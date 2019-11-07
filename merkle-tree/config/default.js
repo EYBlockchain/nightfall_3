@@ -25,16 +25,15 @@ module.exports = {
   // contract to filter:
   contract: {
     name: 'MerkleTreeController',
-    events: [
-      {
-        name: 'newLeaf', // filter for this event
+    events: {
+      // indexed by event names:
+      newLeaf: {
         parameters: ['leafIndex', 'leafValue', 'root'], // filter for these parameters
       },
-      {
-        name: 'newLeaves', // filter for this event
+      newLeaves: {
         parameters: ['minLeafIndex', 'leafValues', 'root'], // filter for these parameters
       },
-    ], // even if only filtering for one event, keep the array brackets []
+    }, // even if only filtering for one event, keep the array brackets []
     deploymentLocality: process.env.DEPLOYMENT_LOCALITY, // 'local' or 'remote'
   },
 
