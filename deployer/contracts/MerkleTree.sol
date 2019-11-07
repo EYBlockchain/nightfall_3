@@ -125,9 +125,21 @@ contract MerkleTree {
 
     function insertLeaves(bytes32[] memory leafValues) public returns (bytes32) {
         uint numberOfLeaves = leafValues.length;
+
         // check that space exists in the tree:
         if ( numberOfLeaves > treeWidth - leafCount ) {
-            numberOfLeaves = treeWidth - leafCount; // we'll ignore any extra leaves
+            uint numberOfExcessLeaves = numberOfLeaves - (treeWidth - leafCount);
+            // remove the excess leaves, because we only want to emit those we've added as an event:
+            for (uint xs = 0; xs < numberOfExcessLeaves; xs++) {
+                /**
+                  CAUTION!!! This attempts to succinctly achieve leafValues.pop() on a **memory** dynamic array. Not thoroughly tested!
+                  Credit: https://ethereum.stackexchange.com/a/51897/45916
+                */
+                assembly {
+                  mstore(leafValues, sub(mload(leafValues), 1))
+                }
+            }
+            numberOfLeaves = treeWidth - leafCount;
         }
 
         uint slot;
