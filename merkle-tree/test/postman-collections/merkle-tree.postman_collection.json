@@ -1,0 +1,951 @@
+{
+	"info": {
+		"_postman_id": "04e7e673-9377-4678-96b8-f5b1cbe68641",
+		"name": "merkle-tree",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "leaf",
+			"item": [
+				{
+					"name": "/leaf -> inserts a leaf object",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"value\": \"0xabc123-7\",\n\t\"leafIndex\": 100,\n\t\"blockNumber\": 60000000\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8000/leaf",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"leaf"
+							]
+						},
+						"description": "inserts a leaf object"
+					},
+					"response": []
+				},
+				{
+					"name": "/leaves -> inserts many leaf objects",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n\t{\n\t\t\"value\": \"0xabc123-3\",\n\t\t\"leafIndex\": 1,\n\t\t\"blockNumber\": 60000000\n\t}\n]"
+						},
+						"url": {
+							"raw": "http://localhost:8000/leaves",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"leaves"
+							]
+						},
+						"description": "{\n\t\t\"value\": \"0xabc123-0\",\n\t\t\"leafIndex\": 0,\n\t\t\"blockNumber\": 60000000\n\t},\n\t{\n\t\t\"value\": \"0xabc123-2\",\n\t\t\"leafIndex\": 2,\n\t\t\"blockNumber\": 60000003\n\t},\n\t{\n\t\t\"value\": \"0xabc123-3\",\n\t\t\"leafIndex\": 3,\n\t\t\"blockNumber\": 60000000\n\t},\n\t\t{\n\t\t\"value\": \"0xabc123-2\",\n\t\t\"leafIndex\": 7,\n\t\t\"blockNumber\": 60000003\n\t},\n\t{\n\t\t\"value\": \"0xabc123-3\",\n\t\t\"leafIndex\": 8,\n\t\t\"blockNumber\": 60000000\n\t},"
+					},
+					"response": []
+				},
+				{
+					"name": "/leaf/:leafIndex -> gets a leaf at leafIndex",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:8000/leaf/index/100",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"leaf",
+								"index",
+								"100"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/leaf/index -> gets a leaf at leafIndex",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \"leafIndex\": 0 }"
+						},
+						"url": {
+							"raw": "http://localhost:8000/leaf/index",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"leaf",
+								"index"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/leaf/value -> gets a leaf with a given value",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \"value\": \"0xabc123-7\" }"
+						},
+						"url": {
+							"raw": "http://localhost:8000/leaf/value",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"leaf",
+								"value"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/leaves -> get leaves by array of indices",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \"leafIndices\": [0, 2, 3] }"
+						},
+						"url": {
+							"raw": "http://localhost:8000/leaves",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"leaves"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/leaves -> get leaves by array of values",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \"values\": [\"0xabc123-7\", \"0xabc123-8\", \"0xabc123-9\"] }"
+						},
+						"url": {
+							"raw": "http://localhost:8000/leaves",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"leaves"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/leaves -> get leaves within index range",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"minIndex\": 0,\n\t\"maxIndex\": 100000\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8000/leaves",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"leaves"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/leaves/check -> check for missing leaves",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:8000/leaves/check",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"leaves",
+								"check"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "node",
+			"item": [
+				{
+					"name": "/node -> inserts a node object",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"value\": \"0xabc123-0\",\n\t\"nodeIndex\": \"0\",\n\t\"isLocked\": false\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8000/node",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"node"
+							]
+						},
+						"description": "inserts a node object"
+					},
+					"response": []
+				},
+				{
+					"name": "/nodes -> updates many node objects",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n\t{\n\t\t\"value\": \"0xabc123-0\",\n\t\t\"nodeIndex\": \"0\"\n\t},\n\t{\n\t\t\"value\": \"0xabc123-1\",\n\t\t\"nodeIndex\": 1\n\t},\n\t{\n\t\t\"value\": \"0xabc123-2\",\n\t\t\"nodeIndex\": 2\n\t}\n]"
+						},
+						"url": {
+							"raw": "http://localhost:8000/nodes",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"nodes"
+							]
+						},
+						"description": "inserts a leaf object"
+					},
+					"response": []
+				},
+				{
+					"name": "/node/:nodeIndex -> gets a node at nodeIndex",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:8000/node/index/0",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"node",
+								"index",
+								"0"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/node/:nodeIndex -> updates a node at nodeIndex",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:8000/node/index/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"node",
+								"index",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/node/index -> gets a node at nodeIndex",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \"nodeIndex\": 0 }"
+						},
+						"url": {
+							"raw": "http://localhost:8000/node/index",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"node",
+								"index"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/node/value -> gets a node with a given value",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \"value\": \"0xabc123-1\" }"
+						},
+						"url": {
+							"raw": "http://localhost:8000/node/value",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"node",
+								"value"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/nodes -> get nodes by array of indices",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \"nodeIndices\": [0, 2, 7] }"
+						},
+						"url": {
+							"raw": "http://localhost:8000/nodes",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"nodes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/nodes -> get nodes by array of values",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \"values\": [\"0xabc123-0\", \"0xabc123-1\", \"0xabc123-9\"] }"
+						},
+						"url": {
+							"raw": "http://localhost:8000/nodes",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"nodes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/nodes -> get nodes within index range",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"minIndex\": 0,\n\t\"maxIndex\": 1000000000\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8000/nodes",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"nodes"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "metaData",
+			"item": [
+				{
+					"name": "/metadata/contractAddress -> inserts the contract address of the tree",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractAddress\": \"0xabc123-0\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8000/metadata/contractAddress",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"metadata",
+								"contractAddress"
+							]
+						},
+						"description": "inserts a node object"
+					},
+					"response": []
+				},
+				{
+					"name": "/metadata -> gets the tree's metadata object",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:8000/metadata",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"metadata"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/metadata/latestLeaf -> updates the latestLeaf metadata object",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:8000/metadata/latestLeaf",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"metadata",
+								"latestLeaf"
+							]
+						},
+						"description": "inserts a leaf object"
+					},
+					"response": []
+				},
+				{
+					"name": "/metadata/latestLeaf -> updates the latestLeaf metadata object",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:8000/metadata/latestLeaf",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"metadata",
+								"latestLeaf"
+							]
+						},
+						"description": "inserts a leaf object"
+					},
+					"response": []
+				},
+				{
+					"name": "/metadata/latestRecalculation -> updates the latestRecalculation metadata object",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\t\"latestRecalculation\": {\n\t\t\t\"blockNumber\": \"60000008\",\n\t\t\t\"leafIndex\": \"5\",\n\t\t\t\"root\": \"0xabc12345\"\n\t\t}\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8000/metadata/latestRecalculation",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"metadata",
+								"latestRecalculation"
+							]
+						},
+						"description": "inserts a leaf object"
+					},
+					"response": []
+				},
+				{
+					"name": "/metadata/latestRecalculation -> gets the latestRecalculation metadata object",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:8000/metadata/latestRecalculation",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"metadata",
+								"latestRecalculation"
+							]
+						},
+						"description": "inserts a leaf object"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "merkle-tree",
+			"item": [
+				{
+					"name": "/start -> starts the event filter",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:8000/start",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"start"
+							]
+						},
+						"description": "inserts a node object"
+					},
+					"response": []
+				},
+				{
+					"name": "/siblingPath/:leafIndex -> gets a siblingPath array for leafIndex",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:8000/siblingPath/2",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"siblingPath",
+								"2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/path/:leafIndex -> gets a path array for leafIndex",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:8000/path/2",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"path",
+								"2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/update -> updates the merkle tree",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:8000/update",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"update"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
