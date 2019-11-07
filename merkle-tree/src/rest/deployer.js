@@ -1,3 +1,9 @@
+/**
+ * @module node.routes.js
+ * @author iAmMichaelConnor
+ * @desc gateway for querying contract details from some external contract deployment microservice.
+ */
+
 import request from 'request';
 import config from 'config';
 import Web3 from '../web3';

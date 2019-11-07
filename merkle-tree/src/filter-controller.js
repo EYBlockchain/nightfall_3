@@ -1,5 +1,5 @@
 /**
-@module index.js
+@module filter-controller.js
 @desc file that starts up the filter
 @author iAmMichaelConnor
 */

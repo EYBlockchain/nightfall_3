@@ -1,3 +1,9 @@
+/**
+ * @module node.routes.js
+ * @author iAmMichaelConnor
+ * @desc merkle-tree.routes.js gives api endpoints to access the functions of the merkle-tree microservice
+ */
+
 import contractController from '../contract-controller';
 import filterController from '../filter-controller';
 import merkleTreeController from '../merkle-tree-controller';

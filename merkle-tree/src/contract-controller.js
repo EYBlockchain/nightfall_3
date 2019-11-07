@@ -1,6 +1,6 @@
 /**
-@module index.js
-@desc file that starts up the filter
+@module contract-controller.js
+@desc
 @author iAmMichaelConnor
 */
 

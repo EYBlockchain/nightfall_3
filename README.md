@@ -26,7 +26,7 @@ The merkle-tree miscroservice requires the following software to run:
 
 Start Docker:
 
-- On Mac, open Docker.app.
+-  On Mac, open Docker.app.
 
 ### Installing the merkle-tree microservice
 

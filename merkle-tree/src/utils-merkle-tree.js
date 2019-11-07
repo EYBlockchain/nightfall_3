@@ -1,7 +1,7 @@
 /**
 @module utils.js
 @author iAmMichaelConnor
-@desc Set of utilities
+@desc Set of utilities for merkle-tree calculations
 */
 
 /* eslint-disable no-bitwise */ // bit operations are essential for merkle-tree computations.

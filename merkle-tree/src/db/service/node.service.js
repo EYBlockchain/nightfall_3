@@ -1,3 +1,9 @@
+/**
+ * @module node.service.js
+ * @author iAmMichaelConnor
+ * @desc orchestrates inserts to and gets from the mongodb
+ */
+
 import { COLLECTIONS } from '../common/constants';
 import { nodeMapper } from '../mappers';
 

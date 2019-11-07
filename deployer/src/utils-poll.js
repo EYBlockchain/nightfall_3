@@ -1,5 +1,5 @@
 /**
-@module poll.js contains all of the logic for starting and stopping a poll.
+@module utils-poll.js contains all of the logic for starting and stopping a poll.
 @author iAmMichaelConnor
 */
 

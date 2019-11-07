@@ -1,3 +1,9 @@
+/**
+ * @module db.js
+ * @author iAmMichaelConnor
+ * @desc js wrappers for mongoose & mongodb functions
+ */
+
 import config from 'config';
 import { COLLECTIONS } from '../common/constants';
 import { nodeSchema, metadataSchema } from '../models';

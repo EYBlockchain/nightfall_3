@@ -1,5 +1,5 @@
 /**
- * @module tree.routes.js
+ * @module metadata.routes.js
  * @author iAmMichaelConnor
  * @desc tree.routes.js gives api endpoints to access the functions of the merkle-tree microservice
  */

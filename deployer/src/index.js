@@ -1,6 +1,6 @@
 /**
 @module index.js
-@desc Bootstrap the application. Start express.
+@desc
 @author iAmMichaelConnor
 */
 

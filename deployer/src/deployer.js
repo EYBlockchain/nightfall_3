@@ -1,3 +1,9 @@
+/**
+ * @module node.service.js
+ * @author iAmMichaelConnor
+ * @desc deploy a contract using web3 directly
+ */
+
 import config from 'config';
 import Web3 from './web3';
 import utilsWeb3 from './utils-web3';

@@ -1,3 +1,9 @@
+/**
+@module web3.js
+@desc
+@author liju
+*/
+
 import Web3 from 'web3';
 import config from 'config';
 
