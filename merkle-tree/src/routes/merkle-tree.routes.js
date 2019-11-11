@@ -117,38 +117,11 @@ async function update(req, res, next) {
   }
 }
 
-/**
- * Updates the tree (but not necessarily using the latest-stored leafIndex) based on the leaves up to a given leafIndex.
- * req.user.db (an instance of mongoose.createConnection (a 'Connection' instance in mongoose terminoligy)) is required, to access the user's db from within the merkleTreeController
- * req.params {
- *  leafIndex: 1234,
- * }
- * @param {*} req
- * @param {*} res - returns the tree's metadata
- */
-async function updateByLeafIndex(req, res, next) {
-  console.log('\nsrc/routes/merkle-tree.routes updateByLeafIndex()');
-
-  const { db } = req.user;
-  let { leafIndex } = req.params;
-  leafIndex = Number(leafIndex); // force to number
-
-  try {
-    const metadata = await merkleTreeController.updateByLeafIndex(db, leafIndex);
-
-    res.data = metadata;
-    next();
-  } catch (err) {
-    next(err);
-  }
-}
-
 // initializing routes
 export default function(router) {
   router.route('/start').post(startFilter);
 
   router.route('/update').patch(update);
-  router.patch('/update/:leafIndex', updateByLeafIndex);
 
   router.get('/siblingPath/:leafIndex', getSiblingPathByLeafIndex);
   router.get('/path/:leafIndex', getPathByLeafIndex);

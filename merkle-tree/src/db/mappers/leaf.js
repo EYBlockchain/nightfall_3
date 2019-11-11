@@ -18,6 +18,5 @@ export default function({ value, nodeIndex, leafIndex, blockNumber }) {
     nodeIndex,
     leafIndex,
     blockNumber,
-    isLocked: true, // a leaf is always 'locked' in an append-only tree, because it will never change.
   };
 }

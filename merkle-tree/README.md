@@ -18,8 +18,6 @@ Just have intermediate hash nodes as hex hashes (i.e. don't allow extra metadata
 node: {
   nodeIndex: number,
   value: string, // hex
-  isLeaf: bool
-  isLocked: bool // true if the node's value will never change in future. We can use this information when recursively recalculating the tree (where we start at the root and work through each child - if we hit a 'true' the recursion doesn't need to go any further for this branch)
 }
 
 leaf: {

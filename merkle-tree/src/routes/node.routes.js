@@ -11,7 +11,6 @@ import { NodeService } from '../db/service';
  * req.body {
  *  value: '0xabc123..',
  *  nodeIndex: 12345678,
- *  isLocked: false,
  * }
  * @param {*} req
  * @param {*} res
@@ -82,8 +81,10 @@ async function getNodes(req, res, next) {
       res.data = await nodeService.getNodesByNodeIndices(nodeIndices);
     } else if (values) {
       res.data = await nodeService.getNodesByValues(values);
-    } else {
+    } else if (minIndex || maxIndex) {
       res.data = await nodeService.getNodesByNodeIndexRange(minIndex, maxIndex);
+    } else {
+      res.data = await nodeService.getNodes();
     }
 
     next();
@@ -98,7 +99,6 @@ async function getNodes(req, res, next) {
  * req.body: {
  *  value: '0xabc123..',
  *  nodeIndex: 12345678,
- *  isLocked: false,
  * }
  * @param {*} req
  * @param {*} res
@@ -121,12 +121,10 @@ async function updateNodeByNodeIndex(req, res, next) {
  *   {
  *     value: '0xabc123..',
  *     nodeIndex: 12345678,
- *     isLocked: false,
  *   },
  *   {
  *     value: '0xabc123..',
  *     nodeIndex: 12345678,
- *     isLocked: false,
  *   }
  * ]
  * @param {*} req
@@ -137,6 +135,24 @@ async function updateNodes(req, res, next) {
   try {
     await nodeService.updateNodes(req.body);
     res.data = { message: 'updated' };
+    next();
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Count the nodes in the tree's 'nodes' db.
+ * @param {*} req
+ * @param {*} res
+ */
+async function countNodes(req, res, next) {
+  console.log('\nsrc/routes/leaf.routes countLeaves()');
+
+  try {
+    const nodeService = new NodeService(req.user.db);
+    const nodeCount = await nodeService.countNodes(req.body);
+    res.data = { nodeCount };
     next();
   } catch (err) {
     next(err);
@@ -182,6 +198,8 @@ export default function(router) {
     .route('/nodes')
     .get(getNodes) // will decide within this function whether we're getting nodes by nodeIndices or by a nodeIndex range, or all nodes.
     .patch(updateNodes);
+
+  router.route('/nodes/count').get(countNodes);
 
   // ROOT ROUTES
 

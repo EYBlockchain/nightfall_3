@@ -1,6 +1,7 @@
 /**
-Contract to enable the management of hidden non fungible toke transactions.
-@Author Westlad, Chaitanya-Konda, iAmMichaelConnor
+Contract to manage permissions to update the leaves of the imported MerkleTree contract (which is the base contract which handles tree inserts and updates).
+
+@Author iAmMichaelConnor
 */
 pragma solidity ^0.5.8;
 
@@ -24,29 +25,38 @@ contract MerkleTreeController is MerkleTree {
     }
 
     /**
-    Constructor for the MerkleTreeController contract. We also need to specify the arguments for the Base contract's (MerkleTree.sol's) constructor. We do this through a "modifier" of this 'derived' contract's constructor (hence the unusual 'MerkleTree' "modifier" directly below):
+    @notice Constructor for the MerkleTreeController contract.
+    @param _treeHeight - the height of the tree (see the base contract for a disambiguation of what is meant by 'height').
+
+    We also need to specify the arguments for the Base contract's (MerkleTree.sol's) constructor. We do this through a "modifier" of this 'derived' contract's constructor (hence the unusual 'MerkleTree' "modifier" directly below).
     */
     constructor(uint _treeHeight) MerkleTree(_treeHeight) public {
         owner = msg.sender;
     }
 
     /**
-    Append a leaf to the tree
+    @notice Append a leaf to the tree
+    @param leafValue - the value of the leaf being inserted.
     */
     function _insertLeaf(bytes32 leafValue) external onlyOwner {
 
         bytes32 root = insertLeaf(leafValue); // recalculate the root of the tree
 
-        // emit newLeaf(leafCount, leafValue, root); // this event is what the merkle-tree microservice's filter will listen for.
+        roots[root] = root;
+
+        latestRoot = root;
     }
 
     /**
-    Append leaves to the tree
+    @notice Append leaves to the tree
+    @param leafValues - the values of the leaves being inserted.
     */
     function _insertLeaves(bytes32[] calldata leafValues) external onlyOwner {
 
         bytes32 root = insertLeaves(leafValues); // recalculate the root of the tree
 
-        // emit newLeaf(leafCount, leafValue, root); // this event is what the merkle-tree microservice's filter will listen for.
+        roots[root] = root;
+
+        latestRoot = root;
     }
 }

@@ -29,10 +29,6 @@ export default new Schema(
       // the blockNumber during which this leaf was emitted
       type: Number,
     },
-    isLocked: {
-      type: Boolean, // true if the value at this node will never again change.
-      default: false,
-    },
   },
 
   // { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } },

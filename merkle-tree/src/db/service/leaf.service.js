@@ -148,7 +148,6 @@ export default class LeafService {
 
   /**
   Get all leaves.
-  TODO: THIS MIGHT BE COMPUTATIONALLY IMPRACTICAL!!!
   @returns {array} an array of leaf objects
   */
   async getLeaves() {
@@ -208,8 +207,7 @@ export default class LeafService {
   async countLeaves() {
     console.log('\nsrc/db/service/leaf.service countLeaves()');
 
-    // insert the leaf into the 'nodes' collection:
-    const leafCount = await this.db.estimatedDocumentCount(COLLECTIONS.NODE, {
+    const leafCount = await this.db.countDocuments(COLLECTIONS.NODE, {
       leafIndex: { $exists: true },
     });
 
@@ -222,7 +220,6 @@ export default class LeafService {
   async maxLeafIndex() {
     console.log('\nsrc/db/service/leaf.service maxLeafIndex()');
 
-    // insert the leaf into the 'nodes' collection:
     const doc = await this.db.getDocs(
       COLLECTIONS.NODE,
       { leafIndex: { $exists: true } }, // query
@@ -231,7 +228,7 @@ export default class LeafService {
       1, // limit output to the 'top' (max) result
     );
 
-    const { leafIndex } = doc[0];
+    const { leafIndex } = doc[0] || {};
 
     return leafIndex;
   }
@@ -277,7 +274,7 @@ export default class LeafService {
 
     // format of missingLeaves = [ { missing: [ 1, 4, 5, 6 ] } ]
 
-    const { missing } = missingLeaves[0];
+    const { missing } = missingLeaves[0] || {};
 
     return missing;
   }

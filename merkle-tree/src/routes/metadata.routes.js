@@ -72,11 +72,11 @@ async function updateLatestRecalculation(req, res, next) {
  * @param {*} req
  * @param {*} res
  */
-async function getTreeMetadata(req, res, next) {
+async function getMetadata(req, res, next) {
   try {
     const { db } = req.user;
     const metadataService = new MetadataService(db);
-    res.data = await metadataService.getTreeMetadata();
+    res.data = await metadataService.getMetadata();
     next();
   } catch (err) {
     next(err);
@@ -121,7 +121,7 @@ async function getLatestLeaf(req, res, next) {
 export default function(router) {
   // NODE ROUTES
 
-  router.route('/metadata').get(getTreeMetadata);
+  router.route('/metadata').get(getMetadata);
 
   router.route('/metadata/contractAddress').post(insertContractAddress);
 

@@ -77,8 +77,8 @@ export default class MetadataService {
   Get all metadata for the tree
   @returns {object} the tree metadata object
   */
-  async getTreeMetadata() {
-    console.log('\nsrc/db/service/metadata.service getTreeMetadata()');
+  async getMetadata() {
+    console.log('\nsrc/db/service/metadata.service getMetadata()');
 
     const doc = await this.db.getDoc(
       COLLECTIONS.METADATA,

@@ -6,8 +6,9 @@ module.exports = {
   },
   rules: {
     'no-console': 'off',
+    'no-plusplus': 'off',
     'import/no-extraneous-dependencies': [
-      'error', 
+      'error',
       {
         'devDependencies': ['integration-test/test.js', 'integration-test/testData.js'],
       },

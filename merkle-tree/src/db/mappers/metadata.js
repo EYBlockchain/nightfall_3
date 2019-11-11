@@ -2,12 +2,14 @@ export default function({ contractAddress, latestRecalculation, latestLeaf }) {
   let lrbn;
   let lrli;
   let lrr;
+  let lrf;
   let llbn;
   let llli;
   if (latestRecalculation) {
     lrbn = latestRecalculation.blockNumber;
     lrli = latestRecalculation.leafIndex;
     lrr = latestRecalculation.root;
+    lrf = latestRecalculation.frontier;
   }
   if (latestLeaf) {
     llbn = latestLeaf.blockNumber;
@@ -22,6 +24,7 @@ export default function({ contractAddress, latestRecalculation, latestLeaf }) {
       blockNumber: lrbn,
       leafIndex: lrli,
       root: lrr,
+      frontier: lrf,
     },
 
     [latestLeaf ? 'latestLeaf' : undefined]: {

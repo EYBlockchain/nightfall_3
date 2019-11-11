@@ -1,3 +1,10 @@
+/**
+A base contract which handles Merkle Tree inserts (and consequent updates to the root and 'frontier' (see below)).
+The intention is for other 'derived' contracts to import this contract, and for those derived contracts to manage permissions to actually call the insertLeaf/insertleaves functions of this base contract.
+
+@Author iAmMichaelConnor
+*/
+
 pragma solidity ^0.5.8;
 
 contract MerkleTree {
@@ -32,8 +39,13 @@ contract MerkleTree {
 
     */
 
-    event newLeaf(uint leafIndex, bytes32 leafValue, bytes32 root); // This event is what the merkle-tree microservice's filter will listen for. We assume that some importing contract will be the one to actually emit this event, because it will be the importing contract which manages permissions for inserting a leaf into this tree.
+    /**
+    These events are what the merkle-tree microservice's filters will listen for.
+    */
+    event newLeaf(uint leafIndex, bytes32 leafValue, bytes32 root);
     event newLeaves(uint minLeafIndex, bytes32[] leafValues, bytes32 root);
+
+    // event Output(bytes32 leftInput, bytes32 rightInput, bytes32 output, uint level, uint nodeIndex); // for debugging only
 
     bytes32 zero = 0x0000000000000000000000000000000000000000000000000000000000000000;
     uint public treeHeight;
@@ -48,7 +60,11 @@ contract MerkleTree {
         // frontier = new bytes32[](treeHeight + 1);
     }
 
-    function getFrontierSlot(uint leafIndex) internal pure returns (uint slot) {
+    /**
+    @notice Get the index of the frontier (or 'storage slot') into which we will next store a nodeValue (based on the leafIndex currently being inserted). See the top-level README for a detailed explanation.
+    @return uint - the index of the frontier (or 'storage slot') into which we will next store a nodeValue
+    */
+    function getFrontierSlot(uint leafIndex) private pure returns (uint slot) {
         slot = 0;
         if ( leafIndex % 2 == 1 ) {
             uint exp1 = 1;
@@ -66,12 +82,15 @@ contract MerkleTree {
         }
     }
 
-
-
+    /**
+    @notice Insert a leaf into the Merkle Tree, update the root, and update any values in the (persistently stored) frontier.
+    @param leafValue - the value of the leaf being inserted.
+    @return bytes32 - the root of the merkle tree, after the insert.
+    */
     function insertLeaf(bytes32 leafValue) public returns (bytes32) {
 
         uint slot = getFrontierSlot(leafCount);
-        uint nodeIndex = leafCount + treeWidth - 2;
+        uint nodeIndex = leafCount + treeWidth - 1;
         bytes32 nodeValue = leafValue; // nodeValue is the hash, which iteratively gets overridden to the top of the tree until it becomes the root.
 
         bytes32[2] memory inputs; // the left and right inputs to the hash function.
@@ -120,9 +139,11 @@ contract MerkleTree {
         return nodeValue; //the root of the tree
     }
 
-
-
-
+    /**
+    @notice Insert multiple leaves into the Merkle Tree, and then update the root, and update any values in the (persistently stored) frontier.
+    @param leafValues - the values of the leaves being inserted.
+    @return bytes32[] - the root of the merkle tree, after all the inserts.
+    */
     function insertLeaves(bytes32[] memory leafValues) public returns (bytes32) {
         uint numberOfLeaves = leafValues.length;
 
@@ -153,6 +174,7 @@ contract MerkleTree {
         // consider each new leaf in turn, from left to right:
         for (uint leafIndex = leafCount; leafIndex < numberOfLeaves; leafIndex++) {
             nodeValue = leafValues[leafIndex - leafCount];
+            nodeIndex = leafIndex + treeWidth - 1; // convert the leafIndex to a nodeIndex
 
             slot = getFrontierSlot(leafIndex); // determine at which level we will next need to store a nodeValue
 
@@ -160,8 +182,6 @@ contract MerkleTree {
                 frontier[slot] = nodeValue; // store in frontier
                 continue;
             }
-
-            nodeIndex = leafIndex + treeWidth - 2; // convert the leafIndex to a nodeIndex
 
             // hash up to the level whose nodeValue we'll store in the frontier slot:
             for (uint level = 1; level <= slot; level++) {
@@ -176,6 +196,9 @@ contract MerkleTree {
                         // Use "invalid" to make gas estimation work
                         switch success case 0 { invalid() }
                     }
+
+                    // emit Output(inputs[0], inputs[1], output[0], level, nodeIndex); // for debugging only
+
                     nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
                     nodeIndex = (nodeIndex - 1) / 2; // move one row up the tree
                 } else {
@@ -187,6 +210,9 @@ contract MerkleTree {
                         success := call(not(0), 2, 0, inputs, 0x40, output, 0x20)
                         switch success case 0 { invalid() }
                     }
+
+                    // emit Output(inputs[0], inputs[1], output[0], level, nodeIndex); // for debugging only
+
                     nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
                     nodeIndex = nodeIndex / 2; // the parentIndex, but will become the nodeIndex of the next level
                 }
@@ -206,6 +232,9 @@ contract MerkleTree {
                     success := call(not(0), 2, 0, inputs, 0x40, output, 0x20)
                     switch success case 0 { invalid() }
                 }
+
+                // emit Output(inputs[0], inputs[1], output[0], level, nodeIndex); // for debugging only
+
                 nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
                 nodeIndex = (nodeIndex - 1) / 2;  // the parentIndex, but will become the nodeIndex of the next level
             } else {
@@ -217,6 +246,9 @@ contract MerkleTree {
                     success := call(not(0), 2, 0, inputs, 0x40, output, 0x20)
                     switch success case 0 { invalid() }
                 }
+
+                // emit Output(inputs[0], inputs[1], output[0], level, nodeIndex); // for debugging only
+
                 nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
                 nodeIndex = nodeIndex / 2;  // the parentIndex, but will become the nodeIndex of the next level
             }
@@ -238,6 +270,7 @@ contract MerkleTree {
 
     // [1234,2345,3456,4567]
     // [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]
+    // for Remix testing only:
     function bytes32ArrayEncoder(uint[25] memory valuesToConvertToLeafValues) public returns (bytes32) {
         bytes32[] memory leafValues = new bytes32[](25);
         for (uint i = 0; i < valuesToConvertToLeafValues.length; i++) {

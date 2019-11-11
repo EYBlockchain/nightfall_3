@@ -218,17 +218,17 @@ export default class DB {
 
   /**
   Count the number of documents (instances of a particular Model) in a collection.
-  We can use 'estimatedDocumentCount' for fast counting of indexed documents.
+  We can use 'countDocuments' for fast counting of indexed documents.
   @param {string} modelName - the name of the Model class.
   @param {object} query - query parameters. Default is empty.
   */
-  async estimatedDocumentCount(modelName, query = {}) {
+  async countDocuments(modelName, query = {}) {
     try {
       // A Model is a class with which we construct documents. We can also access all documents constructed from a particular Model class through that Model class:
       const Model = this.Models[modelName];
-      const count = await Model.estimatedDocumentCount(query);
+      const count = await Model.countDocuments(query);
 
-      console.log('\nsrc/db/mongodb/db estimatedDocumentCount()');
+      console.log('\nsrc/db/mongodb/db countDocuments()');
       console.log('count:');
       console.log(count);
 

@@ -1,3 +1,7 @@
+/**
+This is just a scrapbook for quick debugging of utility functions
+*/
+
 /*
 Execute this from the command line:
 cd path/to/src
@@ -13,11 +17,7 @@ import utilsMT from './utils-merkle-tree';
 // console.log(utilsMT.testMerkleRecursion(0));
 
 async function main() {
-  // console.log(await utilsMT.testMerkleRecursionAsync(0));
-  // console.log(utilsMT.testMerkleRecursion(0));
-  // console.log(utilsMT.testMerkleIteration());
-  console.log(utilsMT.loopNumberOfHashes(4, 6));
-  // console.log(utilsMT.numberOfHashes(2 ** 31, 5, 32));
+  console.log(utilsMT.numberOfHashes(2 ** 31, 5, 32));
 }
 
 main();

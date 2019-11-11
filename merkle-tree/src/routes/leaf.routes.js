@@ -101,8 +101,10 @@ async function getLeaves(req, res, next) {
       res.data = await leafService.getLeavesByLeafIndices(leafIndices);
     } else if (values) {
       res.data = await leafService.getLeavesByValues(values);
-    } else {
+    } else if (minIndex || maxIndex) {
       res.data = await leafService.getLeavesByLeafIndexRange(minIndex, maxIndex);
+    } else {
+      res.data = await leafService.getLeaves();
     }
 
     next();
@@ -152,6 +154,24 @@ async function checkLeaves(req, res, next) {
   }
 }
 
+/**
+ * Count the leaves in the tree's 'nodes' db.
+ * @param {*} req
+ * @param {*} res
+ */
+async function countLeaves(req, res, next) {
+  console.log('\nsrc/routes/leaf.routes countLeaves()');
+
+  try {
+    const leafService = new LeafService(req.user.db);
+    const leafCount = await leafService.countLeaves(req.body);
+    res.data = { leafCount };
+    next();
+  } catch (err) {
+    next(err);
+  }
+}
+
 // initializing routes
 export default router => {
   // LEAF ROUTES
@@ -171,4 +191,5 @@ export default router => {
     .post(insertLeaves);
 
   router.route('/leaves/check').get(checkLeaves);
+  router.route('/leaves/count').get(countLeaves);
 };

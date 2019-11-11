@@ -23,7 +23,10 @@ export default new Schema(
       blockNumber: Number,
       leafIndex: Number,
       root: String,
-      frontier: Array,
+      frontier: {
+        type: Array,
+        default: new Array(config.TREE_HEIGHT + 1),
+      },
       /*
         The frontier contains one value from each level of the tree.
         By 'level' (as opposed to 'row') we mean: the leaves are at level '0' and the root is at level 'H = config.TREE_HEIGHT'.

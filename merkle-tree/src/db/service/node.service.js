@@ -47,7 +47,6 @@ export default class NodeService {
       COLLECTIONS.NODE,
       {
         nodeIndex,
-        isLocked: false, // only update if not a 'locked' node!
       }, // query
       { $set: mappedData }, // update
     );
@@ -69,7 +68,6 @@ export default class NodeService {
       updateOne: {
         filter: {
           nodeIndex: item.nodeIndex,
-          isLocked: false, // only update if not a 'locked' node!
         },
         update: { $set: { value: item.value } },
         upsert: true, // create a new entry if the item ('node') doesn't yet exist in the db
@@ -175,7 +173,6 @@ export default class NodeService {
 
   /**
   Get all nodes.
-  TODO: THIS MIGHT BE COMPUTATIONALLY IMPRACTICAL!!!
   @returns {array} an array of node objects
   */
   async getNodes() {
@@ -203,5 +200,20 @@ export default class NodeService {
     });
 
     return doc;
+  }
+
+  // OTHER
+
+  /**
+  Count the number of nodes stored in the merkle tree
+  */
+  async countNodes() {
+    console.log('\nsrc/db/service/node.service countNodes()');
+
+    const nodeCount = await this.db.countDocuments(COLLECTIONS.NODE, {
+      nodeIndex: { $exists: true },
+    });
+
+    return nodeCount;
   }
 }

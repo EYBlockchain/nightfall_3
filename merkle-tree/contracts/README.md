@@ -1,7 +1,15 @@
 # Example Contracts
 
-These contracts are provided to demonstrate deploying the merkle-tree contracts from this merkle-tree microservice.
+[Example contracts](/deployer/contracts/README.md) are (by default) provided in the 'deployer' microservice.
 
-To deploy from this merkle-tree microservice, the `DEPLOYMENT_LOCALITY` environment variable needs to be set to `DEPLOYMENT_LOCALITY = 'local'` in the `docker-compose.yml` file.
+To deploy those contracts from **this** merkle-tree microservice instead:
 
-The contracts will then be deployed when the microservice is started with `docker-compose up`.
+- copy the contracts into this folder (/merkle-tree/contracts),
+- set the `DEPLOYMENT_LOCALITY` environment variable to `DEPLOYMENT_LOCALITY = 'local'` in the [docker-compose.yml](/docker-compose.yml) file.
+
+Before deploying, the contracts will need to be compiled (in order to generate the contracts' json interfaces in the ../build/contracts/ folder). The simplest way to do this is with truffle:
+`cd path/to/merkle-tree/merkle-tree/`  
+`truffle compile --all`
+
+The contracts will then be deployed when the microservice is started with:  
+`docker-compose up`.

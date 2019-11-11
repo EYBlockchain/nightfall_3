@@ -2,11 +2,10 @@
 @author iAmMichaelConnor
 */
 
-import assert from 'assert';
+// import assert from 'assert';
 import config from 'config';
 
 import Web3 from '../src/web3';
-import utilsWeb3 from '../src/utils-web3';
 
 import deployer from './rest/deployer';
 
@@ -16,7 +15,7 @@ let contractInstance;
 
 let coinbase;
 
-const n = 100;
+const n = 5;
 
 describe('MerkleTreeController', async () => {
   before('get contractInstance', async () => {
@@ -28,61 +27,56 @@ describe('MerkleTreeController', async () => {
     // console.log('contractInstance', contractInstance);
   });
 
-  let rootOneAtATime; // the root after adding the leaves one-at-a-time
-  let rootBulk; // the root after adding the leaves (to a new instance of the tree) in bulk.
-
-  // eslint-disable-next-line func-names
-  describe(`adding leaves via MerkleTreeController`, async function() {
-    this.timeout(3660000); // surprisingly, this.timeout() doesn't work inside an arrow function!
-
-    const gasUsedArray = [];
-    let totalGasUsed = 0;
-    let averageGasUsed = 0;
-    let averageGasUsedMinusTxCost = 0;
-    let max = 0;
-    let min = 100000000;
-    let range;
-
-    it(`adds one leaf at a time correctly`, async () => {
-      for (let i = 0; i < n; i += 1) {
-        // eslint-disable-next-line no-await-in-loop
-        const txReceipt = await contractInstance.methods
-          ._insertLeaf(`0x${i}`)
-          .send({
-            from: coinbase,
-            gas: config.web3.options.defaultGas,
-            gasPrice: config.web3.options.defaultGasPrice,
-          })
-          // eslint-disable-next-line no-loop-func
-          .on('receipt', receipt => {
-            const { leafIndex, leafValue, root } = receipt.events.newLeaf.returnValues;
-            // console.log(leafIndex, leafValue, root);
-
-            rootOneAtATime = root; // will be used in a later test
-          });
-
-        const { gasUsed } = txReceipt;
-        gasUsedArray.push(gasUsed);
-      }
-    });
-
-    after('provide summary stats', async () => {
-      totalGasUsed = gasUsedArray.reduce((acc, cur) => acc + cur);
-      max = Math.max(...gasUsedArray);
-      min = Math.min(...gasUsedArray);
-      averageGasUsed = totalGasUsed / n;
-      averageGasUsedMinusTxCost = averageGasUsed - 21000;
-      range = max - min;
-      console.log('gasUsedArray:');
-      console.dir(gasUsedArray, { maxArrayLength: null });
-      console.log('totalGasUsed:', totalGasUsed);
-      console.log('averageGasUsed:', averageGasUsed);
-      console.log('averageGasUsedMinusTxCost:', averageGasUsedMinusTxCost);
-      console.log('min:', min);
-      console.log('max:', max);
-      console.log('range:', range);
-    });
-  });
+  // // eslint-disable-next-line func-names
+  // describe(`adding leaves via MerkleTreeController`, async function() {
+  //   this.timeout(3660000); // surprisingly, this.timeout() doesn't work inside an arrow function!
+  //
+  //   const gasUsedArray = [];
+  //   let totalGasUsed = 0;
+  //   let averageGasUsed = 0;
+  //   let averageGasUsedMinusTxCost = 0;
+  //   let max = 0;
+  //   let min = 100000000;
+  //   let range;
+  //
+  //   it(`adds one leaf at a time correctly`, async () => {
+  //     for (let i = 0; i < n; i += 1) {
+  //       // eslint-disable-next-line no-await-in-loop
+  //       const txReceipt = await contractInstance.methods
+  //         ._insertLeaf(`0x${i}`)
+  //         .send({
+  //           from: coinbase,
+  //           gas: config.web3.options.defaultGas,
+  //           gasPrice: config.web3.options.defaultGasPrice,
+  //         })
+  //         // eslint-disable-next-line no-loop-func
+  //         .on('receipt', receipt => {
+  //           const { leafIndex, leafValue, root } = receipt.events.newLeaf.returnValues;
+  //           console.log('newLeaf event returnValues:', leafIndex, leafValue, root);
+  //         });
+  //
+  //       const { gasUsed } = txReceipt;
+  //       gasUsedArray.push(gasUsed);
+  //     }
+  //   });
+  //
+  //   after('provide summary stats', async () => {
+  //     totalGasUsed = gasUsedArray.reduce((acc, cur) => acc + cur);
+  //     max = Math.max(...gasUsedArray);
+  //     min = Math.min(...gasUsedArray);
+  //     averageGasUsed = totalGasUsed / n;
+  //     averageGasUsedMinusTxCost = averageGasUsed - 21000;
+  //     range = max - min;
+  //     console.log('gasUsedArray:');
+  //     console.dir(gasUsedArray, { maxArrayLength: null });
+  //     console.log('totalGasUsed:', totalGasUsed);
+  //     console.log('averageGasUsed:', averageGasUsed);
+  //     console.log('averageGasUsedMinusTxCost:', averageGasUsedMinusTxCost);
+  //     console.log('min:', min);
+  //     console.log('max:', max);
+  //     console.log('range:', range);
+  //   });
+  // });
 
   // eslint-disable-next-line func-names
   describe(`Adding ${n} leaves at once`, async function() {
@@ -110,9 +104,10 @@ describe('MerkleTreeController', async () => {
         // eslint-disable-next-line no-loop-func
         .on('receipt', receipt => {
           const { minLeafIndex, leafValues, root } = receipt.events.newLeaves.returnValues;
-          // console.log(minLeafIndex, leafValues, root);
 
-          rootBulk = root; // will be used in a later test
+          console.log('newLeaves event returnValues:', minLeafIndex, leafValues, root);
+
+          console.dir(receipt.events, { depth: null });
         });
 
       const { gasUsed } = txReceipt;

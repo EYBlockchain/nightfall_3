@@ -13,6 +13,7 @@ import { LeafService, NodeService, MetadataService } from './db/service';
 const subscriptions = {};
 
 /**
+DEPRECATED - preferred using a direct event subscription rather than a 'logs' subscription.
 This function is triggered by the 'Logs' subscription, every time a new event is received via the websocket.
 @param {object} eventObject - An event object.
 */
@@ -154,7 +155,7 @@ This can also be executed from the command line with:
 node -e 'require("./index").filterBlock(blockNumber)'
 @param {number} blockNumber
 */
-async function filterBlock(contractInstance, fromBlock, db) {
+async function filterBlock(db, contractInstance, fromBlock) {
   console.log(`\nsrc/filter-controller filterBlock(contractInstance, fromBlock=${fromBlock})`);
 
   const contractName = config.contract.name;
@@ -233,7 +234,7 @@ async function start(db, contractInstance) {
     const fromBlock = await getFromBlock(db); // the blockNumber we get is the next WHOLE block to start filtering.
 
     // Now we filter indefinitely:
-    await filterBlock(contractInstance, fromBlock, db);
+    await filterBlock(db, contractInstance, fromBlock);
     return true;
   } catch (err) {
     throw new Error(err);
