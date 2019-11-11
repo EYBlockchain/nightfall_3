@@ -31,7 +31,8 @@ async function checkLeaves(db) {
   if (leafCount !== maxLeafIndex + 1) {
     // then we are missing values. Let's do a slower search to find the earliest missing value:
     console.log(
-      `\nThere are missing leaves in the db. Found ${leafCount} leaves, but expected ${maxLeafIndex + 1}. Performing a slower check to find the missing leaves...`,
+      `\nThere are missing leaves in the db. Found ${leafCount} leaves, but expected ${maxLeafIndex +
+        1}. Performing a slower check to find the missing leaves...`,
     );
     const missingLeaves = await leafService.findMissingLeaves(0, maxLeafIndex);
 
@@ -243,7 +244,6 @@ async function update(db) {
       root,
       frontier: newFrontier,
     };
-    console.log('\n\n\n\n\nLATESTRECALCULATION!:', latestRecalculation);
     await metadataService.updateLatestRecalculation({ latestRecalculation });
 
     // update the metadata db (based on currently stored leaves):

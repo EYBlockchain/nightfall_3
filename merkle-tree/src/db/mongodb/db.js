@@ -60,8 +60,8 @@ export default class DB {
       const dbResponse = await doc.save();
 
       console.log('\nsrc/db/mongodb/db save()');
-      console.log('dbResponse:');
-      console.log(dbResponse);
+      // console.log('dbResponse:');
+      // console.log(dbResponse);
 
       return Promise.resolve(dbResponse);
     } catch (e) {
@@ -84,8 +84,8 @@ export default class DB {
       const dbResponse = await Model.insertMany(docs); // insertMany uses a single write operation, rather than iterating through.
 
       console.log('\nsrc/db/mongodb/db insertMany()');
-      console.log('dbResponse:');
-      console.log(dbResponse);
+      // console.log('dbResponse:');
+      // console.log(dbResponse);
 
       return Promise.resolve(dbResponse);
     } catch (e) {
@@ -106,8 +106,8 @@ export default class DB {
       const doc = await Model.findOne(query, projections);
 
       console.log('\nsrc/db/mongodb/db getDoc()');
-      console.log('doc:');
-      console.log(doc);
+      // console.log('doc:');
+      // console.log(doc);
 
       return Promise.resolve(doc);
     } catch (e) {
@@ -132,8 +132,8 @@ export default class DB {
         .exec();
 
       console.log('\nsrc/db/mongodb/db getDocs()');
-      console.log('docs:');
-      console.log(docs);
+      // console.log('docs:');
+      // console.log(docs);
 
       return Promise.resolve(docs);
     } catch (e) {
@@ -156,8 +156,8 @@ export default class DB {
       const doc = await Model.updateOne(query, updateData, options);
 
       console.log('\nsrc/db/mongodb/db updateDoc()');
-      console.log('doc:');
-      console.log(doc);
+      // console.log('doc:');
+      // console.log(doc);
 
       return Promise.resolve(doc);
     } catch (e) {
@@ -178,9 +178,9 @@ export default class DB {
       const Model = this.Models[modelName];
       const dbResponse = await Model.collection.bulkWrite(bulkUpdates); // CAUTION: we've used 'Model.collection...' rather than mongoose's built-in 'Model.' '' functions, and so validation might be being skipped!
 
-      console.log('src/db/mongodb/db bulkWrite()');
-      console.log('dbResponse:');
-      console.log(dbResponse);
+      console.log('\nsrc/db/mongodb/db bulkWrite()');
+      // console.log('dbResponse:');
+      // console.log(dbResponse);
 
       return Promise.resolve(dbResponse);
     } catch (e) {
@@ -229,116 +229,12 @@ export default class DB {
       const count = await Model.countDocuments(query);
 
       console.log('\nsrc/db/mongodb/db countDocuments()');
-      console.log('count:');
-      console.log(count);
+      // console.log('count:');
+      // console.log(count);
 
       return Promise.resolve(count);
     } catch (e) {
       console.log('DB error', e);
-      return Promise.reject(e);
-    }
-  }
-
-  /**
-  TODO: Not used currently - delete?
-  Aggregation operations process data records and return computed results. Aggregation operations group values from multiple documents together, and can perform a variety of operations on the grouped data to RETURN A SINGLE RESULT.
-  @param {string} modelName - the name of the Model class.
-  @param {object} conditions - the conditions which filter to the documents we want to aggregate together.
-  @param {object} projection - Specifies the fields to return in the documents that match the query filter. To return all fields in the matching documents, omit this parameter.
-  @param {object} options - extra mongoose options.
-  */
-  async aggregation(modelName, conditions, projection, options) {
-    try {
-      const Model = this.Models[modelName];
-      const pipeline = [{ $match: conditions }];
-
-      if (projection) pipeline.push(projection);
-
-      if (options) pipeline.push(options);
-
-      const data = await Model.aggregate(pipeline);
-
-      return Promise.resolve(data);
-    } catch (e) {
-      return Promise.reject(e);
-    }
-  }
-
-  // TODO: Not used currently - delete?
-  async populate(modelName, data, populates) {
-    try {
-      const Model = this.Models[modelName];
-      return await Model.populate(data, populates);
-    } catch (e) {
-      return Promise.reject(e);
-    }
-  }
-
-  async getDocsPaginated(
-    modelName,
-    query,
-    projection = { path: '', select: '' },
-    sort = {},
-    pageNo = 1,
-    limit = 5,
-  ) {
-    try {
-      const Model = this.Models[modelName];
-      const data = await Model.find(query)
-        .limit(limit)
-        .skip(limit * (pageNo - 1))
-        .sort(sort)
-        .populate(projection)
-        .exec();
-      const totalCount = await Model.find(query)
-        .countDocuments()
-        .exec();
-      return Promise.resolve({ data, totalCount });
-    } catch (e) {
-      console.log('DB error', e);
-      return Promise.reject(e);
-    }
-  }
-
-  /**
-  TODO: remove because unused?
-  */
-  async getDocsRefined(modelName, query, projection, sort = {}, pageNo, limit) {
-    try {
-      const Model = this.Models[modelName];
-      const mQuery = Model.find(query);
-      if (limit) {
-        mQuery.limit(limit);
-      }
-      if (pageNo) {
-        mQuery.skip(limit * (pageNo - 1));
-      }
-      if (sort) {
-        mQuery.sort(sort);
-      }
-      if (projection) {
-        mQuery.populate(projection);
-      }
-
-      const docs = await mQuery.exec();
-      return Promise.resolve({ docs });
-    } catch (e) {
-      return Promise.reject(e);
-    }
-  }
-
-  /**
-  TODO: remove because unused?
-  */
-  async getListData(modelName, query, page) {
-    try {
-      const Model = this.Models[modelName];
-      const data = await Model.find(query)
-        .skip(page.index * page.size)
-        .limit(page.size)
-        .exec();
-      return Promise.resolve(data);
-    } catch (e) {
       return Promise.reject(e);
     }
   }

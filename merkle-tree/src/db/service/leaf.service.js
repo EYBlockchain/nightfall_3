@@ -20,9 +20,9 @@ export default class LeafService {
   */
   async insertLeaf(data) {
     console.log('\nsrc/db/service/leaf.service insertLeaf()');
-    console.log('data before mapping:', data);
+    // console.log('data before mapping:', data);
     const mappedData = leafMapper(data);
-    console.log('data after mapping:', mappedData);
+    // console.log('data after mapping:', mappedData);
 
     // insert the leaf into the 'nodes' collection:
     try {
@@ -45,9 +45,9 @@ export default class LeafService {
   */
   async insertLeaves(data) {
     console.log('\nsrc/db/service/leaf.service insertLeaves()');
-    console.log('data before mapping:', data);
+    // console.log('data before mapping:', data);
     const mappedData = data.map(item => leafMapper(item));
-    console.log('data after mapping:', mappedData);
+    // console.log('data after mapping:', mappedData);
 
     // insert the leaves into the 'nodes' collection:
     const dbResponse = await this.db.insertMany(COLLECTIONS.NODE, mappedData);

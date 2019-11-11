@@ -35,9 +35,9 @@ export default class MetadataService {
   */
   async updateLatestLeaf(data) {
     console.log('\nsrc/db/service/metadata.service updateLatestLeaf()');
-    console.log('data before mapping:', data);
+    // console.log('data before mapping:', data);
     const mappedData = metadataMapper(data);
-    console.log('data after mapping:', mappedData);
+    // console.log('data after mapping:', mappedData);
 
     const { latestLeaf } = mappedData;
 
@@ -57,9 +57,9 @@ export default class MetadataService {
   */
   async updateLatestRecalculation(data) {
     console.log('\nsrc/db/service/metadata.service updateLatestRecalculation()');
-    console.log('data before mapping:', data);
+    // console.log('data before mapping:', data);
     const mappedData = metadataMapper(data);
-    console.log('data after mapping:', mappedData);
+    // console.log('data after mapping:', mappedData);
 
     const { latestRecalculation } = mappedData;
 

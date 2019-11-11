@@ -1,7 +1,7 @@
 /**
 @module web3.js
 @desc
-@author liju
+@author liju jose
 */
 
 import Web3 from 'web3';

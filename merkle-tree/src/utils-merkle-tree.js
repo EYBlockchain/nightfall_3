@@ -159,18 +159,12 @@ A js implementation of the corresponding Solidity function in MerkleTree.sol
 */
 async function updateNodes(leafValues, currentLeafCount, frontier, updateNodesFunction) {
   console.log(`\nsrc/utils-merkle-tree updateNodes()`);
-  console.log('updateNodes(): leafValues', leafValues);
-  console.log('updateNodes(): currentLeafCount', currentLeafCount);
-  console.log('updateNodes(): frontier', frontier);
 
   const newFrontier = frontier;
 
   // check that space exists in the tree:
   const numberOfLeavesAvailable = treeWidth - currentLeafCount;
   const numberOfLeaves = Math.min(leafValues.length, numberOfLeavesAvailable);
-
-  console.log('updateNodes(): numberOfLeavesAvailable', numberOfLeavesAvailable);
-  console.log('updateNodes(): numberOfLeaves', numberOfLeaves);
 
   let slot;
   let nodeIndex;
@@ -188,37 +182,35 @@ async function updateNodes(leafValues, currentLeafCount, frontier, updateNodesFu
     slot = getFrontierSlot(leafIndex); // determine at which level we will next need to store a nodeValue
 
     if (slot === 0) {
-      console.log('below slot');
-      console.log('level', 0);
-      console.log('slot', slot);
+      // console.log('below slot');
+      // console.log('level', 0);
+      // console.log('slot', slot);
       newFrontier[slot] = nodeValue; // store in frontier
-      console.log(frontier);
+      // console.log('frontier', frontier);
       continue; // eslint-disable-line no-continue
     }
 
     // hash up to the level whose nodeValue we'll store in the frontier slot:
     for (let level = 1; level <= slot; level++) {
-      console.log('below slot');
-      console.log('level', level);
-      console.log('slot', slot);
+      // console.log('below slot');
+      // console.log('level', level);
+      // console.log('slot', slot);
       if (nodeIndex % 2 === 0) {
         // even nodeIndex
-        console.log('leafIndex', leafIndex);
-        console.log('nodeIndex', nodeIndex);
-        console.log('left input', frontier[level - 1]);
-        console.log('right input', nodeValue);
+        // console.log('leafIndex', leafIndex);
+        // console.log('nodeIndex', nodeIndex);
+        // console.log('left input', frontier[level - 1]);
+        // console.log('right input', nodeValue);
         nodeValue = utils.concatenateThenHash(frontier[level - 1], nodeValue); // the parentValue, but will become the nodeValue of the next level
-        console.log('output', nodeValue);
-        console.log('level', level);
+        // console.log('output', nodeValue);
       } else {
         // odd nodeIndex
-        console.log('leafIndex', leafIndex);
-        console.log('nodeIndex', nodeIndex);
-        console.log('left input', nodeValue);
-        console.log('right input', config.ZERO);
+        // console.log('leafIndex', leafIndex);
+        // console.log('nodeIndex', nodeIndex);
+        // console.log('left input', nodeValue);
+        // console.log('right input', config.ZERO);
         nodeValue = utils.concatenateThenHash(nodeValue, config.ZERO); // the parentValue, but will become the nodeValue of the next level
-        console.log('output', nodeValue);
-        console.log('level', level);
+        // console.log('output', nodeValue);
       }
       nodeIndex = parentNodeIndex(nodeIndex); // move one row up the tree
 
@@ -241,26 +233,23 @@ async function updateNodes(leafValues, currentLeafCount, frontier, updateNodesFu
 
   // So far we've added all leaves, and hashed up to a particular level of the tree. We now need to continue hashing from that level until the root:
   for (let level = slot + 1; level <= treeHeight; level++) {
-    console.log('above slot');
-    console.log('level', level);
-    console.log('slot', slot);
-    console.log('nodeIndex', nodeIndex);
+    // console.log('above slot');
+    // console.log('level', level);
+    // console.log('slot', slot);
     if (nodeIndex % 2 === 0) {
       // even nodeIndex
-      console.log('nodeIndex', nodeIndex);
-      console.log('left input', frontier[level - 1]);
-      console.log('right input', nodeValue);
+      // console.log('nodeIndex', nodeIndex);
+      // console.log('left input', frontier[level - 1]);
+      // console.log('right input', nodeValue);
       nodeValue = utils.concatenateThenHash(frontier[level - 1], nodeValue); // the parentValue, but will become the nodeValue of the next level
-      console.log('output', nodeValue);
-      console.log('level', level);
+      // console.log('output', nodeValue);
     } else {
       // odd nodeIndex
-      console.log('nodeIndex', nodeIndex);
-      console.log('left input', nodeValue);
-      console.log('right input', config.ZERO);
+      // console.log('nodeIndex', nodeIndex);
+      // console.log('left input', nodeValue);
+      // console.log('right input', config.ZERO);
       nodeValue = utils.concatenateThenHash(nodeValue, config.ZERO); // the parentValue, but will become the nodeValue of the next level
-      console.log('output', nodeValue);
-      console.log('level', level);
+      // console.log('output', nodeValue);
     }
     nodeIndex = parentNodeIndex(nodeIndex); // move one row up the tree
     const node = {
@@ -277,7 +266,6 @@ async function updateNodes(leafValues, currentLeafCount, frontier, updateNodesFu
 
   const root = nodeValue; // nodeValue is now the root of the tree
 
-  console.log("HERE's THE ROOT, NODEVALUE!!!!", root, nodeValue)
   return [root, newFrontier];
 }
 

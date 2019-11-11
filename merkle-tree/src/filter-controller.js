@@ -7,36 +7,36 @@
 import config from 'config';
 import utilsWeb3 from './utils-web3';
 
-import { LeafService, NodeService, MetadataService } from './db/service';
+import { LeafService, MetadataService } from './db/service';
 
 // global subscriptions object:
 const subscriptions = {};
 
-/**
-DEPRECATED - preferred using a direct event subscription rather than a 'logs' subscription.
-This function is triggered by the 'Logs' subscription, every time a new event is received via the websocket.
-@param {object} eventObject - An event object.
-*/
-const newEventFromLogResponder = async (eventObject, args = {}) => {
-  // First some generic eventObject handling code:
-  console.log('\nResponding to New Event Log...');
-
-  const { decodedEventData } = eventObject;
-
-  const eventParams = config.contract.event.parameters;
-  const eventInstance = {};
-
-  // extract each relevent event parameter from the decodedEventData and add it to our eventInstance.
-  eventParams.forEach(param => {
-    eventInstance[param] = decodedEventData[param];
-  });
-
-  console.log('eventInstance:');
-  console.dir(eventInstance, { depth: null });
-
-  // Now some bespoke code; specific to our particular event:
-  // We make some hardcoded presumptions about what's contained in the 'args':
-};
+// /**
+// DEPRECATED - preferred using a direct event subscription rather than a 'logs' subscription.
+// This function is triggered by the 'Logs' subscription, every time a new event is received via the websocket.
+// @param {object} eventObject - An event object.
+// */
+// const newEventFromLogResponder = async (eventObject, args = {}) => {
+//   // First some generic eventObject handling code:
+//   console.log('\nResponding to New Event Log...');
+//
+//   const { decodedEventData } = eventObject;
+//
+//   const eventParams = config.contract.event.parameters;
+//   const eventInstance = {};
+//
+//   // extract each relevent event parameter from the decodedEventData and add it to our eventInstance.
+//   eventParams.forEach(param => {
+//     eventInstance[param] = decodedEventData[param];
+//   });
+//
+//   console.log('eventInstance:');
+//   console.dir(eventInstance, { depth: null });
+//
+//   // Now some bespoke code; specific to our particular event:
+//   // We make some hardcoded presumptions about what's contained in the 'args':
+// };
 
 /**
 TODO: description
@@ -59,8 +59,8 @@ const newLeafResponseFunction = async (eventObject, args) => {
   eventParams.forEach(param => {
     eventInstance[param] = eventData.returnValues[param];
   });
-  console.log('eventInstance:');
-  console.dir(eventInstance, { depth: null });
+  // console.log('eventInstance:');
+  // console.dir(eventInstance, { depth: null });
 
   // Now some bespoke code; specific to how our application needs to deal with this eventObject:
   // construct a 'leaf' document to store in the db:
@@ -99,8 +99,8 @@ const newLeavesResponseFunction = async (eventObject, args) => {
   eventParams.forEach(param => {
     eventInstance[param] = eventData.returnValues[param];
   });
-  console.log('eventInstance:');
-  console.dir(eventInstance, { depth: null });
+  // console.log('eventInstance:');
+  // console.dir(eventInstance, { depth: null });
 
   // Now some bespoke code; specific to how our application needs to deal with this eventObject:
   // construct an array of 'leaf' documents to store in the db:

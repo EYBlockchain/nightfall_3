@@ -315,6 +315,9 @@ function addNewEventFromLogs(eventObject) {
   return events;
 }
 
+/**
+DEPRECATED in favour of subscribing to events (rather than subscribing to events via logs)
+*/
 async function subscribeToEventViaLogs(
   contractName,
   contractInstance,
@@ -382,7 +385,7 @@ async function subscribeToEventViaLogs(
     },{...}]
   */
   eventSubscription.on('data', eventData => {
-    console.log('\n\n\n\n\nNew', contractName, eventName, 'event detected');
+    console.log('\n\n\nNew', contractName, eventName, 'event detected');
     console.log('\nEncoded Event Data:');
     console.log(eventData);
 

@@ -20,9 +20,9 @@ export default class NodeService {
   */
   async insertNode(data) {
     console.log('\nsrc/db/service/node.service insertNode()');
-    console.log('data before mapping:', data);
+    // console.log('data before mapping:', data);
     const mappedData = nodeMapper(data);
-    console.log('data after mapping:', mappedData);
+    // console.log('data after mapping:', mappedData);
 
     // insert the node into the 'nodes' collection:
     const dbResponse = await this.db.save(COLLECTIONS.NODE, mappedData);
@@ -39,9 +39,9 @@ export default class NodeService {
   */
   async updateNodeByNodeIndex(nodeIndex, data) {
     console.log('\nsrc/db/service/node.service updateNodeByNodeIndex()');
-    console.log('data before mapping:', data);
+    // console.log('data before mapping:', data);
     const mappedData = nodeMapper(data);
-    console.log('data after mapping:', mappedData);
+    // console.log('data after mapping:', mappedData);
 
     const doc = await this.db.updateDoc(
       COLLECTIONS.NODE,
@@ -60,9 +60,9 @@ export default class NodeService {
   */
   async updateNodes(data) {
     console.log('\nsrc/db/service/node.service updateNodes()');
-    console.log('data before mapping:', data);
+    // console.log('data before mapping:', data);
     const mappedData = data.map(item => nodeMapper(item));
-    console.log('data after mapping:', mappedData);
+    // console.log('data after mapping:', mappedData);
 
     const bulkUpdates = mappedData.map(item => ({
       updateOne: {
