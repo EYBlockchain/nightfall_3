@@ -173,11 +173,11 @@ async function getSiblingPathByLeafIndex(db, leafIndex) {
 const nodes = [];
 let hashCount = 0;
 async function updateNodes(node) {
-  console.log('node', node);
+  // console.log('node', node);
   nodes.push(node);
   hashCount += 1;
-  console.log('hashCount', hashCount);
-  console.log('numberOfHashes', this.numberOfHashes);
+  // console.log('hashCount', hashCount);
+  // console.log('numberOfHashes', this.numberOfHashes);
   if (nodes.length === config.BULK_WRITE_BUFFER_SIZE) {
     await this.nodeService.updateNodes(nodes);
     nodes.length = 0; // empty the array to start again

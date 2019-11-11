@@ -228,7 +228,7 @@ async function updateNodes(leafValues, currentLeafCount, frontier, updateNodesFu
     }
 
     newFrontier[slot] = nodeValue; // store in frontier
-    console.log(frontier);
+    // console.log(frontier);
   }
 
   // So far we've added all leaves, and hashed up to a particular level of the tree. We now need to continue hashing from that level until the root:
