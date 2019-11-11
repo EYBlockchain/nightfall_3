@@ -20,7 +20,7 @@ module.exports = {
   },
 
   UPDATE_FREQUENCY: 100, // recalculate the tree every 'x' leaves - NOT USED YET
-  BULK_WRITE_BUFFER_SIZE: 100, // number of documents to add to a buffer before writing them to the db
+  BULK_WRITE_BUFFER_SIZE: 1000, // number of documents to add to a buffer before writing them to the db
 
   // contract to filter:
   contract: {

@@ -31,7 +31,7 @@ async function checkLeaves(db) {
   if (leafCount !== maxLeafIndex + 1) {
     // then we are missing values. Let's do a slower search to find the earliest missing value:
     console.log(
-      `\nThere are missing leaves in the db. Found ${leafCount} leaves, but expected ${maxLeafIndex}. Performing a slower check to find the missing leaves...`,
+      `\nThere are missing leaves in the db. Found ${leafCount} leaves, but expected ${maxLeafIndex + 1}. Performing a slower check to find the missing leaves...`,
     );
     const missingLeaves = await leafService.findMissingLeaves(0, maxLeafIndex);
 
@@ -238,7 +238,7 @@ async function update(db) {
   // Check whether we're already up-to-date:
   if (latestRecalculationLeafIndex < toLeafIndex) {
     // We're not up-to-date:
-    console.log('\nThe tree needs updating.');
+    console.log('\n\n\n\n\nThe tree needs updating.');
     // Recalculate any nodes along the path from the new leaves to the root:
     console.log(`\nUpdating the tree from leaf ${fromLeafIndex} to leaf ${toLeafIndex}`);
 
@@ -247,7 +247,7 @@ async function update(db) {
       fromLeafIndex,
       config.TREE_HEIGHT,
     );
-    console.log(`\n${numberOfHashes} hashes are required to update the tree...`);
+    console.log(`\n${numberOfHashes} hashes are required to update the tree...\n\n\n\n\n`);
 
     const { frontier } = latestRecalculation || [];
     const leaves = await leafService.getLeavesByLeafIndexRange(fromLeafIndex, toLeafIndex);
@@ -267,12 +267,13 @@ async function update(db) {
       root,
       frontier: newFrontier,
     };
+    console.log('\n\n\n\n\nLATESTRECALCULATION!:', latestRecalculation);
     await metadataService.updateLatestRecalculation({ latestRecalculation });
 
     // update the metadata db (based on currently stored leaves):
     ({ latestLeaf } = await updateLatestLeaf(db));
   } else {
-    console.log('\nThe tree is already up to date.');
+    console.log('\n\n\n\n\nThe tree is already up to date.\n\n\n\n\n');
   }
 
   const metadata = await metadataService.getMetadata();

@@ -159,18 +159,29 @@ A js implementation of the corresponding Solidity function in MerkleTree.sol
 */
 async function updateNodes(leafValues, currentLeafCount, frontier, updateNodesFunction) {
   console.log(`\nsrc/utils-merkle-tree updateNodes()`);
+  console.log('updateNodes(): leafValues', leafValues);
+  console.log('updateNodes(): currentLeafCount', currentLeafCount);
+  console.log('updateNodes(): frontier', frontier);
+
   const newFrontier = frontier;
 
   // check that space exists in the tree:
   const numberOfLeavesAvailable = treeWidth - currentLeafCount;
   const numberOfLeaves = Math.min(leafValues.length, numberOfLeavesAvailable);
 
+  console.log('updateNodes(): numberOfLeavesAvailable', numberOfLeavesAvailable);
+  console.log('updateNodes(): numberOfLeaves', numberOfLeaves);
+
   let slot;
   let nodeIndex;
   let nodeValue;
 
   // consider each new leaf in turn, from left to right:
-  for (let leafIndex = currentLeafCount; leafIndex < numberOfLeaves; leafIndex++) {
+  for (
+    let leafIndex = currentLeafCount;
+    leafIndex < currentLeafCount + numberOfLeaves;
+    leafIndex++
+  ) {
     nodeValue = leafValues[leafIndex - currentLeafCount];
     nodeIndex = leafIndexToNodeIndex(leafIndex, treeWidth); // convert the leafIndex to a nodeIndex
 
@@ -266,6 +277,7 @@ async function updateNodes(leafValues, currentLeafCount, frontier, updateNodesFu
 
   const root = nodeValue; // nodeValue is now the root of the tree
 
+  console.log("HERE's THE ROOT, NODEVALUE!!!!", root, nodeValue)
   return [root, newFrontier];
 }
 

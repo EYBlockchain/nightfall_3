@@ -172,7 +172,7 @@ contract MerkleTree {
         bool success;
 
         // consider each new leaf in turn, from left to right:
-        for (uint leafIndex = leafCount; leafIndex < numberOfLeaves; leafIndex++) {
+        for (uint leafIndex = leafCount; leafIndex < leafCount + numberOfLeaves; leafIndex++) {
             nodeValue = leafValues[leafIndex - leafCount];
             nodeIndex = leafIndex + treeWidth - 1; // convert the leafIndex to a nodeIndex
 
