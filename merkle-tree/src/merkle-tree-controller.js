@@ -116,31 +116,20 @@ async function getPathByLeafIndex(db, leafIndex) {
   const nodeService = new NodeService(db);
   const nodes = await nodeService.getNodesByNodeIndices(pathIndices);
 
+  console.log('\n', nodes);
+
   // Check whether some nodeIndices don't yet exist in the db. If they don't, we'll presume their values are zero, and add these to the 'nodes' before returning them.
-  // check if empty:
-  if (!Array.isArray(nodes) || !nodes.length) {
-    // eslint-disable-next-line no-shadow
-    pathIndices.forEach((nodeIndex, index) => {
+  // eslint-disable-next-line no-shadow
+  pathIndices.forEach((nodeIndex, index) => {
+    if (nodes[index] === undefined || nodes[index].nodeIndex !== pathIndices[index]) {
       const node = {
         value: config.ZERO,
         nodeIndex,
       };
       // insert the node into the nodes array:
       nodes.splice(index, 0, node);
-    });
-  } else {
-    // eslint-disable-next-line no-shadow
-    pathIndices.forEach((nodeIndex, index) => {
-      if (nodes[index].nodeIndex !== pathIndices[index]) {
-        const node = {
-          value: config.ZERO,
-          nodeIndex,
-        };
-        // insert the node into the nodes array:
-        nodes.splice(index, 0, node);
-      }
-    });
-  }
+    }
+  });
 
   return nodes;
 }
@@ -165,30 +154,17 @@ async function getSiblingPathByLeafIndex(db, leafIndex) {
   const nodes = await nodeService.getNodesByNodeIndices(siblingPathIndices);
 
   // Check whether some nodeIndices don't yet exist in the db. If they don't, we'll presume their values are zero, and add these to the 'nodes' before returning them.
-  // check if empty:
-  if (!Array.isArray(nodes) || !nodes.length) {
-    // eslint-disable-next-line no-shadow
-    siblingPathIndices.forEach((nodeIndex, index) => {
+  // eslint-disable-next-line no-shadow
+  siblingPathIndices.forEach((nodeIndex, index) => {
+    if (nodes[index] === undefined || nodes[index].nodeIndex !== siblingPathIndices[index]) {
       const node = {
         value: config.ZERO,
         nodeIndex,
       };
       // insert the node into the nodes array:
       nodes.splice(index, 0, node);
-    });
-  } else {
-    // eslint-disable-next-line no-shadow
-    siblingPathIndices.forEach((nodeIndex, index) => {
-      if (nodes[index].nodeIndex !== siblingPathIndices[index]) {
-        const node = {
-          value: config.ZERO,
-          nodeIndex,
-        };
-        // insert the node into the nodes array:
-        nodes.splice(index, 0, node);
-      }
-    });
-  }
+    }
+  });
 
   return nodes;
 }
