@@ -273,6 +273,39 @@
 					"response": []
 				},
 				{
+					"name": "/leaves -> get all leaves",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:8000/leaves",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"leaves"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "/leaves/check -> check for missing leaves",
 					"protocolProfileBehavior": {
 						"disableBodyPruning": true
@@ -301,6 +334,40 @@
 							"path": [
 								"leaves",
 								"check"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/leaves/count -> count the number of leaves in the db",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:8000/leaves/count",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"leaves",
+								"count"
 							]
 						}
 					},
@@ -591,7 +658,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"minIndex\": 0,\n\t\"maxIndex\": 1000000000\n}"
+							"raw": "{\n\t\"minIndex\": 0,\n\t\"maxIndex\": 1000000000000000\n}"
 						},
 						"url": {
 							"raw": "http://localhost:8000/nodes",
@@ -602,6 +669,73 @@
 							"port": "8000",
 							"path": [
 								"nodes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/nodes -> get all nodes",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:8000/nodes",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"nodes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/nodes/count -> count the number of nodes in the db",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:8000/nodes/count",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"nodes",
+								"count"
 							]
 						}
 					},
@@ -758,7 +892,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\t\"latestRecalculation\": {\n\t\t\t\"blockNumber\": \"60000008\",\n\t\t\t\"leafIndex\": \"5\",\n\t\t\t\"root\": \"0xabc12345\"\n\t\t}\n}"
+							"raw": ""
 						},
 						"url": {
 							"raw": "http://localhost:8000/metadata/latestRecalculation",
