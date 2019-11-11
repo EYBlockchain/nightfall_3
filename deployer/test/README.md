@@ -11,6 +11,7 @@ truffle compile --all
 
 In one terminal window:  
 `docker-compose up`  
+
 Then in another terminal window:
 `docker-compose run --rm deployer npm run test`
 
@@ -34,6 +35,7 @@ This test relies on the deployer microservice's url '<http://deployer:80>' being
 
 In one terminal window:  
 `docker-compose up`  
+
 Then in another terminal window:  
 `docker-compose run --rm deployer npx mocha --exit --require @babel/register 'test/MerkleTreeController.test.js'`
 
