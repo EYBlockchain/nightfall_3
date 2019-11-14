@@ -39,7 +39,7 @@ module.exports = {
 
   // mongodb:
   mongo: {
-    host: 'mongo',
+    host: 'mongo-merkle-tree',
     port: '27017',
     databaseName: 'merkle_tree',
     admin: 'admin',
