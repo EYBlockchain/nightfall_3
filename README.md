@@ -108,15 +108,15 @@ Interact with the merkle-tree microservice through its API. A postman collection
 
 ##### Start the event filter:
 
-Send a `post` request to `http://localhost:8000/start` to start the merkle-tree's event filters for `newLeaf` and `newLeaves` events. Any 'new leaf' events will be picked up by the filters, and cause the new leaf data to be inserted into the mongodb.
+Send a `post` request to `http://localhost:9000/start` to start the merkle-tree's event filters for `newLeaf` and `newLeaves` events. Any 'new leaf' events will be picked up by the filters, and cause the new leaf data to be inserted into the mongodb.
 
 ##### Update the merkle-tree database:
 
-Send a `patch` request to `http://localhost:8000/update`. Given the leaves now stored in the mongodb, this `update` command will calculate all of the intermediate nodes from the leaves to the root, and store all of these nodes in the mongodb.
+Send a `patch` request to `http://localhost:9000/update`. Given the leaves now stored in the mongodb, this `update` command will calculate all of the intermediate nodes from the leaves to the root, and store all of these nodes in the mongodb.
 
 ##### Get information from the merkle-tree database:
 
-Send a `get` request to `http://localhost:8000/siblingPath/3`. This will retrieve from the mongodb the sibling-path for the leaf with `leafIndex = 3`.
+Send a `get` request to `http://localhost:9000/siblingPath/3`. This will retrieve from the mongodb the sibling-path for the leaf with `leafIndex = 3`.
 
 
 ### Stopping
@@ -140,7 +140,7 @@ The `merkle-tree` container (or 'service') exposes several useful endpoints.
 
 If the microservices are started with the default `./docker-compose.yml` file, these endpoints can be accessed by other containers on the same docker network through <http://merkle-tree:80>.
 
-To access the `merkle-tree` service from your local machine (which is not in the docker network), use <http://localhost:8000> by default.
+To access the `merkle-tree` service from your local machine (which is not in the docker network), use <http://localhost:9000> by default.
 
 A postman collection (for local testing) is provided at [./merkle-tree/test/postman-collections/](merkle-tree/test/postman-collections/).
 

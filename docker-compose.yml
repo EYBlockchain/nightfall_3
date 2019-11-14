@@ -30,7 +30,7 @@ services:
       # - ./merkle-tree/contracts/:/app/contracts:delegated # required if doing a 'local' deployment
       # - ./merkle-tree/build/:/app/build # required if doing a 'local' deployment
     ports:
-      - "8000:80"
+      - "9000:80"
     environment:
       BLOCKCHAIN_HOST: ws://ganache
       BLOCKCHAIN_PORT: 8545
