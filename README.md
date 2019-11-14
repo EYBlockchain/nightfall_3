@@ -1,10 +1,62 @@
-# merkle-tree microservice
+# timber :evergreen_tree:
 
-Create an append-only merkle tree on-chain, with minimal gas cost.
+Construct a Merkle Tree database from Ethereum logs.
 
-Leaves are submitted to a `MerkleTree` smart-contract by users.
+---
+## Contents
 
-A local (off-chain) merkle-tree database is populated with the nodes of the tree, based on on-chain events.
+-   Objectives
+-   Summary
+-   In this repo...
+-   Quick Start
+-   API
+-   Gas Costs
+-   Technical Details
+
+---
+
+## Objectives
+1)   Keep track of a Merkle Tree's root on-chain;
+2)   Minimise the gas cost of adding leaves to the Tree;
+3)   Minimise the gas cost of updating the root;
+4)   Ensure data availability;
+
+---
+
+## Summary
+
+Leaves are submitted to a `MerkleTree` smart-contract by users. Submitting multiple leaves in-bulk results in considerable gas cost savings per leaf.
+
+Only the `root` and a small `frontier` of nodes is stored on-chain. New leaves are not stored on-chain; they're emitted as events.
+
+A local merkle-tree database (off-chain) is populated with the leaves and nodes of the Tree, based on `newLeaf` events emitted by the smart-contract.
+
+The database can then be queried, e.g. for sibling-paths in order to provide set-membership proofs to the smart-contract.
+
+---
+
+## In this repo...
+
+```
+./docker-compose.yml <-- 'startup' configuration
+|
+./merkle-tree/ <-- the 'main' microservice of this repo
+      |
+      contracts/ <-- example MerkleTree.sol contract for efficient merkle-tree updates
+      |
+      src/
+          |
+          db/ <-- database services for managing the merkle-tree mongodb
+          |
+          routes/ <-- API routes for externally accessing this microservice
+          |
+          filter-controller.js <-- Ethereum event filter
+          |
+          merkle-tree-controller.js <-- merkle-tree update & calculation controller
+|
+./deployer/ <-- example 'stub' microservice, demonstrating how one would use
+                'timber' as part of an application
+```
 
 ---
 
@@ -12,34 +64,29 @@ A local (off-chain) merkle-tree database is populated with the nodes of the tree
 
 ### Prerequisites
 
-Mac and Linux machines are supported.
-
 The merkle-tree miscroservice requires the following software to run:
 
-- Docker
-- Python
-- Node.js (tested with node 10.15.3) with npm and node-gyp.
-- Xcode Command line tools:
-  - If running macOS, install Xcode then run `xcode-select --install` to install command line tools.
+-   Docker
+-   Node.js (tested with node 10.15.3) with npm and node-gyp.
+-   Xcode Command line tools:
+    -   If running macOS, install Xcode then run `xcode-select --install` to install command line tools.
 
-### Starting servers
-
-Start Docker:
-
--  On Mac, open Docker.app.
-
-### Installing the merkle-tree microservice
+### Installing
 
 Clone the merkle-tree repository and use a terminal to enter the directory.
 
-### Starting the merkle-tree microservice
+### Starting
 
-If you have pulled new changes from the repo, then first run
+Start Docker:  
+
+-   On Mac, open Docker.app.
+
+If you have pulled new changes from the repo, then first run:  
 
 ```sh
 docker-compose build
 ```
-We're ready to go!
+Start all microservices:  
 
 ```sh
 docker-compose up
@@ -47,7 +94,32 @@ docker-compose up
 
 It's up and running!
 
+### Using
 
+#### Example usage:
+
+##### Add leaves to the tree:
+
+Submit loads of leaves to the `MerkleTree.sol` smart contract. We can do this easily in another terminal window:  
+`docker-compose run --rm deployer npx mocha --exit --require @babel/register 'test/MerkleTreeController.test.js'` will submit many leaves.
+
+
+Interact with the merkle-tree microservice through its API. A postman collection (for local testing) is provided at [./merkle-tree/test/postman-collections/](merkle-tree/test/postman-collections/).
+
+##### Start the event filter:
+
+Send a `post` request to `http://localhost:8000/start` to start the merkle-tree's event filters for `newLeaf` and `newLeaves` events. Any 'new leaf' events will be picked up by the filters, and cause the new leaf data to be inserted into the mongodb.
+
+##### Update the merkle-tree database:
+
+Send a `patch` request to `http://localhost:8000/update`. Given the leaves now stored in the mongodb, this `update` command will calculate all of the intermediate nodes from the leaves to the root, and store all of these nodes in the mongodb.
+
+##### Get information from the merkle-tree database:
+
+Send a `get` request to `http://localhost:8000/siblingPath/3`. This will retrieve from the mongodb the sibling-path for the leaf with `leafIndex = 3`.
+
+
+### Stopping
 
 If you want to close the application, make sure to stop containers and remove containers, networks, volumes, and images which were created by `up`, using
 
@@ -55,32 +127,74 @@ If you want to close the application, make sure to stop containers and remove co
 docker-compose down -v
 ```
 
-### To run unit tests
+### Testing
 
-See the [deployment README](deployer/test/README.md).
+See the [deployment README](deployer/test/README.md) for unit tests.
 
 
 ---
 
-## api
+## API
 
 The `merkle-tree` container (or 'service') exposes several useful endpoints.
 
 If the microservices are started with the default `./docker-compose.yml` file, these endpoints can be accessed by other containers on the same docker network through <http://merkle-tree:80>.
 
-To access the `merkle-tree` service from your local machine, use <http://localhost:8000> by default.
+To access the `merkle-tree` service from your local machine (which is not in the docker network), use <http://localhost:8000> by default.
 
 A postman collection (for local testing) is provided at [./merkle-tree/test/postman-collections/](merkle-tree/test/postman-collections/).
 
-See `./merkle-tree/routes` for all api routes.
+See `./merkle-tree/src/routes` for all api routes.
 
 ---
 
-## Explanations:
+## Gas Costs
+
+The following gives gas cost measurements for inserting leaves into the MerkleTree.sol contract.
+
+### `insertLeaf`
+-   `treeHeight = 32`
+-   32 sha256() hashes. We use assembly to minimise the cost of calling the sha256 precompiled contract.
+-   1,024 leaves inserted, one-at-a-time, from left to right.
+-   Notice how there is a jump in cost every `2**n` leaves, when a new level of the `frontier` is written to for the first time.
+-   The very first transaction costs the most, due to initialising of the `leafCount` and `latestRoot` parameters.
+-   Gas values shown include the 21KGas transaction cost.
+
+![insertLeaf](./doc/insertLeaf.png)
+
+### `insertLeaves`
+
+-   `treeHeight = 32`  
+
+-   We explore the cost of inserting leaves in batches of varying sizes (doubling the batch size each time).
+-   We insert each batch into an empty tree each time.
+-   Gas values shown include the 21KGas transaction cost each time.
+-   The Gas cost per leaf reduces asymptotically with batch size.
+-   Batches of 128 leaves and over appear to start levelling out around 10,000 gas per leaf.
+
+![insertLeaves1](./doc/insertLeaves-gas-per-leaf.png)
+
+![insertLeaves2](./doc/insertLeaves-gas.png)
+
+-   We also explore the cost of inserting a fixed total of 512 leaves, but in batches of varying sizes (doubling the batch size each time).
+-   I.e.:
+    -   512 transactions of batches of 1 leaf
+    -   256 transactions of batches of 2 leaves
+    -   64 transactions of batches of 4 leaves
+    ...
+    -   1 transaction of a batch of 512 leaves
+-   We begin each set of transactions with an empty tree each time.
+-   Gas values shown have been adjusted to exclude the 21KGas transaction cost each time. This helps hone in on the 'internal contract' gas costs, but massively understates the costs of multiple transactions of small batches (e.g. we're understating the cost of '512 transactions of batches of 1' by over 10MGas).
+-   The gas cost for inserting a given number of leaves reduces asymptotically as batch size increases.
+-   Beyond batches of 128 leaves, the gas savings begin to level out.
+
+![insertLeaves3](./doc/insertLeaves-512.png)
 
 ---
 
-### on-chain  
+## Technical Details:
+
+### On-chain  
 
 The leaves of the tree are not stored on-chain, they're emitted as events.
 
@@ -88,9 +202,7 @@ The intermediate-nodes of the tree (between the leaves and the root) are not sto
 
 Only a 'frontier' is stored on-chain (see the detailed explanation below).  
 
----
-
-### off-chain  
+### Off-chain  
 
 We filter the blockchain for `newLeaf` event emissions, which contain:
 
@@ -106,9 +218,7 @@ We then insert each leaf into a local mongodb database.
 
 With this database, we can reconstruct the entire merkle tree.
 
----
-
-### technical details
+### Technical details
 
 
 We consistently use the following indexing throughout the codebase:

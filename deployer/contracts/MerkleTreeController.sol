@@ -42,7 +42,7 @@ contract MerkleTreeController is MerkleTree {
 
         bytes32 root = insertLeaf(leafValue); // recalculate the root of the tree
 
-        roots[root] = root;
+        // roots[root] = root;
 
         latestRoot = root;
     }
@@ -55,7 +55,7 @@ contract MerkleTreeController is MerkleTree {
 
         bytes32 root = insertLeaves(leafValues); // recalculate the root of the tree
 
-        roots[root] = root;
+        // roots[root] = root;
 
         latestRoot = root;
     }

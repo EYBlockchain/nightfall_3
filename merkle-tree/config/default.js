@@ -19,8 +19,8 @@ module.exports = {
     LAG_BEHIND_CURRENT_BLOCK: 5, // add warnings for use of tree data which lags further behind the current block (e.g. due to anonymity concerns)
   },
 
-  UPDATE_FREQUENCY: 100, // recalculate the tree every 'x' leaves - NOT USED YET
-  BULK_WRITE_BUFFER_SIZE: 1000, // number of documents to add to a buffer before writing them to the db
+  UPDATE_FREQUENCY: 100, // TODO: recalculate the tree every 'x' leaves - NOT USED YET
+  BULK_WRITE_BUFFER_SIZE: 1000, // number of documents to add to a buffer before bulk-writing them to the db
 
   // contract to filter:
   contract: {
