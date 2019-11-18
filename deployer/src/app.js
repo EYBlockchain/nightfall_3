@@ -9,7 +9,6 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 
 import Web3 from './web3';
-import deployerRoutes from './routes/deployer.routes';
 
 const app = express();
 Web3.connect();
@@ -22,8 +21,6 @@ app.use(bodyParser.json());
 // Routes
 const router = Router();
 app.use(router);
-
-deployerRoutes(router);
 
 // handle bad calls
 app.use((req, res) => {

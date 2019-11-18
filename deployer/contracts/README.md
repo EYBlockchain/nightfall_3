@@ -4,9 +4,7 @@ These contracts are provided to demonstrate deploying the merkle-tree contracts 
 
 ## Deployment locality  
 
-To deploy from **this** 'remote' microservice, the `DEPLOYMENT_LOCALITY` environment variable needs to be set to `DEPLOYMENT_LOCALITY = 'remote'` in the [docker-compose.yml](/docker-compose.yml) file.
-
-To deploy from the merkle-tree 'local' microservice (i.e. ignoring the 'deployer' folder altogether), the `DEPLOYMENT_LOCALITY` environment variable needs to be set to `DEPLOYMENT_LOCALITY = 'local'` in the `docker-compose.yml` file. See more instructions [here](/merkle-tree/contracts/README.md) on how to do a 'local' deployment.
+To deploy from **this** 'remote' microservice:
 
 Before deploying, the contracts will need to be compiled (in order to generate the contracts' json interfaces in the `../build/contracts/` folder). The simplest way to do this is with truffle:
 

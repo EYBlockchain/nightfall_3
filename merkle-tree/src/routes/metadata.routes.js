@@ -8,7 +8,7 @@ import { MetadataService } from '../db/service';
 import merkleTreeController from '../merkle-tree-controller';
 
 /**
- * Add a new node to the tree's 'nodes' db.
+ * Add the relevant contract address to the tree's db.
  * req.body {
  *  contractAddress: '0xabc123..',
  * }
@@ -20,6 +20,45 @@ async function insertContractAddress(req, res, next) {
     const { db } = req.user;
     const metadataService = new MetadataService(db);
     await metadataService.insertContractAddress(req.body);
+    res.data = { message: 'inserted' };
+    next();
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Add the relevant contract address to the tree's db.
+ * req.body {
+ *  contractAddress: '0xabc123..',
+ * }
+ * @param {*} req
+ * @param {*} res
+ */
+async function insertContractInterface(req, res, next) {
+  try {
+    const { db } = req.user;
+    // const contractName = req.headers.contractname;
+    // const { contractInterface } = req.body;
+    // const path = `../../build/contracts/${contractName}.json`;
+
+    const metadataService = new MetadataService(db);
+    await metadataService.insertContractInterface(req.body);
+
+    // // write the interface to the more conventional 'build' folder within this microservice:
+    // await new Promise((resolve, reject) => {
+    //   fs.writeFile(path, contractInterface, err => {
+    //     if (err) {
+    //       console.log(
+    //         `fs.writeFile has failed when writing the new contract interface to the build/contracts/ folder. Here's the error:`,
+    //       );
+    //       reject(err);
+    //     }
+    //     console.log(`writing to ${path}`);
+    //     resolve();
+    //   });
+    // });
+
     res.data = { message: 'inserted' };
     next();
   } catch (err) {
@@ -68,7 +107,7 @@ async function updateLatestRecalculation(req, res, next) {
 }
 
 /**
- * Get all tree metadata from the tree's 'tree' db.
+ * Get all tree metadata from the tree's 'metadata' db.
  * @param {*} req
  * @param {*} res
  */
@@ -84,7 +123,39 @@ async function getMetadata(req, res, next) {
 }
 
 /**
- * Get the latestRecalculation tree metadata from the tree's 'tree' db.
+ * Get the contract address from the tree's 'metadata' db.
+ * @param {*} req
+ * @param {*} res
+ */
+async function getContractAddress(req, res, next) {
+  try {
+    const { db } = req.user;
+    const metadataService = new MetadataService(db);
+    res.data = await metadataService.getContractAddress();
+    next();
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Get the contract interface from the tree's 'metadata' db.
+ * @param {*} req
+ * @param {*} res
+ */
+async function getContractInterface(req, res, next) {
+  try {
+    const { db } = req.user;
+    const metadataService = new MetadataService(db);
+    res.data = await metadataService.getContractInterface();
+    next();
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Get the latestRecalculation tree metadata from the tree's 'metadata' db.
  * @param {*} req
  * @param {*} res
  */
@@ -123,7 +194,15 @@ export default function(router) {
 
   router.route('/metadata').get(getMetadata);
 
-  router.route('/metadata/contractAddress').post(insertContractAddress);
+  router
+    .route('/metadata/contractAddress')
+    .get(getContractAddress)
+    .post(insertContractAddress);
+
+  router
+    .route('/metadata/contractInterface')
+    .get(getContractInterface)
+    .post(insertContractInterface);
 
   router
     .route('/metadata/latestLeaf')

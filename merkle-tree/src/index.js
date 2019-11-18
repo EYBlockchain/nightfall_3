@@ -10,7 +10,7 @@ import cors from 'cors';
 import Web3 from './web3';
 
 import {
-  adminDbConnection,
+  assignDbConnection,
   formatResponse,
   formatError,
   errorHandler,
@@ -43,7 +43,7 @@ app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-app.use(adminDbConnection);
+app.use(assignDbConnection);
 
 // Routes
 const router = Router();

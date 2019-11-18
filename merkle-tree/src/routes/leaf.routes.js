@@ -45,7 +45,6 @@ async function getLeafByLeafIndex(req, res, next) {
   console.log(req.body);
   try {
     const leafIndex = req.params.leafIndex || req.body.leafIndex;
-    console.log('LEAF INDEX', leafIndex);
     const leafService = new LeafService(req.user.db);
     res.data = await leafService.getLeafByLeafIndex(leafIndex);
     next();

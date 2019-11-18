@@ -12,40 +12,18 @@ import { LeafService, MetadataService } from './db/service';
 // global subscriptions object:
 const subscriptions = {};
 
-// /**
-// DEPRECATED - preferred using a direct event subscription rather than a 'logs' subscription.
-// This function is triggered by the 'Logs' subscription, every time a new event is received via the websocket.
-// @param {object} eventObject - An event object.
-// */
-// const newEventFromLogResponder = async (eventObject, args = {}) => {
-//   // First some generic eventObject handling code:
-//   console.log('\nResponding to New Event Log...');
-//
-//   const { decodedEventData } = eventObject;
-//
-//   const eventParams = config.contract.event.parameters;
-//   const eventInstance = {};
-//
-//   // extract each relevent event parameter from the decodedEventData and add it to our eventInstance.
-//   eventParams.forEach(param => {
-//     eventInstance[param] = decodedEventData[param];
-//   });
-//
-//   console.log('eventInstance:');
-//   console.dir(eventInstance, { depth: null });
-//
-//   // Now some bespoke code; specific to our particular event:
-//   // We make some hardcoded presumptions about what's contained in the 'args':
-// };
-
 /**
 TODO: description
 */
 const newLeafResponseFunction = async (eventObject, args) => {
   const eventName = 'newLeaf'; // hardcoded, as inextricably linked to the name of this function.
-  const eventParams = config.contract.events[eventName].parameters;
 
-  // First some generic eventObject handling code:
+  // We make some hardcoded presumptions about what's contained in the 'args':
+  const { db, contractName } = args;
+
+  const eventParams = config.contracts[contractName].events[eventName].parameters;
+
+  // Now some generic eventObject handling code:
   const { eventData } = eventObject;
 
   /*
@@ -72,8 +50,6 @@ const newLeafResponseFunction = async (eventObject, args) => {
     blockNumber,
   };
 
-  // We make some hardcoded presumptions about what's contained in the 'args':
-  const { db } = args;
   const leafService = new LeafService(db);
   leafService.insertLeaf(doc); // no need to await this
 };
@@ -83,9 +59,13 @@ TODO: description
 */
 const newLeavesResponseFunction = async (eventObject, args) => {
   const eventName = 'newLeaves'; // hardcoded, as inextricably linked to the name of this function.
-  const eventParams = config.contract.events[eventName].parameters;
 
-  // First some generic eventObject handling code:
+  // We make some hardcoded presumptions about what's contained in the 'args':
+  const { db, contractName } = args;
+
+  const eventParams = config.contracts[contractName].events[eventName].parameters;
+
+  // Now some generic eventObject handling code:
   const { eventData } = eventObject;
 
   /*
@@ -102,7 +82,7 @@ const newLeavesResponseFunction = async (eventObject, args) => {
   // console.log('eventInstance:');
   // console.dir(eventInstance, { depth: null });
 
-  // Now some bespoke code; specific to how our application needs to deal with this eventObject:
+  // Now some more bespoke code; specific to how our application needs to deal with this eventObject:
   // construct an array of 'leaf' documents to store in the db:
   const { blockNumber } = eventData;
   const { minLeafIndex, leafValues } = eventInstance;
@@ -119,8 +99,6 @@ const newLeavesResponseFunction = async (eventObject, args) => {
     docs.push(doc);
   });
 
-  // We make some hardcoded presumptions about what's contained in the 'args':
-  const { db } = args;
   const leafService = new LeafService(db);
   leafService.insertLeaves(docs); // no need to await this
 };
@@ -155,16 +133,15 @@ This can also be executed from the command line with:
 node -e 'require("./index").filterBlock(blockNumber)'
 @param {number} blockNumber
 */
-async function filterBlock(db, contractInstance, fromBlock) {
-  console.log(`\nsrc/filter-controller filterBlock(contractInstance, fromBlock=${fromBlock})`);
+async function filterBlock(db, contractName, contractInstance, fromBlock) {
+  console.log(`\nsrc/filter-controller filterBlock(db, contractInstance, fromBlock=${fromBlock})`);
 
-  const contractName = config.contract.name;
-  const eventNames = Object.keys(config.contract.events);
+  const eventNames = Object.keys(config.contracts[contractName].events);
 
   eventNames.forEach(async eventName => {
     const responder = newEventResponder;
     const responseFunction = responseFunctions[eventName];
-    const responseFunctionArgs = { db };
+    const responseFunctionArgs = { db, contractName };
 
     const eventSubscription = await utilsWeb3.subscribeToEvent(
       contractName,
@@ -227,14 +204,14 @@ async function getFromBlock(db) {
 /**
 Commence filtering
 */
-async function start(db, contractInstance) {
+async function start(db, contractName, contractInstance) {
   try {
     console.log('\nStarting filter...');
     // check the fiddly case of having to re-filter any old blocks due to lost information (e.g. due to a system crash).
     const fromBlock = await getFromBlock(db); // the blockNumber we get is the next WHOLE block to start filtering.
 
     // Now we filter indefinitely:
-    await filterBlock(db, contractInstance, fromBlock);
+    await filterBlock(db, contractName, contractInstance, fromBlock);
     return true;
   } catch (err) {
     throw new Error(err);

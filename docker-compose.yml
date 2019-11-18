@@ -19,10 +19,9 @@ services:
     depends_on:
       - ganache
       - mongo-merkle-tree
-      - deployer # replace with external microservice's name
     volumes: # ensure relative paths are correct if embedding this microservice in another application:
       - ./merkle-tree/src:/app/src
-      - ./merkle-tree/config:/app/config
+      - ./merkle-tree/config:/app/config # mount point might be different if configuring from another application
       - ./merkle-tree/test:/app/test
       - ./merkle-tree/.babelrc:/app/.babelrc
       - ./merkle-tree/setup-mongo-acl-for-new-users.js:/app/setup-mongo-acl-for-new-users.js
@@ -36,7 +35,6 @@ services:
       BLOCKCHAIN_PORT: 8545
       DEPLOYER_HOST: http://deployer # replace with external microservice's name
       DEPLOYER_PORT: 80
-      DEPLOYMENT_LOCALITY: 'remote' # specify 'local' or 'remote' deployment
     networks:
       - merkle_tree_network
 
@@ -61,12 +59,12 @@ services:
     restart: on-failure
     depends_on:
       - ganache
+      - merkle-tree
     volumes:
       - ./deployer/src:/app/src
       - ./deployer/config:/app/config
       - ./deployer/test:/app/test
       - ./deployer/.babelrc:/app/.babelrc
-      - leveldb-volume:/app/db
       - ./deployer/contracts/:/app/contracts:delegated
       - ./deployer/build/:/app/build
     environment:
@@ -81,7 +79,6 @@ services:
 
 volumes:
   mongo-merkle-tree-volume: {}
-  leveldb-volume: {} # only used by the example deployer microservice
 
 networks:
   merkle_tree_network:

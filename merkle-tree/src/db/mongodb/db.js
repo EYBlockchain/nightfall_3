@@ -4,44 +4,36 @@
  * @desc js wrappers for mongoose & mongodb functions
  */
 
-import config from 'config';
 import { COLLECTIONS } from '../common/constants';
 import { nodeSchema, metadataSchema } from '../models';
 
-const mongo = config.get('mongo');
-
 /**
 Class created from within src/middleware/assign-db-connection
-@param {object} db - an instance of mongoose.createConnection (a 'Connection' instance in mongoose terminoligy)
+@param {object} connection - an instance of mongoose.createConnection (a 'Connection' instance in mongoose terminoligy)
 @param {string} username - username
+@param {string} contractName - contractName of the contract which relates to this db
 */
 export default class DB {
-  constructor(db, username) {
-    this.database = db;
+  constructor(connection, username, contractName) {
+    this.connection = connection;
     this.username = username;
     if (!username) return;
-    this.createModelsForUser();
-  }
-
-  addUser(name, password) {
-    return this.database.db.addUser(name, password, {
-      roles: [
-        {
-          role: 'read',
-          db: mongo.databaseName,
-        },
-      ],
-    });
+    this.createModelsForUser(contractName);
   }
 
   /**
   A model is a class with which we construct documents
   */
-  createModelsForUser() {
-    const { username, database } = this;
+  createModelsForUser(contractName) {
     this.Models = {
-      node: database.model(`${username}_${COLLECTIONS.NODE}`, nodeSchema),
-      metadata: database.model(`${username}_${COLLECTIONS.METADATA}`, metadataSchema),
+      node: this.connection.model(
+        `${this.username}_${contractName}_${COLLECTIONS.NODE}`,
+        nodeSchema,
+      ),
+      metadata: this.connection.model(
+        `${this.username}_${contractName}_${COLLECTIONS.METADATA}`,
+        metadataSchema,
+      ),
     };
   }
 

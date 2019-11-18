@@ -22,19 +22,30 @@ module.exports = {
   UPDATE_FREQUENCY: 100, // TODO: recalculate the tree every 'x' leaves - NOT USED YET
   BULK_WRITE_BUFFER_SIZE: 1000, // number of documents to add to a buffer before bulk-writing them to the db
 
-  // contract to filter:
-  contract: {
-    name: 'MerkleTreeController',
-    events: {
-      // indexed by event names:
-      newLeaf: {
-        parameters: ['leafIndex', 'leafValue', 'root'], // filter for these parameters
+  // contracts to filter:
+  contracts: {
+    MerkleTreeController: {
+      events: {
+        // indexed by event names:
+        newLeaf: {
+          parameters: ['leafIndex', 'leafValue'], // filter for these parameters
+        },
+        newLeaves: {
+          parameters: ['minLeafIndex', 'leafValues'], // filter for these parameters
+        },
       },
-      newLeaves: {
-        parameters: ['minLeafIndex', 'leafValues', 'root'], // filter for these parameters
+    },
+    MerkleTreeController2: {
+      events: {
+        // indexed by event names:
+        newLeaf: {
+          parameters: ['leafIndex', 'leafValue'], // filter for these parameters
+        },
+        newLeaves: {
+          parameters: ['minLeafIndex', 'leafValues'], // filter for these parameters
+        },
       },
-    }, // even if only filtering for one event, keep the array brackets []
-    deploymentLocality: process.env.DEPLOYMENT_LOCALITY, // 'local' or 'remote'
+    },
   },
 
   // mongodb:
@@ -46,12 +57,6 @@ module.exports = {
     adminPassword: 'admin',
   },
   isLoggerEnabled: true,
-
-  // external contract deployment microservice (which deploys the MerkleTree.sol contract):
-  deployer: {
-    host: process.env.DEPLOYER_HOST,
-    port: process.env.DEPLOYER_PORT,
-  },
 
   // web3:
   web3: {

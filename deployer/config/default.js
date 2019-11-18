@@ -10,9 +10,7 @@ module.exports = {
   POLLING_FREQUENCY: 6000, // How many milliseconds to wait between each poll
 
   // deployed contract info:
-  contract: {
-    name: 'MerkleTreeController',
-  },
+  contractNames: ['MerkleTreeController', 'MerkleTreeController2'],
 
   // microservices:
   merkleTree: {
@@ -20,7 +18,7 @@ module.exports = {
     port: process.env.MERKLE_TREE_PORT,
   },
 
-  // this deployer's data, for testing:
+  // this deployer's url, for testing:
   deployer: {
     host: process.env.DEPLOYER_HOST,
     port: process.env.DEPLOYER_PORT,

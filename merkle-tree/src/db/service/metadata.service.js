@@ -21,8 +21,33 @@ export default class MetadataService {
   async insertContractAddress(data) {
     console.log('\nsrc/db/service/metadata.service insertContractAddress()');
     const { contractAddress } = metadataMapper(data);
+    if (contractAddress === undefined) return null;
 
-    const dbResponse = await this.db.save(COLLECTIONS.METADATA, { _id: 1, contractAddress });
+    const dbResponse = await this.db.updateDoc(
+      COLLECTIONS.METADATA,
+      { _id: 1 },
+      { $set: { contractAddress } },
+      { upsert: true },
+    );
+
+    return dbResponse;
+  }
+
+  /**
+  Insert a contractInterface into the tree's metadata
+  @param {object} data
+  */
+  async insertContractInterface(data) {
+    console.log('\nsrc/db/service/metadata.service insertContractInterface()');
+    const { contractInterface } = metadataMapper(data);
+    if (contractInterface === undefined) return null;
+
+    const dbResponse = await this.db.updateDoc(
+      COLLECTIONS.METADATA,
+      { _id: 1 },
+      { $set: { contractInterface } },
+      { upsert: true },
+    );
 
     return dbResponse;
   }
@@ -35,11 +60,13 @@ export default class MetadataService {
   */
   async updateLatestLeaf(data) {
     console.log('\nsrc/db/service/metadata.service updateLatestLeaf()');
-    // console.log('data before mapping:', data);
+    console.log('\ndata before mapping:', data);
     const mappedData = metadataMapper(data);
-    // console.log('data after mapping:', mappedData);
+    console.log('\ndata after mapping:', mappedData);
 
     const { latestLeaf } = mappedData;
+    console.log('latestLeaf:', latestLeaf);
+    if (latestLeaf === undefined) return null;
 
     const doc = await this.db.updateDoc(
       COLLECTIONS.METADATA,
@@ -57,11 +84,13 @@ export default class MetadataService {
   */
   async updateLatestRecalculation(data) {
     console.log('\nsrc/db/service/metadata.service updateLatestRecalculation()');
-    // console.log('data before mapping:', data);
+    console.log('\ndata before mapping:', data);
     const mappedData = metadataMapper(data);
-    // console.log('data after mapping:', mappedData);
+    console.log('\ndata after mapping:', mappedData);
 
     const { latestRecalculation } = mappedData;
+    console.log('latestRecalculation:', latestRecalculation);
+    if (latestRecalculation === undefined) return null;
 
     const doc = await this.db.updateDoc(
       COLLECTIONS.METADATA,
@@ -89,8 +118,8 @@ export default class MetadataService {
   }
 
   /**
-  Get the latestRecalculation metadata for the tree
-  @returns {object} the latestRecalculation object
+  Get the contractAddress relating to MerkleTree contract
+  @returns {object} the { contractAddress }
   */
   async getContractAddress() {
     console.log('\nsrc/db/service/metadata.service getContractAddress()');
@@ -102,6 +131,28 @@ export default class MetadataService {
     );
 
     return doc;
+  }
+
+  /**
+  Get the contractInterface relating to the MerkleTree contract
+  @returns {object} the { contractInterface }
+  */
+  async getContractInterface() {
+    console.log('\nsrc/db/service/metadata.service getContractInterface()');
+
+    const doc = await this.db.getDoc(
+      COLLECTIONS.METADATA,
+      { _id: 1 }, // 'match all' (within our one document)
+      ['contractInterface', '-_id'], // return only the 'contractInterface' key (and exclude the _id key)
+    );
+
+    let { contractInterface } = doc;
+
+    contractInterface = {
+      contractInterface: JSON.parse(contractInterface),
+    };
+
+    return contractInterface;
   }
 
   /**

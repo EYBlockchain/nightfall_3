@@ -18,6 +18,10 @@ export default new Schema(
       type: String,
       default: '0', // '0' can be interpreted as 'no known contract'
     },
+    contractInterface: {
+      type: String, // a jsonified object
+      default: '0', // '0' can be interpreted as 'no known contract'
+    },
 
     latestRecalculation: {
       blockNumber: Number,

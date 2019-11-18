@@ -8,7 +8,7 @@ import contractController from '../contract-controller';
 import filterController from '../filter-controller';
 import merkleTreeController from '../merkle-tree-controller';
 
-let alreadyStarted = false; // initialises as false
+const alreadyStarted = {}; // initialises as false
 
 /**
  * Updates the entire tree based on the latest-stored leaves.
@@ -19,18 +19,23 @@ let alreadyStarted = false; // initialises as false
 async function startFilter(req, res, next) {
   console.log('\nsrc/routes/merkle-tree.routes startFilter()');
 
+  const contractName = req.headers.contractname;
   const { db } = req.user;
 
   try {
-    console.log(`already started? ${alreadyStarted}`);
-    if (alreadyStarted) {
-      res.data = { message: 'already started' };
+    console.log(`already started?`);
+    console.log(alreadyStarted);
+
+    if (alreadyStarted[contractName]) {
+      res.data = { message: `filter already started for ${contractName}` };
     } else {
-      const contractInstance = await contractController.instantiateContract(db);
+      // get a web3 contractInstance we can work with:
+      const contractInstance = await contractController.instantiateContract(db, contractName);
 
-      const started = await filterController.start(db, contractInstance);
+      // start an event filter on this contractInstance:
+      const started = await filterController.start(db, contractName, contractInstance);
 
-      alreadyStarted = started;
+      alreadyStarted[contractName] = started; // true/false
 
       res.data = { message: 'filter started' };
     }

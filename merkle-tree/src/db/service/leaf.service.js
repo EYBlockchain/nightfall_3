@@ -50,9 +50,18 @@ export default class LeafService {
     // console.log('data after mapping:', mappedData);
 
     // insert the leaves into the 'nodes' collection:
-    const dbResponse = await this.db.insertMany(COLLECTIONS.NODE, mappedData);
-
-    return dbResponse;
+    try {
+      const dbResponse = await this.db.insertMany(COLLECTIONS.NODE, mappedData);
+      return dbResponse;
+    } catch (err) {
+      if (err.code === 11000) {
+        console.log(
+          '\nIgnore the above "DB Error" message. The record already exists. No overwrite has happened. This is acceptable.',
+        );
+        return false;
+      }
+      return Promise.reject(err);
+    }
   }
 
   // UPDATES
