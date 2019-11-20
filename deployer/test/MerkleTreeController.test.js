@@ -7,7 +7,7 @@ import config from 'config';
 
 import Web3 from '../src/web3';
 
-import merkleTree from './rest/merkle-tree';
+import deployer from './rest/deployer';
 
 const web3 = Web3.connect();
 
@@ -27,7 +27,7 @@ describe('MerkleTreeController', async () => {
 
     coinbase = await web3.eth.getCoinbase();
 
-    contractInstance = await merkleTree.getContractInstance(contractName);
+    contractInstance = await deployer.getContractInstance(contractName);
   });
 
   // // eslint-disable-next-line func-names

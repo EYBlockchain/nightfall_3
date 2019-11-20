@@ -16,15 +16,25 @@ const main = async () => {
     const { contractNames } = config;
 
     await contractNames.forEach(async contractName => {
-      // deploy the contract:
-      const contractInstance = await deployer.deploy(contractName);
+      switch (config.PUSH_OR_PULL) {
+        default:
+          // 'pull': deploy the contract, and then wait for GET requests to 'pull' the contract information from the merkle-tree microservice.
+          await deployer.deploy(contractName);
+          break;
 
-      const contractAddress = contractInstance._address; // eslint-disable-line no-underscore-dangle
+        case 'push': {
+          // 'push': deploy the contract and POST (push) the contract information to the merkle-tree microservice:
+          const contractInstance = await deployer.deploy(contractName);
 
-      const contractInterface = utilsWeb3.getContractInterface(contractName);
+          const contractAddress = contractInstance._address; // eslint-disable-line no-underscore-dangle
 
-      await merkleTree.postContractInterface(contractName, JSON.stringify(contractInterface));
-      await merkleTree.postContractAddress(contractName, contractAddress);
+          const contractInterface = utilsWeb3.getContractInterface(contractName);
+
+          await merkleTree.postContractInterface(contractName, JSON.stringify(contractInterface));
+          await merkleTree.postContractAddress(contractName, contractAddress);
+          break;
+        }
+      }
     });
 
     app.listen(80, '0.0.0.0', () => {

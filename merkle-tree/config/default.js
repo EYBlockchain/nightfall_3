@@ -48,6 +48,21 @@ module.exports = {
     },
   },
 
+  /*
+  # Where to find the contractInstances?
+  # Specify one of:
+  # - 'remote' (to GET them from a remote microservice); or
+  # - 'mongodb' (to get them from mongodb); or
+  # - 'default' (to get them from the app/build/contracts folder)
+  */
+  contractLocation: process.env.CONTRACT_LOCATION,
+
+  // external contract deployment microservice (which deploys the MerkleTree.sol contract):
+  deployer: {
+    host: process.env.DEPLOYER_HOST,
+    port: process.env.DEPLOYER_PORT,
+  },
+
   // mongodb:
   mongo: {
     host: 'mongo-merkle-tree',
@@ -66,7 +81,7 @@ module.exports = {
     options: {
       defaultAccount: '0x0',
       defaultBlock: '0', // e.g. the genesis block our blockchain
-      defaultGas: 100000,
+      defaultGas: 2000000,
       defaultGasPrice: 20000000000,
       transactionBlockTimeout: 50,
       transactionConfirmationBlocks: 15,

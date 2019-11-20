@@ -12,6 +12,9 @@ module.exports = {
   // deployed contract info:
   contractNames: ['MerkleTreeController', 'MerkleTreeController2'],
 
+  // push the contract information, or wait for it to be pulled
+  PUSH_OR_PULL: process.env.PUSH_OR_PULL,
+
   // microservices:
   merkleTree: {
     host: process.env.MERKLE_TREE_HOST,

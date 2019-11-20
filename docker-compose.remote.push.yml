@@ -26,8 +26,8 @@ services:
       - ./merkle-tree/.babelrc:/app/.babelrc
       - ./merkle-tree/setup-mongo-acl-for-new-users.js:/app/setup-mongo-acl-for-new-users.js
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./deployer/contracts/:/app/contracts:consistent # required if deploying contracts from within this service (if CONTRACT_LOCATION = 'default')
-      - ./deployer/build/:/app/build:consistent # required if CONTRACT_LOCATION = 'default'
+      # - ./deployer/contracts/:/app/contracts:delegated # required if deploying contracts from within this service (if CONTRACT_LOCATION = 'default')
+      # - ./deployer/build/:/app/build # required if CONTRACT_LOCATION = 'default'
     ports:
       - "9000:80"
     environment:
@@ -35,7 +35,7 @@ services:
       BLOCKCHAIN_PORT: 8545
       DEPLOYER_HOST: http://deployer # required if CONTRACT_LOCATION = 'remote' - replace with external microservice's name
       DEPLOYER_PORT: 80
-      CONTRACT_LOCATION: 'default' # Where to find the contractInstances?
+      CONTRACT_LOCATION: 'mongodb' # Where to find the contractInstances?
       # Specify one of:
       # - 'remote' (to GET them from a remote microservice); or
       # - 'mongodb' (to get them from mongodb); or
@@ -80,7 +80,7 @@ services:
       MERKLE_TREE_PORT: 80
       DEPLOYER_HOST: http://deployer # included so it can lazily find itself
       DEPLOYER_PORT: 80
-      PUSH_OR_PULL: 'pull'
+      PUSH_OR_PULL: 'push'
       # 'push': POST the contracts to the merkle-tree microservice;
       # 'pull': Wait for a GET request for the contracts from the merkle-tree microservice
     networks:

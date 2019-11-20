@@ -65,19 +65,44 @@ async function getTransactionFromBlock(hashStringOrNumber, indexNumber) {
 let events = {};
 
 function getContractInterface(contractName) {
-  console.log(`./src/utils-web3 getContractInterface(${contractName})`);
+  console.log(`\n./src/utils-web3 getContractInterface(${contractName})`);
 
   const path = `../build/contracts/${contractName}.json`;
   const contractInterface = require(path); // eslint-disable-line global-require, import/no-dynamic-require
-  console.log('\ncontractInterface:');
-  console.log(contractInterface);
+  // console.log('\ncontractInterface:');
+  // console.log(contractInterface);
   return contractInterface;
 }
 
-// returns a web3 contract instance (as opposed to a truffle-contract instance)
-function getContractInstance(contractName, deployedAddress) {
-  console.log(`./src/utils-web3 getContractInterface(${contractName}, ${deployedAddress})`);
+async function getContractAddress(contractName) {
+  console.log(`\n./src/utils-web3 getContractAddress(${contractName})`);
+  let deployedAddress;
   const contractInterface = getContractInterface(contractName);
+
+  const networkId = await web3.eth.net.getId();
+  console.log('networkId:', networkId);
+
+  if (contractInterface && contractInterface.networks && contractInterface.networks[networkId]) {
+    deployedAddress = contractInterface.networks[networkId].address;
+  }
+
+  console.log('deployed address:', deployedAddress);
+
+  return deployedAddress;
+}
+
+// returns a web3 contract instance (as opposed to a truffle-contract instance)
+async function getContractInstance(contractName, deployedAddress) {
+  console.log(`\n./src/utils-web3 getContractInstance(${contractName}, ${deployedAddress})`);
+
+  // interface:
+  const contractInterface = getContractInterface(contractName);
+
+  // address:
+  // eslint-disable-next-line no-param-reassign
+  if (!deployedAddress) deployedAddress = await getContractAddress(contractName);
+
+  // instance:
   let contractInstance;
 
   if (!deployedAddress) {
@@ -85,9 +110,18 @@ function getContractInstance(contractName, deployedAddress) {
   } else {
     contractInstance = new web3.eth.Contract(contractInterface.abi, deployedAddress);
   }
-  console.log('\ncontractInstance:');
-  console.log(contractInstance);
+  // console.log('\ncontractInstance:');
+  // console.log(contractInstance);
   return contractInstance;
+}
+
+// returns a web3 contract instance (rather than a truffle-contract instance)
+function getContractBytecode(contractName) {
+  const contractInterface = getContractInterface(contractName);
+  const { bytecode } = contractInterface;
+  // console.log('\nbytecode:');
+  // console.log(bytecode);
+  return bytecode;
 }
 
 function addNewEvent(eventObject) {
@@ -216,7 +250,7 @@ async function subscribeToEvent(
 }
 
 async function unsubscribe(subscription) {
-  console.log('\nUNSUBSCRIBING...');
+  console.log('\nUnsubscribing...');
   if (!subscription) {
     console.log('\nThere is nothing to unsubscribe from');
     return;
@@ -240,7 +274,9 @@ export default {
   getBlockTransactionCount,
   getTransactionFromBlock,
   getContractInterface,
+  getContractAddress,
   getContractInstance,
+  getContractBytecode,
   subscribeToEvent,
   unsubscribe,
 };

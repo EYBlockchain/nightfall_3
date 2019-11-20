@@ -5,7 +5,7 @@ import utilsPoll from '../utils-poll';
 const url = `${config.merkleTree.host}:${config.merkleTree.port}`;
 
 /**
-Gets the address of a deployed MerkleTree.sol contract
+Gets the interface of a deployed MerkleTree.sol contract
 */
 async function getContractInterface(contractName) {
   console.log(`\nCalling getContractInterface(${contractName})`);
@@ -19,13 +19,13 @@ async function getContractInterface(contractName) {
     };
     request(options, (err, res, body) => {
       if (err) reject(err);
-      else resolve(body);
+      else resolve(body.data);
     });
   });
 }
 
 /**
-Gets the interface of a deployed MerkleTree.sol contract
+Gets the address of a deployed MerkleTree.sol contract
 */
 async function getContractAddress(contractName) {
   console.log(`\nCalling getContractAddress(${contractName})`);
@@ -39,7 +39,7 @@ async function getContractAddress(contractName) {
     };
     request(options, (err, res, body) => {
       if (err) reject(err);
-      else resolve(body);
+      else resolve(body.data);
     });
   });
 }
@@ -56,7 +56,7 @@ async function postInterface(contractName, contractInterface) {
     };
     request(options, (err, res, body) => {
       if (err) reject(err);
-      else resolve(body);
+      else resolve(body.data);
     });
   });
 }
@@ -104,7 +104,7 @@ async function postAddress(contractName, contractAddress) {
     };
     request(options, (err, res, body) => {
       if (err) reject(err);
-      else resolve(body);
+      else resolve(body.data);
     });
   });
 }

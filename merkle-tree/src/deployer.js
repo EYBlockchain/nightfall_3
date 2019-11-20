@@ -1,13 +1,12 @@
 /**
- * @module node.service.js
- * @author iAmMichaelConnor
- * @desc deploy a contract using web3 directly
- */
+@module deployer.js
+@desc
+@author iAmMichaelConnor
+*/
 
 import config from 'config';
 import Web3 from './web3';
 import utilsWeb3 from './utils-web3';
-import db from './leveldb';
 
 const web3 = Web3.connect();
 const { options } = config.web3;
@@ -28,13 +27,9 @@ async function deploy(contractName) {
       throw new Error(err);
     })
     .then(newContractInstance => {
-      contractInstance = newContractInstance; // instance with the new contract address added
+      contractInstance = newContractInstance; // instance with the new contract address added.
       console.log(`\n${contractName} contract deployed at address ${newContractInstance._address}`); // eslint-disable-line no-underscore-dangle
     });
-
-  // store the address of the contract against its name
-  console.log('\nAdding deployed contract address to db');
-  await db.put(contractName, contractInstance._address); // eslint-disable-line no-underscore-dangle
 
   return contractInstance;
 }
