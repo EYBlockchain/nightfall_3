@@ -23,12 +23,13 @@ async function checkLeaves(db) {
   // count all the leaves
   const leafCount = await leafService.countLeaves();
   // get the max leafIndex of all the leaves
-  const maxLeafIndex = (await leafService.maxLeafIndex()) || -1;
+  let maxLeafIndex = await leafService.maxLeafIndex();
+  if (maxLeafIndex === undefined) maxLeafIndex = -1;
 
   let maxReliableLeafIndex;
 
   // then we can quickly see if there are NOT any missing leaves:
-  if (leafCount !== maxLeafIndex + 1) {
+  if (leafCount < maxLeafIndex + 1) {
     // then we are missing values. Let's do a slower search to find the earliest missing value:
     console.log(
       `\nThere are missing leaves in the db. Found ${leafCount} leaves, but expected ${maxLeafIndex +
@@ -213,7 +214,7 @@ async function update(db) {
   const toLeafIndex = Number(latestLeaf.leafIndex);
 
   // Check whether we're already up-to-date:
-  if (latestRecalculationLeafIndex < toLeafIndex) {
+  if (latestRecalculationLeafIndex < toLeafIndex || latestRecalculationLeafIndex === 0) {
     // We're not up-to-date:
     console.log('\n\n\n\n\nThe tree needs updating.');
     // Recalculate any nodes along the path from the new leaves to the root:

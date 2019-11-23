@@ -15,8 +15,12 @@
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
 								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "contractname",
+								"value": "MerkleTreeController",
 								"type": "text"
 							}
 						],
@@ -46,9 +50,13 @@
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
-								"type": "text",
-								"value": "application/json"
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "contractname",
+								"value": "MerkleTreeController",
+								"type": "text"
 							}
 						],
 						"body": {
@@ -64,6 +72,13 @@
 							"port": "9000",
 							"path": [
 								"leaves"
+							],
+							"query": [
+								{
+									"key": "",
+									"value": "",
+									"disabled": true
+								}
 							]
 						},
 						"description": "{\n\t\t\"value\": \"0xabc123-0\",\n\t\t\"leafIndex\": 0,\n\t\t\"blockNumber\": 60000000\n\t},\n\t{\n\t\t\"value\": \"0xabc123-2\",\n\t\t\"leafIndex\": 2,\n\t\t\"blockNumber\": 60000003\n\t},\n\t{\n\t\t\"value\": \"0xabc123-3\",\n\t\t\"leafIndex\": 3,\n\t\t\"blockNumber\": 60000000\n\t},\n\t\t{\n\t\t\"value\": \"0xabc123-2\",\n\t\t\"leafIndex\": 7,\n\t\t\"blockNumber\": 60000003\n\t},\n\t{\n\t\t\"value\": \"0xabc123-3\",\n\t\t\"leafIndex\": 8,\n\t\t\"blockNumber\": 60000000\n\t},"
@@ -80,8 +95,12 @@
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
 								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "contractname",
+								"value": "MerkleTreeController",
 								"type": "text"
 							}
 						],
@@ -115,8 +134,12 @@
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
 								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "contractname",
+								"value": "MerkleTreeController2",
 								"type": "text"
 							}
 						],
@@ -149,9 +172,13 @@
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
-								"type": "text",
-								"value": "application/json"
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "contractname",
+								"value": "MerkleTreeController",
+								"type": "text"
 							}
 						],
 						"body": {
@@ -183,8 +210,12 @@
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
 								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "contractname",
+								"value": "MerkleTreeController",
 								"type": "text"
 							}
 						],
@@ -216,8 +247,12 @@
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
 								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "contractname",
+								"value": "MerkleTreeController",
 								"type": "text"
 							}
 						],
@@ -249,9 +284,13 @@
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
-								"type": "text",
-								"value": "application/json"
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "contractname",
+								"value": "MerkleTreeController",
+								"type": "text"
 							}
 						],
 						"body": {
@@ -282,9 +321,13 @@
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
-								"type": "text",
-								"value": "application/json"
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "contractname",
+								"value": "MerkleTreeController2",
+								"type": "text"
 							}
 						],
 						"body": {
@@ -315,9 +358,13 @@
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
-								"type": "text",
-								"value": "application/json"
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "contractname",
+								"value": "MerkleTreeController",
+								"type": "text"
 							}
 						],
 						"body": {
@@ -349,9 +396,13 @@
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
-								"type": "text",
-								"value": "application/json"
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "contractname",
+								"value": "MerkleTreeController",
+								"type": "text"
 							}
 						],
 						"body": {
@@ -385,8 +436,12 @@
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
 								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "contractname",
+								"value": "MerkleTreeController2",
 								"type": "text"
 							}
 						],
@@ -416,9 +471,13 @@
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
-								"type": "text",
-								"value": "application/json"
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "contractname",
+								"value": "MerkleTreeController",
+								"type": "text"
 							}
 						],
 						"body": {
@@ -450,9 +509,13 @@
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
-								"type": "text",
-								"value": "application/json"
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "contractname",
+								"value": "MerkleTreeController",
+								"type": "text"
 							}
 						],
 						"body": {
@@ -482,9 +545,13 @@
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
-								"type": "text",
-								"value": "application/json"
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "contractname",
+								"value": "MerkleTreeController",
+								"type": "text"
 							}
 						],
 						"body": {
@@ -517,9 +584,13 @@
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
-								"type": "text",
-								"value": "application/json"
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "contractname",
+								"value": "MerkleTreeController",
+								"type": "text"
 							}
 						],
 						"body": {
@@ -551,9 +622,13 @@
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
-								"type": "text",
-								"value": "application/json"
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "contractname",
+								"value": "MerkleTreeController",
+								"type": "text"
 							}
 						],
 						"body": {
@@ -585,9 +660,13 @@
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
-								"type": "text",
-								"value": "application/json"
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "contractname",
+								"value": "MerkleTreeController",
+								"type": "text"
 							}
 						],
 						"body": {
@@ -618,9 +697,13 @@
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
-								"type": "text",
-								"value": "application/json"
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "contractname",
+								"value": "MerkleTreeController",
+								"type": "text"
 							}
 						],
 						"body": {
@@ -651,9 +734,13 @@
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
-								"type": "text",
-								"value": "application/json"
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "contractname",
+								"value": "MerkleTreeController",
+								"type": "text"
 							}
 						],
 						"body": {
@@ -684,9 +771,13 @@
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
-								"type": "text",
-								"value": "application/json"
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "contractname",
+								"value": "MerkleTreeController2",
+								"type": "text"
 							}
 						],
 						"body": {
@@ -717,9 +808,13 @@
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
-								"type": "text",
-								"value": "application/json"
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "contractname",
+								"value": "MerkleTreeController",
+								"type": "text"
 							}
 						],
 						"body": {
@@ -753,9 +848,13 @@
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
-								"type": "text",
-								"value": "application/json"
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "contractname",
+								"value": "MerkleTreeController",
+								"type": "text"
 							}
 						],
 						"body": {
@@ -779,6 +878,120 @@
 					"response": []
 				},
 				{
+					"name": "/metadata/contractAddress -> gets the contractAddress",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "contractname",
+								"type": "text",
+								"value": "MerkleTreeController2"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:9000/metadata/contractAddress",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"metadata",
+								"contractAddress"
+							]
+						},
+						"description": "inserts a leaf object"
+					},
+					"response": []
+				},
+				{
+					"name": "/metadata/contractInterface -> inserts the contract address of the tree",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "contractname",
+								"type": "text",
+								"value": "MerkleTreeController"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractInterface\": \"pretend this is an interface\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/metadata/contractInterface",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"metadata",
+								"contractInterface"
+							]
+						},
+						"description": "inserts a node object"
+					},
+					"response": []
+				},
+				{
+					"name": "/metadata/contractInterface -> gets the contractInterface",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "contractname",
+								"type": "text",
+								"value": "MerkleTreeController"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:9000/metadata/contractInterface",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"metadata",
+								"contractInterface"
+							]
+						},
+						"description": "inserts a leaf object"
+					},
+					"response": []
+				},
+				{
 					"name": "/metadata -> gets the tree's metadata object",
 					"protocolProfileBehavior": {
 						"disableBodyPruning": true
@@ -788,9 +1001,13 @@
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
-								"type": "text",
-								"value": "application/json"
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "contractname",
+								"value": "MerkleTreeController",
+								"type": "text"
 							}
 						],
 						"body": {
@@ -818,9 +1035,13 @@
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
-								"type": "text",
-								"value": "application/json"
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "contractname",
+								"value": "MerkleTreeController",
+								"type": "text"
 							}
 						],
 						"body": {
@@ -853,9 +1074,13 @@
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
-								"type": "text",
-								"value": "application/json"
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "contractname",
+								"value": "MerkleTreeController",
+								"type": "text"
 							}
 						],
 						"body": {
@@ -885,9 +1110,13 @@
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
-								"type": "text",
-								"value": "application/json"
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "contractname",
+								"value": "MerkleTreeController",
+								"type": "text"
 							}
 						],
 						"body": {
@@ -920,9 +1149,13 @@
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
-								"type": "text",
-								"value": "application/json"
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "contractname",
+								"value": "MerkleTreeController",
+								"type": "text"
 							}
 						],
 						"body": {
@@ -957,9 +1190,13 @@
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
-								"type": "text",
-								"value": "application/json"
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "contractname",
+								"value": "MerkleTreeController2",
+								"type": "text"
 							}
 						],
 						"body": {
@@ -991,9 +1228,13 @@
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
-								"type": "text",
-								"value": "application/json"
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "contractname",
+								"value": "MerkleTreeController",
+								"type": "text"
 							}
 						],
 						"body": {
@@ -1025,9 +1266,13 @@
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
-								"type": "text",
-								"value": "application/json"
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "contractname",
+								"value": "MerkleTreeController",
+								"type": "text"
 							}
 						],
 						"body": {
@@ -1056,9 +1301,13 @@
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
-								"type": "text",
-								"value": "application/json"
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "contractname",
+								"value": "MerkleTreeController2",
+								"type": "text"
 							}
 						],
 						"body": {
