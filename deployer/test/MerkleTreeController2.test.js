@@ -54,8 +54,8 @@ describe('MerkleTreeController2', async () => {
   //         })
   //         // eslint-disable-next-line no-loop-func
   //         .on('receipt', receipt => {
-  //           const { leafIndex, leafValue, root } = receipt.events.newLeaf.returnValues;
-  //           console.log('newLeaf event returnValues:', leafIndex, leafValue, root);
+  //           const { leafIndex, leafValue, root } = receipt.events.NewLeaf.returnValues;
+  //           console.log('NewLeaf event returnValues:', leafIndex, leafValue, root);
   //         });
   //
   //       const { gasUsed } = txReceipt;
@@ -106,9 +106,9 @@ describe('MerkleTreeController2', async () => {
   //       })
   //       // eslint-disable-next-line no-loop-func
   //       .on('receipt', receipt => {
-  //         const { minLeafIndex, leafValues, root } = receipt.events.newLeaves.returnValues;
+  //         const { minLeafIndex, leafValues, root } = receipt.events.NewLeaves.returnValues;
   //
-  //         console.log('newLeaves event returnValues:', minLeafIndex, leafValues, root);
+  //         console.log('NewLeaves event returnValues:', minLeafIndex, leafValues, root);
   //
   //         console.dir(receipt.events, { depth: null });
   //       });
@@ -158,9 +158,9 @@ describe('MerkleTreeController2', async () => {
           })
           // eslint-disable-next-line no-loop-func
           .on('receipt', receipt => {
-            const { minLeafIndex, leafValues, root } = receipt.events.newLeaves.returnValues;
+            const { minLeafIndex, leafValues, root } = receipt.events.NewLeaves.returnValues;
 
-            console.log('newLeaves event returnValues:', minLeafIndex, leafValues, root);
+            console.log('NewLeaves event returnValues:', minLeafIndex, leafValues, root);
 
             console.dir(receipt.events, { depth: null });
           });

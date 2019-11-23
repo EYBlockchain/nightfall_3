@@ -156,6 +156,7 @@ function getFrontierSlot(leafIndex) {
 
 /**
 A js implementation of the corresponding Solidity function in MerkleTree.sol
+@notice KEEP ALL CONSOLE LOGGING (even if commented out) FOR FUTURE DEBUGGING.
 */
 async function updateNodes(leafValues, currentLeafCount, frontier, updateNodesFunction) {
   console.log(`\nsrc/utils-merkle-tree updateNodes()`);
@@ -168,7 +169,8 @@ async function updateNodes(leafValues, currentLeafCount, frontier, updateNodesFu
 
   let slot;
   let nodeIndex;
-  let nodeValue;
+  let nodeValueFull; // the node value before truncation (truncation is sometimes done so that the nodeValue (when concatenated with another) fits into a single hashing round in the next hashing iteration up the tree).
+  let nodeValue; // the truncated nodeValue
 
   // consider each new leaf in turn, from left to right:
   for (
@@ -176,7 +178,8 @@ async function updateNodes(leafValues, currentLeafCount, frontier, updateNodesFu
     leafIndex < currentLeafCount + numberOfLeaves;
     leafIndex++
   ) {
-    nodeValue = leafValues[leafIndex - currentLeafCount];
+    nodeValueFull = leafValues[leafIndex - currentLeafCount];
+    nodeValue = `0x${nodeValueFull.slice(-config.NODE_HASHLENGTH * 2)}`; // truncate hashed value, so it 'fits' into the next hash.
     nodeIndex = leafIndexToNodeIndex(leafIndex, treeWidth); // convert the leafIndex to a nodeIndex
 
     slot = getFrontierSlot(leafIndex); // determine at which level we will next need to store a nodeValue
@@ -201,7 +204,8 @@ async function updateNodes(leafValues, currentLeafCount, frontier, updateNodesFu
         // console.log('nodeIndex', nodeIndex);
         // console.log('left input', frontier[level - 1]);
         // console.log('right input', nodeValue);
-        nodeValue = utils.concatenateThenHash(frontier[level - 1], nodeValue); // the parentValue, but will become the nodeValue of the next level
+        nodeValueFull = utils.concatenateThenHash(frontier[level - 1], nodeValue); // the parentValue, but will become the nodeValue of the next level
+        nodeValue = `0x${nodeValueFull.slice(-config.NODE_HASHLENGTH * 2)}`; // truncate hashed value, so it 'fits' into the next hash.
         // console.log('output', nodeValue);
       } else {
         // odd nodeIndex
@@ -209,7 +213,8 @@ async function updateNodes(leafValues, currentLeafCount, frontier, updateNodesFu
         // console.log('nodeIndex', nodeIndex);
         // console.log('left input', nodeValue);
         // console.log('right input', config.ZERO);
-        nodeValue = utils.concatenateThenHash(nodeValue, config.ZERO); // the parentValue, but will become the nodeValue of the next level
+        nodeValueFull = utils.concatenateThenHash(nodeValue, config.ZERO); // the parentValue, but will become the nodeValue of the next level
+        nodeValue = `0x${nodeValueFull.slice(-config.NODE_HASHLENGTH * 2)}`; // truncate hashed value, so it 'fits' into the next hash.
         // console.log('output', nodeValue);
       }
       nodeIndex = parentNodeIndex(nodeIndex); // move one row up the tree
@@ -241,19 +246,21 @@ async function updateNodes(leafValues, currentLeafCount, frontier, updateNodesFu
       // console.log('nodeIndex', nodeIndex);
       // console.log('left input', frontier[level - 1]);
       // console.log('right input', nodeValue);
-      nodeValue = utils.concatenateThenHash(frontier[level - 1], nodeValue); // the parentValue, but will become the nodeValue of the next level
+      nodeValueFull = utils.concatenateThenHash(frontier[level - 1], nodeValue); // the parentValue, but will become the nodeValue of the next level
+      nodeValue = `0x${nodeValueFull.slice(-config.NODE_HASHLENGTH * 2)}`; // truncate hashed value, so it 'fits' into the next hash.
       // console.log('output', nodeValue);
     } else {
       // odd nodeIndex
       // console.log('nodeIndex', nodeIndex);
       // console.log('left input', nodeValue);
       // console.log('right input', config.ZERO);
-      nodeValue = utils.concatenateThenHash(nodeValue, config.ZERO); // the parentValue, but will become the nodeValue of the next level
+      nodeValueFull = utils.concatenateThenHash(nodeValue, config.ZERO); // the parentValue, but will become the nodeValue of the next level
+      nodeValue = `0x${nodeValueFull.slice(-config.NODE_HASHLENGTH * 2)}`; // truncate hashed value, so it 'fits' into the next hash.
       // console.log('output', nodeValue);
     }
     nodeIndex = parentNodeIndex(nodeIndex); // move one row up the tree
     const node = {
-      value: nodeValue,
+      value: nodeIndex === 0 ? nodeValueFull : nodeValue, // we can add the full 32-byte root (nodeIndex=0) to the db, because it doesn't need to fit into another hash round.
       nodeIndex,
     };
     if (!updateNodesFunction) {
@@ -263,8 +270,8 @@ async function updateNodes(leafValues, currentLeafCount, frontier, updateNodesFu
       await updateNodesFunction(node); // eslint-disable-line no-await-in-loop
     }
   }
-
-  const root = nodeValue; // nodeValue is now the root of the tree
+  const root = nodeValueFull;
+  console.log('root:', root);
 
   return [root, newFrontier];
 }
@@ -294,7 +301,7 @@ function getNumberOfHashes(maxLeafIndex, minLeafIndex, height) {
 }
 
 /**
-For debugging: Loops through a calculation of the numberOfHashes for a given batch size, at every leafIndex of the tree.
+For debugging the correctness of getNumberOfHashes: Loops through a calculation of the numberOfHashes for a given batch size, at every leafIndex of the tree.
 @param {integer} batchSize - the number of leaves in the batch
 @param {integer} height - the height of the merkle tree
 */

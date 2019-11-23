@@ -5,7 +5,6 @@
 */
 
 module.exports = {
-  TREE_HEIGHT: 32, // the hieght of the Merkle tree
   LEVEL_DB_PATH: '/app/db/db',
   POLLING_FREQUENCY: 6000, // How many milliseconds to wait between each poll
 

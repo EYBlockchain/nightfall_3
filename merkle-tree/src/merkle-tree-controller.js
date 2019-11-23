@@ -110,8 +110,8 @@ async function getPathByLeafIndex(db, leafIndex) {
 
   // construct an array of indices to query from the db:
   const pathIndices = utilsMT.getPathIndices(nodeIndex);
-  console.log(`pathIndices to retreive:`);
-  console.log(pathIndices);
+  // console.log(`pathIndices to retreive:`);
+  // console.log(pathIndices);
 
   // get the actual nodes from the db:
   const nodeService = new NodeService(db);
@@ -147,8 +147,8 @@ async function getSiblingPathByLeafIndex(db, leafIndex) {
 
   // construct an array of indices to query from the db:
   const siblingPathIndices = utilsMT.getSiblingPathIndices(nodeIndex);
-  console.log(`siblingPathIndices to retreive:`);
-  console.log(siblingPathIndices);
+  // console.log(`siblingPathIndices to retreive:`);
+  // console.log(siblingPathIndices);
 
   // get the actual nodes from the db:
   const nodeService = new NodeService(db);

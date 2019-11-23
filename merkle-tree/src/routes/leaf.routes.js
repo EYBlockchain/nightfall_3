@@ -42,6 +42,8 @@ async function insertLeaf(req, res, next) {
 async function getLeafByLeafIndex(req, res, next) {
   console.log('\nsrc/routes/leaf.routes getLeafByLeafIndex()');
   console.log('req.params:');
+  console.log(req.params);
+  console.log('req.body:');
   console.log(req.body);
   try {
     const leafIndex = req.params.leafIndex || req.body.leafIndex;

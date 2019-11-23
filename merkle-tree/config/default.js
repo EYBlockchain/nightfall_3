@@ -6,10 +6,12 @@
 
 module.exports = {
   // general:
-  ZERO: '0x0000000000000000000000000000000000000000000000000000000000000000', // 32-bit hex string representing zero, for hashing with '0' up the tree.
+  // ZERO: '0x0000000000000000000000000000000000000000000000000000000000000000', // 32-byte hex string representing zero, for hashing with '0' up the tree.
+  ZERO: '0x000000000000000000000000000000000000000000000000000000', // 27-byte hex string representing zero, for hashing with '0' up the tree. Byte length must match that of NODE_HASHLENGTH
+
+  // Tree parameters. You also need to set these in the MerkleTree.sol contract.
   LEAF_HASHLENGTH: 32, // expected length of leaves' values in bytes
   NODE_HASHLENGTH: 27, // expected length of nodes' values up the merkle tree, in bytes
-
   TREE_HEIGHT: 32, // the hieght of the Merkle tree
 
   POLLING_FREQUENCY: 6000, // milliseconds
@@ -27,10 +29,10 @@ module.exports = {
     MerkleTreeController: {
       events: {
         // indexed by event names:
-        newLeaf: {
+        NewLeaf: {
           parameters: ['leafIndex', 'leafValue'], // filter for these parameters
         },
-        newLeaves: {
+        NewLeaves: {
           parameters: ['minLeafIndex', 'leafValues'], // filter for these parameters
         },
       },
@@ -38,10 +40,10 @@ module.exports = {
     MerkleTreeController2: {
       events: {
         // indexed by event names:
-        newLeaf: {
+        NewLeaf: {
           parameters: ['leafIndex', 'leafValue'], // filter for these parameters
         },
-        newLeaves: {
+        NewLeaves: {
           parameters: ['minLeafIndex', 'leafValues'], // filter for these parameters
         },
       },

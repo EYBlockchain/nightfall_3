@@ -26,11 +26,8 @@ contract MerkleTreeController2 is MerkleTree {
 
     /**
     @notice Constructor for the MerkleTreeController contract.
-    @param _treeHeight - the height of the tree (see the base contract for a disambiguation of what is meant by 'height').
-
-    We also need to specify the arguments for the Base contract's (MerkleTree.sol's) constructor. We do this through a "modifier" of this 'derived' contract's constructor (hence the unusual 'MerkleTree' "modifier" directly below).
     */
-    constructor(uint _treeHeight) MerkleTree(_treeHeight) public {
+    constructor() public {
         owner = msg.sender;
     }
 

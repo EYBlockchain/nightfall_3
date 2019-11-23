@@ -42,26 +42,16 @@ contract MerkleTree {
     /**
     These events are what the merkle-tree microservice's filters will listen for.
     */
-    event NewLeaf(uint leafIndex, bytes32 leafValue, bytes32 root);
-    event NewLeaves(uint minLeafIndex, bytes32[] leafValues, bytes32 root);
+    event NewLeaf(uint leafIndex, bytes32 leafValue);
+    event NewLeaves(uint minLeafIndex, bytes32[] leafValues);
 
-    // event Output(bytes27 leftInput, bytes27 rightInput, bytes32 output, uint nodeIndex); // for debugging only
+    // event Output(bytes32 leftInput, bytes32 rightInput, bytes32 output, uint level, uint nodeIndex); // for debugging only
 
+    bytes32 zero = 0x0000000000000000000000000000000000000000000000000000000000000000;
     uint public treeHeight = 32;
     uint public treeWidth = 2 ** treeHeight; // 2 ** treeHeight
+    bytes32[33] frontier; // the right-most 'frontier' of nodes required to calculate the new root when the next new leaf value is added.
     uint256 public leafCount; // the number of leaves currently in the tree
-
-    /**
-    Whilst ordinarily, we'd work solely with bytes32, we need to truncate nodeValues up the tree. Therefore, we need to declare certain variables with lower byte-lengths:
-    LEAF_HASHLENGTH = 32 bytes;
-    NODE_HASHLENGTH = 27 bytes;
-    5 byte difference * 8 bits per byte = 40 bit shift to truncate hashlengths.
-    27 bytes * 2 inputs to sha() = 54 byte input to sha(). 54 = 0x36.
-    If in future you want to change the truncation values, search for '27', '40' and '0x36'.
-    */
-    bytes27 zero = 0x000000000000000000000000000000000000000000000000000000;
-    // bytes32 zero = 0x0000000000000000000000000000000000000000000000000000000000000000;
-    bytes27[33] frontier; // the right-most 'frontier' of nodes required to calculate the new root when the next new leaf value is added.
 
     /**
     @notice Get the index of the frontier (or 'storage slot') into which we will next store a nodeValue (based on the leafIndex currently being inserted). See the top-level README for a detailed explanation.
@@ -90,19 +80,16 @@ contract MerkleTree {
     @param leafValue - the value of the leaf being inserted.
     @return bytes32 - the root of the merkle tree, after the insert.
     */
-    function insertLeaf(bytes32 leafValue) public returns (bytes32 root) {
-
-        // check that space exists in the tree:
-        require(treeWidth > leafCount, "There is no space left in the tree.");
+    function insertLeaf(bytes32 leafValue) public returns (bytes32) {
 
         uint slot = getFrontierSlot(leafCount);
         uint nodeIndex = leafCount + treeWidth - 1;
-        bytes27 nodeValue = bytes27(leafValue << 40); // nodeValue is the hash, which iteratively gets overridden to the top of the tree until it becomes the root.
+        bytes32 nodeValue = leafValue; // nodeValue is the hash, which iteratively gets overridden to the top of the tree until it becomes the root.
 
-        bytes27 leftInput;
-        bytes27 rightInput;
-        bytes32[1] memory output; // output of the hash function
+        bytes32[2] memory inputs; // the left and right inputs to the hash function.
+        bytes32[1] memory output;
         bool success;
+
 
         for (uint level = 0; level < treeHeight; level++) {
 
@@ -110,66 +97,39 @@ contract MerkleTree {
 
             if (nodeIndex % 2 == 0) {
                 // even nodeIndex
-                leftInput = frontier[level];
-                rightInput = nodeValue;
-
+                inputs[0] = frontier[level];
+                inputs[1] = nodeValue;
                 // compute the hash of the inputs:
                 // note: we don't extract this hashing into a separate function because that would cost more gas.
-                /*
-                  * gasLimit: calling with gas equal to not(0), as we have here, will send all available gas to the function being called. This removes the need to guess or upper-bound the amount of gas being sent yourself. As an alternative, we could have guessed the gas needed with: sub(gas, 2000)
-                  * to: the sha256 precompiled contract is at address 0x2: Sending the amount of gas currently available to us (or after subtracting 2000 gas if using the alternative mentioned above);
-                  * inputOffset: Input data to the sha256 precompiled contract.
-                  * inputSize:
-                    hex input size = 0x40 = 2 x 32-bytes
-                    OR
-                    hex input size = 0x36 = 2 x 27-bytes
-                  * outputOffset: "where will the output be stored?" (in variable 'output' in our case)
-                  * outputSize: sha256 outputs 256-bits = 32-bytes = 0x20 in hex
-                */
                 assembly {
-                    // define pointer
-                    let input := mload(0x40) // 0x40 is always the free memory pointer. Don't change this.
-                    mstore(input, leftInput) // push first input
-                    mstore(add(input, 0x1b), rightInput) // push second input at position 27bytes = 0x1b
-                    success := staticcall(not(0), 2, input, 0x36, output, 0x20)
+                    success := call(not(0), 2, 0, inputs, 0x40, output, 0x20)
                     // Use "invalid" to make gas estimation work
                     switch success case 0 { invalid() }
                 }
-
-                nodeValue = bytes27(output[0] << 40); // the parentValue, but will become the nodeValue of the next level
+                nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
                 nodeIndex = (nodeIndex - 1) / 2; // move one row up the tree
-
-                // emit Output(leftInput, rightInput, output[0], nodeIndex); // for debugging only
             } else {
                 // odd nodeIndex
-                leftInput = nodeValue;
-                rightInput = zero;
-
+                inputs[0] = nodeValue;
+                inputs[1] = zero;
                 // compute the hash of the inputs:
                 assembly {
-                    // define pointer
-                    let input := mload(0x40) // 0x40 is always the free memory pointer. Don't change this.
-                    mstore(input, leftInput) // push first input
-                    mstore(add(input, 0x1b), rightInput) // push second input at position 27bytes = 0x1b
-                    success := staticcall(not(0), 2, input, 0x36, output, 0x20)
-                    // Use "invalid" to make gas estimation work
+                    success := call(not(0), 2, 0, inputs, 0x40, output, 0x20)
                     switch success case 0 { invalid() }
                 }
-
-                nodeValue = bytes27(output[0] << 40); // the parentValue, but will become the nodeValue of the next level
+                nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
                 nodeIndex = nodeIndex / 2; // move one row up the tree
-
-                // emit Output(leftInput, rightInput, output[0], nodeIndex); // for debugging only
             }
         }
 
-        root = nodeValue;
+        // refund gas by deleting a redundant frontier slot:
+        // if (slot > 0) frontier[slot - 1] = 0; // THIS ACTUALLY COSTS MORE IN THE LONG RUN!
 
-        emit NewLeaf(leafCount, leafValue, root); // this event is what the merkle-tree microservice's filter will listen for.
+        emit NewLeaf(leafCount, leafValue); // this event is what the merkle-tree microservice's filter will listen for.
 
         leafCount++; // the incrememnting of leafCount costs us 20k for the first leaf, and 5k thereafter
 
-        return root; //the root of the tree
+        return nodeValue; //the root of the tree
     }
 
     /**
@@ -177,12 +137,11 @@ contract MerkleTree {
     @param leafValues - the values of the leaves being inserted.
     @return bytes32[] - the root of the merkle tree, after all the inserts.
     */
-    function insertLeaves(bytes32[] memory leafValues) public returns (bytes32 root) {
+    function insertLeaves(bytes32[] memory leafValues) public returns (bytes32) {
         uint numberOfLeaves = leafValues.length;
 
         // check that space exists in the tree:
-        require(treeWidth > leafCount, "There is no space left in the tree.");
-        if (numberOfLeaves > treeWidth - leafCount) {
+        if ( numberOfLeaves > treeWidth - leafCount ) {
             uint numberOfExcessLeaves = numberOfLeaves - (treeWidth - leafCount);
             // remove the excess leaves, because we only want to emit those we've added as an event:
             for (uint xs = 0; xs < numberOfExcessLeaves; xs++) {
@@ -199,16 +158,15 @@ contract MerkleTree {
 
         uint slot;
         uint nodeIndex;
-        bytes27 nodeValue;
+        bytes32 nodeValue;
 
-        bytes27 leftInput;
-        bytes27 rightInput;
+        bytes32[2] memory inputs; // the left and right inputs to the hash function.
         bytes32[1] memory output; // the output of the hash
         bool success;
 
         // consider each new leaf in turn, from left to right:
         for (uint leafIndex = leafCount; leafIndex < leafCount + numberOfLeaves; leafIndex++) {
-            nodeValue = bytes27(leafValues[leafIndex - leafCount] << 40);
+            nodeValue = leafValues[leafIndex - leafCount];
             nodeIndex = leafIndex + treeWidth - 1; // convert the leafIndex to a nodeIndex
 
             slot = getFrontierSlot(leafIndex); // determine at which level we will next need to store a nodeValue
@@ -222,42 +180,33 @@ contract MerkleTree {
             for (uint level = 1; level <= slot; level++) {
                 if (nodeIndex % 2 == 0) {
                     // even nodeIndex
-                    leftInput = frontier[level - 1];
-                    rightInput = nodeValue;
+                    inputs[0] = frontier[level - 1];
+                    inputs[1] = nodeValue;
                     // compute the hash of the inputs:
                     // note: we don't extract this hashing into a separate function because that would cost more gas.
                     assembly {
-                        // define pointer
-                        let input := mload(0x40) // 0x40 is always the free memory pointer. Don't change this.
-                        mstore(input, leftInput) // push first input
-                        mstore(add(input, 0x1b), rightInput) // push second input at position 27bytes = 0x1b
-                        success := staticcall(not(0), 2, input, 0x36, output, 0x20)
+                        success := call(not(0), 2, 0, inputs, 0x40, output, 0x20)
                         // Use "invalid" to make gas estimation work
                         switch success case 0 { invalid() }
                     }
 
-                    // emit Output(leftInput, rightInput, output[0], level, nodeIndex); // for debugging only
+                    // emit Output(inputs[0], inputs[1], output[0], level, nodeIndex); // for debugging only
 
-                    nodeValue = bytes27(output[0] << 40); // the parentValue, but will become the nodeValue of the next level
+                    nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
                     nodeIndex = (nodeIndex - 1) / 2; // move one row up the tree
                 } else {
                     // odd nodeIndex
-                    leftInput = nodeValue;
-                    rightInput = zero;
+                    inputs[0] = nodeValue;
+                    inputs[1] = zero;
                     // compute the hash of the inputs:
                     assembly {
-                        // define pointer
-                        let input := mload(0x40) // 0x40 is always the free memory pointer. Don't change this.
-                        mstore(input, leftInput) // push first input
-                        mstore(add(input, 0x1b), rightInput) // push second input at position 27bytes = 0x1b
-                        success := staticcall(not(0), 2, input, 0x36, output, 0x20)
-                        // Use "invalid" to make gas estimation work
+                        success := call(not(0), 2, 0, inputs, 0x40, output, 0x20)
                         switch success case 0 { invalid() }
                     }
 
-                    // emit Output(leftInput, rightInput, output[0], level, nodeIndex); // for debugging only
+                    // emit Output(inputs[0], inputs[1], output[0], level, nodeIndex); // for debugging only
 
-                    nodeValue = bytes27(output[0] << 40); // the parentValue, but will become the nodeValue of the next level
+                    nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
                     nodeIndex = nodeIndex / 2; // the parentIndex, but will become the nodeIndex of the next level
                 }
             }
@@ -269,51 +218,40 @@ contract MerkleTree {
 
             if (nodeIndex % 2 == 0) {
                 // even nodeIndex
-                leftInput = frontier[level - 1];
-                rightInput = nodeValue;
+                inputs[0] = frontier[level - 1];
+                inputs[1] = nodeValue;
                 // compute the hash of the inputs:
                 assembly {
-                    // define pointer
-                    let input := mload(0x40) // 0x40 is always the free memory pointer. Don't change this.
-                    mstore(input, leftInput) // push first input
-                    mstore(add(input, 0x1b), rightInput) // push second input at position 27bytes = 0x1b
-                    success := staticcall(not(0), 2, input, 0x36, output, 0x20)
-                    // Use "invalid" to make gas estimation work
+                    success := call(not(0), 2, 0, inputs, 0x40, output, 0x20)
                     switch success case 0 { invalid() }
                 }
 
-                // emit Output(leftInput, rightInput, output[0], level, nodeIndex); // for debugging only
+                // emit Output(inputs[0], inputs[1], output[0], level, nodeIndex); // for debugging only
 
-                nodeValue = bytes27(output[0] << 40); // the parentValue, but will become the nodeValue of the next level
+                nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
                 nodeIndex = (nodeIndex - 1) / 2;  // the parentIndex, but will become the nodeIndex of the next level
             } else {
                 // odd nodeIndex
-                leftInput = nodeValue;
-                rightInput = zero;
+                inputs[0] = nodeValue;
+                inputs[1] = zero;
                 // compute the hash of the inputs:
                 assembly {
-                    // define pointer
-                    let input := mload(0x40) // 0x40 is always the free memory pointer. Don't change this.
-                    mstore(input, leftInput) // push first input
-                    mstore(add(input, 0x1b), rightInput) // push second input at position 27bytes = 0x1b
-                    success := staticcall(not(0), 2, input, 0x36, output, 0x20)
-                    // Use "invalid" to make gas estimation work
+                    success := call(not(0), 2, 0, inputs, 0x40, output, 0x20)
                     switch success case 0 { invalid() }
                 }
 
-                // emit Output(leftInput, rightInput, output[0], level, nodeIndex); // for debugging only
+                // emit Output(inputs[0], inputs[1], output[0], level, nodeIndex); // for debugging only
 
-                nodeValue = bytes27(output[0] << 40); // the parentValue, but will become the nodeValue of the next level
+                nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
                 nodeIndex = nodeIndex / 2;  // the parentIndex, but will become the nodeIndex of the next level
             }
         }
+        // nodeValue is now the root of the tree
 
-        root = nodeValue;
-
-        emit NewLeaves(leafCount, leafValues, root); // this event is what the merkle-tree microservice's filter will listen for.
+        emit NewLeaves(leafCount, leafValues); // this event is what the merkle-tree microservice's filter will listen for.
 
         leafCount += numberOfLeaves; // the incrememnting of leafCount costs us 20k for the first leaf, and 5k thereafter
 
-        return root; //the root of the tree
+        return nodeValue; //the root of the tree
     }
 }

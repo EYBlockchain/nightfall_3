@@ -5,6 +5,46 @@ import utilsPoll from '../utils-poll';
 const url = `${config.merkleTree.host}:${config.merkleTree.port}`;
 
 /**
+Start the event filter in the merkle-tree microservice, for the given contract
+*/
+async function startEventFilter(contractName) {
+  console.log(`\nCalling startEventFilter(${contractName})`);
+  return new Promise((resolve, reject) => {
+    const options = {
+      url: `${url}/start`,
+      method: 'POST',
+      json: true,
+      headers: { contractname: contractName },
+      body: { contractName },
+    };
+    request(options, (err, res, body) => {
+      if (err) reject(err);
+      else resolve(body.data);
+    });
+  });
+}
+
+/**
+Get the nodes on the sibling path from the given leafIndex to the root.
+*/
+async function getSiblingPathByLeafIndex(contractName, leafIndex) {
+  console.log(`\nCalling getSiblingPathByLeafIndex(${contractName}, ${leafIndex})`);
+  return new Promise((resolve, reject) => {
+    const options = {
+      url: `${url}/siblingPath/${leafIndex}`,
+      method: 'POST',
+      json: true,
+      headers: { contractname: contractName },
+      // body:, // no body; uses url param
+    };
+    request(options, (err, res, body) => {
+      if (err) reject(err);
+      else resolve(body.data);
+    });
+  });
+}
+
+/**
 Gets the interface of a deployed MerkleTree.sol contract
 */
 async function getContractInterface(contractName) {
@@ -141,6 +181,8 @@ async function postContractAddress(contractName, contractAddress) {
 }
 
 export default {
+  startEventFilter,
+  getSiblingPathByLeafIndex,
   getContractInterface,
   getContractAddress,
   postContractInterface,

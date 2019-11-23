@@ -22,7 +22,7 @@ async function deploy(contractName) {
   const bytecode = await utilsWeb3.getContractBytecode(contractName);
 
   await contractInstance
-    .deploy({ data: bytecode, arguments: [config.TREE_HEIGHT] }) // we pass constructor arguments here
+    .deploy({ data: bytecode }) // we would pass constructor arguments here
     .send({ from: coinbase, gas: options.defaultGas, gasPrice: options.defaultGasPrice })
     .on('error', err => {
       throw new Error(err);

@@ -16,8 +16,8 @@ const alreadyStarted = {}; // initialises as false
  * @param {*} req
  * @param {*} res - returns the tree's metadata
  */
-async function startFilter(req, res, next) {
-  console.log('\nsrc/routes/merkle-tree.routes startFilter()');
+async function startEventFilter(req, res, next) {
+  console.log('\nsrc/routes/merkle-tree.routes startEventFilter()');
 
   const contractName = req.headers.contractname;
   const { db } = req.user;
@@ -59,11 +59,15 @@ async function getSiblingPathByLeafIndex(req, res, next) {
   console.log('req.params:');
   console.log(req.params);
 
-  try {
-    const { db } = req.user;
-    let { leafIndex } = req.params;
-    leafIndex = Number(leafIndex); // force to number
+  const { db } = req.user;
+  let { leafIndex } = req.params;
+  leafIndex = Number(leafIndex); // force to number
 
+  try {
+    // first update all nodes in the DB to be in line with the latest-known leaf:
+    await merkleTreeController.update(db);
+
+    // get the sibling path:
     const siblingPath = await merkleTreeController.getSiblingPathByLeafIndex(db, leafIndex);
 
     res.data = siblingPath;
@@ -92,6 +96,10 @@ async function getPathByLeafIndex(req, res, next) {
   leafIndex = Number(leafIndex); // force to number
 
   try {
+    // first update all nodes in the DB to be in line with the latest-known leaf:
+    await merkleTreeController.update(db);
+
+    // get the path:
     const path = await merkleTreeController.getPathByLeafIndex(db, leafIndex);
 
     res.data = path;
@@ -124,7 +132,7 @@ async function update(req, res, next) {
 
 // initializing routes
 export default function(router) {
-  router.route('/start').post(startFilter);
+  router.route('/start').post(startEventFilter);
 
   router.route('/update').patch(update);
 

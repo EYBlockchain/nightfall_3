@@ -29,7 +29,7 @@ Leaves are submitted to a `MerkleTree` smart-contract by users. Submitting multi
 
 Only the `root` and a small `frontier` of nodes is stored on-chain. New leaves are not stored on-chain; they're emitted as events.
 
-A local merkle-tree database (off-chain) is populated with the leaves and nodes of the Tree, based on `newLeaf` events emitted by the smart-contract.
+A local merkle-tree database (off-chain) is populated with the leaves and nodes of the Tree, based on `NewLeaf` events emitted by the smart-contract.
 
 The database can then be queried, e.g. for sibling-paths in order to provide set-membership proofs to the smart-contract.
 
@@ -108,7 +108,7 @@ Interact with the merkle-tree microservice through its API. A postman collection
 
 ##### Start the event filter:
 
-Send a `post` request to `http://localhost:9000/start` to start the merkle-tree's event filters for `newLeaf` and `newLeaves` events. Any 'new leaf' events will be picked up by the filters, and cause the new leaf data to be inserted into the mongodb.
+Send a `post` request to `http://localhost:9000/start` to start the merkle-tree's event filters for `NewLeaf` and `NewLeaves` events. Any 'new leaf' events will be picked up by the filters, and cause the new leaf data to be inserted into the mongodb.
 
 ##### Update the merkle-tree database:
 
@@ -204,10 +204,10 @@ Only a 'frontier' is stored on-chain (see the detailed explanation below).
 
 ### Off-chain  
 
-We filter the blockchain for `newLeaf` event emissions, which contain:
+We filter the blockchain for `NewLeaf` event emissions, which contain:
 
 ```
-newLeafEvent: {
+NewLeafEvent: {
   leafIndex: 1234,
   leafValue: '0xacb5678',
   root: '0xdef9012'

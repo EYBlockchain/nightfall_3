@@ -16,7 +16,7 @@ const subscriptions = {};
 TODO: description
 */
 const newLeafResponseFunction = async (eventObject, args) => {
-  const eventName = 'newLeaf'; // hardcoded, as inextricably linked to the name of this function.
+  const eventName = 'NewLeaf'; // hardcoded, as inextricably linked to the name of this function.
 
   // We make some hardcoded presumptions about what's contained in the 'args':
   const { db, contractName } = args;
@@ -58,7 +58,7 @@ const newLeafResponseFunction = async (eventObject, args) => {
 TODO: description
 */
 const newLeavesResponseFunction = async (eventObject, args) => {
-  const eventName = 'newLeaves'; // hardcoded, as inextricably linked to the name of this function.
+  const eventName = 'NewLeaves'; // hardcoded, as inextricably linked to the name of this function.
 
   // We make some hardcoded presumptions about what's contained in the 'args':
   const { db, contractName } = args;
@@ -123,8 +123,8 @@ Naming convention:
 }
 */
 const responseFunctions = {
-  newLeaf: newLeafResponseFunction,
-  newLeaves: newLeavesResponseFunction,
+  NewLeaf: newLeafResponseFunction,
+  NewLeaves: newLeavesResponseFunction,
 };
 
 /**

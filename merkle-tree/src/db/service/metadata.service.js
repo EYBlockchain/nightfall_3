@@ -60,9 +60,9 @@ export default class MetadataService {
   */
   async updateLatestLeaf(data) {
     console.log('\nsrc/db/service/metadata.service updateLatestLeaf()');
-    console.log('\ndata before mapping:', data);
+    // console.log('\ndata before mapping:', data);
     const mappedData = metadataMapper(data);
-    console.log('\ndata after mapping:', mappedData);
+    // console.log('\ndata after mapping:', mappedData);
 
     const { latestLeaf } = mappedData;
     console.log('latestLeaf:', latestLeaf);
@@ -84,9 +84,9 @@ export default class MetadataService {
   */
   async updateLatestRecalculation(data) {
     console.log('\nsrc/db/service/metadata.service updateLatestRecalculation()');
-    console.log('\ndata before mapping:', data);
+    // console.log('\ndata before mapping:', data);
     const mappedData = metadataMapper(data);
-    console.log('\ndata after mapping:', mappedData);
+    // console.log('\ndata after mapping:', mappedData);
 
     const { latestRecalculation } = mappedData;
     console.log('latestRecalculation:', latestRecalculation);
