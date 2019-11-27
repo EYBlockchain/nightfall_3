@@ -225,6 +225,7 @@ We consistently use the following indexing throughout the codebase:
 
 ```
 Level Row                            nodeIndices                      frontier indices
+
   4    0                                  0                                  [4,
                            /                             \
   3    1                  1                               2                   3,
@@ -245,6 +246,9 @@ We start with an empty `frontier = [ , , , , ]`.
 
 The frontier will represent the right-most fixed nodeValues at each level of the tree. So `frontier[0]` will be the right-most fixed nodeValue at level `0`, and so on up the tree. By 'fixed nodeValue', we mean that the `nodeValue` will never again change; it is permanently fixed regardless of future leaf appends.
 
+
+##### Inserting leaf 0
+
 A user submits the 0th leaf (`leafIndex = 0`) to the `MerkleTree` smart contract.
 
 We add it to `leafIndex = 0` (`nodeIndex = 15`) in the contract's local stack (but not to persistent storage, because we can more cheaply emit this leaf's data as an event).
@@ -255,6 +259,7 @@ Let's provide a visualisation:
 // Inserting a leaf with nodeValue = '15.0' into the tree
 
                                 nodeValues                                frontier
+
                                     0                                     [    ,
                   /                                    \          
                  0                                      0                      ,
@@ -279,6 +284,7 @@ The 0th leaf is an easy case where the sibling-path nodes are always to the righ
 // Showing the sibling-path of leafIndex = 0
 
                                 nodeValues                                frontier
+
                                     0                                     [    ,
                   /                                    \          
                  0                                     *0*                     ,
@@ -302,11 +308,13 @@ So it's easy to update the tree:
 // Hashing computation to update the root for a newly inserted leaf at leafIndex = 0
 
 frontier        nodeValue  = hash ( left input   ,   right input   )       zeros  
+
  [  ,              7.0     = hash (   15.0       ,        0        )    <--  0
     ,              3.0     = hash (    7.0       ,        0        )    <--  0
     ,              1.0     = hash (    3.0       ,        0        )    <--  0
     ,              0.0     = hash (    1.0       ,        0        )    <--  0
     ]
+                    ^ these are the values in our recalculated path from leafIndex = 0
 ```
 
 We will only use the `frontier` to inject sibling-nodes which are to the left of a leaf's path. More on that later.
@@ -317,6 +325,7 @@ Our updated tree can be visualised like this:
 // Updating the path from leafIndex = 0 to the root:
 
                               nodeValues                                  frontier
+
                                   0.0                                      [   ,
                   /                                    \     
                 1.0                                     0                      ,
@@ -343,6 +352,7 @@ Now the purpose of the `frontier` starts to become clear. We will add `nodeValue
 // Adding a nodeValue to frontier[0]
 
                               nodeValues                                     frontier
+
                                   0.0                                          [    ,
                   /                                    \
                 1.0                                     0                           ,
@@ -357,6 +367,11 @@ Now the purpose of the `frontier` starts to become clear. We will add `nodeValue
 
 ```
 
+The smart contract emits the leaf value as an event `NewLeaf`, which is then picked-up by `timber`'s event listener and added to the mongodb.
+
+That completes the insertion of leaf 0.  
+
+##### Inserting leaf 1
 
 Let's add some more leaves (always appending them from left to right):
 
@@ -370,6 +385,7 @@ Let's provide a visualisation:
 // Inserting a leaf with nodeValue = '16.0' into the tree
 
                               nodeValues                                     frontier
+
                                   0.0                                          [    ,
                   /                                    \
                 1.0                                     0                           ,
@@ -384,12 +400,15 @@ Let's provide a visualisation:
 
 ```
 
-But this visualisation is misleading, because most of this data wasn't stored in persistent storage. In actual fact all the smart contract knows is:
+_Note, we haven't yet recalculated the path from leafIndex = 1 (nodeValue = 16.0) to the root_.  
+
+The above visualisation is misleading, because most of this data wasn't stored in persistent storage. In actual fact all the smart contract knows is:
 
 ```
 // Data known by the smart contract (or implied, in the case of all the 0's):
 
                               nodeValues                                     frontier
+
                                    ?                                           [    ,
                   /                                    \
                  ?                                      0                           ,
@@ -404,24 +423,27 @@ But this visualisation is misleading, because most of this data wasn't stored in
 
 ```
 
-In order to insert `nodeValue` `16.0` into the tree, we will need the `nodeValues` of the sibling-path of `leafIndex = 1`, and we will also need to know whether those sibling-nodes are on the left or the right of the path up the tree:
+In order to insert `nodeValue` `16.0` into the tree and update its path, we will need the `nodeValues` of the sibling-path of `leafIndex = 1`, and we will also need to know whether those sibling-nodes are on the left or the right of the path up the tree:
 
 ```
-// Hashing computation to update the root for a newly inserted leaf at leafIndex = 0
+// Hashing computation to update the root for a newly inserted leaf at leafIndex = 1
 
 frontier        nodeValue  = hash ( left input   ,   right input   )       zeros  
+
 [15.0,             7.1     = hash (      ?       ,        ?        )         0
      ,             3.1     = hash (      ?       ,        ?        )         0
      ,             1.1     = hash (      ?       ,        ?        )         0
      ,             0.1     = hash (      ?       ,        ?        )         0
      ]
+                    ^ these are the values in our recalculated path from leafIndex = 1
 ```
 
 We can actually deduce the 'left-ness' or 'right-ness' of a leaf's path up the tree from the binary representation the leaf's leafIndex:
 
 
 ```
-                               binary leafIndices                              
+                               binary leafIndices    
+
                                         *                                  
                     /                                     \    
 >>                 0                                       1
@@ -441,7 +463,8 @@ Notice how for `leafIndex = 1 = 0b0001` the path is on the right, left, left, le
 ```
 // Path up the tree
 
-                               nodeValues                                     
+                               nodeValues   
+
                                   root                                          
                   /                                    \
                 left                                    S                       
@@ -464,13 +487,130 @@ Now we can hash up the tree, by injecting the sister-path to the opposing 'left,
 // Hashing computation to update the root for a newly inserted leaf at leafIndex = 1
 
 frontier        nodeValue  = hash ( left input   ,   right input   )       zeros  
+
  [15.0,   -->      7.1     = hash (   15.0       ,      16.0       )         0
       ,            3.1     = hash (    7.1       ,        0        )    <--  0
       ,            1.1     = hash (    3.1       ,        0        )    <--  0
       ,            0.1     = hash (    1.1       ,        0        )    <--  0
       ]
+                    ^ these are the values in our recalculated path from leafIndex = 1
+```
+
+We can visualise the tree after updating the path (but remember the smart contract isn't actually storing anything except the frontier!):
+```
+// Inserting a leaf with nodeValue = '16.0' into the tree
+
+                              nodeValues                                     frontier
+
+                                  0.1                                          [    ,
+                  /                                    \
+                1.1                                     0                           ,
+         /               \                   /               \
+       3.1                0                 0                 0                     ,
+     /      \          /      \          /      \          /      \
+   7.1       0        0        0        0        0        0        0                ,
+  /   \    /   \    /   \    /   \    /   \    /   \    /   \    /   \
+15.0 16.0 0     0  0     0  0     0  0     0  0     0  0     0  0     0         15.0]
+
+  0    1  2     3  4     5  6     7  8     9 10    11 12    13 14    15 <-- leafIndices
+
 ```
 
 Now we've udpated the tree, how do we decide which nodeValue to add to the `frontier`?
 
 We use the following algorithm to decide which index (or storage 'slot') of the `frontier` to update:
+
+```solidity
+// Which level of the path to store in the frontier, after adding each leafIndex:
+
+// pseudocode:
+- After adding leafIndex = l and recalculating its path to the root:
+    if l == 0 (mod 2) return 0; // store the 0th level of the path in frontier[0].
+    if l + 1 - 2**1 == 0 (mod 2**2) return 1; // store the 1st level of the path in frontier[1].
+    if l + 1 - 2**2 == 0 (mod 2**3) return 2; // store the 2nd level of the path in frontier[2].
+    if l + 1 - 2**3 == 0 (mod 2**4) return 3; // store the 3rd level of the path in frontier[3].
+    ...
+
+// solidity:
+function getFrontierSlot(uint leafIndex) private pure returns (uint slot) {
+    slot = 0;
+    if ( leafIndex % 2 == 1 ) {
+        uint exp1 = 1;
+        uint pow1 = 2;
+        uint pow2 = pow1 << 1;
+        while (slot == 0) {
+            if ( (leafIndex + 1 - pow1) % pow2 == 0 ) {
+                slot = exp1;
+            } else {
+                pow1 = pow2;
+                pow2 = pow2 << 1;
+                exp1++;
+            }
+        }
+    }
+}
+```
+
+```
+
+// Which level of the path to store in the frontier, after adding each leafIndex:
+
+level                                   nodeIndices                      frontier
+
+  4                                        15->                               [4,
+                            /                             \
+  3                        7->                             .                   3,
+                    /             \                 /             \
+  2                3->             .               11->            .           2,
+                /     \         /      \        /      \        /      \
+  1            1->     .       5->      .      9->     .       13->     .      1,
+              /  \    /  \    /  \    /  \    /  \    /  \    /  \    /  \
+  0          0->  .  2->  .  4->  .  6->  .  8->  .  10-> .  12-> .  14-> .    0]
+
+leafIndices: 0    1  2    3  4    5  6    7  8    9  10  11  12  13  14  15
+
+/*
+I.e.:
+- After adding leaf 0 and recalculating its path to the root, we store the 0th
+level of this path in the frontier.
+- After adding leaf 1 and recalculating its path, we store the 1st level of
+  this path in the frontier.
+...
+- After adding leaf 7 and recalculating its path, we store the 3rd level of this
+  path in the frontier.
+*/
+
+```
+
+After adding the 1st leaf and updating the root, the smart contract now has stored:
+
+```
+// Data known by the smart contract:
+
+frontier = [ 15.0, 7.1,   ,   ,   ];
+leafCount = 2;                          
+```
+
+That's very lightweight in terms of storage costs!
+
+##### Future inserts
+
+We can project forward and show how the `frontier` will progress as new leaves are added:
+
+After adding the 1st leaf and updating the root, the smart contract now has stored:
+
+```
+// Change in the frontier after successively adding leaves to the tree:
+// (recall x.y means the nodeValue of nodeIndex = x after its yth overwrite)
+
+After adding leaf 0: frontier = [ 15.0,    ,    ,     ,     ];
+After adding leaf 1: frontier = [ 15.0, 7.1,    ,     ,     ];
+After adding leaf 2: frontier = [ 17.0, 7.1,    ,     ,     ];
+After adding leaf 3: frontier = [ 17.0, 7.1, 3.3,     ,     ];
+After adding leaf 4: frontier = [ 19.0, 7.1, 3.3,     ,     ];
+After adding leaf 5: frontier = [ 19.0, 9.1, 3.3,     ,     ];
+After adding leaf 6: frontier = [ 21.0, 9.1, 3.3,     ,     ];
+After adding leaf 7: frontier = [ 21.0, 9.1, 3.3,  1.7,     ];
+After adding leaf 8: frontier = [ 23.0, 9.1, 3.3,  1.7,     ];
+...
+```
