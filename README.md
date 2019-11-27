@@ -1,6 +1,8 @@
 # timber :evergreen_tree:
 
-Construct a Merkle Tree database from Ethereum logs.
+Construct a Merkle Tree database from Ethereum logs.  
+
+<sub><sup>Originator: [iAmMichaelConnor](https://github.com/iAmMichaelConnor)</sup></sub>
 
 ---
 ## Contents
@@ -32,6 +34,8 @@ Only the `root` and a small `frontier` of nodes is stored on-chain. New leaves a
 A local merkle-tree database (off-chain) is populated with the leaves and nodes of the Tree, based on `NewLeaf` events emitted by the smart-contract.
 
 The database can then be queried, e.g. for sibling-paths in order to provide set-membership proofs to the smart-contract.
+
+**Disclaimer: Note that this code has not yet completed a security review and therefore we strongly recommend that you do not use it in production. We take no responsibility for any loss you may incur through the use of this code.**
 
 ---
 
