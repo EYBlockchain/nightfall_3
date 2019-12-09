@@ -128,9 +128,7 @@ const responseFunctions = {
 };
 
 /**
-An 'orchestrator' which oversees the various filtering steps of the filter, before a txObject is ready to be sent to the Transaction Interpreter.
-This can also be executed from the command line with:
-node -e 'require("./index").filterBlock(blockNumber)'
+An 'orchestrator' which oversees the various filtering steps of the filter
 @param {number} blockNumber
 */
 async function filterBlock(db, contractName, contractInstance, fromBlock) {

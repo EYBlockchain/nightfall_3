@@ -51,12 +51,12 @@ Returns a block matching the block number or block hash.
 async function getTransactionFromBlock(hashStringOrNumber, indexNumber) {
   console.log(`\nGetting transaction ${indexNumber} from Block ${hashStringOrNumber}`);
 
-  const txObject = await web3.eth.getTransactionFromBlock(hashStringOrNumber, indexNumber);
+  const txReceipt = await web3.eth.getTransactionFromBlock(hashStringOrNumber, indexNumber);
 
-  console.log('txObject.input:');
-  console.log(txObject.input);
+  console.log('txReceipt.input:');
+  console.log(txReceipt.input);
 
-  return txObject;
+  return txReceipt;
 }
 
 // EVENTS!!!
