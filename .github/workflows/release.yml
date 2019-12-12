@@ -1,14 +1,14 @@
 name: Release
 
 on:
-    push:
-        branches:
-            -master
+  push:
+    branches:
+      - master
 
 env:
-    REPO_NAME: timber
-    ORG_NAME: eyblockchain
-    DOCKER_REGISTRY: docker.pkg.github.com
+  REPO_NAME: timber
+  ORG_NAME: eyblockchain
+  DOCKER_REGISTRY: docker.pkg.github.com
 
 jobs:
   release:
