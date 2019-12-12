@@ -1,6 +1,6 @@
 {
   "name": "merkle-tree",
-  "version": "1.0.0",
+  "version": "0.0.0-semantically-released",
   "description": "construct and store a merkle tree from its leaves",
   "private": true,
   "main": "index.js",
