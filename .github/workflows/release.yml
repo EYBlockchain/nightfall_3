@@ -6,7 +6,7 @@ on:
       - master
 
 env:
-  REPO_NAME: timber
+  IMAGE_NAME: timber/timber
   ORG_NAME: eyblockchain
   DOCKER_REGISTRY: docker.pkg.github.com
 
@@ -27,12 +27,12 @@ jobs:
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login $DOCKER_REGISTRY -u ${{ github.actor }} --password-stdin
 
     - name: Build Docker Image
-      run: docker build . --file Dockerfile --tag $DOCKER_REGISTRY/$ORG_NAME/$REPO_NAME/$REPO_NAME
+      run: docker build . --file Dockerfile --tag $DOCKER_REGISTRY/$ORG_NAME/$IMAGE_NAME
 
     - name: docker push release
       if: steps.semantic.outputs.new-release-published == 'true'
       run: |
-        docker tag $DOCKER_REGISTRY/$ORG_NAME/$REPO_NAME/$REPO_NAME $DOCKER_REGISTRY/$ORG_NAME/$REPO_NAME/$REPO_NAME:$VERSION_TAG
-        docker push $DOCKER_REGISTRY/$ORG_NAME/$REPO_NAME/$REPO_NAME:$VERSION_TAG
+        docker tag $DOCKER_REGISTRY/$ORG_NAME/$IMAGE_NAME $DOCKER_REGISTRY/$ORG_NAME/$IMAGE_NAME:$VERSION_TAG
+        docker push $DOCKER_REGISTRY/$ORG_NAME/$IMAGE_NAME:$VERSION_TAG
       env:
         VERSION_TAG: v${{ steps.semantic.outputs.release-version }}
