@@ -28,7 +28,7 @@ jobs:
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login $DOCKER_REGISTRY -u ${{ github.actor }} --password-stdin
 
     - name: Build Docker Image
-      run: docker build . --file Dockerfile --tag $DOCKER_REGISTRY/$ORG_NAME/$IMAGE_NAME
+      run: docker build ./merkle-tree --file Dockerfile --tag $DOCKER_REGISTRY/$ORG_NAME/$IMAGE_NAME
 
     - name: docker push release
       if: steps.semantic.outputs.new-release-published == 'true'
