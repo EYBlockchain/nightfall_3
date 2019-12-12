@@ -2,6 +2,7 @@
   "name": "merkle-tree",
   "version": "1.0.0",
   "description": "construct and store a merkle tree from its leaves",
+  "private": true,
   "main": "index.js",
   "scripts": {
     "start": "nodemon --ignore src/vkIds.json --ignore stats-config/ --ignore code/ --exec babel-node ./src/index.js",
