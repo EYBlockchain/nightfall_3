@@ -55,9 +55,13 @@ module.exports = {
   # Specify one of:
   # - 'remote' (to GET them from a remote microservice); or
   # - 'mongodb' (to get them from mongodb); or
-  # - 'default' (to get them from the app/build/contracts folder)
+  # - 'compile' (to compile the contracts from /app/build to /app/contracts)
+  # - 'default' (to get them from the /app/build/contracts folder)
   */
-  contractLocation: process.env.CONTRACT_LOCATION,
+  contractOrigin: process.env.CONTRACT_ORIGIN,
+
+  contractsPath: '/app/contracts/', // where to find contract .sol files (if applicable)
+  buildPath: '/app/build/contracts/', // where to find the contract interface json files
 
   // external contract deployment microservice (which deploys the MerkleTree.sol contract):
   deployer: {

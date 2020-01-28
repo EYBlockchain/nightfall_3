@@ -4,6 +4,10 @@
 @author iAmMichaelConnor
 */
 
+/*
+THIS FILE LOOKS TO BE DEPRECATED AND CAN BE REMOVED. The merkle-tree microservice will not deploy a contract. It will only subscribe to already-deployed contracts.
+*/
+
 import config from 'config';
 import Web3 from './web3';
 import utilsWeb3 from './utils-web3';

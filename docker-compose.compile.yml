@@ -14,12 +14,11 @@ services:
   merkle-tree:
     build:
       context: ./merkle-tree
-      dockerfile: Dockerfile
+      dockerfile: dev.Dockerfile
     restart: on-failure
     depends_on:
       - ganache
       - mongo-merkle-tree
-      - deployer # replace with external microservice's name
     volumes: # ensure relative paths are correct if embedding this microservice in another application:
       - ./merkle-tree/src:/app/src
       - ./merkle-tree/config:/app/config # mount point might be different if configuring from another application
@@ -27,8 +26,8 @@ services:
       - ./merkle-tree/.babelrc:/app/.babelrc
       - ./merkle-tree/setup-mongo-acl-for-new-users.js:/app/setup-mongo-acl-for-new-users.js
       - /var/run/docker.sock:/var/run/docker.sock
-      # - ./deployer/contracts/:/app/contracts:delegated # required if deploying contracts from within this service (if CONTRACT_ORIGIN = 'default')
-      # - ./deployer/build/:/app/build # required if CONTRACT_ORIGIN = 'default'
+      - ./deployer/contracts/:/app/contracts:consistent # required if deploying/compiling contracts from within this service (if CONTRACT_ORIGIN = 'default' or 'compile')
+      # - ./deployer/build/:/app/build:consistent # required if CONTRACT_ORIGIN = 'default'
     ports:
       - "9000:80"
     environment:
@@ -36,7 +35,7 @@ services:
       BLOCKCHAIN_PORT: 8545
       DEPLOYER_HOST: http://deployer # required if CONTRACT_ORIGIN = 'remote' - replace with external microservice's name
       DEPLOYER_PORT: 80
-      CONTRACT_ORIGIN: 'remote' # Where to find the contractInstances?
+      CONTRACT_ORIGIN: 'compile' # Where to find the contractInstances?
       # Specify one of:
       # - 'remote' (to GET a solc-compiled contract interface json from a remote microservice); or
       # - 'mongodb' (to get a solc-compiled contract interface json from mongodb); or
