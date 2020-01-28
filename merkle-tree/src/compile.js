@@ -58,40 +58,6 @@ const buildSources = () => {
   return sources;
 };
 
-// const buildSource = contractName => {
-//   const contractsFiles = fs.readdirSync(contractsPath);
-//   let source = {};
-//   console.log('CONTRACTSFILES:', contractsFiles);
-//
-//   contractsFiles.forEach(fileName => {
-//     if (contractName === path.basename(fileName, '.sol')) {
-//       // filename without '.sol'
-//       const contractFullPath = path.resolve(contractsPath, fileName);
-//       source[fileName] = {
-//         content: fs.readFileSync(contractFullPath, 'utf8'),
-//       };
-//     }
-//   });
-//
-//   console.log('source:', source);
-//   if (Object.keys(source).length === 0 && source.constructor === Object)
-//     throw new Error(`Contract ${contractName} not found in ${contractsPath}.`);
-//
-//   return source;
-// };
-
-// const input = {
-//   language: 'Solidity',
-//   sources: buildSources(),
-//   settings: {
-//     outputSelection: {
-//       '*': {
-//         '*': ['abi', 'evm.bytecode'],
-//       },
-//     },
-//   },
-// };
-
 const createSolcInput = sources => {
   const input = {
     language: 'Solidity',
@@ -127,17 +93,6 @@ const compile = (solcInstance, input) => {
   }
 };
 
-// export const compileContracts = async () => {
-//   solc.loadRemoteVersion(releases['0.5.8'].slice(8, -3), (err, solcVersion) => {
-//     if (err) {
-//       throw new Error('Error loading solc version', err);
-//     } else {
-//       console.log('solcVersion', solcVersion);
-//       compile(solcVersion);
-//     }
-//   });
-// };
-
 const loadRemoteVersionAsync = async solcVersionRelease => {
   return new Promise((resolve, reject) => {
     solc.loadRemoteVersion(solcVersionRelease, (err, solcInstance) => {
@@ -155,14 +110,6 @@ export const compileContract = async contractName => {
     const sources = buildSources();
     const input = createSolcInput(sources);
 
-    // solc.loadRemoteVersion(releases[solcVersion].slice(8, -3), (err, solcInstance) => {
-    //   if (err) {
-    //     throw new Error(`Error loading solc instance from solc version ${solcVersion}`, err);
-    //   } else {
-    //     console.log('solcInstance', solcInstance);
-    //     compile(solcInstance, input);
-    //   }
-    // });
     const solcInstance = await loadRemoteVersionAsync(releases[solcVersion].slice(8, -3));
     compile(solcInstance, input);
   } catch (err) {
