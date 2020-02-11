@@ -17,7 +17,7 @@ let coinbase;
 
 const numberOfBatches = 1;
 
-const batchSize = 10;
+const batchSize = 100;
 
 describe('MerkleTreeController2', async () => {
   contractName = 'MerkleTreeController2';
