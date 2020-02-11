@@ -5,7 +5,7 @@
   "private": true,
   "main": "index.js",
   "scripts": {
-    "start": "nodemon --ignore src/vkIds.json --ignore stats-config/ --ignore code/ --exec babel-node ./src/index.js",
+    "start": "nodemon --exec babel-node ./src/index.js",
     "test": "truffle test"
   },
   "author": "iAmMichaelConnor",

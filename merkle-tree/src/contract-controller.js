@@ -7,8 +7,8 @@
 import config from 'config';
 
 import { MetadataService } from './db/service';
-import deployer from './deployer';
 import deployerRest from './rest/deployer';
+import { compileContract } from './compile';
 import utilsWeb3 from './utils-web3';
 import utilsPoll from './utils-poll';
 import Web3 from './web3';
@@ -70,7 +70,9 @@ Gets a web3 contract instance a contract, and checks its consistency with the me
 @param {object} db - an instance of mongoose.createConnection (a 'Connection' instance in mongoose terminoligy). This contains permissions to access the merkle tree's databases.
 */
 async function getContractInstanceFromMongoDB(db, contractName) {
-  console.log(`\nsrc/contract-controller getContractInstanceFromMongoDB(db, ${contractName})`);
+  console.log(
+    `\nsrc/contract-controller getContractInstanceFromMongoDB(db, contractName=${contractName})`,
+  );
 
   const metadataService = new MetadataService(db);
 
@@ -84,31 +86,44 @@ async function getContractInstanceFromMongoDB(db, contractName) {
   return contractInstance;
 }
 
-async function getContractInstanceFromBuildFolder(db, contractName) {
-  console.log(`\nsrc/contract-controller getContractInstanceFromBuildFolder(db, ${contractName})`);
+async function getContractInstanceFromContractsFolder(db, contractName, contractAddress) {
+  console.log(
+    `\nsrc/contract-controller getContractInstanceFromContractsFolder(db, contractName=${contractName}, contractAddress=${contractAddress})`,
+  );
 
   const metadataService = new MetadataService(db);
 
-  let contractAddress = await utilsWeb3.getContractAddress(contractName);
+  // compile the contracts in /app/contracts, and save the compiled contract interface json's in /app/build.
+  await compileContract(contractName);
 
-  let contractInstance;
+  // retrieve the contract from the 'build' folder:
+  const contractInstance = await utilsWeb3.getContractInstance(contractName, contractAddress);
 
-  // 'local'
-  console.log(`The contract was deployed locally...`);
-  if (contractAddress === undefined) {
-    // if no contractAddress found in the build folder, then presumably the contract hasn't yet been deployed.
-    // Deploy the contract:
-    console.log(
-      `No contractAddress found in the contract's JSON interface. Deploying the contract...`,
+  // Then add its address to the db:
+  console.log(`Adding contractAddress ${contractAddress} to the merkle-tree's metadata db...`);
+  await metadataService.insertContractAddress({ contractAddress });
+
+  return contractInstance;
+}
+
+async function getContractInstanceFromBuildFolder(db, contractName, contractAddress) {
+  console.log(
+    `\nsrc/contract-controller getContractInstanceFromBuildFolder(db, contractName=${contractName})`,
+  );
+
+  const metadataService = new MetadataService(db);
+
+  // if no address specified in the API call, then let's try to get one from the contract's json interface in the build folder"
+  if (contractAddress === undefined)
+    contractAddress = await utilsWeb3.getContractAddress(contractName); // eslint-disable-line no-param-reassign
+
+  if (contractAddress === undefined)
+    throw new Error(
+      `No deployed contract address found in the contract interface json for ${contractName}`,
     );
 
-    contractInstance = await deployer.deploy(contractName);
-    contractAddress = contractInstance._address; // eslint-disable-line no-underscore-dangle
-    console.log(`Contract successfully deployed to ${contractAddress}.`);
-  } else {
-    // else, retrieve the contract from the 'build' folder:
-    contractInstance = await utilsWeb3.getContractInstance(contractName, contractAddress);
-  }
+  // retrieve the contract from the 'build' folder, and create a web3 contract instance:
+  const contractInstance = await utilsWeb3.getContractInstance(contractName, contractAddress);
 
   // Then add its address to the db:
   console.log(`Adding contractAddress ${contractAddress} to the merkle-tree's metadata db...`);
@@ -121,27 +136,45 @@ async function getContractInstanceFromBuildFolder(db, contractName) {
 Gets a web3 contract instance a contract, and checks its consistency with the merkle tree's existing metadata db.
 @param {object} db - an instance of mongoose.createConnection (a 'Connection' instance in mongoose terminoligy). This contains permissions to access the merkle tree's databases.
 */
-async function instantiateContract(db, contractName) {
-  console.log(`\nsrc/contract-controller instantiateContract(db, ${contractName})`);
+async function instantiateContract(db, contractName, contractAddress) {
+  console.log(
+    `\nsrc/contract-controller instantiateContract(db, contractName=${contractName}, contractAddress=${contractAddress})`,
+  );
   let contractInstance;
-  // different logic is needed depending on where the contract's interface is stored:
-  switch (config.contractLocation) {
+  // different logic is needed depending on where the contract's interface json is stored:
+  switch (config.contractOrigin) {
     case 'remote':
-      // 'remote' - get the contract from an external deployment microservice
-      console.log(`\nGetting contract from contractLocation 'remote'...`);
+      // 'remote' - get a (truffle-compiled) contract interface json, and the deployed contract address, from an external deployment microservice. A web3 contract instance is created from these components and assigned to contractInstance:
+      console.log(`\nGetting contract from contractOrigin 'remote'...`);
       contractInstance = await getContractInstanceFromRemote(db, contractName);
       break;
 
     case 'mongodb':
-      // 'mongodb' - get the contract information from mongodb (e.g. if the info had been POSTed there by some external microservice)
-      console.log(`\nGetting contract from contractLocation 'mongodb'...`);
+      // 'mongodb' - get a (truffle-comiled) contract interface json, and the deployed contract address, from mongodb (e.g. if the info had been POSTed there by some external microservice). A web3 contract instance is created from these components and assigned to contractInstance:
+      console.log(`\nGetting contract from contractOrigin 'mongodb'...`);
       contractInstance = await getContractInstanceFromMongoDB(db, contractName);
       break;
 
+    case 'compile':
+      // 'compile' - Useful if the application using Timber doesn't use truffle to generate contract interface json's. Get solidity contracts from the /app/contracts/ folder, and compile them (using truffle) at startup. A web3 contract instance is created from the compiled contract interface & deployed address and assigned to contractInstance:
+      console.log(
+        `\nCompiling the contracts from '/app/contracts/' and then getting contract from contractOrigin '/app/build/'...`,
+      );
+      contractInstance = await getContractInstanceFromContractsFolder(
+        db,
+        contractName,
+        contractAddress,
+      );
+      break;
+
     default:
-      // 'default' - get the contract JSON from the build folder
-      console.log(`\nGetting contract from contractLocation 'app/build/'...`);
-      contractInstance = await getContractInstanceFromBuildFolder(db, contractName);
+      // 'default' - get the (truffle-compiled) contract interface json from the /app/build folder. Infer the contract's address from this json file. A web3 contract instance is created from these components and assigned to contractInstance:
+      console.log(`\nGetting contract from contractOrigin '/app/build/'...`);
+      contractInstance = await getContractInstanceFromBuildFolder(
+        db,
+        contractName,
+        contractAddress,
+      );
   }
   return contractInstance;
 }

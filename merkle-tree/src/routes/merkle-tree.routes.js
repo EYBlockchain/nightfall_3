@@ -21,6 +21,7 @@ async function startEventFilter(req, res, next) {
 
   const contractName = req.headers.contractname;
   const { db } = req.user;
+  const { contractAddress } = req.body; // contractAddress is an optional parameter. Address can instead be inferred by Timber in many cases.
 
   try {
     console.log(`already started?`);
@@ -30,7 +31,11 @@ async function startEventFilter(req, res, next) {
       res.data = { message: `filter already started for ${contractName}` };
     } else {
       // get a web3 contractInstance we can work with:
-      const contractInstance = await contractController.instantiateContract(db, contractName);
+      const contractInstance = await contractController.instantiateContract(
+        db,
+        contractName,
+        contractAddress,
+      );
 
       // start an event filter on this contractInstance:
       const started = await filterController.start(db, contractName, contractInstance);
