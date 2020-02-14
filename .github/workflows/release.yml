@@ -6,9 +6,7 @@ on:
       - master
 
 env:
-  IMAGE_NAME: timber/timber
-  ORG_NAME: eyblockchain
-  DOCKER_REGISTRY: docker.pkg.github.com
+  IMAGE_REPO: eyblockchain/timber
 
 jobs:
   release:
@@ -17,23 +15,26 @@ jobs:
     steps:
     - uses: actions/checkout@v1
 
-    - name: Release
+    - name: release
       id: semantic
       uses: codfish/semantic-release-action@v1.2.1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-    - name: Docker Login
-      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login $DOCKER_REGISTRY -u ${{ github.actor }} --password-stdin
+    - name: docker login
+      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
 
-    - name: Build Docker Image
-      run: docker build ./merkle-tree --tag $DOCKER_REGISTRY/$ORG_NAME/$IMAGE_NAME
+    - name: build docker image
+      run: docker build ./merkle-tree --tag $IMAGE_REPO
+
+    - name: docker push latest
+      run: docker push $IMAGE_REPO
 
     - name: docker push release
       if: steps.semantic.outputs.new-release-published == 'true'
       run: |
-        docker tag $DOCKER_REGISTRY/$ORG_NAME/$IMAGE_NAME $DOCKER_REGISTRY/$ORG_NAME/$IMAGE_NAME:$VERSION_TAG
-        docker push $DOCKER_REGISTRY/$ORG_NAME/$IMAGE_NAME:$VERSION_TAG
+        docker tag $IMAGE_REPO $IMAGE_REPO:$VERSION_TAG
+        docker push $IMAGE_REPO:$VERSION_TAG
       env:
         VERSION_TAG: v${{ steps.semantic.outputs.release-version }}
