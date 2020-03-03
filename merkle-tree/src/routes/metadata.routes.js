@@ -84,13 +84,6 @@ async function updateLatestLeaf(req, res, next) {
 
 /**
  * Update the latestRecalculation metadata in the tree's db.
- * req.body {
- *   latestLeaf: {
- *     blockNumber: 12345678,
- *     leafIndex: 87654321,
- *     root: '0xabc1234',
- *   }
- * }
  * @param {*} req
  * @param {*} res
  */

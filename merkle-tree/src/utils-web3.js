@@ -156,17 +156,12 @@ async function subscribeToEvent(
 ) {
   console.log(`\nSubscribing to event...`);
   console.log(`contractName`, contractName);
-  // console.log(`contractInstance:`, contractInstance);
-  console.log(`deployedAddress`, deployedAddress);
   console.log(`eventName`, eventName);
   console.log(`fromBlock`, fromBlock);
-  // console.log(`responder`, responder);
-  // console.log(`responseFunction`, responseFunction);
-  // console.log(`responseFunctionArgs`, responseFunctionArgs);
 
   if (!contractInstance) {
     console.log(
-      `Contract instance not provided. Generating a contractInstance from the contractName and deployedAddress...`,
+      `Contract instance not provided. Generating a contractInstance from the contractName ${contractName} and deployedAddress ${deployedAddress}...`,
     );
     contractInstance = getContractInstance(contractName, deployedAddress); // eslint-disable-line no-param-reassign
   } else {

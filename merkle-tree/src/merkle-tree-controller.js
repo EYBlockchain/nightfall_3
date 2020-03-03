@@ -204,7 +204,8 @@ async function update(db) {
   let { latestLeaf } = await updateLatestLeaf(db);
 
   // get the latest recalculation metadata (to know how up-to-date the nodes of our tree actually are):
-  let { latestRecalculation } = (await metadataService.getLatestRecalculation()) || {};
+  let { latestRecalculation } = await metadataService.getLatestRecalculation();
+  latestRecalculation = latestRecalculation === undefined ? {} : latestRecalculation;
 
   const latestRecalculationLeafIndex =
     latestRecalculation.leafIndex === undefined ? 0 : Number(latestRecalculation.leafIndex);
@@ -227,7 +228,9 @@ async function update(db) {
     );
     console.log(`\n${numberOfHashes} hashes are required to update the tree...\n\n\n\n\n`);
 
-    const { frontier } = latestRecalculation || [];
+    let { frontier } = latestRecalculation;
+    frontier = frontier === undefined ? [] : frontier;
+
     const leaves = await leafService.getLeavesByLeafIndexRange(fromLeafIndex, toLeafIndex);
     const leafValues = leaves.map(leaf => leaf.value);
     const currentLeafCount = fromLeafIndex;

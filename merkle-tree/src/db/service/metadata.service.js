@@ -162,11 +162,13 @@ export default class MetadataService {
   async getLatestRecalculation() {
     console.log('\nsrc/db/service/metadata.service getLatestRecalculation()');
 
-    const doc = await this.db.getDoc(
+    let doc = await this.db.getDoc(
       COLLECTIONS.METADATA,
       { _id: 1 }, // 'match all' (within our one document)
       ['latestRecalculation', '-_id'], // return only the 'latestRecalculation' key (and exclude the _id key)
     );
+
+    doc = doc || {};
 
     return doc;
   }

@@ -26,7 +26,8 @@ const getSolcVersion = contractName => {
     }
   });
 
-  console.log('source:', source);
+  // console.log('source:', source);
+
   if (Object.keys(source).length === 0 && source.constructor === Object)
     throw new Error(`Contract ${contractName} not found in ${contractsPath}.`);
 
@@ -53,7 +54,7 @@ const buildSources = () => {
     }
   });
 
-  console.log('SOURCES:', sources);
+  // console.log('SOURCES:', sources);
 
   return sources;
 };
@@ -75,7 +76,7 @@ const createSolcInput = sources => {
 
 const compile = (solcInstance, input) => {
   const compiledOutput = solcInstance.compile(JSON.stringify(input));
-  console.log('COMPILED OUTPUT:', compiledOutput);
+  console.log('COMPILED OUTPUT:', JSON.parse(compiledOutput).errors || 'no errors :)');
 
   const compiledContracts = JSON.parse(compiledOutput).contracts;
 
@@ -98,7 +99,6 @@ const loadRemoteVersionAsync = async solcVersionRelease => {
     solc.loadRemoteVersion(solcVersionRelease, (err, solcInstance) => {
       if (err) {
         reject(err);
-        // throw new Error(`Error loading solc instance from solc version ${solcVersionRelease}`, err);
       } else resolve(solcInstance);
     });
   });

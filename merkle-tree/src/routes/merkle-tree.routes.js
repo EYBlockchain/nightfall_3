@@ -9,6 +9,7 @@ import filterController from '../filter-controller';
 import merkleTreeController from '../merkle-tree-controller';
 
 const alreadyStarted = {}; // initialises as false
+const alreadyStarting = {}; // initialises as false
 
 /**
  * Updates the entire tree based on the latest-stored leaves.
@@ -24,12 +25,15 @@ async function startEventFilter(req, res, next) {
   const { contractAddress } = req.body; // contractAddress is an optional parameter. Address can instead be inferred by Timber in many cases.
 
   try {
-    console.log(`already started?`);
-    console.log(alreadyStarted);
-
     if (alreadyStarted[contractName]) {
       res.data = { message: `filter already started for ${contractName}` };
+    } else if (alreadyStarting[contractName]) {
+      res.data = {
+        message: `filter is already in the process of being started for ${contractName}`,
+      };
     } else {
+      alreadyStarting[contractName] = true;
+      console.log(`starting filter for ${contractName}`);
       // get a web3 contractInstance we can work with:
       const contractInstance = await contractController.instantiateContract(
         db,
@@ -41,11 +45,13 @@ async function startEventFilter(req, res, next) {
       const started = await filterController.start(db, contractName, contractInstance);
 
       alreadyStarted[contractName] = started; // true/false
+      alreadyStarting[contractName] = false;
 
       res.data = { message: 'filter started' };
     }
     next();
   } catch (err) {
+    alreadyStarting[contractName] = false;
     next(err);
   }
 }
