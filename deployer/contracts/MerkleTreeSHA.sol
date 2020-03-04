@@ -7,7 +7,7 @@ The intention is for other 'derived' contracts to import this contract, and for 
 
 pragma solidity ^0.5.8;
 
-contract MerkleTree {
+contract MerkleTreeSHA {
 
     /*
     @notice Explanation of the Merkle Tree in this contract:

@@ -167,6 +167,7 @@ async function subscribeToEvent(
   } else {
     console.log(`Contract instance provided.`);
     deployedAddress = contractInstance._address; // eslint-disable-line no-param-reassign, no-underscore-dangle
+    console.log(deployedAddress);
   }
 
   /*

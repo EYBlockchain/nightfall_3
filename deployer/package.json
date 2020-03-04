@@ -14,6 +14,7 @@
   ],
   "dependencies": {
     "body-parser": "^1.19.0",
+    "big-integer": "^1.6.47",
     "express": "^4.17.1",
     "request": "^2.88.0",
     "cors": "^2.8.5",

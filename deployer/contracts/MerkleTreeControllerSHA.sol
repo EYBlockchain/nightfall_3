@@ -5,9 +5,9 @@ Contract to manage permissions to update the leaves of the imported MerkleTree c
 */
 pragma solidity ^0.5.8;
 
-import "./MerkleTree.sol";
+import "./MerkleTreeSHA.sol";
 
-contract MerkleTreeController2 is MerkleTree {
+contract MerkleTreeControllerSHA is MerkleTreeSHA {
 
     address public owner; // We'll demonstrate simple 'permissioning' to update leaves by only allowing the owner to update leaves.
 

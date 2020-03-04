@@ -1,5 +1,5 @@
 {
-  "contractName": "MerkleTreeController",
+  "contractName": "MerkleTreeControllerMiMC",
   "abi": [
     {
       "constant": true,
@@ -17,6 +17,48 @@
     },
     {
       "constant": true,
+      "inputs": [
+        {
+          "name": "in_msgs",
+          "type": "uint256[]"
+        },
+        {
+          "name": "in_key",
+          "type": "uint256"
+        }
+      ],
+      "name": "Hash",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "leafIndex",
+          "type": "uint256"
+        }
+      ],
+      "name": "getFrontierSlot",
+      "outputs": [
+        {
+          "name": "slot",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "constant": true,
       "inputs": [],
       "name": "leafCount",
       "outputs": [
@@ -27,6 +69,25 @@
       ],
       "payable": false,
       "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "in_msgs",
+          "type": "bytes32[2]"
+        }
+      ],
+      "name": "mimcHash2",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "pure",
       "type": "function"
     },
     {
@@ -74,6 +135,48 @@
       ],
       "payable": false,
       "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "in_x",
+          "type": "uint256"
+        },
+        {
+          "name": "in_k",
+          "type": "uint256"
+        }
+      ],
+      "name": "Encipher",
+      "outputs": [
+        {
+          "name": "out_x",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "in_msgs",
+          "type": "bytes32[]"
+        }
+      ],
+      "name": "mimcHash",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "pure",
       "type": "function"
     },
     {
@@ -179,6 +282,33 @@
       "type": "event"
     },
     {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "input",
+          "type": "bytes32[2]"
+        },
+        {
+          "indexed": false,
+          "name": "output",
+          "type": "bytes32[1]"
+        },
+        {
+          "indexed": false,
+          "name": "nodeIndex",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "name": "leafCount",
+          "type": "uint256"
+        }
+      ],
+      "name": "Output",
+      "type": "event"
+    },
+    {
       "constant": false,
       "inputs": [
         {
@@ -207,25 +337,25 @@
       "type": "function"
     }
   ],
-  "metadata": "{\"compiler\":{\"version\":\"0.5.8+commit.23d335f2\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"constant\":true,\"inputs\":[],\"name\":\"treeHeight\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"leafValues\",\"type\":\"bytes32[]\"}],\"name\":\"_insertLeaves\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"leafCount\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"leafValue\",\"type\":\"bytes32\"}],\"name\":\"insertLeaf\",\"outputs\":[{\"name\":\"root\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"leafValue\",\"type\":\"bytes32\"}],\"name\":\"_insertLeaf\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"treeWidth\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"roots\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"latestRoot\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"leafValues\",\"type\":\"bytes32[]\"}],\"name\":\"insertLeaves\",\"outputs\":[{\"name\":\"root\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"leafIndex\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"leafValue\",\"type\":\"bytes32\"},{\"indexed\":false,\"name\":\"root\",\"type\":\"bytes32\"}],\"name\":\"NewLeaf\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"minLeafIndex\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"leafValues\",\"type\":\"bytes32[]\"},{\"indexed\":false,\"name\":\"root\",\"type\":\"bytes32\"}],\"name\":\"NewLeaves\",\"type\":\"event\"}],\"devdoc\":{\"methods\":{\"_insertLeaf(bytes32)\":{\"params\":{\"leafValue\":\"- the value of the leaf being inserted.\"}},\"_insertLeaves(bytes32[])\":{\"params\":{\"leafValues\":\"- the values of the leaves being inserted.\"}},\"insertLeaf(bytes32)\":{\"params\":{\"leafValue\":\"- the value of the leaf being inserted.\"},\"return\":\"bytes32 - the root of the merkle tree, after the insert.\"},\"insertLeaves(bytes32[])\":{\"params\":{\"leafValues\":\"- the values of the leaves being inserted.\"},\"return\":\"bytes32[] - the root of the merkle tree, after all the inserts.\"}}},\"userdoc\":{\"methods\":{\"_insertLeaf(bytes32)\":{\"notice\":\"Append a leaf to the tree\"},\"_insertLeaves(bytes32[])\":{\"notice\":\"Append leaves to the tree\"},\"constructor\":\"Constructor for the MerkleTreeController contract.\",\"insertLeaf(bytes32)\":{\"notice\":\"Insert a leaf into the Merkle Tree, update the root, and update any values in the (persistently stored) frontier.\"},\"insertLeaves(bytes32[])\":{\"notice\":\"Insert multiple leaves into the Merkle Tree, and then update the root, and update any values in the (persistently stored) frontier.\"}}}},\"settings\":{\"compilationTarget\":{\"/Users/em137vl/git/nightfall-merkle-tree/nightfall/merkle-tree/deployer/contracts/MerkleTreeController.sol\":\"MerkleTreeController\"},\"evmVersion\":\"petersburg\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/Users/em137vl/git/nightfall-merkle-tree/nightfall/merkle-tree/deployer/contracts/MerkleTree.sol\":{\"keccak256\":\"0x150d81b59fcf96684f250b07e6b2e2201ed48fb0d731b755025deffdd61c95ea\",\"urls\":[\"bzzr://50ac7dc5f4a4f41fdbe2a30d159adec7514768e83746701a99d1a962940e4cbf\"]},\"/Users/em137vl/git/nightfall-merkle-tree/nightfall/merkle-tree/deployer/contracts/MerkleTreeController.sol\":{\"keccak256\":\"0x7ed0fe7910b0b14708d0b5392bc88dd14d0f4737a2f075246ae4834c943cffd3\",\"urls\":[\"bzzr://dd2ab9db15789a58a22a3de588d6e0ca775ac803c8fbe0bfe469a49c2c5d908b\"]}},\"version\":1}",
-  "bytecode": "0x6080604052602060005560005460020a600155600060281b600360006101000a8154817affffffffffffffffffffffffffffffffffffffffffffffffffffff021916908360281c021790555034801561005757600080fd5b5033602560006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff160217905550610d7a806100a86000396000f3fe608060405234801561001057600080fd5b506004361061009e5760003560e01c806376c601b11161006657806376c601b1146101c85780638da5cb5b146101e6578063ae6dead714610230578063d7b0fef114610272578063dc52bf9f146102905761009e565b806301e3e915146100a357806303ebd1d4146100c157806330e69fc31461013a5780635c8b80ab1461015857806371b625411461019a575b600080fd5b6100ab61035c565b6040518082815260200191505060405180910390f35b610138600480360360208110156100d757600080fd5b81019080803590602001906401000000008111156100f457600080fd5b82018360208201111561010657600080fd5b8035906020019184602083028401116401000000008311171561012857600080fd5b9091929391929390505050610362565b005b610142610462565b6040518082815260200191505060405180910390f35b6101846004803603602081101561016e57600080fd5b8101908080359060200190929190505050610468565b6040518082815260200191505060405180910390f35b6101c6600480360360208110156101b057600080fd5b81019080803590602001909291905050506106d2565b005b6101d0610790565b6040518082815260200191505060405180910390f35b6101ee610796565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b61025c6004803603602081101561024657600080fd5b81019080803590602001909291905050506107bc565b6040518082815260200191505060405180910390f35b61027a6107d4565b6040518082815260200191505060405180910390f35b610346600480360360208110156102a657600080fd5b81019080803590602001906401000000008111156102c357600080fd5b8201836020820111156102d557600080fd5b803590602001918460208302840111640100000000831117156102f757600080fd5b919080806020026020016040519081016040528093929190818152602001838360200280828437600081840152601f19601f8201169050808301925050505050505091929192905050506107da565b6040518082815260200191505060405180910390f35b60005481565b602560009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff1614610408576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040180806020018281038252602e815260200180610d21602e913960400191505060405180910390fd5b6000610454838380806020026020016040519081016040528093929190818152602001838360200280828437600081840152601f19601f820116905080830192505050505050506107da565b905080602781905550505050565b60025481565b6000600254600154116104c6576040517f08c379a0000000000000000000000000000000000000000000000000000000008152600401808060200182810382526023815260200180610cfe6023913960400191505060405180910390fd5b60006104d3600254610c64565b9050600060018054600254010390506000602885901b90506000806104f6610cdb565b600080600090505b600054811015610653578781141561055257856004896021811061051e57fe5b0160006101000a8154817affffffffffffffffffffffffffffffffffffffffffffffffffffff021916908360281c02179055505b60006002888161055e57fe5b0614156105df576004816021811061057257fe5b0160009054906101000a900460281b945085935060405185815284601b8201526020846036836002600019fa925082600081146105ae576105b0565bfe5b50506028836000600181106105c157fe5b6020020151901b9550600260018803816105d757fe5b049650610646565b859450600360009054906101000a900460281b935060405185815284601b8201526020846036836002600019fa9250826000811461061c5761061e565bfe5b505060288360006001811061062f57fe5b6020020151901b95506002878161064257fe5b0496505b80806001019150506104fe565b508160006001811061066157fe5b602002015197507f6a82ba2aa1d2c039c41e6e2b5a5a1090d09906f060d32af9c1ac0beff7af75c06002548a8a60405180848152602001838152602001828152602001935050505060405180910390a160026000815480929190600101919050555087975050505050505050919050565b602560009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff1614610778576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040180806020018281038252602e815260200180610d21602e913960400191505060405180910390fd5b600061078382610468565b9050806027819055505050565b60015481565b602560009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b60266020528060005260406000206000915090505481565b60275481565b600080825190506002546001541161083d576040517f08c379a0000000000000000000000000000000000000000000000000000000008152600401808060200182810382526023815260200180610cfe6023913960400191505060405180910390fd5b60025460015403811115610886576000600254600154038203905060008090505b8181101561087a5760018551038552808060010191505061085e565b50600254600154039150505b6000806000806000610896610cdb565b60008060025490505b8860025401811015610a8e5760288b6002548303815181106108bd57fe5b6020026020010151901b95506001805482010396506108db81610c64565b9750600088141561092c5785600489602181106108f457fe5b0160006101000a8154817affffffffffffffffffffffffffffffffffffffffffffffffffffff021916908360281c0217905550610a81565b6000600190505b888111610a3e5760006002898161094657fe5b0614156109ca576004600182036021811061095d57fe5b0160009054906101000a900460281b955086945060405186815285601b8201526020856036836002600019fa935083600081146109995761099b565bfe5b50506028846000600181106109ac57fe5b6020020151901b9650600260018903816109c257fe5b049750610a31565b869550600360009054906101000a900460281b945060405186815285601b8201526020856036836002600019fa93508360008114610a0757610a09565bfe5b5050602884600060018110610a1a57fe5b6020020151901b965060028881610a2d57fe5b0497505b8080600101915050610933565b508560048960218110610a4d57fe5b0160006101000a8154817affffffffffffffffffffffffffffffffffffffffffffffffffffff021916908360281c02179055505b808060010191505061089f565b5060006001880190505b6000548111610ba557600060028881610aad57fe5b061415610b315760046001820360218110610ac457fe5b0160009054906101000a900460281b945085935060405185815284601b8201526020846036836002600019fa92508260008114610b0057610b02565bfe5b5050602883600060018110610b1357fe5b6020020151901b955060026001880381610b2957fe5b049650610b98565b859450600360009054906101000a900460281b935060405185815284601b8201526020846036836002600019fa92508260008114610b6e57610b70565bfe5b5050602883600060018110610b8157fe5b6020020151901b955060028781610b9457fe5b0496505b8080600101915050610a98565b5081600060018110610bb357fe5b602002015198507f8ec50f97970775682a68d3c6f9caedf60fd82448ea40706b8b65d6c03648b9226002548b8b6040518084815260200180602001838152602001828103825284818151815260200191508051906020019060200280838360005b83811015610c2f578082015181840152602081019050610c14565b5050505090500194505050505060405180910390a1876002600082825401925050819055508898505050505050505050919050565b6000809050600160028381610c7557fe5b061415610cd6576000600190506000600290506000600182901b90505b6000841415610cd25760008183600188010381610cab57fe5b061415610cba57829350610ccd565b809150600181901b905082806001019350505b610c92565b5050505b919050565b604051806020016040528060019060208202803883398082019150509050509056fe5468657265206973206e6f207370616365206c65667420696e2074686520747265652e596f7520617265206e6f7420617574686f726973656420746f20696e766f6b6520746869732066756e6374696f6ea165627a7a72305820cd1beaa2e5dc41e61abafc9be437007cf9cd126a150e27d9e7a97a41c61685820029",
-  "deployedBytecode": "0x608060405234801561001057600080fd5b506004361061009e5760003560e01c806376c601b11161006657806376c601b1146101c85780638da5cb5b146101e6578063ae6dead714610230578063d7b0fef114610272578063dc52bf9f146102905761009e565b806301e3e915146100a357806303ebd1d4146100c157806330e69fc31461013a5780635c8b80ab1461015857806371b625411461019a575b600080fd5b6100ab61035c565b6040518082815260200191505060405180910390f35b610138600480360360208110156100d757600080fd5b81019080803590602001906401000000008111156100f457600080fd5b82018360208201111561010657600080fd5b8035906020019184602083028401116401000000008311171561012857600080fd5b9091929391929390505050610362565b005b610142610462565b6040518082815260200191505060405180910390f35b6101846004803603602081101561016e57600080fd5b8101908080359060200190929190505050610468565b6040518082815260200191505060405180910390f35b6101c6600480360360208110156101b057600080fd5b81019080803590602001909291905050506106d2565b005b6101d0610790565b6040518082815260200191505060405180910390f35b6101ee610796565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b61025c6004803603602081101561024657600080fd5b81019080803590602001909291905050506107bc565b6040518082815260200191505060405180910390f35b61027a6107d4565b6040518082815260200191505060405180910390f35b610346600480360360208110156102a657600080fd5b81019080803590602001906401000000008111156102c357600080fd5b8201836020820111156102d557600080fd5b803590602001918460208302840111640100000000831117156102f757600080fd5b919080806020026020016040519081016040528093929190818152602001838360200280828437600081840152601f19601f8201169050808301925050505050505091929192905050506107da565b6040518082815260200191505060405180910390f35b60005481565b602560009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff1614610408576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040180806020018281038252602e815260200180610d21602e913960400191505060405180910390fd5b6000610454838380806020026020016040519081016040528093929190818152602001838360200280828437600081840152601f19601f820116905080830192505050505050506107da565b905080602781905550505050565b60025481565b6000600254600154116104c6576040517f08c379a0000000000000000000000000000000000000000000000000000000008152600401808060200182810382526023815260200180610cfe6023913960400191505060405180910390fd5b60006104d3600254610c64565b9050600060018054600254010390506000602885901b90506000806104f6610cdb565b600080600090505b600054811015610653578781141561055257856004896021811061051e57fe5b0160006101000a8154817affffffffffffffffffffffffffffffffffffffffffffffffffffff021916908360281c02179055505b60006002888161055e57fe5b0614156105df576004816021811061057257fe5b0160009054906101000a900460281b945085935060405185815284601b8201526020846036836002600019fa925082600081146105ae576105b0565bfe5b50506028836000600181106105c157fe5b6020020151901b9550600260018803816105d757fe5b049650610646565b859450600360009054906101000a900460281b935060405185815284601b8201526020846036836002600019fa9250826000811461061c5761061e565bfe5b505060288360006001811061062f57fe5b6020020151901b95506002878161064257fe5b0496505b80806001019150506104fe565b508160006001811061066157fe5b602002015197507f6a82ba2aa1d2c039c41e6e2b5a5a1090d09906f060d32af9c1ac0beff7af75c06002548a8a60405180848152602001838152602001828152602001935050505060405180910390a160026000815480929190600101919050555087975050505050505050919050565b602560009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff1614610778576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040180806020018281038252602e815260200180610d21602e913960400191505060405180910390fd5b600061078382610468565b9050806027819055505050565b60015481565b602560009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b60266020528060005260406000206000915090505481565b60275481565b600080825190506002546001541161083d576040517f08c379a0000000000000000000000000000000000000000000000000000000008152600401808060200182810382526023815260200180610cfe6023913960400191505060405180910390fd5b60025460015403811115610886576000600254600154038203905060008090505b8181101561087a5760018551038552808060010191505061085e565b50600254600154039150505b6000806000806000610896610cdb565b60008060025490505b8860025401811015610a8e5760288b6002548303815181106108bd57fe5b6020026020010151901b95506001805482010396506108db81610c64565b9750600088141561092c5785600489602181106108f457fe5b0160006101000a8154817affffffffffffffffffffffffffffffffffffffffffffffffffffff021916908360281c0217905550610a81565b6000600190505b888111610a3e5760006002898161094657fe5b0614156109ca576004600182036021811061095d57fe5b0160009054906101000a900460281b955086945060405186815285601b8201526020856036836002600019fa935083600081146109995761099b565bfe5b50506028846000600181106109ac57fe5b6020020151901b9650600260018903816109c257fe5b049750610a31565b869550600360009054906101000a900460281b945060405186815285601b8201526020856036836002600019fa93508360008114610a0757610a09565bfe5b5050602884600060018110610a1a57fe5b6020020151901b965060028881610a2d57fe5b0497505b8080600101915050610933565b508560048960218110610a4d57fe5b0160006101000a8154817affffffffffffffffffffffffffffffffffffffffffffffffffffff021916908360281c02179055505b808060010191505061089f565b5060006001880190505b6000548111610ba557600060028881610aad57fe5b061415610b315760046001820360218110610ac457fe5b0160009054906101000a900460281b945085935060405185815284601b8201526020846036836002600019fa92508260008114610b0057610b02565bfe5b5050602883600060018110610b1357fe5b6020020151901b955060026001880381610b2957fe5b049650610b98565b859450600360009054906101000a900460281b935060405185815284601b8201526020846036836002600019fa92508260008114610b6e57610b70565bfe5b5050602883600060018110610b8157fe5b6020020151901b955060028781610b9457fe5b0496505b8080600101915050610a98565b5081600060018110610bb357fe5b602002015198507f8ec50f97970775682a68d3c6f9caedf60fd82448ea40706b8b65d6c03648b9226002548b8b6040518084815260200180602001838152602001828103825284818151815260200191508051906020019060200280838360005b83811015610c2f578082015181840152602081019050610c14565b5050505090500194505050505060405180910390a1876002600082825401925050819055508898505050505050505050919050565b6000809050600160028381610c7557fe5b061415610cd6576000600190506000600290506000600182901b90505b6000841415610cd25760008183600188010381610cab57fe5b061415610cba57829350610ccd565b809150600181901b905082806001019350505b610c92565b5050505b919050565b604051806020016040528060019060208202803883398082019150509050509056fe5468657265206973206e6f207370616365206c65667420696e2074686520747265652e596f7520617265206e6f7420617574686f726973656420746f20696e766f6b6520746869732066756e6374696f6ea165627a7a72305820cd1beaa2e5dc41e61abafc9be437007cf9cd126a150e27d9e7a97a41c61685820029",
-  "sourceMap": "243:1667:1:-;;;2127:2:0;2102:27;;2164:10;;2159:1;:15;2135:39;;2784:56;2769:71;;;;;;;;;;;;;;;;;;;;;;1173:56:1;8:9:-1;5:2;;;30:1;27;20:12;5:2;1173:56:1;1212:10;1204:5;;:18;;;;;;;;;;;;;;;;;;243:1667;;;;;;",
-  "deployedSourceMap": "243:1667:1:-;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;243:1667:1;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;2102:27:0;;;:::i;:::-;;;;;;;;;;;;;;;;;;;1682:226:1;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;1682:226:1;;;;;;;;;;21:11:-1;8;5:28;2:2;;;46:1;43;36:12;2:2;1682:226:1;;35:9:-1;28:4;12:14;8:25;5:40;2:2;;;58:1;55;48:12;2:2;1682:226:1;;;;;;101:9:-1;95:2;81:12;77:21;67:8;63:36;60:51;39:11;25:12;22:29;11:108;8:2;;;132:1;129;122:12;8:2;1682:226:1;;;;;;;;;;;;:::i;:::-;;2199:24:0;;;:::i;:::-;;;;;;;;;;;;;;;;;;;4197:4257;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;4197:4257:0;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;1349:209:1;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;1349:209:1;;;;;;;;;;;;;;;;;:::i;:::-;;2135:39:0;;;:::i;:::-;;;;;;;;;;;;;;;;;;;294:20:1;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;427:40;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;427:40:1;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;612:25;;;:::i;:::-;;;;;;;;;;;;;;;;;;;8760:7228:0;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;8760:7228:0;;;;;;;;;;21:11:-1;8;5:28;2:2;;;46:1;43;36:12;2:2;8760:7228:0;;35:9:-1;28:4;12:14;8:25;5:40;2:2;;;58:1;55;48:12;2:2;8760:7228:0;;;;;;101:9:-1;95:2;81:12;77:21;67:8;63:36;60:51;39:11;25:12;22:29;11:108;8:2;;;132:1;129;122:12;8:2;8760:7228:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;30:3:-1;22:6;14;1:33;99:1;93:3;85:6;81:16;74:27;137:4;133:9;126:4;121:3;117:14;113:30;106:37;;169:3;161:6;157:16;147:26;;8760:7228:0;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;2102:27;;;;:::o;1682:226:1:-;1015:5;;;;;;;;;;;1001:19;;:10;:19;;;993:78;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;1766:12;1781:24;1794:10;;1781:24;;;;;;;;;;;;;;;;;;;;;;;;;;;30:3:-1;22:6;14;1:33;99:1;93:3;85:6;81:16;74:27;137:4;133:9;126:4;121:3;117:14;113:30;106:37;;169:3;161:6;157:16;147:26;;1781:24:1;;;;;;:12;:24::i;:::-;1766:39;;1897:4;1884:10;:17;;;;1081:1;1682:226;;:::o;2199:24:0:-;;;;:::o;4197:4257::-;4252:12;4345:9;;4333;;:21;4325:69;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;4405:9;4417:26;4433:9;;4417:15;:26::i;:::-;4405:38;;4453:14;4494:1;4482:9;;4470;;:21;:25;4453:42;;4505:17;4546:2;4533:9;:15;;4505:44;;4670:17;4697:18;4725:24;;:::i;:::-;4790:12;4818:10;4831:1;4818:14;;4813:3328;4842:10;;4834:5;:18;4813:3328;;;4891:4;4882:5;:13;4878:45;;;4914:9;4897:8;4906:4;4897:14;;;;;;;;;:26;;;;;;;;;;;;;;;;;;4878:45;4959:1;4954;4942:9;:13;;;;;;:18;4938:3193;;;5026:8;5035:5;5026:15;;;;;;;;;;;;;;;;;;5014:27;;5072:9;5059:22;;6326:4;6320:11;6428:9;6421:5;6414:24;6504:10;6497:4;6490:5;6486:16;6479:36;6638:4;6630:6;6624:4;6617:5;6614:1;6610;6606:6;6595:48;6584:59;;6736:7;6749:1;6744:20;;;;6729:35;;6744:20;6753:9;6729:35;;6247:535;6833:2;6820:6;6827:1;6820:9;;;;;;;;;;;:15;;6800:36;;6952:1;6947;6935:9;:13;6934:19;;;;;;6922:31;;4938:3193;;;7165:9;7153:21;;7205:4;;;;;;;;;;;7192:17;;7367:4;7361:11;7469:9;7462:5;7455:24;7545:10;7538:4;7531:5;7527:16;7520:36;7679:4;7671:6;7665:4;7658:5;7655:1;7651;7647:6;7636:48;7625:59;;7777:7;7790:1;7785:20;;;;7770:35;;7785:20;7794:9;7770:35;;7288:535;7874:2;7861:6;7868:1;7861:9;;;;;;;;;;;:15;;7841:36;;7987:1;7975:9;:13;;;;;;7963:25;;4938:3193;4854:7;;;;;;;4813:3328;;;;8158:6;8165:1;8158:9;;;;;;;;;;;8151:16;;8183:35;8191:9;;8202;8213:4;8183:35;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;8306:9;;:11;;;;;;;;;;;;;8420:4;8413:11;;;;;;;;;4197:4257;;;:::o;1349:209:1:-;1015:5;;;;;;;;;;;1001:19;;:10;:19;;;993:78;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;1419:12;1434:21;1445:9;1434:10;:21::i;:::-;1419:36;;1547:4;1534:10;:17;;;;1081:1;1349:209;:::o;2135:39:0:-;;;;:::o;294:20:1:-;;;;;;;;;;;;;:::o;427:40::-;;;;;;;;;;;;;;;;;:::o;612:25::-;;;;:::o;8760:7228:0:-;8827:12;8851:19;8873:10;:17;8851:39;;8969:9;;8957;;:21;8949:69;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;9061:9;;9049;;:21;9032:14;:38;9028:728;;;9086:25;9144:9;;9132;;:21;9114:14;:40;9086:68;;9274:7;9284:1;9274:11;;9269:425;9292:20;9287:2;:25;9269:425;;;9659:1;9646:10;9640:17;9636:25;9624:10;9617:45;9314:4;;;;;;;9269:425;;;;9736:9;;9724;;:21;9707:38;;9028:728;;9766:9;9785:14;9809:17;9837;9864:18;9892:24;;:::i;:::-;9952:12;10043:14;10060:9;;10043:26;;10038:3166;10095:14;10083:9;;:26;10071:9;:38;10038:3166;;;10195:2;10158:10;10181:9;;10169;:21;10158:33;;;;;;;;;;;;;;:39;;10138:60;;10248:1;10236:9;;10224;:21;:25;10212:37;;10311:26;10327:9;10311:15;:26::i;:::-;10304:33;;10431:1;10423:4;:9;10419:121;;;10469:9;10452:8;10461:4;10452:14;;;;;;;;;:26;;;;;;;;;;;;;;;;;;10517:8;;10419:121;10645:10;10658:1;10645:14;;10640:2493;10670:4;10661:5;:13;10640:2493;;10724:1;10719;10707:9;:13;;;;;;:18;10703:2416;;;10799:8;10816:1;10808:5;:9;10799:19;;;;;;;;;;;;;;;;;;10787:31;;10853:9;10840:22;;11153:4;11147:11;11259:9;11252:5;11245:24;11339:10;11332:4;11325:5;11321:16;11314:36;11477:4;11469:6;11463:4;11456:5;11453:1;11449;11445:6;11434:48;11423:59;;11583:7;11596:1;11591:20;;;;11576:35;;11591:20;11600:9;11576:35;;11066:567;11799:2;11786:6;11793:1;11786:9;;;;;;;;;;;:15;;11766:36;;11922:1;11917;11905:9;:13;11904:19;;;;;;11892:31;;10703:2416;;;12047:9;12035:21;;12091:4;;;;;;;;;;;12078:17;;12268:4;12262:11;12374:9;12367:5;12360:24;12454:10;12447:4;12440:5;12436:16;12429:36;12592:4;12584:6;12578:4;12571:5;12568:1;12564;12560:6;12549:48;12538:59;;12698:7;12711:1;12706:20;;;;12691:35;;12706:20;12715:9;12691:35;;12181:567;12914:2;12901:6;12908:1;12901:9;;;;;;;;;;;:15;;12881:36;;13031:1;13019:9;:13;;;;;;13007:25;;10703:2416;10676:7;;;;;;;10640:2493;;;;13163:9;13146:8;13155:4;13146:14;;;;;;;;;:26;;;;;;;;;;;;;;;;;;10038:3166;10111:11;;;;;;;10038:3166;;;;13374:10;13394:1;13387:4;:8;13374:21;;13369:2287;13406:10;;13397:5;:19;13369:2287;;13463:1;13458;13446:9;:13;;;;;;:18;13442:2204;;;13530:8;13547:1;13539:5;:9;13530:19;;;;;;;;;;;;;;;;;;13518:31;;13580:9;13567:22;;13746:4;13740:11;13848:9;13841:5;13834:24;13924:10;13917:4;13910:5;13906:16;13899:36;14058:4;14050:6;14044:4;14037:5;14034:1;14030;14026:6;14015:48;14004:59;;14156:7;14169:1;14164:20;;;;14149:35;;14164:20;14173:9;14149:35;;13667:535;14360:2;14347:6;14354:1;14347:9;;;;;;;;;;;:15;;14327:36;;14479:1;14474;14462:9;:13;14461:19;;;;;;14449:31;;13442:2204;;;14633:9;14621:21;;14673:4;;;;;;;;;;;14660:17;;14834:4;14828:11;14936:9;14929:5;14922:24;15012:10;15005:4;14998:5;14994:16;14987:36;15146:4;15138:6;15132:4;15125:5;15122:1;15118;15114:6;15103:48;15092:59;;15244:7;15257:1;15252:20;;;;15237:35;;15252:20;15261:9;15237:35;;14755:535;15448:2;15435:6;15442:1;15435:9;;;;;;;;;;;:15;;15415:36;;15561:1;15549:9;:13;;;;;;15537:25;;13442:2204;13418:7;;;;;;;13369:2287;;;;15673:6;15680:1;15673:9;;;;;;;;;;;15666:16;;15698:38;15708:9;;15719:10;15731:4;15698:38;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;23:1:-1;8:100;33:3;30:1;27:10;8:100;;;99:1;94:3;90:11;84:18;80:1;75:3;71:11;64:39;52:2;49:1;45:10;40:15;;8:100;;;12:14;15698:38:0;;;;;;;;;;;;;;;;;;;15837:14;15824:9;;:27;;;;;;;;;;;15954:4;15947:11;;;;;;;;;;8760:7228;;;:::o;3405:515::-;3468:9;3496:1;3489:8;;3529:1;3524;3512:9;:13;;;;;;:18;3507:407;;;3547:9;3559:1;3547:13;;3574:9;3586:1;3574:13;;3601:9;3621:1;3613:4;:9;;3601:21;;3636:268;3651:1;3643:4;:9;3636:268;;;3710:1;3702:4;3694;3690:1;3678:9;:13;:20;3677:29;;;;;;:34;3672:218;;;3743:4;3736:11;;3672:218;;;3801:4;3794:11;;3842:1;3834:4;:9;;3827:16;;3865:6;;;;;;;3672:218;3636:268;;;3507:407;;;;3405:515;;;:::o;243:1667:1:-;;;;;;;;;;;29:2:-1;21:6;17:15;117:4;105:10;97:6;88:34;148:4;140:6;136:17;126:27;;0:157;243:1667:1;;;;:::o",
-  "source": "/**\nContract to manage permissions to update the leaves of the imported MerkleTree contract (which is the base contract which handles tree inserts and updates).\n\n@Author iAmMichaelConnor\n*/\npragma solidity ^0.5.8;\n\nimport \"./MerkleTree.sol\";\n\ncontract MerkleTreeController is MerkleTree {\n\n    address public owner; // We'll demonstrate simple 'permissioning' to update leaves by only allowing the owner to update leaves.\n\n    mapping(bytes32 => bytes32) public roots; // Example of a way to hold every root that's been calculated by this contract. This isn't actually used by this simple example-contract.\n\n    bytes32 public latestRoot; // Example of a way to hold the latest root so that users can retrieve it. This isn't actually used by this simple example-contract.\n\n    /**\n    We'll demonstrate simple 'permissioning' to update leaves by only allowing the owner to update leaves.\n    @dev Throws if called by any account other than the owner.\n    */\n    modifier onlyOwner() {\n        require(msg.sender == owner, \"You are not authorised to invoke this function\");\n        _;\n    }\n\n    /**\n    @notice Constructor for the MerkleTreeController contract.\n    */\n    constructor() public {\n        owner = msg.sender;\n    }\n\n    /**\n    @notice Append a leaf to the tree\n    @param leafValue - the value of the leaf being inserted.\n    */\n    function _insertLeaf(bytes32 leafValue) external onlyOwner {\n\n        bytes32 root = insertLeaf(leafValue); // recalculate the root of the tree\n\n        // roots[root] = root;\n\n        latestRoot = root;\n    }\n\n    /**\n    @notice Append leaves to the tree\n    @param leafValues - the values of the leaves being inserted.\n    */\n    function _insertLeaves(bytes32[] calldata leafValues) external onlyOwner {\n\n        bytes32 root = insertLeaves(leafValues); // recalculate the root of the tree\n\n        // roots[root] = root;\n\n        latestRoot = root;\n    }\n}\n",
-  "sourcePath": "/Users/em137vl/git/nightfall-merkle-tree/nightfall/merkle-tree/deployer/contracts/MerkleTreeController.sol",
+  "metadata": "{\"compiler\":{\"version\":\"0.5.8+commit.23d335f2\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"constant\":true,\"inputs\":[],\"name\":\"treeHeight\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"leafValues\",\"type\":\"bytes32[]\"}],\"name\":\"_insertLeaves\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"in_msgs\",\"type\":\"uint256[]\"},{\"name\":\"in_key\",\"type\":\"uint256\"}],\"name\":\"Hash\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"leafIndex\",\"type\":\"uint256\"}],\"name\":\"getFrontierSlot\",\"outputs\":[{\"name\":\"slot\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"leafCount\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"in_msgs\",\"type\":\"bytes32[2]\"}],\"name\":\"mimcHash2\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"leafValue\",\"type\":\"bytes32\"}],\"name\":\"insertLeaf\",\"outputs\":[{\"name\":\"root\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"leafValue\",\"type\":\"bytes32\"}],\"name\":\"_insertLeaf\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"treeWidth\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"in_x\",\"type\":\"uint256\"},{\"name\":\"in_k\",\"type\":\"uint256\"}],\"name\":\"Encipher\",\"outputs\":[{\"name\":\"out_x\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"in_msgs\",\"type\":\"bytes32[]\"}],\"name\":\"mimcHash\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"roots\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"latestRoot\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"leafValues\",\"type\":\"bytes32[]\"}],\"name\":\"insertLeaves\",\"outputs\":[{\"name\":\"root\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"leafIndex\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"leafValue\",\"type\":\"bytes32\"},{\"indexed\":false,\"name\":\"root\",\"type\":\"bytes32\"}],\"name\":\"NewLeaf\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"minLeafIndex\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"leafValues\",\"type\":\"bytes32[]\"},{\"indexed\":false,\"name\":\"root\",\"type\":\"bytes32\"}],\"name\":\"NewLeaves\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"input\",\"type\":\"bytes32[2]\"},{\"indexed\":false,\"name\":\"output\",\"type\":\"bytes32[1]\"},{\"indexed\":false,\"name\":\"nodeIndex\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"leafCount\",\"type\":\"uint256\"}],\"name\":\"Output\",\"type\":\"event\"}],\"devdoc\":{\"methods\":{\"_insertLeaf(bytes32)\":{\"params\":{\"leafValue\":\"- the value of the leaf being inserted.\"}},\"_insertLeaves(bytes32[])\":{\"params\":{\"leafValues\":\"- the values of the leaves being inserted.\"}},\"getFrontierSlot(uint256)\":{\"return\":\"uint - the index of the frontier (or 'storage slot') into which we will next store a nodeValue\"},\"insertLeaf(bytes32)\":{\"params\":{\"leafValue\":\"- the value of the leaf being inserted.\"},\"return\":\"bytes32 - the root of the merkle tree, after the insert.\"},\"insertLeaves(bytes32[])\":{\"params\":{\"leafValues\":\"- the values of the leaves being inserted.\"},\"return\":\"bytes32[] - the root of the merkle tree, after all the inserts.\"}}},\"userdoc\":{\"methods\":{\"_insertLeaf(bytes32)\":{\"notice\":\"Append a leaf to the tree\"},\"_insertLeaves(bytes32[])\":{\"notice\":\"Append leaves to the tree\"},\"constructor\":\"Constructor for the MerkleTreeController contract.\",\"getFrontierSlot(uint256)\":{\"notice\":\"Get the index of the frontier (or 'storage slot') into which we will next store a nodeValue (based on the leafIndex currently being inserted). See the top-level README for a detailed explanation.\"},\"insertLeaf(bytes32)\":{\"notice\":\"Insert a leaf into the Merkle Tree, update the root, and update any values in the (persistently stored) frontier.\"},\"insertLeaves(bytes32[])\":{\"notice\":\"Insert multiple leaves into the Merkle Tree, and then update the root, and update any values in the (persistently stored) frontier.\"}}}},\"settings\":{\"compilationTarget\":{\"/Users/miranda.Wooduk.ey.com/nightfallmimc/timber/deployer/contracts/MerkleTreeControllerMiMC.sol\":\"MerkleTreeControllerMiMC\"},\"evmVersion\":\"petersburg\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/Users/miranda.Wooduk.ey.com/nightfallmimc/timber/deployer/contracts/MerkleTreeControllerMiMC.sol\":{\"keccak256\":\"0xc38e6f8dfa1cd396f2c5fd4af3cbb968ffa9fbd3d142956e4a50babd10c18cca\",\"urls\":[\"bzzr://6b6c80e1bdfe487a58979c68a9cd6ad24ef22b505382ea93748b6213658fe8c2\"]},\"/Users/miranda.Wooduk.ey.com/nightfallmimc/timber/deployer/contracts/MerkleTreeMiMC.sol\":{\"keccak256\":\"0x15d0680848ce7332d918df338c6f0ddcfc6602b17416e1ac1a7c44eccd4417a6\",\"urls\":[\"bzzr://9a53b8e6639245b46f18bfb06d907e07f88dca179ef485cbf619b674ec7377ca\"]},\"/Users/miranda.Wooduk.ey.com/nightfallmimc/timber/deployer/contracts/MiMC.sol\":{\"keccak256\":\"0x57401a5d7432c227161d716e85a1592fe88150412d0922a580c88bf182084c29\",\"urls\":[\"bzzr://2c45845beaafaa56aa96b1b34faeaa1a145bdc2caa33e6104d46116758103b19\"]}},\"version\":1}",
+  "bytecode": "0x6080604052602060005560005460020a6001556000801b60035534801561002557600080fd5b5033602560006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055506113a8806100766000396000f3fe608060405234801561001057600080fd5b50600436106100f55760003560e01c806371b6254111610097578063aa0324a011610066578063aa0324a014610464578063ae6dead714610530578063d7b0fef114610572578063dc52bf9f14610590576100f5565b806371b625411461038257806376c601b1146103b05780638da5cb5b146103ce57806396d8d82014610418576100f5565b80632a3a8183116100d35780632a3a81831461026757806330e69fc3146102a9578063599a29e4146102c75780635c8b80ab14610340576100f5565b806301e3e915146100fa57806303ebd1d4146101185780630fa16e3814610191575b600080fd5b61010261065c565b6040518082815260200191505060405180910390f35b61018f6004803603602081101561012e57600080fd5b810190808035906020019064010000000081111561014b57600080fd5b82018360208201111561015d57600080fd5b8035906020019184602083028401116401000000008311171561017f57600080fd5b9091929391929390505050610662565b005b610251600480360360408110156101a757600080fd5b81019080803590602001906401000000008111156101c457600080fd5b8201836020820111156101d657600080fd5b803590602001918460208302840111640100000000831117156101f857600080fd5b919080806020026020016040519081016040528093929190818152602001838360200280828437600081840152601f19601f82011690508083019250505050505050919291929080359060200190929190505050610762565b6040518082815260200191505060405180910390f35b6102936004803603602081101561027d57600080fd5b81019080803590602001909291905050506107ec565b6040518082815260200191505060405180910390f35b6102b1610863565b6040518082815260200191505060405180910390f35b61032a600480360360408110156102dd57600080fd5b8101908080604001906002806020026040519081016040528092919082600260200280828437600081840152601f19601f8201169050808301925050505050509192919290505050610869565b6040518082815260200191505060405180910390f35b61036c6004803603602081101561035657600080fd5b8101908080359060200190929190505050610912565b6040518082815260200191505060405180910390f35b6103ae6004803603602081101561039857600080fd5b8101908080359060200190929190505050610b4e565b005b6103b8610c0c565b6040518082815260200191505060405180910390f35b6103d6610c12565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b61044e6004803603604081101561042e57600080fd5b810190808035906020019092919080359060200190929190505050610c38565b6040518082815260200191505060405180910390f35b61051a6004803603602081101561047a57600080fd5b810190808035906020019064010000000081111561049757600080fd5b8201836020820111156104a957600080fd5b803590602001918460208302840111640100000000831117156104cb57600080fd5b919080806020026020016040519081016040528093929190818152602001838360200280828437600081840152601f19601f820116905080830192505050505050509192919290505050610cc2565b6040518082815260200191505060405180910390f35b61055c6004803603602081101561054657600080fd5b8101908080359060200190929190505050610d5b565b6040518082815260200191505060405180910390f35b61057a610d73565b6040518082815260200191505060405180910390f35b610646600480360360208110156105a657600080fd5b81019080803590602001906401000000008111156105c357600080fd5b8201836020820111156105d557600080fd5b803590602001918460208302840111640100000000831117156105f757600080fd5b919080806020026020016040519081016040528093929190818152602001838360200280828437600081840152601f19601f820116905080830192505050505050509192919290505050610d79565b6040518082815260200191505060405180910390f35b60005481565b602560009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff1614610708576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040180806020018281038252602e81526020018061134f602e913960400191505060405180910390fd5b6000610754838380806020026020016040519081016040528093929190818152602001838360200280828437600081840152601f19601f82011690508083019250505050505050610d79565b905080602781905550505050565b600080636d696d6360e01b90506107e384848360405160200180827bffffffffffffffffffffffffffffffffffffffffffffffffffffffff19167bffffffffffffffffffffffffffffffffffffffffffffffffffffffff191681526004019150506040516020818303038152906040528051906020012060001c605b6111bc565b91505092915050565b60008090506001600283816107fd57fe5b06141561085e576000600190506000600290506000600182901b90505b600084141561085a576000818360018801038161083357fe5b06141561084257829350610855565b809150600181901b905082806001019350505b61081a565b5050505b919050565b60025481565b60006060600260405190808252806020026020018201604052801561089d5781602001602082028038833980820191505090505b509050826000600281106108ad57fe5b602002015160001c816000815181106108c257fe5b602002602001018181525050826001600281106108db57fe5b602002015160001c816001815181106108f057fe5b602002602001018181525050610907816000610762565b60001b915050919050565b600060025460015411610970576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040180806020018281038252602381526020018061132c6023913960400191505060405180910390fd5b600061097d6002546107ec565b90506000600180546002540103905060008490506109996112e7565b6109a1611309565b60008090505b600054811015610ae257858114156109cd5783600487602181106109c757fe5b01819055505b6000600286816109d957fe5b061415610a6457600481602181106109ed57fe5b0154836000600281106109fc57fe5b6020020181815250508383600160028110610a1357fe5b602002018181525050610a2583610869565b82600060018110610a3257fe5b60200201818152505081600060018110610a4857fe5b6020020151935060026001860381610a5c57fe5b049450610ad5565b8383600060028110610a7257fe5b60200201818152505060035483600160028110610a8b57fe5b602002018181525050610a9d83610869565b82600060018110610aaa57fe5b60200201818152505081600060018110610ac057fe5b6020020151935060028581610ad157fe5b0494505b80806001019150506109a7565b508295507f6a82ba2aa1d2c039c41e6e2b5a5a1090d09906f060d32af9c1ac0beff7af75c0600254888860405180848152602001838152602001828152602001935050505060405180910390a16002600081548092919060010191905055508595505050505050919050565b602560009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff1614610bf4576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040180806020018281038252602e81526020018061134f602e913960400191505060405180910390fd5b6000610bff82610912565b9050806027819055505050565b60015481565b602560009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b600080636d696d6360e01b9050610cb984848360405160200180827bffffffffffffffffffffffffffffffffffffffffffffffffffffffff19167bffffffffffffffffffffffffffffffffffffffffffffffffffffffff191681526004019150506040516020818303038152906040528051906020012060001c605b61125b565b91505092915050565b600060608251604051908082528060200260200182016040528015610cf65781602001602082028038833980820191505090505b50905060008090505b8351811015610d4457838181518110610d1457fe5b602002602001015160001c828281518110610d2b57fe5b6020026020010181815250508080600101915050610cff565b50610d50816000610762565b60001b915050919050565b60266020528060005260406000206000915090505481565b60275481565b6000808251905060025460015411610ddc576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040180806020018281038252602381526020018061132c6023913960400191505060405180910390fd5b60025460015403811115610e25576000600254600154038203905060008090505b81811015610e1957600185510385528080600101915050610dfd565b50600254600154039150505b6000806000610e326112e7565b610e3a611309565b600060025490505b8660025401811015610fe55788600254820381518110610e5e57fe5b60200260200101519350600180548201039450610e7a816107ec565b95506000861415610e9d578360048760218110610e9357fe5b0181905550610fd8565b6000600190505b868111610fc357600060028781610eb757fe5b061415610f455760046001820360218110610ece57fe5b015484600060028110610edd57fe5b6020020181815250508484600160028110610ef457fe5b602002018181525050610f0684610869565b83600060018110610f1357fe5b60200201818152505082600060018110610f2957fe5b6020020151945060026001870381610f3d57fe5b049550610fb6565b8484600060028110610f5357fe5b60200201818152505060035484600160028110610f6c57fe5b602002018181525050610f7e84610869565b83600060018110610f8b57fe5b60200201818152505082600060018110610fa157fe5b6020020151945060028681610fb257fe5b0495505b8080600101915050610ea4565b508360048760218110610fd257fe5b01819055505b8080600101915050610e42565b5060006001860190505b60005481116111105760006002868161100457fe5b061415611092576004600182036021811061101b57fe5b01548360006002811061102a57fe5b602002018181525050838360016002811061104157fe5b60200201818152505061105383610869565b8260006001811061106057fe5b6020020181815250508160006001811061107657fe5b602002015193506002600186038161108a57fe5b049450611103565b83836000600281106110a057fe5b602002018181525050600354836001600281106110b957fe5b6020020181815250506110cb83610869565b826000600181106110d857fe5b602002018181525050816000600181106110ee57fe5b60200201519350600285816110ff57fe5b0494505b8080600101915050610fef565b508296507f8ec50f97970775682a68d3c6f9caedf60fd82448ea40706b8b65d6c03648b92260025489896040518084815260200180602001838152602001828103825284818151815260200191508051906020019060200280838360005b8381101561118957808201518184015260208101905061116e565b5050505090500194505050505060405180910390a185600260008282540192505081905550869650505050505050919050565b60008084905060007f30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001905060008090505b875181101561124d578161121689838151811061120657fe5b602002602001015185898961125b565b838a848151811061122357fe5b60200260200101518161123257fe5b068501018161123d57fe5b06925080806001019150506111ed565b829350505050949350505050565b6000600182101561126b57600080fd5b604051602081016040528381527f30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001600080855b60008111156112d45760208520855283898587518d0808925083838409915083838586858609850909995060018103905061129e565b5082888a08945050505050949350505050565b6040518060400160405280600290602082028038833980820191505090505090565b604051806020016040528060019060208202803883398082019150509050509056fe5468657265206973206e6f207370616365206c65667420696e2074686520747265652e596f7520617265206e6f7420617574686f726973656420746f20696e766f6b6520746869732066756e6374696f6ea165627a7a72305820592729d34d6173553efa715b7baf489b3cff6df1e02aeba7d4502cd1804f63770029",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100f55760003560e01c806371b6254111610097578063aa0324a011610066578063aa0324a014610464578063ae6dead714610530578063d7b0fef114610572578063dc52bf9f14610590576100f5565b806371b625411461038257806376c601b1146103b05780638da5cb5b146103ce57806396d8d82014610418576100f5565b80632a3a8183116100d35780632a3a81831461026757806330e69fc3146102a9578063599a29e4146102c75780635c8b80ab14610340576100f5565b806301e3e915146100fa57806303ebd1d4146101185780630fa16e3814610191575b600080fd5b61010261065c565b6040518082815260200191505060405180910390f35b61018f6004803603602081101561012e57600080fd5b810190808035906020019064010000000081111561014b57600080fd5b82018360208201111561015d57600080fd5b8035906020019184602083028401116401000000008311171561017f57600080fd5b9091929391929390505050610662565b005b610251600480360360408110156101a757600080fd5b81019080803590602001906401000000008111156101c457600080fd5b8201836020820111156101d657600080fd5b803590602001918460208302840111640100000000831117156101f857600080fd5b919080806020026020016040519081016040528093929190818152602001838360200280828437600081840152601f19601f82011690508083019250505050505050919291929080359060200190929190505050610762565b6040518082815260200191505060405180910390f35b6102936004803603602081101561027d57600080fd5b81019080803590602001909291905050506107ec565b6040518082815260200191505060405180910390f35b6102b1610863565b6040518082815260200191505060405180910390f35b61032a600480360360408110156102dd57600080fd5b8101908080604001906002806020026040519081016040528092919082600260200280828437600081840152601f19601f8201169050808301925050505050509192919290505050610869565b6040518082815260200191505060405180910390f35b61036c6004803603602081101561035657600080fd5b8101908080359060200190929190505050610912565b6040518082815260200191505060405180910390f35b6103ae6004803603602081101561039857600080fd5b8101908080359060200190929190505050610b4e565b005b6103b8610c0c565b6040518082815260200191505060405180910390f35b6103d6610c12565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b61044e6004803603604081101561042e57600080fd5b810190808035906020019092919080359060200190929190505050610c38565b6040518082815260200191505060405180910390f35b61051a6004803603602081101561047a57600080fd5b810190808035906020019064010000000081111561049757600080fd5b8201836020820111156104a957600080fd5b803590602001918460208302840111640100000000831117156104cb57600080fd5b919080806020026020016040519081016040528093929190818152602001838360200280828437600081840152601f19601f820116905080830192505050505050509192919290505050610cc2565b6040518082815260200191505060405180910390f35b61055c6004803603602081101561054657600080fd5b8101908080359060200190929190505050610d5b565b6040518082815260200191505060405180910390f35b61057a610d73565b6040518082815260200191505060405180910390f35b610646600480360360208110156105a657600080fd5b81019080803590602001906401000000008111156105c357600080fd5b8201836020820111156105d557600080fd5b803590602001918460208302840111640100000000831117156105f757600080fd5b919080806020026020016040519081016040528093929190818152602001838360200280828437600081840152601f19601f820116905080830192505050505050509192919290505050610d79565b6040518082815260200191505060405180910390f35b60005481565b602560009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff1614610708576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040180806020018281038252602e81526020018061134f602e913960400191505060405180910390fd5b6000610754838380806020026020016040519081016040528093929190818152602001838360200280828437600081840152601f19601f82011690508083019250505050505050610d79565b905080602781905550505050565b600080636d696d6360e01b90506107e384848360405160200180827bffffffffffffffffffffffffffffffffffffffffffffffffffffffff19167bffffffffffffffffffffffffffffffffffffffffffffffffffffffff191681526004019150506040516020818303038152906040528051906020012060001c605b6111bc565b91505092915050565b60008090506001600283816107fd57fe5b06141561085e576000600190506000600290506000600182901b90505b600084141561085a576000818360018801038161083357fe5b06141561084257829350610855565b809150600181901b905082806001019350505b61081a565b5050505b919050565b60025481565b60006060600260405190808252806020026020018201604052801561089d5781602001602082028038833980820191505090505b509050826000600281106108ad57fe5b602002015160001c816000815181106108c257fe5b602002602001018181525050826001600281106108db57fe5b602002015160001c816001815181106108f057fe5b602002602001018181525050610907816000610762565b60001b915050919050565b600060025460015411610970576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040180806020018281038252602381526020018061132c6023913960400191505060405180910390fd5b600061097d6002546107ec565b90506000600180546002540103905060008490506109996112e7565b6109a1611309565b60008090505b600054811015610ae257858114156109cd5783600487602181106109c757fe5b01819055505b6000600286816109d957fe5b061415610a6457600481602181106109ed57fe5b0154836000600281106109fc57fe5b6020020181815250508383600160028110610a1357fe5b602002018181525050610a2583610869565b82600060018110610a3257fe5b60200201818152505081600060018110610a4857fe5b6020020151935060026001860381610a5c57fe5b049450610ad5565b8383600060028110610a7257fe5b60200201818152505060035483600160028110610a8b57fe5b602002018181525050610a9d83610869565b82600060018110610aaa57fe5b60200201818152505081600060018110610ac057fe5b6020020151935060028581610ad157fe5b0494505b80806001019150506109a7565b508295507f6a82ba2aa1d2c039c41e6e2b5a5a1090d09906f060d32af9c1ac0beff7af75c0600254888860405180848152602001838152602001828152602001935050505060405180910390a16002600081548092919060010191905055508595505050505050919050565b602560009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff1614610bf4576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040180806020018281038252602e81526020018061134f602e913960400191505060405180910390fd5b6000610bff82610912565b9050806027819055505050565b60015481565b602560009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b600080636d696d6360e01b9050610cb984848360405160200180827bffffffffffffffffffffffffffffffffffffffffffffffffffffffff19167bffffffffffffffffffffffffffffffffffffffffffffffffffffffff191681526004019150506040516020818303038152906040528051906020012060001c605b61125b565b91505092915050565b600060608251604051908082528060200260200182016040528015610cf65781602001602082028038833980820191505090505b50905060008090505b8351811015610d4457838181518110610d1457fe5b602002602001015160001c828281518110610d2b57fe5b6020026020010181815250508080600101915050610cff565b50610d50816000610762565b60001b915050919050565b60266020528060005260406000206000915090505481565b60275481565b6000808251905060025460015411610ddc576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040180806020018281038252602381526020018061132c6023913960400191505060405180910390fd5b60025460015403811115610e25576000600254600154038203905060008090505b81811015610e1957600185510385528080600101915050610dfd565b50600254600154039150505b6000806000610e326112e7565b610e3a611309565b600060025490505b8660025401811015610fe55788600254820381518110610e5e57fe5b60200260200101519350600180548201039450610e7a816107ec565b95506000861415610e9d578360048760218110610e9357fe5b0181905550610fd8565b6000600190505b868111610fc357600060028781610eb757fe5b061415610f455760046001820360218110610ece57fe5b015484600060028110610edd57fe5b6020020181815250508484600160028110610ef457fe5b602002018181525050610f0684610869565b83600060018110610f1357fe5b60200201818152505082600060018110610f2957fe5b6020020151945060026001870381610f3d57fe5b049550610fb6565b8484600060028110610f5357fe5b60200201818152505060035484600160028110610f6c57fe5b602002018181525050610f7e84610869565b83600060018110610f8b57fe5b60200201818152505082600060018110610fa157fe5b6020020151945060028681610fb257fe5b0495505b8080600101915050610ea4565b508360048760218110610fd257fe5b01819055505b8080600101915050610e42565b5060006001860190505b60005481116111105760006002868161100457fe5b061415611092576004600182036021811061101b57fe5b01548360006002811061102a57fe5b602002018181525050838360016002811061104157fe5b60200201818152505061105383610869565b8260006001811061106057fe5b6020020181815250508160006001811061107657fe5b602002015193506002600186038161108a57fe5b049450611103565b83836000600281106110a057fe5b602002018181525050600354836001600281106110b957fe5b6020020181815250506110cb83610869565b826000600181106110d857fe5b602002018181525050816000600181106110ee57fe5b60200201519350600285816110ff57fe5b0494505b8080600101915050610fef565b508296507f8ec50f97970775682a68d3c6f9caedf60fd82448ea40706b8b65d6c03648b92260025489896040518084815260200180602001838152602001828103825284818151815260200191508051906020019060200280838360005b8381101561118957808201518184015260208101905061116e565b5050505090500194505050505060405180910390a185600260008282540192505081905550869650505050505050919050565b60008084905060007f30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001905060008090505b875181101561124d578161121689838151811061120657fe5b602002602001015185898961125b565b838a848151811061122357fe5b60200260200101518161123257fe5b068501018161123d57fe5b06925080806001019150506111ed565b829350505050949350505050565b6000600182101561126b57600080fd5b604051602081016040528381527f30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001600080855b60008111156112d45760208520855283898587518d0808925083838409915083838586858609850909995060018103905061129e565b5082888a08945050505050949350505050565b6040518060400160405280600290602082028038833980820191505090505090565b604051806020016040528060019060208202803883398082019150509050509056fe5468657265206973206e6f207370616365206c65667420696e2074686520747265652e596f7520617265206e6f7420617574686f726973656420746f20696e766f6b6520746869732066756e6374696f6ea165627a7a72305820592729d34d6173553efa715b7baf489b3cff6df1e02aeba7d4502cd1804f63770029",
+  "sourceMap": "247:1675:0:-;;;2197:2:2;2172:27;;2268:10;;2263:1;:15;2239:39;;3011:66;2996:81;;;;1185:56:0;8:9:-1;5:2;;;30:1;27;20:12;5:2;1185:56:0;1224:10;1216:5;;:18;;;;;;;;;;;;;;;;;;247:1675;;;;;;",
+  "deployedSourceMap": "247:1675:0:-;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;247:1675:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;2172:27:2;;;:::i;:::-;;;;;;;;;;;;;;;;;;;1694:226:0;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;1694:226:0;;;;;;;;;;21:11:-1;8;5:28;2:2;;;46:1;43;36:12;2:2;1694:226:0;;35:9:-1;28:4;12:14;8:25;5:40;2:2;;;58:1;55;48:12;2:2;1694:226:0;;;;;;101:9:-1;95:2;81:12;77:21;67:8;63:36;60:51;39:11;25:12;22:29;11:108;8:2;;;132:1;129;122:12;8:2;1694:226:0;;;;;;;;;;;;:::i;:::-;;2502:259:4;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;2502:259:4;;;;;;;;;;21:11:-1;8;5:28;2:2;;;46:1;43;36:12;2:2;2502:259:4;;35:9:-1;28:4;12:14;8:25;5:40;2:2;;;58:1;55;48:12;2:2;2502:259:4;;;;;;101:9:-1;95:2;81:12;77:21;67:8;63:36;60:51;39:11;25:12;22:29;11:108;8:2;;;132:1;129;122:12;8:2;2502:259:4;;;;;;;;;;;;;;;;;;;;;;;;;;;;;30:3:-1;22:6;14;1:33;99:1;93:3;85:6;81:16;74:27;137:4;133:9;126:4;121:3;117:14;113:30;106:37;;169:3;161:6;157:16;147:26;;2502:259:4;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;3575:514:2;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;3575:514:2;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;2303:24;;;:::i;:::-;;;;;;;;;;;;;;;;;;;3120:369:4;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;3120:369:4;;;;;;;;;;;;;;;;;;;;;;;;;;;30:3:-1;22:6;14;1:33;99:1;93:3;85:6;81:16;74:27;137:4;133:9;126:4;121:3;117:14;113:30;106:37;;169:3;161:6;157:16;147:26;;3120:369:4;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;4366:2311:2;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;4366:2311:2;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;1361:209:0;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;1361:209:0;;;;;;;;;;;;;;;;;:::i;:::-;;2239:39:2;;;:::i;:::-;;;;;;;;;;;;;;;;;;;306:20:0;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;463:246:4;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;463:246:4;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;2767:347;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;2767:347:4;;;;;;;;;;21:11:-1;8;5:28;2:2;;;46:1;43;36:12;2:2;2767:347:4;;35:9:-1;28:4;12:14;8:25;5:40;2:2;;;58:1;55;48:12;2:2;2767:347:4;;;;;;101:9:-1;95:2;81:12;77:21;67:8;63:36;60:51;39:11;25:12;22:29;11:108;8:2;;;132:1;129;122:12;8:2;2767:347:4;;;;;;;;;;;;;;;;;;;;;;;;;;;;;30:3:-1;22:6;14;1:33;99:1;93:3;85:6;81:16;74:27;137:4;133:9;126:4;121:3;117:14;113:30;106:37;;169:3;161:6;157:16;147:26;;2767:347:4;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;439:40:0;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;439:40:0;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;624:25;;;:::i;:::-;;;;;;;;;;;;;;;;;;;6983:5187:2;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;6983:5187:2;;;;;;;;;;21:11:-1;8;5:28;2:2;;;46:1;43;36:12;2:2;6983:5187:2;;35:9:-1;28:4;12:14;8:25;5:40;2:2;;;58:1;55;48:12;2:2;6983:5187:2;;;;;;101:9:-1;95:2;81:12;77:21;67:8;63:36;60:51;39:11;25:12;22:29;11:108;8:2;;;132:1;129;122:12;8:2;6983:5187:2;;;;;;;;;;;;;;;;;;;;;;;;;;;;;30:3:-1;22:6;14;1:33;99:1;93:3;85:6;81:16;74:27;137:4;133:9;126:4;121:3;117:14;113:30;106:37;;169:3;161:6;157:16;147:26;;6983:5187:2;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;2172:27;;;;:::o;1694:226:0:-;1027:5;;;;;;;;;;;1013:19;;:10;:19;;;1005:78;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;1778:12;1793:24;1806:10;;1793:24;;;;;;;;;;;;;;;;;;;;;;;;;;;30:3:-1;22:6;14;1:33;99:1;93:3;85:6;81:16;74:27;137:4;133:9;126:4;121:3;117:14;113:30;106:37;;169:3;161:6;157:16;147:26;;1793:24:0;;;;;;:12;:24::i;:::-;1778:39;;1909:4;1896:10;:17;;;;1093:1;1694:226;;:::o;2502:259:4:-;2589:7;2612:11;2626:10;2612:24;;;;2677:77;2689:7;2698:6;2741:4;2724:22;;;;;;;;;;;;;;;;;;;;;49:4:-1;39:7;30;26:21;22:32;13:7;6:49;2724:22:4;;;2714:33;;;;;;2706:42;;2750:2;2677:10;:77::i;:::-;2670:84;;;2502:259;;;;:::o;3575:514:2:-;3637:9;3665:1;3658:8;;3698:1;3693;3681:9;:13;;;;;;:18;3676:407;;;3716:9;3728:1;3716:13;;3743:9;3755:1;3743:13;;3770:9;3790:1;3782:4;:9;;3770:21;;3805:268;3820:1;3812:4;:9;3805:268;;;3879:1;3871:4;3863;3859:1;3847:9;:13;:20;3846:29;;;;;;:34;3841:218;;;3912:4;3905:11;;3841:218;;;3970:4;3963:11;;4011:1;4003:4;:9;;3996:16;;4034:6;;;;;;;3841:218;3805:268;;;3676:407;;;;3575:514;;;:::o;2303:24::-;;;;:::o;3120:369:4:-;3197:7;3220:21;3258:14;3244:29;;;;;;;;;;;;;;;;;;;;;;29:2:-1;21:6;17:15;117:4;105:10;97:6;88:34;148:4;140:6;136:17;126:27;;0:157;3244:29:4;;;;3220:53;;3303:7;3311:1;3303:10;;;;;;;;;;;3295:19;;3285:4;3290:1;3285:7;;;;;;;;;;;;;:29;;;;;3387:7;3395:1;3387:10;;;;;;;;;;;3379:19;;3369:4;3374:1;3369:7;;;;;;;;;;;;;:29;;;;;3466:15;3472:4;3478:1;3466:4;:15::i;:::-;3458:24;;3451:31;;;3120:369;;;:::o;4366:2311:2:-;4421:12;4514:9;;4502;;:21;4494:69;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;4574:9;4586:26;4602:9;;4586:15;:26::i;:::-;4574:38;;4622:14;4663:1;4651:9;;4639;;:21;:25;4622:42;;4674:17;4694:9;4674:29;;4933:23;;:::i;:::-;4994:24;;:::i;:::-;5065:10;5078:1;5065:14;;5060:1304;5089:10;;5081:5;:18;5060:1304;;;5138:4;5129:5;:13;5125:45;;;5161:9;5144:8;5153:4;5144:14;;;;;;;;:26;;;;5125:45;5206:1;5201;5189:9;:13;;;;;;:18;5185:1169;;;5361:8;5370:5;5361:15;;;;;;;;;5350:5;5356:1;5350:8;;;;;;;;;;:26;;;;;5405:9;5394:5;5400:1;5394:8;;;;;;;;;;:20;;;;;5445:16;5455:5;5445:9;:16::i;:::-;5433:6;5440:1;5433:9;;;;;;;;;;:28;;;;;5534:6;5541:1;5534:9;;;;;;;;;;;5522:21;;5659:1;5654;5642:9;:13;5641:19;;;;;;5629:31;;5185:1169;;;5939:9;5928:5;5934:1;5928:8;;;;;;;;;;:20;;;;;5977:4;;5966:5;5972:1;5966:8;;;;;;;;;;:15;;;;;6012:16;6022:5;6012:9;:16::i;:::-;6000:6;6007:1;6000:9;;;;;;;;;;:28;;;;;6101:6;6108:1;6101:9;;;;;;;;;;;6089:21;;6220:1;6208:9;:13;;;;;;6196:25;;5185:1169;5101:7;;;;;;;5060:1304;;;;6381:9;6374:16;;6406:35;6414:9;;6425;6436:4;6406:35;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;6529:9;;:11;;;;;;;;;;;;;6643:4;6636:11;;;;;;;4366:2311;;;:::o;1361:209:0:-;1027:5;;;;;;;;;;;1013:19;;:10;:19;;;1005:78;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;1431:12;1446:21;1457:9;1446:10;:21::i;:::-;1431:36;;1559:4;1546:10;:17;;;;1093:1;1361:209;:::o;2239:39:2:-;;;;:::o;306:20:0:-;;;;;;;;;;;;;:::o;463:246:4:-;539:13;568:11;582:10;568:24;;;;633:69;642:4;648;689;672:22;;;;;;;;;;;;;;;;;;;;;49:4:-1;39:7;30;26:21;22:32;13:7;6:49;672:22:4;;;662:33;;;;;;654:42;;698:2;633:7;:69::i;:::-;626:76;;;463:246;;;;:::o;2767:347::-;2842:7;2865:21;2903:7;:14;2889:29;;;;;;;;;;;;;;;;;;;;;;29:2:-1;21:6;17:15;117:4;105:10;97:6;88:34;148:4;140:6;136:17;126:27;;0:157;2889:29:4;;;;2865:53;;2934:9;2944:1;2934:11;;2928:139;2951:7;:14;2947:1;:18;2928:139;;;3002:7;3010:1;3002:10;;;;;;;;;;;;;;2994:19;;2984:4;2989:1;2984:7;;;;;;;;;;;;;:29;;;;;2967:3;;;;;;;2928:139;;;;3091:15;3097:4;3103:1;3091:4;:15::i;:::-;3083:24;;3076:31;;;2767:347;;;:::o;439:40:0:-;;;;;;;;;;;;;;;;;:::o;624:25::-;;;;:::o;6983:5187:2:-;7050:12;7075:19;7097:10;:17;7075:39;;7193:9;;7181;;:21;7173:69;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;7285:9;;7273;;:21;7256:14;:38;7252:728;;;7310:25;7368:9;;7356;;:21;7338:14;:40;7310:68;;7498:7;7508:1;7498:11;;7493:425;7516:20;7511:2;:25;7493:425;;;7883:1;7870:10;7864:17;7860:25;7848:10;7841:45;7538:4;;;;;;;7493:425;;;;7960:9;;7948;;:21;7931:38;;7252:728;;7990:9;8009:14;8033:17;8120:23;;:::i;:::-;8153:24;;:::i;:::-;8282:14;8299:9;;8282:26;;8277:2052;8334:14;8322:9;;:26;8310:9;:38;8277:2052;;;8389:10;8412:9;;8400;:21;8389:33;;;;;;;;;;;;;;8377:45;;8472:1;8460:9;;8448;:21;:25;8436:37;;8535:26;8551:9;8535:15;:26::i;:::-;8528:33;;8655:1;8647:4;:9;8643:121;;;8693:9;8676:8;8685:4;8676:14;;;;;;;;:26;;;;8741:8;;8643:121;8869:10;8882:1;8869:14;;8864:1394;8894:4;8885:5;:13;8864:1394;;8948:1;8943;8931:9;:13;;;;;;:18;8927:1317;;;9123:8;9140:1;9132:5;:9;9123:19;;;;;;;;;9112:5;9118:1;9112:8;;;;;;;;;;:30;;;;;9196:9;9185:5;9191:1;9185:8;;;;;;;;;;:20;;;;;9239:16;9249:5;9239:9;:16::i;:::-;9227:6;9234:1;9227:9;;;;;;;;;;:28;;;;;9427:6;9434:1;9427:9;;;;;;;;;;;9415:21;;9556:1;9551;9539:9;:13;9538:19;;;;;;9526:31;;8927:1317;;;9766:9;9755:5;9761:1;9755:8;;;;;;;;;;:20;;;;;9808:4;;9797:5;9803:1;9797:8;;;;;;;;;;:15;;;;;9846:16;9856:5;9846:9;:16::i;:::-;9834:6;9841:1;9834:9;;;;;;;;;;:28;;;;;10033:6;10040:1;10033:9;;;;;;;;;;;10021:21;;10156:1;10144:9;:13;;;;;;10132:25;;8927:1317;8900:7;;;;;;;8864:1394;;;;10288:9;10271:8;10280:4;10271:14;;;;;;;;:26;;;;8277:2052;8350:11;;;;;;;8277:2052;;;;10499:10;10519:1;10512:4;:8;10499:21;;10494:1345;10531:10;;10522:5;:19;10494:1345;;10588:1;10583;10571:9;:13;;;;;;:18;10567:1261;;;10747:8;10764:1;10756:5;:9;10747:19;;;;;;;;;10736:5;10742:1;10736:8;;;;;;;;;;:30;;;;;10795:9;10784:5;10790:1;10784:8;;;;;;;;;;:20;;;;;10834:16;10844:5;10834:9;:16::i;:::-;10822:6;10829:1;10822:9;;;;;;;;;;:28;;;;;10924:6;10931:1;10924:9;;;;;;;;;;;10912:21;;11049:1;11044;11032:9;:13;11031:19;;;;;;11019:31;;10567:1261;;;11371:9;11360:5;11366:1;11360:8;;;;;;;;;;:20;;;;;11409:4;;11398:5;11404:1;11398:8;;;;;;;;;;:15;;;;;11443:16;11453:5;11443:9;:16::i;:::-;11431:6;11438:1;11431:9;;;;;;;;;;:28;;;;;11533:6;11540:1;11533:9;;;;;;;;;;;11521:21;;11652:1;11640:9;:13;;;;;;11628:25;;10567:1261;10543:7;;;;;;;10494:1345;;;;11856:9;11849:16;;11881:38;11891:9;;11902:10;11914:4;11881:38;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;23:1:-1;8:100;33:3;30:1;27:10;8:100;;;99:1;94:3;90:11;84:18;80:1;75:3;71:11;64:39;52:2;49:1;45:10;40:15;;8:100;;;12:14;11881:38:2;;;;;;;;;;;;;;;;;;;12020:14;12007:9;;:27;;;;;;;;;;;12136:4;12129:11;;;;;;;;6983:5187;;;:::o;2034:462:4:-;2162:7;2185:9;2197:4;2185:16;;2211:14;2228:66;2211:83;;2304:9;2332:1;2328:5;;2323:149;2339:4;:11;2335:1;:15;2323:149;;;2455:6;2410:41;2418:4;2423:1;2418:7;;;;;;;;;;;;;;2427:1;2430:7;2439:11;2410:7;:41::i;:::-;2400:6;2390:4;2395:1;2390:7;;;;;;;;;;;;;;:16;;;;;;2385:1;:22;:66;2384:77;;;;;;2380:81;;2352:3;;;;;;;2323:149;;;2488:1;2481:8;;;;;2034:462;;;;;;:::o;841:1187::-;956:13;1027:1;1014:11;1011:18;1008:2;;;1042:1;1039;1032:12;1008:2;1135:4;1129:11;1173:2;1170:1;1166:10;1160:4;1153:24;1200:7;1197:1;1190:18;1236:66;;;1437:11;1422:485;1457:1;1454;1451:8;1422:485;;;1548:2;1545:1;1535:16;1532:1;1525:27;1666:6;1660:4;1651:6;1647:1;1641:8;1635:4;1628:30;1621:52;1616:57;;1740:6;1737:1;1734;1727:20;1722:25;;1875:6;1872:1;1863:6;1854;1851:1;1848;1841:20;1838:1;1831:39;1824:58;1816:66;;1474:1;1471;1467:9;1462:14;;1422:485;;;1426:24;2005:6;1999:4;1993;1986:26;1977:35;;994:1028;;;;;;;;;;:::o;247:1675:0:-;;;;;;;;;;;29:2:-1;21:6;17:15;117:4;105:10;97:6;88:34;148:4;140:6;136:17;126:27;;0:157;247:1675:0;;;;:::o;:::-;;;;;;;;;;;29:2:-1;21:6;17:15;117:4;105:10;97:6;88:34;148:4;140:6;136:17;126:27;;0:157;247:1675:0;;;;:::o",
+  "source": "/**\nContract to manage permissions to update the leaves of the imported MerkleTree contract (which is the base contract which handles tree inserts and updates).\n\n@Author iAmMichaelConnor\n*/\npragma solidity ^0.5.8;\n\nimport \"./MerkleTreeMiMC.sol\";\n\ncontract MerkleTreeControllerMiMC is MerkleTreeMiMC {\n\n    address public owner; // We'll demonstrate simple 'permissioning' to update leaves by only allowing the owner to update leaves.\n\n    mapping(bytes32 => bytes32) public roots; // Example of a way to hold every root that's been calculated by this contract. This isn't actually used by this simple example-contract.\n\n    bytes32 public latestRoot; // Example of a way to hold the latest root so that users can retrieve it. This isn't actually used by this simple example-contract.\n\n    /**\n    We'll demonstrate simple 'permissioning' to update leaves by only allowing the owner to update leaves.\n    @dev Throws if called by any account other than the owner.\n    */\n    modifier onlyOwner() {\n        require(msg.sender == owner, \"You are not authorised to invoke this function\");\n        _;\n    }\n\n    /**\n    @notice Constructor for the MerkleTreeController contract.\n    */\n    constructor() public {\n        owner = msg.sender;\n    }\n\n    /**\n    @notice Append a leaf to the tree\n    @param leafValue - the value of the leaf being inserted.\n    */\n    function _insertLeaf(bytes32 leafValue) external onlyOwner {\n\n        bytes32 root = insertLeaf(leafValue); // recalculate the root of the tree\n\n        // roots[root] = root;\n\n        latestRoot = root;\n    }\n\n    /**\n    @notice Append leaves to the tree\n    @param leafValues - the values of the leaves being inserted.\n    */\n    function _insertLeaves(bytes32[] calldata leafValues) external onlyOwner {\n\n        bytes32 root = insertLeaves(leafValues); // recalculate the root of the tree\n\n        // roots[root] = root;\n\n        latestRoot = root;\n    }\n}\n",
+  "sourcePath": "/Users/miranda.Wooduk.ey.com/nightfallmimc/timber/deployer/contracts/MerkleTreeControllerMiMC.sol",
   "ast": {
-    "absolutePath": "/Users/em137vl/git/nightfall-merkle-tree/nightfall/merkle-tree/deployer/contracts/MerkleTreeController.sol",
+    "absolutePath": "/Users/miranda.Wooduk.ey.com/nightfallmimc/timber/deployer/contracts/MerkleTreeControllerMiMC.sol",
     "exportedSymbols": {
-      "MerkleTreeController": [
-        642
+      "MerkleTreeControllerMiMC": [
+        71
       ]
     },
-    "id": 643,
+    "id": 72,
     "nodeType": "SourceUnit",
     "nodes": [
       {
-        "id": 572,
+        "id": 1,
         "literals": [
           "solidity",
           "^",
@@ -233,16 +363,16 @@
           ".8"
         ],
         "nodeType": "PragmaDirective",
-        "src": "190:23:1"
+        "src": "190:23:0"
       },
       {
-        "absolutePath": "/Users/em137vl/git/nightfall-merkle-tree/nightfall/merkle-tree/deployer/contracts/MerkleTree.sol",
-        "file": "./MerkleTree.sol",
-        "id": 573,
+        "absolutePath": "/Users/miranda.Wooduk.ey.com/nightfallmimc/timber/deployer/contracts/MerkleTreeMiMC.sol",
+        "file": "./MerkleTreeMiMC.sol",
+        "id": 2,
         "nodeType": "ImportDirective",
-        "scope": 643,
-        "sourceUnit": 571,
-        "src": "215:26:1",
+        "scope": 72,
+        "sourceUnit": 756,
+        "src": "215:30:0",
         "symbolAliases": [],
         "unitAlias": ""
       },
@@ -252,42 +382,44 @@
             "arguments": null,
             "baseName": {
               "contractScope": null,
-              "id": 574,
-              "name": "MerkleTree",
+              "id": 3,
+              "name": "MerkleTreeMiMC",
               "nodeType": "UserDefinedTypeName",
-              "referencedDeclaration": 570,
-              "src": "276:10:1",
+              "referencedDeclaration": 755,
+              "src": "284:14:0",
               "typeDescriptions": {
-                "typeIdentifier": "t_contract$_MerkleTree_$570",
-                "typeString": "contract MerkleTree"
+                "typeIdentifier": "t_contract$_MerkleTreeMiMC_$755",
+                "typeString": "contract MerkleTreeMiMC"
               }
             },
-            "id": 575,
+            "id": 4,
             "nodeType": "InheritanceSpecifier",
-            "src": "276:10:1"
+            "src": "284:14:0"
           }
         ],
         "contractDependencies": [
-          570
+          755,
+          1571
         ],
         "contractKind": "contract",
         "documentation": null,
         "fullyImplemented": true,
-        "id": 642,
+        "id": 71,
         "linearizedBaseContracts": [
-          642,
-          570
+          71,
+          755,
+          1571
         ],
-        "name": "MerkleTreeController",
+        "name": "MerkleTreeControllerMiMC",
         "nodeType": "ContractDefinition",
         "nodes": [
           {
             "constant": false,
-            "id": 577,
+            "id": 6,
             "name": "owner",
             "nodeType": "VariableDeclaration",
-            "scope": 642,
-            "src": "294:20:1",
+            "scope": 71,
+            "src": "306:20:0",
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -295,10 +427,10 @@
               "typeString": "address"
             },
             "typeName": {
-              "id": 576,
+              "id": 5,
               "name": "address",
               "nodeType": "ElementaryTypeName",
-              "src": "294:7:1",
+              "src": "306:7:0",
               "stateMutability": "nonpayable",
               "typeDescriptions": {
                 "typeIdentifier": "t_address",
@@ -310,11 +442,11 @@
           },
           {
             "constant": false,
-            "id": 581,
+            "id": 10,
             "name": "roots",
             "nodeType": "VariableDeclaration",
-            "scope": 642,
-            "src": "427:40:1",
+            "scope": 71,
+            "src": "439:40:0",
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -322,28 +454,28 @@
               "typeString": "mapping(bytes32 => bytes32)"
             },
             "typeName": {
-              "id": 580,
+              "id": 9,
               "keyType": {
-                "id": 578,
+                "id": 7,
                 "name": "bytes32",
                 "nodeType": "ElementaryTypeName",
-                "src": "435:7:1",
+                "src": "447:7:0",
                 "typeDescriptions": {
                   "typeIdentifier": "t_bytes32",
                   "typeString": "bytes32"
                 }
               },
               "nodeType": "Mapping",
-              "src": "427:27:1",
+              "src": "439:27:0",
               "typeDescriptions": {
                 "typeIdentifier": "t_mapping$_t_bytes32_$_t_bytes32_$",
                 "typeString": "mapping(bytes32 => bytes32)"
               },
               "valueType": {
-                "id": 579,
+                "id": 8,
                 "name": "bytes32",
                 "nodeType": "ElementaryTypeName",
-                "src": "446:7:1",
+                "src": "458:7:0",
                 "typeDescriptions": {
                   "typeIdentifier": "t_bytes32",
                   "typeString": "bytes32"
@@ -355,11 +487,11 @@
           },
           {
             "constant": false,
-            "id": 583,
+            "id": 12,
             "name": "latestRoot",
             "nodeType": "VariableDeclaration",
-            "scope": 642,
-            "src": "612:25:1",
+            "scope": 71,
+            "src": "624:25:0",
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -367,10 +499,10 @@
               "typeString": "bytes32"
             },
             "typeName": {
-              "id": 582,
+              "id": 11,
               "name": "bytes32",
               "nodeType": "ElementaryTypeName",
-              "src": "612:7:1",
+              "src": "624:7:0",
               "typeDescriptions": {
                 "typeIdentifier": "t_bytes32",
                 "typeString": "bytes32"
@@ -381,9 +513,9 @@
           },
           {
             "body": {
-              "id": 594,
+              "id": 23,
               "nodeType": "Block",
-              "src": "983:106:1",
+              "src": "995:106:0",
               "statements": [
                 {
                   "expression": {
@@ -395,7 +527,7 @@
                           "typeIdentifier": "t_address",
                           "typeString": "address"
                         },
-                        "id": 589,
+                        "id": 18,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
@@ -404,18 +536,18 @@
                           "argumentTypes": null,
                           "expression": {
                             "argumentTypes": null,
-                            "id": 586,
+                            "id": 15,
                             "name": "msg",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 729,
-                            "src": "1001:3:1",
+                            "referencedDeclaration": 1586,
+                            "src": "1013:3:0",
                             "typeDescriptions": {
                               "typeIdentifier": "t_magic_message",
                               "typeString": "msg"
                             }
                           },
-                          "id": 587,
+                          "id": 16,
                           "isConstant": false,
                           "isLValue": false,
                           "isPure": false,
@@ -423,7 +555,7 @@
                           "memberName": "sender",
                           "nodeType": "MemberAccess",
                           "referencedDeclaration": null,
-                          "src": "1001:10:1",
+                          "src": "1013:10:0",
                           "typeDescriptions": {
                             "typeIdentifier": "t_address_payable",
                             "typeString": "address payable"
@@ -433,18 +565,18 @@
                         "operator": "==",
                         "rightExpression": {
                           "argumentTypes": null,
-                          "id": 588,
+                          "id": 17,
                           "name": "owner",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 577,
-                          "src": "1015:5:1",
+                          "referencedDeclaration": 6,
+                          "src": "1027:5:0",
                           "typeDescriptions": {
                             "typeIdentifier": "t_address",
                             "typeString": "address"
                           }
                         },
-                        "src": "1001:19:1",
+                        "src": "1013:19:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_bool",
                           "typeString": "bool"
@@ -453,14 +585,14 @@
                       {
                         "argumentTypes": null,
                         "hexValue": "596f7520617265206e6f7420617574686f726973656420746f20696e766f6b6520746869732066756e6374696f6e",
-                        "id": 590,
+                        "id": 19,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
                         "kind": "string",
                         "lValueRequested": false,
                         "nodeType": "Literal",
-                        "src": "1022:48:1",
+                        "src": "1034:48:0",
                         "subdenomination": null,
                         "typeDescriptions": {
                           "typeIdentifier": "t_stringliteral_6af07f385029d971e807b8a865d509915c5562585426c93e05f8579214aa193c",
@@ -480,21 +612,21 @@
                           "typeString": "literal_string \"You are not authorised to invoke this function\""
                         }
                       ],
-                      "id": 585,
+                      "id": 14,
                       "name": "require",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
-                        732,
-                        733
+                        1589,
+                        1590
                       ],
-                      "referencedDeclaration": 733,
-                      "src": "993:7:1",
+                      "referencedDeclaration": 1590,
+                      "src": "1005:7:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_require_pure$_t_bool_$_t_string_memory_ptr_$returns$__$",
                         "typeString": "function (bool,string memory) pure"
                       }
                     },
-                    "id": 591,
+                    "id": 20,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -502,58 +634,58 @@
                     "lValueRequested": false,
                     "names": [],
                     "nodeType": "FunctionCall",
-                    "src": "993:78:1",
+                    "src": "1005:78:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_tuple$__$",
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 592,
+                  "id": 21,
                   "nodeType": "ExpressionStatement",
-                  "src": "993:78:1"
+                  "src": "1005:78:0"
                 },
                 {
-                  "id": 593,
+                  "id": 22,
                   "nodeType": "PlaceholderStatement",
-                  "src": "1081:1:1"
+                  "src": "1093:1:0"
                 }
               ]
             },
             "documentation": "We'll demonstrate simple 'permissioning' to update leaves by only allowing the owner to update leaves.\n@dev Throws if called by any account other than the owner.",
-            "id": 595,
+            "id": 24,
             "name": "onlyOwner",
             "nodeType": "ModifierDefinition",
             "parameters": {
-              "id": 584,
+              "id": 13,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "980:2:1"
+              "src": "992:2:0"
             },
-            "src": "962:127:1",
+            "src": "974:127:0",
             "visibility": "internal"
           },
           {
             "body": {
-              "id": 603,
+              "id": 32,
               "nodeType": "Block",
-              "src": "1194:35:1",
+              "src": "1206:35:0",
               "statements": [
                 {
                   "expression": {
                     "argumentTypes": null,
-                    "id": 601,
+                    "id": 30,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
                       "argumentTypes": null,
-                      "id": 598,
+                      "id": 27,
                       "name": "owner",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 577,
-                      "src": "1204:5:1",
+                      "referencedDeclaration": 6,
+                      "src": "1216:5:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_address",
                         "typeString": "address"
@@ -565,18 +697,18 @@
                       "argumentTypes": null,
                       "expression": {
                         "argumentTypes": null,
-                        "id": 599,
+                        "id": 28,
                         "name": "msg",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 729,
-                        "src": "1212:3:1",
+                        "referencedDeclaration": 1586,
+                        "src": "1224:3:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_magic_message",
                           "typeString": "msg"
                         }
                       },
-                      "id": 600,
+                      "id": 29,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": false,
@@ -584,67 +716,67 @@
                       "memberName": "sender",
                       "nodeType": "MemberAccess",
                       "referencedDeclaration": null,
-                      "src": "1212:10:1",
+                      "src": "1224:10:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_address_payable",
                         "typeString": "address payable"
                       }
                     },
-                    "src": "1204:18:1",
+                    "src": "1216:18:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
                       "typeString": "address"
                     }
                   },
-                  "id": 602,
+                  "id": 31,
                   "nodeType": "ExpressionStatement",
-                  "src": "1204:18:1"
+                  "src": "1216:18:0"
                 }
               ]
             },
             "documentation": "@notice Constructor for the MerkleTreeController contract.",
-            "id": 604,
+            "id": 33,
             "implemented": true,
             "kind": "constructor",
             "modifiers": [],
             "name": "",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 596,
+              "id": 25,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "1184:2:1"
+              "src": "1196:2:0"
             },
             "returnParameters": {
-              "id": 597,
+              "id": 26,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "1194:0:1"
+              "src": "1206:0:0"
             },
-            "scope": 642,
-            "src": "1173:56:1",
+            "scope": 71,
+            "src": "1185:56:0",
             "stateMutability": "nonpayable",
             "superFunction": null,
             "visibility": "public"
           },
           {
             "body": {
-              "id": 621,
+              "id": 50,
               "nodeType": "Block",
-              "src": "1408:150:1",
+              "src": "1420:150:0",
               "statements": [
                 {
                   "assignments": [
-                    612
+                    41
                   ],
                   "declarations": [
                     {
                       "constant": false,
-                      "id": 612,
+                      "id": 41,
                       "name": "root",
                       "nodeType": "VariableDeclaration",
-                      "scope": 621,
-                      "src": "1419:12:1",
+                      "scope": 50,
+                      "src": "1431:12:0",
                       "stateVariable": false,
                       "storageLocation": "default",
                       "typeDescriptions": {
@@ -652,10 +784,10 @@
                         "typeString": "bytes32"
                       },
                       "typeName": {
-                        "id": 611,
+                        "id": 40,
                         "name": "bytes32",
                         "nodeType": "ElementaryTypeName",
-                        "src": "1419:7:1",
+                        "src": "1431:7:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_bytes32",
                           "typeString": "bytes32"
@@ -665,18 +797,18 @@
                       "visibility": "internal"
                     }
                   ],
-                  "id": 616,
+                  "id": 45,
                   "initialValue": {
                     "argumentTypes": null,
                     "arguments": [
                       {
                         "argumentTypes": null,
-                        "id": 614,
+                        "id": 43,
                         "name": "leafValue",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 606,
-                        "src": "1445:9:1",
+                        "referencedDeclaration": 35,
+                        "src": "1457:9:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_bytes32",
                           "typeString": "bytes32"
@@ -690,18 +822,18 @@
                           "typeString": "bytes32"
                         }
                       ],
-                      "id": 613,
+                      "id": 42,
                       "name": "insertLeaf",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 257,
-                      "src": "1434:10:1",
+                      "referencedDeclaration": 423,
+                      "src": "1446:10:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_bytes32_$returns$_t_bytes32_$",
                         "typeString": "function (bytes32) returns (bytes32)"
                       }
                     },
-                    "id": 615,
+                    "id": 44,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -709,31 +841,31 @@
                     "lValueRequested": false,
                     "names": [],
                     "nodeType": "FunctionCall",
-                    "src": "1434:21:1",
+                    "src": "1446:21:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes32",
                       "typeString": "bytes32"
                     }
                   },
                   "nodeType": "VariableDeclarationStatement",
-                  "src": "1419:36:1"
+                  "src": "1431:36:0"
                 },
                 {
                   "expression": {
                     "argumentTypes": null,
-                    "id": 619,
+                    "id": 48,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
                       "argumentTypes": null,
-                      "id": 617,
+                      "id": 46,
                       "name": "latestRoot",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 583,
-                      "src": "1534:10:1",
+                      "referencedDeclaration": 12,
+                      "src": "1546:10:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_bytes32",
                         "typeString": "bytes32"
@@ -743,67 +875,67 @@
                     "operator": "=",
                     "rightHandSide": {
                       "argumentTypes": null,
-                      "id": 618,
+                      "id": 47,
                       "name": "root",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 612,
-                      "src": "1547:4:1",
+                      "referencedDeclaration": 41,
+                      "src": "1559:4:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_bytes32",
                         "typeString": "bytes32"
                       }
                     },
-                    "src": "1534:17:1",
+                    "src": "1546:17:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes32",
                       "typeString": "bytes32"
                     }
                   },
-                  "id": 620,
+                  "id": 49,
                   "nodeType": "ExpressionStatement",
-                  "src": "1534:17:1"
+                  "src": "1546:17:0"
                 }
               ]
             },
             "documentation": "@notice Append a leaf to the tree\n@param leafValue - the value of the leaf being inserted.",
-            "id": 622,
+            "id": 51,
             "implemented": true,
             "kind": "function",
             "modifiers": [
               {
                 "arguments": null,
-                "id": 609,
+                "id": 38,
                 "modifierName": {
                   "argumentTypes": null,
-                  "id": 608,
+                  "id": 37,
                   "name": "onlyOwner",
                   "nodeType": "Identifier",
                   "overloadedDeclarations": [],
-                  "referencedDeclaration": 595,
-                  "src": "1398:9:1",
+                  "referencedDeclaration": 24,
+                  "src": "1410:9:0",
                   "typeDescriptions": {
                     "typeIdentifier": "t_modifier$__$",
                     "typeString": "modifier ()"
                   }
                 },
                 "nodeType": "ModifierInvocation",
-                "src": "1398:9:1"
+                "src": "1410:9:0"
               }
             ],
             "name": "_insertLeaf",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 607,
+              "id": 36,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 606,
+                  "id": 35,
                   "name": "leafValue",
                   "nodeType": "VariableDeclaration",
-                  "scope": 622,
-                  "src": "1370:17:1",
+                  "scope": 51,
+                  "src": "1382:17:0",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -811,10 +943,10 @@
                     "typeString": "bytes32"
                   },
                   "typeName": {
-                    "id": 605,
+                    "id": 34,
                     "name": "bytes32",
                     "nodeType": "ElementaryTypeName",
-                    "src": "1370:7:1",
+                    "src": "1382:7:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes32",
                       "typeString": "bytes32"
@@ -824,38 +956,38 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "1369:19:1"
+              "src": "1381:19:0"
             },
             "returnParameters": {
-              "id": 610,
+              "id": 39,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "1408:0:1"
+              "src": "1420:0:0"
             },
-            "scope": 642,
-            "src": "1349:209:1",
+            "scope": 71,
+            "src": "1361:209:0",
             "stateMutability": "nonpayable",
             "superFunction": null,
             "visibility": "external"
           },
           {
             "body": {
-              "id": 640,
+              "id": 69,
               "nodeType": "Block",
-              "src": "1755:153:1",
+              "src": "1767:153:0",
               "statements": [
                 {
                   "assignments": [
-                    631
+                    60
                   ],
                   "declarations": [
                     {
                       "constant": false,
-                      "id": 631,
+                      "id": 60,
                       "name": "root",
                       "nodeType": "VariableDeclaration",
-                      "scope": 640,
-                      "src": "1766:12:1",
+                      "scope": 69,
+                      "src": "1778:12:0",
                       "stateVariable": false,
                       "storageLocation": "default",
                       "typeDescriptions": {
@@ -863,10 +995,10 @@
                         "typeString": "bytes32"
                       },
                       "typeName": {
-                        "id": 630,
+                        "id": 59,
                         "name": "bytes32",
                         "nodeType": "ElementaryTypeName",
-                        "src": "1766:7:1",
+                        "src": "1778:7:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_bytes32",
                           "typeString": "bytes32"
@@ -876,18 +1008,18 @@
                       "visibility": "internal"
                     }
                   ],
-                  "id": 635,
+                  "id": 64,
                   "initialValue": {
                     "argumentTypes": null,
                     "arguments": [
                       {
                         "argumentTypes": null,
-                        "id": 633,
+                        "id": 62,
                         "name": "leafValues",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 625,
-                        "src": "1794:10:1",
+                        "referencedDeclaration": 54,
+                        "src": "1806:10:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_array$_t_bytes32_$dyn_calldata_ptr",
                           "typeString": "bytes32[] calldata"
@@ -901,18 +1033,18 @@
                           "typeString": "bytes32[] calldata"
                         }
                       ],
-                      "id": 632,
+                      "id": 61,
                       "name": "insertLeaves",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 569,
-                      "src": "1781:12:1",
+                      "referencedDeclaration": 754,
+                      "src": "1793:12:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_array$_t_bytes32_$dyn_memory_ptr_$returns$_t_bytes32_$",
                         "typeString": "function (bytes32[] memory) returns (bytes32)"
                       }
                     },
-                    "id": 634,
+                    "id": 63,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -920,31 +1052,31 @@
                     "lValueRequested": false,
                     "names": [],
                     "nodeType": "FunctionCall",
-                    "src": "1781:24:1",
+                    "src": "1793:24:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes32",
                       "typeString": "bytes32"
                     }
                   },
                   "nodeType": "VariableDeclarationStatement",
-                  "src": "1766:39:1"
+                  "src": "1778:39:0"
                 },
                 {
                   "expression": {
                     "argumentTypes": null,
-                    "id": 638,
+                    "id": 67,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
                       "argumentTypes": null,
-                      "id": 636,
+                      "id": 65,
                       "name": "latestRoot",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 583,
-                      "src": "1884:10:1",
+                      "referencedDeclaration": 12,
+                      "src": "1896:10:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_bytes32",
                         "typeString": "bytes32"
@@ -954,67 +1086,67 @@
                     "operator": "=",
                     "rightHandSide": {
                       "argumentTypes": null,
-                      "id": 637,
+                      "id": 66,
                       "name": "root",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 631,
-                      "src": "1897:4:1",
+                      "referencedDeclaration": 60,
+                      "src": "1909:4:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_bytes32",
                         "typeString": "bytes32"
                       }
                     },
-                    "src": "1884:17:1",
+                    "src": "1896:17:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes32",
                       "typeString": "bytes32"
                     }
                   },
-                  "id": 639,
+                  "id": 68,
                   "nodeType": "ExpressionStatement",
-                  "src": "1884:17:1"
+                  "src": "1896:17:0"
                 }
               ]
             },
             "documentation": "@notice Append leaves to the tree\n@param leafValues - the values of the leaves being inserted.",
-            "id": 641,
+            "id": 70,
             "implemented": true,
             "kind": "function",
             "modifiers": [
               {
                 "arguments": null,
-                "id": 628,
+                "id": 57,
                 "modifierName": {
                   "argumentTypes": null,
-                  "id": 627,
+                  "id": 56,
                   "name": "onlyOwner",
                   "nodeType": "Identifier",
                   "overloadedDeclarations": [],
-                  "referencedDeclaration": 595,
-                  "src": "1745:9:1",
+                  "referencedDeclaration": 24,
+                  "src": "1757:9:0",
                   "typeDescriptions": {
                     "typeIdentifier": "t_modifier$__$",
                     "typeString": "modifier ()"
                   }
                 },
                 "nodeType": "ModifierInvocation",
-                "src": "1745:9:1"
+                "src": "1757:9:0"
               }
             ],
             "name": "_insertLeaves",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 626,
+              "id": 55,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 625,
+                  "id": 54,
                   "name": "leafValues",
                   "nodeType": "VariableDeclaration",
-                  "scope": 641,
-                  "src": "1705:29:1",
+                  "scope": 70,
+                  "src": "1717:29:0",
                   "stateVariable": false,
                   "storageLocation": "calldata",
                   "typeDescriptions": {
@@ -1023,19 +1155,19 @@
                   },
                   "typeName": {
                     "baseType": {
-                      "id": 623,
+                      "id": 52,
                       "name": "bytes32",
                       "nodeType": "ElementaryTypeName",
-                      "src": "1705:7:1",
+                      "src": "1717:7:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_bytes32",
                         "typeString": "bytes32"
                       }
                     },
-                    "id": 624,
+                    "id": 53,
                     "length": null,
                     "nodeType": "ArrayTypeName",
-                    "src": "1705:9:1",
+                    "src": "1717:9:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_array$_t_bytes32_$dyn_storage_ptr",
                       "typeString": "bytes32[]"
@@ -1045,39 +1177,39 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "1704:31:1"
+              "src": "1716:31:0"
             },
             "returnParameters": {
-              "id": 629,
+              "id": 58,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "1755:0:1"
+              "src": "1767:0:0"
             },
-            "scope": 642,
-            "src": "1682:226:1",
+            "scope": 71,
+            "src": "1694:226:0",
             "stateMutability": "nonpayable",
             "superFunction": null,
             "visibility": "external"
           }
         ],
-        "scope": 643,
-        "src": "243:1667:1"
+        "scope": 72,
+        "src": "247:1675:0"
       }
     ],
-    "src": "190:1721:1"
+    "src": "190:1733:0"
   },
   "legacyAST": {
-    "absolutePath": "/Users/em137vl/git/nightfall-merkle-tree/nightfall/merkle-tree/deployer/contracts/MerkleTreeController.sol",
+    "absolutePath": "/Users/miranda.Wooduk.ey.com/nightfallmimc/timber/deployer/contracts/MerkleTreeControllerMiMC.sol",
     "exportedSymbols": {
-      "MerkleTreeController": [
-        642
+      "MerkleTreeControllerMiMC": [
+        71
       ]
     },
-    "id": 643,
+    "id": 72,
     "nodeType": "SourceUnit",
     "nodes": [
       {
-        "id": 572,
+        "id": 1,
         "literals": [
           "solidity",
           "^",
@@ -1085,16 +1217,16 @@
           ".8"
         ],
         "nodeType": "PragmaDirective",
-        "src": "190:23:1"
+        "src": "190:23:0"
       },
       {
-        "absolutePath": "/Users/em137vl/git/nightfall-merkle-tree/nightfall/merkle-tree/deployer/contracts/MerkleTree.sol",
-        "file": "./MerkleTree.sol",
-        "id": 573,
+        "absolutePath": "/Users/miranda.Wooduk.ey.com/nightfallmimc/timber/deployer/contracts/MerkleTreeMiMC.sol",
+        "file": "./MerkleTreeMiMC.sol",
+        "id": 2,
         "nodeType": "ImportDirective",
-        "scope": 643,
-        "sourceUnit": 571,
-        "src": "215:26:1",
+        "scope": 72,
+        "sourceUnit": 756,
+        "src": "215:30:0",
         "symbolAliases": [],
         "unitAlias": ""
       },
@@ -1104,42 +1236,44 @@
             "arguments": null,
             "baseName": {
               "contractScope": null,
-              "id": 574,
-              "name": "MerkleTree",
+              "id": 3,
+              "name": "MerkleTreeMiMC",
               "nodeType": "UserDefinedTypeName",
-              "referencedDeclaration": 570,
-              "src": "276:10:1",
+              "referencedDeclaration": 755,
+              "src": "284:14:0",
               "typeDescriptions": {
-                "typeIdentifier": "t_contract$_MerkleTree_$570",
-                "typeString": "contract MerkleTree"
+                "typeIdentifier": "t_contract$_MerkleTreeMiMC_$755",
+                "typeString": "contract MerkleTreeMiMC"
               }
             },
-            "id": 575,
+            "id": 4,
             "nodeType": "InheritanceSpecifier",
-            "src": "276:10:1"
+            "src": "284:14:0"
           }
         ],
         "contractDependencies": [
-          570
+          755,
+          1571
         ],
         "contractKind": "contract",
         "documentation": null,
         "fullyImplemented": true,
-        "id": 642,
+        "id": 71,
         "linearizedBaseContracts": [
-          642,
-          570
+          71,
+          755,
+          1571
         ],
-        "name": "MerkleTreeController",
+        "name": "MerkleTreeControllerMiMC",
         "nodeType": "ContractDefinition",
         "nodes": [
           {
             "constant": false,
-            "id": 577,
+            "id": 6,
             "name": "owner",
             "nodeType": "VariableDeclaration",
-            "scope": 642,
-            "src": "294:20:1",
+            "scope": 71,
+            "src": "306:20:0",
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -1147,10 +1281,10 @@
               "typeString": "address"
             },
             "typeName": {
-              "id": 576,
+              "id": 5,
               "name": "address",
               "nodeType": "ElementaryTypeName",
-              "src": "294:7:1",
+              "src": "306:7:0",
               "stateMutability": "nonpayable",
               "typeDescriptions": {
                 "typeIdentifier": "t_address",
@@ -1162,11 +1296,11 @@
           },
           {
             "constant": false,
-            "id": 581,
+            "id": 10,
             "name": "roots",
             "nodeType": "VariableDeclaration",
-            "scope": 642,
-            "src": "427:40:1",
+            "scope": 71,
+            "src": "439:40:0",
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -1174,28 +1308,28 @@
               "typeString": "mapping(bytes32 => bytes32)"
             },
             "typeName": {
-              "id": 580,
+              "id": 9,
               "keyType": {
-                "id": 578,
+                "id": 7,
                 "name": "bytes32",
                 "nodeType": "ElementaryTypeName",
-                "src": "435:7:1",
+                "src": "447:7:0",
                 "typeDescriptions": {
                   "typeIdentifier": "t_bytes32",
                   "typeString": "bytes32"
                 }
               },
               "nodeType": "Mapping",
-              "src": "427:27:1",
+              "src": "439:27:0",
               "typeDescriptions": {
                 "typeIdentifier": "t_mapping$_t_bytes32_$_t_bytes32_$",
                 "typeString": "mapping(bytes32 => bytes32)"
               },
               "valueType": {
-                "id": 579,
+                "id": 8,
                 "name": "bytes32",
                 "nodeType": "ElementaryTypeName",
-                "src": "446:7:1",
+                "src": "458:7:0",
                 "typeDescriptions": {
                   "typeIdentifier": "t_bytes32",
                   "typeString": "bytes32"
@@ -1207,11 +1341,11 @@
           },
           {
             "constant": false,
-            "id": 583,
+            "id": 12,
             "name": "latestRoot",
             "nodeType": "VariableDeclaration",
-            "scope": 642,
-            "src": "612:25:1",
+            "scope": 71,
+            "src": "624:25:0",
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -1219,10 +1353,10 @@
               "typeString": "bytes32"
             },
             "typeName": {
-              "id": 582,
+              "id": 11,
               "name": "bytes32",
               "nodeType": "ElementaryTypeName",
-              "src": "612:7:1",
+              "src": "624:7:0",
               "typeDescriptions": {
                 "typeIdentifier": "t_bytes32",
                 "typeString": "bytes32"
@@ -1233,9 +1367,9 @@
           },
           {
             "body": {
-              "id": 594,
+              "id": 23,
               "nodeType": "Block",
-              "src": "983:106:1",
+              "src": "995:106:0",
               "statements": [
                 {
                   "expression": {
@@ -1247,7 +1381,7 @@
                           "typeIdentifier": "t_address",
                           "typeString": "address"
                         },
-                        "id": 589,
+                        "id": 18,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
@@ -1256,18 +1390,18 @@
                           "argumentTypes": null,
                           "expression": {
                             "argumentTypes": null,
-                            "id": 586,
+                            "id": 15,
                             "name": "msg",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 729,
-                            "src": "1001:3:1",
+                            "referencedDeclaration": 1586,
+                            "src": "1013:3:0",
                             "typeDescriptions": {
                               "typeIdentifier": "t_magic_message",
                               "typeString": "msg"
                             }
                           },
-                          "id": 587,
+                          "id": 16,
                           "isConstant": false,
                           "isLValue": false,
                           "isPure": false,
@@ -1275,7 +1409,7 @@
                           "memberName": "sender",
                           "nodeType": "MemberAccess",
                           "referencedDeclaration": null,
-                          "src": "1001:10:1",
+                          "src": "1013:10:0",
                           "typeDescriptions": {
                             "typeIdentifier": "t_address_payable",
                             "typeString": "address payable"
@@ -1285,18 +1419,18 @@
                         "operator": "==",
                         "rightExpression": {
                           "argumentTypes": null,
-                          "id": 588,
+                          "id": 17,
                           "name": "owner",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 577,
-                          "src": "1015:5:1",
+                          "referencedDeclaration": 6,
+                          "src": "1027:5:0",
                           "typeDescriptions": {
                             "typeIdentifier": "t_address",
                             "typeString": "address"
                           }
                         },
-                        "src": "1001:19:1",
+                        "src": "1013:19:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_bool",
                           "typeString": "bool"
@@ -1305,14 +1439,14 @@
                       {
                         "argumentTypes": null,
                         "hexValue": "596f7520617265206e6f7420617574686f726973656420746f20696e766f6b6520746869732066756e6374696f6e",
-                        "id": 590,
+                        "id": 19,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
                         "kind": "string",
                         "lValueRequested": false,
                         "nodeType": "Literal",
-                        "src": "1022:48:1",
+                        "src": "1034:48:0",
                         "subdenomination": null,
                         "typeDescriptions": {
                           "typeIdentifier": "t_stringliteral_6af07f385029d971e807b8a865d509915c5562585426c93e05f8579214aa193c",
@@ -1332,21 +1466,21 @@
                           "typeString": "literal_string \"You are not authorised to invoke this function\""
                         }
                       ],
-                      "id": 585,
+                      "id": 14,
                       "name": "require",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
-                        732,
-                        733
+                        1589,
+                        1590
                       ],
-                      "referencedDeclaration": 733,
-                      "src": "993:7:1",
+                      "referencedDeclaration": 1590,
+                      "src": "1005:7:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_require_pure$_t_bool_$_t_string_memory_ptr_$returns$__$",
                         "typeString": "function (bool,string memory) pure"
                       }
                     },
-                    "id": 591,
+                    "id": 20,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -1354,58 +1488,58 @@
                     "lValueRequested": false,
                     "names": [],
                     "nodeType": "FunctionCall",
-                    "src": "993:78:1",
+                    "src": "1005:78:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_tuple$__$",
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 592,
+                  "id": 21,
                   "nodeType": "ExpressionStatement",
-                  "src": "993:78:1"
+                  "src": "1005:78:0"
                 },
                 {
-                  "id": 593,
+                  "id": 22,
                   "nodeType": "PlaceholderStatement",
-                  "src": "1081:1:1"
+                  "src": "1093:1:0"
                 }
               ]
             },
             "documentation": "We'll demonstrate simple 'permissioning' to update leaves by only allowing the owner to update leaves.\n@dev Throws if called by any account other than the owner.",
-            "id": 595,
+            "id": 24,
             "name": "onlyOwner",
             "nodeType": "ModifierDefinition",
             "parameters": {
-              "id": 584,
+              "id": 13,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "980:2:1"
+              "src": "992:2:0"
             },
-            "src": "962:127:1",
+            "src": "974:127:0",
             "visibility": "internal"
           },
           {
             "body": {
-              "id": 603,
+              "id": 32,
               "nodeType": "Block",
-              "src": "1194:35:1",
+              "src": "1206:35:0",
               "statements": [
                 {
                   "expression": {
                     "argumentTypes": null,
-                    "id": 601,
+                    "id": 30,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
                       "argumentTypes": null,
-                      "id": 598,
+                      "id": 27,
                       "name": "owner",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 577,
-                      "src": "1204:5:1",
+                      "referencedDeclaration": 6,
+                      "src": "1216:5:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_address",
                         "typeString": "address"
@@ -1417,18 +1551,18 @@
                       "argumentTypes": null,
                       "expression": {
                         "argumentTypes": null,
-                        "id": 599,
+                        "id": 28,
                         "name": "msg",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 729,
-                        "src": "1212:3:1",
+                        "referencedDeclaration": 1586,
+                        "src": "1224:3:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_magic_message",
                           "typeString": "msg"
                         }
                       },
-                      "id": 600,
+                      "id": 29,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": false,
@@ -1436,67 +1570,67 @@
                       "memberName": "sender",
                       "nodeType": "MemberAccess",
                       "referencedDeclaration": null,
-                      "src": "1212:10:1",
+                      "src": "1224:10:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_address_payable",
                         "typeString": "address payable"
                       }
                     },
-                    "src": "1204:18:1",
+                    "src": "1216:18:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
                       "typeString": "address"
                     }
                   },
-                  "id": 602,
+                  "id": 31,
                   "nodeType": "ExpressionStatement",
-                  "src": "1204:18:1"
+                  "src": "1216:18:0"
                 }
               ]
             },
             "documentation": "@notice Constructor for the MerkleTreeController contract.",
-            "id": 604,
+            "id": 33,
             "implemented": true,
             "kind": "constructor",
             "modifiers": [],
             "name": "",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 596,
+              "id": 25,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "1184:2:1"
+              "src": "1196:2:0"
             },
             "returnParameters": {
-              "id": 597,
+              "id": 26,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "1194:0:1"
+              "src": "1206:0:0"
             },
-            "scope": 642,
-            "src": "1173:56:1",
+            "scope": 71,
+            "src": "1185:56:0",
             "stateMutability": "nonpayable",
             "superFunction": null,
             "visibility": "public"
           },
           {
             "body": {
-              "id": 621,
+              "id": 50,
               "nodeType": "Block",
-              "src": "1408:150:1",
+              "src": "1420:150:0",
               "statements": [
                 {
                   "assignments": [
-                    612
+                    41
                   ],
                   "declarations": [
                     {
                       "constant": false,
-                      "id": 612,
+                      "id": 41,
                       "name": "root",
                       "nodeType": "VariableDeclaration",
-                      "scope": 621,
-                      "src": "1419:12:1",
+                      "scope": 50,
+                      "src": "1431:12:0",
                       "stateVariable": false,
                       "storageLocation": "default",
                       "typeDescriptions": {
@@ -1504,10 +1638,10 @@
                         "typeString": "bytes32"
                       },
                       "typeName": {
-                        "id": 611,
+                        "id": 40,
                         "name": "bytes32",
                         "nodeType": "ElementaryTypeName",
-                        "src": "1419:7:1",
+                        "src": "1431:7:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_bytes32",
                           "typeString": "bytes32"
@@ -1517,18 +1651,18 @@
                       "visibility": "internal"
                     }
                   ],
-                  "id": 616,
+                  "id": 45,
                   "initialValue": {
                     "argumentTypes": null,
                     "arguments": [
                       {
                         "argumentTypes": null,
-                        "id": 614,
+                        "id": 43,
                         "name": "leafValue",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 606,
-                        "src": "1445:9:1",
+                        "referencedDeclaration": 35,
+                        "src": "1457:9:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_bytes32",
                           "typeString": "bytes32"
@@ -1542,18 +1676,18 @@
                           "typeString": "bytes32"
                         }
                       ],
-                      "id": 613,
+                      "id": 42,
                       "name": "insertLeaf",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 257,
-                      "src": "1434:10:1",
+                      "referencedDeclaration": 423,
+                      "src": "1446:10:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_bytes32_$returns$_t_bytes32_$",
                         "typeString": "function (bytes32) returns (bytes32)"
                       }
                     },
-                    "id": 615,
+                    "id": 44,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -1561,31 +1695,31 @@
                     "lValueRequested": false,
                     "names": [],
                     "nodeType": "FunctionCall",
-                    "src": "1434:21:1",
+                    "src": "1446:21:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes32",
                       "typeString": "bytes32"
                     }
                   },
                   "nodeType": "VariableDeclarationStatement",
-                  "src": "1419:36:1"
+                  "src": "1431:36:0"
                 },
                 {
                   "expression": {
                     "argumentTypes": null,
-                    "id": 619,
+                    "id": 48,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
                       "argumentTypes": null,
-                      "id": 617,
+                      "id": 46,
                       "name": "latestRoot",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 583,
-                      "src": "1534:10:1",
+                      "referencedDeclaration": 12,
+                      "src": "1546:10:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_bytes32",
                         "typeString": "bytes32"
@@ -1595,67 +1729,67 @@
                     "operator": "=",
                     "rightHandSide": {
                       "argumentTypes": null,
-                      "id": 618,
+                      "id": 47,
                       "name": "root",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 612,
-                      "src": "1547:4:1",
+                      "referencedDeclaration": 41,
+                      "src": "1559:4:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_bytes32",
                         "typeString": "bytes32"
                       }
                     },
-                    "src": "1534:17:1",
+                    "src": "1546:17:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes32",
                       "typeString": "bytes32"
                     }
                   },
-                  "id": 620,
+                  "id": 49,
                   "nodeType": "ExpressionStatement",
-                  "src": "1534:17:1"
+                  "src": "1546:17:0"
                 }
               ]
             },
             "documentation": "@notice Append a leaf to the tree\n@param leafValue - the value of the leaf being inserted.",
-            "id": 622,
+            "id": 51,
             "implemented": true,
             "kind": "function",
             "modifiers": [
               {
                 "arguments": null,
-                "id": 609,
+                "id": 38,
                 "modifierName": {
                   "argumentTypes": null,
-                  "id": 608,
+                  "id": 37,
                   "name": "onlyOwner",
                   "nodeType": "Identifier",
                   "overloadedDeclarations": [],
-                  "referencedDeclaration": 595,
-                  "src": "1398:9:1",
+                  "referencedDeclaration": 24,
+                  "src": "1410:9:0",
                   "typeDescriptions": {
                     "typeIdentifier": "t_modifier$__$",
                     "typeString": "modifier ()"
                   }
                 },
                 "nodeType": "ModifierInvocation",
-                "src": "1398:9:1"
+                "src": "1410:9:0"
               }
             ],
             "name": "_insertLeaf",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 607,
+              "id": 36,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 606,
+                  "id": 35,
                   "name": "leafValue",
                   "nodeType": "VariableDeclaration",
-                  "scope": 622,
-                  "src": "1370:17:1",
+                  "scope": 51,
+                  "src": "1382:17:0",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -1663,10 +1797,10 @@
                     "typeString": "bytes32"
                   },
                   "typeName": {
-                    "id": 605,
+                    "id": 34,
                     "name": "bytes32",
                     "nodeType": "ElementaryTypeName",
-                    "src": "1370:7:1",
+                    "src": "1382:7:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes32",
                       "typeString": "bytes32"
@@ -1676,38 +1810,38 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "1369:19:1"
+              "src": "1381:19:0"
             },
             "returnParameters": {
-              "id": 610,
+              "id": 39,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "1408:0:1"
+              "src": "1420:0:0"
             },
-            "scope": 642,
-            "src": "1349:209:1",
+            "scope": 71,
+            "src": "1361:209:0",
             "stateMutability": "nonpayable",
             "superFunction": null,
             "visibility": "external"
           },
           {
             "body": {
-              "id": 640,
+              "id": 69,
               "nodeType": "Block",
-              "src": "1755:153:1",
+              "src": "1767:153:0",
               "statements": [
                 {
                   "assignments": [
-                    631
+                    60
                   ],
                   "declarations": [
                     {
                       "constant": false,
-                      "id": 631,
+                      "id": 60,
                       "name": "root",
                       "nodeType": "VariableDeclaration",
-                      "scope": 640,
-                      "src": "1766:12:1",
+                      "scope": 69,
+                      "src": "1778:12:0",
                       "stateVariable": false,
                       "storageLocation": "default",
                       "typeDescriptions": {
@@ -1715,10 +1849,10 @@
                         "typeString": "bytes32"
                       },
                       "typeName": {
-                        "id": 630,
+                        "id": 59,
                         "name": "bytes32",
                         "nodeType": "ElementaryTypeName",
-                        "src": "1766:7:1",
+                        "src": "1778:7:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_bytes32",
                           "typeString": "bytes32"
@@ -1728,18 +1862,18 @@
                       "visibility": "internal"
                     }
                   ],
-                  "id": 635,
+                  "id": 64,
                   "initialValue": {
                     "argumentTypes": null,
                     "arguments": [
                       {
                         "argumentTypes": null,
-                        "id": 633,
+                        "id": 62,
                         "name": "leafValues",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 625,
-                        "src": "1794:10:1",
+                        "referencedDeclaration": 54,
+                        "src": "1806:10:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_array$_t_bytes32_$dyn_calldata_ptr",
                           "typeString": "bytes32[] calldata"
@@ -1753,18 +1887,18 @@
                           "typeString": "bytes32[] calldata"
                         }
                       ],
-                      "id": 632,
+                      "id": 61,
                       "name": "insertLeaves",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 569,
-                      "src": "1781:12:1",
+                      "referencedDeclaration": 754,
+                      "src": "1793:12:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_array$_t_bytes32_$dyn_memory_ptr_$returns$_t_bytes32_$",
                         "typeString": "function (bytes32[] memory) returns (bytes32)"
                       }
                     },
-                    "id": 634,
+                    "id": 63,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -1772,31 +1906,31 @@
                     "lValueRequested": false,
                     "names": [],
                     "nodeType": "FunctionCall",
-                    "src": "1781:24:1",
+                    "src": "1793:24:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes32",
                       "typeString": "bytes32"
                     }
                   },
                   "nodeType": "VariableDeclarationStatement",
-                  "src": "1766:39:1"
+                  "src": "1778:39:0"
                 },
                 {
                   "expression": {
                     "argumentTypes": null,
-                    "id": 638,
+                    "id": 67,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
                       "argumentTypes": null,
-                      "id": 636,
+                      "id": 65,
                       "name": "latestRoot",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 583,
-                      "src": "1884:10:1",
+                      "referencedDeclaration": 12,
+                      "src": "1896:10:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_bytes32",
                         "typeString": "bytes32"
@@ -1806,67 +1940,67 @@
                     "operator": "=",
                     "rightHandSide": {
                       "argumentTypes": null,
-                      "id": 637,
+                      "id": 66,
                       "name": "root",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 631,
-                      "src": "1897:4:1",
+                      "referencedDeclaration": 60,
+                      "src": "1909:4:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_bytes32",
                         "typeString": "bytes32"
                       }
                     },
-                    "src": "1884:17:1",
+                    "src": "1896:17:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes32",
                       "typeString": "bytes32"
                     }
                   },
-                  "id": 639,
+                  "id": 68,
                   "nodeType": "ExpressionStatement",
-                  "src": "1884:17:1"
+                  "src": "1896:17:0"
                 }
               ]
             },
             "documentation": "@notice Append leaves to the tree\n@param leafValues - the values of the leaves being inserted.",
-            "id": 641,
+            "id": 70,
             "implemented": true,
             "kind": "function",
             "modifiers": [
               {
                 "arguments": null,
-                "id": 628,
+                "id": 57,
                 "modifierName": {
                   "argumentTypes": null,
-                  "id": 627,
+                  "id": 56,
                   "name": "onlyOwner",
                   "nodeType": "Identifier",
                   "overloadedDeclarations": [],
-                  "referencedDeclaration": 595,
-                  "src": "1745:9:1",
+                  "referencedDeclaration": 24,
+                  "src": "1757:9:0",
                   "typeDescriptions": {
                     "typeIdentifier": "t_modifier$__$",
                     "typeString": "modifier ()"
                   }
                 },
                 "nodeType": "ModifierInvocation",
-                "src": "1745:9:1"
+                "src": "1757:9:0"
               }
             ],
             "name": "_insertLeaves",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 626,
+              "id": 55,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 625,
+                  "id": 54,
                   "name": "leafValues",
                   "nodeType": "VariableDeclaration",
-                  "scope": 641,
-                  "src": "1705:29:1",
+                  "scope": 70,
+                  "src": "1717:29:0",
                   "stateVariable": false,
                   "storageLocation": "calldata",
                   "typeDescriptions": {
@@ -1875,19 +2009,19 @@
                   },
                   "typeName": {
                     "baseType": {
-                      "id": 623,
+                      "id": 52,
                       "name": "bytes32",
                       "nodeType": "ElementaryTypeName",
-                      "src": "1705:7:1",
+                      "src": "1717:7:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_bytes32",
                         "typeString": "bytes32"
                       }
                     },
-                    "id": 624,
+                    "id": 53,
                     "length": null,
                     "nodeType": "ArrayTypeName",
-                    "src": "1705:9:1",
+                    "src": "1717:9:0",
                     "typeDescriptions": {
                       "typeIdentifier": "t_array$_t_bytes32_$dyn_storage_ptr",
                       "typeString": "bytes32[]"
@@ -1897,34 +2031,34 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "1704:31:1"
+              "src": "1716:31:0"
             },
             "returnParameters": {
-              "id": 629,
+              "id": 58,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "1755:0:1"
+              "src": "1767:0:0"
             },
-            "scope": 642,
-            "src": "1682:226:1",
+            "scope": 71,
+            "src": "1694:226:0",
             "stateMutability": "nonpayable",
             "superFunction": null,
             "visibility": "external"
           }
         ],
-        "scope": 643,
-        "src": "243:1667:1"
+        "scope": 72,
+        "src": "247:1675:0"
       }
     ],
-    "src": "190:1721:1"
+    "src": "190:1733:0"
   },
   "compiler": {
     "name": "solc",
     "version": "0.5.8+commit.23d335f2.Emscripten.clang"
   },
   "networks": {},
-  "schemaVersion": "3.0.9",
-  "updatedAt": "2019-11-22T15:45:18.462Z",
+  "schemaVersion": "3.0.19",
+  "updatedAt": "2020-02-11T14:32:09.425Z",
   "devdoc": {
     "methods": {
       "_insertLeaf(bytes32)": {
@@ -1936,6 +2070,9 @@
         "params": {
           "leafValues": "- the values of the leaves being inserted."
         }
+      },
+      "getFrontierSlot(uint256)": {
+        "return": "uint - the index of the frontier (or 'storage slot') into which we will next store a nodeValue"
       },
       "insertLeaf(bytes32)": {
         "params": {
@@ -1960,6 +2097,9 @@
         "notice": "Append leaves to the tree"
       },
       "constructor": "Constructor for the MerkleTreeController contract.",
+      "getFrontierSlot(uint256)": {
+        "notice": "Get the index of the frontier (or 'storage slot') into which we will next store a nodeValue (based on the leafIndex currently being inserted). See the top-level README for a detailed explanation."
+      },
       "insertLeaf(bytes32)": {
         "notice": "Insert a leaf into the Merkle Tree, update the root, and update any values in the (persistently stored) frontier."
       },

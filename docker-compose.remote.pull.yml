@@ -32,6 +32,7 @@ services:
     ports:
       - "9000:80"
     environment:
+      HASH_TYPE: 'sha' # sha or mimc
       BLOCKCHAIN_HOST: ws://ganache
       BLOCKCHAIN_PORT: 8545
       DEPLOYER_HOST: http://deployer # required if CONTRACT_ORIGIN = 'remote' - replace with external microservice's name
@@ -76,6 +77,7 @@ services:
       - ./deployer/contracts/:/app/contracts:delegated
       - ./deployer/build/:/app/build
     environment:
+      HASH_TYPE: 'sha' # sha or mimc - only applies to deployer
       BLOCKCHAIN_HOST: ws://ganache
       BLOCKCHAIN_PORT: 8545
       MERKLE_TREE_HOST: http://merkle-tree

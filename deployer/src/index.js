@@ -14,7 +14,7 @@ import merkleTree from './rest/merkle-tree';
 const main = async () => {
   try {
     const { contractNames } = config;
-
+    
     await contractNames.forEach(async contractName => {
       switch (config.PUSH_OR_PULL) {
         default:

@@ -7,11 +7,12 @@ import config from 'config';
 
 import Web3 from '../src/web3';
 
-import deployer from '../src/deployer';
+import deployer from './rest/deployer';
+import contractDeployer from '../src/deployer';
 
 const web3 = Web3.connect();
 
-const contractInstance = {};
+let contractInstance;
 let coinbase;
 
 const n = 10;
@@ -22,24 +23,31 @@ const deployContract = async contractName => {
   coinbase = await web3.eth.getCoinbase();
 
   console.log(`\nDeploying ${contractName}`);
-  contractInstance[contractName] = await deployer.deploy(contractName);
+  contractInstance = await contractDeployer.deploy(contractName);
 };
 
 describe('Deployment', async () => {
   const { contractNames } = config;
+  let contractName = 'MerkleTreeControllerSHA';
+  before('get contractInstance', async () => {
+    if (!(await Web3.isConnected())) await Web3.connection();
 
+    coinbase = await web3.eth.getCoinbase();
+
+    contractInstance = await deployer.getContractInstance(contractName);
+  });
+
+  /*
   before('\ndeploy contracts', async () => {
     // eslint-disable-next-line no-restricted-syntax
     for (const contractName of contractNames) {
       await deployContract(contractName); // eslint-disable-line no-await-in-loop
     }
-  });
-
-  it('test1', async () => {});
+  });  */
 
   it(`sets the contract's owner`, async () => {
-    const contractName = 'MerkleTreeController';
-    const _owner = await contractInstance[contractName].methods.owner().call(); // calls the implicit getter for the public variable
+    const contractName = 'MerkleTreeControllerSHA';
+    const _owner = await contractInstance.methods.owner().call(); // calls the implicit getter for the public variable
     const owner = await web3.eth.getCoinbase();
     console.log('_owner', _owner);
     console.log('owner', owner);
@@ -48,7 +56,7 @@ describe('Deployment', async () => {
 });
 
 describe('MerkleTreeController', async () => {
-  const contractName = 'MerkleTreeController';
+  const contractName = 'MerkleTreeControllerSHA';
   let rootOneAtATime; // the root after adding the leaves one-at-a-time
   let rootBulk; // the root after adding the leaves (to a new instance of the tree) in bulk.
 
@@ -73,7 +81,7 @@ describe('MerkleTreeController', async () => {
         const leaf = i.toString().padStart(64, '0'); // pad to 32 bytes
 
         // eslint-disable-next-line no-await-in-loop
-        const txReceipt = await contractInstance[contractName].methods
+        const txReceipt = await contractInstance.methods
           ._insertLeaf(`0x${leaf}`)
           .send({
             from: coinbase,
@@ -86,13 +94,6 @@ describe('MerkleTreeController', async () => {
             console.log('NewLeaf:', leafIndex, leafValue, root);
 
             rootOneAtATime = root; // will be used in a later test
-
-            // // For debugging the hash function:
-            // const outputs = receipt.events.Output.map(event => {
-            //   const { leftInput, rightInput, output, nodeIndex } = event.returnValues;
-            //   return { leftInput, rightInput, output, nodeIndex };
-            // });
-            // console.log('outputs:', outputs);
           });
 
         const { gasUsed } = txReceipt;
@@ -120,7 +121,7 @@ describe('MerkleTreeController', async () => {
 
   // eslint-disable-next-line func-names
   describe(`Adding ${n} leaves at once`, async function() {
-    before('deploy contract', async () => {
+    before('\ndeploy contract', async () => {
       await deployContract(contractName);
     });
 
@@ -139,7 +140,7 @@ describe('MerkleTreeController', async () => {
         leaves.push(`0x${leaf}`);
       }
       // eslint-disable-next-line no-await-in-loop
-      const txReceipt = await contractInstance[contractName].methods
+      const txReceipt = await contractInstance.methods
         ._insertLeaves(leaves)
         .send({
           from: coinbase,

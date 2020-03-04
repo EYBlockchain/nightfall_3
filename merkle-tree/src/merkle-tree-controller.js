@@ -230,7 +230,6 @@ async function update(db) {
 
     let { frontier } = latestRecalculation;
     frontier = frontier === undefined ? [] : frontier;
-
     const leaves = await leafService.getLeavesByLeafIndexRange(fromLeafIndex, toLeafIndex);
     const leafValues = leaves.map(leaf => leaf.value);
     const currentLeafCount = fromLeafIndex;

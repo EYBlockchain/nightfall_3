@@ -17,4 +17,7 @@ module.exports = {
   env: {
     mocha: true,
   },
+  globals: {
+  'BigInt':true
+},
 };

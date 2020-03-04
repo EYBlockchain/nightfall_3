@@ -167,6 +167,7 @@ export default class MetadataService {
       { _id: 1 }, // 'match all' (within our one document)
       ['latestRecalculation', '-_id'], // return only the 'latestRecalculation' key (and exclude the _id key)
     );
+    doc = doc || {};
 
     doc = doc || {};
 
