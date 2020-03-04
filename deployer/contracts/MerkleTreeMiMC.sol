@@ -47,7 +47,7 @@ contract MerkleTreeMiMC is MiMC {
     event NewLeaf(uint leafIndex, bytes32 leafValue, bytes32 root);
     event NewLeaves(uint minLeafIndex, bytes32[] leafValues, bytes32 root);
 
-    event Output(bytes32[2] input, bytes32[1] output, uint nodeIndex, uint256 leafCount); // for debugging only
+    //event Output(bytes32[2] input, bytes32[1] output, uint nodeIndex, uint256 leafCount); // for debugging only
 
     uint public treeHeight = 32; //change back to 32 after testing
     uint public treeWidth = 2 ** treeHeight; // 2 ** treeHeight
