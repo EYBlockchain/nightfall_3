@@ -19,9 +19,8 @@ module.exports = {
   HASH_TYPE: process.env.HASH_TYPE,
   LEAF_HASHLENGTH: 32, // expected length of leaves' values in bytes
   NODE_HASHLENGTH: nodeHashLength, // expected length of nodes' values up the merkle tree, in bytes
-  TREE_HEIGHT: 32, // the hieght of the Merkle tree
+  TREE_HEIGHT: 32, // the height of the Merkle tree
   ZOKRATES_PRIME: '21888242871839275222246405745257275088548364400416034343698204186575808495617', // decimal representation of the prime p of GaloisField(p)
-  ZOKRATES_PACKING_SIZE: '128', // ZOKRATES_PRIME is approx 253-254bits (just shy of 256), so we pack field elements into blocks of 128 bits.
 
   POLLING_FREQUENCY: 6000, // milliseconds
   FILTER_GENESIS_BLOCK_NUMBER: 0, // blockNumber
@@ -35,25 +34,31 @@ module.exports = {
 
   // contracts to filter:
   contracts: {
+    // contract name:
     MerkleTreeControllerMiMC: {
       events: {
-        // indexed by event names:
+        // filter for the following event names:
         NewLeaf: {
-          parameters: ['leafIndex', 'leafValue'], // filter for these parameters
+          // filter for these event parameters:
+          parameters: ['leafIndex', 'leafValue'],
         },
         NewLeaves: {
-          parameters: ['minLeafIndex', 'leafValues'], // filter for these parameters
+          // filter for these event parameters:
+          parameters: ['minLeafIndex', 'leafValues'],
         },
       },
     },
+    // contract name:
     MerkleTreeControllerSHA: {
       events: {
-        // indexed by event names:
+        // filter for the following event names:
         NewLeaf: {
-          parameters: ['leafIndex', 'leafValue'], // filter for these parameters
+          // filter for these event parameters:
+          parameters: ['leafIndex', 'leafValue'],
         },
         NewLeaves: {
-          parameters: ['minLeafIndex', 'leafValues'], // filter for these parameters
+          // filter for these event parameters:
+          parameters: ['minLeafIndex', 'leafValues'],
         },
       },
     },

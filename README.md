@@ -5,15 +5,62 @@ Construct a Merkle Tree database from Ethereum logs.
 <sub><sup>Originator: [iAmMichaelConnor](https://github.com/iAmMichaelConnor)</sup></sub>
 
 ---
-## Contents
 
--   Objectives
--   Summary
--   In this repo...
--   Quick Start
--   API
--   Gas Costs
--   Technical Details
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+
+- [Summary](#summary)
+- [In this repo...](#in-this-repo)
+- [Quick Start:](#quick-start)
+  - [Prerequisites](#prerequisites)
+  - [Installing](#installing)
+  - [Starting](#starting)
+  - [Using](#using)
+    - [Example usage:](#example-usage)
+      - [Add leaves to the tree:](#add-leaves-to-the-tree)
+      - [Start the event filter:](#start-the-event-filter)
+      - [Update the merkle-tree database:](#update-the-merkle-tree-database)
+      - [Get information from the merkle-tree database:](#get-information-from-the-merkle-tree-database)
+  - [Stopping](#stopping)
+  - [Testing](#testing)
+- [Start-up configuration](#start-up-configuration)
+  - [`docker-compose.<...>.yml` options](#docker-composeyml-options)
+    - [`CONTRACT_ORIGIN`](#contract_origin)
+      - [`default`](#default)
+      - [`remote`](#remote)
+      - [`mongodb`](#mongodb)
+      - [`compile`](#compile)
+    - [`HASH_TYPE`](#hash_type)
+  - [config](#config)
+    - [`contracts`](#contracts)
+    - [`TREE_HEIGHT`](#tree_height)
+- [API](#api)
+  - [merkle-tree endpoints](#merkle-tree-endpoints)
+    - [`/start`](#start)
+    - [`/update`](#update)
+    - [`/siblingPath/:leafIndex`](#siblingpathleafindex)
+    - [`/path/:leafIndex`](#pathleafindex)
+  - [metadata endpoints](#metadata-endpoints)
+  - [leaf endpoints](#leaf-endpoints)
+    - [`/leaf`](#leaf)
+    - [`/leaves`](#leaves)
+  - [node endpoints](#node-endpoints)
+    - [`/node`](#node)
+    - [`/nodes`](#nodes)
+    - [`/root`](#root)
+- [Gas Costs](#gas-costs)
+  - [`insertLeaf`](#insertleaf)
+  - [`insertLeaves`](#insertleaves)
+- [Technical Details:](#technical-details)
+  - [Summary](#summary-1)
+  - [Details](#details)
+    - [On-chain logic](#on-chain-logic)
+      - [Inserting leaf 0](#inserting-leaf-0)
+      - [Inserting leaf 1](#inserting-leaf-1)
+      - [Future inserts](#future-inserts)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 ---
 
@@ -33,7 +80,7 @@ Only the `root` and a small `frontier` of nodes is stored on-chain. New leaves a
 
 A local merkle-tree database (off-chain) is populated with the leaves and nodes of the Tree, based on `NewLeaf` events emitted by the smart-contract.
 
-The database can then be queried, e.g. for sibling-paths in order to provide set-membership proofs to the smart-contract.
+The database can then be queried, e.g. for sibling-paths in order to provide set-membership proofs.
 
 **Disclaimer: Note that this code has not yet completed a security review and therefore we strongly recommend that you do not use it in production. We take no responsibility for any loss you may incur through the use of this code.**
 
@@ -45,21 +92,25 @@ The database can then be queried, e.g. for sibling-paths in order to provide set
 ./docker-compose.yml <-- 'startup' configuration
 |
 ./merkle-tree/ <-- the 'main' microservice of this repo
-      |
-      contracts/ <-- example MerkleTree.sol contract for efficient merkle-tree updates
-      |
-      src/
-          |
-          db/ <-- database services for managing the merkle-tree mongodb
-          |
-          routes/ <-- API routes for externally accessing this microservice
-          |
-          filter-controller.js <-- Ethereum event filter
-          |
-          merkle-tree-controller.js <-- merkle-tree update & calculation controller
+    |
+    config/
+        |
+        default.js  <-- specify important config parameters
+    |
+    src/
+        |
+        db/ <-- database services for managing the merkle-tree mongodb
+        |
+        routes/ <-- API routes for externally accessing this microservice
+        |
+        filter-controller.js <-- Ethereum event filter
+        |
+        merkle-tree-controller.js <-- merkle-tree update & calculation controller
 |
 ./deployer/ <-- example 'stub' microservice, demonstrating how one would use
                 'timber' as part of an application
+      |
+      contracts/ <-- example MerkleTree.sol contracts for efficient merkle-tree updates
 ```
 
 ---
@@ -138,6 +189,93 @@ See the [deployment README](deployer/test/README.md) for unit tests.
 
 ---
 
+## Start-up configuration
+
+There are several startup options which we can specify for Timber.
+Some are specified in Timber's `docker-compose.<...>.yml` file; others are specified in the config file mounted to `app/config/default.js`.
+
+### `docker-compose.<...>.yml` options
+
+We provide four example `docker-compose.<...>.yml` files to demonstrate the four start-up options (based on `CONTRACT_ORIGIN`).
+
+#### `CONTRACT_ORIGIN`
+
+Timber relies on being 'fed' details about the contracts it should subscribe to. When we POST to the `/start` endpoint of Timber, it will search for contract details at the `CONTRACT_ORIGIN` location we have specified.
+
+Importantly, Timber can only interpret smart contract interface json files which have been compiled with `solc`.
+
+We use the `CONTRACT_ORIGIN` environment variable to specify one of four options:
+
+##### `default`
+Timber will look for solc-compiled contract interface json files in `/app/build/`. You'll need to mount the relevant interface json files to this location.
+
+##### `remote`
+Timber will `GET` the solc-compiled contract interface json files from some external container. We call this external container 'deployer' (because, presumably it has deployed the contracts).
+You will need to specify two extra environment variables:
+`DEPLOYER_HOST: http://<host name of deployer>`
+`DEPLOYER_PORT: 80`
+
+##### `mongodb`
+Timber will get the solc-compiled contract interface json files from a mongodb collection.
+
+##### `compile`
+If no _solc_-compiled json files are available, then we'll need Timber to compile the contracts itself (using solc) from solidity files. You'll need to mount the relevant solidity files (including dependencies) to `app/contracts/`. Timber will then compile the `.sol` files itself, and store the contract interface json files in `app/build/`.
+
+#### `HASH_TYPE`
+
+For hashing 'up the merkle tree', there are currently two supported hash types:
+`sha` or `mimc`.
+
+| HASH_TYPE  | Algorithm	| Cost* (gas))	| Proving time  	| Constraints**	|
+|:-:	       |:-:	        |--:	          |--:	            |--:          	|
+| `sha`  	   | sha256   	|  ~90k         |  slow 	        | ~25,000	      |
+| `mimc`	   | MiMC-p/p  	|  ~1.4m    	  |  fast 	        | ~740        	|
+
+
+
+\*cost of hashing 32 times up a merkle tree.
+\**for a single hash
+
+### config
+
+Many options can be specified in the config file mounted to `app/config/default.js`. Some important options are highlighted below:
+
+#### `contracts`
+
+Specify which contracts, events, and event parameters to subscribe to.
+E.g.:
+```js
+// contracts to filter:
+contracts: {
+  // contract name:
+  MerkleTreeControllerMiMC: {
+    events: {
+      // filter for the following event names:
+      NewLeaf: {
+        // filter for these event parameters:
+        parameters: ['leafIndex', 'leafValue'],
+      },
+      NewLeaves: {
+        // filter for these event parameters:
+        parameters: ['minLeafIndex', 'leafValues'],
+      },
+    },
+  },
+},
+```
+**Note:** Requests to the API must specify the `contractname` in the header of the request.
+By specifying the `contractname`, Timber will know: which contract to interact with; and which db collection to get from, insert to, or update.
+
+E.g. `"contractname": "MerkleTreeControllerSHA"`
+
+
+#### `TREE_HEIGHT`
+The height of the merkle tree.
+
+Note that this height must match the height specified elsewhere in your application (e.g. the tree height in the merkle tree contract, or inside any zk-snark circuits).
+
+---
+
 ## API
 
 The `merkle-tree` container (or 'service') exposes several useful endpoints.
@@ -148,7 +286,98 @@ To access the `merkle-tree` service from your local machine (which is not in the
 
 A postman collection (for local testing) is provided at [./merkle-tree/test/postman-collections/](merkle-tree/test/postman-collections/).
 
+**Note:** Requests to the API must specify the `contractname` in the header of the request.
+By specifying the `contractname`, Timber will know: which contract to interact with; and which db collection to get from, insert to, or update.
+
+E.g. `"contractname": "MerkleTreeControllerSHA"`
+
 See `./merkle-tree/src/routes` for all api routes.
+
+### merkle-tree endpoints
+For interacting 'broadly' with Timber:
+#### `/start`
+Starts the event filter. Ensure to pass the relevant `contractname` as a req.header.
+#### `/update`
+Updates the entire merkle-tree db.
+Once started (via `/start`), Timber will be listening to contract events for new leaves. These leaves will be stored in the db, but the nodes of the db (i.e. tree data 'above' the leaves) won't be updated automatically, because that would be a waste of computation (node data would be constantly overwritten with each new leaf). Any time we want to GET up-to-date node information from the db, we must first call `/update` in order to update all nodes of the tree, based on the current set of leaves in the tree.
+
+**Note**: when calling the `/path` or `/siblingPath` getters, an `/update` is done automatically, so that the path being returned is up-to-date.
+
+#### `/siblingPath/:leafIndex`
+Get a siblingPath (an array of nodes) for a particular leafIndex. This endpoint will be used frequently, for merkle inclusion proofs.
+
+#### `/path/:leafIndex`
+Get a path (an array of nodes) for a particular leafIndex.
+
+### metadata endpoints
+There are several `/metadata/` endpoints for getting/setting data about the tree. E.g. `contractAddress`, `contractInterface`, `latestLeaf`, `latestRecalculation`.
+
+### leaf endpoints
+For getting/inserting/updating information relating to leaves of the tree.
+#### `/leaf`
+- `GET`
+  - `/leaf/index/:leafIndex` Get a leaf by leafIndex  
+  - `/leaf/index` Get a leaf by leafIndex  
+  - `/leaf/value` Get a leaf by leafValue  
+- `POST`
+  - **WARNING**: these POST requests were built for quick db testing only. In practice, insertions of leaves into Timber's merkle-tree db should only be done via the event subscriptions to MerkleTree smart contract(s). (See the `/start` endpoint for starting an event subscription).
+  - `/leaf` Insert a leaf into the merkle-tree db.
+
+#### `/leaves`
+- `GET`
+  - `/leaves` Get information about multiple leaves at once.
+  There are several options, specified through the request body:
+    - `req.body: { "leafIndices": [10, 15, 100000, 10000000] }`
+      Specify a selection of leaves, by their leafIndices.
+    - `req.body: { "values": ["0x1234", "hello", "0x12345678"] }`
+      Specify a selection of leaves, by their values.
+    - `req.body: { "minIndex": 10, "maxIndex": 1000 }`
+      Specify a range of leaves, by the lower and upper bounds of the index range.
+    - `req.body: {}`
+      Get information about all leaves.  
+  - `/leaves/check` Run some broad checks on the leaves of the tree, to check for corrupted filtering, or leaf tracking.
+  - `/leaves/count` Get the number of leaves currently in the merkle-tree mongodb.
+- `POST`
+  - **WARNING**: these POST requests were built for quick db testing only. In practice, insertions of leaves into Timber's merkle-tree db should only be done via the event subscriptions to MerkleTree smart contract(s). (See the `/start` endpoint for starting an event subscription).
+  - `/leaves` Insert multiple leaves into the merkle-tree db.
+
+### node endpoints
+For getting/inserting/updating information relating to nodes of the tree. A leaf is a special type of node (in that it has no children).
+#### `/node`
+- `GET`
+  - `/node/index/:nodeIndex` Get a node by nodeIndex  
+  - `/node/index` Get a node by nodeIndex  
+  - `/node/value` Get a node by nodeValue  
+- `POST`
+  - **WARNING**: these POST requests were built for quick db testing only. In practice, insertions of nodes into Timber's merkle-tree db should only be done via the `/update` endpoint.
+  - `/node` Insert a node into the merkle-tree db.
+- `PATCH`
+  - **WARNING**: these PATCH requests were built for quick db testing only. In practice, updates of nodes of Timber's merkle-tree db should only be done via the `/update` endpoint.
+  - `/node` Update the nodes of the tree (see `/update` for a more detailed explanation).
+
+#### `/nodes`
+- `GET`
+  - `/nodes` Get information about multiple nodes at once.
+  There are several options, specified through the request body:
+    - `req.body: { "nodeIndices": [10, 15, 100000, 10000000] }`
+      Specify a selection of nodes, by their nodeIndices (can include leaves).
+    - `req.body: { "values": ["0x1234", "hello", "0x12345678"] }`
+      Specify a selection of nodes, by their values  (can include leaves).
+    - `req.body: { "minIndex": 10, "maxIndex": 1000 }`
+      Specify a range of nodes, by the lower and upper bounds of the index range      (can include leaves).
+    - `req.body: {}`
+      Get information about all nodes (includes leaves).
+  - `/nodes/count` Get the number of nodes currently in the merkle-tree mongodb (includes leaves).
+- `POST`
+  - **WARNING**: these POST requests were built for quick db testing only. In practice, insertions of nodes into Timber's merkle-tree db should only be done via the `/update` endpoint.
+  - `/nodes` Insert multiple nodes into the merkle-tree db.
+- `PATCH`
+  - **WARNING**: these PATCH requests were built for quick db testing only. In practice, updates of nodes of Timber's merkle-tree db should only be done via the `/update` endpoint.
+  - `/nodes` Update the nodes of the tree (see `/update` for a more detailed explanation).
+
+#### `/root`
+- `GET`
+  - `/root` Get the root of the tree.
 
 ---
 
@@ -198,7 +427,9 @@ The following gives gas cost measurements for inserting leaves into the MerkleTr
 
 ## Technical Details:
 
-### On-chain  
+### Summary
+
+**On-chain**  
 
 The leaves of the tree are not stored on-chain, they're emitted as events.
 
@@ -206,7 +437,7 @@ The intermediate-nodes of the tree (between the leaves and the root) are not sto
 
 Only a 'frontier' is stored on-chain (see the detailed explanation below).  
 
-### Off-chain  
+**Off-chain**
 
 We filter the blockchain for `NewLeaf` event emissions, which contain:
 
@@ -222,7 +453,7 @@ We then insert each leaf into a local mongodb database.
 
 With this database, we can reconstruct the entire merkle tree.
 
-### Technical details
+### Details
 
 
 We consistently use the following indexing throughout the codebase:
