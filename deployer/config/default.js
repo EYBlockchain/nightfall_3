@@ -7,6 +7,7 @@ const nodeHashLength = process.env.HASH_TYPE === 'mimc' ? 32 : 27;
 const controller =
   process.env.HASH_TYPE === 'mimc' ? 'MerkleTreeControllerMiMC' : 'MerkleTreeControllerSHA';
 const contracts = [controller];
+
 module.exports = {
   LEVEL_DB_PATH: '/app/db/db',
   POLLING_FREQUENCY: 6000, // How many milliseconds to wait between each poll
