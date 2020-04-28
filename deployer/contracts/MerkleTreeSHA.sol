@@ -47,8 +47,8 @@ contract MerkleTreeSHA {
 
     // event Output(bytes27 leftInput, bytes27 rightInput, bytes32 output, uint nodeIndex); // for debugging only
 
-    uint public treeHeight = 32;
-    uint public treeWidth = 2 ** treeHeight; // 2 ** treeHeight
+    uint constant public treeHeight = 32;
+    uint constant public treeWidth = 2 ** treeHeight; // 2 ** treeHeight
     uint256 public leafCount; // the number of leaves currently in the tree
 
     /**
@@ -59,9 +59,8 @@ contract MerkleTreeSHA {
     27 bytes * 2 inputs to sha() = 54 byte input to sha(). 54 = 0x36.
     If in future you want to change the truncation values, search for '27', '40' and '0x36'.
     */
-    bytes27 zero = 0x000000000000000000000000000000000000000000000000000000;
-    // bytes32 zero = 0x0000000000000000000000000000000000000000000000000000000000000000;
-    bytes27[33] frontier; // the right-most 'frontier' of nodes required to calculate the new root when the next new leaf value is added.
+    bytes27 constant zero = 0x000000000000000000000000000000000000000000000000000000;
+    bytes27[32] frontier; // the right-most 'frontier' of nodes required to calculate the new root when the next new leaf value is added.
 
     /**
     @notice Get the index of the frontier (or 'storage slot') into which we will next store a nodeValue (based on the leafIndex currently being inserted). See the top-level README for a detailed explanation.
@@ -206,6 +205,8 @@ contract MerkleTreeSHA {
         bytes32[1] memory output; // the output of the hash
         bool success;
 
+        bytes27[32] memory tempFrontier = frontier;
+
         // consider each new leaf in turn, from left to right:
         for (uint leafIndex = leafCount; leafIndex < leafCount + numberOfLeaves; leafIndex++) {
             nodeValue = bytes27(leafValues[leafIndex - leafCount] << 40);
@@ -214,7 +215,7 @@ contract MerkleTreeSHA {
             slot = getFrontierSlot(leafIndex); // determine at which level we will next need to store a nodeValue
 
             if (slot == 0) {
-                frontier[slot] = nodeValue; // store in frontier
+                tempFrontier[slot] = nodeValue; // store in frontier
                 continue;
             }
 
@@ -222,7 +223,7 @@ contract MerkleTreeSHA {
             for (uint level = 1; level <= slot; level++) {
                 if (nodeIndex % 2 == 0) {
                     // even nodeIndex
-                    leftInput = frontier[level - 1];
+                    leftInput = tempFrontier[level - 1];
                     rightInput = nodeValue;
                     // compute the hash of the inputs:
                     // note: we don't extract this hashing into a separate function because that would cost more gas.
@@ -261,8 +262,16 @@ contract MerkleTreeSHA {
                     nodeIndex = nodeIndex / 2; // the parentIndex, but will become the nodeIndex of the next level
                 }
             }
-            frontier[slot] = nodeValue; // store in frontier
+            tempFrontier[slot] = nodeValue; // store in frontier
         }
+
+        // assign the new, final frontier values into storage:
+        for (uint level = 0; level < frontier.length; level++) {
+            if (frontier[level] != tempFrontier[level]) {
+                frontier[level] = tempFrontier[level];
+            }
+        }
+        delete tempFrontier;
 
         // So far we've added all leaves, and hashed up to a particular level of the tree. We now need to continue hashing from that level until the root:
         for (uint level = slot + 1; level <= treeHeight; level++) {

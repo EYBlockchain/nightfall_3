@@ -13,7 +13,24 @@ _Note: in the steps below, you can replace `-f docker-compose.remote.pull.yml` w
 
 _Note, however, that the default `docker-compose.yml` file is a bit more fiddly, because it relies on contracts being deployed via truffle with your application. Tests aren't provided for that file yet._
 
-Or, to run a specific test:  
+First, compile the contracts:
+
+```sh
+cd deployer
+truffle compile
+cd ..
+```
+
+#### MerkleTreeController.test.js  
+
+This test relies on the deployer microservice's url '<http://deployer:80>' being discoverable by itself. We achieve this easily by running the 'main' docker-compose script first:  
+
+In one terminal window:  
+`docker-compose up`  
+
+Then in another terminal window:  
+`docker-compose -f docker-compose.remote.pull.yml run --rm deployer npx mocha --exit --require @babel/register 'test/MerkleTreeController.test.js'`
+
 #### deployment.test.js  
 
 `docker-compose -f docker-compose.remote.pull.yml run --rm deployer npx mocha --exit --require @babel/register 'test/deployment.test.js'`
@@ -25,17 +42,6 @@ Or, to run a specific test:
 `--exit` exits the mocha test once its finished (although this will leave the containers still running).  
 `--require @babel/register` to help mocha understand the js syntax used.
 
-#### MerkleTreeController.test.js  
-
-This test relies on the deployer microservice's url '<http://deployer:80>' being discoverable by itself. We achieve this easily by running the 'main' docker-compose script first:  
-
-In one terminal window:  
-`docker-compose -f docker-compose.remote.pull.yml up`  
-
-Then in another terminal window:  
-`docker-compose -f docker-compose.remote.pull.yml run --rm deployer npx mocha --exit --require @babel/register 'test/MerkleTreeController.test.js'`
-
-
 ## After testing
 
-`docker-compose -f docker-compose.remote.pull.yml down -v` to kill the docker containers, volumes, and networks.
+`docker-compose down -v` to kill the docker containers, volumes, and networks.
