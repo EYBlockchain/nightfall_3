@@ -69,7 +69,7 @@ module.exports = {
   # Specify one of:
   # - 'remote' (to GET them from a remote microservice); or
   # - 'mongodb' (to get them from mongodb); or
-  # - 'compile' (to compile the contracts from /app/build to /app/contracts)
+  # - 'compile' (to compile the contracts from /app/build to /app/build/contracts)
   # - 'default' (to get them from the /app/build/contracts folder)
   */
   contractOrigin: process.env.CONTRACT_ORIGIN,

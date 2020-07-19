@@ -202,12 +202,41 @@ We provide four example `docker-compose.<...>.yml` files to demonstrate the four
 
 Timber relies on being 'fed' details about the contracts it should subscribe to. When we POST to the `/start` endpoint of Timber, it will search for contract details at the `CONTRACT_ORIGIN` location we have specified.
 
-Importantly, Timber can only interpret smart contract interface json files which have been compiled with `solc`.
+Importantly, Timber expects smart contract interface json filesin `/app/build/contracts` to have the following format:
+```
+{
+  abi: "...",
+  evm:
+    bytecode:
+      object: "0x..."
+}
+```  
+
+`0x/sol-compiler` outputs JSON in this format:
+```
+{
+  compiledOutput:
+    abi: "...",
+    evm:
+      bytecode: 
+        object: "0x..."
+}
+```
+
+`truffle compile` outputs JSON in this format:
+```
+{
+  abi: "...",
+  bytecode: "0x...."
+}
+```
+
+Timber uses the `abi` field but does not currently use `bytecode`, so truffle's format works without any translation.
 
 We use the `CONTRACT_ORIGIN` environment variable to specify one of four options:
 
 ##### `default`
-Timber will look for solc-compiled contract interface json files in `/app/build/`. You'll need to mount the relevant interface json files to this location.
+Timber will look for solc-compiled contract interface json files in `/app/build/contracts`. You'll need to mount the relevant interface json files to this location.
 
 ##### `remote`
 Timber will `GET` the solc-compiled contract interface json files from some external container. We call this external container 'deployer' (because, presumably it has deployed the contracts).
@@ -219,7 +248,7 @@ You will need to specify two extra environment variables:
 Timber will get the solc-compiled contract interface json files from a mongodb collection.
 
 ##### `compile`
-If no _solc_-compiled json files are available, then we'll need Timber to compile the contracts itself (using solc) from solidity files. You'll need to mount the relevant solidity files (including dependencies) to `app/contracts/`. Timber will then compile the `.sol` files itself, and store the contract interface json files in `app/build/`.
+If no _solc_-compiled json files are available, then we'll need Timber to compile the contracts itself (using solc) from solidity files. You'll need to mount the relevant solidity files (including dependencies) to `app/contracts/`. Timber will then compile the `.sol` files itself, and store the contract interface json files in `app/build/contracts`.
 
 #### `HASH_TYPE`
 
