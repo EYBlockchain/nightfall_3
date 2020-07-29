@@ -4,9 +4,11 @@
 @desc constants used by a number of other modules
 */
 const nodeHashLength = process.env.HASH_TYPE === 'mimc' ? 32 : 27;
-const controller =
-  process.env.HASH_TYPE === 'mimc' ? 'MerkleTreeControllerMiMC' : 'MerkleTreeControllerSHA';
-const contracts = [controller];
+const contracts =
+  process.env.HASH_TYPE === 'mimc'
+    ? ['MerkleTreeControllerMiMC']
+    : ['MerkleTreeControllerSHA', 'MultipleMerkleTreesControllerSHA'];
+// const contracts = [controller];
 
 module.exports = {
   LEVEL_DB_PATH: '/app/db/db',
@@ -19,6 +21,37 @@ module.exports = {
 
   // push the contract information, or wait for it to be pulled
   PUSH_OR_PULL: process.env.PUSH_OR_PULL,
+
+  contracts: {
+    // contract name:
+    MerkleTreeControllerMiMC: {
+      events: {
+        // filter for the following event names:
+        NewLeaf: {
+          // filter for these event parameters:
+          parameters: ['leafIndex', 'leafValue'],
+        },
+        NewLeaves: {
+          // filter for these event parameters:
+          parameters: ['minLeafIndex', 'leafValues'],
+        },
+      },
+    },
+    // contract name:
+    MerkleTreeControllerSHA: {
+      events: {
+        // filter for the following event names:
+        NewLeaf: {
+          // filter for these event parameters:
+          parameters: ['leafIndex', 'leafValue'],
+        },
+        NewLeaves: {
+          // filter for these event parameters:
+          parameters: ['minLeafIndex', 'leafValues'],
+        },
+      },
+    },
+  },
 
   // microservices:
   merkleTree: {

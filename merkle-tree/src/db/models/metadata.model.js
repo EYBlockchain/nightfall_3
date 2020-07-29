@@ -1,5 +1,4 @@
 import { Schema } from 'mongoose';
-import config from 'config';
 
 // This schema stores information relating to the whole tree.
 
@@ -12,7 +11,7 @@ export default new Schema(
 
     treeHeight: {
       type: Number,
-      default: config.TREE_HEIGHT,
+      default: 32,
     },
     contractAddress: {
       type: String,
@@ -29,7 +28,7 @@ export default new Schema(
       root: String,
       frontier: {
         type: Array,
-        default: new Array(config.TREE_HEIGHT + 1),
+        default: new Array(33),
       },
       /*
         The frontier contains one value from each level of the tree.

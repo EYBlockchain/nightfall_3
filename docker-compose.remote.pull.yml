@@ -4,7 +4,7 @@ services:
   # A local blockchain instance
   ganache:
     image: trufflesuite/ganache-cli:latest
-    command: ganache-cli --accounts=10 --defaultBalanceEther=1000 --gasLimit=8000000
+    command: ganache-cli --accounts=10 --defaultBalanceEther=1000 --gasLimit=10000000
     ports:
       - "8545:8545"
     networks:

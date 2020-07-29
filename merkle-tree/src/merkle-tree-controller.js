@@ -106,8 +106,11 @@ Calculate the path (each parent up the tree) from a given leaf to the root.
 */
 async function getPathByLeafIndex(db, leafIndex) {
   console.log('\nsrc/merkle-tree-controller getPathByLeafIndex()');
+  const metadataService = new MetadataService(db);
+  // update the metadata db (based on currently stored leaves):
+  const { treeHeight } = await metadataService.getTreeHeight();
 
-  const nodeIndex = utilsMT.leafIndexToNodeIndex(leafIndex);
+  const nodeIndex = utilsMT.leafIndexToNodeIndex(leafIndex, treeHeight);
 
   // construct an array of indices to query from the db:
   const pathIndices = utilsMT.getPathIndices(nodeIndex);
@@ -143,8 +146,11 @@ Calculate the siblingPath or 'witness path' for a given leaf.
 */
 async function getSiblingPathByLeafIndex(db, leafIndex) {
   console.log('\nsrc/merkle-tree-controller getSiblingPathByLeafIndex()');
+  const metadataService = new MetadataService(db);
+  // update the metadata db (based on currently stored leaves):
+  const { treeHeight } = await metadataService.getTreeHeight();
 
-  const nodeIndex = utilsMT.leafIndexToNodeIndex(leafIndex);
+  const nodeIndex = utilsMT.leafIndexToNodeIndex(leafIndex, treeHeight);
 
   // construct an array of indices to query from the db:
   const siblingPathIndices = utilsMT.getSiblingPathIndices(nodeIndex);
@@ -203,6 +209,9 @@ async function update(db) {
   // update the metadata db (based on currently stored leaves):
   let { latestLeaf } = await updateLatestLeaf(db);
 
+  // update the metadata db (based on currently stored leaves):
+  const { treeHeight } = await metadataService.getTreeHeight();
+
   // get the latest recalculation metadata (to know how up-to-date the nodes of our tree actually are):
   let { latestRecalculation } = await metadataService.getLatestRecalculation();
   latestRecalculation = latestRecalculation === undefined ? {} : latestRecalculation;
@@ -221,11 +230,7 @@ async function update(db) {
     // Recalculate any nodes along the path from the new leaves to the root:
     console.log(`\nUpdating the tree from leaf ${fromLeafIndex} to leaf ${toLeafIndex}`);
 
-    const numberOfHashes = utilsMT.getNumberOfHashes(
-      toLeafIndex,
-      fromLeafIndex,
-      config.TREE_HEIGHT,
-    );
+    const numberOfHashes = utilsMT.getNumberOfHashes(toLeafIndex, fromLeafIndex, treeHeight);
     console.log(`\n${numberOfHashes} hashes are required to update the tree...\n\n\n\n\n`);
 
     let { frontier } = latestRecalculation;
@@ -238,6 +243,7 @@ async function update(db) {
       leafValues,
       currentLeafCount,
       frontier,
+      treeHeight,
       updateNodes.bind({ nodeService, numberOfHashes }),
     );
 

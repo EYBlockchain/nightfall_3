@@ -52,6 +52,26 @@ export default class MetadataService {
     return dbResponse;
   }
 
+  /**
+  Insert a tree height into the tree's metadata
+  @param {object} data
+  */
+  async insertTreeHeight(data) {
+    console.log('\nsrc/db/service/metadata.service insertTreeHeight()');
+    const { treeHeight } = metadataMapper(data);
+    if (treeHeight === undefined) return null;
+    console.log(`treeHeight: ${treeHeight}`);
+
+    const dbResponse = await this.db.updateDoc(
+      COLLECTIONS.METADATA,
+      { _id: 1 },
+      { $set: { treeHeight } },
+      { upsert: true },
+    );
+
+    return dbResponse;
+  }
+
   // UPDATES
 
   /**
@@ -153,6 +173,22 @@ export default class MetadataService {
     };
 
     return contractInterface;
+  }
+
+  /**
+  Get the treeHeight relating to the MerkleTree contract & treeId
+  @returns {object} the { treeHeight }
+  */
+  async getTreeHeight() {
+    console.log('\nsrc/db/service/metadata.service getTreeHeight()');
+
+    let doc = await this.db.getDoc(
+      COLLECTIONS.METADATA,
+      { _id: 1 }, // 'match all' (within our one document)
+      ['treeHeight', '-_id'], // return only the 'treeHeight' key (and exclude the _id key)
+    );
+    doc = doc || {};
+    return doc;
   }
 
   /**

@@ -16,12 +16,21 @@ const subscriptions = {};
 TODO: description
 */
 const newLeafResponseFunction = async (eventObject, args) => {
-  const eventName = 'NewLeaf'; // hardcoded, as inextricably linked to the name of this function.
-
+  // NEW - function remains the same, for detecting single leaves, but can now specify the event name
+  // NOTE - events must have same parameters as newLeaf / newLeaves
   // We make some hardcoded presumptions about what's contained in the 'args':
-  const { db, contractName } = args;
+  const { db, contractName, treeId } = args;
 
-  const eventParams = config.contracts[contractName].events[eventName].parameters;
+  const eventName = args.eventName === undefined ? 'NewLeaf' : args.eventName; // hardcoded, as inextricably linked to the name of this function.
+
+  let eventParams;
+  console.log(`eventname: ${eventName}`);
+
+  if (treeId === undefined || treeId === '') {
+    eventParams = config.contracts[contractName].events[eventName].parameters;
+  } else {
+    eventParams = config.contracts[contractName].treeId[treeId].events[eventName].parameters;
+  }
 
   // Now some generic eventObject handling code:
   const { eventData } = eventObject;
@@ -40,6 +49,9 @@ const newLeafResponseFunction = async (eventObject, args) => {
   // console.log('eventInstance:');
   // console.dir(eventInstance, { depth: null });
 
+  const metadataService = new MetadataService(db);
+  const { treeHeight } = await metadataService.getTreeHeight();
+
   // Now some bespoke code; specific to how our application needs to deal with this eventObject:
   // construct a 'leaf' document to store in the db:
   const { blockNumber } = eventData;
@@ -48,6 +60,7 @@ const newLeafResponseFunction = async (eventObject, args) => {
     value: leafValue,
     leafIndex,
     blockNumber,
+    treeHeight,
   };
 
   const leafService = new LeafService(db);
@@ -58,12 +71,18 @@ const newLeafResponseFunction = async (eventObject, args) => {
 TODO: description
 */
 const newLeavesResponseFunction = async (eventObject, args) => {
-  const eventName = 'NewLeaves'; // hardcoded, as inextricably linked to the name of this function.
-
   // We make some hardcoded presumptions about what's contained in the 'args':
-  const { db, contractName } = args;
+  const { db, contractName, treeId } = args;
 
-  const eventParams = config.contracts[contractName].events[eventName].parameters;
+  const eventName = args.eventName === undefined ? 'NewLeaves' : args.eventName; // hardcoded, as inextricably linked to the name of this function.
+
+  let eventParams;
+
+  if (treeId === undefined || treeId === '') {
+    eventParams = config.contracts[contractName].events[eventName].parameters;
+  } else {
+    eventParams = config.contracts[contractName].treeId[treeId].events[eventName].parameters;
+  }
 
   // Now some generic eventObject handling code:
   const { eventData } = eventObject;
@@ -81,6 +100,8 @@ const newLeavesResponseFunction = async (eventObject, args) => {
   });
   // console.log('eventInstance:');
   // console.dir(eventInstance, { depth: null });
+  const metadataService = new MetadataService(db);
+  const { treeHeight } = await metadataService.getTreeHeight();
 
   // Now some more bespoke code; specific to how our application needs to deal with this eventObject:
   // construct an array of 'leaf' documents to store in the db:
@@ -95,6 +116,7 @@ const newLeavesResponseFunction = async (eventObject, args) => {
       value: leafValue,
       leafIndex,
       blockNumber,
+      treeHeight,
     };
     docs.push(doc);
   });
@@ -131,15 +153,43 @@ const responseFunctions = {
 An 'orchestrator' which oversees the various filtering steps of the filter
 @param {number} blockNumber
 */
-async function filterBlock(db, contractName, contractInstance, fromBlock) {
-  console.log(`\nsrc/filter-controller filterBlock(db, contractInstance, fromBlock=${fromBlock})`);
+async function filterBlock(db, contractName, contractInstance, fromBlock, treeId) {
+  console.log(
+    `\nsrc/filter-controller filterBlock(db, contractInstance, fromBlock=${fromBlock}, treeId)`,
+  );
+  const metadataService = new MetadataService(db);
 
-  const eventNames = Object.keys(config.contracts[contractName].events);
+  let eventNames;
+
+  if (treeId === undefined || treeId === '') {
+    eventNames = Object.keys(config.contracts[contractName].events);
+    if (config.treeHeight !== undefined || config.treeHeight !== '') {
+      const { treeHeight } = config;
+      metadataService.insertTreeHeight({ treeHeight });
+    }
+  } else {
+    const { treeHeightDb } = await metadataService.getTreeHeight();
+    const { treeHeight } = config.contracts[contractName].treeId[treeId];
+    if (treeHeightDb !== treeHeight && (treeHeight !== undefined || treeHeight !== '')) {
+      metadataService.insertTreeHeight({ treeHeight });
+    }
+    eventNames = Object.keys(config.contracts[contractName].treeId[treeId].events);
+  }
+
+  const { treeHeight } = await metadataService.getTreeHeight();
+  const { latestRecalculation } = await metadataService.getLatestRecalculation();
+  const { frontier } =
+    latestRecalculation.frontier === undefined ? new Array(treeHeight) : latestRecalculation;
+  if (frontier.length !== treeHeight && treeHeight !== 32) {
+    latestRecalculation.frontier = new Array(treeHeight);
+    await metadataService.updateLatestRecalculation({ latestRecalculation });
+  }
 
   eventNames.forEach(async eventName => {
     const responder = newEventResponder;
-    const responseFunction = responseFunctions[eventName];
-    const responseFunctionArgs = { db, contractName };
+    const responseFunction =
+      eventName === eventNames[0] ? responseFunctions.NewLeaf : responseFunctions.NewLeaves;
+    const responseFunctionArgs = { db, contractName, eventName, treeId };
 
     const eventSubscription = await utilsWeb3.subscribeToEvent(
       contractName,
@@ -202,14 +252,14 @@ async function getFromBlock(db) {
 /**
 Commence filtering
 */
-async function start(db, contractName, contractInstance) {
+async function start(db, contractName, contractInstance, treeId) {
   try {
     console.log('\nStarting filter...');
     // check the fiddly case of having to re-filter any old blocks due to lost information (e.g. due to a system crash).
     const fromBlock = await getFromBlock(db); // the blockNumber we get is the next WHOLE block to start filtering.
 
     // Now we filter indefinitely:
-    await filterBlock(db, contractName, contractInstance, fromBlock);
+    await filterBlock(db, contractName, contractInstance, fromBlock, treeId);
     return true;
   } catch (err) {
     throw new Error(err);

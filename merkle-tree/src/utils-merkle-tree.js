@@ -10,9 +10,6 @@ import config from 'config';
 
 import utils from './utils';
 
-const treeHeight = config.TREE_HEIGHT;
-const treeWidth = 2 ** treeHeight;
-
 function rightShift(integer, shift) {
   return Math.floor(integer / 2 ** shift);
 }
@@ -23,13 +20,15 @@ function leftShift(integer, shift) {
 
 // INDEX CONVERSIONS
 
-function leafIndexToNodeIndex(_leafIndex) {
+function leafIndexToNodeIndex(_leafIndex, _height) {
   const leafIndex = Number(_leafIndex);
+  const treeWidth = 2 ** _height;
   return leafIndex + treeWidth - 1;
 }
 
-function nodeIndexToLeafIndex(_nodeIndex) {
+function nodeIndexToLeafIndex(_nodeIndex, _height) {
   const nodeIndex = Number(_nodeIndex);
+  const treeWidth = 2 ** _height;
   return nodeIndex + 1 - treeWidth;
 }
 
@@ -158,9 +157,9 @@ function getFrontierSlot(leafIndex) {
 A js implementation of the corresponding Solidity function in MerkleTree.sol
 @notice KEEP ALL CONSOLE LOGGING (even if commented out) FOR FUTURE DEBUGGING.
 */
-async function updateNodes(leafValues, currentLeafCount, frontier, updateNodesFunction) {
+async function updateNodes(leafValues, currentLeafCount, frontier, height, updateNodesFunction) {
   console.log(`\nsrc/utils-merkle-tree updateNodes()`);
-
+  const treeWidth = 2 ** height;
   const newFrontier = frontier;
 
   // check that space exists in the tree:
@@ -239,7 +238,7 @@ async function updateNodes(leafValues, currentLeafCount, frontier, updateNodesFu
   }
 
   // So far we've added all leaves, and hashed up to a particular level of the tree. We now need to continue hashing from that level until the root:
-  for (let level = slot + 1; level <= treeHeight; level++) {
+  for (let level = slot + 1; level <= height; level++) {
     // console.log('above slot');
     // console.log('level', level);
     // console.log('slot', slot);

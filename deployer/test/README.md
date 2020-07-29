@@ -31,6 +31,12 @@ In one terminal window:
 Then in another terminal window:  
 `docker-compose -f docker-compose.remote.pull.yml run --rm deployer npx mocha --exit --require @babel/register 'test/MerkleTreeController.test.js'`
 
+#### MultipleMerkleTreesController.test.js  
+
+`docker-compose -f docker-compose.remote.pull.yml run --rm deployer npx mocha --exit --require @babel/register 'test/MultipleMerkleTreesController.test.js'`
+
+This test demonstrates using multiple merkle trees per smart contract. Be sure to specify the `treeId` (either `a` or `b`) in the body of any API requests sent for this test.
+
 #### deployment.test.js  
 
 `docker-compose -f docker-compose.remote.pull.yml run --rm deployer npx mocha --exit --require @babel/register 'test/deployment.test.js'`

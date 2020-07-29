@@ -14,27 +14,40 @@ Class created from within src/middleware/assign-db-connection
 @param {string} contractName - contractName of the contract which relates to this db
 */
 export default class DB {
-  constructor(connection, username, contractName) {
+  constructor(connection, username, contractName, treeId) {
     this.connection = connection;
     this.username = username;
     if (!username) return;
-    this.createModelsForUser(contractName);
+    this.createModelsForUser(contractName, treeId);
   }
 
   /**
   A model is a class with which we construct documents
   */
-  createModelsForUser(contractName) {
-    this.Models = {
-      node: this.connection.model(
-        `${this.username}_${contractName}_${COLLECTIONS.NODE}`,
-        nodeSchema,
-      ),
-      metadata: this.connection.model(
-        `${this.username}_${contractName}_${COLLECTIONS.METADATA}`,
-        metadataSchema,
-      ),
-    };
+  createModelsForUser(contractName, treeId) {
+    if (treeId === undefined || treeId === '') {
+      this.Models = {
+        node: this.connection.model(
+          `${this.username}_${contractName}_${COLLECTIONS.NODE}`,
+          nodeSchema,
+        ),
+        metadata: this.connection.model(
+          `${this.username}_${contractName}_${COLLECTIONS.METADATA}`,
+          metadataSchema,
+        ),
+      };
+    } else {
+      this.Models = {
+        node: this.connection.model(
+          `${this.username}_${contractName}_${treeId}_${COLLECTIONS.NODE}`,
+          nodeSchema,
+        ),
+        metadata: this.connection.model(
+          `${this.username}_${contractName}_${treeId}_${COLLECTIONS.METADATA}`,
+          metadataSchema,
+        ),
+      };
+    }
   }
 
   /**

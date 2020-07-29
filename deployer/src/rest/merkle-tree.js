@@ -14,7 +14,7 @@ async function startEventFilter(contractName) {
       url: `${url}/start`,
       method: 'POST',
       json: true,
-      headers: { contractname: contractName },
+      // headers: { contractName: contractName },
       body: { contractName },
     };
     request(options, (err, res, body) => {
@@ -34,8 +34,8 @@ async function getSiblingPathByLeafIndex(contractName, leafIndex) {
       url: `${url}/siblingPath/${leafIndex}`,
       method: 'POST',
       json: true,
-      headers: { contractname: contractName },
-      // body:, // no body; uses url param
+      // headers: { contractName: contractName },
+      body: { contractName }, // no body; uses url param
     };
     request(options, (err, res, body) => {
       if (err) reject(err);
@@ -54,7 +54,7 @@ async function getContractInterface(contractName) {
       url: `${url}/metadata/contractInterface`,
       method: 'GET',
       json: true,
-      headers: { contractname: contractName },
+      // headers: { contractName: contractName },
       body: { contractName },
     };
     request(options, (err, res, body) => {
@@ -74,7 +74,7 @@ async function getContractAddress(contractName) {
       url: `${url}/metadata/contractAddress`,
       method: 'GET',
       json: true,
-      headers: { contractname: contractName },
+      // headers: { contractName: contractName },
       body: { contractName },
     };
     request(options, (err, res, body) => {
@@ -91,8 +91,8 @@ async function postInterface(contractName, contractInterface) {
       url: `${url}/metadata/contractInterface`,
       method: 'POST',
       json: true,
-      headers: { contractname: contractName }, // lowercase keys for headers
-      body: { contractInterface },
+      // headers: { contractName: contractName }, // lowercase keys for headers
+      body: { contractName, contractInterface },
     };
     request(options, (err, res, body) => {
       if (err) reject(err);
@@ -139,8 +139,8 @@ async function postAddress(contractName, contractAddress) {
       url: `${url}/metadata/contractAddress`,
       method: 'POST',
       json: true,
-      headers: { contractname: contractName }, // lowercase keys for headers
-      body: { contractAddress },
+      // headers: { contractName: contractName }, // lowercase keys for headers
+      body: { contractName, contractAddress },
     };
     request(options, (err, res, body) => {
       if (err) reject(err);
