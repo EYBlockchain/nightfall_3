@@ -3,17 +3,27 @@
 @author iAmMichaelConnor
 @desc constants used by a number of other modules
 */
-const nodeHashLength = process.env.HASH_TYPE === 'mimc' ? 32 : 27;
-const contracts =
-  process.env.HASH_TYPE === 'mimc'
-    ? ['MerkleTreeControllerMiMC']
-    : ['MerkleTreeControllerSHA', 'MultipleMerkleTreesControllerSHA'];
-// const contracts = [controller];
+
+let nodeHashLength;
+let contracts;
+
+if (process.env.HASH_TYPE === 'mimc') {
+  nodeHashLength = 32;
+  if (process.env.CURVE === 'BLS12_377') {
+    contracts = ['MerkleTreeControllerMiMC_BLS12'];
+  } else {
+    contracts = ['MerkleTreeControllerMiMC_BN254'];
+  }
+} else {
+  nodeHashLength = 27;
+  contracts = ['MerkleTreeControllerSHA', 'MultipleMerkleTreesControllerSHA'];
+}
 
 module.exports = {
   LEVEL_DB_PATH: '/app/db/db',
   POLLING_FREQUENCY: 6000, // How many milliseconds to wait between each poll
   HASH_TYPE: process.env.HASH_TYPE,
+  CURVE: process.env.CURVE,
   NODE_HASHLENGTH: nodeHashLength, // expected length of nodes' values up the merkle tree, in bytes
 
   // deployed contract info:
@@ -24,7 +34,35 @@ module.exports = {
 
   contracts: {
     // contract name:
-    MerkleTreeControllerMiMC: {
+    MerkleTreeControllerMiMC_BN254: {
+      events: {
+        // filter for the following event names:
+        NewLeaf: {
+          // filter for these event parameters:
+          parameters: ['leafIndex', 'leafValue'],
+        },
+        NewLeaves: {
+          // filter for these event parameters:
+          parameters: ['minLeafIndex', 'leafValues'],
+        },
+      },
+    },
+    // contract name:
+    MerkleTreeControllerMiMC_BLS12: {
+      events: {
+        // filter for the following event names:
+        NewLeaf: {
+          // filter for these event parameters:
+          parameters: ['leafIndex', 'leafValue'],
+        },
+        NewLeaves: {
+          // filter for these event parameters:
+          parameters: ['minLeafIndex', 'leafValues'],
+        },
+      },
+    },
+    // contract name:
+    MerkleTreeControllerMiMC_BW6: {
       events: {
         // filter for the following event names:
         NewLeaf: {

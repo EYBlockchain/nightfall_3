@@ -14,7 +14,7 @@ let contractInstance;
 let coinbase;
 
 const numberOfBatches = 1;
-const batchSize = 128;
+const batchSize = 16;
 
 describe(`${contractName}`, async () => {
   before('get contractInstance', async () => {
@@ -23,6 +23,71 @@ describe(`${contractName}`, async () => {
     coinbase = await web3.eth.getCoinbase();
 
     contractInstance = await deployer.getContractInstance(contractName);
+  });
+
+  // eslint-disable-next-line func-names
+  describe(`mimc hashing via ${contractName}`, async function() {
+    this.timeout(3660000); // surprisingly, this.timeout() doesn't work inside an arrow function!
+
+    // console.log('in config', config.contractNames, config.HASH_TYPE);
+    // console.log('in docker-compose', process.env.HASH_TYPE);
+    const gasUsedArray = [];
+    let totalGasUsed = 0;
+    let averageGasUsed = 0;
+    let averageGasUsedMinusTxCost = 0;
+    let max = 0;
+    let min = 100000000;
+    let range;
+
+    it(`hashes correctly`, async () => {
+      if (process.env.HASH_TYPE === 'mimc') {
+        let txReceipt;
+        for (let i = 0; i < 32; i += 1) {
+          if (process.env.CURVE === 'BLS12_377') {
+            // eslint-disable-next-line no-await-in-loop
+            txReceipt = await contractInstance.methods.mimcHash([i, i + 1]).send({
+              from: coinbase,
+              gas: config.web3.options.defaultGas,
+              gasPrice: config.web3.options.defaultGasPrice,
+            });
+          } else {
+            const preimage = [
+              `0x${i.toString().padStart(64, '0')}`,
+              `0x${(i + 1).toString().padStart(64, '0')}`,
+            ]; // pad to 32 bytes
+            // eslint-disable-next-line no-await-in-loop
+            txReceipt = await contractInstance.methods.mimcHash2(preimage).send({
+              from: coinbase,
+              gas: config.web3.options.defaultGas,
+              gasPrice: config.web3.options.defaultGasPrice,
+            });
+          }
+          const { gasUsed } = txReceipt;
+          gasUsedArray.push(gasUsed);
+        }
+      } else {
+        console.log('This test is disabled for SHA hashing.');
+      }
+    });
+
+    if (process.env.HASH_TYPE === 'mimc') {
+      after('provide summary stats', async () => {
+        totalGasUsed = gasUsedArray.reduce((acc, cur) => acc + cur);
+        max = Math.max(...gasUsedArray);
+        min = Math.min(...gasUsedArray);
+        averageGasUsed = totalGasUsed / batchSize;
+        averageGasUsedMinusTxCost = averageGasUsed - 21000;
+        range = max - min;
+        // console.log('gasUsedArray:');
+        // console.dir(gasUsedArray, { maxArrayLength: null });
+        console.log('totalGasUsed:', totalGasUsed);
+        console.log('averageGasUsed:', averageGasUsed);
+        console.log('averageGasUsedMinusTxCost:', averageGasUsedMinusTxCost);
+        console.log('min:', min);
+        console.log('max:', max);
+        console.log('range:', range);
+      });
+    }
   });
 
   // eslint-disable-next-line func-names

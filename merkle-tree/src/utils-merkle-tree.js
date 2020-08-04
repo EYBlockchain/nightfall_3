@@ -181,7 +181,7 @@ async function updateNodes(leafValues, currentLeafCount, frontier, height, updat
     // console.log('nodeValueFull:', nodeValueFull, 'hashlength:', config.NODE_HASHLENGTH);
     nodeValue = `0x${nodeValueFull.slice(-config.NODE_HASHLENGTH * 2)}`; // truncate hashed value, so it 'fits' into the next hash.
     // console.log('nodeValue:', nodeValue);
-    nodeIndex = leafIndexToNodeIndex(leafIndex, treeWidth); // convert the leafIndex to a nodeIndex
+    nodeIndex = leafIndexToNodeIndex(leafIndex, height); // convert the leafIndex to a nodeIndex
 
     slot = getFrontierSlot(leafIndex); // determine at which level we will next need to store a nodeValue
 

@@ -2,7 +2,7 @@
 @author iAmMichaelConnor
 */
 
-// import assert from 'assert';
+import assert from 'assert';
 import config from 'config';
 import Web3 from '../src/web3';
 import deployer from './rest/deployer';
@@ -23,6 +23,13 @@ describe(`${contractName}`, async () => {
     coinbase = await web3.eth.getCoinbase();
 
     contractInstance = await deployer.getContractInstance(contractName);
+  });
+
+  it('Should have hash_type = SHA for this multiple merkle trees test', async () => {
+    console.log(
+      'While treeIds can be used for any hash type, this test only works with SHA hashing',
+    );
+    assert.notEqual(process.env.HASH_TYPE, 'mimc');
   });
 
   // eslint-disable-next-line func-names

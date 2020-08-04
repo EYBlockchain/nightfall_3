@@ -9,6 +9,28 @@ import createKeccakHash from 'keccak';
 const crypto = require('crypto');
 const { Buffer } = require('safe-buffer');
 
+const mimcCurves = {
+  BLS12_377: {
+    exponent: 11,
+    rounds: 74,
+    modulus: BigInt('8444461749428370424248824938781546531375899335154063827935233455917409239041'),
+  },
+  ALT_BN_254: {
+    exponent: 7,
+    rounds: 91,
+    modulus: BigInt(
+      '21888242871839275222246405745257275088548364400416034343698204186575808495617',
+    ),
+  },
+  BW6_761: {
+    exponent: 23,
+    rounds: 84,
+    modulus: BigInt(
+      '258664426012969094010652733694893533536393512754914660539884262666720468348340822774968888139573360124440321458177',
+    ),
+  },
+};
+
 /**
 utility function to remove a leading 0x on a string representing a hex number.
 If no 0x is present then it returns the string un-altered.
@@ -109,9 +131,9 @@ mimc encryption function
 @param  {String} x - the input value
 @param {String} k - the key value
 @param {String} seed - input seed for first round (=0n for a hash)
-@param
+@param {int} exponent - the exponent
 */
-function mimcpe7(x, k, seed, roundCount, m) {
+function mimcpe(x, k, seed, roundCount, exponent, m) {
   let xx = x;
   let t;
   let c = seed;
@@ -124,28 +146,30 @@ function mimcpe7(x, k, seed, roundCount, m) {
   return addMod([xx, k], m);
 }
 
-function mimcpe7mp(x, k, seed, roundCount, m = BigInt(config.ZOKRATES_PRIME)) {
+function mimcpemp(x, k, seed, roundCount, exponent, m) {
   let r = k;
   let i;
   for (i = 0; i < x.length; i++) {
-    r = (r + (x[i] % m) + mimcpe7(x[i], r, seed, roundCount, m)) % m;
+    r = (r + (x[i] % m) + mimcpe(x[i], r, seed, roundCount, exponent, m)) % m;
   }
   return r;
 }
 
 function mimcHash(...msgs) {
-  // elipses means input stored in array called msgs
+  const { rounds, exponent, modulus } = !config.CURVE ? mimcCurves[2] : mimcCurves[config.CURVE];
+  console.log(`dep curve: ${config.CURVE} rounds: ${rounds} exp ${exponent} mod ${modulus}`);
   const mimc = '0x6d696d63'; // this is 'mimc' in hex as a nothing-up-my-sleeve seed
-  return `0x${mimcpe7mp(
-    // '${' notation '0x${x}' -> '0x34' w/ x=34
+  return `0x${mimcpemp(
     msgs.map(e => {
       const f = BigInt(e);
-      if (f > config.ZOKRATES_PRIME) throw new Error('MiMC input exceeded prime field size');
+      // if (f > config.ZOKRATES_PRIME) throw new Error('MiMC input exceeded prime field size');
       return f;
     }),
     BigInt(0), // k
     keccak256Hash(mimc), // seed
-    91, // rounds of hashing
+    rounds, // rounds of hashing
+    exponent, // exponent
+    modulus, // modulus
   )
     .toString(16) // hex string - can remove 0s
     .padStart(64, '0')}`; // so pad
@@ -164,15 +188,14 @@ function shaHash(...items) {
 }
 
 function concatenateThenHash(...items) {
-  if (config.HASH_TYPE == SHA) {
-    const h = shaHash(...items);
-    return h;
+  let h;
+  if (config.HASH_TYPE === 'mimc') {
+    h = mimcHash(...items);
   } else {
-    const h = mimcHash(...items);
-    return h;
+    h = shaHash(...items);
   }
+  return h;
 }
-
 
 export default {
   ensure0x,

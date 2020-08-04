@@ -254,17 +254,17 @@ If no _solc_-compiled json files are available, then we'll need Timber to compil
 #### `HASH_TYPE`
 
 For hashing 'up the merkle tree', there are currently two supported hash types:
-`sha` or `mimc`.
+`sha` or `mimc`. You can also choose which elliptic curve `mimc` hashing is computed over. The 'default' option (when no `CURVE` is defined in the startup options) is ALT_BN_254.
 
-| HASH_TYPE  | Algorithm	| Cost* (gas))	| Proving time  	| Constraints**	|
-|:-:	       |:-:	        |--:	          |--:	            |--:          	|
-| `sha`  	   | sha256   	|  ~90k         |  slow 	        | ~25,000	      |
-| `mimc`	   | MiMC-p/p  	|  ~1.4m    	  |  fast 	        | ~740        	|
-
+| HASH_TYPE  | Algorithm	| Curve    | Cost* (gas))	| Proving time  	| Constraints**	|
+|:-:	       |:-:	        |:-:       | --:	          |--:	            |--:          	|
+| `sha`  	   | sha256   	| n/a       | ~90k         |  slow 	        | ~25,000	      |
+| `mimc`	   | MiMC-p/p  	| ALT_BN_254      | ~1.4m    	  |  fast 	        | ~740        	|
+| `mimc`	   | MiMC-p/p  	| BLS12_377      | ~1.8m    	  |  fast 	        | ~1000        	|
 
 
 \*cost of hashing 32 times up a merkle tree.
-\**for a single hash
+\**for a single hash of two inputs
 
 ### config
 
@@ -278,7 +278,7 @@ E.g.:
 // contracts to filter:
 contracts: {
   // contract name:
-  MerkleTreeControllerMiMC: {
+  MerkleTreeControllerSHA: {
     events: {
       // filter for the following event names:
       NewLeaf: {
@@ -488,7 +488,7 @@ The following gives gas cost measurements for inserting leaves into the MerkleTr
 
 ### `insertLeaf`
 -   `treeHeight = 32`
--   32 sha256() hashes. We use assembly to minimise the cost of calling the sha256 precompiled contract.
+-   32 sha256() hashes. We use assembly to minimise the cost of calling the sha256 precompiled contract (if HASH_TYPE = mimc, the gas cost will increase).
 -   1,024 leaves inserted, one-at-a-time, from left to right.
 -   Notice how there is a jump in cost every `2**n` leaves, when a new level of the `frontier` is written to for the first time.
 -   The very first transaction costs the most, due to initialising of the `leafCount` and `latestRoot` parameters.

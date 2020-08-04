@@ -20,7 +20,13 @@ const alreadyStarting = {}; // initialises as false
 async function startEventFilter(req, res, next) {
   console.log('\nsrc/routes/merkle-tree.routes startEventFilter()');
 
-  const contractName = req.body.contractName;
+  let contractName = req.body.contractName;
+  if (contractName === 'MerkleTreeControllerMiMC') {
+    contractName =
+      process.env.CURVE === 'BLS12_377'
+        ? 'MerkleTreeControllerMiMC_BLS12'
+        : 'MerkleTreeControllerMiMC_BN254';
+  }
   const treeId = req.body.treeId;
   const { db } = req.user;
   const { contractAddress } = req.body; // contractAddress is an optional parameter. Address can instead be inferred by Timber in many cases.

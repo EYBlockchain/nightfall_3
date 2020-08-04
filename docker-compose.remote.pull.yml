@@ -33,6 +33,7 @@ services:
       - "9000:80"
     environment:
       HASH_TYPE: 'sha' # sha or mimc
+      #CURVE: 'BLS12_377' # BLS12_377 or ALT_BN_254 (= default) (BW6 a future enhancement)
       BLOCKCHAIN_HOST: ws://ganache
       BLOCKCHAIN_PORT: 8545
       DEPLOYER_HOST: http://deployer # required if CONTRACT_ORIGIN = 'remote' - replace with external microservice's name
@@ -78,6 +79,7 @@ services:
       - ./deployer/build/:/app/build
     environment:
       HASH_TYPE: 'sha' # sha or mimc - only applies to deployer
+      #CURVE: 'BLS12_377'
       BLOCKCHAIN_HOST: ws://ganache
       BLOCKCHAIN_PORT: 8545
       MERKLE_TREE_HOST: http://merkle-tree

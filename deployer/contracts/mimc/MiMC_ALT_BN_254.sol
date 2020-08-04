@@ -10,7 +10,7 @@ pragma solidity ^0.5.8;
 *
 * Round constants are generated in sequence from a seed
 */
-contract MiMC
+contract MiMC_ALT_BN_254
 {
     function GetScalarField ()
         internal pure returns (uint256)

@@ -5,9 +5,9 @@ Contract to manage permissions to update the leaves of the imported MerkleTree c
 */
 pragma solidity ^0.5.8;
 
-import "./MerkleTreeMiMC.sol";
+import "./MerkleTreeMiMC_BN254.sol";
 
-contract MerkleTreeControllerMiMC is MerkleTreeMiMC {
+contract MerkleTreeControllerMiMC_BN254 is MerkleTreeMiMC_BN254 {
 
     address public owner; // We'll demonstrate simple 'permissioning' to update leaves by only allowing the owner to update leaves.
 

@@ -3,20 +3,31 @@
 @author iAmMichaelConnor
 @desc constants used by a nubmer of other modules
 */
-const nodeHashLength = process.env.HASH_TYPE === 'mimc' ? 32 : 27;
-const zeroHex =
-  process.env.HASH_TYPE === 'mimc'
-    ? '0x0000000000000000000000000000000000000000000000000000000000000000'
-    : '0x000000000000000000000000000000000000000000000000000000';
+
+let nodeHashLength;
+let zero;
+
+if (process.env.HASH_TYPE === 'mimc') {
+  nodeHashLength = 32;
+  if (process.env.CURVE === 'BLS12_377') {
+    zero = 0;
+  } else {
+    zero = '0x0000000000000000000000000000000000000000000000000000000000000000';
+  }
+} else {
+  nodeHashLength = 27;
+  zero = '0x000000000000000000000000000000000000000000000000000000';
+}
 
 module.exports = {
   // general:
   // ZERO: '0x0000000000000000000000000000000000000000000000000000000000000000', // 32-byte hex string representing zero, for hashing with '0' up the tree.
-  ZERO: zeroHex, // 27-byte hex string representing zero, for hashing with '0' up the tree. Byte length must match that of NODE_HASHLENGTH
+  ZERO: zero, // 27-byte hex string representing zero, for hashing with '0' up the tree. Byte length must match that of NODE_HASHLENGTH
 
   // Tree parameters. You also need to set these in the MerkleTree.sol contract.
 
   HASH_TYPE: process.env.HASH_TYPE,
+  CURVE: process.env.CURVE,
   LEAF_HASHLENGTH: 32, // expected length of leaves' values in bytes
   NODE_HASHLENGTH: nodeHashLength, // expected length of nodes' values up the merkle tree, in bytes
   TREE_HEIGHT: 32, // the height of the Merkle tree
@@ -35,7 +46,20 @@ module.exports = {
   // contracts to filter:
   contracts: {
     // contract name:
-    MerkleTreeControllerMiMC: {
+    MerkleTreeControllerMiMC_BN254: {
+      events: {
+        // filter for the following event names:
+        NewLeaf: {
+          // filter for these event parameters:
+          parameters: ['leafIndex', 'leafValue'],
+        },
+        NewLeaves: {
+          // filter for these event parameters:
+          parameters: ['minLeafIndex', 'leafValues'],
+        },
+      },
+    },
+    MerkleTreeControllerMiMC_BLS12: {
       events: {
         // filter for the following event names:
         NewLeaf: {
