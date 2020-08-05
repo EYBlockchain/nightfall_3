@@ -180,7 +180,7 @@ async function filterBlock(db, contractName, contractInstance, fromBlock, treeId
   const { latestRecalculation } = await metadataService.getLatestRecalculation();
   const { frontier } =
     latestRecalculation.frontier === undefined ? new Array(treeHeight) : latestRecalculation;
-  if (frontier.length !== treeHeight && treeHeight !== 32) {
+  if (frontier.length !== treeHeight + 1 && treeHeight !== 32) {
     latestRecalculation.frontier = new Array(treeHeight + 1);
     await metadataService.updateLatestRecalculation({ latestRecalculation });
   }

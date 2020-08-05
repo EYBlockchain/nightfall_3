@@ -247,6 +247,10 @@ async function update(db) {
       updateNodes.bind({ nodeService, numberOfHashes }),
     );
 
+    if (frontier.length !== treeHeight + 1 && treeHeight !== 32) {
+      newFrontier.length = treeHeight + 1;
+    }
+
     latestRecalculation = {
       blockNumber: latestLeaf.blockNumber,
       leafIndex: toLeafIndex,
