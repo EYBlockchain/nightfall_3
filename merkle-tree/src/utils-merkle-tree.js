@@ -179,6 +179,10 @@ async function updateNodes(leafValues, currentLeafCount, frontier, height, updat
   ) {
     nodeValueFull = leafValues[leafIndex - currentLeafCount];
     // console.log('nodeValueFull:', nodeValueFull, 'hashlength:', config.NODE_HASHLENGTH);
+    if (!utils.isHex(nodeValueFull)) {
+      nodeValueFull = utils.convertBase(nodeValueFull.toString(), 10, 16);
+      // console.log('nodeValueFull:', nodeValueFull, 'hashlength:', config.NODE_HASHLENGTH);
+    }
     nodeValue = `0x${nodeValueFull.slice(-config.NODE_HASHLENGTH * 2)}`; // truncate hashed value, so it 'fits' into the next hash.
     // console.log('nodeValue:', nodeValue);
     nodeIndex = leafIndexToNodeIndex(leafIndex, height); // convert the leafIndex to a nodeIndex
