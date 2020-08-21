@@ -14,7 +14,7 @@ services:
   merkle-tree:
     build:
       context: ./merkle-tree
-      dockerfile: dev.Dockerfile
+      dockerfile: Dockerfile
     restart: on-failure
     depends_on:
       - ganache

@@ -10,12 +10,7 @@ export default async function(req, res, next) {
 
   try {
     let contractName = req.body.contractName;
-    if (contractName === 'MerkleTreeControllerMiMC') {
-      contractName =
-        process.env.CURVE === 'BLS12_377'
-          ? 'MerkleTreeControllerMiMC_BLS12'
-          : 'MerkleTreeControllerMiMC_BN254';
-    } else if (contractName === undefined) {
+    if (contractName === undefined) {
       const contractNameTest = req.body[0].contractName;
       if (contractNameTest === undefined) {
         throw new Error('No contractName key provided in req.body.');

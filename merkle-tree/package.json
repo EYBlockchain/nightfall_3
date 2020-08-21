@@ -4,7 +4,8 @@
   "description": "construct and store a merkle tree from its leaves",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon --ignore /app/build/ --exec babel-node ./src/index.js",
+    "start": "babel-node ./src/index.js",
+    "dev": "nodemon --ignore /app/build/ --exec babel-node ./src/index.js",
     "test": "truffle test"
   },
   "author": "iAmMichaelConnor",
