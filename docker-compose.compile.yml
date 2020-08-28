@@ -42,6 +42,8 @@ services:
       # - 'mongodb' (to get a solc-compiled contract interface json from mongodb); or
       # - 'default' (to get a solc-compiled contract interface json from the app/build/ folder)
       # - 'compile' (to compile contracts from a .sol file, at startup, with solc, from the /app/contracts/ folder). Useful if the application using Timber doesn't use solc to generate contract interface json's.
+      LOG_LEVEL: 'silly'
+      UNIQUE_LEAVES: 'true'
     networks:
       - merkle_tree_network
 

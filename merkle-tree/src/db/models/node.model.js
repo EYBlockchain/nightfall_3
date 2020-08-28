@@ -10,6 +10,7 @@ export default new Schema(
       // For leaves this is some string of information.
       type: String,
       required: true,
+      unique: process.env.UNIQUE_LEAVES === 'true', // if the leaves are unique, then all nodes are unique, and so we can index node values for faster lookup.
     },
     nodeIndex: {
       type: Number,

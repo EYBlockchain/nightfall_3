@@ -20,11 +20,10 @@ const alreadyStarting = {}; // initialises as false
 async function startEventFilter(req, res, next) {
   console.log('\nsrc/routes/merkle-tree.routes startEventFilter()');
 
-  let contractName = req.body.contractName;
-  const treeId = req.body.treeId;
+  const { contractName, treeId, contractAddress } = req.body; // contractAddress & treeId are optional parameters. Address can instead be inferred by Timber in many cases.
   const { db } = req.user;
-  const { contractAddress } = req.body; // contractAddress is an optional parameter. Address can instead be inferred by Timber in many cases.
 
+  // TODO: if possible, make this easier to read and follow. Fewer 'if' statements. Perhaps use 'switch' statements instead?
   try {
     if (alreadyStarted[contractName] && (treeId === undefined || treeId === '')) {
       res.data = { message: `filter already started for ${contractName}` };

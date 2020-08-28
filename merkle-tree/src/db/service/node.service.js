@@ -16,12 +16,12 @@ export default class NodeService {
 
   /**
   Insert a new node (not a leaf) into the merkle tree
-  @param {object} data
+  @param {object} node
   */
-  async insertNode(data) {
+  async insertNode(node) {
     console.log('\nsrc/db/service/node.service insertNode()');
-    // console.log('data before mapping:', data);
-    const mappedData = nodeMapper(data);
+    // console.log('data before mapping:', node);
+    const mappedData = nodeMapper(node);
     // console.log('data after mapping:', mappedData);
 
     // insert the node into the 'nodes' collection:
@@ -56,12 +56,12 @@ export default class NodeService {
 
   /**
   Update many nodes (not leaves). We implicitly update based on nodeIndex (by finding that index within the 'data')
-  @param {array} data an array of node objects
+  @param {array} nodes an array of node objects
   */
-  async updateNodes(data) {
+  async updateNodes(nodes) {
     console.log('\nsrc/db/service/node.service updateNodes()');
     // console.log('data before mapping:', data);
-    const mappedData = data.map(item => nodeMapper(item));
+    const mappedData = nodes.map(nodeMapper);
     // console.log('data after mapping:', mappedData);
 
     const bulkUpdates = mappedData.map(item => ({

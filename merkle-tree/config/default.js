@@ -21,8 +21,7 @@ if (process.env.HASH_TYPE === 'mimc') {
 
 module.exports = {
   // general:
-  // ZERO: '0x0000000000000000000000000000000000000000000000000000000000000000', // 32-byte hex string representing zero, for hashing with '0' up the tree.
-  ZERO: zero, // 27-byte hex string representing zero, for hashing with '0' up the tree. Byte length must match that of NODE_HASHLENGTH
+  ZERO: zero,
 
   // Tree parameters. You also need to set these in the MerkleTree.sol contract.
 
@@ -31,7 +30,6 @@ module.exports = {
   LEAF_HASHLENGTH: 32, // expected length of leaves' values in bytes
   NODE_HASHLENGTH: nodeHashLength, // expected length of nodes' values up the merkle tree, in bytes
   TREE_HEIGHT: 32, // the height of the Merkle tree
-  ZOKRATES_PRIME: '21888242871839275222246405745257275088548364400416034343698204186575808495617', // decimal representation of the prime p of GaloisField(p)
 
   POLLING_FREQUENCY: 6000, // milliseconds
   FILTER_GENESIS_BLOCK_NUMBER: 0, // blockNumber

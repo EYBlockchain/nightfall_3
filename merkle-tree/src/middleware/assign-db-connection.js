@@ -9,7 +9,7 @@ export default async function(req, res, next) {
   // console.log('req.body:', req.body);
 
   try {
-    let contractName = req.body.contractName;
+    let { contractName } = req.body;
     if (contractName === undefined) {
       const contractNameTest = req.body[0].contractName;
       if (contractNameTest === undefined) {
@@ -18,7 +18,7 @@ export default async function(req, res, next) {
         contractName = contractNameTest;
       }
     }
-    const treeId = req.body.treeId;
+    const { treeId } = req.body;
     // console.log(`treeId: ${treeId}`);
     req.user = {};
     // give all requesters admin privileges:

@@ -10,10 +10,13 @@ import merkleTreeController from '../merkle-tree-controller';
 /**
  * Add a new leaf to the tree's 'nodes' db.
  * req.body {
- *  value: '0xabc123..',
- *  nodeIndex: 12345678,
- *  leafIndex: 1234,
- *  blockNumber: 60000000,
+ *   contractName: '...',
+ *   leaf: {
+ *     value: '0xabc123..',
+ *     nodeIndex: 12345678, // optional - can be calculated by mapper
+ *     leafIndex: 1234,
+ *     blockNumber: 60000000
+ *   }
  * }
  * @param {*} req
  * @param {*} res
@@ -23,11 +26,13 @@ async function insertLeaf(req, res, next) {
   console.log('req.body:');
   console.log(req.body);
   try {
+    const { leaf } = req.body;
     const metadataService = new MetadataService(req.user.db);
-    const { treeHeight } = await metadataService.getTreeHeight();
-    req.body.treeHeight = treeHeight;
     const leafService = new LeafService(req.user.db);
-    await leafService.insertLeaf(req.body);
+    const { treeHeight } = await metadataService.getTreeHeight();
+
+    await leafService.insertLeaf(treeHeight, leaf);
+
     res.data = { message: 'inserted' };
     next();
   } catch (err) {
@@ -38,7 +43,7 @@ async function insertLeaf(req, res, next) {
 /**
  * Get a leaf from the tree's 'nodes' db.
  * req.params { leafIndex: 1234 }
- * req.body { leafIndex: 1234 }
+ * req.body { contractName: '...', leafIndex: 1234 }
  * @param {*} req
  * @param {*} res
  */
@@ -60,7 +65,10 @@ async function getLeafByLeafIndex(req, res, next) {
 
 /**
  * Get a leaf from the tree's 'nodes' db.
- * req.body { value: '0xabc1234' }
+ * req.body {
+ *   contractName: '...',
+ *   value: '0xabc1234'
+ * }
  * @param {*} req
  * @param {*} res
  */
@@ -80,11 +88,11 @@ async function getLeafByValue(req, res, next) {
 
 /**
  * Get many leaves from the tree's 'nodes' db.
- * req.body { leafIndices: [index0, index1, ..., indexn] }
+ * req.body { contractName: '...', leafIndices: [index0, index1, ..., indexn] }
  * or
- * req.body { values: [value0, value1, ..., valuen] }
+ * req.body { contractName: '...', values: [value0, value1, ..., valuen] }
  * or
- * req.body { minIndex: 1234, maxIndex: 5678 }
+ * req.body { contractName: '...', minIndex: 1234, maxIndex: 5678 }
  * @param {*} req
  * @param {*} res
  */
@@ -95,7 +103,7 @@ async function getLeaves(req, res, next) {
   try {
     const leafService = new LeafService(req.user.db);
 
-    const { leafIndices, values, minIndex, maxIndex } = req.body; // necessarily, not all of these deconstructions will be possible
+    const { leafIndices, values, minIndex, maxIndex } = req.body; // necessarily, not all of these destructurings will be possible
     console.log('leafIndices:', leafIndices);
     console.log('values:', values);
     console.log('minIndex:', minIndex);
@@ -120,7 +128,15 @@ async function getLeaves(req, res, next) {
 /**
  * Add a new array of leaves to the tree's 'nodes' db.
  * req.body {
+ *  contractName: '...',
  *  leaves: [leafObject1, leafObject2,...]
+ * };
+ * where a leafObject is of the form:
+ * {
+ *  value: '0xabc123..',
+ *  nodeIndex: 12345678, // optional - can be calculated by mapper
+ *  leafIndex: 1234,
+ *  blockNumber: 60000000,
  * }
  * @param {*} req
  * @param {*} res
@@ -131,12 +147,12 @@ async function insertLeaves(req, res, next) {
   console.log(req.body);
   try {
     const metadataService = new MetadataService(req.user.db);
-    const { treeHeight } = await metadataService.getTreeHeight();
-    for (let i = 0; i < req.body.length; i += 1) {
-      req.body[i].treeHeight = treeHeight;
-    }
     const leafService = new LeafService(req.user.db);
-    await leafService.insertLeaves(req.body);
+    const { leaves } = req.body;
+    const { treeHeight } = await metadataService.getTreeHeight();
+
+    await leafService.insertLeaves(treeHeight, leaves);
+
     res.data = { message: 'inserted' };
     next();
   } catch (err) {

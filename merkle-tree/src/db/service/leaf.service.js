@@ -16,12 +16,13 @@ export default class LeafService {
 
   /**
   Insert a new leaf into the merkle tree
-  @param {object} data
+  @param {number} treeHeight
+  @param {object} leaf
   */
-  async insertLeaf(data) {
+  async insertLeaf(treeHeight, leaf) {
     console.log('\nsrc/db/service/leaf.service insertLeaf()');
     // console.log('data before mapping:', data);
-    const mappedData = leafMapper(data);
+    const mappedData = leafMapper(treeHeight, leaf);
     // console.log('data after mapping:', mappedData);
 
     // insert the leaf into the 'nodes' collection:
@@ -41,13 +42,14 @@ export default class LeafService {
 
   /**
   Insert many leaves into the merkle tree
-  @param {array} data - an array of leaf objects ('documents')
+  @param {number} treeHeight
+  @param {array} leaves - an array of leaf objects ('documents')
   */
-  async insertLeaves(data) {
+  async insertLeaves(treeHeight, leaves) {
     console.log('\nsrc/db/service/leaf.service insertLeaves()');
-    //   console.log('data before mapping:', data);
-    const mappedData = data.map(item => leafMapper(item));
-    console.log('data after mapping:', mappedData);
+    // console.log('data before mapping:', leaves);
+    const mappedData = leaves.map(leaf => leafMapper(treeHeight, leaf));
+    // console.log('data after mapping:', mappedData);
 
     // insert the leaves into the 'nodes' collection:
     try {

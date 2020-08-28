@@ -26,7 +26,7 @@ module.exports = {
   CURVE: process.env.CURVE,
   NODE_HASHLENGTH: nodeHashLength, // expected length of nodes' values up the merkle tree, in bytes
 
-  // deployed contract info:
+  // deployed contract info, for test scripts
   contractNames: contracts,
 
   // push the contract information, or wait for it to be pulled

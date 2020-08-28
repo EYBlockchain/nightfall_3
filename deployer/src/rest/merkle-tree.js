@@ -14,7 +14,6 @@ async function startEventFilter(contractName) {
       url: `${url}/start`,
       method: 'POST',
       json: true,
-      // headers: { contractName: contractName },
       body: { contractName },
     };
     request(options, (err, res, body) => {
@@ -34,8 +33,7 @@ async function getSiblingPathByLeafIndex(contractName, leafIndex) {
       url: `${url}/siblingPath/${leafIndex}`,
       method: 'POST',
       json: true,
-      // headers: { contractName: contractName },
-      body: { contractName }, // no body; uses url param
+      body: { contractName },
     };
     request(options, (err, res, body) => {
       if (err) reject(err);
@@ -54,7 +52,6 @@ async function getContractInterface(contractName) {
       url: `${url}/metadata/contractInterface`,
       method: 'GET',
       json: true,
-      // headers: { contractName: contractName },
       body: { contractName },
     };
     request(options, (err, res, body) => {
@@ -74,7 +71,6 @@ async function getContractAddress(contractName) {
       url: `${url}/metadata/contractAddress`,
       method: 'GET',
       json: true,
-      // headers: { contractName: contractName },
       body: { contractName },
     };
     request(options, (err, res, body) => {
@@ -91,7 +87,6 @@ async function postInterface(contractName, contractInterface) {
       url: `${url}/metadata/contractInterface`,
       method: 'POST',
       json: true,
-      // headers: { contractName: contractName }, // lowercase keys for headers
       body: { contractName, contractInterface },
     };
     request(options, (err, res, body) => {
@@ -139,7 +134,6 @@ async function postAddress(contractName, contractAddress) {
       url: `${url}/metadata/contractAddress`,
       method: 'POST',
       json: true,
-      // headers: { contractName: contractName }, // lowercase keys for headers
       body: { contractName, contractAddress },
     };
     request(options, (err, res, body) => {
@@ -180,6 +174,69 @@ async function postContractAddress(contractName, contractAddress) {
   }
 }
 
+async function insertTreeHeight(contractName, treeHeight) {
+  console.log('\nPosting a request to insert the treeHeight into the merkle-tree microservice...');
+  try {
+    console.log(`\nCalling insertTreeHeight(${contractName}, ${treeHeight})`);
+    return new Promise((resolve, reject) => {
+      const options = {
+        url: `${url}/metadata/treeHeight`,
+        method: 'POST',
+        json: true,
+        body: { contractName, treeHeight },
+      };
+      request(options, (err, res, body) => {
+        if (err) reject(err);
+        else resolve(body.data);
+      });
+    });
+  } catch (err) {
+    throw new Error(
+      'Could not post a request to insert a treeHeight into the merkle-tree microservice',
+    );
+  }
+}
+
+async function insertLeaves(contractName, leaves) {
+  // console.log('\nPosting a request to insert leaves into the merkle-tree microservice...');
+  try {
+    // console.log(`\nCalling insertLeaves(${contractName})`);
+    return new Promise((resolve, reject) => {
+      const options = {
+        url: `${url}/leaves`,
+        method: 'POST',
+        json: true,
+        body: { contractName, leaves },
+      };
+      request(options, (err, res, body) => {
+        if (err) reject(err);
+        else resolve(body.data);
+      });
+    });
+  } catch (err) {
+    throw new Error('Could not post a request to insert leaves into the merkle-tree microservice');
+  }
+}
+
+async function update(contractName) {
+  try {
+    return new Promise((resolve, reject) => {
+      const options = {
+        url: `${url}/update`,
+        method: 'PATCH',
+        json: true,
+        body: { contractName },
+      };
+      request(options, (err, res, body) => {
+        if (err) reject(err);
+        else resolve(body.data);
+      });
+    });
+  } catch (err) {
+    throw new Error('Could not post a request to insert leaves into the merkle-tree microservice');
+  }
+}
+
 export default {
   startEventFilter,
   getSiblingPathByLeafIndex,
@@ -187,4 +244,7 @@ export default {
   getContractAddress,
   postContractInterface,
   postContractAddress,
+  insertTreeHeight,
+  insertLeaves,
+  update,
 };

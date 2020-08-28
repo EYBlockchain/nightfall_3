@@ -56,15 +56,14 @@ const newLeafResponseFunction = async (eventObject, args) => {
   // construct a 'leaf' document to store in the db:
   const { blockNumber } = eventData;
   const { leafIndex, leafValue } = eventInstance;
-  const doc = {
+  const leaf = {
     value: leafValue,
     leafIndex,
     blockNumber,
-    treeHeight,
   };
 
   const leafService = new LeafService(db);
-  leafService.insertLeaf(doc); // no need to await this
+  leafService.insertLeaf(treeHeight, leaf); // no need to await this
 };
 
 /**
@@ -108,21 +107,20 @@ const newLeavesResponseFunction = async (eventObject, args) => {
   const { blockNumber } = eventData;
   const { minLeafIndex, leafValues } = eventInstance;
 
-  const docs = [];
+  const leaves = [];
   let leafIndex;
   leafValues.forEach((leafValue, index) => {
     leafIndex = Number(minLeafIndex) + Number(index);
-    const doc = {
+    const leaf = {
       value: leafValue,
       leafIndex,
       blockNumber,
-      treeHeight,
     };
-    docs.push(doc);
+    leaves.push(leaf);
   });
 
   const leafService = new LeafService(db);
-  leafService.insertLeaves(docs); // no need to await this
+  leafService.insertLeaves(treeHeight, leaves); // no need to await this
 };
 
 /**
@@ -161,6 +159,7 @@ async function filterBlock(db, contractName, contractInstance, fromBlock, treeId
 
   let eventNames;
 
+  // TODO: if possible, make this easier to read and follow. Fewer 'if' statements. Perhaps use 'switch' statements instead?
   if (treeId === undefined || treeId === '') {
     eventNames = Object.keys(config.contracts[contractName].events);
     if (config.treeHeight !== undefined || config.treeHeight !== '') {

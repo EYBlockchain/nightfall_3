@@ -1,7 +1,7 @@
 import utilsMT from '../../utils-merkle-tree';
 
 // This 'leaf' mapper differs from the 'node' mapper.
-export default function({ value, nodeIndex, leafIndex, blockNumber, treeHeight }) {
+export default function(treeHeight, { value, nodeIndex, leafIndex, blockNumber }) {
   // to prevent incorrect leaf data from being stored, we ensure the nodeIndex is calculated correctly from the leafIndex:
   const checkNodeIndex = utilsMT.leafIndexToNodeIndex(leafIndex, treeHeight);
   if (!nodeIndex) {

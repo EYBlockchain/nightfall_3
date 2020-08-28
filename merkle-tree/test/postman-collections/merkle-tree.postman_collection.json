@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "cbc33008-1712-4b9e-9e55-e79bcc033a0d",
+		"_postman_id": "5d4dcae2-10cb-418a-9ec9-b32f329d243c",
 		"name": "merkle-tree",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -21,7 +21,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"value\": \"0xabc123-7\",\n\t\"leafIndex\": 100,\n\t\"blockNumber\": 60000000,\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"leaf\": {\n\t\t\"value\": \"0xabc123-7\",\n\t\t\"leafIndex\": 2,\n\t\t\"blockNumber\": 60000000\n\t}\n}"
 						},
 						"url": {
 							"raw": "http://localhost:9000/leaf",
@@ -51,10 +51,10 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "[\n\t{\n\t\t\"value\": \"0xabc123-3\",\n\t\t\"leafIndex\": 1,\n\t\t\"blockNumber\": 60000000,\n\t\t\"contractName\": \"MerkleTreeControllerSHA\"\n\t}\n]"
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"leaves\": [\n\t\t{\n\t\t\t\"value\": \"0xabc123-3\",\n\t\t\t\"leafIndex\": 1,\n\t\t\t\"blockNumber\": 60000000\n\t\t}\n\t]\n}"
 						},
 						"url": {
-							"raw": "http://localhost:9000/leaves?",
+							"raw": "http://localhost:9000/leaves",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -125,7 +125,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{ \n\t\"leafIndex\": 0,\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
+							"raw": "{ \n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"leafIndex\": 18231\n}"
 						},
 						"url": {
 							"raw": "http://localhost:9000/leaf/index",
@@ -158,7 +158,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{ \n\t\"value\": \"0xabc123-7\",\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
+							"raw": "{ \n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"value\": \"0xabc123-7\"\n}"
 						},
 						"url": {
 							"raw": "http://localhost:9000/leaf/value",
@@ -191,7 +191,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{ \n\t\"leafIndices\": [0, 2, 3],\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
+							"raw": "{ \n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"leafIndices\": [1, 2, 3]\n}"
 						},
 						"url": {
 							"raw": "http://localhost:9000/leaves",
@@ -223,7 +223,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{ \n\t\"values\": [\"0xabc123-7\", \"0xabc123-8\", \"0xabc123-9\"],\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
+							"raw": "{ \n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"values\": [\"0xabc123-7\", \"0xabc123-8\", \"0xabc123-9\"]\n}"
 						},
 						"url": {
 							"raw": "http://localhost:9000/leaves",
@@ -255,7 +255,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"minIndex\": 0,\n\t\"maxIndex\": 100000,\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"minIndex\": 0,\n\t\"maxIndex\": 100000\n}"
 						},
 						"url": {
 							"raw": "http://localhost:9000/leaves",
@@ -287,7 +287,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"minIndex\": 0,\n\t\"maxIndex\": 10,\n\t\"treeId\": \"a\",\n\t\"contractName\": \"MultipleMerkleTreesControllerSHA\"\n}"
+							"raw": "{\n\t\"contractName\": \"MultipleMerkleTreesControllerSHA\",\n\t\"treeId\": \"a\",\n\t\"minIndex\": 0,\n\t\"maxIndex\": 10\n}"
 						},
 						"url": {
 							"raw": "http://localhost:9000/leaves",
@@ -351,7 +351,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"treeId\": \"a\",\n\t\"contractName\": \"MultipleMerkleTreesControllerSHA\"\n}"
+							"raw": "{\n\t\"contractName\": \"MultipleMerkleTreesControllerSHA\",\n\t\"treeId\": \"a\"\n}"
 						},
 						"url": {
 							"raw": "http://localhost:9000/leaves",
@@ -416,7 +416,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"treeId\": \"a\",\n\t\"contractName\": \"MultipleMerkleTreesControllerSHA\"\n}"
+							"raw": "{\n\t\"contractName\": \"MultipleMerkleTreesControllerSHA\",\n\t\"treeId\": \"a\"\n}"
 						},
 						"url": {
 							"raw": "http://localhost:9000/leaves/check",
@@ -449,7 +449,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": ""
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
 						},
 						"url": {
 							"raw": "http://localhost:9000/leaves/count",
@@ -482,7 +482,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"treeId\": \"a\",\n\t\"contractName\": \"MultipleMerkleTreesControllerSHA\"\n}"
+							"raw": "{\n\t\"contractName\": \"MultipleMerkleTreesControllerSHA\",\n\t\"treeId\": \"a\"\n}"
 						},
 						"url": {
 							"raw": "http://localhost:9000/leaves/count",
@@ -518,7 +518,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"value\": \"0xabc123-0\",\n\t\"nodeIndex\": \"0\",\n\t\"isLocked\": false,\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"node\": {\n\t\t\"value\": \"0xabc123-0\",\n\t\t\"nodeIndex\": \"0\",\n\t\t\"isLocked\": false\n\t}\n}"
 						},
 						"url": {
 							"raw": "http://localhost:9000/node",
@@ -548,7 +548,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "[\n\t\n\t{\n\t\t\"value\": \"0xabc123-0\",\n\t\t\"nodeIndex\": \"0\",\n\t\t\"contractName\": \"MerkleTreeControllerSHA\"\n\t},\n\t{\n\t\t\"value\": \"0xabc123-1\",\n\t\t\"nodeIndex\": 1,\n\t\t\"contractName\": \"MerkleTreeControllerSHA\"\n\t},\n\t{\n\t\t\"value\": \"0xabc123-2\",\n\t\t\"nodeIndex\": 2,\n\t\t\"contractName\": \"MerkleTreeControllerSHA\"\n\t}\n]"
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"nodes\": [\n\t\t{\n\t\t\t\"value\": \"0xabc123-0\",\n\t\t\t\"nodeIndex\": \"0\"\n\t\t},\n\t\t{\n\t\t\t\"value\": \"0xabc123-1\",\n\t\t\t\"nodeIndex\": 1\n\t\t},\n\t\t{\n\t\t\t\"value\": \"0xabc123-2\",\n\t\t\t\"nodeIndex\": 2\n\t\t}\n\t]\n}"
 						},
 						"url": {
 							"raw": "http://localhost:9000/nodes",
@@ -612,7 +612,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"node\": {\n\t\t\"value\": \"0x1234\",\n\t\t\"nodeIndex\": 6\n\t}\n}"
 						},
 						"url": {
 							"raw": "http://localhost:9000/node/index/1",
@@ -643,7 +643,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"treeId\": \"a\",\n\t\"contractName\": \"MultipleMerkleTreesControllerSHA\"\n}"
+							"raw": "{\n\t\"contractName\": \"MultipleMerkleTreesControllerSHA\",\n\t\"treeId\": \"a\",\n\t\"node\": {\n\t\t\"value\": \"0x1234\",\n\t\t\"nodeIndex\": 6\n\t}\n}"
 						},
 						"url": {
 							"raw": "http://localhost:9000/node/index/1",
@@ -677,7 +677,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{ \n\t\"nodeIndex\": 0,\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
+							"raw": "{ \n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"nodeIndex\": 0\n}"
 						},
 						"url": {
 							"raw": "http://localhost:9000/node/index",
@@ -710,7 +710,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{ \n\t\"value\": \"0xabc123-1\",\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
+							"raw": "{ \n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"value\": \"0x2d93c2118bf899d6a4985dfdbd1d3e3333609a1d4fdf192af37c0dc53f216876\"\n}"
 						},
 						"url": {
 							"raw": "http://localhost:9000/node/value",
@@ -743,7 +743,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{ \n\t\"nodeIndices\": [0, 2, 7],\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
+							"raw": "{ \n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"nodeIndices\": [0, 2, 7]\n}"
 						},
 						"url": {
 							"raw": "http://localhost:9000/nodes",
@@ -775,7 +775,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{ \n\t\"values\": [\"0xabc123-0\", \"0xabc123-1\", \"0xabc123-9\"],\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
+							"raw": "{ \n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"values\": [\"0xabc123-0\", \"0xabc123-1\", \"0xabc123-9\"]\n}"
 						},
 						"url": {
 							"raw": "http://localhost:9000/nodes",
@@ -807,7 +807,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"minIndex\": 0,\n\t\"maxIndex\": 1000000000000000,\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"minIndex\": 0,\n\t\"maxIndex\": 1000000000000000\n}"
 						},
 						"url": {
 							"raw": "http://localhost:9000/nodes",
@@ -904,7 +904,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"treeId\": \"a\",\n\t\"contractName\": \"MultipleMerkleTreesControllerSHA\"\n}"
+							"raw": "{\n\t\"contractName\": \"MultipleMerkleTreesControllerSHA\",\n\t\"treeId\": \"a\"\n}"
 						},
 						"url": {
 							"raw": "http://localhost:9000/nodes/count",
@@ -940,7 +940,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"contractAddress\": \"0xabc123-0\",\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"contractAddress\": \"0xabc123-0\"\n}"
 						},
 						"url": {
 							"raw": "http://localhost:9000/metadata/contractAddress",
@@ -1005,7 +1005,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"contractInterface\": \"pretend this is an interface\",\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"contractInterface\": \"{ \"pretend\": \"this is a stringified json interface\" }\"\n}"
 						},
 						"url": {
 							"raw": "http://localhost:9000/metadata/contractInterface",
@@ -1017,6 +1017,37 @@
 							"path": [
 								"metadata",
 								"contractInterface"
+							]
+						},
+						"description": "inserts a node object"
+					},
+					"response": []
+				},
+				{
+					"name": "/metadata/treeHeight -> establishes the treeHeight for a db",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"treeHeight\": 22\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/metadata/treeHeight",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"metadata",
+								"treeHeight"
 							]
 						},
 						"description": "inserts a node object"
@@ -1106,7 +1137,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"treeId\": \"a\",\n\t\"contractName\": \"MultipleMerkleTreesControllerSHA\"\n}",
+							"raw": "{\n\t\"contractName\": \"MultipleMerkleTreesControllerSHA\",\n\t\"treeId\": \"a\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1159,7 +1190,7 @@
 					"response": []
 				},
 				{
-					"name": "/metadata/latestLeaf -> updates the latestLeaf metadata object",
+					"name": "/metadata/latestLeaf -> get the latestLeaf metadata object",
 					"protocolProfileBehavior": {
 						"disableBodyPruning": true
 					},
@@ -1208,7 +1239,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"treeId\": \"a\",\n\t\"contractName\": \"MultipleMerkleTreesControllerSHA\"\n}"
+							"raw": "{\n\t\"contractName\": \"MultipleMerkleTreesControllerSHA\",\n\t\"treeId\": \"a\"\n}"
 						},
 						"url": {
 							"raw": "http://localhost:9000/metadata/latestLeaf",
@@ -1307,7 +1338,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"treeId\": \"a\",\n\t\"contractName\": \"MultipleMerkleTreesControllerSHA\"\n}"
+							"raw": "{\n\t\"contractName\": \"MultipleMerkleTreesControllerSHA\",\n\t\"treeId\": \"a\"\n}"
 						},
 						"url": {
 							"raw": "http://localhost:9000/metadata/latestRecalculation",
@@ -1374,7 +1405,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"treeId\": \"a\",\n\t\"contractName\": \"MultipleMerkleTreesControllerSHA\"\n}"
+							"raw": "{\n\t\"contractName\": \"MultipleMerkleTreesControllerSHA\",\n\t\"treeId\": \"a\"\n}"
 						},
 						"url": {
 							"raw": "http://localhost:9000/start",
@@ -1499,7 +1530,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"treeId\": \"a\",\n\t\"contractName\": \"MultipleMerkleTreesControllerSHA\"\n}"
+							"raw": "{\n\t\"contractName\": \"MultipleMerkleTreesControllerSHA\",\n\t\"treeId\": \"a\"\n}"
 						},
 						"url": {
 							"raw": "http://localhost:9000/update",

@@ -40,12 +40,21 @@ async function checkLeaves(db) {
     console.log('\nmissing leaves:', missingLeaves);
 
     const minMissingLeafIndex = missingLeaves[0];
+
     maxReliableLeafIndex = minMissingLeafIndex - 1;
 
-    // get the prior leaf:
-    const latestConsecutiveLeaf = await leafService.getLeafByLeafIndex(maxReliableLeafIndex);
+    let fromBlock;
 
-    const fromBlock = latestConsecutiveLeaf.blockNumber;
+    if (minMissingLeafIndex > 0) {
+      // get the prior leaf:
+      const latestConsecutiveLeaf = await leafService.getLeafByLeafIndex(maxReliableLeafIndex);
+
+      fromBlock = latestConsecutiveLeaf.blockNumber;
+    } else {
+      // start from scratch:
+      fromBlock = config.FILTER_GENESIS_BLOCK_NUMBER;
+      return maxReliableLeafIndex; // the maximum reliable leafIndex is -1; i.e. nothing's reliable. Let's start again.
+    }
 
     const currentBlock = await utilsWeb3.getBlockNumber();
 
@@ -58,7 +67,7 @@ async function checkLeaves(db) {
         `\nIdeally, we would re-filter from block ${fromBlock}, but the filter is only ${lag} blocks behind the current block ${currentBlock}. Since the user's config specifies a 'lag' tolerance of ${lagTolerance} blocks, we will not re-filter.`,
       );
 
-      return maxReliableLeafIndex; // return the latest reliable leaf index  up to which we can update the tree
+      return maxReliableLeafIndex; // return the latest reliable leaf index up to which we can update the tree
     }
     console.log(
       `\nWe need to re-filter from block ${fromBlock}, but this feature hasn't been built yet!`,
@@ -207,21 +216,27 @@ async function update(db) {
   const metadataService = new MetadataService(db);
 
   // update the metadata db (based on currently stored leaves):
-  let { latestLeaf } = await updateLatestLeaf(db);
+  let { latestLeaf } = (await updateLatestLeaf(db)) || {};
 
-  // update the metadata db (based on currently stored leaves):
-  const { treeHeight } = await metadataService.getTreeHeight();
+  if (!latestLeaf) {
+    console.log('There are no (reliable) leaves in the tree. Nothing to update.'); // this might also be triggered if there are no _reliable_ leaves in the tree; in which case everything should be refiltered: (TODO)
+    const metadata = await metadataService.getMetadata();
+    return metadata;
+  }
 
   // get the latest recalculation metadata (to know how up-to-date the nodes of our tree actually are):
-  let { latestRecalculation } = await metadataService.getLatestRecalculation();
-  latestRecalculation = latestRecalculation === undefined ? {} : latestRecalculation;
+  let { latestRecalculation } = (await metadataService.getLatestRecalculation()) || {};
 
   const latestRecalculationLeafIndex =
-    latestRecalculation.leafIndex === undefined ? 0 : Number(latestRecalculation.leafIndex);
+    latestRecalculation && latestRecalculation.leafIndex
+      ? Number(latestRecalculation.leafIndex)
+      : 0;
 
   const fromLeafIndex = latestRecalculationLeafIndex === 0 ? 0 : latestRecalculationLeafIndex + 1;
 
-  const toLeafIndex = Number(latestLeaf.leafIndex);
+  const toLeafIndex = latestLeaf && latestLeaf.leafIndex ? Number(latestLeaf.leafIndex) : 0;
+
+  const { treeHeight } = await metadataService.getTreeHeight();
 
   // Check whether we're already up-to-date:
   if (latestRecalculationLeafIndex < toLeafIndex || latestRecalculationLeafIndex === 0) {

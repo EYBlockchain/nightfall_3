@@ -40,8 +40,8 @@ app.use(function cros(req, res, next) {
 
 // cors & body parser middleware should come before any routes are handled
 app.use(cors());
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
 
 app.use(assignDbConnection);
 

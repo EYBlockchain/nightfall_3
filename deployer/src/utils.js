@@ -160,11 +160,7 @@ function mimcHash(...msgs) {
   console.log(`dep curve: ${config.CURVE} rounds: ${rounds} exp ${exponent} mod ${modulus}`);
   const mimc = '0x6d696d63'; // this is 'mimc' in hex as a nothing-up-my-sleeve seed
   return `0x${mimcpemp(
-    msgs.map(e => {
-      const f = BigInt(e);
-      // if (f > config.ZOKRATES_PRIME) throw new Error('MiMC input exceeded prime field size');
-      return f;
-    }),
+    msgs.map(BigInt),
     BigInt(0), // k
     keccak256Hash(mimc), // seed
     rounds, // rounds of hashing

@@ -53,11 +53,33 @@ export default class MetadataService {
   }
 
   /**
+  Get the treeHeight relating to the MerkleTree contract & treeId
+  @returns {object} the { treeHeight }
+  */
+  async getTreeHeight() {
+    console.log('\nsrc/db/service/metadata.service getTreeHeight()');
+
+    let doc = await this.db.getDoc(
+      COLLECTIONS.METADATA,
+      { _id: 1 }, // 'match all' (within our one document)
+      ['treeHeight', '-_id'], // return only the 'treeHeight' key (and exclude the _id key)
+    );
+    doc = doc || {};
+    return doc;
+  }
+
+  /**
   Insert a tree height into the tree's metadata
   @param {object} data
   */
   async insertTreeHeight(data) {
     console.log('\nsrc/db/service/metadata.service insertTreeHeight()');
+
+    // TODO: although a check is done within the filter-controller to prevent treeHeight overwrites, users who call the API endpoint aren't protected unless we have code here. Unfortunately, this strong error-throwing code is too disruptive. Handle more intelligently, like the filter does.
+    // const { treeHeight: checkTreeHeight } = await this.getTreeHeight();
+    // if (checkTreeHeight)
+    //   throw new Error(`treeHeight already set at ${checkTreeHeight}. This cannot be edited.`);
+
     const { treeHeight } = metadataMapper(data);
     if (treeHeight === undefined) return null;
     console.log(`treeHeight: ${treeHeight}`);
@@ -176,22 +198,6 @@ export default class MetadataService {
   }
 
   /**
-  Get the treeHeight relating to the MerkleTree contract & treeId
-  @returns {object} the { treeHeight }
-  */
-  async getTreeHeight() {
-    console.log('\nsrc/db/service/metadata.service getTreeHeight()');
-
-    let doc = await this.db.getDoc(
-      COLLECTIONS.METADATA,
-      { _id: 1 }, // 'match all' (within our one document)
-      ['treeHeight', '-_id'], // return only the 'treeHeight' key (and exclude the _id key)
-    );
-    doc = doc || {};
-    return doc;
-  }
-
-  /**
   Get the latestRecalculation metadata for the tree
   @returns {object} the latestRecalculation object
   */
@@ -203,8 +209,6 @@ export default class MetadataService {
       { _id: 1 }, // 'match all' (within our one document)
       ['latestRecalculation', '-_id'], // return only the 'latestRecalculation' key (and exclude the _id key)
     );
-    doc = doc || {};
-
     doc = doc || {};
 
     return doc;

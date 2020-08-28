@@ -30,7 +30,8 @@ async function insertContractAddress(req, res, next) {
 /**
  * Add the relevant contract address to the tree's db.
  * req.body {
- *  contractAddress: '0xabc123..',
+ *   contractName: '...',
+ *   contractAddress: '0xabc123..',
  * }
  * @param {*} req
  * @param {*} res
@@ -69,7 +70,8 @@ async function insertContractInterface(req, res, next) {
 /**
  * Add the relevant height to the tree's db.
  * req.body {
- *  contractAddress: '0xabc123..',
+ *   contractName: '...',
+ *   treeHeight: 32,
  * }
  * @param {*} req
  * @param {*} res
@@ -88,6 +90,10 @@ async function insertTreeHeight(req, res, next) {
 
 /**
  * Update the latestLeaf metadata in the tree's db.
+ * req.body {
+ *   contractName: '...',
+ *   latestLeaf: {} // a latestLeaf object
+ * }
  * @param {*} req
  * @param {*} res
  */
@@ -104,6 +110,10 @@ async function updateLatestLeaf(req, res, next) {
 
 /**
  * Update the latestRecalculation metadata in the tree's db.
+ * req.body {
+ *   contractName: '...',
+ *   latestRecalculation: {} // a latestRecalculation object
+ * }
  * @param {*} req
  * @param {*} res
  */
@@ -200,15 +210,12 @@ async function getLatestRecalculation(req, res, next) {
 }
 
 /**
-TODO: I don't think we want to query this directly, as the metadata db doesn't keep-pace with the filter automatically. We might need to call the 'update' function in order to get the latest leaf. DONE!
  * Get the latestLeaf tree metadata from the tree's 'tree' db.
  * @param {*} req
  * @param {*} res
  */
 async function getLatestLeaf(req, res, next) {
   try {
-    // const metadataService = new MetadataService(req.user.db);
-    // res.data = await metadataService.getLatestLeaf();
     const { db } = req.user;
     res.data = await merkleTreeController.updateLatestLeaf(db);
     next();

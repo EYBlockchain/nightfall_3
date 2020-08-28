@@ -9,16 +9,20 @@ import { NodeService } from '../db/service';
 /**
  * Add a new node to the tree's 'nodes' db.
  * req.body {
- *  value: '0xabc123..',
- *  nodeIndex: 12345678,
+ *   contractName: '...',
+ *   node: {
+ *     value: '0xabc123..',
+ *     nodeIndex: 12345678,
+ *   }
  * }
  * @param {*} req
  * @param {*} res
  */
 async function insertNode(req, res, next) {
   try {
+    const { node } = req.body;
     const nodeService = new NodeService(req.user.db);
-    await nodeService.insertNode(req.body);
+    await nodeService.insertNode(node);
     res.data = { message: 'inserted' };
     next();
   } catch (err) {
@@ -29,7 +33,7 @@ async function insertNode(req, res, next) {
 /**
  * Get a node from the tree's 'nodes' db.
  * req.params { nodeIndex: 1234 }
- * req.body { nodeIndex: 1234 }
+ * req.body { contractName: '...', nodeIndex: 1234 }
  * @param {*} req
  * @param {*} res
  */
@@ -46,7 +50,7 @@ async function getNodeByNodeIndex(req, res, next) {
 
 /**
  * Get a node from the tree's 'nodes' db.
- * req.body { value: '0xabc1234' }
+ * req.body { contractName: '...', value: '0xabc1234' }
  * @param {*} req
  * @param {*} res
  */
@@ -63,11 +67,24 @@ async function getNodeByValue(req, res, next) {
 
 /**
  * Get many nodes from the tree's 'nodes' db.
- * req.body { nodeIndices: [index0, index1, ..., indexn] }
+ * req.body {
+ *   contractName: '...',
+ *   treeId: '...', // optional
+ *   nodeIndices: [index0, index1, ..., indexn]
+ * }
  * or
- * req.body { values: [value0, value1, ..., valuen] }
+ * req.body {
+ *   contractName: '...',
+ *   treeId: '...', // optional,
+ *   values: [value0, value1, ..., valuen]
+ * }
  * or
- * req.body { minIndex: 1234, maxIndex: 5678 }
+ * req.body {
+ *   contractName: '...',
+ *   treeId: '...', // optional
+ *   minIndex: 1234,
+ *   maxIndex: 5678
+ * }
  * @param {*} req
  * @param {*} res
  */
@@ -97,14 +114,18 @@ async function getNodes(req, res, next) {
  * Update a node in the db.
  * req.params: { nodeIndex }
  * req.body: {
- *  value: '0xabc123..',
- *  nodeIndex: 12345678,
+ *   contractName: '...',
+ *   treeId: '...', // optional
+ *   node: {
+ *     value: '0xabc123..',
+ *     nodeIndex: 12345678,
+ *   }
  * }
  * @param {*} req
  * @param {*} res
  */
 async function updateNodeByNodeIndex(req, res, next) {
-  const nodeIndex = req.params.nodeIndex || req.body.nodeIndex;
+  const nodeIndex = req.params.nodeIndex || req.body.node.nodeIndex;
   const nodeService = new NodeService(req.user.db);
   try {
     await nodeService.updateNodeByNodeIndex(nodeIndex, req.body);
@@ -117,23 +138,30 @@ async function updateNodeByNodeIndex(req, res, next) {
 
 /**
  * Update many nodes in the db.
- * req.body [
- *   {
- *     value: '0xabc123..',
- *     nodeIndex: 12345678,
- *   },
- *   {
- *     value: '0xabc123..',
- *     nodeIndex: 12345678,
+ * req.body {
+ *   contractName: '...',
+ *   treeId: '...', // optional
+ *   nodes: {
+ *     [
+ *       {
+ *         value: '0xabc123..',
+ *         nodeIndex: 12345678,
+ *       },
+ *       {
+ *         value: '0xabc123..',
+ *         nodeIndex: 12345678,
+ *       }
+ *     ]
  *   }
- * ]
+ * }
  * @param {*} req
  * @param {*} res
  */
 async function updateNodes(req, res, next) {
-  const nodeService = new NodeService(req.user.db);
   try {
-    await nodeService.updateNodes(req.body);
+    const { nodes } = req.body;
+    const nodeService = new NodeService(req.user.db);
+    await nodeService.updateNodes(nodes);
     res.data = { message: 'updated' };
     next();
   } catch (err) {
@@ -151,7 +179,7 @@ async function countNodes(req, res, next) {
 
   try {
     const nodeService = new NodeService(req.user.db);
-    const nodeCount = await nodeService.countNodes(req.body);
+    const nodeCount = await nodeService.countNodes();
     res.data = { nodeCount };
     next();
   } catch (err) {

@@ -13,15 +13,16 @@
     "Michael Connor <Michael.Connor@uk.ey.com>"
   ],
   "dependencies": {
-    "body-parser": "^1.19.0",
     "big-integer": "^1.6.47",
-    "express": "^4.17.1",
-    "request": "^2.88.0",
-    "cors": "^2.8.5",
+    "body-parser": "^1.19.0",
     "config": "^3.2.2",
-    "web3": "1.0.0-beta.36",
+    "cors": "^2.8.5",
+    "crypto": "^1.0.1",
+    "express": "^4.17.1",
     "jsonfile": "^5.0.0",
-    "level": "^5.0.1"
+    "level": "^5.0.1",
+    "request": "^2.88.0",
+    "web3": "^1.2.11"
   },
   "devDependencies": {
     "@babel/cli": "^7.6.4",
