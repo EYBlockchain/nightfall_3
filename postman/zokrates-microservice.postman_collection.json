@@ -1,6 +1,6 @@
 {
   "info": {
-    "_postman_id": "4a0421d3-e2e1-44b6-aaca-dc4bb6828529",
+    "_postman_id": "0cca53bf-6dd8-4dc3-b53f-477215b7c78a",
     "name": "zokrates-microservice Copy",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
@@ -11,7 +11,7 @@
         {
           "listen": "test",
           "script": {
-            "id": "0ecb5b1a-a988-4835-908b-5f30d09c7b46",
+            "id": "15a5370d-8ca7-4b78-853a-4eb05e2a091a",
             "exec": [
               "pm.test(\"Status code is 200\", function () {",
               "    pm.response.to.have.status(200);",
@@ -56,7 +56,7 @@
         {
           "listen": "test",
           "script": {
-            "id": "152bf063-af25-492b-bfc9-360a61402e8f",
+            "id": "5c05ab1d-fb16-4de0-b4cf-0a68b8c06332",
             "exec": [
               "pm.test(\"Status code is 200\", function () {",
               "    pm.response.to.have.status(200);",
@@ -88,7 +88,7 @@
             {
               "key": "circuits",
               "type": "file",
-              "src": "/Users/a2021282/Documents/zokrates-zexe-microservice/circuits/examples/0xfa1f368f31334dce92b28341a8de3d9b.tar"
+              "src": "/Users/a2024338/git/zokrates-worker/circuits/examples/0xfa1f368f31334dce92b28341a8de3d9b.tar"
             }
           ]
         },
@@ -107,7 +107,7 @@
         {
           "listen": "test",
           "script": {
-            "id": "10cec5ff-ba2c-405d-a004-5da77ead5e7f",
+            "id": "f2e46d87-a108-4aee-a78b-e99491558a27",
             "exec": [
               "pm.test(\"Status code is 200\", function () {",
               "    pm.response.to.have.status(200);",
@@ -142,7 +142,7 @@
             {
               "key": "circuit",
               "type": "file",
-              "src": "/Users/a2021282/Documents/zokrates-zexe-microservice/circuits/examples/factor.zok"
+              "src": "/Users/a2024338/git/zokrates-worker/circuits/examples/factor.zok"
             }
           ]
         },
@@ -162,7 +162,7 @@
         {
           "listen": "test",
           "script": {
-            "id": "a3327782-ad73-464c-9e5f-c273a9ced7d7",
+            "id": "cc07cb63-15d6-4c09-9f13-8af743c9b8e3",
             "exec": [
               "pm.test(\"Status code is 200\", function () {",
               "    pm.response.to.have.status(200);",
@@ -216,7 +216,7 @@
         {
           "listen": "test",
           "script": {
-            "id": "7fe9c0ec-12d2-4306-bc78-fa72a615f594",
+            "id": "283dd2b0-18ee-4051-8235-ffe3f5e52c22",
             "exec": [
               "pm.test(\"Status code is 200\", function () {",
               "    pm.response.to.have.status(200);",
@@ -273,7 +273,7 @@
         {
           "listen": "test",
           "script": {
-            "id": "207cbec1-968a-4146-8aaa-9c309033ea43",
+            "id": "3e19a822-bdbb-4e63-97f6-458a76026b47",
             "exec": [
               "pm.test(\"Status code is 200\", function () {",
               "    pm.response.to.have.status(200);",

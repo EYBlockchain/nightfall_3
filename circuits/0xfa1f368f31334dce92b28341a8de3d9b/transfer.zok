@@ -1,0 +1,92 @@
+from "utils/pack_bls12_377/bool/unpack128.zok" import main as field_to_bool_128
+from "utils/pack_bls12_377/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
+from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256
+from "utils/pack/u32/pack128.zok" import main as u32_4_to_field
+
+from "./common/hashes/sha256/pad256ThenHash.zok" import main as sha256of256
+from "./common/hashes/sha256/pad512ThenHash.zok" import main as sha256of512
+from "./common/hashes/sha256/pad896ThenHash.zok" import main as sha256of896
+
+struct OldCommitmentPreimage {
+	u32[4] value
+	u32[8] salt
+}
+
+struct NewCommitmentPreimage {
+	u32[4] value
+	u32[8] publicKey
+	u32[8] salt
+}
+
+def main(\
+	private u32[8] erc20ContractAddress,\
+	private u32[8] secretKeySender,\
+	private OldCommitmentPreimage[2] oldCommitmentPreimages,\
+	private NewCommitmentPreimage[2] newCommitmentPreimages,\
+	field[2] oldCommitments,\
+	field[2] nullifiers,\
+	field[2] newCommitments,\
+	field publicStorageRoot\
+)->():
+
+
+	// Calculation of publicKeySender from H(secretKeySender)
+	u32[8] publicKeySender = sha256of256(secretKeySender)
+
+
+	// oldCommitments:
+	for field i in 0..2 do
+		// H(salt|secretKeySender) = nullifier
+		u32[8] nullifier = sha256of512([\
+			...oldCommitmentPreimages[i].salt,\
+			...secretKeySender\
+		])
+		field_to_bool_256(nullifiers[i])[4..256] == u32_8_to_bool_256(nullifier)[4..256]
+
+		// calculation of oldCommitment =  H(erc20ContractAddress|value|publicKey|salt)
+		u32[8] oldCommitment = sha256of896([\
+			...erc20ContractAddress,\
+			...oldCommitmentPreimages[i].value,\
+			...publicKeySender,\
+			...oldCommitmentPreimages[i].salt\
+		])
+		field_to_bool_256(oldCommitments[i])[4..256] == u32_8_to_bool_256(oldCommitment)[4..256]
+
+		// Crude overflow prevention:
+		oldCommitmentPreimages[i].value[0] == 0x00000000
+	endfor
+
+
+	// newCommitments:
+	for field i in 0..2 do
+		// Calculation of newCommitment =  H(erc20ContractAddress|value|publicKey|salt)
+		u32[8] newCommitment = sha256of896([\
+			...erc20ContractAddress,\
+			...newCommitmentPreimages[i].value,\
+			...newCommitmentPreimages[i].publicKey,\
+			...newCommitmentPreimages[i].salt\
+		])
+		field_to_bool_256(newCommitments[i])[4..256] == u32_8_to_bool_256(newCommitment)[4..256]
+
+		// Crude overflow prevention:
+		newCommitmentPreimages[i].value[0] == 0x00000000
+	endfor
+
+
+	// Sum check: sum(oldCommitment values) = sum(newCommitment values) - we don't want anyone to create money.
+	field sumIn = 0
+	field sumOut = 0
+	for field i in 0..2 do
+		sumIn = sumIn + u32_4_to_field(oldCommitmentPreimages[i].value)
+	endfor
+	for field i in 0..2 do
+		sumOut = sumOut + u32_4_to_field(newCommitmentPreimages[i].value)
+	endfor
+	sumIn == sumOut
+
+
+    publicStorageRoot == 0
+	// Notice that we MUST specify a publicStorageRoot, even though we don't refer to any public storage variables in this proof. By convention, we can specify it as 0 when not used by a zApp's circuit.
+
+
+	return
