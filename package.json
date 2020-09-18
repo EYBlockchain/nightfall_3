@@ -1,0 +1,56 @@
+{
+  "name": "@eyblockchain/zokrates-microservice",
+  "description": "ZoKrates microservice",
+  "repository": "https://github.com/EYBlockchain/zokrates-zexe-microservice.git",
+  "license": "CC0-1.0",
+  "version": "1.0.2",
+  "private": false,
+  "type": "module",
+  "scripts": {
+    "start": "node ./src/index.js",
+    "dev": "nodemon ./src/index.js",
+    "setup": "./bin/setup.sh",
+    "test": "npx newman run ./postman/zokrates-microservice.postman_collection.json",
+    "fix": "npm run format && npm run lint -- --fix",
+    "format": "prettier --write \"**/*.{json,css,scss,md}\"",
+    "lint": "eslint .",
+    "lint:md": "markdownlint -i node_modules .",
+    "lint:commit": "cod-scripts commitlint",
+    "validate": "cod-scripts validate"
+  },
+  "eslintConfig": {
+    "extends": [
+      "./node_modules/cod-scripts/eslint.js"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "cod-scripts pre-commit",
+      "commit-msg": "cod-scripts commitlint -E HUSKY_GIT_PARAMS"
+    }
+  },
+  "dependencies": {
+    "@eyblockchain/zokrates-zexe.js": "^0.1.11",
+    "@semantic-release/git": "^9.0.0",
+    "amqplib": "^0.6.0",
+    "body-parser": "1.19.0",
+    "cors": "2.8.5",
+    "eslint-plugin-react-hooks": "^1.7.0",
+    "express": "^4.17.1",
+    "express-fileupload": "^1.1.7-alpha.4",
+    "tar": "^6.0.2"
+  },
+  "devDependencies": {
+    "cod-scripts": "^3.2.0",
+    "markdownlint-cli": "^0.15.0",
+    "nodemon": "^1.18.9"
+  },
+  "nodemonConfig": {
+    "verbose": true,
+    "ignore": [
+      "output/",
+      "circuits/",
+      "*.json"
+    ]
+  }
+}

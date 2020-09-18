@@ -1,0 +1,14 @@
+version: '3.5'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: dev.Dockerfile
+    volumes:
+      - ./src:/app/src:delegated
+      - ./output:/app/output:delegated
+      - ./circuits:/app/circuits:delegated
+      - ./node_modules:/app/node_modules:delegated
+    ports:
+      - 8080:80
