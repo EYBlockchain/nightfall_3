@@ -1,8 +1,8 @@
 import zokrates from '@eyblockchain/zokrates-zexe.js';
 import path from 'path';
 
-import rabbitmq from '../utils/rabbitmq.js';
-import { getProofByCircuitPath } from '../utils/filing.js';
+import rabbitmq from '../utils/rabbitmq.mjs';
+import { getProofByCircuitPath } from '../utils/filing.mjs';
 
 export default function receiveMessage() {
   const outputPath = `./output/`;

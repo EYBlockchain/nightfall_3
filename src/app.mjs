@@ -2,11 +2,11 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import fileUpload from 'express-fileupload';
-import generateProof from './routes/generateProof.js';
-import generateKeys from './routes/generateKeys.js';
-import vk from './routes/vk.js';
-import loadCircuit from './routes/loadCircuit.js';
-import loadCircuits from './routes/loadCircuits.js';
+import generateProof from './routes/generateProof.mjs';
+import generateKeys from './routes/generateKeys.mjs';
+import vk from './routes/vk.mjs';
+import loadCircuit from './routes/loadCircuit.mjs';
+import loadCircuits from './routes/loadCircuits.mjs';
 
 const app = express();
 

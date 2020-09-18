@@ -1,6 +1,6 @@
-import app from './app.js';
-import rabbitmq from './utils/rabbitmq.js';
-import queues from './queues/index.js';
+import app from './app.mjs';
+import rabbitmq from './utils/rabbitmq.mjs';
+import queues from './queues/index.mjs';
 
 const main = async () => {
   try {

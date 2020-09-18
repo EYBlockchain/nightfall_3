@@ -1,7 +1,7 @@
 import fs from 'fs';
 
-import rabbitmq from '../utils/rabbitmq.js';
-import { untarFiles, deleteFile, getFilesRecursively } from '../utils/filing.js';
+import rabbitmq from '../utils/rabbitmq.mjs';
+import { untarFiles, deleteFile, getFilesRecursively } from '../utils/filing.mjs';
 
 export default function receiveMessage() {
   const outputPath = `./circuits/`;

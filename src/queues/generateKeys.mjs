@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import zokrates from '@eyblockchain/zokrates-zexe.js';
 
-import rabbitmq from '../utils/rabbitmq.js';
+import rabbitmq from '../utils/rabbitmq.mjs';
 
 export default function receiveMessage() {
   const outputPath = `./output`;

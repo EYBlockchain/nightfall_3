@@ -1,6 +1,6 @@
 import express from 'express';
 import fs from 'fs';
-import { untarFiles, deleteFile, getFilesRecursively } from '../utils/filing.js';
+import { untarFiles, deleteFile, getFilesRecursively } from '../utils/filing.mjs';
 
 const router = express.Router();
 

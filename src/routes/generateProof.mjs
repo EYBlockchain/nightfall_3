@@ -1,7 +1,7 @@
 import express from 'express';
 import zokrates from '@eyblockchain/zokrates-zexe.js';
 import path from 'path';
-import { getProofByCircuitPath } from '../utils/filing.js';
+import { getProofByCircuitPath } from '../utils/filing.mjs';
 
 const router = express.Router();
 
