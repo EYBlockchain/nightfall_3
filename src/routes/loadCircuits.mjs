@@ -17,32 +17,36 @@ router.post('/', async (req, res, next) => {
     }
     // Use the name of the input field (i.e. "circuits") to retrieve the uploaded file
     const { circuits } = req.files;
-    if (!circuits.name.endsWith('.tar')) {
+    if (!circuits.name.endsWith('.tar') && !circuits.name.endsWith('.zok')) {
       return res.send({
         status: false,
-        message: `Expected an archive file with extension '.tar'. Got ${circuits.name}`,
+        message: `Expected either a zokrates .zok file or tar achive. Got ${circuits.name}`,
       });
     }
     // check for duplicates
     const exists = fs.existsSync(`${outputPath}${circuits.name}`);
     // Use the mv() method to place the file in the required directory (i.e. "./circuits")
     await circuits.mv(`${outputPath}${circuits.name}`);
-    // unarchive the circuit files
-    const overwrote = await untarFiles('/app/circuits', circuits.name);
 
-    // get a list of files from the unarchived folder
-    const files = await getFilesRecursively(`/app/circuits/${circuits.name.replace('.tar', '')}`);
-    files.forEach(file => {
-      if (!file.endsWith('.zok')) {
-        return res.send({
-          status: false,
-          message: 'For shame, this is not an .zok file',
-        });
-      }
-      return null;
-    });
-    // delete the archive file
-    await deleteFile(`${outputPath}${circuits.name}`);
+    // extra code to handle unpacking a tar archive
+    let overwrote;
+    if (circuits.name.endsWith('.tar')) {
+      // unarchive the circuit files and put in a list then delete the archive
+      overwrote = await untarFiles('/app/circuits', circuits.name);
+      const files = await getFilesRecursively(`/app/circuits/${circuits.name.replace('.tar', '')}`);
+      await deleteFile(`${outputPath}${circuits.name}`);
+      // check the archive contained .zok files only
+      files.forEach(file => {
+        if (!file.endsWith('.zok')) {
+          return res.send({
+            status: false,
+            message: 'For shame, this is not an .zok file',
+          });
+        }
+        return null;
+      });
+    }
+
     // send response
     return res.send({
       status: true,

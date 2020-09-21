@@ -18,8 +18,8 @@ describe('Testing the http API', () => {
   it('should load a zokrates file', done => {
     chai
       .request('http://localhost:8080')
-      .post('/load-circuit')
-      .attach('circuit', 'circuits/test/factor.zok')
+      .post('/load-circuits')
+      .attach('circuits', 'circuits/test/factor.zok')
       .end((err, res) => {
         expect(res.status).to.equal(200);
         expect(res.body.message).to.equal('File factor.zok was uploaded');
@@ -46,9 +46,9 @@ describe('Testing the http API', () => {
       .set('Content-Type', 'application/json')
       .send({
         filepath: 'factor.zok',
-        curve: 'bls12_377',
+        curve: 'bn128',
         provingScheme: 'gm17',
-        backend: 'zexe',
+        backend: 'libsnark',
       })
       .end((err, res) => {
         expect(res.body).to.have.property('vk');
@@ -78,7 +78,7 @@ describe('Testing the http API', () => {
         folderpath: 'factor',
         inputs: [6, 3, 2],
         provingScheme: 'gm17',
-        backend: 'zexe',
+        backend: 'libsnark',
       })
       .end((err, res) => {
         expect(res.body).to.have.property('proof');
