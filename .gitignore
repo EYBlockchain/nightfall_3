@@ -75,3 +75,7 @@ dist
 
 # large files
 output/*
+
+#circuits, except for test purposes
+circuits/*
+!circuits/test/
