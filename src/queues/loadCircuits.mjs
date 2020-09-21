@@ -34,6 +34,7 @@ export default function receiveMessage() {
 
       // delete the archive file
       await deleteFile(`${outputPath}${circuits.name}`);
+      response.data = { message: 'Circuits loadded successfully' };
     } catch (err) {
       response.error = err;
     }

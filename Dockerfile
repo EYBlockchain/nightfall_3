@@ -14,6 +14,7 @@ COPY ./package.json ./
 # give the Dockerfile github credentials, which isn't great.
 COPY ./node_modules ./node_modules
 COPY ./start-script ./start-script
+COPY ./start-dev ./start-dev
 
 RUN apt-get update -y
 RUN apt-get install -y netcat
