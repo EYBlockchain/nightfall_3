@@ -1,37 +1,36 @@
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-- [zokrates-zexe-microservice](#zokrates-zexe-microservice)
+- [zokrates-worker](#zokrates-worker)
   - [Prerequisites](#prerequisites)
-  - [Getting Started](#getting-started)
-  - [Docker Image](#docker-image)
-  - [Building an new Docker Image](#building-an-new-docker-image)
+  - [Getting Started - Development](#getting-started---development)
+  - [Getting Started - Docker Image](#getting-started---docker-image)
   - [Testing](#testing)
   - [Endpoints](#endpoints)
-    - [`loadCircuit`](#loadcircuit)
-    - [`generateKeys`](#generatekeys)
-    - [`generateProof`](#generateproof)
+    - [`load-circuits`](#load-circuits)
+    - [`generate-keys`](#generate-keys)
+    - [`generate-proof`](#generate-proof)
     - [`vk`](#vk)
   - [Zokrates - writing & testing `.zok` circuit files](#zokrates---writing--testing-zok-circuit-files)
     - [a) mounting to zokrates in the terminal (recommended)](#a-mounting-to-zokrates-in-the-terminal-recommended)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-# zokrates-zexe-microservice
+# zokrates-worker
 
 ## Prerequisites
 
 1. Install [Docker for Mac](https://www.docker.com/docker-mac), or
    [Docker for Windows](https://www.docker.com/docker-windows)
 
-## Getting Started
+## Getting Started - Development
 
 1. Clone this repository to your computer:
-   `git clone git@github.com:EYBlockchain/zokrates-zexe-microservice.git`
+   `git clone git@github.com:EYBlockchain/zokrates-worker.git`
 1. Run:
 
 ```sh
-cd zokrates-zexe-microservice
+cd zokrates-worker
 npm install
 ```
 
@@ -40,50 +39,29 @@ docker-compose build
 docker-compose up -d
 ```
 
-When docker is done building, the API will be available at `http://localhost:8080`.
+When docker is done building, the http:// API will be available at `http://localhost:8080`.
 
-## Docker Image
+## Getting Started - Docker Image
 
-There is also a docker image of this `zokrates-zexe-microservice`. It can be pulled from GitHub:
+There is also a docker image of `zokrates-worker`. It can be pulled from GitHub:
 
 ```sh
-docker pull docker.pkg.github.com/eyblockchain/zokrates-zexe-microservice/zokrates_zexe_microservice:<tag>
+docker pull docker.pkg.github.com/eyblockchain/zokrates-worker/zokrates_worker:<version>
 ```
 
 You will need a GitHub token with package read permission so that you can log in to
 `docker.pkg.github.com` to pull the image. The instructions on how to make one of these are
 [here](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token).
-To log in to docker:
 
-## Building an new Docker Image
-
-There is no automated build of the Docker image stored in the package repository. Thus, if you do
-`git push` the Docker image **will not** be updated. This is because the image is build on top of
-the `zokrates-zexe` image and it is not possible to credential github actions to pull that image (it
-appears to be a limitation of Github currently). Thus, you must build it manually following these
-instructions:
-
-- Edit the first line of the Dockerfile so that the image is built `FROM` the correct zokrates-zexe
-  image (normally this will be the most recent image available), then;
-
-- ```sh
-  $ git push
-  $ docker build -t docker.pkg.github.com/eyblockchain/zokrates-zexe-microservice/zokrates_zexe_microservice:<tag> .
-  $ docker push docker.pkg.github.com/eyblockchain/zokrates-zexe-microservice/zokrates_zexe_microservice:<tag>
-  ```
-
-````
-_It is strongly recommended that the tag used is the commit hash of the git commit from which this image is built._
+Once available, you can run the docker image with the following command
 
 ```sh
-$ cat /path/to/TOKEN.txt | docker login https://docker.pkg.github.com -u USERNAME --password-stdin
-````
-
-Where `TOKEN.txt` contains your token.
+docker run -p 8080:80 docker.pkg.github.com/eyblockchain/zokrates-worker/zokrates_worker:<version>
+```
 
 ## Testing
 
-To test using the postman collection:
+To test locally:
 
 ```sh
 docker-compose up -d
@@ -94,8 +72,14 @@ To build and test without docker-compose:
 
 ```sh
 docker build .  (note the image id)
-docker run -p 8080:80 -e PROVING_SCHEME='gm17' <image id>
+docker run -p 8080:80 -v $PWD/output:/app/output -v $PWD/circuits:/app/circuits <image id>
 npm test
+```
+
+To test using the published Docker image:
+
+```sh
+docker run -p 8080:80 -v $PWD/output:/app/output -v $PWD/circuits:/app/circuits docker.pkg.github.com/eyblockchain/zokrates-worker/zokrates_worker:<version>
 ```
 
 ## Endpoints
@@ -111,20 +95,23 @@ The `api` service is a RESTful service that makes use of the `@eyblockchain/zokr
 package, and has the following endpoints.
 
 To be able to leverage the service, mount the `.zok` file(s) to
-`/app/circuits/path/to/parent-dir/file.zok`, and run each of the instructions below per file. This
-service can be exposed via a port set in the `docker-compose.yml` (`http://localhost:8080` in all
-the example commands which follow).
+`/app/circuits/path/to/parent-dir/file.zok`, and run each of the instructions below per file. You
+can also use a `.tar` archive of `.zok` files. This service can be exposed via a port set in the
+`docker-compose.yml` (`http://localhost:8080` in all the example commands which follow).
 
-### `loadCircuit`
+### `load-circuits`
 
-This is a post instruction that takes a .zok file and uploads it. It will be stored in
-`./circuits/`.
+This is a post instruction that takes a `.zok` or a `.tar` archive of `.zok` files and uploads
+it/them. It/they will be stored in `./circuits/`.
+
+If a tar file was used, the unpacked files will be in a subdirectory,named after the tar file, with
+the `.tar` extension removed.
 
 **Request body:**
 
-`form-data`: key = `circuit`, value = `<file to upload>`
+`form-data`: key = `circuits`, value = `<file to upload>`
 
-### `generateKeys`
+### `generate-keys`
 
 This is a POST instruction that runs `compile`, `setup` and `exportVerifier` instructions.
 
@@ -132,23 +119,24 @@ This is a POST instruction that runs `compile`, `setup` and `exportVerifier` ins
 
 - `filepath`: the path of the `.zok` file (relative to `/app/circuits/`). E.g. for a file at
   `/app/circuits/path/to/test.zok` the filepath is `path/to/test.zok`.
-- `curve`: specify one of: `[alt_bn128, bls12_381, bls12_377, bw6_761]`
-- `provingScheme`: specify one of: `[g16, gm17, pghr13]`. Note: zexe functionality currently only
-  works with `gm17`.
-- `backend`: specify one of: `zexe`, `bellman`.
+- `curve`: specify one of: `[bn128, bls12_381]`
+- `provingScheme`: specify one of: `[g16, gm17, pghr13]`.
+- `backend`: specify one of: `libsnark`, `bellman`.
+
+Note, Nightfall currently uses `[ bn128, libsnark, gm17]`
 
 **Example:**
 
-`curl -d '{"filepath": "path/to/test.zok", "curve": "bls12_377", "provingScheme": "gm17", "backend": "zexe"}' -H "Content-Type: application/json" -X POST http://localhost:8080/generate-keys`
+`curl -d '{"filepath": "path/to/test.zok", "curve": "bn128", "provingScheme": "gm17", "backend": "libsnark"}' -H "Content-Type: application/json" -X POST http://localhost:8080/generate-keys`
 
 Alternatively, the POSTMAN application can be used to run these curl requests. E.g. with body:
 
 ```json
 {
   "filepath": "path/to/test.zok",
-  "curve": "bls12_377",
+  "curve": "bn128",
   "provingScheme": "gm17",
-  "backend": "zexe"
+  "backend": "libsnark"
 }
 ```
 
@@ -156,7 +144,7 @@ Note: All the resultant files from this step are stored in a new sub-directory o
 directory, called `${circuitName}` (where, for example, if the `circuitName` is `test`, the output
 files are stored in a dir `app/output/test/`).
 
-### `generateProof`
+### `generate-proof`
 
 This is a POST instruction that runs `compute-witness` and `generate-proof` instructions.
 
@@ -165,7 +153,7 @@ This is a POST instruction that runs `compute-witness` and `generate-proof` inst
 - `folderpath`: the path of the circuit folder (relative to `/app/outputs/`). E.g. for a folder at
   `/app/outputs/path/to/test` the folderpath is `path/to/test`. The folder contains the keys related
   to the circuit
-- `inputs`: array of the arguments the the `main()` function of the circuit.
+- `inputs`: array of the arguments for the witness computation.
 
 The `/app/circuits/output` dir has the outputs of these steps copied from within the container. When
 the `generate-proof` instruction is run, the corresponding `proof.json` is stored in the
@@ -182,7 +170,7 @@ Alternatively, the POSTMAN application can be used to run these curl requests. E
   "folderpath": "path/to/test",
   "inputs": [6, 32, 2],
   "provingScheme": "gm17",
-  "backend": "zexe"
+  "backend": "libsnark"
 }
 ```
 
@@ -195,7 +183,7 @@ output files are stored in a dir `app/output/test/circuit`).
 This is a GET request, to retrieve a vk from disk. (Note: a trusted setup will have to have taken
 place for the vk to exist).
 
-**Request body:**
+**query parameters:**
 
 - `folderpath`: the path of the circuit folder (relative to `/app/outputs/`). E.g. for a folder at
   `/app/outputs/path/to/test` the folderpath is `path/to/test`. The folder contains the keys related
@@ -203,15 +191,11 @@ place for the vk to exist).
 
 **Example:**
 
-`curl -d '{"folderpath": "path/to/test"}' -H "Content-Type: application/json" -X GET http://localhost:8080/vk`
+`curl -H "Content-Type: application/json" -X GET http://localhost:8080/vk?folderpath=test`
 
-Alternatively, the POSTMAN application can be used to run these curl requests. E.g. with body:
+Alternatively, the POSTMAN application can be used to run these curl requests. E.g. with params:
 
-```json
-{
-  "folderpath": "path/to/test"
-}
-```
+key: "folderpath", value: "test"
 
 ## Zokrates - writing & testing `.zok` circuit files
 
@@ -220,19 +204,19 @@ Alternatively, the POSTMAN application can be used to run these curl requests. E
 To test a particular `.zok` file manually in the terminal:
 
 (You might need to do
-`docker pull docker.pkg.github.com/eyblockchain/zokrates-zexe-microservice/zokrates_zexe_microservice:latest`
-if you haven't already).
+`docker pull docker.pkg.github.com/eyblockchain/zokrates-worker/zokrates_zexe_worker:<version>` if
+you haven't already).
 
 `cd path/to/parent-dir-of-zok-file/`
 
-`docker run -v $PWD:/home/zokrates/code -ti docker.pkg.github.com/eyblockchain/zokrates-zexe-microservice/zokrates_zexe_microservice:latest /bin/bash`
+`docker run -v $PWD:/home/zokrates/code -ti docker.pkg.github.com/eyblockchain/zokrates-worker/zokrates_worker:<version> /bin/bash`
 (mounting to `/code` ensures the outputs from zokrates don't overwrite / mix with our local
 machine's files).
 
-`./zokrates compile -c bls12_377 -i code/<circuitName>.zok`
+`./zokrates compile -c bn128 -i code/<circuitName>.zok`
 
-`./zokrates setup -b zexe -proving-scheme gm17`
+`./zokrates setup -b libsnark -proving-scheme gm17`
 
 `./zokrates compute-witness -a <inputs>`
 
-`./zokrates generate-proof -b zexe -proving-scheme gm17`
+`./zokrates generate-proof -b libsnark -proving-scheme gm17`
