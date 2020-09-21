@@ -31,7 +31,7 @@ jobs:
         if: steps.semantic.outputs.new-release-published == 'true'
         run: |
           docker login https://docker.pkg.github.com -u $GITHUB_ACTOR -p $GITHUB_TOKEN
-          docker build -t docker.pkg.github.com/eyblockchain/zokrates-zexe-microservice/zokrates_zexe_microservice:$RELEASE_VERSION .
-          docker push docker.pkg.github.com/eyblockchain/zokrates-zexe-microservice/zokrates_zexe_microservice:$RELEASE_VERSION
+          docker build -t docker.pkg.github.com/eyblockchain/zokrates-worker/zokrates_worker:$RELEASE_VERSION .
+          docker push docker.pkg.github.com/eyblockchain/zokrates-worker/zokrates_worker:$RELEASE_VERSION
         env:
           GITHUB_TOKEN: ${{ secrets.WRITE_PACKAGES }}
