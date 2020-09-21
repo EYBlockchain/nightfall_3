@@ -1,7 +1,7 @@
 {
-  "name": "@eyblockchain/zokrates-microservice",
-  "description": "ZoKrates microservice",
-  "repository": "https://github.com/EYBlockchain/zokrates-zexe-microservice.git",
+  "name": "@eyblockchain/zokrates-worker",
+  "description": "ZoKrates worker",
+  "repository": "https://github.com/EYBlockchain/zokrates-worker.git",
   "license": "CC0-1.0",
   "version": "1.0.2",
   "private": false,
@@ -9,7 +9,7 @@
     "start": "node ./src/index.mjs",
     "dev": "nodemon ./src/index.mjs",
     "setup": "./bin/setup.sh",
-    "test": "npx newman run ./postman/zokrates-microservice.postman_collection.json",
+    "test": "npx mocha",
     "fix": "npm run format && npm run lint -- --fix",
     "format": "prettier --write \"**/*.{json,css,scss,md}\"",
     "lint": "eslint .",
@@ -45,8 +45,7 @@
     "chai-http": "^4.3.0",
     "cod-scripts": "^3.2.0",
     "markdownlint-cli": "^0.15.0",
-    "nodemon": "^1.18.9",
-    "supertest": "^4.0.2"
+    "nodemon": "^1.18.9"
   },
   "nodemonConfig": {
     "verbose": true,
