@@ -19,11 +19,23 @@ describe('Testing the http API', () => {
     chai
       .request('http://localhost:8080')
       .post('/load-circuit')
-      .attach('circuit', 'circuits/factor.zok')
+      .attach('circuit', 'circuits/test/factor.zok')
       .end((err, res) => {
         expect(res.status).to.equal(200);
         expect(res.body.message).to.equal('File factor.zok was uploaded');
         expect(res.body.data.name).to.equal('factor.zok');
+        done();
+      });
+  });
+  it('should load a tar-ed set of zokrates file', done => {
+    chai
+      .request('http://localhost:8080')
+      .post('/load-circuits')
+      .attach('circuits', 'circuits/test/multiple.tar')
+      .end((err, res) => {
+        expect(res.status).to.equal(200);
+        expect(res.body.message).to.equal('File multiple.tar was uploaded');
+        expect(res.body.data.name).to.equal('multiple.tar');
         done();
       });
   });

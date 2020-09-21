@@ -1,0 +1,35 @@
+from "./common/hashes/sha256/pad640ThenHash.zok" import main as sha256of640
+from "./common/hashes/sha256/pad896ThenHash.zok" import main as sha256of896
+
+// Inputs for main:
+// - erc20ContractAddress (public) is the erc20 contract address
+// - value (public) is the 128 bit coin value
+// - publicKey (private) is the public key of the newCommitment derived by hashing the Secret Key Sk of the newCommitment. IT IS KEPT PRIVATE FOR ZK!!!
+// - salt (private) is the salt for the newCommitment
+// - newCommitment (public) is the newCommitment
+
+def main(\
+	u32[8] publicInputHash,\
+	private u32[8] erc20ContractAddress,\
+	private u32[4] value,\
+	private u32[8] publicKey,\
+	private u32[8] salt,\
+	private u32[8] newCommitment\
+)->():
+
+	// validate the new commitment:
+	newCommitment == sha256of896([\
+		...erc20ContractAddress,\
+		...value,\
+		...publicKey,\
+		...salt\
+	])
+
+	// Check that the 'public inputs' hash to the publicInputHash:
+	publicInputHash == sha256of640([\
+		...erc20ContractAddress,\
+		...value,\
+		...newCommitment\
+	])
+
+	return

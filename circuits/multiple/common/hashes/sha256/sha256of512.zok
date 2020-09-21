@@ -1,0 +1,8 @@
+from "hashes/sha256/512bit.code" import main as sha256of512
+
+def main(field[512] a) -> (field[256]):
+    field[256] output = sha256of512(\
+        a[0..256],\
+        a[256..512]\
+    )
+    return output
