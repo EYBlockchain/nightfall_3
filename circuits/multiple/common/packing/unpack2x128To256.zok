@@ -1,9 +1,0 @@
-#pragma curve bls12_377
-
-import "utils/pack_bls12_377/bool/unpack128.code" as unpack128
-
-// unpack a field[2] (assumed to be two 128-bit values) into 256 bits
-def main(field[2] input)->(bool[256]):
-	bool[128] left = unpack128(input[0])
-	bool[128] right = unpack128(input[1])
-  	return [...left, ...right]

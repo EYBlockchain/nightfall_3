@@ -1,9 +1,0 @@
-from "hashes/sha256/1024bit.zok" import main as sha256
-
-def main(u32[32] a) -> (u32[8]):
-    return sha256(\
-        a[0..8],\
-        a[8..16],\
-        a[16..24],\
-        a[24..32]\
-    )
