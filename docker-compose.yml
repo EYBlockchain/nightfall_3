@@ -1,0 +1,12 @@
+version: '3.5'
+# Tests nightfall-client
+services:
+  client:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    volumes:
+      - ./src:/app/src/
+      - ./test:/app/test/
+
+    command: ['npm', 'test']
