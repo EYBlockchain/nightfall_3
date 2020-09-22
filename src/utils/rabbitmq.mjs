@@ -16,8 +16,18 @@ export default {
     this.channel.sendToQueue(queue, Buffer.from(JSON.stringify(data)), options);
   },
 
+  // only called from test-suite ./test/queue.mjs
+  cancelChannelConsume(consumerTag) {
+    this.channel.cancel(consumerTag);
+  },
+
   sendACK(message) {
     this.channel.ack(message);
+  },
+
+  // only called from test-suite ./test/queue.mjs
+  sendNACK(message) {
+    this.channel.nack(message);
   },
 
   /*
@@ -28,10 +38,26 @@ export default {
     this.channel.consume(queue, callback);
   },
 
-  /*
-   * function not in use.
-   * close the channel and server connection.
-   */
+  // only called from test-suite ./test/queue.mjs
+  listenToReplyQueue(queue, correlationId, callback) {
+    this.receiveMessage(queue, message => {
+      if (message.properties.correlationId !== correlationId) {
+        return this.sendNACK(message);
+      }
+
+      this.cancelChannelConsume(message.fields.consumerTag);
+      this.sendACK(message);
+
+      const response = JSON.parse(message.content.toString());
+      if (response.error) {
+        throw Error(response.error);
+      }
+
+      return callback(response.data);
+    });
+  },
+
+  // only called from test-suite ./test/queue.mjs
   async close() {
     await this.channel.close();
     await this.connection.close();

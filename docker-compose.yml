@@ -10,6 +10,16 @@ services:
       - ./output:/app/output:delegated
       - ./circuits:/app/circuits:delegated
       - ./node_modules:/app/node_modules:delegated
+      - ./test:/app/test:delegated
     ports:
       - 8080:80
-    command: ['npm', 'run', 'dev']
+    environment:
+      RABBITMQ_HOST: amqp://rabbitmq
+      RABBITMQ_PORT: 5672
+      ENABLE_QUEUE: 1
+    command: ./start-dev
+
+  rabbitmq:
+    image: rabbitmq
+    ports:
+      - '5672:5672'
