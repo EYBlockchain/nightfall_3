@@ -5,7 +5,10 @@
     "no-console": "off",
     "import/extensions": "off",
   },
-    "env": {
+  "globals": {
+    "BigInt": "true"
+  },
+  "env": {
     "mocha": true
   }
 }

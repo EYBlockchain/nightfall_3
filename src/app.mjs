@@ -2,10 +2,7 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import fileUpload from 'express-fileupload';
-// import generateProof from './routes/generateProof.mjs';
-// import generateKeys from './routes/generateKeys.mjs';
-// import vk from './routes/vk.mjs';
-// import loadCircuits from './routes/loadCircuits.mjs';
+import { generateZkpKey } from './routes/index.mjs';
 
 const app = express();
 
@@ -19,7 +16,7 @@ app.use(
 );
 
 app.get('/healthcheck', (req, res) => res.sendStatus(200));
-// app.use('/generate-keys', generateKeys);
+app.use('/generate-zkp-key', generateZkpKey);
 // app.use('/generate-proof', generateProof);
 // app.use('/vk', vk);
 // app.use('/load-circuits', loadCircuits);

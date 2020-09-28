@@ -1,12 +1,21 @@
 version: '3.5'
 # Tests nightfall-client
 services:
-  client:
+  nightfall-client:
     build:
       dockerfile: Dockerfile
       context: .
     volumes:
       - ./src:/app/src/
       - ./test:/app/test/
+      - mongodb:/app/mongodb
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
 
     command: ['npm', 'test']
+
+volumes:
+  mongodb:
