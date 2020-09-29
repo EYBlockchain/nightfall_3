@@ -3,7 +3,7 @@
   "description": "ZoKrates worker",
   "repository": "https://github.com/EYBlockchain/zokrates-worker.git",
   "license": "CC0-1.0",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "private": false,
   "scripts": {
     "start": "node ./src/index.mjs",
