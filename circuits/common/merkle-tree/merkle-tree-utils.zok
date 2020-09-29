@@ -1,0 +1,6 @@
+def leafIndexToNodeIndex(field leafIndex, field treeWidth) -> (field):
+    return leafIndex + treeWidth - 1
+
+
+def nodeIndexToLeafIndex(field nodeIndex, field treeWidth) -> (field):
+    return nodeIndex + 1 - treeWidth

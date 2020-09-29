@@ -1,0 +1,151 @@
+// SPDX-License-Identifier: CC0-1
+
+pragma solidity >=0.5.0 <7.0.0;
+
+/**
+* Implements MiMC-p/p over the BW6-761 scalar field used by zkSNARKs
+*
+* see https://eprint.iacr.org/2020/351.pdf
+*
+* Round constants are generated in sequence from a seed
+*/
+contract MiMC_BW6_761 {
+
+    /**
+    * MiMC-p/p with exponent of 23 and 84 rounds
+    */
+    function MiMCp_bw6_761(
+        uint256[2] memory in_x,
+        uint256[2] memory in_k,
+        uint256 in_seed,
+        uint256 round_count
+    )
+        private view returns(uint256[2] memory out_x)
+    {
+
+        uint256 c = in_seed;  // this is the nothing-up-my-sleeve seed
+        for (uint256 i = 0; i < round_count; i++) {
+            c = uint256(keccak256(abi.encodePacked(c))); //this is to provide randomness from the seed
+            uint256[2] memory t = limbAdd(limbAddSingle(in_x, c), in_k);
+            in_x = limbExpMod(t, uint256(23));  // GCD(r-1, 23) = 1
+        }
+        out_x = limbExpMod(limbAdd(in_x, in_k), uint(1)); //use limbExpMod for modular reduction
+    }
+
+    function MiMCp_mp_bw6_761(
+        uint256[2][] memory in_x,
+        uint256[2] memory in_k,
+        uint256 in_seed,
+        uint256 round_count
+    )
+        private view returns (uint256[2] memory)
+    {
+        uint256[2] memory u = in_k;
+        for( uint i = 0; i < in_x.length; i++ ) {
+            u = limbAdd(limbAdd(u, in_x[i]), MiMCp_bw6_761(in_x[i], u, in_seed, round_count));
+        }
+        return limbExpMod(u, uint(1)); //we need a modular reduction here
+    }
+
+    // modular exponentiation using a pre-compile
+    // here both the base and modulus are 377 bit numbers (2x256 bit limbs),
+    // exponent is only up to 256 bits
+    // computes: base^exponent mod m
+    function limbExpMod(
+        uint[2] memory base,
+        uint exponent
+    )
+        private view returns (uint[2] memory out)
+    {
+        assembly {
+            // define pointer
+            let p := mload(0x40)
+            // store data
+            mstore(p, 0x40)             // Length of base
+            mstore(add(p, 0x20), 0x20)  // Length of exponent
+            mstore(add(p, 0x40), 0x40)  // Length of modulus
+            mstore(add(p, 0x60), mload(base))  // base word 0
+            mstore(add(p, 0x80), mload(add(base, 0x20)))  // base word 1
+            mstore(add(p, 0xa0), exponent)  // exponent word 0
+            mstore(add(p, 0xc0), 0x1ae3a4617c510eac63b05c06ca1493b)  // modulus word 0 hardcoded to save a bit of gas
+            mstore(add(p, 0xe0), 0x1a22d9f300f5138f1ef3622fba094800170b5d44300000008508c00000000001)  // modulus word 1
+            // staticcall(gasLimit, to, inputOffset, inputSize, outputOffset, outputSize)
+            if iszero(staticcall(sub(gas(), 2000), 0x05, p, 0x100, p, 0x40)) {
+                revert(0, 0)
+            }
+            // output
+            mstore(out, mload(p))
+            mstore(add(out, 0x20), mload(add(p, 0x20)))
+        }
+    }
+
+    /**
+      @author Duncan Westland
+      @return c - the two limbed addition of a and b (unsigned)
+      NB: To save gas, this function does not check overflow.  This is probably fine as we're dealing with ~377 bits
+    */
+    function limbAdd(
+        uint256[2] memory a,
+        uint256[2] memory b
+    )
+        private pure returns (uint256[2] memory c)
+    {
+        assembly {
+            let a_0 := mload(a)
+            let a_1 := mload(add(a, 0x20))
+            let b_0 := mload(b)
+            let b_1 := mload(add(b, 0x20))
+            let c_1 := add(a_1, b_1)
+            let c_0 := add(a_0, b_0)
+            if lt(c_1, a_1) { // carry needed
+              c_0 := add(0x01, c_0)
+            }
+            mstore(c, c_0)
+            mstore(add(c, 0x20), c_1) // store the two output limbs in the output array
+        }
+    }
+
+    /**
+      @author Duncan Westland
+      @return c - adds a two limbed a addition to a single limbed b (unsigned)
+      NB: To save gas, this function does not check overflow.  This is probably fine as we're dealing with ~377 bits
+    */
+    function limbAddSingle(
+        uint256[2] memory a,
+        uint256 b
+    )
+        private pure returns (uint256[2] memory c)
+    {
+        assembly {
+            let a_0 := mload(a)
+            let a_1 := mload(add(a, 0x20))
+            let c_1 := add(a_1, b)
+            if lt(c_1, a_1) { // carry needed
+                a_0 := add(0x01, a_0)
+            }
+            mstore(c, a_0)
+            mstore(add(c, 0x20), c_1) // store the two output limbs in the output array
+        }
+    }
+
+    function hash_bw6_761(
+        uint256[2][] memory in_msgs,
+        uint256[2] memory in_key
+    )
+        private view returns (uint256[2] memory)
+    {
+        bytes4 seed = 0x6d696d63; // this is 'mimc' in hex
+        return MiMCp_mp_bw6_761(
+            in_msgs,
+            in_key,
+            uint256(keccak256(abi.encodePacked(seed))),
+            84
+        );
+    }
+
+    function mimc_bw6_761(uint[2][] memory in_msgs)
+        public view returns (uint[2] memory)
+    {
+        return hash_bw6_761(in_msgs, [uint(0), uint(0)]);
+    }
+}

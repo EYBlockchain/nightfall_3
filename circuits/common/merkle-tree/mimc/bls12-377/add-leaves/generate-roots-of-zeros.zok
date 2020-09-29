@@ -1,0 +1,28 @@
+from "../../../../hashes/mimc/bls12-377/mimc2.zok" import main as mimc2
+
+def main() -> (field[8]):
+    field SUBTREE_HEIGHT = 8
+    field SUBTREE_WIDTH = 256 // 2 ** SUBTREE_HEIGHT
+    field SUBTREE_SIZE = 511 // = SUBTREE_WIDTH * 2 - 1
+    field UPPER_SUBTREE_SIZE = 255 // = SUBTREE_SIZE - SUBTREE_WIDTH
+
+    field[256] leaves = [0; 256] // all leaves of the subtree are ZERO
+    field[255] upperSubtree = [0; 255]
+    field[511] subtree = [...upperSubtree, ...leaves]
+
+    field node = 0
+    for field i in 0..UPPER_SUBTREE_SIZE do
+        field j = UPPER_SUBTREE_SIZE - 1 - i
+        node = mimc2([subtree[2*j + 1], subtree[2*j + 2]])
+        subtree[j] = node
+    endfor
+
+    field[8] ROOTS_OF_ZEROS = [0; 8]
+    field k = 0
+    for field i in 0..SUBTREE_HEIGHT do
+        field j = SUBTREE_HEIGHT - 1 - i
+        ROOTS_OF_ZEROS[j] = subtree[k]
+        k = 2*k + 1
+    endfor
+
+     return ROOTS_OF_ZEROS

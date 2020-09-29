@@ -1,0 +1,14 @@
+// the mimc encryption function, used as the basis of hashing rounds
+// encryption function
+
+// we use an exponent of 11 and 74 rounds
+
+from "./mimc-constants.zok" import main as constants
+
+def main(field x, field k)->(field):
+  field[74] c = constants()
+  for field i in 0..74 do
+    field t = x + c[i] + k
+    x = t**11 // t^11 because 11th power is bijective in this field
+  endfor
+  return x + k

@@ -1,0 +1,35 @@
+from "../common/merkle-tree/mimc/bls12-377/verify-membership/height20.zok" import main as calcRoot20
+
+from "../common/hashes/mimc/bls12-377/mimc2.zok" import main as mimc2
+
+struct StorageData {
+    field storageRoot
+    field stateLeaf
+    field stateLeafIndex
+    field[20] stateLeafSiblingPath
+}
+
+def calcStateRoot(StorageData s) -> (field):
+    return calcRoot20(s.stateLeafSiblingPath, s.stateLeaf, s.stateLeafIndex)
+
+// Check the storage details actually exist within the state tree:
+def checkStorageData(StorageData storageData, field privateContractAddress) -> (field):
+    // Check that the storage.stateLeaf is a leaf of the publicState tree:
+    //
+    //                              stateRoot
+    //                         /                \
+    //                     ...                  ...
+    //               /           \          /         \
+    //          stateLeaf   stateLeaf  stateLeaf   stateLeaf
+    //         /         \
+    //      addr      storageRoot
+    //                  /     \
+    //             ...          ...
+    //           /     \      /     \
+    //        var0    var1  varN-1 varN <-- handled by app's circuit
+    //
+    storageData.stateLeaf == mimc2([privateContractAddress, storageData.storageRoot])
+    field publicStateRoot = calcStateRoot(storageData)
+    // ^^^ Note: any checks against the public storage states of this private contract will have been done within the custom inner circuit. So we can do as many public storage state checks as we want in the custom inner circuit. And this proof can always just have one (constant sized) membership proof of the publicStorageRoot to the publicStateRoot).
+
+    return publicStateRoot

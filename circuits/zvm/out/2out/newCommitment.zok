@@ -1,0 +1,15 @@
+from "../../../common/hashes/mimc/bls12-377/mimc2.zok" import main as mimc2
+
+def generateNewOuterCommitments(\
+    field[2] newInnerCommitments,\
+    field innerVKID\
+) -> (field[2]):
+    // Force the newCommitments to include a parentVK reference to the innerVK's vkID:
+    field[2] newOuterCommitments = [0; 2]
+    field temp = 0 // can't seem to allocate a function result directly to an element of an array, so we use a temp variable.
+    for field i in 0..2 do
+        temp = mimc2([innerVKID, newInnerCommitments[i]])
+        newOuterCommitments[i] = temp
+    endfor
+
+    return newOuterCommitments

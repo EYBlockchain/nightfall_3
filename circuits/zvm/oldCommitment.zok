@@ -1,0 +1,34 @@
+from "./vk.zok" import ParentVKData as ParentVKData
+
+from "../common/merkle-tree/mimc/bls12-377/verify-membership/height52.zok" import main as calcRoot52
+
+// Use this neater nested struct when the nested structs bug is fixed in zokrates:
+// struct OldCommitmentData {
+//     field innerNullifier
+//     field outerNullifier
+//     field innerCommitment
+//     field outerCommitment
+//     field index
+//     field[52] siblingPath
+//     ParentVKData parentVKData
+// }
+
+struct OldCommitmentData {
+    field innerNullifier
+    field outerNullifier
+    field innerCommitment
+    field outerCommitment
+    field index
+    field[52] siblingPath
+    // ParentVKData: used to be nested within a struct.
+    // temporary, until struct nesting bug is fixed in zokrates:
+    field parentVKID
+    field parentVKLeaf
+    field parentVKLeafIndex
+    field[22] parentVKSiblingPath
+    field[4] parentVKPredators
+    field parentVKPreyHash // the hash of this vk's prey
+}
+
+def calcCommitmentRoot(OldCommitmentData c) -> (field):
+    return calcRoot52(c.siblingPath, c.outerCommitment, c.index)

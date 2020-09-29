@@ -1,0 +1,111 @@
+from "../vk.zok" import InnerVKData as InnerVKData
+from "../vk.zok" import ParentVKData as ParentVKData // temporary, until struct nesting bug is fixed in zokrates
+from "../in/2in/vk.zok" import checkVKData as checkVKData
+
+from "../oldCommitment.zok" import OldCommitmentData as OldCommitmentData
+from "../in/2in/oldCommitment.zok" import checkOldCommitments as checkOldCommitments
+
+from "../out/2out/newCommitment.zok" import generateNewOuterCommitments as generateNewOuterCommitments
+
+from "../storage.zok" import StorageData as StorageData
+from "../storage.zok" import checkStorageData as checkStorageData
+
+// *** Data collation structs ***
+
+struct PublicInputs {
+    field[2] innerNullifiers
+    field[2] outerNullifiers
+    field[2] oldInnerCommitments
+    field[2] newInnerCommitments
+    field[2] newOuterCommitments
+    field commitmentRoot
+    field innerVKID
+    field vkRoot
+    field storageRoot
+    field stateRoot
+}
+
+
+// @param {OldCommitment[2]} oldCommitments - data relating to the 'old commitments' which are being nullified.
+
+// @param {field[2]} newInnerCommitments - data relating to the 'new commitments' which are being created.
+
+// @param {Storage} storage - details of the public storage space for the private contract being executed.
+
+// @param {InnerVK} innerVK - data relating to the VK which must be used to verify the innerProof. Includes the membership witness for VK the vk tree.
+
+// @param {field} privateContractAddress - the private contract's 'address'
+
+def main(\
+    private OldCommitmentData[2] oldCommitments,\
+    private field[2] newInnerCommitments,\
+    private StorageData storageData,\
+    private InnerVKData innerVKData,\
+    private field privateContractAddress\
+) -> (PublicInputs):
+
+    // Temporary struct creation, until struct nesting bug is fixed in zokrates. The code used to be so pretty, until this bug workaround!
+    ParentVKData[2] parentVKData = [
+        ParentVKData {\
+                vkID: oldCommitments[0].parentVKID,\
+                leaf: oldCommitments[0].parentVKLeaf,\
+                index: oldCommitments[0].parentVKLeafIndex,\
+                siblingPath: oldCommitments[0].parentVKSiblingPath,\
+                predators: oldCommitments[0].parentVKPredators,\
+                preyHash: oldCommitments[0].parentVKPreyHash,\
+        },\
+        ParentVKData {\
+                vkID: oldCommitments[1].parentVKID,\
+                leaf: oldCommitments[1].parentVKLeaf,\
+                index: oldCommitments[1].parentVKLeafIndex,\
+                siblingPath: oldCommitments[1].parentVKSiblingPath,\
+                predators: oldCommitments[1].parentVKPredators,\
+                preyHash: oldCommitments[1].parentVKPreyHash,\
+        }\
+    ]
+
+    // Check the validity of all VKs:
+    field vkRoot = checkVKData(\
+        innerVKData,\
+        [\
+            parentVKData[0],\
+            parentVKData[1]\
+            // oldCommitments[0].parentVKData,\
+            // oldCommitments[1].parentVKData\
+        ],\
+        privateContractAddress\
+    )
+
+    // Check the validity the oldCommitments:
+    field commitmentRoot = checkOldCommitments(oldCommitments)
+
+    // Generate the new outer commitments:
+    field[2] newOuterCommitments = generateNewOuterCommitments(newInnerCommitments, innerVKData.vkID)
+
+    // Check the storage details actually exist within the state tree:
+    field stateRoot = checkStorageData(storageData, privateContractAddress)
+
+    // Create the public outputs of this circuit:
+    PublicInputs publicInputs = PublicInputs {\
+        innerNullifiers: [\
+            oldCommitments[0].innerNullifier,\
+            oldCommitments[1].innerNullifier\
+        ],\
+        outerNullifiers: [\
+            oldCommitments[0].outerNullifier,\
+            oldCommitments[1].outerNullifier\
+        ],\
+        oldInnerCommitments: [\
+            oldCommitments[0].innerCommitment,\
+            oldCommitments[1].innerCommitment\
+        ],\
+        newInnerCommitments: newInnerCommitments,\
+        newOuterCommitments: newOuterCommitments,\
+        commitmentRoot: commitmentRoot,\
+        innerVKID: innerVKData.vkID,\
+        vkRoot: vkRoot,\
+        storageRoot: storageData.storageRoot,\
+        stateRoot: stateRoot\
+    }
+
+   return publicInputs

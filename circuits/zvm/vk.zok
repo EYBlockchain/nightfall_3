@@ -1,0 +1,78 @@
+from "../common/hashes/mimc/bls12-377/mimc2.zok" import main as mimc2
+from "../common/hashes/mimc/bls12-377/mimc4.zok" import main as mimc4
+
+from "../common/merkle-tree/mimc/bls12-377/verify-membership/height22.zok" import main as calcRoot22
+
+struct InnerVKData {
+    field vkID
+    field leaf
+    field index
+    field[22] siblingPath
+    field[4] prey
+    field predatorHash // the hash of this vk's predators
+}
+
+struct ParentVKData {
+    field vkID
+    field leaf
+    field index
+    field[22] siblingPath
+    field[4] predators
+    field preyHash // the hash of this vk's prey
+}
+
+def findMatch(field lookFor, field[4] inList) -> (bool):
+    bool foundMatch = false
+    bool alreadyFoundMatch = false
+    for field i in 0..4 do
+        foundMatch = if lookFor == inList[i] then true else false fi
+        alreadyFoundMatch = if alreadyFoundMatch == true then true else foundMatch fi
+    endfor
+    return alreadyFoundMatch
+
+def isPrey(field self, field[4] prey) -> (bool):
+    return findMatch(self, prey)
+
+def isPredator(field self, field[4] predators) -> (bool):
+    return findMatch(self, predators)
+
+def calcVKRoot(InnerVKData vk) -> (field):
+    return calcRoot22(vk.siblingPath, vk.leaf, vk.index)
+
+def calcVKRoot(ParentVKData vk) -> (field):
+    return calcRoot22(vk.siblingPath, vk.leaf, vk.index)
+
+// Ensure the purported predators and prey reflect those on-chain:
+//
+// vk tree structure:
+//
+//                                   vkRoot
+//                           /                 \
+//                         ...                 ...
+//                  /            \          /      \
+//               vkLeaf         vkLeaf   vkLeaf   vkLeaf
+//          /             \
+//       left             right
+//       /  \          /         \
+//      /    \        /           \
+//   addr   vkID  h(predators)  h(prey)
+//
+def checkVK(InnerVKData innerVK, field privateContractAddress) -> (field):
+    // check its prey are correct:
+    field preyHash = mimc4([...innerVK.prey])
+    field right = mimc2([innerVK.predatorHash, preyHash])
+    field left = mimc2([privateContractAddress, innerVK.vkID])
+    innerVK.leaf == mimc2([left, right])
+    // Ensure the vk's leaf is in the vk tree:
+    field vkRoot = calcVKRoot(innerVK)
+    return vkRoot
+//
+def checkVK(ParentVKData parentVK, field privateContractAddress) -> (field):
+    // check its predators are correct:
+    field predatorHash = mimc4([...parentVK.predators])
+    field right = mimc2([predatorHash, parentVK.preyHash])
+    field left = mimc2([privateContractAddress, parentVK.vkID])
+    parentVK.leaf == mimc2([left, right])
+    // Ensure the vk's leaf is in the vk tree:
+    field vkRoot = calcVKRoot(parentVK)
+    return vkRoot

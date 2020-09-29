@@ -1,0 +1,39 @@
+{
+  "name": "midnight-deployer",
+  "version": "1.0.0",
+  "description": "deploys fundamental smart contracts and circuits for Midnight",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/index.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EYBlockchain/midnight-deployer.git"
+  },
+  "keywords": [
+    "Midnight"
+  ],
+  "author": "duncan.westland@uk.ey.com",
+  "license": "CC0-1.0",
+  "bugs": {
+    "url": "https://github.com/EYBlockchain/midnight-deployer/issues"
+  },
+  "homepage": "https://github.com/EYBlockchain/midnight-deployer#readme",
+  "dependencies": {
+    "axios": "^0.19.2",
+    "big-integer": "^1.6.48",
+    "config": "^3.3.1",
+    "hex-to-binary": "^1.0.1",
+    "safe-buffer": "^5.2.1",
+    "truffle": "^5.1.39",
+    "web3": "^1.2.11",
+    "winston": "^3.3.3"
+  },
+  "devDependencies": {
+    "cod-scripts": "^3.2.0",
+    "husky": "^4.2.5",
+    "prettier": "^2.0.5",
+    "prettier-plugin-solidity": "^1.0.0-alpha.54",
+    "eslint": "^5.16.0"
+  }
+}

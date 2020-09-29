@@ -1,0 +1,3 @@
+struct GM17Proof {
+    field[8] proof
+}

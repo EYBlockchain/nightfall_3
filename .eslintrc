@@ -1,0 +1,12 @@
+{
+  "extends": "./node_modules/cod-scripts/eslint.js",
+  "rules": {
+    "no-underscore-dangle": "off",
+    "no-console": "off",
+    "no-plusplus": "off",
+    "import/extensions": "off",
+  },
+  "globals": {
+    "BigInt": "true"
+  }
+}

@@ -1,0 +1,37 @@
+from "../../vk.zok" import InnerVKData as InnerVKData
+from "../../vk.zok" import ParentVKData as ParentVKData
+from "../../vk.zok" import isPrey as isPrey
+from "../../vk.zok" import isPredator as isPredator
+from "../../vk.zok" import checkVK as checkVK
+
+// Ensure predator-prey relationships between the VKs are valid.
+// Check all VKs exist within the vk tree.
+// @param {InnerVK} innerVK - the VK being used to nullify the commitments
+// @param {ParentVK[2]} parentVKs - the parent VKs of the commitments being nullified (i.e. the VKs used to create those commitments)
+// @param {field} privateContractAddress - the private contract's address
+// @return {field} vkRoot - the root of the vk tree
+def checkVKData(\
+    InnerVKData innerVK,\
+    ParentVKData[2] parentVKs,\
+    field privateContractAddress\
+) -> (field):
+
+    // Ensure that this innerVK.vkID is a predator of the commitments being nullified:
+    for field i in 0..2 do
+        isPredator(innerVK.vkID, parentVKs[i].predators) == true
+    endfor
+
+    // Ensure each of the oldCommitments[i].parentVK.vkID’s is prey for the innerVK:
+    for field i in 0..2 do
+        isPrey(parentVKs[i].vkID, innerVK.prey) == true
+    endfor
+
+    // Check the innerVK first:
+    field vkRoot = checkVK(innerVK, privateContractAddress)
+
+    // Repeat the check for the oldCommitments' parentVKs:
+    for field i in 0..2 do
+        vkRoot == checkVK(parentVKs[i], privateContractAddress)
+    endfor
+
+    return vkRoot

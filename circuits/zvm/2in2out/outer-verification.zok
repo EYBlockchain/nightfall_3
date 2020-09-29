@@ -1,0 +1,139 @@
+from "./inner-checks-vk.zok" import main as innerChecksVK // a hard-coded vk for the inner-checks circuit
+
+from "../../common/zk-snark/gm17/bls12-377/structs.zok" import GM17Proof as GM17Proof
+
+from "../../common/zk-snark/gm17/bls12-377/verify7.zok" import GM17VerificationKey as GM17VerificationKey
+from "../../common/zk-snark/gm17/bls12-377/verify7.zok" import generateVKID as generateVKID
+from "../../common/zk-snark/gm17/bls12-377/verify7.zok" import main as verify7
+
+from "../../common/zk-snark/gm17/bls12-377/verify15.zok" import main as verify15
+
+from "utils/pack_bw6_761/u32/unpack256.zok" import main as field_to_u32_8
+from "utils/pack/u32/pack256.zok" import main as u32_8_to_field
+from "../../common/hashes/sha256/pad1792ThenHash.zok" import main as sha256
+
+// *** Input structs ***
+
+struct OldCommitmentData {
+    field innerNullifier
+    field outerNullifier
+    field innerCommitment
+}
+
+struct NewCommitmentData {
+    field innerCommitment
+    field outerCommitment
+}
+
+// *** Data collation structs ***
+
+struct OuterPublicInputs {
+    field[2] outerNullifiers
+    field[2] newOuterCommitments
+    field commitmentRoot
+    field vkRoot
+    field publicStateRoot
+}
+
+def hashOuterPublicInputs(OuterPublicInputs i) -> (field):
+    u32[8] hash = sha256([\
+        ...field_to_u32_8(i.outerNullifiers[0]),\
+        ...field_to_u32_8(i.outerNullifiers[1]),\
+        ...field_to_u32_8(i.newOuterCommitments[0]),\
+        ...field_to_u32_8(i.newOuterCommitments[1]),\
+        ...field_to_u32_8(i.commitmentRoot),\
+        ...field_to_u32_8(i.vkRoot),\
+        ...field_to_u32_8(i.publicStateRoot)\
+    ])
+    field result = u32_8_to_field(hash)
+    return result
+
+
+// @param {GM17Proof} innerProof - the inner proof object, to be verified.
+
+// @param {InnerVK} innerVK - data relating to the VK which must be used to verify the innerProof. Includes the membership witness for VK the vk tree.
+
+// @param {GM17Proof} innerChecksProof - the proof object attesting to the inner checks, to be verified.
+
+// @param {OldCommitment[2]} oldCommitments - data relating to the 'old commitments' which are being nullified.
+
+// @param {NewCommitment[2]} newCommitments - data relating to the 'new commitments' which are being created.
+
+// @param {field} commitmentRoot - root of the commitment tree
+// @param {field} vkRoot - root of the vk tree
+// @param {field} publicStorageRoot - root of the private contract's public storage tree.
+// @param {field} publicStateRoot - root of the global state tree
+def main(\
+    private GM17Proof innerProof,\
+    private GM17VerificationKey innerVK,\
+    private field innerVKID,\
+    private GM17Proof innerChecksProof,\
+    private OldCommitmentData[2] oldCommitments,\
+    private NewCommitmentData[2] newCommitments,\
+    private field commitmentRoot,\
+    private field vkRoot,\
+    private field publicStorageRoot,\
+    private field publicStateRoot\
+) -> (field):
+
+    // NOTE: input parameter: private InnerVKData innerVKData,\ // temporarily removed, until nested struct functionality is fixed in zokrates.
+
+    // Collate the public inputs of the inner circuit:
+    field[7] innerPublicInputsArray = [\
+        oldCommitments[0].innerCommitment,\
+        oldCommitments[1].innerCommitment,\
+        oldCommitments[0].innerNullifier,\
+        oldCommitments[1].innerNullifier,\
+        newCommitments[0].innerCommitment,\
+        newCommitments[1].innerCommitment,\
+        publicStorageRoot\
+    ]
+
+    // Verify the innerProof
+    verify7(innerProof, innerPublicInputsArray, innerVK) == true
+
+
+    // Check the vkID of the innerVK:
+    innerVKID == generateVKID(innerVK)
+
+
+    // Collate the public inputs of the inner checks circuit:
+    field[15] innerChecksPublicInputsArray = [\
+        oldCommitments[0].innerNullifier,\
+        oldCommitments[1].innerNullifier,\
+        oldCommitments[0].outerNullifier,\
+        oldCommitments[1].outerNullifier,\
+        oldCommitments[0].innerCommitment,\
+        oldCommitments[1].innerCommitment,\
+        newCommitments[0].innerCommitment,\
+        newCommitments[1].innerCommitment,\
+        newCommitments[0].outerCommitment,\
+        newCommitments[1].outerCommitment,\
+        commitmentRoot,\
+        innerVKID,\
+        vkRoot,\
+        publicStorageRoot,\
+        publicStateRoot\
+    ]
+
+    // Verify the innerChecks
+    verify15(innerChecksProof, innerChecksPublicInputsArray, innerChecksVK()) == true
+
+    // Create the public outputs of this outer circuit:
+    OuterPublicInputs outerPublicInputs = OuterPublicInputs {\
+        outerNullifiers: [\
+            oldCommitments[0].outerNullifier,\
+            oldCommitments[1].outerNullifier\
+        ],\
+        newOuterCommitments: [\
+            newCommitments[0].outerCommitment,\
+            newCommitments[1].outerCommitment\
+        ],\
+        commitmentRoot: commitmentRoot,\
+        vkRoot: vkRoot,\
+        publicStateRoot: publicStateRoot\
+    }
+
+    field outerPublicInputsHash = hashOuterPublicInputs(outerPublicInputs)
+
+    return outerPublicInputsHash

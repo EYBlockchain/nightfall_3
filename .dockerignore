@@ -1,0 +1,15 @@
+# doc
+README.md
+
+#docker
+docker-compose.yml
+Dockerfile
+
+# git
+.git
+.gitattributes
+.gitignore
+.github
+
+# Node
+node_modules/

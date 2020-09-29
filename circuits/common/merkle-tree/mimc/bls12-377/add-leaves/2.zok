@@ -1,0 +1,67 @@
+from "utils/pack/unpack128.zok" import main as unpack128
+
+from "./roots-of-zeros" import main as rootsOfZeros
+from "../verify-membership/height127.zok" import main as calcRoot127
+
+from "../../../merkle-tree-utils.zok" import leafIndexToNodeIndex as leafIndexToNodeIndex
+from "../../../merkle-tree-utils.zok" import nodeIndexToLeafIndex as nodeIndexToLeafIndex
+
+from "../../../../hashes/mimc/bls12-377/mimc2.zok" import main as mimc2
+
+// The root of the subtree is a leaf within the corresponding merkle pollard.
+// We calculate this pollardLeafIndex (from the left-most leafIndex of the subtree being added) here.
+def calcPollardLeafIndex(field leafIndex) -> (field):
+    field TREE_HEIGHT = 128
+    field TREE_WIDTH = 340282366920938463463374607431768211456 // = 2 ** TREE_HEIGHT
+    field SUBTREE_HEIGHT = 1 // = log_2(# commitments)
+    field SUBTREE_DEPTH = 127 // = TREE_HEIGHT - SUBTREE_HEIGHT
+
+    field POLLARD_WIDTH = 170141183460469231731687303715884105728 // = 2 ** SUBTREE_DEPTH (A merkle pollard is an 'upper triangle' of a merkle tree. In this case it's the upper tree with leaves at the level of the root of the subtree).
+
+    // FUTURE ENHANCEMENTS: it would be more efficient if we had an unpackN() for smaller numbers than 128; in this case for N = SUBTREE_HEIGHT
+    field[128] leafIndexBits = unpack128(leafIndex)
+    field nodeIndex = leafIndexToNodeIndex(leafIndex, TREE_WIDTH)
+    field parentNodeIndex = 0
+
+    for field i in 0..SUBTREE_HEIGHT do
+      field k = 127 - i // iterator for the leafIndexBits
+      parentNodeIndex = if leafIndexBits[k] == 0 then (nodeIndex - 1) else (nodeIndex - 2) fi // ensure divisibility by 2 (in an 'integer sense' rather than field division).
+      parentNodeIndex = parentNodeIndex / 2
+    endfor
+
+    field parentLeafIndex = nodeIndexToLeafIndex(parentNodeIndex, POLLARD_WIDTH)
+
+    return parentLeafIndex
+
+
+def calcSubtreeRoot(field[2] leaves) -> (field):
+    return mimc2(leaves)
+
+
+// @param {field} latestLeafIndex - the right-most populated leafIndex of the tree BEFORE we add any new leaves. (So the first leaf we add will be at index = latestLeafIndex + 1)
+// @param {field} oldRoot - the root currently stored on-chain
+// @param {field} newRoot - the new root that will replace the oldRoot
+// @param {field[SUBTREE_DEPTH]} siblingPath. The siblingPath for the root of the subtree in the merkle pollard.
+def main(\
+    field latestLeafIndex,\
+    field oldRoot,\
+    field newRoot,\
+    field[2] newLeaves,\
+    private field[127] siblingPath\
+) -> ():
+    field leftLeafIndex = latestLeafIndex + 1 // the left-most leafIndex of the batch of new leaves we wish to add (although in this circuit we're just adding one leaf).
+    field pollardLeafIndex = calcPollardLeafIndex(leftLeafIndex)
+
+    field[8] ROOTS_OF_ZEROS = rootsOfZeros()
+    field ROOT_OF_2_ZEROS = ROOTS_OF_ZEROS[1] // = hash(..., hash(0, 0)); the hard-coded root of a subtree of all zeros of height 1.
+
+    // prove that:
+    // - the next available subtree was previously empty.
+    // - the siblingPath for this pollardLeafIndex is correct, since it resolves to the oldRoot
+    oldRoot == calcRoot127(siblingPath, ROOT_OF_2_ZEROS, pollardLeafIndex)
+
+    subtreeRoot = calcSubtreeRoot(newLeaves)
+
+    newRoot == calcRoot127(siblingPath, subtreeRoot, pollardLeafIndex)
+
+    return
