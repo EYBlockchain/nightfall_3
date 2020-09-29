@@ -1,12 +1,12 @@
 FROM zokrates/zokrates:0.6.1 as builder
 
-FROM node:12.18.1
+FROM node:14.11.0
 
 RUN mkdir /app
 WORKDIR /app
 
 COPY --from=builder /home/zokrates/.zokrates/bin/zokrates /app/zokrates
-COPY --from=builder /home/zokrates/.zokrates/stdlib /app/stdlib/
+COPY ./stdlib-bugfix/stdlib /app/stdlib/
 COPY ./src ./src
 COPY ./circuits ./circuits
 COPY ./package.json ./
