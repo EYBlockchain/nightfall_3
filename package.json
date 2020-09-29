@@ -1,14 +1,14 @@
 {
-  "name": "midnight-deployer",
+  "name": "nightfall-deployer",
   "version": "1.0.0",
-  "description": "deploys fundamental smart contracts and circuits for Midnight",
+  "description": "deploys fundamental smart contracts and circuits for Nightfall",
   "main": "index.js",
   "scripts": {
     "start": "node src/index.mjs"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/EYBlockchain/midnight-deployer.git"
+    "url": "git+https://github.com/EYBlockchain/nightfall-deployer.git"
   },
   "keywords": [
     "Midnight"
@@ -16,9 +16,9 @@
   "author": "duncan.westland@uk.ey.com",
   "license": "CC0-1.0",
   "bugs": {
-    "url": "https://github.com/EYBlockchain/midnight-deployer/issues"
+    "url": "https://github.com/EYBlockchain/nightfall-deployer/issues"
   },
-  "homepage": "https://github.com/EYBlockchain/midnight-deployer#readme",
+  "homepage": "https://github.com/EYBlockchain/nightfall-deployer#readme",
   "dependencies": {
     "axios": "^0.19.2",
     "big-integer": "^1.6.48",

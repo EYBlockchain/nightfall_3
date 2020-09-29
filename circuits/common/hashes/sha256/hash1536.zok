@@ -1,4 +1,4 @@
-from "hashes/sha256/1536bit.code" import main as sha256
+from "hashes/sha256/1536bit.zok" import main as sha256
 
 def main(u32[48] a) -> (u32[8]):
     return sha256(\

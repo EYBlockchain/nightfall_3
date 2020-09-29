@@ -1,0 +1,42 @@
+from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
+from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256
+
+from "./common/hashes/sha256/pad640ThenHash.zok" import main as sha256of640
+from "./common/hashes/sha256/pad896ThenHash.zok" import main as sha256of896
+
+// Inputs for main:
+// - ercContractAddress (public) is the ERCx contract address
+// - value (public) is the 256 bit value (fungible) or identifier (non-fungible)
+// - publicKey (private) is the public key of the newCommitment derived by hashing the Secret Key Sk of the newCommitment. IT IS KEPT PRIVATE!!
+// - salt (private) is the salt for the newCommitment
+// - newCommitment (public) is the newCommitment
+
+def main(\
+	field publicInputsHash,\
+	private u32[8] erc20ContractAddress,\
+	private u32[4] value,\
+	private u32[8] publicKey,\
+	private u32[8] salt,\
+	private u32[8] newCommitment\
+)->():
+
+	// validate the new commitment:
+	assert(newCommitment == sha256of896([\
+		...erc20ContractAddress,\
+		...value,\
+		...publicKey,\
+		...salt\
+	]))
+
+	// Check that the 'public inputs' hash to the publicInputHash:
+	u32[8] publicInputsHashCheck = sha256of640([\
+			...erc20ContractAddress,\
+			...value,\
+			...newCommitment\
+	])
+	bool[256] publicInputsHashCheckBits = u32_8_to_bool_256(publicInputsHashCheck)
+	bool[256] publicInputsHashBits = field_to_bool_256(publicInputsHash)
+
+	assert(publicInputsHashBits[8..256] == publicInputsHashCheckBits[8..256])
+
+	return

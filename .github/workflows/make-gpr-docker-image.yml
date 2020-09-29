@@ -15,7 +15,7 @@ jobs:
       - name: Build container image
         uses: mr-smithers-excellent/docker-build-push@v3
         with:
-         image: midnight-deployer/midnight_deployer
+         image: nightfall-deployer/nightfall_deployer
          dockerfile: Dockerfile
          tag: ${{ github.sha }}
          registry: docker.pkg.github.com

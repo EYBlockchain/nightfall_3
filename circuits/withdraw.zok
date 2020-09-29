@@ -1,0 +1,78 @@
+from "utils/pack/bool/unpack128.zok" import main as field_to_bool_128
+from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
+from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8
+from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256
+from "utils/pack/u32/pack128.zok" import main as u32_4_to_field
+from "utils/pack/u32/pack256.zok" import main as u32_8_to_field
+from "utils/pack/bool/pack256.zok" import main as bool_256_to_field
+
+from "./common/hashes/sha256/pad256ThenHash.zok" import main as sha256of256
+from "./common/hashes/sha256/pad512ThenHash.zok" import main as sha256of512
+from "./common/hashes/sha256/pad896ThenHash.zok" import main as sha256of896
+from "./common/hashes/sha256/pad1152ThenHash.zok" import main as sha256of1152
+
+from "./common/hashes/mimc/bls12-377/mimc2.zok" import main as mimc2
+
+from "./common/merkle-tree/mimc/bls12-377/verify-membership/height52.zok" import main as calcRoot52
+
+def main(\
+    u32[8] publicInputsHash,\
+    private u32[8] erc20ContractAddress,\
+    private u32[8] payTo,\
+    private u32[4] value,\
+    private u32[8] secretKeySender,\
+    private u32[8] salt,\
+    private u32[8] innerNullifier,\
+    private field parentVKID,\
+    private field oldCommitmentLeafIndex,\
+    private field[52] oldCommitmentSiblingPath,\
+    private field commitmentRoot\
+)->():
+
+    // validate the nullifier = H(salt|secretKeySender)nullifier
+    assert(innerNullifier == sha256of512([\
+        ...salt,\
+        ...secretKeySender\
+    ]))
+
+	// calculate publicKeySender = H(secretKeySender)
+	u32[8] publicKeySender = sha256of256(secretKeySender)
+
+    // validate the oldCommitment =  H(erc20ContractAddress|value|publicKey|salt)
+    u32[8] oldInnerCommitmentU32 = sha256of896([\
+        ...erc20ContractAddress,\
+        ...value,\
+        ...publicKeySender,\
+        ...salt\
+    ])
+    bool[256] oldInnerCommitmentBool256 = u32_8_to_bool_256(oldInnerCommitmentU32)
+    bool[256] oldInnerCommitmentBool256Sliced = [\
+        ...[false; 8],\
+        ...oldInnerCommitmentBool256[8..256]\
+    ]
+    field oldInnerCommitmentSliced = bool_256_to_field(oldInnerCommitmentBool256Sliced)
+
+    // generate the outerCommitment
+    field oldOuterCommitment = mimc2([\
+        parentVKID,\
+        oldInnerCommitmentSliced\
+    ])
+
+    // check the oldOuterCommitment exists in the commitment tree:
+    assert(commitmentRoot == calcRoot52(\
+        oldCommitmentSiblingPath,\
+        oldOuterCommitment,\
+        oldCommitmentLeafIndex\
+    ))
+
+    // Check that the 'public inputs' hash to the publicInputHash:
+    // (This also intertwines the 'payTo' input into the proof)
+	assert(publicInputsHash == sha256of1152([\
+		...erc20ContractAddress,\
+        ...payTo,\
+		...value,\
+        ...innerNullifier,\
+        ...field_to_u32_8(commitmentRoot)\
+	]))
+
+ 	return

@@ -1,9 +1,0 @@
-from "../../common/zk-snark/gm17/bls12-377/verify15.zok" import GM17VerificationKey as GM17VerificationKey
-
-// returns the hard-coded VK for the inner-checks-2in-2out.zok circuit:
-def main() -> (GM17VerificationKey):
-    GM17VerificationKey vk = GM17VerificationKey {\
-        vk: [ $ a macro will insert vk data here $ ]\
-    }
-
-    return vk
