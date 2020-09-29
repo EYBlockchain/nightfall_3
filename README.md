@@ -95,8 +95,10 @@ The `api` service is a RESTful service that makes use of the `@eyblockchain/zokr
 package, and has the following endpoints.
 
 To be able to leverage the service, mount the `.zok` file(s) to
-`/app/circuits/path/to/parent-dir/file.zok`, and run each of the instructions below per file. You
-can also use a `.tar` archive of `.zok` files. This service can be exposed via a port set in the
+`/app/circuits/path/to/file.zok` or load them via the `load-circuits` endpoint (see below). If using the `load-circuits` enpoint, you
+can also use a `.tar` archive of `.zok` files to quickly load several files. 
+
+This service lists on container port 80 and can be exposed via a port set in the
 `docker-compose.yml` (`http://localhost:8080` in all the example commands which follow).
 
 ### `load-circuits`
