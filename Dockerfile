@@ -6,7 +6,7 @@ RUN mkdir /app
 WORKDIR /app
 
 COPY --from=builder /home/zokrates/.zokrates/bin/zokrates /app/zokrates
-COPY --from=builder /home/zokrates/.zokrates/stdlib/* /app/stdlib/
+COPY --from=builder /home/zokrates/.zokrates/stdlib /app/stdlib/
 COPY ./src ./src
 COPY ./circuits ./circuits
 COPY ./package.json ./
@@ -18,6 +18,8 @@ COPY ./start-dev ./start-dev
 
 RUN apt-get update -y
 RUN apt-get install -y netcat
+
+ENV ZOKRATES_HOME /app/stdlib
 
 EXPOSE 80
 CMD npm start
