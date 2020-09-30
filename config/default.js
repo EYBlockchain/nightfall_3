@@ -2,12 +2,6 @@ module.exports = {
   // These defaults are used if not set by an environment variable
   PROTOCOL: 'http://', // connect to zokrates microservice like this
   CIRCUITS_HOME: process.env.CIRCUITS_HOME || '/app/circuits/',
-  DEPOSIT_PATH: process.env.DEPOSIT_PATH || 'deposit.zok',
-  TRANSFER_PATH: process.env.TRANSFER_PATH || 'transfer.zok',
-  WITHDRAW_PATH: process.env.WITHDRAW_PATH || 'withdraw.zok',
-  get TRUSTED_SETUPS_TODO() {
-    return [this.DEPOSIT_PATH, this.TRANSFER_PATH];
-  },
   ALWAYS_DO_TRUSTED_SETUP: process.env.ALWAYS_DO_TRUSTED_SETUP || false,
   ZOKRATES_WORKER_HOST: process.env.ZOKRATES_WORKER_HOST || 'worker',
   BLOCKCHAIN_HOST: process.env.BLOCKCHAIN_HOST || 'ws://openethereum',
@@ -23,5 +17,6 @@ module.exports = {
     // transactionSigner: new CustomTransactionSigner()
   },
   CONTRACT_ARTIFACTS: '/app/build/contracts/',
+  EXCLUDE_DIRS: 'common', // don't setup files with this in their path
   LOG_LEVEL: process.env.LOG_LEVEL || 'info',
 };

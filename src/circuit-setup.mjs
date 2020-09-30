@@ -4,10 +4,12 @@ instance. Note, we don't need to deploy the circuits through a zokrates microser
 */
 import axios from 'axios';
 import config from 'config';
+import fs from 'fs';
+import path from 'path';
 import logger from './utils/logger.mjs';
 // import Web3 from './utils/web3.mjs';
 // import { generalise } from './utils/general-number.mjs';
-
+const fsPromises = fs.promises;
 // const web3 = Web3.connection();
 
 /**
@@ -28,16 +30,36 @@ async function waitForZokrates() {
   logger.info('zokrates_worker reports that it is healthy');
 }
 
+// function to extract all file paths in a directory
+
+async function walk(dir) {
+  let files = await fsPromises.readdir(dir);
+  files = files.filter(file => !file.includes(config.EXCLUDE_DIRS)); // remove common dir
+  files = await Promise.all(
+    files.map(async file => {
+      const filePath = path.join(dir, file);
+      const stats = await fsPromises.stat(filePath);
+      if (stats.isDirectory()) return walk(filePath);
+      if (stats.isFile()) return filePath;
+      return undefined;
+    }),
+  );
+  return files
+    .reduce((all, folderContents) => all.concat(folderContents), [])
+    .map(file => file.replace(config.CIRCUITS_HOME, ''));
+}
 /**
 This calls the /generateKeys endpoint on a zokrates microservice container to do the setup.
 */
 async function setupCircuits() {
   // do all the trusted setups needed
-  for (const path of config.TRUSTED_SETUPS_TODO) {
+  const circuitsToSetup = await walk(config.CIRCUITS_HOME);
+  console.log('circuitsToSetup', circuitsToSetup);
+  for (const circuit of circuitsToSetup) {
     // first check if a vk already exists
     let vk;
-    logger.debug(`checking for existing setup for ${path}`);
-    const folderpath = path.slice(0, -4); // remove the .zok extension
+    logger.debug(`checking for existing setup for ${circuit}`);
+    const folderpath = circuit.slice(0, -4); // remove the .zok extension
     const res1 = await axios.get(`${config.PROTOCOL}${config.ZOKRATES_WORKER_HOST}/vk`, {
       params: { folderpath },
     });
@@ -45,11 +67,11 @@ async function setupCircuits() {
     if (!vk || config.ALWAYS_DO_TRUSTED_SETUP) {
       // we don't have an existing vk so let's generate one
       try {
-        logger.debug(`no existing verification key: calling generate keys on ${path}`);
+        logger.debug(`no existing verification key: calling generate keys on ${circuit}`);
         const res2 = await axios.post(
           `${config.PROTOCOL}${config.ZOKRATES_WORKER_HOST}/generate-keys`,
           {
-            filepath: path,
+            filepath: circuit,
             curve: 'bn128',
             provingScheme: 'gm17',
             backend: 'libsnark',
@@ -59,7 +81,7 @@ async function setupCircuits() {
       } catch (err) {
         logger.error(err);
       }
-    } else logger.info(`${path} verification key exists: trusted setup skipped`);
+    } else logger.info(`${circuit} verification key exists: trusted setup skipped`);
     // we should register the vk now
     logger.warn('VK REGISTERING NOT YET IMPLEMENTED');
   }

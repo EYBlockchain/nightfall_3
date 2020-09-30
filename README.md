@@ -1,11 +1,11 @@
-# midnight-deployer
+# nightfall-deployer
 
-<sub><sup>Part of the [midnight](https://github.com/EYBlockchain/midnight) project.</sup></sub>
+<sub><sup>Part of the [nightfall_2](https://github.com/EYBlockchain/nightfall_2) project.</sup></sub>
 
-`midnight-deployer` should be used to build a docker image. When the resulting container is run up it will:
+`nightfall-deployer` should be used to build a docker image. When the resulting container is run up it will:
 
-  - Try to deploy the smart contracts contained in `/app/contracts` to an ethereum client, which it will look for at `openethereum:8545`. Thus there should normally be a docker container with this hostname. It will not deploy the contracts if there are already deployment artefacts in its `/app/build` folder.
-  - Check for the existence of a running zokrates_zexe_microservice, deploy the circuits in the `/app/circuits` folder to the zokrates_zexe_microservice and perform a trusted setup of the inner-checks and outer verification circuits.  It will _not_ perform a trusted setup if an outer verification key already exists in the zokrates_zexe_microservice `proving_files` volume, unless this behaviour is over-ridden by setting `ALWAYS_DO_TRUSTED_SETUP` (see below). Note that the circuits are placed in the zokrates_zexe_microservice container by mounting a `circuits` volume common to both containers, and not via http://.
+  - Try to deploy the smart contracts contained in `/app/contracts` to an ethereum client, which it will look for (by default) at `openethereum:8545`. Thus there should normally be a docker container with this hostname. It will not deploy the contracts if there are already deployment artefacts in its `/app/build` folder.
+  - Check for the existence of a running `zokrates_worker`, deploy the circuits in the `/app/circuits` folder to the zokrates_worker and perform a trusted setup of the circuits.  It will _not_ perform a trusted setup if an outer verification key already exists in the zokrates_zexe_microservice `proving_files` volume, unless this behaviour is over-ridden by setting `ALWAYS_DO_TRUSTED_SETUP` (see below). Note that the circuits are placed in the zokrates_zexe_microservice container by mounting a `circuits` volume common to both containers, and not via http://.
   - Register the outer verification vk with ZVM.sol.
 
 There are several environment variables that can be used to modify the container's behaviour.  Most of these should be left at the default value unless you really know what you are doing:
