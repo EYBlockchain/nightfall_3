@@ -1,6 +1,7 @@
 import app from './app.mjs';
 import rabbitmq from './utils/rabbitmq.mjs';
 import queues from './queues/index.mjs';
+import logger from './utils/logger.mjs';
 
 const main = async () => {
   try {
@@ -13,7 +14,7 @@ const main = async () => {
 
     app.listen(80);
   } catch (err) {
-    console.log(err);
+    logger.error(err);
     process.exit(1);
   }
 };

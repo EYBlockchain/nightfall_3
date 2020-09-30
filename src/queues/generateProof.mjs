@@ -1,8 +1,8 @@
 import zokrates from '@eyblockchain/zokrates-zexe.js';
 import path from 'path';
-
 import rabbitmq from '../utils/rabbitmq.mjs';
 import { getProofByCircuitPath } from '../utils/filing.mjs';
+import logger from '../utils/logger.mjs';
 
 export default function receiveMessage() {
   const outputPath = `./output/`;
@@ -31,7 +31,7 @@ export default function receiveMessage() {
     opts.fileName = `${circuitName}_proof.json` || proofFileName;
 
     try {
-      console.log('\nCompute witness...');
+      logger.info('\nCompute witness...');
       await zokrates.computeWitness(
         `${outputPath}/${folderpath}/${circuitName}_out`,
         `${outputPath}/${folderpath}/`,
@@ -39,7 +39,7 @@ export default function receiveMessage() {
         inputs,
       );
 
-      console.log('\nGenerate proof...');
+      logger.info('\nGenerate proof...');
       await zokrates.generateProof(
         `${outputPath}/${folderpath}/${circuitName}_pk.key`,
         `${outputPath}/${folderpath}/${circuitName}_out`,
@@ -51,10 +51,10 @@ export default function receiveMessage() {
 
       const { proof, inputs: publicInputs } = await getProofByCircuitPath(folderpath);
 
-      console.log(`\nComplete`);
-      console.log(`\nResponding with proof and inputs:`);
-      console.log(proof);
-      console.log(publicInputs);
+      logger.info(`\nComplete`);
+      logger.debug(`\nResponding with proof and inputs:`);
+      logger.debug(proof);
+      logger.debug(publicInputs);
 
       response.data = { proof, inputs: publicInputs };
     } catch (err) {

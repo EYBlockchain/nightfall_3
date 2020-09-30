@@ -2,6 +2,7 @@ import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import zokrates from '@eyblockchain/zokrates-zexe.js';
+import logger from '../utils/logger.mjs';
 
 const router = express.Router();
 
@@ -18,7 +19,7 @@ router.post('/', async (req, res, next) => {
 
     fs.mkdirSync(`${outputPath}/${circuitDir}`, { recursive: true });
 
-    console.log('\nCompile...');
+    logger.info('\nCompile...');
     await zokrates.compile(
       `${circuitsPath}/${filepath}`,
       `${outputPath}/${circuitDir}`,
@@ -26,7 +27,7 @@ router.post('/', async (req, res, next) => {
       curve,
     );
 
-    console.log('\nSetup...');
+    logger.info('\nSetup...');
     await zokrates.setup(
       `${outputPath}/${circuitDir}/${circuitName}_out`,
       `${outputPath}/${circuitDir}`,
@@ -38,7 +39,7 @@ router.post('/', async (req, res, next) => {
 
     const vk = await zokrates.extractVk(`${outputPath}/${circuitDir}/${circuitName}_vk.key`);
 
-    console.log(`\nComplete`);
+    logger.info(`\nComplete`);
 
     return res.send({ vk });
   } catch (err) {

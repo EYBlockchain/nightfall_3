@@ -1,8 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 import zokrates from '@eyblockchain/zokrates-zexe.js';
-
 import rabbitmq from '../utils/rabbitmq.mjs';
+import logger from '../utils/logger.mjs';
 
 export default function receiveMessage() {
   const outputPath = `./output`;
@@ -25,7 +25,7 @@ export default function receiveMessage() {
 
       fs.mkdirSync(`${outputPath}/${circuitDir}`, { recursive: true });
 
-      console.log('\nCompile...');
+      logger.info('\nCompile...');
       await zokrates.compile(
         `${circuitsPath}/${filepath}`,
         `${outputPath}/${circuitDir}`,
@@ -33,7 +33,7 @@ export default function receiveMessage() {
         curve,
       );
 
-      console.log('\nSetup...');
+      logger.info('\nSetup...');
       await zokrates.setup(
         `${outputPath}/${circuitDir}/${circuitName}_out`,
         `${outputPath}/${circuitDir}`,
@@ -45,7 +45,7 @@ export default function receiveMessage() {
 
       const vk = await zokrates.extractVk(`${outputPath}/${circuitDir}/${circuitName}_vk.key`);
 
-      console.log(`\nComplete ${filepath}`);
+      logger.info(`\nComplete ${filepath}`);
 
       response.data = { vk, filepath };
     } catch (err) {
