@@ -25,7 +25,7 @@ export default function receiveMessage() {
 
       fs.mkdirSync(`${outputPath}/${circuitDir}`, { recursive: true });
 
-      logger.info('\nCompile...');
+      logger.info('Compile...');
       await zokrates.compile(
         `${circuitsPath}/${filepath}`,
         `${outputPath}/${circuitDir}`,
@@ -33,7 +33,7 @@ export default function receiveMessage() {
         curve,
       );
 
-      logger.info('\nSetup...');
+      logger.info('Setup...');
       await zokrates.setup(
         `${outputPath}/${circuitDir}/${circuitName}_out`,
         `${outputPath}/${circuitDir}`,
@@ -45,7 +45,7 @@ export default function receiveMessage() {
 
       const vk = await zokrates.extractVk(`${outputPath}/${circuitDir}/${circuitName}_vk.key`);
 
-      logger.info(`\nComplete ${filepath}`);
+      logger.info(`Complete ${filepath}`);
 
       response.data = { vk, filepath };
     } catch (err) {

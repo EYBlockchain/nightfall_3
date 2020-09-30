@@ -19,7 +19,7 @@ router.post('/', async (req, res, next) => {
 
     fs.mkdirSync(`${outputPath}/${circuitDir}`, { recursive: true });
 
-    logger.info('\nCompile...');
+    logger.info('Compile...');
     await zokrates.compile(
       `${circuitsPath}/${filepath}`,
       `${outputPath}/${circuitDir}`,
@@ -27,7 +27,7 @@ router.post('/', async (req, res, next) => {
       curve,
     );
 
-    logger.info('\nSetup...');
+    logger.info('Setup...');
     await zokrates.setup(
       `${outputPath}/${circuitDir}/${circuitName}_out`,
       `${outputPath}/${circuitDir}`,
@@ -39,7 +39,7 @@ router.post('/', async (req, res, next) => {
 
     const vk = await zokrates.extractVk(`${outputPath}/${circuitDir}/${circuitName}_vk.key`);
 
-    logger.info(`\nComplete`);
+    logger.info(`Complete`);
 
     return res.send({ vk });
   } catch (err) {

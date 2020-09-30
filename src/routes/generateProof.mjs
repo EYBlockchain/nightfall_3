@@ -18,7 +18,7 @@ router.post('/', async (req, res, next) => {
     backend = 'zexe',
     provingScheme = 'gm17',
   } = req.body;
-  logger.info(`\nReceived request to /generateProof`);
+  logger.info(`Received request to /generateProof`);
   logger.debug(req.body);
 
   const circuitName = path.basename(folderpath);
@@ -29,7 +29,7 @@ router.post('/', async (req, res, next) => {
   opts.fileName = `${circuitName}_proof.json` || proofFileName;
 
   try {
-    logger.info('\nCompute witness...');
+    logger.info('Compute witness...');
     await zokrates.computeWitness(
       `${outputPath}/${folderpath}/${circuitName}_out`,
       `${outputPath}/${folderpath}/`,
@@ -37,7 +37,7 @@ router.post('/', async (req, res, next) => {
       inputs,
     );
 
-    logger.info('\nGenerate proof...');
+    logger.info('Generate proof...');
     await zokrates.generateProof(
       `${outputPath}/${folderpath}/${circuitName}_pk.key`,
       `${outputPath}/${folderpath}/${circuitName}_out`,
@@ -49,8 +49,8 @@ router.post('/', async (req, res, next) => {
 
     const { proof, inputs: publicInputs } = await getProofByCircuitPath(folderpath);
 
-    logger.info(`\nComplete`);
-    logger.debug(`\nResponding with proof and inputs:`);
+    logger.info(`Complete`);
+    logger.debug(`Responding with proof and inputs:`);
     logger.debug(proof);
     logger.debug(publicInputs);
     return res.send({

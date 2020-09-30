@@ -14,7 +14,7 @@ router.get('/', async (req, res, next) => {
     logger.debug('Query', req.query);
     const { folderpath } = req.query;
     const vk = getVerificationKeyByCircuitPath(folderpath);
-    logger.debug('\nReturning vk:');
+    logger.debug('Returning vk:');
     logger.debug(vk);
     return res.send({ vk });
   } catch (err) {

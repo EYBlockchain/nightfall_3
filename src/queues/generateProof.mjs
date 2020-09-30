@@ -31,7 +31,7 @@ export default function receiveMessage() {
     opts.fileName = `${circuitName}_proof.json` || proofFileName;
 
     try {
-      logger.info('\nCompute witness...');
+      logger.info('Compute witness...');
       await zokrates.computeWitness(
         `${outputPath}/${folderpath}/${circuitName}_out`,
         `${outputPath}/${folderpath}/`,
@@ -39,7 +39,7 @@ export default function receiveMessage() {
         inputs,
       );
 
-      logger.info('\nGenerate proof...');
+      logger.info('Generate proof...');
       await zokrates.generateProof(
         `${outputPath}/${folderpath}/${circuitName}_pk.key`,
         `${outputPath}/${folderpath}/${circuitName}_out`,
@@ -51,8 +51,8 @@ export default function receiveMessage() {
 
       const { proof, inputs: publicInputs } = await getProofByCircuitPath(folderpath);
 
-      logger.info(`\nComplete`);
-      logger.debug(`\nResponding with proof and inputs:`);
+      logger.info(`Complete`);
+      logger.debug(`Responding with proof and inputs:`);
       logger.debug(proof);
       logger.debug(publicInputs);
 

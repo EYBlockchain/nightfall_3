@@ -9,9 +9,11 @@ COPY --from=builder /home/zokrates/.zokrates/bin/zokrates /app/zokrates
 COPY ./stdlib-bugfix/stdlib /app/stdlib/
 COPY ./src ./src
 COPY ./circuits ./circuits
+COPY ./config ./config
 COPY ./package.json ./
 # Note: we copy the node modules in directly because otherwise we'd need to
 # give the Dockerfile github credentials, which isn't great.
+# TODO find a better solution!
 COPY ./node_modules ./node_modules
 COPY ./start-script ./start-script
 COPY ./start-dev ./start-dev
