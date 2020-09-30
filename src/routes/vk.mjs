@@ -1,5 +1,6 @@
 import express from 'express';
 import { getVerificationKeyByCircuitPath } from '../utils/filing.mjs';
+import logger from '../utils/logger.mjs';
 
 const router = express.Router();
 
@@ -9,12 +10,12 @@ const router = express.Router();
 */
 router.get('/', async (req, res, next) => {
   try {
-    console.log(`\nReceived request to /vk`);
-    console.log('Query', req.query);
+    logger.info(`\nReceived request to /vk`);
+    logger.debug('Query', req.query);
     const { folderpath } = req.query;
     const vk = getVerificationKeyByCircuitPath(folderpath);
-    console.log('\nReturning vk:');
-    console.log(vk);
+    logger.debug('\nReturning vk:');
+    logger.debug(vk);
     return res.send({ vk });
   } catch (err) {
     return next(err);

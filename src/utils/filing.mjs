@@ -3,6 +3,7 @@
 import fs from 'fs';
 import tar from 'tar';
 import path from 'path';
+import logger from './logger.mjs';
 
 const outputPath = `/app/output`;
 
@@ -16,7 +17,7 @@ const readJsonFile = filePath => {
     const file = fs.readFileSync(filePath);
     return JSON.parse(file);
   }
-  console.log('Unable to locate file: ', filePath);
+  logger.warn('Unable to locate file: ', filePath);
   return null;
 };
 

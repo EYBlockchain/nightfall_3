@@ -2,6 +2,7 @@ import express from 'express';
 import zokrates from '@eyblockchain/zokrates-zexe.js';
 import path from 'path';
 import { getProofByCircuitPath } from '../utils/filing.mjs';
+import logger from '../utils/logger.mjs';
 
 const router = express.Router();
 
@@ -17,8 +18,8 @@ router.post('/', async (req, res, next) => {
     backend = 'zexe',
     provingScheme = 'gm17',
   } = req.body;
-  console.log(`\nReceived request to /generateProof`);
-  console.log(req.body);
+  logger.info(`\nReceived request to /generateProof`);
+  logger.debug(req.body);
 
   const circuitName = path.basename(folderpath);
 
@@ -28,7 +29,7 @@ router.post('/', async (req, res, next) => {
   opts.fileName = `${circuitName}_proof.json` || proofFileName;
 
   try {
-    console.log('\nCompute witness...');
+    logger.info('\nCompute witness...');
     await zokrates.computeWitness(
       `${outputPath}/${folderpath}/${circuitName}_out`,
       `${outputPath}/${folderpath}/`,
@@ -36,7 +37,7 @@ router.post('/', async (req, res, next) => {
       inputs,
     );
 
-    console.log('\nGenerate proof...');
+    logger.info('\nGenerate proof...');
     await zokrates.generateProof(
       `${outputPath}/${folderpath}/${circuitName}_pk.key`,
       `${outputPath}/${folderpath}/${circuitName}_out`,
@@ -48,10 +49,10 @@ router.post('/', async (req, res, next) => {
 
     const { proof, inputs: publicInputs } = await getProofByCircuitPath(folderpath);
 
-    console.log(`\nComplete`);
-    console.log(`\nResponding with proof and inputs:`);
-    console.log(proof);
-    console.log(publicInputs);
+    logger.info(`\nComplete`);
+    logger.debug(`\nResponding with proof and inputs:`);
+    logger.debug(proof);
+    logger.debug(publicInputs);
     return res.send({
       proof,
       inputs: publicInputs,
