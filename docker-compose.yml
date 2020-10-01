@@ -18,8 +18,9 @@ services:
       - openethereum
       - worker
     environment:
-      LOG_LEVEL: silly
+      LOG_LEVEL: debug
       ETH_NETWORK: openethereum
+      DEFAULT_ACCOUNT: '0x00a329c0648769A73afAc7F9381E08FB43dBEA72'
     networks:
       - midnight_deployer_network
 
@@ -41,7 +42,7 @@ services:
   # but we can't do a bind mount and a volume in the same place.  This is
   # only an issue for development where we want to mount the local file system
   worker:
-    image: docker.pkg.github.com/eyblockchain/zokrates-worker/zokrates_worker:1.0.4
+    image: docker.pkg.github.com/eyblockchain/zokrates-worker/zokrates_worker:1.0.7
     command: ./start-script
     volumes:
       - type: volume

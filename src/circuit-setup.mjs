@@ -7,10 +7,11 @@ import config from 'config';
 import fs from 'fs';
 import path from 'path';
 import logger from './utils/logger.mjs';
-// import Web3 from './utils/web3.mjs';
+import Web3 from './utils/web3.mjs';
+import { getContractAddress, getContractInstance } from './utils/contract.mjs';
 // import { generalise } from './utils/general-number.mjs';
 const fsPromises = fs.promises;
-// const web3 = Web3.connection();
+const web3 = Web3.connection();
 
 /**
 This function will ping the Zokrates service until it is up before attempting
@@ -46,15 +47,16 @@ async function walk(dir) {
   );
   return files
     .reduce((all, folderContents) => all.concat(folderContents), [])
-    .map(file => file.replace(config.CIRCUITS_HOME, ''));
+    .map(file => file.replace(config.CIRCUITS_HOME, ''))
+    .filter(file => file.endsWith('.zok'));
 }
 /**
 This calls the /generateKeys endpoint on a zokrates microservice container to do the setup.
 */
 async function setupCircuits() {
   // do all the trusted setups needed
+  let account = config.WEB3_OPTIONS.defaultAccount;
   const circuitsToSetup = await walk(config.CIRCUITS_HOME);
-  console.log('circuitsToSetup', circuitsToSetup);
   for (const circuit of circuitsToSetup) {
     // first check if a vk already exists
     let vk;
@@ -83,38 +85,27 @@ async function setupCircuits() {
       }
     } else logger.info(`${circuit} verification key exists: trusted setup skipped`);
     // we should register the vk now
-    logger.warn('VK REGISTERING NOT YET IMPLEMENTED');
-  }
-  // and, lastly, we register the outer vk with ZVM.sol
-  /*
-  try {
-    logger.debug('Registering outer verification vk');
-    delete vk.raw; // long and not needed
-    logger.silly('outer vk:', vk);
-    const vkArray = Object.values(vk).flat(Infinity); // flatten the Vk array of arrays because that's how ZVM.sol likes it.  I see no need for decimal conversion here - but that may be wrong.
-    logger.silly(`flattened outer vk: ${vkArray}`);
-    const generalisedVk = generalise(vkArray.flat(Infinity));
-    const limbedVk = generalisedVk.map(coeff => coeff.limbs(256, 3)).flat(Infinity); // convert to three limbs of size 256-bits (VK is a bw6 one of 761-bits).
-
-    const accounts = await web3.eth.getAccounts();
-    logger.debug('blockchain accounts are: ', accounts);
-
-    // FUTURE ENHANCEMENTS: generalise this code to submit outerVKs for all permutations of input/output commitments
-    await registerOuterVK(2, 2, limbedVk, accounts[0]);
-    logger.info('Registered outer verification vk with ZVM');
-    // check we have actually stored the verification vk
-    const zvmVK = await getOuterVK(2, 2);
-    for (let i = 0; i < vk.length; i++) {
-      if (zvmVK[i] !== vk[i])
-        throw new Error(`retrievedVk element was ${zvmVK[i]} but vk element was ${vk[i]} at ${i}`);
+    logger.info(`Registering verification key for ${circuit}`);
+    try {
+      delete vk.raw; // long and not needed
+      logger.silly('vk:', vk);
+      const vkArray = Object.values(vk).flat(Infinity); // flatten the Vk array of arrays because that's how Shield.sol likes it.  I see no need for decimal conversion here - but that may be wrong.
+      if (!account) {
+        const accounts = await web3.eth.getAccounts();
+        logger.debug('blockchain accounts are: ', accounts);
+        [account] = accounts;
+      }
+      const shieldAddress = await getContractAddress('Shield');
+      const shield = await getContractInstance('Shield', shieldAddress);
+      await shield.methods
+        .registerVerificationKey(vkArray, config.transactionTypes.DEPOSIT)
+        .send({ from: account });
+    } catch (err) {
+      logger.error(err);
+      throw new Error(err);
     }
-    logger.info('Storage of outer verification vk confirmed');
-  } catch (err) {
-    logger.error(err);
-    throw new Error(err);
   }
-  */
-  // Web3.disconnect();
+  Web3.disconnect();
 }
 
 export default { setupCircuits, waitForZokrates };
