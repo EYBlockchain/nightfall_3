@@ -10,7 +10,7 @@ const router = express.Router();
 */
 router.get('/', async (req, res, next) => {
   try {
-    logger.info(`\nReceived request to /vk`);
+    logger.info(`Received request to /vk`);
     logger.debug('Query', req.query);
     const { folderpath } = req.query;
     const vk = getVerificationKeyByCircuitPath(folderpath);
