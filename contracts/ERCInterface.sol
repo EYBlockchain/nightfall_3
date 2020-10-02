@@ -13,6 +13,18 @@ interface ERCInterface {
   function transferFrom(address from, address to, uint256 value)
     external returns (bool);
 
+  function safeTransferFrom(
+    address from, address to, uint256 value, bytes calldata _data
+  )
+    external returns (bool);
+
+  function safeTransferFrom(
+    address from, address to, uint256 id, uint256 value, bytes calldata _data
+  )
+    external returns (bool);
+
+
+
   event Transfer(
     address indexed from,
     address indexed to,

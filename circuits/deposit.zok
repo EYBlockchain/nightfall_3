@@ -1,7 +1,4 @@
-from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
-from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256
-
-from "./common/hashes/sha256/pad768ThenHash.zok" import main as sha256of768
+from "./common/hashes/sha256/pad1280ThenHash.zok" import main as sha256of1280
 from "./common/hashes/sha256/pad1024ThenHash.zok" import main as sha256of1024
 
 // Inputs for main:
@@ -14,6 +11,7 @@ from "./common/hashes/sha256/pad1024ThenHash.zok" import main as sha256of1024
 def main(\
 	u32[8] publicInputsHash,\
 	private u32[8] ercContractAddress,\
+	u32[8] id,\
  	u32[8] value,\
 	private u32[8] publicKey,\
 	private u32[8] salt,\
@@ -21,16 +19,18 @@ def main(\
 )->():
 
 	// validate the new commitment:
-	assert(newCommitment == sha256of1024([\
+	assert(newCommitment == sha256of1280([\
 		...ercContractAddress,\
+		...id,\
 		...value,\
 		...publicKey,\
 		...salt\
 	]))
 
 	// Check that the 'public inputs' hash to the publicInputHash:
-	assert(publicInputsHash == sha256of768([\
+	assert(publicInputsHash == sha256of1024([\
 			...ercContractAddress,\
+			...id,\
 			...value,\
 			...newCommitment\
 	]))

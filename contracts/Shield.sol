@@ -80,6 +80,7 @@ contract Shield is Ownable, MerkleTree {
   function deposit(
       bytes32 _publicInputHash,
       bytes32 tokenContractAddress, // Take in as bytes32 for consistent hashing
+      bytes32 _tokenId,
       bytes32 _value,
       bytes32 _commitment,
       uint256[] calldata _proof
@@ -90,7 +91,7 @@ contract Shield is Ownable, MerkleTree {
     // Check that the publicInputHash equals the hash of the 'public inputs':
     require(
       _publicInputHash == sha256(
-        abi.encodePacked(tokenContractAddress, _value, _commitment)
+        abi.encodePacked(tokenContractAddress, _tokenId, _value, _commitment)
       ),
       "publicInputHash cannot be reconciled"
     );
@@ -123,13 +124,33 @@ contract Shield is Ownable, MerkleTree {
     ERCInterface tokenContract = ERCInterface(
         address(uint160(uint256(tokenContractAddress)))
     );
-    require(
-      tokenContract.transferFrom(msg.sender, address(this), uint256(_value)),
-      "Commitment cannot be minted"
-    );
+    if (_tokenId == zero && _value == zero) // disallow this corner case
+      revert("Minting of zero-value tokens is not allowed");
 
-      // gas measurement:
-      gasUsedByShieldContract = gasUsedByShieldContract + gasCheckpoint - gasleft();
-      emit GasUsed(gasUsedByShieldContract, gasUsedByVerifierContract);
+    if (_tokenId == zero) // must be an ERC20
+      require(
+        tokenContract.transferFrom(msg.sender, address(this), uint256(_value)),
+        "Commitment cannot be minted"
+      );
+    else if (_value == zero) // must be ERC721
+      require(
+        tokenContract.safeTransferFrom(
+          msg.sender, address(this), uint256(_tokenId), ''
+        ),
+        "Commitment cannot be minted"
+      );
+    else // must be an ERC1155
+      require(
+        tokenContract.safeTransferFrom(
+          msg.sender, address(this), uint256(_tokenId), uint256(_value),''
+        ),
+        "Commitment cannot be minted"
+      );
+
+
+    // gas measurement:
+    gasUsedByShieldContract = gasUsedByShieldContract +
+      gasCheckpoint - gasleft();
+    emit GasUsed(gasUsedByShieldContract, gasUsedByVerifierContract);
   }
 }
