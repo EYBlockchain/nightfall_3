@@ -41,6 +41,6 @@
     "husky": "^4.2.5",
     "prettier": "^2.0.5",
     "prettier-plugin-solidity": "^1.0.0-alpha.54",
-    "eslint": "^7.9.0",
+    "eslint": "^7.9.0"
   }
 }
