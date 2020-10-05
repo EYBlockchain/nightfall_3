@@ -1,0 +1,37 @@
+name: Docker Package
+
+on:
+  push:
+    branches:
+      - master
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '14.x'
+          registry-url: https://npm.pkg.github.com/
+          scope: $GITHUB_ACTOR
+      - run: npm install
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.WRITE_PACKAGES }}
+
+      - uses: codfish/semantic-release-action@master
+        id: semantic
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - run: echo ${{ steps.semantic.outputs.release-version }}
+
+      - name: Docker push version
+        if: steps.semantic.outputs.new-release-published == 'true'
+        run: |
+          docker login https://docker.pkg.github.com -u $GITHUB_ACTOR -p $GITHUB_TOKEN
+          docker build -t docker.pkg.github.com/eyblockchain/nightfall-deployer/nightfall_deployer:$RELEASE_VERSION .
+          docker push docker.pkg.github.com/eyblockchain/nightfall-deployer/nightfall_deployer:$RELEASE_VERSION
+        env:
+          GITHUB_TOKEN: ${{ secrets.WRITE_PACKAGES }}
