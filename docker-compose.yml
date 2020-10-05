@@ -1,7 +1,7 @@
 version: '3.5'
 # Tests nightfall-client
 services:
-  nightfall-client:
+  client:
     build:
       dockerfile: Dockerfile
       context: .
@@ -16,6 +16,10 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: admin
 
     command: ['npm', 'test']
-
+  worker:
+    image: docker.pkg.github.com/eyblockchain/zokrates-worker/zokrates_worker:1.0.2
+    volumes:
+      - circuits:/app/circuits
 volumes:
   mongodb:
+  circuits:

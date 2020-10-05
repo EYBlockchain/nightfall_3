@@ -1,7 +1,7 @@
 /**
  This module contains the logic needed create a zkp deposit, i.e. to pay
  a token to the Shield contract and have it create a zkp commitment for the
- same value.
+ same value. It is agnostic to whether we are dealing with an ERC20 or ERC721.
  * @module deposit.mjs
  * @author westlad, Chaitanya-Konda, iAmMichaelConnor, will-kim
  */
@@ -17,14 +17,14 @@ const { ZKP_KEY_LENGTH, ZOKRATES_WORKER_URL } = config;
 async function deposit(items) {
   // before we do anything else, long hex strings should be generalised to make
   // subsequent manipulations easier
-  const { ercAddress, value, zkpPublicKey } = generalise(items);
+  const { ercAddress, tokenId, value, zkpPublicKey } = generalise(items);
   // we also need a salt to make the commitment unique and increase its entropy
   const salt = await rand(ZKP_KEY_LENGTH);
   // next, let's compute the zkp commitment we're going to store and the hash of the public inputs
-  const commitment = sha256([ercAddress, value, zkpPublicKey, salt]);
-  const publicInputHash = sha256([ercAddress, value, commitment]);
+  const commitment = sha256([ercAddress, tokenId, value, zkpPublicKey, salt]);
+  const publicInputHash = sha256([ercAddress, tokenId, value, commitment]);
   // now we can compute a Witness so that we can generate the proof
-  const witness = [publicInputHash, ercAddress, value, salt, commitment];
+  const witness = [publicInputHash, ercAddress, tokenId, value, salt, commitment];
   // call a zokrates worker to generate the proof
   const { proof } = await axios.post(`${ZOKRATES_WORKER_URL}/generate-proof`, {
     folderpath: 'deposit',
@@ -36,11 +36,12 @@ async function deposit(items) {
   const shieldContractInstance = getWeb3ContractInstance('shield');
   return shieldContractInstance.methods
     .deposit(
-      Object.values(proof),
       publicInputHash.hex(32),
       ercAddress.hex(32),
+      tokenId.hex(32),
       value.hex(32),
       commitment.hex(32),
+      Object.values(proof).flat(Infinity),
     )
     .encodeABI();
 }
