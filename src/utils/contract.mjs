@@ -6,7 +6,7 @@ import logger from './logger.mjs';
 
 const web3 = Web3.connection();
 
-const { options } = config.WEB3_OPTIONS;
+const options = config.WEB3_OPTIONS;
 
 export const contractPath = contractName => {
   return `${config.CONTRACT_ARTIFACTS}/${contractName}.json`;
@@ -35,8 +35,13 @@ export async function getContractAddress(contractName) {
 
 // returns a web3 contract instance
 export async function getContractInstance(contractName, deployedAddress) {
+  // grab a 'from' account if one isn't set
+  if (!options.from) {
+    const accounts = await web3.eth.getAccounts();
+    logger.debug('blockchain accounts are: ', accounts);
+    [options.from] = accounts;
+  }
   const contractInterface = await getContractInterface(contractName);
-
   if (!deployedAddress) {
     // eslint-disable-next-line no-param-reassign
     deployedAddress = await getContractAddress(contractName);

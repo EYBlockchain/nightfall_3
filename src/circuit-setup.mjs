@@ -20,13 +20,19 @@ to populate Zokrates' volumes.  Thus it can't be sure that Zokrates is up yet
 */
 async function waitForZokrates() {
   logger.info('checking for zokrates_worker');
-  while (
-    (await axios.get(`${config.PROTOCOL}${config.ZOKRATES_WORKER_HOST}/healthcheck`)).status !== 200
-  ) {
-    logger.warn(
-      `No response from zokratesworker yet.  That's ok. We'll wait three seconds and try again...`,
-    );
-    await new Promise(resolve => setTimeout(resolve, 3000));
+  try {
+    while (
+      (await axios.get(`${config.PROTOCOL}${config.ZOKRATES_WORKER_HOST}/healthcheck`)).status !==
+      200
+    ) {
+      logger.warn(
+        `No response from zokratesworker yet.  That's ok. We'll wait three seconds and try again...`,
+      );
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
+  } catch (err) {
+    logger.error(err);
+    process.exit(1);
   }
   logger.info('zokrates_worker reports that it is healthy');
 }
@@ -90,16 +96,9 @@ async function setupCircuits() {
       delete vk.raw; // long and not needed
       logger.silly('vk:', vk);
       const vkArray = Object.values(vk).flat(Infinity); // flatten the Vk array of arrays because that's how Shield.sol likes it.  I see no need for decimal conversion here - but that may be wrong.
-      if (!account) {
-        const accounts = await web3.eth.getAccounts();
-        logger.debug('blockchain accounts are: ', accounts);
-        [account] = accounts;
-      }
       const shieldAddress = await getContractAddress('Shield');
       const shield = await getContractInstance('Shield', shieldAddress);
-      await shield.methods
-        .registerVerificationKey(vkArray, config.transactionTypes.DEPOSIT)
-        .send({ from: account });
+      await shield.methods.registerVerificationKey(vkArray, config.transactionTypes.DEPOSIT).send();
     } catch (err) {
       logger.error(err);
       throw new Error(err);

@@ -7,14 +7,9 @@ module.exports = {
   BLOCKCHAIN_HOST: process.env.BLOCKCHAIN_HOST || 'ws://openethereum',
   BLOCKCHAIN_PORT: process.env.BLOCKCHAIN_PORT || '8546',
   WEB3_OPTIONS: {
-    defaultAccount: process.env.DEFAULT_ACCOUNT || undefined,
-    defaultBlock: '0', // e.g. the genesis block our blockchain
-    defaultGas: 100000,
-    defaultGasPrice: 20000000000,
-    transactionBlockTimeout: 50,
-    transactionConfirmationBlocks: 15,
-    transactionPollingTimeout: 480,
-    // transactionSigner: new CustomTransactionSigner()
+    gas: process.env.GAS || 1000000,
+    gasPrice: process.env.GAS_PRICE || '20000000000',
+    from: process.env.FROM_ADDRESS || undefined,
   },
   CONTRACT_ARTIFACTS: '/app/build/contracts/',
   EXCLUDE_DIRS: 'common', // don't setup files with this in their path
