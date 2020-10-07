@@ -37,6 +37,8 @@ contract Shield is Ownable, MerkleTree {
 
   bytes32 public latestRoot; // holds the index for the latest root so that the prover can provide it later and this contract can look up the relevant root
 
+  bytes32 public selectBits248 = 0x0000000000000000ffffffffffffffffffffffffffffffffffffffffffffffff;
+
   // FUNCTIONS:
   constructor(address _verifier) public {
       _owner = msg.sender;
@@ -89,10 +91,11 @@ contract Shield is Ownable, MerkleTree {
     uint256 gasCheckpoint = gasleft();
 
     // Check that the publicInputHash equals the hash of the 'public inputs':
+    // we shorten the SHA hash to 248 bits so it fits in one field
     require(
       _publicInputHash == sha256(
         abi.encodePacked(tokenContractAddress, _tokenId, _value, _commitment)
-      ),
+      ) & selectBits248,
       "publicInputHash cannot be reconciled"
     );
 
