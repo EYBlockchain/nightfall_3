@@ -10,10 +10,13 @@ import deposit from '../services/deposit.mjs';
 const router = express.Router();
 
 router.post('/', async (req, res, next) => {
+  logger.debug(`deposit endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
   try {
-    deposit(res.body);
+    res.json({ txToSign: await deposit(req.body) });
   } catch (err) {
     logger.error(err);
     next(err);
   }
 });
+
+export default router;

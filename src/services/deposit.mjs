@@ -9,12 +9,14 @@ import config from 'config';
 import axios from 'axios';
 import { generalise } from '../utils/general-number/general-number.mjs';
 import { sha256 } from '../utils/crypto/sha256.mjs';
-import rand from '../utils/crypto/crypto-random';
-import { getWeb3ContractInstance } from '../utils/contract-utils.mjs';
+import rand from '../utils/crypto/crypto-random.mjs';
+import { getContractInstance } from '../utils/contract.mjs';
+import logger from '../utils/logger.mjs';
 
 const { ZKP_KEY_LENGTH, ZOKRATES_WORKER_URL } = config;
 
 async function deposit(items) {
+  logger.info('Creating a deposit transaction');
   // before we do anything else, long hex strings should be generalised to make
   // subsequent manipulations easier
   const { ercAddress, tokenId, value, zkpPublicKey } = generalise(items);
@@ -24,19 +26,27 @@ async function deposit(items) {
   const commitment = sha256([ercAddress, tokenId, value, zkpPublicKey, salt]);
   const publicInputHash = sha256([ercAddress, tokenId, value, commitment]);
   // now we can compute a Witness so that we can generate the proof
-  const witness = [publicInputHash, ercAddress, tokenId, value, salt, commitment];
+  const witness = [
+    publicInputHash.limbs(248, 1),
+    ercAddress.limbs(32),
+    tokenId.limbs(32),
+    value.limbs(32),
+    salt.limbs(32),
+    commitment.limbs(32),
+  ].flat(Infinity);
+  logger.debug(`witness computed as ${witness}`);
   // call a zokrates worker to generate the proof
   const { proof } = await axios.post(`${ZOKRATES_WORKER_URL}/generate-proof`, {
     folderpath: 'deposit',
-    inputs: witness.all.limbs(256, 2),
+    inputs: witness,
     provingScheme: 'gm17',
     backend: 'libsnark',
   });
   // and work out the ABI encoded data that the caller should sign and send to the shield contract
-  const shieldContractInstance = getWeb3ContractInstance('shield');
+  const shieldContractInstance = getContractInstance('shield');
   return shieldContractInstance.methods
     .deposit(
-      publicInputHash.hex(32),
+      publicInputHash.limbs(248, 1, 'hex'),
       ercAddress.hex(32),
       tokenId.hex(32),
       value.hex(32),

@@ -7,19 +7,90 @@ services:
       context: .
     volumes:
       - ./src:/app/src/
-      - ./test:/app/test/
       - mongodb:/app/mongodb
+    networks:
+      - nightfall_network
     ports:
       - 27017:27017
+      - 8080:80
+    depends_on:
+      - deployer
+      - worker
+      - openethereum
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
 
-    command: ['npm', 'test']
+    command: ['npm', 'start']
+
   worker:
-    image: docker.pkg.github.com/eyblockchain/zokrates-worker/zokrates_worker:1.0.2
+    image: docker.pkg.github.com/eyblockchain/zokrates-worker/zokrates_worker:1.0.7
     volumes:
-      - circuits:/app/circuits
+      - type: volume
+        source: proving_files
+        target: /app/output/
+      - type: volume
+        source: circuits
+        target: /app/circuits/
+    depends_on:
+      - deployer
+    networks:
+      - nightfall_network
+    environment:
+      LOG_LEVEL: debug
+
+    # Temporary container to deploy contracts and circuits and populate volumes
+  deployer:
+    build:
+      context: ../nightfall-deployer/
+      dockerfile: Dockerfile
+    depends_on:
+      - openethereum
+    volumes:
+      - type: volume
+        source: build
+        target: /app/build/
+      - type: volume
+        source: contracts
+        target: /app/contracts/
+      - type: volume
+        source: circuits
+        target: /app/circuits/
+    networks:
+      - nightfall_network
+    environment:
+      LOG_LEVEL: debug
+      ETH_NETWORK: openethereum
+
+  openethereum:
+    image: docker.pkg.github.com/eyblockchain/parity-zvm/openethereum:83947864dfb666444136ee5189a0b0c6ce79f4e5
+    volumes:
+      - type: volume
+        source: chaindata
+        target: /root/.local/share/openethereum/
+    ports:
+      - '8545:8545'
+      - '8546:8546'
+    networks:
+      - nightfall_network
+    command:
+      [
+        '--config',
+        'dev-insecure',
+        '--unsafe-expose',
+        '--unlock',
+        '0x00a329c0648769a73afac7f9381e08fb43dbea72',
+        '--password',
+        './pwd.txt',
+      ]
+
 volumes:
   mongodb:
   circuits:
+  proving_files:
+  build:
+  contracts:
+  chaindata:
+
+networks:
+  nightfall_network:
