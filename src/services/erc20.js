@@ -1,3 +1,5 @@
+// DEPRECATED - JUST USING AS A SOURCE OF CODE
+
 /**
  * This module contains the logic needed to interact with the FTokenShield contract,
  * specifically handling the mint, transfer, simpleBatchTransfer, and burn functions for fungible commitments.

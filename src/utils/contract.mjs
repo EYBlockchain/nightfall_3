@@ -50,7 +50,7 @@ export async function getContractInstance(contractName, deployedAddress) {
   const contractInstance = deployedAddress
     ? new web3.eth.Contract(contractInterface.abi, deployedAddress, options)
     : new web3.eth.Contract(contractInterface.abi, options);
-  // logger.silly('\ncontractInstance:', contractInstance);
+  if (!contractInstance) throw new Error('Contract instance null or undefined');
 
   return contractInstance;
 }

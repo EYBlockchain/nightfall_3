@@ -12,7 +12,10 @@ const router = express.Router();
 router.post('/', async (req, res, next) => {
   logger.debug(`deposit endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
   try {
-    res.json({ txToSign: await deposit(req.body) });
+    const txToSign = await deposit(req.body);
+    logger.debug('returning raw transaction');
+    logger.silly(` raw transaction is ${JSON.stringify(txToSign, null, 2)}`);
+    res.json({ txToSign });
   } catch (err) {
     logger.error(err);
     next(err);

@@ -13,7 +13,7 @@ import rand from '../utils/crypto/crypto-random.mjs';
 import { getContractInstance } from '../utils/contract.mjs';
 import logger from '../utils/logger.mjs';
 
-const { ZKP_KEY_LENGTH, ZOKRATES_WORKER_URL } = config;
+const { ZKP_KEY_LENGTH, ZOKRATES_WORKER_URL, SHIELD_CONTRACT_NAME } = config;
 
 async function deposit(items) {
   logger.info('Creating a deposit transaction');
@@ -22,31 +22,35 @@ async function deposit(items) {
   const { ercAddress, tokenId, value, zkpPublicKey } = generalise(items);
   // we also need a salt to make the commitment unique and increase its entropy
   const salt = await rand(ZKP_KEY_LENGTH);
-  // next, let's compute the zkp commitment we're going to store and the hash of the public inputs
+  // next, let's compute the zkp commitment we're going to store and the hash of the public inputs (truncated to 248 bits)
   const commitment = sha256([ercAddress, tokenId, value, zkpPublicKey, salt]);
-  const publicInputHash = sha256([ercAddress, tokenId, value, commitment]);
+  const [, publicInputHash] = sha256([ercAddress, tokenId, value, commitment]).limbs(248, 2, 'hex');
   // now we can compute a Witness so that we can generate the proof
   const witness = [
-    publicInputHash.limbs(248, 1),
-    ercAddress.limbs(32),
-    tokenId.limbs(32),
-    value.limbs(32),
-    salt.limbs(32),
-    commitment.limbs(32),
+    publicInputHash,
+    ercAddress.limbs(32, 8),
+    tokenId.limbs(32, 8),
+    value.limbs(32, 8),
+    zkpPublicKey.limbs(32, 8),
+    salt.limbs(32, 8),
+    commitment.limbs(32, 8),
   ].flat(Infinity);
-  logger.debug(`witness computed as ${witness}`);
+  logger.debug(`witness input is ${witness.join(' ')}`);
+  logger.debug(`witness input length is ${witness.length}`);
   // call a zokrates worker to generate the proof
-  const { proof } = await axios.post(`${ZOKRATES_WORKER_URL}/generate-proof`, {
+  const res = await axios.post(`${ZOKRATES_WORKER_URL}/generate-proof`, {
     folderpath: 'deposit',
     inputs: witness,
     provingScheme: 'gm17',
     backend: 'libsnark',
   });
+  logger.silly(`Received response ${JSON.stringify(res.data, null, 2)}`);
+  const { proof } = res.data;
   // and work out the ABI encoded data that the caller should sign and send to the shield contract
-  const shieldContractInstance = getContractInstance('shield');
+  const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
   return shieldContractInstance.methods
     .deposit(
-      publicInputHash.limbs(248, 1, 'hex'),
+      publicInputHash,
       ercAddress.hex(32),
       tokenId.hex(32),
       value.hex(32),

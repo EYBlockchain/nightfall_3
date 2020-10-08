@@ -7,4 +7,11 @@ module.exports = {
   ZOKRATES_WORKER_URL: process.env.ZOKRATES_WORKER_URL || 'http://worker',
   BLOCKCHAIN_HOST: process.env.BLOCKCHAIN_HOST || 'ws://openethereum',
   BLOCKCHAIN_PORT: process.env.BLOCKCHAIN_PORT || '8546',
+  WEB3_OPTIONS: {
+    gas: process.env.GAS || 1000000,
+    gasPrice: process.env.GAS_PRICE || '20000000000',
+    from: process.env.FROM_ADDRESS || undefined,
+  },
+  CONTRACT_ARTIFACTS: '/app/build/contracts',
+  SHIELD_CONTRACT_NAME: 'Shield',
 };
