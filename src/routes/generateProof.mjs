@@ -19,7 +19,7 @@ router.post('/', async (req, res, next) => {
     provingScheme = 'gm17',
   } = req.body;
   logger.info(`Received request to /generateProof`);
-  logger.debug(req.body);
+  logger.debug(JSON.stringify(req.body, null, 2));
 
   const circuitName = path.basename(folderpath);
 
@@ -51,7 +51,7 @@ router.post('/', async (req, res, next) => {
 
     logger.info(`Complete`);
     logger.debug(`Responding with proof and inputs:`);
-    logger.debug(proof);
+    logger.debug(JSON.stringify(req.body, null, 2));
     logger.debug(publicInputs);
     return res.send({
       proof,
