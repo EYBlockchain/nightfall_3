@@ -11,7 +11,6 @@ import Web3 from './utils/web3.mjs';
 import { getContractAddress, getContractInstance } from './utils/contract.mjs';
 // import { generalise } from './utils/general-number.mjs';
 const fsPromises = fs.promises;
-const web3 = Web3.connection();
 
 /**
 This function will ping the Zokrates service until it is up before attempting
@@ -61,7 +60,6 @@ This calls the /generateKeys endpoint on a zokrates microservice container to do
 */
 async function setupCircuits() {
   // do all the trusted setups needed
-  let account = config.WEB3_OPTIONS.defaultAccount;
   const circuitsToSetup = await walk(config.CIRCUITS_HOME);
   for (const circuit of circuitsToSetup) {
     // first check if a vk already exists
@@ -75,7 +73,7 @@ async function setupCircuits() {
     if (!vk || config.ALWAYS_DO_TRUSTED_SETUP) {
       // we don't have an existing vk so let's generate one
       try {
-        logger.debug(`no existing verification key: calling generate keys on ${circuit}`);
+        logger.info(`no existing verification key: calling generate keys on ${circuit}`);
         const res2 = await axios.post(
           `${config.PROTOCOL}${config.ZOKRATES_WORKER_HOST}/generate-keys`,
           {
