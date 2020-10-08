@@ -1,6 +1,6 @@
 {
   "name": "nightfall-deployer",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "deploys fundamental smart contracts and circuits for Nightfall",
   "main": "index.js",
   "scripts": {
