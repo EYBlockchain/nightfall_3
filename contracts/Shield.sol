@@ -37,7 +37,7 @@ contract Shield is Ownable, MerkleTree {
 
   bytes32 public latestRoot; // holds the index for the latest root so that the prover can provide it later and this contract can look up the relevant root
 
-  bytes32 public selectBits248 = 0x0000000000000000ffffffffffffffffffffffffffffffffffffffffffffffff;
+  bytes32 public selectBits248 = 0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
 
   // FUNCTIONS:
   constructor(address _verifier) public {
@@ -149,7 +149,6 @@ contract Shield is Ownable, MerkleTree {
         ),
         "Commitment cannot be minted"
       );
-
 
     // gas measurement:
     gasUsedByShieldContract = gasUsedByShieldContract +

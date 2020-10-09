@@ -1,5 +1,5 @@
-// Copyright (c) 2018 HarryR
 // SPDX-License-Identifier: LGPL-3.0+
+// Copyright (c) 2018 HarryR
 
 pragma solidity ^0.6.0;
 
@@ -25,7 +25,7 @@ contract MiMC
         return MiMCpe7( in_x, in_k, uint256(keccak256(abi.encodePacked(seed))), 91 );
     }
 
-    /**
+    /*
     * MiMC-p/p with exponent of 7
     *
     * Recommended at least 46 rounds, for a polynomial degree of 2^126

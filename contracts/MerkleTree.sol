@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: CC0-1.0
-
 /**
 A base contract which handles Merkle Tree inserts (and consequent updates to the root and 'frontier' (see below)).
 The intention is for other 'derived' contracts to import this contract, and for those derived contracts to manage permissions to actually call the insertLeaf/insertleaves functions of this base contract.
@@ -72,7 +71,7 @@ contract MerkleTree is MiMC {
 
     /**
     @notice Get the index of the frontier (or 'storage slot') into which we will next store a nodeValue (based on the leafIndex currently being inserted). See the top-level README for a detailed explanation.
-    @return slot - the index of the frontier (or 'storage slot') into which we will next store a nodeValue
+    @return slot uint - the index of the frontier (or 'storage slot') into which we will next store a nodeValue
     */
     function getFrontierSlot(uint leafIndex) public pure returns (uint slot) {
         slot = 0;
@@ -95,7 +94,7 @@ contract MerkleTree is MiMC {
     /**
     @notice Insert a leaf into the Merkle Tree, update the root, and update any values in the (persistently stored) frontier.
     @param leafValue - the value of the leaf being inserted.
-    @return root - the root of the merkle tree, after the insert.
+    @return root bytes32 - the root of the merkle tree, after the insert.
     */
     function insertLeaf(bytes32 leafValue) public returns (bytes32 root) {
 
@@ -151,7 +150,7 @@ contract MerkleTree is MiMC {
     /**
     @notice Insert multiple leaves into the Merkle Tree, and then update the root, and update any values in the (persistently stored) frontier.
     @param leafValues - the values of the leaves being inserted.
-    @return root - the root of the merkle tree, after all the inserts.
+    @return root bytes32[] - the root of the merkle tree, after all the inserts.
     */
     function insertLeaves(bytes32[] memory leafValues) public returns (bytes32 root) {
 

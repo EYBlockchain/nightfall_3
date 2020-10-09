@@ -18,7 +18,7 @@ services:
       - ganache
       - worker
     environment:
-      LOG_LEVEL: silly
+      LOG_LEVEL: debug
       ETH_NETWORK: ganache
       BLOCKCHAIN_HOST: ws://ganache
       BLOCKCHAIN_PORT: 8545

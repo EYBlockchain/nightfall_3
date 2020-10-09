@@ -9,7 +9,7 @@ import path from 'path';
 import logger from './utils/logger.mjs';
 import Web3 from './utils/web3.mjs';
 import { getContractAddress, getContractInstance } from './utils/contract.mjs';
-// import { generalise } from './utils/general-number.mjs';
+
 const fsPromises = fs.promises;
 
 /**
@@ -73,7 +73,9 @@ async function setupCircuits() {
     if (!vk || config.ALWAYS_DO_TRUSTED_SETUP) {
       // we don't have an existing vk so let's generate one
       try {
-        logger.info(`no existing verification key: calling generate keys on ${circuit}`);
+        logger.info(
+          `no existing verification key. Fear not, I will make a new one: calling generate keys on ${circuit}`,
+        );
         const res2 = await axios.post(
           `${config.PROTOCOL}${config.ZOKRATES_WORKER_HOST}/generate-keys`,
           {
