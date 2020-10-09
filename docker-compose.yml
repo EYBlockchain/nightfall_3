@@ -48,9 +48,10 @@ services:
 
     # Temporary container to deploy contracts and circuits and populate volumes
   deployer:
-    build:
-      context: ../nightfall-deployer/
-      dockerfile: Dockerfile
+    image: docker.pkg.github.com/eyblockchain/nightfall-deployer/nightfall_deployer:1.1.0
+    #build:
+    #  context: ../nightfall-deployer/
+    #  dockerfile: Dockerfile
     depends_on:
       - ganache
     volumes:
