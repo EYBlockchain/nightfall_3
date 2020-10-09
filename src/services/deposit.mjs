@@ -7,13 +7,14 @@
  */
 import config from 'config';
 import axios from 'axios';
-import { generalise } from '../utils/general-number/general-number.mjs';
+import gen from 'general-number';
 import { sha256 } from '../utils/crypto/sha256.mjs';
 import rand from '../utils/crypto/crypto-random.mjs';
 import { getContractInstance } from '../utils/contract.mjs';
 import logger from '../utils/logger.mjs';
 
 const { ZKP_KEY_LENGTH, ZOKRATES_WORKER_URL, SHIELD_CONTRACT_NAME } = config;
+const { generalise, GN } = gen;
 
 async function deposit(items) {
   logger.info('Creating a deposit transaction');
@@ -24,10 +25,10 @@ async function deposit(items) {
   const salt = await rand(ZKP_KEY_LENGTH);
   // next, let's compute the zkp commitment we're going to store and the hash of the public inputs (truncated to 248 bits)
   const commitment = sha256([ercAddress, tokenId, value, zkpPublicKey, salt]);
-  const [, publicInputHash] = sha256([ercAddress, tokenId, value, commitment]).limbs(248, 2, 'hex');
+  const publicInputHash = new GN(sha256([ercAddress, tokenId, value, commitment]).limbs(248, 2)[1]);
   // now we can compute a Witness so that we can generate the proof
   const witness = [
-    publicInputHash,
+    publicInputHash.decimal,
     ercAddress.limbs(32, 8),
     tokenId.limbs(32, 8),
     value.limbs(32, 8),
@@ -37,6 +38,8 @@ async function deposit(items) {
   ].flat(Infinity);
   logger.debug(`witness input is ${witness.join(' ')}`);
   logger.debug(`witness input length is ${witness.length}`);
+  logger.silly(`publicInputhash is ${publicInputHash.hex()}`);
+  logger.silly(`padded publicInputhash is ${publicInputHash.hex(32)}`);
   // call a zokrates worker to generate the proof
   const res = await axios.post(`${ZOKRATES_WORKER_URL}/generate-proof`, {
     folderpath: 'deposit',
@@ -50,7 +53,7 @@ async function deposit(items) {
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
   return shieldContractInstance.methods
     .deposit(
-      publicInputHash,
+      publicInputHash.hex(32),
       ercAddress.hex(32),
       tokenId.hex(32),
       value.hex(32),

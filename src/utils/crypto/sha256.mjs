@@ -1,6 +1,15 @@
 import crypto from 'crypto';
-import { strip0x } from '../general-number/conversions.mjs';
-import { GN } from '../general-number/general-number.mjs';
+import gen from 'general-number';
+
+const { GN } = gen;
+
+const strip0x = hex => {
+  if (typeof hex === 'undefined') return '';
+  if (typeof hex === 'string' && hex.indexOf('0x') === 0) {
+    return hex.slice(2).toString();
+  }
+  return hex.toString();
+};
 
 /**
 Utility function to concatenate two hex strings and return as buffer

@@ -1,5 +1,5 @@
 module.exports = {
-  LOG_LEVEL: process.env.DEBUG_LEVEL || 'debug',
+  LOG_LEVEL: process.env.LOG_LEVEL || 'debug',
   MONGO_URL: process.env.MONGO_URL || 'mongodb://localhost:27017/',
   COMMITMENTS_DB: 'nightfall_commitments',
   WALLETS_COLLECTION: 'wallets',

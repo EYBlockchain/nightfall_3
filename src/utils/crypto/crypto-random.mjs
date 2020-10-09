@@ -3,7 +3,9 @@ Simple routine to create a cryptographically sound random.
 */
 
 import crypto from 'crypto';
-import { GN } from '../general-number/general-number.mjs';
+import gen from 'general-number';
+
+const { GN } = gen;
 
 async function rand(bytes) {
   const buf = await crypto.randomBytes(bytes);
