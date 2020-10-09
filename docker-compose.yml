@@ -58,9 +58,9 @@ services:
       - type: volume
         source: build
         target: /app/build/
-      - type: bind
-        source: ../nightfall-deployer/contracts
-        target: /app/contracts/
+      #    - type: bind
+      #      source: ../nightfall-deployer/contracts
+      #      target: /app/contracts/
       - type: volume
         source: circuits
         target: /app/circuits/
