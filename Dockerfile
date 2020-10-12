@@ -1,24 +1,23 @@
 FROM zokrates/zokrates:0.6.1 as builder
 
-FROM node:14.11.0
+FROM node:14.11.0 as node-build
+ARG NPM_TOKEN
+WORKDIR /app
+COPY ./package.json ./package-lock.json ./.npmrc ./
+RUN npm ci
+RUN rm -f .npmrc
 
-RUN mkdir /app
+FROM node:14.11.0
 WORKDIR /app
 
-ARG NPM_TOKEN
-
+COPY --from=node-build /app /app
 COPY --from=builder /home/zokrates/.zokrates/bin/zokrates /app/zokrates
 COPY ./stdlib-bugfix/stdlib /app/stdlib/
 COPY ./src ./src
 COPY ./circuits ./circuits
 COPY ./config ./config
-COPY ./package.json ./package-lock.json ./.npmrc ./
-
 COPY ./start-script ./start-script
 COPY ./start-dev ./start-dev
-
-RUN npm ci
-RUN rm -f .npmrc
 
 RUN apt-get update -y
 RUN apt-get install -y netcat
