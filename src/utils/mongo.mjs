@@ -5,18 +5,17 @@ Mongo database functions
 import mongo from 'mongodb';
 
 const { MongoClient } = mongo;
-const db = {};
+const connection = {};
 
 export default {
-  connection: {},
-  async connect(url, name) {
-    if (db[name]) return db[name];
+  async connect(url) {
+    if (connection[url]) return connection[url];
     const client = await new MongoClient(url, { useUnifiedTopology: true });
-    this.connection = await client.connect();
-    db[name] = this.connection.db(name);
-    return db[name];
+    connection[url] = await client.connect();
+    return connection[url];
   },
-  async disconnect() {
-    this.connection.close();
+  async disconnect(url) {
+    connection[url].close();
+    delete connection[url];
   },
 };

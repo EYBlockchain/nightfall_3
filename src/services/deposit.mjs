@@ -1,7 +1,8 @@
 /**
  This module contains the logic needed create a zkp deposit, i.e. to pay
  a token to the Shield contract and have it create a zkp commitment for the
- same value. It is agnostic to whether we are dealing with an ERC20 or ERC721.
+ same value. It is agnostic to whether we are dealing with an ERC20 or ERC721
+ (or ERC1155).
  * @module deposit.mjs
  * @author westlad, Chaitanya-Konda, iAmMichaelConnor, will-kim
  */
@@ -12,8 +13,18 @@ import { sha256 } from '../utils/crypto/sha256.mjs';
 import rand from '../utils/crypto/crypto-random.mjs';
 import { getContractInstance } from '../utils/contract.mjs';
 import logger from '../utils/logger.mjs';
+import mongo from '../utils/mongo.mjs';
 
-const { ZKP_KEY_LENGTH, ZOKRATES_WORKER_URL, SHIELD_CONTRACT_NAME } = config;
+const {
+  ZKP_KEY_LENGTH,
+  ZOKRATES_WORKER_URL,
+  SHIELD_CONTRACT_NAME,
+  PROVING_SCHEME,
+  BACKEND,
+  MONGO_URL,
+  COMMITMENTS_DB,
+  COMMITMENTS_COLLECTION,
+} = config;
 const { generalise, GN } = gen;
 
 async function deposit(items) {
@@ -44,14 +55,14 @@ async function deposit(items) {
   const res = await axios.post(`${ZOKRATES_WORKER_URL}/generate-proof`, {
     folderpath: 'deposit',
     inputs: witness,
-    provingScheme: 'gm17',
-    backend: 'libsnark',
+    provingScheme: PROVING_SCHEME,
+    backend: BACKEND,
   });
   logger.silly(`Received response ${JSON.stringify(res.data, null, 2)}`);
   const { proof } = res.data;
   // and work out the ABI encoded data that the caller should sign and send to the shield contract
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
-  return shieldContractInstance.methods
+  const rawTransaction = shieldContractInstance.methods
     .deposit(
       publicInputHash.hex(32),
       ercAddress.hex(32),
@@ -61,6 +72,19 @@ async function deposit(items) {
       Object.values(proof).flat(Infinity),
     )
     .encodeABI();
+  // need to store this commitment, indexed by public commitment hash
+  const data = {
+    _id: commitment.hex(32),
+    zkpPublicKey: zkpPublicKey.hex(32),
+    ercAddress: ercAddress.hex(32),
+    tokenId: tokenId.hex(32),
+    value: value.decimal,
+  };
+  const connection = await mongo.connect(MONGO_URL);
+  await Promise.all([connection, rawTransaction]);
+  const db = connection.db(COMMITMENTS_DB);
+  db.collection(COMMITMENTS_COLLECTION).insertOne(data);
+  return rawTransaction;
 }
 
 export default deposit;

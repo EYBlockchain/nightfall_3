@@ -10,9 +10,10 @@ describe('Testing the http API', () => {
   let id;
   let shieldAddress;
   let txToSign;
-  let stubAddress;
+  let ercAddress;
   const url = 'http://localhost:8080';
   const tokenId = '0x01';
+  const value = 10;
   // this is the private key for the test account in openethereum
   const privateKey = '0x4f3edf983ac636a65a842ce7c78d9aa706d3b113bce9c46f30d7d21715b23b1d';
   const gas = 10000000;
@@ -36,8 +37,8 @@ describe('Testing the http API', () => {
 
   it('should get the address of the test ERC contract stub', async () => {
     const res = await chai.request(url).get('/contract-address/ERCStub');
-    stubAddress = res.body.address;
-    expect(stubAddress).to.be.a('string');
+    ercAddress = res.body.address;
+    expect(ercAddress).to.be.a('string');
   });
 
   it('should deposit some crypto into a ZKP commitment', async () => {
@@ -45,14 +46,14 @@ describe('Testing the http API', () => {
       .request(url)
       .post('/deposit')
       .send({
-        ercAddress: stubAddress,
-        tokenId: 0x01,
-        value: 10,
+        ercAddress,
+        tokenId,
+        value,
         zkpPublicKey: id,
       });
     txToSign = res.body.txToSign;
     expect(txToSign).to.be.a('string');
-    console.log(txToSign);
+    // console.log(txToSign);
   });
 
   it('should should send the commitment proof to the shield contract to verify the proof and store the commitment in the Merkle tree', async () => {
@@ -66,7 +67,9 @@ describe('Testing the http API', () => {
       web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8545'));
       const signed = await web3.eth.accounts.signTransaction(tx, privateKey);
       const receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction);
-      console.log('receipt', receipt);
+      expect(receipt).to.have.property('transactionHash');
+      expect(receipt).to.have.property('blockHash');
+      // console.log('receipt', receipt);
     } catch (err) {
       expect.fail(err);
     } finally {
@@ -74,21 +77,20 @@ describe('Testing the http API', () => {
     }
   });
 
-  it.skip('should transfer some crypto using ZKP', async () => {
-    chai
+  it('should transfer some crypto using ZKP', async () => {
+    const res = await chai
       .request(url)
       .post('/transfer')
       .send({
         ercAddress,
         tokenId,
         value,
-        senderZkpPublicKey,
-        recipientZkpPublicKey
-      })
-      .end((err, res) => {
-        // TODO
-        expect(res.body.txToSign).to.be.a('string');
+        senderZkpPublicKey: id,
+        recipientZkpPublicKey: id,
       });
+    // TODO
+    console.log(res.body);
+    expect(res.statusCode).to.equal(200);
   });
 
   it.skip('should withdraw some crypto from a ZKP commitment', async () => {
@@ -99,8 +101,8 @@ describe('Testing the http API', () => {
         ercAddress,
         tokenId,
         value,
-        senderZkpPublicKey,
-        recipientAddress
+        senderZkpPublicKey: id,
+        recipientAddress: id,
       })
       .end((err, res) => {
         // TODO

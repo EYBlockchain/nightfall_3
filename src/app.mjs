@@ -2,7 +2,7 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import fileUpload from 'express-fileupload';
-import { generateZkpKey, deposit, getContractAddress } from './routes/index.mjs';
+import { generateZkpKey, deposit, getContractAddress, transfer } from './routes/index.mjs';
 
 const app = express();
 
@@ -19,7 +19,6 @@ app.get('/healthcheck', (req, res) => res.sendStatus(200));
 app.use('/generate-zkp-key', generateZkpKey);
 app.use('/deposit', deposit);
 app.use('/contract-address', getContractAddress);
-// app.use('/vk', vk);
-// app.use('/load-circuits', loadCircuits);
+app.use('/transfer', transfer);
 
 export default app;

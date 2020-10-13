@@ -4,6 +4,7 @@
     "no-underscore-dangle": "off",
     "no-console": "off",
     "import/extensions": "off",
+    "no-restricted-syntax": "off"
   },
   "globals": {
     "BigInt": "true"

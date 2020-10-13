@@ -18,7 +18,8 @@ router.get('/', async (req, res, next) => {
     logger.info(`generated new zkp public key ${zkpPublicKey.decimal}`);
     const keyData = { _id: zkpPublicKey.hex(), zkpPrivateKey: zkpPrivateKey.hex() };
     // store the keypair using the public key as the _id
-    const db = await mongo.connect(MONGO_URL, COMMITMENTS_DB);
+    const connection = await mongo.connect(MONGO_URL);
+    const db = connection.db(COMMITMENTS_DB);
     db.collection(WALLETS_COLLECTION).insertOne(keyData);
     logger.info('Stored a new zkp keypair');
     res.json({ keyId: keyData._id });
