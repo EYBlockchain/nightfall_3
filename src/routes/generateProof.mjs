@@ -56,6 +56,7 @@ router.post('/', async (req, res, next) => {
     return res.send({
       proof,
       inputs: publicInputs,
+      type: folderpath,
     });
   } catch (err) {
     return next(err);
