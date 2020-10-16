@@ -46,9 +46,6 @@ async function deposit(items) {
     commitment.hash.limbs(32, 8),
   ].flat(Infinity);
   logger.debug(`witness input is ${witness.join(' ')}`);
-  logger.debug(`witness input length is ${witness.length}`);
-  logger.silly(`publicInputhash is ${publicInputs.hash.hex()}`);
-  logger.silly(`padded publicInputhash is ${publicInputs.hash.hex(32)}`);
   // call a zokrates worker to generate the proof
   const res = await axios.post(`${ZOKRATES_WORKER_URL}/generate-proof`, {
     folderpath: 'deposit',
