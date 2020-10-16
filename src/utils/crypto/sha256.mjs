@@ -17,7 +17,7 @@ Looks like the inputs are somehow being changed to decimal!
 @param {string} a
 @param {string} b
 */
-export const concatenate = (a, b) => {
+const concatenate = (a, b) => {
   const length = a.length + b.length;
   const buffer = Buffer.allocUnsafe(length); // creates a buffer object of length 'length'
   for (let i = 0; i < a.length; i += 1) {
@@ -32,7 +32,7 @@ export const concatenate = (a, b) => {
 /**
 @param {Array[GN]} generalValues
  */
-export const sha256 = generalValues => {
+const sha256 = generalValues => {
   const preimage = generalValues
     .map(item => Buffer.from(strip0x(item.hex(32)), 'hex'))
     .reduce((acc, item) => concatenate(acc, item));
@@ -43,3 +43,5 @@ export const sha256 = generalValues => {
     .digest('hex')}`;
   return new GN(h);
 };
+
+export default sha256;

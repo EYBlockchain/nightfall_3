@@ -8,7 +8,7 @@ const { MongoClient } = mongo;
 const connection = {};
 
 export default {
-  async connect(url) {
+  async connection(url) {
     if (connection[url]) return connection[url];
     const client = await new MongoClient(url, { useUnifiedTopology: true });
     connection[url] = await client.connect();

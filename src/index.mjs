@@ -11,7 +11,7 @@ const main = async () => {
       await rabbitmq.connect();
       // queues();
     }
-    await mongo.connect(config.MONGO_URL, config.COMMITMENTS_DB); // get a db connection
+    await mongo.connection(config.MONGO_URL, config.COMMITMENTS_DB); // get a db connection
     app.listen(80);
   } catch (err) {
     logger.error(err);
