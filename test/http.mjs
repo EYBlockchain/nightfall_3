@@ -82,10 +82,12 @@ describe('Testing the http API', () => {
       })
       .end((err, res) => {
         expect(res.body).to.have.property('proof');
+        expect(res.body).to.have.property('type');
         expect(res.body.proof).to.have.property('a');
         expect(res.body.proof).to.have.property('b');
         expect(res.body.proof).to.have.property('c');
         expect(res.body.proof.a).to.be.instanceof(Array);
+        expect(res.body.type).to.equal('factor');
         done();
       });
   });

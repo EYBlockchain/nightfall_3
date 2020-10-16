@@ -44,16 +44,16 @@ export default {
       if (message.properties.correlationId !== correlationId) {
         return this.sendNACK(message);
       }
-
       this.cancelChannelConsume(message.fields.consumerTag);
       this.sendACK(message);
 
       const response = JSON.parse(message.content.toString());
+      response.type = message.properties.type;
       if (response.error) {
         throw Error(response.error);
       }
 
-      return callback(response.data);
+      return callback(response);
     });
   },
 

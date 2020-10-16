@@ -32,21 +32,19 @@ const generateUuid = () => `${Math.random().toString()}
 const { expect } = chai;
 let file;
 
-const env = process.env;
+const { env } = process;
 env.RABBITMQ_HOST = 'amqp://localhost';
 env.RABBITMQ_PORT = '5672';
 
 process.on('unhandledRejection', () => {});
 
 describe('Testing the Zokrates queue mechanism', () => {
-  
   before(async () => {
     await rabbitmq.connect();
     file = {
       name: 'multiple.tar',
       data: (await fileToBuffer('./circuits/test/multiple.tar')).toString(),
     };
-
   });
 
   after(() => rabbitmq.close());
@@ -61,8 +59,10 @@ describe('Testing the Zokrates queue mechanism', () => {
       replyTo,
     });
 
-    rabbitmq.listenToReplyQueue(replyTo, correlationId, data => {
-      expect(data.message).to.equal('Circuits loadded successfully');
+    rabbitmq.listenToReplyQueue(replyTo, correlationId, response => {
+      expect(response).to.have.property('data');
+      expect(response.data).to.have.property('message');
+      expect(response.data.message).to.equal('Circuits loadded successfully');
       done();
     });
   });
@@ -86,10 +86,11 @@ describe('Testing the Zokrates queue mechanism', () => {
       },
     );
 
-    rabbitmq.listenToReplyQueue(replyTo, correlationId, data => {
-      expect(data).to.have.property('vk');
-      expect(data.vk).to.have.property('raw');
-      expect(data.vk.h).to.be.instanceof(Array);
+    rabbitmq.listenToReplyQueue(replyTo, correlationId, response => {
+      expect(response).to.have.property('data');
+      expect(response.data).to.have.property('vk');
+      expect(response.data.vk).to.have.property('raw');
+      expect(response.data.vk.h).to.be.instanceof(Array);
       done();
     });
   });
@@ -113,12 +114,15 @@ describe('Testing the Zokrates queue mechanism', () => {
       },
     );
 
-    rabbitmq.listenToReplyQueue(replyTo, correlationId, data => {
-      expect(data).to.have.property('proof');
-      expect(data.proof).to.have.property('a');
-      expect(data.proof).to.have.property('b');
-      expect(data.proof).to.have.property('c');
-      expect(data.proof.a).to.be.instanceof(Array);
+    rabbitmq.listenToReplyQueue(replyTo, correlationId, response => {
+      expect(response).to.have.property('type');
+      expect(response).to.have.property('data');
+      expect(response.data).to.have.property('proof');
+      expect(response.data.proof).to.have.property('a');
+      expect(response.data.proof).to.have.property('b');
+      expect(response.data.proof).to.have.property('c');
+      expect(response.data.proof.a).to.be.instanceof(Array);
+      expect(response.type).to.equal('factor');
       done();
     });
   });
