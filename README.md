@@ -35,7 +35,7 @@ npm install
 ```
 
 ```sh
-docker-compose build
+docker-compose build --build-arg NPM_TOKEN=${NPM_TOKEN}
 docker-compose up -d
 ```
 
@@ -71,7 +71,7 @@ npm test
 To build and test without docker-compose:
 
 ```sh
-docker build .  (note the image id)
+docker build --build-arg NPM_TOKEN=${NPM_TOKEN} .  (note the image id)
 docker run -p 8080:80 -v $PWD/output:/app/output -v $PWD/circuits:/app/circuits <image id>
 npm test
 ```
@@ -94,9 +94,9 @@ the service.
 The `api` service is a RESTful service that makes use of the `@eyblockchain/zokrates-zexe.js`
 package, and has the following endpoints.
 
-To be able to leverage the service, mount the `.zok` file(s) to
-`/app/circuits/path/to/file.zok` or load them via the `load-circuits` endpoint (see below). If using the `load-circuits` enpoint, you
-can also use a `.tar` archive of `.zok` files to quickly load several files. 
+To be able to leverage the service, mount the `.zok` file(s) to `/app/circuits/path/to/file.zok` or
+load them via the `load-circuits` endpoint (see below). If using the `load-circuits` enpoint, you
+can also use a `.tar` archive of `.zok` files to quickly load several files.
 
 This service lists on container port 80 and can be exposed via a port set in the
 `docker-compose.yml` (`http://localhost:8080` in all the example commands which follow).

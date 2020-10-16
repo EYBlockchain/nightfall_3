@@ -1,20 +1,21 @@
 FROM zokrates/zokrates:0.6.1 as builder
 
-FROM node:14.11.0
+FROM node:14.11.0 as node-build
+ARG NPM_TOKEN
+WORKDIR /app
+COPY ./package.json ./package-lock.json ./.npmrc ./
+RUN npm ci
+RUN rm -f .npmrc
 
-RUN mkdir /app
+FROM node:14.11.0
 WORKDIR /app
 
+COPY --from=node-build /app /app
 COPY --from=builder /home/zokrates/.zokrates/bin/zokrates /app/zokrates
 COPY ./stdlib-bugfix/stdlib /app/stdlib/
 COPY ./src ./src
 COPY ./circuits ./circuits
 COPY ./config ./config
-COPY ./package.json ./
-# Note: we copy the node modules in directly because otherwise we'd need to
-# give the Dockerfile github credentials, which isn't great.
-# TODO find a better solution!
-COPY ./node_modules ./node_modules
 COPY ./start-script ./start-script
 COPY ./start-dev ./start-dev
 
