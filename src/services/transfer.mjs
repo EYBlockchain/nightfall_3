@@ -59,6 +59,8 @@ async function transfer(items) {
     // DO a single commitment transfer
     logger.info('Doing single-token transfer');
     logger.silly(`with commitment ${JSON.stringify(singleCommitment, null, 2)}`);
+    // ok - let's compute a witness and generate a proof
+    
     const rawTransaction = 'Not implemented';
     return rawTransaction;
   }

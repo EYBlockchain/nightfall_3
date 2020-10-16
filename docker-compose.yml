@@ -36,8 +36,8 @@ services:
       - type: volume
         source: proving_files
         target: /app/output/
-      - type: volume
-        source: circuits
+      - type: bind
+        source: ../nightfall-deployer/circuits
         target: /app/circuits/
     depends_on:
       - deployer
@@ -48,22 +48,28 @@ services:
 
     # Temporary container to deploy contracts and circuits and populate volumes
   deployer:
-    image: docker.pkg.github.com/eyblockchain/nightfall-deployer/nightfall_deployer:1.1.0
-    #build:
-    #  context: ../nightfall-deployer/
-    #  dockerfile: Dockerfile
+    #image: docker.pkg.github.com/eyblockchain/nightfall-deployer/nightfall_deployer:1.1.0
+    build:
+      context: ../nightfall-deployer/
+      dockerfile: Dockerfile
     depends_on:
       - ganache
     volumes:
       - type: volume
         source: build
         target: /app/build/
-      #    - type: bind
-      #      source: ../nightfall-deployer/contracts
-      #      target: /app/contracts/
-      - type: volume
-        source: circuits
+      - type: bind
+        source: ../nightfall-deployer/contracts
+        target: /app/contracts/
+      - type: bind
+        source: ../nightfall-deployer/circuits
         target: /app/circuits/
+      - type: bind
+        source: ../nightfall-deployer/src
+        target: /app/src/
+      - type: bind
+        source: ../nightfall-deployer/config
+        target: /app/config/
     networks:
       - nightfall_network
     environment:
@@ -82,9 +88,27 @@ services:
     networks:
       - nightfall_network
 
+  # Timber service, configured for nightfall
+  timber:
+    build:
+      context: ../nightfall-timber
+      dockerfile: Dockerfile
+    depends_on:
+      - ganache
+      - deployer
+    networks:
+      - nightfall_network
+    volumes:
+      - type: volume
+        source: build
+        target: /app/build/
+    environment:
+      BLOCKCHAIN_HOST: ws://ganache
+      BLOCKCHAIN_PORT: 8545
+
 volumes:
   mongodb:
-  circuits:
+  #circuits:
   proving_files:
   build:
 
