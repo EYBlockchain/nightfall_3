@@ -23,6 +23,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: validate before release
+        run: |
+          npm ci --no-save
+        env:
+          SKIP_PREFLIGHT_CHECK: true
+          GPR_TOKEN: ${{ secrets.GPR_TOKEN }}
+          CI: true
+
       - name: semantic release
         uses: codfish/semantic-release-action@v1
         id: semantic
