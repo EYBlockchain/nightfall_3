@@ -61,7 +61,7 @@ export default function receiveMessage() {
       response.error = err;
     }
 
-    rabbitmq.sendMessage(replyTo, response, { correlationId });
+    rabbitmq.sendMessage(replyTo, response, { correlationId, type: folderpath });
     rabbitmq.sendACK(message);
   });
 }
