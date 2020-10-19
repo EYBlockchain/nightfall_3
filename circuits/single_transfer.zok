@@ -1,0 +1,88 @@
+from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256
+from "utils/pack/bool/pack256.zok" import main as bool_256_to_field
+from "utils/pack/u32/pack256.zok" import main as u32_8_to_field
+from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8
+
+from "./common/hashes/sha256/pad256ThenHash.zok" import main as sha256of256
+from "./common/hashes/sha256/pad512ThenHash.zok" import main as sha256of512
+from "./common/hashes/sha256/pad1024ThenHash.zok" import main as sha256of1024
+from "./common/hashes/sha256/pad1280ThenHash.zok" import main as sha256of1280
+
+from "./common/merkle-tree/mimc-root.zok" import main as mimcRoot
+
+struct OldCommitment {
+	u32[8] ercAddress
+	u32[8] id
+	u32[8] value
+	u32[8] salt
+	u32[8] hash
+}
+
+struct NewCommitment {
+	u32[8] publicKeyRecipient
+	u32[8] salt
+	u32[8] hash
+}
+
+struct Nullifier {
+	u32[8] privateKeySender
+	u32[8] hash
+}
+
+def main(\
+	field publicInputsHash,\
+	private OldCommitment oldCommitment,\
+	private NewCommitment newCommitment,\
+	private Nullifier nullifier,\
+	private field[32] path,\
+	private field order,\
+	private field root\
+)->():
+
+
+	// Calculation of publicKeySender from H(privateKeySender)
+	u32[8] publicKeySender = sha256of256(nullifier.privateKeySender)
+
+	// check the nullifier is valid
+	assert(nullifier.hash == sha256of512([\
+		...nullifier.privateKeySender,\
+		...oldCommitment.salt\
+	]))
+
+	// check the new commitment is valid
+	assert(newCommitment.hash == sha256of1280([\
+		...oldCommitment.ercAddress,\
+		...oldCommitment.id,\
+		...oldCommitment.value,\
+		...newCommitment.publicKeyRecipient,\
+		...newCommitment.salt\
+	]))
+
+	// check the old commitment is valid
+	assert(oldCommitment.hash == sha256of1280([\
+		...oldCommitment.ercAddress,\
+		...oldCommitment.id,\
+		...oldCommitment.value,\
+		...publicKeySender,\
+		...oldCommitment.salt\
+	]))
+
+	// check the public input hash
+	u32[8] publicInputsHashU32 = sha256of1024([\
+		...nullifier.hash,\
+		...newCommitment.hash,\
+		...oldCommitment.ercAddress,\
+		...field_to_u32_8(root)\
+	])
+	bool[256] publicInputsHashBool256 = u32_8_to_bool_256(publicInputsHashU32)
+	bool[256] publicInputsHashBool256Sliced = [\
+	     ...[false; 8],\
+	     ...publicInputsHashBool256[8..256]\
+	]
+	assert(publicInputsHash == bool_256_to_field(publicInputsHashBool256Sliced))
+
+	// check that the old commitment is in the merkle tree
+	field mimcHash = u32_8_to_field(oldCommitment.hash)
+	assert( root == mimcRoot(path, order, mimcHash))
+
+	return

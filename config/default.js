@@ -14,5 +14,5 @@ module.exports = {
   CONTRACT_ARTIFACTS: '/app/build/contracts/',
   EXCLUDE_DIRS: 'common', // don't setup files with this in their path
   LOG_LEVEL: process.env.LOG_LEVEL || 'info',
-  transactionTypes: { DEPOSIT: 0, TRANSFER: 1, WITHDRAW: 2 }, // used as an enum to mirror the Shield contracts enum for vk types.
+  VK_IDS: { deposit: 0, single_transfer: 1, withdraw: 2 }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
 };

@@ -98,12 +98,14 @@ async function setupCircuits() {
       const vkArray = Object.values(vk).flat(Infinity); // flatten the Vk array of arrays because that's how Shield.sol likes it.  I see no need for decimal conversion here - but that may be wrong.
       const shieldAddress = await getContractAddress('Shield');
       const shield = await getContractInstance('Shield', shieldAddress);
-      await shield.methods.registerVerificationKey(vkArray, config.transactionTypes.DEPOSIT).send();
+      await shield.methods.registerVerificationKey(vkArray, config.VK_IDS[folderpath]).send();
     } catch (err) {
       logger.error(err);
       throw new Error(err);
     }
   }
+  // before we finish, start Timber listening
+
   Web3.disconnect();
 }
 

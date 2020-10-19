@@ -14,7 +14,7 @@ import "./ERCInterface.sol";
 
 contract Shield is Ownable, MerkleTree {
   // ENUMS:
-  enum TransactionTypes { Deposit, Transfer, Withdraw }
+  enum TransactionTypes { DEPOSIT, SINGLE_TRANSFER, WITHDRAW }
 
   // EVENTS:
   // Observers may wish to listen for nullification of commitments:
@@ -108,7 +108,7 @@ contract Shield is Ownable, MerkleTree {
       verifier.verify(
         _proof,
         uint256(_publicInputHash),
-        vks[TransactionTypes.Deposit]
+        vks[TransactionTypes.DEPOSIT]
       ),
       "The proof has not been verified by the contract"
     );
