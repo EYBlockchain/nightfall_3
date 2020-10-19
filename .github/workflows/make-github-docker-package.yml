@@ -19,19 +19,37 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.WRITE_PACKAGES }}
 
-      - uses: codfish/semantic-release-action@master
+      - name: docker login
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.GPR_BASE_DOCKER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: semantic release
+        uses: codfish/semantic-release-action@v1
         id: semantic
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GPR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - run: echo ${{ steps.semantic.outputs.release-version }}
+      - name: docker build and push latest
+        run: |
+          docker build --build-arg GPR_TOKEN -t $DOCKER_REGISTRY/zokrates-worker/zokrates_worker:latest .
+          docker push $DOCKER_REGISTRY/zokrates-worker/zokrates_worker:latest
+        env:
+          GPR_TOKEN: ${{ secrets.GPR_TOKEN }}
+          DOCKER_REGISTRY: ${{ secrets.GPR_DOCKER_REGISTRY }}
 
-      - name: Docker push version
+      - name: docker push versions
         if: steps.semantic.outputs.new-release-published == 'true'
         run: |
-          docker login https://docker.pkg.github.com -u $GITHUB_ACTOR -p $GITHUB_TOKEN
-          docker build -t docker.pkg.github.com/eyblockchain/zokrates-worker/zokrates_worker:$RELEASE_VERSION .
-          docker push docker.pkg.github.com/eyblockchain/zokrates-worker/zokrates_worker:$RELEASE_VERSION
+          docker tag $DOCKER_REGISTRY/zokrates-worker/zokrates_worker $DOCKER_REGISTRY/zokrates-worker/zokrates_worker:$VERSION_TAG
+          docker tag $DOCKER_REGISTRY/zokrates-worker/zokrates_worker $DOCKER_REGISTRY/zokrates-worker/zokrates_worker:$MAJOR_TAG
+          docker push $DOCKER_REGISTRY/zokrates-worker/zokrates_worker:$VERSION_TAG
+          docker push $DOCKER_REGISTRY/zokrates-worker/zokrates_worker:$MAJOR_TAG
         env:
-          GITHUB_TOKEN: ${{ secrets.WRITE_PACKAGES }}
+          DOCKER_REGISTRY: ${{ secrets.GPR_DOCKER_REGISTRY }}
+          VERSION_TAG: v${{ steps.semantic.outputs.release-version }}
+          MAJOR_TAG: v${{ steps.semantic.outputs.release-major }}
