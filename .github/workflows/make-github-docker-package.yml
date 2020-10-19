@@ -16,16 +16,6 @@ jobs:
           registry-url: https://npm.pkg.github.com/
           scope: $GITHUB_ACTOR
 
-      - name: validate before release
-        run: |
-          npm ci --no-save
-          npm run lint
-          npm run lint:md
-        env:
-          SKIP_PREFLIGHT_CHECK: true
-          GPR_TOKEN: ${{ secrets.GPR_TOKEN }}
-          CI: true
-
       - name: docker login
         uses: azure/docker-login@v1
         with:
