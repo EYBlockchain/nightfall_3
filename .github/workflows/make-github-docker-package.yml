@@ -18,6 +18,7 @@ jobs:
       - run: npm install
         env:
           NODE_AUTH_TOKEN: ${{ secrets.WRITE_PACKAGES }}
+          NPM_TOKEN: ${{ secrets.GPR_TOKEN }}
 
       - name: docker login
         uses: azure/docker-login@v1
