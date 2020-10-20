@@ -9,6 +9,7 @@ import path from 'path';
 import logger from './utils/logger.mjs';
 import Web3 from './utils/web3.mjs';
 import { getContractAddress, getContractInstance } from './utils/contract.mjs';
+import { startEventFilter } from './utils/timber.mjs';
 
 const fsPromises = fs.promises;
 
@@ -105,7 +106,7 @@ async function setupCircuits() {
     }
   }
   // before we finish, start Timber listening
-
+  startEventFilter();
   Web3.disconnect();
 }
 

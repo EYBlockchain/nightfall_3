@@ -15,4 +15,7 @@ module.exports = {
   EXCLUDE_DIRS: 'common', // don't setup files with this in their path
   LOG_LEVEL: process.env.LOG_LEVEL || 'info',
   VK_IDS: { deposit: 0, single_transfer: 1, double_transfer: 2, withdraw: 3 }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
+  TIMBER_HOST: process.env.TIMBER_HOST || 'timber',
+  TIMBER_PORT: process.env.TIMBER_PORT || 80,
+  SHIELD_CONTRACT_NAME: 'Shield',
 };
