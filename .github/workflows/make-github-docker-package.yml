@@ -13,10 +13,6 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: '12.x'
-          registry-url: https://npm.pkg.github.com/
-          scope: ${{ github.actor }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: docker login
         uses: azure/docker-login@v1
@@ -31,7 +27,6 @@ jobs:
           npm run lint
           npm run lint:md
         env:
-          SKIP_PREFLIGHT_CHECK: true
           GPR_TOKEN: ${{ secrets.GPR_TOKEN }}
           CI: true
 
