@@ -14,7 +14,7 @@ import "./ERCInterface.sol";
 
 contract Shield is Ownable, MerkleTree {
   // ENUMS:
-  enum TransactionTypes { DEPOSIT, SINGLE_TRANSFER, WITHDRAW }
+  enum TransactionTypes { DEPOSIT, SINGLE_TRANSFER, DOUBLE_TRANSFER, WITHDRAW }
 
   // EVENTS:
   // Observers may wish to listen for nullification of commitments:
