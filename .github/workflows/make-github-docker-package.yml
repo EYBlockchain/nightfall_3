@@ -16,7 +16,7 @@ jobs:
           registry-url: https://npm.pkg.github.com/
           scope: $GITHUB_ACTOR
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.WRITE_PACKAGES }}
+          NODE_AUTH_TOKEN: ${{ secrets.GPR_TOKEN }}
 
       - name: docker login
         uses: azure/docker-login@v1
