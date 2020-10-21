@@ -1,7 +1,9 @@
+ARG GPR_TOKEN
+
 FROM zokrates/zokrates:0.6.1 as builder
 
 FROM node:14.11.0 as node-build
-ARG NPM_TOKEN
+ARG GPR_TOKEN
 WORKDIR /app
 COPY ./package.json ./package-lock.json ./.npmrc ./
 RUN npm ci

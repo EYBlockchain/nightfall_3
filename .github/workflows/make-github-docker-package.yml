@@ -38,8 +38,8 @@ jobs:
 
       - name: docker build and push latest
         run: |
-          docker build --build-arg GPR_TOKEN -t $DOCKER_REGISTRY/zokrates-worker/zokrates_worker:latest .
-          docker push $DOCKER_REGISTRY/zokrates-worker/zokrates_worker:latest
+          docker build --build-arg GPR_TOKEN -t $DOCKER_REGISTRY/zokrates-worker/zokrates-worker:latest .
+          docker push $DOCKER_REGISTRY/zokrates-worker/zokrates-worker:latest
         env:
           GPR_TOKEN: ${{ secrets.GPR_TOKEN }}
           DOCKER_REGISTRY: ${{ secrets.GPR_DOCKER_REGISTRY }}
@@ -47,10 +47,10 @@ jobs:
       - name: docker push versions
         if: steps.semantic.outputs.new-release-published == 'true'
         run: |
-          docker tag $DOCKER_REGISTRY/zokrates-worker/zokrates_worker $DOCKER_REGISTRY/zokrates-worker/zokrates_worker:$VERSION_TAG
-          docker tag $DOCKER_REGISTRY/zokrates-worker/zokrates_worker $DOCKER_REGISTRY/zokrates-worker/zokrates_worker:$MAJOR_TAG
-          docker push $DOCKER_REGISTRY/zokrates-worker/zokrates_worker:$VERSION_TAG
-          docker push $DOCKER_REGISTRY/zokrates-worker/zokrates_worker:$MAJOR_TAG
+          docker tag $DOCKER_REGISTRY/zokrates-worker/zokrates-worker $DOCKER_REGISTRY/zokrates-worker/zokrates-worker:$VERSION_TAG
+          docker tag $DOCKER_REGISTRY/zokrates-worker/zokrates-worker $DOCKER_REGISTRY/zokrates-worker/zokrates-worker:$MAJOR_TAG
+          docker push $DOCKER_REGISTRY/zokrates-worker/zokrates-worker:$VERSION_TAG
+          docker push $DOCKER_REGISTRY/zokrates-worker/zokrates-worker:$MAJOR_TAG
         env:
           DOCKER_REGISTRY: ${{ secrets.GPR_DOCKER_REGISTRY }}
           VERSION_TAG: v${{ steps.semantic.outputs.release-version }}
