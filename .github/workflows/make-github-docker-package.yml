@@ -21,11 +21,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: validate before release
+      - name: npm install
         run: |
           npm ci
-          npm run lint
-          npm run lint:md
         env:
           GPR_TOKEN: ${{ secrets.GPR_TOKEN }}
           CI: true
