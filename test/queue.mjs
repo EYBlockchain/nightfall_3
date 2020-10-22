@@ -105,6 +105,7 @@ describe('Testing the Zokrates queue mechanism', () => {
       {
         folderpath: 'factor',
         inputs: [6, 3, 2],
+        transactionInputs: 'test',
         provingScheme: 'gm17',
         backend: 'libsnark',
       },
@@ -118,11 +119,13 @@ describe('Testing the Zokrates queue mechanism', () => {
       expect(response).to.have.property('type');
       expect(response).to.have.property('data');
       expect(response.data).to.have.property('proof');
+      expect(response.data).to.have.property('transactionInputs');
       expect(response.data.proof).to.have.property('a');
       expect(response.data.proof).to.have.property('b');
       expect(response.data.proof).to.have.property('c');
       expect(response.data.proof.a).to.be.instanceof(Array);
       expect(response.type).to.equal('factor');
+      expect(response.data.transactionInputs).to.equal('test');
       done();
     });
   });

@@ -13,6 +13,7 @@ router.post('/', async (req, res, next) => {
   const {
     folderpath,
     inputs,
+    transactionInputs,
     outputDirectoryPath,
     proofFileName,
     backend = 'zexe',
@@ -57,6 +58,7 @@ router.post('/', async (req, res, next) => {
       proof,
       inputs: publicInputs,
       type: folderpath,
+      transactionInputs,
     });
   } catch (err) {
     return next(err);
