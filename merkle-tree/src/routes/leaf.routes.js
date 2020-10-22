@@ -54,7 +54,7 @@ async function getLeafByLeafIndex(req, res, next) {
   console.log('req.body:');
   console.log(req.body);
   try {
-    const leafIndex = req.params.leafIndex || req.body.leafIndex;
+    const leafIndex = req.params.leafIndex || req.body.leafIndex || req.body.leafIndex;
     const leafService = new LeafService(req.user.db);
     res.data = await leafService.getLeafByLeafIndex(leafIndex);
     next();
@@ -77,7 +77,7 @@ async function getLeafByValue(req, res, next) {
   console.log('req.body:');
   console.log(req.body);
   try {
-    const { value } = req.body;
+    const  value  = req.body.value || req.query.value;
     const leafService = new LeafService(req.user.db);
     res.data = await leafService.getLeafByValue(value);
     next();
@@ -102,8 +102,13 @@ async function getLeaves(req, res, next) {
   console.log(req.body);
   try {
     const leafService = new LeafService(req.user.db);
+    // some clients call get with data in the body.  That's naughty but we handle it anyway
+    const leafIndices = req.body.leafIndices || req.query.leafIndices;
+    const values = req.body.values || req.query.values;
+    const minIndex = req.body.minIndex || req.query.minIndex;
+    const maxIndex = req.body.maxIndex || req.query.maxIndex;
 
-    const { leafIndices, values, minIndex, maxIndex } = req.body; // necessarily, not all of these destructurings will be possible
+    // not necessarily, not all of these destructurings will be possible
     console.log('leafIndices:', leafIndices);
     console.log('values:', values);
     console.log('minIndex:', minIndex);
@@ -189,7 +194,7 @@ async function countLeaves(req, res, next) {
 
   try {
     const leafService = new LeafService(req.user.db);
-    const leafCount = await leafService.countLeaves(req.body);
+    const leafCount = await leafService.countLeaves();
     res.data = { leafCount };
     next();
   } catch (err) {

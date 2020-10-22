@@ -56,7 +56,7 @@ async function getNodeByNodeIndex(req, res, next) {
  */
 async function getNodeByValue(req, res, next) {
   try {
-    const { value } = req.body;
+    const value = req.body.value || req.query.value;
     const nodeService = new NodeService(req.user.db);
     res.data = await nodeService.getNodeByValue(value);
     next();
@@ -92,7 +92,11 @@ async function getNodes(req, res, next) {
   try {
     const nodeService = new NodeService(req.user.db);
 
-    const { nodeIndices, values, minIndex, maxIndex } = req.body; // necessarily, not all of these deconstructions will be possible
+    const nodeIndices = req.body.nodeIndices || req.query.nodeIndices;
+    const values = req.body.values || req.query.values;
+    const minIndex = req.body.minIndex || req.query.minIndex;
+    const maxIndex = req.body.maxIndex || req.query.maxIndex;
+    // necessarily, not all of these deconstructions will be possible
 
     if (nodeIndices) {
       res.data = await nodeService.getNodesByNodeIndices(nodeIndices);

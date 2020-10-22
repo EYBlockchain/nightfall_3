@@ -420,6 +420,7 @@ For getting/inserting/updating information relating to leaves of the tree.
   - `/leaf/index/:leafIndex` Get a leaf by leafIndex  
   - `/leaf/index` Get a leaf by leafIndex  
   - `/leaf/value` Get a leaf by leafValue  
+  Note that the latter two are not restful endpoints and the leafIndex or the leafValue should be passed in as GET query parameters {contractName, value}
 - `POST`
   - **WARNING**: these POST requests were built for quick db testing only. In practice, insertions of leaves into Timber's merkle-tree db should only be done via the event subscriptions to MerkleTree smart contract(s). (See the `/start` endpoint for starting an event subscription).
   - `/leaf` Insert a leaf into the merkle-tree db.
@@ -427,14 +428,14 @@ For getting/inserting/updating information relating to leaves of the tree.
 #### `/leaves`
 - `GET`
   - `/leaves` Get information about multiple leaves at once.
-  There are several options, specified through the request body:
-    - `req.body: { "leafIndices": [10, 15, 100000, 10000000] }`
+  There are several options, specified through the request body (DEPRECATED) or via query parameters:
+    - `{ "leafIndices": [10, 15, 100000, 10000000] }`
       Specify a selection of leaves, by their leafIndices.
-    - `req.body: { "values": ["0x1234", "hello", "0x12345678"] }`
+    - `{ "values": ["0x1234", "hello", "0x12345678"] }`
       Specify a selection of leaves, by their values.
-    - `req.body: { "minIndex": 10, "maxIndex": 1000 }`
+    - `{ "minIndex": 10, "maxIndex": 1000 }`
       Specify a range of leaves, by the lower and upper bounds of the index range.
-    - `req.body: {}`
+    - `{}`
       Get information about all leaves.  
   - `/leaves/check` Run some broad checks on the leaves of the tree, to check for corrupted filtering, or leaf tracking.
   - `/leaves/count` Get the number of leaves currently in the merkle-tree mongodb.
@@ -459,14 +460,14 @@ For getting/inserting/updating information relating to nodes of the tree. A leaf
 #### `/nodes`
 - `GET`
   - `/nodes` Get information about multiple nodes at once.
-  There are several options, specified through the request body:
-    - `req.body: { "nodeIndices": [10, 15, 100000, 10000000] }`
+  There are several options, specified through the request body (DEPRECATED) or via query parameters:
+    - `{ "nodeIndices": [10, 15, 100000, 10000000] }`
       Specify a selection of nodes, by their nodeIndices (can include leaves).
-    - `req.body: { "values": ["0x1234", "hello", "0x12345678"] }`
+    - `{ "values": ["0x1234", "hello", "0x12345678"] }`
       Specify a selection of nodes, by their values  (can include leaves).
-    - `req.body: { "minIndex": 10, "maxIndex": 1000 }`
+    - `{ "minIndex": 10, "maxIndex": 1000 }`
       Specify a range of nodes, by the lower and upper bounds of the index range      (can include leaves).
-    - `req.body: {}`
+    - `{}`
       Get information about all nodes (includes leaves).
   - `/nodes/count` Get the number of nodes currently in the merkle-tree mongodb (includes leaves).
 - `POST`
