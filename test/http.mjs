@@ -77,12 +77,14 @@ describe('Testing the http API', () => {
       .send({
         folderpath: 'factor',
         inputs: [6, 3, 2],
+        transactionInputs: 'test',
         provingScheme: 'gm17',
         backend: 'libsnark',
       })
       .end((err, res) => {
         expect(res.body).to.have.property('proof');
         expect(res.body).to.have.property('type');
+        expect(res.body).to.have.property('transactionInputs');
         expect(res.body.proof).to.have.property('a');
         expect(res.body.proof).to.have.property('b');
         expect(res.body.proof).to.have.property('c');

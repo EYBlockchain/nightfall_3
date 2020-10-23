@@ -12,6 +12,7 @@ export default function receiveMessage() {
     const {
       folderpath,
       inputs,
+      transactionInputs,
       outputDirectoryPath,
       proofFileName,
       backend = 'zexe',
@@ -56,7 +57,7 @@ export default function receiveMessage() {
       logger.debug(proof);
       logger.debug(publicInputs);
 
-      response.data = { proof, inputs: publicInputs };
+      response.data = { proof, inputs: publicInputs, transactionInputs };
     } catch (err) {
       response.error = err;
     }

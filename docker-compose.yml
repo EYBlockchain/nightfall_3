@@ -5,6 +5,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - GPR_TOKEN
     volumes:
       - ./src:/app/src:delegated
       - ./output:/app/output:delegated
