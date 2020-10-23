@@ -19,6 +19,7 @@ services:
       - deployer
       - worker
       - ganache
+      - timber
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
@@ -91,11 +92,12 @@ services:
   # Timber service, configured for nightfall
   timber:
     build:
-      context: ../nightfall-timber
       dockerfile: Dockerfile
+      context: ../nightfall-timber
     depends_on:
       - ganache
       - deployer
+      - timber-merkle-tree
     networks:
       - nightfall_network
     volumes:
@@ -105,12 +107,32 @@ services:
     environment:
       BLOCKCHAIN_HOST: ws://ganache
       BLOCKCHAIN_PORT: 8545
+      MONGO_HOST: timber-merkle-tree
+      MONGO_PORT: 27017
+      MONGO_NAME: merkle_tree
+      MONGO_USERNAME: admin
+      MONGO_PASSWORD: admin
+
+  #The database storing the merkle tree
+  #At present Timber seems to need a specially configured db.  If we can fix
+  #that, we can run it on a vanilla mongo instance
+  timber-merkle-tree:
+    image: docker.pkg.github.com/eyblockchain/timber-mongo/timber_mongo:73c12fc8bd35d4cab739c836b738b416f6db64ba
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin
+      - MONGO_INITDB_DATABASE=merkle_tree
+    volumes:
+      - timber-merkle-tree-volume:/data/db
+    networks:
+      - nightfall_network
 
 volumes:
   mongodb:
   #circuits:
   proving_files:
   build:
+  timber-merkle-tree-volume:
 
 networks:
   nightfall_network:

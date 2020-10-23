@@ -8,6 +8,8 @@ module.exports = {
   ZOKRATES_WORKER_URL: process.env.ZOKRATES_WORKER_URL || 'http://worker',
   BLOCKCHAIN_HOST: process.env.BLOCKCHAIN_HOST || 'ws://openethereum',
   BLOCKCHAIN_PORT: process.env.BLOCKCHAIN_PORT || '8546',
+  TIMBER_HOST: process.env.TIMBER_HOST || 'timber',
+  TIMBER_PORT: process.env.TIMBER_PORT || 80,
   WEB3_OPTIONS: {
     gas: process.env.GAS || 1000000,
     gasPrice: process.env.GAS_PRICE || '20000000000',
@@ -18,4 +20,6 @@ module.exports = {
   PROVING_SCHEME: 'gm17',
   BACKEND: 'libsnark',
   CURVE: 'bn128',
+  PROOF_QUEUE: 'generate-proof',
+  BN128_PRIME:  21888242871839275222246405745257275088548364400416034343698204186575808495617n,
 };

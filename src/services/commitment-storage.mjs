@@ -3,33 +3,36 @@ Logic for storing and retrieving commitments from a mongo DB.  Abstracted from
 deposit/transfer/withdraw
 */
 import config from 'config';
+import gen from 'general-number';
 import mongo from '../utils/mongo.mjs';
 import logger from '../utils/logger.mjs';
 import Commitment from '../classes/commitment.mjs';
 
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
+const { GN } = gen;
 
 // function to format a commitment for a mongo db and store it
 export async function storeCommitment(commitment) {
   const connection = await mongo.connection(MONGO_URL);
   const data = {
     _id: commitment.hash.hex(32),
-    preImage: commitment.preImage.all.hex(32),
+    preimage: commitment.preimage.all.hex(32),
   };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).insertOne(data);
 }
 
 // function to find commitments that can be used in the proposed transfer
-export async function findUsableCommittments(zkpPublicKey, ercAddress, tokenId, value) {
+export async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _value) {
+  const value = new GN(_value); // sometimes this is sent as a BigInt.
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const commitments = await db
     .collection(COMMITMENTS_COLLECTION)
     .find({
-      'preImage.zkpPublicKey': zkpPublicKey.hex(32),
-      'preImage.ercAddress': ercAddress.hex(32),
-      'preImage.tokenId': tokenId.hex(32),
+      'preimage.zkpPublicKey': zkpPublicKey.hex(32),
+      'preimage.ercAddress': ercAddress.hex(32),
+      'preimage.tokenId': tokenId.hex(32),
     })
     .toArray();
   if (commitments === []) return null;
@@ -38,9 +41,9 @@ export async function findUsableCommittments(zkpPublicKey, ercAddress, tokenId, 
   // this function will tell us:
   const singleCommitment = (() => {
     for (const commitment of commitments) {
-      if (commitment.preImage.value === value.hex(32)) {
+      if (commitment.preimage.value === value.hex(32)) {
         logger.info('Found commitment suitable for single transfer');
-        return [new Commitment(commitment.preImage)];
+        return [new Commitment(commitment.preimage)];
       }
     }
     return null;
@@ -52,11 +55,11 @@ export async function findUsableCommittments(zkpPublicKey, ercAddress, tokenId, 
       const innerResult = (() => {
         for (const commitmentD of commitments) {
           if (
-            BigInt(commitmentC.preImage.value) + BigInt(commitmentD.preImage.value) >
+            BigInt(commitmentC.preimage.value) + BigInt(commitmentD.preimage.value) >
             value.bigInt
           ) {
             logger.info('Found commitments suitable for two-token transfer');
-            return [new Commitment(commitmentC.preImage), new Commitment(commitmentD.preImage)];
+            return [new Commitment(commitmentC.preimage), new Commitment(commitmentD.preimage)];
           }
         }
         return null;
