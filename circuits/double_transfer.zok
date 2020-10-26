@@ -8,7 +8,7 @@ from "./common/hashes/sha256/pad512ThenHash.zok" import main as sha256of512
 from "./common/hashes/sha256/pad1536ThenHash.zok" import main as sha256of1536
 from "./common/hashes/sha256/pad1280ThenHash.zok" import main as sha256of1280
 
-from "./common/merkle-tree/mimc-root.zok" import main as mimcRoot
+from "./common/merkle-tree/mimc-path-check.zok" import main as pathCheck
 
 struct OldCommitment {
 	u32[8] ercAddress
@@ -35,9 +35,8 @@ def main(\
 	private OldCommitment[2] oldCommitment,\
 	private NewCommitment[2] newCommitment,\
 	private Nullifier[2] nullifier,\
-	private field[2][32] path,\
-	private field[2] order,\
-	private field root\
+	private field[2][33] path,\
+	private field[2] order\
 )->():
 
 	// Calculation of publicKeySender from H(privateKeySender)
@@ -108,7 +107,7 @@ def main(\
 		...newCommitment[0].hash,\
 		...newCommitment[1].hash,\
 		...oldCommitment[0].ercAddress,\
-		...field_to_u32_8(root)\
+		...field_to_u32_8(path[0][0])\
 	])
 	bool[256] publicInputsHashBool256 = u32_8_to_bool_256(publicInputsHashU32)
 	bool[256] publicInputsHashBool256Sliced = [\
@@ -118,9 +117,10 @@ def main(\
 	assert(publicInputsHash == bool_256_to_field(publicInputsHashBool256Sliced))
 
 	// check that the old commitments are in the merkle tree
+	assert(path[0][0] == path[1][0]) // these should both be the root
 	for field i in 0..2 do
 		field mimcHash = u32_8_to_field(oldCommitment[i].hash)
-		assert( root == mimcRoot(path[i], order[i], mimcHash))
+		assert(pathCheck(path[i], order[i], mimcHash))
 	endfor
 
 	return
