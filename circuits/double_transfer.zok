@@ -5,7 +5,7 @@ from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8
 
 from "./common/hashes/sha256/pad256ThenHash.zok" import main as sha256of256
 from "./common/hashes/sha256/pad512ThenHash.zok" import main as sha256of512
-from "./common/hashes/sha256/pad1536ThenHash.zok" import main as sha256of1536
+from "./common/hashes/sha256/pad1792ThenHash.zok" import main as sha256of1792
 from "./common/hashes/sha256/pad1280ThenHash.zok" import main as sha256of1280
 
 from "./common/merkle-tree/mimc-path-check.zok" import main as pathCheck
@@ -102,16 +102,15 @@ def main(\
 		]))
 	endfor
 
-	// check the public input hash (no need to include both ERCAddresses as
+	// check the public input hash (TODO no need to include both ERCAddresses as
 	// they are proven equal) so we can save 25k constraints
-	// we could also just pass the address in once to main but it seems a little
-	// inelegant on the node side of things.
-	u32[8] publicInputsHashU32 = sha256of1536([\
-		...nullifier[0].hash,\
-		...nullifier[1].hash,\
+	u32[8] publicInputsHashU32 = sha256of1792([\
+		...oldCommitment[0].ercAddress,\
+		...oldCommitment[1].ercAddress,\
 		...newCommitment[0].hash,\
 		...newCommitment[1].hash,\
-		...oldCommitment[0].ercAddress,\
+		...nullifier[0].hash,\
+		...nullifier[1].hash,\
 		...field_to_u32_8(path[0][0])\
 	])
 	bool[256] publicInputsHashBool256 = u32_8_to_bool_256(publicInputsHashU32)
