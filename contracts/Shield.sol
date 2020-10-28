@@ -31,8 +31,8 @@ contract Shield is Ownable, MerkleTree {
   MerkleTree private timber; // the timber contract
 
   // PRIVATE TRANSACTIONS' PUBLIC STATES:
-  mapping(bytes32 => bytes32) public nullifiers; // store nullifiers of spent commitments
-  mapping(bytes32 => bytes32) public roots; // holds each root we've calculated so that we can pull the one relevant to the prover
+  mapping(bytes32 => bool) public usedNullifiers; // store nullifiers of spent commitments
+  mapping(bytes32 => bool) public roots; // holds each root we've calculated so that we can pull the one relevant to the prover
   mapping(TransactionTypes => uint256[]) public vks; // mapped to by an enum uint(TransactionTypes):
 
   bytes32 public latestRoot; // holds the index for the latest root so that the prover can provide it later and this contract can look up the relevant root
@@ -81,7 +81,7 @@ contract Shield is Ownable, MerkleTree {
   */
   function deposit(
       bytes32 _publicInputHash,
-      bytes32 tokenContractAddress, // Take in as bytes32 for consistent hashing
+      bytes32 ercAddress, // Take in as bytes32 for consistent hashing
       bytes32 _tokenId,
       bytes32 _value,
       bytes32 _commitment,
@@ -94,7 +94,7 @@ contract Shield is Ownable, MerkleTree {
     // we shorten the SHA hash to 248 bits so it fits in one field
     require(
       _publicInputHash == sha256(
-        abi.encodePacked(tokenContractAddress, _tokenId, _value, _commitment)
+        abi.encodePacked(ercAddress, _tokenId, _value, _commitment)
       ) & selectBits248,
       "publicInputHash cannot be reconciled"
     );
@@ -121,11 +121,11 @@ contract Shield is Ownable, MerkleTree {
     // recalculate the root of the merkleTree as it's now different
     latestRoot = insertLeaf(_commitment);
     // and save the new root to the list of roots
-    roots[latestRoot] = latestRoot;
+    roots[latestRoot] = true;
 
     // Finally, transfer the fTokens from the sender to this contract
     ERCInterface tokenContract = ERCInterface(
-        address(uint160(uint256(tokenContractAddress)))
+        address(uint160(uint256(ercAddress)))
     );
     if (_tokenId == zero && _value == zero) // disallow this corner case
       revert("Minting of zero-value tokens is not allowed");
@@ -133,22 +133,97 @@ contract Shield is Ownable, MerkleTree {
     if (_tokenId == zero) // must be an ERC20
       require(
         tokenContract.transferFrom(msg.sender, address(this), uint256(_value)),
-        "Commitment cannot be minted"
+        "ERC20 Commitment cannot be minted"
       );
     else if (_value == zero) // must be ERC721
       require(
         tokenContract.safeTransferFrom(
           msg.sender, address(this), uint256(_tokenId), ''
         ),
-        "Commitment cannot be minted"
+        "ERC721 Commitment cannot be minted"
       );
     else // must be an ERC1155
       require(
         tokenContract.safeTransferFrom(
           msg.sender, address(this), uint256(_tokenId), uint256(_value),''
         ),
-        "Commitment cannot be minted"
+        "ERC1155 Commitment cannot be minted"
       );
+
+    // gas measurement:
+    gasUsedByShieldContract = gasUsedByShieldContract +
+      gasCheckpoint - gasleft();
+    emit GasUsed(gasUsedByShieldContract, gasUsedByVerifierContract);
+  }
+
+  /**
+  The transfer function nullifies old commitments and creates new ones, subject
+  to it accepting the proof of correct commitment transfer.
+  */
+  function transfer(
+      bytes32 _publicInputHash,
+      bytes32[] calldata ercAddresses,
+      bytes32[] calldata _newCommitmentHashes,
+      bytes32[] calldata _nullifierHashes,
+      bytes32 _root,
+      uint256[] calldata _proof
+    ) external {
+    // gas measurement:
+    uint256 gasCheckpoint = gasleft();
+
+    // Check that the publicInputHash equals the hash of the 'public inputs':
+    // we shorten the SHA hash to 248 bits so it fits in one field
+    require(
+      _publicInputHash == sha256(
+        abi.encodePacked(ercAddresses, _newCommitmentHashes, _nullifierHashes, _root)
+      ) & selectBits248,
+      "publicInputHash cannot be reconciled"
+    );
+
+    // gas measurement:
+    uint256 gasUsedByShieldContract = gasCheckpoint - gasleft();
+    gasCheckpoint = gasleft();
+
+    // check that the nullifiers haven't been used before
+    for (uint i = 0; i < _nullifierHashes.length; i++) {
+      require(!usedNullifiers[_nullifierHashes[i]], 'One of the nullifiers has already been used');
+      usedNullifiers[_nullifierHashes[i]] = true;
+    }
+
+    // check that the root exists
+    require(roots[_root], 'The root is not recognised');
+
+    // verify the proof
+    if (_newCommitmentHashes.length == 1)
+      require(
+        verifier.verify(
+          _proof,
+          uint256(_publicInputHash),
+          vks[TransactionTypes.SINGLE_TRANSFER]
+        ),
+        "The proof has not been verified by the contract"
+      );
+    else if (_newCommitmentHashes.length == 2)
+      require(
+        verifier.verify(
+          _proof,
+          uint256(_publicInputHash),
+          vks[TransactionTypes.DOUBLE_TRANSFER]
+        ),
+        "The proof has not been verified by the contract"
+      );
+    else
+      revert('Too many commitments - only 1 or 2 are currently supported');
+
+    // gas measurement:
+    uint256 gasUsedByVerifierContract = gasCheckpoint - gasleft();
+    gasCheckpoint = gasleft();
+
+    // update contract states
+    // recalculate the root of the merkleTree as it's now different
+    latestRoot = insertLeaves(_newCommitmentHashes);
+    // and save the new root to the list of roots
+    roots[latestRoot] = true;
 
     // gas measurement:
     gasUsedByShieldContract = gasUsedByShieldContract +

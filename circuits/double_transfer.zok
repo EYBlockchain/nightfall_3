@@ -63,6 +63,11 @@ def main(\
 	assert(oldCommitment[0].ercAddress == oldCommitment[1].ercAddress)
 	// and are of the same type (they might not be for ERC1155)
 	assert(oldCommitment[0].id == oldCommitment[1].id)
+	// commitments can never be equal
+	assert(newCommitment[0].hash != newCommitment[1].hash)
+	// nullifiers can never be equal
+	assert(nullifier[0].hash != nullifier[1].hash)
+
 
 	// check the nullifiers are valid
 	for field i in 0..2 do

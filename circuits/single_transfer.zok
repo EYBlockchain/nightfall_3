@@ -44,38 +44,41 @@ def main(\
 	u32[8] publicKeySender = sha256of256(nullifier.privateKeySender)
 
 	// check the nullifier is valid
-	assert(nullifier.hash == sha256of512([\
+	u32[8] sha = sha256of512([\
 		...nullifier.privateKeySender,\
 		...oldCommitment.salt\
-	]))
+	])
+	assert(sha == nullifier.hash)
 
 	// check the new commitment is valid
 	// we effectively throw away the value of the new commitment by insisting
 	// that it is equal to the old commitment value for a single-token transfer
 	// This is a little inefficient but makes the witness computation in node
 	// independent of how many commitments are being transformed.
-	assert(newCommitment.hash == sha256of1280([\
+	sha = sha256of1280([\
 		...oldCommitment.ercAddress,\
 		...oldCommitment.id,\
 		...oldCommitment.value,\
 		...newCommitment.publicKeyRecipient,\
 		...newCommitment.salt\
-	]))
+	])
+	assert(sha == newCommitment.hash)
 
 	// check the old commitment is valid
-	assert(oldCommitment.hash == sha256of1280([\
+	sha = sha256of1280([\
 		...oldCommitment.ercAddress,\
 		...oldCommitment.id,\
 		...oldCommitment.value,\
 		...publicKeySender,\
 		...oldCommitment.salt\
-	]))
+	])
+	assert(sha == oldCommitment.hash)
 
 	// check the public input hash
 	u32[8] publicInputsHashU32 = sha256of1024([\
-		...nullifier.hash,\
-		...newCommitment.hash,\
 		...oldCommitment.ercAddress,\
+		...newCommitment.hash,\
+		...nullifier.hash,\
 		...field_to_u32_8(path[0])\
 	])
 	bool[256] publicInputsHashBool256 = u32_8_to_bool_256(publicInputsHashU32)
@@ -84,9 +87,9 @@ def main(\
 	     ...publicInputsHashBool256[8..256]\
 	]
 	assert(publicInputsHash == bool_256_to_field(publicInputsHashBool256Sliced))
-
 	// check that the old commitment is in the merkle tree (path[0] should be the root)
 	field mimcHash = u32_8_to_field(oldCommitment.hash)
-	assert(pathCheck(path, order, mimcHash))
+	bool x = pathCheck(path, order, mimcHash)
+	assert(x)
 
 	return

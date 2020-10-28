@@ -2,8 +2,8 @@ import "../hashes/mimc/mimc-hash-2.zok" as mimc2
 import "utils/pack/bool/unpack128.zok" as unpack128
 
 def orderFields(bool order, field pathNode, field siblingNode)->(field[2]):
-	field left = if order then pathNode else siblingNode fi
-	field right = if order then siblingNode else pathNode fi
+	field right = if order then pathNode else siblingNode fi
+	field left = if order then siblingNode else pathNode fi
 	return [left, right]
 
 // Merkle Tree root calculation given:
@@ -11,7 +11,7 @@ def orderFields(bool order, field pathNode, field siblingNode)->(field[2]):
 //  Order - LeafIndex, decomposed to binary for calculation up the tree
 //  Hash - input commitment (leafValue)
 
-def main(field[33] path, field order, field hash)->(bool):
+def main(field[33] siblingPath, field order, field hash)->(bool):
 
   bool[128] orderBits = unpack128(order)
   field mimcHash = hash
@@ -19,6 +19,6 @@ def main(field[33] path, field order, field hash)->(bool):
   for field i in 0..32 do
     field j = 32-i // since we have 33 path elts but we don't include the root
     field k = 127-i // since order is unpacked to 128 bits
-    mimcHash = mimc2(orderFields(orderBits[k], mimcHash, path[j]))
+    mimcHash = mimc2(orderFields(orderBits[k], mimcHash, siblingPath[j]))
   endfor
-  return mimcHash == path[0]
+  return mimcHash == siblingPath[0]
