@@ -85,7 +85,7 @@ export const getSiblingPath = async leafIndex => {
         timeout: 360000,
       },
     );
-    logger.http('Timber Response:', response.data.data);
+    logger.silly('Timber Response:', response.data.data);
     // TODO: handle null response
     const siblingPath = response.data.data;
     const siblingPathValues = siblingPath.map(node => node.value);

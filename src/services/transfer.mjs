@@ -12,20 +12,19 @@ import sha256 from '../utils/crypto/sha256.mjs';
 import rand from '../utils/crypto/crypto-random.mjs';
 import { getContractInstance } from '../utils/contract.mjs';
 import logger from '../utils/logger.mjs';
-import { findUsableCommitments } from './commitment-storage.mjs';
+import { findUsableCommitments, storeCommitment, markNullified } from './commitment-storage.mjs';
 import Nullifier from '../classes/nullifier.mjs';
 import Commitment from '../classes/commitment.mjs';
 import PublicInputs from '../classes/public-inputs.mjs';
-import { getSiblingPath, getLeafIndex } from '../utils/timber.mjs';
+import { getSiblingPath } from '../utils/timber.mjs';
 
 const {
   BN128_PRIME,
   ZKP_KEY_LENGTH,
   ZOKRATES_WORKER_URL,
+  PROVING_SCHEME,
+  BACKEND,
   SHIELD_CONTRACT_NAME,
-  COMMITMENTS_COLLECTION,
-  MONGO_URL,
-  COMMITMENTS_DB,
 } = config;
 const { generalise, GN } = gen;
 
@@ -41,19 +40,21 @@ async function transfer(items) {
   // the first thing we need to do is to find some input commitments which
   // will enable us to conduct our transfer.  Let's rummage in the db...
   const totalValueToSend = values.reduce((acc, value) => acc + value.bigInt, 0n);
-  const commitments = await findUsableCommitments(
+  const oldCommitments = await findUsableCommitments(
     senderZkpPublicKey,
     ercAddress,
     tokenId,
     totalValueToSend,
   );
-  if (commitments) logger.debug(`Found commitments ${JSON.stringify(commitments, null, 2)}`);
+  if (oldCommitments) logger.debug(`Found commitments ${JSON.stringify(oldCommitments, null, 2)}`);
   else throw new Error('No suitable commitments were found'); // caller to handle - need to get the user to make some commitments
   // Having found either 1 or 2 commitments, which are suitable inputs to the
   // proof, the next step is to compute their nullifiers;
-  const nullifiers = commitments.map(commitment => new Nullifier(commitment, senderZkpPrivateKey));
+  const nullifiers = oldCommitments.map(
+    commitment => new Nullifier(commitment, senderZkpPrivateKey),
+  );
   // then the new output commitment(s)
-  const totalInputCommitmentValue = commitments.reduce(
+  const totalInputCommitmentValue = oldCommitments.reduce(
     (acc, commitment) => acc + commitment.preimage.value.bigInt,
     0n,
   );
@@ -64,9 +65,9 @@ async function transfer(items) {
     values.push(new GN(change));
     recipientZkpPublicKeys.push(senderZkpPublicKey);
   }
-  const outputCommitments = [];
+  const newCommitments = [];
   for (let i = 0; i < recipientZkpPublicKeys.length; i++) {
-    outputCommitments.push(
+    newCommitments.push(
       new Commitment({
         zkpPublicKey: recipientZkpPublicKeys[i],
         ercAddress,
@@ -79,50 +80,15 @@ async function transfer(items) {
   // and the Merkle path(s) from the commitment(s) to the root
   const siblingPaths = generalise(
     await Promise.all(
-      commitments.map(async commitment => {
-        console.log('index direct', await getLeafIndex(commitment.hash.hex(32)));
-        console.log('index', await commitment.index());
-        return getSiblingPath(await commitment.index());
-      }),
+      oldCommitments.map(async commitment => getSiblingPath(await commitment.index)),
     ),
   );
-  logger.silly(`SiblingPaths were: ${siblingPaths}`);
-  const root = new GN(siblingPaths[0][0]);
-  // and finally, the publicInput hash
-  /*
-  struct OldCommitment {
-	u32[8] ercAddress
-	u32[8] id
-	u32[8] value
-	u32[8] salt
-	u32[8] hash
-}
-
-struct NewCommitment {
-	u32[8] publicKeyRecipient
-	u32[8] value
-	u32[8] salt
-	u32[8] hash
-}
-
-struct Nullifier {
-	u32[8] privateKeySender
-	u32[8] hash
-}
-
-def main(\
-	field publicInputsHash,\
-	private OldCommitment[2] oldCommitment,\
-	private NewCommitment[2] newCommitment,\
-	private Nullifier[2] nullifier,\
-	private field[2][32] path,\
-	private field[2] order,\
-	private field root\
-)->():
-*/
+  logger.silly(`SiblingPaths were: ${JSON.stringify(siblingPaths)}`);
+  // public inputs
+  const root = siblingPaths[0][0];
   const publicInputs = new PublicInputs([
-    commitments.map(commitment => commitment.hash),
-    outputCommitments.map(commitment => commitment.hash),
+    oldCommitments.map(commitment => commitment.preimage.ercAddress),
+    newCommitments.map(commitment => commitment.hash),
     nullifiers.map(nullifier => nullifier.hash),
     root,
   ]);
@@ -130,14 +96,14 @@ def main(\
   // now we have everything we need to create a Witness and compute a proof
   const witness = [
     publicInputs.hash.decimal, // TODO safer to make this a prime field??
-    commitments.map(commitment => [
+    oldCommitments.map(commitment => [
       commitment.preimage.ercAddress.limbs(32, 8),
-      commitment.preimage.id.limbs(32, 8),
+      commitment.preimage.tokenId.limbs(32, 8),
       commitment.preimage.value.limbs(32, 8),
       commitment.preimage.salt.limbs(32, 8),
       commitment.hash.limbs(32, 8),
     ]),
-    outputCommitments.map(commitment => [
+    newCommitments.map(commitment => [
       commitment.preimage.zkpPublicKey.limbs(32, 8),
       commitment.preimage.value.limbs(32, 8),
       commitment.preimage.salt.limbs(32, 8),
@@ -145,13 +111,50 @@ def main(\
     ]),
     nullifiers.map(nullifier => [
       nullifier.preimage.zkpPrivateKey.limbs(32, 8),
-      nullifier.preimage.salt.limbs(32, 8),
+      nullifier.hash.limbs(32, 8),
     ]),
-    siblingPaths.map(path => path.field(BN128_PRIME)),
-    commitments.map(commitment => commitment.index.field(BN128_PRIME)),
-    root,
+    siblingPaths.map(siblingPath => siblingPath.map(node => node.field(BN128_PRIME, false))), // siblingPAth[32] is a sha hash and will overflow a field but it's ok to take the mod here - hence the 'false' flag
+    await Promise.all(oldCommitments.map(commitment => commitment.index)),
   ].flat(Infinity);
-  console.log('witness', witness);
+
+  logger.debug(`witness input is ${witness.join(' ')}`);
+  // call a zokrates worker to generate the proof
+  // This is (so far) the only place where we need to get specific about the
+  // circuit
+  let folderpath;
+  if (oldCommitments.length === 1) folderpath = 'single_transfer';
+  else if (oldCommitments.length === 2) folderpath = 'double_transfer';
+  else throw new Error('Unsupported number of commitments');
+  const res = await axios.post(`${ZOKRATES_WORKER_URL}/generate-proof`, {
+    folderpath,
+    inputs: await witness,
+    provingScheme: PROVING_SCHEME,
+    backend: BACKEND,
+  });
+  logger.silly(`Received response ${JSON.stringify(res.data, null, 2)}`);
+  const { proof } = res.data;
+  // and work out the ABI encoded data that the caller should sign and send to the shield contract
+  const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
+  try {
+    const rawTransaction = await shieldContractInstance.methods
+      .transfer(
+        publicInputs.hash.hex(32),
+        oldCommitments.map(commitment => commitment.preimage.ercAddress.hex(32)),
+        newCommitments.map(commitment => commitment.hash.hex(32)),
+        nullifiers.map(nullifier => nullifier.hash.hex(32)),
+        root.hex(32),
+        Object.values(proof).flat(Infinity),
+      )
+      .encodeABI();
+    // store the commitment on successful computation of the transaction
+    newCommitments.map(commitment => storeCommitment(commitment)); // TODO insertMany
+    // mark the old commitments as nullified
+    oldCommitments.map(commitment => markNullified(commitment));
+
+    return rawTransaction;
+  } catch (err) {
+    throw new Error(err); // let the caller handle the error
+  }
 }
 
 export default transfer;

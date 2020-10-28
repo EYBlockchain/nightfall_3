@@ -112,6 +112,7 @@ services:
       MONGO_NAME: merkle_tree
       MONGO_USERNAME: admin
       MONGO_PASSWORD: admin
+      HASH_TYPE: mimc
 
   #The database storing the merkle tree
   #At present Timber seems to need a specially configured db.  If we can fix

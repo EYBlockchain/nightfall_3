@@ -11,15 +11,32 @@ import Commitment from '../classes/commitment.mjs';
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
 const { GN } = gen;
 
+// function to drop the commitment collection (useful for testing)
+export async function dropCommitments() {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(COMMITMENTS_COLLECTION).drop();
+}
+
 // function to format a commitment for a mongo db and store it
 export async function storeCommitment(commitment) {
   const connection = await mongo.connection(MONGO_URL);
   const data = {
     _id: commitment.hash.hex(32),
     preimage: commitment.preimage.all.hex(32),
+    isNullified: commitment.isNullified,
   };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).insertOne(data);
+}
+
+// function to mark a commitment as nullified for a mongo db
+export async function markNullified(commitment) {
+  const connection = await mongo.connection(MONGO_URL);
+  const query = { _id: commitment.hash.hex(32) };
+  const update = { $set: { isNullified: true } };
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(COMMITMENTS_COLLECTION).updateOne(query, update);
 }
 
 // function to find commitments that can be used in the proposed transfer
@@ -33,6 +50,7 @@ export async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _
       'preimage.zkpPublicKey': zkpPublicKey.hex(32),
       'preimage.ercAddress': ercAddress.hex(32),
       'preimage.tokenId': tokenId.hex(32),
+      isNullified: false,
     })
     .toArray();
   if (commitments === []) return null;

@@ -35,6 +35,7 @@ async function deposit(items) {
   // next, let's compute the zkp commitment we're going to store and the hash of the public inputs (truncated to 248 bits)
   const commitment = new Commitment({ ercAddress, tokenId, value, zkpPublicKey, salt });
   const publicInputs = new PublicInputs([ercAddress, tokenId, value, commitment.hash]);
+  logger.debug(`Hash of new commitment is ${commitment.hash}`);
   // now we can compute a Witness so that we can generate the proof
   const witness = [
     publicInputs.hash.decimal,

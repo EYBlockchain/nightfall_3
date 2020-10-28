@@ -13,7 +13,7 @@ class PublicInputs {
   hash;
 
   constructor(publicInputs) {
-    this.publicInputs = generalise(publicInputs);
+    this.publicInputs = generalise(publicInputs.flat(Infinity));
     [, this.hash] = generalise(sha256(this.publicInputs).limbs(248, 2));
   }
 }
