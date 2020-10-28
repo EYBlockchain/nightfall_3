@@ -1,0 +1,4 @@
+#! /bin/bash
+docker-compose down --remove-orphans
+docker-compose rm -f timber-database
+docker volume rm nightfall-client_timber-database-volume

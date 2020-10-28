@@ -69,15 +69,18 @@ export async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _
   if (singleCommitment) return singleCommitment;
   // if not, maybe we can do a two-commitment transfer, this is a expensive search and this function will tell us:
   return (() => {
-    for (const commitmentC of commitments) {
+    for (let i = 0; i < commitments.length; i++) {
       const innerResult = (() => {
-        for (const commitmentD of commitments) {
+        for (let j = i + 1; j < commitments.length; j++) {
           if (
-            BigInt(commitmentC.preimage.value) + BigInt(commitmentD.preimage.value) >
+            BigInt(commitments[i].preimage.value) + BigInt(commitments[j].preimage.value) >
             value.bigInt
           ) {
             logger.info('Found commitments suitable for two-token transfer');
-            return [new Commitment(commitmentC.preimage), new Commitment(commitmentD.preimage)];
+            return [
+              new Commitment(commitments[i].preimage),
+              new Commitment(commitments[j].preimage),
+            ];
           }
         }
         return null;

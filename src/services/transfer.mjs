@@ -92,6 +92,16 @@ async function transfer(items) {
     nullifiers.map(nullifier => nullifier.hash),
     root,
   ]);
+  // time for a quick sanity check.  We expect the number of old commitments,
+  // new commitments and nullifiers to be equal.
+  if (nullifiers.length !== oldCommitments.length || nullifiers.length !== newCommitments.length) {
+    logger.error(
+      `number of old commitments: ${oldCommitments.length}, number of new commitments: ${newCommitments.length}, number of nullifiers: ${nullifiers.length}`,
+    );
+    throw new Error(
+      'Commitment or nullifier numbers are mismatched.  There should be equal numbers of each',
+    );
+  }
 
   // now we have everything we need to create a Witness and compute a proof
   const witness = [
