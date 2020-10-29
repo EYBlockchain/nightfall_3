@@ -27,7 +27,7 @@ def main(\
 	field publicInputsHash,\
 	private OldCommitment oldCommitment,\
 	private Nullifier nullifier,\
-	private u32[8] payTo,\
+	private field recipientAddress,\
 	private field[33] path,\
 	private field order\
 )->():
@@ -52,11 +52,11 @@ def main(\
 
 	// check the public input hash
 	u32[8] publicInputsHashU32 = sha256of1536([\
-		...nullifier.hash,\
 		...oldCommitment.ercAddress,\
-		...oldCommitment.value,\
 		...oldCommitment.id,\
-		...payTo,\
+		...oldCommitment.value,\
+		...nullifier.hash,\
+		...field_to_u32_8(recipientAddress),\
 		...field_to_u32_8(path[0])\
 	])
 	bool[256] publicInputsHashBool256 = u32_8_to_bool_256(publicInputsHashU32)
@@ -64,7 +64,7 @@ def main(\
 	     ...[false; 8],\
 	     ...publicInputsHashBool256[8..256]\
 	]
-	assert(publicInputsHash == bool_256_to_field(publicInputsHashBool256Sliced))
+	assert(bool_256_to_field(publicInputsHashBool256Sliced) == publicInputsHash)
 
 	// check that the old commitment is in the merkle tree
 	field mimcHash = u32_8_to_field(oldCommitment.hash)

@@ -128,26 +128,26 @@ contract Shield is Ownable, MerkleTree {
         address(uint160(uint256(ercAddress)))
     );
     if (_tokenId == zero && _value == zero) // disallow this corner case
-      revert("Minting of zero-value tokens is not allowed");
+      revert("Depositing zero-value tokens is not allowed");
 
     if (_tokenId == zero) // must be an ERC20
       require(
         tokenContract.transferFrom(msg.sender, address(this), uint256(_value)),
-        "ERC20 Commitment cannot be minted"
+        "ERC20 Commitment cannot be deposited"
       );
     else if (_value == zero) // must be ERC721
       require(
         tokenContract.safeTransferFrom(
           msg.sender, address(this), uint256(_tokenId), ''
         ),
-        "ERC721 Commitment cannot be minted"
+        "ERC721 Commitment cannot be deposited"
       );
     else // must be an ERC1155
       require(
         tokenContract.safeTransferFrom(
           msg.sender, address(this), uint256(_tokenId), uint256(_value),''
         ),
-        "ERC1155 Commitment cannot be minted"
+        "ERC1155 Commitment cannot be deposited"
       );
 
     // gas measurement:
@@ -224,6 +224,99 @@ contract Shield is Ownable, MerkleTree {
     latestRoot = insertLeaves(_newCommitmentHashes);
     // and save the new root to the list of roots
     roots[latestRoot] = true;
+
+    // gas measurement:
+    gasUsedByShieldContract = gasUsedByShieldContract +
+      gasCheckpoint - gasleft();
+    emit GasUsed(gasUsedByShieldContract, gasUsedByVerifierContract);
+  }
+  /**
+  The transfer function nullifies old commitments and creates new ones, subject
+  to it accepting the proof of correct commitment transfer.
+  */
+  function withdraw(
+      bytes32 _publicInputHash,
+      bytes32 _ercAddress,
+      bytes32 _tokenId,
+      bytes32 _value,
+      bytes32 _nullifierHash,
+      bytes32 _recipientAddress,
+      bytes32 _root,
+      uint256[] calldata _proof
+    ) external {
+    // gas measurement:
+    uint256 gasCheckpoint = gasleft();
+
+    // Check that the publicInputHash equals the hash of the 'public inputs':
+    // we shorten the SHA hash to 248 bits so it fits in one field
+    require(
+      _publicInputHash == sha256(
+        abi.encodePacked(_ercAddress, _tokenId, _value, _nullifierHash, _recipientAddress, _root)
+      ) & selectBits248,
+      "publicInputHash cannot be reconciled"
+    );
+
+    // gas measurement:
+    uint256 gasUsedByShieldContract = gasCheckpoint - gasleft();
+    gasCheckpoint = gasleft();
+
+    // check that the nullifiers haven't been used before
+    require(!usedNullifiers[_nullifierHash], 'One of the nullifiers has already been used');
+    usedNullifiers[_nullifierHash] = true;
+
+    // check that the root exists
+    require(roots[_root], 'The root is not recognised');
+
+    // verify the proof
+    require(
+      verifier.verify(
+        _proof,
+        uint256(_publicInputHash),
+        vks[TransactionTypes.WITHDRAW]
+      ),
+      "The proof has not been verified by the contract"
+    );
+
+    // gas measurement:
+    uint256 gasUsedByVerifierContract = gasCheckpoint - gasleft();
+    gasCheckpoint = gasleft();
+
+    // Now pay out the value of the commitment
+    ERCInterface tokenContract = ERCInterface(
+        address(uint160(uint256(_ercAddress)))
+    );
+    address recipientAddress = address(uint160(uint256(_recipientAddress)));
+    if (_tokenId == zero && _value == zero) // disallow this corner case
+      revert("Zero-value tokens are not allowed");
+
+    if (_tokenId == zero) // must be an ERC20
+      require(
+        tokenContract.transferFrom(
+          address(this),
+          recipientAddress,
+          uint256(_value)
+        ),
+        "ERC20 Commitment cannot be withdrawn"
+      );
+    else if (_value == zero) // must be ERC721
+      require(
+        tokenContract.safeTransferFrom(
+          address(this),
+          recipientAddress,
+          uint256(_tokenId), ''
+        ),
+        "ERC721 Commitment cannot be withdrawn"
+      );
+    else // must be an ERC1155
+      require(
+        tokenContract.safeTransferFrom(
+          address(this),
+          recipientAddress,
+          uint256(_tokenId),
+          uint256(_value),''
+        ),
+        "ERC1155 Commitment cannot be withdrawn"
+      );
 
     // gas measurement:
     gasUsedByShieldContract = gasUsedByShieldContract +
