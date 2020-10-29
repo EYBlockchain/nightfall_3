@@ -9,7 +9,7 @@ import logger from '../utils/logger.mjs';
 import Commitment from '../classes/commitment.mjs';
 
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
-const { GN } = gen;
+const { generalise } = gen;
 
 // function to drop the commitment collection (useful for testing)
 export async function dropCommitments() {
@@ -40,8 +40,8 @@ export async function markNullified(commitment) {
 }
 
 // function to find commitments that can be used in the proposed transfer
-export async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _value) {
-  const value = new GN(_value); // sometimes this is sent as a BigInt.
+export async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _value, onlyOne) {
+  const value = generalise(_value); // sometimes this is sent as a BigInt.
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const commitments = await db
@@ -67,6 +67,7 @@ export async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _
     return null;
   })();
   if (singleCommitment) return singleCommitment;
+  if (onlyOne) return null; // sometimes we require just one commitment
   // if not, maybe we can do a two-commitment transfer, this is a expensive search and this function will tell us:
   return (() => {
     for (let i = 0; i < commitments.length; i++) {

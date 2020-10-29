@@ -32,8 +32,8 @@ async function transfer(items) {
   logger.info('Creating a transfer transaction');
   // let's extract the input items
   const { ercAddress, tokenId, recipientData, senderZkpPrivateKey } = generalise(items);
-  const senderZkpPublicKey = sha256([senderZkpPrivateKey]);
   const { recipientZkpPublicKeys, values } = recipientData;
+  const senderZkpPublicKey = sha256([senderZkpPrivateKey]);
   if (recipientZkpPublicKeys.length > 1)
     throw new Error('Batching is not supported yet: only one recipient is allowed'); // this will not always be true so we try to make the following code agnostic to the number of commitments
 

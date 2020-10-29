@@ -23,7 +23,7 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
-      LOG_LEVEL: debug
+      LOG_LEVEL: silly
       BLOCKCHAIN_HOST: ws://ganache
       BLOCKCHAIN_PORT: 8545
     command: ['npm', 'start']
