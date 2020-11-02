@@ -6,7 +6,7 @@
 
 import { COLLECTIONS } from '../common/constants';
 import { nodeSchema, metadataSchema } from '../models';
-
+import logger from '../../logger';
 /**
 Class created from within src/middleware/assign-db-connection
 @param {object} connection - an instance of mongoose.createConnection (a 'Connection' instance in mongoose terminoligy)
@@ -64,13 +64,11 @@ export default class DB {
       // Save the document to the db:
       const dbResponse = await doc.save();
 
-      console.log('\nsrc/db/mongodb/db save()');
-      // console.log('dbResponse:');
-      // console.log(dbResponse);
+      logger.debug('src/db/mongodb/db save()');
 
       return Promise.resolve(dbResponse);
     } catch (e) {
-      console.log('DB error', e);
+      logger.error(e);
       return Promise.reject(e);
     }
   }
@@ -88,13 +86,12 @@ export default class DB {
       // insert the documents into the db:
       const dbResponse = await Model.insertMany(docs); // insertMany uses a single write operation, rather than iterating through.
 
-      console.log('\nsrc/db/mongodb/db insertMany()');
-      // console.log('dbResponse:');
-      // console.log(dbResponse);
+      logger.debug('src/db/mongodb/db insertMany()');
+      logger.silly(`dbResponse ${JSON.stringify(dbResponse, null, 2)}`);
 
       return Promise.resolve(dbResponse);
     } catch (e) {
-      console.log('DB error', e);
+      logger.error(e);
       return Promise.reject(e);
     }
   }
@@ -110,12 +107,12 @@ export default class DB {
       const Model = this.Models[modelName];
       const doc = await Model.findOne(query, projections);
 
-      console.log('\nsrc/db/mongodb/db getDoc()');
-      // console.log('doc:');
-      // console.log(doc);
+      logger.debug('src/db/mongodb/db getDoc()');
+      logger.silly(`doc ${JSON.stringify(doc, null, 2)}`);
 
       return Promise.resolve(doc);
     } catch (e) {
+      logger.error(e);
       return Promise.reject(e);
     }
   }
@@ -136,13 +133,12 @@ export default class DB {
         .limit(limit) // output only the 'top' n results
         .exec();
 
-      console.log('\nsrc/db/mongodb/db getDocs()');
-      // console.log('docs:');
-      // console.log(docs);
+      logger.debug('src/db/mongodb/db getDocs()');
+      logger.silly(`docs ${JSON.stringify(docs, null, 2)}`);
 
       return Promise.resolve(docs);
     } catch (e) {
-      console.log('DB error', e);
+      logger.error(e);
       return Promise.reject(e);
     }
   }
@@ -160,12 +156,12 @@ export default class DB {
       const Model = this.Models[modelName];
       const doc = await Model.updateOne(query, updateData, options);
 
-      console.log('\nsrc/db/mongodb/db updateDoc()');
-      // console.log('doc:');
-      // console.log(doc);
+      logger.debug('src/db/mongodb/db updateDoc()');
+      logger.silly(`doc ${JSON.stringify(doc, null, 2)}`);
 
       return Promise.resolve(doc);
     } catch (e) {
+      logger.error(e);
       return Promise.reject(e);
     }
   }
@@ -183,12 +179,12 @@ export default class DB {
       const Model = this.Models[modelName];
       const dbResponse = await Model.collection.bulkWrite(bulkUpdates); // CAUTION: we've used 'Model.collection...' rather than mongoose's built-in 'Model.' '' functions, and so validation might be being skipped!
 
-      console.log('\nsrc/db/mongodb/db bulkWrite()');
-      // console.log('dbResponse:');
-      // console.log(dbResponse);
+      logger.debug('src/db/mongodb/db bulkWrite()');
+      logger.silly(`dbResponse ${JSON.stringify(dbResponse, null, 2)}`);
 
       return Promise.resolve(dbResponse);
     } catch (e) {
+      logger.error(e);
       return Promise.reject(e);
     }
   }
@@ -233,13 +229,12 @@ export default class DB {
       const Model = this.Models[modelName];
       const count = await Model.countDocuments(query);
 
-      console.log('\nsrc/db/mongodb/db countDocuments()');
-      // console.log('count:');
-      // console.log(count);
+      logger.debug('src/db/mongodb/db countDocuments()');
+      logger.silly(`count ${JSON.stringify(count, null, 2)}`);
 
       return Promise.resolve(count);
     } catch (e) {
-      console.log('DB error', e);
+      logger.error(e);
       return Promise.reject(e);
     }
   }

@@ -12,6 +12,7 @@ import { compileContract } from './compile';
 import utilsWeb3 from './utils-web3';
 import utilsPoll from './utils-poll';
 import Web3 from './web3';
+import logger from './logger';
 
 const web3 = Web3.connect();
 
@@ -25,7 +26,7 @@ const getContractInstancePollingFunction = async args => {
     const contractInstance = await deployerRest.getContractInstance(contractName);
     return contractInstance;
   } catch (err) {
-    console.log(
+    logger.warn(
       `Got a polling error "${err}", but that might be because the external server missed our call - we'll poll again...`,
     );
     return false;
@@ -42,8 +43,6 @@ async function getContractInstanceFromRemote(db, contractName) {
     config.POLLING_FREQUENCY,
     { contractName },
   );
-  // console.log('contractInstance:');
-  // console.log(contractInstance);
 
   // retrieve the address of the contract we wish to filter events for:
   let { contractAddress } = (await metadataService.getContractAddress()) || {};
@@ -51,7 +50,7 @@ async function getContractInstanceFromRemote(db, contractName) {
   if (contractAddress === undefined) {
     // if no contractAddress in the mongodb, add it to the db:
     contractAddress = contractInstance._address; // eslint-disable-line no-underscore-dangle
-    console.log(
+    logger.info(
       `contractAddress ${contractAddress} not yet added to the merkle-tree's metadata db. Adding it now...`,
     );
     await metadataService.insertContractAddress({ contractAddress });
@@ -70,8 +69,8 @@ Gets a web3 contract instance a contract, and checks its consistency with the me
 @param {object} db - an instance of mongoose.createConnection (a 'Connection' instance in mongoose terminoligy). This contains permissions to access the merkle tree's databases.
 */
 async function getContractInstanceFromMongoDB(db, contractName) {
-  console.log(
-    `\nsrc/contract-controller getContractInstanceFromMongoDB(db, contractName=${contractName})`,
+  logger.debug(
+    `src/contract-controller getContractInstanceFromMongoDB(db, contractName=${contractName})`,
   );
 
   const metadataService = new MetadataService(db);
@@ -87,8 +86,8 @@ async function getContractInstanceFromMongoDB(db, contractName) {
 }
 
 async function getContractInstanceFromContractsFolder(db, contractName, contractAddress) {
-  console.log(
-    `\nsrc/contract-controller getContractInstanceFromContractsFolder(db, contractName=${contractName}, contractAddress=${contractAddress})`,
+  logger.debug(
+    `src/contract-controller getContractInstanceFromContractsFolder(db, contractName=${contractName}, contractAddress=${contractAddress})`,
   );
 
   const metadataService = new MetadataService(db);
@@ -100,14 +99,14 @@ async function getContractInstanceFromContractsFolder(db, contractName, contract
   const contractInstance = await utilsWeb3.getContractInstance(contractName, contractAddress);
 
   // Then add its address to the db:
-  console.log(`Adding contractAddress ${contractAddress} to the merkle-tree's metadata db...`);
+  logger.info(`Adding contractAddress ${contractAddress} to the merkle-tree's metadata db...`);
   await metadataService.insertContractAddress({ contractAddress });
 
   return contractInstance;
 }
 
 async function getContractInstanceFromBuildFolder(db, contractName, contractAddress) {
-  console.log(
+  logger.debug(
     `\nsrc/contract-controller getContractInstanceFromBuildFolder(db, contractName=${contractName})`,
   );
 
@@ -126,7 +125,7 @@ async function getContractInstanceFromBuildFolder(db, contractName, contractAddr
   const contractInstance = await utilsWeb3.getContractInstance(contractName, contractAddress);
 
   // Then add its address to the db:
-  console.log(`Adding contractAddress ${contractAddress} to the merkle-tree's metadata db...`);
+  logger.info(`Adding contractAddress ${contractAddress} to the merkle-tree's metadata db...`);
   await metadataService.insertContractAddress({ contractAddress });
 
   return contractInstance;
@@ -137,28 +136,28 @@ Gets a web3 contract instance a contract, and checks its consistency with the me
 @param {object} db - an instance of mongoose.createConnection (a 'Connection' instance in mongoose terminoligy). This contains permissions to access the merkle tree's databases.
 */
 async function instantiateContract(db, contractName, contractAddress) {
-  console.log(
-    `\nsrc/contract-controller instantiateContract(db, contractName=${contractName}, contractAddress=${contractAddress})`,
+  logger.debug(
+    `src/contract-controller instantiateContract(db, contractName=${contractName}, contractAddress=${contractAddress})`,
   );
   let contractInstance;
   // different logic is needed depending on where the contract's interface json is stored:
   switch (config.contractOrigin) {
     case 'remote':
       // 'remote' - get a (truffle-compiled) contract interface json, and the deployed contract address, from an external deployment microservice. A web3 contract instance is created from these components and assigned to contractInstance:
-      console.log(`\nGetting contract from contractOrigin 'remote'...`);
+      logger.info(`\nGetting contract from contractOrigin 'remote'...`);
       contractInstance = await getContractInstanceFromRemote(db, contractName);
       break;
 
     case 'mongodb':
       // 'mongodb' - get a (truffle-comiled) contract interface json, and the deployed contract address, from mongodb (e.g. if the info had been POSTed there by some external microservice). A web3 contract instance is created from these components and assigned to contractInstance:
-      console.log(`\nGetting contract from contractOrigin 'mongodb'...`);
+      logger.info(`\nGetting contract from contractOrigin 'mongodb'...`);
       contractInstance = await getContractInstanceFromMongoDB(db, contractName);
       break;
 
     case 'compile':
       // 'compile' - Useful if the application using Timber doesn't use truffle to generate contract interface json's. Get solidity contracts from the /app/contracts/ folder, and compile them (using truffle) at startup. A web3 contract instance is created from the compiled contract interface & deployed address and assigned to contractInstance:
-      console.log(
-        `\nCompiling the contracts from '/app/contracts/' and then getting contract from contractOrigin '/app/build/'...`,
+      logger.info(
+        `Compiling the contracts from '/app/contracts/' and then getting contract from contractOrigin '/app/build/'...`,
       );
       contractInstance = await getContractInstanceFromContractsFolder(
         db,
@@ -169,7 +168,7 @@ async function instantiateContract(db, contractName, contractAddress) {
 
     default:
       // 'default' - get the (truffle-compiled) contract interface json from the /app/build folder. Infer the contract's address from this json file. A web3 contract instance is created from these components and assigned to contractInstance:
-      console.log(`\nGetting contract from contractOrigin '/app/build/'...`);
+      logger.info(`Getting contract from contractOrigin '/app/build/'...`);
       contractInstance = await getContractInstanceFromBuildFolder(
         db,
         contractName,

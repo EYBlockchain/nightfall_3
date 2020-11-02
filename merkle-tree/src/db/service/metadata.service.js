@@ -6,6 +6,7 @@
 
 import { COLLECTIONS } from '../common/constants';
 import { metadataMapper } from '../mappers';
+import logger from '../../logger';
 
 export default class MetadataService {
   constructor(_db) {
@@ -19,7 +20,7 @@ export default class MetadataService {
   @param {object} data
   */
   async insertContractAddress(data) {
-    console.log('\nsrc/db/service/metadata.service insertContractAddress()');
+    logger.debug('src/db/service/metadata.service insertContractAddress()');
     const { contractAddress } = metadataMapper(data);
     if (contractAddress === undefined) return null;
 
@@ -38,7 +39,7 @@ export default class MetadataService {
   @param {object} data
   */
   async insertContractInterface(data) {
-    console.log('\nsrc/db/service/metadata.service insertContractInterface()');
+    logger.debug('src/db/service/metadata.service insertContractInterface()');
     const { contractInterface } = metadataMapper(data);
     if (contractInterface === undefined) return null;
 
@@ -57,7 +58,7 @@ export default class MetadataService {
   @returns {object} the { treeHeight }
   */
   async getTreeHeight() {
-    console.log('\nsrc/db/service/metadata.service getTreeHeight()');
+    logger.debug('src/db/service/metadata.service getTreeHeight()');
 
     let doc = await this.db.getDoc(
       COLLECTIONS.METADATA,
@@ -73,7 +74,7 @@ export default class MetadataService {
   @param {object} data
   */
   async insertTreeHeight(data) {
-    console.log('\nsrc/db/service/metadata.service insertTreeHeight()');
+    logger.debug('src/db/service/metadata.service insertTreeHeight()');
 
     // TODO: although a check is done within the filter-controller to prevent treeHeight overwrites, users who call the API endpoint aren't protected unless we have code here. Unfortunately, this strong error-throwing code is too disruptive. Handle more intelligently, like the filter does.
     // const { treeHeight: checkTreeHeight } = await this.getTreeHeight();
@@ -82,7 +83,7 @@ export default class MetadataService {
 
     const { treeHeight } = metadataMapper(data);
     if (treeHeight === undefined) return null;
-    console.log(`treeHeight: ${treeHeight}`);
+    logger.debug(`treeHeight: ${treeHeight}`);
 
     const dbResponse = await this.db.updateDoc(
       COLLECTIONS.METADATA,
@@ -101,13 +102,13 @@ export default class MetadataService {
   @param {object} data
   */
   async updateLatestLeaf(data) {
-    console.log('\nsrc/db/service/metadata.service updateLatestLeaf()');
-    // console.log('\ndata before mapping:', data);
+    logger.debug('src/db/service/metadata.service updateLatestLeaf()');
+    logger.silly(`data before mapping: ${JSON.stringify(data, null, 2)}`);
     const mappedData = metadataMapper(data);
-    // console.log('\ndata after mapping:', mappedData);
+    logger.silly(`data after mapping: ${JSON.stringify(mappedData, null, 2)}`);
 
     const { latestLeaf } = mappedData;
-    console.log('latestLeaf:', latestLeaf);
+    logger.debug('latestLeaf:', latestLeaf);
     if (latestLeaf === undefined) return null;
 
     const doc = await this.db.updateDoc(
@@ -125,20 +126,19 @@ export default class MetadataService {
   @param {object} data
   */
   async updateLatestRecalculation(data) {
-    console.log('\nsrc/db/service/metadata.service updateLatestRecalculation()');
-    // console.log('\ndata before mapping:', data);
+    logger.debug('src/db/service/metadata.service updateLatestRecalculation()');
+    logger.silly(`data before mapping: ${JSON.stringify(data, null, 2)}`);
     const mappedData = metadataMapper(data);
-    // console.log('\ndata after mapping:', mappedData);
+    logger.silly(`data after mapping: ${JSON.stringify(mappedData, null, 2)}`);
 
     const { latestRecalculation } = mappedData;
-    console.log('latestRecalculation:', latestRecalculation);
+    logger.silly(`latestRecalculation: ${JSON.stringify(latestRecalculation, null, 2)}`);
     if (latestRecalculation === undefined) return null;
 
     const doc = await this.db.updateDoc(
       COLLECTIONS.METADATA,
       { _id: 1 }, // 'match all' (within our one document)
       { $set: { latestRecalculation } },
-      // { upsert: false }, // we only ever want 1 'tree' document, so don't want to upsert
     );
 
     return doc;
@@ -149,7 +149,7 @@ export default class MetadataService {
   @returns {object} the tree metadata object
   */
   async getMetadata() {
-    console.log('\nsrc/db/service/metadata.service getMetadata()');
+    logger.debug('src/db/service/metadata.service getMetadata()');
 
     const doc = await this.db.getDoc(
       COLLECTIONS.METADATA,
@@ -164,7 +164,7 @@ export default class MetadataService {
   @returns {object} the { contractAddress }
   */
   async getContractAddress() {
-    console.log('\nsrc/db/service/metadata.service getContractAddress()');
+    logger.debug('src/db/service/metadata.service getContractAddress()');
 
     const doc = await this.db.getDoc(
       COLLECTIONS.METADATA,
@@ -180,7 +180,7 @@ export default class MetadataService {
   @returns {object} the { contractInterface }
   */
   async getContractInterface() {
-    console.log('\nsrc/db/service/metadata.service getContractInterface()');
+    logger.debug('src/db/service/metadata.service getContractInterface()');
 
     const doc = await this.db.getDoc(
       COLLECTIONS.METADATA,
@@ -202,7 +202,7 @@ export default class MetadataService {
   @returns {object} the latestRecalculation object
   */
   async getLatestRecalculation() {
-    console.log('\nsrc/db/service/metadata.service getLatestRecalculation()');
+    logger.debug('src/db/service/metadata.service getLatestRecalculation()');
 
     let doc = await this.db.getDoc(
       COLLECTIONS.METADATA,
@@ -219,7 +219,7 @@ export default class MetadataService {
   @returns {object} the latestLeaf object
   */
   async getLatestLeaf() {
-    console.log('\nsrc/db/service/metadata.service getLatestLeaf()');
+    logger.debug('src/db/service/metadata.service getLatestLeaf()');
 
     const doc = await this.db.getDoc(
       COLLECTIONS.METADATA,

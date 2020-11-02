@@ -9,15 +9,16 @@ npx babel-node console-testing
 */
 
 import utilsMT from './utils-merkle-tree';
+import logger from './logger';
 
-// console.log(utilsMT.rightChildBinaryIndex(0b11).toString(2));
+// logger.debug(utilsMT.rightChildBinaryIndex(0b11).toString(2));
 
-// console.log(utilsMT.getSiblingPathIndices('50'));
+// logger.debug(utilsMT.getSiblingPathIndices('50'));
 
-// console.log(utilsMT.testMerkleRecursion(0));
+// logger.debug(utilsMT.testMerkleRecursion(0));
 
 async function main() {
-  console.log(utilsMT.numberOfHashes(2 ** 31, 5, 32));
+  logger.debug(utilsMT.numberOfHashes(2 ** 31, 5, 32));
 }
 
 main();

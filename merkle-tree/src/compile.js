@@ -6,15 +6,16 @@ import fs from 'fs-extra';
 import solc from 'solc';
 import config from 'config';
 import { releases } from './solc-versions-list';
+import logger from './logger';
 
 const { contractsPath } = config;
 const { buildPath } = config;
 
 const getSolcVersion = contractName => {
-  console.log('getSolcVersion...');
+  logger.debug('getSolcVersion...');
   const contractsFiles = fs.readdirSync(contractsPath);
   const source = {};
-  console.log('CONTRACTSFILES:', contractsFiles);
+  logger.debug(`CONTRACTSFILES: ${JSON.stringify(contractsFiles)}`);
 
   contractsFiles.forEach(fileName => {
     if (contractName === path.basename(fileName, '.sol')) {
@@ -26,24 +27,22 @@ const getSolcVersion = contractName => {
     }
   });
 
-  // console.log('source:', source);
-
   if (Object.keys(source).length === 0 && source.constructor === Object)
     throw new Error(`Contract ${contractName} not found in ${contractsPath}.`);
 
   const sourceCodeString = JSON.stringify(source);
   const regex = new RegExp(/(?<=pragma solidity .)(0).*?(?=;)/g);
   const solcVersion = sourceCodeString.match(regex);
-  console.log(`solcVersion for ${contractName} is ${solcVersion}`);
+  logger.info(`solcVersion for ${contractName} is ${solcVersion}`);
   return solcVersion;
 };
 
 const buildSources = () => {
-  console.log('buildSources...');
+  logger.info('buildSources...');
   const sources = {};
   const contractsFiles = fs.readdirSync(contractsPath);
 
-  console.log('CONTRACTSFILES:', contractsFiles);
+  logger.info(`CONTRACTSFILES: ${JSON.stringify(contractsFiles)}`);
 
   contractsFiles.forEach(file => {
     if (path.extname(file) === '.sol') {
@@ -53,8 +52,6 @@ const buildSources = () => {
       };
     }
   });
-
-  // console.log('SOURCES:', sources);
 
   return sources;
 };
@@ -76,11 +73,11 @@ const createSolcInput = sources => {
 
 const compile = (solcInstance, input) => {
   const compiledOutput = solcInstance.compile(JSON.stringify(input));
-  console.log('COMPILED OUTPUT:', JSON.parse(compiledOutput).errors || 'no errors :)');
+  logger.info(`COMPILED OUTPUT: ${JSON.parse(compiledOutput).errors || 'no errors'}`);
 
   const compiledContracts = JSON.parse(compiledOutput).contracts;
 
-  console.log('COMPILED CONTRACTS:', compiledContracts);
+  logger.info(`COMPILED CONTRACTS: ${JSON.stringify(compiledContracts)}`);
   // eslint-disable-next-line no-restricted-syntax
   for (const contract of Object.keys(compiledContracts)) {
     // eslint-disable-next-line no-restricted-syntax

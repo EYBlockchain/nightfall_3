@@ -1,4 +1,4 @@
-import logger from './logger';
+import logger from '../logger';
 
 export function formatResponse(req, res, next) {
   const { data } = res;
@@ -14,9 +14,8 @@ export function formatResponse(req, res, next) {
 }
 
 export function formatError(err, req, res, next) {
-  console.log('\nsrc/middleware/response formatError()');
-  console.log('err:');
-  console.log(err);
+  logger.debug('src/middleware/response formatError()');
+  logger.error(`error: ${JSON.stringify(err, null, 2)}`);
 
   next({
     code: err.code,
@@ -27,9 +26,8 @@ export function formatError(err, req, res, next) {
 }
 
 export function errorHandler(err, req, res, next) {
-  console.log('\nsrc/middleware/response errorHandler()');
-  console.log('err:');
-  console.log(err);
+  logger.debug('src/middleware/response errorHandler()');
+  logger.error(`error: ${JSON.stringify(err, null, 2)}`);
 
   res.status(err.status || 500).send({
     error: err,
@@ -39,19 +37,7 @@ export function errorHandler(err, req, res, next) {
 }
 
 export function logError(err, req, res, next) {
-  console.log('\nsrc/middleware/response logError()');
-  console.log('err:');
-  console.log(err);
-
-  logger.error(
-    `${req.method}:${req.url}
-    ${JSON.stringify({ error: err.message })}
-    ${JSON.stringify({ errorStack: err.stack.split('\n') }, null, 1)}
-    ${JSON.stringify({ body: req.body })}
-    ${JSON.stringify({ params: req.params })}
-    ${JSON.stringify({ query: req.query })}
-  `,
-  );
-  console.error(JSON.stringify(err, null, 2));
+  logger.debug('src/middleware/response logError()');
+  logger.error(`error: ${JSON.stringify(err, null, 2)}`);
   next(err);
 }

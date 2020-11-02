@@ -1,15 +1,22 @@
 import config from 'config';
 import adminDbConnection from '../db/common/adminDbConnection';
 import DB from '../db/mongodb/db';
+import logger from '../logger';
 
 const { admin } = config.get('mongo');
 
 export default async function(req, res, next) {
-  console.log('\nsrc/middleware/assign-db-connection');
-  console.log('req.query, req.body:', req.query, req.body);
+  logger.debug('src/middleware/assign-db-connection');
+  logger.silly(
+    `req.query: ${JSON.stringify(req.query, null, 2)}, req.body: ${JSON.stringify(
+      req.body,
+      null,
+      2,
+    )}`,
+  );
 
   try {
-    let contractName  = req.body.contractName || req.query.contractName;
+    let contractName = req.body.contractName || req.query.contractName;
     if (contractName === undefined) {
       const contractNameTest = req.body[0].contractName;
       if (contractNameTest === undefined) {
@@ -19,17 +26,16 @@ export default async function(req, res, next) {
       }
     }
     const treeId = req.body.treeId || req.query.treeId;
-    // console.log(`treeId: ${treeId}`);
+    logger.silly(`treeId: ${treeId}`);
     req.user = {};
     // give all requesters admin privileges:
-    // console.log('\nAssigning req.user.connection as', adminDbConnection);
     req.user.connection = adminDbConnection;
 
     req.user.db = new DB(req.user.connection, admin, contractName, treeId);
 
     return next();
   } catch (err) {
-    console.log(err);
+    logger.error(err);
     return next(err);
   }
 }

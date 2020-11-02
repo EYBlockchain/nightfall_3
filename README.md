@@ -152,6 +152,10 @@ It's up and running!
 
 ### Using
 
+#### Logging
+
+The logging level in Timber can be set to any of: error, warn, info, http, debug or silly (default: info) via the environment variable `LOG_LEVEL`.
+
 #### Example usage:
 
 ##### Add leaves to the tree:
