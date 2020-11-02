@@ -6,6 +6,7 @@
 
 import { COLLECTIONS } from '../common/constants';
 import { leafMapper } from '../mappers';
+import logger from '../../logger';
 
 export default class LeafService {
   constructor(_db) {
@@ -20,10 +21,10 @@ export default class LeafService {
   @param {object} leaf
   */
   async insertLeaf(treeHeight, leaf) {
-    console.log('\nsrc/db/service/leaf.service insertLeaf()');
-    // console.log('data before mapping:', data);
+    logger.silly(`data before mapping: ${JSON.stringify(leaf, null, 2)}`);
+    logger.debug('src/db/service/leaf.service insertLeaf()');
     const mappedData = leafMapper(treeHeight, leaf);
-    // console.log('data after mapping:', mappedData);
+    logger.silly(`data after mapping: ${JSON.stringify(mappedData, null, 2)}`);
 
     // insert the leaf into the 'nodes' collection:
     try {
@@ -31,8 +32,8 @@ export default class LeafService {
       return dbResponse;
     } catch (err) {
       if (err.code === 11000) {
-        console.log(
-          '\nIgnore the above "DB Error" message. The record already exists. No overwrite has happened. This is acceptable.',
+        logger.warn(
+          'You may wish to ignore the above "DB Error" message. The record already exists. No overwrite has happened. This is acceptable.',
         );
         return false;
       }
@@ -46,10 +47,10 @@ export default class LeafService {
   @param {array} leaves - an array of leaf objects ('documents')
   */
   async insertLeaves(treeHeight, leaves) {
-    console.log('\nsrc/db/service/leaf.service insertLeaves()');
-    // console.log('data before mapping:', leaves);
+    logger.debug('src/db/service/leaf.service insertLeaves()');
+    logger.silly(`data before mapping: ${JSON.stringify(leaves, null, 2)}`);
     const mappedData = leaves.map(leaf => leafMapper(treeHeight, leaf));
-    // console.log('data after mapping:', mappedData);
+    logger.silly(`data after mapping: ${JSON.stringify(mappedData, null, 2)}`);
 
     // insert the leaves into the 'nodes' collection:
     try {
@@ -57,8 +58,8 @@ export default class LeafService {
       return dbResponse;
     } catch (err) {
       if (err.code === 11000) {
-        console.log(
-          '\nIgnore the above "DB Error" message. The record already exists. No overwrite has happened. This is acceptable.',
+        logger.warn(
+          'You may wish to ignore the above "DB Error" message. The record already exists. No overwrite has happened. This is acceptable.',
         );
         return false;
       }
@@ -78,7 +79,7 @@ export default class LeafService {
   @returns {object} the leaf object
   */
   async getLeafByLeafIndex(leafIndex) {
-    console.log('\nsrc/db/service/leaf.service getLeafByLeafIndex()');
+    logger.debug('src/db/service/leaf.service getLeafByLeafIndex()');
 
     const doc = await this.db.getDoc(COLLECTIONS.NODE, {
       leafIndex,
@@ -93,7 +94,7 @@ export default class LeafService {
   @returns {array} an array of leaf objects
   */
   async getLeavesByLeafIndices(leafIndices) {
-    console.log('\nsrc/db/service/leaf.service getLeavesByLeafIndices()');
+    logger.debug('src/db/service/leaf.service getLeavesByLeafIndices()');
 
     const docs = await this.db.getDocs(
       COLLECTIONS.NODE,
@@ -112,7 +113,7 @@ export default class LeafService {
   @returns {array} an array of leaf objects
   */
   async getLeavesByLeafIndexRange(minIndex, maxIndex) {
-    console.log('\nsrc/db/service/leaf.service getLeavesByLeafIndexRange()');
+    logger.debug('src/db/service/leaf.service getLeavesByLeafIndexRange()');
 
     const docs = await this.db.getDocs(
       COLLECTIONS.NODE,
@@ -130,7 +131,7 @@ export default class LeafService {
   @returns {object} the leaf object(s)
   */
   async getLeafByValue(value) {
-    console.log('\nsrc/db/service/leaf.service getLeafByValue()');
+    logger.debug('src/db/service/leaf.service getLeafByValue()');
 
     const docs = await this.db.getDoc(COLLECTIONS.NODE, {
       value,
@@ -145,7 +146,7 @@ export default class LeafService {
   @returns {array} an array of leaf objects
   */
   async getLeavesByValues(values) {
-    console.log('\nsrc/db/service/leaf.service getLeavesByValues()');
+    logger.debug('src/db/service/leaf.service getLeavesByValues()');
 
     const docs = await this.db.getDocs(
       COLLECTIONS.NODE,
@@ -162,7 +163,7 @@ export default class LeafService {
   @returns {array} an array of leaf objects
   */
   async getLeaves() {
-    console.log('\nsrc/db/service/leaf.service getLeaves()');
+    logger.debug('src/db/service/leaf.service getLeaves()');
 
     const docs = await this.db.getDocs(
       COLLECTIONS.NODE,
@@ -180,7 +181,7 @@ export default class LeafService {
   @returns {array} an array of leaf values, in ascending order (by leafIndex)
   */
   async getLeafValues() {
-    console.log('\nsrc/db/service/leaf.service getLeafValues()');
+    logger.debug('src/db/service/leaf.service getLeafValues()');
 
     const docs = await this.db.getDocs(
       COLLECTIONS.NODE,
@@ -196,7 +197,7 @@ export default class LeafService {
   Get the leaf document for the latest leaf (i.e. the one with the max index)
   */
   async getLatestLeaf() {
-    console.log('\nsrc/db/service/leaf.service getLatestLeaf()');
+    logger.debug('src/db/service/leaf.service getLatestLeaf()');
 
     // insert the leaf into the 'nodes' collection:
     const doc = await this.db.getDocs(
@@ -216,7 +217,7 @@ export default class LeafService {
   Count the number of leaves stored in the merkle tree
   */
   async countLeaves() {
-    console.log('\nsrc/db/service/leaf.service countLeaves()');
+    logger.debug('src/db/service/leaf.service countLeaves()');
 
     const leafCount = await this.db.countDocuments(COLLECTIONS.NODE, {
       leafIndex: { $exists: true },
@@ -229,7 +230,7 @@ export default class LeafService {
   Get the maximum leafIndex stored in the db
   */
   async maxLeafIndex() {
-    console.log('\nsrc/db/service/leaf.service maxLeafIndex()');
+    logger.debug('src/db/service/leaf.service maxLeafIndex()');
 
     const doc = await this.db.getDocs(
       COLLECTIONS.NODE,
@@ -245,7 +246,7 @@ export default class LeafService {
   }
 
   async findMissingLeaves(startLeafIndex, endLeafIndex) {
-    console.log('\nsrc/db/service/leaf.service findMissingLeaves()');
+    logger.debug('src/db/service/leaf.service findMissingLeaves()');
 
     const missingLeaves = await this.db.aggregate(
       COLLECTIONS.NODE,

@@ -11,8 +11,4 @@ dbConnections.admin = mongoose.createConnection(
 
 const adminDbConnection = dbConnections.admin;
 
-// console.log('\nsrc/db/common/adminDbConnection');
-// console.log('adminDbConnection:');
-// console.log(adminDbConnection);
-
 export default adminDbConnection;

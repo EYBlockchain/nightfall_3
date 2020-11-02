@@ -7,8 +7,8 @@
 /* eslint-disable no-bitwise */ // bit operations are essential for merkle-tree computations.
 
 import config from 'config';
-
 import utils from './utils';
+import logger from './logger';
 
 function rightShift(integer, shift) {
   return Math.floor(integer / 2 ** shift);
@@ -155,10 +155,9 @@ function getFrontierSlot(leafIndex) {
 
 /**
 A js implementation of the corresponding Solidity function in MerkleTree.sol
-@notice KEEP ALL CONSOLE LOGGING (even if commented out) FOR FUTURE DEBUGGING.
 */
 async function updateNodes(leafValues, currentLeafCount, frontier, height, updateNodesFunction) {
-  console.log(`\nsrc/utils-merkle-tree updateNodes()`);
+  logger.debug(`\nsrc/utils-merkle-tree updateNodes()`);
   const treeWidth = 2 ** height;
   const newFrontier = frontier;
 
@@ -178,49 +177,49 @@ async function updateNodes(leafValues, currentLeafCount, frontier, height, updat
     leafIndex++
   ) {
     nodeValueFull = leafValues[leafIndex - currentLeafCount];
-    // console.log('nodeValueFull:', nodeValueFull, 'hashlength:', config.NODE_HASHLENGTH);
+    logger.silly(`nodeValueFull: ${nodeValueFull}, hashlength: ${config.NODE_HASHLENGTH}`);
     if (!utils.isHex(nodeValueFull)) {
       nodeValueFull = utils.convertBase(nodeValueFull.toString(), 10, 16);
-      // console.log('nodeValueFull:', nodeValueFull, 'hashlength:', config.NODE_HASHLENGTH);
+      logger.silly(`nodeValueFull: ${nodeValueFull}, hashlength: ${config.NODE_HASHLENGTH}`);
     }
     nodeValue = `0x${nodeValueFull.slice(-config.NODE_HASHLENGTH * 2)}`; // truncate hashed value, so it 'fits' into the next hash.
-    // console.log('nodeValue:', nodeValue);
+    logger.silly(`nodeValue: ${nodeValue})`);
     nodeIndex = leafIndexToNodeIndex(leafIndex, height); // convert the leafIndex to a nodeIndex
 
     slot = getFrontierSlot(leafIndex); // determine at which level we will next need to store a nodeValue
 
     if (slot === 0) {
-      // console.log('below slot');
-      // console.log('level', 0);
-      // console.log('slot', slot);
+      logger.silly('below slot');
+      logger.silly('level 0');
+      logger.silly(`slot: ${slot}`);
       newFrontier[slot] = nodeValue; // store in frontier
-      // console.log('frontier', frontier);
+      logger.silly(`frontier ${JSON.stringify(frontier, null, 2)}`);
       continue; // eslint-disable-line no-continue
     }
 
     // hash up to the level whose nodeValue we'll store in the frontier slot:
     for (let level = 1; level <= slot; level++) {
-      // console.log('below slot');
-      // console.log('level', level);
-      // console.log('slot', slot);
+      logger.silly('below slot');
+      logger.silly(`level ${level}`);
+      logger.silly(`slot ${slot}`);
       if (nodeIndex % 2 === 0) {
         // even nodeIndex
-        // console.log('leafIndex', leafIndex);
-        // console.log('nodeIndex', nodeIndex);
-        // console.log('left input', frontier[level - 1]);
-        // console.log('right input', nodeValue);
+        logger.silly(`leafIndex ${leafIndex}`);
+        logger.silly(`nodeIndex ${nodeIndex}`);
+        logger.silly(`left input ${frontier[level - 1]}`);
+        logger.silly(`right input ${nodeValue}`);
         nodeValueFull = utils.concatenateThenHash(frontier[level - 1], nodeValue); // the parentValue, but will become the nodeValue of the next level
         nodeValue = `0x${nodeValueFull.slice(-config.NODE_HASHLENGTH * 2)}`; // truncate hashed value, so it 'fits' into the next hash.
-        // console.log('output', nodeValue);
+        logger.silly(`output ${nodeValue}`);
       } else {
         // odd nodeIndex
-        // console.log('leafIndex', leafIndex);
-        // console.log('nodeIndex', nodeIndex);
-        // console.log('left input', nodeValue);
-        // console.log('right input', config.ZERO);
+        logger.silly(`leafIndex ${leafIndex}`);
+        logger.silly(`nodeIndex ${nodeIndex}`);
+        logger.silly(`left input ${nodeValue}`);
+        logger.silly(`right input ${config.ZERO}`);
         nodeValueFull = utils.concatenateThenHash(nodeValue, config.ZERO); // the parentValue, but will become the nodeValue of the next level
         nodeValue = `0x${nodeValueFull.slice(-config.NODE_HASHLENGTH * 2)}`; // truncate hashed value, so it 'fits' into the next hash.
-        // console.log('output', nodeValue);
+        logger.silly(`output ${nodeValue}`);
       }
       nodeIndex = parentNodeIndex(nodeIndex); // move one row up the tree
 
@@ -231,37 +230,37 @@ async function updateNodes(leafValues, currentLeafCount, frontier, height, updat
       };
       if (!updateNodesFunction) {
         // e.g. for use NOT with a db
-        console.log(node);
+        logger.silly(node);
       } else {
         await updateNodesFunction(node); // eslint-disable-line no-await-in-loop
       }
     }
 
     newFrontier[slot] = nodeValue; // store in frontier
-    // console.log(frontier);
+    logger.silly(`frontier, ${JSON.stringify(frontier, null, 2)}`);
   }
 
   // So far we've added all leaves, and hashed up to a particular level of the tree. We now need to continue hashing from that level until the root:
   for (let level = slot + 1; level <= height; level++) {
-    // console.log('above slot');
-    // console.log('level', level);
-    // console.log('slot', slot);
+    logger.silly('above slot');
+    logger.silly(`level, ${level}`);
+    logger.silly(`slot, ${slot}`);
     if (nodeIndex % 2 === 0) {
       // even nodeIndex
-      // console.log('nodeIndex', nodeIndex);
-      // console.log('left input', frontier[level - 1]);
-      // console.log('right input', nodeValue);
+      logger.silly(`nodeIndex, ${nodeIndex}`);
+      logger.silly(`left input, ${frontier[level - 1]}`);
+      logger.silly(`right input, ${nodeValue}`);
       nodeValueFull = utils.concatenateThenHash(frontier[level - 1], nodeValue); // the parentValue, but will become the nodeValue of the next level
       nodeValue = `0x${nodeValueFull.slice(-config.NODE_HASHLENGTH * 2)}`; // truncate hashed value, so it 'fits' into the next hash.
-      // console.log('output', nodeValue);
+      logger.silly(`output: ${nodeValue}`);
     } else {
       // odd nodeIndex
-      // console.log('nodeIndex', nodeIndex);
-      // console.log('left input', nodeValue);
-      // console.log('right input', config.ZERO);
+      logger.silly(`nodeIndex, ${nodeIndex}`);
+      logger.silly(`left input, ${nodeValue}`);
+      logger.silly(`right input, ${config.ZERO}`);
       nodeValueFull = utils.concatenateThenHash(nodeValue, config.ZERO); // the parentValue, but will become the nodeValue of the next level
       nodeValue = `0x${nodeValueFull.slice(-config.NODE_HASHLENGTH * 2)}`; // truncate hashed value, so it 'fits' into the next hash.
-      // console.log('output', nodeValue);
+      logger.silly(`output, ${nodeValue}`);
     }
     nodeIndex = parentNodeIndex(nodeIndex); // move one row up the tree
     const node = {
@@ -269,14 +268,14 @@ async function updateNodes(leafValues, currentLeafCount, frontier, height, updat
       nodeIndex,
     };
     if (!updateNodesFunction) {
-      console.log(node);
+      logger.debug(`node, ${node}`);
     } else {
       // add the node to the db
       await updateNodesFunction(node); // eslint-disable-line no-await-in-loop
     }
   }
   const root = nodeValueFull;
-  console.log('root:', root);
+  logger.debug(`root: ${root}`);
 
   return [root, newFrontier];
 }
@@ -318,7 +317,7 @@ function loopNumberOfHashes(batchSize, height) {
     lo = i;
     hi = i + batchSize - 1;
     const numberOfHashes = getNumberOfHashes(hi, lo, height);
-    console.log(`(${hi}, ${lo}) = ${numberOfHashes}`);
+    logger.silly(`(${hi}, ${lo}) = ${numberOfHashes}`);
   }
   return true;
 }

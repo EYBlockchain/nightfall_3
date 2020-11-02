@@ -6,6 +6,7 @@
 
 import { LeafService, MetadataService } from '../db/service';
 import merkleTreeController from '../merkle-tree-controller';
+import logger from '../logger';
 
 /**
  * Add a new leaf to the tree's 'nodes' db.
@@ -22,9 +23,8 @@ import merkleTreeController from '../merkle-tree-controller';
  * @param {*} res
  */
 async function insertLeaf(req, res, next) {
-  console.log('\nsrc/routes/leaf.routes insertLeaf()');
-  console.log('req.body:');
-  console.log(req.body);
+  logger.debug('src/routes/leaf.routes insertLeaf()');
+  logger.silly(`req.body: ${req.body}`);
   try {
     const { leaf } = req.body;
     const metadataService = new MetadataService(req.user.db);
@@ -48,11 +48,14 @@ async function insertLeaf(req, res, next) {
  * @param {*} res
  */
 async function getLeafByLeafIndex(req, res, next) {
-  console.log('\nsrc/routes/leaf.routes getLeafByLeafIndex()');
-  console.log('req.params:');
-  console.log(req.params);
-  console.log('req.body:');
-  console.log(req.body);
+  logger.debug('src/routes/leaf.routes getLeafByLeafIndex()');
+  logger.silly(
+    `req.params: ${JSON.stringify(req.params, null, 2)}, req.body: ${JSON.stringify(
+      req.body,
+      null,
+      2,
+    )}`,
+  );
   try {
     const leafIndex = req.params.leafIndex || req.body.leafIndex || req.body.leafIndex;
     const leafService = new LeafService(req.user.db);
@@ -73,11 +76,16 @@ async function getLeafByLeafIndex(req, res, next) {
  * @param {*} res
  */
 async function getLeafByValue(req, res, next) {
-  console.log('\nsrc/routes/leaf.routes getLeafByValue()');
-  console.log('req.body:');
-  console.log(req.body);
+  logger.debug('src/routes/leaf.routes getLeafByValue()');
+  logger.silly(
+    `req.query: ${JSON.stringify(req.query, null, 2)}, req.body: ${JSON.stringify(
+      req.body,
+      null,
+      2,
+    )}`,
+  );
   try {
-    const  value  = req.body.value || req.query.value;
+    const value = req.body.value || req.query.value;
     const leafService = new LeafService(req.user.db);
     res.data = await leafService.getLeafByValue(value);
     next();
@@ -97,9 +105,14 @@ async function getLeafByValue(req, res, next) {
  * @param {*} res
  */
 async function getLeaves(req, res, next) {
-  console.log('\nsrc/routes/leaf.routes getLeaves()');
-  console.log('req.body:');
-  console.log(req.body);
+  logger.debug('src/routes/leaf.routes getLeaves()');
+  logger.silly(
+    `req.query: ${JSON.stringify(req.query, null, 2)}, req.body: ${JSON.stringify(
+      req.body,
+      null,
+      2,
+    )}`,
+  );
   try {
     const leafService = new LeafService(req.user.db);
     // some clients call get with data in the body.  That's naughty but we handle it anyway
@@ -109,10 +122,10 @@ async function getLeaves(req, res, next) {
     const maxIndex = req.body.maxIndex || req.query.maxIndex;
 
     // not necessarily, not all of these destructurings will be possible
-    console.log('leafIndices:', leafIndices);
-    console.log('values:', values);
-    console.log('minIndex:', minIndex);
-    console.log('maxIndex:', maxIndex);
+    logger.silly(`leafIndices: ${JSON.stringify(leafIndices, null, 2)}`);
+    logger.silly(`values: ${JSON.stringify(values, null, 2)}`);
+    logger.silly(`minIndex: ${minIndex}`);
+    logger.silly(`maxIndex: ${maxIndex}`);
 
     if (leafIndices) {
       res.data = await leafService.getLeavesByLeafIndices(leafIndices);
@@ -147,9 +160,8 @@ async function getLeaves(req, res, next) {
  * @param {*} res
  */
 async function insertLeaves(req, res, next) {
-  console.log('\nsrc/routes/leaf.routes insertLeaves()');
-  console.log('req.body:');
-  console.log(req.body);
+  logger.debug('src/routes/leaf.routes insertLeaves()');
+  logger.silly(`req.body: ${JSON.stringify(req.body, null, 2)}`);
   try {
     const metadataService = new MetadataService(req.user.db);
     const leafService = new LeafService(req.user.db);
@@ -190,7 +202,7 @@ async function checkLeaves(req, res, next) {
  * @param {*} res
  */
 async function countLeaves(req, res, next) {
-  console.log('\nsrc/routes/leaf.routes countLeaves()');
+  logger.debug('src/routes/leaf.routes countLeaves()');
 
   try {
     const leafService = new LeafService(req.user.db);

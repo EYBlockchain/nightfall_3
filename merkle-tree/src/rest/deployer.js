@@ -7,6 +7,7 @@
 import request from 'request';
 import config from 'config';
 import Web3 from '../web3';
+import logger from '../logger';
 
 const web3 = Web3.connect();
 
@@ -14,9 +15,9 @@ const web3 = Web3.connect();
 Gets an instance of a MerkleTree.sol contract interface from some external contract deployment microservice, a.k.a. 'deployer'
 */
 async function getContractInterface(contractName) {
-  console.log(`\nCalling getContractInterface(${contractName})`);
+  logger.debug(`Calling getContractInterface(${contractName})`);
   const url = `${config.deployer.host}:${config.deployer.port}`;
-  console.log('url:', url);
+  logger.debug(`url:, ${url}`);
   return new Promise((resolve, reject) => {
     const options = {
       url: `${url}/contract/interface`,
@@ -35,9 +36,9 @@ async function getContractInterface(contractName) {
 Gets the address of a deployed MerkleTree.sol contract from some external contract deployment microservice, a.k.a. 'deployer'
 */
 async function getContractAddress(contractName) {
-  console.log(`\nCalling getContractAddress(${contractName})`);
+  logger.debug(`Calling getContractAddress(${contractName})`);
   const url = `${config.deployer.host}:${config.deployer.port}`;
-  console.log('url:', url);
+  logger.debug(`url: ${url}`);
   return new Promise((resolve, reject) => {
     const options = {
       url: `${url}/contract/address`,
@@ -57,17 +58,17 @@ Gets MerkleTree.sol contract data from some external contract deployment microse
 */
 async function getContractInstance(contractName) {
   try {
-    console.log(`\nCalling getContractInstance(${contractName})`);
+    logger.debug(`Calling getContractInstance(${contractName})`);
     const { contractAddress } = await getContractAddress(contractName);
-    // console.log('contractAddress', contractAddress);
+    logger.silly(`contractAddress, ${contractAddress}`);
     const { contractInterface } = await getContractInterface(contractName);
-    // console.log('contractInterface', contractInterface);
+    logger.silly(`contractInterface ${JSON.stringify(contractInterface)}`);
     const { abi } = contractInterface;
-    // console.log('abi', abi);
+    logger.silly(`abi, ${JSON.stringify(abi, null, 2)}`);
 
     const contractInstance = await new web3.eth.Contract(abi, contractAddress);
 
-    // console.log('\nMerkleTree.sol contract instance:\n', contractInstance);
+    logger.silly(`MerkleTree.sol contract instance: ${JSON.stringify(contractInstance, null, 2)}`);
     if (typeof contractInstance === 'undefined')
       throw new Error('Could not retrieve contractInstance');
 

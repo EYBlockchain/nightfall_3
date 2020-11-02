@@ -5,6 +5,7 @@
  */
 
 import { NodeService } from '../db/service';
+import logger from '../logger';
 
 /**
  * Add a new node to the tree's 'nodes' db.
@@ -179,7 +180,7 @@ async function updateNodes(req, res, next) {
  * @param {*} res
  */
 async function countNodes(req, res, next) {
-  console.log('\nsrc/routes/leaf.routes countLeaves()');
+  logger.debug('src/routes/leaf.routes countLeaves()');
 
   try {
     const nodeService = new NodeService(req.user.db);

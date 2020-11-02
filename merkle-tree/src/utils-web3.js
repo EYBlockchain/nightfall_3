@@ -8,6 +8,7 @@
 // Important Note: Subscribe method only works with a websocket provider!
 
 import Web3 from './web3';
+import logger from './logger';
 
 const web3 = Web3.connect();
 
@@ -49,12 +50,11 @@ Returns a block matching the block number or block hash.
 @returns {Object} Returns a transaction object based on a block hash or number and the transactions index position.
 */
 async function getTransactionFromBlock(hashStringOrNumber, indexNumber) {
-  console.log(`\nGetting transaction ${indexNumber} from Block ${hashStringOrNumber}`);
+  logger.debug(`Getting transaction ${indexNumber} from Block ${hashStringOrNumber}`);
 
   const txReceipt = await web3.eth.getTransactionFromBlock(hashStringOrNumber, indexNumber);
 
-  console.log('txReceipt.input:');
-  console.log(txReceipt.input);
+  logger.silly(`txReceipt.input: ${JSON.stringify(txReceipt.input, null, 2)}`);
 
   return txReceipt;
 }
@@ -65,35 +65,34 @@ async function getTransactionFromBlock(hashStringOrNumber, indexNumber) {
 let events = {};
 
 function getContractInterface(contractName) {
-  console.log(`\n./src/utils-web3 getContractInterface(${contractName})`);
+  logger.debug(`./src/utils-web3 getContractInterface(${contractName})`);
 
   const path = `../build/contracts/${contractName}.json`;
   const contractInterface = require(path); // eslint-disable-line global-require, import/no-dynamic-require
-  // console.log('\ncontractInterface:');
-  // console.log(contractInterface);
+  logger.silly(`contractInterface: ${JSON.stringify(contractInterface, null, 2)}`);
   return contractInterface;
 }
 
 async function getContractAddress(contractName) {
-  console.log(`\n./src/utils-web3 getContractAddress(${contractName})`);
+  logger.debug(`./src/utils-web3 getContractAddress(${contractName})`);
   let deployedAddress;
   const contractInterface = getContractInterface(contractName);
 
   const networkId = await web3.eth.net.getId();
-  console.log('networkId:', networkId);
+  logger.silly(`networkId: ${networkId}`);
 
   if (contractInterface && contractInterface.networks && contractInterface.networks[networkId]) {
     deployedAddress = contractInterface.networks[networkId].address;
   }
 
-  console.log('deployed address:', deployedAddress);
+  logger.silly(`deployed address: ${deployedAddress}`);
 
   return deployedAddress;
 }
 
 // returns a web3 contract instance (as opposed to a truffle-contract instance)
 async function getContractInstance(contractName, deployedAddress) {
-  console.log(`\n./src/utils-web3 getContractInstance(${contractName}, ${deployedAddress})`);
+  logger.debug(`./src/utils-web3 getContractInstance(${contractName}, ${deployedAddress})`);
 
   // interface:
   const contractInterface = getContractInterface(contractName);
@@ -110,8 +109,7 @@ async function getContractInstance(contractName, deployedAddress) {
   } else {
     contractInstance = new web3.eth.Contract(contractInterface.abi, deployedAddress);
   }
-  // console.log('\ncontractInstance:');
-  // console.log(contractInstance);
+  logger.silly(`contractInstance: ${JSON.stringify(contractInstance, null, 2)}`);
   return contractInstance;
 }
 
@@ -119,8 +117,7 @@ async function getContractInstance(contractName, deployedAddress) {
 function getContractBytecode(contractName) {
   const contractInterface = getContractInterface(contractName);
   const { bytecode } = contractInterface;
-  // console.log('\nbytecode:');
-  // console.log(bytecode);
+  logger.silly(`bytecode: ${JSON.stringify(bytecode, null, 2)}`);
   return bytecode;
 }
 
@@ -154,20 +151,20 @@ async function subscribeToEvent(
   responseFunction,
   responseFunctionArgs = {},
 ) {
-  console.log(`\nSubscribing to event...`);
-  console.log(`contractName`, contractName);
-  console.log(`eventName`, eventName);
-  console.log(`fromBlock`, fromBlock);
+  logger.info(`Subscribing to event...`);
+  logger.info(`contractName: ${contractName}`);
+  logger.info(`eventName: ${eventName}`);
+  logger.info(`fromBlock: ${fromBlock}`);
 
   if (!contractInstance) {
-    console.log(
+    logger.info(
       `Contract instance not provided. Generating a contractInstance from the contractName ${contractName} and deployedAddress ${deployedAddress}...`,
     );
     contractInstance = getContractInstance(contractName, deployedAddress); // eslint-disable-line no-param-reassign
   } else {
-    console.log(`Contract instance provided.`);
+    logger.info(`Contract instance provided.`);
     deployedAddress = contractInstance._address; // eslint-disable-line no-param-reassign, no-underscore-dangle
-    console.log(deployedAddress);
+    logger.info(deployedAddress);
   }
 
   /*
@@ -192,8 +189,7 @@ async function subscribeToEvent(
     o => o.name === eventName && o.type === 'event',
   );
 
-  // console.log("\neventJsonInterface")
-  // console.log(eventJsonInterface)
+  logger.silly(`eventJsonInterface: ${JSON.stringify(eventJsonInterface, null, 2)}`);
 
   const eventSubscription = await contractInstance.events[eventName]({
     fromBlock,
@@ -222,9 +218,8 @@ async function subscribeToEvent(
     }
   */
   eventSubscription.on('data', eventData => {
-    console.log('\n\n\n\n\nNew', contractName, eventName, 'event detected');
-    // console.log('\nEvent Data:');
-    // console.log(eventData);
+    logger.info(`New ${contractName}, ${eventName}, event detected`);
+    logger.silly(`Event Data: ${JSON.stringify(eventData, null, 2)}`);
 
     const eventObject = {
       eventData,
@@ -234,29 +229,25 @@ async function subscribeToEvent(
     // let's add the eventObject to the list of events:
     events = addNewEvent(eventObject, events);
 
-    // console.log('\nevents');
-    // console.dir(events, { depth: null });
+    logger.silly(`events: ${JSON.stringify(events, null, 2)}, { depth: null }`);
 
     responder(eventObject, responseFunction, responseFunctionArgs);
   });
-
-  // console.log("Here's the subscription object for", contractName, eventName);
-  // console.log(eventSubscription);
   return eventSubscription;
 }
 
 async function unsubscribe(subscription) {
-  console.log('\nUnsubscribing...');
+  logger.debug('Unsubscribing...');
   if (!subscription) {
-    console.log('\nThere is nothing to unsubscribe from');
+    logger.warn('There is nothing to unsubscribe from');
     return;
   }
-  console.log(subscription);
+  logger.silly(JSON.stringify(subscription, null, 2));
   // unsubscribes the subscription
   await subscription.unsubscribe((error, success) => {
-    console.log("we're in subscription.unsubscribe", error, success);
+    logger.silly(`we're in subscription.unsubscribe, ${error}, ${success}`);
     if (success) {
-      console.log('Successfully unsubscribed!');
+      logger.info('Successfully unsubscribed!');
     }
     if (error) {
       throw new Error(error);

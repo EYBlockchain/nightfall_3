@@ -6,7 +6,7 @@
 import express, { Router } from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
-
+import logger from './logger';
 import Web3 from './web3';
 
 import {
@@ -15,7 +15,6 @@ import {
   formatError,
   errorHandler,
   logError,
-  logger,
 } from './middleware';
 
 import { leafRoutes, nodeRoutes, metadataRoutes, merkleTreeRoutes } from './routes';
@@ -61,6 +60,6 @@ app.use(errorHandler);
 app.use(logError);
 
 const server = app.listen(80, '0.0.0.0', () =>
-  logger.info('\nmerkle-tree RESTful API server started on ::: 80'),
+  logger.info('merkle-tree RESTful API server started on ::: 80'),
 );
 server.timeout = 0;

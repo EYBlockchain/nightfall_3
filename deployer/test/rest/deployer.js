@@ -50,17 +50,17 @@ Gets MerkleTree.sol contract data from some external contract deployment microse
 */
 async function getContractInstance(contractName) {
   try {
-    console.log(`\nCalling getContractInstance(${contractName})`);
+    console.log(`\nCalling *getContractInstance(${contractName})`);
     const { contractAddress } = await getContractAddress(contractName);
-    // console.log('contractAddress', contractAddress);
+    console.log('contractAddress', contractAddress);
     const { contractInterface } = await getContractInterface(contractName);
     // console.log('contractInterface', contractInterface);
     const { abi } = contractInterface;
-    // console.log('abi', abi);
+    console.log('abi', abi);
 
     const contractInstance = await new web3.eth.Contract(abi, contractAddress);
 
-    // console.log('\nMerkleTree.sol contract instance:\n', contractInstance);
+    console.log('\nMerkleTree.sol contract instance:\n', contractInstance);
     if (typeof contractInstance === 'undefined')
       throw new Error('Could not retrieve contractInstance');
 

@@ -2,20 +2,20 @@
 @module utils-poll.js contains all of the logic for starting and stopping a poll.
 @author iAmMichaelConnor
 */
-
+import logger from './logger';
 /**
 @param {function} pollingFunction - function MUST return false for 'unsuccessful' results.
 @param {number} interval - polling frequency (in milliseconds)
 @param {object} args = an object of arguments which are to be passed to the pollingFunction each poll.
 */
 const poll = async (pollingFunction, interval, args) => {
-  console.log('Polling...');
+  logger.info('Polling...');
   // this is called as a Promise which only resolves when the conditions of the pollingFunction have been satisfied (i.e. once the pollingFunction returns something other than false).
   const checkPollCondition = async (resolve, reject) => {
     const response = await pollingFunction(args); // polling function must return a FALSE if unsuccessful.
     if (response === false) {
       // if the polling function was unsuccessful, poll again:
-      console.log('...');
+      logger.info('...');
       setTimeout(checkPollCondition, interval, resolve, reject);
     } else {
       // if the polling function was successful, resolve this poll.
@@ -57,9 +57,9 @@ EXAMPLE ONLY - an example of a pollingFunction
 @returns {boolean} - ALWAYS!!!
 */
 const examplePollingFunction = async () => {
-  console.log('in pollingFunction');
+  logger.debug('in pollingFunction');
   const response = await exampleQuery();
-  console.log(`response: ${response}`);
+  logger.silly(`response: ${response}`);
   return response;
 };
 

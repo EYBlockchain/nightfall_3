@@ -7,6 +7,7 @@
 import contractController from '../contract-controller';
 import filterController from '../filter-controller';
 import merkleTreeController from '../merkle-tree-controller';
+import logger from '../logger';
 
 const alreadyStarted = {}; // initialises as false
 const alreadyStarting = {}; // initialises as false
@@ -18,7 +19,7 @@ const alreadyStarting = {}; // initialises as false
  * @param {*} res - returns the tree's metadata
  */
 async function startEventFilter(req, res, next) {
-  console.log('\nsrc/routes/merkle-tree.routes startEventFilter()');
+  logger.debug('src/routes/merkle-tree.routes startEventFilter()');
 
   const { contractName, treeId, contractAddress } = req.body; // contractAddress & treeId are optional parameters. Address can instead be inferred by Timber in many cases.
   const { db } = req.user;
@@ -40,10 +41,10 @@ async function startEventFilter(req, res, next) {
     } else {
       if (treeId === undefined || treeId === '') {
         alreadyStarting[contractName] = true;
-        console.log(`starting filter for ${contractName}`);
+        logger.info(`starting filter for ${contractName}`);
       } else {
         alreadyStarting[(contractName, treeId)] = true;
-        console.log(`starting filter for ${contractName}.${treeId}`);
+        logger.info(`starting filter for ${contractName}.${treeId}`);
       }
       // get a web3 contractInstance we can work with:
       const contractInstance = await contractController.instantiateContract(
@@ -81,9 +82,8 @@ async function startEventFilter(req, res, next) {
  * @param {*} res
  */
 async function getSiblingPathByLeafIndex(req, res, next) {
-  console.log('\nsrc/routes/merkle-tree.routes getSiblingPathByLeafIndex()');
-  console.log('req.params:');
-  console.log(req.params);
+  logger.debug('src/routes/merkle-tree.routes getSiblingPathByLeafIndex()');
+  logger.silly(`req.params: ${JSON.stringify(req.params, null, 2)}`);
 
   const { db } = req.user;
   let { leafIndex } = req.params;
@@ -113,9 +113,8 @@ async function getSiblingPathByLeafIndex(req, res, next) {
  * @param {*} res
  */
 async function getPathByLeafIndex(req, res, next) {
-  console.log('\nsrc/routes/merkle-tree.routes getPathByLeafIndex()');
-  console.log('req.params:');
-  console.log(req.params);
+  logger.debug('src/routes/merkle-tree.routes getPathByLeafIndex()');
+  logger.silly(`req.params: ${JSON.stringify(req.params, null, 2)}`);
 
   const { db } = req.user;
   let { leafIndex } = req.params;
@@ -142,7 +141,7 @@ async function getPathByLeafIndex(req, res, next) {
  * @param {*} res - returns the tree's metadata
  */
 async function update(req, res, next) {
-  console.log('\nsrc/routes/merkle-tree.routes update()');
+  logger.debug('src/routes/merkle-tree.routes update()');
 
   const { db } = req.user;
 

@@ -45,21 +45,6 @@ async function insertContractInterface(req, res, next) {
 
     const metadataService = new MetadataService(db);
     await metadataService.insertContractInterface(req.body);
-
-    // // write the interface to the more conventional 'build' folder within this microservice:
-    // await new Promise((resolve, reject) => {
-    //   fs.writeFile(path, contractInterface, err => {
-    //     if (err) {
-    //       console.log(
-    //         `fs.writeFile has failed when writing the new contract interface to the build/contracts/ folder. Here's the error:`,
-    //       );
-    //       reject(err);
-    //     }
-    //     console.log(`writing to ${path}`);
-    //     resolve();
-    //   });
-    // });
-
     res.data = { message: 'inserted' };
     next();
   } catch (err) {

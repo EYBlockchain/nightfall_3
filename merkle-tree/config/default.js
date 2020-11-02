@@ -164,4 +164,5 @@ module.exports = {
       // transactionSigner: new CustomTransactionSigner()
     },
   },
+  LOG_LEVEL: process.env.LOG_LEVEL || 'info',
 };
