@@ -154,7 +154,7 @@ It's up and running!
 
 #### Logging
 
-The logging level in Timber can be set to any of: error, warn, info, http, debug or silly (default: info) via the environment variable `LOG_LEVEL`.
+The logging level in Timber can be set to any of: error; warn; info; http; verbose; debug; silly (default: info), via the environment variable `LOG_LEVEL`.
 
 #### Example usage:
 
