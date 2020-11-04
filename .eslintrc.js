@@ -7,6 +7,7 @@ module.exports = {
   rules: {
     'no-console': 'off',
     'no-plusplus': 'off',
+    'no-restricted-syntax': 'off',
     'import/no-extraneous-dependencies': [
       'error',
       {
