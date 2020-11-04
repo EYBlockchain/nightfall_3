@@ -14,6 +14,7 @@
     "Michael Connor <Michael.Connor@uk.ey.com>"
   ],
   "dependencies": {
+    "axios": "^0.20.0",
     "body-parser": "^1.19.0",
     "express": "^4.16.4",
     "express-promise-router": "^3.0.3",
@@ -21,7 +22,7 @@
     "cors": "^2.8.5",
     "config": "^3.2.2",
     "big-integer": "^1.6.48",
-    "web3": "1.0.0-beta.36",
+    "web3": "^1.3.0",
     "mongoose": "^5.7.5",
     "winston": "^3.1.0",
     "winston-daily-rotate-file": "^3.4.1",

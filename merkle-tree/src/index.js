@@ -8,6 +8,7 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import logger from './logger';
 import Web3 from './web3';
+import autostart from './auto-start';
 
 import {
   assignDbConnection,
@@ -59,7 +60,8 @@ app.use(formatError);
 app.use(errorHandler);
 app.use(logError);
 
-const server = app.listen(80, '0.0.0.0', () =>
-  logger.info('merkle-tree RESTful API server started on ::: 80'),
-);
+const server = app.listen(80, '0.0.0.0', () => {
+  logger.info('merkle-tree RESTful API server started on ::: 80');
+  if (process.env.AUTOSTART) autostart(process.env.AUTOSTART);
+});
 server.timeout = 0;

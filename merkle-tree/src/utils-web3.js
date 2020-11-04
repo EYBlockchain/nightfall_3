@@ -109,7 +109,6 @@ async function getContractInstance(contractName, deployedAddress) {
   } else {
     contractInstance = new web3.eth.Contract(contractInterface.abi, deployedAddress);
   }
-  logger.silly(`contractInstance: ${JSON.stringify(contractInstance, null, 2)}`);
   return contractInstance;
 }
 

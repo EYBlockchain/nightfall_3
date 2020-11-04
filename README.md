@@ -170,6 +170,8 @@ Interact with the merkle-tree microservice through its API. A postman collection
 
 Send a `post` request to `http://localhost:9000/start` to start the merkle-tree's event filters for `NewLeaf` and `NewLeaves` events. Any 'new leaf' events will be picked up by the filters, and cause the new leaf data to be inserted into the mongodb.
 
+If you only have a single 'shield' contract from which leaf events are emitted, and you are not using multiple Merkle trees, you can ask Timber to start automatically by setting the environment variable `AUTOSTART` to the name of the contract that is emitting leaf events.  This is useful when you are deploying another Timber instance to an already-running ZKP solution.
+
 ##### Update the merkle-tree database:
 
 Send a `patch` request to `http://localhost:9000/update`. Given the leaves now stored in the mongodb, this `update` command will calculate all of the intermediate nodes from the leaves to the root, and store all of these nodes in the mongodb.
