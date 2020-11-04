@@ -16,7 +16,6 @@ export const startEventFilter = async () => {
       `${url}/start`,
       {
         contractName,
-        contractAddress: await contractAddress,
       },
       {
         timeout: 3600000,

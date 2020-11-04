@@ -106,7 +106,7 @@ async function setupCircuits() {
     }
   }
   // before we finish, start Timber listening
-  startEventFilter();
+  // startEventFilter();
   Web3.disconnect();
 }
 
