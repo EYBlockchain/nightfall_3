@@ -103,6 +103,8 @@ describe('Testing the http API', () => {
       const receipt = await submitTransaction(txToSign, privateKey, shieldAddress, gas);
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
+      // give Timber time to respond to the blockchain event
+      await new Promise(resolve => setTimeout(resolve, 5000));
     });
   });
 
@@ -149,6 +151,8 @@ describe('Testing the http API', () => {
       const receipt = await submitTransaction(txToSign, privateKey, shieldAddress, gas);
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
+      // give Timber time to respond to the blockchain event
+      await new Promise(resolve => setTimeout(resolve, 5000));
     });
 
     it('should transfer some crypto (back to us) using ZKP', async () => {
@@ -193,6 +197,8 @@ describe('Testing the http API', () => {
       const receipt = await submitTransaction(txToSign, privateKey, shieldAddress, gas);
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
+      // give Timber time to respond to the blockchain event
+      await new Promise(resolve => setTimeout(resolve, 5000));
     });
     it('should withdraw some crypto from a ZKP commitment', async () => {
       const res = await chai

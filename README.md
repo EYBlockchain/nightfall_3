@@ -41,6 +41,12 @@ $ docker-compose up
 If this is the first run, nightfall-deployer will do a trusted setup of the proving circuits. This
 takes about 30 mins. Subsequently it will omit this step if it detects a trusted setup.
 
+You may (will) find that the timber service errors and restarts once or twice. This is fine provided
+it does finally start (you can tell if it reports that it has subscribed to the NewLeaf and
+NewLeaves events). It's because Timber has been configured to `AUTOSTART`, however this will fail
+until the Shield contract has been deployed, at which point Timber will be able to obtain a Shield
+contract address. Given this situation will not arise in normal use, it's acceptable.
+
 Once the setup is done and the smart contracts are deployed, you will see `nightfall-deployer` exit
 with code 0. At this point you can run the tests. Open another terminal in the same directory (root
 of `nightfall-client`) and run `npm test`.
