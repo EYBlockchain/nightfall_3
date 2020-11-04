@@ -6,19 +6,15 @@ starting it up in an already-established blockchain environment.
 Currently it only supports a single shield contract.
 */
 const autoStart = async contractName => {
+  const data = { contractName };
+  if (process.env.CONTRACT_ADDRESS) data.contractAddress = process.env.CONTRACT_ADDRESS;
   try {
     logger.debug(
       `Calling /start for Timber, with contractName '${contractName}' and url localhost`,
     );
-    const response = await axios.post(
-      'http://localhost/start',
-      {
-        contractName,
-      },
-      {
-        timeout: 3600000,
-      },
-    );
+    const response = await axios.post('http://localhost/start', data, {
+      timeout: 3600000,
+    });
     logger.debug('Timber Response:', response.data.data);
     return response.data.data;
   } catch (error) {
