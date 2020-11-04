@@ -170,7 +170,7 @@ Interact with the merkle-tree microservice through its API. A postman collection
 
 Send a `post` request to `http://localhost:9000/start` to start the merkle-tree's event filters for `NewLeaf` and `NewLeaves` events. Any 'new leaf' events will be picked up by the filters, and cause the new leaf data to be inserted into the mongodb.
 
-If you only have a single 'shield' contract from which leaf events are emitted, and you are not using multiple Merkle trees, you can ask Timber to start automatically by setting the environment variable `AUTOSTART` to the name of the contract that is emitting leaf events.  This is useful when you are deploying another Timber instance to an already-running ZKP solution.
+You can ask Timber to start automatically by setting the environment variable `AUTOSTART` to anything that is truthy.  This is useful when you are deploying another Timber instance to an already-running ZKP solution. In this case, Timber will take contract (name, address, treeId) from its config file. Depending on your configuration, not all of these may be needed.  Often Timber can infer the contract address from build artefacts.  
 
 ##### Update the merkle-tree database:
 
