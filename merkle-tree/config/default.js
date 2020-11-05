@@ -3,23 +3,33 @@
 @author iAmMichaelConnor
 @desc constants used by a nubmer of other modules
 */
-const nodeHashLength = process.env.HASH_TYPE === 'mimc' ? 32 : 27;
-const zeroHex =
-  process.env.HASH_TYPE === 'mimc'
-    ? '0x0000000000000000000000000000000000000000000000000000000000000000'
-    : '0x000000000000000000000000000000000000000000000000000000';
+
+let nodeHashLength;
+let zero;
+
+if (process.env.HASH_TYPE === 'mimc') {
+  nodeHashLength = 32;
+  if (process.env.CURVE === 'BLS12_377') {
+    zero = 0;
+  } else {
+    zero = '0x0000000000000000000000000000000000000000000000000000000000000000';
+  }
+} else {
+  nodeHashLength = 27;
+  zero = '0x000000000000000000000000000000000000000000000000000000';
+}
 
 module.exports = {
   // general:
-  ZERO: zeroHex, // 27-byte hex string representing zero, for hashing with '0' up the tree. Byte length must match that of NODE_HASHLENGTH
+  ZERO: zero,
 
   // Tree parameters. You also need to set these in the MerkleTree.sol contract.
+
   HASH_TYPE: process.env.HASH_TYPE,
+  CURVE: process.env.CURVE,
   LEAF_HASHLENGTH: 32, // expected length of leaves' values in bytes
   NODE_HASHLENGTH: nodeHashLength, // expected length of nodes' values up the merkle tree, in bytes
-  TREE_HEIGHT: 32, // the hieght of the Merkle tree
-  ZOKRATES_PACKING_SIZE: '128', // ZOKRATES_PRIME is approx 253-254bits (just shy of 256), so we pack field elements into blocks of 128 bits.
-  ZOKRATES_PRIME: '21888242871839275222246405745257275088548364400416034343698204186575808495617', // decimal representation of the prime p of GaloisField(p)
+  TREE_HEIGHT: 32, // the height of the Merkle tree
 
   POLLING_FREQUENCY: 6000, // milliseconds
   FILTER_GENESIS_BLOCK_NUMBER: 0, // blockNumber
@@ -33,14 +43,77 @@ module.exports = {
 
   // contracts to filter:
   contracts: {
-    Shield: {
+    // contract name:
+    MerkleTreeControllerMiMC_BN254: {
       events: {
-        // indexed by event names:
+        // filter for the following event names:
         NewLeaf: {
-          parameters: ['leafIndex', 'leafValue'], // filter for these parameters
+          // filter for these event parameters:
+          parameters: ['leafIndex', 'leafValue'],
         },
         NewLeaves: {
-          parameters: ['minLeafIndex', 'leafValues'], // filter for these parameters
+          // filter for these event parameters:
+          parameters: ['minLeafIndex', 'leafValues'],
+        },
+      },
+    },
+    MerkleTreeControllerMiMC_BLS12: {
+      events: {
+        // filter for the following event names:
+        NewLeaf: {
+          // filter for these event parameters:
+          parameters: ['leafIndex', 'leafValue'],
+        },
+        NewLeaves: {
+          // filter for these event parameters:
+          parameters: ['minLeafIndex', 'leafValues'],
+        },
+      },
+    },
+    // contract name:
+    MerkleTreeControllerSHA: {
+      events: {
+        // filter for the following event names:
+        NewLeaf: {
+          // filter for these event parameters:
+          parameters: ['leafIndex', 'leafValue'],
+        },
+        NewLeaves: {
+          // filter for these event parameters:
+          parameters: ['minLeafIndex', 'leafValues'],
+        },
+      },
+    },
+    // contract name:
+    MultipleMerkleTreesControllerSHA: {
+      treeId: {
+        a: {
+          treeHeight: 16,
+          events: {
+            // filter for the following event names:
+            NewLeafA: {
+              // filter for these event parameters when a single leaf is added:
+              parameters: ['leafIndex', 'leafValue'],
+            },
+            NewLeavesA: {
+              // filter for these event parameters when multiple leaves are added:
+              parameters: ['minLeafIndex', 'leafValues'],
+            },
+          },
+        },
+        b: {
+          treeHeight: 10,
+          events: {
+            // filter for the following event names:
+            NewLeafB: {
+              // filter for these event parameters:
+              parameters: ['leafIndex', 'leafValue'],
+            },
+            NewLeavesB: {
+              // filter for these event parameters:
+              parameters: ['minLeafIndex', 'leafValues'],
+            },
+          },
         },
       },
     },
@@ -51,9 +124,13 @@ module.exports = {
   # Specify one of:
   # - 'remote' (to GET them from a remote microservice); or
   # - 'mongodb' (to get them from mongodb); or
-  # - 'default' (to get them from the app/build/contracts folder)
+  # - 'compile' (to compile the contracts from /app/build to /app/build/contracts)
+  # - 'default' (to get them from the /app/build/contracts folder)
   */
-  contractLocation: process.env.CONTRACT_LOCATION,
+  contractOrigin: process.env.CONTRACT_ORIGIN,
+
+  contractsPath: '/app/contracts/', // where to find contract .sol files (if applicable)
+  buildPath: '/app/build/contracts/', // where to find the contract interface json files
 
   // external contract deployment microservice (which deploys the MerkleTree.sol contract):
   deployer: {
@@ -63,11 +140,11 @@ module.exports = {
 
   // mongodb:
   mongo: {
-    host: process.env.MONGO_HOST || 'client',
-    port: process.env.MONGO_PORT || '27017',
-    databaseName: process.env.MONGO_DB || 'merkle_tree',
-    admin: process.env.MONGO_USERNAME || 'admin',
-    adminPassword: process.env.MONGO_PASSWORD || 'admin',
+    host: 'mongo-merkle-tree',
+    port: '27017',
+    databaseName: 'merkle_tree',
+    admin: 'admin',
+    adminPassword: 'admin',
   },
   isLoggerEnabled: true,
 
@@ -79,7 +156,7 @@ module.exports = {
     options: {
       defaultAccount: '0x0',
       defaultBlock: '0', // e.g. the genesis block our blockchain
-      defaultGas: 100000,
+      defaultGas: 2000000,
       defaultGasPrice: 20000000000,
       transactionBlockTimeout: 50,
       transactionConfirmationBlocks: 15,
