@@ -5,7 +5,7 @@ WORKDIR /app
 COPY ./package.json ./package-lock.json ./
 COPY ./src ./src
 COPY ./test ./test
-COPY ./setup-mongo-acl-for-new-users.js ./.babelrc ./
+COPY ./.babelrc ./
 RUN npm ci
 
 EXPOSE 80
