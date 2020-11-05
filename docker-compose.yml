@@ -115,7 +115,7 @@ services:
       MONGO_PASSWORD: admin
       HASH_TYPE: mimc
       LOG_LEVEL: debug
-      AUTOSTART: Shield
+      AUTOSTART: true
 
   #The database storing the merkle tree
   #At present Timber seems to need a specially configured db.  If we can fix
