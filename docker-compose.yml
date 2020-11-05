@@ -51,8 +51,6 @@ services:
   mongo-merkle-tree:
     image: mongo
     environment:
-      #- MONGO_INITDB_ROOT_USERNAME=admin
-      #- MONGO_INITDB_ROOT_PASSWORD=admin
       - MONGO_INITDB_DATABASE=merkle_tree
     volumes:
       #- ./merkle-tree/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
