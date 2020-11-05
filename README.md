@@ -28,10 +28,9 @@ this code in developer mode, you will also need to clone:
 
 - [zokrates-worker](https://github.com/EYBlockchain/zokrates-worker)
 - [nightfall-deployer](https://github.com/EYBlockchain/nightfall-deployer)
-- [nightfall-timber](https://github.com/EYBlockchain/nightfall-timber)
 
 Make sure you put all of these repositories under a common root in your file system because the
-docker-compose yaml assumes they are accessible via `../<appplication>`. Then, in the
+docker-compose yaml assumes they are accessible via `../<application>`. Then, in the
 `nightfall-client` root directory, locally install the files you'll need for testing via:
 
 ```sh
