@@ -80,7 +80,7 @@ services:
       BLOCKCHAIN_HOST: ws://ganache
       BLOCKCHAIN_PORT: 8545
 
-  # The openethereum (Parity) client, containing required precompiles
+  # The Ganache client, containing required precompiles
   ganache:
     image: trufflesuite/ganache-cli:latest
     command:
@@ -94,7 +94,7 @@ services:
   timber:
     build:
       dockerfile: Dockerfile
-      context: ../timber/merkle-tree
+      context: ../nightfall-timber
     depends_on:
       - ganache
       - deployer
@@ -105,12 +105,6 @@ services:
       - type: volume
         source: build
         target: /app/build/
-      - type: bind
-        source: ../timber/merkle-tree/config
-        target: /app/config/
-      - type: bind
-        source: ../timber/merkle-tree/src
-        target: /app/src/
     restart: on-failure
     environment:
       BLOCKCHAIN_HOST: ws://ganache
