@@ -49,9 +49,6 @@ export default {
 
       const response = JSON.parse(message.content.toString());
       response.type = message.properties.type;
-      if (response.error) {
-        throw Error(response.error);
-      }
 
       return callback(response);
     });

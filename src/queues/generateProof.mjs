@@ -1,8 +1,12 @@
+import fs from 'fs';
+import util from 'util';
 import zokrates from '@eyblockchain/zokrates-zexe.js';
 import path from 'path';
 import rabbitmq from '../utils/rabbitmq.mjs';
 import { getProofByCircuitPath } from '../utils/filing.mjs';
 import logger from '../utils/logger.mjs';
+
+const unlink = util.promisify(fs.unlink);
 
 export default function receiveMessage() {
   const outputPath = `./output/`;
@@ -25,6 +29,15 @@ export default function receiveMessage() {
     };
 
     const circuitName = path.basename(folderpath);
+
+    // Delete previous witness/proof files if they exist.
+    // Prevents bad inputs from going through anyway.
+    try {
+      await unlink(`${outputPath}/${folderpath}/${circuitName}_witness`);
+      await unlink(`${outputPath}/${folderpath}/${circuitName}_proof.json`);
+    } catch {
+      // No files to delete. Do nothing.
+    }
 
     const opts = {};
     opts.createFile = true;
@@ -59,7 +72,7 @@ export default function receiveMessage() {
 
       response.data = { proof, inputs: publicInputs, transactionInputs };
     } catch (err) {
-      response.error = err;
+      response.error = 'Proof generation failed';
     }
 
     rabbitmq.sendMessage(replyTo, response, { correlationId, type: folderpath });

@@ -95,6 +95,32 @@ describe('Testing the Zokrates queue mechanism', () => {
     });
   });
 
+  it('Should fail on malformed inputs', done => {
+    const correlationId = generateUuid();
+    const queue = 'generate-proof';
+    const replyTo = `${queue}-reply`; // replyTo queue
+
+    rabbitmq.sendMessage(
+      queue,
+      {
+        folderpath: 'factor',
+        inputs: [13, 3, 2],
+        transactionInputs: 'test',
+        provingScheme: 'gm17',
+        backend: 'libsnark',
+      },
+      {
+        correlationId,
+        replyTo,
+      },
+    );
+
+    rabbitmq.listenToReplyQueue(replyTo, correlationId, response => {
+      expect(response.error).to.be.string('Proof generation failed');
+      done();
+    });
+  });
+
   it('should generate a proof', done => {
     const correlationId = generateUuid();
     const queue = 'generate-proof';
