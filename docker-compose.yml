@@ -1,5 +1,6 @@
 version: '3.5'
-# Tests nightfall-client
+# Use this script for running up nightfall_2 in 'developer' mode with local
+# bindings.  See the readme for more information.
 services:
   client:
     build:
@@ -122,8 +123,6 @@ services:
       AUTOSTART: enabled
 
   #The database storing the merkle tree
-  #At present Timber seems to need a specially configured db.  If we can fix
-  #that, we can run it on a vanilla mongo instance
   timber-database:
     image: mongo
     environment:

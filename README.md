@@ -2,7 +2,7 @@
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
 - [nightfall-client](#nightfall-client)
-  - [Testing nightfall-client](#testing-nightfall-client)
+  - [Building and testing nightfall-client](#building-and-testing-nightfall-client)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -11,7 +11,23 @@
 This code generates a containerised application that can be used to interact with Nightfall_2 via
 http endpoints.
 
-## Testing nightfall-client
+It has a docker-compose.yml file that will run nightfall-client up with local file system bindings
+as well as a number of supporting services. This is useful for development work (you can change
+source code without having to rebuild the Docker image).
+
+nightfall-client requires a number of services to be present for it to work. The following
+instructions explain how to run all of these up, in a similar 'developer' mode with local file
+system bindings.
+
+If you just want to run Nightfall_2 then an easier way is to use
+[nightfall-scripts](https://github.com/EYBlockchain/nightfall-scripts), which does a similar job but
+uses docker images that do not rely on your local file system and therefore requires no other code
+repositories to be downloaded.
+
+Check out the [Nightfall_2](https://github.com/EYBlockchain/nightfall_2) meta repository for an
+overview of all the Nightfall_2 services.
+
+## Building and testing nightfall-client
 
 You'll need Node version >=12.18 so that you have ESM support.
 
