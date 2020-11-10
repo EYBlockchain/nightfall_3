@@ -180,10 +180,6 @@ contract Shield is Ownable, MerkleTree {
       "publicInputHash cannot be reconciled"
     );
 
-    // gas measurement:
-    uint256 gasUsedByShieldContract = gasCheckpoint - gasleft();
-    gasCheckpoint = gasleft();
-
     // check that the nullifiers haven't been used before
     for (uint i = 0; i < _nullifierHashes.length; i++) {
       require(!usedNullifiers[_nullifierHashes[i]], 'One of the nullifiers has already been used');
@@ -192,6 +188,10 @@ contract Shield is Ownable, MerkleTree {
 
     // check that the root exists
     require(roots[_root], 'The root is not recognised');
+
+    // gas measurement:
+    uint256 gasUsedByShieldContract = gasCheckpoint - gasleft();
+    gasCheckpoint = gasleft();
 
     // verify the proof
     if (_newCommitmentHashes.length == 1)
@@ -256,16 +256,16 @@ contract Shield is Ownable, MerkleTree {
       "publicInputHash cannot be reconciled"
     );
 
-    // gas measurement:
-    uint256 gasUsedByShieldContract = gasCheckpoint - gasleft();
-    gasCheckpoint = gasleft();
-
     // check that the nullifiers haven't been used before
     require(!usedNullifiers[_nullifierHash], 'One of the nullifiers has already been used');
     usedNullifiers[_nullifierHash] = true;
 
     // check that the root exists
     require(roots[_root], 'The root is not recognised');
+    
+    // gas measurement:
+    uint256 gasUsedByShieldContract = gasCheckpoint - gasleft();
+    gasCheckpoint = gasleft();
 
     // verify the proof
     require(

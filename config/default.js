@@ -4,7 +4,7 @@ module.exports = {
   CIRCUITS_HOME: process.env.CIRCUITS_HOME || '/app/circuits/',
   ALWAYS_DO_TRUSTED_SETUP: process.env.ALWAYS_DO_TRUSTED_SETUP || false,
   ZOKRATES_WORKER_HOST: process.env.ZOKRATES_WORKER_HOST || 'worker',
-  BLOCKCHAIN_HOST: process.env.BLOCKCHAIN_HOST || 'ws://openethereum',
+  BLOCKCHAIN_WS_HOST: process.env.BLOCKCHAIN_WS_HOST || 'ws://openethereum',
   BLOCKCHAIN_PORT: process.env.BLOCKCHAIN_PORT || '8546',
   WEB3_OPTIONS: {
     gas: process.env.GAS || 1000000,

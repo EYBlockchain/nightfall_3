@@ -1,5 +1,7 @@
 FROM node:12.18
 WORKDIR /app
+RUN apt-get update -y
+RUN apt-get install -y netcat-openbsd
 COPY package.json package-lock.json ./
 COPY config config
 COPY src src
