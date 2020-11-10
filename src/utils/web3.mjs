@@ -16,7 +16,7 @@ export default {
 
     logger.info('Blockchain Connecting ...');
     const provider = new Web3.providers.WebsocketProvider(
-      `${config.BLOCKCHAIN_HOST}:${config.BLOCKCHAIN_PORT}`,
+      `ws://${config.BLOCKCHAIN_WS_HOST}:${config.BLOCKCHAIN_PORT}`,
     );
 
     provider.on('error', err => logger.error(`web3 error: ${err}`));

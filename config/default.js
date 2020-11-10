@@ -6,7 +6,7 @@ module.exports = {
   COMMITMENTS_COLLECTION: 'commitments',
   ZKP_KEY_LENGTH: 32, // use a 32 byte key length for SHA compatibility
   ZOKRATES_WORKER_URL: process.env.ZOKRATES_WORKER_URL || 'http://worker',
-  BLOCKCHAIN_HOST: process.env.BLOCKCHAIN_HOST || 'ws://openethereum',
+  BLOCKCHAIN_WS_HOST: process.env.BLOCKCHAIN_WS_HOST || 'openethereum',
   BLOCKCHAIN_PORT: process.env.BLOCKCHAIN_PORT || '8546',
   TIMBER_HOST: process.env.TIMBER_HOST || 'timber',
   TIMBER_PORT: process.env.TIMBER_PORT || 80,

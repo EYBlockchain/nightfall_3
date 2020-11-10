@@ -25,12 +25,12 @@ services:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
       LOG_LEVEL: silly
-      BLOCKCHAIN_HOST: ws://ganache
+      BLOCKCHAIN_WS_HOST: ganache
       BLOCKCHAIN_PORT: 8545
     command: ['npm', 'start']
 
   worker:
-    # image: docker.pkg.github.com/eyblockchain/zokrates-worker/zokrates_worker:1.0.8
+    #  image: 3800decac71d
     build:
       dockerfile: Dockerfile
       context: ../zokrates-worker
@@ -77,12 +77,12 @@ services:
     environment:
       LOG_LEVEL: debug
       ETH_NETWORK: ganache
-      BLOCKCHAIN_HOST: ws://ganache
+      BLOCKCHAIN_WS_HOST: ganache
       BLOCKCHAIN_PORT: 8545
 
   # The Ganache client, containing required precompiles
   ganache:
-    image: trufflesuite/ganache-cli:latest
+    image: trufflesuite/ganache-cli:v6.12.1
     command:
       ganache-cli --accounts=10 --defaultBalanceEther=1000 --gasLimit=12500000 --deterministic
     ports:

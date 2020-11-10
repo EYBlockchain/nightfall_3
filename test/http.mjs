@@ -10,9 +10,30 @@ import mongo from '../src/utils/mongo.mjs';
 const { expect } = chai;
 chai.use(chaiHttp);
 const { GN } = gen;
+const web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8545'));
+
+function subscribeToGasUSed(shieldAddress) {
+  console.log('Subscribing to GasUsed event');
+  const topic = web3.utils.sha3('GasUsed(uint256,uint256)');
+  web3.eth.subscribe('logs', { address: shieldAddress, topics: [topic] }, (err, res) => {
+    const gasData = web3.eth.abi.decodeLog(
+      [
+        { type: 'uint256', name: 'byShieldContract' },
+        { type: 'uint256', name: 'byVerifierContract' },
+      ],
+      res.data,
+      [topic],
+    );
+    console.log(
+      'Gas used by Shield contract:',
+      gasData.byShieldContract,
+      'Gas used by Verifier contract:',
+      gasData.byVerifierContract,
+    );
+  });
+}
 
 async function submitTransaction(unsignedTransaction, privateKey, shieldAddress, gas) {
-  const web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8545'));
   const tx = {
     to: shieldAddress,
     data: unsignedTransaction,
@@ -24,8 +45,6 @@ async function submitTransaction(unsignedTransaction, privateKey, shieldAddress,
     receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction);
   } catch (err) {
     expect.fail(err);
-  } finally {
-    web3.currentProvider.connection.close();
   }
   return receipt;
 }
@@ -63,6 +82,7 @@ describe('Testing the http API', () => {
       const res = await chai.request(url).get('/contract-address/Shield');
       shieldAddress = res.body.address;
       expect(shieldAddress).to.be.a('string');
+      subscribeToGasUSed(shieldAddress);
     });
 
     it('should get the address of the test ERC contract stub', async () => {
@@ -83,6 +103,7 @@ describe('Testing the http API', () => {
   });
 
   describe('Deposit tests', () => {
+    subscribeToGasUSed(shieldAddress);
     it('should deposit some crypto into a ZKP commitment and get a raw blockchain transaction back', async () => {
       const res = await chai
         .request(url)
@@ -223,5 +244,6 @@ describe('Testing the http API', () => {
   });
   after(async () => {
     mongo.disconnect(config.MONGO_URL);
+    web3.currentProvider.connection.close();
   });
 });
