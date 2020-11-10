@@ -1,8 +1,12 @@
+import fs from 'fs';
+import util from 'util';
 import express from 'express';
 import zokrates from '@eyblockchain/zokrates-zexe.js';
 import path from 'path';
 import { getProofByCircuitPath } from '../utils/filing.mjs';
 import logger from '../utils/logger.mjs';
+
+const unlink = util.promisify(fs.unlink);
 
 const router = express.Router();
 
@@ -19,10 +23,19 @@ router.post('/', async (req, res, next) => {
     backend = 'zexe',
     provingScheme = 'gm17',
   } = req.body;
-  logger.info(`Received request to /generateProof`);
+  logger.info(`Received request to /generate-proof`);
   logger.debug(JSON.stringify(req.body, null, 2));
 
   const circuitName = path.basename(folderpath);
+
+  // Delete previous witness/proof files if they exist.
+  // Prevents bad inputs from going through anyway.
+  try {
+    await unlink(`${outputPath}/${folderpath}/${circuitName}_witness`);
+    await unlink(`${outputPath}/${folderpath}/${circuitName}_proof.json`);
+  } catch {
+    // Do nothing. It's okay if files don't exist.
+  }
 
   const opts = {};
   opts.createFile = true;

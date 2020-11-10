@@ -69,6 +69,23 @@ describe('Testing the http API', () => {
         done();
       });
   });
+  it('should fail on malformed inputs', done => {
+    chai
+      .request('http://localhost:8080')
+      .post('/generate-proof')
+      .set('Content-Type', 'application/json')
+      .send({
+        folderpath: 'factor',
+        inputs: [24534, 1468, 12458],
+        transactionInputs: 'test',
+        provingScheme: 'gm17',
+        backend: 'libsnark',
+      })
+      .end((err, res) => {
+        expect(res.error.status).to.equal(500);
+        done();
+      });
+  });
   it('should generate a proof', done => {
     chai
       .request('http://localhost:8080')
