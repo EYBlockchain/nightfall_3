@@ -172,6 +172,8 @@ Send a `post` request to `http://localhost:9000/start` to start the merkle-tree'
 
 You can ask Timber to start automatically by setting the environment variable `AUTOSTART` to anything that is truthy.  This is useful when you are deploying another Timber instance to an already-running ZKP solution. In this case, Timber will take contract (name, address, treeId) from its config file. Depending on your configuration, not all of these may be needed.  Often Timber can infer the contract address from build artefacts.  
 
+If `AUTOSTART` is used, it will attempt to obtain a contract address and will try to do this `AUTOSTART_RETRIES` (default 20) times, every three seconds, before giving up.  This is useful if the contracts are not deployed before Timber is started.
+
 ##### Update the merkle-tree database:
 
 Send a `patch` request to `http://localhost:9000/update`. Given the leaves now stored in the mongodb, this `update` command will calculate all of the intermediate nodes from the leaves to the root, and store all of these nodes in the mongodb.
