@@ -5,7 +5,8 @@ module.exports = {
   WALLETS_COLLECTION: 'wallets',
   COMMITMENTS_COLLECTION: 'commitments',
   ZKP_KEY_LENGTH: 32, // use a 32 byte key length for SHA compatibility
-  ZOKRATES_WORKER_URL: process.env.ZOKRATES_WORKER_URL || 'http://worker',
+  PROTOCOL: 'http://', // connect to zokrates microservice like this
+  ZOKRATES_WORKER_HOST: process.env.ZOKRATES_WORKER_HOST || 'worker',
   BLOCKCHAIN_WS_HOST: process.env.BLOCKCHAIN_WS_HOST || 'openethereum',
   BLOCKCHAIN_PORT: process.env.BLOCKCHAIN_PORT || '8546',
   TIMBER_HOST: process.env.TIMBER_HOST || 'timber',

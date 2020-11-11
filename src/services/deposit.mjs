@@ -18,10 +18,11 @@ import { storeCommitment } from './commitment-storage.mjs';
 
 const {
   ZKP_KEY_LENGTH,
-  ZOKRATES_WORKER_URL,
+  ZOKRATES_WORKER_HOST,
   SHIELD_CONTRACT_NAME,
   PROVING_SCHEME,
   BACKEND,
+  PROTOCOL,
 } = config;
 const { generalise } = gen;
 
@@ -48,7 +49,7 @@ async function deposit(items) {
   ].flat(Infinity);
   logger.debug(`witness input is ${witness.join(' ')}`);
   // call a zokrates worker to generate the proof
-  const res = await axios.post(`${ZOKRATES_WORKER_URL}/generate-proof`, {
+  const res = await axios.post(`${PROTOCOL}${ZOKRATES_WORKER_HOST}/generate-proof`, {
     folderpath: 'deposit',
     inputs: witness,
     provingScheme: PROVING_SCHEME,

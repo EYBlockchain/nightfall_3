@@ -16,7 +16,14 @@ import Nullifier from '../classes/nullifier.mjs';
 import PublicInputs from '../classes/public-inputs.mjs';
 import { getSiblingPath } from '../utils/timber.mjs';
 
-const { BN128_PRIME, ZOKRATES_WORKER_URL, PROVING_SCHEME, BACKEND, SHIELD_CONTRACT_NAME } = config;
+const {
+  BN128_PRIME,
+  ZOKRATES_WORKER_HOST,
+  PROVING_SCHEME,
+  BACKEND,
+  SHIELD_CONTRACT_NAME,
+  PROTOCOL,
+} = config;
 const { generalise } = gen;
 
 async function withdraw(items) {
@@ -78,7 +85,7 @@ async function withdraw(items) {
 
   logger.debug(`witness input is ${witness.join(' ')}`);
   // call a zokrates worker to generate the proof
-  const res = await axios.post(`${ZOKRATES_WORKER_URL}/generate-proof`, {
+  const res = await axios.post(`${PROTOCOL}${ZOKRATES_WORKER_HOST}/generate-proof`, {
     folderpath: 'withdraw',
     inputs: await witness,
     provingScheme: PROVING_SCHEME,

@@ -21,10 +21,11 @@ import { getSiblingPath } from '../utils/timber.mjs';
 const {
   BN128_PRIME,
   ZKP_KEY_LENGTH,
-  ZOKRATES_WORKER_URL,
+  ZOKRATES_WORKER_HOST,
   PROVING_SCHEME,
   BACKEND,
   SHIELD_CONTRACT_NAME,
+  PROTOCOL,
 } = config;
 const { generalise, GN } = gen;
 
@@ -135,7 +136,7 @@ async function transfer(items) {
   if (oldCommitments.length === 1) folderpath = 'single_transfer';
   else if (oldCommitments.length === 2) folderpath = 'double_transfer';
   else throw new Error('Unsupported number of commitments');
-  const res = await axios.post(`${ZOKRATES_WORKER_URL}/generate-proof`, {
+  const res = await axios.post(`${PROTOCOL}${ZOKRATES_WORKER_HOST}/generate-proof`, {
     folderpath,
     inputs: await witness,
     provingScheme: PROVING_SCHEME,

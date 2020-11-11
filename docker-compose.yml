@@ -27,6 +27,7 @@ services:
       LOG_LEVEL: silly
       BLOCKCHAIN_WS_HOST: ganache
       BLOCKCHAIN_PORT: 8545
+      ZOKRATES_WORKER_HOST: worker
     command: ['npm', 'start']
 
   worker:
@@ -76,9 +77,11 @@ services:
       - nightfall_network
     environment:
       LOG_LEVEL: debug
+      # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
       ETH_NETWORK: ganache
       BLOCKCHAIN_WS_HOST: ganache
       BLOCKCHAIN_PORT: 8545
+      ZOKRATES_WORKER_HOST: worker
 
   # The Ganache client, containing required precompiles
   ganache:
@@ -113,7 +116,7 @@ services:
       MONGO_PORT: 27017
       MONGO_NAME: merkle_tree
       HASH_TYPE: mimc
-      LOG_LEVEL: debug
+      LOG_LEVEL: info
       AUTOSTART: enabled
 
   #The database storing the merkle tree
