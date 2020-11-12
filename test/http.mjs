@@ -11,28 +11,71 @@ const { expect } = chai;
 chai.use(chaiHttp);
 const { GN } = gen;
 const web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8545'));
-
-function subscribeToGasUSed(shieldAddress) {
+/*
+function gasUsedStats(txReceipt, functionName) {
+  console.log(`\nGas used in ${functionName}:`);
+  const { gasUsed } = txReceipt.receipt;
+  const gasUsedLog = txReceipt.logs.filter(log => {
+    return log.event === 'GasUsed';
+  });
+  const gasUsedByShieldContract = Number(gasUsedLog[0].args.byShieldContract.toString());
+  const gasUsedByVerifierContract = Number(gasUsedLog[0].args.byVerifierContract.toString());
+  const refund = gasUsedByVerifierContract + gasUsedByShieldContract - gasUsed;
+  console.log('Total:', gasUsed);
+  console.log('By shield contract:', gasUsedByShieldContract);
+  console.log('By verifier contract (pre refund):', gasUsedByVerifierContract);
+  console.log('Refund:', refund);
+  console.log('Attributing all of refund to the verifier contract...');
+  console.log('By verifier contract (post refund):', gasUsedByVerifierContract - refund);
+}
+*/
+function subscribeToGasUsed(shieldAddress) {
   console.log('Subscribing to GasUsed event');
   const topic = web3.utils.sha3('GasUsed(uint256,uint256)');
   web3.eth.subscribe('logs', { address: shieldAddress, topics: [topic] }, (err, res) => {
-    const gasData = web3.eth.abi.decodeLog(
-      [
-        { type: 'uint256', name: 'byShieldContract' },
-        { type: 'uint256', name: 'byVerifierContract' },
-      ],
-      res.data,
-      [topic],
-    );
-    console.log(
-      'Gas used by Shield contract:',
-      gasData.byShieldContract,
-      'Gas used by Verifier contract:',
-      gasData.byVerifierContract,
-    );
+    web3.eth.getTransactionReceipt(res.transactionHash, (err1, txReceipt) => {
+      const gasData = web3.eth.abi.decodeLog(
+        [
+          { type: 'uint256', name: 'byShieldContract' },
+          { type: 'uint256', name: 'byVerifierContract' },
+        ],
+        res.data,
+        [topic],
+      );
+      const gasUsedByVerifierContract = Number(gasData.byVerifierContract);
+      const gasUsedByShieldContract = Number(gasData.byShieldContract);
+      const gasUsed = Number(txReceipt.gasUsed);
+      const refund = gasUsedByVerifierContract + gasUsedByShieldContract - gasUsed;
+      const attributedToVerifier = gasUsedByVerifierContract - refund;
+      console.log(
+        'Gas attributed to Shield contract:',
+        gasUsedByShieldContract,
+        'Gas attributed to Verifier contract:',
+        attributedToVerifier,
+      );
+    });
   });
 }
 
+/*
+function gasStats(txReceipt) {
+  const topic = web3.utils.sha3('GasUsed(uint256,uint256)');
+  const { logs } = txReceipt;
+  logs.forEach(log => {
+    if ([topic] === log.topics)
+      console.log(
+        web3.eth.abi.decodeLog(
+          [
+            { type: 'uint256', name: 'byShieldContract' },
+            { type: 'uint256', name: 'byVerifierContract' },
+          ],
+          log.data,
+          [topic],
+        ),
+      );
+  });
+}
+*/
 async function submitTransaction(unsignedTransaction, privateKey, shieldAddress, gas) {
   const tx = {
     to: shieldAddress,
@@ -82,7 +125,7 @@ describe('Testing the http API', () => {
       const res = await chai.request(url).get('/contract-address/Shield');
       shieldAddress = res.body.address;
       expect(shieldAddress).to.be.a('string');
-      subscribeToGasUSed(shieldAddress);
+      // subscribeToGasUsed(shieldAddress);
     });
 
     it('should get the address of the test ERC contract stub', async () => {
@@ -103,7 +146,7 @@ describe('Testing the http API', () => {
   });
 
   describe('Deposit tests', () => {
-    subscribeToGasUSed(shieldAddress);
+    subscribeToGasUsed(shieldAddress);
     it('should deposit some crypto into a ZKP commitment and get a raw blockchain transaction back', async () => {
       const res = await chai
         .request(url)
@@ -124,6 +167,7 @@ describe('Testing the http API', () => {
       const receipt = await submitTransaction(txToSign, privateKey, shieldAddress, gas);
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
+      // gasStats(receipt);
       // give Timber time to respond to the blockchain event
       await new Promise(resolve => setTimeout(resolve, 5000));
     });
@@ -149,6 +193,7 @@ describe('Testing the http API', () => {
       const receipt = await submitTransaction(txToSign, privateKey, shieldAddress, gas);
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
+      // gasStats(receipt);
     });
   });
 
