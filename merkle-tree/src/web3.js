@@ -26,9 +26,9 @@ export default {
       config.web3.options,
     );
 
-    provider.on('error', console.error);
+    provider.on('error', err => logger.error(err));
     provider.on('connect', () => logger.info('Blockchain Connected ...'));
-    provider.on('end', console.error);
+    provider.on('end', () => logger.error('Blockchain Disconnected'));
 
     this.web3 = new Web3(provider);
 

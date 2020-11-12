@@ -7,6 +7,7 @@
 // First we need to connect to a websocket provider.
 // Important Note: Subscribe method only works with a websocket provider!
 
+import fs from 'fs';
 import Web3 from './web3';
 import logger from './logger';
 
@@ -67,8 +68,8 @@ let events = {};
 function getContractInterface(contractName) {
   logger.debug(`./src/utils-web3 getContractInterface(${contractName})`);
 
-  const path = `../build/contracts/${contractName}.json`;
-  const contractInterface = require(path); // eslint-disable-line global-require, import/no-dynamic-require
+  const path = `./build/contracts/${contractName}.json`;
+  const contractInterface = JSON.parse(fs.readFileSync(path));
   logger.silly(`contractInterface: ${JSON.stringify(contractInterface, null, 2)}`);
   return contractInterface;
 }
