@@ -134,9 +134,7 @@ services:
       - nightfall_network
 
   rabbitmq:
-    build:
-      context: ./rabbitmq
-      dockerfile: Dockerfile
+    image: rabbitmq
     ports:
       - '15674:15674'
       - '5672:5672'
