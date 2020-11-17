@@ -21,6 +21,7 @@ services:
       - worker
       - ganache
       - timber
+      - rabbitmq
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
@@ -28,6 +29,9 @@ services:
       BLOCKCHAIN_WS_HOST: ganache
       BLOCKCHAIN_PORT: 8545
       ZOKRATES_WORKER_HOST: worker
+      RABBITMQ_HOST: amqp://rabbitmq
+      RABBITMQ_PORT: 5672
+      ENABLE_QUEUE: 1
     command: ['npm', 'start']
 
   worker:
@@ -126,6 +130,16 @@ services:
       - MONGO_INITDB_DATABASE=merkle_tree
     volumes:
       - timber-database-volume:/data/db
+    networks:
+      - nightfall_network
+
+  rabbitmq:
+    build:
+      context: ./rabbitmq
+      dockerfile: Dockerfile
+    ports:
+      - '15674:15674'
+      - '5672:5672'
     networks:
       - nightfall_network
 
