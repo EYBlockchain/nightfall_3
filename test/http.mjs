@@ -1,11 +1,10 @@
 import chai from 'chai';
-import config from 'config';
+// import config from 'config';
 import chaiHttp from 'chai-http';
 import Web3 from 'web3';
 import gen from 'general-number';
 import sha256 from '../src/utils/crypto/sha256.mjs';
-import { dropCommitments } from '../src/services/commitment-storage.mjs';
-import mongo from '../src/utils/mongo.mjs';
+// import mongo from '../src/utils/mongo.mjs';
 
 const { expect } = chai;
 chai.use(chaiHttp);
@@ -97,16 +96,6 @@ describe('Testing the http API', () => {
       ercAddress = res.body.address;
       expect(ercAddress).to.be.a('string');
     });
-  });
-
-  before(async () => {
-    try {
-      await dropCommitments();
-    } catch (err) {
-      console.log(
-        "Couldn't drop the Mongo db - that's fine there probably wasn't one set up if this is the first test run,",
-      );
-    }
   });
 
   describe('Deposit tests', () => {
@@ -254,7 +243,7 @@ describe('Testing the http API', () => {
     });
   });
   after(async () => {
-    mongo.disconnect(config.MONGO_URL);
+    // mongo.disconnect(config.MONGO_URL);
     web3.currentProvider.connection.close();
   });
 });

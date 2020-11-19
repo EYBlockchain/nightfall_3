@@ -89,9 +89,9 @@ with `code 0`. At this point you can run the tests. Open another terminal in the
 (root of `nightfall-client`) and run `npm test`.
 
 Once the tests are complete you can run `docker-compose down` or `docker-compose down -v`, although
-the latter will require you to re-do the trusted setup. You can also reset the Timber database
-without deleting the trusted setup by running the `./kill-timberdb` script. This is useful as the
-database can sometimes get out of step if the tests are aborted. A clue that this is the issue will
-be that the logging shows `null` leaf values being returned. It's generally simplest to always use
-`./kill-timberdb` to restart the environment for all times when you don't want a trusted setup to be
-re-done.
+the latter will require you to re-do the trusted setup. You can also reset the Timber and
+nightfall-client databases without deleting the trusted setup by running the `./clean_and_reset`
+script. This is useful as the database can sometimes get out of step if the tests are aborted. A
+clue that this is the issue will be that the logging shows `null` leaf values being returned. It's
+generally simplest to always use `./clean_and_reset` to restart the environment for all times when
+you don't want a trusted setup to be re-done.
