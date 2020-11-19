@@ -1,10 +1,8 @@
 import chai from 'chai';
-import config from 'config';
+// import config from 'config';
 import chaiHttp from 'chai-http';
 import gen from 'general-number';
 import sha256 from '../src/utils/crypto/sha256.mjs';
-import { dropCommitments } from '../src/services/commitment-storage.mjs';
-import mongo from '../src/utils/mongo.mjs';
 import {closeWeb3Connection, gasStats, submitTransaction, connectWeb3 } from './utils.mjs';
 
 const { expect } = chai;
@@ -29,8 +27,6 @@ describe('Testing the http API', () => {
 
   before(async () => {
     connectWeb3();
-    await dropCommitments()
-      .catch(err => console.log("Couldn't drop the Mongo db - that's fine there probably wasn't one set up if this is the first test run"));
   });
 
   describe('Miscellaneous tests', () => {
@@ -205,7 +201,6 @@ describe('Testing the http API', () => {
     });
   });
   after(async () => {
-    mongo.disconnect(config.MONGO_URL);
     closeWeb3Connection();
   });
 });

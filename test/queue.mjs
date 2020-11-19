@@ -1,10 +1,10 @@
 import chai from 'chai';
-import config from 'config';
+// import config from 'config';
 import chaiHttp from 'chai-http';
 import gen from 'general-number';
 import sha256 from '../src/utils/crypto/sha256.mjs';
-import { dropCommitments } from '../src/services/commitment-storage.mjs';
-import mongo from '../src/utils/mongo.mjs';
+// import { dropCommitments } from '../src/services/commitment-storage.mjs';
+// import mongo from '../src/utils/mongo.mjs';
 import rabbitmq from '../src/utils/rabbitmq.mjs';
 import {closeWeb3Connection, gasStats, submitTransaction, connectWeb3 } from './utils.mjs';
 
@@ -33,7 +33,7 @@ function queue(queueName, message) {
 
 process.env = {
   RABBITMQ_HOST: 'amqp://localhost',
-  RABBITMQ_PORT: 5672
+  RABBITMQ_PORT: 5672,
 };
 
 describe('Testing the queue implementation', () => {
@@ -55,9 +55,6 @@ describe('Testing the queue implementation', () => {
   before(async () => {
     connectWeb3();
     await rabbitmq.connect();
-    await dropCommitments()
-      .catch(err => console.log("Couldn't drop the Mongo db - that's fine there probably wasn't one set up if this is the first test run"));
-
     await chai.request(url).get('/generate-zkp-key');
     shieldAddress = (await chai.request(url).get('/contract-address/Shield')).body.address;
     ercAddress = (await chai.request(url).get('/contract-address/ERCStub')).body.address;
@@ -182,7 +179,6 @@ describe('Testing the queue implementation', () => {
     });
   });
   after(async () => {
-    mongo.disconnect(config.MONGO_URL);
     closeWeb3Connection();
     await rabbitmq.close();
   });
