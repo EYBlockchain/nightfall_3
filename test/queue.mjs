@@ -1,61 +1,16 @@
 import chai from 'chai';
 import config from 'config';
 import chaiHttp from 'chai-http';
-import Web3 from 'web3';
 import gen from 'general-number';
 import sha256 from '../src/utils/crypto/sha256.mjs';
 import { dropCommitments } from '../src/services/commitment-storage.mjs';
 import mongo from '../src/utils/mongo.mjs';
 import rabbitmq from '../src/utils/rabbitmq.mjs';
+import {closeWeb3Connection, gasStats, submitTransaction, connectWeb3 } from './utils.mjs';
 
 const { expect } = chai;
 chai.use(chaiHttp);
 const { GN } = gen;
-const web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8545'));
-
-function gasStats(txReceipt) {
-  const topic = web3.utils.sha3('GasUsed(uint256,uint256)');
-  const { logs } = txReceipt;
-  logs.forEach(log => {
-    if (log.topics.includes(topic)) {
-      const gasData = web3.eth.abi.decodeLog(
-        [
-          { type: 'uint256', name: 'byShieldContract' },
-          { type: 'uint256', name: 'byVerifierContract' },
-        ],
-        log.data,
-        [topic],
-      );
-      const gasUsedByVerifierContract = Number(gasData.byVerifierContract);
-      const gasUsedByShieldContract = Number(gasData.byShieldContract);
-      const gasUsed = Number(txReceipt.gasUsed);
-      const refund = gasUsedByVerifierContract + gasUsedByShieldContract - gasUsed;
-      const attributedToVerifier = gasUsedByVerifierContract - refund;
-      console.log(
-        'Gas attributed to Shield contract:',
-        gasUsedByShieldContract,
-        'Gas attributed to Verifier contract:',
-        attributedToVerifier,
-      );
-    }
-  });
-}
-
-async function submitTransaction(unsignedTransaction, privateKey, shieldAddress, gas) {
-  const tx = {
-    to: shieldAddress,
-    data: unsignedTransaction,
-    gas,
-  };
-  let receipt;
-  try {
-    const signed = await web3.eth.accounts.signTransaction(tx, privateKey);
-    receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction);
-  } catch (err) {
-    expect.fail(err);
-  }
-  return receipt;
-}
 
 function queue(queueName, message) {
   const replyTo = `${queueName}-reply`; // replyTo queue
@@ -97,36 +52,15 @@ describe('Testing the queue implementation', () => {
   // this is the openethereum test account (but could be anything)
   const recipientAddress = '0x00a329c0648769a73afac7f9381e08fb43dbea72';
 
-  describe('Miscellaneous tests', () => {
-    it('should generate a new 256 bit zkp private key for a user', async () => {
-      const res = await chai.request(url).get('/generate-zkp-key');
-      expect(res.body.keyId).to.be.a('string');
-      // normally this value would be the private key for subsequent transactions
-      // however we use a fixed one (zkpPrivateKey) to make the tests more independent.
-    });
-
-    it('should get the address of the shield contract', async () => {
-      const res = await chai.request(url).get('/contract-address/Shield');
-      shieldAddress = res.body.address;
-      expect(shieldAddress).to.be.a('string');
-    });
-
-    it('should get the address of the test ERC contract stub', async () => {
-      const res = await chai.request(url).get('/contract-address/ERCStub');
-      ercAddress = res.body.address;
-      expect(ercAddress).to.be.a('string');
-    });
-  });
-
   before(async () => {
-    try {
-      await rabbitmq.connect();
-      await dropCommitments();
-    } catch (err) {
-      console.log(
-        "Couldn't drop the Mongo db - that's fine there probably wasn't one set up if this is the first test run,",
-      );
-    }
+    connectWeb3();
+    await rabbitmq.connect();
+    await dropCommitments()
+      .catch(err => console.log("Couldn't drop the Mongo db - that's fine there probably wasn't one set up if this is the first test run"));
+
+    await chai.request(url).get('/generate-zkp-key');
+    shieldAddress = (await chai.request(url).get('/contract-address/Shield')).body.address;
+    ercAddress = (await chai.request(url).get('/contract-address/ERCStub')).body.address;
   });
 
   describe('Deposit tests', () => {
@@ -249,7 +183,7 @@ describe('Testing the queue implementation', () => {
   });
   after(async () => {
     mongo.disconnect(config.MONGO_URL);
-    web3.currentProvider.connection.close();
+    closeWeb3Connection();
     await rabbitmq.close();
   });
 });
