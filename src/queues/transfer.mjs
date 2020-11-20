@@ -11,6 +11,7 @@ export default function receiveMessage() {
     };
 
     try {
+      logger.debug(`transfer queue handler ${message.content.toString()}`);
       const txToSign = await transfer(JSON.parse(message.content.toString()));
       logger.debug('returning raw transaction');
       logger.silly(` raw transaction is ${JSON.stringify(txToSign, null, 2)}`);

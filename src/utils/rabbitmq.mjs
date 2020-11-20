@@ -40,13 +40,13 @@ export default {
 
   // only called from test-suite ./test/queue.mjs
   listenToReplyQueue(queue, correlationId, callback) {
-    this.receiveMessage(queue, message => {
+    this.receiveMessage(queue, async message => {
       if (message.properties.correlationId !== correlationId) {
         return this.sendNACK(message);
       }
 
-      this.cancelChannelConsume(message.fields.consumerTag);
       this.sendACK(message);
+      await this.cancelChannelConsume(message.fields.consumerTag);
 
       const response = JSON.parse(message.content.toString());
       if (response.error) {
