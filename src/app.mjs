@@ -8,6 +8,7 @@ import {
   getContractAddress,
   transfer,
   withdraw,
+  isMessageValid,
 } from './routes/index.mjs';
 
 const app = express();
@@ -27,5 +28,6 @@ app.use('/deposit', deposit);
 app.use('/contract-address', getContractAddress);
 app.use('/transfer', transfer);
 app.use('/withdraw', withdraw);
+app.use('/check-message', isMessageValid);
 
 export default app;

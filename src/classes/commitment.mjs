@@ -17,11 +17,12 @@ class Commitment {
   #computedIndex; // this is the index of this commitment in the Merkle tree. unlike all other numbers in this class, it's a normal Number, rather than a GN for compaitibility with Timber.
 
   constructor({ zkpPublicKey, ercAddress, tokenId, value, salt }) {
-    const properties = Object.values({ zkpPublicKey, ercAddress, tokenId, value, salt });
-    for (const property of properties)
-      if (property === undefined)
+    const items = { zkpPublicKey, ercAddress, tokenId, value, salt };
+    const keys = Object.keys(items);
+    for (const key of keys)
+      if (items[key] === undefined)
         throw new Error(
-          `Property ${value} was undefined. Did you pass the wrong object to the constructor?`,
+          `Property ${key} was undefined. Did you pass the wrong object to the constructor?`,
         );
     this.preimage = generalise({
       zkpPublicKey,
@@ -43,6 +44,14 @@ class Commitment {
   get index() {
     if (this.#computedIndex === undefined) this.#computedIndex = getLeafIndex(this.hash.hex(32));
     return this.#computedIndex;
+  }
+
+  // sometimes (e.g. going over http) the general-number class is inconvenient
+  toHex() {
+    return {
+      preimage: this.preimage.all.hex(),
+      hash: this.hash.hex(),
+    };
   }
 }
 

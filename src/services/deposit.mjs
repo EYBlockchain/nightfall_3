@@ -72,7 +72,7 @@ async function deposit(items) {
       .encodeABI();
     // store the commitment on successful computation of the transaction
     storeCommitment(commitment);
-    return rawTransaction;
+    return { rawTransaction, commitment };
   } catch (err) {
     throw new Error(err); // let the caller handle the error
   }

@@ -3,7 +3,7 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import gen from 'general-number';
 import sha256 from '../src/utils/crypto/sha256.mjs';
-import {closeWeb3Connection, gasStats, submitTransaction, connectWeb3 } from './utils.mjs';
+import { closeWeb3Connection, gasStats, submitTransaction, connectWeb3 } from './utils.mjs';
 
 const { expect } = chai;
 chai.use(chaiHttp);
@@ -13,6 +13,7 @@ describe('Testing the http API', () => {
   let shieldAddress;
   let txToSign;
   let ercAddress;
+  let commitment;
   const zkpPrivateKey = '0xc05b14fa15148330c6d008814b0bdd69bc4a08a1bd0b629c42fa7e2c61f16739'; // the zkp private key we're going to use in the tests.
   const zkpPublicKey = sha256([new GN(zkpPrivateKey)]).hex();
   const url = 'http://localhost:8080';
@@ -69,6 +70,7 @@ describe('Testing the http API', () => {
           zkpPublicKey,
         });
       txToSign = res.body.txToSign;
+      commitment = res.body.commitment;
       expect(txToSign).to.be.a('string');
       // console.log(txToSign);
     });
@@ -81,6 +83,32 @@ describe('Testing the http API', () => {
       gasStats(receipt);
       // give Timber time to respond to the blockchain event
       await new Promise(resolve => setTimeout(resolve, 5000));
+    });
+  });
+
+  describe('Check transfer message tests', () => {
+    it('should return true for a valid transfer message', async () => {
+      const { salt } = commitment.preimage;
+      const message = { ercAddress, tokenId, value, salt };
+      const query = { message, recipientZkpPublicKey: zkpPublicKey };
+      const res = await chai
+        .request(url)
+        .get('/check-message')
+        .query(query);
+      const result = res.body.valid;
+      expect(result).to.equal(true);
+    });
+
+    it('should return false for an invalid transfer message', async () => {
+      const { salt } = commitment.preimage;
+      const message = { ercAddress, tokenId, value: 3, salt };
+      const query = { message, recipientZkpPublicKey: zkpPublicKey };
+      const res = await chai
+        .request(url)
+        .get('/check-message')
+        .query(query);
+      const result = res.body.valid;
+      expect(result).to.equal(false);
     });
   });
 
