@@ -44,9 +44,10 @@ export const getLeafIndex = async leafValue => {
       },
     );
     logger.http('Timber Response:', response.data.data);
-    // TODO: handle null response
+    if (!response.data.data) return null;
     return response.data.data.leafIndex;
   } catch (error) {
+    logger.error(`getLeafIndex threw error ${error}`);
     throw new Error(error);
   }
 };
