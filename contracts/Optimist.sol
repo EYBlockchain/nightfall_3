@@ -8,23 +8,63 @@ pragma solidity ^0.6.0;
 import './Shield.sol';
 
 contract Optimist is Shield {
+  struct Proposal {
+    bytes32 latestRoot;
+    uint nonce;
+    bytes32[] commitments;
+    bytes32[] nullifiers;
+  } // a proposed new state for the Shield contract
 
-  uint public nonce; // keeps track of the transaction requests
-  address public proposer; // can propose a new shield state
-  address public validator; // can validate a proposal
-  uint transactionFee = 1;
-
-  event NewDeposit(
-    uint _nonce,
-    bytes32 _publicInputHash,
-    bytes32 ercAddress, // Take in as bytes32 for consistent hashing
-    bytes32 _tokenId,
-    bytes32 _value,
-    bytes32 _commitment,
-    uint256[] _proof
+  struct Transaction {
+    uint nonce;
+    uint fee;
+    TransactionTypes transactionType;
+    TransactionStates transactionState;
+    bytes32 publicInputHash;
+    bytes32 root;
+    bytes32 tokenId;
+    bytes32 value;
+    bytes32 ercAddress;
+    bytes32[] commitments;
+    bytes32[] nullifiers;
+    bytes32 recipientAddress;
+    uint[] proof;
+  }
+// event is split into two because otherwise we get a Stack Too Deep error
+  event OptimisticTransactionHeader(
+    uint nonce,
+    uint fee,
+    TransactionTypes transactionType,
+    TransactionStates transactionState
   );
-  event Proposal(uint _startNonce, uint _endNonce, bytes32 _latestRoot, bytes32[] _commitments, bytes32[] _nullifiers);
 
+  event OptimisticTransactionBody(
+    uint nonce,
+    bytes32 publicInputHash,
+    bytes32 root,
+    bytes32 tokenId,
+    bytes32 value,
+    bytes32 ercAddress,
+    bytes32[] commitments,
+    bytes32[] nullifiers,
+    bytes32 recipientAddress,
+    uint256[] proof
+  );
+
+  event ProposedTransaction(bytes32 _latestRoot, uint nonce, bytes32[] _commitments, bytes32[] _nullifiers);
+
+  uint public nonce; // transaction nonce for ease of reference
+  address public proposer; // can propose a new shield state
+  mapping(address => bool) validators; // can validate a proposal
+  mapping(uint => uint) fee; //keeps track of each transaction's payment
+  Proposal currentProposal; // the current proposal
+  mapping(address => address) voted; // keep track of who has voted (linke list)
+  address private lastAddress;
+  uint public validations; // how many validators have voted
+  uint constant TRANSACTION_FEE = 0; // it's free for now!
+  // mapping(uint => Transaction) public transactions;
+
+  enum TransactionStates { PENDING, PROPOSED, ACCEPTED, REJECTED }
 
   constructor(address _verifier) Shield(_verifier) public {
   }
@@ -34,77 +74,106 @@ contract Optimist is Shield {
       _;
   }
 
-  modifier onlyValidator() { // Modifier
-    require(msg.sender == validator, "Only validator can call this.");
-      _;
-  }
-
-  function optimisticDeposit(
+  function deposit(
       bytes32 _publicInputHash,
       bytes32 ercAddress, // Take in as bytes32 for consistent hashing
       bytes32 _tokenId,
       bytes32 _value,
       bytes32 _commitment,
       uint256[] calldata _proof
-    ) public payable {
+    ) external payable override {
     // gas measurement:
     uint256 gasCheckpoint = gasleft();
-
-    emit NewDeposit(
-      nonce,
-      _publicInputHash,
-      ercAddress,
-      _tokenId,
-      _value,
-      _commitment,
-      _proof
-    );
+    // save the transaction in case it gets challenged
+    bytes32[] memory c = new bytes32[](1);
+    c[0] = _commitment;
+    Transaction memory t = Transaction({
+      nonce: nonce,
+      fee: msg.value,
+      transactionType: TransactionTypes.DEPOSIT,
+      transactionState: TransactionStates.PENDING,
+      publicInputHash: _publicInputHash,
+      root: '',
+      tokenId: _tokenId,
+      value: _value,
+      ercAddress: ercAddress,
+      commitments: c,
+      nullifiers: new bytes32[](0),
+      recipientAddress: '',
+      proof: _proof
+    });
+    emitOptimisticTransaction(t);
     nonce++;
     uint256 gasUsedByDeposit = gasCheckpoint - gasleft();
     emit GasUsed(gasUsedByDeposit, gasUsedByDeposit);
   }
 
-  function propose(uint _startNonce, uint _endNonce, bytes32 _latestRoot, bytes32[] calldata _commitments, bytes32[] calldata _nullifiers) external {
-    emit Proposal(_startNonce, _endNonce, _latestRoot, _commitments, _nullifiers);
+  // proposer proposes new transaction
+  function proposeTransaction(
+    bytes32 _latestRoot,
+    uint _nonce,
+    bytes32[] calldata _commitments,
+    bytes32[] calldata _nullifiers
+  ) external onlyProposer {
+    // root must not be empty/zero because we use this to check for a current proposal
+    require(_latestRoot != '', 'root cannot be zero');
+    // cannot create a new proposal until the previous one is dealt with
+    require(currentProposal.latestRoot == 0, 'A proposal is already in progress');
+    // to simplify things we take transactions in ascending nonce order
+    // if that's all ok, we can submit a new proposal for the Shield state
+    currentProposal = Proposal({
+      latestRoot: _latestRoot,
+      nonce: _nonce,
+      commitments: _commitments,
+      nullifiers: _nullifiers
+    });
+    emit ProposedTransaction(_latestRoot, _nonce, _commitments, _nullifiers);
   }
 
-  // Update the state for a double transfer
-  function updateState(
-    bytes32 _latestRoot,
-    bytes32 [] calldata _newCommitmentHashes,
-    bytes32[] calldata _nullifierHashes
-  ) private {
-    latestRoot = _latestRoot;
-    roots[latestRoot] = true;
-    for (uint i = 0; i < _nullifierHashes.length; i++)
-      usedNullifiers[_nullifierHashes[i]] = true;
-    emit NewLeaves(leafCount, _newCommitmentHashes, _latestRoot);
-    leafCount += _newCommitmentHashes.length;
+  // challenger challenges transaction
+  function challenge(bytes32 _latestRoot) view external {
+    require(currentProposal.latestRoot == _latestRoot, 'You can only challenge the current proposal');
   }
-  // Update the state for a single transfer
-  function updateState(
-    bytes32 _latestRoot,
-    bytes32 _newCommitmentHash,
-    bytes32 _nullifierHash
-  ) private {
-    latestRoot = _latestRoot;
+
+  // Update the state of the Shield contract
+  function updateState() private {
+    latestRoot = currentProposal.latestRoot;
+    // update the root
     roots[latestRoot] = true;
-    usedNullifiers[_nullifierHash] = true;
-    emit NewLeaf(leafCount, _newCommitmentHash, _latestRoot);
-    leafCount++;
+    // update the nullifiers
+    for (uint i = 0; i < currentProposal.nullifiers.length; i++)
+      usedNullifiers[currentProposal.nullifiers[i]] = true;
+    // TODO update the FRONTIER
+
+    // emit an event so that Timber updates its commitment database
+    if (currentProposal.commitments.length == 1)
+      emit NewLeaf(leafCount, currentProposal.commitments[0], latestRoot);
+    if (currentProposal.commitments.length > 1)
+      emit NewLeaves(leafCount, currentProposal.commitments, latestRoot);
+    // update the number of Merkle tree leaves
+    leafCount += currentProposal.commitments.length;
   }
-  // Update the state for a deposit
-  function updateState(
-    bytes32 _latestRoot,
-    bytes32 _newCommitmentHash
-  ) private {
-    latestRoot = _latestRoot;
-    roots[latestRoot] = true;
-    emit NewLeaf(leafCount, _newCommitmentHash, _latestRoot);
-    leafCount++;
-  }
-  // Update the state for a withdraw
-  function updateState( bytes32 _nullifierHash ) private {
-    usedNullifiers[_nullifierHash] = true;
+  // TODO
+  function clear(mapping(address => address) storage _voted) private {}
+
+  function emitOptimisticTransaction(Transaction memory t) private {
+    emit OptimisticTransactionHeader(
+      t.nonce,
+      t.fee,
+      t.transactionType,
+      t.transactionState
+    );
+    emit OptimisticTransactionBody(
+      t.nonce,
+      t.publicInputHash,
+      t.root,
+      t.tokenId,
+      t.value,
+      t.ercAddress,
+      t.commitments,
+      t.nullifiers,
+      t.recipientAddress,
+      t.proof
+    );
   }
 }

@@ -86,10 +86,12 @@ contract Shield is Ownable, MerkleTree {
       bytes32 _value,
       bytes32 _commitment,
       uint256[] calldata _proof
-    ) external {
+    ) virtual external payable {
     // gas measurement:
     uint256 gasCheckpoint = gasleft();
-
+    // we don't want this function to be payable but we do perhaps want the
+    // overriding function to be payable
+    require(msg.value == 0, "I don't want your money");
     // Check that the publicInputHash equals the hash of the 'public inputs':
     // we shorten the SHA hash to 248 bits so it fits in one field
     require(
@@ -262,7 +264,7 @@ contract Shield is Ownable, MerkleTree {
 
     // check that the root exists
     require(roots[_root], 'The root is not recognised');
-    
+
     // gas measurement:
     uint256 gasUsedByShieldContract = gasCheckpoint - gasleft();
     gasCheckpoint = gasleft();
