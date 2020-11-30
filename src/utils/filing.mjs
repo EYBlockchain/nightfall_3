@@ -21,7 +21,7 @@ export const readJsonFile = filePath => {
   return null;
 };
 
-export const writeJsonFile = (filePath, jsonObject) => {
+const writeJsonFile = (filePath, jsonObject) => {
   // this will overwrite any existing file:
   try {
     fs.writeFileSync(filePath, JSON.stringify(jsonObject));
