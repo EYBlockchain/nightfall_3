@@ -85,8 +85,8 @@ contract Shield is Ownable, MerkleTree {
       bytes32 _tokenId,
       bytes32 _value,
       bytes32 _commitment,
-      uint256[] calldata _proof
-    ) virtual external payable {
+      uint256[] memory _proof
+    ) virtual public payable returns(bool) {
     // gas measurement:
     uint256 gasCheckpoint = gasleft();
     // we don't want this function to be payable but we do perhaps want the
@@ -94,26 +94,24 @@ contract Shield is Ownable, MerkleTree {
     require(msg.value == 0, "I don't want your money");
     // Check that the publicInputHash equals the hash of the 'public inputs':
     // we shorten the SHA hash to 248 bits so it fits in one field
-    require(
-      _publicInputHash == sha256(
+    if(
+      _publicInputHash != sha256(
         abi.encodePacked(ercAddress, _tokenId, _value, _commitment)
-      ) & selectBits248,
-      "publicInputHash cannot be reconciled"
-    );
+      ) & selectBits248
+    ) return false;
 
     // gas measurement:
     uint256 gasUsedByShieldContract = gasCheckpoint - gasleft();
     gasCheckpoint = gasleft();
 
     // verify the proof
-    require(
-      verifier.verify(
+    if (
+      !verifier.verify(
         _proof,
         uint256(_publicInputHash),
         vks[TransactionTypes.DEPOSIT]
-      ),
-      "The proof has not been verified by the contract"
-    );
+      )
+    ) return false;
 
     // gas measurement:
     uint256 gasUsedByVerifierContract = gasCheckpoint - gasleft();
@@ -156,6 +154,7 @@ contract Shield is Ownable, MerkleTree {
     gasUsedByShieldContract = gasUsedByShieldContract +
       gasCheckpoint - gasleft();
     emit GasUsed(gasUsedByShieldContract, gasUsedByVerifierContract);
+    return true;
   }
 
   /**
