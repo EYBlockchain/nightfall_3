@@ -12,7 +12,7 @@ const vkPath = circuitPath => `${outputPath}/${circuitPath}/${path.basename(circ
 const proofPath = circuitPath =>
   `${outputPath}/${circuitPath}/${path.basename(circuitPath)}_proof.json`;
 
-const readJsonFile = filePath => {
+export const readJsonFile = filePath => {
   if (fs.existsSync(filePath)) {
     const file = fs.readFileSync(filePath);
     return JSON.parse(file);
@@ -54,6 +54,11 @@ export const getProofByCircuitPath = circuitPath => {
   const { proof, inputs } = readJsonFile(proofPath(circuitPath));
   return { proof, inputs };
 };
+
+export const getProofFromFile = filePath => {
+  console.log('in filling ', `${outputPath}/${filePath}`);
+  return readJsonFile(`${outputPath}/${filePath}`);
+}
 
 export const untarFiles = async (filePath, fileName) => {
   const dir = fileName.replace('.tar', '');

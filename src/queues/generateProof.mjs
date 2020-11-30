@@ -3,13 +3,13 @@ import util from 'util';
 import zokrates from '@eyblockchain/zokrates-zexe.js';
 import path from 'path';
 import rabbitmq from '../utils/rabbitmq.mjs';
-import { getProofByCircuitPath } from '../utils/filing.mjs';
+import { getProofFromFile } from '../utils/filing.mjs';
 import logger from '../utils/logger.mjs';
 
 const unlink = util.promisify(fs.unlink);
 
 export default function receiveMessage() {
-  const outputPath = `./output/`;
+  const outputPath = `./output`;
 
   rabbitmq.receiveMessage('generate-proof', async message => {
     const { replyTo, correlationId } = message.properties;
@@ -19,6 +19,7 @@ export default function receiveMessage() {
       transactionInputs,
       outputDirectoryPath,
       proofFileName,
+      commitmentHash,
       backend = 'zexe',
       provingScheme = 'gm17',
     } = JSON.parse(message.content.toString());
@@ -30,26 +31,25 @@ export default function receiveMessage() {
 
     const circuitName = path.basename(folderpath);
 
-    // Delete previous witness/proof files if they exist.
-    // Prevents bad inputs from going through anyway.
-    try {
-      await unlink(`${outputPath}/${folderpath}/${circuitName}_witness`);
-      await unlink(`${outputPath}/${folderpath}/${circuitName}_proof.json`);
-    } catch {
-      // No files to delete. Do nothing.
-    }
+    const witnessFile = commitmentHash
+      ? `${circuitName}_${commitmentHash}_witness`
+      : `${circuitName}_witness`;
+
+    const proofJsonFile = commitmentHash
+      ? `${circuitName}_${commitmentHash}_proof.json`
+      : `${circuitName}_proof.json`;
 
     const opts = {};
     opts.createFile = true;
-    opts.directory = `./output/${folderpath}` || outputDirectoryPath;
-    opts.fileName = `${circuitName}_proof.json` || proofFileName;
+    opts.directory = outputDirectoryPath || `./output/${folderpath}`;
+    opts.fileName = proofFileName || `${proofJsonFile}`;
 
     try {
       logger.info('Compute witness...');
       await zokrates.computeWitness(
         `${outputPath}/${folderpath}/${circuitName}_out`,
         `${outputPath}/${folderpath}/`,
-        `${circuitName}_witness`,
+        `${witnessFile}`,
         inputs,
       );
 
@@ -57,13 +57,13 @@ export default function receiveMessage() {
       await zokrates.generateProof(
         `${outputPath}/${folderpath}/${circuitName}_pk.key`,
         `${outputPath}/${folderpath}/${circuitName}_out`,
-        `${outputPath}/${folderpath}/${circuitName}_witness`,
+        `${outputPath}/${folderpath}/${witnessFile}`,
         provingScheme,
         backend,
         opts,
       );
 
-      const { proof, inputs: publicInputs } = await getProofByCircuitPath(folderpath);
+      const { proof, inputs: publicInputs } = await getProofFromFile(`${folderpath}/${proofJsonFile}`);
 
       logger.info(`Complete`);
       logger.debug(`Responding with proof and inputs:`);
@@ -73,6 +73,15 @@ export default function receiveMessage() {
       response.data = { proof, inputs: publicInputs, transactionInputs };
     } catch (err) {
       response.error = 'Proof generation failed';
+    }
+
+    // Delete previous witness/proof files if they exist.
+    // Prevents bad inputs from going through anyway.
+    try {
+      await unlink(`${outputPath}/${folderpath}/${witnessFile}`);
+      await unlink(`${outputPath}/${folderpath}/${proofJsonFile}`);
+    } catch {
+      // No files to delete. Do nothing.
     }
 
     rabbitmq.sendMessage(replyTo, response, { correlationId, type: folderpath });
