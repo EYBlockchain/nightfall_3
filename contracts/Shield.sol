@@ -1,83 +1,24 @@
-// SPDX-License-Identifier: CC0-1.0
-
+// SPDX-License-Identifier: CC0
 /**
-Contract to enable the management of private fungible token (ERC-20) transactions using zk-SNARKs.
-@Author Westlad, Chaitanya-Konda, iAmMichaelConnor
+Contract to support optimistic verification of proofs.  This doesn't (yet) do
+a rollup.
 */
-
 pragma solidity ^0.6.0;
 
-import "./Ownable.sol";
-import "./MerkleTree.sol";
-import "./Verifier_Interface.sol";
-import "./ERCInterface.sol";
+import './Shield_Computations.sol';
 
-contract Shield is Ownable, MerkleTree {
-  // ENUMS:
-  enum TransactionTypes { DEPOSIT, SINGLE_TRANSFER, DOUBLE_TRANSFER, WITHDRAW }
+contract Shield is Shield_Computations{
 
-  // EVENTS:
-  // Observers may wish to listen for nullification of commitments:
-  event Transfer(bytes32 nullifier1, bytes32 nullifier2);
-  event Withdraw(bytes32 nullifier);
-  // Observers may wish to listen for zkSNARK-related changes:
-  event VerifierChanged(address newVerifierContract);
-  event VkChanged(TransactionTypes txType);
-  // For testing only. This SHOULD be deleted before mainnet deployment:
-  event GasUsed(uint256 byShieldContract, uint256 byVerifierContract);
+  uint public acceptedProposals; // holds the nonce of the last accepted proposal + 1
+  mapping(uint => uint) fee; //keeps track of each transaction's payment
+  mapping(uint => bool) public challenges; // stores nonces of challenged proposals
+  mapping(bytes32 => bool) public badRoots; // stores a list of roots that failed to make it into the state
+  uint constant TRANSACTION_FEE = 0; // it's free for now!
 
-  // CONTRACT INSTANCES:
-  Verifier_Interface private verifier; // the verification smart contract
-  MerkleTree private timber; // the timber contract
-
-  // PRIVATE TRANSACTIONS' PUBLIC STATES:
-  mapping(bytes32 => bool) public usedNullifiers; // store nullifiers of spent commitments
-  mapping(bytes32 => bool) public roots; // holds each root we've calculated so that we can pull the one relevant to the prover
-  mapping(TransactionTypes => uint256[]) public vks; // mapped to by an enum uint(TransactionTypes):
-
-  bytes32 public latestRoot; // holds the index for the latest root so that the prover can provide it later and this contract can look up the relevant root
-
-  bytes32 public selectBits248 = 0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
-
-  // FUNCTIONS:
-  constructor(address _verifier) public {
-      _owner = msg.sender;
-      verifier = Verifier_Interface(_verifier);
+  constructor(address _verifier) Shield_Computations(_verifier) public {
   }
-
-  /**
-  self destruct
-  */
-  function close() external onlyOwner {
-      selfdestruct(address(uint160(_owner)));
-  }
-
-  /**
-  function to change the address of the underlying Verifier contract
-  */
-  function changeVerifier(address _verifier) external onlyOwner {
-      verifier = Verifier_Interface(_verifier);
-      emit VerifierChanged(_verifier);
-  }
-
-  /**
-  returns the verifier-interface contract address that this shield contract is calling
-  */
-  function getVerifier() public view returns (address) {
-      return address(verifier);
-  }
-
-  /**
-  Stores verification keys (for the 'deposit', 'transfer' and 'withdraw' computations).
-  */
-  function registerVerificationKey(uint256[] calldata _vk, TransactionTypes _txType) external onlyOwner {
-      // CAUTION: we do not prevent overwrites of vk's. Users must listen for the emitted event to detect updates to a vk.
-      vks[_txType] = _vk;
-      emit VkChanged(_txType);
-  }
-
-  /**
-  The deposit function accepts tokens from the specified ERCx contract and creates the same amount as a commitment.
+  /*
+  * Function to create and broadcast a deposit transaction
   */
   function deposit(
       bytes32 _publicInputHash,
@@ -85,243 +26,145 @@ contract Shield is Ownable, MerkleTree {
       bytes32 _tokenId,
       bytes32 _value,
       bytes32 _commitment,
-      uint256[] memory _proof
-    ) virtual public payable returns(bool) {
+      uint256[] calldata _proof
+    ) public payable returns(bool) {
     // gas measurement:
     uint256 gasCheckpoint = gasleft();
-    // we don't want this function to be payable but we do perhaps want the
-    // overriding function to be payable
-    require(msg.value == 0, "I don't want your money");
-    // Check that the publicInputHash equals the hash of the 'public inputs':
-    // we shorten the SHA hash to 248 bits so it fits in one field
-    if(
-      _publicInputHash != sha256(
-        abi.encodePacked(ercAddress, _tokenId, _value, _commitment)
-      ) & selectBits248
-    ) return false;
-
-    // gas measurement:
-    uint256 gasUsedByShieldContract = gasCheckpoint - gasleft();
-    gasCheckpoint = gasleft();
-
-    // verify the proof
-    if (
-      !verifier.verify(
-        _proof,
-        uint256(_publicInputHash),
-        vks[TransactionTypes.DEPOSIT]
-      )
-    ) return false;
-
-    // gas measurement:
-    uint256 gasUsedByVerifierContract = gasCheckpoint - gasleft();
-    gasCheckpoint = gasleft();
-
-    // update contract states
-    // recalculate the root of the merkleTree as it's now different
-    latestRoot = insertLeaf(_commitment);
-    // and save the new root to the list of roots
-    roots[latestRoot] = true;
-
-    // Finally, transfer the fTokens from the sender to this contract
-    ERCInterface tokenContract = ERCInterface(
-        address(uint160(uint256(ercAddress)))
-    );
-    if (_tokenId == zero && _value == zero) // disallow this corner case
-      revert("Depositing zero-value tokens is not allowed");
-
-    if (_tokenId == zero) // must be an ERC20
-      require(
-        tokenContract.transferFrom(msg.sender, address(this), uint256(_value)),
-        "ERC20 Commitment cannot be deposited"
-      );
-    else if (_value == zero) // must be ERC721
-      require(
-        tokenContract.safeTransferFrom(
-          msg.sender, address(this), uint256(_tokenId), ''
-        ),
-        "ERC721 Commitment cannot be deposited"
-      );
-    else // must be an ERC1155
-      require(
-        tokenContract.safeTransferFrom(
-          msg.sender, address(this), uint256(_tokenId), uint256(_value),''
-        ),
-        "ERC1155 Commitment cannot be deposited"
-      );
-
-    // gas measurement:
-    gasUsedByShieldContract = gasUsedByShieldContract +
-      gasCheckpoint - gasleft();
-    emit GasUsed(gasUsedByShieldContract, gasUsedByVerifierContract);
-    return true;
+    // save the transaction in case it gets challenged
+    bytes32[] memory c = new bytes32[](1); // TODO this is rather ugly
+    c[0] = _commitment;
+    Transaction memory transaction = Transaction({
+      transactionNonce: transactionNonce,
+      fee: msg.value,
+      transactionType: TransactionTypes.DEPOSIT,
+      transactionState: TransactionStates.PENDING,
+      publicInputHash: _publicInputHash,
+      root: '',
+      tokenId: _tokenId,
+      value: _value,
+      ercAddress: ercAddress,
+      commitments: c,
+      nullifiers: new bytes32[](0),
+      recipientAddress: '',
+      proof: _proof
+    });
+    emitOptimisticTransaction(transaction);
+    transactions[transactionNonce] = transaction;
+    transactionNonce++;
+    uint256 gasUsedByDeposit = gasCheckpoint - gasleft();
+    emit GasUsed(gasUsedByDeposit, gasUsedByDeposit);
+    return true; // we don't need this but the super requires it
   }
 
-  /**
-  The transfer function nullifies old commitments and creates new ones, subject
-  to it accepting the proof of correct commitment transfer.
-  */
-  function transfer(
-      bytes32 _publicInputHash,
-      bytes32[] calldata ercAddresses,
-      bytes32[] calldata _newCommitmentHashes,
-      bytes32[] calldata _nullifierHashes,
-      bytes32 _root,
-      uint256[] calldata _proof
-    ) external {
-    // gas measurement:
-    uint256 gasCheckpoint = gasleft();
-
-    // Check that the publicInputHash equals the hash of the 'public inputs':
-    // we shorten the SHA hash to 248 bits so it fits in one field
-    require(
-      _publicInputHash == sha256(
-        abi.encodePacked(ercAddresses, _newCommitmentHashes, _nullifierHashes, _root)
-      ) & selectBits248,
-      "publicInputHash cannot be reconciled"
-    );
-
-    // check that the nullifiers haven't been used before
-    for (uint i = 0; i < _nullifierHashes.length; i++) {
-      require(!usedNullifiers[_nullifierHashes[i]], 'One of the nullifiers has already been used');
-      usedNullifiers[_nullifierHashes[i]] = true;
+  // test to see if the challenge is successful
+  function runChallenge(RootProposal memory p) private returns(MerkleUpdate memory) {
+    Transaction memory t = transactions[p.proofProposal.transactionNonce];
+    // check the transaction type we're dealing with
+    if (t.transactionType == TransactionTypes.DEPOSIT) {
+      // run the shield computation in full and get the resulting state update
+      return depositComputation(
+        t.publicInputHash,
+        t.ercAddress,
+        t.tokenId,
+        t.value,
+        t.commitments[0],
+        t.proof
+      );
     }
-
-    // check that the root exists
-    require(roots[_root], 'The root is not recognised');
-
-    // gas measurement:
-    uint256 gasUsedByShieldContract = gasCheckpoint - gasleft();
-    gasCheckpoint = gasleft();
-
-    // verify the proof
-    if (_newCommitmentHashes.length == 1)
-      require(
-        verifier.verify(
-          _proof,
-          uint256(_publicInputHash),
-          vks[TransactionTypes.SINGLE_TRANSFER]
-        ),
-        "The proof has not been verified by the contract"
-      );
-    else if (_newCommitmentHashes.length == 2)
-      require(
-        verifier.verify(
-          _proof,
-          uint256(_publicInputHash),
-          vks[TransactionTypes.DOUBLE_TRANSFER]
-        ),
-        "The proof has not been verified by the contract"
-      );
-    else
-      revert('Too many commitments - only 1 or 2 are currently supported');
-
-    // gas measurement:
-    uint256 gasUsedByVerifierContract = gasCheckpoint - gasleft();
-    gasCheckpoint = gasleft();
-
-    // update contract states
-    // recalculate the root of the merkleTree as it's now different
-    latestRoot = insertLeaves(_newCommitmentHashes);
-    // and save the new root to the list of roots
-    roots[latestRoot] = true;
-
-    // gas measurement:
-    gasUsedByShieldContract = gasUsedByShieldContract +
-      gasCheckpoint - gasleft();
-    emit GasUsed(gasUsedByShieldContract, gasUsedByVerifierContract);
   }
-  /**
-  The transfer function nullifies old commitments and creates new ones, subject
-  to it accepting the proof of correct commitment transfer.
-  */
-  function withdraw(
-      bytes32 _publicInputHash,
-      bytes32 _ercAddress,
-      bytes32 _tokenId,
-      bytes32 _value,
-      bytes32 _nullifierHash,
-      bytes32 _recipientAddress,
-      bytes32 _root,
-      uint256[] calldata _proof
-    ) external {
-    // gas measurement:
-    uint256 gasCheckpoint = gasleft();
 
-    // Check that the publicInputHash equals the hash of the 'public inputs':
-    // we shorten the SHA hash to 248 bits so it fits in one field
-    require(
-      _publicInputHash == sha256(
-        abi.encodePacked(_ercAddress, _tokenId, _value, _nullifierHash, _recipientAddress, _root)
-      ) & selectBits248,
-      "publicInputHash cannot be reconciled"
+
+  // challenger challenges transaction
+  function challenge(uint _proposalNonce) external {
+    // store the nonce where the challenge was made
+    challenges[_proposalNonce] = true;
+    // TODO they need to pay for the transaction. As it stands, challenges are
+    // too cheap.
+  }
+
+  // trigger acceptance of a valid proposal after 1 week
+  function acceptNextProposal() external {
+    MerkleUpdate memory m;
+    RootProposal memory p = rootProposals[acceptedProposals];
+    // it's possible that p doesn't exist if the proposal was invalid and has
+    // been deleted.  If that's the case, there's nothing to do
+    if (p.proofProposal.proposerAddress == address(0)) {
+      emit RejectedProposedStateUpdate(acceptedProposals++);
+      return;
+    }
+    require(now > p.blockTime + 1 weeks, 'Too soon to accept proposal' );
+    // we can straight-away delete any proposal that is dependent on a proposal
+    // that has already been successfully challenged
+    if (badRoots[p.proofProposal.inputRoot]) {
+      delete rootProposals[acceptedProposals];
+      emit RejectedProposedStateUpdate(acceptedProposals++);
+      return;
+    }
+    // this proposal is the next candidate to be incorporated into the Shield
+    // state. Therefore, its input root must be known to the Shield contract.
+    if (!roots[p.proofProposal.inputRoot]) {
+      delete rootProposals[acceptedProposals];
+      emit RejectedProposedStateUpdate(acceptedProposals++);
+      return;
+    }
+    // next,check if someone has challenged this proposal
+    if (challenges[acceptedProposals]) {
+      // run the challenge and see if we get a valid state update back
+      m = runChallenge(p);
+      if (m.err || m.root != p.outputRoot) {
+        // successful challenge
+        // add the proposal's root to the naughty list
+        badRoots[p.outputRoot] = true;
+        // remove the proposal and don't add its state
+        delete rootProposals[acceptedProposals];
+        emit RejectedProposedStateUpdate(acceptedProposals++);
+        return;
+      }
+    }
+    // if not, update the state of the shield contract
+    updateState(p, m);
+    delete transactions[rootProposals[acceptedProposals].proofProposal.transactionNonce];
+    delete rootProposals[acceptedProposals];
+    emit AcceptedProposedStateUpdate(acceptedProposals++);
+  }
+
+  // Update the state of the Shield contract
+  function updateState(RootProposal memory p, MerkleUpdate memory m) private {
+    latestRoot = p.outputRoot;
+    // update the root
+    roots[latestRoot] = true;
+    // update the nullifiers
+    for (uint i = 0; i < p.proofProposal.nullifiers.length; i++)
+      usedNullifiers[p.proofProposal.nullifiers[i]] = true;
+    //update the FRONTIER
+    frontier = m.frontier;
+    // emit an event so that Timber updates its commitment database
+    if (p.proofProposal.commitments.length == 1)
+      emit NewLeaf(leafCount, p.proofProposal.commitments[0], latestRoot);
+    if (p.proofProposal.commitments.length > 1)
+      emit NewLeaves(leafCount, p.proofProposal.commitments, latestRoot);
+    // update the number of Merkle tree leaves
+    leafCount += p.proofProposal.commitments.length;
+  }
+
+  function emitOptimisticTransaction(Transaction memory t) private {
+    emit OptimisticTransactionHeader(
+      t.transactionNonce,
+      t.fee,
+      t.transactionType,
+      t.transactionState
     );
-
-    // check that the nullifiers haven't been used before
-    require(!usedNullifiers[_nullifierHash], 'One of the nullifiers has already been used');
-    usedNullifiers[_nullifierHash] = true;
-
-    // check that the root exists
-    require(roots[_root], 'The root is not recognised');
-
-    // gas measurement:
-    uint256 gasUsedByShieldContract = gasCheckpoint - gasleft();
-    gasCheckpoint = gasleft();
-
-    // verify the proof
-    require(
-      verifier.verify(
-        _proof,
-        uint256(_publicInputHash),
-        vks[TransactionTypes.WITHDRAW]
-      ),
-      "The proof has not been verified by the contract"
+    emit OptimisticTransactionBody(
+      t.transactionNonce,
+      t.publicInputHash,
+      t.root,
+      t.tokenId,
+      t.value,
+      t.ercAddress,
+      t.commitments,
+      t.nullifiers,
+      t.recipientAddress,
+      t.proof
     );
-
-    // gas measurement:
-    uint256 gasUsedByVerifierContract = gasCheckpoint - gasleft();
-    gasCheckpoint = gasleft();
-
-    // Now pay out the value of the commitment
-    ERCInterface tokenContract = ERCInterface(
-        address(uint160(uint256(_ercAddress)))
-    );
-    address recipientAddress = address(uint160(uint256(_recipientAddress)));
-    if (_tokenId == zero && _value == zero) // disallow this corner case
-      revert("Zero-value tokens are not allowed");
-
-    if (_tokenId == zero) // must be an ERC20
-      require(
-        tokenContract.transferFrom(
-          address(this),
-          recipientAddress,
-          uint256(_value)
-        ),
-        "ERC20 Commitment cannot be withdrawn"
-      );
-    else if (_value == zero) // must be ERC721
-      require(
-        tokenContract.safeTransferFrom(
-          address(this),
-          recipientAddress,
-          uint256(_tokenId), ''
-        ),
-        "ERC721 Commitment cannot be withdrawn"
-      );
-    else // must be an ERC1155
-      require(
-        tokenContract.safeTransferFrom(
-          address(this),
-          recipientAddress,
-          uint256(_tokenId),
-          uint256(_value),''
-        ),
-        "ERC1155 Commitment cannot be withdrawn"
-      );
-
-    // gas measurement:
-    gasUsedByShieldContract = gasUsedByShieldContract +
-      gasCheckpoint - gasleft();
-    emit GasUsed(gasUsedByShieldContract, gasUsedByVerifierContract);
   }
 }

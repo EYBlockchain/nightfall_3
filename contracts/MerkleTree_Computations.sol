@@ -10,7 +10,7 @@ pragma solidity ^0.6.0;
 
 import "./MiMC.sol"; // import contract with MiMC function
 
-contract MerkleTree is MiMC {
+contract MerkleTree_Computations is MiMC {
 
     /*
     @notice Explanation of the Merkle Tree in this contract:
@@ -49,6 +49,17 @@ contract MerkleTree is MiMC {
     event NewLeaves(uint minLeafIndex, bytes32[] leafValues, bytes32 root);
 
     event Output(bytes32[2] input, bytes32[1] output, uint prevNodeIndex, uint nodeIndex); // for debugging only
+
+    // In this version of MerkleTree, we don't want to update the leafcount
+    // or Frontier until we are sure the transaction (including the root
+    // calculation) is good. So, we need to return the update values in a
+    // struct
+    struct MerkleUpdate{
+      bool err;
+      uint leafCount;
+      bytes32 root;
+      bytes32[33] frontier;
+    }
 
     uint public treeHeight = 32; //change back to 32 after testing
     uint public treeWidth = 2 ** treeHeight; // 2 ** treeHeight
@@ -96,7 +107,7 @@ contract MerkleTree is MiMC {
     @param leafValue - the value of the leaf being inserted.
     @return root bytes32 - the root of the merkle tree, after the insert.
     */
-    function insertLeaf(bytes32 leafValue) public returns (bytes32 root) {
+    function insertLeaf(bytes32 leafValue) internal view returns (MerkleUpdate memory) {
 
         // check that space exists in the tree:
         require(treeWidth > leafCount, "There is no space left in the tree.");
@@ -110,21 +121,22 @@ contract MerkleTree is MiMC {
         //bytes32 rightInput;
         bytes32[2] memory input; //input of the hash fuction
         bytes32[1] memory output; // output of the hash function
+        bytes32[33] memory newFrontier = frontier;
 
         for (uint level = 0; level < treeHeight; level++) {
 
-            if (level == slot) frontier[slot] = nodeValue;
+            if (level == slot) newFrontier[slot] = nodeValue;
 
             if (nodeIndex % 2 == 0) {
                 // even nodeIndex
-                input[0] = frontier[level];
+                input[0] = newFrontier[level];
                 input[1] = nodeValue;
 
                 output[0] = mimcHash2(input); // mimc hash of concatenation of each node
                 nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
                 prevNodeIndex = nodeIndex;
                 nodeIndex = (nodeIndex - 1) / 2; // move one row up the tree
-                emit Output(input, output, prevNodeIndex, nodeIndex); // for debugging only
+                // emit Output(input, output, prevNodeIndex, nodeIndex); // for debugging only
             } else {
                 // odd nodeIndex
                 input[0] = nodeValue;
@@ -134,17 +146,22 @@ contract MerkleTree is MiMC {
                 nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
                 prevNodeIndex = nodeIndex;
                 nodeIndex = nodeIndex / 2; // move one row up the tree
-                emit Output(input, output, prevNodeIndex, nodeIndex); // for debugging only
+                // emit Output(input, output, prevNodeIndex, nodeIndex); // for debugging only
             }
         }
 
-        root = nodeValue;
+        // emit NewLeaf(leafCount, leafValue, root); // this event is what the merkle-tree microservice's filter will listen for.
 
-        emit NewLeaf(leafCount, leafValue, root); // this event is what the merkle-tree microservice's filter will listen for.
+        // leafCount++; // the incrememnting of leafCount costs us 20k for the first leaf, and 5k thereafter
 
-        leafCount++; // the incrememnting of leafCount costs us 20k for the first leaf, and 5k thereafter
+        MerkleUpdate memory merkleUpdate = MerkleUpdate({
+          err: false,
+          leafCount: leafCount + 1,
+          root: nodeValue,
+          frontier: newFrontier
+        });
 
-        return root; //the root of the tree
+        return merkleUpdate; //the root of the tree
     }
 
     /**
@@ -152,9 +169,10 @@ contract MerkleTree is MiMC {
     @param leafValues - the values of the leaves being inserted.
     @return root bytes32[] - the root of the merkle tree, after all the inserts.
     */
-    function insertLeaves(bytes32[] memory leafValues) public returns (bytes32 root) {
+    function insertLeaves(bytes32[] memory leafValues) internal view returns (MerkleUpdate memory) {
 
         uint numberOfLeaves = leafValues.length;
+        bytes32[33] memory newFrontier = frontier;
 
         // check that space exists in the tree:
         require(treeWidth > leafCount, "There is no space left in the tree.");
@@ -192,7 +210,7 @@ contract MerkleTree is MiMC {
             slot = getFrontierSlot(leafIndex); // determine at which level we will next need to store a nodeValue
 
             if (slot == 0) {
-                frontier[slot] = nodeValue; // store in frontier
+                newFrontier[slot] = nodeValue; // store in frontier
                 continue;
             }
 
@@ -200,7 +218,7 @@ contract MerkleTree is MiMC {
             for (uint level = 1; level <= slot; level++) {
                 if (nodeIndex % 2 == 0) {
                     // even nodeIndex
-                    input[0] = frontier[level - 1]; //replace with push?
+                    input[0] = newFrontier[level - 1]; //replace with push?
                     input[1] = nodeValue;
                     output[0] = mimcHash2(input); // mimc hash of concatenation of each node
 
@@ -220,7 +238,7 @@ contract MerkleTree is MiMC {
                     // emit Output(input, output, prevNodeIndex, nodeIndex); // for debugging only
                 }
             }
-            frontier[slot] = nodeValue; // store in frontier
+            newFrontier[slot] = nodeValue; // store in frontier
         }
 
         // So far we've added all leaves, and hashed up to a particular level of the tree. We now need to continue hashing from that level until the root:
@@ -228,7 +246,7 @@ contract MerkleTree is MiMC {
 
             if (nodeIndex % 2 == 0) {
                 // even nodeIndex
-                input[0] = frontier[level - 1];
+                input[0] = newFrontier[level - 1];
                 input[1] = nodeValue;
                 output[0] = mimcHash2(input); // mimc hash of concatenation of each node
 
@@ -250,11 +268,18 @@ contract MerkleTree is MiMC {
 
         }
 
-        root = nodeValue;
+        // we don't want to include new leaves or update the leafcount until we
+        // are sure the proposal is valid
+        //emit NewLeaves(leafCount, leafValues, root); // this event is what the merkle-tree microservice's filter will listen for.
 
-        emit NewLeaves(leafCount, leafValues, root); // this event is what the merkle-tree microservice's filter will listen for.
+        //leafCount += numberOfLeaves; // the incrememnting of leafCount costs us 20k for the first leaf, and 5k thereafter
+        MerkleUpdate memory merkleUpdate = MerkleUpdate({
+          err: false,
+          leafCount: leafCount + numberOfLeaves,
+          root: nodeValue,
+          frontier: newFrontier
+        });
 
-        leafCount += numberOfLeaves; // the incrememnting of leafCount costs us 20k for the first leaf, and 5k thereafter
-        return root; //the root of the tree
+        return merkleUpdate; //the root of the tree
     }
 }
