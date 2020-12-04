@@ -25,20 +25,38 @@ contract Proposals is Transactions {
     address proposer;
     uint blockTime;
     uint blockEnd;
+    uint fee;
     bytes32 transactionHash;
     bytes32[33] frontier;
   }
 
-  address public proposer; // can propose a new shield state
-  mapping(address => bool) public proposers;
+  address public currentProposer; // can propose a new shield state
+  uint public currentProposerIndex; // keeps track of which proposer is current
+  uint proposerStartBlock; // block where currentProposer became current
+  address[] public proposers;
   uint public proposalNonce;
   mapping(uint => ProposedStateUpdate) public proposedStateUpdates;
   mapping(address => uint) public pendingWithdrawals;
-  uint constant REGISTRATION_FEE = 1 ether; // TODO owner can update
+  uint constant REGISTRATION_BOND = 10 ether; // TODO owner can update
+  uint constant ROTATE_PROPOSER_BLOCKS = 4;
 
-  modifier onlyProposer() { // Modifier
-    require(proposers[msg.sender], "Only proposers can call this.");
+  modifier onlyCurrentProposer() { // Modifier
+    require(msg.sender == currentProposer, "Only the current proposer can call this.");
       _;
+  }
+
+  /**
+  * Each proposer gets a chance to propose blocks for a certain time, defined
+  * in Ethereum blocks.  After a certain number of blocks has passed, the
+  * proposer can be rotated by calling this function. The method for choosing
+  * the next proposer is simple rotation for now.
+  */
+  function changeCurrentProposer() external {
+    require(block.number - proposerStartBlock > ROTATE_PROPOSER_BLOCKS,
+    "It's too soon to rotate the proposer");
+    proposerStartBlock = block.number;
+    currentProposer = proposers[currentProposerIndex++];
+    if (currentProposerIndex == proposers.length) currentProposerIndex = 0;
   }
 
   /**
@@ -52,7 +70,7 @@ contract Proposals is Transactions {
   function proposeStateUpdatesBlock(
     bytes32[] calldata _transactionHashes,
     bytes32[33][] calldata _frontiers
-  ) external onlyProposer {
+  ) external onlyCurrentProposer {
     // data validity checks
     require(_frontiers.length == _transactionHashes.length);
     //record in each proposal in the block, where the block ends.  If we get a
@@ -64,27 +82,29 @@ contract Proposals is Transactions {
     // in principle, we could leave this to a challenge but it's quite hard to
     // check without a synchonised database of transaction states.
     for (uint i = 0; i < _transactionHashes.length; i++) {
-      require(transactionHashes[_transactionHashes[i]], 'Non-existant transactionHash proposed');
-      transactionHashes[_transactionHashes[i]] = false;
+      require(transactionHashes[_transactionHashes[i]] > 0, 'Non-existant transactionHash proposed');
       ProposedStateUpdate memory p = ProposedStateUpdate({
         proposer: msg.sender,
         blockTime: now,
         blockEnd: blockEnd,
+        fee: transactionHashes[_transactionHashes[i]],
         transactionHash: _transactionHashes[i],
         frontier: _frontiers[i]
       });
+      transactionHashes[_transactionHashes[i]] = 0;
       proposedStateUpdates[proposalNonce++] = p;
     }
     emit StateUpdateBlockProposed(_transactionHashes, _frontiers);
   }
 
   function registerProposer() external payable {
-    require(REGISTRATION_FEE == msg.value, 'The registration payment is incorrect');
-    proposers[msg.sender] = true;
+    require(REGISTRATION_BOND == msg.value, 'The registration payment is incorrect');
+    proposers.push(msg.sender);
   }
-  function deregisterProposer() external {
-    require(proposers[msg.sender], 'This proposer is not registered');
-    pendingWithdrawals[msg.sender] = REGISTRATION_FEE;
+  function deregisterProposer(uint index) external {
+    require(proposers[index] == msg.sender, 'This proposer is not registered or you are not that proposer');
+    proposers[index] = address(0); // array will be a bit sparse
+    pendingWithdrawals[msg.sender] = REGISTRATION_BOND;
   }
   function withdraw() external {
     uint amount = pendingWithdrawals[msg.sender];

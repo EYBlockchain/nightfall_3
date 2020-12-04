@@ -28,6 +28,6 @@ contract Transactions {
     uint[] proof
   );
 
-  mapping(bytes32 => bool) public transactionHashes;
+  mapping(bytes32 => uint) public transactionHashes; // saves submitted transaction hashes, also used as an easy way to recover the fee submitted with the transaction (stored as the value uint), because we'll need to know that to pay the proposer
 
 }

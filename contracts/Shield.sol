@@ -9,9 +9,18 @@ import './Shield_Computations.sol';
 
 contract Shield is Shield_Computations{
 
+  // This struct holds a deposit transaction that has been challenged, together
+  // with the address of the challenger
+  struct DepositTransactionChallenge{
+    DepositTransaction depositTransaction;
+    address challenger;
+  }
+
   uint public acceptedProposals; // holds the nonce of the last accepted proposal + 1
-  mapping(uint => DepositTransaction) public depositChallenges; // stores nonces of challenged proposals
+  mapping(uint => DepositTransactionChallenge) private depositChallenges; // stores nonces of challenged proposals
   mapping(bytes32 => bool) public badRoots; // stores a list of roots that failed to make it into the state
+
+  uint constant CHALLENGE_DEPOSIT_STAKE = 1 ether;
 
   constructor(address _verifier) Shield_Computations(_verifier) public {
   }
@@ -28,6 +37,7 @@ contract Shield is Shield_Computations{
   ) public payable {
     // gas measurement:
     uint256 gasCheckpoint = gasleft();
+    require(msg.value > 0, 'The payment offered may be small, but not zero');
     // work out the hash of this data - we'll use that later to identify the tx
     bytes32 transactionHash = sha256(
       abi.encode(
@@ -51,8 +61,9 @@ contract Shield is Shield_Computations{
       commitment,
       proof
     );
-    // save the transactionHash for later identification
-    transactionHashes[transactionHash] = true;
+    // save the transactionHash for later identification (also a handy way to
+    // remember the fee offered)
+    transactionHashes[transactionHash] = msg.value;
     uint256 gasUsedByDeposit = gasCheckpoint - gasleft();
     emit GasUsed(gasUsedByDeposit, gasUsedByDeposit);
   }
@@ -67,7 +78,15 @@ contract Shield is Shield_Computations{
     bytes32 ercAddress,
     bytes32 commitment,
     uint[] calldata proof
-  ) external {
+  ) external payable {
+    // we can only allow one challenger per proposal
+    require(
+      depositChallenges[_proposalNonce].challenger == address(0),
+      'This proposal has already been challenged'
+    );
+    // You have to pay to challenge.  You get it back about x10 if you are
+    // correct, else you lose it!
+    require(msg.value == CHALLENGE_DEPOSIT_STAKE, 'Incorrect stake sent');
     // compute the transactionHash
     bytes32 transactionHash = sha256(
       abi.encode(
@@ -95,23 +114,38 @@ contract Shield is Shield_Computations{
       commitment: commitment,
       proof: proof
     });
-    // store the nonce where the challenge was made
-    depositChallenges[_proposalNonce] = t;
-    // TODO they need to pay for the transaction. As it stands, challenges are
-    // too cheap.
+    DepositTransactionChallenge memory c = DepositTransactionChallenge({
+      depositTransaction: t,
+      challenger: msg.sender
+    });
+    // store the details of the challenge was made
+    depositChallenges[_proposalNonce] = c;
   }
 
-  // trigger acceptance of a valid proposal after 1 week
+  /**
+  * This function allows someone to trigger acceptance of a ste-update proposal
+  * after 1 week has elapsed.  It will simply taken the next proposal in
+  * sequence (sequence is defined by ascending proposalNonce) that has not yet
+  * been added to the Shield contract state.
+  * The function will check if the candidate proposal has been challenged and,
+  * if it has, it will do a full on-chain proof verification and merkle-tree
+  * update computation.  If the challenge fails (i.e. the proposal was correct)
+  * the proposal will be added to the shield contract.  If not, that proposal
+  * and any remaining proposal in the submitted block will be ignored and the
+  * proposer will be punished by being removed from the proposers' list and
+  * their stake paid to the challenger. TODO decide what to do with the
+  * challengers stake in the event of an incorrect challenge.
+  */
   function acceptNextProposal() external {
     MerkleUpdate memory m; // the updates computed, onchain, for the MerkleTree
     ProposedStateUpdate memory p = proposedStateUpdates[acceptedProposals];
 
     require(now > p.blockTime + 1 weeks, 'Too soon to accept proposal' );
     // next,check if someone has challenged this proposal
-    if (depositChallenges[acceptedProposals].transactionHash != '') {
+    if (depositChallenges[acceptedProposals].depositTransaction.transactionHash != '') {
       // run the challenge and see if we get a valid state update back
       // (frontier[32] should be the root of the Merkle tree)
-      DepositTransaction memory t = depositChallenges[acceptedProposals];
+      DepositTransaction memory t = depositChallenges[acceptedProposals].depositTransaction;
       m = depositComputation(
         t.publicInputHash,
         t.ercAddress,
@@ -125,12 +159,16 @@ contract Shield is Shield_Computations{
         emit RejectedProposedStateUpdate(acceptedProposals);
         acceptedProposals = p.blockEnd; // wipe out the entire remaining block
         // kill the proposer
-        proposers[p.proposer] = false;
+        proposers[currentProposerIndex-1] = address(0);
+        // give all the bond to the challenger.
+        pendingWithdrawals[depositChallenges[acceptedProposals].challenger] += REGISTRATION_BOND;
         return;
       }
     }
     // if not, update the state of the shield contract
     updateDepositState(p);
+    // pay the proposer and clean up
+    pendingWithdrawals[p.proposer] += p.fee;
     delete depositChallenges[acceptedProposals];
     delete proposedStateUpdates[acceptedProposals];
     emit AcceptedProposedStateUpdate(acceptedProposals++);
