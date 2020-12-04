@@ -57,7 +57,6 @@ contract MerkleTree_Computations is MiMC {
     struct MerkleUpdate{
       bool err;
       uint leafCount;
-      bytes32 root;
       bytes32[33] frontier;
     }
 
@@ -157,7 +156,6 @@ contract MerkleTree_Computations is MiMC {
         MerkleUpdate memory merkleUpdate = MerkleUpdate({
           err: false,
           leafCount: leafCount + 1,
-          root: nodeValue,
           frontier: newFrontier
         });
 
@@ -276,7 +274,6 @@ contract MerkleTree_Computations is MiMC {
         MerkleUpdate memory merkleUpdate = MerkleUpdate({
           err: false,
           leafCount: leafCount + numberOfLeaves,
-          root: nodeValue,
           frontier: newFrontier
         });
 

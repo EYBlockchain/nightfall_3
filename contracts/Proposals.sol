@@ -7,37 +7,10 @@ pragma solidity ^0.6.0;
 import './Transactions.sol';
 
 contract Proposals is Transactions {
-  // propose a new transaction proof
-  struct ProofProposal {
-    uint proposalNonce;
-    address proposerAddress;
-    bytes32 inputRoot;
-    uint transactionNonce;
-    bytes32[] commitments;
-    bytes32[] nullifiers;
-  }
 
-  // propose a new Merkle root
-  struct RootProposal {
-    uint proposalNonce;
-    uint blockTime;
-    bytes32 outputRoot;
-    ProofProposal proofProposal;
-  }
-
-  event ProofProposed(
-    uint proposalNonce,
-    address proposerAddress,
-    bytes32 inputRoot,
-    uint transactionNonce,
-    bytes32[] _commitments,
-    bytes32[] _nullifiers
-  );
-
-  event RootProposed(
-    uint proposalNonce,
-    uint blockTime,
-    bytes32 _outputRoot
+  event StateUpdateBlockProposed(
+    bytes32[] transactionHashes,
+    bytes32[33][] frontiers
   );
 
   event RejectedProposedStateUpdate(
@@ -48,91 +21,74 @@ contract Proposals is Transactions {
     uint proposalNonce
   );
 
-  address public proposer; // can propose a new shield state
-  uint public proposalNonce;
-  mapping(uint => ProofProposal) proofProposals; // PENDING proof Proposals
-  mapping(uint => RootProposal) rootProposals; // pending root proposals
+  struct ProposedStateUpdate {
+    address proposer;
+    uint blockTime;
+    uint blockEnd;
+    bytes32 transactionHash;
+    bytes32[33] frontier;
+  }
 
+  address public proposer; // can propose a new shield state
+  mapping(address => bool) public proposers;
+  uint public proposalNonce;
+  mapping(uint => ProposedStateUpdate) public proposedStateUpdates;
+  mapping(address => uint) public pendingWithdrawals;
+  uint constant REGISTRATION_FEE = 1 ether; // TODO owner can update
 
   modifier onlyProposer() { // Modifier
-    require(msg.sender == proposer, "Only proposer can call this.");
+    require(proposers[msg.sender], "Only proposers can call this.");
       _;
   }
 
-  /*
-  * Allows a Proposer to propose a new transaction proof.  This has to be done
-  * separately from proposing a new MerkleTree root because it takes ages to
-  * calculate, and a proposer is only in a position to compute a root when they
-  * are next in line to add a proposal. We don't want to have to wait for them
-  * to compute a proof at that point.  If we just let them compute a proof and
-  * not propose it, then we have the problem that several people might
-  * incorporate the same transactions into their proposals. They won't find out
-  * until it's too late and they have no time to compute a fresh proof before
-  * they have to propose one.
+  /**
+  * Allows a Proposer to propose a new block of state updates.
+  * @param _transactionHashes - the hashes of transactions that are being
+  * included in this block
+  * @param _frontiers - the Timber frontier that will exist after the
+  * corresponding transaction is included in the Merkle tree. This must include
+  * the leaf and the root.
   */
-  function proposeProof(
-    uint _transactionNonce,
-    bytes32[] calldata _commitments,
-    bytes32[] calldata _nullifiers
+  function proposeStateUpdatesBlock(
+    bytes32[] calldata _transactionHashes,
+    bytes32[33][] calldata _frontiers
   ) external onlyProposer {
-    // Let's check the transaction being proposed is in the PENDING state
-    require(transactions[transactionNonce].transactionState == TransactionStates.PENDING, "This transaction's state is not PENDING");
-    ProofProposal memory proposal = ProofProposal({
-      proposalNonce: proposalNonce++,
-      proposerAddress: msg.sender, // ensures someone can't nick this proposal
-      inputRoot: transactions[transactionNonce].root,
-      transactionNonce: _transactionNonce,
-      commitments: _commitments,
-      nullifiers: _nullifiers
-    });
-    proofProposals[proposal.proposalNonce] = proposal;
-    emit ProofProposed(
-      proposal.proposalNonce,
-      proposal.proposerAddress,
-      proposal.inputRoot,
-      proposal.transactionNonce,
-      proposal.commitments,
-      proposal.nullifiers
-    );
-    transactions[transactionNonce].transactionState = TransactionStates.PROPOSED;
+    // data validity checks
+    require(_frontiers.length == _transactionHashes.length);
+    //record in each proposal in the block, where the block ends.  If we get a
+    // successful challenge, we use this to blow away the remaining proposals
+    // in the block
+    uint blockEnd = proposalNonce + _transactionHashes.length ;
+    // check all the transactions exist and delete them, because they've now
+    // been proposed and we don't want another Proposer picking them up
+    // in principle, we could leave this to a challenge but it's quite hard to
+    // check without a synchonised database of transaction states.
+    for (uint i = 0; i < _transactionHashes.length; i++) {
+      require(transactionHashes[_transactionHashes[i]], 'Non-existant transactionHash proposed');
+      transactionHashes[_transactionHashes[i]] = false;
+      ProposedStateUpdate memory p = ProposedStateUpdate({
+        proposer: msg.sender,
+        blockTime: now,
+        blockEnd: blockEnd,
+        transactionHash: _transactionHashes[i],
+        frontier: _frontiers[i]
+      });
+      proposedStateUpdates[proposalNonce++] = p;
+    }
+    emit StateUpdateBlockProposed(_transactionHashes, _frontiers);
   }
 
-  /*
-  * Function that lets a Proposer propose an 'output' root.  This is what would
-  * be the Merkle tree root, once the proposal was accepted into the Shield
-  * contract state.  It's only possible to calculate this once the order in
-  * which this proposal will be accepted into the shield contract is known. Thus
-  * it's done separately, after the zk snark proof is proposed. This
-  * function joins up the two parts of the proposal into a single
-  * 'rootProposal'.
-  */
-  function proposeRoot (
-    uint _proposalNonce,
-    bytes32 _outputRoot
-  ) external onlyProposer {
-    // a few checks
-    require(
-      proofProposals[_proposalNonce].proposerAddress != address(0),
-      'There is no corresponding proof proposal'
-    );
-    require(
-      proofProposals[_proposalNonce].proposerAddress == msg.sender,
-      'This sending address did not originate the corresponding proposal proof'
-    );
-    RootProposal memory proposal = RootProposal({
-      proposalNonce: _proposalNonce,
-      outputRoot: _outputRoot,
-      blockTime: now,
-      proofProposal: proofProposals[_proposalNonce]
-    });
-    rootProposals[proposal.proposalNonce] = proposal;
-    emit RootProposed(
-      proposal.proposalNonce,
-      proposal.blockTime,
-      proposal.outputRoot
-    );
-    // we no longer need the proof Proposal as we've incorporated it in the
-    // root proposal
-    delete proofProposals[_proposalNonce];
+  function registerProposer() external payable {
+    require(REGISTRATION_FEE == msg.value, 'The registration payment is incorrect');
+    proposers[msg.sender] = true;
+  }
+  function deregisterProposer() external {
+    require(proposers[msg.sender], 'This proposer is not registered');
+    pendingWithdrawals[msg.sender] = REGISTRATION_FEE;
+  }
+  function withdraw() external {
+    uint amount = pendingWithdrawals[msg.sender];
+    pendingWithdrawals[msg.sender] = 0;
+    msg.sender.transfer(amount);
   }
 }

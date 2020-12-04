@@ -15,6 +15,7 @@ import './Proposals.sol';
 
 contract Shield_Computations is Ownable, MerkleTree_Computations, Proposals  {
   // ENUMS:
+  enum TransactionTypes { DEPOSIT, SINGLE_TRANSFER, DOUBLE_TRANSFER, WITHDRAW }
 
   // EVENTS:
   // Observers may wish to listen for nullification of commitments:
@@ -99,7 +100,6 @@ contract Shield_Computations is Ownable, MerkleTree_Computations, Proposals  {
     ) return MerkleUpdate({ // error condition
       err: true,
       leafCount: 0,
-      root: '',
       frontier: nullFrontier
     });
 
@@ -117,7 +117,6 @@ contract Shield_Computations is Ownable, MerkleTree_Computations, Proposals  {
     ) return MerkleUpdate({ // error condition
       err: true,
       leafCount: 0,
-      root: '',
       frontier: nullFrontier
     });
 
