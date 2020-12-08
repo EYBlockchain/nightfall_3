@@ -110,4 +110,29 @@ describe('Testing the http API', () => {
         done();
       });
   });
+  it('should generate a proof by passing commitmentHash, so concurrent call should not overwrite each others withness and proof file', done => {
+    chai
+      .request('http://localhost:8080')
+      .post('/generate-proof')
+      .set('Content-Type', 'application/json')
+      .send({
+        folderpath: 'factor',
+        inputs: [6, 3, 2],
+        transactionInputs: 'test',
+        provingScheme: 'gm17',
+        backend: 'libsnark',
+        commitmentHash: 2,
+      })
+      .end((err, res) => {
+        expect(res.body).to.have.property('proof');
+        expect(res.body).to.have.property('type');
+        expect(res.body).to.have.property('transactionInputs');
+        expect(res.body.proof).to.have.property('a');
+        expect(res.body.proof).to.have.property('b');
+        expect(res.body.proof).to.have.property('c');
+        expect(res.body.proof.a).to.be.instanceof(Array);
+        expect(res.body.type).to.equal('factor');
+        done();
+      });
+  });
 });

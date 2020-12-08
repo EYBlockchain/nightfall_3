@@ -62,7 +62,7 @@ describe('Testing the Zokrates queue mechanism', () => {
     rabbitmq.listenToReplyQueue(replyTo, correlationId, response => {
       expect(response).to.have.property('data');
       expect(response.data).to.have.property('message');
-      expect(response.data.message).to.equal('Circuits loadded successfully');
+      expect(response.data.message).to.equal('File multiple.tar was uploaded');
       done();
     });
   });
@@ -150,7 +150,43 @@ describe('Testing the Zokrates queue mechanism', () => {
       expect(response.data.proof).to.have.property('b');
       expect(response.data.proof).to.have.property('c');
       expect(response.data.proof.a).to.be.instanceof(Array);
-      expect(response.type).to.equal('factor');
+      expect(response.data.type).to.equal('factor');
+      expect(response.data.transactionInputs).to.equal('test');
+      done();
+    });
+  });
+
+  it('should generate a proof by passing commitmentHash, so concurrent call should not overwrite each others withness and proof file', done => {
+    const correlationId = generateUuid();
+    const queue = 'generate-proof';
+    const replyTo = `${queue}-reply`; // replyTo queue
+
+    rabbitmq.sendMessage(
+      queue,
+      {
+        folderpath: 'factor',
+        inputs: [6, 3, 2],
+        transactionInputs: 'test',
+        provingScheme: 'gm17',
+        backend: 'libsnark',
+        commitmentHash: 2,
+      },
+      {
+        correlationId,
+        replyTo,
+      },
+    );
+
+    rabbitmq.listenToReplyQueue(replyTo, correlationId, response => {
+      expect(response).to.have.property('type');
+      expect(response).to.have.property('data');
+      expect(response.data).to.have.property('proof');
+      expect(response.data).to.have.property('transactionInputs');
+      expect(response.data.proof).to.have.property('a');
+      expect(response.data.proof).to.have.property('b');
+      expect(response.data.proof).to.have.property('c');
+      expect(response.data.proof.a).to.be.instanceof(Array);
+      expect(response.data.type).to.equal('factor');
       expect(response.data.transactionInputs).to.equal('test');
       done();
     });
