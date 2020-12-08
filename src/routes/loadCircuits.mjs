@@ -14,7 +14,7 @@ router.post('/', async (req, res, next) => {
   }
 
   try {
-    res.send(await loadCircuits(req.files));
+    res.send(await loadCircuits(req.files.circuits));
   } catch (err) {
     next(err);
   }
