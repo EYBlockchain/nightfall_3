@@ -19,6 +19,7 @@ contract Shield is Shield_Computations{
   uint public acceptedProposals; // holds the nonce of the last accepted proposal + 1
   mapping(uint => DepositTransactionChallenge) private depositChallenges; // stores nonces of challenged proposals
   mapping(bytes32 => bool) public badRoots; // stores a list of roots that failed to make it into the state
+  mapping(address => bytes32) public challengeHashes; // stores challenge commitments as part of the front-running defence
 
   uint constant CHALLENGE_DEPOSIT_STAKE = 1 ether;
 
@@ -68,8 +69,14 @@ contract Shield is Shield_Computations{
     emit GasUsed(gasUsedByDeposit, gasUsedByDeposit);
   }
 
+  function commitToChallenge(bytes32 challengeHash) external {
+    challengeHashes[msg.sender] = challengeHash;
+  }
+
   // challenger challenges transaction
   function challengeDeposit(
+    bytes32 challengeSalt,
+    bytes32 challengeHash,
     uint _proposalNonce,
     uint fee,
     bytes32 publicInputHash,
@@ -79,6 +86,20 @@ contract Shield is Shield_Computations{
     bytes32 commitment,
     uint[] calldata proof
   ) external payable {
+    // check we're not being front-run
+    bytes32 challengeHashExpected = sha256(abi.encode(
+      challengeSalt,
+      _proposalNonce,
+      fee,
+      publicInputHash,
+      tokenId,
+      value,
+      ercAddress,
+      commitment,
+      proof
+    ));
+    require(challengeHashExpected == challengeHash, 'The challenge hash does not match');
+    require(challengeHashes[msg.sender] == challengeHash, 'The origins of the commitment and the reveal are not the same');
     // we can only allow one challenger per proposal
     require(
       depositChallenges[_proposalNonce].challenger == address(0),

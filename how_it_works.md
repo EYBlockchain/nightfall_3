@@ -23,7 +23,8 @@ A `Challenger` challenges the correctness of a proposal. Anyone can be a Challen
 stake some ETH to make a `Challenge`. This is to prevent frivolous challenges. They make money for
 correct challenges.
 
-_NB: Currently it's possible to front-run a challenge. We need to fix that._
+_NB: Currently it's possible to front-run a challenge. We need to fix that._ [EDIT - now fixed, see
+front-running section below]
 
 ## Contracts
 
@@ -144,3 +145,23 @@ if there's a reasonable chance some of those blocks are good.
 
 A Transactor who loses their transaction because it was in a bad block, will get their fee refunded
 but will have to resubmit their Transaction.
+
+## Avoiding front-running attacks
+
+It would be possible to front-run the Challenges described above. A front runner would simply submit
+the Challenge before the original challenger. To fix this, we use a commit-reveal strategy.
+
+The Challenger does not challenge immediately but provides a salted hash of the Challenge
+information. This hash is saved by `Shield.sol` against the sender's address. Once that transaction
+has gone through, the Challenger sends the complete Challenge information along with the salt.
+Shield.sol then checks:
+
+- the data sent is the pre-image of the hash, once the salt is added.
+- the originating address is the same for both transactions
+
+A front-runner would be alerted that a challenge has been made but would have to find the flawed
+Proposal themselves and front-run before the challenge hash is written to the blockchain. This is
+not completely impossible but they have very little time to find the flawed Proposal and so are
+unlikely to succeed. It would also be possible to create obfuscating transactions if needed. [To
+consider: is this sufficient, a front-runner who has a server checking Proposals could just delay
+competitors enough so that they get their challange in first?]
