@@ -63,19 +63,15 @@ export const getProofFromFile = filePath => {
 export const untarFiles = async (filePath, fileName) => {
   const dir = fileName.replace('.tar', '');
   const cwd = `${filePath}/${dir}`;
-  try {
-    const exists = fs.existsSync(cwd);
-    if (!exists) {
-      fs.mkdirSync(cwd);
-    }
-    await tar.x({
-      file: `${filePath}/${fileName}`,
-      cwd: cwd,
-    });
-    return exists;
-  } catch (err) {
-    throw new Error(err);
+  const exists = fs.existsSync(cwd);
+  if (!exists) {
+    fs.mkdirSync(cwd);
   }
+  await tar.x({
+    file: `${filePath}/${fileName}`,
+    cwd: cwd,
+  });
+  return exists;
 };
 
 export const deleteFile = async filePath => {
