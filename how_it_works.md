@@ -164,4 +164,4 @@ Proposal themselves and front-run before the challenge hash is written to the bl
 not completely impossible but they have very little time to find the flawed Proposal and so are
 unlikely to succeed. It would also be possible to create obfuscating transactions if needed. [To
 consider: is this sufficient, a front-runner who has a server checking Proposals could just delay
-competitors enough so that they get their challange in first?]
+competitors enough so that they get their Challenge in first?]

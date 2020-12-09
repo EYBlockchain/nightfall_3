@@ -37,6 +37,7 @@ contract Proposals is Transactions {
   uint public proposalNonce;
   mapping(uint => ProposedStateUpdate) public proposedStateUpdates;
   mapping(address => uint) public pendingWithdrawals;
+  mapping(address => uint) outstandingProposals; // remember how many proposals a proposer has, that are still in train
   uint constant REGISTRATION_BOND = 10 ether; // TODO owner can update
   uint constant ROTATE_PROPOSER_BLOCKS = 4;
 
@@ -93,6 +94,7 @@ contract Proposals is Transactions {
       });
       transactionHashes[_transactionHashes[i]] = 0;
       proposedStateUpdates[proposalNonce++] = p;
+      outstandingProposals[msg.sender]++;
     }
     emit StateUpdateBlockProposed(_transactionHashes, _frontiers);
   }
@@ -101,14 +103,18 @@ contract Proposals is Transactions {
     require(REGISTRATION_BOND == msg.value, 'The registration payment is incorrect');
     proposers.push(msg.sender);
   }
-  function deregisterProposer(uint index) external {
+  function deRegisterProposer(uint index) external {
     require(proposers[index] == msg.sender, 'This proposer is not registered or you are not that proposer');
     proposers[index] = address(0); // array will be a bit sparse
+    require(outstandingProposals[msg.sender] <= 0, 'You cannot withdraw your bond while you still have active proposals');
     pendingWithdrawals[msg.sender] = REGISTRATION_BOND;
   }
   function withdraw() external {
     uint amount = pendingWithdrawals[msg.sender];
     pendingWithdrawals[msg.sender] = 0;
     msg.sender.transfer(amount);
+  }
+  function getProposers() external view returns(address[] memory) {
+    return proposers;
   }
 }

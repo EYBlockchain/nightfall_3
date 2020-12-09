@@ -181,7 +181,8 @@ contract Shield is Shield_Computations{
         acceptedProposals = p.blockEnd; // wipe out the entire remaining block
         // kill the proposer
         proposers[currentProposerIndex-1] = address(0);
-        // give all the bond to the challenger.
+        outstandingProposals[p.proposer]--; 
+        // give all bond's value to the challenger.
         pendingWithdrawals[depositChallenges[acceptedProposals].challenger] += REGISTRATION_BOND;
         return;
       }
@@ -192,6 +193,7 @@ contract Shield is Shield_Computations{
     pendingWithdrawals[p.proposer] += p.fee;
     delete depositChallenges[acceptedProposals];
     delete proposedStateUpdates[acceptedProposals];
+    outstandingProposals[p.proposer]--;
     emit AcceptedProposedStateUpdate(acceptedProposals++);
   }
 
