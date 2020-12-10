@@ -11,11 +11,11 @@ export default function receiveMessage() {
     };
 
     try {
-      const txToSign = await deposit(JSON.parse(message.content.toString()));
+      const txDataToSign = await deposit(JSON.parse(message.content.toString()));
       logger.debug('returning raw transaction');
-      logger.silly(` raw transaction is ${JSON.stringify(txToSign, null, 2)}`);
+      logger.silly(` raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
 
-      response.data = { txToSign };
+      response.data = { txDataToSign };
     } catch (err) {
       logger.error(err);
       response.error = err;

@@ -38,10 +38,17 @@ export function gasStats(txReceipt) {
   });
 }
 
-export async function submitTransaction(unsignedTransaction, privateKey, shieldAddress, gas) {
+export async function submitTransaction(
+  unsignedTransaction,
+  privateKey,
+  shieldAddress,
+  gas,
+  value,
+) {
   const tx = {
     to: shieldAddress,
     data: unsignedTransaction,
+    value,
     gas,
   };
   try {
@@ -50,4 +57,11 @@ export async function submitTransaction(unsignedTransaction, privateKey, shieldA
   } catch (err) {
     return err;
   }
+}
+export async function getAccounts() {
+  const accounts = web3.eth.getAccounts();
+  return accounts;
+}
+export async function getBalance(account) {
+  return web3.eth.getBalance(account);
 }

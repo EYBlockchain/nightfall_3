@@ -25,7 +25,7 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
-      LOG_LEVEL: silly
+      LOG_LEVEL: debug
       BLOCKCHAIN_WS_HOST: ganache
       BLOCKCHAIN_PORT: 8545
       ZOKRATES_WORKER_HOST: worker

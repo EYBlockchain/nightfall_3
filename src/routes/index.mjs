@@ -4,5 +4,14 @@ import getContractAddress from './contract-address.mjs';
 import transfer from './transfer.mjs';
 import withdraw from './withdraw.mjs';
 import isMessageValid from './check-message.mjs';
+import proposer from './proposer.mjs';
 
-export { transfer, deposit, withdraw, generateZkpKey, getContractAddress, isMessageValid };
+export {
+  transfer,
+  deposit,
+  withdraw,
+  generateZkpKey,
+  getContractAddress,
+  isMessageValid,
+  proposer,
+};

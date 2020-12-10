@@ -10,10 +10,10 @@ const router = express.Router();
 router.post('/', async (req, res, next) => {
   logger.debug(`withdraw endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
   try {
-    const txToSign = await withdraw(req.body);
+    const txDataToSign = await withdraw(req.body);
     logger.debug('returning raw transaction');
-    logger.silly(` raw transaction is ${JSON.stringify(txToSign, null, 2)}`);
-    res.json({ txToSign });
+    logger.silly(` raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
+    res.json({ txDataToSign });
   } catch (err) {
     logger.error(err);
     next(err);
