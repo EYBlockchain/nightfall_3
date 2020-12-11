@@ -19,7 +19,7 @@ const { generalise } = gen;
  * This function maintains the transactions map: adding new transaction events
  * and removing ones that a Proposer has proposed.
  */
-function maintainTransactionsMap() {
+export function maintainTransactionsMap() {
   const transactions = new Map();
   subscribeToDepositTransactionEvents(event => {
     logger.silly(`DepositTransactionCreated Event ${JSON.stringify(event, null, 2)}`);
@@ -45,9 +45,9 @@ function maintainTransactionsMap() {
       );
   });
   subscribeToProposalBlockEvents(event => {
-    const blockData = generalise(event.returnValues);
+    const block = generalise(event.returnValues);
     // remove any transactions that are in the block as they're already picked
-    blockData.transactionHashes.forEach(hash => {
+    block.transactionHashes.forEach(hash => {
       if (transactions.get(hash)) {
         logger.info(`Transaction ${transactions.get(hash)} has been proposed`);
         transactions.delete(hash);
@@ -55,6 +55,27 @@ function maintainTransactionsMap() {
     });
   });
   return transactions;
+}
+
+export function maintainProposalsMap() {
+  let proposal;
+  subscribeToProposalBlockEvents(event => {
+    const block = generalise(event.returnValues);
+    // remove any transactions that are in the block as they're already picked
+    block.transactionHashes.forEach((hash, i) => {
+      proposal = { hash, frontier: block.frontiers[i] };
+      logger.debug(`Found proposal event ${JSON.stringify(proposal, null, 2)}`);
+    });
+  });
+  return proposal;
+}
+
+/**
+ * Function to compute a block of proposed state updates
+ */
+async function computeBlock() {
+  // the first thing to do is to get the current proposed state (or the Shield
+  // state if nothing has been proposed yet).
 }
 
 export default maintainTransactionsMap;
