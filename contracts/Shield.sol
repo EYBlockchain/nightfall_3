@@ -41,7 +41,7 @@ contract Shield is Shield_Computations{
     require(msg.value > 0, 'The payment offered may be small, but not zero');
     // work out the hash of this data - we'll use that later to identify the tx
     bytes32 transactionHash = sha256(
-      abi.encode(
+      abi.encodePacked(
         msg.value,
         publicInputHash,
         tokenId,
@@ -87,7 +87,7 @@ contract Shield is Shield_Computations{
     uint[] calldata proof
   ) external payable {
     // check we're not being front-run
-    bytes32 challengeHashExpected = sha256(abi.encode(
+    bytes32 challengeHashExpected = sha256(abi.encodePacked(
       challengeSalt,
       _proposalNonce,
       fee,
@@ -110,7 +110,7 @@ contract Shield is Shield_Computations{
     require(msg.value == CHALLENGE_DEPOSIT_STAKE, 'Incorrect stake sent');
     // compute the transactionHash
     bytes32 transactionHash = sha256(
-      abi.encode(
+      abi.encodePacked(
         fee,
         publicInputHash,
         tokenId,
@@ -181,7 +181,7 @@ contract Shield is Shield_Computations{
         acceptedProposals = p.blockEnd; // wipe out the entire remaining block
         // kill the proposer
         proposers[currentProposerIndex-1] = address(0);
-        outstandingProposals[p.proposer]--; 
+        outstandingProposals[p.proposer]--;
         // give all bond's value to the challenger.
         pendingWithdrawals[depositChallenges[acceptedProposals].challenger] += REGISTRATION_BOND;
         return;

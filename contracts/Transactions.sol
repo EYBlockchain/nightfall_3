@@ -16,7 +16,7 @@ contract Transactions {
     bytes32 commitment;
     uint[] proof;
   }
-  // event is split into two because otherwise we get a Stack Too Deep error
+
   event DepositTransactionCreated(
     bytes32 transactionHash,
     uint fee,
