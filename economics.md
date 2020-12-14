@@ -146,7 +146,11 @@ We will make some assumptions:
 
 If the CLR has 99.9% availability then `1-p_c` = 1e-3. Thus the bond value b should be (eq 5)
 
+```
 b > 1e-3 \* 1e5 = 100 ETH
+```
+
+Note that the Proposer bond should ideally scale with Shield contract value.
 
 ### The Challenger's fee
 
@@ -165,10 +169,36 @@ their compute costs and gas costs, and make a reasonable return on their capital
 
 - compute costs 50p/hr => 5p/tx
 - ROC at 4% per annum on 100 ETH @ £400/ETH = 18p/hr => 1.8p/tx
-- State update costs - store (update) a new Frontier at 32 \* 5k = 160 kGas, plus some ancilliary
-  gas; estimate ~ 200kGas/proposal (TBC by experiment). At 100GWei per Gas that works out at £8/tx.
+- State update costs - in the worst case we will need to store: 2 nullifiers, a new root, two
+  Frontier updates. This is 20 _ 2 + 20 + 2 _ 5 = 70 kGas + 20k tx cost. This is 90kGas, including
+  the tx cost. Thus, the Gas estimate ~ 100kGas/proposal (TBC by experiment). At 100GWei per Gas
+  that works out at £4/tx.
 
 ### The Transactor's payment
 
-We see from above that the Transactor has to pay about £10 for a transaction. This is mainly the
-Proposer's fee plus their Gas costs ~30kGas (measured).
+We see from above that the Transactor has to pay ~£6 for a transaction. This is mainly the
+Proposer's fee (~100kGas) plus the Transactor's Gas costs ()~30kGas measured) to post the
+transaction i.e ~ 130kGas in total.
+
+## Benefits of a rollup
+
+The gas costs are considerably below those of a conventional Nightfall MiMC transaction (2MGas) and
+even a SHA transaction (700kGas). However, given the current costs of using Ethereum, the
+transaction cost is still too high for many use cases.
+
+We could consider rolling up the transactions. This means, in effect, we will not post new state
+after each transaction is proposed but only after `n` transactions. How big can `n` be? If a block
+of transactions is challenged as being incorrect, then the nature of the challenge determines what
+we do:
+
+- If the challenge is one of incorrect computation (proof does not verify, public hash is
+  incorrect), then we simply need to check the purportedly incorrect transaction, because is no
+  dependency on prior state.
+- If the challenge is that a root or nullifier list is incorrect, then we have two choices: we can
+  compute the root or list from the point of the last valid state update to the point of the
+  challenge, or we can include a Merkle-root value in each transaction for the commitments and
+  nullifiers, which will mean we only need to compute from the prior transaction. As these can be
+  call-data, the cost of doing so is low.
+
+This approach will reduce the cost of the Proposer's work considerably. In fact it's not clear what
+the new limitation on cost would be, and rollups could be large.
