@@ -5,9 +5,9 @@ a rollup.
 */
 pragma solidity ^0.6.0;
 
-import './Shield_Computations.sol';
+import './Shield_Challenges.sol';
 
-contract Shield is Shield_Computations{
+contract Shield is Shield_Challenges{
 
   // This struct holds a deposit transaction that has been challenged, together
   // with the address of the challenger
@@ -38,19 +38,6 @@ contract Shield is Shield_Computations{
   ) public payable {
     // gas measurement:
     uint256 gasCheckpoint = gasleft();
-    require(msg.value > 0, 'The payment offered may be small, but not zero');
-    // work out the hash of this data - we'll use that later to identify the tx
-    bytes32 transactionHash = sha256(
-      abi.encodePacked(
-        msg.value,
-        publicInputHash,
-        tokenId,
-        value,
-        ercAddress, // Take in as bytes32 for consistent hashing
-        commitment,
-        proof
-      )
-    );
     // broadcast this tx so a proposer can pick it up
     emit DepositTransactionCreated(
       transactionHash,
@@ -62,9 +49,6 @@ contract Shield is Shield_Computations{
       commitment,
       proof
     );
-    // save the transactionHash for later identification (also a handy way to
-    // remember the fee offered)
-    transactionHashes[transactionHash] = msg.value;
     uint256 gasUsedByDeposit = gasCheckpoint - gasleft();
     emit GasUsed(gasUsedByDeposit, gasUsedByDeposit);
   }

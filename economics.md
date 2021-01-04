@@ -192,8 +192,8 @@ of transactions is challenged as being incorrect, then the nature of the challen
 we do:
 
 - If the challenge is one of incorrect computation (proof does not verify, public hash is
-  incorrect), then we simply need to check the purportedly incorrect transaction, because is no
-  dependency on prior state.
+  incorrect), then we simply need to check the purportedly incorrect transaction, because there is
+  no dependency on prior state.
 - If the challenge is that a root or nullifier list is incorrect, then we have two choices: we can
   compute the root or list from the point of the last valid state update to the point of the
   challenge, or we can include a Merkle-root value in each transaction for the commitments and
