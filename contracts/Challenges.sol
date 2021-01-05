@@ -41,7 +41,7 @@ contract Challenges is Utils, Verifier, Key_Registry, MerkleTree_Stateless {
         vks[transaction.transactionType]),
       'This proof appears to be valid'
     );
-    challengeAccepted(blockL2.blockHash);
+    challengeAccepted(blockL2);
   }
 
   // a transaction proof is challenged as incorrect.  Does not require the
@@ -60,7 +60,7 @@ contract Challenges is Utils, Verifier, Key_Registry, MerkleTree_Stateless {
     revert('Transaction not found in this block');
   }
 
-  // the new commitment-Merkle-tree root is challenged as incorrect
+  // the new commitment Merkle-tree root is challenged as incorrect
   function challengeNewRootCorrect(
     Block memory priorBlockL2, // the block immediately prior to this one
     Transaction memory priorBlockL2LastTransaction,
@@ -70,7 +70,7 @@ contract Challenges is Utils, Verifier, Key_Registry, MerkleTree_Stateless {
     uint commitmentIndex // the index *in the Merkle Tree* of the commitment that we are providing a SiblingPath for.
   ) external {
     // first, check we have real, in-train, contiguous blocks
-    require(priorBlockL2.blockNonce + 1 == blockL2.blockNonce, 'The blocks are not contiguous');
+    require(blockHashes[priorBlockL2.blockHash].nextHash == blockHashes[blockL2.blockHash].previousHash, 'The blocks are not contiguous');
     isBlockReal(blockL2);
     isBlockReal(priorBlockL2);
     // next, check that we have the correct transactions. We do that by checking that the hashes of the commitments match those stored in the block. Also, while we're at it, save all the commitments for later.
@@ -105,40 +105,22 @@ contract Challenges is Utils, Verifier, Key_Registry, MerkleTree_Stateless {
     // At last, we can check if the root itself is correct!
     (bytes32 root, , ) = insertLeaves(commitments, _frontier, commitmentIndex);
     require(root != blockL2.root, 'The root is actually fine');
-    challengeAccepted(blockL2.blockHash);
+    challengeAccepted(blockL2);
   }
 
   // TODO more challenges must be added but these will do to demo the principle
 
-  //TODO This should do something when a challenge succeeds
-  function challengeAccepted(bytes32 blockHash) private {
+  // This gets called when a challenge succeeds
+  function challengeAccepted(Block memory badBlock) private {
     // first of all, we need to remove the block that has been successfully
     // challenged from the linked list of blocks and splice the list together
     // again
-    bytes32 previousHash = blockHashes[blockHash].previousHash;
-    bytes32 nextHash = blockHashes[blockHash].nextHash;
-    delete blockHashes[blockHash];
-    blockHashes[previousHash].nextHash = blockHashes[nextHash].hash;
-    blockHashes[nextHash].previousHash = blockHashes[previousHash].hash;
-    emit RejectedProposedblock(blockHash);
-    // remove the proposer
-//    TODO on return, write a function to remove proposer from circular linked list
-// update add and remove proposer functions to use a circular linked list AND
-// worry about how to initialise it
-    // give all bond's value to the challenger.
-    pendingWithdrawals[msg.sender] +=
-//TODO proposer pays a block stake whcih they get back if block isn't chllenged
-// successful challenge pays blockstake to challenger
-// fees go to proposer or are returned in case of successful challenge
-
-  }
-
-
-  // Checks if a block is actually referenced in the queue of blocks waiting
-  // to go into the Shield state (stops someone challenging with a non-existent
-  // block).
-  function isBlockReal(Block memory b) public view {
-    require(b.blockHash == hashBlock(b), 'The block hash is incorrect');
-    require(blockHashes[b.blockHash].hash == b.blockHash, 'This block does not exist');
+    removeBlockHash(badBlock.blockHash);
+    emit RejectedProposedBlock(badBlock.blockHash);
+    // remove the proposer and re-join the chain where they've been removed
+    removeProposer(badBlock.proposer);
+    // give the proposer's block stake to the challenger
+    pendingWithdrawals[msg.sender] += BLOCK_STAKE;
+    // TODO repay the fees of the transactors
   }
 }

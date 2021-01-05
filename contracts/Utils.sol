@@ -28,7 +28,6 @@ contract Utils is Structures {
   function hashBlock(Block memory b) internal pure returns(bytes32) {
     return sha256(
       abi.encodePacked(
-        b.blockNonce,
         b.transactionHashes,
         b.root,
         b.rootAccumulator,
@@ -36,4 +35,29 @@ contract Utils is Structures {
       )
     );
   }
+
+  function removeBlockHash(bytes32 blockHash) internal {
+    bytes32 previousHash = blockHashes[blockHash].previousHash;
+    bytes32 nextHash = blockHashes[blockHash].nextHash;
+    delete blockHashes[blockHash];
+    blockHashes[previousHash].nextHash = blockHashes[nextHash].thisHash;
+    blockHashes[nextHash].previousHash = blockHashes[previousHash].thisHash;
+  }
+
+  function removeProposer(address proposer) internal {
+    address previousAddress = proposers[proposer].previousAddress;
+    address nextAddress = proposers[proposer].nextAddress;
+    delete proposers[proposer];
+    proposers[previousAddress].nextAddress = proposers[nextAddress].thisAddress;
+    proposers[nextAddress].previousAddress = proposers[previousAddress].thisAddress;
+  }
+
+  // Checks if a block is actually referenced in the queue of blocks waiting
+  // to go into the Shield state (stops someone challenging with a non-existent
+  // block).
+  function isBlockReal(Block memory b) public view {
+    require(b.blockHash == hashBlock(b), 'The block hash is incorrect');
+    require(blockHashes[b.blockHash].thisHash == b.blockHash, 'This block does not exist');
+  }
+
 }

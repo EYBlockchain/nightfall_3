@@ -4,12 +4,34 @@ Basic data structures for an optimistic rollup
 */
 
 pragma solidity ^0.6.0;
+pragma experimental ABIEncoderV2;
 
-contract Structures {
+import './Config.sol';
+
+contract Structures is Config {
 
   enum TransactionTypes { DEPOSIT, SINGLE_TRANSFER, DOUBLE_TRANSFER, WITHDRAW }
 
+  event RejectedProposedBlock(
+    bytes32 blockHash
+  );
+
+  event AcceptedProposedBlock(
+    bytes32 blockHash
+  );
+
+  event BlockProposed(
+    Block b
+  );
+
+  event TransactionSubmitted(
+    Transaction t
+  );
+
   mapping(bytes32 => LinkedHash) public blockHashes; //linked list of block hashes
+  mapping(address => LinkedAddress) public proposers;
+  mapping(address => uint) public pendingWithdrawals;
+
   bytes32 endHash; // holds the hash at the end of the linked list of block hashes, so that we can pick up the end.
 
   // a struct representing a generic transaction, some of these data items
@@ -32,22 +54,22 @@ contract Structures {
   struct Block {
     bytes32 blockHash;
     address proposer;
-    bytes32[] transactionHashes;
+    bytes32[] transactionHashes; // TODO this could be a merkle root
     bytes32 root;
     bytes32 rootAccumulator;
     bytes32 nullifierAccumulator;
   }
 
   struct LinkedHash {
-    bytes32 hash;
+    bytes32 thisHash;
     bytes32 previousHash;
     bytes32 nextHash;
   }
 
-  struct LinkedProposer {
-    address proposer;
-    address lastProposer;
-    address nextProposer;
+  struct LinkedAddress {
+    address thisAddress;
+    address previousAddress;
+    address nextAddress;
   }
 
 }
