@@ -45,13 +45,7 @@ contract MerkleTree_Stateless is MiMC {
 
     */
 
-    /**
-    These events are what the merkle-tree microservice's filters will listen for.
-    */
-    event NewLeaf(uint leafIndex, bytes32 leafValue, bytes32 root);
-    event NewLeaves(uint minLeafIndex, bytes32[] leafValues, bytes32 root);
-
-    event Output(bytes32[2] input, bytes32[1] output, uint prevNodeIndex, uint nodeIndex); // for debugging only
+    // event Output(bytes32[2] input, bytes32[1] output, uint prevNodeIndex, uint nodeIndex); // for debugging only
 
     uint constant treeHeight = 32; //change back to 32 after testing
     uint constant treeWidth = 2 ** treeHeight; // 2 ** treeHeight

@@ -28,6 +28,12 @@ contract Structures is Config {
     Transaction t
   );
 
+  /**
+  These events are what the merkle-tree microservice's filters will listen for.
+  */
+  event NewLeaf(uint leafIndex, bytes32 leafValue, bytes32 root);
+  event NewLeaves(uint minLeafIndex, bytes32[] leafValues, bytes32 root);
+
   mapping(bytes32 => LinkedHash) public blockHashes; //linked list of block hashes
   mapping(address => LinkedAddress) public proposers;
   mapping(address => uint) public pendingWithdrawals;
@@ -45,6 +51,7 @@ contract Structures is Config {
     bytes32 tokenId;
     bytes32 value;
     bytes32 ercAddress;
+    bytes32 recipientAddress;
     bytes32[] commitments;
     bytes32[] nullifiers;
     bytes32 historicRoot; // the root (if any) used to create the proof
@@ -53,6 +60,7 @@ contract Structures is Config {
 
   struct Block {
     bytes32 blockHash;
+    uint blockTime;
     address proposer;
     bytes32[] transactionHashes; // TODO this could be a merkle root
     bytes32 root;

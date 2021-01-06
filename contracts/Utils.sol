@@ -5,6 +5,7 @@ pragma experimental ABIEncoderV2;
 
 import './Structures.sol';
 import './Ownable.sol';
+import "./ERCInterface.sol";
 
 contract Utils is Structures {
 
@@ -17,6 +18,7 @@ contract Utils is Structures {
         t.tokenId,
         t.value,
         t.ercAddress, // Take in as bytes32 for consistent hashing
+        t.recipientAddress,
         t.commitments,
         t.nullifiers,
         t.historicRoot,
@@ -28,6 +30,7 @@ contract Utils is Structures {
   function hashBlock(Block memory b) internal pure returns(bytes32) {
     return sha256(
       abi.encodePacked(
+        b.blockTime,
         b.transactionHashes,
         b.root,
         b.rootAccumulator,
@@ -60,4 +63,60 @@ contract Utils is Structures {
     require(blockHashes[b.blockHash].thisHash == b.blockHash, 'This block does not exist');
   }
 
+  function payOut(Transaction memory t) internal {
+  // Now pay out the value of the commitment
+    ERCInterface tokenContract = ERCInterface(
+      address(uint160(uint256(t.ercAddress)))
+    );
+    address recipientAddress = address(uint160(uint256(t.recipientAddress)));
+    if (t.tokenId == ZERO && t.value == ZERO) // disallow this corner case
+      revert("Zero-value tokens are not allowed");
+
+    if (t.tokenId == ZERO) // must be an ERC20
+      tokenContract.transferFrom(
+        address(this),
+        recipientAddress,
+        uint256(t.value)
+      );
+    else if (t.value == ZERO) // must be ERC721
+      tokenContract.safeTransferFrom(
+        address(this),
+        recipientAddress,
+        uint256(t.tokenId),
+        ''
+      );
+    else // must be an ERC1155
+      tokenContract.safeTransferFrom(
+        address(this),
+        recipientAddress,
+        uint256(t.tokenId),
+        uint256(t.value),
+        ''
+      );
+  }
+
+  function payIn(Transaction memory t) internal {
+    ERCInterface tokenContract = ERCInterface(
+      address(uint160(uint256(t.ercAddress)))
+    );
+    if (t.tokenId == ZERO && t.value == ZERO) // disallow this corner case
+      revert("Depositing zero-value tokens is not allowed");
+    if (t.tokenId == ZERO) // must be an ERC20
+      tokenContract.transferFrom(msg.sender, address(this), uint256(t.value));
+    else if (t.value == ZERO) // must be ERC721
+      tokenContract.safeTransferFrom(
+        msg.sender,
+        address(this),
+        uint256(t.tokenId),
+        ''
+      );
+    else // must be an ERC1155
+      tokenContract.safeTransferFrom(
+        msg.sender,
+        address(this),
+        uint256(t.tokenId),
+        uint256(t.value),
+        ''
+      );
+  }
 }

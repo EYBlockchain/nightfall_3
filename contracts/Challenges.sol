@@ -121,6 +121,7 @@ contract Challenges is Utils, Verifier, Key_Registry, MerkleTree_Stateless {
     removeProposer(badBlock.proposer);
     // give the proposer's block stake to the challenger
     pendingWithdrawals[msg.sender] += BLOCK_STAKE;
-    // TODO repay the fees of the transactors
+    // TODO repay the fees of the transactors and any escrowed funds held by the
+    // Shield contract.
   }
 }

@@ -29,7 +29,6 @@ contract ERCStub {
   ) external returns (bool) {
     data = _data;
     emit Transfer(from, to, value);
-    return true;
   }
   // ERC1155 (TODO check event)
   function safeTransferFrom(
@@ -42,7 +41,6 @@ contract ERCStub {
     data = _data;
     id = _id;
     emit Transfer(from, to, value);
-    return true;
   }
 
   event Transfer(
