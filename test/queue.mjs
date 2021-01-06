@@ -62,7 +62,7 @@ describe('Testing the Zokrates queue mechanism', () => {
     rabbitmq.listenToReplyQueue(replyTo, correlationId, response => {
       expect(response).to.have.property('data');
       expect(response.data).to.have.property('message');
-      expect(response.data.message).to.equal('Circuits loadded successfully');
+      expect(response.data.message).to.equal('File multiple.tar was uploaded');
       done();
     });
   });
@@ -150,7 +150,7 @@ describe('Testing the Zokrates queue mechanism', () => {
       expect(response.data.proof).to.have.property('b');
       expect(response.data.proof).to.have.property('c');
       expect(response.data.proof.a).to.be.instanceof(Array);
-      expect(response.type).to.equal('factor');
+      expect(response.data.type).to.equal('factor');
       expect(response.data.transactionInputs).to.equal('test');
       done();
     });

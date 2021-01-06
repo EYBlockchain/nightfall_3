@@ -1,17 +1,9 @@
-import fs from 'fs';
-import path from 'path';
-import zokrates from '@eyblockchain/zokrates-zexe.js';
 import rabbitmq from '../utils/rabbitmq.mjs';
 import logger from '../utils/logger.mjs';
+import generateKeys from '../services/generateKeys.mjs';
 
 export default function receiveMessage() {
-  const outputPath = `./output`;
-  const circuitsPath = `./circuits`;
-
   rabbitmq.receiveMessage('generate-keys', async message => {
-    const { filepath, curve = 'bls12_377', backend = 'zexe', provingScheme = 'gm17' } = JSON.parse(
-      message.content.toString(),
-    );
     const { replyTo, correlationId } = message.properties;
     const response = {
       error: null,
@@ -19,37 +11,12 @@ export default function receiveMessage() {
     };
 
     try {
-      const ext = path.extname(filepath);
-      const circuitName = path.basename(filepath, '.zok'); // filename without '.zok'
-      const circuitDir = filepath.replace(ext, '');
-
-      fs.mkdirSync(`${outputPath}/${circuitDir}`, { recursive: true });
-
-      logger.info('Compile...');
-      await zokrates.compile(
-        `${circuitsPath}/${filepath}`,
-        `${outputPath}/${circuitDir}`,
-        `${circuitName}_out`,
-        curve,
-      );
-
-      logger.info('Setup...');
-      await zokrates.setup(
-        `${outputPath}/${circuitDir}/${circuitName}_out`,
-        `${outputPath}/${circuitDir}`,
-        provingScheme,
-        backend,
-        `${circuitName}_vk`,
-        `${circuitName}_pk`,
-      );
-
-      const vk = await zokrates.extractVk(`${outputPath}/${circuitDir}/${circuitName}_vk.key`);
-
-      logger.info(`Complete ${filepath}`);
-
-      response.data = { vk, filepath };
+      response.data = await generateKeys(JSON.parse(
+        message.content.toString(),
+      ));
     } catch (err) {
-      response.error = err;
+      logger.error('Error in generate-keys', err);
+      response.error = 'Key generation failed';
     }
 
     rabbitmq.sendMessage(replyTo, response, { correlationId });

@@ -12,7 +12,7 @@ const vkPath = circuitPath => `${outputPath}/${circuitPath}/${path.basename(circ
 const proofPath = circuitPath =>
   `${outputPath}/${circuitPath}/${path.basename(circuitPath)}_proof.json`;
 
-const readJsonFile = filePath => {
+export const readJsonFile = filePath => {
   if (fs.existsSync(filePath)) {
     const file = fs.readFileSync(filePath);
     return JSON.parse(file);
@@ -21,7 +21,7 @@ const readJsonFile = filePath => {
   return null;
 };
 
-export const writeJsonFile = (filePath, jsonObject) => {
+const writeJsonFile = (filePath, jsonObject) => {
   // this will overwrite any existing file:
   try {
     fs.writeFileSync(filePath, JSON.stringify(jsonObject));
@@ -55,22 +55,23 @@ export const getProofByCircuitPath = circuitPath => {
   return { proof, inputs };
 };
 
+export const getProofFromFile = filePath => {
+  console.log('in filling ', `${outputPath}/${filePath}`);
+  return readJsonFile(`${outputPath}/${filePath}`);
+}
+
 export const untarFiles = async (filePath, fileName) => {
   const dir = fileName.replace('.tar', '');
   const cwd = `${filePath}/${dir}`;
-  try {
-    const exists = fs.existsSync(cwd);
-    if (!exists) {
-      fs.mkdirSync(cwd);
-    }
-    await tar.x({
-      file: `${filePath}/${fileName}`,
-      cwd: cwd,
-    });
-    return exists;
-  } catch (err) {
-    throw new Error(err);
+  const exists = fs.existsSync(cwd);
+  if (!exists) {
+    fs.mkdirSync(cwd);
   }
+  await tar.x({
+    file: `${filePath}/${fileName}`,
+    cwd: cwd,
+  });
+  return exists;
 };
 
 export const deleteFile = async filePath => {
