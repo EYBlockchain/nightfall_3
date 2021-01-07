@@ -11,157 +11,146 @@ There are three actors involved in the process:
 A `Transactor` is a normal customer of the service. They wish to make `Transactions` i.e. Deposit,
 Transfer, Withdraw. Anyone can be a Transactor. They pay a fee for the service.
 
-A `Proposer` proposes new updates to the state of the Shield contract (a `Proposal`). By _state_, we
-mean specifically the storage variables that are associated with a zkp transaction: nullifiers,
-roots, commitments and the Timber Merkle-tree Frontier (in fact the Frontier actually contains the
-last root and commitment so separate root and commitment updates are not needed). Anyone can become
-a Proposer but they must post a bond to do so. The bond is intended to incentivise good behaviour.
-They make money by providing correct proposals. They are somewhat analogous to Miners in a
-conventional blockchain although the way they operate is completely different.
+A `Proposer` proposes new updates to the state of the Shield contract. By _state_, we mean
+specifically the storage variables that are associated with a zkp transaction: nullifiers, and
+commitment roots. Update proposals contain many `Transactions`, rolled up into a layer 2 `Block` and
+only the final state, that would exist after all the Transactions in the Block were processed, is
+stored. Anyone can become a Proposer but they must post a bond to do so. The bond is intended to
+incentivise good behaviour. They must also stake some ETH every time they propose a block, which is
+paid to a successful challenger. They make money by providing correct Blocks, collecting fees from
+transactors. They are somewhat analogous to Miners in a conventional blockchain although the way
+they operate is completely different.
 
-A `Challenger` challenges the correctness of a proposal. Anyone can be a Challenger but they must
-stake some ETH to make a `Challenge`. This is to prevent frivolous challenges. They make money for
-correct challenges.
+A `Challenger` challenges the correctness of a proposal. Anyone can be a Challenger. They make money
+from correct challenges.
 
-_NB: Currently it's possible to front-run a challenge. We need to fix that._ [EDIT - now fixed, see
-front-running section below]
+_NB: Currently it's possible to front-run a challenge. We need to fix that._
 
 ## Contracts
 
 The following contracts are relevant (others play no specific role in the optimistic rollup process
 and have the same functionality as conventional nightfall).
 
-- `Shield.sol` - this has the optimist deposit, transfer, withdraw, state update and challenge
-  functionality.
-- `Proposal.sol` - structs for a state update proposal and functionality for registering,
-  deregistering, paying and rotating proposers.
-- `Shield_Computations.sol` - does a full on-chain verification and public inputs hash check, and
-  calls `MerkleTree_Computations.sol` to compute the Merkle tree state update.
-  `Shield_Computations.sol` is called by the Shield contract when a Challenge forces on-chain
-  computation. Note that although `Shield_Computations.sol` and `MerkleTree_Computations.sol`
-  _compute_ the state update between them, they do not _store_ it. Instead they pass back a
-  `MerkleTreeUpdate` struct, which contains the state update data (the new Timber frontier and the
-  results of the public inputs hashing check and the proof verification), to the Shield contract.
-  The Shield contract then does the state update.
-- `Transactions.sol` - contains structs and events associated with Transactions.
+- `Shield.sol` - this enables a user to submit a transaction for processing by a Proposer. If it's a
+  deposit Transaction, it will take payment. It also allows anyone to request that the state of the
+  Shield contract (commitment root and nullifier lists) is updated. When the state is updated, any
+  withdrawals in the update will be processed (we don't yet allow immediate withdrawal; one needs to
+  wait until a block is finalised).
+- `Proposers.sol` - functionality for registering, deregistering, paying and rotating proposers.
+- `Challenges.sol` - functionality to enable a Block to be challenged as incorrect in some way
+  (there are several different ways a Block can be incorrect and, eventually this contract will
+  cover all of them. For now, one can just challenge that the ZKP verifies and that the update to
+  the commitment root is correct.
+- `MerkleTree_Computations.sol` - A stateless (pure function) version of the original
+  `MerkleTree.sol`, used by `Challenges.sol` to help compute challenged blocks on-chain.
+- `Utils.sol` - collects together functionality which is either used in multiple contracts or which,
+  if left inline, would affect readability of code.
+- `Config.sol` - holds constants rather like a Nodejs config file.
+- `Structures.sol` - defines global structs, enums, events, mappings and state variables. It makes
+  these easier to find.
 
 ## Operation
 
 We assume that several Proposers have registered with the system, posting a bond (I set this at 10
 ETH) to do so.
 
-The process starts with a Transactor creating a transaction by calling `deposit`, `transfer` or
-`withdraw` on `Shield.sol`. [NB currently only `Deposit` is implemented but the other functions will
-work in the same way]. The Transactor pays a fee to the Shield contract for the transaction, which
-can be anything the Transactor decides (but greater than 0 because 0 is reserved for other uses).
-The transaction call causes a transaction event to be posted, containing the details of the
-transaction.
+### Transaction posting
+
+The process starts with a Transactor creating a transaction by calling `submitTransaction` on
+`Shield.sol`. The Transactor pays a fee to the Shield contract for the Transaction, which can be
+anything the Transactor decides. Ultimately this will be paid to the Proposer that incorporates the
+Transaction in a Block. The higher the fee, the more likely a Proposer is to pick up the
+Transaction.
+
+The Transaction call causes a Transaction event to be posted, containing the details of the
+Transaction. If the Transaction is a Deposit, the Shield contract takes payment of the layer 1 ERC
+token in question.
+
+### Block assembly and submission
 
 Proposers wait until the Shield contract assigns them as the current proposer (presently this is
 done by simple rotation, I feel this should be random but I can't actually see a problem with
 rotation).
 
-The current proposer looks at the available transactions and chooses one. Normally this would be the
+The current proposer looks at the available Transactions and chooses one. Normally this would be the
 one with the highest fee. They verify the proof and public inputs hash and compute the new
-Merkle-tree and nullifier-list states, that _would_ come into being _were_ this transaction to be
-added to the Shield contract next. The Merkle tree state update is sufficiently represented by a
-`Timber Frontier` update and the nullifier list is unchanged by a Deposit.
+commitment Merkle-tree that _would_ come into being _were_ this transaction to be added to the
+Shield contract next.
 
-The current Proposer bundles all this information, along with some metadata, up into a struct
-(actually they don't _really_ make a struct because you can't pass structs into solidity, so they
-just save up the data, but I like to think of it as a struct because the contract keeps it as a
-struct internally).
+The current Proposer repeats this process n times, until they have assembled a Block, which contains
+the hashes of the Transactions included in the Block and the commitment Merkle-tree root as it would
+exist after processing all the transaction in the block (Commitment Root).
 
-The current proposer then chooses another transaction and creates another Proposal, building its
-state on top of the previous Proposal. They keep doing this until they run out of time or
-Transactions to propose (they get to be current proposer for a certain number of blocks). They then
-call `Proposals.proposeStateUpdatesBlock(...)` and pass in the Proposal data, correctly ordered in
-arrays of state updates and transactions (actually just hashes of the transactions to save storage).
-This data constitutes a `Layer 2 Block`. The Proposals are given an incrementing sequence number by
-the Proposals contract, called a proposalNonce. This is used both as a unique identifier and to keep
-the proposals in the correct order: the state update described by a Proposal is a function of the
-current state of the Shield contract and all of the updates to that state described by the Proposals
-between the Shield contract state and the Proposal in question, so correct order is vital.
+They then call `Proposers.proposeBlock(...)` and pass in the Block struct that they have just
+assembled. The hash of this Block is then stored in a queue consisting of a linked-list of Block
+hashes. They have to stake a `BLOCK_STAKE` to do this, which is additional to their bond.
 
-`Shield state <- Proposal r <- Proposal r+1 <- Proposal r+2....<- Proposal n`
+### Challenges
 
-Proposals can be added to the Shield contract state after they have existed for 1 week. This is done
-by calling `Shield.acceptNextProposal()`. Note there is no input parameter: the 'next' Proposal is
-determined solely by the proposalNonce. The function will add the next proposal, provided it is more
-than one week old and has not been the subject of a challenge. The 'next' proposal is kept track of
-by the state variable `acceptedProposals`. This points to the `proposalNonce` of the _next_ Proposal
-due to be added (`Proposal r` in the above diagram; the counting is like array slices). Anyone can
-call `Shield.acceptNextProposal()` but, for anyone other than a Proposer or Transactor, this would
-be a waste of Gas [To consider - do I call it or do I wait and hope someone else calls it? How does
-that play out?].
+The blocks will be in the queue for a week, during which time their correctness may be challenged by
+calling one of the challenging functions in `Challenges.sol`. The challenger will need to pass in
+Block struct and the Transaction structs that are contained in the block, because the blockchain
+does not retain these. `Challenges.sol` will confirm this data against its stored Block hashes and
+then do an on-chain computation to determin the correctness of the challenge (the details of the
+computation being dependent on the type of challenge). The challenges that can be made are (not all
+are yet implemented):
 
-Once a Proposal is added to the Shield contract, the Proposer is paid the fee proposed by the
-Transactor for the Transaction contained in the Proposal. This is how they make their money.
+- PROOF_VERIFIES - the proof given in a transaction does not verify true;
+- PUBLIC_INPUT_HASH_VALID - the public input hash of a transaction is not the correct hash of the
+  public inputs;
+- HISTORIC_ROOT_EXISTS - the root of the commitment Merkle Tree used to create the transaction proof
+  has never existed;
+- NULLIFIER_ABSENT - A nullifier, given as part of a Transaction is present in the list of spent
+  nullifiers;
+- NEW_ROOT_CORRECT - the given, updated commitment root that results from processing the
+  transactions in the Block is not correct.
 
-At any time during the week a Proposal may be challenged. Once its state is added to the Shield
-contract, it is too late to challenge.
+[...any others?]
 
-If a challenge is made, nothing happens at the point of challenge, the challenge data is simply
-recorded in a list. Challengers have to stake some money (1 ETH) to prevent frivolous Challenges as
-the gas costs of a challenge are low. Only when a Proposal is about to be added to the Shield
-contract state by `Shield.acceptNextProposal()` is the list of Challenges examined. If there is one
-that references the proposalNonce of the about-to-be-added proposal (`= acceptedProposals`), then a
-full on-chain Transaction is computed.
+Should the challenge succeed, i.e. the on-chain computation shows it to be a valid challenge, then
+the following actions are taken by `Challenges.sol`:
 
-If the results of that on-chain computation match the proposal, the Challenge has failed. The
-Challenger loses their stake and the Proposal is added to the Shield contract [To consider; what do
-we do with that stake? Do we keep it and buy a massive yacht?]. If the results do not match, then
-the Challenge is successful. The guilty Proposer is de-listed and their bond is paid to the
-Challenger. The bond is much more than the stake, so that's how the Challenger makes their money.
-The state of the flawed Proposal is not added to the Shield contract and neither is the state of any
-remaining Proposals in the ex-Proposer's Layer 2 Block, because these are assumed to depend on the
-flawed Proposal. This is accomplished simply by moving the `acceptedProposals` pointer to the end of
-the Layer 2 Block.
+- The hash of the Block in question is removed from the queue and the queue is spliced together at
+  the point of removal;
+- The Block stake, submitted by the Proposer, is paid to the Challenger;
+- The Transactors with a Transaction in the Block are reimbursed the fee that they would have paid
+  to the Proposer and any escrowed funds held by the Shield contract in the case of a Deposit
+  transaction.
+- The Proposer is delisted [what shall be do with their registration Bond? Do we need this?]
 
-We hope that the Proposer of the next block will have spotted the bad block and will have built
-their block on good state (probably issuing a Challenge too). If not (perhaps because the flawed
-block was challenged after they build their block on top and they didn't do any checks) they will
-almost certainly be challenged because a Challenger is likely to check Layer 2 Blocks that are
-upstream of their challenge point. A Proposer will be reasonably safe if they check a few blocks
-ahead, in the assumption that other Proposers will do likewise. This means that a current Proposer
-should check some previous blocks as well as assemble their own block.
+### State incorporation
 
-Imagine though, what would happen if Proposers continue to build on bad state. Eventually someone
-will challenge the flawed block and, fairly quickly, a string of Challenges will be created as
-Challengers check Layer 2 Blocks upstream of the original Challenge (they'll realise that Proposers
-might build on the bad block and so will prioritise checking subsequent blocks). The Proposers will
-see what is happening and will stop adding Blocks until they have computed the extent of the bad
-state. In practice, Proposers will probably do this as soon as the first Challenge is issued because
-they'll be worried that subsequent blocks may also be flawed and they'll get penalised if they build
-on top. They will then start building good blocks by ignoring the bad state. Thus, the approach is
-self-correcting. We will probably arrange things so that Proposers of subsequent bad blocks do not
-get penalised so heavily as the Proposer of the first bad block but Challengers still get a
-(reduced) reward, although this is not currently implemented.
+Anyone can call the `Shield.updateShieldState(...)` function, passing in a Block and the
+Transactions within that block. If the hash of that Block is at the head of the queue of Block
+hashes, and it has been in the queue for more than a week, it will be removed from the queue and
+incorporated into the Shield contract's state. From then on its transactions are finalised. The
+state incorporation comprises:
 
-We could, of course, tear up _all_ of the blocks that were upstream of a successful Challenge, but
-that would mean we'd need to wait a week before we could add any more state to the Shield contract.
-That would work, and people would still be able to transact in the meantime, but it seems wasteful
-if there's a reasonable chance some of those blocks are good.
-
-A Transactor who loses their transaction because it was in a bad block, will get their fee refunded
-but will have to resubmit their Transaction.
+- Validating the Block and its Transactions against the stored Block hash;
+- Checking it is at the head of the queue and is more than a week old;
+- Adding the Block's updated commitment root to the Shield's list of historic roots;
+- Adding all the nullifiers in all the Transactions in the Block to the list of spent nullifiers;
+- Broadcasting a newLeaves/newLeaf event;
+- Updating the leafCount variable that Timber uses;
+- Making the penultimate Block hash the new head of the queue and deleting the old head.
+- Refunding the `BLOCK_STAKE` and paying the Transactor fees to the Proposer of the Block.
 
 ## Avoiding front-running attacks
 
 It would be possible to front-run the Challenges described above. A front runner would simply submit
-the Challenge before the original challenger. To fix this, we use a commit-reveal strategy.
+the Challenge before the original challenger. To fix this, we will use a commit-reveal strategy
+(TODO).
 
 The Challenger does not challenge immediately but provides a salted hash of the Challenge
-information. This hash is saved by `Shield.sol` against the sender's address. Once that transaction
-has gone through, the Challenger sends the complete Challenge information along with the salt.
-Shield.sol then checks:
+information. This hash is saved against the sender's address.
+
+Once that transaction has gone through, the Challenger sends the complete Challenge information
+along with the salt. The contract then checks:
 
 - the data sent is the pre-image of the hash, once the salt is added.
 - the originating address is the same for both transactions
 
 A front-runner would be alerted that a challenge has been made but would have to find the flawed
-Proposal themselves and front-run before the challenge hash is written to the blockchain. This is
-not completely impossible but they have very little time to find the flawed Proposal and so are
-unlikely to succeed. It would also be possible to create obfuscating transactions if needed. [To
-consider: is this sufficient, a front-runner who has a server checking Proposals could just delay
-competitors enough so that they get their Challenge in first?]
+Block themselves and front-run before the challenge hash is written to the blockchain. This is not
+completely impossible but they have very little time to find the flawed Block and so are unlikely to
+succeed, or rather they have no more chance of succeeding than anyone else, which is fair game.
