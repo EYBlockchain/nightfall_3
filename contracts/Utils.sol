@@ -39,12 +39,14 @@ contract Utils is Structures {
     );
   }
 
-  function removeBlockHash(bytes32 blockHash) internal {
-    bytes32 previousHash = blockHashes[blockHash].previousHash;
-    bytes32 nextHash = blockHashes[blockHash].nextHash;
-    delete blockHashes[blockHash];
-    blockHashes[previousHash].nextHash = blockHashes[nextHash].thisHash;
-    blockHashes[nextHash].previousHash = blockHashes[previousHash].thisHash;
+  function removeBlockHashes(bytes32 blockHash) internal {
+    bytes32 hash = blockHash;
+    endHash = blockHashes[hash].previousHash;
+    do {
+      bytes32 nextHash = blockHashes[hash].nextHash;
+      delete blockHashes[hash];
+      hash = nextHash;
+    } while(blockHashes[hash].nextHash != ZERO);
   }
 
   function removeProposer(address proposer) internal {

@@ -113,9 +113,9 @@ contract Challenges is Utils, Verifier, Key_Registry, MerkleTree_Stateless {
   // This gets called when a challenge succeeds
   function challengeAccepted(Block memory badBlock) private {
     // first of all, we need to remove the block that has been successfully
-    // challenged from the linked list of blocks and splice the list together
-    // again
-    removeBlockHash(badBlock.blockHash);
+    // challenged from the linked list of blocks and all of the subsequent
+    // blocks
+    removeBlockHashes(badBlock.blockHash);
     emit RejectedProposedBlock(badBlock.blockHash);
     // remove the proposer and re-join the chain where they've been removed
     removeProposer(badBlock.proposer);

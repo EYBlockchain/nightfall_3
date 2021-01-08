@@ -85,15 +85,19 @@ They then call `Proposers.proposeBlock(...)` and pass in the Block struct that t
 assembled. The hash of this Block is then stored in a queue consisting of a linked-list of Block
 hashes. They have to stake a `BLOCK_STAKE` to do this, which is additional to their bond.
 
+The submission triggers emission of NewLeaf/NewLeaves events for a Timber listener. The Timber
+listener must realise that these new leaves may be removed after a successful challenge and thus
+must incorporate logic to wait for finalisation.
+
 ### Challenges
 
-The blocks will be in the queue for a week, during which time their correctness may be challenged by
-calling one of the challenging functions in `Challenges.sol`. The challenger will need to pass in
-Block struct and the Transaction structs that are contained in the block, because the blockchain
-does not retain these. `Challenges.sol` will confirm this data against its stored Block hashes and
-then do an on-chain computation to determin the correctness of the challenge (the details of the
-computation being dependent on the type of challenge). The challenges that can be made are (not all
-are yet implemented):
+The blocks will be challengeable in the queue for a week, during which time their correctness may be
+challenged by calling one of the challenging functions in `Challenges.sol`. The challenger will need
+to pass in Block struct and the Transaction structs that are contained in the block, because the
+blockchain does not retain these. `Challenges.sol` will confirm this data against its stored Block
+hashes and then do an on-chain computation to determine the correctness of the challenge (the
+details of the computation being dependent on the type of challenge). The challenges that can be
+made are (not all are yet implemented):
 
 - PROOF_VERIFIES - the proof given in a transaction does not verify true;
 - PUBLIC_INPUT_HASH_VALID - the public input hash of a transaction is not the correct hash of the
@@ -110,8 +114,7 @@ are yet implemented):
 Should the challenge succeed, i.e. the on-chain computation shows it to be a valid challenge, then
 the following actions are taken by `Challenges.sol`:
 
-- The hash of the Block in question is removed from the queue and the queue is spliced together at
-  the point of removal;
+- The hash of the Block in question and all subsequent Blocks are removed from the queue;
 - The Block stake, submitted by the Proposer, is paid to the Challenger;
 - The Transactors with a Transaction in the Block are reimbursed the fee that they would have paid
   to the Proposer and any escrowed funds held by the Shield contract in the case of a Deposit
@@ -120,20 +123,9 @@ the following actions are taken by `Challenges.sol`:
 
 ### State incorporation
 
-Anyone can call the `Shield.updateShieldState(...)` function, passing in a Block and the
-Transactions within that block. If the hash of that Block is at the head of the queue of Block
-hashes, and it has been in the queue for more than a week, it will be removed from the queue and
-incorporated into the Shield contract's state. From then on its transactions are finalised. The
-state incorporation comprises:
-
-- Validating the Block and its Transactions against the stored Block hash;
-- Checking it is at the head of the queue and is more than a week old;
-- Adding the Block's updated commitment root to the Shield's list of historic roots;
-- Adding all the nullifiers in all the Transactions in the Block to the list of spent nullifiers;
-- Broadcasting a newLeaves/newLeaf event;
-- Updating the leafCount variable that Timber uses;
-- Making the penultimate Block hash the new head of the queue and deleting the old head.
-- Refunding the `BLOCK_STAKE` and paying the Transactor fees to the Proposer of the Block.
+We don't explicitly do this. Any block that is more than a week old is assumed final.
+`Shield.withdraw` can be called to withdraw funds from a finalised block. For this reason, Blocks
+that are final cannot be challenged.
 
 ## Avoiding front-running attacks
 

@@ -12,6 +12,8 @@ contract Proposals is Structures, Utils {
 
   LinkedAddress currentProposer; // can propose a new shield state
   uint proposerStartBlock; // L1 block where currentProposer became current
+  uint leafCount; // number of leaves in the Merkle treeWidth
+
 
   modifier onlyCurrentProposer() { // Modifier
     require(msg.sender == currentProposer.thisAddress, "Only the current proposer can call this.");
@@ -35,7 +37,7 @@ contract Proposals is Structures, Utils {
   * Allows a Proposer to propose a new block of state updates.
   * @param b the block being proposed.
   */
-  function proposeBlock(Block memory b) external payable onlyCurrentProposer() {
+  function proposeBlock(Block memory b, Transaction[] memory t) external payable onlyCurrentProposer() {
     require(BLOCK_STAKE == msg.value, 'The stake payment is incorrect');
     b.blockTime = block.timestamp;
     b.blockHash == hashBlock(b);
@@ -43,9 +45,44 @@ contract Proposals is Structures, Utils {
     blockHashes[b.blockHash] = LinkedHash({
       thisHash: b.blockHash,
       previousHash: endHash,
-      nextHash: bytes32(0)
+      nextHash: ZERO
     });
-    endHash = b.blockHash; // point to the new end of the list of blockhashes
+    endHash = b.blockHash; // point to the new end of the list of blockhashes.
+    // signal to Timber that new leaves may need to be added to the Merkle tree.
+    // It's possible that these will be successfully challenged over the next
+    // week, and Timber (or a Timber proxy), will need to be sure they only add
+    // valid leaves to the Timber db.  This is a little challenging but the
+    // alternative is to broadcast events for Timber after the challenge period
+    // has elapsed.  This would take more gas because of the need to make a
+    // a blockchain transaction to call a 'check week is up and then emit
+    // events' function
+    uint nCommitments; // number of commitments, used in NewLeaves/NewLeaf event
+    for (uint i = 0; i < b.transactionHashes.length; i++) {
+      // make sure the Transactions are in the Block
+      require(
+        b.transactionHashes[i] == hashTransaction(t[i]),
+        'Transaction hash was not found'
+      );
+      // remember how many commitments are in the block, this is needed later
+      nCommitments += t[i].commitments.length;
+      }
+    // now we need to emit all the leafValues (commitments) in this block so
+    // any listening Timber instances can update their offchain DBs.
+    // The first job is to assembly an array of all the leafValues in the block
+    bytes32[] memory leafValues = new bytes32[](nCommitments);
+    uint k;
+    for (uint i = 0; i < t.length; i++) {
+      for (uint j = 0; j < t[i].commitments.length; j++)
+        leafValues[k++] = t[i].commitments[j];
+    }
+    // Signal to Timber listeners, if we have any commitments to add
+    if (nCommitments == 1)
+      emit NewLeaf(leafCount, leafValues[0], b.root);
+    else if (nCommitments !=0)
+      emit NewLeaves(leafCount, leafValues, b.root);
+    // remember how many leaves the Merkle tree has (Timber needs this to check
+    // that it hasn't missed any leaf additions)
+    leafCount += nCommitments;
   }
 
   //add the proposer to the circular linked list
