@@ -8,7 +8,7 @@ pragma experimental ABIEncoderV2;
 import './Structures.sol';
 import './Utils.sol';
 
-contract Proposals is Structures, Utils {
+contract Proposers is Structures, Utils {
 
   LinkedAddress currentProposer; // can propose a new shield state
   uint proposerStartBlock; // L1 block where currentProposer became current
