@@ -17,7 +17,7 @@ const { SHIELD_CONTRACT_NAME } = config;
  * amount
  */
 router.post('/register', async (req, res, next) => {
-  logger.debug(`register proposal endpoint received GET ${JSON.stringify(req.body, null, 2)}`);
+  logger.debug(`register proposal endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
   try {
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
     const txDataToSign = await shieldContractInstance.methods.registerProposer().encodeABI();
@@ -54,9 +54,8 @@ router.get('/proposers', async (req, res, next) => {
 router.post('/de-register', async (req, res, next) => {
   logger.debug(`de-register proposal endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
   try {
-    const { index } = req.body;
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
-    const txDataToSign = await shieldContractInstance.methods.deRegisterProposer(index).encodeABI();
+    const txDataToSign = await shieldContractInstance.methods.deRegisterProposer().encodeABI();
     logger.debug('returning raw transaction data');
     logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
     res.json({ txDataToSign });

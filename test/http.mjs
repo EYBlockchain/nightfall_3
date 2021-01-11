@@ -64,14 +64,14 @@ describe('Testing the http API', () => {
     });
   });
 
-  describe.skip('Basic Proposer tests', () => {
+  describe('Basic Proposer tests', () => {
     it('should register a proposer', async () => {
       const res = await chai.request(url).post('/proposer/register');
       txDataToSign = res.body.txDataToSign;
       expect(txDataToSign).to.be.a('string');
       // we have to pay 10 ETH to be registered
       const bond = 10000000000000000000;
-      const gasCosts = 2000000000000000;
+      const gasCosts = 5000000000000000;
       const myAddress = (await getAccounts())[0];
       const startBalance = await getBalance(myAddress);
       // now we need to sign the transaction and send it to the blockchain
@@ -82,18 +82,8 @@ describe('Testing the http API', () => {
       expect(endBalance - startBalance).to.closeTo(-bond, gasCosts);
     });
 
-    it.skip('should de-register a proposer', async () => {
-      // first get the array of proposers so we can find the index
-      let res = await chai.request(url).get('/proposer/proposers');
-      const { proposers } = res.body;
-      // then extract the index of our address
-      const myAddress = (await getAccounts())[0];
-      const index = proposers.indexOf(myAddress);
-      expect(index).not.to.equal(-1);
-      res = await chai
-        .request(url)
-        .post('/proposer/de-register')
-        .send({ index });
+    it('should de-register a proposer', async () => {
+      const res = await chai.request(url).post('/proposer/de-register');
       txDataToSign = res.body.txDataToSign;
       expect(txDataToSign).to.be.a('string');
       // now we need to sign the transaction and send it to the blockchain
@@ -102,7 +92,7 @@ describe('Testing the http API', () => {
       expect(receipt).to.have.property('blockHash');
     });
 
-    it.skip("should withdraw the proposer's bond", async () => {
+    it("should withdraw the proposer's bond", async () => {
       const myAddress = (await getAccounts())[0];
       const startBalance = await getBalance(myAddress);
       const res = await chai.request(url).get('/proposer/withdraw');
@@ -114,7 +104,7 @@ describe('Testing the http API', () => {
       expect(receipt).to.have.property('blockHash');
       const endBalance = await getBalance(myAddress);
       const bond = 10000000000000000000;
-      const gasCosts = 2000000000000000;
+      const gasCosts = 5000000000000000;
       expect(endBalance - startBalance).to.closeTo(bond, gasCosts);
     });
   });
