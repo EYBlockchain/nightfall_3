@@ -64,7 +64,7 @@ describe('Testing the http API', () => {
     });
   });
 
-  describe('Basic Proposer tests', () => {
+  describe.skip('Basic Proposer tests', () => {
     it('should register a proposer', async () => {
       const res = await chai.request(url).post('/proposer/register');
       txDataToSign = res.body.txDataToSign;
@@ -82,7 +82,7 @@ describe('Testing the http API', () => {
       expect(endBalance - startBalance).to.closeTo(-bond, gasCosts);
     });
 
-    it('should de-register a proposer', async () => {
+    it.skip('should de-register a proposer', async () => {
       // first get the array of proposers so we can find the index
       let res = await chai.request(url).get('/proposer/proposers');
       const { proposers } = res.body;
@@ -102,7 +102,7 @@ describe('Testing the http API', () => {
       expect(receipt).to.have.property('blockHash');
     });
 
-    it("should withdraw the proposer's bond", async () => {
+    it.skip("should withdraw the proposer's bond", async () => {
       const myAddress = (await getAccounts())[0];
       const startBalance = await getBalance(myAddress);
       const res = await chai.request(url).get('/proposer/withdraw');
@@ -119,7 +119,7 @@ describe('Testing the http API', () => {
     });
   });
 
-  describe('Deposit tests', () => {
+  describe.skip('Deposit tests', () => {
     // subscribeToGasUsed(shieldAddress);
     it('should deposit some crypto into a ZKP commitment and get a raw blockchain transaction back', async () => {
       const res = await chai
