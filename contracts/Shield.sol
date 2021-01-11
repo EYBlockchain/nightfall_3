@@ -10,10 +10,10 @@ functionality is not really required - it's just a data availability aid.
 pragma solidity ^0.6.0;
 pragma experimental ABIEncoderV2;
 
-import './Structures.sol';
+import './Key_Registry.sol';
 import './Utils.sol';
 
-contract Shield is Structures, Utils {
+contract Shield is Utils, Key_Registry {
   /**
   We don't need to do the checks herein because the Proposer should do them.
   We don't really need this function at all because we could just send the
