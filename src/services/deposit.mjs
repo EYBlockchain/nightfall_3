@@ -15,6 +15,7 @@ import logger from '../utils/logger.mjs';
 import Commitment from '../classes/commitment.mjs';
 import PublicInputs from '../classes/public-inputs.mjs';
 import { storeCommitment } from './commitment-storage.mjs';
+import Transaction from '../classes/transaction.mjs';
 
 const {
   ZKP_KEY_LENGTH,
@@ -30,7 +31,7 @@ async function deposit(items) {
   logger.info('Creating a deposit transaction');
   // before we do anything else, long hex strings should be generalised to make
   // subsequent manipulations easier
-  const { ercAddress, tokenId, value, zkpPublicKey } = generalise(items);
+  const { ercAddress, tokenId, value, zkpPublicKey, fee } = generalise(items);
   // we also need a salt to make the commitment unique and increase its entropy
   const salt = await rand(ZKP_KEY_LENGTH);
   // next, let's compute the zkp commitment we're going to store and the hash of the public inputs (truncated to 248 bits)
@@ -58,17 +59,26 @@ async function deposit(items) {
   logger.silly(`Received response ${JSON.stringify(res.data, null, 2)}`);
   const { proof } = res.data;
   // and work out the ABI encoded data that the caller should sign and send to the shield contract
+  // first, get the contract instance
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
+  // next we need to compute the optimistic Transaction object
+  const optimisticDepositTransaction = new Transaction({
+    fee,
+    transactionType: 0,
+    publicInputs,
+    tokenId,
+    value,
+    ercAddress,
+    commitments: [commitment],
+    proof,
+  });
+  logger.debug(
+    `Optimistic deposit transaction ${JSON.stringify(optimisticDepositTransaction, null, 2)}`,
+  );
+  // and then we can create an unsigned blockchain transaction
   try {
     const rawTransaction = await shieldContractInstance.methods
-      .deposit(
-        publicInputs.hash.hex(32),
-        ercAddress.hex(32),
-        tokenId.hex(32),
-        value.hex(32),
-        commitment.hash.hex(32),
-        Object.values(proof).flat(Infinity),
-      )
+      .submitTransaction(optimisticDepositTransaction)
       .encodeABI();
     // store the commitment on successful computation of the transaction
     storeCommitment(commitment);

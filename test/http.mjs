@@ -109,9 +109,9 @@ describe('Testing the http API', () => {
     });
   });
 
-  describe.skip('Deposit tests', () => {
-    // subscribeToGasUsed(shieldAddress);
-    it('should deposit some crypto into a ZKP commitment and get a raw blockchain transaction back', async () => {
+  describe('Deposit tests', () => {
+    const fee = 1;
+    it('should deposit some crypto into a ZKP commitment and get an unsigned blockchain transaction back', async () => {
       const res = await chai
         .request(url)
         .post('/deposit')
@@ -120,6 +120,7 @@ describe('Testing the http API', () => {
           tokenId,
           value,
           zkpPublicKey,
+          fee: fee,
         });
       txDataToSign = res.body.txDataToSign;
       commitment = res.body.commitment;
@@ -127,9 +128,9 @@ describe('Testing the http API', () => {
       // console.log(txDataToSign);
     });
 
-    it('should send the raw transaction to the shield contract to verify the proof and store the commitment in the Merkle tree, and update the commitment db', async () => {
+    it('should send the transaction to the shield contract', async () => {
       // now we need to sign the transaction and send it to the blockchain
-      const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, '1');
+      const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
       gasStats(receipt);
