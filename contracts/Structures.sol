@@ -64,8 +64,6 @@ contract Structures is Config {
     address proposer;
     bytes32[] transactionHashes; // TODO this could be a merkle root
     bytes32 root;
-    bytes32 rootAccumulator;
-    bytes32 nullifierAccumulator;
   }
 
   struct LinkedHash {

@@ -10,7 +10,7 @@ import "./ERCInterface.sol";
 contract Utils is Structures {
 
   function hashTransaction(Transaction memory t) internal pure returns(bytes32) {
-    return sha256(
+    return keccak256(
       abi.encodePacked(
         t.fee,
         t.transactionType,
@@ -28,13 +28,11 @@ contract Utils is Structures {
   }
 
   function hashBlock(Block memory b) internal pure returns(bytes32) {
-    return sha256(
+    return keccak256(
       abi.encodePacked(
         b.blockTime,
         b.transactionHashes,
-        b.root,
-        b.rootAccumulator,
-        b.nullifierAccumulator
+        b.root
       )
     );
   }

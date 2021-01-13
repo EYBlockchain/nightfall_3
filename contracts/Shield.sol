@@ -22,10 +22,10 @@ contract Shield is Utils, Key_Registry, Proposers {
   removed in future to save Gas.
   */
   function submitTransaction(Transaction memory t) external payable {
-    //check the transaction hash
-    require (t.transactionHash == hashTransaction(t), 'The transaction hash is not correct');
-    //check they've paid correctly
-    require (t.fee == msg.value, 'The amount paid was not the same as the amount specified in the transaction');
+    // check the transaction hash
+    // require (t.transactionHash == hashTransaction(t), 'The transaction hash is not correct');
+    // check they've paid correctly
+    // require (t.fee == msg.value, 'The amount paid was not the same as the amount specified in the transaction');
     // TODO take payment for a Deposit - can't do it here because no guarantee
     // transaction will proceed (we could refund later if it doesn't of course).
     // if this is a deposit transaction, we should take payment now
