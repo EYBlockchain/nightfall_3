@@ -7,6 +7,7 @@ import express from 'express';
 import config from 'config';
 import logger from '../utils/logger.mjs';
 import { getContractInstance } from '../utils/contract.mjs';
+import Block from '../classes/block.mjs';
 
 const router = express.Router();
 const { SHIELD_CONTRACT_NAME } = config;
@@ -90,10 +91,14 @@ router.get('/withdraw', async (req, res, next) => {
 router.post('/propose', async (req, res, next) => {
   logger.debug(`propose endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
   try {
-    const { transactionHashes, frontiers } = req.body;
+    const { transactions, proposer, currentLeafCount } = req.body;
+    // use the information we've been POSTED to assemble a block
+    // we use a Builder pattern because an async constructor is bad form
+    const block = await Block.build({ transactions, proposer, currentLeafCount });
+    logger.debug(`New block assembled ${JSON.stringify(block, null, 2)}`);
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
     const txDataToSign = await shieldContractInstance.methods
-      .proposeStateUpdateBlock(transactionHashes, frontiers)
+      .proposeBlock(block, transactions)
       .encodeABI();
     logger.debug('returning raw transaction');
     logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);

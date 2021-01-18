@@ -25,7 +25,6 @@ class Transaction {
   }) {
     if (proof === undefined) throw new Error('Proof cannot be undefined');
     const flatProof = Object.values(proof).flat(Infinity);
-    console.log('flatProof', flatProof);
     if (publicInputs === undefined) throw new Error('PublicInputs cannot be undefined');
     let commitments;
     let nullifiers;
@@ -33,7 +32,6 @@ class Transaction {
     else commitments = _commitments;
     if (_nullifiers === undefined) nullifiers = [{ hash: 0 }];
     else nullifiers = _nullifiers;
-    console.log('COMMITMENTS:', commitments);
     // convert everything to hex(32) for interfacing with web3
     const preimage = generalise({
       fee: fee || 0,

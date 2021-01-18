@@ -20,7 +20,7 @@ describe('Testing the http API', () => {
   let shieldAddress;
   let txDataToSign;
   let ercAddress;
-  let commitment;
+  let transaction;
   const zkpPrivateKey = '0xc05b14fa15148330c6d008814b0bdd69bc4a08a1bd0b629c42fa7e2c61f16739'; // the zkp private key we're going to use in the tests.
   const zkpPublicKey = sha256([new GN(zkpPrivateKey)]).hex();
   const url = 'http://localhost:8080';
@@ -32,6 +32,9 @@ describe('Testing the http API', () => {
   const gas = 10000000;
   // this is the openethereum test account (but could be anything)
   const recipientAddress = '0x00a329c0648769a73afac7f9381e08fb43dbea72';
+  // this is what we pay the proposer for incorporating a transaction
+  const fee = 1;
+  const BLOCK_STAKE = 1000000000000000000; // 1 ether
 
   before(async () => {
     connectWeb3();
@@ -110,7 +113,6 @@ describe('Testing the http API', () => {
   });
 
   describe('Deposit tests', () => {
-    const fee = 1;
     it('should deposit some crypto into a ZKP commitment and get an unsigned blockchain transaction back', async () => {
       const res = await chai
         .request(url)
@@ -120,10 +122,10 @@ describe('Testing the http API', () => {
           tokenId,
           value,
           zkpPublicKey,
-          fee: fee,
+          fee,
         });
       txDataToSign = res.body.txDataToSign;
-      commitment = res.body.commitment;
+      transaction = res.body.transaction;
       expect(txDataToSign).to.be.a('string');
       // console.log(txDataToSign);
     });
@@ -139,29 +141,40 @@ describe('Testing the http API', () => {
     });
   });
 
-  describe.skip('Check transfer message tests', () => {
-    it('should return true for a valid transfer message', async () => {
-      const { salt } = commitment.preimage;
-      const message = { ercAddress, tokenId, value, salt };
-      const query = { message, recipientZkpPublicKey: zkpPublicKey };
+  // Before we attempt another transaction, we need to post a block containing
+  // the deposit transaction so that Timber gets to hear about it.  Otherwise
+  // we won't be able to find an input commitment for the next transaction
+
+  describe('Block proposal test', () => {
+    it('should create a block proposal transaction', async () => {
+      console.log('calling proposer/propose');
       const res = await chai
         .request(url)
-        .get('/check-message')
-        .query(query);
-      const result = res.body.valid;
-      expect(result).to.equal(true);
+        .post('/proposer/propose')
+        .send({
+          proposer: (await getAccounts())[0],
+          transactions: [transaction],
+          currentLeafCount: 0,
+        });
+      txDataToSign = res.body.txDataToSign;
+      expect(txDataToSign).to.be.a('string');
     });
 
-    it('should return false for an invalid transfer message', async () => {
-      const { salt } = commitment.preimage;
-      const message = { ercAddress, tokenId, value: 3, salt };
-      const query = { message, recipientZkpPublicKey: zkpPublicKey };
-      const res = await chai
-        .request(url)
-        .get('/check-message')
-        .query(query);
-      const result = res.body.valid;
-      expect(result).to.equal(false);
+    it('should send the transaction to the shield contract', async () => {
+      // now we need to sign the transaction and send it to the blockchain
+      console.log('Transaction is', txDataToSign);
+      const receipt = await submitTransaction(
+        txDataToSign,
+        privateKey,
+        shieldAddress,
+        gas,
+        BLOCK_STAKE,
+      );
+      expect(receipt).to.have.property('transactionHash');
+      expect(receipt).to.have.property('blockHash');
+      gasStats(receipt);
+      // give Timber time to respond to the blockchain event
+      await new Promise(resolve => setTimeout(resolve, 5000));
     });
   });
 
@@ -175,6 +188,7 @@ describe('Testing the http API', () => {
           tokenId,
           recipientData: { values: [value], recipientZkpPublicKeys: [zkpPublicKey] },
           senderZkpPrivateKey: zkpPrivateKey,
+          fee,
         });
       txDataToSign = res.body.txDataToSign;
       expect(txDataToSign).to.be.a('string');
@@ -182,7 +196,7 @@ describe('Testing the http API', () => {
 
     it('should should send the raw transaction to the shield contract to verify the proof and update the Merkle tree', async () => {
       // now we need to sign the transaction and send it to the blockchain
-      const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
+      const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
       gasStats(receipt);

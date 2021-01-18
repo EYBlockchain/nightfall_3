@@ -17,6 +17,7 @@ import Nullifier from '../classes/nullifier.mjs';
 import Commitment from '../classes/commitment.mjs';
 import PublicInputs from '../classes/public-inputs.mjs';
 import { getSiblingPath } from '../utils/timber.mjs';
+import Transaction from '../classes/transaction.mjs';
 
 const {
   BN128_PRIME,
@@ -32,7 +33,7 @@ const { generalise, GN } = gen;
 async function transfer(items) {
   logger.info('Creating a transfer transaction');
   // let's extract the input items
-  const { ercAddress, tokenId, recipientData, senderZkpPrivateKey } = generalise(items);
+  const { ercAddress, tokenId, recipientData, senderZkpPrivateKey, fee } = generalise(items);
   const { recipientZkpPublicKeys, values } = recipientData;
   const senderZkpPublicKey = sha256([senderZkpPrivateKey]);
   if (recipientZkpPublicKeys.length > 1)
@@ -133,9 +134,14 @@ async function transfer(items) {
   // This is (so far) the only place where we need to get specific about the
   // circuit
   let folderpath;
-  if (oldCommitments.length === 1) folderpath = 'single_transfer';
-  else if (oldCommitments.length === 2) folderpath = 'double_transfer';
-  else throw new Error('Unsupported number of commitments');
+  let transactionType;
+  if (oldCommitments.length === 1) {
+    folderpath = 'single_transfer';
+    transactionType = 1;
+  } else if (oldCommitments.length === 2) {
+    folderpath = 'double_transfer';
+    transactionType = 2;
+  } else throw new Error('Unsupported number of commitments');
   const res = await axios.post(`${PROTOCOL}${ZOKRATES_WORKER_HOST}/generate-proof`, {
     folderpath,
     inputs: await witness,
@@ -146,16 +152,19 @@ async function transfer(items) {
   const { proof } = res.data;
   // and work out the ABI encoded data that the caller should sign and send to the shield contract
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
+  const optimisticTransferTransaction = new Transaction({
+    fee,
+    transactionType,
+    publicInputs,
+    ercAddress,
+    commitments: newCommitments,
+    nullifiers,
+    historicRoot: root,
+    proof,
+  });
   try {
     const rawTransaction = await shieldContractInstance.methods
-      .transfer(
-        publicInputs.hash.hex(32),
-        oldCommitments.map(commitment => commitment.preimage.ercAddress.hex(32)),
-        newCommitments.map(commitment => commitment.hash.hex(32)),
-        nullifiers.map(nullifier => nullifier.hash.hex(32)),
-        root.hex(32),
-        Object.values(proof).flat(Infinity),
-      )
+      .submitTransaction(optimisticTransferTransaction)
       .encodeABI();
     // store the commitment on successful computation of the transaction
     newCommitments.map(commitment => storeCommitment(commitment)); // TODO insertMany
