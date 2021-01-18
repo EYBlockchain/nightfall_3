@@ -171,7 +171,7 @@ async function transfer(items) {
     // mark the old commitments as nullified
     oldCommitments.map(commitment => markNullified(commitment));
 
-    return { rawTransaction, commitments: [...newCommitments] };
+    return { rawTransaction, transaction: optimisticTransferTransaction };
   } catch (err) {
     throw new Error(err); // let the caller handle the error
   }

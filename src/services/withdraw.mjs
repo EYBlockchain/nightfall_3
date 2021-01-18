@@ -15,6 +15,7 @@ import { findUsableCommitments, markNullified } from './commitment-storage.mjs';
 import Nullifier from '../classes/nullifier.mjs';
 import PublicInputs from '../classes/public-inputs.mjs';
 import { getSiblingPath } from '../utils/timber.mjs';
+import Transaction from '../classes/transaction.mjs';
 
 const {
   BN128_PRIME,
@@ -29,7 +30,9 @@ const { generalise } = gen;
 async function withdraw(items) {
   logger.info('Creating a transfer transaction');
   // let's extract the input items
-  const { ercAddress, tokenId, value, recipientAddress, senderZkpPrivateKey } = generalise(items);
+  const { ercAddress, tokenId, value, recipientAddress, senderZkpPrivateKey, fee } = generalise(
+    items,
+  );
   const senderZkpPublicKey = sha256([senderZkpPrivateKey]);
 
   // the first thing we need to do is to find and input commitment which
@@ -95,23 +98,23 @@ async function withdraw(items) {
   const { proof } = res.data;
   // and work out the ABI encoded data that the caller should sign and send to the shield contract
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
+  const optimisticWithdrawTransaction = new Transaction({
+    fee,
+    transactionType: 3,
+    publicInputs,
+    ercAddress,
+    nullifiers: [nullifier],
+    historicRoot: root,
+    proof,
+  });
   try {
     const rawTransaction = await shieldContractInstance.methods
-      .withdraw(
-        publicInputs.hash.hex(32),
-        oldCommitment.preimage.ercAddress.hex(32),
-        oldCommitment.preimage.tokenId.hex(32),
-        oldCommitment.preimage.value.hex(32),
-        nullifier.hash.hex(32),
-        recipientAddress.hex(32),
-        root.hex(32),
-        Object.values(proof).flat(Infinity),
-      )
+      .submitTransaction(optimisticWithdrawTransaction)
       .encodeABI();
     // on successful computation of the transaction mark the old commitments as nullified
     markNullified(oldCommitment);
 
-    return rawTransaction;
+    return { rawTransaction, transaction: optimisticWithdrawTransaction };
   } catch (err) {
     throw new Error(err); // let the caller handle the error
   }
