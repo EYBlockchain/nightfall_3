@@ -39,13 +39,12 @@ contract Proposers is Structures, Utils {
   */
   function proposeBlock(Block memory b, Transaction[] memory t) external payable onlyCurrentProposer() {
     require(BLOCK_STAKE == msg.value, 'The stake payment is incorrect');
-    b.blockTime = block.timestamp;
-    b.blockHash == hashBlock(b);
     // add the block to the list of blocks waiting to be permanently added to the state - we only save the hash of the block data - it's up to the challenger, or person requesting inclusion of the block to the permanent contract state, to provide the block data.
     blockHashes[b.blockHash] = LinkedHash({
       thisHash: b.blockHash,
       previousHash: endHash,
-      nextHash: ZERO
+      nextHash: ZERO,
+      data: block.timestamp
     });
     endHash = b.blockHash; // point to the new end of the list of blockhashes.
     // signal to Timber that new leaves may need to be added to the Merkle tree.

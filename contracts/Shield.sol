@@ -42,11 +42,11 @@ contract Shield is Utils, Key_Registry, Proposers {
   @param t - the actual transaction
   @param index - the index of the transaction that locates it in the array of Transactions in Block b
   */
-  function withdraw(Block memory b, Transaction memory t, uint index) external {
+  function finaliseWithdrawal(Block memory b, Transaction memory t, uint index) external {
     // check this block is a real one, in the queue, not something made up.
     isBlockReal(b);
     // check that the block has been finalised
-    require(b.blockTime + COOLING_OFF_PERIOD < block.timestamp, 'It is too soon withdraw funds from this block');
+    require(blockHashes[b.blockHash].data + COOLING_OFF_PERIOD < block.timestamp, 'It is too soon withdraw funds from this block');
     // check the transaction is in the block
     require(b.transactionHashes[index] == hashTransaction(t), 'Transaction not found at the given index');
     if (t.transactionType == TransactionTypes.WITHDRAW) payOut(t);

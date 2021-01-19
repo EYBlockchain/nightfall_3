@@ -60,7 +60,6 @@ contract Structures is Config {
 
   struct Block {
     bytes32 blockHash;
-    uint blockTime;
     address proposer;
     bytes32[] transactionHashes; // TODO this could be a merkle root
     bytes32 root; // the 'output' commmitment root after adding all commitments
@@ -70,6 +69,7 @@ contract Structures is Config {
     bytes32 thisHash;
     bytes32 previousHash;
     bytes32 nextHash;
+    uint data; // we use this to hold a timestamp but keeping it general here.
   }
 
   struct LinkedAddress {

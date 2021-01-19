@@ -30,7 +30,7 @@ contract Utils is Structures {
   function hashBlock(Block memory b) internal pure returns(bytes32) {
     return keccak256(
       abi.encodePacked(
-        b.blockTime,
+        b.proposer,
         b.transactionHashes,
         b.root
       )
