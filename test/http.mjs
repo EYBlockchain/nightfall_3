@@ -1,19 +1,22 @@
 import chai from 'chai';
 // import config from 'config';
 import chaiHttp from 'chai-http';
+import chaiAsPromised from 'chai-as-promised';
 import gen from 'general-number';
 import sha256 from '../src/utils/crypto/sha256.mjs';
 import {
   closeWeb3Connection,
-  gasStats,
   submitTransaction,
   connectWeb3,
   getAccounts,
   getBalance,
+  timeJump,
 } from './utils.mjs';
 
 const { expect } = chai;
 chai.use(chaiHttp);
+chai.use(chaiAsPromised);
+
 const { GN } = gen;
 
 describe('Testing the http API', () => {
@@ -21,6 +24,9 @@ describe('Testing the http API', () => {
   let txDataToSign;
   let ercAddress;
   let transactions = [];
+  let block = {};
+  let currentLeafCount = 0;
+  let newLeaves = 0;
   const zkpPrivateKey = '0xc05b14fa15148330c6d008814b0bdd69bc4a08a1bd0b629c42fa7e2c61f16739'; // the zkp private key we're going to use in the tests.
   const zkpPublicKey = sha256([new GN(zkpPrivateKey)]).hex();
   const url = 'http://localhost:8080';
@@ -127,7 +133,7 @@ describe('Testing the http API', () => {
       txDataToSign = res.body.txDataToSign;
       transactions.push(res.body.transaction);
       expect(txDataToSign).to.be.a('string');
-      // console.log(txDataToSign);
+      newLeaves++; // remember how many leaves we're adding for when we propose a block
     });
 
     it('should send the transaction to the shield contract', async () => {
@@ -135,7 +141,7 @@ describe('Testing the http API', () => {
       const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
-      gasStats(receipt);
+      console.log(`Gas used was ${Number(receipt.gasUsed)}`);
       // give Timber time to respond to the blockchain event
       await new Promise(resolve => setTimeout(resolve, 5000));
     });
@@ -153,6 +159,7 @@ describe('Testing the http API', () => {
       txDataToSign = res.body.txDataToSign;
       transactions.push(res.body.transaction);
       expect(txDataToSign).to.be.a('string');
+      newLeaves++;
     });
 
     it('should should send the transaction to the shield contract', async () => {
@@ -160,6 +167,7 @@ describe('Testing the http API', () => {
       const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
+      console.log(`Gas used was ${Number(receipt.gasUsed)}`);
       // give Timber time to respond to the blockchain event
       await new Promise(resolve => setTimeout(resolve, 5000));
     });
@@ -176,6 +184,7 @@ describe('Testing the http API', () => {
       txDataToSign = res.body.txDataToSign;
       transactions.push(res.body.transaction);
       expect(txDataToSign).to.be.a('string');
+      newLeaves++;
     });
 
     it('should should send the raw transaction to the shield contract to verify the proof and store the commitment in the Merkle tree, and update the commitment db', async () => {
@@ -183,6 +192,7 @@ describe('Testing the http API', () => {
       const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
+      console.log(`Gas used was ${Number(receipt.gasUsed)}`);
       // give Timber time to respond to the blockchain event
       await new Promise(resolve => setTimeout(resolve, 5000));
     });
@@ -200,8 +210,10 @@ describe('Testing the http API', () => {
         .send({
           proposer: (await getAccounts())[0],
           transactions: transactions,
-          currentLeafCount: 0,
+          currentLeafCount,
         });
+      currentLeafCount += newLeaves; // remember we added a leaf
+      newLeaves = 0;
       txDataToSign = res.body.txDataToSign;
       expect(txDataToSign).to.be.a('string');
     });
@@ -217,7 +229,7 @@ describe('Testing the http API', () => {
       );
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
-      gasStats(receipt);
+      console.log(`Gas used was ${Number(receipt.gasUsed)}`);
       // give Timber time to respond to the blockchain event
       await new Promise(resolve => setTimeout(resolve, 5000));
     });
@@ -239,6 +251,7 @@ describe('Testing the http API', () => {
       txDataToSign = res.body.txDataToSign;
       transactions = [res.body.transaction]; // a new block of transactions
       expect(txDataToSign).to.be.a('string');
+      newLeaves++;
     });
 
     it('should should send the raw transaction to the shield contract to verify the proof and update the Merkle tree', async () => {
@@ -246,7 +259,7 @@ describe('Testing the http API', () => {
       const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
-      gasStats(receipt);
+      console.log(`Gas used was ${Number(receipt.gasUsed)}`);
     });
   });
 
@@ -261,8 +274,10 @@ describe('Testing the http API', () => {
         .send({
           proposer: (await getAccounts())[0],
           transactions: transactions,
-          currentLeafCount: 3,
+          currentLeafCount,
         });
+      currentLeafCount += newLeaves; // remember we added a leaf
+      newLeaves = 0;
       txDataToSign = res.body.txDataToSign;
       expect(txDataToSign).to.be.a('string');
     });
@@ -278,7 +293,7 @@ describe('Testing the http API', () => {
       );
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
-      gasStats(receipt);
+      console.log(`Gas used was ${Number(receipt.gasUsed)}`);
       // give Timber time to respond to the blockchain event
       await new Promise(resolve => setTimeout(resolve, 5000));
     });
@@ -299,6 +314,8 @@ describe('Testing the http API', () => {
       txDataToSign = res.body.txDataToSign;
       transactions = [res.body.transaction]; // a new block of transactions
       expect(txDataToSign).to.be.a('string');
+      newLeaves++;
+      newLeaves++;
     });
 
     it('should should send the raw transaction to the shield contract to verify the proof and update the Merkle tree', async () => {
@@ -306,7 +323,7 @@ describe('Testing the http API', () => {
       const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
-      gasStats(receipt);
+      console.log(`Gas used was ${Number(receipt.gasUsed)}`);
     });
   });
 
@@ -321,10 +338,11 @@ describe('Testing the http API', () => {
         .send({
           proposer: (await getAccounts())[0],
           transactions: transactions,
-          currentLeafCount: 4,
+          currentLeafCount,
         });
+      currentLeafCount += newLeaves; // remember we added a leaf
+      newLeaves = 0;
       txDataToSign = res.body.txDataToSign;
-      transactions = [res.body.transaction]; // a new block of transactions
       expect(txDataToSign).to.be.a('string');
     });
 
@@ -339,7 +357,7 @@ describe('Testing the http API', () => {
       );
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
-      gasStats(receipt);
+      console.log(`Gas used was ${Number(receipt.gasUsed)}`);
       // give Timber time to respond to the blockchain event
       await new Promise(resolve => setTimeout(resolve, 5000));
     });
@@ -358,6 +376,7 @@ describe('Testing the http API', () => {
           recipientAddress,
         });
       txDataToSign = res.body.txDataToSign;
+      transactions = [res.body.transaction]; // a new block of transactions
       expect(txDataToSign).to.be.a('string');
     });
     it('should should send the transaction to the shield contract', async () => {
@@ -365,9 +384,99 @@ describe('Testing the http API', () => {
       const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
-      gasStats(receipt);
+      console.log(`Gas used was ${Number(receipt.gasUsed)}`);
     });
   });
+  // propose the withdraw test so that we can try withdrawing actual money!
+  // The withdraw test is dependent on the double transfer completing,
+  // so the double transfer needs to go into a block before we run the withdraw
+  // tests.
+  describe('Block proposal test', () => {
+    it('should create a block proposal transaction', async () => {
+      const res = await chai
+        .request(url)
+        .post('/proposer/propose')
+        .send({
+          proposer: (await getAccounts())[0],
+          transactions: transactions,
+          currentLeafCount,
+        });
+      currentLeafCount += newLeaves; // remember we added a leaf
+      newLeaves = 0;
+      txDataToSign = res.body.txDataToSign;
+      block = res.body.block;
+      expect(txDataToSign).to.be.a('string');
+    });
+
+    it('should send the transaction to the shield contract', async () => {
+      // now we need to sign the transaction and send it to the blockchain
+      const receipt = await submitTransaction(
+        txDataToSign,
+        privateKey,
+        shieldAddress,
+        gas,
+        BLOCK_STAKE,
+      );
+      expect(receipt).to.have.property('transactionHash');
+      expect(receipt).to.have.property('blockHash');
+      console.log(`Gas used was ${Number(receipt.gasUsed)}`);
+      // give Timber time to respond to the blockchain event
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    });
+  });
+  // when the widthdraw transaction is finalised, we want to be able to pull the
+  // funds into layer1
+  describe('Withdraw funds to layer 1', () => {
+    let startBalance;
+    let endBalance;
+    it('Should create a failing finalise-withdrawal (because insufficient time has passed)', async () => {
+      const res = await chai
+        .request(url)
+        .post('/finalise-withdrawal')
+        .send({
+          block,
+          transaction: transactions[0],
+        });
+      txDataToSign = res.body.txDataToSign;
+      expect(txDataToSign).to.be.a('string');
+    });
+    it('should send the transaction to the shield contract, which should then revert', async () => {
+      // now we need to sign the transaction and send it to the blockchain
+      await expect(
+        submitTransaction(txDataToSign, privateKey, shieldAddress, gas),
+      ).to.be.rejectedWith(
+        'Returned error: VM Exception while processing transaction: revert It is too soon withdraw funds from this block',
+      );
+    });
+    it('Should create a passing finalise-withdrawal (because sufficient time has passed)', async () => {
+      await timeJump(3600 * 24 * 10); // jump in time by 10 days
+      const res = await chai
+        .request(url)
+        .post('/finalise-withdrawal')
+        .send({
+          block,
+          transaction: transactions[0],
+        });
+      txDataToSign = res.body.txDataToSign;
+      expect(txDataToSign).to.be.a('string');
+    });
+    it('should send the transaction to the shield contract', async () => {
+      // we have to pay 10 ETH to be registered
+      const myAddress = (await getAccounts())[0];
+      startBalance = await getBalance(myAddress);
+      // now we need to sign the transaction and send it to the blockchain
+      const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
+      expect(receipt).to.have.property('transactionHash');
+      expect(receipt).to.have.property('blockHash');
+      endBalance = await getBalance(myAddress);
+      console.log(`Gas used was ${Number(receipt.gasUsed)}`);
+    });
+    it('Should have increased our balance', async () => {
+      const gasCosts = 5000000000000000;
+      expect(endBalance - startBalance).to.closeTo(Number(value), gasCosts);
+    });
+  });
+
   after(async () => {
     closeWeb3Connection();
   });

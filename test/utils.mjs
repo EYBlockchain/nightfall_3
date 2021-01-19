@@ -1,4 +1,5 @@
 import Web3 from 'web3';
+import axios from 'axios';
 
 let web3;
 
@@ -43,7 +44,7 @@ export async function submitTransaction(
   privateKey,
   shieldAddress,
   gas,
-  value,
+  value = 0,
 ) {
   const tx = {
     to: shieldAddress,
@@ -64,4 +65,14 @@ export async function getAccounts() {
 }
 export async function getBalance(account) {
   return web3.eth.getBalance(account);
+}
+
+// This only works with Ganache but it can move block time forwards
+export async function timeJump(secs) {
+  axios.post('http://localhost:8545', {
+    id: 1337,
+    jsonrpc: '2.0',
+    method: 'evm_increaseTime',
+    params: [secs],
+  });
 }

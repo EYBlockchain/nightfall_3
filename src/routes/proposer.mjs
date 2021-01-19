@@ -102,7 +102,7 @@ router.post('/propose', async (req, res, next) => {
       .encodeABI();
     logger.debug('returning raw transaction');
     logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
-    res.json({ txDataToSign });
+    res.json({ txDataToSign, block });
   } catch (err) {
     logger.error(err);
     next(err);

@@ -5,6 +5,7 @@ import transfer from './transfer.mjs';
 import withdraw from './withdraw.mjs';
 import isMessageValid from './check-message.mjs';
 import proposer from './proposer.mjs';
+import finaliseWithdrawal from './finalise-withdrawal.mjs';
 
 export {
   transfer,
@@ -14,4 +15,5 @@ export {
   getContractAddress,
   isMessageValid,
   proposer,
+  finaliseWithdrawal,
 };
