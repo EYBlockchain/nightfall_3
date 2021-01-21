@@ -9,7 +9,7 @@ import utilsWeb3 from './utils-web3';
 import utilsMT from './utils-merkle-tree';
 import logger from './logger';
 
-import { LeafService, NodeService, MetadataService } from './db/service';
+import { LeafService, NodeService, MetadataService, HistoryService } from './db/service';
 
 /**
 Check the leaves of the tree are all there.
@@ -213,6 +213,7 @@ async function update(db) {
   const leafService = new LeafService(db);
   const nodeService = new NodeService(db);
   const metadataService = new MetadataService(db);
+  const historyService = new HistoryService(db);
 
   // update the metadata db (based on currently stored leaves):
   let { latestLeaf } = (await updateLatestLeaf(db)) || {};
@@ -272,6 +273,18 @@ async function update(db) {
       frontier: newFrontier,
     };
     await metadataService.updateLatestRecalculation({ latestRecalculation });
+
+    // we also need to save the current state of the tree so that Optmistic
+    // blocks can be checked using Timber data, and optimistic rollbacks of
+    // the Timber database facilitated
+    const history = {
+      root,
+      frontier: newFrontier,
+      leafIndex: toLeafIndex,
+      blockNumber: latestLeaf.blockNumber,
+    };
+    await historyService.saveTreeHistory(history);
+    logger.debug(`Saved new Merkle tree history ${JSON.stringify(history, null, 2)}`);
 
     // update the metadata db (based on currently stored leaves):
     ({ latestLeaf } = await updateLatestLeaf(db));

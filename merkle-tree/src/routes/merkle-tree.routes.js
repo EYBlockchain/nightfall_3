@@ -8,6 +8,7 @@ import contractController from '../contract-controller';
 import filterController from '../filter-controller';
 import merkleTreeController from '../merkle-tree-controller';
 import logger from '../logger';
+import { HistoryService } from '../db/service';
 
 const alreadyStarted = {}; // initialises as false
 const alreadyStarting = {}; // initialises as false
@@ -155,6 +156,18 @@ async function update(req, res, next) {
   }
 }
 
+async function getTreeHistory(req, res, next) {
+  try {
+    const { db } = req.user;
+    const { root } = req.params;
+    const historyService = new HistoryService(db);
+    res.data = await historyService.getTreeHistory(root);
+    next();
+  } catch (err) {
+    next(err);
+  }
+}
+
 // initializing routes
 export default function(router) {
   router.route('/start').post(startEventFilter);
@@ -163,4 +176,5 @@ export default function(router) {
 
   router.get('/siblingPath/:leafIndex', getSiblingPathByLeafIndex);
   router.get('/path/:leafIndex', getPathByLeafIndex);
+  router.get('/tree-history/:root').get(getTreeHistory);
 }
