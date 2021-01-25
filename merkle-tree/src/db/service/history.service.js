@@ -6,6 +6,7 @@
 
 import { COLLECTIONS } from '../common/constants';
 import logger from '../../logger';
+import { historyMapper } from '../mappers';
 
 export default class HistoryService {
   constructor(_db) {
@@ -17,7 +18,7 @@ export default class HistoryService {
   Added by Westlad
   */
   async saveTreeHistory({ root, frontier, leafIndex, blockNumber }) {
-    logger.debug('src/db/service/metadata.service InsertTreeHistory()');
+    logger.debug('src/db/service/metadata.service saveTreeHistory()');
     // insert the leaf into the 'nodes' collection:
     try {
       const dbResponse = await this.db.save(COLLECTIONS.HISTORY, {
@@ -38,6 +39,6 @@ export default class HistoryService {
     const docs = await this.db.getDoc(COLLECTIONS.HISTORY, {
       root,
     });
-    return docs;
+    return historyMapper(docs);
   }
 }

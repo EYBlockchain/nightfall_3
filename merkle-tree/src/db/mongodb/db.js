@@ -5,7 +5,7 @@
  */
 
 import { COLLECTIONS } from '../common/constants';
-import { nodeSchema, metadataSchema } from '../models';
+import { nodeSchema, metadataSchema, historySchema } from '../models';
 import logger from '../../logger';
 /**
 Class created from within src/middleware/assign-db-connection
@@ -35,6 +35,10 @@ export default class DB {
           `${this.username}_${contractName}_${COLLECTIONS.METADATA}`,
           metadataSchema,
         ),
+        history: this.connection.model(
+          `${this.username}_${contractName}_${COLLECTIONS.HISTORY}`,
+          historySchema,
+        ),
       };
     } else {
       this.Models = {
@@ -45,6 +49,10 @@ export default class DB {
         metadata: this.connection.model(
           `${this.username}_${contractName}_${treeId}_${COLLECTIONS.METADATA}`,
           metadataSchema,
+        ),
+        history: this.connection.model(
+          `${this.username}_${contractName}_${treeId}_${COLLECTIONS.HISTORY}`,
+          historySchema,
         ),
       };
     }

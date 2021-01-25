@@ -276,11 +276,12 @@ async function update(db) {
 
     // we also need to save the current state of the tree so that Optmistic
     // blocks can be checked using Timber data, and optimistic rollbacks of
-    // the Timber database facilitated
+    // the Timber database facilitated.  We don't want to remember the new
+    // forntier, but the one that existed when the block was added.
     const history = {
       root,
-      frontier: newFrontier,
-      leafIndex: toLeafIndex,
+      frontier,
+      leafIndex: latestRecalculationLeafIndex,
       blockNumber: latestLeaf.blockNumber,
     };
     await historyService.saveTreeHistory(history);
@@ -297,10 +298,16 @@ async function update(db) {
   return metadata;
 }
 
+async function getTreeHistory(db, root) {
+  const historyService = new HistoryService(db);
+  return historyService.getTreeHistory(root);
+}
+
 export default {
   checkLeaves,
   updateLatestLeaf,
   getPathByLeafIndex,
   getSiblingPathByLeafIndex,
   update,
+  getTreeHistory,
 };
