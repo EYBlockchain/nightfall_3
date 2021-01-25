@@ -1,7 +1,6 @@
 /**
 An optimistic layer 2 Block class
 */
-import config from 'config';
 import { getSiblingPath } from '../utils/timber.mjs';
 import mt from '../utils/crypto/merkle-tree/merkle-tree.mjs';
 import Web3 from '../utils/web3.mjs';
@@ -58,6 +57,16 @@ class Block {
       { t: 'bytes32', v: root },
     );
     return new Block({ proposer, transactionHashes, currentLeafCount, root, blockHash });
+  }
+
+  static checkHash(block) {
+    const web3 = Web3.connection();
+    const blockHash = web3.utils.soliditySha3(
+      { t: 'address', v: block.proposer },
+      ...block.transactionHashes.map(th => ({ t: 'bytes32', v: th })),
+      { t: 'bytes32', v: block.root },
+    );
+    return blockHash === block.blockHash;
   }
 }
 

@@ -101,7 +101,8 @@ services:
   timber:
     build:
       dockerfile: Dockerfile
-      context: ../nightfall-timber
+      #context: ../nightfall-timber
+      context: ../timber/merkle-tree
     depends_on:
       - ganache
       - deployer
@@ -112,6 +113,15 @@ services:
       - type: volume
         source: build
         target: /app/build/
+      - type: bind
+        source: ../timber/merkle-tree/src
+        target: /app/src/
+      - type: bind
+        source: ../timber/merkle-tree/config
+        target: /app/config/
+      - type: bind
+        source: ../timber/merkle-tree/test
+        target: /app/test/
     restart: on-failure
     environment:
       BLOCKCHAIN_HOST: ws://ganache
@@ -120,8 +130,9 @@ services:
       MONGO_PORT: 27017
       MONGO_NAME: merkle_tree
       HASH_TYPE: mimc
-      LOG_LEVEL: info
+      LOG_LEVEL: debug
       AUTOSTART: enabled
+      NODE_ENV: nightfall_2
 
   #The database storing the merkle tree
   timber-database:

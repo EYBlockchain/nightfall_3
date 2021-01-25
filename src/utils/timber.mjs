@@ -96,6 +96,22 @@ export const getSiblingPath = async leafIndex => {
   }
 };
 
+/**
+returns the frontier etc at the point in time where the tree had the given root.
+This is useful for checking that the root of an optimistic block is correct
+@author Westlad
+@param {string} root - the historic root of the merkle tree
+*/
+export const getTreeHistory = async root => {
+  logger.http(`Calling /tree-history/${root}`);
+  const response = await axios.get(
+    `${url}/tree-history/${root}`,
+    { params: { contractName } },
+    { timeout: 360000 },
+  );
+  return response.data.data;
+};
+
 export default {
   getLeafIndex,
   getRoot,

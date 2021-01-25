@@ -19,7 +19,7 @@ const mimcCurves = {
     rounds: 74,
     modulus: BigInt('8444461749428370424248824938781546531375899335154063827935233455917409239041'),
   },
-  ALT_BN_254: {
+  bn128: {
     exponent: 7,
     rounds: 91,
     modulus: BigInt(

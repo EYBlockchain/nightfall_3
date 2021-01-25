@@ -146,7 +146,7 @@ describe('Testing the http API', () => {
       await new Promise(resolve => setTimeout(resolve, 5000));
     });
 
-    it('should deposit some more crypto (we need a second token for the double transfer test) into a ZKP commitment and get a raw blockchain transaction back', async () => {
+    it.skip('should deposit some more crypto (we need a second token for the double transfer test) into a ZKP commitment and get a raw blockchain transaction back', async () => {
       const res = await chai
         .request(url)
         .post('/deposit')
@@ -162,7 +162,7 @@ describe('Testing the http API', () => {
       newLeaves++;
     });
 
-    it('should should send the transaction to the shield contract', async () => {
+    it.skip('should should send the transaction to the shield contract', async () => {
       // now we need to sign the transaction and send it to the blockchain
       const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
       expect(receipt).to.have.property('transactionHash');
@@ -171,7 +171,7 @@ describe('Testing the http API', () => {
       // give Timber time to respond to the blockchain event
       await new Promise(resolve => setTimeout(resolve, 5000));
     });
-    it('should deposit yet more crypto (we need another token to test withdraw) into a ZKP commitment and get a raw blockchain transaction back', async () => {
+    it.skip('should deposit yet more crypto (we need another token to test withdraw) into a ZKP commitment and get a raw blockchain transaction back', async () => {
       const res = await chai
         .request(url)
         .post('/deposit')
@@ -187,7 +187,7 @@ describe('Testing the http API', () => {
       newLeaves++;
     });
 
-    it('should should send the raw transaction to the shield contract to verify the proof and store the commitment in the Merkle tree, and update the commitment db', async () => {
+    it.skip('should should send the raw transaction to the shield contract to verify the proof and store the commitment in the Merkle tree, and update the commitment db', async () => {
       // now we need to sign the transaction and send it to the blockchain
       const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
       expect(receipt).to.have.property('transactionHash');
@@ -214,7 +214,7 @@ describe('Testing the http API', () => {
         });
       currentLeafCount += newLeaves; // remember we added a leaf
       newLeaves = 0;
-      txDataToSign = res.body.txDataToSign;
+      ({ txDataToSign, block, transactions } = res.body);
       expect(txDataToSign).to.be.a('string');
     });
 
@@ -235,8 +235,19 @@ describe('Testing the http API', () => {
     });
   });
 
+  describe('Block check tests', () => {
+    it('Should check that the proposed block is valid', async () => {
+      console.log('check tests', block, transactions);
+      const res = await chai
+        .request(url)
+        .post('/check-block')
+        .send({ block, transactions });
+      console.log('result of check', res.body);
+    });
+  });
+
   // now we have some deposited tokens, we can transfer one of them:
-  describe('Single transfer tests', () => {
+  describe.skip('Single transfer tests', () => {
     it('should transfer some crypto (back to us) using ZKP', async () => {
       const res = await chai
         .request(url)
@@ -266,7 +277,7 @@ describe('Testing the http API', () => {
   // the double transfer test is dependent on the single transfer completing,
   // so the single transfer needs to go into a block before we run the double
   // transfer tests.
-  describe('Block proposal test', () => {
+  describe.skip('Block proposal test', () => {
     it('should create a block proposal transaction', async () => {
       const res = await chai
         .request(url)
@@ -300,7 +311,7 @@ describe('Testing the http API', () => {
   });
 
   // now we can do the double transfer
-  describe('Double transfer tests', () => {
+  describe.skip('Double transfer tests', () => {
     it('should transfer some crypto (back to us) using ZKP', async () => {
       const res = await chai
         .request(url)
@@ -330,7 +341,7 @@ describe('Testing the http API', () => {
   // The withdraw test is dependent on the double transfer completing,
   // so the double transfer needs to go into a block before we run the withdraw
   // tests.
-  describe('Block proposal test', () => {
+  describe.skip('Block proposal test', () => {
     it('should create a block proposal transaction', async () => {
       const res = await chai
         .request(url)
@@ -363,7 +374,7 @@ describe('Testing the http API', () => {
     });
   });
 
-  describe('Withdraw tests', () => {
+  describe.skip('Withdraw tests', () => {
     it('should withdraw some crypto from a ZKP commitment', async () => {
       const res = await chai
         .request(url)
@@ -391,7 +402,7 @@ describe('Testing the http API', () => {
   // The withdraw test is dependent on the double transfer completing,
   // so the double transfer needs to go into a block before we run the withdraw
   // tests.
-  describe('Block proposal test', () => {
+  describe.skip('Block proposal test', () => {
     it('should create a block proposal transaction', async () => {
       const res = await chai
         .request(url)
@@ -426,7 +437,7 @@ describe('Testing the http API', () => {
   });
   // when the widthdraw transaction is finalised, we want to be able to pull the
   // funds into layer1
-  describe('Withdraw funds to layer 1', () => {
+  describe.skip('Withdraw funds to layer 1', () => {
     let startBalance;
     let endBalance;
     it('Should create a failing finalise-withdrawal (because insufficient time has passed)', async () => {

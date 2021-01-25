@@ -6,6 +6,7 @@ import withdraw from './withdraw.mjs';
 import isMessageValid from './check-message.mjs';
 import proposer from './proposer.mjs';
 import finaliseWithdrawal from './finalise-withdrawal.mjs';
+import checkBlock from './check-block.mjs';
 
 export {
   transfer,
@@ -16,4 +17,5 @@ export {
   isMessageValid,
   proposer,
   finaliseWithdrawal,
+  checkBlock,
 };
