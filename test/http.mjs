@@ -237,12 +237,10 @@ describe('Testing the http API', () => {
 
   describe('Block check tests', () => {
     it('Should check that the proposed block is valid', async () => {
-      console.log('check tests', block, transactions);
-      const res = await chai
+      await chai
         .request(url)
         .post('/check-block')
         .send({ block, transactions });
-      console.log('result of check', res.body);
     });
   });
 
