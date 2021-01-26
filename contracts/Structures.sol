@@ -21,7 +21,8 @@ contract Structures is Config {
   );
 
   event BlockProposed(
-    Block b
+    Block b,
+    Transaction[] t
   );
 
   event TransactionSubmitted(
