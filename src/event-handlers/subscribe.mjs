@@ -3,8 +3,8 @@
  */
 
 import config from 'config';
-import { getContractInstance, getContractAddress } from './contract.mjs';
-import logger from './logger.mjs';
+import { getContractInstance, getContractAddress } from '../utils/contract.mjs';
+import logger from '../utils/logger.mjs';
 
 const { SHIELD_CONTRACT_NAME, RETRIES } = config;
 
@@ -37,26 +37,14 @@ async function waitForShield() {
   return instance;
 }
 
-export async function subscribeToDepositTransactionEvents(callback) {
-  const emitter = (await waitForShield()).events.DepositTransactionCreated();
+export async function subscribeToBlockProposedEvent(callback) {
+  const emitter = (await waitForShield()).events.BlockProposed();
   emitter.on('data', event => callback(event));
   return emitter;
 }
 
-export async function subscribeToProposalBlockEvents(callback) {
-  const emitter = (await waitForShield()).events.StateUpdateBlockProposed();
-  emitter.on('data', event => callback(event));
-  return emitter;
-}
-
-export async function subscribeToAcceptedProposalEvents(callback) {
-  const emitter = (await waitForShield()).events.AcceptedProposedStateUpdate();
-  emitter.on('data', event => callback(event));
-  return emitter;
-}
-
-export async function subscribeToRejectedProposalEvents(callback) {
-  const emitter = (await waitForShield()).events.RejectedProposedStateUpdate();
+export async function transactionSubmitted(callback) {
+  const emitter = (await waitForShield()).events.TransactionSubmitted();
   emitter.on('data', event => callback(event));
   return emitter;
 }

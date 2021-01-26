@@ -10,6 +10,9 @@ import BlockError from '../classes/block-error.mjs';
 
 /**
 Checks the block's properties.  It will return the first inconsistency it finds
+@param {object} block - the block being checked
+@param {array} transactions - array of transaction objects whose transaction hashes are contained in the block (in hash order).
+TODO - nullifiers
 */
 async function checkBlock(block, transactions) {
   // first, check the hash is correct.  That's nice and easy
@@ -35,9 +38,9 @@ async function checkBlock(block, transactions) {
       `The number of transactions (${transactions.length}) provided is not consistent with the number of transaction hashes in the block (${block.transactionHashes.length})`,
       3,
     );
-  // now we have to check the root.  For this we can make use of Timber with its
-  // optimistic extensions
-  // start by seeing if Timber knows about the root.  It should.
+  // now we have to check the commitment root.  For this we can make use of
+  // Timber with its optimistic extensions.
+  // Start by seeing if Timber knows about the root.  It should.
   try {
     logger.debug(`Checking block with root ${block.root}`);
     const history = await getTreeHistory(block.root);
@@ -55,9 +58,9 @@ async function checkBlock(block, transactions) {
       );
   } catch (err) {
     logger.error(err); // log errors but let the caller handle them
-    throw new BlockError(`The block root (${block.root}) was not found in the Timber database`);
+    throw new BlockError(`The block root (${block.root}) was not found in the Timber database`, 5);
   }
-  return null;
+  return null; // if we've got here with no BlockErrors being thrown then our checks have passed.
 }
 
 export default checkBlock;
