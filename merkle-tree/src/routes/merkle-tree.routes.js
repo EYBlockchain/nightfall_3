@@ -159,10 +159,13 @@ async function getTreeHistory(req, res, next) {
   const { db } = req.user;
   const { root } = req.params;
   try {
-    // first update the db with any recently-added leaves
-    await merkleTreeController.update(db);
-    // then get the tree history
-    const history = await merkleTreeController.getTreeHistory(db, root);
+    // see if the historic root is in the dB and return it if it is
+    let history = await merkleTreeController.getTreeHistory(db, root);
+    if (history === null) {
+      // if not, update the db with the most recent events and try again
+      await merkleTreeController.update(db);
+      history = await merkleTreeController.getTreeHistory(db, root);
+    }
     logger.debug(`Read history collection and retrieved ${JSON.stringify(history, null, 2)}`);
     res.data = history;
     next();
