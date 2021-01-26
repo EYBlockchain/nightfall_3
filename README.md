@@ -1,1 +1,0 @@
-# nightfall-optimist
