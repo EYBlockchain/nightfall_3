@@ -30,6 +30,7 @@ describe('Testing the http API', () => {
   const zkpPrivateKey = '0xc05b14fa15148330c6d008814b0bdd69bc4a08a1bd0b629c42fa7e2c61f16739'; // the zkp private key we're going to use in the tests.
   const zkpPublicKey = sha256([new GN(zkpPrivateKey)]).hex();
   const url = 'http://localhost:8080';
+  const optimistUrl = 'http://localhost:8081';
   const tokenId = '0x01';
   const value = 10;
   const value2 = 12;
@@ -75,7 +76,7 @@ describe('Testing the http API', () => {
 
   describe('Basic Proposer tests', () => {
     it('should register a proposer', async () => {
-      const res = await chai.request(url).post('/proposer/register');
+      const res = await chai.request(optimistUrl).post('/proposer/register');
       txDataToSign = res.body.txDataToSign;
       expect(txDataToSign).to.be.a('string');
       // we have to pay 10 ETH to be registered
@@ -92,7 +93,7 @@ describe('Testing the http API', () => {
     });
 
     it('should de-register a proposer', async () => {
-      const res = await chai.request(url).post('/proposer/de-register');
+      const res = await chai.request(optimistUrl).post('/proposer/de-register');
       txDataToSign = res.body.txDataToSign;
       expect(txDataToSign).to.be.a('string');
       // now we need to sign the transaction and send it to the blockchain
@@ -104,7 +105,7 @@ describe('Testing the http API', () => {
     it("should withdraw the proposer's bond", async () => {
       const myAddress = (await getAccounts())[0];
       const startBalance = await getBalance(myAddress);
-      const res = await chai.request(url).get('/proposer/withdraw');
+      const res = await chai.request(optimistUrl).get('/proposer/withdraw');
       txDataToSign = res.body.txDataToSign;
       expect(txDataToSign).to.be.a('string');
       // now we need to sign the transaction and send it to the blockchain
@@ -205,7 +206,7 @@ describe('Testing the http API', () => {
   describe('Block proposal test', () => {
     it('should create a block proposal transaction', async () => {
       const res = await chai
-        .request(url)
+        .request(optimistUrl)
         .post('/proposer/propose')
         .send({
           proposer: (await getAccounts())[0],
@@ -238,7 +239,7 @@ describe('Testing the http API', () => {
   describe('Block check tests', () => {
     it('Should check that the proposed block is valid', async () => {
       await chai
-        .request(url)
+        .request(optimistUrl)
         .post('/check-block')
         .send({ block, transactions });
     });

@@ -9,9 +9,7 @@ import {
   transfer,
   withdraw,
   isMessageValid,
-  proposer,
   finaliseWithdrawal,
-  checkBlock,
 } from './routes/index.mjs';
 
 const app = express();
@@ -32,8 +30,6 @@ app.use('/contract-address', getContractAddress);
 app.use('/transfer', transfer);
 app.use('/withdraw', withdraw);
 app.use('/check-message', isMessageValid);
-app.use('/proposer', proposer);
 app.use('/finalise-withdrawal', finaliseWithdrawal);
-app.use('/check-block', checkBlock);
 
 export default app;

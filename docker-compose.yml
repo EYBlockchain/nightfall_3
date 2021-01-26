@@ -152,6 +152,27 @@ services:
     networks:
       - nightfall_network
 
+  optimist:
+    build:
+      context: ../nightfall-optimist
+    depends_on:
+      - ganache
+      - timber
+      - deployer
+    networks:
+      - nightfall_network
+    ports:
+      - 8081:80
+    volumes:
+      - type: volume
+        source: build
+        target: /app/build/
+    environment:
+      BLOCKCHAIN_WS_HOST: ganache
+      BLOCKCHAIN_PORT: 8545
+      HASH_TYPE: mimc
+      LOG_LEVEL: debug
+
 volumes:
   mongodb:
   proving_files:
