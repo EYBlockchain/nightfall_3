@@ -31,6 +31,7 @@ contract Proposers is Structures, Utils {
     "It's too soon to rotate the proposer");
     proposerStartBlock = block.number;
     currentProposer = proposers[currentProposer.nextAddress];
+    emit NewCurrentProposer(currentProposer.thisAddress);
   }
 
   /**

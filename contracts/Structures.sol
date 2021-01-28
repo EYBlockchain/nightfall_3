@@ -29,6 +29,10 @@ contract Structures is Config {
     Transaction t
   );
 
+  event NewCurrentProposer(
+    address proposer
+  );
+
   /**
   These events are what the merkle-tree microservice's filters will listen for.
   */
