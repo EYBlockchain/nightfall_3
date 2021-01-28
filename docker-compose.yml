@@ -167,6 +167,8 @@ services:
       - type: volume
         source: build
         target: /app/build/
+      - ../nightfall-optimist/src:/app/src
+      - ../nightfall-optimist/config:/app/config
     environment:
       BLOCKCHAIN_WS_HOST: ganache
       BLOCKCHAIN_PORT: 8545
