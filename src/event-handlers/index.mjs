@@ -1,4 +1,10 @@
+import { subscribeToBlockProposedEvent, subscribeToNewCurrentProposer } from './subscribe.mjs';
 import blockProposedEventHandler from './block-proposed.mjs';
-import { subscribeToBlockProposedEvent } from './subscribe.mjs';
+import newCurrentProposerEventHandler from './new-current-proposer.mjs';
 
-export { subscribeToBlockProposedEvent, blockProposedEventHandler };
+export {
+  subscribeToBlockProposedEvent,
+  blockProposedEventHandler,
+  subscribeToNewCurrentProposer,
+  newCurrentProposerEventHandler,
+};

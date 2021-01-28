@@ -44,6 +44,7 @@
     "general-number": "^1.0.1",
     "hex-to-binary": "^1.0.1",
     "keccak": "^3.0.1",
+    "mongodb": "^3.6.3",
     "safe-buffer": "^5.2.1",
     "tar": "^6.0.2",
     "web3": "^1.3.0",

@@ -8,6 +8,7 @@ import config from 'config';
 import logger from '../utils/logger.mjs';
 import { getContractInstance } from '../utils/contract.mjs';
 import Block from '../classes/block.mjs';
+import { setRegisteredProposerAddress } from '../services/database.mjs';
 
 const router = express.Router();
 const { SHIELD_CONTRACT_NAME } = config;
@@ -15,16 +16,19 @@ const { SHIELD_CONTRACT_NAME } = config;
 /**
  * Function to return a raw transaction that registers a proposer.  This just
  * provides the tx data, the user will need to append the registration bond
- * amount
+ * amount.  The user must post the address being registered.  This is for the
+ * Optimist app to use for it to decide when to start proposing blocks.  It is * not part of the unsigned blockchain transaction that is returned.
  */
 router.post('/register', async (req, res, next) => {
   logger.debug(`register proposal endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
   try {
+    const { address } = req.body;
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
     const txDataToSign = await shieldContractInstance.methods.registerProposer().encodeABI();
     logger.debug('returning raw transaction data');
     logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
     res.json({ txDataToSign });
+    setRegisteredProposerAddress(address); // save the registration address
   } catch (err) {
     logger.error(err);
     next(err);
@@ -111,10 +115,12 @@ router.post('/propose', async (req, res, next) => {
 /**
  * Function to change the current proposer (assuming their time has elapsed).
  * This just provides the tx data, the user will need to call the blockchain
- * client.
+ * client.  It is a convenience function, because the unsigned transaction is
+ * for a parameterless function - therefore it's a constant and could be pre-
+ * computed by the app that calls this endpoint.
  */
 router.get('/change', async (req, res, next) => {
-  logger.debug(`change endpoint received GET ${JSON.stringify(req.body, null, 2)}`);
+  logger.debug(`proposer/change endpoint received GET ${JSON.stringify(req.body, null, 2)}`);
   try {
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
     const txDataToSign = await shieldContractInstance.methods.changeCurrentProposer().encodeABI();

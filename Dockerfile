@@ -1,10 +1,14 @@
-FROM node:14.15
+FROM mongo:4.4.1-bionic
 
-# install netcat
+# install node
 RUN apt-get update
+RUN apt-get install -y curl
+RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
+RUN apt-get install -y nodejs
 RUN apt-get install -y netcat
 
 WORKDIR /app
+RUN mkdir /app/mongodb
 
 COPY src src
 COPY config config

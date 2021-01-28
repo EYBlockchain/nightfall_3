@@ -1,5 +1,9 @@
 module.exports = {
   LOG_LEVEL: process.env.LOG_LEVEL || 'debug',
+  MONGO_URL: process.env.MONGO_URL || 'mongodb://localhost:27017/',
+  OPTIMIST_DB: 'optimist_data',
+  METADATA_COLLECTION: 'metadata',
+  UNPROCESSED_TRANSACTIONS_COLLECTION: 'unprocessed_transactions',
   ZKP_KEY_LENGTH: 32, // use a 32 byte key length for SHA compatibility
   BLOCKCHAIN_WS_HOST: process.env.BLOCKCHAIN_WS_HOST || 'openethereum',
   BLOCKCHAIN_PORT: process.env.BLOCKCHAIN_PORT || '8546',
