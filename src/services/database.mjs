@@ -17,9 +17,9 @@ assemble blocks on behalf of the proposer. It listens for the NewCurrentProposer
 event to determine who is the current proposer.
 */
 export async function setRegisteredProposerAddress(address) {
-  logger.debug(`Saving proposer address ${address}`);
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
+  logger.debug(`Saving proposer address ${address}`);
   const data = { proposer: address };
   return db.collection(METADATA_COLLECTION).insertOne(data);
 }
@@ -32,6 +32,48 @@ export async function isRegisteredProposerAddressMine(address) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const metadata = await db.collection(METADATA_COLLECTION).findOne({ proposer: address });
-  logger.debug(`found registered proposer ${JSON.stringify(metadata, null, 2)}`);
+  logger.silly(`found registered proposer ${JSON.stringify(metadata, null, 2)}`);
   return metadata !== null;
+}
+
+/**
+Function to return 'number' transactions, ordered by the highest fee. If there
+are fewer than 'number' transactions, all are returned.
+*/
+export async function getMostProfitableTransactions(number) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  return db
+    .collection(UNPROCESSED_TRANSACTIONS_COLLECTION)
+    .find({}, { limit: number, sort: { fee: -1 }, projection: { _id: 0 } })
+    .toArray();
+}
+
+/**
+Function to save a (unprocessed) Transaction
+*/
+export async function saveTransaction(transaction) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  return db.collection(UNPROCESSED_TRANSACTIONS_COLLECTION).insertOne(transaction);
+}
+
+/**
+Function to remove a set of transactions once they've been processed into a
+block
+*/
+export async function removeTransactions(block) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { transactionHash: { $in: block.transactionHashes } };
+  return db.collection(UNPROCESSED_TRANSACTIONS_COLLECTION).deleteMany(query);
+}
+
+/**
+How many transactions are waiting to be processed into a block?
+*/
+export async function numberOfUnprocessedTransactions() {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  return db.collection(UNPROCESSED_TRANSACTIONS_COLLECTION).countDocuments();
 }

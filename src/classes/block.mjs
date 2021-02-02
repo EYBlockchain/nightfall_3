@@ -46,7 +46,6 @@ class Block {
     const frontier = await getSiblingPath(currentLeafCount);
     // extract the commitment hashes from the transactions
     const leafValues = transactions.map(transaction => transaction.commitments).flat(Infinity);
-    console.log('LEAF VALUES', leafValues);
     // compute the root using Timber's code
     const { root } = await updateNodes(leafValues, currentLeafCount, frontier);
     // compute the keccak hash of the block data

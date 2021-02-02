@@ -5,12 +5,27 @@ import {
   blockProposedEventHandler,
   subscribeToNewCurrentProposer,
   newCurrentProposerEventHandler,
+  subscribeToTransactionSubmitted,
+  transactionSubmittedEventHandler,
+  subscribeToBlockAssembledWebSocketConnection,
 } from './event-handlers/index.mjs';
+import Proposer from './classes/proposer.mjs';
+import {
+  conditionalMakeBlock,
+  setBlockAssembledWebSocketConnection,
+} from './services/propose-block.mjs';
 
 const main = async () => {
   try {
-    await subscribeToBlockProposedEvent(blockProposedEventHandler);
-    await subscribeToNewCurrentProposer(newCurrentProposerEventHandler);
+    const proposer = new Proposer();
+    // subscribe to blockchain events
+    subscribeToBlockProposedEvent(blockProposedEventHandler);
+    subscribeToNewCurrentProposer(newCurrentProposerEventHandler, proposer);
+    subscribeToTransactionSubmitted(transactionSubmittedEventHandler);
+    // subscribe to WebSocket events
+    subscribeToBlockAssembledWebSocketConnection(setBlockAssembledWebSocketConnection);
+    // start making blocks whenever we can
+    conditionalMakeBlock(proposer);
     app.listen(80);
   } catch (err) {
     logger.error(err);
