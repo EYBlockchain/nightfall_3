@@ -21,12 +21,12 @@ contract Structures is Config {
   );
 
   event BlockProposed(
-    Block b,
-    Transaction[] t
+    Block block,
+    Transaction[] transactions
   );
 
   event TransactionSubmitted(
-    Transaction t
+    Transaction transaction
   );
 
   event NewCurrentProposer(
