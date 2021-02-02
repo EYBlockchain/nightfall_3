@@ -72,7 +72,7 @@ async function deposit(items) {
     commitments: [commitment],
     proof,
   });
-  logger.debug(
+  logger.silly(
     `Optimistic deposit transaction ${JSON.stringify(optimisticDepositTransaction, null, 2)}`,
   );
   // and then we can create an unsigned blockchain transaction

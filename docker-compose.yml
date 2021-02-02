@@ -163,6 +163,8 @@ services:
       - nightfall_network
     ports:
       - 8081:80
+      # websocket port for Optimist is on localhost:8082
+      - 8082:8080
     volumes:
       - type: volume
         source: build

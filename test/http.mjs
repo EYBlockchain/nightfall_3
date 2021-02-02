@@ -3,6 +3,7 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import gen from 'general-number';
+import WebSocket from 'ws';
 import sha256 from '../src/utils/crypto/sha256.mjs';
 import {
   closeWeb3Connection,
@@ -27,10 +28,12 @@ describe('Testing the http API', () => {
   let block = {};
   let currentLeafCount = 0;
   let newLeaves = 0;
+  let connection; // WS connection
   const zkpPrivateKey = '0xc05b14fa15148330c6d008814b0bdd69bc4a08a1bd0b629c42fa7e2c61f16739'; // the zkp private key we're going to use in the tests.
   const zkpPublicKey = sha256([new GN(zkpPrivateKey)]).hex();
   const url = 'http://localhost:8080';
   const optimistUrl = 'http://localhost:8081';
+  const optimistWsUrl = 'ws:localhost:8082';
   const tokenId = '0x01';
   const value = 10;
   const value2 = 12;
@@ -45,6 +48,13 @@ describe('Testing the http API', () => {
 
   before(async () => {
     connectWeb3();
+    // set up a websocket connection to listen for assembled blocks
+    connection = new WebSocket(optimistWsUrl);
+    connection.onopen = () => {
+      connection.send('blocks');
+    };
+    connection.onmessage = m =>
+      submitTransaction(m.data, privateKey, shieldAddress, gas, BLOCK_STAKE);
   });
 
   describe('Miscellaneous tests', () => {
@@ -130,7 +140,7 @@ describe('Testing the http API', () => {
     });
   });
 
-  describe.skip('Deposit tests', () => {
+  describe('Deposit tests', () => {
     it('should deposit some crypto into a ZKP commitment and get an unsigned blockchain transaction back', async () => {
       const res = await chai
         .request(url)
@@ -158,7 +168,7 @@ describe('Testing the http API', () => {
       await new Promise(resolve => setTimeout(resolve, 5000));
     });
 
-    it.skip('should deposit some more crypto (we need a second token for the double transfer test) into a ZKP commitment and get a raw blockchain transaction back', async () => {
+    it('should deposit some more crypto (we need a second token for the double transfer test) into a ZKP commitment and get a raw blockchain transaction back', async () => {
       const res = await chai
         .request(url)
         .post('/deposit')
@@ -174,7 +184,7 @@ describe('Testing the http API', () => {
       newLeaves++;
     });
 
-    it.skip('should should send the transaction to the shield contract', async () => {
+    it('should should send the transaction to the shield contract', async () => {
       // now we need to sign the transaction and send it to the blockchain
       const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
       expect(receipt).to.have.property('transactionHash');
@@ -183,7 +193,7 @@ describe('Testing the http API', () => {
       // give Timber time to respond to the blockchain event
       await new Promise(resolve => setTimeout(resolve, 5000));
     });
-    it.skip('should deposit yet more crypto (we need another token to test withdraw) into a ZKP commitment and get a raw blockchain transaction back', async () => {
+    it('should deposit yet more crypto (we need another token to test withdraw) into a ZKP commitment and get a raw blockchain transaction back', async () => {
       const res = await chai
         .request(url)
         .post('/deposit')
@@ -199,7 +209,7 @@ describe('Testing the http API', () => {
       newLeaves++;
     });
 
-    it.skip('should should send the raw transaction to the shield contract to verify the proof and store the commitment in the Merkle tree, and update the commitment db', async () => {
+    it('should should send the raw transaction to the shield contract to verify the proof and store the commitment in the Merkle tree, and update the commitment db', async () => {
       // now we need to sign the transaction and send it to the blockchain
       const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
       expect(receipt).to.have.property('transactionHash');
