@@ -48,7 +48,6 @@ class Block {
     // be in Timber yet.  However, Timber has a handy update
     // interface, which will, inter-alia, return that very frontier.
     const frontier = await getFrontier();
-    console.log('FRONTIER', frontier);
     // extract the commitment hashes from the transactions
     const leafValues = transactions.map(transaction => transaction.commitments).flat(Infinity);
     // compute the root using Timber's code

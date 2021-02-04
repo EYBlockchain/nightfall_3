@@ -7,7 +7,39 @@ import config from 'config';
 import mongo from '../utils/mongo.mjs';
 import logger from '../utils/logger.mjs';
 
-const { MONGO_URL, OPTIMIST_DB, UNPROCESSED_TRANSACTIONS_COLLECTION, METADATA_COLLECTION } = config;
+const {
+  MONGO_URL,
+  OPTIMIST_DB,
+  UNPROCESSED_TRANSACTIONS_COLLECTION,
+  METADATA_COLLECTION,
+  SUBMITTED_BLOCKS_COLLECTION,
+} = config;
+
+/**
+function to save a block, so that we can later search the block, for example to
+find which block a transaction went into. Note, we'll save all blocks, that get
+posted to the blockchain, not just ours, although that may not be needed (but
+they're small).
+*/
+export async function saveBlock(block) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  logger.debug(`saving block ${JSON.stringify(block, null, 2)}`);
+  return db.collection(SUBMITTED_BLOCKS_COLLECTION).insertOne(block);
+}
+
+/**
+function to search the submitted blocks collection by transaction hash. This is
+useful for finding which block a transaction was in (something we have no
+control over, because another Proposer may assemble one of our transactions
+into a block).
+*/
+export async function getBlock(transactionHash) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { transactionHashes: transactionHash };
+  return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
+}
 
 /**
 function to store addresses of proposers that are registered through this

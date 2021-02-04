@@ -2,7 +2,7 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import fileUpload from 'express-fileupload';
-import { proposer, checkBlock } from './routes/index.mjs';
+import { proposer, block } from './routes/index.mjs';
 
 const app = express();
 
@@ -17,6 +17,6 @@ app.use(
 
 app.get('/healthcheck', (req, res) => res.sendStatus(200));
 app.use('/proposer', proposer);
-app.use('/check-block', checkBlock);
+app.use('/block', block);
 
 export default app;
