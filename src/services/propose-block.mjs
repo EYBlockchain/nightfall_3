@@ -38,7 +38,7 @@ export async function makeBlock(proposer, number = TRANSACTIONS_PER_BLOCK) {
   const transactions = await getMostProfitableTransactions(number);
   // then we make new block objects until we run out of unprocessed
   // transactions
-  const currentLeafCount = await (await waitForShield()).methods.leafCount().call();
+  const currentLeafCount = parseInt(await (await waitForShield()).methods.leafCount().call(), 10);
   const block = await Block.build({ proposer, transactions, currentLeafCount });
   return { block, transactions };
 }
@@ -64,6 +64,7 @@ export async function conditionalMakeBlock(proposer) {
         .proposeBlock(block, transactions)
         .encodeABI();
       if (ws) ws.send(unsignedProposeBlockTransaction);
+      logger.debug('Send unsigned propose-block transaction to ws client');
       // Wait until it is proposed to the blockchain before we make any more:
       logger.info('Waiting until block is proposed');
       while (!isBlockProposed(block.blockHash)) {
