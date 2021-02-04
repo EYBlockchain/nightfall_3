@@ -46,15 +46,19 @@ describe('Testing the http API', () => {
   const fee = 1;
   const BLOCK_STAKE = 1000000000000000000; // 1 ether
 
-  before(async () => {
+  before(() => {
     connectWeb3();
     // set up a websocket connection to listen for assembled blocks
     connection = new WebSocket(optimistWsUrl);
     connection.onopen = () => {
       connection.send('blocks');
     };
-    connection.onmessage = m =>
-      submitTransaction(m.data, privateKey, shieldAddress, gas, BLOCK_STAKE);
+    connection.onmessage = m => {
+      console.log('WebSocket received message', m.data);
+      submitTransaction(m.data, privateKey, shieldAddress, gas, BLOCK_STAKE).then(receipt =>
+        console.log('tx hash was', receipt.transactionHash),
+      );
+    };
   });
 
   describe('Miscellaneous tests', () => {
@@ -267,7 +271,7 @@ describe('Testing the http API', () => {
   });
 
   // now we have some deposited tokens, we can transfer one of them:
-  describe.skip('Single transfer tests', () => {
+  describe('Single transfer tests', () => {
     it('should transfer some crypto (back to us) using ZKP', async () => {
       const res = await chai
         .request(url)
@@ -508,7 +512,7 @@ describe('Testing the http API', () => {
     });
   });
 
-  after(async () => {
-    closeWeb3Connection();
+  after(() => {
+    // closeWeb3Connection();
   });
 });
