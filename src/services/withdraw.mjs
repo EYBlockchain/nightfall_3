@@ -28,7 +28,7 @@ const {
 const { generalise } = gen;
 
 async function withdraw(items) {
-  logger.info('Creating a transfer transaction');
+  logger.info('Creating a withdraw transaction');
   // let's extract the input items
   const { ercAddress, tokenId, value, recipientAddress, senderZkpPrivateKey, fee } = generalise(
     items,
