@@ -14,7 +14,7 @@ const { SHIELD_CONTRACT_NAME, RETRIES } = config;
  * This is useful in case nightfall-optimist comes up before the Shield contract
  * is fully deployed.
  */
-async function waitForShield() {
+export async function waitForShield() {
   let errorCount = 0;
   let error;
   let instance;

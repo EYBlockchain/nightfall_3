@@ -9,8 +9,8 @@ const router = express.Router();
 
 router.post('/', async (req, res, next) => {
   logger.debug('check-block endpoint received POST');
+  const { block, transactions } = req.body;
   try {
-    const { block, transactions } = req.body;
     const result = await checkBlock(block, transactions);
     logger.debug(`Result of block check was ${JSON.stringify(result, null, 2)}`);
     res.json(result);

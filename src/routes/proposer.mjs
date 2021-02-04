@@ -6,6 +6,7 @@ module but handle the entire request here.
 import express from 'express';
 import config from 'config';
 import logger from '../utils/logger.mjs';
+import rand from '../utils/crypto/crypto-random.mjs';
 import { getContractInstance } from '../utils/contract.mjs';
 import Block from '../classes/block.mjs';
 import { setRegisteredProposerAddress } from '../services/database.mjs';
@@ -98,7 +99,11 @@ router.post('/propose', async (req, res, next) => {
     const { transactions, proposer, currentLeafCount } = req.body;
     // use the information we've been POSTED to assemble a block
     // we use a Builder pattern because an async constructor is bad form
-    const block = await Block.build({ transactions, proposer, currentLeafCount });
+    const block = await Block.build({
+      transactions,
+      proposer,
+      currentLeafCount,
+    });
     logger.debug(`New block assembled ${JSON.stringify(block, null, 2)}`);
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
     const txDataToSign = await shieldContractInstance.methods
@@ -127,6 +132,36 @@ router.get('/change', async (req, res, next) => {
     logger.debug('returning raw transaction data');
     logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
     res.json({ txDataToSign });
+  } catch (err) {
+    logger.error(err);
+    next(err);
+  }
+});
+/**
+ * Function to Propose a wrong state update block  This just
+ * provides the tx data, the user will need to call the blockchain client
+ */
+router.post('/faultyPropose', async (req, res, next) => {
+  logger.debug(`faulty propose endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
+  try {
+    const { transactions, proposer, currentLeafCount } = req.body;
+    // use the information we've been POSTED to assemble a block
+    // we use a Builder pattern because an async constructor is bad form
+    const block = await Block.build({
+      transactions,
+      proposer,
+      currentLeafCount,
+    });
+    logger.debug(`New block assembled ${JSON.stringify(block, null, 2)}`);
+    block.root = (await rand(32)).hex(); // Editing root to replace with fault root
+    logger.debug(`New faulty block assembled ${JSON.stringify(block, null, 2)}`);
+    const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
+    const txDataToSign = await shieldContractInstance.methods
+      .proposeBlock(block, transactions)
+      .encodeABI();
+    logger.debug('returning raw transaction');
+    logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
+    res.json({ txDataToSign, block, transactions });
   } catch (err) {
     logger.error(err);
     next(err);
