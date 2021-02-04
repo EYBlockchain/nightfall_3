@@ -17,7 +17,7 @@ export default class HistoryService {
   Saves the given root and associated frontier, leafIndex and block
   Added by Westlad
   */
-  async saveTreeHistory({ root, frontier, leafIndex, blockNumber }) {
+  async saveTreeHistory({ root, frontier, leafIndex, currentLeafCount, blockNumber }) {
     logger.debug('src/db/service/metadata.service saveTreeHistory()');
     // insert the leaf into the 'nodes' collection:
     try {
@@ -25,6 +25,7 @@ export default class HistoryService {
         root,
         frontier,
         leafIndex,
+        currentLeafCount,
         blockNumber,
       });
       return dbResponse;

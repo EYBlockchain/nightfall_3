@@ -254,6 +254,7 @@ async function update(db) {
     const leafValues = leaves.map(leaf => leaf.value);
     const currentLeafCount = fromLeafIndex;
 
+    const historicFrontier = [...frontier]; // avoid mutation of frontier
     const [root, newFrontier] = await utilsMT.updateNodes(
       leafValues,
       currentLeafCount,
@@ -280,8 +281,9 @@ async function update(db) {
     // forntier, but the one that existed when the block was added.
     const history = {
       root,
-      frontier,
+      frontier: historicFrontier,
       leafIndex: latestRecalculationLeafIndex,
+      currentLeafCount,
       blockNumber: latestLeaf.blockNumber,
     };
     await historyService.saveTreeHistory(history);

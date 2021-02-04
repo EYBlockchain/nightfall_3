@@ -14,6 +14,7 @@ export default new Schema(
       default: new Array(33),
     },
     leafIndex: Number,
+    currentLeafCount: Number,
     blockNumber: Number,
   },
 
