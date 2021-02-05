@@ -25,11 +25,13 @@ async function checkBlock(block, transactions) {
       throw new BlockError(
         ` The transaction hash ${transactions[i].transactionHash} is not consistent with the transaction data at index ${i}`,
         1,
+        { index: i },
       );
     if (!block.transactionHashes.includes(transactions[i].transactionHash))
       throw new BlockError(
         `Transaction hash ${transactions[i].transactionHash} missing from block at index ${i}`,
         2,
+        { index: i },
       );
   }
   // we may even be short a hash or two...
