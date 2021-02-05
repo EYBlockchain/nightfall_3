@@ -1,11 +1,11 @@
 import config from 'config';
+import WebSocket from 'ws';
 // import Web3 from '../utils/web3.mjs';
 import logger from '../utils/logger.mjs';
 import { getContractInstance, getContractAddress } from '../utils/contract.mjs';
 // import subscribeToEvent from './event.mjs';
-import submitChallenge from '../utils/submitChallenge.mjs';
 
-const { SHIELD_CONTRACT_NAME } = config;
+const { SHIELD_CONTRACT_NAME, ORCHESTRATOR_WS_HOST, ORCHESTRATOR_WS_PORT } = config;
 
 // async function submitTransaction(unsignedTransaction, privateKey, shieldAddress, gas, value = 0) {
 //   const tx = {
@@ -22,6 +22,28 @@ const { SHIELD_CONTRACT_NAME } = config;
 //     return err;
 //   }
 // }
+
+function submitChallenge(message) {
+  const client = new WebSocket(`ws://${ORCHESTRATOR_WS_HOST}:${ORCHESTRATOR_WS_PORT}`);
+  client.on('open', () => {
+    logger.info('Websocket connection open with server');
+    logger.debug(
+      `raw challenge transaction has been sent to be signed and submitted ${JSON.stringify(
+        message,
+        null,
+        2,
+      )}`,
+    );
+    client.send(message);
+  });
+  client.on('error', () => {
+    logger.info('Websocket connection failed. Retrying... ');
+    submitChallenge();
+  });
+  client.on('close', () => {
+    logger.info('Websocket disconnected');
+  });
+}
 
 export default async function createChallenge(block, transactions, err) {
   logger.warn(`Block invalid, with code ${err.code}! ${err.message}`);
