@@ -13,7 +13,7 @@ contract Structures is Config {
   enum TransactionTypes { DEPOSIT, SINGLE_TRANSFER, DOUBLE_TRANSFER, WITHDRAW }
 
   event RejectedProposedBlock(
-    bytes32 blockHash
+    bytes32 indexed blockHash
   );
 
   event AcceptedProposedBlock(
@@ -21,6 +21,7 @@ contract Structures is Config {
   );
 
   event BlockProposed(
+    bytes32 indexed blockHash,
     Block b,
     Transaction[] t
   );

@@ -49,7 +49,7 @@ contract MerkleTree_Stateless is MiMC {
 
     uint constant treeHeight = 32; //change back to 32 after testing
     uint constant treeWidth = 2 ** treeHeight; // 2 ** treeHeight
-    uint256 public leafCount; // the number of leaves currently in the tree. This storage variable must be updated by the calling function.  This version of MerkleTree does not do it automatically. That's so it can be used to compute the outcome of Challenges to an optimistic transaction.
+    /* uint256 public leafCount; // the number of leaves currently in the tree. This storage variable must be updated by the calling function.  This version of MerkleTree does not do it automatically. That's so it can be used to compute the outcome of Challenges to an optimistic transaction. */
 
     /*
     Whilst ordinarily, we'd work solely with bytes32, we need to truncate nodeValues up the tree. Therefore, we need to declare certain variables with lower byte-lengths:

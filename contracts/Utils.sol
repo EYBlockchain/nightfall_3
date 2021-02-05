@@ -55,11 +55,21 @@ contract Utils is Structures {
     proposers[nextAddress].previousAddress = proposers[previousAddress].thisAddress;
   }
 
+
+  /* function isBlockReal(Block memory b) public view {
+    require(b.blockHash == hashBlock(b), 'The block hash is incorrect');
+    require(blockHashes[b.blockHash].thisHash == b.blockHash, 'This block does not exist');
+  } */
+
+  // Checks if a block has is calculated correctly
+  function isBlockHashCorrect(Block memory b) public view {
+    require(b.blockHash == hashBlock(b), 'The block hash is incorrect');
+  }
+
   // Checks if a block is actually referenced in the queue of blocks waiting
   // to go into the Shield state (stops someone challenging with a non-existent
-  // block).
+  // block)
   function isBlockReal(Block memory b) public view {
-    require(b.blockHash == hashBlock(b), 'The block hash is incorrect');
     require(blockHashes[b.blockHash].thisHash == b.blockHash, 'This block does not exist');
   }
 

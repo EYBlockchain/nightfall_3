@@ -59,10 +59,10 @@ contract Proposers is Structures, Utils {
     uint nCommitments; // number of commitments, used in NewLeaves/NewLeaf event
     for (uint i = 0; i < b.transactionHashes.length; i++) {
       // make sure the Transactions are in the Block
-      require(
+      /* require(
         b.transactionHashes[i] == hashTransaction(t[i]),
         'Transaction hash was not found'
-      );
+      ); */
       // remember how many commitments are in the block, this is needed later
       nCommitments += t[i].commitments.length;
       }
@@ -83,7 +83,7 @@ contract Proposers is Structures, Utils {
     // remember how many leaves the Merkle tree has (Timber needs this to check
     // that it hasn't missed any leaf additions)
     leafCount += nCommitments;
-    emit BlockProposed(b, t);
+    emit BlockProposed(b.blockHash, b, t);
   }
 
   //add the proposer to the circular linked list

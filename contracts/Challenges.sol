@@ -9,22 +9,65 @@ grounds.
 pragma solidity ^0.6.0;
 pragma experimental ABIEncoderV2;
 
-import './Verifier.sol';
+/* import './Verifier.sol'; */
 import './Utils.sol';
 import './Key_Registry.sol';
 import './MerkleTree_Stateless.sol';
 
-contract Challenges is Utils, Verifier, Key_Registry, MerkleTree_Stateless {
+/* contract Challenges is Utils, Verifier, Key_Registry, MerkleTree_Stateless { */
+contract Challenges is Utils, Key_Registry, MerkleTree_Stateless {
 
-  enum ChallengeType { //TODO - remove but it's a handy reminder for now
+  /* enum ChallengeType { //TODO - remove but it's a handy reminder for now
     PROOF_VERIFIES,
     PUBLIC_INPUT_HASH_VALID,
     HISTORIC_ROOT_EXISTS,
     NULLIFIER_ABSENT,
     NEW_ROOT_CORRECT
+  } */
+
+  // a block is challenged if the block hash is wrong
+  function challengeBlockHash(
+    Block memory block
+  ) external {
+    require(block.blockHash != hashBlock(block), 'The block hash is correct');
+    challengeAccepted(block);
   }
 
-  // a transaction proof is challenged as incorrect
+  // a block is challenged if the block hash does not exist
+  function challengeBlockIsReal(
+    Block memory block
+  ) external {
+    require(blockHashes[block.blockHash].thisHash != block.blockHash, 'This block exists');
+    challengeAccepted(block);
+  }
+
+  // a transaction is challenged if transaction hash is incorrect or doesn't exist in the block
+  function challengeTransactionHashesInBlock(
+    Block memory block,
+    Transaction[] memory transactions,
+    uint transactionIndex
+  ) external {
+    require(
+      transactions[transactionIndex].transactionHash != hashTransaction(transactions[transactionIndex]) ||
+      block.transactionHashes[transactionIndex] != transactions[transactionIndex].transactionHash,
+      'Either the transaction hash is correct or the transaction hash found in the block'
+      );
+    challengeAccepted(block);
+  }
+
+  // a challenge if the number of transactions in the block is not equal to the number of transactions in transactions
+  function challengeTransactionCount(
+    Block memory block,
+    Transaction[] memory transactions
+  ) external {
+    require(
+      transactions.length != block.transactionHashes.length,
+      'The number of transactions in the block are equal to the number of transactions in transactions'
+      );
+    challengeAccepted(block);
+  }
+
+  /* // a transaction proof is challenged as incorrect
   function challengeProofVerifies(
     Block memory blockL2,
     Transaction memory transaction,
@@ -42,15 +85,16 @@ contract Challenges is Utils, Verifier, Key_Registry, MerkleTree_Stateless {
       'This proof appears to be valid'
     );
     challengeAccepted(blockL2);
-  }
+  } */
 
-  // a transaction proof is challenged as incorrect.  Does not require the
+  /* // a transaction proof is challenged as incorrect.  Does not require the
   // index of the transaction in the block, but uses more Gas as it has to
   // search for it
   function challengeProofVerifies(
     Block memory blockL2,
     Transaction memory transaction
   ) external {
+    isBlockReal(blockL2); // check the block exists
     for (uint i = 0; i < blockL2.transactionHashes.length; i++){
       if (transaction.transactionHash == blockL2.transactionHashes[i] ) {
         challengeProofVerifies(blockL2, transaction, i);
@@ -58,7 +102,7 @@ contract Challenges is Utils, Verifier, Key_Registry, MerkleTree_Stateless {
       }
     }
     revert('Transaction not found in this block');
-  }
+  } */
 
   // the new commitment Merkle-tree root is challenged as incorrect
   function challengeNewRootCorrect(
@@ -72,7 +116,9 @@ contract Challenges is Utils, Verifier, Key_Registry, MerkleTree_Stateless {
     // first, check we have real, in-train, contiguous blocks
     require(blockHashes[priorBlockL2.blockHash].nextHash == blockHashes[blockL2.blockHash].previousHash, 'The blocks are not contiguous');
     isBlockReal(blockL2);
+    isBlockHashCorrect(blockL2);
     isBlockReal(priorBlockL2);
+    isBlockHashCorrect(priorBlockL2);
     // next, check that we have the correct transactions. We do that by checking that the hashes of the commitments match those stored in the block. Also, while we're at it, save all the commitments for later.
     uint nCommitments;
     for (uint i = 0; i < transactions.length; i++) {

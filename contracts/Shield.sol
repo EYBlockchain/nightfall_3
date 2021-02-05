@@ -13,8 +13,9 @@ pragma experimental ABIEncoderV2;
 import './Key_Registry.sol';
 import './Utils.sol';
 import './Proposers.sol';
+import './Challenges.sol';
 
-contract Shield is Utils, Key_Registry, Proposers {
+contract Shield is Utils, Key_Registry, Proposers, Challenges {
   /**
   We don't need to do the checks herein because the Proposer should do them.
   We don't really need this function at all because we could just send the
