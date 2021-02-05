@@ -313,7 +313,6 @@ describe('Testing the http API', () => {
       const res = await chai.request(optimistUrl).get(`/block/${transactions[0].transactionHash}`);
       block = res.body;
       expect(block).not.to.be.null; // eslint-disable-line
-      console.log('BLOCK', block);
     });
     let startBalance;
     let endBalance;
