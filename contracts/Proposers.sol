@@ -47,6 +47,7 @@ contract Proposers is Structures, Utils {
       nextHash: ZERO,
       data: block.timestamp
     });
+    blockHashes[endHash].nextHash = b.blockHash;
     endHash = b.blockHash; // point to the new end of the list of blockhashes.
     // signal to Timber that new leaves may need to be added to the Merkle tree.
     // It's possible that these will be successfully challenged over the next
