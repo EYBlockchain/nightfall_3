@@ -50,11 +50,8 @@ describe('Testing the http API', () => {
     connection.onopen = () => {
       connection.send('blocks');
     };
-    connection.onmessage = m => {
-      submitTransaction(m.data, privateKey, shieldAddress, gas, BLOCK_STAKE).then(receipt =>
-        console.log('tx hash was', receipt.transactionHash),
-      );
-    };
+    connection.onmessage = m =>
+      submitTransaction(m.data, privateKey, shieldAddress, gas, BLOCK_STAKE);
   });
 
   describe('Miscellaneous tests', () => {
@@ -365,6 +362,8 @@ describe('Testing the http API', () => {
   });
 
   after(() => {
-    // closeWeb3Connection();
+    console.log('end');
+    closeWeb3Connection();
+    connection.close();
   });
 });
