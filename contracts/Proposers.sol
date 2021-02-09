@@ -49,14 +49,12 @@ contract Proposers is Structures, Utils {
     });
     blockHashes[endHash].nextHash = b.blockHash;
     endHash = b.blockHash; // point to the new end of the list of blockhashes.
-    // signal to Timber that new leaves may need to be added to the Merkle tree.
-    // It's possible that these will be successfully challenged over the next
-    // week, and Timber (or a Timber proxy), will need to be sure they only add
-    // valid leaves to the Timber db.  This is a little challenging but the
-    // alternative is to broadcast events for Timber after the challenge period
-    // has elapsed.  This would take more gas because of the need to make a
-    // a blockchain transaction to call a 'check week is up and then emit
-    // events' function
+    // We need to check the blockHash on chain here, because there is no way to
+    // convince a challenge function of the (in)correctness by an offchain
+    // computation; the on-chain code doesn't save the pre-image of the hash so
+    // it can't tell if it's been given the correct one as part of a challenge.
+    require(b.blockHash == hashBlock(b), 'The block hash is incorrect');
+    // likewise the transaction hashes
     uint nCommitments; // number of commitments, used in NewLeaves/NewLeaf event
     for (uint i = 0; i < b.transactionHashes.length; i++) {
       // make sure the Transactions are in the Block
@@ -76,7 +74,14 @@ contract Proposers is Structures, Utils {
       for (uint j = 0; j < t[i].commitments.length; j++)
         leafValues[k++] = t[i].commitments[j];
     }
-    // Signal to Timber listeners, if we have any commitments to add
+    // signal to Timber that new leaves may need to be added to the Merkle tree.
+    // It's possible that these will be successfully challenged over the next
+    // week, and Timber (or a Timber proxy), will need to be sure they only add
+    // valid leaves to the Timber db.  This is a little challenging but the
+    // alternative is to broadcast events for Timber after the challenge period
+    // has elapsed.  This would take more gas because of the need to make a
+    // a blockchain transaction to call a 'check week is up and then emit
+    // events' function
     if (nCommitments == 1)
       emit NewLeaf(leafCount, leafValues[0], b.root);
     else if (nCommitments !=0)
