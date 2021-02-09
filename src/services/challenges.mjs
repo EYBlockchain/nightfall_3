@@ -1,48 +1,24 @@
 import config from 'config';
-import WebSocket from 'ws';
-// import Web3 from '../utils/web3.mjs';
 import logger from '../utils/logger.mjs';
-import { getContractInstance, getContractAddress } from '../utils/contract.mjs';
-// import subscribeToEvent from './event.mjs';
+import { getContractInstance } from '../utils/contract.mjs';
 
-const { SHIELD_CONTRACT_NAME, ORCHESTRATOR_WS_HOST, ORCHESTRATOR_WS_PORT } = config;
+const { SHIELD_CONTRACT_NAME } = config;
 
-// async function submitTransaction(unsignedTransaction, privateKey, shieldAddress, gas, value = 0) {
-//   const tx = {
-//     to: shieldAddress,
-//     data: unsignedTransaction,
-//     value,
-//     gas,
-//   };
-//   try {
-//     const web3 = Web3.connection();
-//     const signed = await web3.eth.accounts.signTransaction(tx, privateKey);
-//     return web3.eth.sendSignedTransaction(signed.rawTransaction);
-//   } catch (err) {
-//     return err;
-//   }
-// }
+let ws;
+
+export function setChallengeWebSocketConnection(_ws) {
+  ws = _ws;
+}
 
 function submitChallenge(message) {
-  const client = new WebSocket(`ws://${ORCHESTRATOR_WS_HOST}:${ORCHESTRATOR_WS_PORT}`);
-  client.on('open', () => {
-    logger.info('Websocket connection open with server');
-    logger.debug(
-      `raw challenge transaction has been sent to be signed and submitted ${JSON.stringify(
-        message,
-        null,
-        2,
-      )}`,
-    );
-    client.send(message);
-  });
-  client.on('error', () => {
-    logger.info('Websocket connection failed. Retrying... ');
-    submitChallenge();
-  });
-  client.on('close', () => {
-    logger.info('Websocket disconnected');
-  });
+  logger.debug(
+    `raw challenge transaction has been sent to be signed and submitted ${JSON.stringify(
+      message,
+      null,
+      2,
+    )}`,
+  );
+  ws.send(message);
 }
 
 export default async function createChallenge(block, transactions, err) {
@@ -50,7 +26,6 @@ export default async function createChallenge(block, transactions, err) {
   if (process.env.IS_CHALLENGER === 'true') {
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
     let txDataToSign;
-    // let receipt;
     switch (err.code) {
       case 0:
         txDataToSign = await shieldContractInstance.methods.challengeBlockHash(block).encodeABI();

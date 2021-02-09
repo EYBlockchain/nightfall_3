@@ -3,10 +3,13 @@
  */
 
 import config from 'config';
+import WebSocket from 'ws';
 import { getContractInstance, getContractAddress } from '../utils/contract.mjs';
 import logger from '../utils/logger.mjs';
 
-const { SHIELD_CONTRACT_NAME, RETRIES } = config;
+const { SHIELD_CONTRACT_NAME, RETRIES, WEBSOCKET_PORT } = config;
+
+const wss = new WebSocket.Server({ port: WEBSOCKET_PORT });
 
 /**
  * Function that tries to get a Shield contract instance and, if it fails, will
@@ -56,4 +59,13 @@ export async function subscribeToNewCurrentProposer(callback) {
   emitter.on('data', event => callback(event));
   logger.debug('Subscribed to NewCurrentProposer event');
   return emitter;
+}
+
+export async function subscribeToChallengeWebSocketConnection(callback, ...args) {
+  wss.on('connection', ws =>
+    ws.on('message', message => {
+      if (message === 'challenge') callback(ws, args);
+    }),
+  );
+  logger.debug('Subscribed to WebSocket connection');
 }

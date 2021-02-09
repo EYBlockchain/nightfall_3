@@ -5,8 +5,7 @@ module.exports = {
   METADATA_COLLECTION: 'metadata',
   UNPROCESSED_TRANSACTIONS_COLLECTION: 'unprocessed_transactions',
   ZKP_KEY_LENGTH: 32, // use a 32 byte key length for SHA compatibility
-  ORCHESTRATOR_WS_HOST: process.env.ORCHESTRATOR_WS_HOST || 'host.docker.internal',
-  ORCHESTRATOR_WS_PORT: process.env.ORCHESTRATOR_WS_PORT || 3000,
+  WEBSOCKET_PORT: process.env.WEBSOCKET_PORT || 8080,
   BLOCKCHAIN_WS_HOST: process.env.BLOCKCHAIN_WS_HOST || 'openethereum',
   BLOCKCHAIN_PORT: process.env.BLOCKCHAIN_PORT || '8546',
   TIMBER_HOST: process.env.TIMBER_HOST || 'timber',
