@@ -152,9 +152,6 @@ describe('Testing the http API', () => {
       txDataToSign = res.body.txDataToSign;
       transactions.push(res.body.transaction);
       expect(txDataToSign).to.be.a('string');
-    });
-
-    it('should send the transaction to the shield contract', async () => {
       // now we need to sign the transaction and send it to the blockchain
       const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
       expect(receipt).to.have.property('transactionHash');
@@ -177,9 +174,6 @@ describe('Testing the http API', () => {
       txDataToSign = res.body.txDataToSign;
       transactions.push(res.body.transaction);
       expect(txDataToSign).to.be.a('string');
-    });
-
-    it('should should send the transaction to the shield contract', async () => {
       // now we need to sign the transaction and send it to the blockchain
       const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
       expect(receipt).to.have.property('transactionHash');
@@ -202,9 +196,6 @@ describe('Testing the http API', () => {
       txDataToSign = res.body.txDataToSign;
       transactions.push(res.body.transaction);
       expect(txDataToSign).to.be.a('string');
-    });
-
-    it('should should send the raw transaction to the shield contract to verify the proof and store the commitment in the Merkle tree, and update the commitment db', async () => {
       // now we need to sign the transaction and send it to the blockchain
       const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
       expect(receipt).to.have.property('transactionHash');
@@ -229,9 +220,6 @@ describe('Testing the http API', () => {
       txDataToSign = res.body.txDataToSign;
       transactions = [res.body.transaction]; // a new block of transactions
       expect(txDataToSign).to.be.a('string');
-    });
-
-    it('should should send the raw transaction to the shield contract to verify the proof and update the Merkle tree', async () => {
       // now we need to sign the transaction and send it to the blockchain
       const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
       expect(receipt).to.have.property('transactionHash');
@@ -260,9 +248,6 @@ describe('Testing the http API', () => {
       txDataToSign = res.body.txDataToSign;
       transactions = [res.body.transaction]; // a transaction
       expect(txDataToSign).to.be.a('string');
-    });
-
-    it('should should send the raw transaction to the shield contract to verify the proof and update the Merkle tree', async () => {
       // now we need to sign the transaction and send it to the blockchain
       const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
       expect(receipt).to.have.property('transactionHash');
@@ -286,8 +271,6 @@ describe('Testing the http API', () => {
       txDataToSign = res.body.txDataToSign;
       transactions = [res.body.transaction]; // a new transaction
       expect(txDataToSign).to.be.a('string');
-    });
-    it('should should send the transaction to the shield contract', async () => {
       // now we need to sign the transaction and send it to the blockchain
       const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
       expect(receipt).to.have.property('transactionHash');
