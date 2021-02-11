@@ -44,15 +44,10 @@ contract Proposers is Structures, Config {
   */
   function proposeBlock(Block memory b, Transaction[] memory t) external payable onlyCurrentProposer() {
     require(BLOCK_STAKE == msg.value, 'The stake payment is incorrect');
-    // add the block to the list of blocks waiting to be permanently added to the state - we only save the hash of the block data - it's up to the challenger, or person requesting inclusion of the block to the permanent contract state, to provide the block data.
-    blockHashes[b.blockHash] = LinkedHash({
-      thisHash: b.blockHash,
-      previousHash: endHash,
-      nextHash: ZERO,
-      data: block.timestamp
-    });
-    blockHashes[endHash].nextHash = b.blockHash;
-    endHash = b.blockHash; // point to the new end of the list of blockhashes.
+    // We need to check that the block has correctly stored its leaf count. This
+    // is needed in case of a roll-back of a bad block, but cannot be checked by
+    // a Challenge function (at least i haven't thought of a way to do it).
+    require(b.leafCount == leafCount, 'The leaf count stored in the Block is not correct');
     // We need to check the blockHash on chain here, because there is no way to
     // convince a challenge function of the (in)correctness by an offchain
     // computation; the on-chain code doesn't save the pre-image of the hash so
@@ -69,6 +64,15 @@ contract Proposers is Structures, Config {
       // remember how many commitments are in the block, this is needed later
       nCommitments += t[i].commitments.length;
       }
+    // All check pass so add the block to the list of blocks waiting to be permanently added to the state - we only save the hash of the block data plus the absolute minimum of metadata - it's up to the challenger, or person requesting inclusion of the block to the permanent contract state, to provide the block data.
+    blockHashes[b.blockHash] = LinkedHash({
+      thisHash: b.blockHash,
+      previousHash: endHash,
+      nextHash: ZERO,
+      data: block.timestamp
+    });
+    blockHashes[endHash].nextHash = b.blockHash;
+    endHash = b.blockHash; // point to the new end of the list of blockhashes.
     // now we need to emit all the leafValues (commitments) in this block so
     // any listening Timber instances can update their offchain DBs.
     // The first job is to assembly an array of all the leafValues in the block

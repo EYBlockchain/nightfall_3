@@ -113,11 +113,18 @@ contract Challenges is Key_Registry, Proposers {
 
   // This gets called when a challenge succeeds
   function challengeAccepted(Block memory badBlock) private {
-    // first of all, we need to remove the block that has been successfully
+    // emit the leafCount where the bad block was added. Timber will pick this
+    // up and rollback its database to that point.
+    emit Rollback(badBlock.root, badBlock.leafCount);
+    // as we have a rollback, we need to reset the leafcount to the point
+    // where the bad block was created.  Luckily, we noted that value in
+    // the block when the block was proposed. It was check onchain so must be
+    // correct.
+    leafCount -= badBlock.leafCount;
+    // we need to remove the block that has been successfully
     // challenged from the linked list of blocks and all of the subsequent
     // blocks
     removeBlockHashes(badBlock.blockHash);
-    emit RejectedProposedBlock(badBlock.blockHash);
     // remove the proposer and re-join the chain where they've been removed
     removeProposer(badBlock.proposer);
     // give the proposer's block stake to the challenger
@@ -134,5 +141,10 @@ contract Challenges is Key_Registry, Proposers {
       delete blockHashes[hash];
       hash = nextHash;
     } while(blockHashes[hash].nextHash != ZERO);
+  }
+
+  // for dev purposes. Do not use in production
+  function forceChallengeAccepted(Block memory anyBlock) external onlyOwner {
+    challengeAccepted(anyBlock);
   }
 }

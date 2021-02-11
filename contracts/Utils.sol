@@ -30,7 +30,8 @@ library Utils {
       abi.encodePacked(
         b.proposer,
         b.transactionHashes,
-        b.root
+        b.root,
+        b.leafCount
       )
     );
   }
