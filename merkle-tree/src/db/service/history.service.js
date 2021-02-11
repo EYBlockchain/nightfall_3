@@ -1,7 +1,7 @@
 /**
- * @module metadata.service.js
+ * @module history.service.js
  * @author westlad
- * @desc orchestrates inserts to and gets from the mongodb
+ * @desc orchestrates inserts to and gets from the mongodb related to history
  */
 
 import { COLLECTIONS } from '../common/constants';
@@ -41,5 +41,10 @@ export default class HistoryService {
       root,
     });
     return historyMapper(docs);
+  }
+
+  async deleteTreeHistory(leafCount) {
+    logger.debug('deleting alternative timeline');
+    this.db.deleteMany(COLLECTIONS.HISTORY, { currentLeafCount: { $gte: leafCount } });
   }
 }

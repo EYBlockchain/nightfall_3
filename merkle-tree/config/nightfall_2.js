@@ -42,6 +42,9 @@ module.exports = {
         NewLeaves: {
           parameters: ['minLeafIndex', 'leafValues'], // filter for these parameters
         },
+        Rollback: {
+          parameters: ['root', 'leafCount'],
+        },
       },
     },
   },

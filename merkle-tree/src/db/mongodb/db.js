@@ -246,4 +246,14 @@ export default class DB {
       return Promise.reject(e);
     }
   }
+
+  async deleteMany(modelName, query = {}) {
+    try {
+      const Model = this.Models[modelName];
+      return Model.deleteMany(query);
+    } catch (e) {
+      logger.error(e);
+      return Promise.reject(e);
+    }
+  }
 }

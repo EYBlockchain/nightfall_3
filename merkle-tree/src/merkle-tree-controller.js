@@ -305,6 +305,48 @@ async function getTreeHistory(db, root) {
   return historyService.getTreeHistory(root);
 }
 
+/**
+This function rolls back the database to a time when it contained 'leafCount'
+leaves and had the root 'root'.
+It is triggered by reception of a Rollback event from the blockchain.
+*/
+async function rollback(db, treeHeight, leafCount, root) {
+  const historyService = new HistoryService(db);
+  const leafService = new LeafService(db);
+  const nodeService = new NodeService(db);
+  // before we do anything, make sure the DB is up to date
+  await update(db);
+  // let's get the details of where we're going to rollback to
+  const history = await historyService.getTreeHistory(root);
+  if (leafCount !== history.currentLeafCount)
+    throw new Error(
+      `Rollback event's leaf count (${leafCount}) and the historic record do not match(${history.currentLeafCount})`,
+    );
+  // Delete all of the nodes between the new highest-index leaf and the old
+  // highest index leaf (inclusive) up to their common root. This has the
+  // effect of removing non-zero nodes, which should no longer exist after
+  // rollback.
+  const oldMaxLeafIndex = await leafService.getMaxLeafIndex();
+  const newMaxLeafIndex = history.leafIndex;
+  const newMaxLeaf = await leafService.getPathByLeafIndex(newMaxLeafIndex);
+  const oldMaxPath = await getPathByLeafIndex(db, oldMaxLeafIndex);
+  const newMaxPath = await getPathByLeafIndex(db, newMaxLeafIndex);
+  const indicesOfNodesToDelete = [];
+  for (let i = 0; i < treeHeight; i++) {
+    if (newMaxPath.value === oldMaxPath.value) break; // common root reached
+    for (let j = newMaxPath[i].nodeIndex; j < oldMaxPath[i].nodeIndex + 1; j++) {
+      indicesOfNodesToDelete.push(j);
+    }
+  }
+  await nodeService.deleteNodes(indicesOfNodesToDelete);
+  // add back the newMaxLeaf (this is the same behaviour as a NewLeaf event)
+  await leafService.insertLeaf(treeHeight, newMaxLeaf);
+  // delete the history which is now in a future that won't happen
+  await historyService.deleteTreeHistory(history.currentLeafCount);
+  // update the database again so that the new values are in the latest recalculation
+  update(db);
+}
+
 export default {
   checkLeaves,
   updateLatestLeaf,
@@ -312,4 +354,5 @@ export default {
   getSiblingPathByLeafIndex,
   update,
   getTreeHistory,
+  rollback,
 };
