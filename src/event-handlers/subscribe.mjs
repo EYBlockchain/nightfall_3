@@ -1,14 +1,12 @@
 /**
  * Module to subscribe to blockchain events
  */
-
-import config from 'config';
 import WebSocket from 'ws';
+import config from 'config';
 import { getContractInstance, getContractAddress } from '../utils/contract.mjs';
 import logger from '../utils/logger.mjs';
 
 const { SHIELD_CONTRACT_NAME, RETRIES, WEBSOCKET_PORT } = config;
-
 const wss = new WebSocket.Server({ port: WEBSOCKET_PORT });
 
 /**
@@ -40,23 +38,23 @@ export async function waitForShield() {
   return instance;
 }
 
-export async function subscribeToBlockProposedEvent(callback) {
+export async function subscribeToBlockProposedEvent(callback, ...args) {
   const emitter = (await waitForShield()).events.BlockProposed();
-  emitter.on('data', event => callback(event));
+  emitter.on('data', event => callback(event, args));
   logger.debug('Subscribed to BlockProposed event');
   return emitter;
 }
 
-export async function transactionSubmitted(callback) {
+export async function subscribeToTransactionSubmitted(callback, ...args) {
   const emitter = (await waitForShield()).events.TransactionSubmitted();
-  emitter.on('data', event => callback(event));
+  emitter.on('data', event => callback(event, args));
   logger.debug('Subscribed to TransactionSubmitted event');
   return emitter;
 }
 
-export async function subscribeToNewCurrentProposer(callback) {
+export async function subscribeToNewCurrentProposer(callback, ...args) {
   const emitter = (await waitForShield()).events.NewCurrentProposer();
-  emitter.on('data', event => callback(event));
+  emitter.on('data', event => callback(event, args));
   logger.debug('Subscribed to NewCurrentProposer event');
   return emitter;
 }
@@ -65,6 +63,15 @@ export async function subscribeToChallengeWebSocketConnection(callback, ...args)
   wss.on('connection', ws =>
     ws.on('message', message => {
       if (message === 'challenge') callback(ws, args);
+    }),
+  );
+  logger.debug('Subscribed to WebSocket connection');
+}
+
+export async function subscribeToBlockAssembledWebSocketConnection(callback, ...args) {
+  wss.on('connection', ws =>
+    ws.on('message', message => {
+      if (message === 'blocks') callback(ws, args);
     }),
   );
   logger.debug('Subscribed to WebSocket connection');

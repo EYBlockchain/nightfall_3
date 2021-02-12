@@ -20,7 +20,7 @@ const { SHIELD_CONTRACT_NAME } = config;
  * Optimist app to use for it to decide when to start proposing blocks.  It is * not part of the unsigned blockchain transaction that is returned.
  */
 router.post('/register', async (req, res, next) => {
-  logger.debug(`register proposal endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
+  logger.debug(`register proposer endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
   try {
     const { address } = req.body;
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
@@ -57,7 +57,7 @@ router.get('/proposers', async (req, res, next) => {
  * provides the tx data. The user has to call the blockchain client.
  */
 router.post('/de-register', async (req, res, next) => {
-  logger.debug(`de-register proposal endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
+  logger.debug(`de-register proposer endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
   try {
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
     const txDataToSign = await shieldContractInstance.methods.deRegisterProposer().encodeABI();
@@ -91,9 +91,12 @@ router.get('/withdraw', async (req, res, next) => {
 /**
  * Function to Propose a state update block  This just
  * provides the tx data, the user will need to call the blockchain client
+ * @deprecated - this is now an automated process - no need to manually propose
+ * a block
  */
 router.post('/propose', async (req, res, next) => {
-  logger.debug(`propose endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
+  logger.debug(`propose endpoint received POST`);
+  logger.silly(`With content ${JSON.stringify(req.body, null, 2)}`);
   try {
     const { transactions, proposer, currentLeafCount } = req.body;
     // use the information we've been POSTED to assemble a block

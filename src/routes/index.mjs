@@ -1,4 +1,4 @@
 import proposer from './proposer.mjs';
-import checkBlock from './check-block.mjs';
+import block from './block.mjs';
 
-export { proposer, checkBlock };
+export { proposer, block };

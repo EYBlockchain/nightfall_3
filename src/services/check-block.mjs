@@ -46,13 +46,18 @@ async function checkBlock(block, transactions) {
   try {
     logger.debug(`Checking block with root ${block.root}`);
     const history = await getTreeHistory(block.root);
-    logger.debug(`Retrieved history from Timber ${JSON.stringify(history, null, 2)}`);
+    logger.debug(`Retrieved history from Timber`);
+    logger.silly(`Timber history was ${JSON.stringify(history, null, 2)}`);
     // Timber does know the root, but is it correct?  The historic frontier,
     // together with the commitments should produce the correct root.
     const commitmentHashes = transactions
       .map(transaction => transaction.commitments)
       .flat(Infinity);
-    const { root } = await mt.updateNodes(commitmentHashes, history.leafIndex, history.frontier);
+    const { root } = await mt.updateNodes(
+      commitmentHashes,
+      history.currentLeafCount,
+      history.frontier,
+    );
     if (root !== block.root)
       throw new BlockError(
         `The block's root (${block.root}) is known to Timber but it cannot be reconstructed from the commitment hashes in the transactions in this block and the historic Frontier held by Timber for this root`,

@@ -1,7 +1,7 @@
 /**
 An optimistic layer 2 Block class
 */
-import { getSiblingPath } from '../utils/timber.mjs';
+import { getFrontier } from '../utils/timber.mjs';
 import mt from '../utils/crypto/merkle-tree/merkle-tree.mjs';
 import Web3 from '../utils/web3.mjs';
 
@@ -38,15 +38,18 @@ class Block {
   }
 
   // computes the root and hash. We use a Builder pattern because it's very
-  // bad form to return a promise from a constructor (is it even possible?)-
-  // which should return a fully-formed object, also, we're too cool for an
+  // bad form to return a promise from a constructor -
+  // which should return a fully-formed object. Also, we're too cool for an
   // init() function.
   static async build({ proposer, transactions, currentLeafCount }) {
     const web3 = Web3.connection();
-    const frontier = await getSiblingPath(currentLeafCount);
+    // we have to get the current frontier from Timber, so that we can compute
+    // the new root bearing in mind that the transactions in this block won't
+    // be in Timber yet.  However, Timber has a handy update
+    // interface, which will, inter-alia, return that very frontier.
+    const frontier = await getFrontier();
     // extract the commitment hashes from the transactions
     const leafValues = transactions.map(transaction => transaction.commitments).flat(Infinity);
-    console.log('LEAF VALUES', leafValues);
     // compute the root using Timber's code
     const { root } = await updateNodes(leafValues, currentLeafCount, frontier);
     // compute the keccak hash of the block data
