@@ -17,7 +17,7 @@ these properties offchain.
 class Block {
   root; // remembers the root of this block to save recomputing it
 
-  #currentLeafCount;
+  leafCount;
 
   transactionHashes;
 
@@ -29,8 +29,8 @@ class Block {
 
   constructor(asyncParams) {
     if (asyncParams === undefined) throw new Error('Cannot be called directly');
-    const { proposer, transactionHashes, currentLeafCount, root, blockHash } = asyncParams;
-    this.#currentLeafCount = currentLeafCount;
+    const { proposer, transactionHashes, leafCount, root, blockHash } = asyncParams;
+    this.leafCount = leafCount;
     this.proposer = proposer;
     this.transactionHashes = transactionHashes;
     this.root = root;
@@ -52,14 +52,16 @@ class Block {
     const leafValues = transactions.map(transaction => transaction.commitments).flat(Infinity);
     // compute the root using Timber's code
     const { root } = await updateNodes(leafValues, currentLeafCount, frontier);
+    const leafCount = currentLeafCount || 0;
     // compute the keccak hash of the block data
     const transactionHashes = transactions.map(transaction => transaction.transactionHash);
     const blockHash = web3.utils.soliditySha3(
       { t: 'address', v: proposer },
       ...transactionHashes.map(th => ({ t: 'bytes32', v: th })),
       { t: 'bytes32', v: root },
+      { t: 'uint', v: leafCount },
     );
-    return new Block({ proposer, transactionHashes, currentLeafCount, root, blockHash });
+    return new Block({ proposer, transactionHashes, leafCount, root, blockHash });
   }
 
   static checkHash(block) {
@@ -68,6 +70,7 @@ class Block {
       { t: 'address', v: block.proposer },
       ...block.transactionHashes.map(th => ({ t: 'bytes32', v: th })),
       { t: 'bytes32', v: block.root },
+      { t: 'uint', v: block.leafCount },
     );
     return blockHash === block.blockHash;
   }

@@ -34,10 +34,21 @@ useful for finding which block a transaction was in (something we have no
 control over, because another Proposer may assemble one of our transactions
 into a block).
 */
-export async function getBlock(transactionHash) {
+export async function getBlockByTransactionHash(transactionHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { transactionHashes: transactionHash };
+  return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
+}
+
+/**
+function to look a block by blockHash, if you know the hash of the block. This
+is useful for rolling back Timber.
+*/
+export async function getBlockByBlockHash(blockHash) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { blockHash };
   return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
 }
 

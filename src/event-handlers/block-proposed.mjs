@@ -39,14 +39,14 @@ async function blockProposedEventHandler(data) {
     await removeTransactions(block); // TODO is await needed?
     // and save the block to facilitate later lookup of block data
     await saveBlock(block);
-    // signal to the block-making routines that the block is received: they
+    // signal to the block-making routines that a block is received: they
     // won't make a new block until their previous one is stored on-chain.
     setBlockProposed(block.blockHash);
-    logger.info('Block was valid');
+    logger.info('Block Checker - Block was valid');
   } catch (err) {
     if (err instanceof BlockError)
       // ooh - TODO need to issue a challenge here!
-      logger.warn(`Block invalid, with code ${err.code}! ${err.message}`);
+      logger.warn(`Block Checker - Block invalid, with code ${err.code}! ${err.message}`);
     else throw new Error(err);
   }
 }

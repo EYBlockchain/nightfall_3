@@ -58,7 +58,7 @@ export async function conditionalMakeBlock(proposer) {
     // or we're no-longer the proposer (boo).
     if ((await numberOfUnprocessedTransactions()) >= TRANSACTIONS_PER_BLOCK && proposer.isMe) {
       const { block, transactions } = await makeBlock(proposer.address);
-      logger.info(`New Block created, ${JSON.stringify(block, null, 2)}`);
+      logger.info(`Block Assembler - New Block created, ${JSON.stringify(block, null, 2)}`);
       // TODO propose this block to the Shield contract here!
       const unsignedProposeBlockTransaction = await (await waitForShield()).methods
         .proposeBlock(block, transactions)
@@ -66,7 +66,7 @@ export async function conditionalMakeBlock(proposer) {
       if (ws) ws.send(unsignedProposeBlockTransaction);
       logger.debug('Send unsigned propose-block transaction to ws client');
       // Wait until it is proposed to the blockchain before we make any more:
-      logger.info('Waiting until block is proposed');
+      logger.info('Block Assembler - Waiting until block is proposed before making any more');
       while (!isBlockProposed(block.blockHash)) {
         await new Promise(resolve => setTimeout(resolve, 1000));
         // we only get so long to propose this block.  Once we're no-longer the
@@ -81,4 +81,12 @@ export async function conditionalMakeBlock(proposer) {
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
   logger.debug('Stopped making blocks');
+}
+
+/**
+This function forces a rollback to the given (bad) block and also eliminates the
+block proposer.
+*/
+export async function forceRollback(block) {
+  return (await waitForShield()).forceChallengeAccepted(block).encodeABI();
 }

@@ -6,9 +6,9 @@ import Block from '../classes/block.mjs';
 import Transaction from '../classes/transaction.mjs';
 
 function mappedData(data) {
-  const { block: unMappedBlock, transactions: unMappedTransactions, leafCount } = data.returnValues;
-  const { proposer, transactionHashes, root, blockHash } = unMappedBlock;
-  const block = { proposer, transactionHashes, root, blockHash };
+  const { block: unMappedBlock, transactions: unMappedTransactions } = data.returnValues;
+  const { proposer, transactionHashes, root, blockHash, leafCount } = unMappedBlock;
+  const block = { proposer, transactionHashes, root, blockHash, leafCount };
   const transactions = unMappedTransactions.map(u => {
     const {
       transactionHash,
