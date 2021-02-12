@@ -12,7 +12,7 @@ contract Proposers is Structures, Utils {
 
   LinkedAddress currentProposer; // can propose a new shield state
   uint proposerStartBlock; // L1 block where currentProposer became current
-  uint leafCount; // number of leaves in the Merkle treeWidth
+  uint public leafCount; // number of leaves in the Merkle treeWidth
 
 
   modifier onlyCurrentProposer() { // Modifier

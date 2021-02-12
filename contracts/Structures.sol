@@ -27,7 +27,7 @@ contract Structures is Config {
   );
 
   event TransactionSubmitted(
-    Transaction t
+    Transaction transaction
   );
 
   event NewCurrentProposer(
