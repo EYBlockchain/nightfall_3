@@ -77,6 +77,9 @@ services:
       - type: bind
         source: ../nightfall-deployer/config
         target: /app/config/
+      - type: bind
+        source: ../nightfall-deployer/migrations
+        target: /app/migrations
     networks:
       - nightfall_network
     environment:
