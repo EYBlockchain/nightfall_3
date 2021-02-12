@@ -5,15 +5,19 @@ Contract to manage the creation and managment of Proposals
 pragma solidity ^0.6.0;
 pragma experimental ABIEncoderV2;
 
-import './Structures.sol';
+import './Config.sol';
 import './Utils.sol';
+import './Structures.sol';
 
-contract Proposers is Structures, Utils {
+contract Proposers is Structures, Config {
 
   LinkedAddress currentProposer; // can propose a new shield state
   uint proposerStartBlock; // L1 block where currentProposer became current
   uint public leafCount; // number of leaves in the Merkle treeWidth
-
+  mapping(address => uint) public pendingWithdrawals;
+  mapping(bytes32 => LinkedHash) public blockHashes; //linked list of block hashes
+  mapping(address => LinkedAddress) public proposers;
+  bytes32 endHash; // holds the hash at the end of the linked list of block hashes, so that we can pick up the end.
 
   modifier onlyCurrentProposer() { // Modifier
     require(msg.sender == currentProposer.thisAddress, "Only the current proposer can call this.");
@@ -53,13 +57,13 @@ contract Proposers is Structures, Utils {
     // convince a challenge function of the (in)correctness by an offchain
     // computation; the on-chain code doesn't save the pre-image of the hash so
     // it can't tell if it's been given the correct one as part of a challenge.
-    require(b.blockHash == hashBlock(b), 'The block hash is incorrect');
+    require(b.blockHash == Utils.hashBlock(b), 'The block hash is incorrect');
     // likewise the transaction hashes
     uint nCommitments; // number of commitments, used in NewLeaves/NewLeaf event
     for (uint i = 0; i < b.transactionHashes.length; i++) {
       // make sure the Transactions are in the Block
       require(
-        b.transactionHashes[i] == hashTransaction(t[i]),
+        b.transactionHashes[i] == Utils.hashTransaction(t[i]),
         'Transaction hash was not found'
       );
       // remember how many commitments are in the block, this is needed later
@@ -121,5 +125,21 @@ contract Proposers is Structures, Utils {
     uint amount = pendingWithdrawals[msg.sender];
     pendingWithdrawals[msg.sender] = 0;
     msg.sender.transfer(amount);
+  }
+
+  function removeProposer(address proposer) internal {
+    address previousAddress = proposers[proposer].previousAddress;
+    address nextAddress = proposers[proposer].nextAddress;
+    delete proposers[proposer];
+    proposers[previousAddress].nextAddress = proposers[nextAddress].thisAddress;
+    proposers[nextAddress].previousAddress = proposers[previousAddress].thisAddress;
+  }
+
+  // Checks if a block is actually referenced in the queue of blocks waiting
+  // to go into the Shield state (stops someone challenging with a non-existent
+  // block).
+  function isBlockReal(Block memory b) public view {
+    require(b.blockHash == Utils.hashBlock(b), 'The block hash is incorrect');
+    require(blockHashes[b.blockHash].thisHash == b.blockHash, 'This block does not exist');
   }
 }

@@ -10,11 +10,12 @@ pragma solidity ^0.6.0;
 pragma experimental ABIEncoderV2;
 
 import './Verifier.sol';
-import './Utils.sol';
+import './Proposers.sol';
 import './Key_Registry.sol';
 import './MerkleTree_Stateless.sol';
+import './Utils.sol';
 
-contract Challenges is Utils, Verifier, Key_Registry, MerkleTree_Stateless {
+contract Challenges is Key_Registry, Proposers {
 
   enum ChallengeType { //TODO - remove but it's a handy reminder for now
     PROOF_VERIFIES,
@@ -32,7 +33,7 @@ contract Challenges is Utils, Verifier, Key_Registry, MerkleTree_Stateless {
   ) public {
     isBlockReal(blockL2); // check the block exists
     require(
-      blockL2.transactionHashes[transactionIndex] == hashTransaction(transaction),
+      blockL2.transactionHashes[transactionIndex] == Utils.hashTransaction(transaction),
       'This transaction is not in the block at the index given'
     );
     require(!Verifier.verify(
@@ -77,17 +78,17 @@ contract Challenges is Utils, Verifier, Key_Registry, MerkleTree_Stateless {
     uint nCommitments;
     for (uint i = 0; i < transactions.length; i++) {
       require(
-        blockL2.transactionHashes[i] == hashTransaction(transactions[i]),
+        blockL2.transactionHashes[i] == Utils.hashTransaction(transactions[i]),
         'Transaction hash was not found'
       );
       nCommitments += transactions[i].commitments.length; // remember how many commitments are in the block
     }
     require(
-      priorBlockL2.transactionHashes[priorBlockL2.transactionHashes.length - 1] == hashTransaction(priorBlockL2LastTransaction),
+      priorBlockL2.transactionHashes[priorBlockL2.transactionHashes.length - 1] == Utils.hashTransaction(priorBlockL2LastTransaction),
       'Last transaction of prior block is invalid'
     );
     // next check the sibling path is valid and get the Frontier
-    (bool valid, bytes32[33] memory _frontier) = checkPath(
+    (bool valid, bytes32[33] memory _frontier) = MerkleTree_Stateless.checkPath(
       siblingPath,
       commitmentIndex,
       priorBlockL2LastTransaction.commitments[priorBlockL2LastTransaction.commitments.length - 1],
@@ -103,7 +104,7 @@ contract Challenges is Utils, Verifier, Key_Registry, MerkleTree_Stateless {
         commitments[k++] = transactions[i].commitments[j];
     }
     // At last, we can check if the root itself is correct!
-    (bytes32 root, , ) = insertLeaves(commitments, _frontier, commitmentIndex);
+    (bytes32 root, , ) = MerkleTree_Stateless.insertLeaves(commitments, _frontier, commitmentIndex);
     require(root != blockL2.root, 'The root is actually fine');
     challengeAccepted(blockL2);
   }
@@ -123,5 +124,15 @@ contract Challenges is Utils, Verifier, Key_Registry, MerkleTree_Stateless {
     pendingWithdrawals[msg.sender] += BLOCK_STAKE;
     // TODO repay the fees of the transactors and any escrowed funds held by the
     // Shield contract.
+  }
+
+  function removeBlockHashes(bytes32 blockHash) internal {
+    bytes32 hash = blockHash;
+    endHash = blockHashes[hash].previousHash;
+    do {
+      bytes32 nextHash = blockHashes[hash].nextHash;
+      delete blockHashes[hash];
+      hash = nextHash;
+    } while(blockHashes[hash].nextHash != ZERO);
   }
 }
