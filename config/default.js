@@ -27,4 +27,5 @@ module.exports = {
   ZERO: '0x0000000000000000000000000000000000000000000000000000000000000000',
   HASH_TYPE: 'mimc',
   TRANSACTIONS_PER_BLOCK: 2,
+  TIMBER_SYNC_RETRIES: 5, // Sets amount of exponential backoff attempts to sync with timber.
 };

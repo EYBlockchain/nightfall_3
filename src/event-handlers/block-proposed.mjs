@@ -1,18 +1,35 @@
+import config from 'config';
 import logger from '../utils/logger.mjs';
 import checkBlock from '../services/check-block.mjs';
 import BlockError from '../classes/block-error.mjs';
 import { removeTransactions, saveBlock } from '../services/database.mjs';
 import mappedBlock from '../event-mappers/block-proposed.mjs';
 import { setBlockProposed } from '../services/propose-block.mjs';
+import { getLeafCount } from '../utils/timber.mjs';
 /**
 This handler runs whenever a BlockProposed event is emitted by the blockchain
 */
+const { TIMBER_SYNC_RETRIES } = config;
 async function blockProposedEventHandler(data) {
   // convert web3js' version of a struct into our node objects.
-  const { block, transactions } = mappedBlock(data);
+  const { block, transactions, leafCount } = mappedBlock(data);
+
+  // Sync Optimist with Timber by checking number of leaves
+  for (let i = 0; i < TIMBER_SYNC_RETRIES; i++) {
+    const timberLeafCount = await getLeafCount();
+    // Exponential Backoff
+    const backoff = 2 ** i * 1000;
+    if (leafCount > timberLeafCount) {
+      // Need to wait if the latest leaf count from the block is ahead of Timber
+      logger.debug(`Timber doesn't appear synced: Waiting ${backoff}`);
+      await new Promise(resolve => setTimeout(resolve, backoff));
+      if (i === TIMBER_SYNC_RETRIES) {
+        throw new Error('Timber and Optimist appear out of sync');
+      }
+    } else break;
+  }
   logger.info('Received BlockProposed event');
   // TODO this waits to be sure Timber is updated.  Instead write some proper syncing code!
-  await new Promise(resolve => setTimeout(resolve, 5000));
   try {
     // we'll check the block and issue a challenge if appropriate
     await checkBlock(block, transactions);
