@@ -18,7 +18,7 @@ function submitChallenge(message) {
       2,
     )}`,
   );
-  ws.send(message);
+  ws.send(JSON.stringify({ type: 'challenge', tx: message }));
 }
 
 export default async function createChallenge(block, transactions, err) {

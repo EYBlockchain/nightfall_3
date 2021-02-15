@@ -63,7 +63,7 @@ export async function conditionalMakeBlock(proposer) {
       const unsignedProposeBlockTransaction = await (await waitForShield()).methods
         .proposeBlock(block, transactions)
         .encodeABI();
-      if (ws) ws.send(unsignedProposeBlockTransaction);
+      if (ws) ws.send(JSON.stringify({ type: 'block', tx: unsignedProposeBlockTransaction }));
       logger.debug('Send unsigned propose-block transaction to ws client');
       // Wait until it is proposed to the blockchain before we make any more:
       logger.info('Waiting until block is proposed');

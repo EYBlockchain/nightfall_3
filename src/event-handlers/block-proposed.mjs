@@ -29,6 +29,7 @@ async function blockProposedEventHandler(data) {
     logger.info('Block was valid');
   } catch (err) {
     if (err instanceof BlockError) await createChallenge(block, transactions, err);
+    // TODO remove transactions
     else throw new Error(err);
   }
 }
