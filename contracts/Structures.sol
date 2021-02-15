@@ -22,8 +22,8 @@ contract Structures is Config {
 
   event BlockProposed(
     bytes32 indexed blockHash,
-    Block b,
-    Transaction[] t
+    Block block,
+    Transaction[] transactions
   );
 
   event TransactionSubmitted(
