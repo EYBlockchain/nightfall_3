@@ -6,9 +6,7 @@ Basic data structures for an optimistic rollup
 pragma solidity ^0.6.0;
 pragma experimental ABIEncoderV2;
 
-import './Config.sol';
-
-contract Structures is Config {
+contract Structures {
 
   enum TransactionTypes { DEPOSIT, SINGLE_TRANSFER, DOUBLE_TRANSFER, WITHDRAW }
 
@@ -38,12 +36,6 @@ contract Structures is Config {
   */
   event NewLeaf(uint leafIndex, bytes32 leafValue, bytes32 root);
   event NewLeaves(uint minLeafIndex, bytes32[] leafValues, bytes32 root);
-
-  mapping(bytes32 => LinkedHash) public blockHashes; //linked list of block hashes
-  mapping(address => LinkedAddress) public proposers;
-  mapping(address => uint) public pendingWithdrawals;
-
-  bytes32 endHash; // holds the hash at the end of the linked list of block hashes, so that we can pick up the end.
 
   // a struct representing a generic transaction, some of these data items
   // will hold default values for any specific tranaction, e.g. there are no

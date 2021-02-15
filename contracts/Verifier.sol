@@ -30,7 +30,7 @@ pragma solidity ^0.6.0;
 import "./Ownable.sol";
 import "./Pairing.sol";
 
-contract Verifier is Ownable {
+library Verifier {
 
   using Pairing for *;
 
@@ -49,8 +49,6 @@ contract Verifier is Ownable {
       Pairing.G1Point[2] query;
   }
 
-  Verification_Key_GM17 vk;
-
   function verify(uint256[] memory _proof, uint256 _publicInputsHash, uint256[] memory _vk) public returns (bool result) {
       if (verificationCalculation(_proof, _publicInputsHash, _vk) == 0) {
           result = true;
@@ -63,6 +61,7 @@ contract Verifier is Ownable {
 
       Proof_GM17 memory proof;
       Pairing.G1Point memory vk_dot_inputs;
+      Verification_Key_GM17 memory vk;
 
       vk_dot_inputs = Pairing.G1Point(0, 0); //initialise
 
@@ -100,24 +99,12 @@ contract Verifier is Ownable {
           return 1;
       }
 
-
       /**
        * e(A, H^{gamma}) = e(G^{gamma}, B)
        */
       if (!Pairing.pairingProd2(proof.A, vk.Hgamma, Pairing.negate(vk.Ggamma), proof.B)) {
           return 2;
       }
-
-      delete proof;
-      delete vk.H;
-      delete vk.Galpha;
-      delete vk.Hbeta;
-      delete vk.Ggamma;
-      delete vk.Hgamma;
-      delete vk.query;
-      delete vk_dot_inputs;
-
       return 0;
-
   }
 }
