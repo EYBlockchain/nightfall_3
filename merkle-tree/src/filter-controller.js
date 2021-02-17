@@ -58,7 +58,7 @@ const rollbackResponseFunction = async (eventObject, args) => {
   // Now some bespoke code; specific to how our application needs to deal with this eventObject:
   // const { blockNumber } = eventData;
   const { root, leafCount } = eventInstance;
-  mtc.rollback(db, treeHeight, leafCount, root); // no need to await this
+  mtc.rollback(db, treeHeight, Number(leafCount), root); // no need to await this
 };
 
 /**

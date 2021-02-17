@@ -17,12 +17,13 @@ export default class HistoryService {
   Saves the given root and associated frontier, leafIndex and block
   Added by Westlad
   */
-  async saveTreeHistory({ root, frontier, leafIndex, currentLeafCount, blockNumber }) {
+  async saveTreeHistory({ root, oldRoot, frontier, leafIndex, currentLeafCount, blockNumber }) {
     logger.debug('src/db/service/metadata.service saveTreeHistory()');
     // insert the leaf into the 'nodes' collection:
     try {
       const dbResponse = await this.db.save(COLLECTIONS.HISTORY, {
         root,
+        oldRoot,
         frontier,
         leafIndex,
         currentLeafCount,
@@ -43,8 +44,9 @@ export default class HistoryService {
     return historyMapper(docs);
   }
 
-  async deleteTreeHistory(leafCount) {
+  async deleteTreeHistory(_leafCount) {
     logger.debug('deleting alternative timeline');
-    this.db.deleteMany(COLLECTIONS.HISTORY, { currentLeafCount: { $gte: leafCount } });
+    const leafCount = Number(_leafCount);
+    return this.db.deleteMany(COLLECTIONS.HISTORY, { currentLeafCount: { $gte: leafCount } });
   }
 }
