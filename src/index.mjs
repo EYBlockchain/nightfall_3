@@ -8,12 +8,14 @@ import {
   subscribeToTransactionSubmitted,
   transactionSubmittedEventHandler,
   subscribeToBlockAssembledWebSocketConnection,
+  subscribeToBlockDeletedEventHandler,
+  blockDeletedEventHandler,
 } from './event-handlers/index.mjs';
 import Proposer from './classes/proposer.mjs';
 import {
   conditionalMakeBlock,
   setBlockAssembledWebSocketConnection,
-} from './services/propose-block.mjs';
+} from './services/block-assembler.mjs';
 
 const main = async () => {
   try {
@@ -22,6 +24,7 @@ const main = async () => {
     subscribeToBlockProposedEvent(blockProposedEventHandler);
     subscribeToNewCurrentProposer(newCurrentProposerEventHandler, proposer);
     subscribeToTransactionSubmitted(transactionSubmittedEventHandler);
+    subscribeToBlockDeletedEventHandler(blockDeletedEventHandler);
     // subscribe to WebSocket events
     subscribeToBlockAssembledWebSocketConnection(setBlockAssembledWebSocketConnection);
     // start making blocks whenever we can

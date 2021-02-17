@@ -96,6 +96,13 @@ export async function subscribeToRejectedBlock(callback, ...args) {
   return emitter;
 }
 
+export async function subscribeToBlockDeletedEventHandler(callback, ...args) {
+  const emitter = (await waitForShield()).events.BlockDeleted();
+  emitter.on('data', event => callback(event, args));
+  logger.debug('Subscribed to RejectedBlock event');
+  return emitter;
+}
+
 export async function subscribeToBlockAssembledWebSocketConnection(callback, ...args) {
   wss.on('connection', ws =>
     ws.on('message', message => {

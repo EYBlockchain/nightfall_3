@@ -10,7 +10,7 @@ import logger from '../utils/logger.mjs';
 const {
   MONGO_URL,
   OPTIMIST_DB,
-  UNPROCESSED_TRANSACTIONS_COLLECTION,
+  TRANSACTIONS_COLLECTION,
   METADATA_COLLECTION,
   SUBMITTED_BLOCKS_COLLECTION,
 } = config;
@@ -53,6 +53,17 @@ export async function getBlockByBlockHash(blockHash) {
 }
 
 /**
+function to delete a block. This is useful after a rollback event, whereby the
+block no longer exists
+*/
+export async function deleteBlock(blockHash) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { blockHash };
+  return db.collection(SUBMITTED_BLOCKS_COLLECTION).deleteOne(query);
+}
+
+/**
 function to store addresses of proposers that are registered through this
 app. These are needed because the app needs to know when one of them is the
 current (active) proposer, at which point it will automatically start to
@@ -87,29 +98,42 @@ export async function getMostProfitableTransactions(number) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   return db
-    .collection(UNPROCESSED_TRANSACTIONS_COLLECTION)
-    .find({}, { limit: number, sort: { fee: -1 }, projection: { _id: 0 } })
+    .collection(TRANSACTIONS_COLLECTION)
+    .find({ mempool: true }, { limit: number, sort: { fee: -1 }, projection: { _id: 0 } })
     .toArray();
 }
 
 /**
 Function to save a (unprocessed) Transaction
 */
-export async function saveTransaction(transaction) {
+export async function saveTransaction(_transaction) {
+  const transaction = { ..._transaction, mempool: true };
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  return db.collection(UNPROCESSED_TRANSACTIONS_COLLECTION).insertOne(transaction);
+  return db.collection(TRANSACTIONS_COLLECTION).insertOne(transaction);
 }
 
 /**
-Function to remove a set of transactions once they've been processed into a
-block
+Function to add a set of transactions from the layer 2 mempool once a block has been rolled back
 */
-export async function removeTransactions(block) {
+export async function addTransactionsToMemPool(block) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { transactionHash: { $in: block.transactionHashes } };
-  return db.collection(UNPROCESSED_TRANSACTIONS_COLLECTION).deleteMany(query);
+  const update = { $set: { mempool: true } };
+  return db.collection(TRANSACTIONS_COLLECTION).updateMany(query, update);
+}
+
+/**
+Function to remove a set of transactions from the layer 2 mempool once they've
+been processed into a block
+*/
+export async function removeTransactionsFromMemPool(block) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { transactionHash: { $in: block.transactionHashes } };
+  const update = { $set: { mempool: false } };
+  return db.collection(TRANSACTIONS_COLLECTION).updateMany(query, update);
 }
 
 /**
@@ -118,5 +142,5 @@ How many transactions are waiting to be processed into a block?
 export async function numberOfUnprocessedTransactions() {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  return db.collection(UNPROCESSED_TRANSACTIONS_COLLECTION).countDocuments();
+  return db.collection(TRANSACTIONS_COLLECTION).countDocuments({ mempool: true });
 }

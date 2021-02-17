@@ -3,7 +3,7 @@ Module to handle new Transactions being posted
 */
 import logger from '../utils/logger.mjs';
 import { saveTransaction } from '../services/database.mjs';
-// import { conditionalMakeBlock } from '../services/propose-block.mjs';
+// import { conditionalMakeBlock } from '../services/block-assembler.mjs';
 import mappedTransaction from '../event-mappers/transaction-submitted.mjs';
 
 /**

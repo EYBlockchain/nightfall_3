@@ -8,7 +8,7 @@ import Transaction from '../classes/transaction.mjs';
 function mappedData(data) {
   const { block: unMappedBlock, transactions: unMappedTransactions } = data.returnValues;
   const { proposer, transactionHashes, root, blockHash, leafCount } = unMappedBlock;
-  const block = { proposer, transactionHashes, root, blockHash, leafCount };
+  const block = { proposer, transactionHashes, root, blockHash, leafCount: Number(leafCount) };
   const transactions = unMappedTransactions.map(u => {
     const {
       transactionHash,
