@@ -120,7 +120,7 @@ contract Challenges is Key_Registry, Proposers {
     // where the bad block was created.  Luckily, we noted that value in
     // the block when the block was proposed. It was check onchain so must be
     // correct.
-    leafCount -= badBlock.leafCount;
+    leafCount = badBlock.leafCount;
     // we need to remove the block that has been successfully
     // challenged from the linked list of blocks and all of the subsequent
     // blocks
@@ -137,10 +137,12 @@ contract Challenges is Key_Registry, Proposers {
     bytes32 hash = blockHash;
     endHash = blockHashes[hash].previousHash;
     do {
+      emit BlockDeleted(hash);
       bytes32 nextHash = blockHashes[hash].nextHash;
       delete blockHashes[hash];
       hash = nextHash;
-    } while(blockHashes[hash].nextHash != ZERO);
+    } while(hash != ZERO);
+    blockHashes[endHash].nextHash = ZERO; // terminate the chain correctly
   }
 
   // for dev purposes. Do not use in production

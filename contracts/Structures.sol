@@ -15,6 +15,8 @@ contract Structures {
     uint leafCount
   );
 
+  event BlockDeleted(bytes32 blockHash);
+
   event BlockProposed(
     Block block,
     Transaction[] transactions,
