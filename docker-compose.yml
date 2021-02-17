@@ -125,7 +125,6 @@ services:
       - type: bind
         source: ../timber/merkle-tree/test
         target: /app/test/
-    restart: on-failure
     environment:
       BLOCKCHAIN_HOST: ws://ganache
       BLOCKCHAIN_PORT: 8545
@@ -133,7 +132,7 @@ services:
       MONGO_PORT: 27017
       MONGO_NAME: merkle_tree
       HASH_TYPE: mimc
-      LOG_LEVEL: debug
+      LOG_LEVEL: info
       AUTOSTART: enabled
       NODE_ENV: nightfall_2
 

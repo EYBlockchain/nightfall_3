@@ -138,7 +138,7 @@ describe('Testing the http API', () => {
   });
 
   describe('Deposit tests', () => {
-    it('should deposit some crypto into a ZKP commitment and get an unsigned blockchain transaction back', async () => {
+    it('should deposit some crypto into a ZKP commitment', async () => {
       const res = await chai
         .request(url)
         .post('/deposit')
@@ -161,7 +161,7 @@ describe('Testing the http API', () => {
       await new Promise(resolve => setTimeout(resolve, 5000));
     });
 
-    it('should deposit some more crypto (we need a second token for the double transfer test) into a ZKP commitment and get a raw blockchain transaction back', async () => {
+    it('should deposit some more crypto (we need a second token for the double transfer test) into a ZKP commitment ', async () => {
       const res = await chai
         .request(url)
         .post('/deposit')
@@ -183,7 +183,7 @@ describe('Testing the http API', () => {
       await new Promise(resolve => setTimeout(resolve, 5000));
     });
 
-    it('should deposit yet more crypto (we need another token to test withdraw) into a ZKP commitment and get a raw blockchain transaction back', async () => {
+    it('should deposit yet more crypto (we need another token to test withdraw) into a ZKP commitment', async () => {
       const res = await chai
         .request(url)
         .post('/deposit')
@@ -201,6 +201,76 @@ describe('Testing the http API', () => {
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
       console.log(`Gas used was ${Number(receipt.gasUsed)}`);
+    });
+  });
+
+  describe('Rollback tests', () => {
+    let block;
+    it('should find the Block with the first two Deposit transactions in them', async () => {
+      const res = await chai.request(optimistUrl).get(`/block/${transactions[0].transactionHash}`);
+      block = res.body;
+      expect(block).to.have.property('blockHash');
+      expect(block).to.have.property('leafCount');
+    });
+
+    it('should rollback the Block just created', async () => {
+      const res = await chai
+        .request(optimistUrl)
+        .post('/block/rollback')
+        .send(block);
+      txDataToSign = res.body;
+      expect(txDataToSign).to.be.a('string');
+      // now we need to sign the transaction and send it to the blockchain
+      const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
+      expect(receipt).to.have.property('transactionHash');
+      expect(receipt).to.have.property('blockHash');
+      console.log(`Gas used was ${Number(receipt.gasUsed)}`);
+      // give Timber time to respond to the blockchain event
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    });
+    it.skip('should deposit some crypto into a ZKP commitment (to replace the one that was rolled back)', async () => {
+      const res = await chai
+        .request(url)
+        .post('/deposit')
+        .send({
+          ercAddress,
+          tokenId,
+          value,
+          zkpPublicKey,
+          fee,
+        });
+      txDataToSign = res.body.txDataToSign;
+      transactions.push(res.body.transaction);
+      expect(txDataToSign).to.be.a('string');
+      // now we need to sign the transaction and send it to the blockchain
+      const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
+      expect(receipt).to.have.property('transactionHash');
+      expect(receipt).to.have.property('blockHash');
+      console.log(`Gas used was ${Number(receipt.gasUsed)}`);
+      // give Timber time to respond to the blockchain event
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    });
+
+    it.skip('should deposit some more crypto (we need a second token for the double transfer test) into a ZKP commitment  (to replace the one that was rolled back) back', async () => {
+      const res = await chai
+        .request(url)
+        .post('/deposit')
+        .send({
+          ercAddress,
+          tokenId,
+          value,
+          zkpPublicKey,
+        });
+      txDataToSign = res.body.txDataToSign;
+      transactions.push(res.body.transaction);
+      expect(txDataToSign).to.be.a('string');
+      // now we need to sign the transaction and send it to the blockchain
+      const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
+      expect(receipt).to.have.property('transactionHash');
+      expect(receipt).to.have.property('blockHash');
+      console.log(`Gas used was ${Number(receipt.gasUsed)}`);
+      // give Timber time to respond to the blockchain event
+      await new Promise(resolve => setTimeout(resolve, 5000));
     });
   });
 
