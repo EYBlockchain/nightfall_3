@@ -20,7 +20,7 @@ contract Structures {
   event BlockProposed(
     Block block,
     Transaction[] transactions,
-    uint leafCount
+    uint currentLeafCount
   );
 
   event TransactionSubmitted(
