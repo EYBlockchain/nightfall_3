@@ -13,6 +13,7 @@ const {
   TRANSACTIONS_COLLECTION,
   METADATA_COLLECTION,
   SUBMITTED_BLOCKS_COLLECTION,
+  NULLIFIER_COLLECTION,
 } = config;
 
 /**
@@ -153,4 +154,24 @@ export async function getTransactionByTransactionHash(transactionHash) {
   const db = connection.db(OPTIMIST_DB);
   const query = { transactionHash };
   return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
+}
+
+export async function saveNullifiers(nullifiers) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const indexNullifiers = nullifiers.map(n => {
+    return {
+      hash: n,
+    };
+  });
+  return db.collection(NULLIFIER_COLLECTION).insertMany(indexNullifiers);
+}
+
+export async function retrieveNullifiers() {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  return db
+    .collection(NULLIFIER_COLLECTION)
+    .find({}, { projection: { hash: 1 } })
+    .toArray();
 }

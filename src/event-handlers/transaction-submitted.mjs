@@ -2,8 +2,8 @@
 Module to handle new Transactions being posted
 */
 import logger from '../utils/logger.mjs';
-import { saveTransaction } from '../services/database.mjs';
-// import { conditionalMakeBlock } from '../services/block-assembler.mjs';
+import { saveTransaction, retrieveNullifiers, saveNullifiers } from '../services/database.mjs';
+// import { conditionalMakeBlock } from '../services/propose-block.mjs';
 import mappedTransaction from '../event-mappers/transaction-submitted.mjs';
 import checkTransaction from '../services/transaction-checker.mjs';
 import TransactionError from '../classes/transaction-error.mjs';
@@ -20,6 +20,18 @@ async function transactionSubmittedEventHandler(data) {
   try {
     await checkTransaction(transaction); // TODO handle errors
     logger.info('Transaction checks passed');
+    const storedNullifiers = (await retrieveNullifiers()).map(sNull => sNull.hash); // List of Nullifiers stored by blockProposer
+    const transactionNullifiers = transaction.nullifiers.filter(
+      hash => hash !== '0x0000000000000000000000000000000000000000000000000000000000000000',
+    ); // Deposit transactions still have nullifier fields but they are 0
+    const dupNullifier = transactionNullifiers.some(txNull => storedNullifiers.includes(txNull)); // Move to Set for performance later.
+    if (dupNullifier) {
+      throw new TransactionError(
+        'One of the Nullifiers in the transaction is a duplicate! Dropping tx',
+        1,
+      );
+    }
+    if (transactionNullifiers.length > 0) saveNullifiers(transactionNullifiers); // we can now safely store the nullifiers IFF they are present
     saveTransaction(transaction); // then we need to save it
   } catch (err) {
     if (err instanceof TransactionError)
