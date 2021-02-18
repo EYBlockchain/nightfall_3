@@ -11,14 +11,14 @@ This handler runs whenever a BlockProposed event is emitted by the blockchain
 const { TIMBER_SYNC_RETRIES } = config;
 async function blockProposedEventHandler(data) {
   // convert web3js' version of a struct into our node objects.
-  const { block, transactions, leafCount } = mappedBlock(data);
+  const { block, transactions, currentLeafCount } = mappedBlock(data);
 
   // Sync Optimist with Timber by checking number of leaves
   for (let i = 0; i < TIMBER_SYNC_RETRIES; i++) {
     const timberLeafCount = await getLeafCount();
     // Exponential Backoff
     const backoff = 2 ** i * 1000;
-    if (leafCount > timberLeafCount) {
+    if (currentLeafCount > timberLeafCount) {
       // Need to wait if the latest leaf count from the block is ahead of Timber
       logger.debug(`Timber doesn't appear synced: Waiting ${backoff}`);
       await new Promise(resolve => setTimeout(resolve, backoff));
