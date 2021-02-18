@@ -93,7 +93,7 @@ contract Proposers is Structures, Config {
     // remember how many leaves the Merkle tree has (Timber needs this to check
     // that it hasn't missed any leaf additions)
     leafCount += nCommitments;
-    emit BlockProposed(b, t);
+    emit BlockProposed(b, t, leafCount);
   }
 
   //add the proposer to the circular linked list
