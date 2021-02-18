@@ -6,7 +6,7 @@ import Block from '../classes/block.mjs';
 import Transaction from '../classes/transaction.mjs';
 
 function mappedData(data) {
-  const { block: unMappedBlock, transactions: unMappedTransactions } = data.returnValues;
+  const { block: unMappedBlock, transactions: unMappedTransactions, leafCount } = data.returnValues;
   const { proposer, transactionHashes, root, blockHash } = unMappedBlock;
   const block = { proposer, transactionHashes, root, blockHash };
   const transactions = unMappedTransactions.map(u => {
@@ -43,7 +43,7 @@ function mappedData(data) {
     return transaction;
   });
   if (!Block.checkHash(block)) throw new Error('Block hash incorrect in mapper');
-  return { block, transactions };
+  return { block, transactions, leafCount };
 }
 
 export default mappedData;
