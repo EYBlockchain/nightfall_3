@@ -9,9 +9,57 @@ import utilsWeb3 from './utils-web3';
 
 import { LeafService, MetadataService } from './db/service';
 import logger from './logger';
+import mtc from './merkle-tree-controller';
 
 // global subscriptions object:
 const subscriptions = {};
+
+/**
+@author westlad
+This is a response function (similar to the ones below, but specific for a
+rollback.  It closely follows the same format though)
+*/
+const rollbackResponseFunction = async (eventObject, args) => {
+  // NEW - function remains the same, for detecting single leaves, but can now specify the event name
+  // NOTE - events must have same parameters as newLeaf / newLeaves
+  // We make some hardcoded presumptions about what's contained in the 'args':
+  const { db, contractName, treeId } = args;
+
+  const eventName = args.eventName === undefined ? 'Rollback' : args.eventName; // hardcoded, as inextricably linked to the name of this function.
+
+  let eventParams;
+  logger.debug(`eventname: ${eventName}`);
+
+  if (treeId === undefined || treeId === '') {
+    eventParams = config.contracts[contractName].events[eventName].parameters;
+  } else {
+    eventParams = config.contracts[contractName].treeId[treeId].events[eventName].parameters;
+  }
+
+  // Now some generic eventObject handling code:
+  const { eventData } = eventObject;
+
+  /*
+  extract each relevent event parameter from the eventData and create an eventInstance: {
+    eventParamName_0: eventParamValue_0,
+    eventParamName_1: eventParamValue_1,
+    ...
+  }
+  */
+  const eventInstance = {};
+  eventParams.forEach(param => {
+    eventInstance[param] = eventData.returnValues[param];
+  });
+  logger.silly(`eventInstance: ${JSON.stringify(eventInstance, null, 2)}`);
+
+  const metadataService = new MetadataService(db);
+  const { treeHeight } = await metadataService.getTreeHeight();
+
+  // Now some bespoke code; specific to how our application needs to deal with this eventObject:
+  // const { blockNumber } = eventData;
+  const { root, leafCount } = eventInstance;
+  mtc.rollback(db, treeHeight, Number(leafCount), root); // no need to await this
+};
 
 /**
 TODO: description
@@ -144,6 +192,7 @@ Naming convention:
 const responseFunctions = {
   NewLeaf: newLeafResponseFunction,
   NewLeaves: newLeavesResponseFunction,
+  Rollback: rollbackResponseFunction,
 };
 
 /**
@@ -185,8 +234,7 @@ async function filterBlock(db, contractName, contractInstance, fromBlock, treeId
 
   eventNames.forEach(async eventName => {
     const responder = newEventResponder;
-    const responseFunction =
-      eventName === eventNames[0] ? responseFunctions.NewLeaf : responseFunctions.NewLeaves;
+    const responseFunction = responseFunctions[eventName];
     const responseFunctionArgs = { db, contractName, eventName, treeId };
 
     const eventSubscription = await utilsWeb3.subscribeToEvent(

@@ -10,6 +10,7 @@ import utilsMT from './utils-merkle-tree';
 import logger from './logger';
 
 import { LeafService, NodeService, MetadataService, HistoryService } from './db/service';
+const { ZERO } = config;
 
 /**
 Check the leaves of the tree are all there.
@@ -130,7 +131,7 @@ async function getPathByLeafIndex(db, leafIndex) {
   const nodeService = new NodeService(db);
   const nodes = await nodeService.getNodesByNodeIndices(pathIndices);
 
-  logger.debug(`${JSON.stringify(nodes, null, 2)}`);
+  // logger.debug(`${JSON.stringify(nodes, null, 2)}`);
 
   // Check whether some nodeIndices don't yet exist in the db. If they don't, we'll presume their values are zero, and add these to the 'nodes' before returning them.
   // eslint-disable-next-line no-shadow
@@ -249,6 +250,7 @@ async function update(db) {
     logger.debug(`${numberOfHashes} hashes are required to update the tree...`);
 
     let { frontier } = latestRecalculation;
+    const { root: oldRoot } = latestRecalculation; // we store the old root in history as well as the new root (the latter being used to look up the history).
     frontier = frontier === undefined ? [] : frontier;
     const leaves = await leafService.getLeavesByLeafIndexRange(fromLeafIndex, toLeafIndex);
     const leafValues = leaves.map(leaf => leaf.value);
@@ -281,6 +283,7 @@ async function update(db) {
     // forntier, but the one that existed when the block was added.
     const history = {
       root,
+      oldRoot,
       frontier: historicFrontier,
       leafIndex: latestRecalculationLeafIndex,
       currentLeafCount,
@@ -305,6 +308,77 @@ async function getTreeHistory(db, root) {
   return historyService.getTreeHistory(root);
 }
 
+/**
+This function rolls back the database to a time when it contained 'leafCount'
+leaves and had the root 'root'.
+It is triggered by reception of a Rollback event from the blockchain.
+*/
+async function rollback(db, treeHeight, leafCount, root) {
+  logger.debug(`treeHeight is ${treeHeight}`);
+  const historyService = new HistoryService(db);
+  const leafService = new LeafService(db);
+  const nodeService = new NodeService(db);
+  const metadataService = new MetadataService(db);
+  // before we do anything, make sure the DB is up to date
+  await update(db);
+  // let's get the details of where we're going to rollback to
+  const history = await historyService.getTreeHistory(root);
+  if (leafCount !== history.currentLeafCount)
+    throw new Error(
+      `Rollback event's leaf count (${leafCount}) and the historic record (${history.currentLeafCount}) do not match`,
+    );
+  // Delete all of the nodes between the new highest-index leaf and the old
+  // highest index leaf (inclusive) up to their common root. This has the
+  // effect of removing non-zero nodes, which should no longer exist after
+  // rollback.
+  const oldMaxLeafIndex = await leafService.maxLeafIndex();
+  const newMaxLeafIndex = history.leafIndex;
+  const newMaxLeaf = await leafService.getLeafByLeafIndex(newMaxLeafIndex);
+  // we reverse the arrays so that the leaf is element [0] that is similar to
+  // how the Frontier is arranged and a bit more convenient here.
+  const oldMaxPath = (await getPathByLeafIndex(db, oldMaxLeafIndex)).reverse();
+  const newMaxPath = (await getPathByLeafIndex(db, newMaxLeafIndex)).reverse();
+  const indicesOfNodesToDelete = [];
+  for (let i = 0; i < treeHeight; i++) {
+    if (newMaxPath[i].value === oldMaxPath[i].value) break; // common root reached
+    for (let j = newMaxPath[i].nodeIndex; j < oldMaxPath[i].nodeIndex + 1; j++) {
+      indicesOfNodesToDelete.push(j);
+    }
+  }
+  logger.debug(`Indices of nodes to delete are ${JSON.stringify(indicesOfNodesToDelete, null, 2)}`);
+  let response = await nodeService.deleteNodes(indicesOfNodesToDelete);
+  logger.debug(`Mongo response to node deletion ${JSON.stringify(response, null, 2)}`);
+  // add back the newMaxLeaf (this is the same behaviour as a NewLeaf event)
+  // because our reset of the TImber database will have deleted it.
+  // but note the special case of newMaxLeaf index == 0.  This could indicate
+  // that there is one leaf in the tree or no leaves. For this reason we need
+  // to also check the leafCount.
+  if (Number(leafCount) !== 0) await leafService.insertLeaf(treeHeight, newMaxLeaf);
+  // revert the metadata so that it's consistent with the rollback
+  await metadataService.updateLatestLeaf({
+    latestLeaf: {
+      blockNumber: history.blockNumber,
+      leafIndex: history.leafIndex,
+    },
+  });
+  logger.debug(`Reverting metadata to historic values ${JSON.stringify(history, null, 2)}`);
+  await metadataService.updateLatestRecalculation({
+    latestRecalculation: {
+      blockNumber: history.blockNumber,
+      leafIndex: history.leafIndex,
+      root: history.oldRoot === ZERO ? null : history.oldRoot, // null is neater
+      frontier: history.frontier.map(f => (f === ZERO ? null : f)),
+    },
+  });
+  // delete the history which is now in a future that won't happen
+  response = await historyService.deleteTreeHistory(history.currentLeafCount);
+  logger.debug(`Mongo response to history deletion ${JSON.stringify(response, null, 2)}`);
+  logger.debug(
+    `metadata after rollback is ${JSON.stringify(await metadataService.getMetadata(), null, 2)}`,
+  );
+  logger.info('Rollback complete');
+}
+
 export default {
   checkLeaves,
   updateLatestLeaf,
@@ -312,4 +386,5 @@ export default {
   getSiblingPathByLeafIndex,
   update,
   getTreeHistory,
+  rollback,
 };

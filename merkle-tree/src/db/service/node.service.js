@@ -121,7 +121,7 @@ export default class NodeService {
   }
 
   /**
-  Get all nodes within a range determined by their nodeIndices
+  Get all nodes within a range determined by their nodeIndices (inclusive)
   @param {number} minIndex
   @param {number} maxIndex
   @returns {array} an array of node objects
@@ -216,5 +216,11 @@ export default class NodeService {
     });
 
     return nodeCount;
+  }
+
+  async deleteNodes(indices) {
+    logger.debug('deleting nodes');
+    const dbResponse = this.db.deleteMany(COLLECTIONS.NODE, { nodeIndex: { $in: indices } });
+    return dbResponse;
   }
 }
