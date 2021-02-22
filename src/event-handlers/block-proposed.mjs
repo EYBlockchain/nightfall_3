@@ -16,6 +16,7 @@ async function blockProposedEventHandler(data) {
   await new Promise(resolve => setTimeout(resolve, 5000));
   try {
     // we'll check the block and issue a challenge if appropriate
+    setBlockProposed(block.blockHash); // TODO to move this after check block
     await checkBlock(block, transactions);
     // if the block is, in fact, valid then we also need to remove the
     // transactions in the block from our database of unprocessed transactions,
@@ -25,7 +26,6 @@ async function blockProposedEventHandler(data) {
     await saveBlock(block);
     // signal to the block-making routines that the block is received: they
     // won't make a new block until their previous one is stored on-chain.
-    setBlockProposed(block.blockHash);
     logger.info('Block was valid');
   } catch (err) {
     if (err instanceof BlockError) await createChallenge(block, transactions, err);

@@ -38,11 +38,11 @@ function mappedData(data) {
       historicRoot,
       proof,
     };
-    if (!Transaction.checkHash(transaction))
-      throw new Error('Transaction hash incorrect in block mapper');
+    // if (!Transaction.checkHash(transaction))
+    //   throw new Error('Transaction hash incorrect in block mapper');
     return transaction;
   });
-  if (!Block.checkHash(block)) throw new Error('Block hash incorrect in mapper');
+  // if (!Block.checkHash(block)) throw new Error('Block hash incorrect in mapper');
   return { block, transactions };
 }
 

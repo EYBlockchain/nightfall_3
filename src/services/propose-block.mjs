@@ -7,8 +7,9 @@ import { getMostProfitableTransactions, numberOfUnprocessedTransactions } from '
 import Block from '../classes/block.mjs';
 import { waitForShield } from '../event-handlers/subscribe.mjs';
 import logger from '../utils/logger.mjs';
+import { getContractAddress } from '../utils/contract.mjs';
 
-const { TRANSACTIONS_PER_BLOCK } = config;
+const { TRANSACTIONS_PER_BLOCK, SHIELD_CONTRACT_NAME } = config;
 let makeBlocks = true;
 let blockProposed = '0x0';
 let ws;
@@ -31,6 +32,16 @@ export function setBlockProposed(hash) {
 function isBlockProposed(hash) {
   return hash === blockProposed;
 }
+
+// async function isBlockProposed(blockHash) {
+//   return new Promise(async function(resolve) {
+//     const emitter = (await waitForShield()).events.BlockProposed({
+//       filter: { blockHash },
+//       fromBlock: 0,
+//     });
+//     emitter.on('data', event => resolve(true));
+//   });
+// }
 
 export async function makeBlock(proposer, number = TRANSACTIONS_PER_BLOCK) {
   // we retrieve un-processed transactions from our local database, relying on
@@ -63,7 +74,15 @@ export async function conditionalMakeBlock(proposer) {
       const unsignedProposeBlockTransaction = await (await waitForShield()).methods
         .proposeBlock(block, transactions)
         .encodeABI();
-      if (ws) ws.send(JSON.stringify({ type: 'block', tx: unsignedProposeBlockTransaction }));
+      if (ws)
+        ws.send(
+          JSON.stringify({
+            type: 'block',
+            tx: unsignedProposeBlockTransaction,
+            block,
+            transactions,
+          }),
+        );
       logger.debug('Send unsigned propose-block transaction to ws client');
       // Wait until it is proposed to the blockchain before we make any more:
       logger.info('Waiting until block is proposed');
