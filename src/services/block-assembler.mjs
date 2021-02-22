@@ -3,14 +3,18 @@ This module does all of the heaving lifting for a Proposer: It assembles blocks
 from posted transactions and proposes these blocks.
 */
 import config from 'config';
-import { getMostProfitableTransactions, numberOfUnprocessedTransactions } from './database.mjs';
+import {
+  removeTransactionsFromMemPool,
+  getMostProfitableTransactions,
+  numberOfUnprocessedTransactions,
+} from './database.mjs';
 import Block from '../classes/block.mjs';
 import { waitForShield } from '../event-handlers/subscribe.mjs';
 import logger from '../utils/logger.mjs';
 
 const { TRANSACTIONS_PER_BLOCK } = config;
 let makeBlocks = true;
-let blockProposed = '0x0';
+// let blockProposed = '0x0';
 let ws;
 
 export function setBlockAssembledWebSocketConnection(_ws) {
@@ -24,15 +28,16 @@ export function stopMakingBlocks() {
   makeBlocks = false;
 }
 
-export function setBlockProposed(hash) {
-  blockProposed = hash;
-}
+// export function setBlockProposed(hash) {
+//  blockProposed = hash;
+// }
 
-function isBlockProposed(hash) {
-  return hash === blockProposed;
-}
+// function isBlockProposed(hash) {
+//  return hash === blockProposed;
+// }
 
 export async function makeBlock(proposer, number = TRANSACTIONS_PER_BLOCK) {
+  logger.debug('Block Assembler - about to make a new block');
   // we retrieve un-processed transactions from our local database, relying on
   // the transaction service to keep the database current
   const transactions = await getMostProfitableTransactions(number);
@@ -52,33 +57,46 @@ should not be called from anywhere else because we only want one instance ever.
 export async function conditionalMakeBlock(proposer) {
   logger.debug('Ready to make blocks');
   while (makeBlocks) {
+    logger.silly('Block Assembler is waiting for transactions');
     // if we are the current proposer, and there are enough transactions waiting
     // to be processed, we can assemble a block and create a proposal
     // transaction. If not, we must wait until either we have enough (hooray)
     // or we're no-longer the proposer (boo).
     if ((await numberOfUnprocessedTransactions()) >= TRANSACTIONS_PER_BLOCK && proposer.isMe) {
       const { block, transactions } = await makeBlock(proposer.address);
-      logger.info(`New Block created, ${JSON.stringify(block, null, 2)}`);
-      // TODO propose this block to the Shield contract here!
+      logger.info(`Block Assembler - New Block created, ${JSON.stringify(block, null, 2)}`);
+      // propose this block to the Shield contract here
       const unsignedProposeBlockTransaction = await (await waitForShield()).methods
         .proposeBlock(block, transactions)
         .encodeABI();
       if (ws) ws.send(unsignedProposeBlockTransaction);
-      logger.debug('Send unsigned propose-block transaction to ws client');
+      logger.debug('Send unsigned block-assembler transaction to ws client');
+      // remove the transactiosn from the mempool so we don't keep making new
+      // blocks with them
+      await removeTransactionsFromMemPool(block); // TODO is await needed?
       // Wait until it is proposed to the blockchain before we make any more:
-      logger.info('Waiting until block is proposed');
-      while (!isBlockProposed(block.blockHash)) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+  //    logger.info('Block Assembler - Waiting until block is proposed before making any more');
+  //    while (!isBlockProposed(block.blockHash)) {
+//await new Promise(resolve => setTimeout(resolve, 1000));
         // we only get so long to propose this block.  Once we're no-longer the
         // current proposer, we've missed our chance
-        if (!proposer.isMe) {
-          logger.warn('Our turn as proposer ended before the block was proposed');
-          break;
-        }
-      }
+//        if (!proposer.isMe) {
+//          logger.warn('Our turn as proposer ended before the block was proposed');
+//          break;
+//        }
+//      }
     }
     // slow the loop a bit so we don't hammer the database
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
   logger.debug('Stopped making blocks');
+}
+
+/**
+This function forces a rollback to the given (bad) block and also eliminates the
+block proposer.
+*/
+export async function forceRollback(block) {
+  logger.info(`Request to rollback Block with hash ${block.blockHash}`);
+  return (await waitForShield()).methods.forceChallengeAccepted(block).encodeABI();
 }

@@ -3,10 +3,12 @@ import {
   subscribeToNewCurrentProposer,
   subscribeToTransactionSubmitted,
   subscribeToBlockAssembledWebSocketConnection,
+  subscribeToBlockDeletedEventHandler,
 } from './subscribe.mjs';
 import blockProposedEventHandler from './block-proposed.mjs';
 import newCurrentProposerEventHandler from './new-current-proposer.mjs';
 import transactionSubmittedEventHandler from './transaction-submitted.mjs';
+import blockDeletedEventHandler from './block-deleted.mjs';
 
 export {
   subscribeToBlockProposedEvent,
@@ -16,4 +18,6 @@ export {
   subscribeToTransactionSubmitted,
   transactionSubmittedEventHandler,
   subscribeToBlockAssembledWebSocketConnection,
+  subscribeToBlockDeletedEventHandler,
+  blockDeletedEventHandler,
 };
