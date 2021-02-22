@@ -10,18 +10,17 @@ contract Structures {
 
   enum TransactionTypes { DEPOSIT, SINGLE_TRANSFER, DOUBLE_TRANSFER, WITHDRAW }
 
-  event RejectedProposedBlock(
-    bytes32 blockHash
+  event Rollback(
+    bytes32 root,
+    uint leafCount
   );
 
-  event AcceptedProposedBlock(
-    bytes32 blockHash
-  );
+  event BlockDeleted(bytes32 blockHash);
 
   event BlockProposed(
     Block block,
     Transaction[] transactions,
-    uint leafCount
+    uint currentLeafCount
   );
 
   event TransactionSubmitted(
@@ -61,13 +60,14 @@ contract Structures {
     address proposer;
     bytes32[] transactionHashes; // TODO this could be a merkle root
     bytes32 root; // the 'output' commmitment root after adding all commitments
+    uint leafCount;
   }
 
   struct LinkedHash {
     bytes32 thisHash;
     bytes32 previousHash;
     bytes32 nextHash;
-    uint data; // we use this to hold a timestamp but keeping it general here.
+    uint data; // metadata (currently holds the block time)
   }
 
   struct LinkedAddress {
