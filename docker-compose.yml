@@ -120,12 +120,11 @@ services:
         source: ../timber/merkle-tree/src
         target: /app/src/
       - type: bind
-        source: ../timber/merkle-tree/config
-        target: /app/config/
+        source: ./config/timber.js
+        target: /app/config/timber.js
       - type: bind
         source: ../timber/merkle-tree/test
         target: /app/test/
-    restart: on-failure
     environment:
       BLOCKCHAIN_HOST: ws://ganache
       BLOCKCHAIN_PORT: 8545
@@ -133,9 +132,10 @@ services:
       MONGO_PORT: 27017
       MONGO_NAME: merkle_tree
       HASH_TYPE: mimc
-      LOG_LEVEL: debug
+      LOG_LEVEL: info
       AUTOSTART: enabled
-      NODE_ENV: nightfall_2
+      # NODE_ENV needs to equal the name of the timber config file, without extension (timber.js here)
+      NODE_ENV: timber
 
   #The database storing the merkle tree
   timber-database:
