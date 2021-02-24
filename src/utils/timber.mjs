@@ -122,16 +122,37 @@ export const getFrontier = async () => {
   try {
     const response = await axios.patch(
       `${url}/update`,
+      { contractName: contractName },
+      { timeout: 3600000 },
+    );
+    logger.http('Timber response:', response.data.data.latestRecalculation);
+    // TODO: handle null response
+    return response.data.data.latestRecalculation.frontier.map(e => e ?? config.ZERO);
+  } catch (error) {
+    throw new Error(error);
+  }
+};
+
+/**
+returns the count of leaves in the current tree. Useful to sync state between optimist.
+ */
+export const getLeafCount = async () => {
+  logger.http(`Calling /leaves/count`);
+  try {
+    const response = await axios.get(
+      `${url}/leaves/count`,
       {
-        contractName: contractName,
+        params: {
+          contractName,
+        },
       },
       {
         timeout: 3600000,
       },
     );
-    logger.http('Timber Response:', response.data.data.latestRecalculation);
-    // TODO: handle null response
-    return response.data.data.latestRecalculation.frontier.map(e => e ?? config.ZERO);
+    logger.http('Timber Response:', response.data.data.leafCount);
+    if (!response.data.data) return null;
+    return response.data.data.leafCount;
   } catch (error) {
     throw new Error(error);
   }
@@ -142,4 +163,5 @@ export default {
   getRoot,
   getSiblingPath,
   getFrontier,
+  getLeafCount,
 };

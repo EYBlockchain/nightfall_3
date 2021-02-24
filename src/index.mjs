@@ -8,13 +8,15 @@ import {
   subscribeToTransactionSubmitted,
   transactionSubmittedEventHandler,
   subscribeToBlockAssembledWebSocketConnection,
+  subscribeToBlockDeletedEventHandler,
   subscribeToChallengeWebSocketConnection,
+  blockDeletedEventHandler,
 } from './event-handlers/index.mjs';
 import Proposer from './classes/proposer.mjs';
 import {
   conditionalMakeBlock,
   setBlockAssembledWebSocketConnection,
-} from './services/propose-block.mjs';
+} from './services/block-assembler.mjs';
 import { setChallengeWebSocketConnection } from './services/challenges.mjs';
 
 const main = async () => {
@@ -24,6 +26,7 @@ const main = async () => {
     subscribeToBlockProposedEvent(blockProposedEventHandler);
     subscribeToNewCurrentProposer(newCurrentProposerEventHandler, proposer);
     subscribeToTransactionSubmitted(transactionSubmittedEventHandler);
+    subscribeToBlockDeletedEventHandler(blockDeletedEventHandler);
     // subscribe to WebSocket events
     subscribeToBlockAssembledWebSocketConnection(setBlockAssembledWebSocketConnection);
     subscribeToChallengeWebSocketConnection(setChallengeWebSocketConnection);
