@@ -6,24 +6,22 @@ Basic data structures for an optimistic rollup
 pragma solidity ^0.6.0;
 pragma experimental ABIEncoderV2;
 
-import './Config.sol';
-
-contract Structures is Config {
+contract Structures {
 
   enum TransactionTypes { DEPOSIT, SINGLE_TRANSFER, DOUBLE_TRANSFER, WITHDRAW }
 
-  event RejectedProposedBlock(
-    bytes32 indexed blockHash
+  event Rollback(
+    bytes32 root,
+    uint leafCount
   );
 
-  event AcceptedProposedBlock(
-    bytes32 blockHash
-  );
+  event BlockDeleted(bytes32 indexed blockHash);
 
   event BlockProposed(
     bytes32 indexed blockHash,
     Block block,
-    Transaction[] transactions
+    Transaction[] transactions,
+    uint currentLeafCount
   );
 
   event TransactionSubmitted(
@@ -39,12 +37,6 @@ contract Structures is Config {
   */
   event NewLeaf(uint leafIndex, bytes32 leafValue, bytes32 root);
   event NewLeaves(uint minLeafIndex, bytes32[] leafValues, bytes32 root);
-
-  mapping(bytes32 => LinkedHash) public blockHashes; //linked list of block hashes
-  mapping(address => LinkedAddress) public proposers;
-  mapping(address => uint) public pendingWithdrawals;
-
-  bytes32 endHash; // holds the hash at the end of the linked list of block hashes, so that we can pick up the end.
 
   // a struct representing a generic transaction, some of these data items
   // will hold default values for any specific tranaction, e.g. there are no
@@ -69,13 +61,14 @@ contract Structures is Config {
     address proposer;
     bytes32[] transactionHashes; // TODO this could be a merkle root
     bytes32 root; // the 'output' commmitment root after adding all commitments
+    uint leafCount;
   }
 
   struct LinkedHash {
     bytes32 thisHash;
     bytes32 previousHash;
     bytes32 nextHash;
-    uint data; // we use this to hold a timestamp but keeping it general here.
+    uint data; // metadata (currently holds the block time)
   }
 
   struct LinkedAddress {

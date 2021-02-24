@@ -32,15 +32,16 @@
     "config": "^3.3.1",
     "hex-to-binary": "^1.0.1",
     "safe-buffer": "^5.2.1",
-    "truffle": "^5.1.39",
+    "truffle": "^5.1.65",
     "web3": "^1.2.11",
     "winston": "^3.3.3"
   },
   "devDependencies": {
     "cod-scripts": "^3.2.0",
+    "eslint": "^7.9.0",
     "husky": "^4.2.5",
     "prettier": "^2.0.5",
     "prettier-plugin-solidity": "^1.0.0-alpha.54",
-    "eslint": "^7.9.0"
+    "truffle-contract-size": "^2.0.1"
   }
 }

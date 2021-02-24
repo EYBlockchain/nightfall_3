@@ -10,12 +10,11 @@ functionality is not really required - it's just a data availability aid.
 pragma solidity ^0.6.0;
 pragma experimental ABIEncoderV2;
 
-import './Key_Registry.sol';
-import './Utils.sol';
-import './Proposers.sol';
 import './Challenges.sol';
+import './Utils.sol';
+import './ERCInterface.sol';
 
-contract Shield is Utils, Key_Registry, Proposers, Challenges {
+contract Shield is Challenges {
   /**
   We don't need to do the checks herein because the Proposer should do them.
   We don't really need this function at all because we could just send the
@@ -49,7 +48,65 @@ contract Shield is Utils, Key_Registry, Proposers, Challenges {
     // check that the block has been finalised
     require(blockHashes[b.blockHash].data + COOLING_OFF_PERIOD < block.timestamp, 'It is too soon withdraw funds from this block');
     // check the transaction is in the block
-    require(b.transactionHashes[index] == hashTransaction(t), 'Transaction not found at the given index');
+    require(b.transactionHashes[index] == Utils.hashTransaction(t), 'Transaction not found at the given index');
     if (t.transactionType == TransactionTypes.WITHDRAW) payOut(t);
   }
+
+
+    function payOut(Transaction memory t) internal {
+    // Now pay out the value of the commitment
+      ERCInterface tokenContract = ERCInterface(
+        address(uint160(uint256(t.ercAddress)))
+      );
+      address recipientAddress = address(uint160(uint256(t.recipientAddress)));
+      if (t.tokenId == ZERO && t.value == ZERO) // disallow this corner case
+        revert("Zero-value tokens are not allowed");
+
+      if (t.tokenId == ZERO) // must be an ERC20
+        tokenContract.transferFrom(
+          address(this),
+          recipientAddress,
+          uint256(t.value)
+        );
+      else if (t.value == ZERO) // must be ERC721
+        tokenContract.safeTransferFrom(
+          address(this),
+          recipientAddress,
+          uint256(t.tokenId),
+          ''
+        );
+      else // must be an ERC1155
+        tokenContract.safeTransferFrom(
+          address(this),
+          recipientAddress,
+          uint256(t.tokenId),
+          uint256(t.value),
+          ''
+        );
+    }
+
+    function payIn(Transaction memory t) internal {
+      ERCInterface tokenContract = ERCInterface(
+        address(uint160(uint256(t.ercAddress)))
+      );
+      if (t.tokenId == ZERO && t.value == ZERO) // disallow this corner case
+        revert("Depositing zero-value tokens is not allowed");
+      if (t.tokenId == ZERO) // must be an ERC20
+        tokenContract.transferFrom(msg.sender, address(this), uint256(t.value));
+      else if (t.value == ZERO) // must be ERC721
+        tokenContract.safeTransferFrom(
+          msg.sender,
+          address(this),
+          uint256(t.tokenId),
+          ''
+        );
+      else // must be an ERC1155
+        tokenContract.safeTransferFrom(
+          msg.sender,
+          address(this),
+          uint256(t.tokenId),
+          uint256(t.value),
+          ''
+        );
+    }
 }

@@ -5,15 +5,19 @@ Contract to manage the creation and managment of Proposals
 pragma solidity ^0.6.0;
 pragma experimental ABIEncoderV2;
 
-import './Structures.sol';
+import './Config.sol';
 import './Utils.sol';
+import './Structures.sol';
 
-contract Proposers is Structures, Utils {
+contract Proposers is Structures, Config {
 
   LinkedAddress currentProposer; // can propose a new shield state
   uint proposerStartBlock; // L1 block where currentProposer became current
   uint public leafCount; // number of leaves in the Merkle treeWidth
-
+  mapping(address => uint) public pendingWithdrawals;
+  mapping(bytes32 => LinkedHash) public blockHashes; //linked list of block hashes
+  mapping(address => LinkedAddress) public proposers;
+  bytes32 endHash; // holds the hash at the end of the linked list of block hashes, so that we can pick up the end.
 
   modifier onlyCurrentProposer() { // Modifier
     require(msg.sender == currentProposer.thisAddress, "Only the current proposer can call this.");
@@ -40,32 +44,35 @@ contract Proposers is Structures, Utils {
   */
   function proposeBlock(Block memory b, Transaction[] memory t) external payable onlyCurrentProposer() {
     require(BLOCK_STAKE == msg.value, 'The stake payment is incorrect');
-    // add the block to the list of blocks waiting to be permanently added to the state - we only save the hash of the block data - it's up to the challenger, or person requesting inclusion of the block to the permanent contract state, to provide the block data.
+    // We need to check that the block has correctly stored its leaf count. This
+    // is needed in case of a roll-back of a bad block, but cannot be checked by
+    // a Challenge function (at least i haven't thought of a way to do it).
+    require(b.leafCount == leafCount, 'The leaf count stored in the Block is not correct');
+    // We need to check the blockHash on chain here, because there is no way to
+    // convince a challenge function of the (in)correctness by an offchain
+    // computation; the on-chain code doesn't save the pre-image of the hash so
+    // it can't tell if it's been given the correct one as part of a challenge.
+    require(b.blockHash == Utils.hashBlock(b), 'The block hash is incorrect');
+    // likewise the transaction hashes
+    uint nCommitments; // number of commitments, used in NewLeaves/NewLeaf event
+    for (uint i = 0; i < b.transactionHashes.length; i++) {
+      // make sure the Transactions are in the Block
+      require(
+        b.transactionHashes[i] == Utils.hashTransaction(t[i]),
+        'Transaction hash was not found'
+      ); */
+      // remember how many commitments are in the block, this is needed later
+      nCommitments += t[i].commitments.length;
+      }
+    // All check pass so add the block to the list of blocks waiting to be permanently added to the state - we only save the hash of the block data plus the absolute minimum of metadata - it's up to the challenger, or person requesting inclusion of the block to the permanent contract state, to provide the block data.
     blockHashes[b.blockHash] = LinkedHash({
       thisHash: b.blockHash,
       previousHash: endHash,
       nextHash: ZERO,
       data: block.timestamp
     });
+    blockHashes[endHash].nextHash = b.blockHash;
     endHash = b.blockHash; // point to the new end of the list of blockhashes.
-    // signal to Timber that new leaves may need to be added to the Merkle tree.
-    // It's possible that these will be successfully challenged over the next
-    // week, and Timber (or a Timber proxy), will need to be sure they only add
-    // valid leaves to the Timber db.  This is a little challenging but the
-    // alternative is to broadcast events for Timber after the challenge period
-    // has elapsed.  This would take more gas because of the need to make a
-    // a blockchain transaction to call a 'check week is up and then emit
-    // events' function
-    uint nCommitments; // number of commitments, used in NewLeaves/NewLeaf event
-    for (uint i = 0; i < b.transactionHashes.length; i++) {
-      // make sure the Transactions are in the Block
-      /* require(
-        b.transactionHashes[i] == hashTransaction(t[i]),
-        'Transaction hash was not found'
-      ); */
-      // remember how many commitments are in the block, this is needed later
-      nCommitments += t[i].commitments.length;
-      }
     // now we need to emit all the leafValues (commitments) in this block so
     // any listening Timber instances can update their offchain DBs.
     // The first job is to assembly an array of all the leafValues in the block
@@ -75,7 +82,14 @@ contract Proposers is Structures, Utils {
       for (uint j = 0; j < t[i].commitments.length; j++)
         leafValues[k++] = t[i].commitments[j];
     }
-    // Signal to Timber listeners, if we have any commitments to add
+    // signal to Timber that new leaves may need to be added to the Merkle tree.
+    // It's possible that these will be successfully challenged over the next
+    // week, and Timber (or a Timber proxy), will need to be sure they only add
+    // valid leaves to the Timber db.  This is a little challenging but the
+    // alternative is to broadcast events for Timber after the challenge period
+    // has elapsed.  This would take more gas because of the need to make a
+    // a blockchain transaction to call a 'check week is up and then emit
+    // events' function
     if (nCommitments == 1)
       emit NewLeaf(leafCount, leafValues[0], b.root);
     else if (nCommitments !=0)
@@ -83,7 +97,7 @@ contract Proposers is Structures, Utils {
     // remember how many leaves the Merkle tree has (Timber needs this to check
     // that it hasn't missed any leaf additions)
     leafCount += nCommitments;
-    emit BlockProposed(b.blockHash, b, t);
+    emit BlockProposed(b, t, leafCount);
   }
 
   //add the proposer to the circular linked list
@@ -115,5 +129,26 @@ contract Proposers is Structures, Utils {
     uint amount = pendingWithdrawals[msg.sender];
     pendingWithdrawals[msg.sender] = 0;
     msg.sender.transfer(amount);
+  }
+
+  function removeProposer(address proposer) internal {
+    address previousAddress = proposers[proposer].previousAddress;
+    address nextAddress = proposers[proposer].nextAddress;
+    delete proposers[proposer];
+    proposers[previousAddress].nextAddress = proposers[nextAddress].thisAddress;
+    proposers[nextAddress].previousAddress = proposers[previousAddress].thisAddress;
+  }
+
+  // Checks if a block is actually referenced in the queue of blocks waiting
+  // to go into the Shield state (stops someone challenging with a non-existent
+  // block).
+  function isBlockReal(Block memory b) public view {
+    /* require(b.blockHash == Utils.hashBlock(b), 'The block hash is incorrect'); */
+    require(blockHashes[b.blockHash].thisHash == b.blockHash, 'This block does not exist');
+  }
+
+  // Checks if a block has is calculated correctly
+  function isBlockHashCorrect(Block memory b) public view {
+    require(b.blockHash == hashBlock(b), 'The block hash is incorrect');
   }
 }

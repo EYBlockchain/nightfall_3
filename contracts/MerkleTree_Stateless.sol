@@ -13,7 +13,7 @@ pragma solidity ^0.6.0;
 
 import "./MiMC.sol"; // import contract with MiMC function
 
-contract MerkleTree_Stateless is MiMC {
+library MerkleTree_Stateless {
 
     /*
     @notice Explanation of the Merkle Tree in this contract:
@@ -49,8 +49,6 @@ contract MerkleTree_Stateless is MiMC {
 
     uint constant treeHeight = 32; //change back to 32 after testing
     uint constant treeWidth = 2 ** treeHeight; // 2 ** treeHeight
-    /* uint256 public leafCount; // the number of leaves currently in the tree. This storage variable must be updated by the calling function.  This version of MerkleTree does not do it automatically. That's so it can be used to compute the outcome of Challenges to an optimistic transaction. */
-
     /*
     Whilst ordinarily, we'd work solely with bytes32, we need to truncate nodeValues up the tree. Therefore, we need to declare certain variables with lower byte-lengths:
     LEAF_HASHLENGTH = 32 bytes;
@@ -63,7 +61,6 @@ contract MerkleTree_Stateless is MiMC {
 
     //Changed to bytes32 for MiMC hashing
     bytes32 constant zero = 0x0000000000000000000000000000000000000000000000000000000000000000;
-    bytes32[33] frontier; // the right-most 'frontier' of nodes required to calculate the new root when the next new leaf value is added. Note, the MerkleTree contract does not update this but just returns the current value.  The user must update this value from the calling contract.  This is because if we are challenging a block, we don't necessarily want to update this variable.  We only update the static frontier when transactions are incorporated into the shield state.
 
     /**
     @notice Get the index of the frontier (or 'storage slot') into which we will next store a nodeValue (based on the leafIndex currently being inserted). See the top-level README for a detailed explanation.
@@ -119,7 +116,7 @@ contract MerkleTree_Stateless is MiMC {
                 input[0] = _frontier[level];
                 input[1] = nodeValue;
 
-                output[0] = mimcHash2(input); // mimc hash of concatenation of each node
+                output[0] = MiMC.mimcHash2(input); // mimc hash of concatenation of each node
                 nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
                 prevNodeIndex = nodeIndex;
                 nodeIndex = (nodeIndex - 1) / 2; // move one row up the tree
@@ -129,7 +126,7 @@ contract MerkleTree_Stateless is MiMC {
                 input[0] = nodeValue;
                 input[1] = zero;
 
-                output[0] = mimcHash2(input); // mimc hash of concatenation of each node
+                output[0] = MiMC.mimcHash2(input); // mimc hash of concatenation of each node
                 nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
                 prevNodeIndex = nodeIndex;
                 nodeIndex = nodeIndex / 2; // move one row up the tree
@@ -202,7 +199,7 @@ contract MerkleTree_Stateless is MiMC {
                     // even nodeIndex
                     input[0] = _frontier[level - 1]; //replace with push?
                     input[1] = nodeValue;
-                    output[0] = mimcHash2(input); // mimc hash of concatenation of each node
+                    output[0] = MiMC.mimcHash2(input); // mimc hash of concatenation of each node
 
                     nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
                     prevNodeIndex = nodeIndex;
@@ -212,7 +209,7 @@ contract MerkleTree_Stateless is MiMC {
                     // odd nodeIndex
                     input[0] = nodeValue;
                     input[1] = zero;
-                    output[0] = mimcHash2(input); // mimc hash of concatenation of each node
+                    output[0] = MiMC.mimcHash2(input); // mimc hash of concatenation of each node
 
                     nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
                     prevNodeIndex = nodeIndex;
@@ -230,7 +227,7 @@ contract MerkleTree_Stateless is MiMC {
                 // even nodeIndex
                 input[0] = _frontier[level - 1];
                 input[1] = nodeValue;
-                output[0] = mimcHash2(input); // mimc hash of concatenation of each node
+                output[0] = MiMC.mimcHash2(input); // mimc hash of concatenation of each node
 
                 nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
                 prevNodeIndex = nodeIndex;
@@ -240,7 +237,7 @@ contract MerkleTree_Stateless is MiMC {
                 // odd nodeIndex
                 input[0] = nodeValue;
                 input[1] = zero;
-                output[0] = mimcHash2(input); // mimc hash of concatenation of each node
+                output[0] = MiMC.mimcHash2(input); // mimc hash of concatenation of each node
 
                 nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
                 prevNodeIndex = nodeIndex;
@@ -272,8 +269,8 @@ contract MerkleTree_Stateless is MiMC {
       if (siblingPath[0] != root) return (false, _frontier); // check root of sibling path is actually the prior block root
       for (uint i = 32; i > 0; i--) {
         _frontier[i] = node;
-        if (leafIndex % 2 == 0) node = mimcHash2([ node, siblingPath[i]]);
-        else node = mimcHash2([ siblingPath[i], node]);
+        if (leafIndex % 2 == 0) node = MiMC.mimcHash2([ node, siblingPath[i]]);
+        else node = MiMC.mimcHash2([ siblingPath[i], node]);
         leafIndex >> 1;
       }
       _frontier[0] = node;
