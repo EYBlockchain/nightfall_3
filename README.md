@@ -206,7 +206,7 @@ This is a POST request to verify a proof offchain. It does not require any trust
 of the data that zokrates-worker needs is contained within the POST. The inputs are somewhat lengthy
 however so testing with curl or Postman is awkward. However, the JSON inputs are as follows:
 
-```json
+```
 {
   "vk": // the verifying key JSON in the same format as the ZoKrates file
   "proof": // the proof JSON in the same format as the ZoKrates proof file
