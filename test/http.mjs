@@ -6,6 +6,8 @@ chai.use(chaiHttp);
 
 describe('Testing the http API', () => {
   let vk;
+  let proof;
+  let inputs;
   it('should respond with status 200 to the health check', done => {
     chai
       .request('http://localhost:8080')
@@ -48,11 +50,10 @@ describe('Testing the http API', () => {
         filepath: 'factor.zok',
         curve: 'bn128',
         provingScheme: 'gm17',
-        backend: 'libsnark',
+        backend: 'ark',
       })
       .end((err, res) => {
         expect(res.body).to.have.property('vk');
-        expect(res.body.vk).to.have.property('raw');
         expect(res.body.vk.h).to.be.instanceof(Array);
         vk = res.body.vk;
         done();
@@ -79,7 +80,7 @@ describe('Testing the http API', () => {
         inputs: [24534, 1468, 12458],
         transactionInputs: 'test',
         provingScheme: 'gm17',
-        backend: 'libsnark',
+        backend: 'ark',
       })
       .end((err, res) => {
         expect(res.error.status).to.equal(500);
@@ -96,17 +97,38 @@ describe('Testing the http API', () => {
         inputs: [6, 3, 2],
         transactionInputs: 'test',
         provingScheme: 'gm17',
-        backend: 'libsnark',
+        backend: 'ark',
       })
       .end((err, res) => {
         expect(res.body).to.have.property('proof');
         expect(res.body).to.have.property('type');
         expect(res.body).to.have.property('transactionInputs');
+        expect(res.body).to.have.property('inputs');
         expect(res.body.proof).to.have.property('a');
         expect(res.body.proof).to.have.property('b');
         expect(res.body.proof).to.have.property('c');
         expect(res.body.proof.a).to.be.instanceof(Array);
         expect(res.body.type).to.equal('factor');
+        proof = res.body.proof;
+        inputs = res.body.inputs;
+        done();
+      });
+  });
+  it('should verify the proof offchain', done => {
+    chai
+      .request('http://localhost:8080')
+      .post('/verify')
+      .set('Content-Type', 'application/json')
+      .send({
+        vk,
+        proof,
+        provingScheme: 'gm17',
+        backend: 'ark',
+        curve: 'bn128',
+        inputs,
+      })
+      .end((err, res) => {
+        expect(res.body.verifies).to.equal(true);
         done();
       });
   });

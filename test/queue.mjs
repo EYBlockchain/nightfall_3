@@ -78,7 +78,7 @@ describe('Testing the Zokrates queue mechanism', () => {
         filepath: 'factor.zok',
         curve: 'bn128',
         provingScheme: 'gm17',
-        backend: 'libsnark',
+        backend: 'ark',
       },
       {
         correlationId,
@@ -89,7 +89,6 @@ describe('Testing the Zokrates queue mechanism', () => {
     rabbitmq.listenToReplyQueue(replyTo, correlationId, response => {
       expect(response).to.have.property('data');
       expect(response.data).to.have.property('vk');
-      expect(response.data.vk).to.have.property('raw');
       expect(response.data.vk.h).to.be.instanceof(Array);
       done();
     });
@@ -107,7 +106,7 @@ describe('Testing the Zokrates queue mechanism', () => {
         inputs: [13, 3, 2],
         transactionInputs: 'test',
         provingScheme: 'gm17',
-        backend: 'libsnark',
+        backend: 'ark',
       },
       {
         correlationId,
@@ -133,7 +132,7 @@ describe('Testing the Zokrates queue mechanism', () => {
         inputs: [6, 3, 2],
         transactionInputs: 'test',
         provingScheme: 'gm17',
-        backend: 'libsnark',
+        backend: 'ark',
       },
       {
         correlationId,

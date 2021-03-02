@@ -1,11 +1,12 @@
 ARG GPR_TOKEN
 
-FROM zokrates/zokrates:0.6.1 as builder
+FROM zokrates/zokrates:0.6.3 as builder
 
 FROM node:14.11.0 as node-build
 ARG GPR_TOKEN
 WORKDIR /app
 COPY ./package.json ./package-lock.json ./.npmrc ./
+
 RUN npm ci
 RUN rm -f .npmrc
 

@@ -19,6 +19,7 @@ services:
       RABBITMQ_HOST: amqp://rabbitmq
       RABBITMQ_PORT: 5672
       ENABLE_QUEUE: 1
+      LOG_LEVEL: debug
     command: ./start-dev
 
   rabbitmq:

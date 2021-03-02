@@ -64,7 +64,7 @@ export default async function ({
 
     logger.info(`Complete`);
     logger.debug(`Responding with proof and inputs:`);
-    logger.debug(proof);
+    logger.debug(`${JSON.stringify(proof, null, 2)}`);
     logger.debug(publicInputs);
   } finally {
     try {
