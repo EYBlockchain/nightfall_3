@@ -11,6 +11,7 @@
     - [`generate-keys`](#generate-keys)
     - [`generate-proof`](#generate-proof)
     - [`vk`](#vk)
+    - [`verify`](#verify)
   - [Zokrates - writing & testing `.zok` circuit files](#zokrates---writing--testing-zok-circuit-files)
     - [a) mounting to zokrates in the terminal (recommended)](#a-mounting-to-zokrates-in-the-terminal-recommended)
 
@@ -35,7 +36,7 @@ npm install
 ```
 
 ```sh
-docker-compose build --build-arg NPM_TOKEN=${NPM_TOKEN}
+docker-compose build --no-cache --build-arg NPM_TOKEN=${NPM_TOKEN}
 docker-compose up -d
 ```
 
@@ -198,6 +199,23 @@ place for the vk to exist).
 Alternatively, the POSTMAN application can be used to run these curl requests. E.g. with params:
 
 key: "folderpath", value: "test"
+
+### `verify`
+
+This is a POST request to verify a proof offchain. It does not require any trusted setup because all
+of the data that zokrates-worker needs is contained within the POST. The inputs are somewhat lengthy
+however so testing with curl or Postman is awkward. However, the JSON inputs are as follows:
+
+```json
+{
+  "vk": // the verifying key JSON in the same format as the ZoKrates file
+  "proof": // the proof JSON in the same format as the ZoKrates proof file
+  "provingScheme": // "gm17", "g16" etc, as ZoKrates command line,
+  "backend": // "ark", "libsnark" etc, as ZoKrates command line,
+  "curve": // "bn128", "bls12_377" etc, as ZoKrates command line,
+  "inputs": // if the proof does not have an 'inputs' property, it can be added here
+}
+```
 
 ## Zokrates - writing & testing `.zok` circuit files
 
