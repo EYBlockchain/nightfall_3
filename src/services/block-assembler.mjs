@@ -84,7 +84,7 @@ export async function conditionalMakeBlock(proposer) {
         ws.send(
           JSON.stringify({
             type: 'block',
-            tx: unsignedProposeBlockTransaction,
+            txDataToSign: unsignedProposeBlockTransaction,
             block,
             transactions,
           }),

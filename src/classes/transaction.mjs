@@ -82,5 +82,25 @@ class Transaction {
     );
     return transactionHash === transaction.transactionHash;
   }
+
+  static calcHash(transaction) {
+    const web3 = Web3.connection();
+    // compute the solidity hash, using suitable type conversions
+    const transactionHash = web3.utils.soliditySha3(
+      { t: 'uint', v: transaction.fee },
+      { t: 'uint8', v: transaction.transactionType },
+      { t: 'bytes32', v: transaction.publicInputHash },
+      { t: 'bytes32', v: transaction.tokenId },
+      { t: 'bytes32', v: transaction.value },
+      { t: 'bytes32', v: transaction.ercAddress },
+      { t: 'bytes32', v: transaction.recipientAddress },
+      ...transaction.commitments.map(ch => ({ t: 'bytes32', v: ch })),
+      ...transaction.nullifiers.map(nh => ({ t: 'bytes32', v: nh })),
+      { t: 'bytes32', v: transaction.historicRoot },
+      ...transaction.proof.map(p => ({ t: 'uint', v: p })),
+    );
+    transaction.transactionHash = transactionHash;
+    return transaction;
+  }
 }
 export default Transaction;
