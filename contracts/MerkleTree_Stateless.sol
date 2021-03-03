@@ -255,16 +255,7 @@ library MerkleTree_Stateless {
         return (root, _frontier, _leafCount); //the root of the tree
     }
 
-    /**
-    @notice Checks that a sibling path, given as a Merkle proof, is correct i.e. we can use it to 'ascend' the tree from the given leaf to the given root.
-    @param siblingPath - the sibling path for the given leaf
-    @param leafIndex - the index of the leaf to which the sibling path refers, i.e. it's leaf position, counting from the extreme left of the bottom of the Merkle Tree (first position = 0)
-    @param node - the leaf value
-    @param root - the root value
-    @return bool - true if the siblingPath is valid, else false.
-    @return _frontier - the nodes computed herein are actually the Timber Frontier for adding the next leaf.  This is jolly handy so we save them up.
-    */
-    function checkPath(bytes32[33] memory siblingPath, uint leafIndex, bytes32 node, bytes32 root) public pure returns(bool, bytes32[33] memory) {
+    /* function checkPath(bytes32[33] memory siblingPath, uint leafIndex, bytes32 node, bytes32 root) public pure returns(bool, bytes32[33] memory) {
       bytes32[33] memory _frontier;
       if (siblingPath[0] != root) return (false, _frontier); // check root of sibling path is actually the prior block root
       for (uint i = 32; i > 0; i--) {
@@ -275,5 +266,112 @@ library MerkleTree_Stateless {
       }
       _frontier[0] = node;
       return (siblingPath[0] == node, _frontier);
-    }
+    } */
+
+    function checkPath(bytes32[] memory leafValues, bytes32[33] memory _frontier, uint _leafCount, bytes32 _root) public pure returns(bool, bytes32[33] memory) {
+
+      uint numberOfLeaves = leafValues.length;
+
+      // check that space exists in the tree:
+      require(treeWidth > _leafCount, "There is no space left in the tree.");
+      if (numberOfLeaves > treeWidth - _leafCount) {
+        uint numberOfExcessLeaves = numberOfLeaves - (treeWidth - _leafCount);
+        // remove the excess leaves, because we only want to emit those we've added as an event:
+        for (uint xs = 0; xs < numberOfExcessLeaves; xs++) {
+          /*
+          CAUTION!!! This attempts to succinctly achieve leafValues.pop() on a **memory** dynamic array. Not thoroughly tested!
+          Credit: https://ethereum.stackexchange.com/a/51897/45916
+          */
+
+          assembly {
+            mstore(leafValues, sub(mload(leafValues), 1))
+          }
+        }
+        numberOfLeaves = treeWidth - _leafCount;
+      }
+
+      uint slot;
+      uint nodeIndex;
+      uint prevNodeIndex;
+      bytes32 nodeValue;
+
+      //bytes32 leftInput;
+      //bytes32 rightInput;
+      bytes32[2] memory input;
+      bytes32[1] memory output; // the output of the hash
+
+      // consider each new leaf in turn, from left to right:
+      for (uint leafIndex = _leafCount; leafIndex < _leafCount + numberOfLeaves; leafIndex++) {
+        nodeValue = leafValues[leafIndex - _leafCount];
+        nodeIndex = leafIndex + treeWidth - 1; // convert the leafIndex to a nodeIndex
+
+        slot = getFrontierSlot(leafIndex); // determine at which level we will next need to store a nodeValue
+
+        if (slot == 0) {
+          _frontier[slot] = nodeValue; // update Frontier
+          continue;
+        }
+
+        // hash up to the level whose nodeValue we'll store in the frontier slot:
+        for (uint level = 1; level <= slot; level++) {
+          if (nodeIndex % 2 == 0) {
+            // even nodeIndex
+            input[0] = _frontier[level - 1]; //replace with push?
+            input[1] = nodeValue;
+            output[0] = MiMC.mimcHash2(input); // mimc hash of concatenation of each node
+
+            nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
+            prevNodeIndex = nodeIndex;
+            nodeIndex = (nodeIndex - 1) / 2; // move one row up the tree
+            // emit Output(input, output, prevNodeIndex, nodeIndex); // for debugging only
+            } else {
+              // odd nodeIndex
+              input[0] = nodeValue;
+              input[1] = zero;
+              output[0] = MiMC.mimcHash2(input); // mimc hash of concatenation of each node
+
+              nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
+              prevNodeIndex = nodeIndex;
+              nodeIndex = nodeIndex / 2; // the parentIndex, but will become the nodeIndex of the next level
+              // emit Output(input, output, prevNodeIndex, nodeIndex); // for debugging only
+            }
+          }
+          _frontier[slot] = nodeValue; // update frontier
+        }
+
+        // So far we've added all leaves, and hashed up to a particular level of the tree. We now need to continue hashing from that level until the root:
+        for (uint level = slot + 1; level <= treeHeight; level++) {
+
+          if (nodeIndex % 2 == 0) {
+            // even nodeIndex
+            input[0] = _frontier[level - 1];
+            input[1] = nodeValue;
+            output[0] = MiMC.mimcHash2(input); // mimc hash of concatenation of each node
+
+            nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
+            prevNodeIndex = nodeIndex;
+            nodeIndex = (nodeIndex - 1) / 2;  // the parentIndex, but will become the nodeIndex of the next level
+            // emit Output(input, output, prevNodeIndex, nodeIndex); // for debugging only
+            } else {
+              // odd nodeIndex
+              input[0] = nodeValue;
+              input[1] = zero;
+              output[0] = MiMC.mimcHash2(input); // mimc hash of concatenation of each node
+
+              nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
+              prevNodeIndex = nodeIndex;
+              nodeIndex = nodeIndex / 2;  // the parentIndex, but will become the nodeIndex of the next level
+              // emit Output(input, output, prevNodeIndex, nodeIndex); // for debugging only
+            }
+
+          }
+
+          /* root = nodeValue; */
+
+          //emit NewLeaves(_leafCount, leafValues, root); // this event is what the merkle-tree microservice's filter will listen for.
+
+          /* return (root, _frontier, _leafCount); //the root of the tree */
+          return (_root == nodeValue, _frontier);
+        }
+
 }
