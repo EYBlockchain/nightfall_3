@@ -14,7 +14,7 @@ export default async function ({
   transactionInputs,
   outputDirectoryPath,
   proofFileName,
-  backend = 'zexe',
+  backend = 'ark',
   provingScheme = 'gm17',
 }) {
   const outputPath = `./output`;

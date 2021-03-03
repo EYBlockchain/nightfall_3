@@ -7,8 +7,8 @@ import logger from '../utils/logger.mjs';
 export default async function({
   filepath,
   curve = 'bls12_377',
-  backend = 'zexe',
-  provingScheme = 'gm17'
+  backend = 'ark',
+  provingScheme = 'gm17',
 }) {
   const outputPath = `./output`;
   const circuitsPath = `./circuits`;
@@ -18,6 +18,13 @@ export default async function({
   const circuitDir = filepath.replace(ext, '');
 
   fs.mkdirSync(`${outputPath}/${circuitDir}`, { recursive: true });
+
+  logger.debug(
+    `${circuitsPath}/${filepath}`,
+    `${outputPath}/${circuitDir}`,
+    `${circuitName}_out`,
+    curve,
+  );
 
   logger.info('Compile...');
   await zokrates.compile(

@@ -11,7 +11,6 @@ services:
       - ./src:/app/src:delegated
       - ./output:/app/output:delegated
       - ./circuits:/app/circuits:delegated
-      - ./node_modules:/app/node_modules:delegated
       - ./test:/app/test:delegated
     ports:
       - 8080:80

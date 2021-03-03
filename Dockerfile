@@ -25,7 +25,8 @@ COPY ./start-dev ./start-dev
 RUN apt-get update -y
 RUN apt-get install -y netcat
 
-ENV ZOKRATES_HOME /app/stdlib
+ENV ZOKRATES_HOME /app
+ENV ZOKRATES_STDLIB /app/stdlib
 
 EXPOSE 80
 CMD npm start
