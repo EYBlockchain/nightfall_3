@@ -50,7 +50,7 @@ describe('Testing the http API', () => {
         filepath: 'factor.zok',
         curve: 'bn128',
         provingScheme: 'gm17',
-        backend: 'ark',
+        backend: 'libsnark',
       })
       .end((err, res) => {
         expect(res.body).to.have.property('vk');
@@ -80,7 +80,7 @@ describe('Testing the http API', () => {
         inputs: [24534, 1468, 12458],
         transactionInputs: 'test',
         provingScheme: 'gm17',
-        backend: 'ark',
+        backend: 'libsnark',
       })
       .end((err, res) => {
         expect(res.error.status).to.equal(500);
@@ -97,7 +97,7 @@ describe('Testing the http API', () => {
         inputs: [6, 3, 2],
         transactionInputs: 'test',
         provingScheme: 'gm17',
-        backend: 'ark',
+        backend: 'libsnark',
       })
       .end((err, res) => {
         expect(res.body).to.have.property('proof');
@@ -123,7 +123,7 @@ describe('Testing the http API', () => {
         vk,
         proof,
         provingScheme: 'gm17',
-        backend: 'ark',
+        backend: 'libsnark',
         curve: 'bn128',
         inputs,
       })
