@@ -46,6 +46,9 @@ services:
       - type: bind
         source: ../nightfall-deployer/circuits
         target: /app/circuits/
+      - type: bind
+        source: ../zokrates-worker/src
+        target: /app/src/
     depends_on:
       - deployer
     networks:
