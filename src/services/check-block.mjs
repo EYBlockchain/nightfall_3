@@ -41,6 +41,7 @@ async function checkBlock(block, transactions) {
   // now we have to check the commitment root.  For this we can make use of
   // Timber with its optimistic extensions.
   // Start by seeing if Timber knows about the root.  It should.
+  let root;
   try {
     logger.debug(`Checking block with root ${block.root}`);
     const history = await getTreeHistory(block.root);
@@ -51,20 +52,16 @@ async function checkBlock(block, transactions) {
     const commitmentHashes = transactions
       .map(transaction => transaction.commitments)
       .flat(Infinity);
-    const { root } = await mt.updateNodes(
-      commitmentHashes,
-      history.currentLeafCount,
-      history.frontier,
-    );
-    if (root !== block.root)
-      throw new BlockError(
-        `The block's root (${block.root}) is known to Timber but it cannot be reconstructed from the commitment hashes in the transactions in this block and the historic Frontier held by Timber for this root`,
-        4,
-      );
+    ({ root } = await mt.updateNodes(commitmentHashes, history.currentLeafCount, history.frontier));
   } catch (err) {
     logger.error(err); // log errors but let the caller handle them
     throw new BlockError(`The block root (${block.root}) was not found in the Timber database`, 5);
   }
+  if (root !== block.root)
+    throw new BlockError(
+      `The block's root (${block.root}) is known to Timber but it cannot be reconstructed from the commitment hashes in the transactions in this block and the historic Frontier held by Timber for this root`,
+      4,
+    );
   return null; // if we've got here with no BlockErrors being thrown then our checks have passed.
 }
 
