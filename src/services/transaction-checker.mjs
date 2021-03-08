@@ -146,7 +146,7 @@ async function checkPublicInputHash(transaction) {
       )
         throw new TransactionError('public input hash is incorrect', 3);
       break;
-    case 3: // deposit transaction
+    case 3: // withdraw transaction
       if (
         transaction.publicInputHash !==
         new PublicInputs([
