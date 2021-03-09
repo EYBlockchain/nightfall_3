@@ -44,6 +44,14 @@ export default class HistoryService {
     return historyMapper(docs);
   }
 
+  async getTreeHistoryByCurrentLeafCount(currentLeafCount) {
+    logger.debug('src/db/service/metadata.service getTreeHistory()');
+    const docs = await this.db.getDoc(COLLECTIONS.HISTORY, {
+      currentLeafCount,
+    });
+    return historyMapper(docs);
+  }
+
   async deleteTreeHistory(_leafCount) {
     logger.debug('deleting alternative timeline');
     const leafCount = Number(_leafCount);
