@@ -80,9 +80,9 @@ async function setupCircuits() {
           `${config.PROTOCOL}${config.ZOKRATES_WORKER_HOST}/generate-keys`,
           {
             filepath: circuit,
-            curve: 'bn128',
-            provingScheme: 'gm17',
-            backend: 'libsnark',
+            curve: config.CURVE,
+            provingScheme: config.PROVING_SCHEME,
+            backend: config.BACKEND,
           },
         );
         vk = res2.data.vk;

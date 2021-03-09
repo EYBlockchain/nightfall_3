@@ -18,4 +18,7 @@ module.exports = {
   TIMBER_HOST: process.env.TIMBER_HOST || 'timber',
   TIMBER_PORT: process.env.TIMBER_PORT || 80,
   SHIELD_CONTRACT_NAME: 'Shield',
+  BACKEND: process.env.BACKEND || 'libsnark',
+  CURVE: process.env.CURVE || 'bn128',
+  PROVING_SCHEME: process.env.PROVING_SCHEME || 'gm17',
 };
