@@ -33,8 +33,6 @@ function mappedData(data) {
     historicRoot,
     proof,
   };
-  if (!Transaction.checkHash(transaction))
-    throw new Error('Transaction hash incorrect in transaction mapper');
   return transaction;
 }
 

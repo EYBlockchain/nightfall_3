@@ -3,9 +3,10 @@ module.exports = {
   MONGO_URL: process.env.MONGO_URL || 'mongodb://localhost:27017/',
   OPTIMIST_DB: 'optimist_data',
   METADATA_COLLECTION: 'metadata',
-  TRANSACTIONS_COLLECTION: 'unprocessed_transactions',
+  TRANSACTIONS_COLLECTION: 'transactions',
   SUBMITTED_BLOCKS_COLLECTION: 'blocks',
   ZKP_KEY_LENGTH: 32, // use a 32 byte key length for SHA compatibility
+  ZOKRATES_WORKER_URL: process.env.ZOKRATES_WORKER_URL || 'worker',
   WEBSOCKET_PORT: process.env.WEBSOCKET_PORT || 8080,
   BLOCKCHAIN_WS_HOST: process.env.BLOCKCHAIN_WS_HOST || 'openethereum',
   BLOCKCHAIN_PORT: process.env.BLOCKCHAIN_PORT || '8546',
