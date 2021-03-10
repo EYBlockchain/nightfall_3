@@ -34,8 +34,9 @@ async function checkLeaves(db) {
   if (leafCount < maxLeafIndex + 1) {
     // then we are missing values. Let's do a slower search to find the earliest missing value:
     logger.warn(
-      `There are missing leaves in the db. Found ${leafCount} leaves, but expected ${maxLeafIndex +
-        1}. Performing a slower check to find the missing leaves...`,
+      `There are missing leaves in the db. Found ${leafCount} leaves, but expected ${
+        maxLeafIndex + 1
+      }. Performing a slower check to find the missing leaves...`,
     );
     const missingLeaves = await leafService.findMissingLeaves(0, maxLeafIndex);
 
@@ -253,7 +254,7 @@ async function update(db) {
     const { root: oldRoot } = latestRecalculation; // we store the old root in history as well as the new root (the latter being used to look up the history).
     frontier = frontier === undefined ? [] : frontier;
     const leaves = await leafService.getLeavesByLeafIndexRange(fromLeafIndex, toLeafIndex);
-    const leafValues = leaves.map(leaf => leaf.value);
+    const leafValues = leaves.map((leaf) => leaf.value);
     const currentLeafCount = fromLeafIndex;
 
     const historicFrontier = [...frontier]; // avoid mutation of frontier
@@ -322,7 +323,9 @@ async function rollback(db, treeHeight, leafCount, root) {
   // before we do anything, make sure the DB is up to date
   await update(db);
   // let's get the details of where we're going to rollback to
-  const history = await historyService.getTreeHistory(root);
+  // const history = await historyService.getTreeHistory(root);
+  const history = await historyService.getTreeHistoryByCurrentLeafCount(leafCount);
+
   if (leafCount !== history.currentLeafCount)
     throw new Error(
       `Rollback event's leaf count (${leafCount}) and the historic record (${history.currentLeafCount}) do not match`,
@@ -367,7 +370,7 @@ async function rollback(db, treeHeight, leafCount, root) {
       blockNumber: history.blockNumber,
       leafIndex: history.leafIndex,
       root: history.oldRoot === ZERO ? null : history.oldRoot, // null is neater
-      frontier: history.frontier.map(f => (f === ZERO ? null : f)),
+      frontier: history.frontier.map((f) => (f === ZERO ? null : f)),
     },
   });
   // delete the history which is now in a future that won't happen
