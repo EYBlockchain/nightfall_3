@@ -53,6 +53,9 @@ contract Proposers is Structures, Config {
     // computation; the on-chain code doesn't save the pre-image of the hash so
     // it can't tell if it's been given the correct one as part of a challenge.
     require(b.blockHash == Utils.hashBlock(b), 'The block hash is incorrect');
+    // Ensure that Transction[] doesn't have more txs than block because these tx hashes
+    // will be added to merkle tree even though they are not in the block
+    require(b.transactionHashes.length == t.length, 'The block and transaction have unequal number of transactions');
     // likewise the transaction hashes
     uint nCommitments; // number of commitments, used in NewLeaves/NewLeaf event
     for (uint i = 0; i < b.transactionHashes.length; i++) {
@@ -143,7 +146,12 @@ contract Proposers is Structures, Config {
   // to go into the Shield state (stops someone challenging with a non-existent
   // block).
   function isBlockReal(Block memory b) public view {
-    require(b.blockHash == Utils.hashBlock(b), 'The block hash is incorrect');
+    /* require(b.blockHash == Utils.hashBlock(b), 'The block hash is incorrect'); */
     require(blockHashes[b.blockHash].thisHash == b.blockHash, 'This block does not exist');
+  }
+
+  // Checks if a block has is calculated correctly
+  function isBlockHashCorrect(Block memory b) public view {
+    require(b.blockHash == Utils.hashBlock(b), 'The block hash is incorrect');
   }
 }

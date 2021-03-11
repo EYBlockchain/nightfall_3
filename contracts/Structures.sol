@@ -11,11 +11,11 @@ contract Structures {
   enum TransactionTypes { DEPOSIT, SINGLE_TRANSFER, DOUBLE_TRANSFER, WITHDRAW }
 
   event Rollback(
-    bytes32 root,
+    bytes32 indexed root,
     uint leafCount
   );
 
-  event BlockDeleted(bytes32 blockHash);
+  event BlockDeleted(bytes32 indexed blockHash);
 
   event BlockProposed(
     Block block,

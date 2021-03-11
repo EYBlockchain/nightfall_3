@@ -17,15 +17,7 @@ import './Utils.sol';
 
 contract Challenges is Key_Registry, Proposers {
 
-  enum ChallengeType { //TODO - remove but it's a handy reminder for now
-    PROOF_VERIFIES,
-    PUBLIC_INPUT_HASH_VALID,
-    HISTORIC_ROOT_EXISTS,
-    NULLIFIER_ABSENT,
-    NEW_ROOT_CORRECT
-  }
-
-  // a transaction proof is challenged as incorrect
+  /* // a transaction proof is challenged as incorrect
   function challengeProofVerifies(
     Block memory blockL2,
     Transaction memory transaction,
@@ -43,15 +35,16 @@ contract Challenges is Key_Registry, Proposers {
       'This proof appears to be valid'
     );
     challengeAccepted(blockL2);
-  }
+  } */
 
-  // a transaction proof is challenged as incorrect.  Does not require the
+  /* // a transaction proof is challenged as incorrect.  Does not require the
   // index of the transaction in the block, but uses more Gas as it has to
   // search for it
   function challengeProofVerifies(
     Block memory blockL2,
     Transaction memory transaction
   ) external {
+    isBlockReal(blockL2); // check the block exists
     for (uint i = 0; i < blockL2.transactionHashes.length; i++){
       if (transaction.transactionHash == blockL2.transactionHashes[i] ) {
         challengeProofVerifies(blockL2, transaction, i);
@@ -59,22 +52,56 @@ contract Challenges is Key_Registry, Proposers {
       }
     }
     revert('Transaction not found in this block');
-  }
+  } */
 
   // the new commitment Merkle-tree root is challenged as incorrect
   function challengeNewRootCorrect(
     Block memory priorBlockL2, // the block immediately prior to this one
-    Transaction memory priorBlockL2LastTransaction,
+    Transaction[] memory priorBlockTransactions, // the transactions in the prior block
+    bytes32[33] calldata frontierPriorBlock, // frontier path before prior block is added. The same frontier used in calculating root when prior block is added
     Block memory blockL2,
     Transaction[] memory transactions,
-    bytes32[33] calldata siblingPath, // sibling path for the last commitment in the prior block, (which we assume is correct or it will be challenged)
     uint commitmentIndex // the index *in the Merkle Tree* of the commitment that we are providing a SiblingPath for.
   ) external {
     // first, check we have real, in-train, contiguous blocks
-    require(blockHashes[priorBlockL2.blockHash].nextHash == blockHashes[blockL2.blockHash].previousHash, 'The blocks are not contiguous');
-    isBlockReal(blockL2);
+    require(blockHashes[priorBlockL2.blockHash].nextHash == blockHashes[blockL2.blockHash].thisHash, 'The blocks are not contiguous');
+    // check if the block hash is correct and the block hash exists for the prior block
     isBlockReal(priorBlockL2);
-    // next, check that we have the correct transactions. We do that by checking that the hashes of the commitments match those stored in the block. Also, while we're at it, save all the commitments for later.
+    isBlockHashCorrect(priorBlockL2);
+    // check if the transaction hashes from prior transactions are in the prior block
+      uint nCommitmentsPriorBlock;
+      for (uint i = 0; i < priorBlockTransactions.length; i++) {
+        require(
+          priorBlockL2.transactionHashes[i] == Utils.hashTransaction(priorBlockTransactions[i]),
+          'Transaction hash was not found'
+        );
+        nCommitmentsPriorBlock += priorBlockTransactions[i].commitments.length; // remember how many commitments are in the block
+      }
+
+      //calculate the number of commitments in prior block
+      bytes32[] memory commitmentsPriorBlock = new bytes32[](nCommitmentsPriorBlock);
+      uint l;
+      for (uint i = 0; i < priorBlockTransactions.length; i++) {
+        for (uint j = 0; j < priorBlockTransactions[i].commitments.length; j++)
+          commitmentsPriorBlock[l++] = priorBlockTransactions[i].commitments[j];
+      }
+      // next check the sibling path is valid and get the Frontier
+      bool valid;
+      bytes32[33] memory _frontier;
+      (valid, _frontier) = MerkleTree_Stateless.checkPath(
+        commitmentsPriorBlock,
+        frontierPriorBlock,
+        priorBlockL2.leafCount,
+        priorBlockL2.root
+      );
+      require(valid, 'The sibling path is invalid');
+
+      // check if the block hash is correct and the block hash exists for the current block
+    isBlockReal(blockL2);
+    isBlockHashCorrect(blockL2);
+
+    // check if the transaction hashes from current transactions are in the current block
+    //calculate the number of commitments in current block
     uint nCommitments;
     for (uint i = 0; i < transactions.length; i++) {
       require(
@@ -83,18 +110,7 @@ contract Challenges is Key_Registry, Proposers {
       );
       nCommitments += transactions[i].commitments.length; // remember how many commitments are in the block
     }
-    require(
-      priorBlockL2.transactionHashes[priorBlockL2.transactionHashes.length - 1] == Utils.hashTransaction(priorBlockL2LastTransaction),
-      'Last transaction of prior block is invalid'
-    );
-    // next check the sibling path is valid and get the Frontier
-    (bool valid, bytes32[33] memory _frontier) = MerkleTree_Stateless.checkPath(
-      siblingPath,
-      commitmentIndex,
-      priorBlockL2LastTransaction.commitments[priorBlockL2LastTransaction.commitments.length - 1],
-      priorBlockL2.root
-    );
-    require(valid, 'The sibling path is invalid');
+
     // next, let's get all the commitments in the block, togther in an array
     // we could do this with less code by making commitments 'storage' and pushing to the end of the array but it's a waste of Gas because we don't want to keep the commitments.
     bytes32[] memory commitments = new bytes32[](nCommitments);
@@ -107,6 +123,29 @@ contract Challenges is Key_Registry, Proposers {
     (bytes32 root, , ) = MerkleTree_Stateless.insertLeaves(commitments, _frontier, commitmentIndex);
     require(root != blockL2.root, 'The root is actually fine');
     challengeAccepted(blockL2);
+  }
+
+  // the new commitment Merkle-tree root is challenged as incorrect
+  function challengeNoDuplicateTransaction(
+    Block memory block1,
+    Block memory block2,
+    uint transactionIndex1,
+    uint transactionIndex2
+  ) external {
+    // first, check we have real, in-train, contiguous blocks
+    isBlockReal(block1);
+    isBlockHashCorrect(block1);
+    isBlockReal(block2);
+    isBlockHashCorrect(block2);
+    // Check if a duplicate transaction exists in these blocks
+    require(block1.transactionHashes[transactionIndex1] == block1.transactionHashes[transactionIndex2],
+      'There is no duplicate transaction in these blocks');
+    // Delete the latest block of the two
+    if(blockHashes[block1.blockHash].data > blockHashes[block2.blockHash].data) {
+      challengeAccepted(block1);
+    } else {
+      challengeAccepted(block2);
+    }
   }
 
   // TODO more challenges must be added but these will do to demo the principle
