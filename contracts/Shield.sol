@@ -13,6 +13,8 @@ pragma experimental ABIEncoderV2;
 import './Challenges.sol';
 import './Utils.sol';
 import './ERCInterface.sol';
+import './Key_Registry.sol';
+import './Challenges.sol';
 
 contract Shield is Challenges {
   /**

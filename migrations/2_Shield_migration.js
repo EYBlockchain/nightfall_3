@@ -6,7 +6,7 @@ const MiMC = artifacts.require('MiMC.sol');
 const Structures = artifacts.require('Structures.sol');
 const Config = artifacts.require('Config.sol');
 const Utils = artifacts.require('Utils.sol');
-
+const ChallengesUtil = artifacts.require('ChallengesUtil.sol')
 module.exports = function(deployer) {
   deployer.then(async () => {
     await deployer.deploy(BN256G2);
@@ -17,6 +17,8 @@ module.exports = function(deployer) {
     await deployer.link(MiMC, MerkleTree_Stateless);
     await deployer.deploy(MerkleTree_Stateless);
     await deployer.link(MerkleTree_Stateless, Shield);
+    await deployer.deploy(ChallengesUtil);
+    await deployer.link(ChallengesUtil, Shield);
     await deployer.deploy(Structures);
     await deployer.deploy(Config);
     await deployer.deploy(Utils);
