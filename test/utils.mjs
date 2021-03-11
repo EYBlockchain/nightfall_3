@@ -1,10 +1,13 @@
 import Web3 from 'web3';
 import axios from 'axios';
+import chai from 'chai';
+import rand from '../src/utils/crypto/crypto-random.mjs';
 
 let web3;
 
 export function connectWeb3() {
   web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8545'));
+  return web3;
 }
 
 export function closeWeb3Connection() {
@@ -59,6 +62,7 @@ export async function submitTransaction(
     return err;
   }
 }
+
 export async function getAccounts() {
   const accounts = web3.eth.getAccounts();
   return accounts;
@@ -75,4 +79,35 @@ export async function timeJump(secs) {
     method: 'evm_increaseTime',
     params: [secs],
   });
+}
+
+export async function createBadBlock(badBlockType, block, transactions, args) {
+  let res;
+  switch (badBlockType) {
+    case 'RandomRootNotInTimber': {
+      block.root = (await rand(32)).hex();
+      break;
+    }
+    case 'IncorrectRoot': {
+      res = await chai
+        .request('http://localhost:8083')
+        .get(`/path/${args.leafIndex}`)
+        .send({ contractName: 'Shield' });
+      block.root = res.body.data[0].value;
+      break;
+    }
+    case 'DuplicateTransaction': {
+      transactions[transactions.length - 1] = args.duplicateTransaction;
+      break;
+    }
+    default:
+      break;
+  }
+  const {
+    body: { txDataToSign, block: newBlock, transactions: newTransactions },
+  } = await chai
+    .request('http://localhost:8081')
+    .post('/proposer/encode')
+    .send({ block, transactions });
+  return { txDataToSign, block: newBlock, transactions: newTransactions };
 }
