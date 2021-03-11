@@ -4,6 +4,7 @@ import {
   subscribeToTransactionSubmitted,
   subscribeToBlockAssembledWebSocketConnection,
   subscribeToBlockDeletedEventHandler,
+  subscribeToChallengeWebSocketConnection,
 } from './subscribe.mjs';
 import blockProposedEventHandler from './block-proposed.mjs';
 import newCurrentProposerEventHandler from './new-current-proposer.mjs';
@@ -19,5 +20,6 @@ export {
   transactionSubmittedEventHandler,
   subscribeToBlockAssembledWebSocketConnection,
   subscribeToBlockDeletedEventHandler,
+  subscribeToChallengeWebSocketConnection,
   blockDeletedEventHandler,
 };

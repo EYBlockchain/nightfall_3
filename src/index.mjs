@@ -9,6 +9,7 @@ import {
   transactionSubmittedEventHandler,
   subscribeToBlockAssembledWebSocketConnection,
   subscribeToBlockDeletedEventHandler,
+  subscribeToChallengeWebSocketConnection,
   blockDeletedEventHandler,
 } from './event-handlers/index.mjs';
 import Proposer from './classes/proposer.mjs';
@@ -16,6 +17,7 @@ import {
   conditionalMakeBlock,
   setBlockAssembledWebSocketConnection,
 } from './services/block-assembler.mjs';
+import { setChallengeWebSocketConnection } from './services/challenges.mjs';
 
 const main = async () => {
   try {
@@ -27,6 +29,7 @@ const main = async () => {
     subscribeToBlockDeletedEventHandler(blockDeletedEventHandler);
     // subscribe to WebSocket events
     subscribeToBlockAssembledWebSocketConnection(setBlockAssembledWebSocketConnection);
+    subscribeToChallengeWebSocketConnection(setChallengeWebSocketConnection);
     // start making blocks whenever we can
     conditionalMakeBlock(proposer);
     app.listen(80);

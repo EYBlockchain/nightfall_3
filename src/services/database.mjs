@@ -144,3 +144,13 @@ export async function numberOfUnprocessedTransactions() {
   const db = connection.db(OPTIMIST_DB);
   return db.collection(TRANSACTIONS_COLLECTION).countDocuments({ mempool: true });
 }
+
+/**
+function to look a transaction by transactionHash, if you know the hash of the transaction.
+*/
+export async function getTransactionByTransactionHash(transactionHash) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { transactionHash };
+  return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
+}

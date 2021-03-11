@@ -103,6 +103,15 @@ export async function subscribeToBlockDeletedEventHandler(callback, ...args) {
   return emitter;
 }
 
+export async function subscribeToChallengeWebSocketConnection(callback, ...args) {
+  wss.on('connection', ws =>
+    ws.on('message', message => {
+      if (message === 'challenge') callback(ws, args);
+    }),
+  );
+  logger.debug('Subscribed to WebSocket connection');
+}
+
 export async function subscribeToBlockAssembledWebSocketConnection(callback, ...args) {
   wss.on('connection', ws =>
     ws.on('message', message => {

@@ -11,8 +11,9 @@ import {
 import Block from '../classes/block.mjs';
 import { waitForShield } from '../event-handlers/subscribe.mjs';
 import logger from '../utils/logger.mjs';
+import { getContractAddress } from '../utils/contract.mjs';
 
-const { TRANSACTIONS_PER_BLOCK } = config;
+const { TRANSACTIONS_PER_BLOCK, SHIELD_CONTRACT_NAME } = config;
 let makeBlocks = true;
 // let blockProposed = '0x0';
 let ws;
@@ -34,6 +35,16 @@ export function stopMakingBlocks() {
 
 // function isBlockProposed(hash) {
 //  return hash === blockProposed;
+// }
+
+// async function isBlockProposed(blockHash) {
+//   return new Promise(async function(resolve) {
+//     const emitter = (await waitForShield()).events.BlockProposed({
+//       filter: { blockHash },
+//       fromBlock: 0,
+//     });
+//     emitter.on('data', event => resolve(true));
+//   });
 // }
 
 export async function makeBlock(proposer, number = TRANSACTIONS_PER_BLOCK) {
@@ -69,22 +80,30 @@ export async function conditionalMakeBlock(proposer) {
       const unsignedProposeBlockTransaction = await (await waitForShield()).methods
         .proposeBlock(block, transactions)
         .encodeABI();
-      if (ws) ws.send(unsignedProposeBlockTransaction);
+      if (ws)
+        ws.send(
+          JSON.stringify({
+            type: 'block',
+            txDataToSign: unsignedProposeBlockTransaction,
+            block,
+            transactions,
+          }),
+        );
       logger.debug('Send unsigned block-assembler transaction to ws client');
       // remove the transactiosn from the mempool so we don't keep making new
       // blocks with them
       await removeTransactionsFromMemPool(block); // TODO is await needed?
       // Wait until it is proposed to the blockchain before we make any more:
-  //    logger.info('Block Assembler - Waiting until block is proposed before making any more');
-  //    while (!isBlockProposed(block.blockHash)) {
-//await new Promise(resolve => setTimeout(resolve, 1000));
-        // we only get so long to propose this block.  Once we're no-longer the
-        // current proposer, we've missed our chance
-//        if (!proposer.isMe) {
-//          logger.warn('Our turn as proposer ended before the block was proposed');
-//          break;
-//        }
-//      }
+      //    logger.info('Block Assembler - Waiting until block is proposed before making any more');
+      //    while (!isBlockProposed(block.blockHash)) {
+      //await new Promise(resolve => setTimeout(resolve, 1000));
+      // we only get so long to propose this block.  Once we're no-longer the
+      // current proposer, we've missed our chance
+      //        if (!proposer.isMe) {
+      //          logger.warn('Our turn as proposer ended before the block was proposed');
+      //          break;
+      //        }
+      //      }
     }
     // slow the loop a bit so we don't hammer the database
     await new Promise(resolve => setTimeout(resolve, 1000));

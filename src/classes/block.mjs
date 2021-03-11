@@ -23,8 +23,6 @@ class Block {
 
   proposer;
 
-  hash;
-
   blockHash; // null value as explained above
 
   constructor(asyncParams) {
@@ -73,6 +71,23 @@ class Block {
       { t: 'uint', v: block.leafCount },
     );
     return blockHash === block.blockHash;
+  }
+
+  static calcHash(block) {
+    const web3 = Web3.connection();
+    const blockHash = web3.utils.soliditySha3(
+      { t: 'address', v: block.proposer },
+      ...block.transactionHashes.map(th => ({ t: 'bytes32', v: th })),
+      { t: 'bytes32', v: block.root },
+      { t: 'uint', v: block.leafCount },
+    );
+    return new Block({
+      proposer: block.proposer,
+      transactionHashes: block.transactionHashes,
+      leafCount: block.leafCount,
+      root: block.root,
+      blockHash,
+    });
   }
 }
 
