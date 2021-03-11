@@ -46,6 +46,9 @@ services:
       - type: bind
         source: ../nightfall-deployer/circuits
         target: /app/circuits/
+      - type: bind
+        source: ../zokrates-worker/src
+        target: /app/src/
     depends_on:
       - deployer
     networks:
@@ -121,7 +124,7 @@ services:
         target: /app/src/
       - type: bind
         source: ./config/timber.js
-        target: /app/config/timber.js
+        target: /app/config/default.js
       - type: bind
         source: ../timber/merkle-tree/test
         target: /app/test/
@@ -135,7 +138,7 @@ services:
       LOG_LEVEL: info
       AUTOSTART: enabled
       # NODE_ENV needs to equal the name of the timber config file, without extension (timber.js here)
-      NODE_ENV: timber
+      #NODE_ENV: timber
 
   #The database storing the merkle tree
   timber-database:
