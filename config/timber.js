@@ -33,7 +33,7 @@ module.exports = {
 
   // contracts to filter:
   contracts: {
-    Shield: {
+    Challenges: {
       events: {
         // indexed by event names:
         NewLeaf: {

@@ -21,8 +21,9 @@ chai.use(chaiAsPromised);
 
 describe('Testing the http API', () => {
   let shieldAddress;
+  let challengeAddress;
   let ercAddress;
-  let transactions = [];
+  const transactions = [];
   let connection; // WS connection
   const zkpPrivateKey = '0xc05b14fa15148330c6d008814b0bdd69bc4a08a1bd0b629c42fa7e2c61f16739'; // the zkp private key we're going to use in the tests.
   const zkpPublicKey = sha256([new GN(zkpPrivateKey)]).hex();
@@ -44,8 +45,11 @@ describe('Testing the http API', () => {
   before(async () => {
     connectWeb3();
 
-    const res = await chai.request(url).get('/contract-address/Shield');
+    let res = await chai.request(url).get('/contract-address/Shield');
     shieldAddress = res.body.address;
+
+    res = await chai.request(url).get('/contract-address/Challenges');
+    challengeAddress = res.body.address;
 
     connection = new WebSocket(optimistWsUrl);
     connection.onopen = () => {
@@ -53,19 +57,12 @@ describe('Testing the http API', () => {
       connection.send('blocks');
     };
     connection.onmessage = async message => {
-      let txReceipt;
       const msg = JSON.parse(message.data);
       const { type, txDataToSign } = msg;
       if (type === 'block') {
-        txReceipt = await submitTransaction(
-          txDataToSign,
-          privateKey,
-          shieldAddress,
-          gas,
-          BLOCK_STAKE,
-        );
+        await submitTransaction(txDataToSign, privateKey, challengeAddress, gas, BLOCK_STAKE);
       } else {
-        txReceipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
+        await submitTransaction(txDataToSign, privateKey, challengeAddress, gas);
         // console.log('tx hash is', txReceipt.transactionHash);
       }
     };
@@ -112,7 +109,13 @@ describe('Testing the http API', () => {
       const gasCosts = 5000000000000000;
       const startBalance = await getBalance(myAddress);
       // now we need to sign the transaction and send it to the blockchain
-      const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, bond);
+      const receipt = await submitTransaction(
+        txDataToSign,
+        privateKey,
+        challengeAddress,
+        gas,
+        bond,
+      );
       const endBalance = await getBalance(myAddress);
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
@@ -124,7 +127,7 @@ describe('Testing the http API', () => {
       txDataToSign = res.body.txDataToSign;
       expect(txDataToSign).to.be.a('string');
       // now we need to sign the transaction and send it to the blockchain
-      const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
+      const receipt = await submitTransaction(txDataToSign, privateKey, challengeAddress, gas);
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
     });
@@ -136,7 +139,7 @@ describe('Testing the http API', () => {
       txDataToSign = res.body.txDataToSign;
       expect(txDataToSign).to.be.a('string');
       // now we need to sign the transaction and send it to the blockchain
-      const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
+      const receipt = await submitTransaction(txDataToSign, privateKey, challengeAddress, gas);
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
       const endBalance = await getBalance(myAddress);
@@ -148,7 +151,7 @@ describe('Testing the http API', () => {
       const res = await chai.request(optimistUrl).get('/proposer/change');
       expect(res.status).to.equal(200);
       txDataToSign = res.body.txDataToSign;
-      const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
+      const receipt = await submitTransaction(txDataToSign, privateKey, challengeAddress, gas);
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
     });
