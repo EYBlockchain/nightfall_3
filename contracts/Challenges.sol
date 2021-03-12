@@ -17,7 +17,7 @@ import './Utils.sol';
 import './ChallengesUtil.sol';
 
 
-contract Challenges is Key_Registry, Proposers {
+contract Challenges is Proposers, Key_Registry {
 
   /* // a transaction proof is challenged as incorrect
   function challengeProofVerifies(
