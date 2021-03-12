@@ -10,19 +10,26 @@ functionality is not really required - it's just a data availability aid.
 pragma solidity ^0.6.0;
 pragma experimental ABIEncoderV2;
 
-import './Challenges.sol';
 import './Utils.sol';
 import './ERCInterface.sol';
 import './Key_Registry.sol';
-import './Challenges.sol';
+import './Structures.sol';
+import './Config.sol';
+import './Proposers.sol';
 
-contract Shield is Challenges {
+contract Shield is Structures, Config, Key_Registry {
   /**
   We don't need to do the checks herein because the Proposer should do them.
   We don't really need this function at all because we could just send the
   transaction to a proposer.  Thus, some or all of this functionality may be
   removed in future to save Gas.
   */
+
+  Proposers private proposers;
+
+  constructor (address _proposersAddr) public {
+    proposers = Proposers(_proposersAddr);
+  }
   function submitTransaction(Transaction memory t) external payable {
     // check the transaction hash
     // require (t.transactionHash == hashTransaction(t), 'The transaction hash is not correct');
@@ -46,9 +53,10 @@ contract Shield is Challenges {
   */
   function finaliseWithdrawal(Block memory b, Transaction memory t, uint index) external {
     // check this block is a real one, in the queue, not something made up.
-    isBlockReal(b);
+    proposers.isBlockReal(b);
     // check that the block has been finalised
-    require(blockHashes[b.blockHash].data + COOLING_OFF_PERIOD < block.timestamp, 'It is too soon withdraw funds from this block');
+    (,,,uint data) = proposers.blockHashes(b.blockHash);
+    require(data + COOLING_OFF_PERIOD < block.timestamp, 'It is too soon withdraw funds from this block');
     // check the transaction is in the block
     require(b.transactionHashes[index] == Utils.hashTransaction(t), 'Transaction not found at the given index');
     if (t.transactionType == TransactionTypes.WITHDRAW) payOut(t);
