@@ -8,7 +8,7 @@ import {
 } from './database.mjs';
 import { getTreeHistory } from '../utils/timber.mjs';
 
-const { SHIELD_CONTRACT_NAME } = config;
+const { CHALLENGES_CONTRACT_NAME } = config;
 
 let ws;
 
@@ -37,7 +37,7 @@ async function getTransactionsBlock(transactions, block, length) {
 
 export default async function createChallenge(block, transactions, err) {
   if (process.env.IS_CHALLENGER === 'true') {
-    const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
+    const challengeContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
     switch (err.code) {
       // Challenge Root not in Timber
       case 0:
@@ -45,7 +45,7 @@ export default async function createChallenge(block, transactions, err) {
       // Challenge Wrong Root
       case 1: {
         // Getting prior block hash for the current block
-        const { previousHash } = await shieldContractInstance.methods
+        const { previousHash } = await challengeContractInstance.methods
           .blockHashes(block.blockHash)
           .call();
 
@@ -66,7 +66,7 @@ export default async function createChallenge(block, transactions, err) {
         const priorBlockHistory = await getTreeHistory(priorBlock.root);
 
         // Create a challenge
-        const txDataToSign = await shieldContractInstance.methods
+        const txDataToSign = await challengeContractInstance.methods
           .challengeNewRootCorrect(
             priorBlock,
             priorBlockTransactions,
@@ -91,7 +91,7 @@ export default async function createChallenge(block, transactions, err) {
           transactionHash => transactionHash === block.transactionHashes[transactionIndex1],
         );
         // Create a challenge
-        const txDataToSign = await shieldContractInstance.methods
+        const txDataToSign = await challengeContractInstance.methods
           .challengeNoDuplicateTransaction(
             block,
             block2,

@@ -13,10 +13,17 @@ import VerificationKey from '../classes/verification-key.mjs';
 import Proof from '../classes/proof.mjs';
 import TransactionError from '../classes/transaction-error.mjs';
 import PublicInputs from '../classes/public-inputs.mjs';
-import { waitForShield } from '../event-handlers/subscribe.mjs';
+import { waitForContract } from '../event-handlers/subscribe.mjs';
 import logger from '../utils/logger.mjs';
 
-const { ZOKRATES_WORKER_URL, PROVING_SCHEME, BACKEND, CURVE, ZERO } = config;
+const {
+  ZOKRATES_WORKER_URL,
+  PROVING_SCHEME,
+  BACKEND,
+  CURVE,
+  ZERO,
+  CHALLENGES_CONTRACT_NAME,
+} = config;
 
 // first, let's check the hash. That's nice and easy
 async function checkTransactionHash(transaction) {
@@ -167,8 +174,8 @@ async function checkPublicInputHash(transaction) {
 
 async function verifyProof(transaction) {
   // we'll need the verification key.  That's actually stored in the b/c
-  const shieldInstance = await waitForShield();
-  const vkArray = await shieldInstance.methods
+  const challengeInstance = await waitForContract(CHALLENGES_CONTRACT_NAME);
+  const vkArray = await challengeInstance.methods
     .getVerificationKey(transaction.transactionType)
     .call();
   // to verify a proof, we make use of a zokrates-worker, which has an offchain

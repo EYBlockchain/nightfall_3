@@ -4,7 +4,7 @@ import config from 'config';
 import logger from './logger.mjs';
 
 const url = `http://${config.TIMBER_HOST}:${config.TIMBER_PORT}`;
-const contractName = config.SHIELD_CONTRACT_NAME;
+const contractName = config.CHALLENGES_CONTRACT_NAME;
 
 export const startEventFilter = async () => {
   try {

@@ -6,7 +6,7 @@ import config from 'config';
 import { getContractInstance, getContractAddress } from '../utils/contract.mjs';
 import logger from '../utils/logger.mjs';
 
-const { SHIELD_CONTRACT_NAME, RETRIES, WEBSOCKET_PORT } = config;
+const { SHIELD_CONTRACT_NAME, RETRIES, WEBSOCKET_PORT, CHALLENGES_CONTRACT_NAME } = config;
 const wss = new WebSocket.Server({ port: WEBSOCKET_PORT });
 
 /**
@@ -69,35 +69,35 @@ export async function waitForContract(contractName) {
 }
 
 export async function subscribeToBlockProposedEvent(callback, ...args) {
-  const emitter = (await waitForShield()).events.BlockProposed();
+  const emitter = (await waitForContract(CHALLENGES_CONTRACT_NAME)).events.BlockProposed();
   emitter.on('data', event => callback(event, args));
   logger.debug('Subscribed to BlockProposed event');
   return emitter;
 }
 
 export async function subscribeToTransactionSubmitted(callback, ...args) {
-  const emitter = (await waitForShield()).events.TransactionSubmitted();
+  const emitter = (await waitForContract(SHIELD_CONTRACT_NAME)).events.TransactionSubmitted();
   emitter.on('data', event => callback(event, args));
   logger.debug('Subscribed to TransactionSubmitted event');
   return emitter;
 }
 
 export async function subscribeToNewCurrentProposer(callback, ...args) {
-  const emitter = (await waitForShield()).events.NewCurrentProposer();
+  const emitter = (await waitForContract(CHALLENGES_CONTRACT_NAME)).events.NewCurrentProposer();
   emitter.on('data', event => callback(event, args));
   logger.debug('Subscribed to NewCurrentProposer event');
   return emitter;
 }
 
-export async function subscribeToRejectedBlock(callback, ...args) {
-  const emitter = (await waitForShield()).events.RejectedBlock();
-  emitter.on('data', event => callback(event, args));
-  logger.debug('Subscribed to RejectedBlock event');
-  return emitter;
-}
+// export async function subscribeToRejectedBlock(callback, ...args) {
+//   const emitter = (await waitForShield()).events.RejectedBlock();
+//   emitter.on('data', event => callback(event, args));
+//   logger.debug('Subscribed to RejectedBlock event');
+//   return emitter;
+// }
 
 export async function subscribeToBlockDeletedEventHandler(callback, ...args) {
-  const emitter = (await waitForShield()).events.BlockDeleted();
+  const emitter = (await waitForContract(CHALLENGES_CONTRACT_NAME)).events.BlockDeleted();
   emitter.on('data', event => callback(event, args));
   logger.debug('Subscribed to BlockDeleted event');
   return emitter;

@@ -20,6 +20,7 @@ module.exports = {
   CONTRACT_ARTIFACTS: '/app/build/contracts',
   SHIELD_CONTRACT_NAME: 'Shield',
   CHALLENGES_CONTRACT_NAME: 'Challenges',
+  PROPOSERS_CONTRACT_NAME: 'Proposers',
   PROVING_SCHEME: 'gm17',
   BACKEND: 'libsnark',
   CURVE: 'bn128',
