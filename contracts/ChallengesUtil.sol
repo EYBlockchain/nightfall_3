@@ -1,4 +1,4 @@
-
+// SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.6.0;
 pragma experimental ABIEncoderV2;
 
@@ -8,12 +8,13 @@ import './MerkleTree_Stateless.sol';
 import './Structures.sol';
 
 library ChallengesUtil {
+
   function libChallengeProofVerifies(
     Structures.Block memory blockL2,
     Structures.Transaction memory transaction,
     uint transactionIndex, // the location of the transaction in the block (saves a loop)
     uint256[] memory vk
-  ) public returns (bool){
+  ) public {
     require(
       blockL2.transactionHashes[transactionIndex] == Utils.hashTransaction(transaction),
       'This transaction is not in the block at the index given'
@@ -24,18 +25,18 @@ library ChallengesUtil {
         vk),
       'This proof appears to be valid'
     );
-    return true;
   }
 
-  function getPath(bytes32[] memory commitmentsPriorBlock, bytes32[33] calldata frontierPriorBlock, uint leafCount, bytes32 root ) pure internal returns (bool,bytes32[33] memory){
-      (bool valid, bytes32[33] memory _frontier) = MerkleTree_Stateless.checkPath(
-      commitmentsPriorBlock,
-      frontierPriorBlock,
-      leafCount,
-      root
-    );
-    return (valid,_frontier);
-  }
+  // Need this internal function to prevent deep stack error due to accessing slot 16
+  // function getPath(bytes32[] memory commitmentsPriorBlock, bytes32[33] calldata frontierPriorBlock, uint leafCount, bytes32 root ) pure internal returns (bool,bytes32[33] memory){
+  //     (bool valid, bytes32[33] memory _frontier) = MerkleTree_Stateless.checkPath(
+  //     commitmentsPriorBlock,
+  //     frontierPriorBlock,
+  //     leafCount,
+  //     root
+  //   );
+  //   return (valid,_frontier);
+  // }
 
   function libChallengeNewRootCorrect(
     Structures.Block memory priorBlockL2, // the block immediately prior to this one
@@ -44,7 +45,7 @@ library ChallengesUtil {
     Structures.Block memory blockL2,
     Structures.Transaction[] memory transactions,
     uint commitmentIndex // the index *in the Merkle Tree* of the commitment that we are providing a SiblingPath for.
-  ) public pure returns (bool){
+  ) public pure {
   uint nCommitmentsPriorBlock;
   for (uint i = 0; i < priorBlockTransactions.length; i++) {
     require(
@@ -62,8 +63,15 @@ library ChallengesUtil {
       commitmentsPriorBlock[l++] = priorBlockTransactions[i].commitments[j];
   }
   // next check the sibling path is valid and get the Frontier
-  (bool valid, bytes32[33] memory _frontier) = getPath(commitmentsPriorBlock, frontierPriorBlock,priorBlockL2.leafCount, priorBlockL2.root);
-  
+  // (bool valid, bytes32[33] memory _frontier) = getPath(commitmentsPriorBlock, frontierPriorBlock,priorBlockL2.leafCount, priorBlockL2.root);
+    bool valid;
+    bytes32[33] memory _frontier;
+    (valid, _frontier) = MerkleTree_Stateless.checkPath(
+      commitmentsPriorBlock,
+      frontierPriorBlock,
+      priorBlockL2.leafCount,
+      priorBlockL2.root
+    );
   require(valid, 'The sibling path is invalid');
 
   uint nCommitments;
@@ -86,7 +94,5 @@ library ChallengesUtil {
     // At last, we can check if the root itself is correct!
     (bytes32 root, , ) = MerkleTree_Stateless.insertLeaves(commitments, _frontier, commitmentIndex);
     require(root != blockL2.root, 'The root is actually fine');
-
-    return true;
   }
 }

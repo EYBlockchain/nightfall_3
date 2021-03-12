@@ -14,6 +14,8 @@ import './Proposers.sol';
 import './Key_Registry.sol';
 import './MerkleTree_Stateless.sol';
 import './Utils.sol';
+import './ChallengesUtil.sol';
+
 
 contract Challenges is Key_Registry, Proposers {
 
@@ -68,60 +70,10 @@ contract Challenges is Key_Registry, Proposers {
     // check if the block hash is correct and the block hash exists for the prior block
     isBlockReal(priorBlockL2);
     isBlockHashCorrect(priorBlockL2);
-    // check if the transaction hashes from prior transactions are in the prior block
-      uint nCommitmentsPriorBlock;
-      for (uint i = 0; i < priorBlockTransactions.length; i++) {
-        require(
-          priorBlockL2.transactionHashes[i] == Utils.hashTransaction(priorBlockTransactions[i]),
-          'Transaction hash was not found'
-        );
-        nCommitmentsPriorBlock += priorBlockTransactions[i].commitments.length; // remember how many commitments are in the block
-      }
-
-      //calculate the number of commitments in prior block
-      bytes32[] memory commitmentsPriorBlock = new bytes32[](nCommitmentsPriorBlock);
-      uint l;
-      for (uint i = 0; i < priorBlockTransactions.length; i++) {
-        for (uint j = 0; j < priorBlockTransactions[i].commitments.length; j++)
-          commitmentsPriorBlock[l++] = priorBlockTransactions[i].commitments[j];
-      }
-      // next check the sibling path is valid and get the Frontier
-      bool valid;
-      bytes32[33] memory _frontier;
-      (valid, _frontier) = MerkleTree_Stateless.checkPath(
-        commitmentsPriorBlock,
-        frontierPriorBlock,
-        priorBlockL2.leafCount,
-        priorBlockL2.root
-      );
-      require(valid, 'The sibling path is invalid');
-
-      // check if the block hash is correct and the block hash exists for the current block
     isBlockReal(blockL2);
+    // check if the transaction hashes from prior transactions are in the prior block
     isBlockHashCorrect(blockL2);
-
-    // check if the transaction hashes from current transactions are in the current block
-    //calculate the number of commitments in current block
-    uint nCommitments;
-    for (uint i = 0; i < transactions.length; i++) {
-      require(
-        blockL2.transactionHashes[i] == Utils.hashTransaction(transactions[i]),
-        'Transaction hash was not found'
-      );
-      nCommitments += transactions[i].commitments.length; // remember how many commitments are in the block
-    }
-
-    // next, let's get all the commitments in the block, togther in an array
-    // we could do this with less code by making commitments 'storage' and pushing to the end of the array but it's a waste of Gas because we don't want to keep the commitments.
-    bytes32[] memory commitments = new bytes32[](nCommitments);
-    uint k;
-    for (uint i = 0; i < transactions.length; i++) {
-      for (uint j = 0; j < transactions[i].commitments.length; j++)
-        commitments[k++] = transactions[i].commitments[j];
-    }
-    // At last, we can check if the root itself is correct!
-    (bytes32 root, , ) = MerkleTree_Stateless.insertLeaves(commitments, _frontier, commitmentIndex);
-    require(root != blockL2.root, 'The root is actually fine');
+    ChallengesUtil.libChallengeNewRootCorrect(priorBlockL2, priorBlockTransactions, frontierPriorBlock, blockL2, transactions, commitmentIndex);
     challengeAccepted(blockL2);
   }
 
