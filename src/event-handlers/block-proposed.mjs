@@ -18,6 +18,7 @@ async function blockProposedEventHandler(data) {
   // Sync Optimist with Timber by checking number of leaves
   for (let i = 0; i < TIMBER_SYNC_RETRIES; i++) {
     const timberLeafCount = await getLeafCount();
+    logger.debug(`Timber leaf count was ${timberLeafCount}`);
     // Exponential Backoff
     const backoff = 2 ** i * 1000;
     if (currentLeafCount > timberLeafCount) {
@@ -30,6 +31,7 @@ async function blockProposedEventHandler(data) {
     } else break;
   }
   logger.info('Received BlockProposed event');
+  // await new Promise(resolve => setTimeout(resolve, 2000));
   // TODO this waits to be sure Timber is updated.  Instead write some proper syncing code!
   try {
     // and save the block to facilitate later lookup of block data

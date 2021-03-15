@@ -2,8 +2,6 @@
 Turns the slightly odd object/class/thing returned in a transaction-submitted event into a true transaction
 */
 
-import Transaction from '../classes/transaction.mjs';
-
 function mappedData(data) {
   const {
     transactionHash,
