@@ -278,10 +278,18 @@ describe('Testing the http API', () => {
     it('Should find the block containing the withdraw transaction', async () => {
       // give the last block time to be submitted, or we won't have added the
       // withdraw transaction to the blockchain at all.
-      await new Promise(resolve => setTimeout(resolve, 10000));
-      // next look for the block that contains the withdraw tx
-      const res = await chai.request(optimistUrl).get(`/block/${transactions[0].transactionHash}`);
-      block = res.body;
+      // it sometimes seems to take a while for this block to appear so loop
+      // every five seconds.
+      let i = 0;
+      do {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        console.log('Waiting for withdraw block to appear', i++ * 5, 'seconds');
+        // look for the block that contains the withdraw tx
+        const res = await chai
+          .request(optimistUrl)
+          .get(`/block/${transactions[0].transactionHash}`);
+        block = res.body;
+      } while (block === {});
       expect(block).not.to.be.null; // eslint-disable-line
       expect(Object.entries(block).length).not.to.equal(0); // empty object {}
     });
