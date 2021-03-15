@@ -48,6 +48,7 @@
     "hex-to-binary": "^1.0.1",
     "keccak": "^3.0.1",
     "mongodb": "^3.6.2",
+    "queue": "^6.0.2",
     "request": "^2.88.2",
     "safe-buffer": "^5.2.1",
     "tar": "^6.0.2",
