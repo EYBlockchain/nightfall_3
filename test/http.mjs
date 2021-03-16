@@ -289,7 +289,7 @@ describe('Testing the http API', () => {
           .request(optimistUrl)
           .get(`/block/${transactions[0].transactionHash}`);
         block = res.body;
-      } while (block === {});
+      } while (Object.entries(block).length === 0);
       expect(block).not.to.be.null; // eslint-disable-line
       expect(Object.entries(block).length).not.to.equal(0); // empty object {}
     });
