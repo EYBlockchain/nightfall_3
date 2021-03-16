@@ -5,6 +5,7 @@ import {
   getBlockByBlockHash,
   getTransactionByTransactionHash,
   getBlockByTransactionHash,
+  retrieveMinedNullifiers,
 } from './database.mjs';
 import { getTreeHistory } from '../utils/timber.mjs';
 
@@ -102,6 +103,51 @@ export default async function createChallenge(block, transactions, err) {
         logger.debug('returning raw transaction');
         logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
         submitChallenge(txDataToSign);
+        break;
+      }
+      // Challenge Duplicate Nullfier
+      case 3: {
+        const storedMinedNullifiers = await retrieveMinedNullifiers(); // List of Nullifiers stored by blockProposer
+        const blockNullifiers = transactions.map(tNull => tNull.nullifiers.toString()); // List of Nullifiers in block
+        const alreadyMinedNullifiers = storedMinedNullifiers.filter(sNull =>
+          blockNullifiers.includes(sNull.hash),
+        );
+        if (alreadyMinedNullifiers.length > 0) {
+          const n = alreadyMinedNullifiers[0]; // We can only slash this block no matter which nullifier we pick anyways.
+          const oldBlock = await getBlockByBlockHash(n.blockHash);
+          const oldBlockTransactions = await Promise.all(
+            oldBlock.transactionHashes.map(tx => getTransactionByTransactionHash(tx)),
+          );
+          const [oldTxIdx, oldNullifierIdx] = oldBlockTransactions
+            .map((txs, txIndex) => [
+              txIndex,
+              txs.nullifiers.findIndex(oldN => oldN.toString() === n.hash),
+            ])
+            .filter(oldIdxs => oldIdxs[1] >= 0)
+            .flat(Infinity);
+          const [currentTxIdx, currentNullifierIdx] = transactions
+            .map((txs, txIndex) => [
+              txIndex,
+              txs.nullifiers.findIndex(currN => currN.toString() === n.hash),
+            ])
+            .filter(currentIdx => currentIdx[1] >= 0)
+            .flat(Infinity);
+          const txDataToSign = await challengeContractInstance.methods
+            .challengeNullifier(
+              block,
+              transactions[currentTxIdx],
+              currentTxIdx,
+              currentNullifierIdx,
+              oldBlock,
+              oldBlockTransactions[oldTxIdx],
+              oldTxIdx,
+              oldNullifierIdx,
+            )
+            .encodeABI();
+          logger.debug('returning raw transaction for challenge Nullifier');
+          logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
+          submitChallenge(txDataToSign);
+        }
         break;
       }
       default:

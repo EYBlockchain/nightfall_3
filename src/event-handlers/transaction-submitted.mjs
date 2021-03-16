@@ -3,7 +3,6 @@ Module to handle new Transactions being posted
 */
 import logger from '../utils/logger.mjs';
 import { saveTransaction, retrieveNullifiers, saveNullifiers } from '../services/database.mjs';
-// import { conditionalMakeBlock } from '../services/propose-block.mjs';
 import mappedTransaction from '../event-mappers/transaction-submitted.mjs';
 import checkTransaction from '../services/transaction-checker.mjs';
 import TransactionError from '../classes/transaction-error.mjs';

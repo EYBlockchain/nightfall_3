@@ -175,3 +175,20 @@ export async function retrieveNullifiers() {
     .find({}, { projection: { hash: 1 } })
     .toArray();
 }
+
+export async function stampNullifiers(nullifiers, blockHash) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { hash: { $in: nullifiers } };
+  const update = { $set: { blockHash: blockHash } };
+  return db.collection(NULLIFIER_COLLECTION).updateMany(query, update);
+}
+
+export async function retrieveMinedNullifiers() {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  return db
+    .collection(NULLIFIER_COLLECTION)
+    .find({ blockHash: { $exists: true } })
+    .toArray();
+}
