@@ -283,7 +283,7 @@ describe('Testing the http API', () => {
       let i = 0;
       do {
         await new Promise(resolve => setTimeout(resolve, 1000));
-        console.log('Waiting for withdraw block to appear', i++ * 5, 'seconds');
+        console.log('Waiting for withdraw block to appear', i++, 'seconds');
         // look for the block that contains the withdraw tx
         const res = await chai
           .request(optimistUrl)
