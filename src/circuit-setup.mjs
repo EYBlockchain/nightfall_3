@@ -96,8 +96,8 @@ async function setupCircuits() {
       delete vk.raw; // long and not needed
       logger.silly('vk:', vk);
       const vkArray = Object.values(vk).flat(Infinity); // flatten the Vk array of arrays because that's how Shield.sol likes it.  I see no need for decimal conversion here - but that may be wrong.
-      const shieldAddress = await getContractAddress('Shield');
-      const shield = await getContractInstance('Shield', shieldAddress);
+      const challengeAddress = await getContractAddress('Challenges');
+      const shield = await getContractInstance('Challenges', challengeAddress);
       await shield.methods.registerVerificationKey(vkArray, config.VK_IDS[folderpath]).send();
     } catch (err) {
       logger.error(err);
