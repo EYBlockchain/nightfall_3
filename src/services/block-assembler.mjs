@@ -9,11 +9,11 @@ import {
   numberOfUnprocessedTransactions,
 } from './database.mjs';
 import Block from '../classes/block.mjs';
-import { waitForShield } from '../event-handlers/subscribe.mjs';
+import { waitForContract } from '../event-handlers/subscribe.mjs';
 import logger from '../utils/logger.mjs';
 import { getContractAddress } from '../utils/contract.mjs';
 
-const { TRANSACTIONS_PER_BLOCK, SHIELD_CONTRACT_NAME } = config;
+const { TRANSACTIONS_PER_BLOCK, CHALLENGES_CONTRACT_NAME } = config;
 let makeBlocks = true;
 // let blockProposed = '0x0';
 let ws;
@@ -39,7 +39,7 @@ export function stopMakingBlocks() {
 
 // async function isBlockProposed(blockHash) {
 //   return new Promise(async function(resolve) {
-//     const emitter = (await waitForShield()).events.BlockProposed({
+//     const emitter = (await waitForContract(CHALLENGES_CONTRACT_NAME)).events.BlockProposed({
 //       filter: { blockHash },
 //       fromBlock: 0,
 //     });
@@ -54,7 +54,10 @@ export async function makeBlock(proposer, number = TRANSACTIONS_PER_BLOCK) {
   const transactions = await getMostProfitableTransactions(number);
   // then we make new block objects until we run out of unprocessed
   // transactions
-  const currentLeafCount = parseInt(await (await waitForShield()).methods.leafCount().call(), 10);
+  const currentLeafCount = parseInt(
+    await (await waitForContract(CHALLENGES_CONTRACT_NAME)).methods.leafCount().call(),
+    10,
+  );
   const block = await Block.build({ proposer, transactions, currentLeafCount });
   return { block, transactions };
 }
@@ -77,7 +80,9 @@ export async function conditionalMakeBlock(proposer) {
       const { block, transactions } = await makeBlock(proposer.address);
       logger.info(`Block Assembler - New Block created, ${JSON.stringify(block, null, 2)}`);
       // propose this block to the Shield contract here
-      const unsignedProposeBlockTransaction = await (await waitForShield()).methods
+      const unsignedProposeBlockTransaction = await (
+        await waitForContract(CHALLENGES_CONTRACT_NAME)
+      ).methods
         .proposeBlock(block, transactions)
         .encodeABI();
       if (ws)
@@ -117,5 +122,7 @@ block proposer.
 */
 export async function forceRollback(block) {
   logger.info(`Request to rollback Block with hash ${block.blockHash}`);
-  return (await waitForShield()).methods.forceChallengeAccepted(block).encodeABI();
+  return (await waitForContract(CHALLENGES_CONTRACT_NAME)).methods
+    .forceChallengeAccepted(block)
+    .encodeABI();
 }

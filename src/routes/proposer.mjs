@@ -9,11 +9,11 @@ import logger from '../utils/logger.mjs';
 import { getContractInstance } from '../utils/contract.mjs';
 import Block from '../classes/block.mjs';
 import { setRegisteredProposerAddress } from '../services/database.mjs';
-import { waitForShield } from '../event-handlers/subscribe.mjs';
+import { waitForContract } from '../event-handlers/subscribe.mjs';
 import Transaction from '../classes/transaction.mjs';
 
 const router = express.Router();
-const { SHIELD_CONTRACT_NAME } = config;
+const { CHALLENGES_CONTRACT_NAME } = config;
 
 /**
  * Function to return a raw transaction that registers a proposer.  This just
@@ -25,8 +25,8 @@ router.post('/register', async (req, res, next) => {
   logger.debug(`register proposer endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
   try {
     const { address } = req.body;
-    const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
-    const txDataToSign = await shieldContractInstance.methods.registerProposer().encodeABI();
+    const proposersContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
+    const txDataToSign = await proposersContractInstance.methods.registerProposer().encodeABI();
     logger.debug('returning raw transaction data');
     logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
     res.json({ txDataToSign });
@@ -43,8 +43,8 @@ router.post('/register', async (req, res, next) => {
 router.get('/proposers', async (req, res, next) => {
   logger.debug(`list proposals endpoint received GET ${JSON.stringify(req.body, null, 2)}`);
   try {
-    const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
-    const proposers = await shieldContractInstance.methods.getProposers().call();
+    const proposersContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
+    const proposers = await proposersContractInstance.methods.getProposers().call();
     logger.debug('returning raw transaction data');
     logger.silly(`raw transaction is ${JSON.stringify(proposers, null, 2)}`);
     res.json({ proposers });
@@ -61,8 +61,8 @@ router.get('/proposers', async (req, res, next) => {
 router.post('/de-register', async (req, res, next) => {
   logger.debug(`de-register proposer endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
   try {
-    const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
-    const txDataToSign = await shieldContractInstance.methods.deRegisterProposer().encodeABI();
+    const proposersContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
+    const txDataToSign = await proposersContractInstance.methods.deRegisterProposer().encodeABI();
     logger.debug('returning raw transaction data');
     logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
     res.json({ txDataToSign });
@@ -80,8 +80,8 @@ router.post('/de-register', async (req, res, next) => {
 router.get('/withdraw', async (req, res, next) => {
   logger.debug(`withdraw endpoint received GET ${JSON.stringify(req.body, null, 2)}`);
   try {
-    const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
-    const txDataToSign = await shieldContractInstance.methods.withdraw().encodeABI();
+    const proposersContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
+    const txDataToSign = await proposersContractInstance.methods.withdraw().encodeABI();
     logger.debug('returning raw transaction data');
     logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
     res.json({ txDataToSign });
@@ -109,8 +109,8 @@ router.post('/propose', async (req, res, next) => {
       currentLeafCount,
     });
     logger.debug(`New block assembled ${JSON.stringify(block, null, 2)}`);
-    const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
-    const txDataToSign = await shieldContractInstance.methods
+    const proposersContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
+    const txDataToSign = await proposersContractInstance.methods
       .proposeBlock(block, transactions)
       .encodeABI();
     logger.debug('returning raw transaction');
@@ -131,8 +131,10 @@ router.post('/propose', async (req, res, next) => {
 router.get('/change', async (req, res, next) => {
   logger.debug(`proposer/change endpoint received GET ${JSON.stringify(req.body, null, 2)}`);
   try {
-    const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
-    const txDataToSign = await shieldContractInstance.methods.changeCurrentProposer().encodeABI();
+    const proposersContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
+    const txDataToSign = await proposersContractInstance.methods
+      .changeCurrentProposer()
+      .encodeABI();
     logger.debug('returning raw transaction data');
     logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
     res.json({ txDataToSign });
@@ -155,7 +157,10 @@ router.post('/encode', async (req, res, next) => {
     const { transactions, block } = req.body;
     // use the information we've been POSTED to assemble a block
     // we use a Builder pattern because an async constructor is bad form
-    const currentLeafCount = parseInt(await (await waitForShield()).methods.leafCount().call(), 10);
+    const currentLeafCount = parseInt(
+      await (await waitForContract(CHALLENGES_CONTRACT_NAME)).methods.leafCount().call(),
+      10,
+    );
 
     const newTransactions = await Promise.all(
       transactions.map(transaction => Transaction.calcHash(transaction)),
@@ -169,8 +174,8 @@ router.post('/encode', async (req, res, next) => {
     });
 
     logger.debug(`New block assembled ${JSON.stringify(newBlock, null, 2)}`);
-    const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
-    const txDataToSign = await shieldContractInstance.methods
+    const proposersContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
+    const txDataToSign = await proposersContractInstance.methods
       .proposeBlock(newBlock, newTransactions)
       .encodeABI();
     logger.debug('returning raw transaction');
