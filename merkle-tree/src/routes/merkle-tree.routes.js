@@ -174,13 +174,33 @@ async function getTreeHistory(req, res, next) {
   }
 }
 
+async function getTreeHistoryByCurrentLeafCount(req, res, next) {
+  const { db } = req.user;
+  const { currentLeafCount } = req.params;
+  try {
+    // see if the historic root is in the dB and return it if it is
+    let history = await merkleTreeController.getTreeHistoryByCurrentLeafCount(db, currentLeafCount);
+    if (history === null) {
+      // if not, update the db with the most recent events and try again
+      await merkleTreeController.update(db);
+      history = await merkleTreeController.getTreeHistoryByCurrentLeafCount(db, currentLeafCount);
+    }
+    logger.debug(`Read history collection and retrieved ${JSON.stringify(history, null, 2)}`);
+    res.data = history;
+    next();
+  } catch (err) {
+    next(err);
+  }
+}
+
 // initializing routes
-export default function(router) {
+export default function (router) {
   router.route('/start').post(startEventFilter);
 
   router.route('/update').patch(update);
 
   router.get('/siblingPath/:leafIndex', getSiblingPathByLeafIndex);
   router.get('/path/:leafIndex', getPathByLeafIndex);
-  router.get('/tree-history/:root', getTreeHistory);
+  router.get('/tree-history/root/:root', getTreeHistory);
+  router.get('/tree-history/currentLeafCount/:currentLeafCount', getTreeHistoryByCurrentLeafCount);
 }

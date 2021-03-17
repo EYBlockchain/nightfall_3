@@ -309,6 +309,11 @@ async function getTreeHistory(db, root) {
   return historyService.getTreeHistory(root);
 }
 
+async function getTreeHistoryByCurrentLeafCount(db, currentLeafCount) {
+  const historyService = new HistoryService(db);
+  return historyService.getTreeHistoryByCurrentLeafCount(currentLeafCount);
+}
+
 /**
 This function rolls back the database to a time when it contained 'leafCount'
 leaves and had the root 'root'.
@@ -389,5 +394,6 @@ export default {
   getSiblingPathByLeafIndex,
   update,
   getTreeHistory,
+  getTreeHistoryByCurrentLeafCount,
   rollback,
 };
