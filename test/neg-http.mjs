@@ -21,6 +21,7 @@ chai.use(chaiAsPromised);
 describe('Testing the challenge http API', () => {
   let web3;
   let shieldAddress;
+  let challengeAddress;
   let ercAddress;
   let connection; // WS connection
   const zkpPrivateKey = '0xc05b14fa15148330c6d008814b0bdd69bc4a08a1bd0b629c42fa7e2c61f16739'; // the zkp private key we're going to use in the tests.
@@ -56,6 +57,9 @@ describe('Testing the challenge http API', () => {
     res = await chai.request(url).get('/contract-address/Shield');
     shieldAddress = res.body.address;
 
+    res = await chai.request(url).get('/contract-address/Challenges');
+    challengeAddress = res.body.address;
+
     // should get the address of the test ERC contract stub
     res = await chai.request(url).get('/contract-address/ERCStub');
     ercAddress = res.body.address;
@@ -68,12 +72,12 @@ describe('Testing the challenge http API', () => {
       .post('/proposer/register')
       .send({ address: myAddress });
     txToSign = res.body.txDataToSign;
-    await submitTransaction(txToSign, privateKey, shieldAddress, gas, bond);
+    await submitTransaction(txToSign, privateKey, challengeAddress, gas, bond);
 
     // Should change the current proposer (to the just-registered proposer as that is the only one
     res = await chai.request(optimistUrl).get('/proposer/change');
     txToSign = res.body.txDataToSign;
-    await submitTransaction(txToSign, privateKey, shieldAddress, gas);
+    await submitTransaction(txToSign, privateKey, challengeAddress, gas);
 
     connection = new WebSocket(optimistWsUrl);
     connection.onopen = () => {
@@ -115,18 +119,12 @@ describe('Testing the challenge http API', () => {
         } else {
           // txDataToSign = msg.txDataToSign;
         }
-        txReceipt = await submitTransaction(
-          txDataToSign,
-          privateKey,
-          shieldAddress,
-          gas,
-          BLOCK_STAKE,
-        );
+        await submitTransaction(txDataToSign, privateKey, challengeAddress, gas, BLOCK_STAKE);
         counter++;
         // console.log('tx hash of propose block is', txReceipt.transactionHash);
         // (msg.type === 'challenge')
       } else {
-        txReceipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
+        await submitTransaction(txDataToSign, privateKey, challengeAddress, gas);
         // console.log('tx hash of challenge block is', txReceipt.transactionHash);
       }
     };
@@ -230,7 +228,7 @@ describe('Testing the challenge http API', () => {
       web3.eth
         .getPastLogs({
           fromBlock: web3.utils.toHex(0),
-          address: shieldAddress,
+          address: challengeAddress,
           topics: [web3.utils.sha3('BlockDeleted(bytes32)'), topicsBlockHashesIncorrectRootInBlock],
         })
         .then(events => {
@@ -243,7 +241,7 @@ describe('Testing the challenge http API', () => {
       web3.eth
         .getPastLogs({
           fromBlock: web3.utils.toHex(0),
-          address: shieldAddress,
+          address: challengeAddress,
           topics: [web3.utils.sha3('Rollback(bytes32,uint256)'), topicsRootIncorrectRootInBlock],
         })
         .then(events => {
@@ -259,7 +257,7 @@ describe('Testing the challenge http API', () => {
       web3.eth
         .getPastLogs({
           fromBlock: web3.utils.toHex(0),
-          address: shieldAddress,
+          address: challengeAddress,
           topics: [web3.utils.sha3('BlockDeleted(bytes32)'), topicsBlockHashesDuplicateTransaction],
         })
         .then(events => {
