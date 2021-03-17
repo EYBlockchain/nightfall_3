@@ -104,8 +104,9 @@ export async function createBadBlock(badBlockType, block, transactions, args) {
       break;
     }
     case 'InvalidDepositTransaction': {
-      transaction.tokenId = '0x0000000000000000000000000000000000000000000000000000000000000001';
-      transaction.value = '0x0000000000000000000000000000000000000000000000000000000000000001';
+      transactions[0].tokenId =
+        '0x0000000000000000000000000000000000000000000000000000000000000001';
+      transactions[0].value = '0x0000000000000000000000000000000000000000000000000000000000000001';
       break;
     }
     default:

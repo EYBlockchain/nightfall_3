@@ -85,7 +85,7 @@ describe('Testing the challenge http API', () => {
       connection.send('blocks');
     };
     connection.onmessage = async message => {
-      let txReceipt;
+      // let txReceipt;
       const msg = JSON.parse(message.data);
       const { type } = msg;
       let { txDataToSign } = msg;
@@ -108,16 +108,16 @@ describe('Testing the challenge http API', () => {
           topicsBlockHashesDuplicateTransaction = res.block.blockHash;
           topicsRootDuplicateTransaction = res.block.root;
           txDataToSign = res.txDataToSign;
-          // } else if (counter === 3) {
-          //   txDataToSign = msg.txDataToSign;
-          //   res = await createBadBlock('InvalidDepositTransaction', block, transactions, {
-          //     duplicateTransaction,
-          //   });
-          //   topicsBlockHashesDuplicateTransaction = res.block.blockHash;
-          //   topicsRootDuplicateTransaction = res.block.root;
-          //   txDataToSign = res.txDataToSign;
+        } else if (counter === 3) {
+          txDataToSign = msg.txDataToSign;
+          res = await createBadBlock('InvalidDepositTransaction', block, transactions, {
+            duplicateTransaction,
+          });
+          topicsBlockHashesDuplicateTransaction = res.block.blockHash;
+          topicsRootDuplicateTransaction = res.block.root;
+          txDataToSign = res.txDataToSign;
         } else {
-          // txDataToSign = msg.txDataToSign;
+          txDataToSign = msg.txDataToSign;
         }
         await submitTransaction(txDataToSign, privateKey, challengeAddress, gas, BLOCK_STAKE);
         counter++;
@@ -270,7 +270,7 @@ describe('Testing the challenge http API', () => {
       web3.eth
         .getPastLogs({
           fromBlock: web3.utils.toHex(0),
-          address: shieldAddress,
+          address: challengeAddress,
           topics: [web3.utils.sha3('Rollback(bytes32,uint256)'), topicsRootDuplicateTransaction],
         })
         .then(events => {
@@ -280,13 +280,27 @@ describe('Testing the challenge http API', () => {
     });
   });
 
-  describe.skip('Challenge 3: Invalid transaction submitted', () => {
+  describe('Challenge 3: Invalid transaction submitted', () => {
     it('Should delete the wrong block', async () => {
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      const res = await chai
+        .request(url)
+        .post('/deposit')
+        .send({
+          ercAddress,
+          tokenId,
+          value,
+          zkpPublicKey,
+          fee,
+        });
+      const { txDataToSign } = res.body;
+      // now we need to sign the transaction and send it to the blockchain
+      const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
+
+      await new Promise(resolve => setTimeout(resolve, 15000));
       web3.eth
         .getPastLogs({
           fromBlock: web3.utils.toHex(0),
-          address: shieldAddress,
+          address: challengeAddress,
           topics: [web3.utils.sha3('BlockDeleted(bytes32)'), topicsBlockHashesInvalidTransaction],
         })
         .then(events => {
@@ -299,7 +313,7 @@ describe('Testing the challenge http API', () => {
       web3.eth
         .getPastLogs({
           fromBlock: web3.utils.toHex(0),
-          address: shieldAddress,
+          address: challengeAddress,
           topics: [web3.utils.sha3('Rollback(bytes32,uint256)'), topicsRootInvalidTransaction],
         })
         .then(events => {
