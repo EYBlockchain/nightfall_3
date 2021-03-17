@@ -43,12 +43,15 @@ describe('Testing the challenge http API', () => {
   let topicsRootIncorrectRootInBlock;
   let topicsBlockHashesDuplicateTransaction;
   let topicsRootDuplicateTransaction;
+  let topicsBlockHashesInvalidTransaction;
+  let topicsRootInvalidTransaction;
 
   before(async () => {
     let res;
     let txToSign;
     web3 = connectWeb3();
     let counter = 0; // to edit a block to a different bad block type each time a block proposed transaction is received
+    let duplicateTransaction;
 
     res = await chai.request(url).get('/contract-address/Shield');
     shieldAddress = res.body.address;
@@ -79,11 +82,11 @@ describe('Testing the challenge http API', () => {
     };
     connection.onmessage = async message => {
       let txReceipt;
-      let duplicateTransaction;
       const msg = JSON.parse(message.data);
-      const { type, block, transactions } = msg;
+      const { type } = msg;
       let { txDataToSign } = msg;
       if (type === 'block') {
+        const { block, transactions } = msg;
         if (counter === 0) {
           duplicateTransaction = transactions[0];
         } else if (counter === 1) {
@@ -95,12 +98,20 @@ describe('Testing the challenge http API', () => {
           txDataToSign = res.txDataToSign;
         } else if (counter === 2) {
           txDataToSign = msg.txDataToSign;
-          // res = await createBadBlock('DuplicateTransaction', block, transactions, {
-          //   duplicateTransaction,
-          // });
-          // topicsBlockHashesDuplicateTransaction = res.block.blockHash;
-          // topicsRootDuplicateTransaction = res.block.root;
-          // txDataToSign = res.txDataToSign;
+          res = await createBadBlock('DuplicateTransaction', block, transactions, {
+            duplicateTransaction,
+          });
+          topicsBlockHashesDuplicateTransaction = res.block.blockHash;
+          topicsRootDuplicateTransaction = res.block.root;
+          txDataToSign = res.txDataToSign;
+          // } else if (counter === 3) {
+          //   txDataToSign = msg.txDataToSign;
+          //   res = await createBadBlock('InvalidDepositTransaction', block, transactions, {
+          //     duplicateTransaction,
+          //   });
+          //   topicsBlockHashesDuplicateTransaction = res.block.blockHash;
+          //   topicsRootDuplicateTransaction = res.block.root;
+          //   txDataToSign = res.txDataToSign;
         } else {
           // txDataToSign = msg.txDataToSign;
         }
@@ -242,7 +253,7 @@ describe('Testing the challenge http API', () => {
     });
   });
 
-  describe.skip('Challenge 2: Duplicate transaction submitted', () => {
+  describe('Challenge 2: Duplicate transaction submitted', () => {
     it('Should delete the wrong block', async () => {
       await new Promise(resolve => setTimeout(resolve, 5000));
       web3.eth
@@ -250,6 +261,48 @@ describe('Testing the challenge http API', () => {
           fromBlock: web3.utils.toHex(0),
           address: shieldAddress,
           topics: [web3.utils.sha3('BlockDeleted(bytes32)'), topicsBlockHashesDuplicateTransaction],
+        })
+        .then(events => {
+          expect(events[0]).to.have.property('transactionHash');
+        });
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    });
+    it('Should rollback the wrong leaves', async () => {
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      web3.eth
+        .getPastLogs({
+          fromBlock: web3.utils.toHex(0),
+          address: shieldAddress,
+          topics: [web3.utils.sha3('Rollback(bytes32,uint256)'), topicsRootDuplicateTransaction],
+        })
+        .then(events => {
+          expect(events[0]).to.have.property('transactionHash');
+        });
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    });
+  });
+
+  describe.skip('Challenge 3: Invalid transaction submitted', () => {
+    it('Should delete the wrong block', async () => {
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      web3.eth
+        .getPastLogs({
+          fromBlock: web3.utils.toHex(0),
+          address: shieldAddress,
+          topics: [web3.utils.sha3('BlockDeleted(bytes32)'), topicsBlockHashesInvalidTransaction],
+        })
+        .then(events => {
+          expect(events[0]).to.have.property('transactionHash');
+        });
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    });
+    it('Should rollback the wrong leaves', async () => {
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      web3.eth
+        .getPastLogs({
+          fromBlock: web3.utils.toHex(0),
+          address: shieldAddress,
+          topics: [web3.utils.sha3('Rollback(bytes32,uint256)'), topicsRootInvalidTransaction],
         })
         .then(events => {
           expect(events[0]).to.have.property('transactionHash');

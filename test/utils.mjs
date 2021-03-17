@@ -83,6 +83,7 @@ export async function timeJump(secs) {
 
 export async function createBadBlock(badBlockType, block, transactions, args) {
   let res;
+
   switch (badBlockType) {
     case 'RandomRootNotInTimber': {
       block.root = (await rand(32)).hex();
@@ -97,7 +98,14 @@ export async function createBadBlock(badBlockType, block, transactions, args) {
       break;
     }
     case 'DuplicateTransaction': {
+      delete block.root; // we delete root, so that /proposer/encode below can recalculate the root.
+      // We don't want the check-block in NO catch wrong root error. Hence this statement
       transactions[transactions.length - 1] = args.duplicateTransaction;
+      break;
+    }
+    case 'InvalidDepositTransaction': {
+      transaction.tokenId = '0x0000000000000000000000000000000000000000000000000000000000000001';
+      transaction.value = '0x0000000000000000000000000000000000000000000000000000000000000001';
       break;
     }
     default:
@@ -109,5 +117,6 @@ export async function createBadBlock(badBlockType, block, transactions, args) {
     .request('http://localhost:8081')
     .post('/proposer/encode')
     .send({ block, transactions });
+
   return { txDataToSign, block: newBlock, transactions: newTransactions };
 }
