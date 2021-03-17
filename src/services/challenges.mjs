@@ -64,7 +64,7 @@ export default async function createChallenge(block, transactions, err) {
         const priorBlockHistory = await getTreeHistory(priorBlock.root);
 
         // Create a challenge
-        txDataToSign = await shieldContractInstance.methods
+        txDataToSign = await challengeContractInstance.methods
           .challengeNewRootCorrect(
             priorBlock,
             priorBlockTransactions,
@@ -91,7 +91,7 @@ export default async function createChallenge(block, transactions, err) {
         );
 
         // Create a challenge
-        txDataToSign = await shieldContractInstance.methods
+        txDataToSign = await challengeContractInstance.methods
           .challengeNoDuplicateTransaction(
             block,
             block2,
@@ -105,7 +105,7 @@ export default async function createChallenge(block, transactions, err) {
       case 2: {
         const { transaction, transactionHashIndex: transactionIndex } = err.metadata;
         // Create a challenge
-        txDataToSign = await shieldContractInstance.methods
+        txDataToSign = await challengeContractInstance.methods
           .challengeTransactionType(block, transaction, transactionIndex)
           .encodeABI();
         break;

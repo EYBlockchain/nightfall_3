@@ -13,6 +13,7 @@ import { waitForContract } from '../event-handlers/subscribe.mjs';
 import Transaction from '../classes/transaction.mjs';
 import { getFrontier } from '../utils/timber.mjs';
 import mt from '../utils/crypto/merkle-tree/merkle-tree.mjs';
+
 const { updateNodes } = mt;
 
 const router = express.Router();
@@ -159,7 +160,10 @@ router.post('/encode', async (req, res, next) => {
   try {
     const { transactions, block } = req.body;
 
-    const currentLeafCount = parseInt(await (await waitForShield()).methods.leafCount().call(), 10);
+    const currentLeafCount = parseInt(
+      await (await waitForContract(CHALLENGES_CONTRACT_NAME)).methods.leafCount().call(),
+      10,
+    );
 
     const newTransactions = await Promise.all(
       transactions.map(transaction => Transaction.calcHash(transaction)),

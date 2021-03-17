@@ -17,6 +17,8 @@ async function blockDeletedEventHandler(data) {
   // find the block
   const block = await getBlockByBlockHash(blockHash);
   // move the transactions contained in the block back into the mempool
+  // If any transaction already exists in a prior block then don't add it back to mempool
+  // TODO chait handle block deleting after various kinds of challenges
   await Promise.all(
     block.transactionHashes.map(async (transactionHash, index) => {
       if ((await getBlockByTransactionHash(transactionHash, true)) !== null)
