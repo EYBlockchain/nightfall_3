@@ -90,7 +90,7 @@ contract Challenges is Proposers, Key_Registry {
     isBlockReal(block2);
     isBlockHashCorrect(block2);
     // Check if a duplicate transaction exists in these blocks
-    require(block1.transactionHashes[transactionIndex1] == block1.transactionHashes[transactionIndex2],
+    require(block1.transactionHashes[transactionIndex1] == block2.transactionHashes[transactionIndex2],
       'There is no duplicate transaction in these blocks');
     // Delete the latest block of the two
     if(blockHashes[block1.blockHash].data > blockHashes[block2.blockHash].data) {
@@ -100,7 +100,25 @@ contract Challenges is Proposers, Key_Registry {
     }
   }
 
-  // TODO more challenges must be added but these will do to demo the principle
+  function challengeTransactionType(
+    Block memory block,
+    Transaction memory transaction,
+    uint transactionIndex
+    ) external {
+      isBlockReal(block);
+      isBlockHashCorrect(block);
+      isTransactionValid(block, transaction, transactionIndex);
+      if(transaction.transactionType == TransactionTypes.DEPOSIT)
+        ChallengesUtil.libChallengeTransactionTypeDeposit(transaction);
+      else if(transaction.transactionType == TransactionTypes.SINGLE_TRANSFER)
+        ChallengesUtil.libChallengeTransactionTypeSingleTransfer(transaction);
+      else if(transaction.transactionType == TransactionTypes.DOUBLE_TRANSFER)
+        ChallengesUtil.libChallengeTransactionTypeDoubleTransfer(transaction);
+      else // if(transaction.transactionType == TransactionTypes.WITHDRAW)
+        ChallengesUtil.libChallengeTransactionTypeWithdraw(transaction);
+      // Delete the latest block of the two
+      challengeAccepted(block);
+    }
 
   // This gets called when a challenge succeeds
   function challengeAccepted(Block memory badBlock) private {

@@ -95,4 +95,146 @@ library ChallengesUtil {
     (bytes32 root, , ) = MerkleTree_Stateless.insertLeaves(commitments, _frontier, commitmentIndex);
     require(root != blockL2.root, 'The root is actually fine');
   }
+
+    // the transaction type deposit is challenged to not be valid
+    function libChallengeTransactionTypeDeposit(
+      Structures.Transaction memory transaction
+    ) internal {
+      // Check if a duplicate transaction exists in these blocks
+      uint nZeroCommitments;
+      for (uint i = 0; i < transaction.commitments.length; i++) {
+        if(transaction.commitments[i].length == 0)
+          nZeroCommitments++;
+      }
+      uint nZeroNullifiers;
+      for (uint i = 0; i < transaction.commitments.length; i++) {
+        if(transaction.commitments[i].length == 0)
+          nZeroNullifiers++;
+      }
+      uint nZeroProof;
+      for (uint i = 0; i < transaction.commitments.length; i++) {
+        if(transaction.commitments[i].length == 0)
+          nZeroProof++;
+      }
+      require(
+        transaction.publicInputHash.length == 0 ||
+        (transaction.tokenId.length == 0 && transaction.value.length == 0) ||
+        transaction.ercAddress.length == 0 ||
+        transaction.recipientAddress.length != 0 ||
+        nZeroCommitments > 0 ||
+        transaction.commitments.length != 1 ||
+        nZeroNullifiers > 0 ||
+        transaction.nullifiers.length != 0 || // TODO in NO
+        transaction.historicRoot.length != 0 ||
+        nZeroProof > 0,
+        'This deposit transaction type is valid'
+      );
+    }
+
+    // the transaction type single transfer is challenged to not be valid
+    function libChallengeTransactionTypeSingleTransfer(
+      Structures.Transaction memory transaction
+    ) internal {
+      // Check if a duplicate transaction exists in these blocks
+      uint nZeroCommitments;
+      for (uint i = 0; i < transaction.commitments.length; i++) {
+        if(transaction.commitments[i].length == 0)
+          nZeroCommitments++;
+      }
+      uint nZeroNullifiers;
+      for (uint i = 0; i < transaction.commitments.length; i++) {
+        if(transaction.commitments[i].length == 0)
+          nZeroNullifiers++;
+      }
+      uint nZeroProof;
+      for (uint i = 0; i < transaction.commitments.length; i++) {
+        if(transaction.commitments[i].length == 0)
+          nZeroProof++;
+      }
+      require(
+        transaction.publicInputHash.length == 0 ||
+        transaction.tokenId.length != 0 ||
+        transaction.value.length != 0 ||
+        transaction.ercAddress.length == 0 ||
+        transaction.recipientAddress.length != 0 ||
+        nZeroCommitments > 0 ||
+        transaction.commitments.length != 1 ||
+        nZeroNullifiers > 0 ||
+        transaction.nullifiers.length != 1 ||
+        transaction.historicRoot.length == 0 ||
+        nZeroProof > 0,
+        'This single transfer transaction type is valid'
+      );
+    }
+
+    // the transaction type double transfer is challenged to not be valid
+    function libChallengeTransactionTypeDoubleTransfer(
+      Structures.Transaction memory transaction
+    ) internal {
+      // Check if a duplicate transaction exists in these blocks
+      uint nZeroCommitments;
+      for (uint i = 0; i < transaction.commitments.length; i++) {
+        if(transaction.commitments[i].length == 0)
+          nZeroCommitments++;
+      }
+      uint nZeroNullifiers;
+      for (uint i = 0; i < transaction.commitments.length; i++) {
+        if(transaction.commitments[i].length == 0)
+          nZeroNullifiers++;
+      }
+      uint nZeroProof;
+      for (uint i = 0; i < transaction.commitments.length; i++) {
+        if(transaction.commitments[i].length == 0)
+          nZeroProof++;
+      }
+      require(
+        transaction.publicInputHash.length == 0 ||
+        transaction.tokenId.length != 0 ||
+        transaction.value.length != 0 ||
+        transaction.ercAddress.length == 0 ||
+        transaction.recipientAddress.length != 0 ||
+        nZeroCommitments > 0 ||
+        transaction.commitments.length != 2 ||
+        nZeroNullifiers > 0 ||
+        transaction.nullifiers.length != 2 ||
+        transaction.historicRoot.length == 0 ||
+        nZeroProof > 0,
+        'This double transfer transaction type is valid'
+      );
+    }
+
+    // the transaction type withdraw is challenged to not be valid
+    function libChallengeTransactionTypeWithdraw(
+      Structures.Transaction memory transaction
+    ) internal {
+      // Check if a duplicate transaction exists in these blocks
+      uint nZeroCommitments;
+      for (uint i = 0; i < transaction.commitments.length; i++) {
+        if(transaction.commitments[i].length == 0)
+          nZeroCommitments++;
+      }
+      uint nZeroNullifiers;
+      for (uint i = 0; i < transaction.commitments.length; i++) {
+        if(transaction.commitments[i].length == 0)
+          nZeroNullifiers++;
+      }
+      uint nZeroProof;
+      for (uint i = 0; i < transaction.commitments.length; i++) {
+        if(transaction.commitments[i].length == 0)
+          nZeroProof++;
+      }
+      require(
+        transaction.publicInputHash.length == 0 ||
+        (transaction.tokenId.length == 0 && transaction.value.length == 0) ||
+        transaction.ercAddress.length == 0 ||
+        transaction.recipientAddress.length == 0 ||
+        nZeroCommitments > 0 ||
+        transaction.commitments.length != 0 || // TODO in NO
+        nZeroNullifiers > 0 ||
+        transaction.nullifiers.length != 1 ||
+        transaction.historicRoot.length == 0 ||
+        nZeroProof > 0,
+        'This withdraw transaction type is valid'
+      );
+    }
 }
