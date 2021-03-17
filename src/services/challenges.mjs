@@ -8,7 +8,7 @@ import {
 } from './database.mjs';
 import { getTreeHistory } from '../utils/timber.mjs';
 
-const { SHIELD_CONTRACT_NAME } = config;
+const { CHALLENGES_CONTRACT_NAME } = config;
 
 let ws;
 
@@ -38,12 +38,12 @@ async function getTransactionsBlock(transactions, block, length) {
 export default async function createChallenge(block, transactions, err) {
   let txDataToSign;
   if (process.env.IS_CHALLENGER === 'true') {
-    const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
+    const challengeContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
     switch (err.code) {
       // Challenge wrong root
       case 0: {
         // Getting prior block hash for the current block
-        const { previousHash } = await shieldContractInstance.methods
+        const { previousHash } = await challengeContractInstance.methods
           .blockHashes(block.blockHash)
           .call();
 
