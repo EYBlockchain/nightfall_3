@@ -103,9 +103,25 @@ This is useful for checking that the root of an optimistic block is correct
 @param {string} root - the historic root of the merkle tree
 */
 export const getTreeHistory = async root => {
-  logger.http(`Calling /tree-history/${root}`);
+  logger.http(`Calling /tree-history/root/${root}`);
   const response = await axios.get(
-    `${url}/tree-history/${root}`,
+    `${url}/tree-history/root/${root}`,
+    { params: { contractName } },
+    { timeout: 360000 },
+  );
+  return response.data.data;
+};
+
+/**
+returns the frontier etc at the point in time where the tree had the given current leaf count.
+This is useful for checking that the root of an optimistic block is correct
+@author Westlad
+@param {string} currentLeafCount - the current leaf count of the merkle tree when history associated with the block is created
+*/
+export const getTreeHistoryByCurrentLeafCount = async currentLeafCount => {
+  logger.http(`Calling /tree-history/currentLeafCount/${currentLeafCount}`);
+  const response = await axios.get(
+    `${url}/tree-history/currentLeafCount/${currentLeafCount}`,
     { params: { contractName } },
     { timeout: 360000 },
   );
@@ -164,4 +180,6 @@ export default {
   getSiblingPath,
   getFrontier,
   getLeafCount,
+  getTreeHistory,
+  getTreeHistoryByCurrentLeafCount,
 };

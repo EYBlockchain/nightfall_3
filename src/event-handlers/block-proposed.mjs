@@ -3,7 +3,11 @@ import logger from '../utils/logger.mjs';
 import checkBlock from '../services/check-block.mjs';
 import BlockError from '../classes/block-error.mjs';
 import createChallenge from '../services/challenges.mjs';
-import { removeTransactionsFromMemPool, saveBlock } from '../services/database.mjs';
+import {
+  removeTransactionsFromMemPool,
+  saveBlock,
+  markBlockChecked,
+} from '../services/database.mjs';
 import mappedBlock from '../event-mappers/block-proposed.mjs';
 import { getLeafCount } from '../utils/timber.mjs';
 
@@ -33,16 +37,18 @@ async function blockProposedEventHandler(data) {
   // TODO this waits to be sure Timber is updated.  Instead write some proper syncing code!
   try {
     // and save the block to facilitate later lookup of block data
-    // we will save before checking because when a challenge is raised we need block data to
-    // the find transactions that a block holds to mark them unprocessed. In case of check block
-    // failure we will delete the block when challenge is accepted and block deleted event is raised
+    // we will save before checking because the database at any time should reflect the state the blockchain holds
+    // when a challenge is raised because the is correct block data, then the corresponding block deleted event will
+    // update this collection
     await saveBlock(block);
-    // we'll check the block and issue a challenge if appropriate
-    await checkBlock(block, transactions);
-    // if the block is, in fact, valid then we also need to mark as used the
-    // transactions in the block from our database of unprocessed transactions,
+    // we also need to mark as used the transactions in the block from our database of unprocessed transactions,
     // so we don't try to use them in a block which we're proposing.
     await removeTransactionsFromMemPool(block); // TODO is await needed?
+    // we'll check the block and issue a challenge if appropriate
+    await checkBlock(block, transactions);
+    // mark that the block has been validated. Because a block is saved without checking when it is received, this flag will help
+    // differentiate the state of the block in the collection
+    await markBlockChecked(block);
     // signal to the block-making routines that a block is received: they
     // won't make a new block until their previous one is stored on-chain.
     logger.info('Block Checker - Block was valid');

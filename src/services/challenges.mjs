@@ -36,14 +36,12 @@ async function getTransactionsBlock(transactions, block, length) {
 }
 
 export default async function createChallenge(block, transactions, err) {
+  let txDataToSign;
   if (process.env.IS_CHALLENGER === 'true') {
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
     switch (err.code) {
-      // Challenge Root not in Timber
-      case 0:
-        break;
-      // Challenge Wrong Root
-      case 1: {
+      // Challenge wrong root
+      case 0: {
         // Getting prior block hash for the current block
         const { previousHash } = await shieldContractInstance.methods
           .blockHashes(block.blockHash)
@@ -66,7 +64,7 @@ export default async function createChallenge(block, transactions, err) {
         const priorBlockHistory = await getTreeHistory(priorBlock.root);
 
         // Create a challenge
-        const txDataToSign = await shieldContractInstance.methods
+        txDataToSign = await shieldContractInstance.methods
           .challengeNewRootCorrect(
             priorBlock,
             priorBlockTransactions,
@@ -76,37 +74,48 @@ export default async function createChallenge(block, transactions, err) {
             priorBlockHistory.leafIndex + priorBlockCommitmentsCount, // priorBlockHistory.leafIndex + number of commitments  in prior block
           )
           .encodeABI();
-        logger.debug('returning raw transaction');
-        logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
-        submitChallenge(txDataToSign);
         break;
       }
       // Challenge Duplicate Transaction
-      case 2: {
+      case 1: {
         const transactionIndex1 = err.metadata.transactionHashIndex;
+
         // Get the block that contains the duplicate of the transaction
-        const block2 = await getBlockByTransactionHash(block.transactionHashes[transactionIndex1]);
+        const block2 = await getBlockByTransactionHash(
+          block.transactionHashes[transactionIndex1],
+          true,
+        );
         // Find the index of the duplication transaction in this block
         const transactionIndex2 = block2.transactionHashes.findIndex(
           transactionHash => transactionHash === block.transactionHashes[transactionIndex1],
         );
+
         // Create a challenge
-        const txDataToSign = await shieldContractInstance.methods
+        txDataToSign = await shieldContractInstance.methods
           .challengeNoDuplicateTransaction(
             block,
             block2,
-            err.metadata.transactionHashIndex, // index of duplicate transaction in block
+            transactionIndex1, // index of duplicate transaction in block
             transactionIndex2,
           )
           .encodeABI();
-        logger.debug('returning raw transaction');
-        logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
-        submitChallenge(txDataToSign);
+        break;
+      }
+      // invalid transaction
+      case 2: {
+        const { transaction, transactionHashIndex: transactionIndex } = err.metadata;
+        // Create a challenge
+        txDataToSign = await shieldContractInstance.methods
+          .challengeTransactionType(block, transaction, transactionIndex)
+          .encodeABI();
         break;
       }
       default:
       // code block
     }
+    logger.debug('returning raw transaction');
+    logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
+    submitChallenge(txDataToSign);
   } else {
     // only proposer not a challenger
     logger.info(

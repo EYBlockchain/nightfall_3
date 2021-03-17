@@ -7,6 +7,7 @@ import {
   addTransactionsToMemPool,
   deleteBlock,
   getBlockByBlockHash,
+  getBlockByTransactionHash,
 } from '../services/database.mjs';
 import logger from '../utils/logger.mjs';
 
@@ -16,6 +17,13 @@ async function blockDeletedEventHandler(data) {
   // find the block
   const block = await getBlockByBlockHash(blockHash);
   // move the transactions contained in the block back into the mempool
+  await Promise.all(
+    block.transactionHashes.map(async (transactionHash, index) => {
+      if ((await getBlockByTransactionHash(transactionHash, true)) !== null)
+        delete block.transactionHashes[index];
+    }),
+  );
+  // TODO remove the following check with by adding transaction checker here
   await addTransactionsToMemPool(block);
   // the delete the block
   deleteBlock(blockHash);
