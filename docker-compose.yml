@@ -32,7 +32,7 @@ services:
       RABBITMQ_HOST: amqp://rabbitmq
       RABBITMQ_PORT: 5672
       ENABLE_QUEUE: 1
-    command: ['npm', 'start']
+    command: ['npm', 'run', 'dev']
 
   worker:
     #  image: 3800decac71d
@@ -46,6 +46,9 @@ services:
       - type: bind
         source: ../nightfall-deployer/circuits
         target: /app/circuits/
+      - type: bind
+        source: ../zokrates-worker/src
+        target: /app/src/
     depends_on:
       - deployer
     networks:
@@ -112,6 +115,8 @@ services:
       - timber-database
     networks:
       - nightfall_network
+    ports:
+      - 8083:80
     volumes:
       - type: volume
         source: build
@@ -173,10 +178,13 @@ services:
       - ../nightfall-optimist/src:/app/src
       - ../nightfall-optimist/config:/app/config
     environment:
+      WEBSOCKET_PORT: 8080
       BLOCKCHAIN_WS_HOST: ganache
       BLOCKCHAIN_PORT: 8545
       HASH_TYPE: mimc
       LOG_LEVEL: debug
+      IS_CHALLENGER: 'true'
+    command: ['npm', 'run', 'dev']
 
 volumes:
   mongodb:
