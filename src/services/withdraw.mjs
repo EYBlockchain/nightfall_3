@@ -24,6 +24,7 @@ const {
   BACKEND,
   SHIELD_CONTRACT_NAME,
   PROTOCOL,
+  USE_STUBS,
 } = config;
 const { generalise } = gen;
 
@@ -88,8 +89,10 @@ async function withdraw(items) {
 
   logger.debug(`witness input is ${witness.join(' ')}`);
   // call a zokrates worker to generate the proof
+  let folderpath = 'withdraw';
+  if (USE_STUBS) folderpath = `${folderpath}_stub`;
   const res = await axios.post(`${PROTOCOL}${ZOKRATES_WORKER_HOST}/generate-proof`, {
-    folderpath: 'withdraw',
+    folderpath,
     inputs: await witness,
     provingScheme: PROVING_SCHEME,
     backend: BACKEND,

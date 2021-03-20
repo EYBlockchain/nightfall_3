@@ -27,6 +27,7 @@ const {
   BACKEND,
   SHIELD_CONTRACT_NAME,
   PROTOCOL,
+  USE_STUBS,
 } = config;
 const { generalise, GN } = gen;
 
@@ -142,6 +143,7 @@ async function transfer(items) {
     folderpath = 'double_transfer';
     transactionType = 2;
   } else throw new Error('Unsupported number of commitments');
+  if (USE_STUBS) folderpath = `${folderpath}_stub`;
   const res = await axios.post(`${PROTOCOL}${ZOKRATES_WORKER_HOST}/generate-proof`, {
     folderpath,
     inputs: await witness,
