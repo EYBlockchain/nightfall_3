@@ -139,8 +139,6 @@ services:
       HASH_TYPE: mimc
       LOG_LEVEL: info
       AUTOSTART: enabled
-      # NODE_ENV needs to equal the name of the timber config file, without extension (timber.js here)
-      #NODE_ENV: timber
 
   #The database storing the merkle tree
   timber-database:
