@@ -60,7 +60,9 @@ This calls the /generateKeys endpoint on a zokrates microservice container to do
 */
 async function setupCircuits() {
   // do all the trusted setups needed
-  const circuitsToSetup = await walk(config.CIRCUITS_HOME);
+  const circuitsToSetup = await (await walk(config.CIRCUITS_HOME)).filter(c =>
+    config.USE_STUBS ? c.includes('_stub') : !c.includes('_stub'),
+  );
   for (const circuit of circuitsToSetup) {
     // first check if a vk already exists
     let vk;
@@ -98,7 +100,13 @@ async function setupCircuits() {
       const vkArray = Object.values(vk).flat(Infinity); // flatten the Vk array of arrays because that's how Shield.sol likes it.  I see no need for decimal conversion here - but that may be wrong.
       const challengeAddress = await getContractAddress('Challenges');
       const shield = await getContractInstance('Challenges', challengeAddress);
-      await shield.methods.registerVerificationKey(vkArray, config.VK_IDS[folderpath]).send();
+      if (config.USE_STUBS) {
+        await shield.methods
+          .registerVerificationKey(vkArray, config.VK_IDS[folderpath.slice(0, -5)]) // register without the _stub
+          .send();
+      } else {
+        await shield.methods.registerVerificationKey(vkArray, config.VK_IDS[folderpath]).send();
+      }
     } catch (err) {
       logger.error(err);
       throw new Error(err);
