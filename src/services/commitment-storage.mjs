@@ -44,7 +44,7 @@ export async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _
   const value = generalise(_value); // sometimes this is sent as a BigInt.
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
-  const commitments = await db
+  const commitmentArray = await db
     .collection(COMMITMENTS_COLLECTION)
     .find({
       'preimage.zkpPublicKey': zkpPublicKey.hex(32),
@@ -53,40 +53,47 @@ export async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _
       isNullified: false,
     })
     .toArray();
-  if (commitments === []) return null;
+  if (commitmentArray === []) return null;
+  // turn the commitments into real commitment objects
+  console.log('COMMITMENTS', commitmentArray);
+  const commitments = commitmentArray.map(ct => new Commitment(ct.preimage));
   // now we need to treat different cases
   // if we have an exact match, we can do a single-commitment transfer.
-  // this function will tell us:
-  const singleCommitment = (() => {
+  // this function will tell us.
+  const singleCommitment = (async () => {
     for (const commitment of commitments) {
-      if (commitment.preimage.value === value.hex(32)) {
+      console.log('INDEX', await commitment.index);
+      if (commitment.preimage.value.hex(32) === value.hex(32)) {
+        // check if Timber knows about the commitment
+        if ((await commitment.index) == null) return null;
         logger.info('Found commitment suitable for single transfer');
-        return [new Commitment(commitment.preimage)];
+        return [commitment];
       }
     }
     return null;
   })();
-  if (singleCommitment) return singleCommitment;
+  if (await singleCommitment) return singleCommitment;
   if (onlyOne) return null; // sometimes we require just one commitment
   // if not, maybe we can do a two-commitment transfer, this is a expensive search and this function will tell us:
-  return (() => {
+  return (async () => {
     for (let i = 0; i < commitments.length; i++) {
-      const innerResult = (() => {
+      // check Timber holds the commitment
+      if ((await commitments[i].index) === null) break;
+      const innerResult = (async () => {
         for (let j = i + 1; j < commitments.length; j++) {
+          // check Timber holds the commitment
+          if ((await commitments[j].index) === null) break;
           if (
-            BigInt(commitments[i].preimage.value) + BigInt(commitments[j].preimage.value) >
+            commitments[i].preimage.value.bigInt + commitments[j].preimage.value.bigInt >
             value.bigInt
           ) {
             logger.info('Found commitments suitable for two-token transfer');
-            return [
-              new Commitment(commitments[i].preimage),
-              new Commitment(commitments[j].preimage),
-            ];
+            return [commitments[i], commitments[j]];
           }
         }
         return null;
       })();
-      if (innerResult) return innerResult;
+      if (await innerResult) return innerResult;
     }
     return null;
   })();
