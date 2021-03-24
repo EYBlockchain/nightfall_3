@@ -3,7 +3,11 @@ import logger from '../utils/logger.mjs';
 import checkBlock from '../services/check-block.mjs';
 import BlockError from '../classes/block-error.mjs';
 import createChallenge from '../services/challenges.mjs';
-import { removeTransactionsFromMemPool, saveBlock } from '../services/database.mjs';
+import {
+  removeTransactionsFromMemPool,
+  saveBlock,
+  stampNullifiers,
+} from '../services/database.mjs';
 import mappedBlock from '../event-mappers/block-proposed.mjs';
 import { getLeafCount } from '../utils/timber.mjs';
 
@@ -41,6 +45,17 @@ async function blockProposedEventHandler(data) {
     await saveBlock(block);
     // we'll check the block and issue a challenge if appropriate
     await checkBlock(block, transactions);
+    // If the block is fine, we update the same nullifiers we have stored with the blockhash
+    await stampNullifiers(
+      transactions
+        .map(tx =>
+          tx.nullifiers.filter(
+            nulls => nulls !== '0x0000000000000000000000000000000000000000000000000000000000000000',
+          ),
+        )
+        .flat(Infinity),
+      block.blockHash,
+    );
     // if the block is, in fact, valid then we also need to mark as used the
     // transactions in the block from our database of unprocessed transactions,
     // so we don't try to use them in a block which we're proposing.

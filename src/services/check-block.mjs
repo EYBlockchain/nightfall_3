@@ -7,7 +7,7 @@ import { getTreeHistory } from '../utils/timber.mjs';
 import logger from '../utils/logger.mjs';
 import mt from '../utils/crypto/merkle-tree/merkle-tree.mjs';
 import BlockError from '../classes/block-error.mjs';
-
+import { retrieveMinedNullifiers } from './database.mjs';
 /**
 Checks the block's properties.  It will return the first inconsistency it finds
 @param {object} block - the block being checked
@@ -21,12 +21,25 @@ async function checkBlock(block, transactions) {
   let history;
   try {
     logger.debug(`Checking block with root ${block.root}`);
+    await new Promise(resolve => setTimeout(resolve, 1000));
     history = await getTreeHistory(block.root);
     logger.debug(`Retrieved history from Timber`);
     logger.silly(`Timber history was ${JSON.stringify(history, null, 2)}`);
   } catch (err) {
     logger.error(err); // log errors but let the caller handle them
     throw new BlockError(`The block root (${block.root}) was not found in the Timber database`, 0);
+  }
+  // Check nullifiers
+  const storedMinedNullifiers = await retrieveMinedNullifiers(); // List of Nullifiers stored by blockProposer
+  const blockNullifiers = transactions.map(tNull => tNull.nullifiers.toString()); // List of Nullifiers in block
+  const alreadyMinedNullifiers = storedMinedNullifiers.filter(sNull =>
+    blockNullifiers.includes(sNull.hash),
+  );
+  if (alreadyMinedNullifiers.length > 0) {
+    throw new BlockError(
+      `Some Nullifiers included in ${block.root} have been included in previous blocks`,
+      3,
+    );
   }
 
   // Timber does know the root, but is it correct?  The historic frontier,
