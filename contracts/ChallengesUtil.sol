@@ -27,17 +27,6 @@ library ChallengesUtil {
     );
   }
 
-  // Need this internal function to prevent deep stack error due to accessing slot 16
-  // function getPath(bytes32[] memory commitmentsPriorBlock, bytes32[33] calldata frontierPriorBlock, uint leafCount, bytes32 root ) pure internal returns (bool,bytes32[33] memory){
-  //     (bool valid, bytes32[33] memory _frontier) = MerkleTree_Stateless.checkPath(
-  //     commitmentsPriorBlock,
-  //     frontierPriorBlock,
-  //     leafCount,
-  //     root
-  //   );
-  //   return (valid,_frontier);
-  // }
-
   function libChallengeNewRootCorrect(
     Structures.Block memory priorBlockL2, // the block immediately prior to this one
     Structures.Transaction[] memory priorBlockTransactions, // the transactions in the prior block
