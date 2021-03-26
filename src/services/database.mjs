@@ -192,3 +192,11 @@ export async function retrieveMinedNullifiers() {
     .find({ blockHash: { $exists: true } })
     .toArray();
 }
+
+export async function resetNullifiers(blockHash) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { blockHash: blockHash };
+  const update = { $unset: { blockHash: '' } };
+  return db.collection(NULLIFIER_COLLECTION).updateMany(query, update);
+}
