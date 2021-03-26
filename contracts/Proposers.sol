@@ -140,6 +140,11 @@ contract Proposers is Structures, Config {
     delete proposers[proposer];
     proposers[previousAddress].nextAddress = proposers[nextAddress].thisAddress;
     proposers[nextAddress].previousAddress = proposers[previousAddress].thisAddress;
+    if(proposer == currentProposer.thisAddress) {
+      // Cannot just call changeCurrentProposer directly due to the require time check
+      currentProposer = proposers[nextAddress]; 
+      emit NewCurrentProposer(currentProposer.thisAddress);
+    }
   }
 
   // Checks if a block is actually referenced in the queue of blocks waiting
