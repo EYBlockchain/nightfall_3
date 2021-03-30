@@ -24,6 +24,7 @@ const {
   PROVING_SCHEME,
   BACKEND,
   PROTOCOL,
+  USE_STUBS,
 } = config;
 const { generalise } = gen;
 
@@ -50,8 +51,10 @@ async function deposit(items) {
   ].flat(Infinity);
   logger.debug(`witness input is ${witness.join(' ')}`);
   // call a zokrates worker to generate the proof
+  let folderpath = 'deposit';
+  if (USE_STUBS) folderpath = `${folderpath}_stub`;
   const res = await axios.post(`${PROTOCOL}${ZOKRATES_WORKER_HOST}/generate-proof`, {
-    folderpath: 'deposit',
+    folderpath,
     inputs: witness,
     provingScheme: PROVING_SCHEME,
     backend: BACKEND,
