@@ -21,4 +21,5 @@ module.exports = {
   BACKEND: process.env.BACKEND || 'libsnark',
   CURVE: process.env.CURVE || 'bn128',
   PROVING_SCHEME: process.env.PROVING_SCHEME || 'gm17',
+  USE_STUBS: process.env.USE_STUBS === 'true',
 };
