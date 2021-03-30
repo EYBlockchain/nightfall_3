@@ -31,6 +31,12 @@ contract Structures {
     address proposer
   );
 
+  event CommittedToChallenge(
+    bytes32 commitmentHash,
+    address sender
+  );
+
+
   /**
   These events are what the merkle-tree microservice's filters will listen for.
   */

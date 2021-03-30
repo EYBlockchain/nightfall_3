@@ -190,6 +190,7 @@ contract Challenges is Proposers, Key_Registry {
   function commitToChallenge(bytes32 commitmentHash) external {
     require(committers[commitmentHash] == address(0), 'This hash is already committed to');
     committers[commitmentHash] = msg.sender;
+    emit CommittedToChallenge(commitmentHash, msg.sender);
   }
   // and having sent it, we need to check that commitment to a challenge from
   // within the challenge function using this function:
