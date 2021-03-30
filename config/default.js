@@ -5,6 +5,7 @@ module.exports = {
   METADATA_COLLECTION: 'metadata',
   TRANSACTIONS_COLLECTION: 'transactions',
   SUBMITTED_BLOCKS_COLLECTION: 'blocks',
+  NULLIFIER_COLLECTION: 'nullifiers',
   ZKP_KEY_LENGTH: 32, // use a 32 byte key length for SHA compatibility
   ZOKRATES_WORKER_URL: process.env.ZOKRATES_WORKER_URL || 'worker',
   WEBSOCKET_PORT: process.env.WEBSOCKET_PORT || 8080,

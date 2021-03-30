@@ -2,9 +2,6 @@
 Turns the slightly odd object/class/thing returned in a transaction-submitted event into a true Block
 */
 
-import Block from '../classes/block.mjs';
-import Transaction from '../classes/transaction.mjs';
-
 function mappedData(data) {
   const {
     block: unMappedBlock,

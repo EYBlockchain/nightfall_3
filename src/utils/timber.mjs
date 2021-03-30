@@ -166,7 +166,7 @@ export const getLeafCount = async () => {
         timeout: 3600000,
       },
     );
-    logger.http('Timber Response:', response.data.data.leafCount);
+    logger.http(`Timber Response: ${response.data.data.leafCount}`);
     if (!response.data.data) return null;
     return response.data.data.leafCount;
   } catch (error) {

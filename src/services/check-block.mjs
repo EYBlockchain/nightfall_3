@@ -5,8 +5,12 @@ import { getTreeHistoryByCurrentLeafCount } from '../utils/timber.mjs';
 import { getBlockByTransactionHash } from './database.mjs';
 import logger from '../utils/logger.mjs';
 import BlockError from '../classes/block-error.mjs';
+<<<<<<< HEAD
 import checkTransaction from './transaction-checker.mjs';
 
+=======
+import { retrieveMinedNullifiers } from './database.mjs';
+>>>>>>> origin/master
 /**
 Checks the block's properties.  It will return the first inconsistency it finds
 @param {object} block - the block being checked
@@ -17,6 +21,7 @@ async function checkBlock(block, transactions) {
   // now we have to check the commitment root.  For this we can make use of
   // Timber with its optimistic extensions.
   logger.debug(`Checking block with leafCount ${block.leafCount}`);
+  await new Promise(resolve => setTimeout(resolve, 1000));
   const history = await getTreeHistoryByCurrentLeafCount(block.leafCount);
   logger.debug(`Retrieved history from Timber`);
   logger.silly(`Timber history was ${JSON.stringify(history, null, 2)}`);
@@ -55,6 +60,19 @@ async function checkBlock(block, transactions) {
       }
     }),
   );
+
+  // Check nullifiers
+  const storedMinedNullifiers = await retrieveMinedNullifiers(); // List of Nullifiers stored by blockProposer
+  const blockNullifiers = transactions.map(tNull => tNull.nullifiers.toString()); // List of Nullifiers in block
+  const alreadyMinedNullifiers = storedMinedNullifiers.filter(sNull =>
+    blockNullifiers.includes(sNull.hash),
+  );
+  if (alreadyMinedNullifiers.length > 0) {
+    throw new BlockError(
+      `Some Nullifiers included in ${block.root} have been included in previous blocks`,
+      3,
+    );
+  }
 }
 
 export default checkBlock;

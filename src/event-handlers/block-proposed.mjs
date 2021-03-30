@@ -6,7 +6,11 @@ import createChallenge from '../services/challenges.mjs';
 import {
   removeTransactionsFromMemPool,
   saveBlock,
+<<<<<<< HEAD
   markBlockChecked,
+=======
+  stampNullifiers,
+>>>>>>> origin/master
 } from '../services/database.mjs';
 import mappedBlock from '../event-mappers/block-proposed.mjs';
 import { getLeafCount } from '../utils/timber.mjs';
@@ -22,6 +26,7 @@ async function blockProposedEventHandler(data) {
   // Sync Optimist with Timber by checking number of leaves
   for (let i = 0; i < TIMBER_SYNC_RETRIES; i++) {
     const timberLeafCount = await getLeafCount();
+    logger.debug(`Timber leaf count was ${timberLeafCount}`);
     // Exponential Backoff
     const backoff = 2 ** i * 1000;
     if (currentLeafCount > timberLeafCount) {
@@ -34,6 +39,7 @@ async function blockProposedEventHandler(data) {
     } else break;
   }
   logger.info('Received BlockProposed event');
+  // await new Promise(resolve => setTimeout(resolve, 2000));
   // TODO this waits to be sure Timber is updated.  Instead write some proper syncing code!
   try {
     // and save the block to facilitate later lookup of block data
@@ -41,7 +47,21 @@ async function blockProposedEventHandler(data) {
     // when a challenge is raised because the is correct block data, then the corresponding block deleted event will
     // update this collection
     await saveBlock(block);
-    // we also need to mark as used the transactions in the block from our database of unprocessed transactions,
+    // we'll check the block and issue a challenge if appropriate
+    await checkBlock(block, transactions);
+    // If the block is fine, we update the same nullifiers we have stored with the blockhash
+    await stampNullifiers(
+      transactions
+        .map(tx =>
+          tx.nullifiers.filter(
+            nulls => nulls !== '0x0000000000000000000000000000000000000000000000000000000000000000',
+          ),
+        )
+        .flat(Infinity),
+      block.blockHash,
+    );
+    // if the block is, in fact, valid then we also need to mark as used the
+    // transactions in the block from our database of unprocessed transactions,
     // so we don't try to use them in a block which we're proposing.
     await removeTransactionsFromMemPool(block); // TODO is await needed?
     // we'll check the block and issue a challenge if appropriate
