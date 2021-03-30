@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LGPL-3.0+
 // Copyright (c) 2018 HarryR
 
-pragma solidity ^0.6.0;
+pragma solidity ^0.8.0;
 
 /**
 * Implements MiMC-p/p over the altBN scalar field used by zkSNARKs

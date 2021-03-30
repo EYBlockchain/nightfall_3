@@ -3,7 +3,7 @@
 Basic data structures for an optimistic rollup
 */
 
-pragma solidity ^0.6.0;
+pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
 contract Structures {

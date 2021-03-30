@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
-pragma solidity ^0.6.0;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.0;
+//pragma experimental ABIEncoderV2;
 
 import './Utils.sol';
 import './Verifier.sol';

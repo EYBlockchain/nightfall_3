@@ -7,7 +7,7 @@ functionality is not really required - it's just a data availability aid.
 @Author Westlad
 */
 
-pragma solidity ^0.6.0;
+pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
 import './Utils.sol';
@@ -18,16 +18,10 @@ import './Config.sol';
 import './Proposers.sol';
 
 contract Shield is Structures, Config, Key_Registry {
-  /**
-  We don't need to do the checks herein because the Proposer should do them.
-  We don't really need this function at all because we could just send the
-  transaction to a proposer.  Thus, some or all of this functionality may be
-  removed in future to save Gas.
-  */
 
   Proposers private proposers;
 
-  constructor (address _proposersAddr) public {
+  constructor (address _proposersAddr) {
     proposers = Proposers(_proposersAddr);
   }
   function submitTransaction(Transaction memory t) external payable {

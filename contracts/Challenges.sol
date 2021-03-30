@@ -6,8 +6,8 @@ grounds.
 @Author Westlad
 */
 
-pragma solidity ^0.6.0;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.0;
+//pragma experimental ABIEncoderV2;
 
 import './Proposers.sol';
 import './Key_Registry.sol';
@@ -18,12 +18,16 @@ import './ChallengesUtil.sol';
 
 contract Challenges is Proposers, Key_Registry {
 
+  mapping(bytes32 => address) public committers;
+
   // a transaction proof is challenged as incorrect
   function challengeProofVerifies(
     Block memory blockL2,
     Transaction memory transaction,
-    uint transactionIndex // the location of the transaction in the block (saves a loop)
+    uint transactionIndex, // the location of the transaction in the block (saves a loop)
+    bytes32 salt // salt for the commitementHash
   ) public {
+    checkCommit(msg.data, salt);
     isBlockReal(blockL2); // check the block exists
     ChallengesUtil.libChallengeProofVerifies(blockL2,transaction,transactionIndex,vks[transaction.transactionType]);
     challengeAccepted(blockL2);
@@ -34,12 +38,13 @@ contract Challenges is Proposers, Key_Registry {
   // search for it
   function challengeProofVerifies(
     Block memory blockL2,
-    Transaction memory transaction
+    Transaction memory transaction,
+    bytes32 salt
   ) external {
     isBlockReal(blockL2); // check the block exists
     for (uint i = 0; i < blockL2.transactionHashes.length; i++){
       if (transaction.transactionHash == blockL2.transactionHashes[i] ) {
-        challengeProofVerifies(blockL2, transaction, i);
+        challengeProofVerifies(blockL2, transaction, i, salt);
         return;
       }
     }
@@ -53,8 +58,10 @@ contract Challenges is Proposers, Key_Registry {
     bytes32[33] calldata frontierPriorBlock, // frontier path before prior block is added. The same frontier used in calculating root when prior block is added
     Block memory blockL2,
     Transaction[] memory transactions,
-    uint commitmentIndex // the index *in the Merkle Tree* of the commitment that we are providing a SiblingPath for.
+    uint commitmentIndex, // the index *in the Merkle Tree* of the commitment that we are providing a SiblingPath for.
+    bytes32 salt
   ) external {
+    checkCommit(msg.data, salt);
     // first, check we have real, in-train, contiguous blocks
     require(blockHashes[priorBlockL2.blockHash].nextHash == blockHashes[blockL2.blockHash].thisHash, 'The blocks are not contiguous');
     // check if the block hash is correct and the block hash exists for the prior block
@@ -71,8 +78,10 @@ contract Challenges is Proposers, Key_Registry {
     Block memory block1,
     Block memory block2,
     uint transactionIndex1,
-    uint transactionIndex2
+    uint transactionIndex2,
+    bytes32 salt
   ) external {
+    checkCommit(msg.data, salt);
     // first, check we have real, in-train, contiguous blocks
     isBlockReal(block1);
     isBlockHashCorrect(block1);
@@ -126,9 +135,10 @@ contract Challenges is Proposers, Key_Registry {
     Block memory block2,
     Transaction memory tx2,
     uint transactionIndex2,
-    uint nullifierIndex2
+    uint nullifierIndex2,
+    bytes32 salt
   ) public {
-    
+    checkCommit(msg.data, salt);
     require(tx1.nullifiers[nullifierIndex1] == tx2.nullifiers[nullifierIndex2], 'Not matching nullifiers' );
     require(tx1.transactionHash != tx2.transactionHash, 'Transactions need to be different' );
     require(Utils.hashTransaction(tx1) == block1.transactionHashes[transactionIndex1], 'First Tx not in block' );
@@ -146,7 +156,7 @@ contract Challenges is Proposers, Key_Registry {
       challengeAccepted(block1);
     } else if (blockHashes[block1.blockHash].data < blockHashes[block2.blockHash].data) {
       challengeAccepted(block2);
-    } else { 
+    } else {
       // They are within the same L1 blocktime so we need to walk the linked hashmap
       bytes32 checkHash = endHash;
 
@@ -176,8 +186,17 @@ contract Challenges is Proposers, Key_Registry {
     blockHashes[endHash].nextHash = ZERO; // terminate the chain correctly
   }
 
-  // for dev purposes. Do not use in production
-  function forceChallengeAccepted(Block memory anyBlock) external onlyOwner {
-    challengeAccepted(anyBlock);
+  //To prevent frontrunning, we need to commit to a challenge before we send it
+  function commitToChallenge(bytes32 commitmentHash) external {
+    require(committers[commitmentHash] == address(0), 'This hash is already committed to');
+    committers[commitmentHash] = msg.sender;
+  }
+  // and having sent it, we need to check that commitment to a challenge from
+  // within the challenge function using this function:
+  function checkCommit(bytes calldata messageData, bytes32 salt) private {
+    bytes32 hash = keccak256(messageData);
+    salt = 0; // not really required as salt is in msg.data but stops the unused variable compiler warning. Bit of a waste of gas though.
+    require(committers[hash] == msg.sender, 'The commitment hash is invalid');
+    delete committers[hash];
   }
 }

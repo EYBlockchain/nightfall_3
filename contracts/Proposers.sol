@@ -2,7 +2,7 @@
 /*
 Contract to manage the creation and managment of Proposals
 */
-pragma solidity ^0.6.0;
+pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
 import './Config.sol';
@@ -131,7 +131,7 @@ contract Proposers is Structures, Config {
   function withdraw() external {
     uint amount = pendingWithdrawals[msg.sender];
     pendingWithdrawals[msg.sender] = 0;
-    msg.sender.transfer(amount);
+    payable(msg.sender).transfer(amount);
   }
 
   function removeProposer(address proposer) internal {
@@ -151,7 +151,7 @@ contract Proposers is Structures, Config {
   }
 
   // Checks if a block has is calculated correctly
-  function isBlockHashCorrect(Block memory b) public view {
+  function isBlockHashCorrect(Block memory b) public pure {
     require(b.blockHash == Utils.hashBlock(b), 'The block hash is incorrect');
   }
 }
