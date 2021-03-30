@@ -2,6 +2,7 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import gen from 'general-number';
+import Queue from 'queue';
 import WebSocket from 'ws';
 import sha256 from '../src/utils/crypto/sha256.mjs';
 import {
@@ -14,6 +15,7 @@ import {
 
 const { expect } = chai;
 const { GN } = gen;
+const txQueue = new Queue({ autostart: true, concurrency: 1 });
 
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
@@ -64,10 +66,7 @@ describe('Testing the challenge http API', () => {
     // should register a proposer
     const myAddress = (await getAccounts())[0];
     const bond = 10000000000000000000;
-    res = await chai
-      .request(optimistUrl)
-      .post('/proposer/register')
-      .send({ address: myAddress });
+    res = await chai.request(optimistUrl).post('/proposer/register').send({ address: myAddress });
     txToSign = res.body.txDataToSign;
     await submitTransaction(txToSign, privateKey, challengeAddress, gas, bond);
 
@@ -81,57 +80,54 @@ describe('Testing the challenge http API', () => {
       connection.send('challenge');
       connection.send('blocks');
     };
-    connection.onmessage = async message => {
-      let txReceipt;
-      let duplicateTransaction;
-      const msg = JSON.parse(message.data);
-      const { type, block, transactions } = msg;
-      let { txDataToSign } = msg;
-      if (type === 'block') {
-        if (counter === 0) {
-          duplicateTransaction = transactions[0];
-        } else if (counter === 1) {
-          res = await createBadBlock('IncorrectRoot', block, transactions, {
-            leafIndex: 1,
-          });
-          topicsBlockHashesIncorrectRootInBlock = res.block.blockHash;
-          topicsRootIncorrectRootInBlock = res.block.root;
-          txDataToSign = res.txDataToSign;
-        } else if (counter === 2) {
-          txDataToSign = msg.txDataToSign;
-          // res = await createBadBlock('DuplicateTransaction', block, transactions, {
-          //   duplicateTransaction,
-          // });
-          // topicsBlockHashesDuplicateTransaction = res.block.blockHash;
-          // topicsRootDuplicateTransaction = res.block.root;
-          // txDataToSign = res.txDataToSign;
+    // queue the websocket messages so we deal with them in order
+    connection.onmessage = message =>
+      txQueue.push(async () => {
+        let duplicateTransaction;
+        const msg = JSON.parse(message.data);
+        const { type, block, transactions } = msg;
+        let { txDataToSign } = msg;
+        if (type === 'block') {
+          if (counter === 0) {
+            [duplicateTransaction,] = transactions;
+          } else if (counter === 1) {
+            res = await createBadBlock('IncorrectRoot', block, transactions, {
+              leafIndex: 1,
+            });
+            topicsBlockHashesIncorrectRootInBlock = res.block.blockHash;
+            topicsRootIncorrectRootInBlock = res.block.root;
+            txDataToSign = res.txDataToSign;
+          } else if (counter === 2) {
+            txDataToSign = msg.txDataToSign;
+            // res = await createBadBlock('DuplicateTransaction', block, transactions, {
+            //   duplicateTransaction,
+            // });
+            // topicsBlockHashesDuplicateTransaction = res.block.blockHash;
+            // topicsRootDuplicateTransaction = res.block.root;
+            // txDataToSign = res.txDataToSign;
+          } else {
+            // txDataToSign = msg.txDataToSign;
+          }
+          await submitTransaction(txDataToSign, privateKey, challengeAddress, gas, BLOCK_STAKE);
+          counter++;
+          // console.log('tx hash of propose block is', txReceipt.transactionHash);
+          // (msg.type === 'challenge')
         } else {
-          // txDataToSign = msg.txDataToSign;
+          await submitTransaction(txDataToSign, privateKey, challengeAddress, gas);
         }
-        await submitTransaction(txDataToSign, privateKey, challengeAddress, gas, BLOCK_STAKE);
-        counter++;
-        // console.log('tx hash of propose block is', txReceipt.transactionHash);
-        // (msg.type === 'challenge')
-      } else {
-        await submitTransaction(txDataToSign, privateKey, challengeAddress, gas);
-        // console.log('tx hash of challenge block is', txReceipt.transactionHash);
-      }
-    };
+      });
   });
 
   describe('Creating correct transactions to get proper root history in timber', () => {
     let txDataToSign;
     it('should deposit some crypto into a ZKP commitment', async () => {
-      const res = await chai
-        .request(url)
-        .post('/deposit')
-        .send({
-          ercAddress,
-          tokenId,
-          value,
-          zkpPublicKey,
-          fee,
-        });
+      const res = await chai.request(url).post('/deposit').send({
+        ercAddress,
+        tokenId,
+        value,
+        zkpPublicKey,
+        fee,
+      });
       txDataToSign = res.body.txDataToSign;
       expect(txDataToSign).to.be.a('string');
       // now we need to sign the transaction and send it to the blockchain
@@ -144,15 +140,12 @@ describe('Testing the challenge http API', () => {
     });
 
     it('should deposit some more crypto (we need a second transaction for proposing block) into a ZKP commitment and get a raw blockchain transaction back', async () => {
-      const res = await chai
-        .request(url)
-        .post('/deposit')
-        .send({
-          ercAddress,
-          tokenId,
-          value,
-          zkpPublicKey,
-        });
+      const res = await chai.request(url).post('/deposit').send({
+        ercAddress,
+        tokenId,
+        value,
+        zkpPublicKey,
+      });
       txDataToSign = res.body.txDataToSign;
       expect(txDataToSign).to.be.a('string');
       // now we need to sign the transaction and send it to the blockchain
@@ -168,16 +161,13 @@ describe('Testing the challenge http API', () => {
   describe('Creating transactions for challenges', () => {
     let txDataToSign;
     it('should deposit some crypto into a ZKP commitment and get an unsigned blockchain transaction back', async () => {
-      const res = await chai
-        .request(url)
-        .post('/deposit')
-        .send({
-          ercAddress,
-          tokenId,
-          value,
-          zkpPublicKey,
-          fee,
-        });
+      const res = await chai.request(url).post('/deposit').send({
+        ercAddress,
+        tokenId,
+        value,
+        zkpPublicKey,
+        fee,
+      });
       txDataToSign = res.body.txDataToSign;
       expect(txDataToSign).to.be.a('string');
       // now we need to sign the transaction and send it to the blockchain
@@ -190,15 +180,12 @@ describe('Testing the challenge http API', () => {
     });
 
     it('should deposit some more crypto (we need a second transaction for proposing block) into a ZKP commitment and get a raw blockchain transaction back', async () => {
-      const res = await chai
-        .request(url)
-        .post('/deposit')
-        .send({
-          ercAddress,
-          tokenId,
-          value,
-          zkpPublicKey,
-        });
+      const res = await chai.request(url).post('/deposit').send({
+        ercAddress,
+        tokenId,
+        value,
+        zkpPublicKey,
+      });
       txDataToSign = res.body.txDataToSign;
       expect(txDataToSign).to.be.a('string');
       // now we need to sign the transaction and send it to the blockchain
@@ -257,8 +244,15 @@ describe('Testing the challenge http API', () => {
   });
 
   after(() => {
-    // console.log('end');
-    closeWeb3Connection();
-    connection.close();
+    // if the queue is still running, let's close down after it ends
+    txQueue.on('end', () => {
+      closeWeb3Connection();
+      connection.close();
+    });
+    // if it's empty, close down immediately
+    if (txQueue.length === 0) {
+      closeWeb3Connection();
+      connection.close();
+    }
   });
 });
