@@ -5,6 +5,7 @@
 */
 
 import config from 'config';
+import Queue from 'queue';
 import utilsWeb3 from './utils-web3';
 
 import { LeafService, MetadataService } from './db/service';
@@ -13,7 +14,10 @@ import mtc from './merkle-tree-controller';
 
 // global subscriptions object:
 const subscriptions = {};
-
+// this queue controls event concurrency to be 1.  This means that event
+// event responders cannot attempt parallel writes to the db. Instead, such
+// requests are queued and handled in order
+const queue = new Queue({ autostart: true, concurrency: 1 });
 /**
 @author westlad
 This is a response function (similar to the ones below, but specific for a
@@ -23,6 +27,7 @@ const rollbackResponseFunction = async (eventObject, args) => {
   // NEW - function remains the same, for detecting single leaves, but can now specify the event name
   // NOTE - events must have same parameters as newLeaf / newLeaves
   // We make some hardcoded presumptions about what's contained in the 'args':
+
   const { db, contractName, treeId } = args;
 
   const eventName = args.eventName === undefined ? 'Rollback' : args.eventName; // hardcoded, as inextricably linked to the name of this function.
@@ -58,7 +63,7 @@ const rollbackResponseFunction = async (eventObject, args) => {
   // Now some bespoke code; specific to how our application needs to deal with this eventObject:
   // const { blockNumber } = eventData;
   const { root, leafCount } = eventInstance;
-  mtc.rollback(db, treeHeight, Number(leafCount), root); // no need to await this
+  return mtc.rollback(db, treeHeight, Number(leafCount), root);
 };
 
 /**
@@ -111,7 +116,8 @@ const newLeafResponseFunction = async (eventObject, args) => {
   };
 
   const leafService = new LeafService(db);
-  leafService.insertLeaf(treeHeight, leaf); // no need to await this
+  await leafService.insertLeaf(treeHeight, leaf);
+  return mtc.update(db); // update the database to ensure we have a historic root
 };
 
 /**
@@ -167,7 +173,8 @@ const newLeavesResponseFunction = async (eventObject, args) => {
   });
 
   const leafService = new LeafService(db);
-  leafService.insertLeaves(treeHeight, leaves); // no need to await this
+  await leafService.insertLeaves(treeHeight, leaves);
+  return mtc.update(db); // update the database to ensure we have a historic root
 };
 
 /**
@@ -176,10 +183,12 @@ This function is triggered by the 'event' contract subscription, every time a ne
 */
 const newEventResponder = async (eventObject, responseFunction, responseFunctionArgs = {}) => {
   logger.debug('Responding to New Event...');
-  /*
-    Although this function appears to be redundant (because it's passing data straight through), we retain it for the sake of example. Hopefully it demonstrates most generally how this eventResponder structure can be applied to respond to other events.
-  */
-  responseFunction(eventObject, responseFunctionArgs); // we don't need to await this
+
+  // we can push to a queue here to buffer the events during a rollback
+  // the items in the queue will execute until it's empty or we stop it
+  queue.push(cb => {
+    responseFunction(eventObject, responseFunctionArgs).then(() => cb());
+  }); // we don't need to await this
 };
 
 /**
@@ -309,6 +318,31 @@ async function start(db, contractName, contractInstance, treeId) {
   }
 }
 
+/**
+Many functions need to be sure that the database is current.  If it's
+potentially in the process of updating (i.e. an event responder is running)
+then these functions will want to hang on for a bit.  Hence this function:
+*/
+function waitForUpdatesToComplete() {
+  return new Promise((resolve, reject) => {
+//    queue.once('end', () => {
+//      logger.debug('queue emptied');
+//      resolve();
+//    });
+    // we'll push in this dummy function. This ensures that there is at least
+    // one function in the queue, when it clear the queue, the 'end' event will
+    // fire.  You'd think you could use queue.length == 0 as a test but that
+    // doesn't seem to work.
+    queue.push(cb => {
+      resolve();
+      logger.debug('queued events have run');
+      cb();
+    });
+    setTimeout(() => reject(new Error('Waiting too long for queue to empty')), 1000);
+  });
+}
+
 export default {
   start,
+  waitForUpdatesToComplete,
 };

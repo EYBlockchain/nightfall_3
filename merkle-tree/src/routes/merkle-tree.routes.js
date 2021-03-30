@@ -91,7 +91,7 @@ async function getSiblingPathByLeafIndex(req, res, next) {
 
   try {
     // first update all nodes in the DB to be in line with the latest-known leaf:
-    await merkleTreeController.update(db);
+    // await merkleTreeController.update(db);
 
     // get the sibling path:
     const siblingPath = await merkleTreeController.getSiblingPathByLeafIndex(db, leafIndex);
@@ -122,7 +122,7 @@ async function getPathByLeafIndex(req, res, next) {
 
   try {
     // first update all nodes in the DB to be in line with the latest-known leaf:
-    await merkleTreeController.update(db);
+    // await merkleTreeController.update(db);
 
     // get the path:
     const path = await merkleTreeController.getPathByLeafIndex(db, leafIndex);
@@ -139,6 +139,8 @@ async function getPathByLeafIndex(req, res, next) {
  * req.user.db (an instance of mongoose.createConnection (a 'Connection' instance in mongoose terminoligy)) is required, to access the user's db from within the merkleTreeController
  * @param {*} req
  * @param {*} res - returns the tree's metadata
+ @deprecated There should be no reason to call this as newLea(f|ves) events
+ cause an update.
  */
 async function update(req, res, next) {
   logger.debug('src/routes/merkle-tree.routes update()');
@@ -160,12 +162,13 @@ async function getTreeHistory(req, res, next) {
   const { root } = req.params;
   try {
     // see if the historic root is in the dB and return it if it is
-    let history = await merkleTreeController.getTreeHistory(db, root);
-    if (history === null) {
-      // if not, update the db with the most recent events and try again
-      await merkleTreeController.update(db);
-      history = await merkleTreeController.getTreeHistory(db, root);
-    }
+    await filterController.waitForUpdatesToComplete();
+    const history = await merkleTreeController.getTreeHistory(db, root);
+    // if (history === null) {
+    // it's possible that an update is running
+    //  await merkleTreeController.update(db);
+    // history = await merkleTreeController.getTreeHistory(db, root);
+    // }
     logger.debug(`Read history collection and retrieved ${JSON.stringify(history, null, 2)}`);
     res.data = history;
     next();

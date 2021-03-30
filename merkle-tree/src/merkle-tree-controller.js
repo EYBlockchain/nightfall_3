@@ -8,8 +8,8 @@ import config from 'config';
 import utilsWeb3 from './utils-web3';
 import utilsMT from './utils-merkle-tree';
 import logger from './logger';
-
 import { LeafService, NodeService, MetadataService, HistoryService } from './db/service';
+
 const { ZERO } = config;
 
 /**
@@ -326,7 +326,7 @@ async function rollback(db, treeHeight, leafCount, root) {
   const nodeService = new NodeService(db);
   const metadataService = new MetadataService(db);
   // before we do anything, make sure the DB is up to date
-  await update(db);
+  // await update(db);
   // let's get the details of where we're going to rollback to
   // const history = await historyService.getTreeHistory(root);
   const history = await historyService.getTreeHistoryByCurrentLeafCount(leafCount);
