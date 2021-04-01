@@ -46,7 +46,7 @@ async function withdraw(items) {
     true,
   )) || [null];
   if (oldCommitment) logger.debug(`Found commitment ${JSON.stringify(oldCommitment, null, 2)}`);
-  else throw new Error('No suitable commitments were found'); // caller to handle - need to get the user to make some commitments
+  else throw new Error('No suitable commitments were found'); // caller to handle - need to get the user to make some commitments or wait until they've been posted to the blockchain and Timber knows about them
   // Having found 1 commitment, which is a suitable input to the
   // proof, the next step is to compute its nullifier;
   const nullifier = new Nullifier(oldCommitment, senderZkpPrivateKey);
