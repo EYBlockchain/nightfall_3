@@ -13,9 +13,10 @@ import { waitForContract } from '../event-handlers/subscribe.mjs';
 import Transaction from '../classes/transaction.mjs';
 import { getFrontier } from '../utils/timber.mjs';
 import mt from '../utils/crypto/merkle-tree/merkle-tree.mjs';
+import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
+import TransactionError from '../classes/transaction-error.mjs';
 
 const { updateNodes } = mt;
-
 const router = express.Router();
 const { CHALLENGES_CONTRACT_NAME, ZERO } = config;
 
@@ -199,6 +200,26 @@ router.post('/encode', async (req, res, next) => {
   } catch (err) {
     logger.error(err);
     next(err);
+  }
+});
+
+router.post('/transfer', async (req, res) => {
+  logger.debug(`transfer endpoint received POST`);
+  logger.silly(`With content ${JSON.stringify(req.body, null, 2)}`);
+  const { transactions } = req.body;
+  try {
+    // data.returnValues.transaction
+    await transactionSubmittedEventHandler({
+      data: { returnValues: { transactions } },
+    });
+    res.sendStatus(200);
+  } catch (err) {
+    if (err instanceof TransactionError)
+      logger.warn(
+        `The transaction check failed with error: ${err.message}. The transaction has been ignored`,
+      );
+    else logger.error(err.message);
+    res.sendStatus(400);
   }
 });
 
