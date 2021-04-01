@@ -11,7 +11,7 @@ import './Structures.sol';
 
 contract Proposers is Structures, Config {
 
-  LinkedAddress currentProposer; // can propose a new shield state
+  LinkedAddress public currentProposer; // can propose a new shield state
   uint proposerStartBlock; // L1 block where currentProposer became current
   uint public leafCount; // number of leaves in the Merkle treeWidth
   mapping(address => uint) public pendingWithdrawals;
