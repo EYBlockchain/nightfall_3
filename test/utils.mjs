@@ -2,6 +2,7 @@ import Web3 from 'web3';
 import axios from 'axios';
 import chai from 'chai';
 import rand from '../src/utils/crypto/crypto-random.mjs';
+// import { generalise } from 'general-number';
 
 let web3;
 
@@ -83,10 +84,11 @@ export async function timeJump(secs) {
 
 export async function createBadBlock(badBlockType, block, transactions, args) {
   let res;
-
+  const badBlock = block;
+  const badTransactions = transactions;
   switch (badBlockType) {
     case 'RandomRootNotInTimber': {
-      block.root = (await rand(32)).hex();
+      badBlock.root = (await rand(32)).hex();
       break;
     }
     case 'IncorrectRoot': {
@@ -94,19 +96,32 @@ export async function createBadBlock(badBlockType, block, transactions, args) {
         .request('http://localhost:8083')
         .get(`/path/${args.leafIndex}`)
         .send({ contractName: 'Challenges' });
-      block.root = res.body.data[0].value;
+      badBlock.root = res.body.data[0].value;
       break;
     }
     case 'DuplicateTransaction': {
-      delete block.root; // we delete root, so that /proposer/encode below can recalculate the root.
+      delete badBlock.root; // we delete root, so that /proposer/encode below can recalculate the root.
       // We don't want the check-block in NO catch wrong root error. Hence this statement
-      transactions[transactions.length - 1] = args.duplicateTransaction;
+      badTransactions[badTransactions.length - 1] = args.duplicateTransaction;
       break;
     }
     case 'InvalidDepositTransaction': {
-      transactions[0].tokenId =
-        '0x0000000000000000000000000000000000000000000000000000000000000001';
-      transactions[0].value = '0x0000000000000000000000000000000000000000000000000000000000000001';
+      // if both tokenID and value are 0 for deposit, then this is an invalid deposit transaction
+      badTransactions[0].tokenId =
+        '0x0000000000000000000000000000000000000000000000000000000000000000';
+      badTransactions[0].value =
+        '0x0000000000000000000000000000000000000000000000000000000000000000';
+      break;
+    }
+    case 'IncorrectPublicInputHash': {
+      // if both tokenID and value are 0 for deposit, then this is an invalid deposit transaction
+      badTransactions[0].publicInputHash = (await rand(32)).hex();
+      break;
+    }
+    case 'IncorrectProof': {
+      // use the proof of a prior transaction
+      badTransactions[0].publicInputHash = (await rand(32)).hex();
+      // badTransactions[0].proof = args.proof;
       break;
     }
     default:
@@ -117,7 +132,7 @@ export async function createBadBlock(badBlockType, block, transactions, args) {
   } = await chai
     .request('http://localhost:8081')
     .post('/proposer/encode')
-    .send({ block, transactions });
+    .send({ block: badBlock, transactions: badTransactions });
 
   return { txDataToSign, block: newBlock, transactions: newTransactions };
 }
