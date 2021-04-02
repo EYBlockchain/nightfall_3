@@ -18,34 +18,6 @@ import './ChallengesUtil.sol';
 
 contract Challenges is Proposers, Key_Registry {
 
-  // a transaction proof is challenged as incorrect
-  function challengeProofVerifies(
-    Block memory blockL2,
-    Transaction memory transaction,
-    uint transactionIndex // the location of the transaction in the block (saves a loop)
-  ) public {
-    isBlockReal(blockL2); // check the block exists
-    ChallengesUtil.libChallengeProofVerifies(blockL2,transaction,transactionIndex,vks[transaction.transactionType]);
-    challengeAccepted(blockL2);
-  }
-
-  // a transaction proof is challenged as incorrect.  Does not require the
-  // index of the transaction in the block, but uses more Gas as it has to
-  // search for it
-  function challengeProofVerifies(
-    Block memory blockL2,
-    Transaction memory transaction
-  ) external {
-    isBlockReal(blockL2); // check the block exists
-    for (uint i = 0; i < blockL2.transactionHashes.length; i++){
-      if (transaction.transactionHash == blockL2.transactionHashes[i] ) {
-        challengeProofVerifies(blockL2, transaction, i);
-        return;
-      }
-    }
-    revert('Transaction not found in this block');
-  }
-
   // the new commitment Merkle-tree root is challenged as incorrect
   function challengeNewRootCorrect(
     Block memory priorBlockL2, // the block immediately prior to this one
@@ -107,7 +79,93 @@ contract Challenges is Proposers, Key_Registry {
         ChallengesUtil.libChallengeTransactionTypeWithdraw(transaction);
       // Delete the latest block of the two
       challengeAccepted(block);
+  }
+
+  function challengePublicInputHash(
+    Block memory block,
+    Transaction memory transaction,
+    uint transactionIndex
+    ) external {
+      isBlockReal(block);
+      isBlockHashCorrect(block);
+      isTransactionValid(block, transaction, transactionIndex);
+      if(transaction.transactionType == TransactionTypes.DEPOSIT)
+        ChallengesUtil.libChallengePublicInputHashDeposit(transaction);
+      else if(transaction.transactionType == TransactionTypes.SINGLE_TRANSFER)
+        ChallengesUtil.libChallengePublicInputHashSingleTransfer(transaction);
+      else if(transaction.transactionType == TransactionTypes.DOUBLE_TRANSFER)
+        ChallengesUtil.libChallengePublicInputHashDoubleTransfer(transaction);
+      else // if(transaction.transactionType == TransactionTypes.WITHDRAW)
+        ChallengesUtil.libChallengePublicInputHashWithdraw(transaction);
+      // Delete the latest block of the two
+      challengeAccepted(block);
+  }
+
+  function challengeProofVerification(
+    Block memory block,
+    Transaction memory transaction,
+    uint transactionIndex
+    /* uint256[] memory _vk */
+    ) external {
+      isBlockReal(block);
+      isBlockHashCorrect(block);
+      isTransactionValid(block, transaction, transactionIndex);
+      ChallengesUtil.libChallengeProofVerification(transaction, vks[transaction.transactionType]);
+      /* ChallengesUtil.libChallengeProofVerification(transaction, _vk); */
+      challengeAccepted(block);
+  }
+
+  /*
+   This is a challenge that a nullifier has already been spent
+   For this challenge to succeed a challenger provides:
+   the indices for the same nullifier in two **different** transactions contained in two blocks (note it should also be ok for the blocks to be the same)
+  */
+  function challengeNullifier(
+    Block memory block1,
+    Transaction memory tx1,
+    uint transactionIndex1,
+    uint nullifierIndex1,
+    Block memory block2,
+    Transaction memory tx2,
+    uint transactionIndex2,
+    uint nullifierIndex2
+  ) public {
+
+    require(tx1.nullifiers[nullifierIndex1] == tx2.nullifiers[nullifierIndex2], 'Not matching nullifiers' );
+    require(tx1.transactionHash != tx2.transactionHash, 'Transactions need to be different' );
+    require(Utils.hashTransaction(tx1) == block1.transactionHashes[transactionIndex1], 'First Tx not in block' );
+    require(Utils.hashTransaction(tx2) == block2.transactionHashes[transactionIndex2], 'Second Tx not in block' );
+    isBlockReal(block1);
+    isBlockReal(block2);
+
+    if (block1.blockHash == block2.blockHash){ //They are the same block
+      challengeAccepted(block1);
     }
+
+    // The blocks are different and we prune the later block of the two
+    // simplest first check is to use the timestamp
+    if (blockHashes[block1.blockHash].data > blockHashes[block2.blockHash].data){
+      challengeAccepted(block1);
+    } else if (blockHashes[block1.blockHash].data < blockHashes[block2.blockHash].data) {
+      challengeAccepted(block2);
+    } else {
+      // They are within the same L1 blocktime so we need to walk the linked hashmap
+      bytes32 checkHash = endHash;
+
+      // Check safety of this condition (gas costs?)
+      while(blockHashes[checkHash].previousHash != ZERO) {
+          if(blockHashes[checkHash].previousHash == block1.blockHash) {
+            challengeAccepted(block1);
+            break;
+          }
+          if(blockHashes[checkHash].previousHash == block2.blockHash) {
+            challengeAccepted(block2);
+            break;
+          }
+          checkHash = blockHashes[checkHash].previousHash;
+      }
+    }
+  }
 
   // This gets called when a challenge succeeds
   function challengeAccepted(Block memory badBlock) private {
@@ -131,57 +189,6 @@ contract Challenges is Proposers, Key_Registry {
     // Shield contract.
   }
 
-  /*
-   This is a challenge that a nullifier has already been spent
-   For this challenge to succeed a challenger provides:
-   the indices for the same nullifier in two **different** transactions contained in two blocks (note it should also be ok for the blocks to be the same)
-  */
-  function challengeNullifier(
-    Block memory block1,
-    Transaction memory tx1,
-    uint transactionIndex1,
-    uint nullifierIndex1,
-    Block memory block2,
-    Transaction memory tx2,
-    uint transactionIndex2,
-    uint nullifierIndex2
-  ) public {
-    
-    require(tx1.nullifiers[nullifierIndex1] == tx2.nullifiers[nullifierIndex2], 'Not matching nullifiers' );
-    require(tx1.transactionHash != tx2.transactionHash, 'Transactions need to be different' );
-    require(Utils.hashTransaction(tx1) == block1.transactionHashes[transactionIndex1], 'First Tx not in block' );
-    require(Utils.hashTransaction(tx2) == block2.transactionHashes[transactionIndex2], 'Second Tx not in block' );
-    isBlockReal(block1);
-    isBlockReal(block2);
-
-    if (block1.blockHash == block2.blockHash){ //They are the same block
-      challengeAccepted(block1);
-    }
-
-    // The blocks are different and we prune the later block of the two
-    // simplest first check is to use the timestamp
-    if (blockHashes[block1.blockHash].data > blockHashes[block2.blockHash].data){
-      challengeAccepted(block1);
-    } else if (blockHashes[block1.blockHash].data < blockHashes[block2.blockHash].data) {
-      challengeAccepted(block2);
-    } else { 
-      // They are within the same L1 blocktime so we need to walk the linked hashmap
-      bytes32 checkHash = endHash;
-
-      // Check safety of this condition (gas costs?)
-      while(blockHashes[checkHash].previousHash != ZERO) {
-          if(blockHashes[checkHash].previousHash == block1.blockHash) {
-            challengeAccepted(block1);
-            break;
-          }
-          if(blockHashes[checkHash].previousHash == block2.blockHash) {
-            challengeAccepted(block2);
-            break;
-          }
-          checkHash = blockHashes[checkHash].previousHash;
-      }
-    }
-  }
   function removeBlockHashes(bytes32 blockHash) internal {
     bytes32 hash = blockHash;
     endHash = blockHashes[hash].previousHash;

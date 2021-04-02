@@ -81,7 +81,7 @@ library Verifier {
         vk.query[j++] = Pairing.G1Point(_vk[i], _vk[i+1]);
       }
 
-      require(vk.query.length == 2, "Length of vk.query is incorrect!");
+      /* require(vk.query.length == 2, "Length of vk.query is incorrect!"); */
 
       vk_dot_inputs = Pairing.addition(
         vk_dot_inputs,

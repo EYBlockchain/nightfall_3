@@ -419,7 +419,7 @@ library Pairing {
             // Use "invalid" to make gas estimation work
             switch success case 0 { invalid() }
         }
-        require(success, "EC addition failed");
+        /* require(success, "EC addition failed"); */
     }
     /// @return r the sum of two points of G2
     function addition2(G2Point memory p1, G2Point memory p2) internal pure returns (G2Point memory r) {
@@ -439,14 +439,14 @@ library Pairing {
             // Use "invalid" to make gas estimation work
             switch success case 0 { invalid() }
         }
-        require (success, "EC scalar multiplication failed");
+        /* require (success, "EC scalar multiplication failed"); */
     }
     /// @return the result of computing the pairing check
     /// e(p1[0], p2[0]) *  .... * e(p1[n], p2[n]) == 1
     /// For example pairing([P1(), P1().negate()], [P2(), P2()]) should
     /// return true.
     function pairing(G1Point[] memory p1, G2Point[] memory p2) internal returns (bool) {
-        require(p1.length == p2.length, "EC pairing p1 length != p2 length");
+        /* require(p1.length == p2.length, "EC pairing p1 length != p2 length"); */
         uint elements = p1.length;
         uint inputSize = elements * 6;
         uint[] memory input = new uint[](inputSize);

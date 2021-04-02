@@ -9,16 +9,12 @@ import './Structures.sol';
 
 library ChallengesUtil {
 
-  function libChallengeProofVerifies(
-    Structures.Block memory blockL2,
+  bytes32 public constant ZERO = 0x0000000000000000000000000000000000000000000000000000000000000000;
+
+  function libChallengeProofVerification(
     Structures.Transaction memory transaction,
-    uint transactionIndex, // the location of the transaction in the block (saves a loop)
     uint256[] memory vk
   ) public {
-    require(
-      blockL2.transactionHashes[transactionIndex] == Utils.hashTransaction(transaction),
-      'This transaction is not in the block at the index given'
-    );
     require(!Verifier.verify(
         transaction.proof,
         uint256(transaction.publicInputHash),
@@ -92,29 +88,29 @@ library ChallengesUtil {
       // Check if a duplicate transaction exists in these blocks
       uint nZeroCommitments;
       for (uint i = 0; i < transaction.commitments.length; i++) {
-        if(transaction.commitments[i].length == 0)
+        if(transaction.commitments[i] == ZERO)
           nZeroCommitments++;
       }
       uint nZeroNullifiers;
-      for (uint i = 0; i < transaction.commitments.length; i++) {
-        if(transaction.commitments[i].length == 0)
+      for (uint i = 0; i < transaction.nullifiers.length; i++) {
+        if(transaction.nullifiers[i] == ZERO)
           nZeroNullifiers++;
       }
       uint nZeroProof;
-      for (uint i = 0; i < transaction.commitments.length; i++) {
-        if(transaction.commitments[i].length == 0)
+      for (uint i = 0; i < transaction.proof.length; i++) {
+        if(transaction.proof[i] == 0)
           nZeroProof++;
       }
       require(
-        transaction.publicInputHash.length == 0 ||
-        (transaction.tokenId.length == 0 && transaction.value.length == 0) ||
-        transaction.ercAddress.length == 0 ||
-        transaction.recipientAddress.length != 0 ||
+        transaction.publicInputHash == ZERO ||
+        (transaction.tokenId == ZERO && transaction.value == ZERO) ||
+        transaction.ercAddress == ZERO ||
+        transaction.recipientAddress != ZERO ||
         nZeroCommitments > 0 ||
         transaction.commitments.length != 1 ||
-        nZeroNullifiers > 0 ||
-        transaction.nullifiers.length != 0 || // TODO in NO
-        transaction.historicRoot.length != 0 ||
+        nZeroNullifiers == 0 ||
+        /* transaction.nullifiers.length != 0 || // TODO in NO */
+        transaction.historicRoot != ZERO ||
         nZeroProof > 0,
         'This deposit transaction type is valid'
       );
@@ -127,30 +123,30 @@ library ChallengesUtil {
       // Check if a duplicate transaction exists in these blocks
       uint nZeroCommitments;
       for (uint i = 0; i < transaction.commitments.length; i++) {
-        if(transaction.commitments[i].length == 0)
+        if(transaction.commitments[i] == ZERO)
           nZeroCommitments++;
       }
       uint nZeroNullifiers;
-      for (uint i = 0; i < transaction.commitments.length; i++) {
-        if(transaction.commitments[i].length == 0)
+      for (uint i = 0; i < transaction.nullifiers.length; i++) {
+        if(transaction.nullifiers[i] == ZERO)
           nZeroNullifiers++;
       }
       uint nZeroProof;
-      for (uint i = 0; i < transaction.commitments.length; i++) {
-        if(transaction.commitments[i].length == 0)
+      for (uint i = 0; i < transaction.proof.length; i++) {
+        if(transaction.proof[i] == 0)
           nZeroProof++;
       }
       require(
-        transaction.publicInputHash.length == 0 ||
-        transaction.tokenId.length != 0 ||
-        transaction.value.length != 0 ||
-        transaction.ercAddress.length == 0 ||
-        transaction.recipientAddress.length != 0 ||
+        transaction.publicInputHash == ZERO ||
+        transaction.tokenId != ZERO ||
+        transaction.value != ZERO ||
+        transaction.ercAddress == ZERO ||
+        transaction.recipientAddress != ZERO ||
         nZeroCommitments > 0 ||
         transaction.commitments.length != 1 ||
         nZeroNullifiers > 0 ||
         transaction.nullifiers.length != 1 ||
-        transaction.historicRoot.length == 0 ||
+        transaction.historicRoot == ZERO ||
         nZeroProof > 0,
         'This single transfer transaction type is valid'
       );
@@ -163,30 +159,30 @@ library ChallengesUtil {
       // Check if a duplicate transaction exists in these blocks
       uint nZeroCommitments;
       for (uint i = 0; i < transaction.commitments.length; i++) {
-        if(transaction.commitments[i].length == 0)
+        if(transaction.commitments[i] == ZERO)
           nZeroCommitments++;
       }
       uint nZeroNullifiers;
-      for (uint i = 0; i < transaction.commitments.length; i++) {
-        if(transaction.commitments[i].length == 0)
+      for (uint i = 0; i < transaction.nullifiers.length; i++) {
+        if(transaction.nullifiers[i] == ZERO)
           nZeroNullifiers++;
       }
       uint nZeroProof;
-      for (uint i = 0; i < transaction.commitments.length; i++) {
-        if(transaction.commitments[i].length == 0)
+      for (uint i = 0; i < transaction.proof.length; i++) {
+        if(transaction.proof[i] == 0)
           nZeroProof++;
       }
       require(
-        transaction.publicInputHash.length == 0 ||
-        transaction.tokenId.length != 0 ||
-        transaction.value.length != 0 ||
-        transaction.ercAddress.length == 0 ||
-        transaction.recipientAddress.length != 0 ||
+        transaction.publicInputHash == ZERO ||
+        transaction.tokenId != ZERO ||
+        transaction.value != ZERO ||
+        transaction.ercAddress == ZERO ||
+        transaction.recipientAddress != ZERO ||
         nZeroCommitments > 0 ||
         transaction.commitments.length != 2 ||
         nZeroNullifiers > 0 ||
         transaction.nullifiers.length != 2 ||
-        transaction.historicRoot.length == 0 ||
+        transaction.historicRoot == ZERO ||
         nZeroProof > 0,
         'This double transfer transaction type is valid'
       );
@@ -199,31 +195,79 @@ library ChallengesUtil {
       // Check if a duplicate transaction exists in these blocks
       uint nZeroCommitments;
       for (uint i = 0; i < transaction.commitments.length; i++) {
-        if(transaction.commitments[i].length == 0)
+        if(transaction.commitments[i] == ZERO)
           nZeroCommitments++;
       }
       uint nZeroNullifiers;
-      for (uint i = 0; i < transaction.commitments.length; i++) {
-        if(transaction.commitments[i].length == 0)
+      for (uint i = 0; i < transaction.nullifiers.length; i++) {
+        if(transaction.nullifiers[i] == ZERO)
           nZeroNullifiers++;
       }
       uint nZeroProof;
-      for (uint i = 0; i < transaction.commitments.length; i++) {
-        if(transaction.commitments[i].length == 0)
+      for (uint i = 0; i < transaction.proof.length; i++) {
+        if(transaction.proof[i] == 0)
           nZeroProof++;
       }
       require(
-        transaction.publicInputHash.length == 0 ||
-        (transaction.tokenId.length == 0 && transaction.value.length == 0) ||
-        transaction.ercAddress.length == 0 ||
-        transaction.recipientAddress.length == 0 ||
-        nZeroCommitments > 0 ||
-        transaction.commitments.length != 0 || // TODO in NO
+        transaction.publicInputHash == ZERO ||
+        (transaction.tokenId == ZERO && transaction.value == ZERO) ||
+        transaction.ercAddress == ZERO ||
+        transaction.recipientAddress == ZERO ||
+        nZeroCommitments == 0 ||
+        /* transaction.commitments.length != 0 || // TODO in NO */
         nZeroNullifiers > 0 ||
         transaction.nullifiers.length != 1 ||
-        transaction.historicRoot.length == 0 ||
+        transaction.historicRoot == ZERO ||
         nZeroProof > 0,
         'This withdraw transaction type is valid'
+      );
+    }
+
+    // the transaction type withdraw is challenged to not be valid
+    function libChallengePublicInputHashDeposit(
+      Structures.Transaction memory transaction
+    ) internal {
+      require(
+        transaction.publicInputHash != sha256(
+          abi.encodePacked(transaction.ercAddress, transaction.tokenId, transaction.value, transaction.commitments)
+        ) & 0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff, // select 248 bits of the sha256 calculated
+        "publicInputHash for deposit is correct"
+      );
+    }
+
+    // the transaction type withdraw is challenged to not be valid
+    function libChallengePublicInputHashSingleTransfer(
+      Structures.Transaction memory transaction
+    ) internal {
+      require(
+        transaction.publicInputHash != sha256(
+          abi.encodePacked(transaction.ercAddress, transaction.commitments, transaction.nullifiers, transaction.historicRoot)
+        ) & 0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff, // select 248 bits of the sha256 calculated
+        "publicInputHash for single transfer is correct"
+      );
+    }
+
+    // the transaction type withdraw is challenged to not be valid
+    function libChallengePublicInputHashDoubleTransfer(
+      Structures.Transaction memory transaction
+    ) internal {
+      require(
+        transaction.publicInputHash != sha256(
+          abi.encodePacked(transaction.ercAddress, transaction.ercAddress, transaction.commitments, transaction.nullifiers, transaction.historicRoot)
+        ) & 0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff, // select 248 bits of the sha256 calculated
+        "publicInputHash for double transfer is correct"
+      );
+    }
+
+    // the transaction type withdraw is challenged to not be valid
+    function libChallengePublicInputHashWithdraw(
+      Structures.Transaction memory transaction
+    ) internal {
+      require(
+        transaction.publicInputHash != sha256(
+          abi.encodePacked(transaction.ercAddress, transaction.tokenId, transaction.value, transaction.nullifiers, transaction.recipientAddress, transaction.historicRoot)
+        ) & 0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff, // select 248 bits of the sha256 calculated
+        "publicInputHash for withdraw is correct"
       );
     }
 }
