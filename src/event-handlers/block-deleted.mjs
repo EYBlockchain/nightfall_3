@@ -9,6 +9,7 @@ import {
   deleteBlock,
   getBlockByBlockHash,
   getBlockByTransactionHash,
+  resetNullifiers,
 } from '../services/database.mjs';
 import Block from '../classes/block.mjs';
 import logger from '../utils/logger.mjs';
@@ -31,6 +32,8 @@ async function blockDeletedEventHandler(data) {
   await addTransactionsToMemPool(block);
   // the delete the block
   deleteBlock(blockHash);
+  // unset blockhashes for nullifiers
+  resetNullifiers(blockHash);
   // reset the Block class cached values.
   Block.rollback();
 }
