@@ -17,7 +17,7 @@ export function setChallengeWebSocketConnection(_ws) {
   ws = _ws;
 }
 
-function submitChallenge(txDataToSign) {
+export function submitChallenge(txDataToSign) {
   logger.debug(
     `raw challenge transaction has been sent to be signed and submitted ${JSON.stringify(
       txDataToSign,
@@ -28,7 +28,7 @@ function submitChallenge(txDataToSign) {
   ws.send(JSON.stringify({ type: 'challenge', txDataToSign }));
 }
 
-async function getTransactionsBlock(transactions, block, length) {
+export async function getTransactionsBlock(transactions, block, length) {
   if (length === block.transactionHashes.length) {
     return transactions;
   }
@@ -36,7 +36,7 @@ async function getTransactionsBlock(transactions, block, length) {
   return getTransactionsBlock(transactions, block, length + 1);
 }
 
-export default async function createChallenge(block, transactions, err) {
+export async function createChallenge(block, transactions, err) {
   let txDataToSign;
   if (process.env.IS_CHALLENGER === 'true') {
     const challengeContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
@@ -102,7 +102,7 @@ export default async function createChallenge(block, transactions, err) {
           .encodeABI();
         break;
       }
-      // invalid transaction
+      // invalid transaction type
       case 2: {
         const { transaction, transactionHashIndex: transactionIndex } = err.metadata;
         // Create a challenge
@@ -111,8 +111,26 @@ export default async function createChallenge(block, transactions, err) {
           .encodeABI();
         break;
       }
-      // Challenge Duplicate Nullfier
+      // invalid public input hash
       case 3: {
+        const { transaction, transactionHashIndex: transactionIndex } = err.metadata;
+        // Create a challenge
+        txDataToSign = await challengeContractInstance.methods
+          .challengePublicInputHash(block, transaction, transactionIndex)
+          .encodeABI();
+        break;
+      }
+      // proof does not verify
+      case 4: {
+        // const { transaction, transactionHashIndex: transactionIndex } = err.metadata;
+        // // Create a challenge
+        // txDataToSign = await challengeContractInstance.methods
+        //   .challengeProofVerification(block, transaction, transactionIndex)
+        //   .encodeABI();
+        break;
+      }
+      // Challenge Duplicate Nullfier
+      case 5: {
         const storedMinedNullifiers = await retrieveMinedNullifiers(); // List of Nullifiers stored by blockProposer
         const blockNullifiers = transactions.map(tNull => tNull.nullifiers.toString()); // List of Nullifiers in block
         const alreadyMinedNullifiers = storedMinedNullifiers.filter(sNull =>
@@ -138,7 +156,7 @@ export default async function createChallenge(block, transactions, err) {
             ])
             .filter(currentIdx => currentIdx[1] >= 0)
             .flat(Infinity);
-          const txDataToSign = await challengeContractInstance.methods
+          txDataToSign = await challengeContractInstance.methods
             .challengeNullifier(
               block,
               transactions[currentTxIdx],

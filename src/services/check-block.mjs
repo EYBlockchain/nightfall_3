@@ -2,21 +2,17 @@
 Module to check that submitted Blocks and Transactions are valid
 */
 import { getTreeHistoryByCurrentLeafCount } from '../utils/timber.mjs';
-import { getBlockByTransactionHash } from './database.mjs';
 import logger from '../utils/logger.mjs';
 import BlockError from '../classes/block-error.mjs';
-<<<<<<< HEAD
 import checkTransaction from './transaction-checker.mjs';
-
-=======
-import { retrieveMinedNullifiers } from './database.mjs';
->>>>>>> origin/master
+import { getBlockByTransactionHash, retrieveMinedNullifiers } from './database.mjs';
 /**
 Checks the block's properties.  It will return the first inconsistency it finds
 @param {object} block - the block being checked
 @param {array} transactions - array of transaction objects whose transaction hashes are contained in the block (in hash order).
 TODO - nullifiers
 */
+
 async function checkBlock(block, transactions) {
   // now we have to check the commitment root.  For this we can make use of
   // Timber with its optimistic extensions.
@@ -44,19 +40,20 @@ async function checkBlock(block, transactions) {
     }),
   );
 
-  // check if the transaction is valid
+  // check if the transaction is valid - transaction type, public input hash and proof verification are all checked
   await Promise.all(
     transactions.map(async transaction => {
       try {
         await checkTransaction(transaction);
       } catch (err) {
-        // if (err instanceof TransactionError)
-        throw new BlockError(`The transaction check failed with error: ${err.message}`, 2, {
-          transaction,
-          transactionHashIndex: block.transactionHashes.indexOf(transaction.transactionHash),
-          transactionErrorCode: err.code,
-        });
-        // else logger.error(err.message);
+        throw new BlockError(
+          `The transaction check failed with error: ${err.message}`,
+          err.code === 1 ? 2 : err.code, // mapping transaction error to block error
+          {
+            transaction,
+            transactionHashIndex: block.transactionHashes.indexOf(transaction.transactionHash),
+          },
+        );
       }
     }),
   );
@@ -70,7 +67,7 @@ async function checkBlock(block, transactions) {
   if (alreadyMinedNullifiers.length > 0) {
     throw new BlockError(
       `Some Nullifiers included in ${block.root} have been included in previous blocks`,
-      3,
+      5,
     );
   }
 }
