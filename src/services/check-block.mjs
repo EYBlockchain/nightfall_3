@@ -5,7 +5,7 @@ import { getTreeHistoryByCurrentLeafCount } from '../utils/timber.mjs';
 import logger from '../utils/logger.mjs';
 import BlockError from '../classes/block-error.mjs';
 import checkTransaction from './transaction-checker.mjs';
-import { getBlockByTransactionHash, retrieveMinedNullifiers } from './database.mjs';
+import { numberOfBlockWithTransactionHash, retrieveMinedNullifiers } from './database.mjs';
 /**
 Checks the block's properties.  It will return the first inconsistency it finds
 @param {object} block - the block being checked
@@ -31,7 +31,7 @@ async function checkBlock(block, transactions) {
   // This will also capture a duplicate block error
   await Promise.all(
     transactions.map(async (transaction, index) => {
-      if ((await getBlockByTransactionHash(transaction.transactionHash, true)) !== null)
+      if ((await numberOfBlockWithTransactionHash(transaction.transactionHash)) > 1)
         throw new BlockError(
           `The transaction with transaction hash (${transaction.transactionHash}) has already been submitted, hence this block is incorrect`,
           1,
@@ -41,22 +41,20 @@ async function checkBlock(block, transactions) {
   );
 
   // check if the transaction is valid - transaction type, public input hash and proof verification are all checked
-  await Promise.all(
-    transactions.map(async transaction => {
-      try {
-        await checkTransaction(transaction);
-      } catch (err) {
-        throw new BlockError(
-          `The transaction check failed with error: ${err.message}`,
-          err.code === 1 ? 2 : err.code, // mapping transaction error to block error
-          {
-            transaction,
-            transactionHashIndex: block.transactionHashes.indexOf(transaction.transactionHash),
-          },
-        );
-      }
-    }),
-  );
+  for (let i = 0; i < transactions.length; i++) {
+    try {
+      await checkTransaction(transactions[i]);
+    } catch (err) {
+      throw new BlockError(
+        `The transaction check failed with error: ${err.message}`,
+        err.code === 1 ? 2 : err.code, // mapping transaction error to block error
+        {
+          transaction: transactions[i],
+          transactionHashIndex: block.transactionHashes.indexOf(transactions[i].transactionHash),
+        },
+      );
+    }
+  }
 
   // Check nullifiers
   const storedMinedNullifiers = await retrieveMinedNullifiers(); // List of Nullifiers stored by blockProposer

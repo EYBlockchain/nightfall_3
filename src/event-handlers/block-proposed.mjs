@@ -6,7 +6,6 @@ import { createChallenge } from '../services/challenges.mjs';
 import {
   removeTransactionsFromMemPool,
   saveBlock,
-  markBlockChecked,
   stampNullifiers,
 } from '../services/database.mjs';
 import mappedBlock from '../event-mappers/block-proposed.mjs';
@@ -46,6 +45,13 @@ async function blockProposedEventHandler(data) {
     await saveBlock(block);
     // we'll check the block and issue a challenge if appropriate
     await checkBlock(block, transactions);
+
+    // if the block is, in fact, valid then we also need to mark as used the
+    // transactions in the block from our database of unprocessed transactions,
+    // so we don't try to use them in a block which we're proposing.
+    await removeTransactionsFromMemPool(block); // TODO is await needed?
+    // we'll check the block and issue a challenge if appropriate
+    await checkBlock(block, transactions);
     // If the block is fine, we update the same nullifiers we have stored with the blockhash
     await stampNullifiers(
       transactions
@@ -57,16 +63,6 @@ async function blockProposedEventHandler(data) {
         .flat(Infinity),
       block.blockHash,
     );
-
-    // if the block is, in fact, valid then we also need to mark as used the
-    // transactions in the block from our database of unprocessed transactions,
-    // so we don't try to use them in a block which we're proposing.
-    await removeTransactionsFromMemPool(block); // TODO is await needed?
-    // we'll check the block and issue a challenge if appropriate
-    await checkBlock(block, transactions);
-    // mark that the block has been validated. Because a block is saved without checking when it is received, this flag will help
-    // differentiate the state of the block in the collection
-    await markBlockChecked(block);
     // signal to the block-making routines that a block is received: they
     // won't make a new block until their previous one is stored on-chain.
     logger.info('Block Checker - Block was valid');

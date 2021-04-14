@@ -26,7 +26,7 @@ router.get('/:transactionHash', async (req, res, next) => {
   try {
     const { transactionHash } = req.params;
     logger.debug(`searching for block containing transaction hash ${transactionHash}`);
-    const block = await getBlockByTransactionHash(transactionHash, true);
+    const block = await getBlockByTransactionHash(transactionHash);
     delete block._id; // this is database specific so no need to send it
     logger.debug(`Found block ${JSON.stringify(block, null, 2)} in database`);
     res.json(block || null);

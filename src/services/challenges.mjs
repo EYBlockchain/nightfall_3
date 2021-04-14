@@ -84,7 +84,7 @@ export async function createChallenge(block, transactions, err) {
         // Get the block that contains the duplicate of the transaction
         const block2 = await getBlockByTransactionHash(
           block.transactionHashes[transactionIndex1],
-          true,
+          // true,
         );
         // Find the index of the duplication transaction in this block
         const transactionIndex2 = block2.transactionHashes.findIndex(
