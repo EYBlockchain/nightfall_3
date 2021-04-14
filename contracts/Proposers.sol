@@ -145,7 +145,7 @@ contract Proposers is Structures, Config {
     if(proposer == currentProposer.thisAddress) {
       // Cannot just call changeCurrentProposer directly due to the require time check
       proposerStartBlock = block.number;
-      currentProposer = proposers[nextAddress]; 
+      currentProposer = proposers[nextAddress];
       emit NewCurrentProposer(currentProposer.thisAddress);
     }
   }
@@ -156,24 +156,5 @@ contract Proposers is Structures, Config {
   function isBlockReal(Block memory b) public view {
     /* require(b.blockHash == Utils.hashBlock(b), 'The block hash is incorrect'); */
     require(blockHashes[b.blockHash].thisHash == b.blockHash, 'This block does not exist');
-  }
-
-  // Checks if a block has is calculated correctly
-  function isBlockHashCorrect(Block memory b) public view {
-    require(b.blockHash == Utils.hashBlock(b), 'The block hash is incorrect');
-  }
-
-  // Checks if the block contains the transaction in the index specified and that the
-  // transaction hash is correctly calculated
-  function isTransactionValid(Block memory b, Transaction memory t, uint index) internal {
-    bytes32 transactionHash = Utils.hashTransaction(t);
-    require(
-      b.transactionHashes[index] == transactionHash,
-      'Transaction hash was not found in the block'
-    );
-    require(
-      t.transactionHash == transactionHash,
-      'The transaction hash is incorrect'
-    );
   }
 }
