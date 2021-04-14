@@ -78,11 +78,6 @@ describe('Testing the challenge http API', () => {
     txToSign = res.body.txDataToSign;
     await submitTransaction(txToSign, privateKey, challengeAddress, gas, bond);
 
-    // Should change the current proposer (to the just-registered proposer as that is the only one
-    res = await chai.request(optimistUrl).get('/proposer/change');
-    txToSign = res.body.txDataToSign;
-    await submitTransaction(txToSign, privateKey, challengeAddress, gas);
-
     connection = new WebSocket(optimistWsUrl);
     connection.onopen = () => {
       connection.send('challenge');
@@ -146,6 +141,12 @@ describe('Testing the challenge http API', () => {
         // (msg.type === 'challenge')
       } else {
         await submitTransaction(txDataToSign, privateKey, challengeAddress, gas);
+        const result = await chai
+          .request(optimistUrl)
+          .post('/proposer/register')
+          .send({ address: myAddress });
+        txToSign = result.body.txDataToSign;
+        await submitTransaction(txToSign, privateKey, challengeAddress, gas, bond);
         // console.log('tx hash of challenge block is', txReceipt.transactionHash);
       }
     };
@@ -154,6 +155,7 @@ describe('Testing the challenge http API', () => {
   describe('Creating correct transactions to get proper root history in timber', () => {
     let txDataToSign;
     it('should deposit some crypto into a ZKP commitment', async () => {
+      await new Promise(resolve => setTimeout(resolve, 5000));
       const res = await chai
         .request(url)
         .post('/deposit')
@@ -257,7 +259,6 @@ describe('Testing the challenge http API', () => {
         });
     });
     it('Should rollback the wrong leaves', async () => {
-      await new Promise(resolve => setTimeout(resolve, 5000));
       web3.eth
         .getPastLogs({
           fromBlock: web3.utils.toHex(0),
@@ -273,7 +274,6 @@ describe('Testing the challenge http API', () => {
 
   describe('Challenge 2: Duplicate transaction submitted', () => {
     it('Should delete the wrong block', async () => {
-      await new Promise(resolve => setTimeout(resolve, 5000));
       web3.eth
         .getPastLogs({
           fromBlock: web3.utils.toHex(0),
@@ -285,7 +285,6 @@ describe('Testing the challenge http API', () => {
         });
     });
     it('Should rollback the wrong leaves', async () => {
-      await new Promise(resolve => setTimeout(resolve, 5000));
       web3.eth
         .getPastLogs({
           fromBlock: web3.utils.toHex(0),
@@ -300,22 +299,6 @@ describe('Testing the challenge http API', () => {
 
   describe('Challenge 3: Invalid transaction submitted', () => {
     it('Should delete the wrong block', async () => {
-      // create another transaction to trigger NO's block assembly
-      const res = await chai
-        .request(url)
-        .post('/deposit')
-        .send({
-          ercAddress,
-          tokenId,
-          value,
-          zkpPublicKey,
-          fee,
-        });
-      const { txDataToSign } = res.body;
-      // now we need to sign the transaction and send it to the blockchain
-      await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
-
-      await new Promise(resolve => setTimeout(resolve, 15000));
       web3.eth
         .getPastLogs({
           fromBlock: web3.utils.toHex(0),
@@ -325,10 +308,8 @@ describe('Testing the challenge http API', () => {
         .then(events => {
           expect(events[0]).to.have.property('transactionHash');
         });
-      await new Promise(resolve => setTimeout(resolve, 5000));
     });
     it('Should rollback the wrong leaves', async () => {
-      await new Promise(resolve => setTimeout(resolve, 5000));
       web3.eth
         .getPastLogs({
           fromBlock: web3.utils.toHex(0),
@@ -338,7 +319,6 @@ describe('Testing the challenge http API', () => {
         .then(events => {
           expect(events[0]).to.have.property('transactionHash');
         });
-      await new Promise(resolve => setTimeout(resolve, 5000));
     });
   });
 
@@ -359,7 +339,6 @@ describe('Testing the challenge http API', () => {
       // now we need to sign the transaction and send it to the blockchain
       await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
 
-      await new Promise(resolve => setTimeout(resolve, 15000));
       web3.eth
         .getPastLogs({
           fromBlock: web3.utils.toHex(0),
@@ -375,7 +354,6 @@ describe('Testing the challenge http API', () => {
       await new Promise(resolve => setTimeout(resolve, 5000));
     });
     it('Should rollback the wrong leaves', async () => {
-      await new Promise(resolve => setTimeout(resolve, 5000));
       web3.eth
         .getPastLogs({
           fromBlock: web3.utils.toHex(0),
@@ -388,7 +366,6 @@ describe('Testing the challenge http API', () => {
         .then(events => {
           expect(events[0]).to.have.property('transactionHash');
         });
-      await new Promise(resolve => setTimeout(resolve, 5000));
     });
   });
 
@@ -438,7 +415,7 @@ describe('Testing the challenge http API', () => {
 
   after(() => {
     // console.log('end');
-    closeWeb3Connection();
+    // closeWeb3Connection();
     connection.close();
   });
 });

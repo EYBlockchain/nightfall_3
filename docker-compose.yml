@@ -99,7 +99,7 @@ services:
   ganache:
     image: trufflesuite/ganache-cli:v6.12.1
     command:
-      ganache-cli --accounts=10 --defaultBalanceEther=1000 --gasLimit=12500000 --deterministic
+      ganache-cli --accounts=10 --defaultBalanceEther=1000 --gasLimit=0xbebc20 --deterministic
     ports:
       - '8545:8545'
     networks:
