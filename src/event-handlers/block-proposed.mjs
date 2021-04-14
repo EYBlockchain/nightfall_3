@@ -45,13 +45,10 @@ async function blockProposedEventHandler(data) {
     await saveBlock(block);
     // we'll check the block and issue a challenge if appropriate
     await checkBlock(block, transactions);
-
     // if the block is, in fact, valid then we also need to mark as used the
     // transactions in the block from our database of unprocessed transactions,
     // so we don't try to use them in a block which we're proposing.
     await removeTransactionsFromMemPool(block); // TODO is await needed?
-    // we'll check the block and issue a challenge if appropriate
-    await checkBlock(block, transactions);
     // If the block is fine, we update the same nullifiers we have stored with the blockhash
     await stampNullifiers(
       transactions
