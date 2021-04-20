@@ -5,7 +5,7 @@ An stub implementation of the ERCInterface
 It's very minimal but it's all that we need for Shield contract testing
 */
 
-pragma solidity ^0.6.0;
+pragma solidity ^0.8.0;
 
 contract ERCStub {
   //ERC20
@@ -26,7 +26,7 @@ contract ERCStub {
     address to,
     uint256 value,
     bytes calldata _data
-  ) external returns (bool) {
+  ) external {
     data = _data;
     emit Transfer(from, to, value);
   }
@@ -37,7 +37,7 @@ contract ERCStub {
     uint256 _id,
     uint256 value,
     bytes calldata _data
-  ) external returns (bool) {
+  ) external {
     data = _data;
     id = _id;
     emit Transfer(from, to, value);

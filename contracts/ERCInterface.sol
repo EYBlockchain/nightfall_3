@@ -7,7 +7,7 @@ we don't need separate code for FT and NFT token-types so it's more
 efficient and the code is much DRYer.
 */
 
-pragma solidity ^0.6.0;
+pragma solidity ^0.8.0;
 
 interface ERCInterface {
   function transferFrom(address from, address to, uint256 value)
@@ -16,12 +16,12 @@ interface ERCInterface {
   function safeTransferFrom(
     address from, address to, uint256 value, bytes calldata _data
   )
-    external returns (bool);
+    external;
 
   function safeTransferFrom(
     address from, address to, uint256 id, uint256 value, bytes calldata _data
   )
-    external returns (bool);
+    external;
 
 
 

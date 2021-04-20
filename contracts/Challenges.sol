@@ -6,8 +6,8 @@ grounds.
 @Author Westlad
 */
 
-pragma solidity ^0.6.0;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.0;
+//pragma experimental ABIEncoderV2;
 
 import './Proposers.sol';
 import './Key_Registry.sol';
@@ -17,6 +17,8 @@ import './ChallengesUtil.sol';
 
 contract Challenges is Proposers, Key_Registry {
 
+  mapping(bytes32 => address) public committers;
+
   // the new commitment Merkle-tree root is challenged as incorrect
   function challengeNewRootCorrect(
     Block memory priorBlockL2, // the block immediately prior to this one
@@ -24,8 +26,10 @@ contract Challenges is Proposers, Key_Registry {
     bytes32[33] calldata frontierPriorBlock, // frontier path before prior block is added. The same frontier used in calculating root when prior block is added
     Block memory blockL2,
     Transaction[] memory transactions,
-    uint commitmentIndex // the index *in the Merkle Tree* of the commitment that we are providing a SiblingPath for.
+    uint commitmentIndex, // the index *in the Merkle Tree* of the commitment that we are providing a SiblingPath for.
+    bytes32 salt
   ) external {
+    checkCommit(msg.data, salt);
     // first, check we have real, in-train, contiguous blocks
     require(blockHashes[priorBlockL2.blockHash].nextHash == blockHashes[blockL2.blockHash].thisHash, 'The blocks are not contiguous');
     // check if the block hash is correct and the block hash exists for the prior block
@@ -40,8 +44,10 @@ contract Challenges is Proposers, Key_Registry {
     Block memory block1,
     Block memory block2,
     uint transactionIndex1,
-    uint transactionIndex2
+    uint transactionIndex2,
+    bytes32 salt
   ) external {
+    checkCommit(msg.data, salt);
     // first, check we have real, in-train, contiguous blocks
     isBlockReal(block1);
     isBlockReal(block2);
@@ -57,8 +63,10 @@ contract Challenges is Proposers, Key_Registry {
   function challengeTransactionType(
     Block memory _block,
     Transaction memory _transaction,
-    uint _transactionIndex
+    uint _transactionIndex,
+    bytes32 salt
     ) external {
+      checkCommit(msg.data, salt);
       isBlockReal(_block);
       ChallengesUtil.libChallengeTransactionType(_block, _transaction, _transactionIndex);
       // Delete the latest block of the two
@@ -68,8 +76,10 @@ contract Challenges is Proposers, Key_Registry {
   function challengePublicInputHash(
     Block memory _block,
     Transaction memory _transaction,
-    uint _transactionIndex
+    uint _transactionIndex,
+    bytes32 salt
     ) external {
+      checkCommit(msg.data, salt);
       isBlockReal(_block);
       ChallengesUtil.libChallengePublicInputHash(_block, _transaction, _transactionIndex);
       // Delete the latest block of the two
@@ -99,8 +109,10 @@ contract Challenges is Proposers, Key_Registry {
     Block memory block2,
     Transaction memory tx2,
     uint transactionIndex2,
-    uint nullifierIndex2
+    uint nullifierIndex2,
+    bytes32 salt
   ) public {
+    checkCommit(msg.data, salt);
     ChallengesUtil.libChallengeNullifier(block1, tx1, transactionIndex1, nullifierIndex1, block2, tx2, transactionIndex2, nullifierIndex2);
     isBlockReal(block1);
     isBlockReal(block2);
@@ -165,5 +177,20 @@ contract Challenges is Proposers, Key_Registry {
       hash = nextHash;
     } while(hash != ZERO);
     blockHashes[endHash].nextHash = ZERO; // terminate the chain correctly
+  }
+
+  //To prevent frontrunning, we need to commit to a challenge before we send it
+  function commitToChallenge(bytes32 commitmentHash) external {
+    require(committers[commitmentHash] == address(0), 'This hash is already committed to');
+    committers[commitmentHash] = msg.sender;
+    emit CommittedToChallenge(commitmentHash, msg.sender);
+  }
+  // and having sent it, we need to check that commitment to a challenge from
+  // within the challenge function using this function:
+  function checkCommit(bytes calldata messageData, bytes32 salt) private {
+    bytes32 hash = keccak256(messageData);
+    salt = 0; // not really required as salt is in msg.data but stops the unused variable compiler warning. Bit of a waste of gas though.
+    require(committers[hash] == msg.sender, 'The commitment hash is invalid');
+    delete committers[hash];
   }
 }
