@@ -2,6 +2,7 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import gen from 'general-number';
+import Queue from 'queue';
 import WebSocket from 'ws';
 import sha256 from '../src/utils/crypto/sha256.mjs';
 import {
@@ -14,6 +15,7 @@ import {
 
 const { expect } = chai;
 const { GN } = gen;
+const txQueue = new Queue({ autostart: true, concurrency: 1 });
 
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
@@ -85,70 +87,75 @@ describe('Testing the challenge http API', () => {
     };
     connection.onmessage = async message => {
       // let txReceipt;
-      const msg = JSON.parse(message.data);
-      const { type } = msg;
-      let { txDataToSign } = msg;
-      if (type === 'block') {
-        const { block, transactions } = msg;
-        if (counter === 0) {
-          duplicateTransaction = transactions[0];
-        } else if (counter === 1) {
-          res = await createBadBlock('IncorrectRoot', block, transactions, {
-            leafIndex: 1,
-          });
-          topicsBlockHashesIncorrectRootInBlock = res.block.blockHash;
-          topicsRootIncorrectRootInBlock = res.block.root;
-          txDataToSign = res.txDataToSign;
-        } else if (counter === 2) {
-          // txDataToSign = msg.txDataToSign;
-          res = await createBadBlock('DuplicateTransaction', block, transactions, {
-            duplicateTransaction,
-          });
-          topicsBlockHashesDuplicateTransaction = res.block.blockHash;
-          topicsRootDuplicateTransaction = res.block.root;
-          txDataToSign = res.txDataToSign;
-        } else if (counter === 3) {
-          // txDataToSign = msg.txDataToSign;
-          res = await createBadBlock('InvalidDepositTransaction', block, transactions, {
-            duplicateTransaction,
-          });
-          topicsBlockHashesDuplicateTransaction = res.block.blockHash;
-          topicsRootDuplicateTransaction = res.block.root;
-          txDataToSign = res.txDataToSign;
-        } else if (counter === 4) {
-          // txDataToSign = msg.txDataToSign;
-          res = await createBadBlock('IncorrectPublicInputHash', block, transactions, {
-            duplicateTransaction,
-          });
-          topicsBlockHashesIncorrectPublicInputHash = res.block.blockHash;
-          topicsRootIncorrectPublicInputHash = res.block.root;
-          txDataToSign = res.txDataToSign;
-          // } else if (counter === 5) {
-          // txDataToSign = msg.txDataToSign;
-          // res = await createBadBlock('IncorrectProof', block, transactions, {
-          //   proof: duplicateTransaction.proof,
-          // });
-          // topicsBlockHashesIncorrectProof = res.block.blockHash;
-          // topicsRootIncorrectProof = res.block.root;
-          // txDataToSign = res.txDataToSign;
-          // txDataToSign = msg.txDataToSign;
+      txQueue.push(async () => {
+        const msg = JSON.parse(message.data);
+        const { type } = msg;
+        let { txDataToSign } = msg;
+        if (type === 'block') {
+          const { block, transactions } = msg;
+          if (counter === 0) {
+            duplicateTransaction = transactions[0];
+          } else if (counter === 1) {
+            res = await createBadBlock('IncorrectRoot', block, transactions, {
+              leafIndex: 1,
+            });
+            topicsBlockHashesIncorrectRootInBlock = res.block.blockHash;
+            topicsRootIncorrectRootInBlock = res.block.root;
+            txDataToSign = res.txDataToSign;
+          } else if (counter === 2) {
+            // txDataToSign = msg.txDataToSign;
+            res = await createBadBlock('DuplicateTransaction', block, transactions, {
+              duplicateTransaction,
+            });
+            topicsBlockHashesDuplicateTransaction = res.block.blockHash;
+            topicsRootDuplicateTransaction = res.block.root;
+            txDataToSign = res.txDataToSign;
+          } else if (counter === 3) {
+            // txDataToSign = msg.txDataToSign;
+            res = await createBadBlock('InvalidDepositTransaction', block, transactions, {
+              duplicateTransaction,
+            });
+            topicsBlockHashesDuplicateTransaction = res.block.blockHash;
+            topicsRootDuplicateTransaction = res.block.root;
+            txDataToSign = res.txDataToSign;
+          } else if (counter === 4) {
+            // txDataToSign = msg.txDataToSign;
+            res = await createBadBlock('IncorrectPublicInputHash', block, transactions, {
+              duplicateTransaction,
+            });
+            topicsBlockHashesIncorrectPublicInputHash = res.block.blockHash;
+            topicsRootIncorrectPublicInputHash = res.block.root;
+            txDataToSign = res.txDataToSign;
+            // } else if (counter === 5) {
+            // txDataToSign = msg.txDataToSign;
+            // res = await createBadBlock('IncorrectProof', block, transactions, {
+            //   proof: duplicateTransaction.proof,
+            // });
+            // topicsBlockHashesIncorrectProof = res.block.blockHash;
+            // topicsRootIncorrectProof = res.block.root;
+            // txDataToSign = res.txDataToSign;
+            // txDataToSign = msg.txDataToSign;
+          } else {
+            txDataToSign = msg.txDataToSign;
+          }
+          await submitTransaction(txDataToSign, privateKey, challengeAddress, gas, BLOCK_STAKE);
+          counter++;
+          // console.log('tx hash of propose block is', txReceipt.transactionHash);
+          // (msg.type === 'challenge')
+        } else if (type === 'commit') {
+          await submitTransaction(txDataToSign, privateKey, challengeAddress, gas);
         } else {
-          txDataToSign = msg.txDataToSign;
+          await submitTransaction(txDataToSign, privateKey, challengeAddress, gas);
+          // When a challenge succeeds, the challenger is removed. We are adding them back for subsequent for challenges
+          const result = await chai
+            .request(optimistUrl)
+            .post('/proposer/register')
+            .send({ address: myAddress });
+          txToSign = result.body.txDataToSign;
+          await submitTransaction(txToSign, privateKey, challengeAddress, gas, bond);
+          // console.log('tx hash of challenge block is', txReceipt.transactionHash);
         }
-        await submitTransaction(txDataToSign, privateKey, challengeAddress, gas, BLOCK_STAKE);
-        counter++;
-        // console.log('tx hash of propose block is', txReceipt.transactionHash);
-        // (msg.type === 'challenge')
-      } else {
-        await submitTransaction(txDataToSign, privateKey, challengeAddress, gas);
-        const result = await chai
-          .request(optimistUrl)
-          .post('/proposer/register')
-          .send({ address: myAddress });
-        txToSign = result.body.txDataToSign;
-        await submitTransaction(txToSign, privateKey, challengeAddress, gas, bond);
-        // console.log('tx hash of challenge block is', txReceipt.transactionHash);
-      }
+      });
     };
   });
 
@@ -414,8 +421,15 @@ describe('Testing the challenge http API', () => {
   });
 
   after(() => {
-    // console.log('end');
-    // closeWeb3Connection();
-    connection.close();
+    // if the queue is still running, let's close down after it ends
+    txQueue.on('end', () => {
+      // closeWeb3Connection();
+      connection.close();
+    });
+    // if it's empty, close down immediately
+    if (txQueue.length === 0) {
+      // closeWeb3Connection();
+      connection.close();
+    }
   });
 });
