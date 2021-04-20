@@ -140,13 +140,16 @@ describe('Testing the http API', () => {
     // blocks should be directly submitted to the blockchain, not queued
     blockSubmissionFunction = (a, b, c, d, e) => submitTransaction(a, b, c, d, e);
     it('should deposit some crypto into a ZKP commitment', async () => {
-      const res = await chai.request(url).post('/deposit').send({
-        ercAddress,
-        tokenId,
-        value,
-        zkpPublicKey,
-        fee,
-      });
+      const res = await chai
+        .request(url)
+        .post('/deposit')
+        .send({
+          ercAddress,
+          tokenId,
+          value,
+          zkpPublicKey,
+          fee,
+        });
       txDataToSign = res.body.txDataToSign;
       expect(txDataToSign).to.be.a('string');
       // now we need to sign the transaction and send it to the blockchain
@@ -159,12 +162,15 @@ describe('Testing the http API', () => {
     });
 
     it('should deposit some more crypto (we need a second token for the double transfer test) into a ZKP commitment ', async () => {
-      const res = await chai.request(url).post('/deposit').send({
-        ercAddress,
-        tokenId,
-        value,
-        zkpPublicKey,
-      });
+      const res = await chai
+        .request(url)
+        .post('/deposit')
+        .send({
+          ercAddress,
+          tokenId,
+          value,
+          zkpPublicKey,
+        });
       txDataToSign = res.body.txDataToSign;
       expect(txDataToSign).to.be.a('string');
       // now we need to sign the transaction and send it to the blockchain
@@ -177,12 +183,15 @@ describe('Testing the http API', () => {
     });
 
     it('should deposit yet more crypto (we need another token to test withdraw) into a ZKP commitment', async () => {
-      const res = await chai.request(url).post('/deposit').send({
-        ercAddress,
-        tokenId,
-        value,
-        zkpPublicKey,
-      });
+      const res = await chai
+        .request(url)
+        .post('/deposit')
+        .send({
+          ercAddress,
+          tokenId,
+          value,
+          zkpPublicKey,
+        });
       txDataToSign = res.body.txDataToSign;
       expect(txDataToSign).to.be.a('string');
       // now we need to sign the transaction and send it to the blockchain
@@ -255,13 +264,16 @@ describe('Testing the http API', () => {
   describe('Withdraw tests', () => {
     let txDataToSign;
     it('should withdraw some crypto from a ZKP commitment', async () => {
-      const res = await chai.request(url).post('/withdraw').send({
-        ercAddress,
-        tokenId,
-        value,
-        senderZkpPrivateKey: zkpPrivateKey,
-        recipientAddress,
-      });
+      const res = await chai
+        .request(url)
+        .post('/withdraw')
+        .send({
+          ercAddress,
+          tokenId,
+          value,
+          senderZkpPrivateKey: zkpPrivateKey,
+          recipientAddress,
+        });
       txDataToSign = res.body.txDataToSign;
       transactions.push(res.body.transaction); // a new transaction
       expect(txDataToSign).to.be.a('string');
@@ -299,10 +311,13 @@ describe('Testing the http API', () => {
     let startBalance;
     let endBalance;
     it('Should create a failing finalise-withdrawal (because insufficient time has passed)', async () => {
-      const res = await chai.request(url).post('/finalise-withdrawal').send({
-        block,
-        transaction: transactions[0],
-      });
+      const res = await chai
+        .request(url)
+        .post('/finalise-withdrawal')
+        .send({
+          block,
+          transaction: transactions[0],
+        });
       txDataToSign = res.body.txDataToSign;
       expect(txDataToSign).to.be.a('string');
     });
@@ -316,10 +331,13 @@ describe('Testing the http API', () => {
     });
     it('Should create a passing finalise-withdrawal (because sufficient time has passed)', async () => {
       await timeJump(3600 * 24 * 10); // jump in time by 10 days
-      const res = await chai.request(url).post('/finalise-withdrawal').send({
-        block,
-        transaction: transactions[0],
-      });
+      const res = await chai
+        .request(url)
+        .post('/finalise-withdrawal')
+        .send({
+          block,
+          transaction: transactions[0],
+        });
       txDataToSign = res.body.txDataToSign;
       expect(txDataToSign).to.be.a('string');
     });
@@ -349,12 +367,15 @@ describe('Testing the http API', () => {
         blockSubmissionQueue.push(() => submitTransaction(a, b, c, d, e));
       // to make three blocks, we need six transactions
       for (let i = 0; i < 6; i++) {
-        const res = await chai.request(url).post('/deposit').send({
-          ercAddress,
-          tokenId,
-          value,
-          zkpPublicKey,
-        });
+        const res = await chai
+          .request(url)
+          .post('/deposit')
+          .send({
+            ercAddress,
+            tokenId,
+            value,
+            zkpPublicKey,
+          });
         const { txDataToSign } = res.body;
         transactions.push(res.body.transaction);
         expect(txDataToSign).to.be.a('string');
