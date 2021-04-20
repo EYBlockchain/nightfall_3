@@ -46,24 +46,28 @@ module.exports = {
       host: 'openethereum', // Localhost (default: none)
       port: 8545, // Standard Ethereum port (default: none)
       network_id: '*', // Any network (default: none)
+      gas: 12500000,
     },
 
     ganache: {
       host: 'ganache', // Localhost (default: none)
       port: 8545, // Standard Ethereum port (default: none)
       network_id: '*', // Any network (default: none)
+      gas: 12500000,
     },
 
     development: {
       host: 'host.docker.internal', // Localhost (default: none)
       port: 8545, // Standard Ethereum port (default: none)
       network_id: '*', // Any network (default: none)
+      gas: 12500000,
     },
 
     localhost: {
       host: 'localhost', // Localhost (default: none)
       port: 8545, // Standard Ethereum port (default: none)
       network_id: '*', // Any network (default: none)
+      gas: 12500000,
     },
 
     // Another network with more advanced options...

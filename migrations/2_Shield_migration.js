@@ -7,7 +7,7 @@ const Structures = artifacts.require('Structures.sol');
 const Config = artifacts.require('Config.sol');
 const Utils = artifacts.require('Utils.sol');
 const ChallengesUtil = artifacts.require('ChallengesUtil.sol')
-const Proposers = artifacts.require('Proposers.sol')
+// const Proposers = artifacts.require('Proposers.sol')
 const Challenges = artifacts.require('Challenges.sol')
 
 module.exports = function(deployer) {
