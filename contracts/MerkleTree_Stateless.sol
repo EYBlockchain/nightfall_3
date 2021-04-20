@@ -9,7 +9,7 @@ Thus, it is up to the calling contract to store the updated leafCount, frontier 
 @Author iAmMichaelConnor
 */
 
-pragma solidity ^0.6.0;
+pragma solidity ^0.8.0;
 
 import "./MiMC.sol"; // import contract with MiMC function
 

@@ -3,7 +3,7 @@
 Basic data structures for an optimistic rollup
 */
 
-pragma solidity ^0.6.0;
+pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
 contract Structures {
@@ -30,6 +30,12 @@ contract Structures {
   event NewCurrentProposer(
     address proposer
   );
+
+  event CommittedToChallenge(
+    bytes32 commitmentHash,
+    address sender
+  );
+
 
   /**
   These events are what the merkle-tree microservice's filters will listen for.
