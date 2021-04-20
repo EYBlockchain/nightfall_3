@@ -8,6 +8,8 @@ import {
   retrieveMinedNullifiers,
 } from './database.mjs';
 import { getTreeHistory } from '../utils/timber.mjs';
+import Web3 from '../utils/web3.mjs';
+import rand from '../utils/crypto/crypto-random.mjs';
 
 const { CHALLENGES_CONTRACT_NAME } = config;
 
@@ -17,7 +19,24 @@ export function setChallengeWebSocketConnection(_ws) {
   ws = _ws;
 }
 
-export function submitChallenge(txDataToSign) {
+async function commitToChallenge(txDataToSign) {
+  const web3 = Web3.connection();
+  const commitHash = web3.utils.soliditySha3({ t: 'bytes', v: txDataToSign });
+  const challengeContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
+  const commitToSign = await challengeContractInstance.methods
+    .commitToChallenge(commitHash)
+    .encodeABI();
+  logger.debug(
+    `raw transaction for committing to challenge has been sent to be signed and submitted ${JSON.stringify(
+      commitToSign,
+      null,
+      2,
+    )}`,
+  );
+  ws.send(JSON.stringify({ type: 'commit', txDataToSign: commitToSign }));
+}
+
+async function revealChallenge(txDataToSign) {
   logger.debug(
     `raw challenge transaction has been sent to be signed and submitted ${JSON.stringify(
       txDataToSign,
@@ -26,6 +45,11 @@ export function submitChallenge(txDataToSign) {
     )}`,
   );
   ws.send(JSON.stringify({ type: 'challenge', txDataToSign }));
+}
+
+async function submitChallenge(txDataToSign) {
+  await commitToChallenge(txDataToSign);
+  revealChallenge(txDataToSign);
 }
 
 export async function getTransactionsBlock(transactions, block, length) {
@@ -40,6 +64,7 @@ export async function createChallenge(block, transactions, err) {
   let txDataToSign;
   if (process.env.IS_CHALLENGER === 'true') {
     const challengeContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
+    const salt = (await rand(32)).hex(32);
     switch (err.code) {
       // Challenge wrong root
       case 0: {
@@ -73,6 +98,7 @@ export async function createChallenge(block, transactions, err) {
             block,
             transactions,
             priorBlockHistory.leafIndex + priorBlockCommitmentsCount, // priorBlockHistory.leafIndex + number of commitments  in prior block
+            salt,
           )
           .encodeABI();
         break;
@@ -98,6 +124,7 @@ export async function createChallenge(block, transactions, err) {
             block2,
             transactionIndex1, // index of duplicate transaction in block
             transactionIndex2,
+            salt,
           )
           .encodeABI();
         break;
@@ -107,8 +134,10 @@ export async function createChallenge(block, transactions, err) {
         const { transaction, transactionHashIndex: transactionIndex } = err.metadata;
         // Create a challenge
         txDataToSign = await challengeContractInstance.methods
-          .challengeTransactionType(block, transaction, transactionIndex)
+          .challengeTransactionType(block, transaction, transactionIndex, salt)
           .encodeABI();
+        logger.debug('returning raw transaction');
+        logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
         break;
       }
       // invalid public input hash
@@ -116,7 +145,7 @@ export async function createChallenge(block, transactions, err) {
         const { transaction, transactionHashIndex: transactionIndex } = err.metadata;
         // Create a challenge
         txDataToSign = await challengeContractInstance.methods
-          .challengePublicInputHash(block, transaction, transactionIndex)
+          .challengePublicInputHash(block, transaction, transactionIndex, salt)
           .encodeABI();
         break;
       }
@@ -166,19 +195,15 @@ export async function createChallenge(block, transactions, err) {
               oldBlockTransactions[oldTxIdx],
               oldTxIdx,
               oldNullifierIdx,
+              salt,
             )
             .encodeABI();
-          logger.debug('returning raw transaction for challenge Nullifier');
-          logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
-          submitChallenge(txDataToSign);
         }
         break;
       }
       default:
       // code block
     }
-    logger.debug('returning raw transaction');
-    logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
     submitChallenge(txDataToSign);
   } else {
     // only proposer not a challenger

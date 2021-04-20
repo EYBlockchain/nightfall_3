@@ -33,6 +33,9 @@
       "commit-msg": "cod-scripts commitlint -E HUSKY_GIT_PARAMS"
     }
   },
+  "nodemonConfig": {
+    "ignore": ["build/*"]
+  },
   "dependencies": {
     "@semantic-release/git": "^9.0.0",
     "axios": "^0.20.0",
