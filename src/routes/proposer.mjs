@@ -11,6 +11,10 @@ import Block from '../classes/block.mjs';
 import { setRegisteredProposerAddress } from '../services/database.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import Transaction from '../classes/transaction.mjs';
+import { getFrontier } from '../utils/timber.mjs';
+import mt from '../utils/crypto/merkle-tree/merkle-tree.mjs';
+
+const { updateNodes } = mt;
 
 const router = express.Router();
 const { CHALLENGES_CONTRACT_NAME } = config;
@@ -155,8 +159,7 @@ router.post('/encode', async (req, res, next) => {
   logger.silly(`With content ${JSON.stringify(req.body, null, 2)}`);
   try {
     const { transactions, block } = req.body;
-    // use the information we've been POSTED to assemble a block
-    // we use a Builder pattern because an async constructor is bad form
+
     const currentLeafCount = parseInt(
       await (await waitForContract(CHALLENGES_CONTRACT_NAME)).methods.leafCount().call(),
       10,
@@ -166,6 +169,13 @@ router.post('/encode', async (req, res, next) => {
       transactions.map(transaction => Transaction.calcHash(transaction)),
     );
 
+    if (block.root == null) {
+      const frontier = await getFrontier();
+      const leafValues = newTransactions
+        .map(newTransaction => newTransaction.commitments)
+        .flat(Infinity);
+      block.root = (await updateNodes(leafValues, currentLeafCount, frontier)).root;
+    }
     const newBlock = await Block.calcHash({
       proposer: block.proposer,
       transactionHashes: transactions.map(transaction => transaction.transactionHash),

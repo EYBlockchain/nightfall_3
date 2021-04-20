@@ -1,34 +1,61 @@
 /**
 Module to check that submitted Blocks and Transactions are valid
 */
-// import Block from '../classes/block.mjs';
-// import Transaction from '../classes/transaction.mjs';
-import { getTreeHistory } from '../utils/timber.mjs';
+import { getTreeHistoryByCurrentLeafCount } from '../utils/timber.mjs';
 import logger from '../utils/logger.mjs';
-import mt from '../utils/crypto/merkle-tree/merkle-tree.mjs';
 import BlockError from '../classes/block-error.mjs';
-import { retrieveMinedNullifiers } from './database.mjs';
+import checkTransaction from './transaction-checker.mjs';
+import { numberOfBlockWithTransactionHash, retrieveMinedNullifiers } from './database.mjs';
 /**
 Checks the block's properties.  It will return the first inconsistency it finds
 @param {object} block - the block being checked
 @param {array} transactions - array of transaction objects whose transaction hashes are contained in the block (in hash order).
 TODO - nullifiers
 */
+
 async function checkBlock(block, transactions) {
   // now we have to check the commitment root.  For this we can make use of
   // Timber with its optimistic extensions.
-  // Start by seeing if Timber knows about the root.  It should.
-  let history;
-  try {
-    logger.debug(`Checking block with root ${block.root}`);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    history = await getTreeHistory(block.root);
-    logger.debug(`Retrieved history from Timber`);
-    logger.silly(`Timber history was ${JSON.stringify(history, null, 2)}`);
-  } catch (err) {
-    logger.error(err); // log errors but let the caller handle them
-    throw new BlockError(`The block root (${block.root}) was not found in the Timber database`, 0);
+  logger.debug(`Checking block with leafCount ${block.leafCount}`);
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  const history = await getTreeHistoryByCurrentLeafCount(block.leafCount);
+  logger.debug(`Retrieved history from Timber`);
+  logger.silly(`Timber history was ${JSON.stringify(history, null, 2)}`);
+  if (history.root !== block.root)
+    throw new BlockError(
+      `The block's root (${block.root}) cannot be reconstructed from the commitment hashes in the transactions in this block and the historic Frontier held by Timber for this root`,
+      0,
+    );
+
+  // check if the transactions in the block have not already been submitted
+  // This will also capture a duplicate block error
+  await Promise.all(
+    transactions.map(async (transaction, index) => {
+      if ((await numberOfBlockWithTransactionHash(transaction.transactionHash)) > 1)
+        throw new BlockError(
+          `The transaction with transaction hash (${transaction.transactionHash}) has already been submitted, hence this block is incorrect`,
+          1,
+          { transactionHashIndex: index },
+        );
+    }),
+  );
+
+  // check if the transaction is valid - transaction type, public input hash and proof verification are all checked
+  for (let i = 0; i < transactions.length; i++) {
+    try {
+      await checkTransaction(transactions[i]);
+    } catch (err) {
+      throw new BlockError(
+        `The transaction check failed with error: ${err.message}`,
+        err.code === 1 ? 2 : err.code, // mapping transaction error to block error
+        {
+          transaction: transactions[i],
+          transactionHashIndex: block.transactionHashes.indexOf(transactions[i].transactionHash),
+        },
+      );
+    }
   }
+
   // Check nullifiers
   const storedMinedNullifiers = await retrieveMinedNullifiers(); // List of Nullifiers stored by blockProposer
   const blockNullifiers = transactions.map(tNull => tNull.nullifiers.toString()); // List of Nullifiers in block
@@ -38,23 +65,9 @@ async function checkBlock(block, transactions) {
   if (alreadyMinedNullifiers.length > 0) {
     throw new BlockError(
       `Some Nullifiers included in ${block.root} have been included in previous blocks`,
-      3,
+      5,
     );
   }
-
-  // Timber does know the root, but is it correct?  The historic frontier,
-  // together with the commitments should produce the correct root.
-  const commitmentHashes = transactions.map(transaction => transaction.commitments).flat(Infinity);
-  const { root } = await mt.updateNodes(
-    commitmentHashes,
-    history.currentLeafCount,
-    history.frontier,
-  );
-  if (root !== block.root)
-    throw new BlockError(
-      `The block's root (${block.root}) is known to Timber but it cannot be reconstructed from the commitment hashes in the transactions in this block and the historic Frontier held by Timber for this root`,
-      1,
-    );
 }
 
 export default checkBlock;

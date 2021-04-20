@@ -19,20 +19,21 @@ export function setChallengeWebSocketConnection(_ws) {
   ws = _ws;
 }
 
-async function commitToChallenge(txDataToSign, challengeContractInstance) {
+async function commitToChallenge(txDataToSign) {
   const web3 = Web3.connection();
   const commitHash = web3.utils.soliditySha3({ t: 'bytes', v: txDataToSign });
+  const challengeContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
   const commitToSign = await challengeContractInstance.methods
     .commitToChallenge(commitHash)
     .encodeABI();
   logger.debug(
-    `raw commit transaction has been sent to be signed and submitted ${JSON.stringify(
+    `raw transaction for committing to challenge has been sent to be signed and submitted ${JSON.stringify(
       commitToSign,
       null,
       2,
     )}`,
   );
-  return ws.send(JSON.stringify({ type: 'commit', txDataToSign: commitToSign }));
+  ws.send(JSON.stringify({ type: 'commit', txDataToSign: commitToSign }));
 }
 
 async function revealChallenge(txDataToSign) {
@@ -43,15 +44,15 @@ async function revealChallenge(txDataToSign) {
       2,
     )}`,
   );
-  return ws.send(JSON.stringify({ type: 'challenge', txDataToSign }));
+  ws.send(JSON.stringify({ type: 'challenge', txDataToSign }));
 }
 
-async function submitChallenge(txDataToSign, challengeContractInstance) {
-  await commitToChallenge(txDataToSign, challengeContractInstance);
+async function submitChallenge(txDataToSign) {
+  await commitToChallenge(txDataToSign);
   revealChallenge(txDataToSign);
 }
 
-async function getTransactionsBlock(transactions, block, length) {
+export async function getTransactionsBlock(transactions, block, length) {
   if (length === block.transactionHashes.length) {
     return transactions;
   }
@@ -59,16 +60,14 @@ async function getTransactionsBlock(transactions, block, length) {
   return getTransactionsBlock(transactions, block, length + 1);
 }
 
-export default async function createChallenge(block, transactions, err) {
+export async function createChallenge(block, transactions, err) {
+  let txDataToSign;
   if (process.env.IS_CHALLENGER === 'true') {
     const challengeContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
     const salt = (await rand(32)).hex(32);
     switch (err.code) {
-      // Challenge Root not in Timber
-      case 0:
-        break;
-      // Challenge Wrong Root
-      case 1: {
+      // Challenge wrong root
+      case 0: {
         // Getting prior block hash for the current block
         const { previousHash } = await challengeContractInstance.methods
           .blockHashes(block.blockHash)
@@ -91,7 +90,7 @@ export default async function createChallenge(block, transactions, err) {
         const priorBlockHistory = await getTreeHistory(priorBlock.root);
 
         // Create a challenge
-        const txDataToSign = await challengeContractInstance.methods
+        txDataToSign = await challengeContractInstance.methods
           .challengeNewRootCorrect(
             priorBlock,
             priorBlockTransactions,
@@ -102,37 +101,65 @@ export default async function createChallenge(block, transactions, err) {
             salt,
           )
           .encodeABI();
-        logger.debug('returning raw transaction');
-        logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
-        submitChallenge(txDataToSign, challengeContractInstance);
         break;
       }
       // Challenge Duplicate Transaction
-      case 2: {
+      case 1: {
         const transactionIndex1 = err.metadata.transactionHashIndex;
+
         // Get the block that contains the duplicate of the transaction
-        const block2 = await getBlockByTransactionHash(block.transactionHashes[transactionIndex1]);
+        const block2 = await getBlockByTransactionHash(
+          block.transactionHashes[transactionIndex1],
+          // true,
+        );
         // Find the index of the duplication transaction in this block
         const transactionIndex2 = block2.transactionHashes.findIndex(
           transactionHash => transactionHash === block.transactionHashes[transactionIndex1],
         );
+
         // Create a challenge
-        const txDataToSign = await challengeContractInstance.methods
+        txDataToSign = await challengeContractInstance.methods
           .challengeNoDuplicateTransaction(
             block,
             block2,
-            err.metadata.transactionHashIndex, // index of duplicate transaction in block
+            transactionIndex1, // index of duplicate transaction in block
             transactionIndex2,
             salt,
           )
           .encodeABI();
+        break;
+      }
+      // invalid transaction type
+      case 2: {
+        const { transaction, transactionHashIndex: transactionIndex } = err.metadata;
+        // Create a challenge
+        txDataToSign = await challengeContractInstance.methods
+          .challengeTransactionType(block, transaction, transactionIndex, salt)
+          .encodeABI();
         logger.debug('returning raw transaction');
         logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
-        submitChallenge(txDataToSign, challengeContractInstance);
+        break;
+      }
+      // invalid public input hash
+      case 3: {
+        const { transaction, transactionHashIndex: transactionIndex } = err.metadata;
+        // Create a challenge
+        txDataToSign = await challengeContractInstance.methods
+          .challengePublicInputHash(block, transaction, transactionIndex, salt)
+          .encodeABI();
+        break;
+      }
+      // proof does not verify
+      case 4: {
+        // const { transaction, transactionHashIndex: transactionIndex } = err.metadata;
+        // // Create a challenge
+        // txDataToSign = await challengeContractInstance.methods
+        //   .challengeProofVerification(block, transaction, transactionIndex)
+        //   .encodeABI();
         break;
       }
       // Challenge Duplicate Nullfier
-      case 3: {
+      case 5: {
         const storedMinedNullifiers = await retrieveMinedNullifiers(); // List of Nullifiers stored by blockProposer
         const blockNullifiers = transactions.map(tNull => tNull.nullifiers.toString()); // List of Nullifiers in block
         const alreadyMinedNullifiers = storedMinedNullifiers.filter(sNull =>
@@ -158,7 +185,7 @@ export default async function createChallenge(block, transactions, err) {
             ])
             .filter(currentIdx => currentIdx[1] >= 0)
             .flat(Infinity);
-          const txDataToSign = await challengeContractInstance.methods
+          txDataToSign = await challengeContractInstance.methods
             .challengeNullifier(
               block,
               transactions[currentTxIdx],
@@ -171,15 +198,13 @@ export default async function createChallenge(block, transactions, err) {
               salt,
             )
             .encodeABI();
-          logger.debug('returning raw transaction for challenge Nullifier');
-          logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
-          submitChallenge(txDataToSign, challengeContractInstance);
         }
         break;
       }
       default:
       // code block
     }
+    submitChallenge(txDataToSign);
   } else {
     // only proposer not a challenger
     logger.info(

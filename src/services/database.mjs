@@ -22,7 +22,9 @@ find which block a transaction went into. Note, we'll save all blocks, that get
 posted to the blockchain, not just ours, although that may not be needed (but
 they're small).
 */
-export async function saveBlock(block) {
+export async function saveBlock(_block) {
+  // const block = { ..._block, check: false };
+  const block = { ..._block };
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   logger.debug(`saving block ${JSON.stringify(block, null, 2)}`);
@@ -36,10 +38,21 @@ control over, because another Proposer may assemble one of our transactions
 into a block).
 */
 export async function getBlockByTransactionHash(transactionHash) {
+  // export async function getBlockByTransactionHash(transactionHash, isChecked) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
+  // const query = { transactionHashes: transactionHash, check: isChecked };
   const query = { transactionHashes: transactionHash };
   return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
+}
+
+export async function numberOfBlockWithTransactionHash(transactionHash) {
+  // export async function getBlockByTransactionHash(transactionHash, isChecked) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  // const query = { transactionHashes: transactionHash, check: isChecked };
+  const query = { transactionHashes: transactionHash };
+  return db.collection(SUBMITTED_BLOCKS_COLLECTION).countDocuments(query);
 }
 
 /**
