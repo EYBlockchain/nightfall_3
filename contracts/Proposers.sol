@@ -114,12 +114,14 @@ contract Proposers is Structures, Config {
       emit NewCurrentProposer(currentProposer.thisAddress);
     } else {
       // else, splice the new proposer into the circular linked list of proposers just behind the current proposer
-      LinkedAddress memory proposer;
-      proposer.thisAddress = msg.sender;
-      proposer.nextAddress = currentProposer.thisAddress;
-      proposer.previousAddress = currentProposer.previousAddress;
-      proposers[currentProposer.previousAddress].nextAddress = proposer.thisAddress;
-      currentProposer.previousAddress = proposer.thisAddress;
+      // assume current proposer is (x,A,z) address of this proposer is B
+      LinkedAddress memory proposer; // proposer: (_,_,_)
+      proposer.thisAddress = msg.sender; // proposer: (_,B,_)
+      proposer.nextAddress = currentProposer.thisAddress;  // proposer: (_,B,A)
+      proposer.previousAddress = currentProposer.previousAddress; // proposer: (x,B,A)
+      proposers[currentProposer.previousAddress].nextAddress = proposer.thisAddress; // X: (u,v,B)
+      proposers[currentProposer.thisAddress].previousAddress = proposer.thisAddress; // current: (B,A,z)
+      currentProposer = proposers[currentProposer.thisAddress]; // ensure sync: currentProposer: (B,A,z)
       proposers[msg.sender] = proposer;
     }
   }
@@ -145,7 +147,7 @@ contract Proposers is Structures, Config {
     if(proposer == currentProposer.thisAddress) {
       // Cannot just call changeCurrentProposer directly due to the require time check
       proposerStartBlock = block.number;
-      currentProposer = proposers[nextAddress]; 
+      currentProposer = proposers[nextAddress];
       emit NewCurrentProposer(currentProposer.thisAddress);
     }
   }
