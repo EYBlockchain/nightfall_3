@@ -14,7 +14,64 @@ const {
   METADATA_COLLECTION,
   SUBMITTED_BLOCKS_COLLECTION,
   NULLIFIER_COLLECTION,
+  COMMIT_COLLECTION,
 } = config;
+
+/**
+Function to save a commit, used in a challenge commit-reveal process
+*/
+export async function saveCommit(commitHash, txDataToSign) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  logger.debug(`saving commit hash ${commitHash}`);
+  return db.collection(COMMIT_COLLECTION).insertOne({ commitHash, txDataToSign });
+}
+/**
+Function to retrieve a commit, by commitHash
+*/
+export async function getCommit(commitHash) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { commitHash };
+  return db.collection(COMMIT_COLLECTION).findOne(query);
+}
+
+/**
+function to store addresses that are used to sign challenge transactions.  This
+is done so that we can check that a challenge commit is from us and hasn't been
+front-run (because that would change the origin address of the commit to that of
+the front-runner).
+*/
+export async function addChallengerAddress(address) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  logger.debug(`Saving proposer address ${address}`);
+  const data = { challenger: address };
+  return db.collection(METADATA_COLLECTION).insertOne(data);
+}
+
+/**
+function to remove addresses that are used to sign challenge transactions. This
+is needed in the case of a key compromise, or if we simply no longer wish to use
+the address.
+*/
+export async function removeChallengerAddress(address) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  logger.debug(`Saving proposer address ${address}`);
+  const data = { challenger: address };
+  return db.collection(METADATA_COLLECTION).deleteOne(data);
+}
+
+/**
+Function to tell us if an address used to commit to a challenge belongs to us
+*/
+export async function isChallengerAddressMine(address) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const metadata = await db.collection(METADATA_COLLECTION).findOne({ challenger: address });
+  return metadata !== null;
+}
 
 /**
 function to save a block, so that we can later search the block, for example to

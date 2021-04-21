@@ -11,6 +11,8 @@ import {
   subscribeToBlockDeletedEventHandler,
   subscribeToChallengeWebSocketConnection,
   blockDeletedEventHandler,
+  subscribeTocommittedToChallengeEventHandler,
+  committedToChallengeEventHandler,
 } from './event-handlers/index.mjs';
 import Proposer from './classes/proposer.mjs';
 import {
@@ -27,6 +29,7 @@ const main = async () => {
     subscribeToNewCurrentProposer(newCurrentProposerEventHandler, proposer);
     subscribeToTransactionSubmitted(transactionSubmittedEventHandler);
     subscribeToBlockDeletedEventHandler(blockDeletedEventHandler);
+    subscribeTocommittedToChallengeEventHandler(committedToChallengeEventHandler);
     // subscribe to WebSocket events
     subscribeToBlockAssembledWebSocketConnection(setBlockAssembledWebSocketConnection);
     subscribeToChallengeWebSocketConnection(setChallengeWebSocketConnection);

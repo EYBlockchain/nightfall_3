@@ -6,6 +6,7 @@ import {
   getTransactionByTransactionHash,
   getBlockByTransactionHash,
   retrieveMinedNullifiers,
+  saveCommit,
 } from './database.mjs';
 import { getTreeHistory } from '../utils/timber.mjs';
 import Web3 from '../utils/web3.mjs';
@@ -34,23 +35,20 @@ async function commitToChallenge(txDataToSign) {
     )}`,
   );
   ws.send(JSON.stringify({ type: 'commit', txDataToSign: commitToSign }));
+  saveCommit(commitHash, txDataToSign);
 }
 
-async function revealChallenge(txDataToSign) {
-  logger.debug(
-    `raw challenge transaction has been sent to be signed and submitted ${JSON.stringify(
-      txDataToSign,
-      null,
-      2,
-    )}`,
-  );
+export async function revealChallenge(txDataToSign) {
+  logger.debug('raw challenge transaction has been sent to be signed and submitted');
   ws.send(JSON.stringify({ type: 'challenge', txDataToSign }));
 }
 
+/*
 async function submitChallenge(txDataToSign) {
   await commitToChallenge(txDataToSign);
   revealChallenge(txDataToSign);
 }
+*/
 
 export async function getTransactionsBlock(transactions, block, length) {
   if (length === block.transactionHashes.length) {
@@ -204,7 +202,11 @@ export async function createChallenge(block, transactions, err) {
       default:
       // code block
     }
-    submitChallenge(txDataToSign);
+    // now we need to commit to this challenge. When we have, this fact will be
+    // picked up by the challenge-commit event-handler and a reveal will be sent
+    // to intiate the challenge transaction (after checking we haven't been
+    // front-run)
+    commitToChallenge(txDataToSign);
   } else {
     // only proposer not a challenger
     logger.info(

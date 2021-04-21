@@ -89,12 +89,12 @@ export async function subscribeToNewCurrentProposer(callback, ...args) {
   return emitter;
 }
 
-// export async function subscribeToRejectedBlock(callback, ...args) {
-//   const emitter = (await waitForShield()).events.RejectedBlock();
-//   emitter.on('data', event => callback(event, args));
-//   logger.debug('Subscribed to RejectedBlock event');
-//   return emitter;
-// }
+export async function subscribeTocommittedToChallengeEventHandler(callback, ...args) {
+  const emitter = (await waitForContract(CHALLENGES_CONTRACT_NAME)).events.CommittedToChallenge();
+  emitter.on('data', event => callback(event, args));
+  logger.debug('Subscribed to committedToChallenge event');
+  return emitter;
+}
 
 export async function subscribeToBlockDeletedEventHandler(callback, ...args) {
   const emitter = (await waitForContract(CHALLENGES_CONTRACT_NAME)).events.BlockDeleted();
