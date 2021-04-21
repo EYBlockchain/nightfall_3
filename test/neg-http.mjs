@@ -144,7 +144,7 @@ describe('Testing the challenge http API', () => {
           // (msg.type === 'challenge')
         } else if (type === 'commit') {
           await submitTransaction(txDataToSign, privateKey, challengeAddress, gas);
-        } else {
+        } else if (type === 'challenge') {
           await submitTransaction(txDataToSign, privateKey, challengeAddress, gas);
           // When a challenge succeeds, the challenger is removed. We are adding them back for subsequent for challenges
           const result = await chai
@@ -154,9 +154,20 @@ describe('Testing the challenge http API', () => {
           txToSign = result.body.txDataToSign;
           await submitTransaction(txToSign, privateKey, challengeAddress, gas, bond);
           // console.log('tx hash of challenge block is', txReceipt.transactionHash);
-        }
+        } else throw new Error(`Unhandled transaction type: ${type}`);
       });
     };
+  });
+
+  describe('Basic Challenger tests', () => {
+    it('should add a Challenger address', async () => {
+      const myAddress = (await getAccounts())[0];
+      const res = await chai
+        .request(optimistUrl)
+        .post('/challenger/add')
+        .send({ challenger: myAddress });
+      expect(res.body.ok).to.equal(1);
+    });
   });
 
   describe('Creating correct transactions to get proper root history in timber', () => {
@@ -255,15 +266,13 @@ describe('Testing the challenge http API', () => {
   describe('Challenge 1: Incorrect root challenge', () => {
     it('Should delete the wrong block', async () => {
       await new Promise(resolve => setTimeout(resolve, 5000));
-      web3.eth
-        .getPastLogs({
-          fromBlock: web3.utils.toHex(0),
-          address: challengeAddress,
-          topics: [web3.utils.sha3('BlockDeleted(bytes32)'), topicsBlockHashesIncorrectRootInBlock],
-        })
-        .then(events => {
-          expect(events[0]).to.have.property('transactionHash');
-        });
+      const events = await web3.eth.getPastLogs({
+        fromBlock: web3.utils.toHex(0),
+        address: challengeAddress,
+        topics: [web3.utils.sha3('BlockDeleted(bytes32)'), topicsBlockHashesIncorrectRootInBlock],
+      });
+      expect(events.length).not.to.equal(0);
+      expect(events[0]).to.have.property('transactionHash');
     });
     it('Should rollback the wrong leaves', async () => {
       web3.eth
