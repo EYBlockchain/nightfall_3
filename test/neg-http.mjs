@@ -126,22 +126,20 @@ describe('Testing the challenge http API', () => {
             topicsBlockHashesIncorrectPublicInputHash = res.block.blockHash;
             topicsRootIncorrectPublicInputHash = res.block.root;
             txDataToSign = res.txDataToSign;
-            // } else if (counter === 5) {
-            // txDataToSign = msg.txDataToSign;
-            // res = await createBadBlock('IncorrectProof', block, transactions, {
-            //   proof: duplicateTransaction.proof,
-            // });
-            // topicsBlockHashesIncorrectProof = res.block.blockHash;
-            // topicsRootIncorrectProof = res.block.root;
-            // txDataToSign = res.txDataToSign;
-            // txDataToSign = msg.txDataToSign;
+          } else if (counter === 5) {
+            txDataToSign = msg.txDataToSign;
+            res = await createBadBlock('IncorrectProof', block, transactions, {
+              proof: duplicateTransaction.proof,
+            });
+            topicsBlockHashesIncorrectProof = res.block.blockHash;
+            topicsRootIncorrectProof = res.block.root;
+            txDataToSign = res.txDataToSign;
           } else {
             txDataToSign = msg.txDataToSign;
           }
           await submitTransaction(txDataToSign, privateKey, challengeAddress, gas, BLOCK_STAKE);
           counter++;
           // console.log('tx hash of propose block is', txReceipt.transactionHash);
-          // (msg.type === 'challenge')
         } else if (type === 'commit') {
           await submitTransaction(txDataToSign, privateKey, challengeAddress, gas);
         } else {
@@ -376,7 +374,7 @@ describe('Testing the challenge http API', () => {
     });
   });
 
-  describe.skip('Challenge 5: Proof verification failure', async () => {
+  describe('Challenge 5: Proof verification failure', async () => {
     it('Should delete the wrong block', async () => {
       // create another transaction to trigger NO's block assembly
       const res = await chai
