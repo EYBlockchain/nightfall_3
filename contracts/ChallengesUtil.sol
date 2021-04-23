@@ -6,27 +6,10 @@ import './Utils.sol';
 import './Verifier.sol';
 import './MerkleTree_Stateless.sol';
 import './Structures.sol';
-/* import './Proposers.sol'; */
 
 library ChallengesUtil {
 
   bytes32 public constant ZERO = 0x0000000000000000000000000000000000000000000000000000000000000000;
-
-    /* function libChallengeProofVerification(
-      Structures.Block memory block,
-      Structures.Transaction memory transaction,
-      uint transactionIndex,
-      uint256[] memory vk
-    ) internal {
-      isBlockHashCorrect(block);
-      isTransactionValid(block, transaction, transactionIndex);
-      require(!Verifier.verify(
-          transaction.proof,
-          uint256(transaction.publicInputHash),
-          vk),
-        'This proof appears to be valid'
-      );
-    } */
 
     function libChallengeNewRootCorrect(
       Structures.Block memory priorBlockL2, // the block immediately prior to this one
@@ -326,6 +309,22 @@ library ChallengesUtil {
           abi.encodePacked(transaction.ercAddress, transaction.tokenId, transaction.value, transaction.nullifiers, transaction.recipientAddress, transaction.historicRoot)
         ) & 0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff, // select 248 bits of the sha256 calculated
         "publicInputHash for withdraw is correct"
+      );
+    }
+
+    function libChallengeProofVerification(
+      Structures.Block memory block,
+      Structures.Transaction memory transaction,
+      uint transactionIndex,
+      uint256[] memory vk
+    ) internal {
+      isBlockHashCorrect(block);
+      isTransactionValid(block, transaction, transactionIndex);
+      require(!Verifier.verify(
+        transaction.proof,
+        uint256(transaction.publicInputHash),
+        vk),
+        'This proof appears to be valid'
       );
     }
 

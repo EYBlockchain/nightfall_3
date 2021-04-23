@@ -82,29 +82,72 @@ library Verifier {
       }
 
       /* require(vk.query.length == 2, "Length of vk.query is incorrect!"); */
+      // Replacing for the above require statement so that the proof verification returns false. Removing require statements to ensure a wrong proof verification challenge's require statement correctly works
+      if (vk.query.length != 2) {
+        return 1;
+      }
 
-      vk_dot_inputs = Pairing.addition(
-        vk_dot_inputs,
-        Pairing.scalar_mul(vk.query[1], _publicInputsHash)
-      );
+      {
+          Pairing.G1Point memory sm_qpih;
+          // The following success variables replace require statements with corresponding functions called. Removing require statements to ensure a wrong proof verification challenge's require statement correctly works
+          bool success_sm_qpih;
+          bool success_vkdi_sm_qpih;
+          (sm_qpih, success_sm_qpih) = Pairing.scalar_mul(vk.query[1], _publicInputsHash);
+          (vk_dot_inputs, success_vkdi_sm_qpih) = Pairing.addition(
+            vk_dot_inputs,
+            sm_qpih
+          );
+          if (!success_sm_qpih || !success_vkdi_sm_qpih) {
+          return 2;
+         }
+      }
 
-      vk_dot_inputs = Pairing.addition(vk_dot_inputs, vk.query[0]);
+      {
+          // The following success variables replace require statements with corresponding functions called. Removing require statements to ensure a wrong proof verification challenge's require statement correctly works
+          bool success_vkdi_q;
+          (vk_dot_inputs, success_vkdi_q) = Pairing.addition(vk_dot_inputs, vk.query[0]);
+          if (!success_vkdi_q) {
+          return 3;
+         }
+      }
+
 
       /**
        * e(A*G^{alpha}, B*H^{beta}) = e(G^{alpha}, H^{beta}) * e(G^{psi}, H^{gamma})
        *                              * e(C, H)
        * where psi = \sum_{i=0}^l input_i pvk.query[i]
        */
-      if (!Pairing.pairingProd4(vk.Galpha, vk.Hbeta, vk_dot_inputs, vk.Hgamma, proof.C, vk.H, Pairing.negate(Pairing.addition(proof.A, vk.Galpha)), Pairing.addition2(proof.B, vk.Hbeta))) {
-          return 1;
+      {
+        Pairing.G1Point memory add_A_Galpha;
+        // The following success variables replace require statements with corresponding functions called. Removing require statements to ensure a wrong proof verification challenge's require statement correctly works
+        bool success_pp4_out_not_0;
+        bool success_pp4_pairing;
+        {
+          bool success_add_A_Galpha;
+          (add_A_Galpha, success_add_A_Galpha) = Pairing.addition(proof.A, vk.Galpha);
+          if (!success_add_A_Galpha) {
+            return 4;
+           }
+        }
+        (success_pp4_out_not_0, success_pp4_pairing) = Pairing.pairingProd4(vk.Galpha, vk.Hbeta, vk_dot_inputs, vk.Hgamma, proof.C, vk.H, Pairing.negate(add_A_Galpha), Pairing.addition2(proof.B, vk.Hbeta));
+        if (!success_pp4_out_not_0 || !success_pp4_pairing) {
+            return 5;
+        }
       }
 
       /**
        * e(A, H^{gamma}) = e(G^{gamma}, B)
        */
-      if (!Pairing.pairingProd2(proof.A, vk.Hgamma, Pairing.negate(vk.Ggamma), proof.B)) {
-          return 2;
+      {
+        // The following success variables replace require statements with corresponding functions called. Removing require statements to ensure a wrong proof verification challenge's require statement correctly works
+        bool success_pp2_out_not_0;
+        bool success_pp2_pairing;
+        (success_pp2_out_not_0, success_pp2_pairing) = Pairing.pairingProd2(proof.A, vk.Hgamma, Pairing.negate(vk.Ggamma), proof.B);
+        if (!success_pp2_out_not_0 || !success_pp2_pairing) {
+            return 6;
+        }
       }
+
       return 0;
   }
 }
