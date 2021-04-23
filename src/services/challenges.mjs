@@ -151,11 +151,11 @@ export async function createChallenge(block, transactions, err) {
       }
       // proof does not verify
       case 4: {
-        // const { transaction, transactionHashIndex: transactionIndex } = err.metadata;
-        // // Create a challenge
-        // txDataToSign = await challengeContractInstance.methods
-        //   .challengeProofVerification(block, transaction, transactionIndex)
-        //   .encodeABI();
+        const { transaction, transactionHashIndex: transactionIndex } = err.metadata;
+        // Create a challenge
+        txDataToSign = await challengeContractInstance.methods
+          .challengeProofVerification(block, transaction, transactionIndex, salt)
+          .encodeABI();
         break;
       }
       // Challenge Duplicate Nullfier
