@@ -1,9 +1,11 @@
 import Web3 from 'web3';
 import axios from 'axios';
 import chai from 'chai';
+import config from 'config';
 import rand from '../src/utils/crypto/crypto-random.mjs';
 // import { generalise } from 'general-number';
 
+const { ZERO } = config;
 let web3;
 
 export function connectWeb3() {
@@ -118,6 +120,17 @@ export async function createBadBlock(badBlockType, block, transactions, args) {
       // use the proof of a prior transaction
       badTransactions[0].proof = args.proof;
       // badTransactions[0].proof = args.proof;
+      break;
+    }
+    case 'DuplicateNullifier': {
+      // Find a transaction with a nullifier and replace one we have from earlier
+      for (let i = 0; i < badTransactions.length; i++) {
+        const nonZeroNullifier = badTransactions[i].nullifiers.findIndex(n => n !== ZERO);
+        if (nonZeroNullifier >= 0) {
+          badTransactions[i].nullifiers[nonZeroNullifier] = args.duplicateNullifier;
+          break;
+        }
+      }
       break;
     }
     default:
