@@ -124,15 +124,6 @@ describe('Testing the http API', () => {
       expect(receipt).to.have.property('blockHash');
       expect(endBalance - startBalance).to.closeTo(-bond, gasCosts);
     });
-
-    it.skip('Should change the current proposer (to the just-registered proposer as that is the only one)', async () => {
-      const res = await chai.request(optimistUrl).get('/proposer/change');
-      expect(res.status).to.equal(200);
-      txDataToSign = res.body.txDataToSign;
-      const receipt = await submitTransaction(txDataToSign, privateKey, challengeAddress, gas);
-      expect(receipt).to.have.property('transactionHash');
-      expect(receipt).to.have.property('blockHash');
-    });
   });
 
   describe('Deposit tests', () => {
