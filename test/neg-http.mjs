@@ -33,8 +33,10 @@ describe('Testing the challenge http API', () => {
   const optimistWsUrl = 'ws:localhost:8082';
   const tokenId = '0x01';
   const value = 10;
-  // this is the etherum private key for the test account in openethereum
+  // this is the etherum private key for accounts[0]
   const privateKey = '0x4f3edf983ac636a65a842ce7c78d9aa706d3b113bce9c46f30d7d21715b23b1d';
+  // this is the ethereum private key for accounts[1]
+  const privateKey1 = '0x6cbed15c793ce57650b9877cf6fa156fbef513c4e6134f022a85b1ffdd59b2a1';
   const gas = 10000000;
   // this is the openethereum test account (but could be anything)
   // const recipientAddress = '0x00a329c0648769a73afac7f9381e08fb43dbea72';
@@ -143,9 +145,9 @@ describe('Testing the challenge http API', () => {
           // console.log('tx hash of propose block is', txReceipt.transactionHash);
           // (msg.type === 'challenge')
         } else if (type === 'commit') {
-          await submitTransaction(txDataToSign, privateKey, challengeAddress, gas);
+          await submitTransaction(txDataToSign, privateKey1, challengeAddress, gas);
         } else if (type === 'challenge') {
-          await submitTransaction(txDataToSign, privateKey, challengeAddress, gas);
+          await submitTransaction(txDataToSign, privateKey1, challengeAddress, gas);
           // When a challenge succeeds, the challenger is removed. We are adding them back for subsequent for challenges
           const result = await chai
             .request(optimistUrl)
@@ -161,7 +163,7 @@ describe('Testing the challenge http API', () => {
 
   describe('Basic Challenger tests', () => {
     it('should add a Challenger address', async () => {
-      const myAddress = (await getAccounts())[0];
+      const myAddress = (await getAccounts())[1];
       const res = await chai
         .request(optimistUrl)
         .post('/challenger/add')
