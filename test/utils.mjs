@@ -56,12 +56,8 @@ export async function submitTransaction(
     value,
     gas,
   };
-  try {
-    const signed = await web3.eth.accounts.signTransaction(tx, privateKey);
-    return web3.eth.sendSignedTransaction(signed.rawTransaction);
-  } catch (err) {
-    return err;
-  }
+  const signed = await web3.eth.accounts.signTransaction(tx, privateKey);
+  return web3.eth.sendSignedTransaction(signed.rawTransaction);
 }
 
 export async function getAccounts() {
