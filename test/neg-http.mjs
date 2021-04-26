@@ -53,8 +53,8 @@ describe('Testing the challenge http API', () => {
   let topicsRootInvalidTransaction;
   let topicsBlockHashesIncorrectPublicInputHash;
   let topicsRootIncorrectPublicInputHash;
-  let topicsBlockHashesIncorrectProof;
-  let topicsRootIncorrectProof;
+  // let topicsBlockHashesIncorrectProof;
+  // let topicsRootIncorrectProof;
   let topicsBlockHashesDuplicateNullifier;
   let topicsRootDuplicateNullifier;
 
@@ -102,7 +102,6 @@ describe('Testing the challenge http API', () => {
           if (counter === 0) {
             duplicateTransaction = transactions[0];
           } else if (counter === 1) {
-            duplicateTransaction = transactions[0];
             [duplicateNullifier] = transactions
               .map(t => t.nullifiers.filter(n => n !== ZERO))
               .flat(Infinity);
@@ -123,17 +122,13 @@ describe('Testing the challenge http API', () => {
             txDataToSign = res.txDataToSign;
           } else if (counter === 4) {
             // txDataToSign = msg.txDataToSign;
-            res = await createBadBlock('InvalidDepositTransaction', block, transactions, {
-              duplicateTransaction,
-            });
-            topicsBlockHashesDuplicateTransaction = res.block.blockHash;
-            topicsRootDuplicateTransaction = res.block.root;
+            res = await createBadBlock('InvalidDepositTransaction', block, transactions);
+            topicsBlockHashesInvalidTransaction = res.block.blockHash;
+            topicsRootInvalidTransaction = res.block.root;
             txDataToSign = res.txDataToSign;
           } else if (counter === 5) {
             // txDataToSign = msg.txDataToSign;
-            res = await createBadBlock('IncorrectPublicInputHash', block, transactions, {
-              duplicateTransaction,
-            });
+            res = await createBadBlock('IncorrectPublicInputHash', block, transactions);
             topicsBlockHashesIncorrectPublicInputHash = res.block.blockHash;
             topicsRootIncorrectPublicInputHash = res.block.root;
             txDataToSign = res.txDataToSign;
@@ -365,6 +360,7 @@ describe('Testing the challenge http API', () => {
 
   describe('Challenge 3: Invalid transaction submitted', () => {
     it('Should delete the wrong block', async () => {
+      await new Promise(resolve => setTimeout(resolve, 5000));
       const events = await web3.eth.getPastLogs({
         fromBlock: web3.utils.toHex(0),
         address: challengeAddress,
@@ -384,21 +380,6 @@ describe('Testing the challenge http API', () => {
 
   describe('Challenge 4: Incorrect public input hash', async () => {
     it('Should delete the wrong block', async () => {
-      // create another transaction to trigger NO's block assembly
-      const res = await chai
-        .request(url)
-        .post('/deposit')
-        .send({
-          ercAddress,
-          tokenId,
-          value,
-          zkpPublicKey,
-          fee,
-        });
-      const { txDataToSign } = res.body;
-      // now we need to sign the transaction and send it to the blockchain
-      await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
-
       const events = await web3.eth.getPastLogs({
         fromBlock: web3.utils.toHex(0),
         address: challengeAddress,
@@ -422,39 +403,40 @@ describe('Testing the challenge http API', () => {
 
   describe('Challenge 5: Duplicate Nullifier', async () => {
     it('Should delete the wrong block', async () => {
-      // create another transaction to trigger NO's block assembly
-      const res = await chai
-        .request(url)
-        .post('/deposit')
-        .send({
-          ercAddress,
-          tokenId,
-          value,
-          zkpPublicKey,
-        });
-      const { txDataToSign } = res.body;
-      // now we need to sign the transaction and send it to the blockchain
-      await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
-      // await new Promise(resolve => setTimeout(resolve, 5000));
+      // create two transfers - transfers are preferred here because we want to swap out a nullifier.
+      for (let i = 0; i < 2; i++) {
+        const res = await chai
+          .request(url)
+          .post('/transfer')
+          .send({
+            ercAddress,
+            tokenId,
+            recipientData: {
+              values: [value],
+              recipientZkpPublicKeys: [zkpPublicKey],
+            },
+            senderZkpPrivateKey: zkpPrivateKey,
+            fee,
+          });
+        const { txDataToSign } = res.body;
+        await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
+      }
 
-      await new Promise(resolve => setTimeout(resolve, 15000));
+      await new Promise(resolve => setTimeout(resolve, 10000));
       const events = await web3.eth.getPastLogs({
         fromBlock: web3.utils.toHex(0),
         address: challengeAddress,
         topics: [web3.utils.sha3('BlockDeleted(bytes32)'), topicsBlockHashesDuplicateNullifier],
       });
       expect(events[0]).to.have.property('transactionHash');
-      await new Promise(resolve => setTimeout(resolve, 5000));
     });
     it('Should rollback the wrong leaves', async () => {
-      await new Promise(resolve => setTimeout(resolve, 5000));
       const events = await web3.eth.getPastLogs({
         fromBlock: web3.utils.toHex(0),
         address: challengeAddress,
         topics: [web3.utils.sha3('Rollback(bytes32,uint256)'), topicsRootDuplicateNullifier],
       });
       expect(events[0]).to.have.property('transactionHash');
-      await new Promise(resolve => setTimeout(resolve, 5000));
     });
   });
 
