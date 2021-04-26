@@ -104,12 +104,12 @@ library ChallengesUtil {
 
     // the transaction type is challenged to not be valid
     function libChallengeTransactionType(
-      Structures.Block memory block,
+      Structures.Block memory l2block,
       Structures.Transaction memory transaction,
       uint transactionIndex
     ) public pure {
-      isBlockHashCorrect(block);
-      isTransactionValid(block, transaction, transactionIndex);
+      isBlockHashCorrect(l2block);
+      isTransactionValid(l2block, transaction, transactionIndex);
       if(transaction.transactionType == Structures.TransactionTypes.DEPOSIT)
         libChallengeTransactionTypeDeposit(transaction);
         // TODO add these checks back after PR for out of gas
@@ -265,12 +265,12 @@ library ChallengesUtil {
 
     // the transaction type deposit is challenged to not be valid
     function libChallengePublicInputHash(
-      Structures.Block memory block,
+      Structures.Block memory l2block,
       Structures.Transaction memory transaction,
       uint transactionIndex
     ) public pure {
-      isBlockHashCorrect(block);
-      isTransactionValid(block, transaction, transactionIndex);
+      isBlockHashCorrect(l2block);
+      isTransactionValid(l2block, transaction, transactionIndex);
       if(transaction.transactionType == Structures.TransactionTypes.DEPOSIT)
         libChallengePublicInputHashDeposit(transaction);
       else if(transaction.transactionType == Structures.TransactionTypes.SINGLE_TRANSFER)

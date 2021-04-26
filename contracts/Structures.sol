@@ -32,7 +32,7 @@ contract Structures {
   );
 
   event CommittedToChallenge(
-    bytes32 commitmentHash,
+    bytes32 commitHash,
     address sender
   );
 

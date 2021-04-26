@@ -180,10 +180,10 @@ contract Challenges is Proposers, Key_Registry {
   }
 
   //To prevent frontrunning, we need to commit to a challenge before we send it
-  function commitToChallenge(bytes32 commitmentHash) external {
-    require(committers[commitmentHash] == address(0), 'This hash is already committed to');
-    committers[commitmentHash] = msg.sender;
-    emit CommittedToChallenge(commitmentHash, msg.sender);
+  function commitToChallenge(bytes32 commitHash) external {
+    require(committers[commitHash] == address(0), 'This hash is already committed to');
+    committers[commitHash] = msg.sender;
+    emit CommittedToChallenge(commitHash, msg.sender);
   }
   // and having sent it, we need to check that commitment to a challenge from
   // within the challenge function using this function:
