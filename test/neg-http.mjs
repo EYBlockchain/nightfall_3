@@ -275,66 +275,51 @@ describe('Testing the challenge http API', () => {
       expect(events[0]).to.have.property('transactionHash');
     });
     it('Should rollback the wrong leaves', async () => {
-      web3.eth
-        .getPastLogs({
-          fromBlock: web3.utils.toHex(0),
-          address: challengeAddress,
-          topics: [web3.utils.sha3('Rollback(bytes32,uint256)'), topicsRootIncorrectRootInBlock],
-        })
-        .then(events => {
-          expect(events[0]).to.have.property('transactionHash');
-        });
+      const events = await web3.eth.getPastLogs({
+        fromBlock: web3.utils.toHex(0),
+        address: challengeAddress,
+        topics: [web3.utils.sha3('Rollback(bytes32,uint256)'), topicsRootIncorrectRootInBlock],
+      });
+      expect(events[0]).to.have.property('transactionHash');
       await new Promise(resolve => setTimeout(resolve, 5000));
     });
   });
 
   describe('Challenge 2: Duplicate transaction submitted', () => {
     it('Should delete the wrong block', async () => {
-      web3.eth
-        .getPastLogs({
-          fromBlock: web3.utils.toHex(0),
-          address: challengeAddress,
-          topics: [web3.utils.sha3('BlockDeleted(bytes32)'), topicsBlockHashesDuplicateTransaction],
-        })
-        .then(events => {
-          expect(events[0]).to.have.property('transactionHash');
-        });
+      const events = await web3.eth.getPastLogs({
+        fromBlock: web3.utils.toHex(0),
+        address: challengeAddress,
+        topics: [web3.utils.sha3('BlockDeleted(bytes32)'), topicsBlockHashesDuplicateTransaction],
+      });
+      expect(events[0]).to.have.property('transactionHash');
     });
     it('Should rollback the wrong leaves', async () => {
-      web3.eth
-        .getPastLogs({
-          fromBlock: web3.utils.toHex(0),
-          address: challengeAddress,
-          topics: [web3.utils.sha3('Rollback(bytes32,uint256)'), topicsRootDuplicateTransaction],
-        })
-        .then(events => {
-          expect(events[0]).to.have.property('transactionHash');
-        });
+      const events = await web3.eth.getPastLogs({
+        fromBlock: web3.utils.toHex(0),
+        address: challengeAddress,
+        topics: [web3.utils.sha3('Rollback(bytes32,uint256)'), topicsRootDuplicateTransaction],
+      });
+      expect(events[0]).to.have.property('transactionHash');
     });
   });
 
   describe('Challenge 3: Invalid transaction submitted', () => {
     it('Should delete the wrong block', async () => {
-      web3.eth
-        .getPastLogs({
-          fromBlock: web3.utils.toHex(0),
-          address: challengeAddress,
-          topics: [web3.utils.sha3('BlockDeleted(bytes32)'), topicsBlockHashesInvalidTransaction],
-        })
-        .then(events => {
-          expect(events[0]).to.have.property('transactionHash');
-        });
+      const events = await web3.eth.getPastLogs({
+        fromBlock: web3.utils.toHex(0),
+        address: challengeAddress,
+        topics: [web3.utils.sha3('BlockDeleted(bytes32)'), topicsBlockHashesInvalidTransaction],
+      });
+      expect(events[0]).to.have.property('transactionHash');
     });
     it('Should rollback the wrong leaves', async () => {
-      web3.eth
-        .getPastLogs({
-          fromBlock: web3.utils.toHex(0),
-          address: challengeAddress,
-          topics: [web3.utils.sha3('Rollback(bytes32,uint256)'), topicsRootInvalidTransaction],
-        })
-        .then(events => {
-          expect(events[0]).to.have.property('transactionHash');
-        });
+      const events = await web3.eth.getPastLogs({
+        fromBlock: web3.utils.toHex(0),
+        address: challengeAddress,
+        topics: [web3.utils.sha3('Rollback(bytes32,uint256)'), topicsRootInvalidTransaction],
+      });
+      expect(events[0]).to.have.property('transactionHash');
     });
   });
 
@@ -355,33 +340,24 @@ describe('Testing the challenge http API', () => {
       // now we need to sign the transaction and send it to the blockchain
       await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
 
-      web3.eth
-        .getPastLogs({
-          fromBlock: web3.utils.toHex(0),
-          address: challengeAddress,
-          topics: [
-            web3.utils.sha3('BlockDeleted(bytes32)'),
-            topicsBlockHashesIncorrectPublicInputHash,
-          ],
-        })
-        .then(events => {
-          expect(events[0]).to.have.property('transactionHash');
-        });
+      const events = await web3.eth.getPastLogs({
+        fromBlock: web3.utils.toHex(0),
+        address: challengeAddress,
+        topics: [
+          web3.utils.sha3('BlockDeleted(bytes32)'),
+          topicsBlockHashesIncorrectPublicInputHash,
+        ],
+      });
+      expect(events[0]).to.have.property('transactionHash');
       await new Promise(resolve => setTimeout(resolve, 5000));
     });
     it('Should rollback the wrong leaves', async () => {
-      web3.eth
-        .getPastLogs({
-          fromBlock: web3.utils.toHex(0),
-          address: challengeAddress,
-          topics: [
-            web3.utils.sha3('Rollback(bytes32,uint256)'),
-            topicsRootIncorrectPublicInputHash,
-          ],
-        })
-        .then(events => {
-          expect(events[0]).to.have.property('transactionHash');
-        });
+      const events = await web3.eth.getPastLogs({
+        fromBlock: web3.utils.toHex(0),
+        address: challengeAddress,
+        topics: [web3.utils.sha3('Rollback(bytes32,uint256)'), topicsRootIncorrectPublicInputHash],
+      });
+      expect(events[0]).to.have.property('transactionHash');
     });
   });
 
@@ -403,28 +379,22 @@ describe('Testing the challenge http API', () => {
       await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
 
       await new Promise(resolve => setTimeout(resolve, 15000));
-      web3.eth
-        .getPastLogs({
-          fromBlock: web3.utils.toHex(0),
-          address: challengeAddress,
-          topics: [web3.utils.sha3('BlockDeleted(bytes32)'), topicsBlockHashesIncorrectProof],
-        })
-        .then(events => {
-          expect(events[0]).to.have.property('transactionHash');
-        });
+      const events = await web3.eth.getPastLogs({
+        fromBlock: web3.utils.toHex(0),
+        address: challengeAddress,
+        topics: [web3.utils.sha3('BlockDeleted(bytes32)'), topicsBlockHashesIncorrectProof],
+      });
+      expect(events[0]).to.have.property('transactionHash');
       await new Promise(resolve => setTimeout(resolve, 5000));
     });
     it('Should rollback the wrong leaves', async () => {
       await new Promise(resolve => setTimeout(resolve, 5000));
-      web3.eth
-        .getPastLogs({
-          fromBlock: web3.utils.toHex(0),
-          address: challengeAddress,
-          topics: [web3.utils.sha3('Rollback(bytes32,uint256)'), topicsRootIncorrectProof],
-        })
-        .then(events => {
-          expect(events[0]).to.have.property('transactionHash');
-        });
+      const events = await web3.eth.getPastLogs({
+        fromBlock: web3.utils.toHex(0),
+        address: challengeAddress,
+        topics: [web3.utils.sha3('Rollback(bytes32,uint256)'), topicsRootIncorrectProof],
+      });
+      expect(events[0]).to.have.property('transactionHash');
       await new Promise(resolve => setTimeout(resolve, 5000));
     });
   });
