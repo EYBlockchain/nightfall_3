@@ -14,10 +14,20 @@ import rand from '../utils/crypto/crypto-random.mjs';
 
 const { CHALLENGES_CONTRACT_NAME } = config;
 
+let makeChallenges = process.env.IS_CHALLENGER === 'true';
 let ws;
 
 export function setChallengeWebSocketConnection(_ws) {
   ws = _ws;
+}
+
+export function startMakingChallenges() {
+  logger.info(`Challenges ON`);
+  makeChallenges = true;
+}
+export function stopMakingChallenges() {
+  logger.info(`Challenges OFF`);
+  makeChallenges = false;
 }
 
 async function commitToChallenge(txDataToSign) {
@@ -60,7 +70,7 @@ export async function getTransactionsBlock(transactions, block, length) {
 
 export async function createChallenge(block, transactions, err) {
   let txDataToSign;
-  if (process.env.IS_CHALLENGER === 'true') {
+  if (makeChallenges) {
     const challengeContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
     const salt = (await rand(32)).hex(32);
     switch (err.code) {
@@ -73,7 +83,6 @@ export async function createChallenge(block, transactions, err) {
 
         // Retrieve prior block from its block hash
         const priorBlock = await getBlockByBlockHash(previousHash);
-
         // Retrieve last transaction from prior block using its transaction hash.
         // Note that not all transactions in a block will have commitments. Loop until one is found
         let priorBlockTransactions = [];
