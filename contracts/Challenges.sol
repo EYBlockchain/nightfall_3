@@ -86,15 +86,17 @@ contract Challenges is Proposers, Key_Registry {
       challengeAccepted(_block);
   }
 
-  /* function challengeProofVerification(
+  function challengeProofVerification(
     Block memory block,
     Transaction memory transaction,
-    uint transactionIndex
+    uint transactionIndex,
+    bytes32 salt
     ) external {
+      checkCommit(msg.data, salt);
       isBlockReal(block);
       ChallengesUtil.libChallengeProofVerification(block, transaction, transactionIndex, vks[transaction.transactionType]);
       challengeAccepted(block);
-  } */
+  }
 
   /*
    This is a challenge that a nullifier has already been spent
