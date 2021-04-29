@@ -40,6 +40,22 @@ async function checkBlock(block, transactions) {
     }),
   );
 
+  // Check nullifiers for duplicates that have already been mined.
+  const storedMinedNullifiers = await retrieveMinedNullifiers(); // List of Nullifiers stored by blockProposer
+  const blockNullifiers = transactions.map(tNull => tNull.nullifiers.toString()); // List of Nullifiers in block
+  const alreadyMinedNullifiers = storedMinedNullifiers.filter(sNull =>
+    blockNullifiers.includes(sNull.hash),
+  );
+  if (alreadyMinedNullifiers.length > 0) {
+    throw new BlockError(
+      `Some Nullifiers included in ${block.root} have been included in previous blocks`,
+      5,
+    );
+  }
+
+  // This concludes all 'block-level' checks i.e. checks which require the context of this block w.r.t the existing L2 State.
+
+  // The transaction checks below are 'stateless'.
   // check if the transaction is valid - transaction type, public input hash and proof verification are all checked
   for (let i = 0; i < transactions.length; i++) {
     try {
@@ -54,19 +70,6 @@ async function checkBlock(block, transactions) {
         },
       );
     }
-  }
-
-  // Check nullifiers
-  const storedMinedNullifiers = await retrieveMinedNullifiers(); // List of Nullifiers stored by blockProposer
-  const blockNullifiers = transactions.map(tNull => tNull.nullifiers.toString()); // List of Nullifiers in block
-  const alreadyMinedNullifiers = storedMinedNullifiers.filter(sNull =>
-    blockNullifiers.includes(sNull.hash),
-  );
-  if (alreadyMinedNullifiers.length > 0) {
-    throw new BlockError(
-      `Some Nullifiers included in ${block.root} have been included in previous blocks`,
-      5,
-    );
   }
 }
 
