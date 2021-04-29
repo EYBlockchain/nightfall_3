@@ -1,10 +1,12 @@
 /**
 An optimistic layer 2 Block class
 */
+import config from 'config';
 import { getFrontier } from '../utils/timber.mjs';
 import mt from '../utils/crypto/merkle-tree/merkle-tree.mjs';
 import Web3 from '../utils/web3.mjs';
 
+const { ZERO } = config;
 const { updateNodes } = mt;
 
 /**
@@ -70,7 +72,10 @@ class Block {
       currentLeafCount = this.localLeafCount;
     }
     // extract the commitment hashes from the transactions
-    const leafValues = transactions.map(transaction => transaction.commitments).flat(Infinity);
+    // we filter out zeroes commitments that can come from withdrawals
+    const leafValues = transactions
+      .map(transaction => transaction.commitments.filter(c => c !== ZERO))
+      .flat(Infinity);
     // compute the root using Timber's code
     const { root, newFrontier } = await updateNodes(leafValues, currentLeafCount, frontier);
     const leafCount = currentLeafCount || 0;
