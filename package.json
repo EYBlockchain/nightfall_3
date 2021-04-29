@@ -4,7 +4,8 @@
   "description": "A client for interacting with Nightfall",
   "main": "index.mjs",
   "scripts": {
-    "test": "npx mocha --timeout 0 --bail",
+    "test": "npx mocha --timeout 0 --bail test/http.mjs test/neg-http.mjs",
+    "test-gas": "npx mocha --timeout 0 --bail test/tx-gas.mjs",
     "start": "node src/index.mjs",
     "dev": "nodemon src/index.mjs"
   },
