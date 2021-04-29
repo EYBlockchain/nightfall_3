@@ -42,7 +42,7 @@ contract Proposers is Structures, Config {
   * Allows a Proposer to propose a new block of state updates.
   * @param b the block being proposed.
   */
-  function proposeBlock(Block memory b, Transaction[] memory t) external payable onlyCurrentProposer() {
+  function proposeBlock(Block calldata b, Transaction[] calldata t) external payable onlyCurrentProposer() {
     require(BLOCK_STAKE == msg.value, 'The stake payment is incorrect');
     // We need to check that the block has correctly stored its leaf count. This
     // is needed in case of a roll-back of a bad block, but cannot be checked by
@@ -88,7 +88,7 @@ contract Proposers is Structures, Config {
         if(t[i].transactionType != Structures.TransactionTypes.WITHDRAW){
           leafValues[k++] = t[i].commitments[j];
         }
-      }       
+      }
     }
     // signal to Timber that new leaves may need to be added to the Merkle tree.
     // It's possible that these will be successfully challenged over the next
