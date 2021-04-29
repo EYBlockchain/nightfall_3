@@ -53,8 +53,8 @@ describe('Testing the challenge http API', () => {
   let topicsRootInvalidTransaction;
   let topicsBlockHashesIncorrectPublicInputHash;
   let topicsRootIncorrectPublicInputHash;
-  // let topicsBlockHashesIncorrectProof;
-  // let topicsRootIncorrectProof;
+  let topicsBlockHashesIncorrectProof;
+  let topicsRootIncorrectProof;
   let topicsBlockHashesDuplicateNullifier;
   let topicsRootDuplicateNullifier;
 
@@ -133,6 +133,13 @@ describe('Testing the challenge http API', () => {
             topicsRootIncorrectPublicInputHash = res.block.root;
             txDataToSign = res.txDataToSign;
           } else if (counter === 6) {
+            res = await createBadBlock('IncorrectProof', block, transactions, {
+              proof: duplicateTransaction.proof,
+            });
+            topicsBlockHashesDuplicateNullifier = res.block.blockHash;
+            topicsRootDuplicateNullifier = res.block.root;
+            txDataToSign = res.txDataToSign;
+          } else if (counter === 7) {
             res = await createBadBlock('DuplicateNullifier', block, transactions, {
               duplicateNullifier,
             });
@@ -401,7 +408,45 @@ describe('Testing the challenge http API', () => {
     });
   });
 
-  describe('Challenge 5: Duplicate Nullifier', async () => {
+  describe('Challenge 5: Proof verification failure', async () => {
+    it('Should delete the wrong block', async () => {
+      // create another transaction to trigger NO's block assembly
+      const res = await chai
+        .request(url)
+        .post('/deposit')
+        .send({
+          ercAddress,
+          tokenId,
+          value,
+          zkpPublicKey,
+          fee,
+        });
+      const { txDataToSign } = res.body;
+      // now we need to sign the transaction and send it to the blockchain
+      await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
+
+      await new Promise(resolve => setTimeout(resolve, 15000));
+      const events = await web3.eth.getPastLogs({
+        fromBlock: web3.utils.toHex(0),
+        address: challengeAddress,
+        topics: [web3.utils.sha3('BlockDeleted(bytes32)'), topicsBlockHashesIncorrectProof],
+      });
+      expect(events[0]).to.have.property('transactionHash');
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    });
+    it('Should rollback the wrong leaves', async () => {
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      const events = await web3.eth.getPastLogs({
+        fromBlock: web3.utils.toHex(0),
+        address: challengeAddress,
+        topics: [web3.utils.sha3('Rollback(bytes32,uint256)'), topicsRootIncorrectProof],
+      });
+      expect(events[0]).to.have.property('transactionHash');
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    });
+  });
+
+  describe('Challenge 6: Duplicate Nullifier', async () => {
     it('Should delete the wrong block', async () => {
       // create two transfers - transfers are preferred here because we want to swap out a nullifier.
       for (let i = 0; i < 2; i++) {
