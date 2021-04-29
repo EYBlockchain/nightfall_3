@@ -65,8 +65,10 @@ contract Proposers is Structures, Config {
         'Transaction hash was not found'
       );
       // remember how many commitments are in the block, this is needed later
-      nCommitments += t[i].commitments.length;
+      if(t[i].transactionType != Structures.TransactionTypes.WITHDRAW){
+        nCommitments += t[i].commitments.length;
       }
+    }
     // All check pass so add the block to the list of blocks waiting to be permanently added to the state - we only save the hash of the block data plus the absolute minimum of metadata - it's up to the challenger, or person requesting inclusion of the block to the permanent contract state, to provide the block data.
     blockHashes[b.blockHash] = LinkedHash({
       thisHash: b.blockHash,
@@ -82,8 +84,11 @@ contract Proposers is Structures, Config {
     bytes32[] memory leafValues = new bytes32[](nCommitments);
     uint k;
     for (uint i = 0; i < t.length; i++) {
-      for (uint j = 0; j < t[i].commitments.length; j++)
-        leafValues[k++] = t[i].commitments[j];
+      for (uint j = 0; j < t[i].commitments.length; j++){
+        if(t[i].transactionType != Structures.TransactionTypes.WITHDRAW){
+          leafValues[k++] = t[i].commitments[j];
+        }
+      }       
     }
     // signal to Timber that new leaves may need to be added to the Merkle tree.
     // It's possible that these will be successfully challenged over the next
