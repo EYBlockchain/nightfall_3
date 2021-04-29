@@ -53,12 +53,9 @@ contract Proposers is Structures, Config {
     // computation; the on-chain code doesn't save the pre-image of the hash so
     // it can't tell if it's been given the correct one as part of a challenge.
     require(b.blockHash == Utils.hashBlock(b), 'The block hash is incorrect');
-    // Ensure that Transction[] doesn't have more txs than block because these tx hashes
-    // will be added to merkle tree even though they are not in the block
-    require(b.transactionHashes.length == t.length, 'The block and transaction have unequal number of transactions');
-    // likewise the transaction hashes
+
     uint nCommitments; // number of commitments, used in NewLeaves/NewLeaf event
-    for (uint i = 0; i < b.transactionHashes.length; i++) {
+    for (uint i = 0; i < t.length; i++) {
       // make sure the Transactions are in the Block
       require(
         b.transactionHashes[i] == Utils.hashTransaction(t[i]),
