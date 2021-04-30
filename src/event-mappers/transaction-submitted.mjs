@@ -1,10 +1,10 @@
 /**
 Turns the slightly odd object/class/thing returned in a transaction-submitted event into a true transaction
 */
+import Transaction from '../classes/transaction.mjs';
 
 function mappedData(data) {
   const {
-    transactionHash,
     fee,
     transactionType,
     publicInputHash,
@@ -18,7 +18,6 @@ function mappedData(data) {
     proof,
   } = data.returnValues.transaction;
   const transaction = {
-    transactionHash,
     fee,
     transactionType,
     publicInputHash,
@@ -31,6 +30,8 @@ function mappedData(data) {
     historicRoot,
     proof,
   };
+  // add in the transaction hash (we no longer sent this to the blockchain)
+  transaction.transactionHash = Transaction.calcHash(transaction);
   return transaction;
 }
 

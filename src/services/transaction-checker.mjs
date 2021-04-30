@@ -25,7 +25,9 @@ const {
   CHALLENGES_CONTRACT_NAME,
 } = config;
 
-// first, let's check the hash. That's nice and easy
+// first, let's check the hash. That's nice and easy:
+// NB as we actually now comput the hash on receipt of the transaction this
+// _should_ never fail.  Consider removal in the future.
 async function checkTransactionHash(transaction) {
   if (!Transaction.checkHash(transaction)) {
     logger.debug(
@@ -40,11 +42,12 @@ async function checkTransactionType(transaction) {
     case 0: // deposit
       if (
         transaction.publicInputHash === ZERO ||
-        (transaction.tokenId === ZERO && transaction.value === ZERO) ||
+        (transaction.tokenId === ZERO && transaction.value === 0) ||
         transaction.ercAddress === ZERO ||
         transaction.recipientAddress !== ZERO ||
-        transaction.commitments.some(c => c === ZERO) ||
-        transaction.commitments.length !== 1 ||
+        transaction.commitments[0] === ZERO ||
+        transaction.commitments[1] !== ZERO ||
+        transaction.commitments.length !== 2 ||
         transaction.nullifiers.some(n => n !== ZERO) ||
         transaction.historicRoot !== ZERO ||
         transaction.proof.some(p => p === ZERO)
@@ -61,10 +64,12 @@ async function checkTransactionType(transaction) {
         transaction.value !== ZERO ||
         transaction.ercAddress === ZERO ||
         transaction.recipientAddress !== ZERO ||
-        transaction.commitments.some(c => c === ZERO) ||
-        transaction.commitments.length !== 1 ||
-        transaction.nullifiers.some(n => n === ZERO) ||
-        transaction.nullifiers.length !== 1 ||
+        transaction.commitments[0] === ZERO ||
+        transaction.commitments[1] !== ZERO ||
+        transaction.commitments.length !== 2 ||
+        transaction.nullifiers[0] === ZERO ||
+        transaction.nullifiers[1] !== ZERO ||
+        transaction.nullifiers.length !== 2 ||
         transaction.historicRoot === ZERO ||
         transaction.proof.some(p => p === ZERO)
       )
@@ -99,8 +104,9 @@ async function checkTransactionType(transaction) {
         transaction.ercAddress === ZERO ||
         transaction.recipientAddress === ZERO ||
         transaction.commitments.some(c => c !== ZERO) ||
-        transaction.nullifiers.some(n => n === ZERO) ||
-        transaction.nullifiers.length !== 1 ||
+        transaction.nullifiers[0] === ZERO ||
+        transaction.nullifiers[1] !== ZERO ||
+        transaction.nullifiers.length !== 2 ||
         transaction.historicRoot === ZERO ||
         transaction.proof.some(p => p === ZERO)
       )
@@ -123,7 +129,7 @@ async function checkPublicInputHash(transaction) {
           transaction.ercAddress,
           transaction.tokenId,
           transaction.value,
-          transaction.commitments,
+          transaction.commitments[0],
         ]).hash.hex(32)
       )
         throw new TransactionError('public input hash is incorrect', 3);
@@ -133,8 +139,8 @@ async function checkPublicInputHash(transaction) {
         transaction.publicInputHash !==
         new PublicInputs([
           transaction.ercAddress,
-          transaction.commitments,
-          transaction.nullifiers,
+          transaction.commitments[0],
+          transaction.nullifiers[0],
           transaction.historicRoot,
         ]).hash.hex(32)
       )
@@ -160,7 +166,7 @@ async function checkPublicInputHash(transaction) {
           transaction.ercAddress,
           transaction.tokenId,
           transaction.value,
-          transaction.nullifiers,
+          transaction.nullifiers[0],
           transaction.recipientAddress,
           transaction.historicRoot,
         ]).hash.hex(32)
