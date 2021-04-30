@@ -54,17 +54,12 @@ contract Proposers is Structures, Config {
     // it can't tell if it's been given the correct one as part of a challenge.
     require(b.blockHash == Utils.hashBlock(b), 'The block hash is incorrect');
 
-    uint nCommitments; // number of commitments, used in NewLeaves/NewLeaf event
     for (uint i = 0; i < t.length; i++) {
       // make sure the Transactions are in the Block
       require(
         b.transactionHashes[i] == Utils.hashTransaction(t[i]),
         'Transaction hash was not found'
       );
-      // remember how many commitments are in the block, this is needed later
-      if(t[i].transactionType != Structures.TransactionTypes.WITHDRAW){
-        nCommitments += t[i].commitments.length;
-      }
     }
     // All check pass so add the block to the list of blocks waiting to be permanently added to the state - we only save the hash of the block data plus the absolute minimum of metadata - it's up to the challenger, or person requesting inclusion of the block to the permanent contract state, to provide the block data.
     blockHashes[b.blockHash] = LinkedHash({
@@ -78,11 +73,11 @@ contract Proposers is Structures, Config {
     // now we need to emit all the leafValues (commitments) in this block so
     // any listening Timber instances can update their offchain DBs.
     // The first job is to assembly an array of all the leafValues in the block
-    bytes32[] memory leafValues = new bytes32[](nCommitments);
+    bytes32[] memory leafValues = new bytes32[](b.nCommitments);
     uint k;
     for (uint i = 0; i < t.length; i++) {
       for (uint j = 0; j < t[i].commitments.length; j++){
-        if(t[i].transactionType != Structures.TransactionTypes.WITHDRAW){
+        if(t[i].commitments[j] != ZERO){  // don't add zero values
           leafValues[k++] = t[i].commitments[j];
         }
       }
@@ -95,13 +90,13 @@ contract Proposers is Structures, Config {
     // has elapsed.  This would take more gas because of the need to make a
     // a blockchain transaction to call a 'check week is up and then emit
     // events' function
-    if (nCommitments == 1)
+    if (b.nCommitments == 1)
       emit NewLeaf(leafCount, leafValues[0], b.root);
-    else if (nCommitments !=0)
+    else if (b.nCommitments !=0)
       emit NewLeaves(leafCount, leafValues, b.root);
     // remember how many leaves the Merkle tree has (Timber needs this to check
     // that it hasn't missed any leaf additions)
-    leafCount += nCommitments;
+    leafCount += b.nCommitments;
     emit BlockProposed(b, t, leafCount);
   }
 

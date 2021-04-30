@@ -11,10 +11,10 @@ library Utils {
     return keccak256(
       abi.encodePacked(
         t.fee,
+        t.value,
         t.transactionType,
         t.publicInputHash,
         t.tokenId,
-        t.value,
         t.ercAddress, // Take in as bytes32 for consistent hashing
         t.recipientAddress,
         t.commitments,
@@ -31,7 +31,8 @@ library Utils {
         b.proposer,
         b.transactionHashes,
         b.root,
-        b.leafCount
+        b.leafCount,
+        b.nCommitments
       )
     );
   }

@@ -87,12 +87,12 @@ library ChallengesUtil {
 
     // the transaction type is challenged to not be valid
     function libChallengeTransactionType(
-      Structures.Block memory l2block,
+      Structures.Block memory blockL2,
       Structures.Transaction memory transaction,
       uint transactionIndex
     ) public pure {
-      isBlockHashCorrect(l2block);
-      isTransactionValid(l2block, transaction, transactionIndex);
+      isBlockHashCorrect(blockL2);
+      isTransactionValid(blockL2, transaction, transactionIndex);
       if(transaction.transactionType == Structures.TransactionTypes.DEPOSIT)
         libChallengeTransactionTypeDeposit(transaction);
         // TODO add these checks back after PR for out of gas
@@ -126,7 +126,7 @@ library ChallengesUtil {
       }
       require(
         transaction.publicInputHash == ZERO ||
-        (transaction.tokenId == ZERO && transaction.value == ZERO) ||
+        (transaction.tokenId == ZERO && transaction.value == 0) ||
         transaction.ercAddress == ZERO ||
         transaction.recipientAddress != ZERO ||
         nZeroCommitments > 0 ||
@@ -162,7 +162,7 @@ library ChallengesUtil {
       require(
         transaction.publicInputHash == ZERO ||
         transaction.tokenId != ZERO ||
-        transaction.value != ZERO ||
+        transaction.value != 0 ||
         transaction.ercAddress == ZERO ||
         transaction.recipientAddress != ZERO ||
         nZeroCommitments > 0 ||
@@ -198,7 +198,7 @@ library ChallengesUtil {
       require(
         transaction.publicInputHash == ZERO ||
         transaction.tokenId != ZERO ||
-        transaction.value != ZERO ||
+        transaction.value != 0 ||
         transaction.ercAddress == ZERO ||
         transaction.recipientAddress != ZERO ||
         nZeroCommitments > 0 ||
@@ -233,7 +233,7 @@ library ChallengesUtil {
       }
       require(
         transaction.publicInputHash == ZERO ||
-        (transaction.tokenId == ZERO && transaction.value == ZERO) ||
+        (transaction.tokenId == ZERO && transaction.value == 0) ||
         transaction.ercAddress == ZERO ||
         transaction.recipientAddress == ZERO ||
         nZeroCommitments == 0 ||
@@ -248,12 +248,12 @@ library ChallengesUtil {
 
     // the transaction type deposit is challenged to not be valid
     function libChallengePublicInputHash(
-      Structures.Block memory l2block,
+      Structures.Block memory blockL2,
       Structures.Transaction memory transaction,
       uint transactionIndex
     ) public pure {
-      isBlockHashCorrect(l2block);
-      isTransactionValid(l2block, transaction, transactionIndex);
+      isBlockHashCorrect(blockL2);
+      isTransactionValid(blockL2, transaction, transactionIndex);
       if(transaction.transactionType == Structures.TransactionTypes.DEPOSIT)
         libChallengePublicInputHashDeposit(transaction);
       else if(transaction.transactionType == Structures.TransactionTypes.SINGLE_TRANSFER)
@@ -313,15 +313,19 @@ library ChallengesUtil {
     }
 
     function libChallengeProofVerification(
-      Structures.Block memory block,
+      Structures.Block memory blockL2,
       Structures.Transaction memory transaction,
       uint transactionIndex,
       uint256[] memory vk
     ) internal {
-      isBlockHashCorrect(block);
-      isTransactionValid(block, transaction, transactionIndex);
+      isBlockHashCorrect(blockL2);
+      isTransactionValid(blockL2, transaction, transactionIndex);
+      uint[] memory proof = new uint[](transaction.proof.length);
+      for (uint i = 0; i < proof.length; i++){
+        proof[i] = transaction.proof[i];
+      }
       require(!Verifier.verify(
-        transaction.proof,
+        proof,
         uint256(transaction.publicInputHash),
         vk),
         'This proof appears to be valid'
@@ -339,7 +343,7 @@ library ChallengesUtil {
       uint nullifierIndex2
     ) public pure {
         require(tx1.nullifiers[nullifierIndex1] == tx2.nullifiers[nullifierIndex2], 'Not matching nullifiers' );
-        require(tx1.transactionHash != tx2.transactionHash, 'Transactions need to be different' );
+        require(Utils.hashTransaction(tx1) != Utils.hashTransaction(tx2), 'Transactions need to be different' );
         require(Utils.hashTransaction(tx1) == block1.transactionHashes[transactionIndex1], 'First Tx not in block' );
         require(Utils.hashTransaction(tx2) == block2.transactionHashes[transactionIndex2], 'Second Tx not in block' );
     }
@@ -358,7 +362,7 @@ library ChallengesUtil {
         'Transaction hash was not found in the block'
       );
       require(
-        t.transactionHash == transactionHash,
+        Utils.hashTransaction(t) == transactionHash,
         'The transaction hash is incorrect'
       );
     }
