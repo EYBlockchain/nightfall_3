@@ -194,13 +194,13 @@ describe('Testing the http API', () => {
   });
 
   // now we have some deposited tokens, we can transfer one of them:
-  describe('Single transfer tests', () => {
-    let txDataToSign;
-    it('should transfer some crypto (back to us) using ZKP', async () => {
+  describe('Single off-chain transfer tests', () => {
+    it('should transfer some crypto (back to us) using ZKP offchain', async () => {
       const res = await chai
         .request(url)
         .post('/transfer')
         .send({
+          offchain: true,
           ercAddress,
           tokenId,
           recipientData: {
@@ -210,13 +210,8 @@ describe('Testing the http API', () => {
           senderZkpPrivateKey: zkpPrivateKey,
           fee,
         });
-      txDataToSign = res.body.txDataToSign;
-      expect(txDataToSign).to.be.a('string');
-      // now we need to sign the transaction and send it to the blockchain
-      const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
-      expect(receipt).to.have.property('transactionHash');
-      expect(receipt).to.have.property('blockHash');
-      console.log(`Gas used was ${Number(receipt.gasUsed)}`);
+      expect(res.status).to.be.equal(200);
+      console.log(`Gas used was ${Number('0')}`);
       // give Timber time to respond to the blockchain event
       await new Promise(resolve => setTimeout(resolve, 5000));
     });
