@@ -113,6 +113,7 @@ async function withdraw(items) {
     historicRoot: root,
     proof,
   });
+  delete optimisticWithdrawTransaction.transactionHash; // we don't send this
   try {
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(optimisticWithdrawTransaction)

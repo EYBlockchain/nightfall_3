@@ -79,6 +79,7 @@ async function deposit(items) {
     `Optimistic deposit transaction ${JSON.stringify(optimisticDepositTransaction, null, 2)}`,
   );
   // and then we can create an unsigned blockchain transaction
+  delete optimisticDepositTransaction.transactionHash; // we don't send this
   try {
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(optimisticDepositTransaction)

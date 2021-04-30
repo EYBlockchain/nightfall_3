@@ -164,6 +164,7 @@ async function transfer(items) {
     historicRoot: root,
     proof,
   });
+  delete optimisticTransferTransaction.transactionHash; // we don't send this
   try {
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(optimisticTransferTransaction)

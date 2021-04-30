@@ -6,6 +6,25 @@ import Web3 from '../utils/web3.mjs';
 
 const { generalise } = gen;
 
+// function to compute the keccak hash of a transaction
+function keccak(preimage) {
+  const web3 = Web3.connection();
+  // compute the solidity hash, using suitable type conversions
+  return web3.utils.soliditySha3(
+    { t: 'uint64', v: preimage.fee },
+    { t: 'uint64', v: preimage.value },
+    { t: 'uint8', v: preimage.transactionType },
+    { t: 'bytes32', v: preimage.publicInputHash },
+    { t: 'bytes32', v: preimage.tokenId },
+    { t: 'bytes32', v: preimage.ercAddress },
+    { t: 'bytes32', v: preimage.recipientAddress },
+    ...preimage.commitments.map(ch => ({ t: 'bytes32', v: ch })),
+    ...preimage.nullifiers.map(nh => ({ t: 'bytes32', v: nh })),
+    { t: 'bytes32', v: preimage.historicRoot },
+    ...preimage.proof.map(p => ({ t: 'uint', v: p })),
+  );
+}
+
 class Transaction {
   // for any given transaction, some of these values will not exist.  In that
   // case, we give them the Solidity default value (0). (TODO - would leaving
@@ -28,9 +47,11 @@ class Transaction {
     if (publicInputs === undefined) throw new Error('PublicInputs cannot be undefined');
     let commitments;
     let nullifiers;
-    if (_commitments === undefined) commitments = [{ hash: 0 }];
+    if (_commitments === undefined) commitments = [{ hash: 0 }, { hash: 0 }];
+    else if (_commitments.length === 1) commitments = [..._commitments, { hash: 0 }];
     else commitments = _commitments;
-    if (_nullifiers === undefined) nullifiers = [{ hash: 0 }];
+    if (_nullifiers === undefined) nullifiers = [{ hash: 0 }, { hash: 0 }];
+    else if (_nullifiers.length === 1) nullifiers = [..._nullifiers, { hash: 0 }];
     else nullifiers = _nullifiers;
     // convert everything to hex(32) for interfacing with web3
     const preimage = generalise({
@@ -46,41 +67,21 @@ class Transaction {
       historicRoot: historicRoot || 0,
       proof: flatProof,
     }).all.hex(32);
-    const web3 = Web3.connection();
     // compute the solidity hash, using suitable type conversions
-    preimage.transactionHash = web3.utils.soliditySha3(
-      { t: 'uint', v: preimage.fee },
-      { t: 'uint8', v: preimage.transactionType },
-      { t: 'bytes32', v: preimage.publicInputHash },
-      { t: 'bytes32', v: preimage.tokenId },
-      { t: 'bytes32', v: preimage.value },
-      { t: 'bytes32', v: preimage.ercAddress },
-      { t: 'bytes32', v: preimage.recipientAddress },
-      ...preimage.commitments.map(ch => ({ t: 'bytes32', v: ch })),
-      ...preimage.nullifiers.map(nh => ({ t: 'bytes32', v: nh })),
-      { t: 'bytes32', v: preimage.historicRoot },
-      ...preimage.proof.map(p => ({ t: 'uint', v: p })),
-    );
+    preimage.transactionHash = keccak(preimage);
     return preimage;
   }
 
   static checkHash(transaction) {
-    const web3 = Web3.connection();
     // compute the solidity hash, using suitable type conversions
-    const transactionHash = web3.utils.soliditySha3(
-      { t: 'uint', v: transaction.fee },
-      { t: 'uint8', v: transaction.transactionType },
-      { t: 'bytes32', v: transaction.publicInputHash },
-      { t: 'bytes32', v: transaction.tokenId },
-      { t: 'bytes32', v: transaction.value },
-      { t: 'bytes32', v: transaction.ercAddress },
-      { t: 'bytes32', v: transaction.recipientAddress },
-      ...transaction.commitments.map(ch => ({ t: 'bytes32', v: ch })),
-      ...transaction.nullifiers.map(nh => ({ t: 'bytes32', v: nh })),
-      { t: 'bytes32', v: transaction.historicRoot },
-      ...transaction.proof.map(p => ({ t: 'uint', v: p })),
-    );
+    const transactionHash = keccak(transaction);
     return transactionHash === transaction.transactionHash;
+  }
+
+  static calcHash(transaction) {
+    // compute the solidity hash, using suitable type conversions
+    const transactionHash = keccak(transaction);
+    return transactionHash;
   }
 }
 export default Transaction;
