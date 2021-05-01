@@ -17,11 +17,7 @@ contract Structures {
 
   event BlockDeleted(bytes32 indexed blockHash);
 
-  event BlockProposed(
-    Block block,
-    Transaction[] transactions,
-    uint currentLeafCount
-  );
+  event BlockProposed(uint currentLeafCount);
 
   event TransactionSubmitted(
     Transaction transaction

@@ -12,6 +12,9 @@ library ChallengesUtil {
   bytes32 public constant ZERO = 0x0000000000000000000000000000000000000000000000000000000000000000;
 
     function libChallengeNewRootCorrect(
+      /* TODO we can probably use the fact that the blocks now contain the
+      number of commitments to shorten this code
+      */
       Structures.Block memory priorBlockL2, // the block immediately prior to this one
       Structures.Transaction[] memory priorBlockTransactions, // the transactions in the prior block
       bytes32[33] calldata frontierPriorBlock, // frontier path before prior block is added. The same frontier used in calculating root when prior block is added
@@ -27,7 +30,11 @@ library ChallengesUtil {
         priorBlockL2.transactionHashes[i] == Utils.hashTransaction(priorBlockTransactions[i]),
         'Transaction hash was not found'
       );
-      nCommitmentsPriorBlock += priorBlockTransactions[i].commitments.length; // remember how many commitments are in the block
+      for (uint j = 0; j < priorBlockTransactions[i].commitments.length; j++){
+        if (priorBlockTransactions[i].commitments[j] != ZERO) {
+          nCommitmentsPriorBlock++; // remember how many commitments are in the block
+        }
+      }
     }
 
     //calculate the number of commitments in prior block
@@ -35,7 +42,9 @@ library ChallengesUtil {
     uint l;
     for (uint i = 0; i < priorBlockTransactions.length; i++) {
       for (uint j = 0; j < priorBlockTransactions[i].commitments.length; j++)
-        commitmentsPriorBlock[l++] = priorBlockTransactions[i].commitments[j];
+        if (priorBlockTransactions[i].commitments[j] != ZERO) {
+          commitmentsPriorBlock[l++] = priorBlockTransactions[i].commitments[j];
+        }
     }
     // next check the sibling path is valid and get the Frontier
     // (bool valid, bytes32[33] memory _frontier) = getPath(commitmentsPriorBlock, frontierPriorBlock,priorBlockL2.leafCount, priorBlockL2.root);
