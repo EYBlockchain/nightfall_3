@@ -166,7 +166,11 @@ router.post('/encode', async (req, res, next) => {
     );
 
     const newTransactions = await Promise.all(
-      transactions.map(transaction => Transaction.calcHash(transaction)),
+      transactions.map(t => {
+        const transaction = t;
+        transaction.transactionHash = Transaction.calcHash(transaction);
+        return transaction;
+      }),
     );
 
     if (block.root == null) {
@@ -181,6 +185,7 @@ router.post('/encode', async (req, res, next) => {
       transactionHashes: transactions.map(transaction => transaction.transactionHash),
       root: block.root,
       leafCount: currentLeafCount,
+      nCommitments: block.nCommitments,
     });
 
     logger.debug(`New block assembled ${JSON.stringify(newBlock, null, 2)}`);

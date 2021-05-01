@@ -132,7 +132,7 @@ class Block {
       { t: 'uint64', v: block.leafCount },
       { t: 'uint64', v: block.nCommitments },
     );
-    return new Block({
+    const b = new Block({
       proposer: block.proposer,
       transactionHashes: block.transactionHashes,
       leafCount: block.leafCount,
@@ -140,6 +140,7 @@ class Block {
       root: block.root,
       blockHash,
     });
+    return b;
   }
 }
 

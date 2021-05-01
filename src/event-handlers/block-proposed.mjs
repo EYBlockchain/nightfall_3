@@ -8,16 +8,19 @@ import {
   saveBlock,
   stampNullifiers,
 } from '../services/database.mjs';
-import mappedBlock from '../event-mappers/block-proposed.mjs';
+// import mappedBlock from '../event-mappers/block-proposed.mjs';
 import { getLeafCount } from '../utils/timber.mjs';
+import getProposeBlockCalldata from '../utils/calldata.mjs';
 
 /**
 This handler runs whenever a BlockProposed event is emitted by the blockchain
 */
 const { TIMBER_SYNC_RETRIES } = config;
 async function blockProposedEventHandler(data) {
+  const { currentLeafCount } = data.returnValues;
+  const { block, transactions } = await getProposeBlockCalldata(data);
   // convert web3js' version of a struct into our node objects.
-  const { block, transactions, currentLeafCount } = mappedBlock(data);
+  // const { block, transactions, currentLeafCount } = mappedBlock(data);
 
   // Sync Optimist with Timber by checking number of leaves
   for (let i = 0; i < TIMBER_SYNC_RETRIES; i++) {
