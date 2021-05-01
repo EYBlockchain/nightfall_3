@@ -79,6 +79,7 @@ async function deposit(items) {
     `Optimistic deposit transaction ${JSON.stringify(optimisticDepositTransaction, null, 2)}`,
   );
   // and then we can create an unsigned blockchain transaction
+  const th = optimisticDepositTransaction.transactionHash;
   delete optimisticDepositTransaction.transactionHash; // we don't send this
   try {
     const rawTransaction = await shieldContractInstance.methods
@@ -86,6 +87,7 @@ async function deposit(items) {
       .encodeABI();
     // store the commitment on successful computation of the transaction
     storeCommitment(commitment);
+    optimisticDepositTransaction.transactionHash = th;
     return { rawTransaction, transaction: optimisticDepositTransaction };
   } catch (err) {
     throw new Error(err); // let the caller handle the error

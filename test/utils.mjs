@@ -142,6 +142,5 @@ export async function createBadBlock(badBlockType, block, transactions, args) {
     .request('http://localhost:8081')
     .post('/proposer/encode')
     .send({ block: badBlock, transactions: badTransactions });
-
   return { txDataToSign, block: newBlock, transactions: newTransactions };
 }

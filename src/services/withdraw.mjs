@@ -113,6 +113,7 @@ async function withdraw(items) {
     historicRoot: root,
     proof,
   });
+  const th = optimisticWithdrawTransaction.transactionHash;
   delete optimisticWithdrawTransaction.transactionHash; // we don't send this
   try {
     const rawTransaction = await shieldContractInstance.methods
@@ -120,7 +121,7 @@ async function withdraw(items) {
       .encodeABI();
     // on successful computation of the transaction mark the old commitments as nullified
     markNullified(oldCommitment);
-
+    optimisticWithdrawTransaction.transactionHash = th;
     return { rawTransaction, transaction: optimisticWithdrawTransaction };
   } catch (err) {
     throw new Error(err); // let the caller handle the error

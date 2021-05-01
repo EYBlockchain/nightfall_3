@@ -164,6 +164,7 @@ async function transfer(items) {
     historicRoot: root,
     proof,
   });
+  const th = optimisticTransferTransaction.transactionHash;
   delete optimisticTransferTransaction.transactionHash; // we don't send this
   try {
     const rawTransaction = await shieldContractInstance.methods
@@ -173,7 +174,7 @@ async function transfer(items) {
     newCommitments.map(commitment => storeCommitment(commitment)); // TODO insertMany
     // mark the old commitments as nullified
     oldCommitments.map(commitment => markNullified(commitment));
-
+    optimisticTransferTransaction.transactionHash = th;
     return { rawTransaction, transaction: optimisticTransferTransaction };
   } catch (err) {
     throw new Error(err); // let the caller handle the error
