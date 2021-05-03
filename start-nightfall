@@ -1,5 +1,5 @@
 #! /bin/bash
 docker-compose down -v
 docker-compose up -d deployer
-sleep 50
+sleep 100
 docker-compose up

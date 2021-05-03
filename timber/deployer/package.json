@@ -1,0 +1,36 @@
+{
+  "name": "deployer",
+  "version": "1.0.0",
+  "description": "Deploys an example merkle-tree contract",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon --exec babel-node ./src/index.js",
+    "test": "mocha --exit --require @babel/register 'test/*test.js'"
+  },
+  "author": "iAmMichaelConnor",
+  "license": "CC0-1.0",
+  "contributors": [
+    "Michael Connor <Michael.Connor@uk.ey.com>"
+  ],
+  "dependencies": {
+    "big-integer": "^1.6.47",
+    "body-parser": "^1.19.0",
+    "config": "^3.2.2",
+    "cors": "^2.8.5",
+    "crypto": "^1.0.1",
+    "express": "^4.17.1",
+    "jsonfile": "^5.0.0",
+    "level": "^5.0.1",
+    "request": "^2.88.0",
+    "web3": "^1.2.11"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.6.4",
+    "@babel/core": "^7.6.4",
+    "@babel/node": "^7.6.3",
+    "@babel/preset-env": "^7.6.3",
+    "@babel/register": "^7.6.2",
+    "nodemon": "^1.19.4",
+    "mocha": "^6.2.2"
+  }
+}

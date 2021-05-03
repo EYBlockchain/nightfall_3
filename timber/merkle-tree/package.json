@@ -1,0 +1,46 @@
+{
+  "name": "merkle-tree",
+  "version": "1.0.0",
+  "description": "construct and store a merkle tree from its leaves",
+  "main": "index.js",
+  "scripts": {
+    "start": "babel-node ./src/index.js",
+    "dev": "nodemon --ignore /app/build/ --exec babel-node ./src/index.js",
+    "test": "truffle test"
+  },
+  "author": "iAmMichaelConnor",
+  "license": "CC0-1.0",
+  "contributors": [
+    "Michael Connor <Michael.Connor@uk.ey.com>"
+  ],
+  "dependencies": {
+    "axios": "^0.21.1",
+    "big-integer": "^1.6.48",
+    "body-parser": "^1.19.0",
+    "config": "^3.2.2",
+    "cors": "^2.8.5",
+    "express": "^4.16.4",
+    "express-promise-router": "^3.0.3",
+    "fs-extra": "^8.1.0",
+    "hex-to-binary": "^1.0.1",
+    "jsonfile": "^5.0.0",
+    "keccak": "^2.1.0",
+    "mongoose": "^5.7.5",
+    "queue": "^6.0.2",
+    "request": "^2.88.0",
+    "safe-buffer": "^5.1.2",
+    "solc": "0.5.8",
+    "web3": "^1.3.0",
+    "winston": "^3.1.0",
+    "winston-daily-rotate-file": "^3.4.1"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.6.4",
+    "@babel/core": "^7.6.4",
+    "@babel/node": "^7.6.3",
+    "@babel/preset-env": "^7.6.3",
+    "@babel/register": "^7.6.2",
+    "nodemon": "^1.19.4",
+    "mocha": "^6.2.2"
+  }
+}
