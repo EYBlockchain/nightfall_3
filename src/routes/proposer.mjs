@@ -206,13 +206,22 @@ router.post('/encode', async (req, res, next) => {
 router.post('/transfer', async (req, res) => {
   logger.debug(`transfer endpoint received POST`);
   logger.silly(`With content ${JSON.stringify(req.body, null, 2)}`);
-  const { transactions } = req.body;
+  const { transaction } = req.body;
   try {
-    // data.returnValues.transaction
-    await transactionSubmittedEventHandler({
-      data: { returnValues: { transactions } },
-    });
-    res.sendStatus(200);
+    switch (Number(transaction.transactionType)) {
+      case 1:
+      case 2:
+      case 3: {
+        await transactionSubmittedEventHandler({
+          returnValues: { transaction },
+        });
+        res.sendStatus(200);
+        break;
+      }
+      default:
+        res.sendStatus(400);
+        break;
+    }
   } catch (err) {
     if (err instanceof TransactionError)
       logger.warn(
