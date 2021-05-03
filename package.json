@@ -1,0 +1,19 @@
+{
+  "name": "nightfall_3",
+  "version": "0.0.1",
+  "description": "Optimistic Nightfall",
+  "main": "./nightfall-client/src/index.mjs",
+  "scripts": {
+    "test": "cd ./nightfall-client && npm test && cd .."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EYBlockchain/optimistic-nightfall.git"
+  },
+  "author": "“Liju <“liju.jose.jj@gmail.com”>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/EYBlockchain/optimistic-nightfall/issues"
+  },
+  "homepage": "https://github.com/EYBlockchain/optimistic-nightfall#readme"
+}
