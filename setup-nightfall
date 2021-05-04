@@ -1,0 +1,24 @@
+#! /bin/bash
+docker-compose down -v
+
+pushd nightfall-client
+npm i
+popd
+
+pushd nightfall-deployer
+npm i
+popd
+
+pushd nightfall-optimist
+npm i
+popd
+
+pushd timber/merkle-tree
+npm i
+popd
+
+pushd zokrates-worker
+npm i
+popd
+
+docker-compose build --build-arg GPR_TOKEN=${NPM_TOKEN} --no-cache
