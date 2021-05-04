@@ -42,7 +42,7 @@ async function checkTransactionType(transaction) {
     case 0: // deposit
       if (
         transaction.publicInputHash === ZERO ||
-        (transaction.tokenId === ZERO && transaction.value === 0) ||
+        (transaction.tokenId === ZERO && Number(transaction.value) === 0) ||
         transaction.ercAddress === ZERO ||
         transaction.recipientAddress !== ZERO ||
         transaction.commitments[0] === ZERO ||
@@ -61,7 +61,7 @@ async function checkTransactionType(transaction) {
       if (
         transaction.publicInputHash === ZERO ||
         transaction.tokenId !== ZERO ||
-        transaction.value !== ZERO ||
+        Number(transaction.value) !== 0 ||
         transaction.ercAddress === ZERO ||
         transaction.recipientAddress !== ZERO ||
         transaction.commitments[0] === ZERO ||
@@ -82,7 +82,7 @@ async function checkTransactionType(transaction) {
       if (
         transaction.publicInputHash === ZERO ||
         transaction.tokenId !== ZERO ||
-        transaction.value !== ZERO ||
+        Number(transaction.value) !== 0 ||
         transaction.ercAddress === ZERO ||
         transaction.recipientAddress !== ZERO ||
         transaction.commitments.some(c => c === ZERO) ||
@@ -100,7 +100,7 @@ async function checkTransactionType(transaction) {
     case 3: // withdraw transaction
       if (
         transaction.publicInputHash === ZERO ||
-        (transaction.tokenId === ZERO && transaction.value === ZERO) ||
+        (transaction.tokenId === ZERO && Number(transaction.value) === 0) ||
         transaction.ercAddress === ZERO ||
         transaction.recipientAddress === ZERO ||
         transaction.commitments.some(c => c !== ZERO) ||
