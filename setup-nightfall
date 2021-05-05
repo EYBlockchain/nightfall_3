@@ -1,23 +1,10 @@
 #! /bin/bash
-docker-compose down -v
 
+# Install node dependencies 
+npm i
+
+# Install node dependencies of nightfall-client
 pushd nightfall-client
-npm i
-popd
-
-pushd nightfall-deployer
-npm i
-popd
-
-pushd nightfall-optimist
-npm i
-popd
-
-pushd timber/merkle-tree
-npm i
-popd
-
-pushd zokrates-worker
 npm i
 popd
 
