@@ -17,11 +17,7 @@ contract Structures {
 
   event BlockDeleted(bytes32 indexed blockHash);
 
-  event BlockProposed(
-    Block block,
-    Transaction[] transactions,
-    uint currentLeafCount
-  );
+  event BlockProposed(uint currentLeafCount);
 
   event TransactionSubmitted(
     Transaction transaction
@@ -47,18 +43,17 @@ contract Structures {
   // will hold default values for any specific tranaction, e.g. there are no
   // nullifiers for a Deposit transaction.
   struct Transaction {
-    bytes32 transactionHash;
-    uint fee;
+    uint64 fee;
+    uint64 value;
     TransactionTypes transactionType;
     bytes32 publicInputHash;
     bytes32 tokenId;
-    bytes32 value;
     bytes32 ercAddress;
     bytes32 recipientAddress;
-    bytes32[] commitments;
-    bytes32[] nullifiers;
+    bytes32[2] commitments;
+    bytes32[2] nullifiers;
     bytes32 historicRoot; // the root (if any) used to create the proof
-    uint[] proof;
+    uint[8] proof;
   }
 
   struct Block {
@@ -66,7 +61,8 @@ contract Structures {
     address proposer;
     bytes32[] transactionHashes; // TODO this could be a merkle root
     bytes32 root; // the 'output' commmitment root after adding all commitments
-    uint leafCount;
+    uint64 leafCount;
+    uint64 nCommitments;
   }
 
   struct LinkedHash {

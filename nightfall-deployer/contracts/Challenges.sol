@@ -87,15 +87,15 @@ contract Challenges is Proposers, Key_Registry {
   }
 
   function challengeProofVerification(
-    Block memory block,
+    Block memory blockL2,
     Transaction memory transaction,
     uint transactionIndex,
     bytes32 salt
     ) external {
       checkCommit(msg.data, salt);
-      isBlockReal(block);
-      ChallengesUtil.libChallengeProofVerification(block, transaction, transactionIndex, vks[transaction.transactionType]);
-      challengeAccepted(block);
+      isBlockReal(blockL2);
+      ChallengesUtil.libChallengeProofVerification(blockL2, transaction, transactionIndex, vks[transaction.transactionType]);
+      challengeAccepted(blockL2);
   }
 
   /*

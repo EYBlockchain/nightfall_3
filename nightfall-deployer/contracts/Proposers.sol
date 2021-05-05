@@ -42,7 +42,7 @@ contract Proposers is Structures, Config {
   * Allows a Proposer to propose a new block of state updates.
   * @param b the block being proposed.
   */
-  function proposeBlock(Block memory b, Transaction[] memory t) external payable onlyCurrentProposer() {
+  function proposeBlock(Block calldata b, Transaction[] calldata t) external payable onlyCurrentProposer() {
     require(BLOCK_STAKE == msg.value, 'The stake payment is incorrect');
     // We need to check that the block has correctly stored its leaf count. This
     // is needed in case of a roll-back of a bad block, but cannot be checked by
@@ -53,21 +53,13 @@ contract Proposers is Structures, Config {
     // computation; the on-chain code doesn't save the pre-image of the hash so
     // it can't tell if it's been given the correct one as part of a challenge.
     require(b.blockHash == Utils.hashBlock(b), 'The block hash is incorrect');
-    // Ensure that Transction[] doesn't have more txs than block because these tx hashes
-    // will be added to merkle tree even though they are not in the block
-    require(b.transactionHashes.length == t.length, 'The block and transaction have unequal number of transactions');
-    // likewise the transaction hashes
-    uint nCommitments; // number of commitments, used in NewLeaves/NewLeaf event
-    for (uint i = 0; i < b.transactionHashes.length; i++) {
+
+    for (uint i = 0; i < t.length; i++) {
       // make sure the Transactions are in the Block
       require(
         b.transactionHashes[i] == Utils.hashTransaction(t[i]),
         'Transaction hash was not found'
       );
-      // remember how many commitments are in the block, this is needed later
-      if(t[i].transactionType != Structures.TransactionTypes.WITHDRAW){
-        nCommitments += t[i].commitments.length;
-      }
     }
     // All check pass so add the block to the list of blocks waiting to be permanently added to the state - we only save the hash of the block data plus the absolute minimum of metadata - it's up to the challenger, or person requesting inclusion of the block to the permanent contract state, to provide the block data.
     blockHashes[b.blockHash] = LinkedHash({
@@ -81,14 +73,14 @@ contract Proposers is Structures, Config {
     // now we need to emit all the leafValues (commitments) in this block so
     // any listening Timber instances can update their offchain DBs.
     // The first job is to assembly an array of all the leafValues in the block
-    bytes32[] memory leafValues = new bytes32[](nCommitments);
+    bytes32[] memory leafValues = new bytes32[](b.nCommitments);
     uint k;
     for (uint i = 0; i < t.length; i++) {
       for (uint j = 0; j < t[i].commitments.length; j++){
-        if(t[i].transactionType != Structures.TransactionTypes.WITHDRAW){
+        if(t[i].commitments[j] != ZERO){  // don't add zero values
           leafValues[k++] = t[i].commitments[j];
         }
-      }       
+      }
     }
     // signal to Timber that new leaves may need to be added to the Merkle tree.
     // It's possible that these will be successfully challenged over the next
@@ -98,14 +90,14 @@ contract Proposers is Structures, Config {
     // has elapsed.  This would take more gas because of the need to make a
     // a blockchain transaction to call a 'check week is up and then emit
     // events' function
-    if (nCommitments == 1)
+    if (b.nCommitments == 1)
       emit NewLeaf(leafCount, leafValues[0], b.root);
-    else if (nCommitments !=0)
+    else if (b.nCommitments !=0)
       emit NewLeaves(leafCount, leafValues, b.root);
     // remember how many leaves the Merkle tree has (Timber needs this to check
     // that it hasn't missed any leaf additions)
-    leafCount += nCommitments;
-    emit BlockProposed(b, t, leafCount);
+    leafCount += b.nCommitments;
+    emit BlockProposed(leafCount);
   }
 
   //add the proposer to the circular linked list

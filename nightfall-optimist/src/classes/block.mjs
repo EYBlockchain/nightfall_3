@@ -27,18 +27,21 @@ class Block {
 
   blockHash; // null value as explained above
 
+  nCommitments; // number of commitments in the block
+
   static localLeafCount = 0; // ensure this is less than Timber to start with
 
   static localFrontier = [];
 
   constructor(asyncParams) {
     if (asyncParams === undefined) throw new Error('Cannot be called directly');
-    const { proposer, transactionHashes, leafCount, root, blockHash } = asyncParams;
+    const { proposer, transactionHashes, leafCount, root, blockHash, nCommitments } = asyncParams;
     this.leafCount = leafCount;
     this.proposer = proposer;
     this.transactionHashes = transactionHashes;
     this.root = root;
     this.blockHash = blockHash;
+    this.nCommitments = nCommitments;
   }
 
   // computes the root and hash. We use a Builder pattern because it's very
@@ -76,6 +79,7 @@ class Block {
     const leafValues = transactions
       .map(transaction => transaction.commitments.filter(c => c !== ZERO))
       .flat(Infinity);
+    const nCommitments = leafValues.length;
     // compute the root using Timber's code
     const { root, newFrontier } = await updateNodes(leafValues, currentLeafCount, frontier);
     const leafCount = currentLeafCount || 0;
@@ -88,9 +92,17 @@ class Block {
       { t: 'address', v: proposer },
       ...transactionHashes.map(th => ({ t: 'bytes32', v: th })),
       { t: 'bytes32', v: root },
-      { t: 'uint', v: leafCount },
+      { t: 'uint64', v: leafCount },
+      { t: 'uint64', v: nCommitments },
     );
-    return new Block({ proposer, transactionHashes, leafCount, root, blockHash });
+    return new Block({
+      proposer,
+      transactionHashes,
+      leafCount,
+      root,
+      blockHash,
+      nCommitments,
+    });
   }
 
   // we cache the leafCount in case Timber isn't up to date, however we
@@ -117,15 +129,18 @@ class Block {
       { t: 'address', v: block.proposer },
       ...block.transactionHashes.map(th => ({ t: 'bytes32', v: th })),
       { t: 'bytes32', v: block.root },
-      { t: 'uint', v: block.leafCount },
+      { t: 'uint64', v: block.leafCount },
+      { t: 'uint64', v: block.nCommitments },
     );
-    return new Block({
+    const b = new Block({
       proposer: block.proposer,
       transactionHashes: block.transactionHashes,
       leafCount: block.leafCount,
+      nCommitments: block.nCommitments,
       root: block.root,
       blockHash,
     });
+    return b;
   }
 }
 

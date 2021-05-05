@@ -4,7 +4,7 @@
   "description": "Optimistic Nightfall",
   "main": "./nightfall-client/src/index.mjs",
   "scripts": {
-    "test": "cd ./nightfall-client && npm test && cd .."
+    "test": "mocha ./nightfall-client/test --timeout 0 --bail"
   },
   "repository": {
     "type": "git",
@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/EYBlockchain/optimistic-nightfall/issues"
   },
-  "homepage": "https://github.com/EYBlockchain/optimistic-nightfall#readme"
+  "homepage": "https://github.com/EYBlockchain/optimistic-nightfall#readme",
+  "devDependencies": {
+    "mocha": "^8.3.2"
+  }
 }

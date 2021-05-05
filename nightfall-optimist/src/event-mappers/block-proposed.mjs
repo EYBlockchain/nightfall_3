@@ -1,6 +1,7 @@
 /**
 Turns the slightly odd object/class/thing returned in a transaction-submitted event into a true Block
 */
+import Transaction from '../classes/transaction.mjs';
 
 function mappedData(data) {
   const {
@@ -12,7 +13,6 @@ function mappedData(data) {
   const block = { proposer, transactionHashes, root, blockHash, leafCount: Number(leafCount) };
   const transactions = unMappedTransactions.map(u => {
     const {
-      transactionHash,
       fee,
       transactionType,
       publicInputHash,
@@ -26,7 +26,6 @@ function mappedData(data) {
       proof,
     } = u;
     const transaction = {
-      transactionHash,
       fee,
       transactionType,
       publicInputHash,
@@ -39,6 +38,7 @@ function mappedData(data) {
       historicRoot,
       proof,
     };
+    transaction.transactionHash = Transaction.calcHash(transaction);
     return transaction;
   });
   return { block, transactions, currentLeafCount };

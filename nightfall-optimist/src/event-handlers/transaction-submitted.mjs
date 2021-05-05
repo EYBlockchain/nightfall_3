@@ -12,7 +12,7 @@ This handler runs whenever a new transaction is submitted to the blockchain
 */
 async function transactionSubmittedEventHandler(data) {
   const transaction = mappedTransaction(data);
-  logger.info(`Transaction Handler - New transaction submitted.`);
+  logger.info(`Transaction Handler - New transaction received.`);
   logger.debug(`Transaction was ${JSON.stringify(transaction, null, 2)}`);
   // check that this is a valid transaction before we incorporate it into our
   // mempool
