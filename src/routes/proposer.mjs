@@ -17,7 +17,7 @@ import mt from '../utils/crypto/merkle-tree/merkle-tree.mjs';
 const { updateNodes } = mt;
 
 const router = express.Router();
-const { CHALLENGES_CONTRACT_NAME } = config;
+const { CHALLENGES_CONTRACT_NAME, ZERO } = config;
 
 /**
  * Function to return a raw transaction that registers a proposer.  This just
@@ -176,7 +176,7 @@ router.post('/encode', async (req, res, next) => {
     if (block.root == null) {
       const frontier = await getFrontier();
       const leafValues = newTransactions
-        .map(newTransaction => newTransaction.commitments)
+        .map(newTransaction => newTransaction.commitments.filter(c => c !== ZERO))
         .flat(Infinity);
       block.root = (await updateNodes(leafValues, currentLeafCount, frontier)).root;
     }
