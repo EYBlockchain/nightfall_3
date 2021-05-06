@@ -42,7 +42,7 @@ async function checkBlock(block, transactions) {
 
   // Check nullifiers for duplicates that have already been mined.
   const storedMinedNullifiers = await retrieveMinedNullifiers(); // List of Nullifiers stored by blockProposer
-  const blockNullifiers = transactions.map(tNull => tNull.nullifiers.toString()); // List of Nullifiers in block
+  const blockNullifiers = transactions.map(tNull => tNull.nullifiers).flat(Infinity); // List of Nullifiers in block
   const alreadyMinedNullifiers = storedMinedNullifiers.filter(sNull =>
     blockNullifiers.includes(sNull.hash),
   );

@@ -159,7 +159,7 @@ export async function createChallenge(block, transactions, err) {
       // Challenge Duplicate Nullfier
       case 5: {
         const storedMinedNullifiers = await retrieveMinedNullifiers(); // List of Nullifiers stored by blockProposer
-        const blockNullifiers = transactions.map(tNull => tNull.nullifiers.toString()); // List of Nullifiers in block
+        const blockNullifiers = transactions.map(tNull => tNull.nullifiers).flat(Infinity); // List of Nullifiers in block
         const alreadyMinedNullifiers = storedMinedNullifiers.filter(sNull =>
           blockNullifiers.includes(sNull.hash),
         );
