@@ -17,7 +17,7 @@ contract Proposers is Structures, Config {
   mapping(address => uint) public pendingWithdrawals;
   mapping(bytes32 => LinkedHash) public blockHashes; //linked list of block hashes
   mapping(address => LinkedAddress) public proposers;
-  bytes32 endHash; // holds the hash at the end of the linked list of block hashes, so that we can pick up the end.
+  bytes32 public endHash; // holds the hash at the end of the linked list of block hashes, so that we can pick up the end.
 
   modifier onlyCurrentProposer() { // Modifier
     require(msg.sender == currentProposer.thisAddress, "Only the current proposer can call this.");
