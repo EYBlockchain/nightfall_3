@@ -174,6 +174,26 @@ export const getLeafCount = async () => {
   }
 };
 
+export const callTimberHandler = async data => {
+  try {
+    logger.http(`Calling /replayEvent for Timber`);
+    const response = await axios.post(
+      `${url}/replayEvent`,
+      {
+        contractName,
+        eventData: data,
+      },
+      {
+        timeout: 3600000,
+      },
+    );
+    logger.http('Timber Response:', response.data.data);
+    return response.data.data;
+  } catch (error) {
+    throw new Error(error);
+  }
+};
+
 export default {
   getLeafIndex,
   getRoot,

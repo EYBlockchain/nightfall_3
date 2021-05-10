@@ -18,6 +18,7 @@ import Commitment from '../classes/commitment.mjs';
 import PublicInputs from '../classes/public-inputs.mjs';
 import { getSiblingPath } from '../utils/timber.mjs';
 import Transaction from '../classes/transaction.mjs';
+import { discoverPeers } from './peers.mjs';
 
 const {
   BN128_PRIME,
@@ -31,9 +32,10 @@ const {
 } = config;
 const { generalise, GN } = gen;
 
-async function transfer(items) {
+async function transfer(transferParams) {
   logger.info('Creating a transfer transaction');
   // let's extract the input items
+  const { offchain = false, ...items } = transferParams;
   const { ercAddress, tokenId, recipientData, senderZkpPrivateKey, fee } = generalise(items);
   const { recipientZkpPublicKeys, values } = recipientData;
   const senderZkpPublicKey = sha256([senderZkpPrivateKey]);
@@ -167,6 +169,25 @@ async function transfer(items) {
   const th = optimisticTransferTransaction.transactionHash;
   delete optimisticTransferTransaction.transactionHash; // we don't send this
   try {
+    if (offchain) {
+      // dig up connection peers
+      const peerList = await discoverPeers('Local');
+      Object.keys(peerList).forEach(async address => {
+        await axios
+          .post(
+            `${peerList[address]}/proposer/transfer`,
+            { transaction: optimisticTransferTransaction },
+            { timeout: 3600000 },
+          )
+          .catch(err => {
+            throw new Error(err);
+          });
+      });
+      newCommitments.map(commitment => storeCommitment(commitment)); // TODO insertMany
+      // mark the old commitments as nullified
+      oldCommitments.map(commitment => markNullified(commitment));
+      return { transaction: optimisticTransferTransaction };
+    }
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(optimisticTransferTransaction)
       .encodeABI();

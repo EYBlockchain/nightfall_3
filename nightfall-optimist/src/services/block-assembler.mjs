@@ -11,7 +11,6 @@ import {
 import Block from '../classes/block.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import logger from '../utils/logger.mjs';
-import { getContractAddress } from '../utils/contract.mjs';
 
 const { TRANSACTIONS_PER_BLOCK, CHALLENGES_CONTRACT_NAME } = config;
 let makeBlocks = true;
@@ -101,7 +100,7 @@ export async function conditionalMakeBlock(proposer) {
       // Wait until it is proposed to the blockchain before we make any more:
       //    logger.info('Block Assembler - Waiting until block is proposed before making any more');
       //    while (!isBlockProposed(block.blockHash)) {
-      //await new Promise(resolve => setTimeout(resolve, 1000));
+      // await new Promise(resolve => setTimeout(resolve, 1000));
       // we only get so long to propose this block.  Once we're no-longer the
       // current proposer, we've missed our chance
       //        if (!proposer.isMe) {

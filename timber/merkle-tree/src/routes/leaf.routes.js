@@ -4,10 +4,15 @@
  * @desc leaf.routes.js gives api endpoints to access the functions of the merkle-tree microservice
  */
 
+import config from 'config';
 import { LeafService, MetadataService } from '../db/service';
 import merkleTreeController from '../merkle-tree-controller';
 import logger from '../logger';
+import { responseFunctions } from '../filter-controller';
+import DB from '../db/mongodb/db';
+import adminDbConnection from '../db/common/adminDbConnection';
 
+const { admin } = config.get('mongo');
 /**
  * Add a new leaf to the tree's 'nodes' db.
  * req.body {
@@ -214,6 +219,27 @@ async function countLeaves(req, res, next) {
   }
 }
 
+async function replayEvent(req, res, next) {
+  logger.debug('src/routes/leaf.routes replayEvent()');
+  logger.silly(`req.body: ${req.body}`);
+  try {
+    const { eventData, contractName } = req.body;
+    const { event } = eventData;
+    // eslint-disable-next-line prefer-destructuring
+    const treeId = config.contracts[contractName].treeId;
+    const connection = adminDbConnection;
+    const db = new DB(connection, admin, contractName, treeId);
+    const responseFunction = responseFunctions[event];
+    const responseFunctionArgs = { db, contractName, event, treeId };
+    await responseFunction({ eventData }, responseFunctionArgs);
+    res.data = { event };
+    next();
+  } catch (err) {
+    logger.info(err);
+    next(err);
+  }
+}
+
 // initializing routes
 export default router => {
   // LEAF ROUTES
@@ -234,4 +260,5 @@ export default router => {
 
   router.route('/leaves/check').get(checkLeaves);
   router.route('/leaves/count').get(countLeaves);
+  router.route('/replayEvent').post(replayEvent);
 };

@@ -16,6 +16,7 @@ import Nullifier from '../classes/nullifier.mjs';
 import PublicInputs from '../classes/public-inputs.mjs';
 import { getSiblingPath } from '../utils/timber.mjs';
 import Transaction from '../classes/transaction.mjs';
+import { discoverPeers } from './peers.mjs';
 
 const {
   BN128_PRIME,
@@ -28,9 +29,10 @@ const {
 } = config;
 const { generalise } = gen;
 
-async function withdraw(items) {
+async function withdraw(transferParams) {
   logger.info('Creating a withdraw transaction');
   // let's extract the input items
+  const { offchain = false, ...items } = transferParams;
   const { ercAddress, tokenId, value, recipientAddress, senderZkpPrivateKey, fee } = generalise(
     items,
   );
@@ -116,6 +118,23 @@ async function withdraw(items) {
   const th = optimisticWithdrawTransaction.transactionHash;
   delete optimisticWithdrawTransaction.transactionHash; // we don't send this
   try {
+    if (offchain) {
+      const peerList = await discoverPeers('Local');
+      Object.keys(peerList).forEach(async address => {
+        await axios
+          .post(
+            `${peerList[address]}/proposer/transfer`,
+            { transaction: optimisticWithdrawTransaction },
+            { timeout: 3600000 },
+          )
+          .catch(err => {
+            throw new Error(err);
+          });
+      });
+      markNullified(oldCommitment);
+      optimisticWithdrawTransaction.transactionHash = th;
+      return { transaction: optimisticWithdrawTransaction };
+    }
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(optimisticWithdrawTransaction)
       .encodeABI();

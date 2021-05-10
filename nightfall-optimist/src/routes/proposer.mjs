@@ -13,11 +13,12 @@ import { waitForContract } from '../event-handlers/subscribe.mjs';
 import Transaction from '../classes/transaction.mjs';
 import { getFrontier } from '../utils/timber.mjs';
 import mt from '../utils/crypto/merkle-tree/merkle-tree.mjs';
+import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
+import TransactionError from '../classes/transaction-error.mjs';
 
 const { updateNodes } = mt;
-
 const router = express.Router();
-const { CHALLENGES_CONTRACT_NAME } = config;
+const { CHALLENGES_CONTRACT_NAME, ZERO } = config;
 
 /**
  * Function to return a raw transaction that registers a proposer.  This just
@@ -176,7 +177,7 @@ router.post('/encode', async (req, res, next) => {
     if (block.root == null) {
       const frontier = await getFrontier();
       const leafValues = newTransactions
-        .map(newTransaction => newTransaction.commitments)
+        .map(newTransaction => newTransaction.commitments.filter(c => c !== ZERO))
         .flat(Infinity);
       block.root = (await updateNodes(leafValues, currentLeafCount, frontier)).root;
     }
@@ -199,6 +200,35 @@ router.post('/encode', async (req, res, next) => {
   } catch (err) {
     logger.error(err);
     next(err);
+  }
+});
+
+router.post('/transfer', async (req, res) => {
+  logger.debug(`transfer endpoint received POST`);
+  logger.silly(`With content ${JSON.stringify(req.body, null, 2)}`);
+  const { transaction } = req.body;
+  try {
+    switch (Number(transaction.transactionType)) {
+      case 1:
+      case 2:
+      case 3: {
+        await transactionSubmittedEventHandler({
+          returnValues: { transaction },
+        });
+        res.sendStatus(200);
+        break;
+      }
+      default:
+        res.sendStatus(400);
+        break;
+    }
+  } catch (err) {
+    if (err instanceof TransactionError)
+      logger.warn(
+        `The transaction check failed with error: ${err.message}. The transaction has been ignored`,
+      );
+    else logger.error(err.message);
+    res.sendStatus(400);
   }
 });
 

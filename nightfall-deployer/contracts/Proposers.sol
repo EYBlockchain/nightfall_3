@@ -11,13 +11,13 @@ import './Structures.sol';
 
 contract Proposers is Structures, Config {
 
-  LinkedAddress currentProposer; // can propose a new shield state
+  LinkedAddress public currentProposer; // can propose a new shield state
   uint proposerStartBlock; // L1 block where currentProposer became current
   uint public leafCount; // number of leaves in the Merkle treeWidth
   mapping(address => uint) public pendingWithdrawals;
   mapping(bytes32 => LinkedHash) public blockHashes; //linked list of block hashes
   mapping(address => LinkedAddress) public proposers;
-  bytes32 endHash; // holds the hash at the end of the linked list of block hashes, so that we can pick up the end.
+  bytes32 public endHash; // holds the hash at the end of the linked list of block hashes, so that we can pick up the end.
 
   modifier onlyCurrentProposer() { // Modifier
     require(msg.sender == currentProposer.thisAddress, "Only the current proposer can call this.");

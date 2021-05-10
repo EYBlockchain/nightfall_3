@@ -198,7 +198,7 @@ Naming convention:
   eventName: eventNameResponseFunction
 }
 */
-const responseFunctions = {
+export const responseFunctions = {
   NewLeaf: newLeafResponseFunction,
   NewLeaves: newLeavesResponseFunction,
   Rollback: rollbackResponseFunction,

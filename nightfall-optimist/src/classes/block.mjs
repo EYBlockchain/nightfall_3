@@ -69,6 +69,9 @@ class Block {
     if (currentLeafCount >= this.localLeafCount) {
       // looks like Timber is up to date so use Timber values
       frontier = await getFrontier();
+      // Update localLeafCount instead of relying on the incrementing below
+      // in case we are joining the network midway.
+      this.localLeafCount = currentLeafCount;
     } else {
       // Timber appears to be behind, so us locally stored values
       frontier = this.localFrontier;

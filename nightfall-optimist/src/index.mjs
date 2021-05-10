@@ -20,21 +20,27 @@ import {
   setBlockAssembledWebSocketConnection,
 } from './services/block-assembler.mjs';
 import { setChallengeWebSocketConnection } from './services/challenges.mjs';
+import { initialBlockSync } from './services/state-sync.mjs';
 
 const main = async () => {
   try {
     const proposer = new Proposer();
+    // subscribe to WebSocket events first
+    await subscribeToBlockAssembledWebSocketConnection(setBlockAssembledWebSocketConnection);
+    await subscribeToChallengeWebSocketConnection(setChallengeWebSocketConnection);
+    // try to sync any missing blockchain state
+    // only then start making blocks and listening to new proposers
+    initialBlockSync(proposer).then(() => {
+      subscribeToNewCurrentProposer(newCurrentProposerEventHandler, proposer);
+      conditionalMakeBlock(proposer);
+    });
+    // we do not wait for the initial block sync for these event handlers
+    // as we want to still listen to incoming events (just not make blocks)
     // subscribe to blockchain events
     subscribeToBlockProposedEvent(blockProposedEventHandler);
-    subscribeToNewCurrentProposer(newCurrentProposerEventHandler, proposer);
     subscribeToTransactionSubmitted(transactionSubmittedEventHandler);
     subscribeToBlockDeletedEventHandler(blockDeletedEventHandler);
     subscribeTocommittedToChallengeEventHandler(committedToChallengeEventHandler);
-    // subscribe to WebSocket events
-    subscribeToBlockAssembledWebSocketConnection(setBlockAssembledWebSocketConnection);
-    subscribeToChallengeWebSocketConnection(setChallengeWebSocketConnection);
-    // start making blocks whenever we can
-    conditionalMakeBlock(proposer);
     app.listen(80);
   } catch (err) {
     logger.error(err);
