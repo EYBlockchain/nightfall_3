@@ -1,10 +1,10 @@
-export default function({
+export default ({
   contractAddress,
   contractInterface,
   treeHeight,
   latestRecalculation,
   latestLeaf,
-}) {
+}) => {
   return {
     ...(contractAddress && { contractAddress }),
     ...(contractInterface && { contractInterface }),
@@ -12,4 +12,4 @@ export default function({
     ...(latestRecalculation && { latestRecalculation }),
     ...(latestLeaf && { latestLeaf }),
   };
-}
+};

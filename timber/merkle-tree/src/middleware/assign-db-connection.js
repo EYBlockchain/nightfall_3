@@ -5,7 +5,7 @@ import logger from '../logger';
 
 const { admin } = config.get('mongo');
 
-export default async function(req, res, next) {
+export default async (req, res, next) => {
   logger.debug('src/middleware/assign-db-connection');
   logger.silly(
     `req.query: ${JSON.stringify(req.query, null, 2)}, req.body: ${JSON.stringify(
@@ -38,4 +38,4 @@ export default async function(req, res, next) {
     logger.error(err);
     return next(err);
   }
-}
+};

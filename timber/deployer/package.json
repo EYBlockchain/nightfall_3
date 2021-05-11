@@ -20,8 +20,10 @@
     "crypto": "^1.0.1",
     "express": "^4.17.1",
     "jsonfile": "^5.0.0",
+    "keccak": "^3.0.1",
     "level": "^5.0.1",
     "request": "^2.88.0",
+    "safe-buffer": "^5.2.1",
     "web3": "^1.2.11"
   },
   "devDependencies": {

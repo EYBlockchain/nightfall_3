@@ -20,7 +20,7 @@ const web3 = Web3.connect();
 Gets a web3 instance of a contract from some external contract deployment microservice (a.k.a. 'deployer') and assembles a contract instance
 @returns {false | object} Polling functions MUST return FALSE if the poll is unsuccessful. Otherwise we return the MerkleTree.sol contract instance.
 */
-const getContractInstancePollingFunction = async args => {
+const getContractInstancePollingFunction = async (args) => {
   try {
     const { contractName } = args;
     const contractInstance = await deployerRest.getContractInstance(contractName);

@@ -13,7 +13,7 @@ const contractName = config.contractNames[1];
 let contractInstance;
 let coinbase;
 
-const numberOfBatches = 1;
+// const numberOfBatches = 1;
 const batchSize = 16;
 
 describe(`${contractName}`, async () => {
@@ -33,7 +33,7 @@ describe(`${contractName}`, async () => {
   });
 
   // eslint-disable-next-line func-names
-  describe(`adding leaves (one-at-a-time) via ${contractName}`, async function() {
+  describe(`adding leaves (one-at-a-time) via ${contractName}`, async function () {
     this.timeout(3660000); // surprisingly, this.timeout() doesn't work inside an arrow function!
 
     // console.log('in config', config.contractNames, config.HASH_TYPE);
@@ -59,7 +59,7 @@ describe(`${contractName}`, async () => {
             gasPrice: config.web3.options.defaultGasPrice,
           })
           // eslint-disable-next-line no-loop-func
-          .on('receipt', receipt => {
+          .on('receipt', (receipt) => {
             const { leafIndex, leafValue, root } = receipt.events.NewLeafA.returnValues;
             console.log('NewLeaf A event returnValues:', leafIndex, leafValue, root);
 
@@ -80,7 +80,7 @@ describe(`${contractName}`, async () => {
             gasPrice: config.web3.options.defaultGasPrice,
           })
           // eslint-disable-next-line no-loop-func
-          .on('receipt', receipt => {
+          .on('receipt', (receipt) => {
             const { leafIndex, leafValue, root } = receipt.events.NewLeafB.returnValues;
             console.log('NewLeaf B event returnValues:', leafIndex, leafValue, root);
 
@@ -119,7 +119,7 @@ describe(`${contractName}`, async () => {
   });
 
   // eslint-disable-next-line func-names
-  describe(`Adding ${batchSize} leaves at once`, async function() {
+  describe(`Adding ${batchSize} leaves at once`, async function () {
     this.timeout(3660000); // surprisingly, this.timeout() doesn't work inside an arrow function!
 
     const gasUsedArray = [];
@@ -143,7 +143,7 @@ describe(`${contractName}`, async () => {
           gasPrice: config.web3.options.defaultGasPrice,
         })
         // eslint-disable-next-line no-loop-func
-        .on('receipt', receipt => {
+        .on('receipt', (receipt) => {
           const { minLeafIndex, leafValues, root } = receipt.events.NewLeavesA.returnValues;
 
           console.log('NewLeaves A event returnValues:', minLeafIndex, leafValues, root);
@@ -160,7 +160,7 @@ describe(`${contractName}`, async () => {
           gasPrice: config.web3.options.defaultGasPrice,
         })
         // eslint-disable-next-line no-loop-func
-        .on('receipt', receipt => {
+        .on('receipt', (receipt) => {
           const { minLeafIndex, leafValues, root } = receipt.events.NewLeavesB.returnValues;
 
           console.log('NewLeaves B event returnValues:', minLeafIndex, leafValues, root);

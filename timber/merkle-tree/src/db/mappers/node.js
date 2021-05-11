@@ -1,7 +1,7 @@
 // This 'node' mapper differs from the 'leaf' mapper.
-export default function({ value, nodeIndex }) {
+export default ({ value, nodeIndex }) => {
   return {
     value,
     nodeIndex,
   };
-}
+};

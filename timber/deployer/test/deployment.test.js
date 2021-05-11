@@ -44,7 +44,7 @@ describe('Main test', async () => {
   let rootBulk; // the root after adding the leaves (to a new instance of the tree) in bulk.
 
   // eslint-disable-next-line func-names
-  describe(`adding ${n} leaves one-at-a-time`, async function() {
+  describe(`adding ${n} leaves one-at-a-time`, async function () {
     this.timeout(3660000); // surprisingly, this.timeout() doesn't work inside an arrow function!
 
     const gasUsedArray = [];
@@ -68,7 +68,7 @@ describe('Main test', async () => {
             gasPrice: config.web3.options.defaultGasPrice,
           })
           // eslint-disable-next-line no-loop-func
-          .on('receipt', receipt => {
+          .on('receipt', (receipt) => {
             const { leafIndex, leafValue, root } = receipt.events.NewLeaf.returnValues;
             console.log('NewLeaf:', leafIndex, leafValue, root);
 
@@ -99,7 +99,7 @@ describe('Main test', async () => {
   });
 
   // eslint-disable-next-line func-names
-  describe(`Adding ${batchSize} leaves at once`, async function() {
+  describe(`Adding ${batchSize} leaves at once`, async function () {
     this.timeout(3660000); // surprisingly, this.timeout() doesn't work inside an arrow function!
 
     const gasUsedArray = [];
@@ -123,7 +123,7 @@ describe('Main test', async () => {
           gasPrice: config.web3.options.defaultGasPrice,
         })
         // eslint-disable-next-line no-loop-func
-        .on('receipt', receipt => {
+        .on('receipt', (receipt) => {
           const { minLeafIndex, leafValues, root } = receipt.events.NewLeaves.returnValues;
           console.log(minLeafIndex, leafValues, root);
 
@@ -146,8 +146,10 @@ describe('Main test', async () => {
     });
   });
 
-  // eslint-disable-next-line func-names
-  describe(`Adding ${numberOfBatches * batchSize} leaves in batches of ${batchSize}`, async function() {
+  /* eslint-disable */
+  describe(`Adding ${numberOfBatches * batchSize}
+    leaves in batches of ${batchSize}`, async function () {
+    /* eslint-enable */
     this.timeout(3660000); // surprisingly, this.timeout() doesn't work inside an arrow function!
 
     const numberOfLeaves = numberOfBatches * batchSize;
@@ -175,7 +177,7 @@ describe('Main test', async () => {
             gasPrice: config.web3.options.defaultGasPrice,
           })
           // eslint-disable-next-line no-loop-func
-          .on('receipt', receipt => {
+          .on('receipt', (receipt) => {
             const { minLeafIndex, leafValues, root } = receipt.events.NewLeaves.returnValues;
 
             console.log('NewLeaves event returnValues:', minLeafIndex, leafValues, root);
@@ -201,7 +203,7 @@ describe('Main test', async () => {
   });
 
   // eslint-disable-next-line func-names
-  describe(`Having added ${batchSize} leaves in two different ways...`, async function() {
+  describe(`Having added ${batchSize} leaves in two different ways...`, async () => {
     it(`Should yield the same merkle root both times`, async () => {
       console.log('rootOneAtATime', rootOneAtATime);
       console.log('rootBulk', rootBulk);

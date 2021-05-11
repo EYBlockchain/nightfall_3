@@ -52,7 +52,7 @@ const rollbackResponseFunction = async (eventObject, args) => {
   }
   */
   const eventInstance = {};
-  eventParams.forEach(param => {
+  eventParams.forEach((param) => {
     eventInstance[param] = eventData.returnValues[param];
   });
   logger.silly(`eventInstance: ${JSON.stringify(eventInstance, null, 2)}`);
@@ -97,7 +97,7 @@ const newLeafResponseFunction = async (eventObject, args) => {
   }
   */
   const eventInstance = {};
-  eventParams.forEach(param => {
+  eventParams.forEach((param) => {
     eventInstance[param] = eventData.returnValues[param];
   });
   logger.silly(`eventInstance: ${JSON.stringify(eventInstance, null, 2)}`);
@@ -148,7 +148,7 @@ const newLeavesResponseFunction = async (eventObject, args) => {
   }
   */
   const eventInstance = {};
-  eventParams.forEach(param => {
+  eventParams.forEach((param) => {
     eventInstance[param] = eventData.returnValues[param];
   });
   logger.silly(`eventInstance: ${JSON.stringify(eventInstance, null, 2)}`);
@@ -186,7 +186,7 @@ const newEventResponder = async (eventObject, responseFunction, responseFunction
 
   // we can push to a queue here to buffer the events during a rollback
   // the items in the queue will execute until it's empty or we stop it
-  queue.push(cb => {
+  queue.push((cb) => {
     responseFunction(eventObject, responseFunctionArgs).then(() => cb());
   }); // we don't need to await this
 };
@@ -241,7 +241,7 @@ async function filterBlock(db, contractName, contractInstance, fromBlock, treeId
     await metadataService.updateLatestRecalculation({ latestRecalculation });
   }
 
-  eventNames.forEach(async eventName => {
+  eventNames.forEach(async (eventName) => {
     const responder = newEventResponder;
     const responseFunction = responseFunctions[eventName];
     const responseFunctionArgs = { db, contractName, eventName, treeId };
@@ -325,15 +325,15 @@ then these functions will want to hang on for a bit.  Hence this function:
 */
 function waitForUpdatesToComplete() {
   return new Promise((resolve, reject) => {
-//    queue.once('end', () => {
-//      logger.debug('queue emptied');
-//      resolve();
-//    });
+    // queue.once('end', () => {
+    // logger.debug('queue emptied');
+    //    resolve();
+    // });
     // we'll push in this dummy function. This ensures that there is at least
     // one function in the queue, when it clear the queue, the 'end' event will
     // fire.  You'd think you could use queue.length == 0 as a test but that
     // doesn't seem to work.
-    queue.push(cb => {
+    queue.push((cb) => {
       resolve();
       logger.debug('queued events have run');
       cb();

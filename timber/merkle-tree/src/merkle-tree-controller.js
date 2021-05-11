@@ -321,6 +321,7 @@ It is triggered by reception of a Rollback event from the blockchain.
 */
 async function rollback(db, treeHeight, leafCount, root) {
   logger.debug(`treeHeight is ${treeHeight}`);
+  logger.debug(`root is ${root}`);
   const historyService = new HistoryService(db);
   const leafService = new LeafService(db);
   const nodeService = new NodeService(db);

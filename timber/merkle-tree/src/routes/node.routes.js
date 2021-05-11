@@ -208,20 +208,14 @@ async function getRoot(req, res, next) {
 }
 
 // initializing routes
-export default function(router) {
+export default (router) => {
   // NODE ROUTES
 
   router.route('/node').post(insertNode);
 
-  router
-    .route('/node/index/:nodeIndex')
-    .get(getNodeByNodeIndex)
-    .patch(updateNodeByNodeIndex);
+  router.route('/node/index/:nodeIndex').get(getNodeByNodeIndex).patch(updateNodeByNodeIndex);
 
-  router
-    .route('/node/index')
-    .get(getNodeByNodeIndex)
-    .patch(updateNodeByNodeIndex);
+  router.route('/node/index').get(getNodeByNodeIndex).patch(updateNodeByNodeIndex);
 
   router.route('/node/value').get(getNodeByValue);
 
@@ -237,4 +231,4 @@ export default function(router) {
   // ROOT ROUTES
 
   router.route('/root').get(getRoot);
-}
+};

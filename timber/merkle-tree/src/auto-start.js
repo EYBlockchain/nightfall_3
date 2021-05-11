@@ -32,7 +32,7 @@ const autoStart = async () => {
         retries--;
         logger.warn('Unable to find a contract address. Retrying in 3 seconds.');
         // eslint-disable-next-line no-await-in-loop
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        await new Promise((resolve) => setTimeout(resolve, 3000));
       }
     }
     // Now that we are fairly sure calling start will work, we can go ahead.
