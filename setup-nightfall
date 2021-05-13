@@ -1,11 +1,11 @@
 #! /bin/bash
 
 # Install node dependencies 
-npm i
+npm ci
 
 # Install node dependencies of nightfall-client
 pushd nightfall-client
-npm i
+npm ci
 popd
 
 docker-compose build --build-arg GPR_TOKEN=${NPM_TOKEN} --no-cache
