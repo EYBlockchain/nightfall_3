@@ -8,4 +8,4 @@ pushd nightfall-client
 npm ci
 popd
 
-docker-compose build --build-arg GPR_TOKEN=${NPM_TOKEN} --no-cache
+docker-compose build --build-arg GPR_TOKEN=${GPR_TOKEN} --no-cache
