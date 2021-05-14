@@ -115,8 +115,6 @@ async function withdraw(transferParams) {
     historicRoot: root,
     proof,
   });
-  const th = optimisticWithdrawTransaction.transactionHash;
-  delete optimisticWithdrawTransaction.transactionHash; // we don't send this
   try {
     if (offchain) {
       const peerList = await discoverPeers('Local');
@@ -136,11 +134,10 @@ async function withdraw(transferParams) {
       return { transaction: optimisticWithdrawTransaction };
     }
     const rawTransaction = await shieldContractInstance.methods
-      .submitTransaction(optimisticWithdrawTransaction)
+      .submitTransaction(Transaction.buildSolidityStruct(optimisticWithdrawTransaction))
       .encodeABI();
     // on successful computation of the transaction mark the old commitments as nullified
     markNullified(oldCommitment);
-    optimisticWithdrawTransaction.transactionHash = th;
     return { rawTransaction, transaction: optimisticWithdrawTransaction };
   } catch (err) {
     throw new Error(err); // let the caller handle the error

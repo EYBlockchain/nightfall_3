@@ -4,7 +4,8 @@
   "description": "Optimistic Nightfall",
   "main": "./nightfall-client/src/index.mjs",
   "scripts": {
-    "test": "mocha ./nightfall-client/test --timeout 0 --bail",
+    "test": "npx mocha --timeout 0 --bail nightfall-client/test/http.mjs nightfall-client/test/neg-http.mjs",
+    "test-gas": "npx mocha --timeout 0 --bail nightfall-client/test/tx-gas.mjs",
     "lint": "eslint -c consolidated-eslint-config.js --no-eslintrc ."
   },
   "repository": {

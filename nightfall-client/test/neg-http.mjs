@@ -112,6 +112,7 @@ describe('Testing the challenge http API', () => {
             topicsBlockHashesIncorrectRootInBlock = res.block.blockHash;
             topicsRootIncorrectRootInBlock = res.block.root;
             txDataToSign = res.txDataToSign;
+            console.log('Created flawed block with incorrect root', res.block.root);
           } else if (counter === 3) {
             // txDataToSign = msg.txDataToSign;
             res = await createBadBlock('DuplicateTransaction', block, transactions, {
@@ -325,7 +326,7 @@ describe('Testing the challenge http API', () => {
   });
 
   describe('Challenge 1: Incorrect root challenge', () => {
-    it('Should delete the wrong block', async () => {
+    it('Should delete the flawed block', async () => {
       await new Promise(resolve => setTimeout(resolve, 5000));
       const events = await web3.eth.getPastLogs({
         fromBlock: web3.utils.toHex(0),
@@ -335,7 +336,7 @@ describe('Testing the challenge http API', () => {
       expect(events.length).not.to.equal(0);
       expect(events[0]).to.have.property('transactionHash');
     });
-    it('Should rollback the wrong leaves', async () => {
+    it('Should rollback the flawed leaves', async () => {
       const events = await web3.eth.getPastLogs({
         fromBlock: web3.utils.toHex(0),
         address: challengeAddress,
@@ -347,7 +348,7 @@ describe('Testing the challenge http API', () => {
   });
 
   describe('Challenge 2: Duplicate transaction submitted', () => {
-    it('Should delete the wrong block', async () => {
+    it('Should delete the flawed block', async () => {
       const events = await web3.eth.getPastLogs({
         fromBlock: web3.utils.toHex(0),
         address: challengeAddress,
@@ -355,7 +356,7 @@ describe('Testing the challenge http API', () => {
       });
       expect(events[0]).to.have.property('transactionHash');
     });
-    it('Should rollback the wrong leaves', async () => {
+    it('Should rollback the flawed leaves', async () => {
       const events = await web3.eth.getPastLogs({
         fromBlock: web3.utils.toHex(0),
         address: challengeAddress,
@@ -366,7 +367,7 @@ describe('Testing the challenge http API', () => {
   });
 
   describe('Challenge 3: Invalid transaction submitted', () => {
-    it('Should delete the wrong block', async () => {
+    it('Should delete the flawed block', async () => {
       await new Promise(resolve => setTimeout(resolve, 5000));
       const events = await web3.eth.getPastLogs({
         fromBlock: web3.utils.toHex(0),
@@ -375,7 +376,7 @@ describe('Testing the challenge http API', () => {
       });
       expect(events[0]).to.have.property('transactionHash');
     });
-    it('Should rollback the wrong leaves', async () => {
+    it('Should rollback the flawed leaves', async () => {
       const events = await web3.eth.getPastLogs({
         fromBlock: web3.utils.toHex(0),
         address: challengeAddress,
@@ -386,7 +387,7 @@ describe('Testing the challenge http API', () => {
   });
 
   describe('Challenge 4: Incorrect public input hash', async () => {
-    it('Should delete the wrong block', async () => {
+    it('Should delete the flawed block', async () => {
       const events = await web3.eth.getPastLogs({
         fromBlock: web3.utils.toHex(0),
         address: challengeAddress,
@@ -398,7 +399,7 @@ describe('Testing the challenge http API', () => {
       expect(events[0]).to.have.property('transactionHash');
       await new Promise(resolve => setTimeout(resolve, 5000));
     });
-    it('Should rollback the wrong leaves', async () => {
+    it('Should rollback the flawed leaves', async () => {
       const events = await web3.eth.getPastLogs({
         fromBlock: web3.utils.toHex(0),
         address: challengeAddress,
@@ -409,7 +410,7 @@ describe('Testing the challenge http API', () => {
   });
 
   describe('Challenge 5: Proof verification failure', async () => {
-    it('Should delete the wrong block', async () => {
+    it('Should delete the flawed block', async () => {
       // create another transaction to trigger NO's block assembly
       const res = await chai
         .request(url)
@@ -434,7 +435,7 @@ describe('Testing the challenge http API', () => {
       expect(events[0]).to.have.property('transactionHash');
       await new Promise(resolve => setTimeout(resolve, 5000));
     });
-    it('Should rollback the wrong leaves', async () => {
+    it('Should rollback the flawed leaves', async () => {
       await new Promise(resolve => setTimeout(resolve, 5000));
       const events = await web3.eth.getPastLogs({
         fromBlock: web3.utils.toHex(0),
@@ -447,7 +448,7 @@ describe('Testing the challenge http API', () => {
   });
 
   describe('Challenge 6: Duplicate Nullifier', async () => {
-    it('Should delete the wrong block', async () => {
+    it('Should delete the flawed block', async () => {
       // create two transfers - transfers are preferred here because we want to swap out a nullifier.
       for (let i = 0; i < 2; i++) {
         const res = await chai
@@ -475,7 +476,7 @@ describe('Testing the challenge http API', () => {
       });
       expect(events[0]).to.have.property('transactionHash');
     });
-    it('Should rollback the wrong leaves', async () => {
+    it('Should rollback the flawed leaves', async () => {
       const events = await web3.eth.getPastLogs({
         fromBlock: web3.utils.toHex(0),
         address: challengeAddress,

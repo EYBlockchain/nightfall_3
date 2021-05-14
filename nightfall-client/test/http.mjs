@@ -25,7 +25,7 @@ describe('Testing the http API', () => {
   let shieldAddress;
   let challengeAddress;
   let ercAddress;
-  const transactions = [];
+  let transactions = [];
   let connection; // WS connection
   let blockSubmissionFunction;
   const zkpPrivateKey = '0xc05b14fa15148330c6d008814b0bdd69bc4a08a1bd0b629c42fa7e2c61f16739'; // the zkp private key we're going to use in the tests.
@@ -281,22 +281,22 @@ describe('Testing the http API', () => {
   describe('Withdraw funds to layer 1', () => {
     let block;
     let txDataToSign;
+    let index;
     it('Should find the block containing the withdraw transaction', async () => {
       // give the last block time to be submitted, or we won't have added the
       // withdraw transaction to the blockchain at all.
       // it sometimes seems to take a while for this block to appear so loop
       // every five seconds.
       let i = 0;
+      const withdrawTransactionHash = transactions[0].transactionHash;
       do {
         await new Promise(resolve => setTimeout(resolve, 1000));
         console.log('Waiting for withdraw block to appear', i++, 'seconds');
         // look for the block that contains the withdraw tx
-        const res = await chai
-          .request(optimistUrl)
-          .get(`/block/${transactions[0].transactionHash}`);
-        block = res.body;
-      } while (Object.entries(block).length === 0);
-      expect(block).not.to.be.null; // eslint-disable-line
+        const res = await chai.request(optimistUrl).get(`/block/${withdrawTransactionHash}`);
+        ({ block, transactions, index } = res.body);
+      } while (block === null);
+      expect(block).not.to.be.undefined; // eslint-disable-line
       expect(Object.entries(block).length).not.to.equal(0); // empty object {}
     });
     let startBalance;
@@ -306,8 +306,9 @@ describe('Testing the http API', () => {
         .request(url)
         .post('/finalise-withdrawal')
         .send({
-          block,
-          transaction: transactions[0],
+          block, // block containing the withdraw transaction
+          transactions, // transactions in the withdraw block
+          index, // index of the withdraw transaction in the transactions
         });
       txDataToSign = res.body.txDataToSign;
       expect(txDataToSign).to.be.a('string');
@@ -327,7 +328,8 @@ describe('Testing the http API', () => {
         .post('/finalise-withdrawal')
         .send({
           block,
-          transaction: transactions[0],
+          transactions,
+          index,
         });
       txDataToSign = res.body.txDataToSign;
       expect(txDataToSign).to.be.a('string');
@@ -355,7 +357,10 @@ describe('Testing the http API', () => {
       blockSubmissionQueue.stop();
       // push subsequent block signing requests to the queue
       blockSubmissionFunction = (a, b, c, d, e) =>
-        blockSubmissionQueue.push(() => submitTransaction(a, b, c, d, e));
+        blockSubmissionQueue.push(async () => {
+          await new Promise(resolve => setTimeout(resolve, 1000)); // TODO fix /verify so we can remove this.
+          return submitTransaction(a, b, c, d, e);
+        });
       // to make three blocks, we need six transactions
       for (let i = 0; i < 6; i++) {
         const res = await chai

@@ -35,7 +35,7 @@ async function checkBlock(block, transactions) {
         throw new BlockError(
           `The transaction with transaction hash (${transaction.transactionHash}) has already been submitted, hence this block is incorrect`,
           1,
-          { transactionHashIndex: index },
+          { transactionHashIndex: index, transactionHash: transaction.transactionHash },
         );
     }),
   );

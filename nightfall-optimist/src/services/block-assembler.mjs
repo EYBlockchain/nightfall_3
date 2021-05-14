@@ -9,6 +9,7 @@ import {
   numberOfUnprocessedTransactions,
 } from './database.mjs';
 import Block from '../classes/block.mjs';
+import Transaction from '../classes/transaction.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import logger from '../utils/logger.mjs';
 
@@ -82,7 +83,10 @@ export async function conditionalMakeBlock(proposer) {
       const unsignedProposeBlockTransaction = await (
         await waitForContract(CHALLENGES_CONTRACT_NAME)
       ).methods
-        .proposeBlock(block, transactions)
+        .proposeBlock(
+          Block.buildSolidityStruct(block),
+          transactions.map(t => Transaction.buildSolidityStruct(t)),
+        )
         .encodeABI();
       if (ws)
         ws.send(
@@ -97,17 +101,6 @@ export async function conditionalMakeBlock(proposer) {
       // remove the transactiosn from the mempool so we don't keep making new
       // blocks with them
       await removeTransactionsFromMemPool(block); // TODO is await needed?
-      // Wait until it is proposed to the blockchain before we make any more:
-      //    logger.info('Block Assembler - Waiting until block is proposed before making any more');
-      //    while (!isBlockProposed(block.blockHash)) {
-      // await new Promise(resolve => setTimeout(resolve, 1000));
-      // we only get so long to propose this block.  Once we're no-longer the
-      // current proposer, we've missed our chance
-      //        if (!proposer.isMe) {
-      //          logger.warn('Our turn as proposer ended before the block was proposed');
-      //          break;
-      //        }
-      //      }
     }
     // slow the loop a bit so we don't hammer the database
     await new Promise(resolve => setTimeout(resolve, 1000));

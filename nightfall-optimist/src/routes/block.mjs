@@ -4,7 +4,10 @@ Routes for checking that a block is valid.
 import express from 'express';
 import logger from '../utils/logger.mjs';
 import checkBlock from '../services/check-block.mjs';
-import { getBlockByTransactionHash } from '../services/database.mjs';
+import {
+  getBlockByTransactionHash,
+  getTransactionsByTransactionHashes,
+} from '../services/database.mjs';
 import { forceRollback } from '../services/block-assembler.mjs';
 
 const router = express.Router();
@@ -26,10 +29,18 @@ router.get('/:transactionHash', async (req, res, next) => {
   try {
     const { transactionHash } = req.params;
     logger.debug(`searching for block containing transaction hash ${transactionHash}`);
+    // get data to return
     const block = await getBlockByTransactionHash(transactionHash);
-    delete block._id; // this is database specific so no need to send it
-    logger.debug(`Found block ${JSON.stringify(block, null, 2)} in database`);
-    res.json(block || null);
+    if (block !== null) {
+      const transactions = await getTransactionsByTransactionHashes(block.transactionHashes);
+      const index = block.transactionHashes.indexOf(transactionHash);
+      delete block?._id; // this is database specific so no need to send it
+      logger.debug(`Found block ${JSON.stringify(block, null, 2)} in database`);
+      res.json({ block, transactions, index });
+    } else {
+      logger.debug('Block not found');
+      res.json({ block: null, transactions: null, index: null });
+    }
   } catch (err) {
     next(err);
   }

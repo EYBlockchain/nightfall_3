@@ -11,7 +11,7 @@ function keccak(preimage) {
   const web3 = Web3.connection();
   // compute the solidity hash, using suitable type conversions
   return web3.utils.soliditySha3(
-    { t: 'uint64', v: preimage.fee },
+    // { t: 'uint64', v: preimage.fee }, not part of the on-chain tx
     { t: 'uint64', v: preimage.value },
     { t: 'uint8', v: preimage.transactionType },
     { t: 'bytes32', v: preimage.publicInputHash },
@@ -82,6 +82,34 @@ class Transaction {
     // compute the solidity hash, using suitable type conversions
     const transactionHash = keccak(transaction);
     return transactionHash;
+  }
+
+  static buildSolidityStruct(transaction) {
+    // return a version without properties that are not sent to the blockchain
+    const {
+      value,
+      transactionType,
+      publicInputHash,
+      tokenId,
+      ercAddress,
+      recipientAddress,
+      commitments,
+      nullifiers,
+      historicRoot,
+      proof,
+    } = transaction;
+    return {
+      value,
+      transactionType,
+      publicInputHash,
+      tokenId,
+      ercAddress,
+      recipientAddress,
+      commitments,
+      nullifiers,
+      historicRoot,
+      proof,
+    };
   }
 }
 export default Transaction;
