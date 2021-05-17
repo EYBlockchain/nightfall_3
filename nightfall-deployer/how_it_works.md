@@ -21,10 +21,8 @@ paid to a successful challenger. They make money by providing correct Blocks, co
 transactors. They are somewhat analogous to Miners in a conventional blockchain although the way
 they operate is completely different.
 
-A `Challenger` challenges the correctness of a proposal. Anyone can be a Challenger. They make money
+A `Challenger` challenges the correctness of a proposed block. Anyone can be a Challenger. They make money
 from correct challenges.
-
-_NB: Currently it's possible to front-run a challenge. We need to fix that._
 
 ## Contracts
 
@@ -56,6 +54,7 @@ ETH) to do so.
 
 ### Transaction posting
 
+#### **On-chain**
 The process starts with a Transactor creating a transaction by calling `submitTransaction` on
 `Shield.sol`. The Transactor pays a fee to the Shield contract for the Transaction, which can be
 anything the Transactor decides. Ultimately this will be paid to the Proposer that incorporates the
@@ -66,6 +65,20 @@ The Transaction call causes a Transaction event to be posted, containing the det
 Transaction. If the Transaction is a Deposit, the Shield contract takes payment of the layer 1 ERC
 token in question.
 
+#### **Off-chain**
+Transfer and Withdraw transactions have the option of being submitted directly to listening proposers
+rather than being submitted on-chain via the above process. These off-chain transactions will save 
+transactors the on-chain submission cost (~50k gas), but requires a greater degree of trust from 
+transactors with the proposers they choose to connect to. It is easier for bad acting proposers
+to censor transactions received off-chain than those received on-chain.
+
+### Transaction receival
+When proposers receive any transactions, they perform a range of checks to validate that the
+transaction is well-formed and that the proof verifies against the public inputs hash.
+
+If this is true in both cases, the transaction is added to proposer's mempool to be considered in
+a `Block`.
+
 ### Block assembly and submission
 
 Proposers wait until the Shield contract assigns them as the current proposer (presently this is
@@ -73,9 +86,8 @@ done by simple rotation, I feel this should be random but I can't actually see a
 rotation).
 
 The current proposer looks at the available Transactions and chooses one. Normally this would be the
-one with the highest fee. They verify the proof and public inputs hash and compute the new
-commitment Merkle-tree that _would_ come into being _were_ this transaction to be added to the
-Shield contract next.
+one with the highest fee. They compute the newcommitment Merkle-tree that _would_ come into being 
+_were_ this transaction to be added to the Shield contract next.
 
 The current Proposer repeats this process n times, until they have assembled a Block, which contains
 the hashes of the Transactions included in the Block and the commitment Merkle-tree root as it would
@@ -97,19 +109,21 @@ to pass in Block struct and the Transaction structs that are contained in the bl
 blockchain does not retain these. `Challenges.sol` will confirm this data against its stored Block
 hashes and then do an on-chain computation to determine the correctness of the challenge (the
 details of the computation being dependent on the type of challenge). The challenges that can be
-made are (not all are yet implemented):
+made are:
 
-- PROOF_VERIFIES - the proof given in a transaction does not verify true;
-- PUBLIC_INPUT_HASH_VALID - the public input hash of a transaction is not the correct hash of the
+- INVALID_PROOF - the proof given in a transaction does not verify as true;
+- INVALID_PUBLIC_INPUT_HASH - the public input hash of a transaction is not the correct hash of the
   public inputs;
 - HISTORIC_ROOT_EXISTS - the root of the commitment Merkle Tree used to create the transaction proof
   has never existed;
-- NULLIFIER_ABSENT - A nullifier, given as part of a Transaction is present in the list of spent
+- DUPLICATE_NULLIFIER - A nullifier, given as part of a Transaction is present in the list of spent
   nullifiers;
-- NEW_ROOT_CORRECT - the given, updated commitment root that results from processing the
+- HISTORIC_ROOT_INVALID - the updated commitment root that results from processing the
   transactions in the Block is not correct.
-
-[...any others?]
+- DUPLICATE_TRANSACTION - An identical transaction included in this block has already been included
+  in a prior block.
+- TRANSACTION_TYPE_INVALID - The transaction is not well-formed based on the transaction type (e.g.
+  DEPOSIT, TRANSFER, WITHDRAWAL).
 
 Should the challenge succeed, i.e. the on-chain computation shows it to be a valid challenge, then
 the following actions are taken by `Challenges.sol`:
@@ -119,7 +133,7 @@ the following actions are taken by `Challenges.sol`:
 - The Transactors with a Transaction in the Block are reimbursed the fee that they would have paid
   to the Proposer and any escrowed funds held by the Shield contract in the case of a Deposit
   transaction.
-- The Proposer is delisted [what shall be do with their registration Bond? Do we need this?]
+- The Proposer is delisted.
 
 ### State incorporation
 
@@ -129,12 +143,9 @@ that are final cannot be challenged.
 
 ## Avoiding front-running attacks
 
-It would be possible to front-run the Challenges described above. A front runner would simply submit
-the Challenge before the original challenger. To fix this, we will use a commit-reveal strategy
-(TODO).
-
-The Challenger does not challenge immediately but provides a salted hash of the Challenge
-information. This hash is saved against the sender's address.
+Challengers submit valid challenges using a 'commit-reveal' scheme to mitigate the risks that their 
+challenge can be front-run.The Challenger does not challenge immediately but provides a salted hash
+of the Challenge information. This hash is saved against the sender's address.
 
 Once that transaction has gone through, the Challenger sends the complete Challenge information
 along with the salt. The contract then checks:
