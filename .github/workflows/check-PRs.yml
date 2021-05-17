@@ -1,0 +1,41 @@
+name: Check PR
+
+on:
+  push:
+    branch:
+      - liju.jose/github-actions
+
+jobs:
+  run-checks:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '14.15.0'
+
+      - name: Do setup
+        run: ./setup-nightfall
+        env:
+          GPR_TOKEN: ${{ secrets.GPR_TOKEN }}
+
+      - name: eslint check
+        run: npm run lint
+
+      - name: Start Containers
+        run: |
+          docker-compose up -d
+          docker-compose logs -f &> nightfall_3-test.log &disown
+
+      - name: Run integration test
+        run: |
+          sleep 150
+          npm test
+
+      - name: If integration test failed, upload logs files as artifacts
+        if: failure()
+        run: cat ./nightfall_3-test.log
+        # uses: actions/upload-artifact@master
+        # with:
+        #   name: integration-test-logs
+        #   path: ./nightfall_3-test.log

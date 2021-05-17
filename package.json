@@ -4,7 +4,8 @@
   "description": "Optimistic Nightfall",
   "main": "./nightfall-client/src/index.mjs",
   "scripts": {
-    "test": "mocha ./nightfall-client/test --timeout 0 --bail",
+    "test": "NODE_CONFIG_DIR=./nightfall-client/config mocha --timeout 0 --bail test/http.mjs test/neg-http.mjs",
+    "test-gas": "NODE_CONFIG_DIR=./nightfall-client/config mocha --timeout 0 --bail --timeout 0 --bail test/tx-gas.mjs",
     "lint": "eslint -c consolidated-eslint-config.js --no-eslintrc ."
   },
   "repository": {
@@ -20,11 +21,19 @@
   "devDependencies": {
     "@commitlint/cli": "^12.1.1",
     "@commitlint/config-conventional": "^12.1.1",
+    "axios": "^0.21.1",
+    "chai": "^4.3.4",
+    "chai-as-promised": "^7.1.1",
+    "chai-http": "^4.3.0",
+    "config": "^3.3.6",
     "eslint": "^7.25.0",
     "eslint-config-codfish": "^10.0.0",
+    "general-number": "^1.0.1",
     "husky": "^6.0.0",
     "mocha": "^8.3.2",
-    "prettier": "^2.2.1"
+    "prettier": "^2.2.1",
+    "queue": "^6.0.2",
+    "ws": "^7.4.5"
   },
   "husky": {
     "hooks": {
