@@ -149,7 +149,9 @@ contract Challenges is Proposers, Key_Registry {
   }
 
   // This gets called when a challenge succeeds
-  function challengeAccepted(Block memory badBlock, bytes32 badBlockHash) private {
+  function challengeAccepted(Block memory badBlock) private {
+    // Check to ensure that the block being challenged is less than a week old
+    require(blockHashes[badBlock.blockHash].data >= (block.timestamp - 7 days) , 'Can only challenge blocks less than a week old');
     // emit the leafCount where the bad block was added. Timber will pick this
     // up and rollback its database to that point.
     emit Rollback(badBlock.root, badBlock.leafCount);
