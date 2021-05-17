@@ -45,6 +45,9 @@ module.exports = {
         Rollback: {
           parameters: ['root', 'leafCount'],
         },
+        BlockProposed: {
+          parameters: ['currentLeafCount'],
+        },
       },
     },
   },

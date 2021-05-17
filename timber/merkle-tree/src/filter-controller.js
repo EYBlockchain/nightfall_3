@@ -11,6 +11,7 @@ import utilsWeb3 from './utils-web3';
 import { LeafService, MetadataService } from './db/service';
 import logger from './logger';
 import mtc from './merkle-tree-controller';
+import getProposeBlockCalldata from './optimistic/process-calldata';
 
 // global subscriptions object:
 const subscriptions = {};
@@ -18,6 +19,97 @@ const subscriptions = {};
 // event responders cannot attempt parallel writes to the db. Instead, such
 // requests are queued and handled in order
 const queue = new Queue({ autostart: true, concurrency: 1 });
+/**
+@author westlad
+This is a response function that is able to filter data from an optimistic block
+proposal and extract data that Timber's NewLeaf(s) response functions understand.  It then call them.  Doing it that way means that the smart contract
+Timber is listening to does not have to emit all the commitment data in a
+NewLeaf(s) event and that saves considerable gas (event emitting is not free).
+*/
+const blockProposedResponseFunction = async (eventObject, args) => {
+  // NEW - function remains the same, for detecting single leaves, but can now specify the event name
+  // NOTE - events must have same parameters as newLeaf / newLeaves
+  // We make some hardcoded presumptions about what's contained in the 'args':
+  logger.debug('processing BlockProposed event');
+  const { db, contractName, treeId } = args;
+
+  const eventName = args.eventName === undefined ? 'BlockProposed' : args.eventName; // hardcoded, as inextricably linked to the name of this function.
+
+  let eventParams;
+  logger.debug(`eventname: ${eventName}`);
+
+  if (treeId === undefined || treeId === '') {
+    eventParams = config.contracts[contractName].events[eventName].parameters;
+  } else {
+    eventParams = config.contracts[contractName].treeId[treeId].events[eventName].parameters;
+  }
+
+  // Now some generic eventObject handling code:
+  const { eventData } = eventObject;
+
+  /*
+  extract each relevent event parameter from the eventData and create an eventInstance: {
+    eventParamName_0: eventParamValue_0,
+    eventParamName_1: eventParamValue_1,
+    ...
+  }
+  */
+  const eventInstance = {};
+  eventParams.forEach(param => {
+    eventInstance[param] = eventData.returnValues[param];
+  });
+
+  const metadataService = new MetadataService(db);
+  const { treeHeight } = await metadataService.getTreeHeight();
+
+  // Now some more bespoke code; specific to how our application needs to deal with this eventObject:
+  // construct an array of 'leaf' documents to store in the db:
+  const { blockNumber } = eventData;
+  const { currentLeafCount } = eventInstance;
+  // first, we need to extract the commitment values from the calldata because
+  // it's not in the emitted event.  We don't care about the Block object
+  const { transactions } = await getProposeBlockCalldata(eventData);
+  logger.debug(`recovered transactions ${JSON.stringify(transactions, null, 2)}`);
+  const leafValues = transactions
+    .map(transaction => transaction.commitments.filter(c => c !== config.ZERO))
+    .flat(Infinity);
+  // Timber works on the leafIndex BEFORE the new leafValues are added but the
+  // BlockProposed event broadcasts the AFTER value:
+  const minLeafIndex = Number(currentLeafCount) - leafValues.length;
+  logger.debug(
+    `minLeafIndex was ${minLeafIndex}, updatedLeafCount, ${currentLeafCount}, leafValues.length ${leafValues.length}, eventInstance, ${eventInstance}`,
+  );
+  console.log('eventInstance', eventInstance);
+  logger.debug(`leafValues were ${JSON.stringify(leafValues, null, 2)}`);
+  // now we have the relevant data, update the Merkle tree:
+  if (leafValues.length === 0) return Promise.resolve();
+  if (leafValues.length === 1) {
+    const leaf = {
+      value: leafValues[0],
+      leafIndex: minLeafIndex,
+      blockNumber,
+    };
+    const leafService = new LeafService(db);
+    await leafService.insertLeaf(treeHeight, leaf);
+    return mtc.update(db); // update the database to ensure we have a historic root
+  }
+  const leaves = [];
+  let leafIndex;
+  leafValues.forEach((leafValue, index) => {
+    leafIndex = Number(minLeafIndex) + Number(index);
+    const leaf = {
+      value: leafValue,
+      leafIndex,
+      blockNumber,
+    };
+    leaves.push(leaf);
+  });
+
+  const leafService = new LeafService(db);
+  await leafService.insertLeaves(treeHeight, leaves);
+  return mtc.update(db); // update the database to ensure we have a historic root};
+};
+
 /**
 @author westlad
 This is a response function (similar to the ones below, but specific for a
@@ -52,7 +144,7 @@ const rollbackResponseFunction = async (eventObject, args) => {
   }
   */
   const eventInstance = {};
-  eventParams.forEach((param) => {
+  eventParams.forEach(param => {
     eventInstance[param] = eventData.returnValues[param];
   });
   logger.silly(`eventInstance: ${JSON.stringify(eventInstance, null, 2)}`);
@@ -97,7 +189,7 @@ const newLeafResponseFunction = async (eventObject, args) => {
   }
   */
   const eventInstance = {};
-  eventParams.forEach((param) => {
+  eventParams.forEach(param => {
     eventInstance[param] = eventData.returnValues[param];
   });
   logger.silly(`eventInstance: ${JSON.stringify(eventInstance, null, 2)}`);
@@ -148,7 +240,7 @@ const newLeavesResponseFunction = async (eventObject, args) => {
   }
   */
   const eventInstance = {};
-  eventParams.forEach((param) => {
+  eventParams.forEach(param => {
     eventInstance[param] = eventData.returnValues[param];
   });
   logger.silly(`eventInstance: ${JSON.stringify(eventInstance, null, 2)}`);
@@ -186,7 +278,7 @@ const newEventResponder = async (eventObject, responseFunction, responseFunction
 
   // we can push to a queue here to buffer the events during a rollback
   // the items in the queue will execute until it's empty or we stop it
-  queue.push((cb) => {
+  queue.push(cb => {
     responseFunction(eventObject, responseFunctionArgs).then(() => cb());
   }); // we don't need to await this
 };
@@ -202,6 +294,7 @@ export const responseFunctions = {
   NewLeaf: newLeafResponseFunction,
   NewLeaves: newLeavesResponseFunction,
   Rollback: rollbackResponseFunction,
+  BlockProposed: blockProposedResponseFunction,
 };
 
 /**
@@ -241,7 +334,7 @@ async function filterBlock(db, contractName, contractInstance, fromBlock, treeId
     await metadataService.updateLatestRecalculation({ latestRecalculation });
   }
 
-  eventNames.forEach(async (eventName) => {
+  eventNames.forEach(async eventName => {
     const responder = newEventResponder;
     const responseFunction = responseFunctions[eventName];
     const responseFunctionArgs = { db, contractName, eventName, treeId };
@@ -325,15 +418,15 @@ then these functions will want to hang on for a bit.  Hence this function:
 */
 function waitForUpdatesToComplete() {
   return new Promise((resolve, reject) => {
-    // queue.once('end', () => {
-    // logger.debug('queue emptied');
-    //    resolve();
-    // });
+//    queue.once('end', () => {
+//      logger.debug('queue emptied');
+//      resolve();
+//    });
     // we'll push in this dummy function. This ensures that there is at least
     // one function in the queue, when it clear the queue, the 'end' event will
     // fire.  You'd think you could use queue.length == 0 as a test but that
     // doesn't seem to work.
-    queue.push((cb) => {
+    queue.push(cb => {
       resolve();
       logger.debug('queued events have run');
       cb();

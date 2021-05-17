@@ -3,15 +3,17 @@ Module to handle new Transactions being posted
 */
 import logger from '../utils/logger.mjs';
 import { saveTransaction, retrieveNullifiers, saveNullifiers } from '../services/database.mjs';
-import mappedTransaction from '../event-mappers/transaction-submitted.mjs';
+// import mappedTransaction from '../event-mappers/transaction-submitted.mjs';
 import checkTransaction from '../services/transaction-checker.mjs';
 import TransactionError from '../classes/transaction-error.mjs';
+import { getTransactionSubmittedCalldata } from '../services/process-calldata.mjs';
 
 /**
 This handler runs whenever a new transaction is submitted to the blockchain
 */
 async function transactionSubmittedEventHandler(data) {
-  const transaction = mappedTransaction(data);
+  // const transaction = mappedTransaction(data);
+  const transaction = await getTransactionSubmittedCalldata(data);
   logger.info(`Transaction Handler - New transaction received.`);
   logger.debug(`Transaction was ${JSON.stringify(transaction, null, 2)}`);
   // check that this is a valid transaction before we incorporate it into our

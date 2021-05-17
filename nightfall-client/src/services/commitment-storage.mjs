@@ -55,7 +55,6 @@ export async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _
     .toArray();
   if (commitmentArray === []) return null;
   // turn the commitments into real commitment objects
-  console.log('COMMITMENTS', commitmentArray);
   const commitments = commitmentArray.map(ct => new Commitment(ct.preimage));
   // now we need to treat different cases
   // if we have an exact match, we can do a single-commitment transfer.
@@ -66,7 +65,7 @@ export async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _
       if (commitment.preimage.value.hex(32) === value.hex(32)) {
         // check if Timber knows about the commitment
         if ((await commitment.index) == null) return null;
-        logger.info('Found commitment suitable for single transfer');
+        logger.info('Found commitment suitable for single transfer or withdraw');
         return [commitment];
       }
     }

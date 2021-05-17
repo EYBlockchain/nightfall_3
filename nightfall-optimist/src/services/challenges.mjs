@@ -3,14 +3,16 @@ import logger from '../utils/logger.mjs';
 import { getContractInstance } from '../utils/contract.mjs';
 import {
   getBlockByBlockHash,
-  getTransactionByTransactionHash,
   getBlockByTransactionHash,
   retrieveMinedNullifiers,
   saveCommit,
+  getTransactionsByTransactionHashes,
 } from './database.mjs';
 import { getTreeHistory } from '../utils/timber.mjs';
 import Web3 from '../utils/web3.mjs';
 import rand from '../utils/crypto/crypto-random.mjs';
+import Transaction from '../classes/transaction.mjs';
+import Block from '../classes/block.mjs';
 
 const { CHALLENGES_CONTRACT_NAME } = config;
 
@@ -53,21 +55,6 @@ export async function revealChallenge(txDataToSign) {
   ws.send(JSON.stringify({ type: 'challenge', txDataToSign }));
 }
 
-/*
-async function submitChallenge(txDataToSign) {
-  await commitToChallenge(txDataToSign);
-  revealChallenge(txDataToSign);
-}
-*/
-
-export async function getTransactionsBlock(transactions, block, length) {
-  if (length === block.transactionHashes.length) {
-    return transactions;
-  }
-  transactions.push(await getTransactionByTransactionHash(block.transactionHashes[length]));
-  return getTransactionsBlock(transactions, block, length + 1);
-}
-
 export async function createChallenge(block, transactions, err) {
   let txDataToSign;
   if (makeChallenges) {
@@ -77,16 +64,18 @@ export async function createChallenge(block, transactions, err) {
       // Challenge wrong root
       case 0: {
         // Getting prior block hash for the current block
-        const { previousHash } = await challengeContractInstance.methods
+        const linkedHash = await challengeContractInstance.methods
           .blockHashes(block.blockHash)
           .call();
-
+        console.log('LINKEDHASH', linkedHash);
+        const { previousHash } = linkedHash;
         // Retrieve prior block from its block hash
         const priorBlock = await getBlockByBlockHash(previousHash);
         // Retrieve last transaction from prior block using its transaction hash.
         // Note that not all transactions in a block will have commitments. Loop until one is found
-        let priorBlockTransactions = [];
-        priorBlockTransactions = await getTransactionsBlock(priorBlockTransactions, priorBlock, 0);
+        const priorBlockTransactions = await getTransactionsByTransactionHashes(
+          priorBlock.transactionHashes,
+        );
         const priorBlockCommitmentsCount = priorBlockTransactions.reduce(
           (acc, priorBlockTransaction) => {
             return acc + priorBlockTransaction.commitments.length;
@@ -112,23 +101,27 @@ export async function createChallenge(block, transactions, err) {
       }
       // Challenge Duplicate Transaction
       case 1: {
-        const transactionIndex1 = err.metadata.transactionHashIndex;
+        const {
+          transactionHashIndex: transactionIndex1,
+          transactionHash: transactionHash1,
+        } = err.metadata;
 
         // Get the block that contains the duplicate of the transaction
-        const block2 = await getBlockByTransactionHash(
-          block.transactionHashes[transactionIndex1],
-          // true,
-        );
+        const block2 = await getBlockByTransactionHash(transactionHash1);
         // Find the index of the duplication transaction in this block
-        const transactionIndex2 = block2.transactionHashes.findIndex(
-          transactionHash => transactionHash === block.transactionHashes[transactionIndex1],
-        );
-
-        // Create a challenge
+        const transactions2 = await getTransactionsByTransactionHashes(block2.transactionHashes);
+        const transactionIndex2 = transactions2
+          .map(t => t.transactionHash)
+          .indexOf(transactionHash1);
+        if (transactionIndex2 === -1) throw new Error('Could not find duplicate transaction');
+        // Create a challenge. Don't forget to remove properties that don't get
+        // sent to the blockchain
         txDataToSign = await challengeContractInstance.methods
           .challengeNoDuplicateTransaction(
-            block,
-            block2,
+            Block.buildSolidityStruct(block),
+            Block.buildSolidityStruct(block2),
+            transactions.map(t => Transaction.buildSolidityStruct(t)),
+            transactions2.map(t => Transaction.buildSolidityStruct(t)),
             transactionIndex1, // index of duplicate transaction in block
             transactionIndex2,
             salt,
@@ -138,10 +131,15 @@ export async function createChallenge(block, transactions, err) {
       }
       // invalid transaction type
       case 2: {
-        const { transaction, transactionHashIndex: transactionIndex } = err.metadata;
+        const { transactionHashIndex: transactionIndex } = err.metadata;
         // Create a challenge
         txDataToSign = await challengeContractInstance.methods
-          .challengeTransactionType(block, transaction, transactionIndex, salt)
+          .challengeTransactionType(
+            Block.buildSolidityStruct(block),
+            transactions.map(t => Transaction.buildSolidityStruct(t)),
+            transactionIndex,
+            salt,
+          )
           .encodeABI();
         logger.debug('returning raw transaction');
         logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
@@ -149,19 +147,29 @@ export async function createChallenge(block, transactions, err) {
       }
       // invalid public input hash
       case 3: {
-        const { transaction, transactionHashIndex: transactionIndex } = err.metadata;
+        const { transactionHashIndex: transactionIndex } = err.metadata;
         // Create a challenge
         txDataToSign = await challengeContractInstance.methods
-          .challengePublicInputHash(block, transaction, transactionIndex, salt)
+          .challengePublicInputHash(
+            Block.buildSolidityStruct(block),
+            transactions.map(t => Transaction.buildSolidityStruct(t)),
+            transactionIndex,
+            salt,
+          )
           .encodeABI();
         break;
       }
       // proof does not verify
       case 4: {
-        const { transaction, transactionHashIndex: transactionIndex } = err.metadata;
+        const { transactionHashIndex: transactionIndex } = err.metadata;
         // Create a challenge
         txDataToSign = await challengeContractInstance.methods
-          .challengeProofVerification(block, transaction, transactionIndex, salt)
+          .challengeProofVerification(
+            Block.buildSolidityStruct(block),
+            transactions.map(t => Transaction.buildSolidityStruct(t)),
+            transactionIndex,
+            salt,
+          )
           .encodeABI();
         break;
       }
@@ -175,9 +183,10 @@ export async function createChallenge(block, transactions, err) {
         if (alreadyMinedNullifiers.length > 0) {
           const n = alreadyMinedNullifiers[0]; // We can only slash this block no matter which nullifier we pick anyways.
           const oldBlock = await getBlockByBlockHash(n.blockHash);
-          const oldBlockTransactions = await Promise.all(
-            oldBlock.transactionHashes.map(tx => getTransactionByTransactionHash(tx)),
+          const oldBlockTransactions = await getTransactionsByTransactionHashes(
+            oldBlock.transactionHashes,
           );
+
           const [oldTxIdx, oldNullifierIdx] = oldBlockTransactions
             .map((txs, txIndex) => [
               txIndex,
@@ -194,12 +203,12 @@ export async function createChallenge(block, transactions, err) {
             .flat(Infinity);
           txDataToSign = await challengeContractInstance.methods
             .challengeNullifier(
-              block,
-              transactions[currentTxIdx],
+              Block.buildSolidityStruct(block),
+              transactions.map(t => Transaction.buildSolidityStruct(t)),
               currentTxIdx,
               currentNullifierIdx,
-              oldBlock,
-              oldBlockTransactions[oldTxIdx],
+              Block.buildSolidityStruct(oldBlock),
+              oldBlockTransactions.map(t => Transaction.buildSolidityStruct(t)),
               oldTxIdx,
               oldNullifierIdx,
               salt,

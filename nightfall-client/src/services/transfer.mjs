@@ -166,8 +166,6 @@ async function transfer(transferParams) {
     historicRoot: root,
     proof,
   });
-  const th = optimisticTransferTransaction.transactionHash;
-  delete optimisticTransferTransaction.transactionHash; // we don't send this
   try {
     if (offchain) {
       // dig up connection peers
@@ -189,13 +187,12 @@ async function transfer(transferParams) {
       return { transaction: optimisticTransferTransaction };
     }
     const rawTransaction = await shieldContractInstance.methods
-      .submitTransaction(optimisticTransferTransaction)
+      .submitTransaction(Transaction.buildSolidityStruct(optimisticTransferTransaction))
       .encodeABI();
     // store the commitment on successful computation of the transaction
     newCommitments.map(commitment => storeCommitment(commitment)); // TODO insertMany
     // mark the old commitments as nullified
     oldCommitments.map(commitment => markNullified(commitment));
-    optimisticTransferTransaction.transactionHash = th;
     return { rawTransaction, transaction: optimisticTransferTransaction };
   } catch (err) {
     throw new Error(err); // let the caller handle the error
