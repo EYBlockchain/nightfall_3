@@ -3,5 +3,4 @@ docker-compose down --remove-orphans
 docker volume rm nightfall_3_timber-database-volume
 docker volume rm nightfall_3_mongodb
 docker volume rm nightfall_3_build
-docker-compose up -d deployer
 docker-compose up

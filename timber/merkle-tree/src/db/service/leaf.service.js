@@ -49,7 +49,7 @@ export default class LeafService {
   async insertLeaves(treeHeight, leaves) {
     logger.debug('src/db/service/leaf.service insertLeaves()');
     logger.silly(`data before mapping: ${JSON.stringify(leaves, null, 2)}`);
-    const mappedData = leaves.map(leaf => leafMapper(treeHeight, leaf));
+    const mappedData = leaves.map((leaf) => leafMapper(treeHeight, leaf));
     logger.silly(`data after mapping: ${JSON.stringify(mappedData, null, 2)}`);
 
     // insert the leaves into the 'nodes' collection:

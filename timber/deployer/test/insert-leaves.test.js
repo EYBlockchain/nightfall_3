@@ -20,7 +20,7 @@ const batchSize = 100000;
 function to generate a promise that resolves to a string of hex
 @param {int} bytes - the number of bytes of hex that should be returned
 */
-const rndHex = bytes => {
+const rndHex = (bytes) => {
   const buf = crypto.randomBytes(bytes);
   return `0x${buf.toString('hex')}`;
 };

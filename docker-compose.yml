@@ -111,7 +111,6 @@ services:
       dockerfile: Dockerfile
       #context: ./nightfall-timber
       context: ./timber/merkle-tree
-    restart: on-failure
     depends_on:
       - ganache
       - deployer

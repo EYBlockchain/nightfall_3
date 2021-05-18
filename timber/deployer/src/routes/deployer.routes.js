@@ -31,7 +31,7 @@ async function getContractInterface(req, res) {
   }
 }
 
-export default router => {
+export default (router) => {
   router.route('/contract/address').get(getContractAddress);
   router.route('/contract/interface').get(getContractInterface);
 };

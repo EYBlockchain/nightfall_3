@@ -210,7 +210,7 @@ async function getLatestLeaf(req, res, next) {
 }
 
 // initializing routes
-export default router => {
+export default (router) => {
   // NODE ROUTES
 
   router.route('/metadata').get(getMetadata);

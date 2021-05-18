@@ -65,7 +65,7 @@ export default class NodeService {
     const mappedData = nodes.map(nodeMapper);
     logger.silly(`data after mapping: ${JSON.stringify(mappedData, null, 2)}`);
 
-    const bulkUpdates = mappedData.map(item => ({
+    const bulkUpdates = mappedData.map((item) => ({
       updateOne: {
         filter: {
           nodeIndex: item.nodeIndex,

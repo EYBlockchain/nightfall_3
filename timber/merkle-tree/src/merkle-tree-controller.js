@@ -254,7 +254,7 @@ async function update(db) {
     const { root: oldRoot } = latestRecalculation; // we store the old root in history as well as the new root (the latter being used to look up the history).
     frontier = frontier === undefined ? [] : frontier;
     const leaves = await leafService.getLeavesByLeafIndexRange(fromLeafIndex, toLeafIndex);
-    const leafValues = leaves.map(leaf => leaf.value);
+    const leafValues = leaves.map((leaf) => leaf.value);
     const currentLeafCount = fromLeafIndex;
 
     const historicFrontier = [...frontier]; // avoid mutation of frontier
@@ -376,7 +376,7 @@ async function rollback(db, treeHeight, leafCount, root) {
       blockNumber: history.blockNumber,
       leafIndex: history.leafIndex,
       root: history.oldRoot === ZERO ? null : history.oldRoot, // null is neater
-      frontier: history.frontier.map(f => (f === ZERO ? null : f)),
+      frontier: history.frontier.map((f) => (f === ZERO ? null : f)),
     },
   });
   // delete the history which is now in a future that won't happen

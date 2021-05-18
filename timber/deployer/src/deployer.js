@@ -24,10 +24,10 @@ async function deploy(contractName) {
   await contractInstance
     .deploy({ data: bytecode }) // we would pass constructor arguments here
     .send({ from: coinbase, gas: options.defaultGas, gasPrice: options.defaultGasPrice })
-    .on('error', err => {
+    .on('error', (err) => {
       throw new Error(err);
     })
-    .then(newContractInstance => {
+    .then((newContractInstance) => {
       contractInstance = newContractInstance; // instance with the new contract address added
       console.log(`\n${contractName} contract deployed at address ${newContractInstance._address}`); // eslint-disable-line no-underscore-dangle
     });
