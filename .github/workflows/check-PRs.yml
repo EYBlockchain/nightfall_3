@@ -1,9 +1,9 @@
 name: Check PR
 
 on:
-  push:
+  pull_request:
     branch:
-      - liju.jose/github-actions
+      - master
 
 jobs:
   run-checks:
@@ -31,6 +31,7 @@ jobs:
         run: |
           sleep 150
           npm test
+          docker-compose down -v
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
