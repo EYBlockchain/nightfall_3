@@ -418,10 +418,10 @@ then these functions will want to hang on for a bit.  Hence this function:
 */
 function waitForUpdatesToComplete() {
   return new Promise((resolve, reject) => {
-//    queue.once('end', () => {
-//      logger.debug('queue emptied');
-//      resolve();
-//    });
+    // queue.once('end', () => {
+    //   logger.debug('queue emptied');
+    //   resolve();
+    // });
     // we'll push in this dummy function. This ensures that there is at least
     // one function in the queue, when it clear the queue, the 'end' event will
     // fire.  You'd think you could use queue.length == 0 as a test but that
