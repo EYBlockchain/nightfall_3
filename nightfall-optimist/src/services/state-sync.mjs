@@ -36,6 +36,7 @@ export const syncState = async proposer => {
         await callTimberHandler(pastEvent);
         break;
       case 'BlockProposed':
+        await callTimberHandler(pastEvent);
         await blockProposedEventHandler(pastEvent);
         break;
       case 'CommittedToChallenge':
