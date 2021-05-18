@@ -22,17 +22,6 @@
     "url": "https://github.com/EYBlockchain/nightfall-optimist/issues"
   },
   "homepage": "https://github.com/EYBlockchain/nightfall-optimist#readme",
-  "eslintConfig": {
-    "extends": [
-      "./node_modules/cod-scripts/eslint.js"
-    ]
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "cod-scripts pre-commit",
-      "commit-msg": "cod-scripts commitlint -E HUSKY_GIT_PARAMS"
-    }
-  },
   "nodemonConfig": {
     "ignore": [
       "build/*"

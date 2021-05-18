@@ -6,7 +6,7 @@
   "scripts": {
     "test": "NODE_CONFIG_DIR=./nightfall-client/config mocha --timeout 0 --bail test/http.mjs test/neg-http.mjs",
     "test-gas": "NODE_CONFIG_DIR=./nightfall-client/config mocha --timeout 0 --bail --timeout 0 --bail test/tx-gas.mjs",
-    "lint": "eslint -c consolidated-eslint-config.js --no-eslintrc .",
+    "lint": "eslint .",
     "prepare": "husky install"
   },
   "repository": {
