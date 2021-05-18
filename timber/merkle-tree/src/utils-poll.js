@@ -38,7 +38,7 @@ const exampleDelayToResolution = async () => {
 };
 
 function delayedPromise(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 const exampleQueryDelay = async () => {

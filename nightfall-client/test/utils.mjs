@@ -2,7 +2,7 @@ import Web3 from 'web3';
 import axios from 'axios';
 import chai from 'chai';
 import config from 'config';
-import rand from '../nightfall-client/src/utils/crypto/crypto-random.mjs';
+import rand from '../src/utils/crypto/crypto-random.mjs';
 // import { generalise } from 'general-number';
 
 const { ZERO } = config;

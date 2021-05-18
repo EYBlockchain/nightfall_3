@@ -20,7 +20,7 @@ const web3 = Web3.connect();
 Gets a web3 instance of a contract from some external contract deployment microservice (a.k.a. 'deployer') and assembles a contract instance
 @returns {false | object} Polling functions MUST return FALSE if the poll is unsuccessful. Otherwise we return the MerkleTree.sol contract instance.
 */
-const getContractInstancePollingFunction = async args => {
+const getContractInstancePollingFunction = async (args) => {
   try {
     const { contractName } = args;
     const contractInstance = await deployerRest.getContractInstance(contractName);
@@ -54,8 +54,7 @@ async function getContractInstanceFromRemote(db, contractName) {
       `contractAddress ${contractAddress} not yet added to the merkle-tree's metadata db. Adding it now...`,
     );
     await metadataService.insertContractAddress({ contractAddress });
-  } else if (contractAddress !== contractInstance._address) {
-    // eslint-disable-line no-underscore-dangle, prettier/prettier
+  } else if (contractAddress !== contractInstance._address) { // eslint-disable-line no-underscore-dangle, prettier/prettier
     // here, we've noticed that the stored mongodb contractAddress !== the address retrieved from the external microservice.
     throw new Error(
       `Unexpected mismatch between the stored mongodb contractAddress (${contractAddress}), and the address retrieved from the external microservice (${contractInstance._address}).`, // eslint-disable-line no-underscore-dangle, prettier/prettier
