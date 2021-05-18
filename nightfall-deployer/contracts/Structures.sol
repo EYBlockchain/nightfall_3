@@ -19,9 +19,7 @@ contract Structures {
 
   event BlockProposed(uint currentLeafCount);
 
-  event TransactionSubmitted(
-    Transaction transaction
-  );
+  event TransactionSubmitted();
 
   event NewCurrentProposer(
     address proposer
@@ -31,7 +29,6 @@ contract Structures {
     bytes32 commitHash,
     address sender
   );
-
 
   /**
   These events are what the merkle-tree microservice's filters will listen for.
@@ -43,7 +40,6 @@ contract Structures {
   // will hold default values for any specific tranaction, e.g. there are no
   // nullifiers for a Deposit transaction.
   struct Transaction {
-    uint64 fee;
     uint64 value;
     TransactionTypes transactionType;
     bytes32 publicInputHash;
@@ -57,9 +53,7 @@ contract Structures {
   }
 
   struct Block {
-    bytes32 blockHash;
     address proposer;
-    bytes32[] transactionHashes; // TODO this could be a merkle root
     bytes32 root; // the 'output' commmitment root after adding all commitments
     uint64 leafCount;
     uint64 nCommitments;

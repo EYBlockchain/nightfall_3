@@ -4,17 +4,28 @@ address.
 */
 import config from 'config';
 import { getContractInstance } from '../utils/contract.mjs';
+import Transaction from '../classes/transaction.mjs';
 
 const { SHIELD_CONTRACT_NAME } = config;
 
-async function finaliseWithdrawal({ block, transaction }) {
+// TODO move classes to their own folder so this is not needed (it's already a
+// static function in the Block class)
+function buildSolidityStruct(block) {
+  const { proposer, root, leafCount, nCommitments } = block;
+  return { proposer, root, leafCount: Number(leafCount), nCommitments: Number(nCommitments) };
+}
+
+async function finaliseWithdrawal({ block, transactions, index }) {
   // first, find the position of the transaction in the block
-  const index = block.transactionHashes.indexOf(transaction.transactionHash);
   // TODO we could check that the block is final here, but it's not required
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
   try {
     const rawTransaction = await shieldContractInstance.methods
-      .finaliseWithdrawal(block, transaction, index)
+      .finaliseWithdrawal(
+        buildSolidityStruct(block),
+        transactions.map(t => Transaction.buildSolidityStruct(t)),
+        index,
+      )
       .encodeABI();
     // store the commitment on successful computation of the transaction
     return { rawTransaction };

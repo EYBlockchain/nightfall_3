@@ -48,54 +48,26 @@ contract Proposers is Structures, Config {
     // is needed in case of a roll-back of a bad block, but cannot be checked by
     // a Challenge function (at least i haven't thought of a way to do it).
     require(b.leafCount == leafCount, 'The leaf count stored in the Block is not correct');
-    // We need to check the blockHash on chain here, because there is no way to
+    // We need to set the blockHash on chain here, because there is no way to
     // convince a challenge function of the (in)correctness by an offchain
     // computation; the on-chain code doesn't save the pre-image of the hash so
     // it can't tell if it's been given the correct one as part of a challenge.
-    require(b.blockHash == Utils.hashBlock(b), 'The block hash is incorrect');
-
-    for (uint i = 0; i < t.length; i++) {
-      // make sure the Transactions are in the Block
-      require(
-        b.transactionHashes[i] == Utils.hashTransaction(t[i]),
-        'Transaction hash was not found'
-      );
-    }
+    // To do this, we simply hash the function parameters because (1) they
+    // contain all of the relevant data (2) it doesn't take much gas.
+    bytes32 blockHash = keccak256(msg.data[4:]);
+    //bytes32 blockHash = Utils.hashBlock(b, t);
     // All check pass so add the block to the list of blocks waiting to be permanently added to the state - we only save the hash of the block data plus the absolute minimum of metadata - it's up to the challenger, or person requesting inclusion of the block to the permanent contract state, to provide the block data.
-    blockHashes[b.blockHash] = LinkedHash({
-      thisHash: b.blockHash,
+    blockHashes[blockHash] = LinkedHash({
+      thisHash: blockHash,
       previousHash: endHash,
       nextHash: ZERO,
       data: block.timestamp
     });
-    blockHashes[endHash].nextHash = b.blockHash;
-    endHash = b.blockHash; // point to the new end of the list of blockhashes.
-    // now we need to emit all the leafValues (commitments) in this block so
-    // any listening Timber instances can update their offchain DBs.
-    // The first job is to assembly an array of all the leafValues in the block
-    bytes32[] memory leafValues = new bytes32[](b.nCommitments);
-    uint k;
-    for (uint i = 0; i < t.length; i++) {
-      for (uint j = 0; j < t[i].commitments.length; j++){
-        if(t[i].commitments[j] != ZERO){  // don't add zero values
-          leafValues[k++] = t[i].commitments[j];
-        }
-      }
-    }
-    // signal to Timber that new leaves may need to be added to the Merkle tree.
-    // It's possible that these will be successfully challenged over the next
-    // week, and Timber (or a Timber proxy), will need to be sure they only add
-    // valid leaves to the Timber db.  This is a little challenging but the
-    // alternative is to broadcast events for Timber after the challenge period
-    // has elapsed.  This would take more gas because of the need to make a
-    // a blockchain transaction to call a 'check week is up and then emit
-    // events' function
-    if (b.nCommitments == 1)
-      emit NewLeaf(leafCount, leafValues[0], b.root);
-    else if (b.nCommitments !=0)
-      emit NewLeaves(leafCount, leafValues, b.root);
-    // remember how many leaves the Merkle tree has (Timber needs this to check
-    // that it hasn't missed any leaf additions)
+    blockHashes[endHash].nextHash = blockHash;
+    endHash = blockHash; // point to the new end of the list of blockhashes.
+    // Timber will listen for the BlockProposed event as well as
+    // nightfall-optimist.  The current, optimistic version of Timber does not
+    // require the smart contract to craft NewLeaf/NewLeaves events.
     leafCount += b.nCommitments;
     emit BlockProposed(leafCount);
   }
@@ -148,12 +120,12 @@ contract Proposers is Structures, Config {
       emit NewCurrentProposer(currentProposer.thisAddress);
     }
   }
-
   // Checks if a block is actually referenced in the queue of blocks waiting
   // to go into the Shield state (stops someone challenging with a non-existent
   // block).
-  function isBlockReal(Block memory b) public view {
-    /* require(b.blockHash == Utils.hashBlock(b), 'The block hash is incorrect'); */
-    require(blockHashes[b.blockHash].thisHash == b.blockHash, 'This block does not exist');
+  function isBlockReal(Block memory b, Transaction[] memory t) public view returns(bytes32) {
+    bytes32 blockHash = Utils.hashBlock(b, t);
+    require(blockHashes[blockHash].thisHash == blockHash, 'This block does not exist');
+    return blockHash;
   }
 }

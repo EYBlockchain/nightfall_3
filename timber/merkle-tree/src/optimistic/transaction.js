@@ -1,8 +1,8 @@
 /**
 An optimistic Transaction class
 */
-import gen from 'general-number';
-import Web3 from '../utils/web3.mjs';
+import gen from '@eyblockchain/general-number';
+import Web3 from '../web3';
 
 const { generalise } = gen;
 
@@ -86,30 +86,10 @@ class Transaction {
 
   static buildSolidityStruct(transaction) {
     // return a version without properties that are not sent to the blockchain
-    const {
-      value,
-      transactionType,
-      publicInputHash,
-      tokenId,
-      ercAddress,
-      recipientAddress,
-      commitments,
-      nullifiers,
-      historicRoot,
-      proof,
-    } = transaction;
-    return {
-      value,
-      transactionType,
-      publicInputHash,
-      tokenId,
-      ercAddress,
-      recipientAddress,
-      commitments,
-      nullifiers,
-      historicRoot,
-      proof,
-    };
+    const newTx = { ...transaction };
+    if (newTx.fee !== undefined) delete newTx.fee;
+    if (newTx.transactionHash !== undefined) delete newTx.transactionHash;
+    return newTx;
   }
 }
 export default Transaction;
