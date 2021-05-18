@@ -15,7 +15,7 @@ const main = async () => {
   try {
     const { contractNames } = config;
 
-    await contractNames.forEach(async (contractName) => {
+    await contractNames.forEach(async contractName => {
       switch (config.PUSH_OR_PULL) {
         default:
           // 'pull': deploy the contract, and then wait for GET requests to 'pull' the contract information from the merkle-tree microservice.

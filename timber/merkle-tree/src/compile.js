@@ -11,13 +11,13 @@ import logger from './logger';
 const { contractsPath } = config;
 const { buildPath } = config;
 
-const getSolcVersion = (contractName) => {
+const getSolcVersion = contractName => {
   logger.debug('getSolcVersion...');
   const contractsFiles = fs.readdirSync(contractsPath);
   const source = {};
   logger.debug(`CONTRACTSFILES: ${JSON.stringify(contractsFiles)}`);
 
-  contractsFiles.forEach((fileName) => {
+  contractsFiles.forEach(fileName => {
     if (contractName === path.basename(fileName, '.sol')) {
       // filename without '.sol'
       const contractFullPath = path.resolve(contractsPath, fileName);
@@ -44,7 +44,7 @@ const buildSources = () => {
 
   logger.info(`CONTRACTSFILES: ${JSON.stringify(contractsFiles)}`);
 
-  contractsFiles.forEach((file) => {
+  contractsFiles.forEach(file => {
     if (path.extname(file) === '.sol') {
       const contractFullPath = path.resolve(contractsPath, file);
       sources[file] = {
@@ -56,7 +56,7 @@ const buildSources = () => {
   return sources;
 };
 
-const createSolcInput = (sources) => {
+const createSolcInput = sources => {
   const input = {
     language: 'Solidity',
     sources,
@@ -91,7 +91,7 @@ const compile = (solcInstance, input) => {
   }
 };
 
-const loadRemoteVersionAsync = async (solcVersionRelease) => {
+const loadRemoteVersionAsync = async solcVersionRelease => {
   return new Promise((resolve, reject) => {
     solc.loadRemoteVersion(solcVersionRelease, (err, solcInstance) => {
       if (err) {
@@ -101,7 +101,7 @@ const loadRemoteVersionAsync = async (solcVersionRelease) => {
   });
 };
 
-export const compileContract = async (contractName) => {
+export const compileContract = async contractName => {
   try {
     const solcVersion = getSolcVersion(contractName);
     const sources = buildSources();
