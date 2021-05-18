@@ -33,13 +33,11 @@
     "keccak": "^3.0.1",
     "mongodb": "^3.6.2",
     "path": "^0.12.7",
-    "request": "^2.88.2",
     "safe-buffer": "^5.2.1",
     "web3": "^1.3.6",
     "winston": "^3.3.3"
   },
   "devDependencies": {
-    "markdownlint-cli": "^0.15.0",
     "nodemon": "^1.18.9"
   },
   "nodemonConfig": {

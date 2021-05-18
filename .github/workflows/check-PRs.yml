@@ -34,8 +34,7 @@ jobs:
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
-        run: cat ./nightfall_3-test.log
-        # uses: actions/upload-artifact@master
-        # with:
-        #   name: integration-test-logs
-        #   path: ./nightfall_3-test.log
+        uses: actions/upload-artifact@master
+        with:
+          name: integration-test-logs
+          path: ./nightfall_3-test.log
