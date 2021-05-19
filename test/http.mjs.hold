@@ -293,7 +293,8 @@ describe('Testing the http API', () => {
         // look for the block that contains the withdraw tx
         const res = await chai
           .request(optimistUrl)
-          .get(`/block/${transactions[0].transactionHash}`);
+          .get(`/block/transactionHash`)
+          .query({ transactionHash: transactions[0].transactionHash });
         block = res.body;
       } while (Object.entries(block).length === 0);
       expect(block).not.to.be.null; // eslint-disable-line

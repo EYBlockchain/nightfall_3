@@ -18,6 +18,7 @@ import Commitment from '../classes/commitment.mjs';
 import PublicInputs from '../classes/public-inputs.mjs';
 import { getSiblingPath } from '../utils/timber.mjs';
 import Transaction from '../classes/transaction.mjs';
+import { getHistoricRootBlockHash } from '../utils/optimist.mjs';
 
 const {
   BN128_PRIME,
@@ -89,6 +90,10 @@ async function transfer(items) {
   logger.silly(`SiblingPaths were: ${JSON.stringify(siblingPaths)}`);
   // public inputs
   const root = siblingPaths[0][0];
+  console.log('HERE root------', root);
+  console.log('HERE root------', root.hex());
+  const historicRootBlockHash = await getHistoricRootBlockHash(root);
+  console.log('HERE historicRootBlockHash------', historicRootBlockHash);
   const publicInputs = new PublicInputs([
     oldCommitments.map(commitment => commitment.preimage.ercAddress),
     newCommitments.map(commitment => commitment.hash),
@@ -162,6 +167,7 @@ async function transfer(items) {
     commitments: newCommitments,
     nullifiers,
     historicRoot: root,
+    historicRootBlockHash,
     proof,
   });
   const th = optimisticTransferTransaction.transactionHash;

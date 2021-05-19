@@ -16,6 +16,7 @@ import Nullifier from '../classes/nullifier.mjs';
 import PublicInputs from '../classes/public-inputs.mjs';
 import { getSiblingPath } from '../utils/timber.mjs';
 import Transaction from '../classes/transaction.mjs';
+import { getHistoricRootBlockHash } from '../utils/optimist.mjs';
 
 const {
   BN128_PRIME,
@@ -55,6 +56,7 @@ async function withdraw(items) {
   logger.silly(`SiblingPath was: ${JSON.stringify(siblingPath)}`);
   // public inputs
   const root = siblingPath[0];
+  const historicRootBlockHash = await getHistoricRootBlockHash(root);
   console.log('public inputs', [
     oldCommitment.preimage.ercAddress,
     oldCommitment.preimage.tokenId,
@@ -111,6 +113,7 @@ async function withdraw(items) {
     recipientAddress,
     nullifiers: [nullifier],
     historicRoot: root,
+    historicRootBlockHash,
     proof,
   });
   const th = optimisticWithdrawTransaction.transactionHash;

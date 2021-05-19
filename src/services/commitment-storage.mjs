@@ -7,6 +7,7 @@ import gen from 'general-number';
 import mongo from '../utils/mongo.mjs';
 import logger from '../utils/logger.mjs';
 import Commitment from '../classes/commitment.mjs';
+import Nullifier from '../classes/nullifier.mjs';
 
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
 const { generalise } = gen;
@@ -55,14 +56,12 @@ export async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _
     .toArray();
   if (commitmentArray === []) return null;
   // turn the commitments into real commitment objects
-  console.log('COMMITMENTS', commitmentArray);
   const commitments = commitmentArray.map(ct => new Commitment(ct.preimage));
   // now we need to treat different cases
   // if we have an exact match, we can do a single-commitment transfer.
   // this function will tell us.
   const singleCommitment = (async () => {
     for (const commitment of commitments) {
-      console.log('INDEX', await commitment.index);
       if (commitment.preimage.value.hex(32) === value.hex(32)) {
         // check if Timber knows about the commitment
         if ((await commitment.index) == null) return null;
@@ -97,4 +96,20 @@ export async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _
     }
     return null;
   })();
+}
+
+export async function getCommitmentByNullifier(nullifier, zkpPrivateKey) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  const commitmentArray = await db
+    .collection(COMMITMENTS_COLLECTION)
+    .find()
+    .toArray();
+  if (commitmentArray === []) return null;
+  const commitments = commitmentArray.map(ct => new Commitment(ct.preimage));
+  for (const commitment of commitments) {
+    if (nullifier === new Nullifier(commitment, zkpPrivateKey).hash.hex()) {
+      return commitment.toHex();
+    }
+  }
 }
