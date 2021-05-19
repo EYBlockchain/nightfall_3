@@ -18,6 +18,7 @@ const { TIMBER_SYNC_RETRIES } = config;
 async function blockProposedEventHandler(data) {
   const { currentLeafCount } = data.returnValues;
   const { block, transactions } = await getProposeBlockCalldata(data);
+  const currentBlockCount = data.blockNumber
   // convert web3js' version of a struct into our node objects.
   // const { block, transactions, currentLeafCount } = mappedBlock(data);
 
@@ -44,7 +45,7 @@ async function blockProposedEventHandler(data) {
     // we will save before checking because the database at any time should reflect the state the blockchain holds
     // when a challenge is raised because the is correct block data, then the corresponding block deleted event will
     // update this collection
-    await saveBlock(block);
+    await saveBlock({blockNumber: currentBlockCount,...block});
     // we'll check the block and issue a challenge if appropriate
     await checkBlock(block, transactions);
     // if the block is, in fact, valid then we also need to mark as used the
