@@ -59,7 +59,7 @@ describe(`${contractName}`, async () => {
             gasPrice: config.web3.options.defaultGasPrice,
           })
           // eslint-disable-next-line no-loop-func
-          .on('receipt', (receipt) => {
+          .on('receipt', receipt => {
             const { leafIndex, leafValue, root } = receipt.events.NewLeafA.returnValues;
             console.log('NewLeaf A event returnValues:', leafIndex, leafValue, root);
 
@@ -80,7 +80,7 @@ describe(`${contractName}`, async () => {
             gasPrice: config.web3.options.defaultGasPrice,
           })
           // eslint-disable-next-line no-loop-func
-          .on('receipt', (receipt) => {
+          .on('receipt', receipt => {
             const { leafIndex, leafValue, root } = receipt.events.NewLeafB.returnValues;
             console.log('NewLeaf B event returnValues:', leafIndex, leafValue, root);
 
@@ -143,7 +143,7 @@ describe(`${contractName}`, async () => {
           gasPrice: config.web3.options.defaultGasPrice,
         })
         // eslint-disable-next-line no-loop-func
-        .on('receipt', (receipt) => {
+        .on('receipt', receipt => {
           const { minLeafIndex, leafValues, root } = receipt.events.NewLeavesA.returnValues;
 
           console.log('NewLeaves A event returnValues:', minLeafIndex, leafValues, root);
@@ -160,7 +160,7 @@ describe(`${contractName}`, async () => {
           gasPrice: config.web3.options.defaultGasPrice,
         })
         // eslint-disable-next-line no-loop-func
-        .on('receipt', (receipt) => {
+        .on('receipt', receipt => {
           const { minLeafIndex, leafValues, root } = receipt.events.NewLeavesB.returnValues;
 
           console.log('NewLeaves B event returnValues:', minLeafIndex, leafValues, root);

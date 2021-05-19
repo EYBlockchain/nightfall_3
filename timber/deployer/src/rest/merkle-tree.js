@@ -100,7 +100,7 @@ async function postInterface(contractName, contractInterface) {
 Posts a contract interface to the merkle-tree microservice
 @returns {false | object} Polling functions MUST return FALSE if the poll is unsuccessful. Otherwise we return the response from the merkle-tree microservice
 */
-const postContractInterfacePollingFunction = async (args) => {
+const postContractInterfacePollingFunction = async args => {
   try {
     const { contractName, contractInterface } = args;
 
@@ -147,7 +147,7 @@ async function postAddress(contractName, contractAddress) {
 Posts a contract address to the merkle-tree microservice
 @returns {false | object} Polling functions MUST return FALSE if the poll is unsuccessful. Otherwise we return the response from the merkle-tree microservice
 */
-const postContractAddressPollingFunction = async (args) => {
+const postContractAddressPollingFunction = async args => {
   try {
     const { contractName, contractAddress } = args;
 

@@ -241,7 +241,7 @@ async function replayEvent(req, res, next) {
 }
 
 // initializing routes
-export default (router) => {
+export default router => {
   // LEAF ROUTES
 
   router.route('/leaf').post(insertLeaf);

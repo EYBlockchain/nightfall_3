@@ -208,7 +208,7 @@ async function getRoot(req, res, next) {
 }
 
 // initializing routes
-export default (router) => {
+export default router => {
   // NODE ROUTES
 
   router.route('/node').post(insertNode);
