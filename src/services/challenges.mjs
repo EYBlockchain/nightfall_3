@@ -138,8 +138,27 @@ export async function createChallenge(block, transactions, err) {
         logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
         break;
       }
-      // invalid public input hash
+      // historic root block hash  is incorrect
       case 3: {
+        const { transaction, transactionHashIndex: transactionIndex } = err.metadata;
+        const historicBlock = await getBlockByBlockHash(transaction.historicRootBlockHash);
+        // Create a challenge
+        txDataToSign = await challengeContractInstance.methods
+          .challengeHistoricRoot(block, historicBlock, transaction, transactionIndex, salt)
+          .encodeABI();
+        break;
+      }
+      // // historic root is incorrect
+      // case 4: {
+      //   const { transaction, transactionHashIndex: transactionIndex } = err.metadata;
+      //   // Create a challenge
+      //   txDataToSign = await challengeContractInstance.methods
+      //     .challengeHistoricRoot(block, transaction, transactionIndex, salt)
+      //     .encodeABI();
+      //   break;
+      // }
+      // invalid public input hash
+      case 4: {
         const { transaction, transactionHashIndex: transactionIndex } = err.metadata;
         // Create a challenge
         txDataToSign = await challengeContractInstance.methods
@@ -148,7 +167,7 @@ export async function createChallenge(block, transactions, err) {
         break;
       }
       // proof does not verify
-      case 4: {
+      case 5: {
         const { transaction, transactionHashIndex: transactionIndex } = err.metadata;
         // Create a challenge
         txDataToSign = await challengeContractInstance.methods
@@ -157,7 +176,7 @@ export async function createChallenge(block, transactions, err) {
         break;
       }
       // Challenge Duplicate Nullfier
-      case 5: {
+      case 6: {
         const storedMinedNullifiers = await retrieveMinedNullifiers(); // List of Nullifiers stored by blockProposer
         const blockNullifiers = transactions.map(tNull => tNull.nullifiers).flat(Infinity); // List of Nullifiers in block
         const alreadyMinedNullifiers = storedMinedNullifiers.filter(sNull =>

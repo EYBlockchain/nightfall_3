@@ -23,6 +23,7 @@ function mappedData(data) {
       commitments,
       nullifiers,
       historicRoot,
+      historicRootBlockHash,
       proof,
     } = u;
     const transaction = {
@@ -36,6 +37,7 @@ function mappedData(data) {
       commitments,
       nullifiers,
       historicRoot,
+      historicRootBlockHash,
       proof,
     };
     transaction.transactionHash = Transaction.calcHash(transaction);

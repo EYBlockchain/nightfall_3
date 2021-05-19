@@ -21,6 +21,7 @@ function keccak(preimage) {
     ...preimage.commitments.map(ch => ({ t: 'bytes32', v: ch })),
     ...preimage.nullifiers.map(nh => ({ t: 'bytes32', v: nh })),
     { t: 'bytes32', v: preimage.historicRoot },
+    { t: 'bytes32', v: preimage.historicRootBlockHash },
     ...preimage.proof.map(p => ({ t: 'uint', v: p })),
   );
 }
@@ -40,6 +41,7 @@ class Transaction {
     commitments: _commitments, // this must be an array of objects from the Commitments class
     nullifiers: _nullifiers, // this must be an array of objects from the Nullifier class
     historicRoot,
+    historicRootBlockHash,
     proof, // this must be a proof object, as computed by zokrates worker
   }) {
     if (proof === undefined) throw new Error('Proof cannot be undefined');
@@ -65,6 +67,7 @@ class Transaction {
       commitments: commitments.map(c => c.hash),
       nullifiers: nullifiers.map(n => n.hash),
       historicRoot: historicRoot || 0,
+      historicRootBlockHash: historicRootBlockHash || 0,
       proof: flatProof,
     }).all.hex(32);
     // compute the solidity hash, using suitable type conversions

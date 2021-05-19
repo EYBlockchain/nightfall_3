@@ -15,6 +15,7 @@ function mappedData(data) {
     commitments,
     nullifiers,
     historicRoot,
+    historicRootBlockHash,
     proof,
   } = data.returnValues.transaction;
   const transaction = {
@@ -28,6 +29,7 @@ function mappedData(data) {
     commitments,
     nullifiers,
     historicRoot,
+    historicRootBlockHash,
     proof,
   };
   // add in the transaction hash (we no longer sent this to the blockchain)

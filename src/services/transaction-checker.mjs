@@ -15,6 +15,7 @@ import TransactionError from '../classes/transaction-error.mjs';
 import PublicInputs from '../classes/public-inputs.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import logger from '../utils/logger.mjs';
+import { getBlockByBlockHash } from './database.mjs';
 
 const {
   ZOKRATES_WORKER_URL,
@@ -50,6 +51,7 @@ async function checkTransactionType(transaction) {
         transaction.commitments.length !== 2 ||
         transaction.nullifiers.some(n => n !== ZERO) ||
         transaction.historicRoot !== ZERO ||
+        transaction.historicRootBlockHash !== ZERO ||
         transaction.proof.some(p => p === ZERO)
       )
         throw new TransactionError(
@@ -71,6 +73,7 @@ async function checkTransactionType(transaction) {
         transaction.nullifiers[1] !== ZERO ||
         transaction.nullifiers.length !== 2 ||
         transaction.historicRoot === ZERO ||
+        transaction.historicRootBlockHash === ZERO ||
         transaction.proof.some(p => p === ZERO)
       )
         throw new TransactionError(
@@ -90,6 +93,7 @@ async function checkTransactionType(transaction) {
         transaction.nullifiers.some(n => n === ZERO) ||
         transaction.nullifiers.length !== 2 ||
         transaction.historicRoot === ZERO ||
+        transaction.historicRootBlockHash === ZERO ||
         transaction.proof.some(p => p === ZERO)
       )
         throw new TransactionError(
@@ -108,6 +112,7 @@ async function checkTransactionType(transaction) {
         transaction.nullifiers[1] !== ZERO ||
         transaction.nullifiers.length !== 2 ||
         transaction.historicRoot === ZERO ||
+        transaction.historicRootBlockHash === ZERO ||
         transaction.proof.some(p => p === ZERO)
       )
         throw new TransactionError(
@@ -117,6 +122,23 @@ async function checkTransactionType(transaction) {
       break;
     default:
       throw new TransactionError('Unknown transaction type', 2);
+  }
+}
+
+async function checkHistoricRoot(transaction) {
+  // Deposit transaction will not have historic roots
+  if (Number(transaction.transactionType) !== 0) {
+    try {
+      const historicBlock = await getBlockByBlockHash(transaction.historicRootBlockHash);
+      if (transaction.historicRoot !== historicBlock.root) {
+        throw new TransactionError(
+          'The block hash of the historic root is incorrect or the historic root does not exist in the specified historic block',
+          3,
+        );
+      }
+    } catch (err) {
+      throw new TransactionError('The historic root in the transaction does not exist', 3);
+    }
   }
 }
 
@@ -132,7 +154,7 @@ async function checkPublicInputHash(transaction) {
           transaction.commitments[0],
         ]).hash.hex(32)
       )
-        throw new TransactionError('public input hash is incorrect', 3);
+        throw new TransactionError('public input hash is incorrect', 4);
       break;
     case 1: // single transfer transaction
       if (
@@ -144,7 +166,7 @@ async function checkPublicInputHash(transaction) {
           transaction.historicRoot,
         ]).hash.hex(32)
       )
-        throw new TransactionError('public input hash is incorrect', 3);
+        throw new TransactionError('public input hash is incorrect', 4);
       break;
     case 2: // double transfer transaction
       if (
@@ -157,7 +179,7 @@ async function checkPublicInputHash(transaction) {
           transaction.historicRoot,
         ]).hash.hex(32)
       )
-        throw new TransactionError('public input hash is incorrect', 3);
+        throw new TransactionError('public input hash is incorrect', 4);
       break;
     case 3: // withdraw transaction
       if (
@@ -171,7 +193,7 @@ async function checkPublicInputHash(transaction) {
           transaction.historicRoot,
         ]).hash.hex(32)
       )
-        throw new TransactionError('public input hash is incorrect', 3);
+        throw new TransactionError('public input hash is incorrect', 4);
       break;
     default:
       throw new TransactionError('Unknown transaction type', 2);
@@ -195,13 +217,14 @@ async function verifyProof(transaction) {
     inputs: [transaction.publicInputHash],
   });
   const { verifies } = res.data;
-  if (!verifies) throw new TransactionError('The proof did not verify', 4);
+  if (!verifies) throw new TransactionError('The proof did not verify', 5);
 }
 
 function checkTransaction(transaction) {
   return Promise.all([
     checkTransactionHash(transaction),
     checkTransactionType(transaction),
+    checkHistoricRoot(transaction),
     checkPublicInputHash(transaction),
     verifyProof(transaction),
   ]);

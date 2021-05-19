@@ -152,7 +152,7 @@ router.get('/change', async (req, res, next) => {
  * Function to Propose a state update block  This just
  * provides the tx data, the user will need to call the blockchain client
  * @deprecated - this is now an automated process - no need to manually propose
- * a block
+ * a block. But this is used for challenge test cases
  */
 router.post('/encode', async (req, res, next) => {
   logger.debug(`encode endpoint received POST`);

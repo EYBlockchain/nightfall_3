@@ -49,7 +49,7 @@ async function checkBlock(block, transactions) {
   if (alreadyMinedNullifiers.length > 0) {
     throw new BlockError(
       `Some Nullifiers included in ${block.root} have been included in previous blocks`,
-      5,
+      6,
     );
   }
 
@@ -61,14 +61,17 @@ async function checkBlock(block, transactions) {
     try {
       await checkTransaction(transactions[i]);
     } catch (err) {
-      throw new BlockError(
-        `The transaction check failed with error: ${err.message}`,
-        err.code === 1 ? 2 : err.code, // mapping transaction error to block error
-        {
-          transaction: transactions[i],
-          transactionHashIndex: block.transactionHashes.indexOf(transactions[i].transactionHash),
-        },
-      );
+      if (err.code !== 2) {
+        // Error 2 of transaction checker does not need a challenge
+        throw new BlockError(
+          `The transaction check failed with error: ${err.message}`,
+          err.code === 1 ? 2 : err.code, // mapping transaction error to block error
+          {
+            transaction: transactions[i],
+            transactionHashIndex: block.transactionHashes.indexOf(transactions[i].transactionHash),
+          },
+        );
+      }
     }
   }
 }
