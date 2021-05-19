@@ -143,6 +143,8 @@ library ChallengesUtil {
         nZeroNullifiers == 0 ||
         /* transaction.nullifiers.length != 0 || // TODO in NO */
         transaction.historicRoot != ZERO ||
+        transaction.historicRootBlockHash != ZERO ||
+
         nZeroProof > 0,
         'This deposit transaction type is valid'
       );
@@ -179,6 +181,7 @@ library ChallengesUtil {
         nZeroNullifiers > 0 ||
         transaction.nullifiers.length != 1 ||
         transaction.historicRoot == ZERO ||
+        transaction.historicRootBlockHash == ZERO ||
         nZeroProof > 0,
         'This single transfer transaction type is valid'
       );
@@ -215,6 +218,7 @@ library ChallengesUtil {
         nZeroNullifiers > 0 ||
         transaction.nullifiers.length != 2 ||
         transaction.historicRoot == ZERO ||
+        transaction.historicRootBlockHash == ZERO ||
         nZeroProof > 0,
         'This double transfer transaction type is valid'
       );
@@ -250,6 +254,7 @@ library ChallengesUtil {
         nZeroNullifiers > 0 ||
         transaction.nullifiers.length != 1 ||
         transaction.historicRoot == ZERO ||
+        transaction.historicRootBlockHash == ZERO ||
         nZeroProof > 0,
         'This withdraw transaction type is valid'
       );
@@ -365,14 +370,19 @@ library ChallengesUtil {
     // Checks if the block contains the transaction in the index specified and that the
     // transaction hash is correctly calculated
     function isTransactionValid(Structures.Block memory b, Structures.Transaction memory t, uint index) public pure {
-      bytes32 transactionHash = Utils.hashTransaction(t);
       require(
-        b.transactionHashes[index] == transactionHash,
+        b.transactionHashes[index] == Utils.hashTransaction(t),
         'Transaction hash was not found in the block'
       );
-      require(
-        Utils.hashTransaction(t) == transactionHash,
-        'The transaction hash is incorrect'
-      );
+    }
+
+    // the historic root of the transaction is challenged
+    function libChallengeHistoricRoot(
+      Structures.Block memory blockL2,
+      Structures.Transaction memory transaction,
+      uint transactionIndex
+    ) public pure {
+      isBlockHashCorrect(blockL2);
+      isTransactionValid(blockL2, transaction, transactionIndex);
     }
 }

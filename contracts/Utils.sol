@@ -20,6 +20,7 @@ library Utils {
         t.commitments,
         t.nullifiers,
         t.historicRoot,
+        t.historicRootBlockHash,
         t.proof
       )
     );

@@ -52,7 +52,8 @@ contract Structures {
     bytes32 recipientAddress;
     bytes32[2] commitments;
     bytes32[2] nullifiers;
-    bytes32 historicRoot; // the root (if any) used to create the proof
+    bytes32 historicRoot;
+    bytes32 historicRootBlockHash; // the root (if any) used to create the proof
     uint[8] proof;
   }
 

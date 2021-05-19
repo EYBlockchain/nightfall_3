@@ -31,7 +31,7 @@ contract Challenges is Proposers, Key_Registry {
   ) external {
     checkCommit(msg.data, salt);
     // first, check we have real, in-train, contiguous blocks
-    require(blockHashes[priorBlockL2.blockHash].nextHash == blockHashes[blockL2.blockHash].thisHash, 'The blocks are not contiguous');
+    require(blockHashes[priorBlockL2.blockHash].nextHash == blockHashes[blockL2.blockHash].thisHash, 'Blocks are not contiguous');
     // check if the block hash is correct and the block hash exists for the prior block
     isBlockReal(priorBlockL2);
     isBlockReal(blockL2);
@@ -69,7 +69,6 @@ contract Challenges is Proposers, Key_Registry {
       checkCommit(msg.data, salt);
       isBlockReal(_block);
       ChallengesUtil.libChallengeTransactionType(_block, _transaction, _transactionIndex);
-      // Delete the latest block of the two
       challengeAccepted(_block);
   }
 
@@ -82,7 +81,6 @@ contract Challenges is Proposers, Key_Registry {
       checkCommit(msg.data, salt);
       isBlockReal(_block);
       ChallengesUtil.libChallengePublicInputHash(_block, _transaction, _transactionIndex);
-      // Delete the latest block of the two
       challengeAccepted(_block);
   }
 
@@ -113,18 +111,20 @@ contract Challenges is Proposers, Key_Registry {
     uint transactionIndex2,
     uint nullifierIndex2,
     bytes32 salt
-  ) public {
+  ) external {
     checkCommit(msg.data, salt);
     ChallengesUtil.libChallengeNullifier(block1, tx1, transactionIndex1, nullifierIndex1, block2, tx2, transactionIndex2, nullifierIndex2);
     isBlockReal(block1);
     isBlockReal(block2);
 
-    if (block1.blockHash == block2.blockHash){ //They are the same block
+    /* if (block1.blockHash == block2.blockHash){
       challengeAccepted(block1);
-    }
+    } */
+
+    // If they are the same block, then challenge is accepted
     // The blocks are different and we prune the later block of the two
     // simplest first check is to use the timestamp
-    if (blockHashes[block1.blockHash].data > blockHashes[block2.blockHash].data){
+    if (block1.blockHash == block2.blockHash || blockHashes[block1.blockHash].data > blockHashes[block2.blockHash].data){
       challengeAccepted(block1);
     } else if (blockHashes[block1.blockHash].data < blockHashes[block2.blockHash].data) {
       challengeAccepted(block2);
@@ -145,6 +145,23 @@ contract Challenges is Proposers, Key_Registry {
           checkHash = blockHashes[checkHash].previousHash;
       }
     }
+  }
+  
+  function challengeHistoricRoot(
+    Block memory _block,
+    Block memory _historicRootBlock,
+    Transaction memory _transaction,
+    uint _transactionIndex,
+    bytes32 salt
+    ) external {
+      checkCommit(msg.data, salt);
+      isBlockReal(_block);
+      ChallengesUtil.libChallengeHistoricRoot(_block, _transaction, _transactionIndex);
+      require(blockHashes[_transaction.historicRootBlockHash].thisHash != _transaction.historicRootBlockHash ||
+        _transaction.historicRootBlockHash != Utils.hashBlock(_historicRootBlock) ||
+        _transaction.historicRoot != _historicRootBlock.root
+        , 'Historic root in transaction exists');
+      challengeAccepted(_block);
   }
 
   // This gets called when a challenge succeeds
@@ -192,7 +209,7 @@ contract Challenges is Proposers, Key_Registry {
   function checkCommit(bytes calldata messageData, bytes32 salt) private {
     bytes32 hash = keccak256(messageData);
     salt = 0; // not really required as salt is in msg.data but stops the unused variable compiler warning. Bit of a waste of gas though.
-    require(committers[hash] == msg.sender, 'The commitment hash is invalid');
+    require(committers[hash] == msg.sender, 'Commitment hash is invalid');
     delete committers[hash];
   }
 }
