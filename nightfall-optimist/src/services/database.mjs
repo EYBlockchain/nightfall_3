@@ -283,3 +283,9 @@ export async function resetNullifiers(blockHash) {
   const update = { $unset: { blockHash: '' } };
   return db.collection(NULLIFIER_COLLECTION).updateMany(query, update);
 }
+
+export async function getBlocks() {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  return db.collection(SUBMITTED_BLOCKS_COLLECTION).find({},{ sort: { blockNumber: 1 }}).toArray()
+}
