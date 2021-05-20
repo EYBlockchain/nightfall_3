@@ -6,7 +6,8 @@
   "scripts": {
     "test": "npx mocha --timeout 0 --bail nightfall-client/test/http.mjs nightfall-client/test/neg-http.mjs",
     "test-gas": "npx mocha --timeout 0 --bail nightfall-client/test/tx-gas.mjs",
-    "lint": "eslint -c consolidated-eslint-config.js --no-eslintrc ."
+    "lint": "eslint -c consolidated-eslint-config.js --no-eslintrc .",
+    "prepare": "husky install"
   },
   "repository": {
     "type": "git",
@@ -26,10 +27,5 @@
     "husky": "^6.0.0",
     "mocha": "^8.3.2",
     "prettier": "^2.2.1"
-  },
-  "husky": {
-    "hooks": {
-      "commit-msg": "commitlint --env HUSKY_GIT_PARAMS"
-    }
   }
 }
