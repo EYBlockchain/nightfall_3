@@ -14,7 +14,7 @@ Transfer, Withdraw. Anyone can be a Transactor. They pay a fee for the service.
 A `Proposer` proposes new updates to the state of the Shield contract. By _state_, we mean
 specifically the storage variables that are associated with a zkp transaction: nullifiers, and
 commitment roots. Update proposals contain many `Transactions`, rolled up into a layer 2 `Block` and
-only the final state, that would exist after all the Transactions in the Block were processed, is
+only a hash of the final state, that would exist after all the Transactions in the Block were processed, is
 stored. Anyone can become a Proposer but they must post a bond to do so. The bond is intended to
 incentivise good behaviour. They must also stake some ETH every time they propose a block, which is
 paid to a successful challenger. They make money by providing correct Blocks, collecting fees from
@@ -34,11 +34,9 @@ and have the same functionality as conventional nightfall).
   Shield contract (commitment root and nullifier lists) is updated. When the state is updated, any
   withdrawals in the update will be processed (we don't yet allow immediate withdrawal; one needs to
   wait until a block is finalised).
-- `Proposers.sol` - functionality for registering, deregistering, paying and rotating proposers.
-- `Challenges.sol` - functionality to enable a Block to be challenged as incorrect in some way
-  (there are several different ways a Block can be incorrect and, eventually this contract will
-  cover all of them. For now, one can just challenge that the ZKP verifies and that the update to
-  the commitment root is correct.
+  Note that there is no fundamental need to post a transfer or withdraw transaction to the blockchain: it's simply acting as a message board for proposers to pick up the transaction and incorporate it into a layer 2 Block.  These days, that's a lot of Gas for a bit of convenience.  Therefore this functionality can be disabled and transfer transactions sent directly to a proposer endpoint (see below).
+- `Proposers.sol` - functionality for registering, deregistering, paying and rotating proposers and, most importantly, proposing a new Layer 2 Block to the blockchain.
+- `Challenges.sol` - functionality to enable a Block to be challenged as incorrect in some way.
 - `MerkleTree_Computations.sol` - A stateless (pure function) version of the original
   `MerkleTree.sol`, used by `Challenges.sol` to help compute challenged blocks on-chain.
 - `Utils.sol` - collects together functionality which is either used in multiple contracts or which,
@@ -67,8 +65,8 @@ token in question.
 
 #### **Off-chain**
 Transfer and Withdraw transactions have the option of being submitted directly to listening proposers
-rather than being submitted on-chain via the above process. These off-chain transactions will save 
-transactors the on-chain submission cost (~50k gas), but requires a greater degree of trust from 
+rather than being submitted on-chain via the above process. These off-chain transactions will save
+transactors the on-chain submission cost (~45k gas), but requires a greater degree of trust from
 transactors with the proposers they choose to connect to. It is easier for bad acting proposers
 to censor transactions received off-chain than those received on-chain.
 
@@ -82,11 +80,11 @@ a `Block`.
 ### Block assembly and submission
 
 Proposers wait until the Shield contract assigns them as the current proposer (presently this is
-done by simple rotation, I feel this should be random but I can't actually see a problem with
+done by simple rotation, we feel this should be random but we can't actually see a problem with
 rotation).
 
 The current proposer looks at the available Transactions and chooses one. Normally this would be the
-one with the highest fee. They compute the newcommitment Merkle-tree that _would_ come into being 
+one with the highest fee. They compute the new commitment Merkle-tree that _would_ come into being
 _were_ this transaction to be added to the Shield contract next.
 
 The current Proposer repeats this process n times, until they have assembled a Block, which contains
@@ -137,14 +135,14 @@ the following actions are taken by `Challenges.sol`:
 
 ### State incorporation
 
-We don't explicitly do this. Any block that is more than a week old is assumed final.
+We don't explicitly incorporate new state. Any block that is more than a week old is assumed final.
 `Shield.withdraw` can be called to withdraw funds from a finalised block. For this reason, Blocks
 that are final cannot be challenged.
 
 ## Avoiding front-running attacks
 
-Challengers submit valid challenges using a 'commit-reveal' scheme to mitigate the risks that their 
-challenge can be front-run.The Challenger does not challenge immediately but provides a salted hash
+Challengers submit valid challenges using a 'commit-reveal' scheme to mitigate the risk that their
+challenge can be front-run. The Challenger does not challenge immediately but provides a salted hash
 of the Challenge information. This hash is saved against the sender's address.
 
 Once that transaction has gone through, the Challenger sends the complete Challenge information
