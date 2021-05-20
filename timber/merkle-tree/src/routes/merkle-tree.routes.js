@@ -197,7 +197,7 @@ async function getTreeHistoryByCurrentLeafCount(req, res, next) {
 }
 
 // initializing routes
-export default (router) => {
+export default router => {
   router.route('/start').post(startEventFilter);
 
   router.route('/update').patch(update);

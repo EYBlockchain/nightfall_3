@@ -16,28 +16,7 @@ let coinbase;
 const n = 10;
 
 const insertLeavesBatchSizes = [
-  1,
-  2,
-  3,
-  4,
-  5,
-  6,
-  7,
-  8,
-  9,
-  10,
-  11,
-  12,
-  13,
-  14,
-  15,
-  16,
-  32,
-  64,
-  128,
-  256,
-  512,
-  1024,
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 32, 64, 128, 256, 512, 1024,
 ];
 
 beforeEach('Redeploy contract', async () => {
@@ -75,7 +54,7 @@ describe('insertLeaf', async () => {
             gasPrice: config.web3.options.defaultGasPrice,
           })
           // eslint-disable-next-line no-loop-func
-          .on('receipt', (receipt) => {
+          .on('receipt', receipt => {
             const { leafIndex, leafValue, root } = receipt.events.NewLeaf.returnValues;
             console.log('NewLeaf:', leafIndex, leafValue, root);
           });
@@ -133,7 +112,7 @@ describe('insertLeaves', async () => {
             gasPrice: config.web3.options.defaultGasPrice,
           })
           // eslint-disable-next-line no-loop-func, no-unused-vars
-          .on('receipt', (receipt) => {
+          .on('receipt', receipt => {
             // const { minLeafIndex, leafValues, root } = receipt.events.NewLeaves.returnValues;
             // console.log(minLeafIndex, leafValues, root);
           });
