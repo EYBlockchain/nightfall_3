@@ -9,8 +9,9 @@ import utilsWeb3 from './utils-web3';
 import utilsMT from './utils-merkle-tree';
 import logger from './logger';
 import { LeafService, NodeService, MetadataService, HistoryService } from './db/service';
-
-const { ZERO } = config;
+import { responseFunctions } from './filter-controller';
+// import { getContractInterface } from '../../../nightfall-optimist/src/utils/contract.mjs'
+const { ZERO, CHALLENGES_CONTRACT_NAME } = config;
 
 /**
 Check the leaves of the tree are all there.
@@ -43,7 +44,9 @@ async function checkLeaves(db) {
     logger.warn(`missing leaves: ${JSON.stringify(missingLeaves, null, 2)}`);
 
     const minMissingLeafIndex = missingLeaves[0];
-
+    const maxMissingLeafIndex = missingLeaves[missingLeaves.length - 1];
+    
+    const leafAfterMissingLeaves = await leafService.getLeafByLeafIndex(maxMissingLeafIndex + 1);
     maxReliableLeafIndex = minMissingLeafIndex - 1;
 
     let fromBlock;
@@ -60,7 +63,7 @@ async function checkLeaves(db) {
     }
 
     const currentBlock = await utilsWeb3.getBlockNumber();
-
+    const toBlock = leafAfterMissingLeaves.blockNumber ?? 'latest';
     const lag = currentBlock - fromBlock;
 
     const lagTolerance = config.tolerances.LAG_BEHIND_CURRENT_BLOCK;
@@ -72,10 +75,28 @@ async function checkLeaves(db) {
 
       return maxReliableLeafIndex; // return the latest reliable leaf index up to which we can update the tree
     }
-    logger.error(
-      `We need to re-filter from block ${fromBlock}, but this feature hasn't been built yet!`,
-    );
-    // TODO: re-filter the blockchain for events from this fromBlock.
+    const contractName = Object.keys(config.contracts)[0]
+    const treeId = config.contracts[contractName].treeId;
+
+    const contractAddress = await utilsWeb3.getContractAddress(contractName);
+
+    if (contractAddress === undefined) throw new Error('undefined contract address');
+
+    const contractInterface = await utilsWeb3.getContractInstance(contractName,contractAddress)
+
+    // fromBlock incremented since we only want the next block after the last one we have saved.
+    const events = await contractInterface.getPastEvents({
+      fromBlock: fromBlock + 1,
+      toBlock: toBlock - 1
+    });
+
+    const pastTimberEvents = events.filter(e => ['NewLeaf','NewLeaves','Rollback','BlockProposed'].includes(e.event)).sort((a, b) => a.blockNumber - b.blockNumber);
+
+    for (let i = 0; i < pastTimberEvents.length; i++) {
+      const responseFunction = responseFunctions[pastTimberEvents[i].event];
+      const responseFunctionArgs = { db, contractName:contractName, event: pastTimberEvents[i], treeId };
+      await responseFunction({ eventData: pastTimberEvents[i] }, responseFunctionArgs);
+    }
   }
 
   maxReliableLeafIndex = maxLeafIndex;
