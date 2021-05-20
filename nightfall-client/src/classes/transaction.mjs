@@ -43,6 +43,8 @@ class Transaction {
     proof, // this must be a proof object, as computed by zokrates worker
   }) {
     if (proof === undefined) throw new Error('Proof cannot be undefined');
+    console.log('TX-PROOF', proof);
+
     const flatProof = Object.values(proof).flat(Infinity);
     if (publicInputs === undefined) throw new Error('PublicInputs cannot be undefined');
     let commitments;
