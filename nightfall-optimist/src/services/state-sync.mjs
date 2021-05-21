@@ -15,8 +15,6 @@ import { waitForContract } from '../event-handlers/subscribe.mjs';
 const { CHALLENGES_CONTRACT_NAME, SHIELD_CONTRACT_NAME, ZERO } = config;
 
 export const syncState = async (proposer, fromBlock='earliest', toBlock='latest', eventFilter = 'allEvents') => {
-  logger.info(`fromBlock: ${fromBlock}`)
-  logger.info(`toBlock: ${toBlock}`)
   const proposersContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
   const pastProposerEvents = await proposersContractInstance.getPastEvents(eventFilter, {
@@ -72,7 +70,6 @@ export const initialBlockSync = async proposer => {
     await stopMakingChallenges();
     for(let i = 0; i< missingBlocks.length; i++) {
       const [fromBlock,toBlock] = missingBlocks[i]
-      logger.info(`Missing Blocks, resyncing between ${fromBlock} and ${toBlock} `);
       // Sync the state inbetween these blocks
       await syncState(proposer,fromBlock,toBlock);
     };
