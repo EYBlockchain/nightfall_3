@@ -1,5 +1,12 @@
 import assert from 'assert';
-import { compressG1, decompressG1 } from '../src/utils/curve-maths/curves.mjs';
+import {
+  compressG1,
+  decompressG1,
+  compressG2,
+  decompressG2,
+  compressProof,
+  decompressProof,
+} from '../src/utils/curve-maths/curves.mjs';
 
 const testProof = {
   a: [
@@ -28,17 +35,23 @@ describe('compression tests', () => {
       compressG1(testProof.a),
       compressG1(testProof.c),
     ]);
-    const [decompressedG1a, decompressedG1c] = await Promise.all([
+    const [decompressedG1a, decompressedG1c] = [
       decompressG1(compressedG1a),
       decompressG1(compressedG1c),
-    ]);
-    assert.deepStrictEqual(
-      testProof.a.map(c => BigInt(c)),
-      decompressedG1a,
-    );
-    assert.deepStrictEqual(
-      testProof.c.map(c => BigInt(c)),
-      decompressedG1c,
-    );
+    ];
+    assert.deepStrictEqual(testProof.a, decompressedG1a);
+    assert.deepStrictEqual(testProof.c, decompressedG1c);
+  });
+
+  it('should compress and decompress a G2 point, recovering the original', async () => {
+    const compressedG2b = await Promise.all(compressG2(testProof.b));
+    const decompressedG2b = decompressG2(compressedG2b);
+    assert.deepStrictEqual(testProof.b, decompressedG2b);
+  });
+  it('should compress and decompress a GM17 proof', async () => {
+    const compressedProof = await compressProof(testProof);
+    const decompressedProof = decompressProof(compressedProof);
+    const flatProof = [testProof.a, testProof.b, testProof.c].flat(2);
+    assert.deepStrictEqual(flatProof, decompressedProof);
   });
 });

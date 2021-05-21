@@ -6,8 +6,9 @@ return values are BigInts (or arrays of BigInts).
 import config from 'config';
 import { mulMod, addMod, squareRootModPrime } from './number-theory.mjs';
 import Proof from '../../classes/proof.mjs';
+import Fq2 from '../../classes/fq2.mjs';
 
-const { COMPRESS_G2, BN128_PRIME_FIELD } = config;
+const { BN128_PRIME_FIELD } = config;
 
 /**
 function to compress a G1 point. If we throw away the y coodinate, we can
@@ -48,13 +49,18 @@ export async function compressProof(_proof) {
     if (_proof.length !== 8) throw new Error('Flat proof array should have length 8');
     proof = new Proof(_proof);
   } else proof = _proof;
-  return [compressG1(proof.a), compressG2(proof.b), compressG1(proof.c)].flat();
+  const compressed = await Promise.all([
+    compressG1(proof.a),
+    await Promise.all(compressG2(proof.b)),
+    compressG1(proof.c),
+  ]);
+  return compressed.flat();
 }
 
 /**
 solving Y^2 = X^3 + 3 over p
 */
-export async function decompressG1(xin) {
+export function decompressG1(xin) {
   // first, extract the parity bit
   const xbin = BigInt(xin)
     .toString(2)
@@ -66,17 +72,34 @@ export async function decompressG1(xin) {
   const y2 = addMod([x3, 3n]);
   let y = squareRootModPrime(y2);
   if (parity !== y.toString(2).slice(-1)) y = BN128_PRIME_FIELD - y;
-  return [x, y];
+  return [`0x${x.toString(16).padStart(64, '0')}`, `0x${y.toString(16).padStart(64, '0')}`];
 }
 
 /**
 solving Y^2 = X^3 + 3/(i+9)
 */
-export async function decompressG2(cin) {
-  throw new Error('Not yet implemented');
+export function decompressG2(xin) {
+  // first extract parity bits
+  const xbin = xin.map(c =>
+    BigInt(c)
+      .toString(2)
+      .padStart(256, '0'),
+  );
+  const parity = xbin.map(xb => xb[0]); // extract parity
+  const x = new Fq2(...xbin.map(xb => BigInt(`0b${xb.slice(1)}`))); // x element
+  const x3 = x.mul(x).mul(x);
+  const d = new Fq2(3n, 0n).div(new Fq2(9n, 1n)); // TODO hardcode this?
+  const y2 = x3.add(d);
+  const y = y2.sqrt();
+  // fix the parity of y
+  const a = parity[0] === y.real.toString(2).slice(-1) ? y.real : BN128_PRIME_FIELD - y.real;
+  const b =
+    parity[1] === y.imaginary.toString(2).slice(-1) ? y.imaginary : BN128_PRIME_FIELD - y.imaginary;
+  // we return arrays of real and imaginary points not Fq2.
+  return [x.toHex(), new Fq2(a, b).toHex()];
 }
 
-export async function decompressProof(compressedProof) {
+export function decompressProof(compressedProof) {
   // compressed proofs are always just flat arrays. We also return a flattend
   // proof array as we rarely need the object.  If we do we can construct one
   // from the flattened array as an instance of the Proof class. This returns

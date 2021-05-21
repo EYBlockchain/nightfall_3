@@ -8,8 +8,10 @@ import config from 'config';
 
 const { BN128_PRIME_FIELD } = config;
 
-export function mod(x, m = BN128_PRIME_FIELD) {
-  return (x + m) % m; // accounts for x being negative
+export function mod(_x, _m = BN128_PRIME_FIELD) {
+  const m = BigInt(_m);
+  const x = BigInt(_x);
+  return ((x % m) + m) % m; // accounts for x being negative
 }
 
 export function addMod(addMe, m = BN128_PRIME_FIELD) {
