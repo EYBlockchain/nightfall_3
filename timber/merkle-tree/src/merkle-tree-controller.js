@@ -102,8 +102,7 @@ async function checkLeaves(db) {
         event: pastTimberEvents[i],
         treeId,
       };
-      // eslint-disable-next-line no-await-in-loop
-      await responseFunction({ eventData: pastTimberEvents[i] }, responseFunctionArgs);
+      await responseFunction({ eventData: pastTimberEvents[i] }, responseFunctionArgs); // eslint-disable-line no-await-in-loop
     }
   }
 
