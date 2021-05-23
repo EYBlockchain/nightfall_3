@@ -3,6 +3,7 @@ An optimistic Transaction class
 */
 import gen from 'general-number';
 import Web3 from '../utils/web3.mjs';
+import { compressProof } from '../utils/curve-maths/curves.mjs';
 
 const { generalise } = gen;
 
@@ -43,8 +44,6 @@ class Transaction {
     proof, // this must be a proof object, as computed by zokrates worker
   }) {
     if (proof === undefined) throw new Error('Proof cannot be undefined');
-    console.log('TX-PROOF', proof);
-
     const flatProof = Object.values(proof).flat(Infinity);
     if (publicInputs === undefined) throw new Error('PublicInputs cannot be undefined');
     let commitments;
@@ -110,7 +109,7 @@ class Transaction {
       commitments,
       nullifiers,
       historicRoot,
-      proof,
+      proof: compressProof(proof),
     };
   }
 }

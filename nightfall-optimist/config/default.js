@@ -34,8 +34,6 @@ module.exports = {
   HASH_TYPE: 'mimc',
   TRANSACTIONS_PER_BLOCK: Number(process.env.TRANSACTIONS_PER_BLOCK) || 2,
   TIMBER_SYNC_RETRIES: 5, // Sets amount of exponential backoff attempts to sync with timber.
-  PROPOSE_BLOCK_TYPES: [
-    '(address,bytes32,uint64,uint64)',
-    '(uint64,uint8,bytes32,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32,uint[8])[]',
-  ], // used to encode/decode proposeBlock signature
+  PROPOSE_BLOCK_TYPES: ['(address,bytes32,uint64,uint64)',
+        '(uint64,uint8,bytes32,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32,uint[4])[]'], // used to encode/decode proposeBlock signature
 };

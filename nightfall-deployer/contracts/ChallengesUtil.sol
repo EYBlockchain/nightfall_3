@@ -272,19 +272,26 @@ library ChallengesUtil {
     }
 
     function libChallengeProofVerification(
-      Structures.Transaction memory transaction,
+      uint publicInputHash,
+      uint[8] memory proof,
       uint256[] memory vk
     ) internal {
-      uint[] memory proof = new uint[](transaction.proof.length);
-      for (uint i = 0; i < proof.length; i++){
-        proof[i] = transaction.proof[i];
+      // TODO convert from uint[8] to uint[] - make unnecessary.
+      uint[] memory proof1 = new uint[](proof.length);
+      for (uint i = 0; i < proof.length; i++) {
+        proof1[i] = proof[i];
       }
       require(!Verifier.verify(
-        proof,
-        uint256(transaction.publicInputHash),
+        proof1,
+        publicInputHash,
         vk),
         'This proof appears to be valid'
       );
+    }
+
+    function libCheckCompressedProof(uint[4] memory compressedProof, uint[8] memory uncompressedProof) internal pure {
+      // check equality by comparing hashes (cheaper than comparing elements)
+      require(keccak256(abi.encodePacked(compressedProof)) == keccak256(abi.encodePacked(Utils.compressProof(uncompressedProof))), 'Cannot recreate compressed proof from uncompressed proof');
     }
 
     function libChallengeNullifier(

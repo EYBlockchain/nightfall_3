@@ -5,6 +5,7 @@ import config from 'config';
 import { getFrontier } from '../utils/timber.mjs';
 import mt from '../utils/crypto/merkle-tree/merkle-tree.mjs';
 import Web3 from '../utils/web3.mjs';
+import { compressProof } from '../utils/curve-maths/curves.mjs';
 
 const { ZERO, PROPOSE_BLOCK_TYPES } = config;
 const { updateNodes } = mt;
@@ -141,7 +142,7 @@ class Block {
         commitments,
         nullifiers,
         historicRoot,
-        proof,
+        compressProof(proof),
       ];
     });
     const encoded = web3.eth.abi.encodeParameters(PROPOSE_BLOCK_TYPES, [

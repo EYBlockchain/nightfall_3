@@ -48,8 +48,16 @@ describe('compression tests', () => {
     const decompressedG2b = decompressG2(compressedG2b);
     assert.deepStrictEqual(testProof.b, decompressedG2b);
   });
-  it('should compress and decompress a GM17 proof', async () => {
+
+  it('should compress and decompress a GM17 proof object', async () => {
     const compressedProof = await compressProof(testProof);
+    const decompressedProof = decompressProof(compressedProof);
+    const flatProof = [testProof.a, testProof.b, testProof.c].flat(2);
+    assert.deepStrictEqual(flatProof, decompressedProof);
+  });
+
+  it('should compress and decompress a flattened GM17 proof array', async () => {
+    const compressedProof = await compressProof(Object.values(testProof).flat(Infinity));
     const decompressedProof = decompressProof(compressedProof);
     const flatProof = [testProof.a, testProof.b, testProof.c].flat(2);
     assert.deepStrictEqual(flatProof, decompressedProof);
