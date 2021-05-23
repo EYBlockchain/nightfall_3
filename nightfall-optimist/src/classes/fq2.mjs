@@ -75,6 +75,8 @@ class Fq2 {
   }
 
   sqrt() {
+    // This method is from https://eprint.iacr.org/2012/685.pdf.  We gratefully
+    // acknowledge the contribution from these authors.
     // step 0.  Ensure that q meets the condition q = 3 mod 4
     if (this.mod(this.m, 4n) !== 3n) throw new Error('Field is not congruent to 3 mod 4');
     // step 1
@@ -97,17 +99,6 @@ class Fq2 {
     }
     return x;
   }
-  /*
-  sqrt2() {
-    const test = this.pow(modDivide(this.m - 1n, 2n));
-    if (test.equals(new Fq2(this.m - 1n, 0n)))
-      return new Fq2(0n, 1n).mul(this.pow(modDivide(this.m + 1n, 4n)));
-    return new Fq2(1n, 0n)
-      .add(this.pow(modDivide(this.m - 1n, 2n)))
-      .pow(modDivide(this.m - 1n, 2n))
-      .mul(this.pow(modDivide(this.m + 1n, 4n)));
-  }
-  */
 }
 
 export default Fq2;
