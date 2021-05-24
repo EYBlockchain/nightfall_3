@@ -1,0 +1,8 @@
+node_modules
+*.DS_Store
+build/
+node_modules/
+proving-files/
+circuits-user/
+temp-user-files/
+tests/CID

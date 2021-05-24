@@ -1,0 +1,16 @@
+#! /bin/bash
+git checkout optimistic
+git pull
+cd ../nightfall-deployer
+git checkout optimistic
+git pull
+cd ../nightfall-optimist
+git checkout master
+git pull
+cd ../timber
+git checkout optimistic
+git pull
+cd ../zokrates-worker
+git checkout optimistic
+git pull
+cd ../nightfall-client
