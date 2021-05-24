@@ -7,6 +7,8 @@ const dbConnections = {};
 dbConnections.admin = mongoose.createConnection(`mongodb://${host}:${port}/${databaseName}`, {
   useNewUrlParser: true,
   useCreateIndex: true,
+  reconnectTries: 3,
+  connectTimeoutMS: 120000,
 });
 
 const adminDbConnection = dbConnections.admin;
