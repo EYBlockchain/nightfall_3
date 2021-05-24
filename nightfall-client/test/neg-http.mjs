@@ -66,7 +66,6 @@ describe('Testing the challenge http API', () => {
     web3 = connectWeb3();
     let counter = 0; // to edit a block to a different bad block type each time a block proposed transaction is received
     let duplicateTransaction;
-    let duplicateBlock;
     let duplicateNullifier;
 
     res = await chai.request(url).get('/contract-address/Shield');
@@ -82,10 +81,7 @@ describe('Testing the challenge http API', () => {
     // should register a proposer
     const myAddress = (await getAccounts())[0];
     const bond = 10000000000000000000;
-    res = await chai
-      .request(optimistUrl)
-      .post('/proposer/register')
-      .send({ address: myAddress });
+    res = await chai.request(optimistUrl).post('/proposer/register').send({ address: myAddress });
     txToSign = res.body.txDataToSign;
     await submitTransaction(txToSign, privateKey, challengeAddress, gas, bond);
 
@@ -194,16 +190,13 @@ describe('Testing the challenge http API', () => {
     let txDataToSign;
     it('should deposit some crypto into a ZKP commitment', async () => {
       await new Promise(resolve => setTimeout(resolve, 5000));
-      const res = await chai
-        .request(url)
-        .post('/deposit')
-        .send({
-          ercAddress,
-          tokenId,
-          value,
-          zkpPublicKey,
-          fee,
-        });
+      const res = await chai.request(url).post('/deposit').send({
+        ercAddress,
+        tokenId,
+        value,
+        zkpPublicKey,
+        fee,
+      });
       txDataToSign = res.body.txDataToSign;
       expect(txDataToSign).to.be.a('string');
       // now we need to sign the transaction and send it to the blockchain
@@ -216,15 +209,12 @@ describe('Testing the challenge http API', () => {
     });
 
     it('should deposit some more crypto (we need a second transaction for proposing block) into a ZKP commitment and get a raw blockchain transaction back', async () => {
-      const res = await chai
-        .request(url)
-        .post('/deposit')
-        .send({
-          ercAddress,
-          tokenId,
-          value,
-          zkpPublicKey,
-        });
+      const res = await chai.request(url).post('/deposit').send({
+        ercAddress,
+        tokenId,
+        value,
+        zkpPublicKey,
+      });
       txDataToSign = res.body.txDataToSign;
       expect(txDataToSign).to.be.a('string');
       // now we need to sign the transaction and send it to the blockchain
@@ -239,15 +229,12 @@ describe('Testing the challenge http API', () => {
   describe('Creating blocks with at least 1 transfer so there is a non-zero nullifier for later challenges', () => {
     let txDataToSign;
     it('should create a deposit', async () => {
-      const res = await chai
-        .request(url)
-        .post('/deposit')
-        .send({
-          ercAddress,
-          tokenId,
-          value,
-          zkpPublicKey,
-        });
+      const res = await chai.request(url).post('/deposit').send({
+        ercAddress,
+        tokenId,
+        value,
+        zkpPublicKey,
+      });
       txDataToSign = res.body.txDataToSign;
       expect(txDataToSign).to.be.a('string');
       // now we need to sign the transaction and send it to the blockchain
@@ -288,15 +275,12 @@ describe('Testing the challenge http API', () => {
   describe('Create challenge block consisting of a deposit and transfer transaction ', () => {
     let txDataToSign;
     it('should create a deposit', async () => {
-      const res = await chai
-        .request(url)
-        .post('/deposit')
-        .send({
-          ercAddress,
-          tokenId,
-          value,
-          zkpPublicKey,
-        });
+      const res = await chai.request(url).post('/deposit').send({
+        ercAddress,
+        tokenId,
+        value,
+        zkpPublicKey,
+      });
       txDataToSign = res.body.txDataToSign;
       expect(txDataToSign).to.be.a('string');
       // now we need to sign the transaction and send it to the blockchain
@@ -379,16 +363,13 @@ describe('Testing the challenge http API', () => {
   describe('Challenge 2: Incorrect root challenge', () => {
     it('Should delete the wrong block', async () => {
       // create another transaction to trigger NO's block assembly
-      const res = await chai
-        .request(url)
-        .post('/deposit')
-        .send({
-          ercAddress,
-          tokenId,
-          value,
-          zkpPublicKey,
-          fee,
-        });
+      const res = await chai.request(url).post('/deposit').send({
+        ercAddress,
+        tokenId,
+        value,
+        zkpPublicKey,
+        fee,
+      });
       const { txDataToSign } = res.body;
       await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
 
@@ -461,16 +442,13 @@ describe('Testing the challenge http API', () => {
   describe('Challenge 5: Challenge historic root used in a transaction', async () => {
     it('Should delete the wrong block', async () => {
       // create another transaction to trigger NO's block assembly
-      const res = await chai
-        .request(url)
-        .post('/deposit')
-        .send({
-          ercAddress,
-          tokenId,
-          value,
-          zkpPublicKey,
-          fee,
-        });
+      const res = await chai.request(url).post('/deposit').send({
+        ercAddress,
+        tokenId,
+        value,
+        zkpPublicKey,
+        fee,
+      });
       const { txDataToSign } = res.body;
       // now we need to sign the transaction and send it to the blockchain
       await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
@@ -501,16 +479,13 @@ describe('Testing the challenge http API', () => {
   describe('Challenge 6: Incorrect public input hash', async () => {
     it('Should delete the wrong block', async () => {
       // create another transaction to trigger NO's block assembly
-      const res = await chai
-        .request(url)
-        .post('/deposit')
-        .send({
-          ercAddress,
-          tokenId,
-          value,
-          zkpPublicKey,
-          fee,
-        });
+      const res = await chai.request(url).post('/deposit').send({
+        ercAddress,
+        tokenId,
+        value,
+        zkpPublicKey,
+        fee,
+      });
       const { txDataToSign } = res.body;
       // now we need to sign the transaction and send it to the blockchain
       await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
@@ -542,16 +517,13 @@ describe('Testing the challenge http API', () => {
   describe('Challenge 7: Proof verification failure', async () => {
     it('Should delete the wrong block', async () => {
       // create another transaction to trigger NO's block assembly
-      const res = await chai
-        .request(url)
-        .post('/deposit')
-        .send({
-          ercAddress,
-          tokenId,
-          value,
-          zkpPublicKey,
-          fee,
-        });
+      const res = await chai.request(url).post('/deposit').send({
+        ercAddress,
+        tokenId,
+        value,
+        zkpPublicKey,
+        fee,
+      });
       const { txDataToSign } = res.body;
       await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
       await new Promise(resolve => setTimeout(resolve, 5000));

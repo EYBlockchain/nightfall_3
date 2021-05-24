@@ -2,7 +2,6 @@ import Web3 from 'web3';
 import axios from 'axios';
 import chai from 'chai';
 import config from 'config';
-import { generalise } from 'general-number';
 import rand from '../src/utils/crypto/crypto-random.mjs';
 import PublicInputs from '../src/classes/public-inputs.mjs';
 
@@ -115,19 +114,6 @@ export async function createBadBlock(badBlockType, block, transactions, args) {
     case 'IncorrectHistoricRoot': {
       // Replace the historic root with a wrong historic root
       badTransactions[0].historicRoot = (await rand(32)).hex();
-      // // To update the public input hash with this historic root we need the old commitments to recalculate the public input hash
-      // const oldCommitmentsErcAddress = await Promise.all(
-      //   badTransactions[0].nullifiers.map(async (nullifier, index) => {
-      //     if (nullifier === ZERO && badTransactions[0].commitments[index] === ZERO) return ZERO; // It is a single transfer. Only one old commitment exists
-      //     const {
-      //       body, // : { valid },
-      //     } = await chai
-      //       .request('http://localhost:8080')
-      //       .get('/get-commitment-by-nullifier')
-      //       .query({ nullifier, zkpPrivateKey: args.zkpPrivateKey });
-      //     return valid.preimage.ercAddress;
-      //   }),
-      // );
       // calculate the new public input hash
       badTransactions[0].publicInputHash = new PublicInputs([
         args.ercAddress,

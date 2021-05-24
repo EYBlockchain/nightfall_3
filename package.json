@@ -1,0 +1,31 @@
+{
+  "name": "nightfall_3",
+  "version": "0.0.1",
+  "description": "Optimistic Nightfall",
+  "main": "./nightfall-client/src/index.mjs",
+  "scripts": {
+    "test": "npx mocha --timeout 0 --bail nightfall-client/test/http.mjs nightfall-client/test/neg-http.mjs",
+    "test-gas": "npx mocha --timeout 0 --bail nightfall-client/test/tx-gas.mjs",
+    "lint": "eslint -c consolidated-eslint-config.js --no-eslintrc .",
+    "prepare": "husky install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EYBlockchain/optimistic-nightfall.git"
+  },
+  "author": "duncan.westland@uk.ey.com",
+  "license": "CC0-1.0",
+  "bugs": {
+    "url": "https://github.com/EYBlockchain/optimistic-nightfall/issues"
+  },
+  "homepage": "https://github.com/EYBlockchain/optimistic-nightfall#readme",
+  "devDependencies": {
+    "@commitlint/cli": "^12.1.1",
+    "@commitlint/config-conventional": "^12.1.1",
+    "eslint": "^7.25.0",
+    "eslint-config-codfish": "^10.0.0",
+    "husky": "^6.0.0",
+    "mocha": "^8.3.2",
+    "prettier": "^2.2.1"
+  }
+}

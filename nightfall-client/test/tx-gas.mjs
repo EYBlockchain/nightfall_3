@@ -41,7 +41,7 @@ describe('Testing the http API', () => {
   // this is what we pay the proposer for incorporating a transaction
   const fee = 1;
   const BLOCK_STAKE = 1000000000000000000; // 1 ether
-  const TRANSACTIONS_PER_BLOCK = 2;
+  const TRANSACTIONS_PER_BLOCK = 32;
 
   before(async () => {
     connectWeb3();
@@ -162,7 +162,7 @@ describe('Testing the http API', () => {
         expect(receipt).to.have.property('blockHash');
         console.log(`Gas used was ${Number(receipt.gasUsed)}`);
         // give Timber time to respond to the blockchain event
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        await new Promise(resolve => setTimeout(resolve, 3000));
       }
     });
   });

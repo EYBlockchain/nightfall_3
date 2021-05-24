@@ -16,7 +16,11 @@ import Nullifier from '../classes/nullifier.mjs';
 import PublicInputs from '../classes/public-inputs.mjs';
 import { getSiblingPath } from '../utils/timber.mjs';
 import Transaction from '../classes/transaction.mjs';
+<<<<<<< HEAD
 import { getHistoricRootBlockHash } from '../utils/optimist.mjs';
+=======
+import { discoverPeers } from './peers.mjs';
+>>>>>>> master
 
 const {
   BN128_PRIME,
@@ -29,9 +33,16 @@ const {
 } = config;
 const { generalise } = gen;
 
+<<<<<<< HEAD
 async function withdraw(items) {
   logger.info('Creating a withdraw transaction');
   // let's extract the input items
+=======
+async function withdraw(transferParams) {
+  logger.info('Creating a withdraw transaction');
+  // let's extract the input items
+  const { offchain = false, ...items } = transferParams;
+>>>>>>> master
   const { ercAddress, tokenId, value, recipientAddress, senderZkpPrivateKey, fee } = generalise(
     items,
   );
@@ -56,7 +67,10 @@ async function withdraw(items) {
   logger.silly(`SiblingPath was: ${JSON.stringify(siblingPath)}`);
   // public inputs
   const root = siblingPath[0];
+<<<<<<< HEAD
   const historicRootBlockHash = await getHistoricRootBlockHash(root);
+=======
+>>>>>>> master
   console.log('public inputs', [
     oldCommitment.preimage.ercAddress,
     oldCommitment.preimage.tokenId,
@@ -113,6 +127,7 @@ async function withdraw(items) {
     recipientAddress,
     nullifiers: [nullifier],
     historicRoot: root,
+<<<<<<< HEAD
     historicRootBlockHash,
     proof,
   });
@@ -125,6 +140,33 @@ async function withdraw(items) {
     // on successful computation of the transaction mark the old commitments as nullified
     markNullified(oldCommitment);
     optimisticWithdrawTransaction.transactionHash = th;
+=======
+    proof,
+  });
+  try {
+    if (offchain) {
+      const peerList = await discoverPeers('Local');
+      Object.keys(peerList).forEach(async address => {
+        await axios
+          .post(
+            `${peerList[address]}/proposer/transfer`,
+            { transaction: optimisticWithdrawTransaction },
+            { timeout: 3600000 },
+          )
+          .catch(err => {
+            throw new Error(err);
+          });
+      });
+      markNullified(oldCommitment);
+      optimisticWithdrawTransaction.transactionHash = th;
+      return { transaction: optimisticWithdrawTransaction };
+    }
+    const rawTransaction = await shieldContractInstance.methods
+      .submitTransaction(Transaction.buildSolidityStruct(optimisticWithdrawTransaction))
+      .encodeABI();
+    // on successful computation of the transaction mark the old commitments as nullified
+    markNullified(oldCommitment);
+>>>>>>> master
     return { rawTransaction, transaction: optimisticWithdrawTransaction };
   } catch (err) {
     throw new Error(err); // let the caller handle the error

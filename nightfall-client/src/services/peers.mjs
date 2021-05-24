@@ -75,6 +75,7 @@ const validatePeers = async peerList => {
     },
     [[], []],
   );
+  logger.debug(`Validate Proposers; ${validPeers}`);
   if (Object.keys(invalidPeers).length > 0) await deletePeers(invalidPeers);
   if (Object.keys(validPeers).length > 0) await savePeers(validPeers);
   return validPeers;

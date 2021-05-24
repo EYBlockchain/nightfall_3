@@ -5,7 +5,6 @@ import transfer from './transfer.mjs';
 import withdraw from './withdraw.mjs';
 import isMessageValid from './check-message.mjs';
 import finaliseWithdrawal from './finalise-withdrawal.mjs';
-import getCommitmentByNullifier from './get-commitment-by-nullifier.mjs';
 
 export {
   transfer,
@@ -15,5 +14,4 @@ export {
   getContractAddress,
   isMessageValid,
   finaliseWithdrawal,
-  getCommitmentByNullifier,
 };

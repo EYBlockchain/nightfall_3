@@ -1,0 +1,1554 @@
+{
+	"info": {
+		"_postman_id": "5d4dcae2-10cb-418a-9ec9-b32f329d243c",
+		"name": "merkle-tree",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "leaf",
+			"item": [
+				{
+					"name": "/leaf -> inserts a leaf object",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"leaf\": {\n\t\t\"value\": \"0xabc123-7\",\n\t\t\"leafIndex\": 2,\n\t\t\"blockNumber\": 60000000\n\t}\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/leaf",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"leaf"
+							]
+						},
+						"description": "inserts a leaf object"
+					},
+					"response": []
+				},
+				{
+					"name": "/leaves -> inserts many leaf objects",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"leaves\": [\n\t\t{\n\t\t\t\"value\": \"0xabc123-3\",\n\t\t\t\"leafIndex\": 1,\n\t\t\t\"blockNumber\": 60000000\n\t\t}\n\t]\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/leaves",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"leaves"
+							],
+							"query": [
+								{
+									"key": "",
+									"value": "",
+									"disabled": true
+								}
+							]
+						},
+						"description": "{\n\t\t\"value\": \"0xabc123-0\",\n\t\t\"leafIndex\": 0,\n\t\t\"blockNumber\": 60000000\n\t},\n\t{\n\t\t\"value\": \"0xabc123-2\",\n\t\t\"leafIndex\": 2,\n\t\t\"blockNumber\": 60000003\n\t},\n\t{\n\t\t\"value\": \"0xabc123-3\",\n\t\t\"leafIndex\": 3,\n\t\t\"blockNumber\": 60000000\n\t},\n\t\t{\n\t\t\"value\": \"0xabc123-2\",\n\t\t\"leafIndex\": 7,\n\t\t\"blockNumber\": 60000003\n\t},\n\t{\n\t\t\"value\": \"0xabc123-3\",\n\t\t\"leafIndex\": 8,\n\t\t\"blockNumber\": 60000000\n\t},"
+					},
+					"response": []
+				},
+				{
+					"name": "/leaf/:leafIndex -> gets a leaf at leafIndex",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/leaf/index/100",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"leaf",
+								"index",
+								"100"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/leaf/index -> gets a leaf at leafIndex",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"leafIndex\": 18231\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/leaf/index",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"leaf",
+								"index"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/leaf/value -> gets a leaf with a given value",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"value\": \"0xabc123-7\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/leaf/value",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"leaf",
+								"value"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/leaves -> get leaves by array of indices",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"leafIndices\": [1, 2, 3]\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/leaves",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"leaves"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/leaves -> get leaves by array of values",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"values\": [\"0xabc123-7\", \"0xabc123-8\", \"0xabc123-9\"]\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/leaves",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"leaves"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/leaves -> get leaves within index range",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"minIndex\": 0,\n\t\"maxIndex\": 100000\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/leaves",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"leaves"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/leaves -> get leaves within index range for a treeId",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MultipleMerkleTreesControllerSHA\",\n\t\"treeId\": \"a\",\n\t\"minIndex\": 0,\n\t\"maxIndex\": 10\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/leaves",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"leaves"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/leaves -> get all leaves",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/leaves",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"leaves"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/leaves -> get all leaves for a treeId",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MultipleMerkleTreesControllerSHA\",\n\t\"treeId\": \"a\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/leaves",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"leaves"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/leaves/check -> check for missing leaves",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/leaves/check",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"leaves",
+								"check"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/leaves/check -> check for missing leaves for a treeId",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MultipleMerkleTreesControllerSHA\",\n\t\"treeId\": \"a\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/leaves/check",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"leaves",
+								"check"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/leaves/count -> count the number of leaves in the db",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/leaves/count",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"leaves",
+								"count"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/leaves/count -> count the number of leaves in the db for a treeId",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MultipleMerkleTreesControllerSHA\",\n\t\"treeId\": \"a\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/leaves/count",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"leaves",
+								"count"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "node",
+			"item": [
+				{
+					"name": "/node -> inserts a node object",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"node\": {\n\t\t\"value\": \"0xabc123-0\",\n\t\t\"nodeIndex\": \"0\",\n\t\t\"isLocked\": false\n\t}\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/node",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"node"
+							]
+						},
+						"description": "inserts a node object"
+					},
+					"response": []
+				},
+				{
+					"name": "/nodes -> updates many node objects",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"nodes\": [\n\t\t{\n\t\t\t\"value\": \"0xabc123-0\",\n\t\t\t\"nodeIndex\": \"0\"\n\t\t},\n\t\t{\n\t\t\t\"value\": \"0xabc123-1\",\n\t\t\t\"nodeIndex\": 1\n\t\t},\n\t\t{\n\t\t\t\"value\": \"0xabc123-2\",\n\t\t\t\"nodeIndex\": 2\n\t\t}\n\t]\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/nodes",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"nodes"
+							]
+						},
+						"description": "inserts a leaf object"
+					},
+					"response": []
+				},
+				{
+					"name": "/node/:nodeIndex -> gets a node at nodeIndex",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/node/index/0",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"node",
+								"index",
+								"0"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/node/:nodeIndex -> updates a node at nodeIndex",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"node\": {\n\t\t\"value\": \"0x1234\",\n\t\t\"nodeIndex\": 6\n\t}\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/node/index/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"node",
+								"index",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/node/:nodeIndex -> updates a node at nodeIndex for treeId",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MultipleMerkleTreesControllerSHA\",\n\t\"treeId\": \"a\",\n\t\"node\": {\n\t\t\"value\": \"0x1234\",\n\t\t\"nodeIndex\": 6\n\t}\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/node/index/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"node",
+								"index",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/node/index -> gets a node at nodeIndex",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"nodeIndex\": 0\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/node/index",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"node",
+								"index"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/node/value -> gets a node with a given value",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"value\": \"0x2d93c2118bf899d6a4985dfdbd1d3e3333609a1d4fdf192af37c0dc53f216876\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/node/value",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"node",
+								"value"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/nodes -> get nodes by array of indices",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"nodeIndices\": [0, 2, 7]\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/nodes",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"nodes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/nodes -> get nodes by array of values",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"values\": [\"0xabc123-0\", \"0xabc123-1\", \"0xabc123-9\"]\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/nodes",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"nodes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/nodes -> get nodes within index range",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"minIndex\": 0,\n\t\"maxIndex\": 1000000000000000\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/nodes",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"nodes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/nodes -> get all nodes",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/nodes",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"nodes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/nodes/count -> count the number of nodes in the db",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/nodes/count",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"nodes",
+								"count"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/nodes/count -> count the number of nodes in the treeId db",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MultipleMerkleTreesControllerSHA\",\n\t\"treeId\": \"a\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/nodes/count",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"nodes",
+								"count"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "metaData",
+			"item": [
+				{
+					"name": "/metadata/contractAddress -> inserts the contract address of the tree",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"contractAddress\": \"0xabc123-0\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/metadata/contractAddress",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"metadata",
+								"contractAddress"
+							]
+						},
+						"description": "inserts a node object"
+					},
+					"response": []
+				},
+				{
+					"name": "/metadata/contractAddress -> gets the contractAddress",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/metadata/contractAddress",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"metadata",
+								"contractAddress"
+							]
+						},
+						"description": "inserts a leaf object"
+					},
+					"response": []
+				},
+				{
+					"name": "/metadata/contractInterface -> inserts the contract address of the tree",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"contractInterface\": \"{ \"pretend\": \"this is a stringified json interface\" }\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/metadata/contractInterface",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"metadata",
+								"contractInterface"
+							]
+						},
+						"description": "inserts a node object"
+					},
+					"response": []
+				},
+				{
+					"name": "/metadata/treeHeight -> establishes the treeHeight for a db",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\",\n\t\"treeHeight\": 22\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/metadata/treeHeight",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"metadata",
+								"treeHeight"
+							]
+						},
+						"description": "inserts a node object"
+					},
+					"response": []
+				},
+				{
+					"name": "/metadata/contractInterface -> gets the contractInterface",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/metadata/contractInterface",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"metadata",
+								"contractInterface"
+							]
+						},
+						"description": "inserts a leaf object"
+					},
+					"response": []
+				},
+				{
+					"name": "/metadata -> gets the tree's metadata object",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/metadata",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"metadata"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/metadata -> gets the tree's metadata object for a treeId",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MultipleMerkleTreesControllerSHA\",\n\t\"treeId\": \"a\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:9000/metadata",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"metadata"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/metadata/latestLeaf -> updates the latestLeaf metadata object",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/metadata/latestLeaf",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"metadata",
+								"latestLeaf"
+							]
+						},
+						"description": "inserts a leaf object"
+					},
+					"response": []
+				},
+				{
+					"name": "/metadata/latestLeaf -> get the latestLeaf metadata object",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/metadata/latestLeaf",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"metadata",
+								"latestLeaf"
+							]
+						},
+						"description": "inserts a leaf object"
+					},
+					"response": []
+				},
+				{
+					"name": "/metadata/latestLeaf -> updates the latestLeaf metadata object for a treeId",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MultipleMerkleTreesControllerSHA\",\n\t\"treeId\": \"a\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/metadata/latestLeaf",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"metadata",
+								"latestLeaf"
+							]
+						},
+						"description": "inserts a leaf object"
+					},
+					"response": []
+				},
+				{
+					"name": "/metadata/latestRecalculation -> updates the latestRecalculation metadata object",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/metadata/latestRecalculation",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"metadata",
+								"latestRecalculation"
+							]
+						},
+						"description": "inserts a leaf object"
+					},
+					"response": []
+				},
+				{
+					"name": "/metadata/latestRecalculation -> gets the latestRecalculation metadata object",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/metadata/latestRecalculation",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"metadata",
+								"latestRecalculation"
+							]
+						},
+						"description": "inserts a leaf object"
+					},
+					"response": []
+				},
+				{
+					"name": "/metadata/latestRecalculation -> gets the latestRecalculation metadata object for a treeId",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MultipleMerkleTreesControllerSHA\",\n\t\"treeId\": \"a\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/metadata/latestRecalculation",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"metadata",
+								"latestRecalculation"
+							]
+						},
+						"description": "inserts a leaf object"
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "merkle-tree",
+			"item": [
+				{
+					"name": "/start -> starts the event filter",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/start",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"start"
+							]
+						},
+						"description": "inserts a node object"
+					},
+					"response": []
+				},
+				{
+					"name": "/start -> starts the event filter for a treeId",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MultipleMerkleTreesControllerSHA\",\n\t\"treeId\": \"a\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/start",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"start"
+							]
+						},
+						"description": "inserts a node object"
+					},
+					"response": []
+				},
+				{
+					"name": "/siblingPath/:leafIndex -> gets a siblingPath array for leafIndex",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/siblingPath/2",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"siblingPath",
+								"2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/path/:leafIndex -> gets a path array for leafIndex",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/path/2",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"path",
+								"2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/update -> updates the merkle tree",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MerkleTreeControllerSHA\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/update",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"update"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/update -> updates the merkle tree for a treeId",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractName\": \"MultipleMerkleTreesControllerSHA\",\n\t\"treeId\": \"a\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:9000/update",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"update"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		}
+	],
+	"protocolProfileBehavior": {}
+}

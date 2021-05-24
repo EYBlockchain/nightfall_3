@@ -92,10 +92,7 @@ async function transfer(transferParams) {
   logger.silly(`SiblingPaths were: ${JSON.stringify(siblingPaths)}`);
   // public inputs
   const root = siblingPaths[0][0];
-  console.log('HERE root------', root);
-  console.log('HERE root------', root.hex());
   const historicRootBlockHash = await getHistoricRootBlockHash(root);
-  console.log('HERE historicRootBlockHash------', historicRootBlockHash);
   const publicInputs = new PublicInputs([
     oldCommitments.map(commitment => commitment.preimage.ercAddress),
     newCommitments.map(commitment => commitment.hash),
@@ -172,12 +169,9 @@ async function transfer(transferParams) {
     historicRootBlockHash,
     proof,
   });
-  const th = optimisticTransferTransaction.transactionHash;
-  delete optimisticTransferTransaction.transactionHash; // we don't send this
   try {
     if (offchain) {
       // dig up connection peers
-      logger.info(`Offchain Transfer Processed`);
       const peerList = await discoverPeers('Local');
       Object.keys(peerList).forEach(async address => {
         await axios
@@ -196,13 +190,12 @@ async function transfer(transferParams) {
       return { transaction: optimisticTransferTransaction };
     }
     const rawTransaction = await shieldContractInstance.methods
-      .submitTransaction(optimisticTransferTransaction)
+      .submitTransaction(Transaction.buildSolidityStruct(optimisticTransferTransaction))
       .encodeABI();
     // store the commitment on successful computation of the transaction
     newCommitments.map(commitment => storeCommitment(commitment)); // TODO insertMany
     // mark the old commitments as nullified
     oldCommitments.map(commitment => markNullified(commitment));
-    optimisticTransferTransaction.transactionHash = th;
     return { rawTransaction, transaction: optimisticTransferTransaction };
   } catch (err) {
     throw new Error(err); // let the caller handle the error

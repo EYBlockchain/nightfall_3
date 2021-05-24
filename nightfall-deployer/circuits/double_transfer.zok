@@ -1,0 +1,130 @@
+from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256
+from "utils/pack/bool/pack256.zok" import main as bool_256_to_field
+from "utils/pack/u32/pack256.zok" import main as u32_8_to_field
+from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8
+
+from "./common/hashes/sha256/pad256ThenHash.zok" import main as sha256of256
+from "./common/hashes/sha256/pad512ThenHash.zok" import main as sha256of512
+from "./common/hashes/sha256/pad1792ThenHash.zok" import main as sha256of1792
+from "./common/hashes/sha256/pad1280ThenHash.zok" import main as sha256of1280
+
+from "./common/merkle-tree/mimc-path-check.zok" import main as pathCheck
+
+struct OldCommitment {
+	u32[8] ercAddress
+	u32[8] id
+	u32[8] value
+	u32[8] salt
+	u32[8] hash
+}
+
+struct NewCommitment {
+	u32[8] publicKeyRecipient
+	u32[8] value
+	u32[8] salt
+	u32[8] hash
+}
+
+struct Nullifier {
+	u32[8] privateKeySender
+	u32[8] hash
+}
+
+def main(\
+	field publicInputsHash,\
+	private OldCommitment[2] oldCommitment,\
+	private NewCommitment[2] newCommitment,\
+	private Nullifier[2] nullifier,\
+	private field[2][33] path,\
+	private field[2] order\
+)->():
+
+	// Calculation of publicKeySender from H(privateKeySender)
+	u32[8] publicKeySender = sha256of256(nullifier[0].privateKeySender)
+
+	// Check the commitment value will not overflow we do this by only allowing
+	// the value to be <224 bits (Most Significant U32 = 0). TODO is it worth
+	// passing it in, should we allow more than 224 bits, might be a bit more
+	// efficient?
+	assert(0 == if oldCommitment[0].value[0] == 0x00000000 then 0 else 1 fi)
+	assert(0 == if oldCommitment[1].value[0] == 0x00000000 then 0 else 1 fi)
+	assert(0 == if newCommitment[0].value[0] == 0x00000000 then 0 else 1 fi)
+	assert(0 == if newCommitment[1].value[0] == 0x00000000 then 0 else 1 fi)
+
+	// check the summation is correct
+	assert(\
+		u32_8_to_field(oldCommitment[0].value) +\
+		u32_8_to_field(oldCommitment[1].value) ==\
+		u32_8_to_field(newCommitment[0].value) +\
+		u32_8_to_field(newCommitment[1].value)\
+	)
+
+	// check the two old commitments relate to the same ERC contract
+	assert(oldCommitment[0].ercAddress == oldCommitment[1].ercAddress)
+	// and are of the same type (they might not be for ERC1155)
+	assert(oldCommitment[0].id == oldCommitment[1].id)
+	// commitments can never be equal
+	assert(newCommitment[0].hash != newCommitment[1].hash)
+	// nullifiers can never be equal
+	assert(nullifier[0].hash != nullifier[1].hash)
+
+
+	// check the nullifiers are valid
+	for field i in 0..2 do
+		assert(\
+			nullifier[i].hash == sha256of512([\
+			...nullifier[i].privateKeySender,\
+			...oldCommitment[i].salt\
+		]))
+	endfor
+
+	// check the new commitments are valid
+	for field i in 0..2 do
+		assert(\
+			newCommitment[i].hash == sha256of1280([\
+			...oldCommitment[i].ercAddress,\
+			...oldCommitment[i].id,\
+			...newCommitment[i].value,\
+			...newCommitment[i].publicKeyRecipient,\
+			...newCommitment[i].salt\
+		]))
+	endfor
+
+	// check the old commitments are valid
+	for field i in 0..2 do
+		assert(\
+			oldCommitment[i].hash == sha256of1280([\
+			...oldCommitment[i].ercAddress,\
+			...oldCommitment[i].id,\
+			...oldCommitment[i].value,\
+			...publicKeySender,\
+			...oldCommitment[i].salt\
+		]))
+	endfor
+
+	// check the public input hash (TODO no need to include both ERCAddresses as
+	// they are proven equal) so we can save 25k constraints
+	u32[8] publicInputsHashU32 = sha256of1792([\
+		...oldCommitment[0].ercAddress,\
+		...oldCommitment[1].ercAddress,\
+		...newCommitment[0].hash,\
+		...newCommitment[1].hash,\
+		...nullifier[0].hash,\
+		...nullifier[1].hash,\
+		...field_to_u32_8(path[0][0])\
+	])
+	bool[256] publicInputsHashBool256 = u32_8_to_bool_256(publicInputsHashU32)
+	bool[256] publicInputsHashBool256Sliced = [\
+	     ...[false; 8],\
+	     ...publicInputsHashBool256[8..256]\
+	]
+	assert(publicInputsHash == bool_256_to_field(publicInputsHashBool256Sliced))
+
+	// check that the old commitments are in the merkle tree
+	assert(path[0][0] == path[1][0]) // these should both be the root
+	for field i in 0..2 do
+		field mimcHash = u32_8_to_field(oldCommitment[i].hash)
+		assert(pathCheck(path[i], order[i], mimcHash))
+	endfor
+
+	return
