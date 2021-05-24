@@ -1,5 +1,4 @@
-FROM node:14.15.1
-RUN npm install npm@^7.11 -g
+FROM node:14.17
 
 WORKDIR /app
 
@@ -10,6 +9,7 @@ COPY ./.babelrc ./
 COPY ./config ./config/
 ARG GPR_TOKEN
 RUN npm ci
+RUN rm -f .npmrc
 
 EXPOSE 80
 CMD npm start
