@@ -9,9 +9,9 @@ import utilsWeb3 from './utils-web3';
 import utilsMT from './utils-merkle-tree';
 import logger from './logger';
 import { LeafService, NodeService, MetadataService, HistoryService } from './db/service';
-import { responseFunctions } from './filter-controller';
+import { responseFunctions } from './filter-controller'; // eslint-disable-line import/no-cycle
 // import { getContractInterface } from '../../../nightfall-optimist/src/utils/contract.mjs'
-const { ZERO, CHALLENGES_CONTRACT_NAME } = config;
+const { ZERO } = config;
 
 /**
 Check the leaves of the tree are all there.
@@ -45,7 +45,7 @@ async function checkLeaves(db) {
 
     const minMissingLeafIndex = missingLeaves[0];
     const maxMissingLeafIndex = missingLeaves[missingLeaves.length - 1];
-    
+
     const leafAfterMissingLeaves = await leafService.getLeafByLeafIndex(maxMissingLeafIndex + 1);
     maxReliableLeafIndex = minMissingLeafIndex - 1;
 
@@ -75,26 +75,34 @@ async function checkLeaves(db) {
 
       return maxReliableLeafIndex; // return the latest reliable leaf index up to which we can update the tree
     }
-    const contractName = Object.keys(config.contracts)[0]
-    const treeId = config.contracts[contractName].treeId;
+    const contractName = Object.keys(config.contracts)[0];
+    const { treeId } = config.contracts[contractName];
 
     const contractAddress = await utilsWeb3.getContractAddress(contractName);
 
     if (contractAddress === undefined) throw new Error('undefined contract address');
 
-    const contractInterface = await utilsWeb3.getContractInstance(contractName,contractAddress)
+    const contractInterface = await utilsWeb3.getContractInstance(contractName, contractAddress);
 
     // fromBlock incremented since we only want the next block after the last one we have saved.
     const events = await contractInterface.getPastEvents({
       fromBlock: fromBlock + 1,
-      toBlock: toBlock - 1
+      toBlock: toBlock - 1,
     });
 
-    const pastTimberEvents = events.filter(e => ['NewLeaf','NewLeaves','Rollback','BlockProposed'].includes(e.event)).sort((a, b) => a.blockNumber - b.blockNumber);
+    const pastTimberEvents = events
+      .filter(e => ['NewLeaf', 'NewLeaves', 'Rollback', 'BlockProposed'].includes(e.event))
+      .sort((a, b) => a.blockNumber - b.blockNumber);
 
     for (let i = 0; i < pastTimberEvents.length; i++) {
       const responseFunction = responseFunctions[pastTimberEvents[i].event];
-      const responseFunctionArgs = { db, contractName:contractName, event: pastTimberEvents[i], treeId };
+      const responseFunctionArgs = {
+        db,
+        contractName,
+        event: pastTimberEvents[i],
+        treeId,
+      };
+      // eslint-disable-next-line no-await-in-loop
       await responseFunction({ eventData: pastTimberEvents[i] }, responseFunctionArgs);
     }
   }
