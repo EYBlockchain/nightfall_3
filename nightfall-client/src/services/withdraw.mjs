@@ -16,11 +16,8 @@ import Nullifier from '../classes/nullifier.mjs';
 import PublicInputs from '../classes/public-inputs.mjs';
 import { getSiblingPath } from '../utils/timber.mjs';
 import Transaction from '../classes/transaction.mjs';
-<<<<<<< HEAD
 import { getHistoricRootBlockHash } from '../utils/optimist.mjs';
-=======
 import { discoverPeers } from './peers.mjs';
->>>>>>> master
 
 const {
   BN128_PRIME,
@@ -33,16 +30,10 @@ const {
 } = config;
 const { generalise } = gen;
 
-<<<<<<< HEAD
-async function withdraw(items) {
-  logger.info('Creating a withdraw transaction');
-  // let's extract the input items
-=======
 async function withdraw(transferParams) {
   logger.info('Creating a withdraw transaction');
   // let's extract the input items
   const { offchain = false, ...items } = transferParams;
->>>>>>> master
   const { ercAddress, tokenId, value, recipientAddress, senderZkpPrivateKey, fee } = generalise(
     items,
   );
@@ -67,10 +58,7 @@ async function withdraw(transferParams) {
   logger.silly(`SiblingPath was: ${JSON.stringify(siblingPath)}`);
   // public inputs
   const root = siblingPath[0];
-<<<<<<< HEAD
   const historicRootBlockHash = await getHistoricRootBlockHash(root);
-=======
->>>>>>> master
   console.log('public inputs', [
     oldCommitment.preimage.ercAddress,
     oldCommitment.preimage.tokenId,
@@ -127,20 +115,7 @@ async function withdraw(transferParams) {
     recipientAddress,
     nullifiers: [nullifier],
     historicRoot: root,
-<<<<<<< HEAD
     historicRootBlockHash,
-    proof,
-  });
-  const th = optimisticWithdrawTransaction.transactionHash;
-  delete optimisticWithdrawTransaction.transactionHash; // we don't send this
-  try {
-    const rawTransaction = await shieldContractInstance.methods
-      .submitTransaction(optimisticWithdrawTransaction)
-      .encodeABI();
-    // on successful computation of the transaction mark the old commitments as nullified
-    markNullified(oldCommitment);
-    optimisticWithdrawTransaction.transactionHash = th;
-=======
     proof,
   });
   try {
@@ -166,7 +141,6 @@ async function withdraw(transferParams) {
       .encodeABI();
     // on successful computation of the transaction mark the old commitments as nullified
     markNullified(oldCommitment);
->>>>>>> master
     return { rawTransaction, transaction: optimisticWithdrawTransaction };
   } catch (err) {
     throw new Error(err); // let the caller handle the error
