@@ -25,15 +25,8 @@ contract Shield is Structures, Config, Key_Registry {
     proposers = Proposers(_proposersAddr);
   }
   function submitTransaction(Transaction memory t) external payable {
-    // check the transaction hash
-    // require (t.transactionHash == hashTransaction(t), 'The transaction hash is not correct');
-    // check they've paid correctly
-    // require (t.fee == msg.value, 'The amount paid was not the same as the amount specified in the transaction');
-    // TODO take payment for a Deposit - can't do it here because no guarantee
-    // transaction will proceed (we could refund later if it doesn't of course).
-    // if this is a deposit transaction, we should take payment now
     // let everyone know what you did
-    emit TransactionSubmitted(t);
+    emit TransactionSubmitted();
     // if this is a deposit transaction, take payment now (TODO: is there a
     // better way? This feels expensive).
     if (t.transactionType == TransactionTypes.DEPOSIT) payIn(t);
@@ -42,75 +35,72 @@ contract Shield is Structures, Config, Key_Registry {
   /**
   This function enables funds to be withdrawn, once a block is finalised
   @param b - the block containing the Withdraw transaction
-  @param t - the actual transaction
+  @param ts - array of the transactions contained in the block
   @param index - the index of the transaction that locates it in the array of Transactions in Block b
   */
-  function finaliseWithdrawal(Block memory b, Transaction memory t, uint index) external {
+  function finaliseWithdrawal(Block memory b, Transaction[] memory ts, uint index) external {
     // check this block is a real one, in the queue, not something made up.
-    proposers.isBlockReal(b);
+    bytes32 blockHash = proposers.isBlockReal(b, ts);
     // check that the block has been finalised
-    (,,,uint data) = proposers.blockHashes(b.blockHash);
+    (,,,uint data) = proposers.blockHashes(blockHash);
     require(data + COOLING_OFF_PERIOD < block.timestamp, 'It is too soon withdraw funds from this block');
-    // check the transaction is in the block
-    require(b.transactionHashes[index] == Utils.hashTransaction(t), 'Transaction not found at the given index');
-    if (t.transactionType == TransactionTypes.WITHDRAW) payOut(t);
+    if (ts[index].transactionType == TransactionTypes.WITHDRAW) payOut(ts[index]);
   }
 
+  function payOut(Transaction memory t) internal {
+  // Now pay out the value of the commitment
+    ERCInterface tokenContract = ERCInterface(
+      address(uint160(uint256(t.ercAddress)))
+    );
+    address recipientAddress = address(uint160(uint256(t.recipientAddress)));
+    if (t.tokenId == ZERO && t.value == 0) // disallow this corner case
+      revert("Zero-value tokens are not allowed");
 
-    function payOut(Transaction memory t) internal {
-    // Now pay out the value of the commitment
-      ERCInterface tokenContract = ERCInterface(
-        address(uint160(uint256(t.ercAddress)))
+    if (t.tokenId == ZERO) // must be an ERC20
+      tokenContract.transferFrom(
+        address(this),
+        recipientAddress,
+        uint256(t.value)
       );
-      address recipientAddress = address(uint160(uint256(t.recipientAddress)));
-      if (t.tokenId == ZERO && t.value == 0) // disallow this corner case
-        revert("Zero-value tokens are not allowed");
-
-      if (t.tokenId == ZERO) // must be an ERC20
-        tokenContract.transferFrom(
-          address(this),
-          recipientAddress,
-          uint256(t.value)
-        );
-      else if (t.value == 0) // must be ERC721
-        tokenContract.safeTransferFrom(
-          address(this),
-          recipientAddress,
-          uint256(t.tokenId),
-          ''
-        );
-      else // must be an ERC1155
-        tokenContract.safeTransferFrom(
-          address(this),
-          recipientAddress,
-          uint256(t.tokenId),
-          uint256(t.value),
-          ''
-        );
-    }
-
-    function payIn(Transaction memory t) internal {
-      ERCInterface tokenContract = ERCInterface(
-        address(uint160(uint256(t.ercAddress)))
+    else if (t.value == 0) // must be ERC721
+      tokenContract.safeTransferFrom(
+        address(this),
+        recipientAddress,
+        uint256(t.tokenId),
+        ''
       );
-      if (t.tokenId == ZERO && t.value == 0) // disallow this corner case
-        revert("Depositing zero-value tokens is not allowed");
-      if (t.tokenId == ZERO) // must be an ERC20
-        tokenContract.transferFrom(msg.sender, address(this), uint256(t.value));
-      else if (t.value == 0) // must be ERC721
-        tokenContract.safeTransferFrom(
-          msg.sender,
-          address(this),
-          uint256(t.tokenId),
-          ''
-        );
-      else // must be an ERC1155
-        tokenContract.safeTransferFrom(
-          msg.sender,
-          address(this),
-          uint256(t.tokenId),
-          uint256(t.value),
-          ''
-        );
-    }
+    else // must be an ERC1155
+      tokenContract.safeTransferFrom(
+        address(this),
+        recipientAddress,
+        uint256(t.tokenId),
+        uint256(t.value),
+        ''
+      );
+  }
+
+  function payIn(Transaction memory t) internal {
+    ERCInterface tokenContract = ERCInterface(
+      address(uint160(uint256(t.ercAddress)))
+    );
+    if (t.tokenId == ZERO && t.value == 0) // disallow this corner case
+      revert("Depositing zero-value tokens is not allowed");
+    if (t.tokenId == ZERO) // must be an ERC20
+      tokenContract.transferFrom(msg.sender, address(this), uint256(t.value));
+    else if (t.value == 0) // must be ERC721
+      tokenContract.safeTransferFrom(
+        msg.sender,
+        address(this),
+        uint256(t.tokenId),
+        ''
+      );
+    else // must be an ERC1155
+      tokenContract.safeTransferFrom(
+        msg.sender,
+        address(this),
+        uint256(t.tokenId),
+        uint256(t.value),
+        ''
+      );
+  }
 }

@@ -1,0 +1,100 @@
+version: '3.5'
+
+services:
+  # A local blockchain instance
+  ganache:
+    image: trufflesuite/ganache-cli:latest
+    command: ganache-cli --accounts=10 --defaultBalanceEther=1000 --gasLimit=8000000
+    ports:
+      - "8545:8545"
+    networks:
+      - merkle_tree_network
+
+  # The main microservice for reconstructing a merkle tree
+  merkle-tree:
+    build:
+      context: ./merkle-tree
+      dockerfile: dev.Dockerfile
+    restart: on-failure
+    depends_on:
+      - ganache
+      - mongo-merkle-tree
+    volumes: # ensure relative paths are correct if embedding this microservice in another application:
+      - ./merkle-tree/src:/app/src
+      - ./merkle-tree/config:/app/config # mount point might be different if configuring from another application
+      - ./merkle-tree/test:/app/test
+      - ./merkle-tree/.babelrc:/app/.babelrc
+      - ./merkle-tree/setup-mongo-acl-for-new-users.js:/app/setup-mongo-acl-for-new-users.js
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./deployer/contracts/:/app/contracts:consistent # required if deploying/compiling contracts from within this service (if CONTRACT_ORIGIN = 'default' or 'compile')
+      # - ./deployer/build/:/app/build:consistent # required if CONTRACT_ORIGIN = 'default'
+    ports:
+      - "9000:80"
+    environment:
+      HASH_TYPE: 'sha' # sha or mimc
+      BLOCKCHAIN_HOST: ws://ganache
+      BLOCKCHAIN_PORT: 8545
+      DEPLOYER_HOST: http://deployer # required if CONTRACT_ORIGIN = 'remote' - replace with external microservice's name
+      DEPLOYER_PORT: 80
+      CONTRACT_ORIGIN: 'compile' # Where to find the contractInstances?
+      # Specify one of:
+      # - 'remote' (to GET a solc-compiled contract interface json from a remote microservice); or
+      # - 'mongodb' (to get a solc-compiled contract interface json from mongodb); or
+      # - 'default' (to get a solc-compiled contract interface json from the app/build/ folder)
+      # - 'compile' (to compile contracts from a .sol file, at startup, with solc, from the /app/contracts/ folder). Useful if the application using Timber doesn't use solc to generate contract interface json's.
+      LOG_LEVEL: 'silly'
+      UNIQUE_LEAVES: 'true'
+    networks:
+      - merkle_tree_network
+
+  # The database storing the merkle tree
+  mongo-merkle-tree:
+    image: mongo
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin
+      - MONGO_INITDB_DATABASE=merkle_tree
+    volumes:
+      - ./merkle-tree/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+      - mongo-merkle-tree-volume:/data/db
+    networks:
+      - merkle_tree_network
+
+  # The deployer microservice is an example of a microservice which might deploy a merkle tree smart contract.
+  deployer:
+    build:
+      context: ./deployer
+      dockerfile: Dockerfile
+    restart: on-failure
+    depends_on:
+      - ganache
+      # - merkle-tree # required if PUSH_OR_PULL = 'push'
+    volumes:
+      - ./deployer/src:/app/src
+      - ./deployer/config:/app/config
+      - ./deployer/test:/app/test
+      - ./deployer/.babelrc:/app/.babelrc
+      - leveldb-volume:/app/db
+      - ./deployer/contracts/:/app/contracts:delegated
+      - ./deployer/build/:/app/build
+    environment:
+      HASH_TYPE: 'sha' # sha or mimc
+      BLOCKCHAIN_HOST: ws://ganache
+      BLOCKCHAIN_PORT: 8545
+      MERKLE_TREE_HOST: http://merkle-tree
+      MERKLE_TREE_PORT: 80
+      DEPLOYER_HOST: http://deployer # included so it can lazily find itself
+      DEPLOYER_PORT: 80
+      PUSH_OR_PULL: 'pull'
+      # 'push': POST the contracts to the merkle-tree microservice;
+      # 'pull': (default) Wait for a GET request for the contracts from the merkle-tree microservice
+    networks:
+      - merkle_tree_network
+
+volumes:
+  mongo-merkle-tree-volume: {}
+  leveldb-volume: {} # only used by the example deployer microservice
+
+networks:
+  merkle_tree_network:
+    name: merkle_tree_network

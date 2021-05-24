@@ -7,10 +7,9 @@ import './Structures.sol';
 
 library Utils {
 
-  function hashTransaction(Structures.Transaction memory t) public pure returns(bytes32) {
+  function hashTransaction(Structures.Transaction memory t) internal pure returns(bytes32) {
     return keccak256(
       abi.encodePacked(
-        t.fee,
         t.value,
         t.transactionType,
         t.publicInputHash,
@@ -26,15 +25,7 @@ library Utils {
     );
   }
 
-  function hashBlock(Structures.Block memory b) public pure returns(bytes32) {
-    return keccak256(
-      abi.encodePacked(
-        b.proposer,
-        b.transactionHashes,
-        b.root,
-        b.leafCount,
-        b.nCommitments
-      )
-    );
+  function hashBlock(Structures.Block memory b, Structures.Transaction[] memory t) internal pure returns(bytes32) {
+    return keccak256(abi.encode(b, t));
   }
 }

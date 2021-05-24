@@ -12,7 +12,11 @@ jobs:
 
       - uses: actions/setup-node@v1
         with:
+<<<<<<< HEAD
           node-version: '12.x'
+=======
+          node-version: '14.x'
+>>>>>>> chait/merge_NC
           registry-url: https://npm.pkg.github.com/
           scope: $GITHUB_ACTOR
       - run: npm install
@@ -31,7 +35,12 @@ jobs:
         if: steps.semantic.outputs.new-release-published == 'true'
         run: |
           docker login https://docker.pkg.github.com -u $GITHUB_ACTOR -p $GITHUB_TOKEN
+<<<<<<< HEAD
           docker build -t docker.pkg.github.com/eyblockchain/nightfall-deployer/nightfall_deployer:$RELEASE_VERSION .
           docker push docker.pkg.github.com/eyblockchain/nightfall-deployer/nightfall_deployer:$RELEASE_VERSION
+=======
+          docker build -t docker.pkg.github.com/eyblockchain/nightfall-client/nightfall_client:$RELEASE_VERSION .
+          docker push docker.pkg.github.com/eyblockchain/nightfall-client/nightfall_client:$RELEASE_VERSION
+>>>>>>> chait/merge_NC
         env:
           GITHUB_TOKEN: ${{ secrets.WRITE_PACKAGES }}
