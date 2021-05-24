@@ -17,14 +17,8 @@ import { waitForContract } from '../event-handlers/subscribe.mjs';
 import logger from '../utils/logger.mjs';
 import { getBlockByBlockHash } from './database.mjs';
 
-const {
-  ZOKRATES_WORKER_URL,
-  PROVING_SCHEME,
-  BACKEND,
-  CURVE,
-  ZERO,
-  CHALLENGES_CONTRACT_NAME,
-} = config;
+const { ZOKRATES_WORKER_URL, PROVING_SCHEME, BACKEND, CURVE, ZERO, CHALLENGES_CONTRACT_NAME } =
+  config;
 
 // first, let's check the hash. That's nice and easy:
 // NB as we actually now comput the hash on receipt of the transaction this

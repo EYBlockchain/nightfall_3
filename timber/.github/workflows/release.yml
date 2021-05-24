@@ -1,0 +1,40 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - master
+
+env:
+  IMAGE_REPO: eyblockchain/timber
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: release
+      id: semantic
+      uses: codfish/semantic-release-action@v1.2.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+    - name: docker login
+      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+
+    - name: build docker image
+      run: docker build ./merkle-tree --tag $IMAGE_REPO
+
+    - name: docker push latest
+      run: docker push $IMAGE_REPO
+
+    - name: docker push release
+      if: steps.semantic.outputs.new-release-published == 'true'
+      run: |
+        docker tag $IMAGE_REPO $IMAGE_REPO:$VERSION_TAG
+        docker push $IMAGE_REPO:$VERSION_TAG
+      env:
+        VERSION_TAG: v${{ steps.semantic.outputs.release-version }}

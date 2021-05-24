@@ -1,0 +1,12 @@
+from "hashes/sha256/IVconstants" import main as IVconstants
+from "hashes/sha256/shaRound" import main as sha256
+
+def main(u32[64] a) -> (u32[8]):
+
+    u32[8] IV =  IVconstants()
+    u32[8] digest1 =  sha256([...a[0..8], ...a[8..16]], IV)
+    u32[8] digest2 =  sha256([...a[16..24], ...a[24..32]], digest1)
+    u32[8] digest3 =  sha256([...a[32..40], ...a[40..48]], digest2)
+    u32[8] digest4 =  sha256([...a[48..56], ...a[56..64]], digest3)
+
+	return digest4

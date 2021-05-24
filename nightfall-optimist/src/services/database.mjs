@@ -229,6 +229,16 @@ export async function getTransactionByTransactionHash(transactionHash) {
   return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
 }
 
+/**
+function to find transactions with a transactionHash in the array transactionHashes.
+*/
+export async function getTransactionsByTransactionHashes(transactionHashes) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { transactionHash: { $in: transactionHashes } };
+  return db.collection(TRANSACTIONS_COLLECTION).find(query).toArray();
+}
+
 export async function saveNullifiers(nullifiers) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);

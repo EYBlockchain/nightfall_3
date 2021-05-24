@@ -8,9 +8,8 @@ import {
   saveBlock,
   stampNullifiers,
 } from '../services/database.mjs';
-// import mappedBlock from '../event-mappers/block-proposed.mjs';
 import { getLeafCount } from '../utils/timber.mjs';
-import getProposeBlockCalldata from '../utils/calldata.mjs';
+import { getProposeBlockCalldata } from '../services/process-calldata.mjs';
 
 /**
 This handler runs whenever a BlockProposed event is emitted by the blockchain

@@ -34,7 +34,9 @@
     }
   },
   "nodemonConfig": {
-    "ignore": ["build/*"]
+    "ignore": [
+      "build/*"
+    ]
   },
   "dependencies": {
     "@semantic-release/git": "^9.0.0",

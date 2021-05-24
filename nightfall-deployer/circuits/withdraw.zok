@@ -1,0 +1,73 @@
+from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256
+from "utils/pack/bool/pack256.zok" import main as bool_256_to_field
+from "utils/pack/u32/pack256.zok" import main as u32_8_to_field
+from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8
+
+from "./common/hashes/sha256/pad256ThenHash.zok" import main as sha256of256
+from "./common/hashes/sha256/pad512ThenHash.zok" import main as sha256of512
+from "./common/hashes/sha256/pad1536ThenHash.zok" import main as sha256of1536
+from "./common/hashes/sha256/pad1280ThenHash.zok" import main as sha256of1280
+
+from "./common/merkle-tree/mimc-path-check.zok" import main as pathCheck
+
+struct OldCommitment {
+	u32[8] ercAddress
+	u32[8] id
+	u32[8] value
+	u32[8] salt
+	u32[8] hash
+}
+
+struct Nullifier {
+	u32[8] privateKeySender
+	u32[8] hash
+}
+
+def main(\
+	field publicInputsHash,\
+	private OldCommitment oldCommitment,\
+	private Nullifier nullifier,\
+	private field recipientAddress,\
+	private field[33] path,\
+	private field order\
+)->():
+
+	// Calculation of publicKeySender from H(privateKeySender)
+	u32[8] publicKeySender = sha256of256(nullifier.privateKeySender)
+
+	// check the nullifier is valid
+	assert(nullifier.hash == sha256of512([\
+		...nullifier.privateKeySender,\
+		...oldCommitment.salt\
+	]))
+
+	// check the old commitment is valid
+	assert(oldCommitment.hash == sha256of1280([\
+		...oldCommitment.ercAddress,\
+		...oldCommitment.id,\
+		...oldCommitment.value,\
+		...publicKeySender,\
+		...oldCommitment.salt\
+	]))
+
+	// check the public input hash
+	u32[8] publicInputsHashU32 = sha256of1536([\
+		...oldCommitment.ercAddress,\
+		...oldCommitment.id,\
+		...oldCommitment.value,\
+		...nullifier.hash,\
+		...field_to_u32_8(recipientAddress),\
+		...field_to_u32_8(path[0])\
+	])
+	bool[256] publicInputsHashBool256 = u32_8_to_bool_256(publicInputsHashU32)
+	bool[256] publicInputsHashBool256Sliced = [\
+	     ...[false; 8],\
+	     ...publicInputsHashBool256[8..256]\
+	]
+	assert(bool_256_to_field(publicInputsHashBool256Sliced) == publicInputsHash)
+
+	// check that the old commitment is in the merkle tree
+	field mimcHash = u32_8_to_field(oldCommitment.hash)
+	assert(pathCheck(path, order, mimcHash))
+
+	return

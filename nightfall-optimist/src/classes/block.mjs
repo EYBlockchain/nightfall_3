@@ -6,7 +6,7 @@ import { getFrontier } from '../utils/timber.mjs';
 import mt from '../utils/crypto/merkle-tree/merkle-tree.mjs';
 import Web3 from '../utils/web3.mjs';
 
-const { ZERO } = config;
+const { ZERO, PROPOSE_BLOCK_TYPES } = config;
 const { updateNodes } = mt;
 
 /**
@@ -51,7 +51,6 @@ class Block {
   static async build(components) {
     const { proposer, transactions } = components;
     let { currentLeafCount } = components;
-    const web3 = Web3.connection();
     // we have to get the current frontier from Timber, so that we can compute
     // the new root bearing in mind that the transactions in this block won't
     // be in Timber yet.  However, Timber has a handy update
@@ -89,18 +88,14 @@ class Block {
     // remember the updated values in case we need them for the next block.
     this.localLeafCount += leafValues.length;
     this.localFrontier = newFrontier;
-    // compute the keccak hash of the block data
-    const transactionHashes = transactions.map(transaction => transaction.transactionHash);
-    const blockHash = web3.utils.soliditySha3(
-      { t: 'address', v: proposer },
-      ...transactionHashes.map(th => ({ t: 'bytes32', v: th })),
-      { t: 'bytes32', v: root },
-      { t: 'uint64', v: leafCount },
-      { t: 'uint64', v: nCommitments },
-    );
+    // compute the keccak hash of the proposeBlock signature
+    const blockHash = this.calcHash({ proposer, root, leafCount, nCommitments }, transactions);
+    // note that the transactionHashes array is not part of the on-chain block
+    // but we compute it here for convenience. It needs removing before sending
+    // a block object to the blockchain.
     return new Block({
       proposer,
-      transactionHashes,
+      transactionHashes: transactions.map(t => t.transactionHash),
       leafCount,
       root,
       blockHash,
@@ -115,35 +110,54 @@ class Block {
     this.localLeafCount = 0;
   }
 
-  static checkHash(block) {
-    const web3 = Web3.connection();
-    const blockHash = web3.utils.soliditySha3(
-      { t: 'address', v: block.proposer },
-      ...block.transactionHashes.map(th => ({ t: 'bytes32', v: th })),
-      { t: 'bytes32', v: block.root },
-      { t: 'uint', v: block.leafCount },
-    );
-    return blockHash === block.blockHash;
+  static checkHash(block, transactions) {
+    return this.calcHash(block, transactions) === block.blockHash;
   }
 
-  static calcHash(block) {
+  static calcHash(block, transactions) {
     const web3 = Web3.connection();
-    const blockHash = web3.utils.soliditySha3(
-      { t: 'address', v: block.proposer },
-      ...block.transactionHashes.map(th => ({ t: 'bytes32', v: th })),
-      { t: 'bytes32', v: block.root },
-      { t: 'uint64', v: block.leafCount },
-      { t: 'uint64', v: block.nCommitments },
-    );
-    const b = new Block({
-      proposer: block.proposer,
-      transactionHashes: block.transactionHashes,
-      leafCount: block.leafCount,
-      nCommitments: block.nCommitments,
-      root: block.root,
-      blockHash,
+    const { proposer, root, leafCount, nCommitments } = block;
+    const blockArray = [proposer, root, leafCount, nCommitments];
+    const transactionsArray = transactions.map(t => {
+      const {
+        value,
+        transactionType,
+        publicInputHash,
+        tokenId,
+        ercAddress,
+        recipientAddress,
+        commitments,
+        nullifiers,
+        historicRoot,
+        historicRootBlockHash,
+        proof,
+      } = t;
+      return [
+        value,
+        transactionType,
+        publicInputHash,
+        tokenId,
+        ercAddress,
+        recipientAddress,
+        commitments,
+        nullifiers,
+        historicRoot,
+        historicRootBlockHash,
+        proof,
+      ];
     });
-    return b;
+    const encoded = web3.eth.abi.encodeParameters(PROPOSE_BLOCK_TYPES, [
+      blockArray,
+      transactionsArray,
+    ]);
+    return web3.utils.soliditySha3({ t: 'bytes', v: encoded });
+  }
+
+  // remove properties that do not get sent to the blockchain returning
+  // a new object (don't mutate the original)
+  static buildSolidityStruct(block) {
+    const { proposer, root, leafCount, nCommitments } = block;
+    return { proposer, root, leafCount: Number(leafCount), nCommitments: Number(nCommitments) };
   }
 }
 

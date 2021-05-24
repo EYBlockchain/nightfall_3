@@ -153,11 +153,11 @@ router.get('/change', async (req, res, next) => {
  * Function to Propose a state update block  This just
  * provides the tx data, the user will need to call the blockchain client
  * @deprecated - this is now an automated process - no need to manually propose
- * a block. But this is used for challenge test cases
+ * a block
  */
 router.post('/encode', async (req, res, next) => {
   logger.debug(`encode endpoint received POST`);
-  logger.silly(`With content ${JSON.stringify(req.body, null, 2)}`);
+  logger.debug(`With content ${JSON.stringify(req.body, null, 2)}`);
   try {
     const { transactions, block } = req.body;
 
@@ -181,13 +181,15 @@ router.post('/encode', async (req, res, next) => {
         .flat(Infinity);
       block.root = (await updateNodes(leafValues, currentLeafCount, frontier)).root;
     }
-    const newBlock = await Block.calcHash({
+
+    const newBlock = {
       proposer: block.proposer,
       transactionHashes: transactions.map(transaction => transaction.transactionHash),
       root: block.root,
       leafCount: currentLeafCount,
       nCommitments: block.nCommitments,
-    });
+    };
+    newBlock.blockHash = await Block.calcHash(newBlock, newTransactions);
 
     logger.debug(`New block assembled ${JSON.stringify(newBlock, null, 2)}`);
     const proposersContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
