@@ -27,7 +27,7 @@ export function compressG1(point) {
   // string is 256 bits to fit with an Ethereum word)
   const compressedBinary = parity.concat(x.toString(2).padStart(255, '0'));
   const compressedBigInt = BigInt(`0b${compressedBinary}`);
-  return `0x${compressedBigInt.toString(16).padStart(64, '0')}`;
+  return `0x${compressedBigInt.toString(16)}`;
 }
 
 /**
@@ -59,9 +59,7 @@ solving Y^2 = X^3 + 3 over p
 */
 export function decompressG1(xin) {
   // first, extract the parity bit
-  const xbin = BigInt(xin)
-    .toString(2)
-    .padStart(256, '0');
+  const xbin = BigInt(xin).toString(2).padStart(256, '0');
   const parity = xbin[0];
   // then convert the rest into a BigInt
   const x = BigInt(`0b${xbin.slice(1)}`);
@@ -77,11 +75,7 @@ solving Y^2 = X^3 + 3/(i+9)
 */
 export function decompressG2(xin) {
   // first extract parity bits
-  const xbin = xin.map(c =>
-    BigInt(c)
-      .toString(2)
-      .padStart(256, '0'),
-  );
+  const xbin = xin.map(c => BigInt(c).toString(2).padStart(256, '0'));
   const parity = xbin.map(xb => xb[0]); // extract parity
   const x = new Fq2(...xbin.map(xb => BigInt(`0b${xb.slice(1)}`))); // x element
   const x3 = x.mul(x).mul(x);

@@ -22,7 +22,7 @@ export function compressG1(point) {
   // string is 256 bits to fit with an Ethereum word)
   const compressedBinary = parity.concat(x.toString(2).padStart(255, '0'));
   const compressedBigInt = BigInt(`0b${compressedBinary}`);
-  return `0x${compressedBigInt.toString(16).padStart(64, '0')}`;
+  return `0x${compressedBigInt.toString(16)}`;
 }
 
 /**
