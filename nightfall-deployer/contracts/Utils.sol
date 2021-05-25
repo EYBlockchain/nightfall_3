@@ -11,7 +11,7 @@ library Utils {
     return keccak256(
       abi.encodePacked(
         t.value,
-        t.blockNumberL2,
+        t.historicRootBlockNumberL2,
         t.transactionType,
         t.publicInputHash,
         t.tokenId,

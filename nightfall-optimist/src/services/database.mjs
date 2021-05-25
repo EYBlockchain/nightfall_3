@@ -124,6 +124,16 @@ export async function getBlockByBlockHash(blockHash) {
 }
 
 /**
+function to look a block by blockNumberL2, if you know the number of the block. This is useful for rolling back Timber.
+*/
+export async function getBlockByBlockNumberL2(blockNumberL2) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { blockNumberL2 };
+  return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
+}
+
+/**
 function to delete a block. This is useful after a rollback event, whereby the
 block no longer exists
 */

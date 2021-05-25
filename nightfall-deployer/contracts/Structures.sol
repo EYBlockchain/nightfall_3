@@ -41,7 +41,7 @@ contract Structures {
   // nullifiers for a Deposit transaction.
   struct Transaction {
     uint64 value;
-    uint64 blockNumberL2; // number of block containing historic root
+    uint64 historicRootBlockNumberL2; // number of L2 block containing historic root
     TransactionTypes transactionType;
     bytes32 publicInputHash;
     bytes32 tokenId;

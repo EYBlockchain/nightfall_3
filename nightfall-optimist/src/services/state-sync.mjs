@@ -7,21 +7,20 @@ import newCurrentProposerEventHandler from '../event-handlers/new-current-propos
 import committedToChallengeEventHandler from '../event-handlers/challenge-commit.mjs';
 import blockDeletedEventHandler from '../event-handlers/block-deleted.mjs';
 import { callTimberHandler } from '../utils/timber.mjs';
-import { getBlockByBlockHash, getBlocks } from './database.mjs';
+import { getBlockByBlockHash } from './database.mjs';
 import { stopMakingBlocks, startMakingBlocks } from './block-assembler.mjs';
 import { stopMakingChallenges, startMakingChallenges } from './challenges.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 
 const { CHALLENGES_CONTRACT_NAME, SHIELD_CONTRACT_NAME, ZERO } = config;
 
-export const syncState = async (proposer, fromBlock='earliest', toBlock='latest', eventFilter = 'allEvents') => {
+export const syncState = async proposer => {
   const proposersContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
-  const pastProposerEvents = await proposersContractInstance.getPastEvents(eventFilter, {
-    fromBlock: fromBlock,
-    toBlock: toBlock
+  const pastProposerEvents = await proposersContractInstance.getPastEvents({
+    fromBlock: 'earliest',
   });
-  const pastShieldEvents = await shieldContractInstance.getPastEvents(eventFilter,{ fromBlock: fromBlock, toBlock: toBlock });
+  const pastShieldEvents = await shieldContractInstance.getPastEvents({ fromBlock: 'earliest' });
   const splicedList = pastProposerEvents
     .concat(pastShieldEvents)
     .sort((a, b) => a.blockNumber - b.blockNumber);
@@ -37,7 +36,6 @@ export const syncState = async (proposer, fromBlock='earliest', toBlock='latest'
         await callTimberHandler(pastEvent);
         break;
       case 'BlockProposed':
-        await callTimberHandler(pastEvent);
         await blockProposedEventHandler(pastEvent);
         break;
       case 'CommittedToChallenge':
@@ -55,52 +53,40 @@ export const syncState = async (proposer, fromBlock='earliest', toBlock='latest'
   }
 };
 
+const BLOCKS_BEHIND = 1;
+
 export const initialBlockSync = async proposer => {
+  logger.info(`initialBlockSync Proposer: ${proposer.address}`);
   await waitForContract(CHALLENGES_CONTRACT_NAME);
   const proposersContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
   let endHash = await proposersContractInstance.methods.endHash().call();
   if (endHash === ZERO) return; // The blockchain is empty
-  
-  const missingBlocks = await checkBlocks(); // Stores any gaps of missing blocks
-  const [fromBlock, ] = missingBlocks[0]
-  const latestBlockLocally = (await getBlockByBlockHash(endHash)) ?? undefined;
-  if (!latestBlockLocally || fromBlock !== (latestBlockLocally.blockNumber + 1)) {
-    // The latest block stored locally does not match the endHash on-chain
-    // or we have detected a gap in the L2 blockchain
-    await stopMakingChallenges();
-    for(let i = 0; i< missingBlocks.length; i++) {
-      const [fromBlock,toBlock] = missingBlocks[i]
-      // Sync the state inbetween these blocks
-      await syncState(proposer,fromBlock,toBlock);
-    };
-    await startMakingChallenges();
+  let counter = BLOCKS_BEHIND;
+  // Walk back the blockHashes hashmap to get to the desired chain depth
+  while (counter > 0) {
+    const block = await proposersContractInstance.methods.blockHashes(endHash).call();
+    endHash = block.previousHash;
+    counter--;
   }
+  // Check if we have this blockHash in our DB
+  const latestBlockLocally = (await getBlockByBlockHash(endHash)) ?? undefined;
+  // If not, we're too far behind so let's sync
+  if (!latestBlockLocally) {
+    await stopMakingBlocks();
+    await stopMakingChallenges();
+    await syncState(proposer);
+    await startMakingBlocks();
+    await startMakingChallenges();
+    return;
+  }
+  // Could use currentProposer
   const currentProposer = (await proposersContractInstance.methods.currentProposer().call())
     .thisAddress;
-    await newCurrentProposerEventHandler({ returnValues: { proposer: currentProposer } }, [proposer]);
-  
-  return;
+  await newCurrentProposerEventHandler({ returnValues: { proposer: currentProposer } }, [proposer]);
+  // logger.info(`Propopser is :${JSON.stringify(proposer)}`);
+  // const pastProposerEvents = await proposersContractInstance.getPastEvents({ fromBlock: 'earliest' });
+  // const newProposerEvents = pastProposerEvents
+  //   .filter(p => p.event === 'NewCurrentProposer')
+  //   .sort((a, b) => a.blockNumber - b.blockNumber);
+  // await newCurrentProposerEventHandler(newProposerEvents[newProposerEvents.length - 1], [proposer]);
 };
-
-export const checkBlocks = async () => {
-  const blocks = await getBlocks();
-  const gapArray = [];
-  if(blocks.length > 0) {
-    // Existing blocks found stored locally
-    let expectedLeafCount = 0;
-    for(let i = 0; i < blocks.length; i++){
-      if (blocks[i].leafCount !== expectedLeafCount) {
-        const fromBlock = i === 0 ? 'earliest' : blocks[i-1].blockNumber + 1;
-        const toBlock = blocks[i].blockNumber - 1; 
-        gapArray.push([fromBlock,toBlock]);
-      } else {
-        expectedLeafCount = blocks[i].leafCount //reset so we can find more
-      }
-      expectedLeafCount += blocks[i].nCommitments
-    }
-    if (gapArray.length > 0) return gapArray //We found some missing blocks
-    const fromBlock = blocks[blocks.length - 1].blockNumber + 1
-    return [[fromBlock, 'latest']];
-  }
-  return [['earliest', 'latest']]
-}

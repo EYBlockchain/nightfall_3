@@ -12,8 +12,8 @@ function keccak(preimage) {
   const web3 = Web3.connection();
   // compute the solidity hash, using suitable type conversions
   return web3.utils.soliditySha3(
-    // { t: 'uint64', v: preimage.fee }, not part of the on-chain tx
     { t: 'uint64', v: preimage.value },
+    { t: 'uint64', v: preimage.historicRootBlockNumberL2 },
     { t: 'uint8', v: preimage.transactionType },
     { t: 'bytes32', v: preimage.publicInputHash },
     { t: 'bytes32', v: preimage.tokenId },
@@ -21,7 +21,6 @@ function keccak(preimage) {
     { t: 'bytes32', v: preimage.recipientAddress },
     ...preimage.commitments.map(ch => ({ t: 'bytes32', v: ch })),
     ...preimage.nullifiers.map(nh => ({ t: 'bytes32', v: nh })),
-    { t: 'bytes32', v: preimage.historicRoot },
     ...preimage.proof.map(p => ({ t: 'uint', v: p })),
   );
 }
@@ -89,6 +88,7 @@ class Transaction {
     // return a version without properties that are not sent to the blockchain
     const {
       value,
+      historicRootBlockNumberL2,
       transactionType,
       publicInputHash,
       tokenId,
@@ -96,11 +96,11 @@ class Transaction {
       recipientAddress,
       commitments,
       nullifiers,
-      historicRoot,
       proof,
     } = transaction;
     return {
       value,
+      historicRootBlockNumberL2,
       transactionType,
       publicInputHash,
       tokenId,
@@ -108,7 +108,6 @@ class Transaction {
       recipientAddress,
       commitments,
       nullifiers,
-      historicRoot,
       proof: compressProof(proof),
     };
   }

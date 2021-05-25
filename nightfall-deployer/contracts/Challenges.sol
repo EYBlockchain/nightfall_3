@@ -52,7 +52,7 @@ contract Challenges is Proposers, Key_Registry {
     // first, check we have real, in-train, contiguous blocks
     isBlockReal(block1, transactions1);
     isBlockReal(block2, transactions2);
-    require(Utils.hashTransaction(transactions1[transactionIndex1]) == Utils.hashTransaction(transactions2[transactionIndex2]), 'The transactions are not, in fact, the same');
+    require(Utils.hashTransaction(transactions1[transactionIndex1]) == Utils.hashTransaction(transactions2[transactionIndex2]), 'The transactions are not the same');
     // Delete the latest block of the two
     if(block1.blockNumberL2 > block2.blockNumberL2) {
       challengeAccepted(block1);
@@ -91,8 +91,8 @@ contract Challenges is Proposers, Key_Registry {
     );
     // check the historic root is in the block provided.
     require(
-      transactions[transactionIndex].blockNumberL2 == blockL2ContainingHistoricRoot.blockNumberL2,
-      'The historic root block has not been correctly provided'
+      transactions[transactionIndex].historicRootBlockNumberL2 == blockL2ContainingHistoricRoot.blockNumberL2,
+      'Incorrect historic root block'
     );
     ChallengesUtil.libChallengePublicInputHash(transactions[transactionIndex], blockL2ContainingHistoricRoot.root);
     // Delete the latest block of the two

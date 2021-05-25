@@ -6,8 +6,9 @@ import { getFrontier } from '../utils/timber.mjs';
 import mt from '../utils/crypto/merkle-tree/merkle-tree.mjs';
 import Web3 from '../utils/web3.mjs';
 import { compressProof } from '../utils/curve-maths/curves.mjs';
+import { getContractInstance } from '../utils/contract.mjs';
 
-const { ZERO, PROPOSE_BLOCK_TYPES } = config;
+const { ZERO, PROPOSE_BLOCK_TYPES, CHALLENGES_CONTRACT_NAME } = config;
 const { updateNodes } = mt;
 
 /**
@@ -30,19 +31,23 @@ class Block {
 
   nCommitments; // number of commitments in the block
 
+  blockNumberL2; // the number (index) of this Layer 2 block
+
   static localLeafCount = 0; // ensure this is less than Timber to start with
 
   static localFrontier = [];
 
   constructor(asyncParams) {
     if (asyncParams === undefined) throw new Error('Cannot be called directly');
-    const { proposer, transactionHashes, leafCount, root, blockHash, nCommitments } = asyncParams;
+    const { proposer, transactionHashes, leafCount, root, blockHash, nCommitments, blockNumberL2 } =
+      asyncParams;
     this.leafCount = leafCount;
     this.proposer = proposer;
     this.transactionHashes = transactionHashes;
     this.root = root;
     this.blockHash = blockHash;
     this.nCommitments = nCommitments;
+    this.blockNumberL2 = blockNumberL2;
   }
 
   // computes the root and hash. We use a Builder pattern because it's very
@@ -52,11 +57,15 @@ class Block {
   static async build(components) {
     const { proposer, transactions } = components;
     let { currentLeafCount } = components;
+    // the only place to get the next block number is from the blockchain:
+    const proposersContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
+    const blockNumberL2 = await proposersContractInstance.methods.getBlockNumberL2().call();
+
     // we have to get the current frontier from Timber, so that we can compute
-    // the new root bearing in mind that the transactions in this block won't
+    // the new root, bearing in mind that the transactions in this block won't
     // be in Timber yet.  However, Timber has a handy update
     // interface, which will, inter-alia, return that very frontier.
-    // However, it's possilbe the previous block that we computed hasn't been
+    // However, it's possible the previous block that we computed hasn't been
     // added to Timber yet, in which case the Frontier will be wrong. We can
     // detect that if we remember what the leafCount should actually be, and
     // if it's ahead of what Timber thinks, we compute the new Frontier locally
@@ -101,6 +110,7 @@ class Block {
       root,
       blockHash,
       nCommitments,
+      blockNumberL2,
     });
   }
 
@@ -117,11 +127,12 @@ class Block {
 
   static calcHash(block, transactions) {
     const web3 = Web3.connection();
-    const { proposer, root, leafCount, nCommitments } = block;
-    const blockArray = [proposer, root, leafCount, nCommitments];
+    const { proposer, root, leafCount, nCommitments, blockNumberL2 } = block;
+    const blockArray = [proposer, root, leafCount, nCommitments, blockNumberL2];
     const transactionsArray = transactions.map(t => {
       const {
         value,
+        historicRootBlockNumberL2,
         transactionType,
         publicInputHash,
         tokenId,
@@ -129,11 +140,11 @@ class Block {
         recipientAddress,
         commitments,
         nullifiers,
-        historicRoot,
         proof,
       } = t;
       return [
         value,
+        historicRootBlockNumberL2,
         transactionType,
         publicInputHash,
         tokenId,
@@ -141,7 +152,6 @@ class Block {
         recipientAddress,
         commitments,
         nullifiers,
-        historicRoot,
         compressProof(proof),
       ];
     });
@@ -155,8 +165,14 @@ class Block {
   // remove properties that do not get sent to the blockchain returning
   // a new object (don't mutate the original)
   static buildSolidityStruct(block) {
-    const { proposer, root, leafCount, nCommitments } = block;
-    return { proposer, root, leafCount: Number(leafCount), nCommitments: Number(nCommitments) };
+    const { proposer, root, leafCount, nCommitments, blockNumberL2 } = block;
+    return {
+      proposer,
+      root,
+      leafCount: Number(leafCount),
+      nCommitments: Number(nCommitments),
+      blockNumberL2: Number(blockNumberL2),
+    };
   }
 }
 

@@ -7,6 +7,7 @@ import {
   retrieveMinedNullifiers,
   saveCommit,
   getTransactionsByTransactionHashes,
+  getBlockByBlockNumberL2,
 } from './database.mjs';
 import { getTreeHistory } from '../utils/timber.mjs';
 import Web3 from '../utils/web3.mjs';
@@ -101,10 +102,8 @@ export async function createChallenge(block, transactions, err) {
       }
       // Challenge Duplicate Transaction
       case 1: {
-        const {
-          transactionHashIndex: transactionIndex1,
-          transactionHash: transactionHash1,
-        } = err.metadata;
+        const { transactionHashIndex: transactionIndex1, transactionHash: transactionHash1 } =
+          err.metadata;
 
         // Get the block that contains the duplicate of the transaction
         const block2 = await getBlockByTransactionHash(transactionHash1);
@@ -148,15 +147,35 @@ export async function createChallenge(block, transactions, err) {
       // invalid public input hash
       case 3: {
         const { transactionHashIndex: transactionIndex } = err.metadata;
-        // Create a challenge
-        txDataToSign = await challengeContractInstance.methods
-          .challengePublicInputHash(
-            Block.buildSolidityStruct(block),
-            transactions.map(t => Transaction.buildSolidityStruct(t)),
-            transactionIndex,
-            salt,
-          )
-          .encodeABI();
+        // Create a challenge (DEPOSIT has no historic root to worry about)
+        if (transactions.transactionType === 'DEPOSIT') {
+          txDataToSign = await challengeContractInstance.methods
+            .challengePublicInputHash(
+              Block.buildSolidityStruct(block),
+              transactions.map(t => Transaction.buildSolidityStruct(t)),
+              transactionIndex,
+              salt,
+            )
+            .encodeABI();
+        } else {
+          const blockL2ContainingHistoricRoot = getBlockByBlockNumberL2(
+            transactions[transactionIndex].blockL2ContainingHistoricRoot,
+          );
+          const transactionsOfblockL2ContainingHistoricRoot = getTransactionsByTransactionHashes(
+            blockL2ContainingHistoricRoot.transtransactionHashes,
+          );
+          txDataToSign = await challengeContractInstance.methods
+            .challengePublicInputHash(
+              Block.buildSolidityStruct(block),
+              transactions.map(t => Transaction.buildSolidityStruct(t)),
+              transactionIndex,
+              blockL2ContainingHistoricRoot,
+              transactionsOfblockL2ContainingHistoricRoot,
+              salt,
+            )
+            .encodeABI();
+        }
+
         break;
       }
       // proof does not verify

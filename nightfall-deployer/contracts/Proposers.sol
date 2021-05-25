@@ -28,6 +28,10 @@ contract Proposers is Structures, Config {
     return blockHashes[index];
   }
 
+  function getBlockNumberL2() public view returns(uint) {
+    return blockHashes.length;
+  }
+
   /**
   * Each proposer gets a chance to propose blocks for a certain time, defined
   * in Ethereum blocks.  After a certain number of blocks has passed, the

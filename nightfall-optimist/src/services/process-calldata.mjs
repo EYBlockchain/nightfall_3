@@ -9,7 +9,7 @@ import Transaction from '../classes/transaction.mjs';
 import Block from '../classes/block.mjs';
 import { decompressProof } from '../utils/curve-maths/curves.mjs';
 
-const { PROPOSE_BLOCK_TYPES } = config;
+const { PROPOSE_BLOCK_TYPES, SUBMIT_TRANSACTION_TYPES } = config;
 
 export async function getProposeBlockCalldata(eventData) {
   const web3 = Web3.connection();
@@ -20,16 +20,18 @@ export async function getProposeBlockCalldata(eventData) {
   const decoded = web3.eth.abi.decodeParameters(PROPOSE_BLOCK_TYPES, abiBytecode);
   const blockData = decoded['0'];
   const transactionsData = decoded['1'];
-  const [proposer, root, leafCount, nCommitments] = blockData;
+  const [proposer, root, leafCount, nCommitments, blockNumberL2] = blockData;
   const block = {
     proposer,
     root,
     leafCount: Number(leafCount),
     nCommitments: Number(nCommitments),
+    blockNumberL2: Number(blockNumberL2),
   };
   const transactions = transactionsData.map(t => {
     const [
       value,
+      historicRootBlockNumberL2,
       transactionType,
       publicInputHash,
       tokenId,
@@ -37,11 +39,11 @@ export async function getProposeBlockCalldata(eventData) {
       recipientAddress,
       commitments,
       nullifiers,
-      historicRoot,
       proof,
     ] = t;
     const transaction = {
       value,
+      historicRootBlockNumberL2,
       transactionType,
       publicInputHash,
       tokenId,
@@ -49,7 +51,6 @@ export async function getProposeBlockCalldata(eventData) {
       recipientAddress,
       commitments,
       nullifiers,
-      historicRoot,
       proof: decompressProof(proof),
     };
     transaction.transactionHash = Transaction.calcHash(transaction);
@@ -61,7 +62,9 @@ export async function getProposeBlockCalldata(eventData) {
   // we know how to compute. Many node functions assume these are present.
   block.blockHash = Block.calcHash(block, transactions);
   block.transactionHashes = transactions.map(t => t.transactionHash);
-  return { block, transactions };
+  // currentLeafCount holds the count of the next leaf to be added
+  const currentLeafCount = Number(nCommitments) + Number(leafCount);
+  return { block, transactions, currentLeafCount };
 }
 
 export async function getTransactionSubmittedCalldata(eventData) {
@@ -70,9 +73,7 @@ export async function getTransactionSubmittedCalldata(eventData) {
   const tx = await web3.eth.getTransaction(transactionHash);
   // Remove the '0x' and function signature to recove rhte abi bytecode
   const abiBytecode = `0x${tx.input.slice(10)}`;
-  const types =
-    '(uint64,uint8,bytes32,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32,uint[4])';
-  const transactionData = web3.eth.abi.decodeParameter(types, abiBytecode);
+  const transactionData = web3.eth.abi.decodeParameter(SUBMIT_TRANSACTION_TYPES, abiBytecode);
   const [
     value,
     transactionType,
