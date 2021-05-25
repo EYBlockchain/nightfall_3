@@ -33,7 +33,7 @@ beforeEach('Redeploy contract', async () => {
 });
 
 /* eslint-disable */
-describe(`Adding ${numberOfBatches * batchSize} 
+describe(`Adding ${numberOfBatches * batchSize}
   leaves in batches of ${batchSize}`, async function () {
   /* eslint-enable */
   this.timeout(10000000); // surprisingly, this.timeout() doesn't work inside an arrow function!
