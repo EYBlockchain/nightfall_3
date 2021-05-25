@@ -40,10 +40,10 @@ contract Shield is Structures, Config, Key_Registry {
   */
   function finaliseWithdrawal(Block memory b, Transaction[] memory ts, uint index) external {
     // check this block is a real one, in the queue, not something made up.
-    bytes32 blockHash = proposers.isBlockReal(b, ts);
+    proposers.isBlockReal(b, ts);
     // check that the block has been finalised
-    (,,,uint data) = proposers.blockHashes(blockHash);
-    require(data + COOLING_OFF_PERIOD < block.timestamp, 'It is too soon withdraw funds from this block');
+    uint time = proposers.getBlockData(b.blockNumberL2).time;
+    require(time + COOLING_OFF_PERIOD < block.timestamp, 'It is too soon withdraw funds from this block');
     if (ts[index].transactionType == TransactionTypes.WITHDRAW) payOut(ts[index]);
   }
 

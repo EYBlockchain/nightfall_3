@@ -15,13 +15,17 @@ contract Proposers is Structures, Config {
   uint proposerStartBlock; // L1 block where currentProposer became current
   uint public leafCount; // number of leaves in the Merkle treeWidth
   mapping(address => uint) public pendingWithdrawals;
-  mapping(bytes32 => LinkedHash) public blockHashes; //linked list of block hashes
+  // mapping(bytes32 => LinkedHash) public blockHashes; //linked list of block hashes
+  BlockData[] public blockHashes; // array containing mainly blockHashes
   mapping(address => LinkedAddress) public proposers;
-  bytes32 public endHash; // holds the hash at the end of the linked list of block hashes, so that we can pick up the end.
-
   modifier onlyCurrentProposer() { // Modifier
     require(msg.sender == currentProposer.thisAddress, "Only the current proposer can call this.");
       _;
+  }
+
+  // getter for blockData
+  function getBlockData(uint index) public view returns(BlockData memory) {
+    return blockHashes[index];
   }
 
   /**
@@ -47,7 +51,10 @@ contract Proposers is Structures, Config {
     // We need to check that the block has correctly stored its leaf count. This
     // is needed in case of a roll-back of a bad block, but cannot be checked by
     // a Challenge function (at least i haven't thought of a way to do it).
+
+    // TODO it is probably cheaper just to set these, rather than test them
     require(b.leafCount == leafCount, 'The leaf count stored in the Block is not correct');
+    require(b.blockNumberL2 == blockHashes.length, 'The block number stored in the Block is not correct');
     // We need to set the blockHash on chain here, because there is no way to
     // convince a challenge function of the (in)correctness by an offchain
     // computation; the on-chain code doesn't save the pre-image of the hash so
@@ -57,19 +64,15 @@ contract Proposers is Structures, Config {
     bytes32 blockHash = keccak256(msg.data[4:]);
     //bytes32 blockHash = Utils.hashBlock(b, t);
     // All check pass so add the block to the list of blocks waiting to be permanently added to the state - we only save the hash of the block data plus the absolute minimum of metadata - it's up to the challenger, or person requesting inclusion of the block to the permanent contract state, to provide the block data.
-    blockHashes[blockHash] = LinkedHash({
-      thisHash: blockHash,
-      previousHash: endHash,
-      nextHash: ZERO,
-      data: block.timestamp
-    });
-    blockHashes[endHash].nextHash = blockHash;
-    endHash = blockHash; // point to the new end of the list of blockhashes.
+    blockHashes.push(BlockData({
+      blockHash: blockHash,
+      time: block.timestamp
+    }));
     // Timber will listen for the BlockProposed event as well as
     // nightfall-optimist.  The current, optimistic version of Timber does not
     // require the smart contract to craft NewLeaf/NewLeaves events.
     leafCount += b.nCommitments;
-    emit BlockProposed(leafCount);
+    emit BlockProposed();
   }
 
   //add the proposer to the circular linked list
@@ -123,9 +126,8 @@ contract Proposers is Structures, Config {
   // Checks if a block is actually referenced in the queue of blocks waiting
   // to go into the Shield state (stops someone challenging with a non-existent
   // block).
-  function isBlockReal(Block memory b, Transaction[] memory t) public view returns(bytes32) {
+  function isBlockReal(Block memory b, Transaction[] memory t) public view {
     bytes32 blockHash = Utils.hashBlock(b, t);
-    require(blockHashes[blockHash].thisHash == blockHash, 'This block does not exist');
-    return blockHash;
+    require(blockHashes[b.blockNumberL2].blockHash == blockHash, 'This block does not exist');
   }
 }
