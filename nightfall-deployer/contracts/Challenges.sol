@@ -91,11 +91,14 @@ contract Challenges is Proposers, Key_Registry {
     Block memory blockL2,
     Transaction[] memory transactions,
     uint transactionIndex,
+    uint[8] memory uncompressedProof,
     bytes32 salt
     ) external {
       checkCommit(msg.data, salt);
       bytes32 blockL2Hash = isBlockReal(blockL2, transactions);
-      ChallengesUtil.libChallengeProofVerification(transactions[transactionIndex], vks[transactions[transactionIndex].transactionType]);
+      // now we need to check that the proof is correct
+      ChallengesUtil.libCheckCompressedProof(transactions[transactionIndex].proof, uncompressedProof);
+      ChallengesUtil.libChallengeProofVerification(uint(transactions[transactionIndex].publicInputHash), uncompressedProof, vks[transactions[transactionIndex].transactionType]);
       challengeAccepted(blockL2, blockL2Hash);
   }
 

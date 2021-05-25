@@ -190,11 +190,13 @@ router.post('/encode', async (req, res, next) => {
       nCommitments: block.nCommitments,
     };
     newBlock.blockHash = await Block.calcHash(newBlock, newTransactions);
-
     logger.debug(`New block assembled ${JSON.stringify(newBlock, null, 2)}`);
     const proposersContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
     const txDataToSign = await proposersContractInstance.methods
-      .proposeBlock(newBlock, newTransactions)
+      .proposeBlock(
+        Block.buildSolidityStruct(newBlock),
+        newTransactions.map(t => Transaction.buildSolidityStruct(t)),
+      )
       .encodeABI();
     logger.debug('returning raw transaction');
     logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
