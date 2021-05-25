@@ -37,6 +37,7 @@ export async function getProposeBlockCalldata(eventData) {
       commitments,
       nullifiers,
       historicRoot,
+      historicRootBlockHash,
       proof,
     ] = t;
     const transaction = {
@@ -49,6 +50,7 @@ export async function getProposeBlockCalldata(eventData) {
       commitments,
       nullifiers,
       historicRoot,
+      historicRootBlockHash,
       proof,
     };
     transaction.transactionHash = Transaction.calcHash(transaction);
@@ -70,7 +72,7 @@ export async function getTransactionSubmittedCalldata(eventData) {
   // Remove the '0x' and function signature to recove rhte abi bytecode
   const abiBytecode = `0x${tx.input.slice(10)}`;
   const types =
-    '(uint64,uint8,bytes32,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32,uint[8])';
+    '(uint64,uint8,bytes32,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32,bytes32,uint[8])';
   const transactionData = web3.eth.abi.decodeParameter(types, abiBytecode);
   const [
     value,
@@ -82,6 +84,7 @@ export async function getTransactionSubmittedCalldata(eventData) {
     commitments,
     nullifiers,
     historicRoot,
+    historicRootBlockHash,
     proof,
   ] = transactionData;
   const transaction = {
@@ -95,6 +98,7 @@ export async function getTransactionSubmittedCalldata(eventData) {
     commitments,
     nullifiers,
     historicRoot,
+    historicRootBlockHash,
     proof,
   };
   transaction.transactionHash = Transaction.calcHash(transaction);

@@ -145,9 +145,10 @@ export async function createChallenge(block, transactions, err) {
       }
       // historic root is incorrect
       case 3: {
-        const { transactionHashIndex: transactionIndex } = err.metadata;
-        const historicBlock = await getBlockByBlockHash(
-          transactions[transactionIndex].historicRootBlockHash,
+        const { transaction, transactionHashIndex: transactionIndex } = err.metadata;
+        const historicBlock = await getBlockByBlockHash(transaction.historicRootBlockHash);
+        const historicBlockTransactions = await getTransactionsByTransactionHashes(
+          historicBlock.transactionHashes,
         );
         // Create a challenge
         txDataToSign = await challengeContractInstance.methods
@@ -155,6 +156,7 @@ export async function createChallenge(block, transactions, err) {
             Block.buildSolidityStruct(block),
             Block.buildSolidityStruct(historicBlock),
             transactions.map(t => Transaction.buildSolidityStruct(t)),
+            historicBlockTransactions.map(t => Transaction.buildSolidityStruct(t)),
             transactionIndex,
             salt,
           )

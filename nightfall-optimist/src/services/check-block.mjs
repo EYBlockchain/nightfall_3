@@ -67,7 +67,7 @@ async function checkBlock(block, transactions) {
           `The transaction check failed with error: ${err.message}`,
           err.code === 1 ? 2 : err.code, // mapping transaction error to block error
           {
-            // transaction: transactions[i],
+            transaction: transactions[i],
             transactionHashIndex: block.transactionHashes.indexOf(transactions[i].transactionHash),
           },
         );

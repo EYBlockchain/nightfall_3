@@ -5,7 +5,7 @@ import config from 'config';
 import rand from '../src/utils/crypto/crypto-random.mjs';
 import PublicInputs from '../src/classes/public-inputs.mjs';
 
-const { ZERO } = config;
+const ZERO = '0x0000000000000000000000000000000000000000000000000000000000000000';
 let web3;
 
 export function connectWeb3() {
@@ -85,10 +85,6 @@ export async function createBadBlock(badBlockType, block, transactions, args) {
   const badBlock = block;
   const badTransactions = transactions;
   switch (badBlockType) {
-    case 'RandomRootNotInTimber': {
-      badBlock.root = (await rand(32)).hex();
-      break;
-    }
     case 'IncorrectRoot': {
       res = await chai
         .request('http://localhost:8083')

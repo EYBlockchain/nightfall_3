@@ -152,14 +152,14 @@ contract Challenges is Proposers, Key_Registry {
     Block memory blockL2,
     Block memory historicRootBlockL2,
     Transaction[] memory transactions,
+    Transaction[] memory transactionshistoricRootBlockL2,
     uint transactionIndex,
     bytes32 salt
     ) external {
       checkCommit(msg.data, salt);
       bytes32 blockL2Hash = isBlockReal(blockL2, transactions);
-      /* ChallengesUtil.libChallengeHistoricRoot(blockL2, transactions, transactionIndex); */
       require(blockHashes[transactions[transactionIndex].historicRootBlockHash].thisHash != transactions[transactionIndex].historicRootBlockHash ||
-        transactions[transactionIndex].historicRootBlockHash != Utils.hashBlock(historicRootBlockL2) ||
+        transactions[transactionIndex].historicRootBlockHash != Utils.hashBlock(historicRootBlockL2, transactionshistoricRootBlockL2) ||
         transactions[transactionIndex].historicRoot != historicRootBlockL2.root
         , 'Historic root in transaction exists');
       challengeAccepted(blockL2, blockL2Hash);
