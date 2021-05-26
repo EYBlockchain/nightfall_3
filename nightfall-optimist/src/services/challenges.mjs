@@ -88,11 +88,11 @@ export async function createChallenge(block, transactions, err) {
         // Create a challenge
         txDataToSign = await challengeContractInstance.methods
           .challengeNewRootCorrect(
-            priorBlock,
-            priorBlockTransactions,
+            Block.buildSolidityStruct(priorBlock),
+            priorBlockTransactions.map(t => Transaction.buildSolidityStruct(t)),
             priorBlockHistory.frontier,
-            block,
-            transactions,
+            Block.buildSolidityStruct(block),
+            transactions.map(t => Transaction.buildSolidityStruct(t)),
             priorBlockHistory.leafIndex + priorBlockCommitmentsCount, // priorBlockHistory.leafIndex + number of commitments  in prior block
             salt,
           )
@@ -181,11 +181,13 @@ export async function createChallenge(block, transactions, err) {
       case 5: {
         const { transactionHashIndex: transactionIndex } = err.metadata;
         // Create a challenge
+        const uncompressedProof = transactions[transactionIndex].proof;
         txDataToSign = await challengeContractInstance.methods
           .challengeProofVerification(
             Block.buildSolidityStruct(block),
             transactions.map(t => Transaction.buildSolidityStruct(t)),
             transactionIndex,
+            uncompressedProof,
             salt,
           )
           .encodeABI();

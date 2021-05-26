@@ -4,7 +4,6 @@ This is used, rather than re-emmiting the calldata in the event because it's
 much cheaper, although the offchain part is more complex.
 */
 import Web3 from '../web3';
-import Transaction from './transaction';
 import logger from '../logger';
 
 async function getProposeBlockCalldata(eventData) {
@@ -17,7 +16,7 @@ async function getProposeBlockCalldata(eventData) {
   const abiBytecode = `0x${tx.input.slice(10)}`;
   const typesArray = [
     '(address,bytes32,uint64,uint64)',
-    '(uint64,uint8,bytes32,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32,bytes32,uint[8])[]',
+    '(uint64,uint8,bytes32,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32,bytes32,uint[4])[]',
   ];
   const decoded = web3.eth.abi.decodeParameters(typesArray, abiBytecode);
   const blockData = decoded['0'];
@@ -51,7 +50,6 @@ async function getProposeBlockCalldata(eventData) {
       historicRootBlockHash,
       proof,
     };
-    transaction.transactionHash = Transaction.calcHash(transaction);
     return transaction;
   });
   return { block, transactions };

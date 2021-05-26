@@ -50,7 +50,7 @@ contract Structures {
     bytes32[2] nullifiers;
     bytes32 historicRoot;
     bytes32 historicRootBlockHash; // the root (if any) used to create the proof
-    uint[8] proof;
+    uint[4] proof;
   }
 
   struct Block {

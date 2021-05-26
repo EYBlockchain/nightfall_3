@@ -7,6 +7,7 @@ import config from 'config';
 import Web3 from '../utils/web3.mjs';
 import Transaction from '../classes/transaction.mjs';
 import Block from '../classes/block.mjs';
+import { decompressProof } from '../utils/curve-maths/curves.mjs';
 
 const { PROPOSE_BLOCK_TYPES } = config;
 
@@ -51,7 +52,7 @@ export async function getProposeBlockCalldata(eventData) {
       nullifiers,
       historicRoot,
       historicRootBlockHash,
-      proof,
+      proof: decompressProof(proof),
     };
     transaction.transactionHash = Transaction.calcHash(transaction);
     // note, this transaction is incomplete in that the 'fee' field is empty.
@@ -72,7 +73,7 @@ export async function getTransactionSubmittedCalldata(eventData) {
   // Remove the '0x' and function signature to recove rhte abi bytecode
   const abiBytecode = `0x${tx.input.slice(10)}`;
   const types =
-    '(uint64,uint8,bytes32,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32,bytes32,uint[8])';
+    '(uint64,uint8,bytes32,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32,bytes32,uint[4])';
   const transactionData = web3.eth.abi.decodeParameter(types, abiBytecode);
   const [
     value,
@@ -99,7 +100,7 @@ export async function getTransactionSubmittedCalldata(eventData) {
     nullifiers,
     historicRoot,
     historicRootBlockHash,
-    proof,
+    proof: decompressProof(proof),
   };
   transaction.transactionHash = Transaction.calcHash(transaction);
   return transaction;

@@ -3,6 +3,7 @@ An optimistic Transaction class
 */
 import gen from 'general-number';
 import Web3 from '../utils/web3.mjs';
+import { compressProof } from '../utils/curve-maths/curves.mjs';
 
 const { generalise } = gen;
 
@@ -113,7 +114,7 @@ class Transaction {
       nullifiers,
       historicRoot,
       historicRootBlockHash,
-      proof,
+      proof: compressProof(proof),
     };
   }
 }

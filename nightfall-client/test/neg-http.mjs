@@ -99,7 +99,7 @@ describe('Testing the challenge http API', () => {
         if (type === 'block') {
           const { block, transactions } = msg;
           if (counter === 0) {
-            duplicateTransaction = transactions[0];
+            [duplicateTransaction] = transactions;
           } else if (counter === 1) {
             [duplicateNullifier] = transactions
               .map(t => t.nullifiers.filter(n => n !== ZERO))

@@ -20,7 +20,7 @@ import { getHistoricRootBlockHash } from '../utils/optimist.mjs';
 import { discoverPeers } from './peers.mjs';
 
 const {
-  BN128_PRIME,
+  BN128_GROUP_ORDER,
   ZOKRATES_WORKER_HOST,
   PROVING_SCHEME,
   BACKEND,
@@ -86,8 +86,8 @@ async function withdraw(transferParams) {
     oldCommitment.hash.limbs(32, 8),
     nullifier.preimage.zkpPrivateKey.limbs(32, 8),
     nullifier.hash.limbs(32, 8),
-    recipientAddress.field(BN128_PRIME),
-    siblingPath.map(node => node.field(BN128_PRIME, false)), // siblingPAth[32] is a sha hash and will overflow a field but it's ok to take the mod here - hence the 'false' flag
+    recipientAddress.field(BN128_GROUP_ORDER),
+    siblingPath.map(node => node.field(BN128_GROUP_ORDER, false)), // siblingPAth[32] is a sha hash and will overflow a field but it's ok to take the mod here - hence the 'false' flag
     await oldCommitment.index,
   ].flat(Infinity);
 

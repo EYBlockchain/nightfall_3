@@ -9,7 +9,7 @@ import utilsWeb3 from './utils-web3';
 import utilsMT from './utils-merkle-tree';
 import logger from './logger';
 import { LeafService, NodeService, MetadataService, HistoryService } from './db/service';
-import { responseFunctions } from './filter-controller';
+import { responseFunctions } from './filter-controller'; // eslint-disable-line import/no-cycle
 // import { getContractInterface } from '../../../nightfall-optimist/src/utils/contract.mjs'
 const { ZERO } = config;
 
@@ -76,7 +76,7 @@ async function checkLeaves(db) {
       return maxReliableLeafIndex; // return the latest reliable leaf index up to which we can update the tree
     }
     const contractName = Object.keys(config.contracts)[0];
-    const treeId = config.contracts[contractName].treeId;
+    const { treeId } = config.contracts[contractName];
 
     const contractAddress = await utilsWeb3.getContractAddress(contractName);
 
@@ -98,11 +98,11 @@ async function checkLeaves(db) {
       const responseFunction = responseFunctions[pastTimberEvents[i].event];
       const responseFunctionArgs = {
         db,
-        contractName: contractName,
+        contractName,
         event: pastTimberEvents[i],
         treeId,
       };
-      await responseFunction({ eventData: pastTimberEvents[i] }, responseFunctionArgs);
+      await responseFunction({ eventData: pastTimberEvents[i] }, responseFunctionArgs); // eslint-disable-line no-await-in-loop
     }
   }
 

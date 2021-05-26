@@ -81,7 +81,7 @@ they're small).
 */
 export async function saveBlock(_block) {
   // const block = { ..._block, check: false };
-  const block = { ..._block };
+  const block = { _id: _block.blockHash, ..._block };
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   logger.debug(`saving block ${JSON.stringify(block, null, 2)}`);
@@ -181,7 +181,7 @@ export async function getMostProfitableTransactions(number) {
 Function to save a (unprocessed) Transaction
 */
 export async function saveTransaction(_transaction) {
-  const transaction = { ..._transaction, mempool: true };
+  const transaction = { id: _transaction.transactionHash, ..._transaction, mempool: true };
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   return db.collection(TRANSACTIONS_COLLECTION).insertOne(transaction);
@@ -282,4 +282,10 @@ export async function resetNullifiers(blockHash) {
   const query = { blockHash: blockHash };
   const update = { $unset: { blockHash: '' } };
   return db.collection(NULLIFIER_COLLECTION).updateMany(query, update);
+}
+
+export async function getBlocks() {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  return db.collection(SUBMITTED_BLOCKS_COLLECTION).find({},{ sort: { blockNumber: 1 }}).toArray()
 }
