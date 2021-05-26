@@ -17,7 +17,7 @@ async function getProposeBlockCalldata(eventData) {
   const abiBytecode = `0x${tx.input.slice(10)}`;
   const typesArray = [
     '(address,bytes32,uint64,uint64)',
-    '(uint64,uint8,bytes32,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32,uint[8])[]',
+    '(uint64,uint8,bytes32,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32,bytes32,uint[8])[]',
   ];
   const decoded = web3.eth.abi.decodeParameters(typesArray, abiBytecode);
   const blockData = decoded['0'];
@@ -35,6 +35,7 @@ async function getProposeBlockCalldata(eventData) {
       commitments,
       nullifiers,
       historicRoot,
+      historicRootBlockHash,
       proof,
     ] = t;
     const transaction = {
@@ -47,6 +48,7 @@ async function getProposeBlockCalldata(eventData) {
       commitments,
       nullifiers,
       historicRoot,
+      historicRootBlockHash,
       proof,
     };
     transaction.transactionHash = Transaction.calcHash(transaction);
