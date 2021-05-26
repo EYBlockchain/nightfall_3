@@ -109,13 +109,13 @@ export async function createBadBlock(badBlockType, block, transactions, args) {
     }
     case 'IncorrectHistoricRoot': {
       // Replace the historic root with a wrong historic root
-      badTransactions[0].historicRoot = (await rand(32)).hex();
+      badTransactions[1].historicRoot = (await rand(32)).hex();
       // calculate the new public input hash
-      badTransactions[0].publicInputHash = new PublicInputs([
+      badTransactions[1].publicInputHash = new PublicInputs([
         args.ercAddress,
-        badTransactions[0].commitments[0],
-        badTransactions[0].nullifiers[0],
-        badTransactions[0].historicRoot,
+        badTransactions[1].commitments[0],
+        badTransactions[1].nullifiers[0],
+        badTransactions[1].historicRoot,
       ]).hash.hex(32);
       break;
     }
