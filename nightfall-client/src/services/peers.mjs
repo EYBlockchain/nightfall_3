@@ -9,13 +9,10 @@ import { getContractInstance } from '../utils/contract.mjs';
 
 const { MONGO_URL, COMMITMENTS_DB, PEERS_COLLECTION, CHALLENGES_CONTRACT_NAME } = config;
 
-const retrievePeers = async () => {
+export const retrievePeers = async () => {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
-  return db
-    .collection(PEERS_COLLECTION)
-    .find()
-    .toArray();
+  return db.collection(PEERS_COLLECTION).find().toArray();
 };
 
 export const savePeers = async peers => {
@@ -51,6 +48,7 @@ const getProposers = async () => {
     .call();
   while (currentProposer.thisAddress !== nextProposer.thisAddress) {
     proposerList.push(nextProposer.thisAddress);
+    // eslint-disable-next-line no-await-in-loop
     nextProposer = await proposersContractInstance.methods
       .proposers(nextProposer.nextAddress)
       .call();
