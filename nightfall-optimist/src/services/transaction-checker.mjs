@@ -111,6 +111,17 @@ async function checkTransactionType(transaction) {
   }
 }
 
+async function checkHistoricRoot(transaction) {
+  // Deposit transaction will not have historic roots
+  if (Number(transaction.transactionType) !== 0) {
+    try {
+      await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2);
+    } catch (err) {
+      throw new TransactionError('The historic root in the transaction does not exist', 3);
+    }
+  }
+}
+
 async function checkPublicInputHash(transaction) {
   switch (Number(transaction.transactionType)) {
     case 0: // deposit transaction
@@ -123,7 +134,7 @@ async function checkPublicInputHash(transaction) {
           transaction.commitments[0],
         ]).hash.hex(32)
       )
-        throw new TransactionError('public input hash is incorrect', 3);
+        throw new TransactionError('public input hash is incorrect', 4);
       break;
     case 1: // single transfer transaction
       if (
@@ -135,7 +146,7 @@ async function checkPublicInputHash(transaction) {
           (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2)).root,
         ]).hash.hex(32)
       )
-        throw new TransactionError('public input hash is incorrect', 3);
+        throw new TransactionError('public input hash is incorrect', 4);
       break;
     case 2: // double transfer transaction
       if (
@@ -148,7 +159,7 @@ async function checkPublicInputHash(transaction) {
           (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2)).root,
         ]).hash.hex(32)
       )
-        throw new TransactionError('public input hash is incorrect', 3);
+        throw new TransactionError('public input hash is incorrect', 4);
       break;
     case 3: // withdraw transaction
       if (
@@ -162,7 +173,7 @@ async function checkPublicInputHash(transaction) {
           (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2)).root,
         ]).hash.hex(32)
       )
-        throw new TransactionError('public input hash is incorrect', 3);
+        throw new TransactionError('public input hash is incorrect', 4);
       break;
     default:
       throw new TransactionError('Unknown transaction type', 2);
@@ -186,13 +197,14 @@ async function verifyProof(transaction) {
     inputs: [transaction.publicInputHash],
   });
   const { verifies } = res.data;
-  if (!verifies) throw new TransactionError('The proof did not verify', 4);
+  if (!verifies) throw new TransactionError('The proof did not verify', 5);
 }
 
 function checkTransaction(transaction) {
   return Promise.all([
     checkTransactionHash(transaction),
     checkTransactionType(transaction),
+    checkHistoricRoot(transaction),
     checkPublicInputHash(transaction),
     verifyProof(transaction),
   ]);

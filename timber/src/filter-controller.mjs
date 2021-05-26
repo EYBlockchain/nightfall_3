@@ -46,7 +46,6 @@ const blockProposedResponseFunction = async (eventObject, args) => {
 
   // Now some generic eventObject handling code:
   const { eventData } = eventObject;
-
   /*
   extract each relevent event parameter from the eventData and create an eventInstance: {
     eventParamName_0: eventParamValue_0,
@@ -103,7 +102,6 @@ const blockProposedResponseFunction = async (eventObject, args) => {
     };
     leaves.push(leaf);
   });
-
   const leafService = new LeafService(db);
   await leafService.insertLeaves(treeHeight, leaves);
   return mtc.update(db); // update the database to ensure we have a historic root};

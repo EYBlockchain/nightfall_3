@@ -161,6 +161,7 @@ describe('Testing the http API', () => {
         expect(receipt).to.have.property('blockHash');
         console.log(`Gas used was ${Number(receipt.gasUsed)}`);
         // give Timber time to respond to the blockchain event
+        await new Promise(resolve => setTimeout(resolve, 5000));
       }
     });
   });
@@ -409,7 +410,6 @@ describe('Testing the http API', () => {
   });
 
   after(() => {
-    // console.log('end');
     closeWeb3Connection();
     connection.close();
   });

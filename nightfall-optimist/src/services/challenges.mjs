@@ -147,8 +147,30 @@ export async function createChallenge(block, transactions, err) {
         logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
         break;
       }
-      // invalid public input hash
+      // historic root is incorrect
       case 3: {
+        const { transaction, transactionHashIndex: transactionIndex } = err.metadata;
+        const historicBlock = await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2);
+        const historicBlockTransactions = await getTransactionsByTransactionHashes(
+          historicBlock.transactionHashes,
+        );
+        // Create a challenge
+        txDataToSign = await challengeContractInstance.methods
+          .challengeHistoricRoot(
+            Block.buildSolidityStruct(block),
+            block.blockNumberL2,
+            Block.buildSolidityStruct(historicBlock),
+            historicBlock.blockNumberL2,
+            transactions.map(t => Transaction.buildSolidityStruct(t)),
+            historicBlockTransactions.map(t => Transaction.buildSolidityStruct(t)),
+            transactionIndex,
+            salt,
+          )
+          .encodeABI();
+        break;
+      }
+      // invalid public input hash
+      case 4: {
         const { transactionHashIndex: transactionIndex } = err.metadata;
         // Create a challenge (DEPOSIT has no historic root to worry about)
         if (transactions.transactionType === 'DEPOSIT') {
@@ -188,7 +210,7 @@ export async function createChallenge(block, transactions, err) {
         break;
       }
       // proof does not verify
-      case 4: {
+      case 5: {
         const { transactionHashIndex: transactionIndex } = err.metadata;
         // Create a challenge
         const uncompressedProof = transactions[transactionIndex].proof;
@@ -205,7 +227,7 @@ export async function createChallenge(block, transactions, err) {
         break;
       }
       // Challenge Duplicate Nullfier
-      case 5: {
+      case 6: {
         const storedMinedNullifiers = await retrieveMinedNullifiers(); // List of Nullifiers stored by blockProposer
         const blockNullifiers = transactions.map(tNull => tNull.nullifiers).flat(Infinity); // List of Nullifiers in block
         const alreadyMinedNullifiers = storedMinedNullifiers.filter(sNull =>
