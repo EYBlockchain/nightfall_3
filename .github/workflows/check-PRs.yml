@@ -1,9 +1,9 @@
 name: Check PR
 
 on:
-  push:
+  pull_request:
     branch:
-      - liju.jose/clears-all-waits
+      - master
 
 jobs:
   run-checks:
