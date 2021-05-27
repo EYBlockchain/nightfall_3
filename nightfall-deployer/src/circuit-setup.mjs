@@ -27,7 +27,6 @@ async function waitForZokrates() {
       logger.warn(
         `No response from zokratesworker yet.  That's ok. We'll wait three seconds and try again...`,
       );
-      await new Promise(resolve => setTimeout(resolve, 3000));
     }
   } catch (err) {
     logger.error(err);
