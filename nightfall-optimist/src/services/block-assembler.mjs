@@ -102,8 +102,6 @@ export async function conditionalMakeBlock(proposer) {
       // blocks with them
       await removeTransactionsFromMemPool(block); // TODO is await needed?
     }
-    // slow the loop a bit so we don't hammer the database
-    await new Promise(resolve => setTimeout(resolve, 1000));
   }
   logger.debug('Stopped making blocks');
 }

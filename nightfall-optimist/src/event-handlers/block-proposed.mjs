@@ -29,17 +29,12 @@ async function blockProposedEventHandler(data) {
     // Exponential Backoff
     const backoff = 2 ** i * 1000;
     if (currentLeafCount > timberLeafCount) {
-      // Need to wait if the latest leaf count from the block is ahead of Timber
-      logger.debug(`Timber doesn't appear synced: Waiting ${backoff}`);
-      await new Promise(resolve => setTimeout(resolve, backoff));
       if (i === TIMBER_SYNC_RETRIES) {
         throw new Error('Timber and Optimist appear out of sync');
       }
     } else break;
   }
   logger.info('Received BlockProposed event');
-  // await new Promise(resolve => setTimeout(resolve, 2000));
-  // TODO this waits to be sure Timber is updated.  Instead write some proper syncing code!
   try {
     // and save the block to facilitate later lookup of block data
     // we will save before checking because the database at any time should reflect the state the blockchain holds

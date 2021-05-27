@@ -17,7 +17,6 @@ async function checkBlock(block, transactions) {
   // now we have to check the commitment root.  For this we can make use of
   // Timber with its optimistic extensions.
   logger.debug(`Checking block with leafCount ${block.leafCount}`);
-  await new Promise(resolve => setTimeout(resolve, 1000));
   const history = await getTreeHistoryByCurrentLeafCount(block.leafCount);
   logger.debug(`Retrieved history from Timber`);
   logger.silly(`Timber history was ${JSON.stringify(history, null, 2)}`);

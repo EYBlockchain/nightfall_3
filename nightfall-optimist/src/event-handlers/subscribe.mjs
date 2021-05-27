@@ -32,7 +32,6 @@ export async function waitForShield() {
       error = err;
       errorCount++;
       logger.warn('Unable to get a Shield contract instance will try again in 3 seconds');
-      await new Promise(resolve => setTimeout(() => resolve(), 3000));
     }
   }
   if (error) throw error;
