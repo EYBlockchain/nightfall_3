@@ -18,7 +18,7 @@ import TransactionError from '../classes/transaction-error.mjs';
 
 const { updateNodes } = mt;
 const router = express.Router();
-const { CHALLENGES_CONTRACT_NAME, ZERO } = config;
+const { CHALLENGES_CONTRACT_NAME, PROPOSERS_CONTRACT_NAME, ZERO } = config;
 
 /**
  * Function to return a raw transaction that registers a proposer.  This just
@@ -30,7 +30,7 @@ router.post('/register', async (req, res, next) => {
   logger.debug(`register proposer endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
   try {
     const { address } = req.body;
-    const proposersContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
+    const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
     const txDataToSign = await proposersContractInstance.methods.registerProposer().encodeABI();
     logger.debug('returning raw transaction data');
     logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
@@ -48,7 +48,7 @@ router.post('/register', async (req, res, next) => {
 router.get('/proposers', async (req, res, next) => {
   logger.debug(`list proposals endpoint received GET ${JSON.stringify(req.body, null, 2)}`);
   try {
-    const proposersContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
+    const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
     const proposers = await proposersContractInstance.methods.getProposers().call();
     logger.debug('returning raw transaction data');
     logger.silly(`raw transaction is ${JSON.stringify(proposers, null, 2)}`);
@@ -66,7 +66,7 @@ router.get('/proposers', async (req, res, next) => {
 router.post('/de-register', async (req, res, next) => {
   logger.debug(`de-register proposer endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
   try {
-    const proposersContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
+    const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
     const txDataToSign = await proposersContractInstance.methods.deRegisterProposer().encodeABI();
     logger.debug('returning raw transaction data');
     logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
@@ -85,7 +85,7 @@ router.post('/de-register', async (req, res, next) => {
 router.get('/withdraw', async (req, res, next) => {
   logger.debug(`withdraw endpoint received GET ${JSON.stringify(req.body, null, 2)}`);
   try {
-    const proposersContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
+    const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
     const txDataToSign = await proposersContractInstance.methods.withdraw().encodeABI();
     logger.debug('returning raw transaction data');
     logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
@@ -136,7 +136,7 @@ router.post('/propose', async (req, res, next) => {
 router.get('/change', async (req, res, next) => {
   logger.debug(`proposer/change endpoint received GET ${JSON.stringify(req.body, null, 2)}`);
   try {
-    const proposersContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
+    const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
     const txDataToSign = await proposersContractInstance.methods
       .changeCurrentProposer()
       .encodeABI();
@@ -161,10 +161,12 @@ router.post('/encode', async (req, res, next) => {
   try {
     const { transactions, block } = req.body;
 
+    const proposalsContractInstance = await waitForContract(CHALLENGES_CONTRACT_NAME);
     const currentLeafCount = parseInt(
       await (await waitForContract(CHALLENGES_CONTRACT_NAME)).methods.leafCount().call(),
       10,
     );
+    const blockNumberL2 = Number(await proposalsContractInstance.methods.getBlockNumberL2().call());
 
     const newTransactions = await Promise.all(
       transactions.map(t => {
@@ -188,6 +190,7 @@ router.post('/encode', async (req, res, next) => {
       root: block.root,
       leafCount: currentLeafCount,
       nCommitments: block.nCommitments,
+      blockNumberL2,
     };
     newBlock.blockHash = await Block.calcHash(newBlock, newTransactions);
     logger.debug(`New block assembled ${JSON.stringify(newBlock, null, 2)}`);
@@ -202,7 +205,7 @@ router.post('/encode', async (req, res, next) => {
     logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
     res.json({ txDataToSign, block: newBlock, transactions: newTransactions });
   } catch (err) {
-    logger.error(err);
+    logger.error(err.stack);
     next(err);
   }
 });

@@ -11,6 +11,8 @@ module.exports = {
   BLOCKCHAIN_PORT: process.env.BLOCKCHAIN_PORT || '8546',
   TIMBER_HOST: process.env.TIMBER_HOST || 'timber',
   TIMBER_PORT: process.env.TIMBER_PORT || 80,
+  OPTIMIST_HOST: process.env.OPTIMIST_HOST || 'optimist',
+  OPTIMIST_PORT: process.env.OPTIMIST_PORT || 80,
   WEB3_OPTIONS: {
     gas: process.env.GAS || 1000000,
     gasPrice: process.env.GAS_PRICE || '20000000000',

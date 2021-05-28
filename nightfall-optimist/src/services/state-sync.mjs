@@ -7,21 +7,21 @@ import newCurrentProposerEventHandler from '../event-handlers/new-current-propos
 import committedToChallengeEventHandler from '../event-handlers/challenge-commit.mjs';
 import blockDeletedEventHandler from '../event-handlers/block-deleted.mjs';
 import { callTimberHandler } from '../utils/timber.mjs';
-import { getBlockByBlockHash } from './database.mjs';
+import { getBlockByBlockNumberL2 } from './database.mjs';
 import { stopMakingBlocks, startMakingBlocks } from './block-assembler.mjs';
 import { stopMakingChallenges, startMakingChallenges } from './challenges.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 
-const { CHALLENGES_CONTRACT_NAME, SHIELD_CONTRACT_NAME, ZERO } = config;
+const { CHALLENGES_CONTRACT_NAME, SHIELD_CONTRACT_NAME, PROPOSERS_CONTRACT_NAME } = config;
 
 export const syncState = async proposer => {
-  const proposersContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
+  const proposalsContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
-  const pastProposerEvents = await proposersContractInstance.getPastEvents({
+  const pastProposalEvents = await proposalsContractInstance.getPastEvents({
     fromBlock: 'earliest',
   });
   const pastShieldEvents = await shieldContractInstance.getPastEvents({ fromBlock: 'earliest' });
-  const splicedList = pastProposerEvents
+  const splicedList = pastProposalEvents
     .concat(pastShieldEvents)
     .sort((a, b) => a.blockNumber - b.blockNumber);
   for (let i = 0; i < splicedList.length; i++) {
@@ -58,18 +58,13 @@ const BLOCKS_BEHIND = 1;
 export const initialBlockSync = async proposer => {
   logger.info(`initialBlockSync Proposer: ${proposer.address}`);
   await waitForContract(CHALLENGES_CONTRACT_NAME);
-  const proposersContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
-  let endHash = await proposersContractInstance.methods.endHash().call();
-  if (endHash === ZERO) return; // The blockchain is empty
-  let counter = BLOCKS_BEHIND;
-  // Walk back the blockHashes hashmap to get to the desired chain depth
-  while (counter > 0) {
-    const block = await proposersContractInstance.methods.blockHashes(endHash).call();
-    endHash = block.previousHash;
-    counter--;
-  }
-  // Check if we have this blockHash in our DB
-  const latestBlockLocally = (await getBlockByBlockHash(endHash)) ?? undefined;
+  const proposalsContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
+  const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
+  const blockNumberL2 = Number(await proposalsContractInstance.methods.getBlockNumberL2().call()); // get the length of the on-chain blockHash array
+  if (blockNumberL2 === 0) return; // The blockchain is empty
+  // Check if we have the most recent block that we want to be synced to
+  const latestBlockLocally =
+    (await getBlockByBlockNumberL2(blockNumberL2 - BLOCKS_BEHIND)) ?? undefined;
   // If not, we're too far behind so let's sync
   if (!latestBlockLocally) {
     await stopMakingBlocks();

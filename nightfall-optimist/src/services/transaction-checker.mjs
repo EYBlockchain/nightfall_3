@@ -15,15 +15,10 @@ import TransactionError from '../classes/transaction-error.mjs';
 import PublicInputs from '../classes/public-inputs.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import logger from '../utils/logger.mjs';
+import { getBlockByBlockNumberL2 } from './database.mjs';
 
-const {
-  ZOKRATES_WORKER_URL,
-  PROVING_SCHEME,
-  BACKEND,
-  CURVE,
-  ZERO,
-  CHALLENGES_CONTRACT_NAME,
-} = config;
+const { ZOKRATES_WORKER_URL, PROVING_SCHEME, BACKEND, CURVE, ZERO, CHALLENGES_CONTRACT_NAME } =
+  config;
 
 // first, let's check the hash. That's nice and easy:
 // NB as we actually now comput the hash on receipt of the transaction this
@@ -49,7 +44,6 @@ async function checkTransactionType(transaction) {
         transaction.commitments[1] !== ZERO ||
         transaction.commitments.length !== 2 ||
         transaction.nullifiers.some(n => n !== ZERO) ||
-        transaction.historicRoot !== ZERO ||
         transaction.proof.some(p => p === ZERO)
       )
         throw new TransactionError(
@@ -70,7 +64,6 @@ async function checkTransactionType(transaction) {
         transaction.nullifiers[0] === ZERO ||
         transaction.nullifiers[1] !== ZERO ||
         transaction.nullifiers.length !== 2 ||
-        transaction.historicRoot === ZERO ||
         transaction.proof.some(p => p === ZERO)
       )
         throw new TransactionError(
@@ -89,7 +82,6 @@ async function checkTransactionType(transaction) {
         transaction.commitments.length !== 2 ||
         transaction.nullifiers.some(n => n === ZERO) ||
         transaction.nullifiers.length !== 2 ||
-        transaction.historicRoot === ZERO ||
         transaction.proof.some(p => p === ZERO)
       )
         throw new TransactionError(
@@ -107,7 +99,6 @@ async function checkTransactionType(transaction) {
         transaction.nullifiers[0] === ZERO ||
         transaction.nullifiers[1] !== ZERO ||
         transaction.nullifiers.length !== 2 ||
-        transaction.historicRoot === ZERO ||
         transaction.proof.some(p => p === ZERO)
       )
         throw new TransactionError(
@@ -141,7 +132,7 @@ async function checkPublicInputHash(transaction) {
           transaction.ercAddress,
           transaction.commitments[0],
           transaction.nullifiers[0],
-          transaction.historicRoot,
+          (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2)).root,
         ]).hash.hex(32)
       )
         throw new TransactionError('public input hash is incorrect', 3);
@@ -154,7 +145,7 @@ async function checkPublicInputHash(transaction) {
           transaction.ercAddress, // in a double-transfer public input hash
           transaction.commitments,
           transaction.nullifiers,
-          transaction.historicRoot,
+          (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2)).root,
         ]).hash.hex(32)
       )
         throw new TransactionError('public input hash is incorrect', 3);
@@ -168,7 +159,7 @@ async function checkPublicInputHash(transaction) {
           transaction.value,
           transaction.nullifiers[0],
           transaction.recipientAddress,
-          transaction.historicRoot,
+          (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2)).root,
         ]).hash.hex(32)
       )
         throw new TransactionError('public input hash is incorrect', 3);

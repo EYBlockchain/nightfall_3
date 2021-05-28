@@ -17,6 +17,7 @@ import PublicInputs from '../classes/public-inputs.mjs';
 import { getSiblingPath } from '../utils/timber.mjs';
 import Transaction from '../classes/transaction.mjs';
 import { discoverPeers } from './peers.mjs';
+import getBlockAndTransactionsByRoot from '../utils/optimist.mjs';
 
 const {
   BN128_GROUP_ORDER,
@@ -105,6 +106,8 @@ async function withdraw(transferParams) {
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
   const optimisticWithdrawTransaction = new Transaction({
     fee,
+    historicRootBlockNumberL2: (await getBlockAndTransactionsByRoot(root.hex(32))).block
+      .blockNumberL2,
     transactionType: 3,
     publicInputs,
     tokenId,
@@ -112,7 +115,6 @@ async function withdraw(transferParams) {
     ercAddress,
     recipientAddress,
     nullifiers: [nullifier],
-    historicRoot: root,
     proof,
   });
   try {
@@ -130,9 +132,9 @@ async function withdraw(transferParams) {
           });
       });
       markNullified(oldCommitment);
-      optimisticWithdrawTransaction.transactionHash = th;
       return { transaction: optimisticWithdrawTransaction };
     }
+    console.log('OPTIMISTIC WITHDRAW TX', optimisticWithdrawTransaction);
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(optimisticWithdrawTransaction))
       .encodeABI();

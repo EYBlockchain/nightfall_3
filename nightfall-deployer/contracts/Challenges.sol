@@ -9,15 +9,17 @@ grounds.
 pragma solidity ^0.8.0;
 //pragma experimental ABIEncoderV2;
 
-import './Proposers.sol';
+import './Proposals.sol';
 import './Key_Registry.sol';
 import './Utils.sol';
 import './ChallengesUtil.sol';
 
 
-contract Challenges is Proposers, Key_Registry {
+contract Challenges is Proposals, Key_Registry {
 
   mapping(bytes32 => address) public committers;
+
+  constructor(address proposersAddr) Proposals(proposersAddr) {}
 
   // the new commitment Merkle-tree root is challenged as incorrect
   function challengeNewRootCorrect(
@@ -176,10 +178,8 @@ contract Challenges is Proposers, Key_Registry {
     // challenged from the linked list of blocks and all of the subsequent
     // blocks
     removeBlockHashes(badBlock.blockNumberL2);
-    // remove the proposer and re-join the chain where they've been removed
-    removeProposer(badBlock.proposer);
-    // give the proposer's block stake to the challenger
-    pendingWithdrawals[msg.sender] += BLOCK_STAKE;
+    // remove the proposer and give the proposer's block stake to the challenger
+    removeProposer(badBlock.proposer, msg.sender);
     // TODO repay the fees of the transactors and any escrowed funds held by the
     // Shield contract.
   }

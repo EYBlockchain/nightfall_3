@@ -76,6 +76,7 @@ export async function getTransactionSubmittedCalldata(eventData) {
   const transactionData = web3.eth.abi.decodeParameter(SUBMIT_TRANSACTION_TYPES, abiBytecode);
   const [
     value,
+    historicRootBlockNumberL2,
     transactionType,
     publicInputHash,
     tokenId,
@@ -83,12 +84,12 @@ export async function getTransactionSubmittedCalldata(eventData) {
     recipientAddress,
     commitments,
     nullifiers,
-    historicRoot,
     proof,
   ] = transactionData;
   const transaction = {
     fee: Number(tx.value),
     value,
+    historicRootBlockNumberL2,
     transactionType,
     publicInputHash,
     tokenId,
@@ -96,7 +97,6 @@ export async function getTransactionSubmittedCalldata(eventData) {
     recipientAddress,
     commitments,
     nullifiers,
-    historicRoot,
     proof: decompressProof(proof),
   };
   transaction.transactionHash = Transaction.calcHash(transaction);

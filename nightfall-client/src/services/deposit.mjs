@@ -79,7 +79,6 @@ async function deposit(items) {
     `Optimistic deposit transaction ${JSON.stringify(optimisticDepositTransaction, null, 2)}`,
   );
   // and then we can create an unsigned blockchain transaction
-  console.log('SOLIDITY STRUCT', Transaction.buildSolidityStruct(optimisticDepositTransaction));
   try {
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(optimisticDepositTransaction))

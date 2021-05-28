@@ -24,6 +24,7 @@ describe('Testing the challenge http API', () => {
   let web3;
   let shieldAddress;
   let challengeAddress;
+  let proposersAddress;
   let ercAddress;
   let connection; // WS connection
   const zkpPrivateKey = '0xc05b14fa15148330c6d008814b0bdd69bc4a08a1bd0b629c42fa7e2c61f16739'; // the zkp private key we're going to use in the tests.
@@ -71,6 +72,9 @@ describe('Testing the challenge http API', () => {
     res = await chai.request(url).get('/contract-address/Challenges');
     challengeAddress = res.body.address;
 
+    res = await chai.request(url).get('/contract-address/Proposers');
+    proposersAddress = res.body.address;
+
     // should get the address of the test ERC contract stub
     res = await chai.request(url).get('/contract-address/ERCStub');
     ercAddress = res.body.address;
@@ -80,7 +84,7 @@ describe('Testing the challenge http API', () => {
     const bond = 10000000000000000000;
     res = await chai.request(optimistUrl).post('/proposer/register').send({ address: myAddress });
     txToSign = res.body.txDataToSign;
-    await submitTransaction(txToSign, privateKey, challengeAddress, gas, bond);
+    await submitTransaction(txToSign, privateKey, proposersAddress, gas, bond);
 
     connection = new WebSocket(optimistWsUrl);
     connection.onopen = () => {
@@ -97,10 +101,16 @@ describe('Testing the challenge http API', () => {
           const { block, transactions } = msg;
           if (counter === 0) {
             [duplicateTransaction] = transactions;
+            console.log(
+              `Created good block to extract duplicate tx from with blockHash ${block.blockHash}`,
+            );
           } else if (counter === 1) {
             [duplicateNullifier] = transactions
               .map(t => t.nullifiers.filter(n => n !== ZERO))
               .flat(Infinity);
+            console.log(
+              `Created good block to extract duplicate nullifier from with blockHash ${block.blockHash}`,
+            );
           } else if (counter === 2) {
             res = await createBadBlock('IncorrectRoot', block, transactions, {
               leafIndex: 1,
@@ -108,7 +118,9 @@ describe('Testing the challenge http API', () => {
             topicsBlockHashesIncorrectRootInBlock = res.block.blockHash;
             topicsRootIncorrectRootInBlock = res.block.root;
             txDataToSign = res.txDataToSign;
-            console.log('Created flawed block with incorrect root', res.block.root);
+            console.log(
+              `Created flawed block with incorrect root and blockHash ${res.block.blockHash}`,
+            );
           } else if (counter === 3) {
             // txDataToSign = msg.txDataToSign;
             res = await createBadBlock('DuplicateTransaction', block, transactions, {
@@ -117,18 +129,27 @@ describe('Testing the challenge http API', () => {
             topicsBlockHashesDuplicateTransaction = res.block.blockHash;
             topicsRootDuplicateTransaction = res.block.root;
             txDataToSign = res.txDataToSign;
+            console.log(
+              `Created flawed block containing duplicate transaction and blockHash ${res.block.blockHash}`,
+            );
           } else if (counter === 4) {
             // txDataToSign = msg.txDataToSign;
             res = await createBadBlock('InvalidDepositTransaction', block, transactions);
             topicsBlockHashesInvalidTransaction = res.block.blockHash;
             topicsRootInvalidTransaction = res.block.root;
             txDataToSign = res.txDataToSign;
+            console.log(
+              `Created flawed block with invalid deposit transaction and blockHash ${res.block.blockHash}`,
+            );
           } else if (counter === 5) {
             // txDataToSign = msg.txDataToSign;
             res = await createBadBlock('IncorrectPublicInputHash', block, transactions);
             topicsBlockHashesIncorrectPublicInputHash = res.block.blockHash;
             topicsRootIncorrectPublicInputHash = res.block.root;
             txDataToSign = res.txDataToSign;
+            console.log(
+              `Created flawed block with incorrect public input hash and blockHash ${res.block.blockHash}`,
+            );
           } else if (counter === 6) {
             res = await createBadBlock('IncorrectProof', block, transactions, {
               proof: duplicateTransaction.proof,
@@ -136,6 +157,9 @@ describe('Testing the challenge http API', () => {
             topicsBlockHashesDuplicateNullifier = res.block.blockHash;
             topicsRootDuplicateNullifier = res.block.root;
             txDataToSign = res.txDataToSign;
+            console.log(
+              `Created flawed block with incorrect proof and blockHash ${res.block.blockHash}`,
+            );
           } else if (counter === 7) {
             res = await createBadBlock('DuplicateNullifier', block, transactions, {
               duplicateNullifier,
@@ -143,8 +167,12 @@ describe('Testing the challenge http API', () => {
             topicsBlockHashesDuplicateNullifier = res.block.blockHash;
             topicsRootDuplicateNullifier = res.block.root;
             txDataToSign = res.txDataToSign;
+            console.log(
+              `Created flawed block with duplicate nullifier and blockHash ${res.block.blockHash}`,
+            );
           } else {
             txDataToSign = msg.txDataToSign;
+            console.log(`Created good block with blockHash ${res.block.blockHash}`);
           }
           await submitTransaction(txDataToSign, privateKey, challengeAddress, gas, BLOCK_STAKE);
           counter++;
@@ -159,7 +187,7 @@ describe('Testing the challenge http API', () => {
             .post('/proposer/register')
             .send({ address: myAddress });
           txToSign = result.body.txDataToSign;
-          await submitTransaction(txToSign, privateKey, challengeAddress, gas, bond);
+          await submitTransaction(txToSign, privateKey, proposersAddress, gas, bond);
           // console.log('tx hash of challenge block is', txReceipt.transactionHash);
         } else throw new Error(`Unhandled transaction type: ${type}`);
       });
@@ -407,7 +435,7 @@ describe('Testing the challenge http API', () => {
       // now we need to sign the transaction and send it to the blockchain
       await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
 
-      await new Promise(resolve => setTimeout(resolve, 15000));
+      await new Promise(resolve => setTimeout(resolve, 5000));
       const events = await web3.eth.getPastLogs({
         fromBlock: web3.utils.toHex(0),
         address: challengeAddress,
@@ -449,7 +477,7 @@ describe('Testing the challenge http API', () => {
         await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee); // eslint-disable-line no-await-in-loop
       }
 
-      await new Promise(resolve => setTimeout(resolve, 10000));
+      await new Promise(resolve => setTimeout(resolve, 5000));
       const events = await web3.eth.getPastLogs({
         fromBlock: web3.utils.toHex(0),
         address: challengeAddress,

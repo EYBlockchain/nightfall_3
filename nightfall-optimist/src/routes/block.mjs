@@ -7,6 +7,7 @@ import checkBlock from '../services/check-block.mjs';
 import {
   getBlockByTransactionHash,
   getTransactionsByTransactionHashes,
+  getBlockByRoot,
 } from '../services/database.mjs';
 import { forceRollback } from '../services/block-assembler.mjs';
 
@@ -24,7 +25,7 @@ router.post('/check', async (req, res, next) => {
   }
 });
 
-router.get('/:transactionHash', async (req, res, next) => {
+router.get('/transaction-hash/:transactionHash', async (req, res, next) => {
   logger.debug('block endpoint received get');
   try {
     const { transactionHash } = req.params;
@@ -40,6 +41,27 @@ router.get('/:transactionHash', async (req, res, next) => {
     } else {
       logger.debug('Block not found');
       res.json({ block: null, transactions: null, index: null });
+    }
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/root/:root', async (req, res, next) => {
+  logger.debug('block /root endpoint received get');
+  try {
+    const { root } = req.params;
+    logger.debug(`searching for block containing root ${root}`);
+    // get data to return
+    const block = await getBlockByRoot(root);
+    if (block !== null) {
+      const transactions = await getTransactionsByTransactionHashes(block.transactionHashes);
+      delete block?._id; // this is database specific so no need to send it
+      logger.debug(`Found block ${JSON.stringify(block, null, 2)} in database`);
+      res.json({ block, transactions });
+    } else {
+      logger.debug('Block not found');
+      res.json({ block: null, transactions: null });
     }
   } catch (err) {
     next(err);

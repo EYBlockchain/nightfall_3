@@ -39,7 +39,7 @@ async function transactionSubmittedEventHandler(data) {
       logger.warn(
         `The transaction check failed with error: ${err.message}. The transaction has been ignored`,
       );
-    else logger.error(err.message);
+    else logger.error(err.stack);
   }
 }
 

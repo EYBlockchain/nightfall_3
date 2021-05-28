@@ -35,6 +35,8 @@ class Block {
 
   static localLeafCount = 0; // ensure this is less than Timber to start with
 
+  static localBlockNumberL2 = 0;
+
   static localFrontier = [];
 
   constructor(asyncParams) {
@@ -57,10 +59,17 @@ class Block {
   static async build(components) {
     const { proposer, transactions } = components;
     let { currentLeafCount } = components;
-    // the only place to get the next block number is from the blockchain:
-    const proposersContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
-    const blockNumberL2 = await proposersContractInstance.methods.getBlockNumberL2().call();
-
+    // We'd like to get the block number from the blockchain like this:
+    const proposalsContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
+    let blockNumberL2 = Number(await proposalsContractInstance.methods.getBlockNumberL2().call());
+    // Of course, just like with the leafCount below, it's possible that the
+    // previously made block hasn't been added to the blockchain yet. In that
+    // case, this block will have the same block number as the previous block
+    // and will rightly be reverted when we attempt to add it to the chain.
+    // Thus, we proceeds as for the leafCount and keep a local value, updating
+    // only if the on-chain value is ahead of our local value.
+    if (blockNumberL2 >= this.localBlockNumberL2) this.localBlockNumberL2 = blockNumberL2;
+    else blockNumberL2 = this.localBlockNumberL2;
     // we have to get the current frontier from Timber, so that we can compute
     // the new root, bearing in mind that the transactions in this block won't
     // be in Timber yet.  However, Timber has a handy update
@@ -98,8 +107,12 @@ class Block {
     // remember the updated values in case we need them for the next block.
     this.localLeafCount += leafValues.length;
     this.localFrontier = newFrontier;
+    this.localBlockNumberL2 += 1;
     // compute the keccak hash of the proposeBlock signature
-    const blockHash = this.calcHash({ proposer, root, leafCount, nCommitments }, transactions);
+    const blockHash = this.calcHash(
+      { proposer, root, leafCount, nCommitments, blockNumberL2 },
+      transactions,
+    );
     // note that the transactionHashes array is not part of the on-chain block
     // but we compute it here for convenience. It needs removing before sending
     // a block object to the blockchain.
@@ -116,9 +129,10 @@ class Block {
 
   // we cache the leafCount in case Timber isn't up to date, however we
   // need to reset the cache in the event of a rollback or we'll make a block
-  // with the wrong leafCount.
+  // with the wrong leafCount. The same applies to the localBlockNumberL2.
   static rollback() {
     this.localLeafCount = 0;
+    this.localBlockNumberL2 = 0;
   }
 
   static checkHash(block, transactions) {

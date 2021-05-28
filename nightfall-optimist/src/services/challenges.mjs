@@ -64,14 +64,13 @@ export async function createChallenge(block, transactions, err) {
     switch (err.code) {
       // Challenge wrong root
       case 0: {
-        // Getting prior block hash for the current block
-        const linkedHash = await challengeContractInstance.methods
-          .blockHashes(block.blockHash)
-          .call();
-        console.log('LINKEDHASH', linkedHash);
-        const { previousHash } = linkedHash;
-        // Retrieve prior block from its block hash
-        const priorBlock = await getBlockByBlockHash(previousHash);
+        logger.debug('Challenging incorrect root');
+        // Getting prior block for the current block
+        const priorBlock = await getBlockByBlockNumberL2(Number(block.blockNumberL2) - 1);
+        if (priorBlock === null)
+          throw new Error(
+            `Could not find prior block with block number ${Number(block.blockNumberL2) - 1}`,
+          );
         // Retrieve last transaction from prior block using its transaction hash.
         // Note that not all transactions in a block will have commitments. Loop until one is found
         const priorBlockTransactions = await getTransactionsByTransactionHashes(
@@ -158,19 +157,22 @@ export async function createChallenge(block, transactions, err) {
             )
             .encodeABI();
         } else {
-          const blockL2ContainingHistoricRoot = getBlockByBlockNumberL2(
-            transactions[transactionIndex].blockL2ContainingHistoricRoot,
+          const blockL2ContainingHistoricRoot = await getBlockByBlockNumberL2(
+            transactions[transactionIndex].historicRootBlockNumberL2,
           );
-          const transactionsOfblockL2ContainingHistoricRoot = getTransactionsByTransactionHashes(
-            blockL2ContainingHistoricRoot.transtransactionHashes,
-          );
+          const transactionsOfblockL2ContainingHistoricRoot =
+            await getTransactionsByTransactionHashes(
+              blockL2ContainingHistoricRoot.transactionHashes,
+            );
           txDataToSign = await challengeContractInstance.methods
             .challengePublicInputHash(
               Block.buildSolidityStruct(block),
               transactions.map(t => Transaction.buildSolidityStruct(t)),
               transactionIndex,
-              blockL2ContainingHistoricRoot,
-              transactionsOfblockL2ContainingHistoricRoot,
+              Block.buildSolidityStruct(blockL2ContainingHistoricRoot),
+              transactionsOfblockL2ContainingHistoricRoot.map(t =>
+                Transaction.buildSolidityStruct(t),
+              ),
               salt,
             )
             .encodeABI();

@@ -14,7 +14,7 @@ async function newCurrentProposerEventHandler(data, args) {
     // object is instantiated at the 'main()' level, so will stay in scope even
     // when this handler exits.
     proposer.address = currentProposer;
-    proposer.isMe = await isRegisteredProposerAddressMine(currentProposer);
+    proposer.isMe = !!(await isRegisteredProposerAddressMine(currentProposer));
   } catch (err) {
     // handle errors
     logger.error(err);
