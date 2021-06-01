@@ -92,6 +92,14 @@ async function transfer(transferParams) {
   logger.silly(`SiblingPaths were: ${JSON.stringify(siblingPaths)}`);
   // public inputs
   const root = siblingPaths[0][0];
+  console.log(
+    'COMMITMENT_INDEX',
+    oldCommitments[0].index,
+    'COMMITMENT_HASH',
+    oldCommitments[0].hash,
+    'ROOT',
+    root,
+  );
   const publicInputs = new PublicInputs([
     oldCommitments.map(commitment => commitment.preimage.ercAddress),
     newCommitments.map(commitment => commitment.hash),

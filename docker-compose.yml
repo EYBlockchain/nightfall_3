@@ -140,7 +140,7 @@ services:
       MONGO_PORT: 27017
       MONGO_NAME: merkle_tree
       HASH_TYPE: mimc
-      LOG_LEVEL: info
+      LOG_LEVEL: debug
       AUTOSTART: enabled
 
   #The database storing the merkle tree

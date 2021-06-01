@@ -376,6 +376,7 @@ async function rollback(db, treeHeight, leafCount) {
   // rollback.
   const oldMaxLeafIndex = await leafService.maxLeafIndex();
   const newMaxLeafIndex = history.leafIndex;
+  console.log('OLD_MAX_LEAF_INDEX', oldMaxLeafIndex, 'NEW_MAX_LEAF_INDEX', newMaxLeafIndex);
   const newMaxLeaf = await leafService.getLeafByLeafIndex(newMaxLeafIndex);
   // we reverse the arrays so that the leaf is element [0] that is similar to
   // how the Frontier is arranged and a bit more convenient here.
