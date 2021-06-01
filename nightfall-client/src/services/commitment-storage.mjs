@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 /**
 Logic for storing and retrieving commitments from a mongo DB.  Abstracted from
 deposit/transfer/withdraw
@@ -64,9 +65,10 @@ export async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _
       console.log('INDEX', await commitment.index);
       if (commitment.preimage.value.hex(32) === value.hex(32)) {
         // check if Timber knows about the commitment
-        if ((await commitment.index) == null) return null;
-        logger.info('Found commitment suitable for single transfer or withdraw');
-        return [commitment];
+        if ((await commitment.index) !== null) {
+          logger.info('Found commitment suitable for single transfer or withdraw');
+          return [commitment];
+        }
       }
     }
     return null;
@@ -77,11 +79,9 @@ export async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _
   return (async () => {
     for (let i = 0; i < commitments.length; i++) {
       // check Timber holds the commitment
-      if ((await commitments[i].index) === null) break;
-      const innerResult = (async () => {
-        for (let j = i + 1; j < commitments.length; j++) {
-          // check Timber holds the commitment
-          if ((await commitments[j].index) === null) break;
+      for (let j = i + 1; j < commitments.length; j++) {
+        // check Timber holds the commitmen
+        if ((await commitments[i].index) !== null && (await commitments[j].index) !== null) {
           if (
             commitments[i].preimage.value.bigInt + commitments[j].preimage.value.bigInt >
             value.bigInt
@@ -90,9 +90,7 @@ export async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _
             return [commitments[i], commitments[j]];
           }
         }
-        return null;
-      })();
-      if (await innerResult) return innerResult;
+      }
     }
     return null;
   })();
