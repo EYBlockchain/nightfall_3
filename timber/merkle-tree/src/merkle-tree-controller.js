@@ -347,9 +347,9 @@ This function rolls back the database to a time when it contained 'leafCount'
 leaves and had the root 'root'.
 It is triggered by reception of a Rollback event from the blockchain.
 */
-async function rollback(db, treeHeight, leafCount, root) {
+async function rollback(db, treeHeight, leafCount) {
   logger.debug(`treeHeight is ${treeHeight}`);
-  logger.debug(`root is ${root}`);
+  logger.debug(`leafCount to roll back to is ${leafCount}`);
   const historyService = new HistoryService(db);
   const leafService = new LeafService(db);
   const nodeService = new NodeService(db);
@@ -359,14 +359,20 @@ async function rollback(db, treeHeight, leafCount, root) {
   // let's get the details of where we're going to rollback to
   // const history = await historyService.getTreeHistory(root);
   const history = await historyService.getTreeHistoryByCurrentLeafCount(leafCount);
+  // We'll actually roll back the metadata so that it's one update behind the
+  // new max leaf. Then we'll call update (after this function has run) and
+  // that will recompute the changed hashes in the tree, just as if we'd added
+  // a new leaf.  We'll need the prior history so that we can do that reset of
+  // the metadata.
+  const priorHistory = await historyService.getTreeHistory(history.oldRoot);
 
   if (leafCount !== history.currentLeafCount)
     throw new Error(
       `Rollback event's leaf count (${leafCount}) and the historic record (${history.currentLeafCount}) do not match`,
     );
   // Delete all of the nodes between the new highest-index leaf and the old
-  // highest index leaf (inclusive) up to their common root. This has the
-  // effect of removing non-zero nodes, which should no longer exist after
+  // highest index leaf (inclusive) up to their common root. This has
+  // the effect of removing non-zero nodes, which should no longer exist after
   // rollback.
   const oldMaxLeafIndex = await leafService.maxLeafIndex();
   const newMaxLeafIndex = history.leafIndex;
@@ -386,33 +392,38 @@ async function rollback(db, treeHeight, leafCount, root) {
   let response = await nodeService.deleteNodes(indicesOfNodesToDelete);
   logger.debug(`Mongo response to node deletion ${JSON.stringify(response, null, 2)}`);
   // add back the newMaxLeaf (this is the same behaviour as a NewLeaf event)
-  // because our reset of the TImber database will have deleted it.
+  // because our reset of the Timber database will have deleted it.
   // but note the special case of newMaxLeaf index == 0.  This could indicate
   // that there is one leaf in the tree or no leaves. For this reason we need
   // to also check the leafCount.
   if (Number(leafCount) !== 0) await leafService.insertLeaf(treeHeight, newMaxLeaf);
-  // revert the metadata so that it's consistent with the rollback
+  // revert the metadata so that it's consistent with the rollback and is in the
+  // state it would be if we'd just added a new leaf (the newMaxLeaf).
   await metadataService.updateLatestLeaf({
     latestLeaf: {
       blockNumber: history.blockNumber,
       leafIndex: history.leafIndex,
     },
   });
-  logger.debug(`Reverting metadata to historic values ${JSON.stringify(history, null, 2)}`);
+  logger.debug(`Reverting metadata to historic values ${JSON.stringify(priorHistory, null, 2)}`);
   await metadataService.updateLatestRecalculation({
     latestRecalculation: {
-      blockNumber: history.blockNumber,
-      leafIndex: history.leafIndex,
-      root: history.oldRoot === ZERO ? null : history.oldRoot, // null is neater
-      frontier: history.frontier.map(f => (f === ZERO ? null : f)),
+      blockNumber: priorHistory.blockNumber,
+      leafIndex: priorHistory.leafIndex,
+      root: priorHistory.oldRoot === ZERO ? null : priorHistory.oldRoot, // null is neater
+      frontier: priorHistory.frontier.map(f => (f === ZERO ? null : f)),
     },
   });
-  // delete the history which is now in a future that won't happen
-  response = await historyService.deleteTreeHistory(history.currentLeafCount);
+  // delete the history which is now in a future that won't happen. The update
+  // of the db will re-write the priorHistory so we delete that too. In fact we
+  // need to delete all later histories because they're now causally
+  // disconnected.
+  response = await historyService.deleteTreeHistory(priorHistory.currentLeafCount);
   logger.debug(`Mongo response to history deletion ${JSON.stringify(response, null, 2)}`);
   logger.debug(
     `metadata after rollback is ${JSON.stringify(await metadataService.getMetadata(), null, 2)}`,
   );
+  await update(db); // update to recalculate the hashes that now need to change because of the rollback.
   logger.info('Rollback complete');
 }
 

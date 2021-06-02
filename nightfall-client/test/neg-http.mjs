@@ -4,7 +4,6 @@ import chaiAsPromised from 'chai-as-promised';
 import gen from 'general-number';
 import Queue from 'queue';
 import WebSocket from 'ws';
-import config from 'config';
 import sha256 from '../src/utils/crypto/sha256.mjs';
 import {
   closeWeb3Connection,
@@ -17,7 +16,7 @@ import {
 const { expect } = chai;
 const { GN } = gen;
 const txQueue = new Queue({ autostart: true, concurrency: 1 });
-const { ZERO } = config;
+const ZERO = '0x0000000000000000000000000000000000000000000000000000000000000000';
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
