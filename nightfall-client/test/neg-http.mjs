@@ -122,7 +122,6 @@ describe('Testing the challenge http API', () => {
               `Created flawed block with incorrect root and blockHash ${res.block.blockHash}`,
             );
           } else if (counter === 3) {
-            // txDataToSign = msg.txDataToSign;
             res = await createBadBlock('DuplicateTransaction', block, transactions, {
               duplicateTransaction,
             });
@@ -295,24 +294,42 @@ describe('Testing the challenge http API', () => {
 
   describe('Create challenge block consisting of a deposit and transfer transaction ', () => {
     let txDataToSign;
-    it('should create a transfer', async () => {
-      const res = await chai
-        .request(url)
-        .post('/transfer')
-        .send({
-          ercAddress,
-          tokenId,
-          recipientData: {
-            values: [value],
-            recipientZkpPublicKeys: [zkpPublicKey],
-          },
-          senderZkpPrivateKey: zkpPrivateKey,
-          fee,
-        });
+    // it('should create a transfer', async () => {
+    //   const res = await chai
+    //     .request(url)
+    //     .post('/transfer')
+    //     .send({
+    //       ercAddress,
+    //       tokenId,
+    //       recipientData: {
+    //         values: [value],
+    //         recipientZkpPublicKeys: [zkpPublicKey],
+    //       },
+    //       senderZkpPrivateKey: zkpPrivateKey,
+    //       fee,
+    //     });
+    //   txDataToSign = res.body.txDataToSign;
+    //   expect(txDataToSign).to.be.a('string');
+    //   // now we need to sign the transaction and send it to the blockchain
+    //   const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
+    //   expect(receipt).to.have.property('transactionHash');
+    //   expect(receipt).to.have.property('blockHash');
+    //   console.log(`Gas used was ${Number(receipt.gasUsed)}`);
+    //   // give Timber time to respond to the blockchain event
+    //   await new Promise(resolve => setTimeout(resolve, 5000));
+    // });
+
+    it('should create a deposit', async () => {
+      const res = await chai.request(url).post('/deposit').send({
+        ercAddress,
+        tokenId,
+        value,
+        zkpPublicKey,
+      });
       txDataToSign = res.body.txDataToSign;
       expect(txDataToSign).to.be.a('string');
       // now we need to sign the transaction and send it to the blockchain
-      const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
+      const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
       console.log(`Gas used was ${Number(receipt.gasUsed)}`);
@@ -397,17 +414,34 @@ describe('Testing the challenge http API', () => {
 
   describe('Challenge 4: Challenge historic root used in a transaction', async () => {
     it('Should delete the wrong block', async () => {
-      // create another transaction to trigger NO's block assembly
-      const res = await chai.request(url).post('/deposit').send({
-        ercAddress,
-        tokenId,
-        value,
-        zkpPublicKey,
-        fee,
-      });
+      // // create another transaction to trigger NO's block assembly
+      // const res = await chai.request(url).post('/deposit').send({
+      //   ercAddress,
+      //   tokenId,
+      //   value,
+      //   zkpPublicKey,
+      //   fee,
+      // });
+      // const { txDataToSign } = res.body;
+      // // now we need to sign the transaction and send it to the blockchain
+      // await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
+
+      const res = await chai
+        .request(url)
+        .post('/transfer')
+        .send({
+          ercAddress,
+          tokenId,
+          recipientData: {
+            values: [value],
+            recipientZkpPublicKeys: [zkpPublicKey],
+          },
+          senderZkpPrivateKey: zkpPrivateKey,
+          fee,
+        });
       const { txDataToSign } = res.body;
-      // now we need to sign the transaction and send it to the blockchain
-      await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
+      expect(txDataToSign).to.be.a('string');
+      await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
 
       clearInterval(
         await new Promise(resolve => {
@@ -473,7 +507,7 @@ describe('Testing the challenge http API', () => {
     });
   });
 
-  describe('Challenge 6: Duplicate Nullifier', async () => {
+  describe('Challenge 7: Duplicate Nullifier', async () => {
     it('Should delete the flawed block and rollback the leaves', async () => {
       // create two transfers - transfers are preferred here because we want to swap out a nullifier.
       for (let i = 0; i < 2; i++) {
