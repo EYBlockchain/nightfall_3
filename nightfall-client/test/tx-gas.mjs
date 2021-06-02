@@ -24,6 +24,7 @@ const { GN } = gen;
 describe('Testing the http API', () => {
   let shieldAddress;
   let challengeAddress;
+  let proposersAddress;
   let ercAddress;
   let connection; // WS connection
   let blockSubmissionFunction;
@@ -52,6 +53,9 @@ describe('Testing the http API', () => {
     res = await chai.request(url).get('/contract-address/Challenges');
     challengeAddress = res.body.address;
 
+    res = await chai.request(url).get('/contract-address/Proposers');
+    proposersAddress = res.body.address;
+
     connection = new WebSocket(optimistWsUrl);
     connection.onopen = () => {
       connection.send('challenge');
@@ -69,9 +73,9 @@ describe('Testing the http API', () => {
           BLOCK_STAKE,
         );
         console.log(
-          `Block proposal gas cost was ${
-            receipt.gasUsed
-          }, cost per transaction was ${receipt.gasUsed / TRANSACTIONS_PER_BLOCK}`,
+          `Block proposal gas cost was ${receipt.gasUsed}, cost per transaction was ${
+            receipt.gasUsed / TRANSACTIONS_PER_BLOCK
+          }`,
         );
       } else {
         await submitTransaction(txDataToSign, privateKey, challengeAddress, gas);
@@ -124,7 +128,7 @@ describe('Testing the http API', () => {
       const receipt = await submitTransaction(
         txDataToSign,
         privateKey,
-        challengeAddress,
+        proposersAddress,
         gas,
         bond,
       );
@@ -144,16 +148,13 @@ describe('Testing the http API', () => {
     blockSubmissionFunction = (a, b, c, d, e) => submitTransaction(a, b, c, d, e);
     it('should deposit some crypto into a ZKP commitment', async () => {
       for (let i = 0; i < TRANSACTIONS_PER_BLOCK; i++) {
-        const res = await chai
-          .request(url)
-          .post('/deposit')
-          .send({
-            ercAddress,
-            tokenId,
-            value,
-            zkpPublicKey,
-            fee,
-          });
+        const res = await chai.request(url).post('/deposit').send({
+          ercAddress,
+          tokenId,
+          value,
+          zkpPublicKey,
+          fee,
+        });
         txDataToSign = res.body.txDataToSign;
         expect(txDataToSign).to.be.a('string');
         // now we need to sign the transaction and send it to the blockchain
