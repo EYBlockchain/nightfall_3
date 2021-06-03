@@ -46,7 +46,7 @@ async function blockProposedEventHandler(data) {
     // we will save before checking because the database at any time should reflect the state the blockchain holds
     // when a challenge is raised because the is correct block data, then the corresponding block deleted event will
     // update this collection
-    await saveBlock({blockNumber: currentBlockCount,...block});
+    await saveBlock({ blockNumber: currentBlockCount, ...block });
     // we'll check the block and issue a challenge if appropriate
     await checkBlock(block, transactions);
     // if the block is, in fact, valid then we also need to mark as used the
