@@ -68,6 +68,7 @@ async function setupCircuits() {
   // then we'll get all of the vks (some may not exist but we'll handle that in
   // a moments). We'll grab promises and then resolve them after the loop.
   const resp = [];
+
   for (const circuit of circuitsToSetup) {
     logger.debug(`checking for existing setup for ${circuit}`);
     const folderpath = circuit.slice(0, -4); // remove the .zok extension

@@ -20,10 +20,7 @@ const powerMod = (base, exponent, m) => {
 };
 
 const keccak256Hash = preimage => {
-  const h = createKeccakHash('keccak256')
-    .update(preimage, 'hex')
-    .digest('hex');
-  return h;
+  return createKeccakHash('keccak256').update(preimage, 'hex').digest('hex');
 };
 
 /**
@@ -47,7 +44,7 @@ const mimcp = (x, k, seed, roundCount, exponent, m) => {
   return addMod([xx, k], m);
 };
 
-// eslint-disable-next-line babel/camelcase
+// eslint-disable-next-line camelcase
 const mimcp_mp = (x, k, seed, roundCount, exponent, m) => {
   let r = k;
   let i;

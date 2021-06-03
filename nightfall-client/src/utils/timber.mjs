@@ -58,7 +58,7 @@ export const getRoot = async () => {
     const response = await axios.patch(
       `${url}/update`,
       {
-        contractName: contractName,
+        contractName,
       },
       {
         timeout: 3600000,

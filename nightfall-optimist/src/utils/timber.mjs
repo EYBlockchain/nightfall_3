@@ -58,7 +58,7 @@ export const getRoot = async () => {
     const response = await axios.patch(
       `${url}/update`,
       {
-        contractName: contractName,
+        contractName,
       },
       {
         timeout: 3600000,
@@ -136,11 +136,7 @@ next block.
 export const getFrontier = async () => {
   logger.http(`Calling /update for Timber`);
   try {
-    const response = await axios.patch(
-      `${url}/update`,
-      { contractName: contractName },
-      { timeout: 3600000 },
-    );
+    const response = await axios.patch(`${url}/update`, { contractName }, { timeout: 3600000 });
     logger.http('Timber response:', response.data.data.latestRecalculation);
     // TODO: handle null response
     return response.data.data.latestRecalculation.frontier.map(e => e ?? config.ZERO);

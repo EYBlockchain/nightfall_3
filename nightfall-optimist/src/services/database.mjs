@@ -255,10 +255,7 @@ export async function getTransactionsByTransactionHashes(transactionHashes) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { transactionHash: { $in: transactionHashes } };
-  return db
-    .collection(TRANSACTIONS_COLLECTION)
-    .find(query)
-    .toArray();
+  return db.collection(TRANSACTIONS_COLLECTION).find(query).toArray();
 }
 
 export async function saveNullifiers(nullifiers) {
@@ -285,7 +282,7 @@ export async function stampNullifiers(nullifiers, blockHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { hash: { $in: nullifiers } };
-  const update = { $set: { blockHash: blockHash } };
+  const update = { $set: { blockHash } };
   return db.collection(NULLIFIER_COLLECTION).updateMany(query, update);
 }
 
@@ -301,7 +298,7 @@ export async function retrieveMinedNullifiers() {
 export async function resetNullifiers(blockHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  const query = { blockHash: blockHash };
+  const query = { blockHash };
   const update = { $unset: { blockHash: '' } };
   return db.collection(NULLIFIER_COLLECTION).updateMany(query, update);
 }
@@ -309,5 +306,8 @@ export async function resetNullifiers(blockHash) {
 export async function getBlocks() {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  return db.collection(SUBMITTED_BLOCKS_COLLECTION).find({},{ sort: { blockNumber: 1 }}).toArray()
+  return db
+    .collection(SUBMITTED_BLOCKS_COLLECTION)
+    .find({}, { sort: { blockNumber: 1 } })
+    .toArray();
 }

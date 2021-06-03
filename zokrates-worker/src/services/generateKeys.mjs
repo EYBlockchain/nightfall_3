@@ -4,7 +4,7 @@ import { compile, setup, extractVk } from '../zokrates-lib/index.mjs';
 import rabbitmq from '../utils/rabbitmq.mjs';
 import logger from '../utils/logger.mjs';
 
-export default async function({
+export default async function generateKeys({
   filepath,
   curve = 'bls12_377',
   backend = 'ark',

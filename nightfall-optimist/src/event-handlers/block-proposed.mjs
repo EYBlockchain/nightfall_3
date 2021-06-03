@@ -18,6 +18,7 @@ const { TIMBER_SYNC_RETRIES } = config;
 async function blockProposedEventHandler(data) {
   const currentBlockCount = data.blockNumber;
   const { block, transactions, currentLeafCount } = await getProposeBlockCalldata(data);
+
   // convert web3js' version of a struct into our node objects.
   // const { block, transactions, currentLeafCount } = mappedBlock(data);
 

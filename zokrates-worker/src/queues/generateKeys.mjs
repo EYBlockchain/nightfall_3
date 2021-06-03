@@ -11,9 +11,7 @@ export default function receiveMessage() {
     };
 
     try {
-      response.data = await generateKeys(JSON.parse(
-        message.content.toString(),
-      ));
+      response.data = await generateKeys(JSON.parse(message.content.toString()));
     } catch (err) {
       logger.error('Error in generate-keys', err);
       response.error = 'Key generation failed';
