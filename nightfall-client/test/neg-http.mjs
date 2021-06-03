@@ -497,14 +497,14 @@ describe('Testing the challenge http API', () => {
 
   after(() => {
     // if the queue is still running, let's close down after it ends
-    txQueue.on('end', () => {
-      // closeWeb3Connection();
-      connection.close();
-    });
     // if it's empty, close down immediately
     if (txQueue.length === 0) {
       closeWeb3Connection();
       connection.close();
-    }
+    } else
+      txQueue.on('end', () => {
+        closeWeb3Connection();
+        connection.close();
+      });
   });
 });
