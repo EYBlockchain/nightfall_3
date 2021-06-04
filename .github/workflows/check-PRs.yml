@@ -31,7 +31,10 @@ jobs:
         run: |
           sleep 150
           npm test
-          docker-compose down -v
+
+      - name: If integration test failed, shutdown the Containers
+        if: failure()
+        run: docker-compose down -v
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()

@@ -110,11 +110,7 @@ describe('Testing the challenge http API', () => {
             );
           } else if (counter === 1) {
             [duplicateNullifier] = transactions
-              .map(t =>
-                t.nullifiers.filter(
-                  n => n !== '0x0000000000000000000000000000000000000000000000000000000000000000',
-                ),
-              )
+              .map(t => t.nullifiers.filter(n => n !== ZERO))
               .flat(Infinity);
             console.log(
               `Created good block to extract duplicate nullifier from with blockHash ${block.blockHash}`,
@@ -216,7 +212,6 @@ describe('Testing the challenge http API', () => {
   describe('Creating correct transactions to get proper root history in timber', () => {
     let txDataToSign;
     it('should deposit some crypto into a ZKP commitment', async () => {
-      await new Promise(resolve => setTimeout(resolve, 5000));
       const res = await chai.request(url).post('/deposit').send({
         ercAddress,
         tokenId,
@@ -231,8 +226,6 @@ describe('Testing the challenge http API', () => {
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
       console.log(`Gas used was ${Number(receipt.gasUsed)}`);
-      // give Timber time to respond to the blockchain event
-      await new Promise(resolve => setTimeout(resolve, 5000));
     });
 
     it('should deposit some more crypto (we need a second transaction for proposing block) into a ZKP commitment and get a raw blockchain transaction back', async () => {
@@ -388,7 +381,6 @@ describe('Testing the challenge http API', () => {
 
   describe('Challenge 3: Invalid transaction submitted', () => {
     it('Should delete the flawed block', async () => {
-      await new Promise(resolve => setTimeout(resolve, 5000));
       const events = await web3.eth.getPastLogs({
         fromBlock: web3.utils.toHex(0),
         address: challengeAddress,
@@ -428,7 +420,6 @@ describe('Testing the challenge http API', () => {
         ],
       });
       expect(events[0]).to.have.property('transactionHash');
-      await new Promise(resolve => setTimeout(resolve, 5000));
     });
     it('Should rollback the flawed leaves', async () => {
       const events = await web3.eth.getPastLogs({
@@ -454,17 +445,14 @@ describe('Testing the challenge http API', () => {
       // now we need to sign the transaction and send it to the blockchain
       await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
 
-      await new Promise(resolve => setTimeout(resolve, 5000));
       const events = await web3.eth.getPastLogs({
         fromBlock: web3.utils.toHex(0),
         address: challengeAddress,
         topics: [web3.utils.sha3('BlockDeleted(bytes32)'), topicsBlockHashesIncorrectProof],
       });
       expect(events[0]).to.have.property('transactionHash');
-      await new Promise(resolve => setTimeout(resolve, 5000));
     });
     it('Should rollback the flawed leaves', async () => {
-      await new Promise(resolve => setTimeout(resolve, 5000));
       const events = await web3.eth.getPastLogs({
         fromBlock: web3.utils.toHex(0),
         address: stateAddress,
@@ -496,7 +484,7 @@ describe('Testing the challenge http API', () => {
         await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee); // eslint-disable-line no-await-in-loop
       }
 
-      await new Promise(resolve => setTimeout(resolve, 10000));
+      await new Promise(resolve => setTimeout(resolve, 15000));
       const events = await web3.eth.getPastLogs({
         fromBlock: web3.utils.toHex(0),
         address: challengeAddress,

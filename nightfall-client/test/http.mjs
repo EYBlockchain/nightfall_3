@@ -190,8 +190,6 @@ describe('Testing the http API', () => {
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
       console.log(`Gas used was ${Number(receipt.gasUsed)}`);
-      // give Timber time to respond to the blockchain event
-      await new Promise(resolve => setTimeout(resolve, 5000));
     });
 
     it('should send a single transfer directly to a proposer - offchain', async () => {
@@ -212,7 +210,7 @@ describe('Testing the http API', () => {
       expect(res.status).to.be.equal(200);
       console.log(`Offchain single transfer success`);
       // give Timber time to respond to the blockchain event
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      // await new Promise(resolve => setTimeout(resolve, 5000));
     });
   });
 
@@ -222,7 +220,7 @@ describe('Testing the http API', () => {
     it('should transfer some crypto (back to us) using ZKP', async () => {
       // give the last block time to be submitted, or we won't have enough
       // commitments in the Merkle tree to use for the double transfer.
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      // await new Promise(resolve => setTimeout(resolve, 5000));
       const res = await chai
         .request(url)
         .post('/transfer')
@@ -243,7 +241,6 @@ describe('Testing the http API', () => {
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
       console.log(`Gas used was ${Number(receipt.gasUsed)}`);
-      await new Promise(resolve => setTimeout(resolve, 5000));
     });
 
     it('should send a double transfer directly to a proposer - offchain', async () => {
@@ -265,7 +262,7 @@ describe('Testing the http API', () => {
         });
       expect(res.status).to.be.equal(200);
       console.log(`Offchain Double transfer success`);
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      // await new Promise(resolve => setTimeout(resolve, 5000));
     });
   });
 
@@ -370,7 +367,6 @@ describe('Testing the http API', () => {
       // push subsequent block signing requests to the queue
       blockSubmissionFunction = (a, b, c, d, e) =>
         blockSubmissionQueue.push(async () => {
-          await new Promise(resolve => setTimeout(resolve, 1000)); // TODO fix /verify so we can remove this.
           return submitTransaction(a, b, c, d, e);
         });
       // to make three blocks, we need six transactions
