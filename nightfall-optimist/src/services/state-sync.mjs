@@ -10,7 +10,7 @@ import { getBlockByBlockNumberL2, getBlocks } from './database.mjs';
 import { stopMakingChallenges, startMakingChallenges } from './challenges.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 
-const { CHALLENGES_CONTRACT_NAME, SHIELD_CONTRACT_NAME, PROPOSERS_CONTRACT_NAME } = config;
+const { SHIELD_CONTRACT_NAME, PROPOSERS_CONTRACT_NAME, STATE_CONTRACT_NAME } = config;
 
 export const syncState = async (
   proposer,
@@ -85,10 +85,9 @@ export const checkBlocks = async () => {
 };
 
 export const initialBlockSync = async proposer => {
-  const proposalsContractInstance = await waitForContract(CHALLENGES_CONTRACT_NAME);
-  const proposersContractInstance = await waitForContract(PROPOSERS_CONTRACT_NAME);
+  const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
   const lastBlockNumberL2 = Number(
-    await proposalsContractInstance.methods.getBlockNumberL2().call(),
+    (await stateContractInstance.methods.getNumberOfL2Blocks().call()) - 1,
   );
   if (lastBlockNumberL2 === 0) return; // The blockchain is empty
 
@@ -106,7 +105,7 @@ export const initialBlockSync = async proposer => {
     }
     await startMakingChallenges();
   }
-  const currentProposer = (await proposersContractInstance.methods.currentProposer().call())
+  const currentProposer = (await stateContractInstance.methods.currentProposer().call())
     .thisAddress;
   await newCurrentProposerEventHandler({ returnValues: { proposer: currentProposer } }, [proposer]);
 };

@@ -33,20 +33,13 @@ module.exports = {
 
   // contracts to filter:
   contracts: {
-    Challenges: {
+    State: {
       events: {
-        // indexed by event names:
-        NewLeaf: {
-          parameters: ['leafIndex', 'leafValue'], // filter for these parameters
-        },
-        NewLeaves: {
-          parameters: ['minLeafIndex', 'leafValues'], // filter for these parameters
+        BlockProposed: {
+          parameters: [],
         },
         Rollback: {
           parameters: ['root', 'leafCount'],
-        },
-        BlockProposed: {
-          parameters: ['currentLeafCount'],
         },
       },
     },

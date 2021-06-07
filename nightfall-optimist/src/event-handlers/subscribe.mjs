@@ -12,6 +12,7 @@ const {
   RETRIES,
   WEBSOCKET_PORT,
   CHALLENGES_CONTRACT_NAME,
+  STATE_CONTRACT_NAME,
 } = config;
 const wss = new WebSocket.Server({ port: WEBSOCKET_PORT });
 
@@ -75,7 +76,7 @@ export async function waitForContract(contractName) {
 }
 
 export async function subscribeToBlockProposedEvent(callback, ...args) {
-  const emitter = (await waitForContract(CHALLENGES_CONTRACT_NAME)).events.BlockProposed();
+  const emitter = (await waitForContract(STATE_CONTRACT_NAME)).events.BlockProposed();
   emitter.on('data', event => callback(event, args));
   logger.debug('Subscribed to BlockProposed event');
   return emitter;

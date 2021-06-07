@@ -30,12 +30,11 @@ export default async (req, res, next) => {
     req.user = {};
     // give all requesters admin privileges:
     req.user.connection = adminDbConnection;
-
     req.user.db = new DB(req.user.connection, admin, contractName, treeId);
 
     return next();
   } catch (err) {
-    logger.error(err);
+    logger.error(err.stack);
     return next(err);
   }
 };

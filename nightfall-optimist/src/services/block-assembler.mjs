@@ -13,7 +13,7 @@ import Transaction from '../classes/transaction.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import logger from '../utils/logger.mjs';
 
-const { TRANSACTIONS_PER_BLOCK, CHALLENGES_CONTRACT_NAME } = config;
+const { TRANSACTIONS_PER_BLOCK, STATE_CONTRACT_NAME } = config;
 let makeBlocks = true;
 // let blockProposed = '0x0';
 let ws;
@@ -55,7 +55,7 @@ export async function makeBlock(proposer, number = TRANSACTIONS_PER_BLOCK) {
   // then we make new block objects until we run out of unprocessed
   // transactions
   const currentLeafCount = parseInt(
-    await (await waitForContract(CHALLENGES_CONTRACT_NAME)).methods.leafCount().call(),
+    await (await waitForContract(STATE_CONTRACT_NAME)).methods.leafCount().call(),
     10,
   );
   const block = await Block.build({ proposer, transactions, currentLeafCount });
@@ -81,7 +81,7 @@ export async function conditionalMakeBlock(proposer) {
       logger.info(`Block Assembler - New Block created, ${JSON.stringify(block, null, 2)}`);
       // propose this block to the Shield contract here
       const unsignedProposeBlockTransaction = await (
-        await waitForContract(CHALLENGES_CONTRACT_NAME)
+        await waitForContract(STATE_CONTRACT_NAME)
       ).methods
         .proposeBlock(
           Block.buildSolidityStruct(block),
@@ -106,15 +106,4 @@ export async function conditionalMakeBlock(proposer) {
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
   logger.debug('Stopped making blocks');
-}
-
-/**
-This function forces a rollback to the given (bad) block and also eliminates the
-block proposer.
-*/
-export async function forceRollback(block) {
-  logger.info(`Request to rollback Block with hash ${block.blockHash}`);
-  return (await waitForContract(CHALLENGES_CONTRACT_NAME)).methods
-    .forceChallengeAccepted(block)
-    .encodeABI();
 }

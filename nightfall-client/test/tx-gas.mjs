@@ -25,6 +25,7 @@ describe('Testing the http API', () => {
   let shieldAddress;
   let challengeAddress;
   let proposersAddress;
+  let stateAddress;
   let ercAddress;
   let connection; // WS connection
   let blockSubmissionFunction;
@@ -56,6 +57,9 @@ describe('Testing the http API', () => {
     res = await chai.request(url).get('/contract-address/Proposers');
     proposersAddress = res.body.address;
 
+    res = await chai.request(url).get('/contract-address/State');
+    stateAddress = res.body.address;
+
     connection = new WebSocket(optimistWsUrl);
     connection.onopen = () => {
       connection.send('challenge');
@@ -68,7 +72,7 @@ describe('Testing the http API', () => {
         const receipt = await blockSubmissionFunction(
           txDataToSign,
           privateKey,
-          challengeAddress,
+          stateAddress,
           gas,
           BLOCK_STAKE,
         );

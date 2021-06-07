@@ -23,7 +23,7 @@ module.exports = {
   SHIELD_CONTRACT_NAME: 'Shield',
   CHALLENGES_CONTRACT_NAME: 'Challenges',
   PROPOSERS_CONTRACT_NAME: 'Proposers',
-  PROPOSALS_CONTRACT_NAME: 'Proposals',
+  STATE_CONTRACT_NAME: 'State',
   PROVING_SCHEME: 'gm17',
   BACKEND: 'libsnark',
   CURVE: 'bn128',

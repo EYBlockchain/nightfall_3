@@ -18,7 +18,7 @@ import TransactionError from '../classes/transaction-error.mjs';
 
 const { updateNodes } = mt;
 const router = express.Router();
-const { CHALLENGES_CONTRACT_NAME, PROPOSERS_CONTRACT_NAME, ZERO } = config;
+const { STATE_CONTRACT_NAME, PROPOSERS_CONTRACT_NAME, ZERO } = config;
 
 /**
  * Function to return a raw transaction that registers a proposer.  This just
@@ -114,8 +114,8 @@ router.post('/propose', async (req, res, next) => {
       currentLeafCount,
     });
     logger.debug(`New block assembled ${JSON.stringify(block, null, 2)}`);
-    const proposersContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
-    const txDataToSign = await proposersContractInstance.methods
+    const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
+    const txDataToSign = await stateContractInstance.methods
       .proposeBlock(block, transactions)
       .encodeABI();
     logger.debug('returning raw transaction');
@@ -161,12 +161,12 @@ router.post('/encode', async (req, res, next) => {
   try {
     const { transactions, block } = req.body;
 
-    const proposalsContractInstance = await waitForContract(CHALLENGES_CONTRACT_NAME);
+    const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
     const currentLeafCount = parseInt(
-      await (await waitForContract(CHALLENGES_CONTRACT_NAME)).methods.leafCount().call(),
+      await (await waitForContract(STATE_CONTRACT_NAME)).methods.leafCount().call(),
       10,
     );
-    const blockNumberL2 = Number(await proposalsContractInstance.methods.getBlockNumberL2().call());
+    const blockNumberL2 = Number(await stateContractInstance.methods.getNumberOfL2Blocks().call());
 
     const newTransactions = await Promise.all(
       transactions.map(t => {
@@ -194,8 +194,7 @@ router.post('/encode', async (req, res, next) => {
     };
     newBlock.blockHash = await Block.calcHash(newBlock, newTransactions);
     logger.debug(`New block assembled ${JSON.stringify(newBlock, null, 2)}`);
-    const proposersContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
-    const txDataToSign = await proposersContractInstance.methods
+    const txDataToSign = await stateContractInstance.methods
       .proposeBlock(
         Block.buildSolidityStruct(newBlock),
         newTransactions.map(t => Transaction.buildSolidityStruct(t)),

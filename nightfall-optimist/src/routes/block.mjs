@@ -9,7 +9,6 @@ import {
   getTransactionsByTransactionHashes,
   getBlockByRoot,
 } from '../services/database.mjs';
-import { forceRollback } from '../services/block-assembler.mjs';
 
 const router = express.Router();
 
@@ -63,16 +62,6 @@ router.get('/root/:root', async (req, res, next) => {
       logger.debug('Block not found');
       res.json({ block: null, transactions: null });
     }
-  } catch (err) {
-    next(err);
-  }
-});
-
-router.post('/rollback', async (req, res, next) => {
-  logger.debug('rollback endpoint received post');
-  try {
-    const block = req.body;
-    res.json(await forceRollback(block));
   } catch (err) {
     next(err);
   }

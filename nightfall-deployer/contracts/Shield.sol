@@ -15,15 +15,10 @@ import './ERCInterface.sol';
 import './Key_Registry.sol';
 import './Structures.sol';
 import './Config.sol';
-import './Proposals.sol';
+import './Stateful.sol';
 
-contract Shield is Structures, Config, Key_Registry {
+contract Shield is Stateful, Structures, Config, Key_Registry {
 
-  Proposals private proposals;
-
-  constructor (address proposalsAddr) {
-    proposals = Proposals(proposalsAddr);
-  }
   function submitTransaction(Transaction memory t) external payable {
     // let everyone know what you did
     emit TransactionSubmitted();
@@ -40,9 +35,9 @@ contract Shield is Structures, Config, Key_Registry {
   */
   function finaliseWithdrawal(Block memory b, Transaction[] memory ts, uint index) external {
     // check this block is a real one, in the queue, not something made up.
-    proposals.isBlockReal(b, ts);
+    state.isBlockReal(b, ts);
     // check that the block has been finalised
-    uint time = proposals.getBlockData(b.blockNumberL2).time;
+    uint time = state.getBlockData(b.blockNumberL2).time;
     require(time + COOLING_OFF_PERIOD < block.timestamp, 'It is too soon withdraw funds from this block');
     if (ts[index].transactionType == TransactionTypes.WITHDRAW) payOut(ts[index]);
   }

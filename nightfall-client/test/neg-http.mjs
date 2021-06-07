@@ -25,6 +25,7 @@ describe('Testing the challenge http API', () => {
   let shieldAddress;
   let challengeAddress;
   let proposersAddress;
+  let stateAddress;
   let ercAddress;
   let connection; // WS connection
   const zkpPrivateKey = '0xc05b14fa15148330c6d008814b0bdd69bc4a08a1bd0b629c42fa7e2c61f16739'; // the zkp private key we're going to use in the tests.
@@ -74,6 +75,9 @@ describe('Testing the challenge http API', () => {
 
     res = await chai.request(url).get('/contract-address/Proposers');
     proposersAddress = res.body.address;
+
+    res = await chai.request(url).get('/contract-address/State');
+    stateAddress = res.body.address;
 
     // should get the address of the test ERC contract stub
     res = await chai.request(url).get('/contract-address/ERCStub');
@@ -174,7 +178,7 @@ describe('Testing the challenge http API', () => {
             txDataToSign = msg.txDataToSign;
             console.log(`Created good block with blockHash ${res.block.blockHash}`);
           }
-          await submitTransaction(txDataToSign, privateKey, challengeAddress, gas, BLOCK_STAKE);
+          await submitTransaction(txDataToSign, privateKey, stateAddress, gas, BLOCK_STAKE);
           counter++;
           // console.log('tx hash of propose block is', txReceipt.transactionHash);
         } else if (type === 'commit') {
@@ -351,7 +355,7 @@ describe('Testing the challenge http API', () => {
     it('Should rollback the flawed leaves', async () => {
       const events = await web3.eth.getPastLogs({
         fromBlock: web3.utils.toHex(0),
-        address: challengeAddress,
+        address: stateAddress,
         topics: [web3.utils.sha3('Rollback(bytes32,uint256)'), topicsRootIncorrectRootInBlock],
       });
       expect(events[0]).to.have.property('transactionHash');
@@ -371,7 +375,7 @@ describe('Testing the challenge http API', () => {
     it('Should rollback the flawed leaves', async () => {
       const events = await web3.eth.getPastLogs({
         fromBlock: web3.utils.toHex(0),
-        address: challengeAddress,
+        address: stateAddress,
         topics: [web3.utils.sha3('Rollback(bytes32,uint256)'), topicsRootDuplicateTransaction],
       });
       expect(events[0]).to.have.property('transactionHash');
@@ -391,7 +395,7 @@ describe('Testing the challenge http API', () => {
     it('Should rollback the flawed leaves', async () => {
       const events = await web3.eth.getPastLogs({
         fromBlock: web3.utils.toHex(0),
-        address: challengeAddress,
+        address: stateAddress,
         topics: [web3.utils.sha3('Rollback(bytes32,uint256)'), topicsRootInvalidTransaction],
       });
       expect(events[0]).to.have.property('transactionHash');
@@ -414,7 +418,7 @@ describe('Testing the challenge http API', () => {
     it('Should rollback the flawed leaves', async () => {
       const events = await web3.eth.getPastLogs({
         fromBlock: web3.utils.toHex(0),
-        address: challengeAddress,
+        address: stateAddress,
         topics: [web3.utils.sha3('Rollback(bytes32,uint256)'), topicsRootIncorrectPublicInputHash],
       });
       expect(events[0]).to.have.property('transactionHash');
@@ -448,7 +452,7 @@ describe('Testing the challenge http API', () => {
       await new Promise(resolve => setTimeout(resolve, 5000));
       const events = await web3.eth.getPastLogs({
         fromBlock: web3.utils.toHex(0),
-        address: challengeAddress,
+        address: stateAddress,
         topics: [web3.utils.sha3('Rollback(bytes32,uint256)'), topicsRootIncorrectProof],
       });
       expect(events[0]).to.have.property('transactionHash');
@@ -488,7 +492,7 @@ describe('Testing the challenge http API', () => {
     it('Should rollback the flawed leaves', async () => {
       const events = await web3.eth.getPastLogs({
         fromBlock: web3.utils.toHex(0),
-        address: challengeAddress,
+        address: stateAddress,
         topics: [web3.utils.sha3('Rollback(bytes32,uint256)'), topicsRootDuplicateNullifier],
       });
       expect(events[0]).to.have.property('transactionHash');

@@ -8,7 +8,7 @@ import config from 'config';
 import Queue from 'queue';
 import utilsWeb3 from './utils-web3';
 
-import { LeafService, MetadataService } from './db/service';
+import { LeafService, MetadataService, HistoryService } from './db/service';
 import logger from './logger';
 import mtc from './merkle-tree-controller'; // eslint-disable-line import/no-cycle
 import getProposeBlockCalldata from './optimistic/process-calldata';
@@ -153,8 +153,8 @@ const rollbackResponseFunction = async (eventObject, args) => {
 
   // Now some bespoke code; specific to how our application needs to deal with this eventObject:
   // const { blockNumber } = eventData;
-  const { root, leafCount } = eventInstance;
-  return mtc.rollback(db, treeHeight, Number(leafCount), root);
+  const { leafCount } = eventInstance;
+  return mtc.rollback(db, treeHeight, Number(leafCount));
 };
 
 /**

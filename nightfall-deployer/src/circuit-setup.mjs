@@ -8,7 +8,7 @@ import fs from 'fs';
 import path from 'path';
 import logger from './utils/logger.mjs';
 import Web3 from './utils/web3.mjs';
-import { getContractAddress, getContractInstance } from './utils/contract.mjs';
+import { waitForContract } from './utils/contract.mjs';
 
 const fsPromises = fs.promises;
 
@@ -98,8 +98,7 @@ async function setupCircuits() {
       delete vk.raw; // long and not needed
       logger.silly('vk:', vk);
       const vkArray = Object.values(vk).flat(Infinity); // flatten the Vk array of arrays because that's how Shield.sol likes it.  I see no need for decimal conversion here - but that may be wrong.
-      const challengeAddress = await getContractAddress('Challenges');
-      const shield = await getContractInstance('Challenges', challengeAddress);
+      const shield = await waitForContract('Challenges');
       if (config.USE_STUBS) {
         await shield.methods
           .registerVerificationKey(vkArray, config.VK_IDS[folderpath.slice(0, -5)]) // register without the _stub
@@ -114,7 +113,6 @@ async function setupCircuits() {
   }
   // before we finish, start Timber listening
   // startEventFilter();
-  Web3.disconnect();
 }
 
 export default { setupCircuits, waitForZokrates };

@@ -8,7 +8,7 @@ import Web3 from '../utils/web3.mjs';
 import { compressProof } from '../utils/curve-maths/curves.mjs';
 import { getContractInstance } from '../utils/contract.mjs';
 
-const { ZERO, PROPOSE_BLOCK_TYPES, CHALLENGES_CONTRACT_NAME } = config;
+const { ZERO, PROPOSE_BLOCK_TYPES, STATE_CONTRACT_NAME } = config;
 const { updateNodes } = mt;
 
 /**
@@ -60,13 +60,13 @@ class Block {
     const { proposer, transactions } = components;
     let { currentLeafCount } = components;
     // We'd like to get the block number from the blockchain like this:
-    const proposalsContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
-    let blockNumberL2 = Number(await proposalsContractInstance.methods.getBlockNumberL2().call());
+    const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
+    let blockNumberL2 = Number(await stateContractInstance.methods.getNumberOfL2Blocks().call());
     // Of course, just like with the leafCount below, it's possible that the
     // previously made block hasn't been added to the blockchain yet. In that
     // case, this block will have the same block number as the previous block
     // and will rightly be reverted when we attempt to add it to the chain.
-    // Thus, we proceeds as for the leafCount and keep a local value, updating
+    // Thus, we proceed as for the leafCount and keep a local value, updating
     // only if the on-chain value is ahead of our local value.
     if (blockNumberL2 >= this.localBlockNumberL2) this.localBlockNumberL2 = blockNumberL2;
     else blockNumberL2 = this.localBlockNumberL2;
