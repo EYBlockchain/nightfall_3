@@ -8,7 +8,7 @@ import config from 'config';
 import Queue from 'queue';
 import utilsWeb3 from './utils-web3';
 
-import { LeafService, MetadataService, HistoryService } from './db/service';
+import { LeafService, MetadataService } from './db/service';
 import logger from './logger';
 import mtc from './merkle-tree-controller'; // eslint-disable-line import/no-cycle
 import getProposeBlockCalldata from './optimistic/process-calldata';
