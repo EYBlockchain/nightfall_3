@@ -4,7 +4,6 @@ import chaiAsPromised from 'chai-as-promised';
 import gen from 'general-number';
 import Queue from 'queue';
 import WebSocket from 'ws';
-import config from 'config';
 import sha256 from '../src/utils/crypto/sha256.mjs';
 import {
   closeWeb3Connection,
@@ -17,7 +16,6 @@ import {
 const { expect } = chai;
 const { GN } = gen;
 const txQueue = new Queue({ autostart: true, concurrency: 1 });
-const { ZERO } = config;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
@@ -100,7 +98,11 @@ describe('Testing the challenge http API', () => {
             [duplicateTransaction] = transactions;
           } else if (counter === 1) {
             [duplicateNullifier] = transactions
-              .map(t => t.nullifiers.filter(n => n !== ZERO))
+              .map(t =>
+                t.nullifiers.filter(
+                  n => n !== '0x0000000000000000000000000000000000000000000000000000000000000000',
+                ),
+              )
               .flat(Infinity);
           } else if (counter === 2) {
             res = await createBadBlock('IncorrectRoot', block, transactions, {
@@ -134,8 +136,8 @@ describe('Testing the challenge http API', () => {
             res = await createBadBlock('IncorrectProof', block, transactions, {
               proof: duplicateTransaction.proof,
             });
-            topicsBlockHashesDuplicateNullifier = res.block.blockHash;
-            topicsRootDuplicateNullifier = res.block.root;
+            topicsBlockHashesIncorrectProof = res.block.blockHash;
+            topicsRootIncorrectProof = res.block.root;
             txDataToSign = res.txDataToSign;
           } else if (counter === 7) {
             res = await createBadBlock('DuplicateNullifier', block, transactions, {
