@@ -89,6 +89,12 @@ export const deleteFile = async filePath => {
   );
 };
 
+export const deleteSingleFile = fileName => {
+  fs.unlink(fileName, err => {
+    if (err) throw err;
+  });
+};
+
 export const getFilesRecursively = (dir, fileList = []) => {
   const files = fs.readdirSync(dir);
 
