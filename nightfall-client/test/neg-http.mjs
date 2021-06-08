@@ -110,7 +110,11 @@ describe('Testing the challenge http API', () => {
             );
           } else if (counter === 1) {
             [duplicateNullifier] = transactions
-              .map(t => t.nullifiers.filter(n => n !== ZERO))
+              .map(t =>
+                t.nullifiers.filter(
+                  n => n !== '0x0000000000000000000000000000000000000000000000000000000000000000',
+                ),
+              )
               .flat(Infinity);
             console.log(
               `Created good block to extract duplicate nullifier from with blockHash ${block.blockHash}`,
