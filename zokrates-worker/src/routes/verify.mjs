@@ -1,5 +1,5 @@
 import express from 'express';
-import { verify } from '../zokrates-lib/index.mjs';
+import zokrates from '@eyblockchain/zokrates-zexe.js';
 import logger from '../utils/logger.mjs';
 
 const router = express.Router();
@@ -15,7 +15,7 @@ router.post('/', async (req, res, next) => {
     let combinedProof;
     if (!proof.inputs) combinedProof = { proof, inputs };
     else combinedProof = proof;
-    const verifies = await verify(vk, combinedProof, provingScheme, backend, curve);
+    const verifies = await zokrates.verify(vk, combinedProof, provingScheme, backend, curve);
     logger.debug(`verify returned ${verifies}`);
     return res.send({ verifies });
   } catch (err) {

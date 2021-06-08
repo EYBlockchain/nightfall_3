@@ -1,8 +1,8 @@
 import fs from 'fs';
 import util from 'util';
 import crypto from 'crypto';
+import zokrates from '@eyblockchain/zokrates-zexe.js';
 import path from 'path';
-import { computeWitness, generateProof } from '../zokrates-lib/index.mjs';
 import { getProofFromFile } from '../utils/filing.mjs';
 import logger from '../utils/logger.mjs';
 
@@ -43,7 +43,7 @@ export default async function ({
 
   try {
     logger.info('Compute witness...');
-    await computeWitness(
+    await zokrates.computeWitness(
       `${outputPath}/${folderpath}/${circuitName}_out`,
       `${outputPath}/${folderpath}/`,
       `${witnessFile}`,
@@ -51,7 +51,7 @@ export default async function ({
     );
 
     logger.info('Generate proof...');
-    await generateProof(
+    await zokrates.generateProof(
       `${outputPath}/${folderpath}/${circuitName}_pk.key`,
       `${outputPath}/${folderpath}/${circuitName}_out`,
       `${outputPath}/${folderpath}/${witnessFile}`,
