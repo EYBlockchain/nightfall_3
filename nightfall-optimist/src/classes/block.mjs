@@ -6,8 +6,9 @@ import { getFrontier } from '../utils/timber.mjs';
 import mt from '../utils/crypto/merkle-tree/merkle-tree.mjs';
 import Web3 from '../utils/web3.mjs';
 import { compressProof } from '../utils/curve-maths/curves.mjs';
+import { getContractInstance } from '../utils/contract.mjs';
 
-const { ZERO, PROPOSE_BLOCK_TYPES } = config;
+const { ZERO, PROPOSE_BLOCK_TYPES, STATE_CONTRACT_NAME } = config;
 const { updateNodes } = mt;
 
 /**
@@ -30,19 +31,25 @@ class Block {
 
   nCommitments; // number of commitments in the block
 
+  blockNumberL2; // the number (index) of this Layer 2 block
+
   static localLeafCount = 0; // ensure this is less than Timber to start with
+
+  static localBlockNumberL2 = 0;
 
   static localFrontier = [];
 
   constructor(asyncParams) {
     if (asyncParams === undefined) throw new Error('Cannot be called directly');
-    const { proposer, transactionHashes, leafCount, root, blockHash, nCommitments } = asyncParams;
+    const { proposer, transactionHashes, leafCount, root, blockHash, nCommitments, blockNumberL2 } =
+      asyncParams;
     this.leafCount = leafCount;
     this.proposer = proposer;
     this.transactionHashes = transactionHashes;
     this.root = root;
     this.blockHash = blockHash;
     this.nCommitments = nCommitments;
+    this.blockNumberL2 = blockNumberL2;
   }
 
   // computes the root and hash. We use a Builder pattern because it's very
@@ -52,11 +59,22 @@ class Block {
   static async build(components) {
     const { proposer, transactions } = components;
     let { currentLeafCount } = components;
+    // We'd like to get the block number from the blockchain like this:
+    const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
+    let blockNumberL2 = Number(await stateContractInstance.methods.getNumberOfL2Blocks().call());
+    // Of course, just like with the leafCount below, it's possible that the
+    // previously made block hasn't been added to the blockchain yet. In that
+    // case, this block will have the same block number as the previous block
+    // and will rightly be reverted when we attempt to add it to the chain.
+    // Thus, we proceed as for the leafCount and keep a local value, updating
+    // only if the on-chain value is ahead of our local value.
+    if (blockNumberL2 >= this.localBlockNumberL2) this.localBlockNumberL2 = blockNumberL2;
+    else blockNumberL2 = this.localBlockNumberL2;
     // we have to get the current frontier from Timber, so that we can compute
-    // the new root bearing in mind that the transactions in this block won't
+    // the new root, bearing in mind that the transactions in this block won't
     // be in Timber yet.  However, Timber has a handy update
     // interface, which will, inter-alia, return that very frontier.
-    // However, it's possilbe the previous block that we computed hasn't been
+    // However, it's possible the previous block that we computed hasn't been
     // added to Timber yet, in which case the Frontier will be wrong. We can
     // detect that if we remember what the leafCount should actually be, and
     // if it's ahead of what Timber thinks, we compute the new Frontier locally
@@ -89,8 +107,12 @@ class Block {
     // remember the updated values in case we need them for the next block.
     this.localLeafCount += leafValues.length;
     this.localFrontier = newFrontier;
+    this.localBlockNumberL2 += 1;
     // compute the keccak hash of the proposeBlock signature
-    const blockHash = this.calcHash({ proposer, root, leafCount, nCommitments }, transactions);
+    const blockHash = this.calcHash(
+      { proposer, root, leafCount, nCommitments, blockNumberL2 },
+      transactions,
+    );
     // note that the transactionHashes array is not part of the on-chain block
     // but we compute it here for convenience. It needs removing before sending
     // a block object to the blockchain.
@@ -101,14 +123,16 @@ class Block {
       root,
       blockHash,
       nCommitments,
+      blockNumberL2,
     });
   }
 
   // we cache the leafCount in case Timber isn't up to date, however we
   // need to reset the cache in the event of a rollback or we'll make a block
-  // with the wrong leafCount.
+  // with the wrong leafCount. The same applies to the localBlockNumberL2.
   static rollback() {
     this.localLeafCount = 0;
+    this.localBlockNumberL2 = 0;
   }
 
   static checkHash(block, transactions) {
@@ -117,11 +141,12 @@ class Block {
 
   static calcHash(block, transactions) {
     const web3 = Web3.connection();
-    const { proposer, root, leafCount, nCommitments } = block;
-    const blockArray = [proposer, root, leafCount, nCommitments];
+    const { proposer, root, leafCount, nCommitments, blockNumberL2 } = block;
+    const blockArray = [proposer, root, leafCount, nCommitments, blockNumberL2];
     const transactionsArray = transactions.map(t => {
       const {
         value,
+        historicRootBlockNumberL2,
         transactionType,
         publicInputHash,
         tokenId,
@@ -129,11 +154,11 @@ class Block {
         recipientAddress,
         commitments,
         nullifiers,
-        historicRoot,
         proof,
       } = t;
       return [
         value,
+        historicRootBlockNumberL2,
         transactionType,
         publicInputHash,
         tokenId,
@@ -141,7 +166,6 @@ class Block {
         recipientAddress,
         commitments,
         nullifiers,
-        historicRoot,
         compressProof(proof),
       ];
     });
@@ -155,8 +179,14 @@ class Block {
   // remove properties that do not get sent to the blockchain returning
   // a new object (don't mutate the original)
   static buildSolidityStruct(block) {
-    const { proposer, root, leafCount, nCommitments } = block;
-    return { proposer, root, leafCount: Number(leafCount), nCommitments: Number(nCommitments) };
+    const { proposer, root, leafCount, nCommitments, blockNumberL2 } = block;
+    return {
+      proposer,
+      root,
+      leafCount: Number(leafCount),
+      nCommitments: Number(nCommitments),
+      blockNumberL2: Number(blockNumberL2),
+    };
   }
 }
 

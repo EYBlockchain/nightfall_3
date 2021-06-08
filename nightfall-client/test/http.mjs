@@ -23,7 +23,9 @@ const blockSubmissionQueue = new Queue({ concurrency: 1 });
 
 describe('Testing the http API', () => {
   let shieldAddress;
-  let challengeAddress;
+  let stateAddress;
+  let proposersAddress;
+  let challengesAddress;
   let ercAddress;
   let transactions = [];
   let connection; // WS connection
@@ -51,8 +53,14 @@ describe('Testing the http API', () => {
     let res = await chai.request(url).get('/contract-address/Shield');
     shieldAddress = res.body.address;
 
+    res = await chai.request(url).get('/contract-address/State');
+    stateAddress = res.body.address;
+
+    res = await chai.request(url).get('/contract-address/Proposers');
+    proposersAddress = res.body.address;
+
     res = await chai.request(url).get('/contract-address/Challenges');
-    challengeAddress = res.body.address;
+    challengesAddress = res.body.address;
 
     connection = new WebSocket(optimistWsUrl);
     connection.onopen = () => {
@@ -63,9 +71,9 @@ describe('Testing the http API', () => {
       const msg = JSON.parse(message.data);
       const { type, txDataToSign } = msg;
       if (type === 'block') {
-        await blockSubmissionFunction(txDataToSign, privateKey, challengeAddress, gas, BLOCK_STAKE);
+        await blockSubmissionFunction(txDataToSign, privateKey, stateAddress, gas, BLOCK_STAKE);
       } else {
-        await submitTransaction(txDataToSign, privateKey, challengeAddress, gas);
+        await submitTransaction(txDataToSign, privateKey, challengesAddress, gas);
         // console.log('tx hash is', txReceipt.transactionHash);
       }
     };
@@ -115,7 +123,7 @@ describe('Testing the http API', () => {
       const receipt = await submitTransaction(
         txDataToSign,
         privateKey,
-        challengeAddress,
+        proposersAddress,
         gas,
         bond,
       );
@@ -293,7 +301,9 @@ describe('Testing the http API', () => {
         await new Promise(resolve => setTimeout(resolve, 1000));
         console.log('Waiting for withdraw block to appear', i++, 'seconds');
         // look for the block that contains the withdraw tx
-        const res = await chai.request(optimistUrl).get(`/block/${withdrawTransactionHash}`);
+        const res = await chai
+          .request(optimistUrl)
+          .get(`/block/transaction-hash/${withdrawTransactionHash}`);
         ({ block, transactions, index } = res.body);
       } while (block === null);
       expect(block).not.to.be.undefined; // eslint-disable-line

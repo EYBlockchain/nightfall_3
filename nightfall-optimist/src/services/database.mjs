@@ -113,13 +113,35 @@ export async function numberOfBlockWithTransactionHash(transactionHash) {
 }
 
 /**
-function to look a block by blockHash, if you know the hash of the block. This
+function to get a block by blockHash, if you know the hash of the block. This
 is useful for rolling back Timber.
 */
 export async function getBlockByBlockHash(blockHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { blockHash };
+  return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
+}
+
+/**
+function to get a block by root, if you know the root of the block. This
+is useful for nightfall-client to establish the layer block number containing
+a given (historic) root.
+*/
+export async function getBlockByRoot(root) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { root };
+  return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
+}
+
+/**
+function to get a block by blockNumberL2, if you know the number of the block. This is useful for rolling back Timber.
+*/
+export async function getBlockByBlockNumberL2(blockNumberL2) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { blockNumberL2: Number(blockNumberL2) };
   return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
 }
 
@@ -158,7 +180,7 @@ export async function isRegisteredProposerAddressMine(address) {
   const db = connection.db(OPTIMIST_DB);
   const metadata = await db.collection(METADATA_COLLECTION).findOne({ proposer: address });
   logger.silly(`found registered proposer ${JSON.stringify(metadata, null, 2)}`);
-  return metadata !== null;
+  return metadata;
 }
 
 /**

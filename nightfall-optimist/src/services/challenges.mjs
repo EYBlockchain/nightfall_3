@@ -7,6 +7,7 @@ import {
   retrieveMinedNullifiers,
   saveCommit,
   getTransactionsByTransactionHashes,
+  getBlockByBlockNumberL2,
 } from './database.mjs';
 import { getTreeHistory } from '../utils/timber.mjs';
 import Web3 from '../utils/web3.mjs';
@@ -63,14 +64,13 @@ export async function createChallenge(block, transactions, err) {
     switch (err.code) {
       // Challenge wrong root
       case 0: {
-        // Getting prior block hash for the current block
-        const linkedHash = await challengeContractInstance.methods
-          .blockHashes(block.blockHash)
-          .call();
-        console.log('LINKEDHASH', linkedHash);
-        const { previousHash } = linkedHash;
-        // Retrieve prior block from its block hash
-        const priorBlock = await getBlockByBlockHash(previousHash);
+        logger.debug('Challenging incorrect root');
+        // Getting prior block for the current block
+        const priorBlock = await getBlockByBlockNumberL2(Number(block.blockNumberL2) - 1);
+        if (priorBlock === null)
+          throw new Error(
+            `Could not find prior block with block number ${Number(block.blockNumberL2) - 1}`,
+          );
         // Retrieve last transaction from prior block using its transaction hash.
         // Note that not all transactions in a block will have commitments. Loop until one is found
         const priorBlockTransactions = await getTransactionsByTransactionHashes(
@@ -101,10 +101,8 @@ export async function createChallenge(block, transactions, err) {
       }
       // Challenge Duplicate Transaction
       case 1: {
-        const {
-          transactionHashIndex: transactionIndex1,
-          transactionHash: transactionHash1,
-        } = err.metadata;
+        const { transactionHashIndex: transactionIndex1, transactionHash: transactionHash1 } =
+          err.metadata;
 
         // Get the block that contains the duplicate of the transaction
         const block2 = await getBlockByTransactionHash(transactionHash1);
@@ -148,15 +146,38 @@ export async function createChallenge(block, transactions, err) {
       // invalid public input hash
       case 3: {
         const { transactionHashIndex: transactionIndex } = err.metadata;
-        // Create a challenge
-        txDataToSign = await challengeContractInstance.methods
-          .challengePublicInputHash(
-            Block.buildSolidityStruct(block),
-            transactions.map(t => Transaction.buildSolidityStruct(t)),
-            transactionIndex,
-            salt,
-          )
-          .encodeABI();
+        // Create a challenge (DEPOSIT has no historic root to worry about)
+        if (transactions.transactionType === 'DEPOSIT') {
+          txDataToSign = await challengeContractInstance.methods
+            .challengePublicInputHash(
+              Block.buildSolidityStruct(block),
+              transactions.map(t => Transaction.buildSolidityStruct(t)),
+              transactionIndex,
+              salt,
+            )
+            .encodeABI();
+        } else {
+          const blockL2ContainingHistoricRoot = await getBlockByBlockNumberL2(
+            transactions[transactionIndex].historicRootBlockNumberL2,
+          );
+          const transactionsOfblockL2ContainingHistoricRoot =
+            await getTransactionsByTransactionHashes(
+              blockL2ContainingHistoricRoot.transactionHashes,
+            );
+          txDataToSign = await challengeContractInstance.methods
+            .challengePublicInputHash(
+              Block.buildSolidityStruct(block),
+              transactions.map(t => Transaction.buildSolidityStruct(t)),
+              transactionIndex,
+              Block.buildSolidityStruct(blockL2ContainingHistoricRoot),
+              transactionsOfblockL2ContainingHistoricRoot.map(t =>
+                Transaction.buildSolidityStruct(t),
+              ),
+              salt,
+            )
+            .encodeABI();
+        }
+
         break;
       }
       // proof does not verify

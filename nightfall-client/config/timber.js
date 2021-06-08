@@ -33,20 +33,13 @@ module.exports = {
 
   // contracts to filter:
   contracts: {
-    Challenges: {
+    State: {
       events: {
-        // indexed by event names:
-        NewLeaf: {
-          parameters: ['leafIndex', 'leafValue'], // filter for these parameters
-        },
-        NewLeaves: {
-          parameters: ['minLeafIndex', 'leafValues'], // filter for these parameters
+        BlockProposed: {
+          parameters: [],
         },
         Rollback: {
           parameters: ['root', 'leafCount'],
-        },
-        BlockProposed: {
-          parameters: ['currentLeafCount'],
         },
       },
     },
@@ -94,4 +87,8 @@ module.exports = {
     },
   },
   LOG_LEVEL: process.env.LOG_LEVEL || 'info',
+  PROPOSE_BLOCK_TYPES: [
+    '(address,bytes32,uint64,uint64, uint64)',
+    '(uint64,uint64, uint8,bytes32,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],uint[4])[]',
+  ],
 };

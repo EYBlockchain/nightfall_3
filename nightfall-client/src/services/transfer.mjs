@@ -19,6 +19,7 @@ import PublicInputs from '../classes/public-inputs.mjs';
 import { getSiblingPath } from '../utils/timber.mjs';
 import Transaction from '../classes/transaction.mjs';
 import { discoverPeers } from './peers.mjs';
+import getBlockAndTransactionsByRoot from '../utils/optimist.mjs';
 
 const {
   BN128_GROUP_ORDER,
@@ -91,6 +92,14 @@ async function transfer(transferParams) {
   logger.silly(`SiblingPaths were: ${JSON.stringify(siblingPaths)}`);
   // public inputs
   const root = siblingPaths[0][0];
+  console.log(
+    'COMMITMENT_INDEX',
+    oldCommitments[0].index,
+    'COMMITMENT_HASH',
+    oldCommitments[0].hash,
+    'ROOT',
+    root,
+  );
   const publicInputs = new PublicInputs([
     oldCommitments.map(commitment => commitment.preimage.ercAddress),
     newCommitments.map(commitment => commitment.hash),
@@ -158,12 +167,13 @@ async function transfer(transferParams) {
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
   const optimisticTransferTransaction = new Transaction({
     fee,
+    historicRootBlockNumberL2: (await getBlockAndTransactionsByRoot(root.hex(32))).block
+      .blockNumberL2,
     transactionType,
     publicInputs,
     ercAddress,
     commitments: newCommitments,
     nullifiers,
-    historicRoot: root,
     proof,
   });
   try {

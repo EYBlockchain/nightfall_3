@@ -65,21 +65,20 @@ const blockProposedResponseFunction = async (eventObject, args) => {
   // Now some more bespoke code; specific to how our application needs to deal with this eventObject:
   // construct an array of 'leaf' documents to store in the db:
   const { blockNumber } = eventData;
-  const { currentLeafCount } = eventInstance;
   // first, we need to extract the commitment values from the calldata because
   // it's not in the emitted event.  We don't care about the Block object
-  const { transactions } = await getProposeBlockCalldata(eventData);
+  const { block, transactions } = await getProposeBlockCalldata(eventData);
   logger.debug(`recovered transactions ${JSON.stringify(transactions, null, 2)}`);
+  const currentLeafCount = Number(block.leafCount) + Number(block.nCommitments);
   const leafValues = transactions
     .map(transaction => transaction.commitments.filter(c => c !== config.ZERO))
     .flat(Infinity);
   // Timber works on the leafIndex BEFORE the new leafValues are added but the
   // BlockProposed event broadcasts the AFTER value:
-  const minLeafIndex = Number(currentLeafCount) - leafValues.length;
+  const minLeafIndex = currentLeafCount - leafValues.length;
   logger.debug(
     `minLeafIndex was ${minLeafIndex}, updatedLeafCount, ${currentLeafCount}, leafValues.length ${leafValues.length}, eventInstance, ${eventInstance}`,
   );
-  console.log('eventInstance', eventInstance);
   logger.debug(`leafValues were ${JSON.stringify(leafValues, null, 2)}`);
   // now we have the relevant data, update the Merkle tree:
   if (leafValues.length === 0) return Promise.resolve();
@@ -154,8 +153,8 @@ const rollbackResponseFunction = async (eventObject, args) => {
 
   // Now some bespoke code; specific to how our application needs to deal with this eventObject:
   // const { blockNumber } = eventData;
-  const { root, leafCount } = eventInstance;
-  return mtc.rollback(db, treeHeight, Number(leafCount), root);
+  const { leafCount } = eventInstance;
+  return mtc.rollback(db, treeHeight, Number(leafCount));
 };
 
 /**

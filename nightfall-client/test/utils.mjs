@@ -93,7 +93,7 @@ export async function createBadBlock(badBlockType, block, transactions, args) {
       res = await chai
         .request('http://localhost:8083')
         .get(`/path/${args.leafIndex}`)
-        .send({ contractName: 'Challenges' });
+        .send({ contractName: 'State' });
       badBlock.root = res.body.data[0].value;
       break;
     }

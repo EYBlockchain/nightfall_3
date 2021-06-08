@@ -6,9 +6,10 @@ const MiMC = artifacts.require('MiMC.sol');
 const Structures = artifacts.require('Structures.sol');
 const Config = artifacts.require('Config.sol');
 const Utils = artifacts.require('Utils.sol');
-const ChallengesUtil = artifacts.require('ChallengesUtil.sol')
-// const Proposers = artifacts.require('Proposers.sol')
-const Challenges = artifacts.require('Challenges.sol')
+const ChallengesUtil = artifacts.require('ChallengesUtil.sol');
+const Proposers = artifacts.require('Proposers.sol');
+const Challenges = artifacts.require('Challenges.sol');
+const State = artifacts.require('State.sol');
 
 module.exports = function(deployer) {
   deployer.then(async () => {
@@ -26,7 +27,9 @@ module.exports = function(deployer) {
     await deployer.link(Utils, [Shield,Challenges,ChallengesUtil]);
     await deployer.deploy(ChallengesUtil);
     await deployer.link(ChallengesUtil, Challenges);
+    await deployer.deploy(Proposers)
     await deployer.deploy(Challenges);
-    await deployer.deploy(Shield,Challenges.address);
+    await deployer.deploy(Shield);
+    await deployer.deploy(State, Proposers.address, Challenges.address, Shield.address);
   });
 };

@@ -96,7 +96,6 @@ library ChallengesUtil {
         transaction.commitments.length != 1 ||
         nZeroNullifiers == 0 ||
         /* transaction.nullifiers.length != 0 || // TODO in NO */
-        transaction.historicRoot != ZERO ||
         nZeroProof > 0,
         'This deposit transaction type is valid'
       );
@@ -132,7 +131,6 @@ library ChallengesUtil {
         transaction.commitments.length != 1 ||
         nZeroNullifiers > 0 ||
         transaction.nullifiers.length != 1 ||
-        transaction.historicRoot == ZERO ||
         nZeroProof > 0,
         'This single transfer transaction type is valid'
       );
@@ -168,7 +166,6 @@ library ChallengesUtil {
         transaction.commitments.length != 2 ||
         nZeroNullifiers > 0 ||
         transaction.nullifiers.length != 2 ||
-        transaction.historicRoot == ZERO ||
         nZeroProof > 0,
         'This double transfer transaction type is valid'
       );
@@ -203,7 +200,6 @@ library ChallengesUtil {
         /* transaction.commitments.length != 0 || // TODO in NO */
         nZeroNullifiers > 0 ||
         transaction.nullifiers.length != 1 ||
-        transaction.historicRoot == ZERO ||
         nZeroProof > 0,
         'This withdraw transaction type is valid'
       );
@@ -211,16 +207,17 @@ library ChallengesUtil {
 
     // the transaction type deposit is challenged to not be valid
     function libChallengePublicInputHash(
-      Structures.Transaction memory transaction
+      Structures.Transaction memory transaction,
+      bytes32 historicRoot
     ) public pure {
       if(transaction.transactionType == Structures.TransactionTypes.DEPOSIT)
         libChallengePublicInputHashDeposit(transaction);
       else if(transaction.transactionType == Structures.TransactionTypes.SINGLE_TRANSFER)
-        libChallengePublicInputHashSingleTransfer(transaction);
+        libChallengePublicInputHashSingleTransfer(transaction, historicRoot);
       else if(transaction.transactionType == Structures.TransactionTypes.DOUBLE_TRANSFER)
-        libChallengePublicInputHashDoubleTransfer(transaction);
+        libChallengePublicInputHashDoubleTransfer(transaction, historicRoot);
       else // if(transaction.transactionType == TransactionTypes.WITHDRAW)
-        libChallengePublicInputHashWithdraw(transaction);
+        libChallengePublicInputHashWithdraw(transaction, historicRoot);
     }
 
     // the transaction type withdraw is challenged to not be valid
@@ -237,11 +234,12 @@ library ChallengesUtil {
 
     // the transaction type withdraw is challenged to not be valid
     function libChallengePublicInputHashSingleTransfer(
-      Structures.Transaction memory transaction
+      Structures.Transaction memory transaction,
+      bytes32 historicRoot
     ) public pure {
       require(
         transaction.publicInputHash != sha256(
-          abi.encodePacked(transaction.ercAddress, transaction.commitments, transaction.nullifiers, transaction.historicRoot)
+          abi.encodePacked(transaction.ercAddress, transaction.commitments, transaction.nullifiers, historicRoot)
         ) & 0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff, // select 248 bits of the sha256 calculated
         "publicInputHash for single transfer is correct"
       );
@@ -249,11 +247,12 @@ library ChallengesUtil {
 
     // the transaction type withdraw is challenged to not be valid
     function libChallengePublicInputHashDoubleTransfer(
-      Structures.Transaction memory transaction
+      Structures.Transaction memory transaction,
+      bytes32 historicRoot
     ) public pure {
       require(
         transaction.publicInputHash != sha256(
-          abi.encodePacked(transaction.ercAddress, transaction.ercAddress, transaction.commitments, transaction.nullifiers, transaction.historicRoot)
+          abi.encodePacked(transaction.ercAddress, transaction.ercAddress, transaction.commitments, transaction.nullifiers, historicRoot)
         ) & 0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff, // select 248 bits of the sha256 calculated
         "publicInputHash for double transfer is correct"
       );
@@ -261,11 +260,12 @@ library ChallengesUtil {
 
     // the transaction type withdraw is challenged to not be valid
     function libChallengePublicInputHashWithdraw(
-      Structures.Transaction memory transaction
+      Structures.Transaction memory transaction,
+      bytes32 historicRoot
     ) public pure {
       require(
         transaction.publicInputHash != sha256(
-          abi.encodePacked(transaction.ercAddress, transaction.tokenId, transaction.value, transaction.nullifiers, transaction.recipientAddress, transaction.historicRoot)
+          abi.encodePacked(transaction.ercAddress, transaction.tokenId, transaction.value, transaction.nullifiers, transaction.recipientAddress, historicRoot)
         ) & 0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff, // select 248 bits of the sha256 calculated
         "publicInputHash for withdraw is correct"
       );

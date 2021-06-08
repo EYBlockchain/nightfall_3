@@ -45,7 +45,9 @@ export default class HistoryService {
   }
 
   async getTreeHistoryByCurrentLeafCount(currentLeafCount) {
-    logger.debug('src/db/service/metadata.service getTreeHistory()');
+    logger.debug(
+      `src/db/service/history.service getTreeHistoryByCurrentLeafCount(${currentLeafCount})`,
+    );
     const docs = await this.db.getDoc(COLLECTIONS.HISTORY, {
       currentLeafCount,
     });

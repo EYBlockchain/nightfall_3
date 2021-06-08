@@ -17,7 +17,7 @@ contract Structures {
 
   event BlockDeleted(bytes32 indexed blockHash);
 
-  event BlockProposed(uint currentLeafCount);
+  event BlockProposed();
 
   event TransactionSubmitted();
 
@@ -41,6 +41,7 @@ contract Structures {
   // nullifiers for a Deposit transaction.
   struct Transaction {
     uint64 value;
+    uint64 historicRootBlockNumberL2; // number of L2 block containing historic root
     TransactionTypes transactionType;
     bytes32 publicInputHash;
     bytes32 tokenId;
@@ -48,7 +49,6 @@ contract Structures {
     bytes32 recipientAddress;
     bytes32[2] commitments;
     bytes32[2] nullifiers;
-    bytes32 historicRoot; // the root (if any) used to create the proof
     uint[4] proof;
   }
 
@@ -57,13 +57,20 @@ contract Structures {
     bytes32 root; // the 'output' commmitment root after adding all commitments
     uint64 leafCount;
     uint64 nCommitments;
+    uint64 blockNumberL2;
   }
 
+/*
   struct LinkedHash {
     bytes32 thisHash;
     bytes32 previousHash;
     bytes32 nextHash;
     uint data; // metadata (currently holds the block time)
+  }
+*/
+  struct BlockData {
+    bytes32 blockHash; // hash of the block
+    uint time; // time the block was created
   }
 
   struct LinkedAddress {

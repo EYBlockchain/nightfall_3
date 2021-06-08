@@ -6,7 +6,14 @@ import config from 'config';
 import { getContractInstance, getContractAddress } from '../utils/contract.mjs';
 import logger from '../utils/logger.mjs';
 
-const { SHIELD_CONTRACT_NAME, RETRIES, WEBSOCKET_PORT, CHALLENGES_CONTRACT_NAME } = config;
+const {
+  PROPOSERS_CONTRACT_NAME,
+  SHIELD_CONTRACT_NAME,
+  RETRIES,
+  WEBSOCKET_PORT,
+  CHALLENGES_CONTRACT_NAME,
+  STATE_CONTRACT_NAME,
+} = config;
 const wss = new WebSocket.Server({ port: WEBSOCKET_PORT });
 
 /**
@@ -69,7 +76,7 @@ export async function waitForContract(contractName) {
 }
 
 export async function subscribeToBlockProposedEvent(callback, ...args) {
-  const emitter = (await waitForContract(CHALLENGES_CONTRACT_NAME)).events.BlockProposed();
+  const emitter = (await waitForContract(STATE_CONTRACT_NAME)).events.BlockProposed();
   emitter.on('data', event => callback(event, args));
   logger.debug('Subscribed to BlockProposed event');
   return emitter;
@@ -83,7 +90,7 @@ export async function subscribeToTransactionSubmitted(callback, ...args) {
 }
 
 export async function subscribeToNewCurrentProposer(callback, ...args) {
-  const emitter = (await waitForContract(CHALLENGES_CONTRACT_NAME)).events.NewCurrentProposer();
+  const emitter = (await waitForContract(PROPOSERS_CONTRACT_NAME)).events.NewCurrentProposer();
   emitter.on('data', event => callback(event, args));
   logger.debug('Subscribed to NewCurrentProposer event');
   return emitter;

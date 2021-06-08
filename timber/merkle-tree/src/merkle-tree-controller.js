@@ -359,12 +359,16 @@ async function rollback(db, treeHeight, leafCount) {
   // let's get the details of where we're going to rollback to
   // const history = await historyService.getTreeHistory(root);
   const history = await historyService.getTreeHistoryByCurrentLeafCount(leafCount);
+  logger.debug(`Found history for leafCount ${leafCount}, ${JSON.stringify(history, null, 2)}`);
   // We'll actually roll back the metadata so that it's one update behind the
   // new max leaf. Then we'll call update (after this function has run) and
   // that will recompute the changed hashes in the tree, just as if we'd added
   // a new leaf.  We'll need the prior history so that we can do that reset of
   // the metadata.
   const priorHistory = await historyService.getTreeHistory(history.oldRoot);
+  logger.debug(
+    `Found priorHistory for leafCount ${leafCount}, ${JSON.stringify(priorHistory, null, 2)}`,
+  );
 
   if (leafCount !== history.currentLeafCount)
     throw new Error(
