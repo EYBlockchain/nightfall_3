@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import zokrates from '@eyblockchain/zokrates-zexe.js';
+import { compile, setup, extractVk } from '../zokrates-lib/index.mjs';
 import rabbitmq from '../utils/rabbitmq.mjs';
 import logger from '../utils/logger.mjs';
 
@@ -27,7 +27,7 @@ export default async function({
   );
 
   logger.info('Compile...');
-  await zokrates.compile(
+  await compile(
     `${circuitsPath}/${filepath}`,
     `${outputPath}/${circuitDir}`,
     `${circuitName}_out`,
@@ -35,7 +35,7 @@ export default async function({
   );
 
   logger.info('Setup...');
-  await zokrates.setup(
+  await setup(
     `${outputPath}/${circuitDir}/${circuitName}_out`,
     `${outputPath}/${circuitDir}`,
     provingScheme,
@@ -44,7 +44,7 @@ export default async function({
     `${circuitName}_pk`,
   );
 
-  const vk = await zokrates.extractVk(`${outputPath}/${circuitDir}/${circuitName}_vk.key`);
+  const vk = await extractVk(`${outputPath}/${circuitDir}/${circuitName}_vk.key`);
 
   logger.info(`Complete ${filepath}`);
   return { vk, filepath };
