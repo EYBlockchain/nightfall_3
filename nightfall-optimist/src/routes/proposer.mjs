@@ -218,9 +218,7 @@ router.post('/transfer', async (req, res) => {
       case 1:
       case 2:
       case 3: {
-        await transactionSubmittedEventHandler({
-          returnValues: { transaction },
-        });
+        await transactionSubmittedEventHandler({ offchain: true, ...transaction });
         res.sendStatus(200);
         break;
       }

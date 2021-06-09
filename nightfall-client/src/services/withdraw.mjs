@@ -34,9 +34,8 @@ async function withdraw(transferParams) {
   logger.info('Creating a withdraw transaction');
   // let's extract the input items
   const { offchain = false, ...items } = transferParams;
-  const { ercAddress, tokenId, value, recipientAddress, senderZkpPrivateKey, fee } = generalise(
-    items,
-  );
+  const { ercAddress, tokenId, value, recipientAddress, senderZkpPrivateKey, fee } =
+    generalise(items);
   const senderZkpPublicKey = sha256([senderZkpPrivateKey]);
 
   // the first thing we need to do is to find and input commitment which
@@ -132,6 +131,9 @@ async function withdraw(transferParams) {
           });
       });
       markNullified(oldCommitment);
+      const th = optimisticWithdrawTransaction.transactionHash;
+      delete optimisticWithdrawTransaction.transactionHash;
+      optimisticWithdrawTransaction.transactionHash = th;
       return { transaction: optimisticWithdrawTransaction };
     }
     console.log('OPTIMISTIC WITHDRAW TX', optimisticWithdrawTransaction);

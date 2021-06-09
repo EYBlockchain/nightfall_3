@@ -7,15 +7,12 @@ import mongo from '../utils/mongo.mjs';
 import logger from '../utils/logger.mjs';
 import { getContractInstance } from '../utils/contract.mjs';
 
-const { MONGO_URL, COMMITMENTS_DB, PEERS_COLLECTION, CHALLENGES_CONTRACT_NAME } = config;
+const { MONGO_URL, COMMITMENTS_DB, PEERS_COLLECTION, STATE_CONTRACT_NAME } = config;
 
-const retrievePeers = async () => {
+export const retrievePeers = async () => {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
-  return db
-    .collection(PEERS_COLLECTION)
-    .find()
-    .toArray();
+  return db.collection(PEERS_COLLECTION).find().toArray();
 };
 
 export const savePeers = async peers => {
@@ -43,7 +40,7 @@ const connectRelay = async relayAddress => {
 };
 
 const getProposers = async () => {
-  const proposersContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
+  const proposersContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
   const currentProposer = await proposersContractInstance.methods.currentProposer().call();
   const proposerList = [currentProposer.thisAddress];
   let nextProposer = await proposersContractInstance.methods
@@ -51,6 +48,7 @@ const getProposers = async () => {
     .call();
   while (currentProposer.thisAddress !== nextProposer.thisAddress) {
     proposerList.push(nextProposer.thisAddress);
+    // eslint-disable-next-line no-await-in-loop
     nextProposer = await proposersContractInstance.methods
       .proposers(nextProposer.nextAddress)
       .call();

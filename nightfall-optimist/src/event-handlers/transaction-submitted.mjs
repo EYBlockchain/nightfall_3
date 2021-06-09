@@ -11,9 +11,12 @@ import { getTransactionSubmittedCalldata } from '../services/process-calldata.mj
 /**
 This handler runs whenever a new transaction is submitted to the blockchain
 */
-async function transactionSubmittedEventHandler(data) {
+async function transactionSubmittedEventHandler(eventParams) {
   // const transaction = mappedTransaction(data);
-  const transaction = await getTransactionSubmittedCalldata(data);
+  const { offchain = false, ...data } = eventParams;
+  let transaction;
+  if (offchain) transaction = data;
+  else transaction = await getTransactionSubmittedCalldata(data);
   logger.info(`Transaction Handler - New transaction received.`);
   logger.debug(`Transaction was ${JSON.stringify(transaction, null, 2)}`);
   // check that this is a valid transaction before we incorporate it into our
