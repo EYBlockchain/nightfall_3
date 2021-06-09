@@ -143,56 +143,23 @@ describe('Testing the http API', () => {
     // blocks should be directly submitted to the blockchain, not queued
     blockSubmissionFunction = (a, b, c, d, e) => submitTransaction(a, b, c, d, e);
     it('should deposit some crypto into a ZKP commitment', async () => {
-      const res = await chai.request(url).post('/deposit').send({
-        ercAddress,
-        tokenId,
-        value,
-        zkpPublicKey,
-        fee,
-      });
-      txDataToSign = res.body.txDataToSign;
-      expect(txDataToSign).to.be.a('string');
-      // now we need to sign the transaction and send it to the blockchain
-      const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
-      expect(receipt).to.have.property('transactionHash');
-      expect(receipt).to.have.property('blockHash');
-      console.log(`Gas used was ${Number(receipt.gasUsed)}`);
-      // give Timber time to respond to the blockchain event
-      await new Promise(resolve => setTimeout(resolve, 5000));
-    });
-
-    it('should deposit some more crypto (we need a second token for the double transfer test) into a ZKP commitment ', async () => {
-      const res = await chai.request(url).post('/deposit').send({
-        ercAddress,
-        tokenId,
-        value,
-        zkpPublicKey,
-      });
-      txDataToSign = res.body.txDataToSign;
-      expect(txDataToSign).to.be.a('string');
-      // now we need to sign the transaction and send it to the blockchain
-      const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
-      expect(receipt).to.have.property('transactionHash');
-      expect(receipt).to.have.property('blockHash');
-      console.log(`Gas used was ${Number(receipt.gasUsed)}`);
-      // give Timber time to respond to the blockchain event
-      await new Promise(resolve => setTimeout(resolve, 5000));
-    });
-
-    it('should deposit yet more crypto (we need another token to test withdraw) into a ZKP commitment', async () => {
-      const res = await chai.request(url).post('/deposit').send({
-        ercAddress,
-        tokenId,
-        value,
-        zkpPublicKey,
-      });
-      txDataToSign = res.body.txDataToSign;
-      expect(txDataToSign).to.be.a('string');
-      // now we need to sign the transaction and send it to the blockchain
-      const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
-      expect(receipt).to.have.property('transactionHash');
-      expect(receipt).to.have.property('blockHash');
-      console.log(`Gas used was ${Number(receipt.gasUsed)}`);
+      for (let i = 0; i < 3; i++) {
+        const res = await chai.request(url).post('/deposit').send({
+          ercAddress,
+          tokenId,
+          value,
+          zkpPublicKey,
+          fee,
+        });
+        txDataToSign = res.body.txDataToSign;
+        expect(txDataToSign).to.be.a('string');
+        // now we need to sign the transaction and send it to the blockchain
+        const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
+        expect(receipt).to.have.property('transactionHash');
+        expect(receipt).to.have.property('blockHash');
+        console.log(`Gas used was ${Number(receipt.gasUsed)}`);
+        // give Timber time to respond to the blockchain event
+      }
     });
   });
 
@@ -200,6 +167,7 @@ describe('Testing the http API', () => {
   describe('Single transfer tests', () => {
     let txDataToSign;
     it('should transfer some crypto (back to us) using ZKP', async () => {
+      await new Promise(resolve => setTimeout(resolve, 5000));
       const res = await chai
         .request(url)
         .post('/transfer')
@@ -223,11 +191,60 @@ describe('Testing the http API', () => {
       // give Timber time to respond to the blockchain event
       await new Promise(resolve => setTimeout(resolve, 5000));
     });
+
+    it('should send a single transfer directly to a proposer - offchain', async () => {
+      const res = await chai
+        .request(url)
+        .post('/transfer')
+        .send({
+          offchain: true,
+          ercAddress,
+          tokenId,
+          recipientData: {
+            values: [value],
+            recipientZkpPublicKeys: [zkpPublicKey],
+          },
+          senderZkpPrivateKey: zkpPrivateKey,
+          fee,
+        });
+      expect(res.status).to.be.equal(200);
+      console.log(`Offchain single transfer success`);
+      // give Timber time to respond to the blockchain event
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    });
   });
 
   // now we can do the double transfer
   describe('Double transfer tests', () => {
+    let txDataToSign;
     it('should transfer some crypto (back to us) using ZKP', async () => {
+      // give the last block time to be submitted, or we won't have enough
+      // commitments in the Merkle tree to use for the double transfer.
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      const res = await chai
+        .request(url)
+        .post('/transfer')
+        .send({
+          ercAddress,
+          tokenId,
+          recipientData: {
+            values: [value2],
+            recipientZkpPublicKeys: [zkpPublicKey],
+          },
+          senderZkpPrivateKey: zkpPrivateKey,
+        });
+      // now we need to sign the transaction and send it to the blockchain
+      txDataToSign = res.body.txDataToSign;
+      expect(txDataToSign).to.be.a('string');
+      // now we need to sign the transaction and send it to the blockchain
+      const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
+      expect(receipt).to.have.property('transactionHash');
+      expect(receipt).to.have.property('blockHash');
+      console.log(`Gas used was ${Number(receipt.gasUsed)}`);
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    });
+
+    it('should send a double transfer directly to a proposer - offchain', async () => {
       // give the last block time to be submitted, or we won't have enough
       // commitments in the Merkle tree to use for the double transfer.
       await new Promise(resolve => setTimeout(resolve, 5000));
@@ -245,16 +262,31 @@ describe('Testing the http API', () => {
           senderZkpPrivateKey: zkpPrivateKey,
         });
       expect(res.status).to.be.equal(200);
-      // now we need to sign the transaction and send it to the blockchain
-      // const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
-      // expect(receipt).to.have.property('transactionHash');
-      // expect(receipt).to.have.property('blockHash');
-      // console.log(`Gas used was ${Number(receipt.gasUsed)}`);
+      console.log(`Offchain Double transfer success`);
       await new Promise(resolve => setTimeout(resolve, 5000));
     });
   });
 
   describe('Withdraw tests', () => {
+    // let txDataToSign;
+    // it('should withdraw some crypto from a ZKP commitment', async () => {
+    //   const res = await chai.request(url).post('/withdraw').send({
+    //     ercAddress,
+    //     tokenId,
+    //     value,
+    //     senderZkpPrivateKey: zkpPrivateKey,
+    //     recipientAddress,
+    //   });
+    //   txDataToSign = res.body.txDataToSign;
+    //   transactions.push(res.body.transaction); // a new transaction
+    //   expect(txDataToSign).to.be.a('string');
+    //   // now we need to sign the transaction and send it to the blockchain
+    //   const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
+    //   expect(receipt).to.have.property('transactionHash');
+    //   expect(receipt).to.have.property('blockHash');
+    //   console.log(`Gas used was ${Number(receipt.gasUsed)}`);
+    // });
+
     it('should withdraw some crypto from a ZKP commitment', async () => {
       const res = await chai.request(url).post('/withdraw').send({
         offchain: true,
@@ -266,12 +298,6 @@ describe('Testing the http API', () => {
       });
       expect(res.status).to.be.equal(200);
       transactions.push(res.body.transaction); // a new transaction
-      // expect(transaction).to.be.a('string');
-      // now we need to sign the transaction and send it to the blockchain
-      // const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
-      // expect(receipt).to.have.property('transactionHash');
-      // expect(receipt).to.have.property('blockHash');
-      // console.log(`Gas used was ${Number(receipt.gasUsed)}`);
     });
   });
 
@@ -288,6 +314,7 @@ describe('Testing the http API', () => {
       // every five seconds.
       let i = 0;
       const withdrawTransactionHash = transactions[0].transactionHash;
+      // const offchainTransactionHash = transactions[1].transactionHash;
       do {
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 1000));

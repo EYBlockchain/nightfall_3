@@ -158,8 +158,8 @@ describe('Testing the challenge http API', () => {
             res = await createBadBlock('IncorrectProof', block, transactions, {
               proof: duplicateTransaction.proof,
             });
-            topicsBlockHashesDuplicateNullifier = res.block.blockHash;
-            topicsRootDuplicateNullifier = res.block.root;
+            topicsBlockHashesIncorrectProof = res.block.blockHash;
+            topicsRootIncorrectProof = res.block.root;
             txDataToSign = res.txDataToSign;
             console.log(
               `Created flawed block with incorrect proof and blockHash ${res.block.blockHash}`,
@@ -404,6 +404,17 @@ describe('Testing the challenge http API', () => {
 
   describe('Challenge 4: Incorrect public input hash', async () => {
     it('Should delete the flawed block', async () => {
+      const res = await chai.request(url).post('/deposit').send({
+        ercAddress,
+        tokenId,
+        value,
+        zkpPublicKey,
+        fee,
+      });
+      const { txDataToSign } = res.body;
+      // now we need to sign the transaction and send it to the blockchain
+      await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
+
       const events = await web3.eth.getPastLogs({
         fromBlock: web3.utils.toHex(0),
         address: challengeAddress,
