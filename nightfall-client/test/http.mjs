@@ -268,36 +268,23 @@ describe('Testing the http API', () => {
   });
 
   describe('Withdraw tests', () => {
-    // let txDataToSign;
-    // it('should withdraw some crypto from a ZKP commitment', async () => {
-    //   const res = await chai.request(url).post('/withdraw').send({
-    //     ercAddress,
-    //     tokenId,
-    //     value,
-    //     senderZkpPrivateKey: zkpPrivateKey,
-    //     recipientAddress,
-    //   });
-    //   txDataToSign = res.body.txDataToSign;
-    //   transactions.push(res.body.transaction); // a new transaction
-    //   expect(txDataToSign).to.be.a('string');
-    //   // now we need to sign the transaction and send it to the blockchain
-    //   const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
-    //   expect(receipt).to.have.property('transactionHash');
-    //   expect(receipt).to.have.property('blockHash');
-    //   console.log(`Gas used was ${Number(receipt.gasUsed)}`);
-    // });
-
+    let txDataToSign;
     it('should withdraw some crypto from a ZKP commitment', async () => {
       const res = await chai.request(url).post('/withdraw').send({
-        offchain: true,
         ercAddress,
         tokenId,
         value,
         senderZkpPrivateKey: zkpPrivateKey,
         recipientAddress,
       });
-      expect(res.status).to.be.equal(200);
+      txDataToSign = res.body.txDataToSign;
       transactions.push(res.body.transaction); // a new transaction
+      expect(txDataToSign).to.be.a('string');
+      // now we need to sign the transaction and send it to the blockchain
+      const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
+      expect(receipt).to.have.property('transactionHash');
+      expect(receipt).to.have.property('blockHash');
+      console.log(`Gas used was ${Number(receipt.gasUsed)}`);
     });
   });
 
