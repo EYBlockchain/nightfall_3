@@ -7,7 +7,6 @@ import config from 'config';
 import fs from 'fs';
 import path from 'path';
 import logger from './utils/logger.mjs';
-import Web3 from './utils/web3.mjs';
 import { waitForContract } from './utils/contract.mjs';
 
 const fsPromises = fs.promises;
@@ -21,12 +20,14 @@ async function waitForZokrates() {
   logger.info('checking for zokrates_worker');
   try {
     while (
+      // eslint-disable-next-line no-await-in-loop
       (await axios.get(`${config.PROTOCOL}${config.ZOKRATES_WORKER_HOST}/healthcheck`)).status !==
       200
     ) {
       logger.warn(
         `No response from zokratesworker yet.  That's ok. We'll wait three seconds and try again...`,
       );
+      // eslint-disable-next-line no-await-in-loop
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
   } catch (err) {
@@ -60,24 +61,34 @@ This calls the /generateKeys endpoint on a zokrates microservice container to do
 */
 async function setupCircuits() {
   // do all the trusted setups needed
-  const circuitsToSetup = await (await walk(config.CIRCUITS_HOME)).filter(c =>
-    config.USE_STUBS ? c.includes('_stub') : !c.includes('_stub'),
-  );
+  // first, we need to find the circuits we're going to do the setup on
+  const circuitsToSetup = await (
+    await walk(config.CIRCUITS_HOME)
+  ).filter(c => (config.USE_STUBS ? c.includes('_stub') : !c.includes('_stub')));
+  // then we'll get all of the vks (some may not exist but we'll handle that in
+  // a moments). We'll grab promises and then resolve them after the loop.
+  const resp = [];
   for (const circuit of circuitsToSetup) {
-    // first check if a vk already exists
-    let vk;
     logger.debug(`checking for existing setup for ${circuit}`);
     const folderpath = circuit.slice(0, -4); // remove the .zok extension
-    const res1 = await axios.get(`${config.PROTOCOL}${config.ZOKRATES_WORKER_HOST}/vk`, {
-      params: { folderpath },
-    });
-    vk = res1.data.vk;
-    if (!vk || config.ALWAYS_DO_TRUSTED_SETUP) {
-      // we don't have an existing vk so let's generate one
+    resp.push(
+      axios.get(`${config.PROTOCOL}${config.ZOKRATES_WORKER_HOST}/vk`, {
+        params: { folderpath },
+      }),
+    );
+  }
+  const vks = (await Promise.all(resp)).map(r => r.data.vk);
+  // some or all of the vks will be undefined, so we need to run a trusted setup
+  // on these
+  for (let i = 0; i < vks.length; i++) {
+    const circuit = circuitsToSetup[i];
+    if (!vks[i] || config.ALWAYS_DO_TRUSTED_SETUP) {
+      // we don't have an existing vk so let's generate one (TODO in parallel)
       try {
         logger.info(
           `no existing verification key. Fear not, I will make a new one: calling generate keys on ${circuit}`,
         );
+        // eslint-disable-next-line no-await-in-loop
         const res2 = await axios.post(
           `${config.PROTOCOL}${config.ZOKRATES_WORKER_HOST}/generate-keys`,
           {
@@ -87,32 +98,41 @@ async function setupCircuits() {
             backend: config.BACKEND,
           },
         );
-        vk = res2.data.vk;
+        vks[i] = res2.data.vk;
       } catch (err) {
         logger.error(err);
       }
     } else logger.info(`${circuit} verification key exists: trusted setup skipped`);
-    // we should register the vk now
+  }
+  // we should register the vk now
+  const keyRegistry = await waitForContract('Challenges');
+  const registrationPromises = [];
+  for (let i = 0; i < vks.length; i++) {
+    const circuit = circuitsToSetup[i];
+    const vk = vks[i];
     logger.info(`Registering verification key for ${circuit}`);
     try {
       delete vk.raw; // long and not needed
       logger.silly('vk:', vk);
-      const vkArray = Object.values(vk).flat(Infinity); // flatten the Vk array of arrays because that's how Shield.sol likes it.  I see no need for decimal conversion here - but that may be wrong.
-      const shield = await waitForContract('Challenges');
+      const vkArray = Object.values(vk).flat(Infinity); // flatten the Vk array of arrays because that's how Key_registry.sol likes it.
+      const folderpath = circuit.slice(0, -4); // remove the .zok extension
       if (config.USE_STUBS) {
-        await shield.methods
-          .registerVerificationKey(vkArray, config.VK_IDS[folderpath.slice(0, -5)]) // register without the _stub
-          .send();
+        registrationPromises.push(
+          keyRegistry.methods
+            .registerVerificationKey(vkArray, config.VK_IDS[folderpath.slice(0, -5)]) // register without the _stub
+            .send(),
+        );
       } else {
-        await shield.methods.registerVerificationKey(vkArray, config.VK_IDS[folderpath]).send();
+        registrationPromises.push(
+          keyRegistry.methods.registerVerificationKey(vkArray, config.VK_IDS[folderpath]).send(),
+        );
       }
     } catch (err) {
       logger.error(err);
       throw new Error(err);
     }
   }
-  // before we finish, start Timber listening
-  // startEventFilter();
+  return Promise.all(registrationPromises);
 }
 
 export default { setupCircuits, waitForZokrates };

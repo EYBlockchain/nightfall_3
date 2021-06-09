@@ -42,8 +42,8 @@ contract State is Structures, Config {
       _;
   }
 
-  function emitRollback( bytes32 root, uint leafCount) public onlyRegistered {
-    emit Rollback(root, leafCount);
+  function emitRollback( bytes32 rootToRollbackTo, uint leafCountToRollbackTo) public onlyRegistered {
+    emit Rollback(rootToRollbackTo, leafCountToRollbackTo);
   }
 
   function setProposer(address addr, LinkedAddress memory proposer) public onlyRegistered {

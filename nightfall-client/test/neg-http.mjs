@@ -492,7 +492,7 @@ describe('Testing the challenge http API', () => {
         await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee); // eslint-disable-line no-await-in-loop
       }
 
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      await new Promise(resolve => setTimeout(resolve, 10000));
       const events = await web3.eth.getPastLogs({
         fromBlock: web3.utils.toHex(0),
         address: challengeAddress,

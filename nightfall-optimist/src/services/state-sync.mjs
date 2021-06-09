@@ -10,6 +10,8 @@ import { getBlockByBlockNumberL2, getBlocks } from './database.mjs';
 import { stopMakingChallenges, startMakingChallenges } from './challenges.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 
+// TODO can we remove these await-in-loops?
+
 const { SHIELD_CONTRACT_NAME, PROPOSERS_CONTRACT_NAME, STATE_CONTRACT_NAME } = config;
 
 export const syncState = async (
@@ -35,24 +37,31 @@ export const syncState = async (
     const pastEvent = splicedList[i];
     switch (pastEvent.event) {
       case 'NewCurrentProposer':
+        // eslint-disable-next-line no-await-in-loop
         await newCurrentProposerEventHandler(pastEvent, [proposer]);
         break;
       case 'NewLeaf':
       case 'Rollback':
       case 'NewLeaves':
+        // eslint-disable-next-line no-await-in-loop
         await callTimberHandler(pastEvent);
         break;
       case 'BlockProposed':
+        // eslint-disable-next-line no-await-in-loop
         await callTimberHandler(pastEvent);
+        // eslint-disable-next-line no-await-in-loop
         await blockProposedEventHandler(pastEvent);
         break;
       case 'CommittedToChallenge':
+        // eslint-disable-next-line no-await-in-loop
         await committedToChallengeEventHandler(pastEvent);
         break;
       case 'BlockDeleted':
+        // eslint-disable-next-line no-await-in-loop
         await blockDeletedEventHandler(pastEvent);
         break;
       case 'TransactionSubmitted':
+        // eslint-disable-next-line no-await-in-loop
         await transactionSubmittedEventHandler(pastEvent);
         break;
       default:
@@ -101,6 +110,7 @@ export const initialBlockSync = async proposer => {
     for (let i = 0; i < missingBlocks.length; i++) {
       const [fromBlock, toBlock] = missingBlocks[i];
       // Sync the state inbetween these blocks
+      // eslint-disable-next-line no-await-in-loop
       await syncState(proposer, fromBlock, toBlock);
     }
     await startMakingChallenges();
