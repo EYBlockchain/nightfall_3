@@ -1,7 +1,6 @@
 import fs from 'fs';
 import path from 'path';
 import { compile, setup, extractVk } from '../zokrates-lib/index.mjs';
-import rabbitmq from '../utils/rabbitmq.mjs';
 import logger from '../utils/logger.mjs';
 
 export default async function generateKeys({

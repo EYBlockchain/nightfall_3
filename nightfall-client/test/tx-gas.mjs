@@ -152,6 +152,7 @@ describe('Testing the http API', () => {
     blockSubmissionFunction = (a, b, c, d, e) => submitTransaction(a, b, c, d, e);
     it('should deposit some crypto into a ZKP commitment', async () => {
       for (let i = 0; i < TRANSACTIONS_PER_BLOCK; i++) {
+        // eslint-disable-next-line no-await-in-loop
         const res = await chai.request(url).post('/deposit').send({
           ercAddress,
           tokenId,
@@ -162,12 +163,13 @@ describe('Testing the http API', () => {
         txDataToSign = res.body.txDataToSign;
         expect(txDataToSign).to.be.a('string');
         // now we need to sign the transaction and send it to the blockchain
+        // eslint-disable-next-line no-await-in-loop
         const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
         expect(receipt).to.have.property('transactionHash');
         expect(receipt).to.have.property('blockHash');
         console.log(`Gas used was ${Number(receipt.gasUsed)}`);
         // give Timber time to respond to the blockchain event
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
       }
     });
   });

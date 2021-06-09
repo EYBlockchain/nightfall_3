@@ -1,3 +1,5 @@
+/* eslint-disable no-await-in-loop */
+
 /**
 Logic for storing and retrieving commitments from a mongo DB.  Abstracted from
 deposit/transfer/withdraw

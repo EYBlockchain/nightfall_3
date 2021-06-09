@@ -59,7 +59,7 @@ async function checkBlock(block, transactions) {
   // check if the transaction is valid - transaction type, public input hash and proof verification are all checked
   for (let i = 0; i < transactions.length; i++) {
     try {
-      await checkTransaction(transactions[i]);
+      await checkTransaction(transactions[i]); // eslint-disable-line no-await-in-loop
     } catch (err) {
       throw new BlockError(
         `The transaction check failed with error: ${err.message}`,

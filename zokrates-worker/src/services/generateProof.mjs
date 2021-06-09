@@ -8,7 +8,7 @@ import logger from '../utils/logger.mjs';
 
 const unlink = util.promisify(fs.unlink);
 
-export default async function generateProof({
+export default async ({
   folderpath,
   inputs,
   transactionInputs,
@@ -16,7 +16,7 @@ export default async function generateProof({
   proofFileName,
   backend = 'ark',
   provingScheme = 'gm17',
-}) {
+}) => {
   const outputPath = `./output`;
   let proof;
   let publicInputs;
@@ -82,4 +82,4 @@ export default async function generateProof({
     transactionInputs,
     type: folderpath,
   };
-}
+};

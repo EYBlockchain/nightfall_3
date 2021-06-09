@@ -1,3 +1,5 @@
+/* eslint-disable no-await-in-loop */
+
 /**
 Module to set up all of the circuits contained in circuits/ to a zokrates
 instance. Note, we don't need to deploy the circuits through a zokrates microservice http interface because we're going to create the volume that the zokrates microservice mounts to hold its circuits, so we'll just pop them straight in there. No one will mind.
