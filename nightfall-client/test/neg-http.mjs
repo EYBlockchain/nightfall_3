@@ -11,6 +11,7 @@ import {
   connectWeb3,
   getAccounts,
   createBadBlock,
+  testForEvents,
 } from './utils.mjs';
 
 const { expect } = chai;
@@ -342,68 +343,55 @@ describe('Testing the challenge http API', () => {
   });
 
   describe('Challenge 1: Incorrect root challenge', () => {
-    it('Should delete the flawed block', async () => {
-      await new Promise(resolve => setTimeout(resolve, 5000));
-      const events = await web3.eth.getPastLogs({
-        fromBlock: web3.utils.toHex(0),
-        address: challengeAddress,
-        topics: [web3.utils.sha3('BlockDeleted(bytes32)'), topicsBlockHashesIncorrectRootInBlock],
-      });
+    it('Should delete the flawed block and rollback the leaves', async () => {
+      const events = await testForEvents(
+        challengeAddress,
+        'BlockDeleted(bytes32)',
+        topicsBlockHashesIncorrectRootInBlock,
+      );
       expect(events.length).not.to.equal(0);
-      expect(events[0]).to.have.property('transactionHash');
     });
     it('Should rollback the flawed leaves', async () => {
-      const events = await web3.eth.getPastLogs({
-        fromBlock: web3.utils.toHex(0),
-        address: stateAddress,
-        topics: [web3.utils.sha3('Rollback(bytes32,uint256)'), topicsRootIncorrectRootInBlock],
-      });
-      expect(events[0]).to.have.property('transactionHash');
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      await testForEvents(
+        stateAddress,
+        'Rollback(bytes32,uint256)',
+        topicsRootIncorrectRootInBlock,
+      );
     });
   });
 
   describe('Challenge 2: Duplicate transaction submitted', () => {
-    it('Should delete the flawed block', async () => {
-      const events = await web3.eth.getPastLogs({
-        fromBlock: web3.utils.toHex(0),
-        address: challengeAddress,
-        topics: [web3.utils.sha3('BlockDeleted(bytes32)'), topicsBlockHashesDuplicateTransaction],
-      });
-      expect(events[0]).to.have.property('transactionHash');
+    it('Should delete the flawed block and rollback the leaves', async () => {
+      await testForEvents(
+        challengeAddress,
+        'BlockDeleted(bytes32)',
+        topicsBlockHashesDuplicateTransaction,
+      );
     });
     it('Should rollback the flawed leaves', async () => {
-      const events = await web3.eth.getPastLogs({
-        fromBlock: web3.utils.toHex(0),
-        address: stateAddress,
-        topics: [web3.utils.sha3('Rollback(bytes32,uint256)'), topicsRootDuplicateTransaction],
-      });
-      expect(events[0]).to.have.property('transactionHash');
+      await testForEvents(
+        stateAddress,
+        'Rollback(bytes32,uint256)',
+        topicsRootDuplicateTransaction,
+      );
     });
   });
 
   describe('Challenge 3: Invalid transaction submitted', () => {
-    it('Should delete the flawed block', async () => {
-      await new Promise(resolve => setTimeout(resolve, 5000));
-      const events = await web3.eth.getPastLogs({
-        fromBlock: web3.utils.toHex(0),
-        address: challengeAddress,
-        topics: [web3.utils.sha3('BlockDeleted(bytes32)'), topicsBlockHashesInvalidTransaction],
-      });
-      expect(events[0]).to.have.property('transactionHash');
+    it('Should delete the flawed block and rollback the leaves', async () => {
+      await testForEvents(
+        challengeAddress,
+        'BlockDeleted(bytes32)',
+        topicsBlockHashesInvalidTransaction,
+      );
     });
     it('Should rollback the flawed leaves', async () => {
-      const events = await web3.eth.getPastLogs({
-        fromBlock: web3.utils.toHex(0),
-        address: stateAddress,
-        topics: [web3.utils.sha3('Rollback(bytes32,uint256)'), topicsRootInvalidTransaction],
-      });
-      expect(events[0]).to.have.property('transactionHash');
+      await testForEvents(stateAddress, 'Rollback(bytes32,uint256)', topicsRootInvalidTransaction);
     });
   });
 
   describe('Challenge 4: Incorrect public input hash', async () => {
-    it('Should delete the flawed block', async () => {
+    it('Should delete the flawed block and rollback the leaves', async () => {
       const res = await chai.request(url).post('/deposit').send({
         ercAddress,
         tokenId,
@@ -414,30 +402,24 @@ describe('Testing the challenge http API', () => {
       const { txDataToSign } = res.body;
       // now we need to sign the transaction and send it to the blockchain
       await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
-
-      const events = await web3.eth.getPastLogs({
-        fromBlock: web3.utils.toHex(0),
-        address: challengeAddress,
-        topics: [
-          web3.utils.sha3('BlockDeleted(bytes32)'),
-          topicsBlockHashesIncorrectPublicInputHash,
-        ],
-      });
-      expect(events[0]).to.have.property('transactionHash');
       await new Promise(resolve => setTimeout(resolve, 5000));
+      await testForEvents(
+        challengeAddress,
+        'BlockDeleted(bytes32)',
+        topicsBlockHashesIncorrectPublicInputHash,
+      );
     });
     it('Should rollback the flawed leaves', async () => {
-      const events = await web3.eth.getPastLogs({
-        fromBlock: web3.utils.toHex(0),
-        address: stateAddress,
-        topics: [web3.utils.sha3('Rollback(bytes32,uint256)'), topicsRootIncorrectPublicInputHash],
-      });
-      expect(events[0]).to.have.property('transactionHash');
+      await testForEvents(
+        stateAddress,
+        'Rollback(bytes32,uint256)',
+        topicsRootIncorrectPublicInputHash,
+      );
     });
   });
 
   describe('Challenge 5: Proof verification failure', async () => {
-    it('Should delete the flawed block', async () => {
+    it('Should delete the flawed block and rollback the leaves', async () => {
       // create another transaction to trigger NO's block assembly
       const res = await chai.request(url).post('/deposit').send({
         ercAddress,
@@ -449,30 +431,20 @@ describe('Testing the challenge http API', () => {
       const { txDataToSign } = res.body;
       // now we need to sign the transaction and send it to the blockchain
       await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
-
       await new Promise(resolve => setTimeout(resolve, 5000));
-      const events = await web3.eth.getPastLogs({
-        fromBlock: web3.utils.toHex(0),
-        address: challengeAddress,
-        topics: [web3.utils.sha3('BlockDeleted(bytes32)'), topicsBlockHashesIncorrectProof],
-      });
-      expect(events[0]).to.have.property('transactionHash');
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      await testForEvents(
+        challengeAddress,
+        'BlockDeleted(bytes32)',
+        topicsBlockHashesIncorrectProof,
+      );
     });
     it('Should rollback the flawed leaves', async () => {
-      await new Promise(resolve => setTimeout(resolve, 5000));
-      const events = await web3.eth.getPastLogs({
-        fromBlock: web3.utils.toHex(0),
-        address: stateAddress,
-        topics: [web3.utils.sha3('Rollback(bytes32,uint256)'), topicsRootIncorrectProof],
-      });
-      expect(events[0]).to.have.property('transactionHash');
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      await testForEvents(stateAddress, 'Rollback(bytes32,uint256)', topicsRootIncorrectProof);
     });
   });
 
   describe('Challenge 6: Duplicate Nullifier', async () => {
-    it('Should delete the flawed block', async () => {
+    it('Should delete the flawed block and rollback the leaves', async () => {
       // create two transfers - transfers are preferred here because we want to swap out a nullifier.
       for (let i = 0; i < 2; i++) {
         const res = await chai // eslint-disable-line no-await-in-loop
@@ -489,24 +461,20 @@ describe('Testing the challenge http API', () => {
             fee,
           });
         const { txDataToSign } = res.body;
-        await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee); // eslint-disable-line no-await-in-loop
+        // eslint-disable-next-line no-await-in-loop
+        await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
+        // await new Promise(resolve => setTimeout(resolve, 5000));
+        // eslint-disable-next-line no-await-in-loop
+        await testForEvents(shieldAddress, 'TransactionSubmitted()');
       }
-
-      await new Promise(resolve => setTimeout(resolve, 10000));
-      const events = await web3.eth.getPastLogs({
-        fromBlock: web3.utils.toHex(0),
-        address: challengeAddress,
-        topics: [web3.utils.sha3('BlockDeleted(bytes32)'), topicsBlockHashesDuplicateNullifier],
-      });
-      expect(events[0]).to.have.property('transactionHash');
+      await testForEvents(
+        challengeAddress,
+        'BlockDeleted(bytes32)',
+        topicsBlockHashesDuplicateNullifier,
+      );
     });
     it('Should rollback the flawed leaves', async () => {
-      const events = await web3.eth.getPastLogs({
-        fromBlock: web3.utils.toHex(0),
-        address: stateAddress,
-        topics: [web3.utils.sha3('Rollback(bytes32,uint256)'), topicsRootDuplicateNullifier],
-      });
-      expect(events[0]).to.have.property('transactionHash');
+      await testForEvents(stateAddress, 'Rollback(bytes32,uint256)', topicsRootDuplicateNullifier);
     });
   });
 

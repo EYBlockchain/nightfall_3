@@ -144,3 +144,28 @@ export async function createBadBlock(badBlockType, block, transactions, args) {
     .send({ block: badBlock, transactions: badTransactions });
   return { txDataToSign, block: newBlock, transactions: newTransactions };
 }
+
+export async function testForEvents(contractAddress, eventString, topic, timeOut = 30000) {
+  console.log('Listening for events');
+  const WAIT = 1000;
+  let counter = timeOut / WAIT;
+  let events;
+  while (
+    events === undefined ||
+    events[0] === undefined ||
+    events[0].transactionHash === undefined
+  ) {
+    // eslint-disable-next-line no-await-in-loop
+    events = await web3.eth.getPastLogs({
+      fromBlock: web3.utils.toHex(0),
+      address: contractAddress,
+      topics: [web3.utils.sha3(eventString), topic],
+    });
+    // eslint-disable-next-line no-await-in-loop
+    await new Promise(resolve => setTimeout(resolve, WAIT));
+    counter--;
+    if (counter < 0) throw new Error('No events found before timeout');
+  }
+  console.log('Events found');
+  return events;
+}
