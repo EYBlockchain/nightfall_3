@@ -11,6 +11,7 @@ import {
   getAccounts,
   createBadBlock,
   testForEvents,
+  connectWeb3,
 } from './utils.mjs';
 
 const { expect } = chai;
@@ -53,6 +54,8 @@ describe('Testing the challenge http API', () => {
   let topicsBlockNumberL2DuplicateNullifier;
 
   before(async () => {
+    connectWeb3();
+
     let res;
     let txToSign;
     let counter = 0; // to edit a block to a different bad block type each time a block proposed transaction is received
