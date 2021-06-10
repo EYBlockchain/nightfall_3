@@ -8,7 +8,6 @@ import sha256 from '../src/utils/crypto/sha256.mjs';
 import {
   closeWeb3Connection,
   submitTransaction,
-  connectWeb3,
   getAccounts,
   createBadBlock,
   testForEvents,
@@ -22,7 +21,6 @@ chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
 describe('Testing the challenge http API', () => {
-  let web3;
   let shieldAddress;
   let challengeAddress;
   let proposersAddress;
@@ -47,23 +45,16 @@ describe('Testing the challenge http API', () => {
   const fee = 1;
   const BLOCK_STAKE = 1000000000000000000; // 1 ether
 
-  let topicsBlockHashesIncorrectRootInBlock;
-  let topicsRootIncorrectRootInBlock;
-  let topicsBlockHashesDuplicateTransaction;
-  let topicsRootDuplicateTransaction;
-  let topicsBlockHashesInvalidTransaction;
-  let topicsRootInvalidTransaction;
-  let topicsBlockHashesIncorrectPublicInputHash;
-  let topicsRootIncorrectPublicInputHash;
-  let topicsBlockHashesIncorrectProof;
-  let topicsRootIncorrectProof;
-  let topicsBlockHashesDuplicateNullifier;
-  let topicsRootDuplicateNullifier;
+  let topicsBlockNumberL2IncorrectRootInBlock;
+  let topicsBlockNumberL2DuplicateTransaction;
+  let topicsBlockNumberL2InvalidTransaction;
+  let topicsBlockNumberL2IncorrectPublicInputHash;
+  let topicsBlockNumberL2IncorrectProof;
+  let topicsBlockNumberL2DuplicateNullifier;
 
   before(async () => {
     let res;
     let txToSign;
-    web3 = connectWeb3();
     let counter = 0; // to edit a block to a different bad block type each time a block proposed transaction is received
     let duplicateTransaction;
     let duplicateNullifier;
@@ -120,8 +111,7 @@ describe('Testing the challenge http API', () => {
             res = await createBadBlock('IncorrectRoot', block, transactions, {
               leafIndex: 1,
             });
-            topicsBlockHashesIncorrectRootInBlock = res.block.blockHash;
-            topicsRootIncorrectRootInBlock = res.block.root;
+            topicsBlockNumberL2IncorrectRootInBlock = res.block.blockNumberL2;
             txDataToSign = res.txDataToSign;
             console.log(
               `Created flawed block with incorrect root and blockHash ${res.block.blockHash}`,
@@ -131,8 +121,7 @@ describe('Testing the challenge http API', () => {
             res = await createBadBlock('DuplicateTransaction', block, transactions, {
               duplicateTransaction,
             });
-            topicsBlockHashesDuplicateTransaction = res.block.blockHash;
-            topicsRootDuplicateTransaction = res.block.root;
+            topicsBlockNumberL2DuplicateTransaction = res.block.blockNumberL2;
             txDataToSign = res.txDataToSign;
             console.log(
               `Created flawed block containing duplicate transaction and blockHash ${res.block.blockHash}`,
@@ -140,8 +129,7 @@ describe('Testing the challenge http API', () => {
           } else if (counter === 4) {
             // txDataToSign = msg.txDataToSign;
             res = await createBadBlock('InvalidDepositTransaction', block, transactions);
-            topicsBlockHashesInvalidTransaction = res.block.blockHash;
-            topicsRootInvalidTransaction = res.block.root;
+            topicsBlockNumberL2InvalidTransaction = res.block.blockNumberL2;
             txDataToSign = res.txDataToSign;
             console.log(
               `Created flawed block with invalid deposit transaction and blockHash ${res.block.blockHash}`,
@@ -149,8 +137,7 @@ describe('Testing the challenge http API', () => {
           } else if (counter === 5) {
             // txDataToSign = msg.txDataToSign;
             res = await createBadBlock('IncorrectPublicInputHash', block, transactions);
-            topicsBlockHashesIncorrectPublicInputHash = res.block.blockHash;
-            topicsRootIncorrectPublicInputHash = res.block.root;
+            topicsBlockNumberL2IncorrectPublicInputHash = res.block.blockNumberL2;
             txDataToSign = res.txDataToSign;
             console.log(
               `Created flawed block with incorrect public input hash and blockHash ${res.block.blockHash}`,
@@ -159,8 +146,7 @@ describe('Testing the challenge http API', () => {
             res = await createBadBlock('IncorrectProof', block, transactions, {
               proof: duplicateTransaction.proof,
             });
-            topicsBlockHashesIncorrectProof = res.block.blockHash;
-            topicsRootIncorrectProof = res.block.root;
+            topicsBlockNumberL2IncorrectProof = res.block.blockNumberL2;
             txDataToSign = res.txDataToSign;
             console.log(
               `Created flawed block with incorrect proof and blockHash ${res.block.blockHash}`,
@@ -169,8 +155,8 @@ describe('Testing the challenge http API', () => {
             res = await createBadBlock('DuplicateNullifier', block, transactions, {
               duplicateNullifier,
             });
-            topicsBlockHashesDuplicateNullifier = res.block.blockHash;
-            topicsRootDuplicateNullifier = res.block.root;
+            // topicsBlockHashesDuplicateNullifier = res.block.blockHash;
+            topicsBlockNumberL2DuplicateNullifier = res.block.blockNumberL2;
             txDataToSign = res.txDataToSign;
             console.log(
               `Created flawed block with duplicate nullifier and blockHash ${res.block.blockHash}`,
@@ -344,18 +330,10 @@ describe('Testing the challenge http API', () => {
 
   describe('Challenge 1: Incorrect root challenge', () => {
     it('Should delete the flawed block and rollback the leaves', async () => {
-      const events = await testForEvents(
-        challengeAddress,
-        'BlockDeleted(bytes32)',
-        topicsBlockHashesIncorrectRootInBlock,
-      );
-      expect(events.length).not.to.equal(0);
-    });
-    it('Should rollback the flawed leaves', async () => {
       await testForEvents(
         stateAddress,
-        'Rollback(bytes32,uint256)',
-        topicsRootIncorrectRootInBlock,
+        'Rollback(uint256,uint256)',
+        topicsBlockNumberL2IncorrectRootInBlock,
       );
     });
   });
@@ -363,16 +341,9 @@ describe('Testing the challenge http API', () => {
   describe('Challenge 2: Duplicate transaction submitted', () => {
     it('Should delete the flawed block and rollback the leaves', async () => {
       await testForEvents(
-        challengeAddress,
-        'BlockDeleted(bytes32)',
-        topicsBlockHashesDuplicateTransaction,
-      );
-    });
-    it('Should rollback the flawed leaves', async () => {
-      await testForEvents(
         stateAddress,
-        'Rollback(bytes32,uint256)',
-        topicsRootDuplicateTransaction,
+        'Rollback(uint256,uint256)',
+        topicsBlockNumberL2DuplicateTransaction,
       );
     });
   });
@@ -380,13 +351,10 @@ describe('Testing the challenge http API', () => {
   describe('Challenge 3: Invalid transaction submitted', () => {
     it('Should delete the flawed block and rollback the leaves', async () => {
       await testForEvents(
-        challengeAddress,
-        'BlockDeleted(bytes32)',
-        topicsBlockHashesInvalidTransaction,
+        stateAddress,
+        'Rollback(uint256,uint256)',
+        topicsBlockNumberL2InvalidTransaction,
       );
-    });
-    it('Should rollback the flawed leaves', async () => {
-      await testForEvents(stateAddress, 'Rollback(bytes32,uint256)', topicsRootInvalidTransaction);
     });
   });
 
@@ -404,16 +372,9 @@ describe('Testing the challenge http API', () => {
       await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
       await new Promise(resolve => setTimeout(resolve, 5000));
       await testForEvents(
-        challengeAddress,
-        'BlockDeleted(bytes32)',
-        topicsBlockHashesIncorrectPublicInputHash,
-      );
-    });
-    it('Should rollback the flawed leaves', async () => {
-      await testForEvents(
         stateAddress,
-        'Rollback(bytes32,uint256)',
-        topicsRootIncorrectPublicInputHash,
+        'Rollback(uint256,uint256)',
+        topicsBlockNumberL2IncorrectPublicInputHash,
       );
     });
   });
@@ -433,13 +394,10 @@ describe('Testing the challenge http API', () => {
       await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
       await new Promise(resolve => setTimeout(resolve, 5000));
       await testForEvents(
-        challengeAddress,
-        'BlockDeleted(bytes32)',
-        topicsBlockHashesIncorrectProof,
+        stateAddress,
+        'Rollback(uint256,uint256)',
+        topicsBlockNumberL2IncorrectProof,
       );
-    });
-    it('Should rollback the flawed leaves', async () => {
-      await testForEvents(stateAddress, 'Rollback(bytes32,uint256)', topicsRootIncorrectProof);
     });
   });
 
@@ -463,18 +421,14 @@ describe('Testing the challenge http API', () => {
         const { txDataToSign } = res.body;
         // eslint-disable-next-line no-await-in-loop
         await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
-        // await new Promise(resolve => setTimeout(resolve, 5000));
         // eslint-disable-next-line no-await-in-loop
-        await testForEvents(shieldAddress, 'TransactionSubmitted()');
+        await new Promise(resolve => setTimeout(resolve, 5000));
       }
       await testForEvents(
-        challengeAddress,
-        'BlockDeleted(bytes32)',
-        topicsBlockHashesDuplicateNullifier,
+        stateAddress,
+        'Rollback(uint256,uint256)',
+        topicsBlockNumberL2DuplicateNullifier,
       );
-    });
-    it('Should rollback the flawed leaves', async () => {
-      await testForEvents(stateAddress, 'Rollback(bytes32,uint256)', topicsRootDuplicateNullifier);
     });
   });
 
