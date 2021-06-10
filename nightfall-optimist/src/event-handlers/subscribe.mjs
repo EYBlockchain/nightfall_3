@@ -1,3 +1,5 @@
+/* eslint-disable no-await-in-loop */
+
 /**
  * Module to subscribe to blockchain events
  */

@@ -29,12 +29,7 @@ describe('Arithmetic tests in F_q^2', () => {
     assert.ok(test.equals(fq2));
   });
   it('Should correctly compute the a number raised to a power', () => {
-    const test = fq2
-      .mul(fq2)
-      .mul(fq2)
-      .mul(fq2)
-      .mul(fq2)
-      .mul(fq2);
+    const test = fq2.mul(fq2).mul(fq2).mul(fq2).mul(fq2).mul(fq2);
     const pow = fq2.pow(6n);
     assert.ok(test.equals(pow));
   });

@@ -13,10 +13,5 @@ module.exports = {
   },
   env: {
     mocha: true,
-    es6: true,
-  },
-  parserOptions: {
-    sourceType: 'module',
-    allowImportExportEverywhere: true,
   },
 };

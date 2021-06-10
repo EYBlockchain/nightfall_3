@@ -1,3 +1,5 @@
+/* eslint-disable no-await-in-loop */
+
 import config from 'config';
 import { getContractInstance } from '../utils/contract.mjs';
 import blockProposedEventHandler from '../event-handlers/block-proposed.mjs';

@@ -30,10 +30,12 @@ async function submitProof(folderpath, witness, publicData) {
 }
 
 function getProof(correlationId) {
-  return new Promise((resolve, reject) => {
-    rabbitmq.listenToReplyQueue(replyTo, correlationId, (data) => {
+  return new Promise(resolve => {
+    rabbitmq.listenToReplyQueue(replyTo, correlationId, data => {
       // TODO handle a reject
       resolve(data);
-});
-});
+    });
+  });
 }
+
+export { submitProof, getProof };

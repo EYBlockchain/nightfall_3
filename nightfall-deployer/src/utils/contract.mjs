@@ -100,7 +100,7 @@ export async function waitForContract(contractName) {
   while (errorCount < 50) {
     try {
       error = undefined;
-      const address = await getContractAddress(contractName);
+      const address = await getContractAddress(contractName); // eslint-disable-line no-await-in-loop
       logger.debug(`${contractName} contract address is ${address}`);
       if (address === undefined) throw new Error(`${contractName} contract address was undefined`);
       instance = getContractInstance(contractName, address);
@@ -109,7 +109,7 @@ export async function waitForContract(contractName) {
       error = err;
       errorCount++;
       logger.warn(`Unable to get a ${contractName} contract instance will try again in 3 seconds`);
-      await new Promise(resolve => setTimeout(() => resolve(), 3000));
+      await new Promise(resolve => setTimeout(() => resolve(), 3000)); // eslint-disable-line no-await-in-loop
     }
   }
   if (error) throw error;

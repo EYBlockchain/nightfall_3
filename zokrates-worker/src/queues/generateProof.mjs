@@ -12,14 +12,11 @@ export default function receiveMessage() {
     };
 
     try {
-      response.data = await generateProof(JSON.parse(
-        message.content.toString(),
-      ));
+      response.data = await generateProof(JSON.parse(message.content.toString()));
     } catch (err) {
       logger.error('Error in generate-proof', err);
       response.error = 'Proof generation failed';
     }
-
 
     rabbitmq.sendMessage(replyTo, response, { correlationId });
     rabbitmq.sendACK(message);

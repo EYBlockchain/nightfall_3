@@ -6,7 +6,7 @@
   "scripts": {
     "test": "npx mocha --timeout 0 --bail nightfall-client/test/http.mjs nightfall-client/test/neg-http.mjs",
     "test-gas": "npx mocha --timeout 0 --bail nightfall-client/test/tx-gas.mjs",
-    "lint": "eslint .",
+    "lint": "eslint . --ext js,mjs",
     "prepare": "husky install"
   },
   "repository": {

@@ -1,9 +1,8 @@
 import fs from 'fs';
 
-import rabbitmq from '../utils/rabbitmq.mjs';
 import { untarFiles, deleteFile, getFilesRecursively } from '../utils/filing.mjs';
 
-export default async function(circuits) {
+export default async function loadCircuits(circuits) {
   const outputPath = `./circuits/`;
 
   if (!circuits.name.endsWith('.tar') && !circuits.name.endsWith('.zok')) {

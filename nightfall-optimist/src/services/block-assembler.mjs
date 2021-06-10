@@ -1,3 +1,5 @@
+/* eslint-disable no-await-in-loop */
+
 /**
 This module does all of the heaving lifting for a Proposer: It assembles blocks
 from posted transactions and proposes these blocks.

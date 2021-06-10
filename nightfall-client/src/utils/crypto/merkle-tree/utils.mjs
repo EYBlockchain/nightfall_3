@@ -35,38 +35,6 @@ const mimcCurves = {
   },
 };
 
-/** Helper function for the converting any base to any base
- */
-function convertBase(str, fromBase, toBase) {
-  const digits = parseToDigitsArray(str, fromBase);
-  if (digits === null) return null;
-
-  let outArray = [];
-  let power = [1];
-  for (let i = 0; i < digits.length; i += 1) {
-    // invariant: at this point, fromBase^i = power
-    if (digits[i]) {
-      outArray = add(outArray, multiplyByNumber(digits[i], power, toBase), toBase);
-    }
-    power = multiplyByNumber(fromBase, power, toBase);
-  }
-
-  let out = '';
-  for (let i = outArray.length - 1; i >= 0; i -= 1) {
-    out += outArray[i].toString(toBase);
-  }
-  // if the original input was equivalent to zero, then 'out' will still be empty ''. Let's check for zero.
-  if (out === '') {
-    let sum = 0;
-    for (let i = 0; i < digits.length; i += 1) {
-      sum += digits[i];
-    }
-    if (sum === 0) out = '0';
-  }
-
-  return out;
-}
-
 function parseToDigitsArray(str, base) {
   const digits = str.split('');
   const ary = [];
@@ -117,6 +85,51 @@ function multiplyByNumber(num, x, base) {
   return result;
 }
 
+/** Helper function for the converting any base to any base
+ */
+function convertBase(str, fromBase, toBase) {
+  const digits = parseToDigitsArray(str, fromBase);
+  if (digits === null) return null;
+
+  let outArray = [];
+  let power = [1];
+  for (let i = 0; i < digits.length; i += 1) {
+    // invariant: at this point, fromBase^i = power
+    if (digits[i]) {
+      outArray = add(outArray, multiplyByNumber(digits[i], power, toBase), toBase);
+    }
+    power = multiplyByNumber(fromBase, power, toBase);
+  }
+
+  let out = '';
+  for (let i = outArray.length - 1; i >= 0; i -= 1) {
+    out += outArray[i].toString(toBase);
+  }
+  // if the original input was equivalent to zero, then 'out' will still be empty ''. Let's check for zero.
+  if (out === '') {
+    let sum = 0;
+    for (let i = 0; i < digits.length; i += 1) {
+      sum += digits[i];
+    }
+    if (sum === 0) out = '0';
+  }
+
+  return out;
+}
+
+/**
+utility function to check that a string has a leading 0x (which the Solidity
+compiler uses to check for a hex string).  It adds it if it's not present. If
+it is present then it returns the string unaltered
+*/
+function ensure0x(hex = '') {
+  const hexString = hex.toString();
+  if (typeof hexString === 'string' && hexString.indexOf('0x') !== 0) {
+    return `0x${hexString}`;
+  }
+  return hexString;
+}
+
 // Converts integer value strings to hex values
 function decToHex(decStr) {
   const hex = ensure0x(convertBase(decStr, 10, 16));
@@ -136,19 +149,6 @@ function strip0x(hex) {
 }
 
 /**
-utility function to check that a string has a leading 0x (which the Solidity
-compiler uses to check for a hex string).  It adds it if it's not present. If
-it is present then it returns the string unaltered
-*/
-function ensure0x(hex = '') {
-  const hexString = hex.toString();
-  if (typeof hexString === 'string' && hexString.indexOf('0x') !== 0) {
-    return `0x${hexString}`;
-  }
-  return hexString;
-}
-
-/**
 utility function to check that a string is hexadecimal
 */
 function isHex(value) {
@@ -156,23 +156,6 @@ function isHex(value) {
   if (value.indexOf('0x') !== 0) return false;
   const regexp = /^[0-9a-fA-F]+$/;
   return regexp.test(strip0x(value));
-}
-
-/**
-Utility function to convert a string into a hex representation of fixed length.
-@param {string} str - the string to be converted
-@param {int} outLength - the length of the output hex string in bytes (excluding the 0x)
-if the string is too short to fill the output hex string, it is padded on the left with 0s
-if the string is too long, an error is thrown
-*/
-function utf8StringToHex(str, outLengthBytes) {
-  const outLength = outLengthBytes * 2; // work in characters rather than bytes
-  const buf = Buffer.from(str, 'utf8');
-  let hex = buf.toString('hex');
-  if (outLength < hex.length)
-    throw new Error('String is to long, try increasing the length of the output hex');
-  hex = hex.padStart(outLength, '00');
-  return ensure0x(hex);
 }
 
 /**
@@ -214,7 +197,7 @@ function powerMod(base, exponent, m) {
   let e = exponent;
   while (e > BigInt(0)) {
     if (e % BigInt(2) === BigInt(1)) result = (result * b) % m;
-    e >>= BigInt(1);
+    e >>= BigInt(1); // eslint-disable-line no-bitwise
     b = (b * b) % m;
   }
   return result;
@@ -222,10 +205,7 @@ function powerMod(base, exponent, m) {
 
 function keccak256Hash(item) {
   const preimage = strip0x(item);
-  const h = `0x${createKeccakHash('keccak256')
-    .update(preimage, 'hex')
-    .digest('hex')}`;
-  return h;
+  return `0x${createKeccakHash('keccak256').update(preimage, 'hex').digest('hex')}`;
 }
 
 /**
@@ -280,10 +260,7 @@ function shaHash(...items) {
     .map(item => Buffer.from(strip0x(item), 'hex'))
     .reduce((acc, item) => concatenate(acc, item));
 
-  const h = `0x${crypto
-    .createHash('sha256')
-    .update(concatvalue, 'hex')
-    .digest('hex')}`;
+  const h = `0x${crypto.createHash('sha256').update(concatvalue, 'hex').digest('hex')}`;
   return h;
 }
 

@@ -1,5 +1,4 @@
 import childProcess from 'child_process';
-import fs from 'fs';
 import jsonfile from 'jsonfile';
 
 import { deleteSingleFile } from '../utils/filing.mjs';
@@ -31,7 +30,13 @@ const { writeFile } = jsonfile;
  * @param {String} [options.fileName=proof.json] - Name of JSON proof file ()
  * @returns {Object} JSON of the proof.
  */
-export default async function verify(vk, proof, provingScheme = 'gm17', backend = 'ark', curve = 'bn128') {
+export default async function verify(
+  vk,
+  proof,
+  provingScheme = 'gm17',
+  backend = 'ark',
+  curve = 'bn128',
+) {
   // we've provided a json proof and a verifying key but Zokrates needs to read
   // these from a file. Thus we should write them to temporary unique files.
   // Note: Math.random is used to create unique filename to avoid error at concurrent execution.

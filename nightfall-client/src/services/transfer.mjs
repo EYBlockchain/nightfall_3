@@ -79,7 +79,7 @@ async function transfer(transferParams) {
         ercAddress,
         tokenId,
         value: values[i],
-        salt: await rand(ZKP_KEY_LENGTH),
+        salt: await rand(ZKP_KEY_LENGTH), // eslint-disable-line no-await-in-loop
       }),
     );
   }

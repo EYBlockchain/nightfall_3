@@ -37,10 +37,7 @@ const sha256 = generalValues => {
     .map(item => Buffer.from(strip0x(item.hex(32)), 'hex'))
     .reduce((acc, item) => concatenate(acc, item));
 
-  const h = `0x${crypto
-    .createHash('sha256')
-    .update(preimage, 'hex')
-    .digest('hex')}`;
+  const h = `0x${crypto.createHash('sha256').update(preimage, 'hex').digest('hex')}`;
   return new GN(h);
 };
 

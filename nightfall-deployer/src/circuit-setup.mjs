@@ -1,3 +1,5 @@
+/* eslint-disable no-await-in-loop */
+
 /**
 Module to set up all of the circuits contained in circuits/ to a zokrates
 instance. Note, we don't need to deploy the circuits through a zokrates microservice http interface because we're going to create the volume that the zokrates microservice mounts to hold its circuits, so we'll just pop them straight in there. No one will mind.
@@ -68,6 +70,7 @@ async function setupCircuits() {
   // then we'll get all of the vks (some may not exist but we'll handle that in
   // a moments). We'll grab promises and then resolve them after the loop.
   const resp = [];
+
   for (const circuit of circuitsToSetup) {
     logger.debug(`checking for existing setup for ${circuit}`);
     const folderpath = circuit.slice(0, -4); // remove the .zok extension
