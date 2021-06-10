@@ -8,9 +8,9 @@ import {
   subscribeToTransactionSubmitted,
   transactionSubmittedEventHandler,
   subscribeToBlockAssembledWebSocketConnection,
-  subscribeToBlockDeletedEventHandler,
+  subscribeToRollbackEventHandler,
   subscribeToChallengeWebSocketConnection,
-  blockDeletedEventHandler,
+  rollbackEventHandler,
   subscribeTocommittedToChallengeEventHandler,
   committedToChallengeEventHandler,
 } from './event-handlers/index.mjs';
@@ -39,7 +39,7 @@ const main = async () => {
     // subscribe to blockchain events
     subscribeToBlockProposedEvent(blockProposedEventHandler);
     subscribeToTransactionSubmitted(transactionSubmittedEventHandler);
-    subscribeToBlockDeletedEventHandler(blockDeletedEventHandler);
+    subscribeToRollbackEventHandler(rollbackEventHandler);
     subscribeTocommittedToChallengeEventHandler(committedToChallengeEventHandler);
     app.listen(80);
   } catch (err) {

@@ -157,6 +157,26 @@ export async function deleteBlock(blockHash) {
 }
 
 /**
+function to delete blocks with a layer 2 blockNumber >= blockNumberL2
+*/
+export async function deleteBlocksFromBlockNumberL2(blockNumberL2) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { blockNumberL2: { $gte: Number(blockNumberL2) } };
+  return db.collection(SUBMITTED_BLOCKS_COLLECTION).deleteMany(query);
+}
+
+/**
+function to find blocks with a layer 2 blockNumber >= blockNumberL2
+*/
+export async function findBlocksFromBlockNumberL2(blockNumberL2) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { blockNumberL2: { $gte: Number(blockNumberL2) } };
+  return db.collection(SUBMITTED_BLOCKS_COLLECTION).find(query).toArray();
+}
+
+/**
 function to store addresses of proposers that are registered through this
 app. These are needed because the app needs to know when one of them is the
 current (active) proposer, at which point it will automatically start to

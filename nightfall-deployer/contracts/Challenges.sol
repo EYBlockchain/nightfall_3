@@ -170,7 +170,7 @@ contract Challenges is Stateful, Key_Registry, Config {
     // State.sol because Timber gets confused if its events come from two
     // different contracts (it uses the contract name as part of the db
     // connection - we need to change that).
-    state.emitRollback(badBlock.root, badBlock.leafCount);
+    state.emitRollback(badBlock.blockNumberL2, badBlock.leafCount);
     // as we have a rollback, we need to reset the leafcount to the point
     // where the bad block was created.  Luckily, we noted that value in
     // the block when the block was proposed. It was checked onchain so must be
@@ -191,7 +191,7 @@ contract Challenges is Stateful, Key_Registry, Config {
   function removeBlockHashes(uint blockNumberL2) internal {
     uint lastBlock = state.getNumberOfL2Blocks() - 1;
     for (uint i = lastBlock; i >= blockNumberL2; i--) {
-      emit BlockDeleted(state.popBlockData().blockHash); // TODO - makes more sense to eventually emit the block number, rather than the blockHash.
+      state.popBlockData();
     }
     require(state.getNumberOfL2Blocks() == blockNumberL2, 'After removing blocks, the number remaining is not as expected.');
   }

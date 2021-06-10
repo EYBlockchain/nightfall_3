@@ -105,10 +105,10 @@ export async function subscribeTocommittedToChallengeEventHandler(callback, ...a
   return emitter;
 }
 
-export async function subscribeToBlockDeletedEventHandler(callback, ...args) {
-  const emitter = (await waitForContract(CHALLENGES_CONTRACT_NAME)).events.BlockDeleted();
+export async function subscribeToRollbackEventHandler(callback, ...args) {
+  const emitter = (await waitForContract(STATE_CONTRACT_NAME)).events.Rollback();
   emitter.on('data', event => callback(event, args));
-  logger.debug('Subscribed to BlockDeleted event');
+  logger.debug('Subscribed to Rollback event');
   return emitter;
 }
 

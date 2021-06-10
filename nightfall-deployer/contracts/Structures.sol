@@ -11,7 +11,7 @@ contract Structures {
   enum TransactionTypes { DEPOSIT, SINGLE_TRANSFER, DOUBLE_TRANSFER, WITHDRAW }
 
   event Rollback(
-    bytes32 indexed root,
+    uint indexed blockNumberL2,
     uint leafCount
   );
 
