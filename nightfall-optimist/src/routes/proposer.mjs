@@ -176,7 +176,7 @@ router.post('/encode', async (req, res, next) => {
       }),
     );
 
-    if (block.root == null) {
+    if (!block.root) {
       const frontier = await getFrontier();
       const leafValues = newTransactions
         .map(newTransaction => newTransaction.commitments.filter(c => c !== ZERO))
@@ -193,7 +193,7 @@ router.post('/encode', async (req, res, next) => {
       blockNumberL2,
     };
     newBlock.blockHash = await Block.calcHash(newBlock, newTransactions);
-    logger.debug(`New block assembled ${JSON.stringify(newBlock, null, 2)}`);
+    logger.debug(`New block encoded for test ${JSON.stringify(newBlock, null, 2)}`);
     const txDataToSign = await stateContractInstance.methods
       .proposeBlock(
         Block.buildSolidityStruct(newBlock),

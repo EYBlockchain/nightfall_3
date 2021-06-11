@@ -42,11 +42,15 @@ contract State is Structures, Config {
       _;
   }
 
+  // function to signal a rollback. Note that we include the block hash because
+  // it's uinque, although technically not needed (Optimist consumes the
+  // block number and Timber the leaf count). It's helpful when testing to make
+  // sure we have the correct event.
   function emitRollback(
     uint blockNumberL2ToRollbackTo,
     uint leafCountToRollbackTo
   ) public onlyRegistered {
-    emit Rollback(blockNumberL2ToRollbackTo, leafCountToRollbackTo);
+    emit Rollback(blockHashes[blockNumberL2ToRollbackTo].blockHash, blockNumberL2ToRollbackTo, leafCountToRollbackTo);
   }
 
   function setProposer(address addr, LinkedAddress memory proposer) public onlyRegistered {

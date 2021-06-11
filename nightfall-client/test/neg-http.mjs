@@ -46,15 +46,16 @@ describe('Testing the challenge http API', () => {
   const fee = 1;
   const BLOCK_STAKE = 1000000000000000000; // 1 ether
 
-  let topicsBlockNumberL2IncorrectRootInBlock;
-  let topicsBlockNumberL2DuplicateTransaction;
-  let topicsBlockNumberL2InvalidTransaction;
-  let topicsBlockNumberL2IncorrectPublicInputHash;
-  let topicsBlockNumberL2IncorrectProof;
-  let topicsBlockNumberL2DuplicateNullifier;
+  let topicsBlockHashIncorrectRootInBlock;
+  let topicsBlockHashDuplicateTransaction;
+  let topicsBlockHashInvalidTransaction;
+  let topicsBlockHashIncorrectPublicInputHash;
+  let topicsBlockHashIncorrectProof;
+  let topicsBlockHashDuplicateNullifier;
+  let web3;
 
   before(async () => {
-    connectWeb3();
+    web3 = await connectWeb3();
 
     let res;
     let txToSign;
@@ -114,7 +115,7 @@ describe('Testing the challenge http API', () => {
             res = await createBadBlock('IncorrectRoot', block, transactions, {
               leafIndex: 1,
             });
-            topicsBlockNumberL2IncorrectRootInBlock = res.block.blockNumberL2;
+            topicsBlockHashIncorrectRootInBlock = res.block.blockHash;
             txDataToSign = res.txDataToSign;
             console.log(
               `Created flawed block with incorrect root and blockHash ${res.block.blockHash}`,
@@ -124,7 +125,7 @@ describe('Testing the challenge http API', () => {
             res = await createBadBlock('DuplicateTransaction', block, transactions, {
               duplicateTransaction,
             });
-            topicsBlockNumberL2DuplicateTransaction = res.block.blockNumberL2;
+            topicsBlockHashDuplicateTransaction = res.block.blockHash;
             txDataToSign = res.txDataToSign;
             console.log(
               `Created flawed block containing duplicate transaction and blockHash ${res.block.blockHash}`,
@@ -132,7 +133,7 @@ describe('Testing the challenge http API', () => {
           } else if (counter === 4) {
             // txDataToSign = msg.txDataToSign;
             res = await createBadBlock('InvalidDepositTransaction', block, transactions);
-            topicsBlockNumberL2InvalidTransaction = res.block.blockNumberL2;
+            topicsBlockHashInvalidTransaction = res.block.blockHash;
             txDataToSign = res.txDataToSign;
             console.log(
               `Created flawed block with invalid deposit transaction and blockHash ${res.block.blockHash}`,
@@ -140,7 +141,7 @@ describe('Testing the challenge http API', () => {
           } else if (counter === 5) {
             // txDataToSign = msg.txDataToSign;
             res = await createBadBlock('IncorrectPublicInputHash', block, transactions);
-            topicsBlockNumberL2IncorrectPublicInputHash = res.block.blockNumberL2;
+            topicsBlockHashIncorrectPublicInputHash = res.block.blockHash;
             txDataToSign = res.txDataToSign;
             console.log(
               `Created flawed block with incorrect public input hash and blockHash ${res.block.blockHash}`,
@@ -149,7 +150,7 @@ describe('Testing the challenge http API', () => {
             res = await createBadBlock('IncorrectProof', block, transactions, {
               proof: duplicateTransaction.proof,
             });
-            topicsBlockNumberL2IncorrectProof = res.block.blockNumberL2;
+            topicsBlockHashIncorrectProof = res.block.blockHash;
             txDataToSign = res.txDataToSign;
             console.log(
               `Created flawed block with incorrect proof and blockHash ${res.block.blockHash}`,
@@ -159,7 +160,7 @@ describe('Testing the challenge http API', () => {
               duplicateNullifier,
             });
             // topicsBlockHashesDuplicateNullifier = res.block.blockHash;
-            topicsBlockNumberL2DuplicateNullifier = res.block.blockNumberL2;
+            topicsBlockHashDuplicateNullifier = res.block.blockHash;
             txDataToSign = res.txDataToSign;
             console.log(
               `Created flawed block with duplicate nullifier and blockHash ${res.block.blockHash}`,
@@ -333,31 +334,50 @@ describe('Testing the challenge http API', () => {
 
   describe('Challenge 1: Incorrect root challenge', () => {
     it('Should delete the flawed block and rollback the leaves', async () => {
-      await testForEvents(
-        stateAddress,
-        'Rollback(uint256,uint256)',
-        topicsBlockNumberL2IncorrectRootInBlock,
+      // it's possible that we've arrived here before the block that sets
+      // topicsBlockHashIncorrectRootInBlock has actually been proposed. If that
+      // happens then topicsBlockHashIncorrectRootInBlock will be undefined and
+      // everything will break.  More specifically, we can't await the event
+      // of a topic that isn't defined yet so testForEvents will fail.
+      // Thus, we await topicsBlockHashIncorrectRootInBlock to be defined
+      // before proceeding, with this FrankenPromise.  This approach is used in // the next challenges too.
+      clearInterval(
+        await new Promise(resolve => {
+          const t = setInterval(() => !topicsBlockHashIncorrectRootInBlock || resolve(t), 1000);
+        }),
       );
+      await testForEvents(stateAddress, [
+        web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
+        web3.eth.abi.encodeParameter('bytes32', topicsBlockHashIncorrectRootInBlock),
+      ]);
     });
   });
 
   describe('Challenge 2: Duplicate transaction submitted', () => {
     it('Should delete the flawed block and rollback the leaves', async () => {
-      await testForEvents(
-        stateAddress,
-        'Rollback(uint256,uint256)',
-        topicsBlockNumberL2DuplicateTransaction,
+      clearInterval(
+        await new Promise(resolve => {
+          const t = setInterval(() => !topicsBlockHashDuplicateTransaction || resolve(t), 1000);
+        }),
       );
+      await testForEvents(stateAddress, [
+        web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
+        web3.eth.abi.encodeParameter('bytes32', topicsBlockHashDuplicateTransaction),
+      ]);
     });
   });
 
   describe('Challenge 3: Invalid transaction submitted', () => {
     it('Should delete the flawed block and rollback the leaves', async () => {
-      await testForEvents(
-        stateAddress,
-        'Rollback(uint256,uint256)',
-        topicsBlockNumberL2InvalidTransaction,
+      clearInterval(
+        await new Promise(resolve => {
+          const t = setInterval(() => !topicsBlockHashInvalidTransaction || resolve(t), 1000);
+        }),
       );
+      await testForEvents(stateAddress, [
+        web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
+        web3.eth.abi.encodeParameter('bytes32', topicsBlockHashInvalidTransaction),
+      ]);
     });
   });
 
@@ -374,11 +394,15 @@ describe('Testing the challenge http API', () => {
       // now we need to sign the transaction and send it to the blockchain
       await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
       await new Promise(resolve => setTimeout(resolve, 5000));
-      await testForEvents(
-        stateAddress,
-        'Rollback(uint256,uint256)',
-        topicsBlockNumberL2IncorrectPublicInputHash,
+      clearInterval(
+        await new Promise(resolve => {
+          const t = setInterval(() => !topicsBlockHashIncorrectPublicInputHash || resolve(t), 1000);
+        }),
       );
+      await testForEvents(stateAddress, [
+        web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
+        web3.eth.abi.encodeParameter('bytes32', topicsBlockHashIncorrectPublicInputHash),
+      ]);
     });
   });
 
@@ -396,11 +420,15 @@ describe('Testing the challenge http API', () => {
       // now we need to sign the transaction and send it to the blockchain
       await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
       await new Promise(resolve => setTimeout(resolve, 5000));
-      await testForEvents(
-        stateAddress,
-        'Rollback(uint256,uint256)',
-        topicsBlockNumberL2IncorrectProof,
+      clearInterval(
+        await new Promise(resolve => {
+          const t = setInterval(() => !topicsBlockHashIncorrectProof || resolve(t), 1000);
+        }),
       );
+      await testForEvents(stateAddress, [
+        web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
+        web3.eth.abi.encodeParameter('bytes32', topicsBlockHashIncorrectProof),
+      ]);
     });
   });
 
@@ -427,11 +455,15 @@ describe('Testing the challenge http API', () => {
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 5000));
       }
-      await testForEvents(
-        stateAddress,
-        'Rollback(uint256,uint256)',
-        topicsBlockNumberL2DuplicateNullifier,
+      clearInterval(
+        await new Promise(resolve => {
+          const t = setInterval(() => !topicsBlockHashDuplicateNullifier || resolve(t), 1000);
+        }),
       );
+      await testForEvents(stateAddress, [
+        web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
+        web3.eth.abi.encodeParameter('bytes32', topicsBlockHashDuplicateNullifier),
+      ]);
     });
   });
 
@@ -441,6 +473,7 @@ describe('Testing the challenge http API', () => {
     if (txQueue.length === 0) {
       closeWeb3Connection();
       connection.close();
+      // TODO work out what's still running and close it properly
     } else
       txQueue.on('end', () => {
         closeWeb3Connection();
