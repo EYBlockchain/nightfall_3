@@ -393,7 +393,7 @@ describe('Testing the challenge http API', () => {
       const { txDataToSign } = res.body;
       // now we need to sign the transaction and send it to the blockchain
       await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      // await new Promise(resolve => setTimeout(resolve, 5000));
       clearInterval(
         await new Promise(resolve => {
           const t = setInterval(() => !topicsBlockHashIncorrectPublicInputHash || resolve(t), 1000);
@@ -419,7 +419,7 @@ describe('Testing the challenge http API', () => {
       const { txDataToSign } = res.body;
       // now we need to sign the transaction and send it to the blockchain
       await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      // await new Promise(resolve => setTimeout(resolve, 5000));
       clearInterval(
         await new Promise(resolve => {
           const t = setInterval(() => !topicsBlockHashIncorrectProof || resolve(t), 1000);
@@ -453,7 +453,7 @@ describe('Testing the challenge http API', () => {
         // eslint-disable-next-line no-await-in-loop
         await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
         // eslint-disable-next-line no-await-in-loop
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        // await new Promise(resolve => setTimeout(resolve, 5000));
       }
       clearInterval(
         await new Promise(resolve => {

@@ -144,8 +144,9 @@ export async function createBadBlock(badBlockType, block, transactions, args) {
   return { txDataToSign, block: newBlock, transactions: newTransactions };
 }
 
-// this function polls for a particular event to be emitted by the blockchain
+// This function polls for a particular event to be emitted by the blockchain
 // from a specified contract.  After timeOut, it will give up and error.
+// TODO could we make a neater job with setInterval()?
 export async function testForEvents(contractAddress, topics, timeOut = 30000) {
   // console.log('Listening for events');
   const WAIT = 1000;
