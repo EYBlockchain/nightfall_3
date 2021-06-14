@@ -56,6 +56,8 @@ export async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _
   if (commitmentArray === []) return null;
   // turn the commitments into real commitment objects
   const commitments = commitmentArray.map(ct => new Commitment(ct.preimage));
+
+  // Now filter all commitments to also work with those that timber has already seen.
   const knownCommitments = (
     await Promise.all(
       commitments.map(async c => {
@@ -65,9 +67,7 @@ export async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _
       }),
     )
   ).filter(c => c !== null);
-  // now we need to treat different cases
   // if we have an exact match, we can do a single-commitment transfer.
-  // this function will tell us.
   const [singleCommitment] = knownCommitments.filter(
     c => c.preimage.value.hex(32) === value.hex(32),
   );
@@ -77,24 +77,71 @@ export async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _
   }
   // If we get here it means that we have not been able to find a single commitment that matches the required value
   if (onlyOne) return null; // sometimes we require just one commitment
-  // if not, maybe we can do a two-commitment transfer, this is a expensive search and this function will tell us:
-  return (async () => {
-    for (let i = 0; i < commitments.length; i++) {
-      // check Timber holds the commitment
-      for (let j = i + 1; j < commitments.length; j++) {
-        // check Timber holds the commitmen
-        // eslint-disable-next-line no-await-in-loop
-        if ((await commitments[i].index) !== null && (await commitments[j].index) !== null) {
-          if (
-            commitments[i].preimage.value.bigInt + commitments[j].preimage.value.bigInt >
-            value.bigInt
-          ) {
-            logger.info('Found commitments suitable for two-token transfer');
-            return [commitments[i], commitments[j]];
-          }
-        }
+
+  /* if not, maybe we can do a two-commitment transfer. The current strategy aims to prioritise smaller commitments while also 
+     minimising the creation of low value commitments (dust)
+
+    1) Sort all commitments by value
+    2) Split commitments into two sets based of if their values are less than or greater than the target value. LT & GT respectively.
+    3) If the sum of the two largest values in set LT is LESS than the target value:
+      i) We cannot arrive at the target value with two elements in this set.
+      ii) Our two selected commitments will be the smallest commitment in LT and in smallest commitment in GT.
+      iii) It is guaranteed that the output (change) commitments will be larger than the input commitment from LT.
+
+    5) If the sum of the two largest values in set LT is GREATER than the target value:
+      i) We use a standard inward search whereby we begin with a pointer, lhs & rhs at the start and end of the LT.
+      ii) We also track the change difference, this is the change in size of the smallest commitment in this set resulting from this transaction's output.
+      iii) If the sum of the commitments at the pointers is greater than the target value, we move pointer rhs to the left.
+      iv) Otherwise, we move pointer lhs to the right.
+      v) The selected commitments are the pair that minimise the change difference. The best case in this scenario is a change difference of -1.
+  */
+
+  // sorting will help with making the search easier
+  const sortedCommits = knownCommitments.sort((a, b) =>
+    Number(a.preimage.value.bigInt - b.preimage.value.bigInt),
+  );
+
+  // get all commitments less than the target value
+  const commitsLessThanTargetValue = sortedCommits.filter(
+    s => s.preimage.value.bigInt < value.bigInt,
+  );
+  // get the sum of the greatest two values in this set
+  const twoGreatestSum = commitsLessThanTargetValue
+    .slice(commitsLessThanTargetValue.length - 2)
+    .reduce((acc, curr) => acc + curr.preimage.value.bigInt, 0n);
+  // If the sum of the two greatest values that are less than the target value is STILL less than the target value
+  // then we will need to use a commitment of greater value than the target
+  if (twoGreatestSum < value.bigInt) {
+    if (commitsLessThanTargetValue.length === sortedCommits.length) return null; // We don't have any more commitments
+    return [sortedCommits[commitsLessThanTargetValue.length], sortedCommits[0]]; // This should guarantee that we will replace our smallest commitment with a greater valued one.
+  }
+
+  // If we are here than we can use our commitments less than the target value to sum to greater than the target value
+  let lhs = 0;
+  let rhs = commitsLessThanTargetValue.length - 1;
+  let changeDiff = -Infinity;
+  let commitmentsToUse = null;
+  while (lhs < rhs) {
+    const tempSum =
+      commitsLessThanTargetValue[lhs].preimage.value.bigInt +
+      commitsLessThanTargetValue[rhs].preimage.value.bigInt;
+    // Work out what the change to the value smallest commit we used is
+    // This value will always be negative,
+    // this is equivalent to  tempSum - value.bigInt - commitsLessThanTargetValue[lhs].preimage.value.bigInt
+    const tempChangeDiff = commitsLessThanTargetValue[rhs].preimage.value.bigInt - value.bigInt;
+    if (tempSum > value.bigInt) {
+      if (tempChangeDiff > changeDiff) {
+        // We have a set of commitments that has a lower negative change in our outputs.
+        changeDiff = tempChangeDiff;
+        commitmentsToUse = [commitsLessThanTargetValue[lhs], commitsLessThanTargetValue[rhs]];
       }
-    }
-    return null;
-  })();
+      rhs--;
+    } else lhs++;
+  }
+  if (commitmentsToUse) {
+    logger.info(
+      `Found commitments suitable for two-token transfer: ${JSON.stringify(commitmentsToUse)}`,
+    );
+  }
+  return commitmentsToUse;
 }
