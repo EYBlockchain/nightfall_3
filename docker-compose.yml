@@ -109,8 +109,7 @@ services:
   timber:
     build:
       dockerfile: Dockerfile
-      #context: ./nightfall-timber
-      context: ./timber/merkle-tree
+      context: ./timber
     restart: on-failure
     depends_on:
       - ganache
@@ -125,14 +124,11 @@ services:
         source: build
         target: /app/build/
       - type: bind
-        source: ./timber/merkle-tree/src
+        source: ./timber/src
         target: /app/src/
       - type: bind
         source: ./nightfall-client/config/timber.js
         target: /app/config/default.js
-      - type: bind
-        source: ./timber/merkle-tree/test
-        target: /app/test/
     environment:
       BLOCKCHAIN_HOST: ws://ganache
       BLOCKCHAIN_PORT: 8545
