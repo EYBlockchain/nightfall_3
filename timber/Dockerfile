@@ -4,7 +4,6 @@ WORKDIR /app
 
 COPY ./package.json ./package-lock.json ./.npmrc ./
 COPY ./src ./src
-COPY ./test ./test
 COPY ./.babelrc ./
 COPY ./config ./config/
 ARG GPR_TOKEN
