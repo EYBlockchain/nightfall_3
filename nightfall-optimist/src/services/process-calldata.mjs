@@ -8,8 +8,9 @@ import Web3 from '../utils/web3.mjs';
 import Transaction from '../classes/transaction.mjs';
 import Block from '../classes/block.mjs';
 import { decompressProof } from '../utils/curve-maths/curves.mjs';
+import { waitForContract } from '../event-handlers/subscribe.mjs';
 
-const { PROPOSE_BLOCK_TYPES, SUBMIT_TRANSACTION_TYPES } = config;
+const { PROPOSE_BLOCK_TYPES, SUBMIT_TRANSACTION_TYPES, STATE_CONTRACT_NAME } = config;
 
 export async function getProposeBlockCalldata(eventData) {
   const web3 = Web3.connection();
@@ -20,13 +21,12 @@ export async function getProposeBlockCalldata(eventData) {
   const decoded = web3.eth.abi.decodeParameters(PROPOSE_BLOCK_TYPES, abiBytecode);
   const blockData = decoded['0'];
   const transactionsData = decoded['1'];
-  const [proposer, root, leafCount, nCommitments, blockNumberL2] = blockData;
+  const [leafCount, nCommitments, proposer, root] = blockData;
   const block = {
     proposer,
     root,
     leafCount: Number(leafCount),
     nCommitments: Number(nCommitments),
-    blockNumberL2: Number(blockNumberL2),
   };
   const transactions = transactionsData.map(t => {
     const [
@@ -61,6 +61,16 @@ export async function getProposeBlockCalldata(eventData) {
   // Let's add in data that isn't directly available from the calldata but that
   // we know how to compute. Many node functions assume these are present.
   block.blockHash = Block.calcHash(block, transactions);
+  // This line grabs the blockData array and extracts the index of the block
+  // that we are dealing with.  TODO - this may get unmanageable with large
+  // numbers of L2 blocks. Then we'll need to store it in a DB and sync to the
+  // blockchain record.
+  block.blockNumberL2 = (
+    await (await waitForContract(STATE_CONTRACT_NAME)).methods.getAllBlockData().call()
+  )
+    .map(bd => bd.blockHash)
+    .indexOf(block.blockHash);
+  if (block.blockNumberL2 === -1) throw new Error('Could not find blockHash in blockchain record');
   block.transactionHashes = transactions.map(t => t.transactionHash);
   // currentLeafCount holds the count of the next leaf to be added
   const currentLeafCount = Number(nCommitments) + Number(leafCount);

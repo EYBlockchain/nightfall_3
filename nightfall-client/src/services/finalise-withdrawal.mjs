@@ -11,13 +11,12 @@ const { SHIELD_CONTRACT_NAME } = config;
 // TODO move classes to their own folder so this is not needed (it's already a
 // static function in the Block class)
 function buildSolidityStruct(block) {
-  const { proposer, root, leafCount, nCommitments, blockNumberL2 } = block;
+  const { proposer, root, leafCount, nCommitments } = block;
   return {
     proposer,
     root,
     leafCount: Number(leafCount),
     nCommitments: Number(nCommitments),
-    blockNumberL2: Number(blockNumberL2),
   };
 }
 
@@ -29,6 +28,7 @@ async function finaliseWithdrawal({ block, transactions, index }) {
     const rawTransaction = await shieldContractInstance.methods
       .finaliseWithdrawal(
         buildSolidityStruct(block),
+        block.blockNumberL2,
         transactions.map(t => Transaction.buildSolidityStruct(t)),
         index,
       )

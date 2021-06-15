@@ -141,8 +141,8 @@ class Block {
 
   static calcHash(block, transactions) {
     const web3 = Web3.connection();
-    const { proposer, root, leafCount, nCommitments, blockNumberL2 } = block;
-    const blockArray = [proposer, root, leafCount, nCommitments, blockNumberL2];
+    const { proposer, root, leafCount, nCommitments } = block;
+    const blockArray = [leafCount, nCommitments, proposer, root];
     const transactionsArray = transactions.map(t => {
       const {
         value,
@@ -179,13 +179,12 @@ class Block {
   // remove properties that do not get sent to the blockchain returning
   // a new object (don't mutate the original)
   static buildSolidityStruct(block) {
-    const { proposer, root, leafCount, nCommitments, blockNumberL2 } = block;
+    const { proposer, root, leafCount, nCommitments } = block;
     return {
       proposer,
       root,
       leafCount: Number(leafCount),
       nCommitments: Number(nCommitments),
-      blockNumberL2: Number(blockNumberL2),
     };
   }
 }

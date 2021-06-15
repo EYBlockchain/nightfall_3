@@ -26,23 +26,25 @@ contract Challenges is Stateful, Key_Registry, Config {
     Transaction[] memory priorBlockTransactions, // the transactions in the prior block
     bytes32[33] calldata frontierPriorBlock, // frontier path before prior block is added. The same frontier used in calculating root when prior block is added
     Block memory blockL2,
+    uint blockNumberL2,
     Transaction[] memory transactions,
     uint commitmentIndex, // the index *in the Merkle Tree* of the commitment that we are providing a SiblingPath for.
     bytes32 salt
   ) external {
     checkCommit(msg.data, salt);
     // check if the block hash is correct and the block hash exists for the block and prior block
-    state.isBlockReal(priorBlockL2, priorBlockTransactions);
-    state.isBlockReal(blockL2, transactions);
-    require(priorBlockL2.blockNumberL2 + 1 == blockL2.blockNumberL2, 'The blocks are not contiguous');
+    state.isBlockReal(priorBlockL2, priorBlockTransactions, blockNumberL2 - 1);
+    state.isBlockReal(blockL2, transactions, blockNumberL2);
     // see if the challenge is valid
     ChallengesUtil.libChallengeNewRootCorrect(priorBlockL2, priorBlockTransactions, frontierPriorBlock, blockL2, transactions, commitmentIndex);
-    challengeAccepted(blockL2);
+    challengeAccepted(blockL2, blockNumberL2);
   }
 
   function challengeNoDuplicateTransaction(
     Block memory block1,
+    uint block1NumberL2,
     Block memory block2,
+    uint block2NumberL2,
     Transaction[] memory transactions1,
     Transaction[] memory transactions2,
     uint transactionIndex1,
@@ -51,84 +53,89 @@ contract Challenges is Stateful, Key_Registry, Config {
   ) external {
     checkCommit(msg.data, salt);
     // first, check we have real, in-train, contiguous blocks
-    state.isBlockReal(block1, transactions1);
-    state.isBlockReal(block2, transactions2);
+    state.isBlockReal(block1, transactions1, block1NumberL2);
+    state.isBlockReal(block2, transactions2, block2NumberL2);
     require(Utils.hashTransaction(transactions1[transactionIndex1]) == Utils.hashTransaction(transactions2[transactionIndex2]), 'The transactions are not the same');
     // Delete the latest block of the two
-    if(block1.blockNumberL2 > block2.blockNumberL2) {
-      challengeAccepted(block1);
+    if(block1NumberL2 > block2NumberL2) {
+      challengeAccepted(block1, block1NumberL2);
     } else {
-      challengeAccepted(block2);
+      challengeAccepted(block2, block2NumberL2);
     }
   }
 
   function challengeTransactionType(
     Block memory blockL2,
+    uint blockNumberL2,
     Transaction[] memory transactions,
     uint transactionIndex,
     bytes32 salt
     ) external {
     checkCommit(msg.data, salt);
-    state.isBlockReal(blockL2, transactions);
+    state.isBlockReal(blockL2, transactions, blockNumberL2);
     ChallengesUtil.libChallengeTransactionType(transactions[transactionIndex]);
     // Delete the latest block of the two
-    challengeAccepted(blockL2);
+    challengeAccepted(blockL2, blockNumberL2);
   }
 
   // This function signature is used when we have a non-zero historic root
   // i.e. transfer or withdraw transactions.
   function challengePublicInputHash(
     Block memory blockL2,
+    uint blockNumberL2,
     Transaction[] memory transactions,
     uint transactionIndex,
     Block memory blockL2ContainingHistoricRoot,
+    uint blockNumberL2ContainingHistoricRoot,
     Transaction[] memory transactionsOfblockL2ContainingHistoricRoot,
     bytes32 salt
     ) external {
     checkCommit(msg.data, salt);
-    state.isBlockReal(blockL2, transactions);
+    state.isBlockReal(blockL2, transactions, blockNumberL2);
     state.isBlockReal(
-      blockL2ContainingHistoricRoot, transactionsOfblockL2ContainingHistoricRoot
+      blockL2ContainingHistoricRoot, transactionsOfblockL2ContainingHistoricRoot, blockNumberL2ContainingHistoricRoot
     );
     // check the historic root is in the block provided.
     require(
-      transactions[transactionIndex].historicRootBlockNumberL2 == blockL2ContainingHistoricRoot.blockNumberL2,
+      transactions[transactionIndex].historicRootBlockNumberL2 == blockNumberL2ContainingHistoricRoot,
       'Incorrect historic root block'
     );
     ChallengesUtil.libChallengePublicInputHash(transactions[transactionIndex], blockL2ContainingHistoricRoot.root);
     // Delete the latest block of the two
-    challengeAccepted(blockL2);
+    challengeAccepted(blockL2 , blockNumberL2);
   }
 
   // This function signature is used when we have a zero historic root
   // i.e. a deposit transaction.
   function challengePublicInputHash(
     Block memory blockL2,
+    uint blockNumberL2,
     Transaction[] memory transactions,
     uint transactionIndex,
     bytes32 salt
     ) external {
     checkCommit(msg.data, salt);
-    state.isBlockReal(blockL2, transactions);
+    state.isBlockReal(blockL2, transactions, blockNumberL2);
     // check the historic root is in the block provided.
     ChallengesUtil.libChallengePublicInputHash(transactions[transactionIndex], ZERO);
     // Delete the latest block of the two
-    challengeAccepted(blockL2);
+    challengeAccepted(blockL2, blockNumberL2);
   }
 
   function challengeProofVerification(
     Block memory blockL2,
+    uint blockNumberL2,
     Transaction[] memory transactions,
     uint transactionIndex,
     uint[8] memory uncompressedProof,
     bytes32 salt
     ) external {
       checkCommit(msg.data, salt);
-      state.isBlockReal(blockL2, transactions);
+      state.isBlockReal(blockL2, transactions, blockNumberL2);
       // now we need to check that the proof is correct
       ChallengesUtil.libCheckCompressedProof(transactions[transactionIndex].proof, uncompressedProof);
       ChallengesUtil.libChallengeProofVerification(uint(transactions[transactionIndex].publicInputHash), uncompressedProof, vks[transactions[transactionIndex].transactionType]);
-      challengeAccepted(blockL2);
+      challengeAccepted(blockL2, blockNumberL2);
   }
 
   /*
@@ -138,10 +145,12 @@ contract Challenges is Stateful, Key_Registry, Config {
   */
   function challengeNullifier(
     Block memory block1,
+    uint block1NumberL2,
     Transaction[] memory txs1,
     uint transactionIndex1,
     uint nullifierIndex1,
     Block memory block2,
+    uint block2NumberL2,
     Transaction[] memory txs2,
     uint transactionIndex2,
     uint nullifierIndex2,
@@ -149,28 +158,28 @@ contract Challenges is Stateful, Key_Registry, Config {
   ) public {
     checkCommit(msg.data, salt);
     ChallengesUtil.libChallengeNullifier(txs1[transactionIndex1], nullifierIndex1, txs2[transactionIndex2], nullifierIndex2);
-    state.isBlockReal(block1, txs1);
-    state.isBlockReal(block2, txs2);
+    state.isBlockReal(block1, txs1, block1NumberL2);
+    state.isBlockReal(block2, txs2, block2NumberL2);
 
     // The blocks are different and we prune the later block of the two
     // as we have a block number, it's easy to see which is the latest.
-    if (block1.blockNumberL2 < block2.blockNumberL2){
-      challengeAccepted(block2);
+    if (block1NumberL2 < block2NumberL2){
+      challengeAccepted(block2, block2NumberL2);
     } else {
-      challengeAccepted(block1);
+      challengeAccepted(block1, block1NumberL2);
     }
   }
 
   // This gets called when a challenge succeeds
-  function challengeAccepted(Block memory badBlock) private {
+  function challengeAccepted(Block memory badBlock, uint badBlockNumberL2) private {
     // Check to ensure that the block being challenged is less than a week old
-    require(state.getBlockData(badBlock.blockNumberL2).time >= (block.timestamp - 7 days) , 'Can only challenge blocks less than a week old');
+    require(state.getBlockData(badBlockNumberL2).time >= (block.timestamp - 7 days) , 'Can only challenge blocks less than a week old');
     // emit the leafCount where the bad block was added. Timber will pick this
     // up and rollback its database to that point.  We emit the event from
     // State.sol because Timber gets confused if its events come from two
     // different contracts (it uses the contract name as part of the db
     // connection - we need to change that).
-    state.emitRollback(badBlock.blockNumberL2, badBlock.leafCount);
+    state.emitRollback(badBlockNumberL2, badBlock.leafCount);
     // as we have a rollback, we need to reset the leafcount to the point
     // where the bad block was created.  Luckily, we noted that value in
     // the block when the block was proposed. It was checked onchain so must be
@@ -179,7 +188,7 @@ contract Challenges is Stateful, Key_Registry, Config {
     // we need to remove the block that has been successfully
     // challenged from the linked list of blocks and all of the subsequent
     // blocks
-    removeBlockHashes(badBlock.blockNumberL2);
+    removeBlockHashes(badBlockNumberL2);
     // remove the proposer and give the proposer's block stake to the challenger
     state.removeProposer(badBlock.proposer);
     state.addPendingWithdrawal(msg.sender, BLOCK_STAKE);
