@@ -6,7 +6,7 @@ import blockProposedEventHandler from '../event-handlers/block-proposed.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
 import newCurrentProposerEventHandler from '../event-handlers/new-current-proposer.mjs';
 import committedToChallengeEventHandler from '../event-handlers/challenge-commit.mjs';
-import blockDeletedEventHandler from '../event-handlers/block-deleted.mjs';
+import rollbackEventHandler from '../event-handlers/rollback.mjs';
 import { callTimberHandler } from '../utils/timber.mjs';
 import { getBlockByBlockNumberL2, getBlocks } from './database.mjs';
 import { stopMakingChallenges, startMakingChallenges } from './challenges.mjs';
@@ -42,11 +42,10 @@ export const syncState = async (
         // eslint-disable-next-line no-await-in-loop
         await newCurrentProposerEventHandler(pastEvent, [proposer]);
         break;
-      case 'NewLeaf':
       case 'Rollback':
-      case 'NewLeaves':
         // eslint-disable-next-line no-await-in-loop
         await callTimberHandler(pastEvent);
+        await rollbackEventHandler(pastEvent);
         break;
       case 'BlockProposed':
         // eslint-disable-next-line no-await-in-loop
@@ -57,10 +56,6 @@ export const syncState = async (
       case 'CommittedToChallenge':
         // eslint-disable-next-line no-await-in-loop
         await committedToChallengeEventHandler(pastEvent);
-        break;
-      case 'BlockDeleted':
-        // eslint-disable-next-line no-await-in-loop
-        await blockDeletedEventHandler(pastEvent);
         break;
       case 'TransactionSubmitted':
         // eslint-disable-next-line no-await-in-loop

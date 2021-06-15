@@ -1,11 +1,8 @@
 import Web3 from 'web3';
 import axios from 'axios';
 import chai from 'chai';
-import config from 'config';
 import rand from '../src/utils/crypto/crypto-random.mjs';
-// import { generalise } from 'general-number';
 
-const { ZERO } = config;
 let web3;
 
 export function connectWeb3() {
@@ -125,7 +122,9 @@ export async function createBadBlock(badBlockType, block, transactions, args) {
     case 'DuplicateNullifier': {
       // Find a transaction with a nullifier and replace one we have from earlier
       for (let i = 0; i < badTransactions.length; i++) {
-        const nonZeroNullifier = badTransactions[i].nullifiers.findIndex(n => n !== ZERO);
+        const nonZeroNullifier = badTransactions[i].nullifiers.findIndex(
+          n => n !== '0x0000000000000000000000000000000000000000000000000000000000000000',
+        );
         if (nonZeroNullifier >= 0) {
           badTransactions[i].nullifiers[nonZeroNullifier] = args.duplicateNullifier;
           break;
@@ -143,4 +142,33 @@ export async function createBadBlock(badBlockType, block, transactions, args) {
     .post('/proposer/encode')
     .send({ block: badBlock, transactions: badTransactions });
   return { txDataToSign, block: newBlock, transactions: newTransactions };
+}
+
+// This function polls for a particular event to be emitted by the blockchain
+// from a specified contract.  After timeOut, it will give up and error.
+// TODO could we make a neater job with setInterval()?
+export async function testForEvents(contractAddress, topics, timeOut = 30000) {
+  // console.log('Listening for events');
+  const WAIT = 1000;
+  let counter = timeOut / WAIT;
+  let events;
+  while (
+    events === undefined ||
+    events[0] === undefined ||
+    events[0].transactionHash === undefined
+  ) {
+    // eslint-disable-next-line no-await-in-loop
+    events = await web3.eth.getPastLogs({
+      fromBlock: web3.utils.toHex(0),
+      address: contractAddress,
+      topics,
+    });
+    // console.log('EVENTS WERE', events);
+    // eslint-disable-next-line no-await-in-loop
+    await new Promise(resolve => setTimeout(resolve, WAIT));
+    counter--;
+    if (counter < 0) throw new Error('No events found before timeout');
+  }
+  // console.log('Events found');
+  return events;
 }
