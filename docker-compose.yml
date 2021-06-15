@@ -183,7 +183,7 @@ services:
       HASH_TYPE: mimc
       LOG_LEVEL: debug
       IS_CHALLENGER: 'true'
-      TRANSACTIONS_PER_BLOCK: 32
+      TRANSACTIONS_PER_BLOCK: 2
     command: ['npm', 'run', 'dev']
 
 volumes:
