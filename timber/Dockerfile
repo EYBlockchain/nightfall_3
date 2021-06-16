@@ -5,7 +5,6 @@ WORKDIR /app
 COPY ./package.json ./package-lock.json ./.npmrc ./
 COPY ./src ./src
 COPY ./.babelrc ./
-COPY ./config ./config/
 ARG GPR_TOKEN
 RUN npm ci
 RUN rm -f .npmrc

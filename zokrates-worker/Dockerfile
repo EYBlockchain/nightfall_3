@@ -18,9 +18,6 @@ COPY --from=builder /home/zokrates/.zokrates/bin/zokrates /app/zokrates
 COPY ./stdlib-bugfix/stdlib /app/stdlib/
 COPY ./src ./src
 COPY ./circuits ./circuits
-COPY ./config ./config
-COPY ./start-script ./start-script
-COPY ./start-dev ./start-dev
 
 RUN apt-get update -y
 RUN apt-get install -y netcat
