@@ -22,8 +22,10 @@ export const syncState = async (
   toBlock = 'latest',
   eventFilter = 'allEvents',
 ) => {
-  const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
-  const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
+  const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME); // NewCurrentProposer (register)
+  const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME); // TransactionSubmitted
+  const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME); // Rollback, NewCurrentProposer, BlockProposed
+
   const pastProposerEvents = await proposersContractInstance.getPastEvents(eventFilter, {
     fromBlock,
     toBlock,
@@ -32,8 +34,15 @@ export const syncState = async (
     fromBlock,
     toBlock,
   });
+  const pastStateEvents = await stateContractInstance.getPastEvents(eventFilter, {
+    fromBlock,
+    toBlock,
+  });
+
+  // Put all events together and sort chronologically as they appear on Ethereum
   const splicedList = pastProposerEvents
     .concat(pastShieldEvents)
+    .concat(pastStateEvents)
     .sort((a, b) => a.blockNumber - b.blockNumber);
   for (let i = 0; i < splicedList.length; i++) {
     const pastEvent = splicedList[i];
@@ -73,13 +82,20 @@ export const checkBlocks = async () => {
   if (blocks.length > 0) {
     // Existing blocks found stored locally
     let expectedLeafCount = 0;
+    // Loop through all our blocks to find any gaps in our internal block data
     for (let i = 0; i < blocks.length; i++) {
+      // If the leafCount of the next block stored internally does not match what we expect the leaf count to be
+      // it means we may have a gap in our blockData
       if (blocks[i].leafCount !== expectedLeafCount) {
+        // if we are in the first iteration it means we have a problem with our internal data
+        // let's just restart the sync from earliest,
+        // else let's just scan from the Ethereum blockNumber that is one more than our known correct block.
         const fromBlock = i === 0 ? 'earliest' : blocks[i - 1].blockNumber + 1;
+        // we will scan the gap up to the blockNumber of the current blocks
         const toBlock = blocks[i].blockNumber - 1;
         gapArray.push([fromBlock, toBlock]);
-      } else {
-        expectedLeafCount = blocks[i].leafCount; // reset so we can find more
+        // reset so we can find more
+        expectedLeafCount = blocks[i].leafCount;
       }
       expectedLeafCount += blocks[i].nCommitments;
     }
