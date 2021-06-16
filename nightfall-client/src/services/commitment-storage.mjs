@@ -1,5 +1,3 @@
-/* eslint-disable no-await-in-loop */
-
 /**
 Logic for storing and retrieving commitments from a mongo DB.  Abstracted from
 deposit/transfer/withdraw
@@ -58,32 +56,35 @@ export async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _
   if (commitmentArray === []) return null;
   // turn the commitments into real commitment objects
   const commitments = commitmentArray.map(ct => new Commitment(ct.preimage));
+  const knownCommitments = (
+    await Promise.all(
+      commitments.map(async c => {
+        const cIndex = await c.index;
+        if (cIndex !== null) return c;
+        return null;
+      }),
+    )
+  ).filter(c => c !== null);
   // now we need to treat different cases
   // if we have an exact match, we can do a single-commitment transfer.
   // this function will tell us.
-  const singleCommitment = (async () => {
-    for (const commitment of commitments) {
-      console.log('INDEX', await commitment.index);
-      if (commitment.preimage.value.hex(32) === value.hex(32)) {
-        // check if Timber knows about the commitment
-        if ((await commitment.index) == null) return null;
-        logger.info('Found commitment suitable for single transfer or withdraw');
-        return [commitment];
-      }
-    }
-    return null;
-  })();
-  if (await singleCommitment) return singleCommitment;
+  const [singleCommitment] = knownCommitments.filter(
+    c => c.preimage.value.hex(32) === value.hex(32),
+  );
+  if (singleCommitment) {
+    logger.info('Found commitment suitable for single transfer or withdraw');
+    return [singleCommitment];
+  }
+  // If we get here it means that we have not been able to find a single commitment that matches the required value
   if (onlyOne) return null; // sometimes we require just one commitment
   // if not, maybe we can do a two-commitment transfer, this is a expensive search and this function will tell us:
   return (async () => {
     for (let i = 0; i < commitments.length; i++) {
       // check Timber holds the commitment
-      if ((await commitments[i].index) === null) break;
-      const innerResult = (async () => {
-        for (let j = i + 1; j < commitments.length; j++) {
-          // check Timber holds the commitment
-          if ((await commitments[j].index) === null) break;
+      for (let j = i + 1; j < commitments.length; j++) {
+        // check Timber holds the commitmen
+        // eslint-disable-next-line no-await-in-loop
+        if ((await commitments[i].index) !== null && (await commitments[j].index) !== null) {
           if (
             commitments[i].preimage.value.bigInt + commitments[j].preimage.value.bigInt >
             value.bigInt
@@ -92,9 +93,7 @@ export async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _
             return [commitments[i], commitments[j]];
           }
         }
-        return null;
-      })();
-      if (await innerResult) return innerResult;
+      }
     }
     return null;
   })();
