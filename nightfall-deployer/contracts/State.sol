@@ -53,7 +53,6 @@ contract State is Structures, Config {
     // We need to check that the block has correctly stored its leaf count. This
     // is needed in case of a roll-back of a bad block, but cannot be checked by
     // a Challenge function (at least i haven't thought of a way to do it).
-
     require(b.leafCount == leafCount, 'The leaf count stored in the Block is not correct');
     // We need to set the blockHash on chain here, because there is no way to
     // convince a challenge function of the (in)correctness by an offchain

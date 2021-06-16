@@ -7,6 +7,7 @@ import WebSocket from 'ws';
 import config from 'config';
 import { getContractInstance, getContractAddress } from '../utils/contract.mjs';
 import logger from '../utils/logger.mjs';
+import Web3 from '../utils/web3.mjs';
 
 const {
   PROPOSERS_CONTRACT_NAME,
@@ -75,6 +76,19 @@ export async function waitForContract(contractName) {
   }
   if (error) throw error;
   return instance;
+}
+
+// subscribe to any log from the State.sol contract. Later, we'll filter for a
+// particular function call.  This is more involved than using events but it
+// saves precious gas in a proposeBlock(...) call.
+// TODO don't start from fromBlock:null
+export async function subscribeToStateLogs(callback, ...args) {
+  const { address } = (await waitForContract(STATE_CONTRACT_NAME)).options;
+  const web3 = Web3.connection();
+  const emitter = await web3.eth.subscribe('logs', { fromBlock: null, address });
+  emitter.on('data', log => callback(log, args));
+  logger.debug('subscribed to Stat.sol logs');
+  return emitter;
 }
 
 export async function subscribeToBlockProposedEvent(callback, ...args) {
