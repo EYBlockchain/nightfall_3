@@ -32,12 +32,13 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
   @param b - the block containing the Withdraw transaction
   @param ts - array of the transactions contained in the block
   @param index - the index of the transaction that locates it in the array of Transactions in Block b
+  TODO do we need to pass in  all the block data?
   */
-  function finaliseWithdrawal(Block memory b, Transaction[] memory ts, uint index) external {
+  function finaliseWithdrawal(Block memory b, uint blockNumberL2, Transaction[] memory ts, uint index) external {
     // check this block is a real one, in the queue, not something made up.
-    state.isBlockReal(b, ts);
+    state.isBlockReal(b, ts, blockNumberL2);
     // check that the block has been finalised
-    uint time = state.getBlockData(b.blockNumberL2).time;
+    uint time = state.getBlockData(blockNumberL2).time;
     require(time + COOLING_OFF_PERIOD < block.timestamp, 'It is too soon withdraw funds from this block');
     if (ts[index].transactionType == TransactionTypes.WITHDRAW) payOut(ts[index]);
   }

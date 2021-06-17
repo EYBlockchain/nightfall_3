@@ -52,11 +52,10 @@ contract Structures {
   }
 
   struct Block {
+    uint48 leafCount;
+    uint48 nCommitments;
     address proposer;
     bytes32 root; // the 'output' commmitment root after adding all commitments
-    uint64 leafCount;
-    uint64 nCommitments;
-    uint64 blockNumberL2;
   }
 
 /*
