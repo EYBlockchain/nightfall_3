@@ -13,11 +13,9 @@ import { getBlocks } from './database.mjs';
 
 const { PROPOSE_BLOCK_TYPES, SUBMIT_TRANSACTION_TYPES, STATE_CONTRACT_NAME } = config;
 
-export async function getProposeBlockCalldata(eventData) {
+export async function getProposeBlockCalldata(tx) {
   const web3 = Web3.connection();
-  const { transactionHash } = eventData;
-  const tx = await web3.eth.getTransaction(transactionHash);
-  // Remove the '0x' and function signature to recove rhte abi bytecode
+  // Remove the '0x' and function signature to recover the abi bytecode
   const abiBytecode = `0x${tx.input.slice(10)}`;
   const decoded = web3.eth.abi.decodeParameters(PROPOSE_BLOCK_TYPES, abiBytecode);
   const blockData = decoded['0'];

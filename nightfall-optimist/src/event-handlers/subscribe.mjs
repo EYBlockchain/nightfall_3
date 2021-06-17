@@ -78,16 +78,20 @@ export async function waitForContract(contractName) {
   return instance;
 }
 
-// subscribe to any log from the State.sol contract. Later, we'll filter for a
-// particular function call.  This is more involved than using events but it
-// saves precious gas in a proposeBlock(...) call.
-// TODO don't start from fromBlock:null
-export async function subscribeToStateLogs(callback, ...args) {
-  const { address } = (await waitForContract(STATE_CONTRACT_NAME)).options;
+/**
+subscribe new block headers.
+@param callback - the handler function
+@param arg[0] - the name of the contract to listen for
+@param arg[1] - the signature of the function to listen for
+TODO don't start from fromBlock:null
+*/
+export async function subscribeToNewblockHeaders(callback, ...args) {
   const web3 = Web3.connection();
-  const emitter = await web3.eth.subscribe('logs', { fromBlock: null, address });
-  emitter.on('data', log => callback(log, args));
-  logger.debug('subscribed to Stat.sol logs');
+  const emitter = await web3.eth.subscribe('newBlockHeaders');
+  emitter.on('data', block => {
+    if (block.number !== null) callback(block, web3, args);
+  });
+  logger.debug(`subscribed to new block headers`);
   return emitter;
 }
 

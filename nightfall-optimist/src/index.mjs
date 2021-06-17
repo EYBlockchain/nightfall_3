@@ -1,8 +1,8 @@
 import logger from './utils/logger.mjs';
 import app from './app.mjs';
 import {
-  subscribeToBlockProposedEvent,
-  blockProposedEventHandler,
+  subscribeToNewblockHeaders,
+  newBlockHeaderHandler,
   subscribeToNewCurrentProposer,
   newCurrentProposerEventHandler,
   subscribeToTransactionSubmitted,
@@ -37,13 +37,13 @@ const main = async () => {
     // we do not wait for the initial block sync for these event handlers
     // as we want to still listen to incoming events (just not make blocks)
     // subscribe to blockchain events
-    subscribeToBlockProposedEvent(blockProposedEventHandler);
+    subscribeToNewblockHeaders(newBlockHeaderHandler);
     subscribeToTransactionSubmitted(transactionSubmittedEventHandler);
     subscribeToRollbackEventHandler(rollbackEventHandler);
     subscribeTocommittedToChallengeEventHandler(committedToChallengeEventHandler);
     app.listen(80);
   } catch (err) {
-    logger.error(err);
+    logger.error(err.stack);
     process.exit(1);
   }
 };

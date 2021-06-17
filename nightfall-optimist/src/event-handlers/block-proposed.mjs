@@ -12,10 +12,10 @@ import { getLeafCount } from '../utils/timber.mjs';
 import { getProposeBlockCalldata } from '../services/process-calldata.mjs';
 
 /**
-This handler runs whenever a BlockProposed event is emitted by the blockchain
+This handler runs whenever a BlockProposed function call is made
 */
 const { TIMBER_SYNC_RETRIES } = config;
-async function blockProposedEventHandler(data) {
+async function blockProposedHandler(data) {
   const currentBlockCount = data.blockNumber;
   const { block, transactions, currentLeafCount } = await getProposeBlockCalldata(data);
 
@@ -76,4 +76,4 @@ async function blockProposedEventHandler(data) {
   }
 }
 
-export default blockProposedEventHandler;
+export default blockProposedHandler;

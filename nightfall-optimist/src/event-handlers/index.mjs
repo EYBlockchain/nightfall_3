@@ -1,5 +1,5 @@
 import {
-  subscribeToBlockProposedEvent,
+  subscribeToNewblockHeaders,
   subscribeToNewCurrentProposer,
   subscribeToTransactionSubmitted,
   subscribeToBlockAssembledWebSocketConnection,
@@ -7,15 +7,15 @@ import {
   subscribeToChallengeWebSocketConnection,
   subscribeTocommittedToChallengeEventHandler,
 } from './subscribe.mjs';
-import blockProposedEventHandler from './block-proposed.mjs';
+import newBlockHeaderHandler from './block-header.mjs';
 import newCurrentProposerEventHandler from './new-current-proposer.mjs';
 import transactionSubmittedEventHandler from './transaction-submitted.mjs';
 import rollbackEventHandler from './rollback.mjs';
 import committedToChallengeEventHandler from './challenge-commit.mjs';
 
 export {
-  subscribeToBlockProposedEvent,
-  blockProposedEventHandler,
+  subscribeToNewblockHeaders,
+  newBlockHeaderHandler,
   subscribeToNewCurrentProposer,
   newCurrentProposerEventHandler,
   subscribeToTransactionSubmitted,
