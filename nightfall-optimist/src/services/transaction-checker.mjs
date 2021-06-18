@@ -17,7 +17,7 @@ import { waitForContract } from '../event-handlers/subscribe.mjs';
 import logger from '../utils/logger.mjs';
 import { getBlockByBlockNumberL2 } from './database.mjs';
 
-const { ZOKRATES_WORKER_URL, PROVING_SCHEME, BACKEND, CURVE, ZERO, CHALLENGES_CONTRACT_NAME } =
+const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, CURVE, ZERO, CHALLENGES_CONTRACT_NAME } =
   config;
 
 // first, let's check the hash. That's nice and easy:
@@ -177,7 +177,7 @@ async function verifyProof(transaction) {
     .call();
   // to verify a proof, we make use of a zokrates-worker, which has an offchain
   // verifier capability
-  const res = await axios.post(`http://${ZOKRATES_WORKER_URL}/verify`, {
+  const res = await axios.post(`http://${ZOKRATES_WORKER_HOST}/verify`, {
     vk: new VerificationKey(vkArray),
     proof: new Proof(transaction.proof),
     provingScheme: PROVING_SCHEME,

@@ -11,7 +11,6 @@ WORKDIR /app
 RUN mkdir /app/mongodb
 
 COPY src src
-COPY config config
 COPY docker-entrypoint.sh package.json package-lock.json ./
 RUN chmod 755 docker-entrypoint.sh
 

@@ -8,7 +8,7 @@ services:
       context: ./nightfall-client
     volumes:
       - ./nightfall-client/src:/app/src
-      - ./nightfall-client/config:/app/config
+      - ./config/default.js:/app/config/default.js
       - build:/app/build
       - mongodb:/app/mongodb
     networks:
@@ -50,6 +50,9 @@ services:
       - type: bind
         source: ./zokrates-worker/src
         target: /app/src/
+      - type: bind
+        source: ./config/default.js
+        target: /app/config/default.js
     depends_on:
       - deployer
     networks:
@@ -79,8 +82,8 @@ services:
         source: ./nightfall-deployer/src
         target: /app/src/
       - type: bind
-        source: ./nightfall-deployer/config
-        target: /app/config/
+        source: ./config/default.js
+        target: /app/config/default.js
       - type: bind
         source: ./nightfall-deployer/migrations
         target: /app/migrations
@@ -127,7 +130,7 @@ services:
         source: ./timber/src
         target: /app/src/
       - type: bind
-        source: ./nightfall-client/config/timber.js
+        source: ./config/timber.js
         target: /app/config/default.js
     environment:
       BLOCKCHAIN_HOST: ws://ganache
@@ -175,7 +178,7 @@ services:
         source: build
         target: /app/build/
       - ./nightfall-optimist/src:/app/src
-      - ./nightfall-optimist/config:/app/config
+      - ./config/default.js:/app/config/default.js
     environment:
       WEBSOCKET_PORT: 8080
       BLOCKCHAIN_WS_HOST: ganache
