@@ -32,7 +32,7 @@ services:
       RABBITMQ_HOST: amqp://rabbitmq
       RABBITMQ_PORT: 5672
       ENABLE_QUEUE: 1
-      USE_STUBS: 'true' # make sure this flag is the same as in deployer service
+      USE_STUBS: 'false' # make sure this flag is the same as in deployer service
     command: ['npm', 'run', 'dev']
 
   worker:
@@ -93,7 +93,7 @@ services:
       BLOCKCHAIN_WS_HOST: ganache
       BLOCKCHAIN_PORT: 8545
       ZOKRATES_WORKER_HOST: worker
-      USE_STUBS: 'true'
+      USE_STUBS: 'false'
 
   # The Ganache client, containing required precompiles
   ganache:
