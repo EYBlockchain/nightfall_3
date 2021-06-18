@@ -2,7 +2,7 @@
 
 import config from 'config';
 import { getContractInstance } from '../utils/contract.mjs';
-import blockProposedEventHandler from '../event-handlers/block-proposed.mjs';
+import newBlockHeaderHandler from '../event-handlers/block-header.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
 import newCurrentProposerEventHandler from '../event-handlers/new-current-proposer.mjs';
 import committedToChallengeEventHandler from '../event-handlers/challenge-commit.mjs';
@@ -11,6 +11,7 @@ import { callTimberHandler } from '../utils/timber.mjs';
 import { getBlockByBlockNumberL2, getBlocks } from './database.mjs';
 import { stopMakingChallenges, startMakingChallenges } from './challenges.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
+import Web3 from '../utils/web3.mjs';
 
 // TODO can we remove these await-in-loops?
 
@@ -25,6 +26,7 @@ export const syncState = async (
   const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME); // NewCurrentProposer (register)
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME); // TransactionSubmitted
   const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME); // Rollback, NewCurrentProposer, BlockProposed
+  const web3 = Web3.connection();
 
   const pastProposerEvents = await proposersContractInstance.getPastEvents(eventFilter, {
     fromBlock,
@@ -44,34 +46,35 @@ export const syncState = async (
     .concat(pastShieldEvents)
     .concat(pastStateEvents)
     .sort((a, b) => a.blockNumber - b.blockNumber);
-  for (let i = 0; i < splicedList.length; i++) {
-    const pastEvent = splicedList[i];
-    switch (pastEvent.event) {
-      case 'NewCurrentProposer':
-        // eslint-disable-next-line no-await-in-loop
-        await newCurrentProposerEventHandler(pastEvent, [proposer]);
-        break;
-      case 'Rollback':
-        // eslint-disable-next-line no-await-in-loop
-        await callTimberHandler(pastEvent);
-        await rollbackEventHandler(pastEvent);
-        break;
-      case 'BlockProposed':
-        // eslint-disable-next-line no-await-in-loop
-        await callTimberHandler(pastEvent);
-        // eslint-disable-next-line no-await-in-loop
-        await blockProposedEventHandler(pastEvent);
-        break;
-      case 'CommittedToChallenge':
-        // eslint-disable-next-line no-await-in-loop
-        await committedToChallengeEventHandler(pastEvent);
-        break;
-      case 'TransactionSubmitted':
-        // eslint-disable-next-line no-await-in-loop
-        await transactionSubmittedEventHandler(pastEvent);
-        break;
-      default:
-        break;
+  // for (let i = 0; i < splicedList.length; i++) {
+  let pastEvent = splicedList.shift(); // get the first event
+  for (let i = fromBlock; i <= toBlock; i++) {
+    // first, we'll deal with any function calls
+    await newBlockHeaderHandler({ number: i }, web3);
+    // then handle any past events associated with this blocknumber
+    while (pastEvent !== undefined && pastEvent.blockNumber === i) {
+      switch (pastEvent.event) {
+        case 'NewCurrentProposer':
+          // eslint-disable-next-line no-await-in-loop
+          await newCurrentProposerEventHandler(pastEvent, [proposer]);
+          break;
+        case 'Rollback':
+          // eslint-disable-next-line no-await-in-loop
+          await callTimberHandler(pastEvent);
+          await rollbackEventHandler(pastEvent);
+          break;
+        case 'CommittedToChallenge':
+          // eslint-disable-next-line no-await-in-loop
+          await committedToChallengeEventHandler(pastEvent);
+          break;
+        case 'TransactionSubmitted':
+          // eslint-disable-next-line no-await-in-loop
+          await transactionSubmittedEventHandler(pastEvent);
+          break;
+        default:
+          break;
+      }
+      pastEvent = splicedList.shift(); // handled, so move to the next event
     }
   }
 };
