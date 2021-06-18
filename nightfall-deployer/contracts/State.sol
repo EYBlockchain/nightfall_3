@@ -69,7 +69,6 @@ contract State is Structures, Config {
     // nightfall-optimist.  The current, optimistic version of Timber does not
     // require the smart contract to craft NewLeaf/NewLeaves events.
     leafCount += b.nCommitments;
-    emit BlockProposed();
   }
 
   // function to signal a rollback. Note that we include the block hash because

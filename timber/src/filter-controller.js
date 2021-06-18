@@ -12,6 +12,8 @@ import { LeafService, MetadataService } from './db/service';
 import logger from './logger';
 import mtc from './merkle-tree-controller'; // eslint-disable-line import/no-cycle
 import getProposeBlockCalldata from './optimistic/process-calldata';
+import subscribeToNewblockHeaders from './optimistic/subscribe';
+import newBlockHeaderHandler from './optimistic/block-header';
 
 // global subscriptions object:
 const subscriptions = {};
@@ -26,48 +28,23 @@ proposal and extract data that Timber's NewLeaf(s) response functions understand
 Timber is listening to does not have to emit all the commitment data in a
 NewLeaf(s) event and that saves considerable gas (event emitting is not free).
 */
-const blockProposedResponseFunction = async (eventObject, args) => {
+const blockProposedResponseFunction = async (tx, args) => {
   // NEW - function remains the same, for detecting single leaves, but can now specify the event name
   // NOTE - events must have same parameters as newLeaf / newLeaves
   // We make some hardcoded presumptions about what's contained in the 'args':
   logger.debug('processing BlockProposed event');
-  const { db, contractName, treeId } = args;
 
-  const eventName = args.eventName === undefined ? 'BlockProposed' : args.eventName; // hardcoded, as inextricably linked to the name of this function.
-
-  let eventParams;
-  logger.debug(`eventname: ${eventName}`);
-
-  if (treeId === undefined || treeId === '') {
-    eventParams = config.contracts[contractName].events[eventName].parameters;
-  } else {
-    eventParams = config.contracts[contractName].treeId[treeId].events[eventName].parameters;
-  }
-
-  // Now some generic eventObject handling code:
-  const { eventData } = eventObject;
-
-  /*
-  extract each relevent event parameter from the eventData and create an eventInstance: {
-    eventParamName_0: eventParamValue_0,
-    eventParamName_1: eventParamValue_1,
-    ...
-  }
-  */
-  const eventInstance = {};
-  eventParams.forEach(param => {
-    eventInstance[param] = eventData.returnValues[param];
-  });
+  const { db } = args[0];
 
   const metadataService = new MetadataService(db);
   const { treeHeight } = await metadataService.getTreeHeight();
 
   // Now some more bespoke code; specific to how our application needs to deal with this eventObject:
   // construct an array of 'leaf' documents to store in the db:
-  const { blockNumber } = eventData;
+  const { blockNumber } = tx;
   // first, we need to extract the commitment values from the calldata because
   // it's not in the emitted event.  We don't care about the Block object
-  const { block, transactions } = await getProposeBlockCalldata(eventData);
+  const { block, transactions } = await getProposeBlockCalldata(tx);
   logger.debug(`recovered transactions ${JSON.stringify(transactions, null, 2)}`);
   const currentLeafCount = Number(block.leafCount) + Number(block.nCommitments);
   const leafValues = transactions
@@ -77,7 +54,7 @@ const blockProposedResponseFunction = async (eventObject, args) => {
   // BlockProposed event broadcasts the AFTER value:
   const minLeafIndex = currentLeafCount - leafValues.length;
   logger.debug(
-    `minLeafIndex was ${minLeafIndex}, updatedLeafCount, ${currentLeafCount}, leafValues.length ${leafValues.length}, eventInstance, ${eventInstance}`,
+    `minLeafIndex was ${minLeafIndex}, updatedLeafCount, ${currentLeafCount}, leafValues.length ${leafValues.length}`,
   );
   logger.debug(`leafValues were ${JSON.stringify(leafValues, null, 2)}`);
   // now we have the relevant data, update the Merkle tree:
@@ -293,7 +270,14 @@ export const responseFunctions = {
   NewLeaf: newLeafResponseFunction,
   NewLeaves: newLeavesResponseFunction,
   Rollback: rollbackResponseFunction,
-  BlockProposed: blockProposedResponseFunction,
+  // BlockProposed: blockProposedResponseFunction,
+};
+
+// these are like response functions for events but they get called when a
+// given blockchain function is called and doesn't revert. It's a more compex
+// way of achieving the same thing, but it saves the gas of an event emission.
+export const functionCallHandlers = {
+  proposeBlock: blockProposedResponseFunction,
 };
 
 /**
@@ -307,10 +291,12 @@ async function filterBlock(db, contractName, contractInstance, fromBlock, treeId
   const metadataService = new MetadataService(db);
 
   let eventNames;
+  let functionSignatures;
 
   // TODO: if possible, make this easier to read and follow. Fewer 'if' statements. Perhaps use 'switch' statements instead?
   if (treeId === undefined || treeId === '') {
     eventNames = Object.keys(config.contracts[contractName].events);
+    ({ functionSignatures } = config.contracts[contractName]);
     if (config.treeHeight !== undefined || config.treeHeight !== '') {
       const { treeHeight } = config;
       metadataService.insertTreeHeight({ treeHeight });
@@ -322,6 +308,7 @@ async function filterBlock(db, contractName, contractInstance, fromBlock, treeId
       metadataService.insertTreeHeight({ treeHeight });
     }
     eventNames = Object.keys(config.contracts[contractName].treeId[treeId].events);
+    ({ functionSignatures } = config.contracts[contractName].treeId[treeId]);
   }
 
   const { treeHeight } = await metadataService.getTreeHeight();
@@ -350,6 +337,20 @@ async function filterBlock(db, contractName, contractInstance, fromBlock, treeId
     );
 
     subscriptions[eventName] = eventSubscription; // keep the subscription object for this event in global memory; to enable 'unsubscribe' in future.
+  });
+  // now we need to subscribe to solidity function calls.  This is used when we
+  // want to trade the convenience of a blockchain event emission for lowest
+  // possible gas, and we're prepared to scan the blockchain layer 1 transactions
+  // for non-reverting calls to a Solidity function and then pull in the calldata
+  // and extract or compute whatever we need from the calldata.
+  subscribeToNewblockHeaders(newBlockHeaderHandler, {
+    db,
+    contractName,
+    functionSignatures,
+    functionCallHandlers,
+    newEventResponder,
+    treeId,
+    fromBlock,
   });
 }
 
@@ -406,7 +407,7 @@ async function start(db, contractName, contractInstance, treeId) {
     await filterBlock(db, contractName, contractInstance, fromBlock, treeId);
     return true;
   } catch (err) {
-    throw new Error(err);
+    throw new Error(err.stack);
   }
 }
 
@@ -417,12 +418,8 @@ then these functions will want to hang on for a bit.  Hence this function:
 */
 function waitForUpdatesToComplete() {
   return new Promise((resolve, reject) => {
-    //    queue.once('end', () => {
-    //      logger.debug('queue emptied');
-    //      resolve();
-    //    });
     // we'll push in this dummy function. This ensures that there is at least
-    // one function in the queue, when it clear the queue, the 'end' event will
+    // one function in the queue, when it clears the queue, the 'end' event will
     // fire.  You'd think you could use queue.length == 0 as a test but that
     // doesn't seem to work.
     queue.push(cb => {

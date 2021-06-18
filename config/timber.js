@@ -35,12 +35,12 @@ module.exports = {
   contracts: {
     State: {
       events: {
-        BlockProposed: {
-          parameters: [],
-        },
         Rollback: {
           parameters: ['root', 'leafCount'],
         },
+      },
+      functionSignatures: {
+        proposeBlock: '0xd568c6b8',
       },
     },
   },

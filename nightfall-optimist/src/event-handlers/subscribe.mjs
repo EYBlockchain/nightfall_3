@@ -95,13 +95,6 @@ export async function subscribeToNewblockHeaders(callback, ...args) {
   return emitter;
 }
 
-export async function subscribeToBlockProposedEvent(callback, ...args) {
-  const emitter = (await waitForContract(STATE_CONTRACT_NAME)).events.BlockProposed();
-  emitter.on('data', event => callback(event, args));
-  logger.debug('Subscribed to BlockProposed event');
-  return emitter;
-}
-
 export async function subscribeToTransactionSubmitted(callback, ...args) {
   const emitter = (await waitForContract(SHIELD_CONTRACT_NAME)).events.TransactionSubmitted();
   emitter.on('data', event => callback(event, args));
