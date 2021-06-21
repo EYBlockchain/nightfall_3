@@ -210,7 +210,7 @@ describe('Testing the http API', () => {
       expect(res.status).to.be.equal(200);
       console.log(`Offchain single transfer success`);
       // give Timber time to respond to the blockchain event
-      // await new Promise(resolve => setTimeout(resolve, 5000));
+      await new Promise(resolve => setTimeout(resolve, 5000));
     });
   });
 
