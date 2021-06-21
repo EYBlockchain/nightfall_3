@@ -4,7 +4,7 @@
   "description": "construct and store a merkle tree from its leaves",
   "main": "index.js",
   "scripts": {
-    "start": "babel-node ./src/index.js",
+    "start": "node ./src/index.mjs",
     "dev": "nodemon --ignore /app/build/ --exec babel-node ./src/index.js",
     "test": "truffle test"
   },
@@ -36,11 +36,6 @@
     "winston-daily-rotate-file": "^3.4.1"
   },
   "devDependencies": {
-    "@babel/cli": "^7.6.4",
-    "@babel/core": "^7.6.4",
-    "@babel/node": "^7.6.3",
-    "@babel/preset-env": "^7.6.3",
-    "@babel/register": "^7.6.2",
     "mocha": "^6.2.2",
     "nodemon": "^1.19.4"
   }
