@@ -330,7 +330,7 @@ describe('Testing the http API', () => {
       await expect(
         submitTransaction(txDataToSign, privateKey, shieldAddress, gas),
       ).to.be.rejectedWith(
-        'Returned error: VM Exception while processing transaction: revert It is too soon withdraw funds from this block',
+        'Returned error: VM Exception while processing transaction: revert It is too soon to withdraw funds from this block',
       );
     });
     it('Should create a passing finalise-withdrawal (because sufficient time has passed)', async () => {
