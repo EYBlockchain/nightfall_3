@@ -44,8 +44,8 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
     require(time + COOLING_OFF_PERIOD < block.timestamp, 'It is too soon withdraw funds from this block');
     bytes32 transactionHash = Utils.hashTransaction(ts[index]);
     require(!withdrawn[transactionHash], 'This transaction has already paid out');
-    if (ts[index].transactionType == TransactionTypes.WITHDRAW) payOut(ts[index]);
     withdrawn[transactionHash] = true;
+    if (ts[index].transactionType == TransactionTypes.WITHDRAW) payOut(ts[index]);
   }
 
   function payOut(Transaction memory t) internal {
