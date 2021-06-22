@@ -19,6 +19,8 @@ import './Stateful.sol';
 
 contract Shield is Stateful, Structures, Config, Key_Registry {
 
+  mapping(bytes32 => bool) public withdrawn;
+
   function submitTransaction(Transaction memory t) external payable {
     // let everyone know what you did
     emit TransactionSubmitted();
@@ -40,6 +42,9 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
     // check that the block has been finalised
     uint time = state.getBlockData(blockNumberL2).time;
     require(time + COOLING_OFF_PERIOD < block.timestamp, 'It is too soon withdraw funds from this block');
+    bytes32 transactionHash = Utils.hashTransaction(ts[index]);
+    require(!withdrawn[transactionHash], 'This transaction has already paid out');
+    withdrawn[transactionHash] = true;
     if (ts[index].transactionType == TransactionTypes.WITHDRAW) payOut(ts[index]);
   }
 
