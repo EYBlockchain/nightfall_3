@@ -1,6 +1,6 @@
 ARG GPR_TOKEN
 
-FROM zokrates/zokrates:0.6.3 as builder
+FROM zokrates/zokrates:0.6.4 as builder
 
 FROM node:14.17 as node-build
 ARG GPR_TOKEN
@@ -15,7 +15,7 @@ WORKDIR /app
 
 COPY --from=node-build /app /app
 COPY --from=builder /home/zokrates/.zokrates/bin/zokrates /app/zokrates
-COPY ./stdlib-bugfix/stdlib /app/stdlib/
+COPY --from=builder /home/zokrates/.zokrates/stdlib /app/stdlib/
 COPY ./src ./src
 COPY ./circuits ./circuits
 COPY ./start-script ./start-script

@@ -1,12 +1,14 @@
-from "hashes/sha256/IVconstants" import main as IVconstants
-from "hashes/sha256/shaRound" import main as sha256
+from "hashes/sha256/embed/IVconstants" import main as IVconstants
+from "hashes/sha256/embed/shaRoundNoBoolCheck" import main as sha256
+from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256
+from "utils/casts/bool_256_to_u32_8.zok" import main as bool_256_to_u32_8
 
 def main(u32[64] a) -> (u32[8]):
 
-    u32[8] IV =  IVconstants()
-    u32[8] digest1 =  sha256([...a[0..8], ...a[8..16]], IV)
-    u32[8] digest2 =  sha256([...a[16..24], ...a[24..32]], digest1)
-    u32[8] digest3 =  sha256([...a[32..40], ...a[40..48]], digest2)
-    u32[8] digest4 =  sha256([...a[48..56], ...a[56..64]], digest3)
+    bool[256] IV =  IVconstants()
+    bool[256] digest1 =  sha256(u32_8_to_bool_256(a[0..8]), u32_8_to_bool_256(a[8..16]), IV)
+    bool[256] digest2 =  sha256(u32_8_to_bool_256(a[16..24]), u32_8_to_bool_256(a[24..32]), digest1)
+    bool[256] digest3 =  sha256(u32_8_to_bool_256(a[32..40]), u32_8_to_bool_256(a[40..48]), digest2)
+    bool[256] digest4 =  sha256(u32_8_to_bool_256(a[48..56]), u32_8_to_bool_256(a[56..64]), digest3)
 
-	return digest4
+return bool_256_to_u32_8(digest4)
