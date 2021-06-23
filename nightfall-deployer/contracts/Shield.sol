@@ -20,6 +20,7 @@ import './Stateful.sol';
 contract Shield is Stateful, Structures, Config, Key_Registry {
 
   mapping(bytes32 => bool) public withdrawn;
+  mapping(bytes32 => uint) public feeBook;
 
   function submitTransaction(Transaction memory t) external payable {
     // let everyone know what you did
@@ -27,6 +28,29 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
     // if this is a deposit transaction, take payment now (TODO: is there a
     // better way? This feels expensive).
     if (t.transactionType == TransactionTypes.DEPOSIT) payIn(t);
+    // we need to remember the payment made for each transaction so we can pay
+    // the proposer later. We can override the transaction with a higher fee if
+    // we wish, but not lower it (because otherwise someone would be able to
+    // slow down or stop our transaction)
+    bytes32 transactionHash = Utils.hashTransaction(t);
+    if (feeBook[transactionHash] < msg.value) feeBook[transactionHash] = msg.value;
+  }
+
+  // function to enable a proposer to get paid for proposing a block
+  function requestBlockPayment(Block memory b, uint blockNumberL2, Transaction[] memory ts) external {
+    state.isBlockReal(b, ts, blockNumberL2);
+    // check that the block has been finalised
+    uint time = state.getBlockData(blockNumberL2).time;
+    require(time + COOLING_OFF_PERIOD < block.timestamp, 'It is too soon to get paid for this block');
+    require(b.proposer == msg.sender, 'You are not the proposer of this block');
+    // add up how much the proposer is owed.
+    uint payment;
+    for (uint i = 0; i < ts.length; i++) {
+      bytes32 transactionHash = Utils.hashTransaction(ts[i]);
+      payment += feeBook[transactionHash];
+      feeBook[transactionHash] = 0; // clear the payment
+    }
+    state.addPendingWithdrawal(msg.sender, payment);
   }
 
   /**
@@ -41,7 +65,7 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
     state.isBlockReal(b, ts, blockNumberL2);
     // check that the block has been finalised
     uint time = state.getBlockData(blockNumberL2).time;
-    require(time + COOLING_OFF_PERIOD < block.timestamp, 'It is too soon withdraw funds from this block');
+    require(time + COOLING_OFF_PERIOD < block.timestamp, 'It is too soon to withdraw funds from this block');
     bytes32 transactionHash = Utils.hashTransaction(ts[index]);
     require(!withdrawn[transactionHash], 'This transaction has already paid out');
     withdrawn[transactionHash] = true;

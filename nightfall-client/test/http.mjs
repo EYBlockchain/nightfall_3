@@ -161,6 +161,7 @@ describe('Testing the http API', () => {
         expect(receipt).to.have.property('blockHash');
         console.log(`Gas used was ${Number(receipt.gasUsed)}`);
         // give Timber time to respond to the blockchain event
+        await new Promise(resolve => setTimeout(resolve, 5000));
       }
     });
   });
@@ -330,7 +331,7 @@ describe('Testing the http API', () => {
       await expect(
         submitTransaction(txDataToSign, privateKey, shieldAddress, gas),
       ).to.be.rejectedWith(
-        'Returned error: VM Exception while processing transaction: revert It is too soon withdraw funds from this block',
+        'Returned error: VM Exception while processing transaction: revert It is too soon to withdraw funds from this block',
       );
     });
     it('Should create a passing finalise-withdrawal (because sufficient time has passed)', async () => {
