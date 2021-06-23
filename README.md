@@ -14,7 +14,7 @@ Nightfall_3 operates optimistically to counter the high gas costs of direct ZKP 
 
 This application runs in docker containers so you will need Docker installed and you must allocate 14 GB of RAM and 4 GB of swap to the Docker containers.  Most problems are caused by the containers not having access to enough memory.  We also recommend allocating at least 4 cores to Docker.
 
-You will need a local copy of `node` and `npm` to run the tests and `git` to clone the repository.  We have tested with versions 14.15.1 and 7.11.2 of `node` and `npm`, respectively.
+You will need a local copy of `node` and `npm` to run the tests and `git` to clone the repository.  We have tested with versions 14.15.1 and 6.14.13 of `node` and `npm`, respectively.
 
 The application will run happily on a MacBook pro and most Linux implementations but Windows isn't supported. The code is in the process of being combined into a monorepo, so there may be a few code repetitions.  We'll get to those soon but they don't affect functionality.
 
