@@ -14,13 +14,20 @@ jobs:
         with:
           node-version: '14.15.0'
 
-      - name: Do setup
-        run: ./setup-nightfall
-        env:
-          GPR_TOKEN: ${{ secrets.GPR_TOKEN }}
+      - name: npm install
+        run: npm ci
 
       - name: eslint check
         run: npm run lint
+
+      - name: Do setup
+        run: |
+          pushd nightfall-client
+          npm ci
+          popd
+          docker-compose build --build-arg GPR_TOKEN=${GPR_TOKEN}
+        env:
+          GPR_TOKEN: ${{ secrets.GPR_TOKEN }}
 
       - name: Start Containers
         run: |
