@@ -31,8 +31,13 @@ router.get('/transaction-hash/:transactionHash', async (req, res, next) => {
     logger.debug(`searching for block containing transaction hash ${transactionHash}`);
     // get data to return
     const block = await getBlockByTransactionHash(transactionHash);
+    const positions = {};
     if (block !== null) {
-      const transactions = await getTransactionsByTransactionHashes(block.transactionHashes);
+      // eslint-disable-next-line no-return-assign
+      block.transactionHashes.forEach((t, index) => (positions[t] = index));
+      const transactions = (await getTransactionsByTransactionHashes(block.transactionHashes)).sort(
+        (a, b) => positions[a.transactionHash] - positions[b.transactionHash],
+      );
       const index = block.transactionHashes.indexOf(transactionHash);
       delete block?._id; // this is database specific so no need to send it
       logger.debug(`Found block ${JSON.stringify(block, null, 2)} in database`);
