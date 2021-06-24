@@ -200,19 +200,16 @@ contract Challenges is Stateful, Key_Registry, Config {
     function challengeHistoricRoot(
         Block memory blockL2,
         uint256 blockNumberL2,
-        Block memory historicRootBlockL2,
-        uint256 historicRootBlockNumberL2,
         Transaction[] memory transactions,
-        Transaction[] memory transactionshistoricRootBlockL2,
         uint256 transactionIndex,
         bytes32 salt
     ) external {
         checkCommit(msg.data, salt);
         state.isBlockReal(blockL2, transactions, blockNumberL2);
         require(
-            state.blockHashes[transactions[transactionIndex].historicRootBlockNumberL2].blockHash !=
-                Utils.hashBlock(historicRootBlockL2, transactionshistoricRootBlockL2),
-            'Historic root in transaction exists'
+            state.getNumberOfL2Blocks() <
+                uint256(transactions[transactionIndex].historicRootBlockNumberL2),
+            'Historic root in the transaction exists'
         );
         challengeAccepted(blockL2, blockNumberL2);
     }

@@ -510,26 +510,24 @@ describe('Testing the challenge http API', () => {
   describe('Challenge 7: Duplicate Nullifier', async () => {
     it('Should delete the flawed block and rollback the leaves', async () => {
       // create two transfers - transfers are preferred here because we want to swap out a nullifier.
-      for (let i = 0; i < 2; i++) {
-        const res = await chai // eslint-disable-line no-await-in-loop
-          .request(url)
-          .post('/transfer')
-          .send({
-            ercAddress,
-            tokenId,
-            recipientData: {
-              values: [value],
-              recipientZkpPublicKeys: [zkpPublicKey],
-            },
-            senderZkpPrivateKey: zkpPrivateKey,
-            fee,
-          });
-        const { txDataToSign } = res.body;
-        // eslint-disable-next-line no-await-in-loop
-        await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
-        // eslint-disable-next-line no-await-in-loop
-        // await new Promise(resolve => setTimeout(resolve, 5000));
-      }
+      const res = await chai // eslint-disable-line no-await-in-loop
+        .request(url)
+        .post('/transfer')
+        .send({
+          ercAddress,
+          tokenId,
+          recipientData: {
+            values: [value],
+            recipientZkpPublicKeys: [zkpPublicKey],
+          },
+          senderZkpPrivateKey: zkpPrivateKey,
+          fee,
+        });
+      const { txDataToSign } = res.body;
+      // eslint-disable-next-line no-await-in-loop
+      await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
+      // eslint-disable-next-line no-await-in-loop
+      // await new Promise(resolve => setTimeout(resolve, 5000));
       clearInterval(
         await new Promise(resolve => {
           const t = setInterval(() => !topicsBlockHashDuplicateNullifier || resolve(t), 1000);

@@ -113,70 +113,80 @@ async function checkTransactionType(transaction) {
 
 async function checkHistoricRoot(transaction) {
   // Deposit transaction will not have historic roots
-  if (Number(transaction.transactionType) !== 0) {
-    try {
-      await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2);
-    } catch (err) {
+  if (
+    Number(transaction.transactionType) === 1 ||
+    Number(transaction.transactionType) === 2 ||
+    Number(transaction.transactionType) === 3
+  ) {
+    if ((await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2)) === null)
       throw new TransactionError('The historic root in the transaction does not exist', 3);
-    }
   }
 }
 
 async function checkPublicInputHash(transaction) {
-  switch (Number(transaction.transactionType)) {
-    case 0: // deposit transaction
-      if (
-        transaction.publicInputHash !==
-        new PublicInputs([
-          transaction.ercAddress,
-          transaction.tokenId,
-          transaction.value,
-          transaction.commitments[0],
-        ]).hash.hex(32)
-      )
-        throw new TransactionError('public input hash is incorrect', 4);
-      break;
-    case 1: // single transfer transaction
-      if (
-        transaction.publicInputHash !==
-        new PublicInputs([
-          transaction.ercAddress,
-          transaction.commitments[0],
-          transaction.nullifiers[0],
-          (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2)).root,
-        ]).hash.hex(32)
-      )
-        throw new TransactionError('public input hash is incorrect', 4);
-      break;
-    case 2: // double transfer transaction
-      if (
-        transaction.publicInputHash !==
-        new PublicInputs([
-          transaction.ercAddress, // this is correct; ercAddress appears twice
-          transaction.ercAddress, // in a double-transfer public input hash
-          transaction.commitments,
-          transaction.nullifiers,
-          (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2)).root,
-        ]).hash.hex(32)
-      )
-        throw new TransactionError('public input hash is incorrect', 4);
-      break;
-    case 3: // withdraw transaction
-      if (
-        transaction.publicInputHash !==
-        new PublicInputs([
-          transaction.ercAddress,
-          transaction.tokenId,
-          transaction.value,
-          transaction.nullifiers[0],
-          transaction.recipientAddress,
-          (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2)).root,
-        ]).hash.hex(32)
-      )
-        throw new TransactionError('public input hash is incorrect', 4);
-      break;
-    default:
-      throw new TransactionError('Unknown transaction type', 2);
+  try {
+    // We will check if the historic root used in transaction exists first because this check is done by
+    // looking up for a block with block number in the database. This same look up needs to be done during public input hash
+    // to retrieve the root of the block that needs to be hashed. If the historic block does not exist then this root won't exist either
+    // hence we do this check first
+    await checkHistoricRoot(transaction);
+    switch (Number(transaction.transactionType)) {
+      case 0: // deposit transaction
+        if (
+          transaction.publicInputHash !==
+          new PublicInputs([
+            transaction.ercAddress,
+            transaction.tokenId,
+            transaction.value,
+            transaction.commitments[0],
+          ]).hash.hex(32)
+        )
+          throw new TransactionError('public input hash is incorrect', 4);
+        break;
+      case 1: // single transfer transaction
+        if (
+          transaction.publicInputHash !==
+          new PublicInputs([
+            transaction.ercAddress,
+            transaction.commitments[0],
+            transaction.nullifiers[0],
+            (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2)).root,
+          ]).hash.hex(32)
+        )
+          throw new TransactionError('public input hash is incorrect', 4);
+        break;
+      case 2: // double transfer transaction
+        if (
+          transaction.publicInputHash !==
+          new PublicInputs([
+            transaction.ercAddress, // this is correct; ercAddress appears twice
+            transaction.ercAddress, // in a double-transfer public input hash
+            transaction.commitments,
+            transaction.nullifiers,
+            (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2)).root,
+          ]).hash.hex(32)
+        )
+          throw new TransactionError('public input hash is incorrect', 4);
+        break;
+      case 3: // withdraw transaction
+        if (
+          transaction.publicInputHash !==
+          new PublicInputs([
+            transaction.ercAddress,
+            transaction.tokenId,
+            transaction.value,
+            transaction.nullifiers[0],
+            transaction.recipientAddress,
+            (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2)).root,
+          ]).hash.hex(32)
+        )
+          throw new TransactionError('public input hash is incorrect', 4);
+        break;
+      default:
+        throw new TransactionError('Unknown transaction type', 2);
+    }
+  } catch (err) {
+    throw new TransactionError(err.message, err.code);
   }
 }
 
@@ -204,7 +214,6 @@ function checkTransaction(transaction) {
   return Promise.all([
     checkTransactionHash(transaction),
     checkTransactionType(transaction),
-    checkHistoricRoot(transaction),
     checkPublicInputHash(transaction),
     verifyProof(transaction),
   ]);

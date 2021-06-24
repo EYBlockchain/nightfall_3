@@ -2,7 +2,6 @@ import Web3 from 'web3';
 import axios from 'axios';
 import chai from 'chai';
 import rand from '../src/utils/crypto/crypto-random.mjs';
-import PublicInputs from '../src/classes/public-inputs.mjs';
 
 let web3;
 
@@ -107,14 +106,7 @@ export async function createBadBlock(badBlockType, block, transactions, args) {
     }
     case 'IncorrectHistoricRoot': {
       // Replace the historic root with a wrong historic root
-      badTransactions[1].historicRoot = (await rand(32)).hex();
-      // calculate the new public input hash
-      badTransactions[1].publicInputHash = new PublicInputs([
-        args.ercAddress,
-        badTransactions[1].commitments[0],
-        badTransactions[1].nullifiers[0],
-        badTransactions[1].historicRoot,
-      ]).hash.hex(32);
+      badTransactions[1].historicRootBlockNumberL2 = (await rand(8)).hex();
       break;
     }
     case 'IncorrectPublicInputHash': {
