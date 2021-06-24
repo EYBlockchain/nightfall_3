@@ -275,7 +275,16 @@ export async function getTransactionsByTransactionHashes(transactionHashes) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { transactionHash: { $in: transactionHashes } };
-  return db.collection(TRANSACTIONS_COLLECTION).find(query).toArray();
+  const returnedTransactions = await db.collection(TRANSACTIONS_COLLECTION).find(query).toArray();
+  // Create a dictionary where we will store the correct position ordering
+  const positions = {};
+  // Use the ordering of txHashes in the block to fill the dictionary-indexed by txHash
+  // eslint-disable-next-line no-return-assign
+  transactionHashes.forEach((t, index) => (positions[t] = index));
+  const transactions = returnedTransactions.sort(
+    (a, b) => positions[a.transactionHash] - positions[b.transactionHash],
+  );
+  return transactions;
 }
 
 export async function saveNullifiers(nullifiers) {
