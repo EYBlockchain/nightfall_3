@@ -31,10 +31,14 @@ router.get('/transaction-hash/:transactionHash', async (req, res, next) => {
     logger.debug(`searching for block containing transaction hash ${transactionHash}`);
     // get data to return
     const block = await getBlockByTransactionHash(transactionHash);
+    // Create a dictionary where we will store the correct position ordering
     const positions = {};
     if (block !== null) {
+      // Use the ordering of txHashes in the block to fill the dictionary-indexed by txHash
       // eslint-disable-next-line no-return-assign
       block.transactionHashes.forEach((t, index) => (positions[t] = index));
+
+      // positions is now a hashmap mapping transaction hashes to index and can be fed into .sort()
       const transactions = (await getTransactionsByTransactionHashes(block.transactionHashes)).sort(
         (a, b) => positions[a.transactionHash] - positions[b.transactionHash],
       );
