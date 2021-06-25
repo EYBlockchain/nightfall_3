@@ -20,12 +20,8 @@ jobs:
       - name: eslint check
         run: npm run lint
 
-      - name: Do setup
-        run: |
-          pushd nightfall-client
-          npm ci
-          popd
-          docker-compose build --build-arg GPR_TOKEN=${GPR_TOKEN}
+      - name: docker-compose build
+        run: docker-compose build --build-arg GPR_TOKEN=${GPR_TOKEN}
         env:
           GPR_TOKEN: ${{ secrets.GPR_TOKEN }}
 

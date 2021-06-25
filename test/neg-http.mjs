@@ -4,7 +4,7 @@ import chaiAsPromised from 'chai-as-promised';
 import gen from 'general-number';
 import Queue from 'queue';
 import WebSocket from 'ws';
-import sha256 from '../src/utils/crypto/sha256.mjs';
+import sha256 from '../nightfall-client/src/utils/crypto/sha256.mjs';
 import {
   closeWeb3Connection,
   submitTransaction,
