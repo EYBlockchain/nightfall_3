@@ -13,6 +13,7 @@ import logger from './logger.mjs';
 import mtc from './merkle-tree-controller.mjs'; // eslint-disable-line import/no-cycle
 import getProposeBlockCalldata from './optimistic/process-calldata.mjs';
 
+const ZERO = '0x0000000000000000000000000000000000000000000000000000000000000000';
 // global subscriptions object:
 const subscriptions = {};
 // this queue controls event concurrency to be 1.  This means that event
@@ -69,7 +70,9 @@ const blockProposedResponseFunction = async (eventObject, args) => {
   // it's not in the emitted event.  We don't care about the Block object
   const { block, transactions } = await getProposeBlockCalldata(eventData);
   logger.debug(`recovered transactions ${JSON.stringify(transactions, null, 2)}`);
-  const currentLeafCount = Number(block.leafCount) + Number(block.nCommitments);
+  const currentLeafCount =
+    Number(block.leafCount) +
+    transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat(Infinity).length;
   const leafValues = transactions
     .map(transaction => transaction.commitments.filter(c => c !== config.ZERO))
     .flat(Infinity);
@@ -406,6 +409,7 @@ async function start(db, contractName, contractInstance, treeId) {
     await filterBlock(db, contractName, contractInstance, fromBlock, treeId);
     return true;
   } catch (err) {
+    logger.error(err.stack);
     throw new Error(err);
   }
 }

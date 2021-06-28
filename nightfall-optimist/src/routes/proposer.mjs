@@ -11,7 +11,7 @@ import Block from '../classes/block.mjs';
 import { setRegisteredProposerAddress } from '../services/database.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import Transaction from '../classes/transaction.mjs';
-import { getFrontier } from '../utils/timber.mjs';
+import { getFrontier, getLeafCount } from '../utils/timber.mjs';
 import mt from '../utils/crypto/merkle-tree/merkle-tree.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
 import TransactionError from '../classes/transaction-error.mjs';
@@ -185,10 +185,7 @@ router.post('/encode', async (req, res, next) => {
     const { transactions, block } = req.body;
 
     const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
-    const currentLeafCount = parseInt(
-      await (await waitForContract(STATE_CONTRACT_NAME)).methods.leafCount().call(),
-      10,
-    );
+    const currentLeafCount = parseInt(await getLeafCount(), 10);
     const blockNumberL2 = Number(await stateContractInstance.methods.getNumberOfL2Blocks().call());
 
     const newTransactions = await Promise.all(

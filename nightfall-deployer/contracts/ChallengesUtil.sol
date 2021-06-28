@@ -11,6 +11,15 @@ library ChallengesUtil {
 
   bytes32 public constant ZERO = 0x0000000000000000000000000000000000000000000000000000000000000000;
 
+    function libChallengeLeafCountCorrect(
+      Structures.Block memory priorBlockL2,
+      Structures.Transaction[] memory priorBlockTransactions,
+      uint leafCount
+    ) public pure {
+      uint expectedLeafCount = priorBlockL2.leafCount + Utils.countCommitments(priorBlockTransactions);
+      require(expectedLeafCount != leafCount, 'The leafCount is actually correct');
+    }
+
     function libChallengeNewRootCorrect(
       Structures.Block memory priorBlockL2, // the block immediately prior to this one
       Structures.Transaction[] memory priorBlockTransactions, // the transactions in the prior block
@@ -19,36 +28,18 @@ library ChallengesUtil {
       Structures.Transaction[] memory transactions,
       uint commitmentIndex // the index *in the Merkle Tree* of the commitment that we are providing a SiblingPath for.
     ) public pure {
-    //calculate the number of commitments in prior block
-    bytes32[] memory commitmentsPriorBlock = new bytes32[](priorBlockL2.nCommitments);
-    uint l;
-    for (uint i = 0; i < priorBlockTransactions.length; i++) {
-      for (uint j = 0; j < priorBlockTransactions[i].commitments.length; j++)
-        if (priorBlockTransactions[i].commitments[j] != ZERO) {
-          commitmentsPriorBlock[l++] = priorBlockTransactions[i].commitments[j];
-        }
-    }
-    // next check the sibling path is valid and get the Frontier
-    // (bool valid, bytes32[33] memory _frontier) = getPath(commitmentsPriorBlock, frontierPriorBlock,priorBlockL2.leafCount, priorBlockL2.root);
-    bool valid;
-    bytes32[33] memory _frontier;
-    (valid, _frontier) = MerkleTree_Stateless.checkPath(
-      commitmentsPriorBlock,
-      frontierPriorBlock,
-      priorBlockL2.leafCount,
-      priorBlockL2.root
-    );
-    require(valid, 'The sibling path is invalid');
-    // next, let's get all the commitments in the block, togther in an array
-    // we could do this with less code by making commitments 'storage' and pushing to the end of the array but it's a waste of Gas because we don't want to keep the commitments.
-    bytes32[] memory commitments = new bytes32[](blockL2.nCommitments);
-    uint k;
-      for (uint i = 0; i < transactions.length; i++) {
-        for (uint j = 0; j < transactions[i].commitments.length; j++)
-          if (transactions[i].commitments[j] != ZERO) commitments[k++] = transactions[i].commitments[j];
-      }
+      // next check the sibling path is valid and get the Frontier
+      bool valid;
+      bytes32[33] memory _frontier;
+      (valid, _frontier) = MerkleTree_Stateless.checkPath(
+        Utils.filterCommitments(priorBlockTransactions),
+        frontierPriorBlock,
+        priorBlockL2.leafCount,
+        priorBlockL2.root
+      );
+      require(valid, 'The sibling path is invalid');
       // At last, we can check if the root itself is correct!
-      (bytes32 root, , ) = MerkleTree_Stateless.insertLeaves(commitments, _frontier, commitmentIndex);
+      (bytes32 root, , ) = MerkleTree_Stateless.insertLeaves(Utils.filterCommitments(transactions), _frontier, commitmentIndex);
       require(root != blockL2.root, 'The root is actually fine');
     }
 

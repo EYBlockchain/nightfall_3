@@ -91,7 +91,7 @@ class Block {
       // in case we are joining the network midway.
       this.localLeafCount = currentLeafCount;
     } else {
-      // Timber appears to be behind, so us locally stored values
+      // Timber appears to be behind, so use locally stored values
       frontier = this.localFrontier;
       currentLeafCount = this.localLeafCount;
     }
@@ -141,8 +141,8 @@ class Block {
 
   static calcHash(block, transactions) {
     const web3 = Web3.connection();
-    const { proposer, root, leafCount, nCommitments } = block;
-    const blockArray = [leafCount, nCommitments, proposer, root];
+    const { proposer, root, leafCount } = block;
+    const blockArray = [leafCount, proposer, root];
     const transactionsArray = transactions.map(t => {
       const {
         value,
@@ -179,12 +179,11 @@ class Block {
   // remove properties that do not get sent to the blockchain returning
   // a new object (don't mutate the original)
   static buildSolidityStruct(block) {
-    const { proposer, root, leafCount, nCommitments } = block;
+    const { proposer, root, leafCount } = block;
     return {
       proposer,
       root,
       leafCount: Number(leafCount),
-      nCommitments: Number(nCommitments),
     };
   }
 }

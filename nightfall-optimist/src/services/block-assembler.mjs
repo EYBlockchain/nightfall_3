@@ -5,6 +5,7 @@ This module does all of the heaving lifting for a Proposer: It assembles blocks
 from posted transactions and proposes these blocks.
 */
 import config from 'config';
+import { getLeafCount } from '../utils/timber.mjs';
 import {
   removeTransactionsFromMemPool,
   getMostProfitableTransactions,
@@ -56,10 +57,7 @@ export async function makeBlock(proposer, number = TRANSACTIONS_PER_BLOCK) {
   const transactions = await getMostProfitableTransactions(number);
   // then we make new block objects until we run out of unprocessed
   // transactions
-  const currentLeafCount = parseInt(
-    await (await waitForContract(STATE_CONTRACT_NAME)).methods.leafCount().call(),
-    10,
-  );
+  const currentLeafCount = parseInt(await getLeafCount(), 10);
   const block = await Block.build({ proposer, transactions, currentLeafCount });
   return { block, transactions };
 }

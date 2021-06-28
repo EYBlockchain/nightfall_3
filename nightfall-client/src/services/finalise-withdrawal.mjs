@@ -11,12 +11,11 @@ const { SHIELD_CONTRACT_NAME } = config;
 // TODO move classes to their own folder so this is not needed (it's already a
 // static function in the Block class)
 function buildSolidityStruct(block) {
-  const { proposer, root, leafCount, nCommitments } = block;
+  const { proposer, root, leafCount } = block;
   return {
     proposer,
     root,
     leafCount: Number(leafCount),
-    nCommitments: Number(nCommitments),
   };
 }
 
