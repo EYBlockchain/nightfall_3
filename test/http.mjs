@@ -6,7 +6,7 @@ import chaiAsPromised from 'chai-as-promised';
 import Queue from 'queue';
 import gen from 'general-number';
 import WebSocket from 'ws';
-import sha256 from '../src/utils/crypto/sha256.mjs';
+import sha256 from '../nightfall-client/src/utils/crypto/sha256.mjs';
 import {
   closeWeb3Connection,
   submitTransaction,
@@ -331,7 +331,7 @@ describe('Testing the http API', () => {
       await expect(
         submitTransaction(txDataToSign, privateKey, shieldAddress, gas),
       ).to.be.rejectedWith(
-        'Returned error: VM Exception while processing transaction: revert It is too soon withdraw funds from this block',
+        'Returned error: VM Exception while processing transaction: revert It is too soon to withdraw funds from this block',
       );
     });
     it('Should create a passing finalise-withdrawal (because sufficient time has passed)', async () => {

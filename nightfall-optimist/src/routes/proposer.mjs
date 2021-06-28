@@ -18,7 +18,7 @@ import TransactionError from '../classes/transaction-error.mjs';
 
 const { updateNodes } = mt;
 const router = express.Router();
-const { STATE_CONTRACT_NAME, PROPOSERS_CONTRACT_NAME, ZERO } = config;
+const { STATE_CONTRACT_NAME, PROPOSERS_CONTRACT_NAME, SHIELD_CONTRACT_NAME, ZERO } = config;
 
 /**
  * Function to return a raw transaction that registers a proposer.  This just
@@ -95,6 +95,29 @@ router.get('/withdraw', async (req, res, next) => {
     next(err);
   }
 });
+
+/**
+ * Function to get payment for proposing a L2 block.  This should be called only
+ * after the block is finalised. It will authorise the payment as a pending
+ * withdrawal and then /withdraw needs to be called to recover the money.
+ */
+router.post('/payment', async (req, res, next) => {
+  logger.debug(`payment endpoint received GET ${JSON.stringify(req.body, null, 2)}`);
+  const { block, blockNumberL2, transactions } = req.body;
+  try {
+    const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
+    const txDataToSign = await shieldContractInstance.methods
+      .requestBlockPayment(block, blockNumberL2, transactions)
+      .encodeABI();
+    logger.debug('returning raw transaction data');
+    logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
+    res.json({ txDataToSign });
+  } catch (err) {
+    logger.error(err);
+    next(err);
+  }
+});
+
 /**
  * Function to Propose a state update block  This just
  * provides the tx data, the user will need to call the blockchain client
