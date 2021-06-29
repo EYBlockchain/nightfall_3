@@ -1,3 +1,5 @@
+/* eslint-disable import/no-extraneous-dependencies */
+
 /**
 Class representing a GM17 proof.  Depending on the local definition of 'proof',
 an object from this class may contain the public inputs as well as the a, b, c

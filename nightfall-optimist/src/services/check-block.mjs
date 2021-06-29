@@ -3,7 +3,7 @@ Module to check that submitted Blocks and Transactions are valid
 */
 import { getTreeHistoryByCurrentLeafCount } from '../utils/timber.mjs';
 import logger from '../utils/logger.mjs';
-import BlockError from '../classes/block-error.mjs';
+import { BlockError } from '../classes/index.mjs';
 import checkTransaction from './transaction-checker.mjs';
 import {
   numberOfBlockWithTransactionHash,

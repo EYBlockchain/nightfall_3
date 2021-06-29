@@ -13,11 +13,8 @@ import rand from '../utils/crypto/crypto-random.mjs';
 import { getContractInstance } from '../utils/contract.mjs';
 import logger from '../utils/logger.mjs';
 import { findUsableCommitments, storeCommitment, markNullified } from './commitment-storage.mjs';
-import Nullifier from '../classes/nullifier.mjs';
-import Commitment from '../classes/commitment.mjs';
-import PublicInputs from '../classes/public-inputs.mjs';
+import { Nullifier, Commitment, PublicInputs, Transaction } from '../classes/index.mjs';
 import { getSiblingPath } from '../utils/timber.mjs';
-import Transaction from '../classes/transaction.mjs';
 import { discoverPeers } from './peers.mjs';
 import getBlockAndTransactionsByRoot from '../utils/optimist.mjs';
 

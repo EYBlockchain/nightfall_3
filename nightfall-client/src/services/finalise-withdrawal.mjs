@@ -4,7 +4,7 @@ address.
 */
 import config from 'config';
 import { getContractInstance } from '../utils/contract.mjs';
-import Transaction from '../classes/transaction.mjs';
+import { Transaction } from '../classes/index.mjs';
 
 const { SHIELD_CONTRACT_NAME } = config;
 

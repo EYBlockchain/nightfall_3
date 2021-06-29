@@ -6,8 +6,7 @@ import config from 'config';
 import gen from 'general-number';
 import mongo from '../utils/mongo.mjs';
 import logger from '../utils/logger.mjs';
-import Commitment from '../classes/commitment.mjs';
-import Nullifier from '../classes/nullifier.mjs';
+import { Commitment, Nullifier } from '../classes/index.mjs';
 
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
 const { generalise } = gen;

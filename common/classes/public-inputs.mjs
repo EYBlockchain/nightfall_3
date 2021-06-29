@@ -1,3 +1,5 @@
+/* eslint-disable import/no-extraneous-dependencies, import/no-unresolved */
+
 /**
 Class to construct a public input hash (PIH).  Unlike a commitment, the PIH
 will vary quite a bit and so we use an array as the input

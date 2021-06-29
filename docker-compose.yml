@@ -8,6 +8,9 @@ services:
       context: ./nightfall-client
     volumes:
       - ./nightfall-client/src:/app/src
+      - ./common/classes/proof.mjs:/app/src/classes/proof.mjs
+      - ./common/classes/public-inputs.mjs:/app/src/classes/public-inputs.mjs
+      - ./common/classes/transaction.mjs:/app/src/classes/transaction.mjs
       - ./config/default.js:/app/config/default.js
       - build:/app/build
       - mongodb:/app/mongodb
@@ -178,6 +181,9 @@ services:
         source: build
         target: /app/build/
       - ./nightfall-optimist/src:/app/src
+      - ./common/classes/proof.mjs:/app/src/classes/proof.mjs
+      - ./common/classes/public-inputs.mjs:/app/src/classes/public-inputs.mjs
+      - ./common/classes/transaction.mjs:/app/src/classes/transaction.mjs
       - ./config/default.js:/app/config/default.js
     environment:
       WEBSOCKET_PORT: 8080

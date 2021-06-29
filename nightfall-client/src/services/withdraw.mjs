@@ -12,10 +12,8 @@ import sha256 from '../utils/crypto/sha256.mjs';
 import { getContractInstance } from '../utils/contract.mjs';
 import logger from '../utils/logger.mjs';
 import { findUsableCommitments, markNullified } from './commitment-storage.mjs';
-import Nullifier from '../classes/nullifier.mjs';
-import PublicInputs from '../classes/public-inputs.mjs';
+import { Nullifier, PublicInputs, Transaction } from '../classes/index.mjs';
 import { getSiblingPath } from '../utils/timber.mjs';
-import Transaction from '../classes/transaction.mjs';
 import { discoverPeers } from './peers.mjs';
 import getBlockAndTransactionsByRoot from '../utils/optimist.mjs';
 

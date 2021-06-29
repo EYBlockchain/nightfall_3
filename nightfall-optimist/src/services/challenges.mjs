@@ -12,8 +12,8 @@ import {
 import { getTreeHistory } from '../utils/timber.mjs';
 import Web3 from '../utils/web3.mjs';
 import rand from '../utils/crypto/crypto-random.mjs';
-import Transaction from '../classes/transaction.mjs';
 import Block from '../classes/block.mjs';
+import { Transaction } from '../classes/index.mjs';
 
 const { CHALLENGES_CONTRACT_NAME } = config;
 

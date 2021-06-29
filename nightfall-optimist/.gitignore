@@ -102,3 +102,8 @@ dist
 
 # TernJS port file
 .tern-port
+
+# empty files created in src from docker-compose volume
+src/classes/proof.mjs
+src/classes/public-inputs.mjs
+src/classes/transaction.mjs

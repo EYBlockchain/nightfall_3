@@ -5,8 +5,7 @@ return values are BigInts (or arrays of BigInts).
 */
 import config from 'config';
 import { mulMod, addMod, squareRootModPrime } from './number-theory.mjs';
-import Proof from '../../classes/proof.mjs';
-import Fq2 from '../../classes/fq2.mjs';
+import { Proof, Fq2 } from '../../classes/index.mjs';
 
 const { BN128_PRIME_FIELD } = config;
 

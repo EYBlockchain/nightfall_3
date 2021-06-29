@@ -1,3 +1,5 @@
+/* eslint-disable import/no-extraneous-dependencies, import/no-unresolved */
+
 /**
 An optimistic Transaction class
 */

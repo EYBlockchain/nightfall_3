@@ -12,7 +12,7 @@ import {
   numberOfUnprocessedTransactions,
 } from './database.mjs';
 import Block from '../classes/block.mjs';
-import Transaction from '../classes/transaction.mjs';
+import { Transaction } from '../classes/index.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import logger from '../utils/logger.mjs';
 
