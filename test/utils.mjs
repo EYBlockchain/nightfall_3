@@ -132,6 +132,15 @@ export async function createBadBlock(badBlockType, block, transactions, args) {
       }
       break;
     }
+    case 'IncorrectLeafCount': {
+      // leafCount is normally re-computed by the /encode endpoint, to ensure
+      // that it is correct. Of course that's not much use for this test, so we
+      // make the value negative (and wrong). A negative value will tell /encode
+      // not to recompute but to use the value we've given it (after flipping
+      // the sign back)
+      badBlock.leafCount = -badBlock.leafCount - 100;
+      break;
+    }
     default:
       break;
   }

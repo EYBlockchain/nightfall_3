@@ -1,4 +1,3 @@
-import config from 'config';
 import logger from '../utils/logger.mjs';
 import checkBlock from '../services/check-block.mjs';
 import BlockError from '../classes/block-error.mjs';
@@ -8,40 +7,16 @@ import {
   saveBlock,
   stampNullifiers,
 } from '../services/database.mjs';
-import { getLeafCount } from '../utils/timber.mjs';
 import { getProposeBlockCalldata } from '../services/process-calldata.mjs';
 
 /**
 This handler runs whenever a BlockProposed event is emitted by the blockchain
 */
-const { TIMBER_SYNC_RETRIES } = config;
 async function blockProposedEventHandler(data) {
   const currentBlockCount = data.blockNumber;
-  const { block, transactions, currentLeafCount } = await getProposeBlockCalldata(data);
-
-  // convert web3js' version of a struct into our node objects.
-  // const { block, transactions, currentLeafCount } = mappedBlock(data);
-
-  // Sync Optimist with Timber by checking number of leaves
-  for (let i = 0; i < TIMBER_SYNC_RETRIES; i++) {
-    // eslint-disable-next-line no-await-in-loop
-    const timberLeafCount = await getLeafCount();
-    logger.debug(`Timber leaf count was ${timberLeafCount}`);
-    // Exponential Backoff
-    const backoff = 2 ** i * 1000;
-    if (currentLeafCount > timberLeafCount) {
-      // Need to wait if the latest leaf count from the block is ahead of Timber
-      logger.debug(`Timber doesn't appear synced: Waiting ${backoff}`);
-      // eslint-disable-next-line no-await-in-loop
-      await new Promise(resolve => setTimeout(resolve, backoff));
-      if (i === TIMBER_SYNC_RETRIES) {
-        throw new Error('Timber and Optimist appear out of sync');
-      }
-    } else break;
-  }
+  const { block, transactions } = await getProposeBlockCalldata(data);
   logger.info('Received BlockProposed event');
-  // await new Promise(resolve => setTimeout(resolve, 2000));
-  // TODO this waits to be sure Timber is updated.  Instead write some proper syncing code!
+
   try {
     // and save the block to facilitate later lookup of block data
     // we will save before checking because the database at any time should reflect the state the blockchain holds

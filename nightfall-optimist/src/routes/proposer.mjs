@@ -180,12 +180,16 @@ router.get('/change', async (req, res, next) => {
  */
 router.post('/encode', async (req, res, next) => {
   logger.debug(`encode endpoint received POST`);
-  logger.debug(`With content ${JSON.stringify(req.body, null, 2)}`);
+  logger.silly(`With content ${JSON.stringify(req.body, null, 2)}`);
   try {
     const { transactions, block } = req.body;
 
     const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
-    const currentLeafCount = parseInt(await getLeafCount(), 10);
+    let currentLeafCount = parseInt(await getLeafCount(), 10);
+    // normally we re-compute the leafcount. If however block.leafCount is -ve
+    // that's a signal to use the value given (once we've flipped the sign back)
+    if (block.leafCount < 0) currentLeafCount = -block.leafCount;
+    console.log('CURRENT LEAF COUNT', currentLeafCount, block.leafCount);
     const blockNumberL2 = Number(await stateContractInstance.methods.getNumberOfL2Blocks().call());
 
     const newTransactions = await Promise.all(

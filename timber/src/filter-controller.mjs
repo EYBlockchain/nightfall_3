@@ -13,7 +13,7 @@ import logger from './logger.mjs';
 import mtc from './merkle-tree-controller.mjs'; // eslint-disable-line import/no-cycle
 import getProposeBlockCalldata from './optimistic/process-calldata.mjs';
 
-const ZERO = '0x0000000000000000000000000000000000000000000000000000000000000000';
+// const ZERO = '0x0000000000000000000000000000000000000000000000000000000000000000';
 // global subscriptions object:
 const subscriptions = {};
 // this queue controls event concurrency to be 1.  This means that event
@@ -62,25 +62,34 @@ const blockProposedResponseFunction = async (eventObject, args) => {
 
   const metadataService = new MetadataService(db);
   const { treeHeight } = await metadataService.getTreeHeight();
-
   // Now some more bespoke code; specific to how our application needs to deal with this eventObject:
   // construct an array of 'leaf' documents to store in the db:
   const { blockNumber } = eventData;
   // first, we need to extract the commitment values from the calldata because
   // it's not in the emitted event.  We don't care about the Block object
-  const { block, transactions } = await getProposeBlockCalldata(eventData);
+  const { transactions } = await getProposeBlockCalldata(eventData);
   logger.debug(`recovered transactions ${JSON.stringify(transactions, null, 2)}`);
+  // note that the block chain does not hold a leaf count that we can assume is correct
+  // that's because it's not calculated on-chain but instead is posted optimistically
+  // thus, we're better off relying on Timber's own record.
+  const { latestRecalculation } = await metadataService.getLatestRecalculation();
+  const { leafIndex: storedLeafIndex } = latestRecalculation;
+  /*
   const currentLeafCount =
     Number(block.leafCount) +
     transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat(Infinity).length;
+  */
   const leafValues = transactions
     .map(transaction => transaction.commitments.filter(c => c !== config.ZERO))
     .flat(Infinity);
   // Timber works on the leafIndex BEFORE the new leafValues are added but the
   // BlockProposed event broadcasts the AFTER value:
-  const minLeafIndex = currentLeafCount - leafValues.length;
+  // const minLeafIndex = currentLeafCount - leafValues.length;
+  const minLeafIndex = storedLeafIndex === undefined ? 0 : storedLeafIndex + 1;
+  console.log('**********LATEST RECALCULATION***************', storedLeafIndex, minLeafIndex);
+
   logger.debug(
-    `minLeafIndex was ${minLeafIndex}, updatedLeafCount, ${currentLeafCount}, leafValues.length ${leafValues.length}, eventInstance, ${eventInstance}`,
+    `minLeafIndex was ${minLeafIndex}, leafValues.length ${leafValues.length}, eventInstance, ${eventInstance}`,
   );
   logger.debug(`leafValues were ${JSON.stringify(leafValues, null, 2)}`);
   // now we have the relevant data, update the Merkle tree:
@@ -157,6 +166,7 @@ const rollbackResponseFunction = async (eventObject, args) => {
   // Now some bespoke code; specific to how our application needs to deal with this eventObject:
   // const { blockNumber } = eventData;
   const { leafCount } = eventInstance;
+  console.log('LEAFCOUNT', leafCount);
   return mtc.rollback(db, treeHeight, Number(leafCount));
 };
 

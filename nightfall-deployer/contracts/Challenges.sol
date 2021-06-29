@@ -40,6 +40,11 @@ contract Challenges is Stateful, Key_Registry, Config {
     state.isBlockReal(priorBlockL2, priorBlockTransactions, blockNumberL2 - 1);
     state.isBlockReal(blockL2, transactions, blockNumberL2);
     ChallengesUtil.libChallengeLeafCountCorrect(priorBlockL2, priorBlockTransactions, blockL2.leafCount);
+    // Now, we have an incorrect leafCount, but Timber relies on the leafCount
+    // emitted by the rollback event to revert its commitment database, so we
+    // need to correct the leafCount before we call challengeAccepted(...).
+    // We'll do that by counting forwards from the prior block.
+    blockL2.leafCount = priorBlockL2.leafCount + uint48(Utils.countCommitments(priorBlockTransactions));
     challengeAccepted(blockL2, blockNumberL2);
   }
 

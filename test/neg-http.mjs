@@ -52,6 +52,7 @@ describe('Testing the challenge http API', () => {
   let topicsBlockHashIncorrectPublicInputHash;
   let topicsBlockHashIncorrectProof;
   let topicsBlockHashDuplicateNullifier;
+  let topicsBlockHashIncorrectLeafCount;
   let web3;
 
   before(async () => {
@@ -164,6 +165,13 @@ describe('Testing the challenge http API', () => {
             txDataToSign = res.txDataToSign;
             console.log(
               `Created flawed block with duplicate nullifier and blockHash ${res.block.blockHash}`,
+            );
+          } else if (counter === 8) {
+            res = await createBadBlock('IncorrectLeafCount', block, transactions);
+            topicsBlockHashIncorrectLeafCount = res.block.blockHash;
+            txDataToSign = res.txDataToSign;
+            console.log(
+              `Created flawed block with incorrect leaf count and blockHash ${res.block.blockHash}`,
             );
           } else {
             txDataToSign = msg.txDataToSign;
@@ -463,6 +471,40 @@ describe('Testing the challenge http API', () => {
       await testForEvents(stateAddress, [
         web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
         web3.eth.abi.encodeParameter('bytes32', topicsBlockHashDuplicateNullifier),
+      ]);
+    });
+  });
+
+  describe('Challenge 7: Incorrect Leaf Count', async () => {
+    // create two deposits so that we can make a block with incorrect leaf count
+    it('Should delete the flawed block and rollback the leaves', async () => {
+      // wait for a valid prior block to form (counter = 8)
+      // await new Promise(resolve => setTimeout(resolve, 5000));
+      /*
+      for (let i = 0; i < 2; i++) {
+        const res = await chai // eslint-disable-line no-await-in-loop
+          .request(url)
+          .post('/deposit')
+          .send({
+            ercAddress,
+            tokenId,
+            value,
+            zkpPublicKey,
+            fee,
+          });
+        const { txDataToSign } = res.body;
+        // eslint-disable-next-line no-await-in-loop
+        await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
+      }
+      */
+      clearInterval(
+        await new Promise(resolve => {
+          const t = setInterval(() => !topicsBlockHashIncorrectLeafCount || resolve(t), 1000);
+        }),
+      );
+      await testForEvents(stateAddress, [
+        web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
+        web3.eth.abi.encodeParameter('bytes32', topicsBlockHashIncorrectLeafCount),
       ]);
     });
   });
