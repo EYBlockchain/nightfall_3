@@ -7,33 +7,23 @@ pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
 contract Structures {
+  enum TransactionTypes {DEPOSIT, SINGLE_TRANSFER, DOUBLE_TRANSFER, WITHDRAW}
 
-  enum TransactionTypes { DEPOSIT, SINGLE_TRANSFER, DOUBLE_TRANSFER, WITHDRAW }
-
-  event Rollback(
-    bytes32 indexed blockHash,
-    uint blockNumberL2,
-    uint leafCount
-  );
+  event Rollback(bytes32 indexed blockHash, uint256 blockNumberL2, uint256 leafCount);
 
   event BlockProposed();
 
   event TransactionSubmitted();
 
-  event NewCurrentProposer(
-    address proposer
-  );
+  event NewCurrentProposer(address proposer);
 
-  event CommittedToChallenge(
-    bytes32 commitHash,
-    address sender
-  );
+  event CommittedToChallenge(bytes32 commitHash, address sender);
 
   /**
   These events are what the merkle-tree microservice's filters will listen for.
   */
-  event NewLeaf(uint leafIndex, bytes32 leafValue, bytes32 root);
-  event NewLeaves(uint minLeafIndex, bytes32[] leafValues, bytes32 root);
+  event NewLeaf(uint256 leafIndex, bytes32 leafValue, bytes32 root);
+  event NewLeaves(uint256 minLeafIndex, bytes32[] leafValues, bytes32 root);
 
   // a struct representing a generic transaction, some of these data items
   // will hold default values for any specific tranaction, e.g. there are no
@@ -48,7 +38,7 @@ contract Structures {
     bytes32 recipientAddress;
     bytes32[2] commitments;
     bytes32[2] nullifiers;
-    uint[4] proof;
+    uint256[4] proof;
   }
 
   struct Block {
@@ -57,17 +47,17 @@ contract Structures {
     bytes32 root; // the 'output' commmitment root after adding all commitments
   }
 
-/*
+  /*
   struct LinkedHash {
     bytes32 thisHash;
     bytes32 previousHash;
     bytes32 nextHash;
     uint data; // metadata (currently holds the block time)
   }
-*/
+  */
   struct BlockData {
     bytes32 blockHash; // hash of the block
-    uint time; // time the block was created
+    uint256 time; // time the block was created
   }
 
   struct LinkedAddress {
@@ -75,5 +65,4 @@ contract Structures {
     address previousAddress;
     address nextAddress;
   }
-
 }

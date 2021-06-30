@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY ./package.json ./package-lock.json ./.npmrc ./
 COPY ./src ./src
-ARG GPR_TOKEN
+# ARG GPR_TOKEN
 RUN npm ci
 RUN rm -f .npmrc
 

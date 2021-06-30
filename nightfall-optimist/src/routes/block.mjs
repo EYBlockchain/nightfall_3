@@ -6,8 +6,8 @@ import logger from '../utils/logger.mjs';
 import checkBlock from '../services/check-block.mjs';
 import {
   getBlockByTransactionHash,
-  getTransactionsByTransactionHashes,
   getBlockByRoot,
+  getTransactionsByTransactionHashes,
 } from '../services/database.mjs';
 
 const router = express.Router();

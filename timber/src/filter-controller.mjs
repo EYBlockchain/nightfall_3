@@ -47,7 +47,6 @@ const blockProposedResponseFunction = async (eventObject, args) => {
 
   // Now some generic eventObject handling code:
   const { eventData } = eventObject;
-
   /*
   extract each relevent event parameter from the eventData and create an eventInstance: {
     eventParamName_0: eventParamValue_0,
@@ -86,7 +85,6 @@ const blockProposedResponseFunction = async (eventObject, args) => {
   // BlockProposed event broadcasts the AFTER value:
   // const minLeafIndex = currentLeafCount - leafValues.length;
   const minLeafIndex = storedLeafIndex === undefined ? 0 : storedLeafIndex + 1;
-  console.log('**********LATEST RECALCULATION***************', storedLeafIndex, minLeafIndex);
 
   logger.debug(
     `minLeafIndex was ${minLeafIndex}, leafValues.length ${leafValues.length}, eventInstance, ${eventInstance}`,
@@ -115,7 +113,6 @@ const blockProposedResponseFunction = async (eventObject, args) => {
     };
     leaves.push(leaf);
   });
-
   const leafService = new LeafService(db);
   await leafService.insertLeaves(treeHeight, leaves);
   return mtc.update(db); // update the database to ensure we have a historic root};
@@ -166,7 +163,6 @@ const rollbackResponseFunction = async (eventObject, args) => {
   // Now some bespoke code; specific to how our application needs to deal with this eventObject:
   // const { blockNumber } = eventData;
   const { leafCount } = eventInstance;
-  console.log('LEAFCOUNT', leafCount);
   return mtc.rollback(db, treeHeight, Number(leafCount));
 };
 

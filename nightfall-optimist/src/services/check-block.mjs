@@ -27,10 +27,10 @@ async function checkBlock(block, transactions) {
     const priorBlock = await getBlockByBlockNumberL2(block.blockNumberL2 - 1);
     if (priorBlock === null) logger.warn('Could not find prior block while checking leaf count');
     if (priorBlock.leafCount + priorBlock.nCommitments !== block.leafCount)
-      throw new BlockError('The leaf count in the block is not correct', 6);
+      throw new BlockError('The leaf count in the block is not correct', 7);
   } else if (block.leafCount !== 0)
     // this throws if it's the first block and leafCount!=0, which is impossible
-    throw new BlockError('The leaf count in the block is not correct', 6);
+    throw new BlockError('The leaf count in the block is not correct', 7);
 
   // now we have to check the commitment root.  For this we can make use of
   // Timber with its optimistic extensions.
@@ -67,7 +67,7 @@ async function checkBlock(block, transactions) {
   if (alreadyMinedNullifiers.length > 0) {
     throw new BlockError(
       `Some Nullifiers included in ${block.root} have been included in previous blocks`,
-      5,
+      6,
     );
   }
 
@@ -79,14 +79,17 @@ async function checkBlock(block, transactions) {
     try {
       await checkTransaction(transactions[i]); // eslint-disable-line no-await-in-loop
     } catch (err) {
-      throw new BlockError(
-        `The transaction check failed with error: ${err.message}`,
-        err.code === 1 ? 2 : err.code, // mapping transaction error to block error
-        {
-          transaction: transactions[i],
-          transactionHashIndex: block.transactionHashes.indexOf(transactions[i].transactionHash),
-        },
-      );
+      if (err.code !== 2) {
+        // Error 2 of transaction checker does not need a challenge
+        throw new BlockError(
+          `The transaction check failed with error: ${err.message}`,
+          err.code === 1 ? 2 : err.code, // mapping transaction error to block error
+          {
+            transaction: transactions[i],
+            transactionHashIndex: block.transactionHashes.indexOf(transactions[i].transactionHash),
+          },
+        );
+      }
     }
   }
 }

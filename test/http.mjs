@@ -410,7 +410,6 @@ describe('Testing the http API', () => {
   });
 
   after(() => {
-    // console.log('end');
     closeWeb3Connection();
     connection.close();
   });

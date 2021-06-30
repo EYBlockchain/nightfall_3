@@ -82,10 +82,6 @@ export async function createBadBlock(badBlockType, block, transactions, args) {
   const badBlock = block;
   const badTransactions = transactions;
   switch (badBlockType) {
-    case 'RandomRootNotInTimber': {
-      badBlock.root = (await rand(32)).hex();
-      break;
-    }
     case 'IncorrectRoot': {
       res = await chai
         .request('http://localhost:8083')
@@ -106,6 +102,11 @@ export async function createBadBlock(badBlockType, block, transactions, args) {
         '0x0000000000000000000000000000000000000000000000000000000000000000';
       badTransactions[0].value =
         '0x0000000000000000000000000000000000000000000000000000000000000000';
+      break;
+    }
+    case 'IncorrectHistoricRoot': {
+      // Replace the historic root with a wrong historic root
+      badTransactions[1].historicRootBlockNumberL2 = (await rand(8)).hex();
       break;
     }
     case 'IncorrectPublicInputHash': {
