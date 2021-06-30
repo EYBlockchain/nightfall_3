@@ -18,6 +18,34 @@ import './Stateful.sol';
 contract Challenges is Stateful, Key_Registry, Config {
   mapping(bytes32 => address) public committers;
 
+  /**
+  Check that the block correctly updates the leafCount.  Note that the leafCount
+  is actually the value BEFORE the commitments are added to the Merkle tree.
+  Thus we need the prior block so that we can check it because the value should
+  be the prior block leafcount plus the number of non-zero commitments in the
+  prior block.
+  */
+  function challengeLeafCountCorrect(
+    Block memory priorBlockL2, // the block immediately prior to this one
+    Transaction[] memory priorBlockTransactions, // the transactions in the prior block
+    Block memory blockL2,
+    uint blockNumberL2,
+    Transaction[] memory transactions,
+    bytes32 salt
+  ) external {
+    checkCommit(msg.data, salt);
+    // check if the block hash is correct and the block hash exists for the block and prior block
+    state.isBlockReal(priorBlockL2, priorBlockTransactions, blockNumberL2 - 1);
+    state.isBlockReal(blockL2, transactions, blockNumberL2);
+    ChallengesUtil.libChallengeLeafCountCorrect(priorBlockL2, priorBlockTransactions, blockL2.leafCount);
+    // Now, we have an incorrect leafCount, but Timber relies on the leafCount
+    // emitted by the rollback event to revert its commitment database, so we
+    // need to correct the leafCount before we call challengeAccepted(...).
+    // We'll do that by counting forwards from the prior block.
+    blockL2.leafCount = priorBlockL2.leafCount + uint48(Utils.countCommitments(priorBlockTransactions));
+    challengeAccepted(blockL2, blockNumberL2);
+  }
+
   // the new commitment Merkle-tree root is challenged as incorrect
   function challengeNewRootCorrect(
     Block memory priorBlockL2, // the block immediately prior to this one
@@ -227,11 +255,6 @@ contract Challenges is Stateful, Key_Registry, Config {
     // different contracts (it uses the contract name as part of the db
     // connection - we need to change that).
     state.emitRollback(badBlockNumberL2, badBlock.leafCount);
-    // as we have a rollback, we need to reset the leafcount to the point
-    // where the bad block was created.  Luckily, we noted that value in
-    // the block when the block was proposed. It was checked onchain so must be
-    // correct.
-    state.setLeafCount(badBlock.leafCount);
     // we need to remove the block that has been successfully
     // challenged from the linked list of blocks and all of the subsequent
     // blocks

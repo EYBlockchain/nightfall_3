@@ -15,7 +15,6 @@ import './Config.sol';
 contract State is Structures, Config {
   // global state variables
   BlockData[] public blockHashes; // array containing mainly blockHashes
-  uint public leafCount; // number of leaves in the Merkle treeWidth
   mapping(address => uint) public pendingWithdrawals;
   mapping(address => LinkedAddress) public proposers;
   LinkedAddress public currentProposer; // who can propose a new shield state
@@ -50,11 +49,7 @@ contract State is Structures, Config {
   */
   function proposeBlock(Block calldata b, Transaction[] calldata t) external payable onlyCurrentProposer {
     require(BLOCK_STAKE == msg.value, 'The stake payment is incorrect');
-    // We need to check that the block has correctly stored its leaf count. This
-    // is needed in case of a roll-back of a bad block, but cannot be checked by
-    // a Challenge function (at least i haven't thought of a way to do it).
-
-    require(b.leafCount == leafCount, 'The leaf count stored in the Block is not correct');
+    require(b.proposer == msg.sender, 'The proposer address is not the sender');
     // We need to set the blockHash on chain here, because there is no way to
     // convince a challenge function of the (in)correctness by an offchain
     // computation; the on-chain code doesn't save the pre-image of the hash so
@@ -69,7 +64,6 @@ contract State is Structures, Config {
     // Timber will listen for the BlockProposed event as well as
     // nightfall-optimist.  The current, optimistic version of Timber does not
     // require the smart contract to craft NewLeaf/NewLeaves events.
-    leafCount += b.nCommitments;
     emit BlockProposed();
   }
 
@@ -139,18 +133,6 @@ contract State is Structures, Config {
     uint amount = pendingWithdrawals[msg.sender];
     pendingWithdrawals[msg.sender] = 0;
     payable(msg.sender).transfer(amount);
-  }
-
-  function incrementLeafCount(uint inc) public onlyRegistered {
-    leafCount += inc;
-  }
-
-  function setLeafCount(uint lc) public onlyRegistered {
-    leafCount = lc;
-  }
-
-  function getLeafCount() public view returns(uint) {
-    return leafCount;
   }
 
   function setProposerStartBlock(uint sb) public onlyRegistered {

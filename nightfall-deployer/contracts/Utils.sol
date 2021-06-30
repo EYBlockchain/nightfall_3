@@ -6,9 +6,11 @@ pragma experimental ABIEncoderV2;
 import './Structures.sol';
 
 library Utils {
-  function hashTransaction(Structures.Transaction memory t) internal pure returns (bytes32) {
-    return
-    keccak256(
+
+  bytes32 public constant ZERO = bytes32(0);
+
+  function hashTransaction(Structures.Transaction memory t) internal pure returns(bytes32) {
+    return keccak256(
       abi.encodePacked(
         t.value,
         t.historicRootBlockNumberL2,
@@ -55,5 +57,42 @@ library Utils {
     (uint256 rb, uint256 ib) = compressG2(proof[2], proof[3], proof[4], proof[5]);
     uint256 c = compressG1(proof[6], proof[7]);
     return [a, rb, ib, c];
+  }
+
+  // counts the number of non-zero values (useful for counting real commitments and nullifiers)
+  function countNonZeroValues(bytes32[2] memory vals) internal pure returns(uint) {
+    uint count;
+    if (vals[0] != ZERO) count++;
+    if (vals[1] != ZERO) count++;
+    return count;
+  }
+
+  // filters the number of non-zero values (useful for getting real commitments and nullifiers)
+  function filterNonZeroValues(bytes32[2] memory vals) internal pure returns(bytes32[] memory) {
+    bytes32[] memory filtered = new bytes32[](countNonZeroValues(vals));
+    uint count;
+    if (vals[0] != ZERO) filtered[count++] = vals[0]; // a bit faster than looping?
+    if (vals[1] != ZERO) filtered[count++] = vals[1];
+    return filtered;
+  }
+
+  // counts the number of non-zero commitments in a block containing the ts transactions)
+  function countCommitments(Structures.Transaction[] memory ts) internal pure returns(uint) {
+    uint count;
+    for (uint i = 0; i < ts.length; i++) {
+      count += countNonZeroValues(ts[i].commitments);
+    }
+    return count;
+  }
+
+  // filters the non-zero commitments in a block containing the ts transactions)
+  function filterCommitments(Structures.Transaction[] memory ts) internal pure returns(bytes32[] memory) {
+    bytes32[] memory filtered = new bytes32[](countCommitments(ts));
+    uint count;
+    for (uint i = 0; i < ts.length; i++) {
+      if (ts[i].commitments[0] != ZERO) filtered[count++] = ts[i].commitments[0];
+      if (ts[i].commitments[1] != ZERO) filtered[count++] = ts[i].commitments[1];
+    }
+    return filtered;
   }
 }
