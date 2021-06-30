@@ -9,7 +9,7 @@ printf "\n${GREEN}*** Starting zokrates container ***${NC}\n"
 docker-compose up -d api
 
 # delay needed to ensure all container are in running state.
-sleep 5
+# sleep 5
 
 printf "\n${GREEN}*** Running setup for test.zok ***${NC}\n"
 curl -d '{"filepath": "examples/test.zok"}' -H "Content-Type: application/json" -X POST http://localhost:8080/generate-keys

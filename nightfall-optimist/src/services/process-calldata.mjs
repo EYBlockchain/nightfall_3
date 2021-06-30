@@ -11,7 +11,7 @@ import { decompressProof } from '../utils/curve-maths/curves.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import { getBlocks } from './database.mjs';
 
-const { PROPOSE_BLOCK_TYPES, SUBMIT_TRANSACTION_TYPES, STATE_CONTRACT_NAME } = config;
+const { PROPOSE_BLOCK_TYPES, SUBMIT_TRANSACTION_TYPES, STATE_CONTRACT_NAME, ZERO } = config;
 
 export async function getProposeBlockCalldata(eventData) {
   const web3 = Web3.connection();
@@ -22,12 +22,11 @@ export async function getProposeBlockCalldata(eventData) {
   const decoded = web3.eth.abi.decodeParameters(PROPOSE_BLOCK_TYPES, abiBytecode);
   const blockData = decoded['0'];
   const transactionsData = decoded['1'];
-  const [leafCount, nCommitments, proposer, root] = blockData;
+  const [leafCount, proposer, root] = blockData;
   const block = {
     proposer,
     root,
     leafCount: Number(leafCount),
-    nCommitments: Number(nCommitments),
   };
   const transactions = transactionsData.map(t => {
     const [
@@ -62,9 +61,14 @@ export async function getProposeBlockCalldata(eventData) {
   // Let's add in data that isn't directly available from the calldata but that
   // we know how to compute. Many node functions assume these are present.
   block.blockHash = Block.calcHash(block, transactions);
+  // we no longer put the number of commitments in the on-chain struct but for
+  // backwards compatibility, we'll recreate it here.
+  block.nCommitments = transactions
+    .map(t => t.commitments.filter(c => c !== ZERO))
+    .flat(Infinity).length;
   // This line grabs the blockData array and extracts the index of the block
   // that we are dealing with.  TODO - this may get unmanageable with large
-  // numbers of L2 blocks. Then we'll need to store it in a DB and sync to the
+  // numbers of L2 blocks. Then we'll need to store it in a DB and sync
 
   // This gets all blocks that we have stored locally - could be improved by pre-filtering here
   const storedBlocks = await getBlocks();
@@ -93,8 +97,8 @@ export async function getProposeBlockCalldata(eventData) {
 
   block.transactionHashes = transactions.map(t => t.transactionHash);
   // currentLeafCount holds the count of the next leaf to be added
-  const currentLeafCount = Number(nCommitments) + Number(leafCount);
-  return { block, transactions, currentLeafCount };
+  // const currentLeafCount = Number(block.nCommitments) + Number(leafCount);
+  return { block, transactions };
 }
 
 export async function getTransactionSubmittedCalldata(eventData) {

@@ -52,8 +52,7 @@ contract Structures {
   }
 
   struct Block {
-    uint48 leafCount;
-    uint48 nCommitments;
+    uint48 leafCount; // note this is defined to be the number of leaves BEFORE the commitments in this block are added
     address proposer;
     bytes32 root; // the 'output' commmitment root after adding all commitments
   }

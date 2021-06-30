@@ -6,6 +6,6 @@ set -o pipefail
 while ! nc -z ${BLOCKCHAIN_WS_HOST} ${BLOCKCHAIN_PORT}; do sleep 3; done
 npx truffle migrate --network=${ETH_NETWORK:=openethereum} --reset
 
-sleep 10
+#sleep 10
 
 npm start
