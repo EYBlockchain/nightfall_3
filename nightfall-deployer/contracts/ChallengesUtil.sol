@@ -82,7 +82,8 @@ library ChallengesUtil {
       transaction.commitments.length != 1 ||
       nZeroNullifiers == 0 ||
       /* transaction.nullifiers.length != 0 || // TODO in NO */
-      nZeroProof > 0,
+      nZeroProof > 0 ||
+      transaction.historicRootBlockNumberL2 != 0,
       'This deposit transaction type is valid'
     );
   }
