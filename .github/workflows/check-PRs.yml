@@ -21,9 +21,7 @@ jobs:
         run: npm run lint
 
       - name: docker-compose build
-        run: docker-compose build --build-arg GPR_TOKEN=${GPR_TOKEN}
-        env:
-          GPR_TOKEN: ${{ secrets.GPR_TOKEN }}
+        run: docker-compose build
 
       - name: Start Containers
         run: |
