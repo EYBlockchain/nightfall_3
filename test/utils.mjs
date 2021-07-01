@@ -182,3 +182,18 @@ export async function testForEvents(contractAddress, topics, timeOut = 30000) {
   // console.log('Events found');
   return events;
 }
+
+export const waitForTimber = async (url, targetLeafCount) => {
+  let timberCurrentLeafCount = 0;
+  do {
+    // eslint-disable-next-line no-await-in-loop
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    // eslint-disable-next-line no-await-in-loop
+    timberCurrentLeafCount = await chai.request(url).get('/leaves/count');
+  } while (timberCurrentLeafCount !== targetLeafCount);
+};
+
+export const topicEventMapping = {
+  BlockProposed: '0x566d835e602d4aa5802ee07d3e452e755bc77623507825de7bc163a295d76c0b',
+  Rollback: '0xea34b0bc565cb5f2ac54eaa86422ae05651f84522ef100e16b54a422f2053852',
+};

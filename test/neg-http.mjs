@@ -12,6 +12,7 @@ import {
   createBadBlock,
   testForEvents,
   connectWeb3,
+  topicEventMapping,
 } from './utils.mjs';
 
 const { expect } = chai;
@@ -55,6 +56,8 @@ describe('Testing the challenge http API', () => {
   let topicsBlockHashDuplicateNullifier;
   let topicsBlockHashIncorrectLeafCount;
   let web3;
+  const eventLogs = [];
+  const txPerBlock = 2;
 
   before(async () => {
     web3 = await connectWeb3();
@@ -80,6 +83,14 @@ describe('Testing the challenge http API', () => {
     // should get the address of the test ERC contract stub
     res = await chai.request(url).get('/contract-address/ERCStub');
     ercAddress = res.body.address;
+
+    web3.eth.subscribe('logs', { address: stateAddress }).on('data', log => {
+      if (log.topics[0] === topicEventMapping.BlockProposed) {
+        eventLogs.push('blockProposed');
+      } else if (log.topics[0] === topicEventMapping.Rollback) {
+        eventLogs.push('Rollback');
+      }
+    });
 
     // should register a proposer
     const myAddress = (await getAccounts())[0];
@@ -214,67 +225,45 @@ describe('Testing the challenge http API', () => {
     });
   });
 
-  describe('Creating correct transactions to get proper root history in timber', () => {
-    let txDataToSign;
-    it('should deposit some crypto into a ZKP commitment', async () => {
-      await new Promise(resolve => setTimeout(resolve, 5000));
-      const res = await chai.request(url).post('/deposit').send({
-        ercAddress,
-        tokenId,
-        value,
-        zkpPublicKey,
-        fee,
-      });
-      txDataToSign = res.body.txDataToSign;
-      expect(txDataToSign).to.be.a('string');
-      // now we need to sign the transaction and send it to the blockchain
-      const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
-      expect(receipt).to.have.property('transactionHash');
-      expect(receipt).to.have.property('blockHash');
-      console.log(`Gas used was ${Number(receipt.gasUsed)}`);
-      // give Timber time to respond to the blockchain event
-      await new Promise(resolve => setTimeout(resolve, 5000));
+  describe('Pre-populate L2 state with valid blocks and transactions', () => {
+    afterEach(async () => {
+      while (eventLogs[0] !== 'blockProposed') {
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+      eventLogs.shift();
     });
 
-    it('should deposit some more crypto (we need a second transaction for proposing block) into a ZKP commitment and get a raw blockchain transaction back', async () => {
-      const res = await chai.request(url).post('/deposit').send({
-        ercAddress,
-        tokenId,
-        value,
-        zkpPublicKey,
+    it('should create an initial block of deposits', async () => {
+      const depositTransactions = (
+        await Promise.all(
+          // Create 1 less than two blocks worth of transactions so we can fit in a transfer
+          Array.from({ length: txPerBlock * 2 - 1 }, () =>
+            chai
+              .request(url)
+              .post('/deposit')
+              .send({ ercAddress, tokenId, value, zkpPublicKey, fee }),
+          ),
+        )
+      ).map(res => res.body);
+
+      depositTransactions.forEach(({ txDataToSign }) => expect(txDataToSign).to.be.a('string'));
+
+      const receiptArrays = [];
+      for (let i = 0; i < depositTransactions.length; i++) {
+        const { txDataToSign } = depositTransactions[i];
+        receiptArrays.push(
+          // eslint-disable-next-line no-await-in-loop
+          await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee),
+        );
+      }
+      receiptArrays.forEach(receipt => {
+        expect(receipt).to.have.property('transactionHash');
+        expect(receipt).to.have.property('blockHash');
       });
-      txDataToSign = res.body.txDataToSign;
-      expect(txDataToSign).to.be.a('string');
-      // now we need to sign the transaction and send it to the blockchain
-      const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
-      expect(receipt).to.have.property('transactionHash');
-      expect(receipt).to.have.property('blockHash');
-      console.log(`Gas used was ${Number(receipt.gasUsed)}`);
-      // give Timber time to respond to the blockchain event
-      await new Promise(resolve => setTimeout(resolve, 5000));
-    });
-  });
-  describe('Creating blocks with at least 1 transfer so there is a non-zero nullifier for later challenges', () => {
-    let txDataToSign;
-    it('should create a deposit', async () => {
-      const res = await chai.request(url).post('/deposit').send({
-        ercAddress,
-        tokenId,
-        value,
-        zkpPublicKey,
-      });
-      txDataToSign = res.body.txDataToSign;
-      expect(txDataToSign).to.be.a('string');
-      // now we need to sign the transaction and send it to the blockchain
-      const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
-      expect(receipt).to.have.property('transactionHash');
-      expect(receipt).to.have.property('blockHash');
-      console.log(`Gas used was ${Number(receipt.gasUsed)}`);
-      // give Timber time to respond to the blockchain event
-      await new Promise(resolve => setTimeout(resolve, 5000));
     });
 
-    it('should create a transfer', async () => {
+    it('should create a block with a single transfer', async () => {
       const res = await chai
         .request(url)
         .post('/transfer')
@@ -288,64 +277,39 @@ describe('Testing the challenge http API', () => {
           senderZkpPrivateKey: zkpPrivateKey,
           fee,
         });
-      txDataToSign = res.body.txDataToSign;
-      expect(txDataToSign).to.be.a('string');
       // now we need to sign the transaction and send it to the blockchain
-      const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
-      expect(receipt).to.have.property('transactionHash');
-      expect(receipt).to.have.property('blockHash');
-      console.log(`Gas used was ${Number(receipt.gasUsed)}`);
-      // give Timber time to respond to the blockchain event
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      await submitTransaction(res.body.txDataToSign, privateKey, shieldAddress, gas);
     });
   });
 
   describe('Create challenge block consisting of a deposit and transfer transaction ', () => {
-    let txDataToSign;
-    // it('should create a transfer', async () => {
-    //   const res = await chai
-    //     .request(url)
-    //     .post('/transfer')
-    //     .send({
-    //       ercAddress,
-    //       tokenId,
-    //       recipientData: {
-    //         values: [value],
-    //         recipientZkpPublicKeys: [zkpPublicKey],
-    //       },
-    //       senderZkpPrivateKey: zkpPrivateKey,
-    //       fee,
-    //     });
-    //   txDataToSign = res.body.txDataToSign;
-    //   expect(txDataToSign).to.be.a('string');
-    //   // now we need to sign the transaction and send it to the blockchain
-    //   const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
-    //   expect(receipt).to.have.property('transactionHash');
-    //   expect(receipt).to.have.property('blockHash');
-    //   console.log(`Gas used was ${Number(receipt.gasUsed)}`);
-    //   // give Timber time to respond to the blockchain event
-    //   await new Promise(resolve => setTimeout(resolve, 5000));
-    // });
+    it('should create a block consisting a deposit and transfer', async () => {
+      const depositTransactions = (
+        await Promise.all(
+          // txPerBlock - 1 so that we can fit in a single transfer
+          Array.from({ length: txPerBlock - 1 }, () =>
+            chai
+              .request(url)
+              .post('/deposit')
+              .send({ ercAddress, tokenId, value, zkpPublicKey, fee }),
+          ),
+        )
+      ).map(res => res.body);
 
-    it('should create a deposit', async () => {
-      const res = await chai.request(url).post('/deposit').send({
-        ercAddress,
-        tokenId,
-        value,
-        zkpPublicKey,
+      depositTransactions.forEach(({ txDataToSign }) => expect(txDataToSign).to.be.a('string'));
+
+      const receiptArrays = [];
+      for (let i = 0; i < depositTransactions.length; i++) {
+        const { txDataToSign } = depositTransactions[i];
+        receiptArrays.push(
+          // eslint-disable-next-line no-await-in-loop
+          await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee),
+        );
+      }
+      receiptArrays.forEach(receipt => {
+        expect(receipt).to.have.property('transactionHash');
+        expect(receipt).to.have.property('blockHash');
       });
-      txDataToSign = res.body.txDataToSign;
-      expect(txDataToSign).to.be.a('string');
-      // now we need to sign the transaction and send it to the blockchain
-      const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
-      expect(receipt).to.have.property('transactionHash');
-      expect(receipt).to.have.property('blockHash');
-      console.log(`Gas used was ${Number(receipt.gasUsed)}`);
-      // give Timber time to respond to the blockchain event
-      await new Promise(resolve => setTimeout(resolve, 5000));
-    });
-
-    it('should create a transfer', async () => {
       const res = await chai
         .request(url)
         .post('/transfer')
@@ -359,224 +323,178 @@ describe('Testing the challenge http API', () => {
           senderZkpPrivateKey: zkpPrivateKey,
           fee,
         });
-      txDataToSign = res.body.txDataToSign;
+      const { txDataToSign } = res.body;
       expect(txDataToSign).to.be.a('string');
-      // now we need to sign the transaction and send it to the blockchain
       const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
-      console.log(`Gas used was ${Number(receipt.gasUsed)}`);
-      // give Timber time to respond to the blockchain event
-      await new Promise(resolve => setTimeout(resolve, 5000));
     });
   });
 
-  describe('Challenge 1: Incorrect root challenge', () => {
-    it('Should delete the flawed block and rollback the leaves', async () => {
-      // it's possible that we've arrived here before the block that sets
-      // topicsBlockHashIncorrectRootInBlock has actually been proposed. If that
-      // happens then topicsBlockHashIncorrectRootInBlock will be undefined and
-      // everything will break.  More specifically, we can't await the event
-      // of a topic that isn't defined yet so testForEvents will fail.
-      // Thus, we await topicsBlockHashIncorrectRootInBlock to be defined
-      // before proceeding, with this FrankenPromise.  This approach is used in // the next challenges too.
-      clearInterval(
-        await new Promise(resolve => {
-          const t = setInterval(() => !topicsBlockHashIncorrectRootInBlock || resolve(t), 1000);
-        }),
-      );
-      await testForEvents(stateAddress, [
-        web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
-        web3.eth.abi.encodeParameter('bytes32', topicsBlockHashIncorrectRootInBlock),
-      ]);
+  describe('Rollback Challenge Test', () => {
+    beforeEach(async () => {
+      while (eventLogs.length < 2) {
+        // Wait for us to have ['blockProposed', 'Rollback'] in the eventLogs
+        // Safer to wait as the 2nd while loop may pass when eventLogs[1] is undefined
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+      while (eventLogs[0] !== 'blockProposed' && eventLogs[1] !== 'Rollback') {
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+      // Double shift to take off from our queue
+      eventLogs.shift();
+      eventLogs.shift();
     });
-  });
 
-  describe('Challenge 2: Duplicate transaction submitted', () => {
-    it('Should delete the flawed block and rollback the leaves', async () => {
-      clearInterval(
-        await new Promise(resolve => {
-          const t = setInterval(() => !topicsBlockHashDuplicateTransaction || resolve(t), 1000);
-        }),
-      );
-      await testForEvents(stateAddress, [
-        web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
-        web3.eth.abi.encodeParameter('bytes32', topicsBlockHashDuplicateTransaction),
-      ]);
-    });
-  });
-
-  describe('Challenge 3: Invalid transaction submitted', () => {
-    it('Should delete the flawed block and rollback the leaves', async () => {
-      clearInterval(
-        await new Promise(resolve => {
-          const t = setInterval(() => !topicsBlockHashInvalidTransaction || resolve(t), 1000);
-        }),
-      );
-      await testForEvents(stateAddress, [
-        web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
-        web3.eth.abi.encodeParameter('bytes32', topicsBlockHashInvalidTransaction),
-      ]);
-    });
-  });
-
-  describe('Challenge 4: Challenge historic root used in a transaction', async () => {
-    it('Should delete the wrong block', async () => {
-      // // create another transaction to trigger NO's block assembly
-      // const res = await chai.request(url).post('/deposit').send({
-      //   ercAddress,
-      //   tokenId,
-      //   value,
-      //   zkpPublicKey,
-      //   fee,
-      // });
-      // const { txDataToSign } = res.body;
-      // // now we need to sign the transaction and send it to the blockchain
-      // await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
-
-      const res = await chai
-        .request(url)
-        .post('/transfer')
-        .send({
-          ercAddress,
-          tokenId,
-          recipientData: {
-            values: [value],
-            recipientZkpPublicKeys: [zkpPublicKey],
-          },
-          senderZkpPrivateKey: zkpPrivateKey,
-          fee,
-        });
-      const { txDataToSign } = res.body;
-      expect(txDataToSign).to.be.a('string');
-      await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
-
-      clearInterval(
-        await new Promise(resolve => {
-          const t = setInterval(() => !topicsBlockHashesIncorrectHistoricRoot || resolve(t), 1000);
-        }),
-      );
-      await testForEvents(stateAddress, [
-        web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
-        web3.eth.abi.encodeParameter('bytes32', topicsBlockHashesIncorrectHistoricRoot),
-      ]);
-    });
-  });
-
-  describe('Challenge 5: Incorrect public input hash', async () => {
-    it('Should delete the flawed block and rollback the leaves', async () => {
-      // create another transaction to trigger NO's block assembly
-      const res = await chai.request(url).post('/deposit').send({
-        ercAddress,
-        tokenId,
-        value,
-        zkpPublicKey,
-        fee,
+    describe('Challenge 1: Incorrect root challenge', () => {
+      it('Should delete the flawed block and rollback the leaves', async () => {
+        await testForEvents(stateAddress, [
+          web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
+          web3.eth.abi.encodeParameter('bytes32', topicsBlockHashIncorrectRootInBlock),
+        ]);
       });
-      const { txDataToSign } = res.body;
-      // now we need to sign the transaction and send it to the blockchain
-      await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
-      // await new Promise(resolve => setTimeout(resolve, 5000));
-      clearInterval(
-        await new Promise(resolve => {
-          const t = setInterval(() => !topicsBlockHashIncorrectPublicInputHash || resolve(t), 1000);
-        }),
-      );
-      await testForEvents(stateAddress, [
-        web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
-        web3.eth.abi.encodeParameter('bytes32', topicsBlockHashIncorrectPublicInputHash),
-      ]);
     });
-  });
 
-  describe('Challenge 6: Proof verification failure', async () => {
-    it('Should delete the flawed block and rollback the leaves', async () => {
-      // create another transaction to trigger NO's block assembly
-      const res = await chai.request(url).post('/deposit').send({
-        ercAddress,
-        tokenId,
-        value,
-        zkpPublicKey,
-        fee,
+    describe('Challenge 2: Duplicate transaction submitted', () => {
+      it('Should delete the flawed block and rollback the leaves', async () => {
+        await testForEvents(stateAddress, [
+          web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
+          web3.eth.abi.encodeParameter('bytes32', topicsBlockHashDuplicateTransaction),
+        ]);
       });
-      const { txDataToSign } = res.body;
-      // now we need to sign the transaction and send it to the blockchain
-      await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
-      // await new Promise(resolve => setTimeout(resolve, 5000));
-      clearInterval(
-        await new Promise(resolve => {
-          const t = setInterval(() => !topicsBlockHashIncorrectProof || resolve(t), 1000);
-        }),
-      );
-      await testForEvents(stateAddress, [
-        web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
-        web3.eth.abi.encodeParameter('bytes32', topicsBlockHashIncorrectProof),
-      ]);
     });
-  });
+    describe('Challenge 3: Invalid transaction submitted', () => {
+      it('Should delete the flawed block and rollback the leaves', async () => {
+        await testForEvents(stateAddress, [
+          web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
+          web3.eth.abi.encodeParameter('bytes32', topicsBlockHashInvalidTransaction),
+        ]);
 
-  describe('Challenge 7: Duplicate Nullifier', async () => {
-    it('Should delete the flawed block and rollback the leaves', async () => {
-      // create two transfers - transfers are preferred here because we want to swap out a nullifier.
-      const res = await chai // eslint-disable-line no-await-in-loop
-        .request(url)
-        .post('/transfer')
-        .send({
-          ercAddress,
-          tokenId,
-          recipientData: {
-            values: [value],
-            recipientZkpPublicKeys: [zkpPublicKey],
-          },
-          senderZkpPrivateKey: zkpPrivateKey,
-          fee,
-        });
-      const { txDataToSign } = res.body;
-      // eslint-disable-next-line no-await-in-loop
-      await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
-      // eslint-disable-next-line no-await-in-loop
-      // await new Promise(resolve => setTimeout(resolve, 5000));
-      clearInterval(
-        await new Promise(resolve => {
-          const t = setInterval(() => !topicsBlockHashDuplicateNullifier || resolve(t), 1000);
-        }),
-      );
-      await testForEvents(stateAddress, [
-        web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
-        web3.eth.abi.encodeParameter('bytes32', topicsBlockHashDuplicateNullifier),
-      ]);
-    });
-  });
-
-  describe('Challenge 7: Incorrect Leaf Count', async () => {
-    // create two deposits so that we can make a block with incorrect leaf count
-    it('Should delete the flawed block and rollback the leaves', async () => {
-      // wait for a valid prior block to form (counter = 8)
-      // await new Promise(resolve => setTimeout(resolve, 5000));
-      for (let i = 0; i < 2; i++) {
-        const res = await chai // eslint-disable-line no-await-in-loop
+        const res = await chai
           .request(url)
-          .post('/deposit')
+          .post('/transfer')
           .send({
             ercAddress,
             tokenId,
-            value,
-            zkpPublicKey,
+            recipientData: {
+              values: [value],
+              recipientZkpPublicKeys: [zkpPublicKey],
+            },
+            senderZkpPrivateKey: zkpPrivateKey,
+            fee,
+          });
+        // now we need to sign the transaction and send it to the blockchain
+        await submitTransaction(res.body.txDataToSign, privateKey, shieldAddress, gas, fee);
+      });
+    });
+
+    describe('Challenge 4: Challenge historic root used in a transaction', async () => {
+      it('Should delete the wrong block', async () => {
+        await testForEvents(stateAddress, [
+          web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
+          web3.eth.abi.encodeParameter('bytes32', topicsBlockHashesIncorrectHistoricRoot),
+        ]);
+
+        const res = await chai
+          .request(url)
+          .post('/deposit')
+          .send({ ercAddress, tokenId, value, zkpPublicKey, fee });
+
+        const { txDataToSign } = res.body;
+        expect(txDataToSign).to.be.a('string');
+        await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
+      });
+    });
+
+    describe('Challenge 5: Incorrect public input hash', async () => {
+      it('Should delete the flawed block and rollback the leaves', async () => {
+        await testForEvents(stateAddress, [
+          web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
+          web3.eth.abi.encodeParameter('bytes32', topicsBlockHashIncorrectPublicInputHash),
+        ]);
+
+        // create another transaction to trigger NO's block assembly
+        const res = await chai.request(url).post('/deposit').send({
+          ercAddress,
+          tokenId,
+          value,
+          zkpPublicKey,
+          fee,
+        });
+        const { txDataToSign } = res.body;
+        await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
+      });
+    });
+
+    describe('Challenge 6: Proof verification failure', async () => {
+      it('Should delete the flawed block and rollback the leaves', async () => {
+        await testForEvents(stateAddress, [
+          web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
+          web3.eth.abi.encodeParameter('bytes32', topicsBlockHashIncorrectProof),
+        ]);
+
+        // create another transaction to trigger NO's block assembly
+        const res = await chai
+          .request(url)
+          .post('/transfer')
+          .send({
+            ercAddress,
+            tokenId,
+            recipientData: {
+              values: [value],
+              recipientZkpPublicKeys: [zkpPublicKey],
+            },
+            senderZkpPrivateKey: zkpPrivateKey,
             fee,
           });
         const { txDataToSign } = res.body;
-        // eslint-disable-next-line no-await-in-loop
+
         await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
-      }
-      clearInterval(
-        await new Promise(resolve => {
-          const t = setInterval(() => !topicsBlockHashIncorrectLeafCount || resolve(t), 1000);
-        }),
-      );
-      await testForEvents(stateAddress, [
-        web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
-        web3.eth.abi.encodeParameter('bytes32', topicsBlockHashIncorrectLeafCount),
-      ]);
+      });
+    });
+
+    describe('Challenge 7: Duplicate Nullifier', async () => {
+      it('Should delete the flawed block and rollback the leaves', async () => {
+        await testForEvents(stateAddress, [
+          web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
+          web3.eth.abi.encodeParameter('bytes32', topicsBlockHashDuplicateNullifier),
+        ]);
+        const res = await chai.request(url).post('/deposit').send({
+          ercAddress,
+          tokenId,
+          value,
+          zkpPublicKey,
+          fee,
+        });
+        const { txDataToSign } = res.body;
+        await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
+      });
+    });
+
+    describe('Challenge 8: Incorrect Leaf Count', async () => {
+      it('Should delete the flawed block and rollback the leaves', async () => {
+        await testForEvents(stateAddress, [
+          web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
+          web3.eth.abi.encodeParameter('bytes32', topicsBlockHashIncorrectLeafCount),
+        ]);
+        for (let i = 0; i < 2; i++) {
+          const res = await chai // eslint-disable-line no-await-in-loop
+            .request(url)
+            .post('/deposit')
+            .send({
+              ercAddress,
+              tokenId,
+              value,
+              zkpPublicKey,
+              fee,
+            });
+          const { txDataToSign } = res.body;
+          // eslint-disable-next-line no-await-in-loop
+          await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
+        }
+      });
     });
   });
 
