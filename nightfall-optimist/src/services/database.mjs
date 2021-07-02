@@ -328,6 +328,14 @@ export async function resetNullifiers(blockHash) {
   return db.collection(NULLIFIER_COLLECTION).updateMany(query, update);
 }
 
+// delete all the nullifiers in this block
+export async function deleteNullifiers(blockHash) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { blockHash };
+  return db.collection(NULLIFIER_COLLECTION).deleteMany(query);
+}
+
 export async function getBlocks() {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);

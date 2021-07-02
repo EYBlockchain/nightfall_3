@@ -30,8 +30,6 @@ async function isMessageValid(message, recipientZkpPublicKey) {
     zkpPublicKey: recipientZkpPublicKey,
     ...message,
   });
-  console.log('message', message);
-  console.log('commitment.index', await commitment.index);
   if ((await commitment.index) === null) return false;
   return true;
 }

@@ -7,6 +7,7 @@ import gen from 'general-number';
 import mongo from '../utils/mongo.mjs';
 import logger from '../utils/logger.mjs';
 import Commitment from '../classes/commitment.mjs';
+import Nullifier from '../classes/nullifier.mjs';
 
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
 const { generalise } = gen;
@@ -19,12 +20,18 @@ export async function dropCommitments() {
 }
 
 // function to format a commitment for a mongo db and store it
-export async function storeCommitment(commitment) {
+export async function storeCommitment(commitment, zkpPrivateKey) {
   const connection = await mongo.connection(MONGO_URL);
+  // we'll also compute and store the nullifier hash.  This will be useful for
+  // spotting if the commitment spend is ever rolled back, which would mean the
+  // commitment is once again available to spend
+  const nullifierHash = new Nullifier(commitment, zkpPrivateKey).hash.hex(32);
   const data = {
     _id: commitment.hash.hex(32),
     preimage: commitment.preimage.all.hex(32),
     isNullified: commitment.isNullified,
+    isNullifiedOnChain: Number(commitment.isNullifiedOnChain),
+    nullifier: nullifierHash,
   };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).insertOne(data);
@@ -37,6 +44,35 @@ export async function markNullified(commitment) {
   const update = { $set: { isNullified: true } };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateOne(query, update);
+}
+
+/*
+function to clear a commitments nullified status after a rollback.
+commitments have two stages of nullification (1) when they are spent by Client
+they are marked as isNullified==true to stop them being used in another
+transaction but also as isNullifiedOnChain when we know that they've actually
+made it into an on-chain L2 block.  This contains the number of the L2 block that
+they are in.  We need this if they are ever rolled back because the Rollback
+event only broadcasts the number of the block that was successfully challenged.
+Without that number, we can't tell which spends to roll back.
+Once these properties are cleared, the commitment will automatically become
+available for spending again.
+*/
+export async function clearNullified(blockNumberL2) {
+  const connection = await mongo.connection(MONGO_URL);
+  const query = { isNullifiedOnChain: { $gte: Number(blockNumberL2) } };
+  const update = { $set: { isNullifiedOnChain: -1, isNullified: false } };
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(COMMITMENTS_COLLECTION).update(query, update);
+}
+
+// function to mark a commitments as nullified on chain for a mongo db
+export async function markNullifiedOnChain(nullifiers, blockNumberL2) {
+  const connection = await mongo.connection(MONGO_URL);
+  const query = { nullifier: { $in: nullifiers } };
+  const update = { $set: { isNullifiedOnChain: Number(blockNumberL2) } };
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(COMMITMENTS_COLLECTION).update(query, update);
 }
 
 // function to find commitments that can be used in the proposed transfer
@@ -78,7 +114,7 @@ export async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _
   // If we get here it means that we have not been able to find a single commitment that matches the required value
   if (onlyOne) return null; // sometimes we require just one commitment
 
-  /* if not, maybe we can do a two-commitment transfer. The current strategy aims to prioritise smaller commitments while also 
+  /* if not, maybe we can do a two-commitment transfer. The current strategy aims to prioritise smaller commitments while also
      minimising the creation of low value commitments (dust)
 
     1) Sort all commitments by value

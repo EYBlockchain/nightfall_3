@@ -8,7 +8,7 @@ const contractName = config.STATE_CONTRACT_NAME;
 
 export const startEventFilter = async () => {
   try {
-    logger.http(`Calling /start for Timber, with contractName '${contractName}' and url ${url}`);
+    logger.silly(`Calling /start for Timber, with contractName '${contractName}' and url ${url}`);
     const response = await axios.post(
       `${url}/start`,
       {
@@ -18,7 +18,7 @@ export const startEventFilter = async () => {
         timeout: 3600000,
       },
     );
-    logger.http('Timber Response:', response.data.data);
+    logger.silly('Timber Response:', response.data.data);
     return response.data.data;
   } catch (error) {
     throw new Error(error);
@@ -26,7 +26,7 @@ export const startEventFilter = async () => {
 };
 
 export const getLeafIndex = async leafValue => {
-  logger.http(
+  logger.silly(
     `Calling /leaf/value for leafValue ${leafValue}, contractName, ${contractName}, url ${url}`,
   );
   try {
@@ -43,7 +43,7 @@ export const getLeafIndex = async leafValue => {
         timeout: 3600000,
       },
     );
-    logger.http('Timber Response:', response.data.data);
+    logger.silly('Timber Response:', response.data.data);
     if (!response.data.data) return null;
     return response.data.data.leafIndex;
   } catch (error) {
@@ -53,7 +53,7 @@ export const getLeafIndex = async leafValue => {
 };
 
 export const getRoot = async () => {
-  logger.http(`Calling /update for Timber`);
+  logger.silly(`Calling /update for Timber`);
   try {
     const response = await axios.patch(
       `${url}/update`,
@@ -64,7 +64,7 @@ export const getRoot = async () => {
         timeout: 3600000,
       },
     );
-    logger.http('Timber Response:', response.data.data.latestRecalculation);
+    logger.silly('Timber Response:', response.data.data.latestRecalculation);
     // TODO: handle null response
     return response.data.data.latestRecalculation.root;
   } catch (error) {
@@ -73,7 +73,7 @@ export const getRoot = async () => {
 };
 
 export const getSiblingPath = async leafIndex => {
-  logger.http(`Calling /siblingPath/${leafIndex}`);
+  logger.silly(`Calling /siblingPath/${leafIndex}`);
   try {
     const response = await axios.get(
       `${url}/siblingPath/${leafIndex}`, //
@@ -103,7 +103,7 @@ This is useful for checking that the root of an optimistic block is correct
 @param {string} root - the historic root of the merkle tree
 */
 export const getTreeHistory = async root => {
-  logger.http(`Calling /tree-history/${root}`);
+  logger.silly(`Calling /tree-history/${root}`);
   const response = await axios.get(
     `${url}/tree-history/${root}`,
     { params: { contractName } },

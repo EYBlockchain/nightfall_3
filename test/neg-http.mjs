@@ -242,7 +242,7 @@ describe('Testing the challenge http API', () => {
             chai
               .request(url)
               .post('/deposit')
-              .send({ ercAddress, tokenId, value, zkpPublicKey, fee }),
+              .send({ ercAddress, tokenId, value, zkpPrivateKey, fee }),
           ),
         )
       ).map(res => res.body);
@@ -291,7 +291,7 @@ describe('Testing the challenge http API', () => {
             chai
               .request(url)
               .post('/deposit')
-              .send({ ercAddress, tokenId, value, zkpPublicKey, fee }),
+              .send({ ercAddress, tokenId, value, zkpPrivateKey, fee }),
           ),
         )
       ).map(res => res.body);
@@ -400,7 +400,7 @@ describe('Testing the challenge http API', () => {
         const res = await chai
           .request(url)
           .post('/deposit')
-          .send({ ercAddress, tokenId, value, zkpPublicKey, fee });
+          .send({ ercAddress, tokenId, value, zkpPrivateKey, fee });
 
         const { txDataToSign } = res.body;
         expect(txDataToSign).to.be.a('string');
@@ -420,7 +420,7 @@ describe('Testing the challenge http API', () => {
           ercAddress,
           tokenId,
           value,
-          zkpPublicKey,
+          zkpPrivateKey,
           fee,
         });
         const { txDataToSign } = res.body;
@@ -465,7 +465,7 @@ describe('Testing the challenge http API', () => {
           ercAddress,
           tokenId,
           value,
-          zkpPublicKey,
+          zkpPrivateKey,
           fee,
         });
         const { txDataToSign } = res.body;
@@ -487,7 +487,7 @@ describe('Testing the challenge http API', () => {
               ercAddress,
               tokenId,
               value,
-              zkpPublicKey,
+              zkpPrivateKey,
               fee,
             });
           const { txDataToSign } = res.body;

@@ -4,9 +4,7 @@ Test suite for measuring the gas per transaction
 import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
-import gen from 'general-number';
 import WebSocket from 'ws';
-import sha256 from '../nightfall-client/src/utils/crypto/sha256.mjs';
 import {
   // closeWeb3Connection,
   submitTransaction,
@@ -19,8 +17,6 @@ const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
-const { GN } = gen;
-
 describe('Testing the http API', () => {
   let shieldAddress;
   let challengeAddress;
@@ -30,7 +26,6 @@ describe('Testing the http API', () => {
   let connection; // WS connection
   let blockSubmissionFunction;
   const zkpPrivateKey = '0xc05b14fa15148330c6d008814b0bdd69bc4a08a1bd0b629c42fa7e2c61f16739'; // the zkp private key we're going to use in the tests.
-  const zkpPublicKey = sha256([new GN(zkpPrivateKey)]).hex();
   const url = 'http://localhost:8080';
   const optimistUrl = 'http://localhost:8081';
   const optimistWsUrl = 'ws:localhost:8082';
@@ -157,7 +152,7 @@ describe('Testing the http API', () => {
           ercAddress,
           tokenId,
           value,
-          zkpPublicKey,
+          zkpPrivateKey,
           fee,
         });
         txDataToSign = res.body.txDataToSign;

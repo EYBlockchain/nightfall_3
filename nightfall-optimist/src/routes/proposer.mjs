@@ -189,7 +189,6 @@ router.post('/encode', async (req, res, next) => {
     // normally we re-compute the leafcount. If however block.leafCount is -ve
     // that's a signal to use the value given (once we've flipped the sign back)
     if (block.leafCount < 0) currentLeafCount = -block.leafCount;
-    console.log('CURRENT LEAF COUNT', currentLeafCount, block.leafCount);
     const blockNumberL2 = Number(await stateContractInstance.methods.getNumberOfL2Blocks().call());
 
     const newTransactions = await Promise.all(

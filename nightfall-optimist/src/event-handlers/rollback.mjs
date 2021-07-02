@@ -8,7 +8,7 @@ import {
   addTransactionsToMemPool,
   deleteBlock,
   findBlocksFromBlockNumberL2,
-  resetNullifiers,
+  deleteNullifiers,
 } from '../services/database.mjs';
 import Block from '../classes/block.mjs';
 import logger from '../utils/logger.mjs';
@@ -28,7 +28,7 @@ async function rollbackEventHandler(data) {
     (await findBlocksFromBlockNumberL2(blockNumberL2))
       .map(async block => [
         addTransactionsToMemPool(block),
-        resetNullifiers(block.blockHash),
+        deleteNullifiers(block.blockHash),
         deleteBlock(block.blockHash),
       ])
       .flat(1),

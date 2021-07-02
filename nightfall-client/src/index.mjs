@@ -4,6 +4,12 @@ import app from './app.mjs';
 import rabbitmq from './utils/rabbitmq.mjs';
 import mongo from './utils/mongo.mjs';
 import queues from './queues/index.mjs';
+import {
+  subscribeToBlockProposedEvent,
+  blockProposedEventHandler,
+  subscribeToRollbackEventHandler,
+  rollbackEventHandler,
+} from './event-handlers/index.mjs';
 
 const main = async () => {
   try {
@@ -11,6 +17,8 @@ const main = async () => {
       await rabbitmq.connect();
       queues();
     }
+    subscribeToBlockProposedEvent(blockProposedEventHandler);
+    subscribeToRollbackEventHandler(rollbackEventHandler);
     await mongo.connection(config.MONGO_URL); // get a db connection
     app.listen(80);
   } catch (err) {
