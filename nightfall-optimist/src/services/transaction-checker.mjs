@@ -44,7 +44,9 @@ async function checkTransactionType(transaction) {
         transaction.commitments[1] !== ZERO ||
         transaction.commitments.length !== 2 ||
         transaction.nullifiers.some(n => n !== ZERO) ||
-        transaction.proof.some(p => p === ZERO)
+        transaction.proof.some(p => p === ZERO) ||
+        // This extra check is unique to deposits
+        Number(transaction.historicRootBlockNumberL2) !== 0
       )
         throw new TransactionError(
           'The data provided was inconsistent with a transaction type of DEPOSIT',
@@ -112,7 +114,8 @@ async function checkTransactionType(transaction) {
 }
 
 async function checkHistoricRoot(transaction) {
-  // Deposit transaction will not have historic roots
+  // Deposit transaction have a historic root of 0
+  // the validity is tested in checkTransactionType
   if (
     Number(transaction.transactionType) === 1 ||
     Number(transaction.transactionType) === 2 ||
