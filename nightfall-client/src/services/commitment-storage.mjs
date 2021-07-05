@@ -63,7 +63,7 @@ export async function clearNullified(blockNumberL2) {
   const query = { isNullifiedOnChain: { $gte: Number(blockNumberL2) } };
   const update = { $set: { isNullifiedOnChain: -1, isNullified: false } };
   const db = connection.db(COMMITMENTS_DB);
-  return db.collection(COMMITMENTS_COLLECTION).update(query, update);
+  return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
 }
 
 // function to mark a commitments as nullified on chain for a mongo db
@@ -72,7 +72,7 @@ export async function markNullifiedOnChain(nullifiers, blockNumberL2) {
   const query = { nullifier: { $in: nullifiers } };
   const update = { $set: { isNullifiedOnChain: Number(blockNumberL2) } };
   const db = connection.db(COMMITMENTS_DB);
-  return db.collection(COMMITMENTS_COLLECTION).update(query, update);
+  return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
 }
 
 // function to find commitments that can be used in the proposed transfer

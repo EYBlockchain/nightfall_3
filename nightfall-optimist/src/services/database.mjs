@@ -283,12 +283,23 @@ export async function getTransactionsByTransactionHashes(transactionHashes) {
   return transactions;
 }
 
+export async function deleteTransferAndWithdraw(transactionHashes) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = {
+    transactionHash: { $in: transactionHashes },
+    transactionType: { $in: [1, 2, 3] },
+  };
+  return db.collection(TRANSACTIONS_COLLECTION).deleteMany(query);
+}
+
 export async function saveNullifiers(nullifiers) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const indexNullifiers = nullifiers.map(n => {
     return {
       hash: n,
+      blockHash: null,
     };
   });
   return db.collection(NULLIFIER_COLLECTION).insertMany(indexNullifiers);
@@ -306,7 +317,8 @@ export async function retrieveNullifiers() {
 export async function stampNullifiers(nullifiers, blockHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  const query = { hash: { $in: nullifiers } };
+  // we don't want hashes that already have a blockhash set
+  const query = { hash: { $in: nullifiers }, blockHash: { $eq: null } };
   const update = { $set: { blockHash } };
   return db.collection(NULLIFIER_COLLECTION).updateMany(query, update);
 }
@@ -316,7 +328,7 @@ export async function retrieveMinedNullifiers() {
   const db = connection.db(OPTIMIST_DB);
   return db
     .collection(NULLIFIER_COLLECTION)
-    .find({ blockHash: { $exists: true } })
+    .find({ blockHash: { $ne: null } })
     .toArray();
 }
 
@@ -324,7 +336,7 @@ export async function resetNullifiers(blockHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { blockHash };
-  const update = { $unset: { blockHash: '' } };
+  const update = { $unset: { blockHash: null } };
   return db.collection(NULLIFIER_COLLECTION).updateMany(query, update);
 }
 

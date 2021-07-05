@@ -122,7 +122,7 @@ describe('Testing the challenge http API', () => {
               .map(t => t.nullifiers.filter(n => n !== ZERO))
               .flat(Infinity);
             console.log(
-              `Created good block to extract duplicate nullifier from with blockHash ${block.blockHash}`,
+              `Created good block to extract duplicate nullifier ${duplicateNullifier} from with blockHash ${block.blockHash}`,
             );
           } else if (counter === 2) {
             res = await createBadBlock('IncorrectRoot', block, transactions, {
@@ -177,7 +177,6 @@ describe('Testing the challenge http API', () => {
             res = await createBadBlock('DuplicateNullifier', block, transactions, {
               duplicateNullifier,
             });
-            // topicsBlockHashesDuplicateNullifier = res.block.blockHash;
             topicsBlockHashDuplicateNullifier = res.block.blockHash;
             txDataToSign = res.txDataToSign;
             console.log(
