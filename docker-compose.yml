@@ -7,13 +7,21 @@ services:
       dockerfile: Dockerfile
       context: ./nightfall-client
     volumes:
-      - ./nightfall-client/src:/app/src
-      - ./common/classes/proof.mjs:/app/src/classes/proof.mjs
-      - ./common/classes/public-inputs.mjs:/app/src/classes/public-inputs.mjs
-      - ./common/classes/transaction.mjs:/app/src/classes/transaction.mjs
-      - ./config/default.js:/app/config/default.js
-      - build:/app/build
-      - mongodb:/app/mongodb
+      - type: bind
+        source: ./nightfall-client/src
+        target: /app/src
+      - type: bind
+        source: ./common
+        target: /common
+      - type: bind
+        source: ./config/default.js
+        target: /config/default.js
+      - type: volume
+        source: build
+        target: /app/build
+      - type: volume
+        source: mongodb
+        target: /app/mongodb
     networks:
       - nightfall_network
     ports:
@@ -26,6 +34,7 @@ services:
       - timber
       - rabbitmq
     environment:
+      WORKDIR: app/
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
       LOG_LEVEL: debug
@@ -151,7 +160,9 @@ services:
     environment:
       - MONGO_INITDB_DATABASE=merkle_tree
     volumes:
-      - timber-database-volume:/data/db
+      - type: volume
+        source: timber-database-volume
+        target: /data/db
     networks:
       - nightfall_network
 
@@ -180,12 +191,17 @@ services:
       - type: volume
         source: build
         target: /app/build/
-      - ./nightfall-optimist/src:/app/src
-      - ./common/classes/proof.mjs:/app/src/classes/proof.mjs
-      - ./common/classes/public-inputs.mjs:/app/src/classes/public-inputs.mjs
-      - ./common/classes/transaction.mjs:/app/src/classes/transaction.mjs
-      - ./config/default.js:/app/config/default.js
+      - type: bind
+        source: ./nightfall-optimist/src
+        target: /app/src
+      - type: bind
+        source: ./common
+        target: /common
+      - type: bind
+        source: ./config/default.js
+        target: /config/default.js
     environment:
+      WORKDIR: app/
       WEBSOCKET_PORT: 8080
       BLOCKCHAIN_WS_HOST: ganache
       BLOCKCHAIN_PORT: 8545

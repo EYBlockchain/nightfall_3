@@ -4,8 +4,8 @@
   "description": "A client for interacting with Nightfall",
   "main": "src/index.mjs",
   "scripts": {
-    "start": "node src/index.mjs",
-    "dev": "nodemon src/index.mjs"
+    "start": "node ${WORKDIR}src/index.mjs",
+    "dev": "nodemon --watch ${WORKDIR}src ${WORKDIR}src/index.mjs"
   },
   "repository": {
     "type": "git",
@@ -43,13 +43,6 @@
     "nodemon": "^1.18.9"
   },
   "nodemonConfig": {
-    "verbose": true,
-    "ignore": [
-      "output/",
-      "circuits/",
-      "*.json",
-      "mongodb/",
-      "build/"
-    ]
+    "verbose": true
   }
 }
