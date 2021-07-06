@@ -11,11 +11,11 @@ services:
         source: ./nightfall-client/src
         target: /app/src
       - type: bind
-        source: ./common
-        target: /common
+        source: ./common-files
+        target: /app/node_modules/common-files
       - type: bind
         source: ./config/default.js
-        target: /config/default.js
+        target: /app/config/default.js
       - type: volume
         source: build
         target: /app/build
@@ -34,7 +34,6 @@ services:
       - timber
       - rabbitmq
     environment:
-      WORKDIR: app/
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
       LOG_LEVEL: debug
@@ -195,13 +194,12 @@ services:
         source: ./nightfall-optimist/src
         target: /app/src
       - type: bind
-        source: ./common
-        target: /common
+        source: ./common-files
+        target: /app/node_modules/common-files
       - type: bind
         source: ./config/default.js
-        target: /config/default.js
+        target: /app/config/default.js
     environment:
-      WORKDIR: app/
       WEBSOCKET_PORT: 8080
       BLOCKCHAIN_WS_HOST: ganache
       BLOCKCHAIN_PORT: 8545

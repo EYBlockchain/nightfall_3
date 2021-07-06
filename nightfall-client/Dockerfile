@@ -11,11 +11,8 @@ WORKDIR /app
 RUN mkdir /app/mongodb
 
 COPY src src
-COPY docker-entrypoint.sh ./
+COPY docker-entrypoint.sh package.json package-lock.json ./
 RUN chmod 755 docker-entrypoint.sh
-
-WORKDIR /
-COPY package.json package-lock.json ./
 
 EXPOSE 27017
 RUN npm ci
