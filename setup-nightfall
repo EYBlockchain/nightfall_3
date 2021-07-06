@@ -3,4 +3,4 @@
 # Install node dependencies
 npm ci
 
-docker-compose build
+docker-compose build --no-cache
