@@ -216,7 +216,7 @@ export async function getMostProfitableTransactions(number) {
 Function to save a (unprocessed) Transaction
 */
 export async function saveTransaction(_transaction) {
-  const transaction = { id: _transaction.transactionHash, ..._transaction, mempool: true };
+  const transaction = { _id: _transaction.transactionHash, ..._transaction, mempool: true };
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   return db.collection(TRANSACTIONS_COLLECTION).insertOne(transaction);
@@ -228,9 +228,15 @@ Function to add a set of transactions from the layer 2 mempool once a block has 
 export async function addTransactionsToMemPool(block) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  const query = { transactionHash: { $in: block.transactionHashes } };
-  const update = { $set: { mempool: true } };
-  return db.collection(TRANSACTIONS_COLLECTION).updateMany(query, update);
+  const searchQuery = { transactionHash: { $in: block.transactionHashes } };
+  const transactions = await db.collection(TRANSACTIONS_COLLECTION).find(searchQuery).toArray();
+  // This filters out any transactions that may been included in other blocks
+  const transactionUniqueToBlock = transactions
+    .filter(t => t.blockNumberL2 === block.blockNumberL2)
+    .map(t => t.transactionHash);
+  const updateQuery = { transactionHash: { $in: transactionUniqueToBlock } };
+  const update = { $set: { mempool: true, blockNumberL2: -1 } };
+  return db.collection(TRANSACTIONS_COLLECTION).updateMany(updateQuery, update);
 }
 
 /**
@@ -241,7 +247,7 @@ export async function removeTransactionsFromMemPool(block) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { transactionHash: { $in: block.transactionHashes } };
-  const update = { $set: { mempool: false } };
+  const update = { $set: { mempool: false, blockNumberL2: block.blockNumberL2 } };
   return db.collection(TRANSACTIONS_COLLECTION).updateMany(query, update);
 }
 
