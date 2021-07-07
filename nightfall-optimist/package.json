@@ -4,9 +4,10 @@
   "description": "A container for optimistic proposals and challenges",
   "main": "index.mjs",
   "scripts": {
+    "prestart": "./pre-start-script.sh",
+    "predev": "./pre-start-script.sh",
     "start": "node src/index.mjs",
-    "dev": "nodemon src/index.mjs",
-    "postinstall": "npm link ../common-files"
+    "dev": "nodemon src/index.mjs"
   },
   "repository": {
     "type": "git",
@@ -32,7 +33,7 @@
   "dependencies": {
     "axios": "^0.21.1",
     "body-parser": "1.19.0",
-    "common-files": "0.0.1",
+    "common-files": "file:../common-files",
     "config": "^3.3.1",
     "cors": "2.8.5",
     "express": "^4.17.1",

@@ -12,7 +12,7 @@ services:
         target: /app/src
       - type: bind
         source: ./common-files
-        target: /app/node_modules/common-files
+        target: /common-files
       - type: bind
         source: ./config/default.js
         target: /app/config/default.js
@@ -195,7 +195,7 @@ services:
         target: /app/src
       - type: bind
         source: ./common-files
-        target: /app/node_modules/common-files
+        target: /common-files
       - type: bind
         source: ./config/default.js
         target: /app/config/default.js

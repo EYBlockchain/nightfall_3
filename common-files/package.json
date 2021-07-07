@@ -6,7 +6,7 @@
   },
   "author": "“Liju <“liju.jose@gds.ey.com”>",
   "license": "ISC",
-  "description": "",
+  "description": "nightfall_3 common files",
   "dependencies": {
     "config": "^3.3.6",
     "general-number": "^1.0.1",
