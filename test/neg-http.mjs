@@ -191,7 +191,7 @@ describe('Testing the challenge http API', () => {
             );
           } else {
             txDataToSign = msg.txDataToSign;
-            console.log(`Created good block with blockHash ${res.block.blockHash}`);
+            console.log(`Created good block with blockHash ${block.blockHash}`);
           }
           await submitTransaction(txDataToSign, privateKey, stateAddress, gas, BLOCK_STAKE);
           counter++;
@@ -362,6 +362,12 @@ describe('Testing the challenge http API', () => {
           web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
           web3.eth.abi.encodeParameter('bytes32', topicsBlockHashDuplicateTransaction),
         ]);
+        const res = await chai
+          .request(url)
+          .post('/deposit')
+          .send({ ercAddress, tokenId, value, zkpPrivateKey, fee });
+        // now we need to sign the transaction and send it to the blockchain
+        await submitTransaction(res.body.txDataToSign, privateKey, shieldAddress, gas, fee);
       });
     });
     describe('Challenge 3: Invalid transaction submitted', () => {
