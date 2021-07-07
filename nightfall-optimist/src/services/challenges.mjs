@@ -271,7 +271,6 @@ export async function createChallenge(block, transactions, err) {
         const priorBlockTransactions = await getTransactionsByTransactionHashes(
           priorBlockL2.transactionHashes,
         );
-        console.log('BLOCK AND PRIOR BLOCK', block, priorBlockL2);
         txDataToSign = await challengeContractInstance.methods
           .challengeLeafCountCorrect(
             Block.buildSolidityStruct(priorBlockL2), // the block immediately prior to this one

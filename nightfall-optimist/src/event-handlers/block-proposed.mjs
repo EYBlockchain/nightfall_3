@@ -23,13 +23,11 @@ async function blockProposedEventHandler(data) {
     // when a challenge is raised because the is correct block data, then the corresponding block deleted event will
     // update this collection
     await saveBlock({ blockNumber: currentBlockCount, ...block });
-    // we'll check the block and issue a challenge if appropriate
-    await checkBlock(block, transactions);
-    // if the block is, in fact, valid then we also need to mark as used the
-    // transactions in the block from our database of unprocessed transactions,
-    // so we don't try to use them in a block which we're proposing.
-    await removeTransactionsFromMemPool(block); // TODO is await needed?
-    // If the block is fine, we update the same nullifiers we have stored with the blockhash
+    // Update the nullifiers we have stored, with the blockhash. These will
+    // be deleted if the block check fails and we get a rollback.  We do this
+    // before running the block check because we want to delete the nullifiers
+    // asociated with a failed block, and we can't do that if we haven't
+    // associated them with a blockHash.
     await stampNullifiers(
       transactions
         .map(tx =>
@@ -40,6 +38,12 @@ async function blockProposedEventHandler(data) {
         .flat(Infinity),
       block.blockHash,
     );
+    // we'll check the block and issue a challenge if appropriate
+    await checkBlock(block, transactions);
+    // if the block is, in fact, valid then we also need to mark as used the
+    // transactions in the block from our database of unprocessed transactions,
+    // so we don't try to use them in a block which we're proposing.
+    await removeTransactionsFromMemPool(block); // TODO is await needed?
     // signal to the block-making routines that a block is received: they
     // won't make a new block until their previous one is stored on-chain.
     logger.info('Block Checker - Block was valid');

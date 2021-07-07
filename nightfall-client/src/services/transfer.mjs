@@ -92,14 +92,6 @@ async function transfer(transferParams) {
   logger.silly(`SiblingPaths were: ${JSON.stringify(siblingPaths)}`);
   // public inputs
   const root = siblingPaths[0][0];
-  console.log(
-    'COMMITMENT_INDEX',
-    oldCommitments[0].index,
-    'COMMITMENT_HASH',
-    oldCommitments[0].hash,
-    'ROOT',
-    root,
-  );
   const publicInputs = new PublicInputs([
     oldCommitments.map(commitment => commitment.preimage.ercAddress),
     newCommitments.map(commitment => commitment.hash),
@@ -191,18 +183,26 @@ async function transfer(transferParams) {
             throw new Error(err);
           });
       });
-      newCommitments.map(commitment => storeCommitment(commitment)); // TODO insertMany
+      // we only want to store our own commitments so filter those that don't
+      // have our public key
+      newCommitments
+        .filter(
+          commitment => commitment.preimage.zkpPublicKey.hex(32) === senderZkpPublicKey.hex(32),
+        )
+        .forEach(commitment => storeCommitment(commitment, senderZkpPrivateKey)); // TODO insertMany
       // mark the old commitments as nullified
-      oldCommitments.map(commitment => markNullified(commitment));
+      oldCommitments.forEach(commitment => markNullified(commitment));
       return { transaction: optimisticTransferTransaction };
     }
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(optimisticTransferTransaction))
       .encodeABI();
     // store the commitment on successful computation of the transaction
-    newCommitments.map(commitment => storeCommitment(commitment)); // TODO insertMany
+    newCommitments
+      .filter(commitment => commitment.preimage.zkpPublicKey.hex(32) === senderZkpPublicKey.hex(32))
+      .forEach(commitment => storeCommitment(commitment, senderZkpPrivateKey)); // TODO insertMany
     // mark the old commitments as nullified
-    oldCommitments.map(commitment => markNullified(commitment));
+    oldCommitments.forEach(commitment => markNullified(commitment));
     return { rawTransaction, transaction: optimisticTransferTransaction };
   } catch (err) {
     throw new Error(err); // let the caller handle the error

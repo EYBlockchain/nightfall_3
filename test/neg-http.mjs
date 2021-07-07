@@ -122,7 +122,7 @@ describe('Testing the challenge http API', () => {
               .map(t => t.nullifiers.filter(n => n !== ZERO))
               .flat(Infinity);
             console.log(
-              `Created good block to extract duplicate nullifier from with blockHash ${block.blockHash}`,
+              `Created good block to extract duplicate nullifier ${duplicateNullifier} from with blockHash ${block.blockHash}`,
             );
           } else if (counter === 2) {
             res = await createBadBlock('IncorrectRoot', block, transactions, {
@@ -177,7 +177,6 @@ describe('Testing the challenge http API', () => {
             res = await createBadBlock('DuplicateNullifier', block, transactions, {
               duplicateNullifier,
             });
-            // topicsBlockHashesDuplicateNullifier = res.block.blockHash;
             topicsBlockHashDuplicateNullifier = res.block.blockHash;
             txDataToSign = res.txDataToSign;
             console.log(
@@ -242,7 +241,7 @@ describe('Testing the challenge http API', () => {
             chai
               .request(url)
               .post('/deposit')
-              .send({ ercAddress, tokenId, value, zkpPublicKey, fee }),
+              .send({ ercAddress, tokenId, value, zkpPrivateKey, fee }),
           ),
         )
       ).map(res => res.body);
@@ -291,7 +290,7 @@ describe('Testing the challenge http API', () => {
             chai
               .request(url)
               .post('/deposit')
-              .send({ ercAddress, tokenId, value, zkpPublicKey, fee }),
+              .send({ ercAddress, tokenId, value, zkpPrivateKey, fee }),
           ),
         )
       ).map(res => res.body);
@@ -400,7 +399,7 @@ describe('Testing the challenge http API', () => {
         const res = await chai
           .request(url)
           .post('/deposit')
-          .send({ ercAddress, tokenId, value, zkpPublicKey, fee });
+          .send({ ercAddress, tokenId, value, zkpPrivateKey, fee });
 
         const { txDataToSign } = res.body;
         expect(txDataToSign).to.be.a('string');
@@ -420,7 +419,7 @@ describe('Testing the challenge http API', () => {
           ercAddress,
           tokenId,
           value,
-          zkpPublicKey,
+          zkpPrivateKey,
           fee,
         });
         const { txDataToSign } = res.body;
@@ -465,7 +464,7 @@ describe('Testing the challenge http API', () => {
           ercAddress,
           tokenId,
           value,
-          zkpPublicKey,
+          zkpPrivateKey,
           fee,
         });
         const { txDataToSign } = res.body;
@@ -487,7 +486,7 @@ describe('Testing the challenge http API', () => {
               ercAddress,
               tokenId,
               value,
-              zkpPublicKey,
+              zkpPrivateKey,
               fee,
             });
           const { txDataToSign } = res.body;

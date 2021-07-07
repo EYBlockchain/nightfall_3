@@ -58,23 +58,24 @@ async function checkBlock(block, transactions) {
     }),
   );
 
-  // Check nullifiers for duplicates that have already been mined.
+  // Check nullifiers for duplicates that have already been mined. It's possible to get a block that
+  // we haven't seen the transactions for, because it was made from off-chain transactions. Thus, it's not
+  // sufficient just to check transactions for duplicate nullifiers. Also, we have to be careful not
+  // to check a block against itself (hence the second filter).
   const storedMinedNullifiers = await retrieveMinedNullifiers(); // List of Nullifiers stored by blockProposer
   const blockNullifiers = transactions.map(tNull => tNull.nullifiers).flat(Infinity); // List of Nullifiers in block
-  const alreadyMinedNullifiers = storedMinedNullifiers.filter(sNull =>
-    blockNullifiers.includes(sNull.hash),
-  );
+  console.log('MINED NULLIFIERS', storedMinedNullifiers, blockNullifiers);
+  const alreadyMinedNullifiers = storedMinedNullifiers
+    .filter(sNull => blockNullifiers.includes(sNull.hash))
+    .filter(aNull => aNull.blockHash !== block.blockHash);
   if (alreadyMinedNullifiers.length > 0) {
     throw new BlockError(
-      `Some Nullifiers included in ${block.root} have been included in previous blocks`,
+      `Some Nullifiers included in ${block.blockHash} have been included in previous blocks.`,
       6,
     );
   }
 
-  // This concludes all 'block-level' checks i.e. checks which require the context of this block w.r.t the existing L2 State.
-
-  // The transaction checks below are 'stateless'.
-  // check if the transaction is valid - transaction type, public input hash and proof verification are all checked
+  // check if the transactions are valid - transaction type, public input hash and proof verification are all checked
   for (let i = 0; i < transactions.length; i++) {
     try {
       await checkTransaction(transactions[i]); // eslint-disable-line no-await-in-loop

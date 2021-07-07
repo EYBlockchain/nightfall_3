@@ -155,7 +155,7 @@ describe('Testing the http API', () => {
             chai
               .request(url)
               .post('/deposit')
-              .send({ ercAddress, tokenId, value, zkpPublicKey, fee }),
+              .send({ ercAddress, tokenId, value, zkpPrivateKey, fee }),
           ),
         )
       ).map(res => res.body);
@@ -244,7 +244,7 @@ describe('Testing the http API', () => {
             chai
               .request(url)
               .post('/deposit')
-              .send({ ercAddress, tokenId, value, zkpPublicKey, fee }),
+              .send({ ercAddress, tokenId, value, zkpPrivateKey, fee }),
           ),
         )
       ).map(dRes => dRes.body);
@@ -320,7 +320,7 @@ describe('Testing the http API', () => {
             chai
               .request(url)
               .post('/deposit')
-              .send({ ercAddress, tokenId, value, zkpPublicKey, fee }),
+              .send({ ercAddress, tokenId, value, zkpPrivateKey, fee }),
           ),
         )
       ).map(dRes => dRes.body);
@@ -367,7 +367,7 @@ describe('Testing the http API', () => {
             chai
               .request(url)
               .post('/deposit')
-              .send({ ercAddress, tokenId, value, zkpPublicKey, fee }),
+              .send({ ercAddress, tokenId, value, zkpPrivateKey, fee }),
           ),
         )
       ).map(dRes => dRes.body);
@@ -461,7 +461,7 @@ describe('Testing the http API', () => {
             chai
               .request(url)
               .post('/deposit')
-              .send({ ercAddress, tokenId, value, zkpPublicKey, fee }),
+              .send({ ercAddress, tokenId, value, zkpPrivateKey, fee }),
           ),
         )
       ).map(res => res.body);

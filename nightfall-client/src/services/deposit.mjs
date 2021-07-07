@@ -10,6 +10,7 @@ import config from 'config';
 import axios from 'axios';
 import gen from 'general-number';
 import rand from '../utils/crypto/crypto-random.mjs';
+import sha256 from '../utils/crypto/sha256.mjs';
 import { getContractInstance } from '../utils/contract.mjs';
 import logger from '../utils/logger.mjs';
 import Commitment from '../classes/commitment.mjs';
@@ -32,7 +33,8 @@ async function deposit(items) {
   logger.info('Creating a deposit transaction');
   // before we do anything else, long hex strings should be generalised to make
   // subsequent manipulations easier
-  const { ercAddress, tokenId, value, zkpPublicKey, fee } = generalise(items);
+  const { ercAddress, tokenId, value, zkpPrivateKey, fee } = generalise(items);
+  const zkpPublicKey = sha256([zkpPrivateKey]);
   // we also need a salt to make the commitment unique and increase its entropy
   const salt = await rand(ZKP_KEY_LENGTH);
   // next, let's compute the zkp commitment we're going to store and the hash of the public inputs (truncated to 248 bits)
@@ -84,7 +86,7 @@ async function deposit(items) {
       .submitTransaction(Transaction.buildSolidityStruct(optimisticDepositTransaction))
       .encodeABI();
     // store the commitment on successful computation of the transaction
-    storeCommitment(commitment);
+    storeCommitment(commitment, zkpPrivateKey);
     return { rawTransaction, transaction: optimisticDepositTransaction };
   } catch (err) {
     throw new Error(err); // let the caller handle the error

@@ -57,14 +57,6 @@ async function withdraw(transferParams) {
   logger.silly(`SiblingPath was: ${JSON.stringify(siblingPath)}`);
   // public inputs
   const root = siblingPath[0];
-  console.log('public inputs', [
-    oldCommitment.preimage.ercAddress,
-    oldCommitment.preimage.tokenId,
-    oldCommitment.preimage.value,
-    nullifier.hash,
-    recipientAddress,
-    root,
-  ]);
   const publicInputs = new PublicInputs([
     oldCommitment.preimage.ercAddress,
     oldCommitment.preimage.tokenId,
@@ -136,7 +128,6 @@ async function withdraw(transferParams) {
       optimisticWithdrawTransaction.transactionHash = th;
       return { transaction: optimisticWithdrawTransaction };
     }
-    console.log('OPTIMISTIC WITHDRAW TX', optimisticWithdrawTransaction);
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(optimisticWithdrawTransaction))
       .encodeABI();
