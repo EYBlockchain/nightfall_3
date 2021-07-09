@@ -13,7 +13,7 @@ This handler runs whenever a new transaction is submitted to the blockchain
 */
 async function transactionSubmittedEventHandler(eventParams) {
   // const transaction = mappedTransaction(data);
-  const { offchain = false, ...data } = eventParams;
+  const { offchain = false, blockNumber, ...data } = eventParams;
   let transaction;
   if (offchain) transaction = data;
   else transaction = await getTransactionSubmittedCalldata(data);
@@ -22,7 +22,7 @@ async function transactionSubmittedEventHandler(eventParams) {
   // check that this is a valid transaction before we incorporate it into our
   // mempool
   try {
-    await checkTransaction(transaction); // TODO handle errors
+    await checkTransaction(transaction);
     logger.info('Transaction checks passed');
     const storedNullifiers = (await retrieveNullifiers()).map(sNull => sNull.hash); // List of Nullifiers stored by blockProposer
     const transactionNullifiers = transaction.nullifiers.filter(
@@ -35,8 +35,8 @@ async function transactionSubmittedEventHandler(eventParams) {
         1,
       );
     }
-    if (transactionNullifiers.length > 0) saveNullifiers(transactionNullifiers); // we can now safely store the nullifiers IFF they are present
-    saveTransaction(transaction); // then we need to save it
+    if (transactionNullifiers.length > 0) saveNullifiers(transactionNullifiers, blockNumber); // we can now safely store the nullifiers IFF they are present
+    saveTransaction({ ...transaction, blockNumber }); // then we need to save it
   } catch (err) {
     if (err instanceof TransactionError)
       logger.warn(

@@ -54,4 +54,5 @@ module.exports = {
   HASH_TYPE: 'mimc',
   USE_STUBS: process.env.USE_STUBS === 'true',
   VK_IDS: { deposit: 0, single_transfer: 1, double_transfer: 2, withdraw: 3 }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
+  MAX_QUEUE: 5,
 };

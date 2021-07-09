@@ -20,6 +20,7 @@ const subscriptions = {};
 // event responders cannot attempt parallel writes to the db. Instead, such
 // requests are queued and handled in order
 const queue = new Queue({ autostart: true, concurrency: 1 });
+
 /**
 @author westlad
 This is a response function that is able to filter data from an optimistic block
@@ -120,8 +121,7 @@ const blockProposedResponseFunction = async (eventObject, args) => {
 
 /**
 @author westlad
-This is a response function (similar to the ones below, but specific for a
-rollback.  It closely follows the same format though)
+This is a response function specific for a rollback.
 */
 const rollbackResponseFunction = async (eventObject, args) => {
   // NEW - function remains the same, for detecting single leaves, but can now specify the event name
@@ -167,115 +167,108 @@ const rollbackResponseFunction = async (eventObject, args) => {
 };
 
 /**
-TODO: description
+This function replays events from blockNumber to the latest block.  This is to
+rebuild state that was removed when an event was removed by a layer 1 chain
+reoganisation
 */
-const newLeafResponseFunction = async (eventObject, args) => {
-  // NEW - function remains the same, for detecting single leaves, but can now specify the event name
-  // NOTE - events must have same parameters as newLeaf / newLeaves
-  // We make some hardcoded presumptions about what's contained in the 'args':
+async function resync(fromblockNumberL1, args) {
+  // get all the events and sort them into causal order by block and transaction
+  const { contractName } = args;
+  const events = await (
+    await utilsWeb3.getContractInstance(contractName)
+  ).methods.events
+    .allEvents({
+      fromBlock: fromblockNumberL1,
+      toBlock: 'latest',
+    })
+    .flat()
+    .sort((a, b) => a.blockNumber - b.blockNumber || a.transactionIndex - b.transactionIndex);
+  // now replay them in order
+  for (let i = 0; i < events.length; i++) {
+    switch (events[i].event) {
+      case 'BlockProposed':
+        queue.push(() => blockProposedResponseFunction(events[i], args));
+        break;
+      case 'Rollback':
+        queue.push(() => rollbackResponseFunction(events[i], args));
+        break;
+      default:
+    }
+  }
+}
+
+/**
+@author westlad
+This function is called whenever a BlockProposed event is removed by a layer 1 chain reorg.
+When that happens, we need to roll back the database to the point just before the
+event happened, and then rebuild the state.
+*/
+async function removeBlockProposedFunction(eventObject, args) {
+  // Generic Timber event processing preamble...
   const { db, contractName, treeId } = args;
-
-  const eventName = args.eventName === undefined ? 'NewLeaf' : args.eventName; // hardcoded, as inextricably linked to the name of this function.
-
+  const eventName = args.eventName === undefined ? 'Rollback' : args.eventName;
   let eventParams;
   logger.debug(`eventname: ${eventName}`);
-
   if (treeId === undefined || treeId === '') {
     eventParams = config.contracts[contractName].events[eventName].parameters;
   } else {
     eventParams = config.contracts[contractName].treeId[treeId].events[eventName].parameters;
   }
-
-  // Now some generic eventObject handling code:
   const { eventData } = eventObject;
-
-  /*
-  extract each relevent event parameter from the eventData and create an eventInstance: {
-    eventParamName_0: eventParamValue_0,
-    eventParamName_1: eventParamValue_1,
-    ...
-  }
-  */
   const eventInstance = {};
   eventParams.forEach(param => {
     eventInstance[param] = eventData.returnValues[param];
   });
-  logger.silly(`eventInstance: ${JSON.stringify(eventInstance, null, 2)}`);
-
   const metadataService = new MetadataService(db);
   const { treeHeight } = await metadataService.getTreeHeight();
 
   // Now some bespoke code; specific to how our application needs to deal with this eventObject:
-  // construct a 'leaf' document to store in the db:
   const { blockNumber } = eventData;
-  const { leafIndex, leafValue } = eventInstance;
-  const leaf = {
-    value: leafValue,
-    leafIndex,
-    blockNumber,
-  };
-
-  const leafService = new LeafService(db);
-  await leafService.insertLeaf(treeHeight, leaf);
-  return mtc.update(db); // update the database to ensure we have a historic root
-};
+  const { block } = await getProposeBlockCalldata(eventData);
+  // Now, the leafCount just before this block was added was block.leafCount
+  // that's where we need to roll back to.
+  await mtc.rollback(db, treeHeight, Number(block.leafCount));
+  // and now we need to roll forwards to the present, along our new timeline
+  return resync(blockNumber, args);
+}
 
 /**
-TODO: description
+@author westlad
+This function is called whenever a Rollback event is removed by a layer 1 chain reorg.
+When that happens, we need to roll back the database to the point just before the
+event happened, and then rebuild the state.
 */
-const newLeavesResponseFunction = async (eventObject, args) => {
-  // We make some hardcoded presumptions about what's contained in the 'args':
+async function removeRollbackFunction(eventObject, args) {
+  // Generic Timber event processing preamble...
   const { db, contractName, treeId } = args;
-
-  const eventName = args.eventName === undefined ? 'NewLeaves' : args.eventName; // hardcoded, as inextricably linked to the name of this function.
-
+  const eventName = args.eventName === undefined ? 'Rollback' : args.eventName;
   let eventParams;
-
+  logger.debug(`eventname: ${eventName}`);
   if (treeId === undefined || treeId === '') {
     eventParams = config.contracts[contractName].events[eventName].parameters;
   } else {
     eventParams = config.contracts[contractName].treeId[treeId].events[eventName].parameters;
   }
-
-  // Now some generic eventObject handling code:
   const { eventData } = eventObject;
-
-  /*
-  extract each relevent event parameter from the eventData and create an eventInstance: {
-    eventParamName_0: eventParamValue_0,
-    eventParamName_1: eventParamValue_1,
-    ...
-  }
-  */
   const eventInstance = {};
   eventParams.forEach(param => {
     eventInstance[param] = eventData.returnValues[param];
   });
-  logger.silly(`eventInstance: ${JSON.stringify(eventInstance, null, 2)}`);
   const metadataService = new MetadataService(db);
   const { treeHeight } = await metadataService.getTreeHeight();
 
-  // Now some more bespoke code; specific to how our application needs to deal with this eventObject:
-  // construct an array of 'leaf' documents to store in the db:
-  const { blockNumber } = eventData;
-  const { minLeafIndex, leafValues } = eventInstance;
-
-  const leaves = [];
-  let leafIndex;
-  leafValues.forEach((leafValue, index) => {
-    leafIndex = Number(minLeafIndex) + Number(index);
-    const leaf = {
-      value: leafValue,
-      leafIndex,
-      blockNumber,
-    };
-    leaves.push(leaf);
-  });
-
-  const leafService = new LeafService(db);
-  await leafService.insertLeaves(treeHeight, leaves);
-  return mtc.update(db); // update the database to ensure we have a historic root
-};
+  // Now some bespoke code; specific to how our application needs to deal with this eventObject:
+  const { leafCount } = eventInstance;
+  // Now,this is the leafCount that we originally rolled back to
+  // that's where we need to roll back to again to remove any state added after
+  // the rollback
+  // before we do that though let's find out the block number that corresponds
+  // to that leafCount because we'll need to rebuild the state from that block.
+  const { blockNumber } = await mtc.getTreeHistoryByCurrentLeafCount(db, Number(leafCount));
+  await mtc.rollback(db, treeHeight, Number(leafCount));
+  // and now we need to roll forwards to the present, along our new timeline
+  return resync(blockNumber, args);
+}
 
 /**
 This function is triggered by the 'event' contract subscription, every time a new event is received via the websocket.
@@ -299,10 +292,13 @@ Naming convention:
 }
 */
 export const responseFunctions = {
-  NewLeaf: newLeafResponseFunction,
-  NewLeaves: newLeavesResponseFunction,
   Rollback: rollbackResponseFunction,
   BlockProposed: blockProposedResponseFunction,
+};
+// remover functions are called when an event is removed by a chain reorg.
+export const removerFunctions = {
+  Rollback: removeRollbackFunction,
+  BlockProposed: removeBlockProposedFunction,
 };
 
 /**
@@ -346,6 +342,7 @@ async function filterBlock(db, contractName, contractInstance, fromBlock, treeId
     const responder = newEventResponder;
     const responseFunction = responseFunctions[eventName];
     const responseFunctionArgs = { db, contractName, eventName, treeId };
+    const removerFunction = removerFunctions[eventName];
 
     const eventSubscription = await utilsWeb3.subscribeToEvent(
       contractName,
@@ -356,6 +353,7 @@ async function filterBlock(db, contractName, contractInstance, fromBlock, treeId
       responder,
       responseFunction,
       responseFunctionArgs,
+      removerFunction,
     );
 
     subscriptions[eventName] = eventSubscription; // keep the subscription object for this event in global memory; to enable 'unsubscribe' in future.
@@ -427,10 +425,6 @@ then these functions will want to hang on for a bit.  Hence this function:
 */
 function waitForUpdatesToComplete() {
   return new Promise((resolve, reject) => {
-    //    queue.once('end', () => {
-    //      logger.debug('queue emptied');
-    //      resolve();
-    //    });
     // we'll push in this dummy function. This ensures that there is at least
     // one function in the queue, when it clear the queue, the 'end' event will
     // fire.  You'd think you could use queue.length == 0 as a test but that
