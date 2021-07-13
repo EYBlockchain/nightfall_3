@@ -18,8 +18,10 @@ class Commitment {
 
   #computedIndex; // this is the index of this commitment in the Merkle tree. unlike all other numbers in this class, it's a normal Number, rather than a GN for compaitibility with Timber.
 
-  constructor({ zkpPublicKey, ercAddress, tokenId, value, salt }) {
-    const items = { zkpPublicKey, ercAddress, tokenId, value, salt };
+  // constructor({ zkpPublicKey, ercAddress, tokenId, value, salt }) {
+  //   const items = { zkpPublicKey, ercAddress, tokenId, value, salt };
+  constructor({ compressedPkd, pkd = [], ercAddress, tokenId, value, salt }) {
+    const items = { compressedPkd, pkd, ercAddress, tokenId, value, salt };
     const keys = Object.keys(items);
     for (const key of keys)
       if (items[key] === undefined)
@@ -27,7 +29,9 @@ class Commitment {
           `Property ${key} was undefined. Did you pass the wrong object to the constructor?`,
         );
     this.preimage = generalise({
-      zkpPublicKey,
+      // zkpPublicKey,
+      compressedPkd,
+      pkd,
       ercAddress,
       tokenId,
       value,
@@ -37,7 +41,8 @@ class Commitment {
       this.preimage.ercAddress,
       this.preimage.tokenId,
       this.preimage.value,
-      this.preimage.zkpPublicKey,
+      // this.preimage.zkpPublicKey,
+      this.preimage.compressedPkd,
       this.preimage.salt,
     ]);
   }

@@ -11,12 +11,12 @@ class Nullifier {
 
   hash;
 
-  constructor(commitment, zkpPrivateKey) {
+  constructor(commitment, nsk) {
     this.preimage = generalise({
-      zkpPrivateKey,
-      salt: commitment.preimage.salt,
+      nsk,
+      commitment: commitment.hash,
     });
-    this.hash = sha256([this.preimage.zkpPrivateKey, this.preimage.salt]);
+    this.hash = sha256([this.preimage.nsk, this.preimage.commitment]);
   }
 }
 

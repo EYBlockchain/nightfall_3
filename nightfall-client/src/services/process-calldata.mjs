@@ -72,6 +72,7 @@ async function getProposeBlockCalldata(eventData) {
       recipientAddress,
       commitments,
       nullifiers,
+      encryptedSecrets,
       proof,
     ] = t;
     const transaction = {
@@ -84,6 +85,7 @@ async function getProposeBlockCalldata(eventData) {
       recipientAddress,
       commitments,
       nullifiers,
+      encryptedSecrets,
       proof, // note - this is not decompressed here
     };
     // note, this transaction is incomplete in that the 'fee' field is empty.
