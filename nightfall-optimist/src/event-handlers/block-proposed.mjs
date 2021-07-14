@@ -51,7 +51,10 @@ async function blockProposedEventHandler(data) {
     if (err instanceof BlockError) {
       logger.warn(`Block Checker - Block invalid, with code ${err.code}! ${err.message}`);
       await createChallenge(block, transactions, err);
-    } else throw new Error(err);
+    } else {
+      logger.error(err.stack);
+      throw new Error(err);
+    }
   }
 }
 

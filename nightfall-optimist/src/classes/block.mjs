@@ -2,7 +2,7 @@
 An optimistic layer 2 Block class
 */
 import config from 'config';
-import { getFrontier } from '../utils/timber.mjs';
+import { getFrontier, getRoot } from '../utils/timber.mjs';
 import mt from '../utils/crypto/merkle-tree/merkle-tree.mjs';
 import Web3 from '../utils/web3.mjs';
 import { compressProof } from '../utils/curve-maths/curves.mjs';
@@ -38,6 +38,8 @@ class Block {
   static localBlockNumberL2 = 0;
 
   static localFrontier = [];
+
+  static localRoot = 0;
 
   constructor(asyncParams) {
     if (asyncParams === undefined) throw new Error('Cannot be called directly');
@@ -102,12 +104,20 @@ class Block {
       .flat(Infinity);
     const nCommitments = leafValues.length;
     // compute the root using Timber's code
-    const { root, newFrontier } = await updateNodes(leafValues, currentLeafCount, frontier);
+    if (this.localRoot === 0) this.localRoot = await getRoot(); // if we haven't got a local root, get it from Timber
+    const update = await updateNodes(leafValues, currentLeafCount, frontier);
+    const { newFrontier } = update;
+    let { root } = update;
+    // there's a special case for when we have no new leaves. Then, updateNodes
+    // returns an undefined root and the frontier is not updated. In this (rare)
+    // situation, the root won't have changed.
+    if (root === undefined) root = this.localRoot;
     const leafCount = currentLeafCount || 0;
     // remember the updated values in case we need them for the next block.
     this.localLeafCount += leafValues.length;
     this.localFrontier = newFrontier;
     this.localBlockNumberL2 += 1;
+    this.localRoot = root;
     // compute the keccak hash of the proposeBlock signature
     const blockHash = this.calcHash(
       { proposer, root, leafCount, nCommitments, blockNumberL2 },
@@ -129,10 +139,12 @@ class Block {
 
   // we cache the leafCount in case Timber isn't up to date, however we
   // need to reset the cache in the event of a rollback or we'll make a block
-  // with the wrong leafCount. The same applies to the localBlockNumberL2.
+  // with the wrong leafCount. The same applies to the localBlockNumberL2 and
+  // root.
   static rollback() {
     this.localLeafCount = 0;
     this.localBlockNumberL2 = 0;
+    this.localRoot = 0;
   }
 
   static checkHash(block, transactions) {

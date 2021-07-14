@@ -12,8 +12,8 @@ import sha256 from '../utils/crypto/sha256.mjs';
 import rand from '../utils/crypto/crypto-random.mjs';
 import { getContractInstance } from '../utils/contract.mjs';
 import logger from '../utils/logger.mjs';
-import { findUsableCommitments, storeCommitment, markNullified } from './commitment-storage.mjs';
 import { Nullifier, Commitment, PublicInputs, Transaction } from '../classes/index.mjs';
+import { findUsableCommitmentsMutex, storeCommitment } from './commitment-storage.mjs';
 import { getSiblingPath } from '../utils/timber.mjs';
 import { discoverPeers } from './peers.mjs';
 import getBlockAndTransactionsByRoot from '../utils/optimist.mjs';
@@ -43,7 +43,7 @@ async function transfer(transferParams) {
   // the first thing we need to do is to find some input commitments which
   // will enable us to conduct our transfer.  Let's rummage in the db...
   const totalValueToSend = values.reduce((acc, value) => acc + value.bigInt, 0n);
-  const oldCommitments = await findUsableCommitments(
+  const oldCommitments = await findUsableCommitmentsMutex(
     senderZkpPublicKey,
     ercAddress,
     tokenId,
@@ -188,7 +188,7 @@ async function transfer(transferParams) {
         )
         .forEach(commitment => storeCommitment(commitment, senderZkpPrivateKey)); // TODO insertMany
       // mark the old commitments as nullified
-      oldCommitments.forEach(commitment => markNullified(commitment));
+      // oldCommitments.forEach(commitment => markNullified(commitment));
       return { transaction: optimisticTransferTransaction };
     }
     const rawTransaction = await shieldContractInstance.methods
@@ -199,7 +199,7 @@ async function transfer(transferParams) {
       .filter(commitment => commitment.preimage.zkpPublicKey.hex(32) === senderZkpPublicKey.hex(32))
       .forEach(commitment => storeCommitment(commitment, senderZkpPrivateKey)); // TODO insertMany
     // mark the old commitments as nullified
-    oldCommitments.forEach(commitment => markNullified(commitment));
+    // oldCommitments.forEach(commitment => markNullified(commitment));
     return { rawTransaction, transaction: optimisticTransferTransaction };
   } catch (err) {
     throw new Error(err); // let the caller handle the error

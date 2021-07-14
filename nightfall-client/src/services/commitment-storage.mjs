@@ -3,6 +3,7 @@ Logic for storing and retrieving commitments from a mongo DB.  Abstracted from
 deposit/transfer/withdraw
 */
 import config from 'config';
+import { Mutex } from 'async-mutex';
 import gen from 'general-number';
 import mongo from '../utils/mongo.mjs';
 import logger from '../utils/logger.mjs';
@@ -10,6 +11,7 @@ import { Commitment, Nullifier } from '../classes/index.mjs';
 
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
 const { generalise } = gen;
+const mutex = new Mutex();
 
 // function to drop the commitment collection (useful for testing)
 export async function dropCommitments() {
@@ -75,7 +77,12 @@ export async function markNullifiedOnChain(nullifiers, blockNumberL2) {
 }
 
 // function to find commitments that can be used in the proposed transfer
-export async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _value, onlyOne) {
+// We want to make sure that only one process runs this at a time, otherwise
+// two processes may pick the same commitment. Thus we'll use a mutex lock and
+// also mark any found commitments as nullified (TODO mark them as un-nullified
+// if the transaction errors). The mutex lock is in the function
+// findUsableCommitmentsMutex, which calls this function.
+async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _value, onlyOne) {
   const value = generalise(_value); // sometimes this is sent as a BigInt.
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
@@ -108,6 +115,7 @@ export async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _
   );
   if (singleCommitment) {
     logger.info('Found commitment suitable for single transfer or withdraw');
+    markNullified(singleCommitment);
     return [singleCommitment];
   }
   // If we get here it means that we have not been able to find a single commitment that matches the required value
@@ -178,5 +186,19 @@ export async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _
       `Found commitments suitable for two-token transfer: ${JSON.stringify(commitmentsToUse)}`,
     );
   }
+  commitmentsToUse.forEach(commitment => markNullified(commitment));
   return commitmentsToUse;
+}
+
+// mutex for the above function to ensure it only runs with a concurrency of one
+export async function findUsableCommitmentsMutex(
+  zkpPublicKey,
+  ercAddress,
+  tokenId,
+  _value,
+  onlyOne,
+) {
+  return mutex.runExclusive(async () =>
+    findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _value, onlyOne),
+  );
 }
