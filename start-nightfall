@@ -16,5 +16,10 @@ if [[ $(echo $VOLUME_LIST | grep nightfall_3_build) ]]; then
   docker volume rm nightfall_3_build
 fi
 
+DIR=./common-files/node_modules
+if [[ -d "$DIR" ]]; then
+  rm -dr common-files/node_modules
+fi
+
 docker-compose up -d deployer
 docker-compose up

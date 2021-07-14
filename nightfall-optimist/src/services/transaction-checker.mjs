@@ -8,11 +8,13 @@ Here are the things that could be wrong with a transaction:
 */
 import config from 'config';
 import axios from 'axios';
-import Transaction from '../classes/transaction.mjs';
-import VerificationKey from '../classes/verification-key.mjs';
-import Proof from '../classes/proof.mjs';
-import TransactionError from '../classes/transaction-error.mjs';
-import PublicInputs from '../classes/public-inputs.mjs';
+import {
+  Transaction,
+  VerificationKey,
+  Proof,
+  TransactionError,
+  PublicInputs,
+} from '../classes/index.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import logger from '../utils/logger.mjs';
 import { getBlockByBlockNumberL2 } from './database.mjs';

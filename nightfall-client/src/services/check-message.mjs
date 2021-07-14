@@ -23,7 +23,7 @@
  * @return {boolean}
  */
 
-import Commitment from '../classes/commitment.mjs';
+import { Commitment } from '../classes/index.mjs';
 
 async function isMessageValid(message, recipientZkpPublicKey) {
   const commitment = new Commitment({

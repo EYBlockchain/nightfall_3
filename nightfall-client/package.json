@@ -4,6 +4,8 @@
   "description": "A client for interacting with Nightfall",
   "main": "src/index.mjs",
   "scripts": {
+    "prestart": "./pre-start-script.sh",
+    "predev": "./pre-start-script.sh",
     "start": "node src/index.mjs",
     "dev": "nodemon src/index.mjs"
   },
@@ -26,6 +28,7 @@
     "axios": "^0.21.1",
     "body-parser": "1.19.0",
     "chai-as-promised": "^7.1.1",
+    "common-files": "file:../common-files",
     "config": "^3.3.1",
     "cors": "2.8.5",
     "express": "^4.17.1",
@@ -45,9 +48,6 @@
   "nodemonConfig": {
     "verbose": true,
     "ignore": [
-      "output/",
-      "circuits/",
-      "*.json",
       "mongodb/",
       "build/"
     ]

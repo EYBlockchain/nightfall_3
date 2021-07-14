@@ -8,13 +8,12 @@ import config from 'config';
 import logger from '../utils/logger.mjs';
 import { getContractInstance } from '../utils/contract.mjs';
 import Block from '../classes/block.mjs';
+import { Transaction, TransactionError } from '../classes/index.mjs';
 import { setRegisteredProposerAddress } from '../services/database.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
-import Transaction from '../classes/transaction.mjs';
 import { getFrontier, getLeafCount } from '../utils/timber.mjs';
 import mt from '../utils/crypto/merkle-tree/merkle-tree.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
-import TransactionError from '../classes/transaction-error.mjs';
 
 const { updateNodes } = mt;
 const router = express.Router();

@@ -13,10 +13,8 @@ import rand from '../utils/crypto/crypto-random.mjs';
 import sha256 from '../utils/crypto/sha256.mjs';
 import { getContractInstance } from '../utils/contract.mjs';
 import logger from '../utils/logger.mjs';
-import Commitment from '../classes/commitment.mjs';
-import PublicInputs from '../classes/public-inputs.mjs';
+import { Commitment, PublicInputs, Transaction } from '../classes/index.mjs';
 import { storeCommitment } from './commitment-storage.mjs';
-import Transaction from '../classes/transaction.mjs';
 
 const {
   ZKP_KEY_LENGTH,

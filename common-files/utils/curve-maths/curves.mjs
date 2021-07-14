@@ -3,7 +3,7 @@ module for manupulating elliptic curve points for an alt-bn128 curve. This
 is the curve that Ethereum currently has pairing precompiles for. All the
 return values are BigInts (or arrays of BigInts).
 */
-import { Proof } from '../../classes/index.mjs';
+import Proof from '../../classes/proof.mjs';
 
 /**
 function to compress a G1 point. If we throw away the y coodinate, we can

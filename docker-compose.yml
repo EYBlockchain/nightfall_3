@@ -7,10 +7,21 @@ services:
       dockerfile: Dockerfile
       context: ./nightfall-client
     volumes:
-      - ./nightfall-client/src:/app/src
-      - ./config/default.js:/app/config/default.js
-      - build:/app/build
-      - mongodb:/app/mongodb
+      - type: bind
+        source: ./nightfall-client/src
+        target: /app/src
+      - type: bind
+        source: ./common-files
+        target: /common-files
+      - type: bind
+        source: ./config/default.js
+        target: /app/config/default.js
+      - type: volume
+        source: build
+        target: /app/build
+      - type: volume
+        source: mongodb
+        target: /app/mongodb
     networks:
       - nightfall_network
     ports:
@@ -148,7 +159,9 @@ services:
     environment:
       - MONGO_INITDB_DATABASE=merkle_tree
     volumes:
-      - timber-database-volume:/data/db
+      - type: volume
+        source: timber-database-volume
+        target: /data/db
     networks:
       - nightfall_network
 
@@ -177,8 +190,15 @@ services:
       - type: volume
         source: build
         target: /app/build/
-      - ./nightfall-optimist/src:/app/src
-      - ./config/default.js:/app/config/default.js
+      - type: bind
+        source: ./nightfall-optimist/src
+        target: /app/src
+      - type: bind
+        source: ./common-files
+        target: /common-files
+      - type: bind
+        source: ./config/default.js
+        target: /app/config/default.js
     environment:
       WEBSOCKET_PORT: 8080
       BLOCKCHAIN_WS_HOST: ganache
