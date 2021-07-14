@@ -23,11 +23,10 @@ async function newCurrentProposerEventHandler(data, args) {
     proposer.address = currentProposer;
     // were we the last proposer?
     const weWereLastProposer = proposer.isMe;
-    proposer.isMe = !!(await isRegisteredProposerAddressMine(currentProposer));
 
     // If we were the last proposer return any transactions that were removed from the mempool
     // because they were included in proposed blocks that did not eventually make it on chain.
-    if (weWereLastProposer && !proposer.isMe) {
+    if (weWereLastProposer) {
       const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
       const onChainBlockCount = Number(
         await stateContractInstance.methods.getNumberOfL2Blocks().call(),
@@ -39,6 +38,7 @@ async function newCurrentProposerEventHandler(data, args) {
 
     // !! converts this to a "is not null" check - i.e. false if is null
     // are we the next proposer?
+    proposer.isMe = !!(await isRegisteredProposerAddressMine(currentProposer));
   } catch (err) {
     // handle errors
     logger.error(err);
