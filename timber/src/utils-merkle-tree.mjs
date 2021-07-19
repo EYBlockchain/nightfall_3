@@ -154,6 +154,43 @@ function getFrontierSlot(leafIndex) {
 }
 
 /**
+ * Special function which calculates the root from a given frontier and the
+ * corresponding leafIndex of the right-most leaf at the time the frontier was * solidified.
+ * @param {Array} frontier
+ * @param {Number} leafIndex
+ * @param {Number} height - the height of the tree
+ */
+function calculateRootFromFrontier(frontier, leafIndex, height) {
+  logger.debug(`\nsrc/utils-merkle-tree calculateRootFromFrontier()`);
+
+  // get the lowest level of the frontier which can be hashed against a zero. We'll then begin hashing from that level to get the root.
+  const slot = getFrontierSlot(leafIndex);
+
+  let nodeValue = frontier[slot];
+  let nodeIndex = leafIndexToNodeIndex(leafIndex, height);
+
+  // We only know the leaf's nodeIndex, but we want the nodeIndex of the leaf's ancestor at the level = `slot`.
+  for (let level = 1; level <= slot; level++) {
+    nodeIndex = parentNodeIndex(nodeIndex); // skipped over if the slot = 0.
+  }
+
+  let nodeValueFull; // full bit-length (not yet truncated)
+  for (let level = slot + 1; level <= height; level++) {
+    if (nodeIndex % 2 === 0) {
+      // even nodeIndex
+      nodeValueFull = utils.concatenateThenHash(frontier[level - 1], nodeValue); // the parentValue, but will become the nodeValue of the next level
+    } else {
+      // odd nodeIndex
+      nodeValueFull = utils.concatenateThenHash(nodeValue, config.ZERO); // the parentValue, but will become the nodeValue of the next level
+    }
+    nodeValue = utils.ensure0x(nodeValueFull.slice(-config.NODE_HASHLENGTH * 2)); // truncate hashed value, so it 'fits' into the next hash.
+    nodeIndex = parentNodeIndex(nodeIndex); // move one row up the tree
+  }
+
+  return nodeValueFull; // the root
+}
+
+/**
 A js implementation of the corresponding Solidity function in MerkleTree.sol
 */
 async function updateNodes(leafValues, currentLeafCount, frontier, height, updateNodesFunction) {
@@ -182,7 +219,7 @@ async function updateNodes(leafValues, currentLeafCount, frontier, height, updat
       nodeValueFull = utils.convertBase(nodeValueFull.toString(), 10, 16);
       logger.silly(`nodeValueFull: ${nodeValueFull}, hashlength: ${config.NODE_HASHLENGTH}`);
     }
-    nodeValue = `0x${nodeValueFull.slice(-config.NODE_HASHLENGTH * 2)}`; // truncate hashed value, so it 'fits' into the next hash.
+    nodeValue = utils.ensure0x(nodeValueFull.slice(-config.NODE_HASHLENGTH * 2)); // truncate hashed value, so it 'fits' into the next hash.
     logger.silly(`nodeValue: ${nodeValue})`);
     nodeIndex = leafIndexToNodeIndex(leafIndex, height); // convert the leafIndex to a nodeIndex
 
@@ -209,7 +246,7 @@ async function updateNodes(leafValues, currentLeafCount, frontier, height, updat
         logger.silly(`left input ${frontier[level - 1]}`);
         logger.silly(`right input ${nodeValue}`);
         nodeValueFull = utils.concatenateThenHash(frontier[level - 1], nodeValue); // the parentValue, but will become the nodeValue of the next level
-        nodeValue = `0x${nodeValueFull.slice(-config.NODE_HASHLENGTH * 2)}`; // truncate hashed value, so it 'fits' into the next hash.
+        nodeValue = utils.ensure0x(nodeValueFull.slice(-config.NODE_HASHLENGTH * 2)); // truncate hashed value, so it 'fits' into the next hash.
         logger.silly(`output ${nodeValue}`);
       } else {
         // odd nodeIndex
@@ -218,7 +255,7 @@ async function updateNodes(leafValues, currentLeafCount, frontier, height, updat
         logger.silly(`left input ${nodeValue}`);
         logger.silly(`right input ${config.ZERO}`);
         nodeValueFull = utils.concatenateThenHash(nodeValue, config.ZERO); // the parentValue, but will become the nodeValue of the next level
-        nodeValue = `0x${nodeValueFull.slice(-config.NODE_HASHLENGTH * 2)}`; // truncate hashed value, so it 'fits' into the next hash.
+        nodeValue = utils.ensure0x(nodeValueFull.slice(-config.NODE_HASHLENGTH * 2)); // truncate hashed value, so it 'fits' into the next hash.
         logger.silly(`output ${nodeValue}`);
       }
       nodeIndex = parentNodeIndex(nodeIndex); // move one row up the tree
@@ -336,6 +373,7 @@ export default {
   getPathIndices,
   getSiblingPathIndices,
   getFrontierSlot,
+  calculateRootFromFrontier,
   updateNodes,
   getNumberOfHashes,
   loopNumberOfHashes,
