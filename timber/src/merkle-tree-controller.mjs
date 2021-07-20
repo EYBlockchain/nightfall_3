@@ -215,6 +215,14 @@ async function getSiblingPathByLeafIndex(db, leafIndex) {
   return nodes;
 }
 
+async function calculateRootFromFrontier(db, frontier, leafIndex) {
+  logger.debug('src/merkle-tree-controller calculateRootFromFrontier()');
+  const metadataService = new MetadataService(db);
+  const { treeHeight } = await metadataService.getTreeHeight();
+  const root = await utilsMT.calculateRootFromFrontier(frontier, leafIndex, treeHeight);
+  return root;
+}
+
 const nodes = [];
 let hashCount = 0;
 async function updateNodes(node) {
@@ -436,6 +444,7 @@ export default {
   updateLatestLeaf,
   getPathByLeafIndex,
   getSiblingPathByLeafIndex,
+  calculateRootFromFrontier,
   update,
   getTreeHistory,
   getTreeHistoryByCurrentLeafCount,

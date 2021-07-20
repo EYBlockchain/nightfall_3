@@ -76,11 +76,9 @@ export async function isChallengerAddressMine(address) {
 /**
 function to save a block, so that we can later search the block, for example to
 find which block a transaction went into. Note, we'll save all blocks, that get
-posted to the blockchain, not just ours, although that may not be needed (but
-they're small).
+posted to the blockchain, not just ours.
 */
 export async function saveBlock(_block) {
-  // const block = { ..._block, check: false };
   const block = { _id: _block.blockHash, ..._block };
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
@@ -153,12 +151,22 @@ export async function deleteBlock(blockHash) {
 }
 
 /**
-function to delete blocks with a layer 2 blockNumber >= blockNumberL2
+function to delete blocks with a layer 2 block number >= blockNumberL2
 */
 export async function deleteBlocksFromBlockNumberL2(blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { blockNumberL2: { $gte: Number(blockNumberL2) } };
+  return db.collection(SUBMITTED_BLOCKS_COLLECTION).deleteMany(query);
+}
+
+/**
+function to delete blocks with a layer 1 block number >= blockNumber
+*/
+export async function deleteBlocksFromBlockNumberL1(blockNumber) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { blockNumber: { $gte: Number(blockNumber) } };
   return db.collection(SUBMITTED_BLOCKS_COLLECTION).deleteMany(query);
 }
 
@@ -299,13 +307,21 @@ export async function deleteTransferAndWithdraw(transactionHashes) {
   return db.collection(TRANSACTIONS_COLLECTION).deleteMany(query);
 }
 
-export async function saveNullifiers(nullifiers) {
+export async function deleteTransactionsFromBlockNumberL1(blockNumber) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { blockNumber: { $gte: Number(blockNumber) } };
+  return db.collection(TRANSACTIONS_COLLECTION).deleteMany(query);
+}
+
+export async function saveNullifiers(nullifiers, blockNumber) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const indexNullifiers = nullifiers.map(n => {
     return {
       hash: n,
       blockHash: null,
+      blockNumber,
     };
   });
   return db.collection(NULLIFIER_COLLECTION).insertMany(indexNullifiers);
@@ -351,6 +367,13 @@ export async function deleteNullifiers(blockHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { blockHash };
+  return db.collection(NULLIFIER_COLLECTION).deleteMany(query);
+}
+
+export async function deleteNullifiersFromBlockNumberL1(blockNumber) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { blockNumber: { $gte: Number(blockNumber) } };
   return db.collection(NULLIFIER_COLLECTION).deleteMany(query);
 }
 
