@@ -98,6 +98,7 @@ async function withdraw(transferParams) {
     historicRootBlockNumberL2: (await getBlockAndTransactionsByRoot(root.hex(32))).block
       .blockNumberL2,
     transactionType: 3,
+    tokenType: items.tokenType,
     publicInputs,
     tokenId,
     value,

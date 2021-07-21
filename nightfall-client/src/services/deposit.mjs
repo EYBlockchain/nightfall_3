@@ -64,10 +64,12 @@ async function deposit(items) {
   // and work out the ABI encoded data that the caller should sign and send to the shield contract
   // first, get the contract instance
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
+
   // next we need to compute the optimistic Transaction object
   const optimisticDepositTransaction = new Transaction({
     fee,
     transactionType: 0,
+    tokenType: items.tokenType,
     publicInputs,
     tokenId,
     value,
