@@ -65,4 +65,9 @@ contract Structures {
     address previousAddress;
     address nextAddress;
   }
+
+  struct TimeLockedBond {
+    uint256 amount; // The amount held
+    uint256 time; // The time the funds were locked from
+  }
 }
