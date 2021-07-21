@@ -77,6 +77,22 @@ router.post('/de-register', async (req, res, next) => {
 });
 
 /**
+ * Function to withdraw bond for a de-registered proposer
+ */
+
+router.post('/withdrawBond', async (req, res, next) => {
+  logger.debug(`withdrawBond endpoint received GET`);
+  try {
+    const stateContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
+    const txDataToSign = await stateContractInstance.methods.withdrawBond().encodeABI();
+    res.json({ txDataToSign });
+  } catch (error) {
+    logger.error(error);
+    next(error);
+  }
+});
+
+/**
  * Function to withdraw funds owing to an account.  This could be profits made
  * Through a successful challenge or proposing state updates. This just
  * provides the tx data, the user will need to call the blockchain client.
