@@ -115,14 +115,26 @@ describe('Testing the http API', () => {
   });
 
   describe('Basic Proposer tests', () => {
-    let txDataToSign;
-    it('should register a proposer', async function () {
+    after(async () => {
+      // After the proposer tests, re-register proposers
       const myAddress = (await getAccounts())[0];
       const res = await chai
         .request(optimistUrl)
         .post('/proposer/register')
         .send({ address: myAddress });
-      txDataToSign = res.body.txDataToSign;
+      const { txDataToSign } = res.body;
+      expect(txDataToSign).to.be.a('string');
+      const bond = 10000000000000000000;
+      await submitTransaction(txDataToSign, privateKey, proposersAddress, gas, bond);
+    });
+
+    it('should register a proposer', async () => {
+      const myAddress = (await getAccounts())[0];
+      const res = await chai
+        .request(optimistUrl)
+        .post('/proposer/register')
+        .send({ address: myAddress });
+      const { txDataToSign } = res.body;
       expect(txDataToSign).to.be.a('string');
       // we have to pay 10 ETH to be registered
       const bond = 10000000000000000000;
@@ -145,6 +157,34 @@ describe('Testing the http API', () => {
         address: myAddress,
         enode: 'http://optimist:80',
       });
+    });
+
+    it('should de-register a proposer', async () => {
+      const res = await chai.request(optimistUrl).post('/proposer/de-register');
+      const { txDataToSign } = res.body;
+      expect(txDataToSign).to.be.a('string');
+      const receipt = await submitTransaction(txDataToSign, privateKey, proposersAddress, gas);
+      expect(receipt).to.have.property('transactionHash');
+      expect(receipt).to.have.property('blockHash');
+    });
+    it('Should create a failing withdrawBond (because insufficient time has passed)', async () => {
+      const res = await chai.request(optimistUrl).post('/proposer/withdrawBond');
+      const { txDataToSign } = res.body;
+      expect(txDataToSign).to.be.a('string');
+      await expect(
+        submitTransaction(txDataToSign, privateKey, proposersAddress, gas),
+      ).to.be.rejectedWith(
+        'Returned error: VM Exception while processing transaction: revert It is too soon to withdraw your bond',
+      );
+    });
+    it('Should create a passing withdrawBond (because sufficient time has passed)', async () => {
+      await timeJump(3600 * 24 * 10); // jump in time by 7 days
+      const res = await chai.request(optimistUrl).post('/proposer/withdrawBond');
+      const { txDataToSign } = res.body;
+      expect(txDataToSign).to.be.a('string');
+      const receipt = await submitTransaction(txDataToSign, privateKey, proposersAddress, gas);
+      expect(receipt).to.have.property('transactionHash');
+      expect(receipt).to.have.property('blockHash');
     });
   });
 
