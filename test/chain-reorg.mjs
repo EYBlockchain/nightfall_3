@@ -3,7 +3,7 @@ import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import gen from 'general-number';
 import WebSocket from 'ws';
-import compose from 'docker-compose';
+// import compose from 'docker-compose';
 import sha256 from '../nightfall-client/src/utils/crypto/sha256.mjs';
 import {
   closeWeb3Connection,
@@ -12,8 +12,6 @@ import {
   getAccounts,
   getBalance,
   topicEventMapping,
-  evmSnapshot,
-  evmRevert,
 } from './utils.mjs';
 
 const { expect } = chai;
@@ -30,8 +28,8 @@ describe('Testing the http API', () => {
   let ercAddress;
   let connection; // WS connection
   let blockSubmissionFunction;
-  let snapshot;
-  const composeOpts = { cwd: path.join(__dirname), log: true };
+  // let snapshot;
+  // const composeOpts = { cwd: path.join(__dirname), log: true };
   const zkpPrivateKey = '0xc05b14fa15148330c6d008814b0bdd69bc4a08a1bd0b629c42fa7e2c61f16739'; // the zkp private key we're going to use in the tests.
   const zkpPublicKey = sha256([new GN(zkpPrivateKey)]).hex();
   const url = 'http://localhost:8080';
@@ -185,7 +183,7 @@ describe('Testing the http API', () => {
         eventLogs.shift();
       }
       // and remember the blockchain state
-      snapshot = await evmSnapshot();
+      // snapshot = await evmSnapshot();
     });
   });
 
@@ -244,7 +242,7 @@ describe('Testing the http API', () => {
       expect(res.text).to.have.string('No suitable commitments were found');
     });
     it('should transfer crypto after the withdrawals are rolled back', async () => {
-      await evmRevert(snapshot);
+      // await evmRevert(snapshot);
       const res = await chai
         .request(url)
         .post('/transfer')

@@ -37,5 +37,7 @@
     "web3": "^1.4.0",
     "ws": "^7.5.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "docker-compose": "^0.23.13"
+  }
 }
