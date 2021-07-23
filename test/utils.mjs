@@ -4,14 +4,23 @@ import chai from 'chai';
 import rand from '../nightfall-client/src/utils/crypto/crypto-random.mjs';
 
 let web3;
+let nonce;
 
 export function connectWeb3() {
-  web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8545'));
+  web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8546'));
   return web3;
 }
 
 export function closeWeb3Connection() {
   web3.currentProvider.connection.close();
+}
+
+export function setNonce(_nonce) {
+  nonce = _nonce;
+}
+
+export function getNonce() {
+  return nonce;
 }
 
 export function gasStats(txReceipt) {
@@ -42,23 +51,6 @@ export function gasStats(txReceipt) {
   });
 }
 
-export async function submitTransaction(
-  unsignedTransaction,
-  privateKey,
-  shieldAddress,
-  gas,
-  value = 0,
-) {
-  const tx = {
-    to: shieldAddress,
-    data: unsignedTransaction,
-    value,
-    gas,
-  };
-  const signed = await web3.eth.accounts.signTransaction(tx, privateKey);
-  return web3.eth.sendSignedTransaction(signed.rawTransaction);
-}
-
 export async function getAccounts() {
   const accounts = web3.eth.getAccounts();
   return accounts;
@@ -67,9 +59,31 @@ export async function getBalance(account) {
   return web3.eth.getBalance(account);
 }
 
+export async function submitTransaction(
+  unsignedTransaction,
+  privateKey,
+  shieldAddress,
+  gas,
+  value = 0,
+) {
+  // if the nonce hasn't been set, then use the transaction count
+  if (nonce === undefined) await web3.eth.getTransactionCount((await getAccounts())[0]);
+  const tx = {
+    to: shieldAddress,
+    data: unsignedTransaction,
+    value,
+    gas,
+    gasPrice: 10000000000,
+    nonce,
+  };
+  const signed = await web3.eth.accounts.signTransaction(tx, privateKey);
+  nonce++;
+  return web3.eth.sendSignedTransaction(signed.rawTransaction);
+}
+
 // This only works with Ganache but it can move block time forwards
 export async function timeJump(secs) {
-  axios.post('http://localhost:8545', {
+  axios.post('http://localhost:8546', {
     id: 1337,
     jsonrpc: '2.0',
     method: 'evm_increaseTime',

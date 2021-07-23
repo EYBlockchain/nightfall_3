@@ -11,6 +11,7 @@ import {
   connectWeb3,
   getAccounts,
   getBalance,
+  setNonce,
 } from './utils.mjs';
 
 const { expect } = chai;
@@ -31,8 +32,8 @@ describe('Testing the http API', () => {
   const optimistWsUrl = 'ws:localhost:8082';
   const tokenId = '0x01';
   const value = 10;
-  // this is the etherum private key for the test account in openethereum
-  const privateKey = '0x4f3edf983ac636a65a842ce7c78d9aa706d3b113bce9c46f30d7d21715b23b1d';
+  // this is the etherum private key for accounts[0]
+  const privateKey = '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e';
   const gas = 10000000;
   // this is the openethereum test account (but could be anything)
   // this is what we pay the proposer for incorporating a transaction
@@ -41,7 +42,7 @@ describe('Testing the http API', () => {
   const TRANSACTIONS_PER_BLOCK = 32;
 
   before(async () => {
-    connectWeb3();
+    const web3 = await connectWeb3();
 
     let res = await chai.request(url).get('/contract-address/Shield');
     shieldAddress = res.body.address;
@@ -54,6 +55,8 @@ describe('Testing the http API', () => {
 
     res = await chai.request(url).get('/contract-address/State');
     stateAddress = res.body.address;
+
+    setNonce(await web3.eth.getTransactionCount((await getAccounts())[0]));
 
     connection = new WebSocket(optimistWsUrl);
     connection.onopen = () => {

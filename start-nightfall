@@ -1,7 +1,35 @@
 #! /bin/bash
-docker-compose down --remove-orphans
 
 VOLUME_LIST=$(docker volume ls -q)
+FILE=
+
+usage()
+{
+  echo "Usage:"
+  echo "  -e or --geth for a two-node private geth blockchain"
+  echo "  -g or --ganache for a ganache simulator"
+}
+
+# select a Geth or Ganache client
+if [ "$1" == "" ]; then
+  usage
+  exit 1
+fi
+while [ "$1" != "" ]; do
+  case $1 in
+      -g | --ganache )        shift
+                              ;;
+      -e | --geth )           FILE="-f docker-compose.geth.yml"
+                              ;;
+      -h | --help )           usage
+                              ;;
+      * )                     usage
+                              exit 1
+    esac
+  shift
+done
+
+docker-compose -f docker-compose.yml $FILE down --remove-orphans
 
 # if-else block checks - volume exist and then removes it.
 if [[ $(echo $VOLUME_LIST | grep nightfall_3_timber-database-volume) ]]; then
@@ -16,10 +44,24 @@ if [[ $(echo $VOLUME_LIST | grep nightfall_3_build) ]]; then
   docker volume rm nightfall_3_build
 fi
 
+if [[ $(echo $VOLUME_LIST | grep nightfall_3_geth1-chain) ]]; then
+  docker volume rm nightfall_3_geth1-chain
+fi
+
+if [[ $(echo $VOLUME_LIST | grep nightfall_3_geth2-chain) ]]; then
+  docker volume rm nightfall_3_geth2-chain
+fi
+
+if [[ $(echo $VOLUME_LIST | grep nightfall_3_geth-miner-chain) ]]; then
+  docker volume rm nightfall_3_geth-miner-chain
+fi
+if [[ $(echo $VOLUME_LIST | grep nightfall_3_dag) ]]; then
+  docker volume rm nightfall_3_dag
+fi
+
 DIR=./common-files/node_modules
 if [[ -d "$DIR" ]]; then
   rm -dr common-files/node_modules
 fi
-
-docker-compose up -d deployer
-docker-compose up
+docker-compose -f docker-compose.yml $FILE up -d deployer
+docker-compose -f docker-compose.yml $FILE up
