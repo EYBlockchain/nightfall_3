@@ -34,6 +34,7 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
     // slow down or stop our transaction)
     bytes32 transactionHash = Utils.hashTransaction(t);
     if (feeBook[transactionHash] < msg.value) feeBook[transactionHash] = msg.value;
+    payable(address(state)).transfer(msg.value);
   }
 
   // function to enable a proposer to get paid for proposing a block
@@ -50,6 +51,7 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
       payment += feeBook[transactionHash];
       feeBook[transactionHash] = 0; // clear the payment
     }
+    payment += BLOCK_STAKE;
     state.addPendingWithdrawal(msg.sender, payment);
   }
 

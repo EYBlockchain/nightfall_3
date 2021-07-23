@@ -41,6 +41,10 @@ contract State is Structures, Config {
       _;
   }
 
+  receive() external payable{
+    //fallback for payable
+  }
+
   /**
   * Allows a Proposer to propose a new block of state updates.
   * @param b the block being proposed.  This function is kept in State.sol
