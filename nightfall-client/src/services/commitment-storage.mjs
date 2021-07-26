@@ -30,6 +30,8 @@ export async function storeCommitment(commitment, zkpPrivateKey) {
   const data = {
     _id: commitment.hash.hex(32),
     preimage: commitment.preimage.all.hex(32),
+    isOnChain: Number(commitment.isOnChain),
+    isPendingNullification: false, // will not be pending when stored
     isNullified: commitment.isNullified,
     isNullifiedOnChain: Number(commitment.isNullifiedOnChain),
     nullifier: nullifierHash,
@@ -38,11 +40,29 @@ export async function storeCommitment(commitment, zkpPrivateKey) {
   return db.collection(COMMITMENTS_COLLECTION).insertOne(data);
 }
 
+// function to mark a commitments as on chain for a mongo db
+export async function markOnChain(commitments, blockNumberL2) {
+  const connection = await mongo.connection(MONGO_URL);
+  const query = { _id: { $in: commitments } };
+  const update = { $set: { isOnChain: Number(blockNumberL2) } };
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
+}
+
+// function to mark a commitment as pending nullication for a mongo db
+export async function markPending(commitment) {
+  const connection = await mongo.connection(MONGO_URL);
+  const query = { _id: commitment.hash.hex(32) };
+  const update = { $set: { isPendingNullification: true } };
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(COMMITMENTS_COLLECTION).updateOne(query, update);
+}
+
 // function to mark a commitment as nullified for a mongo db
 export async function markNullified(commitment) {
   const connection = await mongo.connection(MONGO_URL);
   const query = { _id: commitment.hash.hex(32) };
-  const update = { $set: { isNullified: true } };
+  const update = { $set: { isPendingNullification: false, isNullified: true } };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateOne(query, update);
 }
@@ -62,7 +82,9 @@ available for spending again.
 export async function clearNullified(blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
   const query = { isNullifiedOnChain: { $gte: Number(blockNumberL2) } };
-  const update = { $set: { isNullifiedOnChain: -1, isNullified: false } };
+  const update = {
+    $set: { isNullifiedOnChain: -1, isNullified: false, isPendingNullification: false },
+  };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
 }
@@ -93,11 +115,14 @@ async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _value, 
       'preimage.ercAddress': ercAddress.hex(32),
       'preimage.tokenId': tokenId.hex(32),
       isNullified: false,
+      isPendingNullification: false,
     })
     .toArray();
   if (commitmentArray === []) return null;
   // turn the commitments into real commitment objects
-  const commitments = commitmentArray.map(ct => new Commitment(ct.preimage));
+  const commitments = commitmentArray
+    .filter(commitment => commitment.isOnChain > Number(0)) // filters for on chain commitments
+    .map(ct => new Commitment(ct.preimage));
 
   // Now filter all commitments to also work with those that timber has already seen.
   const knownCommitments = (
@@ -115,7 +140,7 @@ async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _value, 
   );
   if (singleCommitment) {
     logger.info('Found commitment suitable for single transfer or withdraw');
-    markNullified(singleCommitment);
+    markPending(singleCommitment);
     return [singleCommitment];
   }
   // If we get here it means that we have not been able to find a single commitment that matches the required value
@@ -186,7 +211,7 @@ async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _value, 
       `Found commitments suitable for two-token transfer: ${JSON.stringify(commitmentsToUse)}`,
     );
   }
-  commitmentsToUse.forEach(commitment => markNullified(commitment));
+  commitmentsToUse.forEach(commitment => markPending(commitment));
   return commitmentsToUse;
 }
 
