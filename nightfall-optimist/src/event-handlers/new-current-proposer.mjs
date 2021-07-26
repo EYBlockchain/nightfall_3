@@ -26,7 +26,7 @@ async function newCurrentProposerEventHandler(data, args) {
 
     // If we were the last proposer return any transactions that were removed from the mempool
     // because they were included in proposed blocks that did not eventually make it on chain.
-    if (weWereLastProposer) {
+    if (weWereLastProposer && !proposer.isMe) {
       const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
       const onChainBlockCount = Number(
         await stateContractInstance.methods.getNumberOfL2Blocks().call(),
