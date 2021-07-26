@@ -10,7 +10,7 @@ import './Structures.sol';
 import './Stateful.sol';
 
 contract Proposers is Stateful, Structures, Config {
-  mapping(address => TimeLockedBond) public pendingBondWithdrawals;
+  // mapping(address => TimeLockedBond) public bondAccounts;
 
   /**
   * Each proposer gets a chance to propose blocks for a certain time, defined
@@ -32,6 +32,7 @@ contract Proposers is Stateful, Structures, Config {
   function registerProposer() external payable {
     require(REGISTRATION_BOND == msg.value, 'The registration payment is incorrect');
     payable(address(state)).transfer(REGISTRATION_BOND);
+    state.setBondAccount(msg.sender,REGISTRATION_BOND);
     LinkedAddress memory currentProposer = state.getCurrentProposer();
     // cope with this being the first proposer
     if (currentProposer.thisAddress == address(0)) {
@@ -65,45 +66,18 @@ contract Proposers is Stateful, Structures, Config {
   // However, their bond is only withdrawable after the COOLING_OFF_PERIOD has passed. This ensures
   // they are not the proposer of any blocks that could be challenged.
   function deRegisterProposer() external {
-    LinkedAddress memory proposersThis = state.getProposer(msg.sender);
-    LinkedAddress memory proposersPrevious = state.getProposer(proposersThis.previousAddress);
-    LinkedAddress memory proposersNext = state.getProposer(proposersThis.nextAddress);
-    LinkedAddress memory proposersCurrent = state.getCurrentProposer();
-    
     require(state.getProposer(msg.sender).thisAddress != address(0), 'This proposer is not registered or you are not that proposer');
-    state.deleteProposer(msg.sender); // array will be a bit sparse
-
-    // splice out the de-registered proposer from the circular list
-    proposersPrevious.nextAddress = proposersNext.thisAddress;
-    proposersNext.previousAddress = proposersPrevious.thisAddress;
-    state.setProposer(proposersPrevious.thisAddress, proposersPrevious);
-    state.setProposer(proposersNext.thisAddress, proposersNext);
-
-    // in case the currentProposer is being de-registered, we rotate the proposer
-    if(proposersThis.thisAddress == proposersCurrent.thisAddress) {
-      emit NewCurrentProposer((proposersCurrent.nextAddress));
-    }
-    addPendingBondWithdrawal(msg.sender, REGISTRATION_BOND);
-  }
-
-   // Bonds that want to be withdrawn by deregistering proposers need to wait out the
-  // cooling off period. This adds them to a special mapping that tracks time.
-  // Currently, we handle multiple insertions for the same address by summing the 
-  // amounts and overwritng the bond.time. We could also use a mapping => TimeLockedFund[]
-  function addPendingBondWithdrawal(address addr, uint amount) private {
-    TimeLockedBond memory bond = pendingBondWithdrawals[addr];
-    // Increment here in case there is already value escrowed for this address
-    bond.amount += amount;
-    // We overwrite the time, adding new amounts will cause all locked up funds to 
-    // obey the new lock time.
-    bond.time = block.timestamp;
-    pendingBondWithdrawals[addr] = bond;
+    state.removeProposer(msg.sender);
+    // The msg.sender has to wait a COOLING_OFF_PERIOD from current block.timestamp
+    state.updateBondAccountTime(msg.sender, block.timestamp);
   }
 
   function withdrawBond() external {
-    TimeLockedBond memory bond = pendingBondWithdrawals[msg.sender];
+    TimeLockedBond memory bond = state.getBondAccount(msg.sender);
     require(bond.time + COOLING_OFF_PERIOD < block.timestamp, 'It is too soon to withdraw your bond');
-    pendingBondWithdrawals[msg.sender] = TimeLockedBond({amount: 0, time: 0});
-    payable(msg.sender).transfer(bond.amount);
+    require(state.getProposer(msg.sender).thisAddress == address(0), 'Cannot withdraw bond while a registered proposer');
+    // Zero out the entry in the bond escrow
+    state.setBondAccount(msg.sender,0);
+    state.addPendingWithdrawal(msg.sender,bond.amount);
   }
 }
