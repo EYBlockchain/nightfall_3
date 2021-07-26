@@ -49,6 +49,7 @@ describe('Testing the http API', () => {
   const BLOCK_STAKE = 1000000000000000000; // 1 ether
   const txPerBlock = 2;
   const eventLogs = [];
+  let stateBalance = 0;
 
   before(async () => {
     const web3 = await connectWeb3();
@@ -134,6 +135,7 @@ describe('Testing the http API', () => {
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
       expect(endBalance - startBalance).to.closeTo(-bond, gasCosts);
+      stateBalance += bond;
       await chai.request(url).post('/peers/addPeers').send({
         address: myAddress,
         enode: 'http://optimist:80',
@@ -188,6 +190,7 @@ describe('Testing the http API', () => {
       // Now we can empty the event queue
       for (let i = 0; i < numDeposits; i++) {
         eventLogs.shift();
+        stateBalance += fee * txPerBlock + BLOCK_STAKE;
       }
     });
   });
@@ -261,6 +264,7 @@ describe('Testing the http API', () => {
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
       eventLogs.shift();
+      stateBalance += fee * txPerBlock + BLOCK_STAKE;
     });
   });
 
@@ -335,6 +339,7 @@ describe('Testing the http API', () => {
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
+      stateBalance += fee * txPerBlock + BLOCK_STAKE;
       eventLogs.shift();
     });
   });
@@ -382,6 +387,7 @@ describe('Testing the http API', () => {
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
       eventLogs.shift();
+      stateBalance += fee * txPerBlock + BLOCK_STAKE;
     });
   });
   // when the widthdraw transaction is finalised, we want to be able to pull the
@@ -430,7 +436,6 @@ describe('Testing the http API', () => {
       expect(txDataToSign).to.be.a('string');
     });
     it('should send the transaction to the shield contract', async () => {
-      // we have to pay 10 ETH to be registered
       const myAddress = (await getAccounts())[0];
       startBalance = await getBalance(myAddress);
       // now we need to sign the transaction and send it to the blockchain
@@ -495,16 +500,28 @@ describe('Testing the http API', () => {
         if (err) assert.fail(err);
         done();
       });
-      it('should have one extra block on chain', async () => {
-        while (eventLogs.length !== 3) {
-          // eslint-disable-next-line no-await-in-loop
-          await new Promise(resolve => setTimeout(resolve, 3000));
-        }
-        eventLogs.shift();
-        eventLogs.shift();
-        eventLogs.shift();
-      });
+    });
+    it('should have one extra block on chain', async () => {
+      while (eventLogs.length !== 3) {
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+      eventLogs.shift();
+      eventLogs.shift();
+      eventLogs.shift();
+      stateBalance += (fee * txPerBlock + BLOCK_STAKE) * 3;
       // TODO currently hard to check this has run ok without looking at logs
+    });
+  });
+
+  describe('Check all balances in contracts', () => {
+    it('Should be zero for shield and proposer and non-zero for state', async () => {
+      const shieldContractBalance = await getBalance(shieldAddress);
+      const stateContractBalance = await getBalance(stateAddress);
+      const proposerContractBalance = await getBalance(proposersAddress);
+      expect(Number(shieldContractBalance)).to.be.eq(0);
+      expect(Number(proposerContractBalance)).to.be.eq(0);
+      expect(Number(stateContractBalance)).to.be.gte(stateBalance);
     });
   });
 
