@@ -1,7 +1,17 @@
 version: '3.5'
-# Use this script for running up nightfall_2 in 'developer' mode with local
+# Use this script for running up nightfall_3 in 'developer' mode with local
 # bindings.  See the readme for more information.
+# You will need to add a configuration for a blockchain client
 services:
+  blockchain1:
+    image: trufflesuite/ganache-cli:v6.12.1
+    ports:
+      - 8546:8546
+    command:
+      ganache-cli --accounts=10 --defaultBalanceEther=1000 --gasLimit=0xbebc20 --deterministic -i 4378921 -p 8546 --account="0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e,10000000000000000000000"
+    networks:
+      - nightfall_network
+
   client:
     build:
       dockerfile: Dockerfile
@@ -30,15 +40,14 @@ services:
     depends_on:
       - deployer
       - worker
-      - ganache
       - timber
       - rabbitmq
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
       LOG_LEVEL: debug
-      BLOCKCHAIN_WS_HOST: ganache
-      BLOCKCHAIN_PORT: 8545
+      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_PORT: 8546
       ZOKRATES_WORKER_HOST: worker
       RABBITMQ_HOST: amqp://rabbitmq
       RABBITMQ_PORT: 5672
@@ -77,8 +86,6 @@ services:
     build:
       context: ./nightfall-deployer
       dockerfile: Dockerfile
-    depends_on:
-      - ganache
     volumes:
       - type: volume
         source: build
@@ -98,26 +105,23 @@ services:
       - type: bind
         source: ./nightfall-deployer/migrations
         target: /app/migrations
+      - type: bind
+        source: ./nightfall-deployer/truffle-config.js
+        target: /app/truffle-config.js
+      - type: bind
+        source: ./nightfall-deployer/entrypoint.sh
+        target: /app/entrypoint.sh
     networks:
       - nightfall_network
     environment:
       LOG_LEVEL: debug
       # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
-      ETH_NETWORK: ganache
-      BLOCKCHAIN_WS_HOST: ganache
-      BLOCKCHAIN_PORT: 8545
+      # startup routines will wait for a blockchain client to be reachable on this network
+      ETH_NETWORK: blockchain1
+      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_PORT: 8546
       ZOKRATES_WORKER_HOST: worker
       USE_STUBS: 'true'
-
-  # The Ganache client, containing required precompiles
-  ganache:
-    image: trufflesuite/ganache-cli:v6.12.1
-    command:
-      ganache-cli --accounts=10 --defaultBalanceEther=1000 --gasLimit=0xbebc20 --deterministic
-    ports:
-      - '8545:8545'
-    networks:
-      - nightfall_network
 
   # Timber service, configured for nightfall
   timber:
@@ -126,7 +130,6 @@ services:
       context: ./timber
     restart: on-failure
     depends_on:
-      - ganache
       - deployer
       - timber-database
     networks:
@@ -144,8 +147,8 @@ services:
         source: ./config/timber.js
         target: /app/config/default.js
     environment:
-      BLOCKCHAIN_HOST: ws://ganache
-      BLOCKCHAIN_PORT: 8545
+      BLOCKCHAIN_HOST: ws://blockchain1
+      BLOCKCHAIN_PORT: 8546
       MONGO_HOST: timber-database
       MONGO_PORT: 27017
       MONGO_NAME: merkle_tree
@@ -177,7 +180,6 @@ services:
     build:
       context: ./nightfall-optimist
     depends_on:
-      - ganache
       - timber
       - deployer
     networks:
@@ -201,8 +203,8 @@ services:
         target: /app/config/default.js
     environment:
       WEBSOCKET_PORT: 8080
-      BLOCKCHAIN_WS_HOST: ganache
-      BLOCKCHAIN_PORT: 8545
+      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_PORT: 8546
       HASH_TYPE: mimc
       LOG_LEVEL: debug
       IS_CHALLENGER: 'true'
@@ -217,3 +219,9 @@ volumes:
 
 networks:
   nightfall_network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.238.0/24
+          gateway: 172.16.238.1

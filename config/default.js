@@ -48,7 +48,7 @@ module.exports = {
   ], // used to encode/decode proposeBlock signature
   SUBMIT_TRANSACTION_TYPES:
     '(uint64,uint64,uint8,bytes32,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],uint[4])',
-  RETRIES: 50,
+  RETRIES: process.env.AUTOSTART_RETRIES || 50,
   NODE_HASHLENGTH: 32,
   ZERO: '0x0000000000000000000000000000000000000000000000000000000000000000',
   HASH_TYPE: 'mimc',
