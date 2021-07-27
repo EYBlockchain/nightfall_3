@@ -12,8 +12,6 @@ class Commitment {
 
   hash;
 
-  isOnChain = -1;
-
   isNullified = false;
 
   isNullifiedOnChain = -1;

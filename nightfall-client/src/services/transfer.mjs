@@ -17,7 +17,7 @@ import {
   findUsableCommitmentsMutex,
   storeCommitment,
   markNullified,
-  clearNullified
+  clearNullified,
 } from './commitment-storage.mjs';
 import { getSiblingPath } from '../utils/timber.mjs';
 import { discoverPeers } from './peers.mjs';

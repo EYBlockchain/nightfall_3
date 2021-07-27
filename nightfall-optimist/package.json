@@ -50,7 +50,7 @@
     "ws": "^7.4.3"
   },
   "devDependencies": {
-    "mocha": "^8.3.2",
-    "nodemon": "^1.18.9"
+    "nodemon": "^1.18.9",
+    "mocha": "^8.3.2"
   }
 }

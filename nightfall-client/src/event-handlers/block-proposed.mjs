@@ -6,8 +6,7 @@ import getProposeBlockCalldata from '../services/process-calldata.mjs';
 This handler runs whenever a BlockProposed event is emitted by the blockchain
 */
 async function blockProposedEventHandler(data) {
-  const proposed = await getProposeBlockCalldata(data);
-  const { nullifiers, blockNumberL2, commitments } = proposed;
+  const { nullifiers, blockNumberL2, commitments } = await getProposeBlockCalldata(data);
   if (nullifiers.length)
     logger.debug(
       `Nullifiers appeared on chain at block number ${blockNumberL2}, ${JSON.stringify(
