@@ -1,7 +1,7 @@
 import express from 'express';
 import config from 'config';
-import logger from '../utils/logger.mjs';
-import rand from '../utils/crypto/crypto-random.mjs';
+import rand from 'common-files/utils/crypto/crypto-random.mjs';
+import logger from 'common-files/utils/logger.mjs';
 
 const router = express.Router();
 const { ZKP_KEY_LENGTH } = config;

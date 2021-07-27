@@ -1,3 +1,5 @@
+/* eslint import/no-extraneous-dependencies: "off" */
+
 /**
 @module utils.js
 @author Westlad,Chaitanya-Konda,iAmMichaelConnor
@@ -205,8 +207,7 @@ function powerMod(base, exponent, m) {
 
 function keccak256Hash(item) {
   const preimage = strip0x(item);
-  const h = `0x${createKeccakHash('keccak256').update(preimage, 'hex').digest('hex')}`;
-  return h;
+  return `0x${createKeccakHash('keccak256').update(preimage, 'hex').digest('hex')}`;
 }
 
 /**

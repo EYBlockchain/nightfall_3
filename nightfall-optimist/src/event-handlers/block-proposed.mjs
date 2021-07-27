@@ -1,4 +1,4 @@
-import logger from '../utils/logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
 import checkBlock from '../services/check-block.mjs';
 import BlockError from '../classes/block-error.mjs';
 import { createChallenge } from '../services/challenges.mjs';

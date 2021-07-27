@@ -4,8 +4,7 @@ Functions for querying the nightfall-optimist container
 
 import axios from 'axios';
 import config from 'config';
-// import { getContractAddress } from './contract.mjs';
-import logger from './logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
 
 const url = `http://${config.OPTIMIST_HOST}:${config.OPTIMIST_PORT}`;
 

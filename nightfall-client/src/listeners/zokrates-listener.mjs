@@ -2,8 +2,8 @@
 Listens for the return of a zokrates proof
 */
 import config from 'config';
+import rand from 'common-files/utils/crypto/crypto-random.mjs';
 import rabbitmq from '../utils/rabbitmq.mjs';
-import rand from '../utils/crypto/crypto-random.mjs';
 
 const { PROOF_QUEUE, ZKP_KEY_LENGTH, PROVING_SCHEME, BACKEND } = config;
 

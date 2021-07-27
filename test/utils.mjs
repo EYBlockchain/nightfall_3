@@ -1,7 +1,7 @@
 import Web3 from 'web3';
 import axios from 'axios';
 import chai from 'chai';
-import rand from '../nightfall-client/src/utils/crypto/crypto-random.mjs';
+import rand from '../common-files/utils/crypto/crypto-random.mjs';
 
 let web3;
 let nonce;

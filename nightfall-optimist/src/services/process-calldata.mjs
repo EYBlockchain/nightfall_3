@@ -4,7 +4,7 @@ This is used, rather than re-emmiting the calldata in the event because it's
 much cheaper, although the offchain part is more complex.
 */
 import config from 'config';
-import Web3 from '../utils/web3.mjs';
+import Web3 from 'common-files/utils/web3.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
 import { decompressProof } from '../utils/curve-maths/curves.mjs';

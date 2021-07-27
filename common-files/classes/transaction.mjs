@@ -1,3 +1,5 @@
+/* eslint import/no-extraneous-dependencies: "off" */
+
 /**
 An optimistic Transaction class
 */

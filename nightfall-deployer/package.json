@@ -4,6 +4,7 @@
   "description": "deploys fundamental smart contracts and circuits for Nightfall",
   "main": "index.js",
   "scripts": {
+    "prestart": "./pre-start-script.sh",
     "start": "node src/index.mjs"
   },
   "repository": {
@@ -23,6 +24,7 @@
     "axios": "^0.21.1",
     "big-integer": "^1.6.48",
     "config": "^3.3.1",
+    "common-files": "file:../common-files",
     "hex-to-binary": "^1.0.1",
     "safe-buffer": "^5.2.1",
     "truffle": "^5.3.14",

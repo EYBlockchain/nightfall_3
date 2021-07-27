@@ -3,7 +3,7 @@
  *  external to Nightfall, to be check for validity by Nightfall.
  */
 import express from 'express';
-import logger from '../utils/logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
 import isMessageValid from '../services/check-message.mjs';
 
 const router = express.Router();

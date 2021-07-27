@@ -8,6 +8,7 @@ Here are the things that could be wrong with a transaction:
 */
 import config from 'config';
 import axios from 'axios';
+import logger from 'common-files/utils/logger.mjs';
 import {
   Transaction,
   VerificationKey,
@@ -16,7 +17,6 @@ import {
   PublicInputs,
 } from '../classes/index.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
-import logger from '../utils/logger.mjs';
 import { getBlockByBlockNumberL2 } from './database.mjs';
 
 const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, CURVE, ZERO, CHALLENGES_CONTRACT_NAME } =

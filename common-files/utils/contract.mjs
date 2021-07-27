@@ -1,3 +1,5 @@
+/* eslint import/no-extraneous-dependencies: "off" */
+
 import fs from 'fs';
 import config from 'config';
 
@@ -50,7 +52,7 @@ export async function getContractInstance(contractName, deployedAddress) {
   const contractInstance = deployedAddress
     ? new web3.eth.Contract(contractInterface.abi, deployedAddress, options)
     : new web3.eth.Contract(contractInterface.abi, options);
-  if (!contractInstance) throw new Error('Contract instance null or undefined');
+  // logger.silly('\ncontractInstance:', contractInstance);
 
   return contractInstance;
 }
@@ -85,4 +87,33 @@ export async function deploy(contractName, constructorParams, { from, gas, passw
       return deployedContractInstance.options.address;
     });
   return deployedContractAddress;
+}
+
+/**
+ * Function that tries to get a (named) contract instance and, if it fails, will
+ * retry after 3 seconds.  After RETRIES attempts, it will give up and throw.
+ * This is useful in case nightfall-optimist comes up before the contract
+ * is fully deployed.
+ */
+export async function waitForContract(contractName) {
+  let errorCount = 0;
+  let error;
+  let instance;
+  while (errorCount < 50) {
+    try {
+      error = undefined;
+      const address = await getContractAddress(contractName); // eslint-disable-line no-await-in-loop
+      logger.debug(`${contractName} contract address is ${address}`);
+      if (address === undefined) throw new Error(`${contractName} contract address was undefined`);
+      instance = getContractInstance(contractName, address);
+      return instance;
+    } catch (err) {
+      error = err;
+      errorCount++;
+      logger.warn(`Unable to get a ${contractName} contract instance will try again in 3 seconds`);
+      await new Promise(resolve => setTimeout(() => resolve(), 3000)); // eslint-disable-line no-await-in-loop
+    }
+  }
+  if (error) throw error;
+  return instance;
 }

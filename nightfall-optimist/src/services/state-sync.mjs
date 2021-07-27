@@ -1,7 +1,7 @@
 /* eslint-disable no-await-in-loop */
 
 import config from 'config';
-import { getContractInstance } from '../utils/contract.mjs';
+import { getContractInstance } from 'common-files/utils/contract.mjs';
 import blockProposedEventHandler from '../event-handlers/block-proposed.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
 import newCurrentProposerEventHandler from '../event-handlers/new-current-proposer.mjs';
