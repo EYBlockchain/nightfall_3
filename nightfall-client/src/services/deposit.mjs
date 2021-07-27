@@ -84,6 +84,7 @@ async function deposit(items) {
       .submitTransaction(Transaction.buildSolidityStruct(optimisticDepositTransaction))
       .encodeABI();
     // store the commitment on successful computation of the transaction
+    commitment.isDeposited = true;
     storeCommitment(commitment, zkpPrivateKey);
     return { rawTransaction, transaction: optimisticDepositTransaction };
   } catch (err) {

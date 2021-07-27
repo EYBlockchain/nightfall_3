@@ -30,6 +30,7 @@ export async function storeCommitment(commitment, zkpPrivateKey) {
   const data = {
     _id: commitment.hash.hex(32),
     preimage: commitment.preimage.all.hex(32),
+    isDeposited: commitment.isDeposited || false,
     isOnChain: Number(commitment.isOnChain),
     isPendingNullification: false, // will not be pending when stored
     isNullified: commitment.isNullified,
@@ -89,6 +90,25 @@ export async function clearNullified(blockNumberL2) {
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
 }
 
+// as above, but removes isOnChain for deposit commitments
+export async function clearOnChain(blockNumberL2) {
+  const connection = await mongo.connection(MONGO_URL);
+  const query = { isOnChain: { $gte: Number(blockNumberL2) }, isDeposited: true };
+  const update = {
+    $set: { isOnChain: -1 },
+  };
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
+}
+
+// as above, but removes output commitments
+export async function dropRollbackCommitments(blockNumberL2) {
+  const connection = await mongo.connection(MONGO_URL);
+  const query = { isOnChain: { $gte: Number(blockNumberL2) }, isDeposited: false };
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(COMMITMENTS_COLLECTION).deleteMany(query);
+}
+
 // function to mark a commitments as nullified on chain for a mongo db
 export async function markNullifiedOnChain(nullifiers, blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
@@ -121,7 +141,7 @@ async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _value, 
   if (commitmentArray === []) return null;
   // turn the commitments into real commitment objects
   const commitments = commitmentArray
-    .filter(commitment => commitment.isOnChain > Number(0)) // filters for on chain commitments
+    .filter(commitment => Number(commitment.isOnChain) > Number(-1)) // filters for on chain commitments
     .map(ct => new Commitment(ct.preimage));
 
   // Now filter all commitments to also work with those that timber has already seen.
