@@ -21,7 +21,7 @@ export default {
 
     logger.info('Blockchain Connecting ...');
     const provider = new Web3.providers.WebsocketProvider(
-      `${config.web3.host}:${config.web3.port}`,
+      `ws://${config.web3.host}:${config.web3.port}`,
       null,
       config.web3.options,
     );

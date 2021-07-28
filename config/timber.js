@@ -72,7 +72,7 @@ module.exports = {
 
   // web3:
   web3: {
-    host: process.env.BLOCKCHAIN_HOST,
+    host: process.env.BLOCKCHAIN_WS_HOST,
     port: process.env.BLOCKCHAIN_PORT,
 
     options: {

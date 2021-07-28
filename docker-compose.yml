@@ -146,8 +146,11 @@ services:
       - type: bind
         source: ./config/timber.js
         target: /app/config/default.js
+      - type: bind
+        source: ./timber/entrypoint.sh
+        target: /app/entrypoint.sh
     environment:
-      BLOCKCHAIN_HOST: ws://blockchain1
+      BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
       MONGO_HOST: timber-database
       MONGO_PORT: 27017
