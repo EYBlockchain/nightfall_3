@@ -47,17 +47,35 @@ services:
     command:
       --ws.port 8546 --ws --ws.origins '*' --ws.addr 0.0.0.0 --verbosity 2
 
-  blockchain-miner:
+  blockchain-miner1:
     image: ethereum/client-go:stable
     volumes:
       - type: bind
         source: ./config/geth
         target: /setup
       - type: volume
-        source: geth-miner-chain
+        source: geth-miner-chain1
         target: /data
       - type: volume
-        source: dag
+        source: dag1
+        target: /dag
+    networks:
+      nightfall_network:
+    entrypoint: /setup/entrypoint.sh
+    command:
+      --ws.port 8546 --ws --ws.origins '*' --ws.addr 0.0.0.0 --mine --verbosity 2
+
+  blockchain-miner2:
+    image: ethereum/client-go:stable
+    volumes:
+      - type: bind
+        source: ./config/geth
+        target: /setup
+      - type: volume
+        source: geth-miner-chain2
+        target: /data
+      - type: volume
+        source: dag2
         target: /dag
     networks:
       nightfall_network:
@@ -84,5 +102,7 @@ services:
 volumes:
   geth1-chain:
   geth2-chain:
-  geth-miner-chain:
-  dag:
+  geth-miner-chain1:
+  dag1:
+  geth-miner-chain2:
+  dag2:

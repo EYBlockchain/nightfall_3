@@ -29,39 +29,60 @@ while [ "$1" != "" ]; do
   shift
 done
 
+# shut down cleanly in the event of a cntl-c etc. We don't want to leave containers running
+trap "docker-compose -f docker-compose.yml $FILE down --remove-orphans -t 1; exit 1" SIGHUP SIGINT SIGTERM
+
 docker-compose -f docker-compose.yml $FILE down --remove-orphans
 
 # if-else block checks - volume exist and then removes it.
 if [[ $(echo $VOLUME_LIST | grep nightfall_3_timber-database-volume) ]]; then
+  echo -n 'Removing '
   docker volume rm nightfall_3_timber-database-volume
 fi
 
 if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb) ]]; then
+  echo -n 'Removing '
   docker volume rm nightfall_3_mongodb
 fi
 
 if [[ $(echo $VOLUME_LIST | grep nightfall_3_build) ]]; then
+  echo -n 'Removing '
   docker volume rm nightfall_3_build
 fi
 
 if [[ $(echo $VOLUME_LIST | grep nightfall_3_geth1-chain) ]]; then
+  echo -n 'Removing '
   docker volume rm nightfall_3_geth1-chain
 fi
 
 if [[ $(echo $VOLUME_LIST | grep nightfall_3_geth2-chain) ]]; then
+  echo -n 'Removing '
   docker volume rm nightfall_3_geth2-chain
 fi
 
-if [[ $(echo $VOLUME_LIST | grep nightfall_3_geth-miner-chain) ]]; then
-  docker volume rm nightfall_3_geth-miner-chain
+if [[ $(echo $VOLUME_LIST | grep nightfall_3_geth-miner-chain1) ]]; then
+  echo -n 'Removing '
+  docker volume rm nightfall_3_geth-miner-chain1
 fi
-if [[ $(echo $VOLUME_LIST | grep nightfall_3_dag) ]]; then
-  docker volume rm nightfall_3_dag
+
+if [[ $(echo $VOLUME_LIST | grep nightfall_3_dag1) ]]; then
+  echo -n 'Removing '
+  docker volume rm nightfall_3_dag1
+fi
+
+if [[ $(echo $VOLUME_LIST | grep nightfall_3_geth-miner-chain2) ]]; then
+  echo -n 'Removing '
+  docker volume rm nightfall_3_geth-miner-chain2
+fi
+
+if [[ $(echo $VOLUME_LIST | grep nightfall_3_dag2) ]]; then
+  echo -n 'Removing '
+  docker volume rm nightfall_3_dag2
 fi
 
 DIR=./common-files/node_modules
 if [[ -d "$DIR" ]]; then
   rm -dr common-files/node_modules
 fi
-docker-compose -f docker-compose.yml $FILE up -d deployer
+#docker-compose -f docker-compose.yml $FILE up -d deployer
 docker-compose -f docker-compose.yml $FILE up
