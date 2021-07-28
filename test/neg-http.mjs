@@ -35,7 +35,8 @@ describe('Testing the challenge http API', () => {
   const url = 'http://localhost:8080';
   const optimistUrl = 'http://localhost:8081';
   const optimistWsUrl = 'ws:localhost:8082';
-  const tokenId = '0x01';
+  const tokenId = '0x00';
+  const tokenType = 'ERC20'; // it can be 'ERC721' or 'ERC1155'
   const value = 10;
   // this is the etherum private key for accounts[0]
   const privateKey = '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e';
@@ -244,7 +245,7 @@ describe('Testing the challenge http API', () => {
             chai
               .request(url)
               .post('/deposit')
-              .send({ ercAddress, tokenId, value, zkpPrivateKey, fee }),
+              .send({ ercAddress, tokenId, tokenType, value, zkpPrivateKey, fee }),
           ),
         )
       ).map(res => res.body);
@@ -293,7 +294,7 @@ describe('Testing the challenge http API', () => {
             chai
               .request(url)
               .post('/deposit')
-              .send({ ercAddress, tokenId, value, zkpPrivateKey, fee }),
+              .send({ ercAddress, tokenId, tokenType, value, zkpPrivateKey, fee }),
           ),
         )
       ).map(res => res.body);
@@ -368,7 +369,7 @@ describe('Testing the challenge http API', () => {
         const res = await chai
           .request(url)
           .post('/deposit')
-          .send({ ercAddress, tokenId, value, zkpPrivateKey, fee });
+          .send({ ercAddress, tokenId, tokenType, value, zkpPrivateKey, fee });
         // now we need to sign the transaction and send it to the blockchain
         await submitTransaction(res.body.txDataToSign, privateKey, shieldAddress, gas, fee);
       });
@@ -408,7 +409,7 @@ describe('Testing the challenge http API', () => {
         const res = await chai
           .request(url)
           .post('/deposit')
-          .send({ ercAddress, tokenId, value, zkpPrivateKey, fee });
+          .send({ ercAddress, tokenId, tokenType, value, zkpPrivateKey, fee });
 
         const { txDataToSign } = res.body;
         expect(txDataToSign).to.be.a('string');
@@ -427,6 +428,7 @@ describe('Testing the challenge http API', () => {
         const res = await chai.request(url).post('/deposit').send({
           ercAddress,
           tokenId,
+          tokenType,
           value,
           zkpPrivateKey,
           fee,
@@ -472,6 +474,7 @@ describe('Testing the challenge http API', () => {
         const res = await chai.request(url).post('/deposit').send({
           ercAddress,
           tokenId,
+          tokenType,
           value,
           zkpPrivateKey,
           fee,
@@ -494,6 +497,7 @@ describe('Testing the challenge http API', () => {
             .send({
               ercAddress,
               tokenId,
+              tokenType,
               value,
               zkpPrivateKey,
               fee,

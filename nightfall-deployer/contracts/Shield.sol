@@ -80,54 +80,75 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
       address(uint160(uint256(t.ercAddress)))
     );
     address recipientAddress = address(uint160(uint256(t.recipientAddress)));
-    if (t.tokenId == ZERO && t.value == 0) // disallow this corner case
-      revert("Zero-value tokens are not allowed");
 
-    if (t.tokenId == ZERO) // must be an ERC20
-      tokenContract.transferFrom(
-        address(this),
-        recipientAddress,
-        uint256(t.value)
-      );
-    else if (t.value == 0) // must be ERC721
-      tokenContract.safeTransferFrom(
-        address(this),
-        recipientAddress,
-        uint256(t.tokenId),
-        ''
-      );
-    else // must be an ERC1155
-      tokenContract.safeTransferFrom(
-        address(this),
-        recipientAddress,
-        uint256(t.tokenId),
-        uint256(t.value),
-        ''
-      );
+    if(t.tokenType == TokenType.ERC20) {
+      if (t.tokenId != ZERO)
+        revert("ERC20 deposit should have tokenId equal to ZERO");
+      else
+        tokenContract.transferFrom(
+          address(this),
+          recipientAddress,
+          uint256(t.value)
+        );
+    } else if(t.tokenType == TokenType.ERC721) {
+      if (t.value != 0 || t.tokenId == ZERO) // value should always be equal to 0 and tokenId cannot be equal to ZERO
+        revert("Invalid inputs for ERC721 deposit");
+      else
+        tokenContract.safeTransferFrom(
+          address(this),
+          recipientAddress,
+          uint256(t.tokenId),
+          ''
+        );
+    } else if (t.tokenType == TokenType.ERC1155) {
+      if (t.tokenId == ZERO && t.value == 0) // disallow this corner case
+        revert("Depositing zero-value ERC1155 tokens is not allowed");
+      else
+        tokenContract.safeTransferFrom(
+          address(this),
+          recipientAddress,
+          uint256(t.tokenId),
+          uint256(t.value),
+          ''
+        );
+    } else {
+      revert("Invalid Token Type");
+    }
   }
 
   function payIn(Transaction memory t) internal {
     ERCInterface tokenContract = ERCInterface(
       address(uint160(uint256(t.ercAddress)))
     );
-    if (t.tokenId == ZERO && t.value == 0) // disallow this corner case
-      revert("Depositing zero-value tokens is not allowed");
-    if (t.tokenId == ZERO) // must be an ERC20
-      tokenContract.transferFrom(msg.sender, address(this), uint256(t.value));
-    else if (t.value == 0) // must be ERC721
-      tokenContract.safeTransferFrom(
-        msg.sender,
-        address(this),
-        uint256(t.tokenId),
-        ''
-      );
-    else // must be an ERC1155
-      tokenContract.safeTransferFrom(
-        msg.sender,
-        address(this),
-        uint256(t.tokenId),
-        uint256(t.value),
-        ''
-      );
+
+    if(t.tokenType == TokenType.ERC20) {
+      if (t.tokenId != ZERO)
+        revert("ERC20 deposit should have tokenId equal to ZERO");
+      else
+        tokenContract.transferFrom(msg.sender, address(this), uint256(t.value));
+    } else if(t.tokenType == TokenType.ERC721) {
+      if (t.value != 0 || t.tokenId == ZERO) // value should always be equal to 0 and tokenId cannot be equal to ZERO
+        revert("Invalid inputs for ERC721 deposit");
+      else
+        tokenContract.safeTransferFrom(
+          msg.sender,
+          address(this),
+          uint256(t.tokenId),
+          ''
+        );
+    } else if (t.tokenType == TokenType.ERC1155) {
+      if (t.tokenId == ZERO && t.value == 0) // disallow this corner case
+        revert("Depositing zero-value ERC1155 tokens is not allowed");
+      else
+        tokenContract.safeTransferFrom(
+          msg.sender,
+          address(this),
+          uint256(t.tokenId),
+          uint256(t.value),
+          ''
+        );
+    } else {
+      revert("Invalid Token Type");
+    }
   }
 }

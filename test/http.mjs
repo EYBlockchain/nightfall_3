@@ -38,7 +38,8 @@ describe('Testing the http API', () => {
   const url = 'http://localhost:8080';
   const optimistUrl = 'http://localhost:8081';
   const optimistWsUrl = 'ws:localhost:8082';
-  const tokenId = '0x01';
+  const tokenId = '0x00';
+  const tokenType = 'ERC20'; // it can be 'ERC721' or 'ERC1155'
   const value = 10;
   const value2 = 12;
   // this is the etherum private key for accounts[0]
@@ -207,7 +208,7 @@ describe('Testing the http API', () => {
             chai
               .request(url)
               .post('/deposit')
-              .send({ ercAddress, tokenId, value, zkpPrivateKey, fee }),
+              .send({ ercAddress, tokenId, tokenType, value, zkpPrivateKey, fee }),
           ),
         )
       ).map(res => res.body);
@@ -297,7 +298,7 @@ describe('Testing the http API', () => {
             chai
               .request(url)
               .post('/deposit')
-              .send({ ercAddress, tokenId, value, zkpPrivateKey, fee }),
+              .send({ ercAddress, tokenId, tokenType, value, zkpPrivateKey, fee }),
           ),
         )
       ).map(dRes => dRes.body);
@@ -374,7 +375,7 @@ describe('Testing the http API', () => {
             chai
               .request(url)
               .post('/deposit')
-              .send({ ercAddress, tokenId, value, zkpPrivateKey, fee }),
+              .send({ ercAddress, tokenId, tokenType, value, zkpPrivateKey, fee }),
           ),
         )
       ).map(dRes => dRes.body);
@@ -399,6 +400,7 @@ describe('Testing the http API', () => {
       const res = await chai.request(url).post('/withdraw').send({
         ercAddress,
         tokenId,
+        tokenType,
         value,
         senderZkpPrivateKey: zkpPrivateKey,
         recipientAddress,
@@ -422,7 +424,7 @@ describe('Testing the http API', () => {
             chai
               .request(url)
               .post('/deposit')
-              .send({ ercAddress, tokenId, value, zkpPrivateKey, fee }),
+              .send({ ercAddress, tokenId, tokenType, value, zkpPrivateKey, fee }),
           ),
         )
       ).map(dRes => dRes.body);
@@ -529,7 +531,7 @@ describe('Testing the http API', () => {
             chai
               .request(url)
               .post('/deposit')
-              .send({ ercAddress, tokenId, value, zkpPrivateKey, fee }),
+              .send({ ercAddress, tokenId, tokenType, value, zkpPrivateKey, fee }),
           ),
         )
       ).map(res => res.body);

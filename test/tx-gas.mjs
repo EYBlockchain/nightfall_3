@@ -30,7 +30,8 @@ describe('Testing the http API', () => {
   const url = 'http://localhost:8080';
   const optimistUrl = 'http://localhost:8081';
   const optimistWsUrl = 'ws:localhost:8082';
-  const tokenId = '0x01';
+  const tokenId = '0x00';
+  const tokenType = 'ERC20'; // it can be 'ERC721' or 'ERC1155'
   const value = 10;
   // this is the etherum private key for accounts[0]
   const privateKey = '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e';
@@ -154,6 +155,7 @@ describe('Testing the http API', () => {
         const res = await chai.request(url).post('/deposit').send({
           ercAddress,
           tokenId,
+          tokenType,
           value,
           zkpPrivateKey,
           fee,
