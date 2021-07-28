@@ -13,7 +13,7 @@ import {
   topicEventMapping,
   setNonce,
   pauseBlockchain,
-  unpauseBlockchain,
+  // unpauseBlockchain,
 } from './utils.mjs';
 
 const { expect } = chai;
