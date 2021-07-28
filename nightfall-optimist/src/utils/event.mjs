@@ -7,8 +7,8 @@
 // First we need to connect to a websocket provider.
 // Important Note: Subscribe method only works with a websocket provider!
 
-import Web3 from './web3.mjs';
-import logger from './logger.mjs';
+import Web3 from 'common-files/utils/web3.mjs';
+import logger from 'common-files/utils/logger.mjs';
 
 const web3 = Web3.connection();
 

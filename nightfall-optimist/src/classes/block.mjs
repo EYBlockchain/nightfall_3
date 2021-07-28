@@ -2,11 +2,11 @@
 An optimistic layer 2 Block class
 */
 import config from 'config';
+import mt from 'common-files/utils/crypto/merkle-tree/merkle-tree.mjs';
+import { getContractInstance } from 'common-files/utils/contract.mjs';
+import Web3 from 'common-files/utils/web3.mjs';
 import { getFrontier, getRoot } from '../utils/timber.mjs';
-import mt from '../utils/crypto/merkle-tree/merkle-tree.mjs';
-import Web3 from '../utils/web3.mjs';
 import { compressProof } from '../utils/curve-maths/curves.mjs';
-import { getContractInstance } from '../utils/contract.mjs';
 
 const { ZERO, PROPOSE_BLOCK_TYPES, STATE_CONTRACT_NAME } = config;
 const { updateNodes } = mt;

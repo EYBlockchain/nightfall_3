@@ -1,6 +1,8 @@
 import config from 'config';
-import logger from '../utils/logger.mjs';
-import { getContractInstance } from '../utils/contract.mjs';
+import rand from 'common-files/utils/crypto/crypto-random.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import Web3 from 'common-files/utils/web3.mjs';
+import { getContractInstance } from 'common-files/utils/contract.mjs';
 import {
   getBlockByBlockHash,
   getBlockByTransactionHash,
@@ -10,8 +12,6 @@ import {
   getBlockByBlockNumberL2,
 } from './database.mjs';
 import { getTreeHistory } from '../utils/timber.mjs';
-import Web3 from '../utils/web3.mjs';
-import rand from '../utils/crypto/crypto-random.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
 

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import config from 'config';
-import { getContractAddress } from './contract.mjs';
-import logger from './logger.mjs';
+import { getContractAddress } from 'common-files/utils/contract.mjs';
+import logger from 'common-files/utils/logger.mjs';
 
 const url = `http://${config.TIMBER_HOST}:${config.TIMBER_PORT}`;
 const contractName = config.SHIELD_CONTRACT_NAME;

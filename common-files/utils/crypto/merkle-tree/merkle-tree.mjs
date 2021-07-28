@@ -1,3 +1,5 @@
+/* eslint import/no-extraneous-dependencies: "off" */
+
 /**
 @module utils.js
 @author iAmMichaelConnor, 'stateless' modifications by Westlad
@@ -153,7 +155,7 @@ async function updateNodes(
   height = 32,
   updateNodesFunction,
 ) {
-  logger.debug(`src/utils-merkle-tree updateNodes()`);
+  logger.debug(`\nsrc/utils-merkle-tree updateNodes()`);
   const treeWidth = 2 ** height;
   const newFrontier = frontier;
 

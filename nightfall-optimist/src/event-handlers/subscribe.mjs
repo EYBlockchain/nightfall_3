@@ -5,8 +5,8 @@
  */
 import WebSocket from 'ws';
 import config from 'config';
-import { getContractInstance, getContractAddress } from '../utils/contract.mjs';
-import logger from '../utils/logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import { getContractInstance, getContractAddress } from 'common-files/utils/contract.mjs';
 
 const {
   PROPOSERS_CONTRACT_NAME,

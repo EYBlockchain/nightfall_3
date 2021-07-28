@@ -1,6 +1,6 @@
+import logger from 'common-files/utils/logger.mjs';
 import { revealChallenge } from '../services/challenges.mjs';
 import { getCommit, isChallengerAddressMine } from '../services/database.mjs';
-import logger from '../utils/logger.mjs';
 
 async function committedToChallengeEventHandler(data) {
   const { commitHash, sender } = data.returnValues;

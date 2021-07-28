@@ -1,3 +1,5 @@
+/* eslint import/no-extraneous-dependencies: "off" */
+
 import crypto from 'crypto';
 import gen from 'general-number';
 

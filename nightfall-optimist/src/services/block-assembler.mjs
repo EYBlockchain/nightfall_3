@@ -5,6 +5,7 @@ This module does all of the heaving lifting for a Proposer: It assembles blocks
 from posted transactions and proposes these blocks.
 */
 import config from 'config';
+import logger from 'common-files/utils/logger.mjs';
 import { getLeafCount } from '../utils/timber.mjs';
 import {
   removeTransactionsFromMemPool,
@@ -14,7 +15,6 @@ import {
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
-import logger from '../utils/logger.mjs';
 
 const { TRANSACTIONS_PER_BLOCK, STATE_CONTRACT_NAME } = config;
 let makeBlocks = true;

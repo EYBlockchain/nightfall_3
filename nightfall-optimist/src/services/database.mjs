@@ -4,8 +4,8 @@ remember wholesale because otherwise it would have to be constructed in real-
 time from blockchain events.
 */
 import config from 'config';
-import mongo from '../utils/mongo.mjs';
-import logger from '../utils/logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import mongo from 'common-files/utils/mongo.mjs';
 
 const {
   MONGO_URL,

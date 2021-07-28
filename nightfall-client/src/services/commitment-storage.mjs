@@ -5,8 +5,8 @@ deposit/transfer/withdraw
 import config from 'config';
 import { Mutex } from 'async-mutex';
 import gen from 'general-number';
-import mongo from '../utils/mongo.mjs';
-import logger from '../utils/logger.mjs';
+import mongo from 'common-files/utils/mongo.mjs';
+import logger from 'common-files/utils/logger.mjs';
 import { Commitment, Nullifier } from '../classes/index.mjs';
 
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;

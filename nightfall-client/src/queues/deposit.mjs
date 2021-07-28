@@ -1,4 +1,4 @@
-import logger from '../utils/logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
 import deposit from '../services/deposit.mjs';
 import rabbitmq from '../utils/rabbitmq.mjs';
 

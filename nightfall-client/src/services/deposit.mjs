@@ -9,10 +9,10 @@
 import config from 'config';
 import axios from 'axios';
 import gen from 'general-number';
-import rand from '../utils/crypto/crypto-random.mjs';
-import sha256 from '../utils/crypto/sha256.mjs';
-import { getContractInstance } from '../utils/contract.mjs';
-import logger from '../utils/logger.mjs';
+import rand from 'common-files/utils/crypto/crypto-random.mjs';
+import sha256 from 'common-files/utils/crypto/sha256.mjs';
+import { getContractInstance } from 'common-files/utils/contract.mjs';
+import logger from 'common-files/utils/logger.mjs';
 import { Commitment, PublicInputs, Transaction } from '../classes/index.mjs';
 import { storeCommitment } from './commitment-storage.mjs';
 

@@ -3,7 +3,7 @@
  */
 
 import express from 'express';
-import logger from '../utils/logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
 import { savePeers, retrievePeers } from '../services/peers.mjs';
 
 const router = express.Router();

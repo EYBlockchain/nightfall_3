@@ -5,14 +5,14 @@ module but handle the entire request here.
 */
 import express from 'express';
 import config from 'config';
-import logger from '../utils/logger.mjs';
-import { getContractInstance } from '../utils/contract.mjs';
+import mt from 'common-files/utils/crypto/merkle-tree/merkle-tree.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import { getContractInstance } from 'common-files/utils/contract.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction, TransactionError } from '../classes/index.mjs';
 import { setRegisteredProposerAddress } from '../services/database.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import { getFrontier, getLeafCount } from '../utils/timber.mjs';
-import mt from '../utils/crypto/merkle-tree/merkle-tree.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
 
 const { updateNodes } = mt;
