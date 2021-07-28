@@ -260,8 +260,7 @@ contract Challenges is Stateful, Key_Registry, Config {
     // blocks
     removeBlockHashes(badBlockNumberL2);
     // remove the proposer and give the proposer's block stake to the challenger
-    state.removeProposer(badBlock.proposer);
-    state.addPendingWithdrawal(msg.sender, BLOCK_STAKE);
+    state.rewardChallenger(msg.sender, badBlock.proposer);
 
     // TODO repay the fees of the transactors and any escrowed funds held by the
     // Shield contract.

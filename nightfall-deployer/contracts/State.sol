@@ -17,6 +17,7 @@ contract State is Structures, Config {
   BlockData[] public blockHashes; // array containing mainly blockHashes
   mapping(address => uint) public pendingWithdrawals;
   mapping(address => LinkedAddress) public proposers;
+  mapping(address => TimeLockedBond) public bondAccounts;
   LinkedAddress public currentProposer; // who can propose a new shield state
   uint public proposerStartBlock; // L1 block where currentProposer became current
   // local state variables
@@ -167,4 +168,26 @@ contract State is Structures, Config {
     bytes32 blockHash = Utils.hashBlock(b, t);
     require(blockHashes[blockNumberL2].blockHash == blockHash, 'This block does not exist');
   }
+
+  function setBondAccount(address addr, uint amount) public onlyRegistered {
+    bondAccounts[addr] = TimeLockedBond(amount,0);
+  }
+  
+  function getBondAccount(address addr) public view returns (TimeLockedBond memory){
+    return bondAccounts[addr];
+  }
+
+  function rewardChallenger(address challengerAddr, address proposer) public onlyRegistered {
+    removeProposer(proposer);
+    TimeLockedBond memory bond = bondAccounts[proposer];
+    bondAccounts[proposer] = TimeLockedBond(0,0);
+    pendingWithdrawals[challengerAddr] += bond.amount;
+  }
+
+  function updateBondAccountTime(address addr, uint time) public onlyRegistered {
+    TimeLockedBond memory bond = bondAccounts[addr];
+    bond.time = time;
+    bondAccounts[addr] = bond;
+  }
+
 }
