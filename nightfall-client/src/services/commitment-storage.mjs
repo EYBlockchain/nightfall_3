@@ -186,8 +186,7 @@ async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _value, 
       `Found commitments suitable for two-token transfer: ${JSON.stringify(commitmentsToUse)}`,
     );
   }
-  commitmentsToUse.forEach(commitment => markNullified(commitment));
-  await Promise.all(commitmentsToUse);
+  await Promise.all(commitmentsToUse.map(commitment => markNullified(commitment)));
   return commitmentsToUse;
 }
 
