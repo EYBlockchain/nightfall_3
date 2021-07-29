@@ -180,17 +180,23 @@ describe('Testing the http API', () => {
       await expect(
         submitTransaction(txDataToSign, privateKey, proposersAddress, gas),
       ).to.be.rejectedWith(
-        'Returned error: VM Exception while processing transaction: revert It is too soon to withdraw your bond',
+        /Returned error: VM Exception while processing transaction: revert It is too soon to withdraw your bond|Transaction has been reverted by the EVM/,
       );
     });
     it('Should create a passing withdrawBond (because sufficient time has passed)', async () => {
-      await timeJump(3600 * 24 * 10); // jump in time by 7 days
+      if (nodeInfo.includes('TestRPC')) await timeJump(3600 * 24 * 10); // jump in time by 7 days
       const res = await chai.request(optimistUrl).post('/proposer/withdrawBond');
       const { txDataToSign } = res.body;
       expect(txDataToSign).to.be.a('string');
-      const receipt = await submitTransaction(txDataToSign, privateKey, proposersAddress, gas);
-      expect(receipt).to.have.property('transactionHash');
-      expect(receipt).to.have.property('blockHash');
+      if (nodeInfo.includes('TestRPC')) {
+        const receipt = await submitTransaction(txDataToSign, privateKey, proposersAddress, gas);
+        expect(receipt).to.have.property('transactionHash');
+        expect(receipt).to.have.property('blockHash');
+      } else {
+        await expect(
+          submitTransaction(txDataToSign, privateKey, proposersAddress, gas),
+        ).to.be.rejectedWith('Transaction has been reverted by the EVM');
+      }
     });
   });
 
