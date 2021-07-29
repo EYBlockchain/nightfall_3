@@ -13,7 +13,7 @@ import {
   topicEventMapping,
   setNonce,
   pauseBlockchain,
-  // unpauseBlockchain,
+  unpauseBlockchain,
 } from './utils.mjs';
 
 const { expect } = chai;
@@ -244,41 +244,49 @@ describe('Testing the http API', () => {
     });
   });
 
-  describe('Deposit tests', () => {
-    // blocks should be directly submitted to the blockchain, not queued
-    blockSubmissionFunction = (a, b, c, d, e, f) => submitTransaction(a, b, c, d, e, f);
+  describe('Create fork 1', () => {
     // we start by just sending enough deposits to fill one block
     // set the number of deposit transactions blocks to perform.
     const numDeposits = 1;
-    it('should deposit enough crypto into a ZKP commitment to fill one layer 2 block', async () => {
-      await doDeposits(numDeposits);
+    it('should deposit enough crypto into fork to fill one layer 2 block', async () => {
+      doDeposits(numDeposits);
     });
-  });
-
-  // so far, all of the Geth nodes are aware of these transactions
-
-  describe('Withdraw tests', () => {
     // next we withdraw each of the deposits
     const numWithdraws = 1;
     it('should withdraw all of our ZKP commitments, taking another block to do so', async () => {
-      await doWithdraws(numWithdraws);
+      doWithdraws(numWithdraws);
     });
-  });
-
-  // now we attempt a transfer on one half of the nodes.  This should fail because all of our deposited
-  // commitments should have been nullified by the withdrawals.
-  describe('Single transfer tests', () => {
+    // now we attempt a transfer on one half of the nodes.  This should fail because all of our deposited
+    // commitments should have been nullified by the withdrawals.
     it('should fail to transfer some crypto because there are no available input commitments', async () => {
       await pauseBlockchain(1); // hold one half of the nodes
       await closeWeb3Connection();
       await connectWeb3('ws://localhost:8547'); // need to talk to the un-held half
-      console.log('Paused node set 1');
-      await expect(doSingleTransfer()).to.be.rejectedWith(Error);
+      await expect(doSingleTransfer()).to.be.rejectedWith('expected undefined to be a string');
+    });
+  });
+
+  describe('Create fork 2', () => {
+    const numDeposits = 1;
+    it('should deposit enough crypto into fork to fill two layer 2 blocks', async () => {
+      // Now we'll pause the nodes that went down the error fork and unpause the nodes
+      // that didn't, then we'll deposit some more crypto
+      await pauseBlockchain(2); // hold one half of the nodes
+      await closeWeb3Connection();
+      await unpauseBlockchain(1); // hold one half of the nodes
+      await connectWeb3('ws://localhost:8546'); // need to talk to the un-held half
+      doDeposits(numDeposits * 2); // make a nice long fork
+    });
+    it('Should complete a chain-reorg', async () => {
+      await unpauseBlockchain(2); // now both halfs are active - hopefully they will converge on the longer fork
+      // need to check syncing here.
+      await doSingleTransfer(); // this should work on the longer fork (but not on the shorter one)
     });
   });
 
   after(() => {
     closeWeb3Connection();
     connection.close();
+    process.exit(0);
   });
 });
