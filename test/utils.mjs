@@ -4,7 +4,7 @@ import chai from 'chai';
 import compose from 'docker-compose';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import rand from '../nightfall-client/src/utils/crypto/crypto-random.mjs';
+import rand from '../common-files/utils/crypto/crypto-random.mjs';
 
 const { dirname } = path;
 const __dirname = dirname(fileURLToPath(import.meta.url));
