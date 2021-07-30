@@ -115,7 +115,7 @@ async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _value, 
   );
   if (singleCommitment) {
     logger.info('Found commitment suitable for single transfer or withdraw');
-    markNullified(singleCommitment);
+    await markNullified(singleCommitment);
     return [singleCommitment];
   }
   // If we get here it means that we have not been able to find a single commitment that matches the required value
@@ -186,7 +186,7 @@ async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _value, 
       `Found commitments suitable for two-token transfer: ${JSON.stringify(commitmentsToUse)}`,
     );
   }
-  commitmentsToUse.forEach(commitment => markNullified(commitment));
+  await Promise.all(commitmentsToUse.map(commitment => markNullified(commitment)));
   return commitmentsToUse;
 }
 
