@@ -2,7 +2,7 @@
 
 if [ $ENABLE_QUEUE == "1" ]
 then
-  while ! nc -z rabbitmq $RABBITMQ_PORT; do sleep 3; done
+  while ! nc -z ${RABBITMQ_HOST:7} $RABBITMQ_PORT; do sleep 3; done
 fi
 
 npm run dev

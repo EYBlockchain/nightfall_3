@@ -10,6 +10,8 @@ import {
   isMessageValid,
   finaliseWithdrawal,
   peers,
+  commitment,
+  incomingViewingKey,
 } from './routes/index.mjs';
 
 const app = express();
@@ -27,5 +29,7 @@ app.use('/withdraw', withdraw);
 app.use('/check-message', isMessageValid);
 app.use('/finalise-withdrawal', finaliseWithdrawal);
 app.use('/peers', peers);
+app.use('/commitment', commitment);
+app.use('/incoming-viewing-key', incomingViewingKey);
 
 export default app;

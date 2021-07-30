@@ -8,21 +8,19 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
 import config from 'config';
 import axios from 'axios';
 import gen from 'general-number';
-// import sha256 from '../utils/crypto/sha256.mjs';
 import rand from '../utils/crypto/crypto-random.mjs';
 import { getContractInstance } from '../utils/contract.mjs';
 import logger from '../utils/logger.mjs';
 import { findUsableCommitments, storeCommitment, markNullified } from './commitment-storage.mjs';
 import Nullifier from '../classes/nullifier.mjs';
 import Commitment from '../classes/commitment.mjs';
+import Secrets from '../classes/secrets.mjs';
 import PublicInputs from '../classes/public-inputs.mjs';
 import { getSiblingPath } from '../utils/timber.mjs';
 import Transaction from '../classes/transaction.mjs';
 import { discoverPeers } from './peers.mjs';
 import getBlockAndTransactionsByRoot from '../utils/optimist.mjs';
-import { compressPublicKey, calculatePkdFromAskNsk, calculateIVK } from './keys.mjs';
-import { edwardsCompress } from '../utils/crypto/encryption/elgamal.mjs';
-import encryptSecrets from './secrets.mjs';
+import { compressPublicKey, calculateIvkPkdfromAskNsk } from './keys.mjs';
 
 const {
   BN128_GROUP_ORDER,
@@ -40,19 +38,10 @@ async function transfer(transferParams) {
   logger.info('Creating a transfer transaction');
   // let's extract the input items
   const { offchain = false, ...items } = transferParams;
-  // const { ercAddress, tokenId, recipientData, senderZkpPrivateKey, fee } = generalise(items);
-  // const { recipientZkpPublicKeys, values } = recipientData;
-  // const senderZkpPublicKey = sha256([senderZkpPrivateKey]);
-  // if (recipientZkpPublicKeys.length > 1)
-  //   throw new Error('Batching is not supported yet: only one recipient is allowed'); // this will not always be true so we try to make the following code agnostic to the number of commitments
-  const { ercAddress, tokenId, recipientData, nsk, ask } = generalise(items);
-  const { pkd, compressedPkd } = await calculatePkdFromAskNsk(ask, nsk);
-  const ivk = await calculateIVK(ask, nsk);
+  const { ercAddress, tokenId, recipientData, nsk, ask, fee } = generalise(items);
+  const { pkd, compressedPkd } = calculateIvkPkdfromAskNsk(ask, nsk);
   const { recipientPkds, values } = recipientData;
-  // Compress public key (x,y) into single element
-  const recipientCompressedPkds = await Promise.all(
-    recipientPkds.map(key => compressPublicKey(key)),
-  );
+  const recipientCompressedPkds = recipientPkds.map(key => compressPublicKey(key));
   if (recipientCompressedPkds.length > 1)
     throw new Error(`Batching is not supported yet: only one recipient is allowed`); // this will not always be true so we try to make the following code agnostic to the number of commitments
 
@@ -60,7 +49,6 @@ async function transfer(transferParams) {
   // will enable us to conduct our transfer.  Let's rummage in the db...
   const totalValueToSend = values.reduce((acc, value) => acc + value.bigInt, 0n);
   const oldCommitments = await findUsableCommitments(
-    // senderZkpPublicKey,
     compressedPkd,
     ercAddress,
     tokenId,
@@ -81,41 +69,34 @@ async function transfer(transferParams) {
   // if so, add an output commitment to do that
   if (change !== 0n) {
     values.push(new GN(change));
-    // recipientZkpPublicKeys.push(senderZkpPublicKey);
-    recipientCompressedPkds.push(compressedPkd);
     recipientPkds.push(pkd);
+    recipientCompressedPkds.push(compressedPkd);
   }
   const newCommitments = [];
   let secrets = [];
+  const salts = [];
   for (let i = 0; i < recipientCompressedPkds.length; i++) {
+    salts.push(new GN((await rand(ZKP_KEY_LENGTH)).bigInt % BN128_GROUP_ORDER));
     newCommitments.push(
       new Commitment({
-        // zkpPublicKey: recipientZkpPublicKeys[i],
-        compressedPkd: recipientCompressedPkds[i],
-        pkd: recipientPkds[i],
         ercAddress,
         tokenId,
         value: values[i],
-        salt: await rand(ZKP_KEY_LENGTH), // eslint-disable-line no-await-in-loop
+        pkd: recipientPkds[i],
+        compressedPkd: recipientCompressedPkds[i],
+        salt: salts[i],
       }),
     );
     // encrypt secrets such as erc20Address, tokenId, value, salt for recipient
     if (i === 0) {
-      secrets = await encryptSecrets(
-        [ercAddress.bigInt, tokenId.bigInt, values[i].bigInt, salt.bigInt],
+      secrets = await Secrets.encryptSecrets(
+        [ercAddress.bigInt, tokenId.bigInt, values[i].bigInt, salts[i].bigInt],
         [recipientPkds[0][0].bigInt, recipientPkds[0][1].bigInt],
       );
     }
   }
-
-  // compress the secrets
-  let compressedSecrets = generalise(
-    secrets.cipherText.map(secret => {
-      return edwardsCompress([secret[0].bigInt, secret[1].bigInt]);
-    }),
-  );
-
-  compressedSecrets = compressedSecrets.map(compressedSecret => compressedSecret.hex());
+  // compress the secrets to save gas
+  const compressedSecrets = Secrets.compressSecrets(secrets);
 
   // and the Merkle path(s) from the commitment(s) to the root
   const siblingPaths = generalise(
@@ -131,7 +112,7 @@ async function transfer(transferParams) {
     newCommitments.map(commitment => commitment.hash),
     nullifiers.map(nullifier => nullifier.hash),
     root,
-    compressedSecrets,
+    compressedSecrets.map(compressedSecret => compressedSecret.hex()),
   ]);
   // time for a quick sanity check.  We expect the number of old commitments,
   // new commitments and nullifiers to be equal.
@@ -156,7 +137,6 @@ async function transfer(transferParams) {
       ask.field(BN128_GROUP_ORDER),
     ]),
     newCommitments.map(commitment => [
-      // commitment.preimage.zkpPublicKey.limbs(32, 8),
       [
         commitment.preimage.pkd[0].field(BN128_GROUP_ORDER),
         commitment.preimage.pkd[1].field(BN128_GROUP_ORDER),
@@ -230,7 +210,7 @@ async function transfer(transferParams) {
       // have our public key
       newCommitments
         .filter(commitment => commitment.preimage.compressedPkd.hex(32) === compressedPkd.hex(32))
-        .forEach(commitment => storeCommitment(commitment, ivk)); // TODO insertMany
+        .forEach(commitment => storeCommitment(commitment, nsk)); // TODO insertMany
       // mark the old commitments as nullified
       oldCommitments.forEach(commitment => markNullified(commitment));
       return { transaction: optimisticTransferTransaction };
@@ -241,10 +221,14 @@ async function transfer(transferParams) {
     // store the commitment on successful computation of the transaction
     newCommitments
       .filter(commitment => commitment.preimage.compressedPkd.hex(32) === compressedPkd.hex(32))
-      .forEach(commitment => storeCommitment(commitment, ivk)); // TODO insertMany
+      .forEach(commitment => storeCommitment(commitment, nsk)); // TODO insertMany
     // mark the old commitments as nullified
     oldCommitments.forEach(commitment => markNullified(commitment));
-    return { rawTransaction, transaction: optimisticTransferTransaction };
+    return {
+      rawTransaction,
+      transaction: optimisticTransferTransaction,
+      salts: salts.map(salt => salt.hex(32)),
+    };
   } catch (err) {
     throw new Error(err); // let the caller handle the error
   }

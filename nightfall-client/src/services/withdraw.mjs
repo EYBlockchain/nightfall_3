@@ -8,7 +8,6 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
 import config from 'config';
 import axios from 'axios';
 import gen from 'general-number';
-import sha256 from '../utils/crypto/sha256.mjs';
 import { getContractInstance } from '../utils/contract.mjs';
 import logger from '../utils/logger.mjs';
 import { findUsableCommitments, markNullified } from './commitment-storage.mjs';
@@ -18,6 +17,7 @@ import { getSiblingPath } from '../utils/timber.mjs';
 import Transaction from '../classes/transaction.mjs';
 import { discoverPeers } from './peers.mjs';
 import getBlockAndTransactionsByRoot from '../utils/optimist.mjs';
+import { calculateIvkPkdfromAskNsk } from './keys.mjs';
 
 const {
   BN128_GROUP_ORDER,
@@ -30,18 +30,17 @@ const {
 } = config;
 const { generalise } = gen;
 
-async function withdraw(transferParams) {
+async function withdraw(withdrawParams) {
   logger.info('Creating a withdraw transaction');
   // let's extract the input items
-  const { offchain = false, ...items } = transferParams;
-  const { ercAddress, tokenId, value, recipientAddress, senderZkpPrivateKey, fee } =
-    generalise(items);
-  const senderZkpPublicKey = sha256([senderZkpPrivateKey]);
+  const { offchain = false, ...items } = withdrawParams;
+  const { ercAddress, tokenId, value, recipientAddress, nsk, ask, fee } = generalise(items);
+  const { compressedPkd } = await calculateIvkPkdfromAskNsk(ask, nsk);
 
   // the first thing we need to do is to find and input commitment which
   // will enable us to conduct our withdraw.  Let's rummage in the db...
   const [oldCommitment] = (await findUsableCommitments(
-    senderZkpPublicKey,
+    compressedPkd,
     ercAddress,
     tokenId,
     value,
@@ -51,7 +50,7 @@ async function withdraw(transferParams) {
   else throw new Error('No suitable commitments were found'); // caller to handle - need to get the user to make some commitments or wait until they've been posted to the blockchain and Timber knows about them
   // Having found 1 commitment, which is a suitable input to the
   // proof, the next step is to compute its nullifier;
-  const nullifier = new Nullifier(oldCommitment, senderZkpPrivateKey);
+  const nullifier = new Nullifier(oldCommitment, nsk);
   // and the Merkle path from the commitment to the root
   const siblingPath = generalise(await getSiblingPath(await oldCommitment.index));
   logger.silly(`SiblingPath was: ${JSON.stringify(siblingPath)}`);
@@ -74,7 +73,8 @@ async function withdraw(transferParams) {
     oldCommitment.preimage.value.limbs(32, 8),
     oldCommitment.preimage.salt.limbs(32, 8),
     oldCommitment.hash.limbs(32, 8),
-    nullifier.preimage.zkpPrivateKey.limbs(32, 8),
+    ask.field(BN128_GROUP_ORDER),
+    nullifier.preimage.nsk.limbs(32, 8),
     nullifier.hash.limbs(32, 8),
     recipientAddress.field(BN128_GROUP_ORDER),
     siblingPath.map(node => node.field(BN128_GROUP_ORDER, false)), // siblingPAth[32] is a sha hash and will overflow a field but it's ok to take the mod here - hence the 'false' flag

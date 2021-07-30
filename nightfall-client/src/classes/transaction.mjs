@@ -21,6 +21,7 @@ function keccak(preimage) {
     { t: 'bytes32', v: preimage.recipientAddress },
     ...preimage.commitments.map(ch => ({ t: 'bytes32', v: ch })),
     ...preimage.nullifiers.map(nh => ({ t: 'bytes32', v: nh })),
+    ...preimage.compressedSecrets.map(es => ({ t: 'bytes32', v: es })),
     ...preimage.proof.map(p => ({ t: 'uint', v: p })),
   );
 }
@@ -40,6 +41,7 @@ class Transaction {
     recipientAddress,
     commitments: _commitments, // this must be an array of objects from the Commitments class
     nullifiers: _nullifiers, // this must be an array of objects from the Nullifier class
+    compressedSecrets: _compressedSecrets, // this must be array of objects that are compressed from Secrets class
     proof, // this must be a proof object, as computed by zokrates worker
   }) {
     if (proof === undefined) throw new Error('Proof cannot be undefined');
@@ -47,12 +49,16 @@ class Transaction {
     if (publicInputs === undefined) throw new Error('PublicInputs cannot be undefined');
     let commitments;
     let nullifiers;
+    let compressedSecrets;
     if (_commitments === undefined) commitments = [{ hash: 0 }, { hash: 0 }];
     else if (_commitments.length === 1) commitments = [..._commitments, { hash: 0 }];
     else commitments = _commitments;
     if (_nullifiers === undefined) nullifiers = [{ hash: 0 }, { hash: 0 }];
     else if (_nullifiers.length === 1) nullifiers = [..._nullifiers, { hash: 0 }];
     else nullifiers = _nullifiers;
+    if (_compressedSecrets === undefined) compressedSecrets = [0, 0, 0, 0, 0, 0, 0, 0];
+    // else if (_compressedSecrets.length === 1) secrets = [..._compressedSecrets, { hash: 0 }];
+    else compressedSecrets = _compressedSecrets;
     // convert everything to hex(32) for interfacing with web3
     const preimage = generalise({
       fee: fee || 0,
@@ -65,6 +71,7 @@ class Transaction {
       recipientAddress: recipientAddress || 0,
       commitments: commitments.map(c => c.hash),
       nullifiers: nullifiers.map(n => n.hash),
+      compressedSecrets,
       proof: flatProof,
     }).all.hex(32);
     // compute the solidity hash, using suitable type conversions
@@ -96,6 +103,7 @@ class Transaction {
       recipientAddress,
       commitments,
       nullifiers,
+      compressedSecrets,
       proof,
     } = transaction;
     return {
@@ -108,6 +116,7 @@ class Transaction {
       recipientAddress,
       commitments,
       nullifiers,
+      compressedSecrets,
       proof: compressProof(proof),
     };
   }

@@ -16,6 +16,7 @@ async function blockProposedEventHandler(data) {
   const currentBlockCount = data.blockNumber;
   const { block, transactions } = await getProposeBlockCalldata(data);
   logger.info('Received BlockProposed event');
+  console.log('HERE transactions in optimist', transactions);
 
   try {
     // and save the block to facilitate later lookup of block data

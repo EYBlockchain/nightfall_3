@@ -6,6 +6,8 @@ import withdraw from './withdraw.mjs';
 import isMessageValid from './check-message.mjs';
 import finaliseWithdrawal from './finalise-withdrawal.mjs';
 import peers from './peers.mjs';
+import commitment from './commitment.mjs';
+import incomingViewingKey from './incomingViewingKey.mjs';
 
 export {
   transfer,
@@ -16,4 +18,6 @@ export {
   isMessageValid,
   finaliseWithdrawal,
   peers,
+  commitment,
+  incomingViewingKey,
 };

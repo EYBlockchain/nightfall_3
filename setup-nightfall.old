@@ -1,0 +1,6 @@
+#! /bin/bash
+
+# Install node dependencies
+npm ci
+
+docker-compose build --no-cache

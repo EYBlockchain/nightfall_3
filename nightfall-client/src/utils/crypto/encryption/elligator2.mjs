@@ -15,10 +15,10 @@ function chi(a) {
   return powerMod(a, (BN128_GROUP_ORDER - one) / BigInt(2), Fp);
 }
 
-// if value <= p-1//2, then positive
-function isPositive(value) {
-  return value % Fp <= modDivide(BN128_GROUP_ORDER - BigInt(1), BigInt(2), Fp);
-}
+// // if value <= p-1//2, then positive
+// function isPositive(value) {
+//   return value % Fp <= modDivide(BN128_GROUP_ORDER - BigInt(1), BigInt(2), Fp);
+// }
 
 // if value > p-1//2, then negative
 function isNegative(value) {

@@ -2,9 +2,8 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import Queue from 'queue';
-import gen from 'general-number';
 import WebSocket from 'ws';
-import sha256 from '../nightfall-client/src/utils/crypto/sha256.mjs';
+import config from 'config';
 import {
   closeWeb3Connection,
   submitTransaction,
@@ -14,15 +13,16 @@ import {
   timeJump,
   topicEventMapping,
 } from './utils.mjs';
+import { generateKeys } from '../nightfall-client/src/services/keys.mjs';
 
+const { ZKP_KEY_LENGTH } = config;
 const { expect, assert } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
-const { GN } = gen;
 const blockSubmissionQueue = new Queue({ concurrency: 1 });
 
-describe('Testing the http API', () => {
+describe('Testing the http API', async () => {
   let shieldAddress;
   let stateAddress;
   let proposersAddress;
@@ -31,8 +31,15 @@ describe('Testing the http API', () => {
   let transactions = [];
   let connection; // WS connection
   let blockSubmissionFunction;
-  const zkpPrivateKey = '0xc05b14fa15148330c6d008814b0bdd69bc4a08a1bd0b629c42fa7e2c61f16739'; // the zkp private key we're going to use in the tests.
-  const zkpPublicKey = sha256([new GN(zkpPrivateKey)]).hex();
+
+  const {
+    ask: ask1,
+    nsk: nsk1,
+    ivk: ivk1,
+    pkd: pkd1,
+    // compressedPkd: compressedPkd1,
+  } = await generateKeys(ZKP_KEY_LENGTH);
+
   const url = 'http://localhost:8080';
   const optimistUrl = 'http://localhost:8081';
   const optimistWsUrl = 'ws:localhost:8082';
@@ -75,8 +82,10 @@ describe('Testing the http API', () => {
       const msg = JSON.parse(message.data);
       const { type, txDataToSign } = msg;
       if (type === 'block') {
+        console.log('HERE block');
         await blockSubmissionFunction(txDataToSign, privateKey, stateAddress, gas, BLOCK_STAKE);
       } else {
+        console.log('HERE block not');
         await submitTransaction(txDataToSign, privateKey, challengesAddress, gas);
       }
     };
@@ -86,13 +95,6 @@ describe('Testing the http API', () => {
     it('should respond with status 200 to the health check', async () => {
       const res = await chai.request(url).get('/healthcheck');
       expect(res.status).to.equal(200);
-    });
-
-    it('should generate a new 256 bit zkp private key for a user', async () => {
-      const res = await chai.request(url).get('/generate-zkp-key');
-      expect(res.body.keyId).to.be.a('string');
-      // normally this value would be the private key for subsequent transactions
-      // however we use a fixed one (zkpPrivateKey) to make the tests more independent.
     });
 
     it('should get the address of the shield contract', async () => {
@@ -105,6 +107,15 @@ describe('Testing the http API', () => {
       const res = await chai.request(url).get('/contract-address/ERCStub');
       ercAddress = res.body.address;
       expect(ercAddress).to.be.a('string');
+    });
+
+    it('should subscribe to block proposed event with the provided incoming viewing key', async () => {
+      const res = await chai.request(url).post('/incoming-viewing-key').send({
+        ivk: ivk1,
+        nsk: nsk1,
+      });
+      expect(res.body.status).to.be.a('string');
+      expect(res.body.status).to.equal('success');
     });
   });
 
@@ -136,7 +147,7 @@ describe('Testing the http API', () => {
       expect(endBalance - startBalance).to.closeTo(-bond, gasCosts);
       await chai.request(url).post('/peers/addPeers').send({
         address: myAddress,
-        enode: 'http://optimist:80',
+        enode: 'http://optimist1:80',
       });
     });
   });
@@ -155,7 +166,7 @@ describe('Testing the http API', () => {
             chai
               .request(url)
               .post('/deposit')
-              .send({ ercAddress, tokenId, value, zkpPrivateKey, fee }),
+              .send({ ercAddress, tokenId, value, pkd: pkd1, nsk: nsk1, fee }),
           ),
         )
       ).map(res => res.body);
@@ -203,9 +214,10 @@ describe('Testing the http API', () => {
           tokenId,
           recipientData: {
             values: [value],
-            recipientZkpPublicKeys: [zkpPublicKey],
+            recipientPkds: [pkd1],
           },
-          senderZkpPrivateKey: zkpPrivateKey,
+          nsk: nsk1,
+          ask: ask1,
           fee,
         });
       expect(res.body.txDataToSign).to.be.a('string');
@@ -232,9 +244,10 @@ describe('Testing the http API', () => {
           tokenId,
           recipientData: {
             values: [value],
-            recipientZkpPublicKeys: [zkpPublicKey],
+            recipientPkds: [pkd1],
           },
-          senderZkpPrivateKey: zkpPrivateKey,
+          nsk: nsk1,
+          ask: ask1,
           fee,
         });
       expect(res.status).to.be.equal(200);
@@ -244,7 +257,7 @@ describe('Testing the http API', () => {
             chai
               .request(url)
               .post('/deposit')
-              .send({ ercAddress, tokenId, value, zkpPrivateKey, fee }),
+              .send({ ercAddress, tokenId, value, pkd: pkd1, nsk: nsk1, fee }),
           ),
         )
       ).map(dRes => dRes.body);
@@ -275,9 +288,10 @@ describe('Testing the http API', () => {
           tokenId,
           recipientData: {
             values: [value2],
-            recipientZkpPublicKeys: [zkpPublicKey],
+            recipientPkds: [pkd1],
           },
-          senderZkpPrivateKey: zkpPrivateKey,
+          nsk: nsk1,
+          ask: ask1,
         });
       // now we need to sign the transaction and send it to the blockchain
       expect(res.body.txDataToSign).to.be.a('string');
@@ -308,9 +322,10 @@ describe('Testing the http API', () => {
           recipientData: {
             // Add one here so we dont use the output of the previous double transfer as a single transfer input
             values: [value2 + 1],
-            recipientZkpPublicKeys: [zkpPublicKey],
+            recipientPkds: [pkd1],
           },
-          senderZkpPrivateKey: zkpPrivateKey,
+          nsk: nsk1,
+          ask: ask1,
         });
       expect(res.status).to.be.equal(200);
 
@@ -320,7 +335,7 @@ describe('Testing the http API', () => {
             chai
               .request(url)
               .post('/deposit')
-              .send({ ercAddress, tokenId, value, zkpPrivateKey, fee }),
+              .send({ ercAddress, tokenId, value, pkd: pkd1, nsk: nsk1, fee }),
           ),
         )
       ).map(dRes => dRes.body);
@@ -345,8 +360,9 @@ describe('Testing the http API', () => {
         ercAddress,
         tokenId,
         value,
-        senderZkpPrivateKey: zkpPrivateKey,
         recipientAddress,
+        nsk: nsk1,
+        ask: ask1,
       });
       transactions.push(res.body.transaction); // a new transaction
       expect(res.body.txDataToSign).to.be.a('string');
@@ -367,7 +383,7 @@ describe('Testing the http API', () => {
             chai
               .request(url)
               .post('/deposit')
-              .send({ ercAddress, tokenId, value, zkpPrivateKey, fee }),
+              .send({ ercAddress, tokenId, value, pkd: pkd1, nsk: nsk1, fee }),
           ),
         )
       ).map(dRes => dRes.body);
@@ -382,6 +398,7 @@ describe('Testing the http API', () => {
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
       eventLogs.shift();
+      console.log('HERE eventLogs end of http.mjs', eventLogs);
     });
   });
   // when the widthdraw transaction is finalised, we want to be able to pull the
@@ -445,7 +462,7 @@ describe('Testing the http API', () => {
     });
   });
 
-  describe('Make three blocks before submitting to the blockchain', () => {
+  describe.skip('Make three blocks before submitting to the blockchain', () => {
     it(`Should make ${txPerBlock * 3} transactions with no block submission`, async () => {
       // hold block submission
       blockSubmissionQueue.stop();
@@ -461,7 +478,7 @@ describe('Testing the http API', () => {
             chai
               .request(url)
               .post('/deposit')
-              .send({ ercAddress, tokenId, value, zkpPrivateKey, fee }),
+              .send({ ercAddress, tokenId, value, pkd: pkd1, nsk: nsk1, fee }),
           ),
         )
       ).map(res => res.body);
@@ -486,7 +503,7 @@ describe('Testing the http API', () => {
       for (let i = 0; i < 10; i++) {
         if (blockSubmissionQueue.length === 3) break;
         // eslint-disable-next-line no-await-in-loop
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 5000));
       }
       expect(blockSubmissionQueue.length).to.equal(3);
     });

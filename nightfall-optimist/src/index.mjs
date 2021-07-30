@@ -22,7 +22,7 @@ import {
 import { setChallengeWebSocketConnection } from './services/challenges.mjs';
 import { initialBlockSync } from './services/state-sync.mjs';
 
-const main = async ivk => {
+const main = async () => {
   try {
     const proposer = new Proposer();
     // subscribe to WebSocket events first
@@ -37,7 +37,7 @@ const main = async ivk => {
     // we do not wait for the initial block sync for these event handlers
     // as we want to still listen to incoming events (just not make blocks)
     // subscribe to blockchain events
-    subscribeToBlockProposedEvent(blockProposedEventHandler, ivk);
+    subscribeToBlockProposedEvent(blockProposedEventHandler);
     subscribeToTransactionSubmitted(transactionSubmittedEventHandler);
     subscribeToRollbackEventHandler(rollbackEventHandler);
     subscribeTocommittedToChallengeEventHandler(committedToChallengeEventHandler);
@@ -48,6 +48,4 @@ const main = async ivk => {
   }
 };
 
-const args = process.argv.slice(2);
-
-main(args[0]);
+main();

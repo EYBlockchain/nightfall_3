@@ -3,9 +3,9 @@
 // https://github.com/rsandor/number-theory
 // but converts them for BigInt (the original library is limited to <2**52)
 // We are very grateful for the original work by rsandor
+import config from 'config';
 
-// import config from './config.mjs';
-import { BN128_GROUP_ORDER } from 'config';
+const { BN128_GROUP_ORDER } = config;
 
 function addMod(addMe, m = BN128_GROUP_ORDER) {
   return addMe.reduce((e, acc) => (((e + m) % m) + acc) % m, BigInt(0));

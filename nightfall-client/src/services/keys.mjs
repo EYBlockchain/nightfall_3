@@ -1,59 +1,62 @@
 import { GN, generalise } from 'general-number';
-import { BABYJUBJUB } from 'config';
+import config from 'config';
 import { scalarMult, edwardsCompress } from '../utils/crypto/encryption/elgamal.mjs';
 import rand from '../utils/crypto/crypto-random.mjs';
 import { mimcHash } from '../utils/crypto/mimc/mimc.mjs';
 
-export async function calculatePublicKey(privateKey) {
+const { BABYJUBJUB, BN128_GROUP_ORDER } = config;
+
+export function calculatePublicKey(privateKey) {
   return generalise(scalarMult(privateKey.hex(), BABYJUBJUB.GENERATOR));
 }
 
-export async function compressPublicKey(publicKey) {
+export function compressPublicKey(publicKey) {
   return new GN(edwardsCompress([publicKey[0].bigInt, publicKey[1].bigInt]));
 }
 
-export async function generateSK(length) {
-  return rand(length);
+export async function generateASK(length) {
+  const ask = new GN((await rand(length)).bigInt % BN128_GROUP_ORDER);
+  return ask;
 }
 
-async function calculateASK(sk) {
-  return new GN(mimcHash([sk.bigInt, BigInt(0)]));
+export async function generateNSK(length) {
+  const nsk = new GN((await rand(length)).bigInt % BN128_GROUP_ORDER);
+  return nsk;
 }
 
-async function calculateNSK(sk) {
-  return new GN(mimcHash([sk.bigInt, BigInt(1)]));
-}
-
-export async function calculateIVK(ask, nsk) {
+export function calculateIVK(ask, nsk) {
   return new GN(mimcHash([ask.bigInt, nsk.bigInt]));
 }
 
-export async function calculatePkd(ivk) {
-  const pkd = await calculatePublicKey(ivk);
-  const compressedPkd = await compressPublicKey(pkd);
+export function calculatePkd(ivk) {
+  const pkd = calculatePublicKey(ivk);
+  const compressedPkd = compressPublicKey(pkd);
   return { pkd, compressedPkd };
 }
 
-export async function calculatePkdFromAskNsk(ask, nsk) {
-  const ivk = await calculateIVK(ask, nsk);
+export function calculatePkdFromAskNsk(ask, nsk) {
+  const ivk = calculateIVK(ask, nsk);
   return calculatePkd(ivk);
 }
 
-// Randomly generate SK
-// NSK = Hash(SK||0)
-// ASK = Hash(SK||1)
-// IVK = Hash(ASK, NSK)
-// Pkd = IVK .  Gd
+export function calculateIvkPkdfromAskNsk(ask, nsk) {
+  const ivk = calculateIVK(ask, nsk);
+  const { pkd, compressedPkd } = calculatePkd(ivk);
+  return { ivk, pkd, compressedPkd };
+}
+
+// Randomly generate sk
+// ask and nsk are random secret keys
+// ivk = MiMC(ask, nsk)
+// pkd = ivk.G
 
 // function to generate all the required keys
 export async function generateKeys(length) {
-  const sk = await generateSK(length);
-  const ask = await calculateASK(sk);
-  const nsk = await calculateNSK(sk);
-  const ivk = await calculateIVK(ask, nsk);
-  const { pkd, compressedPkd } = await calculatePkd(ivk);
+  const ask = await generateASK(length);
+  const nsk = await generateNSK(length);
+  const ivk = calculateIVK(ask, nsk);
+  const { pkd, compressedPkd } = calculatePkd(ivk);
   return {
-    sk: sk.hex(),
     ask: ask.hex(),
     nsk: nsk.hex(),
     ivk: ivk.hex(),

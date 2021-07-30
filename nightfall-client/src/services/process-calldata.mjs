@@ -24,6 +24,7 @@ function calcBlockHash(block, transactions) {
       recipientAddress,
       commitments,
       nullifiers,
+      compressedSecrets,
       proof,
     } = t;
     return [
@@ -36,6 +37,7 @@ function calcBlockHash(block, transactions) {
       recipientAddress,
       commitments,
       nullifiers,
+      compressedSecrets,
       proof, // note - this is not compressed here
     ];
   });
@@ -72,7 +74,7 @@ async function getProposeBlockCalldata(eventData) {
       recipientAddress,
       commitments,
       nullifiers,
-      encryptedSecrets,
+      compressedSecrets,
       proof,
     ] = t;
     const transaction = {
@@ -85,13 +87,16 @@ async function getProposeBlockCalldata(eventData) {
       recipientAddress,
       commitments,
       nullifiers,
-      encryptedSecrets,
+      compressedSecrets,
       proof, // note - this is not decompressed here
     };
     // note, this transaction is incomplete in that the 'fee' field is empty.
     // that shouldn't matter as it's not needed.
     return transaction;
   });
+  // Client needs to check if the commitment that can be created from decrypted secrets is the
+  // same as the commitment in the transaction
+  const commitments = transactions.map(t => t.commitments);
   // Client is only really interested in the nullifiers that have been added
   // because it needs to know if a commitment has been spent or not. Neither
   // Optimist or Timber can know this as we don't want them dealing with
@@ -122,7 +127,13 @@ async function getProposeBlockCalldata(eventData) {
     // eslint-disable-next-line no-await-in-loop
     blockHash !== (await stateContractInstance.methods.getBlockData(blockNumberL2).call()).blockHash
   );
-  return { nullifiers, blockNumberL2 };
+  // Client needs to know if any commitments have been received from a sender. It checks for this
+  // by looking into the compressed secrets
+  const compressedSecrets = transactions.map(t => t.compressedSecrets);
+  // .map(
+  //   secret => secret.bigInt,
+  // );
+  return { commitments, nullifiers, blockNumberL2, compressedSecrets };
 }
 
 export default getProposeBlockCalldata;

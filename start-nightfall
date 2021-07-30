@@ -1,20 +1,28 @@
 #! /bin/bash
-docker-compose down --remove-orphans
+docker-compose -f docker-compose.enc-test.yml down --remove-orphans
 
 VOLUME_LIST=$(docker volume ls -q)
 
 # if-else block checks - volume exist and then removes it.
-if [[ $(echo $VOLUME_LIST | grep nightfall_3_timber-database-volume) ]]; then
-  docker volume rm nightfall_3_timber-database-volume
+if [[ $(echo $VOLUME_LIST | grep nightfall_3_timber-database-volume1) ]]; then
+  docker volume rm nightfall_3_timber-database-volume1
 fi
 
-if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb) ]]; then
-  docker volume rm nightfall_3_mongodb
+if [[ $(echo $VOLUME_LIST | grep nightfall_3_timber-database-volume2) ]]; then
+  docker volume rm nightfall_3_timber-database-volume2
+fi
+
+if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb1) ]]; then
+  docker volume rm nightfall_3_mongodb1
+fi
+
+if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb2) ]]; then
+  docker volume rm nightfall_3_mongodb2
 fi
 
 if [[ $(echo $VOLUME_LIST | grep nightfall_3_build) ]]; then
   docker volume rm nightfall_3_build
 fi
 
-docker-compose up -d deployer
-docker-compose up
+docker-compose -f docker-compose.enc-test.yml up -d deployer
+docker-compose -f docker-compose.enc-test.yml up

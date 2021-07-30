@@ -19,22 +19,40 @@ export async function dropCommitments() {
   return db.collection(COMMITMENTS_COLLECTION).drop();
 }
 
-// function to format a commitment for a mongo db and store it
-export async function storeCommitment(commitment, zkpPrivateKey) {
+// function to retrieve commitment with a specified salt
+export async function getCommitmentByCommitment(commitment) {
   const connection = await mongo.connection(MONGO_URL);
-  // we'll also compute and store the nullifier hash.  This will be useful for
-  // spotting if the commitment spend is ever rolled back, which would mean the
-  // commitment is once again available to spend
-  const nullifierHash = new Nullifier(commitment, zkpPrivateKey).hash.hex(32);
-  const data = {
-    _id: commitment.hash.hex(32),
-    preimage: commitment.preimage.all.hex(32),
-    isNullified: commitment.isNullified,
-    isNullifiedOnChain: Number(commitment.isNullifiedOnChain),
-    nullifier: nullifierHash,
-  };
   const db = connection.db(COMMITMENTS_DB);
-  return db.collection(COMMITMENTS_COLLECTION).insertOne(data);
+  const commitmentsCount = await db
+    .collection(COMMITMENTS_COLLECTION)
+    .countDocuments({ _id: commitment.hash.hex(32) });
+  return commitmentsCount;
+}
+
+// function to format a commitment for a mongo db and store it
+export async function storeCommitment(commitment, nsk) {
+  // if (getCommitmentByCommitment(commitment) !== 0) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  const commitmentsCount = await db
+    .collection(COMMITMENTS_COLLECTION)
+    .countDocuments({ _id: commitment.hash.hex(32) });
+  if (commitmentsCount === 0) {
+    // we'll also compute and store the nullifier hash.  This will be useful for
+    // spotting if the commitment spend is ever rolled back, which would mean the
+    // commitment is once again available to spend
+    const nullifierHash = new Nullifier(commitment, nsk).hash.hex(32);
+    const data = {
+      _id: commitment.hash.hex(32),
+      preimage: commitment.preimage.all.hex(32),
+      isNullified: commitment.isNullified,
+      isNullifiedOnChain: Number(commitment.isNullifiedOnChain),
+      nullifier: nullifierHash,
+    };
+    return db.collection(COMMITMENTS_COLLECTION).insertOne(data);
+  }
+  logger.info('Received commitment from self');
+  return null;
 }
 
 // function to mark a commitment as nullified for a mongo db
@@ -44,6 +62,17 @@ export async function markNullified(commitment) {
   const update = { $set: { isNullified: true } };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateOne(query, update);
+}
+
+// function to retrieve commitment with a specified salt
+export async function getCommitmentBySalt(salt) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  const commitments = await db
+    .collection(COMMITMENTS_COLLECTION)
+    .find({ 'preimage.salt': generalise(salt).hex(32) })
+    .toArray();
+  return commitments;
 }
 
 /*
@@ -76,14 +105,14 @@ export async function markNullifiedOnChain(nullifiers, blockNumberL2) {
 }
 
 // function to find commitments that can be used in the proposed transfer
-export async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _value, onlyOne) {
+export async function findUsableCommitments(compressedPkd, ercAddress, tokenId, _value, onlyOne) {
   const value = generalise(_value); // sometimes this is sent as a BigInt.
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const commitmentArray = await db
     .collection(COMMITMENTS_COLLECTION)
     .find({
-      'preimage.zkpPublicKey': zkpPublicKey.hex(32),
+      'preimage.compressedPkd': compressedPkd.hex(32),
       'preimage.ercAddress': ercAddress.hex(32),
       'preimage.tokenId': tokenId.hex(32),
       isNullified: false,

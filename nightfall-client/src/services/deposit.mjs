@@ -17,7 +17,7 @@ import Commitment from '../classes/commitment.mjs';
 import PublicInputs from '../classes/public-inputs.mjs';
 import { storeCommitment } from './commitment-storage.mjs';
 import Transaction from '../classes/transaction.mjs';
-import { calculatePublicKey, compressPublicKey } from './keys.mjs';
+import { compressPublicKey } from './keys.mjs';
 
 const {
   ZKP_KEY_LENGTH,
@@ -34,9 +34,8 @@ async function deposit(items) {
   logger.info('Creating a deposit transaction');
   // before we do anything else, long hex strings should be generalised to make
   // subsequent manipulations easier
-  const { ercAddress, tokenId, value, ivk, fee } = generalise(items);
-  const pkd = calculatePublicKey(ivk);
-  const compressedPkd = await compressPublicKey(pkd);
+  const { ercAddress, tokenId, value, pkd, nsk, fee } = generalise(items);
+  const compressedPkd = compressPublicKey(pkd);
 
   // we also need a salt to make the commitment unique and increase its entropy
   const salt = await rand(ZKP_KEY_LENGTH);
@@ -89,7 +88,7 @@ async function deposit(items) {
       .submitTransaction(Transaction.buildSolidityStruct(optimisticDepositTransaction))
       .encodeABI();
     // store the commitment on successful computation of the transaction
-    storeCommitment(commitment, ivk);
+    storeCommitment(commitment, nsk);
     return { rawTransaction, transaction: optimisticDepositTransaction };
   } catch (err) {
     throw new Error(err); // let the caller handle the error

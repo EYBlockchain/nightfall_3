@@ -4,7 +4,7 @@
   "description": "Optimistic Nightfall",
   "main": "./nightfall-client/src/index.mjs",
   "scripts": {
-    "test": "mocha --timeout 0 --bail test/http.mjs test/neg-http.mjs",
+    "test": "mocha --timeout 0 --bail test/http.mjs test/neg-http.mjs test/enc.mjs",
     "test-gas": "mocha --timeout 0 --bail test/tx-gas.mjs",
     "lint": "eslint . --ext js,mjs",
     "prepare": "husky install"
@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/EYBlockchain/optimistic-nightfall#readme",
   "devDependencies": {
+    "config": "^3.3.1",
     "@commitlint/cli": "^12.1.1",
     "@commitlint/config-conventional": "^12.1.1",
     "axios": "^0.21.1",

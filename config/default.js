@@ -45,15 +45,15 @@ module.exports = {
   TIMBER_SYNC_RETRIES: 5, // Sets amount of exponential backoff attempts to sync with timber.
   PROPOSE_BLOCK_TYPES: [
     '(uint48,address,bytes32)',
-    '(uint64,uint64,uint8,bytes32,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],uint[4])[]',
+    '(uint64,uint64,uint8,bytes32,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[8],uint[4])[]',
   ], // used to encode/decode proposeBlock signature
   SUBMIT_TRANSACTION_TYPES:
-    '(uint64,uint64,uint8,bytes32,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],uint[4])',
+    '(uint64,uint64,uint8,bytes32,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[8],uint[4])',
   RETRIES: 50,
   NODE_HASHLENGTH: 32,
   ZERO: '0x0000000000000000000000000000000000000000000000000000000000000000',
   HASH_TYPE: 'mimc',
-  USE_STUBS: process.env.USE_STUBS === 'false',
+  USE_STUBS: process.env.USE_STUBS === 'true',
   VK_IDS: { deposit: 0, single_transfer: 1, double_transfer: 2, withdraw: 3 }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
 
   // the various parameters needed to describe the Babyjubjub curve that we use for El-Gamal

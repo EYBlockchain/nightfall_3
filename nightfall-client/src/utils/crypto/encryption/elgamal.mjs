@@ -1,12 +1,14 @@
 /**
-functions to support El-Gamal encryption over a BabyJubJub curve
+functions to support El-Gamal cipherText over a BabyJubJub curve
 */
 
-import { BABYJUBJUB, BN128_GROUP_ORDER } from 'config';
+import config from 'config';
 import { squareRootModPrime, addMod, mulMod } from './number-theory.mjs';
 import { modDivide } from './modular-division.mjs'; // TODO REPLACE WITH NPM VERSION
 import utils from '../merkle-tree/utils.mjs';
 import { hashToCurve, hashToCurveYSqrt, curveToHash } from './elligator2.mjs';
+
+const { BABYJUBJUB, BN128_GROUP_ORDER } = config;
 
 const one = BigInt(1);
 const { JUBJUBE, JUBJUBC, JUBJUBD, JUBJUBA, GENERATOR } = BABYJUBJUB;
@@ -21,15 +23,15 @@ function isOnCurve(p) {
   return (a * uu + vv) % Fp === (one + d * uuvv) % Fp;
 }
 
-// is On Montgomery curve By^2 = x^3 + Ax^2 + x
-function isOnCurveMF(p) {
-  const { MONTA: a, MONTB: b } = BABYJUBJUB;
-  const u = p[0];
-  const uu = (p[0] * p[0]) % Fp;
-  const uuu = (p[0] * p[0] * p[0]) % Fp;
-  const vv = (p[1] * p[1]) % Fp;
-  return (b * vv) % Fp === (uuu + a * uu + u) % Fp;
-}
+// // is On Montgomery curve By^2 = x^3 + Ax^2 + x
+// function isOnCurveMF(p) {
+//   const { MONTA: a, MONTB: b } = BABYJUBJUB;
+//   const u = p[0];
+//   const uu = (p[0] * p[0]) % Fp;
+//   const uuu = (p[0] * p[0] * p[0]) % Fp;
+//   const vv = (p[1] * p[1]) % Fp;
+//   return (b * vv) % Fp === (uuu + a * uu + u) % Fp;
+// }
 
 function negate(g) {
   return [Fp - g[0], g[1]]; // this is wierd - we negate the x coordinate, not the y with babyjubjub!
@@ -100,13 +102,13 @@ function twistedEdwardsToMontgomery(p) {
 }
 
 /**
-Performs El-Gamal encryption
+Performs El-Gamal cipherText
 @param {Array(String)} strings - array containing the hex strings to be encrypted
-@param {String} randomSecrets - random values mod Fq. They must be unique and changed each time this function is called
+@param {String} ephemeralKeys - random values mod Fq. They must be unique and changed each time this function is called
 @param {String} publicKey - public key to encrypt with
 */
-function enc(randomSecrets, strings, publicKey) {
-  if (randomSecrets.length < strings.length) {
+function enc(ephemeralKeys, strings, publicKey) {
+  if (ephemeralKeys.length < strings.length) {
     throw new Error(
       'The number of random secrets must be greater than or equal to the number of messages',
     );
@@ -119,34 +121,34 @@ function enc(randomSecrets, strings, publicKey) {
     return montgomeryToTwistedEdwards(e);
   });
   // we get square roots calculated in hash to curve because it is quicker to prove squaring of two numbers than the square root value in zk circuits
-  const sqrts = strings.map(e => hashToCurveYSqrt(e));
+  const squareRootsElligator2 = strings.map(e => hashToCurveYSqrt(e));
   // now we use the public keys and random number to generate shared secrets
-  const sharedSecrets = randomSecrets.map(e => {
+  const sharedSecrets = ephemeralKeys.map(e => {
     // eslint-disable-next-line valid-typeof
     if (typeof e !== 'bigint')
       throw new Error(
-        'The random secret chosen for encryption should be a BigInt, unlike the messages, which are hex strings',
+        'The random secret chosen for cipherText should be a BigInt, unlike the messages, which are hex strings',
       );
     if (publicKey === undefined) throw new Error('Trying to encrypt with a undefined public key');
     return scalarMult(e, publicKey);
   });
-  // finally, we can encrypt the messages using the share secrets
-  const c = randomSecrets.map(randomSecret => {
-    return scalarMult(randomSecret, GENERATOR);
+  // finally, we can encrypt the messages using the shared secrets
+  const c = ephemeralKeys.map(ephemeralKey => {
+    return scalarMult(ephemeralKey, GENERATOR);
   });
   const encryptedMessages = messagesTE.map((message, i) => {
     return add(message, sharedSecrets[i]);
   });
-  const encryption = [...c, ...encryptedMessages];
-  return { randomSecrets, encryption, sqrts };
+  const cipherText = [...c, ...encryptedMessages];
+  return { ephemeralKeys, cipherText, squareRootsElligator2 };
 }
 
 /**
 Decrypt the above
 */
-function dec(encryption, privateKey) {
-  const c = encryption.slice(0, encryption.length / 2); // this encrypts the sender's random secret, needed for shared-secret generation
-  const encryptedMessages = encryption.slice(encryption.length / 2, encryption.length);
+function dec(cipherText, privateKey) {
+  const c = cipherText.slice(0, cipherText.length / 2); // this encrypts the sender's random secret, needed for shared-secret generation
+  const encryptedMessages = cipherText.slice(cipherText.length / 2, cipherText.length);
   // recover the shared secrets
   const sharedSecrets = c.map(sharedSecret => {
     if (privateKey === undefined)

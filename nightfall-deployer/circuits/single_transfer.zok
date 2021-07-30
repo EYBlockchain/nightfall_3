@@ -1,4 +1,3 @@
-
 from "ecc/babyjubjubParams" import BabyJubJubParams
 from "ecc/babyjubjubParams" import main as curveParams
 from "ecc/edwardsScalarMult" import main as scalarMult
@@ -41,10 +40,10 @@ struct Nullifier {
 }
 
 struct Secrets {
-	u32[8] randomSecret1
-	u32[8] randomSecret2
-	u32[8] randomSecret3
-	u32[8] randomSecret4
+	u32[8] ephemeralKey1
+	u32[8] ephemeralKey2
+	u32[8] ephemeralKey3
+	u32[8] ephemeralKey4
 	field[16] cipherText
 	field sqrtMessage1
 	field sqrtMessage2
@@ -111,7 +110,7 @@ def main(\
 	assert(sha == oldCommitment.hash)
 
 	// And the encryption of the transaction (extend the value up to 256 bits)
-	assert(secrets.cipherText == enc4(oldCommitment.ercAddress, oldCommitment.id, oldCommitment.value, newCommitment.salt, newCommitment.pkdRecipient, secrets.randomSecret1, secrets.randomSecret2, secrets.randomSecret3, secrets.randomSecret4, secrets.sqrtMessage1, secrets.sqrtMessage2, secrets.sqrtMessage3, secrets.sqrtMessage4))
+	assert(secrets.cipherText == enc4(oldCommitment.ercAddress, oldCommitment.id, oldCommitment.value, newCommitment.salt, newCommitment.pkdRecipient, secrets.ephemeralKey1, secrets.ephemeralKey2, secrets.ephemeralKey3, secrets.ephemeralKey4, secrets.sqrtMessage1, secrets.sqrtMessage2, secrets.sqrtMessage3, secrets.sqrtMessage4))
 
 	// check the public input hash
 	// To make the hash smaller, let's 'compress' each curve point ordered pair into a single 256 bit array (rather than two)...
@@ -125,7 +124,7 @@ def main(\
 	bool[256] compressedSecretsBool8 = edwardsCompress(secrets.cipherText[14..16])
 
 	u32[8] compressedSecret1 = bool_256_to_u32_8(compressedSecretsBool1)
-    u32[8] compressedSecret2 = bool_256_to_u32_8(compressedSecretsBool2)
+  u32[8] compressedSecret2 = bool_256_to_u32_8(compressedSecretsBool2)
 	u32[8] compressedSecret3 = bool_256_to_u32_8(compressedSecretsBool3)
 	u32[8] compressedSecret4 = bool_256_to_u32_8(compressedSecretsBool4)
 	u32[8] compressedSecret5 = bool_256_to_u32_8(compressedSecretsBool5)

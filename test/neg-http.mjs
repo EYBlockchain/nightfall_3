@@ -1,10 +1,9 @@
 import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
-import gen from 'general-number';
 import Queue from 'queue';
 import WebSocket from 'ws';
-import sha256 from '../nightfall-client/src/utils/crypto/sha256.mjs';
+import config from 'config';
 import {
   closeWeb3Connection,
   submitTransaction,
@@ -14,26 +13,34 @@ import {
   connectWeb3,
   topicEventMapping,
 } from './utils.mjs';
+import { generateKeys } from '../nightfall-client/src/services/keys.mjs';
 
+const { ZKP_KEY_LENGTH } = config;
 const { expect } = chai;
-const { GN } = gen;
 const txQueue = new Queue({ autostart: true, concurrency: 1 });
 const ZERO = '0x0000000000000000000000000000000000000000000000000000000000000000';
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
-describe('Testing the challenge http API', () => {
+describe('Testing the challenge http API', async () => {
   let shieldAddress;
   let challengeAddress;
   let proposersAddress;
   let stateAddress;
   let ercAddress;
   let connection; // WS connection
-  const zkpPrivateKey = '0xc05b14fa15148330c6d008814b0bdd69bc4a08a1bd0b629c42fa7e2c61f16739'; // the zkp private key we're going to use in the tests.
-  const zkpPublicKey = sha256([new GN(zkpPrivateKey)]).hex();
+
+  const {
+    ask: ask1,
+    nsk: nsk1,
+    ivk: ivk1,
+    pkd: pkd1,
+    // compressedPkd: compressedPkd1,
+  } = await generateKeys(ZKP_KEY_LENGTH);
+
   const url = 'http://localhost:8080';
   const optimistUrl = 'http://localhost:8081';
-  const optimistWsUrl = 'ws:localhost:8082';
+  const optimistWsUrl = 'ws://localhost:8082';
   const tokenId = '0x01';
   const value = 10;
   // this is the etherum private key for accounts[0]
@@ -46,7 +53,8 @@ describe('Testing the challenge http API', () => {
   // this is what we pay the proposer for incorporating a transaction
   const fee = 1;
   const BLOCK_STAKE = 1000000000000000000; // 1 ether
-
+  let eventLogs = [];
+  const txPerBlock = 2;
   let topicsBlockHashIncorrectRootInBlock;
   let topicsBlockHashDuplicateTransaction;
   let topicsBlockHashInvalidTransaction;
@@ -56,8 +64,6 @@ describe('Testing the challenge http API', () => {
   let topicsBlockHashDuplicateNullifier;
   let topicsBlockHashIncorrectLeafCount;
   let web3;
-  const eventLogs = [];
-  const txPerBlock = 2;
 
   before(async () => {
     web3 = await connectWeb3();
@@ -99,6 +105,12 @@ describe('Testing the challenge http API', () => {
     txToSign = res.body.txDataToSign;
     await submitTransaction(txToSign, privateKey, proposersAddress, gas, bond);
 
+    // should subscribe to block proposed event with the provided incoming viewing key
+    await chai.request(url).post('/incoming-viewing-key').send({
+      ivk: ivk1,
+      nsk: nsk1,
+    });
+
     connection = new WebSocket(optimistWsUrl);
     connection.onopen = () => {
       connection.send('challenge');
@@ -106,110 +118,110 @@ describe('Testing the challenge http API', () => {
     };
     connection.onmessage = async message => {
       // let txReceipt;
-      txQueue.push(async () => {
-        const msg = JSON.parse(message.data);
-        const { type } = msg;
-        let { txDataToSign } = msg;
-        if (type === 'block') {
-          const { block, transactions } = msg;
-          if (counter === 0) {
-            [duplicateTransaction] = transactions;
-            console.log(
-              `Created good block to extract duplicate tx from with blockHash ${block.blockHash}`,
-            );
-          } else if (counter === 1) {
-            [duplicateNullifier] = transactions
-              .map(t => t.nullifiers.filter(n => n !== ZERO))
-              .flat(Infinity);
-            console.log(
-              `Created good block to extract duplicate nullifier ${duplicateNullifier} from with blockHash ${block.blockHash}`,
-            );
-          } else if (counter === 2) {
-            res = await createBadBlock('IncorrectRoot', block, transactions, {
-              leafIndex: 1,
-            });
-            topicsBlockHashIncorrectRootInBlock = res.block.blockHash;
-            txDataToSign = res.txDataToSign;
-            console.log(
-              `Created flawed block with incorrect root and blockHash ${res.block.blockHash}`,
-            );
-          } else if (counter === 3) {
-            res = await createBadBlock('DuplicateTransaction', block, transactions, {
-              duplicateTransaction,
-            });
-            topicsBlockHashDuplicateTransaction = res.block.blockHash;
-            txDataToSign = res.txDataToSign;
-            console.log(
-              `Created flawed block containing duplicate transaction and blockHash ${res.block.blockHash}`,
-            );
-          } else if (counter === 4) {
-            res = await createBadBlock('InvalidDepositTransaction', block, transactions);
-            topicsBlockHashInvalidTransaction = res.block.blockHash;
-            txDataToSign = res.txDataToSign;
-            console.log(
-              `Created flawed block with invalid deposit transaction and blockHash ${res.block.blockHash}`,
-            );
-          } else if (counter === 5) {
-            res = await createBadBlock('IncorrectHistoricRoot', block, transactions, {
-              ercAddress,
-              zkpPrivateKey,
-            });
-            topicsBlockHashesIncorrectHistoricRoot = res.block.blockHash;
-            txDataToSign = res.txDataToSign;
-            console.log(`Created flawed block with invalid historic root ${res.block.blockHash}`);
-          } else if (counter === 6) {
-            res = await createBadBlock('IncorrectPublicInputHash', block, transactions);
-            topicsBlockHashIncorrectPublicInputHash = res.block.blockHash;
-            txDataToSign = res.txDataToSign;
-            console.log(
-              `Created flawed block with incorrect public input hash and blockHash ${res.block.blockHash}`,
-            );
-          } else if (counter === 7) {
-            res = await createBadBlock('IncorrectProof', block, transactions, {
-              proof: duplicateTransaction.proof,
-            });
-            topicsBlockHashIncorrectProof = res.block.blockHash;
-            txDataToSign = res.txDataToSign;
-            console.log(
-              `Created flawed block with incorrect proof and blockHash ${res.block.blockHash}`,
-            );
-          } else if (counter === 8) {
-            res = await createBadBlock('DuplicateNullifier', block, transactions, {
-              duplicateNullifier,
-            });
-            topicsBlockHashDuplicateNullifier = res.block.blockHash;
-            txDataToSign = res.txDataToSign;
-            console.log(
-              `Created flawed block with duplicate nullifier and blockHash ${res.block.blockHash}`,
-            );
-          } else if (counter === 9) {
-            res = await createBadBlock('IncorrectLeafCount', block, transactions);
-            topicsBlockHashIncorrectLeafCount = res.block.blockHash;
-            txDataToSign = res.txDataToSign;
-            console.log(
-              `Created flawed block with incorrect leaf count and blockHash ${res.block.blockHash}`,
-            );
-          } else {
-            txDataToSign = msg.txDataToSign;
-            console.log(`Created good block with blockHash ${res.block.blockHash}`);
-          }
-          await submitTransaction(txDataToSign, privateKey, stateAddress, gas, BLOCK_STAKE);
-          counter++;
-          // console.log('tx hash of propose block is', txReceipt.transactionHash);
-        } else if (type === 'commit') {
-          await submitTransaction(txDataToSign, privateKey1, challengeAddress, gas);
-        } else if (type === 'challenge') {
-          await submitTransaction(txDataToSign, privateKey1, challengeAddress, gas);
-          // When a challenge succeeds, the challenger is removed. We are adding them back for subsequent for challenges
-          const result = await chai
-            .request(optimistUrl)
-            .post('/proposer/register')
-            .send({ address: myAddress });
-          txToSign = result.body.txDataToSign;
-          await submitTransaction(txToSign, privateKey, proposersAddress, gas, bond);
-          // console.log('tx hash of challenge block is', txReceipt.transactionHash);
-        } else throw new Error(`Unhandled transaction type: ${type}`);
-      });
+      // txQueue.push(async () => {
+      const msg = JSON.parse(message.data);
+      const { type } = msg;
+      let { txDataToSign } = msg;
+      if (type === 'block') {
+        console.log('HERE block');
+        const { block, transactions } = msg;
+        if (counter === 0) {
+          [duplicateTransaction] = transactions;
+          console.log(
+            `Created good block to extract duplicate tx from with blockHash ${block.blockHash}`,
+          );
+        } else if (counter === 1) {
+          [duplicateNullifier] = transactions
+            .map(t => t.nullifiers.filter(n => n !== ZERO))
+            .flat(Infinity);
+          console.log(
+            `Created good block to extract duplicate nullifier ${duplicateNullifier} from with blockHash ${block.blockHash}`,
+          );
+        } else if (counter === 2) {
+          res = await createBadBlock('IncorrectRoot', block, transactions, {
+            leafIndex: 1,
+          });
+          topicsBlockHashIncorrectRootInBlock = res.block.blockHash;
+          txDataToSign = res.txDataToSign;
+          console.log(
+            `Created flawed block with incorrect root and blockHash ${res.block.blockHash}`,
+          );
+        } else if (counter === 3) {
+          res = await createBadBlock('DuplicateTransaction', block, transactions, {
+            duplicateTransaction,
+          });
+          topicsBlockHashDuplicateTransaction = res.block.blockHash;
+          txDataToSign = res.txDataToSign;
+          console.log(
+            `Created flawed block containing duplicate transaction and blockHash ${res.block.blockHash}`,
+          );
+        } else if (counter === 4) {
+          res = await createBadBlock('InvalidDepositTransaction', block, transactions);
+          topicsBlockHashInvalidTransaction = res.block.blockHash;
+          txDataToSign = res.txDataToSign;
+          console.log(
+            `Created flawed block with invalid deposit transaction and blockHash ${res.block.blockHash}`,
+          );
+        } else if (counter === 5) {
+          res = await createBadBlock('IncorrectHistoricRoot', block, transactions);
+          topicsBlockHashesIncorrectHistoricRoot = res.block.blockHash;
+          txDataToSign = res.txDataToSign;
+          console.log(`Created flawed block with invalid historic root ${res.block.blockHash}`);
+        } else if (counter === 6) {
+          res = await createBadBlock('IncorrectPublicInputHash', block, transactions);
+          topicsBlockHashIncorrectPublicInputHash = res.block.blockHash;
+          txDataToSign = res.txDataToSign;
+          console.log(
+            `Created flawed block with incorrect public input hash and blockHash ${res.block.blockHash}`,
+          );
+        } else if (counter === 7) {
+          res = await createBadBlock('IncorrectProof', block, transactions, {
+            proof: duplicateTransaction.proof,
+          });
+          topicsBlockHashIncorrectProof = res.block.blockHash;
+          txDataToSign = res.txDataToSign;
+          console.log(
+            `Created flawed block with incorrect proof and blockHash ${res.block.blockHash}`,
+          );
+        } else if (counter === 8) {
+          res = await createBadBlock('DuplicateNullifier', block, transactions, {
+            duplicateNullifier,
+          });
+          topicsBlockHashDuplicateNullifier = res.block.blockHash;
+          txDataToSign = res.txDataToSign;
+          console.log(
+            `Created flawed block with duplicate nullifier and blockHash ${res.block.blockHash}`,
+          );
+        } else if (counter === 9) {
+          res = await createBadBlock('IncorrectLeafCount', block, transactions);
+          topicsBlockHashIncorrectLeafCount = res.block.blockHash;
+          txDataToSign = res.txDataToSign;
+          console.log(
+            `Created flawed block with incorrect leaf count and blockHash ${res.block.blockHash}`,
+          );
+        } else {
+          txDataToSign = msg.txDataToSign;
+          console.log(`Created good block with blockHash ${res.block.blockHash}`);
+        }
+        await submitTransaction(txDataToSign, privateKey, stateAddress, gas, BLOCK_STAKE);
+        counter++;
+        // console.log('tx hash of propose block is', txReceipt.transactionHash);
+      } else if (type === 'commit') {
+        console.log('HERE commit');
+        await submitTransaction(txDataToSign, privateKey1, challengeAddress, gas);
+      } else if (type === 'challenge') {
+        console.log('HERE challenge');
+        await submitTransaction(txDataToSign, privateKey1, challengeAddress, gas);
+        // When a challenge succeeds, the challenger is removed. We are adding them back for subsequent for challenges
+        const result = await chai
+          .request(optimistUrl)
+          .post('/proposer/register')
+          .send({ address: myAddress });
+        txToSign = result.body.txDataToSign;
+        await submitTransaction(txToSign, privateKey, proposersAddress, gas, bond);
+        // console.log('tx hash of challenge block is', txReceipt.transactionHash);
+      } else throw new Error(`Unhandled transaction type: ${type}`);
+      // });
     };
   });
 
@@ -225,15 +237,26 @@ describe('Testing the challenge http API', () => {
   });
 
   describe('Pre-populate L2 state with valid blocks and transactions', () => {
+    before(async () => {
+      console.log('HERE start of neg http.mjs', eventLogs);
+      eventLogs = [];
+      console.log('HERE after start clear of neg http.mjs', eventLogs);
+    });
+
     afterEach(async () => {
+      console.log('HERE in eventslog in before 1 afterSync', eventLogs);
       while (eventLogs[0] !== 'blockProposed') {
+        console.log('HERE in eventslog in before 2 afterSync', eventLogs);
         // eslint-disable-next-line no-await-in-loop
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        await new Promise(resolve => setTimeout(resolve, 10000));
       }
+      console.log('HERE in eventslog in after afterSync', eventLogs);
       eventLogs.shift();
     });
 
     it('should create an initial block of deposits', async () => {
+      console.log('HERE in eventslog start of deposit', eventLogs);
+      // eslint-disable-next-line no-await-in-loop
       const depositTransactions = (
         await Promise.all(
           // Create 1 less than two blocks worth of transactions so we can fit in a transfer
@@ -241,7 +264,7 @@ describe('Testing the challenge http API', () => {
             chai
               .request(url)
               .post('/deposit')
-              .send({ ercAddress, tokenId, value, zkpPrivateKey, fee }),
+              .send({ ercAddress, tokenId, value, pkd: pkd1, nsk: nsk1, fee }),
           ),
         )
       ).map(res => res.body);
@@ -256,10 +279,12 @@ describe('Testing the challenge http API', () => {
           await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee),
         );
       }
+      // eslint-disable-next-line no-await-in-loop
       receiptArrays.forEach(receipt => {
         expect(receipt).to.have.property('transactionHash');
         expect(receipt).to.have.property('blockHash');
       });
+      // await new Promise(resolve => setTimeout(resolve, 3000));
     });
 
     it('should create a block with a single transfer', async () => {
@@ -271,9 +296,10 @@ describe('Testing the challenge http API', () => {
           tokenId,
           recipientData: {
             values: [value],
-            recipientZkpPublicKeys: [zkpPublicKey],
+            recipientPkds: [pkd1],
           },
-          senderZkpPrivateKey: zkpPrivateKey,
+          nsk: nsk1,
+          ask: ask1,
           fee,
         });
       // now we need to sign the transaction and send it to the blockchain
@@ -290,7 +316,7 @@ describe('Testing the challenge http API', () => {
             chai
               .request(url)
               .post('/deposit')
-              .send({ ercAddress, tokenId, value, zkpPrivateKey, fee }),
+              .send({ ercAddress, tokenId, value, pkd: pkd1, nsk: nsk1, fee }),
           ),
         )
       ).map(res => res.body);
@@ -317,9 +343,10 @@ describe('Testing the challenge http API', () => {
           tokenId,
           recipientData: {
             values: [value],
-            recipientZkpPublicKeys: [zkpPublicKey],
+            recipientPkds: [pkd1],
           },
-          senderZkpPrivateKey: zkpPrivateKey,
+          nsk: nsk1,
+          ask: ask1,
           fee,
         });
       const { txDataToSign } = res.body;
@@ -379,9 +406,10 @@ describe('Testing the challenge http API', () => {
             tokenId,
             recipientData: {
               values: [value],
-              recipientZkpPublicKeys: [zkpPublicKey],
+              recipientPkds: [pkd1],
             },
-            senderZkpPrivateKey: zkpPrivateKey,
+            nsk: nsk1,
+            ask: ask1,
             fee,
           });
         // now we need to sign the transaction and send it to the blockchain
@@ -399,7 +427,7 @@ describe('Testing the challenge http API', () => {
         const res = await chai
           .request(url)
           .post('/deposit')
-          .send({ ercAddress, tokenId, value, zkpPrivateKey, fee });
+          .send({ ercAddress, tokenId, value, pkd: pkd1, nsk: nsk1, fee });
 
         const { txDataToSign } = res.body;
         expect(txDataToSign).to.be.a('string');
@@ -419,7 +447,8 @@ describe('Testing the challenge http API', () => {
           ercAddress,
           tokenId,
           value,
-          zkpPrivateKey,
+          pkd: pkd1,
+          nsk: nsk1,
           fee,
         });
         const { txDataToSign } = res.body;
@@ -443,9 +472,10 @@ describe('Testing the challenge http API', () => {
             tokenId,
             recipientData: {
               values: [value],
-              recipientZkpPublicKeys: [zkpPublicKey],
+              recipientPkds: [pkd1],
             },
-            senderZkpPrivateKey: zkpPrivateKey,
+            nsk: nsk1,
+            ask: ask1,
             fee,
           });
         const { txDataToSign } = res.body;
@@ -464,7 +494,8 @@ describe('Testing the challenge http API', () => {
           ercAddress,
           tokenId,
           value,
-          zkpPrivateKey,
+          pkd: pkd1,
+          nsk: nsk1,
           fee,
         });
         const { txDataToSign } = res.body;
@@ -486,7 +517,8 @@ describe('Testing the challenge http API', () => {
               ercAddress,
               tokenId,
               value,
-              zkpPrivateKey,
+              pkd: pkd1,
+              nsk: nsk1,
               fee,
             });
           const { txDataToSign } = res.body;
