@@ -240,8 +240,7 @@ describe('Testing the challenge http API', () => {
     it('should create an initial block of deposits', async () => {
       const depositTransactions = (
         await Promise.all(
-          // Create 1 less than two blocks worth of transactions so we can fit in a transfer
-          Array.from({ length: txPerBlock * 2 - 1 }, () =>
+          Array.from({ length: txPerBlock }, () =>
             chai
               .request(url)
               .post('/deposit')
@@ -282,6 +281,29 @@ describe('Testing the challenge http API', () => {
         });
       // now we need to sign the transaction and send it to the blockchain
       await submitTransaction(res.body.txDataToSign, privateKey, shieldAddress, gas);
+
+      const depositTransactions = (
+        await Promise.all(
+          Array.from({ length: txPerBlock - 1 }, () =>
+            chai
+              .request(url)
+              .post('/deposit')
+              .send({ ercAddress, tokenId, tokenType, value, zkpPrivateKey, fee }),
+          ),
+        )
+      ).map(depRes => depRes.body);
+
+      depositTransactions.forEach(({ txDataToSign }) => expect(txDataToSign).to.be.a('string'));
+
+      const receiptArrays = [];
+      for (let i = 0; i < depositTransactions.length; i++) {
+        const { txDataToSign } = depositTransactions[i];
+        receiptArrays.push(
+          // eslint-disable-next-line no-await-in-loop
+          await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee),
+          // we need to await here as we need transactions to be submitted sequentially or we run into nonce issues.
+        );
+      }
     });
   });
 
