@@ -24,12 +24,12 @@ async function blockProposedEventHandler(data) {
       )}`,
     );
   // mark commitments on chain
-  markOnChain(commitments, blockNumberL2);
+  await markOnChain(commitments, blockNumberL2);
 
   // these nullifiers have now appeared on-chain. Thus their nullification
   // has been confirmed (barring a rollback) and we need to update the
   // commitment database to that effect
-  markNullifiedOnChain(nullifiers, blockNumberL2);
+  await markNullifiedOnChain(nullifiers, blockNumberL2);
 }
 
 export default blockProposedEventHandler;
