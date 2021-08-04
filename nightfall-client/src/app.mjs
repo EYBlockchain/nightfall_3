@@ -10,6 +10,7 @@ import {
   isMessageValid,
   finaliseWithdrawal,
   peers,
+  setInstantWithdrawl,
 } from './routes/index.mjs';
 
 const app = express();
@@ -27,5 +28,6 @@ app.use('/withdraw', withdraw);
 app.use('/check-message', isMessageValid);
 app.use('/finalise-withdrawal', finaliseWithdrawal);
 app.use('/peers', peers);
+app.use('/set-instant-withdrawal', setInstantWithdrawl);
 
 export default app;

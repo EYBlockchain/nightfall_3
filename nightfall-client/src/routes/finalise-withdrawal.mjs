@@ -5,7 +5,7 @@ funds on a zkp deposit
 */
 import express from 'express';
 import logger from 'common-files/utils/logger.mjs';
-import finaliseWithdrawal from '../services/finalise-withdrawal.mjs';
+import { finaliseWithdrawal } from '../services/finalise-withdrawal.mjs';
 
 const router = express.Router();
 
