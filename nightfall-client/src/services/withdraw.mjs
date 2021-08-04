@@ -121,7 +121,6 @@ async function withdraw(transferParams) {
             throw new Error(err);
           });
       });
-      markNullified(oldCommitment);
       const th = optimisticWithdrawTransaction.transactionHash;
       delete optimisticWithdrawTransaction.transactionHash;
       optimisticWithdrawTransaction.transactionHash = th;
@@ -131,10 +130,10 @@ async function withdraw(transferParams) {
       .submitTransaction(Transaction.buildSolidityStruct(optimisticWithdrawTransaction))
       .encodeABI();
     // on successful computation of the transaction mark the old commitments as nullified
-    // markNullified(oldCommitment);
+    await markNullified(oldCommitment);
     return { rawTransaction, transaction: optimisticWithdrawTransaction };
   } catch (err) {
-    clearPending(oldCommitment);
+    await clearPending(oldCommitment);
     throw new Error(err); // let the caller handle the error
   }
 }

@@ -204,10 +204,10 @@ async function transfer(transferParams) {
       .filter(commitment => commitment.preimage.zkpPublicKey.hex(32) === senderZkpPublicKey.hex(32))
       .forEach(commitment => storeCommitment(commitment, senderZkpPrivateKey)); // TODO insertMany
     // mark the old commitments as nullified
-    oldCommitments.forEach(commitment => markNullified(commitment));
+    await Promise.all(oldCommitments.map(commitment => markNullified(commitment)));
     return { rawTransaction, transaction: optimisticTransferTransaction };
   } catch (err) {
-    oldCommitments.forEach(commitment => clearPending(commitment));
+    await Promise.all(oldCommitments.map(commitment => clearPending(commitment)));
     throw new Error(err); // let the caller handle the error
   }
 }
