@@ -1,4 +1,4 @@
-import logger from '../utils/logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
 import { markNullifiedOnChain, markOnChain } from '../services/commitment-storage.mjs';
 import getProposeBlockCalldata from '../services/process-calldata.mjs';
 

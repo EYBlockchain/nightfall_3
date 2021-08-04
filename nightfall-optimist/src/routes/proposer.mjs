@@ -5,14 +5,14 @@ module but handle the entire request here.
 */
 import express from 'express';
 import config from 'config';
-import logger from '../utils/logger.mjs';
-import { getContractInstance } from '../utils/contract.mjs';
+import mt from 'common-files/utils/crypto/merkle-tree/merkle-tree.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import { getContractInstance } from 'common-files/utils/contract.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction, TransactionError } from '../classes/index.mjs';
 import { setRegisteredProposerAddress } from '../services/database.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import { getFrontier, getLeafCount } from '../utils/timber.mjs';
-import mt from '../utils/crypto/merkle-tree/merkle-tree.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
 
 const { updateNodes } = mt;
@@ -47,8 +47,20 @@ router.post('/register', async (req, res, next) => {
 router.get('/proposers', async (req, res, next) => {
   logger.debug(`list proposals endpoint received GET ${JSON.stringify(req.body, null, 2)}`);
   try {
-    const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
-    const proposers = await proposersContractInstance.methods.getProposers().call();
+    const proposersContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
+    // proposers is an on-chain mapping so to get proposers we need to key to start iterating
+    // the safest to start with is the currentProposer
+    const currentProposer = await proposersContractInstance.methods.currentProposer().call();
+    const proposers = [];
+    let thisPtr = currentProposer.thisAddress;
+    // Loop through the circular list until we run back into the currentProposer.
+    do {
+      // eslint-disable-next-line no-await-in-loop
+      const proposer = await proposersContractInstance.methods.proposers(thisPtr).call();
+      proposers.push(proposer);
+      thisPtr = proposer.thisAddress;
+    } while (thisPtr !== currentProposer.thisAddress);
+
     logger.debug('returning raw transaction data');
     logger.silly(`raw transaction is ${JSON.stringify(proposers, null, 2)}`);
     res.json({ proposers });
@@ -73,6 +85,22 @@ router.post('/de-register', async (req, res, next) => {
   } catch (err) {
     logger.error(err);
     next(err);
+  }
+});
+
+/**
+ * Function to withdraw bond for a de-registered proposer
+ */
+
+router.post('/withdrawBond', async (req, res, next) => {
+  logger.debug(`withdrawBond endpoint received GET`);
+  try {
+    const stateContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
+    const txDataToSign = await stateContractInstance.methods.withdrawBond().encodeABI();
+    res.json({ txDataToSign });
+  } catch (error) {
+    logger.error(error);
+    next(error);
   }
 });
 

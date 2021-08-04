@@ -30,7 +30,7 @@ jobs:
 
       - name: Run integration test
         run: |
-          sleep 150
+          sleep 200
           npm test
 
       - name: If integration test failed, shutdown the Containers

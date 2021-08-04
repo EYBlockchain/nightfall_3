@@ -1,8 +1,8 @@
 import config from 'config';
-import logger from './utils/logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import mongo from 'common-files/utils/mongo.mjs';
 import app from './app.mjs';
 import rabbitmq from './utils/rabbitmq.mjs';
-import mongo from './utils/mongo.mjs';
 import queues from './queues/index.mjs';
 import {
   subscribeToBlockProposedEvent,

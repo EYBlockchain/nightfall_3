@@ -3,9 +3,9 @@
  */
 import axios from 'axios';
 import config from 'config';
-import mongo from '../utils/mongo.mjs';
-import logger from '../utils/logger.mjs';
-import { getContractInstance } from '../utils/contract.mjs';
+import mongo from 'common-files/utils/mongo.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import { getContractInstance } from 'common-files/utils/contract.mjs';
 
 const { MONGO_URL, COMMITMENTS_DB, PEERS_COLLECTION, STATE_CONTRACT_NAME } = config;
 

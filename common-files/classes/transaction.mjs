@@ -1,3 +1,5 @@
+/* eslint import/no-extraneous-dependencies: "off" */
+
 /**
 An optimistic Transaction class
 */
@@ -7,6 +9,8 @@ import { compressProof } from '../utils/curve-maths/curves.mjs';
 
 const { generalise } = gen;
 
+const TOKEN_TYPES = { ERC20: 0, ERC721: 1, ERC1155: 2 };
+
 // function to compute the keccak hash of a transaction
 function keccak(preimage) {
   const web3 = Web3.connection();
@@ -15,6 +19,7 @@ function keccak(preimage) {
     { t: 'uint64', v: preimage.value },
     { t: 'uint64', v: preimage.historicRootBlockNumberL2 },
     { t: 'uint8', v: preimage.transactionType },
+    { t: 'uint8', v: preimage.tokenType },
     { t: 'bytes32', v: preimage.publicInputHash },
     { t: 'bytes32', v: preimage.tokenId },
     { t: 'bytes32', v: preimage.ercAddress },
@@ -33,6 +38,7 @@ class Transaction {
     fee,
     historicRootBlockNumberL2,
     transactionType,
+    tokenType,
     publicInputs, // this must be an object of the PublicInputs calls
     tokenId,
     value,
@@ -53,11 +59,16 @@ class Transaction {
     if (_nullifiers === undefined) nullifiers = [{ hash: 0 }, { hash: 0 }];
     else if (_nullifiers.length === 1) nullifiers = [..._nullifiers, { hash: 0 }];
     else nullifiers = _nullifiers;
+
+    if ((transactionType === 0 || transactionType === 3) && TOKEN_TYPES[tokenType] === undefined)
+      throw new Error('Unrecognized token type');
+
     // convert everything to hex(32) for interfacing with web3
     const preimage = generalise({
       fee: fee || 0,
       historicRootBlockNumberL2: historicRootBlockNumberL2 || 0,
       transactionType: transactionType || 0,
+      tokenType: TOKEN_TYPES[tokenType] || 0, // tokenType does not matter for transfer
       publicInputHash: publicInputs.hash,
       tokenId: tokenId || 0,
       value: value || 0,
@@ -90,6 +101,7 @@ class Transaction {
       value,
       historicRootBlockNumberL2,
       transactionType,
+      tokenType,
       publicInputHash,
       tokenId,
       ercAddress,
@@ -102,6 +114,7 @@ class Transaction {
       value,
       historicRootBlockNumberL2,
       transactionType,
+      tokenType,
       publicInputHash,
       tokenId,
       ercAddress,

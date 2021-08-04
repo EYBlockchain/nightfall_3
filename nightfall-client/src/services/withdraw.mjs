@@ -8,9 +8,9 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
 import config from 'config';
 import axios from 'axios';
 import gen from 'general-number';
-import sha256 from '../utils/crypto/sha256.mjs';
-import { getContractInstance } from '../utils/contract.mjs';
-import logger from '../utils/logger.mjs';
+import sha256 from 'common-files/utils/crypto/sha256.mjs';
+import { getContractInstance } from 'common-files/utils/contract.mjs';
+import logger from 'common-files/utils/logger.mjs';
 import { Nullifier, PublicInputs, Transaction } from '../classes/index.mjs';
 import { findUsableCommitmentsMutex, markNullified, clearPending } from './commitment-storage.mjs';
 import { getSiblingPath } from '../utils/timber.mjs';
@@ -98,6 +98,7 @@ async function withdraw(transferParams) {
     historicRootBlockNumberL2: (await getBlockAndTransactionsByRoot(root.hex(32))).block
       .blockNumberL2,
     transactionType: 3,
+    tokenType: items.tokenType,
     publicInputs,
     tokenId,
     value,

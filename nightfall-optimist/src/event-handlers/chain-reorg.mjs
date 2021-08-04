@@ -34,13 +34,13 @@ initiated by another event, e.g. a Rollback. This is only true of course if the
 responses to such events are idempotent. TODO consider further.
 */
 import config from 'config';
+import logger from 'common-files/utils/logger.mjs';
 import {
   deleteBlocksFromBlockNumberL1,
   deleteTransactionsFromBlockNumberL1,
   deleteNullifiersFromBlockNumberL1,
   getBlockByBlockNumberL2,
 } from '../services/database.mjs';
-import logger from '../utils/logger.mjs';
 import { waitForContract } from './subscribe.mjs';
 
 const {

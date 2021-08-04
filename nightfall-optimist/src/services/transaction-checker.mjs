@@ -8,6 +8,7 @@ Here are the things that could be wrong with a transaction:
 */
 import config from 'config';
 import axios from 'axios';
+import logger from 'common-files/utils/logger.mjs';
 import {
   Transaction,
   VerificationKey,
@@ -16,7 +17,6 @@ import {
   PublicInputs,
 } from '../classes/index.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
-import logger from '../utils/logger.mjs';
 import { getBlockByBlockNumberL2 } from './database.mjs';
 
 const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, CURVE, ZERO, CHALLENGES_CONTRACT_NAME } =
@@ -35,11 +35,14 @@ async function checkTransactionHash(transaction) {
 }
 // next that the fields provided are consistent with the transaction type
 async function checkTransactionType(transaction) {
+  logger.debug(`in checkTransactionType: ${JSON.stringify(transaction)}`);
   switch (Number(transaction.transactionType)) {
     case 0: // deposit
       if (
         transaction.publicInputHash === ZERO ||
-        (transaction.tokenId === ZERO && Number(transaction.value) === 0) ||
+        (Number(transaction.tokenType) !== 0 &&
+          transaction.tokenId === ZERO &&
+          Number(transaction.value) === 0) ||
         transaction.ercAddress === ZERO ||
         transaction.recipientAddress !== ZERO ||
         transaction.commitments[0] === ZERO ||
@@ -96,7 +99,9 @@ async function checkTransactionType(transaction) {
     case 3: // withdraw transaction
       if (
         transaction.publicInputHash === ZERO ||
-        (transaction.tokenId === ZERO && Number(transaction.value) === 0) ||
+        (Number(transaction.tokenType) !== 0 &&
+          transaction.tokenId === ZERO &&
+          Number(transaction.value) === 0) ||
         transaction.ercAddress === ZERO ||
         transaction.recipientAddress === ZERO ||
         transaction.commitments.some(c => c !== ZERO) ||

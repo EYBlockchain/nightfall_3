@@ -42,18 +42,29 @@ module.exports = {
     // tab if you use this network and you must also set the `host`, `port` and `network_id`
     // options below to some value.
     //
-    openethereum: {
-      host: 'openethereum', // Localhost (default: none)
-      port: 8545, // Standard Ethereum port (default: none)
-      network_id: '*', // Any network (default: none)
-      gas: 12500000,
+    blockchain1: {
+      // host: 'blockchain', // Localhost (default: none)
+      // port: 8545, // Standard Ethereum port (default: none)
+      url: 'ws://blockchain1:8546',
+      network_id: 4378921, // Any network (default: none)
+      gas: 8000000,
+      websockets: true,
+    },
+
+    blockchain2: {
+      // host: 'blockchain', // Localhost (default: none)
+      // port: 8545, // Standard Ethereum port (default: none)
+      url: 'ws://blockchain2:8546',
+      network_id: 4378921, // Any network (default: none)
+      gas: 8000000,
+      websockets: true,
     },
 
     ganache: {
       host: 'ganache', // Localhost (default: none)
       port: 8545, // Standard Ethereum port (default: none)
       network_id: '*', // Any network (default: none)
-      gas: 12500000,
+      gas: 8000000,
     },
 
     development: {

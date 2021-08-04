@@ -3,9 +3,8 @@ module to initialise the proposers, challenges and shield contracts with the
 address of the contract that holds global state (State.sol)
 */
 
-import logger from './utils/logger.mjs';
-import { waitForContract } from './utils/contract.mjs';
-// import Web3 from './utils/web3.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import { waitForContract } from 'common-files/utils/contract.mjs';
 
 async function setupCircuits() {
   const stateInstance = await waitForContract('State');

@@ -3,7 +3,7 @@ import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import gen from 'general-number';
 import WebSocket from 'ws';
-import sha256 from '../nightfall-client/src/utils/crypto/sha256.mjs';
+import sha256 from '../common-files/utils/crypto/sha256.mjs';
 import {
   closeWeb3Connection,
   submitTransaction,
@@ -27,6 +27,8 @@ describe('Testing the http API', () => {
   let ercAddress;
   let connection; // WS connection
   let blockSubmissionFunction;
+  // let snapshot;
+  // const composeOpts = { cwd: path.join(__dirname), log: true };
   const zkpPrivateKey = '0xc05b14fa15148330c6d008814b0bdd69bc4a08a1bd0b629c42fa7e2c61f16739'; // the zkp private key we're going to use in the tests.
   const zkpPublicKey = sha256([new GN(zkpPrivateKey)]).hex();
   const url = 'http://localhost:8080';
@@ -139,10 +141,10 @@ describe('Testing the http API', () => {
   describe('Deposit tests', () => {
     // blocks should be directly submitted to the blockchain, not queued
     blockSubmissionFunction = (a, b, c, d, e) => submitTransaction(a, b, c, d, e);
-    // Need at least 5 deposits to perform all the necessary transfers
+    // we start by just sending enough deposits to fill one block
     // set the number of deposit transactions blocks to perform.
     const numDeposits = 1;
-    it('should deposit some crypto into a ZKP commitment', async () => {
+    it('should deposit enough crypto into a ZKP commitment to fill one layer 2 block', async () => {
       // We create enough transactions to fill numDeposits blocks full of deposits.
       const depositTransactions = (
         await Promise.all(
@@ -179,12 +181,15 @@ describe('Testing the http API', () => {
       for (let i = 0; i < numDeposits; i++) {
         eventLogs.shift();
       }
+      // and remember the blockchain state
+      // snapshot = await evmSnapshot();
     });
   });
 
   describe('Withdraw tests', () => {
+    // next we withdraw each of the deposits
     const numWithdraws = 1;
-    it('should withdraw some crypto from a ZKP commitment', async () => {
+    it('should withdraw all of our ZKP commitments, taking another block to do so', async () => {
       const withdrawTransactions = (
         await Promise.all(
           Array.from({ length: txPerBlock * numWithdraws }, () =>
@@ -216,9 +221,10 @@ describe('Testing the http API', () => {
     });
   });
 
-  // now we have some deposited tokens, we can transfer one of them:
+  // now we attempt a transfer.  This should fail because all of our deposited
+  // commitments should have been nullified by the withdrawals.
   describe('Single transfer tests', () => {
-    it('should transfer some crypto (back to us) using ZKP', async () => {
+    it('should fail to transfer some crypto because there are no available input commitments', async () => {
       const res = await chai
         .request(url)
         .post('/transfer')
@@ -232,31 +238,27 @@ describe('Testing the http API', () => {
           senderZkpPrivateKey: zkpPrivateKey,
           fee,
         });
-      expect(res.body.txDataToSign).to.be.a('string');
-      // now we need to sign the transaction and send it to the blockchain
-      const receipt = await submitTransaction(
-        res.body.txDataToSign,
-        privateKey,
-        shieldAddress,
-        gas,
-        fee,
-      );
-      expect(receipt).to.have.property('transactionHash');
-      expect(receipt).to.have.property('blockHash');
-      console.log(`     Gas used was ${Number(receipt.gasUsed)}`);
-
-      // Wait until we see the right number of blocks appear
-      const numSingles = 1;
-      while (eventLogs.length !== numSingles) {
-        // eslint-disable-next-line no-await-in-loop
-        await new Promise(resolve => setTimeout(resolve, 3000));
-      }
-      // Now we can empty the event queue
-      for (let i = 0; i < numSingles; i++) {
-        eventLogs.shift();
-      }
+      expect(res.text).to.have.string('No suitable commitments were found');
+    });
+    it('should transfer crypto after the withdrawals are rolled back', async () => {
+      // await evmRevert(snapshot);
+      const res = await chai
+        .request(url)
+        .post('/transfer')
+        .send({
+          ercAddress,
+          tokenId,
+          recipientData: {
+            values: [value],
+            recipientZkpPublicKeys: [zkpPublicKey],
+          },
+          senderZkpPrivateKey: zkpPrivateKey,
+          fee,
+        });
+      expect(res.txDataToSign).to.be.a('string');
     });
   });
+
   after(() => {
     closeWeb3Connection();
     connection.close();

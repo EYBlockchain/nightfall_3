@@ -7,6 +7,7 @@ module.exports = {
     'no-restricted-syntax': 'off',
     'no-plusplus': 'off',
     'import/no-extraneous-dependencies': ['error', { devDependencies: ['**/test/*'] }],
+    'func-names': 'off',
   },
   globals: {
     BigInt: 'true',

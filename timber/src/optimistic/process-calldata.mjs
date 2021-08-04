@@ -21,11 +21,13 @@ async function getProposeBlockCalldata(eventData) {
   const transactionsData = decoded['1'];
   const [leafCount, nCommitments, proposer, root] = blockData;
   const block = { proposer, root, leafCount, nCommitments };
+
   const transactions = transactionsData.map(t => {
     const [
       value,
       historicRootBlockNumberL2,
       transactionType,
+      tokenType,
       publicInputHash,
       tokenId,
       ercAddress,
@@ -38,6 +40,7 @@ async function getProposeBlockCalldata(eventData) {
       value,
       historicRootBlockNumberL2,
       transactionType,
+      tokenType,
       publicInputHash,
       tokenId,
       ercAddress,

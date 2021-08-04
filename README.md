@@ -38,9 +38,11 @@ After that, run the setup script
 
 If running for first time, do the setup as above and then run this script:
 ```sh
-./start-nightfall
+./start-nightfall [-e | -g]
 ```
-This will bring up the application. It will take a minute or so, depending on your machine. You'll see lots of warnings as it runs up from the `optimist` and `timber` containers.  That's entirely fine, they're just waiting for the other services that they need to start up. You should see no errors however.  If you do, something has broken.
+This will bring up the application.  You can run it either with a Ganache blockchain simulator or a real Geth private network.  Use -g for Ganache and -e for Geth.  We recommend using Ganache first to check everything works, because it's considerably faster. 
+
+Startup will take a minute or so, depending on your machine. You'll see lots of warnings as it runs up from the `optimist` and `timber` containers.  That's entirely fine, they're just waiting for the other services that they need to start up. You should see no errors however.  If you do, something has broken.
 
 Note that during compilation of the Solidity (part of the startup), you will receive one compiler warning.  This is because we read calldata directly via `msg.data` when a block is proposed, in the interests of Gas efficiency. As a result, the compiler thinks were not using one of our function parameters.  We've been unable to think of a good workaround as yet.
 

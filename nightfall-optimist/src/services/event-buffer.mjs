@@ -8,7 +8,7 @@ in the strict order that they are received.
 */
 import Queue from 'queue';
 import config from 'config';
-import logger from '../utils/logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
 
 const { MAX_QUEUE } = config;
 const eventQueue = new Queue({ autostart: true, concurrency: 1 });

@@ -4,7 +4,7 @@ This is used, rather than re-emmiting the calldata in the event because it's
 much cheaper, although the offchain part is more complex.
 */
 import config from 'config';
-import Web3 from '../utils/web3.mjs';
+import Web3 from 'common-files/utils/web3.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 
 const { PROPOSE_BLOCK_TYPES, STATE_CONTRACT_NAME, ZERO } = config;
@@ -18,6 +18,7 @@ function calcBlockHash(block, transactions) {
       value,
       historicRootBlockNumberL2,
       transactionType,
+      tokenType,
       publicInputHash,
       tokenId,
       ercAddress,
@@ -30,6 +31,7 @@ function calcBlockHash(block, transactions) {
       value,
       historicRootBlockNumberL2,
       transactionType,
+      tokenType,
       publicInputHash,
       tokenId,
       ercAddress,
@@ -66,6 +68,7 @@ async function getProposeBlockCalldata(eventData) {
       value,
       historicRootBlockNumberL2,
       transactionType,
+      tokenType,
       publicInputHash,
       tokenId,
       ercAddress,
@@ -78,6 +81,7 @@ async function getProposeBlockCalldata(eventData) {
       value,
       historicRootBlockNumberL2,
       transactionType,
+      tokenType,
       publicInputHash,
       tokenId,
       ercAddress,

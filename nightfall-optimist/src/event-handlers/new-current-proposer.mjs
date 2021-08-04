@@ -1,12 +1,13 @@
 import config from 'config';
-import logger from '../utils/logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import { getContractInstance } from 'common-files/utils/contract.mjs';
 import {
   isRegisteredProposerAddressMine,
   addTransactionsToMemPoolFromBlockNumberL2,
 } from '../services/database.mjs';
-import { getContractInstance } from '../utils/contract.mjs';
 
 const { STATE_CONTRACT_NAME } = config;
+
 /**
 This handler runs whenever a BlockProposed event is emitted by the blockchain
 */
