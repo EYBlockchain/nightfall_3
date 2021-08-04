@@ -17,7 +17,7 @@ import {
   findUsableCommitmentsMutex,
   storeCommitment,
   markNullified,
-  clearNullified,
+  clearPending,
 } from './commitment-storage.mjs';
 import { getSiblingPath } from '../utils/timber.mjs';
 import { discoverPeers } from './peers.mjs';
@@ -207,7 +207,7 @@ async function transfer(transferParams) {
     oldCommitments.forEach(commitment => markNullified(commitment));
     return { rawTransaction, transaction: optimisticTransferTransaction };
   } catch (err) {
-    oldCommitments.forEach(commitment => clearNullified(commitment));
+    oldCommitments.forEach(commitment => clearPending(commitment));
     throw new Error(err); // let the caller handle the error
   }
 }

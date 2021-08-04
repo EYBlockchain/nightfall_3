@@ -101,6 +101,15 @@ export async function clearOnChain(blockNumberL2) {
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
 }
 
+// function to clear a commitment as pending nullication for a mongo db
+export async function clearPending(commitment) {
+  const connection = await mongo.connection(MONGO_URL);
+  const query = { _id: commitment.hash.hex(32) };
+  const update = { $set: { isPendingNullification: false } };
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(COMMITMENTS_COLLECTION).updateOne(query, update);
+}
+
 // as above, but removes output commitments
 export async function dropRollbackCommitments(blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
@@ -140,9 +149,7 @@ async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _value, 
     .toArray();
   if (commitmentArray === []) return null;
   // turn the commitments into real commitment objects
-  const commitments = commitmentArray
-    .filter(commitment => Number(commitment.isOnChain) > Number(-1)) // filters for on chain commitments
-    .map(ct => new Commitment(ct.preimage));
+  const commitments = commitmentArray.map(ct => new Commitment(ct.preimage));
 
   // Now filter all commitments to also work with those that timber has already seen.
   const knownCommitments = (

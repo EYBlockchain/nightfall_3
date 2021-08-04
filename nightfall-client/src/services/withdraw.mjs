@@ -12,11 +12,7 @@ import sha256 from '../utils/crypto/sha256.mjs';
 import { getContractInstance } from '../utils/contract.mjs';
 import logger from '../utils/logger.mjs';
 import { Nullifier, PublicInputs, Transaction } from '../classes/index.mjs';
-import {
-  findUsableCommitmentsMutex,
-  markNullified,
-  clearNullified,
-} from './commitment-storage.mjs';
+import { findUsableCommitmentsMutex, markNullified, clearPending } from './commitment-storage.mjs';
 import { getSiblingPath } from '../utils/timber.mjs';
 import { discoverPeers } from './peers.mjs';
 import getBlockAndTransactionsByRoot from '../utils/optimist.mjs';
@@ -137,7 +133,7 @@ async function withdraw(transferParams) {
     // markNullified(oldCommitment);
     return { rawTransaction, transaction: optimisticWithdrawTransaction };
   } catch (err) {
-    clearNullified(oldCommitment);
+    clearPending(oldCommitment);
     throw new Error(err); // let the caller handle the error
   }
 }
