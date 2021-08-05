@@ -27,7 +27,7 @@
     "common-files": "file:../common-files",
     "hex-to-binary": "^1.0.1",
     "safe-buffer": "^5.2.1",
-    "truffle": "^5.3.14",
+    "truffle": "^5.4.3",
     "web3": "^1.4.0",
     "winston": "^3.3.3"
   },
