@@ -81,6 +81,9 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
     }
   }
 
+  // TODO does this need to be constrained to blocks within the challenge window
+  // Currently this can pose as a non-interactive way for transactors to get their withdrawals
+  // Instead of calling finaliseWithdrawal (a pull op), advanceWithdrawal will send them the funds (push op) for a fee.
   function advanceWithdrawal(Transaction memory withdrawTransaction) external {
     bytes32 withdrawTransactionHash = Utils.hashTransaction(withdrawTransaction);
 
@@ -115,17 +118,16 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
     state.addPendingWithdrawal(msg.sender, advancedFee);
   }
 
-  // TODO work out a better way to set advance withdrawal fee
+  // TODO Is there a better way to set this fee, e.g. at the point of making a transaction.
   function setAdvanceWithdrawalFee(Block memory b, uint256 blockNumberL2, Transaction[] memory ts, uint index) external payable {
-    // The transaction is a withdrawal
+    // The transaction is a withdrawal transaction
     require(ts[index].transactionType == TransactionTypes.WITHDRAW, 'Can only advance withdrawals');
     // The block and transactions are real
     state.isBlockReal(b,ts,blockNumberL2);
 
     bytes32 withdrawTransactionHash = Utils.hashTransaction(ts[index]);
     // The withdrawal has not been withdrawn
-    require(!withdrawn[withdrawTransactionHash], 'Cannot double withdraw')
-    ;
+    require(!withdrawn[withdrawTransactionHash], 'Cannot double withdraw');
     address originalRecipientAddress =  address(uint160(uint256(ts[index].recipientAddress)));
     address currentOwner = advancedWithdrawals[withdrawTransactionHash] == address(0) ? originalRecipientAddress : advancedWithdrawals[withdrawTransactionHash];
 

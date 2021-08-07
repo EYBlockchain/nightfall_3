@@ -10,6 +10,7 @@ import {
   topicEventMapping,
   setNonce,
   getBalance,
+  timeJump,
 } from './utils.mjs';
 
 const { expect } = chai;
@@ -23,6 +24,7 @@ describe('Test instant withdrawals', () => {
   let ercAddress;
   let withdrawTransaction;
   let connection; // WS connection
+  let nodeInfo;
   const zkpPrivateKey = '0xc05b14fa15148330c6d008814b0bdd69bc4a08a1bd0b629c42fa7e2c61f16739'; // the zkp private key we're going to use in the tests.
   const url = 'http://localhost:8080';
   const optimistUrl = 'http://localhost:8081';
@@ -52,6 +54,8 @@ describe('Test instant withdrawals', () => {
     proposersAddress = (await chai.request(url).get('/contract-address/Proposers')).body.address;
 
     ercAddress = (await chai.request(url).get('/contract-address/ERCStub')).body.address;
+
+    nodeInfo = await web3.eth.getNodeInfo();
 
     setNonce(await web3.eth.getTransactionCount((await getAccounts())[0]));
 
@@ -181,6 +185,29 @@ describe('Test instant withdrawals', () => {
       const receipt = await submitTransaction(txDataToSign, privateKey2, shieldAddress, gas);
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
+    });
+
+    it('Should create a passing finalise-withdrawal that is withdrawn to the advancer addresss', async function () {
+      // jump in time by 10 days
+      if (nodeInfo.includes('TestRPC')) await timeJump(3600 * 24 * 10);
+      else this.skip();
+      const res = await chai.request(url).post('/finalise-withdrawal').send({
+        block,
+        transactions,
+        index,
+      });
+      const { txDataToSign } = res.body;
+      expect(txDataToSign).to.be.a('string');
+
+      if (nodeInfo.includes('TestRPC')) {
+        const receipt = await submitTransaction(txDataToSign, privateKey2, shieldAddress, gas);
+        expect(receipt).to.have.property('transactionHash');
+        expect(receipt).to.have.property('blockHash');
+      } else {
+        await expect(
+          submitTransaction(txDataToSign, privateKey2, shieldAddress, gas),
+        ).to.be.rejectedWith('Transaction has been reverted by the EVM');
+      }
     });
   });
   after(() => {
