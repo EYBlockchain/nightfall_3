@@ -149,22 +149,12 @@ async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _value, 
     .toArray();
   if (commitmentArray === []) return null;
   // turn the commitments into real commitment objects
-  const commitments = commitmentArray.map(ct => new Commitment(ct.preimage));
+  const commitments = commitmentArray
+    .filter(commitment => Number(commitment.isOnChain) > Number(-1)) // filters for on chain commitments
+    .map(ct => new Commitment(ct.preimage));
 
-  // Now filter all commitments to also work with those that timber has already seen.
-  const knownCommitments = (
-    await Promise.all(
-      commitments.map(async c => {
-        const cIndex = await c.index;
-        if (cIndex !== null) return c;
-        return null;
-      }),
-    )
-  ).filter(c => c !== null);
   // if we have an exact match, we can do a single-commitment transfer.
-  const [singleCommitment] = knownCommitments.filter(
-    c => c.preimage.value.hex(32) === value.hex(32),
-  );
+  const [singleCommitment] = commitments.filter(c => c.preimage.value.hex(32) === value.hex(32));
   if (singleCommitment) {
     logger.info('Found commitment suitable for single transfer or withdraw');
     await markPending(singleCommitment);
@@ -192,7 +182,7 @@ async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _value, 
   */
 
   // sorting will help with making the search easier
-  const sortedCommits = knownCommitments.sort((a, b) =>
+  const sortedCommits = commitments.sort((a, b) =>
     Number(a.preimage.value.bigInt - b.preimage.value.bigInt),
   );
 
