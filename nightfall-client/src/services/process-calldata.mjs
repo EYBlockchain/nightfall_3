@@ -103,6 +103,11 @@ async function getProposeBlockCalldata(eventData) {
     .map(t => t.nullifiers)
     .flat()
     .filter(n => n !== ZERO);
+  // we now search for new commitments on chain to update local commitment storage
+  const commitments = transactions
+    .map(t => t.commitments)
+    .flat()
+    .filter(n => n !== ZERO);
   // next, we need to tie these up with the number of the block that they are in
   // It's a little non-trivial to compute this because of course the on-chain
   // layer 2 block record may have moved on since we arrived here if other
@@ -124,7 +129,7 @@ async function getProposeBlockCalldata(eventData) {
     // eslint-disable-next-line no-await-in-loop
     blockHash !== (await stateContractInstance.methods.getBlockData(blockNumberL2).call()).blockHash
   );
-  return { nullifiers, blockNumberL2 };
+  return { nullifiers, commitments, blockNumberL2 };
 }
 
 export default getProposeBlockCalldata;

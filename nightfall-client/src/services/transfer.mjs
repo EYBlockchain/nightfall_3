@@ -13,7 +13,12 @@ import rand from 'common-files/utils/crypto/crypto-random.mjs';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
 import logger from 'common-files/utils/logger.mjs';
 import { Nullifier, Commitment, PublicInputs, Transaction } from '../classes/index.mjs';
-import { findUsableCommitmentsMutex, storeCommitment } from './commitment-storage.mjs';
+import {
+  findUsableCommitmentsMutex,
+  storeCommitment,
+  markNullified,
+  clearPending,
+} from './commitment-storage.mjs';
 import { getSiblingPath } from '../utils/timber.mjs';
 import { discoverPeers } from './peers.mjs';
 import getBlockAndTransactionsByRoot from '../utils/optimist.mjs';
@@ -199,9 +204,10 @@ async function transfer(transferParams) {
       .filter(commitment => commitment.preimage.zkpPublicKey.hex(32) === senderZkpPublicKey.hex(32))
       .forEach(commitment => storeCommitment(commitment, senderZkpPrivateKey)); // TODO insertMany
     // mark the old commitments as nullified
-    // oldCommitments.forEach(commitment => markNullified(commitment));
+    await Promise.all(oldCommitments.map(commitment => markNullified(commitment)));
     return { rawTransaction, transaction: optimisticTransferTransaction };
   } catch (err) {
+    await Promise.all(oldCommitments.map(commitment => clearPending(commitment)));
     throw new Error(err); // let the caller handle the error
   }
 }
