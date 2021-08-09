@@ -19,14 +19,14 @@
     "express": "^4.17.1",
     "express-fileupload": "^1.1.7-alpha.4",
     "jsonfile": "^6.1.0",
-    "tar": "^6.0.2",
+    "tar": "^6.1.6",
     "winston": "^3.3.3"
   },
   "devDependencies": {
     "chai": "^4.2.0",
     "chai-http": "^4.3.0",
     "mocha": "^8.4.0",
-    "nodemon": "^1.18.9"
+    "nodemon": "^2.0.12"
   },
   "nodemonConfig": {
     "verbose": true,
