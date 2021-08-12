@@ -15,10 +15,11 @@ RUN mkdir /app/mongodb
 
 COPY src src
 COPY docker-entrypoint.sh pre-start-script.sh package.json package-lock.json ./
-RUN chmod 755 docker-entrypoint.sh
+
+RUN npm ci
 
 EXPOSE 27017
-RUN npm ci
+EXPOSE 80
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
 

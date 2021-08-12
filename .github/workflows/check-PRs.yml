@@ -64,7 +64,7 @@ jobs:
       - name: Run integration test
         run: |
           npm ci
-          sleep 1000
+          sleep 1500
           npm test
 
       - name: If integration test failed, shutdown the Containers
