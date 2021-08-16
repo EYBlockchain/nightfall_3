@@ -6,7 +6,7 @@
 
 Nightfall_3 is an application for transferring ERC20, ERC721 and ERC1155 applications under Zero Knowledge.  It abstracts away any need to deal directly with ZKP artefacts and provides a simple token-transfer API.  When used correctly, it will hide the recipient and the token being transferred.
 
-Nightfall_3 uses optimisttic rollups to counter the high gas costs of direct ZKP transactions. It can complete a ZKP transfer for approximately 10 kGas (this will soon be reduced to 8 kGas with a pending update).  This compares with 700 kGas for the original Nightfall application. As a Layer 2 solution with on-chain data availability, Nightfall_3 can perform a  private transfer for less than half the cost of a public ERCx transfer whilst maintaining the security and consensus assumptions from the Ethereum Mainnet.
+Nightfall_3 uses optimistic rollups to counter the high gas costs of direct ZKP transactions. It can complete a ZKP transfer for approximately 10 kGas (this will soon be reduced to 8 kGas with a pending update).  This compares with 700 kGas for the original Nightfall application. As a Layer 2 solution with on-chain data availability, Nightfall_3 can perform a  private transfer for less than half the cost of a public ERCx transfer whilst maintaining the security and consensus assumptions from the Ethereum Mainnet.
 
 ## Setup
 
