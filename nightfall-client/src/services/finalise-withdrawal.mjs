@@ -10,7 +10,7 @@ const { SHIELD_CONTRACT_NAME } = config;
 
 // TODO move classes to their own folder so this is not needed (it's already a
 // static function in the Block class)
-function buildSolidityStruct(block) {
+export function buildSolidityStruct(block) {
   const { proposer, root, leafCount } = block;
   return {
     proposer,
@@ -19,7 +19,7 @@ function buildSolidityStruct(block) {
   };
 }
 
-async function finaliseWithdrawal({ block, transactions, index }) {
+export async function finaliseWithdrawal({ block, transactions, index }) {
   // first, find the position of the transaction in the block
   // TODO we could check that the block is final here, but it's not required
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
@@ -38,5 +38,3 @@ async function finaliseWithdrawal({ block, transactions, index }) {
     throw new Error(err); // let the caller handle the error
   }
 }
-
-export default finaliseWithdrawal;

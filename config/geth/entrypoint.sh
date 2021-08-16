@@ -3,12 +3,13 @@ geth init --datadir=/data /setup/genesis.json
 PASSWORDFILE=/tmp/geth.$$.$RANDOM
 trap "rm -f $PASSWORDFILE; exit 1" SIGHUP SIGINT SIGTERM
 echo not very secret test key > $PASSWORDFILE
+echo test key for second account >> $PASSWORDFILE
 # These config items are shared by all nodes
 # Individual configs can be given in docker-compose.geth.yml 'command:' lines
 exec geth --bootnodes=`cat /setup/bootnodes` \
   --networkid 4378921 \
   --password $PASSWORDFILE \
-  --unlock 9c8b2276d490141ae1440da660e470e7c0349c63 \
+  --unlock 9c8b2276d490141ae1440da660e470e7c0349c63,feeda3882dd44aeb394caeef941386e7ed88e0e0 \
   --keystore /setup/keystore \
   --ethash.dagdir=/dag \
   --datadir=/data \
