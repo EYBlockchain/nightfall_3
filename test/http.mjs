@@ -132,7 +132,6 @@ describe('Testing the http API', () => {
 
     it('should register a proposer', async () => {
       const myAddress = (await getAccounts())[0];
-      console.log(`myAddress: ${myAddress}`);
       const res = await chai
         .request(optimistUrl)
         .post('/proposer/register')
@@ -456,11 +455,16 @@ describe('Testing the http API', () => {
     let index;
     it('Should find the block containing the withdraw transaction', async function () {
       const withdrawTransactionHash = transactions[0].transactionHash;
-      const res = await chai
-        .request(optimistUrl)
-        .get(`/block/transaction-hash/${withdrawTransactionHash}`);
-      ({ block, transactions, index } = res.body);
-      // } while (block === null);
+      do {
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        // eslint-disable-next-line no-await-in-loop
+        const res = await chai
+          .request(optimistUrl)
+          .get(`/block/transaction-hash/${withdrawTransactionHash}`);
+        ({ block, transactions, index } = res.body);
+      } while (block === null);
+      // Need this while wait when running geth as it runs slower than ganache
       expect(block).not.to.be.undefined; // eslint-disable-line
       expect(Object.entries(block).length).not.to.equal(0); // empty object {}
     });
@@ -512,7 +516,7 @@ describe('Testing the http API', () => {
     });
     it('Should have increased our balance', async function () {
       if (nodeInfo.includes('TestRPC')) {
-        const gasCosts = 5000000000000000;
+        const gasCosts = (5000000000000000 * txPerBlock) / 2;
         expect(endBalance - startBalance).to.closeTo(Number(value), gasCosts);
       } else {
         console.log('Not using a time-jump capable test client so this test is skipped');
@@ -562,7 +566,7 @@ describe('Testing the http API', () => {
       for (let i = 0; i < 10; i++) {
         if (blockSubmissionQueue.length === 3) break;
         // eslint-disable-next-line no-await-in-loop
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 5000));
       }
       expect(blockSubmissionQueue.length).to.equal(3);
     });
