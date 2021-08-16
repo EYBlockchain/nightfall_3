@@ -136,7 +136,7 @@ export const getFrontier = async () => {
   logger.http(`Calling /update for Timber`);
   try {
     const response = await axios.patch(`${url}/update`, { contractName }, { timeout: 3600000 });
-    logger.http('Timber response:', response.data.data.latestRecalculation);
+    logger.silly('Timber response:', response.data.data.latestRecalculation);
     // TODO: handle null response
     return response.data.data.latestRecalculation.frontier.map(e => e ?? config.ZERO);
   } catch (error) {

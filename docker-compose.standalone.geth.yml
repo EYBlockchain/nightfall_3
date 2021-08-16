@@ -1,7 +1,6 @@
 version: '3.5'
-# Use this script for running up nightfall_3 in 'developer' mode with local
-# bindings and using a Geth private blockchain.  See the readme for more information.
-# It acts as an override file for docker-compose.yml
+# Use this script for running up a standalone Geth private network, accessed
+# through localhost. It is a complete file, and not an override.
 services:
   bootnode:
     image: ethereum/client-go:alltools-stable
@@ -10,7 +9,7 @@ services:
         source: ./config/geth
         target: /setup
     networks:
-      nightfall_network:
+      geth_network:
         # fixed IP because the enode can't use a dns name
         ipv4_address: 172.16.238.10
     command:
@@ -28,10 +27,10 @@ services:
         source: geth1-chain
         target: /data
     networks:
-      nightfall_network:
+      geth_network:
     entrypoint: /setup/entrypoint.sh
     command:
-      --ws.port 8546 --ws --ws.origins '*' --ws.addr 0.0.0.0 --verbosity 2
+      --ws.port 8546 --ws --ws.origins '*' --ws.addr 0.0.0.0 --verbosity 3
 
   blockchain2:
     image: ethereum/client-go:stable
@@ -45,10 +44,10 @@ services:
         source: geth2-chain
         target: /data
     networks:
-      nightfall_network:
+      geth_network:
     entrypoint: /setup/entrypoint.sh
     command:
-      --ws.port 8546 --ws --ws.origins '*' --ws.addr 0.0.0.0 --verbosity 2
+      --ws.port 8546 --ws --ws.origins '*' --ws.addr 0.0.0.0 --verbosity 3
 
   blockchain-miner1:
     image: ethereum/client-go:stable
@@ -63,10 +62,10 @@ services:
         source: dag1
         target: /dag
     networks:
-      nightfall_network:
+      geth_network:
     entrypoint: /setup/entrypoint.sh
     command:
-      --ws.port 8546 --ws --ws.origins '*' --ws.addr 0.0.0.0 --mine --verbosity 2
+      --ws.port 8546 --ws --ws.origins '*' --ws.addr 0.0.0.0 --mine --verbosity 3
 
   blockchain-miner2:
     image: ethereum/client-go:stable
@@ -81,26 +80,19 @@ services:
         source: dag2
         target: /dag
     networks:
-      nightfall_network:
+      geth_network:
     entrypoint: /setup/entrypoint.sh
     command:
-      --ws.port 8546 --ws --ws.origins '*' --ws.addr 0.0.0.0 --mine --verbosity 2
+      --ws.port 8546 --ws --ws.origins '*' --ws.addr 0.0.0.0 --mine --verbosity 3
 
-  timber:
-    environment:
-      AUTOSTART_RETRIES: 300
-
-  deployer:
-    environment:
-      AUTOSTART_RETRIES: 300
-
-  optimist:
-    environment:
-      AUTOSTART_RETRIES: 300
-
-  client:
-    environment:
-      AUTOSTART_RETRIES: 300
+networks:
+  geth_network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.238.0/24
+          gateway: 172.16.238.1
 
 volumes:
   geth1-chain:

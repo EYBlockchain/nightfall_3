@@ -29,7 +29,6 @@ describe('Testing the http API', () => {
   let challengesAddress;
   let ercAddress;
   let connection; // WS connection
-  let blockSubmissionFunction;
   const zkpPrivateKey = '0xc05b14fa15148330c6d008814b0bdd69bc4a08a1bd0b629c42fa7e2c61f16739'; // the zkp private key we're going to use in the tests.
   const zkpPublicKey = sha256([new GN(zkpPrivateKey)]).hex();
   const url = 'http://localhost:8080';
@@ -178,7 +177,7 @@ describe('Testing the http API', () => {
       const msg = JSON.parse(message.data);
       const { type, txDataToSign } = msg;
       if (type === 'block') {
-        await blockSubmissionFunction(txDataToSign, privateKey, stateAddress, gas, BLOCK_STAKE);
+        await submitTransaction(txDataToSign, privateKey, stateAddress, gas, BLOCK_STAKE);
       } else {
         await submitTransaction(txDataToSign, privateKey, challengesAddress, gas);
       }
@@ -249,12 +248,12 @@ describe('Testing the http API', () => {
     // set the number of deposit transactions blocks to perform.
     const numDeposits = 1;
     it('should deposit enough crypto into fork to fill one layer 2 block', async () => {
-      doDeposits(numDeposits);
+      await expect(doDeposits(numDeposits)).to.eventually.be.fulfilled;
     });
     // next we withdraw each of the deposits
     const numWithdraws = 1;
     it('should withdraw all of our ZKP commitments, taking another block to do so', async () => {
-      doWithdraws(numWithdraws);
+      await expect(doWithdraws(numWithdraws)).to.eventually.be.fulfilled;
     });
     // now we attempt a transfer on one half of the nodes.  This should fail because all of our deposited
     // commitments should have been nullified by the withdrawals.
@@ -275,18 +274,19 @@ describe('Testing the http API', () => {
       await closeWeb3Connection();
       await unpauseBlockchain(1); // hold one half of the nodes
       await connectWeb3('ws://localhost:8546'); // need to talk to the un-held half
-      doDeposits(numDeposits * 2); // make a nice long fork
+      console.log('depositing');
+      await expect(await doDeposits(numDeposits * 2)).to.eventually.be.fulfilled; // make a nice long fork
+      console.log('deposited');
     });
     it('Should complete a chain-reorg', async () => {
       await unpauseBlockchain(2); // now both halfs are active - hopefully they will converge on the longer fork
-      // need to check syncing here.
-      await doSingleTransfer(); // this should work on the longer fork (but not on the shorter one)
+      // need to check syncing here?
+      await expect(doSingleTransfer()).to.eventually.be.fulfilled; // this should work on the longer fork (but not on the shorter one)
     });
   });
 
   after(() => {
     closeWeb3Connection();
     connection.close();
-    process.exit(0);
   });
 });
