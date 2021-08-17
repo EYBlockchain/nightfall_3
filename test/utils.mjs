@@ -217,13 +217,14 @@ export const topicEventMapping = {
 /**
 function to pause one client and one miner in the Geth blockchain for the
 purposes of rollback testing.  This creates a sort of split-brain, that we can
-use to force a change reorg when we reconnect the two halves
+use to force a change reorg when we reconnect the two halves.
+It will only work with the standalone geth network!
 */
 export async function pauseBlockchain(side) {
   const options = {
     cwd: path.join(__dirname),
     log: true,
-    config: ['../docker-compose.yml', '../docker-compose.geth.yml'],
+    config: ['../docker-compose.standalone.geth.yml'],
   };
   const client = `blockchain${side}`;
   const miner = `blockchain-miner${side}`;
@@ -233,7 +234,7 @@ export async function unpauseBlockchain(side) {
   const options = {
     cwd: path.join(__dirname),
     log: true,
-    config: ['../docker-compose.yml', '../docker-compose.geth.yml'],
+    config: ['../docker-compose.standalone.geth.yml'],
   };
   const client = `blockchain${side}`;
   const miner = `blockchain-miner${side}`;

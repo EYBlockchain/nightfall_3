@@ -21,8 +21,6 @@ while [ "$1" != "" ]; do
   case $1 in
       -g | --ganache )        FILE="-f docker-compose.ganache.yml"
                               ;;
-      -e | --geth )           FILE="-f docker-compose.geth.yml"
-                              ;;
       -l | --localhost )      FILE="-f docker-compose.host.docker.internal.yml"
                               ;;
       -h | --help )           usage

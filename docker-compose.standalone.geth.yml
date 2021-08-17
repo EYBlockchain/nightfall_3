@@ -11,7 +11,7 @@ services:
     networks:
       geth_network:
         # fixed IP because the enode can't use a dns name
-        ipv4_address: 172.16.238.10
+        ipv4_address: 172.16.239.10
     command:
       bootnode --nodekey=setup/node.key
 
@@ -91,8 +91,8 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: 172.16.238.0/24
-          gateway: 172.16.238.1
+        - subnet: 172.16.239.0/24
+          gateway: 172.16.239.1
 
 volumes:
   geth1-chain:
