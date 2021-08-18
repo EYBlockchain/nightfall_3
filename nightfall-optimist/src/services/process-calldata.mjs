@@ -90,7 +90,10 @@ export async function getProposeBlockCalldata(eventData) {
       // eslint-disable-next-line no-await-in-loop
       onChainBlockData = await stateContractInstance.methods.blockHashes(counter).call();
     } catch (error) {
-      throw new Error('Could not find blockHash in blockchain record');
+      // Getting to this means the block hash doesnt exist (perhaps its was rolled back)
+      counter = Math.max(...storedL2BlockNumbers) + 1;
+      break;
+      // throw new Error('Could not find blockHash in blockchain record');
       // break;
     }
   } while (onChainBlockData.blockHash !== block.blockHash);
