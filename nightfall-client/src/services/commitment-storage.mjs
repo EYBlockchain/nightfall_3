@@ -31,7 +31,7 @@ export async function storeCommitment(commitment, zkpPrivateKey) {
     _id: commitment.hash.hex(32),
     preimage: commitment.preimage.all.hex(32),
     isDeposited: commitment.isDeposited || false,
-    isOnChain: Number(commitment.isOnChain),
+    isOnChain: Number(commitment.isOnChain) || -1,
     isPendingNullification: false, // will not be pending when stored
     isNullified: commitment.isNullified,
     isNullifiedOnChain: Number(commitment.isNullifiedOnChain),
@@ -44,7 +44,7 @@ export async function storeCommitment(commitment, zkpPrivateKey) {
 // function to mark a commitments as on chain for a mongo db
 export async function markOnChain(commitments, blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
-  const query = { _id: { $in: commitments } };
+  const query = { _id: { $in: commitments }, isOnChain: { $eq: -1 } };
   const update = { $set: { isOnChain: Number(blockNumberL2) } };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
@@ -121,7 +121,7 @@ export async function dropRollbackCommitments(blockNumberL2) {
 // function to mark a commitments as nullified on chain for a mongo db
 export async function markNullifiedOnChain(nullifiers, blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
-  const query = { nullifier: { $in: nullifiers } };
+  const query = { nullifier: { $in: nullifiers }, isNullifiedOnChain: { $eq: -1 } };
   const update = { $set: { isNullifiedOnChain: Number(blockNumberL2) } };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
@@ -152,7 +152,6 @@ async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _value, 
   const commitments = commitmentArray
     .filter(commitment => Number(commitment.isOnChain) > Number(-1)) // filters for on chain commitments
     .map(ct => new Commitment(ct.preimage));
-
   // if we have an exact match, we can do a single-commitment transfer.
   const [singleCommitment] = commitments.filter(c => c.preimage.value.hex(32) === value.hex(32));
   if (singleCommitment) {
