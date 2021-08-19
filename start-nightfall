@@ -6,8 +6,9 @@ FILE=
 usage()
 {
   echo "Usage:"
-  echo "  -e or --geth for a two-node private geth blockchain"
-  echo "  -g or --ganache for a ganache simulator"
+  echo "  -g or --ganache; for a ganache simulator"
+  echo "  -l or --localhost; to connect to an already running blockchain on ws://localhost:8546"
+  echo "  -h or --help; to print this message"
 }
 
 # select a Geth or Ganache client
@@ -17,9 +18,9 @@ if [ "$1" == "" ]; then
 fi
 while [ "$1" != "" ]; do
   case $1 in
-      -g | --ganache )        shift
+      -g | --ganache )        FILE="-f docker-compose.ganache.yml"
                               ;;
-      -e | --geth )           FILE="-f docker-compose.geth.yml"
+      -l | --localhost )      FILE="-f docker-compose.host.docker.internal.yml"
                               ;;
       -h | --help )           usage
                               ;;

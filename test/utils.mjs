@@ -1,15 +1,25 @@
 import Web3 from 'web3';
 import axios from 'axios';
 import chai from 'chai';
+import compose from 'docker-compose';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import rand from '../common-files/utils/crypto/crypto-random.mjs';
+
+const { dirname } = path;
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 let web3;
 // This will be a mapping of privateKeys to nonces;
 const nonceDict = {};
 
-export function connectWeb3() {
-  web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8546'));
+export function connectWeb3(url = 'ws://localhost:8546') {
+  web3 = new Web3(new Web3.providers.WebsocketProvider(url));
   return web3;
+}
+
+export function connectWeb3NoState(url = 'ws://localhost:8546') {
+  return new Web3(new Web3.providers.WebsocketProvider(url));
 }
 
 export function closeWeb3Connection() {
@@ -203,17 +213,36 @@ export async function testForEvents(contractAddress, topics, timeOut = 30000) {
   return events;
 }
 
-export const waitForTimber = async (url, targetLeafCount) => {
-  let timberCurrentLeafCount = 0;
-  do {
-    // eslint-disable-next-line no-await-in-loop
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    // eslint-disable-next-line no-await-in-loop
-    timberCurrentLeafCount = await chai.request(url).get('/leaves/count');
-  } while (timberCurrentLeafCount !== targetLeafCount);
-};
-
 export const topicEventMapping = {
   BlockProposed: '0x566d835e602d4aa5802ee07d3e452e755bc77623507825de7bc163a295d76c0b',
   Rollback: '0xea34b0bc565cb5f2ac54eaa86422ae05651f84522ef100e16b54a422f2053852',
 };
+
+/**
+function to pause one client and one miner in the Geth blockchain for the
+purposes of rollback testing.  This creates a sort of split-brain, that we can
+use to force a change reorg when we reconnect the two halves.
+It will only work with the standalone geth network!
+*/
+export async function pauseBlockchain(side) {
+  const options = {
+    cwd: path.join(__dirname),
+    log: true,
+    config: ['../docker-compose.standalone.geth.yml'],
+    composeOptions: ['-p geth'],
+  };
+  const client = `blockchain${side}`;
+  const miner = `blockchain-miner${side}`;
+  return Promise.all([compose.pauseOne(client, options), compose.pauseOne(miner, options)]);
+}
+export async function unpauseBlockchain(side) {
+  const options = {
+    cwd: path.join(__dirname),
+    log: true,
+    config: ['../docker-compose.standalone.geth.yml'],
+    composeOptions: ['-p geth'],
+  };
+  const client = `blockchain${side}`;
+  const miner = `blockchain-miner${side}`;
+  return Promise.all([compose.unpauseOne(client, options), compose.unpauseOne(miner, options)]);
+}

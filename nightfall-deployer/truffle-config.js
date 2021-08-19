@@ -68,17 +68,17 @@ module.exports = {
     },
 
     development: {
-      host: 'host.docker.internal', // Localhost (default: none)
-      port: 8545, // Standard Ethereum port (default: none)
-      network_id: '*', // Any network (default: none)
-      gas: 12500000,
+      url: 'ws://host.docker.internal:8546',
+      network_id: 4378921, // Any network (default: none)
+      gas: 8000000,
+      websockets: true,
     },
 
     localhost: {
-      host: 'localhost', // Localhost (default: none)
-      port: 8545, // Standard Ethereum port (default: none)
-      network_id: '*', // Any network (default: none)
-      gas: 12500000,
+      url: 'ws://localhost:8546',
+      network_id: 4378921, // Any network (default: none)
+      gas: 8000000,
+      websockets: true,
     },
 
     // Another network with more advanced options...
