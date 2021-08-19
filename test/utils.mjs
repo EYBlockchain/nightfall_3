@@ -18,6 +18,10 @@ export function connectWeb3(url = 'ws://localhost:8546') {
   return web3;
 }
 
+export function connectWeb3NoState(url = 'ws://localhost:8546') {
+  return new Web3(new Web3.providers.WebsocketProvider(url));
+}
+
 export function closeWeb3Connection() {
   web3.currentProvider.connection.close();
 }
@@ -225,6 +229,7 @@ export async function pauseBlockchain(side) {
     cwd: path.join(__dirname),
     log: true,
     config: ['../docker-compose.standalone.geth.yml'],
+    composeOptions: ['-p geth'],
   };
   const client = `blockchain${side}`;
   const miner = `blockchain-miner${side}`;
@@ -235,6 +240,7 @@ export async function unpauseBlockchain(side) {
     cwd: path.join(__dirname),
     log: true,
     config: ['../docker-compose.standalone.geth.yml'],
+    composeOptions: ['-p geth'],
   };
   const client = `blockchain${side}`;
   const miner = `blockchain-miner${side}`;
