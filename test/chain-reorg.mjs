@@ -8,6 +8,7 @@ import {
   closeWeb3Connection,
   submitTransaction,
   connectWeb3,
+  connectWeb3NoState,
   getAccounts,
   getBalance,
   topicEventMapping,
@@ -29,6 +30,7 @@ describe('Testing the http API', () => {
   let challengesAddress;
   let ercAddress;
   let connection; // WS connection
+  let web3;
   const zkpPrivateKey = '0xc05b14fa15148330c6d008814b0bdd69bc4a08a1bd0b629c42fa7e2c61f16739'; // the zkp private key we're going to use in the tests.
   const zkpPublicKey = sha256([new GN(zkpPrivateKey)]).hex();
   const url = 'http://localhost:8080';
@@ -119,7 +121,7 @@ describe('Testing the http API', () => {
     }
   };
 
-  const doSingleTransfer = async () => {
+  const doSingleTransferTwice = async () => {
     let res = await chai
       .request(url)
       .post('/transfer')
@@ -133,7 +135,7 @@ describe('Testing the http API', () => {
         senderZkpPrivateKey: zkpPrivateKey,
         fee,
       });
-    expect(res.text).to.have.string('No suitable commitments were found');
+    if (res.status !== 200) throw new Error(res.text);
     res = await chai
       .request(url)
       .post('/transfer')
@@ -147,11 +149,11 @@ describe('Testing the http API', () => {
         senderZkpPrivateKey: zkpPrivateKey,
         fee,
       });
-    expect(res.txDataToSign).to.be.a('string');
+    if (res.status !== 200) throw new Error(res.text);
   };
 
   before(async () => {
-    const web3 = await connectWeb3();
+    web3 = await connectWeb3();
 
     shieldAddress = (await chai.request(url).get('/contract-address/Shield')).body.address;
 
@@ -243,7 +245,7 @@ describe('Testing the http API', () => {
     });
   });
 
-  describe('Create fork 1', () => {
+  describe('Show we have no suitable transactions', () => {
     // we start by just sending enough deposits to fill one block
     // set the number of deposit transactions blocks to perform.
     const numDeposits = 1;
@@ -255,33 +257,54 @@ describe('Testing the http API', () => {
     it('should withdraw all of our ZKP commitments, taking another block to do so', async () => {
       await expect(doWithdraws(numWithdraws)).to.eventually.be.fulfilled;
     });
-    // now we attempt a transfer on one half of the nodes.  This should fail because all of our deposited
+    // now we attempt a transfer.  This should fail because all of our deposited
     // commitments should have been nullified by the withdrawals.
     it('should fail to transfer some crypto because there are no available input commitments', async () => {
-      await pauseBlockchain(1); // hold one half of the nodes
-      await closeWeb3Connection();
-      await connectWeb3('ws://localhost:8547'); // need to talk to the un-held half
-      await expect(doSingleTransfer()).to.be.rejectedWith('expected undefined to be a string');
+      await expect(doSingleTransferTwice()).to.be.rejectedWith(
+        'No suitable commitments were found',
+      );
     });
   });
 
-  describe('Create fork 2', () => {
+  describe.skip('Create fork', () => {
     const numDeposits = 1;
-    it('should deposit enough crypto into fork to fill two layer 2 blocks', async () => {
-      // Now we'll pause the nodes that went down the error fork and unpause the nodes
-      // that didn't, then we'll deposit some more crypto
+    let blocks1;
+    it('should deposit enough crypto into fork to fill a layer 2 block into half the chain', async () => {
+      // at this point we have no suitable commitments. Let's hold half of the nodes
+      // and add some commitments to the un-held half
+      console.log('BLOCKNUMBER is:', await web3.eth.getBlockNumber());
       await pauseBlockchain(2); // hold one half of the nodes
-      await closeWeb3Connection();
-      await unpauseBlockchain(1); // hold one half of the nodes
-      await connectWeb3('ws://localhost:8546'); // need to talk to the un-held half
+      await new Promise(resolve => setTimeout(resolve, 30000));
       console.log('depositing');
-      await expect(await doDeposits(numDeposits * 2)).to.eventually.be.fulfilled; // make a nice long fork
+      await expect(doDeposits(numDeposits)).to.eventually.be.fulfilled; // add transactions to the other half
       console.log('deposited');
+      blocks1 = await web3.eth.getBlockNumber();
+      console.log('BLOCKNUMBER is:', blocks1);
     });
-    it('Should complete a chain-reorg', async () => {
-      await unpauseBlockchain(2); // now both halfs are active - hopefully they will converge on the longer fork
-      // need to check syncing here?
-      await expect(doSingleTransfer()).to.eventually.be.fulfilled; // this should work on the longer fork (but not on the shorter one)
+    it('should still fail to withdraw from the other half', async () => {
+      // now we have only one half of the chain with commitments
+      // if we swap to the half without commitments, a transfer should still fail
+      const web3b = await connectWeb3NoState('http://localhost:8547');
+      await pauseBlockchain(1);
+      await unpauseBlockchain(2);
+      console.log('BLOCKNUMBER is:', await web3b.eth.getBlockNumber());
+      do {
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise(resolve => setTimeout(resolve, 15000));
+        console.log(
+          'Waiting for blocks to be mined - current block is',
+          // eslint-disable-next-line no-await-in-loop
+          await web3b.eth.getBlockNumber(),
+        );
+        // eslint-disable-next-line no-await-in-loop
+      } while ((await web3b.eth.getBlockNumber()) < blocks1 + 10);
+      console.log('BLOCKNUMBER is:', await web3b.eth.getBlockNumber());
+      // we need to connect to that half first
+      // then attempt a transfer.
+      await unpauseBlockchain(1);
+      await expect(doSingleTransferTwice()).to.be.rejectedWith(
+        'No suitable commitments were found',
+      );
     });
   });
 
