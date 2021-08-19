@@ -11,8 +11,12 @@ import {
   findBlocksFromBlockNumberL2,
   deleteNullifiers,
   deleteTransferAndWithdraw,
+  getMempoolTransactions,
+  deleteTransactionsByTransactionHashes,
+  retrieveNullifiers,
 } from '../services/database.mjs';
 import Block from '../classes/block.mjs';
+import checkTransaction from '../services/transaction-checker.mjs';
 
 async function rollbackEventHandler(data) {
   const { blockNumberL2 } = data.returnValues;
@@ -45,6 +49,41 @@ async function rollbackEventHandler(data) {
       ])
       .flat(1),
   );
+
+  const storedNullifiers = (await retrieveNullifiers()).map(sNull => sNull.hash); // List of Nullifiers stored by blockProposer
+  const mempool = (await getMempoolTransactions()).filter(m => m.transactionType !== '0');
+  const deleteTxs = await Promise.all(
+    mempool.map(async transaction => {
+      // logger.info(`storedNullifiers: ${JSON.stringify(storedNullifiers)}`);
+      const transactionNullifiers = transaction.nullifiers.filter(
+        hash => hash !== '0x0000000000000000000000000000000000000000000000000000000000000000',
+      ); // Deposit transactions still have nullifier fields but they are 0
+      let checkTransactionCorrect = true;
+      try {
+        await checkTransaction(transaction);
+        const dupNullifier = transactionNullifiers.some(txNull =>
+          storedNullifiers.includes(txNull),
+        ); // Move to Set for performance later.
+        if (dupNullifier || !checkTransactionCorrect) {
+          return transaction.transactionHash;
+        }
+        return false;
+      } catch (err) {
+        checkTransactionCorrect = false;
+        const dupNullifier = transactionNullifiers.some(txNull => {
+          return storedNullifiers.includes(txNull);
+        }); // Move to Set for performance later.
+        if (dupNullifier || !checkTransactionCorrect) {
+          return transaction.transactionHash;
+        }
+        return false;
+      }
+    }),
+  );
+  const toBeDeleted = deleteTxs.filter(tx => tx);
+
+  logger.info(`Deleting from Mempool: ${toBeDeleted}`);
+  return deleteTransactionsByTransactionHashes(toBeDeleted);
 }
 
 export default rollbackEventHandler;
