@@ -29,12 +29,11 @@ jobs:
       - name: Start Containers
         run: |
           docker-compose build
-          ./start-nightfall -g &> nightfall_3-test.log &disown
+          ./start-nightfall -g &> ganache-test.log &disown
 
       - name: Run integration test
         run: |
           npm ci
-          sleep 200
           npm test
 
       - name: If integration test failed, shutdown the Containers
