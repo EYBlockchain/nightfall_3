@@ -39,7 +39,7 @@ jobs:
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
-        run: docker-compose -f docker-compose.yml docker-compose.ganache.yml down -v
+        run: docker-compose -f docker-compose.yml -f docker-compose.ganache.yml down -v
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
@@ -72,7 +72,7 @@ jobs:
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
-        run: docker-compose -f docker-compose.yml docker-compose.ganache.yml down -v
+        run: docker-compose -f docker-compose.yml -f docker-compose.ganache.yml down -v
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
