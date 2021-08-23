@@ -76,6 +76,7 @@ async function transfer(transferParams) {
   let secrets = [];
   const salts = [];
   for (let i = 0; i < recipientCompressedPkds.length; i++) {
+    // eslint-disable-next-line no-await-in-loop
     salts.push(new GN((await rand(ZKP_KEY_LENGTH)).bigInt % BN128_GROUP_ORDER));
     newCommitments.push(
       new Commitment({
@@ -89,6 +90,7 @@ async function transfer(transferParams) {
     );
     // encrypt secrets such as erc20Address, tokenId, value, salt for recipient
     if (i === 0) {
+      // eslint-disable-next-line no-await-in-loop
       secrets = await Secrets.encryptSecrets(
         [ercAddress.bigInt, tokenId.bigInt, values[i].bigInt, salts[i].bigInt],
         [recipientPkds[0][0].bigInt, recipientPkds[0][1].bigInt],
@@ -213,7 +215,10 @@ async function transfer(transferParams) {
         .forEach(commitment => storeCommitment(commitment, nsk)); // TODO insertMany
       // mark the old commitments as nullified
       oldCommitments.forEach(commitment => markNullified(commitment));
-      return { transaction: optimisticTransferTransaction };
+      return {
+        transaction: optimisticTransferTransaction,
+        salts: salts.map(salt => salt.hex(32)),
+      };
     }
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(optimisticTransferTransaction))

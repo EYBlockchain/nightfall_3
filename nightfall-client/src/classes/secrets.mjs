@@ -78,7 +78,6 @@ class Secrets {
     const saltProbable = [];
     try {
       const decryptedMessages = dec(cipherText, privateKey);
-      console.log('HERE decryptedMessages', decryptedMessages);
       const ercAddress = generalise(decryptedMessages[0]).hex(32);
       // Since the encrypted message could be an encryption of the positive or the negative congruent form of the same number, we check which of the two
       // satisfy commitment calculation. We do this for both token ID and salt
@@ -100,10 +99,6 @@ class Secrets {
             salt: saltProbable[j],
           });
           if (commitmentProbable.hash.hex(32) === newCommitment) {
-            console.log('HERE ercAddress in decryptSecrets', ercAddress);
-            console.log('HERE tokenId in decryptSecrets', tokenIdProbable[i]);
-            console.log('HERE value in decryptSecrets', value);
-            console.log('HERE salt in decryptSecrets', saltProbable[j]);
             commitment = commitmentProbable;
           }
         }

@@ -4,7 +4,7 @@
   "description": "Optimistic Nightfall",
   "main": "./nightfall-client/src/index.mjs",
   "scripts": {
-    "test": "mocha --timeout 0 --bail test/http.mjs test/neg-http.mjs test/enc.mjs",
+    "test": "mocha --timeout 0 --bail test/http.mjs test/neg-http.mjs",
     "test-gas": "mocha --timeout 0 --bail test/tx-gas.mjs",
     "lint": "eslint . --ext js,mjs",
     "prepare": "husky install"

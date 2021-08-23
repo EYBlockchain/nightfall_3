@@ -3,6 +3,7 @@ import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import Queue from 'queue';
 import WebSocket from 'ws';
+import { GN } from 'general-number';
 import config from 'config';
 import {
   closeWeb3Connection,
@@ -22,7 +23,7 @@ chai.use(chaiAsPromised);
 
 const blockSubmissionQueue = new Queue({ concurrency: 1 });
 
-describe('Testing the http API', async () => {
+describe('Testing the http API', () => {
   let shieldAddress;
   let stateAddress;
   let proposersAddress;
@@ -31,18 +32,19 @@ describe('Testing the http API', async () => {
   let transactions = [];
   let connection; // WS connection
   let blockSubmissionFunction;
+  let web3;
+  let ask1;
+  let nsk1;
+  let nsk2;
+  let ivk1;
+  let ivk2;
+  let pkd1;
+  let pkd2;
 
-  const {
-    ask: ask1,
-    nsk: nsk1,
-    ivk: ivk1,
-    pkd: pkd1,
-    // compressedPkd: compressedPkd1,
-  } = await generateKeys(ZKP_KEY_LENGTH);
-
-  const url = 'http://localhost:8080';
+  const senderUrl = 'http://localhost:8080';
+  const recipientUrl = 'http://localhost:8084';
   const optimistUrl = 'http://localhost:8081';
-  const optimistWsUrl = 'ws:localhost:8082';
+  const optimistWsUrl = 'ws://localhost:8082';
   const tokenId = '0x01';
   const value = 10;
   const value2 = 12;
@@ -58,20 +60,25 @@ describe('Testing the http API', async () => {
   const eventLogs = [];
 
   before(async () => {
-    const web3 = await connectWeb3();
+    web3 = await connectWeb3();
 
-    shieldAddress = (await chai.request(url).get('/contract-address/Shield')).body.address;
+    shieldAddress = (await chai.request(senderUrl).get('/contract-address/Shield')).body.address;
 
-    stateAddress = (await chai.request(url).get('/contract-address/State')).body.address;
+    stateAddress = (await chai.request(senderUrl).get('/contract-address/State')).body.address;
 
-    proposersAddress = (await chai.request(url).get('/contract-address/Proposers')).body.address;
+    proposersAddress = (await chai.request(senderUrl).get('/contract-address/Proposers')).body
+      .address;
 
-    challengesAddress = (await chai.request(url).get('/contract-address/Challenges')).body.address;
+    challengesAddress = (await chai.request(senderUrl).get('/contract-address/Challenges')).body
+      .address;
 
     web3.eth.subscribe('logs', { address: stateAddress }).on('data', log => {
       // For event tracking, we use only care about the logs related to 'blockProposed'
       if (log.topics[0] === topicEventMapping.BlockProposed) eventLogs.push('blockProposed');
     });
+
+    ({ ask: ask1, nsk: nsk1, ivk: ivk1, pkd: pkd1 } = await generateKeys(ZKP_KEY_LENGTH));
+    ({ nsk: nsk2, ivk: ivk2, pkd: pkd2 } = await generateKeys(ZKP_KEY_LENGTH));
 
     connection = new WebSocket(optimistWsUrl);
     connection.onopen = () => {
@@ -82,10 +89,8 @@ describe('Testing the http API', async () => {
       const msg = JSON.parse(message.data);
       const { type, txDataToSign } = msg;
       if (type === 'block') {
-        console.log('HERE block');
         await blockSubmissionFunction(txDataToSign, privateKey, stateAddress, gas, BLOCK_STAKE);
       } else {
-        console.log('HERE block not');
         await submitTransaction(txDataToSign, privateKey, challengesAddress, gas);
       }
     };
@@ -93,26 +98,35 @@ describe('Testing the http API', async () => {
 
   describe('Miscellaneous tests', () => {
     it('should respond with status 200 to the health check', async () => {
-      const res = await chai.request(url).get('/healthcheck');
+      const res = await chai.request(senderUrl).get('/healthcheck');
       expect(res.status).to.equal(200);
     });
 
     it('should get the address of the shield contract', async () => {
-      const res = await chai.request(url).get('/contract-address/Shield');
+      const res = await chai.request(senderUrl).get('/contract-address/Shield');
       expect(res.body.address).to.be.a('string');
       // subscribeToGasUsed(shieldAddress);
     });
 
     it('should get the address of the test ERC contract stub', async () => {
-      const res = await chai.request(url).get('/contract-address/ERCStub');
+      const res = await chai.request(senderUrl).get('/contract-address/ERCStub');
       ercAddress = res.body.address;
       expect(ercAddress).to.be.a('string');
     });
 
     it('should subscribe to block proposed event with the provided incoming viewing key', async () => {
-      const res = await chai.request(url).post('/incoming-viewing-key').send({
+      const res = await chai.request(senderUrl).post('/incoming-viewing-key').send({
         ivk: ivk1,
         nsk: nsk1,
+      });
+      expect(res.body.status).to.be.a('string');
+      expect(res.body.status).to.equal('success');
+    });
+
+    it('should subscribe to block proposed event with the provided incoming viewing key', async () => {
+      const res = await chai.request(recipientUrl).post('/incoming-viewing-key').send({
+        ivk: ivk2,
+        nsk: nsk2,
       });
       expect(res.body.status).to.be.a('string');
       expect(res.body.status).to.equal('success');
@@ -145,7 +159,7 @@ describe('Testing the http API', async () => {
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
       expect(endBalance - startBalance).to.closeTo(-bond, gasCosts);
-      await chai.request(url).post('/peers/addPeers').send({
+      await chai.request(senderUrl).post('/peers/addPeers').send({
         address: myAddress,
         enode: 'http://optimist1:80',
       });
@@ -164,7 +178,7 @@ describe('Testing the http API', async () => {
         await Promise.all(
           Array.from({ length: txPerBlock * numDeposits }, () =>
             chai
-              .request(url)
+              .request(senderUrl)
               .post('/deposit')
               .send({ ercAddress, tokenId, value, pkd: pkd1, nsk: nsk1, fee }),
           ),
@@ -207,7 +221,7 @@ describe('Testing the http API', async () => {
   describe('Single transfer tests', () => {
     it('should transfer some crypto (back to us) using ZKP', async () => {
       const res = await chai
-        .request(url)
+        .request(senderUrl)
         .post('/transfer')
         .send({
           ercAddress,
@@ -234,9 +248,9 @@ describe('Testing the http API', async () => {
       console.log(`     Gas used was ${Number(receipt.gasUsed)}`);
     });
 
-    it('should send a single transfer directly to a proposer - offchain', async () => {
+    it('should send a single transfer directly to a proposer - offchain and a receiver different from the sender should successfully receive tha transfer and decrypt the secrets', async () => {
       const res = await chai
-        .request(url)
+        .request(senderUrl)
         .post('/transfer')
         .send({
           offchain: true,
@@ -244,7 +258,7 @@ describe('Testing the http API', async () => {
           tokenId,
           recipientData: {
             values: [value],
-            recipientPkds: [pkd1],
+            recipientPkds: [pkd2],
           },
           nsk: nsk1,
           ask: ask1,
@@ -255,7 +269,7 @@ describe('Testing the http API', async () => {
         await Promise.all(
           Array.from({ length: txPerBlock - 2 }, () =>
             chai
-              .request(url)
+              .request(senderUrl)
               .post('/deposit')
               .send({ ercAddress, tokenId, value, pkd: pkd1, nsk: nsk1, fee }),
           ),
@@ -269,11 +283,23 @@ describe('Testing the http API', async () => {
         await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
       }
 
+      // wait for the block proposed event with transfer function to be recognised by nightfall client of recipient
       while (eventLogs.length !== 1) {
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
       eventLogs.shift();
+
+      const newCommitmentSalts = res.body.salts;
+      const result = await chai.request(recipientUrl).get('/commitment/salt').query({
+        salt: newCommitmentSalts[0],
+      });
+      const commitment = result.body.commitment[0];
+
+      expect(
+        web3.utils.toChecksumAddress(`0x${commitment.preimage.ercAddress.substring(26, 66)}`),
+      ).to.equal(ercAddress); // .subString(22, 64)
+      expect(parseInt(new GN(commitment.preimage.value).decimal, 10)).to.equal(value);
     });
   });
 
@@ -281,7 +307,7 @@ describe('Testing the http API', async () => {
   describe('Double transfer tests', () => {
     it('should transfer some crypto (back to us) using ZKP', async () => {
       const res = await chai
-        .request(url)
+        .request(senderUrl)
         .post('/transfer')
         .send({
           ercAddress,
@@ -308,12 +334,12 @@ describe('Testing the http API', async () => {
       console.log(`     Gas used was ${Number(receipt.gasUsed)}`);
     });
 
-    it('should send a double transfer directly to a proposer - offchain', async () => {
+    it('should send a double transfer directly to a proposer - offchain and a receiver different from the sender should successfully receive tha transfer and decrypt the secrets', async () => {
       // give the last block time to be submitted, or we won't have enough
       // commitments in the Merkle tree to use for the double transfer.
 
       const res = await chai
-        .request(url)
+        .request(senderUrl)
         .post('/transfer')
         .send({
           offchain: true,
@@ -321,8 +347,8 @@ describe('Testing the http API', async () => {
           tokenId,
           recipientData: {
             // Add one here so we dont use the output of the previous double transfer as a single transfer input
-            values: [value2 + 1],
-            recipientPkds: [pkd1],
+            values: [value2 + 2],
+            recipientPkds: [pkd2],
           },
           nsk: nsk1,
           ask: ask1,
@@ -333,7 +359,7 @@ describe('Testing the http API', async () => {
         await Promise.all(
           Array.from({ length: txPerBlock - 2 }, () =>
             chai
-              .request(url)
+              .request(senderUrl)
               .post('/deposit')
               .send({ ercAddress, tokenId, value, pkd: pkd1, nsk: nsk1, fee }),
           ),
@@ -346,17 +372,28 @@ describe('Testing the http API', async () => {
         await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
       }
 
+      // wait for the block proposed event with transfer function to be recognised by nightfall client of recipient
       while (eventLogs[0] !== 'blockProposed') {
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
       eventLogs.shift();
+
+      const newCommitmentSalts = res.body.salts;
+      const result = await chai.request(recipientUrl).get('/commitment/salt').query({
+        salt: newCommitmentSalts[0],
+      });
+      const commitment = result.body.commitment[0];
+      expect(
+        web3.utils.toChecksumAddress(`0x${commitment.preimage.ercAddress.substring(26, 66)}`),
+      ).to.equal(ercAddress); // .subString(22, 64)
+      expect(parseInt(new GN(commitment.preimage.value).decimal, 10)).to.equal(value2 + 2);
     });
   });
 
   describe('Withdraw tests', () => {
     it('should withdraw some crypto from a ZKP commitment', async () => {
-      const res = await chai.request(url).post('/withdraw').send({
+      const res = await chai.request(senderUrl).post('/withdraw').send({
         ercAddress,
         tokenId,
         value,
@@ -381,7 +418,7 @@ describe('Testing the http API', async () => {
         await Promise.all(
           Array.from({ length: txPerBlock - 1 }, () =>
             chai
-              .request(url)
+              .request(senderUrl)
               .post('/deposit')
               .send({ ercAddress, tokenId, value, pkd: pkd1, nsk: nsk1, fee }),
           ),
@@ -398,7 +435,6 @@ describe('Testing the http API', async () => {
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
       eventLogs.shift();
-      console.log('HERE eventLogs end of http.mjs', eventLogs);
     });
   });
   // when the widthdraw transaction is finalised, we want to be able to pull the
@@ -420,7 +456,7 @@ describe('Testing the http API', async () => {
     let startBalance;
     let endBalance;
     it('Should create a failing finalise-withdrawal (because insufficient time has passed)', async () => {
-      const res = await chai.request(url).post('/finalise-withdrawal').send({
+      const res = await chai.request(senderUrl).post('/finalise-withdrawal').send({
         block, // block containing the withdraw transaction
         transactions, // transactions in the withdraw block
         index, // index of the withdraw transaction in the transactions
@@ -438,7 +474,7 @@ describe('Testing the http API', async () => {
     });
     it('Should create a passing finalise-withdrawal (because sufficient time has passed)', async () => {
       await timeJump(3600 * 24 * 10); // jump in time by 10 days
-      const res = await chai.request(url).post('/finalise-withdrawal').send({
+      const res = await chai.request(senderUrl).post('/finalise-withdrawal').send({
         block,
         transactions,
         index,
@@ -462,7 +498,7 @@ describe('Testing the http API', async () => {
     });
   });
 
-  describe.skip('Make three blocks before submitting to the blockchain', () => {
+  describe('Make three blocks before submitting to the blockchain', () => {
     it(`Should make ${txPerBlock * 3} transactions with no block submission`, async () => {
       // hold block submission
       blockSubmissionQueue.stop();
@@ -476,7 +512,7 @@ describe('Testing the http API', async () => {
         await Promise.all(
           Array.from({ length: txPerBlock * 3 }, () =>
             chai
-              .request(url)
+              .request(senderUrl)
               .post('/deposit')
               .send({ ercAddress, tokenId, value, pkd: pkd1, nsk: nsk1, fee }),
           ),

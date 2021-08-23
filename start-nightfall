@@ -1,5 +1,5 @@
 #! /bin/bash
-docker-compose -f docker-compose.enc-test.yml down --remove-orphans
+docker-compose down --remove-orphans
 
 VOLUME_LIST=$(docker volume ls -q)
 
@@ -24,5 +24,5 @@ if [[ $(echo $VOLUME_LIST | grep nightfall_3_build) ]]; then
   docker volume rm nightfall_3_build
 fi
 
-docker-compose -f docker-compose.enc-test.yml up -d deployer
-docker-compose -f docker-compose.enc-test.yml up
+docker-compose up -d deployer
+docker-compose up

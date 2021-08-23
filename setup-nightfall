@@ -3,4 +3,4 @@
 # Install node dependencies
 npm ci
 
-docker-compose -f docker-compose.enc-test.yml build --no-cache
+docker-compose build --no-cache
