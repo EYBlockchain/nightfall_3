@@ -10,7 +10,7 @@ import logger from 'common-files/utils/logger.mjs';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction, TransactionError } from '../classes/index.mjs';
-import { setRegisteredProposerAddress } from '../services/database.mjs';
+import { setRegisteredProposerAddress, getMempoolTransactions } from '../services/database.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import { getFrontier, getLeafCount } from '../utils/timber.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
@@ -200,6 +200,21 @@ router.get('/change', async (req, res, next) => {
 });
 
 /**
+ * Function to get mempool of a connected proposer
+ */
+router.get('/mempool', async (req, res, next) => {
+  logger.debug(`proposer/mempool endpoint received GET ${JSON.stringify(req.body, null, 2)}`);
+  try {
+    const mempool = await getMempoolTransactions();
+    logger.debug('returning mempool');
+    res.json({ result: mempool });
+  } catch (err) {
+    logger.error(err);
+    next(err);
+  }
+});
+
+/**
  * Function to Propose a state update block  This just
  * provides the tx data, the user will need to call the blockchain client
  * @deprecated - this is now an automated process - no need to manually propose
@@ -221,6 +236,7 @@ router.post('/encode', async (req, res, next) => {
     const newTransactions = await Promise.all(
       transactions.map(t => {
         const transaction = t;
+        logger.info(`/endoce Transactions: ${JSON.stringify(transaction)}`);
         transaction.transactionHash = Transaction.calcHash(transaction);
         return transaction;
       }),
