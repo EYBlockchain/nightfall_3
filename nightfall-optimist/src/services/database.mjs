@@ -224,7 +224,12 @@ Function to save a (unprocessed) Transaction
 */
 export async function saveTransaction(_transaction) {
   const { mempool = true } = _transaction; // mempool may not exist
-  const transaction = { _id: _transaction.transactionHash, ..._transaction, mempool };
+  const transaction = {
+    _id: _transaction.transactionHash,
+    ..._transaction,
+    mempool,
+    blockNumberL2: -1,
+  };
   logger.debug(
     `saving transaction ${transaction.transactionHash}, with layer 1 block number ${_transaction.blockNumber}`,
   );
@@ -253,15 +258,12 @@ Function to add a set of transactions from the layer 2 mempool once a block has 
 export async function addTransactionsToMemPool(block) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  const searchQuery = { transactionHash: { $in: block.transactionHashes } };
-  const transactions = await db.collection(TRANSACTIONS_COLLECTION).find(searchQuery).toArray();
-  // This filters out any transactions that may been included in other blocks
-  const transactionUniqueToBlock = transactions
-    .filter(t => t.blockNumberL2 === block.blockNumberL2)
-    .map(t => t.transactionHash);
-  const updateQuery = { transactionHash: { $in: transactionUniqueToBlock } };
+  const query = {
+    transactionHash: { $in: block.transactionHashes },
+    blockNumberL2: { $eq: -1 },
+  };
   const update = { $set: { mempool: true, blockNumberL2: -1 } };
-  return db.collection(TRANSACTIONS_COLLECTION).updateMany(updateQuery, update);
+  return db.collection(TRANSACTIONS_COLLECTION).updateMany(query, update);
 }
 
 /**
@@ -364,10 +366,7 @@ export async function saveNullifiers(nullifiers, blockNumber) {
 export async function retrieveNullifiers() {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  return db
-    .collection(NULLIFIER_COLLECTION)
-    .find({}, { projection: { hash: 1 } })
-    .toArray();
+  return db.collection(NULLIFIER_COLLECTION).find({}).toArray();
 }
 
 export async function stampNullifiers(nullifiers, blockHash) {
@@ -388,11 +387,19 @@ export async function retrieveMinedNullifiers() {
     .toArray();
 }
 
-// delete all the nullifiers in this block
-export async function deleteNullifiers(blockHash) {
+export async function resetNullifiers(blockHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { blockHash };
+  const update = { $set: { blockHash: null } };
+  return db.collection(NULLIFIER_COLLECTION).updateMany(query, update);
+}
+
+// delete all the nullifiers in this block
+export async function deleteNullifiers(hash) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { hash };
   return db.collection(NULLIFIER_COLLECTION).deleteMany(query);
 }
 
