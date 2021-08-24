@@ -30,38 +30,6 @@ export function setNonce(privateKey, _nonce) {
   nonceDict[privateKey] = _nonce;
 }
 
-export function getNonce(privateKey) {
-  return nonceDict[privateKey];
-}
-
-export function gasStats(txReceipt) {
-  const topic = web3.utils.sha3('GasUsed(uint256,uint256)');
-  const { logs } = txReceipt;
-  logs.forEach(log => {
-    if (log.topics.includes(topic)) {
-      const gasData = web3.eth.abi.decodeLog(
-        [
-          { type: 'uint256', name: 'byShieldContract' },
-          { type: 'uint256', name: 'byVerifierContract' },
-        ],
-        log.data,
-        [topic],
-      );
-      const gasUsedByVerifierContract = Number(gasData.byVerifierContract);
-      const gasUsedByShieldContract = Number(gasData.byShieldContract);
-      const gasUsed = Number(txReceipt.gasUsed);
-      const refund = gasUsedByVerifierContract + gasUsedByShieldContract - gasUsed;
-      const attributedToVerifier = gasUsedByVerifierContract - refund;
-      console.log(
-        'Gas attributed to Shield contract:',
-        gasUsedByShieldContract,
-        'Gas attributed to Verifier contract:',
-        attributedToVerifier,
-      );
-    }
-  });
-}
-
 export async function getAccounts() {
   const accounts = web3.eth.getAccounts();
   return accounts;

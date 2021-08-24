@@ -8,7 +8,7 @@ import config from 'config';
 
 import { MetadataService } from './db/service/index.mjs';
 import deployerRest from './rest/deployer.mjs';
-import { compileContract } from './compile.mjs';
+import compileContract from './compile.mjs';
 import utilsWeb3 from './utils-web3.mjs';
 import utilsPoll from './utils-poll.mjs';
 import Web3 from './web3.mjs';

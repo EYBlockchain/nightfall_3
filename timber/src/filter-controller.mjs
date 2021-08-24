@@ -296,7 +296,7 @@ export const responseFunctions = {
   BlockProposed: blockProposedResponseFunction,
 };
 // remover functions are called when an event is removed by a chain reorg.
-export const removerFunctions = {
+const removerFunctions = {
   Rollback: removeRollbackFunction,
   BlockProposed: removeBlockProposedFunction,
 };

@@ -5,7 +5,7 @@ import path from 'path';
 import fs from 'fs-extra';
 import solc from 'solc';
 import config from 'config';
-import { releases } from './solc-versions-list.mjs';
+import versionList from './solc-versions-list.mjs';
 import logger from './logger.mjs';
 
 const { contractsPath } = config;
@@ -101,17 +101,17 @@ const loadRemoteVersionAsync = async solcVersionRelease => {
   });
 };
 
-export const compileContract = async contractName => {
+export default async contractName => {
   try {
     const solcVersion = getSolcVersion(contractName);
     const sources = buildSources();
     const input = createSolcInput(sources);
 
-    const solcInstance = await loadRemoteVersionAsync(releases[solcVersion].slice(8, -3));
+    const solcInstance = await loadRemoteVersionAsync(
+      versionList.releases[solcVersion].slice(8, -3),
+    );
     compile(solcInstance, input);
   } catch (err) {
     throw new Error(err);
   }
 };
-
-export default { compileContract };

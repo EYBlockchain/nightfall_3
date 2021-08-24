@@ -13,13 +13,6 @@ const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
 const { generalise } = gen;
 const mutex = new Mutex();
 
-// function to drop the commitment collection (useful for testing)
-export async function dropCommitments() {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(COMMITMENTS_DB);
-  return db.collection(COMMITMENTS_COLLECTION).drop();
-}
-
 // function to format a commitment for a mongo db and store it
 export async function storeCommitment(commitment, zkpPrivateKey) {
   const connection = await mongo.connection(MONGO_URL);
@@ -51,7 +44,7 @@ export async function markOnChain(commitments, blockNumberL2) {
 }
 
 // function to mark a commitment as pending nullication for a mongo db
-export async function markPending(commitment) {
+async function markPending(commitment) {
   const connection = await mongo.connection(MONGO_URL);
   const query = { _id: commitment.hash.hex(32) };
   const update = { $set: { isPendingNullification: true } };

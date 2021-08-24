@@ -8,12 +8,6 @@ import config from 'config';
 
 const { BN128_PRIME_FIELD } = config;
 
-export function mod(_x, _m = BN128_PRIME_FIELD) {
-  const m = BigInt(_m);
-  const x = BigInt(_x);
-  return ((x % m) + m) % m; // accounts for x being negative
-}
-
 export function addMod(addMe, m = BN128_PRIME_FIELD) {
   return addMe.reduce((e, acc) => (((e + m) % m) + acc) % m, BigInt(0));
 }
@@ -22,7 +16,7 @@ export function mulMod(timesMe, m = BN128_PRIME_FIELD) {
   return timesMe.reduce((e, acc) => (((e + m) % m) * acc) % m, BigInt(1));
 }
 
-export function powerMod(base, exponent, m = BN128_PRIME_FIELD) {
+function powerMod(base, exponent, m = BN128_PRIME_FIELD) {
   if (m === BigInt(1)) return BigInt(0);
   let result = BigInt(1);
   let b = (base + m) % m; // add m in case it's negative: % gives the remainder, not the mod
