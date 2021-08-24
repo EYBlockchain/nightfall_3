@@ -236,7 +236,6 @@ router.post('/encode', async (req, res, next) => {
     const newTransactions = await Promise.all(
       transactions.map(t => {
         const transaction = t;
-        logger.info(`/endoce Transactions: ${JSON.stringify(transaction)}`);
         transaction.transactionHash = Transaction.calcHash(transaction);
         return transaction;
       }),

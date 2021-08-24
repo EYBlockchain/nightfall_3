@@ -11,11 +11,8 @@ import {
   findBlocksFromBlockNumberL2,
   deleteNullifiers,
   deleteTransferAndWithdraw,
-  getMempoolTransactions,
-  deleteTransactionsByTransactionHashes,
 } from '../services/database.mjs';
 import Block from '../classes/block.mjs';
-// import checkTransaction from '../services/transaction-checker.mjs';
 
 async function rollbackEventHandler(data) {
   const { blockNumberL2 } = data.returnValues;
@@ -37,20 +34,6 @@ async function rollbackEventHandler(data) {
    event.
    Also delete nullifiers and the blocks that no longer exist.
   */
-
-  /*
-  Block State Rollback
-  1) Get all blocks from the L2 number - this is all blocks involved in the rollback
-  2) Collect all transactions in this block, splitting them between deposits and others.
-  3) All deposits are returned to the mempool : true;
-  4) All other transactions need to be re-checked for validity
-  5) These transactions and all transactions in the mempool need to be rechecked with timber, to ensure the commitments exist.
-  */
-
-  const mempool = await getMempoolTransactions();
-  const mempoolHashes = mempool.map(m => m.transactionHash);
-
-  await deleteTransactionsByTransactionHashes(mempoolHashes);
   return Promise.all(
     (await findBlocksFromBlockNumberL2(blockNumberL2))
       .map(async block => [

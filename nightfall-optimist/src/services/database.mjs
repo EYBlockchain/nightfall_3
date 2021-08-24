@@ -407,6 +407,5 @@ export async function addTransactionsToMemPoolFromBlockNumberL2(blockNumberL2) {
 export async function getMempoolTransactions() {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  const query = { mempool: true };
-  return db.collection(TRANSACTIONS_COLLECTION).find(query).toArray();
+  return db.collection(TRANSACTIONS_COLLECTION).find().toArray();
 }
