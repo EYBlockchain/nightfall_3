@@ -3,9 +3,11 @@ import app from './app.mjs';
 import {
   startEventQueue,
   subscribeToNewCurrentProposer,
+  subscribeToRemovedNewCurrentProposer,
   subscribeToBlockAssembledWebSocketConnection,
   subscribeToChallengeWebSocketConnection,
   newCurrentProposerEventHandler,
+  removeNewCurrentProposerEventHandler,
   eventHandlers,
 } from './event-handlers/index.mjs';
 import Proposer from './classes/proposer.mjs';
@@ -27,6 +29,7 @@ const main = async () => {
     // only then start making blocks and listening to new proposers
     initialBlockSync(proposer).then(() => {
       subscribeToNewCurrentProposer(newCurrentProposerEventHandler, proposer);
+      subscribeToRemovedNewCurrentProposer(removeNewCurrentProposerEventHandler, proposer);
       conditionalMakeBlock(proposer);
     });
     // we do not wait for the initial block sync for these event handlers

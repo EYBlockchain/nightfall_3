@@ -1,6 +1,7 @@
 import {
   startEventQueue,
   subscribeToNewCurrentProposer,
+  subscribeToRemovedNewCurrentProposer,
   subscribeToBlockAssembledWebSocketConnection,
   subscribeToChallengeWebSocketConnection,
 } from './subscribe.mjs';
@@ -13,7 +14,7 @@ import {
   // removeRollbackEventHandler,
   removeBlockProposedEventHandler,
   // removeCommittedToChallengeEventHandler,
-  // removeNewCurrentProposerEventHandler,
+  removeNewCurrentProposerEventHandler,
   removeTransactionSubmittedEventHandler,
 } from './chain-reorg.mjs';
 
@@ -34,8 +35,10 @@ const eventHandlers = {
 export {
   startEventQueue,
   subscribeToNewCurrentProposer,
+  subscribeToRemovedNewCurrentProposer,
   subscribeToBlockAssembledWebSocketConnection,
   subscribeToChallengeWebSocketConnection,
   newCurrentProposerEventHandler,
+  removeNewCurrentProposerEventHandler,
   eventHandlers,
 };

@@ -166,16 +166,6 @@ export async function deleteBlock(blockHash) {
 }
 
 /**
-function to delete blocks with a layer 1 block number >= blockNumber
-*/
-export async function deleteBlocksFromBlockNumberL1(blockNumber) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  const query = { blockNumber: { $gte: Number(blockNumber) } };
-  return db.collection(SUBMITTED_BLOCKS_COLLECTION).deleteMany(query);
-}
-
-/**
 function to find blocks with a layer 2 blockNumber >= blockNumberL2
 */
 export async function findBlocksFromBlockNumberL2(blockNumberL2) {
@@ -327,6 +317,7 @@ export async function deleteTransferAndWithdraw(transactionHashes) {
   return db.collection(TRANSACTIONS_COLLECTION).deleteMany(query);
 }
 
+<<<<<<< HEAD
 export async function deleteTransactionsFromBlockNumberL1(blockNumber) {
   logger.debug(`deleting transactions from layer 1 block ${blockNumber}`);
   const connection = await mongo.connection(MONGO_URL);
@@ -335,6 +326,8 @@ export async function deleteTransactionsFromBlockNumberL1(blockNumber) {
   return db.collection(TRANSACTIONS_COLLECTION).deleteMany(query);
 }
 
+=======
+>>>>>>> 47e0326 (feat: new current proposer handled in chain reorg)
 // function that sets the Block's L1 blocknumber to null
 // to indicate that it's back in the L1 mempool (and will probably be re-mined
 // and given a new L1 trnasactionHash)
@@ -404,13 +397,6 @@ export async function deleteNullifiers(blockHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { blockHash };
-  return db.collection(NULLIFIER_COLLECTION).deleteMany(query);
-}
-
-export async function deleteNullifiersFromBlockNumberL1(blockNumber) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  const query = { blockNumber: { $gte: Number(blockNumber) } };
   return db.collection(NULLIFIER_COLLECTION).deleteMany(query);
 }
 
