@@ -4,8 +4,8 @@ remember wholesale because otherwise it would have to be constructed in real-
 time from blockchain events.
 */
 import config from 'config';
-import mongo from '../utils/mongo.mjs';
-import logger from '../utils/logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import mongo from 'common-files/utils/mongo.mjs';
 
 const {
   MONGO_URL,
@@ -76,11 +76,9 @@ export async function isChallengerAddressMine(address) {
 /**
 function to save a block, so that we can later search the block, for example to
 find which block a transaction went into. Note, we'll save all blocks, that get
-posted to the blockchain, not just ours, although that may not be needed (but
-they're small).
+posted to the blockchain, not just ours.
 */
 export async function saveBlock(_block) {
-  // const block = { ..._block, check: false };
   const block = { _id: _block.blockHash, ..._block };
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
@@ -153,12 +151,22 @@ export async function deleteBlock(blockHash) {
 }
 
 /**
-function to delete blocks with a layer 2 blockNumber >= blockNumberL2
+function to delete blocks with a layer 2 block number >= blockNumberL2
 */
 export async function deleteBlocksFromBlockNumberL2(blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { blockNumberL2: { $gte: Number(blockNumberL2) } };
+  return db.collection(SUBMITTED_BLOCKS_COLLECTION).deleteMany(query);
+}
+
+/**
+function to delete blocks with a layer 1 block number >= blockNumber
+*/
+export async function deleteBlocksFromBlockNumberL1(blockNumber) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { blockNumber: { $gte: Number(blockNumber) } };
   return db.collection(SUBMITTED_BLOCKS_COLLECTION).deleteMany(query);
 }
 
@@ -216,7 +224,7 @@ export async function getMostProfitableTransactions(number) {
 Function to save a (unprocessed) Transaction
 */
 export async function saveTransaction(_transaction) {
-  const transaction = { id: _transaction.transactionHash, ..._transaction, mempool: true };
+  const transaction = { _id: _transaction.transactionHash, ..._transaction, mempool: true };
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   return db.collection(TRANSACTIONS_COLLECTION).insertOne(transaction);
@@ -228,9 +236,15 @@ Function to add a set of transactions from the layer 2 mempool once a block has 
 export async function addTransactionsToMemPool(block) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  const query = { transactionHash: { $in: block.transactionHashes } };
-  const update = { $set: { mempool: true } };
-  return db.collection(TRANSACTIONS_COLLECTION).updateMany(query, update);
+  const searchQuery = { transactionHash: { $in: block.transactionHashes } };
+  const transactions = await db.collection(TRANSACTIONS_COLLECTION).find(searchQuery).toArray();
+  // This filters out any transactions that may been included in other blocks
+  const transactionUniqueToBlock = transactions
+    .filter(t => t.blockNumberL2 === block.blockNumberL2)
+    .map(t => t.transactionHash);
+  const updateQuery = { transactionHash: { $in: transactionUniqueToBlock } };
+  const update = { $set: { mempool: true, blockNumberL2: -1 } };
+  return db.collection(TRANSACTIONS_COLLECTION).updateMany(updateQuery, update);
 }
 
 /**
@@ -241,7 +255,7 @@ export async function removeTransactionsFromMemPool(block) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { transactionHash: { $in: block.transactionHashes } };
-  const update = { $set: { mempool: false } };
+  const update = { $set: { mempool: false, blockNumberL2: block.blockNumberL2 } };
   return db.collection(TRANSACTIONS_COLLECTION).updateMany(query, update);
 }
 
@@ -293,13 +307,21 @@ export async function deleteTransferAndWithdraw(transactionHashes) {
   return db.collection(TRANSACTIONS_COLLECTION).deleteMany(query);
 }
 
-export async function saveNullifiers(nullifiers) {
+export async function deleteTransactionsFromBlockNumberL1(blockNumber) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { blockNumber: { $gte: Number(blockNumber) } };
+  return db.collection(TRANSACTIONS_COLLECTION).deleteMany(query);
+}
+
+export async function saveNullifiers(nullifiers, blockNumber) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const indexNullifiers = nullifiers.map(n => {
     return {
       hash: n,
       blockHash: null,
+      blockNumber,
     };
   });
   return db.collection(NULLIFIER_COLLECTION).insertMany(indexNullifiers);
@@ -348,6 +370,13 @@ export async function deleteNullifiers(blockHash) {
   return db.collection(NULLIFIER_COLLECTION).deleteMany(query);
 }
 
+export async function deleteNullifiersFromBlockNumberL1(blockNumber) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { blockNumber: { $gte: Number(blockNumber) } };
+  return db.collection(NULLIFIER_COLLECTION).deleteMany(query);
+}
+
 export async function getBlocks() {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
@@ -355,4 +384,15 @@ export async function getBlocks() {
     .collection(SUBMITTED_BLOCKS_COLLECTION)
     .find({}, { sort: { blockNumber: 1 } })
     .toArray();
+}
+
+/**
+Function to add a set of transactions from the layer 2 mempool once a block has been rolled back
+*/
+export async function addTransactionsToMemPoolFromBlockNumberL2(blockNumberL2) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { blockNumberL2: { $gte: Number(blockNumberL2) } };
+  const update = { $set: { mempool: true, blockNumberL2: -1 } };
+  return db.collection(TRANSACTIONS_COLLECTION).updateMany(query, update);
 }

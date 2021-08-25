@@ -6,7 +6,7 @@
 
 Nightfall_3 is an application for transferring ERC20, ERC721 and ERC1155 applications under Zero Knowledge.  It abstracts away any need to deal directly with ZKP artefacts and provides a simple token-transfer API.  When used correctly, it will hide the recipient and the token being transferred.
 
-Nightfall_3 operates optimistically to counter the high gas costs of direct ZKP transactions.  It can complete a ZKP transfer for approximately 10 kGas (this will soon be reduced to 8 kGas with a pending update).  This compares with 700 kGas for the original Nightfall application. Using Nightfall_3 you can make a private transfer for less than half the cost of a public ERCx transfer, with no loss of decentralisation.
+Nightfall_3 uses optimistic rollups to counter the high gas costs of direct ZKP transactions. It can complete a ZKP transfer for approximately 10 kGas (this will soon be reduced to 8 kGas with a pending update).  This compares with 700 kGas for the original Nightfall application. As a Layer 2 solution with on-chain data availability, Nightfall_3 can perform a  private transfer for less than half the cost of a public ERCx transfer whilst maintaining the security and consensus assumptions from the Ethereum Mainnet.
 
 ## Setup
 
@@ -38,9 +38,11 @@ After that, run the setup script
 
 If running for first time, do the setup as above and then run this script:
 ```sh
-./start-nightfall
+./start-nightfall [-e | -g]
 ```
-This will bring up the application. It will take a minute or so, depending on your machine. You'll see lots of warnings as it runs up from the `optimist` and `timber` containers.  That's entirely fine, they're just waiting for the other services that they need to start up. You should see no errors however.  If you do, something has broken.
+This will bring up the application.  You can run it either with a Ganache blockchain simulator or a real Geth private network.  Use -g for Ganache and -e for Geth.  We recommend using Ganache first to check everything works, because it's considerably faster. 
+
+Startup will take a minute or so, depending on your machine. You'll see lots of warnings as it runs up from the `optimist` and `timber` containers.  That's entirely fine, they're just waiting for the other services that they need to start up. You should see no errors however.  If you do, something has broken.
 
 Note that during compilation of the Solidity (part of the startup), you will receive one compiler warning.  This is because we read calldata directly via `msg.data` when a block is proposed, in the interests of Gas efficiency. As a result, the compiler thinks were not using one of our function parameters.  We've been unable to think of a good workaround as yet.
 

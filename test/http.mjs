@@ -13,6 +13,7 @@ import {
   getBalance,
   timeJump,
   topicEventMapping,
+  setNonce,
 } from './utils.mjs';
 import { generateKeys } from '../nightfall-client/src/services/keys.mjs';
 
@@ -32,6 +33,7 @@ describe('Testing the http API', () => {
   let transactions = [];
   let connection; // WS connection
   let blockSubmissionFunction;
+  let nodeInfo;
   let web3;
   let ask1;
   let nsk1;
@@ -45,21 +47,23 @@ describe('Testing the http API', () => {
   const recipientUrl = 'http://localhost:8084';
   const optimistUrl = 'http://localhost:8081';
   const optimistWsUrl = 'ws://localhost:8082';
-  const tokenId = '0x01';
+  const tokenId = '0x00';
+  const tokenType = 'ERC20'; // it can be 'ERC721' or 'ERC1155'
   const value = 10;
   const value2 = 12;
-  // this is the etherum private key for the test account in openethereum
-  const privateKey = '0x4f3edf983ac636a65a842ce7c78d9aa706d3b113bce9c46f30d7d21715b23b1d';
+  // this is the etherum private key for accounts[0]
+  const privateKey = '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e';
   const gas = 10000000;
-  // this is the openethereum test account (but could be anything)
-  const recipientAddress = '0x00a329c0648769a73afac7f9381e08fb43dbea72';
+  // this is also accounts[0]
+  const recipientAddress = '0x9c8b2276d490141ae1440da660e470e7c0349c63';
   // this is what we pay the proposer for incorporating a transaction
   const fee = 1;
   const BLOCK_STAKE = 1000000000000000000; // 1 ether
   const txPerBlock = 2;
   const eventLogs = [];
+  let stateBalance = 0;
 
-  before(async () => {
+  before(async function () {
     web3 = await connectWeb3();
 
     shieldAddress = (await chai.request(senderUrl).get('/contract-address/Shield')).body.address;
@@ -71,6 +75,9 @@ describe('Testing the http API', () => {
 
     challengesAddress = (await chai.request(senderUrl).get('/contract-address/Challenges')).body
       .address;
+
+    nodeInfo = await web3.eth.getNodeInfo();
+    setNonce(await web3.eth.getTransactionCount((await getAccounts())[0]));
 
     web3.eth.subscribe('logs', { address: stateAddress }).on('data', log => {
       // For event tracking, we use only care about the logs related to 'blockProposed'
@@ -97,24 +104,24 @@ describe('Testing the http API', () => {
   });
 
   describe('Miscellaneous tests', () => {
-    it('should respond with status 200 to the health check', async () => {
+    it('should respond with status 200 to the health check', async function () {
       const res = await chai.request(senderUrl).get('/healthcheck');
       expect(res.status).to.equal(200);
     });
 
-    it('should get the address of the shield contract', async () => {
+    it('should get the address of the shield contract', async function () {
       const res = await chai.request(senderUrl).get('/contract-address/Shield');
       expect(res.body.address).to.be.a('string');
       // subscribeToGasUsed(shieldAddress);
     });
 
-    it('should get the address of the test ERC contract stub', async () => {
+    it('should get the address of the test ERC contract stub', async function () {
       const res = await chai.request(senderUrl).get('/contract-address/ERCStub');
       ercAddress = res.body.address;
       expect(ercAddress).to.be.a('string');
     });
 
-    it('should subscribe to block proposed event with the provided incoming viewing key', async () => {
+    it('should subscribe to block proposed event with the provided incoming viewing key', async function () {
       const res = await chai.request(senderUrl).post('/incoming-viewing-key').send({
         ivk: ivk1,
         nsk: nsk1,
@@ -123,7 +130,7 @@ describe('Testing the http API', () => {
       expect(res.body.status).to.equal('success');
     });
 
-    it('should subscribe to block proposed event with the provided incoming viewing key', async () => {
+    it('should subscribe to block proposed event with the provided incoming viewing key', async function () {
       const res = await chai.request(recipientUrl).post('/incoming-viewing-key').send({
         ivk: ivk2,
         nsk: nsk2,
@@ -134,14 +141,27 @@ describe('Testing the http API', () => {
   });
 
   describe('Basic Proposer tests', () => {
-    let txDataToSign;
+    after(async () => {
+      // After the proposer tests, re-register proposers
+      const myAddress = (await getAccounts())[0];
+      const res = await chai
+        .request(optimistUrl)
+        .post('/proposer/register')
+        .send({ address: myAddress });
+      const { txDataToSign } = res.body;
+      expect(txDataToSign).to.be.a('string');
+      const bond = 10000000000000000000;
+      await submitTransaction(txDataToSign, privateKey, proposersAddress, gas, bond);
+      stateBalance += bond;
+    });
+
     it('should register a proposer', async () => {
       const myAddress = (await getAccounts())[0];
       const res = await chai
         .request(optimistUrl)
         .post('/proposer/register')
         .send({ address: myAddress });
-      txDataToSign = res.body.txDataToSign;
+      const { txDataToSign } = res.body;
       expect(txDataToSign).to.be.a('string');
       // we have to pay 10 ETH to be registered
       const bond = 10000000000000000000;
@@ -164,15 +184,53 @@ describe('Testing the http API', () => {
         enode: 'http://optimist1:80',
       });
     });
+
+    it('should de-register a proposer', async () => {
+      const myAddress = (await getAccounts())[0];
+      const res = await chai.request(optimistUrl).post('/proposer/de-register');
+      const { txDataToSign } = res.body;
+      expect(txDataToSign).to.be.a('string');
+      const receipt = await submitTransaction(txDataToSign, privateKey, proposersAddress, gas);
+      expect(receipt).to.have.property('transactionHash');
+      expect(receipt).to.have.property('blockHash');
+      const { proposers } = (await chai.request(optimistUrl).get('/proposer/proposers')).body;
+      const thisProposer = proposers.filter(p => p.thisAddresss === myAddress);
+      expect(thisProposer.length).to.be.equal(0);
+    });
+    it('Should create a failing withdrawBond (because insufficient time has passed)', async () => {
+      const res = await chai.request(optimistUrl).post('/proposer/withdrawBond');
+      const { txDataToSign } = res.body;
+      expect(txDataToSign).to.be.a('string');
+      await expect(
+        submitTransaction(txDataToSign, privateKey, proposersAddress, gas),
+      ).to.be.rejectedWith(
+        /Returned error: VM Exception while processing transaction: revert It is too soon to withdraw your bond|Transaction has been reverted by the EVM/,
+      );
+    });
+    it('Should create a passing withdrawBond (because sufficient time has passed)', async () => {
+      if (nodeInfo.includes('TestRPC')) await timeJump(3600 * 24 * 10); // jump in time by 7 days
+      const res = await chai.request(optimistUrl).post('/proposer/withdrawBond');
+      const { txDataToSign } = res.body;
+      expect(txDataToSign).to.be.a('string');
+      if (nodeInfo.includes('TestRPC')) {
+        const receipt = await submitTransaction(txDataToSign, privateKey, proposersAddress, gas);
+        expect(receipt).to.have.property('transactionHash');
+        expect(receipt).to.have.property('blockHash');
+      } else {
+        await expect(
+          submitTransaction(txDataToSign, privateKey, proposersAddress, gas),
+        ).to.be.rejectedWith('Transaction has been reverted by the EVM');
+      }
+    });
   });
 
   describe('Deposit tests', () => {
     // blocks should be directly submitted to the blockchain, not queued
-    blockSubmissionFunction = (a, b, c, d, e) => submitTransaction(a, b, c, d, e);
+    blockSubmissionFunction = (a, b, c, d, e, f) => submitTransaction(a, b, c, d, e, f);
     // Need at least 5 deposits to perform all the necessary transfers
     // set the number of deposit transactions blocks to perform.
     const numDeposits = txPerBlock >= 5 ? 1 : Math.ceil(5 / txPerBlock);
-    it('should deposit some crypto into a ZKP commitment', async () => {
+    it('should deposit some crypto into a ZKP commitment', async function () {
       // We create enough transactions to fill numDeposits blocks full of deposits.
       const depositTransactions = (
         await Promise.all(
@@ -180,7 +238,7 @@ describe('Testing the http API', () => {
             chai
               .request(senderUrl)
               .post('/deposit')
-              .send({ ercAddress, tokenId, value, pkd: pkd1, nsk: nsk1, fee }),
+              .send({ ercAddress, tokenId, tokenType, value, pkd: pkd1, nsk: nsk1, fee }),
           ),
         )
       ).map(res => res.body);
@@ -213,13 +271,14 @@ describe('Testing the http API', () => {
       // Now we can empty the event queue
       for (let i = 0; i < numDeposits; i++) {
         eventLogs.shift();
+        stateBalance += fee * txPerBlock + BLOCK_STAKE;
       }
     });
   });
 
   // now we have some deposited tokens, we can transfer one of them:
   describe('Single transfer tests', () => {
-    it('should transfer some crypto (back to us) using ZKP', async () => {
+    it('should transfer some crypto (back to us) using ZKP', async function () {
       const res = await chai
         .request(senderUrl)
         .post('/transfer')
@@ -248,7 +307,7 @@ describe('Testing the http API', () => {
       console.log(`     Gas used was ${Number(receipt.gasUsed)}`);
     });
 
-    it('should send a single transfer directly to a proposer - offchain and a receiver different from the sender should successfully receive tha transfer and decrypt the secrets', async () => {
+    it('should send a single transfer directly to a proposer - offchain and a receiver different from the sender should successfully receive tha transfer and decrypt the secrets', async function () {
       const res = await chai
         .request(senderUrl)
         .post('/transfer')
@@ -271,7 +330,7 @@ describe('Testing the http API', () => {
             chai
               .request(senderUrl)
               .post('/deposit')
-              .send({ ercAddress, tokenId, value, pkd: pkd1, nsk: nsk1, fee }),
+              .send({ ercAddress, tokenId, tokenType, value, pkd: pkd1, nsk: nsk1, fee }),
           ),
         )
       ).map(dRes => dRes.body);
@@ -289,6 +348,7 @@ describe('Testing the http API', () => {
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
       eventLogs.shift();
+      stateBalance += fee * txPerBlock + BLOCK_STAKE;
 
       const newCommitmentSalts = res.body.salts;
       const result = await chai.request(recipientUrl).get('/commitment/salt').query({
@@ -305,7 +365,7 @@ describe('Testing the http API', () => {
 
   // now we can do the double transfer
   describe('Double transfer tests', () => {
-    it('should transfer some crypto (back to us) using ZKP', async () => {
+    it('should transfer some crypto (back to us) using ZKP', async function () {
       const res = await chai
         .request(senderUrl)
         .post('/transfer')
@@ -334,7 +394,7 @@ describe('Testing the http API', () => {
       console.log(`     Gas used was ${Number(receipt.gasUsed)}`);
     });
 
-    it('should send a double transfer directly to a proposer - offchain and a receiver different from the sender should successfully receive tha transfer and decrypt the secrets', async () => {
+    it('should send a double transfer directly to a proposer - offchain and a receiver different from the sender should successfully receive tha transfer and decrypt the secrets', async function () {
       // give the last block time to be submitted, or we won't have enough
       // commitments in the Merkle tree to use for the double transfer.
 
@@ -361,7 +421,7 @@ describe('Testing the http API', () => {
             chai
               .request(senderUrl)
               .post('/deposit')
-              .send({ ercAddress, tokenId, value, pkd: pkd1, nsk: nsk1, fee }),
+              .send({ ercAddress, tokenId, tokenType, value, pkd: pkd1, nsk: nsk1, fee }),
           ),
         )
       ).map(dRes => dRes.body);
@@ -377,6 +437,7 @@ describe('Testing the http API', () => {
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
+      stateBalance += fee * txPerBlock + BLOCK_STAKE;
       eventLogs.shift();
 
       const newCommitmentSalts = res.body.salts;
@@ -392,10 +453,11 @@ describe('Testing the http API', () => {
   });
 
   describe('Withdraw tests', () => {
-    it('should withdraw some crypto from a ZKP commitment', async () => {
+    it('should withdraw some crypto from a ZKP commitment', async function () {
       const res = await chai.request(senderUrl).post('/withdraw').send({
         ercAddress,
         tokenId,
+        tokenType,
         value,
         recipientAddress,
         nsk: nsk1,
@@ -420,7 +482,7 @@ describe('Testing the http API', () => {
             chai
               .request(senderUrl)
               .post('/deposit')
-              .send({ ercAddress, tokenId, value, pkd: pkd1, nsk: nsk1, fee }),
+              .send({ ercAddress, tokenId, tokenType, value, pkd: pkd1, nsk: nsk1, fee }),
           ),
         )
       ).map(dRes => dRes.body);
@@ -435,6 +497,7 @@ describe('Testing the http API', () => {
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
       eventLogs.shift();
+      stateBalance += fee * txPerBlock + BLOCK_STAKE;
     });
   });
   // when the widthdraw transaction is finalised, we want to be able to pull the
@@ -443,19 +506,24 @@ describe('Testing the http API', () => {
     let block;
     let txDataToSign;
     let index;
-    it('Should find the block containing the withdraw transaction', async () => {
+    it('Should find the block containing the withdraw transaction', async function () {
       const withdrawTransactionHash = transactions[0].transactionHash;
-      const res = await chai
-        .request(optimistUrl)
-        .get(`/block/transaction-hash/${withdrawTransactionHash}`);
-      ({ block, transactions, index } = res.body);
-      // } while (block === null);
+      do {
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        // eslint-disable-next-line no-await-in-loop
+        const res = await chai
+          .request(optimistUrl)
+          .get(`/block/transaction-hash/${withdrawTransactionHash}`);
+        ({ block, transactions, index } = res.body);
+      } while (block === null);
+      // Need this while wait when running geth as it runs slower than ganache
       expect(block).not.to.be.undefined; // eslint-disable-line
       expect(Object.entries(block).length).not.to.equal(0); // empty object {}
     });
     let startBalance;
     let endBalance;
-    it('Should create a failing finalise-withdrawal (because insufficient time has passed)', async () => {
+    it('Should create a failing finalise-withdrawal (because insufficient time has passed)', async function () {
       const res = await chai.request(senderUrl).post('/finalise-withdrawal').send({
         block, // block containing the withdraw transaction
         transactions, // transactions in the withdraw block
@@ -464,16 +532,16 @@ describe('Testing the http API', () => {
       txDataToSign = res.body.txDataToSign;
       expect(txDataToSign).to.be.a('string');
     });
-    it('should send the transaction to the shield contract, which should then revert', async () => {
+    it('should send the transaction to the shield contract, which should then revert', async function () {
       // now we need to sign the transaction and send it to the blockchain
       await expect(
         submitTransaction(txDataToSign, privateKey, shieldAddress, gas),
       ).to.be.rejectedWith(
-        'Returned error: VM Exception while processing transaction: revert It is too soon to withdraw funds from this block',
+        /Returned error: VM Exception while processing transaction: revert It is too soon to withdraw funds from this block|Transaction has been reverted by the EVM/,
       );
     });
-    it('Should create a passing finalise-withdrawal (because sufficient time has passed)', async () => {
-      await timeJump(3600 * 24 * 10); // jump in time by 10 days
+    it('Should create a passing finalise-withdrawal with a time-jump capable test client (because sufficient time has passed)', async function () {
+      if (nodeInfo.includes('TestRPC')) await timeJump(3600 * 24 * 10); // jump in time by 10 days
       const res = await chai.request(senderUrl).post('/finalise-withdrawal').send({
         block,
         transactions,
@@ -482,30 +550,41 @@ describe('Testing the http API', () => {
       txDataToSign = res.body.txDataToSign;
       expect(txDataToSign).to.be.a('string');
     });
-    it('should send the transaction to the shield contract', async () => {
-      // we have to pay 10 ETH to be registered
+    it('should send the transaction to the shield contract', async function () {
       const myAddress = (await getAccounts())[0];
       startBalance = await getBalance(myAddress);
       // now we need to sign the transaction and send it to the blockchain
-      const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
-      expect(receipt).to.have.property('transactionHash');
-      expect(receipt).to.have.property('blockHash');
+      // this will only work if we're using Ganache, otherwiise expect failure
+      if (nodeInfo.includes('TestRPC')) {
+        const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
+        expect(receipt).to.have.property('transactionHash');
+        expect(receipt).to.have.property('blockHash');
+      } else {
+        await expect(
+          submitTransaction(txDataToSign, privateKey, shieldAddress, gas),
+        ).to.be.rejectedWith('Transaction has been reverted by the EVM');
+      }
       endBalance = await getBalance(myAddress);
     });
-    it('Should have increased our balance', async () => {
-      const gasCosts = 5000000000000000;
-      expect(endBalance - startBalance).to.closeTo(Number(value), gasCosts);
+    it('Should have increased our balance', async function () {
+      if (nodeInfo.includes('TestRPC')) {
+        const gasCosts = (5000000000000000 * txPerBlock) / 2;
+        expect(endBalance - startBalance).to.closeTo(Number(value), gasCosts);
+      } else {
+        console.log('Not using a time-jump capable test client so this test is skipped');
+        this.skip();
+      }
     });
   });
 
   describe('Make three blocks before submitting to the blockchain', () => {
-    it(`Should make ${txPerBlock * 3} transactions with no block submission`, async () => {
+    it(`Should make ${txPerBlock * 3} transactions with no block submission`, async function () {
       // hold block submission
       blockSubmissionQueue.stop();
       // push subsequent block signing requests to the queue
-      blockSubmissionFunction = (a, b, c, d, e) =>
+      blockSubmissionFunction = (a, b, c, d, e, f) =>
         blockSubmissionQueue.push(async () => {
-          return submitTransaction(a, b, c, d, e);
+          return submitTransaction(a, b, c, d, e, f);
         });
       // to make three blocks, we need six transactions
       const depositTransactions = (
@@ -514,7 +593,7 @@ describe('Testing the http API', () => {
             chai
               .request(senderUrl)
               .post('/deposit')
-              .send({ ercAddress, tokenId, value, pkd: pkd1, nsk: nsk1, fee }),
+              .send({ ercAddress, tokenId, tokenType, value, pkd: pkd1, nsk: nsk1, fee }),
           ),
         )
       ).map(res => res.body);
@@ -548,7 +627,7 @@ describe('Testing the http API', () => {
         if (err) assert.fail(err);
         done();
       });
-      it('should have one extra block on chain', async () => {
+      it('should have one extra block on chain', async function () {
         while (eventLogs.length !== 3) {
           // eslint-disable-next-line no-await-in-loop
           await new Promise(resolve => setTimeout(resolve, 3000));
@@ -558,6 +637,17 @@ describe('Testing the http API', () => {
         eventLogs.shift();
       });
       // TODO currently hard to check this has run ok without looking at logs
+    });
+  });
+
+  describe('Check all balances in contracts', () => {
+    it('Should be zero for shield and proposer and non-zero for state', async () => {
+      const shieldContractBalance = await getBalance(shieldAddress);
+      const stateContractBalance = await getBalance(stateAddress);
+      const proposerContractBalance = await getBalance(proposersAddress);
+      expect(Number(shieldContractBalance)).to.be.eq(0);
+      expect(Number(proposerContractBalance)).to.be.eq(0);
+      expect(Number(stateContractBalance)).to.be.gte(stateBalance);
     });
   });
 

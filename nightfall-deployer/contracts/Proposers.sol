@@ -10,6 +10,7 @@ import './Structures.sol';
 import './Stateful.sol';
 
 contract Proposers is Stateful, Structures, Config {
+  // mapping(address => TimeLockedBond) public bondAccounts;
 
   /**
   * Each proposer gets a chance to propose blocks for a certain time, defined
@@ -30,6 +31,8 @@ contract Proposers is Stateful, Structures, Config {
   //add the proposer to the circular linked list
   function registerProposer() external payable {
     require(REGISTRATION_BOND == msg.value, 'The registration payment is incorrect');
+    payable(address(state)).transfer(REGISTRATION_BOND);
+    state.setBondAccount(msg.sender,REGISTRATION_BOND);
     LinkedAddress memory currentProposer = state.getCurrentProposer();
     // cope with this being the first proposer
     if (currentProposer.thisAddress == address(0)) {
@@ -58,10 +61,23 @@ contract Proposers is Stateful, Structures, Config {
     }
     state.setCurrentProposer(currentProposer.thisAddress);
   }
+
+  // Proposers are allowed to deregister themselves at any point (even if they are the current proposer)
+  // However, their bond is only withdrawable after the COOLING_OFF_PERIOD has passed. This ensures
+  // they are not the proposer of any blocks that could be challenged.
   function deRegisterProposer() external {
-    //TODO - check they have no blocks proposed
     require(state.getProposer(msg.sender).thisAddress != address(0), 'This proposer is not registered or you are not that proposer');
-    state.setProposer(msg.sender, LinkedAddress(address(0), address(0), address(0))); // array will be a bit sparse
-    state.addPendingWithdrawal(msg.sender, REGISTRATION_BOND);
+    state.removeProposer(msg.sender);
+    // The msg.sender has to wait a COOLING_OFF_PERIOD from current block.timestamp
+    state.updateBondAccountTime(msg.sender, block.timestamp);
+  }
+
+  function withdrawBond() external {
+    TimeLockedBond memory bond = state.getBondAccount(msg.sender);
+    require(bond.time + COOLING_OFF_PERIOD < block.timestamp, 'It is too soon to withdraw your bond');
+    require(state.getProposer(msg.sender).thisAddress == address(0), 'Cannot withdraw bond while a registered proposer');
+    // Zero out the entry in the bond escrow
+    state.setBondAccount(msg.sender,0);
+    state.addPendingWithdrawal(msg.sender,bond.amount);
   }
 }

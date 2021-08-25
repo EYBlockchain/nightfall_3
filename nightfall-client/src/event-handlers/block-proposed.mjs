@@ -1,18 +1,19 @@
-import logger from '../utils/logger.mjs';
-import { markNullifiedOnChain, storeCommitment } from '../services/commitment-storage.mjs';
+import config from 'config';
+import logger from 'common-files/utils/logger.mjs';
+import {
+  markNullifiedOnChain,
+  markOnChain,
+  storeCommitment,
+} from '../services/commitment-storage.mjs';
 import getProposeBlockCalldata from '../services/process-calldata.mjs';
 import Secrets from '../classes/secrets.mjs';
+
+const { ZERO } = config;
 
 /**
 This handler runs whenever a BlockProposed event is emitted by the blockchain
 */
-async function blockProposedEventHandler(
-  data,
-  keys = [
-    '0x0000000000000000000000000000000000000000000000000000000000000000',
-    '0x0000000000000000000000000000000000000000000000000000000000000000',
-  ],
-) {
+async function blockProposedEventHandler(data, keys = [ZERO, ZERO]) {
   logger.info(`Received Block Proposed event`);
   // ivk will be used to decrypt secrets whilst nsk will be used to calculate nullifiers for commitments and store them
   const ivk = keys[0];
@@ -28,6 +29,12 @@ async function blockProposedEventHandler(
         2,
       )}`,
     );
+
+  // filter out non zero commitmentsCount
+  const nonZeroCommitments = commitments.flat().filter(n => n !== ZERO);
+
+  // mark commitments on chain
+  await markOnChain(nonZeroCommitments, blockNumberL2);
 
   compressedSecrets.forEach(async (compressedSecret, i) => {
     // if there are no compressed secrets in a transaction, then we will ignore it as these could be deposit or
@@ -54,7 +61,7 @@ async function blockProposedEventHandler(
   // these nullifiers have now appeared on-chain. Thus their nullification
   // has been confirmed (barring a rollback) and we need to update the
   // commitment database to that effect
-  markNullifiedOnChain(nullifiers, blockNumberL2);
+  await markNullifiedOnChain(nullifiers, blockNumberL2);
 }
 
 export default blockProposedEventHandler;

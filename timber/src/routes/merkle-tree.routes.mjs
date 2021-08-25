@@ -157,6 +157,34 @@ async function update(req, res, next) {
   }
 }
 
+/**
+ * Special function which calculates the root from a given frontier and the
+ * corresponding leafIndex of the right-most leaf at the time the frontier was * solidified.
+ * req.params {
+ *  frontier: [0x123abc, 0x234bcd, ... ],
+ *  leafIndex: 1234,
+ * }
+ * @param {*} req
+ * @param {*} res - returns the root
+ */
+async function calculateRootFromFrontier(req, res, next) {
+  logger.debug('src/routes/merkle-tree.routes calculateRootFromFrontier()');
+
+  const { db } = req.user;
+  const { frontier } = req.body;
+  let { leafIndex } = req.body;
+  leafIndex = Number(leafIndex); // force to number
+
+  try {
+    const root = await merkleTreeController.calculateRootFromFrontier(db, frontier, leafIndex);
+
+    res.data = { root };
+    next();
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function getTreeHistory(req, res, next) {
   const { db } = req.user;
   const { root } = req.params;
@@ -201,6 +229,8 @@ export default router => {
   router.route('/start').post(startEventFilter);
 
   router.route('/update').patch(update);
+
+  router.get('/calculate-root-from-frontier', calculateRootFromFrontier);
 
   router.get('/siblingPath/:leafIndex', getSiblingPathByLeafIndex);
   router.get('/path/:leafIndex', getPathByLeafIndex);

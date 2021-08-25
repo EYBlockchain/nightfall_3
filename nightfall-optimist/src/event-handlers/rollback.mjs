@@ -4,6 +4,7 @@ as a result of a rollback, this event gets fired.  We can use it to remove the
 same blocks from our local database record and to reset cached Frontier and
 leafCount values in the Block class
 */
+import logger from 'common-files/utils/logger.mjs';
 import {
   addTransactionsToMemPool,
   deleteBlock,
@@ -12,7 +13,6 @@ import {
   deleteTransferAndWithdraw,
 } from '../services/database.mjs';
 import Block from '../classes/block.mjs';
-import logger from '../utils/logger.mjs';
 
 async function rollbackEventHandler(data) {
   const { blockNumberL2 } = data.returnValues;

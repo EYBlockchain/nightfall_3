@@ -1,4 +1,4 @@
-import logger from '../utils/logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
 import checkBlock from '../services/check-block.mjs';
 import BlockError from '../classes/block-error.mjs';
 import { createChallenge } from '../services/challenges.mjs';
@@ -51,7 +51,10 @@ async function blockProposedEventHandler(data) {
     if (err instanceof BlockError) {
       logger.warn(`Block Checker - Block invalid, with code ${err.code}! ${err.message}`);
       await createChallenge(block, transactions, err);
-    } else throw new Error(err);
+    } else {
+      logger.error(err.stack);
+      throw new Error(err);
+    }
   }
 }
 

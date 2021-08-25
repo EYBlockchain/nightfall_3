@@ -9,6 +9,8 @@ pragma experimental ABIEncoderV2;
 contract Structures {
     enum TransactionTypes {DEPOSIT, SINGLE_TRANSFER, DOUBLE_TRANSFER, WITHDRAW}
 
+    enum TokenType {ERC20, ERC721, ERC1155}
+
     event Rollback(bytes32 indexed blockHash, uint256 blockNumberL2, uint256 leafCount);
 
     event BlockProposed();
@@ -32,6 +34,7 @@ contract Structures {
         uint64 value;
         uint64 historicRootBlockNumberL2; // number of L2 block containing historic root
         TransactionTypes transactionType;
+        TokenType tokenType;
         bytes32 publicInputHash;
         bytes32 tokenId;
         bytes32 ercAddress;
@@ -65,5 +68,10 @@ contract Structures {
         address thisAddress;
         address previousAddress;
         address nextAddress;
+    }
+
+    struct TimeLockedBond {
+        uint256 amount; // The amount held
+        uint256 time; // The time the funds were locked from
     }
 }

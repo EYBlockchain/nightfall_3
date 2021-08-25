@@ -3,6 +3,7 @@
  */
 import config from 'config';
 import { GN, generalise } from 'general-number';
+import rand from 'common-files/utils/crypto/crypto-random.mjs';
 import Commitment from './commitment.mjs';
 import {
   enc,
@@ -11,7 +12,6 @@ import {
   edwardsDecompress,
 } from '../utils/crypto/encryption/elgamal.mjs';
 import { calculatePkd } from '../services/keys.mjs';
-import rand from '../utils/crypto/crypto-random.mjs';
 
 const { ZKP_KEY_LENGTH, BN128_GROUP_ORDER } = config;
 

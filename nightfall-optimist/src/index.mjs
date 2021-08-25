@@ -1,18 +1,12 @@
-import logger from './utils/logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
 import app from './app.mjs';
 import {
-  subscribeToBlockProposedEvent,
-  blockProposedEventHandler,
+  subscribeToEvents,
   subscribeToNewCurrentProposer,
-  newCurrentProposerEventHandler,
-  subscribeToTransactionSubmitted,
-  transactionSubmittedEventHandler,
   subscribeToBlockAssembledWebSocketConnection,
-  subscribeToRollbackEventHandler,
   subscribeToChallengeWebSocketConnection,
-  rollbackEventHandler,
-  subscribeTocommittedToChallengeEventHandler,
-  committedToChallengeEventHandler,
+  newCurrentProposerEventHandler,
+  eventHandlers,
 } from './event-handlers/index.mjs';
 import Proposer from './classes/proposer.mjs';
 import {
@@ -21,6 +15,7 @@ import {
 } from './services/block-assembler.mjs';
 import { setChallengeWebSocketConnection } from './services/challenges.mjs';
 import { initialBlockSync } from './services/state-sync.mjs';
+import buffer from './services/event-buffer.mjs';
 
 const main = async () => {
   try {
@@ -37,10 +32,7 @@ const main = async () => {
     // we do not wait for the initial block sync for these event handlers
     // as we want to still listen to incoming events (just not make blocks)
     // subscribe to blockchain events
-    subscribeToBlockProposedEvent(blockProposedEventHandler);
-    subscribeToTransactionSubmitted(transactionSubmittedEventHandler);
-    subscribeToRollbackEventHandler(rollbackEventHandler);
-    subscribeTocommittedToChallengeEventHandler(committedToChallengeEventHandler);
+    subscribeToEvents(buffer, eventHandlers);
     app.listen(80);
   } catch (err) {
     logger.error(err);

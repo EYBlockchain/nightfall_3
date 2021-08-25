@@ -2,7 +2,7 @@
 Routes for setting and removing valid challenger addresses.
 */
 import express from 'express';
-import logger from '../utils/logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
 import { addChallengerAddress, removeChallengerAddress } from '../services/database.mjs';
 
 const router = express.Router();

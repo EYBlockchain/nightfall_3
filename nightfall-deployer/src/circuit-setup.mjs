@@ -8,8 +8,8 @@ import axios from 'axios';
 import config from 'config';
 import fs from 'fs';
 import path from 'path';
-import logger from './utils/logger.mjs';
-import { waitForContract } from './utils/contract.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import { waitForContract } from 'common-files/utils/contract.mjs';
 
 const fsPromises = fs.promises;
 

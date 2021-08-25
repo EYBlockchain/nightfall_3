@@ -12,6 +12,7 @@ import {
   testForEvents,
   connectWeb3,
   topicEventMapping,
+  setNonce,
 } from './utils.mjs';
 import { generateKeys } from '../nightfall-client/src/services/keys.mjs';
 
@@ -37,12 +38,13 @@ describe('Testing the challenge http API', () => {
   const url = 'http://localhost:8080';
   const optimistUrl = 'http://localhost:8081';
   const optimistWsUrl = 'ws://localhost:8082';
-  const tokenId = '0x01';
+  const tokenId = '0x00';
+  const tokenType = 'ERC20'; // it can be 'ERC721' or 'ERC1155'
   const value = 10;
   // this is the etherum private key for accounts[0]
-  const privateKey = '0x4f3edf983ac636a65a842ce7c78d9aa706d3b113bce9c46f30d7d21715b23b1d';
-  // this is the ethereum private key for accounts[1]
-  const privateKey1 = '0x6cbed15c793ce57650b9877cf6fa156fbef513c4e6134f022a85b1ffdd59b2a1';
+  const privateKey = '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e';
+  // this is the ethereum private key used for challenging (for now it's the same)
+  const privateKey1 = '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e';
   const gas = 10000000;
   // this is the openethereum test account (but could be anything)
   // const recipientAddress = '0x00a329c0648769a73afac7f9381e08fb43dbea72';
@@ -85,6 +87,8 @@ describe('Testing the challenge http API', () => {
     // should get the address of the test ERC contract stub
     res = await chai.request(url).get('/contract-address/ERCStub');
     ercAddress = res.body.address;
+    // set the current nonce before we start the test
+    setNonce(await web3.eth.getTransactionCount((await getAccounts())[0]));
 
     ({ ask: ask1, nsk: nsk1, ivk: ivk1, pkd: pkd1 } = await generateKeys(ZKP_KEY_LENGTH));
 
@@ -198,7 +202,7 @@ describe('Testing the challenge http API', () => {
             );
           } else {
             txDataToSign = msg.txDataToSign;
-            console.log(`Created good block with blockHash ${res.block.blockHash}`);
+            console.log(`Created good block with blockHash ${block.blockHash}`);
           }
           await submitTransaction(txDataToSign, privateKey, stateAddress, gas, BLOCK_STAKE);
           counter++;
@@ -244,12 +248,11 @@ describe('Testing the challenge http API', () => {
       // eslint-disable-next-line no-await-in-loop
       const depositTransactions = (
         await Promise.all(
-          // Create 1 less than two blocks worth of transactions so we can fit in a transfer
-          Array.from({ length: txPerBlock * 2 - 1 }, () =>
+          Array.from({ length: txPerBlock }, () =>
             chai
               .request(url)
               .post('/deposit')
-              .send({ ercAddress, tokenId, value, pkd: pkd1, nsk: nsk1, fee }),
+              .send({ ercAddress, tokenId, tokenType, value, pkd: pkd1, nsk: nsk1, fee }),
           ),
         )
       ).map(res => res.body);
@@ -289,6 +292,29 @@ describe('Testing the challenge http API', () => {
         });
       // now we need to sign the transaction and send it to the blockchain
       await submitTransaction(res.body.txDataToSign, privateKey, shieldAddress, gas);
+
+      const depositTransactions = (
+        await Promise.all(
+          Array.from({ length: txPerBlock - 1 }, () =>
+            chai
+              .request(url)
+              .post('/deposit')
+              .send({ ercAddress, tokenId, tokenType, value, pkd: pkd1, nsk: nsk1, fee }),
+          ),
+        )
+      ).map(depRes => depRes.body);
+
+      depositTransactions.forEach(({ txDataToSign }) => expect(txDataToSign).to.be.a('string'));
+
+      const receiptArrays = [];
+      for (let i = 0; i < depositTransactions.length; i++) {
+        const { txDataToSign } = depositTransactions[i];
+        receiptArrays.push(
+          // eslint-disable-next-line no-await-in-loop
+          await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee),
+          // we need to await here as we need transactions to be submitted sequentially or we run into nonce issues.
+        );
+      }
     });
   });
 
@@ -301,7 +327,7 @@ describe('Testing the challenge http API', () => {
             chai
               .request(url)
               .post('/deposit')
-              .send({ ercAddress, tokenId, value, pkd: pkd1, nsk: nsk1, fee }),
+              .send({ ercAddress, tokenId, tokenType, value, pkd: pkd1, nsk: nsk1, fee }),
           ),
         )
       ).map(res => res.body);
@@ -374,6 +400,12 @@ describe('Testing the challenge http API', () => {
           web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
           web3.eth.abi.encodeParameter('bytes32', topicsBlockHashDuplicateTransaction),
         ]);
+        const res = await chai
+          .request(url)
+          .post('/deposit')
+          .send({ ercAddress, tokenId, tokenType, value, pkd: pkd1, nsk: nsk1, fee });
+        // now we need to sign the transaction and send it to the blockchain
+        await submitTransaction(res.body.txDataToSign, privateKey, shieldAddress, gas, fee);
       });
     });
     describe('Challenge 3: Invalid transaction submitted', () => {
@@ -412,7 +444,7 @@ describe('Testing the challenge http API', () => {
         const res = await chai
           .request(url)
           .post('/deposit')
-          .send({ ercAddress, tokenId, value, pkd: pkd1, nsk: nsk1, fee });
+          .send({ ercAddress, tokenId, tokenType, value, pkd: pkd1, nsk: nsk1, fee });
 
         const { txDataToSign } = res.body;
         expect(txDataToSign).to.be.a('string');
@@ -431,6 +463,7 @@ describe('Testing the challenge http API', () => {
         const res = await chai.request(url).post('/deposit').send({
           ercAddress,
           tokenId,
+          tokenType,
           value,
           pkd: pkd1,
           nsk: nsk1,
@@ -478,6 +511,7 @@ describe('Testing the challenge http API', () => {
         const res = await chai.request(url).post('/deposit').send({
           ercAddress,
           tokenId,
+          tokenType,
           value,
           pkd: pkd1,
           nsk: nsk1,
@@ -501,6 +535,7 @@ describe('Testing the challenge http API', () => {
             .send({
               ercAddress,
               tokenId,
+              tokenType,
               value,
               pkd: pkd1,
               nsk: nsk1,

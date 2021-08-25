@@ -2,7 +2,7 @@
 A commitment class
 */
 import gen from 'general-number';
-import sha256 from '../utils/crypto/sha256.mjs';
+import sha256 from 'common-files/utils/crypto/sha256.mjs';
 import { getLeafIndex } from '../utils/timber.mjs';
 
 const { generalise } = gen;

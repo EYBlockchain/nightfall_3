@@ -1,12 +1,13 @@
 FROM node:14.17
 
 WORKDIR /app
-
-COPY ./package.json ./package-lock.json ./.npmrc ./
+RUN apt-get update -y
+RUN apt-get install -y netcat-openbsd
+COPY ./package.json ./package-lock.json ./
 COPY ./src ./src
-# ARG GPR_TOKEN
+COPY entrypoint.sh entrypoint.sh
+
 RUN npm ci
-RUN rm -f .npmrc
 
 EXPOSE 80
-CMD npm start
+ENTRYPOINT ["./entrypoint.sh"]

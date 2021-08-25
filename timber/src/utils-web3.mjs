@@ -150,6 +150,7 @@ async function subscribeToEvent(
   responder,
   responseFunction,
   responseFunctionArgs = {},
+  removerFunction,
 ) {
   logger.info(`Subscribing to event...`);
   logger.info(`contractName: ${contractName}`);
@@ -233,6 +234,17 @@ async function subscribeToEvent(
 
     responder(eventObject, responseFunction, responseFunctionArgs);
   });
+  // we also need to listen for changes to events, which happens if we get a
+  // chain reorg that removes the event.
+  eventSubscription.on('changed', eventData => {
+    logger.info(`New ${contractName}, ${eventName}, event removed`);
+    const eventObject = {
+      eventData,
+      eventJsonInterface,
+    };
+    responder(eventObject, removerFunction, responseFunctionArgs);
+  });
+
   return eventSubscription;
 }
 

@@ -2,7 +2,7 @@
 Routes for checking that a block is valid.
 */
 import express from 'express';
-import logger from '../utils/logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
 import checkBlock from '../services/check-block.mjs';
 import {
   getBlockByTransactionHash,

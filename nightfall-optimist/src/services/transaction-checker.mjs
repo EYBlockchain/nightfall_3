@@ -8,13 +8,15 @@ Here are the things that could be wrong with a transaction:
 */
 import config from 'config';
 import axios from 'axios';
-import Transaction from '../classes/transaction.mjs';
-import VerificationKey from '../classes/verification-key.mjs';
-import Proof from '../classes/proof.mjs';
-import TransactionError from '../classes/transaction-error.mjs';
-import PublicInputs from '../classes/public-inputs.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import {
+  Transaction,
+  VerificationKey,
+  Proof,
+  TransactionError,
+  PublicInputs,
+} from '../classes/index.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
-import logger from '../utils/logger.mjs';
 import { getBlockByBlockNumberL2 } from './database.mjs';
 
 const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, CURVE, ZERO, CHALLENGES_CONTRACT_NAME } =
@@ -33,13 +35,16 @@ async function checkTransactionHash(transaction) {
 }
 // next that the fields provided are consistent with the transaction type
 async function checkTransactionType(transaction) {
+  logger.debug(`in checkTransactionType: ${JSON.stringify(transaction)}`);
   switch (Number(transaction.transactionType)) {
     // Assuming nullifiers and commitments can't be valid ZEROs.
     // But points can such as compressedSecrets, Proofs
     case 0: // deposit
       if (
         transaction.publicInputHash === ZERO ||
-        (transaction.tokenId === ZERO && Number(transaction.value) === 0) ||
+        (Number(transaction.tokenType) !== 0 &&
+          transaction.tokenId === ZERO &&
+          Number(transaction.value) === 0) ||
         transaction.ercAddress === ZERO ||
         transaction.recipientAddress !== ZERO ||
         transaction.commitments[0] === ZERO ||
@@ -102,7 +107,9 @@ async function checkTransactionType(transaction) {
     case 3: // withdraw transaction
       if (
         transaction.publicInputHash === ZERO ||
-        (transaction.tokenId === ZERO && Number(transaction.value) === 0) ||
+        (Number(transaction.tokenType) !== 0 &&
+          transaction.tokenId === ZERO &&
+          Number(transaction.value) === 0) ||
         transaction.ercAddress === ZERO ||
         transaction.recipientAddress === ZERO ||
         transaction.commitments.some(c => c !== ZERO) ||

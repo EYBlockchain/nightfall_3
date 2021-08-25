@@ -8,6 +8,7 @@ import finaliseWithdrawal from './finalise-withdrawal.mjs';
 import peers from './peers.mjs';
 import commitment from './commitment.mjs';
 import incomingViewingKey from './incomingViewingKey.mjs';
+import setInstantWithdrawl from './instant-withdrawal.mjs';
 
 export {
   transfer,
@@ -20,4 +21,5 @@ export {
   peers,
   commitment,
   incomingViewingKey,
+  setInstantWithdrawl,
 };

@@ -12,6 +12,7 @@ import {
   peers,
   commitment,
   incomingViewingKey,
+  setInstantWithdrawl,
 } from './routes/index.mjs';
 
 const app = express();
@@ -31,5 +32,6 @@ app.use('/finalise-withdrawal', finaliseWithdrawal);
 app.use('/peers', peers);
 app.use('/commitment', commitment);
 app.use('/incoming-viewing-key', incomingViewingKey);
+app.use('/set-instant-withdrawal', setInstantWithdrawl);
 
 export default app;

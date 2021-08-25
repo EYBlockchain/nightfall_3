@@ -7,16 +7,21 @@ RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
 RUN apt-get install -y nodejs
 RUN apt-get install -y netcat
 
+WORKDIR /common-files
+RUN echo "{\"name\": \"common-files\"}" > package.json
+
 WORKDIR /app
 RUN mkdir /app/mongodb
 
 COPY src src
-COPY docker-entrypoint.sh package.json package-lock.json ./
-RUN chmod 755 docker-entrypoint.sh
+COPY docker-entrypoint.sh pre-start-script.sh package.json package-lock.json ./
 
 RUN npm ci
 
 EXPOSE 80
+
+# websocket port 8080
+EXPOSE 8080
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
 

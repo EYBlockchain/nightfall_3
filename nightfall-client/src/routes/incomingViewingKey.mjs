@@ -4,7 +4,7 @@ Route for setting the decryption key that will be used to decrypt secrets during
 
 import express from 'express';
 import { generalise } from 'general-number';
-import logger from '../utils/logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
 import {
   subscribeToBlockProposedEvent,
   blockProposedEventHandler,

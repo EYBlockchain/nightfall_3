@@ -6,7 +6,19 @@ on:
       - master
 
 jobs:
-  run-checks:
+  eslint-check:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '14.15.0'
+      - name: eslint check
+        run: |
+          npm ci
+          npm run lint
+
+  ganache-test:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@master
@@ -14,23 +26,15 @@ jobs:
         with:
           node-version: '14.15.0'
 
-      - name: npm install
-        run: npm ci
-
-      - name: eslint check
-        run: npm run lint
-
-      - name: docker-compose build
-        run: docker-compose build
-
       - name: Start Containers
         run: |
-          docker-compose up -d
-          docker-compose logs -f &> nightfall_3-test.log &disown
+          docker-compose build
+          ./start-nightfall -g &> nightfall_3-test.log &disown
 
       - name: Run integration test
         run: |
-          sleep 150
+          npm ci
+          sleep 200
           npm test
 
       - name: If integration test failed, shutdown the Containers

@@ -3,14 +3,15 @@ Logic for storing and retrieving commitments from a mongo DB.  Abstracted from
 deposit/transfer/withdraw
 */
 import config from 'config';
+import { Mutex } from 'async-mutex';
 import gen from 'general-number';
-import mongo from '../utils/mongo.mjs';
-import logger from '../utils/logger.mjs';
-import Commitment from '../classes/commitment.mjs';
-import Nullifier from '../classes/nullifier.mjs';
+import mongo from 'common-files/utils/mongo.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import { Commitment, Nullifier } from '../classes/index.mjs';
 
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
 const { generalise } = gen;
+const mutex = new Mutex();
 
 // function to drop the commitment collection (useful for testing)
 export async function dropCommitments() {
@@ -31,35 +32,48 @@ export async function getCommitmentByCommitment(commitment) {
 
 // function to format a commitment for a mongo db and store it
 export async function storeCommitment(commitment, nsk) {
-  // if (getCommitmentByCommitment(commitment) !== 0) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
-  const commitmentsCount = await db
-    .collection(COMMITMENTS_COLLECTION)
-    .countDocuments({ _id: commitment.hash.hex(32) });
-  if (commitmentsCount === 0) {
-    // we'll also compute and store the nullifier hash.  This will be useful for
-    // spotting if the commitment spend is ever rolled back, which would mean the
-    // commitment is once again available to spend
-    const nullifierHash = new Nullifier(commitment, nsk).hash.hex(32);
-    const data = {
-      _id: commitment.hash.hex(32),
-      preimage: commitment.preimage.all.hex(32),
-      isNullified: commitment.isNullified,
-      isNullifiedOnChain: Number(commitment.isNullifiedOnChain),
-      nullifier: nullifierHash,
-    };
-    return db.collection(COMMITMENTS_COLLECTION).insertOne(data);
-  }
-  logger.info('Received commitment from self');
-  return null;
+  // we'll also compute and store the nullifier hash.  This will be useful for
+  // spotting if the commitment spend is ever rolled back, which would mean the
+  // commitment is once again available to spend
+  const nullifierHash = new Nullifier(commitment, nsk).hash.hex(32);
+  const data = {
+    _id: commitment.hash.hex(32),
+    preimage: commitment.preimage.all.hex(32),
+    isDeposited: commitment.isDeposited || false,
+    isOnChain: Number(commitment.isOnChain),
+    isPendingNullification: false, // will not be pending when stored
+    isNullified: commitment.isNullified,
+    isNullifiedOnChain: Number(commitment.isNullifiedOnChain),
+    nullifier: nullifierHash,
+  };
+  return db.collection(COMMITMENTS_COLLECTION).insertOne(data);
+}
+
+// function to mark a commitments as on chain for a mongo db
+export async function markOnChain(commitments, blockNumberL2) {
+  const connection = await mongo.connection(MONGO_URL);
+  const query = { _id: { $in: commitments } };
+  const update = { $set: { isOnChain: Number(blockNumberL2) } };
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
+}
+
+// function to mark a commitment as pending nullication for a mongo db
+export async function markPending(commitment) {
+  const connection = await mongo.connection(MONGO_URL);
+  const query = { _id: commitment.hash.hex(32) };
+  const update = { $set: { isPendingNullification: true } };
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(COMMITMENTS_COLLECTION).updateOne(query, update);
 }
 
 // function to mark a commitment as nullified for a mongo db
 export async function markNullified(commitment) {
   const connection = await mongo.connection(MONGO_URL);
   const query = { _id: commitment.hash.hex(32) };
-  const update = { $set: { isNullified: true } };
+  const update = { $set: { isPendingNullification: false, isNullified: true } };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateOne(query, update);
 }
@@ -90,9 +104,39 @@ available for spending again.
 export async function clearNullified(blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
   const query = { isNullifiedOnChain: { $gte: Number(blockNumberL2) } };
-  const update = { $set: { isNullifiedOnChain: -1, isNullified: false } };
+  const update = {
+    $set: { isNullifiedOnChain: -1, isNullified: false, isPendingNullification: false },
+  };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
+}
+
+// as above, but removes isOnChain for deposit commitments
+export async function clearOnChain(blockNumberL2) {
+  const connection = await mongo.connection(MONGO_URL);
+  const query = { isOnChain: { $gte: Number(blockNumberL2) }, isDeposited: true };
+  const update = {
+    $set: { isOnChain: -1 },
+  };
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
+}
+
+// function to clear a commitment as pending nullication for a mongo db
+export async function clearPending(commitment) {
+  const connection = await mongo.connection(MONGO_URL);
+  const query = { _id: commitment.hash.hex(32) };
+  const update = { $set: { isPendingNullification: false } };
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(COMMITMENTS_COLLECTION).updateOne(query, update);
+}
+
+// as above, but removes output commitments
+export async function dropRollbackCommitments(blockNumberL2) {
+  const connection = await mongo.connection(MONGO_URL);
+  const query = { isOnChain: { $gte: Number(blockNumberL2) }, isDeposited: false };
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(COMMITMENTS_COLLECTION).deleteMany(query);
 }
 
 // function to mark a commitments as nullified on chain for a mongo db
@@ -105,7 +149,12 @@ export async function markNullifiedOnChain(nullifiers, blockNumberL2) {
 }
 
 // function to find commitments that can be used in the proposed transfer
-export async function findUsableCommitments(compressedPkd, ercAddress, tokenId, _value, onlyOne) {
+// We want to make sure that only one process runs this at a time, otherwise
+// two processes may pick the same commitment. Thus we'll use a mutex lock and
+// also mark any found commitments as nullified (TODO mark them as un-nullified
+// if the transaction errors). The mutex lock is in the function
+// findUsableCommitmentsMutex, which calls this function.
+async function findUsableCommitments(compressedPkd, ercAddress, tokenId, _value, onlyOne) {
   const value = generalise(_value); // sometimes this is sent as a BigInt.
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
@@ -116,28 +165,20 @@ export async function findUsableCommitments(compressedPkd, ercAddress, tokenId, 
       'preimage.ercAddress': ercAddress.hex(32),
       'preimage.tokenId': tokenId.hex(32),
       isNullified: false,
+      isPendingNullification: false,
     })
     .toArray();
   if (commitmentArray === []) return null;
   // turn the commitments into real commitment objects
-  const commitments = commitmentArray.map(ct => new Commitment(ct.preimage));
+  const commitments = commitmentArray
+    .filter(commitment => Number(commitment.isOnChain) > Number(-1)) // filters for on chain commitments
+    .map(ct => new Commitment(ct.preimage));
 
-  // Now filter all commitments to also work with those that timber has already seen.
-  const knownCommitments = (
-    await Promise.all(
-      commitments.map(async c => {
-        const cIndex = await c.index;
-        if (cIndex !== null) return c;
-        return null;
-      }),
-    )
-  ).filter(c => c !== null);
   // if we have an exact match, we can do a single-commitment transfer.
-  const [singleCommitment] = knownCommitments.filter(
-    c => c.preimage.value.hex(32) === value.hex(32),
-  );
+  const [singleCommitment] = commitments.filter(c => c.preimage.value.hex(32) === value.hex(32));
   if (singleCommitment) {
     logger.info('Found commitment suitable for single transfer or withdraw');
+    await markPending(singleCommitment);
     return [singleCommitment];
   }
   // If we get here it means that we have not been able to find a single commitment that matches the required value
@@ -162,7 +203,7 @@ export async function findUsableCommitments(compressedPkd, ercAddress, tokenId, 
   */
 
   // sorting will help with making the search easier
-  const sortedCommits = knownCommitments.sort((a, b) =>
+  const sortedCommits = commitments.sort((a, b) =>
     Number(a.preimage.value.bigInt - b.preimage.value.bigInt),
   );
 
@@ -208,5 +249,19 @@ export async function findUsableCommitments(compressedPkd, ercAddress, tokenId, 
       `Found commitments suitable for two-token transfer: ${JSON.stringify(commitmentsToUse)}`,
     );
   }
+  await Promise.all(commitmentsToUse.map(commitment => markPending(commitment)));
   return commitmentsToUse;
+}
+
+// mutex for the above function to ensure it only runs with a concurrency of one
+export async function findUsableCommitmentsMutex(
+  compressedPkd,
+  ercAddress,
+  tokenId,
+  _value,
+  onlyOne,
+) {
+  return mutex.runExclusive(async () =>
+    findUsableCommitments(compressedPkd, ercAddress, tokenId, _value, onlyOne),
+  );
 }

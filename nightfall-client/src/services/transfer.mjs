@@ -8,16 +8,17 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
 import config from 'config';
 import axios from 'axios';
 import gen from 'general-number';
-import rand from '../utils/crypto/crypto-random.mjs';
-import { getContractInstance } from '../utils/contract.mjs';
-import logger from '../utils/logger.mjs';
-import { findUsableCommitments, storeCommitment, markNullified } from './commitment-storage.mjs';
-import Nullifier from '../classes/nullifier.mjs';
-import Commitment from '../classes/commitment.mjs';
-import Secrets from '../classes/secrets.mjs';
-import PublicInputs from '../classes/public-inputs.mjs';
+import rand from 'common-files/utils/crypto/crypto-random.mjs';
+import { getContractInstance } from 'common-files/utils/contract.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import { Secrets, Nullifier, Commitment, PublicInputs, Transaction } from '../classes/index.mjs';
+import {
+  findUsableCommitmentsMutex,
+  storeCommitment,
+  markNullified,
+  clearPending,
+} from './commitment-storage.mjs';
 import { getSiblingPath } from '../utils/timber.mjs';
-import Transaction from '../classes/transaction.mjs';
 import { discoverPeers } from './peers.mjs';
 import getBlockAndTransactionsByRoot from '../utils/optimist.mjs';
 import { compressPublicKey, calculateIvkPkdfromAskNsk } from './keys.mjs';
@@ -48,7 +49,8 @@ async function transfer(transferParams) {
   // the first thing we need to do is to find some input commitments which
   // will enable us to conduct our transfer.  Let's rummage in the db...
   const totalValueToSend = values.reduce((acc, value) => acc + value.bigInt, 0n);
-  const oldCommitments = await findUsableCommitments(
+
+  const oldCommitments = await findUsableCommitmentsMutex(
     compressedPkd,
     ercAddress,
     tokenId,
@@ -214,7 +216,7 @@ async function transfer(transferParams) {
         .filter(commitment => commitment.preimage.compressedPkd.hex(32) === compressedPkd.hex(32))
         .forEach(commitment => storeCommitment(commitment, nsk)); // TODO insertMany
       // mark the old commitments as nullified
-      oldCommitments.forEach(commitment => markNullified(commitment));
+      // oldCommitments.forEach(commitment => markNullified(commitment));
       return {
         transaction: optimisticTransferTransaction,
         salts: salts.map(salt => salt.hex(32)),
@@ -228,13 +230,14 @@ async function transfer(transferParams) {
       .filter(commitment => commitment.preimage.compressedPkd.hex(32) === compressedPkd.hex(32))
       .forEach(commitment => storeCommitment(commitment, nsk)); // TODO insertMany
     // mark the old commitments as nullified
-    oldCommitments.forEach(commitment => markNullified(commitment));
+    await Promise.all(oldCommitments.map(commitment => markNullified(commitment)));
     return {
       rawTransaction,
       transaction: optimisticTransferTransaction,
       salts: salts.map(salt => salt.hex(32)),
     };
   } catch (err) {
+    await Promise.all(oldCommitments.map(commitment => clearPending(commitment)));
     throw new Error(err); // let the caller handle the error
   }
 }

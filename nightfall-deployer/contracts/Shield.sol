@@ -21,6 +21,8 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
 
   mapping(bytes32 => bool) public withdrawn;
   mapping(bytes32 => uint) public feeBook;
+  mapping(bytes32 => address) public advancedWithdrawals;
+  mapping(bytes32 => uint) public advancedFeeWithdrawals;
 
   function submitTransaction(Transaction memory t) external payable {
     // let everyone know what you did
@@ -34,6 +36,7 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
     // slow down or stop our transaction)
     bytes32 transactionHash = Utils.hashTransaction(t);
     if (feeBook[transactionHash] < msg.value) feeBook[transactionHash] = msg.value;
+    payable(address(state)).transfer(msg.value);
   }
 
   // function to enable a proposer to get paid for proposing a block
@@ -50,6 +53,7 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
       payment += feeBook[transactionHash];
       feeBook[transactionHash] = 0; // clear the payment
     }
+    payment += BLOCK_STAKE;
     state.addPendingWithdrawal(msg.sender, payment);
   }
 
@@ -69,63 +73,145 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
     bytes32 transactionHash = Utils.hashTransaction(ts[index]);
     require(!withdrawn[transactionHash], 'This transaction has already paid out');
     withdrawn[transactionHash] = true;
-    if (ts[index].transactionType == TransactionTypes.WITHDRAW) payOut(ts[index]);
+    if (ts[index].transactionType == TransactionTypes.WITHDRAW) {
+      address originalRecipientAddress = address(uint160(uint256(ts[index].recipientAddress)));
+      // check if an advancedWithdrawal has been paid, if so payout the new owner.
+      address recipientAddress = advancedWithdrawals[transactionHash] == address(0) ? originalRecipientAddress : advancedWithdrawals[transactionHash];
+      payOut(ts[index],recipientAddress);
+    }
   }
 
-  function payOut(Transaction memory t) internal {
+  // TODO does this need to be constrained to blocks within the challenge window
+  // Currently this can pose as a non-interactive way for transactors to get their withdrawals
+  // Instead of calling finaliseWithdrawal (a pull op), advanceWithdrawal will send them the funds (push op) for a fee.
+  function advanceWithdrawal(Transaction memory withdrawTransaction) external {
+    bytes32 withdrawTransactionHash = Utils.hashTransaction(withdrawTransaction);
+
+    // if no fee is set, then the withdrawal is not tagged as advanceable - else someone could just steal withdrawals
+    require(advancedFeeWithdrawals[withdrawTransactionHash] > 0, 'No advanced fee has been set for this withdrawal');
+    require(withdrawTransaction.tokenType == TokenType.ERC20, 'Can only advance withdrawals for fungible tokens');
+    // The withdrawal has not been withdrawn
+    require(!withdrawn[withdrawTransactionHash], 'Cannot double withdraw');
+
+    // TODO should we check if the withdrawal is not in a finalised block
+    // this might incentives sniping freshly finalised blocks by liquidity providers
+    // this is risk-free as the block is finalised, the advancedFee should reflect a risk premium.
+
+    ERCInterface tokenContract = ERCInterface(address(uint160(uint256(withdrawTransaction.ercAddress))));
+    address originalRecipientAddress =  address(uint160(uint256(withdrawTransaction.recipientAddress)));
+    address currentOwner = advancedWithdrawals[withdrawTransactionHash] == address(0) ? originalRecipientAddress : advancedWithdrawals[withdrawTransactionHash];
+    uint256 advancedFee = advancedFeeWithdrawals[withdrawTransactionHash];
+
+    // Send the token from the msg.sender to the receipient
+    if (withdrawTransaction.tokenId != ZERO)
+      revert("ERC20 deposit should have tokenId equal to ZERO");
+    else {
+      tokenContract.transferFrom(
+        address(msg.sender),
+        currentOwner,
+        uint256(withdrawTransaction.value)
+      );
+    }
+    // set new owner of transaction, settign fee to zero.
+    advancedFeeWithdrawals[withdrawTransactionHash] = 0;
+    advancedWithdrawals[withdrawTransactionHash] = msg.sender;
+    state.addPendingWithdrawal(msg.sender, advancedFee);
+  }
+
+  // TODO Is there a better way to set this fee, e.g. at the point of making a transaction.
+  function setAdvanceWithdrawalFee(Block memory b, uint256 blockNumberL2, Transaction[] memory ts, uint index) external payable {
+    // The transaction is a withdrawal transaction
+    require(ts[index].transactionType == TransactionTypes.WITHDRAW, 'Can only advance withdrawals');
+    // The block and transactions are real
+    state.isBlockReal(b,ts,blockNumberL2);
+
+    bytes32 withdrawTransactionHash = Utils.hashTransaction(ts[index]);
+    // The withdrawal has not been withdrawn
+    require(!withdrawn[withdrawTransactionHash], 'Cannot double withdraw');
+    address originalRecipientAddress =  address(uint160(uint256(ts[index].recipientAddress)));
+    address currentOwner = advancedWithdrawals[withdrawTransactionHash] == address(0) ? originalRecipientAddress : advancedWithdrawals[withdrawTransactionHash];
+
+    // Only the owner of the withdraw can set the advanced withdrawal
+    require(msg.sender == currentOwner, 'You are not the current owner of this withdrawal');
+    advancedFeeWithdrawals[withdrawTransactionHash] = msg.value;
+    payable(address(state)).transfer(msg.value);
+  }
+
+  function payOut(Transaction memory t, address recipientAddress) internal {
   // Now pay out the value of the commitment
     ERCInterface tokenContract = ERCInterface(
       address(uint160(uint256(t.ercAddress)))
     );
-    address recipientAddress = address(uint160(uint256(t.recipientAddress)));
-    if (t.tokenId == ZERO && t.value == 0) // disallow this corner case
-      revert("Zero-value tokens are not allowed");
+    // address recipientAddress = address(uint160(uint256(t.recipientAddress)));
 
-    if (t.tokenId == ZERO) // must be an ERC20
-      tokenContract.transferFrom(
-        address(this),
-        recipientAddress,
-        uint256(t.value)
-      );
-    else if (t.value == 0) // must be ERC721
-      tokenContract.safeTransferFrom(
-        address(this),
-        recipientAddress,
-        uint256(t.tokenId),
-        ''
-      );
-    else // must be an ERC1155
-      tokenContract.safeTransferFrom(
-        address(this),
-        recipientAddress,
-        uint256(t.tokenId),
-        uint256(t.value),
-        ''
-      );
+    if(t.tokenType == TokenType.ERC20) {
+      if (t.tokenId != ZERO)
+        revert("ERC20 deposit should have tokenId equal to ZERO");
+      else
+        tokenContract.transferFrom(
+          address(this),
+          recipientAddress,
+          uint256(t.value)
+        );
+    } else if(t.tokenType == TokenType.ERC721) {
+      if (t.value != 0 || t.tokenId == ZERO) // value should always be equal to 0 and tokenId cannot be equal to ZERO
+        revert("Invalid inputs for ERC721 deposit");
+      else
+        tokenContract.safeTransferFrom(
+          address(this),
+          recipientAddress,
+          uint256(t.tokenId),
+          ''
+        );
+    } else if (t.tokenType == TokenType.ERC1155) {
+      if (t.tokenId == ZERO && t.value == 0) // disallow this corner case
+        revert("Depositing zero-value ERC1155 tokens is not allowed");
+      else
+        tokenContract.safeTransferFrom(
+          address(this),
+          recipientAddress,
+          uint256(t.tokenId),
+          uint256(t.value),
+          ''
+        );
+    } else {
+      revert("Invalid Token Type");
+    }
   }
 
   function payIn(Transaction memory t) internal {
     ERCInterface tokenContract = ERCInterface(
       address(uint160(uint256(t.ercAddress)))
     );
-    if (t.tokenId == ZERO && t.value == 0) // disallow this corner case
-      revert("Depositing zero-value tokens is not allowed");
-    if (t.tokenId == ZERO) // must be an ERC20
-      tokenContract.transferFrom(msg.sender, address(this), uint256(t.value));
-    else if (t.value == 0) // must be ERC721
-      tokenContract.safeTransferFrom(
-        msg.sender,
-        address(this),
-        uint256(t.tokenId),
-        ''
-      );
-    else // must be an ERC1155
-      tokenContract.safeTransferFrom(
-        msg.sender,
-        address(this),
-        uint256(t.tokenId),
-        uint256(t.value),
-        ''
-      );
+
+    if(t.tokenType == TokenType.ERC20) {
+      if (t.tokenId != ZERO)
+        revert("ERC20 deposit should have tokenId equal to ZERO");
+      else
+        tokenContract.transferFrom(msg.sender, address(this), uint256(t.value));
+    } else if(t.tokenType == TokenType.ERC721) {
+      if (t.value != 0 || t.tokenId == ZERO) // value should always be equal to 0 and tokenId cannot be equal to ZERO
+        revert("Invalid inputs for ERC721 deposit");
+      else
+        tokenContract.safeTransferFrom(
+          msg.sender,
+          address(this),
+          uint256(t.tokenId),
+          ''
+        );
+    } else if (t.tokenType == TokenType.ERC1155) {
+      if (t.tokenId == ZERO && t.value == 0) // disallow this corner case
+        revert("Depositing zero-value ERC1155 tokens is not allowed");
+      else
+        tokenContract.safeTransferFrom(
+          msg.sender,
+          address(this),
+          uint256(t.tokenId),
+          uint256(t.value),
+          ''
+        );
+    } else {
+      revert("Invalid Token Type");
+    }
   }
 }

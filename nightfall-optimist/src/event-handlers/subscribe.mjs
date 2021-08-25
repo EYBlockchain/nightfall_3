@@ -5,8 +5,8 @@
  */
 import WebSocket from 'ws';
 import config from 'config';
-import { getContractInstance, getContractAddress } from '../utils/contract.mjs';
-import logger from '../utils/logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import { getContractInstance, getContractAddress } from 'common-files/utils/contract.mjs';
 
 const {
   PROPOSERS_CONTRACT_NAME,
@@ -77,6 +77,20 @@ export async function waitForContract(contractName) {
   return instance;
 }
 
+export async function subscribeToEvents(callback, arg) {
+  const emitterState = (await waitForContract(STATE_CONTRACT_NAME)).events.allEvents();
+  const emitterShield = (await waitForContract(SHIELD_CONTRACT_NAME)).events.allEvents();
+  const emitterChallenges = (await waitForContract(CHALLENGES_CONTRACT_NAME)).events.allEvents();
+  emitterState.on('changed', event => callback(event, arg));
+  emitterShield.on('changed', event => callback(event, arg));
+  emitterChallenges.on('changed', event => callback(event, arg));
+  emitterState.on('data', event => callback(event, arg));
+  emitterShield.on('data', event => callback(event, arg));
+  emitterChallenges.on('data', event => callback(event, arg));
+  logger.debug('Subscribed to layer 2 state events');
+  return { emitterState, emitterShield, emitterChallenges };
+}
+
 export async function subscribeToBlockProposedEvent(callback, ...args) {
   const emitter = (await waitForContract(STATE_CONTRACT_NAME)).events.BlockProposed();
   emitter.on('data', event => callback(event, args));
@@ -110,6 +124,19 @@ export async function subscribeToRollbackEventHandler(callback, ...args) {
   emitter.on('data', event => callback(event, args));
   logger.debug('Subscribed to Rollback event');
   return emitter;
+}
+
+export async function subscribeToChainReorgEventHandler(callback, arg) {
+  const emitterState = (await waitForContract(STATE_CONTRACT_NAME)).allEvents();
+  const emitterShield = (await waitForContract(SHIELD_CONTRACT_NAME)).allEvents();
+  const emitterProposers = (await waitForContract(PROPOSERS_CONTRACT_NAME)).allEvents();
+  const emitterChallenges = (await waitForContract(CHALLENGES_CONTRACT_NAME)).allEvents();
+  emitterState.on('changed', event => callback(event, arg));
+  emitterShield.on('changed', event => callback(event, arg));
+  emitterProposers.on('changed', event => callback(event, arg));
+  emitterChallenges.on('changed', event => callback(event, arg));
+  logger.debug('Subscribed to chain reorganisation event');
+  return { emitterState, emitterShield, emitterProposers, emitterChallenges };
 }
 
 export async function subscribeToChallengeWebSocketConnection(callback, ...args) {

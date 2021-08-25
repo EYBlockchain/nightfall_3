@@ -1,6 +1,6 @@
+import Web3 from 'common-files/utils/web3.mjs';
 import circuits from './circuit-setup.mjs';
 import setupContracts from './contract-setup.mjs';
-import Web3 from './utils/web3.mjs';
 
 // TODO these can be paralleled
 async function main() {

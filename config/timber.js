@@ -72,7 +72,7 @@ module.exports = {
 
   // web3:
   web3: {
-    host: process.env.BLOCKCHAIN_HOST,
+    host: process.env.BLOCKCHAIN_WS_HOST,
     port: process.env.BLOCKCHAIN_PORT,
 
     options: {
@@ -89,6 +89,6 @@ module.exports = {
   LOG_LEVEL: process.env.LOG_LEVEL || 'info',
   PROPOSE_BLOCK_TYPES: [
     '(uint48,address,bytes32)',
-    '(uint64,uint64,uint8,bytes32,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[8],uint[4])[]',
+    '(uint64,uint64,uint8,uint8,bytes32,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[8],uint[4])[]',
   ],
 };

@@ -1,0 +1,11 @@
+{
+  "name": "common-files",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "“Liju <“liju.jose@gds.ey.com”>",
+  "license": "ISC",
+  "description": "nightfall_3 common files",
+  "dependencies": {}
+}

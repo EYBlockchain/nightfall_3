@@ -26,7 +26,7 @@ abstract contract Stateful {
   }
 
   // point this contract at its global state.
-  function setStateContract(address stateAddress) external onlyOnce {
+  function setStateContract(address payable stateAddress) external onlyOnce {
     state = State(stateAddress);
   }
 }

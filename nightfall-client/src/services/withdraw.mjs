@@ -8,13 +8,11 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
 import config from 'config';
 import axios from 'axios';
 import gen from 'general-number';
-import { getContractInstance } from '../utils/contract.mjs';
-import logger from '../utils/logger.mjs';
-import { findUsableCommitments, markNullified } from './commitment-storage.mjs';
-import Nullifier from '../classes/nullifier.mjs';
-import PublicInputs from '../classes/public-inputs.mjs';
+import { getContractInstance } from 'common-files/utils/contract.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import { Nullifier, PublicInputs, Transaction } from '../classes/index.mjs';
+import { findUsableCommitmentsMutex, markNullified, clearPending } from './commitment-storage.mjs';
 import { getSiblingPath } from '../utils/timber.mjs';
-import Transaction from '../classes/transaction.mjs';
 import { discoverPeers } from './peers.mjs';
 import getBlockAndTransactionsByRoot from '../utils/optimist.mjs';
 import { calculateIvkPkdfromAskNsk } from './keys.mjs';
@@ -39,7 +37,7 @@ async function withdraw(withdrawParams) {
 
   // the first thing we need to do is to find and input commitment which
   // will enable us to conduct our withdraw.  Let's rummage in the db...
-  const [oldCommitment] = (await findUsableCommitments(
+  const [oldCommitment] = (await findUsableCommitmentsMutex(
     compressedPkd,
     ercAddress,
     tokenId,
@@ -100,6 +98,7 @@ async function withdraw(withdrawParams) {
     historicRootBlockNumberL2: (await getBlockAndTransactionsByRoot(root.hex(32))).block
       .blockNumberL2,
     transactionType: 3,
+    tokenType: items.tokenType,
     publicInputs,
     tokenId,
     value,
@@ -122,7 +121,6 @@ async function withdraw(withdrawParams) {
             throw new Error(err);
           });
       });
-      markNullified(oldCommitment);
       const th = optimisticWithdrawTransaction.transactionHash;
       delete optimisticWithdrawTransaction.transactionHash;
       optimisticWithdrawTransaction.transactionHash = th;
@@ -132,9 +130,10 @@ async function withdraw(withdrawParams) {
       .submitTransaction(Transaction.buildSolidityStruct(optimisticWithdrawTransaction))
       .encodeABI();
     // on successful computation of the transaction mark the old commitments as nullified
-    markNullified(oldCommitment);
+    await markNullified(oldCommitment);
     return { rawTransaction, transaction: optimisticWithdrawTransaction };
   } catch (err) {
+    await clearPending(oldCommitment);
     throw new Error(err); // let the caller handle the error
   }
 }

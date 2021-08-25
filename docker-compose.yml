@@ -1,5 +1,5 @@
 version: '3.5'
-# Use this script for running up nightfall_2 in 'developer' mode with local
+# Use this script for running up nightfall_3 in 'developer' mode with local
 # bindings.  See the readme for more information.
 services:
   client1:
@@ -7,35 +7,45 @@ services:
       dockerfile: Dockerfile
       context: ./nightfall-client
     volumes:
-      - ./nightfall-client/src:/app/src
-      - ./config/default.js:/app/config/default.js
-      - build:/app/build
-      - mongodb1:/app/mongodb
+      - type: bind
+        source: ./nightfall-client/src
+        target: /app/src
+      - type: bind
+        source: ./common-files
+        target: /common-files
+      - type: bind
+        source: ./config/default.js
+        target: /app/config/default.js
+      - type: volume
+        source: build
+        target: /app/build
+      - type: volume
+        source: mongodb1
+        target: /app/mongodb
     networks:
-      - nightfall_network1
+      - nightfall_network
     ports:
       - 27017:27017
       - 8080:80
     depends_on:
       - deployer
       - worker
-      - ganache
       - timber1
       - rabbitmq1
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
       LOG_LEVEL: debug
-      BLOCKCHAIN_WS_HOST: ganache
-      BLOCKCHAIN_PORT: 8545
+      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_PORT: 8546
       ZOKRATES_WORKER_HOST: worker
       RABBITMQ_HOST: amqp://rabbitmq1
       RABBITMQ_PORT: 5672
       TIMBER_HOST: timber1
       TIMBER_PORT: 80
+      ENABLE_QUEUE: 1
       OPTIMIST_HOST: optimist1
       OPTIMIST_PORT: 80
-      ENABLE_QUEUE: 1
       USE_STUBS: 'true' # make sure this flag is the same as in deployer service
     command: ['npm', 'run', 'dev']
 
@@ -44,27 +54,37 @@ services:
       dockerfile: Dockerfile
       context: ./nightfall-client
     volumes:
-      - ./nightfall-client/src:/app/src
-      - ./config/default.js:/app/config/default.js
-      - build:/app/build
-      - mongodb2:/app/mongodb
+      - type: bind
+        source: ./nightfall-client/src
+        target: /app/src
+      - type: bind
+        source: ./common-files
+        target: /common-files
+      - type: bind
+        source: ./config/default.js
+        target: /app/config/default.js
+      - type: volume
+        source: build
+        target: /app/build
+      - type: volume
+        source: mongodb2
+        target: /app/mongodb
     networks:
-      - nightfall_network2
+      - nightfall_network
     ports:
       - 27018:27017
       - 8084:80
     depends_on:
       - deployer
       - worker
-      - ganache
       - timber2
       - rabbitmq2
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
       LOG_LEVEL: debug
-      BLOCKCHAIN_WS_HOST: ganache
-      BLOCKCHAIN_PORT: 8545
+      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_PORT: 8546
       ZOKRATES_WORKER_HOST: worker
       RABBITMQ_HOST: amqp://rabbitmq2
       RABBITMQ_PORT: 5672
@@ -97,8 +117,7 @@ services:
     depends_on:
       - deployer
     networks:
-      - nightfall_network1
-      - nightfall_network2
+      - nightfall_network
     environment:
       LOG_LEVEL: info
 
@@ -108,8 +127,6 @@ services:
     build:
       context: ./nightfall-deployer
       dockerfile: Dockerfile
-    depends_on:
-      - ganache
     volumes:
       - type: volume
         source: build
@@ -124,35 +141,33 @@ services:
         source: ./nightfall-deployer/src
         target: /app/src/
       - type: bind
+        source: ./common-files
+        target: /common-files
+      - type: bind
         source: ./config/default.js
         target: /app/config/default.js
       - type: bind
         source: ./nightfall-deployer/migrations
         target: /app/migrations
+      - type: bind
+        source: ./nightfall-deployer/truffle-config.js
+        target: /app/truffle-config.js
+      - type: bind
+        source: ./nightfall-deployer/entrypoint.sh
+        target: /app/entrypoint.sh
     networks:
-      - nightfall_network1
-      - nightfall_network2
+      - nightfall_network
     environment:
       LOG_LEVEL: debug
       # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
-      ETH_NETWORK: ganache
-      BLOCKCHAIN_WS_HOST: ganache
-      BLOCKCHAIN_PORT: 8545
+      # startup routines will wait for a blockchain client to be reachable on this network
+      ETH_NETWORK: blockchain1
+      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_PORT: 8546
       ZOKRATES_WORKER_HOST: worker
       # TIMBER_HOST: timber1
       # TIMBER_PORT: 80
       USE_STUBS: 'true'
-
-  # The Ganache client, containing required precompiles
-  ganache:
-    image: trufflesuite/ganache-cli:v6.12.1
-    command:
-      ganache-cli --accounts=10 --defaultBalanceEther=1000 --gasLimit=0xbebc20 --deterministic
-    ports:
-      - '8545:8545'
-    networks:
-      - nightfall_network1
-      - nightfall_network2
 
   # Timber service, configured for nightfall
   timber1:
@@ -161,11 +176,10 @@ services:
       context: ./timber
     restart: on-failure
     depends_on:
-      - ganache
       - deployer
       - timber-database1
     networks:
-      - nightfall_network1
+      - nightfall_network
     ports:
       - 8083:80
     volumes:
@@ -178,9 +192,12 @@ services:
       - type: bind
         source: ./config/timber.js
         target: /app/config/default.js
+      - type: bind
+        source: ./timber/entrypoint.sh
+        target: /app/entrypoint.sh
     environment:
-      BLOCKCHAIN_HOST: ws://ganache
-      BLOCKCHAIN_PORT: 8545
+      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_PORT: 8546
       MONGO_HOST: timber-database1
       MONGO_PORT: 27017
       MONGO_NAME: merkle_tree
@@ -195,11 +212,10 @@ services:
       context: ./timber
     restart: on-failure
     depends_on:
-      - ganache
       - deployer
       - timber-database2
     networks:
-      - nightfall_network2
+      - nightfall_network
     ports:
       - 8087:80
     volumes:
@@ -213,8 +229,8 @@ services:
         source: ./config/timber.js
         target: /app/config/default.js
     environment:
-      BLOCKCHAIN_HOST: ws://ganache
-      BLOCKCHAIN_PORT: 8545
+      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_PORT: 8546
       MONGO_HOST: timber-database2
       MONGO_PORT: 27017
       MONGO_NAME: merkle_tree
@@ -228,9 +244,11 @@ services:
     environment:
       - MONGO_INITDB_DATABASE=merkle_tree
     volumes:
-      - timber-database-volume1:/data/db
+      - type: volume
+        source: timber-database-volume1
+        target: /data/db
     networks:
-      - nightfall_network1
+      - nightfall_network
 
   #The database storing the merkle tree
   timber-database2:
@@ -238,9 +256,11 @@ services:
     environment:
       - MONGO_INITDB_DATABASE=merkle_tree
     volumes:
-      - timber-database-volume2:/data/db
+      - type: volume
+        source: timber-database-volume2
+        target: /data/db
     networks:
-      - nightfall_network2
+      - nightfall_network
 
   rabbitmq1:
     image: rabbitmq
@@ -248,7 +268,7 @@ services:
       - '15674:15674'
       - '5672:5672'
     networks:
-      - nightfall_network1
+      - nightfall_network
 
   rabbitmq2:
     image: rabbitmq
@@ -256,17 +276,16 @@ services:
       - '15675:15674'
       - '5673:5672'
     networks:
-      - nightfall_network2
+      - nightfall_network
 
   optimist1:
     build:
       context: ./nightfall-optimist
     depends_on:
-      - ganache
       - timber1
       - deployer
     networks:
-      - nightfall_network1
+      - nightfall_network
     ports:
       - 8081:80
       # websocket port for Optimist is on localhost:8082
@@ -275,12 +294,19 @@ services:
       - type: volume
         source: build
         target: /app/build/
-      - ./nightfall-optimist/src:/app/src
-      - ./config/default.js:/app/config/default.js
+      - type: bind
+        source: ./nightfall-optimist/src
+        target: /app/src
+      - type: bind
+        source: ./common-files
+        target: /common-files
+      - type: bind
+        source: ./config/default.js
+        target: /app/config/default.js
     environment:
       WEBSOCKET_PORT: 8080
-      BLOCKCHAIN_WS_HOST: ganache
-      BLOCKCHAIN_PORT: 8545
+      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_PORT: 8546
       HASH_TYPE: mimc
       LOG_LEVEL: debug
       IS_CHALLENGER: 'true'
@@ -293,11 +319,10 @@ services:
     build:
       context: ./nightfall-optimist
     depends_on:
-      - ganache
       - timber2
       - deployer
     networks:
-      - nightfall_network2
+      - nightfall_network
     ports:
       - 8085:80
       # websocket port for Optimist is on localhost:8086
@@ -306,12 +331,19 @@ services:
       - type: volume
         source: build
         target: /app/build/
-      - ./nightfall-optimist/src:/app/src
-      - ./config/default.js:/app/config/default.js
+      - type: bind
+        source: ./nightfall-optimist/src
+        target: /app/src
+      - type: bind
+        source: ./common-files
+        target: /common-files
+      - type: bind
+        source: ./config/default.js
+        target: /app/config/default.js
     environment:
       WEBSOCKET_PORT: 8084
-      BLOCKCHAIN_WS_HOST: ganache
-      BLOCKCHAIN_PORT: 8545
+      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_PORT: 8546
       HASH_TYPE: mimc
       LOG_LEVEL: debug
       IS_CHALLENGER: 'true'
@@ -329,5 +361,10 @@ volumes:
   timber-database-volume2:
 
 networks:
-  nightfall_network1:
-  nightfall_network2:
+  nightfall_network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.238.0/24
+          gateway: 172.16.238.1

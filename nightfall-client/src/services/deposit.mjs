@@ -9,14 +9,11 @@
 import config from 'config';
 import axios from 'axios';
 import gen from 'general-number';
-import rand from '../utils/crypto/crypto-random.mjs';
-// import sha256 from '../utils/crypto/sha256.mjs';
-import { getContractInstance } from '../utils/contract.mjs';
-import logger from '../utils/logger.mjs';
-import Commitment from '../classes/commitment.mjs';
-import PublicInputs from '../classes/public-inputs.mjs';
+import rand from 'common-files/utils/crypto/crypto-random.mjs';
+import { getContractInstance } from 'common-files/utils/contract.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import { Commitment, PublicInputs, Transaction } from '../classes/index.mjs';
 import { storeCommitment } from './commitment-storage.mjs';
-import Transaction from '../classes/transaction.mjs';
 import { compressPublicKey } from './keys.mjs';
 
 const {
@@ -68,10 +65,12 @@ async function deposit(items) {
   // and work out the ABI encoded data that the caller should sign and send to the shield contract
   // first, get the contract instance
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
+
   // next we need to compute the optimistic Transaction object
   const optimisticDepositTransaction = new Transaction({
     fee,
     transactionType: 0,
+    tokenType: items.tokenType,
     publicInputs,
     tokenId,
     value,
@@ -88,6 +87,7 @@ async function deposit(items) {
       .submitTransaction(Transaction.buildSolidityStruct(optimisticDepositTransaction))
       .encodeABI();
     // store the commitment on successful computation of the transaction
+    commitment.isDeposited = true;
     storeCommitment(commitment, nsk);
     return { rawTransaction, transaction: optimisticDepositTransaction };
   } catch (err) {

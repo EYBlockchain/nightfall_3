@@ -1,9 +1,9 @@
 /**
 Module to check that submitted Blocks and Transactions are valid
 */
+import logger from 'common-files/utils/logger.mjs';
 import { getTreeHistoryByCurrentLeafCount } from '../utils/timber.mjs';
-import logger from '../utils/logger.mjs';
-import BlockError from '../classes/block-error.mjs';
+import { BlockError } from '../classes/index.mjs';
 import checkTransaction from './transaction-checker.mjs';
 import {
   numberOfBlockWithTransactionHash,
@@ -36,9 +36,20 @@ async function checkBlock(block, transactions) {
   // Timber with its optimistic extensions.
   logger.debug(`Checking block with leafCount ${block.leafCount}`);
   await new Promise(resolve => setTimeout(resolve, 1000));
-  const history = await getTreeHistoryByCurrentLeafCount(block.leafCount);
-  logger.debug(`Retrieved history from Timber`);
-  logger.silly(`Timber history was ${JSON.stringify(history, null, 2)}`);
+  // There's a bit of an issue here though.  It's possible that our block didn't
+  // add any new leaves to Timber if it's a block with just withdrawals in.
+  // In this case, Timber won't update its DB and consequently won't write a
+  // new history. To check the block in this case, we make sure the root isn't
+  // changed from the previous block.
+  let history; // this could end up being a Block or Timber history object - as they both have root properties, that's fine.
+  if (block.nCommitments === 0) {
+    history = await getBlockByBlockNumberL2(block.blockNumberL2 - 1);
+    logger.debug('Block has no commitments - checking its root is the same as the previous block');
+  } else {
+    history = await getTreeHistoryByCurrentLeafCount(block.leafCount);
+    logger.debug(`Block has commitments - retrieved history from Timber`);
+    logger.silly(`Timber history was ${JSON.stringify(history, null, 2)}`);
+  }
   if (history.root !== block.root)
     throw new BlockError(
       `The block's root (${block.root}) cannot be reconstructed from the commitment hashes in the transactions in this block and the historic Frontier held by Timber for this root`,
@@ -64,7 +75,6 @@ async function checkBlock(block, transactions) {
   // to check a block against itself (hence the second filter).
   const storedMinedNullifiers = await retrieveMinedNullifiers(); // List of Nullifiers stored by blockProposer
   const blockNullifiers = transactions.map(tNull => tNull.nullifiers).flat(Infinity); // List of Nullifiers in block
-  console.log('MINED NULLIFIERS', storedMinedNullifiers, blockNullifiers);
   const alreadyMinedNullifiers = storedMinedNullifiers
     .filter(sNull => blockNullifiers.includes(sNull.hash))
     .filter(aNull => aNull.blockHash !== block.blockHash);
