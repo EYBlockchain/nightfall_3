@@ -24,6 +24,7 @@ export default new mongoose.Schema(
 
     latestRecalculation: {
       blockNumber: Number,
+      transactionHash: String,
       leafIndex: Number,
       root: String,
       frontier: {
@@ -44,6 +45,7 @@ export default new mongoose.Schema(
 
     latestLeaf: {
       blockNumber: Number,
+      transactionHash: String,
       leafIndex: Number,
     },
   },

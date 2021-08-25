@@ -237,7 +237,7 @@ async function subscribeToEvent(
   // we also need to listen for changes to events, which happens if we get a
   // chain reorg that removes the event.
   eventSubscription.on('changed', eventData => {
-    logger.info(`New ${contractName}, ${eventName}, event removed`);
+    logger.info(`New ${contractName}, ${eventName}, event removal`);
     const eventObject = {
       eventData,
       eventJsonInterface,

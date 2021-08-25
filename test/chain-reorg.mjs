@@ -251,6 +251,7 @@ describe('Testing the http API', () => {
     const numDeposits = 1;
     it('should deposit enough crypto into fork to fill one layer 2 block', async () => {
       await expect(doDeposits(numDeposits)).to.eventually.be.fulfilled;
+      console.log('BlockNumber is:', await web3.eth.getBlockNumber());
     });
     // next we withdraw each of the deposits
     const numWithdraws = 1;
@@ -266,45 +267,68 @@ describe('Testing the http API', () => {
     });
   });
 
-  describe.skip('Create fork', () => {
+  describe('Create fork', () => {
     const numDeposits = 1;
     let blocks1;
-    it('should deposit enough crypto into fork to fill a layer 2 block into half the chain', async () => {
+    it('should create a chain fork', async () => {
       // at this point we have no suitable commitments. Let's hold half of the nodes
       // and add some commitments to the un-held half
-      console.log('BLOCKNUMBER is:', await web3.eth.getBlockNumber());
+      console.log('*Nightfall_3 is connected to node set 1*');
+      console.log('Pausing node set 2');
       await pauseBlockchain(2); // hold one half of the nodes
-      await new Promise(resolve => setTimeout(resolve, 30000));
-      console.log('depositing');
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      console.log('Creating one block of deposit transactions with node set 1');
       await expect(doDeposits(numDeposits)).to.eventually.be.fulfilled; // add transactions to the other half
-      console.log('deposited');
+      console.log('Block created');
       blocks1 = await web3.eth.getBlockNumber();
-      console.log('BLOCKNUMBER is:', blocks1);
+      console.log(
+        'BlockNumber for node set 1 is:',
+        blocks1,
+        '. Pausing node set 1 and unpausing node set 2',
+      );
     });
-    it('should still fail to withdraw from the other half', async () => {
+    it('should create a chain reorg', async () => {
       // now we have only one half of the chain with commitments
       // if we swap to the half without commitments, a transfer should still fail
       const web3b = await connectWeb3NoState('http://localhost:8547');
+      await new Promise(resolve => setTimeout(resolve, 15000));
       await pauseBlockchain(1);
+      await new Promise(resolve => setTimeout(resolve, 15000));
       await unpauseBlockchain(2);
-      console.log('BLOCKNUMBER is:', await web3b.eth.getBlockNumber());
+      console.log('Node set 2 is active.  Blocknumber is:', await web3b.eth.getBlockNumber());
+      // let's wait until the half without any commitments is longer than the
+      // one with commitments.  That should make it the new canonical chain
       do {
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 15000));
         console.log(
-          'Waiting for blocks to be mined - current block is',
+          'Mining blocks on node set 2 - current block is',
           // eslint-disable-next-line no-await-in-loop
           await web3b.eth.getBlockNumber(),
         );
         // eslint-disable-next-line no-await-in-loop
-      } while ((await web3b.eth.getBlockNumber()) < blocks1 + 10);
-      console.log('BLOCKNUMBER is:', await web3b.eth.getBlockNumber());
+      } while ((await web3b.eth.getBlockNumber()) < blocks1 + 5);
+      console.log(
+        'Blocknumber for node set 2 is:',
+        await web3b.eth.getBlockNumber(),
+        '. Unpausing node set 1 to force chain reorg',
+      );
       // we need to connect to that half first
       // then attempt a transfer.
+      await pauseBlockchain(2);
       await unpauseBlockchain(1);
-      await expect(doSingleTransferTwice()).to.be.rejectedWith(
-        'No suitable commitments were found',
-      );
+      console.log('BlockNumber for node set 1 is:', await web3.eth.getBlockNumber());
+      await unpauseBlockchain(2);
+      // a chain reorg should now occur - wait a minute for it to happen
+      console.log('Blocknumber for node set 2 is:', await web3b.eth.getBlockNumber());
+      console.log('BlockNumber for node set 1 is:', await web3.eth.getBlockNumber());
+      console.log('Waiting one minute to check that the reorg occurs');
+      await new Promise(resolve => setTimeout(resolve, 60000));
+      console.log('Blocknumber for node set 2 is:', await web3b.eth.getBlockNumber());
+      console.log('BlockNumber for node set 1 is:', await web3.eth.getBlockNumber());
+      //      await expect(doSingleTransferTwice()).to.be.rejectedWith(
+      //        'No suitable commitments were found',
+      //      );
     });
   });
 

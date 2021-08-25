@@ -4,7 +4,8 @@ const { ZERO } = config;
 
 export default history => {
   if (!history) return null;
-  const { root, oldRoot, frontier, leafIndex, currentLeafCount, blockNumber } = history;
+  const { root, oldRoot, frontier, leafIndex, currentLeafCount, blockNumber, transactionHash } =
+    history;
   return {
     root,
     oldRoot: oldRoot || ZERO,
@@ -12,5 +13,6 @@ export default history => {
     leafIndex,
     currentLeafCount,
     blockNumber,
+    transactionHash,
   };
 };

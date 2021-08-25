@@ -23,6 +23,7 @@ export default new mongoose.Schema(
     leafIndex: Number,
     currentLeafCount: Number,
     blockNumber: Number,
+    transactionHash: String,
   },
 
   { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } },

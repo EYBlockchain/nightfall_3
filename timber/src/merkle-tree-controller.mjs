@@ -127,10 +127,11 @@ async function updateLatestLeaf(db) {
 
   const maxReliableLeaf = await leafService.getLeafByLeafIndex(maxReliableLeafIndex);
 
-  const { blockNumber, leafIndex } = maxReliableLeaf;
+  const { blockNumber, transactionHash, leafIndex } = maxReliableLeaf;
 
   const latestLeaf = {
     blockNumber,
+    transactionHash,
     leafIndex,
   };
 
@@ -308,6 +309,7 @@ async function update(db) {
 
     latestRecalculation = {
       blockNumber: latestLeaf.blockNumber,
+      transactionHash: latestLeaf.transactionHash,
       leafIndex: toLeafIndex,
       root,
       frontier: newFrontier,
@@ -325,6 +327,7 @@ async function update(db) {
       leafIndex: latestRecalculationLeafIndex,
       currentLeafCount,
       blockNumber: latestLeaf.blockNumber,
+      transactionHash: latestLeaf.transactionHash,
     };
     await historyService.saveTreeHistory(history);
     logger.debug(`Saved new Merkle tree history ${JSON.stringify(history, null, 2)}`);

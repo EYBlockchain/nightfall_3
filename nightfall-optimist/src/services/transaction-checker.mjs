@@ -35,7 +35,6 @@ async function checkTransactionHash(transaction) {
 }
 // next that the fields provided are consistent with the transaction type
 async function checkTransactionType(transaction) {
-  logger.debug(`in checkTransactionType: ${JSON.stringify(transaction)}`);
   switch (Number(transaction.transactionType)) {
     case 0: // deposit
       if (

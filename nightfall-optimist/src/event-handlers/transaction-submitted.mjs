@@ -12,8 +12,11 @@ import { getTransactionSubmittedCalldata } from '../services/process-calldata.mj
 This handler runs whenever a new transaction is submitted to the blockchain
 */
 async function transactionSubmittedEventHandler(eventParams) {
-  // const transaction = mappedTransaction(data);
+  // logger.debug(`transactionSubmittedEventHandler, ${JSON.stringify(eventParams)}`);
   const { offchain = false, blockNumber, ...data } = eventParams;
+  const { transactionHash: transactionHashL1 } = data;
+  console.log('EVENTPARAMS', eventParams);
+  console.log('TRANSACTIONHASHL1', transactionHashL1);
   let transaction;
   if (offchain) transaction = data;
   else transaction = await getTransactionSubmittedCalldata(data);
@@ -36,7 +39,7 @@ async function transactionSubmittedEventHandler(eventParams) {
       );
     }
     if (transactionNullifiers.length > 0) saveNullifiers(transactionNullifiers, blockNumber); // we can now safely store the nullifiers IFF they are present
-    saveTransaction({ ...transaction, blockNumber }); // then we need to save it
+    saveTransaction({ ...transaction, blockNumber, transactionHashL1 }); // then we need to save it
   } catch (err) {
     if (err instanceof TransactionError)
       logger.warn(

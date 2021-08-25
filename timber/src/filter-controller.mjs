@@ -8,7 +8,7 @@ import config from 'config';
 import Queue from 'queue';
 import utilsWeb3 from './utils-web3.mjs';
 
-import { LeafService, MetadataService } from './db/service/index.mjs';
+import { LeafService, MetadataService, HistoryService } from './db/service/index.mjs';
 import logger from './logger.mjs';
 import mtc from './merkle-tree-controller.mjs'; // eslint-disable-line import/no-cycle
 import getProposeBlockCalldata from './optimistic/process-calldata.mjs';
@@ -64,7 +64,7 @@ const blockProposedResponseFunction = async (eventObject, args) => {
   const { treeHeight } = await metadataService.getTreeHeight();
   // Now some more bespoke code; specific to how our application needs to deal with this eventObject:
   // construct an array of 'leaf' documents to store in the db:
-  const { blockNumber } = eventData;
+  const { blockNumber, transactionHash } = eventData;
   // first, we need to extract the commitment values from the calldata because
   // it's not in the emitted event.  We don't care about the Block object
   const { transactions } = await getProposeBlockCalldata(eventData);
@@ -98,6 +98,7 @@ const blockProposedResponseFunction = async (eventObject, args) => {
       value: leafValues[0],
       leafIndex: minLeafIndex,
       blockNumber,
+      transactionHash,
     };
     const leafService = new LeafService(db);
     await leafService.insertLeaf(treeHeight, leaf);
@@ -111,6 +112,7 @@ const blockProposedResponseFunction = async (eventObject, args) => {
       value: leafValue,
       leafIndex,
       blockNumber,
+      transactionHash,
     };
     leaves.push(leaf);
   });
@@ -208,7 +210,7 @@ async function removeBlockProposedFunction(eventObject, args) {
   const { db, contractName, treeId } = args;
   const eventName = args.eventName === undefined ? 'Rollback' : args.eventName;
   let eventParams;
-  logger.debug(`eventname: ${eventName}`);
+  logger.debug(`eventname: ${eventName} removal`);
   if (treeId === undefined || treeId === '') {
     eventParams = config.contracts[contractName].events[eventName].parameters;
   } else {
@@ -223,13 +225,17 @@ async function removeBlockProposedFunction(eventObject, args) {
   const { treeHeight } = await metadataService.getTreeHeight();
 
   // Now some bespoke code; specific to how our application needs to deal with this eventObject:
-  const { blockNumber } = eventData;
-  const { block } = await getProposeBlockCalldata(eventData);
+  const { transactionHash } = eventData;
+  // we now know the (layer 1) transaction in which the original event took place,
+  // we can search for the event in Timber's history and extract the leafCount
+  const historyService = new HistoryService(db);
+  const history = await historyService.getTreeHistoryByTransactionHash(transactionHash);
+  //
   // Now, the leafCount just before this block was added was block.leafCount
   // that's where we need to roll back to.
-  await mtc.rollback(db, treeHeight, Number(block.leafCount));
+  return mtc.rollback(db, treeHeight, Number(history.currentLeafCount));
   // and now we need to roll forwards to the present, along our new timeline
-  return resync(blockNumber, args);
+  // return resync(blockNumber, args);
 }
 
 /**
