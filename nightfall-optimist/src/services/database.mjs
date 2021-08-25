@@ -230,10 +230,6 @@ Function to save a (unprocessed) Transaction
 */
 export async function saveTransaction(_transaction) {
   const transaction = { _id: _transaction.transactionHash, ..._transaction, mempool: true };
-  if (!_transaction.transactionHashL1)
-    throw new Error('Layer 2 blocks must be saved with a valid Layer 1 transactionHash');
-  if (!_transaction.blockNumber)
-    throw new Error('Layer 2 blocks must be saved with a valid Layer 1 block number');
   logger.debug(
     `saving transaction ${transaction.transactionHash}, with layer 1 block number ${_transaction.blockNumber}`,
   );

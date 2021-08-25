@@ -24,7 +24,7 @@ import logger from 'common-files/utils/logger.mjs';
 const { MAX_QUEUE } = config;
 const eventQueue = new Queue({ autostart: true, concurrency: 1 });
 
-async function buffer(eventObject, eventHandlers) {
+async function buffer(eventObject, eventHandlers, ...args) {
   // handlers contains the functions needed to handle particular types of event,
   // including removal of events when a chain reorganisation happens
   if (!eventHandlers[eventObject.event]) {
@@ -39,13 +39,11 @@ async function buffer(eventObject, eventHandlers) {
       return;
     }
     logger.info(`Queueing event removal ${eventObject.event}`);
-    eventQueue.push(() =>
-      eventHandlers.removers[eventObject.event](eventObject, eventHandlers, eventQueue),
-    );
+    eventQueue.push(() => eventHandlers.removers[eventObject.event](eventObject, args));
     // otherwise queue the event for processing.
   } else {
     logger.info(`Queueing event ${eventObject.event}`);
-    eventQueue.push(() => eventHandlers[eventObject.event](eventObject));
+    eventQueue.push(() => eventHandlers[eventObject.event](eventObject, args));
   }
   // the queue shouldn't get too long if we're keeping up with the blockchain.
   if (eventQueue.length > MAX_QUEUE)

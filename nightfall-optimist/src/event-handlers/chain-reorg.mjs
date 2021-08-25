@@ -15,7 +15,7 @@ that removed block. Thus we delete it. The new state will be written as new
 events come in from the new layer 1 fork that we are now following (TBC).
 We have to be careful that new events don't come in while we're deleting state
 or we'll delete the new events too!  We do this by queueing incomming events and
-making them run sequentially (concurrency = 1). This is done via event-buffer.mjs.
+making them run sequentially (concurrency = 1). This is done via event-queue.mjs.
 
 Removal of a Rollback event is less straightforward.  The state after, and
 including, the rollback will still be invalid because its built off of the block

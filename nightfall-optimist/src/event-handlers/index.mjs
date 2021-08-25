@@ -1,5 +1,5 @@
 import {
-  subscribeToEvents,
+  startEventQueue,
   subscribeToNewCurrentProposer,
   subscribeToBlockAssembledWebSocketConnection,
   subscribeToChallengeWebSocketConnection,
@@ -32,7 +32,7 @@ const eventHandlers = {
 };
 
 export {
-  subscribeToEvents,
+  startEventQueue,
   subscribeToNewCurrentProposer,
   subscribeToBlockAssembledWebSocketConnection,
   subscribeToChallengeWebSocketConnection,

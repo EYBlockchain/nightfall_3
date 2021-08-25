@@ -15,8 +15,6 @@ async function transactionSubmittedEventHandler(eventParams) {
   // logger.debug(`transactionSubmittedEventHandler, ${JSON.stringify(eventParams)}`);
   const { offchain = false, blockNumber, ...data } = eventParams;
   const { transactionHash: transactionHashL1 } = data;
-  console.log('EVENTPARAMS', eventParams);
-  console.log('TRANSACTIONHASHL1', transactionHashL1);
   let transaction;
   if (offchain) transaction = data;
   else transaction = await getTransactionSubmittedCalldata(data);
