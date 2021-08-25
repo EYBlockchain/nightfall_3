@@ -6,7 +6,7 @@ import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import WebSocket from 'ws';
 import {
-  // closeWeb3Connection,
+  closeWeb3Connection,
   submitTransaction,
   connectWeb3,
   getAccounts,
@@ -176,7 +176,7 @@ describe('Testing the http API', () => {
 
   after(() => {
     // console.log('end');
-    // closeWeb3Connection();
-    // connection.close();
+    closeWeb3Connection();
+    connection.close();
   });
 });
