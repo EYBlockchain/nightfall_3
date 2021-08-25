@@ -1,4 +1,5 @@
 /* eslint import/no-extraneous-dependencies: "off" */
+/* ignore unused exports */
 
 import fs from 'fs';
 import config from 'config';

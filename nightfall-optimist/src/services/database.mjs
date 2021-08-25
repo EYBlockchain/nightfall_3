@@ -151,16 +151,6 @@ export async function deleteBlock(blockHash) {
 }
 
 /**
-function to delete blocks with a layer 2 block number >= blockNumberL2
-*/
-export async function deleteBlocksFromBlockNumberL2(blockNumberL2) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  const query = { blockNumberL2: { $gte: Number(blockNumberL2) } };
-  return db.collection(SUBMITTED_BLOCKS_COLLECTION).deleteMany(query);
-}
-
-/**
 function to delete blocks with a layer 1 block number >= blockNumber
 */
 export async function deleteBlocksFromBlockNumberL1(blockNumber) {
@@ -352,14 +342,6 @@ export async function retrieveMinedNullifiers() {
     .collection(NULLIFIER_COLLECTION)
     .find({ blockHash: { $ne: null } })
     .toArray();
-}
-
-export async function resetNullifiers(blockHash) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  const query = { blockHash };
-  const update = { $unset: { blockHash: null } };
-  return db.collection(NULLIFIER_COLLECTION).updateMany(query, update);
 }
 
 // delete all the nullifiers in this block

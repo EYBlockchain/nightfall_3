@@ -1,4 +1,5 @@
 /* eslint import/no-extraneous-dependencies: "off" */
+/* ignore unused exports */
 
 /**
 Class representing a GM17 proof.  Depending on the local definition of 'proof',

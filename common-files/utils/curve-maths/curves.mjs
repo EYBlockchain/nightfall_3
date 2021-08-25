@@ -1,3 +1,5 @@
+/* ignore unused exports */
+
 /**
 module for manupulating elliptic curve points for an alt-bn128 curve. This
 is the curve that Ethereum currently has pairing precompiles for. All the

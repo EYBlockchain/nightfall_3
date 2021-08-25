@@ -9,10 +9,7 @@ const outputPath = `/app/output`;
 
 const vkPath = circuitPath => `${outputPath}/${circuitPath}/${path.basename(circuitPath)}_vk.key`;
 
-const proofPath = circuitPath =>
-  `${outputPath}/${circuitPath}/${path.basename(circuitPath)}_proof.json`;
-
-export const readJsonFile = filePath => {
+const readJsonFile = filePath => {
   if (fs.existsSync(filePath)) {
     const file = fs.readFileSync(filePath);
     return JSON.parse(file);
@@ -24,26 +21,15 @@ export const readJsonFile = filePath => {
 /**
 Strip the 'raw' field from the vk data
 */
-export const stripRawData = vk => {
+const stripRawData = vk => {
   const { h, g_alpha, h_beta, g_gamma, h_gamma, query } = vk;
   return { h, g_alpha, h_beta, g_gamma, h_gamma, query };
-};
-
-export const getVerificationKeyByCircuitName = circuitName => {
-  const vk = readJsonFile(vkPath(circuitName));
-  const strippedVK = vk === null ? vk : stripRawData(vk);
-  return strippedVK;
 };
 
 export const getVerificationKeyByCircuitPath = circuitPath => {
   const vk = readJsonFile(vkPath(circuitPath));
   const strippedVK = vk === null ? vk : stripRawData(vk);
   return strippedVK;
-};
-
-export const getProofByCircuitPath = circuitPath => {
-  const { proof, inputs } = readJsonFile(proofPath(circuitPath));
-  return { proof, inputs };
 };
 
 export const getProofFromFile = filePath => {

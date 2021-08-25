@@ -1,4 +1,5 @@
 /* eslint import/no-extraneous-dependencies: "off" */
+/* ignore unused exports */
 
 /**
 Mongo database functions

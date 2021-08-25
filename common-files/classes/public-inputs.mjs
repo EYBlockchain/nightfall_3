@@ -1,4 +1,5 @@
 /* eslint import/no-extraneous-dependencies: "off" */
+/* ignore unused exports */
 
 /**
 Class to construct a public input hash (PIH).  Unlike a commitment, the PIH

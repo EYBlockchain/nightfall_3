@@ -14,7 +14,7 @@ import {
   setBlockAssembledWebSocketConnection,
 } from './services/block-assembler.mjs';
 import { setChallengeWebSocketConnection } from './services/challenges.mjs';
-import { initialBlockSync } from './services/state-sync.mjs';
+import initialBlockSync from './services/state-sync.mjs';
 import buffer from './services/event-buffer.mjs';
 
 const main = async () => {

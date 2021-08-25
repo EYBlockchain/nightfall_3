@@ -927,7 +927,7 @@ const soljsonSources = [
   'soljson-v0.1.1+commit.6ff4cd6.js',
 ];
 
-export const releases = {
+const releases = {
   '0.6.2': 'soljson-v0.6.2+commit.bacdbe57.js',
   '0.6.1': 'soljson-v0.6.1+commit.e6f7d5a4.js',
   '0.6.0': 'soljson-v0.6.0+commit.26b70077.js',
