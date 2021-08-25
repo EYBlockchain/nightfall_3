@@ -62,10 +62,12 @@ export async function subscribeToEvents(callback, arg) {
 }
 
 export async function subscribeToNewCurrentProposer(callback, ...args) {
-  const emitter = (await waitForContract(PROPOSERS_CONTRACT_NAME)).events.NewCurrentProposer();
-  emitter.on('data', event => callback(event, args));
+  const emitterProp = (await waitForContract(PROPOSERS_CONTRACT_NAME)).events.NewCurrentProposer();
+  const emitterState = (await waitForContract(STATE_CONTRACT_NAME)).events.NewCurrentProposer();
+  emitterProp.on('data', event => callback(event, args));
+  emitterState.on('data', event => callback(event, args));
   logger.debug('Subscribed to NewCurrentProposer event');
-  return emitter;
+  return { emitterProp, emitterState };
 }
 
 export async function subscribeToChallengeWebSocketConnection(callback, ...args) {

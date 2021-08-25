@@ -292,8 +292,15 @@ export async function deleteTransferAndWithdraw(transactionHashes) {
   const db = connection.db(OPTIMIST_DB);
   const query = {
     transactionHash: { $in: transactionHashes },
-    transactionType: { $in: [1, 2, 3] },
+    transactionType: { $in: ['1', '2', '3'] },
   };
+  return db.collection(TRANSACTIONS_COLLECTION).deleteMany(query);
+}
+
+export async function deleteTransactionsByTransactionHashes(transactionHashes) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { transactionHash: { $in: transactionHashes } };
   return db.collection(TRANSACTIONS_COLLECTION).deleteMany(query);
 }
 
@@ -377,4 +384,10 @@ export async function addTransactionsToMemPoolFromBlockNumberL2(blockNumberL2) {
   const query = { blockNumberL2: { $gte: Number(blockNumberL2) } };
   const update = { $set: { mempool: true, blockNumberL2: -1 } };
   return db.collection(TRANSACTIONS_COLLECTION).updateMany(query, update);
+}
+
+export async function getMempoolTransactions() {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  return db.collection(TRANSACTIONS_COLLECTION).find().toArray();
 }
