@@ -92,5 +92,5 @@ they will still need knowledge of `ask` and `nsk` to spend a commitment.
 
 ### Acknowledgements
 
-Some of the work for in band secret distribution is inspired by zCash. Thankful for their work in
+Some of the work for in band secret distribution is inspired by zCash. Grateful for their work in
 this field.
