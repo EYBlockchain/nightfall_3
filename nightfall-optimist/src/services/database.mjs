@@ -260,7 +260,7 @@ export async function addTransactionsToMemPool(block) {
   const db = connection.db(OPTIMIST_DB);
   const query = {
     transactionHash: { $in: block.transactionHashes },
-    blockNumberL2: { $eq: -1 },
+    blockNumberL2: { $eq: block.blockNumberL2 },
   };
   const update = { $set: { mempool: true, blockNumberL2: -1 } };
   return db.collection(TRANSACTIONS_COLLECTION).updateMany(query, update);

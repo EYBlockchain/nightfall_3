@@ -43,7 +43,10 @@ async function rollbackEventHandler(data) {
    Also delete nullifiers and the blocks that no longer exist.
   */
 
-  // Firstly we should check that timber has also complete a rollback
+  // This is bad
+  // Optimist does not actually need timber to catch up
+  // However, this slows down optimist enough that timber and optimist can rollback
+  // before timber updates from the new block.
   let timberLeafCount;
   do {
     // eslint-disable-next-line no-await-in-loop
@@ -67,8 +70,11 @@ async function rollbackEventHandler(data) {
       .flat(1),
   );
 
+  // Get the nullifiers we have stored
   const storedNullifiers = await retrieveNullifiers();
   const storedNullifiersHash = storedNullifiers.map(sNull => sNull.hash);
+
+  // Filter out deposits and sort by blockNumber order
   const mempool = (await getMempoolTransactions())
     .filter(m => m.transactionType !== '0')
     .sort((a, b) => a.blockNumber - b.blockNumber);
@@ -77,21 +83,32 @@ async function rollbackEventHandler(data) {
 
   for (let i = 0; i < mempool.length; i++) {
     const transaction = mempool[i];
+    // We only care about nullifiers that are not null
     const transactionNullifiers = transaction.nullifiers.filter(hash => hash !== ZERO);
+    // Set this bool to true, we modify it if we catch the error from checkTransaction
     let checkTransactionCorrect = true;
     try {
+      logger.info(`Test`);
       // eslint-disable-next-line no-await-in-loop
       await checkTransaction(transaction);
     } catch (err) {
+      logger.info(`CAUGHT`);
       checkTransactionCorrect = false;
     }
+    // Perform the nullifier check, i.e. see if this transaction has a duplicate nullifier
+    // We have not deleted the nullifier collection, so the presence of a transacaction nullifier in the nullifier list is insufficient
+    // Instead, check if the blockNumber we saw the transaction come from matches the blockNumber we saw the nullifier.
+    logger.info(`Doing DupNullifier Check`);
     const dupNullifier = transactionNullifiers.some(txNull => {
       if (storedNullifiersHash.includes(txNull)) {
-        const alreadyStoredNullifier = storedNullifiers.find(s => s === txNull);
+        const alreadyStoredNullifier = storedNullifiers.find(s => s.hash === txNull);
+        logger.info(`alreadyStoredNullifier: ${JSON.stringify(alreadyStoredNullifier)}`);
         return alreadyStoredNullifier.blockNumber !== transaction.blockNumber;
       }
       return false;
     });
+    // If we found a duplicate nullifier or if the checkTransactionCorrect is false
+    // we queue the transaction hash for deletion.
     if (dupNullifier || !checkTransactionCorrect) {
       toBeDeleted.push(transaction.transactionHash);
     }
