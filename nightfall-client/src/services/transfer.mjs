@@ -216,6 +216,7 @@ async function transfer(transferParams) {
         .filter(commitment => commitment.preimage.compressedPkd.hex(32) === compressedPkd.hex(32))
         .forEach(commitment => storeCommitment(commitment, nsk)); // TODO insertMany
       // mark the old commitments as nullified
+      await Promise.all(oldCommitments.map(commitment => markNullified(commitment)));
       // oldCommitments.forEach(commitment => markNullified(commitment));
       return {
         transaction: optimisticTransferTransaction,
