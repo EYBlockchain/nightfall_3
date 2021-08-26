@@ -27,13 +27,16 @@ export async function saveCommit(commitHash, txDataToSign) {
   return db.collection(COMMIT_COLLECTION).insertOne({ commitHash, txDataToSign });
 }
 /**
-Function to retrieve a commit, by commitHash
+Function to retrieve a commit, by commitHash, it also returns the 'retrieved'
+which will be true if the commitment hash has already been retrieved
 */
 export async function getCommit(commitHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { commitHash };
-  return db.collection(COMMIT_COLLECTION).findOne(query);
+  const commit = await db.collection(COMMIT_COLLECTION).findOne(query);
+  if (commit) db.collection(COMMIT_COLLECTION).updateOne(query, { $set: { retrieved: true } });
+  return commit;
 }
 
 /**
@@ -342,7 +345,7 @@ export async function clearBlockNumberL1ForBlock(transactionHashL1) {
 
 // function that sets the Transactions's L1 blocknumber to null
 // to indicate that it's back in the L1 mempool (and will probably be re-mined
-// and given a new L1 trnasactionHash)
+// and given a new L1 transactionHash)
 export async function clearBlockNumberL1ForTransaction(transactionHashL1) {
   logger.debug(`clearing layer 1 blockNumber for L2 transaction with L1 hash ${transactionHashL1}`);
   const connection = await mongo.connection(MONGO_URL);

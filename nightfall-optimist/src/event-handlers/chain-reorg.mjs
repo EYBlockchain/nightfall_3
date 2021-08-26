@@ -8,30 +8,53 @@ blockchain.
 To address this, we note that each offchain state update is always triggered by
 a blockchain event, which we're subscribed to. Thus we have to reorganise our
 offchain state whenever one of these events is removed by a layer 1 reorg.
-This is actually fairly straightforward for 'additive' events like a BlockProposed.
-In that case, removal of a BlockProposed event means that any later 2 state after,
-and including, that event is invalid because all subsequent state will depend on
-that removed block. Thus we delete it. The new state will be written as new
-events come in from the new layer 1 fork that we are now following (TBC).
-We have to be careful that new events don't come in while we're deleting state
-or we'll delete the new events too!  We do this by queueing incomming events and
-making them run sequentially (concurrency = 1). This is done via event-queue.mjs.
 
-Removal of a Rollback event is less straightforward.  The state after, and
-including, the rollback will still be invalid because its built off of the block
-we rolled back to. Thus, this part of the re-organisation is the same as for
-a BlockProposer. However we will also have deleted layer 2 state in the original
-rollback, which we now have to restore. Thus we need to work out the layer 1
-block which contains the last layer 2 block that our rollback removed and replay
-all the events from that layer 1 block (inclusive) but excluding the rollback.
+If we've been told that an event that occurred in the L1 block with number
+blockNumberL1, has been removed, this means that all our off-chain L2 state
+records are invalid beyond this point (inclusive of the point).  However, we don't
+delete them because the L1 transactions that emitted them are back in the L1 mempool
+and will be re-mined, and the events thus re-emitted. This requires handling in
+slightly different ways, depending on the event.
 
-Some events (CommittedToChallenge and NewCurrentProposer) don't cause layer 2
-state updates directly.  They're triggers for the offchain system to do something,
-for example to send a challenge in. That something will probably result in a
-state change but we don't have to do any layer 2 state modification when one of
-these events is removed because any state change that resulted will have been
-initiated by another event, e.g. a Rollback. This is only true of course if the
-responses to such events are idempotent. TODO consider further.
+TransactionSubmitted events:
+When they are removed we set to null the L1 blockNumber that's stored with the
+transaction.  This indicates to NF_3 that a chain reorg has happened so when the
+event is re-mined NF_3 will not treat the re-mined event as a replay attack. We
+keep mempool = true so that the re-mined events are not used by NF_3 to make
+a new block.  If we don't do this we would get a re-mined block containing the
+transactions and a new one made by NF_3, which would trigger a Duplicate
+Transaction challenge.
+
+BlockProposed events:
+
+We don't really have to do much here, other than reset the L1 block number stored
+in the L2 block data to null, to indicate to NF_3 that the re-mined BlockProposed
+event is not a replay attack. Once the event is re-mined, all will be well.
+
+NewCurrentProposer events:
+
+We need to revert to the previous proposer on removal.  On re-mining, we'll go
+back again. This ensures that the wrong person isn't proposing blocks, which will
+then be reverted.
+Note that these events (and their rmeoval) are not handled by the eventQueue.
+Instead the event is handled immediately by its relevant handler.  This is
+because the initial synchronisation code starts these events before the others.
+This may cause a race in some circumstances.
+TODO - modify intial sychronisation code and queue these events too.
+
+CommittedToChallenge events:
+
+These trigger a commitment reveal transaction.  As the reveal transaction will
+exist and will be put back into the mempool as a result of the chain reorg, then
+re-mined, we need to make sure that the re-mining of this event does not trigger
+yet another reveal transaction. That will cause the sender to waste a significant
+amount of gas because challenges are generally expensive. We do that by making
+the call to the revealChallenge function only happen once.
+
+Rollback events:
+
+TODO - rollback code is currently undergoing changes.
+
 */
 // import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
@@ -41,46 +64,7 @@ import {
   clearBlockNumberL1ForTransaction,
   isRegisteredProposerAddressMine,
 } from '../services/database.mjs';
-// import { waitForContract } from './subscribe.mjs';
-/*
-const {
-  STATE_CONTRACT_NAME,
-  PROPOSERS_CONTRACT_NAME,
-  CHALLENGES_CONTRACT_NAME,
-  SHIELD_CONTRACT_NAME,
-} = config;
-*/
-/**
-If we've been told that an event that occurred in the L1 block with number
-blockNumberL1, has been removed, this means that all our off-chain L2 state
-records are invalid beyond this point (inclusive of the point).  So we delete
-them.
 
-async function deleteBlockState(blockNumberL1) {
-  logger.info(
-    `Responding to layer 1 chain reorganisation - deleting state from block ${blockNumberL1}`,
-  );
-  return Promise.all([
-    deleteBlocksFromBlockNumberL1(blockNumberL1),
-    // deleteTransactionsFromBlockNumberL1(blockNumberL1),
-    deleteNullifiersFromBlockNumberL1(blockNumberL1), // TODO is blockNumberL1 correct here?
-  ]);
-}
-// Transactions don't hold the same L1 block number as Blocks, so they need to be
-// deleted separately, according to the block number in which they were created
-async function deleteTransactionState(blockNumberL1) {
-  logger.info(
-    `Responding to layer 1 chain reorganisation - deleting state from block ${blockNumberL1}`,
-  );
-  return deleteTransactionsFromBlockNumberL1(blockNumberL1);
-}
-
-/*
-/**
-If we've previously removed L2 state and we now wish that we hadn't, we can
-replay the state back with this function. Note the replay is inclusive of
-fromblockNumberL1 and toBlockNumberL1.
-*/
 /*
 async function resync(fromblockNumberL1, toBlockNumberL1, eventHandlers, eventQueue) {
   // get all the events and sort them into causal order by block and transaction
@@ -121,24 +105,6 @@ async function resync(fromblockNumberL1, toBlockNumberL1, eventHandlers, eventQu
 }
 */
 
-/**
-If we've been told that an event that occurred in the L1 block with number
-blockNumberL1, has been removed, this means that all our off-chain L2 state
-records are invalid beyond this point (inclusive of the point).  However, we don't
-delete them because the L1 transactions that emitted them are back in the L1 mempool
-and will be re-mined and the events thus re-emitted.  If we simply delete the L2
-state then we will get two new L2 blocks: one from when the L1 submitTransaction
-events are re-emitted, which will cause the block-assembler to make a new block,
-and one from when the original proposeBlock transaction is re-mined and the
-BlockProposed event re-emitted.  This will make NF_3 think that someone is trying
-to post a duplicate transaction and a challenge will be made.
-To prevent this, we'll just remove the information about which L1 block the event
-is in (this info is held in the relevant L2 collection) to indicate that it's
-back in the mempool. Then, when the same event is re-emitted, we'll detect that
-and assign a new L1 block to the data. Thus, if we get a duplicate event but the
-sotred event has no L1 blockNumber, that indicates this is a chain-reorg, not a
-duplicate transaction.
-*/
 export async function removeBlockProposedEventHandler(eventObject) {
   return clearBlockNumberL1ForBlock(eventObject.transactionHash);
 }
@@ -152,13 +118,9 @@ export async function removeNewCurrentProposerEventHandler(data, args) {
   const [proposer] = args;
   try {
     logger.info(`Proposer Removal Handler - Current proposer is ${currentProposer}`);
-    // remember the current proposer.  We don't store it in the DB as it's an
-    // ephemeral thing. Instead, we have an object to remember it. The
-    // object is instantiated at the 'main()' level, so will stay in scope even
-    // when this handler exits.
-    proposer.proposers.shift(currentProposer); // useful if we need to revert the proposer because of a chain reorg.
+    proposer.proposers.shift(); // revert the proposer because of the chain reorg.
     [proposer.address] = proposer.proposers;
-    proposer.isMe = !!(await isRegisteredProposerAddressMine(currentProposer));
+    proposer.isMe = !!(await isRegisteredProposerAddressMine(proposer.address));
   } catch (err) {
     // handle errors
     logger.error(err);
@@ -166,24 +128,9 @@ export async function removeNewCurrentProposerEventHandler(data, args) {
   }
 }
 
-/*
-// TODO this probably needs to resync some state but not all -
-export async function removeRollbackEventHandler(eventObject, eventHandlers, eventQueue) {
-  const { blockNumberL2 } = eventObject.returnValues;
-  // rollback needs to resync not from the point that the event occurred but
-  // from the point that the rollback reached
-  const { blockNumber: blockNumberL1 } = await getBlockByBlockNumberL2(blockNumberL2);
-  return deleteBlockState(blockNumberL1); // TODO can we just call rollback????
-  // return resync(blockNumberL1, 'latest', eventHandlers, eventQueue);
+// there is no need to handle removal of a CommittedToChallenge event because
+// the handler will only reveal a challenge once. This means that when the event
+// is re-mined, it won't cause a second call to revealChallenge.
+export async function removeCommittedToChallengeEventHandler() {
+  logger.debug('Handled removal of CommittedToChallengeEvent');
 }
-
-export async function removeNewCurrentProposerEventHandler(eventObject) {
-  return deleteBlockState(eventObject.blockNumber);
-  // return resync(eventObject.blockNumber, 'latest', eventHandlers, eventQueue);
-}
-
-export async function removeCommittedToChallengeEventHandler(eventObject) {
-  return deleteBlockState(eventObject.blockNumber);
-  // return resync(eventObject.blockNumber, 'latest', eventHandlers, eventQueue);
-}
-*/

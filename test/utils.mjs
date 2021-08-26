@@ -22,8 +22,8 @@ export function connectWeb3NoState(url = 'ws://localhost:8546') {
   return new Web3(new Web3.providers.WebsocketProvider(url));
 }
 
-export function closeWeb3Connection() {
-  web3.currentProvider.connection.close();
+export function closeWeb3Connection(w = web3) {
+  w.currentProvider.connection.close();
 }
 
 export function setNonce(privateKey, _nonce) {
@@ -195,7 +195,7 @@ It will only work with the standalone geth network!
 export async function pauseBlockchain(side) {
   const options = {
     cwd: path.join(__dirname),
-    log: true,
+    log: false,
     config: ['../docker-compose.standalone.geth.yml'],
     composeOptions: ['-p geth'],
   };
@@ -206,7 +206,7 @@ export async function pauseBlockchain(side) {
 export async function unpauseBlockchain(side) {
   const options = {
     cwd: path.join(__dirname),
-    log: true,
+    log: false,
     config: ['../docker-compose.standalone.geth.yml'],
     composeOptions: ['-p geth'],
   };

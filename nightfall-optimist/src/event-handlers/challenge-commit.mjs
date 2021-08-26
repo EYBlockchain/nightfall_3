@@ -9,9 +9,13 @@ async function committedToChallengeEventHandler(data) {
   );
   if (!isChallengerAddressMine(sender)) return; // it's not us - nothing to do
   logger.info(`Our challenge commitment has been mined, sending reveal`);
-  const { txDataToSign } = await getCommit(commitHash);
+  const { txDataToSign, retrieved } = await getCommit(commitHash);
   if (txDataToSign === null) throw new Error('Commit hash not found in database');
-  revealChallenge(txDataToSign);
+  // if retrieved is true, then we've looked up this commit before and we assume
+  // we have already revealed it - thus we don't reveal it again because that would
+  // just waste gas.  This could happen if a chain reorg were to re-emit the
+  // CommittedToChallenge event.
+  if (!retrieved) revealChallenge(txDataToSign);
 }
 
 export default committedToChallengeEventHandler;

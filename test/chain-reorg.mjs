@@ -1,9 +1,7 @@
 import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
-import gen from 'general-number';
 import WebSocket from 'ws';
-import sha256 from '../common-files/utils/crypto/sha256.mjs';
 import {
   closeWeb3Connection,
   submitTransaction,
@@ -21,8 +19,6 @@ const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
-const { GN } = gen;
-
 describe('Testing the http API', () => {
   let shieldAddress;
   let stateAddress;
@@ -32,7 +28,6 @@ describe('Testing the http API', () => {
   let connection; // WS connection
   let web3;
   const zkpPrivateKey = '0xc05b14fa15148330c6d008814b0bdd69bc4a08a1bd0b629c42fa7e2c61f16739'; // the zkp private key we're going to use in the tests.
-  const zkpPublicKey = sha256([new GN(zkpPrivateKey)]).hex();
   const url = 'http://localhost:8080';
   const optimistUrl = 'http://localhost:8081';
   const optimistWsUrl = 'ws:localhost:8082';
@@ -43,7 +38,6 @@ describe('Testing the http API', () => {
   const privateKey = '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e';
   const gas = 10000000;
   // this is also accounts[0]
-  const recipientAddress = '0x9c8b2276d490141ae1440da660e470e7c0349c63';
   // this is what we pay the proposer for incorporating a transaction
   const fee = 1;
   const BLOCK_STAKE = 1000000000000000000; // 1 ether
@@ -76,8 +70,6 @@ describe('Testing the http API', () => {
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
     });
-    const totalGas = receiptArrays.reduce((acc, { gasUsed }) => acc + Number(gasUsed), 0);
-    console.log(`     Average Gas used was ${Math.ceil(totalGas / (txPerBlock * numDeposits))}`);
     // Wait until we see the right number of blocks appear
     while (eventLogs.length !== numDeposits) {
       // eslint-disable-next-line no-await-in-loop
@@ -87,69 +79,7 @@ describe('Testing the http API', () => {
     for (let i = 0; i < numDeposits; i++) {
       eventLogs.shift();
     }
-  };
-
-  const doWithdraws = async numWithdraws => {
-    const withdrawTransactions = (
-      await Promise.all(
-        Array.from({ length: txPerBlock * numWithdraws }, () =>
-          chai.request(url).post('/withdraw').send({
-            ercAddress,
-            tokenId,
-            tokenType,
-            value,
-            zkpPrivateKey,
-            senderZkpPrivateKey: zkpPrivateKey,
-            recipientAddress,
-          }),
-        ),
-      )
-    ).map(wRes => wRes.body);
-    withdrawTransactions.forEach(({ txDataToSign }) => expect(txDataToSign).to.be.a('string'));
-    for (let i = 0; i < withdrawTransactions.length; i++) {
-      const { txDataToSign } = withdrawTransactions[i];
-      // eslint-disable-next-line no-await-in-loop
-      await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
-    }
-    while (eventLogs.length !== numWithdraws) {
-      // eslint-disable-next-line no-await-in-loop
-      await new Promise(resolve => setTimeout(resolve, 3000));
-    }
-    // Now we can empty the event queue
-    for (let i = 0; i < numWithdraws; i++) {
-      eventLogs.shift();
-    }
-  };
-
-  const doSingleTransferTwice = async () => {
-    let res = await chai
-      .request(url)
-      .post('/transfer')
-      .send({
-        ercAddress,
-        tokenId,
-        recipientData: {
-          values: [value],
-          recipientZkpPublicKeys: [zkpPublicKey],
-        },
-        senderZkpPrivateKey: zkpPrivateKey,
-        fee,
-      });
-    if (res.status !== 200) throw new Error(res.text);
-    res = await chai
-      .request(url)
-      .post('/transfer')
-      .send({
-        ercAddress,
-        tokenId,
-        recipientData: {
-          values: [value],
-          recipientZkpPublicKeys: [zkpPublicKey],
-        },
-        senderZkpPrivateKey: zkpPrivateKey,
-        fee,
-      });
-    if (res.status !== 200) throw new Error(res.text);
+    return receiptArrays;
   };
 
   before(async () => {
@@ -245,71 +175,66 @@ describe('Testing the http API', () => {
     });
   });
 
-  describe('Show we have no suitable transactions', () => {
+  describe('Start a normal chain', () => {
     // we start by just sending enough deposits to fill one block
     // set the number of deposit transactions blocks to perform.
     const numDeposits = 1;
     it('should deposit enough crypto into fork to fill one layer 2 block', async () => {
       await expect(doDeposits(numDeposits)).to.eventually.be.fulfilled;
-      console.log('BlockNumber is:', await web3.eth.getBlockNumber());
-    });
-    // next we withdraw each of the deposits
-    const numWithdraws = 1;
-    it('should withdraw all of our ZKP commitments, taking another block to do so', async () => {
-      await expect(doWithdraws(numWithdraws)).to.eventually.be.fulfilled;
-    });
-    // now we attempt a transfer.  This should fail because all of our deposited
-    // commitments should have been nullified by the withdrawals.
-    it('should fail to transfer some crypto because there are no available input commitments', async () => {
-      await expect(doSingleTransferTwice()).to.be.rejectedWith(
-        'No suitable commitments were found',
-      );
+      console.log('     BlockNumber is:', await web3.eth.getBlockNumber());
     });
   });
 
-  describe('Create fork', () => {
+  describe('Create fork and test chain reorganisation', () => {
     const numDeposits = 1;
     let blocks1;
-    it('should create a chain fork', async () => {
+    let receipts;
+    it('should create a chain fork containing transactions', async () => {
       // at this point we have no suitable commitments. Let's hold half of the nodes
       // and add some commitments to the un-held half
-      console.log('*Nightfall_3 is connected to node set 1*');
-      console.log('Pausing node set 2');
+      console.log(
+        '     *Nightfall_3 is connected to node set 1, nothing is connected to node set 2*',
+      );
+      console.log(
+        '     Pausing node set 2 and waiting one minute for all L1 transactions to complete',
+      );
       await pauseBlockchain(2); // hold one half of the nodes
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      console.log('Creating one block of deposit transactions with node set 1');
-      await expect(doDeposits(numDeposits)).to.eventually.be.fulfilled; // add transactions to the other half
-      console.log('Block created');
+      await new Promise(resolve => setTimeout(resolve, 60000));
+      console.log('     Creating one block of deposit transactions with node set 1');
+      receipts = await doDeposits(numDeposits); // add transactions to the other half
+      console.log('     Block created');
+      // test the receipts are good.
+      const recs = await Promise.all(
+        receipts.map(receipt => web3.eth.getTransactionReceipt(receipt.transactionHash)),
+      );
+      expect(recs).to.not.include(null);
       blocks1 = await web3.eth.getBlockNumber();
       console.log(
-        'BlockNumber for node set 1 is:',
+        '     BlockNumber for node set 1 is:',
         blocks1,
         '. Pausing node set 1 and unpausing node set 2',
       );
+      await pauseBlockchain(1);
+      await unpauseBlockchain(2);
     });
     it('should create a chain reorg', async () => {
       // now we have only one half of the chain with commitments
-      // if we swap to the half without commitments, a transfer should still fail
       const web3b = await connectWeb3NoState('http://localhost:8547');
-      await new Promise(resolve => setTimeout(resolve, 15000));
-      await pauseBlockchain(1);
-      await new Promise(resolve => setTimeout(resolve, 15000));
-      await unpauseBlockchain(2);
-      console.log('Node set 2 is active.  Blocknumber is:', await web3b.eth.getBlockNumber());
+      console.log('     Node set 2 is active.  Blocknumber is:', await web3b.eth.getBlockNumber());
       // let's wait until the half without any commitments is longer than the
       // one with commitments.  That should make it the new canonical chain
       do {
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 15000));
         console.log(
-          'Mining blocks on node set 2 - current block is',
+          '     Mining blocks on node set 2 - current block is',
           // eslint-disable-next-line no-await-in-loop
           await web3b.eth.getBlockNumber(),
         );
         // eslint-disable-next-line no-await-in-loop
       } while ((await web3b.eth.getBlockNumber()) < blocks1 + 5);
       console.log(
-        'Blocknumber for node set 2 is:',
+        '     Blocknumber for node set 2 is:',
         await web3b.eth.getBlockNumber(),
         '. Unpausing node set 1 to force chain reorg',
       );
@@ -317,18 +242,27 @@ describe('Testing the http API', () => {
       // then attempt a transfer.
       await pauseBlockchain(2);
       await unpauseBlockchain(1);
-      console.log('BlockNumber for node set 1 is:', await web3.eth.getBlockNumber());
+      console.log('     BlockNumber for node set 1 is:', await web3.eth.getBlockNumber());
       await unpauseBlockchain(2);
       // a chain reorg should now occur - wait a minute for it to happen
-      console.log('Blocknumber for node set 2 is:', await web3b.eth.getBlockNumber());
-      console.log('BlockNumber for node set 1 is:', await web3.eth.getBlockNumber());
-      console.log('Waiting one minute to check that the reorg occurs');
-      await new Promise(resolve => setTimeout(resolve, 60000));
-      console.log('Blocknumber for node set 2 is:', await web3b.eth.getBlockNumber());
-      console.log('BlockNumber for node set 1 is:', await web3.eth.getBlockNumber());
-      //      await expect(doSingleTransferTwice()).to.be.rejectedWith(
-      //        'No suitable commitments were found',
-      //      );
+      console.log('     Blocknumber for node set 2 is:', await web3b.eth.getBlockNumber());
+      console.log('     BlockNumber for node set 1 is:', await web3.eth.getBlockNumber());
+      console.log('     Waiting 10 s to check that the reorg occurs');
+      await new Promise(resolve => setTimeout(resolve, 10000));
+      console.log('     Blocknumber for node set 2 is:', await web3b.eth.getBlockNumber());
+      console.log('     BlockNumber for node set 1 is:', await web3.eth.getBlockNumber());
+      closeWeb3Connection(web3b);
+    });
+    it('Chain re-org should have replaced original transactions', async function () {
+      // the transactionHashes should point to transactions that no longer exist. The
+      // re-mined transactions will have different block numbers.
+      receipts.forEach(async receipt => {
+        const rec = await web3.eth.getTransactionReceipt(receipt.transactionHash);
+        console.log('COMP', rec.blockHash, receipt.blockHash);
+        expect(rec.blockHash).to.not.equal(receipt.blockHash);
+        expect(rec.blockNumber).to.not.equal(receipt.blockNumber);
+        expect(rec.transactionHash).to.equal(receipt.transactionHash);
+      });
     });
   });
 
