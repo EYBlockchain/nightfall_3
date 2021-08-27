@@ -17,40 +17,14 @@ import { Transaction } from '../classes/index.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 
 const { TRANSACTIONS_PER_BLOCK, STATE_CONTRACT_NAME } = config;
-let makeBlocks = true;
-// let blockProposed = '0x0';
+const makeBlocks = true;
 let ws;
 
 export function setBlockAssembledWebSocketConnection(_ws) {
   ws = _ws;
 }
 
-export function startMakingBlocks() {
-  makeBlocks = true;
-}
-export function stopMakingBlocks() {
-  makeBlocks = false;
-}
-
-// export function setBlockProposed(hash) {
-//  blockProposed = hash;
-// }
-
-// function isBlockProposed(hash) {
-//  return hash === blockProposed;
-// }
-
-// async function isBlockProposed(blockHash) {
-//   return new Promise(async function(resolve) {
-//     const emitter = (await waitForContract(CHALLENGES_CONTRACT_NAME)).events.BlockProposed({
-//       filter: { blockHash },
-//       fromBlock: 0,
-//     });
-//     emitter.on('data', event => resolve(true));
-//   });
-// }
-
-export async function makeBlock(proposer, number = TRANSACTIONS_PER_BLOCK) {
+async function makeBlock(proposer, number = TRANSACTIONS_PER_BLOCK) {
   logger.debug('Block Assembler - about to make a new block');
   // we retrieve un-processed transactions from our local database, relying on
   // the transaction service to keep the database current

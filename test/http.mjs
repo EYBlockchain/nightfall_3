@@ -121,7 +121,7 @@ describe('Testing the http API', () => {
       expect(ercAddress).to.be.a('string');
     });
 
-    it('should subscribe to block proposed event with the provided incoming viewing key', async function () {
+    it('should subscribe to block proposed event with the provided incoming viewing key for optimist1', async function () {
       const res = await chai.request(senderUrl).post('/incoming-viewing-key').send({
         ivk: ivk1,
         nsk: nsk1,
@@ -130,7 +130,7 @@ describe('Testing the http API', () => {
       expect(res.body.status).to.equal('success');
     });
 
-    it('should subscribe to block proposed event with the provided incoming viewing key', async function () {
+    it('should subscribe to block proposed event with the provided incoming viewing key for optimist2', async function () {
       const res = await chai.request(recipientUrl).post('/incoming-viewing-key').send({
         ivk: ivk2,
         nsk: nsk2,

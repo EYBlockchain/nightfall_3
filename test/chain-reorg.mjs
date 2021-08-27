@@ -1,9 +1,8 @@
+import config from 'config';
 import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
-import gen from 'general-number';
 import WebSocket from 'ws';
-import sha256 from '../common-files/utils/crypto/sha256.mjs';
 import {
   closeWeb3Connection,
   submitTransaction,
@@ -16,12 +15,12 @@ import {
   pauseBlockchain,
   unpauseBlockchain,
 } from './utils.mjs';
+import { generateKeys } from '../nightfall-client/src/services/keys.mjs';
 
+const { ZKP_KEY_LENGTH } = config;
 const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
-
-const { GN } = gen;
 
 describe('Testing the http API', () => {
   let shieldAddress;
@@ -31,8 +30,11 @@ describe('Testing the http API', () => {
   let ercAddress;
   let connection; // WS connection
   let web3;
-  const zkpPrivateKey = '0xc05b14fa15148330c6d008814b0bdd69bc4a08a1bd0b629c42fa7e2c61f16739'; // the zkp private key we're going to use in the tests.
-  const zkpPublicKey = sha256([new GN(zkpPrivateKey)]).hex();
+  let ask1;
+  let nsk1;
+  let ivk1;
+  let pkd1;
+
   const url = 'http://localhost:8080';
   const optimistUrl = 'http://localhost:8081';
   const optimistWsUrl = 'ws:localhost:8082';
@@ -58,7 +60,7 @@ describe('Testing the http API', () => {
           chai
             .request(url)
             .post('/deposit')
-            .send({ ercAddress, tokenId, tokenType, value, zkpPrivateKey, fee }),
+            .send({ ercAddress, tokenId, tokenType, value, pkd: pkd1, nsk: nsk1, fee }),
         ),
       )
     ).map(res => res.body);
@@ -98,9 +100,9 @@ describe('Testing the http API', () => {
             tokenId,
             tokenType,
             value,
-            zkpPrivateKey,
-            senderZkpPrivateKey: zkpPrivateKey,
             recipientAddress,
+            nsk: nsk1,
+            ask: ask1,
           }),
         ),
       )
@@ -130,9 +132,10 @@ describe('Testing the http API', () => {
         tokenId,
         recipientData: {
           values: [value],
-          recipientZkpPublicKeys: [zkpPublicKey],
+          recipientPkds: [pkd1],
         },
-        senderZkpPrivateKey: zkpPrivateKey,
+        nsk: nsk1,
+        ask: ask1,
         fee,
       });
     if (res.status !== 200) throw new Error(res.text);
@@ -144,9 +147,10 @@ describe('Testing the http API', () => {
         tokenId,
         recipientData: {
           values: [value],
-          recipientZkpPublicKeys: [zkpPublicKey],
+          recipientPkds: [pkd1],
         },
-        senderZkpPrivateKey: zkpPrivateKey,
+        nsk: nsk1,
+        ask: ask1,
         fee,
       });
     if (res.status !== 200) throw new Error(res.text);
@@ -170,6 +174,8 @@ describe('Testing the http API', () => {
       if (log.topics[0] === topicEventMapping.BlockProposed) eventLogs.push('blockProposed');
     });
 
+    ({ ask: ask1, nsk: nsk1, ivk: ivk1, pkd: pkd1 } = await generateKeys(ZKP_KEY_LENGTH));
+
     connection = new WebSocket(optimistWsUrl);
     connection.onopen = () => {
       connection.send('challenge');
@@ -192,13 +198,6 @@ describe('Testing the http API', () => {
       expect(res.status).to.equal(200);
     });
 
-    it('should generate a new 256 bit zkp private key for a user', async () => {
-      const res = await chai.request(url).get('/generate-zkp-key');
-      expect(res.body.keyId).to.be.a('string');
-      // normally this value would be the private key for subsequent transactions
-      // however we use a fixed one (zkpPrivateKey) to make the tests more independent.
-    });
-
     it('should get the address of the shield contract', async () => {
       const res = await chai.request(url).get('/contract-address/Shield');
       expect(res.body.address).to.be.a('string');
@@ -209,6 +208,15 @@ describe('Testing the http API', () => {
       const res = await chai.request(url).get('/contract-address/ERCStub');
       ercAddress = res.body.address;
       expect(ercAddress).to.be.a('string');
+    });
+
+    it('should subscribe to block proposed event with the provided incoming viewing key for optimist', async function () {
+      const res = await chai.request(url).post('/incoming-viewing-key').send({
+        ivk: ivk1,
+        nsk: nsk1,
+      });
+      expect(res.body.status).to.be.a('string');
+      expect(res.body.status).to.equal('success');
     });
   });
 

@@ -204,4 +204,4 @@ function edwardsDecompress(y) {
   return p;
 }
 
-export { dec, enc, scalarMult, add, edwardsCompress, edwardsDecompress };
+export { dec, enc, scalarMult, edwardsCompress, edwardsDecompress };

@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@master
       - uses: actions/setup-node@v1
         with:
-          node-version: '14.15.0'
+          node-version: '14.17.0'
       - name: eslint check
         run: |
           npm ci
@@ -24,26 +24,59 @@ jobs:
       - uses: actions/checkout@master
       - uses: actions/setup-node@v1
         with:
-          node-version: '14.15.0'
+          node-version: '14.17.0'
 
       - name: Start Containers
         run: |
           docker-compose build
-          ./start-nightfall -g &> nightfall_3-test.log &disown
+          ./start-nightfall -g &> ganache-test.log &disown
 
       - name: Run integration test
         run: |
           npm ci
-          sleep 200
+          sleep 360
           npm test
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
-        run: docker-compose down -v
+        run: docker-compose -f docker-compose.yml -f docker-compose.ganache.yml down -v
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
         uses: actions/upload-artifact@master
         with:
-          name: integration-test-logs
-          path: ./nightfall_3-test.log
+          name: ganache-test-logs
+          path: ./ganache-test.log
+
+  test-gas:
+    name: check gas for 32 transactions per block
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '14.17.0'
+
+      - name: Start Containers with ganache
+        run: |
+          docker-compose build
+          ./start-nightfall -g &> test-gas.log &disown
+        env:
+          TRANSACTIONS_PER_BLOCK: 32
+
+      - name: Run tx-gas.mjs test suites
+        run: |
+          npm ci
+          sleep 360
+          npm run test-gas
+
+      - name: If integration test failed, shutdown the Containers
+        if: failure()
+        run: docker-compose -f docker-compose.yml -f docker-compose.ganache.yml down -v
+
+      - name: If integration test failed, upload logs files as artifacts
+        if: failure()
+        uses: actions/upload-artifact@master
+        with:
+          name: test-gas-logs
+          path: ./test-gas.log

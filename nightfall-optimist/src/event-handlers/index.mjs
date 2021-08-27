@@ -1,13 +1,8 @@
 import {
   subscribeToEvents,
-  subscribeToBlockProposedEvent,
   subscribeToNewCurrentProposer,
-  subscribeToTransactionSubmitted,
   subscribeToBlockAssembledWebSocketConnection,
-  subscribeToRollbackEventHandler,
   subscribeToChallengeWebSocketConnection,
-  subscribeTocommittedToChallengeEventHandler,
-  subscribeToChainReorgEventHandler,
 } from './subscribe.mjs';
 import blockProposedEventHandler from './block-proposed.mjs';
 import newCurrentProposerEventHandler from './new-current-proposer.mjs';
@@ -36,14 +31,9 @@ const eventHandlers = {
 
 export {
   subscribeToEvents,
-  subscribeToBlockProposedEvent,
   subscribeToNewCurrentProposer,
-  subscribeToTransactionSubmitted,
   subscribeToBlockAssembledWebSocketConnection,
-  subscribeToRollbackEventHandler,
   subscribeToChallengeWebSocketConnection,
-  subscribeTocommittedToChallengeEventHandler,
-  subscribeToChainReorgEventHandler,
   newCurrentProposerEventHandler,
   eventHandlers,
 };

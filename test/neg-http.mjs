@@ -391,6 +391,21 @@ describe('Testing the challenge http API', () => {
           web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
           web3.eth.abi.encodeParameter('bytes32', topicsBlockHashIncorrectRootInBlock),
         ]);
+        const res = await chai
+          .request(url)
+          .post('/transfer')
+          .send({
+            ercAddress,
+            tokenId,
+            recipientData: {
+              values: [value],
+              recipientPkds: [pkd1],
+            },
+            nsk: nsk1,
+            ask: ask1,
+            fee,
+          });
+        await submitTransaction(res.body.txDataToSign, privateKey, shieldAddress, gas, fee);
       });
     });
 

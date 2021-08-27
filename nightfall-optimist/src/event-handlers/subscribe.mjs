@@ -19,36 +19,6 @@ const {
 const wss = new WebSocket.Server({ port: WEBSOCKET_PORT });
 
 /**
- * @deprecated: use the more general waitForContract function below
- * Function that tries to get a Shield contract instance and, if it fails, will
- * retry after 3 seconds.  After RETRIES attempts, it will give up and throw.
- * This is useful in case nightfall-optimist comes up before the Shield contract
- * is fully deployed.
- */
-export async function waitForShield() {
-  let errorCount = 0;
-  let error;
-  let instance;
-  while (errorCount < RETRIES) {
-    try {
-      error = undefined;
-      const address = await getContractAddress(SHIELD_CONTRACT_NAME);
-      logger.debug(`Shield contract address is ${address}`);
-      if (address === undefined) throw new Error('Shield address was undefined');
-      instance = getContractInstance(SHIELD_CONTRACT_NAME, address);
-      return instance;
-    } catch (err) {
-      error = err;
-      errorCount++;
-      logger.warn('Unable to get a Shield contract instance will try again in 3 seconds');
-      await new Promise(resolve => setTimeout(() => resolve(), 3000));
-    }
-  }
-  if (error) throw error;
-  return instance;
-}
-
-/**
  * Function that tries to get a (named) contract instance and, if it fails, will
  * retry after 3 seconds.  After RETRIES attempts, it will give up and throw.
  * This is useful in case nightfall-optimist comes up before the contract
@@ -91,52 +61,13 @@ export async function subscribeToEvents(callback, arg) {
   return { emitterState, emitterShield, emitterChallenges };
 }
 
-export async function subscribeToBlockProposedEvent(callback, ...args) {
-  const emitter = (await waitForContract(STATE_CONTRACT_NAME)).events.BlockProposed();
-  emitter.on('data', event => callback(event, args));
-  logger.debug('Subscribed to BlockProposed event');
-  return emitter;
-}
-
-export async function subscribeToTransactionSubmitted(callback, ...args) {
-  const emitter = (await waitForContract(SHIELD_CONTRACT_NAME)).events.TransactionSubmitted();
-  emitter.on('data', event => callback(event, args));
-  logger.debug('Subscribed to TransactionSubmitted event');
-  return emitter;
-}
-
 export async function subscribeToNewCurrentProposer(callback, ...args) {
-  const emitter = (await waitForContract(PROPOSERS_CONTRACT_NAME)).events.NewCurrentProposer();
-  emitter.on('data', event => callback(event, args));
+  const emitterProp = (await waitForContract(PROPOSERS_CONTRACT_NAME)).events.NewCurrentProposer();
+  const emitterState = (await waitForContract(STATE_CONTRACT_NAME)).events.NewCurrentProposer();
+  emitterProp.on('data', event => callback(event, args));
+  emitterState.on('data', event => callback(event, args));
   logger.debug('Subscribed to NewCurrentProposer event');
-  return emitter;
-}
-
-export async function subscribeTocommittedToChallengeEventHandler(callback, ...args) {
-  const emitter = (await waitForContract(CHALLENGES_CONTRACT_NAME)).events.CommittedToChallenge();
-  emitter.on('data', event => callback(event, args));
-  logger.debug('Subscribed to committedToChallenge event');
-  return emitter;
-}
-
-export async function subscribeToRollbackEventHandler(callback, ...args) {
-  const emitter = (await waitForContract(STATE_CONTRACT_NAME)).events.Rollback();
-  emitter.on('data', event => callback(event, args));
-  logger.debug('Subscribed to Rollback event');
-  return emitter;
-}
-
-export async function subscribeToChainReorgEventHandler(callback, arg) {
-  const emitterState = (await waitForContract(STATE_CONTRACT_NAME)).allEvents();
-  const emitterShield = (await waitForContract(SHIELD_CONTRACT_NAME)).allEvents();
-  const emitterProposers = (await waitForContract(PROPOSERS_CONTRACT_NAME)).allEvents();
-  const emitterChallenges = (await waitForContract(CHALLENGES_CONTRACT_NAME)).allEvents();
-  emitterState.on('changed', event => callback(event, arg));
-  emitterShield.on('changed', event => callback(event, arg));
-  emitterProposers.on('changed', event => callback(event, arg));
-  emitterChallenges.on('changed', event => callback(event, arg));
-  logger.debug('Subscribed to chain reorganisation event');
-  return { emitterState, emitterShield, emitterProposers, emitterChallenges };
+  return { emitterProp, emitterState };
 }
 
 export async function subscribeToChallengeWebSocketConnection(callback, ...args) {

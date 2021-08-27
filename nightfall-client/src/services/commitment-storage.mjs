@@ -13,23 +13,6 @@ const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
 const { generalise } = gen;
 const mutex = new Mutex();
 
-// function to drop the commitment collection (useful for testing)
-export async function dropCommitments() {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(COMMITMENTS_DB);
-  return db.collection(COMMITMENTS_COLLECTION).drop();
-}
-
-// function to retrieve commitment with a specified salt
-export async function getCommitmentByCommitment(commitment) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(COMMITMENTS_DB);
-  const commitmentsCount = await db
-    .collection(COMMITMENTS_COLLECTION)
-    .countDocuments({ _id: commitment.hash.hex(32) });
-  return commitmentsCount;
-}
-
 // function to format a commitment for a mongo db and store it
 export async function storeCommitment(commitment, nsk) {
   const connection = await mongo.connection(MONGO_URL);
@@ -42,7 +25,7 @@ export async function storeCommitment(commitment, nsk) {
     _id: commitment.hash.hex(32),
     preimage: commitment.preimage.all.hex(32),
     isDeposited: commitment.isDeposited || false,
-    isOnChain: Number(commitment.isOnChain),
+    isOnChain: Number(commitment.isOnChain) || -1,
     isPendingNullification: false, // will not be pending when stored
     isNullified: commitment.isNullified,
     isNullifiedOnChain: Number(commitment.isNullifiedOnChain),
@@ -54,14 +37,14 @@ export async function storeCommitment(commitment, nsk) {
 // function to mark a commitments as on chain for a mongo db
 export async function markOnChain(commitments, blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
-  const query = { _id: { $in: commitments } };
+  const query = { _id: { $in: commitments }, isOnChain: { $eq: -1 } };
   const update = { $set: { isOnChain: Number(blockNumberL2) } };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
 }
 
 // function to mark a commitment as pending nullication for a mongo db
-export async function markPending(commitment) {
+async function markPending(commitment) {
   const connection = await mongo.connection(MONGO_URL);
   const query = { _id: commitment.hash.hex(32) };
   const update = { $set: { isPendingNullification: true } };
@@ -142,7 +125,7 @@ export async function dropRollbackCommitments(blockNumberL2) {
 // function to mark a commitments as nullified on chain for a mongo db
 export async function markNullifiedOnChain(nullifiers, blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
-  const query = { nullifier: { $in: nullifiers } };
+  const query = { nullifier: { $in: nullifiers }, isNullifiedOnChain: { $eq: -1 } };
   const update = { $set: { isNullifiedOnChain: Number(blockNumberL2) } };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
@@ -173,7 +156,6 @@ async function findUsableCommitments(compressedPkd, ercAddress, tokenId, _value,
   const commitments = commitmentArray
     .filter(commitment => Number(commitment.isOnChain) > Number(-1)) // filters for on chain commitments
     .map(ct => new Commitment(ct.preimage));
-
   // if we have an exact match, we can do a single-commitment transfer.
   const [singleCommitment] = commitments.filter(c => c.preimage.value.hex(32) === value.hex(32));
   if (singleCommitment) {

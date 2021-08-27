@@ -16,7 +16,7 @@ import { waitForContract } from '../event-handlers/subscribe.mjs';
 
 const { SHIELD_CONTRACT_NAME, PROPOSERS_CONTRACT_NAME, STATE_CONTRACT_NAME } = config;
 
-export const syncState = async (
+const syncState = async (
   proposer,
   fromBlock = 'earliest',
   toBlock = 'latest',
@@ -76,7 +76,7 @@ export const syncState = async (
   }
 };
 
-export const checkBlocks = async () => {
+const checkBlocks = async () => {
   const blocks = await getBlocks();
   const gapArray = [];
   if (blocks.length > 0) {
@@ -106,7 +106,7 @@ export const checkBlocks = async () => {
   return [['earliest', 'latest']];
 };
 
-export const initialBlockSync = async proposer => {
+export default async proposer => {
   const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
   const lastBlockNumberL2 = Number(
     (await stateContractInstance.methods.getNumberOfL2Blocks().call()) - 1,

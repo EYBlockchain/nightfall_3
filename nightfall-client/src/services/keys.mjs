@@ -6,7 +6,7 @@ import { scalarMult, edwardsCompress } from '../utils/crypto/encryption/elgamal.
 
 const { BABYJUBJUB, BN128_GROUP_ORDER } = config;
 
-export function calculatePublicKey(privateKey) {
+function calculatePublicKey(privateKey) {
   return generalise(scalarMult(privateKey.hex(), BABYJUBJUB.GENERATOR));
 }
 
@@ -14,17 +14,17 @@ export function compressPublicKey(publicKey) {
   return new GN(edwardsCompress([publicKey[0].bigInt, publicKey[1].bigInt]));
 }
 
-export async function generateASK(length) {
+async function generateASK(length) {
   const ask = new GN((await rand(length)).bigInt % BN128_GROUP_ORDER);
   return ask;
 }
 
-export async function generateNSK(length) {
+async function generateNSK(length) {
   const nsk = new GN((await rand(length)).bigInt % BN128_GROUP_ORDER);
   return nsk;
 }
 
-export function calculateIVK(ask, nsk) {
+function calculateIVK(ask, nsk) {
   return new GN(mimcHash([ask.bigInt, nsk.bigInt]));
 }
 
@@ -34,10 +34,10 @@ export function calculatePkd(ivk) {
   return { pkd, compressedPkd };
 }
 
-export function calculatePkdFromAskNsk(ask, nsk) {
-  const ivk = calculateIVK(ask, nsk);
-  return calculatePkd(ivk);
-}
+// function calculatePkdFromAskNsk(ask, nsk) {
+//   const ivk = calculateIVK(ask, nsk);
+//   return calculatePkd(ivk);
+// }
 
 export function calculateIvkPkdfromAskNsk(ask, nsk) {
   const ivk = calculateIVK(ask, nsk);
