@@ -39,4 +39,4 @@ function modDivide(a, b, m) {
   return (inv * aa) % m;
 }
 
-export { modDivide };
+export { modInverse, modDivide };
