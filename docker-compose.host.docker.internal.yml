@@ -8,6 +8,8 @@ services:
   client1: 
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
+    extra_hosts:
+      host.docker.internal: host-gateway
 
   client2:
     environment:
@@ -21,6 +23,8 @@ services:
       # startup routines will wait for a blockchain client to be reachable on this network
       ETH_NETWORK: development
       BLOCKCHAIN_WS_HOST: host.docker.internal
+    extra_hosts:
+      host.docker.internal: host-gateway
 
   # Timber service, configured for nightfall
   timber1:
@@ -36,8 +40,12 @@ services:
       BLOCKCHAIN_WS_HOST: host.docker.internal
       AUTOSTART_RETRIES: 100
       # LOG_LEVEL: debug
+    extra_hosts:
+      host.docker.internal: host-gateway
 
   optimist2:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
       AUTOSTART_RETRIES: 100
+    extra_hosts:
+      host.docker.internal: host-gateway

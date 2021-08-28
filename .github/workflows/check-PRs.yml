@@ -6,6 +6,7 @@ on:
       - master
 
 jobs:
+
   eslint-check:
     runs-on: ubuntu-18.04
     steps:
@@ -17,6 +18,7 @@ jobs:
         run: |
           npm ci
           npm run lint
+
 
   ganache-test:
     runs-on: ubuntu-18.04
@@ -47,6 +49,7 @@ jobs:
         with:
           name: ganache-test-logs
           path: ./ganache-test.log
+
 
   test-gas:
     name: check gas for 32 transactions per block
@@ -80,3 +83,45 @@ jobs:
         with:
           name: test-gas-logs
           path: ./test-gas.log
+
+
+  localhost-env-test:
+    name: ganache running at host machine
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '14.17.0'
+
+      - name: Install ganache
+        run: npm install -g ganache-cli
+
+      - name: Start ganache
+        run:  |
+          ganache-cli --accounts=10 --defaultBalanceEther=1000  -h "0.0.0.0" \
+            --gasLimit=0xbebc20 --deterministic -i 4378921 -p 8546 \
+            --account="0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e,10000000000000000000000" \
+            &> /dev/null &disown
+
+      - name: Start Containers
+        run: |
+          docker-compose build
+          ./start-nightfall -l &> localhost-env-test.log &disown
+
+      - name: Run integration test
+        run: |
+          npm ci
+          sleep 200
+          npm test
+
+      - name: If integration test failed, shutdown the Containers
+        if: failure()
+        run: docker-compose down -v
+
+      - name: If integration test failed, upload logs files as artifacts
+        if: failure()
+        uses: actions/upload-artifact@master
+        with:
+          name: integration-test-logs
+          path: ./localhost-env-test.log
