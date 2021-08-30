@@ -123,5 +123,5 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@master
         with:
-          name: integration-test-logs
+          name: localhost-env-test-logs
           path: ./localhost-env-test.log
