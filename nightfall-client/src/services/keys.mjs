@@ -1,7 +1,7 @@
 import { GN, generalise } from 'general-number';
 import config from 'config';
 import rand from 'common-files/utils/crypto/crypto-random.mjs';
-import { mimcHash } from 'common-files/utils/crypto/mimc/mimc.mjs';
+import mimcHash from 'common-files/utils/crypto/mimc/mimc.mjs';
 import { scalarMult, edwardsCompress } from '../utils/crypto/encryption/elgamal.mjs';
 
 const { BABYJUBJUB, BN128_GROUP_ORDER } = config;

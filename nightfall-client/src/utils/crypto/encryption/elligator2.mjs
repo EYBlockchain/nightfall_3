@@ -1,6 +1,6 @@
 // import config from './config.mjs';
 import config from 'config';
-import { modDivide } from './modular-division.mjs';
+import modDivide from './modular-division.mjs';
 import { squareRootModPrime, addMod, mulMod, powerMod } from './number-theory.mjs';
 
 const { BABYJUBJUB, BN128_GROUP_ORDER, ELLIGATOR2 } = config;

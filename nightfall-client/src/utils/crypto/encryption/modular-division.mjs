@@ -32,11 +32,9 @@ function modInverse(b, m) {
 }
 
 // Function to compute a/b mod m
-function modDivide(a, b, m) {
+export default function modDivide(a, b, m) {
   const aa = ((a % m) + m) % m; // check the numbers are mod m and not negative
   const bb = ((b % m) + m) % m; // do we really need this?
   const inv = modInverse(bb, m);
   return (inv * aa) % m;
 }
-
-export { modInverse, modDivide };

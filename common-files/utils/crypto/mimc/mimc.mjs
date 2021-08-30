@@ -1,4 +1,5 @@
 /* eslint import/no-extraneous-dependencies: "off" */
+/* ignore unused exports */
 
 import createKeccakHash from 'keccak';
 import config from './mimc-config.mjs';
@@ -57,7 +58,7 @@ const mimcp_mp = (x, k, seed, roundCount, exponent, m) => {
   return r;
 };
 
-export const mimcHash = (_msgs, curve = 'ALT_BN_254') => {
+const mimcHash = (_msgs, curve = 'ALT_BN_254') => {
   if (config[curve] === undefined) throw new Error('Unknown curve type');
   const msgs = _msgs.map(BigInt);
   const { rounds } = config[curve];
@@ -74,4 +75,4 @@ export const mimcHash = (_msgs, curve = 'ALT_BN_254') => {
   );
 };
 
-export { mimcHash as default };
+export default mimcHash;
