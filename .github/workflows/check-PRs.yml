@@ -34,7 +34,7 @@ jobs:
       - name: Run integration test
         run: |
           npm ci
-          sleep 500
+          sleep 3500
           docker-compose logs
           npm test
 
