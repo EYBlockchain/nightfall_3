@@ -1,9 +1,9 @@
 name: Check PR
 
 on:
-  pull_request:
+  push:
     branch:
-      - master
+      - liju.jose/fix-github-action-on-chait-encryption
 
 jobs:
   eslint-check:
@@ -34,7 +34,8 @@ jobs:
       - name: Run integration test
         run: |
           npm ci
-          sleep 360
+          sleep 400
+          docker-compose logs
           npm test
 
       - name: If integration test failed, shutdown the Containers
@@ -67,7 +68,7 @@ jobs:
       - name: Run tx-gas.mjs test suites
         run: |
           npm ci
-          sleep 360
+          sleep 400
           npm run test-gas
 
       - name: If integration test failed, shutdown the Containers
