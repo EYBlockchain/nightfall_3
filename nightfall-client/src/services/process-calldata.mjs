@@ -5,14 +5,14 @@ much cheaper, although the offchain part is more complex.
 */
 import config from 'config';
 import Web3 from 'common-files/utils/web3.mjs';
-import { waitForContract } from '../event-handlers/subscribe.mjs';
+// import { waitForContract } from '../event-handlers/subscribe.mjs';
 
-const { PROPOSE_BLOCK_TYPES, STATE_CONTRACT_NAME, ZERO } = config;
-
+const { PROPOSE_BLOCK_TYPES, ZERO } = config;
+/*
 function calcBlockHash(block, transactions) {
   const web3 = Web3.connection();
-  const { proposer, root, leafCount } = block;
-  const blockArray = [leafCount, proposer, root];
+  const { proposer, root, leafCount, blockNumberL2 } = block;
+  const blockArray = [leafCount, proposer, root, blockNumberL2];
   const transactionsArray = transactions.map(t => {
     const {
       value,
@@ -47,6 +47,7 @@ function calcBlockHash(block, transactions) {
   ]);
   return web3.utils.soliditySha3({ t: 'bytes', v: encoded });
 }
+*/
 
 async function getProposeBlockCalldata(eventData) {
   const web3 = Web3.connection();
@@ -57,11 +58,12 @@ async function getProposeBlockCalldata(eventData) {
   const decoded = web3.eth.abi.decodeParameters(PROPOSE_BLOCK_TYPES, abiBytecode);
   const blockData = decoded['0'];
   const transactionsData = decoded['1'];
-  const [leafCount, proposer, root] = blockData;
+  const [leafCount, proposer, root, blockNumberL2] = blockData;
   const block = {
     proposer,
     root,
     leafCount: Number(leafCount),
+    blockNumberL2: Number(blockNumberL2),
   };
   const transactions = transactionsData.map(t => {
     const [
@@ -98,7 +100,7 @@ async function getProposeBlockCalldata(eventData) {
   // because it needs to know if a commitment has been spent or not. Neither
   // Optimist or Timber can know this as we don't want them dealing with
   // zkp private keys.
-  const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
+  // const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
   const nullifiers = transactions
     .map(t => t.nullifiers)
     .flat()
@@ -108,6 +110,7 @@ async function getProposeBlockCalldata(eventData) {
     .map(t => t.commitments)
     .flat()
     .filter(n => n !== ZERO);
+  /*
   // next, we need to tie these up with the number of the block that they are in
   // It's a little non-trivial to compute this because of course the on-chain
   // layer 2 block record may have moved on since we arrived here if other
@@ -129,7 +132,8 @@ async function getProposeBlockCalldata(eventData) {
     // eslint-disable-next-line no-await-in-loop
     blockHash !== (await stateContractInstance.methods.getBlockData(blockNumberL2).call()).blockHash
   );
-  return { nullifiers, commitments, blockNumberL2 };
+  */
+  return { nullifiers, commitments, blockNumberL2: block.blockNumberL2 };
 }
 
 export default getProposeBlockCalldata;

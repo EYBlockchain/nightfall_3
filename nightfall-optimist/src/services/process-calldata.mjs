@@ -22,11 +22,12 @@ export async function getProposeBlockCalldata(eventData) {
   const decoded = web3.eth.abi.decodeParameters(PROPOSE_BLOCK_TYPES, abiBytecode);
   const blockData = decoded['0'];
   const transactionsData = decoded['1'];
-  const [leafCount, proposer, root] = blockData;
+  const [leafCount, proposer, root, blockNumberL2] = blockData;
   const block = {
     proposer,
     root,
     leafCount: Number(leafCount),
+    blockNumberL2: Number(blockNumberL2),
   };
   const transactions = transactionsData.map(t => {
     const [
