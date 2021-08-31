@@ -15,7 +15,7 @@ const { STATE_CONTRACT_NAME, RETRIES } = config;
  * This is useful in case nightfall-client comes up before the contract
  * is fully deployed.
  */
-export async function waitForContract(contractName) {
+async function waitForContract(contractName) {
   let errorCount = 0;
   let error;
   let instance;
