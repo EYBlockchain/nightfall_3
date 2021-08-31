@@ -11,7 +11,8 @@ import {
   deleteBlock,
   findBlocksFromBlockNumberL2,
   resetNullifiers,
-  // deleteTransferAndWithdraw,
+  deleteNullifiers,
+  getTransactionsByTransactionHashes,
   getMempoolTransactions,
   deleteTransactionsByTransactionHashes,
   retrieveNullifiers,
@@ -28,22 +29,17 @@ async function rollbackEventHandler(data) {
   // reset the Block class cached values.
   Block.rollback();
   /*
-   We have to remove all blocks from our database which have a layer 2 block
-   number >= blockNumberL2, because the blockchain will have deleted these due
-   to a successful challenge. First we find and then process them.
-   Return deposit transactions in the rolled back block to the mempool so that
-   they can be picked up again by a new Proposer, but delete transfer and
-   withdraw transactions because we cannot guarantee that these won't be re-
-   proposed before the corresponding transaction that creates the input
-   commitments.  If that were to happen, the block would become challengable
-   even if the Proposer acted in good faith.  Deleteing them obvously prevents
-   this but means that the Transactor looses their fee payment.  TODO fix this,
-   but for now it will do because the fee isn't much and this should be a rare
-   event.
-   Also delete nullifiers and the blocks that no longer exist.
-  */
+  A Rollback occurs when an on-chain fraud proof (challenge) is accepted.
+  During a rollback we have to do three things:
+  1) Remove the block data from our database from the blockNumberL2 provided in the Rollback Event
+  2) Return transactions to the mempool and delete those that may have become invalid as a result of the Rollback.
+    i) Deposits: Are always valid so can safely be returned to the mempool:true without being deleted.
+    ii) Transfers: Becomes invalid if its getBlockByBlockNumberL2 field references an incorrect or non-existent block root.
+    iii) Withdrawal: The same condition as transfers.
+  3) Delete nullifiers that correspond to invalid transfers, reset nullifiers for transfers returned to the mempool
 
-  // This is bad
+  */
+  // This is sub-optimal
   // Optimist does not actually need timber to catch up
   // However, this slows down optimist enough that timber and optimist can rollback
   // before timber updates from the new block.
@@ -55,67 +51,135 @@ async function rollbackEventHandler(data) {
     await new Promise(resolve => setTimeout(resolve, 3000));
   } while (Number(timberLeafCount) !== Number(leafCount));
 
-  // From the rolled back blocks, we delete the blocks and unset transactions + nullifiers
+  // Get all blocks that need to be deleted
+  const blocksToBeDeleted = await findBlocksFromBlockNumberL2(blockNumberL2);
+  // Get the trannsaction hashes included in these blocks
+  const transactionHashesInBlock = blocksToBeDeleted
+    .map(block => block.transactionHashes)
+    .flat(Infinity);
+
+  // Use the transaction hashes to grab the actual transactions filtering out deposits - In Order.
+  const blockTransactions = (
+    await getTransactionsByTransactionHashes(transactionHashesInBlock)
+  ).filter(t => t.transactionType !== '0');
+
+  logger.info(`blockTransctions: ${JSON.stringify(blockTransactions)}`);
+  // Now we have to also inspect any transfers that are in the mempool:true
+  const mempool = (await getMempoolTransactions()).filter(
+    m =>
+      // Filter out deposits
+      m.transactionType !== '0' &&
+      // Filter only transaction with mempool: true
+      m.mempool &&
+      // Filter out any transactions already in block transactions - this may be true if we are not the proposer of a bad block
+      // being rolled back. Blocks are only marked mempool: false once they pass block checks
+      !blockTransactions.map(bt => bt.transactionHash).includes(m.transactionHash),
+  );
+
+  // Join both sets of transactions, the blockTransactions are in-order, while the mempool randomly ordered (which is fine)
+  const transactions = blockTransactions.concat(mempool);
+
+  // We can now reset or delete the local database.
   await Promise.all(
-    (
-      await findBlocksFromBlockNumberL2(blockNumberL2)
-    )
+    blocksToBeDeleted
       .map(async block => [
-        // deleteTransferAndWithdraw(block.transactionHashes).then(() =>
         addTransactionsToMemPool(block),
-        // ),
         resetNullifiers(block.blockHash),
         deleteBlock(block.blockHash),
       ])
       .flat(1),
   );
 
-  // Get the nullifiers we have stored
-  const storedNullifiers = await retrieveNullifiers();
-  const storedNullifiersHash = storedNullifiers.map(sNull => sNull.hash);
+  // Get nullifiers after we have reset, filtering out nullifiers that havent appeared on-chain
+  const unspentNullifierHashes = (await retrieveNullifiers())
+    .filter(s => s.blockHash === null)
+    .map(sNull => sNull.hash);
 
-  // Filter out deposits and sort by blockNumber order
-  const mempool = (await getMempoolTransactions())
-    .filter(m => m.transactionType !== '0')
-    .sort((a, b) => a.blockNumber - b.blockNumber);
+  // We also get the spent nullifiers, to identiy duplicateNullifier errors that we can delete.
+  const spentNullifierHashes = (await retrieveNullifiers())
+    .filter(s => s.blockHash !== null)
+    .map(sNull => sNull.hash);
 
-  const toBeDeleted = [];
+  // Create sets to manage nullifiers and invalid transactions - this makes membership easier.
+  const nulliferSet = new Set();
+  // Spent nullifiers are used to check duplicate nullifiers
+  const spentNullifierHashesSet = new Set(spentNullifierHashes);
+  const invalidTransactionSet = new Set();
+  // transactions that have passed the nullifier check
+  const maybeValidTransactions = [];
 
-  for (let i = 0; i < mempool.length; i++) {
-    const transaction = mempool[i];
-    // We only care about nullifiers that are not null
-    const transactionNullifiers = transaction.nullifiers.filter(hash => hash !== ZERO);
-    // Set this bool to true, we modify it if we catch the error from checkTransaction
+  // The first test is to see if there are any duplicate nullifiers.
+  // This test is done in order so the later of two transactions are deleted.
+  // Note that while the mempool-half of transactions is unordered, that is ok with us
+  // We preference valid transactions that were in blocks, rather than mempool transactions.
+  // If two mempool transactions have duplicate nullifiers, the choice of which to delete will differ
+  // between optimist instances, this is also fine as mempools are locally-contexted anyways
+  transactions.forEach(t => {
+    const { transactionHash, nullifiers } = t;
+    const nonZeroNullifiers = nullifiers.filter(n => n !== ZERO);
+    // Is there a duplicate nullifier in our list of mempool: true and block transactions
+    const duplicateSeenNullifier = nonZeroNullifiers.some(nz => nulliferSet.has(nz));
+    // Is there a duplicate nullifier in our list of already spent nullifier
+    const duplicateSpentNullifier = nonZeroNullifiers.some(nz => spentNullifierHashesSet.has(nz));
+    if (duplicateSpentNullifier || duplicateSeenNullifier)
+      invalidTransactionSet.add(transactionHash);
+    else {
+      nulliferSet.add(nonZeroNullifiers);
+      maybeValidTransactions.push(t);
+    }
+  });
+
+  // For valid transactions that have made it to this point, we run them through our transaction checker for validity
+  for (let i = 0; i < maybeValidTransactions.length; i++) {
     let checkTransactionCorrect = true;
     try {
-      logger.info(`Test`);
       // eslint-disable-next-line no-await-in-loop
-      await checkTransaction(transaction);
-    } catch (err) {
-      logger.info(`CAUGHT`);
+      await checkTransaction(maybeValidTransactions[i]);
+    } catch (error) {
+      logger.info(`checkTransactionFailed: ${maybeValidTransactions[i].transactionHash}`);
+      logger.info(`ERROR IS: ${error}`);
       checkTransactionCorrect = false;
     }
-    // Perform the nullifier check, i.e. see if this transaction has a duplicate nullifier
-    // We have not deleted the nullifier collection, so the presence of a transacaction nullifier in the nullifier list is insufficient
-    // Instead, check if the blockNumber we saw the transaction come from matches the blockNumber we saw the nullifier.
-    logger.info(`Doing DupNullifier Check`);
-    const dupNullifier = transactionNullifiers.some(txNull => {
-      if (storedNullifiersHash.includes(txNull)) {
-        const alreadyStoredNullifier = storedNullifiers.find(s => s.hash === txNull);
-        logger.info(`alreadyStoredNullifier: ${JSON.stringify(alreadyStoredNullifier)}`);
-        return alreadyStoredNullifier.blockNumber !== transaction.blockNumber;
-      }
-      return false;
-    });
-    // If we found a duplicate nullifier or if the checkTransactionCorrect is false
-    // we queue the transaction hash for deletion.
-    if (dupNullifier || !checkTransactionCorrect) {
-      toBeDeleted.push(transaction.transactionHash);
+    if (!checkTransactionCorrect) {
+      logger.info(`Invalid checkTransaction: ${maybeValidTransactions[i].transactionHash}`);
+      invalidTransactionSet.add(maybeValidTransactions[i].transactionHash);
     }
   }
+  const invalidTransactionHashesArr = [...invalidTransactionSet];
+  logger.info(`Deleting transactions: ${invalidTransactionHashesArr}`);
+  await deleteTransactionsByTransactionHashes(invalidTransactionHashesArr);
 
-  logger.info(`Deleting from Mempool: ${toBeDeleted}`);
-  return deleteTransactionsByTransactionHashes(toBeDeleted);
+  logger.info(
+    `Nullifier of deleted transactions: ${
+      transactions.find(t => t.transactionHash === invalidTransactionHashesArr[0])?.nullifiers[0]
+    }`,
+  );
+
+  // Once we have deleted transactions, we now need to delete any dangling nullifiers
+  // We cannot just delete the nullifiers is invalid transactions, as they may duplicate of nullifiers we need.
+  // Therefore we filter all the list of unspent nullifiers we retrieved from the database after resetting and rmeove
+  // (1) nullifiers seen in valid transactions and
+  // (2) nullifiers we saw while processing transactions.
+  // The remaining nullifiers can be deleted
+  const nullifierArray = [...nulliferSet];
+  const validTransactions = transactions.filter(
+    tx => !invalidTransactionHashesArr.includes(tx.transactionHash),
+  );
+  const validTransactionNullifiers = validTransactions
+    .map(v => v.nullifiers)
+    .flat(Infinity)
+    .filter(n => n !== ZERO);
+
+  const deletedNullifiers = unspentNullifierHashes.filter(
+    un => !validTransactionNullifiers.includes(un) && !nullifierArray.includes(un),
+  );
+  logger.info(`validTransactionsSet: ${validTransactions.map(v => v.transactionHash)}`);
+  logger.info(`validTransactionNullifiers Set: ${validTransactionNullifiers}`);
+  logger.info(`unspentNullifierHashes Set: ${unspentNullifierHashes}`);
+  logger.info(`spentNullifierHashes Set: ${spentNullifierHashes}`);
+  logger.info(`nulliferArray Acc: ${nullifierArray}`);
+  logger.info(`Deleting Nullifiers: ${deletedNullifiers}`);
+  await deleteNullifiers(deletedNullifiers);
 }
 
 export default rollbackEventHandler;
