@@ -34,7 +34,7 @@ jobs:
       - name: Run integration test
         run: |
           npm ci
-          sleep 900
+          sleep 800
           docker-compose logs
           npm test
 
@@ -69,6 +69,7 @@ jobs:
         run: |
           npm ci
           sleep 800
+          docker-compose logs
           npm run test-gas
 
       - name: If integration test failed, shutdown the Containers
