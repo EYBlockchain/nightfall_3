@@ -173,12 +173,6 @@ async function rollbackEventHandler(data) {
   const deletedNullifiers = unspentNullifierHashes.filter(
     un => !validTransactionNullifiers.includes(un) && !nullifierArray.includes(un),
   );
-  logger.info(`validTransactionsSet: ${validTransactions.map(v => v.transactionHash)}`);
-  logger.info(`validTransactionNullifiers Set: ${validTransactionNullifiers}`);
-  logger.info(`unspentNullifierHashes Set: ${unspentNullifierHashes}`);
-  logger.info(`spentNullifierHashes Set: ${spentNullifierHashes}`);
-  logger.info(`nulliferArray Acc: ${nullifierArray}`);
-  logger.info(`Deleting Nullifiers: ${deletedNullifiers}`);
   await deleteNullifiers(deletedNullifiers);
 }
 
