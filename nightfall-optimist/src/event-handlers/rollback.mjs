@@ -136,20 +136,18 @@ async function rollbackEventHandler(data) {
       // eslint-disable-next-line no-await-in-loop
       await checkTransaction(maybeValidTransactions[i]);
     } catch (error) {
-      logger.info(`checkTransactionFailed: ${maybeValidTransactions[i].transactionHash}`);
-      logger.info(`ERROR IS: ${error}`);
       checkTransactionCorrect = false;
     }
     if (!checkTransactionCorrect) {
-      logger.info(`Invalid checkTransaction: ${maybeValidTransactions[i].transactionHash}`);
+      logger.debug(`Invalid checkTransaction: ${maybeValidTransactions[i].transactionHash}`);
       invalidTransactionSet.add(maybeValidTransactions[i].transactionHash);
     }
   }
   const invalidTransactionHashesArr = [...invalidTransactionSet];
-  logger.info(`Deleting transactions: ${invalidTransactionHashesArr}`);
+  logger.debug(`Deleting transactions: ${invalidTransactionHashesArr}`);
   await deleteTransactionsByTransactionHashes(invalidTransactionHashesArr);
 
-  logger.info(
+  logger.debug(
     `Nullifier of deleted transactions: ${
       transactions.find(t => t.transactionHash === invalidTransactionHashesArr[0])?.nullifiers[0]
     }`,
