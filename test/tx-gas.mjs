@@ -5,6 +5,7 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import WebSocket from 'ws';
+import config from 'config';
 import {
   closeWeb3Connection,
   submitTransaction,
@@ -13,7 +14,9 @@ import {
   getBalance,
   setNonce,
 } from './utils.mjs';
+import { generateKeys } from '../nightfall-client/src/services/keys.mjs';
 
+const { ZKP_KEY_LENGTH } = config;
 const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
@@ -26,7 +29,11 @@ describe('Testing the http API', () => {
   let ercAddress;
   let connection; // WS connection
   let blockSubmissionFunction;
-  const zkpPrivateKey = '0xc05b14fa15148330c6d008814b0bdd69bc4a08a1bd0b629c42fa7e2c61f16739'; // the zkp private key we're going to use in the tests.
+  let web3;
+  let nsk1;
+  let ivk1;
+  let pkd1;
+
   const url = 'http://localhost:8080';
   const optimistUrl = 'http://localhost:8081';
   const optimistWsUrl = 'ws:localhost:8082';
@@ -43,7 +50,7 @@ describe('Testing the http API', () => {
   const TRANSACTIONS_PER_BLOCK = 32;
 
   before(async () => {
-    const web3 = await connectWeb3();
+    web3 = await connectWeb3();
 
     let res = await chai.request(url).get('/contract-address/Shield');
     shieldAddress = res.body.address;
@@ -56,6 +63,8 @@ describe('Testing the http API', () => {
 
     res = await chai.request(url).get('/contract-address/State');
     stateAddress = res.body.address;
+
+    ({ nsk: nsk1, ivk: ivk1, pkd: pkd1 } = await generateKeys(ZKP_KEY_LENGTH));
 
     setNonce(await web3.eth.getTransactionCount((await getAccounts())[0]));
 
@@ -93,13 +102,6 @@ describe('Testing the http API', () => {
       expect(res.status).to.equal(200);
     });
 
-    it('should generate a new 256 bit zkp private key for a user', async () => {
-      const res = await chai.request(url).get('/generate-zkp-key');
-      expect(res.body.keyId).to.be.a('string');
-      // normally this value would be the private key for subsequent transactions
-      // however we use a fixed one (zkpPrivateKey) to make the tests more independent.
-    });
-
     it('should get the address of the shield contract', async () => {
       const res = await chai.request(url).get('/contract-address/Shield');
       expect(res.body.address).to.be.a('string');
@@ -110,6 +112,15 @@ describe('Testing the http API', () => {
       const res = await chai.request(url).get('/contract-address/ERCStub');
       ercAddress = res.body.address;
       expect(ercAddress).to.be.a('string');
+    });
+
+    it('should subscribe to block proposed event with the provided incoming viewing key for optimist1', async function () {
+      const res = await chai.request(url).post('/incoming-viewing-key').send({
+        ivk: ivk1,
+        nsk: nsk1,
+      });
+      expect(res.body.status).to.be.a('string');
+      expect(res.body.status).to.equal('success');
     });
   });
 
@@ -157,7 +168,8 @@ describe('Testing the http API', () => {
           tokenId,
           tokenType,
           value,
-          zkpPrivateKey,
+          pkd: pkd1,
+          nsk: nsk1,
           fee,
         });
         txDataToSign = res.body.txDataToSign;
