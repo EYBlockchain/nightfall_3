@@ -30,7 +30,7 @@ router.get('/transaction-hash/:transactionHash', async (req, res, next) => {
     const { transactionHash } = req.params;
     logger.debug(`searching for block containing transaction hash ${transactionHash}`);
     // get data to return
-    const block = await getBlockByTransactionHash(transactionHash);
+    const [block] = await getBlockByTransactionHash(transactionHash);
     if (block !== null) {
       const transactions = await getTransactionsByTransactionHashes(block.transactionHashes);
       const index = block.transactionHashes.indexOf(transactionHash);

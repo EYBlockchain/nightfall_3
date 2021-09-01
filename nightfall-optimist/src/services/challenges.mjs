@@ -106,8 +106,9 @@ export async function createChallenge(block, transactions, err) {
           err.metadata;
 
         // Get the block that contains the duplicate of the transaction
-        const block2 = await getBlockByTransactionHash(transactionHash1);
-        // Find the index of the duplication transaction in this block
+        const [block2] = (await getBlockByTransactionHash(transactionHash1)).filter(
+          b => b.blockHash !== block.blockHash,
+        );
         const transactions2 = await getTransactionsByTransactionHashes(block2.transactionHashes);
         const transactionIndex2 = transactions2
           .map(t => t.transactionHash)
