@@ -96,7 +96,7 @@ export async function getBlockByTransactionHash(transactionHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { transactionHashes: transactionHash };
-  return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
+  return db.collection(SUBMITTED_BLOCKS_COLLECTION).find(query).toArray();
 }
 
 export async function numberOfBlockWithTransactionHash(transactionHash) {
@@ -294,13 +294,6 @@ export async function deleteTransferAndWithdraw(transactionHashes) {
     transactionHash: { $in: transactionHashes },
     transactionType: { $in: ['1', '2', '3'] },
   };
-  return db.collection(TRANSACTIONS_COLLECTION).deleteMany(query);
-}
-
-export async function deleteTransactionsByTransactionHashes(transactionHashes) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  const query = { transactionHash: { $in: transactionHashes } };
   return db.collection(TRANSACTIONS_COLLECTION).deleteMany(query);
 }
 

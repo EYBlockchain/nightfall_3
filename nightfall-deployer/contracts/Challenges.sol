@@ -88,6 +88,10 @@ contract Challenges is Stateful, Key_Registry, Config {
     // first, check we have real, in-train, contiguous blocks
     state.isBlockReal(block1, transactions1, block1NumberL2);
     state.isBlockReal(block2, transactions2, block2NumberL2);
+    // If the duplicate exists in the same block, the index cannot be the same
+    if(block1NumberL2 == block1NumberL2)
+      require(transactionIndex1 != transactionIndex2, 'Cannot be the same index');
+
     require(
       Utils.hashTransaction(transactions1[transactionIndex1]) ==
       Utils.hashTransaction(transactions2[transactionIndex2]),
