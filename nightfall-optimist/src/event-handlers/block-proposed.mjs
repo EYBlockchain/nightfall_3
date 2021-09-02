@@ -37,14 +37,13 @@ async function blockProposedEventHandler(data) {
         .flat(Infinity),
       block.blockHash,
     );
-    // we'll check the block and issue a challenge if appropriate
-    await checkBlock(block, transactions);
-    // if the block is, in fact, valid then we also need to mark as used the
-    // transactions in the block from our database of unprocessed transactions,
+    // mark transactions so that they are out of the mempool,
     // so we don't try to use them in a block which we're proposing.
     await removeTransactionsFromMemPool(block); // TODO is await needed?
     // signal to the block-making routines that a block is received: they
     // won't make a new block until their previous one is stored on-chain.
+    // we'll check the block and issue a challenge if appropriate
+    await checkBlock(block, transactions);
     logger.info('Block Checker - Block was valid');
   } catch (err) {
     if (err instanceof BlockError) {

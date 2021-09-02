@@ -134,14 +134,6 @@ export async function clearPending(commitment) {
   return db.collection(COMMITMENTS_COLLECTION).updateOne(query, update);
 }
 
-// as above, but removes output commitments
-export async function dropRollbackCommitments(blockNumberL2) {
-  const connection = await mongo.connection(MONGO_URL);
-  const query = { isOnChain: { $gte: Number(blockNumberL2) }, isDeposited: false };
-  const db = connection.db(COMMITMENTS_DB);
-  return db.collection(COMMITMENTS_COLLECTION).deleteMany(query);
-}
-
 // function to mark a commitments as nullified on chain for a mongo db
 export async function markNullifiedOnChain(nullifiers, blockNumberL2, blockNumber) {
   const connection = await mongo.connection(MONGO_URL);
