@@ -54,6 +54,8 @@ contract State is Structures, Config {
   */
   function proposeBlock(Block calldata b, Transaction[] calldata t) external payable onlyCurrentProposer {
     require(b.blockNumberL2 == blockHashes.length, 'The block is out of order'); // this will fail if a tx is re-mined out of order due to a chain reorg.
+    bytes32 previousBlockHash;
+    if (blockHashes.length != 0) require(b.previousBlockHash == blockHashes[blockHashes.length - 1].blockHash, 'The block is flawed or out of order'); // this will fail if a tx is re-mined out of order due to a chain reorg.
     require(BLOCK_STAKE == msg.value, 'The stake payment is incorrect');
     require(b.proposer == msg.sender, 'The proposer address is not the sender');
     // We need to set the blockHash on chain here, because there is no way to
@@ -129,6 +131,11 @@ contract State is Structures, Config {
 
   function getNumberOfL2Blocks() public view returns(uint) {
     return blockHashes.length;
+  }
+
+  function getLatestBlockHash() public view returns(bytes32) {
+    if (blockHashes.length != 0) return blockHashes[blockHashes.length - 1].blockHash;
+    else return Config.ZERO;
   }
 
   function addPendingWithdrawal(address addr, uint amount) public onlyRegistered {

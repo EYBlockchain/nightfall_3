@@ -49,16 +49,9 @@ contract Structures {
     address proposer;
     bytes32 root; // the 'output' commmitment root after adding all commitments
     uint256 blockNumberL2;
+    bytes32 previousBlockHash;
   }
 
-  /*
-  struct LinkedHash {
-    bytes32 thisHash;
-    bytes32 previousHash;
-    bytes32 nextHash;
-    uint data; // metadata (currently holds the block time)
-  }
-  */
   struct BlockData {
     bytes32 blockHash; // hash of the block
     uint256 time; // time the block was created

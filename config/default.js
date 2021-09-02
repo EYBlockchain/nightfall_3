@@ -43,7 +43,7 @@ module.exports = {
   TRANSACTIONS_PER_BLOCK: Number(process.env.TRANSACTIONS_PER_BLOCK) || 2,
   TIMBER_SYNC_RETRIES: 5, // Sets amount of exponential backoff attempts to sync with timber.
   PROPOSE_BLOCK_TYPES: [
-    '(uint48,address,bytes32,uint256)',
+    '(uint48,address,bytes32,uint256,bytes32)',
     '(uint64,uint64,uint8,uint8,bytes32,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],uint[4])[]',
   ], // used to encode/decode proposeBlock signature
   SUBMIT_TRANSACTION_TYPES:
