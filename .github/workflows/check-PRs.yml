@@ -1,9 +1,9 @@
 name: Check PR
 
 on:
-  pull_request:
+  push:
     branch:
-      - master
+      - liju.jose/github-action-add-localhost-env-2
 
 jobs:
   eslint-check:
@@ -80,3 +80,39 @@ jobs:
         with:
           name: test-gas-logs
           path: ./test-gas.log
+
+  localhost-env-test:
+    name: geth running at host machine
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '14.17.0'
+
+      - name: Start Containers
+        run: |
+          docker-compose build
+          ./start-nightfall -l &> localhost-env-test.log &disown
+
+      - name: Start standalone geth
+        run: |
+          sleep 200
+          ./geth-standalone -s
+
+      - name: Run integration test
+        run: |
+          npm ci
+          sleep 200
+          cat localhost-env-test.log
+          npm test
+      - name: If integration test failed, shutdown the Containers
+        if: failure()
+        run: docker-compose down -v
+
+      - name: If integration test failed, upload logs files as artifacts
+        if: failure()
+        uses: actions/upload-artifact@master
+        with:
+          name: localhost-env-test-logs
+          path: ./localhost-env-test.log
