@@ -322,7 +322,7 @@ describe('Testing the http API', () => {
       console.log('     Blocknumber for node set 2 is:', await web3b.eth.getBlockNumber());
       console.log('     BlockNumber for node set 1 is:', await web3.eth.getBlockNumber());
       console.log('     Waiting 10 s to check that the reorg occurs');
-      await new Promise(resolve => setTimeout(resolve, 10000));
+      await new Promise(resolve => setTimeout(resolve, 60000));
       console.log('     Blocknumber for node set 2 is:', await web3b.eth.getBlockNumber());
       console.log('     BlockNumber for node set 1 is:', await web3.eth.getBlockNumber());
       closeWeb3Connection(web3b);
@@ -330,13 +330,14 @@ describe('Testing the http API', () => {
     it('Chain re-org should have replaced original transactions', async function () {
       // the transactionHashes should point to transactions that no longer exist. The
       // re-mined transactions will have different block numbers.
-      receipts.forEach(async receipt => {
-        const rec = await web3.eth.getTransactionReceipt(receipt.transactionHash);
-        console.log('COMP', rec.blockHash, receipt.blockHash);
-        expect(rec.blockHash).to.not.equal(receipt.blockHash);
-        expect(rec.blockNumber).to.not.equal(receipt.blockNumber);
-        expect(rec.transactionHash).to.equal(receipt.transactionHash);
-      });
+      await Promise.all(
+        receipts.map(async receipt => {
+          const rec = await web3.eth.getTransactionReceipt(receipt.transactionHash);
+          expect(rec.blockHash).to.not.equal(receipt.blockHash);
+          expect(rec.blockNumber).to.not.equal(receipt.blockNumber);
+          expect(rec.transactionHash).to.equal(receipt.transactionHash);
+        }),
+      );
     });
   });
 

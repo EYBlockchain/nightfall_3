@@ -219,7 +219,7 @@ async function verifyProof(transaction) {
   if (!verifies) throw new TransactionError('The proof did not verify', 5);
 }
 
-function checkTransaction(transaction) {
+async function checkTransaction(transaction) {
   return Promise.all([
     checkTransactionHash(transaction),
     checkTransactionType(transaction),

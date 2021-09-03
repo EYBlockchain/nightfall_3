@@ -205,7 +205,6 @@ class Block {
         compressProof(proof),
       ];
     });
-    console.log('BLOCK_ARRAY', blockArray);
     const encoded = web3.eth.abi.encodeParameters(PROPOSE_BLOCK_TYPES, [
       blockArray,
       transactionsArray,

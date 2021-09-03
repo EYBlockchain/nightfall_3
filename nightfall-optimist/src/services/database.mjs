@@ -35,7 +35,8 @@ export async function getCommit(commitHash) {
   const db = connection.db(OPTIMIST_DB);
   const query = { commitHash };
   const commit = await db.collection(COMMIT_COLLECTION).findOne(query);
-  if (commit) db.collection(COMMIT_COLLECTION).updateOne(query, { $set: { retrieved: true } });
+  if (commit)
+    await db.collection(COMMIT_COLLECTION).updateOne(query, { $set: { retrieved: true } });
   return commit;
 }
 
@@ -222,7 +223,8 @@ export async function getMostProfitableTransactions(number) {
 Function to save a (unprocessed) Transaction
 */
 export async function saveTransaction(_transaction) {
-  const transaction = { _id: _transaction.transactionHash, ..._transaction, mempool: true };
+  const { mempool = true } = _transaction; // mempool may not exist
+  const transaction = { _id: _transaction.transactionHash, ..._transaction, mempool };
   logger.debug(
     `saving transaction ${transaction.transactionHash}, with layer 1 block number ${_transaction.blockNumber}`,
   );
@@ -236,8 +238,10 @@ export async function saveTransaction(_transaction) {
   const query = { transactionHash: transaction.transactionHash };
   const update = { $set: transaction };
   const existing = await db.collection(TRANSACTIONS_COLLECTION).findOne(query);
-  if (!existing || !existing.blockNumber) {
-    if (existing) transaction.mempool = false; // it's a re-mined transaction.  This will stop block-assembler making a new block
+  if (!existing)
+    return db.collection(TRANSACTIONS_COLLECTION).updateOne(query, update, { upsert: true });
+  if (!existing.blockNumber) {
+    logger.info('Saving re-mined transaction resulting from chain reorganisation');
     return db.collection(TRANSACTIONS_COLLECTION).updateOne(query, update, { upsert: true });
   }
   throw new Error('Attempted to replay existing transaction');
