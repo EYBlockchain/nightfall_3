@@ -85,8 +85,8 @@ jobs:
           path: ./test-gas.log
 
 
-  localhost-env-test:
-    name: ganache running at host machine
+  geth-local-env-test:
+    name: geth running as standalone serivce
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@master
@@ -94,26 +94,26 @@ jobs:
         with:
           node-version: '14.17.0'
 
-      - name: Install ganache
-        run: npm install -g ganache-cli
+      - name: Start geth
+        run: ./geth-standalone -s
 
-      - name: Start ganache
-        run:  |
-          ganache-cli --accounts=10 --defaultBalanceEther=1000  -h "0.0.0.0" \
-            --gasLimit=0xbebc20 --deterministic -i 4378921 -p 8546 \
-            --account="0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e,10000000000000000000000" \
-            &> /dev/null &disown
+      - name: Install node dependencies
+        run: npm ci
+
+      - name: Build container images
+        run: docker-compose build
+
+      - name: wait till DAG generation is complete (approx)
+        run: sleep 800
 
       - name: Start Containers
-        run: |
-          docker-compose build
-          ./start-nightfall -l &> localhost-env-test.log &disown
+        run: ./start-nightfall -l &> geth-local-env-test.log &disown
+
+      - name: wait till setups are complete (approx)
+        run: sleep 200
 
       - name: Run integration test
-        run: |
-          npm ci
-          sleep 200
-          npm test
+        run: npm test
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
@@ -123,5 +123,5 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@master
         with:
-          name: localhost-env-test-logs
-          path: ./localhost-env-test.log
+          name: geth-local-env-test-logs
+          path: ./geth-local-env-test.log
