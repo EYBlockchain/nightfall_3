@@ -22,7 +22,6 @@ async function newCurrentProposerEventHandler(data, args) {
     // object is instantiated at the 'main()' level, so will stay in scope even
     // when this handler exits.
     proposer.address = currentProposer;
-    proposer.proposers.unshift(currentProposer); // useful if we need to revert the proposer because of a chain reorg.
     // were we the last proposer?
     const weWereLastProposer = proposer.isMe;
 

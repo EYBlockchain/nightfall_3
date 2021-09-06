@@ -56,54 +56,16 @@ Rollback events:
 TODO - rollback code is currently undergoing changes.
 
 */
-// import config from 'config';
+import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import {
-  // getBlockByBlockNumberL2,
   clearBlockNumberL1ForBlock,
   clearBlockNumberL1ForTransaction,
   isRegisteredProposerAddressMine,
 } from '../services/database.mjs';
+import { waitForContract } from './subscribe.mjs';
 
-/*
-async function resync(fromblockNumberL1, toBlockNumberL1, eventHandlers, eventQueue) {
-  // get all the events and sort them into causal order by block and transaction
-  const events = (
-    await Promise.all([
-      (
-        await waitForContract(STATE_CONTRACT_NAME)
-      ).getPastEvents('allEvents', {
-        fromBlock: fromblockNumberL1,
-        toBlock: toBlockNumberL1,
-      }),
-      (
-        await waitForContract(SHIELD_CONTRACT_NAME)
-      ).getPastEvents('allEvents', {
-        fromBlock: fromblockNumberL1,
-        toBlock: toBlockNumberL1,
-      }),
-      (
-        await waitForContract(PROPOSERS_CONTRACT_NAME)
-      ).getPastEvents('allEvents', {
-        fromBlock: fromblockNumberL1,
-        toBlock: toBlockNumberL1,
-      }),
-      (
-        await waitForContract(CHALLENGES_CONTRACT_NAME)
-      ).getPastEvents('allEvents', {
-        fromBlock: fromblockNumberL1,
-        toBlock: toBlockNumberL1,
-      }),
-    ])
-  )
-    .flat()
-    .sort((a, b) => a.blockNumber - b.blockNumber || a.transactionIndex - b.transactionIndex);
-  // now replay them in order
-  for (let i = 0; i < events.length; i++) {
-    eventQueue.push(async () => eventHandlers[events[i].event](events[i]));
-  }
-}
-*/
+const { STATE_CONTRACT_NAME } = config;
 
 export async function removeBlockProposedEventHandler(eventObject) {
   return clearBlockNumberL1ForBlock(eventObject.transactionHash);
@@ -118,8 +80,13 @@ export async function removeNewCurrentProposerEventHandler(data, args) {
   const [proposer] = args;
   try {
     logger.info(`Proposer Removal Handler - Current proposer is ${currentProposer}`);
-    proposer.proposers.shift(); // revert the proposer because of the chain reorg.
-    [proposer.address] = proposer.proposers;
+    // the chain re-org will have reverted the proposer so we need to update our
+    // local records to match what the chain now thinks is the current proposer.
+    // It's entirely possible that the NewCurrentProposer proposer event will
+    // re-appear when the transaction gets re-mined but that's ok, it will look
+    // like an early rotation of the proposers.
+    const stateContractInstance = waitForContract(STATE_CONTRACT_NAME);
+    proposer.address = await stateContractInstance.methods.call().currentProposer();
     proposer.isMe = !!(await isRegisteredProposerAddressMine(proposer.address));
   } catch (err) {
     // handle errors
