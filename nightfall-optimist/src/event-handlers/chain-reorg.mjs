@@ -86,7 +86,7 @@ export async function removeNewCurrentProposerEventHandler(data, args) {
     // re-appear when the transaction gets re-mined but that's ok, it will look
     // like an early rotation of the proposers.
     const stateContractInstance = waitForContract(STATE_CONTRACT_NAME);
-    proposer.address = await stateContractInstance.methods.call().currentProposer();
+    proposer.address = (await stateContractInstance.methods.currentProposer.call()).thisAddress;
     proposer.isMe = !!(await isRegisteredProposerAddressMine(proposer.address));
   } catch (err) {
     // handle errors
