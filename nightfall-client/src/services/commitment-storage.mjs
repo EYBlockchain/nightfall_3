@@ -30,6 +30,7 @@ export async function storeCommitment(commitment, nsk) {
     isNullified: commitment.isNullified,
     isNullifiedOnChain: Number(commitment.isNullifiedOnChain),
     nullifier: nullifierHash,
+    blockNumber: -1,
   };
   return db.collection(COMMITMENTS_COLLECTION).insertOne(data);
 }
@@ -51,10 +52,10 @@ export async function countNullifiers(nullifiers) {
 }
 
 // function to mark a commitments as on chain for a mongo db
-export async function markOnChain(commitments, blockNumberL2) {
+export async function markOnChain(commitments, blockNumberL2, blockNumber) {
   const connection = await mongo.connection(MONGO_URL);
   const query = { _id: { $in: commitments }, isOnChain: { $eq: -1 } };
-  const update = { $set: { isOnChain: Number(blockNumberL2) } };
+  const update = { $set: { isOnChain: Number(blockNumberL2), blockNumber } };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
 }
@@ -104,7 +105,12 @@ export async function clearNullified(blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
   const query = { isNullifiedOnChain: { $gte: Number(blockNumberL2) } };
   const update = {
-    $set: { isNullifiedOnChain: -1, isNullified: false, isPendingNullification: false },
+    $set: {
+      isNullifiedOnChain: -1,
+      isNullified: false,
+      isPendingNullification: false,
+      blockNumber: -1,
+    },
   };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
@@ -115,7 +121,7 @@ export async function clearOnChain(blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
   const query = { isOnChain: { $gte: Number(blockNumberL2) }, isDeposited: true };
   const update = {
-    $set: { isOnChain: -1 },
+    $set: { isOnChain: -1, blockNumber: -1 },
   };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
@@ -139,10 +145,10 @@ export async function dropRollbackCommitments(blockNumberL2) {
 }
 
 // function to mark a commitments as nullified on chain for a mongo db
-export async function markNullifiedOnChain(nullifiers, blockNumberL2) {
+export async function markNullifiedOnChain(nullifiers, blockNumberL2, blockNumber) {
   const connection = await mongo.connection(MONGO_URL);
   const query = { nullifier: { $in: nullifiers }, isNullifiedOnChain: { $eq: -1 } };
-  const update = { $set: { isNullifiedOnChain: Number(blockNumberL2) } };
+  const update = { $set: { isNullifiedOnChain: Number(blockNumberL2), blockNumber } };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
 }
