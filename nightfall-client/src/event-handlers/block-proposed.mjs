@@ -4,6 +4,8 @@ import {
   markNullifiedOnChain,
   markOnChain,
   storeCommitment,
+  countCommitments,
+  countNullifiers,
 } from '../services/commitment-storage.mjs';
 import getProposeBlockCalldata from '../services/process-calldata.mjs';
 import Secrets from '../classes/secrets.mjs';
@@ -18,8 +20,7 @@ async function blockProposedEventHandler(data, keys = [ZERO, ZERO]) {
   // ivk will be used to decrypt secrets whilst nsk will be used to calculate nullifiers for commitments and store them
   const ivk = keys[0];
   const nsk = keys[1];
-  const { commitments, nullifiers, blockNumberL2, compressedSecrets } =
-    await getProposeBlockCalldata(data);
+  const { transactions, nullifiers, blockNumberL2 } = await getProposeBlockCalldata(data);
 
   if (nullifiers.length)
     logger.debug(
@@ -30,38 +31,60 @@ async function blockProposedEventHandler(data, keys = [ZERO, ZERO]) {
       )}`,
     );
 
-  // filter out non zero commitmentsCount
-  const nonZeroCommitments = commitments.flat().filter(n => n !== ZERO);
-
-  // mark commitments on chain
-  await markOnChain(nonZeroCommitments, blockNumberL2);
-
-  compressedSecrets.forEach(async (compressedSecret, i) => {
-    // if there are no compressed secrets in a transaction, then we will ignore it as these could be deposit or
-    // withdraw transactions which do not hold secrets that need to be decrypted
-    if (
-      !compressedSecret.every(
-        item => item === '0x0000000000000000000000000000000000000000000000000000000000000000',
-      )
-    ) {
-      // decompress the secrets first and then we will decrypt the secrets from this
-      const decompressedSecrets = Secrets.decompressSecrets(compressedSecret);
-      try {
-        const commitment = Secrets.decryptSecrets(decompressedSecrets, ivk, commitments[i][0]);
-        if (commitment === {}) logger.error("This encrypted message isn't for this recipient");
-        // store commitment if the new commitment in this transaction is intended for this client
-        else await storeCommitment(commitment, nsk);
-      } catch (err) {
-        logger.error(err);
-        logger.error("This encrypted message isn't for this recipient");
+  transactions.forEach(async transaction => {
+    // filter out non zero commitments and nullifiers
+    const nonZeroCommitments = transaction.commitments.flat().filter(n => n !== ZERO);
+    const nonZeroNullifiers = transaction.nullifiers.flat().filter(n => n !== ZERO);
+    // if transaction is deposit
+    if (transaction.transactionType === '0') {
+      // if the commitment from deposit is already stored in database, then this commitment has been created by
+      // this client and stored during deposit transaction creation. If so, only update that commitment is on chain
+      // If not this commitment need not be stored or updated by other clients
+      if ((await countCommitments(transaction.commitments)) > 0) {
+        await markOnChain(nonZeroCommitments, blockNumberL2);
       }
-    }
+      // if transaction is single transfer or double transfer
+    } else if (transaction.transactionType === '1' || transaction.transactionType === '2') {
+      // if the commitment from transfer is already stored in database, then this commitment(s) has(ve) been created by
+      // this client and stored during transfer transaction creation. If so, only update that this(ese) commitment(s) is(are)
+      // on chain. If not, a decryption of the secrets will be done by the recipient client. If the decryption is successful,
+      // then the commitment will be stored in the database and will be marked as on chain. If the decryption is unsuccessful,
+      // nothing needs to be stored
+      if ((await countCommitments(transaction.commitments)) > 0) {
+        await Promise.all([
+          markOnChain(nonZeroCommitments, blockNumberL2),
+          markNullifiedOnChain(nonZeroNullifiers, blockNumberL2),
+        ]);
+      } else {
+        // decompress the secrets first and then we will decrypt the secrets from this
+        const decompressedSecrets = Secrets.decompressSecrets(transaction.compressedSecrets);
+        try {
+          const commitment = Secrets.decryptSecrets(
+            decompressedSecrets,
+            ivk,
+            transaction.commitments[0],
+          );
+          if (commitment === {}) logger.error("This encrypted message isn't for this recipient");
+          else {
+            // store commitment if the new commitment in this transaction is intended for this client
+            await storeCommitment(commitment, nsk);
+            await markOnChain(nonZeroCommitments, blockNumberL2);
+          }
+        } catch (err) {
+          logger.error(err);
+          logger.error("This encrypted message isn't for this recipient");
+        }
+      }
+      // if transaction is withdraw
+    } else if (transaction.transactionType === '3') {
+      // if the nullifier from withdraw is already stored in database, then this nullifier has been created by
+      // this client and stored during withdraw transaction creation. If so, only update that nullifier is on chain
+      // If not this nullifier need not be stored or updated by other clients
+      if ((await countNullifiers(transaction.nullifiers)) > 0) {
+        await markNullifiedOnChain(nonZeroNullifiers, blockNumberL2);
+      }
+    } else logger.error('Transaction type is invalid. Transaction type is', transaction.Type);
   });
-
-  // these nullifiers have now appeared on-chain. Thus their nullification
-  // has been confirmed (barring a rollback) and we need to update the
-  // commitment database to that effect
-  await markNullifiedOnChain(nullifiers, blockNumberL2);
 }
 
 export default blockProposedEventHandler;

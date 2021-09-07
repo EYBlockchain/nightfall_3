@@ -34,6 +34,22 @@ export async function storeCommitment(commitment, nsk) {
   return db.collection(COMMITMENTS_COLLECTION).insertOne(data);
 }
 
+// function to get count of commitments. Can also be used to check if it exists
+export async function countCommitments(commitments) {
+  const connection = await mongo.connection(MONGO_URL);
+  const query = { _id: { $in: commitments } };
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(COMMITMENTS_COLLECTION).countDocuments(query);
+}
+
+// function to get count of nullifiers. Can also be used to check if it exists
+export async function countNullifiers(nullifiers) {
+  const connection = await mongo.connection(MONGO_URL);
+  const query = { nullifier: { $in: nullifiers } };
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(COMMITMENTS_COLLECTION).countDocuments(query);
+}
+
 // function to mark a commitments as on chain for a mongo db
 export async function markOnChain(commitments, blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);

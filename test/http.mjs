@@ -350,6 +350,8 @@ describe('Testing the http API', () => {
       eventLogs.shift();
       stateBalance += fee * txPerBlock + BLOCK_STAKE;
 
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
       const newCommitmentSalts = res.body.salts;
       const result = await chai.request(recipientUrl).get('/commitment/salt').query({
         salt: newCommitmentSalts[0],
