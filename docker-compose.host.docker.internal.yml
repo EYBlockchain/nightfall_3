@@ -5,7 +5,7 @@ version: '3.5'
 # See the readme for more information.
 services:
 
-  client1:
+  client1: 
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
 
