@@ -64,15 +64,15 @@ async function blockProposedEventHandler(data, keys = [ZERO, ZERO]) {
             ivk,
             transaction.commitments[0],
           );
-          if (commitment === {}) logger.error("This encrypted message isn't for this recipient");
+          if (commitment === {}) logger.info("This encrypted message isn't for this recipient");
           else {
             // store commitment if the new commitment in this transaction is intended for this client
             await storeCommitment(commitment, nsk);
             await markOnChain(nonZeroCommitments, blockNumberL2);
           }
         } catch (err) {
-          logger.error(err);
-          logger.error("This encrypted message isn't for this recipient");
+          logger.info(err);
+          logger.info("This encrypted message isn't for this recipient");
         }
       }
       // if transaction is withdraw
