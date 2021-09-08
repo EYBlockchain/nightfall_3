@@ -19,15 +19,15 @@
  * This function is NOT required for on-chain messaging methods, that enforce a
  * proof of correctness on the message, because the message is provably correct.
  * @param {object} message - {ercAddress, tokenId, value, salt }
- * @param {general-number} recipientZkpPublicKey - public key of receiving party
+ * @param {general-number} compressedPkd - public key of receiving party
  * @return {boolean}
  */
 
 import { Commitment } from '../classes/index.mjs';
 
-async function isMessageValid(message, recipientZkpPublicKey) {
+async function isMessageValid(message, compressedPkd) {
   const commitment = new Commitment({
-    zkpPublicKey: recipientZkpPublicKey,
+    compressedPkd,
     ...message,
   });
   if ((await commitment.index) === null) return false;

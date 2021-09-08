@@ -5,7 +5,11 @@ version: '3.5'
 # See the readme for more information.
 services:
 
-  client:
+  client1: 
+    environment:
+      BLOCKCHAIN_WS_HOST: host.docker.internal
+
+  client2:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
 
@@ -18,10 +22,18 @@ services:
       BLOCKCHAIN_WS_HOST: host.docker.internal
 
   # Timber service, configured for nightfall
-  timber:
+  timber1:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
 
-  optimist:
+  optimist1:
+    environment:
+      BLOCKCHAIN_WS_HOST: host.docker.internal
+
+  timber2:
+    environment:
+      BLOCKCHAIN_WS_HOST: host.docker.internal
+
+  optimist2:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal

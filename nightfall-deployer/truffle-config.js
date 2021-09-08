@@ -44,7 +44,7 @@ module.exports = {
     //
     blockchain1: {
       // host: 'blockchain', // Localhost (default: none)
-      // port: 8545, // Standard Ethereum port (default: none)
+      // port: 8546, // Standard Ethereum port (default: none)
       url: 'ws://blockchain1:8546',
       network_id: 4378921, // Any network (default: none)
       gas: 8000000,
@@ -53,7 +53,7 @@ module.exports = {
 
     blockchain2: {
       // host: 'blockchain', // Localhost (default: none)
-      // port: 8545, // Standard Ethereum port (default: none)
+      // port: 8546, // Standard Ethereum port (default: none)
       url: 'ws://blockchain2:8546',
       network_id: 4378921, // Any network (default: none)
       gas: 8000000,

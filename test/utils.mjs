@@ -115,7 +115,6 @@ export async function createBadBlock(badBlockType, block, transactions, args) {
     case 'IncorrectProof': {
       // use the proof of a prior transaction
       badTransactions[0].proof = args.proof;
-      // badTransactions[0].proof = args.proof;
       break;
     }
     case 'DuplicateNullifier': {

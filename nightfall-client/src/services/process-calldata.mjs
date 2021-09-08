@@ -7,7 +7,7 @@ import config from 'config';
 import Web3 from 'common-files/utils/web3.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 
-const { PROPOSE_BLOCK_TYPES, STATE_CONTRACT_NAME, ZERO } = config;
+const { PROPOSE_BLOCK_TYPES, STATE_CONTRACT_NAME } = config;
 
 function calcBlockHash(block, transactions) {
   const web3 = Web3.connection();
@@ -25,6 +25,7 @@ function calcBlockHash(block, transactions) {
       recipientAddress,
       commitments,
       nullifiers,
+      compressedSecrets,
       proof,
     } = t;
     return [
@@ -38,6 +39,7 @@ function calcBlockHash(block, transactions) {
       recipientAddress,
       commitments,
       nullifiers,
+      compressedSecrets,
       proof, // note - this is not compressed here
     ];
   });
@@ -75,6 +77,7 @@ async function getProposeBlockCalldata(eventData) {
       recipientAddress,
       commitments,
       nullifiers,
+      compressedSecrets,
       proof,
     ] = t;
     const transaction = {
@@ -88,6 +91,7 @@ async function getProposeBlockCalldata(eventData) {
       recipientAddress,
       commitments,
       nullifiers,
+      compressedSecrets,
       proof, // note - this is not decompressed here
     };
     // note, this transaction is incomplete in that the 'fee' field is empty.
@@ -99,15 +103,8 @@ async function getProposeBlockCalldata(eventData) {
   // Optimist or Timber can know this as we don't want them dealing with
   // zkp private keys.
   const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
-  const nullifiers = transactions
-    .map(t => t.nullifiers)
-    .flat()
-    .filter(n => n !== ZERO);
-  // we now search for new commitments on chain to update local commitment storage
-  const commitments = transactions
-    .map(t => t.commitments)
-    .flat()
-    .filter(n => n !== ZERO);
+  const nullifiers = transactions.map(t => t.nullifiers);
+
   // next, we need to tie these up with the number of the block that they are in
   // It's a little non-trivial to compute this because of course the on-chain
   // layer 2 block record may have moved on since we arrived here if other
@@ -129,7 +126,7 @@ async function getProposeBlockCalldata(eventData) {
     // eslint-disable-next-line no-await-in-loop
     blockHash !== (await stateContractInstance.methods.getBlockData(blockNumberL2).call()).blockHash
   );
-  return { nullifiers, commitments, blockNumberL2 };
+  return { transactions, nullifiers, blockNumberL2 };
 }
 
 export default getProposeBlockCalldata;

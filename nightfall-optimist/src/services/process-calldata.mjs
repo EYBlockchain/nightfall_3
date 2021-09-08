@@ -40,6 +40,7 @@ export async function getProposeBlockCalldata(eventData) {
       recipientAddress,
       commitments,
       nullifiers,
+      compressedSecrets,
       proof,
     ] = t;
     const transaction = {
@@ -53,6 +54,7 @@ export async function getProposeBlockCalldata(eventData) {
       recipientAddress,
       commitments,
       nullifiers,
+      compressedSecrets,
       proof: decompressProof(proof),
     };
     transaction.transactionHash = Transaction.calcHash(transaction);
@@ -124,6 +126,7 @@ export async function getTransactionSubmittedCalldata(eventData) {
     recipientAddress,
     commitments,
     nullifiers,
+    compressedSecrets,
     proof,
   ] = transactionData;
   const transaction = {
@@ -138,6 +141,7 @@ export async function getTransactionSubmittedCalldata(eventData) {
     recipientAddress,
     commitments,
     nullifiers,
+    compressedSecrets,
     proof: decompressProof(proof),
   };
   transaction.transactionHash = Transaction.calcHash(transaction);

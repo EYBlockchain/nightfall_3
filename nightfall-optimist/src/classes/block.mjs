@@ -167,6 +167,7 @@ class Block {
         recipientAddress,
         commitments,
         nullifiers,
+        compressedSecrets,
         proof,
       } = t;
       return [
@@ -180,6 +181,7 @@ class Block {
         recipientAddress,
         commitments,
         nullifiers,
+        compressedSecrets,
         compressProof(proof),
       ];
     });

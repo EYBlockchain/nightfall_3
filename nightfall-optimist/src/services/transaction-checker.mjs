@@ -37,6 +37,8 @@ async function checkTransactionHash(transaction) {
 async function checkTransactionType(transaction) {
   logger.debug(`in checkTransactionType: ${JSON.stringify(transaction)}`);
   switch (Number(transaction.transactionType)) {
+    // Assuming nullifiers and commitments can't be valid ZEROs.
+    // But points can such as compressedSecrets, Proofs
     case 0: // deposit
       if (
         transaction.publicInputHash === ZERO ||
@@ -49,7 +51,9 @@ async function checkTransactionType(transaction) {
         transaction.commitments[1] !== ZERO ||
         transaction.commitments.length !== 2 ||
         transaction.nullifiers.some(n => n !== ZERO) ||
-        transaction.proof.some(p => p === ZERO) ||
+        transaction.compressedSecrets.some(cs => cs !== ZERO) ||
+        transaction.compressedSecrets.length !== 8 ||
+        transaction.proof.every(p => p === ZERO) ||
         // This extra check is unique to deposits
         Number(transaction.historicRootBlockNumberL2) !== 0
       )
@@ -71,7 +75,9 @@ async function checkTransactionType(transaction) {
         transaction.nullifiers[0] === ZERO ||
         transaction.nullifiers[1] !== ZERO ||
         transaction.nullifiers.length !== 2 ||
-        transaction.proof.some(p => p === ZERO)
+        transaction.compressedSecrets.every(cs => cs === ZERO) ||
+        transaction.compressedSecrets.length !== 8 ||
+        transaction.proof.every(p => p === ZERO)
       )
         throw new TransactionError(
           'The data provided was inconsistent with a transaction type of SINGLE_TRANSFER',
@@ -89,7 +95,9 @@ async function checkTransactionType(transaction) {
         transaction.commitments.length !== 2 ||
         transaction.nullifiers.some(n => n === ZERO) ||
         transaction.nullifiers.length !== 2 ||
-        transaction.proof.some(p => p === ZERO)
+        transaction.compressedSecrets.every(cs => cs === ZERO) ||
+        transaction.compressedSecrets.length !== 8 ||
+        transaction.proof.every(p => p === ZERO)
       )
         throw new TransactionError(
           'The data provided was inconsistent with a transaction type of DOUBLE_TRANSFER',
@@ -108,7 +116,8 @@ async function checkTransactionType(transaction) {
         transaction.nullifiers[0] === ZERO ||
         transaction.nullifiers[1] !== ZERO ||
         transaction.nullifiers.length !== 2 ||
-        transaction.proof.some(p => p === ZERO)
+        transaction.compressedSecrets.some(cs => cs !== ZERO) ||
+        transaction.proof.every(p => p === ZERO)
       )
         throw new TransactionError(
           'The data provided was inconsistent with a transaction type of WITHDRAW',
@@ -161,6 +170,7 @@ async function checkPublicInputHash(transaction) {
             transaction.commitments[0],
             transaction.nullifiers[0],
             (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2)).root,
+            ...transaction.compressedSecrets,
           ]).hash.hex(32)
         )
           throw new TransactionError('public input hash is incorrect', 4);
@@ -174,6 +184,7 @@ async function checkPublicInputHash(transaction) {
             transaction.commitments,
             transaction.nullifiers,
             (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2)).root,
+            ...transaction.compressedSecrets,
           ]).hash.hex(32)
         )
           throw new TransactionError('public input hash is incorrect', 4);

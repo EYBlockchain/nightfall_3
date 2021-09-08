@@ -15,7 +15,7 @@ def main(\
 	private u32[8] ercContractAddress,\
 	private u32[8] id,\
  	private u32[8] value,\
-	private u32[8] publicKey,\
+	private u32[8] compressedPkd,\
 	private u32[8] salt,\
 	private u32[8] newCommitment\
 )->():
@@ -25,7 +25,7 @@ def main(\
 		...ercContractAddress,\
 		...id,\
 		...value,\
-		...publicKey,\
+		...compressedPkd,\
 		...salt\
 	]))
 

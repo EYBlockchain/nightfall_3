@@ -11,7 +11,7 @@ const router = express.Router();
 router.get('/', async (req, res, next) => {
   logger.debug(`check-message endpoint received GET ${JSON.stringify(req.query, null, 2)}`);
   try {
-    const result = await isMessageValid(req.query.message, req.query.recipientZkpPublicKey);
+    const result = await isMessageValid(req.query.message, req.query.compressedPkd);
     logger.debug(`returning result ${result}`);
     res.json({ valid: result });
   } catch (err) {

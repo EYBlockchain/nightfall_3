@@ -14,12 +14,13 @@ const { generalise } = gen;
 const mutex = new Mutex();
 
 // function to format a commitment for a mongo db and store it
-export async function storeCommitment(commitment, zkpPrivateKey) {
+export async function storeCommitment(commitment, nsk) {
   const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
   // we'll also compute and store the nullifier hash.  This will be useful for
   // spotting if the commitment spend is ever rolled back, which would mean the
   // commitment is once again available to spend
-  const nullifierHash = new Nullifier(commitment, zkpPrivateKey).hash.hex(32);
+  const nullifierHash = new Nullifier(commitment, nsk).hash.hex(32);
   const data = {
     _id: commitment.hash.hex(32),
     preimage: commitment.preimage.all.hex(32),
@@ -30,8 +31,23 @@ export async function storeCommitment(commitment, zkpPrivateKey) {
     isNullifiedOnChain: Number(commitment.isNullifiedOnChain),
     nullifier: nullifierHash,
   };
-  const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).insertOne(data);
+}
+
+// function to get count of commitments. Can also be used to check if it exists
+export async function countCommitments(commitments) {
+  const connection = await mongo.connection(MONGO_URL);
+  const query = { _id: { $in: commitments } };
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(COMMITMENTS_COLLECTION).countDocuments(query);
+}
+
+// function to get count of nullifiers. Can also be used to check if it exists
+export async function countNullifiers(nullifiers) {
+  const connection = await mongo.connection(MONGO_URL);
+  const query = { nullifier: { $in: nullifiers } };
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(COMMITMENTS_COLLECTION).countDocuments(query);
 }
 
 // function to mark a commitments as on chain for a mongo db
@@ -59,6 +75,17 @@ export async function markNullified(commitment) {
   const update = { $set: { isPendingNullification: false, isNullified: true } };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateOne(query, update);
+}
+
+// function to retrieve commitment with a specified salt
+export async function getCommitmentBySalt(salt) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  const commitments = await db
+    .collection(COMMITMENTS_COLLECTION)
+    .find({ 'preimage.salt': generalise(salt).hex(32) })
+    .toArray();
+  return commitments;
 }
 
 /*
@@ -126,14 +153,14 @@ export async function markNullifiedOnChain(nullifiers, blockNumberL2) {
 // also mark any found commitments as nullified (TODO mark them as un-nullified
 // if the transaction errors). The mutex lock is in the function
 // findUsableCommitmentsMutex, which calls this function.
-async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _value, onlyOne) {
+async function findUsableCommitments(compressedPkd, ercAddress, tokenId, _value, onlyOne) {
   const value = generalise(_value); // sometimes this is sent as a BigInt.
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const commitmentArray = await db
     .collection(COMMITMENTS_COLLECTION)
     .find({
-      'preimage.zkpPublicKey': zkpPublicKey.hex(32),
+      'preimage.compressedPkd': compressedPkd.hex(32),
       'preimage.ercAddress': ercAddress.hex(32),
       'preimage.tokenId': tokenId.hex(32),
       isNullified: false,
@@ -226,13 +253,13 @@ async function findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _value, 
 
 // mutex for the above function to ensure it only runs with a concurrency of one
 export async function findUsableCommitmentsMutex(
-  zkpPublicKey,
+  compressedPkd,
   ercAddress,
   tokenId,
   _value,
   onlyOne,
 ) {
   return mutex.runExclusive(async () =>
-    findUsableCommitments(zkpPublicKey, ercAddress, tokenId, _value, onlyOne),
+    findUsableCommitments(compressedPkd, ercAddress, tokenId, _value, onlyOne),
   );
 }

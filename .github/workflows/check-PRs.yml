@@ -34,7 +34,7 @@ jobs:
       - name: Run integration test
         run: |
           npm ci
-          sleep 200
+          sleep 1000
           npm test
 
       - name: If integration test failed, shutdown the Containers
@@ -67,7 +67,7 @@ jobs:
       - name: Run tx-gas.mjs test suites
         run: |
           npm ci
-          sleep 200
+          sleep 1000
           npm run test-gas
 
       - name: If integration test failed, shutdown the Containers
