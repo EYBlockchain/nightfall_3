@@ -64,7 +64,8 @@ contract State is Structures, Config {
     // All check pass so add the block to the list of blocks waiting to be permanently added to the state - we only save the hash of the block data plus the absolute minimum of metadata - it's up to the challenger, or person requesting inclusion of the block to the permanent contract state, to provide the block data.
     blockHashes.push(BlockData({
       blockHash: keccak256(msg.data[4:]),
-      time: block.timestamp
+      time: block.timestamp,
+      blockProposer: msg.sender // pushing blockProposer information into BlockData
     }));
     // Timber will listen for the BlockProposed event as well as
     // nightfall-optimist.  The current, optimistic version of Timber does not
