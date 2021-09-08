@@ -15,7 +15,7 @@ import {
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
-import { nextHigherPiorityQueueHasEmptied } from './event-queue.mjs';
+import { nextHigherPriorityQueueHasEmptied } from './event-queue.mjs';
 
 const { TRANSACTIONS_PER_BLOCK, STATE_CONTRACT_NAME } = config;
 const makeBlocks = true;
@@ -47,7 +47,7 @@ export async function conditionalMakeBlock(proposer) {
   logger.debug('Ready to make blocks');
   while (makeBlocks) {
     logger.silly('Block Assembler is waiting for transactions');
-    await nextHigherPiorityQueueHasEmptied(1); // i.e. the highest priority queue is empty
+    await nextHigherPriorityQueueHasEmptied(1); // i.e. the highest priority queue is empty
     // if we are the current proposer, and there are enough transactions waiting
     // to be processed, we can assemble a block and create a proposal
     // transaction. If not, we must wait until either we have enough (hooray)

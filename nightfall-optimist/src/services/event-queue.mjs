@@ -31,7 +31,7 @@ This function will return a promise that resolves to true when the next highest
 priority queue is empty (priority goes in reverse order, prioity 0 is highest
 priority)
 */
-export function nextHigherPiorityQueueHasEmptied(priority) {
+export function nextHigherPriorityQueueHasEmptied(priority) {
   return new Promise(resolve => {
     const listener = () => resolve();
     if (priority === 0) resolve(); // resolve if we're the highest priority queue
@@ -61,14 +61,14 @@ export async function queueManager(eventObject, eventHandlers, ...args) {
     }
     logger.info(`Queueing event removal ${eventObject.event}`);
     queues[priority].push(async () => {
-      await nextHigherPiorityQueueHasEmptied(priority); // prevent eventHandlers running until the higher priority queue has emptied
+      await nextHigherPriorityQueueHasEmptied(priority); // prevent eventHandlers running until the higher priority queue has emptied
       eventHandlers.removers[eventObject.event](eventObject, args);
     });
     // otherwise queue the event for processing.
   } else {
     logger.info(`Queueing event ${eventObject.event}`);
     queues[priority].push(async () => {
-      await nextHigherPiorityQueueHasEmptied(priority); // prevent eventHandlers running until the higher priority queue has emptied
+      await nextHigherPriorityQueueHasEmptied(priority); // prevent eventHandlers running until the higher priority queue has emptied
       eventHandlers[eventObject.event](eventObject, args);
     });
   }
