@@ -45,7 +45,7 @@ the front-runner).
 export async function addChallengerAddress(address) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  logger.debug(`Saving proposer address ${address}`);
+  logger.debug(`Saving challenger address ${address}`);
   const data = { challenger: address };
   return db.collection(METADATA_COLLECTION).insertOne(data);
 }
@@ -58,7 +58,7 @@ the address.
 export async function removeChallengerAddress(address) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  logger.debug(`Saving proposer address ${address}`);
+  logger.debug(`Removing challenger address ${address}`);
   const data = { challenger: address };
   return db.collection(METADATA_COLLECTION).deleteOne(data);
 }

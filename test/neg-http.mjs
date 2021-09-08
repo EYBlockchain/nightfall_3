@@ -226,11 +226,11 @@ describe('Testing the challenge http API', () => {
 
   describe('Basic Challenger tests', () => {
     it('should add a Challenger address', async () => {
-      const myAddress = (await getAccounts())[1];
+      const myAddress = (await getAccounts())[0];
       const res = await chai
         .request(optimistUrl)
         .post('/challenger/add')
-        .send({ challenger: myAddress });
+        .send({ address: myAddress });
       expect(res.body.ok).to.equal(1);
     });
   });
