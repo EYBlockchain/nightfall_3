@@ -64,6 +64,7 @@ jobs:
         env:
           TRANSACTIONS_PER_BLOCK: 32
 
+      - run: df -h
       - name: Run tx-gas.mjs test suites
         run: |
           npm ci
@@ -72,7 +73,9 @@ jobs:
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
-        run: docker-compose -f docker-compose.yml -f docker-compose.ganache.yml down -v
+        run: |
+          df -h
+          docker-compose -f docker-compose.yml -f docker-compose.ganache.yml down -v
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
