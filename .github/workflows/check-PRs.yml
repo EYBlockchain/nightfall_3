@@ -52,11 +52,14 @@ jobs:
     name: check gas for 32 transactions per block
     runs-on: ubuntu-20.04
     steps:
+      - run: df -h
       - uses: actions/checkout@master
+      - run: df -h
       - uses: actions/setup-node@v1
         with:
           node-version: '14.17.0'
 
+      - run: df -h
       - name: Start Containers with ganache
         run: |
           docker-compose build
@@ -66,7 +69,7 @@ jobs:
 
       - run: df -h
       - run: swapon -s
-      - run: free -m
+      - run: free -h
       - name: Run tx-gas.mjs test suites
         run: |
           npm ci
@@ -75,13 +78,13 @@ jobs:
 
       - run: df -h
       - run: swapon -s
-      - run: free -m
+      - run: free -h
       - name: If integration test failed, shutdown the Containers
         if: failure()
         run: |
           df -h
           swapon -s
-          free -m
+          free -h
           docker-compose -f docker-compose.yml -f docker-compose.ganache.yml down -v
 
       - name: If integration test failed, upload logs files as artifacts
