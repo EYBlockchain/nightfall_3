@@ -1,9 +1,9 @@
 name: Check PR
 
 on:
-  pull_request:
+  push:
     branch:
-      - master
+      - liju.jose/fix-github-action-on-westlad/priority-queues
 
 jobs:
   eslint-check:
