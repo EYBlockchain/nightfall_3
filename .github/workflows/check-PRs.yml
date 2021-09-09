@@ -65,7 +65,10 @@ jobs:
       - name: free up storage by deleting default docker images
         run: docker rmi $(docker images -aq)
 
-      - run: df -h
+      - name: debug
+        run: |
+          df -h
+          free -h
 
       - name: Start Containers with ganache
         run: |
