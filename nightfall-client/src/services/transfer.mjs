@@ -217,7 +217,6 @@ async function transfer(transferParams) {
         .forEach(commitment => storeCommitment(commitment, nsk)); // TODO insertMany
       // mark the old commitments as nullified
       await Promise.all(oldCommitments.map(commitment => markNullified(commitment)));
-      // oldCommitments.forEach(commitment => markNullified(commitment));
       return {
         transaction: optimisticTransferTransaction,
         salts: salts.map(salt => salt.hex(32)),

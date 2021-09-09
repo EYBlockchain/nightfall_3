@@ -3,6 +3,7 @@ import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import childProcess from 'child_process';
 import WebSocket from 'ws';
+import config from 'config';
 import {
   closeWeb3Connection,
   submitTransaction,
@@ -17,6 +18,8 @@ import {
   waitForEvent,
 } from './utils.mjs';
 
+import { generateKeys } from '../nightfall-client/src/services/keys.mjs';
+
 import {
   url,
   optimistWsUrl,
@@ -24,15 +27,14 @@ import {
   privateKey,
   gas,
   BLOCK_STAKE,
-  zkpPrivateKey,
   fee,
   tokenId,
-  zkpPublicKey,
   value,
   tokenType,
   bond,
 } from './constants.mjs';
 
+const { ZKP_KEY_LENGTH } = config;
 const { spawn } = childProcess;
 const { expect } = chai;
 chai.use(chaiHttp);
@@ -54,6 +56,10 @@ describe('Running rollback and resync test', () => {
   let commitTxDataToSign;
   let defaultDepositArgs;
   let defaultTransferArgs;
+  let ask1;
+  let nsk1;
+  let ivk1;
+  let pkd1;
   const txPerBlock = 2;
   const validTransactions = [];
 
@@ -74,19 +80,18 @@ describe('Running rollback and resync test', () => {
 
     setNonce(await web3.eth.getTransactionCount(myAddress));
 
-    defaultDepositArgs = {
-      ercAddress,
-      tokenId,
-      tokenType,
-      value,
-      zkpPrivateKey,
-      fee,
-    };
+    ({ ask: ask1, nsk: nsk1, ivk: ivk1, pkd: pkd1 } = await generateKeys(ZKP_KEY_LENGTH));
+
+    defaultDepositArgs = { ercAddress, tokenId, tokenType, value, pkd: pkd1, nsk: nsk1, fee };
     defaultTransferArgs = {
       ercAddress,
       tokenId,
-      recipientData: { values: [value], recipientZkpPublicKeys: [zkpPublicKey] },
-      senderZkpPrivateKey: zkpPrivateKey,
+      recipientData: {
+        values: [value],
+        recipientPkds: [pkd1],
+      },
+      nsk: nsk1,
+      ask: ask1,
       fee,
     };
 
@@ -124,8 +129,16 @@ describe('Running rollback and resync test', () => {
       .post('/proposer/register')
       .send({ address: myAddress });
     const { txDataToSign } = res.body;
-    expect(txDataToSign).to.be.a('string');
     await submitTransaction(txDataToSign, privateKey, proposersAddress, gas, bond);
+
+    // Register keys
+    await chai.request(url).post('/incoming-viewing-key').send({
+      ivk: ivk1,
+      nsk: nsk1,
+    });
+
+    // Register Challenger
+    await chai.request(optimistUrl).post('/challenger/add').send({ address: myAddress });
   });
 
   describe('Prepare some boiler plate transactions', () => {
@@ -154,6 +167,8 @@ describe('Running rollback and resync test', () => {
       duplicateTransaction = transferTransactions[0];
       await sendTransactions(transferTransactions, [privateKey, shieldAddress, gas, fee]);
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      // Have to wait here as client block proposal takes longer now
+      await new Promise(resolve => setTimeout(resolve, 3000));
     });
   });
 
@@ -180,6 +195,8 @@ describe('Running rollback and resync test', () => {
       await sendTransactions(transferTransactions, [privateKey, shieldAddress, gas, fee]);
 
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      // Have to wait here as client block proposal takes longer now
+      await new Promise(resolve => setTimeout(resolve, 3000));
     });
     it('should send the commit-challenge', async function () {
       while (!commitTxDataToSign) {
@@ -205,7 +222,7 @@ describe('Running rollback and resync test', () => {
         stdio: 'ignore',
       });
       resetOptimistDB.on('close', async () => {
-        spawn('docker', ['restart', 'nightfall_3_optimist_1'], {
+        spawn('docker', ['restart', 'nightfall_3_optimist1_1'], {
           stdio: 'ignore',
         });
 
@@ -255,6 +272,12 @@ describe('Running rollback and resync test', () => {
       expect(txDataToSign).to.be.a('string');
       // now we need to sign the transaction and send it to the blockchain
       await submitTransaction(txDataToSign, privateKey, proposersAddress, gas, bond);
+      await chai.request(url).post('/incoming-viewing-key').send({
+        ivk: ivk1,
+        nsk: nsk1,
+      });
+      // Register Challenger
+      await chai.request(optimistUrl).post('/challenger/add').send({ address: myAddress });
     });
 
     it('should automatically create a bad block, as the resync will re-populate our local db', async () => {
@@ -299,12 +322,12 @@ describe('Running rollback and resync test', () => {
   describe('Perform a final full resync and compare the results', () => {
     it('should drop everything in the database', async () => {
       // We need to wait here so we do not drop tables before the rollback is finished
-      await new Promise(resolve => setTimeout(resolve, 10000));
+      await new Promise(resolve => setTimeout(resolve, 15000));
       const resetOptimistDB = spawn('./nightfall-client/dropAll.sh', [], {
         stdio: 'ignore',
       });
       resetOptimistDB.on('close', async () => {
-        spawn('docker', ['restart', 'nightfall_3_optimist_1'], {
+        spawn('docker', ['restart', 'nightfall_3_optimist1_1'], {
           stdio: 'ignore',
         });
         let healthCheck;
@@ -322,7 +345,7 @@ describe('Running rollback and resync test', () => {
     });
 
     it('compare the mempools', async () => {
-      await new Promise(resolve => setTimeout(resolve, 30000));
+      await new Promise(resolve => setTimeout(resolve, 50000));
       const optimistMempool = (
         await chai.request(optimistUrl).get('/proposer/mempool')
       ).body.result.filter(m => m.mempool);

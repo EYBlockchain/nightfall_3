@@ -1,10 +1,3 @@
-import gen from 'general-number';
-import sha256 from '../common-files/utils/crypto/sha256.mjs';
-
-const { GN } = gen;
-
-export const zkpPrivateKey = '0xc05b14fa15148330c6d008814b0bdd69bc4a08a1bd0b629c42fa7e2c61f16739'; // the zkp private key we're going to use in the tests.
-export const zkpPublicKey = sha256([new GN(zkpPrivateKey)]).hex();
 export const url = 'http://localhost:8080';
 export const optimistUrl = 'http://localhost:8081';
 export const optimistWsUrl = 'ws:localhost:8082';

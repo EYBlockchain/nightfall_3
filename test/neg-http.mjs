@@ -383,6 +383,7 @@ describe('Testing the challenge http API', () => {
       // Double shift to take off from our queue
       eventLogs.shift();
       eventLogs.shift();
+      await new Promise(resolve => setTimeout(resolve, 5000));
     });
 
     describe('Challenge 1: Incorrect root challenge', () => {
@@ -391,21 +392,6 @@ describe('Testing the challenge http API', () => {
           web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
           web3.eth.abi.encodeParameter('bytes32', topicsBlockHashIncorrectRootInBlock),
         ]);
-        const res = await chai
-          .request(url)
-          .post('/transfer')
-          .send({
-            ercAddress,
-            tokenId,
-            recipientData: {
-              values: [value],
-              recipientPkds: [pkd1],
-            },
-            nsk: nsk1,
-            ask: ask1,
-            fee,
-          });
-        await submitTransaction(res.body.txDataToSign, privateKey, shieldAddress, gas, fee);
       });
     });
 
@@ -449,7 +435,7 @@ describe('Testing the challenge http API', () => {
       });
     });
 
-    describe('Challenge 4: Challenge historic root used in a transaction', async () => {
+    describe('Challenge 4: Challenge historic root used in a transaction', () => {
       it('Should delete the wrong block', async () => {
         await testForEvents(stateAddress, [
           web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
@@ -458,16 +444,25 @@ describe('Testing the challenge http API', () => {
 
         const res = await chai
           .request(url)
-          .post('/deposit')
-          .send({ ercAddress, tokenId, tokenType, value, pkd: pkd1, nsk: nsk1, fee });
-
+          .post('/transfer')
+          .send({
+            ercAddress,
+            tokenId,
+            recipientData: {
+              values: [value],
+              recipientPkds: [pkd1],
+            },
+            nsk: nsk1,
+            ask: ask1,
+            fee,
+          });
         const { txDataToSign } = res.body;
         expect(txDataToSign).to.be.a('string');
         await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
       });
     });
 
-    describe('Challenge 5: Incorrect public input hash', async () => {
+    describe('Challenge 5: Incorrect public input hash', () => {
       it('Should delete the flawed block and rollback the leaves', async () => {
         await testForEvents(stateAddress, [
           web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
@@ -489,35 +484,28 @@ describe('Testing the challenge http API', () => {
       });
     });
 
-    describe('Challenge 6: Proof verification failure', async () => {
+    describe('Challenge 6: Proof verification failure', () => {
       it('Should delete the flawed block and rollback the leaves', async () => {
         await testForEvents(stateAddress, [
           web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
           web3.eth.abi.encodeParameter('bytes32', topicsBlockHashIncorrectProof),
         ]);
-
         // create another transaction to trigger NO's block assembly
-        const res = await chai
-          .request(url)
-          .post('/transfer')
-          .send({
-            ercAddress,
-            tokenId,
-            recipientData: {
-              values: [value],
-              recipientPkds: [pkd1],
-            },
-            nsk: nsk1,
-            ask: ask1,
-            fee,
-          });
+        const res = await chai.request(url).post('/deposit').send({
+          ercAddress,
+          tokenId,
+          tokenType,
+          value,
+          pkd: pkd1,
+          nsk: nsk1,
+          fee,
+        });
         const { txDataToSign } = res.body;
-
         await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
       });
     });
 
-    describe('Challenge 7: Duplicate Nullifier', async () => {
+    describe('Challenge 7: Duplicate Nullifier', () => {
       it('Should delete the flawed block and rollback the leaves', async () => {
         await testForEvents(stateAddress, [
           web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
@@ -537,7 +525,7 @@ describe('Testing the challenge http API', () => {
       });
     });
 
-    describe('Challenge 8: Incorrect Leaf Count', async () => {
+    describe('Challenge 8: Incorrect Leaf Count', () => {
       it('Should delete the flawed block and rollback the leaves', async () => {
         await testForEvents(stateAddress, [
           web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
