@@ -275,6 +275,8 @@ contract Challenges is Stateful, Key_Registry, Config {
     for (uint256 i = lastBlock; i >= blockNumberL2; i--) {
       state.popBlockData();
     }
+    // set current proposer the one with latest valid block
+    //state.setCurrentProposer(state.getBlockData(blockNumberL2-1).blockProposer);
     require(
       state.getNumberOfL2Blocks() == blockNumberL2,
       'After removing blocks, the number remaining is not as expected.'
