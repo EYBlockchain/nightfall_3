@@ -57,23 +57,12 @@ jobs:
         with:
           node-version: '14.17.6'
 
-      - name: debug
-        run: |
-          node -v
-          df -h
-          free -h
-
       - name: Start Containers with ganache
         run: |
           docker-compose build
           ./start-nightfall -g &> test-gas.log &disown
         env:
           TRANSACTIONS_PER_BLOCK: 32
-
-      - name: debug
-        run: |
-          df -h
-          free -h
 
       - name: Run tx-gas.mjs test suites
         run: |
