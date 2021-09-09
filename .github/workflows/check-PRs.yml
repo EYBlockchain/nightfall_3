@@ -55,18 +55,11 @@ jobs:
       - uses: actions/checkout@master
       - uses: actions/setup-node@v1
         with:
-          node-version: '14.17.0'
+          node-version: '14.17.6'
 
       - name: debug
         run: |
-          df -h
-          free -h
-
-      - name: free up storage by deleting default docker images
-        run: docker rmi $(docker images -aq)
-
-      - name: debug
-        run: |
+          node -v
           df -h
           free -h
 
