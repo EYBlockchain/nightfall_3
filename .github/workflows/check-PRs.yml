@@ -50,12 +50,22 @@ jobs:
 
   test-gas:
     name: check gas for 32 transactions per block
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@master
       - uses: actions/setup-node@v1
         with:
           node-version: '14.17.0'
+
+      - name: debug
+        run: |
+          df -h
+          free -h
+
+      - name: free up storage by deleting default docker images
+        run: docker rmi $(docker images -aq)
+
+      - run: df -h
 
       - name: Start Containers with ganache
         run: |
@@ -64,24 +74,26 @@ jobs:
         env:
           TRANSACTIONS_PER_BLOCK: 32
 
-      - run: df -h
-      - run: swapon -shg
-      - run: free -h
+      - name: debug
+        run: |
+          df -h
+          free -h
+
       - name: Run tx-gas.mjs test suites
         run: |
           npm ci
           sleep 200
           npm run test-gas
 
-      - run: df -h
-      - run: swapon -s
-      - run: free -h
-
       - name: debug
+        run: |
+          df -h
+          free -h
+
+      - name: debug if failed
         if: failure()
         run: |
           df -h
-          swapon -s
           free -h
 
       - name: If integration test failed, shutdown the Containers
