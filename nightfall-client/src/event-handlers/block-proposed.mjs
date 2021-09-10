@@ -41,7 +41,7 @@ async function blockProposedEventHandler(data, keys = [ZERO, ZERO]) {
       // this client and stored during deposit transaction creation. If so, only update that commitment is on chain
       // If not this commitment need not be stored or updated by other clients
       if ((await countCommitments(transaction.commitments)) > 0) {
-        await markOnChain(nonZeroCommitments, blockNumberL2);
+        await markOnChain(nonZeroCommitments, blockNumberL2, data.blockNumber);
       }
       // if transaction is single transfer or double transfer
     } else if (transaction.transactionType === '1' || transaction.transactionType === '2') {
@@ -52,8 +52,8 @@ async function blockProposedEventHandler(data, keys = [ZERO, ZERO]) {
       // nothing needs to be stored
       if ((await countCommitments(transaction.commitments)) > 0) {
         await Promise.all([
-          markOnChain(nonZeroCommitments, blockNumberL2),
-          markNullifiedOnChain(nonZeroNullifiers, blockNumberL2),
+          markOnChain(nonZeroCommitments, blockNumberL2, data.blockNumber),
+          markNullifiedOnChain(nonZeroNullifiers, blockNumberL2, data.blockNumber),
         ]);
       } else {
         // decompress the secrets first and then we will decrypt the secrets from this
@@ -68,7 +68,7 @@ async function blockProposedEventHandler(data, keys = [ZERO, ZERO]) {
           else {
             // store commitment if the new commitment in this transaction is intended for this client
             await storeCommitment(commitment, nsk);
-            await markOnChain(nonZeroCommitments, blockNumberL2);
+            await markOnChain(nonZeroCommitments, blockNumberL2, data.blockNumber);
           }
         } catch (err) {
           logger.info(err);
@@ -81,7 +81,7 @@ async function blockProposedEventHandler(data, keys = [ZERO, ZERO]) {
       // this client and stored during withdraw transaction creation. If so, only update that nullifier is on chain
       // If not this nullifier need not be stored or updated by other clients
       if ((await countNullifiers(transaction.nullifiers)) > 0) {
-        await markNullifiedOnChain(nonZeroNullifiers, blockNumberL2);
+        await markNullifiedOnChain(nonZeroNullifiers, blockNumberL2, data.blockNumber);
       }
     } else logger.error('Transaction type is invalid. Transaction type is', transaction.Type);
   });
