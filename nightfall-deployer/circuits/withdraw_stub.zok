@@ -4,10 +4,11 @@ struct OldCommitment {
 	u32[8] value
 	u32[8] salt
 	u32[8] hash
+	field ask
 }
 
 struct Nullifier {
-	u32[8] privateKeySender
+	u32[8] nsk
 	u32[8] hash
 }
 
@@ -30,14 +31,15 @@ def main(\
 				oldCommitment.value[i] +\
 				oldCommitment.salt[i] +\
 				oldCommitment.hash[i] +\
-				nullifier.privateKeySender[i] +\
+				nullifier.nsk[i] +\
 				nullifier.hash[i]
 	endfor
 
 	for field i in 0..33 do
 		u = u * path[i]
 	endfor
-	u = u * order * recipientAddress
+	u = u * order * recipientAddress * oldCommitment.ask
+
 	assert(v == v)
 	assert(u == u)
 

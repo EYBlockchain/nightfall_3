@@ -25,6 +25,7 @@ function calcBlockHash(block, transactions) {
       recipientAddress,
       commitments,
       nullifiers,
+      compressedSecrets,
       proof,
     } = t;
     return [
@@ -38,6 +39,7 @@ function calcBlockHash(block, transactions) {
       recipientAddress,
       commitments,
       nullifiers,
+      compressedSecrets,
       proof, // note - this is not compressed here
     ];
   });
@@ -77,6 +79,7 @@ async function getProposeBlockCalldata(eventData) {
       recipientAddress,
       commitments,
       nullifiers,
+      compressedSecrets,
       proof,
     ] = t;
     const transaction = {
@@ -90,6 +93,7 @@ async function getProposeBlockCalldata(eventData) {
       recipientAddress,
       commitments,
       nullifiers,
+      compressedSecrets,
       proof, // note - this is not decompressed here
     };
     // note, this transaction is incomplete in that the 'fee' field is empty.

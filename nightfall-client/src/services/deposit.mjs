@@ -10,11 +10,11 @@ import config from 'config';
 import axios from 'axios';
 import gen from 'general-number';
 import rand from 'common-files/utils/crypto/crypto-random.mjs';
-import sha256 from 'common-files/utils/crypto/sha256.mjs';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
 import logger from 'common-files/utils/logger.mjs';
 import { Commitment, PublicInputs, Transaction } from '../classes/index.mjs';
 import { storeCommitment } from './commitment-storage.mjs';
+import { compressPublicKey } from './keys.mjs';
 
 const {
   ZKP_KEY_LENGTH,
@@ -31,12 +31,13 @@ async function deposit(items) {
   logger.info('Creating a deposit transaction');
   // before we do anything else, long hex strings should be generalised to make
   // subsequent manipulations easier
-  const { ercAddress, tokenId, value, zkpPrivateKey, fee } = generalise(items);
-  const zkpPublicKey = sha256([zkpPrivateKey]);
+  const { ercAddress, tokenId, value, pkd, nsk, fee } = generalise(items);
+  const compressedPkd = compressPublicKey(pkd);
+
   // we also need a salt to make the commitment unique and increase its entropy
   const salt = await rand(ZKP_KEY_LENGTH);
   // next, let's compute the zkp commitment we're going to store and the hash of the public inputs (truncated to 248 bits)
-  const commitment = new Commitment({ ercAddress, tokenId, value, zkpPublicKey, salt });
+  const commitment = new Commitment({ ercAddress, tokenId, value, compressedPkd, salt });
   const publicInputs = new PublicInputs([ercAddress, tokenId, value, commitment.hash]);
   logger.debug(`Hash of new commitment is ${commitment.hash.hex()}`);
   // now we can compute a Witness so that we can generate the proof
@@ -45,7 +46,7 @@ async function deposit(items) {
     ercAddress.limbs(32, 8),
     tokenId.limbs(32, 8),
     value.limbs(32, 8),
-    zkpPublicKey.limbs(32, 8),
+    compressedPkd.limbs(32, 8),
     salt.limbs(32, 8),
     commitment.hash.limbs(32, 8),
   ].flat(Infinity);
@@ -87,7 +88,7 @@ async function deposit(items) {
       .encodeABI();
     // store the commitment on successful computation of the transaction
     commitment.isDeposited = true;
-    storeCommitment(commitment, zkpPrivateKey);
+    storeCommitment(commitment, nsk);
     return { rawTransaction, transaction: optimisticDepositTransaction };
   } catch (err) {
     throw new Error(err); // let the caller handle the error

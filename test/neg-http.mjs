@@ -1,10 +1,9 @@
 import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
-import gen from 'general-number';
 import Queue from 'queue';
 import WebSocket from 'ws';
-import sha256 from '../common-files/utils/crypto/sha256.mjs';
+import config from 'config';
 import {
   closeWeb3Connection,
   submitTransaction,
@@ -15,9 +14,10 @@ import {
   topicEventMapping,
   setNonce,
 } from './utils.mjs';
+import { generateKeys } from '../nightfall-client/src/services/keys.mjs';
 
+const { ZKP_KEY_LENGTH } = config;
 const { expect } = chai;
-const { GN } = gen;
 const txQueue = new Queue({ autostart: true, concurrency: 1 });
 const ZERO = '0x0000000000000000000000000000000000000000000000000000000000000000';
 chai.use(chaiHttp);
@@ -30,11 +30,14 @@ describe('Testing the challenge http API', () => {
   let stateAddress;
   let ercAddress;
   let connection; // WS connection
-  const zkpPrivateKey = '0xc05b14fa15148330c6d008814b0bdd69bc4a08a1bd0b629c42fa7e2c61f16739'; // the zkp private key we're going to use in the tests.
-  const zkpPublicKey = sha256([new GN(zkpPrivateKey)]).hex();
+  let ask1;
+  let nsk1;
+  let ivk1;
+  let pkd1;
+
   const url = 'http://localhost:8080';
   const optimistUrl = 'http://localhost:8081';
-  const optimistWsUrl = 'ws:localhost:8082';
+  const optimistWsUrl = 'ws://localhost:8082';
   const tokenId = '0x00';
   const tokenType = 'ERC20'; // it can be 'ERC721' or 'ERC1155'
   const value = 10;
@@ -48,7 +51,8 @@ describe('Testing the challenge http API', () => {
   // this is what we pay the proposer for incorporating a transaction
   const fee = 1;
   const BLOCK_STAKE = 1000000000000000000; // 1 ether
-
+  const eventLogs = [];
+  const txPerBlock = 2;
   let topicsBlockHashIncorrectRootInBlock;
   let topicsBlockHashDuplicateTransaction;
   let topicsBlockHashInvalidTransaction;
@@ -58,8 +62,6 @@ describe('Testing the challenge http API', () => {
   let topicsBlockHashDuplicateNullifier;
   let topicsBlockHashIncorrectLeafCount;
   let web3;
-  const eventLogs = [];
-  const txPerBlock = 2;
 
   before(async () => {
     web3 = await connectWeb3();
@@ -88,6 +90,8 @@ describe('Testing the challenge http API', () => {
     // set the current nonce before we start the test
     setNonce(await web3.eth.getTransactionCount((await getAccounts())[0]));
 
+    ({ ask: ask1, nsk: nsk1, ivk: ivk1, pkd: pkd1 } = await generateKeys(ZKP_KEY_LENGTH));
+
     web3.eth.subscribe('logs', { address: stateAddress }).on('data', log => {
       if (log.topics[0] === topicEventMapping.BlockProposed) {
         eventLogs.push('blockProposed');
@@ -102,6 +106,12 @@ describe('Testing the challenge http API', () => {
     res = await chai.request(optimistUrl).post('/proposer/register').send({ address: myAddress });
     txToSign = res.body.txDataToSign;
     await submitTransaction(txToSign, privateKey, proposersAddress, gas, bond);
+
+    // should subscribe to block proposed event with the provided incoming viewing key
+    await chai.request(url).post('/incoming-viewing-key').send({
+      ivk: ivk1,
+      nsk: nsk1,
+    });
 
     connection = new WebSocket(optimistWsUrl);
     connection.onopen = () => {
@@ -154,10 +164,7 @@ describe('Testing the challenge http API', () => {
               `Created flawed block with invalid deposit transaction and blockHash ${res.block.blockHash}`,
             );
           } else if (counter === 5) {
-            res = await createBadBlock('IncorrectHistoricRoot', block, transactions, {
-              ercAddress,
-              zkpPrivateKey,
-            });
+            res = await createBadBlock('IncorrectHistoricRoot', block, transactions);
             topicsBlockHashesIncorrectHistoricRoot = res.block.blockHash;
             txDataToSign = res.txDataToSign;
             console.log(`Created flawed block with invalid historic root ${res.block.blockHash}`);
@@ -219,11 +226,11 @@ describe('Testing the challenge http API', () => {
 
   describe('Basic Challenger tests', () => {
     it('should add a Challenger address', async () => {
-      const myAddress = (await getAccounts())[1];
+      const myAddress = (await getAccounts())[0];
       const res = await chai
         .request(optimistUrl)
         .post('/challenger/add')
-        .send({ challenger: myAddress });
+        .send({ address: myAddress });
       expect(res.body.ok).to.equal(1);
     });
   });
@@ -232,19 +239,20 @@ describe('Testing the challenge http API', () => {
     afterEach(async () => {
       while (eventLogs[0] !== 'blockProposed') {
         // eslint-disable-next-line no-await-in-loop
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        await new Promise(resolve => setTimeout(resolve, 10000));
       }
       eventLogs.shift();
     });
 
     it('should create an initial block of deposits', async () => {
+      // eslint-disable-next-line no-await-in-loop
       const depositTransactions = (
         await Promise.all(
           Array.from({ length: txPerBlock }, () =>
             chai
               .request(url)
               .post('/deposit')
-              .send({ ercAddress, tokenId, tokenType, value, zkpPrivateKey, fee }),
+              .send({ ercAddress, tokenId, tokenType, value, pkd: pkd1, nsk: nsk1, fee }),
           ),
         )
       ).map(res => res.body);
@@ -259,10 +267,12 @@ describe('Testing the challenge http API', () => {
           await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee),
         );
       }
+      // eslint-disable-next-line no-await-in-loop
       receiptArrays.forEach(receipt => {
         expect(receipt).to.have.property('transactionHash');
         expect(receipt).to.have.property('blockHash');
       });
+      // await new Promise(resolve => setTimeout(resolve, 3000));
     });
 
     it('should create a block with a single transfer', async () => {
@@ -274,9 +284,10 @@ describe('Testing the challenge http API', () => {
           tokenId,
           recipientData: {
             values: [value],
-            recipientZkpPublicKeys: [zkpPublicKey],
+            recipientPkds: [pkd1],
           },
-          senderZkpPrivateKey: zkpPrivateKey,
+          nsk: nsk1,
+          ask: ask1,
           fee,
         });
       // now we need to sign the transaction and send it to the blockchain
@@ -288,7 +299,7 @@ describe('Testing the challenge http API', () => {
             chai
               .request(url)
               .post('/deposit')
-              .send({ ercAddress, tokenId, tokenType, value, zkpPrivateKey, fee }),
+              .send({ ercAddress, tokenId, tokenType, value, pkd: pkd1, nsk: nsk1, fee }),
           ),
         )
       ).map(depRes => depRes.body);
@@ -316,7 +327,7 @@ describe('Testing the challenge http API', () => {
             chai
               .request(url)
               .post('/deposit')
-              .send({ ercAddress, tokenId, tokenType, value, zkpPrivateKey, fee }),
+              .send({ ercAddress, tokenId, tokenType, value, pkd: pkd1, nsk: nsk1, fee }),
           ),
         )
       ).map(res => res.body);
@@ -343,9 +354,10 @@ describe('Testing the challenge http API', () => {
           tokenId,
           recipientData: {
             values: [value],
-            recipientZkpPublicKeys: [zkpPublicKey],
+            recipientPkds: [pkd1],
           },
-          senderZkpPrivateKey: zkpPrivateKey,
+          nsk: nsk1,
+          ask: ask1,
           fee,
         });
       const { txDataToSign } = res.body;
@@ -387,9 +399,10 @@ describe('Testing the challenge http API', () => {
             tokenId,
             recipientData: {
               values: [value],
-              recipientZkpPublicKeys: [zkpPublicKey],
+              recipientPkds: [pkd1],
             },
-            senderZkpPrivateKey: zkpPrivateKey,
+            nsk: nsk1,
+            ask: ask1,
             fee,
           });
         await submitTransaction(res.body.txDataToSign, privateKey, shieldAddress, gas, fee);
@@ -405,7 +418,7 @@ describe('Testing the challenge http API', () => {
         const res = await chai
           .request(url)
           .post('/deposit')
-          .send({ ercAddress, tokenId, tokenType, value, zkpPrivateKey, fee });
+          .send({ ercAddress, tokenId, tokenType, value, pkd: pkd1, nsk: nsk1, fee });
         // now we need to sign the transaction and send it to the blockchain
         await submitTransaction(res.body.txDataToSign, privateKey, shieldAddress, gas, fee);
       });
@@ -425,9 +438,10 @@ describe('Testing the challenge http API', () => {
             tokenId,
             recipientData: {
               values: [value],
-              recipientZkpPublicKeys: [zkpPublicKey],
+              recipientPkds: [pkd1],
             },
-            senderZkpPrivateKey: zkpPrivateKey,
+            nsk: nsk1,
+            ask: ask1,
             fee,
           });
         // now we need to sign the transaction and send it to the blockchain
@@ -445,7 +459,7 @@ describe('Testing the challenge http API', () => {
         const res = await chai
           .request(url)
           .post('/deposit')
-          .send({ ercAddress, tokenId, tokenType, value, zkpPrivateKey, fee });
+          .send({ ercAddress, tokenId, tokenType, value, pkd: pkd1, nsk: nsk1, fee });
 
         const { txDataToSign } = res.body;
         expect(txDataToSign).to.be.a('string');
@@ -466,7 +480,8 @@ describe('Testing the challenge http API', () => {
           tokenId,
           tokenType,
           value,
-          zkpPrivateKey,
+          pkd: pkd1,
+          nsk: nsk1,
           fee,
         });
         const { txDataToSign } = res.body;
@@ -490,9 +505,10 @@ describe('Testing the challenge http API', () => {
             tokenId,
             recipientData: {
               values: [value],
-              recipientZkpPublicKeys: [zkpPublicKey],
+              recipientPkds: [pkd1],
             },
-            senderZkpPrivateKey: zkpPrivateKey,
+            nsk: nsk1,
+            ask: ask1,
             fee,
           });
         const { txDataToSign } = res.body;
@@ -512,7 +528,8 @@ describe('Testing the challenge http API', () => {
           tokenId,
           tokenType,
           value,
-          zkpPrivateKey,
+          pkd: pkd1,
+          nsk: nsk1,
           fee,
         });
         const { txDataToSign } = res.body;
@@ -535,7 +552,8 @@ describe('Testing the challenge http API', () => {
               tokenId,
               tokenType,
               value,
-              zkpPrivateKey,
+              pkd: pkd1,
+              nsk: nsk1,
               fee,
             });
           const { txDataToSign } = res.body;

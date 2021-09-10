@@ -34,6 +34,7 @@ async function getProposeBlockCalldata(eventData) {
       recipientAddress,
       commitments,
       nullifiers,
+      compressedSecrets,
       proof,
     ] = t;
     const transaction = {
@@ -47,6 +48,7 @@ async function getProposeBlockCalldata(eventData) {
       recipientAddress,
       commitments,
       nullifiers,
+      compressedSecrets,
       proof,
     };
     return transaction;

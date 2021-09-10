@@ -21,8 +21,10 @@
   },
   "homepage": "https://github.com/EYBlockchain/optimistic-nightfall#readme",
   "devDependencies": {
+    "config": "^3.3.1",
     "@commitlint/cli": "^12.1.1",
     "@commitlint/config-conventional": "^12.1.1",
+    "common-files": "file:./common-files",
     "axios": "^0.21.1",
     "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
