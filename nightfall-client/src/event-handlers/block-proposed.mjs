@@ -20,16 +20,7 @@ async function blockProposedEventHandler(data, keys = [ZERO, ZERO]) {
   // ivk will be used to decrypt secrets whilst nsk will be used to calculate nullifiers for commitments and store them
   const ivk = keys[0];
   const nsk = keys[1];
-  const { transactions, nullifiers, blockNumberL2 } = await getProposeBlockCalldata(data);
-
-  if (nullifiers.length)
-    logger.debug(
-      `Nullifiers appeared on chain at block number ${blockNumberL2}, ${JSON.stringify(
-        nullifiers,
-        null,
-        2,
-      )}`,
-    );
+  const { transactions, blockNumberL2 } = await getProposeBlockCalldata(data);
 
   transactions.forEach(async transaction => {
     // filter out non zero commitments and nullifiers

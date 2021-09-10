@@ -200,7 +200,12 @@ export async function pauseBlockchain(side) {
   };
   const client = `blockchain${side}`;
   const miner = `blockchain-miner${side}`;
-  return Promise.all([compose.pauseOne(client, options), compose.pauseOne(miner, options)]);
+  try {
+    await Promise.all([compose.pauseOne(client, options), compose.pauseOne(miner, options)]);
+  } catch (err) {
+    console.log(err);
+    throw new Error(err);
+  }
 }
 export async function unpauseBlockchain(side) {
   const options = {
