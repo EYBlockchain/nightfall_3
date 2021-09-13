@@ -47,7 +47,7 @@ export async function waitForContract(contractName) {
   return instance;
 }
 
-export async function subscribeToEvents(callback, arg) {
+export async function startEventQueue(callback, arg) {
   const emitterState = (await waitForContract(STATE_CONTRACT_NAME)).events.allEvents();
   const emitterShield = (await waitForContract(SHIELD_CONTRACT_NAME)).events.allEvents();
   const emitterChallenges = (await waitForContract(CHALLENGES_CONTRACT_NAME)).events.allEvents();
@@ -67,6 +67,15 @@ export async function subscribeToNewCurrentProposer(callback, ...args) {
   emitterProp.on('data', event => callback(event, args));
   emitterState.on('data', event => callback(event, args));
   logger.debug('Subscribed to NewCurrentProposer event');
+  return { emitterProp, emitterState };
+}
+
+export async function subscribeToRemovedNewCurrentProposer(callback, ...args) {
+  const emitterProp = (await waitForContract(PROPOSERS_CONTRACT_NAME)).events.NewCurrentProposer();
+  const emitterState = (await waitForContract(STATE_CONTRACT_NAME)).events.NewCurrentProposer();
+  emitterProp.on('changed', event => callback(event, args));
+  emitterState.on('changed', event => callback(event, args));
+  logger.debug('Subscribed to NewCurrentProposer event removal');
   return { emitterProp, emitterState };
 }
 

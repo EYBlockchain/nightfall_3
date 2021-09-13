@@ -29,6 +29,7 @@
     "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
     "chai-http": "^4.3.0",
+    "chai-things": "^0.2.0",
     "eslint": "^7.25.0",
     "eslint-config-codfish": "^10.0.0",
     "find-unused-exports": "^2.0.0",

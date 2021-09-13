@@ -45,24 +45,18 @@ contract Structures {
         uint256[4] proof;
     }
 
-    struct Block {
-        uint48 leafCount; // note this is defined to be the number of leaves BEFORE the commitments in this block are added
-        address proposer;
-        bytes32 root; // the 'output' commmitment root after adding all commitments
-    }
-
-    /*
-  struct LinkedHash {
-    bytes32 thisHash;
-    bytes32 previousHash;
-    bytes32 nextHash;
-    uint data; // metadata (currently holds the block time)
+  struct Block {
+    uint48 leafCount; // note this is defined to be the number of leaves BEFORE the commitments in this block are added
+    address proposer;
+    bytes32 root; // the 'output' commmitment root after adding all commitments
+    uint256 blockNumberL2;
+    bytes32 previousBlockHash;
   }
-  */
-    struct BlockData {
-        bytes32 blockHash; // hash of the block
-        uint256 time; // time the block was created
-    }
+
+  struct BlockData {
+    bytes32 blockHash; // hash of the block
+    uint256 time; // time the block was created
+  }
 
     struct LinkedAddress {
         address thisAddress;

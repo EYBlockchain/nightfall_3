@@ -13,16 +13,15 @@ import { getProposeBlockCalldata } from '../services/process-calldata.mjs';
 This handler runs whenever a BlockProposed event is emitted by the blockchain
 */
 async function blockProposedEventHandler(data) {
-  const currentBlockCount = data.blockNumber;
+  const { blockNumber: currentBlockCount, transactionHash: transactionHashL1 } = data;
   const { block, transactions } = await getProposeBlockCalldata(data);
   logger.info('Received BlockProposed event');
-
   try {
     // and save the block to facilitate later lookup of block data
     // we will save before checking because the database at any time should reflect the state the blockchain holds
     // when a challenge is raised because the is correct block data, then the corresponding block deleted event will
     // update this collection
-    await saveBlock({ blockNumber: currentBlockCount, ...block });
+    await saveBlock({ blockNumber: currentBlockCount, transactionHashL1, ...block });
     // Update the nullifiers we have stored, with the blockhash. These will
     // be deleted if the block check fails and we get a rollback.  We do this
     // before running the block check because we want to delete the nullifiers

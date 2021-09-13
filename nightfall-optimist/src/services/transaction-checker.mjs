@@ -35,7 +35,6 @@ async function checkTransactionHash(transaction) {
 }
 // next that the fields provided are consistent with the transaction type
 async function checkTransactionType(transaction) {
-  logger.debug(`in checkTransactionType: ${JSON.stringify(transaction)}`);
   switch (Number(transaction.transactionType)) {
     // Assuming nullifiers and commitments can't be valid ZEROs.
     // But points can such as compressedSecrets, Proofs
@@ -231,7 +230,7 @@ async function verifyProof(transaction) {
   if (!verifies) throw new TransactionError('The proof did not verify', 5);
 }
 
-function checkTransaction(transaction) {
+async function checkTransaction(transaction) {
   return Promise.all([
     checkTransactionHash(transaction),
     checkTransactionType(transaction),

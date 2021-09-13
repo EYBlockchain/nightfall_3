@@ -2,7 +2,7 @@ import utilsMT from '../../utils-merkle-tree.mjs';
 import logger from '../../logger.mjs';
 
 // This 'leaf' mapper differs from the 'node' mapper.
-export default (treeHeight, { value, nodeIndex, leafIndex, blockNumber }) => {
+export default (treeHeight, { value, nodeIndex, leafIndex, blockNumber, transactionHash }) => {
   // to prevent incorrect leaf data from being stored, we ensure the nodeIndex is calculated correctly from the leafIndex:
   const checkNodeIndex = utilsMT.leafIndexToNodeIndex(leafIndex, treeHeight);
   if (!nodeIndex) {
@@ -19,5 +19,6 @@ export default (treeHeight, { value, nodeIndex, leafIndex, blockNumber }) => {
     nodeIndex,
     leafIndex,
     blockNumber,
+    transactionHash,
   };
 };

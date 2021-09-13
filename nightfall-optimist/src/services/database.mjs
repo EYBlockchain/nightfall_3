@@ -27,13 +27,17 @@ export async function saveCommit(commitHash, txDataToSign) {
   return db.collection(COMMIT_COLLECTION).insertOne({ commitHash, txDataToSign });
 }
 /**
-Function to retrieve a commit, by commitHash
+Function to retrieve a commit, by commitHash, it also returns the 'retrieved'
+which will be true if the commitment hash has already been retrieved
 */
 export async function getCommit(commitHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { commitHash };
-  return db.collection(COMMIT_COLLECTION).findOne(query);
+  const commit = await db.collection(COMMIT_COLLECTION).findOne(query);
+  if (commit)
+    await db.collection(COMMIT_COLLECTION).updateOne(query, { $set: { retrieved: true } });
+  return commit;
 }
 
 /**
@@ -80,10 +84,25 @@ posted to the blockchain, not just ours.
 */
 export async function saveBlock(_block) {
   const block = { _id: _block.blockHash, ..._block };
+  if (!block.transactionHashL1)
+    throw new Error('Layer 2 blocks must be saved with a valid Layer 1 transactionHash');
+  if (!block.blockNumber)
+    throw new Error('Layer 2 blocks must be saved with a valid Layer 1 block number');
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   logger.debug(`saving block ${JSON.stringify(block, null, 2)}`);
-  return db.collection(SUBMITTED_BLOCKS_COLLECTION).insertOne(block);
+  // there are three possibilities here:
+  // 1) We're just saving a block for the first time.  This is fine
+  // 2) We're trying to save a replayed block.  This will correctly fail because the _id will be duplicated
+  // 3) We're trying to save a block that we've seen before but it was re-mined due to a chain reorg. In
+  //    this case, it's fine, we just update the layer 1 blocknumber and transactionHash to the new values
+  const query = { blockHash: block.blockHash };
+  const update = { $set: block };
+  const existing = await db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
+  if (!existing || !existing.blockNumber) {
+    return db.collection(SUBMITTED_BLOCKS_COLLECTION).updateOne(query, update, { upsert: true });
+  }
+  throw new Error('Attempted to replay existing layer 2 block');
 }
 
 /**
@@ -151,16 +170,6 @@ export async function deleteBlock(blockHash) {
 }
 
 /**
-function to delete blocks with a layer 1 block number >= blockNumber
-*/
-export async function deleteBlocksFromBlockNumberL1(blockNumber) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  const query = { blockNumber: { $gte: Number(blockNumber) } };
-  return db.collection(SUBMITTED_BLOCKS_COLLECTION).deleteMany(query);
-}
-
-/**
 function to find blocks with a layer 2 blockNumber >= blockNumberL2
 */
 export async function findBlocksFromBlockNumberL2(blockNumberL2) {
@@ -214,10 +223,28 @@ export async function getMostProfitableTransactions(number) {
 Function to save a (unprocessed) Transaction
 */
 export async function saveTransaction(_transaction) {
-  const transaction = { _id: _transaction.transactionHash, ..._transaction, mempool: true };
+  const { mempool = true } = _transaction; // mempool may not exist
+  const transaction = { _id: _transaction.transactionHash, ..._transaction, mempool };
+  logger.debug(
+    `saving transaction ${transaction.transactionHash}, with layer 1 block number ${_transaction.blockNumber}`,
+  );
+  // there are three possibilities here:
+  // 1) We're just saving a transaction for the first time.  This is fine
+  // 2) We're trying to save a replayed transaction.  This will correctly fail because the _id will be duplicated
+  // 3) We're trying to save a transaction that we've seen before but it was re-mined due to a chain reorg. In
+  //    this case, it's fine, we just update the layer 1 blocknumber and transactionHash to the new values
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  return db.collection(TRANSACTIONS_COLLECTION).insertOne(transaction);
+  const query = { transactionHash: transaction.transactionHash };
+  const update = { $set: transaction };
+  const existing = await db.collection(TRANSACTIONS_COLLECTION).findOne(query);
+  if (!existing)
+    return db.collection(TRANSACTIONS_COLLECTION).updateOne(query, update, { upsert: true });
+  if (!existing.blockNumber) {
+    logger.info('Saving re-mined transaction resulting from chain reorganisation');
+    return db.collection(TRANSACTIONS_COLLECTION).updateOne(query, update, { upsert: true });
+  }
+  throw new Error('Attempted to replay existing transaction');
 }
 
 /**
@@ -297,11 +324,28 @@ export async function deleteTransferAndWithdraw(transactionHashes) {
   return db.collection(TRANSACTIONS_COLLECTION).deleteMany(query);
 }
 
-export async function deleteTransactionsFromBlockNumberL1(blockNumber) {
+// function that sets the Block's L1 blocknumber to null
+// to indicate that it's back in the L1 mempool (and will probably be re-mined
+// and given a new L1 transactionHash)
+export async function clearBlockNumberL1ForBlock(transactionHashL1) {
+  logger.debug(`clearing layer 1 blockNumber for L2 block with L1 hash ${transactionHashL1}`);
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  const query = { blockNumber: { $gte: Number(blockNumber) } };
-  return db.collection(TRANSACTIONS_COLLECTION).deleteMany(query);
+  const query = { transactionHashL1 };
+  const update = { $set: { blockNumber: null } };
+  return db.collection(SUBMITTED_BLOCKS_COLLECTION).updateOne(query, update);
+}
+
+// function that sets the Transactions's L1 blocknumber to null
+// to indicate that it's back in the L1 mempool (and will probably be re-mined
+// and given a new L1 transactionHash)
+export async function clearBlockNumberL1ForTransaction(transactionHashL1) {
+  logger.debug(`clearing layer 1 blockNumber for L2 transaction with L1 hash ${transactionHashL1}`);
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { transactionHashL1 };
+  const update = { $set: { blockNumber: null } };
+  return db.collection(TRANSACTIONS_COLLECTION).updateOne(query, update);
 }
 
 export async function saveNullifiers(nullifiers, blockNumber) {
@@ -349,13 +393,6 @@ export async function deleteNullifiers(blockHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { blockHash };
-  return db.collection(NULLIFIER_COLLECTION).deleteMany(query);
-}
-
-export async function deleteNullifiersFromBlockNumberL1(blockNumber) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  const query = { blockNumber: { $gte: Number(blockNumber) } };
   return db.collection(NULLIFIER_COLLECTION).deleteMany(query);
 }
 

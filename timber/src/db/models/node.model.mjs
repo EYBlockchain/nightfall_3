@@ -30,6 +30,10 @@ export default new mongoose.Schema(
       // the blockNumber during which this leaf was emitted
       type: Number,
     },
+    transactionHash: {
+      // the (layer 1) transactionHash for the transaction that created this leaf
+      type: String,
+    },
   },
 
   // { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } },

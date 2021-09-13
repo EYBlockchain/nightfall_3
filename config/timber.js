@@ -74,7 +74,7 @@ module.exports = {
   web3: {
     host: process.env.BLOCKCHAIN_WS_HOST,
     port: process.env.BLOCKCHAIN_PORT,
-
+    // not used - remove after testing shows it's not needed:
     options: {
       defaultAccount: '0x0',
       defaultBlock: '0', // e.g. the genesis block our blockchain
@@ -88,7 +88,7 @@ module.exports = {
   },
   LOG_LEVEL: process.env.LOG_LEVEL || 'info',
   PROPOSE_BLOCK_TYPES: [
-    '(uint48,address,bytes32)',
+    '(uint48,address,bytes32,uint256,bytes32)',
     '(uint64,uint64,uint8,uint8,bytes32,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[8],uint[4])[]',
   ],
 };

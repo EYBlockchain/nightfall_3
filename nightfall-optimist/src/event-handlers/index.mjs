@@ -1,6 +1,7 @@
 import {
-  subscribeToEvents,
+  startEventQueue,
   subscribeToNewCurrentProposer,
+  subscribeToRemovedNewCurrentProposer,
   subscribeToBlockAssembledWebSocketConnection,
   subscribeToChallengeWebSocketConnection,
 } from './subscribe.mjs';
@@ -10,10 +11,11 @@ import transactionSubmittedEventHandler from './transaction-submitted.mjs';
 import rollbackEventHandler from './rollback.mjs';
 import committedToChallengeEventHandler from './challenge-commit.mjs';
 import {
-  removeRollbackEventHandler,
+  // removeRollbackEventHandler,
   removeBlockProposedEventHandler,
   removeCommittedToChallengeEventHandler,
   removeNewCurrentProposerEventHandler,
+  removeTransactionSubmittedEventHandler,
 } from './chain-reorg.mjs';
 
 const eventHandlers = {
@@ -22,18 +24,20 @@ const eventHandlers = {
   Rollback: rollbackEventHandler,
   CommittedToChallenge: committedToChallengeEventHandler,
   removers: {
-    Rollback: removeRollbackEventHandler,
+    // Rollback: removeRollbackEventHandler,
     BlockProposed: removeBlockProposedEventHandler,
     CommittedToChallenge: removeCommittedToChallengeEventHandler,
-    NewCurrentProposer: removeNewCurrentProposerEventHandler,
+    TransactionSubmitted: removeTransactionSubmittedEventHandler,
   },
 };
 
 export {
-  subscribeToEvents,
+  startEventQueue,
   subscribeToNewCurrentProposer,
+  subscribeToRemovedNewCurrentProposer,
   subscribeToBlockAssembledWebSocketConnection,
   subscribeToChallengeWebSocketConnection,
   newCurrentProposerEventHandler,
+  removeNewCurrentProposerEventHandler,
   eventHandlers,
 };

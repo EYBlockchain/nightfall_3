@@ -30,7 +30,7 @@ describe('Testing the http API', () => {
   let ercAddress;
   let connection; // WS connection
   let web3;
-  let ask1;
+  // let ask1;
   let nsk1;
   let ivk1;
   let pkd1;
@@ -45,7 +45,6 @@ describe('Testing the http API', () => {
   const privateKey = '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e';
   const gas = 10000000;
   // this is also accounts[0]
-  const recipientAddress = '0x9c8b2276d490141ae1440da660e470e7c0349c63';
   // this is what we pay the proposer for incorporating a transaction
   const fee = 1;
   const BLOCK_STAKE = 1000000000000000000; // 1 ether
@@ -78,8 +77,6 @@ describe('Testing the http API', () => {
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
     });
-    const totalGas = receiptArrays.reduce((acc, { gasUsed }) => acc + Number(gasUsed), 0);
-    console.log(`     Average Gas used was ${Math.ceil(totalGas / (txPerBlock * numDeposits))}`);
     // Wait until we see the right number of blocks appear
     while (eventLogs.length !== numDeposits) {
       // eslint-disable-next-line no-await-in-loop
@@ -89,10 +86,12 @@ describe('Testing the http API', () => {
     for (let i = 0; i < numDeposits; i++) {
       eventLogs.shift();
     }
+    return receiptArrays;
   };
-
-  const doWithdraws = async numWithdraws => {
-    const withdrawTransactions = (
+  /*
+  const createDepositTransactions = async numDeposits => {
+    // We create enough transactions to fill numDeposits blocks full of deposits.
+    const depositTransactions = (
       await Promise.all(
         Array.from({ length: txPerBlock * numWithdraws }, () =>
           chai.request(url).post('/withdraw').send({
@@ -106,21 +105,35 @@ describe('Testing the http API', () => {
           }),
         ),
       )
-    ).map(wRes => wRes.body);
-    withdrawTransactions.forEach(({ txDataToSign }) => expect(txDataToSign).to.be.a('string'));
-    for (let i = 0; i < withdrawTransactions.length; i++) {
-      const { txDataToSign } = withdrawTransactions[i];
-      // eslint-disable-next-line no-await-in-loop
-      await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
+    ).map(res => res.body.txDataToSign);
+    depositTransactions.forEach(txDataToSign => expect(txDataToSign).to.be.a('string'));
+    return depositTransactions;
+  };
+
+  const submitDepositTransactions = async depositTransactions => {
+    const receiptArrays = [];
+    for (let i = 0; i < depositTransactions.length; i++) {
+      const txDataToSign = depositTransactions[i];
+      receiptArrays.push(
+        // eslint-disable-next-line no-await-in-loop
+        await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee),
+        // we need to await here as we need transactions to be submitted sequentially or we run into nonce issues.
+      );
     }
-    while (eventLogs.length !== numWithdraws) {
+    receiptArrays.forEach(receipt => {
+      expect(receipt).to.have.property('transactionHash');
+      expect(receipt).to.have.property('blockHash');
+    });
+    // Wait until we see the right number of blocks appear
+    while (eventLogs.length !== numDeposits) {
       // eslint-disable-next-line no-await-in-loop
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
     // Now we can empty the event queue
-    for (let i = 0; i < numWithdraws; i++) {
+    for (let i = 0; i < numDeposits; i++) {
       eventLogs.shift();
     }
+    return receiptArrays;
   };
 
   const doSingleTransferTwice = async () => {
@@ -155,7 +168,7 @@ describe('Testing the http API', () => {
       });
     if (res.status !== 200) throw new Error(res.text);
   };
-
+*/
   before(async () => {
     web3 = await connectWeb3();
 
@@ -174,7 +187,7 @@ describe('Testing the http API', () => {
       if (log.topics[0] === topicEventMapping.BlockProposed) eventLogs.push('blockProposed');
     });
 
-    ({ ask: ask1, nsk: nsk1, ivk: ivk1, pkd: pkd1 } = await generateKeys(ZKP_KEY_LENGTH));
+    ({ nsk: nsk1, ivk: ivk1, pkd: pkd1 } = await generateKeys(ZKP_KEY_LENGTH));
 
     connection = new WebSocket(optimistWsUrl);
     connection.onopen = () => {
@@ -253,65 +266,125 @@ describe('Testing the http API', () => {
     });
   });
 
-  describe('Show we have no suitable transactions', () => {
+  describe('Start a normal chain', () => {
     // we start by just sending enough deposits to fill one block
     // set the number of deposit transactions blocks to perform.
     const numDeposits = 1;
     it('should deposit enough crypto into fork to fill one layer 2 block', async () => {
       await expect(doDeposits(numDeposits)).to.eventually.be.fulfilled;
-    });
-    // next we withdraw each of the deposits
-    const numWithdraws = 1;
-    it('should withdraw all of our ZKP commitments, taking another block to do so', async () => {
-      await expect(doWithdraws(numWithdraws)).to.eventually.be.fulfilled;
-    });
-    // now we attempt a transfer.  This should fail because all of our deposited
-    // commitments should have been nullified by the withdrawals.
-    it('should fail to transfer some crypto because there are no available input commitments', async () => {
-      await expect(doSingleTransferTwice()).to.be.rejectedWith(
-        'No suitable commitments were found',
-      );
+      console.log('     BlockNumber is:', await web3.eth.getBlockNumber());
     });
   });
 
-  describe.skip('Create fork', () => {
+  describe('Create fork and test chain reorganisation', () => {
     const numDeposits = 1;
     let blocks1;
-    it('should deposit enough crypto into fork to fill a layer 2 block into half the chain', async () => {
+    let receipts;
+    /*
+    it('should create a chain fork with both branches containing NF_3 transactions', async () => {
       // at this point we have no suitable commitments. Let's hold half of the nodes
       // and add some commitments to the un-held half
-      console.log('BLOCKNUMBER is:', await web3.eth.getBlockNumber());
+      console.log(
+        '     *Nightfall_3 is connected to node set 1, nothing is connected to node set 2*',
+      );
+      console.log(
+        '     Pausing node set 2 and waiting one minute for all L1 transactions to complete',
+      );
       await pauseBlockchain(2); // hold one half of the nodes
-      await new Promise(resolve => setTimeout(resolve, 30000));
-      console.log('depositing');
-      await expect(doDeposits(numDeposits)).to.eventually.be.fulfilled; // add transactions to the other half
-      console.log('deposited');
+      await new Promise(resolve => setTimeout(resolve, 60000));
+      console.log('     Creating one block of deposit transactions with node set 1');
+      receipts = await doDeposits(numDeposits); // add transactions to the other half
+      console.log('     Block created');
+      // test the receipts are good.
+      const recs = await Promise.all(
+        receipts.map(receipt => web3.eth.getTransactionReceipt(receipt.transactionHash)),
+      );
+      expect(recs).to.not.include(null);
       blocks1 = await web3.eth.getBlockNumber();
-      console.log('BLOCKNUMBER is:', blocks1);
-    });
-    it('should still fail to withdraw from the other half', async () => {
-      // now we have only one half of the chain with commitments
-      // if we swap to the half without commitments, a transfer should still fail
-      const web3b = await connectWeb3NoState('http://localhost:8547');
+      console.log(
+        '     BlockNumber for node set 1 is:',
+        blocks1,
+        '. Pausing node set 1 and unpausing node set 2',
+      );
       await pauseBlockchain(1);
       await unpauseBlockchain(2);
-      console.log('BLOCKNUMBER is:', await web3b.eth.getBlockNumber());
+    });
+    */
+    it('should create a chain fork containing transactions', async () => {
+      // at this point we have no suitable commitments. Let's hold half of the nodes
+      // and add some commitments to the un-held half
+      console.log(
+        '     *Nightfall_3 is connected to node set 1, nothing is connected to node set 2*',
+      );
+      console.log(
+        '     Pausing node set 2 and waiting one minute for all L1 transactions to complete',
+      );
+      await pauseBlockchain(2); // hold one half of the nodes
+      await new Promise(resolve => setTimeout(resolve, 60000));
+      console.log('     Creating one block of deposit transactions with node set 1');
+      receipts = await doDeposits(numDeposits); // add transactions to the other half
+      console.log('     Block created');
+      // test the receipts are good.
+      const recs = await Promise.all(
+        receipts.map(receipt => web3.eth.getTransactionReceipt(receipt.transactionHash)),
+      );
+      expect(recs).to.not.include(null);
+      blocks1 = await web3.eth.getBlockNumber();
+      console.log(
+        '     BlockNumber for node set 1 is:',
+        blocks1,
+        '. Pausing node set 1 and unpausing node set 2',
+      );
+      await pauseBlockchain(1);
+      await unpauseBlockchain(2);
+    });
+
+    it('should create a chain reorg', async () => {
+      // now we have only one half of the chain with commitments
+      const web3b = await connectWeb3NoState('http://localhost:8547');
+      console.log('     Node set 2 is active.  Blocknumber is:', await web3b.eth.getBlockNumber());
+      // let's wait until the half without any commitments is longer than the
+      // one with commitments.  That should make it the new canonical chain
       do {
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 15000));
         console.log(
-          'Waiting for blocks to be mined - current block is',
+          '     Mining blocks on node set 2 - current block is',
           // eslint-disable-next-line no-await-in-loop
           await web3b.eth.getBlockNumber(),
         );
         // eslint-disable-next-line no-await-in-loop
-      } while ((await web3b.eth.getBlockNumber()) < blocks1 + 10);
-      console.log('BLOCKNUMBER is:', await web3b.eth.getBlockNumber());
+      } while ((await web3b.eth.getBlockNumber()) < blocks1 + 5);
+      console.log(
+        '     Blocknumber for node set 2 is:',
+        await web3b.eth.getBlockNumber(),
+        '. Unpausing node set 1 to force chain reorg',
+      );
       // we need to connect to that half first
       // then attempt a transfer.
+      await pauseBlockchain(2);
       await unpauseBlockchain(1);
-      await expect(doSingleTransferTwice()).to.be.rejectedWith(
-        'No suitable commitments were found',
+      console.log('     BlockNumber for node set 1 is:', await web3.eth.getBlockNumber());
+      await unpauseBlockchain(2);
+      // a chain reorg should now occur - wait a minute for it to happen
+      console.log('     Blocknumber for node set 2 is:', await web3b.eth.getBlockNumber());
+      console.log('     BlockNumber for node set 1 is:', await web3.eth.getBlockNumber());
+      console.log('     Waiting 10 s to check that the reorg occurs');
+      await new Promise(resolve => setTimeout(resolve, 60000));
+      console.log('     Blocknumber for node set 2 is:', await web3b.eth.getBlockNumber());
+      console.log('     BlockNumber for node set 1 is:', await web3.eth.getBlockNumber());
+      closeWeb3Connection(web3b);
+    });
+    it('Chain re-org should have replaced original transactions', async function () {
+      // the transactionHashes should point to transactions that no longer exist. The
+      // re-mined transactions will have different block numbers.
+      await Promise.all(
+        receipts.map(async receipt => {
+          const rec = await web3.eth.getTransactionReceipt(receipt.transactionHash);
+          expect(rec.blockHash).to.not.equal(receipt.blockHash);
+          expect(rec.blockNumber).to.not.equal(receipt.blockNumber);
+          expect(rec.transactionHash).to.equal(receipt.transactionHash);
+        }),
       );
     });
   });

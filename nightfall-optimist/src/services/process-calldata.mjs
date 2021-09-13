@@ -22,11 +22,13 @@ export async function getProposeBlockCalldata(eventData) {
   const decoded = web3.eth.abi.decodeParameters(PROPOSE_BLOCK_TYPES, abiBytecode);
   const blockData = decoded['0'];
   const transactionsData = decoded['1'];
-  const [leafCount, proposer, root] = blockData;
+  const [leafCount, proposer, root, blockNumberL2, previousBlockHash] = blockData;
   const block = {
     proposer,
     root,
     leafCount: Number(leafCount),
+    blockNumberL2: Number(blockNumberL2),
+    previousBlockHash,
   };
   const transactions = transactionsData.map(t => {
     const [
@@ -74,6 +76,7 @@ export async function getProposeBlockCalldata(eventData) {
   // that we are dealing with.  TODO - this may get unmanageable with large
   // numbers of L2 blocks. Then we'll need to store it in a DB and sync
 
+  // TODO - do we need this code now that the blockNumberL2 is stored in the struct?...
   // This gets all blocks that we have stored locally - could be improved by pre-filtering here
   const storedBlocks = await getBlocks();
   const storedL2BlockNumbers = storedBlocks.map(s => s.blockNumberL2);

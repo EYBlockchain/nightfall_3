@@ -17,8 +17,16 @@ export default class HistoryService {
   Saves the given root and associated frontier, leafIndex and block
   Added by Westlad
   */
-  async saveTreeHistory({ root, oldRoot, frontier, leafIndex, currentLeafCount, blockNumber }) {
-    logger.debug('src/db/service/metadata.service saveTreeHistory()');
+  async saveTreeHistory({
+    root,
+    oldRoot,
+    frontier,
+    leafIndex,
+    currentLeafCount,
+    blockNumber,
+    transactionHash,
+  }) {
+    logger.debug('src/db/service/history.service saveTreeHistory()');
     // insert the leaf into the 'nodes' collection:
     try {
       const dbResponse = await this.db.save(COLLECTIONS.HISTORY, {
@@ -28,6 +36,7 @@ export default class HistoryService {
         leafIndex,
         currentLeafCount,
         blockNumber,
+        transactionHash,
       });
       return dbResponse;
     } catch (err) {
@@ -50,6 +59,16 @@ export default class HistoryService {
     );
     const docs = await this.db.getDoc(COLLECTIONS.HISTORY, {
       currentLeafCount,
+    });
+    return historyMapper(docs);
+  }
+
+  async getTreeHistoryByTransactionHash(transactionHash) {
+    logger.debug(
+      `src/db/service/history.service getTreeHistoryByTransactionHash(${transactionHash})`,
+    );
+    const docs = await this.db.getDoc(COLLECTIONS.HISTORY, {
+      transactionHash,
     });
     return historyMapper(docs);
   }

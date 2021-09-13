@@ -12,6 +12,7 @@ services:
   client2:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
+      AUTOSTART_RETRIES: 100
 
   deployer:
     environment:
@@ -33,7 +34,10 @@ services:
   timber2:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
+      AUTOSTART_RETRIES: 100
+      # LOG_LEVEL: debug
 
   optimist2:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
+      AUTOSTART_RETRIES: 100

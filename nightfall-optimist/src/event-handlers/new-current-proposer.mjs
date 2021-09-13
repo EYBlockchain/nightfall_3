@@ -18,7 +18,7 @@ async function newCurrentProposerEventHandler(data, args) {
   try {
     logger.info(`Proposer Handler - Current proposer is ${currentProposer}`);
     // remember the current proposer.  We don't store it in the DB as it's an
-    // ephemeral thing. Instead, we have a nice object to remember it. The
+    // ephemeral thing. Instead, we have an object to remember it. The
     // object is instantiated at the 'main()' level, so will stay in scope even
     // when this handler exits.
     proposer.address = currentProposer;

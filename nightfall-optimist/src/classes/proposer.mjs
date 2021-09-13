@@ -7,6 +7,8 @@ class Proposer {
 
   isMe = false;
 
+  proposers = [];
+
   constructor() {
     return { address: this.address, isMe: this.isMe };
   }

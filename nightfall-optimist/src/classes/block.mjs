@@ -33,6 +33,8 @@ class Block {
 
   blockNumberL2; // the number (index) of this Layer 2 block
 
+  previousBlockHash; // the block hash of the previous block (for re-assembling the chain after a reorg)
+
   static localLeafCount = 0; // ensure this is less than Timber to start with
 
   static localBlockNumberL2 = 0;
@@ -41,10 +43,20 @@ class Block {
 
   static localRoot = 0;
 
+  static localPreviousBlockHash = ZERO;
+
   constructor(asyncParams) {
     if (asyncParams === undefined) throw new Error('Cannot be called directly');
-    const { proposer, transactionHashes, leafCount, root, blockHash, nCommitments, blockNumberL2 } =
-      asyncParams;
+    const {
+      proposer,
+      transactionHashes,
+      leafCount,
+      root,
+      blockHash,
+      nCommitments,
+      blockNumberL2,
+      previousBlockHash,
+    } = asyncParams;
     this.leafCount = leafCount;
     this.proposer = proposer;
     this.transactionHashes = transactionHashes;
@@ -52,6 +64,7 @@ class Block {
     this.blockHash = blockHash;
     this.nCommitments = nCommitments;
     this.blockNumberL2 = blockNumberL2;
+    this.previousBlockHash = previousBlockHash;
   }
 
   // computes the root and hash. We use a Builder pattern because it's very
@@ -64,14 +77,20 @@ class Block {
     // We'd like to get the block number from the blockchain like this:
     const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
     let blockNumberL2 = Number(await stateContractInstance.methods.getNumberOfL2Blocks().call());
+    let previousBlockHash = await stateContractInstance.methods.getLatestBlockHash().call();
     // Of course, just like with the leafCount below, it's possible that the
     // previously made block hasn't been added to the blockchain yet. In that
     // case, this block will have the same block number as the previous block
     // and will rightly be reverted when we attempt to add it to the chain.
     // Thus, we proceed as for the leafCount and keep a local value, updating
     // only if the on-chain value is ahead of our local value.
-    if (blockNumberL2 >= this.localBlockNumberL2) this.localBlockNumberL2 = blockNumberL2;
-    else blockNumberL2 = this.localBlockNumberL2;
+    if (blockNumberL2 >= this.localBlockNumberL2) {
+      this.localBlockNumberL2 = blockNumberL2;
+      this.localPreviousBlockHash = previousBlockHash;
+    } else {
+      blockNumberL2 = this.localBlockNumberL2;
+      previousBlockHash = this.localPreviousBlockHash;
+    }
     // we have to get the current frontier from Timber, so that we can compute
     // the new root, bearing in mind that the transactions in this block won't
     // be in Timber yet.  However, Timber has a handy update
@@ -120,9 +139,10 @@ class Block {
     this.localRoot = root;
     // compute the keccak hash of the proposeBlock signature
     const blockHash = this.calcHash(
-      { proposer, root, leafCount, nCommitments, blockNumberL2 },
+      { proposer, root, leafCount, nCommitments, blockNumberL2, previousBlockHash },
       transactions,
     );
+    this.localPreviousBlockHash = blockHash;
     // note that the transactionHashes array is not part of the on-chain block
     // but we compute it here for convenience. It needs removing before sending
     // a block object to the blockchain.
@@ -134,6 +154,7 @@ class Block {
       blockHash,
       nCommitments,
       blockNumberL2,
+      previousBlockHash,
     });
   }
 
@@ -145,6 +166,7 @@ class Block {
     this.localLeafCount = 0;
     this.localBlockNumberL2 = 0;
     this.localRoot = 0;
+    this.localPreviousBlockHash = ZERO;
   }
 
   static checkHash(block, transactions) {
@@ -153,8 +175,8 @@ class Block {
 
   static calcHash(block, transactions) {
     const web3 = Web3.connection();
-    const { proposer, root, leafCount } = block;
-    const blockArray = [leafCount, proposer, root];
+    const { proposer, root, leafCount, blockNumberL2, previousBlockHash } = block;
+    const blockArray = [leafCount, proposer, root, blockNumberL2, previousBlockHash];
     const transactionsArray = transactions.map(t => {
       const {
         value,
@@ -195,11 +217,13 @@ class Block {
   // remove properties that do not get sent to the blockchain returning
   // a new object (don't mutate the original)
   static buildSolidityStruct(block) {
-    const { proposer, root, leafCount } = block;
+    const { proposer, root, leafCount, blockNumberL2, previousBlockHash } = block;
     return {
       proposer,
       root,
       leafCount: Number(leafCount),
+      blockNumberL2: Number(blockNumberL2),
+      previousBlockHash,
     };
   }
 }
