@@ -29,6 +29,12 @@ const eventHandlers = {
     CommittedToChallenge: removeCommittedToChallengeEventHandler,
     TransactionSubmitted: removeTransactionSubmittedEventHandler,
   },
+  priority: {
+    BlockProposed: 0,
+    TransactionSubmitted: 1,
+    Rollback: 0,
+    CommittedToChallenge: 0,
+  },
 };
 
 export {

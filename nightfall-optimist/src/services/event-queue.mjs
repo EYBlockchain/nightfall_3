@@ -22,15 +22,36 @@ import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 
 const { MAX_QUEUE } = config;
-const eventQueue = new Queue({ autostart: true, concurrency: 1 });
+const fastQueue = new Queue({ autostart: true, concurrency: 1 });
+const slowQueue = new Queue({ autostart: true, concurrency: 1 });
+const queues = [fastQueue, slowQueue];
 
-async function buffer(eventObject, eventHandlers, ...args) {
+/**
+This function will return a promise that resolves to true when the next highest
+priority queue is empty (priority goes in reverse order, prioity 0 is highest
+priority)
+*/
+export function nextHigherPriorityQueueHasEmptied(priority) {
+  return new Promise(resolve => {
+    const listener = () => resolve();
+    if (priority === 0) resolve(); // resolve if we're the highest priority queue
+    queues[priority - 1].once('end', listener); // or when the higher priority queue empties
+    if (queues[priority - 1].length === 0) {
+      queues[priority - 1].removeListener('end', listener);
+      resolve(); // or if it's already empty
+    }
+  });
+}
+
+export async function queueManager(eventObject, eventHandlers, ...args) {
   // handlers contains the functions needed to handle particular types of event,
   // including removal of events when a chain reorganisation happens
   if (!eventHandlers[eventObject.event]) {
     logger.debug(`Unknown event ${eventObject.event} ignored`);
     return;
   }
+  // pull up the priority for the event being handled (removers have identical priority)
+  const priority = eventHandlers.priority[eventObject.event];
   // if the event was removed then we have a chain reorg and need to reset our
   // layer 2 state accordingly.
   if (eventObject.removed) {
@@ -39,15 +60,19 @@ async function buffer(eventObject, eventHandlers, ...args) {
       return;
     }
     logger.info(`Queueing event removal ${eventObject.event}`);
-    eventQueue.push(() => eventHandlers.removers[eventObject.event](eventObject, args));
+    queues[priority].push(async () => {
+      await nextHigherPriorityQueueHasEmptied(priority); // prevent eventHandlers running until the higher priority queue has emptied
+      eventHandlers.removers[eventObject.event](eventObject, args);
+    });
     // otherwise queue the event for processing.
   } else {
     logger.info(`Queueing event ${eventObject.event}`);
-    eventQueue.push(() => eventHandlers[eventObject.event](eventObject, args));
+    queues[priority].push(async () => {
+      await nextHigherPriorityQueueHasEmptied(priority); // prevent eventHandlers running until the higher priority queue has emptied
+      eventHandlers[eventObject.event](eventObject, args);
+    });
   }
   // the queue shouldn't get too long if we're keeping up with the blockchain.
-  if (eventQueue.length > MAX_QUEUE)
+  if (queues[priority].length > MAX_QUEUE)
     logger.warn(`The event queue has more than ${MAX_QUEUE} events`);
 }
-
-export default buffer;

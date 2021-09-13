@@ -17,7 +17,7 @@ import {
 } from './services/block-assembler.mjs';
 import { setChallengeWebSocketConnection } from './services/challenges.mjs';
 import initialBlockSync from './services/state-sync.mjs';
-import buffer from './services/event-queue.mjs';
+import { queueManager } from './services/event-queue.mjs';
 
 const main = async () => {
   try {
@@ -35,7 +35,7 @@ const main = async () => {
     // we do not wait for the initial block sync for these event handlers
     // as we want to still listen to incoming events (just not make blocks)
     // subscribe to blockchain events
-    startEventQueue(buffer, eventHandlers);
+    startEventQueue(queueManager, eventHandlers);
     app.listen(80);
   } catch (err) {
     logger.error(err);
