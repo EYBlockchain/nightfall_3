@@ -2,38 +2,46 @@
 
 VOLUME_LIST=$(docker volume ls -q)
 FILE=
+STUBS=
 
 usage()
 {
   echo "Usage:"
   echo "  -g or --ganache; for a ganache simulator"
   echo "  -l or --localhost; to connect to an already running blockchain on ws://localhost:8546"
+  echo "  -s or --stubs; runs with circuits stubbed out (faster but no checking of ZKP code) - use with either -g or -l"
   echo "  -h or --help; to print this message"
 }
 
 # select a Geth or Ganache client
-if [ "$1" == "" ]; then
+if [ -z "$1" ]; then
   usage
   exit 1
 fi
-while [ "$1" != "" ]; do
+while [ -n "$1" ]; do
   case $1 in
-      -g | --ganache )        FILE="-f docker-compose.ganache.yml"
+      -g | --ganache )        FILE="-f docker-compose.yml -f docker-compose.ganache.yml"
                               ;;
-      -l | --localhost )      FILE="-f docker-compose.host.docker.internal.yml"
+      -l | --localhost )      FILE="-f docker-compose.yml -f docker-compose.host.docker.internal.yml"
                               ;;
       -h | --help )           usage
+                              ;;
+      -s | --stubs )          STUBS="-f docker-compose.stubs.yml"
                               ;;
       * )                     usage
                               exit 1
     esac
   shift
 done
-
+# FILE should always be set.  Asking for -s on its own makes no sense
+if [ -z "$FILE" ]; then
+  usage
+  exit 1
+fi
 # shut down cleanly in the event of a cntl-c etc. We don't want to leave containers running
-trap "docker-compose -f docker-compose.yml $FILE down --remove-orphans -t 1; exit 1" SIGHUP SIGINT SIGTERM
+trap "docker-compose $FILE $STUBS down --remove-orphans -t 1; exit 1" SIGHUP SIGINT SIGTERM
 
-docker-compose -f docker-compose.yml $FILE down --remove-orphans
+docker-compose -f docker-compose.yml $FILE $STUBS  down --remove-orphans
 
 # if-else block checks - volume exist and then removes it.
 if [[ $(echo $VOLUME_LIST | grep nightfall_3_timber-database-volume1) ]]; then
@@ -96,4 +104,4 @@ if [[ -d "$DIR" ]]; then
   rm -dr common-files/node_modules
 fi
 #docker-compose -f docker-compose.yml $FILE up -d deployer
-docker-compose -f docker-compose.yml $FILE up
+docker-compose $FILE $STUBS  up

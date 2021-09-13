@@ -46,7 +46,7 @@ services:
       ENABLE_QUEUE: 1
       OPTIMIST_HOST: optimist1
       OPTIMIST_PORT: 80
-      USE_STUBS: 'true' # make sure this flag is the same as in deployer service
+      USE_STUBS: 'false' # make sure this flag is the same as in deployer service
     command: ['npm', 'run', 'dev']
 
   client2:
@@ -93,7 +93,7 @@ services:
       ENABLE_QUEUE: 1
       OPTIMIST_HOST: optimist2
       OPTIMIST_PORT: 80
-      USE_STUBS: 'true' # make sure this flag is the same as in deployer service
+      USE_STUBS: 'false' # make sure this flag is the same as in deployer service
     command: ['npm', 'run', 'dev']
 
   worker:
@@ -167,7 +167,7 @@ services:
       ZOKRATES_WORKER_HOST: worker
       # TIMBER_HOST: timber1
       # TIMBER_PORT: 80
-      USE_STUBS: 'true'
+      USE_STUBS: 'false'
 
   # Timber service, configured for nightfall
   timber1:
