@@ -56,7 +56,7 @@ This will test the application, creating transactions and assembling them into l
 
 ### Measuring Block Gas used
 
-In reality, a value of two transactions per block, although convenient for testing, wouldn't make very efficient use of Optimism.  A more realistic value is 32 transactions per layer 2 block. This value can be configured by the environment variable `TRANSACTIONS_PER_BLOCK` in the docker-compose.yml file (part of the `optimist` service). This is important for the Block Gas measurement, which requires a value of 32 to be set.
+In reality, a value of two transactions per block, although convenient for testing, wouldn't make very efficient use of Optimism.  A more realistic value is 32 transactions per layer 2 block. This value can be configured by the environment variable `TRANSACTIONS_PER_BLOCK` in the `docker-compose.yml` file (part of the `optimist` service). This is important for the Block Gas measurement, which requires a value of 32 to be set.
 
 To measure the Block Gas used per transaction, first edit the `TRANSACTIONS_PER_BLOCK` variable as above (don't forget to change it back after), restart nightfall_3, and run:
 ```sh
