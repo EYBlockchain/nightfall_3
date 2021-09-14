@@ -24,8 +24,12 @@ module.exports = {
   PROTOCOL: 'http://', // connect to zokrates microservice like this
   WEBSOCKET_PORT: process.env.WEBSOCKET_PORT || 8080,
   ZOKRATES_WORKER_HOST: process.env.ZOKRATES_WORKER_HOST || 'worker',
-  BLOCKCHAIN_WS_HOST: process.env.BLOCKCHAIN_WS_HOST || 'openethereum',
-  BLOCKCHAIN_PORT: process.env.BLOCKCHAIN_PORT || '8546',
+  BLOCKCHAIN_WS_HOST: process.env.BLOCKCHAIN_WS_HOST,
+  BLOCKCHAIN_PORT: process.env.BLOCKCHAIN_PORT,
+  BLOCKCHAIN_TESTNET_URL:
+    process.env.BLOCKCHAIN_TESTNET_URL ||
+    `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`,
+  ETH_MNEMONIC: process.env.ETH_MNEMONIC,
   TIMBER_HOST: process.env.TIMBER_HOST || 'timber',
   TIMBER_PORT: process.env.TIMBER_PORT || 80,
   OPTIMIST_HOST: process.env.OPTIMIST_HOST || 'optimist',
@@ -34,6 +38,15 @@ module.exports = {
     gas: process.env.GAS || 1000000,
     gasPrice: process.env.GAS_PRICE || '20000000000',
     from: process.env.FROM_ADDRESS || undefined,
+  },
+  WEB3_RECONNET: {
+    // Enable auto reconnection
+    reconnect: {
+      auto: true,
+      delay: 5000, // ms
+      maxAttempts: 5,
+      onTimeout: false,
+    },
   },
   PROVING_SCHEME: process.env.PROVING_SCHEME || 'gm17',
   BACKEND: process.env.BACKEND || 'libsnark',

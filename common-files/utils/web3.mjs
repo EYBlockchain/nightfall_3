@@ -16,18 +16,10 @@ export default {
   connect() {
     if (this.web3) return this.web3.currentProvider;
 
-    logger.info('Blockchain Connecting ...');
+    logger.info('Blockchain Connecting ...', config.BLOCKCHAIN_TESTNET_URL);
     const provider = new Web3.providers.WebsocketProvider(
-      `ws://${config.BLOCKCHAIN_WS_HOST}:${config.BLOCKCHAIN_PORT}`,
-      {
-        timeout: 3600000,
-        reconnect: {
-          auto: true,
-          delay: 5000, // ms
-          maxAttempts: 120,
-          onTimeout: false,
-        },
-      }, // set a 10 minute timeout
+      config.BLOCKCHAIN_TESTNET_URL,
+      config.WEB3_RECONNET,
     );
 
     provider.on('error', err => logger.error(`web3 error: ${err}`));

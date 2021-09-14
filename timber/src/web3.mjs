@@ -19,23 +19,15 @@ export default {
   connect() {
     if (this.web3) return this.web3;
 
-    logger.info('Blockchain Connecting ...');
-    const provider = new Web3.providers.WebsocketProvider(
-      `ws://${config.web3.host}:${config.web3.port}`,
-      {
-        timeout: 3600000,
-        reconnect: {
-          auto: true,
-          delay: 5000, // ms
-          maxAttempts: 120,
-          onTimeout: false,
-        },
-      }, // set a 10 minute timeout
-    );
+    logger.info(`Blockchain Connecting ..config.web3.url...${config.web3.url}`);
+    const provider = new Web3.providers.WebsocketProvider(config.web3.url, config.web3.options);
 
     provider.on('error', err => logger.error(err));
     provider.on('connect', () => logger.info('Blockchain Connected ...'));
-    provider.on('end', () => logger.error('Blockchain Disconnected'));
+    provider.on('end', () => {
+      logger.error('Blockchain Disconnected');
+      logger.info(this);
+    });
 
     this.web3 = new Web3(provider);
 

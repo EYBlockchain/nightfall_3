@@ -1,0 +1,39 @@
+version: '3.5'
+# Use this script for running up nightfall_3 in 'rinkeby' mode with local
+# Use it as an override file for docker-compose.yml
+# See the readme for more information.
+services:
+
+  client1: 
+    environment:
+      BLOCKCHAIN_TESTNET_URL: "wss://rinkeby.infura.io/ws/v3/0652859c595f4f429c3e4b83c8ff28d2"
+
+  client2:
+    environment:
+      BLOCKCHAIN_TESTNET_URL: "wss://rinkeby.infura.io/ws/v3/0652859c595f4f429c3e4b83c8ff28d2"
+
+  deployer:
+    environment:
+      LOG_LEVEL: debug
+      # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
+      # startup routines will wait for a blockchain client to be reachable on this network
+      ETH_NETWORK: rinkeby
+      BLOCKCHAIN_TESTNET_URL: "wss://rinkeby.infura.io/ws/v3/0652859c595f4f429c3e4b83c8ff28d2"
+      ETH_MNEMONIC: $ETH_MNEMONIC
+
+  # Timber service, configured for nightfall
+  timber1:
+    environment:
+      BLOCKCHAIN_TESTNET_URL: "wss://rinkeby.infura.io/ws/v3/0652859c595f4f429c3e4b83c8ff28d2"
+
+  optimist1:
+    environment:
+      BLOCKCHAIN_TESTNET_URL: "wss://rinkeby.infura.io/ws/v3/0652859c595f4f429c3e4b83c8ff28d2"
+
+  timber2:
+    environment:
+      BLOCKCHAIN_TESTNET_URL: "wss://rinkeby.infura.io/ws/v3/0652859c595f4f429c3e4b83c8ff28d2"
+
+  optimist2:
+    environment:
+      BLOCKCHAIN_TESTNET_URL: "wss://rinkeby.infura.io/ws/v3/0652859c595f4f429c3e4b83c8ff28d2"
