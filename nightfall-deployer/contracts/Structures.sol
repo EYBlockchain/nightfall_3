@@ -61,7 +61,6 @@ contract Structures {
   struct BlockData {
     bytes32 blockHash; // hash of the block
     uint256 time; // time the block was created
-    address blockProposer ; // name of proposer . This is added to retreive proposer info after rollback
   }
 
   struct LinkedAddress {
