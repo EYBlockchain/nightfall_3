@@ -64,8 +64,7 @@ contract State is Structures, Config {
     // All check pass so add the block to the list of blocks waiting to be permanently added to the state - we only save the hash of the block data plus the absolute minimum of metadata - it's up to the challenger, or person requesting inclusion of the block to the permanent contract state, to provide the block data.
     blockHashes.push(BlockData({
       blockHash: keccak256(msg.data[4:]),
-      time: block.timestamp,
-      blockProposer: msg.sender // pushing blockProposer information into BlockData
+      time: block.timestamp
     }));
     // Timber will listen for the BlockProposed event as well as
     // nightfall-optimist.  The current, optimistic version of Timber does not
@@ -155,12 +154,13 @@ contract State is Structures, Config {
     delete proposers[proposer];
     proposers[previousAddress].nextAddress = proposers[nextAddress].thisAddress;
     proposers[nextAddress].previousAddress = proposers[previousAddress].thisAddress;
-    if(proposer == currentProposer.thisAddress) {
+   // if(proposer == currentProposer.thisAddress) {
       // Cannot just call changeCurrentProposer directly due to the require time check
+      //change currentProposer to next aaddress irrespective of whether proposer is currentProposer
       proposerStartBlock = block.number;
       currentProposer = proposers[nextAddress];
       emit NewCurrentProposer(currentProposer.thisAddress);
-    }
+   // }
   }
   // Checks if a block is actually referenced in the queue of blocks waiting
   // to go into the Shield state (stops someone challenging with a non-existent
