@@ -176,7 +176,10 @@ export async function findBlocksFromBlockNumberL2(blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { blockNumberL2: { $gte: Number(blockNumberL2) } };
-  return db.collection(SUBMITTED_BLOCKS_COLLECTION).find(query).toArray();
+  return db
+    .collection(SUBMITTED_BLOCKS_COLLECTION)
+    .find(query, { sort: { blockNumberL2: 1 } })
+    .toArray();
 }
 
 /**
@@ -224,7 +227,12 @@ Function to save a (unprocessed) Transaction
 */
 export async function saveTransaction(_transaction) {
   const { mempool = true } = _transaction; // mempool may not exist
-  const transaction = { _id: _transaction.transactionHash, ..._transaction, mempool };
+  const transaction = {
+    _id: _transaction.transactionHash,
+    ..._transaction,
+    mempool,
+    blockNumberL2: -1,
+  };
   logger.debug(
     `saving transaction ${transaction.transactionHash}, with layer 1 block number ${_transaction.blockNumber}`,
   );
@@ -253,15 +261,12 @@ Function to add a set of transactions from the layer 2 mempool once a block has 
 export async function addTransactionsToMemPool(block) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  const searchQuery = { transactionHash: { $in: block.transactionHashes } };
-  const transactions = await db.collection(TRANSACTIONS_COLLECTION).find(searchQuery).toArray();
-  // This filters out any transactions that may been included in other blocks
-  const transactionUniqueToBlock = transactions
-    .filter(t => t.blockNumberL2 === block.blockNumberL2)
-    .map(t => t.transactionHash);
-  const updateQuery = { transactionHash: { $in: transactionUniqueToBlock } };
+  const query = {
+    transactionHash: { $in: block.transactionHashes },
+    blockNumberL2: { $eq: block.blockNumberL2 },
+  };
   const update = { $set: { mempool: true, blockNumberL2: -1 } };
-  return db.collection(TRANSACTIONS_COLLECTION).updateMany(updateQuery, update);
+  return db.collection(TRANSACTIONS_COLLECTION).updateMany(query, update);
 }
 
 /**
@@ -271,7 +276,7 @@ been processed into a block
 export async function removeTransactionsFromMemPool(block) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  const query = { transactionHash: { $in: block.transactionHashes } };
+  const query = { transactionHash: { $in: block.transactionHashes }, blockNumberL2: -1 };
   const update = { $set: { mempool: false, blockNumberL2: block.blockNumberL2 } };
   return db.collection(TRANSACTIONS_COLLECTION).updateMany(query, update);
 }
@@ -314,16 +319,6 @@ export async function getTransactionsByTransactionHashes(transactionHashes) {
   return transactions;
 }
 
-export async function deleteTransferAndWithdraw(transactionHashes) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  const query = {
-    transactionHash: { $in: transactionHashes },
-    transactionType: { $in: ['1', '2', '3'] },
-  };
-  return db.collection(TRANSACTIONS_COLLECTION).deleteMany(query);
-}
-
 // function that sets the Block's L1 blocknumber to null
 // to indicate that it's back in the L1 mempool (and will probably be re-mined
 // and given a new L1 transactionHash)
@@ -334,6 +329,17 @@ export async function clearBlockNumberL1ForBlock(transactionHashL1) {
   const query = { transactionHashL1 };
   const update = { $set: { blockNumber: null } };
   return db.collection(SUBMITTED_BLOCKS_COLLECTION).updateOne(query, update);
+}
+/*
+For added safety we only delete mempool: true, we should never be deleting
+transactions from our local db that have been spent.
+*/
+export async function deleteTransactionsByTransactionHashes(transactionHashes) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  // We should not delete from a spent mempool
+  const query = { transactionHash: { $in: transactionHashes }, mempool: true };
+  return db.collection(TRANSACTIONS_COLLECTION).deleteMany(query);
 }
 
 // function that sets the Transactions's L1 blocknumber to null
@@ -364,10 +370,7 @@ export async function saveNullifiers(nullifiers, blockNumber) {
 export async function retrieveNullifiers() {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  return db
-    .collection(NULLIFIER_COLLECTION)
-    .find({}, { projection: { hash: 1 } })
-    .toArray();
+  return db.collection(NULLIFIER_COLLECTION).find({}).toArray();
 }
 
 export async function stampNullifiers(nullifiers, blockHash) {
@@ -388,11 +391,19 @@ export async function retrieveMinedNullifiers() {
     .toArray();
 }
 
-// delete all the nullifiers in this block
-export async function deleteNullifiers(blockHash) {
+export async function resetNullifiers(blockHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { blockHash };
+  const update = { $set: { blockHash: null } };
+  return db.collection(NULLIFIER_COLLECTION).updateMany(query, update);
+}
+
+// delete all the nullifiers in this block
+export async function deleteNullifiers(hashes) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { hash: { $in: hashes } };
   return db.collection(NULLIFIER_COLLECTION).deleteMany(query);
 }
 

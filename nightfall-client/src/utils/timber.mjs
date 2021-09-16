@@ -55,3 +55,25 @@ export const getSiblingPath = async leafIndex => {
     throw new Error(error);
   }
 };
+
+export const getLeafCount = async () => {
+  logger.http(`Calling /leaves/count`);
+  try {
+    const response = await axios.get(
+      `${url}/leaves/count`,
+      {
+        params: {
+          contractName,
+        },
+      },
+      {
+        timeout: 3600000,
+      },
+    );
+    logger.http(`Timber Response: ${response.data.data.leafCount}`);
+    if (!response.data.data) return null;
+    return response.data.data.leafCount;
+  } catch (error) {
+    throw new Error(error);
+  }
+};

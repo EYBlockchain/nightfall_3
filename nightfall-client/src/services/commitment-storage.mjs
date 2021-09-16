@@ -105,12 +105,8 @@ export async function clearNullified(blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
   const query = { isNullifiedOnChain: { $gte: Number(blockNumberL2) } };
   const update = {
-    $set: {
-      isNullifiedOnChain: -1,
-      isNullified: false,
-      isPendingNullification: false,
-      blockNumber: -1,
-    },
+    // $set: { isNullifiedOnChain: -1, isNullified: false, isPendingNullification: false },
+    $set: { isNullifiedOnChain: -1, blockNumber: -1 },
   };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
@@ -119,7 +115,9 @@ export async function clearNullified(blockNumberL2) {
 // as above, but removes isOnChain for deposit commitments
 export async function clearOnChain(blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
-  const query = { isOnChain: { $gte: Number(blockNumberL2) }, isDeposited: true };
+  // const query = { isOnChain: { $gte: Number(blockNumberL2) }, isDeposited: true };
+  // Clear all onchains
+  const query = { isOnChain: { $gte: Number(blockNumberL2) } };
   const update = {
     $set: { isOnChain: -1, blockNumber: -1 },
   };
@@ -136,14 +134,6 @@ export async function clearPending(commitment) {
   return db.collection(COMMITMENTS_COLLECTION).updateOne(query, update);
 }
 
-// as above, but removes output commitments
-export async function dropRollbackCommitments(blockNumberL2) {
-  const connection = await mongo.connection(MONGO_URL);
-  const query = { isOnChain: { $gte: Number(blockNumberL2) }, isDeposited: false };
-  const db = connection.db(COMMITMENTS_DB);
-  return db.collection(COMMITMENTS_COLLECTION).deleteMany(query);
-}
-
 // function to mark a commitments as nullified on chain for a mongo db
 export async function markNullifiedOnChain(nullifiers, blockNumberL2, blockNumber) {
   const connection = await mongo.connection(MONGO_URL);
@@ -151,6 +141,20 @@ export async function markNullifiedOnChain(nullifiers, blockNumberL2, blockNumbe
   const update = { $set: { isNullifiedOnChain: Number(blockNumberL2), blockNumber } };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
+}
+
+export async function getAllCommitments() {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(COMMITMENTS_COLLECTION).find().toArray();
+}
+
+// as above, but removes output commitments
+export async function deleteCommitments(commitmentHashes) {
+  const connection = await mongo.connection(MONGO_URL);
+  const query = { _id: { $in: commitmentHashes } };
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(COMMITMENTS_COLLECTION).deleteMany(query);
 }
 
 // function to find commitments that can be used in the proposed transfer

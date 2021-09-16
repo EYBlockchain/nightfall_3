@@ -8,6 +8,7 @@ import rand from '../common-files/utils/crypto/crypto-random.mjs';
 
 const { dirname } = path;
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const { expect } = chai;
 
 let web3;
 // This will be a mapping of privateKeys to nonces;
@@ -183,6 +184,7 @@ export async function testForEvents(contractAddress, topics, timeOut = 30000) {
 export const topicEventMapping = {
   BlockProposed: '0x566d835e602d4aa5802ee07d3e452e755bc77623507825de7bc163a295d76c0b',
   Rollback: '0xea34b0bc565cb5f2ac54eaa86422ae05651f84522ef100e16b54a422f2053852',
+  CommittedToChallenge: '0d5ea452ac7e354069d902d41e41e24f605467acd037b8f5c1c6fee5e27fb5e2',
 };
 
 /**
@@ -218,3 +220,48 @@ export async function unpauseBlockchain(side) {
   const miner = `blockchain-miner${side}`;
   return Promise.all([compose.unpauseOne(client, options), compose.unpauseOne(miner, options)]);
 }
+
+/**
+These are helper functions to reduce the repetitive code bloat in test files
+ */
+
+export const makeTransactions = async (txType, numTxs, url, txArgs) => {
+  const transactions = (
+    await Promise.all(
+      Array.from({ length: numTxs }, () => chai.request(url).post(`/${txType}`).send(txArgs)),
+    )
+  ).map(res => res.body);
+
+  return transactions;
+};
+
+export const sendTransactions = async (transactions, submitArgs) => {
+  const receiptArr = [];
+  for (let i = 0; i < transactions.length; i++) {
+    const { txDataToSign } = transactions[i];
+    // eslint-disable-next-line no-await-in-loop
+    const receipt = await submitTransaction(txDataToSign, ...submitArgs);
+    receiptArr.push(receipt);
+  }
+  return receiptArr;
+};
+
+export const waitForEvent = async (eventLogs, expectedEvents) => {
+  while (eventLogs.length < expectedEvents.length) {
+    // eslint-disable-next-line no-await-in-loop
+    await new Promise(resolve => setTimeout(resolve, 3000));
+  }
+
+  while (eventLogs[0] !== expectedEvents[0]) {
+    // eslint-disable-next-line no-await-in-loop
+    await new Promise(resolve => setTimeout(resolve, 3000));
+  }
+
+  expect(eventLogs[0]).to.equal(expectedEvents[0]);
+
+  for (let i = 0; i < expectedEvents.length; i++) {
+    eventLogs.shift();
+  }
+
+  return eventLogs;
+};
