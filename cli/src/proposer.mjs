@@ -68,6 +68,7 @@ async function startProposer() {
       );
     }
   };
+  // TODO subscribe to layer 1 blocks and call change proposer
   console.log('Listening for incoming events');
 }
 
