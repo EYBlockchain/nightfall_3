@@ -49,7 +49,6 @@ async function transfer(transferParams) {
   // the first thing we need to do is to find some input commitments which
   // will enable us to conduct our transfer.  Let's rummage in the db...
   const totalValueToSend = values.reduce((acc, value) => acc + value.bigInt, 0n);
-
   const oldCommitments = await findUsableCommitmentsMutex(
     compressedPkd,
     ercAddress,
