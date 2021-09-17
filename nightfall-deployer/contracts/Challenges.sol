@@ -263,10 +263,6 @@ contract Challenges is Stateful, Key_Registry, Config {
     // challenged from the linked list of blocks and all of the subsequent
     // blocks
     removeBlockHashes(badBlockNumberL2);
-
-    //set current proposer the one with latest valid block
-    //state.setCurrentProposer(state.getBlockData(badBlockNumberL2-1).blockProposer);
-    
     // remove the proposer and give the proposer's block stake to the challenger
     state.rewardChallenger(msg.sender, badBlock.proposer);
 
