@@ -262,23 +262,24 @@ contract Challenges is Stateful, Key_Registry, Config {
     // we need to remove the block that has been successfully
     // challenged from the linked list of blocks and all of the subsequent
     // blocks
-    removeBlockHashes(badBlockNumberL2);
+    uint numRemoved = removeBlockHashes(badBlockNumberL2);
     // remove the proposer and give the proposer's block stake to the challenger
-    state.rewardChallenger(msg.sender, badBlock.proposer);
+    state.rewardChallenger(msg.sender, badBlock.proposer, numRemoved);
 
     // TODO repay the fees of the transactors and any escrowed funds held by the
     // Shield contract.
   }
 
-  function removeBlockHashes(uint256 blockNumberL2) internal {
+  function removeBlockHashes(uint256 blockNumberL2) internal returns (uint256){
     uint256 lastBlock = state.getNumberOfL2Blocks() - 1;
     for (uint256 i = lastBlock; i >= blockNumberL2; i--) {
-      state.popBlockData();
+      state.setBlockStakeWithdrawn(state.popBlockData().blockHash);
     }
     require(
       state.getNumberOfL2Blocks() == blockNumberL2,
       'After removing blocks, the number remaining is not as expected.'
     );
+    return (lastBlock + 1 - blockNumberL2);
   }
 
   //To prevent frontrunning, we need to commit to a challenge before we send it

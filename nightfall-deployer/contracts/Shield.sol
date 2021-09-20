@@ -41,11 +41,13 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
 
   // function to enable a proposer to get paid for proposing a block
   function requestBlockPayment(Block memory b, uint blockNumberL2, Transaction[] memory ts) external {
+    bytes32 blockHash = Utils.hashBlock(b, ts);
     state.isBlockReal(b, ts, blockNumberL2);
     // check that the block has been finalised
     uint time = state.getBlockData(blockNumberL2).time;
     require(time + COOLING_OFF_PERIOD < block.timestamp, 'It is too soon to get paid for this block');
     require(b.proposer == msg.sender, 'You are not the proposer of this block');
+    require(state.isBlockStakeWithdrawn(blockHash) == false, 'The block stake for this block is already claimed');
     // add up how much the proposer is owed.
     uint payment;
     for (uint i = 0; i < ts.length; i++) {
