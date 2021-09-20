@@ -21,54 +21,36 @@ axios.defaults.baseURL = optimistBaseUrl;
 program.option('-k, --key', 'Ethereum signing key', defaultKey);
 const ethereumSigningKey = program.opts().key || defaultKey;
 
-async function registerProposer(web3, proposersContractAddress, proposersAddress) {
-  const res = await axios.post('/proposer/register', { address: proposersAddress });
-  const { txDataToSign } = res.data;
-  // we have to pay 10 ETH to be registered
-  const PROPOSER_BOND = 10000000000000000000;
-  // now we need to sign the transaction and send it to the blockchain
-  return submitTransaction(
-    web3,
-    txDataToSign,
-    ethereumSigningKey,
-    proposersContractAddress,
-    PROPOSER_BOND,
-  );
+async function registerChallenger(challengerAddress) {
+  return axios.post('/challenger/add', { address: challengerAddress });
 }
 
 /**
 Does the preliminary setup and starts listening on the websocket
 */
-async function startProposer() {
+async function startChallenger() {
   clear();
-  console.log('Starting Proposer...');
-  const BLOCK_STAKE = 1000000000000000000; // 1 ether
+  console.log('Starting Challenger...');
   await healthcheck(optimistBaseUrl);
   console.log('Healthcheck passed');
   const web3 = new Web3(web3WsUrl);
   const ethereumAddress = web3.eth.accounts.privateKeyToAccount(ethereumSigningKey).address;
-  await registerProposer(web3, await getContractAddress('Proposers'), ethereumAddress);
-  console.log('Proposer registration complete');
+  await registerChallenger(ethereumAddress);
+  console.log('Challenger registration complete');
   const stateContractAddress = await getContractAddress('State');
   const connection = new WebSocket(optimistWsUrl);
   connection.onopen = () => {
-    connection.send('blocks');
+    connection.send('challenge');
   };
   connection.onmessage = async message => {
     const msg = JSON.parse(message.data);
     const { type, txDataToSign } = msg;
-    if (type === 'block') {
-      await submitTransaction(
-        web3,
-        txDataToSign,
-        ethereumSigningKey,
-        stateContractAddress,
-        BLOCK_STAKE,
-      );
+    if (type === 'challenge') {
+      await submitTransaction(web3, txDataToSign, ethereumSigningKey, stateContractAddress);
     }
   };
   // TODO subscribe to layer 1 blocks and call change proposer
   console.log('Listening for incoming events');
 }
 
-startProposer();
+startChallenger();
