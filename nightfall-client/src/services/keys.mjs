@@ -4,7 +4,7 @@ import rand from 'common-files/utils/crypto/crypto-random.mjs';
 import mimcHash from 'common-files/utils/crypto/mimc/mimc.mjs';
 import { scalarMult, edwardsCompress } from '../utils/crypto/encryption/elgamal.mjs';
 
-const { BABYJUBJUB, BN128_GROUP_ORDER } = config;
+const { BABYJUBJUB, BN128_GROUP_ORDER, ZKP_KEY_LENGTH } = config;
 
 function calculatePublicKey(privateKey) {
   return generalise(scalarMult(privateKey.hex(), BABYJUBJUB.GENERATOR));
@@ -51,7 +51,7 @@ export function calculateIvkPkdfromAskNsk(ask, nsk) {
 // pkd = ivk.G
 
 // function to generate all the required keys
-export async function generateKeys(length) {
+export async function generateKeys(length = ZKP_KEY_LENGTH) {
   const ask = await generateASK(length);
   const nsk = await generateNSK(length);
   const ivk = calculateIVK(ask, nsk);

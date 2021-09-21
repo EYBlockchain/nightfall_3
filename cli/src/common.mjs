@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export const clientBaseUrl = 'http://localhost:8080';
+const clientBaseUrl = 'http://localhost:8080';
 export const optimistBaseUrl = 'http://localhost:8081';
 export const web3WsUrl = 'ws://localhost:8546';
 export const optimistWsUrl = 'ws://localhost:8082';
