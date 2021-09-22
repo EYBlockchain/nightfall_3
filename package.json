@@ -8,7 +8,8 @@
     "test-gas": "mocha --timeout 0 --bail test/tx-gas.mjs",
     "test-chain-reorg": "mocha --timeout 0 --bail test/chain-reorg.mjs",
     "lint": "eslint . --ext js,mjs && find-unused-exports",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "doc:build:sdk": "jsdoc -c jsdoc.json cli/lib/nf3.mjs"
   },
   "repository": {
     "type": "git",

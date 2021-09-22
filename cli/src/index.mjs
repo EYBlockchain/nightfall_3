@@ -119,16 +119,16 @@ async function loop(nf3, ercAddress) {
   } = await askQuestions(nf3);
   let [x, y] = [pkdX, pkdY]; // make these variable - we may need to change them
   if (privateKey) nf3.setEthereumSigningKey(privateKey); // we'll remember the key so we don't keep asking for it
-  let txDataToSign;
+  let receiptPromise;
   // handle the task that the user has asked for
   switch (task) {
     case 'Deposit':
-      txDataToSign = await nf3.deposit(ercAddress, tokenType, value, tokenId, fee);
+      receiptPromise = await nf3.deposit(ercAddress, tokenType, value, tokenId, fee);
       break;
     case 'Transfer':
-      if (x === 'my key') [x, y] = nf3.keys.pkd;
+      if (x === 'my key') [x, y] = nf3.zkpKeys.pkd;
       try {
-        txDataToSign = await nf3.transfer(
+        receiptPromise = await nf3.transfer(
           ercAddress,
           tokenType,
           value,
@@ -146,7 +146,7 @@ async function loop(nf3, ercAddress) {
       break;
     case 'Withdraw':
       try {
-        txDataToSign = await nf3.withdraw(
+        receiptPromise = await nf3.withdraw(
           ercAddress,
           tokenType,
           value,
@@ -170,11 +170,11 @@ async function loop(nf3, ercAddress) {
     default:
       throw new Error('Unknown task');
   }
-  const receiptPromise = nf3.submitTransaction(await txDataToSign, fee);
   return [false, receiptPromise];
 }
 
 async function main() {
+  // intialisation
   init();
   const nf3 = new Nf3(
     'http://localhost:8080',
@@ -191,6 +191,7 @@ async function main() {
     // eslint-disable-next-line no-await-in-loop
     [exit, receiptPromise] = await loop(nf3, ercAddress);
   } while (!exit);
+  // cleanup
   await receiptPromise; // don't attempt to close the connection until we have a receipt
   nf3.close();
 }
