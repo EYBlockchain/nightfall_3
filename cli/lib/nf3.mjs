@@ -1,6 +1,7 @@
 import axios from 'axios';
 import Web3 from 'web3';
 import WebSocket from 'ws';
+import EventEmitter from 'events';
 import { generateKeys } from '../../nightfall-client/src/services/keys.mjs';
 
 /**
@@ -318,8 +319,8 @@ class Nf3 {
   }
 
   /**
-  Starts a Proposer listening for BlockProposed events and proposing
-  transactions.
+  Starts a Proposer that listens for blocks and submits block proposal
+  transactions to the blockchain.
   @method
   @async
   */
@@ -338,6 +339,32 @@ class Nf3 {
   }
 
   /**
+  Returns an emitter, whose 'on' event fire whenever a block is
+  detected, passing out the transaction needed to propose the block. This
+  is a lower level method than `Nf3.startProposer` because it does not sign and
+  send the transaction to the blockchain. If required, `Nf3.submitTransaction`
+  can be used to do that.
+  @method
+  @async
+  @returns {Promise} A Promise that resolves into an event emitter.
+  */
+  async getNewBlockEmitter() {
+    const newBlockEmitter = new EventEmitter();
+    const connection = new WebSocket(this.optimistWsUrl);
+    connection.onopen = () => {
+      connection.send('blocks');
+    };
+    connection.onmessage = async message => {
+      const msg = JSON.parse(message.data);
+      const { type, txDataToSign } = msg;
+      if (type === 'block') {
+        newBlockEmitter.emit('on', txDataToSign);
+      }
+    };
+    return newBlockEmitter;
+  }
+
+  /**
   Registers our address as a challenger address with the optimist container.
   This is so that the optimist container can tell when a challenge that we have
   committed to has appeared on chain.
@@ -350,8 +377,8 @@ class Nf3 {
   }
 
   /**
-  Starts a Challenger listening for BlockProposed events and proposing
-  transactions.
+  Starts a Challenger that listens for challengable blocks and submits challenge
+  transactions to the blockchain to challenge the block.
   @method
   @async
   */
@@ -367,6 +394,32 @@ class Nf3 {
         await this.submitTransaction(txDataToSign, this.stateContractAddress, 0);
       }
     };
+  }
+
+  /**
+  Returns an emitter, whose 'on' event fire whenever a challengeable block is
+  detected, passing out the transaction needed to raise the challenge. This
+  is a lower level method than `Nf3.startChallenger` because it does not sign and
+  send the transaction to the blockchain. If required, `Nf3.submitTransaction`
+  can be used to do that.
+  @method
+  @async
+  @returns {Promise} A Promise that resolves into an event emitter.
+  */
+  async getChallengeEmitter() {
+    const newChallengeEmitter = new EventEmitter();
+    const connection = new WebSocket(this.optimistWsUrl);
+    connection.onopen = () => {
+      connection.send('blocks');
+    };
+    connection.onmessage = async message => {
+      const msg = JSON.parse(message.data);
+      const { type, txDataToSign } = msg;
+      if (type === 'challenge') {
+        newChallengeEmitter.emit('on', txDataToSign);
+      }
+    };
+    return newChallengeEmitter;
   }
 }
 
