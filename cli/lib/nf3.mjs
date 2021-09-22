@@ -339,7 +339,7 @@ class Nf3 {
   }
 
   /**
-  Returns an emitter, whose 'on' event fire whenever a block is
+  Returns an emitter, whose 'on' event fires whenever a block is
   detected, passing out the transaction needed to propose the block. This
   is a lower level method than `Nf3.startProposer` because it does not sign and
   send the transaction to the blockchain. If required, `Nf3.submitTransaction`
@@ -397,7 +397,7 @@ class Nf3 {
   }
 
   /**
-  Returns an emitter, whose 'on' event fire whenever a challengeable block is
+  Returns an emitter, whose 'on' event fires whenever a challengeable block is
   detected, passing out the transaction needed to raise the challenge. This
   is a lower level method than `Nf3.startChallenger` because it does not sign and
   send the transaction to the blockchain. If required, `Nf3.submitTransaction`
