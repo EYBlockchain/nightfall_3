@@ -1,11 +1,12 @@
 import fs from 'fs';
+import logger from '../utils/logger.mjs';
 
 const readJsonFile = filePath => {
   if (fs.existsSync(filePath)) {
     const file = fs.readFileSync(filePath);
     return JSON.parse(file);
   }
-  console.log('Unable to locate file: ', filePath);
+  logger.debug('Unable to locate file: ', filePath);
   return null;
 };
 

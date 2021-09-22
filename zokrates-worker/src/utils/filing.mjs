@@ -33,7 +33,6 @@ export const getVerificationKeyByCircuitPath = circuitPath => {
 };
 
 export const getProofFromFile = filePath => {
-  console.log('in filling ', `${outputPath}/${filePath}`);
   return readJsonFile(`${outputPath}/${filePath}`);
 };
 
