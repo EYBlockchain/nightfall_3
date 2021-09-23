@@ -45,6 +45,10 @@ should not be called from anywhere else because we only want one instance ever.
 */
 export async function conditionalMakeBlock(proposer) {
   logger.debug('Ready to make blocks');
+  //reset local optimist values before every first L2 block mined in cycle
+  //This will make proposer name L2 blocknumber as next one to the onchain number
+  //which helps in maintaining the blockorder in case of any previous proposer failure
+  Block.rollback();
   while (makeBlocks) {
     logger.silly('Block Assembler is waiting for transactions');
     await nextHigherPriorityQueueHasEmptied(1); // i.e. the highest priority queue is empty
