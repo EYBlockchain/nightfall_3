@@ -67,4 +67,14 @@ router.get('/root/:root', async (req, res, next) => {
   }
 });
 
+router.get('/reset-localblock', async (req,res, next) => {
+  logger.debug('block endpoint received get');
+  try {
+    await Block.rollback();
+    res.json({resetstatus: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;
