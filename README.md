@@ -46,7 +46,7 @@ nightfall_3_deployer_1 exited with code 0
 ```
 This means that deployment is complete and the application is ready to use.  You can run the tests at this point.
 
-### Testing
+## Testing
 
 Open a separate terminal window, cd to the nightfall_3 repo and run
 ```sh
@@ -72,7 +72,7 @@ To facilitate such a test, we create a private Geth-based blockchain (details of
 npm test-chain-reorg
 ```
 
-### Using a Geth private blockchain
+## Using a Geth private blockchain
 
 The script `./geth-standalone` will run up a private blockchain consisting of a bootnode, two client nodes and two miners.  This is required for testing chain reorganisations (Ganache does not simulate a chain-reorg) but can be used for other tests or general running.  It's slower than using Ganache but it does provide a more real-life test. Note also that the private chain exposes a client on `host.docker.internal:8546`.  On a Mac this will map to `localhost` but it won't work on any other machine. If you aren't on a Mac then edit `nightfall-deployer/truffle-config.js` to point to the IP of your `localhost` or use the docker-compose line `external_servers` to inject a hostname into the containers host file (see the Github workflows for further clues about how to do that).
 
@@ -83,6 +83,18 @@ To use the private blockchain:
 - Start Nightfall in another terminal with the `-l` option (`./start-nightfall -l`) and, optionally, the `-s` option if you want stubbed circuits.
 
 That's it.  You can shut down the geth blockchain with `./geth-standalone -d` or pause/unpause it with `-p`, `-u`.
+
+## Software Development Kit
+
+Nightfall_3 provides an SDK which makes it easy to develop applications that use Nightfall_3.  The SDK API is documented in `./doc/lib/Nf3.html` and is provided by the NF_3 class `./cli/lib/nf3.mjs`.
+
+## Command line interface
+
+Nightfall_3 provides a CLI (which makes use of the SDK) so that you can exercise its features.  To use it:
+- run up nightfall_3 as described above and wait for the deployment to complete;
+- open another terminal and type `./proposer`.  This will start a small application running which will sign block proposal transactions;
+- open up a third terminal and type `./nf`.  This will start the CLI. It should be fairly self explanatory but be mindful that you can only use the output of previous transactions once they have been incorporated in a Layer 2 block - for example you need you at least two deposits to be able to do a transfer because by default two deposits is the minimum needed to fill a block.
+- You can also run a Challenge signer if you wish (`./challenger`) but it is of limited use because NF_3 will reject locally-created invalid transactions and so you will never get to the stage of something challengeable making it on chain.
 
 # Acknowledgements
 
