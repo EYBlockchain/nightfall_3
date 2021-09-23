@@ -4,6 +4,7 @@ Routes for checking that a block is valid.
 import express from 'express';
 import logger from 'common-files/utils/logger.mjs';
 import checkBlock from '../services/check-block.mjs';
+import Block from '../classes/block.mjs';
 import {
   getBlockByTransactionHash,
   getBlockByRoot,
@@ -67,11 +68,11 @@ router.get('/root/:root', async (req, res, next) => {
   }
 });
 
-router.get('/reset-localblock', async (req,res, next) => {
+router.get('/reset-localblock', async (req, res, next) => {
   logger.debug('block endpoint received get');
   try {
     await Block.rollback();
-    res.json({resetstatus: true });
+    res.json({ resetstatus: true });
   } catch (err) {
     next(err);
   }
