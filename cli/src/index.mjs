@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import inquirer from 'inquirer';
 import clear from 'clear';
 import Web3 from 'web3';
+import Table from 'cli-table';
 import Nf3 from '../lib/nf3.mjs';
 
 const web3 = new Web3(); // no URL, we're just using some utilities here
@@ -103,6 +104,19 @@ async function askQuestions(nf3) {
 }
 
 /**
+Simple function to print out the balances object
+*/
+function printBalances(balances) {
+  if (Object.keys(balances).length === 0) {
+    console.log('You have no balances yet - try depositing some tokens into Layer 2 from Layer 1');
+    return;
+  }
+  const table = new Table({ head: ['ERC Contract Address', 'Layer 2 Balance'] });
+  table.push(balances);
+  console.log(table.toString());
+}
+
+/**
 UI control loop
 */
 async function loop(nf3, ercAddress) {
@@ -163,7 +177,7 @@ async function loop(nf3, ercAddress) {
       }
       break;
     case 'View my wallet':
-      console.log('Comming soon');
+      printBalances(await nf3.getLayer2Balances());
       return [false, null];
     case 'Exit':
       return [true, null];

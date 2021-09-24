@@ -653,6 +653,14 @@ describe('Testing the http API', () => {
     });
   });
 
+  describe('Check commitment wallet balance', () => {
+    it('Should return the wallet balance', async function () {
+      const res = await chai.request(senderUrl).get('/commitment/balance');
+      expect(res.body).to.have.property('balance');
+      expect(res.body.balance).to.be.an('object');
+    });
+  });
+
   after(() => {
     closeWeb3Connection();
     connection.close();

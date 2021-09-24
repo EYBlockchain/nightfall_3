@@ -421,6 +421,19 @@ class Nf3 {
     };
     return newChallengeEmitter;
   }
+
+  /**
+  Returns the balance of tokens held in layer 2
+  @method
+  @async
+  @returns {Promise} This promise rosolves into an object whose properties are the
+  addresses of the ERC contracts of the tokens held by this account in Layer 2. The
+  value of each propery is the number of tokens originating from that contract.
+  */
+  async getLayer2Balances() {
+    const res = await axios.get(`${this.clientBaseUrl}/commitment/balance`);
+    return res.data.balance;
+  }
 }
 
 export default Nf3;
