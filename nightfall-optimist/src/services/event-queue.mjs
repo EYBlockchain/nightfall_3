@@ -43,6 +43,39 @@ export function nextHigherPriorityQueueHasEmptied(priority) {
   });
 }
 
+/*
+This function pauses the queues but it will also wait until any running
+handler that has reached the front of the queue terminates before it resolves
+so that you can be sure all queue activity has ceased.
+*/
+export async function pauseEventQueues() {
+  // make a promise for each queue which resolves when the queue is paused
+  return Promise.all(
+    queues.map(
+      (q, i) =>
+        new Promise(resolve =>
+          // put this at the front of the queue:
+          q.unshift(async () => {
+            q.autostart = false; // eslint-disable-line no-param-reassign
+            q.stop(); // stop the queue this function was in
+            logger.debug(`Queue ${i} paused`);
+            // when this resolves, we know that the last queued event (this function) has run
+            // and no others are running because the concurrency is 1. This function called
+            // a stop on the queue so no new queued events can now run.  All is silence.
+            resolve();
+          }),
+        ),
+    ),
+  );
+}
+
+export function resumeEventQueues() {
+  queues.forEach(q => {
+    q.autostart = true; // eslint-disable-line no-param-reassign
+    q.start();
+  });
+}
+
 export async function queueManager(eventObject, eventArgs) {
   // First element of eventArgs must be the eventHandlers object
   const [eventHandlers, ...args] = eventArgs;
