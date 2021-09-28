@@ -1,6 +1,6 @@
 // modular division
 import config from 'config';
-import { mulMod, addMod } from './number-theory.mjs';
+import { mulMod, addMod } from 'common-files/utils/crypto/number-theory.mjs';
 
 const { BN128_PRIME_FIELD } = config;
 
@@ -51,7 +51,7 @@ export function complexDivMod(a, b, m = BN128_PRIME_FIELD) {
   const [x, y] = a;
   const [u, v] = b;
   const denominator = addMod([mulMod([u, u], m), mulMod([v, v], m)], m);
-  const realNumerator = addMod([mulMod([x, u], m), mulMod([y, v], m)]);
+  const realNumerator = addMod([mulMod([x, u], m), mulMod([y, v], m)], m);
   const imaginaryNumerator = addMod([mulMod([u, y], m), -mulMod([v, x], m)], m);
   return [modDivide(realNumerator, denominator, m), modDivide(imaginaryNumerator, denominator, m)];
 }

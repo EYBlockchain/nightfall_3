@@ -1,7 +1,12 @@
 // import config from './config.mjs';
 import config from 'config';
+import {
+  squareRootModPrime,
+  addMod,
+  mulMod,
+  powerMod,
+} from 'common-files/utils/crypto/number-theory.mjs';
 import modDivide from './modular-division.mjs';
-import { squareRootModPrime, addMod, mulMod, powerMod } from './number-theory.mjs';
 
 const { BABYJUBJUB, BN128_GROUP_ORDER, ELLIGATOR2 } = config;
 
@@ -12,7 +17,7 @@ const Fp = BigInt(BN128_GROUP_ORDER); // the prime field used with the curve E(F
 
 // χ : Fq → Fq by χ(a) = a^((q−1)/2)
 function chi(a) {
-  return powerMod(a, (BN128_GROUP_ORDER - one) / BigInt(2), Fp);
+  return powerMod(a, (Fp - one) / BigInt(2), Fp);
 }
 
 // // if value <= p-1//2, then positive
@@ -22,7 +27,7 @@ function chi(a) {
 
 // if value > p-1//2, then negative
 function isNegative(value) {
-  return value % Fp > modDivide(BN128_GROUP_ORDER - BigInt(1), BigInt(2), Fp);
+  return value % Fp > modDivide(Fp - BigInt(1), BigInt(2), Fp);
 }
 
 // if value == 0 or chi(value) == 1
@@ -50,7 +55,7 @@ export function hashToCurve(r) {
   const v = modDivide(-MONTA, one + U * r * r, Fp);
   const e = chi((v * v * v + MONTA * v * v + MONTB * v) % Fp);
   const x = ((e * v) % Fp) - modDivide((one - e) * MONTA, BigInt(2), Fp);
-  const y = mulMod([-e, squareRootModPrime((x * x * x + MONTA * x * x + MONTB * x) % Fp)]);
+  const y = mulMod([-e, squareRootModPrime((x * x * x + MONTA * x * x + MONTB * x) % Fp, Fp)], Fp);
   return [x, y];
 }
 
@@ -60,7 +65,7 @@ export function hashToCurveYSqrt(r) {
   const v = modDivide(-MONTA, one + U * r * r, Fp);
   const e = chi((v * v * v + MONTA * v * v + MONTB * v) % Fp);
   const x = ((e * v) % Fp) - modDivide((one - e) * MONTA, BigInt(2), Fp);
-  return squareRootModPrime((x * x * x + MONTA * x * x + MONTB * x) % Fp);
+  return squareRootModPrime((x * x * x + MONTA * x * x + MONTB * x) % Fp, Fp);
 }
 
 // x=−A,
@@ -74,7 +79,7 @@ function canCurveToHash(point) {
       return false;
     }
   }
-  return x !== -MONTA && isSquare(mulMod([mulMod([-U, x]), addMod([x, MONTA])]));
+  return x !== -MONTA && isSquare(mulMod([mulMod([-U, x], Fp), addMod([x, MONTA], Fp)], Fp));
 }
 
 // r = sqrt(-x/(x+A)u), if y ∈ F2q
@@ -86,9 +91,9 @@ export function curveToHash(point) {
   const y = point[1];
   let r;
   if (isNegative(y)) {
-    r = squareRootModPrime(modDivide(-(x + MONTA), U * x, Fp));
+    r = squareRootModPrime(modDivide(-(x + MONTA), U * x, Fp), Fp);
   } else {
-    r = squareRootModPrime(modDivide(-x, U * (x + MONTA), Fp));
+    r = squareRootModPrime(modDivide(-x, U * (x + MONTA), Fp), Fp);
   }
   return r;
 }

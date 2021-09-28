@@ -4,7 +4,7 @@ is the curve that Ethereum currently has pairing precompiles for. All the
 return values are BigInts (or arrays of BigInts).
 */
 import config from 'config';
-import { mulMod, addMod, squareRootModPrime } from './number-theory.mjs';
+import { mulMod, addMod, squareRootModPrime } from 'common-files/utils/crypto/number-theory.mjs';
 import { Proof, Fq2 } from '../../classes/index.mjs';
 
 const { BN128_PRIME_FIELD } = config;
@@ -62,9 +62,9 @@ export function decompressG1(xin) {
   const parity = xbin[0];
   // then convert the rest into a BigInt
   const x = BigInt(`0b${xbin.slice(1)}`);
-  const x3 = mulMod([x, x, x]);
-  const y2 = addMod([x3, 3n]);
-  let y = squareRootModPrime(y2);
+  const x3 = mulMod([x, x, x], BN128_PRIME_FIELD);
+  const y2 = addMod([x3, 3n], BN128_PRIME_FIELD);
+  let y = squareRootModPrime(y2, BN128_PRIME_FIELD);
   if (parity !== y.toString(2).slice(-1)) y = BN128_PRIME_FIELD - y;
   return [`0x${x.toString(16).padStart(64, '0')}`, `0x${y.toString(16).padStart(64, '0')}`];
 }

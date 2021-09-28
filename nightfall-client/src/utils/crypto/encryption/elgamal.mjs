@@ -4,7 +4,7 @@ functions to support El-Gamal cipherText over a BabyJubJub curve
 
 import config from 'config';
 import utils from 'common-files/utils/crypto/merkle-tree/utils.mjs';
-import { squareRootModPrime, addMod, mulMod } from './number-theory.mjs';
+import { squareRootModPrime, addMod, mulMod } from 'common-files/utils/crypto/number-theory.mjs';
 import modDivide from './modular-division.mjs'; // TODO REPLACE WITH NPM VERSION
 import { hashToCurve, hashToCurveYSqrt, curveToHash } from './elligator2.mjs';
 
@@ -186,19 +186,18 @@ function edwardsDecompress(y) {
   const py = BigInt(y).toString(2).padStart(256, '0');
   const sign = py[0];
   const yfield = BigInt(`0b${py.slice(1)}`); // remove the sign encoding
-  if (yfield > BN128_GROUP_ORDER || yfield < 0)
-    throw new Error(`y cordinate ${yfield} is not a field element`);
+  if (yfield > Fp || yfield < 0) throw new Error(`y cordinate ${yfield} is not a field element`);
   // 168700.x^2 + y^2 = 1 + 168696.x^2.y^2
-  const y2 = mulMod([yfield, yfield]);
+  const y2 = mulMod([yfield, yfield], Fp);
   const x2 = modDivide(
-    addMod([y2, BigInt(-1)]),
-    addMod([mulMod([JUBJUBD, y2]), -JUBJUBA]),
-    BN128_GROUP_ORDER,
+    addMod([y2, BigInt(-1)], Fp),
+    addMod([mulMod([JUBJUBD, y2], Fp), -JUBJUBA], Fp),
+    Fp,
   );
   if (x2 === 0n && sign === '0') return BABYJUBJUB.INFINITY;
-  let xfield = squareRootModPrime(x2);
+  let xfield = squareRootModPrime(x2, Fp);
   const px = BigInt(xfield).toString(2).padStart(256, '0');
-  if (px[255] !== sign) xfield = BN128_GROUP_ORDER - xfield;
+  if (px[255] !== sign) xfield = Fp - xfield;
   const p = [xfield, yfield];
   if (!isOnCurve(p)) throw new Error('The computed point was not on the Babyjubjub curve');
   return p;
