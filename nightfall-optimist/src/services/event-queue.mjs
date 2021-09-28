@@ -43,7 +43,9 @@ export function nextHigherPriorityQueueHasEmptied(priority) {
   });
 }
 
-export async function queueManager(eventObject, eventHandlers, ...args) {
+export async function queueManager(eventObject, eventArgs) {
+  // First element of eventArgs must be the eventHandlers object
+  const [eventHandlers, ...args] = eventArgs;
   // handlers contains the functions needed to handle particular types of event,
   // including removal of events when a chain reorganisation happens
   if (!eventHandlers[eventObject.event]) {
