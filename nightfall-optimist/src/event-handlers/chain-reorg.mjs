@@ -58,12 +58,15 @@ TODO - rollback code is currently undergoing changes.
 */
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
+import rollbackEventHandler from './rollback.mjs';
+import sync from '../services/state-sync.mjs';
 import {
   clearBlockNumberL1ForBlock,
   clearBlockNumberL1ForTransaction,
   isRegisteredProposerAddressMine,
 } from '../services/database.mjs';
 import { waitForContract } from './subscribe.mjs';
+import { pauseEventQueues, resumeEventQueues } from '../services/event-queue.mjs';
 
 const { STATE_CONTRACT_NAME } = config;
 
@@ -100,4 +103,29 @@ export async function removeNewCurrentProposerEventHandler(data, args) {
 // is re-mined, it won't cause a second call to revealChallenge.
 export async function removeCommittedToChallengeEventHandler() {
   logger.debug('Handled removal of CommittedToChallengeEvent');
+}
+
+/*
+When a rollback happens, there are two different cases.  If the rollback did not
+alter L2 state that was added in L1 blocks before the point of the fork, then there
+is nothing to do. The new state will be written when events come in from the new
+branch of the fork.  However, it's possible that the rollback extended beyond the
+point of the fork.  In this case, we'll have deleted state that we now want and,
+even worse, we might have over-written it with new state which is now invalidated
+by the removal of the rollback.
+*/
+export async function removeRollbackEventHandler(eventObject, args) {
+  logger.debug('Remove rollback event handler');
+  const [proposer] = args;
+  // Now, all L2 blocks with a blockNumberL2 >= to the rollback point are invalid
+  // because they were added after the rollback and wouldn't have been added if
+  // the rollback never happened. So, let's clean them out by re-rolling back to
+  // the start of the original rollback - but stop new events being processed first!
+  await pauseEventQueues();
+  await rollbackEventHandler(eventObject);
+  // now we're back to something clean, we can rebuild the L2 state, travelling
+  // along the new L1 branch when we reach it.
+  sync(proposer);
+  // we're done.  Start the event queue again.
+  resumeEventQueues();
 }

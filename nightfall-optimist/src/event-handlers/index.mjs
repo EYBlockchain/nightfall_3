@@ -9,11 +9,11 @@ import transactionSubmittedEventHandler from './transaction-submitted.mjs';
 import rollbackEventHandler from './rollback.mjs';
 import committedToChallengeEventHandler from './challenge-commit.mjs';
 import {
-  // removeRollbackEventHandler,
   removeBlockProposedEventHandler,
   removeCommittedToChallengeEventHandler,
   removeNewCurrentProposerEventHandler,
   removeTransactionSubmittedEventHandler,
+  removeRollbackEventHandler,
 } from './chain-reorg.mjs';
 
 const eventHandlers = {
@@ -23,7 +23,7 @@ const eventHandlers = {
   CommittedToChallenge: committedToChallengeEventHandler,
   NewCurrentProposer: newCurrentProposerEventHandler,
   removers: {
-    // Rollback: removeRollbackEventHandler,
+    Rollback: removeRollbackEventHandler,
     BlockProposed: removeBlockProposedEventHandler,
     CommittedToChallenge: removeCommittedToChallengeEventHandler,
     TransactionSubmitted: removeTransactionSubmittedEventHandler,

@@ -10,7 +10,6 @@ import {
   retrieveMinedNullifiers,
   getBlockByBlockNumberL2,
 } from './database.mjs';
-import { pauseEventQueues, resumeEventQueues } from './event-queue.mjs';
 /**
 Checks the block's properties.  It will return the first inconsistency it finds
 @param {object} block - the block being checked
@@ -25,26 +24,12 @@ async function checkBlock(block, transactions) {
   // We need to get hold of the prior block to do this because the leafCount
   // is derrived from data in that block.
   if (block.blockNumberL2 > 0) {
-    let priorBlock = await getBlockByBlockNumberL2(block.blockNumberL2 - 1);
+    const priorBlock = await getBlockByBlockNumberL2(block.blockNumberL2 - 1);
     if (priorBlock === null) {
-      logger.warn(
+      // TODO this needs handling.
+      throw new Error(
         'Could not find prior block while checking leaf count - this could be due to a chain reorg',
       );
-      // if we get to here then the block prior to this one does not exist. That should
-      // only happen if the prior block was deleted because of a rollback and then a
-      // chain reorg happened which removed the rollback event.  The deleted blocks would
-      // not be reinstated in this case, and thus, any new block originating from the reorg
-      // branch, in which the rollback never happened, would expect, but not find, that
-      // the prior block exists. To fix that, we have to re-sync the layer 2 state.
-      // first, let's pause the event queues - we don't want to have to
-      // manage new events while we're trying to resync.
-      await pauseEventQueues();
-      // TODO await blockSync(proposer);
-      resumeEventQueues();
-      // now the priorBlock should exist;
-      priorBlock = await getBlockByBlockNumberL2(block.blockNumberL2 - 1);
-      if (priorBlock === null)
-        throw new Error('Could not find prior block, even after resyncing layer 2 state');
     }
     if (priorBlock.leafCount + priorBlock.nCommitments !== block.leafCount)
       throw new BlockError('The leaf count in the block is not correct', 7);
