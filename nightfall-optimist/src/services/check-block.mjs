@@ -33,8 +33,8 @@ async function checkBlock(block, transactions) {
       // if we get to here then the block prior to this one does not exist. That should
       // only happen if the prior block was deleted because of a rollback and then a
       // chain reorg happened which removed the rollback event.  The deleted blocks would
-      // not be reinstated in this case and thus any new block originating from the reorg
-      // branch in which the rollback never happened would expect, but not find, that
+      // not be reinstated in this case, and thus, any new block originating from the reorg
+      // branch, in which the rollback never happened, would expect, but not find, that
       // the prior block exists. To fix that, we have to re-sync the layer 2 state.
       // first, let's pause the event queues - we don't want to have to
       // manage new events while we're trying to resync.
