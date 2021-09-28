@@ -2,7 +2,6 @@
     "plugins": [],
     "recurseDepth": 10,
     "source": {
-      "include": ["cli/lib/nf3.mjs"],
       "includePattern": ".+\\.mjs(doc|x)?$",
       "excludePattern": "(^|\\/|\\\\)_"
     },
