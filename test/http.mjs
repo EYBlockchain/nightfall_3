@@ -353,10 +353,22 @@ describe('Testing the http API', () => {
       await new Promise(resolve => setTimeout(resolve, 3000));
 
       const newCommitmentSalts = res.body.salts;
-      const result = await chai.request(recipientUrl).get('/commitment/salt').query({
-        salt: newCommitmentSalts[0],
-      });
-      const commitment = result.body.commitment[0];
+      let commitment;
+
+      while (!commitment) {
+        // eslint-disable-next-line no-await-in-loop
+        const result = await chai.request(recipientUrl).get('/commitment/salt').query({
+          salt: newCommitmentSalts[0],
+        });
+        [commitment] = result.body.commitment;
+
+        if (commitment) break;
+
+        console.log('commitment not found - waiting for 3s before re-try');
+
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
 
       expect(
         web3.utils.toChecksumAddress(`0x${commitment.preimage.ercAddress.substring(26, 66)}`),
@@ -443,10 +455,23 @@ describe('Testing the http API', () => {
       eventLogs.shift();
 
       const newCommitmentSalts = res.body.salts;
-      const result = await chai.request(recipientUrl).get('/commitment/salt').query({
-        salt: newCommitmentSalts[0],
-      });
-      const commitment = result.body.commitment[0];
+      let commitment;
+
+      while (!commitment) {
+        // eslint-disable-next-line no-await-in-loop
+        const result = await chai.request(recipientUrl).get('/commitment/salt').query({
+          salt: newCommitmentSalts[0],
+        });
+        [commitment] = result.body.commitment;
+
+        if (commitment) break;
+
+        console.log('commitment not found - waiting for 3s before re-try');
+
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+
       expect(
         web3.utils.toChecksumAddress(`0x${commitment.preimage.ercAddress.substring(26, 66)}`),
       ).to.equal(ercAddress); // .subString(22, 64)
