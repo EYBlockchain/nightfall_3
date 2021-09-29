@@ -55,7 +55,10 @@ export function hashToCurve(r) {
   const v = modDivide(-MONTA, one + U * r * r, Fp);
   const e = chi((v * v * v + MONTA * v * v + MONTB * v) % Fp);
   const x = ((e * v) % Fp) - modDivide((one - e) * MONTA, BigInt(2), Fp);
-  const y = mulMod([-e, squareRootModPrime((x * x * x + MONTA * x * x + MONTB * x) % Fp, Fp)], Fp);
+  let y2 = squareRootModPrime((x * x * x + MONTA * x * x + MONTB * x) % Fp, Fp);
+  // Ensure returned value is the principal root (i.e. sqrt(x) ∈ [0, (Fp -1) / 2] )
+  if (y2 > (Fp - BigInt(1)) / BigInt(2)) y2 = Fp - y2;
+  const y = mulMod([-e, y2], Fp);
   return [x, y];
 }
 
@@ -65,7 +68,10 @@ export function hashToCurveYSqrt(r) {
   const v = modDivide(-MONTA, one + U * r * r, Fp);
   const e = chi((v * v * v + MONTA * v * v + MONTB * v) % Fp);
   const x = ((e * v) % Fp) - modDivide((one - e) * MONTA, BigInt(2), Fp);
-  return squareRootModPrime((x * x * x + MONTA * x * x + MONTB * x) % Fp, Fp);
+  let y2 = squareRootModPrime((x * x * x + MONTA * x * x + MONTB * x) % Fp, Fp);
+  // Ensure returned value is the principal root (i.e. sqrt(x) ∈ [0, (Fp -1) / 2] )
+  if (y2 > (Fp - BigInt(1)) / BigInt(2)) y2 = Fp - y2;
+  return y2;
 }
 
 // x=−A,
@@ -95,5 +101,7 @@ export function curveToHash(point) {
   } else {
     r = squareRootModPrime(modDivide(-x, U * (x + MONTA), Fp), Fp);
   }
+  // Ensure returned value is the principal root (i.e. sqrt(x) ∈ [0, (Fp -1) / 2] )
+  if (r > (Fp - BigInt(1)) / BigInt(2)) r = Fp - r;
   return r;
 }

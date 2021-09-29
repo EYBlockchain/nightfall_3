@@ -102,8 +102,7 @@ function squareRootModPrime(n, p) {
   // TODO Refactor while loop
   // eslint-disable-next-line no-constant-condition
   while (true) {
-    if (t % p === BigInt(1) && R % p <= (p - BigInt(1)) / BigInt(2)) return R;
-    if (t % p === BigInt(1) && R % p > (p - BigInt(1)) / BigInt(2)) return p - R;
+    if (t % p === BigInt(1)) return R;
 
     // Find the smallest i (0 < i < M) such that t^{2^i} = 1
     let u = t;
