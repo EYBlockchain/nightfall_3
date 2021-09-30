@@ -361,11 +361,8 @@ describe('Testing the http API', () => {
           salt: newCommitmentSalts[0],
         });
         [commitment] = result.body.commitment;
-
         if (commitment) break;
-
         console.log('commitment not found - waiting for 3s before re-try');
-
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
@@ -463,11 +460,8 @@ describe('Testing the http API', () => {
           salt: newCommitmentSalts[0],
         });
         [commitment] = result.body.commitment;
-
         if (commitment) break;
-
         console.log('commitment not found - waiting for 3s before re-try');
-
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
