@@ -1,8 +1,5 @@
 // modular division
-import config from 'config';
-import { mulMod, addMod } from 'common-files/utils/crypto/number-theory.mjs';
-
-const { BN128_PRIME_FIELD } = config;
+import { mulMod, addMod } from './number-theory.mjs';
 
 // function for extended Euclidean Algorithm
 // (used to find modular inverse.
@@ -24,7 +21,7 @@ function gcdExtended(a, b, _xy) {
 }
 
 // Function to find modulo inverse of b.
-function modInverse(b, m = BN128_PRIME_FIELD) {
+function modInverse(b, m) {
   const xy = [0n, 0n]; // used in extended GCD algorithm
   const g = gcdExtended(b, m, xy);
   if (g !== 1n) throw new Error('Numbers were not relatively prime');
@@ -33,7 +30,7 @@ function modInverse(b, m = BN128_PRIME_FIELD) {
 }
 
 // Function to compute a/b mod m
-export function modDivide(a, b, m = BN128_PRIME_FIELD) {
+function modDivide(a, b, m) {
   const aa = ((a % m) + m) % m; // check the numbers are mod m and not negative
   const bb = ((b % m) + m) % m; // do we really need this?
   const inv = modInverse(bb, m);
@@ -47,7 +44,7 @@ b = u + iv
 a/b = (x+iy)/(u+iv) = (x+iy)(u-iv)/(u^2+v^2)
     = (xu+yv)/(u^2+v^2) + i(uy-vx)/(u^2+v^2)
 */
-export function complexDivMod(a, b, m = BN128_PRIME_FIELD) {
+function complexDivMod(a, b, m) {
   const [x, y] = a;
   const [u, v] = b;
   const denominator = addMod([mulMod([u, u], m), mulMod([v, v], m)], m);
@@ -55,3 +52,8 @@ export function complexDivMod(a, b, m = BN128_PRIME_FIELD) {
   const imaginaryNumerator = addMod([mulMod([u, y], m), -mulMod([v, x], m)], m);
   return [modDivide(realNumerator, denominator, m), modDivide(imaginaryNumerator, denominator, m)];
 }
+
+// These exports are not unused, but find-unused-exports linter will complain because they are not used
+// within the common-files folder, hence the special disable line below.
+/* ignore unused exports */
+export { modDivide, complexDivMod };

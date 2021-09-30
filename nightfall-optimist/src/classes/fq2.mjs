@@ -4,7 +4,7 @@ for dealing with f_q^2 field elements in the alt BN128 curve.
 */
 
 import config from 'config';
-import { modDivide, complexDivMod } from '../utils/curve-maths/modular-division.mjs';
+import { modDivide, complexDivMod } from 'common-files/utils/crypto/modular-division.mjs';
 
 const { BN128_PRIME_FIELD } = config;
 
@@ -80,7 +80,7 @@ class Fq2 {
     // step 0.  Ensure that q meets the condition q = 3 mod 4
     if (this.mod(this.m, 4n) !== 3n) throw new Error('Field is not congruent to 3 mod 4');
     // step 1
-    const a1 = this.pow(modDivide(this.m - 3n, 4n));
+    const a1 = this.pow(modDivide(this.m - 3n, 4n, this.m));
     // step 2
     const alpha = a1.mul(this).mul(a1);
     // step 3
@@ -94,7 +94,7 @@ class Fq2 {
     if (alpha.equals(new Fq2(this.m - 1n, 0n))) x = new Fq2(0n, 1n).mul(x0);
     // steps 10, 11, 12
     else {
-      const b = new Fq2(1n, 0n).add(alpha).pow(modDivide(this.m - 1n, 2n));
+      const b = new Fq2(1n, 0n).add(alpha).pow(modDivide(this.m - 1n, 2n, this.m));
       x = b.mul(x0);
     }
     return x;
