@@ -3,7 +3,6 @@ functions to support El-Gamal cipherText over a BabyJubJub curve
 */
 
 import config from 'config';
-import utils from 'common-files/utils/crypto/merkle-tree/utils.mjs';
 import { squareRootModPrime, addMod, mulMod } from 'common-files/utils/crypto/number-theory.mjs';
 import { modDivide } from 'common-files/utils/crypto/modular-division.mjs'; // TODO REPLACE WITH NPM VERSION
 import { hashToCurve, hashToCurveYSqrt, curveToHash } from './elligator2.mjs';
@@ -164,40 +163,41 @@ function dec(cipherText, privateKey) {
   return messages;
 }
 
-/** A useful function that takes a curve point and throws away the x coordinate
-retaining only the y coordinate and the odd/eveness of the x coordinate (plays the
-part of a sign in mod arithmetic with a prime field).  This loses no information
-because we know the curve that relates x to y and the odd/eveness disabiguates the two
-possible solutions. So it's a useful data compression.
-TODO - probably simpler to use integer arithmetic rather than binary manipulations
+/**
+function to compress an edwards point. If we throw away the y coodinate, we can
+recover it using the curve equation later, and save almost half the storage.
+Unfortunately that gives us a choice of two y points because of the
+quadratic term in y.  We have two solutions. We could save the sign of y or,
+in a prime field, we can save the parity of y: if y is even, -y (=p-y) must
+be odd and vice versa. We do the latter because it's slightly easier to
+extract.
 */
-function edwardsCompress(p) {
-  const px = p[0];
-  const py = p[1];
-  const xBits = px.toString(2).padStart(256, '0');
-  const yBits = py.toString(2).padStart(256, '0');
-  const sign = xBits[255] === '1' ? '1' : '0';
-  const yBitsC = sign.concat(yBits.slice(1)); // add in the sign bit
-  const y = utils.ensure0x(BigInt('0b'.concat(yBitsC)).toString(16).padStart(64, '0')); // put yBits into hex
-  return y;
+function edwardsCompress(point) {
+  const [x, y] = point.map(p => BigInt(p));
+  // compute whether y is odd or even
+  const parity = y.toString(2).slice(-1); // extract last binary digit
+  // add the parity bit to the x cordinate (x,y are 254 bits long - the final
+  // string is 256 bits to fit with an Ethereum word)
+  const compressedBinary = parity.concat(x.toString(2).padStart(255, '0'));
+  const compressedBigInt = BigInt(`0b${compressedBinary}`);
+  return `0x${compressedBigInt.toString(16)}`;
 }
 
-function edwardsDecompress(y) {
-  const py = BigInt(y).toString(2).padStart(256, '0');
-  const sign = py[0];
-  const yfield = BigInt(`0b${py.slice(1)}`); // remove the sign encoding
-  if (yfield > Fp || yfield < 0) throw new Error(`y cordinate ${yfield} is not a field element`);
+function edwardsDecompress(x) {
+  const px = BigInt(x).toString(2).padStart(256, '0');
+  const sign = px[0];
+  const xfield = BigInt(`0b${px.slice(1)}`); // remove the sign encoding
+  if (xfield > Fp || xfield < 0) throw new Error(`x cordinate ${xfield} is not a field element`);
   // 168700.x^2 + y^2 = 1 + 168696.x^2.y^2
-  const y2 = mulMod([yfield, yfield], Fp);
-  const x2 = modDivide(
-    addMod([y2, BigInt(-1)], Fp),
-    addMod([mulMod([JUBJUBD, y2], Fp), -JUBJUBA], Fp),
+  const x2 = mulMod([xfield, xfield], Fp);
+  const y2 = modDivide(
+    addMod([mulMod([JUBJUBA, x2], Fp), -1n], Fp),
+    addMod([mulMod([JUBJUBD, x2], Fp), -1n], Fp),
     Fp,
   );
-  if (x2 === 0n && sign === '0') return BABYJUBJUB.INFINITY;
-  let xfield = squareRootModPrime(x2, Fp);
-  const px = BigInt(xfield).toString(2).padStart(256, '0');
-  if (px[255] !== sign) xfield = Fp - xfield;
+  if (y2 === 0n && sign === '0') return BABYJUBJUB.INFINITY;
+  let yfield = squareRootModPrime(y2, Fp);
+  if (yfield.toString(2).slice(-1) !== sign) yfield = Fp - yfield;
   const p = [xfield, yfield];
   if (!isOnCurve(p)) throw new Error('The computed point was not on the Babyjubjub curve');
   return p;
