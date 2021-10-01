@@ -19,7 +19,6 @@ jobs:
           npm ci
           npm run lint
 
-
   ganache-test:
     runs-on: ubuntu-18.04
     steps:
@@ -49,7 +48,6 @@ jobs:
         with:
           name: ganache-test-logs
           path: ./ganache-test.log
-
 
   test-gas:
     name: check gas for 32 transactions per block
@@ -83,7 +81,6 @@ jobs:
         with:
           name: test-gas-logs
           path: ./test-gas.log
-
 
   geth-local-env-test:
     name: geth running as standalone serivce
