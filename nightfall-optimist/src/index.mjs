@@ -2,12 +2,8 @@ import logger from 'common-files/utils/logger.mjs';
 import app from './app.mjs';
 import {
   startEventQueue,
-  subscribeToNewCurrentProposer,
-  subscribeToRemovedNewCurrentProposer,
   subscribeToBlockAssembledWebSocketConnection,
   subscribeToChallengeWebSocketConnection,
-  newCurrentProposerEventHandler,
-  removeNewCurrentProposerEventHandler,
   eventHandlers,
 } from './event-handlers/index.mjs';
 import Proposer from './classes/proposer.mjs';
@@ -28,14 +24,9 @@ const main = async () => {
     // try to sync any missing blockchain state
     // only then start making blocks and listening to new proposers
     initialBlockSync(proposer).then(() => {
-      subscribeToNewCurrentProposer(newCurrentProposerEventHandler, proposer);
-      subscribeToRemovedNewCurrentProposer(removeNewCurrentProposerEventHandler, proposer);
+      startEventQueue(queueManager, eventHandlers, proposer);
       conditionalMakeBlock(proposer);
     });
-    // we do not wait for the initial block sync for these event handlers
-    // as we want to still listen to incoming events (just not make blocks)
-    // subscribe to blockchain events
-    startEventQueue(queueManager, eventHandlers);
     app.listen(80);
   } catch (err) {
     logger.error(err);

@@ -47,8 +47,8 @@ async function commitToChallenge(txDataToSign) {
       2,
     )}`,
   );
+  await saveCommit(commitHash, txDataToSign);
   ws.send(JSON.stringify({ type: 'commit', txDataToSign: commitToSign }));
-  saveCommit(commitHash, txDataToSign);
 }
 
 export async function revealChallenge(txDataToSign) {

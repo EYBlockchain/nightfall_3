@@ -149,6 +149,40 @@ export async function getAllCommitments() {
   return db.collection(COMMITMENTS_COLLECTION).find().toArray();
 }
 
+// function to get the balance of commitments for each ERC address
+export async function getWalletBalance() {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  const query = { isNullified: false, isOnChain: { $gte: 0 } };
+  const options = {
+    projection: {
+      preimage: { ercAddress: 1, tokenId: 1, value: 1 },
+      _id: 0,
+    },
+  };
+  const wallet = await db.collection(COMMITMENTS_COLLECTION).find(query, options).toArray();
+  // the below is a little complex.  First we extract the ercAddress, tokenId and value
+  // from the preimage.  Then we format the, nicely. We don't care about the value of the
+  // tokenId, other than if it's zero or not (indicating the token type). Then we filter
+  // any commitments of zero value and tokenId (meaningless commitments), then we
+  // work out the balance contribution of each commitment  - a 721 token has no value field in the
+  // commitment but each 721 token counts as a balance of 1. Then finally add up the individual
+  // commitment balances to get a balance for each erc address.
+  return wallet
+    .map(e => ({
+      ercAddress: BigInt(e.preimage.ercAddress).toString(16),
+      tokenId: !!BigInt(e.preimage.tokenId),
+      value: Number(BigInt(e.preimage.value)),
+    }))
+    .filter(e => e.tokenId || e.value > 0) // there should be no commitments with tokenId and value of ZERO
+    .map(e => ({ ercAddress: e.ercAddress, balance: e.tokenId ? 1 : e.value }))
+    .reduce((acc, e) => {
+      if (!acc[e.ercAddress]) acc[e.ercAddress] = 0;
+      acc[e.ercAddress] += e.balance;
+      return acc;
+    }, {});
+}
+
 // as above, but removes output commitments
 export async function deleteCommitments(commitmentHashes) {
   const connection = await mongo.connection(MONGO_URL);

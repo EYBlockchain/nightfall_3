@@ -47,36 +47,28 @@ export async function waitForContract(contractName) {
   return instance;
 }
 
-export async function startEventQueue(callback, arg) {
-  const emitterState = (await waitForContract(STATE_CONTRACT_NAME)).events.allEvents();
-  const emitterShield = (await waitForContract(SHIELD_CONTRACT_NAME)).events.allEvents();
-  const emitterChallenges = (await waitForContract(CHALLENGES_CONTRACT_NAME)).events.allEvents();
-  emitterState.on('changed', event => callback(event, arg));
-  emitterShield.on('changed', event => callback(event, arg));
-  emitterChallenges.on('changed', event => callback(event, arg));
-  emitterState.on('data', event => callback(event, arg));
-  emitterShield.on('data', event => callback(event, arg));
-  emitterChallenges.on('data', event => callback(event, arg));
+/**
+ *
+ * @param callback - The function that distributes events to the event-handler function
+ * @param arg - List of arguments to be passed to callback, the first element must be the event-handler functions
+ * @returns = List of emitters from each contract.
+ */
+export async function startEventQueue(callback, ...arg) {
+  const contractNames = [
+    STATE_CONTRACT_NAME,
+    SHIELD_CONTRACT_NAME,
+    CHALLENGES_CONTRACT_NAME,
+    PROPOSERS_CONTRACT_NAME,
+  ];
+  const contracts = await Promise.all(contractNames.map(c => waitForContract(c)));
+  const emitters = contracts.map(e => {
+    const emitterC = e.events.allEvents();
+    emitterC.on('changed', event => callback(event, arg));
+    emitterC.on('data', event => callback(event, arg));
+    return emitterC;
+  });
   logger.debug('Subscribed to layer 2 state events');
-  return { emitterState, emitterShield, emitterChallenges };
-}
-
-export async function subscribeToNewCurrentProposer(callback, ...args) {
-  const emitterProp = (await waitForContract(PROPOSERS_CONTRACT_NAME)).events.NewCurrentProposer();
-  const emitterState = (await waitForContract(STATE_CONTRACT_NAME)).events.NewCurrentProposer();
-  emitterProp.on('data', event => callback(event, args));
-  emitterState.on('data', event => callback(event, args));
-  logger.debug('Subscribed to NewCurrentProposer event');
-  return { emitterProp, emitterState };
-}
-
-export async function subscribeToRemovedNewCurrentProposer(callback, ...args) {
-  const emitterProp = (await waitForContract(PROPOSERS_CONTRACT_NAME)).events.NewCurrentProposer();
-  const emitterState = (await waitForContract(STATE_CONTRACT_NAME)).events.NewCurrentProposer();
-  emitterProp.on('changed', event => callback(event, args));
-  emitterState.on('changed', event => callback(event, args));
-  logger.debug('Subscribed to NewCurrentProposer event removal');
-  return { emitterProp, emitterState };
+  return emitters;
 }
 
 export async function subscribeToChallengeWebSocketConnection(callback, ...args) {

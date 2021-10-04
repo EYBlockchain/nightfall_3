@@ -18,6 +18,7 @@ contract State is Structures, Config {
   mapping(address => uint) public pendingWithdrawals;
   mapping(address => LinkedAddress) public proposers;
   mapping(address => TimeLockedBond) public bondAccounts;
+  mapping(bytes32 => bool) public claimedBlockStakes;
   LinkedAddress public currentProposer; // who can propose a new shield state
   uint public proposerStartBlock; // L1 block where currentProposer became current
   // local state variables
@@ -162,12 +163,11 @@ contract State is Structures, Config {
     delete proposers[proposer];
     proposers[previousAddress].nextAddress = proposers[nextAddress].thisAddress;
     proposers[nextAddress].previousAddress = proposers[previousAddress].thisAddress;
-    if(proposer == currentProposer.thisAddress) {
       // Cannot just call changeCurrentProposer directly due to the require time check
+      //change currentProposer to next aaddress irrespective of whether proposer is currentProposer
       proposerStartBlock = block.number;
       currentProposer = proposers[nextAddress];
       emit NewCurrentProposer(currentProposer.thisAddress);
-    }
   }
   // Checks if a block is actually referenced in the queue of blocks waiting
   // to go into the Shield state (stops someone challenging with a non-existent
@@ -185,17 +185,25 @@ contract State is Structures, Config {
     return bondAccounts[addr];
   }
 
-  function rewardChallenger(address challengerAddr, address proposer) public onlyRegistered {
+  function rewardChallenger(address challengerAddr, address proposer, uint256 numRemoved) public onlyRegistered {
     removeProposer(proposer);
     TimeLockedBond memory bond = bondAccounts[proposer];
     bondAccounts[proposer] = TimeLockedBond(0,0);
-    pendingWithdrawals[challengerAddr] += bond.amount;
+    pendingWithdrawals[challengerAddr] += bond.amount + numRemoved * BLOCK_STAKE;
   }
 
   function updateBondAccountTime(address addr, uint time) public onlyRegistered {
     TimeLockedBond memory bond = bondAccounts[addr];
     bond.time = time;
     bondAccounts[addr] = bond;
+  }
+
+  function isBlockStakeWithdrawn(bytes32 blockHash) public view returns (bool){
+    return claimedBlockStakes[blockHash];
+  }
+
+  function setBlockStakeWithdrawn(bytes32 blockHash) public onlyRegistered {
+    claimedBlockStakes[blockHash] = true;
   }
 
 }
