@@ -77,28 +77,34 @@ async function transfer(transferParams) {
   const newCommitments = [];
   let secrets = [];
   const salts = [];
+  let potentialSalt;
+  let potentialCommitment;
   for (let i = 0; i < recipientCompressedPkds.length; i++) {
-    // eslint-disable-next-line no-await-in-loop
-    salts.push(new GN((await rand(ZKP_KEY_LENGTH)).bigInt % BN128_GROUP_ORDER));
-    newCommitments.push(
-      new Commitment({
+    // loop to find a new salt until the commitment hash is smaller than the BN128_GROUP_ORDER
+    do {
+      // eslint-disable-next-line no-await-in-loop
+      potentialSalt = new GN((await rand(ZKP_KEY_LENGTH)).bigInt % BN128_GROUP_ORDER);
+      potentialCommitment = new Commitment({
         ercAddress,
         tokenId,
         value: values[i],
         pkd: recipientPkds[i],
         compressedPkd: recipientCompressedPkds[i],
-        salt: salts[i],
-      }),
-    );
-    // encrypt secrets such as erc20Address, tokenId, value, salt for recipient
-    if (i === 0) {
-      // eslint-disable-next-line no-await-in-loop
-      secrets = await Secrets.encryptSecrets(
-        [ercAddress.bigInt, tokenId.bigInt, values[i].bigInt, salts[i].bigInt],
-        [recipientPkds[0][0].bigInt, recipientPkds[0][1].bigInt],
-      );
-    }
+        salt: potentialSalt,
+      });
+      // encrypt secrets such as erc20Address, tokenId, value, salt for recipient
+      if (i === 0) {
+        // eslint-disable-next-line no-await-in-loop
+        secrets = await Secrets.encryptSecrets(
+          [ercAddress.bigInt, tokenId.bigInt, values[i].bigInt, potentialSalt.bigInt],
+          [recipientPkds[0][0].bigInt, recipientPkds[0][1].bigInt],
+        );
+      }
+    } while (potentialCommitment.hash.bigInt > BN128_GROUP_ORDER);
+    salts.push(potentialSalt);
+    newCommitments.push(potentialCommitment);
   }
+
   // compress the secrets to save gas
   const compressedSecrets = Secrets.compressSecrets(secrets);
 
