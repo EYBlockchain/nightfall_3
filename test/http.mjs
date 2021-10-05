@@ -43,6 +43,9 @@ describe('Testing the http API', () => {
   let pkd1;
   let pkd2;
 
+  const ENABLE_TESTNET_DEPLOY = process.env.ENABLE_TESTNET_DEPLOY === 'true';
+  const { ETH_PRIVATE_KEY, BLOCKCHAIN_TESTNET_URL } = process.env;
+
   const senderUrl = 'http://localhost:8080';
   const recipientUrl = 'http://localhost:8084';
   const optimistUrl = 'http://localhost:8081';
@@ -52,19 +55,29 @@ describe('Testing the http API', () => {
   const value = 10;
   const value2 = 12;
   // this is the etherum private key for accounts[0]
-  const privateKey = '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e';
-  const gas = 10000000;
+  let privateKey = '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e';
+  let gas = 10000000;
   // this is also accounts[0]
   const recipientAddress = '0x9c8b2276d490141ae1440da660e470e7c0349c63';
   // this is what we pay the proposer for incorporating a transaction
   const fee = 1;
-  const BLOCK_STAKE = 1000000000000000000; // 1 ether
+  const BLOCK_STAKE = 1; // 1 wei
   const txPerBlock = 2;
   const eventLogs = [];
   let stateBalance = 0;
 
   before(async function () {
-    web3 = await connectWeb3();
+    web3 = await connectWeb3(BLOCKCHAIN_TESTNET_URL);
+
+    if (ENABLE_TESTNET_DEPLOY) {
+      if (!ETH_PRIVATE_KEY) {
+        throw Error(
+          'Cannot use default private key, please set environment variable ETH_PRIVATE_KEY',
+        );
+      }
+      privateKey = ETH_PRIVATE_KEY;
+      gas = (await web3.eth.getBlock('latest')).gasLimit;
+    }
 
     shieldAddress = (await chai.request(senderUrl).get('/contract-address/Shield')).body.address;
 
@@ -95,10 +108,14 @@ describe('Testing the http API', () => {
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
       const { type, txDataToSign } = msg;
-      if (type === 'block') {
-        await blockSubmissionFunction(txDataToSign, privateKey, stateAddress, gas, BLOCK_STAKE);
-      } else {
-        await submitTransaction(txDataToSign, privateKey, challengesAddress, gas);
+      try {
+        if (type === 'block') {
+          await blockSubmissionFunction(txDataToSign, privateKey, stateAddress, gas, BLOCK_STAKE);
+        } else {
+          await submitTransaction(txDataToSign, privateKey, challengesAddress, gas);
+        }
+      } catch (err) {
+        console.error(err);
       }
     };
   });
@@ -150,7 +167,7 @@ describe('Testing the http API', () => {
         .send({ address: myAddress });
       const { txDataToSign } = res.body;
       expect(txDataToSign).to.be.a('string');
-      const bond = 10000000000000000000;
+      const bond = 10;
       await submitTransaction(txDataToSign, privateKey, proposersAddress, gas, bond);
       stateBalance += bond;
     });
@@ -164,7 +181,7 @@ describe('Testing the http API', () => {
       const { txDataToSign } = res.body;
       expect(txDataToSign).to.be.a('string');
       // we have to pay 10 ETH to be registered
-      const bond = 10000000000000000000;
+      const bond = 10;
       const gasCosts = 5000000000000000;
       const startBalance = await getBalance(myAddress);
       // now we need to sign the transaction and send it to the blockchain
@@ -349,8 +366,6 @@ describe('Testing the http API', () => {
       }
       eventLogs.shift();
       stateBalance += fee * txPerBlock + BLOCK_STAKE;
-
-      await new Promise(resolve => setTimeout(resolve, 3000));
 
       const newCommitmentSalts = res.body.salts;
       let commitment;

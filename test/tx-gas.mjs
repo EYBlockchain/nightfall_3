@@ -46,7 +46,7 @@ describe('Testing the http API', () => {
   // this is the openethereum test account (but could be anything)
   // this is what we pay the proposer for incorporating a transaction
   const fee = 1;
-  const BLOCK_STAKE = 1000000000000000000; // 1 ether
+  const BLOCK_STAKE = 1; // 1 wei
   const TRANSACTIONS_PER_BLOCK = 32;
 
   before(async () => {
@@ -135,7 +135,7 @@ describe('Testing the http API', () => {
       txDataToSign = res.body.txDataToSign;
       expect(txDataToSign).to.be.a('string');
       // we have to pay 10 ETH to be registered
-      const bond = 10000000000000000000;
+      const bond = 10;
       const gasCosts = 5000000000000000;
       const startBalance = await getBalance(myAddress);
       // now we need to sign the transaction and send it to the blockchain

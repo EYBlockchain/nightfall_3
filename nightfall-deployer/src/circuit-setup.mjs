@@ -9,7 +9,8 @@ import config from 'config';
 import fs from 'fs';
 import path from 'path';
 import logger from 'common-files/utils/logger.mjs';
-import { waitForContract } from 'common-files/utils/contract.mjs';
+import Web3 from 'common-files/utils/web3.mjs';
+import { waitForContract, getContractAddress } from 'common-files/utils/contract.mjs';
 
 const fsPromises = fs.promises;
 
@@ -107,9 +108,11 @@ async function setupCircuits() {
       }
     } else logger.info(`${circuit} verification key exists: trusted setup skipped`);
   }
-  // we should register the vk now
+
   const keyRegistry = await waitForContract('Challenges');
-  const registrationPromises = [];
+  const keyRegistryAddress = await getContractAddress('Challenges');
+
+  // we should register the vk now
   for (let i = 0; i < vks.length; i++) {
     const circuit = circuitsToSetup[i];
     const vk = vks[i];
@@ -119,23 +122,28 @@ async function setupCircuits() {
       logger.silly('vk:', vk);
       const vkArray = Object.values(vk).flat(Infinity); // flatten the Vk array of arrays because that's how Key_registry.sol likes it.
       const folderpath = circuit.slice(0, -4); // remove the .zok extension
+
+      let tx;
       if (config.USE_STUBS) {
-        registrationPromises.push(
-          keyRegistry.methods
-            .registerVerificationKey(vkArray, config.VK_IDS[folderpath.slice(0, -5)]) // register without the _stub
-            .send(),
+        tx = keyRegistry.methods.registerVerificationKey(
+          vkArray,
+          config.VK_IDS[folderpath.slice(0, -5)],
         );
       } else {
-        registrationPromises.push(
-          keyRegistry.methods.registerVerificationKey(vkArray, config.VK_IDS[folderpath]).send(),
-        );
+        tx = keyRegistry.methods.registerVerificationKey(vkArray, config.VK_IDS[folderpath]);
+      }
+
+      // when deploying on testnet do serial tx excution to avoid nonce issue
+      if (config.ENABLE_TESTNET_DEPLOY) {
+        await Web3.submitRawTransaction(await tx.encodeABI(), keyRegistryAddress);
+      } else {
+        await tx.send();
       }
     } catch (err) {
       logger.error(err);
       throw new Error(err);
     }
   }
-  return Promise.all(registrationPromises);
 }
 
 export default { setupCircuits, waitForZokrates };

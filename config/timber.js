@@ -30,6 +30,7 @@ module.exports = {
 
   UPDATE_FREQUENCY: 100, // TODO: recalculate the tree every 'x' leaves - NOT USED YET
   BULK_WRITE_BUFFER_SIZE: 1000, // number of documents to add to a buffer before bulk-writing them to the db
+  ENABLE_TESTNET_DEPLOY: process.env.ENABLE_TESTNET_DEPLOY === 'true',
 
   // contracts to filter:
   contracts: {
@@ -72,12 +73,11 @@ module.exports = {
 
   // web3:
   web3: {
-    host: process.env.BLOCKCHAIN_WS_HOST,
-    port: process.env.BLOCKCHAIN_PORT,
     url:
       process.env.BLOCKCHAIN_TESTNET_URL ||
       `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`,
     options: {
+      // some of options are not in use - remove after testing shows it's not needed:
       defaultAccount: '0x0',
       defaultBlock: '0', // e.g. the genesis block our blockchain
       defaultGas: 100000,
@@ -86,12 +86,16 @@ module.exports = {
       transactionConfirmationBlocks: 15,
       transactionPollingTimeout: 480,
       // transactionSigner: new CustomTransactionSigner()
-
-      // Enable auto reconnection
+      clientConfig: {
+        // Useful to keep a connection alive
+        keepalive: true,
+        keepaliveInterval: 60000,
+      },
+      timeout: 3600000,
       reconnect: {
         auto: true,
         delay: 5000, // ms
-        maxAttempts: 5,
+        maxAttempts: 120,
         onTimeout: false,
       },
     },

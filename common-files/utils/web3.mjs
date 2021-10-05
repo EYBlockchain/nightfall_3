@@ -4,6 +4,8 @@ import Web3 from 'web3';
 import config from 'config';
 import logger from './logger.mjs';
 
+const { INFURA_PROJECT_SECRET } = process.env;
+
 export default {
   connection() {
     if (!this.web3) this.connect();
@@ -16,11 +18,24 @@ export default {
   connect() {
     if (this.web3) return this.web3.currentProvider;
 
-    logger.info('Blockchain Connecting ...', config.BLOCKCHAIN_TESTNET_URL);
-    const provider = new Web3.providers.WebsocketProvider(
-      config.BLOCKCHAIN_TESTNET_URL,
-      config.WEB3_RECONNET,
-    );
+    logger.info('Blockchain Connecting ...');
+
+    let provider;
+    if (config.ENABLE_TESTNET_DEPLOY) {
+      if (!INFURA_PROJECT_SECRET) throw Error('env INFURA_PROJECT_SECRET not set');
+
+      provider = new Web3.providers.WebsocketProvider(config.BLOCKCHAIN_TESTNET_URL, {
+        ...config.WEB3_RECONNET,
+        headers: {
+          authorization: `Basic ${Buffer.from(`:${INFURA_PROJECT_SECRET}`).toString('base64')}`,
+        },
+      });
+    } else {
+      provider = new Web3.providers.WebsocketProvider(
+        config.BLOCKCHAIN_TESTNET_URL,
+        config.WEB3_RECONNET,
+      );
+    }
 
     provider.on('error', err => logger.error(`web3 error: ${err}`));
     provider.on('connect', () => logger.info('Blockchain Connected ...'));
@@ -44,5 +59,24 @@ export default {
   },
   disconnect() {
     this.web3.currentProvider.connection.close();
+  },
+
+  // function only needed for testnet deployment
+  async submitRawTransaction(rawTransaction, contractAddress, value = 0) {
+    if (!rawTransaction) throw Error('No tx data to sign');
+    if (!contractAddress) throw Error('No contract address passed');
+    if (!config.WEB3_OPTIONS.from) throw Error('config WEB3_OPTIONS.from is not set');
+    if (!config.ETH_PRIVATE_KEY) throw Error('config ETH_PRIVATE_KEY not set');
+
+    const tx = {
+      to: contractAddress,
+      data: rawTransaction,
+      value,
+      gas: config.WEB3_OPTIONS.gas,
+      gasPrice: config.WEB3_OPTIONS.gasPrice,
+    };
+
+    const signed = await this.web3.eth.accounts.signTransaction(tx, config.ETH_PRIVATE_KEY);
+    return this.web3.eth.sendSignedTransaction(signed.rawTransaction);
   },
 };

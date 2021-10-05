@@ -83,9 +83,10 @@ module.exports = {
       websockets: true,
     },
 
-    rinkeby: {
-      provider: () => new HDWalletProvider(config.ETH_MNEMONIC, config.BLOCKCHAIN_TESTNET_URL),
-      network_id: 4,
+    ropsten: {
+      provider: () => new HDWalletProvider(config.ETH_PRIVATE_KEY, config.BLOCKCHAIN_TESTNET_URL),
+      network_id: 3,
+      networkCheckTimeout: 10000000,
     },
 
     // Another network with more advanced options...
