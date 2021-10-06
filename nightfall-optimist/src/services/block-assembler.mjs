@@ -1,4 +1,5 @@
 /* eslint-disable no-await-in-loop */
+/* eslint-disable import/no-cycle */
 
 /**
 This module does all of the heaving lifting for a Proposer: It assembles blocks
@@ -12,10 +13,7 @@ import {
   getMostProfitableTransactions,
   numberOfUnprocessedTransactions,
 } from './database.mjs';
-import {
-  queues,
-  queueBlockAssembler,
-} from './event-queue.mjs';
+import { queues, queueBlockAssembler } from './event-queue.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
@@ -47,7 +45,6 @@ stop making blocks. It is called from the 'main()' routine to start it, and
 should not be called from anywhere else because we only want one instance ever
 */
 export async function conditionalMakeBlock(proposer) {
-  logger.debug('Ready to make blocks');
   // if we are the current proposer, and there are enough transactions waiting
   // to be processed, we can assemble a block and create a proposal
   // transaction. If not, we must wait until either we have enough (hooray)
@@ -58,7 +55,10 @@ export async function conditionalMakeBlock(proposer) {
     // in queue after blockassemble should not be done So if other events are present in queue
     // we wait for queue to empty and re enqueue blockassembler again
     makeBlocks = false;
-    if ((await numberOfUnprocessedTransactions()) >= TRANSACTIONS_PER_BLOCK && queues[0].length === 0) { 
+    if (
+      (await numberOfUnprocessedTransactions()) >= TRANSACTIONS_PER_BLOCK &&
+      queues[0].length === 0
+    ) {
       const { block, transactions } = await makeBlock(proposer.address);
       logger.info(`Block Assembler - New Block created, ${JSON.stringify(block, null, 2)}`);
       // propose this block to the Shield contract here
@@ -88,8 +88,11 @@ export async function conditionalMakeBlock(proposer) {
     // we wait for proposer enough unprocessed txns to procure and priority queue zero to be empty
     // recursive call to conditionalMakeBlock is done only if after above both statements
     // are satisfied makeBlocks flag is set to true
-    while ((await numberOfUnprocessedTransactions()) < TRANSACTIONS_PER_BLOCK || queues[0].length !== 0)
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    while (
+      (await numberOfUnprocessedTransactions()) < TRANSACTIONS_PER_BLOCK ||
+      queues[0].length !== 0
+    )
+      await new Promise(resolve => setTimeout(resolve, 1000));
     makeBlocks = true;
     queueBlockAssembler(proposer);
   }
