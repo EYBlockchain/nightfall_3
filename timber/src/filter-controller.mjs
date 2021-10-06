@@ -172,7 +172,7 @@ const rollbackResponseFunction = async (eventObject, args) => {
 This function replays events from blockNumber to the latest block.  This is to
 rebuild state that was removed when an event was removed by a layer 1 chain
 reoganisation
-*/
+
 async function resync(fromblockNumberL1, args) {
   // get all the events and sort them into causal order by block and transaction
   const { contractName } = args;
@@ -198,6 +198,7 @@ async function resync(fromblockNumberL1, args) {
     }
   }
 }
+*/
 
 /**
 @author westlad
@@ -242,14 +243,15 @@ async function removeBlockProposedFunction(eventObject, args) {
 @author westlad
 This function is called whenever a Rollback event is removed by a layer 1 chain reorg.
 When that happens, we need to roll back the database to the point just before the
-event happened, and then rebuild the state.
+event happened, the state will then automatically get rebuilt along the new L1 branch
+as the evets for that branch roll in.
 */
 async function removeRollbackFunction(eventObject, args) {
   // Generic Timber event processing preamble...
   const { db, contractName, treeId } = args;
   const eventName = args.eventName === undefined ? 'Rollback' : args.eventName;
   let eventParams;
-  logger.debug(`eventname: ${eventName}`);
+  logger.debug(`eventname: ${eventName} (Removal)`);
   if (treeId === undefined || treeId === '') {
     eventParams = config.contracts[contractName].events[eventName].parameters;
   } else {
@@ -268,12 +270,7 @@ async function removeRollbackFunction(eventObject, args) {
   // Now,this is the leafCount that we originally rolled back to
   // that's where we need to roll back to again to remove any state added after
   // the rollback
-  // before we do that though let's find out the block number that corresponds
-  // to that leafCount because we'll need to rebuild the state from that block.
-  const { blockNumber } = await mtc.getTreeHistoryByCurrentLeafCount(db, Number(leafCount));
-  await mtc.rollback(db, treeHeight, Number(leafCount));
-  // and now we need to roll forwards to the present, along our new timeline
-  return resync(blockNumber, args);
+  return mtc.rollback(db, treeHeight, Number(leafCount));
 }
 
 /**

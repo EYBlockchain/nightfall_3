@@ -63,7 +63,6 @@ async function rollbackEventHandler(data) {
     await getTransactionsByTransactionHashes(transactionHashesInBlock)
   ).filter(t => t.transactionType !== '0');
 
-  logger.info(`blockTransctions: ${JSON.stringify(blockTransactions)}`);
   // Now we have to also inspect any transfers that are in the mempool:true
   const mempool = (await getMempoolTransactions()).filter(
     m =>

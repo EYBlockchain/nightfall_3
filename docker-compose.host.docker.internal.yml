@@ -5,7 +5,7 @@ version: '3.5'
 # See the readme for more information.
 services:
 
-  client1: 
+  client1:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
 
@@ -26,6 +26,7 @@ services:
   timber1:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
+      LOG_LEVEL: debug
 
   optimist1:
     environment:

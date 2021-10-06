@@ -115,7 +115,7 @@ even worse, we might have over-written it with new state which is now invalidate
 by the removal of the rollback.
 */
 export async function removeRollbackEventHandler(eventObject, args) {
-  logger.debug('Remove rollback event handler');
+  logger.debug('Remove rollback event handler fired');
   const [proposer] = args;
   // Now, all L2 blocks with a blockNumberL2 >= to the rollback point are invalid
   // because they were added after the rollback and wouldn't have been added if

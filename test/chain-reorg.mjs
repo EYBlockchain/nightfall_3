@@ -280,36 +280,7 @@ describe('Testing the http API', () => {
     const numDeposits = 1;
     let blocks1;
     let receipts;
-    /*
-    it('should create a chain fork with both branches containing NF_3 transactions', async () => {
-      // at this point we have no suitable commitments. Let's hold half of the nodes
-      // and add some commitments to the un-held half
-      console.log(
-        '     *Nightfall_3 is connected to node set 1, nothing is connected to node set 2*',
-      );
-      console.log(
-        '     Pausing node set 2 and waiting one minute for all L1 transactions to complete',
-      );
-      await pauseBlockchain(2); // hold one half of the nodes
-      await new Promise(resolve => setTimeout(resolve, 60000));
-      console.log('     Creating one block of deposit transactions with node set 1');
-      receipts = await doDeposits(numDeposits); // add transactions to the other half
-      console.log('     Block created');
-      // test the receipts are good.
-      const recs = await Promise.all(
-        receipts.map(receipt => web3.eth.getTransactionReceipt(receipt.transactionHash)),
-      );
-      expect(recs).to.not.include(null);
-      blocks1 = await web3.eth.getBlockNumber();
-      console.log(
-        '     BlockNumber for node set 1 is:',
-        blocks1,
-        '. Pausing node set 1 and unpausing node set 2',
-      );
-      await pauseBlockchain(1);
-      await unpauseBlockchain(2);
-    });
-    */
+
     it('should create a chain fork containing transactions', async () => {
       // at this point we have no suitable commitments. Let's hold half of the nodes
       // and add some commitments to the un-held half
