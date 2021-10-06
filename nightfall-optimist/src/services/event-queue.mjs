@@ -20,11 +20,12 @@ and catch these removals, processing them appropriately.
 import Queue from 'queue';
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
+import { conditionalMakeBlock } from './block-assembler.mjs';
 
 const { MAX_QUEUE } = config;
 const fastQueue = new Queue({ autostart: true, concurrency: 1 });
 const slowQueue = new Queue({ autostart: true, concurrency: 1 });
-const queues = [fastQueue, slowQueue];
+export const queues = [fastQueue, slowQueue];
 
 /**
 This function will return a promise that resolves to true when the next highest
@@ -40,6 +41,19 @@ export function nextHigherPriorityQueueHasEmptied(priority) {
       queues[priority - 1].removeListener('end', listener);
       resolve(); // or if it's already empty
     }
+  });
+}
+
+/**
+This function will push conditionalmakeblock into fastQueue and assures
+no onchain event is executed in parallel with makeblocks . Additonal checks 
+has to be done for makeblocks since following on chain event in order is important
+which is performed and explained in block-assembler service
+*/
+export async function queueBlockAssembler(proposer) {
+  queues[0].push(async () => {
+    await nextHigherPriorityQueueHasEmptied(0); // prevent conditionalmakeblock from running until fastQueue is emptied
+    conditionalMakeBlock(proposer);
   });
 }
 
