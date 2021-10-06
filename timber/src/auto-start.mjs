@@ -19,7 +19,7 @@ const autoStart = async () => {
     // Timber has the ability to infer one. Otherwise Timber will fall over. If
     // the build artefacts don't exist yet then we need to wait.
     // Stop eslint complaining because we DO want delays in this loop
-    let retries = process.env.AUTOSTART_RETRIES || 50;
+    let retries = Number(process.env.AUTOSTART_RETRIES) || 50;
     while (!data.contractAddress) {
       try {
         // eslint-disable-next-line no-await-in-loop

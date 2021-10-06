@@ -202,7 +202,7 @@ services:
       MONGO_PORT: 27017
       MONGO_NAME: merkle_tree
       HASH_TYPE: mimc
-      LOG_LEVEL: info
+      LOG_LEVEL: debug
       AUTOSTART: enabled
 
   # Timber service, configured for nightfall
@@ -310,7 +310,7 @@ services:
       HASH_TYPE: mimc
       LOG_LEVEL: debug
       IS_CHALLENGER: 'true'
-      TRANSACTIONS_PER_BLOCK: 2
+      TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
       TIMBER_HOST: timber1
       TIMBER_PORT: 80
     command: ['npm', 'run', 'dev']
@@ -341,13 +341,13 @@ services:
         source: ./config/default.js
         target: /app/config/default.js
     environment:
-      WEBSOCKET_PORT: 8084
+      WEBSOCKET_PORT: 8080
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
       HASH_TYPE: mimc
       LOG_LEVEL: debug
       IS_CHALLENGER: 'true'
-      TRANSACTIONS_PER_BLOCK: 2
+      TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
       TIMBER_HOST: timber2
       TIMBER_PORT: 80
     command: ['npm', 'run', 'dev']

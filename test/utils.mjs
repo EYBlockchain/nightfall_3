@@ -3,6 +3,7 @@ import axios from 'axios';
 import chai from 'chai';
 import compose from 'docker-compose';
 import path from 'path';
+import config from 'config';
 import { fileURLToPath } from 'url';
 import rand from '../common-files/utils/crypto/crypto-random.mjs';
 
@@ -13,10 +14,38 @@ const { expect } = chai;
 let web3;
 // This will be a mapping of privateKeys to nonces;
 const nonceDict = {};
+const ENABLE_TESTNET_DEPLOY = process.env.ENABLE_TESTNET_DEPLOY === 'true';
+const { INFURA_PROJECT_SECRET, INFURA_PROJECT_ID } = process.env;
 
 export function connectWeb3(url = 'ws://localhost:8546') {
-  web3 = new Web3(new Web3.providers.WebsocketProvider(url));
-  return web3;
+  return new Promise(resolve => {
+    console.log('Blockchain Connecting ...');
+
+    let provider;
+    if (ENABLE_TESTNET_DEPLOY) {
+      if (!INFURA_PROJECT_SECRET) throw Error('env INFURA_PROJECT_SECRET not set');
+      if (!INFURA_PROJECT_ID) throw Error('env INFURA_PROJECT_ID not set');
+
+      const infuraUrl = url.replace('INFURA_PROJECT_ID', INFURA_PROJECT_ID);
+
+      provider = new Web3.providers.WebsocketProvider(infuraUrl, {
+        ...config.WEB3_RECONNET,
+        headers: {
+          authorization: `Basic ${Buffer.from(`:${INFURA_PROJECT_SECRET}`).toString('base64')}`,
+        },
+      });
+    } else {
+      provider = new Web3.providers.WebsocketProvider(url, config.WEB3_RECONNET);
+    }
+
+    web3 = new Web3(provider);
+    provider.on('error', err => console.error(`web3 error: ${JSON.stringify(err)}`));
+    provider.on('connect', () => {
+      console.log('Blockchain Connected ...');
+      resolve(web3);
+    });
+    provider.on('end', () => console.log('Blockchain disconnected'));
+  });
 }
 
 export function connectWeb3NoState(url = 'ws://localhost:8546') {
@@ -32,6 +61,7 @@ export function setNonce(privateKey, _nonce) {
 }
 
 export async function getAccounts() {
+  if (process.env.FROM_ADDRESS) return [process.env.FROM_ADDRESS];
   const accounts = web3.eth.getAccounts();
   return accounts;
 }
@@ -60,6 +90,7 @@ export async function submitTransaction(
     gasPrice: 10000000000,
     nonce,
   };
+
   const signed = await web3.eth.accounts.signTransaction(tx, privateKey);
   nonce++;
   nonceDict[privateKey] = nonce;

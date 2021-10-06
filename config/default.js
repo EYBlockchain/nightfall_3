@@ -24,8 +24,11 @@ module.exports = {
   PROTOCOL: 'http://', // connect to zokrates microservice like this
   WEBSOCKET_PORT: process.env.WEBSOCKET_PORT || 8080,
   ZOKRATES_WORKER_HOST: process.env.ZOKRATES_WORKER_HOST || 'worker',
-  BLOCKCHAIN_WS_HOST: process.env.BLOCKCHAIN_WS_HOST || 'openethereum',
-  BLOCKCHAIN_PORT: process.env.BLOCKCHAIN_PORT || '8546',
+  BLOCKCHAIN_TESTNET_URL:
+    process.env.BLOCKCHAIN_TESTNET_URL ||
+    `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`,
+  ENABLE_TESTNET_DEPLOY: process.env.ENABLE_TESTNET_DEPLOY === 'true',
+  ETH_PRIVATE_KEY: process.env.ETH_PRIVATE_KEY,
   TIMBER_HOST: process.env.TIMBER_HOST || 'timber',
   TIMBER_PORT: process.env.TIMBER_PORT || 80,
   OPTIMIST_HOST: process.env.OPTIMIST_HOST || 'optimist',
@@ -34,6 +37,20 @@ module.exports = {
     gas: process.env.GAS || 1000000,
     gasPrice: process.env.GAS_PRICE || '20000000000',
     from: process.env.FROM_ADDRESS || undefined,
+  },
+  WEB3_RECONNET: {
+    clientConfig: {
+      // Useful to keep a connection alive
+      keepalive: true,
+      keepaliveInterval: 60000,
+    },
+    timeout: 3600000,
+    reconnect: {
+      auto: true,
+      delay: 5000, // ms
+      maxAttempts: 120,
+      onTimeout: false,
+    },
   },
   PROVING_SCHEME: process.env.PROVING_SCHEME || 'gm17',
   BACKEND: process.env.BACKEND || 'libsnark',
@@ -49,7 +66,7 @@ module.exports = {
   ], // used to encode/decode proposeBlock signature
   SUBMIT_TRANSACTION_TYPES:
     '(uint64,uint64,uint8,uint8,bytes32,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[8],uint[4])',
-  RETRIES: process.env.AUTOSTART_RETRIES || 50,
+  RETRIES: Number(process.env.AUTOSTART_RETRIES) || 50,
   NODE_HASHLENGTH: 32,
   ZERO: '0x0000000000000000000000000000000000000000000000000000000000000000',
   HASH_TYPE: 'mimc',

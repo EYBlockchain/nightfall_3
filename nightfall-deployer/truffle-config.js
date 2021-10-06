@@ -18,7 +18,9 @@
  *
  */
 
-// const HDWalletProvider = require('@truffle/hdwallet-provider');
+// eslint-disable-next-line import/no-extraneous-dependencies
+const HDWalletProvider = require('@truffle/hdwallet-provider');
+const config = require('config');
 // const infuraKey = "fj4jll3k.....";
 //
 // const fs = require('fs');
@@ -79,6 +81,12 @@ module.exports = {
       network_id: 4378921, // Any network (default: none)
       gas: 8000000,
       websockets: true,
+    },
+
+    ropsten: {
+      provider: () => new HDWalletProvider(config.ETH_PRIVATE_KEY, config.BLOCKCHAIN_TESTNET_URL),
+      network_id: 3,
+      networkCheckTimeout: 10000000,
     },
 
     // Another network with more advanced options...
