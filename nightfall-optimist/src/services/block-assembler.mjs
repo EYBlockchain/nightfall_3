@@ -82,7 +82,7 @@ export async function conditionalMakeBlock(proposer) {
       // TODO is await needed?
     }
     // we wait for proposer enough unprocessed txns to procure and priority queue zero to be empty
-    // recursive call to conditionalMakeBlock 
+    // recursive call to reenqueue conditionalMakeBlock to eventQueuemanager
     while (
       (await numberOfUnprocessedTransactions()) < TRANSACTIONS_PER_BLOCK ||
       queues[0].length !== 0
