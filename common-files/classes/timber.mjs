@@ -97,8 +97,12 @@ const _checkMembership = (leafVal, tree, path, f, acc) => {
 
 /**
 @class
-Creates a timber library instance.
-@param {Array<string>} leaves - Leaves that should be inserted into timber
+Creates a timber library instance. The constructor is designed to enable the recreation of a timber instance
+@param {string} root - Root of the timber tree
+@param {object} tree  - Tree object to use
+@param {Array<string>} frontier - frontier of this tree
+@param {number} leafCount - number of leaves in the tree
+
 */
 class Timber {
   root = ZERO;
@@ -109,8 +113,14 @@ class Timber {
 
   leafCount = 0;
 
-  constructor(leaves = []) {
-    return this.insertLeaves(leaves);
+  constructor(root = ZERO, tree = Leaf(ZERO), frontier = [], leafCount = 0) {
+    if (root === ZERO || tree === Leaf(ZERO) || frontier.length === 0 || leafCount === 0)
+      return this;
+    this.root = root;
+    this.tree = tree;
+    this.frontier = frontier;
+    this.leafCount = leafCount;
+    return this;
   }
 
   /**
