@@ -17,11 +17,9 @@ Web3js handles event removal (due to a chain reorg) by re-emitting the (now remo
 event with its `removed` property set to true. In the code below, we look out for
 and catch these removals, processing them appropriately.
 */
-/* eslint-disable import/no-cycle */
 import Queue from 'queue';
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
-import { conditionalMakeBlock } from './block-assembler.mjs';
 
 const { MAX_QUEUE } = config;
 const fastQueue = new Queue({ autostart: true, concurrency: 1 });
@@ -46,15 +44,15 @@ function nextHigherPriorityQueueHasEmptied(priority) {
 }
 
 /**
-This function will push conditionalmakeblock into fastQueue and assures
-no onchain event is executed in parallel with makeblocks . Additonal checks 
-has to be done for makeblocks since following on chain event in order is important
-which is performed and explained in block-assembler service
-*/
-export async function queueBlockAssembler(proposer) {
-  queues[0].push(async () => {
-    await nextHigherPriorityQueueHasEmptied(0); // prevent conditionalmakeblock from running until fastQueue is emptied
-    conditionalMakeBlock(proposer);
+ * This is a generic enqueue function pushes a callback function to corrspdnding queue
+ * @param callback - The function to enqueue
+ * @param priority - The priority of function to push to corrsponding queue
+ * @param arg - List of arguments to be passed to callback
+ */
+export async function eventQueueManager(callback, priority, args) {
+  queues[priority].push(async () => {
+    await nextHigherPriorityQueueHasEmptied(priority); // prevent callback event from running until higher priority is emptied
+    callback(args);
   });
 }
 
