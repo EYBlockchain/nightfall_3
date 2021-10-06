@@ -5,6 +5,7 @@ import {
   isRegisteredProposerAddressMine,
   addTransactionsToMemPoolFromBlockNumberL2,
 } from '../services/database.mjs';
+import { queueBlockAssembler } from '../services/event-queue.mjs';
 
 const { STATE_CONTRACT_NAME } = config;
 
@@ -40,6 +41,11 @@ async function newCurrentProposerEventHandler(data, args) {
     // !! converts this to a "is not null" check - i.e. false if is null
     // are we the next proposer?
     proposer.isMe = !!(await isRegisteredProposerAddressMine(currentProposer));
+    // trigger enqueue operation of blockassembler if you are currentproposer
+    if (proposer.isMe) {
+      logger.info(`triggering enqueue operation of blockassembler`);
+      queueBlockAssembler(proposer);
+    }
   } catch (err) {
     // handle errors
     logger.error(err);

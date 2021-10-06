@@ -17,6 +17,7 @@ Web3js handles event removal (due to a chain reorg) by re-emitting the (now remo
 event with its `removed` property set to true. In the code below, we look out for
 and catch these removals, processing them appropriately.
 */
+/* eslint-disable import/no-cycle */
 import Queue from 'queue';
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
@@ -32,7 +33,7 @@ This function will return a promise that resolves to true when the next highest
 priority queue is empty (priority goes in reverse order, prioity 0 is highest
 priority)
 */
-export function nextHigherPriorityQueueHasEmptied(priority) {
+function nextHigherPriorityQueueHasEmptied(priority) {
   return new Promise(resolve => {
     const listener = () => resolve();
     if (priority === 0) resolve(); // resolve if we're the highest priority queue
