@@ -184,12 +184,12 @@ export async function createBadBlock(badBlockType, block, transactions, args) {
 }
 
 // This function polls for a particular event to be emitted by the blockchain
-// from a specified contract.  After timeOut, it will give up and error.
+// from a specified contract.  After retries, it will give up and error.
 // TODO could we make a neater job with setInterval()?
-export async function testForEvents(contractAddress, topics, timeOut = 30000) {
+export async function testForEvents(contractAddress, topics, retries) {
   // console.log('Listening for events');
   const WAIT = 1000;
-  let counter = timeOut / WAIT;
+  let counter = retries || Number(process.env.EVENT_RETRIEVE_RETRIES) || 3;
   let events;
   while (
     events === undefined ||
@@ -206,7 +206,8 @@ export async function testForEvents(contractAddress, topics, timeOut = 30000) {
     // eslint-disable-next-line no-await-in-loop
     await new Promise(resolve => setTimeout(resolve, WAIT));
     counter--;
-    if (counter < 0) throw new Error('No events found before timeout');
+    if (counter < 0)
+      throw new Error(`No events found with in ${counter} retries of ${WAIT}ms wait`);
   }
   // console.log('Events found');
   return events;

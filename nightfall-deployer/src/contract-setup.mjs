@@ -12,7 +12,7 @@ async function setupCircuits() {
   const stateInstance = await waitForContract('State');
   logger.debug(`address of State contract is ${stateInstance.options.address}`);
 
-  // when deploying on testnet
+  // when deploying on infura
   // do serial registration to predict nonce
   if (config.USE_INFURA) {
     await Web3.submitRawTransaction(

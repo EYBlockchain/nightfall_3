@@ -133,7 +133,7 @@ async function setupCircuits() {
         tx = keyRegistry.methods.registerVerificationKey(vkArray, config.VK_IDS[folderpath]);
       }
 
-      // when deploying on testnet do serial tx excution to avoid nonce issue
+      // when deploying on infura - do serial tx execution to avoid nonce issue
       if (config.USE_INFURA) {
         await Web3.submitRawTransaction(await tx.encodeABI(), keyRegistryAddress);
       } else {
