@@ -14,7 +14,7 @@ async function setupCircuits() {
 
   // when deploying on testnet
   // do serial registration to predict nonce
-  if (config.ENABLE_TESTNET_DEPLOY) {
+  if (config.USE_INFURA) {
     await Web3.submitRawTransaction(
       (await waitForContract('Proposers')).methods
         .setStateContract(stateInstance.options.address)

@@ -35,8 +35,8 @@ describe('Testing the challenge http API', () => {
   let ivk1;
   let pkd1;
 
-  const ENABLE_TESTNET_DEPLOY = process.env.ENABLE_TESTNET_DEPLOY === 'true';
-  const { ETH_PRIVATE_KEY, BLOCKCHAIN_TESTNET_URL } = process.env;
+  const USE_INFURA = process.env.USE_INFURA === 'true';
+  const { ETH_PRIVATE_KEY, BLOCKCHAIN_URL } = process.env;
 
   const url = 'http://localhost:8080';
   const optimistUrl = 'http://localhost:8081';
@@ -67,9 +67,9 @@ describe('Testing the challenge http API', () => {
   let web3;
 
   before(async () => {
-    web3 = await connectWeb3(BLOCKCHAIN_TESTNET_URL);
+    web3 = await connectWeb3(BLOCKCHAIN_URL);
 
-    if (ENABLE_TESTNET_DEPLOY) {
+    if (USE_INFURA) {
       if (!ETH_PRIVATE_KEY) {
         throw Error(
           'Cannot use default private key, please set environment variable ETH_PRIVATE_KEY',

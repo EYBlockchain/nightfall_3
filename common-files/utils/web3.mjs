@@ -21,19 +21,19 @@ export default {
     logger.info('Blockchain Connecting ...');
 
     let provider;
-    if (config.ENABLE_TESTNET_DEPLOY) {
+    if (config.USE_INFURA) {
       if (!INFURA_PROJECT_SECRET) throw Error('env INFURA_PROJECT_SECRET not set');
 
-      provider = new Web3.providers.WebsocketProvider(config.BLOCKCHAIN_TESTNET_URL, {
-        ...config.WEB3_RECONNET,
+      provider = new Web3.providers.WebsocketProvider(config.BLOCKCHAIN_URL, {
+        ...config.WEB3_PROVIDER_OPTIONS,
         headers: {
           authorization: `Basic ${Buffer.from(`:${INFURA_PROJECT_SECRET}`).toString('base64')}`,
         },
       });
     } else {
       provider = new Web3.providers.WebsocketProvider(
-        config.BLOCKCHAIN_TESTNET_URL,
-        config.WEB3_RECONNET,
+        config.BLOCKCHAIN_URL,
+        config.WEB3_PROVIDER_OPTIONS,
       );
     }
 

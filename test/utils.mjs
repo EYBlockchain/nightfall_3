@@ -14,7 +14,7 @@ const { expect } = chai;
 let web3;
 // This will be a mapping of privateKeys to nonces;
 const nonceDict = {};
-const ENABLE_TESTNET_DEPLOY = process.env.ENABLE_TESTNET_DEPLOY === 'true';
+const USE_INFURA = process.env.USE_INFURA === 'true';
 const { INFURA_PROJECT_SECRET, INFURA_PROJECT_ID } = process.env;
 
 export function connectWeb3(url = 'ws://localhost:8546') {
@@ -22,20 +22,20 @@ export function connectWeb3(url = 'ws://localhost:8546') {
     console.log('Blockchain Connecting ...');
 
     let provider;
-    if (ENABLE_TESTNET_DEPLOY) {
+    if (USE_INFURA) {
       if (!INFURA_PROJECT_SECRET) throw Error('env INFURA_PROJECT_SECRET not set');
       if (!INFURA_PROJECT_ID) throw Error('env INFURA_PROJECT_ID not set');
 
       const infuraUrl = url.replace('INFURA_PROJECT_ID', INFURA_PROJECT_ID);
 
       provider = new Web3.providers.WebsocketProvider(infuraUrl, {
-        ...config.WEB3_RECONNET,
+        ...config.WEB3_PROVIDER_OPTIONS,
         headers: {
           authorization: `Basic ${Buffer.from(`:${INFURA_PROJECT_SECRET}`).toString('base64')}`,
         },
       });
     } else {
-      provider = new Web3.providers.WebsocketProvider(url, config.WEB3_RECONNET);
+      provider = new Web3.providers.WebsocketProvider(url, config.WEB3_PROVIDER_OPTIONS);
     }
 
     web3 = new Web3(provider);
