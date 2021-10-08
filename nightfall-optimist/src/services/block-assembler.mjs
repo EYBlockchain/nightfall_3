@@ -18,6 +18,7 @@ import { Transaction } from '../classes/index.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 
 const { TRANSACTIONS_PER_BLOCK, STATE_CONTRACT_NAME } = config;
+
 let ws;
 
 export function setBlockAssembledWebSocketConnection(_ws) {
@@ -48,9 +49,6 @@ export async function conditionalMakeBlock(proposer) {
   // transaction. If not, we must wait until either we have enough (hooray)
   // or we're no-longer the proposer (boo).
   if (proposer.isMe) {
-    // it is important for queues length to be empty since a rollback or any onchain event following
-    // in queue after blockassemble should not be done So if other events are present in queue
-    // we wait for queue to empty and re enqueue blockassembler again
     if (
       (await numberOfUnprocessedTransactions()) >= TRANSACTIONS_PER_BLOCK &&
       queues[0].length === 0
@@ -79,15 +77,10 @@ export async function conditionalMakeBlock(proposer) {
       // remove the transactiosn from the mempool so we don't keep making new
       // blocks with them
       await removeTransactionsFromMemPool(block);
+      await eventQueueManager(conditionalMakeBlock, 0, proposer);
       // TODO is await needed?
+    } else {
+      await eventQueueManager(conditionalMakeBlock, 0, proposer);
     }
-    // we wait for proposer enough unprocessed txns to procure and priority queue zero to be empty
-    // recursive call to reenqueue conditionalMakeBlock to eventQueuemanager
-    while (
-      (await numberOfUnprocessedTransactions()) < TRANSACTIONS_PER_BLOCK ||
-      queues[0].length !== 0
-    )
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    eventQueueManager(conditionalMakeBlock, 0, proposer);
   }
 }
