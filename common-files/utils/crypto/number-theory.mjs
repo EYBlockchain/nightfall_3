@@ -4,19 +4,15 @@
 // but converts them for BigInt (the original library is limited to <2**52)
 // We are very grateful for the original work by rsandor
 
-import config from 'config';
-
-const { BN128_PRIME_FIELD } = config;
-
-export function addMod(addMe, m = BN128_PRIME_FIELD) {
+function addMod(addMe, m) {
   return addMe.reduce((e, acc) => (((e + m) % m) + acc) % m, BigInt(0));
 }
 
-export function mulMod(timesMe, m = BN128_PRIME_FIELD) {
+function mulMod(timesMe, m) {
   return timesMe.reduce((e, acc) => (((e + m) % m) * acc) % m, BigInt(1));
 }
 
-function powerMod(base, exponent, m = BN128_PRIME_FIELD) {
+function powerMod(base, exponent, m) {
   if (m === BigInt(1)) return BigInt(0);
   let result = BigInt(1);
   let b = (base + m) % m; // add m in case it's negative: % gives the remainder, not the mod
@@ -81,7 +77,9 @@ function quadraticNonresidue(p) {
   return NaN;
 }
 
-export function squareRootModPrime(n, p = BN128_PRIME_FIELD) {
+function squareRootModPrime(n, p) {
+  if (jacobiSymbol(n, p) === 0) return BigInt(0);
+
   if (jacobiSymbol(n, p) !== 1) return NaN;
 
   let Q = p - BigInt(1);
@@ -130,3 +128,8 @@ export function squareRootModPrime(n, p = BN128_PRIME_FIELD) {
     c = (b * b) % p;
   }
 }
+
+// These exports are not unused, but find-unused-exports linter will complain because they are not used
+// within the common-files folder, hence the special disable line below.
+/* ignore unused exports */
+export { squareRootModPrime, addMod, mulMod, powerMod };
