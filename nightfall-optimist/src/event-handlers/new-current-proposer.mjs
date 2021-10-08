@@ -5,8 +5,8 @@ import {
   isRegisteredProposerAddressMine,
   addTransactionsToMemPoolFromBlockNumberL2,
 } from '../services/database.mjs';
-import { eventQueueManager } from '../services/event-queue.mjs';
 import { conditionalMakeBlock } from '../services/block-assembler.mjs';
+import { eventQueueManager } from '../services/event-queue.mjs';
 
 const { STATE_CONTRACT_NAME } = config;
 
@@ -42,10 +42,10 @@ async function newCurrentProposerEventHandler(data, args) {
     // !! converts this to a "is not null" check - i.e. false if is null
     // are we the next proposer?
     proposer.isMe = !!(await isRegisteredProposerAddressMine(currentProposer));
-    // trigger enqueue operation of conditionalMakeBlock if you are currentproposer
+    // trigger enqueue operation of blockassembler if you are currentproposer
     if (proposer.isMe) {
-      logger.info(`triggering enqueue operation of conditionalMakeBlock`);
-      eventQueueManager(conditionalMakeBlock, 0, proposer);
+      logger.info(`triggering enqueue operation of blockassembler`);
+      await eventQueueManager(conditionalMakeBlock, 0, proposer);
     }
   } catch (err) {
     // handle errors
@@ -53,4 +53,5 @@ async function newCurrentProposerEventHandler(data, args) {
     throw new Error(err); // pass error handling up the call stack
   }
 }
+
 export default newCurrentProposerEventHandler;

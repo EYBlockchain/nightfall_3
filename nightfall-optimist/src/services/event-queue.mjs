@@ -43,15 +43,9 @@ function nextHigherPriorityQueueHasEmptied(priority) {
   });
 }
 
-/**
- * This is a generic enqueue function pushes a callback function to corrspdnding queue
- * @param callback - The function to enqueue
- * @param priority - The priority of function to push to corrsponding queue
- * @param arg - List of arguments to be passed to callback
- */
 export async function eventQueueManager(callback, priority, args) {
   queues[priority].push(async () => {
-    await nextHigherPriorityQueueHasEmptied(priority); // prevent callback event from running until higher priority is emptied
+    await nextHigherPriorityQueueHasEmptied(priority); // prevent conditionalmakeblock from running until fastQueue is emptied
     callback(args);
   });
 }
