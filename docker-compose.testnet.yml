@@ -8,7 +8,6 @@ services:
       BLOCKCHAIN_URL: 'wss://ropsten.infura.io/ws/v3/${INFURA_PROJECT_ID}'
       USE_INFURA: 'true'
       AUTOSTART_RETRIES: 300
-      FROM_ADDRESS: '0x29100E7E3dA6654BF63d9E7804ADe518aCc5AaA5'
       INFURA_PROJECT_SECRET: $INFURA_PROJECT_SECRET
 
   client2:
@@ -16,7 +15,6 @@ services:
       BLOCKCHAIN_URL: 'wss://ropsten.infura.io/ws/v3/${INFURA_PROJECT_ID}'
       USE_INFURA: 'true'
       AUTOSTART_RETRIES: 300
-      FROM_ADDRESS: '0x29100E7E3dA6654BF63d9E7804ADe518aCc5AaA5'
       INFURA_PROJECT_SECRET: $INFURA_PROJECT_SECRET
 
   deployer:
@@ -30,13 +28,11 @@ services:
       ETH_PRIVATE_KEY: $ETH_PRIVATE_KEY
       INFURA_PROJECT_SECRET: $INFURA_PROJECT_SECRET
 
-  # Timber service, configured for nightfall
   timber1:
     environment:
       BLOCKCHAIN_URL: 'wss://ropsten.infura.io/ws/v3/${INFURA_PROJECT_ID}'
       USE_INFURA: 'true'
       AUTOSTART_RETRIES: 300
-      FROM_ADDRESS: '0x29100E7E3dA6654BF63d9E7804ADe518aCc5AaA5'
       INFURA_PROJECT_SECRET: $INFURA_PROJECT_SECRET
 
   timber2:
@@ -44,7 +40,6 @@ services:
       BLOCKCHAIN_URL: 'wss://ropsten.infura.io/ws/v3/${INFURA_PROJECT_ID}'
       USE_INFURA: 'true'
       AUTOSTART_RETRIES: 300
-      FROM_ADDRESS: '0x29100E7E3dA6654BF63d9E7804ADe518aCc5AaA5'
       INFURA_PROJECT_SECRET: $INFURA_PROJECT_SECRET
 
   optimist1:
@@ -52,7 +47,6 @@ services:
       BLOCKCHAIN_URL: 'wss://ropsten.infura.io/ws/v3/${INFURA_PROJECT_ID}'
       USE_INFURA: 'true'
       AUTOSTART_RETRIES: 300
-      FROM_ADDRESS: '0x29100E7E3dA6654BF63d9E7804ADe518aCc5AaA5'
       INFURA_PROJECT_SECRET: $INFURA_PROJECT_SECRET
 
   optimist2:
@@ -60,5 +54,4 @@ services:
       BLOCKCHAIN_URL: 'wss://ropsten.infura.io/ws/v3/${INFURA_PROJECT_ID}'
       USE_INFURA: 'true'
       AUTOSTART_RETRIES: 300
-      FROM_ADDRESS: '0x29100E7E3dA6654BF63d9E7804ADe518aCc5AaA5'
       INFURA_PROJECT_SECRET: $INFURA_PROJECT_SECRET
