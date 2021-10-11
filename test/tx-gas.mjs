@@ -5,7 +5,6 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import WebSocket from 'ws';
-import config from 'config';
 import {
   closeWeb3Connection,
   submitTransaction,
@@ -14,9 +13,7 @@ import {
   getBalance,
   setNonce,
 } from './utils.mjs';
-import { generateKeys } from '../nightfall-client/src/services/keys.mjs';
 
-const { ZKP_KEY_LENGTH } = config;
 const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
@@ -64,7 +61,11 @@ describe('Testing the http API', () => {
     res = await chai.request(url).get('/contract-address/State');
     stateAddress = res.body.address;
 
-    ({ nsk: nsk1, ivk: ivk1, pkd: pkd1 } = await generateKeys(ZKP_KEY_LENGTH));
+    ({
+      nsk: nsk1,
+      ivk: ivk1,
+      pkd: pkd1,
+    } = (await chai.request(url).post('/generate-keys').send()).body);
 
     setNonce(await web3.eth.getTransactionCount((await getAccounts())[0]));
 

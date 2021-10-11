@@ -1,4 +1,3 @@
-import config from 'config';
 import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
@@ -15,9 +14,7 @@ import {
   pauseBlockchain,
   unpauseBlockchain,
 } from './utils.mjs';
-import { generateKeys } from '../nightfall-client/src/services/keys.mjs';
 
-const { ZKP_KEY_LENGTH } = config;
 const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
@@ -187,7 +184,11 @@ describe('Testing the http API', () => {
       if (log.topics[0] === topicEventMapping.BlockProposed) eventLogs.push('blockProposed');
     });
 
-    ({ nsk: nsk1, ivk: ivk1, pkd: pkd1 } = await generateKeys(ZKP_KEY_LENGTH));
+    ({
+      nsk: nsk1,
+      ivk: ivk1,
+      pkd: pkd1,
+    } = (await chai.request(url).post('/generate-keys').send()).body);
 
     connection = new WebSocket(optimistWsUrl);
     connection.onopen = () => {
