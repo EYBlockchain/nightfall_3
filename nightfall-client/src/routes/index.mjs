@@ -8,6 +8,7 @@ import peers from './peers.mjs';
 import commitment from './commitment.mjs';
 import incomingViewingKey from './incomingViewingKey.mjs';
 import setInstantWithdrawl from './instant-withdrawal.mjs';
+import generateKeys from './generate-keys.mjs';
 
 export {
   transfer,
@@ -20,4 +21,5 @@ export {
   commitment,
   incomingViewingKey,
   setInstantWithdrawl,
+  generateKeys,
 };

@@ -4,7 +4,6 @@ import chaiAsPromised from 'chai-as-promised';
 import Queue from 'queue';
 import WebSocket from 'ws';
 import { GN } from 'general-number';
-import config from 'config';
 import {
   closeWeb3Connection,
   submitTransaction,
@@ -15,9 +14,7 @@ import {
   topicEventMapping,
   setNonce,
 } from './utils.mjs';
-import { generateKeys } from '../nightfall-client/src/services/keys.mjs';
 
-const { ZKP_KEY_LENGTH } = config;
 const { expect, assert } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
@@ -97,8 +94,18 @@ describe('Testing the http API', () => {
       if (log.topics[0] === topicEventMapping.BlockProposed) eventLogs.push('blockProposed');
     });
 
-    ({ ask: ask1, nsk: nsk1, ivk: ivk1, pkd: pkd1 } = await generateKeys(ZKP_KEY_LENGTH));
-    ({ nsk: nsk2, ivk: ivk2, pkd: pkd2 } = await generateKeys(ZKP_KEY_LENGTH));
+    ({
+      ask: ask1,
+      nsk: nsk1,
+      ivk: ivk1,
+      pkd: pkd1,
+    } = (await chai.request(senderUrl).post('/generate-keys').send()).body);
+
+    ({
+      nsk: nsk2,
+      ivk: ivk2,
+      pkd: pkd2,
+    } = (await chai.request(senderUrl).post('/generate-keys').send()).body);
 
     connection = new WebSocket(optimistWsUrl);
     connection.onopen = () => {
