@@ -8,7 +8,7 @@ A class for timber-like merkle trees.
 import config from 'config';
 import utils from '../utils/crypto/merkle-tree/utils.mjs';
 
-const { TIMBER_HEIGHT, ZERO } = config;
+const { TIMBER_HEIGHT } = config;
 export const TIMBER_WIDTH = 2 ** TIMBER_HEIGHT;
 
 /** 
@@ -49,8 +49,8 @@ const _insertLeaf = (leafVal, tree, path) => {
     // We then use the next element in path to decided which subtree to traverse
     case 'leaf':
       return path[0] === '0'
-        ? Branch(_insertLeaf(leafVal, Leaf(ZERO), path.slice(1)), Leaf(ZERO))
-        : Branch(Leaf(ZERO), _insertLeaf(leafVal, Leaf(ZERO), path.slice(1)));
+        ? Branch(_insertLeaf(leafVal, Leaf(0), path.slice(1)), Leaf(0))
+        : Branch(Leaf(0), _insertLeaf(leafVal, Leaf(0), path.slice(1)));
     default:
       return tree;
   }
@@ -96,6 +96,22 @@ const _checkMembership = (leafVal, tree, path, f, acc) => {
 };
 
 /**
+@function _combineFrontiers
+* @param arr1 - An array of hashes (frontier points)
+* @param arr2 - An array of hashes (frontier points)
+* @returns An array of hashes, where the hashes of the longer arrays supersedes hashes those in the shorter
+* array at the same indices
+ */
+const combineFrontiers = (arr1, arr2) => {
+  if (arr1.length > arr2.length) {
+    const fromArr1 = arr1.slice(0, arr1.length - arr2.length);
+    return fromArr1.concat(arr2);
+  }
+  const fromArr2 = arr2.slice(0, arr2.length - arr1.length);
+  return fromArr2.concat(arr1);
+};
+
+/**
 @class
 Creates a timber library instance. The constructor is designed to enable the recreation of a timber instance
 @param {string} root - Root of the timber tree
@@ -105,17 +121,16 @@ Creates a timber library instance. The constructor is designed to enable the rec
 
 */
 class Timber {
-  root = ZERO;
+  root;
 
-  tree = Leaf(ZERO);
+  tree = Leaf(0);
 
   frontier = [];
 
   leafCount = 0;
 
-  constructor(root = ZERO, tree = Leaf(ZERO), frontier = [], leafCount = 0) {
-    if (root === ZERO || tree === Leaf(ZERO) || frontier.length === 0 || leafCount === 0)
-      return this;
+  constructor(root = 0, tree = Leaf(0), frontier = [], leafCount = 0) {
+    if (root === 0 || tree === Leaf(0) || frontier.length === 0 || leafCount === 0) return this;
     this.root = root;
     this.tree = tree;
     this.frontier = frontier;
@@ -176,11 +191,14 @@ class Timber {
   @param {string} dir - The element '0' or '1' that decides if we go left or right.
   @returns {object} The subtree where our focus is currently at the root of.
   */
-  static moveDown(tree, dir) {
-    if (Number(dir) > 1 || Number(dir) < 0) throw new Error('Invalid Dir');
+  static moveDown(tree, dirs) {
+    if (dirs.length === 0) return tree;
+    if (Number(dirs[0]) > 1 || Number(dirs[0]) < 0) throw new Error('Invalid Dir');
     switch (tree.tag) {
       case 'branch':
-        return dir === '0' ? tree.left : tree.right;
+        return dirs[0] === '0'
+          ? this.moveDown(tree.left, dirs.slice(1))
+          : this.moveDown(tree.right, dirs.slice(1));
       default:
         return tree;
     }
@@ -224,46 +242,55 @@ class Timber {
   @param {string} index - The index that the leafValue is located at.
   @returns {Array<object>} The merkle path for leafValue.
   */
-  static calcFrontier(tree, leafCount) {
-    // If the tree is full the Frontier is trivially all the rightmost elements.
-    if (leafCount === TIMBER_WIDTH) {
-      const lastElementIndex = Number(TIMBER_WIDTH - 1)
-        .toString(2)
-        .split('');
+  static calcFrontier(tree, leafCount, height = TIMBER_HEIGHT) {
+    // The base case - there are no leaves in this tree.
+    if (leafCount === 0) return [];
+    // If there are some leaves in this tree, we can make our life easier
+    // by locating "full" subtrees. We do this by using the height and leaf count
+    const width = leafCount > 1 ? 2 ** Math.ceil(height) : 2;
+    const numFrontierPoints = Math.floor(Math.log2(leafCount)) + 1;
 
-      // eslint-disable-next-line prettier/prettier, no-return-assign, no-param-reassign
-      return  [Timber.hashTree(tree)].concat(lastElementIndex.map((a => e => a = Timber.hashTree(Timber.moveDown(a, e)))(tree)));
-      // The above line is moves our pointer down the tree, hashing and storing the value after each step.
+    if (leafCount === width) {
+      // If this tree is full, we have a deterministic way to discover the frontier values
+      // Dirs is an array of directions: ['0','10','110'...]
+      const dirs = [...Array(numFrontierPoints - 1).keys()].map(a => '0'.padStart(a + 1, '1'));
+      // The frontier points are then the root of the tree and our deterministic paths.
+      return Timber.hashTree(tree).concat(
+        dirs.map(fp => Timber.hashTree(Timber.moveDown(tree, fp))),
+      );
     }
-    const lastIdx = leafCount - 1;
-    const frontierCount = Math.floor(Math.log2(leafCount)) + 1;
-    const lastIdxBin = Number(lastIdx).toString(2).padStart(TIMBER_HEIGHT, '0');
-    // Move our focus to the subtree that contains the frontier elements
-    const frontierTreeRoot = lastIdxBin
-      .slice(0, TIMBER_HEIGHT - frontierCount)
-      .split('')
-      .reduce((acc, curr) => Timber.moveDown(acc, curr), tree);
+    // Our tree is not full at this height, but there will be a level where it will be full
+    // unless there is only 1 leaf in this tree (which we will handle separately)
 
-    const subTreePath = lastIdxBin.slice(-frontierCount);
-    const frontierPoints = []; // This will be an array of arrays that contain the path to each frontier point.
-    for (let i = 1; i <= subTreePath.length; i++) {
-      // We use i = 1 here because we never consider the first element and always look one element ahead
-      // this aesthetically saves repeated i + 1
-      const lastPathDir = subTreePath[i]; // The last direction to the (i-1)-th frontier point
-      if (lastPathDir === '0') {
-        // If our sequence ends in a 0, then we invert the path to arrive at the predecessor node.
-        frontierPoints.push(
-          subTreePath
-            .slice(0, i)
-            .split('')
-            .map(s => (s === '0' ? '1' : '0')),
-        );
-      } else frontierPoints.push(subTreePath.slice(0, i).split(''));
+    // Firstly, we need to descend to a point where we are sitting over the subtree that form
+    // the frontier points.
+    const lastIdxBin = Number(leafCount - 1)
+      .toString(2)
+      .padStart(height, '0');
+
+    const frontierTreeRoot = Timber.moveDown(tree, lastIdxBin.slice(0, height - numFrontierPoints));
+
+    // If the leaf count is 1 then our only option is left of the current location.
+    if (leafCount === 1) {
+      return [Timber.moveDown(frontierTreeRoot, '0'.padStart(height, '0')).value];
     }
-    // We move our focus from the current tree to each frontier point, resulting in a array of subtrees.
-    // The roots of these subtrees are the frontier points, so we hash each of the subtrees.
-    return frontierPoints.map(fp =>
-      Timber.hashTree(fp.reduce((acc, curr) => Timber.moveDown(acc, curr), frontierTreeRoot)),
+
+    const leftLeafCount = 2 ** Math.floor(Math.log2(leafCount));
+    const rightLeafCount = leafCount - leftLeafCount;
+
+    const leftSubTreeDirs = [...Array(numFrontierPoints - 1).keys()].map(a =>
+      '0'.padStart(a + 1, '1'),
+    );
+
+    const leftTreeFrontierPoints = [Timber.hashTree(frontierTreeRoot.left)].concat(
+      leftSubTreeDirs.map(fp => Timber.hashTree(Timber.moveDown(frontierTreeRoot.left, fp))),
+    );
+
+    // const newHeight = height - numFrontierPoints > 0 ? numFrontierPoints - 1 : height - 1;
+    const newHeight = numFrontierPoints - 1;
+    return combineFrontiers(
+      leftTreeFrontierPoints,
+      this.calcFrontier(frontierTreeRoot.right, rightLeafCount, newHeight),
     );
   }
 
@@ -321,7 +348,7 @@ class Timber {
     switch (tree.tag) {
       case 'branch':
         return pathToLeaf[0] === '0'
-          ? Branch(this.pruneRightSubTree(tree.left, pathToLeaf.slice(1)), Leaf(ZERO)) // Going left, delete the right tree
+          ? Branch(this.pruneRightSubTree(tree.left, pathToLeaf.slice(1)), Leaf(0)) // Going left, delete the right tree
           : Branch(tree.left, this.pruneRightSubTree(tree.right, pathToLeaf.slice(1))); // Going right, but leave the left tree intact
       case 'leaf':
         return tree;
