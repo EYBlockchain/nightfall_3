@@ -3,7 +3,6 @@ import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import Queue from 'queue';
 import WebSocket from 'ws';
-import config from 'config';
 import {
   closeWeb3Connection,
   submitTransaction,
@@ -14,9 +13,7 @@ import {
   topicEventMapping,
   setNonce,
 } from './utils.mjs';
-import { generateKeys } from '../nightfall-client/src/services/keys.mjs';
 
-const { ZKP_KEY_LENGTH } = config;
 const { expect } = chai;
 const txQueue = new Queue({ autostart: true, concurrency: 1 });
 const ZERO = '0x0000000000000000000000000000000000000000000000000000000000000000';
@@ -104,7 +101,12 @@ describe('Testing the challenge http API', () => {
     // set the current nonce before we start the test
     setNonce(await web3.eth.getTransactionCount((await getAccounts())[0]));
 
-    ({ ask: ask1, nsk: nsk1, ivk: ivk1, pkd: pkd1 } = await generateKeys(ZKP_KEY_LENGTH));
+    ({
+      ask: ask1,
+      nsk: nsk1,
+      ivk: ivk1,
+      pkd: pkd1,
+    } = (await chai.request(url).post('/generate-keys').send()).body);
 
     web3.eth.subscribe('logs', { address: stateAddress }).on('data', log => {
       if (log.topics[0] === topicEventMapping.BlockProposed) {
