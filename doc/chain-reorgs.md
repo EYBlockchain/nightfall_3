@@ -79,6 +79,8 @@ Firstly, Optimist sees the event removals.  When it receives a BlockProposed eve
 database and sets the block's L1 block number to null.  This indicates to NF_3 that the Block hash has been removed from the L1 chain.
 You might imagine we could just delete these blocks, but we can't.  We'll explain why in a bit.
 
+*[TODO - also needs do treat nullifiers and un-stamp them?]*
+
 Next, Optimist sees the new events (if any) come in from the canonical chain. It will check these and they should pass its
 checks because they will fit on the existing blocks at the L2 blockNumber they have.
 
@@ -119,4 +121,47 @@ compatible with the new blocks added by the canonical chain.
 
 ### Layer 2 (Client)
 
-TBD
+Client tracks the commitments owned by its user(s).  It will record whether a commitment is spent or not.  Specifically,
+it remembers:
+
+1) If a Deposit transaction has been successfully computed (`.isDeposited`)
+2) If the transaction has made it on chain as part of a Block (`.isOnChain`)
+3) If it has been nullified locally (`.isNullified`)
+4) If the nullification has made it on chain as part of a Block (`.isNullifiedOnChain`)
+5) If the commitment has been selected for spending but not yet nullified (`isPendingNullification`)
+
+If a chain reorganisation happens then it may well change the status of some of these transactions. Changes to
+the L2 Block record are relevant, this being the only event that Client subscribes to (other than the rollback which
+we will consider later)  Here is specifically how Client responds:
+
+First, the event removals are created.  If a `BlockProposed` event is removed, then we need to mark the transactions
+that were in that block (assuming they are 'our' transactions and therefore in the Client database) accordingly:
+
+#### `BlockProposed` removals
+For Deposit transactions, commitment changes;
+```
+.isDeposited = no change
+.isOnChain = -1
+.isNullified = no change
+.isNullifiedOnChain = no change
+.isPendingNullification = no change
+```
+For Transfer transactions, input commitment changes (can be found by a lookup on the nullifier);
+```
+.isDeposited = no change
+.isOnChain = -1
+.isNullified = false
+.isNullifiedOnChain = false
+.isPendingNullification = false
+```
+For Transfer transactions, output commitments should be deleted because the `proposeBlock` transaction that created
+them has been removed;
+
+For withdraw transactions, the commitment is no longer nullified;
+```
+.isDeposited = no change
+.isOnChain = -1
+.isNullified = false
+.isNullifiedOnChain = false
+.isPendingNullification = false
+```
