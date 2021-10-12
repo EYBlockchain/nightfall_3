@@ -24,10 +24,10 @@ module.exports = {
   PROTOCOL: 'http://', // connect to zokrates microservice like this
   WEBSOCKET_PORT: process.env.WEBSOCKET_PORT || 8080,
   ZOKRATES_WORKER_HOST: process.env.ZOKRATES_WORKER_HOST || 'worker',
-  BLOCKCHAIN_TESTNET_URL:
-    process.env.BLOCKCHAIN_TESTNET_URL ||
+  BLOCKCHAIN_URL:
+    process.env.BLOCKCHAIN_URL ||
     `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`,
-  ENABLE_TESTNET_DEPLOY: process.env.ENABLE_TESTNET_DEPLOY === 'true',
+  USE_INFURA: process.env.USE_INFURA === 'true',
   ETH_PRIVATE_KEY: process.env.ETH_PRIVATE_KEY,
   TIMBER_HOST: process.env.TIMBER_HOST || 'timber',
   TIMBER_PORT: process.env.TIMBER_PORT || 80,
@@ -38,7 +38,7 @@ module.exports = {
     gasPrice: process.env.GAS_PRICE || '20000000000',
     from: process.env.FROM_ADDRESS || undefined,
   },
-  WEB3_RECONNET: {
+  WEB3_PROVIDER_OPTIONS: {
     clientConfig: {
       // Useful to keep a connection alive
       keepalive: true,

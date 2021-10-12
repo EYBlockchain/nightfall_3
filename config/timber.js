@@ -30,7 +30,7 @@ module.exports = {
 
   UPDATE_FREQUENCY: 100, // TODO: recalculate the tree every 'x' leaves - NOT USED YET
   BULK_WRITE_BUFFER_SIZE: 1000, // number of documents to add to a buffer before bulk-writing them to the db
-  ENABLE_TESTNET_DEPLOY: process.env.ENABLE_TESTNET_DEPLOY === 'true',
+  USE_INFURA: process.env.USE_INFURA === 'true',
 
   // contracts to filter:
   contracts: {
@@ -74,7 +74,7 @@ module.exports = {
   // web3:
   web3: {
     url:
-      process.env.BLOCKCHAIN_TESTNET_URL ||
+      process.env.BLOCKCHAIN_URL ||
       `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`,
     options: {
       // some of options are not in use - remove after testing shows it's not needed:
