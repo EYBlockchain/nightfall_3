@@ -366,7 +366,6 @@ class Timber {
   rollback(leafCount) {
     if (leafCount > this.leafCount) throw new Error('Cannot rollback tree to desired leafcount');
     if (leafCount === this.leafCount) return this;
-    if (leafCount === 0) return new Timber();
     const pathToNewLastElement = Number(leafCount - 1)
       .toString(2)
       .padStart(TIMBER_HEIGHT, '0');
