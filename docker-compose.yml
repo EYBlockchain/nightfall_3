@@ -202,7 +202,7 @@ services:
       MONGO_PORT: 27017
       MONGO_NAME: merkle_tree
       HASH_TYPE: mimc
-      LOG_LEVEL: debug
+      LOG_LEVEL: info
       AUTOSTART: enabled
 
   # Timber service, configured for nightfall

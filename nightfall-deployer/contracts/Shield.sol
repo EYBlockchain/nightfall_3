@@ -137,6 +137,7 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
     require(msg.sender == currentOwner, 'You are not the current owner of this withdrawal');
     advancedFeeWithdrawals[withdrawTransactionHash] = msg.value;
     payable(address(state)).transfer(msg.value);
+    emit InstantWithdrawalRequested(withdrawTransactionHash, msg.sender, msg.value);
   }
 
   function payOut(Transaction memory t, address recipientAddress) internal {
