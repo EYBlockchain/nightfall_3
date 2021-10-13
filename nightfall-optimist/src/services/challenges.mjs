@@ -76,12 +76,6 @@ export async function createChallenge(block, transactions, err) {
         const priorBlockTransactions = await getTransactionsByTransactionHashes(
           priorBlock.transactionHashes,
         );
-        const priorBlockCommitmentsCount = priorBlockTransactions.reduce(
-          (acc, priorBlockTransaction) => {
-            return acc + priorBlockTransaction.commitments.length;
-          },
-          0,
-        );
 
         const priorBlockHistory = await getTreeHistory(priorBlock.root);
 
@@ -94,7 +88,6 @@ export async function createChallenge(block, transactions, err) {
             Block.buildSolidityStruct(block),
             block.blockNumberL2,
             transactions.map(t => Transaction.buildSolidityStruct(t)),
-            priorBlockHistory.leafIndex + priorBlockCommitmentsCount, // priorBlockHistory.leafIndex + number of commitments  in prior block
             salt,
           )
           .encodeABI();
