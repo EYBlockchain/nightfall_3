@@ -77,7 +77,7 @@ export async function subscribeToChallengeWebSocketConnection(callback, ...args)
       if (message === 'challenge') callback(ws, args);
     }),
   );
-  logger.debug('Subscribed to WebSocket connection');
+  logger.debug('Subscribed to Challenge WebSocket connection');
 }
 
 export async function subscribeToBlockAssembledWebSocketConnection(callback, ...args) {
@@ -86,5 +86,14 @@ export async function subscribeToBlockAssembledWebSocketConnection(callback, ...
       if (message === 'blocks') callback(ws, args);
     }),
   );
-  logger.debug('Subscribed to WebSocket connection');
+  logger.debug('Subscribed to BlockAssembled WebSocket connection');
+}
+
+export async function subscribeToInstantWithDrawalWebSocketConnection(callback, ...args) {
+  wss.on('connection', ws =>
+    ws.on('message', message => {
+      if (message === 'instant') callback(ws, args);
+    }),
+  );
+  logger.debug('Subscribed to InstantWithDrawal WebSocket connection');
 }

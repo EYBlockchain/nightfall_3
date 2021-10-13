@@ -30,7 +30,7 @@ contract Proposers is Stateful, Structures, Config {
 
   //add the proposer to the circular linked list
   function registerProposer() external payable {
-    require(REGISTRATION_BOND == msg.value, 'The registration payment is incorrect');
+    require(REGISTRATION_BOND <= msg.value, 'The registration payment is incorrect');
     payable(address(state)).transfer(REGISTRATION_BOND);
     state.setBondAccount(msg.sender,REGISTRATION_BOND);
     LinkedAddress memory currentProposer = state.getCurrentProposer();
