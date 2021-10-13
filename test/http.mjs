@@ -56,7 +56,7 @@ describe('Testing the http API', () => {
   const value2 = 12;
   // this is the etherum private key for accounts[0]
   let privateKey = '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e';
-  let gas = 10000000;
+  const gas = 10000000;
   // this is also accounts[0]
   const recipientAddress = '0x9c8b2276d490141ae1440da660e470e7c0349c63';
   // this is what we pay the proposer for incorporating a transaction
@@ -76,7 +76,6 @@ describe('Testing the http API', () => {
         );
       }
       privateKey = ETH_PRIVATE_KEY;
-      gas = (await web3.eth.getBlock('latest')).gasLimit;
     }
 
     shieldAddress = (await chai.request(senderUrl).get('/contract-address/Shield')).body.address;

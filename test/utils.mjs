@@ -73,9 +73,14 @@ export async function submitTransaction(
   unsignedTransaction,
   privateKey,
   shieldAddress,
-  gas,
+  gasCount,
   value = 0,
 ) {
+  let gas = gasCount;
+  if (USE_INFURA) {
+    // get gaslimt from latest block as gaslimt may change
+    gas = (await web3.eth.getBlock('latest')).gasLimit;
+  }
   // if the nonce hasn't been set, then use the transaction count
   let nonce = nonceDict[privateKey];
   if (nonce === undefined) {
