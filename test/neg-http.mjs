@@ -48,7 +48,7 @@ describe('Testing the challenge http API', () => {
   let privateKey = '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e';
   // this is the ethereum private key used for challenging (for now it's the same)
   let privateKey1 = '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e';
-  let gas = 10000000;
+  const gas = 10000000;
   // this is the openethereum test account (but could be anything)
   // const recipientAddress = '0x00a329c0648769a73afac7f9381e08fb43dbea72';
   // this is what we pay the proposer for incorporating a transaction
@@ -77,7 +77,6 @@ describe('Testing the challenge http API', () => {
       }
       privateKey = ETH_PRIVATE_KEY;
       privateKey1 = ETH_PRIVATE_KEY;
-      gas = (await web3.eth.getBlock('latest')).gasLimit;
     }
 
     let res;
