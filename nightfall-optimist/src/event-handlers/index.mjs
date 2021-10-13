@@ -47,6 +47,5 @@ export {
   subscribeToBlockAssembledWebSocketConnection,
   subscribeToChallengeWebSocketConnection,
   subscribeToInstantWithDrawalWebSocketConnection,
-  instantWithdrawalRequestedEventHandler,
   eventHandlers,
 };
