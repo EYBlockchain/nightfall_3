@@ -1,3 +1,4 @@
+/* ignore unused exports */
 export const tokenActionTypes = {
   TOKEN_ADD: 'TOKEN_ADD',
   TOKEN_DELETE: 'TOKEN_DELETE',

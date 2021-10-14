@@ -1,3 +1,4 @@
+/* ignore unused exports */
 import { loginActionTypes } from './login.actions';
 
 const initialState = {

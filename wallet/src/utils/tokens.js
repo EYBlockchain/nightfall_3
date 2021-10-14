@@ -1,3 +1,4 @@
+/* ignore unused exports */
 import { DEFAULT_TOKEN_ADDRESS, TOKEN_TYPE, DEFAULT_TOKEN_ID } from '../constants';
 
 const tokens = [

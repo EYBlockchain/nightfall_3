@@ -1,3 +1,4 @@
+/* ignore unused exports */
 export const loginActionTypes = {
   LOGIN_FAILED: 'LOGIN_FAILED',
   LOGIN_SUCCESS: 'LOGIN_SUCCESS',

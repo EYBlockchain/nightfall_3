@@ -1,3 +1,4 @@
+/* ignore unused exports */
 import { getAddress } from './providers';
 
 /**

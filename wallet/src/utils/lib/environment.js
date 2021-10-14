@@ -1,3 +1,4 @@
+/* ignore unused exports */
 import { setProvider } from './providers';
 
 const SUPPORTED_ENVIRONMENTS = {
