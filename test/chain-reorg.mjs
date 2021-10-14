@@ -224,10 +224,13 @@ describe('Testing the http API', () => {
     });
 
     it('should subscribe to block proposed event with the provided incoming viewing key for optimist', async function () {
-      const res = await chai.request(url).post('/incoming-viewing-key').send({
-        ivk: ivk1,
-        nsk: nsk1,
-      });
+      const res = await chai
+        .request(url)
+        .post('/incoming-viewing-key')
+        .send({
+          ivks: [ivk1],
+          nsks: [nsk1],
+        });
       expect(res.body.status).to.be.a('string');
       expect(res.body.status).to.equal('success');
     });

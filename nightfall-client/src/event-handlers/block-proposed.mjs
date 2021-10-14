@@ -9,17 +9,16 @@ import {
 } from '../services/commitment-storage.mjs';
 import getProposeBlockCalldata from '../services/process-calldata.mjs';
 import Secrets from '../classes/secrets.mjs';
+import { ivks, nsks } from '../services/keys.mjs';
 
 const { ZERO } = config;
 
 /**
 This handler runs whenever a BlockProposed event is emitted by the blockchain
 */
-async function blockProposedEventHandler(data, keys = [ZERO, ZERO]) {
+async function blockProposedEventHandler(data) {
   logger.info(`Received Block Proposed event`);
   // ivk will be used to decrypt secrets whilst nsk will be used to calculate nullifiers for commitments and store them
-  const ivk = keys[0];
-  const nsk = keys[1];
   const { transactions, blockNumberL2 } = await getProposeBlockCalldata(data);
 
   transactions.forEach(async transaction => {
@@ -47,24 +46,28 @@ async function blockProposedEventHandler(data, keys = [ZERO, ZERO]) {
           markNullifiedOnChain(nonZeroNullifiers, blockNumberL2, data.blockNumber),
         ]);
       } else {
-        // decompress the secrets first and then we will decrypt the secrets from this
-        const decompressedSecrets = Secrets.decompressSecrets(transaction.compressedSecrets);
-        try {
-          const commitment = Secrets.decryptSecrets(
-            decompressedSecrets,
-            ivk,
-            transaction.commitments[0],
-          );
-          if (commitment === {}) logger.info("This encrypted message isn't for this recipient");
-          else {
-            // store commitment if the new commitment in this transaction is intended for this client
-            await storeCommitment(commitment, nsk);
-            await markOnChain(nonZeroCommitments, blockNumberL2, data.blockNumber);
+        // eslint-disable-next-line consistent-return
+        ivks.every(async (key, i) => {
+          // decompress the secrets first and then we will decrypt the secrets from this
+          const decompressedSecrets = Secrets.decompressSecrets(transaction.compressedSecrets);
+          try {
+            const commitment = Secrets.decryptSecrets(
+              decompressedSecrets,
+              key,
+              transaction.commitments[0],
+            );
+            if (commitment === {}) logger.info("This encrypted message isn't for this recipient");
+            else {
+              // store commitment if the new commitment in this transaction is intended for this client
+              await storeCommitment(commitment, nsks[i]);
+              await markOnChain(nonZeroCommitments, blockNumberL2, data.blockNumber);
+              return false; // to exit every() loop once the a key has successfully decrypted the secrets of the transaction
+            }
+          } catch (err) {
+            logger.info(err);
+            logger.info("This encrypted message isn't for this recipient");
           }
-        } catch (err) {
-          logger.info(err);
-          logger.info("This encrypted message isn't for this recipient");
-        }
+        });
       }
       // if transaction is withdraw
     } else if (transaction.transactionType === '3') {

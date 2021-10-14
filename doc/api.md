@@ -21,8 +21,8 @@ this key will be used to decrypt secrets send to the blockchain as part of a tra
 
 ```js
 {
-  ivk: // the private key which will be used to decrypt messages
-  nsk: // the secret required to create nullifier for a commitment being spent. Required to store nullifier for a commitment being created in DB
+  ivks: // the array of private keys which will be used to decrypt messages
+  nsks: // the array of secrets required to create nullifier for a commitment being spent. Required to store nullifier for a commitment being created in DB
 }
 ```
 

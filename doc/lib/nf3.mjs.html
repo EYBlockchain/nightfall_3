@@ -19,11 +19,11 @@
 
     <h1 class="page-title">Source: nf3.mjs</h1>
 
-    
 
 
 
-    
+
+
     <section>
         <article>
             <pre class="prettyprint source linenums"><code>import axios from 'axios';
@@ -313,8 +313,8 @@ class Nf3 {
   */
   async subscribeToIncomingViewingKeys() {
     return axios.post(`${this.clientBaseUrl}/incoming-viewing-key`, {
-      ivk: this.zkpKeys.ivk,
-      nsk: this.zkpKeys.nsk,
+      ivks: [this.zkpKeys.ivk],
+      nsks: [this.zkpKeys.nsk],
     });
   }
 
