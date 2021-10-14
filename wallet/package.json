@@ -2,6 +2,7 @@
   "name": "nightfall-wallet",
   "version": "0.1.0",
   "private": true,
+  "main": "./src/index.jsx",
   "dependencies": {
     "@testing-library/jest-dom": "^5.14.1",
     "BigInt": "^5.5.3",
