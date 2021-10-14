@@ -77,6 +77,7 @@ export async function conditionalMakeBlock(proposer) {
       // remove the transactiosn from the mempool so we don't keep making new
       // blocks with them
       await removeTransactionsFromMemPool(block);
+      await new Promise(resolve => setTimeout(resolve, 1000));
       await eventQueueManager(conditionalMakeBlock, 0, proposer);
       // TODO is await needed?
     } else {
