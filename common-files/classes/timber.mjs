@@ -104,11 +104,11 @@ const _checkMembership = (leafVal, tree, path, f, acc) => {
  */
 const combineFrontiers = (arr1, arr2) => {
   if (arr1.length > arr2.length) {
-    const fromArr1 = arr1.slice(0, arr1.length - arr2.length);
-    return fromArr1.concat(arr2);
+    const fromArr1 = arr1.slice(arr2.length);
+    return arr2.concat(fromArr1);
   }
-  const fromArr2 = arr2.slice(0, arr2.length - arr1.length);
-  return fromArr2.concat(arr1);
+  const fromArr2 = arr2.slice(arr1.length);
+  return arr1.concat(fromArr2);
 };
 
 /**
@@ -282,9 +282,11 @@ class Timber {
       '0'.padStart(a + 1, '1'),
     );
 
-    const leftTreeFrontierPoints = [Timber.hashTree(frontierTreeRoot.left)].concat(
-      leftSubTreeDirs.map(fp => Timber.hashTree(Timber.moveDown(frontierTreeRoot.left, fp))),
-    );
+    const leftTreeFrontierPoints = [Timber.hashTree(frontierTreeRoot.left)]
+      .concat(
+        leftSubTreeDirs.map(fp => Timber.hashTree(Timber.moveDown(frontierTreeRoot.left, fp))),
+      )
+      .reverse();
 
     // const newHeight = height - numFrontierPoints > 0 ? numFrontierPoints - 1 : height - 1;
     const newHeight = numFrontierPoints - 1;
