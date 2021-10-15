@@ -3,7 +3,6 @@ import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import childProcess from 'child_process';
 import WebSocket from 'ws';
-import config from 'config';
 import {
   closeWeb3Connection,
   submitTransaction,
@@ -17,8 +16,6 @@ import {
   sendTransactions,
   waitForEvent,
 } from './utils.mjs';
-
-import { generateKeys } from '../nightfall-client/src/services/keys.mjs';
 
 import {
   url,
@@ -34,7 +31,6 @@ import {
   bond,
 } from './constants.mjs';
 
-const { ZKP_KEY_LENGTH } = config;
 const { spawn } = childProcess;
 const { expect } = chai;
 chai.use(chaiHttp);
@@ -80,7 +76,12 @@ describe('Running rollback and resync test', () => {
 
     setNonce(await web3.eth.getTransactionCount(myAddress));
 
-    ({ ask: ask1, nsk: nsk1, ivk: ivk1, pkd: pkd1 } = await generateKeys(ZKP_KEY_LENGTH));
+    ({
+      ask: ask1,
+      nsk: nsk1,
+      ivk: ivk1,
+      pkd: pkd1,
+    } = (await chai.request(url).post('/generate-keys').send()).body);
 
     defaultDepositArgs = { ercAddress, tokenId, tokenType, value, pkd: pkd1, nsk: nsk1, fee };
     defaultTransferArgs = {
@@ -116,7 +117,16 @@ describe('Running rollback and resync test', () => {
       if (type === 'block') {
         // third last input is msg.value
         // eslint-disable-next-line prettier/prettier
-        await blockSubmissionFunction(txDataToSign, privateKey, stateAddress, gas, BLOCK_STAKE, '0', block, transactions);
+        await blockSubmissionFunction(
+          txDataToSign,
+          privateKey,
+          stateAddress,
+          gas,
+          BLOCK_STAKE,
+          '0',
+          block,
+          transactions,
+        );
       } else if (type === 'commit') {
         await submitTransaction(txDataToSign, privateKey, challengesAddress, gas);
       } else if (type === 'challenge') {
@@ -255,7 +265,16 @@ describe('Running rollback and resync test', () => {
         const { type, txDataToSign, block, transactions } = msg;
         if (type === 'block') {
           // eslint-disable-next-line prettier/prettier
-          await blockSubmissionFunction(txDataToSign, privateKey, stateAddress, gas, BLOCK_STAKE, '0', block, transactions);
+          await blockSubmissionFunction(
+            txDataToSign,
+            privateKey,
+            stateAddress,
+            gas,
+            BLOCK_STAKE,
+            '0',
+            block,
+            transactions,
+          );
         } else if (type === 'commit') {
           await submitTransaction(txDataToSign, privateKey, challengesAddress, gas);
         } else if (type === 'challenge') {
