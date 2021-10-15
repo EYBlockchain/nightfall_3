@@ -42,7 +42,7 @@ class Nf3 {
 
   PROPOSER_BOND = 10;
 
-  BLOCK_STAKE = 10; // 1 ether
+  BLOCK_STAKE = 1; // 1 ether
 
   constructor(
     clientBaseUrl,

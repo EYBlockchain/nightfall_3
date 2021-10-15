@@ -139,10 +139,16 @@ class TransactionsModal extends Component {
           </Form>
         </Modal.Content>
         <Modal.Actions>
-          <Button color="blue" onClick={this.handleOnSubmit}>
-            <Icon />
-            Submit
-          </Button>
+          <div>
+            <Button floated='left' color="red" onClick={this.props.toggleModalTx}>
+              <Icon name="cancel" />
+              Cancel
+            </Button>
+            <Button floated='right' color="blue" onClick={this.handleOnSubmit}>
+              <Icon name="send" />
+              Submit
+            </Button>
+          </div>
         </Modal.Actions>
       </Modal>
     );

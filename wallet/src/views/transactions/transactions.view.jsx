@@ -9,6 +9,7 @@ import TransactionsMenu from './components/transactions-menu/transactions-menu.v
 import WalletInfo from './components/wallet-info/wallet-info.view';
 import TransactionsModal from './components/transactions/transactions-modal.view';
 import { TX_TYPES } from '../../constants';
+import { toBaseUnit } from '../../utils/lib/utils';
 
 
 class Transactions extends Component {
@@ -50,17 +51,27 @@ class Transactions extends Component {
   }
 
   handleOnTxSubmit = (txType, pkd, tokenType, tokenAddress, tokenId, tokenAmount, fee) => {
+    const tokenAmountBN = toBaseUnit(tokenAmount).toString();
     switch (txType) {
       case TX_TYPES.DEPOSIT:
-        this.props.login.nf3.deposit(tokenAddress, tokenType, tokenAmount, tokenId, fee);
+          // TODO: dispatch error
+          this.props.login.nf3.deposit(tokenAddress, tokenType, tokenAmountBN, tokenId, fee)
+          .then(console.log)
+          .catch(console.log)
         break
 
       case TX_TYPES.TRANSFER:
-        this.props.login.nf3.transfer(tokenAddress, tokenType, tokenAmount, tokenId, pkd, fee);
+          // TODO: dispatch error
+          this.props.login.nf3.transfer(tokenAddress, tokenType, tokenAmountBN, tokenId, pkd, fee)
+          .then(console.log)
+          .catch(console.log)
         break
 
       case TX_TYPES.WITHDRAW:
-        this.props.login.nf3.withdraw(tokenAddress, tokenType, tokenAmount, tokenId, pkd, fee);
+          // TODO: dispatch error
+          this.props.login.nf3.withdraw(tokenAddress, tokenType, tokenAmountBN, tokenId, pkd, fee)
+          .then(console.log)
+          .catch(console.log);
         break;
 
       default:

@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { Table, Button, Container, Icon, Popup, } from 'semantic-ui-react';
+import Web3 from 'web3';
 import { addToken, selectToken, unselectToken } from '../../../../store/token/token.actions';
 import { getL1Balance } from '../../../../utils/lib/providers';
 
@@ -23,11 +24,14 @@ class WalletInfo extends Component {
   reload = () => {
     this.props.nf3.getLayer2Balances()
       .then((l2Balance) => {
-        // TODO: Only works for a single token
-        const tokenAddress = Object.keys(l2Balance)[0];
-        getL1Balance(this.props.wallet.ethereumAddress).then((l1Balance) => {
-          this.props.addToken('0x' + tokenAddress.toLowerCase(), 'ERC20', "0x00", l1Balance, l2Balance[tokenAddress]);
-        })
+        const l2TokenAddressArr = Object.keys(l2Balance)
+        if (l2TokenAddressArr.length) {
+          l2TokenAddressArr.forEach(l2TokenAddress => {
+            getL1Balance(this.props.wallet.ethereumAddress).then((l1Balance) => {
+              this.props.addToken('0x' + l2TokenAddress.toLowerCase(), 'ERC20', "0x00", l1Balance, Web3.utils.fromWei(l2Balance[l2TokenAddress].toString()));
+            })
+          });
+        }
       });
   }
 
@@ -60,14 +64,7 @@ class WalletInfo extends Component {
   }
 
   componentDidMount() {
-    this.props.nf3.getLayer2Balances()
-      .then((l2Balance) => {
-        // TODO: Only works for a single token
-        const tokenAddress = Object.keys(l2Balance)[0];
-        getL1Balance(this.props.wallet.ethereumAddress).then((l1Balance) => {
-          this.props.addToken('0x' + tokenAddress.toLowerCase(), 'ERC20', "0x00", l1Balance, l2Balance[tokenAddress]);
-        })
-      });
+    this.reload();
   }
 
   render() {
