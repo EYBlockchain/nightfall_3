@@ -3,8 +3,9 @@ import logger from 'common-files/utils/logger.mjs';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
 import { Transaction } from '../classes/index.mjs';
 
+let ws;
 const { SHIELD_CONTRACT_NAME } = config;
-const advanceWithdrawal = async transaction => {
+export const advanceWithdrawal = async transaction => {
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
   try {
     const txDataToSign = await shieldContractInstance.methods
@@ -16,4 +17,15 @@ const advanceWithdrawal = async transaction => {
     throw new Error(error);
   }
 };
-export default advanceWithdrawal;
+
+export function setInstantWithdrawalWebSocketConnection(_ws) {
+  ws = _ws;
+}
+
+export async function notifyInstantWithdrawalRequest(withdrawTransactionHash, paidBy, amount) {
+  if (!ws) {
+    logger.warn('No one is listening for instant withdrawal requests');
+    return;
+  }
+  ws.send(JSON.stringify({ type: 'instant', withdrawTransactionHash, paidBy, amount }));
+}
