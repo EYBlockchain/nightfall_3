@@ -1,4 +1,6 @@
 import logger from 'common-files/utils/logger.mjs';
+import Timber from 'common-files/classes/timber.mjs';
+import config from 'config';
 import checkBlock from '../services/check-block.mjs';
 import BlockError from '../classes/block-error.mjs';
 import { createChallenge } from '../services/challenges.mjs';
@@ -6,9 +8,12 @@ import {
   removeTransactionsFromMemPool,
   saveBlock,
   stampNullifiers,
+  getLatestTree,
+  saveTree,
 } from '../services/database.mjs';
 import { getProposeBlockCalldata } from '../services/process-calldata.mjs';
 
+const { ZERO } = config;
 /**
 This handler runs whenever a BlockProposed event is emitted by the blockchain
 */
@@ -40,6 +45,13 @@ async function blockProposedEventHandler(data) {
     // mark transactions so that they are out of the mempool,
     // so we don't try to use them in a block which we're proposing.
     await removeTransactionsFromMemPool(block); // TODO is await needed?
+
+    const latestTree = await getLatestTree();
+    const blockCommitments = transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat();
+    const updatedTimber = Timber.statelessUpdate(latestTree, blockCommitments);
+    // latestTree.insertLeaves(blockCommitments);
+    // logger.info(`latestTree leafCount: ${latestTree.leafCount}`);
+    await saveTree(currentBlockCount, block.blockNumberL2, updatedTimber);
     // signal to the block-making routines that a block is received: they
     // won't make a new block until their previous one is stored on-chain.
     // we'll check the block and issue a challenge if appropriate

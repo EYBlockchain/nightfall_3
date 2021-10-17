@@ -76,15 +76,15 @@ export async function createChallenge(block, transactions, err) {
         const priorBlockTransactions = await getTransactionsByTransactionHashes(
           priorBlock.transactionHashes,
         );
-
-        const priorBlockHistory = await getTreeHistory(priorBlock.root);
+        const priorPriorBlock = await getBlockByBlockNumberL2(Number(block.blockNumberL2) - 2);
+        const frontierToValidatePreviousBlock = await getTreeHistory(priorPriorBlock.root);
 
         // Create a challenge
         txDataToSign = await challengeContractInstance.methods
           .challengeNewRootCorrect(
             Block.buildSolidityStruct(priorBlock),
             priorBlockTransactions.map(t => Transaction.buildSolidityStruct(t)),
-            priorBlockHistory.frontier,
+            frontierToValidatePreviousBlock.frontier,
             Block.buildSolidityStruct(block),
             block.blockNumberL2,
             transactions.map(t => Transaction.buildSolidityStruct(t)),

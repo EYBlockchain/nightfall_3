@@ -46,7 +46,7 @@ async function checkBlock(block, transactions) {
     history = await getBlockByBlockNumberL2(block.blockNumberL2 - 1);
     logger.debug('Block has no commitments - checking its root is the same as the previous block');
   } else {
-    history = await getTreeHistoryByCurrentLeafCount(block.leafCount);
+    history = await getTreeHistoryByCurrentLeafCount(block.leafCount + block.nCommitments);
     logger.debug(`Block has commitments - retrieved history from Timber`);
     logger.silly(`Timber history was ${JSON.stringify(history, null, 2)}`);
   }
