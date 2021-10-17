@@ -182,6 +182,7 @@ class Timber {
   */
   static hashTree(tree) {
     return Timber.reduceTree(utils.concatenateThenHash, tree);
+    // return Timber.reduceTree((a,b) => a + '|' + b, tree);
   }
 
   /**
@@ -359,6 +360,111 @@ class Timber {
     }
   }
 
+  static updateFrontier(timber, leaves) {
+    if (leaves.length === 0) return timber;
+    // let newLeaves = leaves;
+    // let newTimber = timber;
+
+    // if (timber.leafCount < leaves.length) {
+    //   newLeaves = leaves.slice(timber.leafCount);
+    //   newTimber = this.updateFrontier(timber, leaves.slice(0, timber.leafCount));
+    //   return this.updateFrontier(newTimber, newLeaves);
+    // }
+    // Need to check odds at each level
+    // Catch teh scenario where timber odd count at a levelm and leaves create even elements at that level.
+    // if (timber.leafCount % 2 !== 0 && leaves.length > 1) {
+    //   newLeaves = leaves.slice(1);
+    //   newTimber = this.updateFrontier(timber, [leaves[0]]);
+    //   return this.updateFrontier(newTimber, newLeaves);
+    // }
+    const outputLeafCount = timber.leafCount + leaves.length;
+    const outputFrontierLength = Math.floor(Math.log2(outputLeafCount)) + 1;
+
+    // This is an array that counts the number of perfect trees at each depth for the final frontier.
+    const resultingFrontierSlot = Array(outputFrontierLength)
+      .fill(outputLeafCount)
+      .map((a, i) => Math.floor(a / 2 ** i));
+
+    // This is an array that counts the number of perfect trees at each depth for the current frontier.
+    const currentFrontierSlotArray = Array(outputFrontierLength)
+      .fill(timber.leafCount)
+      .map((a, i) => Math.floor(a / 2 ** i));
+
+    // This is the array for the subtree frontier positions should be
+    // this is calculated from the final and current frontier.
+    const subTreeFrontierSlotArray = resultingFrontierSlot.map(
+      (a, i) => a - currentFrontierSlotArray[i],
+    );
+
+    // console.log(`currentFrontierSlotArray: ${currentFrontierSlotArray}`)
+    // console.log(`resultingFrontierSlot: ${resultingFrontierSlot}`)
+    // console.log(`subTreeFrontierSlotArray: ${subTreeFrontierSlotArray}`)
+    const oddDepths = currentFrontierSlotArray.map(
+      (a, i) => a % 2 !== 0 && subTreeFrontierSlotArray[i] > 1,
+    );
+    // const oddDepths = resultingFrontierSlot.map((a, i) => {
+    //   // if (a % 2 !== 0 && a > 1 && subTreeFrontierSlotArray[i] > 1) return true;
+    //   if (a % 2 !== 0 && subTreeFrontierSlotArray[i] > 1) return true;
+    //   if (subTreeFrontierSlotArray[i] % 2 !== 0 && subTreeFrontierSlotArray[i] > 1) return true;
+    //   return false;
+    // });
+
+    // console.log(`leaves: ${leaves.length}`);
+    // console.log(`oddDepths: ${oddDepths}`);
+
+    const oddIndex = oddDepths.findIndex(a => a);
+    // console.log(`oddIndex: ${oddIndex}`);
+    // console.log(`subTreeFrontierSlotArray[oddIndex]: ${subTreeFrontierSlotArray[oddIndex - 1]}`);
+    if (oddIndex >= 0) {
+      // const leavesToSlice = subTreeFrontierSlotArray[oddIndex - 1] ?? -1;
+      // const leavesToSlice = oddIndex > 0 ? 2 : 1;  //subTreeFrontierSlotArray[oddIndex] - subTreeFrontierSlotArray[oddIndex + 1];
+      const leavesToSlice = 2 ** oddIndex;
+      const newLeaves = leaves.slice(leavesToSlice);
+      const newTimber = this.updateFrontier(timber, leaves.slice(0, leavesToSlice));
+      return this.updateFrontier(newTimber, newLeaves);
+    }
+
+    // console.log(`currentFrontierFroniter: ${newTimber.frontier}`)
+    // This is subtree consisting of the new leaves
+    const newSubTree = new Timber().insertLeaves(leaves);
+    // console.log(`suBTreeFrontier: ${newSubTree.frontier}`)
+
+
+    // Now we check if the calculated slots for the subtree frontier
+    // match the frontier we have calculated, as we may have increased the height of our tree
+    // TODO check this filter 0
+    if (newSubTree.frontier.length < subTreeFrontierSlotArray.filter(f => f !== 0).length) {
+      for (let i = newSubTree.frontier.length; i < subTreeFrontierSlotArray.length; i++) {
+        // console.log(`I IN LOOP : ${i}`);
+        // newSubTree.frontier[i] = newTimber.frontier[i - 1] + '|' +newSubTree.frontier[i - 1]
+
+        newSubTree.frontier[i] = utils.concatenateThenHash(
+          timber.frontier[i - 1],
+          newSubTree.frontier[i - 1],
+        );
+      }
+    }
+    const finalFrontier = [];
+    // Let's combine frontiers
+    for (let i = 0; i < resultingFrontierSlot.length; i++) {
+      const currentFrontierSlot = currentFrontierSlotArray[i] ?? 0;
+      const subTreeFrontierSlot = subTreeFrontierSlotArray[i] ?? 0;
+
+      if (currentFrontierSlot === 0 && subTreeFrontierSlot === 0)
+        // finalFrontier.push(
+        //   newTimber.frontier[i - 1] + '|' + newSubTree.frontier[i - 1])
+        finalFrontier.push(
+          utils.concatenateThenHash(timber.frontier[i - 1], newSubTree.frontier[i - 1]),
+        );
+      else if (currentFrontierSlot === 0) finalFrontier.push(newSubTree.frontier[i]);
+      else if (subTreeFrontierSlot === 0) finalFrontier.push(timber.frontier[i]);
+      else if (currentFrontierSlot % 2 === 0) finalFrontier.push(newSubTree.frontier[i]);
+      else if (subTreeFrontierSlot % 2 === 0) finalFrontier.push(newSubTree.frontier[i]);
+      else finalFrontier.push(timber.frontier[i]);
+    }
+    return new Timber('0x0', Leaf(0), finalFrontier, timber.leafCount + leaves.length);
+  }
+
   /**
   @method
   Rolls a tree back to a given leafcount
@@ -371,10 +477,12 @@ class Timber {
     const pathToNewLastElement = Number(leafCount - 1)
       .toString(2)
       .padStart(TIMBER_HEIGHT, '0');
-    this.tree = Timber.pruneRightSubTree(this.tree, pathToNewLastElement);
-    this.root = Timber.hashTree(this.tree);
+
+    this.tree =
+      leafCount === 0 ? Leaf(0) : Timber.pruneRightSubTree(this.tree, pathToNewLastElement);
     this.leafCount = leafCount;
     this.frontier = Timber.calcFrontier(this.tree, this.leafCount);
+    this.root = Timber.hashTree(this.tree);
     return this;
   }
 
