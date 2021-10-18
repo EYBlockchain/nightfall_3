@@ -6,7 +6,7 @@ import isMessageValid from './check-message.mjs';
 import finaliseWithdrawal from './finalise-withdrawal.mjs';
 import peers from './peers.mjs';
 import commitment from './commitment.mjs';
-import incomingViewingKey from './incomingViewingKey.mjs';
+import incomingViewingKey from './incoming-viewing-key.mjs';
 import setInstantWithdrawl from './instant-withdrawal.mjs';
 import generateKeys from './generate-keys.mjs';
 

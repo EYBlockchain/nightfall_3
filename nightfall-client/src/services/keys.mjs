@@ -3,7 +3,6 @@ import config from 'config';
 import rand from 'common-files/utils/crypto/crypto-random.mjs';
 import mimcHash from 'common-files/utils/crypto/mimc/mimc.mjs';
 import { scalarMult, edwardsCompress } from '../utils/crypto/encryption/elgamal.mjs';
-import logger from 'common-files/utils/logger.mjs';
 
 export const ivks = [];
 export const nsks = [];
