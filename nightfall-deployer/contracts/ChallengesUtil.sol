@@ -26,8 +26,7 @@ library ChallengesUtil {
         Structures.Transaction[] memory priorBlockTransactions, // the transactions in the prior block
         bytes32[33] calldata frontierPriorBlock, // frontier path before prior block is added. The same frontier used in calculating root when prior block is added
         Structures.Block memory blockL2,
-        Structures.Transaction[] memory transactions,
-        uint256 commitmentIndex // the index *in the Merkle Tree* of the commitment that we are providing a SiblingPath for.
+        Structures.Transaction[] memory transactions
     ) public pure {
         // next check the sibling path is valid and get the Frontier
         bool valid;
@@ -39,6 +38,7 @@ library ChallengesUtil {
             priorBlockL2.root
         );
         require(valid, 'The sibling path is invalid');
+        uint256 commitmentIndex = priorBlockL2.leafCount + Utils.filterCommitments(priorBlockTransactions).length;
         // At last, we can check if the root itself is correct!
         (bytes32 root, , ) =
             MerkleTree_Stateless.insertLeaves(

@@ -7,6 +7,7 @@ import Table from 'cli-table';
 import Nf3 from '../lib/nf3.mjs';
 
 const web3 = new Web3(); // no URL, we're just using some utilities here
+let latestWithdrawTransactionHash; // we'll remember this globally so it can be used for instant withdrawals
 
 /**
 Initialises the CLI
@@ -41,7 +42,7 @@ async function askQuestions(nf3) {
       name: 'task',
       type: 'list',
       message: 'What would you like to do?',
-      choices: ['Deposit', 'Transfer', 'Withdraw', 'View my wallet', 'Exit'],
+      choices: ['Deposit', 'Transfer', 'Withdraw', 'Instant-Withdraw', 'View my wallet', 'Exit'],
     },
     {
       name: 'recipientAddress',
@@ -74,7 +75,10 @@ async function askQuestions(nf3) {
       default: 10,
       validate: input => input >= 0,
       when: answers =>
-        answers.task === 'Deposit' || answers.task === 'Transfer' || answers.task === 'Withdraw',
+        answers.task === 'Deposit' ||
+        answers.task === 'Transfer' ||
+        answers.task === 'Withdraw' ||
+        answers.task === 'Instant-Withdraw',
     },
     {
       name: 'tokenType',
@@ -99,6 +103,14 @@ async function askQuestions(nf3) {
       when: answers => answers.tokenType === 'ERC721',
       validate: input => web3.utils.isHexStrict(input),
     },
+    {
+      name: 'withdrawTransactionHash',
+      message: 'What is the hash of the transaction you want an instant withdrawal for?',
+      default: 'last withdraw',
+      type: 'input',
+      validate: input => web3.utils.isHexStrict(input) || input === 'last withdraw',
+      when: answers => answers.task === 'Instant-Withdraw',
+    },
   ];
   return inquirer.prompt(questions);
 }
@@ -120,6 +132,7 @@ function printBalances(balances) {
 UI control loop
 */
 async function loop(nf3, ercAddress) {
+  let receiptPromise;
   const {
     task,
     recipientAddress,
@@ -130,10 +143,10 @@ async function loop(nf3, ercAddress) {
     privateKey,
     pkdX,
     pkdY,
+    withdrawTransactionHash,
   } = await askQuestions(nf3);
   let [x, y] = [pkdX, pkdY]; // make these variable - we may need to change them
   if (privateKey) nf3.setEthereumSigningKey(privateKey); // we'll remember the key so we don't keep asking for it
-  let receiptPromise;
   // handle the task that the user has asked for
   switch (task) {
     case 'Deposit':
@@ -160,20 +173,27 @@ async function loop(nf3, ercAddress) {
       break;
     case 'Withdraw':
       try {
-        receiptPromise = await nf3.withdraw(
-          ercAddress,
-          tokenType,
-          value,
-          tokenId,
-          recipientAddress,
-          fee,
-        );
+        ({ withdrawTransactionHash: latestWithdrawTransactionHash, receiptPromise } =
+          await nf3.withdraw(ercAddress, tokenType, value, tokenId, recipientAddress, fee));
+        console.log('PROMISES', latestWithdrawTransactionHash, receiptPromise);
       } catch (err) {
         if (err.response.data.includes('No suitable commitments were found')) {
           console.log('No suitable commitments were found');
           return [false, null];
         }
         throw err;
+      }
+      break;
+    case 'Instant-Withdraw':
+      try {
+        receiptPromise = await nf3.requestInstantWithdrawal(
+          withdrawTransactionHash === 'last withdraw'
+            ? latestWithdrawTransactionHash
+            : withdrawTransactionHash,
+          fee,
+        );
+      } catch (err) {
+        console.log('Instant withdrawal failed. The server reported', err.response.data);
       }
       break;
     case 'View my wallet':

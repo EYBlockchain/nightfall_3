@@ -1,5 +1,5 @@
 /**
-Module that runs up as a combined proposer and challenger
+Module that runs up as a challenger
 */
 import { Command } from 'commander/esm.mjs';
 import clear from 'clear';

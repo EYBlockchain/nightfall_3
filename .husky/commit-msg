@@ -1,4 +1,16 @@
 #!/bin/sh
+
+YELLOW='\033[0;33m'
+BLUE='\033[0;36m'
+RED='\033[0;31m'
+NC='\033[0m'
+
 . "$(dirname "$0")/_/husky.sh"
 
-npx commitlint --edit 
+npx commitlint --edit || ((
+  echo " type(scope${RED}?${NC}): subject ${YELLOW}#scope is optional;${NC} \n"
+  echo "${BLUE} Examples:${NC}"
+  echo " 1. chore: run tests on travis ci"
+  echo " 2. fix(server): send cors headers"
+  echo " 3. feat(blog): add comment section \n"
+) && exit 1)

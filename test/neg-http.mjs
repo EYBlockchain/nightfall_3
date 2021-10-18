@@ -3,7 +3,6 @@ import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import Queue from 'queue';
 import WebSocket from 'ws';
-import config from 'config';
 import {
   closeWeb3Connection,
   submitTransaction,
@@ -14,9 +13,7 @@ import {
   topicEventMapping,
   setNonce,
 } from './utils.mjs';
-import { generateKeys } from '../nightfall-client/src/services/keys.mjs';
 
-const { ZKP_KEY_LENGTH } = config;
 const { expect } = chai;
 const txQueue = new Queue({ autostart: true, concurrency: 1 });
 const ZERO = '0x0000000000000000000000000000000000000000000000000000000000000000';
@@ -35,8 +32,8 @@ describe('Testing the challenge http API', () => {
   let ivk1;
   let pkd1;
 
-  const ENABLE_TESTNET_DEPLOY = process.env.ENABLE_TESTNET_DEPLOY === 'true';
-  const { ETH_PRIVATE_KEY, BLOCKCHAIN_TESTNET_URL } = process.env;
+  const USE_INFURA = process.env.USE_INFURA === 'true';
+  const { ETH_PRIVATE_KEY, BLOCKCHAIN_URL } = process.env;
 
   const url = 'http://localhost:8080';
   const optimistUrl = 'http://localhost:8081';
@@ -48,7 +45,7 @@ describe('Testing the challenge http API', () => {
   let privateKey = '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e';
   // this is the ethereum private key used for challenging (for now it's the same)
   let privateKey1 = '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e';
-  let gas = 10000000;
+  const gas = 10000000;
   // this is the openethereum test account (but could be anything)
   // const recipientAddress = '0x00a329c0648769a73afac7f9381e08fb43dbea72';
   // this is what we pay the proposer for incorporating a transaction
@@ -67,9 +64,9 @@ describe('Testing the challenge http API', () => {
   let web3;
 
   before(async () => {
-    web3 = await connectWeb3(BLOCKCHAIN_TESTNET_URL);
+    web3 = await connectWeb3(BLOCKCHAIN_URL);
 
-    if (ENABLE_TESTNET_DEPLOY) {
+    if (USE_INFURA) {
       if (!ETH_PRIVATE_KEY) {
         throw Error(
           'Cannot use default private key, please set environment variable ETH_PRIVATE_KEY',
@@ -77,7 +74,6 @@ describe('Testing the challenge http API', () => {
       }
       privateKey = ETH_PRIVATE_KEY;
       privateKey1 = ETH_PRIVATE_KEY;
-      gas = (await web3.eth.getBlock('latest')).gasLimit;
     }
 
     let res;
@@ -104,7 +100,12 @@ describe('Testing the challenge http API', () => {
     // set the current nonce before we start the test
     setNonce(await web3.eth.getTransactionCount((await getAccounts())[0]));
 
-    ({ ask: ask1, nsk: nsk1, ivk: ivk1, pkd: pkd1 } = await generateKeys(ZKP_KEY_LENGTH));
+    ({
+      ask: ask1,
+      nsk: nsk1,
+      ivk: ivk1,
+      pkd: pkd1,
+    } = (await chai.request(url).post('/generate-keys').send()).body);
 
     web3.eth.subscribe('logs', { address: stateAddress }).on('data', log => {
       if (log.topics[0] === topicEventMapping.BlockProposed) {

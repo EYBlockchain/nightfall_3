@@ -42,7 +42,6 @@ async function checkAlreadyInBlock(_transaction) {
 This handler runs whenever a new transaction is submitted to the blockchain
 */
 async function transactionSubmittedEventHandler(eventParams) {
-  // logger.debug(`transactionSubmittedEventHandler, ${JSON.stringify(eventParams)}`);
   const { offchain = false, ...data } = eventParams;
   let transaction;
   if (offchain) {

@@ -14,7 +14,7 @@ const { expect } = chai;
 let web3;
 // This will be a mapping of privateKeys to nonces;
 const nonceDict = {};
-const ENABLE_TESTNET_DEPLOY = process.env.ENABLE_TESTNET_DEPLOY === 'true';
+const USE_INFURA = process.env.USE_INFURA === 'true';
 const { INFURA_PROJECT_SECRET, INFURA_PROJECT_ID } = process.env;
 
 export function connectWeb3(url = 'ws://localhost:8546') {
@@ -22,20 +22,20 @@ export function connectWeb3(url = 'ws://localhost:8546') {
     console.log('Blockchain Connecting ...');
 
     let provider;
-    if (ENABLE_TESTNET_DEPLOY) {
+    if (USE_INFURA) {
       if (!INFURA_PROJECT_SECRET) throw Error('env INFURA_PROJECT_SECRET not set');
       if (!INFURA_PROJECT_ID) throw Error('env INFURA_PROJECT_ID not set');
 
       const infuraUrl = url.replace('INFURA_PROJECT_ID', INFURA_PROJECT_ID);
 
       provider = new Web3.providers.WebsocketProvider(infuraUrl, {
-        ...config.WEB3_RECONNET,
+        ...config.WEB3_PROVIDER_OPTIONS,
         headers: {
           authorization: `Basic ${Buffer.from(`:${INFURA_PROJECT_SECRET}`).toString('base64')}`,
         },
       });
     } else {
-      provider = new Web3.providers.WebsocketProvider(url, config.WEB3_RECONNET);
+      provider = new Web3.providers.WebsocketProvider(url, config.WEB3_PROVIDER_OPTIONS);
     }
 
     web3 = new Web3(provider);
@@ -73,9 +73,14 @@ export async function submitTransaction(
   unsignedTransaction,
   privateKey,
   shieldAddress,
-  gas,
+  gasCount,
   value = 0,
 ) {
+  let gas = gasCount;
+  if (USE_INFURA) {
+    // get gaslimt from latest block as gaslimt may change
+    gas = (await web3.eth.getBlock('latest')).gasLimit;
+  }
   // if the nonce hasn't been set, then use the transaction count
   let nonce = nonceDict[privateKey];
   if (nonce === undefined) {
@@ -184,12 +189,12 @@ export async function createBadBlock(badBlockType, block, transactions, args) {
 }
 
 // This function polls for a particular event to be emitted by the blockchain
-// from a specified contract.  After timeOut, it will give up and error.
+// from a specified contract.  After retries, it will give up and error.
 // TODO could we make a neater job with setInterval()?
-export async function testForEvents(contractAddress, topics, timeOut = 30000) {
+export async function testForEvents(contractAddress, topics, retries) {
   // console.log('Listening for events');
   const WAIT = 1000;
-  let counter = timeOut / WAIT;
+  let counter = retries || Number(process.env.EVENT_RETRIEVE_RETRIES) || 3;
   let events;
   while (
     events === undefined ||
@@ -206,7 +211,8 @@ export async function testForEvents(contractAddress, topics, timeOut = 30000) {
     // eslint-disable-next-line no-await-in-loop
     await new Promise(resolve => setTimeout(resolve, WAIT));
     counter--;
-    if (counter < 0) throw new Error('No events found before timeout');
+    if (counter < 0)
+      throw new Error(`No events found with in ${counter} retries of ${WAIT}ms wait`);
   }
   // console.log('Events found');
   return events;

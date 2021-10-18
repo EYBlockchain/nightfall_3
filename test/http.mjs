@@ -4,7 +4,6 @@ import chaiAsPromised from 'chai-as-promised';
 import Queue from 'queue';
 import WebSocket from 'ws';
 import { GN } from 'general-number';
-import config from 'config';
 import {
   closeWeb3Connection,
   submitTransaction,
@@ -15,9 +14,7 @@ import {
   topicEventMapping,
   setNonce,
 } from './utils.mjs';
-import { generateKeys } from '../nightfall-client/src/services/keys.mjs';
 
-const { ZKP_KEY_LENGTH } = config;
 const { expect, assert } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
@@ -43,8 +40,8 @@ describe('Testing the http API', () => {
   let pkd1;
   let pkd2;
 
-  const ENABLE_TESTNET_DEPLOY = process.env.ENABLE_TESTNET_DEPLOY === 'true';
-  const { ETH_PRIVATE_KEY, BLOCKCHAIN_TESTNET_URL } = process.env;
+  const USE_INFURA = process.env.USE_INFURA === 'true';
+  const { ETH_PRIVATE_KEY, BLOCKCHAIN_URL } = process.env;
 
   const senderUrl = 'http://localhost:8080';
   const recipientUrl = 'http://localhost:8084';
@@ -56,7 +53,7 @@ describe('Testing the http API', () => {
   const value2 = 12;
   // this is the etherum private key for accounts[0]
   let privateKey = '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e';
-  let gas = 10000000;
+  const gas = 10000000;
   // this is also accounts[0]
   const recipientAddress = '0x9c8b2276d490141ae1440da660e470e7c0349c63';
   // this is what we pay the proposer for incorporating a transaction
@@ -67,16 +64,15 @@ describe('Testing the http API', () => {
   let stateBalance = 0;
 
   before(async function () {
-    web3 = await connectWeb3(BLOCKCHAIN_TESTNET_URL);
+    web3 = await connectWeb3(BLOCKCHAIN_URL);
 
-    if (ENABLE_TESTNET_DEPLOY) {
+    if (USE_INFURA) {
       if (!ETH_PRIVATE_KEY) {
         throw Error(
           'Cannot use default private key, please set environment variable ETH_PRIVATE_KEY',
         );
       }
       privateKey = ETH_PRIVATE_KEY;
-      gas = (await web3.eth.getBlock('latest')).gasLimit;
     }
 
     shieldAddress = (await chai.request(senderUrl).get('/contract-address/Shield')).body.address;
@@ -97,8 +93,18 @@ describe('Testing the http API', () => {
       if (log.topics[0] === topicEventMapping.BlockProposed) eventLogs.push('blockProposed');
     });
 
-    ({ ask: ask1, nsk: nsk1, ivk: ivk1, pkd: pkd1 } = await generateKeys(ZKP_KEY_LENGTH));
-    ({ nsk: nsk2, ivk: ivk2, pkd: pkd2 } = await generateKeys(ZKP_KEY_LENGTH));
+    ({
+      ask: ask1,
+      nsk: nsk1,
+      ivk: ivk1,
+      pkd: pkd1,
+    } = (await chai.request(senderUrl).post('/generate-keys').send()).body);
+
+    ({
+      nsk: nsk2,
+      ivk: ivk2,
+      pkd: pkd2,
+    } = (await chai.request(senderUrl).post('/generate-keys').send()).body);
 
     connection = new WebSocket(optimistWsUrl);
     connection.onopen = () => {

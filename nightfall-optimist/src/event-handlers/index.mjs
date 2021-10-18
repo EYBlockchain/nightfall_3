@@ -2,12 +2,14 @@ import {
   startEventQueue,
   subscribeToBlockAssembledWebSocketConnection,
   subscribeToChallengeWebSocketConnection,
+  subscribeToInstantWithDrawalWebSocketConnection,
 } from './subscribe.mjs';
 import blockProposedEventHandler from './block-proposed.mjs';
 import newCurrentProposerEventHandler from './new-current-proposer.mjs';
 import transactionSubmittedEventHandler from './transaction-submitted.mjs';
 import rollbackEventHandler from './rollback.mjs';
 import committedToChallengeEventHandler from './challenge-commit.mjs';
+import instantWithdrawalRequestedEventHandler from './instant-withdrawal.mjs';
 import {
   // removeRollbackEventHandler,
   removeBlockProposedEventHandler,
@@ -22,6 +24,7 @@ const eventHandlers = {
   Rollback: rollbackEventHandler,
   CommittedToChallenge: committedToChallengeEventHandler,
   NewCurrentProposer: newCurrentProposerEventHandler,
+  InstantWithdrawalRequested: instantWithdrawalRequestedEventHandler,
   removers: {
     // Rollback: removeRollbackEventHandler,
     BlockProposed: removeBlockProposedEventHandler,
@@ -35,6 +38,7 @@ const eventHandlers = {
     Rollback: 0,
     CommittedToChallenge: 0,
     NewCurrentProposer: 0,
+    InstantWithdrawalRequested: 1,
   },
 };
 
@@ -42,5 +46,6 @@ export {
   startEventQueue,
   subscribeToBlockAssembledWebSocketConnection,
   subscribeToChallengeWebSocketConnection,
+  subscribeToInstantWithDrawalWebSocketConnection,
   eventHandlers,
 };
