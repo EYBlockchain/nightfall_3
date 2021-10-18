@@ -43,9 +43,9 @@ class Nf3 {
 
   defaultFee = 10;
 
-  PROPOSER_BOND = 10000000000000000000;
+  PROPOSER_BOND = 10;
 
-  BLOCK_STAKE = 1000000000000000000; // 1 ether
+  BLOCK_STAKE = 1;
 
   constructor(
     clientBaseUrl,
