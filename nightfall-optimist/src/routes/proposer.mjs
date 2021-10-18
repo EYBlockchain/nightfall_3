@@ -277,7 +277,7 @@ router.post('/encode', async (req, res, next) => {
 });
 
 router.post('/transfer', async (req, res) => {
-  logger.debug(`transfer endpoint received POST`);
+  logger.debug(`proposer/transfer endpoint received POST`);
   logger.silly(`With content ${JSON.stringify(req.body, null, 2)}`);
   const { transaction } = req.body;
   try {

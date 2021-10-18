@@ -205,6 +205,7 @@ async function transfer(transferParams) {
       // dig up connection peers
       const peerList = await discoverPeers('Local');
       Object.keys(peerList).forEach(async address => {
+        logger.debug(`offchain transaction - calling ${peerList[address]}/proposer/transfer`);
         await axios
           .post(
             `${peerList[address]}/proposer/transfer`,
