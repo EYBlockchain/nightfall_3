@@ -28,7 +28,7 @@ function keccak(preimage) {
     ...preimage.commitments.map(ch => ({ t: 'bytes32', v: ch })),
     ...preimage.nullifiers.map(nh => ({ t: 'bytes32', v: nh })),
     ...preimage.compressedSecrets.map(es => ({ t: 'bytes32', v: es })),
-    ...preimage.proof.map(p => ({ t: 'uint', v: p })),
+    ...compressProof(preimage.proof).map(p => ({ t: 'uint', v: p })),
   );
 }
 

@@ -22,6 +22,7 @@ library Utils {
         t.recipientAddress,
         t.commitments,
         t.nullifiers,
+        t.compressedSecrets,
         t.proof
       )
     );

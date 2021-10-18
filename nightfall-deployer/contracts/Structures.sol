@@ -21,6 +21,8 @@ contract Structures {
 
     event CommittedToChallenge(bytes32 commitHash, address sender);
 
+    event InstantWithdrawalRequested(bytes32 withdrawTransactionHash, address paidBy, uint amount);
+
     /**
   These events are what the merkle-tree microservice's filters will listen for.
   */

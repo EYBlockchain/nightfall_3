@@ -54,7 +54,6 @@ contract Challenges is Stateful, Key_Registry, Config {
     Block memory blockL2,
     uint256 blockNumberL2,
     Transaction[] memory transactions,
-    uint256 commitmentIndex, // the index *in the Merkle Tree* of the commitment that we are providing a SiblingPath for.
     bytes32 salt
   ) external {
     checkCommit(msg.data, salt);
@@ -67,8 +66,7 @@ contract Challenges is Stateful, Key_Registry, Config {
       priorBlockTransactions,
       frontierPriorBlock,
       blockL2,
-      transactions,
-      commitmentIndex
+      transactions
     );
     challengeAccepted(blockL2, blockNumberL2);
   }

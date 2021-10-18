@@ -24,6 +24,8 @@ class Nf3 {
 
   web3;
 
+  websockets = [];
+
   shieldContractAddress;
 
   proposersContractAddress;
@@ -42,7 +44,7 @@ class Nf3 {
 
   PROPOSER_BOND = 10;
 
-  BLOCK_STAKE = 1; // 1 ether
+  BLOCK_STAKE = 1;
 
   constructor(
     clientBaseUrl,
@@ -270,7 +272,70 @@ class Nf3 {
       ask: this.zkpKeys.ask,
       fee,
     });
+    const { transactionHash: withdrawTransactionHash } = res.data.transaction;
+    const receiptPromise = this.submitTransaction(
+      res.data.txDataToSign,
+      this.shieldContractAddress,
+      fee,
+    );
+    return { withdrawTransactionHash, receiptPromise };
+  }
+
+  /**
+  Enables someone with a valid withdraw transaction in flight to request instant
+  withdrawal of funds (only relevant for ERC20).
+  @method
+  @async
+  @param {string} withdrawTransactionHash - the hash of the Layer 2 transaction in question
+  @param {number} fee - the amount being paid for the instant withdrawal service
+  */
+  async requestInstantWithdrawal(withdrawTransactionHash, fee) {
+    // find the L2 block containing the L2 transaction hash
+    let res = await axios.get(
+      `${this.optimistBaseUrl}/block/transaction-hash/${withdrawTransactionHash}`,
+    );
+    const { block, transactions, index } = res.data;
+    // set the instant withdrawal fee
+    res = await axios.post(`${this.clientBaseUrl}/set-instant-withdrawal`, {
+      block,
+      transactions,
+      index,
+    });
     return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, fee);
+  }
+
+  /**
+  Enables someone to service a request for an instant withdrawal
+  @method
+  @async
+  @param {string} withdrawTransactionHash - the hash of the Layer 2 transaction in question
+  */
+  async advanceInstantWithdrawal(withdrawTransactionHash) {
+    const res = await axios.post(`${this.optimistBaseUrl}/transaction/advanceWithdrawal`, {
+      transactionHash: withdrawTransactionHash,
+    });
+    return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, 0);
+  }
+
+  /**
+  Returns an event emitter that fires each time an InstantWithdrawalRequested
+  event is detected on the blockchain
+  */
+  async getInstantWithdrawalRequestedEmitter() {
+    const emitter = new EventEmitter();
+    const connection = new WebSocket(this.optimistWsUrl);
+    this.websockets.push(connection); // save so we can close it properly later
+    connection.onopen = () => {
+      connection.send('instant');
+    };
+    connection.onmessage = async message => {
+      const msg = JSON.parse(message.data);
+      const { type, withdrawTransactionHash, paidBy, amount } = msg;
+      if (type === 'instant') {
+        emitter.emit('data', withdrawTransactionHash, paidBy, amount);
+      }
+    };
+    return emitter;
   }
 
   /**
@@ -290,12 +355,13 @@ class Nf3 {
   }
 
   /**
-  Closes the Nf3 connection to the blockchain
+  Closes the Nf3 connection to the blockchain and any open websockets to NF_3
   @method
   @async
   */
   close() {
     this.web3.currentProvider.connection.close();
+    this.websockets.forEach(websocket => websocket.close());
   }
 
   /**
@@ -325,6 +391,7 @@ class Nf3 {
   */
   async startProposer() {
     const connection = new WebSocket(this.optimistWsUrl);
+    this.websockets.push(connection); // save so we can close it properly later
     connection.onopen = () => {
       connection.send('blocks');
     };
@@ -338,7 +405,7 @@ class Nf3 {
   }
 
   /**
-  Returns an emitter, whose 'on' event fires whenever a block is
+  Returns an emitter, whose 'data' event fires whenever a block is
   detected, passing out the transaction needed to propose the block. This
   is a lower level method than `Nf3.startProposer` because it does not sign and
   send the transaction to the blockchain. If required, `Nf3.submitTransaction`
@@ -350,6 +417,7 @@ class Nf3 {
   async getNewBlockEmitter() {
     const newBlockEmitter = new EventEmitter();
     const connection = new WebSocket(this.optimistWsUrl);
+    this.websockets.push(connection); // save so we can close it properly later
     connection.onopen = () => {
       connection.send('blocks');
     };
@@ -357,7 +425,7 @@ class Nf3 {
       const msg = JSON.parse(message.data);
       const { type, txDataToSign } = msg;
       if (type === 'block') {
-        newBlockEmitter.emit('on', txDataToSign);
+        newBlockEmitter.emit('data', txDataToSign);
       }
     };
     return newBlockEmitter;
@@ -383,6 +451,7 @@ class Nf3 {
   */
   async startChallenger() {
     const connection = new WebSocket(this.optimistWsUrl);
+    this.websockets.push(connection); // save so we can close it properly later
     connection.onopen = () => {
       connection.send('challenge');
     };
@@ -396,7 +465,7 @@ class Nf3 {
   }
 
   /**
-  Returns an emitter, whose 'on' event fires whenever a challengeable block is
+  Returns an emitter, whose 'data' event fires whenever a challengeable block is
   detected, passing out the transaction needed to raise the challenge. This
   is a lower level method than `Nf3.startChallenger` because it does not sign and
   send the transaction to the blockchain. If required, `Nf3.submitTransaction`
@@ -408,6 +477,7 @@ class Nf3 {
   async getChallengeEmitter() {
     const newChallengeEmitter = new EventEmitter();
     const connection = new WebSocket(this.optimistWsUrl);
+    this.websockets.push(connection); // save so we can close it properly later
     connection.onopen = () => {
       connection.send('blocks');
     };
@@ -415,7 +485,7 @@ class Nf3 {
       const msg = JSON.parse(message.data);
       const { type, txDataToSign } = msg;
       if (type === 'challenge') {
-        newChallengeEmitter.emit('on', txDataToSign);
+        newChallengeEmitter.emit('data', txDataToSign);
       }
     };
     return newChallengeEmitter;

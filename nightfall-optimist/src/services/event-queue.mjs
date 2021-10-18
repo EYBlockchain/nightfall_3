@@ -24,14 +24,14 @@ import logger from 'common-files/utils/logger.mjs';
 const { MAX_QUEUE } = config;
 const fastQueue = new Queue({ autostart: true, concurrency: 1 });
 const slowQueue = new Queue({ autostart: true, concurrency: 1 });
-const queues = [fastQueue, slowQueue];
+export const queues = [fastQueue, slowQueue];
 
 /**
 This function will return a promise that resolves to true when the next highest
 priority queue is empty (priority goes in reverse order, prioity 0 is highest
 priority)
 */
-export function nextHigherPriorityQueueHasEmptied(priority) {
+function nextHigherPriorityQueueHasEmptied(priority) {
   return new Promise(resolve => {
     const listener = () => resolve();
     if (priority === 0) resolve(); // resolve if we're the highest priority queue
@@ -40,6 +40,13 @@ export function nextHigherPriorityQueueHasEmptied(priority) {
       queues[priority - 1].removeListener('end', listener);
       resolve(); // or if it's already empty
     }
+  });
+}
+
+export async function eventQueueManager(callback, priority, args) {
+  queues[priority].push(async () => {
+    await nextHigherPriorityQueueHasEmptied(priority); // prevent conditionalmakeblock from running until fastQueue is emptied
+    callback(args);
   });
 }
 
