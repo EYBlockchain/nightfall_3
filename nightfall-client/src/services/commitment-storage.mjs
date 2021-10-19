@@ -168,9 +168,11 @@ export async function getWalletBalance() {
   // work out the balance contribution of each commitment  - a 721 token has no value field in the
   // commitment but each 721 token counts as a balance of 1. Then finally add up the individual
   // commitment balances to get a balance for each erc address.
+  console.log('WALLET IS', wallet);
   return wallet
     .map(e => ({
       ercAddress: BigInt(e.preimage.ercAddress).toString(16),
+      compressedPkd: e.preimage.compressedPkd,
       tokenId: !!BigInt(e.preimage.tokenId),
       value: Number(BigInt(e.preimage.value)),
     }))
@@ -181,7 +183,7 @@ export async function getWalletBalance() {
       balance: e.tokenId ? 1 : e.value,
     }))
     .reduce((acc, e) => {
-      if (!acc[e.compressedPkd]) acc[e.compressedPkd] = true;
+      if (!acc[e.compressedPkd]) acc[e.compressedPkd] = {};
       if (!acc[e.compressedPkd][e.ercAddress]) acc[e.compressedPkd][e.ercAddress] = 0;
       acc[e.compressedPkd][e.ercAddress] += e.balance;
       return acc;
