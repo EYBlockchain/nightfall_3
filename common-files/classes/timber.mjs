@@ -213,8 +213,9 @@ class Timber {
   @returns {Array<object>} The merkle path for leafValue.
   */
   getMerklePath(leafValue, index = -1) {
+    if (this.leafCount === 0) return { isMember: false, path: [] };
     // eslint-disable-next-line no-param-reassign
-    if (index === -1) index = this.toArray().findIndex(comm => comm === leafValue);
+    if (index === -1) index = this.toArray()?.findIndex(comm => comm === leafValue);
     if (index > this.leafCount || index < 0) throw new Error('Index is outside valid leaf count');
     const indexBinary = Number(index).toString(2).padStart(TIMBER_HEIGHT, '0');
     return _checkMembership(leafValue, this.tree, indexBinary, Timber.hashTree, []);
@@ -229,6 +230,7 @@ class Timber {
   @returns {boolean} If a path is true or false.
   */
   static verifyMerklePath(leafValue, root, proofPath) {
+    if (proofPath.path.length === 0) return false;
     const calcRoot = proofPath.path.reduce((acc, curr) => {
       if (curr.dir === 'right') return utils.concatenateThenHash(acc, curr.value);
       return utils.concatenateThenHash(curr.value, acc);
@@ -323,6 +325,7 @@ class Timber {
   @returns {object} Updated timber instance.
   */
   insertLeaves(leafValues) {
+    if (leafValues.length === 0) return this;
     if (this.leafCount + leafValues.length > TIMBER_WIDTH)
       throw new Error('Cannot insert leaves as tree is/will be full');
 
@@ -362,21 +365,10 @@ class Timber {
 
   static updateFrontier(timber, leaves) {
     if (leaves.length === 0) return timber;
-    // let newLeaves = leaves;
-    // let newTimber = timber;
+    if (timber.leafCount === 0) {
+      return new Timber().insertLeaves(leaves);
+    }
 
-    // if (timber.leafCount < leaves.length) {
-    //   newLeaves = leaves.slice(timber.leafCount);
-    //   newTimber = this.updateFrontier(timber, leaves.slice(0, timber.leafCount));
-    //   return this.updateFrontier(newTimber, newLeaves);
-    // }
-    // Need to check odds at each level
-    // Catch teh scenario where timber odd count at a levelm and leaves create even elements at that level.
-    // if (timber.leafCount % 2 !== 0 && leaves.length > 1) {
-    //   newLeaves = leaves.slice(1);
-    //   newTimber = this.updateFrontier(timber, [leaves[0]]);
-    //   return this.updateFrontier(newTimber, newLeaves);
-    // }
     const outputLeafCount = timber.leafCount + leaves.length;
     const outputFrontierLength = Math.floor(Math.log2(outputLeafCount)) + 1;
 
@@ -392,77 +384,118 @@ class Timber {
 
     // This is the array for the subtree frontier positions should be
     // this is calculated from the final and current frontier.
+    // We back-calculate this as it helps work out the intermediate frontier
     const subTreeFrontierSlotArray = resultingFrontierSlot.map(
       (a, i) => a - currentFrontierSlotArray[i],
     );
 
-    // console.log(`currentFrontierSlotArray: ${currentFrontierSlotArray}`)
-    // console.log(`resultingFrontierSlot: ${resultingFrontierSlot}`)
-    // console.log(`subTreeFrontierSlotArray: ${subTreeFrontierSlotArray}`)
-    const oddDepths = currentFrontierSlotArray.map(
-      (a, i) => a % 2 !== 0 && subTreeFrontierSlotArray[i] > 1,
-    );
-    // const oddDepths = resultingFrontierSlot.map((a, i) => {
-    //   // if (a % 2 !== 0 && a > 1 && subTreeFrontierSlotArray[i] > 1) return true;
-    //   if (a % 2 !== 0 && subTreeFrontierSlotArray[i] > 1) return true;
-    //   if (subTreeFrontierSlotArray[i] % 2 !== 0 && subTreeFrontierSlotArray[i] > 1) return true;
-    //   return false;
-    // });
+    // The height of the subtree that would be created by the new leaves
+    const subTreeHeight = Math.ceil(Math.log2(leaves.length));
 
-    // console.log(`leaves: ${leaves.length}`);
-    // console.log(`oddDepths: ${oddDepths}`);
+    // Since we are trying to add in batches, we have to be sure that the
+    // new tree created from the incoming leaves are added correctly to the existing tree
+    // We need to work out if adding the subtree directly would impact the balance.
+    // We achieve this by identifying if the perfect tree count at the height of the incoming tree, contains any odd counts
+    // console.log(`Sliced arr: ${currentFrontierSlotArray.slice(0, subTreeHeight)}`)
+    // console.log(`SubTreeFrontierSlot: ${subTreeFrontierSlotArray}`)
+    const oddDepths = currentFrontierSlotArray.slice(0, subTreeHeight).map(a => a % 2 !== 0); // && subTreeFrontierSlotArray[i] > 0);
 
     const oddIndex = oddDepths.findIndex(a => a);
-    // console.log(`oddIndex: ${oddIndex}`);
-    // console.log(`subTreeFrontierSlotArray[oddIndex]: ${subTreeFrontierSlotArray[oddIndex - 1]}`);
     if (oddIndex >= 0) {
-      // const leavesToSlice = subTreeFrontierSlotArray[oddIndex - 1] ?? -1;
-      // const leavesToSlice = oddIndex > 0 ? 2 : 1;  //subTreeFrontierSlotArray[oddIndex] - subTreeFrontierSlotArray[oddIndex + 1];
       const leavesToSlice = 2 ** oddIndex;
       const newLeaves = leaves.slice(leavesToSlice);
       const newTimber = this.updateFrontier(timber, leaves.slice(0, leavesToSlice));
       return this.updateFrontier(newTimber, newLeaves);
     }
 
-    // console.log(`currentFrontierFroniter: ${newTimber.frontier}`)
     // This is subtree consisting of the new leaves
     const newSubTree = new Timber().insertLeaves(leaves);
-    // console.log(`suBTreeFrontier: ${newSubTree.frontier}`)
 
-
+    const paddedSubTreeFrontier = [...newSubTree.frontier]; // We use spread operator here to prevent javascript call-by-sharing
     // Now we check if the calculated slots for the subtree frontier
     // match the frontier we have calculated, as we may have increased the height of our tree
     // TODO check this filter 0
     if (newSubTree.frontier.length < subTreeFrontierSlotArray.filter(f => f !== 0).length) {
       for (let i = newSubTree.frontier.length; i < subTreeFrontierSlotArray.length; i++) {
-        // console.log(`I IN LOOP : ${i}`);
-        // newSubTree.frontier[i] = newTimber.frontier[i - 1] + '|' +newSubTree.frontier[i - 1]
-
-        newSubTree.frontier[i] = utils.concatenateThenHash(
+        paddedSubTreeFrontier[i] = utils.concatenateThenHash(
           timber.frontier[i - 1],
-          newSubTree.frontier[i - 1],
+          paddedSubTreeFrontier[i - 1],
         );
+        // paddedSubTreeFrontier[i] = timber.frontier[i - 1] + '|' + paddedSubTreeFrontier[i - 1]
       }
     }
     const finalFrontier = [];
-    // Let's combine frontiers
     for (let i = 0; i < resultingFrontierSlot.length; i++) {
-      const currentFrontierSlot = currentFrontierSlotArray[i] ?? 0;
-      const subTreeFrontierSlot = subTreeFrontierSlotArray[i] ?? 0;
+      const currentFrontierSlot = currentFrontierSlotArray[i];
+      const subTreeFrontierSlot = subTreeFrontierSlotArray[i];
 
       if (currentFrontierSlot === 0 && subTreeFrontierSlot === 0)
-        // finalFrontier.push(
-        //   newTimber.frontier[i - 1] + '|' + newSubTree.frontier[i - 1])
         finalFrontier.push(
+          // timber.frontier[i - 1] + '|' + paddedSubTreeFrontier[i - 1]
           utils.concatenateThenHash(timber.frontier[i - 1], newSubTree.frontier[i - 1]),
         );
-      else if (currentFrontierSlot === 0) finalFrontier.push(newSubTree.frontier[i]);
+      else if (currentFrontierSlot === 0) finalFrontier.push(paddedSubTreeFrontier[i]);
       else if (subTreeFrontierSlot === 0) finalFrontier.push(timber.frontier[i]);
-      else if (currentFrontierSlot % 2 === 0) finalFrontier.push(newSubTree.frontier[i]);
-      else if (subTreeFrontierSlot % 2 === 0) finalFrontier.push(newSubTree.frontier[i]);
-      else finalFrontier.push(timber.frontier[i]);
+      else if (currentFrontierSlot % 2 !== 0) finalFrontier.push(timber.frontier[i]);
+      // ^-- This is safe because we ensure that subTreeFrontierSlot at this point can only be 1
+      else finalFrontier.push(paddedSubTreeFrontier[i]);
     }
-    return new Timber('0x0', Leaf(0), finalFrontier, timber.leafCount + leaves.length);
+
+    // Let's calcualte the updated root now.
+    // const highestFrontier = Timber.calcRoot(timber.frontier, currentFrontierSlotArray, newSubTree);
+    const rightMostElementSubTree = Number(newSubTree.leafCount - 1)
+      .toString(2)
+      .padStart(TIMBER_HEIGHT, '0');
+    const treeHeight = Math.ceil(Math.log2(newSubTree.leafCount));
+    let highestFrontier = Timber.hashTree(
+      Timber.moveDown(
+        newSubTree.tree,
+        rightMostElementSubTree.slice(0, TIMBER_HEIGHT - treeHeight),
+      ),
+    );
+    for (let i = treeHeight; i < timber.frontier.length; i++) {
+      if (currentFrontierSlotArray[i] % 2 === 0)
+        highestFrontier = utils.concatenateThenHash(highestFrontier, '0');
+      else if (highestFrontier === timber.frontier[i])
+        highestFrontier = utils.concatenateThenHash(highestFrontier, '0');
+      else highestFrontier = utils.concatenateThenHash(timber.frontier[i], highestFrontier);
+    }
+    for (let j = timber.frontier.length; j < TIMBER_HEIGHT; j++) {
+      highestFrontier = utils.concatenateThenHash(highestFrontier, '0');
+    }
+    const t = new Timber();
+    t.root = highestFrontier;
+    t.frontier = finalFrontier;
+    t.leafCount = timber.leafCount + leaves.length;
+    return t;
+  }
+
+  static calcRoot(currentFrontier, currentFrontierSlotArray, newSubTree) {
+    const rightMostElementSubTree = Number(newSubTree.leafCount - 1)
+      .toString(2)
+      .padStart(TIMBER_HEIGHT, '0');
+    const treeHeight = Math.ceil(Math.log2(newSubTree.leafCount));
+    let highestFrontier = Timber.hashTree(
+      Timber.moveDown(
+        newSubTree.tree,
+        rightMostElementSubTree.slice(0, TIMBER_HEIGHT - treeHeight),
+      ),
+    );
+    for (let i = treeHeight; i < currentFrontier.length; i++) {
+      if (currentFrontierSlotArray[i] % 2 === 0)
+        highestFrontier = utils.concatenateThenHash(highestFrontier, '0');
+      // highestFrontier += '|0';
+      else if (highestFrontier === currentFrontier[i])
+        highestFrontier = utils.concatenateThenHash(highestFrontier, '0');
+      // highestFrontier += '|0';
+      // eslint-disable-next-line prefer-template
+      // else highestFrontier = currentFrontier[i] + '|' + highestFrontier;
+      else highestFrontier = utils.concatenateThenHash(currentFrontier[i], highestFrontier);
+    }
+    for (let j = currentFrontier.length; j < TIMBER_HEIGHT; j++) {
+      highestFrontier = utils.concatenateThenHash(highestFrontier, '0');
+    }
+    return highestFrontier;
   }
 
   /**
@@ -492,6 +525,7 @@ class Timber {
   @returns {Array<string>} - Array of all the leaves in the tree including zero elements.
   */
   toArray() {
+    if (this.leafCount === 0) return [];
     return Timber.reduceTree((a, b) => [].concat([a, b]).flat(), this.tree);
   }
 }

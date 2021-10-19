@@ -16,114 +16,102 @@ const genLeafValues = (n, start = 0) => {
 
 const MAX_ARRAY = 100;
 
-const randomLeaves = fc.hexaString({ minLength: 2, maxLength: 2 }).map(h => `0x${h}`);
+const randomLeaf = fc.hexaString({ minLength: 8, maxLength: 8 }).map(h => `0x${h}`);
 
 describe('Test Local timber', () => {
-  // let generatedValues;
-  // let timber;
-  // beforeEach(() => {
-  //   generatedValues = genLeafValues(3);
-  //   timber = new Timber();
-  //   timber.insertLeaves(generatedValues);
-  // });
   describe('Check Tree Operations', () => {
-    // it('Check all leaves inserted ', () => {
-    //   fc.assert(
-    //     fc.property(randomLeaves, leaves => {
-    //       const timber = new Timber();
-    //       timber.insertLeaves(leaves);
-    //       expect(timber.toArray().filter(t => t !== 0)).to.eql(leaves);
-    //       expect(timber.leafCount).to.equal(leaves.length);
-    //     }),
-    //     { numRuns: 10 },
-    //   );
-    // });
-    // it('Check hashing of root', () => {
-    //   fc.assert(
-    //     fc.property(randomLeaves, leaves => {
-    //       let leavesArr = leaves;
-    //       const timber = new Timber();
-    //       timber.insertLeaves(leavesArr);
-    //       for (let i = 0; i < TIMBER_HEIGHT; i++) {
-    //         leavesArr = leavesArr.length % 2 === 0 ? leavesArr : [...leavesArr, 0];
-    //         // eslint-disable-next-line no-loop-func
-    //         leavesArr = leavesArr.reduce((all, one, idx) => {
-    //           const ch = Math.floor(idx / 2);
-    //           // eslint-disable-next-line no-param-reassign
-    //           all[ch] = [].concat(all[ch] || [], one);
-    //           return all;
-    //         }, []);
-    //         leavesArr = leavesArr.map(a => utils.concatenateThenHash(...a));
-    //       }
-    //       expect(leavesArr[0]).to.equal(timber.root);
-    //     }),
-    //     { numRuns: 10 },
-    //   );
-    // });
-    // it('Check Merkle Proof', () => {
-    //   fc.assert(
-    //     fc.property(randomLeaves, fc.nat(MAX_ARRAY - 1), (leaves, randomIndex) => {
-    //       const timber = new Timber();
-    //       timber.insertLeaves(leaves);
-    //       const leafValue = leaves[randomIndex];
-    //       const merklePath = timber.getMerklePath(leafValue);
-    //       expect(Timber.verifyMerklePath(leafValue, timber.root, merklePath)).to.be.equal(true);
-    //     }),
-    //     { numRuns: 10 },
-    //   );
-    // });
-    // it('Check Rollback', () => {
-    //   fc.assert(
-    //     fc.property(randomLeaves, fc.nat(MAX_ARRAY - 1), (leaves, rollbackLeaf) => {
-    //       const timber = new Timber();
-    //       timber.insertLeaves(leaves);
-    //       const newTimber = new Timber();
-    //       newTimber.insertLeaves(leaves.slice(0, rollbackLeaf));
-    //       expect(timber.rollback(rollbackLeaf)).to.eql(newTimber);
-    //     }),
-    //     { numRuns: 10 },
-    //   );
-    // });
-    it('Check even updateFrontier', () => {
+    it('Check all leaves inserted ', () => {
+      fc.assert(
+        fc.property(fc.array(randomLeaf, { minLength: 0, maxLength: MAX_ARRAY }), leaves => {
+          const timber = new Timber();
+          timber.insertLeaves(leaves);
+          expect(timber.toArray().filter(t => t !== 0)).to.eql(leaves);
+          expect(timber.leafCount).to.equal(leaves.length);
+        }),
+        { numRuns: 5 },
+      );
+    });
+    it('Check hashing of root', () => {
+      fc.assert(
+        fc.property(fc.array(randomLeaf, { minLength: 1, maxLength: MAX_ARRAY }), leaves => {
+          let leavesArr = leaves;
+          const timber = new Timber();
+          timber.insertLeaves(leavesArr);
+          for (let i = 0; i < TIMBER_HEIGHT; i++) {
+            leavesArr = leavesArr.length % 2 === 0 ? leavesArr : [...leavesArr, 0];
+            // eslint-disable-next-line no-loop-func
+            leavesArr = leavesArr.reduce((all, one, idx) => {
+              const ch = Math.floor(idx / 2);
+              // eslint-disable-next-line no-param-reassign
+              all[ch] = [].concat(all[ch] || [], one);
+              return all;
+            }, []);
+            leavesArr = leavesArr.map(a => utils.concatenateThenHash(...a));
+          }
+          expect(leavesArr[0]).to.equal(timber.root);
+        }),
+        { numRuns: 5 },
+      );
+    });
+    it('Check Merkle Proof', () => {
+      fc.assert(
+        fc.property(fc.array(randomLeaf, { minLength: 1, maxLength: MAX_ARRAY }), leaves => {
+          const timber = new Timber();
+          timber.insertLeaves(leaves);
+          const randomIndex = Math.floor(Math.random() * (leaves.length - 1));
+          const leafValue = leaves[randomIndex];
+          const merklePath = timber.getMerklePath(leafValue);
+          expect(Timber.verifyMerklePath(leafValue, timber.root, merklePath)).to.be.equal(true);
+        }),
+        { numRuns: 5 },
+      );
+    });
+    it('Check Rollback', () => {
+      fc.assert(
+        fc.property(fc.array(randomLeaf, { minLength: 1, maxLength: MAX_ARRAY }), leaves => {
+          const timber = new Timber();
+          timber.insertLeaves(leaves);
+          const newTimber = new Timber();
+          const rollbackLeaf = Math.max(1,Math.floor(Math.random() * (leaves.length - 1))); //Check this
+          newTimber.insertLeaves(leaves.slice(0, rollbackLeaf));
+          expect(timber.rollback(rollbackLeaf)).to.eql(newTimber);
+        }),
+        { numRuns: 5 },
+      );
+    });
+  });
+  describe('Check Frontier-based Operations', () => {
+    it('Check updateFrontier', () => {
       let count = 0;
       fc.assert(
         fc.property(
-          fc.array(randomLeaves, { minLength: 1, maxLength: MAX_ARRAY }),
-          fc.array(randomLeaves, { minLength: 1, maxLength: 32 }),
+          fc.array(randomLeaf, { minLength: 0, maxLength: MAX_ARRAY }), // Remove Duplicates within both arrays
+          fc.array(randomLeaf, { minLength: 1, maxLength: 32 }), // // Remove Duplicates within both arrays
           (leaves, addedLeaves) => {
-            console.log(`randomLeaves: ${leaves.length}`);
-            console.log(`AddedLeaves: ${addedLeaves.length}`);
             const timber = new Timber();
             timber.insertLeaves(leaves);
             const newFrontier = Timber.updateFrontier(timber, addedLeaves);
             timber.insertLeaves(addedLeaves);
+            // console.log(`Timber post-insert root:${timber.root}`);
+            // console.log(timber.toArray());
             expect(newFrontier.frontier).to.eql(timber.frontier);
             expect(newFrontier.leafCount).to.equal(timber.leafCount);
+            expect(newFrontier.root).to.equal(timber.root);
             console.log(`count: ${count}`);
             count++;
           },
         ),
-        { numRuns: 100 },
+        { numRuns: 10 },
       );
-      // const extraLeaves = genLeafValues(2, 3);
-      // const newFrontier = Timber.updateFrontier(timber, extraLeaves);
-      // // console.log(`newFrontier: ${newFrontier.frontier}`);
-      // timber.insertLeaves(extraLeaves);
-      // // console.log(`timber.insertLeaves: ${timber.frontier}`);
-      // expect(newFrontier.frontier).to.eql(timber.frontier);
-      // expect(newFrontier.leafCount).to.equal(timber.leafCount);
     });
   });
 });
 
 // const t = new Timber();
-// const leafVals = genLeafValues(2);
+// const leafVals = genLeafValues(31);
 // t.insertLeaves(leafVals);
-// const extraLeaves = genLeafValues(4, 2);
+// const extraLeaves = genLeafValues(1, 31);
 // const newFrontier = Timber.updateFrontier(t, extraLeaves);
 // t.insertLeaves(extraLeaves)
-// // const newT = Timber.updateFrontier(t, ['0x03']);
-// console.log(newFrontier.frontier);
-// console.log(t.frontier);
-// console.log(newFrontier.leafCount);
-// console.log(t.leafCount);
+// console.log(newFrontier.root);
+// console.log(t.root);
