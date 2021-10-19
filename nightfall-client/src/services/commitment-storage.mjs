@@ -156,13 +156,13 @@ export async function getWalletBalance() {
   const query = { isNullified: false, isOnChain: { $gte: 0 } };
   const options = {
     projection: {
-      preimage: { ercAddress: 1, tokenId: 1, value: 1 },
+      preimage: { ercAddress: 1, compressedPkd: 1, tokenId: 1, value: 1 },
       _id: 0,
     },
   };
   const wallet = await db.collection(COMMITMENTS_COLLECTION).find(query, options).toArray();
   // the below is a little complex.  First we extract the ercAddress, tokenId and value
-  // from the preimage.  Then we format the, nicely. We don't care about the value of the
+  // from the preimage.  Then we format them nicely. We don't care about the value of the
   // tokenId, other than if it's zero or not (indicating the token type). Then we filter
   // any commitments of zero value and tokenId (meaningless commitments), then we
   // work out the balance contribution of each commitment  - a 721 token has no value field in the
@@ -175,10 +175,15 @@ export async function getWalletBalance() {
       value: Number(BigInt(e.preimage.value)),
     }))
     .filter(e => e.tokenId || e.value > 0) // there should be no commitments with tokenId and value of ZERO
-    .map(e => ({ ercAddress: e.ercAddress, balance: e.tokenId ? 1 : e.value }))
+    .map(e => ({
+      compressedPkd: e.compressedPkd,
+      ercAddress: e.ercAddress,
+      balance: e.tokenId ? 1 : e.value,
+    }))
     .reduce((acc, e) => {
-      if (!acc[e.ercAddress]) acc[e.ercAddress] = 0;
-      acc[e.ercAddress] += e.balance;
+      if (!acc[e.compressedPkd]) acc[e.compressedPkd] = true;
+      if (!acc[e.compressedPkd][e.ercAddress]) acc[e.compressedPkd][e.ercAddress] = 0;
+      acc[e.compressedPkd][e.ercAddress] += e.balance;
       return acc;
     }, {});
 }
