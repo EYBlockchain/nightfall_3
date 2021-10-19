@@ -30,7 +30,6 @@ describe('Testing the Nightfall SDK', () => {
   const tokenId = '0x00';
   const tokenType = 'ERC20'; // it can be 'ERC721' or 'ERC1155'
   const value = 10;
-  const value2 = 12;
   const fee = 1;
   const eventLogs = [];
   let pkd2;
@@ -50,6 +49,12 @@ describe('Testing the Nightfall SDK', () => {
     await nf3.registerChallenger();
     // Chalenger listening for incoming events
     nf3.startChallenger();
+    // Liquidity provider for instant withdraws
+    const emitter = await nf3.getInstantWithdrawalRequestedEmitter();
+    emitter.on('data', async (withdrawTransactionHash, paidBy, amount) => {
+      await nf3.advanceInstantWithdrawal(withdrawTransactionHash);
+      console.log(`Serviced instant-withdrawal request from ${paidBy}, with fee ${amount}`);
+    });
 
     ({ pkd: pkd2 } = await generateKeys(ZKP_KEY_LENGTH));
 
@@ -116,13 +121,11 @@ describe('Testing the Nightfall SDK', () => {
       const resArrays = [];
       for (let i = 0; i < txPerBlock * numDeposits; i++) {
         // eslint-disable-next-line no-await-in-loop
-        resArrays.push(await nf3.deposit(ercAddress, tokenType, value, tokenId, fee));
+        const res = await nf3.deposit(ercAddress, tokenType, value, tokenId, fee);
+        expect(res).to.have.property('transactionHash');
+        expect(res).to.have.property('blockHash');
+        resArrays.push(res);
       }
-
-      resArrays.forEach(receipt => {
-        expect(receipt).to.have.property('transactionHash');
-        expect(receipt).to.have.property('blockHash');
-      });
 
       const totalGas = resArrays.reduce((acc, { gasUsed }) => acc + Number(gasUsed), 0);
 
@@ -149,12 +152,13 @@ describe('Testing the Nightfall SDK', () => {
       console.log(`     Gas used was ${Number(res.gasUsed)}`);
     });
 
-    it('should send a single transfer directly to a proposer - offchain and a receiver different from the sender should successfully receive tha transfer and decrypt the secrets', async function () {
-      // TODO: nf3.getCommitmentBySalt(salt)
-      await nf3.transfer(ercAddress, tokenType, value, tokenId, pkd2, fee);
+    it('should send a single transfer directly to a proposer - offchain and a receiver different from the sender should successfully receive tha transfer', async function () {
+      const res = await nf3.transfer(ercAddress, tokenType, value, tokenId, pkd2, fee);
+      expect(res).to.have.property('transactionHash');
+      expect(res).to.have.property('blockHash');
 
       const depositTransactions = [];
-      for (let i = 0; i < txPerBlock - 2; i++) {
+      for (let i = 0; i < txPerBlock; i++) {
         // eslint-disable-next-line no-await-in-loop
         depositTransactions.push(await nf3.deposit(ercAddress, tokenType, value, tokenId, fee));
       }
@@ -169,95 +173,20 @@ describe('Testing the Nightfall SDK', () => {
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
       eventLogs.shift();
-      /*
-      const newCommitmentSalts = res.salts;
-      let commitment;
-
-      while (!commitment) {
-        // eslint-disable-next-line no-await-in-loop
-        const result = await nf3.getCommitmentBySalt(newCommitmentSalts[0]);
-        [commitment] = result.commitment;
-        if (commitment) break;
-        console.log('commitment not found - waiting for 3s before re-try');
-        // eslint-disable-next-line no-await-in-loop
-        await new Promise(resolve => setTimeout(resolve, 3000));
-      }
-
-      expect(
-        web3.utils.toChecksumAddress(`0x${commitment.preimage.ercAddress.substring(26, 66)}`),
-      ).to.equal(ercAddress); // .subString(22, 64)
-      expect(parseInt(new GN(commitment.preimage.value).decimal, 10)).to.equal(value);
-      */
-    });
-  });
-
-  // now we can do the double transfer
-  describe('Double transfer tests', () => {
-    it('should transfer some crypto (back to us) using ZKP', async function () {
-      const res = await nf3.transfer(ercAddress, tokenType, value2, tokenId, nf3.zkpKeys.pkd, fee);
-      expect(res).to.have.property('transactionHash');
-      expect(res).to.have.property('blockHash');
-      console.log(`     Gas used was ${Number(res.gasUsed)}`);
-    });
-
-    it('should send a double transfer directly to a proposer - offchain and a receiver different from the sender should successfully receive tha transfer and decrypt the secrets', async function () {
-      // give the last block time to be submitted, or we won't have enough
-      // commitments in the Merkle tree to use for the double transfer.
-
-      const res = await nf3.transfer(ercAddress, tokenType, value2 + 2, tokenId, pkd2, fee);
-      expect(res).to.have.property('transactionHash');
-      expect(res).to.have.property('blockHash');
-
-      const depositTransactions = [];
-      for (let i = 0; i < txPerBlock - 2; i++) {
-        // eslint-disable-next-line no-await-in-loop
-        depositTransactions.push(await nf3.deposit(ercAddress, tokenType, value, tokenId, fee));
-      }
-
-      depositTransactions.forEach(receipt => {
-        expect(receipt).to.have.property('transactionHash');
-        expect(receipt).to.have.property('blockHash');
-      });
-
-      // wait for the block proposed event with transfer function to be recognised by nightfall client of recipient
-      while (eventLogs[0] !== 'blockProposed') {
-        // eslint-disable-next-line no-await-in-loop
-        await new Promise(resolve => setTimeout(resolve, 3000));
-      }
-      eventLogs.shift();
-      /*
-      const newCommitmentSalts = res.salts;
-      let commitment;
-
-      while (!commitment) {
-        // eslint-disable-next-line no-await-in-loop
-        const result = await chai.request(recipientUrl).get('/commitment/salt').query({
-          salt: newCommitmentSalts[0],
-        });
-        [commitment] = result.body.commitment;
-        if (commitment) break;
-        console.log('commitment not found - waiting for 3s before re-try');
-        // eslint-disable-next-line no-await-in-loop
-        await new Promise(resolve => setTimeout(resolve, 3000));
-      }
-
-      expect(
-        web3.utils.toChecksumAddress(`0x${commitment.preimage.ercAddress.substring(26, 66)}`),
-      ).to.equal(ercAddress); // .subString(22, 64)
-      expect(parseInt(new GN(commitment.preimage.value).decimal, 10)).to.equal(value2 + 2);
-      */
     });
   });
 
   describe('Withdraw tests', () => {
     it('should withdraw some crypto from a ZKP commitment', async function () {
       const res = await nf3.withdraw(ercAddress, tokenType, value, tokenId, nf3.ethereumAddress);
-      expect(res).to.have.property('transactionHash');
-      expect(res).to.have.property('blockHash');
-      console.log(`     Gas used was ${Number(res.gasUsed)}`);
+      expect(res).to.have.property('withdrawTransactionHash');
+      const restx = await res.receiptPromise; // wait for the promise tx to end
+      expect(restx).to.have.property('transactionHash');
+      expect(restx).to.have.property('blockHash');
+      console.log(`     Gas used was ${Number(restx.gasUsed)}`);
 
       const depositTransactions = [];
-      for (let i = 0; i < txPerBlock - 2; i++) {
+      for (let i = 0; i < txPerBlock - 1; i++) {
         // eslint-disable-next-line no-await-in-loop
         depositTransactions.push(await nf3.deposit(ercAddress, tokenType, value, tokenId, fee));
       }
@@ -275,20 +204,80 @@ describe('Testing the Nightfall SDK', () => {
     });
   });
 
-  // when the widthdraw transaction is finalised, we want to be able to pull the
-  // funds into layer1
-  describe('Withdraw funds to layer 1', () => {
-    it('Should find the block containing the withdraw transaction', async function () {
-      // TODO: nf3.finaliseWithdrawal(block, transactions, index)
-    });
-    it('Should create a failing finalise-withdrawal (because insufficient time has passed)', async function () {
-      // TODO: nf3.finaliseWithdrawal(block, transactions, index)
-    });
-    it('Should create a passing finalise-withdrawal with a time-jump capable test client (because sufficient time has passed)', async function () {
-      // TODO: nf3.finaliseWithdrawal(block, transactions, index)
-    });
-    it('Should have increased our balance', async function () {
-      // TODO
+  describe('Instant withdraw tests', () => {
+    let latestWithdrawTransactionHash; // for instant withdrawals
+
+    it('should allow instant withdraw', async function () {
+      // We create enough transactions to fill numDeposits blocks full of deposits.
+      let resArrays = [];
+      for (let i = 0; i < txPerBlock; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        resArrays.push(await nf3.deposit(ercAddress, tokenType, value, tokenId, fee));
+      }
+
+      resArrays.forEach(receipt => {
+        expect(receipt).to.have.property('transactionHash');
+        expect(receipt).to.have.property('blockHash');
+      });
+
+      while (eventLogs[0] !== 'blockProposed') {
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+      eventLogs.shift();
+
+      let receiptPromise;
+
+      ({ withdrawTransactionHash: latestWithdrawTransactionHash } = await nf3.withdraw(
+        ercAddress,
+        tokenType,
+        value,
+        tokenId,
+        nf3.ethereumAddress,
+        fee,
+        receiptPromise,
+      ));
+      expect(latestWithdrawTransactionHash).to.be.a('string').and.to.include('0x');
+      await receiptPromise; // Wait for the promise of the transaction to end
+
+      resArrays = [];
+      for (let i = 0; i < txPerBlock - 1; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        resArrays.push(await nf3.deposit(ercAddress, tokenType, value, tokenId, fee));
+      }
+
+      resArrays.forEach(receipt => {
+        expect(receipt).to.have.property('transactionHash');
+        expect(receipt).to.have.property('blockHash');
+      });
+
+      while (eventLogs[0] !== 'blockProposed') {
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+      eventLogs.shift();
+
+      const res = await nf3.requestInstantWithdrawal(latestWithdrawTransactionHash, fee);
+      expect(res).to.have.property('transactionHash');
+      expect(res).to.have.property('blockHash');
+      console.log(`     Gas used was ${Number(res.gasUsed)}`);
+
+      const depositTransactions = [];
+      for (let i = 0; i < txPerBlock; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        depositTransactions.push(await nf3.deposit(ercAddress, tokenType, value, tokenId, fee));
+      }
+
+      depositTransactions.forEach(receipt => {
+        expect(receipt).to.have.property('transactionHash');
+        expect(receipt).to.have.property('blockHash');
+      });
+
+      while (eventLogs[0] !== 'blockProposed') {
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+      eventLogs.shift();
     });
   });
 
