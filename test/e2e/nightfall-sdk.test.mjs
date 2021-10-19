@@ -118,16 +118,18 @@ describe('Testing the Nightfall SDK', () => {
 
     it('should deposit some crypto into a ZKP commitment', async function () {
       // We create enough transactions to fill numDeposits blocks full of deposits.
-      const resArrays = [];
+      const depositTransactions = [];
       for (let i = 0; i < txPerBlock * numDeposits; i++) {
+        console.log(`Deposit ${i}`);
         // eslint-disable-next-line no-await-in-loop
         const res = await nf3.deposit(ercAddress, tokenType, value, tokenId, fee);
+        console.log(`Deposit ${i} OK`);
         expect(res).to.have.property('transactionHash');
         expect(res).to.have.property('blockHash');
-        resArrays.push(res);
+        depositTransactions.push(res);
       }
 
-      const totalGas = resArrays.reduce((acc, { gasUsed }) => acc + Number(gasUsed), 0);
+      const totalGas = depositTransactions.reduce((acc, { gasUsed }) => acc + Number(gasUsed), 0);
 
       console.log(`     Average Gas used was ${Math.ceil(totalGas / (txPerBlock * numDeposits))}`);
 
@@ -152,7 +154,8 @@ describe('Testing the Nightfall SDK', () => {
       console.log(`     Gas used was ${Number(res.gasUsed)}`);
     });
 
-    it('should send a single transfer directly to a proposer - offchain and a receiver different from the sender should successfully receive tha transfer', async function () {
+    it('should send a single transfer directly to a proposer - offchain and a receiver different from the sender should successfully receive that transfer', async function () {
+      // TODO: parameter offchain true in transfer function when available in SDK
       const res = await nf3.transfer(ercAddress, tokenType, value, tokenId, pkd2, fee);
       expect(res).to.have.property('transactionHash');
       expect(res).to.have.property('blockHash');
@@ -209,13 +212,13 @@ describe('Testing the Nightfall SDK', () => {
 
     it('should allow instant withdraw', async function () {
       // We create enough transactions to fill numDeposits blocks full of deposits.
-      let resArrays = [];
+      let depositTransactions = [];
       for (let i = 0; i < txPerBlock; i++) {
         // eslint-disable-next-line no-await-in-loop
-        resArrays.push(await nf3.deposit(ercAddress, tokenType, value, tokenId, fee));
+        depositTransactions.push(await nf3.deposit(ercAddress, tokenType, value, tokenId, fee));
       }
 
-      resArrays.forEach(receipt => {
+      depositTransactions.forEach(receipt => {
         expect(receipt).to.have.property('transactionHash');
         expect(receipt).to.have.property('blockHash');
       });
@@ -240,13 +243,13 @@ describe('Testing the Nightfall SDK', () => {
       expect(latestWithdrawTransactionHash).to.be.a('string').and.to.include('0x');
       await receiptPromise; // Wait for the promise of the transaction to end
 
-      resArrays = [];
+      depositTransactions = [];
       for (let i = 0; i < txPerBlock - 1; i++) {
         // eslint-disable-next-line no-await-in-loop
-        resArrays.push(await nf3.deposit(ercAddress, tokenType, value, tokenId, fee));
+        depositTransactions.push(await nf3.deposit(ercAddress, tokenType, value, tokenId, fee));
       }
 
-      resArrays.forEach(receipt => {
+      depositTransactions.forEach(receipt => {
         expect(receipt).to.have.property('transactionHash');
         expect(receipt).to.have.property('blockHash');
       });
@@ -262,7 +265,7 @@ describe('Testing the Nightfall SDK', () => {
       expect(res).to.have.property('blockHash');
       console.log(`     Gas used was ${Number(res.gasUsed)}`);
 
-      const depositTransactions = [];
+      depositTransactions = [];
       for (let i = 0; i < txPerBlock; i++) {
         // eslint-disable-next-line no-await-in-loop
         depositTransactions.push(await nf3.deposit(ercAddress, tokenType, value, tokenId, fee));
