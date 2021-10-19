@@ -120,10 +120,8 @@ describe('Testing the Nightfall SDK', () => {
       // We create enough transactions to fill numDeposits blocks full of deposits.
       const depositTransactions = [];
       for (let i = 0; i < txPerBlock * numDeposits; i++) {
-        console.log(`Deposit ${i}`);
         // eslint-disable-next-line no-await-in-loop
         const res = await nf3.deposit(ercAddress, tokenType, value, tokenId, fee);
-        console.log(`Deposit ${i} OK`);
         expect(res).to.have.property('transactionHash');
         expect(res).to.have.property('blockHash');
         depositTransactions.push(res);
