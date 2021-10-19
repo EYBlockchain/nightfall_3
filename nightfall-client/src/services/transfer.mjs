@@ -205,10 +205,10 @@ async function transfer(transferParams) {
       // dig up connection peers
       const peerList = await discoverPeers('Local');
       Object.keys(peerList).forEach(async address => {
-        logger.debug(`offchain transaction - calling ${peerList[address]}/proposer/transfer`);
+        logger.debug(`offchain transaction - calling ${peerList[address]}/proposer/offchain-transaction`);
         await axios
           .post(
-            `${peerList[address]}/proposer/transfer`,
+            `${peerList[address]}/proposer/offchain-transaction`,
             { transaction: optimisticTransferTransaction },
             { timeout: 3600000 },
           )

@@ -276,8 +276,8 @@ router.post('/encode', async (req, res, next) => {
   }
 });
 
-router.post('/transfer', async (req, res) => {
-  logger.debug(`proposer/transfer endpoint received POST`);
+router.post('/offchain-transaction', async (req, res) => {
+  logger.debug(`proposer/offchain-transaction endpoint received POST`);
   logger.silly(`With content ${JSON.stringify(req.body, null, 2)}`);
   const { transaction } = req.body;
   try {
