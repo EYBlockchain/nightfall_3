@@ -2,7 +2,11 @@
   "name": "cli",
   "version": "1.0.0",
   "description": "A command line interface for Nightfall_3",
-  "main": "index.js",
+  "main": "build/nf3.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "babel lib -d build"
+  },
   "dependencies": {
     "axios": "^0.21.4",
     "chalk": "^4.1.2",
@@ -15,9 +19,11 @@
     "web3": "^1.5.2",
     "ws": "^8.2.2"
   },
-  "devDependencies": {},
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "devDependencies": {
+    "@babel/cli": "^7.15.7",
+    "@babel/core": "^7.15.5",
+    "@babel/plugin-proposal-class-properties": "^7.14.5",
+    "@babel/preset-env": "^7.15.6"
   },
   "repository": {
     "type": "git",
