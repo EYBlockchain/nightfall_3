@@ -374,8 +374,8 @@ class Nf3 {
   */
   async subscribeToIncomingViewingKeys() {
     return axios.post(`${this.clientBaseUrl}/incoming-viewing-key`, {
-      ivk: this.zkpKeys.ivk,
-      nsk: this.zkpKeys.nsk,
+      ivks: [this.zkpKeys.ivk],
+      nsks: [this.zkpKeys.nsk],
     });
   }
 
