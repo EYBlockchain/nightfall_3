@@ -7,18 +7,21 @@ import utils from '../common-files/utils/crypto/merkle-tree/utils.mjs';
 const { expect } = chai;
 const { TIMBER_HEIGHT } = config;
 
-const genLeafValues = (n, start = 0) => {
-  const arrayOfVals = [...Array(n).keys()].map(s => s + (start + 1));
-  const maxPad = Math.ceil(Math.log10(n)) + 1;
-  const paddedVals = arrayOfVals.map(a => `0x${a.toString().padStart(maxPad, '0')}`);
-  return paddedVals;
-};
+// Old way to generate leaf values, now we use fast-check
+// const genLeafValues = (n, start = 0) => {
+//   const arrayOfVals = [...Array(n).keys()].map(s => s + (start + 1));
+//   const maxPad = Math.ceil(Math.log10(n)) + 1;
+//   const paddedVals = arrayOfVals.map(a => `0x${a.toString().padStart(maxPad, '0')}`);
+//   return paddedVals;
+// };
+
+// This runs standard mocha tests but using randomly generated inputs.
 
 const MAX_ARRAY = 100;
 
-const randomLeaf = fc.hexaString({ minLength: 8, maxLength: 8 }).map(h => `0x${h}`);
+const randomLeaf = fc.hexaString({ minLength: 32, maxLength: 32 }).map(h => `0x${h}`);
 
-describe('Test Local timber', () => {
+describe('Local Timber Tests', () => {
   describe('Check Tree Operations', () => {
     it('Check all leaves inserted ', () => {
       fc.assert(
@@ -72,7 +75,7 @@ describe('Test Local timber', () => {
           const timber = new Timber();
           timber.insertLeaves(leaves);
           const newTimber = new Timber();
-          const rollbackLeaf = Math.max(1,Math.floor(Math.random() * (leaves.length - 1))); //Check this
+          const rollbackLeaf = Math.max(1, Math.floor(Math.random() * (leaves.length - 1)));
           newTimber.insertLeaves(leaves.slice(0, rollbackLeaf));
           expect(timber.rollback(rollbackLeaf)).to.eql(newTimber);
         }),
@@ -82,36 +85,22 @@ describe('Test Local timber', () => {
   });
   describe('Check Frontier-based Operations', () => {
     it('Check updateFrontier', () => {
-      let count = 0;
       fc.assert(
         fc.property(
           fc.array(randomLeaf, { minLength: 0, maxLength: MAX_ARRAY }), // Remove Duplicates within both arrays
-          fc.array(randomLeaf, { minLength: 1, maxLength: 32 }), // // Remove Duplicates within both arrays
+          fc.array(randomLeaf, { minLength: 1, maxLength: 32 }), // Remove Duplicates within both arrays
           (leaves, addedLeaves) => {
             const timber = new Timber();
             timber.insertLeaves(leaves);
-            const newFrontier = Timber.updateFrontier(timber, addedLeaves);
+            const newFrontier = Timber.statelessUpdate(timber, addedLeaves);
             timber.insertLeaves(addedLeaves);
-            // console.log(`Timber post-insert root:${timber.root}`);
-            // console.log(timber.toArray());
             expect(newFrontier.frontier).to.eql(timber.frontier);
             expect(newFrontier.leafCount).to.equal(timber.leafCount);
             expect(newFrontier.root).to.equal(timber.root);
-            console.log(`count: ${count}`);
-            count++;
           },
         ),
-        { numRuns: 10 },
+        { numRuns: 20 },
       );
     });
   });
 });
-
-// const t = new Timber();
-// const leafVals = genLeafValues(31);
-// t.insertLeaves(leafVals);
-// const extraLeaves = genLeafValues(1, 31);
-// const newFrontier = Timber.updateFrontier(t, extraLeaves);
-// t.insertLeaves(extraLeaves)
-// console.log(newFrontier.root);
-// console.log(t.root);
