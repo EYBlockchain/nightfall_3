@@ -206,9 +206,7 @@ describe('Testing the Nightfall SDK', () => {
   });
 
   describe('Instant withdraw tests', () => {
-    let latestWithdrawTransactionHash; // for instant withdrawals
-
-    it('should allow instant withdraw', async function () {
+    it('should allow instant withdraw of existing withdraw', async function () {
       // We create enough transactions to fill numDeposits blocks full of deposits.
       let depositTransactions = [];
       for (let i = 0; i < txPerBlock; i++) {
@@ -227,6 +225,7 @@ describe('Testing the Nightfall SDK', () => {
       }
       eventLogs.shift();
 
+      let latestWithdrawTransactionHash = ''; // for instant withdrawals
       ({ withdrawTransactionHash: latestWithdrawTransactionHash } = await nf3.withdraw(
         ercAddress,
         tokenType,
@@ -275,6 +274,30 @@ describe('Testing the Nightfall SDK', () => {
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
       eventLogs.shift();
+    });
+
+    it('should not allow instant withdraw of non existing withdraw or not in block yet', async function () {
+      // We create enough transactions to fill numDeposits blocks full of deposits.
+      let latestWithdrawTransactionHash = ''; // for instant withdrawals
+      ({ withdrawTransactionHash: latestWithdrawTransactionHash } = await nf3.withdraw(
+        ercAddress,
+        tokenType,
+        value,
+        tokenId,
+        nf3.ethereumAddress,
+        fee,
+      ));
+      expect(latestWithdrawTransactionHash).to.be.a('string').and.to.include('0x');
+
+      let error;
+      try {
+        const res = await nf3.requestInstantWithdrawal(latestWithdrawTransactionHash, fee);
+        expect(res).to.have.property('transactionHash');
+        expect(res).to.have.property('blockHash');
+      } catch (e) {
+        error = e;
+      }
+      expect(error.response.status).to.equal(500);
     });
   });
 
