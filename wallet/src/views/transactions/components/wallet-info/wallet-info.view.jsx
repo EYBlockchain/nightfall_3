@@ -24,11 +24,13 @@ class WalletInfo extends Component {
   reload = () => {
     this.props.nf3.getLayer2Balances()
       .then((l2Balance) => {
-        const l2TokenAddressArr = Object.keys(l2Balance)
+        const compressedPkd = this.props.wallet.zkpKeys.compressedPkd;
+        const myL2Balance = typeof l2Balance[compressedPkd] === 'undefined' ? {} : l2Balance[compressedPkd];
+        const l2TokenAddressArr = myL2Balance === {} ? []: Object.keys(myL2Balance);
         if (l2TokenAddressArr.length) {
           l2TokenAddressArr.forEach(l2TokenAddress => {
             getL1Balance(this.props.wallet.ethereumAddress).then((l1Balance) => {
-              this.props.addToken('0x' + l2TokenAddress.toLowerCase(), 'ERC20', "0x00", l1Balance, Web3.utils.fromWei(l2Balance[l2TokenAddress].toString()));
+              this.props.addToken('0x' + l2TokenAddress.toLowerCase(), 'ERC20', "0x00", l1Balance, Web3.utils.fromWei(myL2Balance[l2TokenAddress].toString()));
             })
           });
         }
