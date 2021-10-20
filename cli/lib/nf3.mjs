@@ -409,6 +409,21 @@ class Nf3 {
   }
 
   /**
+  De-registers an existing proposer.
+  It will use the address of the Ethereum Signing key that is holds to de-register
+  the proposer.
+  @method
+  @async
+  @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
+  */
+  async deregisterProposer() {
+    const res = await axios.post(`${this.optimistBaseUrl}/proposer/de-register`, {
+      address: this.ethereumAddress,
+    });
+    return this.submitTransaction(res.data.txDataToSign, this.proposersContractAddress, 0);
+  }
+
+  /**
   Adds a new Proposer peer to a list of proposers that are available for accepting
   offchain (direct) transfers and withdraws. The client will submit direct transfers
   and withdraws to all of these peers.
