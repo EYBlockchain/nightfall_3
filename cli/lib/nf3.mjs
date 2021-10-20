@@ -2,7 +2,6 @@ import axios from 'axios';
 import Web3 from 'web3';
 import WebSocket from 'ws';
 import EventEmitter from 'events';
-import { generateKeys } from '../../nightfall-client/src/services/keys.mjs';
 
 /**
 @class
@@ -70,7 +69,7 @@ class Nf3 {
   */
   async init() {
     this.web3 = new Web3(this.web3WsUrl);
-    this.zkpKeys = this.zkpKeys || (await generateKeys());
+    this.zkpKeys = this.zkpKeys || (await axios.post(`${this.clientBaseUrl}/generate-keys`)).data;
     this.shieldContractAddress = await this.getContractAddress('Shield');
     this.proposersContractAddress = await this.getContractAddress('Proposers');
     this.challengesContractAddress = await this.getContractAddress('Challenges');
