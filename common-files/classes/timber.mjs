@@ -129,7 +129,7 @@ class Timber {
 
   leafCount = 0;
 
-  constructor(root = 0, tree = Leaf(0), frontier = [], leafCount = 0) {
+  constructor(root = 0, frontier = [], leafCount = 0, tree = Leaf(0)) {
     if (root === 0 || tree === Leaf(0) || frontier.length === 0 || leafCount === 0) return this;
     this.root = root;
     this.tree = tree;
@@ -494,10 +494,7 @@ class Timber {
     for (let j = timber.frontier.length; j < TIMBER_HEIGHT; j++) {
       root = utils.concatenateThenHash(root, '0');
     }
-    const t = new Timber();
-    t.root = root;
-    t.frontier = finalFrontier;
-    t.leafCount = timber.leafCount + leaves.length;
+    const t = new Timber(root, finalFrontier, timber.leafCount + leaves.length);
     return t;
   }
 
