@@ -227,8 +227,6 @@ describe('Testing the Nightfall SDK', () => {
       }
       eventLogs.shift();
 
-      let receiptPromise;
-
       ({ withdrawTransactionHash: latestWithdrawTransactionHash } = await nf3.withdraw(
         ercAddress,
         tokenType,
@@ -236,10 +234,8 @@ describe('Testing the Nightfall SDK', () => {
         tokenId,
         nf3.ethereumAddress,
         fee,
-        receiptPromise,
       ));
       expect(latestWithdrawTransactionHash).to.be.a('string').and.to.include('0x');
-      await receiptPromise; // Wait for the promise of the transaction to end
 
       depositTransactions = [];
       for (let i = 0; i < txPerBlock - 1; i++) {
