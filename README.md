@@ -96,6 +96,39 @@ Nightfall_3 provides a CLI (which makes use of the SDK) so that you can exercise
 - open up a third terminal and type `./nf`.  This will start the CLI. It should be fairly self explanatory but be mindful that you can only use the output of previous transactions once they have been incorporated in a Layer 2 block - for example you need you at least two deposits to be able to do a transfer because by default two deposits is the minimum needed to fill a block.
 - You can also run a Challenge signer if you wish (`./challenger`) but it is of limited use because NF_3 will reject locally-created invalid transactions and so you will never get to the stage of something challengeable making it on chain.
 
+## Wallet
+Nightfall_3 provides a Wallet to exercise its features. To use it:
+
+- Generate browser version of SDK:
+```
+cd cli
+npm install
+npm run build
+```
+- Deploy nightfall (only ganache for now) from Nightfall's root folder
+```
+./start-nightfall -g -s
+```
+- Start proposer from Nightfall's root folder once Nightfall deployment is finished
+(you will see this `nightfall_3-deployer-1 exited with code 0`).
+
+```
+./proposer
+```
+- Launch wallet.
+```
+cd wallet
+npm install
+npm start
+```
+
+### Limitations
+- You cannot run the wallet and a separate version of the SDK (CLI for example) in parallel as nonces will get mixed.
+- Initial balances shown by the wallet are fake. 
+- Only ERC20 tokens work for now. When you start the wallet, select the ERC20 token and perform some deposits. Then click on `Reload` button to
+see the real balance.
+- Tested with node version v14.18.0
+
 # Acknowledgements
 
 We gratefully acknowledge the inspiration of the Ethereum Foundation and, particularly, Barry Whitehat and Wanseob Lim and their [zkopru](https://ethresear.ch/t/zkopru-zk-optimistic-rollup-for-private-transactions/7717) application.
