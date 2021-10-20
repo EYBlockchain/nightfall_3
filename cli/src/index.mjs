@@ -111,6 +111,14 @@ async function askQuestions(nf3) {
       validate: input => web3.utils.isHexStrict(input) || input === 'last withdraw',
       when: answers => answers.task === 'Instant-Withdraw',
     },
+    {
+      name: 'offchain',
+      message: 'Do you want to post the transaction on-chain or send it directly to a Proposer?',
+      type: 'list',
+      choices: ['on-chain', 'direct'],
+      when: answers => answers.task === 'Transfer' || answers.task === 'Withdraw',
+      filter: input => input !== 'on-chain',
+    },
   ];
   return inquirer.prompt(questions);
 }
@@ -119,13 +127,18 @@ async function askQuestions(nf3) {
 Simple function to print out the balances object
 */
 function printBalances(balances) {
+  console.log('BALANCES', balances);
   if (Object.keys(balances).length === 0) {
     console.log('You have no balances yet - try depositing some tokens into Layer 2 from Layer 1');
     return;
   }
-  const table = new Table({ head: ['ERC Contract Address', 'Layer 2 Balance'] });
-  table.push(balances);
-  console.log(table.toString());
+  // eslint-disable-next-line guard-for-in
+  for (const compressedPkd in balances) {
+    const table = new Table({ head: ['ERC Contract Address', 'Layer 2 Balance'] });
+    table.push(balances[compressedPkd]);
+    console.log(chalk.yellow('Balances of user', compressedPkd));
+    console.log(table.toString());
+  }
 }
 
 /**
@@ -144,9 +157,13 @@ async function loop(nf3, ercAddress) {
     pkdX,
     pkdY,
     withdrawTransactionHash,
+    offchain,
   } = await askQuestions(nf3);
   let [x, y] = [pkdX, pkdY]; // make these variable - we may need to change them
-  if (privateKey) nf3.setEthereumSigningKey(privateKey); // we'll remember the key so we don't keep asking for it
+  if (privateKey) {
+    await nf3.setEthereumSigningKey(privateKey); // we'll remember the key so we don't keep asking for it
+    nf3.addPeer('http://optimist1:80'); // add a Proposer for direct transfers and withdraws
+  }
   // handle the task that the user has asked for
   switch (task) {
     case 'Deposit':
@@ -156,6 +173,7 @@ async function loop(nf3, ercAddress) {
       if (x === 'my key') [x, y] = nf3.zkpKeys.pkd;
       try {
         receiptPromise = await nf3.transfer(
+          offchain,
           ercAddress,
           tokenType,
           value,
@@ -174,8 +192,15 @@ async function loop(nf3, ercAddress) {
     case 'Withdraw':
       try {
         ({ withdrawTransactionHash: latestWithdrawTransactionHash, receiptPromise } =
-          await nf3.withdraw(ercAddress, tokenType, value, tokenId, recipientAddress, fee));
-        console.log('PROMISES', latestWithdrawTransactionHash, receiptPromise);
+          await nf3.withdraw(
+            offchain,
+            ercAddress,
+            tokenType,
+            value,
+            tokenId,
+            recipientAddress,
+            fee,
+          ));
       } catch (err) {
         if (err.response.data.includes('No suitable commitments were found')) {
           console.log('No suitable commitments were found');

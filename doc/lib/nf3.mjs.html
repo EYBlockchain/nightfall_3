@@ -53,6 +53,8 @@ class Nf3 {
 
   web3;
 
+  websockets = [];
+
   shieldContractAddress;
 
   proposersContractAddress;
@@ -69,9 +71,9 @@ class Nf3 {
 
   defaultFee = 10;
 
-  PROPOSER_BOND = 10000000000000000000;
+  PROPOSER_BOND = 10;
 
-  BLOCK_STAKE = 1000000000000000000; // 1 ether
+  BLOCK_STAKE = 1;
 
   constructor(
     clientBaseUrl,
@@ -253,8 +255,17 @@ class Nf3 {
   represented as an array of two hex strings).
   @returns {Promise} Resolves into the Ethereum transaction receipt.
   */
-  async transfer(ercAddress, tokenType, value, tokenId, pkd, fee = this.defaultFee) {
+  async transfer(
+    offchain = false,
+    ercAddress,
+    tokenType,
+    value,
+    tokenId,
+    pkd,
+    fee = this.defaultFee,
+  ) {
     const res = await axios.post(`${this.clientBaseUrl}/transfer`, {
+      offchain,
       ercAddress,
       tokenId,
       recipientData: {
@@ -265,7 +276,10 @@ class Nf3 {
       ask: this.zkpKeys.ask,
       fee,
     });
-    return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, fee);
+    if (!offchain) {
+      return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, fee);
+    }
+    return res.status;
   }
 
   /**
@@ -288,8 +302,17 @@ class Nf3 {
   should be deposited.
   @returns {Promise} Resolves into the Ethereum transaction receipt.
   */
-  async withdraw(ercAddress, tokenType, value, tokenId, recipientAddress, fee = this.defaultFee) {
+  async withdraw(
+    offchain = false,
+    ercAddress,
+    tokenType,
+    value,
+    tokenId,
+    recipientAddress,
+    fee = this.defaultFee,
+  ) {
     const res = await axios.post(`${this.clientBaseUrl}/withdraw`, {
+      offchain,
       ercAddress,
       tokenId,
       tokenType,
@@ -299,7 +322,73 @@ class Nf3 {
       ask: this.zkpKeys.ask,
       fee,
     });
+    const { transactionHash: withdrawTransactionHash } = res.data.transaction;
+    if (!offchain) {
+      const receiptPromise = this.submitTransaction(
+        res.data.txDataToSign,
+        this.shieldContractAddress,
+        fee,
+      );
+      return { withdrawTransactionHash, receiptPromise };
+    }
+    return { withdrawTransactionHash, receiptPromise: res.status };
+  }
+
+  /**
+  Enables someone with a valid withdraw transaction in flight to request instant
+  withdrawal of funds (only relevant for ERC20).
+  @method
+  @async
+  @param {string} withdrawTransactionHash - the hash of the Layer 2 transaction in question
+  @param {number} fee - the amount being paid for the instant withdrawal service
+  */
+  async requestInstantWithdrawal(withdrawTransactionHash, fee) {
+    // find the L2 block containing the L2 transaction hash
+    let res = await axios.get(
+      `${this.optimistBaseUrl}/block/transaction-hash/${withdrawTransactionHash}`,
+    );
+    const { block, transactions, index } = res.data;
+    // set the instant withdrawal fee
+    res = await axios.post(`${this.clientBaseUrl}/set-instant-withdrawal`, {
+      block,
+      transactions,
+      index,
+    });
     return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, fee);
+  }
+
+  /**
+  Enables someone to service a request for an instant withdrawal
+  @method
+  @async
+  @param {string} withdrawTransactionHash - the hash of the Layer 2 transaction in question
+  */
+  async advanceInstantWithdrawal(withdrawTransactionHash) {
+    const res = await axios.post(`${this.optimistBaseUrl}/transaction/advanceWithdrawal`, {
+      transactionHash: withdrawTransactionHash,
+    });
+    return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, 0);
+  }
+
+  /**
+  Returns an event emitter that fires each time an InstantWithdrawalRequested
+  event is detected on the blockchain
+  */
+  async getInstantWithdrawalRequestedEmitter() {
+    const emitter = new EventEmitter();
+    const connection = new WebSocket(this.optimistWsUrl);
+    this.websockets.push(connection); // save so we can close it properly later
+    connection.onopen = () => {
+      connection.send('instant');
+    };
+    connection.onmessage = async message => {
+      const msg = JSON.parse(message.data);
+      const { type, withdrawTransactionHash, paidBy, amount } = msg;
+      if (type === 'instant') {
+        emitter.emit('data', withdrawTransactionHash, paidBy, amount);
+      }
+    };
+    return emitter;
   }
 
   /**
@@ -319,12 +408,13 @@ class Nf3 {
   }
 
   /**
-  Closes the Nf3 connection to the blockchain
+  Closes the Nf3 connection to the blockchain and any open websockets to NF_3
   @method
   @async
   */
   close() {
     this.web3.currentProvider.connection.close();
+    this.websockets.forEach(websocket => websocket.close());
   }
 
   /**
@@ -347,6 +437,26 @@ class Nf3 {
   }
 
   /**
+  Adds a new Proposer peer to a list of proposers that are available for accepting
+  offchain (direct) transfers and withdraws. The client will submit direct transfers
+  and withdraws to all of these peers.
+  @method
+  @async
+  @param {string} peerUrl - the URL of the Proposer being added. This will be from
+  the point of view of nightfall-client, not the SDK user (e.g. 'http://optimist1:80').
+  Nightfall-client will use this URL to contact the Proposer.
+  */
+  async addPeer(peerUrl) {
+    if (!this.ethereumAddress)
+      throw new Error('Cannot add peer if the Ethereum address for the user is not defined');
+    // the peerUrl is from the point of view of the Client e.g. 'http://optimist1:80'
+    return axios.post(`${this.clientBaseUrl}/peers/addPeers`, {
+      address: this.ethereumAddress,
+      enode: peerUrl,
+    });
+  }
+
+  /**
   Starts a Proposer that listens for blocks and submits block proposal
   transactions to the blockchain.
   @method
@@ -354,6 +464,7 @@ class Nf3 {
   */
   async startProposer() {
     const connection = new WebSocket(this.optimistWsUrl);
+    this.websockets.push(connection); // save so we can close it properly later
     connection.onopen = () => {
       connection.send('blocks');
     };
@@ -364,10 +475,11 @@ class Nf3 {
         await this.submitTransaction(txDataToSign, this.stateContractAddress, this.BLOCK_STAKE);
       }
     };
+    // add this proposer to the list of peers that can accept direct transfers and withdraws
   }
 
   /**
-  Returns an emitter, whose 'on' event fires whenever a block is
+  Returns an emitter, whose 'data' event fires whenever a block is
   detected, passing out the transaction needed to propose the block. This
   is a lower level method than `Nf3.startProposer` because it does not sign and
   send the transaction to the blockchain. If required, `Nf3.submitTransaction`
@@ -379,6 +491,7 @@ class Nf3 {
   async getNewBlockEmitter() {
     const newBlockEmitter = new EventEmitter();
     const connection = new WebSocket(this.optimistWsUrl);
+    this.websockets.push(connection); // save so we can close it properly later
     connection.onopen = () => {
       connection.send('blocks');
     };
@@ -386,7 +499,7 @@ class Nf3 {
       const msg = JSON.parse(message.data);
       const { type, txDataToSign } = msg;
       if (type === 'block') {
-        newBlockEmitter.emit('on', txDataToSign);
+        newBlockEmitter.emit('data', txDataToSign);
       }
     };
     return newBlockEmitter;
@@ -412,6 +525,7 @@ class Nf3 {
   */
   async startChallenger() {
     const connection = new WebSocket(this.optimistWsUrl);
+    this.websockets.push(connection); // save so we can close it properly later
     connection.onopen = () => {
       connection.send('challenge');
     };
@@ -425,7 +539,7 @@ class Nf3 {
   }
 
   /**
-  Returns an emitter, whose 'on' event fires whenever a challengeable block is
+  Returns an emitter, whose 'data' event fires whenever a challengeable block is
   detected, passing out the transaction needed to raise the challenge. This
   is a lower level method than `Nf3.startChallenger` because it does not sign and
   send the transaction to the blockchain. If required, `Nf3.submitTransaction`
@@ -437,6 +551,7 @@ class Nf3 {
   async getChallengeEmitter() {
     const newChallengeEmitter = new EventEmitter();
     const connection = new WebSocket(this.optimistWsUrl);
+    this.websockets.push(connection); // save so we can close it properly later
     connection.onopen = () => {
       connection.send('blocks');
     };
@@ -444,7 +559,7 @@ class Nf3 {
       const msg = JSON.parse(message.data);
       const { type, txDataToSign } = msg;
       if (type === 'challenge') {
-        newChallengeEmitter.emit('on', txDataToSign);
+        newChallengeEmitter.emit('data', txDataToSign);
       }
     };
     return newChallengeEmitter;
@@ -481,7 +596,7 @@ export default Nf3;
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a> on Fri Sep 24 2021 13:27:25 GMT+0100 (British Summer Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a> on Mon Oct 18 2021 16:37:26 GMT+0100 (British Summer Time)
 </footer>
 
 <script> prettyPrint(); </script>

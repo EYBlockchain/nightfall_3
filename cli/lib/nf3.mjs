@@ -226,8 +226,17 @@ class Nf3 {
   represented as an array of two hex strings).
   @returns {Promise} Resolves into the Ethereum transaction receipt.
   */
-  async transfer(ercAddress, tokenType, value, tokenId, pkd, fee = this.defaultFee) {
+  async transfer(
+    offchain = false,
+    ercAddress,
+    tokenType,
+    value,
+    tokenId,
+    pkd,
+    fee = this.defaultFee,
+  ) {
     const res = await axios.post(`${this.clientBaseUrl}/transfer`, {
+      offchain,
       ercAddress,
       tokenId,
       recipientData: {
@@ -238,7 +247,10 @@ class Nf3 {
       ask: this.zkpKeys.ask,
       fee,
     });
-    return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, fee);
+    if (!offchain) {
+      return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, fee);
+    }
+    return res.status;
   }
 
   /**
@@ -261,8 +273,17 @@ class Nf3 {
   should be deposited.
   @returns {Promise} Resolves into the Ethereum transaction receipt.
   */
-  async withdraw(ercAddress, tokenType, value, tokenId, recipientAddress, fee = this.defaultFee) {
+  async withdraw(
+    offchain = false,
+    ercAddress,
+    tokenType,
+    value,
+    tokenId,
+    recipientAddress,
+    fee = this.defaultFee,
+  ) {
     const res = await axios.post(`${this.clientBaseUrl}/withdraw`, {
+      offchain,
       ercAddress,
       tokenId,
       tokenType,
@@ -273,12 +294,15 @@ class Nf3 {
       fee,
     });
     const { transactionHash: withdrawTransactionHash } = res.data.transaction;
-    const receiptPromise = this.submitTransaction(
-      res.data.txDataToSign,
-      this.shieldContractAddress,
-      fee,
-    );
-    return { withdrawTransactionHash, receiptPromise };
+    if (!offchain) {
+      const receiptPromise = this.submitTransaction(
+        res.data.txDataToSign,
+        this.shieldContractAddress,
+        fee,
+      );
+      return { withdrawTransactionHash, receiptPromise };
+    }
+    return { withdrawTransactionHash, receiptPromise: res.status };
   }
 
   /**
@@ -384,6 +408,26 @@ class Nf3 {
   }
 
   /**
+  Adds a new Proposer peer to a list of proposers that are available for accepting
+  offchain (direct) transfers and withdraws. The client will submit direct transfers
+  and withdraws to all of these peers.
+  @method
+  @async
+  @param {string} peerUrl - the URL of the Proposer being added. This will be from
+  the point of view of nightfall-client, not the SDK user (e.g. 'http://optimist1:80').
+  Nightfall-client will use this URL to contact the Proposer.
+  */
+  async addPeer(peerUrl) {
+    if (!this.ethereumAddress)
+      throw new Error('Cannot add peer if the Ethereum address for the user is not defined');
+    // the peerUrl is from the point of view of the Client e.g. 'http://optimist1:80'
+    return axios.post(`${this.clientBaseUrl}/peers/addPeers`, {
+      address: this.ethereumAddress,
+      enode: peerUrl,
+    });
+  }
+
+  /**
   Starts a Proposer that listens for blocks and submits block proposal
   transactions to the blockchain.
   @method
@@ -402,6 +446,7 @@ class Nf3 {
         await this.submitTransaction(txDataToSign, this.stateContractAddress, this.BLOCK_STAKE);
       }
     };
+    // add this proposer to the list of peers that can accept direct transfers and withdraws
   }
 
   /**
