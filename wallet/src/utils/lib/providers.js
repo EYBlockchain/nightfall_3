@@ -11,6 +11,11 @@ function setProvider(providerData) {
   if (typeof providerData === 'string' || typeof window === 'undefined') {
     provider = new Web3(providerData);
   }
+
+  if (window.ethereum) {
+    provider = new Web3(window.ethereum);
+    window.ethereum.send('eth_requestAccounts');
+  }
 }
 
 /**
@@ -26,24 +31,4 @@ function getProvider(providerData) {
   return provider;
 }
 
-function getAddress(privateKey) {
-  if (!provider) {
-    throw new Error('Provider not initialized');
-  }
-
-  const account = provider.eth.accounts.privateKeyToAccount(privateKey);
-
-  return account.address;
-}
-
-function getL1Balance(address) {
-  if (!provider) {
-    throw new Error('Provider not initialized');
-  }
-
-  return provider.eth.getBalance(address).then(function (balanceWei) {
-    return Web3.utils.fromWei(balanceWei);
-  });
-}
-
-export { setProvider, getProvider, getAddress, getL1Balance };
+export { setProvider, getProvider };

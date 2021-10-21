@@ -2,7 +2,7 @@
 import { loginActionTypes } from './login.actions';
 
 const initialState = {
-  isValidPrivateKey: false,
+  isWalletInitialized: false,
   wallet: {
     privateKey: '',
     ethereumAddress: '',
@@ -15,7 +15,7 @@ function loginReducer(state = initialState, action) {
     case loginActionTypes.LOGIN_FAILED:
       return {
         ...state,
-        isValidPrivateKey: false,
+        isWalletInitialized: false,
         wallet: action.payload.wallet,
         nf3: {},
       };
@@ -23,7 +23,7 @@ function loginReducer(state = initialState, action) {
     case loginActionTypes.LOGIN_SUCCESS:
       return {
         ...state,
-        isValidPrivateKey: true,
+        isWalletInitialized: true,
         wallet: action.payload.wallet,
         nf3: action.payload.nf3,
       };

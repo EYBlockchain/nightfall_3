@@ -1,4 +1,3 @@
-/* ignore unused exports */
 import { DEFAULT_TOKEN_ADDRESS, TOKEN_TYPE, DEFAULT_TOKEN_ID } from '../constants';
 
 const tokens = [
@@ -14,7 +13,7 @@ const tokens = [
   // DUMMY
   {
     id: 2,
-    tokenAddress: 2,
+    tokenAddress: DEFAULT_TOKEN_ADDRESS.ERC721,
     tokenType: 'ERC721',
     tokenId: DEFAULT_TOKEN_ID.ERC721,
     tokenName: '',
@@ -24,7 +23,7 @@ const tokens = [
   // DUMMY
   {
     id: 3,
-    tokenAddress: 3,
+    tokenAddress: DEFAULT_TOKEN_ADDRESS.ERC1155,
     tokenType: 'ERC1155',
     tokenId: DEFAULT_TOKEN_ID.ERC1155,
     tokenName: '',
@@ -32,4 +31,5 @@ const tokens = [
     tokenBalanceL2: 20,
   },
 ];
-export default { tokens };
+
+export default tokens;

@@ -3,7 +3,6 @@ import { connect } from 'react-redux';
 import { Table, Button, Container, Icon, Popup, } from 'semantic-ui-react';
 import Web3 from 'web3';
 import { addToken, selectToken, unselectToken } from '../../../../store/token/token.actions';
-import { getL1Balance } from '../../../../utils/lib/providers';
 
 
 class WalletInfo extends Component {
@@ -29,7 +28,7 @@ class WalletInfo extends Component {
         const l2TokenAddressArr = myL2Balance === {} ? []: Object.keys(myL2Balance);
         if (l2TokenAddressArr.length) {
           l2TokenAddressArr.forEach(l2TokenAddress => {
-            getL1Balance(this.props.wallet.ethereumAddress).then((l1Balance) => {
+            this.props.nf3.getL1Balance(this.props.wallet.ethereumAddress).then((l1Balance) => {
               this.props.addToken('0x' + l2TokenAddress.toLowerCase(), 'ERC20', "0x00", l1Balance, Web3.utils.fromWei(myL2Balance[l2TokenAddress].toString()));
             })
           });
@@ -80,7 +79,7 @@ class WalletInfo extends Component {
                 <Table.Cell > {this.importedWallet(this.props.wallet)} </Table.Cell>
               </Table.HeaderCell>
               <Table.HeaderCell textAlign="right">
-                <Button onClick={this.reload}> <Icon name="sync" /> Reload </Button>
+                <Button onClick={this.reload} disabled={this.props.token.activeTokenRowId === ''}><Icon name="sync" /> Reload </Button>
               </Table.HeaderCell>
               <Table.HeaderCell textAlign="right">
                 <Button onClick={this.reload} disabled> <Icon name="plus" /> Add Token </Button>

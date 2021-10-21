@@ -5,7 +5,7 @@ import tokens from '../../utils/tokens';
 const initialState = {
   activeTokenRowId: '',
   maxTokenRowId: tokens.length,
-  tokenPool: tokens.tokens,
+  tokenPool: tokens,
 };
 
 function tokenReducer(state = initialState, action) {
