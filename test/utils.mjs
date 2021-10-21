@@ -84,6 +84,7 @@ export async function submitTransaction(
   isSubmitTxLocked = true;
   let gas = gasCount;
   let gasPrice = 10000000000;
+  let receipt;
   let nonce = nonceDict[privateKey];
   // if the nonce hasn't been set, then use the transaction count
   try {
@@ -110,10 +111,11 @@ export async function submitTransaction(
     nonce++;
     nonceDict[privateKey] = nonce;
     console.log('nonceDict[privateKey] after increment', nonceDict[privateKey]);
-    await web3.eth.sendSignedTransaction(signed.rawTransaction);
+    receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction);
   } finally {
     isSubmitTxLocked = false;
   }
+  return receipt;
 }
 
 // This only works with Ganache but it can move block time forwards
