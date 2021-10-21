@@ -79,7 +79,7 @@ export async function submitTransaction(
 ) {
   while (isSubmitTxLocked) {
     // eslint-disable-next-line no-await-in-loop
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    await new Promise(resolve => setTimeout(resolve, 1000));
   }
   isSubmitTxLocked = true;
   let gas = gasCount;
