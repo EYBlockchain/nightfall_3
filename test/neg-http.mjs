@@ -123,10 +123,13 @@ describe('Testing the challenge http API', () => {
     await submitTransaction(txToSign, privateKey, proposersAddress, gas, bond);
 
     // should subscribe to block proposed event with the provided incoming viewing key
-    await chai.request(url).post('/incoming-viewing-key').send({
-      ivk: ivk1,
-      nsk: nsk1,
-    });
+    await chai
+      .request(url)
+      .post('/incoming-viewing-key')
+      .send({
+        ivks: [ivk1],
+        nsks: [nsk1],
+      });
 
     connection = new WebSocket(optimistWsUrl);
     connection.onopen = () => {

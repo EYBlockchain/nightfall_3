@@ -57,7 +57,7 @@ contract State is Structures, Config {
     require(b.blockNumberL2 == blockHashes.length, 'The block is out of order'); // this will fail if a tx is re-mined out of order due to a chain reorg.
     bytes32 previousBlockHash;
     if (blockHashes.length != 0) require(b.previousBlockHash == blockHashes[blockHashes.length - 1].blockHash, 'The block is flawed or out of order'); // this will fail if a tx is re-mined out of order due to a chain reorg.
-    require(BLOCK_STAKE == msg.value, 'The stake payment is incorrect');
+    require(BLOCK_STAKE <= msg.value, 'The stake payment is incorrect');
     require(b.proposer == msg.sender, 'The proposer address is not the sender');
     // We need to set the blockHash on chain here, because there is no way to
     // convince a challenge function of the (in)correctness by an offchain

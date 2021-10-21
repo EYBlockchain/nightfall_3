@@ -145,19 +145,37 @@ describe('Testing the http API', () => {
     });
 
     it('should subscribe to block proposed event with the provided incoming viewing key for optimist1', async function () {
-      const res = await chai.request(senderUrl).post('/incoming-viewing-key').send({
-        ivk: ivk1,
-        nsk: nsk1,
-      });
+      const res = await chai
+        .request(senderUrl)
+        .post('/incoming-viewing-key')
+        .send({
+          ivks: [ivk1, ivk2],
+          nsks: [nsk1, nsk2],
+        });
       expect(res.body.status).to.be.a('string');
       expect(res.body.status).to.equal('success');
     });
+    //
+    // it('should subscribe to block proposed event with the provided incoming viewing key for optimist1', async function () {
+    //   const res = await chai
+    //     .request(senderUrl)
+    //     .post('/incoming-viewing-key')
+    //     .send({
+    //       ivks: [ivk2],
+    //       nsks: [nsk2],
+    //     });
+    //   expect(res.body.status).to.be.a('string');
+    //   expect(res.body.status).to.equal('success');
+    // });
 
     it('should subscribe to block proposed event with the provided incoming viewing key for optimist2', async function () {
-      const res = await chai.request(recipientUrl).post('/incoming-viewing-key').send({
-        ivk: ivk2,
-        nsk: nsk2,
-      });
+      const res = await chai
+        .request(recipientUrl)
+        .post('/incoming-viewing-key')
+        .send({
+          ivks: [ivk2],
+          nsks: [nsk2],
+        });
       expect(res.body.status).to.be.a('string');
       expect(res.body.status).to.equal('success');
     });

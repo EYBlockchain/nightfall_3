@@ -127,13 +127,18 @@ async function askQuestions(nf3) {
 Simple function to print out the balances object
 */
 function printBalances(balances) {
+  console.log('BALANCES', balances);
   if (Object.keys(balances).length === 0) {
     console.log('You have no balances yet - try depositing some tokens into Layer 2 from Layer 1');
     return;
   }
-  const table = new Table({ head: ['ERC Contract Address', 'Layer 2 Balance'] });
-  table.push(balances);
-  console.log(table.toString());
+  // eslint-disable-next-line guard-for-in
+  for (const compressedPkd in balances) {
+    const table = new Table({ head: ['ERC Contract Address', 'Layer 2 Balance'] });
+    table.push(balances[compressedPkd]);
+    console.log(chalk.yellow('Balances of user', compressedPkd));
+    console.log(table.toString());
+  }
 }
 
 /**

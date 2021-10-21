@@ -72,6 +72,7 @@ module.exports = {
   HASH_TYPE: 'mimc',
   USE_STUBS: process.env.USE_STUBS === 'true',
   VK_IDS: { deposit: 0, single_transfer: 1, double_transfer: 2, withdraw: 3 }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
+  TIMBER_HEIGHT: 32,
 
   // the various parameters needed to describe the Babyjubjub curve that we use for El-Gamal
   // BABYJUBJUB

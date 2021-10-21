@@ -142,10 +142,13 @@ describe('Running rollback and resync test', () => {
     await submitTransaction(txDataToSign, privateKey, proposersAddress, gas, bond);
 
     // Register keys
-    await chai.request(url).post('/incoming-viewing-key').send({
-      ivk: ivk1,
-      nsk: nsk1,
-    });
+    await chai
+      .request(url)
+      .post('/incoming-viewing-key')
+      .send({
+        ivks: [ivk1],
+        nsks: [nsk1],
+      });
 
     // Register Challenger
     await chai.request(optimistUrl).post('/challenger/add').send({ address: myAddress });
@@ -291,10 +294,13 @@ describe('Running rollback and resync test', () => {
       expect(txDataToSign).to.be.a('string');
       // now we need to sign the transaction and send it to the blockchain
       await submitTransaction(txDataToSign, privateKey, proposersAddress, gas, bond);
-      await chai.request(url).post('/incoming-viewing-key').send({
-        ivk: ivk1,
-        nsk: nsk1,
-      });
+      await chai
+        .request(url)
+        .post('/incoming-viewing-key')
+        .send({
+          ivks: [ivk1],
+          nsks: [nsk1],
+        });
       // Register Challenger
       await chai.request(optimistUrl).post('/challenger/add').send({ address: myAddress });
     });
