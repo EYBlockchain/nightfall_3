@@ -15,7 +15,7 @@ function isString(s) {
  * @param {Number} decimals - number of decimals in the final representation
  * @returns {BN} - Amount in Wei
  */
-function toBaseUnit(value, decimals = 18) {
+function toBaseUnit(value, decimals = 9) {
   if (!isString(value)) {
     throw new Error('Pass strings to prevent floating point precision issues.');
   }

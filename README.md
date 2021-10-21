@@ -151,7 +151,7 @@ npm start
 - Initial balances shown by the wallet are fake. 
 - Only ERC20 tokens work for now. When you start the wallet, select the ERC20 token and perform some deposits. Then click on `Reload` button to
 see the real balance.
-- Transactions only accept amounts less or equal than 10. Anything larger produces an error. Need to investigate why. For now, keep amounts below this threshold.
+- Tokens have been configured with a constant number of 9 decimals in the wallet. On the other hand, the mock token contracts do not have decimals implemented. So, there will be inconsistencies in the L1 vs L2 balance (you can deposit more tokens to L2 than what's available in L1). For testing purposes it is not a problem.
 - Direct transactions are not implemented
 - Instant withdraw is selected when doing a withdraw only. Once submitted the instant withdraw request,the wallet requests a simple withdraw and inmediatelly after converts this withdraw into an instant withdraw. Wallet will attempt to send the instant withdraw request up to 10 times, once every 10 seconds. It is likely that during this period, you need to request a simpler transaction (deposit, withdraw or transfer) so that the original withdraw is processed by the processor and the instant withdraw can be carried out.
 - Tested with node version v14.18.0

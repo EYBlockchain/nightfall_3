@@ -29,7 +29,7 @@ class WalletInfo extends Component {
         if (l2TokenAddressArr.length) {
           l2TokenAddressArr.forEach(l2TokenAddress => {
             this.props.nf3.getL1Balance(this.props.wallet.ethereumAddress).then((l1Balance) => {
-              this.props.addToken('0x' + l2TokenAddress.toLowerCase(), 'ERC20', "0x00", l1Balance, Web3.utils.fromWei(myL2Balance[l2TokenAddress].toString()));
+              this.props.addToken('0x' + l2TokenAddress.toLowerCase(), 'ERC20', "0x00", l1Balance, Web3.utils.fromWei(myL2Balance[l2TokenAddress].toString(), 'nano'));
             })
           });
         }

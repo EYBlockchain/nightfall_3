@@ -9,6 +9,7 @@ const tokens = [
     tokenName: '',
     tokenBalanceL1: 10,
     tokenBalanceL2: 2,
+    decimals: 10,
   },
   // DUMMY
   {
@@ -19,6 +20,7 @@ const tokens = [
     tokenName: '',
     tokenBalanceL1: 10,
     tokenBalanceL2: 2,
+    decimals: 10,
   },
   // DUMMY
   {
@@ -29,6 +31,7 @@ const tokens = [
     tokenName: '',
     tokenBalanceL1: 0,
     tokenBalanceL2: 20,
+    decimals: 10,
   },
 ];
 
