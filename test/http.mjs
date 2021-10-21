@@ -62,6 +62,17 @@ describe('Testing the http API', () => {
   const txPerBlock = 2;
   const eventLogs = [];
   let stateBalance = 0;
+  const logCounts = {
+    deposit: 0,
+    regsterProposer: 0,
+  };
+
+  const waitForTxExecution = async (count, txType) => {
+    while (count === logCounts[txType]) {
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
+  };
 
   before(async function () {
     web3 = await connectWeb3(BLOCKCHAIN_URL);
@@ -76,22 +87,31 @@ describe('Testing the http API', () => {
     }
 
     shieldAddress = (await chai.request(senderUrl).get('/contract-address/Shield')).body.address;
+    web3.eth.subscribe('logs', { address: shieldAddress }).on('data', log => {
+      if (log.topics[0] === web3.eth.abi.encodeEventSignature('TransactionSubmitted()')) {
+        logCounts.deposit += 1;
+      }
+    });
 
     stateAddress = (await chai.request(senderUrl).get('/contract-address/State')).body.address;
+    web3.eth.subscribe('logs', { address: stateAddress }).on('data', log => {
+      // For event tracking, we use only care about the logs related to 'blockProposed'
+      if (log.topics[0] === topicEventMapping.BlockProposed) eventLogs.push('blockProposed');
+    });
 
     proposersAddress = (await chai.request(senderUrl).get('/contract-address/Proposers')).body
       .address;
+    web3.eth.subscribe('logs', { address: proposersAddress }).on('data', log => {
+      if (log.topics[0] === web3.eth.abi.encodeEventSignature('NewCurrentProposer(address)')) {
+        logCounts.regsterProposer += 1;
+      }
+    });
 
     challengesAddress = (await chai.request(senderUrl).get('/contract-address/Challenges')).body
       .address;
 
     nodeInfo = await web3.eth.getNodeInfo();
     setNonce(await web3.eth.getTransactionCount((await getAccounts())[0]));
-
-    web3.eth.subscribe('logs', { address: stateAddress }).on('data', log => {
-      // For event tracking, we use only care about the logs related to 'blockProposed'
-      if (log.topics[0] === topicEventMapping.BlockProposed) eventLogs.push('blockProposed');
-    });
 
     ({
       ask: ask1,
@@ -121,7 +141,7 @@ describe('Testing the http API', () => {
           await submitTransaction(txDataToSign, privateKey, challengesAddress, gas);
         }
       } catch (err) {
-        console.error(err);
+        console.error('http.mjs onmessage: ', err);
       }
     };
   });
@@ -192,7 +212,9 @@ describe('Testing the http API', () => {
       const { txDataToSign } = res.body;
       expect(txDataToSign).to.be.a('string');
       const bond = 10;
+      const count = logCounts.regsterProposer;
       await submitTransaction(txDataToSign, privateKey, proposersAddress, gas, bond);
+      await waitForTxExecution(count, 'regsterProposer');
       stateBalance += bond;
     });
 
@@ -208,6 +230,7 @@ describe('Testing the http API', () => {
       const bond = 10;
       const gasCosts = 5000000000000000;
       const startBalance = await getBalance(myAddress);
+      const count = logCounts.regsterProposer;
       // now we need to sign the transaction and send it to the blockchain
       const receipt = await submitTransaction(
         txDataToSign,
@@ -216,6 +239,7 @@ describe('Testing the http API', () => {
         gas,
         bond,
       );
+      await waitForTxExecution(count, 'regsterProposer');
       const endBalance = await getBalance(myAddress);
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
@@ -288,12 +312,15 @@ describe('Testing the http API', () => {
 
       const receiptArrays = [];
       for (let i = 0; i < depositTransactions.length; i++) {
+        const count = logCounts.deposit;
         const { txDataToSign } = depositTransactions[i];
         receiptArrays.push(
           // eslint-disable-next-line no-await-in-loop
           await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee),
           // we need to await here as we need transactions to be submitted sequentially or we run into nonce issues.
         );
+        // eslint-disable-next-line no-await-in-loop
+        await waitForTxExecution(count, 'deposit');
       }
       receiptArrays.forEach(receipt => {
         expect(receipt).to.have.property('transactionHash');

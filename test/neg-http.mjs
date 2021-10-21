@@ -240,7 +240,7 @@ describe('Testing the challenge http API', () => {
             // console.log('tx hash of challenge block is', txReceipt.transactionHash);
           } else throw new Error(`Unhandled transaction type: ${type}`);
         } catch (err) {
-          console.log(err);
+          console.error(`neg-http.mjs for ${type} ${counter} onmessage: ${err}`);
         }
       });
     };
@@ -582,11 +582,11 @@ describe('Testing the challenge http API', () => {
       connection.close();
     } else {
       // TODO work out what's still running and close it properly
-      txQueue.end();
       txQueue.on('end', () => {
         closeWeb3Connection();
         connection.close();
       });
+      txQueue.end();
     }
   });
 });

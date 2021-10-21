@@ -46,9 +46,14 @@ async function checkBlock(block, transactions) {
     history = await getBlockByBlockNumberL2(block.blockNumberL2 - 1);
     logger.debug('Block has no commitments - checking its root is the same as the previous block');
   } else {
-    history = await getTreeHistoryByCurrentLeafCount(block.leafCount);
-    logger.debug(`Block has commitments - retrieved history from Timber`);
-    logger.silly(`Timber history was ${JSON.stringify(history, null, 2)}`);
+    while (!history) {
+      // eslint-disable-next-line no-await-in-loop
+      history = await getTreeHistoryByCurrentLeafCount(block.leafCount);
+      logger.debug(`Block has commitments - retrieved history from Timber`);
+      logger.debug(`Timber history was ${JSON.stringify(history, null, 2)}`);
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
   }
   if (history.root !== block.root)
     throw new BlockError(

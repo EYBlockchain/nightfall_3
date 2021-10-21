@@ -77,25 +77,28 @@ export async function submitTransaction(
   value = 0,
 ) {
   let gas = gasCount;
-  if (USE_INFURA) {
-    // get gaslimt from latest block as gaslimt may change
-    gas = (await web3.eth.getBlock('latest')).gasLimit;
-  }
+  let gasPrice = 10000000000;
+
   // if the nonce hasn't been set, then use the transaction count
   let nonce = nonceDict[privateKey];
   if (nonce === undefined) {
     const accountAddress = await web3.eth.accounts.privateKeyToAccount(privateKey);
     nonce = await web3.eth.getTransactionCount(accountAddress.address);
   }
+  if (USE_INFURA) {
+    // get gaslimt from latest block as gaslimt may vary
+    gas = (await web3.eth.getBlock('latest')).gasLimit;
+    const blockGasPrice = await web3.eth.getGasPrice();
+    if (blockGasPrice > gasPrice) gasPrice = blockGasPrice;
+  }
   const tx = {
     to: shieldAddress,
     data: unsignedTransaction,
     value,
     gas,
-    gasPrice: 10000000000,
+    gasPrice,
     nonce,
   };
-
   const signed = await web3.eth.accounts.signTransaction(tx, privateKey);
   nonce++;
   nonceDict[privateKey] = nonce;
@@ -197,6 +200,7 @@ export async function testForEvents(contractAddress, topics, retries) {
   let counter = retries || Number(process.env.EVENT_RETRIEVE_RETRIES) || 3;
   let events;
   while (
+    counter < 0 ||
     events === undefined ||
     events[0] === undefined ||
     events[0].transactionHash === undefined
@@ -211,8 +215,13 @@ export async function testForEvents(contractAddress, topics, retries) {
     // eslint-disable-next-line no-await-in-loop
     await new Promise(resolve => setTimeout(resolve, WAIT));
     counter--;
-    if (counter < 0)
-      throw new Error(`No events found with in ${counter} retries of ${WAIT}ms wait`);
+  }
+  if (counter < 0) {
+    throw new Error(
+      `No events found with in ${
+        retries || Number(process.env.EVENT_RETRIEVE_RETRIES) || 3
+      }retries of ${WAIT}ms wait`,
+    );
   }
   // console.log('Events found');
   return events;
