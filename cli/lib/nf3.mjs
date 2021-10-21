@@ -2,6 +2,7 @@ import axios from 'axios';
 import Web3 from 'web3';
 import WebSocket from 'ws';
 import EventEmitter from 'events';
+import { Mutex } from 'async-mutex';
 
 /**
 @class
@@ -45,6 +46,10 @@ class Nf3 {
   PROPOSER_BOND = 10;
 
   BLOCK_STAKE = 1;
+
+  nonce = 0;
+
+  mutex = new Mutex();
 
   constructor(
     clientBaseUrl,
@@ -93,6 +98,8 @@ class Nf3 {
     this.ethereumAddress = this.web3.eth.accounts.privateKeyToAccount(
       this.ethereumSigningKey,
     ).address;
+    // clear the nonce as we're using a fresh account
+    this.nonce = 0;
   }
 
   /**
@@ -116,22 +123,28 @@ class Nf3 {
   This can be found using the getContractAddress convenience function.
   @returns {Promise} This will resolve into a transaction receipt.
   */
-  async submitTransaction(
+  submitTransaction( // we don't use 'async' because this anyway returns a promise
     unsignedTransaction,
     contractAddress = this.shieldContractAddress,
     fee = this.defaultFee,
   ) {
-    const nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
-    const tx = {
-      to: contractAddress,
-      data: unsignedTransaction,
-      value: fee,
-      gas: 10000000,
-      gasPrice: 10000000000,
-      nonce,
-    };
-    const signed = await this.web3.eth.accounts.signTransaction(tx, this.ethereumSigningKey);
-    return this.web3.eth.sendSignedTransaction(signed.rawTransaction);
+    // we need a Mutex so that we don't get a nonce-updating race.
+    return this.mutex.runExclusive(async () => {
+      // if we don't have a nonce, we must get one from the ethereum client
+      if (!this.nonce) this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
+      const tx = {
+        to: contractAddress,
+        data: unsignedTransaction,
+        value: fee,
+        gas: 10000000,
+        gasPrice: 10000000000,
+        nonce: this.nonce,
+      };
+      // once we have a nonce, we'll manage it ourselves
+      this.nonce++;
+      const signed = await this.web3.eth.accounts.signTransaction(tx, this.ethereumSigningKey);
+      return this.web3.eth.sendSignedTransaction(signed.rawTransaction);
+    });
   }
 
   /**
