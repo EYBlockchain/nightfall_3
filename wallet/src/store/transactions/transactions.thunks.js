@@ -11,7 +11,7 @@ function txInstantWithdrawSubmit(withdrawTransactionHash, fee) {
     nf3
       .requestInstantWithdrawal(withdrawTransactionHash, fee)
       .then(txReceipt => {
-        // TODO dispatch error 
+        // TODO dispatch error
         dispatch(txActions.txSuccess(TX_TYPES.INSTANT_WITHDRAW, txReceipt));
       })
       .catch(err => {
@@ -28,7 +28,7 @@ function txInstantWithdrawSubmit(withdrawTransactionHash, fee) {
         } else {
           dispatch(txActions.txFailed());
         }
-        // TODO dispatch error 
+        // TODO dispatch error
         console.log(err);
       });
   };
@@ -122,7 +122,6 @@ function txSubmit(txParams) {
                 ),
               );
             }
-            console.log('TX Receipt', response.withdrawTransactionHash, receiptPromise);
           });
         } catch (err) {
           dispatch(txActions.txFailed());
@@ -131,10 +130,9 @@ function txSubmit(txParams) {
         break;
 
       default:
-        throw 'Unknown transaction';
+        throw new Error('Unknown transaction');
     }
   };
 }
-
 
 export { txSubmit, txInstantWithdrawSubmit };

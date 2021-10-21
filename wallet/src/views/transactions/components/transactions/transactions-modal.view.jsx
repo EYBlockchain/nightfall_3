@@ -43,7 +43,7 @@ class TransactionsModal extends Component {
         const txType = this.state.instantWithdrawEnable
           ? TX_TYPES.INSTANT_WITHDRAW
           : TX_TYPES.WITHDRAW;
-        const instantWithdrawFee = txType === TX_TYPES.WITHDRAW ? 0 : this.inputInstantWithdrawFee.value;
+        const instantWithdrawFee = txType === TX_TYPES.WITHDRAW ? 0 : this.inputInstantWithdrawFee.value === '' ? this.state.instantWithdrawFee : this.inputInstantWithdrawFee.value;
         this.props.handleOnTxSubmit({
           txType,
           ethereumAddress,

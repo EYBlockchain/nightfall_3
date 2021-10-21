@@ -130,7 +130,7 @@ class Nf3 {
     };
 
     if (this.ethereumSigningKey) {
-      const signed = await this.web3.eth.accounts.signTransaction(tx, this.ethereumSigningKey)
+      const signed = await this.web3.eth.accounts.signTransaction(tx, this.ethereumSigningKey);
       return this.web3.eth.sendSignedTransaction(signed.rawTransaction);
     }
     return this.web3.eth.sendTransaction(tx);
@@ -593,7 +593,7 @@ class Nf3 {
   async getAccounts() {
     const account =
       this.ethereumSigningKey.length === 0
-        ? this.web3.eth.getAccounts().then(address => { return address[0]})
+        ? this.web3.eth.getAccounts().then(address => address[0])
         : this.web3.eth.accounts.privateKeyToAccount(this.ethereumSigningKey).address;
     return account;
   }

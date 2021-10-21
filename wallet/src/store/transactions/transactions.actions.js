@@ -1,5 +1,3 @@
-import { TX_TYPES } from "../../constants";
-
 /* ignore unused exports */
 export const txActionTypes = {
   TRANSACTION_SUCCESS: 'TRANSACTION_SUCCESS',
