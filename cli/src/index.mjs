@@ -134,7 +134,9 @@ function printBalances(balances) {
   // eslint-disable-next-line guard-for-in
   for (const compressedPkd in balances) {
     const table = new Table({ head: ['ERC Contract Address', 'Layer 2 Balance'] });
-    Object.keys(balances[compressedPkd]).forEach(tokenAddress => table.push({[tokenAddress]: balances[compressedPkd][tokenAddress]}));
+    Object.keys(balances[compressedPkd]).forEach(tokenAddress =>
+      table.push({ [tokenAddress]: balances[compressedPkd][tokenAddress] }),
+    );
     console.log(chalk.yellow('Balances of user', compressedPkd));
     console.log(table.toString());
   }
@@ -221,7 +223,6 @@ async function loop(nf3, tokenAddress) {
       }
       break;
     case 'View my wallet':
-      const l2Balance = await nf3.getLayer2Balances();
       printBalances(await nf3.getLayer2Balances());
       return [false, null];
     case 'Exit':
@@ -246,9 +247,9 @@ async function main() {
   const erc721Address = await nf3.getContractAddress('ERC721Stub');
   const erc1155Address = await nf3.getContractAddress('ERC1155Stub');
   const tokenAddress = {
-	  ERC20: erc20Address,
-	  ERC721: erc721Address,
-	  ERC1155: erc1155Address,
+    ERC20: erc20Address,
+    ERC721: erc721Address,
+    ERC1155: erc1155Address,
   };
   let exit;
   let receiptPromise;
