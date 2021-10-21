@@ -1,3 +1,4 @@
+/* ignore unused exports */
 import { txActionTypes } from './transactions.actions';
 
 const initialState = {
