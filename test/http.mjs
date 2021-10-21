@@ -135,6 +135,7 @@ describe('Testing the http API', () => {
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
       const { type, txDataToSign } = msg;
+      console.log('-- in on onmessage', type);
       try {
         if (type === 'block') {
           await blockSubmissionFunction(txDataToSign, privateKey, stateAddress, gas, BLOCK_STAKE);
