@@ -49,7 +49,9 @@ class Nf3 {
 
   nonce = 0;
 
-  mutex = new Mutex();
+  nonceMutex = new Mutex();
+
+  latestWithdrawHash;
 
   constructor(
     clientBaseUrl,
@@ -123,16 +125,18 @@ class Nf3 {
   This can be found using the getContractAddress convenience function.
   @returns {Promise} This will resolve into a transaction receipt.
   */
-  submitTransaction( // we don't use 'async' because this anyway returns a promise
+  async submitTransaction( // we don't use 'async' because this anyway returns a promise
     unsignedTransaction,
     contractAddress = this.shieldContractAddress,
     fee = this.defaultFee,
   ) {
+    // We'll manage the nonce ourselves because we can run too fast for the blockchain client to update
     // we need a Mutex so that we don't get a nonce-updating race.
-    return this.mutex.runExclusive(async () => {
+    let tx;
+    await this.nonceMutex.runExclusive(async () => {
       // if we don't have a nonce, we must get one from the ethereum client
       if (!this.nonce) this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
-      const tx = {
+      tx = {
         to: contractAddress,
         data: unsignedTransaction,
         value: fee,
@@ -140,11 +144,10 @@ class Nf3 {
         gasPrice: 10000000000,
         nonce: this.nonce,
       };
-      // once we have a nonce, we'll manage it ourselves
-      this.nonce++;
-      const signed = await this.web3.eth.accounts.signTransaction(tx, this.ethereumSigningKey);
-      return this.web3.eth.sendSignedTransaction(signed.rawTransaction);
+      await this.nonce++;
     });
+    const signed = await this.web3.eth.accounts.signTransaction(tx, this.ethereumSigningKey);
+    return this.web3.eth.sendSignedTransaction(signed.rawTransaction);
   }
 
   /**
@@ -306,16 +309,16 @@ class Nf3 {
       ask: this.zkpKeys.ask,
       fee,
     });
-    const { transactionHash: withdrawTransactionHash } = res.data.transaction;
+    this.latestWithdrawHash = res.data.transaction.transactionHash;
     if (!offchain) {
       const receiptPromise = this.submitTransaction(
         res.data.txDataToSign,
         this.shieldContractAddress,
         fee,
       );
-      return { withdrawTransactionHash, receiptPromise };
+      return receiptPromise;
     }
-    return { withdrawTransactionHash, receiptPromise: res.status };
+    return res.status;
   }
 
   /**
@@ -373,6 +376,15 @@ class Nf3 {
       transactionHash: withdrawTransactionHash,
     });
     return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, 0);
+  }
+
+  /**
+  Gets the hash of the last withdraw transaction - sometimes useful for instant transfers
+  @method
+  @returns {string} - the transactionHash of the last transaction
+  */
+  getLatestWithdrawHash() {
+    return this.latestWithdrawHash;
   }
 
   /**
