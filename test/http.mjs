@@ -64,7 +64,7 @@ describe('Testing the http API', () => {
   let stateBalance = 0;
   const logCounts = {
     deposit: 0,
-    regsterProposer: 0,
+    registerProposer: 0,
   };
 
   const waitForTxExecution = async (count, txType) => {
@@ -104,7 +104,7 @@ describe('Testing the http API', () => {
       .address;
     web3.eth.subscribe('logs', { address: proposersAddress }).on('data', log => {
       if (log.topics[0] === web3.eth.abi.encodeEventSignature('NewCurrentProposer(address)')) {
-        logCounts.regsterProposer += 1;
+        logCounts.registerProposer += 1;
       }
     });
 
@@ -214,9 +214,9 @@ describe('Testing the http API', () => {
       const { txDataToSign } = res.body;
       expect(txDataToSign).to.be.a('string');
       const bond = 10;
-      const count = logCounts.regsterProposer;
+      const count = logCounts.registerProposer;
       await submitTransaction(txDataToSign, privateKey, proposersAddress, gas, bond);
-      await waitForTxExecution(count, 'regsterProposer');
+      await waitForTxExecution(count, 'registerProposer');
       stateBalance += bond;
     });
 
@@ -232,7 +232,7 @@ describe('Testing the http API', () => {
       const bond = 10;
       const gasCosts = 5000000000000000;
       const startBalance = await getBalance(myAddress);
-      const count = logCounts.regsterProposer;
+      const count = logCounts.registerProposer;
       // now we need to sign the transaction and send it to the blockchain
       const receipt = await submitTransaction(
         txDataToSign,
@@ -241,7 +241,7 @@ describe('Testing the http API', () => {
         gas,
         bond,
       );
-      await waitForTxExecution(count, 'regsterProposer');
+      await waitForTxExecution(count, 'registerProposer');
       const endBalance = await getBalance(myAddress);
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
