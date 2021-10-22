@@ -69,6 +69,7 @@ describe('Testing the http API', () => {
 
   const waitForTxExecution = async (count, txType) => {
     while (count === logCounts[txType]) {
+      console.log('in waitForTxExecution --', count, txType);
       // eslint-disable-next-line no-await-in-loop
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
@@ -90,7 +91,7 @@ describe('Testing the http API', () => {
     web3.eth.subscribe('logs', { address: shieldAddress }).on('data', log => {
       if (log.topics[0] === web3.eth.abi.encodeEventSignature('TransactionSubmitted()')) {
         logCounts.deposit += 1;
-        console.log('event log received', logCounts.deposit);
+        console.log('event log deposit received', logCounts.deposit);
       }
     });
 
@@ -105,6 +106,7 @@ describe('Testing the http API', () => {
     web3.eth.subscribe('logs', { address: proposersAddress }).on('data', log => {
       if (log.topics[0] === web3.eth.abi.encodeEventSignature('NewCurrentProposer(address)')) {
         logCounts.registerProposer += 1;
+        console.log('event log registerProposer received', logCounts.registerProposer);
       }
     });
 
