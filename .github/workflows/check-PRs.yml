@@ -34,7 +34,7 @@ jobs:
       - name: Run integration test
         run: |
           npm ci
-          sleep 1000
+          sleep 5000
           npm test
 
       - name: debug logs
