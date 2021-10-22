@@ -87,7 +87,7 @@ module.exports = {
       provider: () => new HDWalletProvider(config.ETH_PRIVATE_KEY, config.BLOCKCHAIN_URL),
       network_id: 3,
       gas: 7992189,
-      gasPrice: 100000000000000000
+      gasPrice: 100000000000000000,
       networkCheckTimeout: 100000000,
       timeoutBlocks: 20000,
       skipDryRun: true,
