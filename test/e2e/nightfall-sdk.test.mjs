@@ -3,7 +3,13 @@ import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
 import Nf3 from '../../cli/lib/nf3.mjs';
-import { getBalance, connectWeb3, closeWeb3Connection, topicEventMapping } from '../utils.mjs';
+import {
+  getBalance,
+  connectWeb3,
+  closeWeb3Connection,
+  topicEventMapping,
+  timeJump,
+} from '../utils.mjs';
 import { generateKeys } from '../../nightfall-client/src/services/keys.mjs';
 
 const { BLOCKCHAIN_TESTNET_URL } = process.env;
@@ -33,6 +39,12 @@ describe('Testing the Nightfall SDK', () => {
   const fee = 1;
   const eventLogs = [];
   let pkd2;
+  let nodeInfo;
+  const transactions = [];
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
 
   before(async () => {
     // to enable getBalance with web3 we should connect first
@@ -58,6 +70,8 @@ describe('Testing the Nightfall SDK', () => {
 
     ({ pkd: pkd2 } = await generateKeys(ZKP_KEY_LENGTH));
 
+    nodeInfo = await web3.eth.getNodeInfo();
+
     web3.eth.subscribe('logs', { address: stateAddress }).on('data', log => {
       // For event tracking, we use only care about the logs related to 'blockProposed'
       if (log.topics[0] === topicEventMapping.BlockProposed) eventLogs.push('blockProposed');
@@ -67,7 +81,7 @@ describe('Testing the Nightfall SDK', () => {
   describe('Miscellaneous tests', () => {
     it('should respond with "true" the health check', async function () {
       const res = await nf3.healthcheck('optimist');
-      expect(res).to.equal(true);
+      expect(res).to.be.equal(true);
     });
 
     it('should get the address of the shield contract', async function () {
@@ -84,7 +98,7 @@ describe('Testing the Nightfall SDK', () => {
     it('should subscribe to block proposed event with the provided incoming viewing key for client', async function () {
       const res = await nf3.subscribeToIncomingViewingKeys();
       expect(res.data.status).to.be.a('string');
-      expect(res.data.status).to.equal('success');
+      expect(res.data.status).to.be.equal('success');
     });
   });
 
@@ -103,11 +117,67 @@ describe('Testing the Nightfall SDK', () => {
     });
 
     it('should de-register a proposer', async () => {
-      // TODO: nf3.deregisterProposer(), nf3.getProposers()
+      let proposers;
+      ({ proposers } = await nf3.getProposers());
+      let thisProposer = proposers.filter(p => p.thisAddress === nf3.ethereumAddress);
+      expect(thisProposer.length).to.be.equal(1);
+      const res = await nf3.deregisterProposer();
+      expect(res).to.have.property('transactionHash');
+      ({ proposers } = await nf3.getProposers());
+      thisProposer = proposers.filter(p => p.thisAddress === nf3.ethereumAddress);
+      expect(thisProposer.length).to.be.equal(0);
     });
 
     it('Should create a failing withdrawBond (because insufficient time has passed)', async () => {
-      // TODO: nf3.withdrawBond()
+      let error = null;
+      try {
+        await nf3.withdrawBond();
+      } catch (err) {
+        error = err;
+      }
+      console.log(error.message);
+      expect(error.message).to.be.equal(
+        'Returned error: VM Exception while processing transaction: revert It is too soon to withdraw your bond',
+      );
+    });
+
+    it('Should create a passing withdrawBond (because sufficient time has passed)', async () => {
+      if (nodeInfo.includes('TestRPC')) await timeJump(3600 * 24 * 10); // jump in time by 7 days
+      if (nodeInfo.includes('TestRPC')) {
+        const res = await nf3.withdrawBond();
+        expect(res).to.have.property('transactionHash');
+        expect(res).to.have.property('blockHash');
+      } else {
+        let error = null;
+        try {
+          await nf3.withdrawBond();
+        } catch (err) {
+          error = err;
+        }
+        expect(error.message).to.be.equal('Transaction has been reverted by the EVM');
+      }
+    });
+
+    after(async () => {
+      // After the proposer tests, re-register proposers
+      await nf3.registerProposer();
+    });
+  });
+
+  describe('Basic Challenger tests', () => {
+    it('should register a challenger', async () => {
+      const res = await nf3.registerChallenger();
+      expect(res.status).to.be.equal(200);
+    });
+
+    it('should de-register a challenger', async () => {
+      const res = await nf3.deregisterChallenger();
+      expect(res.status).to.be.equal(200);
+    });
+
+    after(async () => {
+      // After the challenger tests, re-register challenger
+      await nf3.registerChallenger();
     });
   });
 
@@ -143,20 +213,90 @@ describe('Testing the Nightfall SDK', () => {
     });
   });
 
+  describe('Balance tests', () => {
+    it('should increment the balance after deposit some crypto', async function () {
+      await sleep(5000);
+      let balances = await nf3.getLayer2Balances();
+      const currentPkdBalance = balances[nf3.zkpKeys.pkd[1]][BigInt(ercAddress).toString(16)];
+      // We do 2 deposits of 10 each
+      for (let i = 0; i < txPerBlock; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        const res = await nf3.deposit(ercAddress, tokenType, value, tokenId, fee);
+        expect(res).to.have.property('transactionHash');
+        expect(res).to.have.property('blockHash');
+      }
+      // Wait until we see the right number of blocks appear
+      while (eventLogs[0] !== 'blockProposed') {
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+      eventLogs.shift();
+      balances = await nf3.getLayer2Balances();
+      const afterPkdBalance = balances[nf3.zkpKeys.pkd[1]][BigInt(ercAddress).toString(16)];
+      expect(afterPkdBalance - currentPkdBalance).to.be.equal(20);
+    });
+
+    it('should decrement the balance after transfer to other wallet and increment the other wallet', async function () {
+      let res;
+      for (let i = 0; i < txPerBlock; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        res = await nf3.deposit(ercAddress, tokenType, value, tokenId, fee);
+        expect(res).to.have.property('transactionHash');
+        expect(res).to.have.property('blockHash');
+      }
+      while (eventLogs[0] !== 'blockProposed') {
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+      eventLogs.shift();
+
+      let balances = await nf3.getLayer2Balances();
+      // console.log('BEFORE:', balances);
+      const currentPkdBalancePkd = balances[nf3.zkpKeys.pkd[1]][BigInt(ercAddress).toString(16)];
+      const currentPkdBalancePkd2 = balances[pkd2][BigInt(ercAddress).toString(16)];
+      for (let i = 0; i < txPerBlock; i++) {
+        // console.log('T(1)');
+        // eslint-disable-next-line no-await-in-loop
+        res = await nf3.transfer(false, ercAddress, tokenType, value, tokenId, pkd2, fee);
+        // console.log('T(2)');
+        expect(res).to.have.property('transactionHash');
+        expect(res).to.have.property('blockHash');
+      }
+      // Wait until we see the right number of blocks appear
+      while (eventLogs[0] !== 'blockProposed') {
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+      eventLogs.shift();
+      balances = await nf3.getLayer2Balances();
+      // console.log('AFTER:', balances);
+      const afterPkdBalancePkd = balances[nf3.zkpKeys.pkd[1]][BigInt(ercAddress).toString(16)];
+      const afterPkdBalancePkd2 = balances[pkd2][BigInt(ercAddress).toString(16)];
+      expect(afterPkdBalancePkd - currentPkdBalancePkd).to.be.equal(-20);
+      expect(afterPkdBalancePkd2 - currentPkdBalancePkd2).to.be.equal(20);
+    });
+  });
+
   // now we have some deposited tokens, we can transfer one of them:
   describe('Single transfer tests', () => {
     it('should transfer some crypto (back to us) using ZKP', async function () {
-      const res = await nf3.transfer(ercAddress, tokenType, value, tokenId, nf3.zkpKeys.pkd, fee);
+      const res = await nf3.transfer(
+        false,
+        ercAddress,
+        tokenType,
+        value,
+        tokenId,
+        nf3.zkpKeys.pkd,
+        fee,
+      );
       expect(res).to.have.property('transactionHash');
       expect(res).to.have.property('blockHash');
       console.log(`     Gas used was ${Number(res.gasUsed)}`);
     });
 
     it('should send a single transfer directly to a proposer - offchain and a receiver different from the sender should successfully receive that transfer', async function () {
-      // TODO: parameter offchain true in transfer function when available in SDK
-      const res = await nf3.transfer(ercAddress, tokenType, value, tokenId, pkd2, fee);
-      expect(res).to.have.property('transactionHash');
-      expect(res).to.have.property('blockHash');
+      const res = await nf3.transfer(true, ercAddress, tokenType, value, tokenId, pkd2, fee);
+      expect(res).to.be.equal(200);
 
       const depositTransactions = [];
       for (let i = 0; i < txPerBlock; i++) {
@@ -179,9 +319,17 @@ describe('Testing the Nightfall SDK', () => {
 
   describe('Withdraw tests', () => {
     it('should withdraw some crypto from a ZKP commitment', async function () {
-      const res = await nf3.withdraw(ercAddress, tokenType, value, tokenId, nf3.ethereumAddress);
+      const res = await nf3.withdraw(
+        false,
+        ercAddress,
+        tokenType,
+        value,
+        tokenId,
+        nf3.ethereumAddress,
+      );
       expect(res).to.have.property('withdrawTransactionHash');
       const restx = await res.receiptPromise; // wait for the promise tx to end
+      transactions.push(restx.transactionHash); // the new transaction
       expect(restx).to.have.property('transactionHash');
       expect(restx).to.have.property('blockHash');
       console.log(`     Gas used was ${Number(restx.gasUsed)}`);
@@ -203,9 +351,7 @@ describe('Testing the Nightfall SDK', () => {
       }
       eventLogs.shift();
     });
-  });
 
-  describe('Instant withdraw tests', () => {
     it('should allow instant withdraw of existing withdraw', async function () {
       // We create enough transactions to fill numDeposits blocks full of deposits.
       let depositTransactions = [];
@@ -227,6 +373,7 @@ describe('Testing the Nightfall SDK', () => {
 
       let latestWithdrawTransactionHash = ''; // for instant withdrawals
       ({ withdrawTransactionHash: latestWithdrawTransactionHash } = await nf3.withdraw(
+        false,
         ercAddress,
         tokenType,
         value,
@@ -280,6 +427,7 @@ describe('Testing the Nightfall SDK', () => {
       // We create enough transactions to fill numDeposits blocks full of deposits.
       let latestWithdrawTransactionHash = ''; // for instant withdrawals
       ({ withdrawTransactionHash: latestWithdrawTransactionHash } = await nf3.withdraw(
+        false,
         ercAddress,
         tokenType,
         value,
@@ -297,7 +445,63 @@ describe('Testing the Nightfall SDK', () => {
       } catch (e) {
         error = e;
       }
-      expect(error.response.status).to.equal(500);
+      expect(error.response.status).to.be.equal(500);
+    });
+  });
+
+  // when the widthdraw transaction is finalised, we want to be able to pull the
+  // funds into layer1
+  describe('Withdraw funds to layer 1', () => {
+    let startBalance;
+    let endBalance;
+    it('Should create a failing finalise-withdrawal (because insufficient time has passed)', async function () {
+      let error = null;
+      try {
+        const res = await nf3.finaliseWithdrawal(transactions[0]);
+        expect(res).to.have.property('transactionHash');
+        expect(res).to.have.property('blockHash');
+      } catch (err) {
+        error = err;
+      }
+      console.log(error.message);
+      expect(error.message).to.be.equal(
+        'Returned error: VM Exception while processing transaction: revert It is too soon to withdraw funds from this block',
+      );
+    });
+
+    it('Should create a passing finalise-withdrawal with a time-jump capable test client (because sufficient time has passed)', async function () {
+      if (nodeInfo.includes('TestRPC')) await timeJump(3600 * 24 * 10); // jump in time by 10 days
+
+      startBalance = await getBalance(nf3.ethereumAddress);
+      // now we need to sign the transaction and send it to the blockchain
+      // this will only work if we're using Ganache, otherwiise expect failure
+      if (nodeInfo.includes('TestRPC')) {
+        const res = await nf3.finaliseWithdrawal(transactions[0]);
+        expect(res).to.have.property('transactionHash');
+        expect(res).to.have.property('blockHash');
+      } else {
+        let error = null;
+        try {
+          const res = await nf3.finaliseWithdrawal(transactions[0]);
+          expect(res).to.have.property('transactionHash');
+          expect(res).to.have.property('blockHash');
+        } catch (err) {
+          error = err;
+        }
+        console.log(error.message);
+        expect(error.message).to.be.equal('Transaction has been reverted by the EVM');
+      }
+      endBalance = await getBalance(nf3.ethereumAddress);
+    });
+
+    it('Should have increased our balance', async function () {
+      if (nodeInfo.includes('TestRPC')) {
+        const gasCosts = (5000000000000000 * txPerBlock) / 2;
+        expect(endBalance - startBalance).to.closeTo(Number(value), gasCosts);
+      } else {
+        console.log('Not using a time-jump capable test client so this test is skipped');
+        this.skip();
+      }
     });
   });
 
