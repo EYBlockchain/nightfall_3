@@ -2,14 +2,13 @@
 An optimistic layer 2 Block class
 */
 import config from 'config';
-import mt from 'common-files/utils/crypto/merkle-tree/merkle-tree.mjs';
+import Timber from 'common-files/classes/timber.mjs';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
 import Web3 from 'common-files/utils/web3.mjs';
-import { getFrontier, getRoot } from '../utils/timber.mjs';
 import { compressProof } from '../utils/curve-maths/curves.mjs';
+import { getLatestTree } from '../services/database.mjs';
 
 const { ZERO, PROPOSE_BLOCK_TYPES, STATE_CONTRACT_NAME } = config;
-const { updateNodes } = mt;
 
 /**
 This Block class does not have the Block components that are computed on-chain.
@@ -73,48 +72,26 @@ class Block {
   // init() function.
   static async build(components) {
     const { proposer, transactions } = components;
-    let { currentLeafCount } = components;
     // We'd like to get the block number from the blockchain like this:
     const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
     let blockNumberL2 = Number(await stateContractInstance.methods.getNumberOfL2Blocks().call());
     let previousBlockHash = await stateContractInstance.methods.getLatestBlockHash().call();
-    // Of course, just like with the leafCount below, it's possible that the
-    // previously made block hasn't been added to the blockchain yet. In that
-    // case, this block will have the same block number as the previous block
+    // It's possible that the previously made block hasn't been added to the blockchain yet.
+    // In that case, this block will have the same block number as the previous block
     // and will rightly be reverted when we attempt to add it to the chain.
-    // Thus, we proceed as for the leafCount and keep a local value, updating
+    // Thus, we use our locally stored values to make the new block, updating these local values
     // only if the on-chain value is ahead of our local value.
+    let timber;
     if (blockNumberL2 >= this.localBlockNumberL2) {
+      // Make blocks with our on-chain values.
       this.localBlockNumberL2 = blockNumberL2;
       this.localPreviousBlockHash = previousBlockHash;
+      timber = await getLatestTree();
     } else {
+      // Make blocks with our local values.
       blockNumberL2 = this.localBlockNumberL2;
       previousBlockHash = this.localPreviousBlockHash;
-    }
-    // we have to get the current frontier from Timber, so that we can compute
-    // the new root, bearing in mind that the transactions in this block won't
-    // be in Timber yet.  However, Timber has a handy update
-    // interface, which will, inter-alia, return that very frontier.
-    // However, it's possible the previous block that we computed hasn't been
-    // added to Timber yet, in which case the Frontier will be wrong. We can
-    // detect that if we remember what the leafCount should actually be, and
-    // if it's ahead of what Timber thinks, we compute the new Frontier locally
-    // starting from the last value we have.
-    // Of course, it's possible that Timber does a rollback.  That will mess up
-    // our local calculations and make our locally stored values incorrect.
-    // We need to reset the local values in that case.
-    let frontier;
-    // see if Timber is up to date with our blocks and act accordingly
-    if (currentLeafCount >= this.localLeafCount) {
-      // looks like Timber is up to date so use Timber values
-      frontier = await getFrontier();
-      // Update localLeafCount instead of relying on the incrementing below
-      // in case we are joining the network midway.
-      this.localLeafCount = currentLeafCount;
-    } else {
-      // Timber appears to be behind, so use locally stored values
-      frontier = this.localFrontier;
-      currentLeafCount = this.localLeafCount;
+      timber = new Timber(this.localRoot, this.localFrontier, this.localLeafCount);
     }
     // extract the commitment hashes from the transactions
     // we filter out zeroes commitments that can come from withdrawals
@@ -122,24 +99,24 @@ class Block {
       .map(transaction => transaction.commitments.filter(c => c !== ZERO))
       .flat(Infinity);
     const nCommitments = leafValues.length;
-    // compute the root using Timber's code
-    if (this.localRoot === 0) this.localRoot = await getRoot(); // if we haven't got a local root, get it from Timber
-    const update = await updateNodes(leafValues, currentLeafCount, frontier);
-    const { newFrontier } = update;
-    let { root } = update;
-    // there's a special case for when we have no new leaves. Then, updateNodes
-    // returns an undefined root and the frontier is not updated. In this (rare)
-    // situation, the root won't have changed.
-    if (root === undefined) root = this.localRoot;
-    const leafCount = currentLeafCount || 0;
+
+    // Stateless update our frontier and root
+    const updatedTimber = Timber.statelessUpdate(timber, leafValues);
     // remember the updated values in case we need them for the next block.
     this.localLeafCount += leafValues.length;
-    this.localFrontier = newFrontier;
+    this.localFrontier = updatedTimber.frontier;
     this.localBlockNumberL2 += 1;
-    this.localRoot = root;
+    this.localRoot = updatedTimber.root;
     // compute the keccak hash of the proposeBlock signature
     const blockHash = this.calcHash(
-      { proposer, root, leafCount, nCommitments, blockNumberL2, previousBlockHash },
+      {
+        proposer,
+        root: updatedTimber.root,
+        leafCount: timber.leafCount,
+        nCommitments,
+        blockNumberL2,
+        previousBlockHash,
+      },
       transactions,
     );
     this.localPreviousBlockHash = blockHash;
@@ -149,8 +126,8 @@ class Block {
     return new Block({
       proposer,
       transactionHashes: transactions.map(t => t.transactionHash),
-      leafCount,
-      root,
+      leafCount: timber.leafCount,
+      root: updatedTimber.root,
       blockHash,
       nCommitments,
       blockNumberL2,

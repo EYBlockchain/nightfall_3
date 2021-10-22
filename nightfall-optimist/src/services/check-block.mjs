@@ -2,13 +2,13 @@
 Module to check that submitted Blocks and Transactions are valid
 */
 import logger from 'common-files/utils/logger.mjs';
-import { getTreeHistoryByCurrentLeafCount } from '../utils/timber.mjs';
 import { BlockError } from '../classes/index.mjs';
 import checkTransaction from './transaction-checker.mjs';
 import {
   numberOfBlockWithTransactionHash,
   retrieveMinedNullifiers,
   getBlockByBlockNumberL2,
+  getTreeByLeafCount,
 } from './database.mjs';
 /**
 Checks the block's properties.  It will return the first inconsistency it finds
@@ -46,7 +46,7 @@ async function checkBlock(block, transactions) {
     history = await getBlockByBlockNumberL2(block.blockNumberL2 - 1);
     logger.debug('Block has no commitments - checking its root is the same as the previous block');
   } else {
-    history = await getTreeHistoryByCurrentLeafCount(block.leafCount + block.nCommitments);
+    history = await getTreeByLeafCount(block.leafCount + block.nCommitments);
     logger.debug(`Block has commitments - retrieved history from Timber`);
     logger.silly(`Timber history was ${JSON.stringify(history, null, 2)}`);
   }

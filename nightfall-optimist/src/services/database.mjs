@@ -461,8 +461,8 @@ export async function getLatestTree() {
     .limit(1)
     .toArray();
 
-  const timberObj = timberObjArr.length === 1 ? timberObjArr[0] : {};
-  if (!timberObj.root) return new Timber();
+  const timberObj =
+    timberObjArr.length === 1 ? timberObjArr[0] : { root: 0, frontier: [], leafCount: 0 };
   const t = new Timber(timberObj.root, timberObj.frontier, timberObj.leafCount);
   return t;
 }
@@ -470,8 +470,9 @@ export async function getLatestTree() {
 export async function getTreeByRoot(treeRoot) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  const { root, frontier, leafCount } =
-    (await db.collection(TIMBER_COLLECTION).findOne({ root: treeRoot })) ?? {};
+  const { root, frontier, leafCount } = (await db
+    .collection(TIMBER_COLLECTION)
+    .findOne({ root: treeRoot })) ?? { root: 0, frontier: [], leafCount: 0 };
   const t = new Timber(root, frontier, leafCount);
   return t;
 }
