@@ -87,6 +87,7 @@ module.exports = {
       provider: () => new HDWalletProvider(config.ETH_PRIVATE_KEY, config.BLOCKCHAIN_URL),
       network_id: 3,
       networkCheckTimeout: 10000000,
+      timeoutBlocks: 500,
     },
 
     // Another network with more advanced options...
