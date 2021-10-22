@@ -86,6 +86,7 @@ module.exports = {
     ropsten: {
       provider: () => new HDWalletProvider(config.ETH_PRIVATE_KEY, config.BLOCKCHAIN_URL),
       network_id: 3,
+      gasPrice: 10000000000,
       networkCheckTimeout: 10000000,
       timeoutBlocks: 500,
     },
