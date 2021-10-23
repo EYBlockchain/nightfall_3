@@ -107,7 +107,7 @@ export async function submitTransaction(
       gasPrice,
       nonce,
     };
-    console.log('tx.nonce - ', tx.nonce);
+    console.log('tx.nonce gas gasPrice - ', tx.nonce, gas, gasPrice);
     const signed = await web3.eth.accounts.signTransaction(tx, privateKey);
     nonce++;
     nonceDict[privateKey] = nonce;
