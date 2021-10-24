@@ -478,6 +478,7 @@ describe('Testing the challenge http API', () => {
             ask: ask1,
             fee,
           });
+        console.log(res);
         const { txDataToSign } = res.body;
         expect(txDataToSign).to.be.a('string');
         await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
