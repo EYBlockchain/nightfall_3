@@ -569,7 +569,9 @@ describe('Testing the http API', () => {
         ask: ask1,
       });
       transactions.push(res.body.transaction); // a new transaction
+      console.log(res.body.transaction);
       expect(res.body.txDataToSign).to.be.a('string');
+      const count = logCounts.deposit;
       // now we need to sign the transaction and send it to the blockchain
       const receipt = await submitTransaction(
         res.body.txDataToSign,
@@ -577,6 +579,7 @@ describe('Testing the http API', () => {
         shieldAddress,
         gas,
       );
+      await waitForTxExecution(count, 'deposit');
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
       console.log(`     Gas used was ${Number(receipt.gasUsed)}`);
@@ -592,10 +595,16 @@ describe('Testing the http API', () => {
         )
       ).map(dRes => dRes.body);
 
+      txQueue.push(async () => {
+        await holdupQueue('deposit', logCounts.deposit + depositTransactions.length);
+      });
       for (let i = 0; i < depositTransactions.length; i++) {
+        const count = logCounts.deposit;
         const { txDataToSign } = depositTransactions[i];
         // eslint-disable-next-line no-await-in-loop
         await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
+        // eslint-disable-next-line no-await-in-loop
+        await waitForTxExecution(count, 'deposit');
       }
       while (eventLogs[0] !== 'blockProposed') {
         // eslint-disable-next-line no-await-in-loop
@@ -614,6 +623,7 @@ describe('Testing the http API', () => {
     it('Should find the block containing the withdraw transaction', async function () {
       const withdrawTransactionHash = transactions[0].transactionHash;
       do {
+        console.log('in while loop');
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 3000));
         // eslint-disable-next-line no-await-in-loop
