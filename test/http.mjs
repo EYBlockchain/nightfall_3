@@ -571,7 +571,7 @@ describe('Testing the http API', () => {
       transactions.push(res.body.transaction); // a new transaction
       console.log(res.body.transaction);
       expect(res.body.txDataToSign).to.be.a('string');
-      const count = logCounts.deposit;
+      let count = logCounts.deposit;
       // now we need to sign the transaction and send it to the blockchain
       const receipt = await submitTransaction(
         res.body.txDataToSign,
@@ -599,7 +599,7 @@ describe('Testing the http API', () => {
         await holdupQueue('deposit', logCounts.deposit + depositTransactions.length);
       });
       for (let i = 0; i < depositTransactions.length; i++) {
-        const count = logCounts.deposit;
+        count = logCounts.deposit;
         const { txDataToSign } = depositTransactions[i];
         // eslint-disable-next-line no-await-in-loop
         await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
