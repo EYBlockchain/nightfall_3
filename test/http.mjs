@@ -68,6 +68,14 @@ describe('Testing the http API', () => {
     registerProposer: 0,
   };
 
+  function holdupQueue(txType, waitTillCount) {
+    while(logCounts[txType] < waitTillCount) {
+      console.log('in holdupQueue --', txType, logCounts[txType], waitTillCount);
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
+  }
+
   const waitForTxExecution = async (count, txType) => {
     while (count === logCounts[txType]) {
       console.log('in waitForTxExecution --', count, txType);
@@ -318,6 +326,9 @@ describe('Testing the http API', () => {
       depositTransactions.forEach(({ txDataToSign }) => expect(txDataToSign).to.be.a('string'));
 
       const receiptArrays = [];
+      txQueue.push(async () => {
+        await holdupQueue('deposit', logCounts.deposit + depositTransactions.length);
+      });
       for (let i = 0; i < depositTransactions.length; i++) {
         const count = logCounts.deposit;
         const { txDataToSign } = depositTransactions[i];

@@ -97,7 +97,7 @@ export async function submitTransaction(
       // get gaslimt from latest block as gaslimt may vary
       gas = (await web3.eth.getBlock('latest')).gasLimit;
       const blockGasPrice = await web3.eth.getGasPrice();
-      console.log('blockGasPrice ', blockGasPrice);
+      console.log('blockGasPrice ', blockGasPrice, typeof blockGasPrice);
       if (blockGasPrice > gasPrice) gasPrice = blockGasPrice;
     }
     const tx = {
