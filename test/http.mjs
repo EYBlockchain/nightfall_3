@@ -68,13 +68,13 @@ describe('Testing the http API', () => {
     registerProposer: 0,
   };
 
-  function holdupQueue(txType, waitTillCount) {
-    while(logCounts[txType] < waitTillCount) {
+  const holdupQueue = async (txType, waitTillCount) => {
+    while (logCounts[txType] < waitTillCount) {
       console.log('in holdupQueue --', txType, logCounts[txType], waitTillCount);
       // eslint-disable-next-line no-await-in-loop
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
-  }
+  };
 
   const waitForTxExecution = async (count, txType) => {
     while (count === logCounts[txType]) {
