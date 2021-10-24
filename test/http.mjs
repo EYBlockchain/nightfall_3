@@ -4,7 +4,6 @@ import chaiAsPromised from 'chai-as-promised';
 import Queue from 'queue';
 import WebSocket from 'ws';
 import { GN } from 'general-number';
-import Queue from 'queue';
 import {
   closeWeb3Connection,
   submitTransaction,
