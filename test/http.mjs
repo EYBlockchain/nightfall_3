@@ -621,7 +621,7 @@ describe('Testing the http API', () => {
           .request(optimistUrl)
           .get(`/block/transaction-hash/${withdrawTransactionHash}`);
         ({ block, transactions, index } = res.body);
-      } while (block === null || block === undefined);
+      } while (block === null);
       // Need this while wait when running geth as it runs slower than ganache
       expect(block).not.to.be.undefined; // eslint-disable-line
       expect(Object.entries(block).length).not.to.equal(0); // empty object {}
