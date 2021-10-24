@@ -142,6 +142,7 @@ describe('Testing the challenge http API', () => {
         const msg = JSON.parse(message.data);
         const { type } = msg;
         let { txDataToSign } = msg;
+        console.log('-- in on onmessage', type, counter);
         try {
           if (type === 'block') {
             const { block, transactions } = msg;
@@ -240,7 +241,7 @@ describe('Testing the challenge http API', () => {
             // console.log('tx hash of challenge block is', txReceipt.transactionHash);
           } else throw new Error(`Unhandled transaction type: ${type}`);
         } catch (err) {
-          console.error(`neg-http.mjs for ${type} ${counter} onmessage: ${err}`);
+          console.error(`neg-http.mjs onmessage error: ${err}`);
         }
       });
     };

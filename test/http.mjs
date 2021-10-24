@@ -70,7 +70,6 @@ describe('Testing the http API', () => {
 
   const holdupQueue = async (txType, waitTillCount) => {
     while (logCounts[txType] < waitTillCount) {
-      console.log('in holdupQueue --', txType, logCounts[txType], waitTillCount);
       // eslint-disable-next-line no-await-in-loop
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
@@ -78,7 +77,6 @@ describe('Testing the http API', () => {
 
   const waitForTxExecution = async (count, txType) => {
     while (count === logCounts[txType]) {
-      console.log('in waitForTxExecution --', count, txType);
       // eslint-disable-next-line no-await-in-loop
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
@@ -569,7 +567,6 @@ describe('Testing the http API', () => {
         ask: ask1,
       });
       transactions.push(res.body.transaction); // a new transaction
-      console.log(res.body.transaction);
       expect(res.body.txDataToSign).to.be.a('string');
       let count = logCounts.deposit;
       // now we need to sign the transaction and send it to the blockchain
@@ -623,7 +620,6 @@ describe('Testing the http API', () => {
     it('Should find the block containing the withdraw transaction', async function () {
       const withdrawTransactionHash = transactions[0].transactionHash;
       do {
-        console.log('in while loop');
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 3000));
         // eslint-disable-next-line no-await-in-loop
