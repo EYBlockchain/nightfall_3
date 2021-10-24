@@ -4,6 +4,7 @@ import chaiAsPromised from 'chai-as-promised';
 import Queue from 'queue';
 import WebSocket from 'ws';
 import { GN } from 'general-number';
+import Queue from 'queue';
 import {
   closeWeb3Connection,
   submitTransaction,
@@ -16,6 +17,7 @@ import {
 } from './utils.mjs';
 
 const { expect, assert } = chai;
+const txQueue = new Queue({ autostart: true, concurrency: 1 });
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
@@ -135,18 +137,20 @@ describe('Testing the http API', () => {
       connection.send('blocks');
     };
     connection.onmessage = async message => {
-      const msg = JSON.parse(message.data);
-      const { type, txDataToSign } = msg;
-      console.log('-- in on onmessage', type);
-      try {
-        if (type === 'block') {
-          await blockSubmissionFunction(txDataToSign, privateKey, stateAddress, gas, BLOCK_STAKE);
-        } else {
-          await submitTransaction(txDataToSign, privateKey, challengesAddress, gas);
+      txQueue.push(async () => {
+        const msg = JSON.parse(message.data);
+        const { type, txDataToSign } = msg;
+        console.log('-- in on onmessage', type);
+        try {
+          if (type === 'block') {
+            await blockSubmissionFunction(txDataToSign, privateKey, stateAddress, gas, BLOCK_STAKE);
+          } else {
+            await submitTransaction(txDataToSign, privateKey, challengesAddress, gas);
+          }
+        } catch (err) {
+          console.error('http.mjs onmessage: ', err);
         }
-      } catch (err) {
-        console.error('http.mjs onmessage: ', err);
-      }
+      });
     };
   });
 
@@ -751,7 +755,18 @@ describe('Testing the http API', () => {
   });
 
   after(() => {
-    closeWeb3Connection();
-    connection.close();
+    // if the queue is still running, let's close down after it ends
+    // if it's empty, close down immediately
+    if (txQueue.length === 0) {
+      closeWeb3Connection();
+      connection.close();
+    } else {
+      // TODO work out what's still running and close it properly
+      txQueue.on('end', () => {
+        closeWeb3Connection();
+        connection.close();
+      });
+      txQueue.end();
+    }
   });
 });
