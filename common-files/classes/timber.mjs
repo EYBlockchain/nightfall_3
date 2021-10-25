@@ -111,6 +111,69 @@ const combineFrontiers = (arr1, arr2) => {
   return arr1.concat(fromArr2);
 };
 
+const frontierToTree = timber => {
+  if (timber.frontier.length === 0) return Leaf(0);
+  const currentFrontierSlotArray = Array(timber.frontier.length)
+    .fill(timber.leafCount)
+    .map((a, i) => Math.floor(a / 2 ** i));
+  const frontierPaths = [];
+  for (let i = 0; i < timber.frontier.length; i++) {
+    if (currentFrontierSlotArray[i] % 2 === 0)
+      frontierPaths.push(
+        Number(currentFrontierSlotArray[i] - 2)
+          .toString(2)
+          .padStart(TIMBER_HEIGHT, '0')
+          .slice(0, TIMBER_HEIGHT - i),
+      );
+    else
+      frontierPaths.push(
+        Number(currentFrontierSlotArray[i] - 1)
+          .toString(2)
+          .padStart(TIMBER_HEIGHT, '0')
+          .slice(0, TIMBER_HEIGHT - i),
+      );
+  }
+  return timber.frontier.reduce((acc, curr, index) => {
+    return _insertLeaf(curr, acc, frontierPaths[index]);
+  }, timber.tree);
+};
+
+const batchLeaves = (originalLeafCount, leaves, acc) => {
+  if (leaves.length === 0) return acc;
+  const outputLeafCount = originalLeafCount + leaves.length;
+  const outputFrontierLength = Math.floor(Math.log2(outputLeafCount)) + 1;
+
+  // This is an array that counts the number of perfect trees at each depth for the current frontier.
+  // This is padded to be as long as the resultingFrontierSlot.
+  const currentFrontierSlotArray = Array(outputFrontierLength)
+    .fill(originalLeafCount)
+    .map((a, i) => Math.floor(a / 2 ** i));
+
+  // The height of the subtree that would be created by the new leaves
+  const subTreeHeight = Math.ceil(Math.log2(leaves.length));
+
+  // Since we are trying to add in batches, we have to be sure that the
+  // new tree created from the incoming leaves are added correctly to the existing tree
+  // We need to work out if adding the subtree directly would impact the balance of the tree.
+  // We achieve this by identifying if the perfect tree count at the height of the incoming tree, contains any odd counts
+
+  const oddDepths = currentFrontierSlotArray.slice(0, subTreeHeight).map(a => a % 2 !== 0); // && subTreeFrontierSlotArray[i] > 0);
+
+  // If there are odd counts, we fix the lowest one first
+  const oddIndex = oddDepths.findIndex(a => a);
+  if (oddIndex >= 0) {
+    // We can "round a tree out" (i.e. make it perfect) by inserting 2^depth leaves from the incoming set first.
+    const leavesToSlice = 2 ** oddIndex;
+    const newLeaves = leaves.slice(leavesToSlice);
+    return batchLeaves(
+      originalLeafCount + leavesToSlice,
+      newLeaves,
+      acc.concat([leaves.slice(0, leavesToSlice)]),
+    );
+  }
+  return acc.concat([leaves]);
+};
+
 /**
 @class
 Creates a timber library instance. The constructor is designed to enable the recreation of a timber instance
@@ -209,9 +272,9 @@ class Timber {
   This gets the path from a leafValue to the root.
   @param {string} leafValue - The leafValue to get the path of.
   @param {string} index - The index that the leafValue is located at.
-  @returns {Array<object>} The merkle path for leafValue.
+  @returns {Array<object>} The sibling path for leafValue.
   */
-  getMerklePath(leafValue, index = -1) {
+  getSiblingPath(leafValue, index = -1) {
     if (this.leafCount === 0) return { isMember: false, path: [] };
     // eslint-disable-next-line no-param-reassign
     if (index === -1) index = this.toArray()?.findIndex(comm => comm === leafValue);
@@ -222,13 +285,13 @@ class Timber {
 
   /**
   @method
-  This verifies a merkle path for a given leafValue
+  This verifies a sibling path for a given leafValue
   @param {string} leafValue - The leafValue to get the path of.
   @param {string} root - The root that the merkle proof should verify to.
-  @param {Array<object>} proofPath - The output from getMerklePath.
+  @param {Array<object>} proofPath - The output from getSiblingPath.
   @returns {boolean} If a path is true or false.
   */
-  static verifyMerklePath(leafValue, root, proofPath) {
+  static verifySiblingPath(leafValue, root, proofPath) {
     if (proofPath.path.length === 0) return false;
     const calcRoot = proofPath.path.reduce((acc, curr) => {
       if (curr.dir === 'right') return utils.concatenateThenHash(acc, curr.value);
@@ -241,8 +304,9 @@ class Timber {
   @method
   This calculates the frontier for a tree
   @param {object} tree - The tree where our focus is currently at the root of
-  @param {string} index - The index that the leafValue is located at.
-  @returns {Array<object>} The merkle path for leafValue.
+  @param {string} leafCount - leafCount of the tree
+  @param {number} height - The height of the current tree, defaults to the TIMBER_HEIGHT
+  @returns {Array<string>} The frontier gor the given tree
   */
   static calcFrontier(tree, leafCount, height = TIMBER_HEIGHT) {
     // The base case - there are no leaves in this tree.
@@ -257,7 +321,7 @@ class Timber {
       // Dirs is an array of directions: ['0','10','110'...]
       const dirs = [...Array(numFrontierPoints - 1).keys()].map(a => '0'.padStart(a + 1, '1'));
       // The frontier points are then the root of the tree and our deterministic paths.
-      return Timber.hashTree(tree).concat(
+      return [Timber.hashTree(tree)].concat(
         dirs.map(fp => Timber.hashTree(Timber.moveDown(tree, fp))),
       );
     }
@@ -495,6 +559,22 @@ class Timber {
     }
     const t = new Timber(root, finalFrontier, timber.leafCount + leaves.length);
     return t;
+  }
+
+  static statelessSiblingPath(timber, leaves, leafIndex) {
+    if (leaves.length === 0 || leafIndex >= leaves.length || leafIndex < 0)
+      return { isMember: false, path: [] };
+    const leavesInsertOrder = batchLeaves(timber.leafCount, leaves, []);
+    const leafVal = leaves[leafIndex];
+    const leafIndexAfterInsertion = leafIndex + timber.leafCount;
+
+    const frontierTree = frontierToTree(timber);
+    const finalTree = leavesInsertOrder.reduce(
+      (acc, curr) => acc.insertLeaves(curr),
+      new Timber(timber.root, timber.frontier, timber.leafCount, frontierTree),
+    );
+
+    return finalTree.getSiblingPath(leafVal, leafIndexAfterInsertion);
   }
 
   /**
