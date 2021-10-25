@@ -633,9 +633,7 @@ class Nf3 {
   value of each propery is an array of commitments originating from that contract.
   */
   async getLayer2Commitments() {
-    console.log('getLayer2Commitments(1)');
     const res = await axios.get(`${this.clientBaseUrl}/commitment/commitments`);
-    console.log('getLayer2Commitments(2)');
     return res.data.commitments;
   }
 }

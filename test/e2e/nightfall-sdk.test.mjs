@@ -1,7 +1,7 @@
 import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
-import config from 'config';
+// import config from 'config';
 import Nf3 from '../../cli/lib/nf3.mjs';
 import {
   getBalance,
@@ -10,7 +10,7 @@ import {
   topicEventMapping,
   timeJump,
 } from '../utils.mjs';
-import { generateKeys } from '../../nightfall-client/src/services/keys.mjs';
+// import { generateKeys } from '../../nightfall-client/src/services/keys.mjs';
 
 const { BLOCKCHAIN_TESTNET_URL } = process.env;
 
@@ -28,7 +28,15 @@ describe('Testing the Nightfall SDK', () => {
     ethereumSigningKey,
   );
 
-  const { ZKP_KEY_LENGTH } = config;
+  const nf3_2 = new Nf3(
+    'http://localhost:8080',
+    'http://localhost:8081',
+    'ws://localhost:8082',
+    'ws://localhost:8546',
+    ethereumSigningKey,
+  );
+
+  // const { ZKP_KEY_LENGTH } = config;
   let web3;
   let ercAddress;
   let stateAddress;
@@ -38,13 +46,10 @@ describe('Testing the Nightfall SDK', () => {
   const value = 10;
   const fee = 1;
   const eventLogs = [];
-  let pkd2;
+  // let pkd2;
+  // let compressedPkd2;
   let nodeInfo;
   const transactions = [];
-
-  function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
 
   before(async () => {
     // to enable getBalance with web3 we should connect first
@@ -52,7 +57,9 @@ describe('Testing the Nightfall SDK', () => {
     stateAddress = await nf3.getContractAddress('State');
 
     await nf3.init();
+    await nf3_2.init(); // 2nd client to do transfer tests and checks
     if (!(await nf3.healthcheck('optimist'))) throw new Error('Healthcheck failed');
+    if (!(await nf3_2.healthcheck('optimist'))) throw new Error('Healthcheck failed');
     // Proposer registration
     await nf3.registerProposer();
     // Proposer listening for incoming events
@@ -68,7 +75,7 @@ describe('Testing the Nightfall SDK', () => {
       console.log(`Serviced instant-withdrawal request from ${paidBy}, with fee ${amount}`);
     });
 
-    ({ pkd: pkd2 } = await generateKeys(ZKP_KEY_LENGTH));
+    // ({ pkd: pkd2, compressedPkd: compressedPkd2 } = await generateKeys(ZKP_KEY_LENGTH));
 
     nodeInfo = await web3.eth.getNodeInfo();
 
@@ -135,7 +142,6 @@ describe('Testing the Nightfall SDK', () => {
       } catch (err) {
         error = err;
       }
-      console.log(error.message);
       expect(error.message).to.be.equal(
         'Returned error: VM Exception while processing transaction: revert It is too soon to withdraw your bond',
       );
@@ -215,9 +221,9 @@ describe('Testing the Nightfall SDK', () => {
 
   describe('Balance tests', () => {
     it('should increment the balance after deposit some crypto', async function () {
-      await sleep(5000);
       let balances = await nf3.getLayer2Balances();
-      const currentPkdBalance = balances[nf3.zkpKeys.pkd[1]][BigInt(ercAddress).toString(16)];
+      const currentPkdBalance =
+        balances[nf3.zkpKeys.compressedPkd][BigInt(ercAddress).toString(16)];
       // We do 2 deposits of 10 each
       for (let i = 0; i < txPerBlock; i++) {
         // eslint-disable-next-line no-await-in-loop
@@ -232,7 +238,7 @@ describe('Testing the Nightfall SDK', () => {
       }
       eventLogs.shift();
       balances = await nf3.getLayer2Balances();
-      const afterPkdBalance = balances[nf3.zkpKeys.pkd[1]][BigInt(ercAddress).toString(16)];
+      const afterPkdBalance = balances[nf3.zkpKeys.compressedPkd][BigInt(ercAddress).toString(16)];
       expect(afterPkdBalance - currentPkdBalance).to.be.equal(20);
     });
 
@@ -251,14 +257,20 @@ describe('Testing the Nightfall SDK', () => {
       eventLogs.shift();
 
       let balances = await nf3.getLayer2Balances();
-      // console.log('BEFORE:', balances);
-      const currentPkdBalancePkd = balances[nf3.zkpKeys.pkd[1]][BigInt(ercAddress).toString(16)];
-      const currentPkdBalancePkd2 = balances[pkd2][BigInt(ercAddress).toString(16)];
+      const currentPkdBalancePkd =
+        balances[nf3.zkpKeys.compressedPkd][BigInt(ercAddress).toString(16)];
+      const currentPkdBalancePkd2 = 0; // balances[compressedPkd2][BigInt(ercAddress).toString(16)];
       for (let i = 0; i < txPerBlock; i++) {
-        // console.log('T(1)');
         // eslint-disable-next-line no-await-in-loop
-        res = await nf3.transfer(false, ercAddress, tokenType, value, tokenId, pkd2, fee);
-        // console.log('T(2)');
+        res = await nf3.transfer(
+          false,
+          ercAddress,
+          tokenType,
+          value,
+          tokenId,
+          nf3_2.zkpKeys.pkd,
+          fee,
+        );
         expect(res).to.have.property('transactionHash');
         expect(res).to.have.property('blockHash');
       }
@@ -269,11 +281,21 @@ describe('Testing the Nightfall SDK', () => {
       }
       eventLogs.shift();
       balances = await nf3.getLayer2Balances();
-      // console.log('AFTER:', balances);
-      const afterPkdBalancePkd = balances[nf3.zkpKeys.pkd[1]][BigInt(ercAddress).toString(16)];
-      const afterPkdBalancePkd2 = balances[pkd2][BigInt(ercAddress).toString(16)];
+      const afterPkdBalancePkd =
+        balances[nf3.zkpKeys.compressedPkd][BigInt(ercAddress).toString(16)];
+      const afterPkdBalancePkd2 =
+        balances[nf3_2.zkpKeys.compressedPkd][BigInt(ercAddress).toString(16)];
       expect(afterPkdBalancePkd - currentPkdBalancePkd).to.be.equal(-20);
       expect(afterPkdBalancePkd2 - currentPkdBalancePkd2).to.be.equal(20);
+    });
+  });
+
+  describe('Get commitments tests', () => {
+    it('should get current commitments for the account', async function () {
+      const commitments = await nf3.getLayer2Commitments();
+      expect(commitments[nf3.zkpKeys.compressedPkd]).to.have.property(
+        BigInt(ercAddress).toString(16),
+      );
     });
   });
 
@@ -295,7 +317,15 @@ describe('Testing the Nightfall SDK', () => {
     });
 
     it('should send a single transfer directly to a proposer - offchain and a receiver different from the sender should successfully receive that transfer', async function () {
-      const res = await nf3.transfer(true, ercAddress, tokenType, value, tokenId, pkd2, fee);
+      const res = await nf3.transfer(
+        true,
+        ercAddress,
+        tokenType,
+        value,
+        tokenId,
+        nf3_2.zkpKeys.pkd,
+        fee,
+      );
       expect(res).to.be.equal(200);
 
       const depositTransactions = [];
@@ -329,7 +359,7 @@ describe('Testing the Nightfall SDK', () => {
       );
       expect(res).to.have.property('withdrawTransactionHash');
       const restx = await res.receiptPromise; // wait for the promise tx to end
-      transactions.push(restx.transactionHash); // the new transaction
+      transactions.push(res.withdrawTransactionHash); // the new transaction
       expect(restx).to.have.property('transactionHash');
       expect(restx).to.have.property('blockHash');
       console.log(`     Gas used was ${Number(restx.gasUsed)}`);
@@ -463,7 +493,6 @@ describe('Testing the Nightfall SDK', () => {
       } catch (err) {
         error = err;
       }
-      console.log(error.message);
       expect(error.message).to.be.equal(
         'Returned error: VM Exception while processing transaction: revert It is too soon to withdraw funds from this block',
       );
@@ -507,6 +536,7 @@ describe('Testing the Nightfall SDK', () => {
 
   after(() => {
     nf3.close();
+    nf3_2.close();
     closeWeb3Connection();
   });
 });
