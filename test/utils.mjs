@@ -78,6 +78,7 @@ export async function submitTransaction(
   value = 0,
 ) {
   while (isSubmitTxLocked) {
+    console.log('in isSubmitTxLocked while loop', isSubmitTxLocked);
     // eslint-disable-next-line no-await-in-loop
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
@@ -106,11 +107,13 @@ export async function submitTransaction(
       gasPrice,
       nonce,
     };
+    console.log('tx.nonce gas gasPrice - ', tx.nonce, gas, gasPrice);
     const signed = await web3.eth.accounts.signTransaction(tx, privateKey);
     nonce++;
     nonceDict[privateKey] = nonce;
     receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction);
   } finally {
+    console.log('in finally block');
     isSubmitTxLocked = false;
   }
   return receipt;

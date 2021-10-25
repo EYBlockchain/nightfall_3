@@ -1,9 +1,9 @@
 name: Check PR
 
 on:
-  pull_request:
+  push:
     branch:
-      - master
+      - liju.jose/fix-failing-testnet-test-3
 
 jobs:
   eslint-check:
