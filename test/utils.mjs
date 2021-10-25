@@ -97,7 +97,6 @@ export async function submitTransaction(
       // get gaslimt from latest block as gaslimt may vary
       gas = (await web3.eth.getBlock('latest')).gasLimit;
       const blockGasPrice = Number(await web3.eth.getGasPrice());
-      console.log('blockGasPrice ', blockGasPrice, typeof blockGasPrice);
       if (blockGasPrice > gasPrice) gasPrice = blockGasPrice;
     }
     const tx = {
@@ -112,7 +111,6 @@ export async function submitTransaction(
     const signed = await web3.eth.accounts.signTransaction(tx, privateKey);
     nonce++;
     nonceDict[privateKey] = nonce;
-    console.log('nonceDict[privateKey] after increment', nonceDict[privateKey]);
     receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction);
   } finally {
     console.log('in finally block');
