@@ -129,7 +129,7 @@ jobs:
       - name: wait 2000s for Containers startup and setup completion
         run: sleep 2000
 
-      # kept for future debug
+      # kept it for future debug
       # - run: sleep 1000
       # - name: debug logs - after container startup 1
       #   if: always()
