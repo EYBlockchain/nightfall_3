@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import {
-  Button, Modal, Form, Icon, Checkbox,
+  Button, Modal, Form, Icon, Checkbox, Dropdown
 } from 'semantic-ui-react';
 import { connect } from 'react-redux';
 
@@ -15,6 +15,7 @@ class TransactionsModal extends Component {
       fee: DEFAULT_DEPOSIT_FEE,
       pkd: this.props.wallet.zkpKeys.pkd,
       instantWithdrawEnable: false,
+      tokenId:'',
     };
   }
 
@@ -24,7 +25,8 @@ class TransactionsModal extends Component {
     if (activeTokenRowId === '') {
       return null;
     }
-    return tokenPool.filter((token) => token.id === activeTokenRowId)[0];
+    const tokenInfo =tokenPool.filter((token) => token.id === activeTokenRowId)[0];
+    return tokenInfo
   }
 
   handleOnSubmit = () => {
@@ -35,6 +37,7 @@ class TransactionsModal extends Component {
     const fee = this.inputFee.value === '' ? this.state.fee : this.inputFee.value;
     const tokenAmount = tokenInfo.tokenType === TOKEN_TYPE.ERC721 ? '0' :
       this.inputTokenAmount.value === '' ? '0' : this.inputTokenAmount.value;
+    const tokenId = this.state.tokenId === '' ? tokenInfo.tokenId[0] : this.state.tokenId;
 
     switch (this.props.txType) {
       case TX_TYPES.WITHDRAW:
@@ -42,12 +45,12 @@ class TransactionsModal extends Component {
         const txType = this.state.instantWithdrawEnable
           ? TX_TYPES.INSTANT_WITHDRAW
           : TX_TYPES.WITHDRAW;
-        this.props.handleOnTxSubmit(txType, ethereumAddress, tokenInfo.tokenType, tokenInfo.tokenAddress, tokenInfo.tokenId, tokenAmount, fee);
+        this.props.handleOnTxSubmit(txType, ethereumAddress, tokenInfo.tokenType, tokenInfo.tokenAddress, tokenId, tokenAmount, fee);
         break;
 
       default:
         const pkd = this.inputPkdX.value === '' || this.inputPkdY.value === '' ? this.props.wallet.zkpKeys.pkd : [this.inputPkdX.value, this.inputPkdY.value];
-        this.props.handleOnTxSubmit(this.props.txType, pkd, tokenInfo.tokenType, tokenInfo.tokenAddress, tokenInfo.tokenId, tokenAmount, fee);
+        this.props.handleOnTxSubmit(this.props.txType, pkd, tokenInfo.tokenType, tokenInfo.tokenAddress, tokenId, tokenAmount, fee);
     }
 
     this.props.toggleModalTx();
@@ -61,7 +64,7 @@ class TransactionsModal extends Component {
       return null;
     }
     const keyLabel = this.props.txType === TX_TYPES.WITHDRAW ? 'Ethereum Address' : 'PK-X';
-
+    
     return (
       <Modal open={this.props.modalTx}>
         <Modal.Header>{this.props.txType.toUpperCase()}</Modal.Header>
@@ -110,10 +113,16 @@ class TransactionsModal extends Component {
               tokenInfo.tokenType !== TOKEN_TYPE.ERC20 ?
                 <Form.Group>
                   <Form.Field width={6}>
-                    <label htmlFor="token-id">
-                      Token Id
-                      <input type="text" value={tokenInfo.tokenId} id="token-id" align="right" readOnly />
-                    </label>
+                    <span>
+                      Token Id{' '}
+                      <Dropdown 
+                        placeholder={tokenInfo.tokenId[0]}
+                        defaultValue={tokenInfo.tokenId[0]}
+                        selection
+                        options={tokenInfo.tokenId.map(function(id) { return { key: id, text: id, value: id}})}
+                        onChange={(e,{value}) => (this.setState({ tokenId: value }))}
+                      />
+                    </span>
                   </Form.Field>
                 </Form.Group> :
                 null

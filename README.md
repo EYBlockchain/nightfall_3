@@ -126,7 +126,6 @@ npm start
 - You cannot run the wallet and a separate version of the SDK (CLI for example) in parallel as nonces will get mixed.
 - Initial balances shown by the wallet are fake. 
 - Only ERC20 tokens work for now. When you start the wallet, select the ERC20 token and perform some deposits. Then click on `Reload` button to
-see the real balance.
 - Transactions only accept amounts less or equal than 10. Anything larger produces an error. Need to investigate why. For now, keep amounts below this threshold.
 - Tested with node version v14.18.0
 

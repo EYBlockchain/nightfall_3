@@ -127,6 +127,7 @@ async function askQuestions(nf3) {
 Simple function to print out the balances object
 */
 function printBalances(balances) {
+  console.log('BALANCES', balances);
   if (Object.keys(balances).length === 0) {
     console.log('You have no balances yet - try depositing some tokens into Layer 2 from Layer 1');
     return;
@@ -134,8 +135,8 @@ function printBalances(balances) {
   // eslint-disable-next-line guard-for-in
   for (const compressedPkd in balances) {
     const table = new Table({ head: ['ERC Contract Address', 'Layer 2 Balance'] });
-    Object.keys(balances[compressedPkd]).forEach(tokenAddress =>
-      table.push({ [tokenAddress]: balances[compressedPkd][tokenAddress] }),
+    Object.keys(balances[compressedPkd]).forEach(ercAddress =>
+      table.push({ [ercAddress]: balances[compressedPkd][ercAddress] }),
     );
     console.log(chalk.yellow('Balances of user', compressedPkd));
     console.log(table.toString());
@@ -145,7 +146,7 @@ function printBalances(balances) {
 /**
 UI control loop
 */
-async function loop(nf3, tokenAddress) {
+async function loop(nf3, ercAddress) {
   let receiptPromise;
   const {
     task,
@@ -168,14 +169,14 @@ async function loop(nf3, tokenAddress) {
   // handle the task that the user has asked for
   switch (task) {
     case 'Deposit':
-      receiptPromise = await nf3.deposit(tokenAddress[tokenType], tokenType, value, tokenId, fee);
+      receiptPromise = await nf3.deposit(ercAddress[tokenType], tokenType, value, tokenId, fee);
       break;
     case 'Transfer':
       if (x === 'my key') [x, y] = nf3.zkpKeys.pkd;
       try {
         receiptPromise = await nf3.transfer(
           offchain,
-          tokenAddress[tokenType],
+          ercAddress[tokenType],
           tokenType,
           value,
           tokenId,
@@ -195,7 +196,7 @@ async function loop(nf3, tokenAddress) {
         ({ withdrawTransactionHash: latestWithdrawTransactionHash, receiptPromise } =
           await nf3.withdraw(
             offchain,
-            tokenAddress[tokenType],
+            ercAddress[tokenType],
             tokenType,
             value,
             tokenId,
@@ -246,7 +247,7 @@ async function main() {
   const erc20Address = await nf3.getContractAddress('ERCStub');
   const erc721Address = await nf3.getContractAddress('ERC721Stub');
   const erc1155Address = await nf3.getContractAddress('ERC1155Stub');
-  const tokenAddress = {
+  const ercAddress = {
     ERC20: erc20Address,
     ERC721: erc721Address,
     ERC1155: erc1155Address,
@@ -256,7 +257,7 @@ async function main() {
   // main CLI loop
   do {
     // eslint-disable-next-line no-await-in-loop
-    [exit, receiptPromise] = await loop(nf3, tokenAddress);
+    [exit, receiptPromise] = await loop(nf3, ercAddress);
   } while (!exit);
   // cleanup
   await receiptPromise; // don't attempt to close the connection until we have a receipt
