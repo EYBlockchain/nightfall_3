@@ -68,7 +68,7 @@ describe('Testing the http API', () => {
     registerProposer: 0,
   };
 
-  const holdupQueue = async (txType, waitTillCount) => {
+  const holdupTxQueue = async (txType, waitTillCount) => {
     while (logCounts[txType] < waitTillCount) {
       // eslint-disable-next-line no-await-in-loop
       await new Promise(resolve => setTimeout(resolve, 3000));
@@ -98,7 +98,6 @@ describe('Testing the http API', () => {
     web3.eth.subscribe('logs', { address: shieldAddress }).on('data', log => {
       if (log.topics[0] === web3.eth.abi.encodeEventSignature('TransactionSubmitted()')) {
         logCounts.deposit += 1;
-        console.log('event log deposit received', logCounts.deposit);
       }
     });
 
@@ -144,7 +143,6 @@ describe('Testing the http API', () => {
       txQueue.push(async () => {
         const msg = JSON.parse(message.data);
         const { type, txDataToSign } = msg;
-        console.log('-- in on onmessage', type);
         try {
           if (type === 'block') {
             await blockSubmissionFunction(txDataToSign, privateKey, stateAddress, gas, BLOCK_STAKE);
@@ -324,7 +322,7 @@ describe('Testing the http API', () => {
 
       const receiptArrays = [];
       txQueue.push(async () => {
-        await holdupQueue('deposit', logCounts.deposit + depositTransactions.length);
+        await holdupTxQueue('deposit', logCounts.deposit + depositTransactions.length);
       });
       for (let i = 0; i < depositTransactions.length; i++) {
         const count = logCounts.deposit;
@@ -592,7 +590,7 @@ describe('Testing the http API', () => {
       ).map(dRes => dRes.body);
 
       txQueue.push(async () => {
-        await holdupQueue('deposit', logCounts.deposit + depositTransactions.length);
+        await holdupTxQueue('deposit', logCounts.deposit + depositTransactions.length);
       });
       for (let i = 0; i < depositTransactions.length; i++) {
         count = logCounts.deposit;
