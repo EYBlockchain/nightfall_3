@@ -126,18 +126,19 @@ jobs:
           docker-compose build
           ./start-nightfall -t &> testnet-test.log &disown
 
-      # - name: wait 2000s for Containers startup and setup completion
-      #   run: sleep 2000
+      - name: wait 2000s for Containers startup and setup completion
+        run: sleep 2000
 
-      - run: sleep 1000
-      - name: debug logs - after container startup 1
-        if: always()
-        run: cat testnet-test.log
+      # kept for future debug
+      # - run: sleep 1000
+      # - name: debug logs - after container startup 1
+      #   if: always()
+      #   run: cat testnet-test.log
 
-      - run: sleep 1000
-      - name: debug logs - after container startup 2
-        if: always()
-        run: cat testnet-test.log
+      # - run: sleep 1000
+      # - name: debug logs - after container startup 2
+      #   if: always()
+      #   run: cat testnet-test.log
 
       - name: Run integration test
         run: |
