@@ -239,7 +239,7 @@ describe('Testing the Nightfall SDK', () => {
       eventLogs.shift();
       balances = await nf3.getLayer2Balances();
       const afterPkdBalance = balances[nf3.zkpKeys.compressedPkd][BigInt(ercAddress).toString(16)];
-      expect(afterPkdBalance - currentPkdBalance).to.be.equal(20);
+      expect(afterPkdBalance - currentPkdBalance).to.be.equal(txPerBlock * value);
     });
 
     it('should decrement the balance after transfer to other wallet and increment the other wallet', async function () {
@@ -285,8 +285,8 @@ describe('Testing the Nightfall SDK', () => {
         balances[nf3.zkpKeys.compressedPkd][BigInt(ercAddress).toString(16)];
       const afterPkdBalancePkd2 =
         balances[nf32.zkpKeys.compressedPkd][BigInt(ercAddress).toString(16)];
-      expect(afterPkdBalancePkd - currentPkdBalancePkd).to.be.equal(-20);
-      expect(afterPkdBalancePkd2 - currentPkdBalancePkd2).to.be.equal(20);
+      expect(afterPkdBalancePkd - currentPkdBalancePkd).to.be.equal(-txPerBlock * value);
+      expect(afterPkdBalancePkd2 - currentPkdBalancePkd2).to.be.equal(txPerBlock * value);
     });
   });
 
