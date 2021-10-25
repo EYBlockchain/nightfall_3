@@ -9,6 +9,7 @@ module.exports = {
   WALLETS_COLLECTION: 'wallets',
   COMMITMENTS_COLLECTION: 'commitments',
   PEERS_COLLECTION: 'peers',
+  TIMBER_COLLECTION: 'timber',
   CONTRACT_ARTIFACTS: '/app/build/contracts',
   PROPOSERS_CONTRACT_NAME: 'Proposers',
   SHIELD_CONTRACT_NAME: 'Shield',
