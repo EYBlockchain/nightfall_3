@@ -62,6 +62,16 @@ describe('Testing the challenge http API', () => {
   let topicsBlockHashDuplicateNullifier;
   let topicsBlockHashIncorrectLeafCount;
   let web3;
+  const logCounts = {
+    deposit: 0,
+  };
+
+  const holdupQueue = async (txType, waitTillCount) => {
+    while (logCounts[txType] < waitTillCount) {
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
+  };
 
   before(async () => {
     web3 = await connectWeb3(BLOCKCHAIN_URL);
@@ -84,6 +94,12 @@ describe('Testing the challenge http API', () => {
 
     res = await chai.request(url).get('/contract-address/Shield');
     shieldAddress = res.body.address;
+    web3.eth.subscribe('logs', { address: shieldAddress }).on('data', log => {
+      if (log.topics[0] === web3.eth.abi.encodeEventSignature('TransactionSubmitted()')) {
+        logCounts.deposit += 1;
+        console.log('event log deposit received', logCounts.deposit);
+      }
+    });
 
     res = await chai.request(url).get('/contract-address/Challenges');
     challengeAddress = res.body.address;
@@ -283,6 +299,9 @@ describe('Testing the challenge http API', () => {
       depositTransactions.forEach(({ txDataToSign }) => expect(txDataToSign).to.be.a('string'));
 
       const receiptArrays = [];
+      txQueue.push(async () => {
+        await holdupQueue('deposit', logCounts.deposit + depositTransactions.length);
+      });
       for (let i = 0; i < depositTransactions.length; i++) {
         const { txDataToSign } = depositTransactions[i];
         receiptArrays.push(
