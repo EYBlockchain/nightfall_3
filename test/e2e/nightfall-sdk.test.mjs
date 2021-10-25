@@ -28,7 +28,7 @@ describe('Testing the Nightfall SDK', () => {
     ethereumSigningKey,
   );
 
-  const nf3_2 = new Nf3(
+  const nf32 = new Nf3(
     'http://localhost:8080',
     'http://localhost:8081',
     'ws://localhost:8082',
@@ -57,9 +57,9 @@ describe('Testing the Nightfall SDK', () => {
     stateAddress = await nf3.getContractAddress('State');
 
     await nf3.init();
-    await nf3_2.init(); // 2nd client to do transfer tests and checks
+    await nf32.init(); // 2nd client to do transfer tests and checks
     if (!(await nf3.healthcheck('optimist'))) throw new Error('Healthcheck failed');
-    if (!(await nf3_2.healthcheck('optimist'))) throw new Error('Healthcheck failed');
+    if (!(await nf32.healthcheck('optimist'))) throw new Error('Healthcheck failed');
     // Proposer registration
     await nf3.registerProposer();
     // Proposer listening for incoming events
@@ -268,7 +268,7 @@ describe('Testing the Nightfall SDK', () => {
           tokenType,
           value,
           tokenId,
-          nf3_2.zkpKeys.pkd,
+          nf32.zkpKeys.pkd,
           fee,
         );
         expect(res).to.have.property('transactionHash');
@@ -284,7 +284,7 @@ describe('Testing the Nightfall SDK', () => {
       const afterPkdBalancePkd =
         balances[nf3.zkpKeys.compressedPkd][BigInt(ercAddress).toString(16)];
       const afterPkdBalancePkd2 =
-        balances[nf3_2.zkpKeys.compressedPkd][BigInt(ercAddress).toString(16)];
+        balances[nf32.zkpKeys.compressedPkd][BigInt(ercAddress).toString(16)];
       expect(afterPkdBalancePkd - currentPkdBalancePkd).to.be.equal(-20);
       expect(afterPkdBalancePkd2 - currentPkdBalancePkd2).to.be.equal(20);
     });
@@ -323,7 +323,7 @@ describe('Testing the Nightfall SDK', () => {
         tokenType,
         value,
         tokenId,
-        nf3_2.zkpKeys.pkd,
+        nf32.zkpKeys.pkd,
         fee,
       );
       expect(res).to.be.equal(200);
@@ -536,7 +536,7 @@ describe('Testing the Nightfall SDK', () => {
 
   after(() => {
     nf3.close();
-    nf3_2.close();
+    nf32.close();
     closeWeb3Connection();
   });
 });
