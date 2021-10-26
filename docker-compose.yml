@@ -82,7 +82,7 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
-      LOG_LEVEL: debug
+      LOG_LEVEL: error
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
       ZOKRATES_WORKER_HOST: worker
@@ -235,7 +235,7 @@ services:
       MONGO_PORT: 27017
       MONGO_NAME: merkle_tree
       HASH_TYPE: mimc
-      LOG_LEVEL: info
+      LOG_LEVEL: error
       AUTOSTART: enabled
 
   #The database storing the merkle tree
@@ -345,7 +345,7 @@ services:
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
       HASH_TYPE: mimc
-      LOG_LEVEL: debug
+      LOG_LEVEL: error
       IS_CHALLENGER: 'true'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
       TIMBER_HOST: timber2
