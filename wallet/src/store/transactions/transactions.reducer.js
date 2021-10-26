@@ -5,6 +5,8 @@ const initialState = {
   nTx: 0,
   nFailedTx: 0,
   txPool: [],
+  txType: '',
+  modalTx: false,
 };
 
 function txReducer(state = initialState, action) {
@@ -22,12 +24,14 @@ function txReducer(state = initialState, action) {
           },
         ],
         nTx: state.nTx + 1,
+        modalTx: false,
       };
 
     case txActionTypes.TRANSACTION_FAILED:
       return {
         ...state,
         nFailedTx: state.nFailedTx + 1,
+        modalTx: false,
       };
 
     case txActionTypes.TRANSACTION_RETRY: {
@@ -43,6 +47,30 @@ function txReducer(state = initialState, action) {
       return {
         ...state,
         txPool: newTxPool,
+        modalTx: false,
+      };
+    }
+
+    case txActionTypes.TRANSACTION_NEW: {
+      return {
+        ...state,
+        txType: action.payload.txType,
+        modalTx: true,
+      };
+    }
+
+    case txActionTypes.TRANSACTION_DISPATCHED: {
+      return {
+        ...state,
+        txType: '',
+      };
+    }
+
+    case txActionTypes.TRANSACTION_CANCELLED: {
+      return {
+        ...state,
+        txType: '',
+        modalTx: false,
       };
     }
 

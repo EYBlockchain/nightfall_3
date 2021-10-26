@@ -1,215 +1,248 @@
-import React, { Component } from 'react';
-import {
-  Button, Modal, Form, Icon, Checkbox,
-} from 'semantic-ui-react';
+import React from 'react';
+import { Button, Modal, Form, Icon, Checkbox } from 'semantic-ui-react';
 import { connect } from 'react-redux';
+import PropTypes from 'prop-types';
+import * as txThunks from '../../../../store/transactions/transactions.thunks';
+import * as txActionTypes from '../../../../store/transactions/transactions.actions';
 
 import {
-  DEFAULT_DEPOSIT_FEE, DEFAULT_INSTANT_WITHDRAW_FEE, TOKEN_TYPE, TX_TYPES,
+  DEFAULT_DEPOSIT_FEE,
+  DEFAULT_INSTANT_WITHDRAW_FEE,
+  TOKEN_TYPE,
+  TX_TYPES,
 } from '../../../../constants';
 
-class TransactionsModal extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      fee: DEFAULT_DEPOSIT_FEE,
-      instantWithdrawFee: DEFAULT_INSTANT_WITHDRAW_FEE,
-      instantWithdrawEnable: false,
-      directTransactionEnable: false,
-    };
-  }
+function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx }) {
+  const [fee, setFee] = React.useState(DEFAULT_DEPOSIT_FEE);
+  const [tokenAmount, setTokenAmount] = React.useState(0);
+  const [instantWithdrawFee, setInstantWithdrawFee] = React.useState(DEFAULT_INSTANT_WITHDRAW_FEE);
+  const [instantWithdrawEnable, setInstantWithdrawEnable] = React.useState(false);
+  const [directTransactionEnable, setDirectTransactionEnable] = React.useState(false);
+  const [pkdX, setPkdX] = React.useState('');
+  const [pkdY, setPkdY] = React.useState('');
 
-  getTokenInfo() {
-    const tokenPool = this.props.token.tokenPool;
-    const activeTokenRowId = this.props.token.activeTokenRowId;
-    if (activeTokenRowId === '') {
+  const toggleAll = () => {
+    setInstantWithdrawEnable(false);
+    setDirectTransactionEnable(false);
+    onCancelTx();
+  };
+
+  function getTokenInfo() {
+    const { tokenPool } = token;
+    if (tokenPool === '') {
       return null;
     }
-    return tokenPool.filter((token) => token.id === activeTokenRowId)[0];
+    return tokenPool.filter(tokenEl => tokenEl.id === token.activeTokenRowId)[0];
   }
 
-  handleOnSubmit = () => {
-    const tokenInfo = this.getTokenInfo();
+  const handleOnSubmit = () => {
+    const tokenInfo = getTokenInfo();
     if (!tokenInfo) {
       return;
     }
-    const fee = this.inputFee.value === '' ? this.state.fee : this.inputFee.value;
-    const tokenAmount = tokenInfo.tokenType === TOKEN_TYPE.ERC721 ? '0' :
-      this.inputTokenAmount.value === '' ? '0' : this.inputTokenAmount.value;
+    switch (transactions.txType) {
+      case TX_TYPES.WITHDRAW:
+        {
+          const ethereumAddress = pkdX === '' ? login.nf3.ethereumAddress : pkdX;
+          const withdrawType = instantWithdrawEnable
+            ? TX_TYPES.INSTANT_WITHDRAW
+            : TX_TYPES.WITHDRAW;
+          onSubmitTx({
+            txType: withdrawType,
+            ethereumAddress,
+            tokenType: tokenInfo.tokenType,
+            tokenAddress: tokenInfo.tokenAddress,
+            tokenId: tokenInfo.tokenId,
+            tokenAmount,
+            fee,
+            instantWithdrawFee,
+          });
+        }
+        break;
 
-    switch (this.props.txType) {
-      case TX_TYPES.WITHDRAW: {
-        const ethereumAddress = this.inputPkdX.value === '' ? this.props.wallet.ethereumAddress : this.inputPkdX.value;
-        const txType = this.state.instantWithdrawEnable
-          ? TX_TYPES.INSTANT_WITHDRAW
-          : TX_TYPES.WITHDRAW;
-        const instantWithdrawFee = txType === TX_TYPES.WITHDRAW ? 0 : this.inputInstantWithdrawFee.value === '' ? this.state.instantWithdrawFee : this.inputInstantWithdrawFee.value;
-        this.props.handleOnTxSubmit({
+      default: {
+        const pkd = pkdX === '' || pkdY === '' ? login.nf3.zkpKeys.pkd : [pkdX, pkdY];
+        const { txType } = transactions;
+        onSubmitTx({
           txType,
-          ethereumAddress,
+          pkd,
           tokenType: tokenInfo.tokenType,
           tokenAddress: tokenInfo.tokenAddress,
           tokenId: tokenInfo.tokenId,
           tokenAmount,
           fee,
-          instantWithdrawFee,
         });
       }
-        break;
-
-      default:
-        const pkd = this.inputPkdX.value === '' || this.inputPkdY.value === '' ? this.props.wallet.zkpKeys.pkd : [this.inputPkdX.value, this.inputPkdY.value];
-        this.props.handleOnTxSubmit({
-         txType:  this.props.txType,
-         pkd,
-         tokenType: tokenInfo.tokenType,
-         tokenAddress: tokenInfo.tokenAddress,
-         tokenId: tokenInfo.tokenId, 
-         tokenAmount,
-         fee});
     }
 
-    this.toggleAll();
+    setInstantWithdrawEnable(false);
+    setDirectTransactionEnable(false);
+  };
+
+  const tokenInfo = getTokenInfo();
+  if (!tokenInfo) {
+    return null;
   }
+  const keyLabel = transactions.txType === TX_TYPES.WITHDRAW ? 'Ethereum Address' : 'PK-X';
+  const pkd = login.isWalletInitialized ? login.nf3.zkpKeys.pkd : '';
 
-  toggleInstantWithdraw = () => this.setState((prevState) => ({ instantWithdrawEnable: !prevState.instantWithdrawEnable }))
-  toggleDirectTransaction = () => this.setState((prevState) => ({ directTransactionEnable: !prevState.directTransactionEnable }))
-
-  toggleAll = () => {
-     this.setState({instantWithdrawEnable: false});
-     this.setState({directTransactionEnable: false});
-     this.props.toggleModalTx();
-  }
-
-  render() {
-    const tokenInfo = this.getTokenInfo();
-    if (!tokenInfo) {
-      return null;
-    }
-    const keyLabel = this.props.txType === TX_TYPES.WITHDRAW ? 'Ethereum Address' : 'PK-X';
-    const pkd = this.props.isWalletInitialized ? this.props.wallet.zkpKeys.pkd : '';
-
-    return (
-      <Modal open={this.props.modalTx}>
-        <Modal.Header>{this.props.txType.toUpperCase()}</Modal.Header>
-        <Modal.Content>
-          <Form>
-            <Form.Group widths='equal'>
-            {
-              this.props.txType === TX_TYPES.WITHDRAW ?
-                <Form.Field>
-                  <Checkbox
-                    label='Instant Withdraw'
-                    onChange={this.toggleInstantWithdraw}
-                    checked={this.state.instantWithdrawEnable}
-                  />
-                </Form.Field> :
-                null
-            }
-            {
-              this.state.instantWithdrawEnable ?
-                <Form.Field>
-                  <label htmlFor="instante-withdrawfee">
-                    Instant Withdraw Fee
-                    <input type="text" placeholder={this.state.instantWithdrawFee} ref={value => (this.inputInstantWithdrawFee = value)} id="fee" />
-                  </label>
-                </Form.Field> :
-                null
-            }
-            </Form.Group>
-            {
-              this.props.txType !== TX_TYPES.DEPOSIT ?
-                <Form.Field>
-                  <Checkbox
-                    label='Direct Transaction'
-                    onChange={this.toggleDirectTransaction}
-                    checked={this.state.directTransactionEnable}
-                  />
-                </Form.Field> :
-                null
-            }
-            <Form.Group widths='equal'>
+  /* if (transactions.txType === '') 
+    return null;
+  else */
+  return (
+    <Modal open={transactions.modalTx}>
+      <Modal.Header>{transactions.txType.toUpperCase()}</Modal.Header>
+      <Modal.Content>
+        <Form>
+          <Form.Group widths="equal">
+            {transactions.txType === TX_TYPES.WITHDRAW ? (
               <Form.Field>
-                <label htmlFor="pkd-x">
-                  {keyLabel}
-                  <input type="text" placeholder={this.props.txType === TX_TYPES.WITHDRAW ? this.props.wallet.ethereumAddress : pkd[0]} ref={value => (this.inputPkdX = value)} id="pkd-x" />
+                <Checkbox
+                  label="Instant Withdraw"
+                  onChange={() => setInstantWithdrawEnable(!instantWithdrawEnable)}
+                  checked={instantWithdrawEnable}
+                />
+              </Form.Field>
+            ) : null}
+            {instantWithdrawEnable ? (
+              <Form.Field>
+                <label htmlFor="instante-withdrawfee">
+                  Instant Withdraw Fee
+                  <input
+                    type="text"
+                    placeholder={instantWithdrawFee}
+                    onChange={event => setInstantWithdrawFee(event.target.value)}
+                  />
                 </label>
               </Form.Field>
-              {
-                this.props.txType !== TX_TYPES.WITHDRAW ?
-                  <Form.Field>
-                    <label htmlFor="pk-y">
-                      PK-Y
-                      <input type="text" placeholder={pkd[1]} ref={value => (this.inputPkdY = value)} id="pk-y" />
-                    </label>
-                  </Form.Field> :
-                  null
-              }
-            </Form.Group>
-            <Form.Group widths='equal' >
+            ) : null}
+          </Form.Group>
+          {transactions.txType !== TX_TYPES.DEPOSIT ? (
+            <Form.Field>
+              <Checkbox
+                label="Direct Transaction"
+                onChange={() => setDirectTransactionEnable(!directTransactionEnable)}
+                checked={directTransactionEnable}
+              />
+            </Form.Field>
+          ) : null}
+          <Form.Group widths="equal">
+            <Form.Field>
+              <label htmlFor="pkd-x">
+                {keyLabel}
+                <input
+                  type="text"
+                  placeholder={
+                    transactions.txType === TX_TYPES.WITHDRAW ? login.nf3.ethereumAddress : pkd[0]
+                  }
+                  onChange={event => setPkdX(event.target.value)}
+                />
+              </label>
+            </Form.Field>
+            {transactions.txType !== TX_TYPES.WITHDRAW ? (
               <Form.Field>
-                <label> Token Type </label>
-                <input type="text" value={tokenInfo.tokenType} id="token-type" readOnly />
+                <label htmlFor="pk-y">
+                  PK-Y
+                  <input
+                    type="text"
+                    placeholder={pkd[1]}
+                    onChange={event => setPkdY(event.target.value)}
+                  />
+                </label>
               </Form.Field>
-              <Form.Field>
-                <label> Token </label>
-                <input type="text" value={tokenInfo.tokenAddress} id="token-address" readOnly />
-              </Form.Field>
-            </Form.Group>
-            {
-              tokenInfo.tokenType !== TOKEN_TYPE.ERC20 ?
-                <Form.Group>
-                  <Form.Field width={6}>
-                    <label htmlFor="token-id">
-                      Token Id
-                      <input type="text" value={tokenInfo.tokenId} id="token-id" align="right" readOnly />
-                    </label>
-                  </Form.Field>
-                </Form.Group> :
-                null
-            }
-            <Form.Group widths='equal'>
-              {
-                tokenInfo.tokenType === TOKEN_TYPE.ERC721 ?
-                  null :
-                  <Form.Field>
-                    <label htmlFor="amount">
-                      Amount
-                      <input type="text" ref={value => (this.inputTokenAmount = value)} id="amount" />
-                    </label>
-                  </Form.Field>
-              }
-              <Form.Field>
-                <label htmlFor="fee">
-                  Fee
-                  <input type="text" placeholder={this.state.fee} ref={value => (this.inputFee = value)} id="fee" />
+            ) : null}
+          </Form.Group>
+          <Form.Group widths="equal">
+            <Form.Field>
+              <label> Token Type </label>
+              <input type="text" value={tokenInfo.tokenType} id="token-type" readOnly />
+            </Form.Field>
+            <Form.Field>
+              <label> Token </label>
+              <input type="text" value={tokenInfo.tokenAddress} id="token-address" readOnly />
+            </Form.Field>
+          </Form.Group>
+          {tokenInfo.tokenType !== TOKEN_TYPE.ERC20 ? (
+            <Form.Group>
+              <Form.Field width={6}>
+                <label htmlFor="token-id">
+                  Token Id
+                  <input
+                    type="text"
+                    value={tokenInfo.tokenId}
+                    id="token-id"
+                    align="right"
+                    readOnly
+                  />
                 </label>
               </Form.Field>
             </Form.Group>
-          </Form>
-        </Modal.Content>
-        <Modal.Actions>
-          <div>
-            <Button floated='left' color="red" onClick={this.toggleAll}>
-              <Icon name="cancel" />
-              Cancel
-            </Button>
-            <Button floated='right' color="blue" onClick={this.handleOnSubmit}>
-              <Icon name="send" />
-              Submit
-            </Button>
-          </div>
-        </Modal.Actions>
-      </Modal>
-    );
-  }
+          ) : null}
+          <Form.Group widths="equal">
+            {tokenInfo.tokenType === TOKEN_TYPE.ERC721 ? null : (
+              <Form.Field>
+                <label htmlFor="amount">
+                  Amount
+                  <input type="text" onChange={event => setTokenAmount(event.target.value)} />
+                </label>
+              </Form.Field>
+            )}
+            <Form.Field>
+              <label htmlFor="fee">
+                Fee
+                <input
+                  type="text"
+                  placeholder={fee}
+                  onChange={event => setFee(event.target.value)}
+                />
+              </label>
+            </Form.Field>
+          </Form.Group>
+        </Form>
+      </Modal.Content>
+      <Modal.Actions>
+        <div>
+          <Button
+            floated="left"
+            disabled={transactions.txType === ''}
+            color="red"
+            onClick={toggleAll}
+          >
+            <Icon name="cancel" />
+            Cancel
+          </Button>
+          <Button
+            floated="right"
+            disabled={transactions.txType === ''}
+            color="blue"
+            onClick={handleOnSubmit}
+          >
+            <Icon name="send" />
+            Submit
+          </Button>
+        </div>
+      </Modal.Actions>
+    </Modal>
+  );
 }
 
-const mapStateToProps = (state) => ({
+TransactionsModal.propTypes = {
+  token: PropTypes.object.isRequired,
+  login: PropTypes.object.isRequired,
+  transactions: PropTypes.object.isRequired,
+  onSubmitTx: PropTypes.func.isRequired,
+  onCancelTx: PropTypes.func.isRequired,
+};
+
+const mapStateToProps = state => ({
   token: state.token,
+  login: state.login,
+  transactions: state.transactions,
 });
 
-const mapDispatchToProps = (dispatch) => ({
+const mapDispatchToProps = dispatch => ({
+  onSubmitTx: txParams => dispatch(txThunks.txSubmit(txParams)),
+  onCancelTx: () => dispatch(txActionTypes.txCancel()),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(TransactionsModal);

@@ -45,6 +45,7 @@ function txSubmit(txParams) {
       login: { nf3 },
     } = getState();
 
+    dispatch(txActions.txDispatch());
     switch (txParams.txType) {
       case TX_TYPES.DEPOSIT:
         // TODO: dispatch error
@@ -131,7 +132,7 @@ function txSubmit(txParams) {
         break;
 
       default:
-        throw new Error('Unknown transaction');
+        throw new Error('Unknown transaction', txParams.txType);
     }
   };
 }

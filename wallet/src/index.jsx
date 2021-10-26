@@ -9,7 +9,7 @@ import 'bootstrap-social/bootstrap-social.css';
 import 'semantic-ui-css/semantic.min.css';
 import './index.css';
 import './views/app.style.css';
-import App from './views/app.view';
+import App from './views/app.view.jsx';
 import reportWebVitals from './reportWebVitals';
 
 const store = configureStore();
