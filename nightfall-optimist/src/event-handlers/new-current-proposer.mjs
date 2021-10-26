@@ -43,7 +43,7 @@ async function newCurrentProposerEventHandler(data, args) {
     // are we the next proposer?
     proposer.isMe = !!(await isRegisteredProposerAddressMine(currentProposer));
     // trigger enqueue operation of blockassembler if you are currentproposer
-    if (proposer.isMe) {
+    if (proposer.isMe && !weWereLastProposer) {
       logger.info(`triggering enqueue operation of blockassembler`);
       await eventQueueManager(conditionalMakeBlock, 0, proposer);
     }
