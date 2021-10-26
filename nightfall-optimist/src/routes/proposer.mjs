@@ -5,17 +5,19 @@ module but handle the entire request here.
 */
 import express from 'express';
 import config from 'config';
-import mt from 'common-files/utils/crypto/merkle-tree/merkle-tree.mjs';
+import Timber from 'common-files/classes/timber.mjs';
 import logger from 'common-files/utils/logger.mjs';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction, TransactionError } from '../classes/index.mjs';
-import { setRegisteredProposerAddress, getMempoolTransactions } from '../services/database.mjs';
+import {
+  setRegisteredProposerAddress,
+  getMempoolTransactions,
+  getLatestTree,
+} from '../services/database.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
-import { getFrontier, getLeafCount } from '../utils/timber.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
 
-const { updateNodes } = mt;
 const router = express.Router();
 const { STATE_CONTRACT_NAME, PROPOSERS_CONTRACT_NAME, SHIELD_CONTRACT_NAME, ZERO } = config;
 
@@ -227,7 +229,8 @@ router.post('/encode', async (req, res, next) => {
     const { transactions, block } = req.body;
 
     const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
-    let currentLeafCount = parseInt(await getLeafCount(), 10);
+    const latestTree = await getLatestTree();
+    let currentLeafCount = latestTree.leafCount;
     // normally we re-compute the leafcount. If however block.leafCount is -ve
     // that's a signal to use the value given (once we've flipped the sign back)
     if (block.leafCount < 0) currentLeafCount = -block.leafCount;
@@ -243,11 +246,11 @@ router.post('/encode', async (req, res, next) => {
     );
 
     if (!block.root) {
-      const frontier = await getFrontier();
       const leafValues = newTransactions
         .map(newTransaction => newTransaction.commitments.filter(c => c !== ZERO))
         .flat(Infinity);
-      block.root = (await updateNodes(leafValues, currentLeafCount, frontier)).root;
+      const { root } = Timber.statelessUpdate(latestTree, leafValues);
+      block.root = root;
     }
 
     const newBlock = {

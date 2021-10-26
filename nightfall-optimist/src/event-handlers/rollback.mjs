@@ -16,18 +16,20 @@ import {
   getMempoolTransactions,
   deleteTransactionsByTransactionHashes,
   retrieveNullifiers,
+  deleteTreeByBlockNumberL2,
 } from '../services/database.mjs';
 import Block from '../classes/block.mjs';
 import checkTransaction from '../services/transaction-checker.mjs';
-import { getLeafCount } from '../utils/timber.mjs';
 
 const { ZERO } = config;
 
 async function rollbackEventHandler(data) {
-  const { blockNumberL2, leafCount } = data.returnValues;
+  const { blockNumberL2 } = data.returnValues;
   logger.info(`Received Rollback event, with layer 2 block number ${blockNumberL2}`);
   // reset the Block class cached values.
   Block.rollback();
+  await deleteTreeByBlockNumberL2(Number(blockNumberL2));
+
   /*
   A Rollback occurs when an on-chain fraud proof (challenge) is accepted.
   During a rollback we have to do three things:
@@ -39,17 +41,6 @@ async function rollbackEventHandler(data) {
   3) Delete nullifiers that correspond to invalid transfers, reset nullifiers for transfers returned to the mempool
 
   */
-  // This is sub-optimal
-  // Optimist does not actually need timber to catch up
-  // However, this slows down optimist enough that timber and optimist can rollback
-  // before timber updates from the new block.
-  let timberLeafCount;
-  do {
-    // eslint-disable-next-line no-await-in-loop
-    timberLeafCount = await getLeafCount();
-    // eslint-disable-next-line no-await-in-loop
-    await new Promise(resolve => setTimeout(resolve, 3000));
-  } while (Number(timberLeafCount) !== Number(leafCount));
 
   // Get all blocks that need to be deleted
   const blocksToBeDeleted = await findBlocksFromBlockNumberL2(blockNumberL2);

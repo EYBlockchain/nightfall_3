@@ -10,12 +10,12 @@ import {
   saveCommit,
   getTransactionsByTransactionHashes,
   getBlockByBlockNumberL2,
+  getTreeByRoot,
 } from './database.mjs';
-import { getTreeHistory } from '../utils/timber.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
 
-const { CHALLENGES_CONTRACT_NAME } = config;
+const { CHALLENGES_CONTRACT_NAME, TIMBER_HEIGHT, ZERO } = config;
 
 let makeChallenges = process.env.IS_CHALLENGER === 'true';
 let ws;
@@ -77,14 +77,22 @@ export async function createChallenge(block, transactions, err) {
           priorBlock.transactionHashes,
         );
 
-        const priorBlockHistory = await getTreeHistory(priorBlock.root);
+        // We also need to grab the block 2 before the challenged block as it contains the frontier to
+        // calculate the root of the prior block.
+        const priorPriorBlock = await getBlockByBlockNumberL2(Number(block.blockNumberL2) - 2);
+        if (priorPriorBlock === null) priorPriorBlock.root = ZERO;
 
+        const priorPriorTree = await getTreeByRoot(priorPriorBlock.root);
+        // We need to pad our frontier as we don't store them with the trailing zeroes.
+        const frontierToValidatePreviousBlock = priorPriorTree.frontier.concat(
+          Array(TIMBER_HEIGHT - priorPriorTree.frontier.length + 1).fill(ZERO),
+        );
         // Create a challenge
         txDataToSign = await challengeContractInstance.methods
           .challengeNewRootCorrect(
             Block.buildSolidityStruct(priorBlock),
             priorBlockTransactions.map(t => Transaction.buildSolidityStruct(t)),
-            priorBlockHistory.frontier,
+            frontierToValidatePreviousBlock,
             Block.buildSolidityStruct(block),
             block.blockNumberL2,
             transactions.map(t => Transaction.buildSolidityStruct(t)),
