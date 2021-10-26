@@ -125,7 +125,7 @@ class Nf3 {
   This can be found using the getContractAddress convenience function.
   @returns {Promise} This will resolve into a transaction receipt.
   */
-  async submitTransaction( // we don't use 'async' because this anyway returns a promise
+  async submitTransaction(
     unsignedTransaction,
     contractAddress = this.shieldContractAddress,
     fee = this.defaultFee,
@@ -144,7 +144,7 @@ class Nf3 {
         gasPrice: 10000000000,
         nonce: this.nonce,
       };
-      await this.nonce++;
+      this.nonce++;
     });
     const signed = await this.web3.eth.accounts.signTransaction(tx, this.ethereumSigningKey);
     return this.web3.eth.sendSignedTransaction(signed.rawTransaction);
