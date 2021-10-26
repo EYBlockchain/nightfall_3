@@ -6,7 +6,6 @@ from posted transactions and proposes these blocks.
 */
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
-import { getLeafCount } from '../utils/timber.mjs';
 import {
   removeTransactionsFromMemPool,
   getMostProfitableTransactions,
@@ -32,8 +31,7 @@ async function makeBlock(proposer, number = TRANSACTIONS_PER_BLOCK) {
   const transactions = await getMostProfitableTransactions(number);
   // then we make new block objects until we run out of unprocessed
   // transactions
-  const currentLeafCount = parseInt(await getLeafCount(), 10);
-  const block = await Block.build({ proposer, transactions, currentLeafCount });
+  const block = await Block.build({ proposer, transactions });
   return { block, transactions };
 }
 

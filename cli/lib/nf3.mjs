@@ -308,6 +308,27 @@ class Nf3 {
   }
 
   /**
+  Enables someone with a valid withdraw transaction in flight to finalise the
+  withdrawal of funds to L1 (only relevant for ERC20).
+  @method
+  @async
+  @param {string} withdrawTransactionHash - the hash of the Layer 2 transaction in question
+  */
+  async finaliseWithdrawal(withdrawTransactionHash) {
+    // find the L2 block containing the L2 transaction hash
+    let res = await axios.get(
+      `${this.optimistBaseUrl}/block/transaction-hash/${withdrawTransactionHash}`,
+    );
+    const { block, transactions, index } = res.data;
+    res = await axios.post(`${this.clientBaseUrl}/finalise-withdrawal`, {
+      block,
+      transactions,
+      index,
+    });
+    return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, 0);
+  }
+
+  /**
   Enables someone with a valid withdraw transaction in flight to request instant
   withdrawal of funds (only relevant for ERC20).
   @method
@@ -410,6 +431,48 @@ class Nf3 {
   }
 
   /**
+  De-registers an existing proposer.
+  It will use the address of the Ethereum Signing key that is holds to de-register
+  the proposer.
+  @method
+  @async
+  @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
+  */
+  async deregisterProposer() {
+    const res = await axios.post(`${this.optimistBaseUrl}/proposer/de-register`, {
+      address: this.ethereumAddress,
+    });
+    return this.submitTransaction(res.data.txDataToSign, this.proposersContractAddress, 0);
+  }
+
+  /**
+  Withdraw the bond left by the proposer.
+  It will use the address of the Ethereum Signing key that is holds to withdraw the bond.
+  @method
+  @async
+  @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
+  */
+  async withdrawBond() {
+    const res = await axios.post(`${this.optimistBaseUrl}/proposer/withdrawBond`, {
+      address: this.ethereumAddress,
+    });
+    return this.submitTransaction(res.data.txDataToSign, this.proposersContractAddress, 0);
+  }
+
+  /**
+  Get all the list of existing proposers.
+  @method
+  @async
+  @returns {array} A promise that resolves to the Ethereum transaction receipt.
+  */
+  async getProposers() {
+    const res = await axios.get(`${this.optimistBaseUrl}/proposer/proposers`, {
+      address: this.ethereumAddress,
+    });
+    return res.data;
+  }
+
+  /**
   Adds a new Proposer peer to a list of proposers that are available for accepting
   offchain (direct) transfers and withdraws. The client will submit direct transfers
   and withdraws to all of these peers.
@@ -491,6 +554,18 @@ class Nf3 {
   }
 
   /**
+  De-registers our address as a challenger address with the optimist container.
+  @method
+  @async
+  @return {Promise} A promise that resolves to an axios response.
+  */
+  async deregisterChallenger() {
+    return axios.post(`${this.optimistBaseUrl}/challenger/remove`, {
+      address: this.ethereumAddress,
+    });
+  }
+
+  /**
   Starts a Challenger that listens for challengable blocks and submits challenge
   transactions to the blockchain to challenge the block.
   @method
@@ -551,6 +626,18 @@ class Nf3 {
     return res.data.balance;
   }
 
+  /**
+  Returns the commitments of tokens held in layer 2
+  @method
+  @async
+  @returns {Promise} This promise rosolves into an object whose properties are the
+  addresses of the ERC contracts of the tokens held by this account in Layer 2. The
+  value of each propery is an array of commitments originating from that contract.
+  */
+  async getLayer2Commitments() {
+    const res = await axios.get(`${this.clientBaseUrl}/commitment/commitments`);
+    return res.data.commitments;
+  
   /**
   Set a Web3 Provider URL
   @param {String|Object} providerData - Network url (i.e, http://localhost:8544) or an Object with the information to set the provider

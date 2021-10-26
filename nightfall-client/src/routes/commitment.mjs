@@ -4,7 +4,11 @@
 
 import express from 'express';
 import logger from 'common-files/utils/logger.mjs';
-import { getCommitmentBySalt, getWalletBalance } from '../services/commitment-storage.mjs';
+import {
+  getCommitmentBySalt,
+  getWalletBalance,
+  getWalletCommitments,
+} from '../services/commitment-storage.mjs';
 
 const router = express.Router();
 
@@ -27,6 +31,17 @@ router.get('/balance', async (req, res, next) => {
   try {
     const balance = await getWalletBalance();
     res.json({ balance });
+  } catch (err) {
+    logger.error(err);
+    next(err);
+  }
+});
+
+router.get('/commitments', async (req, res, next) => {
+  logger.debug('commitment/commitments endpoint received GET');
+  try {
+    const commitments = await getWalletCommitments();
+    res.json({ commitments });
   } catch (err) {
     logger.error(err);
     next(err);

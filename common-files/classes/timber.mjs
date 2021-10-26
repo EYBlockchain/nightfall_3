@@ -130,7 +130,6 @@ class Timber {
   leafCount = 0;
 
   constructor(root = 0, frontier = [], leafCount = 0, tree = Leaf(0)) {
-    if (root === 0 || tree === Leaf(0) || frontier.length === 0 || leafCount === 0) return this;
     this.root = root;
     this.tree = tree;
     this.frontier = frontier;
