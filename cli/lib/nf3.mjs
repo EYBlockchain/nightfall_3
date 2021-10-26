@@ -637,7 +637,8 @@ class Nf3 {
   async getLayer2Commitments() {
     const res = await axios.get(`${this.clientBaseUrl}/commitment/commitments`);
     return res.data.commitments;
-  
+  }
+
   /**
   Set a Web3 Provider URL
   @param {String|Object} providerData - Network url (i.e, http://localhost:8544) or an Object with the information to set the provider
