@@ -81,6 +81,7 @@ describe('Testing the http API', () => {
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
   };
+  const gasCostsTx = 5000000000000000;
 
   before(async function () {
     web3 = await connectWeb3(BLOCKCHAIN_URL);
@@ -185,18 +186,6 @@ describe('Testing the http API', () => {
       expect(res.body.status).to.be.a('string');
       expect(res.body.status).to.equal('success');
     });
-    //
-    // it('should subscribe to block proposed event with the provided incoming viewing key for optimist1', async function () {
-    //   const res = await chai
-    //     .request(senderUrl)
-    //     .post('/incoming-viewing-key')
-    //     .send({
-    //       ivks: [ivk2],
-    //       nsks: [nsk2],
-    //     });
-    //   expect(res.body.status).to.be.a('string');
-    //   expect(res.body.status).to.equal('success');
-    // });
 
     it('should subscribe to block proposed event with the provided incoming viewing key for optimist2', async function () {
       const res = await chai
@@ -238,7 +227,6 @@ describe('Testing the http API', () => {
       expect(txDataToSign).to.be.a('string');
       // we have to pay 10 ETH to be registered
       const bond = 10;
-      const gasCosts = 5000000000000000;
       const startBalance = await getBalance(myAddress);
       const count = logCounts.registerProposer;
       // now we need to sign the transaction and send it to the blockchain
@@ -253,7 +241,7 @@ describe('Testing the http API', () => {
       const endBalance = await getBalance(myAddress);
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
-      expect(endBalance - startBalance).to.closeTo(-bond, gasCosts);
+      expect(endBalance - startBalance).to.closeTo(-bond, gasCostsTx);
       await chai.request(senderUrl).post('/peers/addPeers').send({
         address: myAddress,
         enode: 'http://optimist1:80',
@@ -676,8 +664,8 @@ describe('Testing the http API', () => {
     });
     it('Should have increased our balance', async function () {
       if (nodeInfo.includes('TestRPC')) {
-        const gasCosts = (5000000000000000 * txPerBlock) / 2;
-        expect(endBalance - startBalance).to.closeTo(Number(value), gasCosts);
+        const gasCost = (gasCostsTx * txPerBlock) / 2;
+        expect(endBalance - startBalance).to.closeTo(Number(value), gasCost);
       } else {
         console.log('Not using a time-jump capable test client so this test is skipped');
         this.skip();

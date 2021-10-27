@@ -1,12 +1,28 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { Table, Button, Container, Icon, Popup, } from 'semantic-ui-react';
+import { Table, Button, Container, Icon } from 'semantic-ui-react';
 import Web3 from 'web3';
-import { addToken, selectToken, unselectToken } from '../../../../store/token/token.actions';
+import * as tokenActions from '../../../../store/token/token.actions';
 import { getL1Balance } from '../../../../utils/lib/providers';
+import { TokenAddModal } from './token-add.view';
 
 
 class WalletInfo extends Component {
+
+  constructor(props){
+    super(props);
+
+    this.state = {
+      isRemoveTokenSelected: false,
+      modalTokenAdd: false,
+    }
+  }
+
+  toggleModalTokenAdd = () => { this.setState((prev) => ({ modalTokenAdd: !prev.modalTokenAdd })); }
+
+  handleOnTokenAddSubmit = (tokenName, tokenType, tokenAddress) => {
+     this.props.onAddToken('0x' + tokenAddress.toLowerCase(), tokenType, '', '-', '-');
+  }
 
   importedWallet = (wallet) => {
     if (wallet.ethereumAddress === '' || typeof wallet.ethereumAddress === 'undefined') {
@@ -27,21 +43,26 @@ class WalletInfo extends Component {
         const compressedPkd = this.props.wallet.zkpKeys.compressedPkd;
         const myL2Balance = typeof l2Balance[compressedPkd] === 'undefined' ? {} : l2Balance[compressedPkd];
         const l2TokenAddressArr = myL2Balance === {} ? []: Object.keys(myL2Balance);
-        if (l2TokenAddressArr.length) {
-          l2TokenAddressArr.forEach(l2TokenAddress => {
-            getL1Balance(this.props.wallet.ethereumAddress).then((l1Balance) => {
-              this.props.addToken('0x' + l2TokenAddress.toLowerCase(), 'ERC20', "0x00", l1Balance, Web3.utils.fromWei(myL2Balance[l2TokenAddress].toString()));
+        getL1Balance(this.props.wallet.ethereumAddress).then((l1Balance) => {
+          if (l2TokenAddressArr.length) {
+            l2TokenAddressArr.forEach(l2TokenAddress => {
+              const l2Token = this.props.token.tokenPool.filter(token => token.tokenAddress === '0x'+l2TokenAddress)[0];
+              this.props.onAddToken('0x' + l2TokenAddress.toLowerCase(), l2Token.tokenType, l2Token.tokenId, l1Balance, Web3.utils.fromWei(myL2Balance[l2TokenAddress].toString()));
             })
-          });
-        }
+          }
+        });
       });
   }
 
   setActiveRow(id) {
     if (id !== this.props.token.activeTokenRowId) {
-      this.props.selectToken(id);
+      this.props.onSelectToken(id);
+      if (this.state.isRemoveTokenSelected){
+         this.props.onDeleteToken(id);
+         this.toggleTokenSelected();
+      }
     } else {
-      this.props.unselectToken();
+      this.props.onUnselectToken();
     }
   }
 
@@ -69,6 +90,14 @@ class WalletInfo extends Component {
     this.reload();
   }
 
+  toggleTokenSelected = () => 
+     this.setState((prevState) => ({ isRemoveTokenSelected : !prevState.isRemoveTokenSelected}));
+
+  removeToken = (() => {
+    this.props.onUnselectToken();
+    this.toggleTokenSelected();
+  });
+
   render() {
     return (
       <Container>
@@ -83,10 +112,15 @@ class WalletInfo extends Component {
                 <Button onClick={this.reload}> <Icon name="sync" /> Reload </Button>
               </Table.HeaderCell>
               <Table.HeaderCell textAlign="right">
-                <Button onClick={this.reload} disabled> <Icon name="plus" /> Add Token </Button>
+                <Button onClick={this.toggleModalTokenAdd}> <Icon name="plus" /> Add Token </Button>
               </Table.HeaderCell>
               <Table.HeaderCell textAlign="right">
-                <Button onClick={this.reload} disabled> <Icon name="minus" /> Remove Token </Button>
+                <Button
+                 toggle
+                 onClick={this.removeToken}
+                 active={this.state.isRemoveTokenSelected && this.props.token.tokenPool.length}
+                 disabled={this.props.token.tokenPool.length === 0}
+                > <Icon name="minus" /> Remove Token </Button>
               </Table.HeaderCell>
             </Table.Row>
           </Table.Header>
@@ -101,6 +135,11 @@ class WalletInfo extends Component {
           <Table.Body> {this.renderRowTable()} </Table.Body>
         </Table>
         <br />
+        <TokenAddModal
+          modalTokenAdd={this.state.modalTokenAdd}
+          toggleModalTokenAdd={this.toggleModalTokenAdd}
+          handleOnTokenAddSubmit={this.handleOnTokenAddSubmit}
+        />
       </Container>
     );
   }
@@ -111,9 +150,10 @@ const mapStateToProps = (state) => ({
 });
 
 const mapDispatchToProps = (dispatch) => ({
-  selectToken: (tokenRowId) => dispatch(selectToken(tokenRowId)),
-  unselectToken: () => dispatch(unselectToken()),
-  addToken: (tokenAddress, tokenType, tokenId, l1Balance, l2Balance) => dispatch(addToken(tokenAddress, tokenType, tokenId, l1Balance, l2Balance)),
+  onSelectToken: (tokenRowId) => dispatch(tokenActions.selectToken(tokenRowId)),
+  onUnselectToken: () => dispatch(tokenActions.unselectToken()),
+  onAddToken: (tokenAddress, tokenType, tokenId, l1Balance, l2Balance) => dispatch(tokenActions.addToken(tokenAddress, tokenType, tokenId, l1Balance, l2Balance)),
+  onDeleteToken: (tokenRowId) => dispatch(tokenActions.deleteToken(tokenRowId)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(WalletInfo);

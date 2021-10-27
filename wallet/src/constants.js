@@ -10,16 +10,24 @@ const TOKEN_TYPE = {
 };
 const DEFAULT_TOKEN_ADDRESS = {
   ERC20: '0xe1b7B854F19A2CEBF96B433ba30050D8890618ab'.toLowerCase(),
-  ERC721: '',
-  ERC1155: 'OPENSTORE',
+  ERC721: '0xf05e9fb485502e5a93990c714560b7ce654173c3'.toLowerCase(),
+  ERC1155: '0xb5acbe9a0f1f8b98f3fc04471f7fe5d2c222cb44'.toLowerCase(),
 };
 
 const DEFAULT_DEPOSIT_AMOUNT = 0;
 const DEFAULT_DEPOSIT_FEE = 10;
 const DEFAULT_TOKEN_ID = {
-  ERC20: 0,
-  ERC721: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-  ERC1155: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+  ERC20: [0],
+  ERC721: [
+    '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    '0x11111111111111111111111111111111',
+    '0x22222222222222222222222222222222',
+  ],
+  ERC1155: [
+    '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+    '0x33333333333333333333333333333333',
+    '0x44444444444444444444444444444444',
+  ],
 };
 
 const TX_TYPES = {

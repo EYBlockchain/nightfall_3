@@ -4,7 +4,7 @@ import tokens from '../../utils/tokens';
 
 const initialState = {
   activeTokenRowId: '',
-  maxTokenRowId: tokens.length,
+  maxTokenRowId: tokens.tokens.length,
   tokenPool: tokens.tokens,
 };
 
@@ -23,12 +23,12 @@ function tokenReducer(state = initialState, action) {
           tokenPool: [
             ...state.tokenPool,
             {
+              id: state.maxTokenRowId + 1,
               tokenAddress: action.payload.tokenAddress,
               tokenType: action.payload.tokenType,
               tokenId: action.payload.tokenId,
               tokenBalanceL1: action.payload.l1Balance,
               tokenBalanceL2: action.payload.l2Balance,
-              id: state.maxTokenRowId + 1,
             },
           ],
         };
@@ -49,10 +49,13 @@ function tokenReducer(state = initialState, action) {
       };
     }
 
-    case tokenActionTypes.TOKEN_DELETE:
+    case tokenActionTypes.TOKEN_DELETE: {
+      const newTokenPool = [...state.tokenPool];
       return {
         ...state,
+        tokenPool: [...newTokenPool.filter(token => token.id !== action.payload.activeTokenRowId)],
       };
+    }
 
     case tokenActionTypes.TOKEN_SELECT:
       return {
