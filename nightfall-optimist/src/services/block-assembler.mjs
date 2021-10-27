@@ -63,7 +63,7 @@ export async function conditionalMakeBlock(proposer) {
         )
         .encodeABI();
       if (ws)
-        ws.send(
+        await ws.send(
           JSON.stringify({
             type: 'block',
             txDataToSign: unsignedProposeBlockTransaction,
