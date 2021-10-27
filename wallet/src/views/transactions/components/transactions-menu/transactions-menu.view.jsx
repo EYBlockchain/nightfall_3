@@ -4,10 +4,11 @@ import { connect } from 'react-redux'
 
 class TransactionsMenu extends Component {
 
+
+
   render() {
     return (
       <Table padded textAlign="center" celled fixed>
-
         <Table.Body>
           <Table.Row>
             <Table.Cell>

@@ -135,7 +135,9 @@ function printBalances(balances) {
   // eslint-disable-next-line guard-for-in
   for (const compressedPkd in balances) {
     const table = new Table({ head: ['ERC Contract Address', 'Layer 2 Balance'] });
-    table.push(balances[compressedPkd]);
+    Object.keys(balances[compressedPkd]).forEach(ercAddress =>
+      table.push({ [ercAddress]: balances[compressedPkd][ercAddress] }),
+    );
     console.log(chalk.yellow('Balances of user', compressedPkd));
     console.log(table.toString());
   }
@@ -167,14 +169,14 @@ async function loop(nf3, ercAddress) {
   // handle the task that the user has asked for
   switch (task) {
     case 'Deposit':
-      receiptPromise = await nf3.deposit(ercAddress, tokenType, value, tokenId, fee);
+      receiptPromise = await nf3.deposit(ercAddress[tokenType], tokenType, value, tokenId, fee);
       break;
     case 'Transfer':
       if (x === 'my key') [x, y] = nf3.zkpKeys.pkd;
       try {
         receiptPromise = await nf3.transfer(
           offchain,
-          ercAddress,
+          ercAddress[tokenType],
           tokenType,
           value,
           tokenId,
@@ -194,7 +196,7 @@ async function loop(nf3, ercAddress) {
         ({ withdrawTransactionHash: latestWithdrawTransactionHash, receiptPromise } =
           await nf3.withdraw(
             offchain,
-            ercAddress,
+            ercAddress[tokenType],
             tokenType,
             value,
             tokenId,
@@ -242,7 +244,14 @@ async function main() {
     'ws://localhost:8546',
   ); // create an nf3 instance
   await nf3.init();
-  const ercAddress = await nf3.getContractAddress('ERCStub');
+  const erc20Address = await nf3.getContractAddress('ERCStub');
+  const erc721Address = await nf3.getContractAddress('ERC721Stub');
+  const erc1155Address = await nf3.getContractAddress('ERC1155Stub');
+  const ercAddress = {
+    ERC20: erc20Address,
+    ERC721: erc721Address,
+    ERC1155: erc1155Address,
+  };
   let exit;
   let receiptPromise;
   // main CLI loop

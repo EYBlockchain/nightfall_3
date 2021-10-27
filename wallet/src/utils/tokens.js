@@ -8,28 +8,28 @@ const tokens = [
     tokenType: TOKEN_TYPE.ERC20,
     tokenId: DEFAULT_TOKEN_ID.ERC20,
     tokenName: '',
-    tokenBalanceL1: 10,
-    tokenBalanceL2: 2,
+    tokenBalanceL1: '-',
+    tokenBalanceL2: '-',
   },
   // DUMMY
   {
     id: 2,
-    tokenAddress: 2,
+    tokenAddress: DEFAULT_TOKEN_ADDRESS.ERC721,
     tokenType: 'ERC721',
     tokenId: DEFAULT_TOKEN_ID.ERC721,
     tokenName: '',
-    tokenBalanceL1: 10,
-    tokenBalanceL2: 2,
+    tokenBalanceL1: '-',
+    tokenBalanceL2: '-',
   },
   // DUMMY
   {
     id: 3,
-    tokenAddress: 3,
+    tokenAddress: DEFAULT_TOKEN_ADDRESS.ERC1155,
     tokenType: 'ERC1155',
     tokenId: DEFAULT_TOKEN_ID.ERC1155,
     tokenName: '',
-    tokenBalanceL1: 0,
-    tokenBalanceL2: 20,
+    tokenBalanceL1: '-',
+    tokenBalanceL2: '-',
   },
 ];
 export default { tokens };
