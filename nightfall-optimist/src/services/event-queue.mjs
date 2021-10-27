@@ -45,7 +45,8 @@ function nextHigherPriorityQueueHasEmptied(priority) {
 
 export async function eventQueueManager(callback, priority, args) {
   queues[priority].push(async () => {
-    //await nextHigherPriorityQueueHasEmptied(priority); // prevent conditionalmakeblock from running until fastQueue is emptied
+    //await nextHigherPriorityQueueHasEmptied(priority); 
+    //prevent conditionalmakeblock from running until fastQueue is emptied
     await callback(args);
   });
 }
