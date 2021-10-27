@@ -24,7 +24,7 @@ import logger from 'common-files/utils/logger.mjs';
 const { MAX_QUEUE } = config;
 const fastQueue = new Queue({ autostart: true, concurrency: 1 });
 const slowQueue = new Queue({ autostart: true, concurrency: 1 });
-export const queues = [fastQueue, slowQueue];
+const queues = [fastQueue, slowQueue];
 
 /**
 This function will return a promise that resolves to true when the next highest
