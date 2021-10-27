@@ -13,10 +13,10 @@ export function addToken(tokenAddress, tokenType, tokenId, l1Balance, l2Balance)
   };
 }
 
-export function deleteToken(tokenAddress) {
+export function deleteToken(activeTokenRowId) {
   return {
     type: tokenActionTypes.TOKEN_DELETE,
-    payload: { tokenAddress },
+    payload: { activeTokenRowId },
   };
 }
 

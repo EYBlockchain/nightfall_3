@@ -76,7 +76,7 @@ class Nf3 {
     this.stateContractAddress = await this.getContractAddress('State');
     // set the ethereumAddress iff we have a signing key
     if (typeof this.ethereumSigningKey === 'string') {
-      this.ethereumAddress = await this.getAccounts();
+      this.ethereumAddress = this.getAccounts();
     }
     return this.subscribeToIncomingViewingKeys();
   }
@@ -89,7 +89,7 @@ class Nf3 {
   */
   async setEthereumSigningKey(key) {
     this.ethereumSigningKey = key;
-    this.ethereumAddress = await this.getAccounts();
+    this.ethereumAddress = this.getAccounts();
   }
 
   /**
@@ -678,7 +678,7 @@ class Nf3 {
   @param {String} privateKey - Private Key - optional
   @returns {String} - Ether balance in account
   */
-  async getAccounts() {
+  getAccounts() {
     const account =
       this.ethereumSigningKey.length === 0
         ? this.web3.eth.getAccounts().then(address => address[0])

@@ -3,9 +3,18 @@ import { connect } from 'react-redux';
 import { Table, Button, Container, Icon } from 'semantic-ui-react';
 import Web3 from 'web3';
 import PropTypes from 'prop-types';
-import { addToken, selectToken, unselectToken } from '../../../../store/token/token.actions';
+import {
+  addToken,
+  selectToken,
+  unselectToken,
+  deleteToken,
+} from '../../../../store/token/token.actions';
+import { TokenAddModal } from './token-add.view.jsx';
 
-function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken }) {
+function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, onDeleteToken }) {
+  const [modalTokenAddEnable, setModalTokenAddEnable] = React.useState(false);
+  const [removeTokenEnable, setRemoveTokenEnable] = React.useState(false);
+
   const importedWallet = () => {
     if (login.nf3.ethereumAddress === '' || typeof login.nf3.ethereumAddress === 'undefined') {
       return (
@@ -25,9 +34,14 @@ function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken }
       const myL2Balance =
         typeof l2Balance[compressedPkd] === 'undefined' ? {} : l2Balance[compressedPkd];
       const l2TokenAddressArr = myL2Balance === {} ? [] : Object.keys(myL2Balance);
-      if (l2TokenAddressArr.length) {
-        l2TokenAddressArr.forEach(l2TokenAddress => {
-          login.nf3.getL1Balance(login.nf3.ethereumAddress).then(l1Balance => {
+      login.nf3.getL1Balance(login.nf3.ethereumAddress).then(l1Balance => {
+        if (l2TokenAddressArr.length) {
+          l2TokenAddressArr.forEach(l2TokenAddress => {
+            /* TODO. Use correct token
+            const l2Token = token.tokenPool.filter(
+              token => token.tokenAddress === `0x${l2TokenAddress}`,
+            )[0];
+	    */
             onAddToken(
               `0x${l2TokenAddress.toLowerCase()}`,
               'ERC20',
@@ -36,14 +50,22 @@ function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken }
               Web3.utils.fromWei(myL2Balance[l2TokenAddress].toString(), 'nano'),
             );
           });
-        });
-      }
+        }
+      });
     });
+  };
+
+  const toggleTokenSelected = () => {
+    setRemoveTokenEnable(!removeTokenEnable);
   };
 
   function setActiveRow(id) {
     if (id !== token.activeTokenRowId) {
       onSelectToken(id);
+      if (removeTokenEnable) {
+        onDeleteToken(id);
+        toggleTokenSelected();
+      }
     } else {
       onUnselectToken();
     }
@@ -81,6 +103,19 @@ function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken }
     reload();
   }, []);
 
+  const handleOnTokenAddSubmit = (tokenName, tokenType, tokenAddress) => {
+    onAddToken(`0x${tokenAddress.toLowerCase()}`, tokenType, '0', '-', '-');
+  };
+
+  const toggleModalTokenAdd = () => {
+    setModalTokenAddEnable(!modalTokenAddEnable);
+  };
+
+  const removeToken = () => {
+    onUnselectToken();
+    toggleTokenSelected();
+  };
+
   return (
     <Container>
       <Table padded>
@@ -97,15 +132,20 @@ function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken }
               </Button>
             </Table.HeaderCell>
             <Table.HeaderCell textAlign="right">
-              <Button onClick={reload} disabled>
+              <Button onClick={toggleModalTokenAdd}>
                 <Icon name="plus" />
                 Add Token
               </Button>
             </Table.HeaderCell>
             <Table.HeaderCell textAlign="right">
-              <Button onClick={reload} disabled>
-                <Icon name="minus" />
-                Remove Token
+              <Button
+                toggle
+                onClick={removeToken}
+                active={removeTokenEnable && token.tokenPool.length}
+                disabled={token.tokenPool.length === 0}
+              >
+                {' '}
+                <Icon name="minus" /> Remove Token{' '}
               </Button>
             </Table.HeaderCell>
           </Table.Row>
@@ -129,6 +169,11 @@ function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken }
         <Table.Body> {renderRowTable()} </Table.Body>
       </Table>
       <br />
+      <TokenAddModal
+        modalTokenAdd={modalTokenAddEnable}
+        toggleModalTokenAdd={toggleModalTokenAdd}
+        handleOnTokenAddSubmit={handleOnTokenAddSubmit}
+      />
     </Container>
   );
 }
@@ -139,6 +184,7 @@ WalletInfo.propTypes = {
   onAddToken: PropTypes.func.isRequired,
   onSelectToken: PropTypes.func.isRequired,
   onUnselectToken: PropTypes.func.isRequired,
+  onDeleteToken: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = state => ({
@@ -151,6 +197,7 @@ const mapDispatchToProps = dispatch => ({
   onUnselectToken: () => dispatch(unselectToken()),
   onAddToken: (tokenAddress, tokenType, tokenId, l1Balance, l2Balance) =>
     dispatch(addToken(tokenAddress, tokenType, tokenId, l1Balance, l2Balance)),
+  onDeleteToken: tokenRowId => dispatch(deleteToken(tokenRowId)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(WalletInfo);

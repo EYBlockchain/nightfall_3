@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Modal, Form, Icon, Checkbox } from 'semantic-ui-react';
+import { Button, Modal, Form, Icon, Checkbox, Dropdown } from 'semantic-ui-react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import * as txThunks from '../../../../store/transactions/transactions.thunks';
@@ -41,6 +41,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
       return;
     }
     switch (transactions.txType) {
+      // TODO : pending select correct tokenId index. For now, i select 0, but it could be different
       case TX_TYPES.WITHDRAW:
         {
           const ethereumAddress = pkdX === '' ? login.nf3.ethereumAddress : pkdX;
@@ -52,7 +53,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
             ethereumAddress,
             tokenType: tokenInfo.tokenType,
             tokenAddress: tokenInfo.tokenAddress,
-            tokenId: tokenInfo.tokenId,
+            tokenId: tokenInfo.tokenId[0],
             tokenAmount,
             fee,
             instantWithdrawFee,
@@ -68,7 +69,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
           pkd,
           tokenType: tokenInfo.tokenType,
           tokenAddress: tokenInfo.tokenAddress,
-          tokenId: tokenInfo.tokenId,
+          tokenId: tokenInfo.tokenId[0],
           tokenAmount,
           fee,
         });
@@ -86,9 +87,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
   const keyLabel = transactions.txType === TX_TYPES.WITHDRAW ? 'Ethereum Address' : 'PK-X';
   const pkd = login.isWalletInitialized ? login.nf3.zkpKeys.pkd : '';
 
-  /* if (transactions.txType === '') 
-    return null;
-  else */
+  if (transactions.txType === '') return null;
   return (
     <Modal open={transactions.modalTx}>
       <Modal.Header>{transactions.txType.toUpperCase()}</Modal.Header>
@@ -165,16 +164,18 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
           {tokenInfo.tokenType !== TOKEN_TYPE.ERC20 ? (
             <Form.Group>
               <Form.Field width={6}>
-                <label htmlFor="token-id">
-                  Token Id
-                  <input
-                    type="text"
-                    value={tokenInfo.tokenId}
-                    id="token-id"
-                    align="right"
-                    readOnly
+                <span>
+                  Token Id{' '}
+                  <Dropdown
+                    placeholder={tokenInfo.tokenId[0]}
+                    defaultValue={tokenInfo.tokenId[0]}
+                    selection
+                    options={tokenInfo.tokenId.map(function (id) {
+                      return { key: id, text: id, value: id };
+                    })}
+                    onChange={(e, { value }) => value}
                   />
-                </label>
+                </span>
               </Form.Field>
             </Form.Group>
           ) : null}
