@@ -38,6 +38,7 @@ class TransactionsModal extends Component {
     const fee = this.inputFee.value === '' ? this.state.fee : this.inputFee.value;
     const tokenAmount = tokenInfo.tokenType === TOKEN_TYPE.ERC721 ? '0' :
       this.inputTokenAmount.value === '' ? '0' : this.inputTokenAmount.value;
+    //TODO : pending select correct tokenId index. For now, i select 0, but it could be different
     const tokenId = this.state.tokenId === '' ? tokenInfo.tokenId[0] : this.state.tokenId;
 
     switch (this.props.txType) {
@@ -52,7 +53,7 @@ class TransactionsModal extends Component {
           ethereumAddress,
           tokenType: tokenInfo.tokenType,
           tokenAddress: tokenInfo.tokenAddress,
-          tokenId: tokenInfo.tokenId,
+          tokenId,
           tokenAmount,
           fee,
           instantWithdrawFee,
@@ -67,7 +68,7 @@ class TransactionsModal extends Component {
          pkd,
          tokenType: tokenInfo.tokenType,
          tokenAddress: tokenInfo.tokenAddress,
-         tokenId: tokenInfo.tokenId, 
+         tokenId,
          tokenAmount,
          fee});
     }
@@ -90,6 +91,7 @@ class TransactionsModal extends Component {
       return null;
     }
     const keyLabel = this.props.txType === TX_TYPES.WITHDRAW ? 'Ethereum Address' : 'PK-X';
+    const pkd = this.props.isWalletInitialized ? this.props.wallet.zkpKeys.pkd : '';
 
     return (
       <Modal open={this.props.modalTx}>

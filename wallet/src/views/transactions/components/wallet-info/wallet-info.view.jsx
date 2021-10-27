@@ -3,7 +3,6 @@ import { connect } from 'react-redux';
 import { Table, Button, Container, Icon } from 'semantic-ui-react';
 import Web3 from 'web3';
 import * as tokenActions from '../../../../store/token/token.actions';
-import { getL1Balance } from '../../../../utils/lib/providers';
 import { TokenAddModal } from './token-add.view';
 
 
@@ -43,13 +42,14 @@ class WalletInfo extends Component {
         const compressedPkd = this.props.wallet.zkpKeys.compressedPkd;
         const myL2Balance = typeof l2Balance[compressedPkd] === 'undefined' ? {} : l2Balance[compressedPkd];
         const l2TokenAddressArr = myL2Balance === {} ? []: Object.keys(myL2Balance);
-        if (l2TokenAddressArr.length) {
-          l2TokenAddressArr.forEach(l2TokenAddress => {
-            this.props.nf3.getL1Balance(this.props.wallet.ethereumAddress).then((l1Balance) => {
-              this.props.addToken('0x' + l2TokenAddress.toLowerCase(), 'ERC20', "0x00", l1Balance, Web3.utils.fromWei(myL2Balance[l2TokenAddress].toString(), 'nano'));
-            })
-          }
-        });
+	this.props.nf3.getL1Balance(this.props.wallet.ethereumAddress).then((l1Balance) => {
+          if (l2TokenAddressArr.length) {
+            l2TokenAddressArr.forEach(l2TokenAddress => {
+              const l2Token = this.props.token.tokenPool.filter(token => token.tokenAddress === '0x'+l2TokenAddress)[0];
+              this.props.onAddToken('0x' + l2TokenAddress.toLowerCase(), l2Token.tokenType, l2Token.tokenId, l1Balance, Web3.utils.fromWei(myL2Balance[l2TokenAddress].toString()));
+            });
+	  }
+	});
       });
   }
 
