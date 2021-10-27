@@ -8,9 +8,9 @@ const tokens = [
     tokenType: TOKEN_TYPE.ERC20,
     tokenId: DEFAULT_TOKEN_ID.ERC20,
     tokenName: '',
-    tokenBalanceL1: 10,
-    tokenBalanceL2: 2,
-    decimals: 10,
+    tokenBalanceL1: '-',
+    tokenBalanceL2: '-',
+    decimals: 9,
   },
   // DUMMY
   {
@@ -19,9 +19,9 @@ const tokens = [
     tokenType: 'ERC721',
     tokenId: DEFAULT_TOKEN_ID.ERC721,
     tokenName: '',
-    tokenBalanceL1: 10,
-    tokenBalanceL2: 2,
-    decimals: 10,
+    tokenBalanceL1: '-',
+    tokenBalanceL2: '-',
+    decimals: 9,
   },
   // DUMMY
   {
@@ -30,9 +30,9 @@ const tokens = [
     tokenType: 'ERC1155',
     tokenId: DEFAULT_TOKEN_ID.ERC1155,
     tokenName: '',
-    tokenBalanceL1: 0,
-    tokenBalanceL2: 20,
-    decimals: 10,
+    tokenBalanceL1: '-',
+    tokenBalanceL2: '-',
+    decimals: 9,
   },
 ];
 

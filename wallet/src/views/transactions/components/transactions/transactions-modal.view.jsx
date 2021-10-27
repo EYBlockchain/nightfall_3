@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import {
-  Button, Modal, Form, Icon, Checkbox,
+  Button, Modal, Form, Icon, Checkbox, Dropdown
 } from 'semantic-ui-react';
 import { connect } from 'react-redux';
 
@@ -16,6 +16,7 @@ class TransactionsModal extends Component {
       instantWithdrawFee: DEFAULT_INSTANT_WITHDRAW_FEE,
       instantWithdrawEnable: false,
       directTransactionEnable: false,
+      tokenId: '',
     };
   }
 
@@ -25,7 +26,8 @@ class TransactionsModal extends Component {
     if (activeTokenRowId === '') {
       return null;
     }
-    return tokenPool.filter((token) => token.id === activeTokenRowId)[0];
+    const tokenInfo =tokenPool.filter((token) => token.id === activeTokenRowId)[0];
+    return tokenInfo
   }
 
   handleOnSubmit = () => {
@@ -36,6 +38,7 @@ class TransactionsModal extends Component {
     const fee = this.inputFee.value === '' ? this.state.fee : this.inputFee.value;
     const tokenAmount = tokenInfo.tokenType === TOKEN_TYPE.ERC721 ? '0' :
       this.inputTokenAmount.value === '' ? '0' : this.inputTokenAmount.value;
+    const tokenId = this.state.tokenId === '' ? tokenInfo.tokenId[0] : this.state.tokenId;
 
     switch (this.props.txType) {
       case TX_TYPES.WITHDRAW: {
@@ -87,7 +90,6 @@ class TransactionsModal extends Component {
       return null;
     }
     const keyLabel = this.props.txType === TX_TYPES.WITHDRAW ? 'Ethereum Address' : 'PK-X';
-    const pkd = this.props.isWalletInitialized ? this.props.wallet.zkpKeys.pkd : '';
 
     return (
       <Modal open={this.props.modalTx}>
@@ -160,10 +162,16 @@ class TransactionsModal extends Component {
               tokenInfo.tokenType !== TOKEN_TYPE.ERC20 ?
                 <Form.Group>
                   <Form.Field width={6}>
-                    <label htmlFor="token-id">
-                      Token Id
-                      <input type="text" value={tokenInfo.tokenId} id="token-id" align="right" readOnly />
-                    </label>
+                    <span>
+                      Token Id{' '}
+                      <Dropdown 
+                        placeholder={tokenInfo.tokenId[0]}
+                        defaultValue={tokenInfo.tokenId[0]}
+                        selection
+                        options={tokenInfo.tokenId.map(function(id) { return { key: id, text: id, value: id}})}
+                        onChange={(e,{value}) => (this.setState({ tokenId: value }))}
+                      />
+                    </span>
                   </Form.Field>
                 </Form.Group> :
                 null
