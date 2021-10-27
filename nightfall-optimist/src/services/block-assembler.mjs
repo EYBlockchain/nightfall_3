@@ -11,7 +11,7 @@ import {
   getMostProfitableTransactions,
   numberOfUnprocessedTransactions,
 } from './database.mjs';
-import { queues, eventQueueManager } from './event-queue.mjs';
+import { eventQueueManager } from './event-queue.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';

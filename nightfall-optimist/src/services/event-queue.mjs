@@ -45,8 +45,8 @@ function nextHigherPriorityQueueHasEmptied(priority) {
 
 export async function eventQueueManager(callback, priority, args) {
   queues[priority].push(async () => {
-    //await nextHigherPriorityQueueHasEmptied(priority); 
-    //prevent conditionalmakeblock from running until fastQueue is emptied
+    // await nextHigherPriorityQueueHasEmptied(priority);
+    // prevent conditionalmakeblock from running until fastQueue is emptied
     await callback(args);
   });
 }
@@ -78,7 +78,7 @@ export async function queueManager(eventObject, eventArgs) {
   } else {
     logger.info(`Queueing event ${eventObject.event}`);
     queues[priority].push(async () => {
-      //await nextHigherPriorityQueueHasEmptied(priority); // prevent eventHandlers running until the higher priority queue has emptied
+      // await nextHigherPriorityQueueHasEmptied(priority); // prevent eventHandlers running until the higher priority queue has emptied
       eventHandlers[eventObject.event](eventObject, args);
     });
   }
