@@ -245,9 +245,9 @@ async function main() {
     'ws://localhost:8546',
   ); // create an nf3 instance
   await nf3.init();
-  const erc20Address = await nf3.getContractAddress('ERCStub');
-  const erc721Address = await nf3.getContractAddress('ERC721Stub');
-  const erc1155Address = await nf3.getContractAddress('ERC1155Stub');
+  const erc20Address = await nf3.getContractAddress('ERC20Mock');
+  const erc721Address = await nf3.getContractAddress('ERC721Mock');
+  const erc1155Address = await nf3.getContractAddress('ERC1155Mock');
   const ercAddress = {
     ERC20: erc20Address,
     ERC721: erc721Address,
