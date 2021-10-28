@@ -418,7 +418,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line421">line 421</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line508">line 508</a>
     </li></ul></dd>
     
 
@@ -555,7 +555,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line338">line 338</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line374">line 374</a>
     </li></ul></dd>
     
 
@@ -643,7 +643,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line387">line 387</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line432">line 432</a>
     </li></ul></dd>
     
 
@@ -901,7 +901,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line198">line 198</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line213">line 213</a>
     </li></ul></dd>
     
 
@@ -948,6 +948,366 @@
 </dl>
 
     
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="deregisterChallenger"><span class="type-signature">(async) </span>deregisterChallenger<span class="signature">()</span><span class="type-signature"> &rarr; {Promise}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    De-registers our address as a challenger address with the optimist container.
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line585">line 585</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    A promise that resolves to an axios response.
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="deregisterProposer"><span class="type-signature">(async) </span>deregisterProposer<span class="signature">()</span><span class="type-signature"> &rarr; {Promise}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    De-registers an existing proposer.
+  It will use the address of the Ethereum Signing key that is holds to de-register
+  the proposer.
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line464">line 464</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    A promise that resolves to the Ethereum transaction receipt.
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="finaliseWithdrawal"><span class="type-signature">(async) </span>finaliseWithdrawal<span class="signature">(withdrawTransactionHash)</span><span class="type-signature"></span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Enables someone with a valid withdraw transaction in flight to finalise the
+  withdrawal of funds to L1 (only relevant for ERC20).
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>withdrawTransactionHash</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">the hash of the Layer 2 transaction in question</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line331">line 331</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1015,7 +1375,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line523">line 523</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line622">line 622</a>
     </li></ul></dd>
     
 
@@ -1175,7 +1535,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line175">line 175</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line190">line 190</a>
     </li></ul></dd>
     
 
@@ -1286,7 +1646,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line349">line 349</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line394">line 394</a>
     </li></ul></dd>
     
 
@@ -1311,6 +1671,116 @@
 
 
 
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="getLatestWithdrawHash"><span class="type-signature"></span>getLatestWithdrawHash<span class="signature">()</span><span class="type-signature"> &rarr; {string}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Gets the hash of the last withdraw transaction - sometimes useful for instant transfers
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line386">line 386</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    - the transactionHash of the last transaction
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">string</span>
+
+
+    </dd>
+</dl>
+
+    
 
 
 
@@ -1374,7 +1844,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line548">line 548</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line647">line 647</a>
     </li></ul></dd>
     
 
@@ -1406,6 +1876,118 @@
     This promise rosolves into an object whose properties are the
   addresses of the ERC contracts of the tokens held by this account in Layer 2. The
   value of each propery is the number of tokens originating from that contract.
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="getLayer2Commitments"><span class="type-signature">(async) </span>getLayer2Commitments<span class="signature">()</span><span class="type-signature"> &rarr; {Promise}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Returns the commitments of tokens held in layer 2
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line660">line 660</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    This promise rosolves into an object whose properties are the
+  addresses of the ERC contracts of the tokens held by this account in Layer 2. The
+  value of each propery is an array of commitments originating from that contract.
 </div>
 
 
@@ -1490,7 +2072,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line463">line 463</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line550">line 550</a>
     </li></ul></dd>
     
 
@@ -1531,6 +2113,116 @@
     <dd>
         
 <span class="param-type">Promise</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="getProposers"><span class="type-signature">(async) </span>getProposers<span class="signature">()</span><span class="type-signature"> &rarr; {array}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Get all the list of existing proposers.
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line491">line 491</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    A promise that resolves to the Ethereum transaction receipt.
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">array</span>
 
 
     </dd>
@@ -1649,7 +2341,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line145">line 145</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line160">line 160</a>
     </li></ul></dd>
     
 
@@ -1760,7 +2452,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line71">line 71</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line77">line 77</a>
     </li></ul></dd>
     
 
@@ -1868,7 +2560,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line488">line 488</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line575">line 575</a>
     </li></ul></dd>
     
 
@@ -1980,7 +2672,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line400">line 400</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line445">line 445</a>
     </li></ul></dd>
     
 
@@ -2163,7 +2855,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line317">line 317</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line353">line 353</a>
     </li></ul></dd>
     
 
@@ -2301,7 +2993,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line92">line 92</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line98">line 98</a>
     </li></ul></dd>
     
 
@@ -2439,7 +3131,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line105">line 105</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line113">line 113</a>
     </li></ul></dd>
     
 
@@ -2528,7 +3220,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line498">line 498</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line597">line 597</a>
     </li></ul></dd>
     
 
@@ -2617,7 +3309,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line437">line 437</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line524">line 524</a>
     </li></ul></dd>
     
 
@@ -2802,7 +3494,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line120">line 120</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line128">line 128</a>
     </li></ul></dd>
     
 
@@ -2964,7 +3656,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line375">line 375</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line420">line 420</a>
     </li></ul></dd>
     
 
@@ -3245,7 +3937,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line230">line 230</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line245">line 245</a>
     </li></ul></dd>
     
 
@@ -3549,7 +4241,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line277">line 277</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line292">line 292</a>
     </li></ul></dd>
     
 
@@ -3602,6 +4294,117 @@
 
 
         
+            
+
+    
+
+    
+    <h4 class="name" id="withdrawBond"><span class="type-signature">(async) </span>withdrawBond<span class="signature">()</span><span class="type-signature"> &rarr; {Promise}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Withdraw the bond left by the proposer.
+  It will use the address of the Ethereum Signing key that is holds to withdraw the bond.
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line478">line 478</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    A promise that resolves to the Ethereum transaction receipt.
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
     
 
     
@@ -3623,7 +4426,7 @@
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a> on Mon Oct 18 2021 16:37:26 GMT+0100 (British Summer Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a> on Thu Oct 28 2021 09:22:22 GMT+0100 (British Summer Time)
 </footer>
 
 <script> prettyPrint(); </script>
