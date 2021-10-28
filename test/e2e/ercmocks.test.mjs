@@ -12,7 +12,7 @@ chai.use(chaiAsPromised);
 
 describe('Testing the Nightfall SDK', () => {
   const ethereumSigningKey = '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e';
-  const walletTestAddress = '0xDd369AF1Bd4D8fEBEf2cE1716AfEC592e00553AA'; 
+  const walletTestAddress = '0xDd369AF1Bd4D8fEBEf2cE1716AfEC592e00553AA';
   const nf3 = new Nf3(
     'http://localhost:8080',
     'http://localhost:8081',
