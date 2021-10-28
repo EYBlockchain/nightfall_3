@@ -5,7 +5,7 @@ import {
 import { connect } from 'react-redux';
 
 import {
-  DEFAULT_DEPOSIT_FEE, TOKEN_TYPE, TX_TYPES,
+  DEFAULT_DEPOSIT_FEE, DEFAULT_INSTANT_WITHDRAW_FEE, TOKEN_TYPE, TX_TYPES,
 } from '../../../../constants';
 
 class TransactionsModal extends Component {
@@ -13,9 +13,10 @@ class TransactionsModal extends Component {
     super(props);
     this.state = {
       fee: DEFAULT_DEPOSIT_FEE,
-      pkd: this.props.wallet.zkpKeys.pkd,
+      instantWithdrawFee: DEFAULT_INSTANT_WITHDRAW_FEE,
       instantWithdrawEnable: false,
-      tokenId:'',
+      directTransactionEnable: false,
+      tokenId: '',
     };
   }
 
@@ -37,26 +38,52 @@ class TransactionsModal extends Component {
     const fee = this.inputFee.value === '' ? this.state.fee : this.inputFee.value;
     const tokenAmount = tokenInfo.tokenType === TOKEN_TYPE.ERC721 ? '0' :
       this.inputTokenAmount.value === '' ? '0' : this.inputTokenAmount.value;
+    //TODO : pending select correct tokenId index. For now, i select 0, but it could be different
     const tokenId = this.state.tokenId === '' ? tokenInfo.tokenId[0] : this.state.tokenId;
 
     switch (this.props.txType) {
-      case TX_TYPES.WITHDRAW:
+      case TX_TYPES.WITHDRAW: {
         const ethereumAddress = this.inputPkdX.value === '' ? this.props.wallet.ethereumAddress : this.inputPkdX.value;
         const txType = this.state.instantWithdrawEnable
           ? TX_TYPES.INSTANT_WITHDRAW
           : TX_TYPES.WITHDRAW;
-        this.props.handleOnTxSubmit(txType, ethereumAddress, tokenInfo.tokenType, tokenInfo.tokenAddress, tokenId, tokenAmount, fee);
+        const instantWithdrawFee = txType === TX_TYPES.WITHDRAW ? 0 : this.inputInstantWithdrawFee.value === '' ? this.state.instantWithdrawFee : this.inputInstantWithdrawFee.value;
+        this.props.handleOnTxSubmit({
+          txType,
+          ethereumAddress,
+          tokenType: tokenInfo.tokenType,
+          tokenAddress: tokenInfo.tokenAddress,
+          tokenId,
+          tokenAmount,
+          fee,
+          instantWithdrawFee,
+        });
+      }
         break;
 
       default:
         const pkd = this.inputPkdX.value === '' || this.inputPkdY.value === '' ? this.props.wallet.zkpKeys.pkd : [this.inputPkdX.value, this.inputPkdY.value];
-        this.props.handleOnTxSubmit(this.props.txType, pkd, tokenInfo.tokenType, tokenInfo.tokenAddress, tokenId, tokenAmount, fee);
+        this.props.handleOnTxSubmit({
+         txType:  this.props.txType,
+         pkd,
+         tokenType: tokenInfo.tokenType,
+         tokenAddress: tokenInfo.tokenAddress,
+         tokenId,
+         tokenAmount,
+         fee});
     }
 
-    this.props.toggleModalTx();
+    this.toggleAll();
   }
 
   toggleInstantWithdraw = () => this.setState((prevState) => ({ instantWithdrawEnable: !prevState.instantWithdrawEnable }))
+  toggleDirectTransaction = () => this.setState((prevState) => ({ directTransactionEnable: !prevState.directTransactionEnable }))
+
+  toggleAll = () => {
+     this.setState({instantWithdrawEnable: false});
+     this.setState({directTransactionEnable: false});
+     this.props.toggleModalTx();
+  }
 
   render() {
     const tokenInfo = this.getTokenInfo();
@@ -64,12 +91,14 @@ class TransactionsModal extends Component {
       return null;
     }
     const keyLabel = this.props.txType === TX_TYPES.WITHDRAW ? 'Ethereum Address' : 'PK-X';
-    
+    const pkd = this.props.isWalletInitialized ? this.props.wallet.zkpKeys.pkd : '';
+
     return (
       <Modal open={this.props.modalTx}>
         <Modal.Header>{this.props.txType.toUpperCase()}</Modal.Header>
         <Modal.Content>
-          <Form onSubmit={this.handleSubmit}>
+          <Form>
+            <Form.Group widths='equal'>
             {
               this.props.txType === TX_TYPES.WITHDRAW ?
                 <Form.Field>
@@ -81,11 +110,33 @@ class TransactionsModal extends Component {
                 </Form.Field> :
                 null
             }
+            {
+              this.state.instantWithdrawEnable ?
+                <Form.Field>
+                  <label htmlFor="instante-withdrawfee">
+                    Instant Withdraw Fee
+                    <input type="text" placeholder={this.state.instantWithdrawFee} ref={value => (this.inputInstantWithdrawFee = value)} id="fee" />
+                  </label>
+                </Form.Field> :
+                null
+            }
+            </Form.Group>
+            {
+              this.props.txType !== TX_TYPES.DEPOSIT ?
+                <Form.Field>
+                  <Checkbox
+                    label='Direct Transaction'
+                    onChange={this.toggleDirectTransaction}
+                    checked={this.state.directTransactionEnable}
+                  />
+                </Form.Field> :
+                null
+            }
             <Form.Group widths='equal'>
               <Form.Field>
                 <label htmlFor="pkd-x">
                   {keyLabel}
-                  <input type="text" placeholder={this.props.txType === TX_TYPES.WITHDRAW ? this.props.wallet.ethereumAddress : this.state.pkd[0]} ref={value => (this.inputPkdX = value)} id="pkd-x" />
+                  <input type="text" placeholder={this.props.txType === TX_TYPES.WITHDRAW ? this.props.wallet.ethereumAddress : pkd[0]} ref={value => (this.inputPkdX = value)} id="pkd-x" />
                 </label>
               </Form.Field>
               {
@@ -93,7 +144,7 @@ class TransactionsModal extends Component {
                   <Form.Field>
                     <label htmlFor="pk-y">
                       PK-Y
-                      <input type="text" placeholder={this.state.pkd[1]} ref={value => (this.inputPkdY = value)} id="pk-y" />
+                      <input type="text" placeholder={pkd[1]} ref={value => (this.inputPkdY = value)} id="pk-y" />
                     </label>
                   </Form.Field> :
                   null
@@ -149,7 +200,7 @@ class TransactionsModal extends Component {
         </Modal.Content>
         <Modal.Actions>
           <div>
-            <Button floated='left' color="red" onClick={this.props.toggleModalTx}>
+            <Button floated='left' color="red" onClick={this.toggleAll}>
               <Icon name="cancel" />
               Cancel
             </Button>

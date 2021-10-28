@@ -28,7 +28,7 @@ class CreateWalletModal extends Component {
                 <input
                   type="text"
                   ref={(value) => { this.inputPrivateKey = value; }}
-                  placeholder={this.props.wallet.isValidPrivateKey
+                  placeholder={this.props.wallet.isWalletInitialized
                     ? this.props.wallet.privateKey
                     : DEFAULT_PRIVATE_KEY}
                   onChange={this.handleChange}
@@ -37,10 +37,14 @@ class CreateWalletModal extends Component {
               </label>
             </Form.Field>
             <Modal.Actions>
-              <Button color="blue" type="submit">
-                <Icon />
-                Submit
+              <Button floated='left' color="red" onClick={this.props.toggleModalPrivateKey}>
+                <Icon name="cancel" />
+                Cancel
               </Button>
+              <Button floated='right' color="blue" type="submit">
+                <Icon name="send" />
+                Submit
+              </Button> 
             </Modal.Actions>
           </Form>
         </Modal.Content>

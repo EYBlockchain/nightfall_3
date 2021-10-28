@@ -10,6 +10,7 @@ const tokens = [
     tokenName: '',
     tokenBalanceL1: '-',
     tokenBalanceL2: '-',
+    decimals: 9,
   },
   // DUMMY
   {
@@ -20,6 +21,7 @@ const tokens = [
     tokenName: '',
     tokenBalanceL1: '-',
     tokenBalanceL2: '-',
+    decimals: 9,
   },
   // DUMMY
   {
@@ -30,6 +32,8 @@ const tokens = [
     tokenName: '',
     tokenBalanceL1: '-',
     tokenBalanceL2: '-',
+    decimals: 9,
   },
 ];
-export default { tokens };
+
+export default tokens;

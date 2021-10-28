@@ -75,17 +75,16 @@ class Nf3 {
   @returns {Promise}
   */
   async init() {
-    this.web3 = new Web3(this.web3WsUrl);
+    this.setWeb3Provider(this.web3WsUrl);
     this.zkpKeys = this.zkpKeys || (await axios.post(`${this.clientBaseUrl}/generate-keys`)).data;
     this.shieldContractAddress = await this.getContractAddress('Shield');
     this.proposersContractAddress = await this.getContractAddress('Proposers');
     this.challengesContractAddress = await this.getContractAddress('Challenges');
     this.stateContractAddress = await this.getContractAddress('State');
     // set the ethereumAddress iff we have a signing key
-    if (this.ethereumSigningKey)
-      this.ethereumAddress = this.web3.eth.accounts.privateKeyToAccount(
-        this.ethereumSigningKey,
-      ).address;
+    if (typeof this.ethereumSigningKey === 'string') {
+      this.ethereumAddress = this.getAccounts();
+    }
     return this.subscribeToIncomingViewingKeys();
   }
 
@@ -97,9 +96,7 @@ class Nf3 {
   */
   setEthereumSigningKey(key) {
     this.ethereumSigningKey = key;
-    this.ethereumAddress = this.web3.eth.accounts.privateKeyToAccount(
-      this.ethereumSigningKey,
-    ).address;
+    this.ethereumAddress = this.getAccounts();
     // clear the nonce as we're using a fresh account
     this.nonce = 0;
   }
@@ -132,11 +129,17 @@ class Nf3 {
   ) {
     // We'll manage the nonce ourselves because we can run too fast for the blockchain client to update
     // we need a Mutex so that we don't get a nonce-updating race.
+	  
     let tx;
     await this.nonceMutex.runExclusive(async () => {
       // if we don't have a nonce, we must get one from the ethereum client
-      if (!this.nonce) this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
+      if (!this.nonce) {
+         console.log("NONCE", this.nonce, this.ethereumAddress);
+	 this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
+         console.log("NONCE", this.nonce, this.ethereumAddress, await this.web3.eth.getTransactionCount(this.ethereumAddress)) ;
+      }
       tx = {
+        from: this.ethereumAddress,
         to: contractAddress,
         data: unsignedTransaction,
         value: fee,
@@ -146,8 +149,12 @@ class Nf3 {
       };
       this.nonce++;
     });
-    const signed = await this.web3.eth.accounts.signTransaction(tx, this.ethereumSigningKey);
-    return this.web3.eth.sendSignedTransaction(signed.rawTransaction);
+
+    if (this.ethereumSigningKey) {
+      const signed = await this.web3.eth.accounts.signTransaction(tx, this.ethereumSigningKey);
+      return this.web3.eth.sendSignedTransaction(signed.rawTransaction);
+    }
+    return this.web3.eth.sendTransaction(tx);
   }
 
   /**
@@ -660,6 +667,71 @@ class Nf3 {
   async getLayer2Commitments() {
     const res = await axios.get(`${this.clientBaseUrl}/commitment/commitments`);
     return res.data.commitments;
+  }
+
+  /**
+  Set a Web3 Provider URL
+  @param {String|Object} providerData - Network url (i.e, http://localhost:8544) or an Object with the information to set the provider
+  */
+  setWeb3Provider(providerData) {
+    if (typeof providerData === 'string' || typeof window === 'undefined') {
+      this.web3 = new Web3(providerData);
+    }
+
+    if (typeof window !== 'undefined' && window.ethereum) {
+      this.web3 = new Web3(window.ethereum);
+      window.ethereum.send('eth_requestAccounts');
+    }
+  }
+
+  /**
+  Web3 provider getter
+  @returns {Object} provider
+  */
+  getWeb3Provider() {
+    return this.web3;
+  }
+
+  /**
+  Get Ethereum Balance
+  @param {String} address - Ethereum address of account
+  @returns {String} - Ether balance in account
+  */
+  getL1Balance(address) {
+    return this.web3.eth.getBalance(address).then(function (balanceWei) {
+      return Web3.utils.fromWei(balanceWei);
+    });
+  }
+
+  /**
+  Get EthereumAddress available.
+  @param {String} privateKey - Private Key - optional
+  @returns {String} - Ether balance in account
+  */
+  getAccounts() {
+    const account =
+      this.ethereumSigningKey.length === 0
+        ? this.web3.eth.getAccounts().then(address => address[0])
+        : this.web3.eth.accounts.privateKeyToAccount(this.ethereumSigningKey).address;
+    return account;
+  }
+
+  /**
+  Signs a message with a given authenticated account
+  @param {String} msg  - Message to sign
+  @param {String } account - Ethereum address of account
+  @returns {Promise} - string with the signature
+  */
+  signMessage(msg, account) {
+    return this.web3.eth.personal.sign(msg, account);
+  }
+
+  /**
+  Returns current network ID
+  @returns {Promise} - Network Id number
+  */
+  getNetworkId() {
+    return this.web3.eth.net.getId();
   }
 }
 

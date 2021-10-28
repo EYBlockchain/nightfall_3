@@ -120,6 +120,13 @@ export async function getBlockByTransactionHash(transactionHash) {
   return db.collection(SUBMITTED_BLOCKS_COLLECTION).find(query).toArray();
 }
 
+export async function getBlockByTransactionHashL1(transactionHashL1) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { transactionHashL1 };
+  return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
+}
+
 export async function numberOfBlockWithTransactionHash(transactionHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
