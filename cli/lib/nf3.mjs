@@ -129,15 +129,12 @@ class Nf3 {
   ) {
     // We'll manage the nonce ourselves because we can run too fast for the blockchain client to update
     // we need a Mutex so that we don't get a nonce-updating race.
-	  
+
     let tx;
     await this.nonceMutex.runExclusive(async () => {
       // if we don't have a nonce, we must get one from the ethereum client
-      if (!this.nonce) {
-         console.log("NONCE", this.nonce, this.ethereumAddress);
-	 this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
-         console.log("NONCE", this.nonce, this.ethereumAddress, await this.web3.eth.getTransactionCount(this.ethereumAddress)) ;
-      }
+      if (!this.nonce) this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
+
       tx = {
         from: this.ethereumAddress,
         to: contractAddress,
