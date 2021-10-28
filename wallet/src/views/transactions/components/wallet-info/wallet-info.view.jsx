@@ -3,7 +3,6 @@ import { connect } from 'react-redux';
 import { Table, Button, Container, Icon } from 'semantic-ui-react';
 import Web3 from 'web3';
 import * as tokenActions from '../../../../store/token/token.actions';
-import { getL1Balance } from '../../../../utils/lib/providers';
 import { TokenAddModal } from './token-add.view';
 
 
@@ -43,14 +42,14 @@ class WalletInfo extends Component {
         const compressedPkd = this.props.wallet.zkpKeys.compressedPkd;
         const myL2Balance = typeof l2Balance[compressedPkd] === 'undefined' ? {} : l2Balance[compressedPkd];
         const l2TokenAddressArr = myL2Balance === {} ? []: Object.keys(myL2Balance);
-        getL1Balance(this.props.wallet.ethereumAddress).then((l1Balance) => {
+	this.props.nf3.getL1Balance(this.props.wallet.ethereumAddress).then((l1Balance) => {
           if (l2TokenAddressArr.length) {
             l2TokenAddressArr.forEach(l2TokenAddress => {
               const l2Token = this.props.token.tokenPool.filter(token => token.tokenAddress === '0x'+l2TokenAddress)[0];
               this.props.onAddToken('0x' + l2TokenAddress.toLowerCase(), l2Token.tokenType, l2Token.tokenId, l1Balance, Web3.utils.fromWei(myL2Balance[l2TokenAddress].toString()));
-            })
-          }
-        });
+            });
+	  }
+	});
       });
   }
 
@@ -109,7 +108,7 @@ class WalletInfo extends Component {
                 <Table.Cell > {this.importedWallet(this.props.wallet)} </Table.Cell>
               </Table.HeaderCell>
               <Table.HeaderCell textAlign="right">
-                <Button onClick={this.reload}> <Icon name="sync" /> Reload </Button>
+                <Button onClick={this.reload} disabled={this.props.token.activeTokenRowId === ''}><Icon name="sync" /> Reload </Button>
               </Table.HeaderCell>
               <Table.HeaderCell textAlign="right">
                 <Button onClick={this.toggleModalTokenAdd}> <Icon name="plus" /> Add Token </Button>

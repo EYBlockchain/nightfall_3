@@ -8,8 +8,8 @@ import FooterMenu from './components/footer-menu/footer-menu.view';
 import TransactionsMenu from './components/transactions-menu/transactions-menu.view';
 import WalletInfo from './components/wallet-info/wallet-info.view';
 import TransactionsModal from './components/transactions/transactions-modal.view';
-import { TX_TYPES } from '../../constants';
-import { toBaseUnit } from '../../utils/lib/utils';
+import * as txActions from '../../store/transactions/transactions.actions';
+import * as txThunks from '../../store/transactions/transactions.thunks';
 
 
 class Transactions extends Component {
@@ -20,7 +20,6 @@ class Transactions extends Component {
       modalTx: false,
       txType: '',
     };
-
   }
 
   handleItemClick = (e, { name }) => {
@@ -37,47 +36,12 @@ class Transactions extends Component {
     this.getInfoAccount();
   }
 
-  handleClickApprove = async (addressTokens, amountToken) => {
-    const res = await this.props.handleApprove(addressTokens, this.props.abiTokens, this.props.wallet,
-      amountToken, this.props.config.address, this.props.password, this.props.config.nodeEth, this.props.gasMultiplier);
-  }
-
   renderRedirect = () => {
-    if (this.props.login.isValidPrivateKey) {
+    if (this.props.login.isWalletInitialized) {
       return <Redirect to="/transactions" />;
     } else {
       return <Redirect to="/login" />;
     }
-  }
-
-  handleOnTxSubmit = (txType, pkd, tokenType, tokenAddress, tokenId, tokenAmount, fee) => {
-    const tokenAmountBN = toBaseUnit(tokenAmount).toString();
-    switch (txType) {
-      case TX_TYPES.DEPOSIT:
-          // TODO: dispatch error
-          this.props.login.nf3.deposit(tokenAddress, tokenType, tokenAmountBN, tokenId, fee)
-          .then(console.log)
-          .catch(console.log)
-        break
-
-      case TX_TYPES.TRANSFER:
-          // TODO: dispatch error
-          this.props.login.nf3.transfer(tokenAddress, tokenType, tokenAmountBN, tokenId, pkd, fee)
-          .then(console.log)
-          .catch(console.log)
-        break
-
-      case TX_TYPES.WITHDRAW:
-          // TODO: dispatch error
-          this.props.login.nf3.withdraw(tokenAddress, tokenType, tokenAmountBN, tokenId, pkd, fee)
-          .then(console.log)
-          .catch(console.log);
-        break;
-
-      default:
-        throw ("Unknown transaction")
-    }
-
   }
 
   render() {
@@ -104,8 +68,9 @@ class Transactions extends Component {
           modalTx={this.state.modalTx && this.props.token.activeTokenRowId}
           txType={this.state.txType}
           wallet={this.props.login.wallet}
+          isWalletInitialized={this.props.login.isWalletInitialized}
           toggleModalTx={this.toggleModalTx}
-          handleOnTxSubmit={this.handleOnTxSubmit}
+          handleOnTxSubmit={this.props.onSubmitTx}
         />
         <FooterMenu />
         {this.renderRedirect()}
@@ -117,9 +82,14 @@ class Transactions extends Component {
 const mapStateToProps = (state) => ({
   login: state.login,
   token: state.token,
+  transactions: state.transactions,
 });
 
-const mapDispatchToProps = () => ({
+const mapDispatchToProps = (dispatch) => ({
+  onFailedTx: () => dispatch(txActions.txFailed()),
+  onSuccessTx: (txReceipt) => dispatch(txActions.txSuccess(txReceipt)),
+  onSubmitTx: (txParams) => dispatch(txThunks.txSubmit(txParams)),
+  onSubmitInstantWithdrawTx: (withdrawTransactionHash, fee) => dispatch(txThunks.txInstantWithdrawSubmit(withdrawTransactionHash, fee)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(Transactions);

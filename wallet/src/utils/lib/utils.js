@@ -1,11 +1,22 @@
 /* ignore unused exports */
 import Web3 from 'web3';
 
+/**
+ * Checkes if passed object is of type string
+ * @param {Object} s
+ * @returns {Boolean}
+ */
 function isString(s) {
   return typeof s === 'string' || s instanceof String;
 }
 
-function toBaseUnit(value, decimals = 18) {
+/**
+ *  Converts amount to Wei
+ * @param {String} value - input amount
+ * @param {Number} decimals - number of decimals in the final representation
+ * @returns {BN} - Amount in Wei
+ */
+function toBaseUnit(value, decimals = 9) {
   if (!isString(value)) {
     throw new Error('Pass strings to prevent floating point precision issues.');
   }
@@ -53,5 +64,4 @@ function toBaseUnit(value, decimals = 18) {
   return new Web3.utils.BN(wei.toString(10), 10);
 }
 
-// eslint-disable-next-line import/prefer-default-export
-export { toBaseUnit };
+export default toBaseUnit;

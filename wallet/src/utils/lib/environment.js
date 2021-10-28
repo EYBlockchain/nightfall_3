@@ -1,6 +1,4 @@
 /* ignore unused exports */
-import { setProvider } from './providers';
-
 const SUPPORTED_ENVIRONMENTS = {
   mainnet: {
     name: 'Mainnet',
@@ -28,7 +26,7 @@ const SUPPORTED_ENVIRONMENTS = {
   },
   localhost: {
     name: 'Localhost',
-    chainId: 1337,
+    chainId: 4378921,
     clientApiUrl: 'http://localhost:8080',
     optimistApiUrl: 'http://localhost:8081',
     optimistWsUrl: 'ws://localhost:8082',
@@ -55,6 +53,7 @@ const currentEnvironment = {
   optimistApiUrl: '',
   optimistWsUrl: '',
   web3WsUrl: '',
+  chainId: null,
 };
 
 /**
@@ -68,6 +67,7 @@ function getSupportedEnvironments() {
 /**
  * Checks if a network has a supported environment
  * @param {String} env Network name
+ * @returns {Boolean} environment supported
  */
 function isEnvironmentSupportedByNetworkName(env) {
   if (
@@ -79,53 +79,86 @@ function isEnvironmentSupportedByNetworkName(env) {
   return false;
 }
 
-async function setContractAddress(contractName) {
-  // CONTRACT_ADDRESSES[contractName] = await Nf3.getContractAddress(contractName);
-  CONTRACT_ADDRESSES[contractName] = '0x121221';
+/**
+ * Stores the addresses of NF contract by type
+ * @param {Object} nf3 - Nightfall instance to retrieve contract addresses from
+ * @param {String} contractName - Name of contract
+ */
+async function setContractAddress(nf3, contractName) {
+  CONTRACT_ADDRESSES[contractName] = await nf3.getContractAddress(contractName);
 }
 
+/**
+ * Stores the addresses of NF contracts
+ * @param {Object} nf3 - Nightfall instance to retrieve contract addresses from
+ */
+async function setContractAddresses(nf3) {
+  setContractAddress(nf3, ContractNames.Shield);
+  setContractAddress(nf3, ContractNames.Proposers);
+  setContractAddress(nf3, ContractNames.Challenges);
+  setContractAddress(nf3, ContractNames.State);
+}
+
+/**
+ * Stores the NF client API URL
+ * @param {String} baseApiUrl - client API URL
+ */
 function setClientApiUrl(baseApiUrl) {
   currentEnvironment.clientApiUrl = baseApiUrl;
 }
 
+/**
+ * Stores the NF Optimist API URL
+ * @param {String} optimistApiUrl - optimist API URL
+ */
 function setOptimistApiUrl(optimistApiUrl) {
   currentEnvironment.optimistApiUrl = optimistApiUrl;
 }
 
+/**
+ * Stores the NF Optimist Websocket URL
+ * @param {String} optimistWsUrl - optimist Websocket URL
+ */
 function setOptimistWsUrl(optimistWsUrl) {
   currentEnvironment.optimistWsUrl = optimistWsUrl;
 }
 
+/**
+ * Stores the NF Web3 Websocket URL
+ * @param {String} web3WsUrl - Web3 websocket URL
+ */
 function setWeb3WsUrl(web3WsUrl) {
   currentEnvironment.web3WsUrl = web3WsUrl;
 }
 
 /**
+ * Stores the NF network chain Id
+ * @param {String} chainId - NF network chain ID
+ */
+function setChainId(chainId) {
+  currentEnvironment.chainId = chainId;
+}
+
+/**
  * Sets an environment from a chain id or from a custom environment object
  * @param {Object|Number} env - Chain id or a custom environment object
- * @param {Bool} enableProvider - Set provider now
  */
-function setEnvironment(env, enableProvider) {
+function setEnvironment(env) {
   if (!env) {
     throw new Error('A environment is required');
   }
-
-  setContractAddress(ContractNames.Shield);
-  setContractAddress(ContractNames.Proposers);
-  setContractAddress(ContractNames.Challenges);
-  setContractAddress(ContractNames.State);
 
   if (typeof env === 'string') {
     if (!isEnvironmentSupportedByNetworkName(env)) {
       throw new Error('Environment not supported');
     }
-  }
-  setClientApiUrl(SUPPORTED_ENVIRONMENTS[env.toLowerCase()].clientApiUrl);
-  setOptimistApiUrl(SUPPORTED_ENVIRONMENTS[env.toLowerCase()].optimistApiUrl);
-  setOptimistWsUrl(SUPPORTED_ENVIRONMENTS[env.toLowerCase()].optimistWsUrl);
-  setWeb3WsUrl(SUPPORTED_ENVIRONMENTS[env.toLowerCase()].web3WsUrl);
 
-  if (typeof env === 'object') {
+    setClientApiUrl(SUPPORTED_ENVIRONMENTS[env.toLowerCase()].clientApiUrl);
+    setOptimistApiUrl(SUPPORTED_ENVIRONMENTS[env.toLowerCase()].optimistApiUrl);
+    setOptimistWsUrl(SUPPORTED_ENVIRONMENTS[env.toLowerCase()].optimistWsUrl);
+    setWeb3WsUrl(SUPPORTED_ENVIRONMENTS[env.toLowerCase()].web3WsUrl);
+    setChainId(SUPPORTED_ENVIRONMENTS[env.toLowerCase()].chainId);
+  } else if (typeof env === 'object') {
     if (env.clientApiUrl && typeof env.clientApiUrl === 'string') {
       setClientApiUrl(env.clientApiUrl);
     }
@@ -138,10 +171,9 @@ function setEnvironment(env, enableProvider) {
     if (env.web3WsUrl && typeof env.Web3WsUrl === 'string') {
       setWeb3WsUrl(env.web3WsUrl);
     }
-  }
-
-  if (enableProvider) {
-    setProvider(currentEnvironment.web3WsUrl);
+    if (env.chainId && typeof env.chainId === 'string') {
+      setChainId(env.chainId);
+    }
   }
 }
 
@@ -157,4 +189,4 @@ function getCurrentEnvironment() {
   };
 }
 
-export { setEnvironment, getCurrentEnvironment, getSupportedEnvironments };
+export { setEnvironment, getCurrentEnvironment, getSupportedEnvironments, setContractAddresses };
