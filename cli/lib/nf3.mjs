@@ -83,7 +83,7 @@ class Nf3 {
     this.stateContractAddress = await this.getContractAddress('State');
     // set the ethereumAddress iff we have a signing key
     if (typeof this.ethereumSigningKey === 'string') {
-      this.ethereumAddress = this.getAccounts();
+      this.ethereumAddress = await this.getAccounts();
     }
     return this.subscribeToIncomingViewingKeys();
   }
