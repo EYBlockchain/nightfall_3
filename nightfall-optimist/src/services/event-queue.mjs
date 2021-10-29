@@ -24,7 +24,7 @@ import logger from 'common-files/utils/logger.mjs';
 const { MAX_QUEUE } = config;
 const fastQueue = new Queue({ autostart: true, concurrency: 1 });
 const slowQueue = new Queue({ autostart: true, concurrency: 1 });
-const queues = [fastQueue, slowQueue];
+export const queues = [fastQueue, slowQueue];
 
 /**
 This function will return a promise that resolves to true when the next highest
@@ -43,11 +43,11 @@ function nextHigherPriorityQueueHasEmptied(priority) {
   });
 }
 
-export async function eventQueueManager(callback, priority, args) {
+export async function enqueueEvent(callback, priority, args) {
   queues[priority].push(async () => {
     // await nextHigherPriorityQueueHasEmptied(priority);
     // prevent conditionalmakeblock from running until fastQueue is emptied
-    await callback(args);
+    return callback(args);
   });
 }
 
@@ -72,14 +72,14 @@ export async function queueManager(eventObject, eventArgs) {
     logger.info(`Queueing event removal ${eventObject.event}`);
     queues[priority].push(async () => {
       await nextHigherPriorityQueueHasEmptied(priority); // prevent eventHandlers running until the higher priority queue has emptied
-      eventHandlers.removers[eventObject.event](eventObject, args);
+      return eventHandlers.removers[eventObject.event](eventObject, args);
     });
     // otherwise queue the event for processing.
   } else {
     logger.info(`Queueing event ${eventObject.event}`);
     queues[priority].push(async () => {
       // await nextHigherPriorityQueueHasEmptied(priority); // prevent eventHandlers running until the higher priority queue has emptied
-      eventHandlers[eventObject.event](eventObject, args);
+      return eventHandlers[eventObject.event](eventObject, args);
     });
   }
   // the queue shouldn't get too long if we're keeping up with the blockchain.

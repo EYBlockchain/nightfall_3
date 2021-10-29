@@ -408,6 +408,17 @@ describe('Testing the challenge http API', () => {
       await new Promise(resolve => setTimeout(resolve, 5000));
     });
 
+    after(async () => {
+      // At the very end make sure we wait for any good blocks before dropping out of the test.
+      while (eventLogs[0] !== 'blockProposed') {
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+
+      eventLogs.shift();
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    });
+
     describe('Challenge 1: Incorrect root challenge', () => {
       it('Should delete the flawed block and rollback the leaves', async () => {
         await testForEvents(stateAddress, [

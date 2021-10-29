@@ -11,7 +11,6 @@ import {
   getMostProfitableTransactions,
   numberOfUnprocessedTransactions,
 } from './database.mjs';
-import { eventQueueManager } from './event-queue.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
@@ -72,11 +71,8 @@ export async function conditionalMakeBlock(proposer) {
       // remove the transactiosn from the mempool so we don't keep making new
       // blocks with them
       await removeTransactionsFromMemPool(block);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      eventQueueManager(conditionalMakeBlock, 0, proposer);
-      // TODO is await needed?
-    } else {
-      await eventQueueManager(conditionalMakeBlock, 0, proposer);
     }
   }
+  // Let's slow down here so we don't slam the database.
+  await new Promise(resolve => setTimeout(resolve, 3000));
 }

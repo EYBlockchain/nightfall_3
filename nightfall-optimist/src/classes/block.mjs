@@ -3,12 +3,11 @@ An optimistic layer 2 Block class
 */
 import config from 'config';
 import Timber from 'common-files/classes/timber.mjs';
-import { getContractInstance } from 'common-files/utils/contract.mjs';
 import Web3 from 'common-files/utils/web3.mjs';
 import { compressProof } from '../utils/curve-maths/curves.mjs';
-import { getLatestTree } from '../services/database.mjs';
+import { getLatestTree, getLatestBlockInfo } from '../services/database.mjs';
 
-const { ZERO, PROPOSE_BLOCK_TYPES, STATE_CONTRACT_NAME } = config;
+const { ZERO, PROPOSE_BLOCK_TYPES } = config;
 
 /**
 This Block class does not have the Block components that are computed on-chain.
@@ -72,10 +71,12 @@ class Block {
   // init() function.
   static async build(components) {
     const { proposer, transactions } = components;
-    // We'd like to get the block number from the blockchain like this:
-    const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
-    let blockNumberL2 = Number(await stateContractInstance.methods.getNumberOfL2Blocks().call());
-    let previousBlockHash = await stateContractInstance.methods.getLatestBlockHash().call();
+    // This is blockNumberL2 and blockHash of the last block we have.
+    const { blockNumberL2: dbPrevBlockNumberL2, blockHash: dbBlockHash } =
+      await getLatestBlockInfo();
+    let blockNumberL2 = dbPrevBlockNumberL2 + 1; // We increment it as this is what the next block should be
+    let previousBlockHash = dbBlockHash;
+
     // It's possible that the previously made block hasn't been added to the blockchain yet.
     // In that case, this block will have the same block number as the previous block
     // and will rightly be reverted when we attempt to add it to the chain.
