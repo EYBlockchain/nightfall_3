@@ -2,6 +2,7 @@ import axios from 'axios';
 import Web3 from 'web3';
 import WebSocket from 'ws';
 import EventEmitter from 'events';
+import { Mutex } from 'async-mutex';
 
 /**
 @class
@@ -46,6 +47,12 @@ class Nf3 {
 
   BLOCK_STAKE = 1;
 
+  nonce = 0;
+
+  nonceMutex = new Mutex();
+
+  latestWithdrawHash;
+
   constructor(
     clientBaseUrl,
     optimistBaseUrl,
@@ -76,7 +83,7 @@ class Nf3 {
     this.stateContractAddress = await this.getContractAddress('State');
     // set the ethereumAddress iff we have a signing key
     if (typeof this.ethereumSigningKey === 'string') {
-      this.ethereumAddress = await this.getAccounts();
+      this.ethereumAddress = this.getAccounts();
     }
     return this.subscribeToIncomingViewingKeys();
   }
@@ -87,9 +94,11 @@ class Nf3 {
   @method
   @param {string} key - the ethereum private key as a hex string.
   */
-  async setEthereumSigningKey(key) {
+  setEthereumSigningKey(key) {
     this.ethereumSigningKey = key;
-    this.ethereumAddress = await this.getAccounts();
+    this.ethereumAddress = this.getAccounts();
+    // clear the nonce as we're using a fresh account
+    this.nonce = 0;
   }
 
   /**
@@ -118,16 +127,25 @@ class Nf3 {
     contractAddress = this.shieldContractAddress,
     fee = this.defaultFee,
   ) {
-    const nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
-    const tx = {
-      from: this.ethereumAddress,
-      to: contractAddress,
-      data: unsignedTransaction,
-      value: fee,
-      gas: 10000000,
-      gasPrice: 10000000000,
-      nonce,
-    };
+    // We'll manage the nonce ourselves because we can run too fast for the blockchain client to update
+    // we need a Mutex so that we don't get a nonce-updating race.
+
+    let tx;
+    await this.nonceMutex.runExclusive(async () => {
+      // if we don't have a nonce, we must get one from the ethereum client
+      if (!this.nonce) this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
+
+      tx = {
+        from: this.ethereumAddress,
+        to: contractAddress,
+        data: unsignedTransaction,
+        value: fee,
+        gas: 10000000,
+        gasPrice: 10000000000,
+        nonce: this.nonce,
+      };
+      this.nonce++;
+    });
 
     if (this.ethereumSigningKey) {
       const signed = await this.web3.eth.accounts.signTransaction(tx, this.ethereumSigningKey);
@@ -295,16 +313,16 @@ class Nf3 {
       ask: this.zkpKeys.ask,
       fee,
     });
-    const { transactionHash: withdrawTransactionHash } = res.data.transaction;
+    this.latestWithdrawHash = res.data.transaction.transactionHash;
     if (!offchain) {
       const receiptPromise = this.submitTransaction(
         res.data.txDataToSign,
         this.shieldContractAddress,
         fee,
       );
-      return { withdrawTransactionHash, receiptPromise };
+      return receiptPromise;
     }
-    return { withdrawTransactionHash, receiptPromise: res.status };
+    return res.status;
   }
 
   /**
@@ -362,6 +380,15 @@ class Nf3 {
       transactionHash: withdrawTransactionHash,
     });
     return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, 0);
+  }
+
+  /**
+  Gets the hash of the last withdraw transaction - sometimes useful for instant transfers
+  @method
+  @returns {string} - the transactionHash of the last transaction
+  */
+  getLatestWithdrawHash() {
+    return this.latestWithdrawHash;
   }
 
   /**
@@ -678,7 +705,7 @@ class Nf3 {
   @param {String} privateKey - Private Key - optional
   @returns {String} - Ether balance in account
   */
-  async getAccounts() {
+  getAccounts() {
     const account =
       this.ethereumSigningKey.length === 0
         ? this.web3.eth.getAccounts().then(address => address[0])
