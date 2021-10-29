@@ -184,7 +184,11 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
               <Form.Field>
                 <label htmlFor="amount">
                   Amount
-                  <input type="text" onChange={event => setTokenAmount(event.target.value)} />
+                  <input
+                    type="text"
+                    id="amount"
+                    onChange={event => setTokenAmount(event.target.value)}
+                  />
                 </label>
               </Form.Field>
             )}
@@ -195,6 +199,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
                   type="text"
                   placeholder={fee}
                   onChange={event => setFee(event.target.value)}
+                  id="fee"
                 />
               </label>
             </Form.Field>
