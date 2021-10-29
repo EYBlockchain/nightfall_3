@@ -5,7 +5,7 @@ import { Command } from 'commander/esm.mjs';
 import clear from 'clear';
 import Nf3 from '../lib/nf3.mjs';
 
-const defaultKey = '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e';
+const defaultKey = '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb';
 const program = new Command();
 program.option('-k, --key', 'Ethereum signing key', defaultKey);
 program.option('-h', '--help', 'Help');

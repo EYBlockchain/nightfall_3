@@ -19,18 +19,18 @@
 
     <h1 class="page-title">Source: nf3.mjs</h1>
 
+    
 
 
 
-
-
+    
     <section>
         <article>
             <pre class="prettyprint source linenums"><code>import axios from 'axios';
 import Web3 from 'web3';
 import WebSocket from 'ws';
 import EventEmitter from 'events';
-import { generateKeys } from '../../nightfall-client/src/services/keys.mjs';
+import { Mutex } from 'async-mutex';
 
 /**
 @class
@@ -75,6 +75,12 @@ class Nf3 {
 
   BLOCK_STAKE = 1;
 
+  nonce = 0;
+
+  nonceMutex = new Mutex();
+
+  latestWithdrawHash;
+
   constructor(
     clientBaseUrl,
     optimistBaseUrl,
@@ -98,7 +104,7 @@ class Nf3 {
   */
   async init() {
     this.web3 = new Web3(this.web3WsUrl);
-    this.zkpKeys = this.zkpKeys || (await generateKeys());
+    this.zkpKeys = this.zkpKeys || (await axios.post(`${this.clientBaseUrl}/generate-keys`)).data;
     this.shieldContractAddress = await this.getContractAddress('Shield');
     this.proposersContractAddress = await this.getContractAddress('Proposers');
     this.challengesContractAddress = await this.getContractAddress('Challenges');
@@ -122,6 +128,8 @@ class Nf3 {
     this.ethereumAddress = this.web3.eth.accounts.privateKeyToAccount(
       this.ethereumSigningKey,
     ).address;
+    // clear the nonce as we're using a fresh account
+    this.nonce = 0;
   }
 
   /**
@@ -150,15 +158,22 @@ class Nf3 {
     contractAddress = this.shieldContractAddress,
     fee = this.defaultFee,
   ) {
-    const nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
-    const tx = {
-      to: contractAddress,
-      data: unsignedTransaction,
-      value: fee,
-      gas: 10000000,
-      gasPrice: 10000000000,
-      nonce,
-    };
+    // We'll manage the nonce ourselves because we can run too fast for the blockchain client to update
+    // we need a Mutex so that we don't get a nonce-updating race.
+    let tx;
+    await this.nonceMutex.runExclusive(async () => {
+      // if we don't have a nonce, we must get one from the ethereum client
+      if (!this.nonce) this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
+      tx = {
+        to: contractAddress,
+        data: unsignedTransaction,
+        value: fee,
+        gas: 10000000,
+        gasPrice: 10000000000,
+        nonce: this.nonce,
+      };
+      this.nonce++;
+    });
     const signed = await this.web3.eth.accounts.signTransaction(tx, this.ethereumSigningKey);
     return this.web3.eth.sendSignedTransaction(signed.rawTransaction);
   }
@@ -322,16 +337,37 @@ class Nf3 {
       ask: this.zkpKeys.ask,
       fee,
     });
-    const { transactionHash: withdrawTransactionHash } = res.data.transaction;
+    this.latestWithdrawHash = res.data.transaction.transactionHash;
     if (!offchain) {
       const receiptPromise = this.submitTransaction(
         res.data.txDataToSign,
         this.shieldContractAddress,
         fee,
       );
-      return { withdrawTransactionHash, receiptPromise };
+      return receiptPromise;
     }
-    return { withdrawTransactionHash, receiptPromise: res.status };
+    return res.status;
+  }
+
+  /**
+  Enables someone with a valid withdraw transaction in flight to finalise the
+  withdrawal of funds to L1 (only relevant for ERC20).
+  @method
+  @async
+  @param {string} withdrawTransactionHash - the hash of the Layer 2 transaction in question
+  */
+  async finaliseWithdrawal(withdrawTransactionHash) {
+    // find the L2 block containing the L2 transaction hash
+    let res = await axios.get(
+      `${this.optimistBaseUrl}/block/transaction-hash/${withdrawTransactionHash}`,
+    );
+    const { block, transactions, index } = res.data;
+    res = await axios.post(`${this.clientBaseUrl}/finalise-withdrawal`, {
+      block,
+      transactions,
+      index,
+    });
+    return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, 0);
   }
 
   /**
@@ -368,6 +404,15 @@ class Nf3 {
       transactionHash: withdrawTransactionHash,
     });
     return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, 0);
+  }
+
+  /**
+  Gets the hash of the last withdraw transaction - sometimes useful for instant transfers
+  @method
+  @returns {string} - the transactionHash of the last transaction
+  */
+  getLatestWithdrawHash() {
+    return this.latestWithdrawHash;
   }
 
   /**
@@ -434,6 +479,48 @@ class Nf3 {
       this.proposersContractAddress,
       this.PROPOSER_BOND,
     );
+  }
+
+  /**
+  De-registers an existing proposer.
+  It will use the address of the Ethereum Signing key that is holds to de-register
+  the proposer.
+  @method
+  @async
+  @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
+  */
+  async deregisterProposer() {
+    const res = await axios.post(`${this.optimistBaseUrl}/proposer/de-register`, {
+      address: this.ethereumAddress,
+    });
+    return this.submitTransaction(res.data.txDataToSign, this.proposersContractAddress, 0);
+  }
+
+  /**
+  Withdraw the bond left by the proposer.
+  It will use the address of the Ethereum Signing key that is holds to withdraw the bond.
+  @method
+  @async
+  @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
+  */
+  async withdrawBond() {
+    const res = await axios.post(`${this.optimistBaseUrl}/proposer/withdrawBond`, {
+      address: this.ethereumAddress,
+    });
+    return this.submitTransaction(res.data.txDataToSign, this.proposersContractAddress, 0);
+  }
+
+  /**
+  Get all the list of existing proposers.
+  @method
+  @async
+  @returns {array} A promise that resolves to the Ethereum transaction receipt.
+  */
+  async getProposers() {
+    const res = await axios.get(`${this.optimistBaseUrl}/proposer/proposers`, {
+      address: this.ethereumAddress,
+    });
+    return res.data;
   }
 
   /**
@@ -518,6 +605,18 @@ class Nf3 {
   }
 
   /**
+  De-registers our address as a challenger address with the optimist container.
+  @method
+  @async
+  @return {Promise} A promise that resolves to an axios response.
+  */
+  async deregisterChallenger() {
+    return axios.post(`${this.optimistBaseUrl}/challenger/remove`, {
+      address: this.ethereumAddress,
+    });
+  }
+
+  /**
   Starts a Challenger that listens for challengable blocks and submits challenge
   transactions to the blockchain to challenge the block.
   @method
@@ -577,6 +676,19 @@ class Nf3 {
     const res = await axios.get(`${this.clientBaseUrl}/commitment/balance`);
     return res.data.balance;
   }
+
+  /**
+  Returns the commitments of tokens held in layer 2
+  @method
+  @async
+  @returns {Promise} This promise rosolves into an object whose properties are the
+  addresses of the ERC contracts of the tokens held by this account in Layer 2. The
+  value of each propery is an array of commitments originating from that contract.
+  */
+  async getLayer2Commitments() {
+    const res = await axios.get(`${this.clientBaseUrl}/commitment/commitments`);
+    return res.data.commitments;
+  }
 }
 
 export default Nf3;
@@ -596,7 +708,7 @@ export default Nf3;
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a> on Mon Oct 18 2021 16:37:26 GMT+0100 (British Summer Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a> on Thu Oct 28 2021 09:22:22 GMT+0100 (British Summer Time)
 </footer>
 
 <script> prettyPrint(); </script>
