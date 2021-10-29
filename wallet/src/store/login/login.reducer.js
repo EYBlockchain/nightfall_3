@@ -3,10 +3,6 @@ import { loginActionTypes } from './login.actions';
 
 const initialState = {
   isWalletInitialized: false,
-  wallet: {
-    privateKey: '',
-    ethereumAddress: '',
-  },
   nf3: {},
 };
 
@@ -16,7 +12,6 @@ function loginReducer(state = initialState, action) {
       return {
         ...state,
         isWalletInitialized: false,
-        wallet: action.payload.wallet,
         nf3: {},
       };
 
@@ -24,7 +19,6 @@ function loginReducer(state = initialState, action) {
       return {
         ...state,
         isWalletInitialized: true,
-        wallet: action.payload.wallet,
         nf3: action.payload.nf3,
       };
 

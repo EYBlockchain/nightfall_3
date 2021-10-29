@@ -1,30 +1,22 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { connect } from 'react-redux';
 import { Table, Button, Container, Icon } from 'semantic-ui-react';
 import Web3 from 'web3';
-import * as tokenActions from '../../../../store/token/token.actions';
-import { TokenAddModal } from './token-add.view';
+import PropTypes from 'prop-types';
+import {
+  addToken,
+  selectToken,
+  unselectToken,
+  deleteToken,
+} from '../../../../store/token/token.actions';
+import { TokenAddModal } from './token-add.view.jsx';
 
+function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, onDeleteToken }) {
+  const [modalTokenAddEnable, setModalTokenAddEnable] = React.useState(false);
+  const [removeTokenEnable, setRemoveTokenEnable] = React.useState(false);
 
-class WalletInfo extends Component {
-
-  constructor(props){
-    super(props);
-
-    this.state = {
-      isRemoveTokenSelected: false,
-      modalTokenAdd: false,
-    }
-  }
-
-  toggleModalTokenAdd = () => { this.setState((prev) => ({ modalTokenAdd: !prev.modalTokenAdd })); }
-
-  handleOnTokenAddSubmit = (tokenName, tokenType, tokenAddress) => {
-     this.props.onAddToken('0x' + tokenAddress.toLowerCase(), tokenType, '', '-', '-');
-  }
-
-  importedWallet = (wallet) => {
-    if (wallet.ethereumAddress === '' || typeof wallet.ethereumAddress === 'undefined') {
+  const importedWallet = () => {
+    if (login.nf3.ethereumAddress === '' || typeof login.nf3.ethereumAddress === 'undefined') {
       return (
         <div>
           <Icon name="close" color="red" />
@@ -32,127 +24,180 @@ class WalletInfo extends Component {
         </div>
       );
     }
-    return wallet.ethereumAddress;
-  }
+    return login.nf3.ethereumAddress;
+  };
 
   // TODO : substitute reload button by periodic function
-  reload = () => {
-    this.props.nf3.getLayer2Balances()
-      .then((l2Balance) => {
-        const compressedPkd = this.props.wallet.zkpKeys.compressedPkd;
-        const myL2Balance = typeof l2Balance[compressedPkd] === 'undefined' ? {} : l2Balance[compressedPkd];
-        const l2TokenAddressArr = myL2Balance === {} ? []: Object.keys(myL2Balance);
-	this.props.nf3.getL1Balance(this.props.wallet.ethereumAddress).then((l1Balance) => {
-          if (l2TokenAddressArr.length) {
-            l2TokenAddressArr.forEach(l2TokenAddress => {
-              const l2Token = this.props.token.tokenPool.filter(token => token.tokenAddress === '0x'+l2TokenAddress)[0];
-              this.props.onAddToken('0x' + l2TokenAddress.toLowerCase(), l2Token.tokenType, l2Token.tokenId, l1Balance, Web3.utils.fromWei(myL2Balance[l2TokenAddress].toString()));
-            });
-	  }
-	});
+  const reload = () => {
+    login.nf3.getLayer2Balances().then(l2Balance => {
+      const { compressedPkd } = login.nf3.zkpKeys;
+      const myL2Balance =
+        typeof l2Balance[compressedPkd] === 'undefined' ? {} : l2Balance[compressedPkd];
+      const l2TokenAddressArr = myL2Balance === {} ? [] : Object.keys(myL2Balance);
+      login.nf3.getL1Balance(login.nf3.ethereumAddress).then(l1Balance => {
+        if (l2TokenAddressArr.length) {
+          l2TokenAddressArr.forEach(l2TokenAddress => {
+            /* TODO. Use correct token
+            const l2Token = token.tokenPool.filter(
+              token => token.tokenAddress === `0x${l2TokenAddress}`,
+            )[0];
+	    */
+            onAddToken(
+              `0x${l2TokenAddress.toLowerCase()}`,
+              'ERC20',
+              '0x00',
+              l1Balance,
+              Web3.utils.fromWei(myL2Balance[l2TokenAddress].toString(), 'nano'),
+            );
+          });
+        }
       });
-  }
+    });
+  };
 
-  setActiveRow(id) {
-    if (id !== this.props.token.activeTokenRowId) {
-      this.props.onSelectToken(id);
-      if (this.state.isRemoveTokenSelected){
-         this.props.onDeleteToken(id);
-         this.toggleTokenSelected();
+  const toggleTokenSelected = () => {
+    setRemoveTokenEnable(!removeTokenEnable);
+  };
+
+  function setActiveRow(id) {
+    if (id !== token.activeTokenRowId) {
+      onSelectToken(id);
+      if (removeTokenEnable) {
+        onDeleteToken(id);
+        toggleTokenSelected();
       }
     } else {
-      this.props.onUnselectToken();
+      onUnselectToken();
     }
   }
 
-  renderRowTable() {
-    let rows = this.props.token.tokenPool.map(item => {
+  function renderRowTable() {
+    const rows = token.tokenPool.map(item => {
       return (
         <Table.Row
           key={item.id}
-          active={item.id === this.props.token.activeTokenRowId}
+          active={item.id === token.activeTokenRowId}
           onClick={() => {
-            this.setActiveRow(item.id);
+            setActiveRow(item.id);
           }}
         >
-          <Table.Cell colSpan='4' title={item.tokenAddress}>{item.tokenAddress}</Table.Cell>
-          <Table.Cell colSpan='1' title={item.tokenType}>{item.tokenType}</Table.Cell>
-          <Table.Cell colSpan='1' title={item.tokenBalanceL1}>{item.tokenBalanceL1}</Table.Cell>
-          <Table.Cell colSpan='1' title={item.tokenBalanceL2}>{item.tokenBalanceL2}</Table.Cell>
+          <Table.Cell colSpan="4" title={item.tokenAddress}>
+            {item.tokenAddress}
+          </Table.Cell>
+          <Table.Cell colSpan="1" title={item.tokenType}>
+            {item.tokenType}
+          </Table.Cell>
+          <Table.Cell colSpan="1" title={item.tokenBalanceL1}>
+            {item.tokenBalanceL1}
+          </Table.Cell>
+          <Table.Cell colSpan="1" title={item.tokenBalanceL2}>
+            {item.tokenBalanceL2}
+          </Table.Cell>
         </Table.Row>
       );
     });
     return rows;
   }
 
-  componentDidMount() {
-    this.reload();
-  }
+  React.useEffect(() => {
+    reload();
+  }, []);
 
-  toggleTokenSelected = () => 
-     this.setState((prevState) => ({ isRemoveTokenSelected : !prevState.isRemoveTokenSelected}));
+  const handleOnTokenAddSubmit = (tokenName, tokenType, tokenAddress) => {
+    onAddToken(`0x${tokenAddress.toLowerCase()}`, tokenType, '0', '-', '-');
+  };
 
-  removeToken = (() => {
-    this.props.onUnselectToken();
-    this.toggleTokenSelected();
-  });
+  const toggleModalTokenAdd = () => {
+    setModalTokenAddEnable(!modalTokenAddEnable);
+  };
 
-  render() {
-    return (
-      <Container>
-        <Table padded>
-          <Table.Header>
-            <Table.Row>
-              <Table.HeaderCell colSpan='4' textAlign="left">
-                <Table.Cell> Account Address: </Table.Cell>
-                <Table.Cell > {this.importedWallet(this.props.wallet)} </Table.Cell>
-              </Table.HeaderCell>
-              <Table.HeaderCell textAlign="right">
-                <Button onClick={this.reload} disabled={this.props.token.activeTokenRowId === ''}><Icon name="sync" /> Reload </Button>
-              </Table.HeaderCell>
-              <Table.HeaderCell textAlign="right">
-                <Button onClick={this.toggleModalTokenAdd}> <Icon name="plus" /> Add Token </Button>
-              </Table.HeaderCell>
-              <Table.HeaderCell textAlign="right">
-                <Button
-                 toggle
-                 onClick={this.removeToken}
-                 active={this.state.isRemoveTokenSelected && this.props.token.tokenPool.length}
-                 disabled={this.props.token.tokenPool.length === 0}
-                > <Icon name="minus" /> Remove Token </Button>
-              </Table.HeaderCell>
-            </Table.Row>
-          </Table.Header>
-          <Table.Header>
-            <Table.Row>
-              <Table.HeaderCell colSpan='4' textAlign='left'> Token Address </Table.HeaderCell>
-              <Table.HeaderCell colSpan='1' textAlign='left'> Token Type </Table.HeaderCell>
-              <Table.HeaderCell colSpan='1' textAlign='left'> L1 Balance </Table.HeaderCell>
-              <Table.HeaderCell colSpan='1' textAlign='left'> L2 Balance </Table.HeaderCell>
-            </Table.Row>
-          </Table.Header>
-          <Table.Body> {this.renderRowTable()} </Table.Body>
-        </Table>
-        <br />
-        <TokenAddModal
-          modalTokenAdd={this.state.modalTokenAdd}
-          toggleModalTokenAdd={this.toggleModalTokenAdd}
-          handleOnTokenAddSubmit={this.handleOnTokenAddSubmit}
-        />
-      </Container>
-    );
-  }
+  const removeToken = () => {
+    onUnselectToken();
+    toggleTokenSelected();
+  };
+
+  return (
+    <Container>
+      <Table padded>
+        <Table.Header>
+          <Table.Row>
+            <Table.HeaderCell colSpan="4" textAlign="left">
+              <Table.Cell>Account Address:</Table.Cell>
+              <Table.Cell> {importedWallet()} </Table.Cell>
+            </Table.HeaderCell>
+            <Table.HeaderCell textAlign="right">
+              <Button onClick={reload} disabled={token.activeTokenRowId === ''}>
+                <Icon name="sync" />
+                Reload
+              </Button>
+            </Table.HeaderCell>
+            <Table.HeaderCell textAlign="right">
+              <Button onClick={toggleModalTokenAdd}>
+                <Icon name="plus" />
+                Add Token
+              </Button>
+            </Table.HeaderCell>
+            <Table.HeaderCell textAlign="right">
+              <Button
+                toggle
+                onClick={removeToken}
+                active={removeTokenEnable && token.tokenPool.length}
+                disabled={token.tokenPool.length === 0}
+              >
+                {' '}
+                <Icon name="minus" /> Remove Token{' '}
+              </Button>
+            </Table.HeaderCell>
+          </Table.Row>
+        </Table.Header>
+        <Table.Header>
+          <Table.Row>
+            <Table.HeaderCell colSpan="4" textAlign="left">
+              Token Address
+            </Table.HeaderCell>
+            <Table.HeaderCell colSpan="1" textAlign="left">
+              Token Type
+            </Table.HeaderCell>
+            <Table.HeaderCell colSpan="1" textAlign="left">
+              L1 Balance
+            </Table.HeaderCell>
+            <Table.HeaderCell colSpan="1" textAlign="left">
+              L2 Balance
+            </Table.HeaderCell>
+          </Table.Row>
+        </Table.Header>
+        <Table.Body> {renderRowTable()} </Table.Body>
+      </Table>
+      <br />
+      <TokenAddModal
+        modalTokenAdd={modalTokenAddEnable}
+        toggleModalTokenAdd={toggleModalTokenAdd}
+        handleOnTokenAddSubmit={handleOnTokenAddSubmit}
+      />
+    </Container>
+  );
 }
 
-const mapStateToProps = (state) => ({
+WalletInfo.propTypes = {
+  login: PropTypes.object.isRequired,
+  token: PropTypes.object.isRequired,
+  onAddToken: PropTypes.func.isRequired,
+  onSelectToken: PropTypes.func.isRequired,
+  onUnselectToken: PropTypes.func.isRequired,
+  onDeleteToken: PropTypes.func.isRequired,
+};
+
+const mapStateToProps = state => ({
   token: state.token,
+  login: state.login,
 });
 
-const mapDispatchToProps = (dispatch) => ({
-  onSelectToken: (tokenRowId) => dispatch(tokenActions.selectToken(tokenRowId)),
-  onUnselectToken: () => dispatch(tokenActions.unselectToken()),
-  onAddToken: (tokenAddress, tokenType, tokenId, l1Balance, l2Balance) => dispatch(tokenActions.addToken(tokenAddress, tokenType, tokenId, l1Balance, l2Balance)),
-  onDeleteToken: (tokenRowId) => dispatch(tokenActions.deleteToken(tokenRowId)),
+const mapDispatchToProps = dispatch => ({
+  onSelectToken: tokenRowId => dispatch(selectToken(tokenRowId)),
+  onUnselectToken: () => dispatch(unselectToken()),
+  onAddToken: (tokenAddress, tokenType, tokenId, l1Balance, l2Balance) =>
+    dispatch(addToken(tokenAddress, tokenType, tokenId, l1Balance, l2Balance)),
+  onDeleteToken: tokenRowId => dispatch(deleteToken(tokenRowId)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(WalletInfo);

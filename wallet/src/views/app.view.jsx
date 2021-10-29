@@ -1,23 +1,20 @@
 import React from 'react';
 import { Route, Redirect, Switch } from 'react-router-dom';
-import { connect } from "react-redux";
+import { connect } from 'react-redux';
+import PropTypes from 'prop-types';
 
-import Transactions from './transactions/transactions.view';
-import Login from './login/login.view'
+import Transactions from './transactions/transactions.view.jsx';
+import Login from './login/login.view.jsx';
 import { setEnvironment } from '../utils/lib/environment';
-import { DEFAULT_ENVIRONMENT, NF3_GITHUB_ISSUES_URL } from '../constants'
+import { DEFAULT_ENVIRONMENT, NF3_GITHUB_ISSUES_URL } from '../constants';
 import * as loginActions from '../store/login/login.actions';
 
-
-function App({ 
-  onDeleteWallet,
-}) {
-
+function App({ onDeleteWallet }) {
   setEnvironment(DEFAULT_ENVIRONMENT);
 
   // Detect page refresh
   React.useEffect(() => {
-    window.addEventListener("beforeunload", () => {
+    window.addEventListener('beforeunload', () => {
       onDeleteWallet();
     });
   }, [onDeleteWallet]);
@@ -27,10 +24,10 @@ function App({
   // Detect accounts changed and chain changed on metamask
   React.useEffect(() => {
     if (window.ethereum) {
-      window.ethereum.on("accountsChanged", () => {
+      window.ethereum.on('accountsChanged', () => {
         onDeleteWallet();
       });
-      window.ethereum.on("chainChanged", () => {
+      window.ethereum.on('chainChanged', () => {
         onDeleteWallet();
       });
     }
@@ -41,19 +38,28 @@ function App({
       <Switch>
         <Route path="/login" render={() => <Login />} />
         <Route path="/transactions" render={() => <Transactions />} />
-        <Route path="/issues" render={() => (window.location = NF3_GITHUB_ISSUES_URL)} />
+        <Route
+          path="/issues"
+          render={() => {
+            window.location = NF3_GITHUB_ISSUES_URL;
+          }}
+        />
         <Redirect to="/login" />
       </Switch>
     </React.Fragment>
   );
 }
 
-const mapStateToProps = (state) => ({
+App.propTypes = {
+  onDeleteWallet: PropTypes.func.isRequired,
+};
+
+const mapStateToProps = state => ({
   login: state.login,
 });
 
-const mapDispatchToProps = (dispatch) => ({
+const mapDispatchToProps = dispatch => ({
   onDeleteWallet: () => dispatch(loginActions.deleteWallet()),
-})
+});
 
 export default connect(mapStateToProps, mapDispatchToProps)(App);

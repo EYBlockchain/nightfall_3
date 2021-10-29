@@ -1,7 +1,5 @@
 import React from 'react';
-import {
-  Menu, Icon, Container, Header,
-} from 'semantic-ui-react';
+import { Menu, Icon, Container, Header } from 'semantic-ui-react';
 import { Link } from 'react-router-dom';
 
 function FooterMenu() {
@@ -26,27 +24,19 @@ function FooterMenu() {
       <Menu secondary>
         <Menu.Menu position="left">
           <Link to="/login">
-            <Menu.Item
-              name="footerMenu"
-              disabled
-            >
+            <Menu.Item name="footerMenu" disabled>
               <Icon name={`${rIcon}`} size="large" color={`${rColor}`} />
               Status
             </Menu.Item>
           </Link>
           <Link to="/account-info">
-            <Menu.Item
-              name="footerMenu"
-              disabled
-            >
+            <Menu.Item name="footerMenu" disabled>
               <Icon name="play" size="large" />
               Wallet Version
             </Menu.Item>
           </Link>
           <Link to="/issues">
-            <Menu.Item
-              name="footerMenu"
-            >
+            <Menu.Item name="footerMenu">
               <Icon name="ambulance" size="large" />
               Report an Issue
             </Menu.Item>
