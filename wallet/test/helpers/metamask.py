@@ -101,13 +101,23 @@ def addTokenMetamask(tokenAddress, findElements):
         findElements.button_clickable_xpath('//*[@id="app-content"]/div/div[4]/div/div[3]/footer/button[2]').click() # Add Token
 
 
-def signTransactionMetamask(driver, findElements):
+def signTransactionMetamask(driver, findElements, stop=0):
     sleep(5)
     #driver.get('chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn/popup.html#')
 
     ### Not sure why, but i need to send and cancel a tx to get to the signature option
-    findElements.element_exist_xpath('(//*[contains(text(), "Send")])').click()
-    findElements.element_exist_xpath('(//*[contains(text(), "Cancel")])').click()
+    sendButtonEnable = findElements.element_exist_xpath('(//*[contains(text(), "Send")])')
+    if sendButtonEnable:
+        #print("send button found")
+        sendButtonEnable.click()
+        findElements.element_exist_xpath('(//*[contains(text(), "Cancel")])').click()
+        sleep(5)
+        if stop:
+            #print("stopped")
+            sleep(1000)
 
-    ## confirm signature
-    return findElements.element_exist_xpath('(//*[contains(text(), "Confirm")])')
+        ## confirm signature
+        return findElements.element_exist_xpath('//*[contains(text(), "Confirm")] | //div[contains(@class, "--unconfirmed")]')
+    else:
+         #print("send button not found")
+         return findElements.element_exist_xpath('//*[contains(text(), "Confirm")] | //div[contains(@class, "--unconfirmed")]')

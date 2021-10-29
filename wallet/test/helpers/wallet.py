@@ -35,8 +35,10 @@ def submitTxWallet(txParams, findElements, driver, metamaskTab, nightfallTab, ca
     if depositButtonEn.get_attribute("disabled"):
       findElements.element_exist_xpath('//*[@title="' + txParams['tokenAddress'] + '"]').click() # Select token
     depositButtonEn.click()
-    findElements.element_exist_xpath('//*[@id="amount"]').send_keys(txParams['amount']) # Amount
-    findElements.element_exist_xpath('//*[@id="fee"]').send_keys(txParams['fee']) # Amount
+
+    if txParams["tokenType"] != "erc721":
+      findElements.element_exist_xpath('//*[@id="amount"]').send_keys(txParams['amount']) # Amount
+    findElements.element_exist_xpath('//*[@id="fee"]').send_keys(txParams['fee']) # Fee
     testTokenType = findElements.element_exist_xpath('//*[@id="token-type"]').get_attribute("value") # Read Token Type
     testTokenAddress = findElements.element_exist_xpath('//*[@id="token-address"]').get_attribute("value") # Read Token Address
     assert(testTokenType.lower() == txParams['tokenType'].lower())
@@ -50,8 +52,11 @@ def submitTxWallet(txParams, findElements, driver, metamaskTab, nightfallTab, ca
     ## Sign the transactions
     driver.switch_to.window(metamaskTab)
 
+    stop=0
+    if txParams['tokenType'] == "erc20" and txType == "Withdraw":
+       stop=0
     # Approve tokens
-    signTransactionMetamask(driver, findElements).click() # sign transaction
+    signTransactionMetamask(driver, findElements, stop).click() # sign transaction
 
     # Make deposit, if tokens were already approved, or is eth then it's already done
     #confirmButton = signTransactionMetamask(driver, findElements) # search if transaction pending

@@ -54,7 +54,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
             tokenType: tokenInfo.tokenType,
             tokenAddress: tokenInfo.tokenAddress,
             tokenId: tokenInfo.tokenId[0],
-            tokenAmount,
+            tokenAmount: tokenInfo.tokenType === TOKEN_TYPE.ERC721 ? '1' : tokenAmount,
             fee,
             instantWithdrawFee,
           });
@@ -70,7 +70,8 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
           tokenType: tokenInfo.tokenType,
           tokenAddress: tokenInfo.tokenAddress,
           tokenId: tokenInfo.tokenId[0],
-          tokenAmount,
+          tokenAmount: tokenInfo.tokenType === TOKEN_TYPE.ERC721 ? '1' : tokenAmount,
+
           fee,
         });
       }

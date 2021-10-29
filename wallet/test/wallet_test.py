@@ -79,6 +79,10 @@ for tokenType in tokenTypes:
 
     print(tokenType, txType)
     submitTxWallet(txParams, findElementsInstance, driver, metamaskTab, nightfallTab, cancel=1)
+    print(tokenType, txType)
+    submitTxWallet(txParams, findElementsInstance, driver, metamaskTab, nightfallTab)
+    sleep(10)
+    print(tokenType, txType)
     submitTxWallet(txParams, findElementsInstance, driver, metamaskTab, nightfallTab)
     sleep(10)
 
