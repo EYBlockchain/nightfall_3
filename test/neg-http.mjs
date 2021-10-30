@@ -103,9 +103,21 @@ describe('Testing the challenge http API', () => {
 
     res = await chai.request(url).get('/contract-address/Challenges');
     challengeAddress = res.body.address;
+    web3.eth.subscribe('logs', { address: challengeAddress }).on('data', log => {
+      // if (log.topics[0] === web3.eth.abi.encodeEventSignature('TransactionSubmitted()')) {
+        // logCounts.deposit += 1;
+        console.log('Challenge log event received', log.topics[0]);
+      // }
+    });
 
     res = await chai.request(url).get('/contract-address/Proposers');
     proposersAddress = res.body.address;
+    web3.eth.subscribe('logs', { address: proposersAddress }).on('data', log => {
+      console.log('proposers log event received', log.topics[0]);
+      // if (log.topics[0] === web3.eth.abi.encodeEventSignature('NewCurrentProposer(address)')) {
+      //   logCounts.registerProposer += 1;
+      // }
+    });
 
     res = await chai.request(url).get('/contract-address/State');
     stateAddress = res.body.address;
