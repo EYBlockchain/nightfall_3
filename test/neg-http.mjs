@@ -104,9 +104,9 @@ describe('Testing the challenge http API', () => {
     res = await chai.request(url).get('/contract-address/Challenges');
     challengeAddress = res.body.address;
     web3.eth.subscribe('logs', { address: challengeAddress }).on('data', log => {
+      console.log('Challenge log event received', log.topics[0]);
       // if (log.topics[0] === web3.eth.abi.encodeEventSignature('TransactionSubmitted()')) {
-        // logCounts.deposit += 1;
-        console.log('Challenge log event received', log.topics[0]);
+      //   logCounts.deposit += 1;
       // }
     });
 
