@@ -97,6 +97,7 @@ describe('Testing the challenge http API', () => {
     web3.eth.subscribe('logs', { address: shieldAddress }).on('data', log => {
       if (log.topics[0] === web3.eth.abi.encodeEventSignature('TransactionSubmitted()')) {
         logCounts.deposit += 1;
+        console.log('deposit log event received', logCounts.deposit);
       }
     });
 
@@ -157,6 +158,7 @@ describe('Testing the challenge http API', () => {
         const msg = JSON.parse(message.data);
         const { type } = msg;
         let { txDataToSign } = msg;
+        console.log('in onmessage', type);
         try {
           if (type === 'block') {
             const { block, transactions } = msg;
