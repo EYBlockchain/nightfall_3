@@ -111,6 +111,13 @@ const combineFrontiers = (arr1, arr2) => {
   return arr1.concat(fromArr2);
 };
 
+/**
+This function converts a frontier array into a tree (unbalanced), this is useful if we need a tree-like structure to add
+new leaves to.
+@function frontierToTree
+ * @param timber - A timber instance whose frontier we want to tree-ify
+ * @returns An object that represents a tree formed from the frontier.
+ */
 const frontierToTree = timber => {
   if (timber.frontier.length === 0) return Leaf(0);
   const currentFrontierSlotArray = Array(timber.frontier.length)
@@ -138,6 +145,16 @@ const frontierToTree = timber => {
   }, timber.tree);
 };
 
+/**
+We do batch insertions when doing stateless operations, the size of each batch is dependent on the tree structure.
+Each batch insert has to less than or equal to the next closest power of two - otherwise we may unbalance the tree.
+E.g. originalLeafCount = 2, leaves.length = 9 -> BatchInserts = [2,4,3]
+@function batchLeaves
+ * @param originalLeafCount - The leaf count of the tree we want to insert into.
+ * @param leaves - The elements to be inserted into the tree
+ * @param acc - Used to eliminate tail calls and make recursion more efficient.
+ * @returns An array of arrays containing paritioned elements of leaves, in the order to be inserted.
+ */
 const batchLeaves = (originalLeafCount, leaves, acc) => {
   if (leaves.length === 0) return acc;
   const outputLeafCount = originalLeafCount + leaves.length;
@@ -561,6 +578,15 @@ class Timber {
     return t;
   }
 
+  /**
+  @method
+  This function statelessly (i.e. does not modify timber.tree) calculates the sibling path for the element leaves[leafIndex].
+  It only requires the frontier and leafCount to do so.
+   * @param timber - The timber instance that contains the frontier and leafCount.
+   * @param leaves - The elements that will be inserted.
+   * @param leafIndex - The index in leaves that the sibling path will be calculated for.
+   * @returns An object { isMember: bool, path: Array<{dir: 'string',value: string }> } representing the sibling path for that element.
+   */
   static statelessSiblingPath(timber, leaves, leafIndex) {
     if (leaves.length === 0 || leafIndex >= leaves.length || leafIndex < 0)
       return { isMember: false, path: [] };
