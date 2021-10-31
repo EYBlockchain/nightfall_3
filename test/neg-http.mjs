@@ -450,10 +450,10 @@ describe('Testing the challenge http API', () => {
     });
 
     describe('Challenge 2: Duplicate transaction submitted', () => {
-      txQueue.push(async () => {
-        await holdupTxQueue('deposit', logCounts.deposit + 1);
-      });
       it('Should delete the flawed block and rollback the leaves', async () => {
+        txQueue.push(async () => {
+          await holdupTxQueue('deposit', logCounts.deposit + 1);
+        });
         await testForEvents(stateAddress, [
           web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
           web3.eth.abi.encodeParameter('bytes32', topicsBlockHashDuplicateTransaction),
