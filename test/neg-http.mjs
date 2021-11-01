@@ -268,16 +268,14 @@ describe('Testing the challenge http API', () => {
             await submitTransaction(txDataToSign, privateKey1, challengeAddress, gas);
             await waitForTxExecution(count, 'challenge');
           } else if (type === 'challenge') {
-            let count = logCounts.challenge;
             await submitTransaction(txDataToSign, privateKey1, challengeAddress, gas);
-            await waitForTxExecution(count, 'challenge');
             // When a challenge succeeds, the challenger is removed. We are adding them back for subsequent for challenges
             const result = await chai
               .request(optimistUrl)
               .post('/proposer/register')
               .send({ address: myAddress });
             txToSign = result.body.txDataToSign;
-            count = logCounts.registerProposer;
+            const count = logCounts.registerProposer;
             await submitTransaction(txToSign, privateKey, proposersAddress, gas, bond);
             await waitForTxExecution(count, 'registerProposer');
             // console.log('tx hash of challenge block is', txReceipt.transactionHash);
