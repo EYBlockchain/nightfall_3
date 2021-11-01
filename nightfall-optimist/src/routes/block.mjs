@@ -10,6 +10,7 @@ import {
   getBlockByRoot,
   getTransactionsByTransactionHashes,
 } from '../services/database.mjs';
+import { flushQueue } from '../services/event-queue.mjs';
 
 const router = express.Router();
 
@@ -53,7 +54,15 @@ router.get('/root/:root', async (req, res, next) => {
     const { root } = req.params;
     logger.debug(`searching for block containing root ${root}`);
     // get data to return
-    const block = await getBlockByRoot(root);
+    let block = await getBlockByRoot(root);
+    // if we don't get a block, it's possible that the corresponding 'BlockProposed'
+    // event is still in the event queue, so Nightfall doesn't have it in its database
+    // yet.  Let's wait for the current queue to empty and try again.
+    if (block === null) {
+      logger.debug('Block not found, waiting for current queue to process before trying once more');
+      await flushQueue(0);
+      block = await getBlockByRoot(root);
+    }
     if (block !== null) {
       const transactions = await getTransactionsByTransactionHashes(block.transactionHashes);
       delete block?._id; // this is database specific so no need to send it

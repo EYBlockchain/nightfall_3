@@ -234,8 +234,6 @@ router.post('/encode', async (req, res, next) => {
     // normally we re-compute the leafcount. If however block.leafCount is -ve
     // that's a signal to use the value given (once we've flipped the sign back)
     if (block.leafCount < 0) currentLeafCount = -block.leafCount;
-    const blockNumberL2 = Number(await stateContractInstance.methods.getNumberOfL2Blocks().call());
-    const previousBlockHash = await stateContractInstance.methods.getLatestBlockHash().call();
 
     const newTransactions = await Promise.all(
       transactions.map(t => {
@@ -259,8 +257,8 @@ router.post('/encode', async (req, res, next) => {
       root: block.root,
       leafCount: currentLeafCount,
       nCommitments: block.nCommitments,
-      blockNumberL2,
-      previousBlockHash,
+      blockNumberL2: block.blockNumberL2,
+      previousBlockHash: block.previousBlockHash,
     };
     newBlock.blockHash = await Block.calcHash(newBlock, newTransactions);
     logger.debug(`New block encoded for test ${JSON.stringify(newBlock, null, 2)}`);

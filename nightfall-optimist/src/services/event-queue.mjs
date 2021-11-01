@@ -43,10 +43,26 @@ function nextHigherPriorityQueueHasEmptied(priority) {
   });
 }
 
-export async function eventQueueManager(callback, priority, args) {
+/**
+This function will wait until all the functions currently in a queue have been
+processed.  It's useful if you want to ensure that Nightfall has had an opportunity
+to update its database with something that you know has happened on the blockchain
+but that Nightfall may not have processed yet, because it's still in the event queue.
+*/
+export function flushQueue(priority) {
+  const p = new Promise(resolve => {
+    queues[priority].push(cb => {
+      cb(null, resolve());
+    });
+  });
+  return p;
+}
+
+export async function enqueueEvent(callback, priority, args) {
   queues[priority].push(async () => {
-    await nextHigherPriorityQueueHasEmptied(priority); // prevent conditionalmakeblock from running until fastQueue is emptied
-    callback(args);
+    // await nextHigherPriorityQueueHasEmptied(priority);
+    // prevent conditionalmakeblock from running until fastQueue is emptied
+    return callback(args);
   });
 }
 
@@ -71,14 +87,14 @@ export async function queueManager(eventObject, eventArgs) {
     logger.info(`Queueing event removal ${eventObject.event}`);
     queues[priority].push(async () => {
       await nextHigherPriorityQueueHasEmptied(priority); // prevent eventHandlers running until the higher priority queue has emptied
-      eventHandlers.removers[eventObject.event](eventObject, args);
+      return eventHandlers.removers[eventObject.event](eventObject, args);
     });
     // otherwise queue the event for processing.
   } else {
     logger.info(`Queueing event ${eventObject.event}`);
     queues[priority].push(async () => {
-      await nextHigherPriorityQueueHasEmptied(priority); // prevent eventHandlers running until the higher priority queue has emptied
-      eventHandlers[eventObject.event](eventObject, args);
+      // await nextHigherPriorityQueueHasEmptied(priority); // prevent eventHandlers running until the higher priority queue has emptied
+      return eventHandlers[eventObject.event](eventObject, args);
     });
   }
   // the queue shouldn't get too long if we're keeping up with the blockchain.
