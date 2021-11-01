@@ -73,6 +73,13 @@ describe('Testing the challenge http API', () => {
     }
   };
 
+  const waitForTxExecution = async (count, txType) => {
+    while (count === logCounts[txType]) {
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
+  };
+
   before(async () => {
     web3 = await connectWeb3(BLOCKCHAIN_URL);
 
@@ -390,11 +397,14 @@ describe('Testing the challenge http API', () => {
 
       const receiptArrays = [];
       for (let i = 0; i < depositTransactions.length; i++) {
+        const count = logCounts.deposit;
         const { txDataToSign } = depositTransactions[i];
         receiptArrays.push(
           // eslint-disable-next-line no-await-in-loop
           await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee),
         );
+        // eslint-disable-next-line no-await-in-loop
+        await waitForTxExecution(count, 'deposit');
       }
       receiptArrays.forEach(receipt => {
         expect(receipt).to.have.property('transactionHash');
