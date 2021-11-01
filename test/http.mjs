@@ -16,6 +16,7 @@ import {
 } from './utils.mjs';
 
 const { expect, assert } = chai;
+const txQueue = new Queue({ autostart: true, concurrency: 1 });
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
@@ -62,6 +63,24 @@ describe('Testing the http API', () => {
   const txPerBlock = 2;
   const eventLogs = [];
   let stateBalance = 0;
+  const logCounts = {
+    deposit: 0,
+    registerProposer: 0,
+  };
+
+  const holdupTxQueue = async (txType, waitTillCount) => {
+    while (logCounts[txType] < waitTillCount) {
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
+  };
+
+  const waitForTxExecution = async (count, txType) => {
+    while (count === logCounts[txType]) {
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
+  };
   const gasCostsTx = 5000000000000000;
 
   before(async function () {
@@ -77,22 +96,31 @@ describe('Testing the http API', () => {
     }
 
     shieldAddress = (await chai.request(senderUrl).get('/contract-address/Shield')).body.address;
+    web3.eth.subscribe('logs', { address: shieldAddress }).on('data', log => {
+      if (log.topics[0] === web3.eth.abi.encodeEventSignature('TransactionSubmitted()')) {
+        logCounts.deposit += 1;
+      }
+    });
 
     stateAddress = (await chai.request(senderUrl).get('/contract-address/State')).body.address;
+    web3.eth.subscribe('logs', { address: stateAddress }).on('data', log => {
+      // For event tracking, we use only care about the logs related to 'blockProposed'
+      if (log.topics[0] === topicEventMapping.BlockProposed) eventLogs.push('blockProposed');
+    });
 
     proposersAddress = (await chai.request(senderUrl).get('/contract-address/Proposers')).body
       .address;
+    web3.eth.subscribe('logs', { address: proposersAddress }).on('data', log => {
+      if (log.topics[0] === web3.eth.abi.encodeEventSignature('NewCurrentProposer(address)')) {
+        logCounts.registerProposer += 1;
+      }
+    });
 
     challengesAddress = (await chai.request(senderUrl).get('/contract-address/Challenges')).body
       .address;
 
     nodeInfo = await web3.eth.getNodeInfo();
     setNonce(await web3.eth.getTransactionCount((await getAccounts())[0]));
-
-    web3.eth.subscribe('logs', { address: stateAddress }).on('data', log => {
-      // For event tracking, we use only care about the logs related to 'blockProposed'
-      if (log.topics[0] === topicEventMapping.BlockProposed) eventLogs.push('blockProposed');
-    });
 
     ({
       ask: ask1,
@@ -113,17 +141,19 @@ describe('Testing the http API', () => {
       connection.send('blocks');
     };
     connection.onmessage = async message => {
-      const msg = JSON.parse(message.data);
-      const { type, txDataToSign } = msg;
-      try {
-        if (type === 'block') {
-          await blockSubmissionFunction(txDataToSign, privateKey, stateAddress, gas, BLOCK_STAKE);
-        } else {
-          await submitTransaction(txDataToSign, privateKey, challengesAddress, gas);
+      txQueue.push(async () => {
+        const msg = JSON.parse(message.data);
+        const { type, txDataToSign } = msg;
+        try {
+          if (type === 'block') {
+            await blockSubmissionFunction(txDataToSign, privateKey, stateAddress, gas, BLOCK_STAKE);
+          } else {
+            await submitTransaction(txDataToSign, privateKey, challengesAddress, gas);
+          }
+        } catch (err) {
+          console.error('http.mjs onmessage: ', err);
         }
-      } catch (err) {
-        console.error(err);
-      }
+      });
     };
   });
 
@@ -181,7 +211,9 @@ describe('Testing the http API', () => {
       const { txDataToSign } = res.body;
       expect(txDataToSign).to.be.a('string');
       const bond = 10;
+      const count = logCounts.registerProposer;
       await submitTransaction(txDataToSign, privateKey, proposersAddress, gas, bond);
+      await waitForTxExecution(count, 'registerProposer');
       stateBalance += bond;
     });
 
@@ -196,6 +228,7 @@ describe('Testing the http API', () => {
       // we have to pay 10 ETH to be registered
       const bond = 10;
       const startBalance = await getBalance(myAddress);
+      const count = logCounts.registerProposer;
       // now we need to sign the transaction and send it to the blockchain
       const receipt = await submitTransaction(
         txDataToSign,
@@ -204,6 +237,7 @@ describe('Testing the http API', () => {
         gas,
         bond,
       );
+      await waitForTxExecution(count, 'registerProposer');
       const endBalance = await getBalance(myAddress);
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
@@ -275,13 +309,19 @@ describe('Testing the http API', () => {
       depositTransactions.forEach(({ txDataToSign }) => expect(txDataToSign).to.be.a('string'));
 
       const receiptArrays = [];
+      txQueue.push(async () => {
+        await holdupTxQueue('deposit', logCounts.deposit + depositTransactions.length);
+      });
       for (let i = 0; i < depositTransactions.length; i++) {
+        const count = logCounts.deposit;
         const { txDataToSign } = depositTransactions[i];
         receiptArrays.push(
           // eslint-disable-next-line no-await-in-loop
           await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee),
           // we need to await here as we need transactions to be submitted sequentially or we run into nonce issues.
         );
+        // eslint-disable-next-line no-await-in-loop
+        await waitForTxExecution(count, 'deposit');
       }
       receiptArrays.forEach(receipt => {
         expect(receipt).to.have.property('transactionHash');
@@ -513,6 +553,7 @@ describe('Testing the http API', () => {
       });
       transactions.push(res.body.transaction); // a new transaction
       expect(res.body.txDataToSign).to.be.a('string');
+      let count = logCounts.deposit;
       // now we need to sign the transaction and send it to the blockchain
       const receipt = await submitTransaction(
         res.body.txDataToSign,
@@ -520,6 +561,7 @@ describe('Testing the http API', () => {
         shieldAddress,
         gas,
       );
+      await waitForTxExecution(count, 'deposit');
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
       console.log(`     Gas used was ${Number(receipt.gasUsed)}`);
@@ -535,10 +577,16 @@ describe('Testing the http API', () => {
         )
       ).map(dRes => dRes.body);
 
+      txQueue.push(async () => {
+        await holdupTxQueue('deposit', logCounts.deposit + depositTransactions.length);
+      });
       for (let i = 0; i < depositTransactions.length; i++) {
+        count = logCounts.deposit;
         const { txDataToSign } = depositTransactions[i];
         // eslint-disable-next-line no-await-in-loop
         await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
+        // eslint-disable-next-line no-await-in-loop
+        await waitForTxExecution(count, 'deposit');
       }
       while (eventLogs[0] !== 'blockProposed') {
         // eslint-disable-next-line no-await-in-loop
@@ -708,7 +756,18 @@ describe('Testing the http API', () => {
   });
 
   after(() => {
-    closeWeb3Connection();
-    connection.close();
+    // if the queue is still running, let's close down after it ends
+    // if it's empty, close down immediately
+    if (txQueue.length === 0) {
+      closeWeb3Connection();
+      connection.close();
+    } else {
+      // TODO work out what's still running and close it properly
+      txQueue.on('end', () => {
+        closeWeb3Connection();
+        connection.close();
+      });
+      txQueue.end();
+    }
   });
 });

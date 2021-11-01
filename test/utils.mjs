@@ -16,6 +16,7 @@ let web3;
 const nonceDict = {};
 const USE_INFURA = process.env.USE_INFURA === 'true';
 const { INFURA_PROJECT_SECRET, INFURA_PROJECT_ID } = process.env;
+let isSubmitTxLocked = false;
 
 export function connectWeb3(url = 'ws://localhost:8546') {
   return new Promise(resolve => {
@@ -76,30 +77,43 @@ export async function submitTransaction(
   gasCount,
   value = 0,
 ) {
+  while (isSubmitTxLocked) {
+    // eslint-disable-next-line no-await-in-loop
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+  isSubmitTxLocked = true;
   let gas = gasCount;
-  if (USE_INFURA) {
-    // get gaslimt from latest block as gaslimt may change
-    gas = (await web3.eth.getBlock('latest')).gasLimit;
-  }
-  // if the nonce hasn't been set, then use the transaction count
+  let gasPrice = 10000000000;
+  let receipt;
   let nonce = nonceDict[privateKey];
-  if (nonce === undefined) {
-    const accountAddress = await web3.eth.accounts.privateKeyToAccount(privateKey);
-    nonce = await web3.eth.getTransactionCount(accountAddress.address);
+  // if the nonce hasn't been set, then use the transaction count
+  try {
+    if (nonce === undefined) {
+      const accountAddress = await web3.eth.accounts.privateKeyToAccount(privateKey);
+      nonce = await web3.eth.getTransactionCount(accountAddress.address);
+    }
+    if (USE_INFURA) {
+      // get gaslimt from latest block as gaslimt may vary
+      gas = (await web3.eth.getBlock('latest')).gasLimit;
+      const blockGasPrice = Number(await web3.eth.getGasPrice());
+      if (blockGasPrice > gasPrice) gasPrice = blockGasPrice;
+    }
+    const tx = {
+      to: shieldAddress,
+      data: unsignedTransaction,
+      value,
+      gas,
+      gasPrice,
+      nonce,
+    };
+    const signed = await web3.eth.accounts.signTransaction(tx, privateKey);
+    nonce++;
+    nonceDict[privateKey] = nonce;
+    receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction);
+  } finally {
+    isSubmitTxLocked = false;
   }
-  const tx = {
-    to: shieldAddress,
-    data: unsignedTransaction,
-    value,
-    gas,
-    gasPrice: 10000000000,
-    nonce,
-  };
-
-  const signed = await web3.eth.accounts.signTransaction(tx, privateKey);
-  nonce++;
-  nonceDict[privateKey] = nonce;
-  return web3.eth.sendSignedTransaction(signed.rawTransaction);
+  return receipt;
 }
 
 // This only works with Ganache but it can move block time forwards
@@ -197,6 +211,7 @@ export async function testForEvents(contractAddress, topics, retries) {
   let counter = retries || Number(process.env.EVENT_RETRIEVE_RETRIES) || 3;
   let events;
   while (
+    counter < 0 ||
     events === undefined ||
     events[0] === undefined ||
     events[0].transactionHash === undefined
@@ -211,8 +226,13 @@ export async function testForEvents(contractAddress, topics, retries) {
     // eslint-disable-next-line no-await-in-loop
     await new Promise(resolve => setTimeout(resolve, WAIT));
     counter--;
-    if (counter < 0)
-      throw new Error(`No events found with in ${counter} retries of ${WAIT}ms wait`);
+  }
+  if (counter < 0) {
+    throw new Error(
+      `No events found with in ${
+        retries || Number(process.env.EVENT_RETRIEVE_RETRIES) || 3
+      }retries of ${WAIT}ms wait`,
+    );
   }
   // console.log('Events found');
   return events;
