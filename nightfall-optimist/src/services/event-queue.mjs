@@ -49,7 +49,7 @@ processed.  It's useful if you want to ensure that Nightfall has had an opportun
 to update its database with something that you know has happened on the blockchain
 but that Nightfall may not have processed yet, because it's still in the event queue.
 */
-export function waitUntilCurrentQueueIsProcessed(priority) {
+export function flushQueue(priority) {
   const p = new Promise(resolve => {
     queues[priority].push(cb => {
       cb(null, resolve());

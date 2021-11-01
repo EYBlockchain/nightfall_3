@@ -10,7 +10,7 @@ import {
   getBlockByRoot,
   getTransactionsByTransactionHashes,
 } from '../services/database.mjs';
-import { waitUntilCurrentQueueIsProcessed } from '../services/event-queue.mjs';
+import { flushQueue } from '../services/event-queue.mjs';
 
 const router = express.Router();
 
@@ -60,7 +60,7 @@ router.get('/root/:root', async (req, res, next) => {
     // yet.  Let's wait for the current queue to empty and try again.
     if (block === null) {
       logger.debug('Block not found, waiting for current queue to process before trying once more');
-      await waitUntilCurrentQueueIsProcessed(0);
+      await flushQueue(0);
       block = await getBlockByRoot(root);
     }
     if (block !== null) {
