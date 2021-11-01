@@ -77,6 +77,7 @@ describe('Testing the http API', () => {
 
   const waitForTxExecution = async (count, txType) => {
     while (count === logCounts[txType]) {
+      console.log(count, txType);
       // eslint-disable-next-line no-await-in-loop
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
