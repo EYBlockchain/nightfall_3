@@ -113,7 +113,7 @@ describe('Testing the challenge http API', () => {
 
     res = await chai.request(url).get('/contract-address/Challenges');
     challengeAddress = res.body.address;
-    web3.eth.subscribe('logs', { address: challengeAddress }).on('data', log => {
+    web3.eth.subscribe('logs', { address: challengeAddress }).on('data', () => {
       logCounts.challenge += 1;
       console.log('Challenge log event received', logCounts.challenge);
     });
@@ -156,9 +156,7 @@ describe('Testing the challenge http API', () => {
     const bond = 10;
     res = await chai.request(optimistUrl).post('/proposer/register').send({ address: myAddress });
     txToSign = res.body.txDataToSign;
-    const count = logCounts.registerProposer;
     await submitTransaction(txToSign, privateKey, proposersAddress, gas, bond);
-    await waitForTxExecution(count, 'registerProposer');
 
     // should subscribe to block proposed event with the provided incoming viewing key
     await chai
@@ -270,7 +268,7 @@ describe('Testing the challenge http API', () => {
             await submitTransaction(txDataToSign, privateKey1, challengeAddress, gas);
             await waitForTxExecution(count, 'challenge');
           } else if (type === 'challenge') {
-            const count = logCounts.challenge;
+            let count = logCounts.challenge;
             await submitTransaction(txDataToSign, privateKey1, challengeAddress, gas);
             await waitForTxExecution(count, 'challenge');
             // When a challenge succeeds, the challenger is removed. We are adding them back for subsequent for challenges
@@ -279,7 +277,7 @@ describe('Testing the challenge http API', () => {
               .post('/proposer/register')
               .send({ address: myAddress });
             txToSign = result.body.txDataToSign;
-            const count = logCounts.registerProposer;
+            count = logCounts.registerProposer;
             await submitTransaction(txToSign, privateKey, proposersAddress, gas, bond);
             await waitForTxExecution(count, 'registerProposer');
             // console.log('tx hash of challenge block is', txReceipt.transactionHash);
