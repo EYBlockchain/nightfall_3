@@ -43,6 +43,21 @@ function nextHigherPriorityQueueHasEmptied(priority) {
   });
 }
 
+/**
+This function will wait until all the functions currently in a queue have been
+processed.  It's useful if you want to ensure that Nightfall has had an opportunity
+to update its database with something that you know has happened on the blockchain
+but that Nightfall may not have processed yet, because it's still in the event queue.
+*/
+export function waitUntilCurrentQueueIsProcessed(priority) {
+  const p = new Promise(resolve => {
+    queues[priority].push(cb => {
+      cb(null, resolve());
+    });
+  });
+  return p;
+}
+
 export async function enqueueEvent(callback, priority, args) {
   queues[priority].push(async () => {
     // await nextHigherPriorityQueueHasEmptied(priority);
