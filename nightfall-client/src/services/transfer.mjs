@@ -107,20 +107,19 @@ async function transfer(transferParams) {
   // compress the secrets to save gas
   const compressedSecrets = Secrets.compressSecrets(secrets);
 
-  // and the Merkle path(s) from the commitment(s) to the root
+  // TODO, need to make sure these are processed in the same order as roots supplied
   const siblingPaths = generalise(
     await Promise.all(
       oldCommitments.map(async commitment => getSiblingPath(await commitment.index)),
     ),
   );
-  logger.silly(`SiblingPaths were: ${JSON.stringify(siblingPaths)}`);
   // public inputs
-  const root = siblingPaths[0][0];
+  const roots = siblingPaths.map(s => s[0]);
   const publicInputs = new PublicInputs([
     oldCommitments.map(commitment => commitment.preimage.ercAddress),
     newCommitments.map(commitment => commitment.hash),
     nullifiers.map(nullifier => nullifier.hash),
-    root,
+    roots,
     compressedSecrets.map(compressedSecret => compressedSecret.hex()),
   ]);
   // time for a quick sanity check.  We expect the number of old commitments,
@@ -188,10 +187,16 @@ async function transfer(transferParams) {
   const { proof } = res.data;
   // and work out the ABI encoded data that the caller should sign and send to the shield contract
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
+  const historicRootBlockNumberL2s = await Promise.all(
+    roots.map(async r => {
+      const blockAndTxs = await getBlockAndTransactionsByRoot(r.hex(32));
+      return blockAndTxs.block.blockNumberL2;
+    }),
+  );
+  if (historicRootBlockNumberL2s.length === 1) historicRootBlockNumberL2s.push(0);
   const optimisticTransferTransaction = new Transaction({
     fee,
-    historicRootBlockNumberL2: (await getBlockAndTransactionsByRoot(root.hex(32))).block
-      .blockNumberL2,
+    historicRootBlockNumberL2: historicRootBlockNumberL2s,
     transactionType,
     publicInputs,
     ercAddress,

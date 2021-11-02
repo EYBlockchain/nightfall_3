@@ -54,7 +54,8 @@ async function checkTransactionType(transaction) {
         transaction.compressedSecrets.length !== 8 ||
         transaction.proof.every(p => p === ZERO) ||
         // This extra check is unique to deposits
-        Number(transaction.historicRootBlockNumberL2) !== 0
+        Number(transaction.historicRootBlockNumberL2[0]) !== 0 ||
+        Number(transaction.historicRootBlockNumberL2[1]) !== 0
       )
         throw new TransactionError(
           'The data provided was inconsistent with a transaction type of DEPOSIT',
@@ -131,12 +132,18 @@ async function checkTransactionType(transaction) {
 async function checkHistoricRoot(transaction) {
   // Deposit transaction have a historic root of 0
   // the validity is tested in checkTransactionType
-  if (
-    Number(transaction.transactionType) === 1 ||
-    Number(transaction.transactionType) === 2 ||
-    Number(transaction.transactionType) === 3
-  ) {
-    if ((await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2)) === null)
+  if (Number(transaction.transactionType) === 1 || Number(transaction.transactionType) === 3) {
+    const historicRootFirst = await getBlockByBlockNumberL2(
+      transaction.historicRootBlockNumberL2[0],
+    );
+    if (historicRootFirst === null)
+      throw new TransactionError('The historic root in the transaction does not exist', 3);
+  }
+  if (Number(transaction.transactionType) === 2) {
+    const [historicRootFirst, historicRootSecond] = await Promise.all(
+      transaction.historicRootBlockNumberL2.map(h => getBlockByBlockNumberL2(h)),
+    );
+    if (historicRootFirst === null || historicRootSecond === null)
       throw new TransactionError('The historic root in the transaction does not exist', 3);
   }
 }
@@ -148,6 +155,12 @@ async function checkPublicInputHash(transaction) {
     // to retrieve the root of the block that needs to be hashed. If the historic block does not exist then this root won't exist either
     // hence we do this check first
     await checkHistoricRoot(transaction);
+    const historicRootFirst = (await getBlockByBlockNumberL2(
+      transaction.historicRootBlockNumberL2[0],
+    )) ?? { root: ZERO };
+    const historicRootSecond = (await getBlockByBlockNumberL2(
+      transaction.historicRootBlockNumberL2[1],
+    )) ?? { root: ZERO };
     switch (Number(transaction.transactionType)) {
       case 0: // deposit transaction
         if (
@@ -168,7 +181,7 @@ async function checkPublicInputHash(transaction) {
             transaction.ercAddress,
             transaction.commitments[0],
             transaction.nullifiers[0],
-            (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2)).root,
+            historicRootFirst.root,
             ...transaction.compressedSecrets,
           ]).hash.hex(32)
         )
@@ -182,7 +195,8 @@ async function checkPublicInputHash(transaction) {
             transaction.ercAddress, // in a double-transfer public input hash
             transaction.commitments,
             transaction.nullifiers,
-            (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2)).root,
+            historicRootFirst.root,
+            historicRootSecond.root,
             ...transaction.compressedSecrets,
           ]).hash.hex(32)
         )
@@ -197,7 +211,7 @@ async function checkPublicInputHash(transaction) {
             transaction.value,
             transaction.nullifiers[0],
             transaction.recipientAddress,
-            (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2)).root,
+            historicRootFirst.root,
           ]).hash.hex(32)
         )
           throw new TransactionError('public input hash is incorrect', 4);

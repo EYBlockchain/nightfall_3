@@ -14,7 +14,7 @@ from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8
 from "./common/hashes/mimc/mimc-hash-2.zok" import main as mimc2
 from "./common/hashes/sha256/pad512ThenHash.zok" import main as sha256of512
 from "./common/hashes/sha256/pad1280ThenHash.zok" import main as sha256of1280
-from "./common/hashes/sha256/pad3840ThenHash.zok" import main as sha256of3840
+from "./common/hashes/sha256/pad4096ThenHash.zok" import main as sha256of4096
 
 from "./common/merkle-tree/mimc-path-check.zok" import main as pathCheck
 
@@ -174,7 +174,7 @@ def main(\
 
 	// check the public input hash (TODO no need to include both ERCAddresses as
 	// they are proven equal) so we can save 25k constraints
-	u32[8] publicInputsHashU32 = sha256of3840([\
+	u32[8] publicInputsHashU32 = sha256of4096([\
 		...oldCommitment[0].ercAddress,\
 		...oldCommitment[1].ercAddress,\
 		...newCommitment[0].hash,\
@@ -182,6 +182,7 @@ def main(\
 		...nullifier[0].hash,\
 		...nullifier[1].hash,\
 		...field_to_u32_8(path[0][0]),\
+		...field_to_u32_8(path[1][0]),\
 		...compressedSecret1,\
 		...compressedSecret2,\
 		...compressedSecret3,\
@@ -199,7 +200,6 @@ def main(\
 	assert(publicInputsHash == bool_256_to_field(publicInputsHashBool256Sliced))
 
 	// check that the old commitments are in the merkle tree
-	assert(path[0][0] == path[1][0]) // these should both be the root
 	for field i in 0..2 do
 		field mimcHash = u32_8_to_field(oldCommitment[i].hash)
 		assert(pathCheck(path[i], order[i], mimcHash))
