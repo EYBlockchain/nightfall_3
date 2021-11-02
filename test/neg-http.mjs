@@ -77,7 +77,6 @@ describe('Testing the challenge http API', () => {
 
   const waitForTxExecution = async (count, txType) => {
     while (count === logCounts[txType]) {
-      console.log('in waitForTxExecution -- ', count, txType);
       // eslint-disable-next-line no-await-in-loop
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
@@ -107,7 +106,6 @@ describe('Testing the challenge http API', () => {
     web3.eth.subscribe('logs', { address: shieldAddress }).on('data', log => {
       if (log.topics[0] === web3.eth.abi.encodeEventSignature('TransactionSubmitted()')) {
         logCounts.txSubmitted += 1;
-        console.log('txSubmitted log event received', logCounts.txSubmitted);
       }
     });
 
@@ -115,7 +113,6 @@ describe('Testing the challenge http API', () => {
     challengeAddress = res.body.address;
     web3.eth.subscribe('logs', { address: challengeAddress }).on('data', () => {
       logCounts.challenge += 1;
-      console.log('Challenge log event received', logCounts.challenge);
     });
 
     res = await chai.request(url).get('/contract-address/Proposers');
@@ -123,7 +120,6 @@ describe('Testing the challenge http API', () => {
     web3.eth.subscribe('logs', { address: proposersAddress }).on('data', log => {
       if (log.topics[0] === web3.eth.abi.encodeEventSignature('NewCurrentProposer(address)')) {
         logCounts.registerProposer += 1;
-        console.log('proposer add log event received', logCounts.registerProposer);
       }
     });
 
@@ -178,7 +174,6 @@ describe('Testing the challenge http API', () => {
         const msg = JSON.parse(message.data);
         const { type } = msg;
         let { txDataToSign } = msg;
-        console.log('in onmessage', type);
         try {
           if (type === 'block') {
             const { block, transactions } = msg;

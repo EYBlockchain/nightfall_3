@@ -77,7 +77,6 @@ describe('Testing the http API', () => {
 
   const waitForTxExecution = async (count, txType) => {
     while (count === logCounts[txType]) {
-      console.log(count, txType);
       // eslint-disable-next-line no-await-in-loop
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
@@ -114,10 +113,8 @@ describe('Testing the http API', () => {
     web3.eth.subscribe('logs', { address: proposersAddress }).on('data', log => {
       if (log.topics[0] === web3.eth.abi.encodeEventSignature('NewCurrentProposer(address)')) {
         logCounts.registerProposer += 1;
-        console.log('proposers add log received', logCounts);
         return;
       }
-      console.log('proposers some other topic log received', log.topics[0]);
     });
 
     challengesAddress = (await chai.request(senderUrl).get('/contract-address/Challenges')).body
@@ -206,7 +203,6 @@ describe('Testing the http API', () => {
 
   describe('Basic Proposer tests', () => {
     after(async () => {
-      console.log('in after block');
       // After the proposer tests, re-register proposers
       const myAddress = (await getAccounts())[0];
       const res = await chai
@@ -234,7 +230,6 @@ describe('Testing the http API', () => {
       const bond = 10;
       const startBalance = await getBalance(myAddress);
       const count = logCounts.registerProposer;
-      console.log(1);
       // now we need to sign the transaction and send it to the blockchain
       const receipt = await submitTransaction(
         txDataToSign,
@@ -243,9 +238,7 @@ describe('Testing the http API', () => {
         gas,
         bond,
       );
-      console.log(2);
       await waitForTxExecution(count, 'registerProposer');
-      console.log(3);
       const endBalance = await getBalance(myAddress);
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
@@ -257,7 +250,6 @@ describe('Testing the http API', () => {
     });
 
     it('should de-register a proposer', async () => {
-      console.log(4);
       const myAddress = (await getAccounts())[0];
       const res = await chai.request(optimistUrl).post('/proposer/de-register');
       const { txDataToSign } = res.body;
