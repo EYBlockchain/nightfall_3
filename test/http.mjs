@@ -4,6 +4,7 @@ import chaiAsPromised from 'chai-as-promised';
 import Queue from 'queue';
 import WebSocket from 'ws';
 import { GN } from 'general-number';
+import { generateMnemonic } from 'bip39';
 import {
   closeWeb3Connection,
   submitTransaction,
@@ -122,18 +123,33 @@ describe('Testing the http API', () => {
     nodeInfo = await web3.eth.getNodeInfo();
     setNonce(await web3.eth.getTransactionCount((await getAccounts())[0]));
 
+    // Generate a random mnemonic (uses crypto.randomBytes under the hood), defaults to 128-bits of entropy
+    // For entropy, crypto.randomBytes uses /dev/urandom (unix, MacOS) or CryptoGenRandom (windows)
+    // Crypto.getRandomValues() is suitable for browser needs
+    const mnemonic = generateMnemonic();
+
     ({
       ask: ask1,
       nsk: nsk1,
       ivk: ivk1,
       pkd: pkd1,
-    } = (await chai.request(senderUrl).post('/generate-keys').send()).body);
+    } = (
+      await chai
+        .request(senderUrl)
+        .post('/generate-keys')
+        .send({ mnemonic, path: `m/44'/60'/0'/0` })
+    ).body);
 
     ({
       nsk: nsk2,
       ivk: ivk2,
       pkd: pkd2,
-    } = (await chai.request(senderUrl).post('/generate-keys').send()).body);
+    } = (
+      await chai
+        .request(senderUrl)
+        .post('/generate-keys')
+        .send({ mnemonic, path: `m/44'/60'/1'/0` })
+    ).body);
 
     connection = new WebSocket(optimistWsUrl);
     connection.onopen = () => {

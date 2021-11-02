@@ -3,6 +3,7 @@ import Web3 from 'web3';
 import WebSocket from 'ws';
 import EventEmitter from 'events';
 import { Mutex } from 'async-mutex';
+import { generateMnemonic } from 'bip39';
 
 /**
 @class
@@ -76,7 +77,12 @@ class Nf3 {
   */
   async init() {
     this.setWeb3Provider(this.web3WsUrl);
-    this.zkpKeys = this.zkpKeys || (await axios.post(`${this.clientBaseUrl}/generate-keys`)).data;
+    // Generate a random mnemonic (uses crypto.randomBytes under the hood), defaults to 128-bits of entropy
+    const mnemonic = generateMnemonic();
+    this.zkpKeys =
+      this.zkpKeys ||
+      (await axios.post(`${this.clientBaseUrl}/generate-keys`),
+      { mnemonic, path: `m/44'/60'/0'/0` }).data;
     this.shieldContractAddress = await this.getContractAddress('Shield');
     this.proposersContractAddress = await this.getContractAddress('Proposers');
     this.challengesContractAddress = await this.getContractAddress('Challenges');
