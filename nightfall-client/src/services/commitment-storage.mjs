@@ -55,10 +55,17 @@ export async function countNullifiers(nullifiers) {
 }
 
 // function to mark a commitments as on chain for a mongo db
-export async function markOnChain(commitments, blockNumberL2, blockNumber) {
+export async function markOnChain(
+  commitments,
+  blockNumberL2,
+  blockNumber,
+  transactionHashCommittedL1,
+) {
   const connection = await mongo.connection(MONGO_URL);
   const query = { _id: { $in: commitments }, isOnChain: { $eq: -1 } };
-  const update = { $set: { isOnChain: Number(blockNumberL2), blockNumber } };
+  const update = {
+    $set: { isOnChain: Number(blockNumberL2), blockNumber, transactionHashCommittedL1 },
+  };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
 }
@@ -92,6 +99,14 @@ export async function getCommitmentBySalt(salt) {
     .find({ 'preimage.salt': generalise(salt).hex(32) })
     .toArray();
   return commitments;
+}
+
+// function to retrieve commitment by transactionHash of the block in which it was
+// committed to
+export async function getCommitmentsByTransactionHashL1(transactionHashCommittedL1) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(COMMITMENTS_COLLECTION).find({ transactionHashCommittedL1 }).toArray();
 }
 
 /*
@@ -140,10 +155,17 @@ export async function clearPending(commitment) {
 }
 
 // function to mark a commitments as nullified on chain for a mongo db
-export async function markNullifiedOnChain(nullifiers, blockNumberL2, blockNumber) {
+export async function markNullifiedOnChain(
+  nullifiers,
+  blockNumberL2,
+  blockNumber,
+  transactionHashNullifiedL1,
+) {
   const connection = await mongo.connection(MONGO_URL);
   const query = { nullifier: { $in: nullifiers }, isNullifiedOnChain: { $eq: -1 } };
-  const update = { $set: { isNullifiedOnChain: Number(blockNumberL2), blockNumber } };
+  const update = {
+    $set: { isNullifiedOnChain: Number(blockNumberL2), blockNumber, transactionHashNullifiedL1 },
+  };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
 }
@@ -173,7 +195,6 @@ export async function getWalletBalance() {
   // work out the balance contribution of each commitment  - a 721 token has no value field in the
   // commitment but each 721 token counts as a balance of 1. Then finally add up the individual
   // commitment balances to get a balance for each erc address.
-  console.log('WALLET IS', wallet);
   return wallet
     .map(e => ({
       ercAddress: BigInt(e.preimage.ercAddress).toString(16),

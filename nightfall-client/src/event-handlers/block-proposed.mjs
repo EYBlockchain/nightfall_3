@@ -31,7 +31,12 @@ async function blockProposedEventHandler(data) {
       // this client and stored during deposit transaction creation. If so, only update that commitment is on chain
       // If not this commitment need not be stored or updated by other clients
       if ((await countCommitments(transaction.commitments)) > 0) {
-        await markOnChain(nonZeroCommitments, blockNumberL2, data.blockNumber);
+        await markOnChain(
+          nonZeroCommitments,
+          blockNumberL2,
+          data.blockNumber,
+          data.transactionHash,
+        );
       }
       // if transaction is single transfer or double transfer
     } else if (transaction.transactionType === '1' || transaction.transactionType === '2') {
@@ -42,8 +47,13 @@ async function blockProposedEventHandler(data) {
       // nothing needs to be stored
       if ((await countCommitments(transaction.commitments)) > 0) {
         await Promise.all([
-          markOnChain(nonZeroCommitments, blockNumberL2, data.blockNumber),
-          markNullifiedOnChain(nonZeroNullifiers, blockNumberL2, data.blockNumber),
+          markOnChain(nonZeroCommitments, blockNumberL2, data.blockNumber, data.transactionHash),
+          markNullifiedOnChain(
+            nonZeroNullifiers,
+            blockNumberL2,
+            data.blockNumber,
+            data.transactionHash,
+          ),
         ]);
       } else {
         // eslint-disable-next-line consistent-return
@@ -60,7 +70,12 @@ async function blockProposedEventHandler(data) {
             else {
               // store commitment if the new commitment in this transaction is intended for this client
               await storeCommitment(commitment, nsks[i]);
-              await markOnChain(nonZeroCommitments, blockNumberL2, data.blockNumber);
+              await markOnChain(
+                nonZeroCommitments,
+                blockNumberL2,
+                data.blockNumber,
+                data.transactionHash,
+              );
               return false; // to exit every() loop once the a key has successfully decrypted the secrets of the transaction
             }
           } catch (err) {
@@ -75,7 +90,12 @@ async function blockProposedEventHandler(data) {
       // this client and stored during withdraw transaction creation. If so, only update that nullifier is on chain
       // If not this nullifier need not be stored or updated by other clients
       if ((await countNullifiers(transaction.nullifiers)) > 0) {
-        await markNullifiedOnChain(nonZeroNullifiers, blockNumberL2, data.blockNumber);
+        await markNullifiedOnChain(
+          nonZeroNullifiers,
+          blockNumberL2,
+          data.blockNumber,
+          data.transactionHash,
+        );
       }
     } else logger.error('Transaction type is invalid. Transaction type is', transaction.Type);
   });
