@@ -113,7 +113,6 @@ describe('Testing the http API', () => {
     web3.eth.subscribe('logs', { address: proposersAddress }).on('data', log => {
       if (log.topics[0] === web3.eth.abi.encodeEventSignature('NewCurrentProposer(address)')) {
         logCounts.registerProposer += 1;
-        return;
       }
     });
 
