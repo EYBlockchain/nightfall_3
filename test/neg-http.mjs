@@ -63,11 +63,20 @@ describe('Testing the challenge http API', () => {
   let topicsBlockHashIncorrectLeafCount;
   let web3;
   const logCounts = {
-    deposit: 0,
+    txSubmitted: 0,
+    registerProposer: 0,
+    challenge: 0,
   };
 
   const holdupTxQueue = async (txType, waitTillCount) => {
     while (logCounts[txType] < waitTillCount) {
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
+  };
+
+  const waitForTxExecution = async (count, txType) => {
+    while (count === logCounts[txType]) {
       // eslint-disable-next-line no-await-in-loop
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
@@ -96,15 +105,23 @@ describe('Testing the challenge http API', () => {
     shieldAddress = res.body.address;
     web3.eth.subscribe('logs', { address: shieldAddress }).on('data', log => {
       if (log.topics[0] === web3.eth.abi.encodeEventSignature('TransactionSubmitted()')) {
-        logCounts.deposit += 1;
+        logCounts.txSubmitted += 1;
       }
     });
 
     res = await chai.request(url).get('/contract-address/Challenges');
     challengeAddress = res.body.address;
+    web3.eth.subscribe('logs', { address: challengeAddress }).on('data', () => {
+      logCounts.challenge += 1;
+    });
 
     res = await chai.request(url).get('/contract-address/Proposers');
     proposersAddress = res.body.address;
+    web3.eth.subscribe('logs', { address: proposersAddress }).on('data', log => {
+      if (log.topics[0] === web3.eth.abi.encodeEventSignature('NewCurrentProposer(address)')) {
+        logCounts.registerProposer += 1;
+      }
+    });
 
     res = await chai.request(url).get('/contract-address/State');
     stateAddress = res.body.address;
@@ -242,7 +259,9 @@ describe('Testing the challenge http API', () => {
             counter++;
             // console.log('tx hash of propose block is', txReceipt.transactionHash);
           } else if (type === 'commit') {
+            const count = logCounts.challenge;
             await submitTransaction(txDataToSign, privateKey1, challengeAddress, gas);
+            await waitForTxExecution(count, 'challenge');
           } else if (type === 'challenge') {
             await submitTransaction(txDataToSign, privateKey1, challengeAddress, gas);
             // When a challenge succeeds, the challenger is removed. We are adding them back for subsequent for challenges
@@ -251,7 +270,9 @@ describe('Testing the challenge http API', () => {
               .post('/proposer/register')
               .send({ address: myAddress });
             txToSign = result.body.txDataToSign;
+            const count = logCounts.registerProposer;
             await submitTransaction(txToSign, privateKey, proposersAddress, gas, bond);
+            await waitForTxExecution(count, 'registerProposer');
             // console.log('tx hash of challenge block is', txReceipt.transactionHash);
           } else throw new Error(`Unhandled transaction type: ${type}`);
         } catch (err) {
@@ -298,7 +319,7 @@ describe('Testing the challenge http API', () => {
 
       const receiptArrays = [];
       txQueue.push(async () => {
-        await holdupTxQueue('deposit', logCounts.deposit + depositTransactions.length);
+        await holdupTxQueue('txSubmitted', logCounts.txSubmitted + depositTransactions.length);
       });
       for (let i = 0; i < depositTransactions.length; i++) {
         const { txDataToSign } = depositTransactions[i];
@@ -376,11 +397,14 @@ describe('Testing the challenge http API', () => {
 
       const receiptArrays = [];
       for (let i = 0; i < depositTransactions.length; i++) {
+        const count = logCounts.txSubmitted;
         const { txDataToSign } = depositTransactions[i];
         receiptArrays.push(
           // eslint-disable-next-line no-await-in-loop
           await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee),
         );
+        // eslint-disable-next-line no-await-in-loop
+        await waitForTxExecution(count, 'txSubmitted');
       }
       receiptArrays.forEach(receipt => {
         expect(receipt).to.have.property('transactionHash');
@@ -448,6 +472,9 @@ describe('Testing the challenge http API', () => {
 
     describe('Challenge 2: Duplicate transaction submitted', () => {
       it('Should delete the flawed block and rollback the leaves', async () => {
+        txQueue.push(async () => {
+          await holdupTxQueue('txSubmitted', logCounts.txSubmitted + 1);
+        });
         await testForEvents(stateAddress, [
           web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
           web3.eth.abi.encodeParameter('bytes32', topicsBlockHashDuplicateTransaction),
