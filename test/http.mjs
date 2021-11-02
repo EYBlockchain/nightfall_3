@@ -257,6 +257,7 @@ describe('Testing the http API', () => {
     });
 
     it('should de-register a proposer', async () => {
+      console.log(4);
       const myAddress = (await getAccounts())[0];
       const res = await chai.request(optimistUrl).post('/proposer/de-register');
       const { txDataToSign } = res.body;
