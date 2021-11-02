@@ -95,39 +95,46 @@ function txSubmit(txParams) {
 
       case TX_TYPES.WITHDRAW:
       case TX_TYPES.INSTANT_WITHDRAW:
-        // TODO: dispatch error
-        try {
+        {
+          // TODO: dispatch error
           const nRetries = 0;
-          const response = await nf3.withdraw(
-            offchain,
-            txParams.tokenAddress,
-            txParams.tokenType,
-            tokenAmountWei,
-            txParams.tokenId,
-            txParams.ethereumAddress,
-            txParams.fee,
-          );
-          response.receiptPromise.then(receiptPromise => {
-            dispatch(
-              txActions.txSuccess(
-                txParams.txType,
-                receiptPromise,
-                response.withdrawTransactionHash,
-                nRetries,
-              ),
-            );
-            if (txParams.txType === TX_TYPES.INSTANT_WITHDRAW) {
+          nf3
+            .withdraw(
+              offchain,
+              txParams.tokenAddress,
+              txParams.tokenType,
+              tokenAmountWei,
+              txParams.tokenId,
+              txParams.ethereumAddress,
+              txParams.fee,
+            )
+            .then(txReceipt => {
+              const latestWithdrawTransactionHash = nf3.getLatestWithdrawHash();
               dispatch(
-                txInstantWithdrawSubmit(
-                  response.withdrawTransactionHash,
-                  txParams.instantWithdrawFee,
+                txActions.txSuccess(
+                  TX_TYPES.WITHDRAW,
+                  txReceipt,
+                  latestWithdrawTransactionHash,
+                  nRetries,
                 ),
               );
-            }
-          });
-        } catch (err) {
-          dispatch(txActions.txFailed());
-          console.log(err);
+              // TODO: dispatch error
+              console.log(txReceipt);
+
+              if (txParams.txType === TX_TYPES.INSTANT_WITHDRAW) {
+                dispatch(
+                  txInstantWithdrawSubmit(
+                    latestWithdrawTransactionHash,
+                    txParams.instantWithdrawFee,
+                  ),
+                );
+              }
+            })
+            .catch(err => {
+              dispatch(txActions.txFailed());
+              // TODO: dispatch error
+              console.log(err);
+            });
         }
         break;
 

@@ -17,6 +17,7 @@ const {
   NULLIFIER_COLLECTION,
   COMMIT_COLLECTION,
   TIMBER_COLLECTION,
+  ZERO,
 } = config;
 
 /**
@@ -120,6 +121,13 @@ export async function getBlockByTransactionHash(transactionHash) {
   return db.collection(SUBMITTED_BLOCKS_COLLECTION).find(query).toArray();
 }
 
+export async function getBlockByTransactionHashL1(transactionHashL1) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { transactionHashL1 };
+  return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
+}
+
 export async function numberOfBlockWithTransactionHash(transactionHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
@@ -148,6 +156,21 @@ export async function getBlockByRoot(root) {
   const db = connection.db(OPTIMIST_DB);
   const query = { root };
   return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
+}
+
+/** 
+get the latest blockNumberL2 in our database
+*/
+export async function getLatestBlockInfo() {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const [blockInfo] = await db
+    .collection(SUBMITTED_BLOCKS_COLLECTION)
+    .find({}, { blockNumberL2: 1, blockHash: 1 })
+    .sort({ blockNumberL2: -1 })
+    .limit(1)
+    .toArray();
+  return blockInfo ?? { blockNumberL2: -1, blockHash: ZERO };
 }
 
 /**

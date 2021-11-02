@@ -62,12 +62,21 @@ import {
   clearBlockNumberL1ForBlock,
   clearBlockNumberL1ForTransaction,
   isRegisteredProposerAddressMine,
+  getBlockByTransactionHashL1,
+  deleteTreeByBlockNumberL2,
 } from '../services/database.mjs';
 import { waitForContract } from './subscribe.mjs';
 
 const { STATE_CONTRACT_NAME } = config;
 
 export async function removeBlockProposedEventHandler(eventObject) {
+  // we need to remove the state associated with this event from the Timber class
+  // so find out which L2 block has been removed by this event removal.
+  const block = await getBlockByTransactionHashL1(eventObject.transactionHash);
+  // then we delete the Timber record associated with this block
+  await deleteTreeByBlockNumberL2(block.blockNumberL2);
+  // now we can clear the L1 blocknumber to indicate that the L2 block is no longer
+  // on chain.
   return clearBlockNumberL1ForBlock(eventObject.transactionHash);
 }
 

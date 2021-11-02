@@ -11,7 +11,6 @@ import {
   getMostProfitableTransactions,
   numberOfUnprocessedTransactions,
 } from './database.mjs';
-import { queues, eventQueueManager } from './event-queue.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
@@ -47,10 +46,7 @@ export async function conditionalMakeBlock(proposer) {
   // transaction. If not, we must wait until either we have enough (hooray)
   // or we're no-longer the proposer (boo).
   if (proposer.isMe) {
-    if (
-      (await numberOfUnprocessedTransactions()) >= TRANSACTIONS_PER_BLOCK &&
-      queues[0].length === 0
-    ) {
+    if ((await numberOfUnprocessedTransactions()) >= TRANSACTIONS_PER_BLOCK) {
       const { block, transactions } = await makeBlock(proposer.address);
       logger.info(`Block Assembler - New Block created, ${JSON.stringify(block, null, 2)}`);
       // propose this block to the Shield contract here
@@ -63,7 +59,7 @@ export async function conditionalMakeBlock(proposer) {
         )
         .encodeABI();
       if (ws)
-        ws.send(
+        await ws.send(
           JSON.stringify({
             type: 'block',
             txDataToSign: unsignedProposeBlockTransaction,
@@ -75,11 +71,8 @@ export async function conditionalMakeBlock(proposer) {
       // remove the transactiosn from the mempool so we don't keep making new
       // blocks with them
       await removeTransactionsFromMemPool(block);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      await eventQueueManager(conditionalMakeBlock, 0, proposer);
-      // TODO is await needed?
-    } else {
-      await eventQueueManager(conditionalMakeBlock, 0, proposer);
     }
   }
+  // Let's slow down here so we don't slam the database.
+  await new Promise(resolve => setTimeout(resolve, 3000));
 }

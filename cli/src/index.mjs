@@ -169,12 +169,12 @@ async function loop(nf3, ercAddress) {
   // handle the task that the user has asked for
   switch (task) {
     case 'Deposit':
-      receiptPromise = await nf3.deposit(ercAddress[tokenType], tokenType, value, tokenId, fee);
+      receiptPromise = nf3.deposit(ercAddress[tokenType], tokenType, value, tokenId, fee);
       break;
     case 'Transfer':
       if (x === 'my key') [x, y] = nf3.zkpKeys.pkd;
       try {
-        receiptPromise = await nf3.transfer(
+        receiptPromise = nf3.transfer(
           offchain,
           ercAddress[tokenType],
           tokenType,
@@ -193,16 +193,15 @@ async function loop(nf3, ercAddress) {
       break;
     case 'Withdraw':
       try {
-        ({ withdrawTransactionHash: latestWithdrawTransactionHash, receiptPromise } =
-          await nf3.withdraw(
-            offchain,
-            ercAddress[tokenType],
-            tokenType,
-            value,
-            tokenId,
-            recipientAddress,
-            fee,
-          ));
+        receiptPromise = nf3.withdraw(
+          offchain,
+          ercAddress[tokenType],
+          tokenType,
+          value,
+          tokenId,
+          recipientAddress,
+          fee,
+        );
       } catch (err) {
         if (err.response.data.includes('No suitable commitments were found')) {
           console.log('No suitable commitments were found');
@@ -213,7 +212,9 @@ async function loop(nf3, ercAddress) {
       break;
     case 'Instant-Withdraw':
       try {
-        receiptPromise = await nf3.requestInstantWithdrawal(
+        await receiptPromise; // we want the other transactions to complete before we try this
+        latestWithdrawTransactionHash = nf3.getLatestWithdrawHash();
+        receiptPromise = nf3.requestInstantWithdrawal(
           withdrawTransactionHash === 'last withdraw'
             ? latestWithdrawTransactionHash
             : withdrawTransactionHash,

@@ -62,6 +62,16 @@ describe('Testing the challenge http API', () => {
   let topicsBlockHashDuplicateNullifier;
   let topicsBlockHashIncorrectLeafCount;
   let web3;
+  const logCounts = {
+    deposit: 0,
+  };
+
+  const holdupTxQueue = async (txType, waitTillCount) => {
+    while (logCounts[txType] < waitTillCount) {
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
+  };
 
   before(async () => {
     web3 = await connectWeb3(BLOCKCHAIN_URL);
@@ -84,6 +94,11 @@ describe('Testing the challenge http API', () => {
 
     res = await chai.request(url).get('/contract-address/Shield');
     shieldAddress = res.body.address;
+    web3.eth.subscribe('logs', { address: shieldAddress }).on('data', log => {
+      if (log.topics[0] === web3.eth.abi.encodeEventSignature('TransactionSubmitted()')) {
+        logCounts.deposit += 1;
+      }
+    });
 
     res = await chai.request(url).get('/contract-address/Challenges');
     challengeAddress = res.body.address;
@@ -240,7 +255,7 @@ describe('Testing the challenge http API', () => {
             // console.log('tx hash of challenge block is', txReceipt.transactionHash);
           } else throw new Error(`Unhandled transaction type: ${type}`);
         } catch (err) {
-          console.log(err);
+          console.error(`neg-http.mjs onmessage error: ${err}`);
         }
       });
     };
@@ -282,6 +297,9 @@ describe('Testing the challenge http API', () => {
       depositTransactions.forEach(({ txDataToSign }) => expect(txDataToSign).to.be.a('string'));
 
       const receiptArrays = [];
+      txQueue.push(async () => {
+        await holdupTxQueue('deposit', logCounts.deposit + depositTransactions.length);
+      });
       for (let i = 0; i < depositTransactions.length; i++) {
         const { txDataToSign } = depositTransactions[i];
         receiptArrays.push(
@@ -404,6 +422,17 @@ describe('Testing the challenge http API', () => {
       }
       // Double shift to take off from our queue
       eventLogs.shift();
+      eventLogs.shift();
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    });
+
+    after(async () => {
+      // At the very end make sure we wait for any good blocks before dropping out of the test.
+      while (eventLogs[0] !== 'blockProposed') {
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+
       eventLogs.shift();
       await new Promise(resolve => setTimeout(resolve, 5000));
     });
@@ -582,11 +611,11 @@ describe('Testing the challenge http API', () => {
       connection.close();
     } else {
       // TODO work out what's still running and close it properly
-      txQueue.end();
       txQueue.on('end', () => {
         closeWeb3Connection();
         connection.close();
       });
+      txQueue.end();
     }
   });
 });
