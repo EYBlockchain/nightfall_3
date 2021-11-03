@@ -94,7 +94,7 @@ class Nf3 {
   @method
   @param {string} key - the ethereum private key as a hex string.
   */
-  setEthereumSigningKey(key) {
+  async setEthereumSigningKey(key) {
     this.ethereumSigningKey = key;
     this.ethereumAddress = await this.getAccounts();
     // clear the nonce as we're using a fresh account
