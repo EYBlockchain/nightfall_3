@@ -56,14 +56,6 @@ export async function countCommitments(commitments) {
   return db.collection(COMMITMENTS_COLLECTION).countDocuments(query);
 }
 
-// function to get count of nullifiers. Can also be used to check if it exists
-export async function countNullifiers(nullifiers) {
-  const connection = await mongo.connection(MONGO_URL);
-  const query = { nullifier: { $in: nullifiers } };
-  const db = connection.db(COMMITMENTS_DB);
-  return db.collection(COMMITMENTS_COLLECTION).countDocuments(query);
-}
-
 // function to mark a commitments as on chain for a mongo db
 export async function markOnChain(
   commitments,
@@ -81,10 +73,10 @@ export async function markOnChain(
 }
 
 // function to mark a commitments as on chain for a mongo db
-export async function updateSibling(commitment, siblingPath, root) {
+export async function setSiblingInfo(commitment, siblingPath, leafIndex, root) {
   const connection = await mongo.connection(MONGO_URL);
-  const query = { _id: commitment, isOnChain: { $eq: -1 } };
-  const update = { $set: { siblingPath, root } };
+  const query = { _id: commitment, isOnChain: { $ne: -1 } };
+  const update = { $set: { siblingPath, leafIndex, root } };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
 }
@@ -134,6 +126,17 @@ export async function getNullifiedByTransactionHashL1(transactionHashNullifiedL1
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).find({ transactionHashNullifiedL1 }).toArray();
 }
+export async function getSiblingInfo(commitment) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  return db
+    .collection(COMMITMENTS_COLLECTION)
+    .findOne(
+      { _id: commitment.hash.hex(32) },
+      { projection: { siblingPath: 1, root: 1, order: 1, isOnChain: 1, leafIndex: 1 } },
+    );
+}
+
 /*
 function to clear a commitments nullified status after a rollback.
 commitments have two stages of nullification (1) when they are spent by Client
@@ -150,7 +153,6 @@ export async function clearNullified(blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
   const query = { isNullifiedOnChain: { $gte: Number(blockNumberL2) } };
   const update = {
-    // $set: { isNullifiedOnChain: -1, isNullified: false, isPendingNullification: false },
     $set: { isNullifiedOnChain: -1, blockNumber: -1 },
   };
   const db = connection.db(COMMITMENTS_DB);
@@ -193,12 +195,6 @@ export async function markNullifiedOnChain(
   };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
-}
-
-export async function getAllCommitments() {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(COMMITMENTS_DB);
-  return db.collection(COMMITMENTS_COLLECTION).find().toArray();
 }
 
 // function to get the balance of commitments for each ERC address
@@ -350,11 +346,18 @@ export async function getWithdrawCommitments() {
 }
 
 // as above, but removes output commitments
-export async function deleteCommitments(commitmentHashes) {
+export async function deleteCommitments(commitments) {
   const connection = await mongo.connection(MONGO_URL);
-  const query = { _id: { $in: commitmentHashes } };
   const db = connection.db(COMMITMENTS_DB);
+  const query = { _id: { $in: commitments }, isOnChain: { $eq: -1 } };
   return db.collection(COMMITMENTS_COLLECTION).deleteMany(query);
+}
+
+export async function getCommitmentsFromBlockNumberL2(blockNumberL2) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  const query = { isOnChain: { $gte: blockNumberL2 } };
+  return db.collection(COMMITMENTS_COLLECTION).find(query).toArray();
 }
 
 // function to find commitments that can be used in the proposed transfer

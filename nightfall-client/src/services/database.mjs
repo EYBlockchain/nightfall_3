@@ -53,11 +53,11 @@ export async function getTreeByRoot(treeRoot) {
   return t;
 }
 
-export async function getTreeByLeafCount(historicalLeafCount) {
+export async function getTreeByBlockNumberL2(blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const { root, frontier, leafCount } =
-    (await db.collection(TIMBER_COLLECTION).findOne({ leafCount: historicalLeafCount })) ?? {};
+    (await db.collection(TIMBER_COLLECTION).findOne({ blockNumberL2 })) ?? {};
   const t = new Timber(root, frontier, leafCount);
   return t;
 }

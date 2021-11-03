@@ -129,15 +129,13 @@ const frontierToTree = timber => {
       frontierPaths.push(
         Number(currentFrontierSlotArray[i] - 2)
           .toString(2)
-          .padStart(TIMBER_HEIGHT, '0')
-          .slice(0, TIMBER_HEIGHT - i),
+          .padStart(TIMBER_HEIGHT - i, '0'),
       );
     else
       frontierPaths.push(
         Number(currentFrontierSlotArray[i] - 1)
           .toString(2)
-          .padStart(TIMBER_HEIGHT, '0')
-          .slice(0, TIMBER_HEIGHT - i),
+          .padStart(TIMBER_HEIGHT - i, '0'),
       );
   }
   return timber.frontier.reduce((acc, curr, index) => {

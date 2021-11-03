@@ -6,7 +6,7 @@ import {
   markOnChain,
   storeCommitment,
   countCommitments,
-  updateSibling,
+  setSiblingInfo,
 } from '../services/commitment-storage.mjs';
 import getProposeBlockCalldata from '../services/process-calldata.mjs';
 import Secrets from '../classes/secrets.mjs';
@@ -28,24 +28,6 @@ async function blockProposedEventHandler(data) {
     // filter out non zero commitments and nullifiers
     const nonZeroCommitments = transaction.commitments.flat().filter(n => n !== ZERO);
     const nonZeroNullifiers = transaction.nullifiers.flat().filter(n => n !== ZERO);
-    await Promise.all(
-      // eslint-disable-next-line consistent-return
-      nonZeroCommitments.map(async (c, cIndex) => {
-        if ((await countCommitments([c])) > 0) {
-          const siblingPath = Timber.statelessSiblingPath(latestTree, nonZeroCommitments, cIndex);
-          const updatedTree = Timber.statelessUpdate(latestTree, nonZeroCommitments);
-          if (siblingPath.isMember) {
-            return updateSibling(c, siblingPath, updatedTree.root);
-          }
-          throw new Error('Sibling Path Not found');
-        }
-      }),
-    );
-
-    // logger.info(`latestTree: ${JSON.stringify(latestTree)}`)
-    // logger.info(`blockCommitments: ${JSON.stringify(blockCommitments)}`)
-    // logger.info(`txIndex: ${txIndex}`)
-    // logger.info(`siblingPath: ${siblingPath}`)
     const storeCommitments = [];
     if (
       (transaction.transactionType === '1' || transaction.transactionType === '2') &&
@@ -73,16 +55,30 @@ async function blockProposedEventHandler(data) {
     return [
       Promise.all(storeCommitments),
       markOnChain(nonZeroCommitments, blockNumberL2, data.blockNumber, data.transactionHash),
-      markNullifiedOnChain(nonZeroNullifiers, blockNumberL2, data.blockNumber, data.transactionHash),
+      markNullifiedOnChain(
+        nonZeroNullifiers,
+        blockNumberL2,
+        data.blockNumber,
+        data.transactionHash,
+      ),
     ];
   });
 
   // await Promise.all(toStore);
   await Promise.all(dbUpdates);
-
-  // Update Timber
   const updatedTimber = Timber.statelessUpdate(latestTree, blockCommitments);
   await saveTree(data.blockNumber, blockNumberL2, updatedTimber);
+
+  await Promise.all(
+    // eslint-disable-next-line consistent-return
+    blockCommitments.map(async (c, i) => {
+      const count = await countCommitments([c]);
+      if (count > 0) {
+        const siblingPath = Timber.statelessSiblingPath(latestTree, blockCommitments, i);
+        return setSiblingInfo(c, siblingPath, latestTree.leafCount + i, updatedTimber.root);
+      }
+    }),
+  );
 }
 
 export default blockProposedEventHandler;
