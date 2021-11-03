@@ -121,7 +121,7 @@ describe('Testing the http API', () => {
 
     challengesAddress = (await chai.request(senderUrl).get('/contract-address/Challenges')).body
       .address;
-    web3.eth.subscribe('logs', { address: challengeAddress }).on('data', () => {
+    web3.eth.subscribe('logs', { address: challengesAddress }).on('data', () => {
       logCounts.challenge += 1;
       console.log('in challenge event log', logCounts.challenge);
     });
