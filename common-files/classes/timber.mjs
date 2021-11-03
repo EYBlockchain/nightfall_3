@@ -49,8 +49,8 @@ const _insertLeaf = (leafVal, tree, path) => {
     // We then use the next element in path to decided which subtree to traverse
     case 'leaf':
       return path[0] === '0'
-        ? Branch(_insertLeaf(leafVal, Leaf(0), path.slice(1)), Leaf(0))
-        : Branch(Leaf(0), _insertLeaf(leafVal, Leaf(0), path.slice(1)));
+        ? Branch(_insertLeaf(leafVal, Leaf('0'), path.slice(1)), Leaf('0'))
+        : Branch(Leaf('0'), _insertLeaf(leafVal, Leaf('0'), path.slice(1)));
     default:
       return tree;
   }
@@ -119,7 +119,7 @@ new leaves to.
  * @returns An object that represents a tree formed from the frontier.
  */
 const frontierToTree = timber => {
-  if (timber.frontier.length === 0) return Leaf(0);
+  if (timber.frontier.length === 0) return Leaf('0');
   const currentFrontierSlotArray = Array(timber.frontier.length)
     .fill(timber.leafCount)
     .map((a, i) => Math.floor(a / 2 ** i));
@@ -203,13 +203,13 @@ Creates a timber library instance. The constructor is designed to enable the rec
 class Timber {
   root;
 
-  tree = Leaf(0);
+  tree = Leaf('0');
 
   frontier = [];
 
   leafCount = 0;
 
-  constructor(root = 0, frontier = [], leafCount = 0, tree = Leaf(0)) {
+  constructor(root = 0, frontier = [], leafCount = 0, tree = Leaf('0')) {
     this.root = root;
     this.tree = tree;
     this.frontier = frontier;
@@ -433,7 +433,7 @@ class Timber {
     switch (tree.tag) {
       case 'branch':
         return pathToLeaf[0] === '0'
-          ? Branch(this.pruneRightSubTree(tree.left, pathToLeaf.slice(1)), Leaf(0)) // Going left, delete the right tree
+          ? Branch(this.pruneRightSubTree(tree.left, pathToLeaf.slice(1)), Leaf('0')) // Going left, delete the right tree
           : Branch(tree.left, this.pruneRightSubTree(tree.right, pathToLeaf.slice(1))); // Going right, but leave the left tree intact
       case 'leaf':
         return tree;
@@ -617,7 +617,7 @@ class Timber {
       .padStart(TIMBER_HEIGHT, '0');
 
     this.tree =
-      leafCount === 0 ? Leaf(0) : Timber.pruneRightSubTree(this.tree, pathToNewLastElement);
+      leafCount === 0 ? Leaf('0') : Timber.pruneRightSubTree(this.tree, pathToNewLastElement);
     this.leafCount = leafCount;
     this.frontier = Timber.calcFrontier(this.tree, this.leafCount);
     this.root = Timber.hashTree(this.tree);
