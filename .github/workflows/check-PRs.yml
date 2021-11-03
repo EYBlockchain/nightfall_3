@@ -1,9 +1,9 @@
 name: Check PR
 
 on:
-  pull_request:
+  push:
     branch:
-      - master
+      - liju.jose/fix-neg-http-infura-github-action-integration-test-1
 
 jobs:
   eslint-check:
