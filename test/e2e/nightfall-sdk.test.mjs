@@ -460,24 +460,28 @@ describe('Testing the Nightfall SDK', () => {
       latestWithdrawTransactionHash = nf3User1.getLatestWithdrawHash();
       expect(latestWithdrawTransactionHash).to.be.a('string').and.to.include('0x');
 
-      depositTransactions = [];
-      for (let i = 0; i < txPerBlock - 1; i++) {
-        depositTransactions.push(
+      if (eventLogs[0] !== 'blockProposed') {
+        depositTransactions = [];
+        for (let i = 0; i < txPerBlock; i++) {
+          depositTransactions.push(
+            // eslint-disable-next-line no-await-in-loop
+            await nf3User1.deposit(ercAddress, tokenType, value, tokenId, fee),
+          );
+        }
+
+        depositTransactions.forEach(receipt => {
+          expect(receipt).to.have.property('transactionHash');
+          expect(receipt).to.have.property('blockHash');
+        });
+
+        while (eventLogs[0] !== 'blockProposed') {
           // eslint-disable-next-line no-await-in-loop
-          await nf3User1.deposit(ercAddress, tokenType, value, tokenId, fee),
-        );
+          await new Promise(resolve => setTimeout(resolve, 3000));
+        }
+        eventLogs.shift();
+      } else {
+        eventLogs.shift();
       }
-
-      depositTransactions.forEach(receipt => {
-        expect(receipt).to.have.property('transactionHash');
-        expect(receipt).to.have.property('blockHash');
-      });
-
-      while (eventLogs[0] !== 'blockProposed') {
-        // eslint-disable-next-line no-await-in-loop
-        await new Promise(resolve => setTimeout(resolve, 3000));
-      }
-      eventLogs.shift();
 
       const res = await nf3User1.requestInstantWithdrawal(latestWithdrawTransactionHash, fee);
       expect(res).to.have.property('transactionHash');
