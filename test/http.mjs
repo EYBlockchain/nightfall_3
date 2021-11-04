@@ -121,10 +121,6 @@ describe('Testing the http API', () => {
 
     challengesAddress = (await chai.request(senderUrl).get('/contract-address/Challenges')).body
       .address;
-    web3.eth.subscribe('logs', { address: challengesAddress }).on('data', () => {
-      logCounts.challenge += 1;
-      console.log('in challenge event log', logCounts.challenge);
-    });
 
     nodeInfo = await web3.eth.getNodeInfo();
     setNonce(await web3.eth.getTransactionCount((await getAccounts())[0]));
