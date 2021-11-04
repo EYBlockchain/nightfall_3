@@ -69,6 +69,7 @@ describe('Testing the challenge http API', () => {
   };
 
   const holdupTxQueue = async (txType, waitTillCount) => {
+    console.log('in holdupTxQueue', txType, logCounts[txType], waitTillCount);
     while (logCounts[txType] < waitTillCount) {
       // eslint-disable-next-line no-await-in-loop
       await new Promise(resolve => setTimeout(resolve, 3000));
