@@ -110,7 +110,9 @@ export async function submitTransaction(
     const signed = await web3.eth.accounts.signTransaction(tx, privateKey);
     nonce++;
     nonceDict[privateKey] = nonce;
+    console.log('going to sign');
     receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction);
+    console.log('after to sign');
   } finally {
     isSubmitTxLocked = false;
   }
