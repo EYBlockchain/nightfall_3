@@ -38,16 +38,10 @@ async function waitForContract(contractName) {
   return instance;
 }
 
-export async function subscribeToBlockProposedEvent(callback, ...args) {
-  const emitter = (await waitForContract(STATE_CONTRACT_NAME)).events.BlockProposed();
+// eslint-disable-next-line import/prefer-default-export
+export async function startEventQueue(callback, ...args) {
+  const emitter = (await waitForContract(STATE_CONTRACT_NAME)).events.allEvents();
   emitter.on('data', event => callback(event, args));
-  logger.debug('Subscribed to BlockProposed event');
-  return emitter;
-}
-
-export async function subscribeToRollbackEventHandler(callback, ...args) {
-  const emitter = (await waitForContract(STATE_CONTRACT_NAME)).events.Rollback();
-  emitter.on('data', event => callback(event, args));
-  logger.debug('Subscribed to Rollback event');
+  logger.debug('Subscribed to layer 2 state events');
   return emitter;
 }

@@ -1,3 +1,5 @@
+/* eslint import/no-extraneous-dependencies: "off" */
+
 /**
 If we're changing the layer 2 state, we want to make sure that we can complete
 that change before the state is further altered by incoming events.  A good
@@ -49,7 +51,7 @@ processed.  It's useful if you want to ensure that Nightfall has had an opportun
 to update its database with something that you know has happened on the blockchain
 but that Nightfall may not have processed yet, because it's still in the event queue.
 */
-export function flushQueue(priority) {
+function flushQueue(priority) {
   const p = new Promise(resolve => {
     queues[priority].push(cb => {
       cb(null, resolve());
@@ -58,7 +60,7 @@ export function flushQueue(priority) {
   return p;
 }
 
-export async function enqueueEvent(callback, priority, args) {
+async function enqueueEvent(callback, priority, args) {
   queues[priority].push(async () => {
     // await nextHigherPriorityQueueHasEmptied(priority);
     // prevent conditionalmakeblock from running until fastQueue is emptied
@@ -66,7 +68,7 @@ export async function enqueueEvent(callback, priority, args) {
   });
 }
 
-export async function queueManager(eventObject, eventArgs) {
+async function queueManager(eventObject, eventArgs) {
   // First element of eventArgs must be the eventHandlers object
   const [eventHandlers, ...args] = eventArgs;
   // handlers contains the functions needed to handle particular types of event,
@@ -101,3 +103,6 @@ export async function queueManager(eventObject, eventArgs) {
   if (queues[priority].length > MAX_QUEUE)
     logger.warn(`The event queue has more than ${MAX_QUEUE} events`);
 }
+
+/* ignore unused exports */
+export { flushQueue, enqueueEvent, queueManager };
