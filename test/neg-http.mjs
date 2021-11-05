@@ -146,8 +146,10 @@ describe('Testing the challenge http API', () => {
     web3.eth.subscribe('logs', { address: stateAddress }).on('data', log => {
       if (log.topics[0] === topicEventMapping.BlockProposed) {
         eventLogs.push('blockProposed');
+        console.log('blockProposed log');
       } else if (log.topics[0] === topicEventMapping.Rollback) {
         eventLogs.push('Rollback');
+        console.log('Rollback log');
       }
     });
 
