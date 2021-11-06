@@ -108,7 +108,7 @@ describe('Testing the http API', () => {
     web3.eth.subscribe('logs', { address: stateAddress }).on('data', log => {
       // For event tracking, we use only care about the logs related to 'blockProposed'
       if (log.topics[0] === topicEventMapping.BlockProposed) eventLogs.push('blockProposed');
-      console.log('blockProposed log', eventLogs.length);
+      console.log('in blockProposed log', eventLogs.length);
     });
 
     proposersAddress = (await chai.request(senderUrl).get('/contract-address/Proposers')).body
