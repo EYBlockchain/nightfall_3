@@ -16,7 +16,6 @@ let web3;
 const nonceDict = {};
 const USE_INFURA = process.env.USE_INFURA === 'true';
 const { INFURA_PROJECT_SECRET, INFURA_PROJECT_ID } = process.env;
-let isSubmitTxLocked = false;
 
 export function connectWeb3(url = 'ws://localhost:8546') {
   return new Promise(resolve => {
@@ -69,6 +68,8 @@ export async function getAccounts() {
 export async function getBalance(account) {
   return web3.eth.getBalance(account);
 }
+
+export let isSubmitTxLocked = false;
 
 export async function submitTransaction(
   unsignedTransaction,
