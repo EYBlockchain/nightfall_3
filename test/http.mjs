@@ -606,10 +606,12 @@ describe('Testing the http API', () => {
         // eslint-disable-next-line no-await-in-loop
         await waitForTxExecution(count, 'deposit');
       }
+      console.log('before while', eventLogs);
       while (eventLogs[0] !== 'blockProposed') {
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
+      console.log('after while', eventLogs);
       eventLogs.shift();
       stateBalance += fee * txPerBlock + BLOCK_STAKE;
     });
