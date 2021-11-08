@@ -230,12 +230,14 @@ async function removeBlockProposedFunction(eventObject, args) {
   // we can search for the event in Timber's history and extract the leafCount
   const historyService = new HistoryService(db);
   const history = await historyService.getTreeHistoryByTransactionHash(transactionHash);
-  //
-  // Now, the leafCount just before this block was added was block.leafCount
-  // that's where we need to roll back to.
+  // check we do actually have such a history. We could get multiple removals of
+  // block proposed events coming together in undefined order. It's possible that
+  // an earlier rollback has already removed the tree history.  That's fine, our
+  // work is already done.
+  if (!history) return true;
+  // Now, the leafCount just before this block was added was history.currentLeafCount.
+  // That's where we need to roll back to.
   return mtc.rollback(db, treeHeight, Number(history.currentLeafCount));
-  // and now we need to roll forwards to the present, along our new timeline
-  // return resync(blockNumber, args);
 }
 
 /**

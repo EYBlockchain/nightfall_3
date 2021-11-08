@@ -142,9 +142,9 @@ For Deposit transactions, commitment changes;
 ```
 .isDeposited = no change
 .isOnChain = -1
-.isNullified = no change
-.isNullifiedOnChain = no change
-.isPendingNullification = no change
+.isNullified = false
+.isNullifiedOnChain = false
+.isPendingNullification = false
 ```
 For Transfer transactions, input commitment changes (can be found by a lookup on the nullifier);
 ```
@@ -165,3 +165,7 @@ For withdraw transactions, the commitment is no longer nullified;
 .isNullifiedOnChain = false
 .isPendingNullification = false
 ```
+
+We need to make sure that these properties are appropriately reset, should the block be re-mined. It's also possible that
+client may re-spend a removed commitment before it gets re-mined.  In this case the re-mined block would be open to challenge.
+This tells us that a Proposer must check that their commitment is not in a tx in the L1 mempool before submitting a block!

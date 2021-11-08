@@ -74,7 +74,8 @@ export async function removeBlockProposedEventHandler(eventObject) {
   // so find out which L2 block has been removed by this event removal.
   const block = await getBlockByTransactionHashL1(eventObject.transactionHash);
   // then we delete the Timber record associated with this block
-  await deleteTreeByBlockNumberL2(block.blockNumberL2);
+  const res = await deleteTreeByBlockNumberL2(block.blockNumberL2);
+  logger.debug(`Deleted tree with block number ${block.blockNumberL2}, ${res}`);
   // now we can clear the L1 blocknumber to indicate that the L2 block is no longer
   // on chain.
   return clearBlockNumberL1ForBlock(eventObject.transactionHash);

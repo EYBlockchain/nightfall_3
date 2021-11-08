@@ -37,6 +37,14 @@ export async function storeCommitment(commitment, nsk) {
   };
   return db.collection(COMMITMENTS_COLLECTION).insertOne(data);
 }
+// function to update an existing commitment
+export async function updateCommitment(commitment, updates) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  const query = { _id: commitment._id };
+  const update = { $set: updates };
+  return db.collection(COMMITMENTS_COLLECTION).updateOne(query, update);
+}
 
 // function to get count of commitments. Can also be used to check if it exists
 export async function countCommitments(commitments) {
@@ -107,6 +115,22 @@ export async function getCommitmentsByTransactionHashL1(transactionHashCommitted
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).find({ transactionHashCommittedL1 }).toArray();
+}
+
+// function to retrieve the output commitments from a nullified input commitment
+export async function getOutputCommitmentsByTransactionHashL1(transactionHashCommittedL1) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  const query = { transactionHashCommittedL1, transactionHashNullified: { $exists: true } };
+  const options = { projection: { transactionHashNullified: 1, _id: 0 } };
+  const transactionHashesNullified = await db
+    .collection(COMMITMENTS_COLLECTION)
+    .find(query, options)
+    .toArray();
+  const outputCommitments = transactionHashesNullified.map(t =>
+    getCommitmentsByTransactionHashL1(t),
+  );
+  return Promise.all(outputCommitments);
 }
 
 /*
