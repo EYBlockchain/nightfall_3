@@ -330,12 +330,14 @@ describe('Testing the challenge http API', () => {
       });
       for (let i = 0; i < depositTransactions.length; i++) {
         const { txDataToSign } = depositTransactions[i];
+        const count = logCounts.txSubmitted;
         receiptArrays.push(
           // eslint-disable-next-line no-await-in-loop
           await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee),
         );
+        // eslint-disable-next-line no-await-in-loop
+        await waitForTxExecution(count, 'txSubmitted');
       }
-      // eslint-disable-next-line no-await-in-loop
       receiptArrays.forEach(receipt => {
         expect(receipt).to.have.property('transactionHash');
         expect(receipt).to.have.property('blockHash');
