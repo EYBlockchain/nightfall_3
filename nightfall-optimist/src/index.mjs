@@ -1,4 +1,5 @@
 import logger from 'common-files/utils/logger.mjs';
+import { queueManager, queues, enqueueEvent } from 'common-files/utils/event-queue.mjs';
 import app from './app.mjs';
 import {
   startEventQueue,
@@ -14,7 +15,6 @@ import {
 } from './services/block-assembler.mjs';
 import { setChallengeWebSocketConnection } from './services/challenges.mjs';
 import initialBlockSync from './services/state-sync.mjs';
-import { queueManager, queues, enqueueEvent } from './services/event-queue.mjs';
 import { setInstantWithdrawalWebSocketConnection } from './services/instant-withdrawal.mjs';
 
 const main = async () => {
