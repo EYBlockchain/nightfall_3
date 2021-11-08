@@ -118,6 +118,7 @@ export async function submitTransaction(
     receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction);
     console.log('after to sign');
   } finally {
+    console.log('in finally');
     isSubmitTxLocked = false;
   }
   return receipt;

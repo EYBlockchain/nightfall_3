@@ -1,4 +1,4 @@
-name: "Infura deployment aat end of every day"
+name: "Infura ropsten deployment at end of every day"
 on:
   schedule:
   - cron: "0 0 * * *"
