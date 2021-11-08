@@ -22,7 +22,6 @@ for arg in sys.argv:
         display = Display(visible=0, size=(1920, 1080))
         display.start()
 
-
 ###################
 # Load selenium  #
 ###################
@@ -61,7 +60,9 @@ assert(testEthAddress.lower() == ethAccount2Params["ethereumAddress"].lower())
 ########################
 # Use wallet   #
 ########################
-tokenTypes = ["erc20", "erc721", "erc1155"]
+#tokenTypes = ["erc20", "erc721", "erc1155"]
+# TODO: Waiting for all toke types to be correctly configured. For now, only ERC20 works
+tokenTypes = ["erc20"]
 txTypes = ["Deposit", "Transfer", "Withdraw"]
 
 
