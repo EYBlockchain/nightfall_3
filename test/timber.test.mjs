@@ -63,8 +63,8 @@ describe('Local Timber Tests', () => {
           timber.insertLeaves(leaves);
           const randomIndex = Math.floor(Math.random() * (leaves.length - 1));
           const leafValue = leaves[randomIndex];
-          const merklePath = timber.getMerklePath(leafValue);
-          expect(Timber.verifyMerklePath(leafValue, timber.root, merklePath)).to.be.equal(true);
+          const merklePath = timber.getSiblingPath(leafValue);
+          expect(Timber.verifySiblingPath(leafValue, timber.root, merklePath)).to.be.equal(true);
         }),
         { numRuns: 5 },
       );
@@ -88,7 +88,7 @@ describe('Local Timber Tests', () => {
       fc.assert(
         fc.property(
           fc.array(randomLeaf, { minLength: 0, maxLength: MAX_ARRAY }), // Remove Duplicates within both arrays
-          fc.array(randomLeaf, { minLength: 1, maxLength: 32 }), // Remove Duplicates within both arrays
+          fc.array(randomLeaf, { minLength: 0, maxLength: 32 }), // Remove Duplicates within both arrays
           (leaves, addedLeaves) => {
             const timber = new Timber();
             timber.insertLeaves(leaves);
@@ -97,6 +97,44 @@ describe('Local Timber Tests', () => {
             expect(newFrontier.frontier).to.eql(timber.frontier);
             expect(newFrontier.leafCount).to.equal(timber.leafCount);
             expect(newFrontier.root).to.equal(timber.root);
+          },
+        ),
+        { numRuns: 20 },
+      );
+    });
+
+    it('Check stateless Merkle Paths', () => {
+      fc.assert(
+        fc.property(
+          fc.array(randomLeaf, { minLength: 0, maxLength: MAX_ARRAY }),
+          fc.array(randomLeaf, { minLength: 1, maxLength: 32 }),
+          (leaves, addedLeaves) => {
+            const leafIndex = Math.max(0, Math.floor(Math.random() * (addedLeaves.length - 1)));
+            const leafValue = addedLeaves[leafIndex];
+            const initialTimber = new Timber().insertLeaves(leaves);
+            const statelessMerklePath = Timber.statelessSiblingPath(
+              initialTimber,
+              addedLeaves,
+              leafIndex,
+            );
+            const statelessUpdate = Timber.statelessUpdate(initialTimber, addedLeaves);
+
+            const timber = new Timber().insertLeaves(leaves.concat(addedLeaves));
+            const timberMerklePath = timber.getSiblingPath(leafValue);
+
+            expect(statelessUpdate.root).to.equal(timber.root);
+            expect(statelessUpdate.frontier).to.eql(timber.frontier);
+            expect(statelessUpdate.leafCount).to.equal(timber.leafCount);
+            expect(statelessMerklePath).to.eql(timberMerklePath);
+
+            if (timberMerklePath.isMember) {
+              expect(
+                Timber.verifySiblingPath(leafValue, statelessUpdate.root, statelessMerklePath),
+              ).to.eql(true);
+              expect(Timber.verifySiblingPath(leafValue, timber.root, timberMerklePath)).to.eql(
+                true,
+              );
+            }
           },
         ),
         { numRuns: 20 },
