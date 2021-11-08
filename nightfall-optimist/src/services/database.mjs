@@ -158,7 +158,7 @@ export async function getBlockByRoot(root) {
   return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
 }
 
-/** 
+/**
 get the latest blockNumberL2 in our database
 */
 export async function getLatestBlockInfo() {
@@ -466,7 +466,8 @@ export async function saveTree(blockNumber, blockNumberL2, timber) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   return db.collection(TIMBER_COLLECTION).insertOne({
-    _id: blockNumber,
+    _id: timber.root,
+    blockNumber,
     blockNumberL2,
     frontier: timber.frontier,
     leafCount: timber.leafCount,
@@ -480,7 +481,7 @@ export async function getLatestTree() {
   const timberObjArr = await db
     .collection(TIMBER_COLLECTION)
     .find()
-    .sort({ _id: -1 })
+    .sort({ blockNumberL2: -1 })
     .limit(1)
     .toArray();
 

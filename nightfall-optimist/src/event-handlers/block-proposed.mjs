@@ -49,8 +49,6 @@ async function blockProposedEventHandler(data) {
     const latestTree = await getLatestTree();
     const blockCommitments = transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat();
     const updatedTimber = Timber.statelessUpdate(latestTree, blockCommitments);
-    // latestTree.insertLeaves(blockCommitments);
-    // logger.info(`latestTree leafCount: ${latestTree.leafCount}`);
     const res = await saveTree(currentBlockCount, block.blockNumberL2, updatedTimber);
     logger.debug(`Saving tree with block number ${block.blockNumberL2}, ${res}`);
     // signal to the block-making routines that a block is received: they
