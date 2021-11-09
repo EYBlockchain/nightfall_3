@@ -535,11 +535,17 @@ describe('Testing the Nightfall SDK', () => {
     });
   });
 
+  describe('Get pending withdraw commitments tests', () => {
+    it('should get current pending withdraw commitments for the account (with 0 valid commitments)', async function () {
+      const commitments = await nf3User1.getPendingWithdraws();
+      expect(commitments.length).to.be.greaterThan(0);
+      expect(commitments.filter(c => c.valid === true).length).to.be.equal(0);
+    });
+  });
+
   // when the widthdraw transaction is finalised, we want to be able to pull the
   // funds into layer1
-  describe('Withdraw funds to layer 1', () => {
-    let startBalance;
-    let endBalance;
+  describe('Withdraw funds to layer 1 failing (because insufficient time has passed)', () => {
     it('Should create a failing finalise-withdrawal (because insufficient time has passed)', async function () {
       let error = null;
       try {
@@ -553,10 +559,21 @@ describe('Testing the Nightfall SDK', () => {
         'Returned error: VM Exception while processing transaction: revert It is too soon to withdraw funds from this block',
       );
     });
+  });
 
-    it('Should create a passing finalise-withdrawal with a time-jump capable test client (because sufficient time has passed)', async function () {
+  describe('Withdraw funds to layer 1 with a time-jump capable test client (because sufficient time has passed)', () => {
+    let startBalance;
+    let endBalance;
+
+    it('should get a valid withdraw commitment with a time-jump capable test client (because sufficient time has passed)', async function () {
       if (nodeInfo.includes('TestRPC')) await timeJump(3600 * 24 * 10); // jump in time by 10 days
+      const commitments = await nf3User1.getPendingWithdraws();
+      expect(commitments.length).to.be.greaterThan(0);
+      expect(commitments.filter(c => c.valid === true).length).to.be.greaterThan(0);
+    });
 
+    it('should create a passing finalise-withdrawal with a time-jump capable test client (because sufficient time has passed)', async function () {
+      if (nodeInfo.includes('TestRPC')) await timeJump(3600 * 24 * 10); // jump in time by 10 days
       startBalance = await getBalance(nf3User1.ethereumAddress);
       // now we need to sign the transaction and send it to the blockchain
       // this will only work if we're using Ganache, otherwiise expect failure

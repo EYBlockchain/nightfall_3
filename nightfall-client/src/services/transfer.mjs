@@ -224,7 +224,9 @@ async function transfer(transferParams) {
         .filter(commitment => commitment.preimage.compressedPkd.hex(32) === compressedPkd.hex(32))
         .forEach(commitment => storeCommitment(commitment, nsk)); // TODO insertMany
       // mark the old commitments as nullified
-      await Promise.all(oldCommitments.map(commitment => markNullified(commitment)));
+      await Promise.all(
+        oldCommitments.map(commitment => markNullified(commitment, optimisticTransferTransaction)),
+      );
       return {
         transaction: optimisticTransferTransaction,
         salts: salts.map(salt => salt.hex(32)),
@@ -238,7 +240,9 @@ async function transfer(transferParams) {
       .filter(commitment => commitment.preimage.compressedPkd.hex(32) === compressedPkd.hex(32))
       .forEach(commitment => storeCommitment(commitment, nsk)); // TODO insertMany
     // mark the old commitments as nullified
-    await Promise.all(oldCommitments.map(commitment => markNullified(commitment)));
+    await Promise.all(
+      oldCommitments.map(commitment => markNullified(commitment, optimisticTransferTransaction)),
+    );
     return {
       rawTransaction,
       transaction: optimisticTransferTransaction,

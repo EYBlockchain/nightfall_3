@@ -133,7 +133,7 @@ async function withdraw(withdrawParams) {
       .submitTransaction(Transaction.buildSolidityStruct(optimisticWithdrawTransaction))
       .encodeABI();
     // on successful computation of the transaction mark the old commitments as nullified
-    await markNullified(oldCommitment);
+    await markNullified(oldCommitment, optimisticWithdrawTransaction);
     return { rawTransaction, transaction: optimisticWithdrawTransaction };
   } catch (err) {
     await clearPending(oldCommitment);

@@ -4,6 +4,7 @@ import transfer from './transfer.mjs';
 import withdraw from './withdraw.mjs';
 import isMessageValid from './check-message.mjs';
 import finaliseWithdrawal from './finalise-withdrawal.mjs';
+import isValidWithdrawal from './valid-withdrawal.mjs';
 import peers from './peers.mjs';
 import commitment from './commitment.mjs';
 import incomingViewingKey from './incoming-viewing-key.mjs';
@@ -17,6 +18,7 @@ export {
   getContractAddress,
   isMessageValid,
   finaliseWithdrawal,
+  isValidWithdrawal,
   peers,
   commitment,
   incomingViewingKey,
