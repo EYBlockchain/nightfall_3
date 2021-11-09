@@ -3,7 +3,7 @@ name: Check PR
 on:
   pull_request:
     branch:
-      - master
+      - liju.jost/infura-integrtion-test-6
 
 jobs:
   eslint-check:
