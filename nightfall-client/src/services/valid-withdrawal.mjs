@@ -9,6 +9,7 @@ import { buildSolidityStruct } from './finalise-withdrawal.mjs';
 
 const { SHIELD_CONTRACT_NAME } = config;
 
+// eslint-disable-next-line import/prefer-default-export
 export async function isValidWithdrawal({ block, transactions, index }) {
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
   try {
@@ -25,5 +26,3 @@ export async function isValidWithdrawal({ block, transactions, index }) {
     return false;
   }
 }
-
-export default isValidWithdrawal;
