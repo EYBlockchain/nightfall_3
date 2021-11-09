@@ -69,7 +69,6 @@ describe('Testing the challenge http API', () => {
   };
 
   const holdupTxQueue = async (txType, waitTillCount) => {
-    console.log('in holdupTxQueue', txType, logCounts[txType], waitTillCount);
     while (logCounts[txType] < waitTillCount) {
       // eslint-disable-next-line no-await-in-loop
       await new Promise(resolve => setTimeout(resolve, 3000));
@@ -107,7 +106,6 @@ describe('Testing the challenge http API', () => {
     web3.eth.subscribe('logs', { address: shieldAddress }).on('data', log => {
       if (log.topics[0] === web3.eth.abi.encodeEventSignature('TransactionSubmitted()')) {
         logCounts.txSubmitted += 1;
-        console.log('txSubmitted log', logCounts.txSubmitted);
       }
     });
 
@@ -115,7 +113,6 @@ describe('Testing the challenge http API', () => {
     challengeAddress = res.body.address;
     web3.eth.subscribe('logs', { address: challengeAddress }).on('data', () => {
       logCounts.challenge += 1;
-      console.log('challenge log', logCounts.challenge);
     });
 
     res = await chai.request(url).get('/contract-address/Proposers');
@@ -123,7 +120,6 @@ describe('Testing the challenge http API', () => {
     web3.eth.subscribe('logs', { address: proposersAddress }).on('data', log => {
       if (log.topics[0] === web3.eth.abi.encodeEventSignature('NewCurrentProposer(address)')) {
         logCounts.registerProposer += 1;
-        console.log('proposer log', logCounts.registerProposer);
       }
     });
 
@@ -146,10 +142,8 @@ describe('Testing the challenge http API', () => {
     web3.eth.subscribe('logs', { address: stateAddress }).on('data', log => {
       if (log.topics[0] === topicEventMapping.BlockProposed) {
         eventLogs.push('blockProposed');
-        console.log('blockProposed log', eventLogs.length);
       } else if (log.topics[0] === topicEventMapping.Rollback) {
         eventLogs.push('Rollback');
-        console.log('Rollback log');
       }
     });
 
@@ -180,7 +174,6 @@ describe('Testing the challenge http API', () => {
         const msg = JSON.parse(message.data);
         const { type } = msg;
         let { txDataToSign } = msg;
-        console.log('in onmessage', type);
         try {
           if (type === 'block') {
             const { block, transactions } = msg;

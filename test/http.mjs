@@ -100,7 +100,6 @@ describe('Testing the http API', () => {
     web3.eth.subscribe('logs', { address: shieldAddress }).on('data', log => {
       if (log.topics[0] === web3.eth.abi.encodeEventSignature('TransactionSubmitted()')) {
         logCounts.deposit += 1;
-        console.log('in deposit event log', logCounts.deposit);
       }
     });
 
@@ -108,7 +107,6 @@ describe('Testing the http API', () => {
     web3.eth.subscribe('logs', { address: stateAddress }).on('data', log => {
       // For event tracking, we use only care about the logs related to 'blockProposed'
       if (log.topics[0] === topicEventMapping.BlockProposed) eventLogs.push('blockProposed');
-      console.log('in blockProposed log', eventLogs.length);
     });
 
     proposersAddress = (await chai.request(senderUrl).get('/contract-address/Proposers')).body
@@ -116,7 +114,6 @@ describe('Testing the http API', () => {
     web3.eth.subscribe('logs', { address: proposersAddress }).on('data', log => {
       if (log.topics[0] === web3.eth.abi.encodeEventSignature('NewCurrentProposer(address)')) {
         logCounts.registerProposer += 1;
-        console.log('in proposer event log', logCounts.registerProposer);
       }
     });
 
@@ -148,7 +145,6 @@ describe('Testing the http API', () => {
       txQueue.push(async () => {
         const msg = JSON.parse(message.data);
         const { type, txDataToSign } = msg;
-        console.log('in onmessage', type);
         try {
           if (type === 'block') {
             await blockSubmissionFunction(txDataToSign, privateKey, stateAddress, gas, BLOCK_STAKE);
@@ -207,7 +203,6 @@ describe('Testing the http API', () => {
 
   describe('Basic Proposer tests', () => {
     after(async () => {
-      console.log('in after block');
       // After the proposer tests, re-register proposers
       const myAddress = (await getAccounts())[0];
       const res = await chai
@@ -224,7 +219,6 @@ describe('Testing the http API', () => {
     });
 
     it('should register a proposer', async () => {
-      console.log('1');
       const myAddress = (await getAccounts())[0];
       const res = await chai
         .request(optimistUrl)
@@ -237,7 +231,6 @@ describe('Testing the http API', () => {
       const startBalance = await getBalance(myAddress);
       const count = logCounts.registerProposer;
       // now we need to sign the transaction and send it to the blockchain
-      console.log('2');
       const receipt = await submitTransaction(
         txDataToSign,
         privateKey,
@@ -245,9 +238,7 @@ describe('Testing the http API', () => {
         gas,
         bond,
       );
-      console.log('3');
       await waitForTxExecution(count, 'registerProposer');
-      console.log('4');
       const endBalance = await getBalance(myAddress);
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
@@ -259,22 +250,18 @@ describe('Testing the http API', () => {
     });
 
     it('should de-register a proposer', async () => {
-      console.log('5');
       const myAddress = (await getAccounts())[0];
       const res = await chai.request(optimistUrl).post('/proposer/de-register');
       const { txDataToSign } = res.body;
       expect(txDataToSign).to.be.a('string');
       const receipt = await submitTransaction(txDataToSign, privateKey, proposersAddress, gas);
-      console.log('6');
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
       const { proposers } = (await chai.request(optimistUrl).get('/proposer/proposers')).body;
-      console.log('7', proposers);
       const thisProposer = proposers.filter(p => p.thisAddresss === myAddress);
       expect(thisProposer.length).to.be.equal(0);
     });
     it('Should create a failing withdrawBond (because insufficient time has passed)', async () => {
-      console.log('8');
       const res = await chai.request(optimistUrl).post('/proposer/withdrawBond');
       const { txDataToSign } = res.body;
       expect(txDataToSign).to.be.a('string');
@@ -285,18 +272,15 @@ describe('Testing the http API', () => {
       );
     });
     it('Should create a passing withdrawBond (because sufficient time has passed)', async () => {
-      console.log('9');
       if (nodeInfo.includes('TestRPC')) await timeJump(3600 * 24 * 10); // jump in time by 7 days
       const res = await chai.request(optimistUrl).post('/proposer/withdrawBond');
       const { txDataToSign } = res.body;
       expect(txDataToSign).to.be.a('string');
       if (nodeInfo.includes('TestRPC')) {
-        console.log('9.if');
         const receipt = await submitTransaction(txDataToSign, privateKey, proposersAddress, gas);
         expect(receipt).to.have.property('transactionHash');
         expect(receipt).to.have.property('blockHash');
       } else {
-        console.log('9.else');
         await expect(
           submitTransaction(txDataToSign, privateKey, proposersAddress, gas),
         ).to.be.rejectedWith('Transaction has been reverted by the EVM');
@@ -351,7 +335,6 @@ describe('Testing the http API', () => {
 
       // Wait until we see the right number of blocks appear
       while (eventLogs.length !== numDeposits) {
-        console.log('in eventLogs.length !== numDeposits while check');
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
@@ -606,13 +589,10 @@ describe('Testing the http API', () => {
         // eslint-disable-next-line no-await-in-loop
         await waitForTxExecution(count, 'deposit');
       }
-      console.log('before while', eventLogs);
       while (eventLogs[0] !== 'blockProposed' || getIsSubmitTxLocked()) {
-        console.log('in while loop');
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
-      console.log('after while', eventLogs);
       eventLogs.shift();
       stateBalance += fee * txPerBlock + BLOCK_STAKE;
     });
