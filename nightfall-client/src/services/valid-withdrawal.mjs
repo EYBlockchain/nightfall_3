@@ -5,21 +5,9 @@ address.
 import config from 'config';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
 import { Transaction } from '../classes/index.mjs';
+import { buildSolidityStruct } from './finalise-withdrawal.mjs';
 
 const { SHIELD_CONTRACT_NAME } = config;
-
-// TODO move classes to their own folder so this is not needed (it's already a
-// static function in the Block class)
-export function buildSolidityStruct(block) {
-  const { proposer, root, leafCount, blockNumberL2, previousBlockHash } = block;
-  return {
-    proposer,
-    root,
-    leafCount: Number(leafCount),
-    blockNumberL2: Number(blockNumberL2),
-    previousBlockHash,
-  };
-}
 
 export async function isValidWithdrawal({ block, transactions, index }) {
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
@@ -37,3 +25,5 @@ export async function isValidWithdrawal({ block, transactions, index }) {
     return false;
   }
 }
+
+export default isValidWithdrawal;
