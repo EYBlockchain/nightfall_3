@@ -70,6 +70,10 @@ export async function getBalance(account) {
   return web3.eth.getBalance(account);
 }
 
+export function getIsSubmitTxLocked() {
+  return isSubmitTxLocked;
+}
+
 export async function submitTransaction(
   unsignedTransaction,
   privateKey,
@@ -106,11 +110,15 @@ export async function submitTransaction(
       gasPrice,
       nonce,
     };
+    console.log('gas, gasPrice, nonce', gas, gasPrice, nonce);
     const signed = await web3.eth.accounts.signTransaction(tx, privateKey);
     nonce++;
     nonceDict[privateKey] = nonce;
+    console.log('going to sign');
     receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction);
+    console.log('after to sign');
   } finally {
+    console.log('in finally done');
     isSubmitTxLocked = false;
   }
   return receipt;

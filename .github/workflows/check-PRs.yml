@@ -1,9 +1,9 @@
 name: Check PR
 
 on:
-  pull_request:
+  push:
     branch:
-      - master
+      - liju.jose/cron-job-infura-deploy-integration-test-run
 
 jobs:
   eslint-check:
@@ -100,3 +100,69 @@ jobs:
         with:
           name: test-gas-logs
           path: ./test-gas.log
+
+  testnet-test:
+    runs-on: ubuntu-18.04
+    environment: TESTNET_DEPLOYMENT
+    env:
+      ETH_PRIVATE_KEY: ${{ secrets.ETH_PRIVATE_KEY }}
+      INFURA_PROJECT_ID: ${{ secrets.INFURA_PROJECT_ID }}
+      INFURA_PROJECT_SECRET: ${{ secrets.INFURA_PROJECT_SECRET }}
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '14.17.0'
+
+      - name: balance before deployment and integration test
+        run: |
+          curl -u :$INFURA_PROJECT_SECRET https://ropsten.infura.io/v3/$INFURA_PROJECT_ID \
+          -X POST \
+          -H "Content-Type: application/json" \
+          -d '{"jsonrpc":"2.0","method":"eth_getBalance","params": ["0x29100E7E3dA6654BF63d9E7804ADe518aCc5AaA5", "latest"],"id":1}'
+
+      - name: Start Containers
+        run: |
+          docker-compose build
+          ./start-nightfall -t &> testnet-test.log &disown
+
+      - name: wait 2000s for Containers startup and setup completion
+        run: sleep 2000
+
+      # kept it for future debug
+      # - run: sleep 1000
+      # - name: debug logs - after container startup 1
+      #   if: always()
+      #   run: cat testnet-test.log
+
+      # - run: sleep 1000
+      # - name: debug logs - after container startup 2
+      #   if: always()
+      #   run: cat testnet-test.log
+
+      - name: Run integration test
+        run: |
+          npm ci
+          npm run testnet-test
+
+      - name: balance after deployment and integration test
+        run: |
+          curl  -u :$INFURA_PROJECT_SECRET https://ropsten.infura.io/v3/$INFURA_PROJECT_ID \
+          -X POST \
+          -H "Content-Type: application/json" \
+          -d '{"jsonrpc":"2.0","method":"eth_getBalance","params": ["0x29100E7E3dA6654BF63d9E7804ADe518aCc5AaA5", "latest"],"id":1}'
+
+      - name: debug logs - after integration test run
+        if: always()
+        run: cat testnet-test.log
+
+      - name: If integration test failed, shutdown the Containers
+        if: failure()
+        run: docker-compose down -v
+
+      - name: If integration test failed, upload logs files as artifacts
+        if: failure()
+        uses: actions/upload-artifact@master
+        with:
+          name: testnet-test-logs
+          path: ./testnet-test.log
