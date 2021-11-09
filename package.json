@@ -9,7 +9,9 @@
     "test-gas": "mocha --timeout 0 --bail test/tx-gas.mjs",
     "test-chain-reorg": "mocha --timeout 0 --bail test/chain-reorg.mjs",
     "test-e2e": "mocha --timeout 0 --bail test/e2e/nightfall-sdk.test.mjs",
+    "test-ercmocks": "mocha --timeout 0 --bail test/e2e/ercmocks.test.mjs",
     "lint": "eslint . --ext js,mjs,jsx && find-unused-exports",
+    "test-ercmocks": "mocha --timeout 0 --bail test/e2e/ercmocks.test.mjs",
     "prepare": "husky install",
     "doc:build:sdk": "jsdoc -c jsdoc.json cli/lib/nf3.mjs"
   },
