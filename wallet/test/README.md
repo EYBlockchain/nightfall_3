@@ -42,9 +42,7 @@ npm run start
 ```
 6. Run the script wallet_test.py
 
-## Usage:
-
-Both scripts support server mode or UI mode (wich display the browser to the user)
+Test script supports server mode or UI mode (wich display the browser to the user) in Linux, and only UI mode in MacOS.
 
 - Server mode: `python3 wallet_test.py server` 
 - UI mode: `python3 wallet_test` 
