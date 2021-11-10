@@ -428,7 +428,9 @@ describe('Testing the challenge http API', () => {
         });
       const { txDataToSign } = res.body;
       expect(txDataToSign).to.be.a('string');
+      const count = logCounts.txSubmitted;
       const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
+      await waitForTxExecution(count, 'txSubmitted');
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
     });
