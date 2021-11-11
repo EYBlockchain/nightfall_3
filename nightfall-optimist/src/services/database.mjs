@@ -424,11 +424,19 @@ export async function resetNullifiers(blockHash) {
   return db.collection(NULLIFIER_COLLECTION).updateMany(query, update);
 }
 
-// delete all the nullifiers in this block
+// delete nullifiers by nullifier value
 export async function deleteNullifiers(hashes) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { hash: { $in: hashes } };
+  return db.collection(NULLIFIER_COLLECTION).deleteMany(query);
+}
+
+// delete all the nullifiers in this block
+export async function deleteNullifiersForBlock(blockHash) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { blockHash };
   return db.collection(NULLIFIER_COLLECTION).deleteMany(query);
 }
 

@@ -49,7 +49,7 @@ describe('Testing the http API', () => {
   const txPerBlock = 2;
   const eventLogs = [];
 
-  const doDeposits = async numDeposits => {
+  const doDeposits = async (numDeposits, amount = value) => {
     // We create enough transactions to fill numDeposits blocks full of deposits.
     const depositTransactions = (
       await Promise.all(
@@ -57,7 +57,7 @@ describe('Testing the http API', () => {
           chai
             .request(url)
             .post('/deposit')
-            .send({ ercAddress, tokenId, tokenType, value, pkd: pkd1, nsk: nsk1, fee }),
+            .send({ ercAddress, tokenId, tokenType, value: amount, pkd: pkd1, nsk: nsk1, fee }),
         ),
       )
     ).map(res => res.body);
@@ -252,10 +252,12 @@ describe('Testing the http API', () => {
 
   describe('Start a normal chain', () => {
     // we start by just sending enough deposits to fill one block
+    // these have a bumped up value so they won't be picked for inputs to the
+    // single transfer
     // set the number of deposit transactions blocks to perform.
     const numDeposits = 1;
     it('should deposit enough crypto into fork to fill one layer 2 block', async () => {
-      await expect(doDeposits(numDeposits)).to.eventually.be.fulfilled;
+      await expect(doDeposits(numDeposits, value + 1)).to.eventually.be.fulfilled;
       console.log('     BlockNumber is:', await web3.eth.getBlockNumber());
     });
   });
