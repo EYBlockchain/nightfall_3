@@ -19,5 +19,3 @@ export async function getBlockByTransactionHash(withdrawTransactionHash) {
   const response = await axios.get(`${url}/block/transaction-hash/${withdrawTransactionHash}`);
   return response.data;
 }
-
-export default getBlockAndTransactionsByRoot;
