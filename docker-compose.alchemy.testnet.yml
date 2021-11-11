@@ -1,0 +1,50 @@
+version: '3.5'
+# Use this script for running up nightfall_3 in 'ropsten' mode with local
+# Use it as an override file for docker-compose.yml
+# See the readme for more information.
+services:
+  client1:
+    environment:
+      BLOCKCHAIN_URL: 'wss://eth-ropsten.alchemyapi.io/v2/${ALCHEMY_PROJECT_ID}'
+      USE_ALCHEMY: 'true'
+      AUTOSTART_RETRIES: 500
+
+  client2:
+    environment:
+      BLOCKCHAIN_URL: 'wss://eth-ropsten.alchemyapi.io/v2/${ALCHEMY_PROJECT_ID}'
+      USE_ALCHEMY: 'true'
+      AUTOSTART_RETRIES: 500
+
+  deployer:
+    environment:
+      # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
+      # startup routines will wait for a blockchain client to be reachable on this network
+      ETH_NETWORK: ropsten
+      BLOCKCHAIN_URL: 'wss://eth-ropsten.alchemyapi.io/v2/${ALCHEMY_PROJECT_ID}'
+      USE_ALCHEMY: 'true'
+      FROM_ADDRESS: '0x29100E7E3dA6654BF63d9E7804ADe518aCc5AaA5'
+      ETH_PRIVATE_KEY: $ETH_PRIVATE_KEY
+
+  timber1:
+    environment:
+      BLOCKCHAIN_URL: 'wss://eth-ropsten.alchemyapi.io/v2/${ALCHEMY_PROJECT_ID}'
+      USE_ALCHEMY: 'true'
+      AUTOSTART_RETRIES: 500
+
+  timber2:
+    environment:
+      BLOCKCHAIN_URL: 'wss://eth-ropsten.alchemyapi.io/v2/${ALCHEMY_PROJECT_ID}'
+      USE_ALCHEMY: 'true'
+      AUTOSTART_RETRIES: 500
+
+  optimist1:
+    environment:
+      BLOCKCHAIN_URL: 'wss://eth-ropsten.alchemyapi.io/v2/${ALCHEMY_PROJECT_ID}'
+      USE_ALCHEMY: 'true'
+      AUTOSTART_RETRIES: 500
+
+  optimist2:
+    environment:
+      BLOCKCHAIN_URL: 'wss://eth-ropsten.alchemyapi.io/v2/${ALCHEMY_PROJECT_ID}'
+      USE_ALCHEMY: 'true'
+      AUTOSTART_RETRIES: 500

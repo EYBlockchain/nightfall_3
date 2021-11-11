@@ -14,7 +14,7 @@ async function setupCircuits() {
 
   // when deploying on infura
   // do serial registration to predict nonce
-  if (config.USE_INFURA) {
+  if (config.USE_INFURA || config.USE_ALCHEMY) {
     await Web3.submitRawTransaction(
       (await waitForContract('Proposers')).methods
         .setStateContract(stateInstance.options.address)

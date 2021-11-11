@@ -43,6 +43,7 @@ describe('Testing the http API', () => {
   let pkd2;
 
   const USE_INFURA = process.env.USE_INFURA === 'true';
+  const USE_ALCHEMY = process.env.USE_ALCHEMY === 'true';
   const { ETH_PRIVATE_KEY, BLOCKCHAIN_URL } = process.env;
 
   const senderUrl = 'http://localhost:8080';
@@ -87,7 +88,7 @@ describe('Testing the http API', () => {
   before(async function () {
     web3 = await connectWeb3(BLOCKCHAIN_URL);
 
-    if (USE_INFURA) {
+    if (USE_INFURA || USE_ALCHEMY) {
       if (!ETH_PRIVATE_KEY) {
         throw Error(
           'Cannot use default private key, please set environment variable ETH_PRIVATE_KEY',

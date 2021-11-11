@@ -15,7 +15,8 @@ let web3;
 // This will be a mapping of privateKeys to nonces;
 const nonceDict = {};
 const USE_INFURA = process.env.USE_INFURA === 'true';
-const { INFURA_PROJECT_SECRET, INFURA_PROJECT_ID } = process.env;
+const USE_ALCHEMY = process.env.USE_ALCHEMY === 'true';
+const { INFURA_PROJECT_SECRET, INFURA_PROJECT_ID, ALCHEMY_PROJECT_ID } = process.env;
 let isSubmitTxLocked = false;
 
 export function connectWeb3(url = 'ws://localhost:8546') {
@@ -35,6 +36,10 @@ export function connectWeb3(url = 'ws://localhost:8546') {
           authorization: `Basic ${Buffer.from(`:${INFURA_PROJECT_SECRET}`).toString('base64')}`,
         },
       });
+    } else if (USE_ALCHEMY) {
+      if (!ALCHEMY_PROJECT_ID) throw Error('env ALCHEMY_PROJECT_ID not set');
+      const alchemyUrl = url.replace('ALCHEMY_PROJECT_ID', ALCHEMY_PROJECT_ID);
+      provider = new Web3.providers.WebsocketProvider(alchemyUrl, config.WEB3_PROVIDER_OPTIONS);
     } else {
       provider = new Web3.providers.WebsocketProvider(url, config.WEB3_PROVIDER_OPTIONS);
     }
@@ -96,7 +101,7 @@ export async function submitTransaction(
       const accountAddress = await web3.eth.accounts.privateKeyToAccount(privateKey);
       nonce = await web3.eth.getTransactionCount(accountAddress.address);
     }
-    if (USE_INFURA) {
+    if (USE_INFURA || USE_ALCHEMY) {
       // get gaslimt from latest block as gaslimt may vary
       gas = (await web3.eth.getBlock('latest')).gasLimit;
       const blockGasPrice = Number(await web3.eth.getGasPrice());

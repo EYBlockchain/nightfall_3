@@ -29,6 +29,7 @@ module.exports = {
     process.env.BLOCKCHAIN_URL ||
     `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`,
   USE_INFURA: process.env.USE_INFURA === 'true',
+  USE_ALCHEMY: process.env.USE_ALCHEMY === 'true',
   ETH_PRIVATE_KEY: process.env.ETH_PRIVATE_KEY,
   TIMBER_HOST: process.env.TIMBER_HOST || 'timber',
   TIMBER_PORT: process.env.TIMBER_PORT || 80,
