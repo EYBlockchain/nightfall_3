@@ -14,7 +14,7 @@ import { Nullifier, PublicInputs, Transaction } from '../classes/index.mjs';
 import { findUsableCommitmentsMutex, markNullified, clearPending } from './commitment-storage.mjs';
 import { getSiblingPath } from '../utils/timber.mjs';
 import { discoverPeers } from './peers.mjs';
-import getBlockAndTransactionsByRoot from '../utils/optimist.mjs';
+import { getBlockAndTransactionsByRoot } from '../utils/optimist.mjs';
 import { calculateIvkPkdfromAskNsk } from './keys.mjs';
 
 const {

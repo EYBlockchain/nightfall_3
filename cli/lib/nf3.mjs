@@ -575,7 +575,7 @@ class Nf3 {
   @method
   @async
   @return {Promise} A promise that resolves to an axios response.
-  */  
+  */
   async registerChallenger() {
     return axios.post(`${this.optimistBaseUrl}/challenger/add`, { address: this.ethereumAddress });
   }

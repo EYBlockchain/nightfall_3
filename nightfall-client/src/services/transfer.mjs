@@ -20,7 +20,7 @@ import {
 } from './commitment-storage.mjs';
 import { getSiblingPath } from '../utils/timber.mjs';
 import { discoverPeers } from './peers.mjs';
-import getBlockAndTransactionsByRoot from '../utils/optimist.mjs';
+import { getBlockAndTransactionsByRoot } from '../utils/optimist.mjs';
 import { compressPublicKey, calculateIvkPkdfromAskNsk } from './keys.mjs';
 
 const {
