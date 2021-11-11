@@ -193,7 +193,7 @@ jobs:
         if: always()
         run: cat alchemy-test.log
 
-      - run: sleep 1200
+      - run: sleep 1100
       - name: debug logs - after container startup 2
         if: always()
         run: cat alchemy-test.log
