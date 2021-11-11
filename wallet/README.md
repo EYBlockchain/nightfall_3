@@ -1,59 +1,76 @@
-## Wallet
-Nightfall_3 provides a Wallet to exercise its features. To use it:
+# Selenium usage
 
-- Generate browser version of SDK:
+## Installation guide
+
+### Linux
+
+1. Install python, pip and google chrome
+   google chrome:
+   - `wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add - `
+   - `sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'`
+   - `sudo apt-get update`
+   - `sudo apt-get install google-chrome-stable`
+   python:
+   - `sudo apt install python3.8`
+   pip:
+   - `sudo apt-get -y install python3-pip`
+2. Install Selenium python library, in case of a server install `pyvirtualdisplay` python library and `xvfb` too
+   - `pip3 install selenium`
+   - `sudo apt install -y xvfb`
+   - `pip3 install pyvirtualdisplay`
+**NOTE**: For MacOS there is no `xvfb` library, so you can skip installing `xvfb` and `pyvirtualdisplay`. The downside is that you will need to run tests in UI mode.
+3. Get metamask crx: Change the following URL, updating the VERSION_GOOGLE_CHROME for yours, ( Version can be found searching in the browser chrome://settings/help) and save it as
+   `metamask.crx` in the `extensions/` folder
+   `https://clients2.google.com/service/update2/crx?response=redirect&prodversion={VERSION_GOOGLE_CHROME}&acceptformat=crx2,crx3&x=id%3Dnkbihfbeogaeaoehlefnkodbefgpgknn%26uc`
+   Example with `Version 87.0.4280.66 (Official Build) (64-bit)`
+   `https://clients2.google.com/service/update2/crx?response=redirect&prodversion=87.0.4280.66&acceptformat=crx2,crx3&x=id%3Dnkbihfbeogaeaoehlefnkodbefgpgknn%26uc`
+4. Get your chrome driver of your version here: https://sites.google.com/chromium.org/driver/downloads?authuser=0 and save it as `chromedriver` in the `drivers/` folder
+5. Make sure nightfall, proposer and wallet are running:
+- Running nightfall: In nightfall's root folder:
 ```
-cd cli
-npm install
-npm run build
-```
-- Deploy nightfall (only ganache for now) from Nightfall's root folder
-```
+./setup-nightfall
 ./start-nightfall -g -s
 ```
-- In a different terminal, start proposer from Nightfall's root folder once Nightfall deployment is finished
-(you will see this `nightfall_3-deployer-1 exited with code 0`).
-
+- Running proposer : in nightfall's root folder:
 ```
 ./proposer
 ```
-
-- In a different terminal, start the liquitidy provider from Nightfall's root folder. Liquidity provider is needed to use `instant withdraw` feature
+- Running wallet: In wallet's root folder:
 ```
-./liquidity-provider
+cd ../cli
+npm run build
+cd -
+npm run start
 ```
+6. Run the script wallet_test.py (see *Usage* section)
 
-- Launch wallet.
+### Mac
+
+1. Check you have Python 3.8 and Pip 3 installed (and install Chrome if you don't already have it):
+```sh
+python3 --version
+pip3 --version
 ```
-cd wallet
-npm install
-npm start
+If necessary upgrade pip3 (Selenium will error if the version you have is too early)
+```sh
+/Library/Developer/CommandLineTools/usr/bin/python3 -m pip install --upgrade pip
 ```
+2. Install Selenium python library:
+```sh
+pip3 install selenium
+```
+3. Get metamask crx: Change the following URL, updating the VERSION_GOOGLE_CHROME for yours, ( Version can be found searching in the browser chrome://settings/help) and save it as
+   `metamask.crx` in the `extensions/` folder
+   `https://clients2.google.com/service/update2/crx?response=redirect&prodversion={VERSION_GOOGLE_CHROME}&acceptformat=crx2,crx3&x=id%3Dnkbihfbeogaeaoehlefnkodbefgpgknn%26uc`
+   Example with `Version 87.0.4280.66 (Official Build) (64-bit)`
+   `https://clients2.google.com/service/update2/crx?response=redirect&prodversion=87.0.4280.66&acceptformat=crx2,crx3&x=id%3Dnkbihfbeogaeaoehlefnkodbefgpgknn%26uc`
+4. Get your chrome driver of your version here: https://sites.google.com/chromium.org/driver/downloads?authuser=0 and save it as `chromedriver` in the `drivers/` folder
+5. Give the driver permission to run: `xattr -d com.apple.quarantine chromedriver`
+6. Run the script wallet_test.py (see *Usage* section)
 
-- When the wallet starts, you will have the option to enter your private key on connecting with metamask wallet installed in your browser. If you select the latter, you need to have previously configured your metamask wallet to operate with Nightfall's deployment on localhost
+## Usage:
 
-### Configuring Metamask to work with Nightfall on localhost
-1. Open Metamask wallet
-2. Import Account and paste the private key. While we are working on localhost, we will be using a test account with private key `0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e`
-3. Next step is to configure Nightfall's RPC network. Go to `Settings->Networks->Add Network`
-4. Enter the following information and press `Savle`
-- `Network Name` : nightfall-localhost
-- `New RPC URL` : http://localhost:8546
-- `Chain ID`: 1337
-5. Select the new imported account and the new created network
+Both scripts support server mode or UI mode (which display the browser to the user). Server mode is not relevant for a Mac
 
-
-
-### Limitations
-- You cannot run the wallet and a separate version of the SDK (CLI for example) in parallel as nonces will get mixed.
-- If you select Metamask as your wallet, you need to reset the nonce every time you restart Nightfall, as Metamask will keep previous nonce whereas ganache has reset it. If nonce is not reset, you will see an error message after signing the transaction. To reset the nonce in metamask:
-1. Open Metamask in browser
-2. Settings->Advance->Reset Account
-
-- Initial balances shown by the wallet are fake. 
-- Only ERC20 tokens work for now. When you start the wallet, select the ERC20 token and perform some deposits. Then click on `Reload` button to
-see the real balance.
-- Transactions only accept amounts less or equal than 10. Anything larger produces an error. Need to investigate why. For now, keep amounts below this threshold.
-- Direct transactions are not implemented
-- Instant withdraw is selected when doing a withdraw only. Once submitted the instant withdraw request,the wallet requests a simple withdraw and inmediatelly after converts this withdraw into an instant withdraw. Wallet will attempt to send the instant withdraw request up to 10 times, once every 10 seconds. It is likely that during this period, you need to request a simpler transaction (deposit, withdraw or transfer) so that the original withdraw is processed by the processor and the instant withdraw can be carried out.
-- Tested with node version v14.18.0
+- Server mode: `python3 wallet_test.py server`
+- UI mode: `python3 wallet_test`
