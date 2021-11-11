@@ -538,8 +538,14 @@ describe('Testing the Nightfall SDK', () => {
   describe('Get pending withdraw commitments tests', () => {
     it('should get current pending withdraw commitments for the account (with 0 valid commitments)', async function () {
       const commitments = await nf3User1.getPendingWithdraws();
-      expect(commitments.length).to.be.greaterThan(0);
-      expect(commitments.filter(c => c.valid === true).length).to.be.equal(0);
+      expect(
+        commitments[nf3User1.zkpKeys.compressedPkd][BigInt(ercAddress).toString(16)].length,
+      ).to.be.greaterThan(0);
+      expect(
+        commitments[nf3User1.zkpKeys.compressedPkd][BigInt(ercAddress).toString(16)].filter(
+          c => c.valid === true,
+        ).length,
+      ).to.be.equal(0);
     });
   });
 
@@ -568,8 +574,14 @@ describe('Testing the Nightfall SDK', () => {
     it('should get a valid withdraw commitment with a time-jump capable test client (because sufficient time has passed)', async function () {
       if (nodeInfo.includes('TestRPC')) await timeJump(3600 * 24 * 10); // jump in time by 10 days
       const commitments = await nf3User1.getPendingWithdraws();
-      expect(commitments.length).to.be.greaterThan(0);
-      expect(commitments.filter(c => c.valid === true).length).to.be.greaterThan(0);
+      expect(
+        commitments[nf3User1.zkpKeys.compressedPkd][BigInt(ercAddress).toString(16)].length,
+      ).to.be.greaterThan(0);
+      expect(
+        commitments[nf3User1.zkpKeys.compressedPkd][BigInt(ercAddress).toString(16)].filter(
+          c => c.valid === true,
+        ).length,
+      ).to.be.greaterThan(0);
     });
 
     it('should create a passing finalise-withdrawal with a time-jump capable test client (because sufficient time has passed)', async function () {

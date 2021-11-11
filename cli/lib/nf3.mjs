@@ -575,7 +575,7 @@ class Nf3 {
   @method
   @async
   @return {Promise} A promise that resolves to an axios response.
-  */
+  */  
   async registerChallenger() {
     return axios.post(`${this.optimistBaseUrl}/challenger/add`, { address: this.ethereumAddress });
   }
@@ -705,30 +705,11 @@ class Nf3 {
   @async
   @returns {Promise} This promise resolves into an object whose properties are the
   addresses of the ERC contracts of the tokens held by this account in Layer 2. The
-  value of each propery is an array of commitments originating from that contract.
+  value of each propery is an array of withdraw commitments originating from that contract.
   */
   async getPendingWithdraws() {
     const res = await axios.get(`${this.clientBaseUrl}/commitment/withdraws`);
-    const listWithdrawCommitments = res.data.commitments[this.zkpKeys.compressedPkd];
-    const pendingWithdrawCommitments = [];
-    if (listWithdrawCommitments) {
-      // we loop through all ercaddresses in the wallet
-      const ercAddresses = Object.getOwnPropertyNames(listWithdrawCommitments);
-
-      for (let i = 0; i < ercAddresses.length; i++) {
-        for (let k = 0; k < listWithdrawCommitments[ercAddresses[i]].length; k++) {
-          // eslint-disable-next-line no-await-in-loop
-          const valid = await this.isValidWithdrawal(
-            listWithdrawCommitments[ercAddresses[i]][k].transactionNullified.transactionHash,
-          );
-          pendingWithdrawCommitments.push({
-            commitment: listWithdrawCommitments[ercAddresses[i]][k],
-            valid,
-          });
-        }
-      }
-    }
-    return pendingWithdrawCommitments;
+    return res.data.commitments;
   }
 
   /**
