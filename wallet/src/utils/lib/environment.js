@@ -179,7 +179,7 @@ function setEnvironment(env) {
 
 /**
  * Returns the current environment
- * @returns {Object} Contains contract addresses, Hermez API and Batch Explorer urls
+ * @returns {Object} Contains contract addresses, and URLs
  * and the Etherscan URL por the provider
  */
 function getCurrentEnvironment() {

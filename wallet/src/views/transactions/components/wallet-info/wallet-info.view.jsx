@@ -29,6 +29,7 @@ function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, 
 
   // TODO : substitute reload button by periodic function
   const reload = () => {
+    if (typeof login.nf3.ethereumAddress === 'undefined') return;
     login.nf3.getLayer2Balances().then(l2Balance => {
       const { compressedPkd } = login.nf3.zkpKeys;
       const myL2Balance =
@@ -123,16 +124,20 @@ function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, 
           <Table.Row>
             <Table.HeaderCell colSpan="4" textAlign="left">
               <Table.Cell>Account Address:</Table.Cell>
-              <Table.Cell> {importedWallet()} </Table.Cell>
+              <Table.Cell id="wallet-info-cell-ethaddress"> {importedWallet()} </Table.Cell>
             </Table.HeaderCell>
             <Table.HeaderCell textAlign="right">
-              <Button onClick={reload} disabled={token.activeTokenRowId === ''}>
+              <Button
+                onClick={reload}
+                id="wallet-info-cell-reload"
+                disabled={token.activeTokenRowId === ''}
+              >
                 <Icon name="sync" />
                 Reload
               </Button>
             </Table.HeaderCell>
             <Table.HeaderCell textAlign="right">
-              <Button onClick={toggleModalTokenAdd}>
+              <Button onClick={toggleModalTokenAdd} id="wallet-info-cell-add-token">
                 <Icon name="plus" />
                 Add Token
               </Button>
@@ -141,6 +146,7 @@ function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, 
               <Button
                 toggle
                 onClick={removeToken}
+                id="wallet-info-cell-remove-token"
                 active={removeTokenEnable && token.tokenPool.length}
                 disabled={token.tokenPool.length === 0}
               >
