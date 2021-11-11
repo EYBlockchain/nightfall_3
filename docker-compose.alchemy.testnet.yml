@@ -29,22 +29,22 @@ services:
     environment:
       BLOCKCHAIN_URL: 'wss://eth-ropsten.alchemyapi.io/v2/${ALCHEMY_PROJECT_ID}'
       USE_ALCHEMY: 'true'
-      AUTOSTART_RETRIES: 500
+      AUTOSTART_RETRIES: 600
 
   timber2:
     environment:
       BLOCKCHAIN_URL: 'wss://eth-ropsten.alchemyapi.io/v2/${ALCHEMY_PROJECT_ID}'
       USE_ALCHEMY: 'true'
-      AUTOSTART_RETRIES: 500
+      AUTOSTART_RETRIES: 600
 
   optimist1:
     environment:
       BLOCKCHAIN_URL: 'wss://eth-ropsten.alchemyapi.io/v2/${ALCHEMY_PROJECT_ID}'
       USE_ALCHEMY: 'true'
-      AUTOSTART_RETRIES: 500
+      AUTOSTART_RETRIES: 600
 
   optimist2:
     environment:
       BLOCKCHAIN_URL: 'wss://eth-ropsten.alchemyapi.io/v2/${ALCHEMY_PROJECT_ID}'
       USE_ALCHEMY: 'true'
-      AUTOSTART_RETRIES: 500
+      AUTOSTART_RETRIES: 600
