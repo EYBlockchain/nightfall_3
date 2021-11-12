@@ -8,6 +8,7 @@ import {
   getCommitmentBySalt,
   getWalletBalance,
   getWalletCommitments,
+  getWithdrawCommitments,
 } from '../services/commitment-storage.mjs';
 
 const router = express.Router();
@@ -41,6 +42,17 @@ router.get('/commitments', async (req, res, next) => {
   logger.debug('commitment/commitments endpoint received GET');
   try {
     const commitments = await getWalletCommitments();
+    res.json({ commitments });
+  } catch (err) {
+    logger.error(err);
+    next(err);
+  }
+});
+
+router.get('/withdraws', async (req, res, next) => {
+  logger.debug('commitment/withdraws endpoint received GET');
+  try {
+    const commitments = await getWithdrawCommitments();
     res.json({ commitments });
   } catch (err) {
     logger.error(err);

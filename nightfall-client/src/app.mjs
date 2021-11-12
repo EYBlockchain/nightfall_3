@@ -8,6 +8,7 @@ import {
   withdraw,
   isMessageValid,
   finaliseWithdrawal,
+  isValidWithdrawal,
   peers,
   commitment,
   incomingViewingKey,
@@ -28,6 +29,7 @@ app.use('/transfer', transfer);
 app.use('/withdraw', withdraw);
 app.use('/check-message', isMessageValid);
 app.use('/finalise-withdrawal', finaliseWithdrawal);
+app.use('/valid-withdrawal', isValidWithdrawal);
 app.use('/peers', peers);
 app.use('/commitment', commitment);
 app.use('/incoming-viewing-key', incomingViewingKey);

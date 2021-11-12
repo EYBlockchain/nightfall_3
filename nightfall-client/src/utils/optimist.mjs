@@ -8,10 +8,14 @@ import logger from 'common-files/utils/logger.mjs';
 
 const url = `http://${config.OPTIMIST_HOST}:${config.OPTIMIST_PORT}`;
 
-async function getBlockAndTransactionsByRoot(root) {
+export async function getBlockAndTransactionsByRoot(root) {
   logger.http(`Calling block/root/${root}`);
   const response = await axios.get(`${url}/block/root/${root}`);
   return response.data;
 }
 
-export default getBlockAndTransactionsByRoot;
+export async function getBlockByTransactionHash(withdrawTransactionHash) {
+  logger.http(`Calling block/transaction-hash/${withdrawTransactionHash}`);
+  const response = await axios.get(`${url}/block/transaction-hash/${withdrawTransactionHash}`);
+  return response.data;
+}

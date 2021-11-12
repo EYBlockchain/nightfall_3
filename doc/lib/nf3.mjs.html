@@ -665,6 +665,39 @@ class Nf3 {
   }
 
   /**
+  Get if it's a valid withdraw transaction for finalising the
+  withdrawal of funds to L1 (only relevant for ERC20).
+  @method
+  @async
+  @param {string} withdrawTransactionHash - the hash of the Layer 2 transaction in question
+  */
+  async isValidWithdrawal(withdrawTransactionHash) {
+    let res;
+    let valid = false;
+
+    try {
+      res = await axios.get(
+        `${this.optimistBaseUrl}/block/transaction-hash/${withdrawTransactionHash}`,
+      );
+    } catch (e) {
+      // transaction is not in block yet
+      valid = false;
+    }
+
+    if (res) {
+      const { block, transactions, index } = res.data;
+      res = await axios.post(`${this.clientBaseUrl}/valid-withdrawal`, {
+        block,
+        transactions,
+        index,
+      });
+      valid = res.data.valid;
+    }
+
+    return valid;
+  }
+
+  /**
   Returns the balance of tokens held in layer 2
   @method
   @async
@@ -681,13 +714,110 @@ class Nf3 {
   Returns the commitments of tokens held in layer 2
   @method
   @async
-  @returns {Promise} This promise rosolves into an object whose properties are the
+  @returns {Promise} This promise resolves into an object whose properties are the
   addresses of the ERC contracts of the tokens held by this account in Layer 2. The
   value of each propery is an array of commitments originating from that contract.
   */
   async getLayer2Commitments() {
     const res = await axios.get(`${this.clientBaseUrl}/commitment/commitments`);
     return res.data.commitments;
+  }
+
+  /**
+  Returns the pending withdraws commitments
+  @method
+  @async
+  @returns {Promise} This promise resolves into an object whose properties are the
+  addresses of the ERC contracts of the tokens held by this account in Layer 2. The
+  value of each propery is an array of withdraw commitments originating from that contract.
+  */
+  async getPendingWithdraws() {
+    const res = await axios.get(`${this.clientBaseUrl}/commitment/withdraws`);
+    const listWithdrawCommitments = res.data.commitments[this.zkpKeys.compressedPkd];
+    const pendingWithdrawCommitments = [];
+    if (listWithdrawCommitments) {
+      // we loop through all ercaddresses in the wallet
+      const ercAddresses = Object.getOwnPropertyNames(listWithdrawCommitments);
+
+      for (let i = 0; i < ercAddresses.length; i++) {
+        for (let k = 0; k < listWithdrawCommitments[ercAddresses[i]].length; k++) {
+          // eslint-disable-next-line no-await-in-loop
+          const valid = await this.isValidWithdrawal(
+            listWithdrawCommitments[ercAddresses[i]][k].transactionNullified.transactionHash,
+          );
+          pendingWithdrawCommitments.push({
+            commitment: listWithdrawCommitments[ercAddresses[i]][k],
+            valid,
+          });
+        }
+      }
+    }
+    return pendingWithdrawCommitments;
+  }
+
+  /**
+  Set a Web3 Provider URL
+  @param {String|Object} providerData - Network url (i.e, http://localhost:8544) or an Object with the information to set the provider
+  */
+  setWeb3Provider(providerData) {
+    if (typeof providerData === 'string' || typeof window === 'undefined') {
+      this.web3 = new Web3(providerData);
+    }
+
+    if (typeof window !== 'undefined' && window.ethereum) {
+      this.web3 = new Web3(window.ethereum);
+      window.ethereum.send('eth_requestAccounts');
+    }
+  }
+
+  /**
+  Web3 provider getter
+  @returns {Object} provider
+  */
+  getWeb3Provider() {
+    return this.web3;
+  }
+
+  /**
+  Get Ethereum Balance
+  @param {String} address - Ethereum address of account
+  @returns {String} - Ether balance in account
+  */
+  getL1Balance(address) {
+    return this.web3.eth.getBalance(address).then(function (balanceWei) {
+      return Web3.utils.fromWei(balanceWei);
+    });
+  }
+
+  /**
+  Get EthereumAddress available.
+  @param {String} privateKey - Private Key - optional
+  @returns {String} - Ether balance in account
+  */
+  getAccounts() {
+    const account =
+      this.ethereumSigningKey.length === 0
+        ? this.web3.eth.getAccounts().then(address => address[0])
+        : this.web3.eth.accounts.privateKeyToAccount(this.ethereumSigningKey).address;
+    return account;
+  }
+
+  /**
+  Signs a message with a given authenticated account
+  @param {String} msg  - Message to sign
+  @param {String } account - Ethereum address of account
+  @returns {Promise} - string with the signature
+  */
+  signMessage(msg, account) {
+    return this.web3.eth.personal.sign(msg, account);
+  }
+
+  /**
+  Returns current network ID
+  @returns {Promise} - Network Id number
+  */
+  getNetworkId() {
+    return this.web3.eth.net.getId();
   }
 }
 

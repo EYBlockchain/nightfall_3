@@ -14,7 +14,7 @@ import { Nullifier, PublicInputs, Transaction } from '../classes/index.mjs';
 import { findUsableCommitmentsMutex, markNullified, clearPending } from './commitment-storage.mjs';
 import { getSiblingPath } from '../utils/timber.mjs';
 import { discoverPeers } from './peers.mjs';
-import getBlockAndTransactionsByRoot from '../utils/optimist.mjs';
+import { getBlockAndTransactionsByRoot } from '../utils/optimist.mjs';
 import { calculateIvkPkdfromAskNsk } from './keys.mjs';
 
 const {
@@ -133,7 +133,7 @@ async function withdraw(withdrawParams) {
       .submitTransaction(Transaction.buildSolidityStruct(optimisticWithdrawTransaction))
       .encodeABI();
     // on successful computation of the transaction mark the old commitments as nullified
-    await markNullified(oldCommitment);
+    await markNullified(oldCommitment, optimisticWithdrawTransaction);
     return { rawTransaction, transaction: optimisticWithdrawTransaction };
   } catch (err) {
     await clearPending(oldCommitment);

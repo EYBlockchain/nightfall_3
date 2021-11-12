@@ -641,6 +641,39 @@ class Nf3 {
   }
 
   /**
+  Get if it's a valid withdraw transaction for finalising the
+  withdrawal of funds to L1 (only relevant for ERC20).
+  @method
+  @async
+  @param {string} withdrawTransactionHash - the hash of the Layer 2 transaction in question
+  */
+  async isValidWithdrawal(withdrawTransactionHash) {
+    let res;
+    let valid = false;
+
+    try {
+      res = await axios.get(
+        `${this.optimistBaseUrl}/block/transaction-hash/${withdrawTransactionHash}`,
+      );
+    } catch (e) {
+      // transaction is not in block yet
+      valid = false;
+    }
+
+    if (res) {
+      const { block, transactions, index } = res.data;
+      res = await axios.post(`${this.clientBaseUrl}/valid-withdrawal`, {
+        block,
+        transactions,
+        index,
+      });
+      valid = res.data.valid;
+    }
+
+    return valid;
+  }
+
+  /**
   Returns the balance of tokens held in layer 2
   @method
   @async
@@ -657,12 +690,25 @@ class Nf3 {
   Returns the commitments of tokens held in layer 2
   @method
   @async
-  @returns {Promise} This promise rosolves into an object whose properties are the
+  @returns {Promise} This promise resolves into an object whose properties are the
   addresses of the ERC contracts of the tokens held by this account in Layer 2. The
   value of each propery is an array of commitments originating from that contract.
   */
   async getLayer2Commitments() {
     const res = await axios.get(`${this.clientBaseUrl}/commitment/commitments`);
+    return res.data.commitments;
+  }
+
+  /**
+  Returns the pending withdraws commitments
+  @method
+  @async
+  @returns {Promise} This promise resolves into an object whose properties are the
+  addresses of the ERC contracts of the tokens held by this account in Layer 2. The
+  value of each propery is an array of withdraw commitments originating from that contract.
+  */
+  async getPendingWithdraws() {
+    const res = await axios.get(`${this.clientBaseUrl}/commitment/withdraws`);
     return res.data.commitments;
   }
 

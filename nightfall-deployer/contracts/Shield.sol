@@ -60,6 +60,26 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
   }
 
   /**
+  This function returns if you are able to withdraw the funds, once a block is finalised
+  @param b - the block containing the Withdraw transaction
+  @param ts - array of the transactions contained in the block
+  @param index - the index of the transaction that locates it in the array of Transactions in Block b
+  */
+  function isValidWithdrawal(Block memory b, uint blockNumberL2, Transaction[] memory ts, uint index) view external returns(bool) {    
+    // check this block is a real one, in the queue, not something made up.
+    state.isBlockReal(b, ts, blockNumberL2);
+    // check that the block has been finalised
+    uint time = state.getBlockData(blockNumberL2).time;
+    require(time + COOLING_OFF_PERIOD < block.timestamp, 'It is too soon to withdraw funds from this block');
+    
+    bytes32 transactionHash = Utils.hashTransaction(ts[index]);
+    require(!withdrawn[transactionHash], 'This transaction has already paid out');
+    require(ts[index].transactionType == TransactionTypes.WITHDRAW, 'This transaction is not a valid WITHDRAW');
+   
+    return true;
+  }
+
+  /**
   This function enables funds to be withdrawn, once a block is finalised
   @param b - the block containing the Withdraw transaction
   @param ts - array of the transactions contained in the block
