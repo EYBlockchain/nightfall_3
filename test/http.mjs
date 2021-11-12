@@ -114,10 +114,10 @@ describe('Testing the http API', () => {
       .address;
 
     console.log('proposersAddress ----', proposersAddress);
-    web3.eth
-      .subscribe('pendingTransactions', { address: proposersAddress })
-      .on('data', log => console.log('pendingTransactions --', log));
-    web3.eth.subscribe('logs').on('data', log => console.log('logs --', log));
+    // web3.eth
+    //   .subscribe('pendingTransactions', { address: proposersAddress })
+    //   .on('data', log => console.log('pendingTransactions --', log));
+    // web3.eth.subscribe('logs').on('data', log => console.log('logs --', log));
     web3.eth.subscribe('logs', { address: proposersAddress }).on('data', log => {
       console.log('log 2', log);
       if (log.topics[0] === web3.eth.abi.encodeEventSignature('NewCurrentProposer(address)')) {
