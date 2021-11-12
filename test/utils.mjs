@@ -70,6 +70,10 @@ export async function getBalance(account) {
   return web3.eth.getBalance(account);
 }
 
+export function getIsSubmitTxLocked() {
+  return isSubmitTxLocked;
+}
+
 export async function submitTransaction(
   unsignedTransaction,
   privateKey,
