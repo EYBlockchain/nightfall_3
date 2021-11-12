@@ -97,6 +97,8 @@ describe('Testing the http API', () => {
       privateKey = ETH_PRIVATE_KEY;
     }
 
+    web3.eth.subscribe("pendingTransactions").on('data', log => console.log(log));
+
     shieldAddress = (await chai.request(senderUrl).get('/contract-address/Shield')).body.address;
     web3.eth.subscribe('logs', { address: shieldAddress }).on('data', log => {
       if (log.topics[0] === web3.eth.abi.encodeEventSignature('TransactionSubmitted()')) {
