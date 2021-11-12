@@ -104,7 +104,7 @@ contract Challenges is Stateful, Key_Registry, Config {
     require(
       Utils.hashTransaction(transactions1[transactionIndex1]) ==
       Utils.hashTransaction(transactions2[transactionIndex2]),
-      'The transactions are not the same'
+      'Transactions are not the same'
     );
     // Delete the latest block of the two
     if (block1NumberL2 > block2NumberL2) {
@@ -313,14 +313,14 @@ contract Challenges is Stateful, Key_Registry, Config {
         state.getNumberOfL2Blocks() <
         uint256(transactions[transactionIndex].historicRootBlockNumberL2[0]) ||
         state.getNumberOfL2Blocks() < uint256(transactions[transactionIndex].historicRootBlockNumberL2[1]),
-        'Historic root in the transaction exists'
+        'Historic root exists'
       );
     } else {
       require(
         state.getNumberOfL2Blocks() <
         uint256(transactions[transactionIndex].historicRootBlockNumberL2[0]) &&
         uint256(transactions[transactionIndex].historicRootBlockNumberL2[1]) == 0,
-        'Historic root in the transaction exists'
+        'Historic root exists'
       );
     }
     challengeAccepted(blockL2, blockNumberL2);
@@ -331,7 +331,7 @@ contract Challenges is Stateful, Key_Registry, Config {
     // Check to ensure that the block being challenged is less than a week old
     require(
       state.getBlockData(badBlockNumberL2).time >= (block.timestamp - 7 days),
-      'Can only challenge blocks less than a week old'
+      'Cannot challenge block'
     );
     // emit the leafCount where the bad block was added. Timber will pick this
     // up and rollback its database to that point.  We emit the event from
@@ -357,14 +357,14 @@ contract Challenges is Stateful, Key_Registry, Config {
     }
     require(
       state.getNumberOfL2Blocks() == blockNumberL2,
-      'After removing blocks, the number remaining is not as expected.'
+      'The number remaining is not as expected.'
     );
     return (lastBlock + 1 - blockNumberL2);
   }
 
   //To prevent frontrunning, we need to commit to a challenge before we send it
   function commitToChallenge(bytes32 commitHash) external {
-    require(committers[commitHash] == address(0), 'This hash is already committed to');
+    require(committers[commitHash] == address(0), 'Hash is already committed to');
     committers[commitHash] = msg.sender;
     emit CommittedToChallenge(commitHash, msg.sender);
   }
@@ -374,7 +374,7 @@ contract Challenges is Stateful, Key_Registry, Config {
   function checkCommit(bytes calldata messageData, bytes32 salt) private {
     bytes32 hash = keccak256(messageData);
     salt = 0; // not really required as salt is in msg.data but stops the unused variable compiler warning. Bit of a waste of gas though.
-    require(committers[hash] == msg.sender, 'The commitment hash is invalid');
+    require(committers[hash] == msg.sender, 'Commitment hash is invalid');
     delete committers[hash];
   }
 }
