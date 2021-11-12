@@ -198,10 +198,11 @@ contract Challenges is Stateful, Key_Registry, Config {
       transactionsOfblockL2ContainingHistoricRoot2,
       blockNumberL2ContainingHistoricRoot2
     );
-    // check the historic root is in the block provided.
+    // check the historic roots are in the blocks provided.
     require(
       transactions[transactionIndex].historicRootBlockNumberL2[0] ==
-      blockNumberL2ContainingHistoricRoot,
+      blockNumberL2ContainingHistoricRoot && transactions[transactionIndex].historicRootBlockNumberL2[1] ==
+      blockNumberL2ContainingHistoricRoot2,
       'Incorrect historic root block'
     );
     ChallengesUtil.libChallengePublicInputHash(
