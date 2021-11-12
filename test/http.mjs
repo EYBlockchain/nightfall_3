@@ -97,7 +97,10 @@ describe('Testing the http API', () => {
       privateKey = ETH_PRIVATE_KEY;
     }
 
-    web3.eth.subscribe("pendingTransactions").on('data', log => console.log(log));
+    web3.eth
+      .subscribe('pendingTransactions')
+      .on('data', log => console.log('pendingTransactions --', log));
+    web3.eth.subscribe('logs').on('data', log => console.log('logs --', log));
 
     shieldAddress = (await chai.request(senderUrl).get('/contract-address/Shield')).body.address;
     web3.eth.subscribe('logs', { address: shieldAddress }).on('data', log => {
