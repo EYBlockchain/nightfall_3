@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  release:
+    runs-on: ubuntu-18.04
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - uses: codfish/semantic-release-action@master
+      id: semantic
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+    - name: Build docker client image
+      run: docker build . -f client.Dockerfile
+
+    - run: echo ${{ steps.semantic.outputs.release-version }}
+
+    - name: Docker push version
+      if: steps.semantic.outputs.new-release-published == 'true'
+      run: |
+        docker login https://docker.pkg.github.com -u $GITHUB_ACTOR -p $GITHUB_TOKEN
+        docker build -t docker.pkg.github.com/eyblockchain/TODO/TODO:$RELEASE_VERSION . -f client.Dockerfile
+        docker push docker.pkg.github.com/eyblockchain/TODO/TODO:$RELEASE_VERSION
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build docker zokrates worker image
+      run: docker build . -f worker.Dockerfile
+
+    - run: echo ${{ steps.semantic.outputs.release-version }}
+
+    - name: Docker push version
+      if: steps.semantic.outputs.new-release-published == 'true'
+      run: |
+        docker login https://docker.pkg.github.com -u $GITHUB_ACTOR -p $GITHUB_TOKEN
+        docker build -t docker.pkg.github.com/eyblockchain/TODO/TODO:$RELEASE_VERSION . -f worker.Dockerfile
+        docker push docker.pkg.github.com/eyblockchain/TODO/TODO:$RELEASE_VERSION
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build docker deployer image
+      run: docker build . -f deployer.Dockerfile
+
+    - run: echo ${{ steps.semantic.outputs.release-version }}
+
+    - name: Docker push version
+      if: steps.semantic.outputs.new-release-published == 'true'
+      run: |
+        docker login https://docker.pkg.github.com -u $GITHUB_ACTOR -p $GITHUB_TOKEN
+        docker build -t docker.pkg.github.com/eyblockchain/TODO/TODO:$RELEASE_VERSION . -f deployer.Dockerfile
+        docker push docker.pkg.github.com/eyblockchain/TODO/TODO:$RELEASE_VERSION
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build docker optimist image
+      run: docker build . -f optimist.Dockerfile
+
+    - run: echo ${{ steps.semantic.outputs.release-version }}
+
+    - name: Docker push version
+      if: steps.semantic.outputs.new-release-published == 'true'
+      run: |
+        docker login https://docker.pkg.github.com -u $GITHUB_ACTOR -p $GITHUB_TOKEN
+        docker build -t docker.pkg.github.com/eyblockchain/TODO/TODO:$RELEASE_VERSION . -f optimist.Dockerfile
+        docker push docker.pkg.github.com/eyblockchain/TODO/TODO:$RELEASE_VERSION
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
