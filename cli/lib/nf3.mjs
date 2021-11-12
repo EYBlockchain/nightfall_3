@@ -81,8 +81,12 @@ class Nf3 {
     const mnemonic = generateMnemonic();
     this.zkpKeys =
       this.zkpKeys ||
-      (await axios.post(`${this.clientBaseUrl}/generate-keys`),
-      { mnemonic, path: `m/44'/60'/0'/0` }).data;
+      (
+        await axios.post(`${this.clientBaseUrl}/generate-keys`, {
+          mnemonic,
+          path: `m/44'/60'/0'/0`,
+        })
+      ).data;
     this.shieldContractAddress = await this.getContractAddress('Shield');
     this.proposersContractAddress = await this.getContractAddress('Proposers');
     this.challengesContractAddress = await this.getContractAddress('Challenges');
