@@ -159,7 +159,7 @@ export async function createBadBlock(badBlockType, block, transactions, args) {
     }
     case 'IncorrectHistoricRoot': {
       // Replace the historic root with a wrong historic root
-      badTransactions[1].historicRootBlockNumberL2 = (await rand(8)).hex();
+      badTransactions[1].historicRootBlockNumberL2[0] = (await rand(8)).hex();
       break;
     }
     case 'IncorrectPublicInputHash': {

@@ -81,7 +81,8 @@ library ChallengesUtil {
                 transaction.nullifiers.length != 0 ||
                 transaction.compressedSecrets.length != 0 ||
                 nZeroProof == 4 || // We assume that 3 out of the 4 proof elements can be a valid ZERO. Deals with exception cases
-                transaction.historicRootBlockNumberL2 != 0,
+                transaction.historicRootBlockNumberL2[0] != 0 ||
+                transaction.historicRootBlockNumberL2[1] != 0,
             'This deposit transaction type is valid'
         );
     }
@@ -112,7 +113,8 @@ library ChallengesUtil {
                 transaction.nullifiers[1] != ZERO ||
                 transaction.nullifiers.length != 1 ||
                 nZeroCompressedSecrets == 8 || // We assume that 7 out of the 8 compressed secrets elements can be a valid ZERO. Deals with exception cases
-                nZeroProof == 4, // We assume that 3 out of the 4 proof elements can be a valid ZERO. Deals with exception cases
+                nZeroProof == 4 || // We assume that 3 out of the 4 proof elements can be a valid ZERO. Deals with exception cases
+                transaction.historicRootBlockNumberL2[1] != 0, // If this is a single, the second historicBlockNumber needs to be zero
             'This single transfer transaction type is valid'
         );
     }
@@ -167,7 +169,8 @@ library ChallengesUtil {
                 transaction.nullifiers[1] != ZERO ||
                 transaction.nullifiers.length != 1 ||
                 transaction.compressedSecrets.length != 0 ||
-                nZeroProof == 4, // We assume that 3 out of the 4 proof elements can be a valid ZERO. Deals with exception cases
+                nZeroProof == 4 || // We assume that 3 out of the 4 proof elements can be a valid ZERO. Deals with exception cases
+                transaction.historicRootBlockNumberL2[1] != 0, // A withdraw has a similar constraint as a single transfer
             'This withdraw transaction type is valid'
         );
     }
@@ -175,15 +178,15 @@ library ChallengesUtil {
     // the transaction type deposit is challenged to not be valid
     function libChallengePublicInputHash(
         Structures.Transaction memory transaction,
-        bytes32 historicRoot
+        bytes32[2] memory historicRoot
     ) public pure {
         if (transaction.transactionType == Structures.TransactionTypes.DEPOSIT)
             libChallengePublicInputHashDeposit(transaction);
         else if (transaction.transactionType == Structures.TransactionTypes.SINGLE_TRANSFER)
-            libChallengePublicInputHashSingleTransfer(transaction, historicRoot);
+            libChallengePublicInputHashSingleTransfer(transaction, historicRoot[0]);
         else if (transaction.transactionType == Structures.TransactionTypes.DOUBLE_TRANSFER)
             libChallengePublicInputHashDoubleTransfer(transaction, historicRoot); // if(transaction.transactionType == TransactionTypes.WITHDRAW)
-        else libChallengePublicInputHashWithdraw(transaction, historicRoot);
+        else libChallengePublicInputHashWithdraw(transaction, historicRoot[0]);
     }
 
     // the public input hash of deposit is challenged to not be valid
@@ -230,7 +233,7 @@ library ChallengesUtil {
     // the public input hash of double transfer is challenged to not be valid
     function libChallengePublicInputHashDoubleTransfer(
         Structures.Transaction memory transaction,
-        bytes32 historicRoot
+        bytes32[2] memory historicRoot
     ) public pure {
         require(
             transaction.publicInputHash !=
@@ -240,7 +243,8 @@ library ChallengesUtil {
                         transaction.ercAddress,
                         transaction.commitments,
                         transaction.nullifiers,
-                        historicRoot,
+                        historicRoot[0],
+                        historicRoot[1],
                         transaction.compressedSecrets
                     )
                 ) &

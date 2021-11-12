@@ -95,8 +95,10 @@ async function withdraw(withdrawParams) {
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
   const optimisticWithdrawTransaction = new Transaction({
     fee,
-    historicRootBlockNumberL2: (await getBlockAndTransactionsByRoot(root.hex(32))).block
-      .blockNumberL2,
+    historicRootBlockNumberL2: [
+      (await getBlockAndTransactionsByRoot(root.hex(32))).block.blockNumberL2,
+      0,
+    ],
     transactionType: 3,
     tokenType: items.tokenType,
     publicInputs,

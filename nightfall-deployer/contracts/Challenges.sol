@@ -46,7 +46,13 @@ contract Challenges is Stateful, Key_Registry, Config {
     challengeAccepted(blockL2, blockNumberL2);
   }
 
-  // the new commitment Merkle-tree root is challenged as incorrect
+  /**
+  Checks that the new merkle tree root of a block is incorrect. This could be because the
+  merkle tree that stores commitments has been incorrectly updated. To verify this, we first calculate
+  this challenged block's frontier using the prior block. Using this frontier, we can work out what the root
+  for the current block should be given the set of transactions in said block. Finally, this calculated root
+  is compared to the root stored within the block.
+  */
   function challengeNewRootCorrect(
     Block memory priorBlockL2, // the block immediately prior to this one
     Transaction[] memory priorBlockTransactions, // the transactions in the prior block
@@ -71,6 +77,11 @@ contract Challenges is Stateful, Key_Registry, Config {
     challengeAccepted(blockL2, blockNumberL2);
   }
 
+  /**
+  Checks that a tranasction has not been seen before (i.e. a duplicate). If the duplicate transaction
+  occurs within the same block, there is an additional check to ensure they are not at the same index
+  (i.e. a trivial duplicate).
+  */
   function challengeNoDuplicateTransaction(
     Block memory block1,
     uint256 block1NumberL2,
@@ -93,7 +104,7 @@ contract Challenges is Stateful, Key_Registry, Config {
     require(
       Utils.hashTransaction(transactions1[transactionIndex1]) ==
       Utils.hashTransaction(transactions2[transactionIndex2]),
-      'The transactions are not the same'
+      'Transactions are not the same'
     );
     // Delete the latest block of the two
     if (block1NumberL2 > block2NumberL2) {
@@ -117,8 +128,13 @@ contract Challenges is Stateful, Key_Registry, Config {
     challengeAccepted(blockL2, blockNumberL2);
   }
 
-  // This function signature is used when we have a non-zero historic root
-  // i.e. transfer or withdraw transactions.
+  /**
+  This checks if the public input hash is incorrect, as the public input hash
+  is calculated differently for each transaction type, we overload this function.
+
+  This function signature is used when we have a non-zero historic root
+  i.e. single transfer or withdraw transactions.
+  */
   function challengePublicInputHash(
     Block memory blockL2,
     uint256 blockNumberL2,
@@ -138,20 +154,71 @@ contract Challenges is Stateful, Key_Registry, Config {
     );
     // check the historic root is in the block provided.
     require(
-      transactions[transactionIndex].historicRootBlockNumberL2 ==
+      transactions[transactionIndex].historicRootBlockNumberL2[0] ==
       blockNumberL2ContainingHistoricRoot,
       'Incorrect historic root block'
     );
     ChallengesUtil.libChallengePublicInputHash(
       transactions[transactionIndex],
-      blockL2ContainingHistoricRoot.root
+      [blockL2ContainingHistoricRoot.root, ZERO]
     );
     // Delete the latest block of the two
     challengeAccepted(blockL2, blockNumberL2);
   }
 
-  // This function signature is used when we have a zero historic root
-  // i.e. a deposit transaction.
+  /**
+  This checks if the public input hash is incorrect, as the public input hash
+  is calculated differently for each transaction type, we overload this function.
+
+  This function signature is used when we have two historic root
+  i.e. a double transfer. We need to verify two historic blocks.
+  */
+  function challengePublicInputHash(
+    Block memory blockL2,
+    uint256 blockNumberL2,
+    Transaction[] memory transactions,
+    uint256 transactionIndex,
+    Block memory blockL2ContainingHistoricRoot,
+    Block memory blockL2ContainingHistoricRoot2,
+    uint256 blockNumberL2ContainingHistoricRoot,
+    uint256 blockNumberL2ContainingHistoricRoot2,
+    Transaction[] memory transactionsOfblockL2ContainingHistoricRoot,
+    Transaction[] memory transactionsOfblockL2ContainingHistoricRoot2,
+    bytes32 salt
+  ) external {
+    checkCommit(msg.data, salt);
+    state.isBlockReal(blockL2, transactions, blockNumberL2);
+    state.isBlockReal(
+      blockL2ContainingHistoricRoot,
+      transactionsOfblockL2ContainingHistoricRoot,
+      blockNumberL2ContainingHistoricRoot
+    );
+    state.isBlockReal(
+      blockL2ContainingHistoricRoot2,
+      transactionsOfblockL2ContainingHistoricRoot2,
+      blockNumberL2ContainingHistoricRoot2
+    );
+    // check the historic roots are in the blocks provided.
+    require(
+      transactions[transactionIndex].historicRootBlockNumberL2[0] ==
+      blockNumberL2ContainingHistoricRoot && transactions[transactionIndex].historicRootBlockNumberL2[1] ==
+      blockNumberL2ContainingHistoricRoot2,
+      'Incorrect historic root block'
+    );
+    ChallengesUtil.libChallengePublicInputHash(
+      transactions[transactionIndex],
+      [blockL2ContainingHistoricRoot.root, blockL2ContainingHistoricRoot2.root]
+    );
+    challengeAccepted(blockL2, blockNumberL2);
+  }
+
+/**
+  This checks if the public input hash is incorrect, as the public input hash
+  is calculated differently for each transaction type, we overload this function.
+
+  This function signature is used when we have a zero historic root
+  i.e. a deposit transaction.
+  */
   function challengePublicInputHash(
     Block memory blockL2,
     uint256 blockNumberL2,
@@ -162,7 +229,7 @@ contract Challenges is Stateful, Key_Registry, Config {
     checkCommit(msg.data, salt);
     state.isBlockReal(blockL2, transactions, blockNumberL2);
     // check the historic root is in the block provided.
-    ChallengesUtil.libChallengePublicInputHash(transactions[transactionIndex], ZERO);
+    ChallengesUtil.libChallengePublicInputHash(transactions[transactionIndex], [ZERO,ZERO]);
     // Delete the latest block of the two
     challengeAccepted(blockL2, blockNumberL2);
   }
@@ -227,6 +294,11 @@ contract Challenges is Stateful, Key_Registry, Config {
     }
   }
 
+  /*
+  This checks if the historic root blockNumberL2 provided is greater than the numbe of blocks on-chain.
+  If the root stored in the block is itself invalid, that is challengeable by challengeNewRootCorrect.
+  the indices for the same nullifier in two **different** transactions contained in two blocks (note it should also be ok for the blocks to be the same)
+  */
   function challengeHistoricRoot(
     Block memory blockL2,
     uint256 blockNumberL2,
@@ -236,11 +308,21 @@ contract Challenges is Stateful, Key_Registry, Config {
   ) external {
     checkCommit(msg.data, salt);
     state.isBlockReal(blockL2, transactions, blockNumberL2);
-    require(
-      state.getNumberOfL2Blocks() <
-      uint256(transactions[transactionIndex].historicRootBlockNumberL2),
-      'Historic root in the transaction exists'
-    );
+    if (transactions[transactionIndex].transactionType == Structures.TransactionTypes.DOUBLE_TRANSFER){
+      require(
+        state.getNumberOfL2Blocks() <
+        uint256(transactions[transactionIndex].historicRootBlockNumberL2[0]) ||
+        state.getNumberOfL2Blocks() < uint256(transactions[transactionIndex].historicRootBlockNumberL2[1]),
+        'Historic root exists'
+      );
+    } else {
+      require(
+        state.getNumberOfL2Blocks() <
+        uint256(transactions[transactionIndex].historicRootBlockNumberL2[0]) &&
+        uint256(transactions[transactionIndex].historicRootBlockNumberL2[1]) == 0,
+        'Historic root exists'
+      );
+    }
     challengeAccepted(blockL2, blockNumberL2);
   }
 
@@ -249,7 +331,7 @@ contract Challenges is Stateful, Key_Registry, Config {
     // Check to ensure that the block being challenged is less than a week old
     require(
       state.getBlockData(badBlockNumberL2).time >= (block.timestamp - 7 days),
-      'Can only challenge blocks less than a week old'
+      'Cannot challenge block'
     );
     // emit the leafCount where the bad block was added. Timber will pick this
     // up and rollback its database to that point.  We emit the event from
@@ -275,14 +357,14 @@ contract Challenges is Stateful, Key_Registry, Config {
     }
     require(
       state.getNumberOfL2Blocks() == blockNumberL2,
-      'After removing blocks, the number remaining is not as expected.'
+      'The number remaining is not as expected.'
     );
     return (lastBlock + 1 - blockNumberL2);
   }
 
   //To prevent frontrunning, we need to commit to a challenge before we send it
   function commitToChallenge(bytes32 commitHash) external {
-    require(committers[commitHash] == address(0), 'This hash is already committed to');
+    require(committers[commitHash] == address(0), 'Hash is already committed to');
     committers[commitHash] = msg.sender;
     emit CommittedToChallenge(commitHash, msg.sender);
   }
@@ -292,7 +374,7 @@ contract Challenges is Stateful, Key_Registry, Config {
   function checkCommit(bytes calldata messageData, bytes32 salt) private {
     bytes32 hash = keccak256(messageData);
     salt = 0; // not really required as salt is in msg.data but stops the unused variable compiler warning. Bit of a waste of gas though.
-    require(committers[hash] == msg.sender, 'The commitment hash is invalid');
+    require(committers[hash] == msg.sender, 'Commitment hash is invalid');
     delete committers[hash];
   }
 }
