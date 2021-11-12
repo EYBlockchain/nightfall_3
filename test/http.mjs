@@ -98,7 +98,7 @@ describe('Testing the http API', () => {
     }
 
     web3.eth
-      .subscribe('pendingTransactions')
+      .subscribe('pendingTransactions', { address: proposersAddress })
       .on('data', log => console.log('pendingTransactions --', log));
     web3.eth.subscribe('logs').on('data', log => console.log('logs --', log));
 
@@ -118,6 +118,7 @@ describe('Testing the http API', () => {
     proposersAddress = (await chai.request(senderUrl).get('/contract-address/Proposers')).body
       .address;
     web3.eth.subscribe('logs', { address: proposersAddress }).on('data', log => {
+      console.log('log 2', log);
       if (log.topics[0] === web3.eth.abi.encodeEventSignature('NewCurrentProposer(address)')) {
         logCounts.registerProposer += 1;
       }
