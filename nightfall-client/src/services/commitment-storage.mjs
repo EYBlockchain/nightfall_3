@@ -37,9 +37,7 @@ export async function storeCommitment(commitment, nsk) {
   };
   // a chain reorg may cause an attempted overwrite. We should allow this, hence
   // the use of replaceOne.
-  return db
-    .collection(COMMITMENTS_COLLECTION)
-    .replaceOne({ _id: commitment.hash.hex(32) }, data, { upsert: true });
+  return db.collection(COMMITMENTS_COLLECTION).insertOne(data);
 }
 // function to update an existing commitment
 export async function updateCommitment(commitment, updates) {

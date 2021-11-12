@@ -474,7 +474,7 @@ export async function saveTree(blockNumber, blockNumberL2, timber) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   return db.collection(TIMBER_COLLECTION).insertOne({
-    _id: timber.root,
+    _id: timber.blockNumberL2,
     blockNumber,
     blockNumberL2,
     frontier: timber.frontier,
