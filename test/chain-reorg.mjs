@@ -2,6 +2,7 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import WebSocket from 'ws';
+import { generateMnemonic } from 'bip39';
 import {
   closeWeb3Connection,
   submitTransaction,
@@ -104,11 +105,16 @@ describe('Testing the http API', () => {
       if (log.topics[0] === topicEventMapping.BlockProposed) eventLogs.push('blockProposed');
     });
 
+    // Generate a random mnemonic (uses crypto.randomBytes under the hood), defaults to 128-bits of entropy
+    const mnemonic = generateMnemonic();
+
     ({
       nsk: nsk1,
       ivk: ivk1,
       pkd: pkd1,
-    } = (await chai.request(url).post('/generate-keys').send()).body);
+    } = (
+      await chai.request(url).post('/generate-keys').send({ mnemonic, path: `m/44'/60'/0'/0` })
+    ).body);
 
     connection = new WebSocket(optimistWsUrl);
     connection.onopen = () => {

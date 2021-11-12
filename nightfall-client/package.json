@@ -42,7 +42,9 @@
     "safe-buffer": "^5.2.1",
     "web3": "^1.4.0",
     "winston": "^3.3.3",
-    "ws": "^7.5.0"
+    "ws": "^7.5.0",
+    "bip39": "^3.0.4",
+    "ethereumjs-wallet": "^1.0.2"
   },
   "devDependencies": {
     "nodemon": "^2.0.12"

@@ -3,6 +3,7 @@ import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import childProcess from 'child_process';
 import WebSocket from 'ws';
+import { generateMnemonic } from 'bip39';
 import {
   closeWeb3Connection,
   submitTransaction,
@@ -76,12 +77,17 @@ describe('Running rollback and resync test', () => {
 
     setNonce(await web3.eth.getTransactionCount(myAddress));
 
+    // Generate a random mnemonic (uses crypto.randomBytes under the hood), defaults to 128-bits of entropy
+    const mnemonic = generateMnemonic();
+
     ({
       ask: ask1,
       nsk: nsk1,
       ivk: ivk1,
       pkd: pkd1,
-    } = (await chai.request(url).post('/generate-keys').send()).body);
+    } = (
+      await chai.request(url).post('/generate-keys').send({ mnemonic, path: `m/44'/60'/0'/0` })
+    ).body);
 
     defaultDepositArgs = { ercAddress, tokenId, tokenType, value, pkd: pkd1, nsk: nsk1, fee };
     defaultTransferArgs = {

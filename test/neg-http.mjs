@@ -3,6 +3,7 @@ import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import Queue from 'queue';
 import WebSocket from 'ws';
+import { generateMnemonic } from 'bip39';
 import {
   closeWeb3Connection,
   submitTransaction,
@@ -132,12 +133,17 @@ describe('Testing the challenge http API', () => {
     // set the current nonce before we start the test
     setNonce(await web3.eth.getTransactionCount((await getAccounts())[0]));
 
+    // Generate a random mnemonic (uses crypto.randomBytes under the hood), defaults to 128-bits of entropy
+    const mnemonic = generateMnemonic();
+
     ({
       ask: ask1,
       nsk: nsk1,
       ivk: ivk1,
       pkd: pkd1,
-    } = (await chai.request(url).post('/generate-keys').send()).body);
+    } = (
+      await chai.request(url).post('/generate-keys').send({ mnemonic, path: `m/44'/60'/0'/0` })
+    ).body);
 
     web3.eth.subscribe('logs', { address: stateAddress }).on('data', log => {
       if (log.topics[0] === topicEventMapping.BlockProposed) {
