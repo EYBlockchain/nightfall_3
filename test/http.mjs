@@ -97,11 +97,6 @@ describe('Testing the http API', () => {
       privateKey = ETH_PRIVATE_KEY;
     }
 
-    web3.eth
-      .subscribe('pendingTransactions', { address: proposersAddress })
-      .on('data', log => console.log('pendingTransactions --', log));
-    web3.eth.subscribe('logs').on('data', log => console.log('logs --', log));
-
     shieldAddress = (await chai.request(senderUrl).get('/contract-address/Shield')).body.address;
     web3.eth.subscribe('logs', { address: shieldAddress }).on('data', log => {
       if (log.topics[0] === web3.eth.abi.encodeEventSignature('TransactionSubmitted()')) {
@@ -117,6 +112,12 @@ describe('Testing the http API', () => {
 
     proposersAddress = (await chai.request(senderUrl).get('/contract-address/Proposers')).body
       .address;
+
+    console.log('proposersAddress ----', proposersAddress);
+    web3.eth
+      .subscribe('pendingTransactions', { address: proposersAddress })
+      .on('data', log => console.log('pendingTransactions --', log));
+    web3.eth.subscribe('logs').on('data', log => console.log('logs --', log));
     web3.eth.subscribe('logs', { address: proposersAddress }).on('data', log => {
       console.log('log 2', log);
       if (log.topics[0] === web3.eth.abi.encodeEventSignature('NewCurrentProposer(address)')) {
