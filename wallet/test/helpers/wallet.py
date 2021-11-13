@@ -19,7 +19,13 @@ def loginNightfallWallet(driver, findElements, metamaskTab, nightfallTab, wallet
         nextButton.click()
         findElements.element_exist_xpath('//button[text()="Connect"]').click() # Connect
         driver.switch_to.window(nightfallTab)
+        findElements.element_exist_xpath('//button[text()="Cancel"]').click() # Cancel
+        sleep(1)
         findElements.element_exist_xpath('//*[local-name()="svg"]').click() # nightfall Metamask button
+        sleep(1)
+        findElements.element_exist_xpath('//button[text()="New"]').click() # New Mnemonic
+        sleep(1)
+        findElements.element_exist_xpath('//button[text()="Submit"]').click() # Submit Mnemonic
 
     driver.switch_to.window(nightfallTab)
 

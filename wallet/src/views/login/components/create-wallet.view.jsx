@@ -47,7 +47,8 @@ function CreateWalletModal({
             <Message warning>
               <Message.Header>
                 These 12 words can restore all of your Nightfall accounts. Save them somewhere safe
-                and secret
+                and secret even if you select to make a backup. The backup option is only offered to
+                easily login into your nightfall account, but not as a permanent backup.
               </Message.Header>
             </Message>
           </Form.Field>

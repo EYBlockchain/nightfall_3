@@ -41,6 +41,7 @@ function Login({ login, settings, onLoadWallet, onDeleteWallet }) {
 
   const initNf3 = async ethereumSigningKey => {
     const nf3Env = getCurrentEnvironment().currentEnvironment;
+    console.log('ENV', nf3Env);
     nf3 = new Nf3.Nf3(
       nf3Env.clientApiUrl,
       nf3Env.optimistApiUrl,

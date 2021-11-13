@@ -38,7 +38,8 @@ const TX_TYPES = {
   INSTANT_WITHDRAW: 'instant-withdraw',
 };
 
-const METAMASK_MESSAGE = 'Sign this message only if you are in a trusted application.';
+const METAMASK_MESSAGE =
+  'This signature is required to unlock your Nightfall account. Sign this message only if you are in a trusted application.';
 
 const TRANSACTION_MAX_RETRIES = 10;
 const TRANSACTION_RETRY_PERIOD = 10000; // 10s

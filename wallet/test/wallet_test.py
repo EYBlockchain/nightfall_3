@@ -56,7 +56,6 @@ loginNightfallWallet(driver, findElementsInstance, metamaskTab, nightfallTab, wa
 testEthAddress = findElementsInstance.element_exist_xpath('//*[@id="wallet-info-cell-ethaddress"]').text
 assert(testEthAddress.lower() == ethAccount2Params["ethereumAddress"].lower())
 
-
 ########################
 # Use wallet   #
 ########################
@@ -64,7 +63,6 @@ assert(testEthAddress.lower() == ethAccount2Params["ethereumAddress"].lower())
 # TODO: Waiting for all toke types to be correctly configured. For now, only ERC20 works
 tokenTypes = ["erc20"]
 txTypes = ["Deposit", "Transfer", "Withdraw"]
-
 
 txParams = {
   "amount": 10,
@@ -81,6 +79,7 @@ for tokenType in tokenTypes:
     print(tokenType, txType)
     submitTxWallet(txParams, findElementsInstance, driver, metamaskTab, nightfallTab, cancel=1)
     print(tokenType, txType)
+    sleep(10)
     submitTxWallet(txParams, findElementsInstance, driver, metamaskTab, nightfallTab)
     sleep(10)
     print(tokenType, txType)
