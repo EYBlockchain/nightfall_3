@@ -77,17 +77,7 @@ class Nf3 {
   @returns {Promise}
   */
   async init() {
-    this.setWeb3Provider(this.web3WsUrl);
-    // Generate a random mnemonic (uses crypto.randomBytes under the hood), defaults to 128-bits of entropy
-    const mnemonic = generateMnemonic();
-    this.zkpKeys =
-      this.zkpKeys ||
-      (
-        await axios.post(`${this.clientBaseUrl}/generate-keys`, {
-          mnemonic,
-          path: `m/44'/60'/0'/0`,
-        })
-      ).data;
+    this.setWeb3Provider();
     this.shieldContractAddress = await this.getContractAddress('Shield');
     this.proposersContractAddress = await this.getContractAddress('Proposers');
     this.challengesContractAddress = await this.getContractAddress('Challenges');
