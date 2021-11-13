@@ -8,6 +8,8 @@ import gen from 'general-number';
 import mongo from 'common-files/utils/mongo.mjs';
 import logger from 'common-files/utils/logger.mjs';
 import { Commitment, Nullifier } from '../classes/index.mjs';
+import { getBlockByTransactionHash } from '../utils/optimist.mjs';
+import { isValidWithdrawal } from './valid-withdrawal.mjs';
 
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
 const { generalise } = gen;
@@ -31,6 +33,7 @@ export async function storeCommitment(commitment, nsk) {
     isNullifiedOnChain: Number(commitment.isNullifiedOnChain),
     nullifier: nullifierHash,
     blockNumber: -1,
+    transactionNullified: null,
   };
   return db.collection(COMMITMENTS_COLLECTION).insertOne(data);
 }
@@ -70,10 +73,12 @@ async function markPending(commitment) {
 }
 
 // function to mark a commitment as nullified for a mongo db
-export async function markNullified(commitment) {
+export async function markNullified(commitment, transaction) {
   const connection = await mongo.connection(MONGO_URL);
   const query = { _id: commitment.hash.hex(32) };
-  const update = { $set: { isPendingNullification: false, isNullified: true } };
+  const update = {
+    $set: { isPendingNullification: false, isNullified: true, transactionNullified: transaction },
+  };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateOne(query, update);
 }
@@ -228,6 +233,74 @@ export async function getWalletCommitments() {
       acc[e.compressedPkd][e.ercAddress].push(e);
       return acc;
     }, {});
+}
+
+// function to get the withdraw commitments for each ERC address of a pkd
+export async function getWithdrawCommitments() {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  const query = {
+    isNullified: true,
+    'transactionNullified.transactionType':
+      '0x0000000000000000000000000000000000000000000000000000000000000003',
+  };
+  const options = {
+    projection: {
+      preimage: { ercAddress: 1, compressedPkd: 1, tokenId: 1, value: 1 },
+      _id: 0,
+      transactionNullified: 1,
+    },
+  };
+  const withdraws = await db.collection(COMMITMENTS_COLLECTION).find(query, options).toArray();
+  const withdrawsDetails = withdraws
+    .map(e => ({
+      ercAddress: BigInt(e.preimage.ercAddress).toString(16),
+      compressedPkd: e.preimage.compressedPkd,
+      tokenId: !!BigInt(e.preimage.tokenId),
+      value: Number(BigInt(e.preimage.value)),
+      transactionNullified: e.transactionNullified,
+    }))
+    .filter(e => e.tokenId || e.value > 0) // there should be no commitments with tokenId and value of ZERO
+    .map(e => ({
+      compressedPkd: e.compressedPkd,
+      ercAddress: e.ercAddress,
+      balance: e.tokenId ? 1 : e.value,
+      transactionNullified: e.transactionNullified,
+    }));
+
+  const withdrawsDetailsValid = await Promise.all(
+    withdrawsDetails.map(async e => {
+      let valid = false;
+
+      try {
+        const { block, transactions, index } = await getBlockByTransactionHash(
+          e.transactionNullified.transactionHash,
+        );
+        try {
+          const res = await isValidWithdrawal({ block, transactions, index });
+          valid = res;
+        } catch (ex) {
+          valid = false;
+        }
+      } catch (ex) {
+        valid = false;
+      }
+      return {
+        compressedPkd: e.compressedPkd,
+        ercAddress: e.ercAddress,
+        balance: e.balance,
+        transactionNullified: e.transactionNullified,
+        valid,
+      };
+    }),
+  );
+
+  return withdrawsDetailsValid.reduce((acc, e) => {
+    if (!acc[e.compressedPkd]) acc[e.compressedPkd] = {};
+    if (!acc[e.compressedPkd][e.ercAddress]) acc[e.compressedPkd][e.ercAddress] = [];
+    acc[e.compressedPkd][e.ercAddress].push(e);
+    return acc;
+  }, {});
 }
 
 // as above, but removes output commitments

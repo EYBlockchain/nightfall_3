@@ -14,6 +14,7 @@ import {
   timeJump,
   topicEventMapping,
   setNonce,
+  getIsSubmitTxLocked,
 } from './utils.mjs';
 
 const { expect, assert } = chai;
@@ -604,7 +605,7 @@ describe('Testing the http API', () => {
         // eslint-disable-next-line no-await-in-loop
         await waitForTxExecution(count, 'deposit');
       }
-      while (eventLogs[0] !== 'blockProposed') {
+      while (eventLogs[0] !== 'blockProposed' || getIsSubmitTxLocked()) {
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 3000));
       }

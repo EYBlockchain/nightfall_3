@@ -70,6 +70,10 @@ export async function getBalance(account) {
   return web3.eth.getBalance(account);
 }
 
+export function getIsSubmitTxLocked() {
+  return isSubmitTxLocked;
+}
+
 export async function submitTransaction(
   unsignedTransaction,
   privateKey,
@@ -155,7 +159,7 @@ export async function createBadBlock(badBlockType, block, transactions, args) {
     }
     case 'IncorrectHistoricRoot': {
       // Replace the historic root with a wrong historic root
-      badTransactions[1].historicRootBlockNumberL2 = (await rand(8)).hex();
+      badTransactions[1].historicRootBlockNumberL2[0] = (await rand(8)).hex();
       break;
     }
     case 'IncorrectPublicInputHash': {
