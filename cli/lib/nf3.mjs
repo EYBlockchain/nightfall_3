@@ -76,7 +76,7 @@ class Nf3 {
   blockchain.
   @returns {Promise}
   */
-  async init() {
+  async init(mnemonic) {
     this.setWeb3Provider();
     this.shieldContractAddress = await this.getContractAddress('Shield');
     this.proposersContractAddress = await this.getContractAddress('Proposers');
