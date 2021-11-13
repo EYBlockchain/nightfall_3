@@ -98,7 +98,6 @@ function Login({ login, settings, onLoadWallet, onDeleteWallet }) {
   };
 
   const createWallet = async () => {
-    Storage.init();
     try {
       await initNf3('');
       if (!Storage.mnemonicGet(nf3.ethereumAddress)) {

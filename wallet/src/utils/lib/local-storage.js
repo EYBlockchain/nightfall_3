@@ -1,3 +1,4 @@
+/* ignore unused exports */
 import AES from 'crypto-js/aes';
 import Utf8 from 'crypto-js/enc-utf8';
 
@@ -59,4 +60,4 @@ function clear() {
   storage.clear();
 }
 
-export { init, mnemonicGet, mnemonicSet, mnemonicRemove, tokensSet, tokensGet, clear };
+export { mnemonicGet, mnemonicSet, mnemonicRemove, tokensSet, tokensGet, clear };
