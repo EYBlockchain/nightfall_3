@@ -1,5 +1,5 @@
 import React from 'react';
-import { Container, Header, Divider, Button } from 'semantic-ui-react';
+import { Container, Header, Divider } from 'semantic-ui-react';
 import { connect } from 'react-redux';
 import { Redirect } from 'react-router-dom';
 import PropTypes from 'prop-types';

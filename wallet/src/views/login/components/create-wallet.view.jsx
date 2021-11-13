@@ -36,7 +36,7 @@ function CreateWalletModal({
 
   const toggleMnemonicBackupEnable = () => {
     setMnemonicBackup(!mnemonicBackup);
-  }
+  };
 
   return (
     <Modal open={modalEnable}>
@@ -82,7 +82,7 @@ function CreateWalletModal({
               <Icon name="cancel" />
               Cancel
             </Button>
-            <Button floated="right" color="blue" disabled={mnemonic===''} onClick={handleSubmit}>
+            <Button floated="right" color="blue" disabled={mnemonic === ''} onClick={handleSubmit}>
               <Icon name="send" />
               Submit
             </Button>
