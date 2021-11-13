@@ -3,12 +3,16 @@ import { Menu, Icon, Button } from 'semantic-ui-react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { deleteWallet } from '../../../../store/login/login.actions';
+import AccountSettingsModal from './account-settings.view.jsx';
 
 function HeaderMenu({ onDeleteWallet }) {
-  const handleClickAccountInfo = () => {};
+  const [accountSettingsEnable, setAccountSettingsEnable] = React.useState(false);
+
+  const toggleAccountSettings = () => {
+    setAccountSettingsEnable(!accountSettingsEnable);
+  };
 
   const handleClickNFInfo = () => {};
-
   return (
     <Menu secondary>
       <Menu.Menu position="right">
@@ -16,15 +20,19 @@ function HeaderMenu({ onDeleteWallet }) {
           <Icon name="upload" size="large" />
           Logout
         </Button>
-        <Button name="account-info" disabled onClick={() => handleClickAccountInfo()}>
-          <Icon name="question circle" size="large" />
-          Account Information
+        <Button name="account-settings" onClick={() => toggleAccountSettings()}>
+          <Icon name="settings" size="large" />
+          Account Settings
         </Button>
         <Button name="account-info" disabled onClick={() => handleClickNFInfo()}>
           <Icon name="question" size="large" />
           NightFall Information
         </Button>
       </Menu.Menu>
+      <AccountSettingsModal
+        accountSettingsEnable={accountSettingsEnable}
+        toggleAccountSettings={toggleAccountSettings}
+      />
     </Menu>
   );
 }
@@ -33,9 +41,7 @@ HeaderMenu.propTypes = {
   onDeleteWallet: PropTypes.func.isRequired,
 };
 
-const mapStateToProps = state => ({
-  login: state.login,
-});
+const mapStateToProps = () => ({});
 
 const mapDispatchToProps = dispatch => ({
   onDeleteWallet: () => dispatch(deleteWallet()),

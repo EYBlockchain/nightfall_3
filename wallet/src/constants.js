@@ -1,5 +1,5 @@
 /* ignore unused exports */
-const DEFAULT_PRIVATE_KEY = '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e';
+const DEFAULT_NF_ADDRESS_INDEX = 0;
 const DEFAULT_ENVIRONMENT = 'Localhost';
 const NF3_GITHUB_ISSUES_URL = 'https://github.com/EYBlockchain/nightfall_3/issues';
 const DEFAULT_TOKEN_TYPE = 'ERC20';
@@ -44,7 +44,7 @@ const TRANSACTION_MAX_RETRIES = 10;
 const TRANSACTION_RETRY_PERIOD = 10000; // 10s
 
 export {
-  DEFAULT_PRIVATE_KEY,
+  DEFAULT_NF_ADDRESS_INDEX,
   DEFAULT_ENVIRONMENT,
   NF3_GITHUB_ISSUES_URL,
   DEFAULT_TOKEN_TYPE,

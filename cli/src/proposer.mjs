@@ -7,6 +7,7 @@ import Nf3 from '../lib/nf3.mjs';
 
 const program = new Command();
 const defaultKey = '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d';
+const defaultMnemonic = 'hurt labor ketchup seven scan swap dirt brown brush path goat together';
 program.option('-k, --key', 'Ethereum signing key', defaultKey);
 program.option('-h', '--help', 'Help');
 if (program.opts().help) console.log('-k | --key input an Ethereum signing key to use');
@@ -25,7 +26,7 @@ async function startProposer() {
     'ws://localhost:8546',
     ethereumSigningKey,
   );
-  await nf3.init();
+  await nf3.init(defaultMnemonic);
   if (await nf3.healthcheck('optimist')) console.log('Healthcheck passed');
   else throw new Error('Healthcheck failed');
   await nf3.registerProposer();

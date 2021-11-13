@@ -10,6 +10,7 @@ import clear from 'clear';
 import Nf3 from '../lib/nf3.mjs';
 
 const defaultKey = '0xfbc1ee1c7332e2e5a76a99956f50b3ba2639aff73d56477e877ef8390c41e0c6';
+const defaultMnemonic = 'toy vivid real shove evolve kidney captain flock hungry evoke lawn plunge';
 const program = new Command();
 program.option('-k, --key', 'Ethereum signing key', defaultKey);
 program.option('-h', '--help', 'Help');
@@ -29,7 +30,7 @@ async function startProvider() {
     'ws://localhost:8546',
     advanceWithdrawalEthereumSigningKey,
   );
-  await nf3.init();
+  await nf3.init(defaultMnemonic);
   if (await nf3.healthcheck('optimist')) console.log('Healthcheck passed');
   else throw new Error('Healthcheck failed');
   // set up a listener to service requests for an instant withdrawal

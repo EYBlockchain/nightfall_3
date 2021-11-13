@@ -29,6 +29,16 @@ describe('Testing the Nightfall SDK', () => {
     '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb';
   const ethereumSigningKeyLiquidityProvider =
     '0xfbc1ee1c7332e2e5a76a99956f50b3ba2639aff73d56477e877ef8390c41e0c6';
+  const mnemonicUser1 =
+    'trip differ bamboo bundle bonus luxury strike mad merry muffin nose auction';
+  const mnemonicUser2 =
+    'control series album tribe category saddle prosper enforce moon eternal talk fame';
+  const mnemonicProposer =
+    'high return hold whale promote payment hat panel reduce oyster ramp mouse';
+  const mnemonicChallenger =
+    'crush power outer gadget enter maze advance rather divert monster indoor axis';
+  const mnemonicLiquidityProvider =
+    'smart base soup sister army address member poem point quick save penalty';
 
   const nf3User1 = new Nf3(
     'http://localhost:8080',
@@ -89,11 +99,11 @@ describe('Testing the Nightfall SDK', () => {
     web3 = await connectWeb3(BLOCKCHAIN_TESTNET_URL);
     stateAddress = await nf3User1.getContractAddress('State');
 
-    await nf3User1.init();
-    await nf3User2.init(); // 2nd client to do transfer tests and checks
-    await nf3Proposer.init();
-    await nf3Challenger.init();
-    await nf3LiquidityProvider.init();
+    await nf3User1.init(mnemonicUser1);
+    await nf3User2.init(mnemonicUser2); // 2nd client to do transfer tests and checks
+    await nf3Proposer.init(mnemonicProposer);
+    await nf3Challenger.init(mnemonicChallenger);
+    await nf3LiquidityProvider.init(mnemonicLiquidityProvider);
 
     if (!(await nf3User1.healthcheck('client'))) throw new Error('Healthcheck failed');
     if (!(await nf3User2.healthcheck('client'))) throw new Error('Healthcheck failed');
