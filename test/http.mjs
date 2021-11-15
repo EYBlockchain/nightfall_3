@@ -97,22 +97,30 @@ describe('Testing the http API', () => {
       privateKey = ETH_PRIVATE_KEY;
     }
 
-    shieldAddress = (await chai.request(senderUrl).get('/contract-address/Shield')).body.address;
+    while (!shieldAddress || !stateAddress || !proposersAddress || !challengesAddress) {
+      // eslint-disable-next-line no-await-in-loop
+      shieldAddress = (await chai.request(senderUrl).get('/contract-address/Shield')).body.address;
+      // eslint-disable-next-line no-await-in-loop
+      stateAddress = (await chai.request(senderUrl).get('/contract-address/State')).body.address;
+      // eslint-disable-next-line no-await-in-loop
+      proposersAddress = (await chai.request(senderUrl).get('/contract-address/Proposers')).body
+        .address;
+      // eslint-disable-next-line no-await-in-loop
+      challengesAddress = (await chai.request(senderUrl).get('/contract-address/Challenges')).body
+        .address;
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
+
     web3.eth.subscribe('logs', { address: shieldAddress }).on('data', log => {
       if (log.topics[0] === web3.eth.abi.encodeEventSignature('TransactionSubmitted()')) {
         logCounts.deposit += 1;
       }
     });
-
-    stateAddress = (await chai.request(senderUrl).get('/contract-address/State')).body.address;
     web3.eth.subscribe('logs', { address: stateAddress }).on('data', log => {
       // For event tracking, we use only care about the logs related to 'blockProposed'
       if (log.topics[0] === topicEventMapping.BlockProposed) eventLogs.push('blockProposed');
     });
-
-    proposersAddress = (await chai.request(senderUrl).get('/contract-address/Proposers')).body
-      .address;
-
     console.log('proposersAddress ----', proposersAddress);
     // web3.eth
     //   .subscribe('pendingTransactions', { address: proposersAddress })
@@ -124,9 +132,6 @@ describe('Testing the http API', () => {
         logCounts.registerProposer += 1;
       }
     });
-
-    challengesAddress = (await chai.request(senderUrl).get('/contract-address/Challenges')).body
-      .address;
 
     nodeInfo = await web3.eth.getNodeInfo();
     setNonce(await web3.eth.getTransactionCount((await getAccounts())[0]));
