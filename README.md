@@ -133,6 +133,8 @@ npm start
 
 - When the wallet starts, you will have the option to enter your private key on connecting with metamask wallet installed in your browser. If you select the latter, you need to have previously configured your metamask wallet to operate with Nightfall's deployment on localhost
 
+More information can be found [here](https://github.com/EYBlockchain/nightfall_3/wallet/README.md)
+
 ### Configuring Metamask to work with Nightfall on localhost
 1. Open Metamask wallet
 2. Import Account and paste the private key. While we are working on localhost, we will be using a test account with private key `0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e`

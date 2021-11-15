@@ -5,6 +5,7 @@ import logger from 'redux-logger';
 import loginReducer from './login/login.reducer';
 import tokenReducer from './token/token.reducer';
 import txReducer from './transactions/transactions.reducer';
+import settingsReducer from './settings/settings.reducer';
 
 function configureStore() {
   const store = createStore(
@@ -12,6 +13,7 @@ function configureStore() {
       login: loginReducer,
       token: tokenReducer,
       transactions: txReducer,
+      settings: settingsReducer,
     }),
     applyMiddleware(thunk, logger),
   );

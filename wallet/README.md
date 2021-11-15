@@ -1,76 +1,15 @@
-# Selenium usage
+# Wallet
 
-## Installation guide
+## How is nightfall's mnemonic stored?
+When connecting with Metamask to your nightfall account for the first time, you will be prompted to enter a twelve word
+mnemonic. This mnemonic is used by nightfall to generate your personal set of keys that will allow you to operate on nighrfall.
+You need to save this 12 word seed in a safe place, as it is the only way to recover your nightfall account.
+This wallet offers a backup, but this backup is only a convenient way to log in to your account without entering the mnemonic, and
+must no be relied to provide a permanent backup.
+If you select to backup your nightfall mnemonic, it will be encrypted in local storage using as a key the result of hashing as signed message via Metamask. When logging back, you will be request to sign a message to decript the mnemonic and unlock your metamask account.
 
-### Linux
+## How to generate different keys from a single mnemonic?
+When you login to nightfall, you will be using account index 0. You can select a different index in `Account Settings` to use a different set of keys.
 
-1. Install python, pip and google chrome
-   google chrome:
-   - `wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add - `
-   - `sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'`
-   - `sudo apt-get update`
-   - `sudo apt-get install google-chrome-stable`
-   python:
-   - `sudo apt install python3.8`
-   pip:
-   - `sudo apt-get -y install python3-pip`
-2. Install Selenium python library, in case of a server install `pyvirtualdisplay` python library and `xvfb` too
-   - `pip3 install selenium`
-   - `sudo apt install -y xvfb`
-   - `pip3 install pyvirtualdisplay`
-**NOTE**: For MacOS there is no `xvfb` library, so you can skip installing `xvfb` and `pyvirtualdisplay`. The downside is that you will need to run tests in UI mode.
-3. Get metamask crx: Change the following URL, updating the VERSION_GOOGLE_CHROME for yours, ( Version can be found searching in the browser chrome://settings/help) and save it as
-   `metamask.crx` in the `extensions/` folder
-   `https://clients2.google.com/service/update2/crx?response=redirect&prodversion={VERSION_GOOGLE_CHROME}&acceptformat=crx2,crx3&x=id%3Dnkbihfbeogaeaoehlefnkodbefgpgknn%26uc`
-   Example with `Version 87.0.4280.66 (Official Build) (64-bit)`
-   `https://clients2.google.com/service/update2/crx?response=redirect&prodversion=87.0.4280.66&acceptformat=crx2,crx3&x=id%3Dnkbihfbeogaeaoehlefnkodbefgpgknn%26uc`
-4. Get your chrome driver of your version here: https://sites.google.com/chromium.org/driver/downloads?authuser=0 and save it as `chromedriver` in the `drivers/` folder
-5. Make sure nightfall, proposer and wallet are running:
-- Running nightfall: In nightfall's root folder:
-```
-./setup-nightfall
-./start-nightfall -g -s
-```
-- Running proposer : in nightfall's root folder:
-```
-./proposer
-```
-- Running wallet: In wallet's root folder:
-```
-cd ../cli
-npm run build
-cd -
-npm run start
-```
-6. Run the script wallet_test.py (see *Usage* section)
-
-### Mac
-
-1. Check you have Python 3.8 and Pip 3 installed (and install Chrome if you don't already have it):
-```sh
-python3 --version
-pip3 --version
-```
-If necessary upgrade pip3 (Selenium will error if the version you have is too early)
-```sh
-/Library/Developer/CommandLineTools/usr/bin/python3 -m pip install --upgrade pip
-```
-2. Install Selenium python library:
-```sh
-pip3 install selenium
-```
-3. Get metamask crx: Change the following URL, updating the VERSION_GOOGLE_CHROME for yours, ( Version can be found searching in the browser chrome://settings/help) and save it as
-   `metamask.crx` in the `extensions/` folder
-   `https://clients2.google.com/service/update2/crx?response=redirect&prodversion={VERSION_GOOGLE_CHROME}&acceptformat=crx2,crx3&x=id%3Dnkbihfbeogaeaoehlefnkodbefgpgknn%26uc`
-   Example with `Version 87.0.4280.66 (Official Build) (64-bit)`
-   `https://clients2.google.com/service/update2/crx?response=redirect&prodversion=87.0.4280.66&acceptformat=crx2,crx3&x=id%3Dnkbihfbeogaeaoehlefnkodbefgpgknn%26uc`
-4. Get your chrome driver of your version here: https://sites.google.com/chromium.org/driver/downloads?authuser=0 and save it as `chromedriver` in the `drivers/` folder
-5. Give the driver permission to run: `xattr -d com.apple.quarantine chromedriver`
-6. Run the script wallet_test.py (see *Usage* section)
-
-## Usage:
-
-Both scripts support server mode or UI mode (which display the browser to the user). Server mode is not relevant for a Mac
-
-- Server mode: `python3 wallet_test.py server`
-- UI mode: `python3 wallet_test`
+## Tests
+See [here](https://github.com/EYBlockchain/nightfall_3/wallet/test/README.md) for information on how to launc tests.
