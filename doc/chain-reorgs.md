@@ -135,33 +135,20 @@ the L2 Block record are relevant, this being the only event that Client subscrib
 we will consider later)  Here is specifically how Client responds:
 
 First, the event removals are created.  If a `BlockProposed` event is removed, then we need to mark the transactions
-that were in that block (assuming they are 'our' transactions and therefore in the Client database) accordingly:
+that were in that block (assuming they are 'our' transactions and therefore in the Client database) accordingly.
 
-#### `BlockProposed` removals
-For Deposit transactions, commitment changes;
-```
-.isDeposited = no change
-.isOnChain = -1
-.isNullified = no change
-.isNullifiedOnChain = no change
-.isPendingNullification = no change
-```
-For Transfer transactions, input commitment changes (can be found by a lookup on the nullifier);
-```
-.isDeposited = no change
-.isOnChain = -1
-.isNullified = false
-.isNullifiedOnChain = false
-.isPendingNullification = false
-```
-For Transfer transactions, output commitments should be deleted because the `proposeBlock` transaction that created
-them has been removed;
+Removal of a block means that commitments and nullifiers which were on-chain (in the sense of being in a proposed block)
+no longer are. Thus we update `.isOnChain` and `.isNullifiedOnChain` to `-1` (these properties hold a blockNumber
+when set, so they're no simply boolean).
 
-For withdraw transactions, the commitment is no longer nullified;
-```
-.isDeposited = no change
-.isOnChain = -1
-.isNullified = false
-.isNullifiedOnChain = false
-.isPendingNullification = false
-```
+This is the simplest approach that we can take, but it's not the full story because the locally determine state
+(`.isNullified`, `isPendingNullification`) is not reset.  That means that these commitments will not be reused
+by Client in new transactions.  That's ok because eventually the transactions will be picked up again by a
+Proposer and placed in a new block.  If we were to clear their internal state then they may be re-spent before
+this happens.  That would create an invalid transaction.
+
+A potential complication arises if dependent L2 transactions are taken off-chain.  This is because a Proposer
+may attempt to re-incorporate them into a block in the wrong order (e.g. incorporating a transfer before the
+deposit which enabled it).  If that happens, the dependent transaction will fail the Proposer's check and will
+be dropped.  That's ok though because this mimics the behaviour that an L1 dependent transaction would experience in a
+chain-reorganisation.

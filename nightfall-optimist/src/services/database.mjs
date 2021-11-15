@@ -158,7 +158,7 @@ export async function getBlockByRoot(root) {
   return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
 }
 
-/** 
+/**
 get the latest blockNumberL2 in our database
 */
 export async function getLatestBlockInfo() {
@@ -424,11 +424,19 @@ export async function resetNullifiers(blockHash) {
   return db.collection(NULLIFIER_COLLECTION).updateMany(query, update);
 }
 
-// delete all the nullifiers in this block
+// delete nullifiers by nullifier value
 export async function deleteNullifiers(hashes) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { hash: { $in: hashes } };
+  return db.collection(NULLIFIER_COLLECTION).deleteMany(query);
+}
+
+// delete all the nullifiers in this block
+export async function deleteNullifiersForBlock(blockHash) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { blockHash };
   return db.collection(NULLIFIER_COLLECTION).deleteMany(query);
 }
 
@@ -466,7 +474,8 @@ export async function saveTree(blockNumber, blockNumberL2, timber) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   return db.collection(TIMBER_COLLECTION).insertOne({
-    _id: blockNumber,
+    _id: timber.blockNumberL2,
+    blockNumber,
     blockNumberL2,
     frontier: timber.frontier,
     leafCount: timber.leafCount,
@@ -480,7 +489,7 @@ export async function getLatestTree() {
   const timberObjArr = await db
     .collection(TIMBER_COLLECTION)
     .find()
-    .sort({ _id: -1 })
+    .sort({ blockNumberL2: -1 })
     .limit(1)
     .toArray();
 

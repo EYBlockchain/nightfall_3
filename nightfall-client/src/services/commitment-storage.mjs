@@ -30,12 +30,22 @@ export async function storeCommitment(commitment, nsk) {
     isOnChain: Number(commitment.isOnChain) || -1,
     isPendingNullification: false, // will not be pending when stored
     isNullified: commitment.isNullified,
-    isNullifiedOnChain: Number(commitment.isNullifiedOnChain),
+    isNullifiedOnChain: Number(commitment.isNullifiedOnChain) || -1,
     nullifier: nullifierHash,
     blockNumber: -1,
     transactionNullified: null,
   };
+  // a chain reorg may cause an attempted overwrite. We should allow this, hence
+  // the use of replaceOne.
   return db.collection(COMMITMENTS_COLLECTION).insertOne(data);
+}
+// function to update an existing commitment
+export async function updateCommitment(commitment, updates) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  const query = { _id: commitment._id };
+  const update = { $set: updates };
+  return db.collection(COMMITMENTS_COLLECTION).updateOne(query, update);
 }
 
 // function to get count of commitments. Can also be used to check if it exists
@@ -55,10 +65,17 @@ export async function countNullifiers(nullifiers) {
 }
 
 // function to mark a commitments as on chain for a mongo db
-export async function markOnChain(commitments, blockNumberL2, blockNumber) {
+export async function markOnChain(
+  commitments,
+  blockNumberL2,
+  blockNumber,
+  transactionHashCommittedL1,
+) {
   const connection = await mongo.connection(MONGO_URL);
   const query = { _id: { $in: commitments }, isOnChain: { $eq: -1 } };
-  const update = { $set: { isOnChain: Number(blockNumberL2), blockNumber } };
+  const update = {
+    $set: { isOnChain: Number(blockNumberL2), blockNumber, transactionHashCommittedL1 },
+  };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
 }
@@ -94,6 +111,20 @@ export async function getCommitmentBySalt(salt) {
   return commitments;
 }
 
+// function to retrieve commitments by transactionHash of the block in which they were
+// committed to
+export async function getCommitmentsByTransactionHashL1(transactionHashCommittedL1) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(COMMITMENTS_COLLECTION).find({ transactionHashCommittedL1 }).toArray();
+}
+// function to retrieve commitments by transactionhash of the block in which they were
+// nullified
+export async function getNullifiedByTransactionHashL1(transactionHashNullifiedL1) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(COMMITMENTS_COLLECTION).find({ transactionHashNullifiedL1 }).toArray();
+}
 /*
 function to clear a commitments nullified status after a rollback.
 commitments have two stages of nullification (1) when they are spent by Client
@@ -140,10 +171,17 @@ export async function clearPending(commitment) {
 }
 
 // function to mark a commitments as nullified on chain for a mongo db
-export async function markNullifiedOnChain(nullifiers, blockNumberL2, blockNumber) {
+export async function markNullifiedOnChain(
+  nullifiers,
+  blockNumberL2,
+  blockNumber,
+  transactionHashNullifiedL1, // the tx in which the nullification happened
+) {
   const connection = await mongo.connection(MONGO_URL);
   const query = { nullifier: { $in: nullifiers }, isNullifiedOnChain: { $eq: -1 } };
-  const update = { $set: { isNullifiedOnChain: Number(blockNumberL2), blockNumber } };
+  const update = {
+    $set: { isNullifiedOnChain: Number(blockNumberL2), blockNumber, transactionHashNullifiedL1 },
+  };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
 }
@@ -173,7 +211,6 @@ export async function getWalletBalance() {
   // work out the balance contribution of each commitment  - a 721 token has no value field in the
   // commitment but each 721 token counts as a balance of 1. Then finally add up the individual
   // commitment balances to get a balance for each erc address.
-  console.log('WALLET IS', wallet);
   return wallet
     .map(e => ({
       ercAddress: BigInt(e.preimage.ercAddress).toString(16),

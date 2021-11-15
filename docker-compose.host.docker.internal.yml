@@ -5,9 +5,10 @@ version: '3.5'
 # See the readme for more information.
 services:
 
-  client1: 
+  client1:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
+      AUTOSTART_RETRIES: 100
 
   client2:
     environment:
@@ -26,10 +27,12 @@ services:
   timber1:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
+      AUTOSTART_RETRIES: 100
 
   optimist1:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
+      AUTOSTART_RETRIES: 100
 
   timber2:
     environment:

@@ -42,6 +42,7 @@ async function waitForContract(contractName) {
 export async function startEventQueue(callback, ...args) {
   const emitter = (await waitForContract(STATE_CONTRACT_NAME)).events.allEvents();
   emitter.on('data', event => callback(event, args));
+  emitter.on('changed', event => callback(event, args));
   logger.debug('Subscribed to layer 2 state events');
   return emitter;
 }

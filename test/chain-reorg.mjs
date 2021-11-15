@@ -28,7 +28,7 @@ describe('Testing the http API', () => {
   let ercAddress;
   let connection; // WS connection
   let web3;
-  // let ask1;
+  let ask1;
   let nsk1;
   let ivk1;
   let pkd1;
@@ -49,7 +49,7 @@ describe('Testing the http API', () => {
   const txPerBlock = 2;
   const eventLogs = [];
 
-  const doDeposits = async numDeposits => {
+  const doDeposits = async (numDeposits, amount = value) => {
     // We create enough transactions to fill numDeposits blocks full of deposits.
     const depositTransactions = (
       await Promise.all(
@@ -57,7 +57,7 @@ describe('Testing the http API', () => {
           chai
             .request(url)
             .post('/deposit')
-            .send({ ercAddress, tokenId, tokenType, value, pkd: pkd1, nsk: nsk1, fee }),
+            .send({ ercAddress, tokenId, tokenType, value: amount, pkd: pkd1, nsk: nsk1, fee }),
         ),
       )
     ).map(res => res.body);
@@ -65,6 +65,59 @@ describe('Testing the http API', () => {
     const receiptArrays = [];
     for (let i = 0; i < depositTransactions.length; i++) {
       const { txDataToSign } = depositTransactions[i];
+      receiptArrays.push(
+        // eslint-disable-next-line no-await-in-loop
+        await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee),
+        // we need to await here as we need transactions to be submitted sequentially or we run into nonce issues.
+      );
+    }
+    receiptArrays.forEach(receipt => {
+      expect(receipt).to.have.property('transactionHash');
+      expect(receipt).to.have.property('blockHash');
+    });
+    // Wait until we see the right number of blocks appear
+    while (eventLogs.length !== numDeposits) {
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
+    // Now we can empty the event queue
+    for (let i = 0; i < numDeposits; i++) {
+      eventLogs.shift();
+    }
+    return receiptArrays;
+  };
+
+  const doDepositsAndTransfer = async numDeposits => {
+    // We create enough transactions to fill numDeposits blocks full of deposits and one transfer
+    const depositTransactions = (
+      await Promise.all(
+        Array.from({ length: txPerBlock * numDeposits - 1 }, () =>
+          chai
+            .request(url)
+            .post('/deposit')
+            .send({ ercAddress, tokenId, tokenType, value, pkd: pkd1, nsk: nsk1, fee }),
+        ),
+      )
+    ).map(res => res.body);
+    const transferTransaction = await chai
+      .request(url)
+      .post('/transfer')
+      .send({
+        ercAddress,
+        tokenId,
+        recipientData: {
+          values: [value],
+          recipientPkds: [pkd1],
+        },
+        nsk: nsk1,
+        ask: ask1,
+        fee,
+      });
+    const transactions = depositTransactions.concat(transferTransaction.body);
+    transactions.forEach(({ txDataToSign }) => expect(txDataToSign).to.be.a('string'));
+    const receiptArrays = [];
+    for (let i = 0; i < transactions.length; i++) {
+      const { txDataToSign } = transactions[i];
       receiptArrays.push(
         // eslint-disable-next-line no-await-in-loop
         await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee),
@@ -112,6 +165,7 @@ describe('Testing the http API', () => {
       nsk: nsk1,
       ivk: ivk1,
       pkd: pkd1,
+      ask: ask1,
     } = (
       await chai.request(url).post('/generate-keys').send({ mnemonic, path: `m/44'/60'/0'/0` })
     ).body);
@@ -198,10 +252,12 @@ describe('Testing the http API', () => {
 
   describe('Start a normal chain', () => {
     // we start by just sending enough deposits to fill one block
+    // these have a bumped up value so they won't be picked for inputs to the
+    // single transfer
     // set the number of deposit transactions blocks to perform.
     const numDeposits = 1;
     it('should deposit enough crypto into fork to fill one layer 2 block', async () => {
-      await expect(doDeposits(numDeposits)).to.eventually.be.fulfilled;
+      await expect(doDeposits(numDeposits, value + 1)).to.eventually.be.fulfilled;
       console.log('     BlockNumber is:', await web3.eth.getBlockNumber());
     });
   });
@@ -223,6 +279,9 @@ describe('Testing the http API', () => {
       await new Promise(resolve => setTimeout(resolve, 60000));
       console.log('     Creating one block of deposit transactions with node set 1');
       receipts = await doDeposits(numDeposits); // add transactions to the other half
+      console.log('     Block created');
+      console.log('     Creating one block of a deposit and a single transfer with node set 1');
+      receipts = await doDepositsAndTransfer(numDeposits);
       console.log('     Block created');
       // test the receipts are good.
       const recs = await Promise.all(
