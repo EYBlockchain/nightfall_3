@@ -1,5 +1,4 @@
-name: Release
-// MON change to gchr.io
+name: "Publish docker images"
 on:
   push:
     branches:
