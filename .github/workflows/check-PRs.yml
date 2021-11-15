@@ -124,7 +124,7 @@ jobs:
       - name: Start Containers
         run: |
           docker-compose build
-          ./start-nightfall -t &> infura-test.log &disown
+          ./start-nightfall -infura &> infura-test.log &disown
 
       # - name: wait 2000s for Containers startup and setup completion
       #   run: sleep 2000
