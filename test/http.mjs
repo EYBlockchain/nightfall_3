@@ -117,7 +117,7 @@ describe('Testing the http API', () => {
     // web3.eth
     //   .subscribe('pendingTransactions', { address: proposersAddress })
     //   .on('data', log => console.log('pendingTransactions --', log));
-    web3.eth.subscribe('logs').on('data', log => console.log('logs --', log));
+    // web3.eth.subscribe('logs').on('data', log => console.log('logs --', log));
     web3.eth.subscribe('logs', { address: proposersAddress }).on('data', log => {
       console.log('log 2', log);
       if (log.topics[0] === web3.eth.abi.encodeEventSignature('NewCurrentProposer(address)')) {
@@ -211,6 +211,7 @@ describe('Testing the http API', () => {
 
   describe('Basic Proposer tests', () => {
     after(async () => {
+      console.log('in after block');
       // After the proposer tests, re-register proposers
       const myAddress = (await getAccounts())[0];
       const res = await chai
@@ -227,6 +228,7 @@ describe('Testing the http API', () => {
     });
 
     it('should register a proposer', async () => {
+      console.log(1);
       const myAddress = (await getAccounts())[0];
       const res = await chai
         .request(optimistUrl)
@@ -239,6 +241,7 @@ describe('Testing the http API', () => {
       const startBalance = await getBalance(myAddress);
       const count = logCounts.registerProposer;
       // now we need to sign the transaction and send it to the blockchain
+      console.log(2);
       const receipt = await submitTransaction(
         txDataToSign,
         privateKey,
@@ -246,6 +249,7 @@ describe('Testing the http API', () => {
         gas,
         bond,
       );
+      console.log(3);
       await waitForTxExecution(count, 'registerProposer');
       const endBalance = await getBalance(myAddress);
       expect(receipt).to.have.property('transactionHash');
