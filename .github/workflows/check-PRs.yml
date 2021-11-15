@@ -101,111 +101,60 @@ jobs:
           name: test-gas-logs
           path: ./test-gas.log
 
-  # infura-test:
-  #   runs-on: ubuntu-18.04
-  #   environment: TESTNET_DEPLOYMENT
-  #   env:
-  #     ETH_PRIVATE_KEY: ${{ secrets.ETH_PRIVATE_KEY }}
-  #     INFURA_PROJECT_ID: ${{ secrets.INFURA_PROJECT_ID }}
-  #     INFURA_PROJECT_SECRET: ${{ secrets.INFURA_PROJECT_SECRET }}
-  #   steps:
-  #     - uses: actions/checkout@master
-  #     - uses: actions/setup-node@v1
-  #       with:
-  #         node-version: '14.17.0'
-
-  #     - name: balance before deployment and integration test
-  #       run: |
-  #         curl -u :$INFURA_PROJECT_SECRET https://ropsten.infura.io/v3/$INFURA_PROJECT_ID \
-  #         -X POST \
-  #         -H "Content-Type: application/json" \
-  #         -d '{"jsonrpc":"2.0","method":"eth_getBalance","params": ["0x29100E7E3dA6654BF63d9E7804ADe518aCc5AaA5", "latest"],"id":1}'
-
-  #     - name: Start Containers
-  #       run: |
-  #         docker-compose build
-  #         ./start-nightfall -t &> infura-test.log &disown
-
-  #     - name: wait 2000s for Containers startup and setup completion
-  #       run: sleep 2000
-
-  #     # kept it for future debug
-  #     # - run: sleep 1000
-  #     # - name: debug logs - after container startup 1
-  #     #   if: always()
-  #     #   run: cat infura-test.log
-
-  #     # - run: sleep 1000
-  #     # - name: debug logs - after container startup 2
-  #     #   if: always()
-  #     #   run: cat infura-test.log
-
-  #     - name: Run integration test
-  #       run: |
-  #         npm ci
-  #         npm run infura-test
-
-  #     - name: balance after deployment and integration test
-  #       run: |
-  #         curl  -u :$INFURA_PROJECT_SECRET https://ropsten.infura.io/v3/$INFURA_PROJECT_ID \
-  #         -X POST \
-  #         -H "Content-Type: application/json" \
-  #         -d '{"jsonrpc":"2.0","method":"eth_getBalance","params": ["0x29100E7E3dA6654BF63d9E7804ADe518aCc5AaA5", "latest"],"id":1}'
-
-  #     - name: debug logs - after integration test run
-  #       if: always()
-  #       run: cat infura-test.log
-
-  #     - name: If integration test failed, shutdown the Containers
-  #       if: failure()
-  #       run: docker-compose down -v
-
-  #     - name: If integration test failed, upload logs files as artifacts
-  #       if: failure()
-  #       uses: actions/upload-artifact@master
-  #       with:
-  #         name: infura-test-logs
-  #         path: ./infura-test.log
-
-  alchemy-test:
+  infura-test:
     runs-on: ubuntu-18.04
     environment: TESTNET_DEPLOYMENT
     env:
       ETH_PRIVATE_KEY: ${{ secrets.ETH_PRIVATE_KEY }}
-      ALCHEMY_PROJECT_ID: ${{ secrets.ALCHEMY_PROJECT_ID }}
+      INFURA_PROJECT_ID: ${{ secrets.INFURA_PROJECT_ID }}
+      INFURA_PROJECT_SECRET: ${{ secrets.INFURA_PROJECT_SECRET }}
     steps:
       - uses: actions/checkout@master
       - uses: actions/setup-node@v1
         with:
           node-version: '14.17.0'
 
+      - name: balance before deployment and integration test
+        run: |
+          curl -u :$INFURA_PROJECT_SECRET https://ropsten.infura.io/v3/$INFURA_PROJECT_ID \
+          -X POST \
+          -H "Content-Type: application/json" \
+          -d '{"jsonrpc":"2.0","method":"eth_getBalance","params": ["0x29100E7E3dA6654BF63d9E7804ADe518aCc5AaA5", "latest"],"id":1}'
+
       - name: Start Containers
         run: |
           docker-compose build
-          ./start-nightfall -alchemy &> alchemy-test.log &disown
+          ./start-nightfall -t &> infura-test.log &disown
 
       # - name: wait 2000s for Containers startup and setup completion
       #   run: sleep 2000
 
-      # kept it for future debug
-      - run: sleep 1200
+      kept it for future debug
+      - run: sleep 1000
       - name: debug logs - after container startup 1
         if: always()
-        run: cat alchemy-test.log
+        run: cat infura-test.log
 
-      - run: sleep 1100
+      - run: sleep 1000
       - name: debug logs - after container startup 2
         if: always()
-        run: cat alchemy-test.log
+        run: cat infura-test.log
 
       - name: Run integration test
         run: |
           npm ci
-          npm run alchemy-test
+          npm run infura-test
+
+      - name: balance after deployment and integration test
+        run: |
+          curl  -u :$INFURA_PROJECT_SECRET https://ropsten.infura.io/v3/$INFURA_PROJECT_ID \
+          -X POST \
+          -H "Content-Type: application/json" \
+          -d '{"jsonrpc":"2.0","method":"eth_getBalance","params": ["0x29100E7E3dA6654BF63d9E7804ADe518aCc5AaA5", "latest"],"id":1}'
 
       - name: debug logs - after integration test run
         if: always()
-        run: cat alchemy-test.log
+        run: cat infura-test.log
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
@@ -215,5 +164,56 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@master
         with:
-          name: alchemy-test-logs
-          path: ./alchemy-test.log
+          name: infura-test-logs
+          path: ./infura-test.log
+
+  # alchemy-test:
+  #   runs-on: ubuntu-18.04
+  #   environment: TESTNET_DEPLOYMENT
+  #   env:
+  #     ETH_PRIVATE_KEY: ${{ secrets.ETH_PRIVATE_KEY }}
+  #     ALCHEMY_PROJECT_ID: ${{ secrets.ALCHEMY_PROJECT_ID }}
+  #   steps:
+  #     - uses: actions/checkout@master
+  #     - uses: actions/setup-node@v1
+  #       with:
+  #         node-version: '14.17.0'
+
+  #     - name: Start Containers
+  #       run: |
+  #         docker-compose build
+  #         ./start-nightfall -alchemy &> alchemy-test.log &disown
+
+  #     # - name: wait 2000s for Containers startup and setup completion
+  #     #   run: sleep 2000
+
+  #     # kept it for future debug
+  #     - run: sleep 1200
+  #     - name: debug logs - after container startup 1
+  #       if: always()
+  #       run: cat alchemy-test.log
+
+  #     - run: sleep 1100
+  #     - name: debug logs - after container startup 2
+  #       if: always()
+  #       run: cat alchemy-test.log
+
+  #     - name: Run integration test
+  #       run: |
+  #         npm ci
+  #         npm run alchemy-test
+
+  #     - name: debug logs - after integration test run
+  #       if: always()
+  #       run: cat alchemy-test.log
+
+  #     - name: If integration test failed, shutdown the Containers
+  #       if: failure()
+  #       run: docker-compose down -v
+
+  #     - name: If integration test failed, upload logs files as artifacts
+  #       if: failure()
+  #       uses: actions/upload-artifact@master
+  #       with:
+  #         name: alchemy-test-logs
+  #         path: ./alchemy-test.log
