@@ -1,9 +1,9 @@
 version: '3.5'
 # Use this script for running up nightfall_3 with images
-# To test locally, run docker build . -f <image-name>.Dockerfile for each container and paste the resulting image hash below
+# If you replace the main docker-compose with this file, it should work!
 services:
   client1:
-    image: f375d8c72152c9258c63f0c12fd98cd39c2a30b0d5a1927f3c4292de1126fd22
+    image: ghcr.io/eyblockchain/nightfall3-client:latest
     volumes:
       - type: volume
         source: build
@@ -39,7 +39,7 @@ services:
     command: ['npm', 'run', 'dev']
 
   client2:
-    image: f375d8c72152c9258c63f0c12fd98cd39c2a30b0d5a1927f3c4292de1126fd22
+    image: ghcr.io/eyblockchain/nightfall3-client:latest
     volumes:
       - type: volume
         source: build
@@ -72,7 +72,7 @@ services:
     command: ['npm', 'run', 'dev']
 
   worker:
-    image: c7dd75e375928295d32f646f83a57ff6812c508e027de3bafa17591caaf03674
+    image: ghcr.io/eyblockchain/nightfall3-worker
     volumes:
       - type: volume
         source: ./proving_files
@@ -86,7 +86,7 @@ services:
 
     # Temporary container to deploy contracts and circuits and populate volumes
   deployer:
-    image: dac0ebfb1c2343a08286dfa9747fac67ab3de9777a097571ae38709c08188482
+    image: ghcr.io/eyblockchain/nightfall3-deployer
     volumes:
       - type: volume
         source: build
@@ -218,7 +218,7 @@ services:
       - nightfall_network
 
   optimist1:
-    image: bc840d1516ad957af9d51ebed66b4de119dcb6eb22fa7465c38edcdc81be022f
+    image: ghcr.io/eyblockchain/nightfall3-optimist:latest
     depends_on:
       - timber1
       - deployer
@@ -245,7 +245,7 @@ services:
     command: ['npm', 'run', 'dev']
 
   optimist2:
-    image: bc840d1516ad957af9d51ebed66b4de119dcb6eb22fa7465c38edcdc81be022f
+    image: ghcr.io/eyblockchain/nightfall3-optimist:latest
     depends_on:
       - timber2
       - deployer
