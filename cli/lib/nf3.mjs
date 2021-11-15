@@ -88,7 +88,7 @@ class Nf3 {
     }
     // set zkp keys from mnemonic if provided
     if (typeof mnemonic !== 'undefined') {
-      this.setzkpKeysFromMnemonic(mnemonic, 0);
+      await this.setzkpKeysFromMnemonic(mnemonic, 0);
     }
   }
 
@@ -134,7 +134,7 @@ class Nf3 {
         path: `m/44'/60'/0'/${this.mnemonic.addressIndex}`,
       })
     ).data;
-    this.subscribeToIncomingViewingKeys();
+    return this.subscribeToIncomingViewingKeys();
   }
 
   /**
