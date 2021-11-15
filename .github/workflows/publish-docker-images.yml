@@ -1,5 +1,5 @@
 name: Release
-
+// MON change to gchr.io
 on:
   push:
     branches:
@@ -16,7 +16,9 @@ jobs:
       id: semantic
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+    - name: Login to docker registry
+      run: docker login ghcr.io -u ${{ github.actor }} -p $GITHUB_TOKEN
 
     - name: Build docker client image
       run: docker build . -f client.Dockerfile
@@ -26,9 +28,8 @@ jobs:
     - name: Docker push version
       if: steps.semantic.outputs.new-release-published == 'true'
       run: |
-        docker login https://docker.pkg.github.com -u $GITHUB_ACTOR -p $GITHUB_TOKEN
-        docker build -t docker.pkg.github.com/eyblockchain/TODO/TODO:$RELEASE_VERSION . -f client.Dockerfile
-        docker push docker.pkg.github.com/eyblockchain/TODO/TODO:$RELEASE_VERSION
+        docker build -t ghcr.io/eyblockchain/nightfall3-client:$RELEASE_VERSION . -f client.Dockerfile
+        docker push ghcr.io/eyblockchain//nightfall3-client:$RELEASE_VERSION
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -40,9 +41,8 @@ jobs:
     - name: Docker push version
       if: steps.semantic.outputs.new-release-published == 'true'
       run: |
-        docker login https://docker.pkg.github.com -u $GITHUB_ACTOR -p $GITHUB_TOKEN
-        docker build -t docker.pkg.github.com/eyblockchain/TODO/TODO:$RELEASE_VERSION . -f worker.Dockerfile
-        docker push docker.pkg.github.com/eyblockchain/TODO/TODO:$RELEASE_VERSION
+        docker build -t ghcr.io/eyblockchain/nightfall3-worker:$RELEASE_VERSION . -f worker.Dockerfile
+        docker push ghcr.io/eyblockchain/nightfall3-worker:$RELEASE_VERSION
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -54,9 +54,8 @@ jobs:
     - name: Docker push version
       if: steps.semantic.outputs.new-release-published == 'true'
       run: |
-        docker login https://docker.pkg.github.com -u $GITHUB_ACTOR -p $GITHUB_TOKEN
-        docker build -t docker.pkg.github.com/eyblockchain/TODO/TODO:$RELEASE_VERSION . -f deployer.Dockerfile
-        docker push docker.pkg.github.com/eyblockchain/TODO/TODO:$RELEASE_VERSION
+        docker build -t ghcr.io/eyblockchain/nightfall3-deployer:$RELEASE_VERSION . -f deployer.Dockerfile
+        docker push ghcr.io/eyblockchain/nightfall3-deployer:$RELEASE_VERSION
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -68,8 +67,7 @@ jobs:
     - name: Docker push version
       if: steps.semantic.outputs.new-release-published == 'true'
       run: |
-        docker login https://docker.pkg.github.com -u $GITHUB_ACTOR -p $GITHUB_TOKEN
-        docker build -t docker.pkg.github.com/eyblockchain/TODO/TODO:$RELEASE_VERSION . -f optimist.Dockerfile
-        docker push docker.pkg.github.com/eyblockchain/TODO/TODO:$RELEASE_VERSION
+        docker build -t ghcr.io/eyblockchain/nightfall3-optimist:$RELEASE_VERSION . -f optimist.Dockerfile
+        docker push ghcr.io/eyblockchain/nightfall3-optimist:$RELEASE_VERSION
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
