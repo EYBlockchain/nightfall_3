@@ -6,6 +6,8 @@ import clear from 'clear';
 import Nf3 from '../lib/nf3.mjs';
 
 const defaultKey = '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb';
+const defaultMnemonic =
+  'minimum swarm pelican target wish key sting elegant island panther weird planet';
 const program = new Command();
 program.option('-k, --key', 'Ethereum signing key', defaultKey);
 program.option('-h', '--help', 'Help');
@@ -25,7 +27,7 @@ async function startChallenger() {
     'ws://localhost:8546',
     ethereumSigningKey,
   );
-  await nf3.init();
+  await nf3.init(defaultMnemonic);
   if (await nf3.healthcheck('optimist')) console.log('Healthcheck passed');
   else throw new Error('Healthcheck failed');
   await nf3.registerChallenger();

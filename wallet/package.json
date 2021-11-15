@@ -5,9 +5,12 @@
   "main": "./src/index.jsx",
   "dependencies": {
     "@testing-library/jest-dom": "^5.14.1",
+    "bip39": "^3.0.4",
     "bootstrap": "^5.1.3",
     "bootstrap-social": "^5.1.1",
+    "crypto-js": "^4.1.1",
     "font-awesome": "4.7.0",
+    "js-sha3": "^0.8.0",
     "nf3": "file:../cli",
     "prop-types": "^15.7.2",
     "react": "^17.0.2",
