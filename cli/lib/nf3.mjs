@@ -386,6 +386,7 @@ class Nf3 {
       `${this.optimistBaseUrl}/block/transaction-hash/${withdrawTransactionHash}`,
     );
     const { block, transactions, index } = res.data;
+    if (!block) return null; // block not found
     // set the instant withdrawal fee
     res = await axios.post(`${this.clientBaseUrl}/set-instant-withdrawal`, {
       block,
@@ -677,17 +678,12 @@ class Nf3 {
     let res;
     let valid = false;
 
-    try {
-      res = await axios.get(
-        `${this.optimistBaseUrl}/block/transaction-hash/${withdrawTransactionHash}`,
-      );
-    } catch (e) {
-      // transaction is not in block yet
-      valid = false;
-    }
+    res = await axios.get(
+      `${this.optimistBaseUrl}/block/transaction-hash/${withdrawTransactionHash}`,
+    );
+    const { block, transactions, index } = res.data;
 
-    if (res) {
-      const { block, transactions, index } = res.data;
+    if (block) {
       res = await axios.post(`${this.clientBaseUrl}/valid-withdrawal`, {
         block,
         transactions,

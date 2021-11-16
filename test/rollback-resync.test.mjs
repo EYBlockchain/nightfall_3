@@ -186,8 +186,6 @@ describe('Running rollback and resync test', () => {
       duplicateTransaction = transferTransactions[0];
       await sendTransactions(transferTransactions, [privateKey, shieldAddress, gas, fee]);
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
-      // Have to wait here as client block proposal takes longer now
-      await new Promise(resolve => setTimeout(resolve, 3000));
     });
   });
 
@@ -214,8 +212,6 @@ describe('Running rollback and resync test', () => {
       await sendTransactions(transferTransactions, [privateKey, shieldAddress, gas, fee]);
 
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
-      // Have to wait here as client block proposal takes longer now
-      await new Promise(resolve => setTimeout(resolve, 3000));
     });
     it('should send the commit-challenge', async function () {
       while (!commitTxDataToSign) {
