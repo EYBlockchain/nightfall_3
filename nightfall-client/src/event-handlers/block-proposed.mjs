@@ -1,15 +1,17 @@
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
+import Timber from 'common-files/classes/timber.mjs';
 import {
   markNullifiedOnChain,
   markOnChain,
   storeCommitment,
   countCommitments,
-  countNullifiers,
+  setSiblingInfo,
 } from '../services/commitment-storage.mjs';
 import getProposeBlockCalldata from '../services/process-calldata.mjs';
 import Secrets from '../classes/secrets.mjs';
 import { ivks, nsks } from '../services/keys.mjs';
+import { getLatestTree, saveTree } from '../services/database.mjs';
 
 const { ZERO } = config;
 
@@ -20,85 +22,61 @@ async function blockProposedEventHandler(data) {
   logger.info(`Received Block Proposed event`);
   // ivk will be used to decrypt secrets whilst nsk will be used to calculate nullifiers for commitments and store them
   const { transactions, blockNumberL2 } = await getProposeBlockCalldata(data);
-  // we return a promise so that the queue awaits this function properly
-  return Promise.all(
-    transactions.map(async transaction => {
-      // filter out non zero commitments and nullifiers
-      const nonZeroCommitments = transaction.commitments.flat().filter(n => n !== ZERO);
-      const nonZeroNullifiers = transaction.nullifiers.flat().filter(n => n !== ZERO);
-      // if transaction is deposit
-      if (transaction.transactionType === '0') {
-        // if the commitment from deposit is already stored in database, then this commitment has been created by
-        // this client and stored during deposit transaction creation. If so, only update that commitment is on chain
-        // If not this commitment need not be stored or updated by other clients
-        if ((await countCommitments(transaction.commitments)) > 0) {
-          await markOnChain(
-            nonZeroCommitments,
-            blockNumberL2,
-            data.blockNumber,
-            data.transactionHash,
+  const latestTree = await getLatestTree();
+  const blockCommitments = transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat();
+  const dbUpdates = transactions.map(async transaction => {
+    // filter out non zero commitments and nullifiers
+    const nonZeroCommitments = transaction.commitments.flat().filter(n => n !== ZERO);
+    const nonZeroNullifiers = transaction.nullifiers.flat().filter(n => n !== ZERO);
+    const storeCommitments = [];
+    if (
+      (transaction.transactionType === '1' || transaction.transactionType === '2') &&
+      (await countCommitments(nonZeroCommitments)) === 0
+    ) {
+      ivks.forEach((key, i) => {
+        // decompress the secrets first and then we will decryp t the secrets from this
+        const decompressedSecrets = Secrets.decompressSecrets(transaction.compressedSecrets);
+        try {
+          const commitment = Secrets.decryptSecrets(
+            decompressedSecrets,
+            key,
+            nonZeroCommitments[0],
           );
+          if (commitment === {}) logger.info("This encrypted message isn't for this recipient");
+          else {
+            storeCommitments.push(storeCommitment(commitment, nsks[i]));
+          }
+        } catch (err) {
+          logger.info(err);
+          logger.info("This encrypted message isn't for this recipient");
         }
-        // if transaction is single transfer or double transfer
-      } else if (transaction.transactionType === '1' || transaction.transactionType === '2') {
-        // if the commitment from transfer is already stored in database, then this commitment(s) has(ve) been created by
-        // this client and stored during transfer transaction creation. If so, only update that this(ese) commitment(s) is(are)
-        // on chain. If not, a decryption of the secrets will be done by the recipient client. If the decryption is successful,
-        // then the commitment will be stored in the database and will be marked as on chain. If the decryption is unsuccessful,
-        // nothing needs to be stored
-        if ((await countCommitments(transaction.commitments)) > 0) {
-          await Promise.all([
-            markOnChain(nonZeroCommitments, blockNumberL2, data.blockNumber, data.transactionHash),
-            markNullifiedOnChain(
-              nonZeroNullifiers,
-              blockNumberL2,
-              data.blockNumber,
-              data.transactionHash,
-            ),
-          ]);
-        } else {
-          // eslint-disable-next-line consistent-return
-          ivks.every(async (key, i) => {
-            // decompress the secrets first and then we will decrypt the secrets from this
-            const decompressedSecrets = Secrets.decompressSecrets(transaction.compressedSecrets);
-            try {
-              const commitment = Secrets.decryptSecrets(
-                decompressedSecrets,
-                key,
-                transaction.commitments[0],
-              );
-              if (commitment === {}) logger.info("This encrypted message isn't for this recipient");
-              else {
-                // store commitment if the new commitment in this transaction is intended for this client
-                await storeCommitment(commitment, nsks[i]);
-                await markOnChain(
-                  nonZeroCommitments,
-                  blockNumberL2,
-                  data.blockNumber,
-                  data.transactionHash,
-                );
-                return false; // to exit every() loop once the a key has successfully decrypted the secrets of the transaction
-              }
-            } catch (err) {
-              logger.info(err);
-              logger.info("This encrypted message isn't for this recipient");
-            }
-          });
-        }
-        // if transaction is withdraw
-      } else if (transaction.transactionType === '3') {
-        // if the nullifier from withdraw is already stored in database, then this nullifier has been created by
-        // this client and stored during withdraw transaction creation. If so, only update that nullifier is on chain
-        // If not this nullifier need not be stored or updated by other clients
-        if ((await countNullifiers(transaction.nullifiers)) > 0) {
-          await markNullifiedOnChain(
-            nonZeroNullifiers,
-            blockNumberL2,
-            data.blockNumber,
-            data.transactionHash,
-          );
-        }
-      } else logger.error('Transaction type is invalid. Transaction type is', transaction.Type);
+      });
+    }
+    return [
+      Promise.all(storeCommitments),
+      markOnChain(nonZeroCommitments, blockNumberL2, data.blockNumber, data.transactionHash),
+      markNullifiedOnChain(
+        nonZeroNullifiers,
+        blockNumberL2,
+        data.blockNumber,
+        data.transactionHash,
+      ),
+    ];
+  });
+
+  // await Promise.all(toStore);
+  await Promise.all(dbUpdates);
+  const updatedTimber = Timber.statelessUpdate(latestTree, blockCommitments);
+  await saveTree(data.blockNumber, blockNumberL2, updatedTimber);
+
+  await Promise.all(
+    // eslint-disable-next-line consistent-return
+    blockCommitments.map(async (c, i) => {
+      const count = await countCommitments([c]);
+      if (count > 0) {
+        const siblingPath = Timber.statelessSiblingPath(latestTree, blockCommitments, i);
+        return setSiblingInfo(c, siblingPath, latestTree.leafCount + i, updatedTimber.root);
+      }
     }),
   );
 }
