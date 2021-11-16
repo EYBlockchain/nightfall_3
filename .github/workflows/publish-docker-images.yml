@@ -18,7 +18,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Login to docker registry
-      run: docker login ghcr.io -u ${{ github.actor }} -p $GITHUB_TOKEN
+      run: docker login ghcr.io -u $GITHUB_ACTOR -p $GITHUB_TOKEN
 
     - name: Build docker client image
       run: docker build . -f client.Dockerfile
