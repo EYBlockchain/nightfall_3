@@ -124,11 +124,20 @@ npm run build
 ./liquidity-provider
 ```
 
-- Launch wallet.
+- Generate wallet
 ```
 cd wallet
 npm install
+```
+
+- Launch wallet in ganache (localhost)
+```
 npm start
+```
+
+- Launch wallet in localhost connected to testnet deploymen
+```
+npm run start-ropsten
 ```
 
 - When the wallet starts, you will have the option to enter your private key on connecting with metamask wallet installed in your browser. If you select the latter, you need to have previously configured your metamask wallet to operate with Nightfall's deployment on localhost
