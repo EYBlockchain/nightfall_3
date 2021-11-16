@@ -111,26 +111,6 @@ describe('Testing the Nightfall SDK', () => {
     });
   });
 
-  /* describe('Synchronizing with block', () => {
-    it('Synchronizing tx with block proposed', async function () {
-      if (!nodeInfo.includes('TestRPC')) {
-        let exit = false;
-        while (!exit) {
-          // eslint-disable-next-line no-await-in-loop
-          await depositNTransactions(nf3User1, 1, ercAddress, tokenType, value, tokenId, fee);
-          // eslint-disable-next-line no-await-in-loop
-          try {
-            // eslint-disable-next-line no-await-in-loop
-            eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
-            exit = true;
-          } catch (e) {
-            exit = false;
-          }
-        }
-      }
-    });
-  }); */
-
   describe('Miscellaneous tests', () => {
     it('should respond with "true" the health check', async function () {
       const res = await nf3User1.healthcheck('client');
