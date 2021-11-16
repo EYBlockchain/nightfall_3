@@ -79,8 +79,6 @@ Firstly, Optimist sees the event removals.  When it receives a BlockProposed eve
 database and sets the block's L1 block number to null.  This indicates to NF_3 that the Block hash has been removed from the L1 chain.
 You might imagine we could just delete these blocks, but we can't.  We'll explain why in a bit.
 
-*[TODO - also needs do treat nullifiers and un-stamp them?]*
-
 Next, Optimist sees the new events (if any) come in from the canonical chain. It will check these and they should pass its
 checks because they will fit on the existing blocks at the L2 blockNumber they have.
 
@@ -152,3 +150,37 @@ may attempt to re-incorporate them into a block in the wrong order (e.g. incorpo
 deposit which enabled it).  If that happens, the dependent transaction will fail the Proposer's check and will
 be dropped.  That's ok though because this mimics the behaviour that an L1 dependent transaction would experience in a
 chain-reorganisation.
+
+### Effect of Rollback events
+
+Thus far, we have only considered the issue of `blockProposed` events being removed an replayed. However, we should also consider the
+removal of a `rollback` event.
+
+When a `rollback` happens, as the result of an existing challenge, all the L2 block hashes within the scope of a rollback will be removed from
+the blockchain record.  Thus we might have the following:
+```
+H_0, H_1 ... H_p, H_q ... H_r ... H_n  before rollback
+
+H_0, H_1 ... H_p after rollback
+```
+So the rollback removes all hashes later than `H_p` We then add new block hashes as the chain progresses:
+```
+chain 1: H_0, H_1 ... H_p, H'_q ... H'_r ... H'_t
+```
+Where the new block hashes are completely different from the old, removed ones, and the chain will generally be of a different length.
+Now imagine a chain fork where the rollback never happened.  The chain looks like this:
+```
+chain 2: H_0, H_1 ... H_p, H_q ... H_r ... H_m
+```
+Suppose this is the heavier chain.  Thus, this will become the canonical chain when the reorganisation happens.  What happens to the
+Layer 2 state in Optimist?
+
+let's consider the actual transactions:
+```
+chain 1: propose(H_p), ...propose(H_r), ...propose(H_n), challenge(H_q), propose(H'_q), ...propose(H'_r), ...propose(H'_t)
+chain 2: propose(H_p), ...propose(H_r), ...propose(H_n), ...propose(H_m)
+```
+
+First of all, removal events will be received.  This will remove the respective `proposeBlock` calls (`H'_q...H'_t`) from the L2 database (or,
+more accurately it will set their L1 block number to null). Then the new 'chain 2' events will be played.  These will be the ones after `propose(H_n)`.
+Then, the events that were removed will be re-mined. The re-mined `proposeBlocks` will revert because none of them can be attached after H_m.  However, the `challenge(H_q)` will succeed and will force a rollback to H_p.  That is correct behaviour because all of the blocks after H_p on chain 2 are in fact invalid (because H_q is invalid).
