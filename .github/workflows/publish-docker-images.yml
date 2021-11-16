@@ -15,12 +15,12 @@ jobs:
     - uses: codfish/semantic-release-action@master
       id: semantic
       env:
-        GITHUB_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Login to docker registry
       run: docker login ghcr.io -u $DOCKER_ACTOR -p $GITHUB_TOKEN
       env:
-        GITHUB_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         DOCKER_ACTOR: ${{ secrets.DOCKER_ACTOR }}
 
     - name: Build docker client image
@@ -34,7 +34,7 @@ jobs:
         docker build -t ghcr.io/eyblockchain/nightfall3-client:$RELEASE_VERSION . -f client.Dockerfile
         docker push ghcr.io/eyblockchain//nightfall3-client:$RELEASE_VERSION
       env:
-        GITHUB_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Build docker zokrates worker image
       run: docker build . -f worker.Dockerfile
@@ -47,7 +47,7 @@ jobs:
         docker build -t ghcr.io/eyblockchain/nightfall3-worker:$RELEASE_VERSION . -f worker.Dockerfile
         docker push ghcr.io/eyblockchain/nightfall3-worker:$RELEASE_VERSION
       env:
-        GITHUB_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Build docker deployer image
       run: docker build . -f deployer.Dockerfile
@@ -60,7 +60,7 @@ jobs:
         docker build -t ghcr.io/eyblockchain/nightfall3-deployer:$RELEASE_VERSION . -f deployer.Dockerfile
         docker push ghcr.io/eyblockchain/nightfall3-deployer:$RELEASE_VERSION
       env:
-        GITHUB_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Build docker optimist image
       run: docker build . -f optimist.Dockerfile
@@ -73,4 +73,4 @@ jobs:
         docker build -t ghcr.io/eyblockchain/nightfall3-optimist:$RELEASE_VERSION . -f optimist.Dockerfile
         docker push ghcr.io/eyblockchain/nightfall3-optimist:$RELEASE_VERSION
       env:
-        GITHUB_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
