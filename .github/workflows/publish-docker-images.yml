@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - master
-      - miranda/docker-images
 
 jobs:
   release:
@@ -18,7 +17,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Login to docker registry
-      run: docker login ghcr.io -u $DOCKER_ACTOR -p $GITHUB_TOKEN
+      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $DOCKER_ACTOR --password-stdin
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         DOCKER_ACTOR: ${{ secrets.DOCKER_ACTOR }}
