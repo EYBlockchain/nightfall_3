@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - master
+      - miranda/docker-images
 
 jobs:
   release:
