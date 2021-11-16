@@ -17,10 +17,9 @@ import {
   storeCommitment,
   markNullified,
   clearPending,
+  getSiblingInfo,
 } from './commitment-storage.mjs';
-import { getSiblingPath } from '../utils/timber.mjs';
 import { discoverPeers } from './peers.mjs';
-import { getBlockAndTransactionsByRoot } from '../utils/optimist.mjs';
 import { compressPublicKey, calculateIvkPkdfromAskNsk } from './keys.mjs';
 
 const {
@@ -107,14 +106,16 @@ async function transfer(transferParams) {
   // compress the secrets to save gas
   const compressedSecrets = Secrets.compressSecrets(secrets);
 
-  // TODO, need to make sure these are processed in the same order as roots supplied
-  const siblingPaths = generalise(
-    await Promise.all(
-      oldCommitments.map(async commitment => getSiblingPath(await commitment.index)),
-    ),
-  );
+  const commitmentTreeInfo = await Promise.all(oldCommitments.map(c => getSiblingInfo(c)));
+  const localSiblingPaths = commitmentTreeInfo.map(l => {
+    const path = l.siblingPath.path.map(p => p.value);
+    return generalise([l.root].concat(path.reverse()));
+  });
+  const leafIndices = commitmentTreeInfo.map(l => l.leafIndex);
+  const blockNumberL2s = commitmentTreeInfo.map(l => l.isOnChain);
+  const roots = commitmentTreeInfo.map(l => l.root);
+
   // public inputs
-  const roots = siblingPaths.map(s => s[0]);
   const publicInputs = new PublicInputs([
     oldCommitments.map(commitment => commitment.preimage.ercAddress),
     newCommitments.map(commitment => commitment.hash),
@@ -154,8 +155,10 @@ async function transfer(transferParams) {
       commitment.hash.limbs(32, 8),
     ]),
     nullifiers.map(nullifier => [nullifier.preimage.nsk.limbs(32, 8), nullifier.hash.limbs(32, 8)]),
-    siblingPaths.map(siblingPath => siblingPath.map(node => node.field(BN128_GROUP_ORDER, false))), // siblingPAth[32] is a sha hash and will overflow a field but it's ok to take the mod here - hence the 'false' flag
-    await Promise.all(oldCommitments.map(commitment => commitment.index)),
+    localSiblingPaths.map(siblingPath =>
+      siblingPath.map(node => node.field(BN128_GROUP_ORDER, false)),
+    ), // siblingPAth[32] is a sha hash and will overflow a field but it's ok to take the mod here - hence the 'false' flag
+    leafIndices,
     [
       ...secrets.ephemeralKeys.map(key => key.limbs(32, 8)),
       secrets.cipherText.flat().map(text => text.field(BN128_GROUP_ORDER)),
@@ -172,6 +175,7 @@ async function transfer(transferParams) {
   if (oldCommitments.length === 1) {
     folderpath = 'single_transfer';
     transactionType = 1;
+    blockNumberL2s.push(0); // We need top pad block numbers if we do a single transfer
   } else if (oldCommitments.length === 2) {
     folderpath = 'double_transfer';
     transactionType = 2;
@@ -187,16 +191,9 @@ async function transfer(transferParams) {
   const { proof } = res.data;
   // and work out the ABI encoded data that the caller should sign and send to the shield contract
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
-  const historicRootBlockNumberL2s = await Promise.all(
-    roots.map(async r => {
-      const blockAndTxs = await getBlockAndTransactionsByRoot(r.hex(32));
-      return blockAndTxs.block.blockNumberL2;
-    }),
-  );
-  if (historicRootBlockNumberL2s.length === 1) historicRootBlockNumberL2s.push(0);
   const optimisticTransferTransaction = new Transaction({
     fee,
-    historicRootBlockNumberL2: historicRootBlockNumberL2s,
+    historicRootBlockNumberL2: blockNumberL2s,
     transactionType,
     publicInputs,
     ercAddress,

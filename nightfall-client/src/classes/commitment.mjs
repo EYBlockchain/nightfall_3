@@ -3,7 +3,6 @@ A commitment class
 */
 import gen from 'general-number';
 import sha256 from 'common-files/utils/crypto/sha256.mjs';
-import { getLeafIndex } from '../utils/timber.mjs';
 
 const { generalise } = gen;
 
@@ -15,8 +14,6 @@ class Commitment {
   isNullified = false;
 
   isNullifiedOnChain = -1;
-
-  #computedIndex; // this is the index of this commitment in the Merkle tree. unlike all other numbers in this class, it's a normal Number, rather than a GN for compaitibility with Timber.
 
   constructor({ ercAddress, tokenId, value, pkd = [], compressedPkd, salt }) {
     const items = { ercAddress, tokenId, value, pkd, compressedPkd, salt };
@@ -41,12 +38,6 @@ class Commitment {
       this.preimage.compressedPkd,
       this.preimage.salt,
     ]);
-  }
-
-  // note this is an async and returns a promise
-  get index() {
-    if (this.#computedIndex === undefined) this.#computedIndex = getLeafIndex(this.hash.hex(32));
-    return this.#computedIndex;
   }
 
   // sometimes (e.g. going over http) the general-number class is inconvenient

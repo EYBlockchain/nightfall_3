@@ -28,7 +28,7 @@ describe('Local Timber Tests', () => {
         fc.property(fc.array(randomLeaf, { minLength: 0, maxLength: MAX_ARRAY }), leaves => {
           const timber = new Timber();
           timber.insertLeaves(leaves);
-          expect(timber.toArray().filter(t => t !== 0)).to.eql(leaves);
+          expect(timber.toArray().filter(t => t !== '0')).to.eql(leaves);
           expect(timber.leafCount).to.equal(leaves.length);
         }),
         { numRuns: 5 },
@@ -41,7 +41,7 @@ describe('Local Timber Tests', () => {
           const timber = new Timber();
           timber.insertLeaves(leavesArr);
           for (let i = 0; i < TIMBER_HEIGHT; i++) {
-            leavesArr = leavesArr.length % 2 === 0 ? leavesArr : [...leavesArr, 0];
+            leavesArr = leavesArr.length % 2 === 0 ? leavesArr : [...leavesArr, '0'];
             // eslint-disable-next-line no-loop-func
             leavesArr = leavesArr.reduce((all, one, idx) => {
               const ch = Math.floor(idx / 2);
