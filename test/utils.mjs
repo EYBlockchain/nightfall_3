@@ -1,5 +1,4 @@
 import Web3 from 'web3';
-import axios from 'axios';
 import chai from 'chai';
 import compose from 'docker-compose';
 import path from 'path';
@@ -122,11 +121,18 @@ export async function submitTransaction(
 
 // This only works with Ganache but it can move block time forwards
 export async function timeJump(secs) {
-  axios.post('http://localhost:8546', {
-    id: 1337,
+  await web3.currentProvider.send({
     jsonrpc: '2.0',
     method: 'evm_increaseTime',
     params: [secs],
+    id: 0,
+  });
+
+  await web3.currentProvider.send({
+    jsonrpc: '2.0',
+    method: 'evm_mine',
+    params: [],
+    id: 0,
   });
 }
 
@@ -302,10 +308,30 @@ export const sendTransactions = async (transactions, submitArgs) => {
   return receiptArr;
 };
 
-export const waitForEvent = async (eventLogs, expectedEvents) => {
-  while (eventLogs.length < expectedEvents.length) {
+export const expectTransaction = res => {
+  expect(res).to.have.property('transactionHash');
+  expect(res).to.have.property('blockHash');
+};
+
+export const depositNTransactions = async (nf3, N, ercAddress, tokenType, value, tokenId, fee) => {
+  const depositTransactions = [];
+  for (let i = 0; i < N; i++) {
+    // eslint-disable-next-line no-await-in-loop
+    const res = await nf3.deposit(ercAddress, tokenType, value, tokenId, fee);
+    expectTransaction(res);
+    depositTransactions.push(res);
+  }
+  return depositTransactions;
+};
+
+export const waitForEvent = async (eventLogs, expectedEvents, count = 1) => {
+  const length = count !== 1 ? count : expectedEvents.length;
+  let timeout = 10;
+  while (eventLogs.length < length) {
     // eslint-disable-next-line no-await-in-loop
     await new Promise(resolve => setTimeout(resolve, 3000));
+    timeout--;
+    if (timeout === 0) throw new Error('Timeout in waitForEvent');
   }
 
   while (eventLogs[0] !== expectedEvents[0]) {
@@ -315,9 +341,27 @@ export const waitForEvent = async (eventLogs, expectedEvents) => {
 
   expect(eventLogs[0]).to.equal(expectedEvents[0]);
 
-  for (let i = 0; i < expectedEvents.length; i++) {
+  for (let i = 0; i < length; i++) {
     eventLogs.shift();
   }
 
+  // Have to wait here as client block proposal takes longer now
+  await new Promise(resolve => setTimeout(resolve, 3000));
+  return eventLogs;
+};
+
+export const waitForBlockProposed = async (
+  eventLogs,
+  nf3,
+  N,
+  ercAddress,
+  tokenType,
+  value,
+  tokenId,
+  fee,
+) => {
+  await depositNTransactions(nf3, N, ercAddress, tokenType, value, tokenId, fee);
+  // eslint-disable-next-line no-param-reassign
+  eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
   return eventLogs;
 };

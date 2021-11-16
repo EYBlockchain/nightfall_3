@@ -375,8 +375,14 @@ class Nf3 {
   @param {number} fee - the amount being paid for the instant withdrawal service
   */
   async requestInstantWithdrawal(withdrawTransactionHash, fee) {
+    // find the L2 block containing the L2 transaction hash
+    let res = await axios.get(
+      `${this.optimistBaseUrl}/block/transaction-hash/${withdrawTransactionHash}`,
+    );
+    const { block } = res.data;
+    if (!block) return null; // block not found
     // set the instant withdrawal fee
-    const res = await axios.post(`${this.clientBaseUrl}/set-instant-withdrawal`, {
+    res = await axios.post(`${this.clientBaseUrl}/set-instant-withdrawal`, {
       transactionHash: withdrawTransactionHash,
     });
     return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, fee);
@@ -664,17 +670,12 @@ class Nf3 {
     let res;
     let valid = false;
 
-    try {
-      res = await axios.get(
-        `${this.optimistBaseUrl}/block/transaction-hash/${withdrawTransactionHash}`,
-      );
-    } catch (e) {
-      // transaction is not in block yet
-      valid = false;
-    }
+    res = await axios.get(
+      `${this.optimistBaseUrl}/block/transaction-hash/${withdrawTransactionHash}`,
+    );
+    const { block, transactions, index } = res.data;
 
-    if (res) {
-      const { block, transactions, index } = res.data;
+    if (block) {
       res = await axios.post(`${this.clientBaseUrl}/valid-withdrawal`, {
         block,
         transactions,
