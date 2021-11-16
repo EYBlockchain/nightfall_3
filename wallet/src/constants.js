@@ -1,6 +1,5 @@
 /* ignore unused exports */
 const DEFAULT_NF_ADDRESS_INDEX = 0;
-const DEFAULT_ENVIRONMENT = 'Localhost';
 const NF3_GITHUB_ISSUES_URL = 'https://github.com/EYBlockchain/nightfall_3/issues';
 const DEFAULT_TOKEN_TYPE = 'ERC20';
 const TOKEN_TYPE = {
@@ -46,7 +45,6 @@ const TRANSACTION_RETRY_PERIOD = 10000; // 10s
 
 export {
   DEFAULT_NF_ADDRESS_INDEX,
-  DEFAULT_ENVIRONMENT,
   NF3_GITHUB_ISSUES_URL,
   DEFAULT_TOKEN_TYPE,
   DEFAULT_TOKEN_ADDRESS,
