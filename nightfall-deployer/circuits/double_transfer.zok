@@ -109,7 +109,7 @@ def main(\
 	assert(nullifier[0].hash != nullifier[1].hash)
 
 	// check the nullifiers are valid
-	for field i in 0..2 do
+	for u32 i in 0..2 do
 		u32[8] sha = sha256of512([\
 			...nullifier[i].nsk,\
 			...oldCommitment[i].hash\
@@ -138,7 +138,7 @@ def main(\
 	assert(sha == newCommitment[1].hash )
 
 	// check the old commitments are valid
-	for field i in 0..2 do
+	for u32 i in 0..2 do
 		sha = sha256of1280([\
 			...oldCommitment[i].ercAddress,\
 			...oldCommitment[i].id,\
@@ -200,7 +200,7 @@ def main(\
 	assert(publicInputsHash == bool_256_to_field(publicInputsHashBool256Sliced))
 
 	// check that the old commitments are in the merkle tree
-	for field i in 0..2 do
+	for u32 i in 0..2 do
 		field mimcHash = u32_8_to_field(oldCommitment[i].hash)
 		assert(pathCheck(path[i], order[i], mimcHash))
 	endfor
