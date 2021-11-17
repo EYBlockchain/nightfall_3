@@ -13,21 +13,20 @@ import {
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { generateMnemonic } from 'bip39';
-import { mnemonicBackupEnable } from '../../../store/settings/settings.actions';
 
-function CreateWalletModal({
-  modalEnable,
-  handleClickOnImport,
-  toggleModalEnable,
-  onMnemonicBackupEnable,
-}) {
+function CreateWalletModal({ modalEnable, handleClickOnImport, toggleModalEnable }) {
   const [mnemonic, setMnemonic] = React.useState('');
   const [mnemonicBackup, setMnemonicBackup] = React.useState(false);
 
-  const handleSubmit = () => {
+  const disableAll = () => {
+    toggleModalEnable();
     setMnemonic('');
-    onMnemonicBackupEnable(mnemonicBackup);
-    handleClickOnImport(mnemonic, false);
+    setMnemonicBackup(false);
+  };
+
+  const handleSubmit = () => {
+    disableAll();
+    handleClickOnImport(mnemonic, mnemonicBackup);
   };
 
   const newMnemonic = () => {
@@ -79,7 +78,7 @@ function CreateWalletModal({
           <Divider />
           <Form.Field></Form.Field>
           <Modal.Actions>
-            <Button floated="left" color="red" onClick={toggleModalEnable}>
+            <Button floated="left" color="red" onClick={disableAll}>
               <Icon name="cancel" />
               Cancel
             </Button>
@@ -98,13 +97,10 @@ CreateWalletModal.propTypes = {
   modalEnable: PropTypes.bool.isRequired,
   handleClickOnImport: PropTypes.func.isRequired,
   toggleModalEnable: PropTypes.func.isRequired,
-  onMnemonicBackupEnable: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = () => ({});
 
-const mapDispatchToProps = dispatch => ({
-  onMnemonicBackupEnable: backupEnable => dispatch(mnemonicBackupEnable(backupEnable)),
-});
+const mapDispatchToProps = () => ({});
 
 export default connect(mapStateToProps, mapDispatchToProps)(CreateWalletModal);
