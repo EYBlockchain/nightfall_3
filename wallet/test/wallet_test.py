@@ -5,7 +5,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import TimeoutException
-from time import sleep    
 import sys
 
 from helpers.find_elements import *
@@ -13,6 +12,12 @@ from helpers.selenium import *
 from helpers.metamask import *
 from helpers.wallet import *
 from constants import *
+
+# import tests
+from tx_test import *
+from effect_test import *
+from login_test import *
+from token_test import *
 
 # virtual display
 from pyvirtualdisplay import Display
@@ -43,7 +48,8 @@ driver.switch_to.window(metamaskTab)
 ###################
 initializeMetamask(driver, findElementsInstance, metamaskConfig)
 deleteNetworkMetamask(driver, findElementsInstance, deleteNetworkConfig)
-selectNetworkMetamask(driver, findElementsInstance, networkConfig)
+selectNetworkMetamask(driver, findElementsInstance, networkConfigLocalhost)
+addEthAccountMetamask(driver, findElementsInstance, ethAccount1Params)
 addEthAccountMetamask(driver, findElementsInstance, ethAccount2Params)
 
 # Add tokens to metamask
@@ -57,35 +63,11 @@ testEthAddress = findElementsInstance.element_exist_xpath('//*[@id="wallet-info-
 assert(testEthAddress.lower() == ethAccount2Params["ethereumAddress"].lower())
 
 ########################
-# Use wallet   #
+# Start Tests          
 ########################
-#tokenTypes = ["erc20", "erc721", "erc1155"]
-# TODO: Waiting for all toke types to be correctly configured. For now, only ERC20 works
-tokenTypes = ["erc20"]
-txTypes = ["Deposit", "Transfer", "Withdraw"]
-
-txParams = {
-  "amount": 10,
-  "fee": 10,
-}
-
-for tokenType in tokenTypes:
-  txParams["tokenType"] = tokenType
-  txParams["tokenAddress"] =  tokens[txParams["tokenType"]]
-
-  for txType in txTypes:
-    txParams["txType"] = txType
-
-    print(tokenType, txType)
-    submitTxWallet(txParams, findElementsInstance, driver, metamaskTab, nightfallTab, cancel=1)
-    print(tokenType, txType)
-    sleep(10)
-    submitTxWallet(txParams, findElementsInstance, driver, metamaskTab, nightfallTab)
-    sleep(10)
-    print(tokenType, txType)
-    submitTxWallet(txParams, findElementsInstance, driver, metamaskTab, nightfallTab)
-    sleep(10)
-
-    # Instant withdraw
+#effectTest(findElementsInstance, driver, metamaskTab, nightfallTab)
+#loginTest(findElementsInstance, driver, metamaskTab, nightfallTab)
+tokenTest(findElementsInstance, driver, metamaskTab, nightfallTab)
+#txTest(findElementsInstance, driver, metamaskTab, nightfallTab)
 
 driver.quit()

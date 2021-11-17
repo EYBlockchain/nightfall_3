@@ -61,6 +61,8 @@ def selectNetworkMetamask(driver, findElements, networkConfig):
       findElements.element_exist_xpath('//input[@id="chainId"]').send_keys(networkConfig['chainId']) # ChainId
       findElements.element_exist_xpath('//input[@id="network-ticker"]').send_keys(networkConfig['ticker']) # ChainId
       findElements.element_exist_xpath('//button[text()="Save"]').click() # Save
+    else:
+      findElements.element_exist_xpath('(//*[contains(text(), "' + networkConfig['name'] + '")])').click()
 
 def deleteNetworkMetamask(driver, findElements, networkConfig):
     # Configure network
@@ -88,6 +90,14 @@ def addEthAccountMetamask(driver, findElements, accountParams):
     findElements.element_exist_xpath('//div[contains(text(),"Import Account")]').click() # Import account
     findElements.element_exist_xpath('//input[@id="private-key-box"]').send_keys(accountParams['privateKey']) # Private Key
     findElements.element_exist_xpath('//button[text()="Import"]').click() # Import
+
+def selectEthAccountMetamask(driver, findElements, accountParams):
+    # Configure network
+    driver.get('chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn/home.html#')
+
+    # Select network
+    findElements.element_exist_xpath('//*[local-name()="svg"]').click() # Color button 
+    findElements.element_exist_xpath('//div[contains(text(), "' + accountParams['name'] + '")]').click()
 
 def addTokenMetamask(tokenAddress, findElements):
     # Add DAI token

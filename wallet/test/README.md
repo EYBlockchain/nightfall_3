@@ -73,4 +73,4 @@ pip3 install selenium
 Both scripts support server mode or UI mode (which display the browser to the user). Server mode is not relevant for a Mac
 
 - Server mode: `python3 wallet_test.py server`
-- UI mode: `python3 wallet_test`
+- UI mode: `python3 wallet_test.py`

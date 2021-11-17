@@ -11,6 +11,8 @@ function AccountSettingsModal({
   toggleAccountSettings,
   onMnemonicBackupEnable,
 }) {
+  if (typeof login.nf3.mnemonic === 'undefined') return null;
+
   const [addressIndex, setAddressIndex] = React.useState(login.nf3.mnemonic.addressIndex);
   const [clearLocalStorage, setClearLocalStorage] = React.useState(false);
 
