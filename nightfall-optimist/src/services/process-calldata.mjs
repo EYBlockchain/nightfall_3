@@ -19,6 +19,7 @@ export async function getProposeBlockCalldata(eventData) {
   const tx = await web3.eth.getTransaction(transactionHash);
   // Remove the '0x' and function signature to recove rhte abi bytecode
   const abiBytecode = `0x${tx.input.slice(10)}`;
+  console.log('TX INPUT', tx.input);
   const decoded = web3.eth.abi.decodeParameters(PROPOSE_BLOCK_TYPES, abiBytecode);
   const blockData = decoded['0'];
   const transactionsData = decoded['1'];
