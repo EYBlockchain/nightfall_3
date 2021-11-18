@@ -129,30 +129,24 @@ function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, 
               <Table.Cell>Account Address:</Table.Cell>
               <Table.Cell id="wallet-info-cell-ethaddress"> {importedWallet()} </Table.Cell>
             </Table.HeaderCell>
-            {/*<Table.HeaderCell textAlign="right">
-              <Button
-                onClick={reload}
-                id="wallet-info-cell-reload"
-                disabled={token.activeTokenRowId === ''}
-              >
-                <Icon name="sync" />
-                Reload
-              </Button>
-            </Table.HeaderCell>*/}
             <Table.HeaderCell colSpan="3">
               <Table.Cell />
               <Table.Cell />
               <Table.Cell>
-                <Button icon labelPosition='left' onClick={toggleModalTokenAdd} id="wallet-info-cell-add-token">
+                <Button
+                  icon
+                  labelPosition="left"
+                  onClick={toggleModalTokenAdd}
+                  id="wallet-info-cell-add-token"
+                >
                   <Icon name="plus" />
                   Add Token
                 </Button>
               </Table.Cell>
-            {/*</Table.HeaderCell>
-            <Table.HeaderCell>*/}
               <Table.Cell>
                 <Button
-                  icon labelPosition='left'
+                  icon
+                  labelPosition="left"
                   id="wallet-info-cell-remove-token"
                   toggle
                   onClick={removeToken}
