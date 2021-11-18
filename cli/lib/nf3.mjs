@@ -3,6 +3,10 @@ import Web3 from 'web3';
 import WebSocket from 'ws';
 import EventEmitter from 'events';
 import { Mutex } from 'async-mutex';
+import erc20 from './interfaces/ERC20.json';
+import erc721 from './interfaces/ERC721.json';
+import erc1155 from './interfaces/ERC1155.json';
+import { ENVIRONMENTS } from './constants.mjs';
 
 /**
 @class
@@ -55,20 +59,18 @@ class Nf3 {
 
   mnemonic = {};
 
-  constructor(
-    clientBaseUrl,
-    optimistBaseUrl,
-    optimistWsUrl,
-    web3WsUrl,
-    ethereumSigningKey,
-    zkpKeys,
-  ) {
-    this.clientBaseUrl = clientBaseUrl;
-    this.optimistBaseUrl = optimistBaseUrl;
-    this.optimistWsUrl = optimistWsUrl;
+  contracts = { ERC20: erc20, ERC721: erc721, ERC1155: erc1155 };
+
+  currentEnvironment;
+
+  constructor(web3WsUrl, ethereumSigningKey, environment = ENVIRONMENTS.localhost, zkpKeys) {
+    this.clientBaseUrl = environment.clientApiUrl;
+    this.optimistBaseUrl = environment.optimistApiUrl;
+    this.optimistWsUrl = environment.optimistWsUrl;
     this.web3WsUrl = web3WsUrl;
     this.ethereumSigningKey = ethereumSigningKey;
     this.zkpKeys = zkpKeys;
+    this.currentEnvironment = environment;
   }
 
   /**
@@ -161,13 +163,18 @@ class Nf3 {
       // if we don't have a nonce, we must get one from the ethereum client
       if (!this.nonce) this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
 
+      let gasPrice = 10000000000;
+      const gas = (await this.web3.eth.getBlock('latest')).gasLimit;
+      const blockGasPrice = Number(await this.web3.eth.getGasPrice());
+      if (blockGasPrice > gasPrice) gasPrice = blockGasPrice;
+
       tx = {
         from: this.ethereumAddress,
         to: contractAddress,
         data: unsignedTransaction,
         value: fee,
-        gas: 10000000,
-        gasPrice: 10000000000,
+        gas,
+        gasPrice,
         nonce: this.nonce,
       };
       this.nonce++;
@@ -486,6 +493,21 @@ class Nf3 {
   */
   async deregisterProposer() {
     const res = await axios.post(`${this.optimistBaseUrl}/proposer/de-register`, {
+      address: this.ethereumAddress,
+    });
+    return this.submitTransaction(res.data.txDataToSign, this.proposersContractAddress, 0);
+  }
+
+  /**
+  Change current proposer.
+  It will use the address of the Ethereum Signing key that is holds to change the current
+  proposer.
+  @method
+  @async
+  @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
+  */
+  async changeCurrentProposer() {
+    const res = await axios.get(`${this.optimistBaseUrl}/proposer/change`, {
       address: this.ethereumAddress,
     });
     return this.submitTransaction(res.data.txDataToSign, this.proposersContractAddress, 0);
