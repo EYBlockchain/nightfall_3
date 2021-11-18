@@ -10,6 +10,7 @@ import {
   deleteToken,
 } from '../../../../store/token/token.actions';
 import { TokenAddModal } from './token-add.view.jsx';
+import * as Constant from '../../../../constants';
 
 function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, onDeleteToken }) {
   const [modalTokenAddEnable, setModalTokenAddEnable] = React.useState(false);
@@ -103,7 +104,7 @@ function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, 
   React.useEffect(() => {
     const retrieveBalance = setInterval(() => {
       reload();
-    }, 30000);
+    }, Constant.BALANCE_INTERVAL);
     return () => clearInterval(retrieveBalance);
   }, []);
 
