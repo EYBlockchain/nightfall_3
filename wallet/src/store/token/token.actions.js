@@ -7,9 +7,12 @@ export const tokenActionTypes = {
 };
 
 export function addToken(tokenAddress, tokenType, tokenId, l1Balance, l2Balance) {
+  let newTokenAddress;
+  if (!tokenAddress.startsWith('0x')) newTokenAddress = `0x${tokenAddress}`;
+  else newTokenAddress = tokenAddress;
   return {
     type: tokenActionTypes.TOKEN_ADD,
-    payload: { tokenAddress, tokenType, tokenId, l1Balance, l2Balance },
+    payload: { tokenAddress: newTokenAddress, tokenType, tokenId, l1Balance, l2Balance },
   };
 }
 

@@ -28,7 +28,11 @@ export function TokenAddModal({ modalTokenAdd, toggleModalTokenAdd, handleOnToke
             <Form.Field>
               <label htmlFor="token-name">
                 Token Name
-                <input type="text" onChange={event => setTokenName(event.target.value)} />
+                <input
+                  type="text"
+                  onChange={event => setTokenName(event.target.value)}
+                  id="Token Name"
+                />
               </label>
             </Form.Field>
             <span>
@@ -45,7 +49,11 @@ export function TokenAddModal({ modalTokenAdd, toggleModalTokenAdd, handleOnToke
           <Form.Field>
             <label htmlFor="token-address">
               Token Address
-              <input type="text" onChange={event => setTokenAddress(event.target.value)} />
+              <input
+                type="text"
+                onChange={event => setTokenAddress(event.target.value)}
+                id="Token Address"
+              />
             </label>
           </Form.Field>
         </Form>

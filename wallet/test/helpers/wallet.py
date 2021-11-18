@@ -2,6 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import Select
 from .find_elements import *
 from .metamask import *
 
@@ -72,3 +73,15 @@ def submitTxWallet(txParams, findElements, driver, metamaskTab, nightfallTab, ca
     #  confirmButton.click()
 
     driver.switch_to.window(nightfallTab)
+
+def addTokenNightfallWallet(driver, findElements, tokenInfo):
+  findElements.element_exist_xpath('//button[text()="Add Token"]').click() # Add Token
+  findElements.element_exist_xpath('//*[@id="Token Name"]').send_keys(tokenInfo['tokenName']) # Set Token Name
+  findElements.element_exist_xpath('//*[@id="Token Address"]').send_keys(tokenInfo['tokenAddress']) # Set Token Name
+  findElements.element_exist_xpath('//div[contains(@class, "ui selection dropdown")]').click()
+  findElements.element_exist_xpath('//span[contains(text(), "' + tokenInfo['tokenType'] + '")]').click()
+  findElements.element_exist_xpath('//button[text()="Submit"]').click() # Submit
+
+def removeTokenNightfallWallet(driver, findElements, tokenInfo):
+  findElements.element_exist_xpath('//button[@id="wallet-info-cell-remove-token"]').click() # Remove Token
+  findElements.element_exist_xpath('//*[@title="' + tokenInfo['tokenAddress'].lower() + '"]').click() # Select token

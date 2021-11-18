@@ -44,7 +44,7 @@ function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, 
             )[0];
 	    */
             onAddToken(
-              `0x${l2TokenAddress.toLowerCase()}`,
+              l2TokenAddress.toLowerCase(),
               'ERC20',
               '0x00',
               l1Balance,
@@ -105,7 +105,7 @@ function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, 
   }, []);
 
   const handleOnTokenAddSubmit = (tokenName, tokenType, tokenAddress) => {
-    onAddToken(`0x${tokenAddress.toLowerCase()}`, tokenType, '0', '-', '-');
+    onAddToken(tokenAddress.toLowerCase(), tokenType, '0', '-', '-');
   };
 
   const toggleModalTokenAdd = () => {
