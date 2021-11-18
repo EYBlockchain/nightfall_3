@@ -223,6 +223,7 @@ describe('Running rollback and resync test', () => {
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
       await submitTransaction(commitTxDataToSign, privateKey, challengesAddress, gas);
+      commitTxDataToSign = null;
     });
     it('Should delete the flawed block and rollback the leaves', async () => {
       eventLogs = await waitForEvent(eventLogs, ['Rollback']);
@@ -246,7 +247,7 @@ describe('Running rollback and resync test', () => {
         });
 
         let healthCheck;
-        while (healthCheck.status !== 200) {
+        while (healthCheck !== 200) {
           try {
             // eslint-disable-next-line no-await-in-loop
             healthCheck = (await chai.request(optimistUrl).get('/healthcheck')).status;
@@ -340,6 +341,7 @@ describe('Running rollback and resync test', () => {
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
       await submitTransaction(commitTxDataToSign, privateKey, challengesAddress, gas);
+      commitTxDataToSign = null;
     });
 
     it('Should delete the flawed block and rollback the leaves', async () => {
@@ -362,7 +364,7 @@ describe('Running rollback and resync test', () => {
           stdio: 'ignore',
         });
         let healthCheck;
-        while (healthCheck.status !== 200) {
+        while (healthCheck !== 200) {
           try {
             // eslint-disable-next-line no-await-in-loop
             healthCheck = (await chai.request(optimistUrl).get('/healthcheck')).status;

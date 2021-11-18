@@ -11,10 +11,13 @@ import gen from 'general-number';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
 import logger from 'common-files/utils/logger.mjs';
 import { Nullifier, PublicInputs, Transaction } from '../classes/index.mjs';
-import { findUsableCommitmentsMutex, markNullified, clearPending } from './commitment-storage.mjs';
-import { getSiblingPath } from '../utils/timber.mjs';
+import {
+  findUsableCommitmentsMutex,
+  markNullified,
+  clearPending,
+  getSiblingInfo,
+} from './commitment-storage.mjs';
 import { discoverPeers } from './peers.mjs';
-import { getBlockAndTransactionsByRoot } from '../utils/optimist.mjs';
 import { calculateIvkPkdfromAskNsk } from './keys.mjs';
 
 const {
@@ -50,10 +53,16 @@ async function withdraw(withdrawParams) {
   // proof, the next step is to compute its nullifier;
   const nullifier = new Nullifier(oldCommitment, nsk);
   // and the Merkle path from the commitment to the root
-  const siblingPath = generalise(await getSiblingPath(await oldCommitment.index));
+  const commitmentTreeInfo = await getSiblingInfo(oldCommitment);
+  const siblingPath = generalise(
+    [commitmentTreeInfo.root].concat(
+      commitmentTreeInfo.siblingPath.path.map(p => p.value).reverse(),
+    ),
+  );
   logger.silly(`SiblingPath was: ${JSON.stringify(siblingPath)}`);
+
   // public inputs
-  const root = siblingPath[0];
+  const { root, leafIndex, isOnChain } = commitmentTreeInfo;
   const publicInputs = new PublicInputs([
     oldCommitment.preimage.ercAddress,
     oldCommitment.preimage.tokenId,
@@ -76,7 +85,7 @@ async function withdraw(withdrawParams) {
     nullifier.hash.limbs(32, 8),
     recipientAddress.field(BN128_GROUP_ORDER),
     siblingPath.map(node => node.field(BN128_GROUP_ORDER, false)), // siblingPAth[32] is a sha hash and will overflow a field but it's ok to take the mod here - hence the 'false' flag
-    await oldCommitment.index,
+    leafIndex,
   ].flat(Infinity);
 
   logger.debug(`witness input is ${witness.join(' ')}`);
@@ -85,7 +94,7 @@ async function withdraw(withdrawParams) {
   if (USE_STUBS) folderpath = `${folderpath}_stub`;
   const res = await axios.post(`${PROTOCOL}${ZOKRATES_WORKER_HOST}/generate-proof`, {
     folderpath,
-    inputs: await witness,
+    inputs: witness,
     provingScheme: PROVING_SCHEME,
     backend: BACKEND,
   });
@@ -95,10 +104,7 @@ async function withdraw(withdrawParams) {
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
   const optimisticWithdrawTransaction = new Transaction({
     fee,
-    historicRootBlockNumberL2: [
-      (await getBlockAndTransactionsByRoot(root.hex(32))).block.blockNumberL2,
-      0,
-    ],
+    historicRootBlockNumberL2: [isOnChain, 0],
     transactionType: 3,
     tokenType: items.tokenType,
     publicInputs,
