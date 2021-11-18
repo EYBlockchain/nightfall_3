@@ -1,7 +1,3 @@
-export const url = 'http://localhost:8080';
-export const optimistUrl = 'http://localhost:8081';
-export const optimistWsUrl = 'ws://localhost:8082';
-export const blockchainWsUrl = 'ws://localhost:8546';
 export const tokenId = '0x00';
 export const tokenType = 'ERC20'; // it can be 'ERC721' or 'ERC1155'
 export const value = 10;
@@ -13,12 +9,19 @@ export const fee = 1;
 export const BLOCK_STAKE = 1; // 1 wei
 export const bond = 10; // 10 wei
 export const txPerBlock = 2;
+export const walletTestAddress = '0xDd369AF1Bd4D8fEBEf2cE1716AfEC592e00553AA';
+export const walletTestSigningkey =
+  '0xb861522aeeff651a048a53f27c67a429d42465d95d0915bab453ad554a8cf07a';
 export const ethereumSigningKeyUser1 =
   '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e';
+export const ethereumAddressUser1 = '0x9c8b2276d490141ae1440da660e470e7c0349c63';
 export const ethereumSigningKeyUser2 =
   '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e';
-export const ethereumSigningKeyProposer =
+export const ethereumSigningKeyProposer1 =
   '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d';
+export const ethereumSigningKeyProposer2 =
+  '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb';
+//  '0x35d9f2b07aaa323d56d031934e0eda93dd3d46a49e5a3f026a45f0e83f3c9ede';
 export const ethereumSigningKeyChallenger =
   '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb';
 export const ethereumSigningKeyLiquidityProvider =

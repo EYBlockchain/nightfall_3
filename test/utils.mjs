@@ -5,6 +5,7 @@ import path from 'path';
 import config from 'config';
 import { fileURLToPath } from 'url';
 import rand from '../common-files/utils/crypto/crypto-random.mjs';
+import { ENVIRONMENTS } from '../cli/lib/constants.mjs';
 
 const { dirname } = path;
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -17,7 +18,30 @@ const USE_INFURA = process.env.USE_INFURA === 'true';
 const { INFURA_PROJECT_SECRET, INFURA_PROJECT_ID } = process.env;
 let isSubmitTxLocked = false;
 
-export function connectWeb3(url = 'ws://localhost:8546') {
+export const getCurrentEnvironment = () => {
+  let environment;
+  switch (process.env.network) {
+    case 'localhost':
+      environment = ENVIRONMENTS.localhost;
+      break;
+    case 'ropsten':
+      environment = ENVIRONMENTS.ropsten;
+      break;
+    case 'mainnet':
+      environment = ENVIRONMENTS.mainnet;
+      break;
+    default:
+      environment = ENVIRONMENTS.localhost;
+      break;
+  }
+  return environment;
+};
+
+export function connectWeb3(url) {
+  if (!url) {
+    // eslint-disable-next-line no-param-reassign
+    url = process.env.web3WsUrl;
+  }
   return new Promise(resolve => {
     console.log('Blockchain Connecting ...');
 
@@ -324,12 +348,14 @@ export const depositNTransactions = async (nf3, N, ercAddress, tokenType, value,
     // eslint-disable-next-line no-await-in-loop
     const res = await nf3.deposit(ercAddress, tokenType, value, tokenId, fee);
     expectTransaction(res);
+    console.log('     TransactionHash: ', res.transactionHash);
     depositTransactions.push(res);
   }
   return depositTransactions;
 };
 
 export const waitForEvent = async (eventLogs, expectedEvents, count = 1) => {
+  console.log('Waiting for event...');
   const length = count !== 1 ? count : expectedEvents.length;
   let timeout = 10;
   while (eventLogs.length < length) {
@@ -352,21 +378,5 @@ export const waitForEvent = async (eventLogs, expectedEvents, count = 1) => {
 
   // Have to wait here as client block proposal takes longer now
   await new Promise(resolve => setTimeout(resolve, 3000));
-  return eventLogs;
-};
-
-export const waitForBlockProposed = async (
-  eventLogs,
-  nf3,
-  N,
-  ercAddress,
-  tokenType,
-  value,
-  tokenId,
-  fee,
-) => {
-  await depositNTransactions(nf3, N, ercAddress, tokenType, value, tokenId, fee);
-  // eslint-disable-next-line no-param-reassign
-  eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
   return eventLogs;
 };
