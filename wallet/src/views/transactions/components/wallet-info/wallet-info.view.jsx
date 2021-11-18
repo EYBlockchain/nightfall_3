@@ -37,38 +37,25 @@ function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, 
       const { compressedPkd } = login.nf3.zkpKeys;
       const myL2Balance =
         typeof l2Balance[compressedPkd] === 'undefined' ? {} : l2Balance[compressedPkd];
-      const l2TokenAddressArr = [
-        ...Object.keys(myL2Balance).map(el => `0x${el}`),
-        ...storedTokens.map(el => el.tokenAddress),
-      ];
-      if (l2TokenAddressArr.length) {
-        l2TokenAddressArr.forEach(l2TokenAddress => {
-          // TODO: Pending retrieve tokenIds and token name
-          try {
-            Nf3.Tokens.getERCInfo(l2TokenAddress, login.nf3.ethereumAddress, login.nf3.web3, {
-              toEth: true,
-              tokenId: 0,
-            }).then(l1Balance => {
-              const l2TokenBalance =
-                typeof myL2Balance[l2TokenAddress.replace('0x', '')] === 'undefined'
-                  ? '-'
-                  : myL2Balance[l2TokenAddress.replace('0x', '')].toString();
-              onAddToken(
-                compressedPkd,
-                l2TokenAddress.toLowerCase(),
-                l1Balance.tokenType,
-                '0x00',
-                'TOK',
-                l1Balance.balance,
-                Nf3.Units.fromBaseUnit(l2TokenBalance, l1Balance.decimals),
-              );
-            });
-          } catch (err) {
-            // TODO
-            console.log(err);
-          }
-        });
-      }
+      const l2TokenAddressArr = myL2Balance === {} ? [] : Object.keys(myL2Balance);
+      login.nf3.getL1Balance(login.nf3.ethereumAddress).then(l1Balance => {
+        if (l2TokenAddressArr.length) {
+          l2TokenAddressArr.forEach(l2TokenAddress => {
+            /* TODO. Use correct token
+            const l2Token = token.tokenPool.filter(
+              token => token.tokenAddress === `0x${l2TokenAddress}`,
+            )[0];
+	    */
+            onAddToken(
+              l2TokenAddress.toLowerCase(),
+              'ERC20',
+              '0x00',
+              l1Balance,
+              Web3.utils.fromWei(myL2Balance[l2TokenAddress].toString(), 'nano'),
+            );
+          });
+        }
+      });
     });
   };
 
@@ -125,15 +112,7 @@ function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, 
   }, []);
 
   const handleOnTokenAddSubmit = (tokenName, tokenType, tokenAddress) => {
-    onAddToken(
-      login.nf3.zkpKeys.compressedPkd,
-      `0x${tokenAddress.replace('0x', '').toLowerCase()}`,
-      tokenType,
-      '0x0',
-      tokenName,
-      '-',
-      '-',
-    );
+    onAddToken(tokenAddress.toLowerCase(), tokenType, '0', '-', '-');
   };
 
   const toggleModalTokenAdd = () => {

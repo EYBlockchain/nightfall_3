@@ -168,7 +168,7 @@ loginTestsList = [
   },
   {
     'name': loginBackupTest,
-    'description' : 'Login selecting backup, and accept signature. Then log out, and log back in. Expected result is that you need to sign the second time as well"'
+    'description' : 'Login selecting backup, and accept signature. Then log out, and log back in. Expected result is that you need to sign the second time as well'
   },
   {
     'name': clearBackupTest,
