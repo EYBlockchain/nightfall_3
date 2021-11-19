@@ -8,8 +8,8 @@ import gen from 'general-number';
 import mongo from 'common-files/utils/mongo.mjs';
 import logger from 'common-files/utils/logger.mjs';
 import { Commitment, Nullifier } from '../classes/index.mjs';
-import { getBlockByTransactionHash } from '../utils/optimist.mjs';
 import { isValidWithdrawal } from './valid-withdrawal.mjs';
+import { getBlockByBlockNumberL2, getTransactionByTransactionHash } from './database.mjs';
 
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
 const { generalise } = gen;
@@ -33,7 +33,6 @@ export async function storeCommitment(commitment, nsk) {
     isNullifiedOnChain: Number(commitment.isNullifiedOnChain) || -1,
     nullifier: nullifierHash,
     blockNumber: -1,
-    transactionNullified: null,
   };
   // a chain reorg may cause an attempted overwrite. We should allow this, hence
   // the use of replaceOne.
@@ -95,7 +94,12 @@ export async function markNullified(commitment, transaction) {
   const connection = await mongo.connection(MONGO_URL);
   const query = { _id: commitment.hash.hex(32) };
   const update = {
-    $set: { isPendingNullification: false, isNullified: true, transactionNullified: transaction },
+    $set: {
+      isPendingNullification: false,
+      isNullified: true,
+      nullifierTransactionType: BigInt(transaction.transactionType).toString(),
+      transactionHash: transaction.transactionHash,
+    },
   };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateOne(query, update);
@@ -218,7 +222,7 @@ export async function getWalletBalance() {
   // commitment balances to get a balance for each erc address.
   return wallet
     .map(e => ({
-      ercAddress: BigInt(e.preimage.ercAddress).toString(16),
+      ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
       compressedPkd: e.preimage.compressedPkd,
       tokenId: !!BigInt(e.preimage.tokenId),
       value: Number(BigInt(e.preimage.value)),
@@ -258,7 +262,7 @@ export async function getWalletCommitments() {
   // commitment balances to get a balance for each erc address.
   return wallet
     .map(e => ({
-      ercAddress: BigInt(e.preimage.ercAddress).toString(16),
+      ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`,
       compressedPkd: e.preimage.compressedPkd,
       tokenId: !!BigInt(e.preimage.tokenId),
       value: Number(BigInt(e.preimage.value)),
@@ -283,55 +287,41 @@ export async function getWithdrawCommitments() {
   const db = connection.db(COMMITMENTS_DB);
   const query = {
     isNullified: true,
-    'transactionNullified.transactionType':
-      '0x0000000000000000000000000000000000000000000000000000000000000003',
+    nullifierTransactionType: '3',
+    isNullifiedOnChain: { $gte: 0 },
   };
-  const options = {
-    projection: {
-      preimage: { ercAddress: 1, compressedPkd: 1, tokenId: 1, value: 1 },
-      _id: 0,
-      transactionNullified: 1,
-    },
-  };
-  const withdraws = await db.collection(COMMITMENTS_COLLECTION).find(query, options).toArray();
-  const withdrawsDetails = withdraws
-    .map(e => ({
-      ercAddress: BigInt(e.preimage.ercAddress).toString(16),
-      compressedPkd: e.preimage.compressedPkd,
-      tokenId: !!BigInt(e.preimage.tokenId),
-      value: Number(BigInt(e.preimage.value)),
-      transactionNullified: e.transactionNullified,
-    }))
-    .filter(e => e.tokenId || e.value > 0) // there should be no commitments with tokenId and value of ZERO
-    .map(e => ({
-      compressedPkd: e.compressedPkd,
-      ercAddress: e.ercAddress,
-      balance: e.tokenId ? 1 : e.value,
-      transactionNullified: e.transactionNullified,
-    }));
+  // Get associated nullifiers of commitments that have been spent on-chain and are used for withdrawals.
+  const withdraws = await db.collection(COMMITMENTS_COLLECTION).find(query).toArray();
 
-  const withdrawsDetailsValid = await Promise.all(
-    withdrawsDetails.map(async e => {
-      let valid = false;
-
-      try {
-        const { block, transactions, index } = await getBlockByTransactionHash(
-          e.transactionNullified.transactionHash,
-        );
-        try {
-          const res = await isValidWithdrawal({ block, transactions, index });
-          valid = res;
-        } catch (ex) {
-          valid = false;
-        }
-      } catch (ex) {
-        valid = false;
-      }
+  // To check validity we need the withdrawal transaction, the block the transaction is in and all other
+  // transactions in the block. We need this for on-chain validity checks.
+  const blockTxs = await Promise.all(
+    withdraws.map(async w => {
+      const block = await getBlockByBlockNumberL2(w.isNullifiedOnChain);
+      const transactions = await Promise.all(
+        block.transactionHashes.map(t => getTransactionByTransactionHash(t)),
+      );
+      const index = block.transactionHashes.findIndex(t => t === w.transactionHash);
       return {
-        compressedPkd: e.compressedPkd,
-        ercAddress: e.ercAddress,
-        balance: e.balance,
-        transactionNullified: e.transactionNullified,
+        block,
+        transactions,
+        index,
+        compressedPkd: w.preimage.compressedPkd,
+        ercAddress: `0x${BigInt(w.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to be a correct address length
+        balance: w.preimage.tokenId ? 1 : w.preimage.value,
+      };
+    }),
+  );
+
+  // Run the validity check for each of the potential withdraws we have.
+  const withdrawsDetailsValid = await Promise.all(
+    blockTxs.map(async wt => {
+      const { block, transactions, index } = wt;
+      const valid = await isValidWithdrawal({ block, transactions, index });
+      return {
+        compressedPkd: wt.compressedPkd,
+        ercAddress: wt.ercAddress,
+        balance: wt.balance,
         valid,
       };
     }),
