@@ -449,14 +449,13 @@ export async function getBlocks() {
     .toArray();
 }
 
-/**
-Function to add a set of transactions from the layer 2 mempool once a block has been rolled back
-*/
-export async function addTransactionsToMemPoolFromBlockNumberL2(blockNumberL2) {
+// This function is useful in resetting transacations that have been marked out of the mempool because
+// we have included them in blocks, but those blocks did not end up being mined on-chain.
+export async function resetUnsuccessfulBlockProposedTransactions() {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  const query = { blockNumberL2: { $gte: Number(blockNumberL2) } };
-  const update = { $set: { mempool: true, blockNumberL2: -1 } };
+  const query = { blockNumberL2: -1, mempool: false }; // Transactions out of mempool but not yet on chain
+  const update = { $set: { mempool: true } };
   return db.collection(TRANSACTIONS_COLLECTION).updateMany(query, update);
 }
 
