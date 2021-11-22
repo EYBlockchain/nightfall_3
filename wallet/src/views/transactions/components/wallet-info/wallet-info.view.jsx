@@ -10,6 +10,7 @@ import {
   deleteToken,
 } from '../../../../store/token/token.actions';
 import { TokenAddModal } from './token-add.view.jsx';
+import * as Constant from '../../../../constants';
 
 function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, onDeleteToken }) {
   const [modalTokenAddEnable, setModalTokenAddEnable] = React.useState(false);
@@ -101,7 +102,10 @@ function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, 
   }
 
   React.useEffect(() => {
-    reload();
+    const retrieveBalance = setInterval(() => {
+      reload();
+    }, Constant.BALANCE_INTERVAL);
+    return () => clearInterval(retrieveBalance);
   }, []);
 
   const handleOnTokenAddSubmit = (tokenName, tokenType, tokenAddress) => {
@@ -119,40 +123,40 @@ function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, 
 
   return (
     <Container>
-      <Table padded>
+      <Table padded fixed selectable>
         <Table.Header>
           <Table.Row>
-            <Table.HeaderCell colSpan="4" textAlign="left">
+            <Table.HeaderCell colSpan="4">
               <Table.Cell>Account Address:</Table.Cell>
               <Table.Cell id="wallet-info-cell-ethaddress"> {importedWallet()} </Table.Cell>
             </Table.HeaderCell>
-            <Table.HeaderCell textAlign="right">
-              <Button
-                onClick={reload}
-                id="wallet-info-cell-reload"
-                disabled={token.activeTokenRowId === ''}
-              >
-                <Icon name="sync" />
-                Reload
-              </Button>
-            </Table.HeaderCell>
-            <Table.HeaderCell textAlign="right">
-              <Button onClick={toggleModalTokenAdd} id="wallet-info-cell-add-token">
-                <Icon name="plus" />
-                Add Token
-              </Button>
-            </Table.HeaderCell>
-            <Table.HeaderCell textAlign="right">
-              <Button
-                toggle
-                onClick={removeToken}
-                id="wallet-info-cell-remove-token"
-                active={removeTokenEnable && token.tokenPool.length}
-                disabled={token.tokenPool.length === 0}
-              >
-                {' '}
-                <Icon name="minus" /> Remove Token{' '}
-              </Button>
+            <Table.HeaderCell colSpan="3">
+              <Table.Cell />
+              <Table.Cell />
+              <Table.Cell>
+                <Button
+                  icon
+                  labelPosition="left"
+                  onClick={toggleModalTokenAdd}
+                  id="wallet-info-cell-add-token"
+                >
+                  <Icon name="plus" />
+                  Add Token
+                </Button>
+              </Table.Cell>
+              <Table.Cell>
+                <Button
+                  icon
+                  labelPosition="left"
+                  id="wallet-info-cell-remove-token"
+                  toggle
+                  onClick={removeToken}
+                  active={removeTokenEnable && token.tokenPool.length}
+                  disabled={token.tokenPool.length === 0}
+                >
+                  <Icon name="minus" /> Remove Token
+                </Button>
+              </Table.Cell>
             </Table.HeaderCell>
           </Table.Row>
         </Table.Header>
