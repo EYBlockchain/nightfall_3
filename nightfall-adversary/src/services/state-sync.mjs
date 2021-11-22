@@ -126,7 +126,6 @@ export default async proposer => {
       // eslint-disable-next-line no-await-in-loop
       await syncState(proposer, fromBlock, toBlock);
     }
-    // we should only start making challenges if this instance was meant to be a challenger
     if (process.env.IS_CHALLENGER === 'true') await startMakingChallenges();
   }
   const currentProposer = (await stateContractInstance.methods.currentProposer().call())

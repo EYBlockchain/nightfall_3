@@ -4,7 +4,7 @@
   "description": "Optimistic Nightfall",
   "main": "./nightfall-client/src/index.mjs",
   "scripts": {
-    "test": "mocha --timeout 0 --bail test/http.mjs test/neg-http.mjs",
+    "test": "mocha --timeout 0 --bail test/http.mjs test/neg-http.mjs test/sdk-neg-http",
     "testnet-test": "EVENT_RETRIEVE_RETRIES=10 USE_INFURA=true FROM_ADDRESS=0x29100E7E3dA6654BF63d9E7804ADe518aCc5AaA5 BLOCKCHAIN_URL=wss://ropsten.infura.io/ws/v3/INFURA_PROJECT_ID mocha --timeout 0 --bail test/http.mjs test/neg-http.mjs",
     "test-gas": "mocha --timeout 0 --bail test/tx-gas.mjs",
     "test-chain-reorg": "mocha --timeout 0 --bail test/chain-reorg.mjs",

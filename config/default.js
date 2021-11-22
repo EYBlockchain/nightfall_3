@@ -1,6 +1,7 @@
 module.exports = {
   COMMITMENTS_DB: 'nightfall_commitments',
   OPTIMIST_DB: 'optimist_data',
+  ADVERSARY_DB: 'adversary_data',
   METADATA_COLLECTION: 'metadata',
   TRANSACTIONS_COLLECTION: 'transactions',
   SUBMITTED_BLOCKS_COLLECTION: 'blocks',

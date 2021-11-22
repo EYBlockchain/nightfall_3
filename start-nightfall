@@ -2,6 +2,7 @@
 
 VOLUME_LIST=$(docker volume ls -q)
 FILE=
+ADVERSARY=
 STUBS=
 
 usage()
@@ -10,6 +11,7 @@ usage()
   echo "  -g or --ganache; for a ganache simulator"
   echo "  -l or --localhost; to connect to an already running blockchain on ws://localhost:8546"
   echo "  -s or --stubs; runs with circuits stubbed out (faster but no checking of ZKP code) - use with either -g or -l"
+  echo "  -a or --adversary; deploys an adversarial block proposer"
   echo "  -h or --help; to print this message"
   echo "  -t or --testnet; to connect infura ropsten testnet"
 }
@@ -29,6 +31,8 @@ while [ -n "$1" ]; do
                               ;;
       -h | --help )           usage
                               ;;
+      -a | --adversary)       ADVERSARY="-f docker-compose.adversary.yml"
+                              ;;
       -s | --stubs )          STUBS="-f docker-compose.stubs.yml"
                               ;;
       * )                     usage
@@ -42,9 +46,9 @@ if [ -z "$FILE" ]; then
   exit 1
 fi
 # shut down cleanly in the event of a cntl-c etc. We don't want to leave containers running
-trap "docker-compose $FILE $STUBS down --remove-orphans -t 1; exit 1" SIGHUP SIGINT SIGTERM
+trap "docker-compose $FILE $STUBS $ADVERSARY down --remove-orphans -t 1; exit 1" SIGHUP SIGINT SIGTERM
 
-docker-compose -f docker-compose.yml $FILE $STUBS  down --remove-orphans
+docker-compose -f docker-compose.yml $FILE $STUBS $ADVERSARY down --remove-orphans
 
 # if-else block checks - volume exist and then removes it.
 if [[ $(echo $VOLUME_LIST | grep nightfall_3_timber-database-volume1) ]]; then
@@ -107,4 +111,4 @@ if [[ -d "$DIR" ]]; then
   rm -dr common-files/node_modules
 fi
 #docker-compose -f docker-compose.yml $FILE up -d deployer
-docker-compose $FILE $STUBS  up
+docker-compose $FILE $STUBS $ADVERSARY up

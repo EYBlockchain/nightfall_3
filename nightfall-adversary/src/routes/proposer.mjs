@@ -17,6 +17,7 @@ import {
 } from '../services/database.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
+import { concatBlockConfig } from '../services/block-assembler.mjs';
 
 const router = express.Router();
 const { STATE_CONTRACT_NAME, PROPOSERS_CONTRACT_NAME, SHIELD_CONTRACT_NAME, ZERO } = config;
@@ -25,7 +26,8 @@ const { STATE_CONTRACT_NAME, PROPOSERS_CONTRACT_NAME, SHIELD_CONTRACT_NAME, ZERO
  * Function to return a raw transaction that registers a proposer.  This just
  * provides the tx data, the user will need to append the registration bond
  * amount.  The user must post the address being registered.  This is for the
- * Optimist app to use for it to decide when to start proposing blocks.  It is * not part of the unsigned blockchain transaction that is returned.
+ * adversary app to use for it to decide when to start proposing blocks.
+ * It is not part of the unsigned blockchain transaction that is returned.
  */
 router.post('/register', async (req, res, next) => {
   logger.debug(`register proposer endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
@@ -237,6 +239,17 @@ router.get('/mempool', async (req, res, next) => {
 });
 
 /**
+ * Function to provide a config that holds the type of bad blocks that adversary
+ * need to create
+ */
+router.post('/config', async (req, res) => {
+  logger.debug(`config endpoint received POST`);
+  logger.silly(`With content ${JSON.stringify(req.body, null, 2)}`);
+  concatBlockConfig(req.body);
+  res.sendStatus(200);
+});
+
+/**
  * Function to Propose a state update block  This just
  * provides the tx data, the user will need to call the blockchain client
  * @deprecated - this is now an automated process - no need to manually propose
@@ -301,24 +314,12 @@ router.post('/offchain-transaction', async (req, res) => {
   logger.debug(`proposer/offchain-transaction endpoint received POST`);
   logger.silly(`With content ${JSON.stringify(req.body, null, 2)}`);
   const { transaction } = req.body;
-  // When a transaction is built by client, they are generalised into hex(32) interfacing with web3
-  // The response from on-chain events converts them to saner string values (e.g. uint64 etc).
-  // Since we do the transfer off-chain, we do the conversation manually here.
-  const { transactionType, tokenType, value, historicRootBlockNumberL2, fee, ...tx } = transaction;
   try {
-    switch (Number(transactionType)) {
+    switch (Number(transaction.transactionType)) {
       case 1:
       case 2:
       case 3: {
-        await transactionSubmittedEventHandler({
-          offchain: true,
-          transactionType: Number(transactionType).toString(),
-          tokenType: Number(tokenType).toString(),
-          value: Number(value).toString(),
-          fee: Number(fee).toString(),
-          historicRootBlockNumberL2: historicRootBlockNumberL2.map(h => Number(h).toString()),
-          ...tx,
-        });
+        await transactionSubmittedEventHandler({ offchain: true, ...transaction });
         res.sendStatus(200);
         break;
       }

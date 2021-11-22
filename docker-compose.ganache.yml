@@ -8,10 +8,13 @@ services:
     ports:
       - 8546:8546
     command:
-      ganache-cli --accounts=10 --defaultBalanceEther=1000 --gasLimit=0xbebc20 --deterministic -i 4378921 -p 8546
+      ganache-cli --accounts=10 --defaultBalanceEther=1000 --gasLimit=0xbebc20 --deterministic -i
+      4378921 -p 8546
       --account="0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e,10000000000000000000000"
       --account="0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d,10000000000000000000000"
       --account="0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb,10000000000000000000000"
       --account="0xfbc1ee1c7332e2e5a76a99956f50b3ba2639aff73d56477e877ef8390c41e0c6,10000000000000000000000"
+      --account="0x72fc398f06b17e1fa5e3dbd9909861172438c8bd4433ce006d7a63ba1b8382d2,10000000000000000000000"
+      --account="0x371c406a2b27499324ecc45343283465b411508ebbb073e8d05caeea115c4006,10000000000000000000000"
     networks:
       - nightfall_network

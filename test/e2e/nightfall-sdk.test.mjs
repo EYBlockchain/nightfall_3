@@ -1,7 +1,6 @@
 import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
-// import config from 'config';
 import Nf3 from '../../cli/lib/nf3.mjs';
 import {
   getBalance,
@@ -10,7 +9,6 @@ import {
   topicEventMapping,
   timeJump,
 } from '../utils.mjs';
-// import { generateKeys } from '../../nightfall-client/src/services/keys.mjs';
 
 const { BLOCKCHAIN_TESTNET_URL } = process.env;
 
@@ -125,8 +123,6 @@ describe('Testing the Nightfall SDK', () => {
       await nf3LiquidityProvider.advanceInstantWithdrawal(withdrawTransactionHash);
       console.log(`Serviced instant-withdrawal request from ${paidBy}, with fee ${amount}`);
     });
-
-    // ({ pkd: pkd2, compressedPkd: compressedPkd2 } = await generateKeys(ZKP_KEY_LENGTH));
 
     nodeInfo = await web3.eth.getNodeInfo();
 

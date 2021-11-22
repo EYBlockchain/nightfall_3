@@ -54,7 +54,7 @@ describe('Testing the http API', () => {
   const tokenType = 'ERC20'; // it can be 'ERC721' or 'ERC1155'
   const value = 10;
   const value2 = 12;
-  // this is the etherum private key for accounts[0]
+  // this is the ethereum private key for accounts[0]
   let privateKey = '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e';
   const gas = 10000000;
   // this is also accounts[0]
@@ -769,6 +769,21 @@ describe('Testing the http API', () => {
       const res = await chai.request(senderUrl).get('/commitment/balance');
       expect(res.body).to.have.property('balance');
       expect(res.body.balance).to.be.an('object');
+    });
+  });
+
+  describe('De register proposer', () => {
+    it('should de-register a proposer', async () => {
+      const myAddress = (await getAccounts())[0];
+      const res = await chai.request(optimistUrl).post('/proposer/de-register');
+      const { txDataToSign } = res.body;
+      expect(txDataToSign).to.be.a('string');
+      const receipt = await submitTransaction(txDataToSign, privateKey, proposersAddress, gas);
+      expect(receipt).to.have.property('transactionHash');
+      expect(receipt).to.have.property('blockHash');
+      const { proposers } = (await chai.request(optimistUrl).get('/proposer/proposers')).body;
+      const thisProposer = proposers.filter(p => p.thisAddresss === myAddress);
+      expect(thisProposer.length).to.be.equal(0);
     });
   });
 

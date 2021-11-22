@@ -9,13 +9,7 @@ Here are the things that could be wrong with a transaction:
 import config from 'config';
 import axios from 'axios';
 import logger from 'common-files/utils/logger.mjs';
-import {
-  Transaction,
-  VerificationKey,
-  Proof,
-  TransactionError,
-  // PublicInputs,
-} from '../classes/index.mjs';
+import { Transaction, VerificationKey, Proof, TransactionError } from '../classes/index.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import { getBlockByBlockNumberL2 } from './database.mjs';
 
@@ -57,15 +51,19 @@ async function checkTransactionType(transaction) {
         transaction.compressedSecrets.length !== 8 ||
         transaction.proof.every(p => p === ZERO) ||
         // This extra check is unique to deposits
-        Number(transaction.historicRootBlockNumberL2[0]) !== 0 ||
-        Number(transaction.historicRootBlockNumberL2[1]) !== 0
+        Number(transaction.historicRootBlockNumberL2) !== 0
       )
         throw new TransactionError(
           'The data provided was inconsistent with a transaction type of DEPOSIT',
           1,
         );
+      // if (
+      //
+      // ) {
+      // }
       break;
-    case 1: // single token transaction
+    case 1: {
+      // single token transaction
       if (
         transaction.publicInputHash === ZERO ||
         ![0, 1, 2].includes(Number(transaction.tokenType)) ||
@@ -73,6 +71,7 @@ async function checkTransactionType(transaction) {
         (Number(transaction.tokenType) === 1 &&
           (transaction.tokenId === ZERO || Number(transaction.value) !== 0)) || // For ERC721, tokenID can be zero, but value has to be zero. tokenID can be zero because that is an acceptable value too
         // For ERC1155 (Number(transaction.tokenType) === 3), both can be zero as they are both acceptable values. SO e don't check for anything
+        transaction.ercAddress === ZERO ||
         transaction.recipientAddress !== ZERO ||
         transaction.commitments[0] === ZERO ||
         transaction.commitments[1] !== ZERO ||
@@ -89,6 +88,8 @@ async function checkTransactionType(transaction) {
           1,
         );
       break;
+    }
+
     case 2: // double token transaction
       if (
         transaction.publicInputHash === ZERO ||
@@ -142,18 +143,12 @@ async function checkTransactionType(transaction) {
 async function checkHistoricRoot(transaction) {
   // Deposit transaction have a historic root of 0
   // the validity is tested in checkTransactionType
-  if (Number(transaction.transactionType) === 1 || Number(transaction.transactionType) === 3) {
-    const historicRootFirst = await getBlockByBlockNumberL2(
-      transaction.historicRootBlockNumberL2[0],
-    );
-    if (historicRootFirst === null)
-      throw new TransactionError('The historic root in the transaction does not exist', 3);
-  }
-  if (Number(transaction.transactionType) === 2) {
-    const [historicRootFirst, historicRootSecond] = await Promise.all(
-      transaction.historicRootBlockNumberL2.map(h => getBlockByBlockNumberL2(h)),
-    );
-    if (historicRootFirst === null || historicRootSecond === null)
+  if (
+    Number(transaction.transactionType) === 1 ||
+    Number(transaction.transactionType) === 2 ||
+    Number(transaction.transactionType) === 3
+  ) {
+    if ((await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2)) === null)
       throw new TransactionError('The historic root in the transaction does not exist', 3);
   }
 }

@@ -93,6 +93,25 @@ class Nf3 {
   }
 
   /**
+  Method for generating zkp (ask, nsk, ivk, pkd) keys used in deposit, transfer and withdraw later
+  @method
+  @returns {Object} containing ask, nsk, ivk, pkd
+  */
+  async generateZKPKeys() {
+    const res = await axios.post(`${this.clientBaseUrl}/generate-keys`);
+    return res.data;
+  }
+
+  /**
+  Getter for zkp (ask, nsk, ivk, pkd) keys used in deposit, transfer and withdraw later
+  @method
+  @returns {Object} containing ask, nsk, ivk, pkd
+  */
+  async getZKPKeys() {
+    return this.zkpKeys;
+  }
+
+  /**
   Setter for the ethereum private key, in case it wasn't known at build time.
   This will also update the corresponding Ethereum address that Nf_3 uses.
   @method
@@ -513,6 +532,22 @@ class Nf3 {
   }
 
   /**
+  Get current proposer
+  @method
+  @async
+  @returns {array} A promise that resolves to the Ethereum transaction receipt.
+  */
+  async getCurrentProposer() {
+    const res = await axios.get(
+      `${this.optimistBaseUrl}/proposer/current-proposer`,
+      //   {
+      //   address: this.ethereumAddress,
+      // }
+    );
+    return res.data.currentProposer;
+  }
+
+  /**
   Get all the list of existing proposers.
   @method
   @async
@@ -633,8 +668,8 @@ class Nf3 {
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
       const { type, txDataToSign } = msg;
-      if (type === 'challenge') {
-        await this.submitTransaction(txDataToSign, this.stateContractAddress, 0);
+      if (type === 'commit' || type === 'challenge') {
+        await this.submitTransaction(txDataToSign, this.challengesContractAddress, 0);
       }
     };
   }
@@ -802,5 +837,8 @@ class Nf3 {
     return this.web3.eth.net.getId();
   }
 }
+
+// Some functions return for adversary. For testing purposes only
+// TODO remove these functions
 
 export default Nf3;
