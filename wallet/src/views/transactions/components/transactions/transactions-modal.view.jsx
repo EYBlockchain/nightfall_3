@@ -20,11 +20,11 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
   const [directTransactionEnable, setDirectTransactionEnable] = React.useState(false);
   const [pkdX, setPkdX] = React.useState({
     value: '',
-    error: null
+    error: null,
   });
   const [pkdY, setPkdY] = React.useState({
     value: '',
-    error: null
+    error: null,
   });
 
   const toggleAll = () => {
@@ -49,17 +49,12 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
       pointing: 'above',
     };
     if (key === 'PK-Y') {
-      if (!/^0x([A-Fa-f0-9]{63,64})$/.test(value))
-        return setPkdY({ value: '', error });
+      if (!/^0x([A-Fa-f0-9]{63,64})$/.test(value)) return setPkdY({ value: '', error });
       setPkdY({ value, error: null });
     }
     if (transactions.txType === 'withdraw') {
-      if (!/^0x([A-Fa-f0-9]{40})$/.test(value))
-        return setPkdX({ value: '', error });
-    } else {
-      if (!/^0x([A-Fa-f0-9]{63,64})$/.test(value))
-        return setPkdX({ value: '', error });
-    }
+      if (!/^0x([A-Fa-f0-9]{40})$/.test(value)) return setPkdX({ value: '', error });
+    } else if (!/^0x([A-Fa-f0-9]{63,64})$/.test(value)) return setPkdX({ value: '', error });
     return setPkdX({ value, error: null });
   }
 
@@ -90,7 +85,8 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
         break;
 
       default: {
-        const pkd = pkdX.value === '' || pkdY.value === '' ? login.nf3.zkpKeys.pkd : [pkdX.value, pkdY.value];
+        const pkd =
+          pkdX.value === '' || pkdY.value === '' ? login.nf3.zkpKeys.pkd : [pkdX.value, pkdY.value];
         const { txType } = transactions;
         onSubmitTx({
           txType,
