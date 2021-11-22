@@ -149,7 +149,9 @@ describe('Testing the Nightfall SDK', () => {
 
     it('should get the address of the test ERC contract stub', async function () {
       const res = await nf3User1.getContractAddress('ERCStub');
-      ercAddress = res;
+      // Lowercase is useful here because BigInt(ercAddress).toString(16) applies a lowercase check
+      // we will use this as a key in our dictionary so it's important they match.
+      ercAddress = res.toLowerCase();
       expect(res).to.be.a('string').and.to.include('0x');
     });
 
@@ -273,8 +275,7 @@ describe('Testing the Nightfall SDK', () => {
   describe('Balance tests', () => {
     it('should increment the balance after deposit some crypto', async function () {
       let balances = await nf3User1.getLayer2Balances();
-      const currentPkdBalance =
-        balances[nf3User1.zkpKeys.compressedPkd][BigInt(ercAddress).toString(16)];
+      const currentPkdBalance = balances[nf3User1.zkpKeys.compressedPkd][ercAddress];
       // We do 2 deposits of 10 each
       for (let i = 0; i < txPerBlock; i++) {
         // eslint-disable-next-line no-await-in-loop
@@ -289,8 +290,7 @@ describe('Testing the Nightfall SDK', () => {
       }
       eventLogs.shift();
       balances = await nf3User1.getLayer2Balances();
-      const afterPkdBalance =
-        balances[nf3User1.zkpKeys.compressedPkd][BigInt(ercAddress).toString(16)];
+      const afterPkdBalance = balances[nf3User1.zkpKeys.compressedPkd][ercAddress];
       expect(afterPkdBalance - currentPkdBalance).to.be.equal(txPerBlock * value);
     });
 
@@ -309,9 +309,8 @@ describe('Testing the Nightfall SDK', () => {
       eventLogs.shift();
 
       let balances = await nf3User1.getLayer2Balances();
-      const currentPkdBalancePkd =
-        balances[nf3User1.zkpKeys.compressedPkd][BigInt(ercAddress).toString(16)];
-      const currentPkdBalancePkd2 = 0; // balances[compressedPkd2][BigInt(ercAddress).toString(16)];
+      const currentPkdBalancePkd = balances[nf3User1.zkpKeys.compressedPkd][ercAddress];
+      const currentPkdBalancePkd2 = 0; // balances[compressedPkd2][ercAddress];
       for (let i = 0; i < txPerBlock; i++) {
         // eslint-disable-next-line no-await-in-loop
         res = await nf3User1.transfer(
@@ -333,10 +332,8 @@ describe('Testing the Nightfall SDK', () => {
       }
       eventLogs.shift();
       balances = await nf3User1.getLayer2Balances();
-      const afterPkdBalancePkd =
-        balances[nf3User1.zkpKeys.compressedPkd][BigInt(ercAddress).toString(16)];
-      const afterPkdBalancePkd2 =
-        balances[nf3User2.zkpKeys.compressedPkd][BigInt(ercAddress).toString(16)];
+      const afterPkdBalancePkd = balances[nf3User1.zkpKeys.compressedPkd][ercAddress];
+      const afterPkdBalancePkd2 = balances[nf3User2.zkpKeys.compressedPkd][ercAddress];
       expect(afterPkdBalancePkd - currentPkdBalancePkd).to.be.equal(-txPerBlock * value);
       expect(afterPkdBalancePkd2 - currentPkdBalancePkd2).to.be.equal(txPerBlock * value);
     });
@@ -345,9 +342,7 @@ describe('Testing the Nightfall SDK', () => {
   describe('Get commitments tests', () => {
     it('should get current commitments for the account', async function () {
       const commitments = await nf3User1.getLayer2Commitments();
-      expect(commitments[nf3User1.zkpKeys.compressedPkd]).to.have.property(
-        BigInt(ercAddress).toString(16),
-      );
+      expect(commitments[nf3User1.zkpKeys.compressedPkd]).to.have.property(ercAddress);
     });
   });
 
@@ -458,6 +453,7 @@ describe('Testing the Nightfall SDK', () => {
       eventLogs.shift();
 
       let latestWithdrawTransactionHash = ''; // for instant withdrawals
+      console.log(`instant withdrawal call`);
       await nf3User1.withdraw(
         false,
         ercAddress,
@@ -468,6 +464,7 @@ describe('Testing the Nightfall SDK', () => {
         fee,
       );
       latestWithdrawTransactionHash = nf3User1.getLatestWithdrawHash();
+      console.log(`ilatestWithdrawTransactionHash: ${latestWithdrawTransactionHash}`);
       expect(latestWithdrawTransactionHash).to.be.a('string').and.to.include('0x');
 
       if (eventLogs[0] !== 'blockProposed') {
@@ -548,13 +545,11 @@ describe('Testing the Nightfall SDK', () => {
   describe('Get pending withdraw commitments tests', () => {
     it('should get current pending withdraw commitments for the account (with 0 valid commitments)', async function () {
       const commitments = await nf3User1.getPendingWithdraws();
+      console.log(`commitments: ${JSON.stringify(commitments)}`);
+      expect(commitments[nf3User1.zkpKeys.compressedPkd][ercAddress].length).to.be.greaterThan(0);
       expect(
-        commitments[nf3User1.zkpKeys.compressedPkd][BigInt(ercAddress).toString(16)].length,
-      ).to.be.greaterThan(0);
-      expect(
-        commitments[nf3User1.zkpKeys.compressedPkd][BigInt(ercAddress).toString(16)].filter(
-          c => c.valid === true,
-        ).length,
+        commitments[nf3User1.zkpKeys.compressedPkd][ercAddress].filter(c => c.valid === true)
+          .length,
       ).to.be.equal(0);
     });
   });
@@ -582,23 +577,24 @@ describe('Testing the Nightfall SDK', () => {
     let endBalance;
 
     it('should get a valid withdraw commitment with a time-jump capable test client (because sufficient time has passed)', async function () {
-      if (nodeInfo.includes('TestRPC')) await timeJump(3600 * 24 * 10); // jump in time by 10 days
+      if (nodeInfo.includes('TestRPC')) await timeJump(3600 * 24 * 10); // jump in time by 50 days
+      console.log(`timeJump`);
+      for (let i = 0; i < txPerBlock; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        await nf3User1.deposit(ercAddress, tokenType, value, tokenId, fee);
+      }
       const commitments = await nf3User1.getPendingWithdraws();
+      expect(commitments[nf3User1.zkpKeys.compressedPkd][ercAddress].length).to.be.greaterThan(0);
       expect(
-        commitments[nf3User1.zkpKeys.compressedPkd][BigInt(ercAddress).toString(16)].length,
-      ).to.be.greaterThan(0);
-      expect(
-        commitments[nf3User1.zkpKeys.compressedPkd][BigInt(ercAddress).toString(16)].filter(
-          c => c.valid === true,
-        ).length,
+        commitments[nf3User1.zkpKeys.compressedPkd][ercAddress].filter(c => c.valid === true)
+          .length,
       ).to.be.greaterThan(0);
     });
 
     it('should create a passing finalise-withdrawal with a time-jump capable test client (because sufficient time has passed)', async function () {
-      if (nodeInfo.includes('TestRPC')) await timeJump(3600 * 24 * 10); // jump in time by 10 days
-      startBalance = await getBalance(nf3User1.ethereumAddress);
       // now we need to sign the transaction and send it to the blockchain
       // this will only work if we're using Ganache, otherwiise expect failure
+      startBalance = await getBalance(nf3User1.ethereumAddress);
       if (nodeInfo.includes('TestRPC')) {
         const res = await nf3User1.finaliseWithdrawal(transactions[0]);
         expect(res).to.have.property('transactionHash');

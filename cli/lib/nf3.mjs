@@ -360,14 +360,8 @@ class Nf3 {
   */
   async finaliseWithdrawal(withdrawTransactionHash) {
     // find the L2 block containing the L2 transaction hash
-    let res = await axios.get(
-      `${this.optimistBaseUrl}/block/transaction-hash/${withdrawTransactionHash}`,
-    );
-    const { block, transactions, index } = res.data;
-    res = await axios.post(`${this.clientBaseUrl}/finalise-withdrawal`, {
-      block,
-      transactions,
-      index,
+    const res = await axios.post(`${this.clientBaseUrl}/finalise-withdrawal`, {
+      transactionHash: withdrawTransactionHash,
     });
     return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, 0);
   }
@@ -381,16 +375,9 @@ class Nf3 {
   @param {number} fee - the amount being paid for the instant withdrawal service
   */
   async requestInstantWithdrawal(withdrawTransactionHash, fee) {
-    // find the L2 block containing the L2 transaction hash
-    let res = await axios.get(
-      `${this.optimistBaseUrl}/block/transaction-hash/${withdrawTransactionHash}`,
-    );
-    const { block, transactions, index } = res.data;
     // set the instant withdrawal fee
-    res = await axios.post(`${this.clientBaseUrl}/set-instant-withdrawal`, {
-      block,
-      transactions,
-      index,
+    const res = await axios.post(`${this.clientBaseUrl}/set-instant-withdrawal`, {
+      transactionHash: withdrawTransactionHash,
     });
     return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, fee);
   }

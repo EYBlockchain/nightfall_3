@@ -4,7 +4,7 @@ An optimistic layer 2 Block class
 import config from 'config';
 import Timber from 'common-files/classes/timber.mjs';
 import Web3 from 'common-files/utils/web3.mjs';
-import { compressProof } from '../utils/curve-maths/curves.mjs';
+import { compressProof } from 'common-files/utils/curve-maths/curves.mjs';
 import { getLatestTree, getLatestBlockInfo } from '../services/database.mjs';
 
 const { ZERO, PROPOSE_BLOCK_TYPES } = config;

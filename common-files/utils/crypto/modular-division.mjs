@@ -1,6 +1,7 @@
 // modular division
+// eslint-disable-next-line import/no-extraneous-dependencies
 import config from 'config';
-import { mulMod, addMod } from 'common-files/utils/crypto/number-theory.mjs';
+import { mulMod, addMod } from './number-theory.mjs';
 
 const { BN128_PRIME_FIELD } = config;
 
