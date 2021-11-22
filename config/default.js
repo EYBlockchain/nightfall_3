@@ -30,8 +30,6 @@ module.exports = {
     `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`,
   USE_INFURA: process.env.USE_INFURA === 'true',
   ETH_PRIVATE_KEY: process.env.ETH_PRIVATE_KEY,
-  TIMBER_HOST: process.env.TIMBER_HOST || 'timber',
-  TIMBER_PORT: process.env.TIMBER_PORT || 80,
   OPTIMIST_HOST: process.env.OPTIMIST_HOST || 'optimist',
   OPTIMIST_PORT: process.env.OPTIMIST_PORT || 80,
   WEB3_OPTIONS: {
@@ -60,7 +58,6 @@ module.exports = {
   BN128_GROUP_ORDER: 21888242871839275222246405745257275088548364400416034343698204186575808495617n,
   BN128_PRIME_FIELD: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
   TRANSACTIONS_PER_BLOCK: Number(process.env.TRANSACTIONS_PER_BLOCK) || 2,
-  TIMBER_SYNC_RETRIES: 5, // Sets amount of exponential backoff attempts to sync with timber.
   PROPOSE_BLOCK_TYPES: [
     '(uint48,address,bytes32,uint256,bytes32)',
     '(uint64,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[8],uint[4])[]',
