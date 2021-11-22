@@ -16,7 +16,7 @@ library Utils {
         t.historicRootBlockNumberL2,
         t.transactionType,
         t.tokenType,
-        t.publicInputHash,
+        t.publicInputs,
         t.tokenId,
         t.ercAddress, // Take in as bytes32 for consistent hashing
         t.recipientAddress,

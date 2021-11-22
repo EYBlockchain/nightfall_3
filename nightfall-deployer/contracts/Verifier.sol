@@ -48,15 +48,15 @@ library Verifier {
         Pairing.G1Point[] gamma_abc;
   }
 
-  function verify(uint256[] memory _proof, uint256 _publicInputsHash, uint256[] memory _vk) public returns (bool result) {
-      if (verificationCalculation(_proof, _publicInputsHash, _vk) == 0) {
+  function verify(uint256[] memory _proof, uint256[] memory _publicInputs, uint256[] memory _vk) public returns (bool result) {
+      if (verificationCalculation(_proof, _publicInputs, _vk) == 0) {
           result = true;
       } else {
           result = false;
       }
   }
 
-  function verificationCalculation(uint256[] memory _proof, uint256 _publicInputsHash, uint256[] memory _vk) public returns (uint) {
+  function verificationCalculation(uint256[] memory _proof, uint256[] memory _publicInputs, uint256[] memory _vk) public returns (uint) {
 
       Proof_G16 memory proof;
       Pairing.G1Point memory vk_dot_inputs;
@@ -84,7 +84,7 @@ library Verifier {
       }
       /* require(vk.gamma.abc.length == 2, "Length of vk.gamma.abc is incorrect!"); */
       // Replacing for the above require statement so that the proof verification returns false. Removing require statements to ensure a wrong proof verification challenge's require statement correctly works
-      if (vk.gamma_abc.length != 2) {
+      if (_publicInputs.length + 1 != vk.query.length) {
         return 1;
       }
 
@@ -93,13 +93,15 @@ library Verifier {
           // The following success variables replace require statements with corresponding functions called. Removing require statements to ensure a wrong proof verification challenge's require statement correctly works
           bool success_sm_qpih;
           bool success_vkdi_sm_qpih;
-          (sm_qpih, success_sm_qpih) = Pairing.scalar_mul(vk.gamma_abc[1], _publicInputsHash);
-          (vk_dot_inputs, success_vkdi_sm_qpih) = Pairing.addition(
-            vk_dot_inputs,
-            sm_qpih
-          );
-          if (!success_sm_qpih || !success_vkdi_sm_qpih) {
-          return 2;
+          for (uint i = 0; i < _publicInputs.length; i++) {
+            (sm_qpih, success_sm_qpih) = Pairing.scalar_mul(vk.query[i + 1], _publicInputs[i]);
+            (vk_dot_inputs, success_vkdi_sm_qpih) = Pairing.addition(
+              vk_dot_inputs,
+              sm_qpih
+            );
+            if (!success_sm_qpih || !success_vkdi_sm_qpih) {
+            return 2;
+          }
          }
       }
 
