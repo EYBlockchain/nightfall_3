@@ -69,7 +69,7 @@ jobs:
       - name: Start Containers
         run: |
           docker-compose build
-          ./start-nightfall -g -a &> adversary-script.log &disown
+          ./start-nightfall -g -a -s &> adversary-script.log &disown
 
       - name: wait 1000s for Containers startup and setup completion
         run: sleep 1000
@@ -81,7 +81,7 @@ jobs:
       - name: Run integration test
         run: |
           npm ci
-          cd cli && npm ci && cd ../ 
+          cd cli && npm ci && cd ../
           npm run adv
 
       - name: debug logs - after integration test run
