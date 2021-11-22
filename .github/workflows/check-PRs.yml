@@ -81,6 +81,7 @@ jobs:
       - name: Run integration test
         run: |
           npm ci
+          cd cli && npm ci && cd ../ 
           npm run adv
 
       - name: debug logs - after integration test run
