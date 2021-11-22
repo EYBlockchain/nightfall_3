@@ -1,5 +1,4 @@
 name: Wallet-selenium
-
 on: workflow_dispatch
 jobs:
   build:
