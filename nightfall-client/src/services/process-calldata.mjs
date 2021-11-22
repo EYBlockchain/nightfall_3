@@ -5,7 +5,8 @@ much cheaper, although the offchain part is more complex.
 */
 import config from 'config';
 import Web3 from 'common-files/utils/web3.mjs';
-// import { waitForContract } from '../event-handlers/subscribe.mjs';
+import Transaction from 'common-files/classes/transaction.mjs';
+import { decompressProof } from 'common-files/utils/curve-maths/curves.mjs';
 
 const { PROPOSE_BLOCK_TYPES } = config;
 
@@ -18,12 +19,13 @@ async function getProposeBlockCalldata(eventData) {
   const decoded = web3.eth.abi.decodeParameters(PROPOSE_BLOCK_TYPES, abiBytecode);
   const blockData = decoded['0'];
   const transactionsData = decoded['1'];
-  const [leafCount, proposer, root, blockNumberL2] = blockData;
+  const [leafCount, proposer, root, blockNumberL2, previousBlockHash] = blockData;
   const block = {
     proposer,
     root,
     leafCount: Number(leafCount),
     blockNumberL2: Number(blockNumberL2),
+    previousBlockHash,
   };
   const transactions = transactionsData.map(t => {
     const [
@@ -52,14 +54,16 @@ async function getProposeBlockCalldata(eventData) {
       commitments,
       nullifiers,
       compressedSecrets,
-      proof, // note - this is not decompressed here
+      proof: decompressProof(proof),
     };
     // note, this transaction is incomplete in that the 'fee' field is empty.
     // that shouldn't matter as it's not needed.
+    transaction.transactionHash = Transaction.calcHash(transaction);
     return transaction;
   });
+  block.transactionHashes = transactions.map(t => t.transactionHash);
 
-  return { transactions, blockNumberL2: block.blockNumberL2 };
+  return { transactions, block };
 }
 
 export default getProposeBlockCalldata;

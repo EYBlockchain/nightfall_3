@@ -18,7 +18,7 @@ function keccak(preimage) {
   // compute the solidity hash, using suitable type conversions
   return web3.utils.soliditySha3(
     { t: 'uint64', v: preimage.value },
-    ...preimage.historicRootBlockNumberL2.map(hi => ({ t: 'uint64', v: hi })),
+    ...preimage.historicRootBlockNumberL2.map(hi => ({ t: 'uint256', v: hi })),
     { t: 'uint8', v: preimage.transactionType },
     { t: 'uint8', v: preimage.tokenType },
     { t: 'bytes32', v: preimage.publicInputHash },

@@ -5,9 +5,9 @@ much cheaper, although the offchain part is more complex.
 */
 import config from 'config';
 import Web3 from 'common-files/utils/web3.mjs';
+import { decompressProof } from 'common-files/utils/curve-maths/curves.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
-import { decompressProof } from '../utils/curve-maths/curves.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import { getBlocks } from './database.mjs';
 

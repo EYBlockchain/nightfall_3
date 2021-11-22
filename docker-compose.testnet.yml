@@ -28,20 +28,6 @@ services:
       ETH_PRIVATE_KEY: $ETH_PRIVATE_KEY
       INFURA_PROJECT_SECRET: $INFURA_PROJECT_SECRET
 
-  timber1:
-    environment:
-      BLOCKCHAIN_URL: 'wss://ropsten.infura.io/ws/v3/${INFURA_PROJECT_ID}'
-      USE_INFURA: 'true'
-      AUTOSTART_RETRIES: 500
-      INFURA_PROJECT_SECRET: $INFURA_PROJECT_SECRET
-
-  timber2:
-    environment:
-      BLOCKCHAIN_URL: 'wss://ropsten.infura.io/ws/v3/${INFURA_PROJECT_ID}'
-      USE_INFURA: 'true'
-      AUTOSTART_RETRIES: 500
-      INFURA_PROJECT_SECRET: $INFURA_PROJECT_SECRET
-
   optimist1:
     environment:
       BLOCKCHAIN_URL: 'wss://ropsten.infura.io/ws/v3/${INFURA_PROJECT_ID}'

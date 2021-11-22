@@ -133,16 +133,11 @@ export async function timeJump(secs) {
 }
 
 export async function createBadBlock(badBlockType, block, transactions, args) {
-  let res;
   const badBlock = block;
   const badTransactions = transactions;
   switch (badBlockType) {
     case 'IncorrectRoot': {
-      res = await chai
-        .request('http://localhost:8083')
-        .get(`/path/${args.leafIndex}`)
-        .send({ contractName: 'State' });
-      badBlock.root = res.body.data[0].value;
+      badBlock.root = (await rand(32)).hex();
       break;
     }
     case 'DuplicateTransaction': {

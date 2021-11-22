@@ -30,7 +30,6 @@ services:
     depends_on:
       - deployer
       - worker
-      - timber1
       - rabbitmq1
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
@@ -41,8 +40,6 @@ services:
       ZOKRATES_WORKER_HOST: worker
       RABBITMQ_HOST: amqp://rabbitmq1
       RABBITMQ_PORT: 5672
-      TIMBER_HOST: timber1
-      TIMBER_PORT: 80
       ENABLE_QUEUE: 1
       OPTIMIST_HOST: optimist1
       OPTIMIST_PORT: 80
@@ -77,7 +74,6 @@ services:
     depends_on:
       - deployer
       - worker
-      - timber2
       - rabbitmq2
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
@@ -88,8 +84,6 @@ services:
       ZOKRATES_WORKER_HOST: worker
       RABBITMQ_HOST: amqp://rabbitmq2
       RABBITMQ_PORT: 5672
-      TIMBER_HOST: timber2
-      TIMBER_PORT: 80
       ENABLE_QUEUE: 1
       OPTIMIST_HOST: optimist2
       OPTIMIST_PORT: 80
@@ -165,102 +159,7 @@ services:
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
       ZOKRATES_WORKER_HOST: worker
-      # TIMBER_HOST: timber1
-      # TIMBER_PORT: 80
       USE_STUBS: 'false'
-
-  # Timber service, configured for nightfall
-  timber1:
-    build:
-      dockerfile: Dockerfile
-      context: ./timber
-    restart: on-failure
-    depends_on:
-      - deployer
-      - timber-database1
-    networks:
-      - nightfall_network
-    ports:
-      - 8083:80
-    volumes:
-      - type: volume
-        source: build
-        target: /app/build/
-      - type: bind
-        source: ./timber/src
-        target: /app/src/
-      - type: bind
-        source: ./config/timber.js
-        target: /app/config/default.js
-      - type: bind
-        source: ./timber/entrypoint.sh
-        target: /app/entrypoint.sh
-    environment:
-      BLOCKCHAIN_WS_HOST: blockchain1
-      BLOCKCHAIN_PORT: 8546
-      MONGO_HOST: timber-database1
-      MONGO_PORT: 27017
-      MONGO_NAME: merkle_tree
-      HASH_TYPE: mimc
-      LOG_LEVEL: info
-      AUTOSTART: enabled
-
-  # Timber service, configured for nightfall
-  timber2:
-    build:
-      dockerfile: Dockerfile
-      context: ./timber
-    restart: on-failure
-    depends_on:
-      - deployer
-      - timber-database2
-    networks:
-      - nightfall_network
-    ports:
-      - 8087:80
-    volumes:
-      - type: volume
-        source: build
-        target: /app/build/
-      - type: bind
-        source: ./timber/src
-        target: /app/src/
-      - type: bind
-        source: ./config/timber.js
-        target: /app/config/default.js
-    environment:
-      BLOCKCHAIN_WS_HOST: blockchain1
-      BLOCKCHAIN_PORT: 8546
-      MONGO_HOST: timber-database2
-      MONGO_PORT: 27017
-      MONGO_NAME: merkle_tree
-      HASH_TYPE: mimc
-      LOG_LEVEL: error
-      AUTOSTART: enabled
-
-  #The database storing the merkle tree
-  timber-database1:
-    image: mongo
-    environment:
-      - MONGO_INITDB_DATABASE=merkle_tree
-    volumes:
-      - type: volume
-        source: timber-database-volume1
-        target: /data/db
-    networks:
-      - nightfall_network
-
-  #The database storing the merkle tree
-  timber-database2:
-    image: mongo
-    environment:
-      - MONGO_INITDB_DATABASE=merkle_tree
-    volumes:
-      - type: volume
-        source: timber-database-volume2
-        target: /data/db
-    networks:
-      - nightfall_network
 
   rabbitmq1:
     image: rabbitmq
@@ -282,7 +181,6 @@ services:
     build:
       context: ./nightfall-optimist
     depends_on:
-      - timber1
       - deployer
     networks:
       - nightfall_network
@@ -311,15 +209,12 @@ services:
       LOG_LEVEL: error
       IS_CHALLENGER: 'false'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
-      TIMBER_HOST: timber1
-      TIMBER_PORT: 80
     command: ['npm', 'run', 'dev']
 
   optimist2:
     build:
       context: ./nightfall-optimist
     depends_on:
-      - timber2
       - deployer
     networks:
       - nightfall_network
@@ -348,8 +243,6 @@ services:
       LOG_LEVEL: debug
       IS_CHALLENGER: 'true'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
-      TIMBER_HOST: timber2
-      TIMBER_PORT: 80
     command: ['npm', 'run', 'dev']
 
 volumes:
@@ -357,8 +250,6 @@ volumes:
   mongodb2:
   proving_files:
   build:
-  timber-database-volume1:
-  timber-database-volume2:
 
 networks:
   nightfall_network:

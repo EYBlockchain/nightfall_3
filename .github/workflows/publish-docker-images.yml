@@ -32,7 +32,7 @@ jobs:
       if: steps.semantic.outputs.new-release-published == 'true'
       run: |
         docker build -t ghcr.io/eyblockchain/nightfall3-client:$RELEASE_VERSION . -f client.Dockerfile
-        docker push ghcr.io/eyblockchain//nightfall3-client:$RELEASE_VERSION
+        docker push ghcr.io/eyblockchain/nightfall3-client:$RELEASE_VERSION
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

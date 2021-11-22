@@ -39,6 +39,8 @@ function AccountSettingsModal({
         <Form>
           <Form.Field>
             <Input
+              type="number"
+              min="0"
               label="Address Index"
               placeholder={login.nf3.mnemonic.addressIndex}
               onChange={event => setAddressIndex(event.target.value)}

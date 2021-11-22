@@ -11,7 +11,12 @@ import {
   deleteCommitments,
   getCommitmentsFromBlockNumberL2,
 } from '../services/commitment-storage.mjs';
-import { deleteTreeByBlockNumberL2 } from '../services/database.mjs';
+import {
+  deleteTreeByBlockNumberL2,
+  deleteBlocksByBlockNumberL2,
+  findBlocksFromBlockNumberL2,
+  deleteTransactionsByTransactionHashes,
+} from '../services/database.mjs';
 
 async function rollbackEventHandler(data) {
   const { blockNumberL2 } = data.returnValues;
@@ -19,6 +24,7 @@ async function rollbackEventHandler(data) {
 
   // We get the commitments from blockNumberL2 + 1 because the bad block itself (except
   // the reason it is bad) contains valid transactions, we should not drop these.
+  // If we clear the commitments in blockNumberL2, we may spend them again while they are in an optimist mempool.
   const commitments = await getCommitmentsFromBlockNumberL2(Number(blockNumberL2) + 1);
   // Deposit transactions should not be dropped because they are always valid even post-rollback.
   const nonDeposit = commitments.filter(t => t.transactionType !== '0').map(c => c._id);
@@ -30,9 +36,14 @@ async function rollbackEventHandler(data) {
   const cResult = await clearOnChain(Number(blockNumberL2));
   logger.debug(`Rollback moved ${cResult.result.nModified} commitments off-chain`);
 
+  const blocksToDelete = await findBlocksFromBlockNumberL2(Number(blockNumberL2));
+  const txsToDelete = blocksToDelete.map(b => b.transactionHashes).flat(Infinity);
+
   await Promise.all([
-    deleteTreeByBlockNumberL2(Number(Number(blockNumberL2))),
+    deleteTreeByBlockNumberL2(Number(blockNumberL2)),
     deleteCommitments(nonDeposit),
+    deleteBlocksByBlockNumberL2(Number(blockNumberL2)),
+    deleteTransactionsByTransactionHashes(txsToDelete),
   ]);
 }
 
