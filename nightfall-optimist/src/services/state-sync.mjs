@@ -7,7 +7,6 @@ import transactionSubmittedEventHandler from '../event-handlers/transaction-subm
 import newCurrentProposerEventHandler from '../event-handlers/new-current-proposer.mjs';
 import committedToChallengeEventHandler from '../event-handlers/challenge-commit.mjs';
 import rollbackEventHandler from '../event-handlers/rollback.mjs';
-import { callTimberHandler } from '../utils/timber.mjs';
 import { getBlockByBlockNumberL2, getBlocks } from './database.mjs';
 import { stopMakingChallenges, startMakingChallenges } from './challenges.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
@@ -52,13 +51,9 @@ const syncState = async (
         await newCurrentProposerEventHandler(pastEvent, [proposer]);
         break;
       case 'Rollback':
-        // eslint-disable-next-line no-await-in-loop
-        await callTimberHandler(pastEvent);
         await rollbackEventHandler(pastEvent);
         break;
       case 'BlockProposed':
-        // eslint-disable-next-line no-await-in-loop
-        await callTimberHandler(pastEvent);
         // eslint-disable-next-line no-await-in-loop
         await blockProposedEventHandler(pastEvent);
         break;
