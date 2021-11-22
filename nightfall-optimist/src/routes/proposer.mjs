@@ -60,7 +60,7 @@ router.get('/proposers', async (req, res, next) => {
       // eslint-disable-next-line no-await-in-loop
       const proposer = await proposersContractInstance.methods.proposers(thisPtr).call();
       proposers.push(proposer);
-      thisPtr = proposer.thisAddress;
+      thisPtr = proposer.nextAddress;
     } while (thisPtr !== currentProposer.thisAddress);
 
     logger.debug('returning raw transaction data');
