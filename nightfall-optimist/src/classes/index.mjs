@@ -5,4 +5,4 @@ import BlockError from './block-error.mjs';
 import TransactionError from './transaction-error.mjs';
 import VerificationKey from './verification-key.mjs';
 
-export { Proof, Transaction, BlockError, Fq2, TransactionError, VerificationKey };
+export { Proof, Transaction, BlockError, TransactionError, VerificationKey };
