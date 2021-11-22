@@ -5,6 +5,7 @@ address.
 import config from 'config';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
 import { Transaction } from '../classes/index.mjs';
+import { getTransactionByTransactionHash, getBlockByTransactionHash } from './database.mjs';
 
 const { SHIELD_CONTRACT_NAME } = config;
 
@@ -21,9 +22,13 @@ export function buildSolidityStruct(block) {
   };
 }
 
-export async function finaliseWithdrawal({ block, transactions, index }) {
-  // first, find the position of the transaction in the block
-  // TODO we could check that the block is final here, but it's not required
+export async function finaliseWithdrawal({ transactionHash }) {
+  const block = await getBlockByTransactionHash(transactionHash);
+  const transactions = await Promise.all(
+    block.transactionHashes.map(t => getTransactionByTransactionHash(t)),
+  );
+  const index = transactions.findIndex(f => f.transactionHash === transactionHash);
+
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
   try {
     const rawTransaction = await shieldContractInstance.methods

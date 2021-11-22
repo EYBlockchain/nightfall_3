@@ -638,9 +638,7 @@ describe('Testing the http API', () => {
     let endBalance;
     it('Should create a failing finalise-withdrawal (because insufficient time has passed)', async function () {
       const res = await chai.request(senderUrl).post('/finalise-withdrawal').send({
-        block, // block containing the withdraw transaction
-        transactions, // transactions in the withdraw block
-        index, // index of the withdraw transaction in the transactions
+        transactionHash: transactions[index].transactionHash,
       });
       txDataToSign = res.body.txDataToSign;
       expect(txDataToSign).to.be.a('string');
@@ -656,9 +654,7 @@ describe('Testing the http API', () => {
     it('Should create a passing finalise-withdrawal with a time-jump capable test client (because sufficient time has passed)', async function () {
       if (nodeInfo.includes('TestRPC')) await timeJump(3600 * 24 * 10); // jump in time by 10 days
       const res = await chai.request(senderUrl).post('/finalise-withdrawal').send({
-        block,
-        transactions,
-        index,
+        transactionHash: transactions[index].transactionHash,
       });
       txDataToSign = res.body.txDataToSign;
       expect(txDataToSign).to.be.a('string');

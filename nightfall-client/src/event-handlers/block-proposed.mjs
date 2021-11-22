@@ -11,7 +11,7 @@ import {
 import getProposeBlockCalldata from '../services/process-calldata.mjs';
 import Secrets from '../classes/secrets.mjs';
 import { ivks, nsks } from '../services/keys.mjs';
-import { getLatestTree, saveTree } from '../services/database.mjs';
+import { getLatestTree, saveTree, saveTransaction, saveBlock } from '../services/database.mjs';
 
 const { ZERO } = config;
 
@@ -21,9 +21,16 @@ This handler runs whenever a BlockProposed event is emitted by the blockchain
 async function blockProposedEventHandler(data) {
   logger.info(`Received Block Proposed event`);
   // ivk will be used to decrypt secrets whilst nsk will be used to calculate nullifiers for commitments and store them
-  const { transactions, blockNumberL2 } = await getProposeBlockCalldata(data);
+  const { blockNumber: currentBlockCount, transactionHash: transactionHashL1 } = data;
+  const { transactions, block } = await getProposeBlockCalldata(data);
   const latestTree = await getLatestTree();
   const blockCommitments = transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat();
+
+  if ((await countCommitments(blockCommitments)) > 0) {
+    await saveBlock({ blockNumber: currentBlockCount, transactionHashL1, ...block });
+    await Promise.all(transactions.map(t => saveTransaction({ transactionHashL1, ...t })));
+  }
+
   const dbUpdates = transactions.map(async transaction => {
     // filter out non zero commitments and nullifiers
     const nonZeroCommitments = transaction.commitments.flat().filter(n => n !== ZERO);
@@ -54,10 +61,10 @@ async function blockProposedEventHandler(data) {
     }
     return [
       Promise.all(storeCommitments),
-      markOnChain(nonZeroCommitments, blockNumberL2, data.blockNumber, data.transactionHash),
+      markOnChain(nonZeroCommitments, block.blockNumberL2, data.blockNumber, data.transactionHash),
       markNullifiedOnChain(
         nonZeroNullifiers,
-        blockNumberL2,
+        block.blockNumberL2,
         data.blockNumber,
         data.transactionHash,
       ),
@@ -67,7 +74,7 @@ async function blockProposedEventHandler(data) {
   // await Promise.all(toStore);
   await Promise.all(dbUpdates);
   const updatedTimber = Timber.statelessUpdate(latestTree, blockCommitments);
-  await saveTree(data.blockNumber, blockNumberL2, updatedTimber);
+  await saveTree(data.blockNumber, block.blockNumberL2, updatedTimber);
 
   await Promise.all(
     // eslint-disable-next-line consistent-return

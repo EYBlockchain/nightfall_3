@@ -53,9 +53,14 @@ contract Proposers is Stateful, Structures, Config {
       // updated the pulled state
       proposersPrevious.nextAddress = proposer.thisAddress; // X: (u,v,B)
       proposersCurrent.previousAddress = proposer.thisAddress; // current: (B,A,z)
+      if (proposersPrevious.thisAddress == proposersCurrent.thisAddress) { // case register second proposer
+        proposersCurrent.nextAddress = proposer.thisAddress; // previous and next Address is the second proposer
+      }
       currentProposer = proposersCurrent; // ensure sync: currentProposer: (B,A,z)
       // set global state to new values
-      state.setProposer(proposersPrevious.thisAddress, proposersPrevious);
+      if (proposersPrevious.thisAddress != proposersCurrent.thisAddress) { // not case register second proposer
+        state.setProposer(proposersPrevious.thisAddress, proposersPrevious);
+      }
       state.setProposer(proposersCurrent.thisAddress, proposersCurrent);
       state.setProposer(msg.sender, proposer);
     }

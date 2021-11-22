@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Modal, Form, Icon, Checkbox, Dropdown } from 'semantic-ui-react';
+import { Button, Modal, Form, Icon, Checkbox, Dropdown, Input } from 'semantic-ui-react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import * as Nf3 from 'nf3';
@@ -15,12 +15,20 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
   const [instantWithdrawFee, setInstantWithdrawFee] = React.useState(DEFAULT_INSTANT_WITHDRAW_FEE);
   const [instantWithdrawEnable, setInstantWithdrawEnable] = React.useState(false);
   const [directTransactionEnable, setDirectTransactionEnable] = React.useState(false);
-  const [pkdX, setPkdX] = React.useState('');
-  const [pkdY, setPkdY] = React.useState('');
+  const [pkdX, setPkdX] = React.useState({
+    value: '',
+    error: null,
+  });
+  const [pkdY, setPkdY] = React.useState({
+    value: '',
+    error: null,
+  });
 
   const toggleAll = () => {
     setInstantWithdrawEnable(false);
     setDirectTransactionEnable(false);
+    setPkdX({ value: '', error: null });
+    setPkdY({ value: '', error: null });
     onCancelTx();
   };
 
@@ -32,6 +40,21 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
     return tokenPool.filter(tokenEl => tokenEl.tokenAddress === token.activeTokenRowId)[0];
   }
 
+  function validateContractAddress(key, value) {
+    const error = {
+      content: `Please enter a valid ${key}`,
+      pointing: 'above',
+    };
+    if (key === 'PK-Y') {
+      if (!/^0x([A-Fa-f0-9]{63,64})$/.test(value)) return setPkdY({ value: '', error });
+      setPkdY({ value, error: null });
+    }
+    if (transactions.txType === 'withdraw') {
+      if (!/^0x([A-Fa-f0-9]{40})$/.test(value)) return setPkdX({ value: '', error });
+    } else if (!/^0x([A-Fa-f0-9]{63,64})$/.test(value)) return setPkdX({ value: '', error });
+    return setPkdX({ value, error: null });
+  }
+
   const handleOnSubmit = () => {
     const tokenInfo = getTokenInfo();
     if (!tokenInfo) {
@@ -41,7 +64,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
       // TODO : pending select correct tokenId index. For now, i select 0, but it could be different
       case Nf3.Constants.TX_TYPES.WITHDRAW:
         {
-          const ethereumAddress = pkdX === '' ? login.nf3.ethereumAddress : pkdX;
+          const ethereumAddress = pkdX.value === '' ? login.nf3.ethereumAddress : pkdX.value;
           const withdrawType = instantWithdrawEnable
             ? Nf3.Constants.TX_TYPES.INSTANT_WITHDRAW
             : Nf3.Constants.TX_TYPES.WITHDRAW;
@@ -60,7 +83,8 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
         break;
 
       default: {
-        const pkd = pkdX === '' || pkdY === '' ? login.nf3.zkpKeys.pkd : [pkdX, pkdY];
+        const pkd =
+          pkdX.value === '' || pkdY.value === '' ? login.nf3.zkpKeys.pkd : [pkdX.value, pkdY.value];
         const { txType } = transactions;
         onSubmitTx({
           txType,
@@ -126,31 +150,26 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
             </Form.Field>
           ) : null}
           <Form.Group widths="equal">
-            <Form.Field>
-              <label htmlFor="pkd-x">
-                {keyLabel}
-                <input
-                  type="text"
-                  placeholder={
-                    transactions.txType === Nf3.Constants.TX_TYPES.WITHDRAW
-                      ? login.nf3.ethereumAddress
-                      : pkd[0]
-                  }
-                  onChange={event => setPkdX(event.target.value)}
-                />
-              </label>
-            </Form.Field>
-            {transactions.txType !== Nf3.Constants.TX_TYPES.WITHDRAW ? (
-              <Form.Field>
-                <label htmlFor="pk-y">
-                  PK-Y
-                  <input
-                    type="text"
-                    placeholder={pkd[1]}
-                    onChange={event => setPkdY(event.target.value)}
-                  />
-                </label>
-              </Form.Field>
+            <Form.Field
+              control={Input}
+              label={keyLabel}
+              placeholder={
+                transactions.txType === Nf3.Constant.TX_TYPES.WITHDRAW
+                  ? login.nf3.ethereumAddress
+                  : pkd[0]
+              }
+              onChange={event => validateContractAddress(keyLabel, event.target.value)}
+              error={pkdX.error}
+            />
+
+            {transactions.txType !== Nf3.Constant.TX_TYPES.WITHDRAW ? (
+              <Form.Field
+                control={Input}
+                label="PK-Y"
+                placeholder={pkd[1]}
+                onChange={event => validateContractAddress('PK-Y', event.target.value)}
+                error={pkdY.error}
+              />
             ) : null}
           </Form.Group>
           <Form.Group widths="equal">
@@ -191,7 +210,8 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
                 <label htmlFor="amount">
                   Amount
                   <input
-                    type="text"
+                    type="number"
+                    min="0"
                     id="amount"
                     onChange={event => setTokenAmount(event.target.value)}
                   />
@@ -202,7 +222,8 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
               <label htmlFor="fee">
                 Fee
                 <input
-                  type="text"
+                  type="number"
+                  min="0"
                   placeholder={fee}
                   onChange={event => setFee(event.target.value)}
                   id="fee"
