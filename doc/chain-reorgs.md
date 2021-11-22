@@ -183,4 +183,6 @@ chain 2: propose(H_p), ...propose(H_r), ...propose(H_n), ...propose(H_m)
 
 First of all, removal events will be received.  This will remove the respective `proposeBlock` calls (`H'_q...H'_t`) from the L2 database (or,
 more accurately it will set their L1 block number to null). Then the new 'chain 2' events will be played.  These will be the ones after `propose(H_n)`.
-Then, the events that were removed will be re-mined. The re-mined `proposeBlocks` will revert because none of them can be attached after H_m.  However, the `challenge(H_q)` will succeed and will force a rollback to H_p.  That is correct behaviour because all of the blocks after H_p on chain 2 are in fact invalid (because H_q is invalid).
+Then, the events that were removed will be re-mined. The re-mined `proposeBlocks` will revert because none of them can be attached after H_m.  However, the `challenge(H_q)` will succeed and will force a rollback to H_p.  
+That is correct behaviour because all of the blocks after H_p on chain 2 are in fact invalid (because H_q is invalid).
+

@@ -6,11 +6,11 @@ import PropTypes from 'prop-types';
 import Transactions from './transactions/transactions.view.jsx';
 import Login from './login/login.view.jsx';
 import { setEnvironment } from '../utils/lib/environment';
-import { DEFAULT_ENVIRONMENT, NF3_GITHUB_ISSUES_URL } from '../constants';
+import { NF3_GITHUB_ISSUES_URL } from '../constants';
 import * as loginActions from '../store/login/login.actions';
 
 function App({ onDeleteWallet }) {
-  setEnvironment(DEFAULT_ENVIRONMENT);
+  setEnvironment(process.env.REACT_APP_ENVIRONMENT);
 
   // Detect page refresh
   React.useEffect(() => {
