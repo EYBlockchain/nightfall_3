@@ -42,14 +42,14 @@ function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, 
       ];
       if (l2TokenAddressArr.length) {
         l2TokenAddressArr.forEach(l2TokenAddress => {
-          //TODO: Pending retrieve tokenIds and token name
+          // TODO: Pending retrieve tokenIds and token name
           try {
             Nf3.Tokens.getERCInfo(l2TokenAddress, login.nf3.ethereumAddress, login.nf3.web3, {
               toEth: true,
               tokenId: 0,
             }).then(l1Balance => {
               const l2TokenBalance =
-                typeof myL2Balance[l2TokenAddress.replace('0x','')] === 'undefined'
+                typeof myL2Balance[l2TokenAddress.replace('0x', '')] === 'undefined'
                   ? '-'
                   : myL2Balance[l2TokenAddress.replace('0x', '')].toString();
               onAddToken(
