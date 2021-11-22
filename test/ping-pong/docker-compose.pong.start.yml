@@ -1,0 +1,201 @@
+version: '3.5'
+# Use this script for running up nightfall_3 with images
+# If you replace the main docker-compose with this file, it should work!
+services:
+  blockchain1:
+    image: trufflesuite/ganache-cli:v6.12.1
+    ports:
+      - 8546:8546
+    command:
+      ganache-cli --accounts=10 --defaultBalanceEther=1000 --gasLimit=0xbebc20 --deterministic -i 4378921 -p 8546
+      --account="0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e,10000000000000000000000"
+      --account="0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d,10000000000000000000000"
+      --account="0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb,10000000000000000000000"
+      --account="0xfbc1ee1c7332e2e5a76a99956f50b3ba2639aff73d56477e877ef8390c41e0c6,10000000000000000000000"
+    networks:
+      - nightfall_network
+
+  client:
+    image: ghcr.io/eyblockchain/nightfall3-client:latest
+    volumes:
+      - type: volume
+        source: build
+        target: /app/build
+      - type: volume
+        source: mongodb
+        target: /app/mongodb
+    networks:
+      - nightfall_network
+    ports:
+      - 27017:27017
+      - 8080:80
+    depends_on:
+      - deployer
+      - worker
+      - timber
+      - rabbitmq
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+      LOG_LEVEL: debug
+      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_PORT: 8546
+      ZOKRATES_WORKER_HOST: worker
+      RABBITMQ_HOST: amqp://rabbitmq
+      RABBITMQ_PORT: 5672
+      TIMBER_HOST: timber
+      TIMBER_PORT: 80
+      ENABLE_QUEUE: 1
+      OPTIMIST_HOST: optimist1
+      OPTIMIST_PORT: 80
+      USE_STUBS: 'false' # make sure this flag is the same as in deployer service
+    command: ['npm', 'run', 'dev']
+
+  worker:
+    image: ghcr.io/eyblockchain/nightfall3-worker
+    volumes:
+      - type: volume
+        source: ./proving_files
+        target: /app/output/
+    depends_on:
+      - deployer
+    networks:
+      - nightfall_network
+    environment:
+      LOG_LEVEL: info
+
+    # Temporary container to deploy contracts and circuits and populate volumes
+  deployer:
+    image: ghcr.io/eyblockchain/nightfall3-deployer
+    volumes:
+      - type: volume
+        source: build
+        target: /app/build/
+    networks:
+      - nightfall_network
+    environment:
+      LOG_LEVEL: debug
+      # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
+      # startup routines will wait for a blockchain client to be reachable on this network
+      ETH_NETWORK: blockchain1
+      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_PORT: 8546
+      ZOKRATES_WORKER_HOST: worker
+      # TIMBER_HOST: timber1
+      # TIMBER_PORT: 80
+      USE_STUBS: 'false'
+
+  # Timber service, configured for nightfall
+  timber:
+    build:
+      dockerfile: Dockerfile
+      context: ../../timber
+    restart: on-failure
+    depends_on:
+      - deployer
+      - timber-database
+    networks:
+      - nightfall_network
+    ports:
+      - 8083:80
+    volumes:
+      - type: volume
+        source: build
+        target: /app/build/
+      - type: bind
+        source: ../../timber/src
+        target: /app/src/
+      - type: bind
+        source: ../../config/timber.js
+        target: /app/config/default.js
+      - type: bind
+        source: ../../timber/entrypoint.sh
+        target: /app/entrypoint.sh
+    environment:
+      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_PORT: 8546
+      MONGO_HOST: timber-database
+      MONGO_PORT: 27017
+      MONGO_NAME: merkle_tree
+      HASH_TYPE: mimc
+      LOG_LEVEL: info
+      AUTOSTART: enabled
+
+  #The database storing the merkle tree
+  timber-database:
+    image: mongo
+    environment:
+      - MONGO_INITDB_DATABASE=merkle_tree
+    volumes:
+      - type: volume
+        source: timber-database-volume
+        target: /data/db
+    networks:
+      - nightfall_network
+
+  rabbitmq:
+    image: rabbitmq
+    ports:
+      - '15674:15674'
+      - '5672:5672'
+    networks:
+      - nightfall_network
+
+  optimist:
+    image: ghcr.io/eyblockchain/nightfall3-optimist:latest
+    depends_on:
+      - timber
+      - deployer
+    networks:
+      - nightfall_network
+    ports:
+      - 8081:80
+      # websocket port for Optimist is on localhost:8082
+      - 8082:8080
+    volumes:
+      - type: volume
+        source: build
+        target: /app/build/
+    environment:
+      WEBSOCKET_PORT: 8080
+      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_PORT: 8546
+      HASH_TYPE: mimc
+      LOG_LEVEL: debug
+      IS_CHALLENGER: 'true'
+      TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
+      TIMBER_HOST: timber
+      TIMBER_PORT: 80
+    command: ['npm', 'run', 'dev']
+
+  proposer:
+    build:
+      dockerfile: Dockerfile
+      context: ./proposer
+    networks:
+      - nightfall_network
+    volumes:
+      - type: bind
+        source: ../../common-files
+        target: /common-files
+      - type: bind
+        source: ./proposer/src
+        target: /test/ping-pong/proposer/src
+    environment:
+      OPTIMIST_HOST: optimist
+      OPTIMIST_PORT: 8080
+
+volumes:
+  mongodb:
+  proving_files:
+  build:
+  timber-database-volume:
+
+networks:
+  nightfall_network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.238.0/24
+          gateway: 172.16.238.1

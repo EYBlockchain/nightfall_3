@@ -1,0 +1,6 @@
+#! /bin/bash
+
+# script to run up the ping pong test on this server
+
+# first, we bring up all of the containers (not deployer though - we assume that's already done).
+docker-compose -f docker-compose.pong.start.yml up --remove-orphans
