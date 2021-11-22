@@ -1,102 +1,27 @@
-name: Check PR
+name: Wallet-selenium
 
-on:
-  pull_request:
-    branch:
-      - master
-
+on: workflow_dispatch
 jobs:
-  eslint-check:
-    runs-on: ubuntu-18.04
+  build:
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
-      - uses: actions/setup-node@v1
-        with:
-          node-version: '14.17.0'
-      - name: eslint check
-        run: |
-          npm ci
-          npm run lint
-
-  ganache-test:
-    runs-on: ubuntu-18.04
-    steps:
-      - uses: actions/checkout@master
-      - uses: actions/setup-node@v1
-        with:
-          node-version: '14.17.0'
-
-      - name: Start Containers
-        run: |
-          docker-compose build
-          ./start-nightfall -g &> ganache-test.log &disown
-
-      - name: wait 1000s for Containers startup and setup completion
-        run: sleep 1000
-
-      - name: debug logs - after container startup
-        if: always()
-        run: cat ganache-test.log
-
-      - name: Run integration test
-        run: |
-          npm ci
-          npm test
-
-      - name: debug logs - after integration test run
-        if: always()
-        run: cat ganache-test.log
-
-      - name: If integration test failed, shutdown the Containers
-        if: failure()
-        run: docker-compose -f docker-compose.yml -f docker-compose.ganache.yml down -v
-
-      - name: If integration test failed, upload logs files as artifacts
-        if: failure()
-        uses: actions/upload-artifact@master
-        with:
-          name: ganache-test-logs
-          path: ./ganache-test.log
-
-  test-gas:
-    name: check gas for 32 transactions per block
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@master
-      - uses: actions/setup-node@v1
-        with:
-          node-version: '14.17.0'
-
-      - name: Start Containers with ganache
-        run: |
-          docker-compose build
-          ./start-nightfall -g &> test-gas.log &disown
-        env:
-          TRANSACTIONS_PER_BLOCK: 32
-
-      - name: wait 1000s for Containers startup and setup completion
-        run: sleep 1000
-
-      - name: debug logs - after container startup
-        if: always()
-        run: cat test-gas.log
-
-      - name: Run tx-gas.mjs test suites
-        run: |
-          npm ci
-          npm run test-gas
-
-      - name: debug logs - after integration test run
-        if: always()
-        run: cat test-gas.log
-
-      - name: If integration test failed, shutdown the Containers
-        if: failure()
-        run: docker-compose -f docker-compose.yml -f docker-compose.ganache.yml down -v
-
-      - name: If integration test failed, upload logs files as artifacts
-        if: failure()
-        uses: actions/upload-artifact@master
-        with:
-          name: test-gas-logs
-          path: ./test-gas.log
+    - uses: actions/checkout@v1
+    - name: Set up Python 3.7
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.7
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pipenv
+        pipenv install
+    - name: Prepare Selenium
+      # https://github.com/marketplace/actions/setup-chromedriver
+      uses: nanasess/setup-chromedriver@v1.0.5
+    - name: Start XVFB
+      run: |
+        Xvfb :99 &
+    - name: Run tests
+      run: pipenv run python manage.py test functional_tests.tests.test_selenium.test_exams -v 2
+      env:
+        DISPLAY: :99
