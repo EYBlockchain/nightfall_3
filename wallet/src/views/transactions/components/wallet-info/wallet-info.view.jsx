@@ -1,8 +1,8 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { Table, Button, Container, Icon } from 'semantic-ui-react';
-import Web3 from 'web3';
 import PropTypes from 'prop-types';
+import * as Nf3 from 'nf3';
 import {
   addToken,
   selectToken,
@@ -10,6 +10,7 @@ import {
   deleteToken,
 } from '../../../../store/token/token.actions';
 import { TokenAddModal } from './token-add.view.jsx';
+import * as Storage from '../../../../utils/lib/local-storage';
 
 function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, onDeleteToken }) {
   const [modalTokenAddEnable, setModalTokenAddEnable] = React.useState(false);
@@ -30,29 +31,43 @@ function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, 
   // TODO : substitute reload button by periodic function
   const reload = () => {
     if (typeof login.nf3.ethereumAddress === 'undefined') return;
+    const storedTokens = Storage.tokensGet(login.nf3.zkpKeys.compressedPkd) || [];
     login.nf3.getLayer2Balances().then(l2Balance => {
       const { compressedPkd } = login.nf3.zkpKeys;
       const myL2Balance =
         typeof l2Balance[compressedPkd] === 'undefined' ? {} : l2Balance[compressedPkd];
-      const l2TokenAddressArr = myL2Balance === {} ? [] : Object.keys(myL2Balance);
-      login.nf3.getL1Balance(login.nf3.ethereumAddress).then(l1Balance => {
-        if (l2TokenAddressArr.length) {
-          l2TokenAddressArr.forEach(l2TokenAddress => {
-            /* TODO. Use correct token
-            const l2Token = token.tokenPool.filter(
-              token => token.tokenAddress === `0x${l2TokenAddress}`,
-            )[0];
-	    */
-            onAddToken(
-              `0x${l2TokenAddress.toLowerCase()}`,
-              'ERC20',
-              '0x00',
-              l1Balance,
-              Web3.utils.fromWei(myL2Balance[l2TokenAddress].toString(), 'nano'),
-            );
-          });
-        }
-      });
+      const l2TokenAddressArr = [
+        ...Object.keys(myL2Balance).map(el => `0x${el}`),
+        ...storedTokens.map(el => el.tokenAddress),
+      ];
+      if (l2TokenAddressArr.length) {
+        l2TokenAddressArr.forEach(l2TokenAddress => {
+          //TODO: Pending retrieve tokenIds and token name
+          try {
+            Nf3.Tokens.getERCInfo(l2TokenAddress, login.nf3.ethereumAddress, login.nf3.web3, {
+              toEth: true,
+              tokenId: 0,
+            }).then(l1Balance => {
+              const l2TokenBalance =
+                typeof myL2Balance[l2TokenAddress.replace('0x','')] === 'undefined'
+                  ? '-'
+                  : myL2Balance[l2TokenAddress.replace('0x', '')].toString();
+              onAddToken(
+                compressedPkd,
+                l2TokenAddress.toLowerCase(),
+                l1Balance.tokenType,
+                '0x00',
+                'TOK',
+                l1Balance.balance,
+                Nf3.Units.fromBaseUnit(l2TokenBalance, l1Balance.decimals),
+              );
+            });
+          } catch (err) {
+            // TODO
+            console.log(err);
+          }
+        });
+      }
     });
   };
 
@@ -64,7 +79,7 @@ function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, 
     if (id !== token.activeTokenRowId) {
       onSelectToken(id);
       if (removeTokenEnable) {
-        onDeleteToken(id);
+        onDeleteToken(login.nf3.zkpKeys.compressedPkd, id);
         toggleTokenSelected();
       }
     } else {
@@ -76,10 +91,10 @@ function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, 
     const rows = token.tokenPool.map(item => {
       return (
         <Table.Row
-          key={item.id}
-          active={item.id === token.activeTokenRowId}
+          key={item.tokenAddress}
+          active={item.tokenAddress === token.activeTokenRowId}
           onClick={() => {
-            setActiveRow(item.id);
+            setActiveRow(item.tokenAddress);
           }}
         >
           <Table.Cell colSpan="4" title={item.tokenAddress}>
@@ -105,7 +120,15 @@ function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, 
   }, []);
 
   const handleOnTokenAddSubmit = (tokenName, tokenType, tokenAddress) => {
-    onAddToken(`0x${tokenAddress.toLowerCase()}`, tokenType, '0', '-', '-');
+    onAddToken(
+      login.nf3.zkpKeys.compressedPkd,
+      `0x${tokenAddress.replace('0x', '').toLowerCase()}`,
+      tokenType,
+      '0x0',
+      tokenName,
+      '-',
+      '-',
+    );
   };
 
   const toggleModalTokenAdd = () => {
@@ -201,9 +224,11 @@ const mapStateToProps = state => ({
 const mapDispatchToProps = dispatch => ({
   onSelectToken: tokenRowId => dispatch(selectToken(tokenRowId)),
   onUnselectToken: () => dispatch(unselectToken()),
-  onAddToken: (tokenAddress, tokenType, tokenId, l1Balance, l2Balance) =>
-    dispatch(addToken(tokenAddress, tokenType, tokenId, l1Balance, l2Balance)),
-  onDeleteToken: tokenRowId => dispatch(deleteToken(tokenRowId)),
+  onAddToken: (compressedPkd, tokenAddress, tokenType, tokenId, tokenName, l1Balance, l2Balance) =>
+    dispatch(
+      addToken(compressedPkd, tokenAddress, tokenType, tokenId, tokenName, l1Balance, l2Balance),
+    ),
+  onDeleteToken: (compressedPkd, tokenRowId) => dispatch(deleteToken(compressedPkd, tokenRowId)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(WalletInfo);

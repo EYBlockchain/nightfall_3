@@ -2,15 +2,12 @@ import React from 'react';
 import { Button, Modal, Form, Icon, Checkbox, Dropdown } from 'semantic-ui-react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
+import * as Nf3 from 'nf3';
 import * as txThunks from '../../../../store/transactions/transactions.thunks';
 import * as txActionTypes from '../../../../store/transactions/transactions.actions';
+import * as Storage from '../../../../utils/lib/local-storage';
 
-import {
-  DEFAULT_DEPOSIT_FEE,
-  DEFAULT_INSTANT_WITHDRAW_FEE,
-  TOKEN_TYPE,
-  TX_TYPES,
-} from '../../../../constants';
+import { DEFAULT_DEPOSIT_FEE, DEFAULT_INSTANT_WITHDRAW_FEE } from '../../../../constants';
 
 function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx }) {
   const [fee, setFee] = React.useState(DEFAULT_DEPOSIT_FEE);
@@ -28,11 +25,11 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
   };
 
   function getTokenInfo() {
-    const { tokenPool } = token;
-    if (tokenPool === '') {
+    const tokenPool = Storage.tokensGet(login.nf3.zkpKeys.compressedPkd);
+    if (tokenPool === null) {
       return null;
     }
-    return tokenPool.filter(tokenEl => tokenEl.id === token.activeTokenRowId)[0];
+    return tokenPool.filter(tokenEl => tokenEl.tokenAddress === token.activeTokenRowId)[0];
   }
 
   const handleOnSubmit = () => {
@@ -42,19 +39,20 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
     }
     switch (transactions.txType) {
       // TODO : pending select correct tokenId index. For now, i select 0, but it could be different
-      case TX_TYPES.WITHDRAW:
+      case Nf3.Constants.TX_TYPES.WITHDRAW:
         {
           const ethereumAddress = pkdX === '' ? login.nf3.ethereumAddress : pkdX;
           const withdrawType = instantWithdrawEnable
-            ? TX_TYPES.INSTANT_WITHDRAW
-            : TX_TYPES.WITHDRAW;
+            ? Nf3.Constants.TX_TYPES.INSTANT_WITHDRAW
+            : Nf3.Constants.TX_TYPES.WITHDRAW;
           onSubmitTx({
             txType: withdrawType,
             ethereumAddress,
             tokenType: tokenInfo.tokenType,
             tokenAddress: tokenInfo.tokenAddress,
             tokenId: tokenInfo.tokenId[0],
-            tokenAmount: tokenInfo.tokenType === TOKEN_TYPE.ERC721 ? '1' : tokenAmount,
+            tokenAmount:
+              tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC721 ? '1' : tokenAmount,
             fee,
             instantWithdrawFee,
           });
@@ -70,7 +68,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
           tokenType: tokenInfo.tokenType,
           tokenAddress: tokenInfo.tokenAddress,
           tokenId: tokenInfo.tokenId[0],
-          tokenAmount: tokenInfo.tokenType === TOKEN_TYPE.ERC721 ? '1' : tokenAmount,
+          tokenAmount: tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC721 ? '1' : tokenAmount,
 
           fee,
         });
@@ -85,7 +83,8 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
   if (!tokenInfo) {
     return null;
   }
-  const keyLabel = transactions.txType === TX_TYPES.WITHDRAW ? 'Ethereum Address' : 'PK-X';
+  const keyLabel =
+    transactions.txType === Nf3.Constants.TX_TYPES.WITHDRAW ? 'Ethereum Address' : 'PK-X';
   const pkd = login.isWalletInitialized ? login.nf3.zkpKeys.pkd : '';
 
   if (transactions.txType === '') return null;
@@ -95,7 +94,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
       <Modal.Content>
         <Form>
           <Form.Group widths="equal">
-            {transactions.txType === TX_TYPES.WITHDRAW ? (
+            {transactions.txType === Nf3.Constants.TX_TYPES.WITHDRAW ? (
               <Form.Field>
                 <Checkbox
                   label="Instant Withdraw"
@@ -117,7 +116,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
               </Form.Field>
             ) : null}
           </Form.Group>
-          {transactions.txType !== TX_TYPES.DEPOSIT ? (
+          {transactions.txType !== Nf3.Constants.TX_TYPES.DEPOSIT ? (
             <Form.Field>
               <Checkbox
                 label="Direct Transaction"
@@ -133,13 +132,15 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
                 <input
                   type="text"
                   placeholder={
-                    transactions.txType === TX_TYPES.WITHDRAW ? login.nf3.ethereumAddress : pkd[0]
+                    transactions.txType === Nf3.Constants.TX_TYPES.WITHDRAW
+                      ? login.nf3.ethereumAddress
+                      : pkd[0]
                   }
                   onChange={event => setPkdX(event.target.value)}
                 />
               </label>
             </Form.Field>
-            {transactions.txType !== TX_TYPES.WITHDRAW ? (
+            {transactions.txType !== Nf3.Constants.TX_TYPES.WITHDRAW ? (
               <Form.Field>
                 <label htmlFor="pk-y">
                   PK-Y
@@ -162,18 +163,22 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
               <input type="text" value={tokenInfo.tokenAddress} id="token-address" readOnly />
             </Form.Field>
           </Form.Group>
-          {tokenInfo.tokenType !== TOKEN_TYPE.ERC20 ? (
+          {tokenInfo.tokenType !== Nf3.Constants.TOKEN_TYPE.ERC20 ? (
             <Form.Group>
               <Form.Field width={6}>
                 <span>
                   Token Id{' '}
                   <Dropdown
-                    placeholder={tokenInfo.tokenId[0]}
-                    defaultValue={tokenInfo.tokenId[0]}
+                    placeholder={tokenInfo.tokenId.length ? tokenInfo.tokenId[0] : 0}
+                    defaultValue={tokenInfo.tokenId.length ? tokenInfo.tokenId[0] : 0}
                     selection
-                    options={tokenInfo.tokenId.map(function (id) {
-                      return { key: id, text: id, value: id };
-                    })}
+                    options={
+                      tokenInfo.tokenId.legth
+                        ? tokenInfo.tokenId.map(function (id) {
+                            return { key: id, text: id, value: id };
+                          })
+                        : []
+                    }
                     onChange={(e, { value }) => value}
                   />
                 </span>
@@ -181,7 +186,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
             </Form.Group>
           ) : null}
           <Form.Group widths="equal">
-            {tokenInfo.tokenType === TOKEN_TYPE.ERC721 ? null : (
+            {tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC721 ? null : (
               <Form.Field>
                 <label htmlFor="amount">
                   Amount

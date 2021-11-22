@@ -3,6 +3,9 @@ import Web3 from 'web3';
 import WebSocket from 'ws';
 import EventEmitter from 'events';
 import { Mutex } from 'async-mutex';
+import getAbi from './abi.mjs';
+import { APPROVE_AMOUNT } from './constants.mjs';
+import { approve } from './tokens.mjs';
 
 /**
 @class
@@ -223,6 +226,30 @@ class Nf3 {
   }
 
   /**
+   Sends an approve transaction to an ERC20/ERC721/ERC1155 contract for a certain amount of tokens
+   * @param {string} ercAddress - The Ethereum address of the transaction sender
+   * @param {string} tokenType  - Type of token 
+   * @param {string} value  - Amount of tokens to be approved (in Wei)
+   * @returns {Promise} transaction
+   */
+  async approve(ercAddress, tokenType, value) {
+    const abi = getAbi(tokenType);
+    const ercContract = new this.web3.eth.Contract(abi, ercAddress);
+    const allowance = await ercContract.methods
+      .allowance(this.ethereumAddress, this.shieldContractAddress)
+      .call();
+    const allowanceBN = new Web3.utils.BN(allowance);
+    const valueBN = new Web3.utils.BN(value);
+
+    if (allowanceBN.lt(valueBN)) {
+      return ercContract.methods
+        .approve(this.shieldContractAddress, APPROVE_AMOUNT)
+        .send({ from: this.ethereumAddress });
+    }
+    return Promise.resolve();
+  }
+
+  /**
   Deposits a Layer 1 token into Layer 2, so that it can be transacted
   privately.
   @method
@@ -241,6 +268,15 @@ class Nf3 {
   @returns {Promise} Resolves into the Ethereum transaction receipt.
   */
   async deposit(ercAddress, tokenType, value, tokenId, fee = this.defaultFee) {
+    await approve(
+      ercAddress,
+      this.ethereumAddress,
+      this.shieldContractAddress,
+      tokenType,
+      value,
+      this.web3,
+    );
+
     const res = await axios.post(`${this.clientBaseUrl}/deposit`, {
       ercAddress,
       tokenId,
