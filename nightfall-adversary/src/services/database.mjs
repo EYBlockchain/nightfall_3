@@ -461,6 +461,14 @@ export async function deleteNullifiers(hashes) {
   return db.collection(NULLIFIER_COLLECTION).deleteMany(query);
 }
 
+// delete all the nullifiers in this block
+export async function deleteNullifiersForBlock(blockHash) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(ADVERSARY_DB);
+  const query = { blockHash };
+  return db.collection(NULLIFIER_COLLECTION).deleteMany(query);
+}
+
 export async function getBlocks() {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(ADVERSARY_DB);
@@ -495,7 +503,8 @@ export async function saveTree(blockNumber, blockNumberL2, timber) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(ADVERSARY_DB);
   return db.collection(TIMBER_COLLECTION).insertOne({
-    _id: blockNumber,
+    _id: timber.blockNumberL2,
+    blockNumber,
     blockNumberL2,
     frontier: timber.frontier,
     leafCount: timber.leafCount,

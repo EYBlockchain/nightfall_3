@@ -51,7 +51,8 @@ async function checkTransactionType(transaction) {
         transaction.compressedSecrets.length !== 8 ||
         transaction.proof.every(p => p === ZERO) ||
         // This extra check is unique to deposits
-        Number(transaction.historicRootBlockNumberL2) !== 0
+        Number(transaction.historicRootBlockNumberL2[0]) !== 0 ||
+        Number(transaction.historicRootBlockNumberL2[1]) !== 0
       )
         throw new TransactionError(
           'The data provided was inconsistent with a transaction type of DEPOSIT',
@@ -81,7 +82,8 @@ async function checkTransactionType(transaction) {
         transaction.nullifiers.length !== 2 ||
         transaction.compressedSecrets.every(cs => cs === ZERO) ||
         transaction.compressedSecrets.length !== 8 ||
-        transaction.proof.every(p => p === ZERO)
+        transaction.proof.every(p => p === ZERO) ||
+        Number(transaction.historicRootBlockNumberL2[1]) !== 0
       )
         throw new TransactionError(
           'The data provided was inconsistent with a transaction type of SINGLE_TRANSFER',
@@ -128,7 +130,8 @@ async function checkTransactionType(transaction) {
         transaction.nullifiers[1] !== ZERO ||
         transaction.nullifiers.length !== 2 ||
         transaction.compressedSecrets.some(cs => cs !== ZERO) ||
-        transaction.proof.every(p => p === ZERO)
+        transaction.proof.every(p => p === ZERO) ||
+        Number(transaction.historicRootBlockNumberL2[1]) !== 0
       )
         throw new TransactionError(
           'The data provided was inconsistent with a transaction type of WITHDRAW',
@@ -143,12 +146,18 @@ async function checkTransactionType(transaction) {
 async function checkHistoricRoot(transaction) {
   // Deposit transaction have a historic root of 0
   // the validity is tested in checkTransactionType
-  if (
-    Number(transaction.transactionType) === 1 ||
-    Number(transaction.transactionType) === 2 ||
-    Number(transaction.transactionType) === 3
-  ) {
-    if ((await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2)) === null)
+  if (Number(transaction.transactionType) === 1 || Number(transaction.transactionType) === 3) {
+    const historicRootFirst = await getBlockByBlockNumberL2(
+      transaction.historicRootBlockNumberL2[0],
+    );
+    if (historicRootFirst === null)
+      throw new TransactionError('The historic root in the transaction does not exist', 3);
+  }
+  if (Number(transaction.transactionType) === 2) {
+    const [historicRootFirst, historicRootSecond] = await Promise.all(
+      transaction.historicRootBlockNumberL2.map(h => getBlockByBlockNumberL2(h)),
+    );
+    if (historicRootFirst === null || historicRootSecond === null)
       throw new TransactionError('The historic root in the transaction does not exist', 3);
   }
 }

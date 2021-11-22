@@ -344,7 +344,7 @@ const waitForProposerToBeCurrent = proposer => {
     async function isCurrentProposer() {
       const currentProposer = await proposer.getCurrentProposer();
       if (currentProposer === proposer.ethereumAddress) {
-        console.log('HERE condition met currentProposer', currentProposer);
+        // console.log('condition met for currentProposer', currentProposer);
         resolve();
       } else {
         await new Promise(resolving => setTimeout(resolving, 1000));
@@ -374,29 +374,32 @@ export const waitForSufficientBalance = (client, value, depositFunction) => {
     // in case there are no pending deposit or transfer transactions to satisfy
     // sufficient balance, then we will send a deposit transaction after sometime
     async function isSufficientBalance() {
-      if (retries > 20) await depositFunction();
+      if (retries > 20) {
+        await depositFunction();
+        await new Promise(resolving => setTimeout(resolving, 10000));
+      }
       const balances = await client.getLayer2Balances();
       // if layer 2 balances don't exist, then wait a bit and look for balances again
       if (Object.keys(balances).length === 0) {
-        await new Promise(resolving => setTimeout(resolving, 1000));
+        await new Promise(resolving => setTimeout(resolving, 10000));
         retries += 1;
         isSufficientBalance();
       }
       // if client does not have layer 2 balances, then wait a bit and look again
       const clientBalances = balances[client.zkpKeys.compressedPkd];
       if (clientBalances === undefined || Object.keys(clientBalances).length === 0) {
-        await new Promise(resolving => setTimeout(resolving, 1000));
+        await new Promise(resolving => setTimeout(resolving, 10000));
         retries += 1;
         isSufficientBalance();
       }
       const balance = clientBalances[Object.keys(clientBalances)[0]];
       // if client has layer 2 balances and if it is equal to value required
       if (balance > value) {
-        console.log('HERE sufficient balance');
+        // console.log('sufficient balance');
         resolve();
       } else {
-        console.log('HERE insufficient balance', balance);
-        await new Promise(resolving => setTimeout(resolving, 1000));
+        // console.log('insufficient balance', balance);
+        await new Promise(resolving => setTimeout(resolving, 10000));
         retries += 1;
         isSufficientBalance();
       }

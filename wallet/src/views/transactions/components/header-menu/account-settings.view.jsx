@@ -16,7 +16,7 @@ function AccountSettingsModal({
 
   const handleSubmit = async () => {
     if (login.nf3.mnemonic.addressIndex !== addressIndex) {
-      login.nf3.setzkpKeysFromMnemonic('', addressIndex);
+      login.nf3.setZkpKeysFromMnemonic('', addressIndex);
     }
 
     if (clearLocalStorage) {

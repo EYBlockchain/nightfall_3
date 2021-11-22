@@ -82,7 +82,8 @@ async function checkTransactionType(transaction) {
         transaction.nullifiers.length !== 2 ||
         transaction.compressedSecrets.every(cs => cs === ZERO) ||
         transaction.compressedSecrets.length !== 8 ||
-        transaction.proof.every(p => p === ZERO)
+        transaction.proof.every(p => p === ZERO) ||
+        Number(transaction.historicRootBlockNumberL2[1]) !== 0
       )
         throw new TransactionError(
           'The data provided was inconsistent with a transaction type of SINGLE_TRANSFER',
@@ -127,7 +128,8 @@ async function checkTransactionType(transaction) {
         transaction.nullifiers[1] !== ZERO ||
         transaction.nullifiers.length !== 2 ||
         transaction.compressedSecrets.some(cs => cs !== ZERO) ||
-        transaction.proof.every(p => p === ZERO)
+        transaction.proof.every(p => p === ZERO) ||
+        Number(transaction.historicRootBlockNumberL2[1]) !== 0
       )
         throw new TransactionError(
           'The data provided was inconsistent with a transaction type of WITHDRAW',

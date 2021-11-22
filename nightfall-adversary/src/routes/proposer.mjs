@@ -314,12 +314,24 @@ router.post('/offchain-transaction', async (req, res) => {
   logger.debug(`proposer/offchain-transaction endpoint received POST`);
   logger.silly(`With content ${JSON.stringify(req.body, null, 2)}`);
   const { transaction } = req.body;
+  // When a transaction is built by client, they are generalised into hex(32) interfacing with web3
+  // The response from on-chain events converts them to saner string values (e.g. uint64 etc).
+  // Since we do the transfer off-chain, we do the conversation manually here.
+  const { transactionType, tokenType, value, historicRootBlockNumberL2, fee, ...tx } = transaction;
   try {
-    switch (Number(transaction.transactionType)) {
+    switch (Number(transactionType)) {
       case 1:
       case 2:
       case 3: {
-        await transactionSubmittedEventHandler({ offchain: true, ...transaction });
+        await transactionSubmittedEventHandler({
+          offchain: true,
+          transactionType: Number(transactionType).toString(),
+          tokenType: Number(tokenType).toString(),
+          value: Number(value).toString(),
+          fee: Number(fee).toString(),
+          historicRootBlockNumberL2: historicRootBlockNumberL2.map(h => Number(h).toString()),
+          ...tx,
+        });
         res.sendStatus(200);
         break;
       }

@@ -49,9 +49,8 @@ async function blockProposedEventHandler(data) {
     const latestTree = await getLatestTree();
     const blockCommitments = transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat();
     const updatedTimber = Timber.statelessUpdate(latestTree, blockCommitments);
-    // latestTree.insertLeaves(blockCommitments);
-    // logger.info(`latestTree leafCount: ${latestTree.leafCount}`);
-    await saveTree(currentBlockCount, block.blockNumberL2, updatedTimber);
+    const res = await saveTree(currentBlockCount, block.blockNumberL2, updatedTimber);
+    logger.debug(`Saving tree with block number ${block.blockNumberL2}, ${res}`);
     // signal to the block-making routines that a block is received: they
     // won't make a new block until their previous one is stored on-chain.
     // we'll check the block and issue a challenge if appropriate

@@ -29,7 +29,7 @@ jobs:
       - name: Start Containers
         run: |
           docker-compose build
-          ./start-nightfall -g -a &> ganache-test.log &disown
+          ./start-nightfall -g &> ganache-test.log &disown
 
       - name: wait 1000s for Containers startup and setup completion
         run: sleep 1000
@@ -49,6 +49,46 @@ jobs:
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
+        run: docker-compose -f docker-compose.yml -f docker-compose.ganache.yml down -v
+
+      - name: If integration test failed, upload logs files as artifacts
+        if: failure()
+        uses: actions/upload-artifact@master
+        with:
+          name: ganache-test-logs
+          path: ./ganache-test.log
+
+  adversary-script:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '14.17.0'
+
+      - name: Start Containers
+        run: |
+          docker-compose build
+          ./start-nightfall -g -a &> adversary-script.log &disown
+
+      - name: wait 1000s for Containers startup and setup completion
+        run: sleep 1000
+
+      - name: debug logs - after container startup
+        if: always()
+        run: cat adversary-script.log
+
+      - name: Run integration test
+        run: |
+          npm ci
+          npm run adv
+
+      - name: debug logs - after integration test run
+        if: always()
+        run: cat adversary-script.log
+
+      - name: If integration test failed, shutdown the Containers
+        if: failure()
         run:
           docker-compose -f docker-compose.yml -f docker-compose.ganache.yml -f
           docker-compose.adversary.yml down -v
@@ -57,8 +97,8 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@master
         with:
-          name: ganache-test-logs
-          path: ./ganache-test.log
+          name: adversary-script-logs
+          path: ./adversary-script.log
 
   test-gas:
     name: check gas for 32 transactions per block

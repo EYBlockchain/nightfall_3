@@ -76,7 +76,7 @@ class Nf3 {
   blockchain.
   @returns {Promise}
   */
-  async init(mnemonic) {
+  async init(mnemonic, addressIndex = 0) {
     this.setWeb3Provider();
     this.shieldContractAddress = await this.getContractAddress('Shield');
     this.proposersContractAddress = await this.getContractAddress('Proposers');
@@ -88,18 +88,8 @@ class Nf3 {
     }
     // set zkp keys from mnemonic if provided
     if (typeof mnemonic !== 'undefined') {
-      await this.setzkpKeysFromMnemonic(mnemonic, 0);
+      await this.setZkpKeysFromMnemonic(mnemonic, addressIndex);
     }
-  }
-
-  /**
-  Method for generating zkp (ask, nsk, ivk, pkd) keys used in deposit, transfer and withdraw later
-  @method
-  @returns {Object} containing ask, nsk, ivk, pkd
-  */
-  async generateZKPKeys() {
-    const res = await axios.post(`${this.clientBaseUrl}/generate-keys`);
-    return res.data;
   }
 
   /**
@@ -130,7 +120,7 @@ class Nf3 {
   @method
   @param {object} keys - The zkp keys object.
   */
-  setzkpKeys(keys) {
+  setZkpKeys(keys) {
     this.zkpKeys = keys;
     this.subscribeToIncomingViewingKeys();
   }
@@ -142,7 +132,7 @@ class Nf3 {
   @param {string} mnemonic - 12 word phrase
   @param {number} addressIndex - Index used to generate keys combined with mnemonic
   */
-  async setzkpKeysFromMnemonic(mnemonic, addressIndex) {
+  async setZkpKeysFromMnemonic(mnemonic, addressIndex) {
     if (mnemonic !== '') {
       this.mnemonic.phrase = mnemonic;
     }

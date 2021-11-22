@@ -642,6 +642,21 @@ describe('Testing the challenge http API', () => {
     });
   });
 
+  describe('De register proposer', () => {
+    it('should de-register a proposer', async () => {
+      const myAddress = (await getAccounts())[0];
+      const res = await chai.request(optimistUrl).post('/proposer/de-register');
+      const { txDataToSign } = res.body;
+      expect(txDataToSign).to.be.a('string');
+      const receipt = await submitTransaction(txDataToSign, privateKey, proposersAddress, gas);
+      expect(receipt).to.have.property('transactionHash');
+      expect(receipt).to.have.property('blockHash');
+      const { proposers } = (await chai.request(optimistUrl).get('/proposer/proposers')).body;
+      const thisProposer = proposers.filter(p => p.thisAddresss === myAddress);
+      expect(thisProposer.length).to.be.equal(0);
+    });
+  });
+
   after(() => {
     // if the queue is still running, let's close down after it ends
     // if it's empty, close down immediately

@@ -85,7 +85,7 @@ function Login({ login, settings, onLoadWallet, onDeleteWallet }) {
         const passphrase = await mnemonicPassphraseGet(nf3);
         Storage.mnemonicSet(nf3.ethereumAddress, mnemonic, passphrase);
       }
-      await nf3.setzkpKeysFromMnemonic(mnemonic, DEFAULT_NF_ADDRESS_INDEX);
+      await nf3.setZkpKeysFromMnemonic(mnemonic, DEFAULT_NF_ADDRESS_INDEX);
       // Set Wallet and Nf3 object
       onLoadWallet(nf3);
     } catch (err) {

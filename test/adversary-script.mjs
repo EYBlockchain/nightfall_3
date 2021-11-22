@@ -9,13 +9,9 @@
 import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
+import { generateMnemonic } from 'bip39';
 import Nf3 from '../cli/lib/nf3.mjs';
-import {
-  sendBlockConfig,
-  closeWeb3Connection,
-  waitForProposer,
-  waitForSufficientBalance,
-} from './utils.mjs';
+import { sendBlockConfig, waitForProposer, waitForSufficientBalance } from './utils.mjs';
 
 const { expect } = chai;
 chai.use(chaiHttp);
@@ -47,8 +43,6 @@ describe('Testing the challenge http API', () => {
   // let nf3Proposer;
   let nf3AdversarialProposer;
   let nf3Challenger;
-  // let shieldAddress;
-  // let stateAddress;
   let ercAddress;
 
   const USE_INFURA = process.env.USE_INFURA === 'true';
@@ -125,11 +119,14 @@ describe('Testing the challenge http API', () => {
       ethereumSigningKeyChallenger,
     );
 
-    await nf3User1.init();
-    await nf3User2.init();
-    // await nf3Proposer.init();
-    await nf3AdversarialProposer.init();
-    await nf3Challenger.init();
+    // Generate a random mnemonic (uses crypto.randomBytes under the hood), defaults to 128-bits of entropy
+    const mnemonic = generateMnemonic();
+
+    await nf3User1.init(mnemonic, 0);
+    await nf3User2.init(mnemonic, 1);
+    // await nf3Proposer.init(mnemonic, 2);
+    await nf3AdversarialProposer.init(mnemonic, 2);
+    await nf3Challenger.init(mnemonic, 3);
 
     if (!(await nf3User1.healthcheck('client'))) throw new Error('Healthcheck failed');
     if (!(await nf3User2.healthcheck('client'))) throw new Error('Healthcheck failed');
@@ -148,8 +145,6 @@ describe('Testing the challenge http API', () => {
     // Send block config to adversarial proposer
     await sendBlockConfig(nf3AdversarialProposer.optimistBaseUrl, blockConfig);
 
-    // stateAddress = await nf3User1.getContractAddress('State');
-    // shieldAddress = await nf3User1.getContractAddress('Shield');
     ercAddress = await nf3User1.getContractAddress('ERCStub');
   });
 
@@ -175,7 +170,7 @@ describe('Testing the challenge http API', () => {
       // we are creating a block of tests such that there will always be
       // enough balance for a transfer. We do this by submitting and mining (waiting until)
       // deposits of value required for a transfer
-      let count = 0;
+      // let count = 0;
       const depositFunction = async () => {
         await nf3User1.deposit(ercAddress, tokenType, value1, tokenId, fee);
       };
@@ -186,8 +181,8 @@ describe('Testing the challenge http API', () => {
         const res = await nf3User1.deposit(ercAddress, tokenType, value1, tokenId, fee);
         expect(res).to.have.property('transactionHash');
         expect(res).to.have.property('blockHash');
-        count += 1;
-        console.log('HERE count', count);
+        // count += 1;
+        // console.log('count', count);
       }
 
       for (let i = 0; i < TEST_LENGTH; i++) {
@@ -212,9 +207,9 @@ describe('Testing the challenge http API', () => {
           );
           expect(resT1).to.have.property('transactionHash');
           expect(resT1).to.have.property('blockHash');
-          count += 1;
+          // count += 1;
 
-          console.log('HERE count', count);
+          // console.log('count', count);
           await new Promise(resolve => setTimeout(resolve, 20000));
         }
       }
@@ -222,11 +217,11 @@ describe('Testing the challenge http API', () => {
   });
 
   after(async () => {
+    // wait for pending transactions before closing
     await new Promise(resolve => setTimeout(resolve, 20000));
     nf3User1.close();
     nf3User2.close();
     nf3AdversarialProposer.close();
     nf3Challenger.close();
-    closeWeb3Connection();
   });
 });

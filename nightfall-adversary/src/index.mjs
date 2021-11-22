@@ -1,4 +1,5 @@
 import logger from 'common-files/utils/logger.mjs';
+import { queueManager, queues, enqueueEvent } from 'common-files/utils/event-queue.mjs';
 import app from './app.mjs';
 import {
   startEventQueue,
@@ -14,7 +15,6 @@ import {
 } from './services/block-assembler.mjs';
 import { setChallengeWebSocketConnection } from './services/challenges.mjs';
 import initialBlockSync from './services/state-sync.mjs';
-import { queueManager, queues, enqueueEvent } from './services/event-queue.mjs';
 import { setInstantWithdrawalWebSocketConnection } from './services/instant-withdrawal.mjs';
 
 const main = async () => {
@@ -35,6 +35,9 @@ const main = async () => {
         // eslint-disable-next-line no-void, no-useless-return
         return void false; // This is here to satisfy consistent return rules, we do nothing.
       });
+      // We enqueue a message so that we can actualy trigger the queue.end call even if we havent received anything.
+      // This helps in the case that we restart client and we are the current proposer.
+      await enqueueEvent(() => logger.info('Start Queue'), 0);
     });
     app.listen(80);
   } catch (err) {
