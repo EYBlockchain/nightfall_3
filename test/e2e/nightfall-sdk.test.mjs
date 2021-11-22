@@ -18,6 +18,7 @@ import {
   ethereumSigningKeyUser2,
   ethereumSigningKeyProposer1,
   ethereumSigningKeyProposer2,
+  ethereumSigningKeyProposer3,
   ethereumSigningKeyLiquidityProvider,
   ethereumSigningKeyChallenger,
   txPerBlock,
@@ -46,40 +47,70 @@ describe('Testing the Nightfall SDK', () => {
   const nf3User2 = new Nf3(web3WsUrl, ethereumSigningKeyUser2, environment);
   const nf3Proposer1 = new Nf3(web3WsUrl, ethereumSigningKeyProposer1, environment);
   const nf3Proposer2 = new Nf3(web3WsUrl, ethereumSigningKeyProposer2, environment);
+  const nf3Proposer3 = new Nf3(web3WsUrl, ethereumSigningKeyProposer3, environment);
   const nf3Challenger = new Nf3(web3WsUrl, ethereumSigningKeyChallenger, environment);
   const nf3LiquidityProvider = new Nf3(web3WsUrl, ethereumSigningKeyLiquidityProvider, environment);
 
   let web3;
   let ercAddress;
   let stateAddress;
-  let proposersAddress;
   let eventLogs = [];
   let nodeInfo;
   const transactions = [];
+
+  const miniStateABI = [
+    {
+      inputs: [],
+      name: 'getNumberOfL2Blocks',
+      outputs: [
+        {
+          internalType: 'uint256',
+          name: '',
+          type: 'uint256',
+        },
+      ],
+      stateMutability: 'view',
+      type: 'function',
+    },
+  ];
+
+  const getOnChainBlockCount = async () => {
+    const stateContractInstance = new web3.eth.Contract(miniStateABI, stateAddress);
+    const onChainBlockCount = await stateContractInstance.methods.getNumberOfL2Blocks().call();
+    return onChainBlockCount;
+  };
 
   before(async () => {
     // to enable getBalance with web3 we should connect first
     web3 = await connectWeb3();
     stateAddress = await nf3User1.getContractAddress('State');
-    console.log('     State address: ', stateAddress);
-    proposersAddress = await nf3User1.getContractAddress('Proposers');
-    console.log('     Proposers address: ', proposersAddress);
+
+    console.log('onChainBlockCount: ', await getOnChainBlockCount());
+
     await nf3User1.init(mnemonicUser1);
     await nf3User2.init(mnemonicUser2); // 2nd client to do transfer tests and checks
     await nf3Proposer1.init(mnemonicProposer);
     await nf3Proposer2.init(mnemonicProposer);
+    await nf3Proposer3.init(mnemonicProposer);
     await nf3Challenger.init(mnemonicChallenger);
     await nf3LiquidityProvider.init(mnemonicLiquidityProvider);
+
+    console.log('     Shield address: ', nf3User1.shieldContractAddress);
+    console.log('     State address: ', nf3User1.stateContractAddress);
+    console.log('     Proposers address: ', nf3User1.proposersContractAddress);
 
     if (!(await nf3User1.healthcheck('client'))) throw new Error('Healthcheck failed');
     if (!(await nf3User2.healthcheck('client'))) throw new Error('Healthcheck failed');
     if (!(await nf3Proposer1.healthcheck('optimist'))) throw new Error('Healthcheck failed');
     if (!(await nf3Proposer2.healthcheck('optimist'))) throw new Error('Healthcheck failed');
+    if (!(await nf3Proposer3.healthcheck('optimist'))) throw new Error('Healthcheck failed');
     if (!(await nf3Challenger.healthcheck('optimist'))) throw new Error('Healthcheck failed');
     if (!(await nf3LiquidityProvider.healthcheck('optimist')))
       throw new Error('Healthcheck failed');
 
     console.log('     Proposer address: ', nf3Proposer1.ethereumAddress);
+    console.log('        Proposer optimistBaseUrl: ', nf3Proposer1.optimistBaseUrl);
+    console.log('        Proposer optimistWsUrl: ', nf3Proposer1.optimistWsUrl);
     console.log('     Challenger address: ', nf3Challenger.ethereumAddress);
     console.log('     LiquidityProvider address: ', nf3LiquidityProvider.ethereumAddress);
     console.log('     User1 address: ', nf3User1.ethereumAddress);
@@ -94,7 +125,9 @@ describe('Testing the Nightfall SDK', () => {
     // Chalenger listening for incoming events
     nf3Challenger.startChallenger();
     const res = await nf3User1.getContractAddress('ERCStub');
-    ercAddress = res;
+    // Lowercase is useful here because BigInt(ercAddress).toString(16) applies a lowercase check
+    // we will use this as a key in our dictionary so it's important they match.
+    ercAddress = res.toLowerCase();
 
     // Liquidity provider for instant withdraws
     const emitter = await nf3User1.getInstantWithdrawalRequestedEmitter();
@@ -106,30 +139,14 @@ describe('Testing the Nightfall SDK', () => {
     nodeInfo = await web3.eth.getNodeInfo();
 
     web3.eth.subscribe('logs', { address: stateAddress }).on('data', log => {
+      console.log(
+        '---> log received: ',
+        log.topics[0] === topicEventMapping.BlockProposed ? 'BlockProposed' : log.topics[0],
+      );
       // For event tracking, we use only care about the logs related to 'blockProposed'
       if (log.topics[0] === topicEventMapping.BlockProposed) eventLogs.push('blockProposed');
     });
   });
-
-  /* describe('Synchronizing with block', () => {
-    it('Synchronizing tx with block proposed', async function () {
-      if (!nodeInfo.includes('TestRPC')) {
-        let exit = false;
-        while (!exit) {
-          // eslint-disable-next-line no-await-in-loop
-          await depositNTransactions(nf3User1, 1, ercAddress, tokenType, value, tokenId, fee);
-          // eslint-disable-next-line no-await-in-loop
-          try {
-            // eslint-disable-next-line no-await-in-loop
-            eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
-            exit = true;
-          } catch (e) {
-            exit = false;
-          }
-        }
-      }
-    });
-  }); */
 
   describe('Miscellaneous tests', () => {
     it('should respond with "true" the health check', async function () {
@@ -144,9 +161,6 @@ describe('Testing the Nightfall SDK', () => {
 
     it('should get the address of the test ERC contract stub', async function () {
       const res = await nf3User1.getContractAddress('ERCStub');
-      // Lowercase is useful here because BigInt(ercAddress).toString(16) applies a lowercase check
-      // we will use this as a key in our dictionary so it's important they match.
-      ercAddress = res.toLowerCase();
       expect(res).to.be.a('string').and.to.include('0x');
     });
 
@@ -158,43 +172,54 @@ describe('Testing the Nightfall SDK', () => {
   });
 
   describe('Basic Proposer tests', () => {
-    it('should change current proposer', async function () {
+    it('should register a proposer', async () => {
       let proposers;
       ({ proposers } = await nf3Proposer2.getProposers());
-      console.log('BEFORE changeCurrentProposer', proposers);
-      const res = await nf3Proposer1.changeCurrentProposer();
-      expectTransaction(res);
-      console.log('     TransactionHash: ', res.transactionHash);
-      ({ proposers } = await nf3Proposer2.getProposers());
-      console.log('AFTER changeCurrentProposer', proposers);
-    });
-
-    it('should register a proposer', async () => {
       // we have to pay 10 ETH to be registered
       const startBalance = await getBalance(nf3Proposer2.ethereumAddress);
       const res = await nf3Proposer2.registerProposer();
       expectTransaction(res);
+      ({ proposers } = await nf3Proposer2.getProposers());
       const endBalance = await getBalance(nf3Proposer2.ethereumAddress);
       expect(endBalance - startBalance).to.closeTo(-bond, gasCosts);
+      const thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer2.ethereumAddress);
+      expect(thisProposer.length).to.be.equal(1);
     });
+
+    it('should register other proposer', async () => {
+      let proposers;
+      ({ proposers } = await nf3Proposer3.getProposers());
+      // we have to pay 10 ETH to be registered
+      const startBalance = await getBalance(nf3Proposer3.ethereumAddress);
+      const res = await nf3Proposer3.registerProposer();
+      expectTransaction(res);
+      ({ proposers } = await nf3Proposer3.getProposers());
+      const endBalance = await getBalance(nf3Proposer3.ethereumAddress);
+      expect(endBalance - startBalance).to.closeTo(-bond, gasCosts);
+      const thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer3.ethereumAddress);
+      expect(thisProposer.length).to.be.equal(1);
+    });
+
+    /* it('should change current proposer', async function () {
+      let proposers;
+      ({ proposers } = await nf3Proposer2.getProposers());
+      console.log('BEFORE changeCurrentProposer', proposers);
+      const res = await nf3Proposer2.changeCurrentProposer();
+      expectTransaction(res);
+      console.log('     TransactionHash: ', res.transactionHash);
+      ({ proposers } = await nf3Proposer2.getProposers());
+      console.log('AFTER changeCurrentProposer', proposers);
+    }); */
 
     it('should de-register a proposer', async () => {
       let proposers;
-      ({ proposers } = await nf3Proposer2.getProposers());
-      let thisProposer = proposers.filter(
-        p =>
-          p.thisAddress === nf3Proposer2.ethereumAddress ||
-          p.previousAddress === nf3Proposer2.ethereumAddress,
-      );
+      ({ proposers } = await nf3Proposer1.getProposers());
+      let thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer1.ethereumAddress);
       expect(thisProposer.length).to.be.equal(1);
-      const res = await nf3Proposer2.deregisterProposer();
+      const res = await nf3Proposer1.deregisterProposer();
       expectTransaction(res);
-      ({ proposers } = await nf3Proposer2.getProposers());
-      thisProposer = proposers.filter(
-        p =>
-          p.thisAddress === nf3Proposer2.ethereumAddress ||
-          p.previousAddress === nf3Proposer2.ethereumAddress,
-      );
+      ({ proposers } = await nf3Proposer1.getProposers());
+      thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer1.ethereumAddress);
       expect(thisProposer.length).to.be.equal(0);
     });
 
@@ -229,10 +254,12 @@ describe('Testing the Nightfall SDK', () => {
       }
     });
 
-    /* after(async () => {
+    after(async () => {
       // After the proposer tests, re-register proposers
+      await nf3Proposer2.deregisterProposer();
+      await nf3Proposer3.deregisterProposer();
       await nf3Proposer1.registerProposer();
-    }); */
+    });
   });
 
   describe('Basic Challenger tests', () => {
@@ -479,18 +506,23 @@ describe('Testing the Nightfall SDK', () => {
     let endBalance;
 
     it('should get a valid withdraw commitment with a time-jump capable test client (because sufficient time has passed)', async function () {
-      if (nodeInfo.includes('TestRPC')) await timeJump(3600 * 24 * 10); // jump in time by 50 days
-      console.log(`timeJump`);
-      for (let i = 0; i < txPerBlock; i++) {
-        // eslint-disable-next-line no-await-in-loop
-        await nf3User1.deposit(ercAddress, tokenType, value, tokenId, fee);
+      if (nodeInfo.includes('TestRPC')) {
+        await timeJump(3600 * 24 * 10); // jump in time by 50 days
+        console.log(`timeJump`);
+        for (let i = 0; i < txPerBlock; i++) {
+          // eslint-disable-next-line no-await-in-loop
+          await nf3User1.deposit(ercAddress, tokenType, value, tokenId, fee);
+        }
+        const commitments = await nf3User1.getPendingWithdraws();
+        expect(commitments[nf3User1.zkpKeys.compressedPkd][ercAddress].length).to.be.greaterThan(0);
+        expect(
+          commitments[nf3User1.zkpKeys.compressedPkd][ercAddress].filter(c => c.valid === true)
+            .length,
+        ).to.be.greaterThan(0);
+      } else {
+        console.log('     Not using a time-jump capable test client so this test is skipped');
+        this.skip();
       }
-      const commitments = await nf3User1.getPendingWithdraws();
-      expect(commitments[nf3User1.zkpKeys.compressedPkd][ercAddress].length).to.be.greaterThan(0);
-      expect(
-        commitments[nf3User1.zkpKeys.compressedPkd][ercAddress].filter(c => c.valid === true)
-          .length,
-      ).to.be.greaterThan(0);
     });
 
     it('should create a passing finalise-withdrawal with a time-jump capable test client (because sufficient time has passed)', async function () {
@@ -524,6 +556,7 @@ describe('Testing the Nightfall SDK', () => {
     nf3User2.close();
     nf3Proposer1.close();
     nf3Proposer2.close();
+    nf3Proposer3.close();
     nf3Challenger.close();
     nf3LiquidityProvider.close();
     closeWeb3Connection();
