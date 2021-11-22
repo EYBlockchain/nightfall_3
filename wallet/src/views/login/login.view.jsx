@@ -110,7 +110,7 @@ function Login({ login, settings, onLoadWallet, onDeleteWallet }) {
       }
     } catch (err) {
       // TODO
-      console.log('ERROR');
+      console.log('ERROR', err);
     }
   };
 
