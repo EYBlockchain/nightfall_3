@@ -3,8 +3,6 @@ import Web3 from 'web3';
 import WebSocket from 'ws';
 import EventEmitter from 'events';
 import { Mutex } from 'async-mutex';
-import getAbi from './abi.mjs';
-import { APPROVE_AMOUNT } from './constants.mjs';
 import { approve } from './tokens.mjs';
 
 /**
