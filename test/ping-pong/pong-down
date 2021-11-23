@@ -1,7 +1,11 @@
 #! /bin/bash
 
 # script to delete volumes so that state can be reset
-
+DOCKER_CONTAINERS=$(docker ps -aq)
+if [ "$DOCKER_CONTAINERS" ]; then
+  echo "Removing containers"
+  docker rm -f $DOCKER_CONTAINERS
+fi
 VOLUME_LIST=$(docker volume ls -q)
 
 usage()

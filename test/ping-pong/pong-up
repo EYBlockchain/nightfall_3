@@ -10,9 +10,7 @@ FILE=
 usage()
 {
   echo "Usage:"
-  echo "  -g or --ganache; for a ganache simulator"
-  echo "  -d or --deployer-only; runs the deployer to perform trusted setup (if not already done) and deploy circuits and contracts"
-  echo "  -s or --stubs; runs with circuits stubbed out (faster but no checking of ZKP code) - use with either -g or -l"
+  echo "  -s or --stubs; runs with circuits stubbed out (faster but no checking of ZKP code)"
   echo "  -h or --help; to print this message"
   echo "  -n or --nightfall; deploy nightfall components to server (nightfall-client, nightfall-optimist, zokrates-worker)"
   echo "  -a or --apps; deploy user, proposer, liquidity provider and challenger apps to the server"
@@ -25,15 +23,11 @@ if [ -z "$1" ]; then
 fi
 while [ -n "$1" ]; do
   case $1 in
-      -g | --ganache )        FILE="${FILE} -f docker-compose.pong.ganache.yml"
-                              ;;
-      -d | --deployer-only )  FILE="${FILE} -f docker-compose.pong.deploy.yml"
-                              ;;
       -n | --nightfall )      FILE="${FILE} -f docker-compose.pong.yml"
                               ;;
       -h | --help )           usage
                               ;;
-      -s | --stubs )          FILE="${FILE} -f docker-compose.pong.stubs.yml"
+      -s | --stubs )          FILE="${FILE} -f docker-compose.pong.client.stubs.yml"
                               ;;
       * )                     usage
                               exit 1
@@ -46,6 +40,7 @@ if [ -z "$FILE" ]; then
   exit 1
 fi
 # shut down cleanly in the event of a cntl-c etc. We don't want to leave containers running
-trap "docker-compose $FILE down --remove-orphans -t 1; exit 1" SIGHUP SIGINT SIGTERM
+trap "exit 1" SIGHUP SIGINT SIGTERM
 
-docker-compose $FILE up
+docker-compose $FILE up -d
+docker-compose $FILE logs -f
