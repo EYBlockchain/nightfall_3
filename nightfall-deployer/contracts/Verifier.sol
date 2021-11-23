@@ -17,11 +17,12 @@ Michael Connor
 Duncan Westland
 Chaitanya Konda
 Harry R
+Migrated to G16 by Hari Krishnan
 */
 
 /**
 @title Verifier
-@dev Example Verifier Implementation - GM17 proof verification.
+@dev Example Verifier Implementation - G16 proof verification.
 @notice Do not use this example in any production code!
 */
 
@@ -34,13 +35,13 @@ library Verifier {
 
   using Pairing for *;
 
-  struct Proof_GM17 {
+  struct Proof_G16 {
       Pairing.G1Point A;
       Pairing.G2Point B;
       Pairing.G1Point C;
   }
 
-  struct Verification_Key_GM17 {
+  struct Verification_Key_G16 {
         Pairing.G1Point alpha;
         Pairing.G2Point beta;
         Pairing.G2Point gamma;
@@ -48,7 +49,7 @@ library Verifier {
         Pairing.G1Point[] gamma_abc;
   }
 
-  function verify(uint256[] memory _proof, uint256 _publicInputsHash, uint256[] memory _vk) public returns (bool result) {
+  function verify(uint256[] memory _proof, uint256 _publicInputsHash, uint256[] memory _vk) public view returns (bool result) {
       if (verificationCalculation(_proof, _publicInputsHash, _vk) == 0) {
           result = true;
       } else {
@@ -56,11 +57,11 @@ library Verifier {
       }
   }
 
-  function verificationCalculation(uint256[] memory _proof, uint256 _publicInputsHash, uint256[] memory _vk) public returns (uint) {
+  function verificationCalculation(uint256[] memory _proof, uint256 _publicInputsHash, uint256[] memory _vk) internal view returns (uint) {
 
-      Proof_GM17 memory proof;
+      Proof_G16 memory proof;
       Pairing.G1Point memory vk_dot_inputs;
-      Verification_Key_GM17 memory vk;
+      Verification_Key_G16 memory vk;
 
       vk_dot_inputs = Pairing.G1Point(0, 0); //initialise
 
@@ -79,85 +80,25 @@ library Verifier {
         vk.gamma_abc[j++] = Pairing.G1Point(_vk[i], _vk[i+1]);
       }
 
-      /* require(vk.query.length == 2, "Length of vk.query is incorrect!"); */
+      /* require(vk.gamma.abc.length == 2, "Length of vk.gamma.abc is incorrect!"); */
       // Replacing for the above require statement so that the proof verification returns false. Removing require statements to ensure a wrong proof verification challenge's require statement correctly works
       if (vk.gamma_abc.length != 2) {
         return 1;
       }
 
-      {
-          Pairing.G1Point memory sm_qpih;
-          // The following success variables replace require statements with corresponding functions called. Removing require statements to ensure a wrong proof verification challenge's require statement correctly works
-          bool success_sm_qpih;
-          bool success_vkdi_sm_qpih;
-          (sm_qpih, success_sm_qpih) = Pairing.scalar_mul(vk.gamma_abc[1], _publicInputsHash);
-          (vk_dot_inputs, success_vkdi_sm_qpih) = Pairing.addition(
-            vk_dot_inputs,
-            sm_qpih
-          );
-          if (!success_sm_qpih || !success_vkdi_sm_qpih) {
-          return 2;
-         }
-      }
+          vk_dot_inputs = Pairing.addition(vk_dot_inputs, Pairing.scalar_mul(vk.gamma_abc[1],_publicInputsHash));
+          vk_dot_inputs = Pairing.addition(vk_dot_inputs, vk.gamma_abc[0]);
 
-      {
-          // The following success variables replace require statements with corresponding functions called. Removing require statements to ensure a wrong proof verification challenge's require statement correctly works
-          bool success_vkdi_q;
-          (vk_dot_inputs, success_vkdi_q) = Pairing.addition(vk_dot_inputs, vk.gamma_abc[0]);
-          if (!success_vkdi_q) {
-          return 3;
-         }
-      }
-
-
-      /**
-       * e(A*G^{alpha}, B*H^{beta}) = e(G^{alpha}, H^{beta}) * e(G^{psi}, H^{gamma})
-       *                              * e(C, H)
-       * where psi = \sum_{i=0}^l input_i pvk.query[i]
-       */
-      // {
-      //   Pairing.G1Point memory add_A_Galpha;
-      //   // The following success variables replace require statements with corresponding functions called. Removing require statements to ensure a wrong proof verification challenge's require statement correctly works
-      //   bool success_pp4_out_not_0;
-      //   bool success_pp4_pairing;
-      //   {
-      //     bool success_add_A_Galpha;
-      //     (add_A_Galpha, success_add_A_Galpha) = Pairing.addition(proof.A, vk.a);
-      //     if (!success_add_A_Galpha) {
-      //       return 4;
-      //      }
-      //   }
-      //   (success_pp4_out_not_0, success_pp4_pairing) = Pairing.pairingProd4(vk.Galpha, vk.Hbeta, vk_dot_inputs, vk.Hgamma, proof.C, vk.H, Pairing.negate(add_A_Galpha), Pairing.addition2(proof.B, vk.Hbeta));
-      //   if (!success_pp4_out_not_0 || !success_pp4_pairing) {
-      //       return 5;
-      //   }
-      // }
-
-      // /**
-      //  * e(A, H^{gamma}) = e(G^{gamma}, B)
-      //  */
-      // {
-      //   // The following success variables replace require statements with corresponding functions called. Removing require statements to ensure a wrong proof verification challenge's require statement correctly works
-      //   bool success_pp2_out_not_0;
-      //   bool success_pp2_pairing;
-      //   (success_pp2_out_not_0, success_pp2_pairing) = Pairing.pairingProd2(proof.A, vk.Hgamma, Pairing.negate(vk.Ggamma), proof.B);
-      //   if (!success_pp2_out_not_0 || !success_pp2_pairing) {
-      //       return 6;
-      //   }
-      // }
-      {
-        bool success_pp4_out_not_0;
+      
         bool success_pp4_pairing;
-      (success_pp4_out_not_0,success_pp4_pairing)=Pairing.pairingProd4(
+      success_pp4_pairing=Pairing.pairingProd4(
              proof.A, proof.B,
              Pairing.negate(vk_dot_inputs), vk.gamma,
              Pairing.negate(proof.C), vk.delta,
              Pairing.negate(vk.alpha), vk.beta);
-
-             if(!success_pp4_out_not_0 || !success_pp4_pairing) {
+             if(!success_pp4_pairing) {
               return 1;
              }
-      }
       return 0;
   }
 }
