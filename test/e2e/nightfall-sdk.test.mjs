@@ -171,7 +171,7 @@ describe('Testing the Nightfall SDK', () => {
     });
   });
 
-  describe('Basic Proposer tests', () => {
+  /* describe('Basic Proposer tests', () => {
     it('should register a proposer', async () => {
       let proposers;
       ({ proposers } = await nf3Proposer2.getProposers());
@@ -211,7 +211,7 @@ describe('Testing the Nightfall SDK', () => {
       console.log('AFTER changeCurrentProposer', proposers);
     }); */
 
-    it('should de-register a proposer', async () => {
+  /*  it('should de-register a proposer', async () => {
       let proposers;
       ({ proposers } = await nf3Proposer1.getProposers());
       let thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer1.ethereumAddress);
@@ -261,7 +261,7 @@ describe('Testing the Nightfall SDK', () => {
       await nf3Proposer1.registerProposer();
     });
   });
-
+*/
   describe('Basic Challenger tests', () => {
     it('should register a challenger', async () => {
       const res = await nf3Challenger.registerChallenger();
@@ -509,10 +509,16 @@ describe('Testing the Nightfall SDK', () => {
       if (nodeInfo.includes('TestRPC')) {
         await timeJump(3600 * 24 * 10); // jump in time by 50 days
         console.log(`timeJump`);
-        for (let i = 0; i < txPerBlock; i++) {
-          // eslint-disable-next-line no-await-in-loop
-          await nf3User1.deposit(ercAddress, tokenType, value, tokenId, fee);
-        }
+        await depositNTransactions(
+          nf3User1,
+          txPerBlock,
+          ercAddress,
+          tokenType,
+          value,
+          tokenId,
+          fee,
+        );
+
         const commitments = await nf3User1.getPendingWithdraws();
         expect(commitments[nf3User1.zkpKeys.compressedPkd][ercAddress].length).to.be.greaterThan(0);
         expect(
