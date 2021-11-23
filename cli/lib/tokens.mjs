@@ -8,7 +8,7 @@ Sends an approve transaction to an ERC20/ERC721/ERC1155 contract for a certain a
 * @param {string} ercAddress - ERC contract address
 * @param {string} ownerAddress - The Ethereum address of the transaction sender
 * @param {string} spenderAddress - The Ethereum address of the approved entity
-* @param {string} tokenType  - Type of token 
+* @param {string} tokenType  - Type of token
 * @param {string} value  - Amount of tokens to be approved (in Wei)
 * @param {object} provider  - web3 provider
 * @returns {Promise} transaction
@@ -19,15 +19,21 @@ async function approve(ercAddress, ownerAddress, spenderAddress, tokenType, valu
 
   switch (tokenType) {
     case TOKEN_TYPE.ERC20: {
+      console.log('HERE in approval');
       const allowance = await ercContract.methods.allowance(ownerAddress, spenderAddress).call();
+      console.log('HERE in allowance', allowance);
       const allowanceBN = new Web3.utils.BN(allowance);
+      console.log('HERE in allowanceBN', allowanceBN);
       const valueBN = new Web3.utils.BN(value);
+      console.log('HERE in valueBN', valueBN);
 
       if (allowanceBN.lt(valueBN)) {
         return ercContract.methods
           .approve(spenderAddress, APPROVE_AMOUNT)
           .send({ from: ownerAddress });
       }
+
+      console.log('HERE at the end');
       return Promise.resolve();
     }
 
@@ -50,9 +56,9 @@ async function approve(ercAddress, ownerAddress, spenderAddress, tokenType, valu
 /**
 Get decimals configured  in ERC token
 * @param {string} ercAddress - ERC contract address
-* @param {string} tokenType  - Type of token 
+* @param {string} tokenType  - Type of token
 * @param {object} provider  - web3 provider
-* @returns {Number} decimals 
+* @returns {Number} decimals
 */
 async function getDecimals(ercAddress, tokenType, provider) {
   const abi = getAbi(tokenType);
@@ -79,7 +85,7 @@ Get Information of ERC token in ethereum address. Default is in Wei
 * @param {object} provider  - web3 provider
 * @param {object} options  - different options for tokens. For ERC20, toEth is boolean
 *    to return the balance as Ether. For ERC1155, tokenId is required to get balance
-*    of specific token Id 
+*    of specific token Id
 * @returns {Object} {balance, decimals}
 */
 async function getERCInfo(ercAddress, ethereumAddress, provider, options) {
