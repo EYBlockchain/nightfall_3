@@ -22,7 +22,6 @@ class VerificationKey {
     this.gamma = generalise([vkArray.slice(6, 8), vkArray.slice(8, 10)]).all.hex(32);
     this.delta = generalise([vkArray.slice(10, 12), vkArray.slice(12, 14)]).all.hex(32);
     this.gamma_abc = generalise(pairArray(vkArray.slice(14))).all.hex(32);
-
   }
 }
 
