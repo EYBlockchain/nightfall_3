@@ -5,7 +5,6 @@ services:
     build:
       context: ./nightfall-adversary
     depends_on:
-      - timber1
       - deployer
     networks:
       - nightfall_network
@@ -34,6 +33,4 @@ services:
       LOG_LEVEL: debug
       IS_CHALLENGER: 'false'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
-      TIMBER_HOST: timber1
-      TIMBER_PORT: 80
     command: ['npm', 'run', 'dev']
