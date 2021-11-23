@@ -24,7 +24,7 @@ import {
   txPerBlock,
   fee,
   value,
-  bond,
+  // bond,
   gasCosts,
   tokenId,
   tokenType,
