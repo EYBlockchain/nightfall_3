@@ -1,6 +1,7 @@
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
+import Block from '../classes/block.mjs';
 import {
   isRegisteredProposerAddressMine,
   addTransactionsToMemPoolFromBlockNumberL2,
@@ -25,6 +26,8 @@ async function newCurrentProposerEventHandler(data, args) {
     // were we the last proposer?
     const weWereLastProposer = proposer.isMe;
 
+    Block.rollback();
+
     // If we were the last proposer return any transactions that were removed from the mempool
     // because they were included in proposed blocks that did not eventually make it on chain.
     if (weWereLastProposer && !proposer.isMe) {
@@ -39,7 +42,7 @@ async function newCurrentProposerEventHandler(data, args) {
 
     // !! converts this to a "is not null" check - i.e. false if is null
     // are we the next proposer?
-    proposer.isMe = !!(await isRegisteredProposerAddressMine(currentProposer));
+    proposer.isMe = await isRegisteredProposerAddressMine(currentProposer);
   } catch (err) {
     // handle errors
     logger.error(err);
