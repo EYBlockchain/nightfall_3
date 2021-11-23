@@ -4,9 +4,8 @@ from "ecc/edwardsScalarMult" import main as scalarMult
 from "ecc/edwardsCompress" import main as edwardsCompress
 from "./common/encryption/el-gamal4" import main as enc4
 
-from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256
+from "utils/casts/u32_to_bits.zok" import main as u32_to_bool_32
 from "utils/casts/bool_256_to_u32_8.zok" import main as bool_256_to_u32_8
-from "utils/pack/bool/pack256.zok" import main as bool_256_to_field
 from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
 from "utils/pack/u32/pack256.zok" import main as u32_8_to_field
 from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8
@@ -14,12 +13,10 @@ from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8
 from "./common/hashes/mimc/mimc-hash-2.zok" import main as mimc2
 from "./common/hashes/sha256/pad512ThenHash.zok" import main as sha256of512
 from "./common/hashes/sha256/pad1280ThenHash.zok" import main as sha256of1280
-from "./common/hashes/sha256/pad3072ThenHash.zok" import main as sha256of3072
 
 from "./common/merkle-tree/mimc-path-check.zok" import main as pathCheck
 
-struct OldCommitment {
-	u32[8] ercAddress
+struct OldCommitmentPreimage {
 	u32[8] id
 	u32[8] value
 	u32[8] salt
@@ -27,23 +24,17 @@ struct OldCommitment {
 	field ask
 }
 
-struct NewCommitment {
+struct NewCommitmentPreimage {
 	field[2] pkdRecipient
 	u32[8] value
 	u32[8] salt
-	u32[8] hash
-}
-
-struct Nullifier {
-	u32[8] nsk
-	u32[8] hash
 }
 
 struct Secrets {
-	u32[8] ephemeralKey1
-	u32[8] ephemeralKey2
-	u32[8] ephemeralKey3
-	u32[8] ephemeralKey4
+	u32[8] randomSecret1
+	u32[8] randomSecret2
+	u32[8] randomSecret3
+	u32[8] randomSecret4
 	field[16] cipherText
 	field sqrtMessage1
 	field sqrtMessage2
@@ -52,26 +43,33 @@ struct Secrets {
 }
 
 def main(\
-	field publicInputsHash,\
-	private OldCommitment oldCommitment,\
-	private NewCommitment newCommitment,\
-	private Nullifier nullifier,\
-	private field[33] path,\
+	field fErcAddress,\
+	private OldCommitmentPreimage oldCommitment,\
+	private NewCommitmentPreimage newCommitment,\
+	field fNewCommitmentHash,\
+	private u32[8] nsk,\
+	field fNullifier,\
+	field root,\
+	private field[32] path,\
 	private field order,\
-	private Secrets secrets\
+	private Secrets secrets,\
+	field[8] compressedCipherText\
 )->():
 
 	BabyJubJubParams context = curveParams()
 	field[2] g = [context.Gu, context.Gv]
 
 	// Calculation of ivk from ask and nsk
-	field nsk = u32_8_to_field(nullifier.nsk)
-	field ivk = mimc2([oldCommitment.ask, nsk])
+	field nskField = u32_8_to_field(nsk)
+	field ivk = mimc2([oldCommitment.ask, nskField])
 	bool[256] ivkBool = field_to_bool_256(ivk)
 	field[2] pkd = scalarMult(ivkBool, g, context)
 	bool[256] pkdBool = edwardsCompress(pkd)
 	u32[8] pkdU32 = bool_256_to_u32_8(pkdBool)
 
+	u32[8] ercAddress = field_to_u32_8(fErcAddress)
+	u32[8] newCommitmentHash = field_to_u32_8(fNewCommitmentHash)
+	u32[8] nullifier = field_to_u32_8(fNullifier)
 	// Convert (x,y) public key of recipient to a single element using Edwards compress
 	// Recipient (x,y) form public key is used for encryption input while single element
 	// is used for commitment inputs
@@ -80,10 +78,16 @@ def main(\
 
 	// check the nullifier is valid
 	u32[8] sha = sha256of512([\
-		...nullifier.nsk,\
+		...nsk,\
 		...oldCommitment.hash\
 	])
-	assert(sha == nullifier.hash)
+	// nullifiers are truncated to 248 bits since they are public inputs
+	// so we must check the 248 bits while minimising constraints/comp time - casting to bool[256] is a slower operation than comparing u32s
+
+	// last 224 bits:
+	assert(sha[1..8] == nullifier[1..8])
+	// first 24 bits:
+	assert(u32_to_bool_32(sha[0])[8..32] == u32_to_bool_32(nullifier[0])[8..32])
 
 	// check the new commitment is valid
 	// we effectively throw away the value of the new commitment by insisting
@@ -91,17 +95,24 @@ def main(\
 	// This is a little inefficient but makes the witness computation in node
 	// independent of how many commitments are being transformed.
 	sha = sha256of1280([\
-		...oldCommitment.ercAddress,\
+		...ercAddress,\
 		...oldCommitment.id,\
 		...oldCommitment.value,\
 		...pkdRecipientU32,\
 		...newCommitment.salt\
 	])
-	assert(sha == newCommitment.hash)
+	// new commitments are truncated to 248 bits since they are public inputs
+	// so we must check the 248 bits while minimising constraints/comp time - casting to bool[256] is a slower operation than comparing u32s
+
+	// last 224 bits:
+	assert(sha[1..8] == newCommitmentHash[1..8])
+	// first 24 bits:
+	assert(u32_to_bool_32(sha[0])[8..32] == u32_to_bool_32(newCommitmentHash[0])[8..32])
 
 	// check the old commitment is valid
+	// old commitments are private inputs, so they are u32[8] and not truncated
 	sha = sha256of1280([\
-		...oldCommitment.ercAddress,\
+		...ercAddress,\
 		...oldCommitment.id,\
 		...oldCommitment.value,\
 		...pkdU32,\
@@ -110,52 +121,25 @@ def main(\
 	assert(sha == oldCommitment.hash)
 
 	// And the encryption of the transaction (extend the value up to 256 bits)
-	assert(secrets.cipherText == enc4(oldCommitment.ercAddress, oldCommitment.id, oldCommitment.value, newCommitment.salt, newCommitment.pkdRecipient, secrets.ephemeralKey1, secrets.ephemeralKey2, secrets.ephemeralKey3, secrets.ephemeralKey4, secrets.sqrtMessage1, secrets.sqrtMessage2, secrets.sqrtMessage3, secrets.sqrtMessage4))
+	assert(secrets.cipherText == enc4(ercAddress, oldCommitment.id, oldCommitment.value, newCommitment.salt, newCommitment.pkdRecipient, secrets.randomSecret1, secrets.randomSecret2, secrets.randomSecret3, secrets.randomSecret4, secrets.sqrtMessage1, secrets.sqrtMessage2, secrets.sqrtMessage3, secrets.sqrtMessage4))
 
-	// check the public input hash
-	// To make the hash smaller, let's 'compress' each curve point ordered pair into a single 256 bit array (rather than two)...
-	bool[256] compressedSecretsBool1 = edwardsCompress(secrets.cipherText[0..2])
-	bool[256] compressedSecretsBool2 = edwardsCompress(secrets.cipherText[2..4])
-	bool[256] compressedSecretsBool3 = edwardsCompress(secrets.cipherText[4..6])
-	bool[256] compressedSecretsBool4 = edwardsCompress(secrets.cipherText[6..8])
-	bool[256] compressedSecretsBool5 = edwardsCompress(secrets.cipherText[8..10])
-	bool[256] compressedSecretsBool6 = edwardsCompress(secrets.cipherText[10..12])
-	bool[256] compressedSecretsBool7 = edwardsCompress(secrets.cipherText[12..14])
-	bool[256] compressedSecretsBool8 = edwardsCompress(secrets.cipherText[14..16])
+	// check the compressed cipherText
+	// we pass in 8x compressed points rather than 16x uncompressed points to save time / gas
+	for u32 i in 0..8 do
+		// these intermediate vars really speed up compile time
+		// there is likely a compiler bug with zokrates 0.6.4 which makes using spreads (e.g. [8..256]) inside a function (e.g. assert()) very slow
+		u32 j = 2*i
+		bool[256] compressed256 = edwardsCompress([secrets.cipherText[j], secrets.cipherText[j+1]])
+		bool[256] compressedCheck256 = field_to_bool_256(compressedCipherText[i])
+		bool[248] compressed = compressed256[8..256]
+		bool[248] compressedCheck = compressedCheck256[8..256]
+		assert(compressed == compressedCheck)
+	endfor
 
-	u32[8] compressedSecret1 = bool_256_to_u32_8(compressedSecretsBool1)
-  u32[8] compressedSecret2 = bool_256_to_u32_8(compressedSecretsBool2)
-	u32[8] compressedSecret3 = bool_256_to_u32_8(compressedSecretsBool3)
-	u32[8] compressedSecret4 = bool_256_to_u32_8(compressedSecretsBool4)
-	u32[8] compressedSecret5 = bool_256_to_u32_8(compressedSecretsBool5)
-	u32[8] compressedSecret6 = bool_256_to_u32_8(compressedSecretsBool6)
-	u32[8] compressedSecret7 = bool_256_to_u32_8(compressedSecretsBool7)
-	u32[8] compressedSecret8 = bool_256_to_u32_8(compressedSecretsBool8)
-
-	u32[8] publicInputsHashU32 = sha256of3072([\
-		...oldCommitment.ercAddress,\
-		...newCommitment.hash,\
-		...nullifier.hash,\
-		...field_to_u32_8(path[0]),\
-		...compressedSecret1,\
-		...compressedSecret2,\
-		...compressedSecret3,\
-		...compressedSecret4,\
-		...compressedSecret5,\
-		...compressedSecret6,\
-		...compressedSecret7,\
-		...compressedSecret8\
-	])
-	bool[256] publicInputsHashBool256 = u32_8_to_bool_256(publicInputsHashU32)
-	bool[256] publicInputsHashBool256Sliced = [\
-	     ...[false; 8],\
-	     ...publicInputsHashBool256[8..256]\
-	]
-	assert(publicInputsHash == bool_256_to_field(publicInputsHashBool256Sliced))
 	// check that the old commitment is in the merkle tree (path[0] should be the root)
 	field mimcHash = u32_8_to_field(oldCommitment.hash)
-	bool x = pathCheck(path, order, mimcHash)
+	bool x = pathCheck([root, ...path], order, mimcHash)
 	assert(x)
 
 	return
-// 143284828176769937529162876553745840098661528919052932904843051765190000213 0 0 0 3786913876 4053413099 4184556347 2734706904 2298878123 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 10 1927252649 927079939 1011969103 1462863294 4277947639 2164353627 2054190607 3300935605 231220448 1059909048 3912712882 3413615922 2013853828 3400088472 3674020231 4105440527 20554508024765599754681452527149817852616693887653983104651939102134258746269 5802437327018723451811518326856862491419038055833342930237171188300450891104 16545141132325711407992161993640323748633157389744839797864940876527209182509 0 0 0 0 0 0 0 10 304542480 1555826699 3974154529 275562342 3760125967 3546966259 3993757441 4146684938 299162623 1338274655 65501719 2692461809 469162276 537606093 1445661210 3963746484 60165613 1853956399 2123184558 1150957582 2995252443 2268101302 4050509027 3488140304 832028438 1511610313 2316378745 109006843 2644699700 958789380 3533429280 1030284148 8308717626547071174504191056599845091543797758815379683484680740062699997707 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 19831456058308218840383066105998020063312483559774954270454659981084757000869 1271202729589421087793329525083926272158030390953707196637558754052550066337 2 65099949 390806448 1468943424 2424251608 735785726 2586302220 2750642937 1679724457 1068822751 3821961552 1436789026 3164858255 1675798895 616358361 643042786 710858878 1548151283 3934328312 3309745464 4214946053 2878647776 646220034 2764611910 4010019478 914632899 693233241 3507053558 3449159451 1760788947 2161835424 1482166259 1770140144 17654850728867419430711282930579224508225798009947388345448650097355217644997 13585014284683770730884874625975258467826496055389632498968923368269391739732 14802052116556489817150874597465051459293332514677535830622354863959049363811 19532988289951935787293994217708613213918227289222392367934826534134906282532 21650713462771141401898305044692007116538072786150723816542604659581215881179 5536265012830065712095140043055756417803425142963352435965405855021655175521 6330018190746400473785236876553753925014166840267887813983695945850906483982 1944151417957012922367090104249989020206538260245469569348316025014311772709 11093615161139455453845316629889061126181162707448021957791847397607495994685 141764331006578424982045423752460395161516928073075923492768545374173449458 13453483141662987381973063268387755736970975684761514054474734686412529676531 21093018927072521436599647807809963502854789246496854295304365621072690323779 14808201850882094145813911297587326756967160750756366937994576945331957592352 17263799159882805324069396319165816997097080380234693803081577915686513873133 11923545249171681496121196632049313998948018200485508065437213979278852965286 12861778064974146267590451089503693155118260597139408188600429189194500430677 9427050129567031675553048604712181295465196374683565284398992208923945768094 0 7776112414460028141291788792364523016183925580621199492677386666015993400427 10214853642588337140599767531545883508168978140458144781397366920330515596996
+// 0 0 0 3786913876 4053413099 4184556347 2734706904 2298878123 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 10 1927252649 927079939 1011969103 1462863294 4277947639 2164353627 2054190607 3300935605 231220448 1059909048 3912712882 3413615922 2013853828 3400088472 3674020231 4105440527 20554508024765599754681452527149817852616693887653983104651939102134258746269 5802437327018723451811518326856862491419038055833342930237171188300450891104 16545141132325711407992161993640323748633157389744839797864940876527209182509 0 0 0 0 0 0 0 10 304542480 1555826699 3974154529 275562342 3760125967 3546966259 3993757441 4146684938 299162623 1338274655 65501719 2692461809 469162276 537606093 1445661210 3963746484 60165613 1853956399 2123184558 1150957582 2995252443 2268101302 4050509027 3488140304 832028438 1511610313 2316378745 109006843 2644699700 958789380 3533429280 1030284148 8308717626547071174504191056599845091543797758815379683484680740062699997707 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 19831456058308218840383066105998020063312483559774954270454659981084757000869 1271202729589421087793329525083926272158030390953707196637558754052550066337 2 65099949 390806448 1468943424 2424251608 735785726 2586302220 2750642937 1679724457 1068822751 3821961552 1436789026 3164858255 1675798895 616358361 643042786 710858878 1548151283 3934328312 3309745464 4214946053 2878647776 646220034 2764611910 4010019478 914632899 693233241 3507053558 3449159451 1760788947 2161835424 1482166259 1770140144 17654850728867419430711282930579224508225798009947388345448650097355217644997 13585014284683770730884874625975258467826496055389632498968923368269391739732 14802052116556489817150874597465051459293332514677535830622354863959049363811 19532988289951935787293994217708613213918227289222392367934826534134906282532 21650713462771141401898305044692007116538072786150723816542604659581215881179 5536265012830065712095140043055756417803425142963352435965405855021655175521 6330018190746400473785236876553753925014166840267887813983695945850906483982 1944151417957012922367090104249989020206538260245469569348316025014311772709 11093615161139455453845316629889061126181162707448021957791847397607495994685 141764331006578424982045423752460395161516928073075923492768545374173449458 13453483141662987381973063268387755736970975684761514054474734686412529676531 21093018927072521436599647807809963502854789246496854295304365621072690323779 14808201850882094145813911297587326756967160750756366937994576945331957592352 17263799159882805324069396319165816997097080380234693803081577915686513873133 11923545249171681496121196632049313998948018200485508065437213979278852965286 12861778064974146267590451089503693155118260597139408188600429189194500430677 9427050129567031675553048604712181295465196374683565284398992208923945768094 0 7776112414460028141291788792364523016183925580621199492677386666015993400427 10214853642588337140599767531545883508168978140458144781397366920330515596996
