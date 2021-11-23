@@ -49,7 +49,7 @@ module.exports = {
       // port: 8546, // Standard Ethereum port (default: none)
       url: 'ws://blockchain1:8546',
       network_id: 4378921, // Any network (default: none)
-      gas: 8000000,
+      gas: 80000000,
       websockets: true,
     },
 
