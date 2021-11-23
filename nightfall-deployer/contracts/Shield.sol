@@ -59,6 +59,15 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
     state.addPendingWithdrawal(msg.sender, payment);
   }
 
+  function onERC721Received(address, address _from, uint256 _tokenId, bytes calldata) external returns(bytes4) {
+
+    return 0x150b7a02;
+  }
+
+  function onERC1155Received(address _operator, address _from, uint256 _id, uint256 _value, bytes calldata _data) external returns(bytes4){
+    return bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes)"));
+  }
+
   /**
   This function returns if you are able to withdraw the funds, once a block is finalised
   @param b - the block containing the Withdraw transaction

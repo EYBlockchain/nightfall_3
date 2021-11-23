@@ -1,5 +1,6 @@
 /* ignore unused exports */
-import { TX_TYPES, TRANSACTION_RETRY_PERIOD, TRANSACTION_MAX_RETRIES } from '../../constants';
+import * as Nf3 from 'nf3';
+import { TRANSACTION_RETRY_PERIOD, TRANSACTION_MAX_RETRIES } from '../../constants';
 import toBaseUnit from '../../utils/lib/utils';
 import * as txActions from './transactions.actions';
 
@@ -13,7 +14,7 @@ function txInstantWithdrawSubmit(withdrawTransactionHash, fee) {
       .requestInstantWithdrawal(withdrawTransactionHash, fee)
       .then(txReceipt => {
         // TODO dispatch error
-        dispatch(txActions.txSuccess(TX_TYPES.INSTANT_WITHDRAW, txReceipt));
+        dispatch(txActions.txSuccess(Nf3.Constants.TX_TYPES.INSTANT_WITHDRAW, txReceipt));
       })
       .catch(err => {
         // TODO: Wait XXX time and retry YYY times. Else fail
@@ -47,7 +48,7 @@ function txSubmit(txParams) {
 
     dispatch(txActions.txDispatch());
     switch (txParams.txType) {
-      case TX_TYPES.DEPOSIT:
+      case Nf3.Constants.TX_TYPES.DEPOSIT:
         // TODO: dispatch error
         nf3
           .deposit(
@@ -58,7 +59,7 @@ function txSubmit(txParams) {
             txParams.fee,
           )
           .then(txReceipt => {
-            dispatch(txActions.txSuccess(TX_TYPES.DEPOSIT, txReceipt));
+            dispatch(txActions.txSuccess(Nf3.Constants.TX_TYPES.DEPOSIT, txReceipt));
             // TODO: dispatch error
             console.log(txReceipt);
           })
@@ -69,7 +70,7 @@ function txSubmit(txParams) {
           });
         break;
 
-      case TX_TYPES.TRANSFER:
+      case Nf3.Constants.TX_TYPES.TRANSFER:
         // TODO: dispatch error
         nf3
           .transfer(
@@ -82,7 +83,7 @@ function txSubmit(txParams) {
             txParams.fee,
           )
           .then(txReceipt => {
-            dispatch(txActions.txSuccess(TX_TYPES.TRANSFER, txReceipt));
+            dispatch(txActions.txSuccess(Nf3.Constants.TX_TYPES.TRANSFER, txReceipt));
             // TODO: dispatch error
             console.log(txReceipt);
           })
@@ -93,8 +94,8 @@ function txSubmit(txParams) {
           });
         break;
 
-      case TX_TYPES.WITHDRAW:
-      case TX_TYPES.INSTANT_WITHDRAW:
+      case Nf3.Constants.TX_TYPES.WITHDRAW:
+      case Nf3.Constants.TX_TYPES.INSTANT_WITHDRAW:
         {
           // TODO: dispatch error
           const nRetries = 0;
@@ -112,7 +113,7 @@ function txSubmit(txParams) {
               const latestWithdrawTransactionHash = nf3.getLatestWithdrawHash();
               dispatch(
                 txActions.txSuccess(
-                  TX_TYPES.WITHDRAW,
+                  Nf3.Constants.TX_TYPES.WITHDRAW,
                   txReceipt,
                   latestWithdrawTransactionHash,
                   nRetries,
@@ -121,7 +122,7 @@ function txSubmit(txParams) {
               // TODO: dispatch error
               console.log(txReceipt);
 
-              if (txParams.txType === TX_TYPES.INSTANT_WITHDRAW) {
+              if (txParams.txType === Nf3.Constants.TX_TYPES.INSTANT_WITHDRAW) {
                 dispatch(
                   txInstantWithdrawSubmit(
                     latestWithdrawTransactionHash,

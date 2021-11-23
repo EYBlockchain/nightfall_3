@@ -3,6 +3,7 @@ import Web3 from 'web3';
 import WebSocket from 'ws';
 import EventEmitter from 'events';
 import { Mutex } from 'async-mutex';
+import { approve } from './tokens.mjs';
 
 /**
 @class
@@ -241,6 +242,15 @@ class Nf3 {
   @returns {Promise} Resolves into the Ethereum transaction receipt.
   */
   async deposit(ercAddress, tokenType, value, tokenId, fee = this.defaultFee) {
+    await approve(
+      ercAddress,
+      this.ethereumAddress,
+      this.shieldContractAddress,
+      tokenType,
+      value,
+      this.web3,
+    );
+
     const res = await axios.post(`${this.clientBaseUrl}/deposit`, {
       ercAddress,
       tokenId,
