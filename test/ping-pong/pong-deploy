@@ -1,0 +1,27 @@
+#! /bin/bash
+
+# script to run up the ping pong test on this server
+usage()
+{
+  echo "Usage:"
+  echo "  -g or --ganache; for a ganache simulator. For test - not used if you already have a client running"
+  echo "  -s or --stubs; runs with circuits stubbed out (faster but no checking of ZKP code)"
+  echo "  -h or --help; to print this message"
+}
+
+while [ -n "$1" ]; do
+  case $1 in
+      -g | --ganache )        docker-compose -f docker-compose.yml -f docker-compose.ganache.yml up ganache
+                              ;;
+      -h | --help )           usage
+                              ;;
+      -s | --stubs )          docker-compose -f docker-compose.yml -f docker-compose.deployer.stubs up deployer
+                              ;;
+      * )                     docker-compose up deployer
+                              exit 1
+    esac
+  shift
+done
+
+# shut down cleanly in the event of a cntl-c etc. We don't want to leave containers running
+trap "exit 1" SIGHUP SIGINT SIGTERM
