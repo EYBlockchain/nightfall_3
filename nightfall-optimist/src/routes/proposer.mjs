@@ -36,7 +36,7 @@ router.post('/register', async (req, res, next) => {
     logger.debug('returning raw transaction data');
     logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
     res.json({ txDataToSign });
-    setRegisteredProposerAddress(address); // save the registration address
+    await setRegisteredProposerAddress(address); // save the registration address
   } catch (err) {
     logger.error(err);
     next(err);

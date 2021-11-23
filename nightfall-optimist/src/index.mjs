@@ -27,7 +27,6 @@ const main = async () => {
     // try to sync any missing blockchain state
     // only then start making blocks and listening to new proposers
     initialBlockSync(proposer).then(async () => {
-      await startEventQueue(queueManager, eventHandlers, proposer);
       queues[0].on('end', () => {
         // We do the proposer isMe check here to fail fast instead of re-enqueing.
         logger.info('Queue has emptied. Queueing block assembler.');
@@ -35,6 +34,7 @@ const main = async () => {
         // eslint-disable-next-line no-void, no-useless-return
         return void false; // This is here to satisfy consistent return rules, we do nothing.
       });
+      await startEventQueue(queueManager, eventHandlers, proposer);
       // We enqueue a message so that we can actualy trigger the queue.end call even if we havent received anything.
       // This helps in the case that we restart client and we are the current proposer.
       await enqueueEvent(() => logger.info('Start Queue'), 0);
