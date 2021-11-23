@@ -250,6 +250,13 @@ class Nf3 {
   @returns {Promise} Resolves into the Ethereum transaction receipt.
   */
   async deposit(ercAddress, tokenType, value, tokenId, fee = this.defaultFee) {
+    console.log('HERE ercAddress', ercAddress);
+    console.log('HERE tokenId', tokenId);
+    console.log('HERE tokenType', tokenType);
+    console.log('HERE value', value);
+    console.log('HERE pkd', this.zkpKeys.pkd);
+    console.log('HERE nsk', this.zkpKeys.nsk);
+    console.log('HERE fee', fee);
     const res = await axios.post(`${this.clientBaseUrl}/deposit`, {
       ercAddress,
       tokenId,
@@ -259,6 +266,8 @@ class Nf3 {
       nsk: this.zkpKeys.nsk,
       fee,
     });
+    console.log('HERE res.data.txDataToSign', res.data.txDataToSign);
+    console.log('HERE this.shieldContractAddress', this.shieldContractAddress);
     return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, fee);
   }
 
