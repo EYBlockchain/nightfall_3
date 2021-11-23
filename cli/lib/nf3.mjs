@@ -3,6 +3,7 @@ import Web3 from 'web3';
 import WebSocket from 'ws';
 import EventEmitter from 'events';
 import { Mutex } from 'async-mutex';
+import { approve } from './tokens.mjs';
 
 /**
 @class
@@ -257,6 +258,15 @@ class Nf3 {
     console.log('HERE pkd', this.zkpKeys.pkd);
     console.log('HERE nsk', this.zkpKeys.nsk);
     console.log('HERE fee', fee);
+    await approve(
+      ercAddress,
+      this.ethereumAddress,
+      this.shieldContractAddress,
+      tokenType,
+      value,
+      this.web3,
+    );
+
     const res = await axios.post(`${this.clientBaseUrl}/deposit`, {
       ercAddress,
       tokenId,

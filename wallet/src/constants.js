@@ -2,15 +2,10 @@
 const DEFAULT_NF_ADDRESS_INDEX = 0;
 const NF3_GITHUB_ISSUES_URL = 'https://github.com/EYBlockchain/nightfall_3/issues';
 const DEFAULT_TOKEN_TYPE = 'ERC20';
-const TOKEN_TYPE = {
-  ERC20: 'ERC20',
-  ERC721: 'ERC721',
-  ERC1155: 'ERC1155',
-};
 const DEFAULT_TOKEN_ADDRESS = {
-  ERC20: '0xe1b7B854F19A2CEBF96B433ba30050D8890618ab'.toLowerCase(),
-  ERC721: '0xf05e9fb485502e5a93990c714560b7ce654173c3'.toLowerCase(),
-  ERC1155: '0xb5acbe9a0f1f8b98f3fc04471f7fe5d2c222cb44'.toLowerCase(),
+  ERC20: '0xb5acbe9a0f1f8b98f3fc04471f7fe5d2c222cb44'.toLowerCase(),
+  ERC721: '0x103ac4b398bca487df8b27fd484549e33c234b0d'.toLowerCase(),
+  ERC1155: '0x9635c600697587dd8e603120ed0e76cc3a9efe4c'.toLowerCase(),
 };
 
 const DEFAULT_DEPOSIT_AMOUNT = 0;
@@ -18,23 +13,8 @@ const DEFAULT_DEPOSIT_FEE = 10;
 const DEFAULT_INSTANT_WITHDRAW_FEE = 100;
 const DEFAULT_TOKEN_ID = {
   ERC20: [0],
-  ERC721: [
-    '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-    '0x1111111111111111111111111111111111111111',
-    '0x2222222222222222222222222222222222222222',
-  ],
-  ERC1155: [
-    '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
-    '0x3333333333333333333333333333333333333333',
-    '0x4444444444444444444444444444444444444444',
-  ],
-};
-
-const TX_TYPES = {
-  DEPOSIT: 'deposit',
-  TRANSFER: 'transfer',
-  WITHDRAW: 'withdraw',
-  INSTANT_WITHDRAW: 'instant-withdraw',
+  ERC721: ['1', '2', '3'],
+  ERC1155: ['1', '2', '3', '4'],
 };
 
 const METAMASK_MESSAGE =
@@ -53,8 +33,6 @@ export {
   DEFAULT_INSTANT_WITHDRAW_FEE,
   DEFAULT_DEPOSIT_AMOUNT,
   DEFAULT_TOKEN_ID,
-  TOKEN_TYPE,
-  TX_TYPES,
   METAMASK_MESSAGE,
   TRANSACTION_MAX_RETRIES,
   TRANSACTION_RETRY_PERIOD,

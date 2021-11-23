@@ -4,9 +4,12 @@ import inquirer from 'inquirer';
 import clear from 'clear';
 import Web3 from 'web3';
 import Table from 'cli-table';
+import { generateMnemonic } from 'bip39';
 import Nf3 from '../lib/nf3.mjs';
+import { toBaseUnit } from '../lib/units.mjs';
+import { getDecimals } from '../lib/tokens.mjs';
 
-const web3 = new Web3(); // no URL, we're just using some utilities here
+const web3 = new Web3('ws://localhost:8546');
 let latestWithdrawTransactionHash; // we'll remember this globally so it can be used for instant withdrawals
 
 /**
@@ -90,7 +93,7 @@ async function askQuestions(nf3) {
     },
     {
       name: 'value',
-      message: 'How many tokens are you transacting?',
+      message: 'How many tokens are you transacting (in Eth)?',
       default: 10,
       type: 'input',
       when: answers => answers.tokenType === 'ERC20' || answers.tokenType === 'ERC1155',
@@ -100,8 +103,7 @@ async function askQuestions(nf3) {
       name: 'tokenId',
       message: 'What is the ID of your token?',
       type: 'input',
-      when: answers => answers.tokenType === 'ERC721',
-      validate: input => web3.utils.isHexStrict(input),
+      when: answers => answers.tokenType === 'ERC721' || answers.tokenType === 'ERC1155',
     },
     {
       name: 'withdrawTransactionHash',
@@ -168,17 +170,26 @@ async function loop(nf3, ercAddress) {
   }
   // handle the task that the user has asked for
   switch (task) {
-    case 'Deposit':
-      receiptPromise = nf3.deposit(ercAddress[tokenType], tokenType, value, tokenId, fee);
+    case 'Deposit': {
+      const valueWei = toBaseUnit(
+        value.toString(),
+        await getDecimals(ercAddress[tokenType], tokenType, web3),
+      );
+      receiptPromise = nf3.deposit(ercAddress[tokenType], tokenType, valueWei, tokenId, fee);
       break;
-    case 'Transfer':
+    }
+    case 'Transfer': {
+      const valueWei = toBaseUnit(
+        value.toString(),
+        await getDecimals(ercAddress[tokenType], tokenType, web3),
+      );
       if (x === 'my key') [x, y] = nf3.zkpKeys.pkd;
       try {
         receiptPromise = nf3.transfer(
           offchain,
           ercAddress[tokenType],
           tokenType,
-          value,
+          valueWei,
           tokenId,
           [x, y], // this holds the recipient's pkd point.
           fee,
@@ -191,13 +202,18 @@ async function loop(nf3, ercAddress) {
         throw err;
       }
       break;
-    case 'Withdraw':
+    }
+    case 'Withdraw': {
+      const valueWei = toBaseUnit(
+        value.toString(),
+        await getDecimals(ercAddress[tokenType], tokenType, web3),
+      );
       try {
         receiptPromise = nf3.withdraw(
           offchain,
           ercAddress[tokenType],
           tokenType,
-          value,
+          valueWei,
           tokenId,
           recipientAddress,
           fee,
@@ -210,6 +226,7 @@ async function loop(nf3, ercAddress) {
         throw err;
       }
       break;
+    }
     case 'Instant-Withdraw':
       try {
         await receiptPromise; // we want the other transactions to complete before we try this
@@ -244,7 +261,8 @@ async function main() {
     'ws://localhost:8082',
     'ws://localhost:8546',
   ); // create an nf3 instance
-  await nf3.init();
+  const mnemonic = generateMnemonic();
+  await nf3.init(mnemonic);
   const erc20Address = await nf3.getContractAddress('ERC20Mock');
   const erc721Address = await nf3.getContractAddress('ERC721Mock');
   const erc1155Address = await nf3.getContractAddress('ERC1155Mock');
