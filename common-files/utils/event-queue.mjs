@@ -26,7 +26,8 @@ import logger from 'common-files/utils/logger.mjs';
 const { MAX_QUEUE } = config;
 const fastQueue = new Queue({ autostart: true, concurrency: 1 });
 const slowQueue = new Queue({ autostart: true, concurrency: 1 });
-export const queues = [fastQueue, slowQueue];
+const stopQueue = new Queue({ autostart: false, concurrency: 1 });
+export const queues = [fastQueue, slowQueue, stopQueue];
 
 /**
 This function will return a promise that resolves to true when the next highest
@@ -68,6 +69,10 @@ async function enqueueEvent(callback, priority, args) {
   });
 }
 
+async function dequeueEvent(priority) {
+  queues[priority].shift();
+}
+
 async function queueManager(eventObject, eventArgs) {
   // First element of eventArgs must be the eventHandlers object
   const [eventHandlers, ...args] = eventArgs;
@@ -105,4 +110,4 @@ async function queueManager(eventObject, eventArgs) {
 }
 
 /* ignore unused exports */
-export { flushQueue, enqueueEvent, queueManager };
+export { flushQueue, enqueueEvent, dequeueEvent, queueManager };
