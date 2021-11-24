@@ -1,0 +1,18 @@
+version: '3.5'
+services:
+   selenium:
+      build:
+        dockerfile: Dockerfile
+        context: ./wallet
+      networks:
+        - nightfall_network
+      user: apps
+      ports:
+        - 5900:5900
+        - 3000:3000
+      privileged: true
+      environment:
+          - VNC_SERVER_PASSWORD=password
+          - RUN_SELENIUM_TESTS=${RUN_SELENIUM_TESTS}
+          - ENABLE_VNC_SERVER=${ENABLE_VNC_SERVER}
+       
