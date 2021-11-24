@@ -453,7 +453,7 @@ export async function resetNullifiers(blockHash) {
   return db.collection(NULLIFIER_COLLECTION).updateMany(query, update);
 }
 
-// delete all the nullifiers in this block
+// delete nullifiers by nullifier value
 export async function deleteNullifiers(hashes) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(ADVERSARY_DB);
@@ -518,7 +518,7 @@ export async function getLatestTree() {
   const timberObjArr = await db
     .collection(TIMBER_COLLECTION)
     .find()
-    .sort({ _id: -1 })
+    .sort({ blockNumberL2: -1 })
     .limit(1)
     .toArray();
 

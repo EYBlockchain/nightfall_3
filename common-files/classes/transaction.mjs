@@ -5,8 +5,8 @@
 An optimistic Transaction class
 */
 import gen from 'general-number';
+import { compressProof } from 'common-files/utils/curve-maths/curves.mjs';
 import Web3 from '../utils/web3.mjs';
-import { compressProof } from '../utils/curve-maths/curves.mjs';
 
 const { generalise } = gen;
 

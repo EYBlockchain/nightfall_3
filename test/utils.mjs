@@ -339,12 +339,11 @@ const waitForProposerToBeCurrent = proposer => {
     async function isCurrentProposer() {
       const currentProposer = await proposer.getCurrentProposer();
       if (currentProposer === proposer.ethereumAddress) {
-        console.log('condition met for currentProposer', currentProposer);
+        // console.log('condition met for currentProposer', currentProposer);
         resolve();
       } else {
-        console.log('condition not met for currentProposer', currentProposer);
+        // console.log('condition not met for currentProposer', currentProposer);
         await new Promise(resolving => setTimeout(resolving, 1000));
-        console.log('after wait');
       }
     }
     isCurrentProposer();
