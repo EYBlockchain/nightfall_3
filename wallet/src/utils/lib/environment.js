@@ -32,6 +32,14 @@ const SUPPORTED_ENVIRONMENTS = {
     optimistWsUrl: 'ws://localhost:8082',
     web3WsUrl: 'ws://localhost:8546',
   },
+  docker: {
+    name: 'Docker',
+    chainId: 4378921,
+    clientApiUrl: 'http://client1',
+    optimistApiUrl: 'http://optimist1',
+    optimistWsUrl: 'ws://optimist1:8082',
+    web3WsUrl: 'ws://blockchain1:8546',
+  },
 };
 
 const ContractNames = {

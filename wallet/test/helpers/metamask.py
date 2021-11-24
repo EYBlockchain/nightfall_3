@@ -55,11 +55,15 @@ def selectNetworkMetamask(driver, findElements, networkConfig):
     # Find network
     networkElement = findElements.element_exist_xpath('(//*[contains(text(), "' + networkConfig['name'] + '")] | //*[@value="' + networkConfig['name'] + '"])')
     if not networkElement:
-      findElements.element_exist_xpath('(//*[contains(text(), "' + networkConfig['type'] + '")])').click()
-      findElements.element_exist_xpath('//input[@id="network-name"]').send_keys(networkConfig['name']) # Name
-      findElements.element_exist_xpath('//input[@id="rpc-url"]').send_keys(networkConfig['url']) # URL
-      findElements.element_exist_xpath('//input[@id="chainId"]').send_keys(networkConfig['chainId']) # ChainId
-      findElements.element_exist_xpath('//input[@id="network-ticker"]').send_keys(networkConfig['ticker']) # ChainId
+      findElements.element_exist_xpath('//button[text()="Add Network"]').click()  # Add Network
+      #findElements.element_exist_xpath('(//*[contains(text(), "' + networkConfig['type'] + '")])').click()
+      findElements.element_exist_xpath('(//*[contains(@class, "form-field__input")])[1]').send_keys(networkConfig['name'])
+      findElements.element_exist_xpath('(//*[contains(@class, "form-field__input")])[2]').send_keys(networkConfig['url'])
+      findElements.element_exist_xpath('(//*[contains(@class, "form-field__input")])[3]').send_keys(networkConfig['chainId'])
+      #findElements.element_exist_xpath('//input[@id="network-name"]').send_keys(networkConfig['name']) # Name
+      #findElements.element_exist_xpath('//input[@id="rpc-url"]').send_keys(networkConfig['url']) # URL
+      #findElements.element_exist_xpath('//input[@id="chainId"]').send_keys(networkConfig['chainId']) # ChainId
+      #findElements.element_exist_xpath('//input[@id="network-ticker"]').send_keys(networkConfig['ticker']) # ChainId
       findElements.element_exist_xpath('//button[text()="Save"]').click() # Save
     else:
       findElements.element_exist_xpath('(//*[contains(text(), "' + networkConfig['name'] + '")])').click()

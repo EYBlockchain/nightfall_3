@@ -8,6 +8,8 @@ usage()
 {
   echo "Usage:"
   echo "  -g or --ganache; for a ganache simulator"
+  echo "  -wt or --wallet-testing; to launch wallet unit testing"
+  echo "  -w or  --wallet; to deploy wallet"
   echo "  -l or --localhost; to connect to an already running blockchain on ws://localhost:8546"
   echo "  -s or --stubs; runs with circuits stubbed out (faster but no checking of ZKP code) - use with either -g or -l"
   echo "  -h or --help; to print this message"
@@ -21,17 +23,24 @@ if [ -z "$1" ]; then
 fi
 while [ -n "$1" ]; do
   case $1 in
-      -g | --ganache )        FILE="-f docker-compose.yml -f docker-compose.ganache.yml"
-                              ;;
-      -l | --localhost )      FILE="-f docker-compose.yml -f docker-compose.host.docker.internal.yml"
-                              ;;
-      -t | --testnet )        FILE="-f docker-compose.yml -f docker-compose.testnet.yml"
-                              ;;
-      -h | --help )           usage
-                              ;;
-      -s | --stubs )          STUBS="-f docker-compose.stubs.yml"
-                              ;;
-      * )                     usage
+      -g  | --ganache )             FILE="-f docker-compose.yml -f docker-compose.ganache.yml";
+                                    ;;
+      -wt | --wallet-testing )      FILE="-f docker-compose.yml -f docker-compose.ganache.yml -f docker-compose.selenium.yml" 
+	                            echo "RUN_SELENIUM_TESTS=1" > .env
+				    cd wallet && ./pre-start-script.sh && cd -
+                                    ;;
+      -wt | --wallet)               FILE="-f docker-compose.yml -f docker-compose.ganache.yml -f docker-compose.selenium.yml" 
+	                            echo "ENABLE_VNC_SERVER=1" > .env
+                                    ;;
+      -l  | --localhost )           FILE="-f docker-compose.yml -f docker-compose.host.docker.internal.yml"
+                                    ;;
+      -t  | --testnet )             FILE="-f docker-compose.yml -f docker-compose.testnet.yml"
+                                    ;;
+      -h  | --help )                usage
+                                    ;;
+      -s  | --stubs )               STUBS="-f docker-compose.stubs.yml"
+                                    ;;
+      * )                           usage
                               exit 1
     esac
   shift
