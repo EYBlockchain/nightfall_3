@@ -4,3 +4,4 @@ node_modules/*
 **/doc/*
 cli/build/*
 wallet/src/index.js
+wallet/cli/*
