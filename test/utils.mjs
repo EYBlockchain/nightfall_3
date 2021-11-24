@@ -84,10 +84,6 @@ export function setNonce(privateKey, _nonce) {
   nonceDict[privateKey] = _nonce;
 }
 
-export function getNonce(privateKey) {
-  return nonceDict[privateKey];
-}
-
 export async function getAccounts() {
   if (process.env.FROM_ADDRESS) return [process.env.FROM_ADDRESS];
   const accounts = web3.eth.getAccounts();
