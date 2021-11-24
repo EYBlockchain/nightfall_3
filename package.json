@@ -52,8 +52,7 @@
     "prettier-plugin-solidity": "^1.0.0-beta.10",
     "queue": "^6.0.2",
     "web3": "^1.4.0",
-    "ws": "^7.5.0",
-    "yargs": "^17.2.1"
+    "ws": "^7.5.0"
   },
   "dependencies": {
     "docker-compose": "^0.23.13"
