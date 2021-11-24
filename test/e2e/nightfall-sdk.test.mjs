@@ -24,7 +24,7 @@ import {
   txPerBlock,
   fee,
   value,
-  // bond,
+  bond,
   gasCosts,
   tokenId,
   tokenType,
@@ -85,8 +85,6 @@ describe('Testing the Nightfall SDK', () => {
     web3 = await connectWeb3();
     stateAddress = await nf3User1.getContractAddress('State');
 
-    console.log('onChainBlockCount: ', await getOnChainBlockCount());
-
     await nf3User1.init(mnemonicUser1);
     await nf3User2.init(mnemonicUser2); // 2nd client to do transfer tests and checks
     await nf3Proposer1.init(mnemonicProposer);
@@ -95,6 +93,7 @@ describe('Testing the Nightfall SDK', () => {
     await nf3Challenger.init(mnemonicChallenger);
     await nf3LiquidityProvider.init(mnemonicLiquidityProvider);
 
+    console.log('     Last block on chain: ', await getOnChainBlockCount());
     console.log('     Shield address: ', nf3User1.shieldContractAddress);
     console.log('     State address: ', nf3User1.stateContractAddress);
     console.log('     Proposers address: ', nf3User1.proposersContractAddress);
@@ -139,10 +138,6 @@ describe('Testing the Nightfall SDK', () => {
     nodeInfo = await web3.eth.getNodeInfo();
 
     web3.eth.subscribe('logs', { address: stateAddress }).on('data', log => {
-      console.log(
-        '---> log received: ',
-        log.topics[0] === topicEventMapping.BlockProposed ? 'BlockProposed' : log.topics[0],
-      );
       // For event tracking, we use only care about the logs related to 'blockProposed'
       if (log.topics[0] === topicEventMapping.BlockProposed) eventLogs.push('blockProposed');
     });
@@ -171,7 +166,7 @@ describe('Testing the Nightfall SDK', () => {
     });
   });
 
-  /* describe('Basic Proposer tests', () => {
+  describe('Basic Proposer tests', () => {
     it('should register a proposer', async () => {
       let proposers;
       ({ proposers } = await nf3Proposer2.getProposers());
@@ -200,18 +195,7 @@ describe('Testing the Nightfall SDK', () => {
       expect(thisProposer.length).to.be.equal(1);
     });
 
-    /* it('should change current proposer', async function () {
-      let proposers;
-      ({ proposers } = await nf3Proposer2.getProposers());
-      console.log('BEFORE changeCurrentProposer', proposers);
-      const res = await nf3Proposer2.changeCurrentProposer();
-      expectTransaction(res);
-      console.log('     TransactionHash: ', res.transactionHash);
-      ({ proposers } = await nf3Proposer2.getProposers());
-      console.log('AFTER changeCurrentProposer', proposers);
-    }); */
-
-  /*  it('should de-register a proposer', async () => {
+    it('should de-register a proposer', async () => {
       let proposers;
       ({ proposers } = await nf3Proposer1.getProposers());
       let thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer1.ethereumAddress);
@@ -261,7 +245,7 @@ describe('Testing the Nightfall SDK', () => {
       await nf3Proposer1.registerProposer();
     });
   });
-*/
+
   describe('Basic Challenger tests', () => {
     it('should register a challenger', async () => {
       const res = await nf3Challenger.registerChallenger();

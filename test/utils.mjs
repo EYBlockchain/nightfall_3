@@ -343,14 +343,12 @@ export const depositNTransactions = async (nf3, N, ercAddress, tokenType, value,
     // eslint-disable-next-line no-await-in-loop
     const res = await nf3.deposit(ercAddress, tokenType, value, tokenId, fee);
     expectTransaction(res);
-    console.log('     TransactionHash: ', res.transactionHash);
     depositTransactions.push(res);
   }
   return depositTransactions;
 };
 
 export const waitForEvent = async (eventLogs, expectedEvents, count = 1) => {
-  console.log('Waiting for event...');
   const length = count !== 1 ? count : expectedEvents.length;
   let timeout = 10;
   while (eventLogs.length < length) {
