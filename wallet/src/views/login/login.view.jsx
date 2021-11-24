@@ -15,7 +15,7 @@ import { DEFAULT_NF_ADDRESS_INDEX, METAMASK_MESSAGE } from '../../constants.js';
 
 let nf3;
 
-function Login({ login, settings, onLoadWallet, onDeleteWallet }) {
+function Login({ login, onLoadWallet, onDeleteWallet }) {
   const [modalEnable, setModalEnable] = React.useState(false);
 
   const renderRedirect = () => {
@@ -41,7 +41,6 @@ function Login({ login, settings, onLoadWallet, onDeleteWallet }) {
 
   const initNf3 = async ethereumSigningKey => {
     const nf3Env = getCurrentEnvironment().currentEnvironment;
-    console.log('ENV', nf3Env);
     nf3 = new Nf3.Nf3(
       nf3Env.clientApiUrl,
       nf3Env.optimistApiUrl,
@@ -70,7 +69,7 @@ function Login({ login, settings, onLoadWallet, onDeleteWallet }) {
       hashedSignature = jsSha3.keccak256(signature);
     } catch (err) {
       // TODO display error message
-      console.log('Signer not found', err);
+      throw new Error('Signature aborted');
     }
     return hashedSignature;
   };
@@ -79,9 +78,9 @@ function Login({ login, settings, onLoadWallet, onDeleteWallet }) {
    * Imports a nightfall wallet based on an Ethereum Private Key
    * @param {string} privateKey - Ethereum Private Key
    */
-  const handleClickOnImport = async (mnemonic, backupExists) => {
+  const handleClickOnImport = async (mnemonic, requestBackup) => {
     try {
-      if (settings.mnemonicBackupEnable && !backupExists) {
+      if (requestBackup) {
         const passphrase = await mnemonicPassphraseGet(nf3);
         Storage.mnemonicSet(nf3.ethereumAddress, mnemonic, passphrase);
       }
@@ -90,6 +89,7 @@ function Login({ login, settings, onLoadWallet, onDeleteWallet }) {
       onLoadWallet(nf3);
     } catch (err) {
       console.log('Failed', err);
+      setModalEnable(false);
       onDeleteWallet();
     }
   };
@@ -106,7 +106,7 @@ function Login({ login, settings, onLoadWallet, onDeleteWallet }) {
       } else {
         const passphrase = await mnemonicPassphraseGet(nf3);
         const mnemonic = Storage.mnemonicGet(nf3.ethereumAddress, passphrase);
-        handleClickOnImport(mnemonic, true);
+        handleClickOnImport(mnemonic, false);
       }
     } catch (err) {
       // TODO
@@ -147,14 +147,12 @@ function Login({ login, settings, onLoadWallet, onDeleteWallet }) {
 
 Login.propTypes = {
   login: PropTypes.object.isRequired,
-  settings: PropTypes.object.isRequired,
   onLoadWallet: PropTypes.func.isRequired,
   onDeleteWallet: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = state => ({
   login: state.login,
-  settings: state.settings,
 });
 
 const mapDispatchToProps = dispatch => ({
