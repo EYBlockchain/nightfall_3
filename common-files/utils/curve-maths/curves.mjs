@@ -36,7 +36,7 @@ export function compressG2(point) {
 }
 
 /**
-This compresses a G16 proof object in its entirety, returning promises of a
+This compresses a GM17 proof object in its entirety, returning promises of a
 flattened, compressed result. That's nice because you can await it with a
 Promise.all. We can turn off G2 compression as G2 decompression isn't done yet.
 It can cope with the proof as an object or as a flattened array.
