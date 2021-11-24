@@ -28,7 +28,6 @@ import {
   setNonce,
   getCurrentEnvironment,
   expectTransaction,
-  getNonce,
 } from './utils.mjs';
 
 const { expect } = chai;
