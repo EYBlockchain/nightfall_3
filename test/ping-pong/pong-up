@@ -10,10 +10,10 @@ FILE=
 usage()
 {
   echo "Usage:"
+  echo "  -g or --ganache; for a ganache simulator. For test purposes"
+  echo "  -t or testnet; to use the deployed blockchain client"
   echo "  -s or --stubs; runs with circuits stubbed out (faster but no checking of ZKP code)"
   echo "  -h or --help; to print this message"
-  echo "  -n or --nightfall; deploy nightfall components to server (nightfall-client, nightfall-optimist, zokrates-worker)"
-  echo "  -a or --apps; deploy user, proposer, liquidity provider and challenger apps to the server"
 }
 
 # select a Geth or Ganache client
@@ -23,11 +23,11 @@ if [ -z "$1" ]; then
 fi
 while [ -n "$1" ]; do
   case $1 in
-      -n | --nightfall )      FILE="${FILE} -f docker-compose.pong.yml"
+      -g | --ganache )        FILE="-f docker-compose.yml -f docker-compose.ganache.yml"
                               ;;
       -h | --help )           usage
                               ;;
-      -s | --stubs )          FILE="${FILE} -f docker-compose.pong.client.stubs.yml"
+      -s | --stubs )          STUBS="-f docker-compose.client.stubs.yml"
                               ;;
       * )                     usage
                               exit 1
@@ -42,5 +42,5 @@ fi
 # shut down cleanly in the event of a cntl-c etc. We don't want to leave containers running
 trap "exit 1" SIGHUP SIGINT SIGTERM
 
-docker-compose $FILE up -d
-docker-compose $FILE logs -f
+docker-compose $FILE $STUBS up -d --remove-orphans client optimist rabbitmq
+docker-compose $FILE $STUBS logs -f

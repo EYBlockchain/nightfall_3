@@ -2,7 +2,6 @@ version: '3.5'
 # Use this script for running up nightfall_3 with images
 # If you replace the main docker-compose with this file, it should work!
 services:
-
   client:
     image: ghcr.io/eyblockchain/nightfall3-client:latest
     volumes:
@@ -17,10 +16,6 @@ services:
     ports:
       - 27017:27017
       - 8080:80
-    depends_on:
-      - deployer
-      - worker
-      - rabbitmq
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
@@ -48,8 +43,6 @@ services:
 
   optimist:
     image: ghcr.io/eyblockchain/nightfall3-optimist:latest
-    depends_on:
-      - deployer
     networks:
       - nightfall_network
     ports:
@@ -99,8 +92,6 @@ services:
       - type: volume
         source: ./proving_files
         target: /app/output/
-    depends_on:
-      - deployer
     networks:
       - nightfall_network
     environment:
