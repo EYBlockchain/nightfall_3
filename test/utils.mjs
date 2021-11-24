@@ -335,7 +335,6 @@ export const waitForEvent = async (eventLogs, expectedEvents) => {
   function to wait until a proposer is the current proposer
 */
 const waitForProposerToBeCurrent = proposer => {
-  console.log('HERE waitForProposerToBeCurrent');
   return new Promise(resolve => {
     async function isCurrentProposer() {
       const currentProposer = await proposer.getCurrentProposer();
@@ -356,9 +355,7 @@ const waitForProposerToBeCurrent = proposer => {
   function to register a proposer and wait until this proposer is the current proposer
 */
 export const waitForProposer = async proposer => {
-  console.log('HERE waitForProposer');
   if ((await proposer.getCurrentProposer()) !== proposer.ethereumAddress) {
-    console.log('HERE registering proposer');
     await proposer.registerProposer();
   }
   await waitForProposerToBeCurrent(proposer);

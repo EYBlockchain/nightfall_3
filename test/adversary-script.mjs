@@ -145,7 +145,7 @@ describe('Testing the challenge http API', () => {
     // Send block config to adversarial proposer
     await sendBlockConfig(nf3AdversarialProposer.optimistBaseUrl, blockConfig);
 
-    ercAddress = await nf3User1.getContractAddress('ERCStub');
+    ercAddress = await nf3User1.getContractAddress('ERC20Mock');
   });
 
   describe('Basic Challenger tests', () => {
@@ -179,7 +179,6 @@ describe('Testing the challenge http API', () => {
         // TODO set this loop to TRANSACTIONS_PER_BLOCK
         await waitForProposer(nf3AdversarialProposer);
         const res = await nf3User1.deposit(ercAddress, tokenType, value1, tokenId, fee);
-        console.log('HERE res', res);
         expect(res).to.have.property('transactionHash');
         expect(res).to.have.property('blockHash');
         // count += 1;
