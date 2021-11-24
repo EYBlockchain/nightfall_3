@@ -9,7 +9,8 @@ metamaskConfig = {
 networkConfigLocalhost = {
    "name": "ganache-nightfall",
    "type": "Custom RPC",
-   "url": "http://localhost:8546",
+   #"url": "http://localhost:8546",
+   "url": "http://blockchain1:8546",
    "chainId": "1337",
    "ticker": "ETH",
 }

@@ -47,7 +47,7 @@ driver.switch_to.window(metamaskTab)
 # Load Metamask   #
 ###################
 initializeMetamask(driver, findElementsInstance, metamaskConfig)
-deleteNetworkMetamask(driver, findElementsInstance, deleteNetworkConfig)
+#deleteNetworkMetamask(driver, findElementsInstance, deleteNetworkConfig)
 selectNetworkMetamask(driver, findElementsInstance, networkConfigLocalhost)
 addEthAccountMetamask(driver, findElementsInstance, ethAccount1Params)
 addEthAccountMetamask(driver, findElementsInstance, ethAccount2Params)
