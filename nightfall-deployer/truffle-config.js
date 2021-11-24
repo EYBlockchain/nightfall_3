@@ -44,6 +44,7 @@ module.exports = {
     // tab if you use this network and you must also set the `host`, `port` and `network_id`
     // options below to some value.
     //
+
     blockchain1: {
       // host: 'blockchain', // Localhost (default: none)
       // port: 8546, // Standard Ethereum port (default: none)
