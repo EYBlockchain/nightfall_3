@@ -83,7 +83,7 @@ describe('Testing the Nightfall SDK', () => {
   before(async () => {
     // to enable getBalance with web3 we should connect first
     web3 = await connectWeb3();
-    stateAddress = await nf3User1.getContractAddress('State');
+    stateAddress = await nf3User1.stateContractAddress;
 
     await nf3User1.init(mnemonicUser1);
     await nf3User2.init(mnemonicUser2); // 2nd client to do transfer tests and checks
