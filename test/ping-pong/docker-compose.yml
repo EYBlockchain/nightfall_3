@@ -99,8 +99,8 @@ services:
 
   proposer:
     build:
-      dockerfile: Dockerfile
-      context: ./proposer
+      dockerfile: proposer.Dockerfile
+      context: ../../
     networks:
       - nightfall_network
     volumes:
@@ -109,7 +109,29 @@ services:
         target: /common-files
       - type: bind
         source: ./proposer/src
-        target: /test/ping-pong/proposer/src
+        target: /app/src
+    environment:
+      OPTIMIST_HOST: optimist
+      OPTIMIST_WS_PORT: 8080
+      OPTIMIST_HTTP_PORT: 80
+      CLIENT_HOST: client
+      CLIENT_PORT: 80
+      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_PORT: 8546
+
+  user-local:
+    build:
+      dockerfile: user-local.Dockerfile
+      context: ../../
+    networks:
+      - nightfall_network
+    volumes:
+      - type: bind
+        source: ../../common-files
+        target: /common-files
+      - type: bind
+        source: ./user-local/src
+        target: /app/src
     environment:
       OPTIMIST_HOST: optimist
       OPTIMIST_WS_PORT: 8080

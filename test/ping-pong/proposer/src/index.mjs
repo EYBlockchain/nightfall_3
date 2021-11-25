@@ -1,8 +1,8 @@
 /**
 Module that runs up as a proposer
 */
+import config from 'config';
 import Nf3 from './nf3.mjs';
-import config from './config.mjs';
 
 const { proposerEthereumSigningKey, optimistWsUrl, web3WsUrl, clientBaseUrl, optimistBaseUrl } =
   config;
