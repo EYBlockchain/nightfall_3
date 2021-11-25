@@ -1,6 +1,5 @@
 version: '3.5'
-# Use this script for running up nightfall_3 with images
-# If you replace the main docker-compose with this file, it should work!
+# Use this script for running up nightfall_3 with images and applications
 services:
   client:
     image: ghcr.io/eyblockchain/nightfall3-client:latest
@@ -16,6 +15,9 @@ services:
     ports:
       - 27017:27017
       - 8080:80
+    depends_on:
+      - worker
+      - rabbitmq
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
@@ -82,8 +84,6 @@ services:
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
       ZOKRATES_WORKER_HOST: worker
-      # TIMBER_HOST: timber1
-      # TIMBER_PORT: 80
       USE_STUBS: 'false'
 
   worker:
@@ -97,22 +97,27 @@ services:
     environment:
       LOG_LEVEL: info
 
-#  proposer:
-#    build:
-#      dockerfile: Dockerfile
-#      context: ./proposer
-#    networks:
-#      - nightfall_network
-#    volumes:
-#      - type: bind
-#        source: ../../common-files
-#        target: /common-files
-#      - type: bind
-#        source: ./proposer/src
-#        target: /test/ping-pong/proposer/src
-#    environment:
-#      OPTIMIST_HOST: optimist
-#      OPTIMIST_PORT: 8080
+  proposer:
+    build:
+      dockerfile: Dockerfile
+      context: ./proposer
+    networks:
+      - nightfall_network
+    volumes:
+      - type: bind
+        source: ../../common-files
+        target: /common-files
+      - type: bind
+        source: ./proposer/src
+        target: /test/ping-pong/proposer/src
+    environment:
+      OPTIMIST_HOST: optimist
+      OPTIMIST_WS_PORT: 8080
+      OPTIMIST_HTTP_PORT: 80
+      CLIENT_HOST: client
+      CLIENT_PORT: 80
+      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_PORT: 8546
 
 volumes:
   mongodb:

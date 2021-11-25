@@ -1,24 +1,28 @@
 #! /bin/bash
 
 # script to delete volumes so that state can be reset
-DOCKER_CONTAINERS=$(docker ps -aq)
-if [ "$DOCKER_CONTAINERS" ]; then
-  echo "Removing containers"
-  docker rm -f $DOCKER_CONTAINERS
-fi
+docker-compose -f docker-compose.yml down
 VOLUME_LIST=$(docker volume ls -q)
 
 usage()
 {
   echo "Usage:"
-  echo "  -a or --all; deletes all volumes, including the zkp trusted setup, otherwise this is kept"
+  echo "  -v or --volumes; deletes all volumes, including the zkp trusted setup, otherwise they are kept"
 }
 
 while [ -n "$1" ]; do
   case $1 in
-      -a | --all )        if [[ $(echo $VOLUME_LIST | grep ping-pong_proving_files) ]]; then
+      -v | --volumes )        if [[ $(echo $VOLUME_LIST | grep ping-pong_proving_files) ]]; then
                               echo -n 'Removing '
                               docker volume rm ping-pong_proving_files
+                              fi
+                          if [[ $(echo $VOLUME_LIST | grep ping-pong_mongodb) ]]; then
+                                echo -n 'Removing '
+                                docker volume rm ping-pong_mongodb
+                              fi
+                          if [[ $(echo $VOLUME_LIST | grep ping-pong_build) ]]; then
+                                echo -n 'Removing '
+                                docker volume rm ping-pong_build
                               fi
                               ;;
       * )                     usage
@@ -26,16 +30,6 @@ while [ -n "$1" ]; do
     esac
   shift
 done
-
-if [[ $(echo $VOLUME_LIST | grep ping-pong_mongodb) ]]; then
-  echo -n 'Removing '
-  docker volume rm ping-pong_mongodb
-fi
-
-if [[ $(echo $VOLUME_LIST | grep ping-pong_build) ]]; then
-  echo -n 'Removing '
-  docker volume rm ping-pong_build
-fi
 
 DIR=./common-files/node_modules
 if [[ -d "$DIR" ]]; then
