@@ -74,6 +74,7 @@ class Transaction {
       historicRootBlockNumberL2: historicRootBlockNumberL2 || [0, 0],
       transactionType: transactionType || 0,
       tokenType: TOKEN_TYPES[tokenType] || 0, // tokenType does not matter for transfer
+      publicInputs: publicInputs.publicInputs ?? publicInputs,
       tokenId: tokenId || 0,
       value: value || 0,
       ercAddress: ercAddress || 0,
@@ -107,6 +108,7 @@ class Transaction {
       historicRootBlockNumberL2,
       transactionType,
       tokenType,
+      publicInputs,
       tokenId,
       ercAddress,
       recipientAddress,
@@ -120,6 +122,7 @@ class Transaction {
       historicRootBlockNumberL2,
       transactionType,
       tokenType,
+      publicInputs,
       tokenId,
       ercAddress,
       recipientAddress,

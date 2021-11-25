@@ -185,7 +185,7 @@ def main(\
 	endfor
 
 	// check that the old commitments are in the merkle tree
-	assert(root[0] == root[1]) // these should both be the root
+	// assert(root[0] == root[1]) // these should both be the root
 	for u32 i in 0..2 do
 		field mimcHash = u32_8_to_field(oldCommitment[i].hash)
 		assert(pathCheck([root[i], ...path[i]], order[i], mimcHash))
