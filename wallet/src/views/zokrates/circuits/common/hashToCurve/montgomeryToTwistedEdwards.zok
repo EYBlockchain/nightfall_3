@@ -1,0 +1,5 @@
+def main(field[2] point)->(field[2]):
+   point = if point == [0,0] then [1,1] else point fi
+   field x = if point == [1,1] then 0 else (point[0] / point[1]) fi
+   field y = if point == [1,1] then 21888242871839275222246405745257275088548364400416034343698204186575808495616 else (point[0] - 1 )/ (point[0] + 1) fi
+  return [x, y]

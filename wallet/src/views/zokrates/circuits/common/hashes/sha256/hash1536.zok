@@ -1,0 +1,13 @@
+from "hashes/sha256/embed/1536bit.zok" import main as sha256
+from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256
+from "utils/casts/bool_256_to_u32_8.zok" import main as bool_256_to_u32_8
+
+def main(u32[48] a) -> (u32[8]):
+    return bool_256_to_u32_8(sha256(\
+        u32_8_to_bool_256(a[0..8]),\
+        u32_8_to_bool_256(a[8..16]),\
+        u32_8_to_bool_256(a[16..24]),\
+        u32_8_to_bool_256(a[24..32]),\
+        u32_8_to_bool_256(a[32..40]),\
+        u32_8_to_bool_256(a[40..48])\
+    ))
