@@ -282,7 +282,11 @@ describe('Testing the challenge http API', () => {
             // console.log('tx hash of challenge block is', txReceipt.transactionHash);
           } else throw new Error(`Unhandled transaction type: ${type}`);
         } catch (err) {
-          console.error(`neg-http.mjs onmessage error: ${err}`);
+          console.error(
+            `neg-http.mjs onmessage error: ${err}, block is : ${JSON.stringify(
+              msg.block,
+            )} / ${JSON.stringify(msg.transactions)} /  ${msg.type}`,
+          );
         }
       });
     };

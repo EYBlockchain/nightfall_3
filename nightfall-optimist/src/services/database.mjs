@@ -298,11 +298,11 @@ export async function addTransactionsToMemPool(block) {
 Function to remove a set of transactions from the layer 2 mempool once they've
 been processed into a block
 */
-export async function removeTransactionsFromMemPool(block) {
+export async function removeTransactionsFromMemPool(transactionHashes, blockNumberL2 = -1) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  const query = { transactionHash: { $in: block.transactionHashes }, blockNumberL2: -1 };
-  const update = { $set: { mempool: false, blockNumberL2: block.blockNumberL2 } };
+  const query = { transactionHash: { $in: transactionHashes }, blockNumberL2: -1 };
+  const update = { $set: { mempool: false, blockNumberL2 } };
   return db.collection(TRANSACTIONS_COLLECTION).updateMany(query, update);
 }
 
@@ -455,7 +455,7 @@ export async function resetUnsuccessfulBlockProposedTransactions() {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { blockNumberL2: -1, mempool: false }; // Transactions out of mempool but not yet on chain
-  const update = { $set: { mempool: true } };
+  const update = { $set: { mempool: true, blockNumberL2: -1 } };
   return db.collection(TRANSACTIONS_COLLECTION).updateMany(query, update);
 }
 
