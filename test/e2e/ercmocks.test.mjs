@@ -25,7 +25,7 @@ const { web3WsUrl } = process.env;
 
 describe('Testing the Nightfall ERCMocks', () => {
   console.log('ENVIRONMENT: ', environment);
-  const nf3 = new Nf3(web3WsUrl, walletTestSigningkey, environment);
+  const nf3 = new Nf3(web3WsUrl, ethereumSigningKeyUser1, environment);
 
   let web3;
   let ercAddress;
@@ -87,7 +87,7 @@ describe('Testing the Nightfall ERCMocks', () => {
 
     it('should get the balance of wallet address of the ERC20 contract mock', async function () {
       const erc20Token = new web3.eth.Contract(nf3.contracts.ERC20, erc20Address);
-      const balance = await erc20Token.methods.balanceOf(walletTestAddress).call();
+      const balance = await erc20Token.methods.balanceOf(ethereumAddressUser1).call();
       expect(Number(balance)).to.be.greaterThan(0);
     });
 
@@ -99,9 +99,7 @@ describe('Testing the Nightfall ERCMocks', () => {
       expect(Number(decimals)).to.be.equal(9);
 
       const gas = (await web3.eth.getBlock('latest')).gasLimit;
-      const txDataToSign = await erc20Token.methods
-        .transfer(ethereumAddressUser1, amount)
-        .encodeABI();
+      const txDataToSign = await erc20Token.methods.transfer(walletTestAddress, amount).encodeABI();
       const res = await submitTransaction(txDataToSign, nf3.ethereumSigningKey, erc20Address, gas);
       expectTransaction(res);
 
@@ -124,31 +122,32 @@ describe('Testing the Nightfall ERCMocks', () => {
     it('should transfer one token of the ERC721 contract mock', async function () {
       const erc721Token = new web3.eth.Contract(nf3.contracts.ERC721, erc721Address);
       const balanceBefore = await erc721Token.methods.balanceOf(nf3.ethereumAddress).call();
+      const tokenId = 1;
       console.log(`        Balance ERC721Mock [${nf3.ethereumAddress}]: ${balanceBefore}`);
       const gas = (await web3.eth.getBlock('latest')).gasLimit;
       let txDataToSign = await erc721Token.methods
-        .safeTransferFrom(nf3.ethereumAddress, ethereumAddressUser1, 4)
+        .safeTransferFrom(nf3.ethereumAddress, walletTestAddress, 1)
         .encodeABI();
       let res = await submitTransaction(txDataToSign, nf3.ethereumSigningKey, erc721Address, gas);
       expectTransaction(res);
 
       const balanceAfter = await erc721Token.methods.balanceOf(nf3.ethereumAddress).call();
       console.log(
-        `        Balance ERC721Mock after transfer tokenId 4 [${nf3.ethereumAddress}]: ${balanceAfter}`,
+        `        Balance ERC721Mock after transfer tokenId ${tokenId} [${nf3.ethereumAddress}]: ${balanceAfter}`,
       );
       expect(Number(balanceAfter)).to.be.equal(Number(balanceBefore) - 1);
 
-      await nf3.setEthereumSigningKey(ethereumSigningKeyUser1);
+      await nf3.setEthereumSigningKey(walletTestSigningkey);
       txDataToSign = await erc721Token.methods
-        .safeTransferFrom(nf3.ethereumAddress, walletTestAddress, 4)
+        .safeTransferFrom(nf3.ethereumAddress, ethereumAddressUser1, 1)
         .encodeABI();
       res = await submitTransaction(txDataToSign, nf3.ethereumSigningKey, erc721Address, gas);
       expectTransaction(res);
-      await nf3.setEthereumSigningKey(walletTestSigningkey);
+      await nf3.setEthereumSigningKey(ethereumSigningKeyUser1);
 
       const balanceAfter2 = await erc721Token.methods.balanceOf(nf3.ethereumAddress).call();
       console.log(
-        `        Balance ERC721Mock after transfer back tokenId 4 [${nf3.ethereumAddress}]: ${balanceAfter2}`,
+        `        Balance ERC721Mock after transfer back tokenId ${tokenId} [${nf3.ethereumAddress}]: ${balanceAfter2}`,
       );
       expect(Number(balanceAfter2)).to.be.equal(Number(balanceAfter) + 1);
     });

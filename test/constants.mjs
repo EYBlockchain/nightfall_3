@@ -9,9 +9,9 @@ export const fee = 1;
 export const BLOCK_STAKE = 1; // 1 wei
 export const bond = 10; // 10 wei
 export const txPerBlock = 2;
-export const walletTestAddress = '0xDd369AF1Bd4D8fEBEf2cE1716AfEC592e00553AA';
+export const walletTestAddress = '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9';
 export const walletTestSigningkey =
-  '0xb861522aeeff651a048a53f27c67a429d42465d95d0915bab453ad554a8cf07a';
+  '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb';
 export const ethereumSigningKeyUser1 =
   '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e';
 export const ethereumAddressUser1 = '0x9c8b2276d490141ae1440da660e470e7c0349c63';

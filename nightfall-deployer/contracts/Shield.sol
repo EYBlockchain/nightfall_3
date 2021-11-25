@@ -180,8 +180,7 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
       if (t.tokenId != ZERO)
         revert("ERC20 deposit should have tokenId equal to ZERO");
       else
-        tokenContract.transferFrom(
-          address(this),
+        tokenContract.transfer(
           recipientAddress,
           uint256(t.value)
         );

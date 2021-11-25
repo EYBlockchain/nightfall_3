@@ -2,6 +2,7 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import Nf3 from '../../cli/lib/nf3.mjs';
+import { getERCInfo } from '../../cli/lib/tokens.mjs';
 import {
   getBalance,
   connectWeb3,
@@ -83,7 +84,6 @@ describe('Testing the Nightfall SDK', () => {
   before(async () => {
     // to enable getBalance with web3 we should connect first
     web3 = await connectWeb3();
-    stateAddress = await nf3User1.stateContractAddress;
 
     await nf3User1.init(mnemonicUser1);
     await nf3User2.init(mnemonicUser2); // 2nd client to do transfer tests and checks
@@ -92,6 +92,8 @@ describe('Testing the Nightfall SDK', () => {
     await nf3Proposer3.init(mnemonicProposer);
     await nf3Challenger.init(mnemonicChallenger);
     await nf3LiquidityProvider.init(mnemonicLiquidityProvider);
+
+    stateAddress = await nf3User1.stateContractAddress;
 
     console.log('     Last block on chain: ', await getOnChainBlockCount());
     console.log('     Shield address: ', nf3User1.shieldContractAddress);
@@ -123,10 +125,13 @@ describe('Testing the Nightfall SDK', () => {
     await nf3Challenger.registerChallenger();
     // Chalenger listening for incoming events
     nf3Challenger.startChallenger();
-    const res = await nf3User1.getContractAddress('ERCStub');
+    const res = await nf3User1.getContractAddress('ERC20Mock');
     // Lowercase is useful here because BigInt(ercAddress).toString(16) applies a lowercase check
     // we will use this as a key in our dictionary so it's important they match.
     ercAddress = res.toLowerCase();
+
+    const balances = await getERCInfo(ercAddress, nf3Proposer1.ethereumAddress, web3);
+    console.log('BALANCES: ', balances);
 
     // Liquidity provider for instant withdraws
     const emitter = await nf3User1.getInstantWithdrawalRequestedEmitter();
