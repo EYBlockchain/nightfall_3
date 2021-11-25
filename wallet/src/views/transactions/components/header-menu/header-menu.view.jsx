@@ -2,6 +2,7 @@ import React from 'react';
 import { Menu, Icon, Button } from 'semantic-ui-react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
+import { Link } from 'react-router-dom';
 import { deleteWallet } from '../../../../store/login/login.actions';
 import AccountSettingsModal from './account-settings.view.jsx';
 
@@ -23,6 +24,10 @@ function HeaderMenu({ onDeleteWallet }) {
         <Button name="account-settings" onClick={() => toggleAccountSettings()}>
           <Icon name="settings" size="large" />
           Account Settings
+        </Button>
+        <Button name="zokrates">
+          <Icon name="settings" size="large" />
+          <Link to="/zokrates">zokrates</Link>
         </Button>
         <Button name="account-info" disabled onClick={() => handleClickNFInfo()}>
           <Icon name="question" size="large" />
