@@ -1,24 +1,14 @@
 /* eslint-disable global-require */
 const { addBeforeLoader, loaderByName } = require('@craco/craco');
-// eslint-disable-next-line no-extend-native
-BigInt.prototype.toJSON = function () {
-  return this.toString();
-};
 
 module.exports = {
   plugins: [{ plugin: require('@semantic-ui-react/craco-less') }],
   webpack: {
     configure: (webpackConfig, { paths }) => {
       const wasmExtensionRegExp = /\.wasm$/;
-      const config = require('../config/default');
-      webpackConfig.resolve.extensions.push('.wasm');
-      // eslint-disable-next-line no-extend-native
-      BigInt.prototype.toJSON = function () {
-        return `${this.toString()} BigInt`;
-      };
 
-      // eslint-disable-next-line no-param-reassign
-      webpackConfig.externals = { config: JSON.stringify(config) };
+      webpackConfig.resolve.extensions.push('.wasm');
+
       webpackConfig.module.rules.forEach(rule => {
         (rule.oneOf || []).forEach(oneOf => {
           if (oneOf.loader && oneOf.loader.indexOf('file-loader') >= 0) {
