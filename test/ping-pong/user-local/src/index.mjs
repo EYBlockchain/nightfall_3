@@ -20,8 +20,7 @@ async function startProposer() {
     proposerEthereumSigningKey,
   );
   await nf3.init();
-  if ((await nf3.healthcheck('optimist')) && (await nf3.healthcheck('client')))
-    console.log('Healthcheck passed');
+  if (await nf3.healthcheck('optimist')) console.log('Healthcheck passed');
   else throw new Error('Healthcheck failed');
   await nf3.registerProposer();
   console.log('Proposer registration complete');
