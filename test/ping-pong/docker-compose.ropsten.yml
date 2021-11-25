@@ -4,7 +4,7 @@ services:
 
   client:
     environment:
-      BLOCKCHAIN_WS_HOST: wss://ropsten1-ws.testnet.nightfall3.com
+      BLOCKCHAIN_WS_HOST: ropsten1-ws.testnet.nightfall3.com
       AUTOSTART_RETRIES: 100
 
   deployer:
@@ -13,13 +13,13 @@ services:
       # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
       # startup routines will wait for a blockchain client to be reachable on this network
       ETH_NETWORK: development
-      BLOCKCHAIN_WS_HOST: wss://ropsten1-ws.testnet.nightfall3.com
+      BLOCKCHAIN_WS_HOST: ropsten1-ws.testnet.nightfall3.com
 
   optimist:
     environment:
-      BLOCKCHAIN_WS_HOST: wss://ropsten1-ws.testnet.nightfall3.com
+      BLOCKCHAIN_WS_HOST: ropsten1-ws.testnet.nightfall3.com
       AUTOSTART_RETRIES: 100
 
   proposer:
     environment:
-      BLOCKCHAIN_WS_HOST: wss://ropsten1-ws.testnet.nightfall3.com
+      BLOCKCHAIN_WS_HOST: ropsten1-ws.testnet.nightfall3.com
