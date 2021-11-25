@@ -12,6 +12,13 @@ contract ERCStub {
   bytes private data;
   uint256 private id;
 
+  function transfer(
+    address to,
+    uint256 value
+  ) external returns (bool) {
+    emit Transfer(msg.sender, to, value);
+    return true;
+  }
   function transferFrom(
     address from,
     address to,
