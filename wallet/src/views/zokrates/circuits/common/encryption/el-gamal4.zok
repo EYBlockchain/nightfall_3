@@ -1,0 +1,53 @@
+from "ecc/babyjubjubParams" import BabyJubJubParams
+from "ecc/babyjubjubParams" import main as curveParams
+from "ecc/edwardsScalarMult.code" import main as scalarMult
+from "ecc/edwardsAdd.code" import main as add
+
+from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256
+
+from "../hashToCurve/elligator2.zok" import main as hashToCurve
+from "../hashToCurve/montgomeryToTwistedEdwards.zok" import main as montgomeryToTwistedEdwards
+
+//* This function encrypts the transaction value and the sender's and recipient's public keys (so that the authority can recover them)
+//* using El-Gamal encryption.  It can work with 256 bit messages (>Fq) because the ZoKrates scalarMult function
+//* supports this (the number can wrap around the group) [TODO - double check this is ok]
+def main(u32[8] message1, u32[8] message2, u32[8] message3, u32[8] message4, field[2] publicKey, u32[8] randomSecret1, u32[8] randomSecret2, u32[8] randomSecret3, u32[8] randomSecret4, field sqrtMessage1, field sqrtMessage2, field sqrtMessage3, field sqrtMessage4)->(field[16]):
+
+  // We can only encrypt curve points.  Unfortunately, we have binary messages.  Luckily, we can map one to the other with a scalar multiplication:
+  field[2] message1Point = hashToCurve(message1, sqrtMessage1)
+  field[2] message2Point = hashToCurve(message2, sqrtMessage2)
+  field[2] message3Point = hashToCurve(message3, sqrtMessage3)
+  field[2] message4Point = hashToCurve(message4, sqrtMessage4)
+
+  // convert montgomery points to twisted edwards point
+  field[2] message1TEPoint = montgomeryToTwistedEdwards(message1Point)
+  field[2] message2TEPoint = montgomeryToTwistedEdwards(message2Point)
+  field[2] message3TEPoint = montgomeryToTwistedEdwards(message3Point)
+  field[2] message4TEPoint = montgomeryToTwistedEdwards(message4Point)
+  //
+  bool[256] randomSecret1Bool256 = u32_8_to_bool_256(randomSecret1)
+  bool[256] randomSecret2Bool256 = u32_8_to_bool_256(randomSecret2)
+  bool[256] randomSecret3Bool256 = u32_8_to_bool_256(randomSecret3)
+  bool[256] randomSecret4Bool256 = u32_8_to_bool_256(randomSecret4)
+
+  BabyJubJubParams context = curveParams()
+  field[2] g = [context.Gu, context.Gv]
+
+  // next, we compute shared secrets using random numbers and our public key.
+  // knowing the shared secret is the same for two encryptions is valuable for an attacker
+  field[2] sharedSecret1 = scalarMult(randomSecret1Bool256, publicKey, context)
+  field[2] sharedSecret2 = scalarMult(randomSecret2Bool256, publicKey, context)
+  field[2] sharedSecret3 = scalarMult(randomSecret3Bool256, publicKey, context)
+  field[2] sharedSecret4 = scalarMult(randomSecret4Bool256, publicKey, context)
+
+  //these are the elements that make up the encryption
+  field[2] c0 = scalarMult(randomSecret1Bool256, g, context) // = g.r1
+  field[2] c1 = scalarMult(randomSecret2Bool256, g, context) // = g.r2
+  field[2] c2 = scalarMult(randomSecret3Bool256, g, context) // = g.r3
+  field[2] c3 = scalarMult(randomSecret4Bool256, g, context) // = g.r4
+  field[2] c4 = add(message1TEPoint, sharedSecret1, context) // = m1 + r1.pubKey
+  field[2] c5 = add(message2TEPoint, sharedSecret2, context) // = m2 + r2.pubKey
+  field[2] c6 = add(message3TEPoint, sharedSecret3, context) // = m3 + r3.pubKey
+  field[2] c7 = add(message4TEPoint, sharedSecret4, context) // = m4 + r4.pubKey
+
+return [...c0, ...c1, ...c2, ...c3, ...c4, ...c5, ...c6, ...c7]
