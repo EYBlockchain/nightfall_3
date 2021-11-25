@@ -1,6 +1,5 @@
 
-struct OldCommitment {
-	u32[8] ercAddress
+struct OldCommitmentPreimage {
 	u32[8] id
 	u32[8] value
 	u32[8] salt
@@ -8,16 +7,10 @@ struct OldCommitment {
 	field ask
 }
 
-struct NewCommitment {
+struct NewCommitmentPreimage {
 	field[2] pkdRecipient
 	u32[8] value
 	u32[8] salt
-	u32[8] hash
-}
-
-struct Nullifier {
-	u32[8] nsk
-	u32[8] hash
 }
 
 struct Secrets {
@@ -33,34 +26,37 @@ struct Secrets {
 }
 
 def main(\
-	field publicInputsHash,\
-	private OldCommitment[2] oldCommitment,\
-	private NewCommitment[2] newCommitment,\
-	private Nullifier[2] nullifier,\
-	private field[2][33] path,\
+	field[2] fErcAddress,\
+	private OldCommitmentPreimage[2] oldCommitment,\
+	private NewCommitmentPreimage[2] newCommitment,\
+	field[2] fNewCommitmentHash,\
+	private u32[2][8] nsk,\
+	field[2] fNullifier,\
+	field[2] root,\
+	private field[2][32] path,\
 	private field[2] order,\
-	private Secrets secrets\
+	private Secrets secrets,\
+	field[8] compressedCipherText\
 )->():
 
-	field u = publicInputsHash
+	field u = 0
 	u32 v = 0x00000000
 	for u32 j in 0..2 do
+		u = u + fErcAddress[j] + fNewCommitmentHash[j] + fNullifier[j] - root[j]
 		for u32 i in 0..8 do
 			v = v + oldCommitment[j].id[i] +\
-				oldCommitment[j].ercAddress[i] +\
 				oldCommitment[j].value[i] +\
 				oldCommitment[j].salt[i] +\
 				oldCommitment[j].hash[i] +\
 				newCommitment[j].value[i] +\
 				newCommitment[j].salt[i] +\
-				newCommitment[j].hash[i] +\
-				nullifier[j].nsk[i] +\
-				nullifier[j].hash[i]
+				nsk[j][i]
 		endfor
 	endfor
 
 	u32 w = 0x00000000
 	for u32 i in 0..8 do
+		u = u + compressedCipherText[i]
 		w = w + secrets.ephemeralKey1[i] +\
 			secrets.ephemeralKey2[i] +\
 			secrets.ephemeralKey3[i] +\
@@ -68,7 +64,7 @@ def main(\
 	endfor
 
 	for u32 j in 0..2 do
-		for u32 i in 0..33 do
+		for u32 i in 0..32 do
 			u = u * path[j][i]
 		endfor
 	endfor

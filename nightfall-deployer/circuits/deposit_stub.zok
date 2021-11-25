@@ -6,25 +6,20 @@
 // - newCommitment (public) is the newCommitment
 
 def main(\
-	field publicInputsHash,\
-	private u32[8] ercContractAddress,\
-	private u32[8] id,\
- 	private u32[8] value,\
+	field ercContractAddress,\
+	field id,\
+ 	field value,\
 	private u32[8] compressedPkd,\
 	private u32[8] salt,\
-	private u32[8] newCommitment\
+	field newCommitment\
 )->():
 
-	field u = publicInputsHash
+	field u = ercContractAddress + id + value + newCommitment
 	u32 v = 0x00000000
 
 	for u32 i in 0..8 do
-		v = v + ercContractAddress[i] +\
-				id[i] +\
-				value[i] +\
-				compressedPkd[i] +\
-				salt[i] +\
-				newCommitment[i]
+		v = v + compressedPkd[i] +\
+				salt[i]
 	endfor
 	assert(v==v)
 	assert(u==u)

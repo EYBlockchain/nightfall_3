@@ -84,7 +84,7 @@ library Verifier {
       }
       /* require(vk.gamma.abc.length == 2, "Length of vk.gamma.abc is incorrect!"); */
       // Replacing for the above require statement so that the proof verification returns false. Removing require statements to ensure a wrong proof verification challenge's require statement correctly works
-      if (_publicInputs.length + 1 != vk.query.length) {
+      if (vk.gamma_abc.length != _publicInputs.length + 1) {
         return 1;
       }
 
@@ -94,15 +94,15 @@ library Verifier {
           bool success_sm_qpih;
           bool success_vkdi_sm_qpih;
           for (uint i = 0; i < _publicInputs.length; i++) {
-            (sm_qpih, success_sm_qpih) = Pairing.scalar_mul(vk.query[i + 1], _publicInputs[i]);
+            (sm_qpih, success_sm_qpih) = Pairing.scalar_mul(vk.gamma_abc[i+1], _publicInputs[i]);
             (vk_dot_inputs, success_vkdi_sm_qpih) = Pairing.addition(
               vk_dot_inputs,
               sm_qpih
             );
             if (!success_sm_qpih || !success_vkdi_sm_qpih) {
             return 2;
-          }
-         }
+           }
+       }
       }
 
       {

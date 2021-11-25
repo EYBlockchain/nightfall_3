@@ -31,10 +31,10 @@ struct NewCommitmentPreimage {
 }
 
 struct Secrets {
-	u32[8] randomSecret1
-	u32[8] randomSecret2
-	u32[8] randomSecret3
-	u32[8] randomSecret4
+	u32[8] ephemeralKey1
+	u32[8] ephemeralKey2
+	u32[8] ephemeralKey3
+	u32[8] ephemeralKey4
 	field[16] cipherText
 	field sqrtMessage1
 	field sqrtMessage2
@@ -121,7 +121,7 @@ def main(\
 	assert(sha == oldCommitment.hash)
 
 	// And the encryption of the transaction (extend the value up to 256 bits)
-	assert(secrets.cipherText == enc4(ercAddress, oldCommitment.id, oldCommitment.value, newCommitment.salt, newCommitment.pkdRecipient, secrets.randomSecret1, secrets.randomSecret2, secrets.randomSecret3, secrets.randomSecret4, secrets.sqrtMessage1, secrets.sqrtMessage2, secrets.sqrtMessage3, secrets.sqrtMessage4))
+	assert(secrets.cipherText == enc4(ercAddress, oldCommitment.id, oldCommitment.value, newCommitment.salt, newCommitment.pkdRecipient, secrets.ephemeralKey1, secrets.ephemeralKey2, secrets.ephemeralKey3, secrets.ephemeralKey4, secrets.sqrtMessage1, secrets.sqrtMessage2, secrets.sqrtMessage3, secrets.sqrtMessage4))
 
 	// check the compressed cipherText
 	// we pass in 8x compressed points rather than 16x uncompressed points to save time / gas
