@@ -1,0 +1,16 @@
+// In SNARK only a constant power exponentiation can be done. Here the exponent is (prime - 1) / 2 with prime
+// being 21888242871839275222246405745257275088548364400416034343698204186575808495617
+// And the modulus is 21888242871839275222246405745257275088548364400416034343698204186575808495617
+// Since both of these are fixed we only pass the base
+
+def main(field base)->(field):
+  // Starting at (prime - 1) / 2 with prime being 21888242871839275222246405745257275088548364400416034343698204186575808495617,
+  // each number is reduced by dividing by 2 and if the result if even is considered 0 and if odd is considered 1
+  field[253] exponentOddEven = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,1,0,0,1,1,0,1,0,1,1,1,1,1,0,0,0,0,1,1,1,1,1,0,0,0,0,1,0,1,0,0,0,1,0,0,1,0,0,0,0,1,1,1,0,1,0,0,1,1,1,0,1,1,0,0,1,1,1,1,0,0,0,0,1,0,0,1,0,0,0,0,1,0,1,1,1,1,1,0,0,1,1,0,0,0,0,0,1,0,1,0,0,1,0,1,1,1,0,1,0,0,0,0,1,1,0,1,0,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,0,1,1,0,1,1,0,1,1,0,1,0,0,0,1,0,0,0,0,0,1,0,1,0,0,0,0,1,1,1,0,1,1,0,0,1,0,1,0,0,0,0,0,0,0,1,0,1,1,0,0,0,1,1,0,0,1,0,0,0,0,1,1,1,0,1,0,0,1,1,1,0,0,1,1,1,0,0,1,0,0,0,1,0,0,1,1,0,0,0,0,0,1,1]
+  field result = 1
+
+  for field i in 0..253 do
+    result = if exponentOddEven[i] == 1 then result * base else result fi
+    base = base * base
+    endfor
+return result
