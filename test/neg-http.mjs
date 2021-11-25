@@ -282,11 +282,7 @@ describe('Testing the challenge http API', () => {
             // console.log('tx hash of challenge block is', txReceipt.transactionHash);
           } else throw new Error(`Unhandled transaction type: ${type}`);
         } catch (err) {
-          console.error(
-            `neg-http.mjs onmessage error: ${err}, block is : ${JSON.stringify(
-              msg.block,
-            )} / ${JSON.stringify(msg.transactions)} /  ${msg.type}`,
-          );
+          console.error(`neg-http.mjs onmessage error: ${err}`);
         }
       });
     };
@@ -495,47 +491,6 @@ describe('Testing the challenge http API', () => {
         ]);
         const res = await chai
           .request(url)
-          .post('/deposit')
-          .send({ ercAddress, tokenId, tokenType, value, pkd: pkd1, nsk: nsk1, fee });
-        // now we need to sign the transaction and send it to the blockchain
-        await submitTransaction(res.body.txDataToSign, privateKey, shieldAddress, gas, fee);
-      });
-    });
-    describe('Challenge 3: Invalid transaction submitted', () => {
-      it('Should delete the flawed block and rollback the leaves', async () => {
-        await testForEvents(stateAddress, [
-          web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
-          web3.eth.abi.encodeParameter('bytes32', topicsBlockHashInvalidTransaction),
-        ]);
-
-        const res = await chai
-          .request(url)
-          .post('/transfer')
-          .send({
-            ercAddress,
-            tokenId,
-            recipientData: {
-              values: [value],
-              recipientPkds: [pkd1],
-            },
-            nsk: nsk1,
-            ask: ask1,
-            fee,
-          });
-        // now we need to sign the transaction and send it to the blockchain
-        await submitTransaction(res.body.txDataToSign, privateKey, shieldAddress, gas, fee);
-      });
-    });
-
-    describe('Challenge 4: Challenge historic root used in a transaction', () => {
-      it('Should delete the wrong block', async () => {
-        await testForEvents(stateAddress, [
-          web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
-          web3.eth.abi.encodeParameter('bytes32', topicsBlockHashesIncorrectHistoricRoot),
-        ]);
-
-        const res = await chai
-          .request(url)
           .post('/transfer')
           .send({
             ercAddress,
@@ -549,8 +504,24 @@ describe('Testing the challenge http API', () => {
             fee,
           });
         const { txDataToSign } = res.body;
-        expect(txDataToSign).to.be.a('string');
         await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
+      });
+    });
+    describe('Challenge 3: Invalid transaction submitted', () => {
+      it('Should delete the flawed block and rollback the leaves', async () => {
+        await testForEvents(stateAddress, [
+          web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
+          web3.eth.abi.encodeParameter('bytes32', topicsBlockHashInvalidTransaction),
+        ]);
+      });
+    });
+
+    describe('Challenge 4: Challenge historic root used in a transaction', () => {
+      it('Should delete the wrong block', async () => {
+        await testForEvents(stateAddress, [
+          web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
+          web3.eth.abi.encodeParameter('bytes32', topicsBlockHashesIncorrectHistoricRoot),
+        ]);
       });
     });
 
@@ -562,17 +533,22 @@ describe('Testing the challenge http API', () => {
         ]);
 
         // create another transaction to trigger NO's block assembly
-        const res = await chai.request(url).post('/deposit').send({
-          ercAddress,
-          tokenId,
-          tokenType,
-          value,
-          pkd: pkd1,
-          nsk: nsk1,
-          fee,
-        });
+        const res = await chai
+          .request(url)
+          .post('/transfer')
+          .send({
+            ercAddress,
+            tokenId,
+            recipientData: {
+              values: [value],
+              recipientPkds: [pkd1],
+            },
+            nsk: nsk1,
+            ask: ask1,
+            fee,
+          });
         const { txDataToSign } = res.body;
-        await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
+        await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
       });
     });
 
@@ -582,18 +558,6 @@ describe('Testing the challenge http API', () => {
           web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
           web3.eth.abi.encodeParameter('bytes32', topicsBlockHashIncorrectProof),
         ]);
-        // create another transaction to trigger NO's block assembly
-        const res = await chai.request(url).post('/deposit').send({
-          ercAddress,
-          tokenId,
-          tokenType,
-          value,
-          pkd: pkd1,
-          nsk: nsk1,
-          fee,
-        });
-        const { txDataToSign } = res.body;
-        await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
       });
     });
 
@@ -603,17 +567,22 @@ describe('Testing the challenge http API', () => {
           web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
           web3.eth.abi.encodeParameter('bytes32', topicsBlockHashDuplicateNullifier),
         ]);
-        const res = await chai.request(url).post('/deposit').send({
-          ercAddress,
-          tokenId,
-          tokenType,
-          value,
-          pkd: pkd1,
-          nsk: nsk1,
-          fee,
-        });
+        const res = await chai
+          .request(url)
+          .post('/transfer')
+          .send({
+            ercAddress,
+            tokenId,
+            recipientData: {
+              values: [value],
+              recipientPkds: [pkd1],
+            },
+            nsk: nsk1,
+            ask: ask1,
+            fee,
+          });
         const { txDataToSign } = res.body;
-        await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
+        await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
       });
     });
 
@@ -623,23 +592,6 @@ describe('Testing the challenge http API', () => {
           web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
           web3.eth.abi.encodeParameter('bytes32', topicsBlockHashIncorrectLeafCount),
         ]);
-        for (let i = 0; i < 2; i++) {
-          const res = await chai // eslint-disable-line no-await-in-loop
-            .request(url)
-            .post('/deposit')
-            .send({
-              ercAddress,
-              tokenId,
-              tokenType,
-              value,
-              pkd: pkd1,
-              nsk: nsk1,
-              fee,
-            });
-          const { txDataToSign } = res.body;
-          // eslint-disable-next-line no-await-in-loop
-          await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
-        }
       });
     });
   });
