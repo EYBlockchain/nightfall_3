@@ -1,0 +1,160 @@
+from "ecc/babyjubjubParams" import BabyJubJubParams
+from "ecc/babyjubjubParams" import main as curveParams
+from "ecc/edwardsScalarMult" import main as scalarMult
+from "ecc/edwardsCompress" import main as edwardsCompress
+from "./common/encryption/el-gamal4" import main as enc4
+
+from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256
+from "utils/casts/bool_256_to_u32_8.zok" import main as bool_256_to_u32_8
+from "utils/pack/bool/pack256.zok" import main as bool_256_to_field
+from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
+from "utils/pack/u32/pack256.zok" import main as u32_8_to_field
+from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8
+
+from "./common/hashes/mimc/mimc-hash-2.zok" import main as mimc2
+from "./common/hashes/sha256/pad512ThenHash.zok" import main as sha256of512
+from "./common/hashes/sha256/pad1280ThenHash.zok" import main as sha256of1280
+from "./common/hashes/sha256/pad3072ThenHash.zok" import main as sha256of3072
+
+from "./common/merkle-tree/mimc-path-check.zok" import main as pathCheck
+
+struct OldCommitment {
+	u32[8] ercAddress
+	u32[8] id
+	u32[8] value
+	u32[8] salt
+	u32[8] hash
+	field ask
+}
+
+struct NewCommitment {
+	field[2] pkdRecipient
+	u32[8] value
+	u32[8] salt
+	u32[8] hash
+}
+
+struct Nullifier {
+	u32[8] nsk
+	u32[8] hash
+}
+
+struct Secrets {
+	u32[8] ephemeralKey1
+	u32[8] ephemeralKey2
+	u32[8] ephemeralKey3
+	u32[8] ephemeralKey4
+	field[16] cipherText
+	field sqrtMessage1
+	field sqrtMessage2
+	field sqrtMessage3
+	field sqrtMessage4
+}
+
+def main(\
+	field publicInputsHash,\
+	private OldCommitment oldCommitment,\
+	private NewCommitment newCommitment,\
+	private Nullifier nullifier,\
+	private field[33] path,\
+	private field order,\
+	private Secrets secrets\
+)->():
+
+	BabyJubJubParams context = curveParams()
+	field[2] g = [context.Gu, context.Gv]
+
+	// Calculation of ivk from ask and nsk
+	field nsk = u32_8_to_field(nullifier.nsk)
+	field ivk = mimc2([oldCommitment.ask, nsk])
+	bool[256] ivkBool = field_to_bool_256(ivk)
+	field[2] pkd = scalarMult(ivkBool, g, context)
+	bool[256] pkdBool = edwardsCompress(pkd)
+	u32[8] pkdU32 = bool_256_to_u32_8(pkdBool)
+
+	// Convert (x,y) public key of recipient to a single element using Edwards compress
+	// Recipient (x,y) form public key is used for encryption input while single element
+	// is used for commitment inputs
+	bool[256] pkdRecipientBool = edwardsCompress(newCommitment.pkdRecipient)
+    u32[8] pkdRecipientU32 = bool_256_to_u32_8(pkdRecipientBool)
+
+	// check the nullifier is valid
+	u32[8] sha = sha256of512([\
+		...nullifier.nsk,\
+		...oldCommitment.hash\
+	])
+	assert(sha == nullifier.hash)
+
+	// check the new commitment is valid
+	// we effectively throw away the value of the new commitment by insisting
+	// that it is equal to the old commitment value for a single-token transfer
+	// This is a little inefficient but makes the witness computation in node
+	// independent of how many commitments are being transformed.
+	sha = sha256of1280([\
+		...oldCommitment.ercAddress,\
+		...oldCommitment.id,\
+		...oldCommitment.value,\
+		...pkdRecipientU32,\
+		...newCommitment.salt\
+	])
+	assert(sha == newCommitment.hash)
+
+	// check the old commitment is valid
+	sha = sha256of1280([\
+		...oldCommitment.ercAddress,\
+		...oldCommitment.id,\
+		...oldCommitment.value,\
+		...pkdU32,\
+		...oldCommitment.salt\
+	])
+	assert(sha == oldCommitment.hash)
+
+	// And the encryption of the transaction (extend the value up to 256 bits)
+	assert(secrets.cipherText == enc4(oldCommitment.ercAddress, oldCommitment.id, oldCommitment.value, newCommitment.salt, newCommitment.pkdRecipient, secrets.ephemeralKey1, secrets.ephemeralKey2, secrets.ephemeralKey3, secrets.ephemeralKey4, secrets.sqrtMessage1, secrets.sqrtMessage2, secrets.sqrtMessage3, secrets.sqrtMessage4))
+
+	// check the public input hash
+	// To make the hash smaller, let's 'compress' each curve point ordered pair into a single 256 bit array (rather than two)...
+	bool[256] compressedSecretsBool1 = edwardsCompress(secrets.cipherText[0..2])
+	bool[256] compressedSecretsBool2 = edwardsCompress(secrets.cipherText[2..4])
+	bool[256] compressedSecretsBool3 = edwardsCompress(secrets.cipherText[4..6])
+	bool[256] compressedSecretsBool4 = edwardsCompress(secrets.cipherText[6..8])
+	bool[256] compressedSecretsBool5 = edwardsCompress(secrets.cipherText[8..10])
+	bool[256] compressedSecretsBool6 = edwardsCompress(secrets.cipherText[10..12])
+	bool[256] compressedSecretsBool7 = edwardsCompress(secrets.cipherText[12..14])
+	bool[256] compressedSecretsBool8 = edwardsCompress(secrets.cipherText[14..16])
+
+	u32[8] compressedSecret1 = bool_256_to_u32_8(compressedSecretsBool1)
+  u32[8] compressedSecret2 = bool_256_to_u32_8(compressedSecretsBool2)
+	u32[8] compressedSecret3 = bool_256_to_u32_8(compressedSecretsBool3)
+	u32[8] compressedSecret4 = bool_256_to_u32_8(compressedSecretsBool4)
+	u32[8] compressedSecret5 = bool_256_to_u32_8(compressedSecretsBool5)
+	u32[8] compressedSecret6 = bool_256_to_u32_8(compressedSecretsBool6)
+	u32[8] compressedSecret7 = bool_256_to_u32_8(compressedSecretsBool7)
+	u32[8] compressedSecret8 = bool_256_to_u32_8(compressedSecretsBool8)
+
+	u32[8] publicInputsHashU32 = sha256of3072([\
+		...oldCommitment.ercAddress,\
+		...newCommitment.hash,\
+		...nullifier.hash,\
+		...field_to_u32_8(path[0]),\
+		...compressedSecret1,\
+		...compressedSecret2,\
+		...compressedSecret3,\
+		...compressedSecret4,\
+		...compressedSecret5,\
+		...compressedSecret6,\
+		...compressedSecret7,\
+		...compressedSecret8\
+	])
+	bool[256] publicInputsHashBool256 = u32_8_to_bool_256(publicInputsHashU32)
+	bool[256] publicInputsHashBool256Sliced = [\
+	     ...[false; 8],\
+	     ...publicInputsHashBool256[8..256]\
+	]
+	assert(publicInputsHash == bool_256_to_field(publicInputsHashBool256Sliced))
+	// check that the old commitment is in the merkle tree (path[0] should be the root)
+	field mimcHash = u32_8_to_field(oldCommitment.hash)
+	bool x = pathCheck(path, order, mimcHash)
+	assert(x)
+
+	return
