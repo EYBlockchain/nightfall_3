@@ -28,7 +28,6 @@ describe('Testing the Nightfall ERCMocks', () => {
   const nf3 = new Nf3(web3WsUrl, ethereumSigningKeyUser1, environment);
 
   let web3;
-  let ercAddress;
   let erc20Address;
   let erc721Address;
   let erc1155Address;
@@ -72,11 +71,6 @@ describe('Testing the Nightfall ERCMocks', () => {
     it('should get the address of the shield contract', async function () {
       const res = await nf3.getContractAddress('Shield');
       expect(res).to.be.a('string').and.to.include('0x');
-    });
-
-    it('should get the address of the test ERC contract stub', async function () {
-      ercAddress = await nf3.getContractAddress('ERCStub');
-      expect(ercAddress).to.be.a('string').and.to.include('0x');
     });
 
     it('should get the address of the test ERC20 contract mock', async function () {

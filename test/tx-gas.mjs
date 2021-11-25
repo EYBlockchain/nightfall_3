@@ -99,8 +99,8 @@ describe('Testing the http API', () => {
       // subscribeToGasUsed(shieldAddress);
     });
 
-    it('should get the address of the test ERC contract stub', async () => {
-      ercAddress = await nf3User1.getContractAddress('ERCStub');
+    it('should get the address of the test ERC contract ERC20Mock', async () => {
+      ercAddress = await nf3User1.getContractAddress('ERC20Mock');
       expect(ercAddress).to.be.a('string').and.to.include('0x');
     });
 
