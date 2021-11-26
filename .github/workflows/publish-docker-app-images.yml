@@ -30,7 +30,7 @@ jobs:
     - run: echo ${{ steps.semantic.outputs.release-version }}
 
     - name: Docker push version
-      if: steps.semantic.outputs.new-release-published == 'true'
+      #if: steps.semantic.outputs.new-release-published == 'true'
       run: |
         docker build -t ghcr.io/eyblockchain/nightfall3-proposer:$RELEASE_VERSION . -f proposer.Dockerfile
         docker push ghcr.io/eyblockchain/nightfall3-proposer:$RELEASE_VERSION
@@ -43,7 +43,7 @@ jobs:
     - run: echo ${{ steps.semantic.outputs.release-version }}
 
     - name: Docker push version
-      if: steps.semantic.outputs.new-release-published == 'true'
+      #if: steps.semantic.outputs.new-release-published == 'true'
       run: |
         docker build -t ghcr.io/eyblockchain/nightfall3-user-local:$RELEASE_VERSION . -f user-local.Dockerfile
         docker push ghcr.io/eyblockchain/nightfall3-user-local:$RELEASE_VERSION
