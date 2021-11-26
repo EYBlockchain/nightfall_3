@@ -24,9 +24,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         DOCKER_ACTOR: ${{ secrets.DOCKER_ACTOR }}
 
-    - name: Build docker proposer image
-      run: docker build . -f proposer.Dockerfile
-
     - run: echo ${{ steps.semantic.outputs.release-version }}
 
     - name: Docker push latest
@@ -43,9 +40,6 @@ jobs:
         docker push ghcr.io/eyblockchain/nightfall3-proposer:$RELEASE_VERSION
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Build docker user-local image
-      run: docker build . -f user-local.Dockerfile
 
     - run: echo ${{ steps.semantic.outputs.release-version }}
 
