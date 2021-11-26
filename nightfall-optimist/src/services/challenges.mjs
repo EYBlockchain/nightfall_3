@@ -165,6 +165,7 @@ export async function createChallenge(block, transactions, err) {
         break;
       }
       // invalid public input hash
+      // TODO remove this
       case 4: {
         const { transactionHashIndex: transactionIndex } = err.metadata;
         // Create a challenge (DEPOSIT has no historic root to worry about)
@@ -236,16 +237,69 @@ export async function createChallenge(block, transactions, err) {
         const { transactionHashIndex: transactionIndex } = err.metadata;
         // Create a challenge
         const uncompressedProof = transactions[transactionIndex].proof;
-        txDataToSign = await challengeContractInstance.methods
-          .challengeProofVerification(
-            Block.buildSolidityStruct(block),
-            block.blockNumberL2,
-            transactions.map(t => Transaction.buildSolidityStruct(t)),
-            transactionIndex,
-            uncompressedProof,
-            salt,
-          )
-          .encodeABI();
+        if (transactions[transactionIndex].transactionType === '0') {
+          txDataToSign = await challengeContractInstance.methods
+            .challengeProofVerification(
+              Block.buildSolidityStruct(block),
+              block.blockNumberL2,
+              transactions.map(t => Transaction.buildSolidityStruct(t)),
+              transactionIndex,
+              uncompressedProof,
+              salt,
+            )
+            .encodeABI();
+        } else if (transactions[transactionIndex].transactionType === '2') {
+          // Create a specific challenge for a double_transfer
+          const [historicInput1, historicInput2] = await Promise.all(
+            transactions[transactionIndex].historicRootBlockNumberL2.map(async b => {
+              const historicBlock = await getBlockByBlockNumberL2(b);
+              const historicTxs = await getTransactionsByTransactionHashes(block.transactionHashes);
+              return {
+                historicBlock,
+                historicTxs,
+              };
+            }),
+          );
+          txDataToSign = await challengeContractInstance.methods
+            .challengeProofVerification(
+              Block.buildSolidityStruct(block),
+              block.blockNumberL2,
+              transactions.map(t => Transaction.buildSolidityStruct(t)),
+              transactionIndex,
+              Block.buildSolidityStruct(historicInput1.historicBlock),
+              Block.buildSolidityStruct(historicInput2.historicBlock),
+              historicInput1.historicBlock.blockNumberL2,
+              historicInput2.historicBlock.blockNumberL2,
+              historicInput1.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
+              historicInput2.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
+              uncompressedProof,
+              salt,
+            )
+            .encodeABI();
+        } else {
+          const blockL2ContainingHistoricRoot = await getBlockByBlockNumberL2(
+            transactions[transactionIndex].historicRootBlockNumberL2[0], // TODO
+          );
+          const transactionsOfblockL2ContainingHistoricRoot =
+            await getTransactionsByTransactionHashes(
+              blockL2ContainingHistoricRoot.transactionHashes,
+            );
+          txDataToSign = await challengeContractInstance.methods
+            .challengeProofVerification(
+              Block.buildSolidityStruct(block),
+              block.blockNumberL2,
+              transactions.map(t => Transaction.buildSolidityStruct(t)),
+              transactionIndex,
+              Block.buildSolidityStruct(blockL2ContainingHistoricRoot),
+              blockL2ContainingHistoricRoot.blockNumberL2,
+              transactionsOfblockL2ContainingHistoricRoot.map(t =>
+                Transaction.buildSolidityStruct(t),
+              ),
+              uncompressedProof,
+              salt,
+            )
+            .encodeABI();
+        }
         break;
       }
       // Challenge Duplicate Nullfier

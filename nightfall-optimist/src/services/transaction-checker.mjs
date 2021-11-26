@@ -8,6 +8,7 @@ Here are the things that could be wrong with a transaction:
 */
 import config from 'config';
 import axios from 'axios';
+import gen from 'general-number';
 import logger from 'common-files/utils/logger.mjs';
 import {
   Transaction,
@@ -21,6 +22,7 @@ import { getBlockByBlockNumberL2 } from './database.mjs';
 
 const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, CURVE, ZERO, CHALLENGES_CONTRACT_NAME } =
   config;
+const { generalise } = gen;
 
 // first, let's check the hash. That's nice and easy:
 // NB as we actually now comput the hash on receipt of the transaction this
@@ -156,13 +158,67 @@ async function verifyProof(transaction) {
     .call();
   // to verify a proof, we make use of a zokrates-worker, which has an offchain
   // verifier capability
+  let inputs;
+  const historicRootFirst = (await getBlockByBlockNumberL2(
+    transaction.historicRootBlockNumberL2[0],
+  )) ?? { root: ZERO };
+  const historicRootSecond = (await getBlockByBlockNumberL2(
+    transaction.historicRootBlockNumberL2[1],
+  )) ?? { root: ZERO };
+
+  switch (Number(transaction.transactionType)) {
+    case 0: // deposit transaction
+      inputs = new PublicInputs([
+        transaction.ercAddress,
+        transaction.tokenId,
+        transaction.value,
+        transaction.commitments[0], // not truncating here as we already ensured hash < group order
+      ]).publicInputs;
+      break;
+    case 1: // single transfer transaction
+      inputs = new PublicInputs([
+        transaction.ercAddress,
+        transaction.commitments[0], // not truncating here as we already ensured hash < group order
+        generalise(transaction.nullifiers[0]).hex(32, 31),
+        historicRootFirst.root,
+        ...transaction.compressedSecrets.map(compressedSecret =>
+          generalise(compressedSecret).hex(32, 31),
+        ),
+      ]).publicInputs;
+      break;
+    case 2: // double transfer transaction
+      inputs = new PublicInputs([
+        transaction.ercAddress, // this is correct; ercAddress appears twice
+        transaction.ercAddress, // in a double-transfer public input hash
+        transaction.commitments, // not truncating here as we already ensured hash < group order
+        transaction.nullifiers.map(nullifier => generalise(nullifier).hex(32, 31)),
+        historicRootFirst.root,
+        historicRootSecond.root,
+        ...transaction.compressedSecrets.map(compressedSecret =>
+          generalise(compressedSecret).hex(32, 31),
+        ),
+      ]).publicInputs;
+      break;
+    case 3: // withdraw transaction
+      inputs = new PublicInputs([
+        transaction.ercAddress,
+        transaction.tokenId,
+        transaction.value,
+        generalise(transaction.nullifiers[0]).hex(32, 31),
+        transaction.recipientAddress,
+        historicRootFirst.root,
+      ]).publicInputs;
+      break;
+    default:
+      throw new TransactionError('Unknown transaction type', 2);
+  }
   const res = await axios.post(`http://${ZOKRATES_WORKER_HOST}/verify`, {
     vk: new VerificationKey(vkArray),
     proof: new Proof(transaction.proof),
     provingScheme: PROVING_SCHEME,
     backend: BACKEND,
     curve: CURVE,
-    inputs: new PublicInputs(transaction.publicInputs).publicInputs.all.hex(32),
+    inputs: inputs.all.hex(32),
   });
   const { verifies } = res.data;
   if (!verifies) throw new TransactionError('The proof did not verify', 5);

@@ -171,116 +171,19 @@ library ChallengesUtil {
         );
     }
 
-    // // the transaction type deposit is challenged to not be valid
-    // function libChallengePublicInputHash(
-    //     Structures.Transaction memory transaction,
-    //     bytes32[2] memory historicRoot
-    // ) public pure {
-    //     if (transaction.transactionType == Structures.TransactionTypes.DEPOSIT)
-    //         libChallengePublicInputHashDeposit(transaction);
-    //     else if (transaction.transactionType == Structures.TransactionTypes.SINGLE_TRANSFER)
-    //         libChallengePublicInputHashSingleTransfer(transaction, historicRoot[0]);
-    //     else if (transaction.transactionType == Structures.TransactionTypes.DOUBLE_TRANSFER)
-    //         libChallengePublicInputHashDoubleTransfer(transaction, historicRoot); // if(transaction.transactionType == TransactionTypes.WITHDRAW)
-    //     else libChallengePublicInputHashWithdraw(transaction, historicRoot[0]);
-    // }
-    // 
-    // // the public input hash of deposit is challenged to not be valid
-    // function libChallengePublicInputHashDeposit(Structures.Transaction memory transaction)
-    //     public
-    //     pure
-    // {
-    //     require(
-    //         transaction.publicInputHash !=
-    //             sha256(
-    //                 abi.encodePacked(
-    //                     transaction.ercAddress,
-    //                     transaction.tokenId,
-    //                     transaction.value,
-    //                     transaction.commitments
-    //                 )
-    //             ) &
-    //                 0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff,
-    //         'publicInputHash for deposit is correct'
-    //     );
-    // }
-    //
-    // // the public input hash of single transfer is challenged to not be valid
-    // function libChallengePublicInputHashSingleTransfer(
-    //     Structures.Transaction memory transaction,
-    //     bytes32 historicRoot
-    // ) public pure {
-    //     require(
-    //         transaction.publicInputHash !=
-    //             sha256(
-    //                 abi.encodePacked(
-    //                     transaction.ercAddress,
-    //                     transaction.commitments,
-    //                     transaction.nullifiers,
-    //                     historicRoot,
-    //                     transaction.compressedSecrets
-    //                 )
-    //             ) &
-    //                 0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff, // select 248 bits of the sha256 calculated
-    //         'publicInputHash for single transfer is correct'
-    //     );
-    // }
-    //
-    // // the public input hash of double transfer is challenged to not be valid
-    // function libChallengePublicInputHashDoubleTransfer(
-    //     Structures.Transaction memory transaction,
-    //     bytes32[2] memory historicRoot
-    // ) public pure {
-    //     require(
-    //         transaction.publicInputHash !=
-    //             sha256(
-    //                 abi.encodePacked(
-    //                     transaction.ercAddress,
-    //                     transaction.ercAddress,
-    //                     transaction.commitments,
-    //                     transaction.nullifiers,
-    //                     historicRoot[0],
-    //                     historicRoot[1],
-    //                     transaction.compressedSecrets
-    //                 )
-    //             ) &
-    //                 0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff, // select 248 bits of the sha256 calculated
-    //         'publicInputHash for double transfer is correct'
-    //     );
-    // }
-    //
-    // // the public input hash of withdraw is challenged to not be valid
-    // function libChallengePublicInputHashWithdraw(
-    //     Structures.Transaction memory transaction,
-    //     bytes32 historicRoot
-    // ) public pure {
-    //     require(
-    //         transaction.publicInputHash !=
-    //             sha256(
-    //                 abi.encodePacked(
-    //                     transaction.ercAddress,
-    //                     transaction.tokenId,
-    //                     transaction.value,
-    //                     transaction.nullifiers,
-    //                     transaction.recipientAddress,
-    //                     historicRoot
-    //                 )
-    //             ) &
-    //                 0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff, // select 248 bits of the sha256 calculated
-    //         'publicInputHash for withdraw is correct'
-    //     );
-    // }
-
     function libChallengeProofVerification(
-        uint256[] memory publicInputs,
+        Structures.Transaction calldata transaction,
+        uint256[2] memory roots,
         uint256[8] memory proof,
         uint256[] memory vk
     ) internal {
+        libCheckCompressedProof(transaction.proof, proof);
         // TODO convert from uint[8] to uint[] - make unnecessary.
         uint256[] memory proof1 = new uint256[](proof.length);
         for (uint256 i = 0; i < proof.length; i++) {
             proof1[i] = proof[i];
         }
+        uint256[] memory publicInputs = Utils.getPublicInputs(transaction, roots);
         require(!Verifier.verify(proof1, publicInputs, vk), 'This proof appears to be valid');
     }
 

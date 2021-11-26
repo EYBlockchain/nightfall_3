@@ -37,7 +37,6 @@ contract Structures {
         uint64[2] historicRootBlockNumberL2; // number of L2 block containing historic root
         TransactionTypes transactionType;
         TokenType tokenType;
-        uint256[] publicInputs;
         bytes32 tokenId;
         bytes32 ercAddress;
         bytes32 recipientAddress;

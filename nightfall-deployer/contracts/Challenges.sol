@@ -33,7 +33,7 @@ contract Challenges is Stateful, Key_Registry, Config {
     Transaction[] memory transactions,
     bytes32 salt
   ) external {
-    checkCommit(msg.data, salt);
+    checkCommit(msg.data);
     // check if the block hash is correct and the block hash exists for the block and prior block
     state.isBlockReal(priorBlockL2, priorBlockTransactions, blockNumberL2 - 1);
     state.isBlockReal(blockL2, transactions, blockNumberL2);
@@ -62,7 +62,7 @@ contract Challenges is Stateful, Key_Registry, Config {
     Transaction[] memory transactions,
     bytes32 salt
   ) external {
-    checkCommit(msg.data, salt);
+    checkCommit(msg.data);
     // check if the block hash is correct and the block hash exists for the block and prior block
     state.isBlockReal(priorBlockL2, priorBlockTransactions, blockNumberL2 - 1);
     state.isBlockReal(blockL2, transactions, blockNumberL2);
@@ -93,7 +93,7 @@ contract Challenges is Stateful, Key_Registry, Config {
     uint256 transactionIndex2,
     bytes32 salt
   ) external {
-    checkCommit(msg.data, salt);
+    checkCommit(msg.data);
     // first, check we have real, in-train, contiguous blocks
     state.isBlockReal(block1, transactions1, block1NumberL2);
     state.isBlockReal(block2, transactions2, block2NumberL2);
@@ -121,128 +121,23 @@ contract Challenges is Stateful, Key_Registry, Config {
     uint256 transactionIndex,
     bytes32 salt
   ) external {
-    checkCommit(msg.data, salt);
+    checkCommit(msg.data);
     state.isBlockReal(blockL2, transactions, blockNumberL2);
     ChallengesUtil.libChallengeTransactionType(transactions[transactionIndex]);
     // Delete the latest block of the two
     challengeAccepted(blockL2, blockNumberL2);
   }
 
-  /**
-  This checks if the public input hash is incorrect, as the public input hash
-  is calculated differently for each transaction type, we overload this function.
-
-  This function signature is used when we have a non-zero historic root
-  i.e. single transfer or withdraw transactions.
-  */
-  // function challengePublicInputHash(
-  //   Block memory blockL2,
-  //   uint256 blockNumberL2,
-  //   Transaction[] memory transactions,
-  //   uint256 transactionIndex,
-  //   Block memory blockL2ContainingHistoricRoot,
-  //   uint256 blockNumberL2ContainingHistoricRoot,
-  //   Transaction[] memory transactionsOfblockL2ContainingHistoricRoot,
-  //   bytes32 salt
-  // ) external {
-  //   checkCommit(msg.data, salt);
-  //   state.isBlockReal(blockL2, transactions, blockNumberL2);
-  //   state.isBlockReal(
-  //     blockL2ContainingHistoricRoot,
-  //     transactionsOfblockL2ContainingHistoricRoot,
-  //     blockNumberL2ContainingHistoricRoot
-  //   );
-  //   // check the historic root is in the block provided.
-  //   require(
-  //     transactions[transactionIndex].historicRootBlockNumberL2[0] ==
-  //     blockNumberL2ContainingHistoricRoot,
-  //     'Incorrect historic root block'
-  //   );
-  //   ChallengesUtil.libChallengePublicInputHash(
-  //     transactions[transactionIndex],
-  //     [blockL2ContainingHistoricRoot.root, ZERO]
-  //   );
-  //   // Delete the latest block of the two
-  //   challengeAccepted(blockL2, blockNumberL2);
-  // }
-
-  /**
-  This checks if the public input hash is incorrect, as the public input hash
-  is calculated differently for each transaction type, we overload this function.
-
-  This function signature is used when we have two historic root
-  i.e. a double transfer. We need to verify two historic blocks.
-  */
-  // function challengePublicInputHash(
-  //   Block memory blockL2,
-  //   uint256 blockNumberL2,
-  //   Transaction[] memory transactions,
-  //   uint256 transactionIndex,
-  //   Block memory blockL2ContainingHistoricRoot,
-  //   Block memory blockL2ContainingHistoricRoot2,
-  //   uint256 blockNumberL2ContainingHistoricRoot,
-  //   uint256 blockNumberL2ContainingHistoricRoot2,
-  //   Transaction[] memory transactionsOfblockL2ContainingHistoricRoot,
-  //   Transaction[] memory transactionsOfblockL2ContainingHistoricRoot2,
-  //   bytes32 salt
-  // ) external {
-  //   checkCommit(msg.data, salt);
-  //   state.isBlockReal(blockL2, transactions, blockNumberL2);
-  //   state.isBlockReal(
-  //     blockL2ContainingHistoricRoot,
-  //     transactionsOfblockL2ContainingHistoricRoot,
-  //     blockNumberL2ContainingHistoricRoot
-  //   );
-  //   state.isBlockReal(
-  //     blockL2ContainingHistoricRoot2,
-  //     transactionsOfblockL2ContainingHistoricRoot2,
-  //     blockNumberL2ContainingHistoricRoot2
-  //   );
-  //   // check the historic roots are in the blocks provided.
-  //   require(
-  //     transactions[transactionIndex].historicRootBlockNumberL2[0] ==
-  //     blockNumberL2ContainingHistoricRoot && transactions[transactionIndex].historicRootBlockNumberL2[1] ==
-  //     blockNumberL2ContainingHistoricRoot2,
-  //     'Incorrect historic root block'
-  //   );
-  //   ChallengesUtil.libChallengePublicInputHash(
-  //     transactions[transactionIndex],
-  //     [blockL2ContainingHistoricRoot.root, blockL2ContainingHistoricRoot2.root]
-  //   );
-  //   challengeAccepted(blockL2, blockNumberL2);
-  // }
-
-/**
-  This checks if the public input hash is incorrect, as the public input hash
-  is calculated differently for each transaction type, we overload this function.
-
-  This function signature is used when we have a zero historic root
-  i.e. a deposit transaction.
-  */
-  // function challengePublicInputHash(
-  //   Block memory blockL2,
-  //   uint256 blockNumberL2,
-  //   Transaction[] memory transactions,
-  //   uint256 transactionIndex,
-  //   bytes32 salt
-  // ) external {
-  //   checkCommit(msg.data, salt);
-  //   state.isBlockReal(blockL2, transactions, blockNumberL2);
-  //   // check the historic root is in the block provided.
-  //   ChallengesUtil.libChallengePublicInputHash(transactions[transactionIndex], [ZERO,ZERO]);
-  //   // Delete the latest block of the two
-  //   challengeAccepted(blockL2, blockNumberL2);
-  // }
-
+  // signature for deposit:
   function challengeProofVerification(
     Block memory blockL2,
     uint256 blockNumberL2,
-    Transaction[] memory transactions,
+    Transaction[] calldata transactions,
     uint256 transactionIndex,
     uint256[8] memory uncompressedProof,
     bytes32 salt
   ) external {
-    checkCommit(msg.data, salt);
+    checkCommit(msg.data);
     state.isBlockReal(blockL2, transactions, blockNumberL2);
     // now we need to check that the proof is correct
     ChallengesUtil.libCheckCompressedProof(
@@ -250,7 +145,93 @@ contract Challenges is Stateful, Key_Registry, Config {
       uncompressedProof
     );
     ChallengesUtil.libChallengeProofVerification(
-      transactions[transactionIndex].publicInputs,
+      transactions[transactionIndex],
+      [uint256(0), uint256(0)],
+      uncompressedProof,
+      vks[transactions[transactionIndex].transactionType]
+    );
+    challengeAccepted(blockL2, blockNumberL2);
+  }
+
+  // signature for single transfer/withdraw:
+  function challengeProofVerification(
+    Block memory blockL2,
+    uint256 blockNumberL2,
+    Transaction[] calldata transactions,
+    uint256 transactionIndex,
+    Block memory blockL2ContainingHistoricRoot,
+    uint256 blockNumberL2ContainingHistoricRoot,
+    Transaction[] memory transactionsOfblockL2ContainingHistoricRoot,
+    uint256[8] memory uncompressedProof,
+    bytes32 salt
+  ) external {
+    checkCommit(msg.data);
+    state.isBlockReal(blockL2, transactions, blockNumberL2);
+    state.isBlockReal(
+      blockL2ContainingHistoricRoot,
+      transactionsOfblockL2ContainingHistoricRoot,
+      blockNumberL2ContainingHistoricRoot
+    );
+    // check the historic root is in the block provided.
+    require(
+      transactions[transactionIndex].historicRootBlockNumberL2[0] ==
+      blockNumberL2ContainingHistoricRoot
+    );
+    // now we need to check that the proof is correct
+    ChallengesUtil.libCheckCompressedProof(
+      transactions[transactionIndex].proof,
+      uncompressedProof
+    );
+    ChallengesUtil.libChallengeProofVerification(
+      transactions[transactionIndex],
+      [uint256(blockL2ContainingHistoricRoot.root), uint256(0)],
+      uncompressedProof,
+      vks[transactions[transactionIndex].transactionType]
+    );
+    challengeAccepted(blockL2, blockNumberL2);
+  }
+
+  // signature for double transfer:
+  function challengeProofVerification(
+    Block memory blockL2,
+    uint256 blockNumberL2,
+    Transaction[] calldata transactions,
+    uint256 transactionIndex,
+    Block[2] calldata blockL2ContainingHistoricRoot,
+    uint256[2] calldata blockNumberL2ContainingHistoricRoot,
+    Transaction[] memory transactionsOfblockL2ContainingHistoricRoot,
+    Transaction[] memory transactionsOfblockL2ContainingHistoricRoot2,
+    uint256[8] memory uncompressedProof,
+    bytes32 salt
+  ) external {
+    // 4000000 ish - all
+    // 4881627 - all but proof
+    // 4893188 - using calldata??
+    // 3040445 - above optimised
+    // 3576127 - everything up optimised
+    checkCommit(msg.data);
+    state.isBlockReal(blockL2, transactions, blockNumberL2);
+    state.isBlockReal(
+      blockL2ContainingHistoricRoot[0],
+      transactionsOfblockL2ContainingHistoricRoot,
+      blockNumberL2ContainingHistoricRoot[0]
+    );
+    state.isBlockReal(
+      blockL2ContainingHistoricRoot[1],
+      transactionsOfblockL2ContainingHistoricRoot2,
+      blockNumberL2ContainingHistoricRoot[1]
+    );
+    // check the historic roots are in the blocks provided.
+    require(
+      transactions[transactionIndex].historicRootBlockNumberL2[0] ==
+      blockNumberL2ContainingHistoricRoot[0] && transactions[transactionIndex].historicRootBlockNumberL2[1] ==
+      blockNumberL2ContainingHistoricRoot[1],
+      'Incorrect historic root block'
+    );
+    // now we need to check that the proof is correct
+    ChallengesUtil.libChallengeProofVerification(
+      transactions[transactionIndex],
+      [uint256(blockL2ContainingHistoricRoot[0].root), uint256(blockL2ContainingHistoricRoot[1].root)],
       uncompressedProof,
       vks[transactions[transactionIndex].transactionType]
     );
@@ -275,7 +256,7 @@ contract Challenges is Stateful, Key_Registry, Config {
     uint256 nullifierIndex2,
     bytes32 salt
   ) public {
-    checkCommit(msg.data, salt);
+    checkCommit(msg.data);
     ChallengesUtil.libChallengeNullifier(
       txs1[transactionIndex1],
       nullifierIndex1,
@@ -306,7 +287,7 @@ contract Challenges is Stateful, Key_Registry, Config {
     uint256 transactionIndex,
     bytes32 salt
   ) external {
-    checkCommit(msg.data, salt);
+    checkCommit(msg.data);
     state.isBlockReal(blockL2, transactions, blockNumberL2);
     if (transactions[transactionIndex].transactionType == Structures.TransactionTypes.DOUBLE_TRANSFER){
       require(
@@ -371,9 +352,9 @@ contract Challenges is Stateful, Key_Registry, Config {
 
   // and having sent it, we need to check that commitment to a challenge from
   // within the challenge function using this function:
-  function checkCommit(bytes calldata messageData, bytes32 salt) private {
+  function checkCommit(bytes calldata messageData) private {
     bytes32 hash = keccak256(messageData);
-    salt = 0; // not really required as salt is in msg.data but stops the unused variable compiler warning. Bit of a waste of gas though.
+    // salt = 0; // not really required as salt is in msg.data but stops the unused variable compiler warning. Bit of a waste of gas though.
     require(committers[hash] == msg.sender, 'Commitment hash is invalid');
     delete committers[hash];
   }

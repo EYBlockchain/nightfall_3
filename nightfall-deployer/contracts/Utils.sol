@@ -16,7 +16,6 @@ library Utils {
         t.historicRootBlockNumberL2,
         t.transactionType,
         t.tokenType,
-        t.publicInputs,
         t.tokenId,
         t.ercAddress, // Take in as bytes32 for consistent hashing
         t.recipientAddress,
@@ -96,5 +95,77 @@ library Utils {
       if (ts[i].commitments[1] != ZERO) filtered[count++] = ts[i].commitments[1];
     }
     return filtered;
+  }
+
+  // function countPublicInputs(Structures.Transaction memory ts) internal pure returns(uint) {
+  //   if (ts.transactionType == Structures.TransactionTypes.DEPOSIT)
+  //     return 4;
+  //   else if (ts.transactionType == Structures.TransactionTypes.SINGLE_TRANSFER)
+  //     return 12;
+  //   else if (ts.transactionType == Structures.TransactionTypes.DOUBLE_TRANSFER)
+  //     return 16;
+  //   else return 6;
+  // }
+  // gathers public inputs for each tx type
+  // required now we have removed the publicInputHash
+  function getPublicInputs(Structures.Transaction calldata ts, uint256[2] memory roots) internal pure returns(uint256[] memory inputs) {
+    // uint256[] memory inputs = new uint256[](countPublicInputs(ts));
+    if (ts.transactionType == Structures.TransactionTypes.DEPOSIT) {
+      inputs = getDepositInputs(ts);
+    } else if (ts.transactionType == Structures.TransactionTypes.SINGLE_TRANSFER) {
+      inputs = getSingleTransferInputs(ts, roots);
+    } else if (ts.transactionType == Structures.TransactionTypes.DOUBLE_TRANSFER) {
+      inputs = getDoubleTransferInputs(ts, roots);
+    } else {
+      inputs = getWithdrawInputs(ts, roots);
+    }
+  }
+
+  function getDepositInputs(Structures.Transaction calldata ts) internal pure returns(uint256[] memory) {
+      uint256[] memory inputs = new uint256[](4);
+      inputs[0] = uint256(ts.ercAddress);
+      inputs[1] = uint256(ts.tokenId);
+      inputs[2] = ts.value;
+      inputs[3] = uint256(ts.commitments[0]);
+      return inputs;
+  }
+
+  function getSingleTransferInputs(Structures.Transaction calldata ts, uint256[2] memory roots) internal pure returns(uint256[] memory) {
+      uint256[] memory inputs = new uint256[](12);
+      inputs[0] = uint256(ts.ercAddress);
+      inputs[1] = uint256(ts.commitments[0]);
+      inputs[2] = uint256(ts.nullifiers[0]);
+      inputs[3] = roots[0];
+      for (uint i = 4; i < 12; i++) {
+        inputs[i] = uint256(ts.compressedSecrets[i-4]);
+      }
+      return inputs;
+  }
+
+  function getWithdrawInputs(Structures.Transaction calldata ts, uint256[2] memory roots) internal pure returns(uint256[] memory) {
+      uint256[] memory inputs = new uint256[](16);
+      inputs[0] = uint256(ts.ercAddress);
+      inputs[1] = uint256(ts.tokenId);
+      inputs[2] = ts.value;
+      inputs[3] = uint256(ts.nullifiers[0]);
+      inputs[4] = uint256(ts.recipientAddress);
+      inputs[5] = roots[0];
+      return inputs;
+  }
+
+  function getDoubleTransferInputs(Structures.Transaction calldata ts, uint256[2] memory roots) internal pure returns(uint256[] memory) {
+      uint256[] memory inputs = new uint256[](6);
+      inputs[0] = uint256(ts.ercAddress);
+      inputs[1] = uint256(ts.ercAddress);
+      inputs[2] = uint256(ts.commitments[0]);
+      inputs[3] = uint256(ts.commitments[1]);
+      inputs[4] = uint256(ts.nullifiers[0]);
+      inputs[5] = uint256(ts.nullifiers[1]);
+      inputs[6] = roots[0];
+      inputs[7] = roots[1];
+      for (uint i = 8; i < 16; i++) {
+        inputs[i] = uint256(ts.compressedSecrets[i-8]);
+      }
+      return inputs;
   }
 }
