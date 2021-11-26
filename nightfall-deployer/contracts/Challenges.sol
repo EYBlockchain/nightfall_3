@@ -204,11 +204,6 @@ contract Challenges is Stateful, Key_Registry, Config {
     uint256[8] memory uncompressedProof,
     bytes32 salt
   ) external {
-    // 4000000 ish - all
-    // 4881627 - all but proof
-    // 4893188 - using calldata??
-    // 3040445 - above optimised
-    // 3576127 - everything up optimised
     checkCommit(msg.data);
     state.isBlockReal(blockL2, transactions, blockNumberL2);
     state.isBlockReal(
