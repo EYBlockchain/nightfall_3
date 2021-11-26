@@ -3,7 +3,9 @@ FROM node:14.17
 WORKDIR /app
 COPY common-files common-files
 COPY config/default.js config/default.js
-COPY cli/lib cli/lib
+COPY cli cli
+WORKDIR /app/cli
+RUN npm ci
 
 WORKDIR /app/test/ping-pong/user-local
 RUN apt-get update -y
