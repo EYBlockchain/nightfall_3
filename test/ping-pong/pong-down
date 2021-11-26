@@ -8,22 +8,25 @@ usage()
 {
   echo "Usage:"
   echo "  -v or --volumes; deletes all volumes, including the zkp trusted setup, otherwise they are kept"
+  echo "  -h or --help; to print this message"
 }
-
 while [ -n "$1" ]; do
   case $1 in
       -v | --volumes )        if [[ $(echo $VOLUME_LIST | grep ping-pong_proving_files) ]]; then
                               echo -n 'Removing '
                               docker volume rm ping-pong_proving_files
                               fi
-                          if [[ $(echo $VOLUME_LIST | grep ping-pong_mongodb) ]]; then
+                              if [[ $(echo $VOLUME_LIST | grep ping-pong_mongodb) ]]; then
                                 echo -n 'Removing '
                                 docker volume rm ping-pong_mongodb
                               fi
-                          if [[ $(echo $VOLUME_LIST | grep ping-pong_build) ]]; then
+                              if [[ $(echo $VOLUME_LIST | grep ping-pong_build) ]]; then
                                 echo -n 'Removing '
                                 docker volume rm ping-pong_build
                               fi
+                              ;;
+      -h | --help )           usage
+                              exit 0
                               ;;
       * )                     usage
                               exit 1

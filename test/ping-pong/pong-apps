@@ -10,10 +10,10 @@ usage()
   echo "  -r or --ropsten; connects to a geth node on ropsten (otherwise localhost)"
   echo "  -h or --help; to print this message"
 }
-
 while [ -n "$1" ]; do
   case $1 in
       -h | --help )           usage
+                              exit 0
                               ;;
       -r | --ropsten )        FILE="-f docker-compose.ropsten.yml"
                               ;;

@@ -98,9 +98,7 @@ services:
       LOG_LEVEL: info
 
   proposer:
-    build:
-      dockerfile: proposer.Dockerfile
-      context: ../../
+    image: ghcr.io/eyblockchain/nightfall3-proposer:latest
     networks:
       - nightfall_network
     volumes:
@@ -120,9 +118,7 @@ services:
       BLOCKCHAIN_PORT: 8546
 
   user-local:
-    build:
-      dockerfile: user-local.Dockerfile
-      context: ../../
+    image: ghcr.io/eyblockchain/nightfall3-user-local:latest
     networks:
       - nightfall_network
     volumes:
