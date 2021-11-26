@@ -53,13 +53,13 @@ function App({ onDeleteWallet }) {
           <Depositjsx />
         </Route>
         <Route path="/Withdrawjsx">
-        <Withdrawjsx />
+          <Withdrawjsx />
         </Route>
         <Route path="/Singletransferjsx">
-        <Singletransferjsx />
+          <Singletransferjsx />
         </Route>
         <Route path="/Doubletransferjsx">
-        <Doubletransferjsx />
+          <Doubletransferjsx />
         </Route>
         <Redirect to="/login" />
       </Switch>
