@@ -24,7 +24,7 @@ def main(\
 	field u = publicInputsHash
 	u32 v = 0x00000000
 
-	for field i in 0..8 do
+	for u32 i in 0..8 do
 		v = v + oldCommitment.id[i] +\
 				oldCommitment.ercAddress[i] +\
 				oldCommitment.id[i] +\
@@ -35,7 +35,7 @@ def main(\
 				nullifier.hash[i]
 	endfor
 
-	for field i in 0..33 do
+	for u32 i in 0..33 do
 		u = u * path[i]
 	endfor
 	u = u * order * recipientAddress * oldCommitment.ask
