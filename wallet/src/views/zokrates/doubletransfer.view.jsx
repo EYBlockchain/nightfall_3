@@ -437,7 +437,7 @@ export default function Zokrates() {
 
       const artifacts = zokratesProvider.compile(source, options);
       // computation
-      //const { witness, output } = zokratesProvider.computeWitness(artifacts, ['2']);
+      // const { witness, output } = zokratesProvider.computeWitness(artifacts, ['2']);
       const { witness } = zokratesProvider.computeWitness(artifacts, [
         oldCommitment,
         newcommitment,
