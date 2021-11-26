@@ -17,13 +17,13 @@ import withdraw from '!!raw-loader!./withdraw.zok';
 import withdrawStub from '!!raw-loader!./withdraw_stub.zok';
 import withdrawNoHash from '!!raw-loader!./withdraw-nohash.zok';
 
-//concatenate
+// concatenate
 import orderLeftRight from '!!raw-loader!./common/concatenate/order-left-right-1x1.zok';
 
-//encryption
+// encryption
 import elgamal from '!!raw-loader!./common/encryption/el-gamal4.zok';
 
-//hashes
+// hashes
 import mimcEncryption from '!!raw-loader!./common/hashes/mimc/mimc-encryption.zok';
 import mimcConstants from '!!raw-loader!./common/hashes/mimc/mimc-constants.zok';
 import mimcHash1 from '!!raw-loader!./common/hashes/mimc/mimc-hash-1.zok';
@@ -50,13 +50,13 @@ import pad3072ThenHash from '!!raw-loader!./common/hashes/sha256/pad3072ThenHash
 import pad3840ThenHash from '!!raw-loader!./common/hashes/sha256/pad3840ThenHash.zok';
 import pad4096ThenHash from '!!raw-loader!./common/hashes/sha256/pad4096ThenHash.zok';
 
-//hashToCurve
+// hashToCurve
 import chi from '!!raw-loader!./common/hashToCurve/chi.zok';
 import elligator from '!!raw-loader!./common/hashToCurve/elligator2.zok';
 import constPowerModofhalfp from '!!raw-loader!./common/hashToCurve/constPowerModOfhalfp-1.zok';
 import montgomeryToTwistedEdwards from '!!raw-loader!./common/hashToCurve/montgomeryToTwistedEdwards.zok';
 
-//merkle-tree
+// merkle-tree
 import pathCheck from '!!raw-loader!./common/merkle-tree/mimc-path-check.zok';
 
 export {
