@@ -43,7 +43,7 @@ def main(\
 
 	field u = publicInputsHash
 	u32 v = 0x00000000
-	for field i in 0..8 do
+	for u32 i in 0..8 do
 		v = v + oldCommitment.id[i] +\
 			oldCommitment.ercAddress[i] +\
 			oldCommitment.value[i] +\
@@ -57,18 +57,18 @@ def main(\
 	endfor
 
 	u32 w = 0x00000000
-	for field i in 0..8 do
+	for u32 i in 0..8 do
 		w = w + secrets.ephemeralKey1[i] +\
 			secrets.ephemeralKey2[i] +\
 			secrets.ephemeralKey3[i] +\
 			secrets.ephemeralKey4[i]
 	endfor
 
-	for field i in 0..33 do
+	for u32 i in 0..33 do
 		u = u * path[i]
 	endfor
 
-	for field i in 0..16 do
+	for u32 i in 0..16 do
 		u = u * secrets.cipherText[i]
 	endfor
 
