@@ -2,17 +2,12 @@ import React from 'react';
 import { Button, Modal, Form, Icon, Input, Checkbox, Divider } from 'semantic-ui-react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { mnemonicBackupEnable } from '../../../../store/settings/settings.actions';
 import * as Storage from '../../../../utils/lib/local-storage';
 
-function AccountSettingsModal({
-  login,
-  accountSettingsEnable,
-  toggleAccountSettings,
-  onMnemonicBackupEnable,
-}) {
-  if (typeof login.nf3.mnemonic === 'undefined') return null;
-
+function AccountSettingsModal({ login, accountSettingsEnable, toggleAccountSettings }) {
+  if (typeof login.nf3 === 'undefined') {
+    return null;
+  }
   const [addressIndex, setAddressIndex] = React.useState(login.nf3.mnemonic.addressIndex);
   const [clearLocalStorage, setClearLocalStorage] = React.useState(false);
 
@@ -22,7 +17,6 @@ function AccountSettingsModal({
     }
 
     if (clearLocalStorage) {
-      onMnemonicBackupEnable(false);
       Storage.clear();
     }
 
@@ -41,6 +35,8 @@ function AccountSettingsModal({
         <Form>
           <Form.Field>
             <Input
+              type="number"
+              min="0"
               label="Address Index"
               placeholder={login.nf3.mnemonic.addressIndex}
               onChange={event => setAddressIndex(event.target.value)}
@@ -72,15 +68,12 @@ AccountSettingsModal.propTypes = {
   login: PropTypes.object.isRequired,
   accountSettingsEnable: PropTypes.bool.isRequired,
   toggleAccountSettings: PropTypes.func.isRequired,
-  onMnemonicBackupEnable: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = state => ({
   login: state.login,
 });
 
-const mapDispatchToProps = dispatch => ({
-  onMnemonicBackupEnable: backupEnable => dispatch(mnemonicBackupEnable(backupEnable)),
-});
+const mapDispatchToProps = () => ({});
 
 export default connect(mapStateToProps, mapDispatchToProps)(AccountSettingsModal);

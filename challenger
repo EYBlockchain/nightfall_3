@@ -1,3 +1,9 @@
 #! /bin/bash
 
-/usr/bin/env node cli/src/challenger.mjs
+## Usage
+# ./challenger [OPTIONAL ARGUMENTS]
+# OPTIONAL_ARGUMENTS:
+#  --environment : test environment (such us localhost, docker, testnet). If no argument given
+#     challenger is launched in localhost environment
+
+/usr/bin/env node cli/src/challenger.mjs "${@:1}"

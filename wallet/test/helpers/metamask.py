@@ -68,6 +68,23 @@ def selectNetworkMetamask(driver, findElements, networkConfig):
     else:
       findElements.element_exist_xpath('(//*[contains(text(), "' + networkConfig['name'] + '")])').click()
 
+def selectTestNetworkMetamask(driver, findElements, networkConfig):
+    # Configure network
+    driver.get('chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn/home.html#')
+
+    # Select network
+    findElements.element_exist_xpath('//*[@id="app-content"]/div/div[1]/div/div[2]/div[1]/div/span').click() # Select network
+    # Find network
+    networkElement = findElements.element_exist_xpath('(//*[contains(text(), "' + networkConfig['name'] + '")] | //*[@value="' + networkConfig['name'] + '"])')
+    try:
+       networkElement.click()
+    except:
+        findElements.element_exist_xpath('//*[contains(@class, "network-dropdown-content--link")]').click() # Show networks
+        findElements.element_exist_xpath('//*[@id="app-content"]/div/div[3]/div/div[2]/div[2]/div[2]/div[7]/div[2]/div/div/div[1]/div[2]').click() # Enable test networks
+        findElements.element_exist_xpath('//*[contains(@class, "settings-page__close-button")]').click() # Save
+        findElements.element_exist_xpath('//*[@id="app-content"]/div/div[1]/div/div[2]/div[1]/div/span').click() # Select network
+        findElements.element_exist_xpath('//*[contains(text(), "' + networkConfig['name'] + '")]').click()
+
 def deleteNetworkMetamask(driver, findElements, networkConfig):
     # Configure network
     driver.get('chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn/home.html#')

@@ -11,7 +11,7 @@ main() {
 
     # Start wallet
     tmux select-pane -t 0
-    tmux send-keys "npm start" Enter
+    tmux send-keys "npm run start:docker" Enter
     # if VNC is enabled, start server
     if [ ! -z ${ENABLE_VNC_SERVER} ]; then
       tmux select-pane -t 1
@@ -21,34 +21,66 @@ main() {
     fi
     # Start selenium tests (after ganache has started and app has been deployed)
     if [ ! -z ${RUN_SELENIUM_TESTS} ]; then
-      wait_app_deployed
+      wait_ready
       tmux select-pane -t 1
-      tmux send-keys "ls" Enter
-      tmux send-keys "node  ../cli/src/proposer.mjs" Enter
+      tmux send-keys "node  ../cli/src/proposer.mjs --environment Docker" Enter
       tmux select-pane -t 2
-      tmux send-keys "node ../cli/src/liquidity_provider.mjs" Enter 
+      tmux send-keys "node ../cli/src/liquidity-provider.mjs --environment Docker" Enter 
       tmux select-pane -t 3
-      tmux send-keys "cd test && python3 wallet_test.py server" Enter
-      tmux send-keys "touch .done" Enter
+      sudo touch test/.test_results
+      sudo chown apps test/.test_results
+      tmux send-keys "cd test && python3 wallet_test.py server docker | tee .test_results" Enter
+      tmux send-keys "sudo touch .done; sudo chown apps .done" Enter
+      #tmux send-keys "touch .done" Enter
       wait_tests_done
+      # infinite loop to prevent container from terminating
+      infinite_loop
     fi
+}
+
+infinite_loop() {
+  while true; do
+    sleep 10
+  done
 }
 
 wait_tests_done() {
    while true; do
-     if [ -f .done ]; then
+     if [ -f test/.done ]; then
         break
      fi
      sleep 10
    done
+   cat test/.test_results
+   testResults=$(cat test/.test_results | grep FAILED)
+   if [ -z "${testResults}" ]; then
+     echo "Selenium tests PASSED"
+   else
+     echo "Selenium tests FAILED"
+   fi
 
 }
-wait_app_deployed() {
-  app_deployed=$(curl http://selenium:3000 | grep favicon)
+
+wait_ready() {
+  app_deployed=$(curl http://selenium:3010 2> /dev/null | grep favicon)
   while [ -z "${app_deployed}" ]; do
+    echo "Waiting for wallet to be deployed"
     sleep 10;
-    app_deployed=$(curl http://selenium:3000 | grep favicon)
+    app_deployed=$(curl http://selenium:3010 2> /dev/null | grep favicon)
   done
+  echo "Wallet deployed"
+  sleep 60
+  #wscommand='{"jsonrpc":  "2.0", "id": 0, "method":  "eth_blockNumber"}'
+  #block=0
+  #while [ ! -z "${block}" ] && [ "${block}" -lt 36 ]; do
+    #res=$(wscat -c 'ws://blockchain1:8546' -w 1 -x "${wscommand}" | grep result)
+    #echo "RES ${res}"
+    #blockHex=$(echo ${res} | awk '{split($0,a,":"); print a[4]}' | tr -d '"' | tr -d '}' | tr -d '0x')	
+    #echo "Busy ${wscommand} ${blockHex} ${block}"
+    #block=$(printf $((16#${blockHex})))
+    #sleep 10
+  #done
+  echo "Contracts deployed"
 }
 
 create_tmux() {

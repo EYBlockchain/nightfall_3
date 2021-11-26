@@ -56,16 +56,6 @@ trap "docker-compose $FILE $STUBS down --remove-orphans -t 1; exit 1" SIGHUP SIG
 docker-compose -f docker-compose.yml $FILE $STUBS  down --remove-orphans
 
 # if-else block checks - volume exist and then removes it.
-if [[ $(echo $VOLUME_LIST | grep nightfall_3_timber-database-volume1) ]]; then
-  echo -n 'Removing '
-  docker volume rm nightfall_3_timber-database-volume1
-fi
-
-if [[ $(echo $VOLUME_LIST | grep nightfall_3_timber-database-volume2) ]]; then
-  echo -n 'Removing '
-  docker volume rm nightfall_3_timber-database-volume2
-fi
-
 if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb1) ]]; then
   echo -n 'Removing '
   docker volume rm nightfall_3_mongodb1

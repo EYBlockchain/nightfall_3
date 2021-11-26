@@ -1,3 +1,9 @@
 #! /bin/bash
 
-/usr/bin/env node cli/src/liquidity-provider.mjs
+## Usage
+# ./liquitidty-provider [OPTIONAL ARGUMENTS]
+# OPTIONAL_ARGUMENTS:
+#  --environment : test environment (such us localhost, docker, testnet). If no argument given
+#     liquitidty-provider is launched in localhost environment
+
+/usr/bin/env node cli/src/liquidity-provider.mjs "${@:1}"

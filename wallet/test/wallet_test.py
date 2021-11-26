@@ -22,10 +22,15 @@ from token_test import *
 # virtual display
 from pyvirtualdisplay import Display
 
+testEnvironment="localhost"
 for arg in sys.argv:
     if arg.lower() == "server":
         display = Display(visible=0, size=(1920, 1080))
         display.start()
+    if arg.lower() == "docker":
+        testEnvironment="docker"
+    if arg.lower() == "ropsten":
+        testEnvironment="ropsten"
 
 ###################
 # Load selenium  #
@@ -43,12 +48,24 @@ nightfallTab=driver.window_handles[1]
 metamaskTab=driver.window_handles[0]
 driver.switch_to.window(metamaskTab)
 
+# Configure variables depending on test environment
+networkConfig = networkConfigLocalhost
+walletUrl = walletUrlLocalhost
+if testEnvironment == "docker":
+    networkConfig = networkConfigDocker
+    walletUrl = walletUrlDocker
+elif testEnvironment == "ropsten":
+    networkConfig = networkConfigRopsten
+    walletUrl = walletUrlRopsten
+   
+
 ###################
 # Load Metamask   #
 ###################
 initializeMetamask(driver, findElementsInstance, metamaskConfig)
 #deleteNetworkMetamask(driver, findElementsInstance, deleteNetworkConfig)
-selectNetworkMetamask(driver, findElementsInstance, networkConfigLocalhost)
+#selectTestNetworkMetamask(driver, findElementsInstance, networkConfigRopsten)
+selectNetworkMetamask(driver, findElementsInstance, networkConfig)
 addEthAccountMetamask(driver, findElementsInstance, ethAccount1Params)
 addEthAccountMetamask(driver, findElementsInstance, ethAccount2Params)
 
@@ -58,16 +75,16 @@ addEthAccountMetamask(driver, findElementsInstance, ethAccount2Params)
 ########################
 # Log in wallet #
 ########################
-loginNightfallWallet(driver, findElementsInstance, metamaskTab, nightfallTab, walletURL)
+loginNightfallWallet(driver, findElementsInstance, metamaskTab, nightfallTab, walletUrl)
 testEthAddress = findElementsInstance.element_exist_xpath('//*[@id="wallet-info-cell-ethaddress"]').text
 assert(testEthAddress.lower() == ethAccount2Params["ethereumAddress"].lower())
 
 ########################
 # Start Tests          
 ########################
-effectTest(findElementsInstance, driver, metamaskTab, nightfallTab)
-loginTest(findElementsInstance, driver, metamaskTab, nightfallTab)
-tokenTest(findElementsInstance, driver, metamaskTab, nightfallTab)
-txTest(findElementsInstance, driver, metamaskTab, nightfallTab)
+#effectTest(findElementsInstance, driver, metamaskTab, nightfallTab, walletUrl)
+#loginTest(findElementsInstance, driver, metamaskTab, nightfallTab)
+#tokenTest(findElementsInstance, driver, metamaskTab, nightfallTab)
+#txTest(findElementsInstance, driver, metamaskTab, nightfallTab)
 
 driver.quit()

@@ -3,7 +3,10 @@ Module that runs up as a challenger
 */
 import { Command } from 'commander/esm.mjs';
 import clear from 'clear';
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
 import Nf3 from '../lib/nf3.mjs';
+import { setEnvironment, getCurrentEnvironment } from '../lib/environment.mjs';
 
 const defaultKey = '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb';
 const defaultMnemonic =
@@ -14,17 +17,26 @@ program.option('-h', '--help', 'Help');
 if (program.opts().help) console.log('-k | --key input an Ethereum signing key to use');
 const ethereumSigningKey = program.opts().key || defaultKey;
 
+const argv = yargs(hideBin(process.argv)).parse();
+const { environment } = argv;
 /**
 Does the preliminary setup and starts listening on the websocket
+@param {string} testEnvironment - Environment where propose is launched ('Testnet','Localhost','Docker')
 */
-async function startChallenger() {
+async function startChallenger(testEnvironment) {
   clear();
   console.log('Starting Challenger...');
+  if (typeof testEnvironment !== 'undefined') {
+    setEnvironment(testEnvironment);
+  } else {
+    setEnvironment('Localhost');
+  }
+  const nf3Env = getCurrentEnvironment().currentEnvironment;
   const nf3 = new Nf3(
-    'http://localhost:8080',
-    'http://localhost:8081',
-    'ws://localhost:8082',
-    'ws://localhost:8546',
+    nf3Env.clientApiUrl,
+    nf3Env.optimistApiUrl,
+    nf3Env.optimistWsUrl,
+    nf3Env.web3WsUrl,
     ethereumSigningKey,
   );
   await nf3.init(defaultMnemonic);
@@ -36,4 +48,4 @@ async function startChallenger() {
   console.log('Listening for incoming events');
 }
 
-startChallenger();
+startChallenger(environment);

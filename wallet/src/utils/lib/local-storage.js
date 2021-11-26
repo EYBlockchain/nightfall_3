@@ -53,7 +53,8 @@ function tokensSet(userKey, tokens) {
 }
 
 function tokensGet(userKey) {
-  return storage.getItem(TOKEN_POOL_KEY + userKey);
+  const tokenString = storage.getItem(TOKEN_POOL_KEY + userKey);
+  return JSON.parse(tokenString);
 }
 
 function clear() {

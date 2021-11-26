@@ -1,7 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { Table, Button, Container, Icon } from 'semantic-ui-react';
-import Web3 from 'web3';
 import PropTypes from 'prop-types';
 import {
   addToken,
@@ -10,10 +9,24 @@ import {
   deleteToken,
 } from '../../../../store/token/token.actions';
 import { TokenAddModal } from './token-add.view.jsx';
+import * as Constant from '../../../../constants';
+import tokensLoad from '../../../../store/token/token.thunks';
 
-function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, onDeleteToken }) {
+function WalletInfo({
+  login,
+  token,
+  onAddToken,
+  onSelectToken,
+  onUnselectToken,
+  onDeleteToken,
+  onLoadTokens,
+}) {
   const [modalTokenAddEnable, setModalTokenAddEnable] = React.useState(false);
   const [removeTokenEnable, setRemoveTokenEnable] = React.useState(false);
+
+  if (typeof login.nf3 === 'undefined') {
+    return null;
+  }
 
   const importedWallet = () => {
     if (login.nf3.ethereumAddress === '' || typeof login.nf3.ethereumAddress === 'undefined') {
@@ -29,31 +42,7 @@ function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, 
 
   // TODO : substitute reload button by periodic function
   const reload = () => {
-    if (typeof login.nf3.ethereumAddress === 'undefined') return;
-    login.nf3.getLayer2Balances().then(l2Balance => {
-      const { compressedPkd } = login.nf3.zkpKeys;
-      const myL2Balance =
-        typeof l2Balance[compressedPkd] === 'undefined' ? {} : l2Balance[compressedPkd];
-      const l2TokenAddressArr = myL2Balance === {} ? [] : Object.keys(myL2Balance);
-      login.nf3.getL1Balance(login.nf3.ethereumAddress).then(l1Balance => {
-        if (l2TokenAddressArr.length) {
-          l2TokenAddressArr.forEach(l2TokenAddress => {
-            /* TODO. Use correct token
-            const l2Token = token.tokenPool.filter(
-              token => token.tokenAddress === `0x${l2TokenAddress}`,
-            )[0];
-	    */
-            onAddToken(
-              l2TokenAddress.toLowerCase(),
-              'ERC20',
-              '0x00',
-              l1Balance,
-              Web3.utils.fromWei(myL2Balance[l2TokenAddress].toString(), 'nano'),
-            );
-          });
-        }
-      });
-    });
+    onLoadTokens([]);
   };
 
   const toggleTokenSelected = () => {
@@ -64,7 +53,7 @@ function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, 
     if (id !== token.activeTokenRowId) {
       onSelectToken(id);
       if (removeTokenEnable) {
-        onDeleteToken(id);
+        onDeleteToken(login.nf3.zkpKeys.compressedPkd, id);
         toggleTokenSelected();
       }
     } else {
@@ -76,10 +65,10 @@ function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, 
     const rows = token.tokenPool.map(item => {
       return (
         <Table.Row
-          key={item.id}
-          active={item.id === token.activeTokenRowId}
+          key={item.tokenAddress}
+          active={item.tokenAddress === token.activeTokenRowId}
           onClick={() => {
-            setActiveRow(item.id);
+            setActiveRow(item.tokenAddress);
           }}
         >
           <Table.Cell colSpan="4" title={item.tokenAddress}>
@@ -101,11 +90,22 @@ function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, 
   }
 
   React.useEffect(() => {
-    reload();
+    const retrieveBalance = setInterval(() => {
+      reload();
+    }, Constant.BALANCE_INTERVAL);
+    return () => clearInterval(retrieveBalance);
   }, []);
 
-  const handleOnTokenAddSubmit = (tokenName, tokenType, tokenAddress) => {
-    onAddToken(tokenAddress.toLowerCase(), tokenType, '0', '-', '-');
+  const handleOnTokenAddSubmit = (tokenName, tokenType, tokenAddress, tokenBalance) => {
+    onAddToken(
+      login.nf3.zkpKeys.compressedPkd,
+      tokenAddress.toLowerCase(),
+      tokenType,
+      '0x0',
+      tokenName,
+      tokenBalance,
+      '-',
+    );
   };
 
   const toggleModalTokenAdd = () => {
@@ -119,40 +119,40 @@ function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, 
 
   return (
     <Container>
-      <Table padded>
+      <Table padded fixed selectable>
         <Table.Header>
           <Table.Row>
-            <Table.HeaderCell colSpan="4" textAlign="left">
+            <Table.HeaderCell colSpan="4">
               <Table.Cell>Account Address:</Table.Cell>
               <Table.Cell id="wallet-info-cell-ethaddress"> {importedWallet()} </Table.Cell>
             </Table.HeaderCell>
-            <Table.HeaderCell textAlign="right">
-              <Button
-                onClick={reload}
-                id="wallet-info-cell-reload"
-                disabled={token.activeTokenRowId === ''}
-              >
-                <Icon name="sync" />
-                Reload
-              </Button>
-            </Table.HeaderCell>
-            <Table.HeaderCell textAlign="right">
-              <Button onClick={toggleModalTokenAdd} id="wallet-info-cell-add-token">
-                <Icon name="plus" />
-                Add Token
-              </Button>
-            </Table.HeaderCell>
-            <Table.HeaderCell textAlign="right">
-              <Button
-                toggle
-                onClick={removeToken}
-                id="wallet-info-cell-remove-token"
-                active={removeTokenEnable && token.tokenPool.length}
-                disabled={token.tokenPool.length === 0}
-              >
-                {' '}
-                <Icon name="minus" /> Remove Token{' '}
-              </Button>
+            <Table.HeaderCell colSpan="3">
+              <Table.Cell />
+              <Table.Cell />
+              <Table.Cell>
+                <Button
+                  icon
+                  labelPosition="left"
+                  onClick={toggleModalTokenAdd}
+                  id="wallet-info-cell-add-token"
+                >
+                  <Icon name="plus" />
+                  Add Token
+                </Button>
+              </Table.Cell>
+              <Table.Cell>
+                <Button
+                  icon
+                  labelPosition="left"
+                  id="wallet-info-cell-remove-token"
+                  toggle
+                  onClick={removeToken}
+                  active={removeTokenEnable && token.tokenPool.length}
+                  disabled={token.tokenPool.length === 0}
+                >
+                  <Icon name="minus" /> Remove Token
+                </Button>
+              </Table.Cell>
             </Table.HeaderCell>
           </Table.Row>
         </Table.Header>
@@ -179,6 +179,7 @@ function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, 
         modalTokenAdd={modalTokenAddEnable}
         toggleModalTokenAdd={toggleModalTokenAdd}
         handleOnTokenAddSubmit={handleOnTokenAddSubmit}
+        nf3={login.nf3}
       />
     </Container>
   );
@@ -191,6 +192,7 @@ WalletInfo.propTypes = {
   onSelectToken: PropTypes.func.isRequired,
   onUnselectToken: PropTypes.func.isRequired,
   onDeleteToken: PropTypes.func.isRequired,
+  onLoadTokens: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = state => ({
@@ -201,9 +203,12 @@ const mapStateToProps = state => ({
 const mapDispatchToProps = dispatch => ({
   onSelectToken: tokenRowId => dispatch(selectToken(tokenRowId)),
   onUnselectToken: () => dispatch(unselectToken()),
-  onAddToken: (tokenAddress, tokenType, tokenId, l1Balance, l2Balance) =>
-    dispatch(addToken(tokenAddress, tokenType, tokenId, l1Balance, l2Balance)),
-  onDeleteToken: tokenRowId => dispatch(deleteToken(tokenRowId)),
+  onAddToken: (compressedPkd, tokenAddress, tokenType, tokenId, tokenName, l1Balance, l2Balance) =>
+    dispatch(
+      addToken(compressedPkd, tokenAddress, tokenType, tokenId, tokenName, l1Balance, l2Balance),
+    ),
+  onDeleteToken: (compressedPkd, tokenRowId) => dispatch(deleteToken(compressedPkd, tokenRowId)),
+  onLoadTokens: (initTokens) => dispatch(tokensLoad(initTokens)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(WalletInfo);

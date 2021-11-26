@@ -6,16 +6,17 @@ import PropTypes from 'prop-types';
 import jsSha3 from 'js-sha3';
 import * as Nf3 from 'nf3';
 import * as Storage from '../../utils/lib/local-storage';
+import tokens from '../../utils/tokens';
 
 import CreateWalletModal from './components/create-wallet.view.jsx';
 import { loadWallet, deleteWallet } from '../../store/login/login.actions';
-import { getCurrentEnvironment, setContractAddresses } from '../../utils/lib/environment';
 import { ReactComponent as MetaMaskLogo } from '../../images/metamask.svg';
 import { DEFAULT_NF_ADDRESS_INDEX, METAMASK_MESSAGE } from '../../constants.js';
+import tokensLoad from '../../store/token/token.thunks';
 
 let nf3;
 
-function Login({ login, settings, onLoadWallet, onDeleteWallet }) {
+function Login({ login, onLoadWallet, onDeleteWallet, onLoadTokens }) {
   const [modalEnable, setModalEnable] = React.useState(false);
 
   const renderRedirect = () => {
@@ -40,8 +41,7 @@ function Login({ login, settings, onLoadWallet, onDeleteWallet }) {
   };
 
   const initNf3 = async ethereumSigningKey => {
-    const nf3Env = getCurrentEnvironment().currentEnvironment;
-    console.log('ENV', nf3Env);
+    const nf3Env = Nf3.Environment.getCurrentEnvironment().currentEnvironment;
     nf3 = new Nf3.Nf3(
       nf3Env.clientApiUrl,
       nf3Env.optimistApiUrl,
@@ -52,7 +52,7 @@ function Login({ login, settings, onLoadWallet, onDeleteWallet }) {
     // Start NF3
     try {
       await nf3.init();
-      setContractAddresses(nf3);
+      Nf3.Environment.setContractAddresses(nf3);
       // Run checks if Metamask selected
       if (ethereumSigningKey === '') {
         await chainIdCheck(nf3Env.chainId);
@@ -70,7 +70,7 @@ function Login({ login, settings, onLoadWallet, onDeleteWallet }) {
       hashedSignature = jsSha3.keccak256(signature);
     } catch (err) {
       // TODO display error message
-      console.log('Signer not found', err);
+      throw new Error('Signature aborted');
     }
     return hashedSignature;
   };
@@ -79,17 +79,18 @@ function Login({ login, settings, onLoadWallet, onDeleteWallet }) {
    * Imports a nightfall wallet based on an Ethereum Private Key
    * @param {string} privateKey - Ethereum Private Key
    */
-  const handleClickOnImport = async (mnemonic, backupExists) => {
+  const handleClickOnImport = async (mnemonic, requestBackup) => {
     try {
-      if (settings.mnemonicBackupEnable && !backupExists) {
+      if (requestBackup) {
         const passphrase = await mnemonicPassphraseGet(nf3);
         Storage.mnemonicSet(nf3.ethereumAddress, mnemonic, passphrase);
       }
       await nf3.setzkpKeysFromMnemonic(mnemonic, DEFAULT_NF_ADDRESS_INDEX);
-      // Set Wallet and Nf3 object
       onLoadWallet(nf3);
+      onLoadTokens(tokens);
     } catch (err) {
       console.log('Failed', err);
+      setModalEnable(false);
       onDeleteWallet();
     }
   };
@@ -106,11 +107,11 @@ function Login({ login, settings, onLoadWallet, onDeleteWallet }) {
       } else {
         const passphrase = await mnemonicPassphraseGet(nf3);
         const mnemonic = Storage.mnemonicGet(nf3.ethereumAddress, passphrase);
-        handleClickOnImport(mnemonic, true);
+        handleClickOnImport(mnemonic, false);
       }
     } catch (err) {
       // TODO
-      console.log('ERROR');
+      console.log('ERROR', err);
     }
   };
 
@@ -147,19 +148,19 @@ function Login({ login, settings, onLoadWallet, onDeleteWallet }) {
 
 Login.propTypes = {
   login: PropTypes.object.isRequired,
-  settings: PropTypes.object.isRequired,
   onLoadWallet: PropTypes.func.isRequired,
   onDeleteWallet: PropTypes.func.isRequired,
+  onLoadTokens: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = state => ({
   login: state.login,
-  settings: state.settings,
 });
 
 const mapDispatchToProps = dispatch => ({
   onLoadWallet: nf3Instance => dispatch(loadWallet(nf3Instance)),
   onDeleteWallet: () => dispatch(deleteWallet()),
+  onLoadTokens: (newTokens) => dispatch(tokensLoad(newTokens)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(Login);

@@ -124,11 +124,20 @@ npm run build
 ./liquidity-provider
 ```
 
-- Launch wallet.
+- Generate wallet
 ```
 cd wallet
 npm install
+```
+
+- Launch wallet in ganache (localhost)
+```
 npm start
+```
+
+- Launch wallet in localhost connected to testnet deploymen
+```
+npm run start-ropsten
 ```
 
 - When the wallet starts, you will have the option to enter your private key on connecting with metamask wallet installed in your browser. If you select the latter, you need to have previously configured your metamask wallet to operate with Nightfall's deployment on localhost
@@ -153,8 +162,7 @@ More information can be found [here](https://github.com/EYBlockchain/nightfall_3
 1. Open Metamask in browser
 2. Settings->Advance->Reset Account
 
-- Tokens have been configured with a constant number of 9 decimals in the wallet. On the other hand, the mock token contracts do not have decimals implemented. So, there will be inconsistencies in the L1 vs L2 balance (you can deposit more tokens to L2 than what's available in L1). For testing purposes it is not a problem.
-- Transactions with ERC721 tokens do not work
+- Transactions with ERC721 tokens do not work. This is because there is not way yet to recover the token Id.
 - Direct transactions are not implemented
 - Instant withdraw is selected when doing a withdraw only. Once submitted the instant withdraw request,the wallet requests a simple withdraw and inmediatelly after converts this withdraw into an instant withdraw. Wallet will attempt to send the instant withdraw request up to 10 times, once every 10 seconds. It is likely that during this period, you need to request a simpler transaction (deposit, withdraw or transfer) so that the original withdraw is processed by the processor and the instant withdraw can be carried out.
 - Tested with node version v14.18.0

@@ -2,6 +2,7 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import WebSocket from 'ws';
+import { generateMnemonic } from 'bip39';
 import {
   closeWeb3Connection,
   submitTransaction,
@@ -25,8 +26,7 @@ describe('Test instant withdrawals', () => {
   let withdrawTransaction;
   let connection; // WS connection
   let nodeInfo;
-  const zkpPrivateKey = '0xc05b14fa15148330c6d008814b0bdd69bc4a08a1bd0b629c42fa7e2c61f16739'; // the zkp private key we're going to use in the tests.
-  const url = 'http://localhost:8080';
+  const senderUrl = 'http://localhost:8080';
   const optimistUrl = 'http://localhost:8081';
   const optimistWsUrl = 'ws:localhost:8082';
   const tokenId = '0x00';
@@ -43,17 +43,22 @@ describe('Test instant withdrawals', () => {
   const BLOCK_STAKE = 1000000000000000000; // 1 ether
   const txPerBlock = 2;
   const eventLogs = [];
+  let ask1;
+  let nsk1;
+  let ivk1;
+  let pkd1;
 
   before(async function () {
     const web3 = await connectWeb3();
 
-    shieldAddress = (await chai.request(url).get('/contract-address/Shield')).body.address;
+    shieldAddress = (await chai.request(senderUrl).get('/contract-address/Shield')).body.address;
 
-    stateAddress = (await chai.request(url).get('/contract-address/State')).body.address;
+    stateAddress = (await chai.request(senderUrl).get('/contract-address/State')).body.address;
 
-    proposersAddress = (await chai.request(url).get('/contract-address/Proposers')).body.address;
+    proposersAddress = (await chai.request(senderUrl).get('/contract-address/Proposers')).body
+      .address;
 
-    ercAddress = (await chai.request(url).get('/contract-address/ERCStub')).body.address;
+    ercAddress = (await chai.request(senderUrl).get('/contract-address/ERCStub')).body.address;
 
     nodeInfo = await web3.eth.getNodeInfo();
 
@@ -63,6 +68,32 @@ describe('Test instant withdrawals', () => {
       // For event tracking, we use only care about the logs related to 'blockProposed'
       if (log.topics[0] === topicEventMapping.BlockProposed) eventLogs.push('blockProposed');
     });
+
+    // Generate a random mnemonic (uses crypto.randomBytes under the hood), defaults to 128-bits of entropy
+    // For entropy, crypto.randomBytes uses /dev/urandom (unix, MacOS) or CryptoGenRandom (windows)
+    // Crypto.getRandomValues() is suitable for browser needs
+    const mnemonic = generateMnemonic();
+
+    ({
+      ask: ask1,
+      nsk: nsk1,
+      ivk: ivk1,
+      pkd: pkd1,
+    } = (
+      await chai
+        .request(senderUrl)
+        .post('/generate-keys')
+        .send({ mnemonic, path: `m/44'/60'/0'/0` })
+    ).body);
+
+    await chai
+      .request(senderUrl)
+      .post('/incoming-viewing-key')
+      .send({
+        ivks: [ivk1],
+        nsks: [nsk1],
+      });
+
     const myAddress = (await getAccounts())[0];
     // register a proposer d
     const res = await chai
@@ -85,18 +116,16 @@ describe('Test instant withdrawals', () => {
     };
   });
 
-  describe('', () => {
-    let block;
-    let transactions;
-    let index;
+  describe('Test Instant Withdrawal', () => {
+    let withdrawTransactionHash;
     before(async () => {
       const depositTransactions = (
         await Promise.all(
           Array.from({ length: txPerBlock * 2 - 1 }, () =>
             chai
-              .request(url)
+              .request(senderUrl)
               .post('/deposit')
-              .send({ ercAddress, tokenId, tokenType, value, zkpPrivateKey, fee }),
+              .send({ ercAddress, tokenId, tokenType, value, pkd: pkd1, nsk: nsk1, fee }),
           ),
         )
       ).map(res => res.body);
@@ -109,16 +138,18 @@ describe('Test instant withdrawals', () => {
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
+      await new Promise(resolve => setTimeout(resolve, 3000));
     });
 
     it('should trigger a withdraw', async () => {
-      const res = await chai.request(url).post('/withdraw').send({
+      const res = await chai.request(senderUrl).post('/withdraw').send({
         ercAddress,
         tokenId,
         tokenType,
         value,
-        senderZkpPrivateKey: zkpPrivateKey,
         recipientAddress,
+        nsk: nsk1,
+        ask: ask1,
       });
       withdrawTransaction = res.body.transaction;
       const receipt = await submitTransaction(
@@ -127,26 +158,14 @@ describe('Test instant withdrawals', () => {
         shieldAddress,
         gas,
       );
+      withdrawTransactionHash = withdrawTransaction.transactionHash;
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
       while (eventLogs.length !== 2) {
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
-    });
-
-    it('Should find the block containing the withdraw transaction', async () => {
-      do {
-        // eslint-disable-next-line no-await-in-loop
-        const res = await chai
-          .request(optimistUrl)
-          .get(`/block/transaction-hash/${withdrawTransaction.transactionHash}`);
-        ({ block, transactions, index } = res.body);
-        // eslint-disable-next-line no-await-in-loop
-        await new Promise(resolve => setTimeout(resolve, 3000));
-      } while (block === null);
-      expect(block).not.to.be.undefined; // eslint-disable-line
-      expect(Object.entries(block).length).not.to.equal(0); // empty object {}
+      await new Promise(resolve => setTimeout(resolve, 3000));
     });
 
     it('should setAdvanceWithdrawalFee', async () => {
@@ -154,9 +173,9 @@ describe('Test instant withdrawals', () => {
       // const account2Balance = await getBalance((await getAccounts())[1]);
 
       const res = await chai
-        .request(url)
+        .request(senderUrl)
         .post('/set-instant-withdrawal')
-        .send({ block, transactions, index });
+        .send({ transactionHash: withdrawTransactionHash });
       const { txDataToSign } = res.body;
       expect(txDataToSign).to.be.a('string');
       const receipt = await submitTransaction(
@@ -176,7 +195,6 @@ describe('Test instant withdrawals', () => {
     });
 
     it('should advance the withdrawal', async () => {
-      const withdrawTransactionHash = withdrawTransaction.transactionHash;
       const res = await chai
         .request(optimistUrl)
         .post('/transaction/advanceWithdrawal')
@@ -191,10 +209,8 @@ describe('Test instant withdrawals', () => {
       // jump in time by 10 days
       if (nodeInfo.includes('TestRPC')) await timeJump(3600 * 24 * 10);
       else this.skip();
-      const res = await chai.request(url).post('/finalise-withdrawal').send({
-        block,
-        transactions,
-        index,
+      const res = await chai.request(senderUrl).post('/finalise-withdrawal').send({
+        transactionHash: withdrawTransactionHash,
       });
       const { txDataToSign } = res.body;
       expect(txDataToSign).to.be.a('string');

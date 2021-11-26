@@ -3,6 +3,7 @@ import Web3 from 'web3';
 import WebSocket from 'ws';
 import EventEmitter from 'events';
 import { Mutex } from 'async-mutex';
+import { approve } from './tokens.mjs';
 
 /**
 @class
@@ -113,7 +114,7 @@ class Nf3 {
   */
   setzkpKeys(keys) {
     this.zkpKeys = keys;
-    this.subscribeToIncomingViewingKeys();
+    return this.subscribeToIncomingViewingKeys();
   }
 
   /**
@@ -241,6 +242,19 @@ class Nf3 {
   @returns {Promise} Resolves into the Ethereum transaction receipt.
   */
   async deposit(ercAddress, tokenType, value, tokenId, fee = this.defaultFee) {
+    try {
+      await approve(
+        ercAddress,
+        this.ethereumAddress,
+        this.shieldContractAddress,
+        tokenType,
+        value,
+        this.web3,
+      );
+    } catch (err) {
+      throw new Error(err);
+    }
+
     const res = await axios.post(`${this.clientBaseUrl}/deposit`, {
       ercAddress,
       tokenId,
@@ -360,14 +374,8 @@ class Nf3 {
   */
   async finaliseWithdrawal(withdrawTransactionHash) {
     // find the L2 block containing the L2 transaction hash
-    let res = await axios.get(
-      `${this.optimistBaseUrl}/block/transaction-hash/${withdrawTransactionHash}`,
-    );
-    const { block, transactions, index } = res.data;
-    res = await axios.post(`${this.clientBaseUrl}/finalise-withdrawal`, {
-      block,
-      transactions,
-      index,
+    const res = await axios.post(`${this.clientBaseUrl}/finalise-withdrawal`, {
+      transactionHash: withdrawTransactionHash,
     });
     return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, 0);
   }
@@ -381,16 +389,9 @@ class Nf3 {
   @param {number} fee - the amount being paid for the instant withdrawal service
   */
   async requestInstantWithdrawal(withdrawTransactionHash, fee) {
-    // find the L2 block containing the L2 transaction hash
-    let res = await axios.get(
-      `${this.optimistBaseUrl}/block/transaction-hash/${withdrawTransactionHash}`,
-    );
-    const { block, transactions, index } = res.data;
     // set the instant withdrawal fee
-    res = await axios.post(`${this.clientBaseUrl}/set-instant-withdrawal`, {
-      block,
-      transactions,
-      index,
+    const res = await axios.post(`${this.clientBaseUrl}/set-instant-withdrawal`, {
+      transactionHash: withdrawTransactionHash,
     });
     return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, fee);
   }
@@ -743,9 +744,14 @@ class Nf3 {
   */
   setWeb3Provider() {
     this.web3 = new Web3(this.web3WsUrl);
-    if (typeof window !== 'undefined' && window.ethereum && this.ethereumSigningKey === '') {
-      this.web3 = new Web3(window.ethereum);
-      window.ethereum.send('eth_requestAccounts');
+    if (typeof window !== 'undefined') {
+      if (window.ethereum && this.ethereumSigningKey === '') {
+        this.web3 = new Web3(window.ethereum);
+        window.ethereum.send('eth_requestAccounts');
+      } else {
+        // Metamask not available
+        throw new Error('No Web3 provider found');
+      }
     }
   }
 

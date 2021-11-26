@@ -6,20 +6,25 @@ export const tokenActionTypes = {
   TOKEN_UNSELECT: 'TOKEN_UNSELECT',
 };
 
-export function addToken(tokenAddress, tokenType, tokenId, l1Balance, l2Balance) {
-  let newTokenAddress;
-  if (!tokenAddress.startsWith('0x')) newTokenAddress = `0x${tokenAddress}`;
-  else newTokenAddress = tokenAddress;
+export function addToken(
+  compressedPkd,
+  tokenAddress,
+  tokenType,
+  tokenId,
+  tokenName,
+  l1Balance,
+  l2Balance,
+) {
   return {
     type: tokenActionTypes.TOKEN_ADD,
-    payload: { tokenAddress: newTokenAddress, tokenType, tokenId, l1Balance, l2Balance },
+    payload: { compressedPkd, tokenAddress, tokenType, tokenId, tokenName, l1Balance, l2Balance },
   };
 }
 
-export function deleteToken(activeTokenRowId) {
+export function deleteToken(compressedPkd, activeTokenRowId) {
   return {
     type: tokenActionTypes.TOKEN_DELETE,
-    payload: { activeTokenRowId },
+    payload: { compressedPkd, activeTokenRowId },
   };
 }
 

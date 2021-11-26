@@ -6,7 +6,6 @@ import {
   getContractAddress,
   transfer,
   withdraw,
-  isMessageValid,
   finaliseWithdrawal,
   isValidWithdrawal,
   peers,
@@ -17,6 +16,10 @@ import {
 } from './routes/index.mjs';
 
 const app = express();
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  next();
+});
 
 app.use(cors());
 app.use(bodyParser.json({ limit: '2mb' }));
@@ -27,7 +30,6 @@ app.use('/deposit', deposit);
 app.use('/contract-address', getContractAddress);
 app.use('/transfer', transfer);
 app.use('/withdraw', withdraw);
-app.use('/check-message', isMessageValid);
 app.use('/finalise-withdrawal', finaliseWithdrawal);
 app.use('/valid-withdrawal', isValidWithdrawal);
 app.use('/peers', peers);

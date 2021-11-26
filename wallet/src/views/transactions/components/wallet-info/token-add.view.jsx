@@ -1,23 +1,52 @@
 import React from 'react';
-import { Dropdown, Modal, Form, Button, Icon } from 'semantic-ui-react';
+import { connect } from 'react-redux';
+import { Dropdown, Modal, Form, Button, Icon, Input } from 'semantic-ui-react';
 import PropTypes from 'prop-types';
+import * as Nf3 from 'nf3';
 
 // TODO - add props correctly
-export function TokenAddModal({ modalTokenAdd, toggleModalTokenAdd, handleOnTokenAddSubmit }) {
-  const tokenTypes = [
-    { key: 'ERC20', value: 'ERC20', text: 'ERC20' },
-    { key: 'ERC721', value: 'ERC721', text: 'ERC721' },
-    { key: 'ERC155', value: 'ERC1155', text: 'ERC1155' },
-  ];
+export function TokenAddModal({ modalTokenAdd, toggleModalTokenAdd, handleOnTokenAddSubmit, nf3 }) {
 
-  const [tokenType, setTokenType] = React.useState(tokenTypes[0].value);
+  const [tokenType, setTokenType] = React.useState('');
   const [tokenName, setTokenName] = React.useState('');
-  const [tokenAddress, setTokenAddress] = React.useState('');
+  const [tokenBalance, setTokenBalance] = React.useState('');
+  const [tokenAddress, setTokenAddress] = React.useState({
+    value: '',
+    error: null,
+  });
 
   const newTokenSubmit = () => {
+    setTokenType('');
+    setTokenAddress({ value: '', error: null });
     toggleModalTokenAdd();
-    handleOnTokenAddSubmit(tokenName, tokenType, tokenAddress);
+    handleOnTokenAddSubmit(tokenName, tokenType, tokenAddress.value, tokenBalance);
   };
+
+  const cancelTokenSubmit = () => {
+    setTokenType('');
+    setTokenAddress({ value: '', error: null });
+    toggleModalTokenAdd();
+  };
+
+  function validateTokenAddress(value) {
+    const error = {
+      content: `Please enter a valid ERC Address`,
+      pointing: 'above',
+    };
+    if (!/^0x([A-Fa-f0-9]{40})$/.test(value)) {
+      return setTokenAddress({ value: '', error });
+    }
+    Nf3.Tokens.getERCInfo(value, nf3.ethereumAddress, nf3.web3, {
+      tokenId: 0,
+    })
+      .then(ercInfo => {
+        setTokenAddress({ value, error: null });
+        setTokenType(ercInfo.tokenType);
+        setTokenBalance(ercInfo.balance);
+      })
+      .catch(() => setTokenAddress({ value: '', error }));
+    return null;
+  }
 
   return (
     <Modal open={modalTokenAdd}>
@@ -35,32 +64,25 @@ export function TokenAddModal({ modalTokenAdd, toggleModalTokenAdd, handleOnToke
                 />
               </label>
             </Form.Field>
-            <span>
-              Token Type{' '}
-              <Dropdown
-                placeholder={tokenType}
-                defaultValue={tokenType}
-                selection
-                options={tokenTypes}
-                onChange={(e, { value }) => setTokenType(value)}
-              />
-            </span>
+            <Form.Field>
+              <label htmlFor="token-type">
+                Token Type
+                <input type="text" value={tokenType} id="token-type" readOnly />
+              </label>
+            </Form.Field>
           </Form.Group>
-          <Form.Field>
-            <label htmlFor="token-address">
-              Token Address
-              <input
-                type="text"
-                onChange={event => setTokenAddress(event.target.value)}
-                id="Token Address"
-              />
-            </label>
-          </Form.Field>
+          <Form.Field
+            control={Input}
+            label="ERC Token Address"
+            onChange={event => validateTokenAddress(event.target.value)}
+            id="Token Address"
+            error={tokenAddress.error}
+          />
         </Form>
       </Modal.Content>
       <Modal.Actions>
         <div>
-          <Button floated="left" color="red" onClick={toggleModalTokenAdd}>
+          <Button floated="left" color="red" onClick={cancelTokenSubmit}>
             <Icon name="cancel" />
             Cancel
           </Button>
@@ -75,9 +97,14 @@ export function TokenAddModal({ modalTokenAdd, toggleModalTokenAdd, handleOnToke
 }
 
 TokenAddModal.propTypes = {
+  nf3: PropTypes.object.isRequired,
   modalTokenAdd: PropTypes.bool.isRequired,
   toggleModalTokenAdd: PropTypes.func.isRequired,
   handleOnTokenAddSubmit: PropTypes.func.isRequired,
 };
 
-export default TokenAddModal;
+const mapStateToProps = () => ({});
+
+const mapDispatchToProps = () => ({});
+
+export default connect(mapStateToProps, mapDispatchToProps)(TokenAddModal);

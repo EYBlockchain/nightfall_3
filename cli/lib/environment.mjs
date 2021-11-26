@@ -11,10 +11,10 @@ const SUPPORTED_ENVIRONMENTS = {
   ropsten: {
     name: 'Ropsten',
     chainId: 3,
-    clientApiUrl: '',
-    optimistApiUrl: '',
-    optimistWsUrl: '',
-    web3WsUrl: '',
+    clientApiUrl: 'https://client1.testnet.nightfall3.com',
+    optimistApiUrl: 'https://optimist1.testnet.nightfall3.com',
+    optimistWsUrl: 'wss://optimist1-ws.testnet.nightfall3.com',
+    web3WsUrl: 'wss://ropsten1-ws.testnet.nightfall3.com',
   },
   rinkeby: {
     name: 'Rinkeby',
@@ -37,7 +37,7 @@ const SUPPORTED_ENVIRONMENTS = {
     chainId: 4378921,
     clientApiUrl: 'http://client1',
     optimistApiUrl: 'http://optimist1',
-    optimistWsUrl: 'ws://optimist1:8082',
+    optimistWsUrl: 'ws://optimist1:8080',
     web3WsUrl: 'ws://blockchain1:8546',
   },
 };

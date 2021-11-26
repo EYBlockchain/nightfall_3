@@ -22,6 +22,9 @@ RUN apt-get update && apt-get -y install google-chrome-stable
 RUN wget -qO - https://deb.nodesource.com/setup_14.x | bash -
 RUN apt-get -y install nodejs
 
+# Instal wscat
+RUN npm install -g wscat
+
 # Build SDK
 WORKDIR /cli
 ADD ./cli /cli

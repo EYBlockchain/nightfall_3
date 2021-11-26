@@ -23,22 +23,10 @@ services:
       ETH_NETWORK: development
       BLOCKCHAIN_WS_HOST: host.docker.internal
 
-  # Timber service, configured for nightfall
-  timber1:
-    environment:
-      BLOCKCHAIN_WS_HOST: host.docker.internal
-      AUTOSTART_RETRIES: 100
-
   optimist1:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
       AUTOSTART_RETRIES: 100
-
-  timber2:
-    environment:
-      BLOCKCHAIN_WS_HOST: host.docker.internal
-      AUTOSTART_RETRIES: 100
-      # LOG_LEVEL: debug
 
   optimist2:
     environment:

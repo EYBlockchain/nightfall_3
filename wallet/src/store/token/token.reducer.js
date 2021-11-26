@@ -1,11 +1,10 @@
 /* ignore unused exports */
-import { tokenActionTypes } from './token.actions';
-import tokens from '../../utils/tokens';
+import { tokenActionTypes, tokenRead } from './token.actions';
+import * as Storage from '../../utils/lib/local-storage';
 
 const initialState = {
   activeTokenRowId: '',
-  maxTokenRowId: tokens.length,
-  tokenPool: tokens,
+  tokenPool: [],
 };
 
 function tokenReducer(state = initialState, action) {
@@ -17,20 +16,22 @@ function tokenReducer(state = initialState, action) {
       );
       // new token -> Add
       if (objIndex === -1) {
+        const newTokenPool = [
+          ...state.tokenPool,
+          {
+            tokenAddress: action.payload.tokenAddress,
+            tokenType: action.payload.tokenType,
+            tokenId: action.payload.tokenId,
+            tokenName: action.payload.tokenName,
+            tokenBalanceL1: action.payload.l1Balance,
+            tokenBalanceL2: action.payload.l2Balance,
+          },
+        ];
+
+        Storage.tokensSet(action.payload.compressedPkd, newTokenPool);
         return {
           ...state,
-          maxTokenRowId: state.maxTokenRowId + 1,
-          tokenPool: [
-            ...state.tokenPool,
-            {
-              id: state.maxTokenRowId + 1,
-              tokenAddress: action.payload.tokenAddress,
-              tokenType: action.payload.tokenType,
-              tokenId: action.payload.tokenId,
-              tokenBalanceL1: action.payload.l1Balance,
-              tokenBalanceL2: action.payload.l2Balance,
-            },
-          ],
+          tokenPool: newTokenPool,
         };
       }
 
@@ -39,10 +40,11 @@ function tokenReducer(state = initialState, action) {
         tokenAddress: action.payload.tokenAddress,
         tokenType: action.payload.tokenType,
         tokenId: action.payload.tokenId,
+        tokenName: action.payload.tokenName,
         tokenBalanceL1: action.payload.l1Balance,
         tokenBalanceL2: action.payload.l2Balance,
-        id: oldTokenPool[objIndex].id,
       };
+      Storage.tokensSet(action.payload.compressedPkd, oldTokenPool);
       return {
         ...state,
         tokenPool: oldTokenPool,
@@ -50,10 +52,13 @@ function tokenReducer(state = initialState, action) {
     }
 
     case tokenActionTypes.TOKEN_DELETE: {
-      const newTokenPool = [...state.tokenPool];
+      const newTokenPool = [...state.tokenPool].filter(
+        token => token.tokenAddress !== action.payload.activeTokenRowId,
+      );
+      Storage.tokensSet(action.payload.compressedPkd, newTokenPool);
       return {
         ...state,
-        tokenPool: [...newTokenPool.filter(token => token.id !== action.payload.activeTokenRowId)],
+        tokenPool: newTokenPool,
       };
     }
 

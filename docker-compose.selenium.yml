@@ -9,7 +9,7 @@ services:
       user: apps
       ports:
         - 5900:5900
-        - 3000:3000
+        - 3010:3010
       privileged: true
       environment:
           - VNC_SERVER_PASSWORD=password

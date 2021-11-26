@@ -1,5 +1,7 @@
 # default network testnet
-walletURL = "http://localhost:3000/login"
+walletUrlLocalhost = "http://localhost:3000/login"
+walletUrlDocker = "http://selenium:3010/login"
+walletUrlRopsten = "https://wallet.testnet.nightfall3.com"
 
 metamaskConfig = {
    "mnemonic": "acquire security drum seed else able huge innocent tiger narrow drift blame",
@@ -9,14 +11,26 @@ metamaskConfig = {
 networkConfigLocalhost = {
    "name": "ganache-nightfall",
    "type": "Custom RPC",
-   #"url": "http://localhost:8546",
-   "url": "http://blockchain1:8546",
+   "url": "http://localhost:8546",
    "chainId": "1337",
    "ticker": "ETH",
 }
 
+networkConfigDocker = {
+   "name": "ganache-nightfall",
+   "type": "Custom RPC",
+   "url": "http://blockchain1:8546",
+   "chainId": "1337",
+   "ticker": "ETH",
+   "explorer": "https://ropsten.etherscan.io",
+}
+
 networkConfigRopsten = {
    "name": "Ropsten Test Network",
+   "type": "testnet",
+   "url": "https://ropsten.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
+   "chainId": "3",
+   "ticker": "ETH",
 }
 
 deleteNetworkConfig = {

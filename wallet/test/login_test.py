@@ -21,6 +21,7 @@ def cancelLoginTest(findElementsInstance, driver, metamaskTab, nightfallTab):
   findElementsInstance.element_exist_xpath('//*[local-name()="svg"]').click() # nightfall Metamask button
   findElementsInstance.element_exist_xpath('//button[text()="Cancel"]').click() # Cancel
   nightfallWalletStartButton = findElementsInstance.element_exist_xpath('//*[local-name()="svg"]') # nightfall Metamask button
+  sleep(1000)
   if not nightfallWalletStartButton:
     return "FAILED\n"
 
@@ -98,6 +99,7 @@ def loginBackupCancelTest(findElementsInstance, driver, metamaskTab, nightfallTa
   findElementsInstance.element_exist_xpath('//div[contains(@class, "ui toggle checkbox")]').click() # Enable backup
   findElementsInstance.element_exist_xpath('//button[text()="Submit"]').click() # Submit button
   driver.switch_to.window(metamaskTab)
+  sleep(1000)
   findElementsInstance.element_exist_xpath('//button[text()="Cancel"]').click() # Cancel signature
   
   # log back in and check that i am asked mnemonic
@@ -146,32 +148,32 @@ loginTestsList = [
     'name': cancelLoginTest,
     'description' : 'Cancel login. Expected result is to go back to login page'
   },
-  {
-    'name': mnemonicTest,
-    'description' : 'Verify that every time we press New button, there is a new mnemonic'
-  },
-  {
-    'name': toggleTest,
-    'description' : 'Verify that toggle backup button works. Leave enabled before cancel'
-  },
-  {
-    'name': initialConditionsTest,
-    'description' : 'Verify that mnemonic text is empty, and submit button and backup checkbox disabled'
-  },
-  {
-    'name': loginNoBackupTest,
-    'description' : 'Login without backup. Then log out, and log back in. Expected result is that you will be prompted the mnemonic'
-  },
-  {
-    'name': loginBackupCancelTest,
-    'description' : 'Login selecting backup, but reject option to sign. Expected result is to  be logged out'
-  },
-  {
-    'name': loginBackupTest,
-    'description' : 'Login selecting backup, and accept signature. Then log out, and log back in. Expected result is that you need to sign the second time as well'
-  },
-  {
-    'name': clearBackupTest,
-    'description' : 'Login selecting backup, and accept signature. Then wipe local storage. Then log out and log back in. Expected result is that you will need to enter the mnemonic again'
-  },
+  #{
+  # 'name': mnemonicTest,
+  # 'description' : 'Verify that every time we press New button, there is a new mnemonic'
+  #,
+  #
+  # 'name': toggleTest,
+  # 'description' : 'Verify that toggle backup button works. Leave enabled before cancel'
+  #,
+  #
+  # 'name': initialConditionsTest,
+  # 'description' : 'Verify that mnemonic text is empty, and submit button and backup checkbox disabled'
+  #,
+  #
+  # 'name': loginNoBackupTest,
+  # 'description' : 'Login without backup. Then log out, and log back in. Expected result is that you will be prompted the mnemonic'
+  #,
+  #
+  # 'name': loginBackupCancelTest,
+  # 'description' : 'Login selecting backup, but reject option to sign. Expected result is to  be logged out'
+  #,
+  #
+  # 'name': loginBackupTest,
+  # 'description' : 'Login selecting backup, and accept signature. Then log out, and log back in. Expected result is that you need to sign the second time as well'
+  #,
+  #
+  # 'name': clearBackupTest,
+  # 'description' : 'Login selecting backup, and accept signature. Then wipe local storage. Then log out and log back in. Expected result is that you will need to enter the mnemonic again'
+  #,
 ]
