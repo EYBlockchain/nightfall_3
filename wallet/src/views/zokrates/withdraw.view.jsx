@@ -108,7 +108,7 @@ export default function Zokrates() {
         '2224534737',
       ];
 
-      const nullifier = { nsk: nsk, hash: hashnullifier };
+      const nullifier = { nsk, hash: hashnullifier };
 
       const recipientAddress = '893705366084700132548040460931008653290460453987';
 
