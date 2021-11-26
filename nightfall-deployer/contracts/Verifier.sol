@@ -73,20 +73,22 @@ library Verifier {
       vk.gamma = Pairing.G2Point([_vk[6],_vk[7]],[_vk[8],_vk[9]]);
       vk.delta = Pairing.G2Point([_vk[10],_vk[11]],[_vk[12],_vk[13]]);
 
-      // vk.gamma_abc.length = (_vk.length - 14)/2;
-      if (_vk.length > 14) {
-        vk.gamma_abc = new Pairing.G1Point[]((_vk.length - 14)/2); // num public inputs + 1
-        for (uint i = 14; i < _vk.length; i+=2) {
-          vk.gamma_abc[(i-14)/2] = Pairing.G1Point(
-              _vk[i], _vk[i+1]
-          );
-        }
-      }
-      /* require(vk.gamma.abc.length == 2, "Length of vk.gamma.abc is incorrect!"); */
+
+            /* require(vk.gamma.abc.length == 2, "Length of vk.gamma.abc is incorrect!"); */
       // Replacing for the above require statement so that the proof verification returns false. Removing require statements to ensure a wrong proof verification challenge's require statement correctly works
       if (vk.gamma_abc.length != _publicInputs.length + 1) {
         return 1;
       }
+
+
+      if (_vk.length > 14) {
+        for (uint i = 14; i < _vk.length; i+=2) {
+        vk.gamma_abc[(i-14)/2] = Pairing.G1Point(
+            _vk[i], _vk[i+1]
+        );
+        }
+      }
+
 
       {
           Pairing.G1Point memory sm_qpih;
