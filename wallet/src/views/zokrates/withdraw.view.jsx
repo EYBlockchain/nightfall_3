@@ -151,7 +151,7 @@ export default function Zokrates() {
 
       const artifacts = zokratesProvider.compile(source, options);
       // computation
-      //const { witness, output } = zokratesProvider.computeWitness(artifacts, ['2']);
+      // const { witness, output } = zokratesProvider.computeWitness(artifacts, ['2']);
       const { witness, output } = zokratesProvider.computeWitness(artifacts, [
         oldCommitment,
         nullifier,
@@ -160,8 +160,8 @@ export default function Zokrates() {
         order,
       ]);
 
-      //   console.log(output, typeof output);
-      //   // run setup
+      // console.log(output, typeof output);
+      // run setup
       const keypair = zokratesProvider.setup(artifacts.program);
       // generate proof
       const genProof = zokratesProvider.generateProof(artifacts.program, witness, keypair.pk);
