@@ -3,7 +3,7 @@ Module that runs up as a proposer
 */
 import logger from 'common-files/utils/logger.mjs';
 import config from 'config';
-import Nf3 from './nf3.mjs';
+import Nf3 from '../../../../cli/lib/nf3.mjs';
 
 const {
   zkpMnemonic,

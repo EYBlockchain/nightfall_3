@@ -1,10 +1,11 @@
 FROM node:14.17
 
-WORKDIR /
-COPY common-files common-files
-COPY config/default.js app/config/default.js
-
 WORKDIR /app
+COPY common-files common-files
+COPY config/default.js config/default.js
+COPY cli/lib cli/lib
+
+WORKDIR /app/test/ping-pong/proposer
 RUN apt-get update -y
 RUN apt-get install -y netcat-openbsd
 COPY test/ping-pong/proposer/package*.json test/ping-pong/proposer/pre-start-script.sh ./
@@ -15,6 +16,6 @@ COPY test/ping-pong/proposer/docker-entrypoint.sh docker-entrypoint.sh
 EXPOSE 8080
 
 RUN npm ci
-ENTRYPOINT ["/app/docker-entrypoint.sh"]
+ENTRYPOINT ["/app/test/ping-pong/proposer/docker-entrypoint.sh"]
 
 CMD ["npm", "start"]
