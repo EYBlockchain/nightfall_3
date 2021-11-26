@@ -7,6 +7,12 @@ import * as Nf3 from 'nf3';
 import Transactions from './transactions/transactions.view.jsx';
 import Login from './login/login.view.jsx';
 import Zokrates from './zokrates/zokrates.view.jsx';
+import Depositjsx from './zokrates/deposit.view.jsx';
+import Withdrawjsx from './zokrates/withdraw.view.jsx';
+import Singletransferjsx from './zokrates/singletransfer.view.jsx';
+import Doubletransferjsx from './zokrates/doubletransfer.view.jsx';
+
+import { setEnvironment } from '../utils/lib/environment';
 import { NF3_GITHUB_ISSUES_URL } from '../constants';
 import * as loginActions from '../store/login/login.actions';
 
@@ -45,8 +51,17 @@ function App({ onDeleteWallet }) {
             window.location = NF3_GITHUB_ISSUES_URL;
           }}
         />
-        <Route path="/zokrates">
-          <Zokrates />
+        <Route path="/Depositjsx">
+          <Depositjsx />
+        </Route>
+        <Route path="/Withdrawjsx">
+        <Withdrawjsx />
+        </Route>
+        <Route path="/Singletransferjsx">
+        <Singletransferjsx />
+        </Route>
+        <Route path="/Doubletransferjsx">
+        <Doubletransferjsx />
         </Route>
         <Redirect to="/login" />
       </Switch>
