@@ -31,9 +31,21 @@ function HeaderMenu({ onDeleteWallet, onClearMsg }) {
           <Icon name="settings" size="large" />
           Account Settings
         </Button>
-        <Button name="zokrates">
+        <Button name="deposit">
           <Icon name="settings" size="large" />
-          <Link to="/zokrates">zokrates</Link>
+          <Link to="/Depositjsx">Deposit</Link>
+        </Button>
+        <Button name="Withdraw">
+          <Icon name="settings" size="large" />
+          <Link to="/Withdrawjsx">withdraw</Link>
+        </Button>
+        <Button name="Single Transfer">
+          <Icon name="settings" size="large" />
+          <Link to="/SingleTransferjsx">Single Transfer</Link>
+        </Button>
+        <Button name="Double Transfer">
+          <Icon name="settings" size="large" />
+          <Link to="/Doubletransferjsx">Double Transfer</Link>
         </Button>
         <Button name="account-info" primary disabled onClick={() => handleClickNFInfo()}>
           <Icon name="question" size="large" />
