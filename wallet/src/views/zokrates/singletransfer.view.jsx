@@ -93,12 +93,12 @@ export default function Zokrates() {
       const ask = '6930558048592459968398874090872446840386493339700763487392344092914357738801';
 
       const oldCommitment = {
-        ercAddress: ercAddress,
-        id: id,
-        value: value,
-        salt: salt,
-        hash: hash,
-        ask: ask,
+        ercAddress,
+        id,
+        value,
+        salt,
+        hash,
+        ask,
       };
 
       // newcommitment
@@ -285,7 +285,7 @@ export default function Zokrates() {
       const artifacts = zokratesProvider.compile(source, options);
       // computation
       // const { witness, output } = zokratesProvider.computeWitness(artifacts, ['2']);
-      const { witness, output } = zokratesProvider.computeWitness(artifacts, [
+      const { witness } = zokratesProvider.computeWitness(artifacts, [
         oldCommitment,
         newcommitment,
         nullifier,
