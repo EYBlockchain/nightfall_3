@@ -9,16 +9,13 @@ import doubleTransfer from '!!raw-loader!./double_transfer.zok';
 import doubleTransferStub from '!!raw-loader!./double_transfer_stub.zok';
 import doubleTransferNoHash from '!!raw-loader!./double_transfer-nohash.zok';
 
-
 import singleTransfer from '!!raw-loader!./single_transfer.zok';
 import singleTransferStub from '!!raw-loader!./single_transfer_stub.zok';
 import singleTransferNoHash from '!!raw-loader!./single_transfer-nohash.zok';
 
-
 import withdraw from '!!raw-loader!./withdraw.zok';
 import withdrawStub from '!!raw-loader!./withdraw_stub.zok';
 import withdrawNoHash from '!!raw-loader!./withdraw-nohash.zok';
-
 
 //concatenate
 import orderLeftRight from '!!raw-loader!./common/concatenate/order-left-right-1x1.zok';
@@ -108,4 +105,3 @@ export {
   montgomeryToTwistedEdwards,
   pathCheck,
 };
-
