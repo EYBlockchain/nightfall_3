@@ -18,7 +18,7 @@ def main(\
 	field u = publicInputsHash
 	u32 v = 0x00000000
 
-	for field i in 0..8 do
+	for u32 i in 0..8 do
 		v = v + ercContractAddress[i] +\
 				id[i] +\
 				value[i] +\

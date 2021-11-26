@@ -1,7 +1,7 @@
 from "ecc/babyjubjubParams" import BabyJubJubParams
 from "ecc/babyjubjubParams" import main as curveParams
-from "ecc/edwardsScalarMult.code" import main as scalarMult
-from "ecc/edwardsAdd.code" import main as add
+from "ecc/edwardsScalarMult" import main as scalarMult
+from "ecc/edwardsAdd" import main as add
 
 from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256
 
