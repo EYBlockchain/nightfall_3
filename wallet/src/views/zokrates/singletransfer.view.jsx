@@ -56,9 +56,6 @@ export default function Zokrates() {
         },
       };
 
-      const publicInputsHash =
-        '415417283559201812128556462617247713976080142505265392744951502712092195983';
-
       // oldcommitment
 
       const ercAddress = [
@@ -104,7 +101,7 @@ export default function Zokrates() {
         ask: ask,
       };
 
-      //newcommitment
+      // newcommitment
 
       const pkdRecipient = [
         '11793120019061651548381689667193031350303535754993894421714575842003180702651',
@@ -163,7 +160,7 @@ export default function Zokrates() {
 
       const nullifier = { nsk: nsk, hash: hashnullifier };
 
-      //path
+      // path
       const path = [
         '13884572707255978198257443140098116758186701468512178718449225834623576601752',
         '0',
@@ -200,10 +197,10 @@ export default function Zokrates() {
         '2406218139732324760769007259542356406383940103365588201580317947943448380165',
       ];
 
-      //order
+      // order
       const order = '4';
 
-      //secrets
+      // secrets
 
       const ephemeralKey1 = [
         '2679237203',
@@ -272,22 +269,22 @@ export default function Zokrates() {
         '2220983197769731066101847354068817243110183716854085171716270043156645686319';
 
       const secrets = {
-        ephemeralKey1: ephemeralKey1,
-        ephemeralKey2: ephemeralKey2,
-        ephemeralKey3: ephemeralKey3,
-        ephemeralKey4: ephemeralKey4,
-        cipherText: cipherText,
-        sqrtMessage1: sqrtMessage1,
-        sqrtMessage2: sqrtMessage2,
-        sqrtMessage3: sqrtMessage3,
-        sqrtMessage4: sqrtMessage4,
+        ephemeralKey1,
+        ephemeralKey2,
+        ephemeralKey3,
+        ephemeralKey4,
+        cipherText,
+        sqrtMessage1,
+        sqrtMessage2,
+        sqrtMessage3,
+        sqrtMessage4,
       };
 
-      //computation
+      // computation
 
       const artifacts = zokratesProvider.compile(source, options);
       // computation
-      //const { witness, output } = zokratesProvider.computeWitness(artifacts, ['2']);
+      // const { witness, output } = zokratesProvider.computeWitness(artifacts, ['2']);
       const { witness, output } = zokratesProvider.computeWitness(artifacts, [
         oldCommitment,
         newcommitment,
@@ -296,8 +293,8 @@ export default function Zokrates() {
         order,
         secrets,
       ]);
-      //   console.log(output, typeof output);
-      //   // run setup
+      // console.log(output, typeof output);
+      // run setup
       const keypair = zokratesProvider.setup(artifacts.program);
       // generate proof
       const genProof = zokratesProvider.generateProof(artifacts.program, witness, keypair.pk);
