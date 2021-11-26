@@ -130,7 +130,7 @@ export default function Zokrates() {
       ];
 
       const newcommitment = {
-        pkdRecipient: pkdRecipient,
+        pkdRecipient,
         value: valuenew,
         salt: saltnew,
         hash: hashnew,
@@ -158,7 +158,7 @@ export default function Zokrates() {
         '3901356914',
       ];
 
-      const nullifier = { nsk: nsk, hash: hashnullifier };
+      const nullifier = { nsk, hash: hashnullifier };
 
       // path
       const path = [
