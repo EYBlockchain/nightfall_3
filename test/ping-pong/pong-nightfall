@@ -2,7 +2,6 @@
 
 # script to run up the ping pong test on this server
 
-DEPLOYER=
 FILE="-f docker-compose.host.docker.internal.yml"
 
 usage()
@@ -13,10 +12,10 @@ usage()
   echo "  -r or --ropsten; connects to a geth node on ropsten (otherwise localhost)"
   echo "  -h or --help; to print this message"
 }
-
 while [ -n "$1" ]; do
   case $1 in
       -h | --help )           usage
+                              exit 0
                               ;;
       -d | --deployer )       DEPLOYER="deployer"
                               ;;
