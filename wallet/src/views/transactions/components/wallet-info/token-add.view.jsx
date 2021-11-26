@@ -1,12 +1,11 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Dropdown, Modal, Form, Button, Icon, Input } from 'semantic-ui-react';
+import { Modal, Form, Button, Icon, Input } from 'semantic-ui-react';
 import PropTypes from 'prop-types';
 import * as Nf3 from 'nf3';
 
 // TODO - add props correctly
 export function TokenAddModal({ modalTokenAdd, toggleModalTokenAdd, handleOnTokenAddSubmit, nf3 }) {
-
   const [tokenType, setTokenType] = React.useState('');
   const [tokenName, setTokenName] = React.useState('');
   const [tokenBalance, setTokenBalance] = React.useState('');

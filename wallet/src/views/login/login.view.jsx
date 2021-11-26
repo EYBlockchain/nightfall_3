@@ -160,7 +160,7 @@ const mapStateToProps = state => ({
 const mapDispatchToProps = dispatch => ({
   onLoadWallet: nf3Instance => dispatch(loadWallet(nf3Instance)),
   onDeleteWallet: () => dispatch(deleteWallet()),
-  onLoadTokens: (newTokens) => dispatch(tokensLoad(newTokens)),
+  onLoadTokens: newTokens => dispatch(tokensLoad(newTokens)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(Login);

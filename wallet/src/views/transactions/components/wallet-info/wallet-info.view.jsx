@@ -208,7 +208,7 @@ const mapDispatchToProps = dispatch => ({
       addToken(compressedPkd, tokenAddress, tokenType, tokenId, tokenName, l1Balance, l2Balance),
     ),
   onDeleteToken: (compressedPkd, tokenRowId) => dispatch(deleteToken(compressedPkd, tokenRowId)),
-  onLoadTokens: (initTokens) => dispatch(tokensLoad(initTokens)),
+  onLoadTokens: initTokens => dispatch(tokensLoad(initTokens)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(WalletInfo);

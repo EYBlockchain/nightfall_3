@@ -1,5 +1,5 @@
 /* ignore unused exports */
-import { tokenActionTypes, tokenRead } from './token.actions';
+import { tokenActionTypes } from './token.actions';
 import * as Storage from '../../utils/lib/local-storage';
 
 const initialState = {
