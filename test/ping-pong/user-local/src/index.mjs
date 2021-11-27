@@ -27,9 +27,9 @@ async function localTest() {
     userEthereumSigningKey,
   );
   await nf3.init(zkpMnemonic);
-  if (await nf3.healthcheck('client')) console.log('Healthcheck passed');
+  if (await nf3.healthcheck('client')) logger.info('Healthcheck passed');
   else throw new Error('Healthcheck failed');
-  const ercAddress = await nf3.getContractAddress('ERCStub'); // TODO use proper mock contracts
+  const ercAddress = await nf3.getContractAddress('ERC20Mock'); // TODO use proper mock contracts
   const startBalance = await nf3.getLayer2Balances();
   await nf3.deposit(ercAddress, 'ERC20', 1, '0x00');
   await nf3.deposit(ercAddress, 'ERC20', 1, '0x00');
