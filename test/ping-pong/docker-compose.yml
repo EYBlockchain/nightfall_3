@@ -12,9 +12,9 @@ services:
         target: /app/mongodb
     networks:
       - pong_network
-#    ports:
-#      - 27017:27017
-#      - 8080:80
+    #    ports:
+    #      - 27017:27017
+    #      - 8080:80
     depends_on:
       - worker
       - rabbitmq
@@ -37,9 +37,9 @@ services:
 
   rabbitmq:
     image: rabbitmq
-#    ports:
-#      - '15674:15674'
-#      - '5672:5672'
+    #    ports:
+    #      - '15674:15674'
+    #      - '5672:5672'
     networks:
       - pong_network
 
@@ -47,10 +47,10 @@ services:
     image: ghcr.io/eyblockchain/nightfall3-optimist:latest
     networks:
       - pong_network
-#    ports:
-#      - 8081:80
-      # websocket port for Optimist is on localhost:8082
-#      - 8082:8080
+    #    ports:
+    #      - 8081:80
+    # websocket port for Optimist is on localhost:8082
+    #      - 8082:8080
     volumes:
       - type: volume
         source: build
@@ -110,13 +110,13 @@ services:
       context: ../../
     networks:
       - pong_network
-#    volumes:
-#      - type: bind
-#        source: ../../common-files
-#        target: /app/common-files
-#      - type: bind
-#        source: ./proposer/src
-#        target: /app/test/ping-pong/proposer/src
+    #    volumes:
+    #      - type: bind
+    #        source: ../../common-files
+    #        target: /app/common-files
+    #      - type: bind
+    #        source: ./proposer/src
+    #        target: /app/test/ping-pong/proposer/src
     environment:
       OPTIMIST_HOST: optimist
       OPTIMIST_WS_PORT: 8080
@@ -133,13 +133,13 @@ services:
       context: ../../
     networks:
       - pong_network
-#    volumes:
-#      - type: bind
-#        source: ../../common-files
-#        target: /app/common-files
-#      - type: bind
-#        source: ./user-local/src
-#        target: /app/test/ping-pong/user-local/src
+    #    volumes:
+    #      - type: bind
+    #        source: ../../common-files
+    #        target: /app/common-files
+    #      - type: bind
+    #        source: ./user-local/src
+    #        target: /app/test/ping-pong/user-local/src
     environment:
       OPTIMIST_HOST: optimist
       OPTIMIST_WS_PORT: 8080
