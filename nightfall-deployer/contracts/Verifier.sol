@@ -68,10 +68,10 @@ library Verifier {
       proof.B = Pairing.G2Point([_proof[2], _proof[3]], [_proof[4], _proof[5]]);
       proof.C = Pairing.G1Point(_proof[6], _proof[7]);
 
-      vk.alpha = Pairing.G1Point(_vk[4],_vk[5]);
-      vk.beta = Pairing.G2Point([_vk[6],_vk[7]],[_vk[8],_vk[9]]);
-      vk.gamma = Pairing.G2Point([_vk[10],_vk[11]],[_vk[12],_vk[13]]);
-      vk.delta = Pairing.G2Point([_vk[14],_vk[15]],[_vk[16],_vk[17]]);
+      vk.alpha = Pairing.G1Point(_vk[0],_vk[1]);
+      vk.beta = Pairing.G2Point([_vk[2],_vk[3]],[_vk[4],_vk[5]]);
+      vk.gamma = Pairing.G2Point([_vk[6],_vk[7]],[_vk[8],_vk[9]]);
+      vk.delta = Pairing.G2Point([_vk[10],_vk[11]],[_vk[12],_vk[13]]);
 
       // vk.gamma_abc.length = (_vk.length - 18)/2;
       uint j = 0;
