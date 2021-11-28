@@ -75,8 +75,12 @@ library Verifier {
 
       // vk.gamma_abc.length = (_vk.length - 18)/2;
       uint j = 0;
-      for (uint i = 18; i < _vk.length; i+=2) {
-        vk.gamma_abc[j++] = Pairing.G1Point(_vk[i], _vk[i+1]);
+      if (_vk.length > 14) {
+        for (uint i = 14; i < _vk.length; i+=2) {
+        vk.gamma_abc[(i-14)/2] = Pairing.G1Point(
+            _vk[i], _vk[i+1]
+        );
+        }
       }
 
 
