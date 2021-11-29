@@ -180,6 +180,7 @@ function WalletInfo({
         toggleModalTokenAdd={toggleModalTokenAdd}
         handleOnTokenAddSubmit={handleOnTokenAddSubmit}
         nf3={login.nf3}
+        token={token}
       />
     </Container>
   );

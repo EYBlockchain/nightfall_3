@@ -93,12 +93,17 @@ def loginNoBackupTest(findElementsInstance, driver, metamaskTab, nightfallTab):
 
 def loginBackupCancelTest(findElementsInstance, driver, metamaskTab, nightfallTab):
   driver.switch_to.window(nightfallTab)
-  sleep(1000)
   findElementsInstance.element_exist_xpath('//*[local-name()="svg"]').click() # nightfall Metamask button
   findElementsInstance.element_exist_xpath('//button[text()="New"]').click() # New Mnemonic
   findElementsInstance.element_exist_xpath('//div[contains(@class, "ui toggle checkbox")]').click() # Enable backup
   findElementsInstance.element_exist_xpath('//button[text()="Submit"]').click() # Submit button
   driver.switch_to.window(metamaskTab)
+
+  cancelButton = findElementsInstance.element_exist_xpath('//button[text()="Cancel"]')
+  if not cancelButton:
+    findElementsInstance.element_exist_xpath('//button[text()="Activity"]').click()
+    findElementsInstance.element_exist_xpath('//div[contains(@class, "list-item transaction-list-item transaction-list-item--unconfirmed")]').click() # Sign
+
   findElementsInstance.element_exist_xpath('//button[text()="Cancel"]').click() # Cancel signature
   
   # log back in and check that i am asked mnemonic
@@ -113,25 +118,37 @@ def loginBackupTest(findElementsInstance, driver, metamaskTab, nightfallTab):
   findElementsInstance.element_exist_xpath('//div[contains(@class, "ui toggle checkbox")]').click() # Enable backup
   findElementsInstance.element_exist_xpath('//button[text()="Submit"]').click() # Submit button
   driver.switch_to.window(metamaskTab)
+  signButton = findElementsInstance.element_exist_xpath('//button[text()="Sign"]')
+  if not signButton:
+    findElementsInstance.element_exist_xpath('//button[text()="Activity"]').click()
+    findElementsInstance.element_exist_xpath('//div[contains(@class, "list-item transaction-list-item transaction-list-item--unconfirmed")]').click() # Sign
   findElementsInstance.element_exist_xpath('//button[text()="Sign"]').click() # Sign signature
 
   driver.switch_to.window(nightfallTab)
   logoutNightfallWallet(driver, findElementsInstance, nightfallTab)
   findElementsInstance.element_exist_xpath('//*[local-name()="svg"]').click() # nightfall Metamask button
   driver.switch_to.window(metamaskTab)
+  signButton = findElementsInstance.element_exist_xpath('//button[text()="Sign"]')
+  if not signButton:
+    findElementsInstance.element_exist_xpath('//button[text()="Activity"]').click()
+    findElementsInstance.element_exist_xpath('//div[contains(@class, "list-item transaction-list-item transaction-list-item--unconfirmed")]').click() # Sign
   findElementsInstance.element_exist_xpath('//button[text()="Sign"]').click() # Sign signature
   driver.switch_to.window(nightfallTab)
   logoutNightfallWallet(driver, findElementsInstance, nightfallTab)
 
 def clearBackupTest(findElementsInstance, driver, metamaskTab, nightfallTab):
   driver.switch_to.window(nightfallTab)
-  findElementsInstance.element_exist_xpath('//button[text()="Cancel"]').click() # Cancel
   findElementsInstance.element_exist_xpath('//*[local-name()="svg"]').click() # nightfall Metamask button
   driver.switch_to.window(metamaskTab)
+  signButton = findElementsInstance.element_exist_xpath('//button[text()="Sign"]')
+  if not signButton:
+    findElementsInstance.element_exist_xpath('//button[text()="Activity"]').click()
+    findElementsInstance.element_exist_xpath('//div[contains(@class, "list-item transaction-list-item transaction-list-item--unconfirmed")]').click() # Sign
   findElementsInstance.element_exist_xpath('//button[text()="Sign"]').click() # Sign signature
   driver.switch_to.window(nightfallTab)
   findElementsInstance.element_exist_xpath('//button[text()="Account Settings"]').click() # Account Settings
   findElementsInstance.element_exist_xpath('//label[text()="Clear Local Storage"]').click() # Clear local storage
+  findElementsInstance.element_exist_xpath('//button[text()="Save"]').click() # Save
   logoutNightfallWallet(driver, findElementsInstance, nightfallTab)
   findElementsInstance.element_exist_xpath('//*[local-name()="svg"]').click() # nightfall Metamask button
   findElementsInstance.element_exist_xpath('//button[text()="New"]').click() # New Mnemonic
