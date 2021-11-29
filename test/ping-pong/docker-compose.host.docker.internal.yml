@@ -3,11 +3,15 @@ version: '3.5'
 services:
 
   client:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
       AUTOSTART_RETRIES: 100
 
   deployer:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       LOG_LEVEL: debug
       # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
@@ -16,14 +20,20 @@ services:
       BLOCKCHAIN_WS_HOST: host.docker.internal
 
   optimist:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
       AUTOSTART_RETRIES: 100
 
   proposer:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
 
   user-local:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
