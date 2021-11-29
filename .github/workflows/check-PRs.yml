@@ -74,6 +74,9 @@ jobs:
       - name: wait 1000s for Containers startup and setup completion
         run: sleep 1000
 
+      - name: retrieve selenium id
+        run: docker ps -aqf "name=selenium"
+
       - name: debug logs - after container startup
         if: always()
         run: cat ganache-test.log

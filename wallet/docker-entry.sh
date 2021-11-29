@@ -13,14 +13,14 @@ main() {
     tmux select-pane -t 0
     tmux send-keys "npm run start:docker" Enter
     # if VNC is enabled, start server
-    if [ ! -z ${ENABLE_VNC_SERVER} ]; then
+    if [ ${ENABLE_VNC_SERVER} -eq 1 ]; then
       tmux select-pane -t 1
       tmux send-keys "launch_xvfb" Enter
       tmux send-keys "launch_window_manager" Enter
       tmux send-keys "run_vnc_server" Enter
     fi
     # Start selenium tests (after ganache has started and app has been deployed)
-    if [ ! -z ${RUN_SELENIUM_TESTS} ]; then
+    if [ ${RUN_SELENIUM_TESTS} -eq 1]; then
       wait_ready
       tmux select-pane -t 1
       tmux send-keys "node  ../cli/src/proposer.mjs --environment Docker" Enter
