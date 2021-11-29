@@ -9,6 +9,7 @@
 ```
 This configuration starts a docker container including the wallet at port 3010, a headless version of chrome/chromium driver, metamask plugin and selenium tests.
 If you exec into this container (`docker exec -it <SELENIUM_CONTAINER_ID> bash), tests are launched under `tmux a -t selenium`.
+When tests are finished, you can see either `Selenium tests PASSED` or `Selenium tests FAILED` in the container logs.
 
 #### Debugging Wallet Unit Tests
 Launching selenium tests with the docker prevents any debugging if test unexpectedly fail. In order to gain more visibility of what is going on, you need to start a real chrome session (graphic). To do this:
@@ -20,9 +21,22 @@ Launching selenium tests with the docker prevents any debugging if test unexpect
 ```
 vncviewer
 ```
-Password is `password`
 3. Go to 127.0.0.1
+Password is `password`
 
+4. Open Chrome
+Right click mouse on  `vnc viewer` screen, `Applications -> Network -> Web Browsing -> Google Chrome`
+
+5. Check Nightfall wallet is correctly deployed
+On a Chrome tab, go to http://localhost:3010/login
+
+6. Open a terminal on VNC viewer
+Right click mouse on `vnc viewer` screen, `Applications -> Shells -> Bash`
+
+7. Launch Selenium tests
+```
+cd test && pyhon3 wallet_test.py docker
+```
 
 
 

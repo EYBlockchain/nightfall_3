@@ -14,13 +14,12 @@ main() {
     tmux send-keys "npm run start:docker" Enter
     # if VNC is enabled, start server
     if [ ${ENABLE_VNC_SERVER} -eq 1 ]; then
-      tmux select-pane -t 1
-      tmux send-keys "launch_xvfb" Enter
-      tmux send-keys "launch_window_manager" Enter
-      tmux send-keys "run_vnc_server" Enter
+      launch_xvfb
+      launch_window_manager
+      run_vnc_server
     fi
     # Start selenium tests (after ganache has started and app has been deployed)
-    if [ ${RUN_SELENIUM_TESTS} -eq 1]; then
+    if [ ${RUN_SELENIUM_TESTS} -eq 1 ]; then
       wait_ready
       tmux select-pane -t 1
       tmux send-keys "node  ../cli/src/proposer.mjs --environment Docker" Enter
@@ -100,7 +99,7 @@ launch_xvfb() {
     local timeout=${XVFB_TIMEOUT:-5}
 
     # Start and wait for either Xvfb to be fully up or we hit the timeout.
-    Xvfb ${DISPLAY} -screen ${screen} ${resolution} &
+    sudo Xvfb ${DISPLAY} -screen ${screen} ${resolution} &
     local loopCount=0
     until xdpyinfo -display ${DISPLAY} > /dev/null 2>&1
     do
