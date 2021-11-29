@@ -66,7 +66,6 @@ assert(testEthAddress.lower() == ethAccount2Params["ethereumAddress"].lower())
 ########################
 # Start Tests          
 ########################
-sleep(1000)
 #effectTest(findElementsInstance, driver, metamaskTab, nightfallTab, walletUrl)
 #loginTest(findElementsInstance, driver, metamaskTab, nightfallTab)
 #tokenTest(findElementsInstance, driver, metamaskTab, nightfallTab)
