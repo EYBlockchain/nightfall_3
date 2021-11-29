@@ -1,0 +1,36 @@
+version: '3.5'
+# Use this script for making an adversary service
+services:
+  adversary1:
+    build:
+      context: ./test/adversary/nightfall-adversary
+    depends_on:
+      - deployer
+    networks:
+      - nightfall_network
+    ports:
+      - 8088:80
+      # websocket port for adversary is on localhost:8082
+      - 8089:8080
+    volumes:
+      - type: volume
+        source: build
+        target: /app/build/
+      - type: bind
+        source: ./test/adversary/nightfall-adversary/src
+        target: /app/src
+      - type: bind
+        source: ./common-files
+        target: /common-files
+      - type: bind
+        source: ./config/default.js
+        target: /app/config/default.js
+    environment:
+      WEBSOCKET_PORT: 8080
+      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_PORT: 8546
+      HASH_TYPE: mimc
+      LOG_LEVEL: debug
+      IS_CHALLENGER: 'false'
+      TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
+    command: ['npm', 'run', 'dev']

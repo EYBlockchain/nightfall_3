@@ -5,11 +5,12 @@ import mongo from 'common-files/utils/mongo.mjs';
 const { MONGO_URL, OPTIMIST_DB, TRANSACTIONS_COLLECTION } = config;
 
 const error = [
-  'DuplicateTransaction',
-  'DuplicateNullifier',
+  // 'DuplicateTransaction',
+  // 'DuplicateNullifier',
   'HistoricRootError',
   'IncorrectProof',
-  'InvalidTransaction',
+  // 'InvalidTransaction',
+  // 'ValidTransaction',
 ];
 
 const duplicateNullifier = async number => {
@@ -44,10 +45,12 @@ const duplicateNullifier = async number => {
   const transactions = availableTxs.filter(
     f => f.transactionHash !== modifiedTransfer.transactionHash,
   );
-  return transactions.slice(0, number - 1).push(modifiedTransfer);
+  transactions.slice(0, number - 1).push(modifiedTransfer);
+  return transactions;
 };
 
 const duplicateTransaction = async number => {
+  logger.debug('Creating Block with Duplicate Transaction');
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const duplicateTx = db
@@ -59,10 +62,12 @@ const duplicateTransaction = async number => {
     .find({ mempool: true }, { limit: number - 1, sort: { fee: -1 }, projection: { _id: 0 } })
     .toArray();
 
-  return transactions.push(duplicateTx);
+  transactions.push(duplicateTx);
+  return transactions;
 };
 
 const incorrectProof = async number => {
+  logger.debug('Creating Block with Incorrect Proof');
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const [{ proof, ...rest }, ...transactions] = await db
@@ -71,23 +76,37 @@ const incorrectProof = async number => {
     .toArray();
   const incorrectProofTx = {
     proof: proof.reverse(),
-    rest,
+    ...rest,
   };
-  return transactions.push(incorrectProofTx);
+  transactions.push(incorrectProofTx);
+  return transactions;
 };
 
 const historicRootError = async number => {
+  logger.debug('Creating Block with Historic Root Error');
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  const [{ historicRootBlockNumberL2, ...rest }, ...transactions] = await db
+  const res = await db
     .collection(TRANSACTIONS_COLLECTION)
-    .find({ mempool: true }, { limit: number - 1, sort: { fee: -1 }, projection: { _id: 0 } })
+    .find(
+      { mempool: true, transactionType: { $gte: 1 } },
+      { limit: number - 1, sort: { fee: -1 }, projection: { _id: 0 } },
+    )
     .toArray();
+  if (res.length === 0) {
+    logger.error('Could not create historicRootError error');
+    return db
+      .collection(TRANSACTIONS_COLLECTION)
+      .find({ mempool: true }, { limit: number, sort: { fee: -1 }, projection: { _id: 0 } })
+      .toArray();
+  }
+  const [{ historicRootBlockNumberL2, ...rest }, ...transactions] = res;
   const incorrectHistoricRoot = {
-    historicRootBlockNumberL2: Array(2).fill(Math.floor(Math.random() * 100)),
-    rest,
+    historicRootBlockNumberL2: Array(2).fill(Math.floor(Math.random() * 100).toString()),
+    ...rest,
   };
-  return transactions.push(incorrectHistoricRoot);
+  transactions.push(incorrectHistoricRoot);
+  return transactions;
 };
 
 /**
@@ -96,7 +115,7 @@ are fewer than 'number' transactions, all are returned.
 */
 // eslint-disable-next-line import/prefer-default-export
 export async function getMostProfitableTransactions(number) {
-  const r = Math.random() * (error.length - 1);
+  const r = Math.floor(Math.random() * (error.length - 1));
   switch (error[r]) {
     case 'DuplicateTransaction':
       return duplicateTransaction(number);
@@ -104,7 +123,7 @@ export async function getMostProfitableTransactions(number) {
       return duplicateNullifier(number);
     case 'IncorrectProof':
       return incorrectProof(number);
-    case 'historicRootError':
+    case 'HistoricRootError':
       return historicRootError(number);
     default: {
       const connection = await mongo.connection(MONGO_URL);

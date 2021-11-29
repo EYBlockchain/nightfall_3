@@ -1,6 +1,6 @@
 import logger from 'common-files/utils/logger.mjs';
 
-const error = ['IncorrectBlockHash', 'IncorrectTreeRoot', 'IncorrectLeafCount', 'ValidBlock'];
+const error = [/* 'IncorrectTreeRoot', 'IncorrectLeafCount'], */ 'ValidBlock'];
 
 const incorrectTreeRoot = block => {
   logger.debug('Creating Incorrect Tree Root');
@@ -9,7 +9,7 @@ const incorrectTreeRoot = block => {
     root: `0x${BigInt(Math.floor(Math.random() * 2 ** 64))
       .toString(16)
       .padStart(64, '0')}`,
-    rest,
+    ...rest,
   };
 };
 
@@ -17,14 +17,14 @@ const incorrectLeafCount = block => {
   logger.debug('Creating Incorrect Leaf Count');
   const { leafCount, ...rest } = block;
   return {
-    leafCount: Math.floor(Math.random() * 2 ** 64),
-    rest,
+    leafCount: Math.floor(Math.random() * 2 ** 16),
+    ...rest,
   };
 };
 
 // eslint-disable-next-line import/prefer-default-export
 export const createBadBlock = block => {
-  const r = Math.random() * (error.length - 1);
+  const r = Math.floor(Math.random() * (error.length - 1));
   switch (error[r]) {
     case 'IncorrectTreeRoot':
       return incorrectTreeRoot(block);
