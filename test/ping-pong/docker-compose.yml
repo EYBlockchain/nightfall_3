@@ -126,20 +126,42 @@ services:
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
 
-  user-local:
-    image: ghcr.io/eyblockchain/nightfall3-user-local:latest
+  #   user-local:
+  #     image: ghcr.io/eyblockchain/nightfall3-user-local:latest
+  #    build:
+  #      dockerfile: user-local.Dockerfile
+  #      context: ../../
+  #     networks:
+  #       - pong_network
+  # #    volumes:
+  # #      - type: bind
+  # #        source: ../../common-files
+  # #        target: /app/common-files
+  # #      - type: bind
+  # #        source: ./user-local/src
+  # #        target: /app/test/ping-pong/user-local/src
+  #     environment:
+  #       OPTIMIST_HOST: optimist
+  #       OPTIMIST_WS_PORT: 8080
+  #       OPTIMIST_HTTP_PORT: 80
+  #       CLIENT_HOST: client
+  #       CLIENT_PORT: 80
+  #       BLOCKCHAIN_WS_HOST: blockchain1
+  #       BLOCKCHAIN_PORT: 8546
+
+  user-local1:
     build:
-      dockerfile: user-local.Dockerfile
+      dockerfile: user-local1.Dockerfile
       context: ../../
     networks:
       - pong_network
-    #    volumes:
-    #      - type: bind
-    #        source: ../../common-files
-    #        target: /app/common-files
-    #      - type: bind
-    #        source: ./user-local/src
-    #        target: /app/test/ping-pong/user-local/src
+    volumes:
+      - type: bind
+        source: ../../common-files
+        target: /app/common-files
+      - type: bind
+        source: ./user-local1/src
+        target: /app/test/ping-pong/user-local1/src
     environment:
       OPTIMIST_HOST: optimist
       OPTIMIST_WS_PORT: 8080
@@ -148,6 +170,7 @@ services:
       CLIENT_PORT: 80
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
+    command: ['npm', 'run', 'dev']
 
 volumes:
   mongodb:

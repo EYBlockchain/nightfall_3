@@ -1,5 +1,5 @@
 /**
-Module that runs up as a user
+Module that runs up as a proposer
 */
 import logger from 'common-files/utils/logger.mjs';
 import config from 'config';
@@ -19,11 +19,13 @@ Does the preliminary setup and starts listening on the websocket
 */
 async function localTest() {
   logger.info('Starting local test...');
-  const nf3 = new Nf3(web3WsUrl, userEthereumSigningKey, {
-    clientApiUrl: clientBaseUrl,
-    optimistApiUrl: optimistBaseUrl,
+  const nf3 = new Nf3(
+    clientBaseUrl,
+    optimistBaseUrl,
     optimistWsUrl,
-  });
+    web3WsUrl,
+    userEthereumSigningKey,
+  );
   await nf3.init(zkpMnemonic);
   if (await nf3.healthcheck('client')) logger.info('Healthcheck passed');
   else throw new Error('Healthcheck failed');
@@ -31,15 +33,11 @@ async function localTest() {
   const startBalance = await nf3.getLayer2Balances();
   await nf3.deposit(ercAddress, 'ERC20', 1, '0x00');
   await nf3.deposit(ercAddress, 'ERC20', 1, '0x00');
-  let endBalance = await nf3.getLayer2Balances();
-  while (Object.keys(startBalance).length >= Object.keys(endBalance).length) {
-    logger.warn(
-      'The test has not yet passed because the L2 balance has not increased - waiting 30s',
-    );
-    // eslint-disable-next-line no-await-in-loop
-    await new Promise(resolve => setTimeout(resolve, 30000));
-    // eslint-disable-next-line no-await-in-loop
-    endBalance = await nf3.getLayer2Balances();
+  await new Promise(resolve => setTimeout(resolve, 30000)); // wait for the block to propose TODO: active check
+  const endBalance = await nf3.getLayer2Balances();
+  if (Object.keys(startBalance).length >= Object.keys(endBalance).length) {
+    logger.warn('The test failed because the L2 balance has not increased');
+    process.exit(1);
   }
   logger.info('Test passed');
   nf3.close();
