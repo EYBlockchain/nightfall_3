@@ -1,13 +1,9 @@
 version: '3.5'
-# Use this script for running up nightfall_3 with a blockchain on localhost 8546
-services:
-version: '3.5'
 # Use this script for running up nightfall_3 with our geth node on ropsten
 services:
-
   client:
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - 'host.docker.internal:host-gateway'
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
       BLOCKCHAIN_PORT: 8546
@@ -15,7 +11,7 @@ services:
 
   deployer:
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - 'host.docker.internal:host-gateway'
     environment:
       LOG_LEVEL: debug
       # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
@@ -33,7 +29,7 @@ services:
 
   optimist:
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - 'host.docker.internal:host-gateway'
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
       BLOCKCHAIN_PORT: 8546
@@ -41,15 +37,17 @@ services:
 
   proposer:
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - 'host.docker.internal:host-gateway'
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
       BLOCKCHAIN_PORT: 8546
       PROPOSER_ETHEREUM_SIGNING_KEY: 645ac79fa9fd87dd1cf30bdca51d326bd501cd328d6dbc9f5f517c7da0dafa6f
 
-  user-local:
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+  # user-local:
+  #   environment:
+  #     BLOCKCHAIN_WS_HOST: host.docker.internal
+
+  user-local1:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
       BLOCKCHAIN_PORT: 8546
