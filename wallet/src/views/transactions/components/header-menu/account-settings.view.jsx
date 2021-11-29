@@ -4,14 +4,10 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import * as Storage from '../../../../utils/lib/local-storage';
 
-function AccountSettingsModal({
-  login,
-  accountSettingsEnable,
-  toggleAccountSettings,
-  onMnemonicBackupEnable,
-}) {
-  if (typeof login.nf3.mnemonic === 'undefined') return null;
-
+function AccountSettingsModal({ login, accountSettingsEnable, toggleAccountSettings }) {
+  if (typeof login.nf3 === 'undefined' || Object.keys(login.nf3).length === 0) {
+    return null;
+  }
   const [addressIndex, setAddressIndex] = React.useState(login.nf3.mnemonic.addressIndex);
   const [clearLocalStorage, setClearLocalStorage] = React.useState(false);
 

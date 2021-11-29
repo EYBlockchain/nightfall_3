@@ -6,6 +6,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import TimeoutException
 import sys
+from time import sleep
 
 from helpers.find_elements import *
 from helpers.selenium import *
@@ -65,9 +66,10 @@ assert(testEthAddress.lower() == ethAccount2Params["ethereumAddress"].lower())
 ########################
 # Start Tests          
 ########################
-effectTest(findElementsInstance, driver, metamaskTab, nightfallTab)
-loginTest(findElementsInstance, driver, metamaskTab, nightfallTab)
-tokenTest(findElementsInstance, driver, metamaskTab, nightfallTab)
-txTest(findElementsInstance, driver, metamaskTab, nightfallTab)
+sleep(1000)
+#effectTest(findElementsInstance, driver, metamaskTab, nightfallTab, walletUrl)
+#loginTest(findElementsInstance, driver, metamaskTab, nightfallTab)
+#tokenTest(findElementsInstance, driver, metamaskTab, nightfallTab)
+#txTest(findElementsInstance, driver, metamaskTab, nightfallTab)
 
 driver.quit()
