@@ -69,32 +69,28 @@ jobs:
       - name: Start Containers
         run: |
           docker-compose build
-          ./start-nightfall -wt &> ganache-test.log &disown
+          ./start-nightfall -wt 
 
       - name: wait 1000s for Containers startup and setup completion
         run: sleep 1000
 
-      - name: retrieve selenium id
-        run: docker ps -aqf "name=selenium"
+      - name: Retrieve Selenium logs
+        run: docker logs $(docker ps -aqf "name=selenium") > selenium-test.log
 
       - name: debug logs - after container startup
         if: always()
-        run: cat ganache-test.log
-
-      - name: debug logs - after integration test run
-        if: always()
-        run: cat ganache-test.log
+        run: cat selenium-test.log
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
-        run: docker-compose -f docker-compose.yml -f docker-compose.ganache.yml down -v
+        run: docker-compose -f docker-compose.yml -f docker-compose.ganache.yml docker-compose.selenium.yml down -v
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
         uses: actions/upload-artifact@master
         with:
-          name: ganache-test-logs
-          path: ./ganache-test.log
+          name: selenium-test-logs
+          path: ./selenium-test.log
 
 
   test-gas:
