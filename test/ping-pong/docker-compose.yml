@@ -11,7 +11,7 @@ services:
         source: mongodb
         target: /app/mongodb
     networks:
-      - nightfall_network
+      - pong_network
     ports:
       - 27017:27017
       - 8080:80
@@ -41,12 +41,12 @@ services:
       - '15674:15674'
       - '5672:5672'
     networks:
-      - nightfall_network
+      - pong_network
 
   optimist:
     image: ghcr.io/eyblockchain/nightfall3-optimist:latest
     networks:
-      - nightfall_network
+      - pong_network
     ports:
       - 8081:80
       # websocket port for Optimist is on localhost:8082
@@ -75,7 +75,7 @@ services:
         source: build
         target: /app/build/
     networks:
-      - nightfall_network
+      - pong_network
     environment:
       LOG_LEVEL: debug
       # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
@@ -90,10 +90,10 @@ services:
     image: ghcr.io/eyblockchain/nightfall3-worker
     volumes:
       - type: volume
-        source: ./proving_files
+        source: proving_files
         target: /app/output/
     networks:
-      - nightfall_network
+      - pong_network
     environment:
       LOG_LEVEL: info
 
@@ -103,7 +103,7 @@ services:
 #      dockerfile: proposer.Dockerfile
 #      context: ../../
     networks:
-      - nightfall_network
+      - pong_network
 #    volumes:
 #      - type: bind
 #        source: ../../common-files
@@ -126,7 +126,7 @@ services:
 #      dockerfile: user-local.Dockerfile
 #      context: ../../
     networks:
-      - nightfall_network
+      - pong_network
 #    volumes:
 #      - type: bind
 #        source: ../../common-files
@@ -149,10 +149,10 @@ volumes:
   build:
 
 networks:
-  nightfall_network:
+  pong_network:
     driver: bridge
     ipam:
       driver: default
       config:
-        - subnet: 172.16.238.0/24
-          gateway: 172.16.238.1
+        - subnet: 172.16.239.0/24
+          gateway: 172.16.239.1
