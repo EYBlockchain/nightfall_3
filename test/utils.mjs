@@ -15,6 +15,7 @@ let web3;
 // This will be a mapping of privateKeys to nonces;
 const nonceDict = {};
 const USE_INFURA = process.env.USE_INFURA === 'true';
+const USE_HOSTED_GETH = process.env.USE_HOSTED_GETH === 'true';
 const { INFURA_PROJECT_SECRET, INFURA_PROJECT_ID } = process.env;
 let isSubmitTxLocked = false;
 
@@ -119,7 +120,7 @@ export async function submitTransaction(
       const accountAddress = await web3.eth.accounts.privateKeyToAccount(privateKey);
       nonce = await web3.eth.getTransactionCount(accountAddress.address);
     }
-    if (USE_INFURA) {
+    if (USE_INFURA || USE_HOSTED_GETH) {
       // get gaslimt from latest block as gaslimt may vary
       gas = (await web3.eth.getBlock('latest')).gasLimit;
       const blockGasPrice = Number(await web3.eth.getGasPrice());

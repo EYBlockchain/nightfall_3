@@ -34,6 +34,7 @@ describe('Testing the challenge http API', () => {
   let pkd1;
 
   const USE_INFURA = process.env.USE_INFURA === 'true';
+  const USE_HOSTED_GETH = process.env.USE_HOSTED_GETH === 'true';
   const { ETH_PRIVATE_KEY, BLOCKCHAIN_URL } = process.env;
 
   const url = 'http://localhost:8080';
@@ -85,7 +86,7 @@ describe('Testing the challenge http API', () => {
   before(async () => {
     web3 = await connectWeb3(BLOCKCHAIN_URL);
 
-    if (USE_INFURA) {
+    if (USE_INFURA || USE_HOSTED_GETH) {
       if (!ETH_PRIVATE_KEY) {
         throw Error(
           'Cannot use default private key, please set environment variable ETH_PRIVATE_KEY',

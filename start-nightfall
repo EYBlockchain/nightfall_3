@@ -13,6 +13,7 @@ usage()
   echo "  -s or --stubs; runs with circuits stubbed out (faster but no checking of ZKP code) - use with either -g or -l"
   echo "  -h or --help; to print this message"
   echo "  -t or --testnet; to connect infura ropsten testnet"
+  echo "  -r or --hosted-geth to connect hosted geth vm"
 }
 
 # select a Geth or Ganache client
@@ -38,6 +39,8 @@ while [ -n "$1" ]; do
 				    cd wallet && ./pre-start-script.sh && cd -
                                     ;;
       -l  | --localhost )           FILE="-f docker-compose.yml -f docker-compose.host.docker.internal.yml"
+                                    ;;
+      -r | ----hosted-geth )        FILE="-f docker-compose.yml -f docker-compose.hosted.geth.yml"
                                     ;;
       -t  | --testnet )             FILE="-f docker-compose.yml -f docker-compose.testnet.yml"
                                     ;;
