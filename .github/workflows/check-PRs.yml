@@ -69,7 +69,7 @@ jobs:
       - name: Start Containers
         run: |
           docker-compose build
-          ./start-nightfall -wt 
+          ./start-nightfall -wt -s &
 
       - name: wait 1000s for Containers startup and setup completion
         run: sleep 1000
