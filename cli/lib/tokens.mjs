@@ -115,7 +115,7 @@ async function getERCInfo(ercAddress, ethereumAddress, provider, options) {
     const abi = getAbi(TOKEN_TYPE.ERC721);
     const ercContract = new provider.eth.Contract(abi, ercAddress);
     balance = await ercContract.methods.balanceOf(ethereumAddress).call();
-  } else if (tokenType === TOKEN_TYPE.ERC1155) { 
+  } else if (tokenType === TOKEN_TYPE.ERC1155) {
     // ERC1155
     const abi = getAbi(TOKEN_TYPE.ERC1155);
     const ercContract = new provider.eth.Contract(abi, ercAddress);
