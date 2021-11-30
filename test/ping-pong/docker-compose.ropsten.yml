@@ -15,6 +15,7 @@ services:
       ETH_NETWORK: ropsten
       BLOCKCHAIN_WS_HOST:
       ETH_PRIVATE_KEY:
+      USE_ROPSTEN: enable
 
   optimist:
     environment:

@@ -134,7 +134,6 @@ async function askQuestions(nf3) {
 Simple function to print out the balances object
 */
 function printBalances(balances) {
-  console.log('BALANCES', balances);
   if (Object.keys(balances).length === 0) {
     console.log('You have no balances yet - try depositing some tokens into Layer 2 from Layer 1');
     return;
