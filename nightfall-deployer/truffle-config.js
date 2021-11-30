@@ -90,6 +90,7 @@ module.exports = {
       networkCheckTimeout: 1000000000,
       timeoutBlocks: 200,
       skipDryRun: true,
+      websockets: true,
     },
 
     // Another network with more advanced options...
