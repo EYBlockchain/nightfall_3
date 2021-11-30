@@ -61,6 +61,7 @@ jobs:
     - run: echo ${{ steps.semantic.outputs.release-version }}
 
     - name: Docker push version
+      if: steps.semantic.outputs.new-release-published == 'true'
       run: |
         docker build -t ghcr.io/eyblockchain/nightfall3-deployer:$RELEASE_VERSION . -f deployer.Dockerfile
         docker push ghcr.io/eyblockchain/nightfall3-deployer:$RELEASE_VERSION
