@@ -4,7 +4,7 @@ services:
 
   client:
     environment:
-      BLOCKCHAIN_WS_HOST: 
+      BLOCKCHAIN_WS_HOST:
       AUTOSTART_RETRIES: 100
 
   deployer:
@@ -12,8 +12,9 @@ services:
       LOG_LEVEL: debug
       # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
       # startup routines will wait for a blockchain client to be reachable on this network
-      ETH_NETWORK: development
+      ETH_NETWORK: ropsten
       BLOCKCHAIN_WS_HOST:
+      ETH_PRIVATE_KEY:
 
   optimist:
     environment:
