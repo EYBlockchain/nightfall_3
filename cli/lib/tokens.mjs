@@ -136,37 +136,6 @@ async function getERCInfo(ercAddress, ethereumAddress, provider, options) {
   }
 
   return { balance, decimals, tokenType };
-
-  /* 
-  try {
-    const abi = getAbi(TOKEN_TYPE.ERC20);
-    const ercContract = new provider.eth.Contract(abi, ercAddress);
-    let balance = await ercContract.methods.balanceOf(ethereumAddress).call();
-    if (toEth) {
-      const decimals = await getDecimals(ercAddress, TOKEN_TYPE.ERC20, provider);
-      balance = fromBaseUnit(balance, decimals);
-      tokenType = TOKEN_TYPE.ERC20;
-      return { balance, decimals, tokenType };
-    }
-    return { balance, tokenType };
-  } catch {
-    try {
-      const abi = getAbi(TOKEN_TYPE.ERC1155);
-      const ercContract = new provider.eth.Contract(abi, ercAddress);
-      const balance = await ercContract.methods.balanceOf(ethereumAddress, tokenId).call();
-      return { balance, tokenType: TOKEN_TYPE.ERC1155 };
-    } catch {
-      try {
-        const abi = getAbi(TOKEN_TYPE.ERC721);
-        const ercContract = new provider.eth.Contract(abi, ercAddress);
-        const balance = await ercContract.methods.balanceOf(ethereumAddress).call();
-        return { balance, tokenType: TOKEN_TYPE.ERC721 };
-      } catch {
-        // TODO
-        throw new Error('Unknown token type', ercAddress);
-      }
-    }
-  } */
 }
 
 /**
