@@ -79,11 +79,11 @@ jobs:
 
       - name: debug logs - after container startup
         if: always()
-        run: results=$(cat wallet-test.log | grep PASSED); if [ ! -z "${results}" ]; then exit 0; else exit 1; fi
+        run: results=$(cat wallet-test.log | grep PASSED); cat wallet-test.log; if [ ! -z "${results}" ]; then exit 0; else exit 1; fi
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
-        run: docker-compose -f docker-compose.yml -f docker-compose.ganache.yml docker-compose.wallet-test.yml down -v
+        run: docker-compose -f docker-compose.yml -f docker-compose.ganache.yml -f docker-compose.wallet-test.yml down -v
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
