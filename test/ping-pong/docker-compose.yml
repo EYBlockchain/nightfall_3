@@ -69,7 +69,10 @@ services:
 
   # Temporary container to deploy contracts and circuits and populate volumes
   deployer:
-    image: ghcr.io/eyblockchain/nightfall3-deployer
+    image: ghcr.io/eyblockchain/nightfall3-deployer:latest
+    build:
+      dockerfile: deployer.Dockerfile
+      context: ../../
     volumes:
       - type: volume
         source: build
@@ -87,7 +90,7 @@ services:
       USE_STUBS: 'false'
 
   worker:
-    image: ghcr.io/eyblockchain/nightfall3-worker
+    image: ghcr.io/eyblockchain/nightfall3-worker:latest
     volumes:
       - type: volume
         source: proving_files
@@ -99,9 +102,9 @@ services:
 
   proposer:
     image: ghcr.io/eyblockchain/nightfall3-proposer:latest
-#    build:
-#      dockerfile: proposer.Dockerfile
-#      context: ../../
+    build:
+      dockerfile: proposer.Dockerfile
+      context: ../../
     networks:
       - pong_network
 #    volumes:
@@ -122,9 +125,9 @@ services:
 
   user-local:
     image: ghcr.io/eyblockchain/nightfall3-user-local:latest
-#    build:
-#      dockerfile: user-local.Dockerfile
-#      context: ../../
+    build:
+      dockerfile: user-local.Dockerfile
+      context: ../../
     networks:
       - pong_network
 #    volumes:
