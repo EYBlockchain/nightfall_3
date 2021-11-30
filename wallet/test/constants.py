@@ -1,6 +1,6 @@
 # default network testnet
 walletUrlLocalhost = "http://localhost:3000/login"
-walletUrlDocker = "http://selenium:3010/login"
+walletUrlDocker = "http://wallet-test:3010/login"
 walletUrlRopsten = "https://wallet.testnet.nightfall3.com"
 
 metamaskConfig = {
