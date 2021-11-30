@@ -45,7 +45,7 @@ def submitTxWallet(txParams, findElements, driver, metamaskTab, nightfallTab, ca
       findElements.element_exist_xpath('//*[@title="' + txParams['tokenAddress'] + '"]').click() # Select token
     depositButtonEn.click()
 
-    if txParams["tokenType"] != "erc721":
+    if txParams["tokenType"].lower() != "erc721":
       findElements.element_exist_xpath('//*[@id="amount"]').send_keys(txParams['amount']) # Amount
     findElements.element_exist_xpath('//*[@id="fee"]').send_keys(txParams['fee']) # Fee
     testTokenType = findElements.element_exist_xpath('//*[@id="token-type"]').get_attribute("value") # Read Token Type

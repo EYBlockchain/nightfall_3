@@ -27,12 +27,12 @@ while [ -n "$1" ]; do
   case $1 in
       -g  | --ganache )             FILE="-f docker-compose.yml -f docker-compose.ganache.yml";
                                     ;;
-      -wt | --wallet-testing )      FILE="-f docker-compose.yml -f docker-compose.ganache.yml -f docker-compose.selenium.yml" 
+      -wt | --wallet-testing )      FILE="-f docker-compose.yml -f docker-compose.ganache.yml -f docker-compose.wallet-test.yml" 
                                     export ENABLE_VNC_SERVER=0
 				    export RUN_SELENIUM_TESTS=1
 				    cd wallet && ./pre-start-script.sh && cd -
                                     ;;
-      -w  | --wallet)               FILE="-f docker-compose.yml -f docker-compose.ganache.yml -f docker-compose.selenium.yml" 
+      -w  | --wallet)               FILE="-f docker-compose.yml -f docker-compose.ganache.yml -f docker-compose.wallet-test.yml" 
                                     export ENABLE_VNC_SERVER=1
 				    export RUN_SELENIUM_TESTS=0
 				    cd wallet && ./pre-start-script.sh && cd -

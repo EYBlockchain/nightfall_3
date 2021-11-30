@@ -136,19 +136,34 @@ def signTransactionMetamask(driver, findElements, stop=0):
     sleep(5)
     #driver.get('chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn/popup.html#')
 
+    signButton = findElements.element_exist_xpath('//button[text()="Sign"]')
+    if not signButton:
+      findElements.element_exist_xpath('//button[text()="Activity"]').click()
+      findElements.element_exist_xpath('//div[contains(@class, "list-item transaction-list-item transaction-list-item--unconfirmed")]').click() # Sign
+      approve = findElements.element_exist_xpath('//button[text()="Confirm"]') # Confirm approve
+      if approve:
+        approve.click()
+        signButton = findElements.element_exist_xpath('//button[text()="Sign"]')
+        if not signButton:
+          findElements.element_exist_xpath('//button[text()="Activity"]').click()
+          findElements.element_exist_xpath('//div[contains(@class, "list-item transaction-list-item transaction-list-item--unconfirmed")]').click() # Sign
+      findElements.element_exist_xpath('//button[text()="Confirm"]').click() # Confirm approve
+    sleep(1000)
+
+
     ### Not sure why, but i need to send and cancel a tx to get to the signature option
     sendButtonEnable = findElements.element_exist_xpath('(//*[contains(text(), "Send")])')
-    if sendButtonEnable:
-        #print("send button found")
-        sendButtonEnable.click()
-        findElements.element_exist_xpath('(//*[contains(text(), "Cancel")])').click()
-        sleep(5)
-        if stop:
+    #if sendButtonEnable:
+        ##print("send button found")
+        #sendButtonEnable.click()
+        #findElements.element_exist_xpath('(//*[contains(text(), "Cancel")])').click()
+        #sleep(5)
+        #if stop:
             #print("stopped")
-            sleep(1000)
+            #sleep(1000)
 
         ## confirm signature
-        return findElements.element_exist_xpath('//*[contains(text(), "Confirm")] | //div[contains(@class, "--unconfirmed")]')
-    else:
-         #print("send button not found")
-         return findElements.element_exist_xpath('//*[contains(text(), "Confirm")] | //div[contains(@class, "--unconfirmed")]')
+        #return findElements.element_exist_xpath('//*[contains(text(), "Confirm")] | //div[contains(@class, "--unconfirmed")]')
+    #else:
+         ##print("send button not found")
+         #return findElements.element_exist_xpath('//*[contains(text(), "Confirm")] | //div[contains(@class, "--unconfirmed")]')
