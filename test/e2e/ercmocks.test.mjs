@@ -2,6 +2,7 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import Nf3 from '../../cli/lib/nf3.mjs';
+import { getTokensInfo } from '../../cli/lib/tokens.mjs';
 import {
   connectWeb3,
   closeWeb3Connection,
@@ -130,6 +131,10 @@ describe('Testing the Nightfall ERCMocks', () => {
         `        Balance ERC721Mock after transfer tokenId ${tokenId} [${nf3.ethereumAddress}]: ${balanceAfter}`,
       );
       expect(Number(balanceAfter)).to.be.equal(Number(balanceBefore) - 1);
+      const tokensInfo = await getTokensInfo(erc721Address, nf3.ethereumAddress, web3);
+      expect(Number(tokensInfo.balance)).to.be.equal(Number(balanceAfter));
+      expect(Number(tokensInfo.tokenIds.length)).to.be.equal(Number(balanceAfter));
+      console.log(`TOKENS INFO ${nf3.ethereumAddress} (${erc721Address}): `, tokensInfo);
 
       await nf3.setEthereumSigningKey(walletTestSigningkey);
       txDataToSign = await erc721Token.methods
@@ -153,9 +158,15 @@ describe('Testing the Nightfall ERCMocks', () => {
     });
 
     it('should get the balance of the ERC1155 contract mock', async function () {
+      const Id = 1; // Index Id from ERC1155 to check
       const erc1155Token = new web3.eth.Contract(nf3.contracts.ERC1155, erc1155Address);
-      const balance = await erc1155Token.methods.balanceOf(nf3.ethereumAddress, 1).call();
+      const balance = await erc1155Token.methods.balanceOf(nf3.ethereumAddress, Id).call();
       expect(Number(balance)).to.be.greaterThan(0);
+      const tokensInfo = await getTokensInfo(erc1155Address, nf3.ethereumAddress, web3);
+      expect(Number(balance)).to.be.equal(
+        Number(tokensInfo.tokenIds.find(tokenId => tokenId.Id === Id.toString()).amount),
+      );
+      console.log(`TOKENS INFO ${nf3.ethereumAddress} (${erc1155Address}): `, tokensInfo);
     });
 
     it('should get the balance of wallet address of the ERC1155 contract mock', async function () {
