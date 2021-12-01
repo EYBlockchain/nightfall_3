@@ -20,22 +20,6 @@ def transactionsTest(findElementsInstance, driver, metamaskTab, nightfallTab):
       "fee": 10,
     }
 
-    #txParams["tokenType"] = "erc20"
-    #txParams["tokenAddress"] =  tokens[txParams["tokenType"]]
-    #txParams["txType"] = "Deposit"
-
-    #nTx=1
-    #l1Balance, l2Balance = getNightfallBalance(findElementsInstance, txParams)
-    #while True:
-      #print("SSS", txParams)
-      #submitTxWallet(txParams, findElementsInstance, driver, metamaskTab, nightfallTab)
-      #status, _ = waitBalanceChange(l1Balance, l2Balance, txParams, nTx, findElementsInstance)
-      #if status == 1:
-        #break
-      #nTx+=1
-      #sleep(5)
-
-
     for tokenType in tokenTypes:
       txParams["tokenType"] = tokenType
       txParams["tokenAddress"] =  tokens[txParams["tokenType"]]
@@ -66,7 +50,6 @@ def waitBalanceChange(l1Balance, l2Balance, txParams, nTx, findElementsInstance)
       return 0, errorMsg
     sleep(5) 
     l1BalanceNew, l2BalanceNew = getNightfallBalance(findElementsInstance, txParams)
-    print("Check", txParams["txType"], l1Balance, l1BalanceNew, l2Balance, l2BalanceNew)
     if txParams["txType"] == "Deposit":
       if l2BalanceNew - nTx*txParams["amount"] == l2Balance and l1BalanceNew + nTx*txParams["amount"] == l1Balance:
         break
