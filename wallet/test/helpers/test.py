@@ -2,7 +2,7 @@ import logging
 import colorama
 from colorama import Fore, Style
 
-PRINT_EXCEPTIONS=False
+PRINT_EXCEPTIONS=True
 
 class walletTest:
   """wallet Test class

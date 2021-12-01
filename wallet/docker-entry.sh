@@ -61,11 +61,11 @@ wait_tests_done() {
 }
 
 wait_ready() {
-  app_deployed=$(curl http://selenium:3010 2> /dev/null | grep favicon)
+  app_deployed=$(curl http://wallet-test:3010 2> /dev/null | grep favicon)
   while [ -z "${app_deployed}" ]; do
     echo "Waiting for wallet to be deployed"
     sleep 10;
-    app_deployed=$(curl http://selenium:3010 2> /dev/null | grep favicon)
+    app_deployed=$(curl http://wallet-test:3010 2> /dev/null | grep favicon)
   done
   echo "Wallet deployed"
   sleep 60

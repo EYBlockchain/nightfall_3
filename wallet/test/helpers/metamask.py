@@ -78,7 +78,7 @@ def selectTestNetworkMetamask(driver, findElements, networkConfig):
     networkElement = findElements.element_exist_xpath('(//*[contains(text(), "' + networkConfig['name'] + '")] | //*[@value="' + networkConfig['name'] + '"])')
     try:
        networkElement.click()
-    except:
+    except Exception:
         findElements.element_exist_xpath('//*[contains(@class, "network-dropdown-content--link")]').click() # Show networks
         findElements.element_exist_xpath('//*[@id="app-content"]/div/div[3]/div/div[2]/div[2]/div[2]/div[7]/div[2]/div/div/div[1]/div[2]').click() # Enable test networks
         findElements.element_exist_xpath('//*[contains(@class, "settings-page__close-button")]').click() # Save
@@ -134,21 +134,17 @@ def addTokenMetamask(tokenAddress, findElements):
 
 def signTransactionMetamask(driver, findElements, stop=0):
     sleep(5)
-    #driver.get('chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn/popup.html#')
+    activityButton = findElements.element_exist_xpath('//button[text()="Activity"]')
+    if activityButton:
+         activityButton.click()
 
-    ### Not sure why, but i need to send and cancel a tx to get to the signature option
-    sendButtonEnable = findElements.element_exist_xpath('(//*[contains(text(), "Send")])')
-    if sendButtonEnable:
-        #print("send button found")
-        sendButtonEnable.click()
-        findElements.element_exist_xpath('(//*[contains(text(), "Cancel")])').click()
-        sleep(5)
-        if stop:
-            #print("stopped")
-            sleep(1000)
-
-        ## confirm signature
-        return findElements.element_exist_xpath('//*[contains(text(), "Confirm")] | //div[contains(@class, "--unconfirmed")]')
-    else:
-         #print("send button not found")
-         return findElements.element_exist_xpath('//*[contains(text(), "Confirm")] | //div[contains(@class, "--unconfirmed")]')
+    while True:
+      sleep(4)
+      pendingTx = findElements.element_exist_xpath('//div[contains(@class, "list-item transaction-list-item transaction-list-item--unconfirmed")]')
+      approve = findElements.element_exist_xpath('//button[text()="Confirm"]') # Confirm approve
+      if pendingTx:
+        pendingTx.click()
+      elif approve:
+          approve.click()
+      else:
+        break
