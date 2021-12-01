@@ -5,6 +5,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 from .find_elements import *
 from .metamask import *
+from decimal import Decimal
 
 def loginNightfallWallet(driver, findElements, metamaskTab, nightfallTab, walletURL):
     driver.switch_to.window(nightfallTab)
@@ -47,6 +48,7 @@ def submitTxWallet(txParams, findElements, driver, metamaskTab, nightfallTab, ca
 
     if txParams["tokenType"].lower() != "erc721":
       findElements.element_exist_xpath('//*[@id="amount"]').send_keys(txParams['amount']) # Amount
+
     findElements.element_exist_xpath('//*[@id="fee"]').send_keys(txParams['fee']) # Fee
     testTokenType = findElements.element_exist_xpath('//*[@id="token-type"]').get_attribute("value") # Read Token Type
     testTokenAddress = findElements.element_exist_xpath('//*[@id="token-address"]').get_attribute("value") # Read Token Address
@@ -57,22 +59,29 @@ def submitTxWallet(txParams, findElements, driver, metamaskTab, nightfallTab, ca
       return
 
     findElements.element_exist_xpath('//button[text()="Submit"]').click() # Submit
-
-    ## Sign the transactions
     driver.switch_to.window(metamaskTab)
 
     stop=0
     if txParams['tokenType'] == "erc20" and txType == "Withdraw":
        stop=0
-    # Approve tokens
-    signTransactionMetamask(driver, findElements, stop).click() # sign transaction
-
-    # Make deposit, if tokens were already approved, or is eth then it's already done
-    #confirmButton = signTransactionMetamask(driver, findElements) # search if transaction pending
-    #if confirmButton:
-    #  confirmButton.click()
-
+    # Approve/sign tokens
+    signTransactionMetamask(driver, findElements, stop) # sign transaction
     driver.switch_to.window(nightfallTab)
+
+def getNightfallBalance(findElements, tokenInfo):
+  niter=0
+  while True:
+    l1BalanceId="l1 balance" + tokenInfo["tokenAddress"]
+    l2BalanceId="l2 balance" + tokenInfo["tokenAddress"]
+    l1Balance = findElements.element_exist_xpath('//*[@id="' +l1BalanceId + '"]').get_attribute("title")
+    l2Balance = findElements.element_exist_xpath('//*[@id="' +l2BalanceId + '"]').get_attribute("title")
+    try:
+      return Decimal(l1Balance), Decimal(l2Balance)
+    except:
+      niter+=1
+      if niter == 10:
+        raise ValueError("Unexpected balance")
+    sleep(3)
 
 def addTokenNightfallWallet(driver, findElements, tokenInfo):
   findElements.element_exist_xpath('//button[text()="Add Token"]').click() # Add Token

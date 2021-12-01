@@ -212,7 +212,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
             {tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC721 ? null : (
               <Form.Field>
                 <label htmlFor="amount">
-                  Amount
+                  Amount (Eth)
                   <input
                     type="number"
                     min="0"
@@ -224,7 +224,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
             )}
             <Form.Field>
               <label htmlFor="fee">
-                Fee
+                Fee (Wei)
                 <input
                   type="number"
                   min="0"

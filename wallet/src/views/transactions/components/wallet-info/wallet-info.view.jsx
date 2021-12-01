@@ -63,6 +63,9 @@ function WalletInfo({
 
   function renderRowTable() {
     const rows = token.tokenPool.map(item => {
+      const tokenTypeId = `token type${item.tokenAddress}`;
+      const l1BalanceId= `l1 balance${item.tokenAddress}`;
+      const l2BalanceId = `l2 balance${item.tokenAddress}`;
       return (
         <Table.Row
           key={item.tokenAddress}
@@ -71,16 +74,16 @@ function WalletInfo({
             setActiveRow(item.tokenAddress);
           }}
         >
-          <Table.Cell colSpan="4" title={item.tokenAddress}>
+          <Table.Cell colSpan="4" title={item.tokenAddress} id="address">
             {item.tokenAddress}
           </Table.Cell>
-          <Table.Cell colSpan="1" title={item.tokenType}>
+          <Table.Cell colSpan="1" title={item.tokenType} id={tokenTypeId}>
             {item.tokenType}
           </Table.Cell>
-          <Table.Cell colSpan="1" title={item.tokenBalanceL1}>
+          <Table.Cell colSpan="1" title={item.tokenBalanceL1} id={l1BalanceId}>
             {item.tokenBalanceL1}
           </Table.Cell>
-          <Table.Cell colSpan="1" title={item.tokenBalanceL2}>
+          <Table.Cell colSpan="1" title={item.tokenBalanceL2} id={l2BalanceId}>
             {item.tokenBalanceL2}
           </Table.Cell>
         </Table.Row>

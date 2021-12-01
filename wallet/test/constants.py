@@ -54,3 +54,5 @@ tokens = {
   "erc1155": "0x9635c600697587dd8e603120ed0e76cc3a9efe4c",
   "erc721": "0x103ac4b398bca487df8b27fd484549e33c234b0d",
 }
+
+BALANCE_INTERVAL = 30000

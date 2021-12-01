@@ -16,9 +16,25 @@ def transactionsTest(findElementsInstance, driver, metamaskTab, nightfallTab):
     txTypes = ["Deposit", "Transfer", "Withdraw"]
   
     txParams = {
-      "amount": 10,
+      "amount": 1,
       "fee": 10,
     }
+
+    #txParams["tokenType"] = "erc20"
+    #txParams["tokenAddress"] =  tokens[txParams["tokenType"]]
+    #txParams["txType"] = "Deposit"
+
+    #nTx=1
+    #l1Balance, l2Balance = getNightfallBalance(findElementsInstance, txParams)
+    #while True:
+      #print("SSS", txParams)
+      #submitTxWallet(txParams, findElementsInstance, driver, metamaskTab, nightfallTab)
+      #status, _ = waitBalanceChange(l1Balance, l2Balance, txParams, nTx, findElementsInstance)
+      #if status == 1:
+        #break
+      #nTx+=1
+      #sleep(5)
+
 
     for tokenType in tokenTypes:
       txParams["tokenType"] = tokenType
@@ -26,7 +42,7 @@ def transactionsTest(findElementsInstance, driver, metamaskTab, nightfallTab):
   
       for txType in txTypes:
         txParams["txType"] = txType
-  
+        l1Balance, l2Balance = getNightfallBalance(findElementsInstance, txParams)
         logging.info(tokenType, txType)
         submitTxWallet(txParams, findElementsInstance, driver, metamaskTab, nightfallTab, cancel=1)
         logging.info(tokenType, txType)
@@ -35,14 +51,43 @@ def transactionsTest(findElementsInstance, driver, metamaskTab, nightfallTab):
         sleep(10)
         logging.info(tokenType, txType)
         submitTxWallet(txParams, findElementsInstance, driver, metamaskTab, nightfallTab)
+        status, errorMsg = waitBalanceChange(l1Balance, l2Balance, txParams, 2, findElementsInstance)
+        if status == 0:
+          return errorMsg
         sleep(10)
-  
-      # Instant withdraw
 
+def waitBalanceChange(l1Balance, l2Balance, txParams, nTx, findElementsInstance):
+  niter=0
+  while True:
+    if niter == 10:
+      errorMsg = "FAILED - waited too long\n"
+      print("ABBO")
+      sleep(1000)
+      return 0, errorMsg
+    sleep(5) 
+    l1BalanceNew, l2BalanceNew = getNightfallBalance(findElementsInstance, txParams)
+    print("Check", txParams["txType"], l1Balance, l1BalanceNew, l2Balance, l2BalanceNew)
+    if txParams["txType"] == "Deposit":
+      if l2BalanceNew - nTx*txParams["amount"] == l2Balance and l1BalanceNew + nTx*txParams["amount"] == l1Balance:
+        break
+    elif txParams["txType"] == "Transfer":
+      if l1BalanceNew != l1Balance:
+        errorMsg = "FAILED - Balances do not match after transfer\n"
+        return 0, errorMsg
+      if l2BalanceNew == l2Balance:
+        break
+    elif txParams["txType"] == "Withdraw":
+       #if l1BalanceNew != l1Balance:
+        #return "FAILED - Balances do not match after withdraw\n"
+       #if l2BalanceNew - nTx*txParams["amount"] == l2Balance:
+         break
+    #elif txType == "Instant-withdraw":
+    niter+=1
+  return 1,""
 
 txTestsList = [
   {
     'name': transactionsTest,
-    'description' : 'Performs deposit, transfer and withdraw of ERC20, ERC721 and ERC1155 tokens'
+    'description' : 'Performs deposit, transfer and withdraw of ERC20, ERC721 and ERC1155 tokens and check balances'
   }
 ]
