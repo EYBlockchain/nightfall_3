@@ -2,7 +2,7 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import Nf3 from '../../cli/lib/nf3.mjs';
-import { getTokensInfo } from '../../cli/lib/tokens.mjs';
+import { getERCInfo } from '../../cli/lib/tokens.mjs';
 import {
   connectWeb3,
   closeWeb3Connection,
@@ -89,6 +89,11 @@ describe('Testing the Nightfall ERCMocks', () => {
     it('should transfer some token of the ERC20 contract mock', async function () {
       const erc20Token = new web3.eth.Contract(nf3.contracts.ERC20, erc20Address);
       const amount = 3000;
+      const tokensInfo = await getERCInfo(erc20Address, nf3.ethereumAddress, web3, {
+        toEth: true,
+        details: true,
+      });
+      console.log(`TOKENS INFO ${nf3.ethereumAddress} (${erc20Address}): `, tokensInfo);
       const balanceBefore = await erc20Token.methods.balanceOf(nf3.ethereumAddress).call();
       const decimals = await erc20Token.methods.decimals().call();
       expect(Number(decimals)).to.be.equal(9);
@@ -131,10 +136,12 @@ describe('Testing the Nightfall ERCMocks', () => {
         `        Balance ERC721Mock after transfer tokenId ${tokenId} [${nf3.ethereumAddress}]: ${balanceAfter}`,
       );
       expect(Number(balanceAfter)).to.be.equal(Number(balanceBefore) - 1);
-      const tokensInfo = await getTokensInfo(erc721Address, nf3.ethereumAddress, web3);
-      expect(Number(tokensInfo.balance)).to.be.equal(Number(balanceAfter));
-      expect(Number(tokensInfo.tokenIds.length)).to.be.equal(Number(balanceAfter));
+      const tokensInfo = await getERCInfo(erc721Address, nf3.ethereumAddress, web3, {
+        details: true,
+      });
       console.log(`TOKENS INFO ${nf3.ethereumAddress} (${erc721Address}): `, tokensInfo);
+      expect(Number(tokensInfo.balance)).to.be.equal(Number(balanceAfter));
+      expect(Number(tokensInfo.details.length)).to.be.equal(Number(balanceAfter));
 
       await nf3.setEthereumSigningKey(walletTestSigningkey);
       txDataToSign = await erc721Token.methods
@@ -162,11 +169,13 @@ describe('Testing the Nightfall ERCMocks', () => {
       const erc1155Token = new web3.eth.Contract(nf3.contracts.ERC1155, erc1155Address);
       const balance = await erc1155Token.methods.balanceOf(nf3.ethereumAddress, Id).call();
       expect(Number(balance)).to.be.greaterThan(0);
-      const tokensInfo = await getTokensInfo(erc1155Address, nf3.ethereumAddress, web3);
-      expect(Number(balance)).to.be.equal(
-        Number(tokensInfo.tokenIds.find(tokenId => tokenId.Id === Id.toString()).amount),
-      );
+      const tokensInfo = await getERCInfo(erc1155Address, nf3.ethereumAddress, web3, {
+        details: true,
+      });
       console.log(`TOKENS INFO ${nf3.ethereumAddress} (${erc1155Address}): `, tokensInfo);
+      expect(Number(balance)).to.be.equal(
+        Number(tokensInfo.details.find(tokenId => tokenId.Id === Id.toString()).amount),
+      );
     });
 
     it('should get the balance of wallet address of the ERC1155 contract mock', async function () {
