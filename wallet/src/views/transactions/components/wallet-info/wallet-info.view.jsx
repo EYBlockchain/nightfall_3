@@ -64,7 +64,7 @@ function WalletInfo({
   function renderRowTable() {
     const rows = token.tokenPool.map(item => {
       const tokenTypeId = `token type${item.tokenAddress}`;
-      const l1BalanceId= `l1 balance${item.tokenAddress}`;
+      const l1BalanceId = `l1 balance${item.tokenAddress}`;
       const l2BalanceId = `l2 balance${item.tokenAddress}`;
       return (
         <Table.Row
