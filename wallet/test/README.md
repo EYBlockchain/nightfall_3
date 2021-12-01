@@ -3,12 +3,12 @@
 ## Installation guide
 
 ### Docker
-1. Start selenium test container
+1. Start wallet-test container
 ```
 ./start-nightfall -wt -s
 ```
 This configuration starts a docker container including the wallet at port 3010, a headless version of chrome/chromium driver, metamask plugin and selenium tests.
-If you exec into this container (`docker exec -it <SELENIUM_CONTAINER_ID> bash), tests are launched under `tmux a -t selenium`.
+If you exec into this container (`docker exec -it <WALLET_TEST_CONTAINER_ID> bash), tests are launched under `tmux a -t selenium`.
 When tests are finished, you can see either `Selenium tests PASSED` or `Selenium tests FAILED` in the container logs.
 
 #### Debugging Wallet Unit Tests

@@ -4,7 +4,6 @@ USER root
 ENV BUNDLE_SILENCE_ROOT_WARNING=1
 
 RUN apt-get update && apt-get -y install curl gnupg unzip wget vim xvfb x11vnc fluxbox wmctrl sudo tmux
-#RUN useradd apps
 RUN adduser --disabled-password --gecos '' apps
 RUN adduser apps sudo
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
@@ -33,9 +32,6 @@ ADD . /src
 
 # Build react app
 RUN npm install --save
-#RUN npm start
-#RUN npm run build
-#RUN npm install -g serve
 
 # Install python3
 RUN apt-get install -y  python3 python3-dev python3-distutils

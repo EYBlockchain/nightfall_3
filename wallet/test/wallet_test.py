@@ -49,13 +49,13 @@ driver.switch_to.window(metamaskTab)
 ###################
 initializeMetamask(driver, findElementsInstance, metamaskConfig)
 #deleteNetworkMetamask(driver, findElementsInstance, deleteNetworkConfig)
-selectNetworkMetamask(driver, findElementsInstance, networkConfigLocalhost)
-addEthAccountMetamask(driver, findElementsInstance, ethAccount1Params)
+#selectTestNetworkMetamask(driver, findElementsInstance, networkConfigRopsten)
+selectNetworkMetamask(driver, findElementsInstance, networkConfig)
+#addEthAccountMetamask(driver, findElementsInstance, ethAccount1Params)
 addEthAccountMetamask(driver, findElementsInstance, ethAccount2Params)
 
 # Add tokens to metamask
 #addTokenMetamask("0x4232AF76301fd6c2B144A7A5A7796331B2A43D90", findElementsInstance)
-
 ########################
 # Log in wallet #
 ########################
@@ -66,9 +66,9 @@ assert(testEthAddress.lower() == ethAccount2Params["ethereumAddress"].lower())
 ########################
 # Start Tests          
 ########################
-#effectTest(findElementsInstance, driver, metamaskTab, nightfallTab, walletUrl)
-#loginTest(findElementsInstance, driver, metamaskTab, nightfallTab)
-#tokenTest(findElementsInstance, driver, metamaskTab, nightfallTab)
-#txTest(findElementsInstance, driver, metamaskTab, nightfallTab)
+effectTest(findElementsInstance, driver, metamaskTab, nightfallTab, walletUrl)
+loginTest(findElementsInstance, driver, metamaskTab, nightfallTab)
+tokenTest(findElementsInstance, driver, metamaskTab, nightfallTab)
+txTest(findElementsInstance, driver, metamaskTab, nightfallTab)
 
 driver.quit()

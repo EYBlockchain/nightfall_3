@@ -42,11 +42,12 @@ wait_tests_done() {
    done
 
 }
-wait_app_deployed() {
-  app_deployed=$(curl http://selenium:3000 | grep favicon)
+
+wait_ready() {
+  app_deployed=$(curl http://wallet-test:3010 2> /dev/null | grep favicon)
   while [ -z "${app_deployed}" ]; do
     sleep 10;
-    app_deployed=$(curl http://selenium:3000 | grep favicon)
+    app_deployed=$(curl http://wallet-test:3010 2> /dev/null | grep favicon)
   done
 }
 
