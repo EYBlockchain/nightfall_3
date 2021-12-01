@@ -1,5 +1,5 @@
 import React from 'react';
-import { Container, Header, Divider } from 'semantic-ui-react';
+import { Container, Header, Divider, Message } from 'semantic-ui-react';
 import { connect } from 'react-redux';
 import { Redirect } from 'react-router-dom';
 import PropTypes from 'prop-types';
@@ -18,6 +18,7 @@ let nf3;
 
 function Login({ login, onLoadWallet, onDeleteWallet, onLoadTokens }) {
   const [modalEnable, setModalEnable] = React.useState(false);
+  const [errorMsg, setErrorMsg] = React.useState('');
 
   const renderRedirect = () => {
     if (login.isWalletInitialized) {
@@ -59,7 +60,7 @@ function Login({ login, onLoadWallet, onDeleteWallet, onLoadTokens }) {
       }
     } catch (err) {
       // TODO display error message
-      throw new Error('No Connection');
+      throw new Error('Incorrect Network');
     }
   };
 
@@ -109,12 +110,13 @@ function Login({ login, onLoadWallet, onDeleteWallet, onLoadTokens }) {
         const mnemonic = Storage.mnemonicGet(nf3.ethereumAddress, passphrase);
         handleClickOnImport(mnemonic, false);
       }
+      setErrorMsg('');
     } catch (err) {
       // TODO
+      setErrorMsg(err.message);
       console.log('ERROR', err);
     }
   };
-
   return (
     <Container textAlign="center">
       <Header
@@ -141,6 +143,11 @@ function Login({ login, onLoadWallet, onDeleteWallet, onLoadTokens }) {
         handleClickOnImport={handleClickOnImport}
         toggleModalEnable={toggleModalEnable}
       />
+      {errorMsg !== '' ? (
+        <Message error>
+          <Message.Header>{errorMsg}</Message.Header>
+        </Message>
+      ) : null}
       {renderRedirect()}
     </Container>
   );
