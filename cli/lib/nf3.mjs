@@ -4,6 +4,10 @@ import WebSocket from 'ws';
 import EventEmitter from 'events';
 import { Mutex } from 'async-mutex';
 import { approve } from './tokens.mjs';
+import erc20 from './abis/ERC20.mjs';
+import erc721 from './abis/ERC721.mjs';
+import erc1155 from './abis/ERC1155.mjs';
+import { ENVIRONMENTS } from './constants.mjs';
 
 /**
 @class
@@ -56,20 +60,18 @@ class Nf3 {
 
   mnemonic = {};
 
-  constructor(
-    clientBaseUrl,
-    optimistBaseUrl,
-    optimistWsUrl,
-    web3WsUrl,
-    ethereumSigningKey,
-    zkpKeys,
-  ) {
-    this.clientBaseUrl = clientBaseUrl;
-    this.optimistBaseUrl = optimistBaseUrl;
-    this.optimistWsUrl = optimistWsUrl;
+  contracts = { ERC20: erc20, ERC721: erc721, ERC1155: erc1155 };
+
+  currentEnvironment;
+
+  constructor(web3WsUrl, ethereumSigningKey, environment = ENVIRONMENTS.localhost, zkpKeys) {
+    this.clientBaseUrl = environment.clientApiUrl;
+    this.optimistBaseUrl = environment.optimistApiUrl;
+    this.optimistWsUrl = environment.optimistWsUrl;
     this.web3WsUrl = web3WsUrl;
     this.ethereumSigningKey = ethereumSigningKey;
     this.zkpKeys = zkpKeys;
+    this.currentEnvironment = environment;
   }
 
   /**
@@ -162,13 +164,18 @@ class Nf3 {
       // if we don't have a nonce, we must get one from the ethereum client
       if (!this.nonce) this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
 
+      let gasPrice = 10000000000;
+      const gas = (await this.web3.eth.getBlock('latest')).gasLimit;
+      const blockGasPrice = Number(await this.web3.eth.getGasPrice());
+      if (blockGasPrice > gasPrice) gasPrice = blockGasPrice;
+
       tx = {
         from: this.ethereumAddress,
         to: contractAddress,
         data: unsignedTransaction,
         value: fee,
-        gas: 10000000,
-        gasPrice: 10000000000,
+        gas,
+        gasPrice,
         nonce: this.nonce,
       };
       this.nonce++;
@@ -385,8 +392,14 @@ class Nf3 {
   @param {number} fee - the amount being paid for the instant withdrawal service
   */
   async requestInstantWithdrawal(withdrawTransactionHash, fee) {
+    // find the L2 block containing the L2 transaction hash
+    let res = await axios.get(
+      `${this.optimistBaseUrl}/block/transaction-hash/${withdrawTransactionHash}`,
+    );
+    const { block } = res.data;
+    if (!block) return null; // block not found
     // set the instant withdrawal fee
-    const res = await axios.post(`${this.clientBaseUrl}/set-instant-withdrawal`, {
+    res = await axios.post(`${this.clientBaseUrl}/set-instant-withdrawal`, {
       transactionHash: withdrawTransactionHash,
     });
     return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, fee);
@@ -490,6 +503,21 @@ class Nf3 {
   */
   async deregisterProposer() {
     const res = await axios.post(`${this.optimistBaseUrl}/proposer/de-register`, {
+      address: this.ethereumAddress,
+    });
+    return this.submitTransaction(res.data.txDataToSign, this.proposersContractAddress, 0);
+  }
+
+  /**
+  Change current proposer.
+  It will use the address of the Ethereum Signing key that is holds to change the current
+  proposer.
+  @method
+  @async
+  @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
+  */
+  async changeCurrentProposer() {
+    const res = await axios.get(`${this.optimistBaseUrl}/proposer/change`, {
       address: this.ethereumAddress,
     });
     return this.submitTransaction(res.data.txDataToSign, this.proposersContractAddress, 0);
@@ -674,17 +702,12 @@ class Nf3 {
     let res;
     let valid = false;
 
-    try {
-      res = await axios.get(
-        `${this.optimistBaseUrl}/block/transaction-hash/${withdrawTransactionHash}`,
-      );
-    } catch (e) {
-      // transaction is not in block yet
-      valid = false;
-    }
+    res = await axios.get(
+      `${this.optimistBaseUrl}/block/transaction-hash/${withdrawTransactionHash}`,
+    );
+    const { block, transactions, index } = res.data;
 
-    if (res) {
-      const { block, transactions, index } = res.data;
+    if (block) {
       res = await axios.post(`${this.clientBaseUrl}/valid-withdrawal`, {
         block,
         transactions,
