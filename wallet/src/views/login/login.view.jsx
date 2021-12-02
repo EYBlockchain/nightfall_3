@@ -82,7 +82,6 @@ function Login({ login, onLoadWallet, onDeleteWallet, onLoadTokens }) {
       }
       await nf3.setzkpKeysFromMnemonic(mnemonic, DEFAULT_NF_ADDRESS_INDEX);
       onLoadWallet(nf3);
-      console.log("TTT", tokens)
       onLoadTokens(tokens);
     } catch (err) {
       console.log('Failed', err);
