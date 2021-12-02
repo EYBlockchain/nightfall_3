@@ -108,7 +108,6 @@ async function getERCInfo(ercAddress, ethereumAddress, provider, options) {
       const interface1155 = await ercContract.methods.supportsInterface('0xd9b67a26').call(); // ERC1155 interface
       if (interface1155) tokenType = TOKEN_TYPE.ERC1155;
     }
-
   } catch {
     // Expected ERC20
     tokenType = TOKEN_TYPE.ERC20;
