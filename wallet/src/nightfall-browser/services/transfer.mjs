@@ -1,3 +1,4 @@
+/* ignore unused exports */
 /**
 This module contains the logic needed create a zkp transfer, i.e. to nullify
 two input commitments and create two new output commitments to the same value.

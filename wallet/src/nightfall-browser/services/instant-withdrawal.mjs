@@ -1,3 +1,4 @@
+/* ignore unused exports */
 /**
  * This module enables setting instant withdrawals fees
  */

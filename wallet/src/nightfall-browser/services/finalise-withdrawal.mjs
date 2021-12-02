@@ -1,3 +1,4 @@
+/* ignore unused exports */
 /**
 Module to endable withdrawal of funds from the Shield contract to the user's
 address.
