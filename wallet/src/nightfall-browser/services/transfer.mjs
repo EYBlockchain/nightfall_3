@@ -7,9 +7,9 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
  */
 import config from 'config';
 import gen from 'general-number';
-import rand from 'common-files/utils/crypto/crypto-random.mjs';
-import { getContractInstance } from 'common-files/utils/contract.mjs';
-import logger from 'common-files/utils/logger.mjs';
+import rand from '../common-files/utils/crypto/crypto-random.mjs';
+import { getContractInstance } from '../common-files/utils/contract.mjs';
+import logger from '../common-files/utils/logger.mjs';
 import { generateProof, computeWitness } from 'zokrates-js';
 import { Secrets, Nullifier, Commitment, PublicInputs, Transaction } from '../classes/index.mjs';
 import {
@@ -174,8 +174,8 @@ async function transfer(transferParams) {
   if (USE_STUBS) folderpath = `${folderpath}_stub`;
   let artifacts;
   let keypair;
-  const { witness } = computeWitness(artifacts, witnessInput);
-  const proof = generateProof(artifacts.program, witness, keypair.pk);
+  // const { witness } = computeWitness(artifacts, witnessInput);
+  const proof = ''; // generateProof(artifacts.program, witness, keypair.pk);
 
   // logger.silly(`Received response ${JSON.stringify(res.data, null, 2)}`);
   // const { proof } = res.data;

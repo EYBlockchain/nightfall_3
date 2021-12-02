@@ -3,8 +3,8 @@ functions to support El-Gamal cipherText over a BabyJubJub curve
 */
 
 import config from 'config';
-import utils from 'common-files/utils/crypto/merkle-tree/utils.mjs';
-import { squareRootModPrime, addMod, mulMod } from 'common-files/utils/crypto/number-theory.mjs';
+import utils from '../../../../common-files/utils/crypto/merkle-tree/utils.mjs';
+import { squareRootModPrime, addMod, mulMod } from '../../../../common-files/utils/crypto/number-theory.mjs';
 import modDivide from './modular-division.mjs'; // TODO REPLACE WITH NPM VERSION
 import { hashToCurve, hashToCurveYSqrt, curveToHash } from './elligator2.mjs';
 

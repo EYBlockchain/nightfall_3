@@ -7,8 +7,8 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
  */
 import config from 'config';
 import gen from 'general-number';
-import { getContractInstance } from 'common-files/utils/contract.mjs';
-import logger from 'common-files/utils/logger.mjs';
+import { getContractInstance } from '../../common-files/utils/contract.mjs';
+import logger from '../../common-files/utils/logger.mjs';
 import { generateProof, computeWitness } from 'zokrates-js';
 import { Nullifier, PublicInputs, Transaction } from '../classes/index.mjs';
 import {
@@ -86,8 +86,8 @@ async function withdraw(withdrawParams) {
   if (USE_STUBS) folderpath = `${folderpath}_stub`;
   let artifacts;
   let keypair;
-  const { witness } = computeWitness(artifacts, witnessInput);
-  const proof = generateProof(artifacts.program, witness, keypair.pk);
+  // const { witness } = computeWitness(artifacts, witnessInput);
+  const proof = ''; // generateProof(artifacts.program, witness, keypair.pk);
   // const res = await axios.post(`${PROTOCOL}${ZOKRATES_WORKER_HOST}/generate-proof`, {
   //   folderpath,
   //   inputs: witness,

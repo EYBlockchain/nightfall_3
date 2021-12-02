@@ -1,6 +1,6 @@
 import config from 'config';
-import logger from 'common-files/utils/logger.mjs';
-import Timber from 'common-files/classes/timber.mjs';
+import logger from '../../common-files/utils/logger.mjs';
+import Timber from '../../common-files/classes/timber.mjs';
 import {
   markNullifiedOnChain,
   markOnChain,

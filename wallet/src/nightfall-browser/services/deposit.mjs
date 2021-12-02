@@ -8,10 +8,10 @@
  */
 import config from 'config';
 import gen from 'general-number';
-import rand from 'common-files/utils/crypto/crypto-random.mjs';
-import { getContractInstance } from 'common-files/utils/contract.mjs';
-import logger from 'common-files/utils/logger.mjs';
-import { generateProof, computeWitness } from 'zokrates-js';
+import rand from '../../common-files/utils/crypto/crypto-random.mjs';
+import { getContractInstance } from '../../common-files/utils/contract.mjs';
+import logger from '../../common-files/utils/logger.mjs';
+// import { generateProof, computeWitness } from 'zokrates-js';
 import { Commitment, PublicInputs, Transaction } from '../classes/index.mjs';
 import { storeCommitment } from './commitment-storage.mjs';
 import { compressPublicKey } from './keys.mjs';
@@ -55,8 +55,8 @@ async function deposit(items) {
   if (USE_STUBS) folderpath = `${folderpath}_stub`;
   let artifacts;
   let keypair;
-  const { witness } = computeWitness(artifacts, witnessInput);
-  const proof = generateProof(artifacts.program, witness, keypair.pk);
+  // const { witness } = computeWitness(artifacts, witnessInput);
+  const proof = ''//generateProof(artifacts.program, witness, keypair.pk);
   // await axios.post(`${PROTOCOL}${ZOKRATES_WORKER_HOST}/generate-proof`, {
   //   folderpath,
   //   inputs: witness,

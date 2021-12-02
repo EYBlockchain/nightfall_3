@@ -3,7 +3,7 @@
  */
 
 import config from 'config';
-import { getContractInstance } from 'common-files/utils/contract.mjs';
+import { getContractInstance } from '../../common-files/utils/contract.mjs';
 import { Transaction } from '../classes/index.mjs';
 import { buildSolidityStruct } from './finalise-withdrawal.mjs';
 import { getTransactionByTransactionHash, getBlockByTransactionHash } from './database.mjs';

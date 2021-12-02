@@ -4,9 +4,9 @@ their local commitments databsae.
 */
 
 import config from 'config';
-import logger from 'common-files/utils/logger.mjs';
-import { getContractInstance } from 'common-files/utils/contract.mjs';
-import mongo from 'common-files/utils/mongo.mjs';
+import logger from '../../common-files/utils/logger.mjs';
+import { getContractInstance } from '../../common-files/utils/contract.mjs';
+import mongo from '../../common-files/utils/mongo.mjs';
 import blockProposedEventHandler from '../event-handlers/block-proposed.mjs';
 import rollbackEventHandler from '../event-handlers/rollback.mjs';
 

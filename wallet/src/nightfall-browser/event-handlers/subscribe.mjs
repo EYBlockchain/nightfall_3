@@ -4,8 +4,8 @@
  * Module to subscribe to blockchain events
  */
 import config from 'config';
-import { getContractInstance, getContractAddress } from 'common-files/utils/contract.mjs';
-import logger from 'common-files/utils/logger.mjs';
+import { getContractInstance, getContractAddress } from '../../common-files/utils/contract.mjs';
+import logger from '../../common-files/utils/logger.mjs';
 
 const { STATE_CONTRACT_NAME, RETRIES } = config;
 

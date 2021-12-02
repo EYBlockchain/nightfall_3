@@ -2,7 +2,7 @@
 A nullifier class
 */
 import gen from 'general-number';
-import sha256 from 'common-files/utils/crypto/sha256.mjs';
+import sha256 from '../../common-files/utils/crypto/sha256.mjs';
 
 const { generalise } = gen;
 

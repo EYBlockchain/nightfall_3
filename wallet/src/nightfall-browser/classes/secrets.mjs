@@ -3,7 +3,7 @@
  */
 import config from 'config';
 import { GN, generalise } from 'general-number';
-import rand from 'common-files/utils/crypto/crypto-random.mjs';
+import rand from '../../common-files/utils/crypto/crypto-random.mjs';
 import Commitment from './commitment.mjs';
 import {
   enc,

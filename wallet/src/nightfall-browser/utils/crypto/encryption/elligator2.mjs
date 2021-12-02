@@ -5,7 +5,7 @@ import {
   addMod,
   mulMod,
   powerMod,
-} from 'common-files/utils/crypto/number-theory.mjs';
+} from '../../../../common-files/utils/crypto/number-theory.mjs';
 import modDivide from './modular-division.mjs';
 
 const { BABYJUBJUB, BN128_GROUP_ORDER, ELLIGATOR2 } = config;

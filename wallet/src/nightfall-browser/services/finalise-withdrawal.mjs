@@ -3,7 +3,7 @@ Module to endable withdrawal of funds from the Shield contract to the user's
 address.
 */
 import config from 'config';
-import { getContractInstance } from 'common-files/utils/contract.mjs';
+import { getContractInstance } from '../../common-files/utils/contract.mjs';
 import { Transaction } from '../classes/index.mjs';
 import { getTransactionByTransactionHash, getBlockByTransactionHash } from './database.mjs';
 

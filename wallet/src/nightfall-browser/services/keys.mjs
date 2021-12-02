@@ -1,6 +1,6 @@
 import { GN, generalise } from 'general-number';
 import config from 'config';
-import mimcHash from 'common-files/utils/crypto/mimc/mimc.mjs';
+import mimcHash from '../../common-files/utils/crypto/mimc/mimc.mjs';
 import bip39Pkg from 'bip39';
 import pkg from 'ethereumjs-wallet';
 import { scalarMult, edwardsCompress } from '../utils/crypto/encryption/elgamal.mjs';

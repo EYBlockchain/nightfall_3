@@ -7,7 +7,7 @@ Functions for interacting with the local client data stores
 
 import config from 'config';
 import { openDB } from 'idb';
-import Timber from 'common-files/classes/timber.mjs';
+import Timber from '../../common-files/classes/timber.mjs';
 
 const { COMMITMENTS_DB, TIMBER_COLLECTION, SUBMITTED_BLOCKS_COLLECTION, TRANSACTIONS_COLLECTION } =
   config;
