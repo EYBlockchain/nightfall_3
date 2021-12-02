@@ -266,11 +266,7 @@ async function main(testEnvironment) {
     setEnvironment('Localhost');
   }
   const nf3Env = getCurrentEnvironment().currentEnvironment;
-  const nf3 = new Nf3(
-    nf3Env.web3WsUrl,
-    '',
-    nf3Env
-  );
+  const nf3 = new Nf3(nf3Env.web3WsUrl, '', nf3Env);
   const mnemonic = generateMnemonic();
   await nf3.init(mnemonic);
   const erc20Address = await nf3.getContractAddress('ERC20Mock');

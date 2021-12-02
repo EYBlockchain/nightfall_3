@@ -32,11 +32,7 @@ async function startChallenger(testEnvironment) {
     setEnvironment('Localhost');
   }
   const nf3Env = getCurrentEnvironment().currentEnvironment;
-  const nf3 = new Nf3(
-    nf3Env.web3WsUrl,
-    ethereumSigningKey,
-    nf3Env
-  );
+  const nf3 = new Nf3(nf3Env.web3WsUrl, ethereumSigningKey, nf3Env);
   await nf3.init(defaultMnemonic);
   if (await nf3.healthcheck('optimist')) console.log('Healthcheck passed');
   else throw new Error('Healthcheck failed');
