@@ -7,7 +7,10 @@ this in production.
 
 import { Command } from 'commander/esm.mjs';
 import clear from 'clear';
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
 import Nf3 from '../lib/nf3.mjs';
+import { setEnvironment, getCurrentEnvironment } from '../lib/environment.mjs';
 
 const defaultKey = '0xfbc1ee1c7332e2e5a76a99956f50b3ba2639aff73d56477e877ef8390c41e0c6';
 const defaultMnemonic = 'toy vivid real shove evolve kidney captain flock hungry evoke lawn plunge';
@@ -17,19 +20,22 @@ program.option('-h', '--help', 'Help');
 if (program.opts().help) console.log('-k | --key input an Ethereum signing key to use');
 const advanceWithdrawalEthereumSigningKey = program.opts().key || defaultKey;
 
+const argv = yargs(hideBin(process.argv)).parse();
+const { environment } = argv;
 /**
 Does the preliminary setup and starts listening on the websocket
+@param {string} testEnvironment - Environment where propose is launched ('Testnet','Localhost','Docker')
 */
-async function startProvider() {
+async function startProvider(testEnvironment) {
   clear();
   console.log('Starting Liquidity Provider...');
-  const nf3 = new Nf3(
-    'http://localhost:8080',
-    'http://localhost:8081',
-    'ws://localhost:8082',
-    'ws://localhost:8546',
-    advanceWithdrawalEthereumSigningKey,
-  );
+  if (typeof testEnvironment !== 'undefined') {
+    setEnvironment(testEnvironment);
+  } else {
+    setEnvironment('Localhost');
+  }
+  const nf3Env = getCurrentEnvironment().currentEnvironment;
+  const nf3 = new Nf3(nf3Env.web3WsUrl, advanceWithdrawalEthereumSigningKey, nf3Env);
   await nf3.init(defaultMnemonic);
   if (await nf3.healthcheck('optimist')) console.log('Healthcheck passed');
   else throw new Error('Healthcheck failed');
@@ -42,4 +48,4 @@ async function startProvider() {
   console.log('Listening for incoming events');
 }
 
-startProvider();
+startProvider(environment);

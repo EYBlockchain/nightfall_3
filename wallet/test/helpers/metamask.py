@@ -55,12 +55,35 @@ def selectNetworkMetamask(driver, findElements, networkConfig):
     # Find network
     networkElement = findElements.element_exist_xpath('(//*[contains(text(), "' + networkConfig['name'] + '")] | //*[@value="' + networkConfig['name'] + '"])')
     if not networkElement:
-      findElements.element_exist_xpath('(//*[contains(text(), "' + networkConfig['type'] + '")])').click()
-      findElements.element_exist_xpath('//input[@id="network-name"]').send_keys(networkConfig['name']) # Name
-      findElements.element_exist_xpath('//input[@id="rpc-url"]').send_keys(networkConfig['url']) # URL
-      findElements.element_exist_xpath('//input[@id="chainId"]').send_keys(networkConfig['chainId']) # ChainId
-      findElements.element_exist_xpath('//input[@id="network-ticker"]').send_keys(networkConfig['ticker']) # ChainId
+      findElements.element_exist_xpath('//button[text()="Add Network"]').click()  # Add Network
+      #findElements.element_exist_xpath('(//*[contains(text(), "' + networkConfig['type'] + '")])').click()
+      findElements.element_exist_xpath('(//*[contains(@class, "form-field__input")])[1]').send_keys(networkConfig['name'])
+      findElements.element_exist_xpath('(//*[contains(@class, "form-field__input")])[2]').send_keys(networkConfig['url'])
+      findElements.element_exist_xpath('(//*[contains(@class, "form-field__input")])[3]').send_keys(networkConfig['chainId'])
+      #findElements.element_exist_xpath('//input[@id="network-name"]').send_keys(networkConfig['name']) # Name
+      #findElements.element_exist_xpath('//input[@id="rpc-url"]').send_keys(networkConfig['url']) # URL
+      #findElements.element_exist_xpath('//input[@id="chainId"]').send_keys(networkConfig['chainId']) # ChainId
+      #findElements.element_exist_xpath('//input[@id="network-ticker"]').send_keys(networkConfig['ticker']) # ChainId
       findElements.element_exist_xpath('//button[text()="Save"]').click() # Save
+    else:
+      findElements.element_exist_xpath('(//*[contains(text(), "' + networkConfig['name'] + '")])').click()
+
+def selectTestNetworkMetamask(driver, findElements, networkConfig):
+    # Configure network
+    driver.get('chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn/home.html#')
+
+    # Select network
+    findElements.element_exist_xpath('//*[@id="app-content"]/div/div[1]/div/div[2]/div[1]/div/span').click() # Select network
+    # Find network
+    networkElement = findElements.element_exist_xpath('(//*[contains(text(), "' + networkConfig['name'] + '")] | //*[@value="' + networkConfig['name'] + '"])')
+    try:
+       networkElement.click()
+    except Exception:
+        findElements.element_exist_xpath('//*[contains(@class, "network-dropdown-content--link")]').click() # Show networks
+        findElements.element_exist_xpath('//*[@id="app-content"]/div/div[3]/div/div[2]/div[2]/div[2]/div[7]/div[2]/div/div/div[1]/div[2]').click() # Enable test networks
+        findElements.element_exist_xpath('//*[contains(@class, "settings-page__close-button")]').click() # Save
+        findElements.element_exist_xpath('//*[@id="app-content"]/div/div[1]/div/div[2]/div[1]/div/span').click() # Select network
+        findElements.element_exist_xpath('//*[contains(text(), "' + networkConfig['name'] + '")]').click()
 
 def deleteNetworkMetamask(driver, findElements, networkConfig):
     # Configure network
@@ -89,6 +112,14 @@ def addEthAccountMetamask(driver, findElements, accountParams):
     findElements.element_exist_xpath('//input[@id="private-key-box"]').send_keys(accountParams['privateKey']) # Private Key
     findElements.element_exist_xpath('//button[text()="Import"]').click() # Import
 
+def selectEthAccountMetamask(driver, findElements, accountParams):
+    # Configure network
+    driver.get('chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn/home.html#')
+
+    # Select network
+    findElements.element_exist_xpath('//*[local-name()="svg"]').click() # Color button 
+    findElements.element_exist_xpath('//div[contains(text(), "' + accountParams['name'] + '")]').click()
+
 def addTokenMetamask(tokenAddress, findElements):
     # Add DAI token
     findElements.element_exist_xpath('//button[@class="button btn-secondary btn--rounded add-token-button__button"]').click() # Add token button
@@ -103,21 +134,17 @@ def addTokenMetamask(tokenAddress, findElements):
 
 def signTransactionMetamask(driver, findElements, stop=0):
     sleep(5)
-    #driver.get('chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn/popup.html#')
+    activityButton = findElements.element_exist_xpath('//button[text()="Activity"]')
+    if activityButton:
+         activityButton.click()
 
-    ### Not sure why, but i need to send and cancel a tx to get to the signature option
-    sendButtonEnable = findElements.element_exist_xpath('(//*[contains(text(), "Send")])')
-    if sendButtonEnable:
-        #print("send button found")
-        sendButtonEnable.click()
-        findElements.element_exist_xpath('(//*[contains(text(), "Cancel")])').click()
-        sleep(5)
-        if stop:
-            #print("stopped")
-            sleep(1000)
-
-        ## confirm signature
-        return findElements.element_exist_xpath('//*[contains(text(), "Confirm")] | //div[contains(@class, "--unconfirmed")]')
-    else:
-         #print("send button not found")
-         return findElements.element_exist_xpath('//*[contains(text(), "Confirm")] | //div[contains(@class, "--unconfirmed")]')
+    while True:
+      sleep(4)
+      pendingTx = findElements.element_exist_xpath('//div[contains(@class, "list-item transaction-list-item transaction-list-item--unconfirmed")]')
+      approve = findElements.element_exist_xpath('//button[text()="Confirm"]') # Confirm approve
+      if pendingTx:
+        pendingTx.click()
+      elif approve:
+          approve.click()
+      else:
+        break

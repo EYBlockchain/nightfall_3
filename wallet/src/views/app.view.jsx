@@ -2,15 +2,15 @@ import React from 'react';
 import { Route, Redirect, Switch } from 'react-router-dom';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
+import * as Nf3 from 'nf3';
 
 import Transactions from './transactions/transactions.view.jsx';
 import Login from './login/login.view.jsx';
-import { setEnvironment } from '../utils/lib/environment';
 import { NF3_GITHUB_ISSUES_URL } from '../constants';
 import * as loginActions from '../store/login/login.actions';
 
 function App({ onDeleteWallet }) {
-  setEnvironment(process.env.REACT_APP_ENVIRONMENT);
+  Nf3.Environment.setEnvironment(process.env.REACT_APP_ENVIRONMENT);
 
   // Detect page refresh
   React.useEffect(() => {

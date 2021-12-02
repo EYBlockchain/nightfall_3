@@ -22,4 +22,4 @@ If you select to backup your nightfall mnemonic, it will be encrypted in local s
 When you login to nightfall, you will be using account index 0. You can select a different index in `Account Settings` to use a different set of keys.
 
 ## Tests
-See [here](https://github.com/EYBlockchain/nightfall_3/wallet/test/README.md) for information on how to launc tests.
+See [here](https://github.com/EYBlockchain/nightfall_3/wallet/test/README.md) for information on how to launch tests.

@@ -140,7 +140,7 @@ npm start
 npm run start-ropsten
 ```
 
-- When the wallet starts, you will have the option to enter your private key on connecting with metamask wallet installed in your browser. If you select the latter, you need to have previously configured your metamask wallet to operate with Nightfall's deployment on localhost
+- When the wallet starts, connect metamask wallet installed in your browser. You need to have previously configured your metamask wallet to operate with Nightfall's deployment on localhost
 
 More information can be found [here](https://github.com/EYBlockchain/nightfall_3/wallet/README.md)
 
@@ -158,11 +158,11 @@ More information can be found [here](https://github.com/EYBlockchain/nightfall_3
 
 ### Limitations
 - You cannot run the wallet and a separate version of the SDK (CLI for example) in parallel as nonces will get mixed.
-- If you select Metamask as your wallet, you need to reset the nonce every time you restart Nightfall, as Metamask will keep previous nonce whereas ganache has reset it. If nonce is not reset, you will see an error message after signing the transaction. To reset the nonce in metamask:
+- You need to reset the nonce every time you restart Nightfall, as Metamask will keep previous nonce whereas ganache has reset it. If nonce is not reset, you will see an error message after signing the transaction. To reset the nonce in metamask:
 1. Open Metamask in browser
 2. Settings->Advance->Reset Account
 
-- Transactions with ERC721 tokens do not work. This is because there is not way yet to recover the token Id.
+- Transactions with ERC721 and ERC1155 tokens do not work. This is because there is not way yet to recover the token Id.
 - Direct transactions are not implemented
 - Instant withdraw is selected when doing a withdraw only. Once submitted the instant withdraw request,the wallet requests a simple withdraw and inmediatelly after converts this withdraw into an instant withdraw. Wallet will attempt to send the instant withdraw request up to 10 times, once every 10 seconds. It is likely that during this period, you need to request a simpler transaction (deposit, withdraw or transfer) so that the original withdraw is processed by the processor and the instant withdraw can be carried out.
 - Tested with node version v14.18.0
