@@ -31,7 +31,7 @@ function Transactions({ login }) {
           marginTop: '1em',
         }}
       >
-      <PolygonLogo width="250px" height="100px" />
+        <PolygonLogo width="250px" height="100px" />
         Nightfall Wallet
       </Header>
       <Divider />
