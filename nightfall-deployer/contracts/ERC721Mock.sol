@@ -10,10 +10,7 @@ contract ERC721Mock is ERC721URIStorage {
 
     constructor() ERC721("ERC721Mock", "E721") {}
 
-    function awardItem(address player, string memory tokenURI)
-        public
-        returns (uint256)
-    {
+    function awardItem(address player, string memory tokenURI) public returns (uint256) {
         _tokenIds.increment();
 
         uint256 newItemId = _tokenIds.current();

@@ -10,27 +10,28 @@ efficient and the code is much DRYer.
 pragma solidity ^0.8.0;
 
 interface ERCInterface {
-  function transfer(address to, uint256 value)
-    external returns (bool);
+    function transfer(address to, uint256 value) external returns (bool);
 
-  function transferFrom(address from, address to, uint256 value)
-    external returns (bool);
+    function transferFrom(
+        address from,
+        address to,
+        uint256 value
+    ) external returns (bool);
 
-  function safeTransferFrom(
-    address from, address to, uint256 value, bytes calldata _data
-  )
-    external;
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 value,
+        bytes calldata _data
+    ) external;
 
-  function safeTransferFrom(
-    address from, address to, uint256 id, uint256 value, bytes calldata _data
-  )
-    external;
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 id,
+        uint256 value,
+        bytes calldata _data
+    ) external;
 
-
-
-  event Transfer(
-    address indexed from,
-    address indexed to,
-    uint256 value
-  );
+    event Transfer(address indexed from, address indexed to, uint256 value);
 }
