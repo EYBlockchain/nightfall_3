@@ -1,5 +1,6 @@
 /* ignore unused exports */
 import * as Nf3 from 'nf3';
+import deposit from '../../nightfall-browser/services/deposit.mjs';
 import { TRANSACTION_RETRY_PERIOD, TRANSACTION_MAX_RETRIES } from '../../constants';
 import toBaseUnit from '../../utils/lib/utils';
 import * as txActions from './transactions.actions';
@@ -50,14 +51,14 @@ function txSubmit(txParams) {
     switch (txParams.txType) {
       case Nf3.Constants.TX_TYPES.DEPOSIT:
         // TODO: dispatch error
-        nf3
-          .deposit(
-            txParams.tokenAddress,
-            txParams.tokenType,
-            tokenAmountWei,
-            txParams.tokenId,
-            txParams.fee,
-          )
+        deposit({
+          ercAddress: txParams.tokenAddress,
+          tokenId: txParams.tokenId,
+          value: tokenAmountWei,
+          pkd: nf3.zkpKeys.pkd,
+          nsk: nf3.zkpKeys.nsk,
+          fee: txParams.fee,
+        })
           .then(txReceipt => {
             dispatch(txActions.txSuccess(Nf3.Constants.TX_TYPES.DEPOSIT, txReceipt));
             // TODO: dispatch error
@@ -68,6 +69,14 @@ function txSubmit(txParams) {
             // TODO: dispatch error
             console.log(err);
           });
+        // nf3
+        // .deposit(
+        //   txParams.tokenAddress,
+        //   txParams.tokenType,
+        //   tokenAmountWei,
+        //   txParams.tokenId,
+        //   txParams.fee,
+        // )
         break;
 
       case Nf3.Constants.TX_TYPES.TRANSFER:
