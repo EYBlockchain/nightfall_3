@@ -16,12 +16,10 @@ import {
   makeTransactions,
   sendTransactions,
   waitForEvent,
+  getCurrentEnvironment,
 } from './utils.mjs';
 
 import {
-  url,
-  optimistWsUrl,
-  optimistUrl,
   privateKey,
   gas,
   BLOCK_STAKE,
@@ -59,19 +57,27 @@ describe('Running rollback and resync test', () => {
   let pkd1;
   const txPerBlock = 2;
   const validTransactions = [];
+  const environment = getCurrentEnvironment();
 
   before(async function () {
     web3 = await connectWeb3();
 
-    shieldAddress = (await chai.request(url).get('/contract-address/Shield')).body.address;
+    shieldAddress = (await chai.request(environment.clientApiUrl).get('/contract-address/Shield'))
+      .body.address;
 
-    stateAddress = (await chai.request(url).get('/contract-address/State')).body.address;
+    stateAddress = (await chai.request(environment.clientApiUrl).get('/contract-address/State'))
+      .body.address;
 
-    proposersAddress = (await chai.request(url).get('/contract-address/Proposers')).body.address;
+    proposersAddress = (
+      await chai.request(environment.clientApiUrl).get('/contract-address/Proposers')
+    ).body.address;
 
-    challengesAddress = (await chai.request(url).get('/contract-address/Challenges')).body.address;
+    challengesAddress = (
+      await chai.request(environment.clientApiUrl).get('/contract-address/Challenges')
+    ).body.address;
 
-    ercAddress = (await chai.request(url).get('/contract-address/ERCStub')).body.address;
+    ercAddress = (await chai.request(environment.clientApiUrl).get('/contract-address/ERCStub'))
+      .body.address;
 
     [myAddress] = await getAccounts();
 
@@ -86,7 +92,10 @@ describe('Running rollback and resync test', () => {
       ivk: ivk1,
       pkd: pkd1,
     } = (
-      await chai.request(url).post('/generate-keys').send({ mnemonic, path: `m/44'/60'/0'/0` })
+      await chai
+        .request(environment.clientApiUrl)
+        .post('/generate-keys')
+        .send({ mnemonic, path: `m/44'/60'/0'/0` })
     ).body);
 
     defaultDepositArgs = { ercAddress, tokenId, tokenType, value, pkd: pkd1, nsk: nsk1, fee };
@@ -112,7 +121,7 @@ describe('Running rollback and resync test', () => {
       }
     });
 
-    connection = new WebSocket(optimistWsUrl);
+    connection = new WebSocket(environment.optimistWsUrl);
     connection.onopen = () => {
       connection.send('challenge');
       connection.send('blocks');
@@ -141,7 +150,7 @@ describe('Running rollback and resync test', () => {
       }
     };
     const res = await chai
-      .request(optimistUrl)
+      .request(environment.optimistApiUrl)
       .post('/proposer/register')
       .send({ address: myAddress });
     const { txDataToSign } = res.body;
@@ -149,7 +158,7 @@ describe('Running rollback and resync test', () => {
 
     // Register keys
     await chai
-      .request(url)
+      .request(environment.clientApiUrl)
       .post('/incoming-viewing-key')
       .send({
         ivks: [ivk1],
@@ -157,7 +166,10 @@ describe('Running rollback and resync test', () => {
       });
 
     // Register Challenger
-    await chai.request(optimistUrl).post('/challenger/add').send({ address: myAddress });
+    await chai
+      .request(environment.optimistApiUrl)
+      .post('/challenger/add')
+      .send({ address: myAddress });
   });
 
   describe('Prepare some boiler plate transactions', () => {
@@ -167,7 +179,7 @@ describe('Running rollback and resync test', () => {
       const depositTransactions = await makeTransactions(
         'deposit',
         txPerBlock,
-        url,
+        environment.clientApiUrl,
         defaultDepositArgs,
       );
 
@@ -179,15 +191,13 @@ describe('Running rollback and resync test', () => {
       const transferTransactions = await makeTransactions(
         'transfer',
         txPerBlock,
-        url,
+        environment.clientApiUrl,
         defaultTransferArgs,
       );
       // eslint-disable-next-line prefer-destructuring
       duplicateTransaction = transferTransactions[0];
       await sendTransactions(transferTransactions, [privateKey, shieldAddress, gas, fee]);
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
-      // Have to wait here as client block proposal takes longer now
-      await new Promise(resolve => setTimeout(resolve, 3000));
     });
   });
 
@@ -206,7 +216,7 @@ describe('Running rollback and resync test', () => {
       const transferTransactions = await makeTransactions(
         'transfer',
         txPerBlock,
-        url,
+        environment.clientApiUrl,
         defaultTransferArgs,
       );
 
@@ -214,8 +224,6 @@ describe('Running rollback and resync test', () => {
       await sendTransactions(transferTransactions, [privateKey, shieldAddress, gas, fee]);
 
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
-      // Have to wait here as client block proposal takes longer now
-      await new Promise(resolve => setTimeout(resolve, 3000));
     });
     it('should send the commit-challenge', async function () {
       while (!commitTxDataToSign) {
@@ -250,7 +258,8 @@ describe('Running rollback and resync test', () => {
         while (healthCheck !== 200) {
           try {
             // eslint-disable-next-line no-await-in-loop
-            healthCheck = (await chai.request(optimistUrl).get('/healthcheck')).status;
+            healthCheck = (await chai.request(environment.optimistApiUrl).get('/healthcheck'))
+              .status;
           } catch (error) {
             console.log(`Wait for Optimist to restart`);
             // eslint-disable-next-line no-await-in-loop
@@ -265,7 +274,7 @@ describe('Running rollback and resync test', () => {
     it('should re-register ourselves as a proposer and reopen the websocket', async function () {
       // Need to wait for the resync process to finish processing
       await new Promise(resolve => setTimeout(resolve, 25000));
-      connection = new WebSocket(optimistWsUrl);
+      connection = new WebSocket(environment.optimistWsUrl);
       connection.onopen = () => {
         connection.send('challenge');
         connection.send('blocks');
@@ -294,7 +303,7 @@ describe('Running rollback and resync test', () => {
       };
 
       const res = await chai
-        .request(optimistUrl)
+        .request(environment.optimistApiUrl)
         .post('/proposer/register')
         .send({ address: myAddress });
       const { txDataToSign } = res.body;
@@ -302,14 +311,17 @@ describe('Running rollback and resync test', () => {
       // now we need to sign the transaction and send it to the blockchain
       await submitTransaction(txDataToSign, privateKey, proposersAddress, gas, bond);
       await chai
-        .request(url)
+        .request(environment.clientApiUrl)
         .post('/incoming-viewing-key')
         .send({
           ivks: [ivk1],
           nsks: [nsk1],
         });
       // Register Challenger
-      await chai.request(optimistUrl).post('/challenger/add').send({ address: myAddress });
+      await chai
+        .request(environment.optimistApiUrl)
+        .post('/challenger/add')
+        .send({ address: myAddress });
     });
 
     it('should automatically create a bad block, as the resync will re-populate our local db', async () => {
@@ -320,14 +332,19 @@ describe('Running rollback and resync test', () => {
     it('should make another good block on top of the bad block', async function () {
       blockSubmissionFunction = async (txDataToSign, b, c, d, e, f) =>
         submitTransaction(txDataToSign, b, c, d, e, f);
-      const transferTransactions = await makeTransactions('transfer', 1, url, defaultTransferArgs);
+      const transferTransactions = await makeTransactions(
+        'transfer',
+        1,
+        environment.clientApiUrl,
+        defaultTransferArgs,
+      );
       await sendTransactions(transferTransactions, [privateKey, shieldAddress, gas, fee]);
       // we do not add this transaction - as it should be dropped because it will become invalid on rollback
 
       const depositTransactions = await makeTransactions(
         'deposit',
         txPerBlock - 1,
-        url,
+        environment.clientApiUrl,
         defaultDepositArgs,
       );
       await sendTransactions(depositTransactions, [privateKey, shieldAddress, gas, fee]);
@@ -367,7 +384,8 @@ describe('Running rollback and resync test', () => {
         while (healthCheck !== 200) {
           try {
             // eslint-disable-next-line no-await-in-loop
-            healthCheck = (await chai.request(optimistUrl).get('/healthcheck')).status;
+            healthCheck = (await chai.request(environment.optimistApiUrl).get('/healthcheck'))
+              .status;
           } catch (error) {
             console.log(`Wait for Optimist to restart`);
             // eslint-disable-next-line no-await-in-loop
@@ -380,7 +398,7 @@ describe('Running rollback and resync test', () => {
     it('compare the mempools', async () => {
       await new Promise(resolve => setTimeout(resolve, 50000));
       const optimistMempool = (
-        await chai.request(optimistUrl).get('/proposer/mempool')
+        await chai.request(environment.optimistApiUrl).get('/proposer/mempool')
       ).body.result.filter(m => m.mempool);
       expect(optimistMempool.map(o => o.transactionHash)).eql(
         validTransactions.map(v => v.transaction.transactionHash),

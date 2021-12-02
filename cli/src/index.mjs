@@ -1,6 +1,8 @@
 import figlet from 'figlet';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
 import clear from 'clear';
 import Web3 from 'web3';
 import Table from 'cli-table';
@@ -8,10 +10,13 @@ import { generateMnemonic } from 'bip39';
 import Nf3 from '../lib/nf3.mjs';
 import { toBaseUnit } from '../lib/units.mjs';
 import { getDecimals } from '../lib/tokens.mjs';
+import { setEnvironment, getCurrentEnvironment } from '../lib/environment.mjs';
 
 const web3 = new Web3('ws://localhost:8546');
 let latestWithdrawTransactionHash; // we'll remember this globally so it can be used for instant withdrawals
 
+const argv = yargs(hideBin(process.argv)).parse();
+const { environment } = argv;
 /**
 Initialises the CLI
 */
@@ -252,15 +257,20 @@ async function loop(nf3, ercAddress) {
   return [false, receiptPromise];
 }
 
-async function main() {
+async function main(testEnvironment) {
   // intialisation
   init();
+  if (typeof testEnvironment !== 'undefined') {
+    setEnvironment(testEnvironment);
+  } else {
+    setEnvironment('Localhost');
+  }
+  const nf3Env = getCurrentEnvironment().currentEnvironment;
   const nf3 = new Nf3(
-    'http://localhost:8080',
-    'http://localhost:8081',
-    'ws://localhost:8082',
-    'ws://localhost:8546',
-  ); // create an nf3 instance
+    nf3Env.web3WsUrl,
+    '',
+    nf3Env
+  );
   const mnemonic = generateMnemonic();
   await nf3.init(mnemonic);
   const erc20Address = await nf3.getContractAddress('ERC20Mock');
@@ -283,4 +293,4 @@ async function main() {
   nf3.close();
 }
 
-main();
+main(environment);
