@@ -11,6 +11,7 @@ import tokens from '../../utils/tokens';
 import CreateWalletModal from './components/create-wallet.view.jsx';
 import { loadWallet, deleteWallet } from '../../store/login/login.actions';
 import { ReactComponent as MetaMaskLogo } from '../../images/metamask.svg';
+import { ReactComponent as PolygonLogo } from '../../images/polygon.svg';
 import { DEFAULT_NF_ADDRESS_INDEX, METAMASK_MESSAGE } from '../../constants.js';
 import tokensLoad from '../../store/token/token.thunks';
 
@@ -81,6 +82,7 @@ function Login({ login, onLoadWallet, onDeleteWallet, onLoadTokens }) {
       }
       await nf3.setzkpKeysFromMnemonic(mnemonic, DEFAULT_NF_ADDRESS_INDEX);
       onLoadWallet(nf3);
+      console.log("TTT", tokens)
       onLoadTokens(tokens);
     } catch (err) {
       console.log('Failed', err);
@@ -120,7 +122,8 @@ function Login({ login, onLoadWallet, onDeleteWallet, onLoadTokens }) {
           marginTop: '3em',
         }}
       >
-        Nightfall Client
+        <PolygonLogo width="250px" height="250px" />
+        Nightfall Wallet
       </Header>
       <Divider />
       <h1> Connect with: </h1>

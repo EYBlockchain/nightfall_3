@@ -65,7 +65,7 @@ function tokensLoad(initTokens) {
                       compressedPkd,
                       el.tokenAddress.toLowerCase(),
                       el.tokenType,
-                      '0x00',
+                      el.tokenId,
                       el.tokenName,
                       l1Balance.balance,
                       Nf3.Units.fromBaseUnit(el.tokenBalanceL2, l1Balance.decimals),

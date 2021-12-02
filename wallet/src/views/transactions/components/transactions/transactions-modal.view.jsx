@@ -193,10 +193,10 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
                   Token Id{' '}
                   <Dropdown
                     placeholder={tokenInfo.tokenId.length ? tokenInfo.tokenId[0] : 0}
-                    defaultValue={tokenInfo.tokenId.length ? tokenInfo.tokenId[0] : 0}
+                    defaultValue={tokenInfo.tokenId.length ? tokenInfo.tokenId : 0}
                     selection
                     options={
-                      tokenInfo.tokenId.legth
+                      tokenInfo.tokenId.length
                         ? tokenInfo.tokenId.map(function (id) {
                             return { key: id, text: id, value: id };
                           })
