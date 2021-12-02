@@ -308,6 +308,16 @@ export async function markNullifiedOnChain(
   const db = await connectDB();
   const res = await db.getAll(COMMITMENTS_COLLECTION);
   const filtered = res.filter(r => nullifiers.include(r.nullifier) && r.isNullifiedOnChain === -1);
+  if (filtered.length > 0) {
+    return Promise.all(
+      filtered.map(f => {
+        const { isNullifiedOnChain: a, blockNumber: b } = f;
+        return db.put(COMMITMENTS_COLLECTION, f._id, {
+          isNullifiedOnChain: Number(blockNumberL2),
+        })
+      })
+    )
+  }
   // const connection = await mongo.connection(MONGO_URL);
   // const query = { nullifier: { $in: nullifiers }, isNullifiedOnChain: { $eq: -1 } };
   // const update = {
