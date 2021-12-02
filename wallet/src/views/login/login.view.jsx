@@ -6,16 +6,17 @@ import PropTypes from 'prop-types';
 import jsSha3 from 'js-sha3';
 import * as Nf3 from 'nf3';
 import * as Storage from '../../utils/lib/local-storage';
+import tokens from '../../utils/tokens';
 
 import CreateWalletModal from './components/create-wallet.view.jsx';
 import { loadWallet, deleteWallet } from '../../store/login/login.actions';
-import { getCurrentEnvironment, setContractAddresses } from '../../utils/lib/environment';
 import { ReactComponent as MetaMaskLogo } from '../../images/metamask.svg';
 import { DEFAULT_NF_ADDRESS_INDEX, METAMASK_MESSAGE } from '../../constants.js';
+import tokensLoad from '../../store/token/token.thunks';
 
 let nf3;
 
-function Login({ login, onLoadWallet, onDeleteWallet }) {
+function Login({ login, onLoadWallet, onDeleteWallet, onLoadTokens }) {
   const [modalEnable, setModalEnable] = React.useState(false);
 
   const renderRedirect = () => {
@@ -40,18 +41,12 @@ function Login({ login, onLoadWallet, onDeleteWallet }) {
   };
 
   const initNf3 = async ethereumSigningKey => {
-    const nf3Env = getCurrentEnvironment().currentEnvironment;
-    nf3 = new Nf3.Nf3(
-      nf3Env.clientApiUrl,
-      nf3Env.optimistApiUrl,
-      nf3Env.optimistWsUrl,
-      nf3Env.web3WsUrl,
-      ethereumSigningKey,
-    );
+    const nf3Env = Nf3.Environment.getCurrentEnvironment().currentEnvironment;
+    nf3 = new Nf3.Nf3(nf3Env.web3WsUrl, ethereumSigningKey, nf3Env);
     // Start NF3
     try {
       await nf3.init();
-      setContractAddresses(nf3);
+      Nf3.Environment.setContractAddresses(nf3);
       // Run checks if Metamask selected
       if (ethereumSigningKey === '') {
         await chainIdCheck(nf3Env.chainId);
@@ -85,8 +80,8 @@ function Login({ login, onLoadWallet, onDeleteWallet }) {
         Storage.mnemonicSet(nf3.ethereumAddress, mnemonic, passphrase);
       }
       await nf3.setzkpKeysFromMnemonic(mnemonic, DEFAULT_NF_ADDRESS_INDEX);
-      // Set Wallet and Nf3 object
       onLoadWallet(nf3);
+      onLoadTokens(tokens);
     } catch (err) {
       console.log('Failed', err);
       setModalEnable(false);
@@ -149,6 +144,7 @@ Login.propTypes = {
   login: PropTypes.object.isRequired,
   onLoadWallet: PropTypes.func.isRequired,
   onDeleteWallet: PropTypes.func.isRequired,
+  onLoadTokens: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = state => ({
@@ -158,6 +154,7 @@ const mapStateToProps = state => ({
 const mapDispatchToProps = dispatch => ({
   onLoadWallet: nf3Instance => dispatch(loadWallet(nf3Instance)),
   onDeleteWallet: () => dispatch(deleteWallet()),
+  onLoadTokens: newTokens => dispatch(tokensLoad(newTokens)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(Login);

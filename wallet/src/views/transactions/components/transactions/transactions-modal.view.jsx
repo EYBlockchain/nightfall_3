@@ -33,11 +33,15 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
   };
 
   function getTokenInfo() {
-    const tokenPool = Storage.tokensGet(login.nf3.zkpKeys.compressedPkd);
-    if (tokenPool === null) {
+    try {
+      const tokenPool = Storage.tokensGet(login.nf3.zkpKeys.compressedPkd);
+      if (tokenPool === null) {
+        return null;
+      }
+      return tokenPool.filter(tokenEl => tokenEl.tokenAddress === token.activeTokenRowId)[0];
+    } catch {
       return null;
     }
-    return tokenPool.filter(tokenEl => tokenEl.tokenAddress === token.activeTokenRowId)[0];
   }
 
   function validateContractAddress(key, value) {
@@ -154,7 +158,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
               control={Input}
               label={keyLabel}
               placeholder={
-                transactions.txType === Nf3.Constant.TX_TYPES.WITHDRAW
+                transactions.txType === Nf3.Constants.TX_TYPES.WITHDRAW
                   ? login.nf3.ethereumAddress
                   : pkd[0]
               }
@@ -162,7 +166,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
               error={pkdX.error}
             />
 
-            {transactions.txType !== Nf3.Constant.TX_TYPES.WITHDRAW ? (
+            {transactions.txType !== Nf3.Constants.TX_TYPES.WITHDRAW ? (
               <Form.Field
                 control={Input}
                 label="PK-Y"
@@ -208,7 +212,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
             {tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC721 ? null : (
               <Form.Field>
                 <label htmlFor="amount">
-                  Amount
+                  Amount (Ether)
                   <input
                     type="number"
                     min="0"
@@ -220,7 +224,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
             )}
             <Form.Field>
               <label htmlFor="fee">
-                Fee
+                Fee (Wei)
                 <input
                   type="number"
                   min="0"

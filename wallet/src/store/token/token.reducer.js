@@ -1,11 +1,10 @@
 /* ignore unused exports */
 import { tokenActionTypes } from './token.actions';
-import tokens from '../../utils/tokens';
 import * as Storage from '../../utils/lib/local-storage';
 
 const initialState = {
   activeTokenRowId: '',
-  tokenPool: tokens,
+  tokenPool: [],
 };
 
 function tokenReducer(state = initialState, action) {
@@ -45,6 +44,7 @@ function tokenReducer(state = initialState, action) {
         tokenBalanceL1: action.payload.l1Balance,
         tokenBalanceL2: action.payload.l2Balance,
       };
+      Storage.tokensSet(action.payload.compressedPkd, oldTokenPool);
       return {
         ...state,
         tokenPool: oldTokenPool,

@@ -42,7 +42,7 @@ async function approve(ercAddress, ownerAddress, spenderAddress, tokenType, valu
     }
 
     default:
-      throw new Error('Unknown token type');
+      throw new Error('Unknown token type', tokenType);
   }
   return Promise.resolve();
 }
@@ -68,7 +68,7 @@ async function getDecimals(ercAddress, tokenType, provider) {
     }
 
     default:
-      throw new Error('Unknown token type');
+      throw new Error('Unknown token type', tokenType);
   }
 }
 
@@ -108,6 +108,7 @@ async function getERCInfo(ercAddress, ethereumAddress, provider, options) {
       const interface1155 = await ercContract.methods.supportsInterface('0xd9b67a26').call(); // ERC1155 interface
       if (interface1155) tokenType = TOKEN_TYPE.ERC1155;
     }
+
   } catch {
     // Expected ERC20
     tokenType = TOKEN_TYPE.ERC20;
@@ -184,8 +185,8 @@ async function getERCInfo(ercAddress, ethereumAddress, provider, options) {
       const abi = getAbi(TOKEN_TYPE.ERC20);
       const ercContract = new provider.eth.Contract(abi, ercAddress);
       balance = await ercContract.methods.balanceOf(ethereumAddress).call();
+      decimals = await getDecimals(ercAddress, TOKEN_TYPE.ERC20, provider);
       if (toEth) {
-        decimals = await getDecimals(ercAddress, TOKEN_TYPE.ERC20, provider);
         balance = fromBaseUnit(balance, decimals);
       }
     } catch {
@@ -194,7 +195,7 @@ async function getERCInfo(ercAddress, ethereumAddress, provider, options) {
   }
 
   let result = { balance, tokenType, details: tokenIds };
-  if (toEth) result = { ...result, decimals };
+  if (tokenType === TOKEN_TYPE.ERC20) result = { ...result, decimals };
   return result;
 }
 

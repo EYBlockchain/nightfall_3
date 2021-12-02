@@ -28,7 +28,8 @@
   },
   "scripts": {
     "start": "REACT_APP_ENVIRONMENT=Localhost react-scripts start",
-    "start-ropsten": "REACT_APP_ENVIRONMENT=Ropsten react-scripts start",
+    "start:docker": "REACT_APP_ENVIRONMENT=Docker PORT=3010 react-scripts start",
+    "start:ropsten": "REACT_APP_ENVIRONMENT=Ropsten react-scripts start",
     "build": "REACT_APP_ENVIRONMENT=Ropsten react-scripts build",
     "deploy": "npm run build && aws s3 sync build/ s3://nightfallv3-wallet --cache-control max-age=172800 --delete && aws configure set preview.cloudfront true && aws cloudfront create-invalidation --distribution-id E9K9C7N0TG7LG --paths \"/*\"",
     "test": "react-scripts test --env=jsdom",

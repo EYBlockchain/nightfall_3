@@ -249,14 +249,18 @@ class Nf3 {
   @returns {Promise} Resolves into the Ethereum transaction receipt.
   */
   async deposit(ercAddress, tokenType, value, tokenId, fee = this.defaultFee) {
-    await approve(
-      ercAddress,
-      this.ethereumAddress,
-      this.shieldContractAddress,
-      tokenType,
-      value,
-      this.web3,
-    );
+    try {
+      await approve(
+        ercAddress,
+        this.ethereumAddress,
+        this.shieldContractAddress,
+        tokenType,
+        value,
+        this.web3,
+      );
+    } catch (err) {
+      throw new Error(err);
+    }
 
     const res = await axios.post(`${this.clientBaseUrl}/deposit`, {
       ercAddress,

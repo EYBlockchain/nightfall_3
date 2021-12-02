@@ -2,7 +2,6 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { Table, Button, Container, Icon } from 'semantic-ui-react';
 import PropTypes from 'prop-types';
-import * as Nf3 from 'nf3';
 import {
   addToken,
   selectToken,
@@ -10,12 +9,24 @@ import {
   deleteToken,
 } from '../../../../store/token/token.actions';
 import { TokenAddModal } from './token-add.view.jsx';
-import * as Storage from '../../../../utils/lib/local-storage';
 import * as Constant from '../../../../constants';
+import tokensLoad from '../../../../store/token/token.thunks';
 
-function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, onDeleteToken }) {
+function WalletInfo({
+  login,
+  token,
+  onAddToken,
+  onSelectToken,
+  onUnselectToken,
+  onDeleteToken,
+  onLoadTokens,
+}) {
   const [modalTokenAddEnable, setModalTokenAddEnable] = React.useState(false);
   const [removeTokenEnable, setRemoveTokenEnable] = React.useState(false);
+
+  if (typeof login.nf3 === 'undefined') {
+    return null;
+  }
 
   const importedWallet = () => {
     if (login.nf3.ethereumAddress === '' || typeof login.nf3.ethereumAddress === 'undefined') {
@@ -31,45 +42,7 @@ function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, 
 
   // TODO : substitute reload button by periodic function
   const reload = () => {
-    if (typeof login.nf3.ethereumAddress === 'undefined') return;
-    const storedTokens = Storage.tokensGet(login.nf3.zkpKeys.compressedPkd) || [];
-    login.nf3.getLayer2Balances().then(l2Balance => {
-      const { compressedPkd } = login.nf3.zkpKeys;
-      const myL2Balance =
-        typeof l2Balance[compressedPkd] === 'undefined' ? {} : l2Balance[compressedPkd];
-      const l2TokenAddressArr = [
-        ...Object.keys(myL2Balance).map(el => `0x${el}`),
-        ...storedTokens.map(el => el.tokenAddress),
-      ];
-      if (l2TokenAddressArr.length) {
-        l2TokenAddressArr.forEach(l2TokenAddress => {
-          // TODO: Pending retrieve tokenIds and token name
-          try {
-            Nf3.Tokens.getERCInfo(l2TokenAddress, login.nf3.ethereumAddress, login.nf3.web3, {
-              toEth: true,
-              tokenId: 0,
-            }).then(l1Balance => {
-              const l2TokenBalance =
-                typeof myL2Balance[l2TokenAddress.replace('0x', '')] === 'undefined'
-                  ? '-'
-                  : myL2Balance[l2TokenAddress.replace('0x', '')].toString();
-              onAddToken(
-                compressedPkd,
-                l2TokenAddress.toLowerCase(),
-                l1Balance.tokenType,
-                '0x00',
-                'TOK',
-                l1Balance.balance,
-                Nf3.Units.fromBaseUnit(l2TokenBalance, l1Balance.decimals),
-              );
-            });
-          } catch (err) {
-            // TODO
-            console.log(err);
-          }
-        });
-      }
-    });
+    onLoadTokens([]);
   };
 
   const toggleTokenSelected = () => {
@@ -90,6 +63,9 @@ function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, 
 
   function renderRowTable() {
     const rows = token.tokenPool.map(item => {
+      const tokenTypeId = `token type${item.tokenAddress}`;
+      const l1BalanceId = `l1 balance${item.tokenAddress}`;
+      const l2BalanceId = `l2 balance${item.tokenAddress}`;
       return (
         <Table.Row
           key={item.tokenAddress}
@@ -98,16 +74,16 @@ function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, 
             setActiveRow(item.tokenAddress);
           }}
         >
-          <Table.Cell colSpan="4" title={item.tokenAddress}>
+          <Table.Cell colSpan="4" title={item.tokenAddress} id="address">
             {item.tokenAddress}
           </Table.Cell>
-          <Table.Cell colSpan="1" title={item.tokenType}>
+          <Table.Cell colSpan="1" title={item.tokenType} id={tokenTypeId}>
             {item.tokenType}
           </Table.Cell>
-          <Table.Cell colSpan="1" title={item.tokenBalanceL1}>
+          <Table.Cell colSpan="1" title={item.tokenBalanceL1} id={l1BalanceId}>
             {item.tokenBalanceL1}
           </Table.Cell>
-          <Table.Cell colSpan="1" title={item.tokenBalanceL2}>
+          <Table.Cell colSpan="1" title={item.tokenBalanceL2} id={l2BalanceId}>
             {item.tokenBalanceL2}
           </Table.Cell>
         </Table.Row>
@@ -117,21 +93,20 @@ function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, 
   }
 
   React.useEffect(() => {
-    reload();
     const retrieveBalance = setInterval(() => {
       reload();
     }, Constant.BALANCE_INTERVAL);
     return () => clearInterval(retrieveBalance);
   }, []);
 
-  const handleOnTokenAddSubmit = (tokenName, tokenType, tokenAddress) => {
+  const handleOnTokenAddSubmit = (tokenName, tokenType, tokenAddress, tokenBalance) => {
     onAddToken(
       login.nf3.zkpKeys.compressedPkd,
-      `0x${tokenAddress.replace('0x', '').toLowerCase()}`,
+      tokenAddress.toLowerCase(),
       tokenType,
       '0x0',
       tokenName,
-      '-',
+      tokenBalance,
       '-',
     );
   };
@@ -207,6 +182,8 @@ function WalletInfo({ login, token, onAddToken, onSelectToken, onUnselectToken, 
         modalTokenAdd={modalTokenAddEnable}
         toggleModalTokenAdd={toggleModalTokenAdd}
         handleOnTokenAddSubmit={handleOnTokenAddSubmit}
+        nf3={login.nf3}
+        token={token}
       />
     </Container>
   );
@@ -219,6 +196,7 @@ WalletInfo.propTypes = {
   onSelectToken: PropTypes.func.isRequired,
   onUnselectToken: PropTypes.func.isRequired,
   onDeleteToken: PropTypes.func.isRequired,
+  onLoadTokens: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = state => ({
@@ -234,6 +212,7 @@ const mapDispatchToProps = dispatch => ({
       addToken(compressedPkd, tokenAddress, tokenType, tokenId, tokenName, l1Balance, l2Balance),
     ),
   onDeleteToken: (compressedPkd, tokenRowId) => dispatch(deleteToken(compressedPkd, tokenRowId)),
+  onLoadTokens: initTokens => dispatch(tokensLoad(initTokens)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(WalletInfo);

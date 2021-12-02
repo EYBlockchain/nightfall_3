@@ -2,6 +2,45 @@
 
 ## Installation guide
 
+### Docker
+1. Start wallet-test container
+```
+./start-nightfall -wt -s
+```
+This configuration starts a docker container including the wallet at port 3010, a headless version of chrome/chromium driver, metamask plugin and selenium tests.
+If you exec into this container (`docker exec -it <WALLET_TEST_CONTAINER_ID> bash), tests are launched under `tmux a -t selenium`.
+When tests are finished, you can see either `Selenium tests PASSED` or `Selenium tests FAILED` in the container logs.
+
+#### Debugging Wallet Unit Tests
+Launching selenium tests with the docker prevents any debugging if test unexpectedly fail. In order to gain more visibility of what is going on, you need to start a real chrome session (graphic). To do this:
+1. Start Chrome docker container
+```
+./start-nightfall -w -s
+```
+2. Start vncviewer. You can install vncviewer from [here](https://www.realvnc.com/es/connect/download/viewer/)
+```
+vncviewer
+```
+3. Go to 127.0.0.1
+Password is `password`
+
+4. Open Chrome
+Right click mouse on  `vnc viewer` screen, `Applications -> Network -> Web Browsing -> Google Chrome`
+
+5. Check Nightfall wallet is correctly deployed
+On a Chrome tab, go to http://localhost:3010/login
+
+6. Open a terminal on VNC viewer
+Right click mouse on `vnc viewer` screen, `Applications -> Shells -> Bash`
+
+7. Launch Selenium tests
+```
+cd test && pyhon3 wallet_test.py docker
+```
+
+
+
+
 ### Linux
 
 1. Install python, pip and google chrome
@@ -72,5 +111,5 @@ pip3 install selenium
 
 Both scripts support server mode or UI mode (which display the browser to the user). Server mode is not relevant for a Mac
 
-- Server mode: `python3 wallet_test.py server`
-- UI mode: `python3 wallet_test`
+- Server mode: `python3 wallet_test.py server localhost`
+- UI mode: `python3 wallet_test.py localhost`
