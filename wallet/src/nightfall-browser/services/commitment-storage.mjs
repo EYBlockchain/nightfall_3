@@ -306,6 +306,8 @@ export async function markNullifiedOnChain(
   transactionHashNullifiedL1, // the tx in which the nullification happened
 ) {
   const db = await connectDB();
+  const res = await db.getAll(COMMITMENTS_COLLECTION);
+  const filtered = res.filter(r => nullifiers.include(r.nullifier) && r.isNullifiedOnChain === -1);
   // const connection = await mongo.connection(MONGO_URL);
   // const query = { nullifier: { $in: nullifiers }, isNullifiedOnChain: { $eq: -1 } };
   // const update = {
