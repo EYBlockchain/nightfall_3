@@ -40,17 +40,16 @@ const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 const environment = getCurrentEnvironment();
-const { web3WsUrl } = process.env;
 
 describe('Testing the Nightfall SDK', () => {
   console.log('ENVIRONMENT: ', environment);
-  const nf3User1 = new Nf3(web3WsUrl, ethereumSigningKeyUser1, environment);
-  const nf3User2 = new Nf3(web3WsUrl, ethereumSigningKeyUser2, environment);
-  const nf3Proposer1 = new Nf3(web3WsUrl, ethereumSigningKeyProposer1, environment);
-  const nf3Proposer2 = new Nf3(web3WsUrl, ethereumSigningKeyProposer2, environment);
-  const nf3Proposer3 = new Nf3(web3WsUrl, ethereumSigningKeyProposer3, environment);
-  const nf3Challenger = new Nf3(web3WsUrl, ethereumSigningKeyChallenger, environment);
-  const nf3LiquidityProvider = new Nf3(web3WsUrl, ethereumSigningKeyLiquidityProvider, environment);
+  const nf3User1 = new Nf3(ethereumSigningKeyUser1, environment);
+  const nf3User2 = new Nf3(ethereumSigningKeyUser2, environment);
+  const nf3Proposer1 = new Nf3(ethereumSigningKeyProposer1, environment);
+  const nf3Proposer2 = new Nf3(ethereumSigningKeyProposer2, environment);
+  const nf3Proposer3 = new Nf3(ethereumSigningKeyProposer3, environment);
+  const nf3Challenger = new Nf3(ethereumSigningKeyChallenger, environment);
+  const nf3LiquidityProvider = new Nf3(ethereumSigningKeyLiquidityProvider, environment);
 
   let web3;
   let ercAddress;
@@ -83,7 +82,7 @@ describe('Testing the Nightfall SDK', () => {
 
   before(async () => {
     // to enable getBalance with web3 we should connect first
-    web3 = await connectWeb3();
+    web3 = await connectWeb3(environment.web3WsUrl);
 
     await nf3User1.init(mnemonicUser1);
     await nf3User2.init(mnemonicUser2); // 2nd client to do transfer tests and checks
@@ -110,8 +109,11 @@ describe('Testing the Nightfall SDK', () => {
       throw new Error('Healthcheck failed');
 
     console.log('     Proposer address: ', nf3Proposer1.ethereumAddress);
-    console.log('        Proposer optimistBaseUrl: ', nf3Proposer1.optimistBaseUrl);
-    console.log('        Proposer optimistWsUrl: ', nf3Proposer1.optimistWsUrl);
+    console.log(
+      '        Proposer optimistBaseUrl: ',
+      nf3Proposer1.currentEnvironment.optimistApiUrl,
+    );
+    console.log('        Proposer optimistWsUrl: ', nf3Proposer1.currentEnvironment.optimistWsUrl);
     console.log('     Challenger address: ', nf3Challenger.ethereumAddress);
     console.log('     LiquidityProvider address: ', nf3LiquidityProvider.ethereumAddress);
     console.log('     User1 address: ', nf3User1.ethereumAddress);

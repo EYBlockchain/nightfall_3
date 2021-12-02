@@ -5,7 +5,7 @@ import path from 'path';
 import config from 'config';
 import { fileURLToPath } from 'url';
 import rand from '../common-files/utils/crypto/crypto-random.mjs';
-import { ENVIRONMENTS } from '../cli/lib/constants.mjs';
+import { SUPPORTED_ENVIRONMENTS } from '../cli/lib/environment.mjs';
 
 const { dirname } = path;
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -22,26 +22,22 @@ export const getCurrentEnvironment = () => {
   let environment;
   switch (process.env.network) {
     case 'localhost':
-      environment = ENVIRONMENTS.localhost;
+      environment = SUPPORTED_ENVIRONMENTS.localhost;
       break;
     case 'ropsten':
-      environment = ENVIRONMENTS.ropsten;
+      environment = SUPPORTED_ENVIRONMENTS.ropsten;
       break;
     case 'mainnet':
-      environment = ENVIRONMENTS.mainnet;
+      environment = SUPPORTED_ENVIRONMENTS.mainnet;
       break;
     default:
-      environment = ENVIRONMENTS.localhost;
+      environment = SUPPORTED_ENVIRONMENTS.localhost;
       break;
   }
   return environment;
 };
 
 export function connectWeb3(url) {
-  if (!url) {
-    // eslint-disable-next-line no-param-reassign
-    url = process.env.web3WsUrl;
-  }
   return new Promise(resolve => {
     console.log('Blockchain Connecting ...');
 

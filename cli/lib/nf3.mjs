@@ -4,30 +4,20 @@ import WebSocket from 'ws';
 import EventEmitter from 'events';
 import { Mutex } from 'async-mutex';
 import { approve } from './tokens.mjs';
-import erc20 from './abis/ERC20.mjs';
-import erc721 from './abis/ERC721.mjs';
-import erc1155 from './abis/ERC1155.mjs';
-import { ENVIRONMENTS } from './constants.mjs';
+import { SUPPORTED_ENVIRONMENTS } from './environment.mjs';
 
 /**
 @class
 Creates a new Nightfall_3 library instance.
-@param {string} clientBaseUrl - The base url for nightfall-client
-@param {string} optimistBaseUrl - The base url for nightfall-optimist
-@param {string} optimistWsUrl - The webscocket url for nightfall-optimist
-@param {string} web3WsUrl - The websocket url for the web3js client
-@param {string} ethereumSigningKey - the Ethereum siging key to be used for transactions (hex string).
+@param {string} ethereumSigningKey - the Ethereum siging key to be used for transactions (hex string). Use '' for no signingKey
+@param {Object} environment - environment information. It includes the following fields:
+          {string} clientApiUrl - The base url for nightfall-client
+          {string} optimistApiUrl - The base url for nightfall-optimist
+          {string} optimistWsUrl - The webscocket url for nightfall-optimist
+          {string} web3WsUrl - The websocket url for the web3js client
 @param {object} zkpKeys - An object containing the zkp keys to use.  These will be auto-generated if left undefined.
 */
 class Nf3 {
-  clientBaseUrl;
-
-  optimistBaseUrl;
-
-  optimistWsUrl;
-
-  web3WsUrl;
-
   web3;
 
   websockets = [];
@@ -60,15 +50,9 @@ class Nf3 {
 
   mnemonic = {};
 
-  contracts = { ERC20: erc20, ERC721: erc721, ERC1155: erc1155 };
-
   currentEnvironment;
 
-  constructor(web3WsUrl, ethereumSigningKey, environment = ENVIRONMENTS.localhost, zkpKeys) {
-    this.clientBaseUrl = environment.clientApiUrl;
-    this.optimistBaseUrl = environment.optimistApiUrl;
-    this.optimistWsUrl = environment.optimistWsUrl;
-    this.web3WsUrl = web3WsUrl;
+  constructor(ethereumSigningKey, environment = SUPPORTED_ENVIRONMENTS.localhost, zkpKeys) {
     this.ethereumSigningKey = ethereumSigningKey;
     this.zkpKeys = zkpKeys;
     this.currentEnvironment = environment;
@@ -132,7 +116,7 @@ class Nf3 {
     }
     this.mnemonic.addressIndex = addressIndex.toString();
     this.zkpKeys = (
-      await axios.post(`${this.clientBaseUrl}/generate-keys`, {
+      await axios.post(`${this.currentEnvironment.clientApiUrl}/generate-keys`, {
         mnemonic: this.mnemonic.phrase,
         path: `m/44'/60'/0'/${this.mnemonic.addressIndex}`,
       })
@@ -199,10 +183,10 @@ class Nf3 {
     let url;
     switch (server) {
       case 'client':
-        url = this.clientBaseUrl;
+        url = this.currentEnvironment.clientApiUrl;
         break;
       case 'optimist':
-        url = this.optimistBaseUrl;
+        url = this.currentEnvironment.optimistApiUrl;
         break;
       default:
         throw new Error('Unknown server name');
@@ -226,7 +210,9 @@ class Nf3 {
   @returns {Promise} Resolves into the Ethereum address of the contract
   */
   async getContractAddress(contractName) {
-    const res = await axios.get(`${this.clientBaseUrl}/contract-address/${contractName}`);
+    const res = await axios.get(
+      `${this.currentEnvironment.clientApiUrl}/contract-address/${contractName}`,
+    );
     return res.data.address;
   }
 
@@ -262,7 +248,7 @@ class Nf3 {
       throw new Error(err);
     }
 
-    const res = await axios.post(`${this.clientBaseUrl}/deposit`, {
+    const res = await axios.post(`${this.currentEnvironment.clientApiUrl}/deposit`, {
       ercAddress,
       tokenId,
       tokenType,
@@ -302,7 +288,7 @@ class Nf3 {
     pkd,
     fee = this.defaultFee,
   ) {
-    const res = await axios.post(`${this.clientBaseUrl}/transfer`, {
+    const res = await axios.post(`${this.currentEnvironment.clientApiUrl}/transfer`, {
       offchain,
       ercAddress,
       tokenId,
@@ -349,7 +335,7 @@ class Nf3 {
     recipientAddress,
     fee = this.defaultFee,
   ) {
-    const res = await axios.post(`${this.clientBaseUrl}/withdraw`, {
+    const res = await axios.post(`${this.currentEnvironment.clientApiUrl}/withdraw`, {
       offchain,
       ercAddress,
       tokenId,
@@ -381,7 +367,7 @@ class Nf3 {
   */
   async finaliseWithdrawal(withdrawTransactionHash) {
     // find the L2 block containing the L2 transaction hash
-    const res = await axios.post(`${this.clientBaseUrl}/finalise-withdrawal`, {
+    const res = await axios.post(`${this.currentEnvironment.clientApiUrl}/finalise-withdrawal`, {
       transactionHash: withdrawTransactionHash,
     });
     return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, 0);
@@ -398,12 +384,12 @@ class Nf3 {
   async requestInstantWithdrawal(withdrawTransactionHash, fee) {
     // find the L2 block containing the L2 transaction hash
     let res = await axios.get(
-      `${this.optimistBaseUrl}/block/transaction-hash/${withdrawTransactionHash}`,
+      `${this.currentEnvironment.optimistApiUrl}/block/transaction-hash/${withdrawTransactionHash}`,
     );
     const { block } = res.data;
     if (!block) return null; // block not found
     // set the instant withdrawal fee
-    res = await axios.post(`${this.clientBaseUrl}/set-instant-withdrawal`, {
+    res = await axios.post(`${this.currentEnvironment.clientApiUrl}/set-instant-withdrawal`, {
       transactionHash: withdrawTransactionHash,
     });
     return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, fee);
@@ -416,9 +402,12 @@ class Nf3 {
   @param {string} withdrawTransactionHash - the hash of the Layer 2 transaction in question
   */
   async advanceInstantWithdrawal(withdrawTransactionHash) {
-    const res = await axios.post(`${this.optimistBaseUrl}/transaction/advanceWithdrawal`, {
-      transactionHash: withdrawTransactionHash,
-    });
+    const res = await axios.post(
+      `${this.currentEnvironment.optimistApiUrl}/transaction/advanceWithdrawal`,
+      {
+        transactionHash: withdrawTransactionHash,
+      },
+    );
     return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, 0);
   }
 
@@ -437,7 +426,7 @@ class Nf3 {
   */
   async getInstantWithdrawalRequestedEmitter() {
     const emitter = new EventEmitter();
-    const connection = new WebSocket(this.optimistWsUrl);
+    const connection = new WebSocket(this.currentEnvironment.optimistWsUrl);
     this.websockets.push(connection); // save so we can close it properly later
     connection.onopen = () => {
       connection.send('instant');
@@ -462,7 +451,7 @@ class Nf3 {
   with the makeKeys function).
   */
   async subscribeToIncomingViewingKeys() {
-    return axios.post(`${this.clientBaseUrl}/incoming-viewing-key`, {
+    return axios.post(`${this.currentEnvironment.clientApiUrl}/incoming-viewing-key`, {
       ivks: [this.zkpKeys.ivk],
       nsks: [this.zkpKeys.nsk],
     });
@@ -487,7 +476,7 @@ class Nf3 {
   @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
   */
   async registerProposer() {
-    const res = await axios.post(`${this.optimistBaseUrl}/proposer/register`, {
+    const res = await axios.post(`${this.currentEnvironment.optimistApiUrl}/proposer/register`, {
       address: this.ethereumAddress,
     });
     return this.submitTransaction(
@@ -506,9 +495,12 @@ class Nf3 {
   @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
   */
   async deregisterProposer() {
-    const res = await axios.post(`${this.optimistBaseUrl}/proposer/de-register`, {
-      address: this.ethereumAddress,
-    });
+    const res = await axios.post(
+      `${this.currentEnvironment.optimistApiUrl}/proposer/de-register`,
+      {
+        address: this.ethereumAddress,
+      },
+    );
     return this.submitTransaction(res.data.txDataToSign, this.proposersContractAddress, 0);
   }
 
@@ -521,7 +513,7 @@ class Nf3 {
   @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
   */
   async changeCurrentProposer() {
-    const res = await axios.get(`${this.optimistBaseUrl}/proposer/change`, {
+    const res = await axios.get(`${this.currentEnvironment.optimistApiUrl}/proposer/change`, {
       address: this.ethereumAddress,
     });
     return this.submitTransaction(res.data.txDataToSign, this.proposersContractAddress, 0);
@@ -535,9 +527,12 @@ class Nf3 {
   @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
   */
   async withdrawBond() {
-    const res = await axios.post(`${this.optimistBaseUrl}/proposer/withdrawBond`, {
-      address: this.ethereumAddress,
-    });
+    const res = await axios.post(
+      `${this.currentEnvironment.optimistApiUrl}/proposer/withdrawBond`,
+      {
+        address: this.ethereumAddress,
+      },
+    );
     return this.submitTransaction(res.data.txDataToSign, this.proposersContractAddress, 0);
   }
 
@@ -548,7 +543,7 @@ class Nf3 {
   @returns {array} A promise that resolves to the Ethereum transaction receipt.
   */
   async getProposers() {
-    const res = await axios.get(`${this.optimistBaseUrl}/proposer/proposers`, {
+    const res = await axios.get(`${this.currentEnvironment.optimistApiUrl}/proposer/proposers`, {
       address: this.ethereumAddress,
     });
     return res.data;
@@ -568,7 +563,7 @@ class Nf3 {
     if (!this.ethereumAddress)
       throw new Error('Cannot add peer if the Ethereum address for the user is not defined');
     // the peerUrl is from the point of view of the Client e.g. 'http://optimist1:80'
-    return axios.post(`${this.clientBaseUrl}/peers/addPeers`, {
+    return axios.post(`${this.currentEnvironment.clientApiUrl}/peers/addPeers`, {
       address: this.ethereumAddress,
       enode: peerUrl,
     });
@@ -581,7 +576,7 @@ class Nf3 {
   @async
   */
   async startProposer() {
-    const connection = new WebSocket(this.optimistWsUrl);
+    const connection = new WebSocket(this.currentEnvironment.optimistWsUrl);
     this.websockets.push(connection); // save so we can close it properly later
     connection.onopen = () => {
       connection.send('blocks');
@@ -608,7 +603,7 @@ class Nf3 {
   */
   async getNewBlockEmitter() {
     const newBlockEmitter = new EventEmitter();
-    const connection = new WebSocket(this.optimistWsUrl);
+    const connection = new WebSocket(this.currentEnvironment.optimistWsUrl);
     this.websockets.push(connection); // save so we can close it properly later
     connection.onopen = () => {
       connection.send('blocks');
@@ -632,7 +627,9 @@ class Nf3 {
   @return {Promise} A promise that resolves to an axios response.
   */
   async registerChallenger() {
-    return axios.post(`${this.optimistBaseUrl}/challenger/add`, { address: this.ethereumAddress });
+    return axios.post(`${this.currentEnvironment.optimistApiUrl}/challenger/add`, {
+      address: this.ethereumAddress,
+    });
   }
 
   /**
@@ -642,7 +639,7 @@ class Nf3 {
   @return {Promise} A promise that resolves to an axios response.
   */
   async deregisterChallenger() {
-    return axios.post(`${this.optimistBaseUrl}/challenger/remove`, {
+    return axios.post(`${this.currentEnvironment.optimistApiUrl}/challenger/remove`, {
       address: this.ethereumAddress,
     });
   }
@@ -654,7 +651,7 @@ class Nf3 {
   @async
   */
   async startChallenger() {
-    const connection = new WebSocket(this.optimistWsUrl);
+    const connection = new WebSocket(this.currentEnvironment.optimistWsUrl);
     this.websockets.push(connection); // save so we can close it properly later
     connection.onopen = () => {
       connection.send('challenge');
@@ -680,7 +677,7 @@ class Nf3 {
   */
   async getChallengeEmitter() {
     const newChallengeEmitter = new EventEmitter();
-    const connection = new WebSocket(this.optimistWsUrl);
+    const connection = new WebSocket(this.currentEnvironment.optimistWsUrl);
     this.websockets.push(connection); // save so we can close it properly later
     connection.onopen = () => {
       connection.send('blocks');
@@ -707,12 +704,12 @@ class Nf3 {
     let valid = false;
 
     res = await axios.get(
-      `${this.optimistBaseUrl}/block/transaction-hash/${withdrawTransactionHash}`,
+      `${this.currentEnvironment.optimistApiUrl}/block/transaction-hash/${withdrawTransactionHash}`,
     );
     const { block, transactions, index } = res.data;
 
     if (block) {
-      res = await axios.post(`${this.clientBaseUrl}/valid-withdrawal`, {
+      res = await axios.post(`${this.currentEnvironment.clientApiUrl}/valid-withdrawal`, {
         block,
         transactions,
         index,
@@ -732,7 +729,7 @@ class Nf3 {
   value of each propery is the number of tokens originating from that contract.
   */
   async getLayer2Balances() {
-    const res = await axios.get(`${this.clientBaseUrl}/commitment/balance`);
+    const res = await axios.get(`${this.currentEnvironment.clientApiUrl}/commitment/balance`);
     return res.data.balance;
   }
 
@@ -745,7 +742,7 @@ class Nf3 {
   value of each propery is an array of commitments originating from that contract.
   */
   async getLayer2Commitments() {
-    const res = await axios.get(`${this.clientBaseUrl}/commitment/commitments`);
+    const res = await axios.get(`${this.currentEnvironment.clientApiUrl}/commitment/commitments`);
     return res.data.commitments;
   }
 
@@ -758,7 +755,7 @@ class Nf3 {
   value of each propery is an array of withdraw commitments originating from that contract.
   */
   async getPendingWithdraws() {
-    const res = await axios.get(`${this.clientBaseUrl}/commitment/withdraws`);
+    const res = await axios.get(`${this.currentEnvironment.clientApiUrl}/commitment/withdraws`);
     return res.data.commitments;
   }
 
@@ -766,7 +763,7 @@ class Nf3 {
   Set a Web3 Provider URL
   */
   setWeb3Provider() {
-    this.web3 = new Web3(this.web3WsUrl);
+    this.web3 = new Web3(this.currentEnvironment.web3WsUrl);
     if (typeof window !== 'undefined') {
       if (window.ethereum && this.ethereumSigningKey === '') {
         this.web3 = new Web3(window.ethereum);

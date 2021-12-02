@@ -197,4 +197,10 @@ function getCurrentEnvironment() {
   };
 }
 
-export { setEnvironment, getCurrentEnvironment, getSupportedEnvironments, setContractAddresses };
+export {
+  setEnvironment,
+  getCurrentEnvironment,
+  getSupportedEnvironments,
+  setContractAddresses,
+  SUPPORTED_ENVIRONMENTS,
+};

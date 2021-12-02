@@ -2,6 +2,8 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import Nf3 from '../../cli/lib/nf3.mjs';
+import getAbi from '../../cli/lib/abi.mjs';
+import { TOKEN_TYPE } from '../../cli/lib/constants.mjs';
 import {
   connectWeb3,
   closeWeb3Connection,
@@ -21,11 +23,10 @@ const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 const environment = getCurrentEnvironment();
-const { web3WsUrl } = process.env;
 
 describe('Testing the Nightfall ERCMocks', () => {
   console.log('ENVIRONMENT: ', environment);
-  const nf3 = new Nf3(web3WsUrl, ethereumSigningKeyUser1, environment);
+  const nf3 = new Nf3(ethereumSigningKeyUser1, environment);
 
   let web3;
   let erc20Address;
@@ -36,7 +37,7 @@ describe('Testing the Nightfall ERCMocks', () => {
 
   before(async () => {
     // to enable getBalance with web3 we should connect first
-    web3 = await connectWeb3();
+    web3 = await connectWeb3(environment.web3WsUrl);
     stateAddress = await nf3.getContractAddress('State');
 
     await nf3.init();
@@ -80,13 +81,15 @@ describe('Testing the Nightfall ERCMocks', () => {
     });
 
     it('should get the balance of wallet address of the ERC20 contract mock', async function () {
-      const erc20Token = new web3.eth.Contract(nf3.contracts.ERC20, erc20Address);
+      const erc20Abi = getAbi(TOKEN_TYPE.ERC20);
+      const erc20Token = new web3.eth.Contract(erc20Abi, erc20Address);
       const balance = await erc20Token.methods.balanceOf(ethereumAddressUser1).call();
       expect(Number(balance)).to.be.greaterThan(0);
     });
 
     it('should transfer some token of the ERC20 contract mock', async function () {
-      const erc20Token = new web3.eth.Contract(nf3.contracts.ERC20, erc20Address);
+      const erc20Abi = getAbi(TOKEN_TYPE.ERC20);
+      const erc20Token = new web3.eth.Contract(erc20Abi, erc20Address);
       const amount = 3000;
       const balanceBefore = await erc20Token.methods.balanceOf(nf3.ethereumAddress).call();
       const decimals = await erc20Token.methods.decimals().call();
@@ -108,13 +111,15 @@ describe('Testing the Nightfall ERCMocks', () => {
     });
 
     it('should get the balance of the ERC721 contract mock', async function () {
-      const erc721Token = new web3.eth.Contract(nf3.contracts.ERC721, erc721Address);
+      const erc721Abi = getAbi(TOKEN_TYPE.ERC721);
+      const erc721Token = new web3.eth.Contract(erc721Abi, erc721Address);
       const balanceBefore = await erc721Token.methods.balanceOf(nf3.ethereumAddress).call();
       expect(Number(balanceBefore)).to.be.greaterThan(0);
     });
 
     it('should transfer one token of the ERC721 contract mock', async function () {
-      const erc721Token = new web3.eth.Contract(nf3.contracts.ERC721, erc721Address);
+      const erc721Abi = getAbi(TOKEN_TYPE.ERC721);
+      const erc721Token = new web3.eth.Contract(erc721Abi, erc721Address);
       const balanceBefore = await erc721Token.methods.balanceOf(nf3.ethereumAddress).call();
       const tokenId = 1;
       console.log(`        Balance ERC721Mock [${nf3.ethereumAddress}]: ${balanceBefore}`);
@@ -153,13 +158,15 @@ describe('Testing the Nightfall ERCMocks', () => {
     });
 
     it('should get the balance of the ERC1155 contract mock', async function () {
-      const erc1155Token = new web3.eth.Contract(nf3.contracts.ERC1155, erc1155Address);
+      const erc1155Abi = getAbi(TOKEN_TYPE.ERC1155);
+      const erc1155Token = new web3.eth.Contract(erc1155Abi, erc1155Address);
       const balance = await erc1155Token.methods.balanceOf(nf3.ethereumAddress, 1).call();
       expect(Number(balance)).to.be.greaterThan(0);
     });
 
     it('should get the balance of wallet address of the ERC1155 contract mock', async function () {
-      const erc1155Token = new web3.eth.Contract(nf3.contracts.ERC1155, erc1155Address);
+      const erc1155Abi = getAbi(TOKEN_TYPE.ERC1155);
+      const erc1155Token = new web3.eth.Contract(erc1155Abi, erc1155Address);
       const balance = await erc1155Token.methods.balanceOf(walletTestAddress, 1).call();
       expect(Number(balance)).to.be.greaterThan(0);
     });
