@@ -67,6 +67,25 @@ services:
       TIMBER_PORT: 80
     command: ['npm', 'run', 'dev']
 
+  # # Temporary container to deploy contracts and circuits and populate volumes
+  # deployer:
+  #   image: ghcr.io/eyblockchain/nightfall3-deployer
+  #   volumes:
+  #     - type: volume
+  #       source: build
+  #       target: /app/build/
+  #   networks:
+  #     - nightfall_network
+  #   environment:
+  #     LOG_LEVEL: debug
+  #     # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
+  #     # startup routines will wait for a blockchain client to be reachable on this network
+  #     ETH_NETWORK: blockchain1
+  #     BLOCKCHAIN_WS_HOST: blockchain1
+  #     BLOCKCHAIN_PORT: 8546
+  #     ZOKRATES_WORKER_HOST: worker
+  #     USE_STUBS: 'false'
+
   # Temporary container to deploy contracts and circuits and populate volumes
   deployer:
     image: ghcr.io/eyblockchain/nightfall3-deployer:latest
@@ -77,6 +96,30 @@ services:
       - type: volume
         source: build
         target: /app/build/
+      - type: bind
+        source: ../../nightfall-deployer/contracts
+        target: /app/contracts/
+      - type: bind
+        source: ../../nightfall-deployer/circuits
+        target: /app/circuits/
+      - type: bind
+        source: ../../nightfall-deployer/src
+        target: /app/src/
+      - type: bind
+        source: ../../common-files
+        target: /common-files
+      - type: bind
+        source: ../../config/default.js
+        target: /app/config/default.js
+      - type: bind
+        source: ../../nightfall-deployer/migrations
+        target: /app/migrations
+      - type: bind
+        source: ../../nightfall-deployer/truffle-config.js
+        target: /app/truffle-config.js
+      - type: bind
+        source: ../../nightfall-deployer/entrypoint.sh
+        target: /app/entrypoint.sh
     networks:
       - pong_network
     environment:
@@ -148,6 +191,7 @@ services:
   #       CLIENT_PORT: 80
   #       BLOCKCHAIN_WS_HOST: blockchain1
   #       BLOCKCHAIN_PORT: 8546
+  #       ZKP_MNEMONIC: tiger victory velvet tank ritual column horse conduct athlete position soul shaft
 
   user-local1:
     build:
@@ -170,6 +214,34 @@ services:
       CLIENT_PORT: 80
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
+      RECIPIENT_PKD: 0x105651c0c5bb97582b3270e0f5a07ca81410ffd1920e86697efddaec03dccef8,0x1ac3b61ecba1448e697b23d37efe290fb86554b2f905aaca3a6df59805eca366
+      ZKP_MNEMONIC: tone shadow woman critic glare utility brass scheme edge brisk enforce champion
+    command: ['npm', 'run', 'dev']
+
+  user-local2:
+    build:
+      dockerfile: user-local2.Dockerfile
+      context: ../../
+    networks:
+      - nightfall_network
+    volumes:
+      - type: bind
+        source: ../../common-files
+        target: /app/common-files
+      - type: bind
+        source: ./user-local2/src
+        target: /app/test/ping-pong/user-local2/src
+    environment:
+      OPTIMIST_HOST: optimist
+      OPTIMIST_WS_PORT: 8080
+      OPTIMIST_HTTP_PORT: 80
+      CLIENT_HOST: client
+      CLIENT_PORT: 80
+      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_PORT: 8546
+      RECIPIENT_PKD: 0x193a37cd7973373aceae05d133f3d69ab6e7ef2f4321461173871ec7611244e2,0x27234a8721e73c9aa160154ee63d2470101fc5fd841221eeb675a91ec2d66e78
+      ZKP_MNEMONIC:
+        tiger victory velvet tank ritual column horse conduct athlete position soul shaft
     command: ['npm', 'run', 'dev']
 
 volumes:

@@ -41,12 +41,31 @@ module.exports = {
     process.env.USER_ETHEREUM_SIGNING_KEY ||
     '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e',
   userAddress: process.env.USER_ADDRESS,
+  user1EthereumSigningKey:
+    process.env.USER_ETHEREUM_SIGNING_KEY ||
+    '0xb0fa8745bd6e77a67ec6a27e701971d659937140cc3159d9f85210da3444eb45', // Change associated user1EthereumAddress
+  user2EthereumSigningKey:
+    process.env.USER2_ETHEREUM_SIGNING_KEY ||
+    '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb', // Change associated user2EthereumAddress
+  userEthereumAddress: process.env.ETHEREUM_ADDRESS || '0x9c8b2276d490141ae1440da660e470e7c0349c63', // Change associated userEthereumSigningKey
+  user1EthereumAddress:
+    process.env.ETHEREUM_ADDRESS || '0x4ca4902a6f456b488947074ad4140317c7e21996', // Change associated user1EthereumSigningKey
+  user2EthereumAddress:
+    process.env.ETHEREUM_ADDRESS || '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9', // Change associated user2EthereumSigningKey
   zkpMnemonic:
     process.env.ZKP_MNEMONIC ||
     'hurt labor ketchup seven scan swap dirt brown brush path goat together',
   proposerEthereumSigningKey:
     process.env.PROPOSER_ETHEREUM_SIGNING_KEY ||
     '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
+  user1Pkd: process.env.RECIPIENT_PKD || [
+    '0x193a37cd7973373aceae05d133f3d69ab6e7ef2f4321461173871ec7611244e2',
+    '0x27234a8721e73c9aa160154ee63d2470101fc5fd841221eeb675a91ec2d66e78',
+  ],
+  user2Pkd: process.env.RECIPIENT_PKD || [
+    '0x105651c0c5bb97582b3270e0f5a07ca81410ffd1920e86697efddaec03dccef8',
+    '0x1ac3b61ecba1448e697b23d37efe290fb86554b2f905aaca3a6df59805eca366',
+  ],
   WEB3_OPTIONS: {
     gas: process.env.GAS || 8000000,
     gasPrice: process.env.GAS_PRICE || '20000000000',

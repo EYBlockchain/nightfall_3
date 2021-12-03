@@ -46,10 +46,17 @@ services:
   # user-local:
   #   environment:
   #     BLOCKCHAIN_WS_HOST: host.docker.internal
+  #     BLOCKCHAIN_PORT: 8546
+  #     USER_ETHEREUM_SIGNING_KEY: abf4ed9f30bd1e4a290310d726c7bbdf39cd75a25eebd9a3a4874e10b4a0c4ce
 
   user-local1:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
       BLOCKCHAIN_PORT: 8546
-      USER_ETHEREUM_SIGNING_KEY: abf4ed9f30bd1e4a290310d726c7bbdf39cd75a25eebd9a3a4874e10b4a0c4ce
-      USER_ADDRESS: '0xdb080dC48961bC1D67a0A4151572eCb824cC76E8'
+      USER_ETHEREUM_SIGNING_KEY: b0fa8745bd6e77a67ec6a27e701971d659937140cc3159d9f85210da3444eb45
+
+  user-local2:
+    environment:
+      BLOCKCHAIN_WS_HOST: host.docker.internal
+      BLOCKCHAIN_PORT: 8546
+      USER_ETHEREUM_SIGNING_KEY: d42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb

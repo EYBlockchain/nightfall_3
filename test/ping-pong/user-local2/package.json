@@ -1,11 +1,12 @@
 {
-  "name": "proposer",
+  "name": "User",
   "version": "1.0.0",
-  "description": "'makes a container with proposer functionality'",
+  "description": "'makes a container with user functionality'",
   "main": "index.js",
   "scripts": {
     "prestart": "./pre-start-script.sh",
     "start": "node --trace-warnings src/index.mjs",
+    "dev": "nodemon --trace-warnings src/index.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "westlad",
@@ -17,6 +18,17 @@
     "ws": "^8.2.3",
     "winston": "^3.3.3",
     "config": "^3.3.1",
+    "inquirer": "^8.1.4",
     "common-files": "file:../../../common-files"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.12"
+  },
+  "nodemonConfig": {
+    "verbose": true,
+    "ignore": [
+      "mongodb/",
+      "build/"
+    ]
   }
 }
