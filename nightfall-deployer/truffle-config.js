@@ -91,6 +91,8 @@ module.exports = {
       timeoutBlocks: 200,
       skipDryRun: true,
       websockets: true,
+      gasPrice: config.WEB3_OPTIONS.gasPrice,
+      gas: 8000000,
     },
 
     // Another network with more advanced options...

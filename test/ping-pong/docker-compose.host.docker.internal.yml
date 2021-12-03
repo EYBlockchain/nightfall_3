@@ -1,13 +1,17 @@
 version: '3.5'
 # Use this script for running up nightfall_3 with a blockchain on localhost 8546
 services:
+version: '3.5'
+# Use this script for running up nightfall_3 with our geth node on ropsten
+services:
 
   client:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
-      AUTOSTART_RETRIES: 100
+      BLOCKCHAIN_PORT: 8546
+      AUTOSTART_RETRIES: 10000
 
   deployer:
     extra_hosts:
@@ -18,22 +22,33 @@ services:
       # startup routines will wait for a blockchain client to be reachable on this network
       ETH_NETWORK: development
       BLOCKCHAIN_WS_HOST: host.docker.internal
+      BLOCKCHAIN_PORT: 8546
+      ETH_PRIVATE_KEY: abf4ed9f30bd1e4a290310d726c7bbdf39cd75a25eebd9a3a4874e10b4a0c4ce
+      USE_ROPSTEN: enable
+      GAS_PRICE: 20000000000
+      # This is only needed for test purposes - it gives tokens to the user at startup
+      USER_ETHEREUM_SIGNING_KEY: abf4ed9f30bd1e4a290310d726c7bbdf39cd75a25eebd9a3a4874e10b4a0c4ce
 
   optimist:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
-      AUTOSTART_RETRIES: 100
+      BLOCKCHAIN_PORT: 8546
+      AUTOSTART_RETRIES: 10000
 
   proposer:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
+      BLOCKCHAIN_PORT: 8546
+      PROPOSER_ETHEREUM_SIGNING_KEY: 645ac79fa9fd87dd1cf30bdca51d326bd501cd328d6dbc9f5f517c7da0dafa6f
 
   user-local:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
+      BLOCKCHAIN_PORT: 8546
+      USER_ETHEREUM_SIGNING_KEY: abf4ed9f30bd1e4a290310d726c7bbdf39cd75a25eebd9a3a4874e10b4a0c4ce

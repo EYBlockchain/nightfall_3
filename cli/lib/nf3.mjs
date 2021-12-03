@@ -3,6 +3,7 @@ import Web3 from 'web3';
 import WebSocket from 'ws';
 import EventEmitter from 'events';
 import { Mutex } from 'async-mutex';
+import config from 'config';
 import { approve } from './tokens.mjs';
 import erc20 from './abis/ERC20.mjs';
 import erc721 from './abis/ERC721.mjs';
@@ -163,19 +164,13 @@ class Nf3 {
     await this.nonceMutex.runExclusive(async () => {
       // if we don't have a nonce, we must get one from the ethereum client
       if (!this.nonce) this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
-
-      let gasPrice = 10000000000;
-      const gas = (await this.web3.eth.getBlock('latest')).gasLimit;
-      const blockGasPrice = Number(await this.web3.eth.getGasPrice());
-      if (blockGasPrice > gasPrice) gasPrice = blockGasPrice;
-
       tx = {
         from: this.ethereumAddress,
         to: contractAddress,
         data: unsignedTransaction,
         value: fee,
-        gas,
-        gasPrice,
+        gas: config.WEB3_OPTIONS.gas,
+        gasPrice: config.WEB3_OPTIONS.gasPrice,
         nonce: this.nonce,
       };
       this.nonce++;
@@ -249,8 +244,9 @@ class Nf3 {
   @returns {Promise} Resolves into the Ethereum transaction receipt.
   */
   async deposit(ercAddress, tokenType, value, tokenId, fee = this.defaultFee) {
+    let txDataToSign;
     try {
-      await approve(
+      txDataToSign = await approve(
         ercAddress,
         this.ethereumAddress,
         this.shieldContractAddress,
@@ -261,7 +257,7 @@ class Nf3 {
     } catch (err) {
       throw new Error(err);
     }
-
+    if (txDataToSign) await this.submitTransaction(txDataToSign, ercAddress, 0);
     const res = await axios.post(`${this.clientBaseUrl}/deposit`, {
       ercAddress,
       tokenId,
