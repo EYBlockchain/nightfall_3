@@ -256,19 +256,14 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
       </Modal.Content>
       <Modal.Actions>
         <div>
-          <Button
-            floated="left"
-            disabled={transactions.txType === ''}
-            color="red"
-            onClick={toggleAll}
-          >
+          <Button floated="left" disabled={transactions.txType === ''} primary onClick={toggleAll}>
             <Icon name="cancel" />
             Cancel
           </Button>
           <Button
             floated="right"
             disabled={transactions.txType === ''}
-            color="blue"
+            primary
             onClick={handleOnSubmit}
           >
             <Icon name="send" />

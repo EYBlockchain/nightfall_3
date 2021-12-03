@@ -21,19 +21,19 @@
     "redux": "4.1.1",
     "redux-logger": "^3.0.6",
     "redux-thunk": "^2.3.0",
-    "semantic-ui-css": "^2.4.1",
+    "semantic-ui-less": "^2.4.1",
     "semantic-ui-react": "^2.0.4",
     "web-vitals": "^2.1.0",
     "web3": "^1.6.0"
   },
   "scripts": {
-    "start": "REACT_APP_ENVIRONMENT=Localhost react-scripts start",
-    "start:docker": "REACT_APP_ENVIRONMENT=Docker PORT=3010 react-scripts start",
-    "start:ropsten": "REACT_APP_ENVIRONMENT=Ropsten react-scripts start",
-    "build": "REACT_APP_ENVIRONMENT=Ropsten react-scripts build",
+    "start": "REACT_APP_ENVIRONMENT=Localhost craco start",
+    "start:docker": "REACT_APP_ENVIRONMENT=Docker PORT=3010 craco start",
+    "start:ropsten": "REACT_APP_ENVIRONMENT=Ropsten craco start",
+    "build": "REACT_APP_ENVIRONMENT=Ropsten craco build",
     "deploy": "npm run build && aws s3 sync build/ s3://nightfallv3-wallet --cache-control max-age=172800 --delete && aws configure set preview.cloudfront true && aws cloudfront create-invalidation --distribution-id E9K9C7N0TG7LG --paths \"/*\"",
-    "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
+    "test": "craco test --env=jsdom",
+    "eject": "craco eject"
   },
   "browserslist": {
     "production": [
@@ -46,5 +46,9 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@craco/craco": "^6.4.2",
+    "@semantic-ui-react/craco-less": "^1.2.3"
   }
 }

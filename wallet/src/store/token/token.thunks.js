@@ -60,7 +60,12 @@ function tokensLoad(initTokens) {
               details: true,
             })
               .then(tokenInfo => {
-                if (el.tokenBalanceL1 !== tokenInfo.balance || el.updated) {
+                const tokenIdL1 = tokenInfo.details.map(tokenDetails => tokenDetails.tokenId);
+                if (
+                  el.tokenBalanceL1 !== tokenInfo.balance ||
+                  el.updated ||
+                  JSON.stringify(el.tokenId) !== JSON.stringify(tokenIdL1)
+                ) {
                   dispatch(
                     tokenActions.addToken(
                       compressedPkd,

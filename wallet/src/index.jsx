@@ -6,7 +6,7 @@ import configureStore from './store';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'font-awesome/css/font-awesome.min.css';
 import 'bootstrap-social/bootstrap-social.css';
-import 'semantic-ui-css/semantic.min.css';
+import 'semantic-ui-less/semantic.less';
 import './index.css';
 import './views/app.style.css';
 import App from './views/app.view.jsx';
