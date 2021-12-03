@@ -15,6 +15,10 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
   const [instantWithdrawFee, setInstantWithdrawFee] = React.useState(DEFAULT_INSTANT_WITHDRAW_FEE);
   const [instantWithdrawEnable, setInstantWithdrawEnable] = React.useState(false);
   const [directTransactionEnable, setDirectTransactionEnable] = React.useState(false);
+  const [tokenId, setTokenId] = React.useState({
+    value: 0,
+    error: null,
+  });
   const [pkdX, setPkdX] = React.useState({
     value: '',
     error: null,
@@ -29,6 +33,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
     setDirectTransactionEnable(false);
     setPkdX({ value: '', error: null });
     setPkdY({ value: '', error: null });
+    setTokenId({ value: 0, error: null });
     onCancelTx();
   };
 
@@ -59,9 +64,24 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
     return setPkdX({ value, error: null });
   }
 
+  function validateTokenId(tokenInfo) {
+    const error = {
+      content: 'Please, enter a valid tokenId',
+      pointing: 'above',
+    };
+    if (tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC721 && tokenId.value === 0) {
+      setTokenId({ value: 0, error });
+      return false;
+    }
+    return true;
+  }
+
   const handleOnSubmit = () => {
     const tokenInfo = getTokenInfo();
     if (!tokenInfo) {
+      return;
+    }
+    if (!validateTokenId(tokenInfo)) {
       return;
     }
     switch (transactions.txType) {
@@ -77,9 +97,9 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
             ethereumAddress,
             tokenType: tokenInfo.tokenType,
             tokenAddress: tokenInfo.tokenAddress,
-            tokenId: tokenInfo.tokenId[0],
+            tokenId: tokenId.value,
             tokenAmount:
-              tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC721 ? '1' : tokenAmount,
+              tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC721 ? '0' : tokenAmount,
             fee,
             instantWithdrawFee,
           });
@@ -95,9 +115,8 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
           pkd,
           tokenType: tokenInfo.tokenType,
           tokenAddress: tokenInfo.tokenAddress,
-          tokenId: tokenInfo.tokenId[0],
-          tokenAmount: tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC721 ? '1' : tokenAmount,
-
+          tokenId: tokenId.value,
+          tokenAmount: tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC721 ? '0' : tokenAmount,
           fee,
         });
       }
@@ -105,6 +124,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
 
     setInstantWithdrawEnable(false);
     setDirectTransactionEnable(false);
+    setTokenId({ value: 0, error: null });
   };
 
   const tokenInfo = getTokenInfo();
@@ -114,7 +134,6 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
   const keyLabel =
     transactions.txType === Nf3.Constants.TX_TYPES.WITHDRAW ? 'Ethereum Address' : 'PK-X';
   const pkd = login.isWalletInitialized ? login.nf3.zkpKeys.pkd : '';
-
   if (transactions.txType === '') return null;
   return (
     <Modal open={transactions.modalTx}>
@@ -189,22 +208,20 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
           {tokenInfo.tokenType !== Nf3.Constants.TOKEN_TYPE.ERC20 ? (
             <Form.Group>
               <Form.Field width={6}>
-                <span>
-                  Token Id{' '}
-                  <Dropdown
-                    placeholder={tokenInfo.tokenId.length ? tokenInfo.tokenId[0] : 0}
-                    defaultValue={tokenInfo.tokenId.length ? tokenInfo.tokenId : 0}
-                    selection
-                    options={
-                      tokenInfo.tokenId.length
-                        ? tokenInfo.tokenId.map(function (id) {
-                            return { key: id, text: id, value: id };
-                          })
-                        : []
-                    }
-                    onChange={(e, { value }) => value}
-                  />
-                </span>
+                <label> Token Id </label>
+                <Dropdown
+                  control={Input}
+                  selection
+                  options={
+                    tokenInfo.tokenId.length
+                      ? tokenInfo.tokenId.map(function (id) {
+                          return { key: id, text: id, value: id };
+                        })
+                      : []
+                  }
+                  onChange={(e, { value }) => setTokenId({ value, error: null })}
+                  error={tokenId.error}
+                />
               </Form.Field>
             </Form.Group>
           ) : null}

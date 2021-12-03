@@ -39,7 +39,7 @@ function CreateWalletModal({ modalEnable, handleClickOnImport, toggleModalEnable
 
   return (
     <Modal open={modalEnable}>
-      <Modal.Header>Enter Nightfall Mnemonic</Modal.Header>
+      <Modal.Header>Enter Polygon Nightfall Mnemonic</Modal.Header>
       <Modal.Content>
         <Form warning>
           <Form.Field>

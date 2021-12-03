@@ -121,7 +121,7 @@ function Login({ login, onLoadWallet, onDeleteWallet, onLoadTokens }) {
           marginTop: '3em',
         }}
       >
-        <PolygonLogo width="250px" height="250px" />
+        <PolygonLogo width="250px" height="100px" />
         Nightfall Wallet
       </Header>
       <Divider />

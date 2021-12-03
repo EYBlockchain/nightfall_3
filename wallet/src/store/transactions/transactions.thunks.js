@@ -3,6 +3,7 @@ import * as Nf3 from 'nf3';
 import { TRANSACTION_RETRY_PERIOD, TRANSACTION_MAX_RETRIES } from '../../constants';
 import toBaseUnit from '../../utils/lib/utils';
 import * as txActions from './transactions.actions';
+import { addToken } from '../token/token.actions';
 
 function txInstantWithdrawSubmit(withdrawTransactionHash, fee) {
   return async (dispatch, getState) => {
@@ -44,6 +45,7 @@ function txSubmit(txParams) {
   return async (dispatch, getState) => {
     const {
       login: { nf3 },
+      token: { tokenPool },
     } = getState();
 
     dispatch(txActions.txDispatch());
@@ -60,6 +62,27 @@ function txSubmit(txParams) {
           )
           .then(txReceipt => {
             dispatch(txActions.txSuccess(Nf3.Constants.TX_TYPES.DEPOSIT, txReceipt));
+            if (txParams.tokenType === Nf3.Constants.TOKEN_TYPE.ERC721) {
+              // update tokenId
+              const erc721Token = tokenPool.filter(
+                token => token.tokenAddress === txParams.tokenAddress,
+              );
+              const tokenIdx = erc721Token[0].tokenId.findIndex(
+                tokenId => tokenId === txParams.tokenId,
+              );
+              erc721Token[0].tokenId.splice(tokenIdx, 1);
+              dispatch(
+                addToken(
+                  nf3.zkpKeys.compressedPkd,
+                  erc721Token[0].tokenAddress,
+                  erc721Token[0].tokenType,
+                  erc721Token[0].tokenId,
+                  erc721Token[0].tokenName,
+                  '0',
+                  '0',
+                ),
+              );
+            }
             // TODO: dispatch error
             console.log(txReceipt);
           })
