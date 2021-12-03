@@ -86,10 +86,13 @@ async function getERCInfo(ercAddress, ethereumAddress, provider, options) {
   let toEth;
   let tokenId;
   let details;
+  let tokenTypeFilter;
+
   if (typeof options !== 'undefined') {
     toEth = options.toEth;
     tokenId = options.tokenId;
     details = options.details;
+    tokenTypeFilter = options.tokenType;
   }
 
   let tokenType;
@@ -97,20 +100,36 @@ async function getERCInfo(ercAddress, ethereumAddress, provider, options) {
   let decimals = 0;
   const tokenIds = [];
 
-  try {
-    // Check supportsInterface ERC165 that implements ERC721 and ERC1155
-    const abi = getAbi(TOKEN_TYPE.ERC165);
-    const ercContract = new provider.eth.Contract(abi, ercAddress);
-    const interface721 = await ercContract.methods.supportsInterface('0x80ac58cd').call(); // ERC721 interface
-    if (interface721) {
-      tokenType = TOKEN_TYPE.ERC721;
-    } else {
-      const interface1155 = await ercContract.methods.supportsInterface('0xd9b67a26').call(); // ERC1155 interface
-      if (interface1155) tokenType = TOKEN_TYPE.ERC1155;
+  if (tokenTypeFilter) {
+    switch (tokenTypeFilter.toUpperCase()) {
+      case 'ERC721':
+        tokenType = TOKEN_TYPE.ERC721;
+        break;
+      case 'ERC1155':
+        tokenType = TOKEN_TYPE.ERC1155;
+        break;
+      case 'ERC20':
+        tokenType = TOKEN_TYPE.ERC20;
+        break;
+      default:
+        throw new Error(`Unknown ERC token ${tokenTypeFilter}`);
     }
-  } catch {
-    // Expected ERC20
-    tokenType = TOKEN_TYPE.ERC20;
+  } else {
+    try {
+      // Check supportsInterface ERC165 that implements ERC721 and ERC1155
+      const abi = getAbi(TOKEN_TYPE.ERC165);
+      const ercContract = new provider.eth.Contract(abi, ercAddress);
+      const interface721 = await ercContract.methods.supportsInterface('0x80ac58cd').call(); // ERC721 interface
+      if (interface721) {
+        tokenType = TOKEN_TYPE.ERC721;
+      } else {
+        const interface1155 = await ercContract.methods.supportsInterface('0xd9b67a26').call(); // ERC1155 interface
+        if (interface1155) tokenType = TOKEN_TYPE.ERC1155;
+      }
+    } catch {
+      // Expected ERC20
+      tokenType = TOKEN_TYPE.ERC20;
+    }
   }
 
   if (tokenType === TOKEN_TYPE.ERC721) {
