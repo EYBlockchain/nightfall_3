@@ -42,8 +42,8 @@ router.get('/balance', async (req, res, next) => {
 router.post('/balance-details', async (req, res, next) => {
   logger.debug('commitment/balance details endpoint received GET');
   try {
-    const { compressedPkd } = req.body;
-    const balance = await getWalletBalanceDetails(compressedPkd);
+    const { compressedPkd, ercList } = req.body;
+    const balance = await getWalletBalanceDetails(compressedPkd, ercList);
     res.json({ balance });
   } catch (err) {
     logger.error(err);

@@ -710,13 +710,15 @@ class Nf3 {
   Returns the balance details of tokens held in layer 2
   @method
   @async
+  @param {Array} ercList - list of erc contract addresses to filter.
   @returns {Promise} This promise rosolves into an object whose properties are the
   addresses of the ERC contracts of the tokens held by this account in Layer 2. The
   value of each propery is the number of tokens originating from that contract.
   */
-  async getLayer2BalancesDetails() {
+  async getLayer2BalancesDetails(ercList) {
     const res = await axios.post(`${this.clientBaseUrl}/commitment/balance-details`, {
       compressedPkd: this.zkpKeys.compressedPkd,
+      ercList,
     });
     return res.data.balance;
   }

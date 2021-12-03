@@ -242,8 +242,9 @@ export async function getWalletBalance() {
 }
 
 // function to get the balance of commitments for each ERC address
-export async function getWalletBalanceDetails(compressedPkd) {
-  console.log('COMPRESSEDPKD: ', compressedPkd);
+export async function getWalletBalanceDetails(compressedPkd, ercList) {
+  let ercAddressList = ercList || [];
+  ercAddressList = ercAddressList.map(e => e.toUpperCase());
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const query = { isNullified: false, isOnChain: { $gte: 0 } };
@@ -261,6 +262,15 @@ export async function getWalletBalanceDetails(compressedPkd) {
   // work out the balance contribution of each commitment  - a 721 token has no value field in the
   // commitment but each 721 token counts as a balance of 1. Then finally add up the individual
   // commitment balances to get a balance for each erc address.
+  const res1 = wallet.map(e => ({
+    ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
+    compressedPkd: e.preimage.compressedPkd,
+    tokenId: !!BigInt(e.preimage.tokenId),
+    value: Number(BigInt(e.preimage.value)),
+    id: Number(BigInt(e.preimage.tokenId)),
+  }));
+  console.log('RES: ', res1);
+
   const res = wallet
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
@@ -269,7 +279,12 @@ export async function getWalletBalanceDetails(compressedPkd) {
       value: Number(BigInt(e.preimage.value)),
       id: Number(BigInt(e.preimage.tokenId)),
     }))
-    .filter(e => (e.tokenId || e.value > 0) && e.compressedPkd === compressedPkd) // there should be no commitments with tokenId and value of ZERO
+    .filter(
+      e =>
+        (e.tokenId || e.value > 0) &&
+        e.compressedPkd === compressedPkd &&
+        (ercAddressList.length === 0 || ercAddressList.includes(e.ercAddress.toUpperCase())),
+    ) // there should be no commitments with tokenId and value of ZERO
     .map(e => ({
       compressedPkd: e.compressedPkd,
       ercAddress: e.ercAddress,
@@ -282,7 +297,7 @@ export async function getWalletBalanceDetails(compressedPkd) {
       if (e.tokenId === 0 && acc[e.compressedPkd][e.ercAddress].length > 0) {
         acc[e.compressedPkd][e.ercAddress][0].balance += e.balance;
       } else {
-        acc[e.compressedPkd][e.ercAddress].push(e);
+        acc[e.compressedPkd][e.ercAddress].push({ balance: e.balance, tokenId: e.tokenId });
       }
       return acc;
     }, {});
