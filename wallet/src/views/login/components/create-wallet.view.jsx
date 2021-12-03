@@ -60,7 +60,7 @@ function CreateWalletModal({ modalEnable, handleClickOnImport, toggleModalEnable
             </Grid.Column>
             <Grid.Column width={4}>
               <Form.Field>
-                <Button color="green" onClick={newMnemonic}>
+                <Button primary onClick={newMnemonic}>
                   <Icon name="question" />
                   New
                 </Button>
@@ -82,7 +82,7 @@ function CreateWalletModal({ modalEnable, handleClickOnImport, toggleModalEnable
               <Icon name="cancel" />
               Cancel
             </Button>
-            <Button floated="right" color="blue" disabled={mnemonic === ''} onClick={handleSubmit}>
+            <Button floated="right" primary disabled={mnemonic === ''} onClick={handleSubmit}>
               <Icon name="send" />
               Submit
             </Button>

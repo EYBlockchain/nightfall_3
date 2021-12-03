@@ -53,7 +53,7 @@ function AccountSettingsModal({ login, accountSettingsEnable, toggleAccountSetti
           </Form.Field>
           <Divider />
           <Modal.Actions>
-            <Button floated="right" color="blue" onClick={handleSubmit}>
+            <Button floated="right" primary onClick={handleSubmit}>
               <Icon name="save" />
               Save
             </Button>

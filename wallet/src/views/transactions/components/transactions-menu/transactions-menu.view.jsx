@@ -21,6 +21,7 @@ function TransactionsMenu({ token, onNewTx, onLoadTokens }) {
                 name="deposit"
                 disabled={token.activeTokenRowId === ''}
                 onClick={(e, { name }) => newTransaction(name)}
+                primary
               >
                 <Icon name="sign-in" size="big" />
                 Deposit
@@ -29,6 +30,7 @@ function TransactionsMenu({ token, onNewTx, onLoadTokens }) {
                 name="transfer"
                 disabled={token.activeTokenRowId === ''}
                 onClick={(e, { name }) => newTransaction(name)}
+                primary
               >
                 <Icon name="share" size="big" />
                 Transfer
@@ -37,6 +39,7 @@ function TransactionsMenu({ token, onNewTx, onLoadTokens }) {
                 name="withdraw"
                 disabled={token.activeTokenRowId === ''}
                 onClick={(e, { name }) => newTransaction(name)}
+                primary
               >
                 <Icon name="sign-out" size="big" />
                 Withdraw

@@ -16,15 +16,15 @@ function HeaderMenu({ onDeleteWallet }) {
   return (
     <Menu secondary>
       <Menu.Menu position="right">
-        <Button name="logout" onClick={onDeleteWallet}>
+        <Button name="logout" primary onClick={onDeleteWallet}>
           <Icon name="upload" size="large" />
           Logout
         </Button>
-        <Button name="account-settings" onClick={() => toggleAccountSettings()}>
+        <Button name="account-settings" primary onClick={() => toggleAccountSettings()}>
           <Icon name="settings" size="large" />
           Account Settings
         </Button>
-        <Button name="account-info" disabled onClick={() => handleClickNFInfo()}>
+        <Button name="account-info" primary disabled onClick={() => handleClickNFInfo()}>
           <Icon name="question" size="large" />
           NightFall Information
         </Button>

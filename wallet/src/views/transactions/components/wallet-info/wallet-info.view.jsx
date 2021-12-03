@@ -138,6 +138,7 @@ function WalletInfo({
                   icon
                   labelPosition="left"
                   onClick={toggleModalTokenAdd}
+                  primary
                   id="wallet-info-cell-add-token"
                 >
                   <Icon name="plus" />
@@ -151,6 +152,7 @@ function WalletInfo({
                   id="wallet-info-cell-remove-token"
                   toggle
                   onClick={removeToken}
+                  primary
                   active={removeTokenEnable && token.tokenPool.length}
                   disabled={token.tokenPool.length === 0}
                 >
