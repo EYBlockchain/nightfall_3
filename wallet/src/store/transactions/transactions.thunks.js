@@ -3,7 +3,6 @@ import * as Nf3 from 'nf3';
 import { TRANSACTION_RETRY_PERIOD, TRANSACTION_MAX_RETRIES } from '../../constants';
 import toBaseUnit from '../../utils/lib/utils';
 import * as txActions from './transactions.actions';
-import { addToken } from '../token/token.actions';
 
 function txInstantWithdrawSubmit(withdrawTransactionHash, fee) {
   return async (dispatch, getState) => {
