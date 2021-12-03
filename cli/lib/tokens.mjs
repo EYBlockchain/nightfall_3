@@ -189,7 +189,7 @@ async function getERCInfo(ercAddress, ethereumAddress, provider, options) {
       await Promise.all(
         tokenIdsEvents.map(async Id => {
           const amount = await ercContract.methods.balanceOf(ethereumAddress, Id).call();
-          tokenIds.push({ Id, amount });
+          tokenIds.push({ tokenId: Id, amount });
         }),
       );
 
@@ -205,7 +205,7 @@ async function getERCInfo(ercAddress, ethereumAddress, provider, options) {
       balance = await ercContract.methods.balanceOf(ethereumAddress).call();
       decimals = await getDecimals(ercAddress, TOKEN_TYPE.ERC20, provider);
       if (toEth) balance = fromBaseUnit(balance, decimals);
-      if (details) tokenIds.push({ Id: 0, amount: balance });
+      if (details) tokenIds.push({ tokenId: 0, amount: balance });
     } catch {
       throw new Error('Unknown token type', ercAddress);
     }

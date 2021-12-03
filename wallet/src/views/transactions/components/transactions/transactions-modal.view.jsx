@@ -69,7 +69,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
       content: 'Please, enter a valid tokenId',
       pointing: 'above',
     };
-    if (tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC721 && tokenId.value === 0) {
+    if (tokenInfo.tokenType !== Nf3.Constants.TOKEN_TYPE.ERC20 && tokenId.value === 0) {
       setTokenId({ value: 0, error });
       return false;
     }
@@ -135,6 +135,10 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
     transactions.txType === Nf3.Constants.TX_TYPES.WITHDRAW ? 'Ethereum Address' : 'PK-X';
   const pkd = login.isWalletInitialized ? login.nf3.zkpKeys.pkd : '';
   if (transactions.txType === '') return null;
+  const tokenIdPool =
+    transactions.txType === Nf3.Constants.TX_TYPES.DEPOSIT
+      ? tokenInfo.tokenId
+      : tokenInfo.l2TokenId;
   return (
     <Modal open={transactions.modalTx}>
       <Modal.Header>{transactions.txType.toUpperCase()}</Modal.Header>
@@ -213,8 +217,8 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
                   control={Input}
                   selection
                   options={
-                    tokenInfo.tokenId.length
-                      ? tokenInfo.tokenId.map(function (id) {
+                    tokenIdPool.length
+                      ? tokenIdPool.map(function (id) {
                           return { key: id, text: id, value: id };
                         })
                       : []

@@ -106,6 +106,7 @@ function WalletInfo({
       tokenAddress.toLowerCase(),
       tokenType,
       '0x0',
+      '0x0',
       tokenName,
       tokenBalance,
       '-',
@@ -210,9 +211,9 @@ const mapStateToProps = state => ({
 const mapDispatchToProps = dispatch => ({
   onSelectToken: tokenRowId => dispatch(selectToken(tokenRowId)),
   onUnselectToken: () => dispatch(unselectToken()),
-  onAddToken: (compressedPkd, tokenAddress, tokenType, tokenId, tokenName, l1Balance, l2Balance) =>
+  onAddToken: (compressedPkd, tokenAddress, tokenType, tokenId, l2TokenId, tokenName, l1Balance, l2Balance) =>
     dispatch(
-      addToken(compressedPkd, tokenAddress, tokenType, tokenId, tokenName, l1Balance, l2Balance),
+      addToken(compressedPkd, tokenAddress, tokenType, tokenId, l2TokenId, tokenName, l1Balance, l2Balance),
     ),
   onDeleteToken: (compressedPkd, tokenRowId) => dispatch(deleteToken(compressedPkd, tokenRowId)),
   onLoadTokens: initTokens => dispatch(tokensLoad(initTokens)),
