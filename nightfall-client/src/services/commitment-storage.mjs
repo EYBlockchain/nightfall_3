@@ -241,6 +241,55 @@ export async function getWalletBalance() {
     }, {});
 }
 
+// function to get the balance of commitments for each ERC address
+export async function getWalletBalanceDetails(compressedPkd) {
+  console.log('COMPRESSEDPKD: ', compressedPkd);
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  const query = { isNullified: false, isOnChain: { $gte: 0 } };
+  const options = {
+    projection: {
+      preimage: { ercAddress: 1, compressedPkd: 1, tokenId: 1, value: 1 },
+      _id: 0,
+    },
+  };
+  const wallet = await db.collection(COMMITMENTS_COLLECTION).find(query, options).toArray();
+  // the below is a little complex.  First we extract the ercAddress, tokenId and value
+  // from the preimage.  Then we format them nicely. We don't care about the value of the
+  // tokenId, other than if it's zero or not (indicating the token type). Then we filter
+  // any commitments of zero value and tokenId (meaningless commitments), then we
+  // work out the balance contribution of each commitment  - a 721 token has no value field in the
+  // commitment but each 721 token counts as a balance of 1. Then finally add up the individual
+  // commitment balances to get a balance for each erc address.
+  const res = wallet
+    .map(e => ({
+      ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
+      compressedPkd: e.preimage.compressedPkd,
+      tokenId: !!BigInt(e.preimage.tokenId),
+      value: Number(BigInt(e.preimage.value)),
+      id: Number(BigInt(e.preimage.tokenId)),
+    }))
+    .filter(e => (e.tokenId || e.value > 0) && e.compressedPkd === compressedPkd) // there should be no commitments with tokenId and value of ZERO
+    .map(e => ({
+      compressedPkd: e.compressedPkd,
+      ercAddress: e.ercAddress,
+      balance: e.tokenId ? 1 : e.value,
+      tokenId: e.id,
+    }))
+    .reduce((acc, e) => {
+      if (!acc[e.compressedPkd]) acc[e.compressedPkd] = {};
+      if (!acc[e.compressedPkd][e.ercAddress]) acc[e.compressedPkd][e.ercAddress] = [];
+      if (e.tokenId === 0 && acc[e.compressedPkd][e.ercAddress].length > 0) {
+        acc[e.compressedPkd][e.ercAddress][0].balance += e.balance;
+      } else {
+        acc[e.compressedPkd][e.ercAddress].push(e);
+      }
+      return acc;
+    }, {});
+
+  return res;
+}
+
 // function to get the commitments for each ERC address of a pkd
 export async function getWalletCommitments() {
   const connection = await mongo.connection(MONGO_URL);

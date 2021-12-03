@@ -707,6 +707,21 @@ class Nf3 {
   }
 
   /**
+  Returns the balance details of tokens held in layer 2
+  @method
+  @async
+  @returns {Promise} This promise rosolves into an object whose properties are the
+  addresses of the ERC contracts of the tokens held by this account in Layer 2. The
+  value of each propery is the number of tokens originating from that contract.
+  */
+  async getLayer2BalancesDetails() {
+    const res = await axios.post(`${this.clientBaseUrl}/commitment/balance-details`, {
+      compressedPkd: this.zkpKeys.compressedPkd,
+    });
+    return res.data.balance;
+  }
+
+  /**
   Returns the commitments of tokens held in layer 2
   @method
   @async

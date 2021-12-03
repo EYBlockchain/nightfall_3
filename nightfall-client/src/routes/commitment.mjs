@@ -9,6 +9,7 @@ import {
   getWalletBalance,
   getWalletCommitments,
   getWithdrawCommitments,
+  getWalletBalanceDetails,
 } from '../services/commitment-storage.mjs';
 
 const router = express.Router();
@@ -31,6 +32,18 @@ router.get('/balance', async (req, res, next) => {
   logger.debug('commitment/balance endpoint received GET');
   try {
     const balance = await getWalletBalance();
+    res.json({ balance });
+  } catch (err) {
+    logger.error(err);
+    next(err);
+  }
+});
+
+router.post('/balance-details', async (req, res, next) => {
+  logger.debug('commitment/balance details endpoint received GET');
+  try {
+    const { compressedPkd } = req.body;
+    const balance = await getWalletBalanceDetails(compressedPkd);
     res.json({ balance });
   } catch (err) {
     logger.error(err);
