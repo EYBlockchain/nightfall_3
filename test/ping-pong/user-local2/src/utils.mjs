@@ -37,7 +37,6 @@ export const waitForSufficientBalance = (client, value) => {
         await new Promise(resolving => setTimeout(resolving, 10000));
         isSufficientBalance();
       }
-      console.log('HERE clientBalances', clientBalances);
       const balance = clientBalances[Object.keys(clientBalances)[0]];
       // if client has layer 2 balances and if it is equal to value required
       if (balance > value) {
