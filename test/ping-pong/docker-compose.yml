@@ -91,6 +91,9 @@ services:
 
   worker:
     image: ghcr.io/eyblockchain/nightfall3-worker:latest
+    build:
+      dockerfile: worker.Dockerfile
+      context: ../../
     volumes:
       - type: volume
         source: proving_files
