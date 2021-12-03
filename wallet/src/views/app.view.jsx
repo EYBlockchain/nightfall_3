@@ -5,10 +5,10 @@ import PropTypes from 'prop-types';
 
 import Transactions from './transactions/transactions.view.jsx';
 import Login from './login/login.view.jsx';
-import Depositjsx from './zokrates/deposit.view.jsx';
-import Withdrawjsx from './zokrates/withdraw.view.jsx';
-import Singletransferjsx from './zokrates/singletransfer.view.jsx';
-import Doubletransferjsx from './zokrates/doubletransfer.view.jsx';
+import Deposit from './zokrates/deposit.view.jsx';
+import Withdraw from './zokrates/withdraw.view.jsx';
+import Singletransfer from './zokrates/singletransfer.view.jsx';
+import Doubletransfer from './zokrates/doubletransfer.view.jsx';
 
 import { setEnvironment } from '../utils/lib/environment';
 import { NF3_GITHUB_ISSUES_URL } from '../constants';
@@ -49,17 +49,17 @@ function App({ onDeleteWallet }) {
             window.location = NF3_GITHUB_ISSUES_URL;
           }}
         />
-        <Route path="/Depositjsx">
-          <Depositjsx />
+        <Route path="/deposit">
+          <Deposit />
         </Route>
-        <Route path="/Withdrawjsx">
-          <Withdrawjsx />
+        <Route path="/withdraw">
+          <Withdraw />
         </Route>
-        <Route path="/Singletransferjsx">
-          <Singletransferjsx />
+        <Route path="/singletransfer">
+          <Singletransfer />
         </Route>
-        <Route path="/Doubletransferjsx">
-          <Doubletransferjsx />
+        <Route path="/doubletransfer">
+          <Doubletransfer />
         </Route>
         <Redirect to="/login" />
       </Switch>
