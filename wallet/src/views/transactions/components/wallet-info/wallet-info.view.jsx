@@ -50,6 +50,7 @@ function WalletInfo({
   };
 
   function setActiveRow(id) {
+    reload();
     if (id !== token.activeTokenRowId) {
       onSelectToken(id);
       if (removeTokenEnable) {

@@ -57,18 +57,19 @@ function tokensLoad(initTokens) {
             Nf3.Tokens.getERCInfo(el.tokenAddress, nf3.ethereumAddress, nf3.web3, {
               toEth: true,
               tokenId: 0,
+              details: true,
             })
-              .then(l1Balance => {
-                if (el.tokenBalanceL1 !== l1Balance.balance || el.updated) {
+              .then(tokenInfo => {
+                if (el.tokenBalanceL1 !== tokenInfo.balance || el.updated) {
                   dispatch(
                     tokenActions.addToken(
                       compressedPkd,
                       el.tokenAddress.toLowerCase(),
                       el.tokenType,
-                      el.tokenId,
+                      tokenInfo.details.map(tokenDetails => tokenDetails.tokenId),
                       el.tokenName,
-                      l1Balance.balance,
-                      Nf3.Units.fromBaseUnit(el.tokenBalanceL2, l1Balance.decimals),
+                      tokenInfo.balance,
+                      Nf3.Units.fromBaseUnit(el.tokenBalanceL2, tokenInfo.decimals),
                     ),
                   );
                 }

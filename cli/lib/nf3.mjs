@@ -396,17 +396,15 @@ class Nf3 {
   @param {number} fee - the amount being paid for the instant withdrawal service
   */
   async requestInstantWithdrawal(withdrawTransactionHash, fee) {
-    // find the L2 block containing the L2 transaction hash
-    let res = await axios.get(
-      `${this.optimistBaseUrl}/block/transaction-hash/${withdrawTransactionHash}`,
-    );
-    const { block } = res.data;
-    if (!block) return null; // block not found
-    // set the instant withdrawal fee
-    res = await axios.post(`${this.clientBaseUrl}/set-instant-withdrawal`, {
-      transactionHash: withdrawTransactionHash,
-    });
-    return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, fee);
+    try {
+      // set the instant withdrawal fee
+      const res = await axios.post(`${this.clientBaseUrl}/set-instant-withdrawal`, {
+        transactionHash: withdrawTransactionHash,
+      });
+      return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, fee);
+    } catch {
+      return null;
+    }
   }
 
   /**
@@ -693,34 +691,6 @@ class Nf3 {
       }
     };
     return newChallengeEmitter;
-  }
-
-  /**
-  Get if it's a valid withdraw transaction for finalising the
-  withdrawal of funds to L1 (only relevant for ERC20).
-  @method
-  @async
-  @param {string} withdrawTransactionHash - the hash of the Layer 2 transaction in question
-  */
-  async isValidWithdrawal(withdrawTransactionHash) {
-    let res;
-    let valid = false;
-
-    res = await axios.get(
-      `${this.optimistBaseUrl}/block/transaction-hash/${withdrawTransactionHash}`,
-    );
-    const { block, transactions, index } = res.data;
-
-    if (block) {
-      res = await axios.post(`${this.clientBaseUrl}/valid-withdrawal`, {
-        block,
-        transactions,
-        index,
-      });
-      valid = res.data.valid;
-    }
-
-    return valid;
   }
 
   /**
