@@ -27,19 +27,19 @@ function HeaderMenu({ onDeleteWallet }) {
         </Button>
         <Button name="deposit">
           <Icon name="settings" size="large" />
-          <Link to="/Depositjsx">Deposit</Link>
+          <Link to="/deposit">Deposit</Link>
         </Button>
         <Button name="Withdraw">
           <Icon name="settings" size="large" />
-          <Link to="/Withdrawjsx">withdraw</Link>
+          <Link to="/withdraw">withdraw</Link>
         </Button>
         <Button name="Single Transfer">
           <Icon name="settings" size="large" />
-          <Link to="/SingleTransferjsx">Single Transfer</Link>
+          <Link to="/singletransfer">Single Transfer</Link>
         </Button>
         <Button name="Double Transfer">
           <Icon name="settings" size="large" />
-          <Link to="/Doubletransferjsx">Double Transfer</Link>
+          <Link to="/doubletransfer">Double Transfer</Link>
         </Button>
         <Button name="account-info" primary disabled onClick={() => handleClickNFInfo()}>
           <Icon name="question" size="large" />

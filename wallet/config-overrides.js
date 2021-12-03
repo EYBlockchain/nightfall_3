@@ -20,13 +20,5 @@ module.exports = function override(config) {
     include: path.resolve(__dirname, 'src'),
     use: [{ loader: require.resolve('wasm-loader'), options: {} }],
   });
-
-  // add a dedicated loader for zok
-  config.module.rules.push({
-    test: /\.zok$/i,
-    include: path.resolve(__dirname, 'src'),
-    use: [{ loader: require.resolve('raw-loader'), options: { esModule: false } }],
-  });
-
   return config;
 };

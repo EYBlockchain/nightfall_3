@@ -1,0 +1,211 @@
+{
+  "inputs": [
+    {
+      "name": "oldCommitment",
+      "public": true,
+      "type": "struct",
+      "components": {
+        "name": "OldCommitment",
+        "generics": [],
+        "members": [
+          {
+            "name": "ercAddress",
+            "type": "array",
+            "components": {
+              "size": 8,
+              "type": "u32"
+            }
+          },
+          {
+            "name": "id",
+            "type": "array",
+            "components": {
+              "size": 8,
+              "type": "u32"
+            }
+          },
+          {
+            "name": "value",
+            "type": "array",
+            "components": {
+              "size": 8,
+              "type": "u32"
+            }
+          },
+          {
+            "name": "salt",
+            "type": "array",
+            "components": {
+              "size": 8,
+              "type": "u32"
+            }
+          },
+          {
+            "name": "hash",
+            "type": "array",
+            "components": {
+              "size": 8,
+              "type": "u32"
+            }
+          },
+          {
+            "name": "ask",
+            "type": "field"
+          }
+        ]
+      }
+    },
+    {
+      "name": "newCommitment",
+      "public": true,
+      "type": "struct",
+      "components": {
+        "name": "NewCommitment",
+        "generics": [],
+        "members": [
+          {
+            "name": "pkdRecipient",
+            "type": "array",
+            "components": {
+              "size": 2,
+              "type": "field"
+            }
+          },
+          {
+            "name": "value",
+            "type": "array",
+            "components": {
+              "size": 8,
+              "type": "u32"
+            }
+          },
+          {
+            "name": "salt",
+            "type": "array",
+            "components": {
+              "size": 8,
+              "type": "u32"
+            }
+          },
+          {
+            "name": "hash",
+            "type": "array",
+            "components": {
+              "size": 8,
+              "type": "u32"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "nullifier",
+      "public": true,
+      "type": "struct",
+      "components": {
+        "name": "Nullifier",
+        "generics": [],
+        "members": [
+          {
+            "name": "nsk",
+            "type": "array",
+            "components": {
+              "size": 8,
+              "type": "u32"
+            }
+          },
+          {
+            "name": "hash",
+            "type": "array",
+            "components": {
+              "size": 8,
+              "type": "u32"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "path",
+      "public": true,
+      "type": "array",
+      "components": {
+        "size": 33,
+        "type": "field"
+      }
+    },
+    {
+      "name": "order",
+      "public": true,
+      "type": "field"
+    },
+    {
+      "name": "secrets",
+      "public": false,
+      "type": "struct",
+      "components": {
+        "name": "Secrets",
+        "generics": [],
+        "members": [
+          {
+            "name": "ephemeralKey1",
+            "type": "array",
+            "components": {
+              "size": 8,
+              "type": "u32"
+            }
+          },
+          {
+            "name": "ephemeralKey2",
+            "type": "array",
+            "components": {
+              "size": 8,
+              "type": "u32"
+            }
+          },
+          {
+            "name": "ephemeralKey3",
+            "type": "array",
+            "components": {
+              "size": 8,
+              "type": "u32"
+            }
+          },
+          {
+            "name": "ephemeralKey4",
+            "type": "array",
+            "components": {
+              "size": 8,
+              "type": "u32"
+            }
+          },
+          {
+            "name": "cipherText",
+            "type": "array",
+            "components": {
+              "size": 16,
+              "type": "field"
+            }
+          },
+          {
+            "name": "sqrtMessage1",
+            "type": "field"
+          },
+          {
+            "name": "sqrtMessage2",
+            "type": "field"
+          },
+          {
+            "name": "sqrtMessage3",
+            "type": "field"
+          },
+          {
+            "name": "sqrtMessage4",
+            "type": "field"
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": []
+}
