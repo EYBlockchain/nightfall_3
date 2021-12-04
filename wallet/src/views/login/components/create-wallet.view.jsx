@@ -55,7 +55,11 @@ function CreateWalletModal({ modalEnable, handleClickOnImport, toggleModalEnable
           <Grid>
             <Grid.Column width={12}>
               <Form.Field>
-                <TextArea value={mnemonic} style={{ minheight: 100 }} />
+                <TextArea
+                  value={mnemonic}
+                  onChange={event => setMnemonic(event.target.value.replace(/\s+/g, ' '))}
+                  style={{ minheight: 100 }}
+                />
               </Form.Field>
             </Grid.Column>
             <Grid.Column width={4}>

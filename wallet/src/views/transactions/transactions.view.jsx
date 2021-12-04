@@ -25,7 +25,7 @@ function Transactions({ login }) {
       <Header
         as="h1"
         style={{
-          fontSize: '2.7em',
+          fontSize: '2.5em',
           fontFamily: 'verdana',
           fontWeight: 'bold',
           marginBottom: 0,

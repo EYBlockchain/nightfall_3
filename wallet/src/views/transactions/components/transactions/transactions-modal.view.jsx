@@ -58,10 +58,15 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
       if (!/^0x([A-Fa-f0-9]{63,64})$/.test(value)) return setPkdY({ value: '', error });
       setPkdY({ value, error: null });
     }
+    if (key === 'PK-X') {
+      if (!/^0x([A-Fa-f0-9]{63,64})$/.test(value)) return setPkdX({ value: '', error });
+      setPkdX({ value, error: null });
+    }
     if (transactions.txType === 'withdraw') {
       if (!/^0x([A-Fa-f0-9]{40})$/.test(value)) return setPkdX({ value: '', error });
-    } else if (!/^0x([A-Fa-f0-9]{63,64})$/.test(value)) return setPkdX({ value: '', error });
-    return setPkdX({ value, error: null });
+      setPkdX({ value, error: null });
+    }
+    return null;
   }
 
   function validateTokenId(tokenInfo) {

@@ -757,7 +757,7 @@ class Nf3 {
     if (typeof window !== 'undefined') {
       if (window.ethereum && this.ethereumSigningKey === '') {
         this.web3 = new Web3(window.ethereum);
-        window.ethereum.send('eth_requestAccounts');
+        window.ethereum.request({ method: 'eth_accounts' });
       } else {
         // Metamask not available
         throw new Error('No Web3 provider found');
