@@ -38,7 +38,7 @@ services:
   rabbitmq:
     image: rabbitmq
 #    ports:
-#      - '15675:15674'
+#      - '15674:15674'
 #      - '5672:5672'
     networks:
       - pong_network
