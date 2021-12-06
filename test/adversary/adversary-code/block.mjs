@@ -1,3 +1,4 @@
+/* ignore unused exports */
 import logger from 'common-files/utils/logger.mjs';
 
 const error = [/* 'IncorrectTreeRoot', 'IncorrectLeafCount'], */ 'ValidBlock'];
