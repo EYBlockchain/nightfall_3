@@ -17,10 +17,13 @@ services:
       BLOCKCHAIN_WS_HOST: ropsten1-ws.testnet.nightfall3.com
       BLOCKCHAIN_PORT: 80
       ETH_PRIVATE_KEY: abf4ed9f30bd1e4a290310d726c7bbdf39cd75a25eebd9a3a4874e10b4a0c4ce
+      # this should be the address corresponding to the above provate key
+      ETH_ADDRESS: db080dC48961bC1D67a0A4151572eCb824cC76E8
       USE_ROPSTEN: enable
       GAS_PRICE: 20000000000
       # This is only needed for test purposes - it gives tokens to the user at startup
       USER_ETHEREUM_SIGNING_KEY: abf4ed9f30bd1e4a290310d726c7bbdf39cd75a25eebd9a3a4874e10b4a0c4ce
+      USER_ADDRESS: db080dC48961bC1D67a0A4151572eCb824cC76E8
 
   optimist:
     environment:
@@ -39,3 +42,4 @@ services:
       BLOCKCHAIN_WS_HOST: ropsten1-ws.testnet.nightfall3.com
       BLOCKCHAIN_PORT: 80
       USER_ETHEREUM_SIGNING_KEY: abf4ed9f30bd1e4a290310d726c7bbdf39cd75a25eebd9a3a4874e10b4a0c4ce
+      USER_ADDRESS: db080dC48961bC1D67a0A4151572eCb824cC76E8

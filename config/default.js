@@ -1,7 +1,3 @@
-const Web3 = require('web3');
-
-const web3 = new Web3();
-
 module.exports = {
   COMMITMENTS_DB: 'nightfall_commitments',
   OPTIMIST_DB: 'optimist_data',
@@ -34,9 +30,7 @@ module.exports = {
     `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`,
   USE_INFURA: process.env.USE_INFURA === 'true',
   ETH_PRIVATE_KEY: process.env.ETH_PRIVATE_KEY, // owner's/deployer's private key
-  ETH_ADDRESS: process.env.ETH_PRIVATE_KEY
-    ? web3.eth.accounts.privateKeyToAccount(process.env.ETH_PRIVATE_KEY, false).address
-    : undefined, // owner's address
+  ETH_ADDRESS: process.env.ETH_ADDRESS,
   OPTIMIST_HOST: process.env.OPTIMIST_HOST || 'optimist',
   OPTIMIST_PORT: process.env.OPTIMIST_PORT || 80,
   clientBaseUrl: `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`,
@@ -46,9 +40,7 @@ module.exports = {
   userEthereumSigningKey:
     process.env.USER_ETHEREUM_SIGNING_KEY ||
     '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e',
-  userAddress: process.env.USER_ETHEREUM_SIGNING_KEY
-    ? web3.eth.accounts.privateKeyToAccount(process.env.USER_ETHEREUM_SIGNING_KEY, false).address
-    : undefined, // user's address
+  userAddress: process.env.USER_ADDRESS,
   zkpMnemonic:
     process.env.ZKP_MNEMONIC ||
     'hurt labor ketchup seven scan swap dirt brown brush path goat together',
@@ -58,10 +50,7 @@ module.exports = {
   WEB3_OPTIONS: {
     gas: process.env.GAS || 8000000,
     gasPrice: process.env.GAS_PRICE || '20000000000',
-    from:
-      process.env.FROM_ADDRESS || process.env.ETH_PRIVATE_KEY
-        ? web3.eth.accounts.privateKeyToAccount(process.env.ETH_PRIVATE_KEY, false).address
-        : undefined,
+    from: process.env.FROM_ADDRESS || process.env.ETH_ADDRESS,
   },
   WEB3_PROVIDER_OPTIONS: {
     clientConfig: {
