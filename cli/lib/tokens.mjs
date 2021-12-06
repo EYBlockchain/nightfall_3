@@ -25,7 +25,9 @@ async function approve(ercAddress, ownerAddress, spenderAddress, tokenType, valu
       if (allowanceBN.lt(valueBN)) {
         if (process.env.USER_ETHEREUM_SIGNING_KEY)
           return ercContract.methods.approve(spenderAddress, APPROVE_AMOUNT).encodeABI();
-        return ercContract.methods.approve(spenderAddress, APPROVE_AMOUNT).send();
+        await ercContract.methods
+          .approve(spenderAddress, APPROVE_AMOUNT)
+          .send({ from: ownerAddress });
       }
       return Promise.resolve(false);
     }
@@ -35,7 +37,9 @@ async function approve(ercAddress, ownerAddress, spenderAddress, tokenType, valu
       if (!(await ercContract.methods.isApprovedForAll(ownerAddress, spenderAddress).call())) {
         if (process.env.USER_ETHEREUM_SIGNING_KEY)
           return ercContract.methods.setApprovalForAll(spenderAddress, true).encodeABI();
-        return ercContract.methods.setApprovalForAll(spenderAddress, true).send();
+        await ercContract.methods
+          .setApprovalForAll(spenderAddress, true)
+          .send({ from: ownerAddress });
       }
       break;
     }
