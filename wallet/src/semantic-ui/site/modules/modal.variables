@@ -5,10 +5,10 @@
 @activeBgColor: #9e9ee6;
 @headerBgColor: #6f56b1;
 @backgroundImage: none;
-@background: @backgroundColor @backgroundImage;
+/*@background: @backgroundColor @backgroundImage;
 
 
 @activeColor: @black;
 @activeBackgroundColor: @activeBgColor;
 @headerBackground: @headerBgColor;
-@headerColor: @white;
+@headerColor: @white;*/

@@ -229,7 +229,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
                       : []
                   }
                   onChange={(e, { value }) => setTokenId({ value, error: null })}
-                  error={tokenId.error}
+                  error={tokenId.error !== null}
                 />
               </Form.Field>
             </Form.Group>
@@ -265,7 +265,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
       </Modal.Content>
       <Modal.Actions>
         <div>
-          <Button floated="left" disabled={transactions.txType === ''} primary onClick={toggleAll}>
+          <Button floated="left" disabled={transactions.txType === ''} color="red" onClick={toggleAll}>
             <Icon name="cancel" />
             Cancel
           </Button>

@@ -8,9 +8,9 @@
 
 
 @activeColor: @black;
-@activeBackgroundColor: @activeBgColor;
-@headerBackground: @headerBgColor;
-@headerColor: @white;
+/* @activeBackgroundColor: @activeBgColor;
+@headerBackground: @headerBgColor; 
+@headerColor: @white; */
 @rowBorder: 4px solid @internalBorderColor;
 @headerBorder: 4px solid @white;
 
