@@ -164,9 +164,9 @@ class Nf3 {
       // if we don't have a nonce, we must get one from the ethereum client
       if (!this.nonce) this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
 
-      let gasPrice = 10000000000;
+      let gasPrice = 20000000000;
       const gas = (await this.web3.eth.getBlock('latest')).gasLimit;
-      const blockGasPrice = Number(await this.web3.eth.getGasPrice());
+      const blockGasPrice = 2 * Number(await this.web3.eth.getGasPrice());
       if (blockGasPrice > gasPrice) gasPrice = blockGasPrice;
 
       tx = {
