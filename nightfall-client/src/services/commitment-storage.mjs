@@ -420,6 +420,7 @@ async function findUsableCommitments(compressedPkd, ercAddress, tokenId, _value,
   // then we will need to use a commitment of greater value than the target
   if (twoGreatestSum < value.bigInt) {
     if (commitsLessThanTargetValue.length === sortedCommits.length) return null; // We don't have any more commitments
+    if (commitsLessThanTargetValue.length === 0) return [sortedCommits[0]]; 
     return [sortedCommits[commitsLessThanTargetValue.length], sortedCommits[0]]; // This should guarantee that we will replace our smallest commitment with a greater valued one.
   }
 
