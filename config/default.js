@@ -39,19 +39,15 @@ module.exports = {
   web3WsUrl: `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`,
   userEthereumSigningKey:
     process.env.USER_ETHEREUM_SIGNING_KEY ||
-    '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e',
+    '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e', // if changed, change associated userEthereumAddresses
   userAddress: process.env.USER_ADDRESS,
-  user1EthereumSigningKey:
-    process.env.USER_ETHEREUM_SIGNING_KEY ||
-    '0xb0fa8745bd6e77a67ec6a27e701971d659937140cc3159d9f85210da3444eb45', // Change associated user1EthereumAddress
-  user2EthereumSigningKey:
-    process.env.USER2_ETHEREUM_SIGNING_KEY ||
-    '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb', // Change associated user2EthereumAddress
-  userEthereumAddress: process.env.ETHEREUM_ADDRESS || '0x9c8b2276d490141ae1440da660e470e7c0349c63', // Change associated userEthereumSigningKey
-  user1EthereumAddress:
-    process.env.ETHEREUM_ADDRESS || '0x4ca4902a6f456b488947074ad4140317c7e21996', // Change associated user1EthereumSigningKey
-  user2EthereumAddress:
-    process.env.ETHEREUM_ADDRESS || '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9', // Change associated user2EthereumSigningKey
+  UserEthereumAddresses: process.env.USER_ETHEREUM_ADDRESSES
+    ? process.env.USER_ETHEREUM_ADDRESSES.split(',')
+    : [
+        '0x9c8b2276d490141ae1440da660e470e7c0349c63',
+        // '0x4ca4902a6f456b488947074ad4140317c7e21996', // 0xb0fa8745bd6e77a67ec6a27e701971d659937140cc3159d9f85210da3444eb45
+        // '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9', // 0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb
+      ],
   zkpMnemonic:
     process.env.ZKP_MNEMONIC ||
     'hurt labor ketchup seven scan swap dirt brown brush path goat together',
