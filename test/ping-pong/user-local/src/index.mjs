@@ -31,11 +31,17 @@ async function localTest() {
   const startBalance = await nf3.getLayer2Balances();
   await nf3.deposit(ercAddress, 'ERC20', 1, '0x00');
   await nf3.deposit(ercAddress, 'ERC20', 1, '0x00');
-  await new Promise(resolve => setTimeout(resolve, 30000)); // wait for the block to propose TODO: active check
-  const endBalance = await nf3.getLayer2Balances();
-  if (Object.keys(startBalance).length >= Object.keys(endBalance).length)
-    logger.warn('The test failed because the L2 balance has not increased');
-  else logger.info('Test passed');
+  let endBalance = await nf3.getLayer2Balances();
+  while (Object.keys(startBalance).length >= Object.keys(endBalance).length) {
+    logger.warn(
+      'The test has not yet passed because the L2 balance has not increased - waiting 30s',
+    );
+    // eslint-disable-next-line no-await-in-loop
+    await new Promise(resolve => setTimeout(resolve, 30000));
+    // eslint-disable-next-line no-await-in-loop
+    endBalance = await nf3.getLayer2Balances();
+  }
+  logger.info('Test passed');
   nf3.close();
 }
 
