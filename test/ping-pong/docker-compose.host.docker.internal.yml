@@ -44,18 +44,24 @@ services:
       PROPOSER_ETHEREUM_SIGNING_KEY: 645ac79fa9fd87dd1cf30bdca51d326bd501cd328d6dbc9f5f517c7da0dafa6f
 
   # user-local:
+  # extra_hosts:
+  #   - 'host.docker.internal:host-gateway'
   #   environment:
   #     BLOCKCHAIN_WS_HOST: host.docker.internal
   #     BLOCKCHAIN_PORT: 8546
   #     USER_ETHEREUM_SIGNING_KEY: abf4ed9f30bd1e4a290310d726c7bbdf39cd75a25eebd9a3a4874e10b4a0c4ce
 
   user-local1:
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
       BLOCKCHAIN_PORT: 8546
       USER_ETHEREUM_SIGNING_KEY: b0fa8745bd6e77a67ec6a27e701971d659937140cc3159d9f85210da3444eb45
 
   user-local2:
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
       BLOCKCHAIN_PORT: 8546

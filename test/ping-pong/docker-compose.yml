@@ -12,9 +12,9 @@ services:
         target: /app/mongodb
     networks:
       - pong_network
-    #    ports:
-    #      - 27017:27017
-    #      - 8080:80
+    # ports:
+    #   - 27017:27017
+    #   - 8080:80
     depends_on:
       - worker
       - rabbitmq
@@ -132,6 +132,7 @@ services:
       ZOKRATES_WORKER_HOST: worker
       USE_STUBS: 'false'
       USER_ETHEREUM_ADDRESSES: 0x4ca4902a6f456b488947074ad4140317c7e21996,0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9
+      ETH_ADDRESS: '0xdb080dC48961bC1D67a0A4151572eCb824cC76E8'
 
   worker:
     image: ghcr.io/eyblockchain/nightfall3-worker:latest
@@ -195,7 +196,7 @@ services:
   #       ZKP_MNEMONIC: tiger victory velvet tank ritual column horse conduct athlete position soul shaft
 
   user-local1:
-    image: ghcr.io/eyblockchain/nightfall3-user-local1:latest
+    # image: ghcr.io/eyblockchain/nightfall3-user-local1:latest
     build:
       dockerfile: user-local1.Dockerfile
       context: ../../
@@ -223,7 +224,7 @@ services:
       ZKP_MNEMONIC: tone shadow woman critic glare utility brass scheme edge brisk enforce champion
 
   user-local2:
-    image: ghcr.io/eyblockchain/nightfall3-user-local1:latest
+    # image: ghcr.io/eyblockchain/nightfall3-user-local1:latest
     build:
       dockerfile: user-local1.Dockerfile
       context: ../../
