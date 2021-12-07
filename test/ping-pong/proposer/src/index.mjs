@@ -13,13 +13,11 @@ Does the preliminary setup and starts listening on the websocket
 */
 async function startProposer() {
   logger.info('Starting Proposer...');
-  const nf3 = new Nf3(
-    clientBaseUrl,
-    optimistBaseUrl,
+  const nf3 = new Nf3(web3WsUrl, proposerEthereumSigningKey, {
+    clientApiUrl: clientBaseUrl,
+    optimistApiUrl: optimistBaseUrl,
     optimistWsUrl,
-    web3WsUrl,
-    proposerEthereumSigningKey,
-  );
+  });
   await nf3.init();
   if ((await nf3.healthcheck('optimist')) && (await nf3.healthcheck('client')))
     logger.info('Healthcheck passed');

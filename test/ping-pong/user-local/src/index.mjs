@@ -19,13 +19,11 @@ Does the preliminary setup and starts listening on the websocket
 */
 async function localTest() {
   logger.info('Starting local test...');
-  const nf3 = new Nf3(
-    clientBaseUrl,
-    optimistBaseUrl,
+  const nf3 = new Nf3(web3WsUrl, userEthereumSigningKey, {
+    clientApiUrl: clientBaseUrl,
+    optimistApiUrl: optimistBaseUrl,
     optimistWsUrl,
-    web3WsUrl,
-    userEthereumSigningKey,
-  );
+  });
   await nf3.init(zkpMnemonic);
   if (await nf3.healthcheck('client')) logger.info('Healthcheck passed');
   else throw new Error('Healthcheck failed');
