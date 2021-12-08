@@ -1,4 +1,5 @@
 // ignore unused exports default
+/* eslint import/no-extraneous-dependencies: "off" */
 
 /**
 Simple routine to create a cryptographically sound random.
