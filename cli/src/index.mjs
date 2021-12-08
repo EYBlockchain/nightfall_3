@@ -50,7 +50,16 @@ async function askQuestions(nf3) {
       name: 'task',
       type: 'list',
       message: 'What would you like to do?',
-      choices: ['Deposit', 'Transfer', 'Withdraw', 'Instant-Withdraw', 'View my wallet', 'Exit'],
+      choices: [
+        'Deposit',
+        'Transfer',
+        'Withdraw',
+        'Instant-Withdraw',
+        'View my wallet',
+        'View my pending deposits',
+        'View my pending spent',
+        'Exit',
+      ],
     },
     {
       name: 'recipientAddress',
@@ -125,19 +134,19 @@ async function askQuestions(nf3) {
 /**
 Simple function to print out the balances object
 */
-function printBalances(balances) {
-  console.log('BALANCES', balances);
+function printBalances(balances, type) {
+  console.log(`${type} BALANCES ${balances}`);
   if (Object.keys(balances).length === 0) {
     console.log('You have no balances yet - try depositing some tokens into Layer 2 from Layer 1');
     return;
   }
   // eslint-disable-next-line guard-for-in
   for (const compressedPkd in balances) {
-    const table = new Table({ head: ['ERC Contract Address', 'Layer 2 Balance'] });
+    const table = new Table({ head: ['ERC Contract Address', `${type} Layer 2 Balance`] });
     Object.keys(balances[compressedPkd]).forEach(ercAddress =>
       table.push({ [ercAddress]: balances[compressedPkd][ercAddress] }),
     );
-    console.log(chalk.yellow('Balances of user', compressedPkd));
+    console.log(chalk.yellow(`${type} Balances of user ${compressedPkd}`));
     console.log(table.toString());
   }
 }
@@ -236,7 +245,13 @@ async function loop(nf3, ercAddress) {
       }
       break;
     case 'View my wallet':
-      printBalances(await nf3.getLayer2Balances());
+      printBalances(await nf3.getLayer2Balances(), '');
+      return [false, null];
+    case 'View my pending deposits':
+      printBalances(await nf3.getLayer2PendingDepositBalances(), 'Pending Deposit');
+      return [false, null];
+    case 'View my pending spent':
+      printBalances(await nf3.getLayer2PendingSpentBalances(), 'Pending Spent');
       return [false, null];
     case 'Exit':
       return [true, null];

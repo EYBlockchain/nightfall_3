@@ -10,6 +10,8 @@ import {
   getWalletCommitments,
   getWithdrawCommitments,
   getWalletBalanceDetails,
+  getWalletPendingDepositBalance,
+  getWalletPendingSpentBalance,
 } from '../services/commitment-storage.mjs';
 
 const router = express.Router();
@@ -44,6 +46,28 @@ router.post('/balance-details', async (req, res, next) => {
   try {
     const { compressedPkd, ercList } = req.body;
     const balance = await getWalletBalanceDetails(compressedPkd, ercList);
+    res.json({ balance });
+  } catch (err) {
+    logger.error(err);
+    next(err);
+  }
+});
+
+router.get('/pending-deposit', async (req, res, next) => {
+  logger.debug('commitment/pending-deposit endpoint received GET');
+  try {
+    const balance = await getWalletPendingDepositBalance();
+    res.json({ balance });
+  } catch (err) {
+    logger.error(err);
+    next(err);
+  }
+});
+
+router.get('/pending-spent', async (req, res, next) => {
+  logger.debug('commitment/pending-spent endpoint received GET');
+  try {
+    const balance = await getWalletPendingSpentBalance();
     res.json({ balance });
   } catch (err) {
     logger.error(err);
