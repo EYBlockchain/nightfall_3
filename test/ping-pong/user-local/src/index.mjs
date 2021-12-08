@@ -1,5 +1,5 @@
 /**
-Module that runs up as a proposer
+Module that runs up as a user
 */
 import logger from 'common-files/utils/logger.mjs';
 import config from 'config';
