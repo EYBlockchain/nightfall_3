@@ -52,8 +52,8 @@ You should see the container images being pulled and then some transactions appe
 nightfall terminal and then, after about 4 minutes, in the other terminal, the `user-local1` and
 `user_local2` containers will exit with the log.info line `Test passed`.
 
-Note, this isn't intended to be an extensive test of Nightfall - there are other test for that -
-it's just to show that the containers are basically running.
+Note, `TEST_LENGTH` variable can be set for `user_local1` and `user_local2` in
+`test/ping-pong/docker-compose.yml` to decide how long the test should run for.
 
 ### Testing (Linux)
 
