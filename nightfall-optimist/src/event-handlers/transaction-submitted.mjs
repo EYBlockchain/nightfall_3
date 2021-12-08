@@ -65,7 +65,7 @@ async function transactionSubmittedEventHandler(eventParams) {
     ); // Deposit transactions still have nullifier fields but they are 0
     const uniqueNullifiers = Array.from(new Set(transactionNullifiers));
     const dupNullifier = transactionNullifiers.some(txNull => storedNullifiers.includes(txNull)); // Move to Set for performance later.
-    if (dupNullifier || (uniqueNullifiers.length !== transactionNullifiers.length)) {
+    if (dupNullifier || uniqueNullifiers.length !== transactionNullifiers.length) {
       throw new TransactionError(
         'One of the Nullifiers in the transaction is a duplicate! Dropping tx',
         1,
