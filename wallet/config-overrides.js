@@ -1,9 +1,15 @@
 const path = require('path');
+const webConfig = require('../config/default');
+
+BigInt.prototype.toJSON = function() {
+  return this.toString();
+};
 
 module.exports = function override(config) {
   const wasmExtensionRegExp = /\.wasm$/;
-
   config.resolve.extensions.push('.wasm');
+  config.externals = {};
+  config.externals.config = JSON.stringify(webConfig);
 
   config.module.rules.forEach(rule => {
     (rule.oneOf || []).forEach(oneOf => {
