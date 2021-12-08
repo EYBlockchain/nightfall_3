@@ -4,6 +4,7 @@ const ERC1155Mock = artifacts.require('ERC1155Mock.sol');
 
 const recipientAddress = '0x9c8b2276d490141ae1440da660e470e7c0349c63'; 
 const walletTestAddress = '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9'; 
+const liquidityProviderAddress = '0x4789FD18D5d71982045d85d5218493fD69F55AC4';
 const nERC721 = 100;
 
 module.exports = function(deployer) {
@@ -21,6 +22,7 @@ module.exports = function(deployer) {
     }
     // For testing the wallet
     await ERC20deployed.transfer(walletTestAddress, 10000000000);
+    await ERC20deployed.transfer(liquidityProviderAddress, 1000000000000);
     for (let i=0; i < 100; i++){
       await ERC721deployed.awardItem(walletTestAddress, `https://erc721mock/item-id-${i}.json`);
     }
