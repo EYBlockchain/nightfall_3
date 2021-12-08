@@ -59,12 +59,6 @@ function AccountSettingsModal({
               value={login.nf3.zkpKeys.compressedPkd}
             />
           </Form.Field>
-          <Form.Field>
-            <Input label="Pkd-x" type="text" readOnly value={login.nf3.zkpKeys.pkd[0]} />
-          </Form.Field>
-          <Form.Field>
-            <Input label="Pkd-y" type="text" readOnly value={login.nf3.zkpKeys.pkd[1]} />
-          </Form.Field>
           <Divider />
           <Form.Field>
             <Checkbox

@@ -20,7 +20,7 @@ import {
   getSiblingInfo,
 } from './commitment-storage.mjs';
 import { discoverPeers } from './peers.mjs';
-import { compressPublicKey, calculateIvkPkdfromAskNsk } from './keys.mjs';
+import { decompressKey, calculateIvkPkdfromAskNsk } from './keys.mjs';
 
 const {
   BN128_GROUP_ORDER,
@@ -40,8 +40,8 @@ async function transfer(transferParams) {
   const { offchain = false, ...items } = transferParams;
   const { ercAddress, tokenId, recipientData, nsk, ask, fee } = generalise(items);
   const { pkd, compressedPkd } = calculateIvkPkdfromAskNsk(ask, nsk);
-  const { recipientPkds, values } = recipientData;
-  const recipientCompressedPkds = recipientPkds.map(key => compressPublicKey(key));
+  const { recipientCompressedPkds, values } = recipientData;
+  const recipientPkds = recipientCompressedPkds.map(key => decompressKey(key));
   if (recipientCompressedPkds.length > 1)
     throw new Error(`Batching is not supported yet: only one recipient is allowed`); // this will not always be true so we try to make the following code agnostic to the number of commitments
 

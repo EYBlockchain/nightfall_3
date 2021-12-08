@@ -61,19 +61,11 @@ async function askQuestions(nf3) {
       validate: input => web3.utils.isAddress(input),
     },
     {
-      name: 'pkdX',
+      name: 'compressedPkd',
       type: 'input',
-      message: "Provide the x coordinate of the recipient's transmission key",
-      default: 'my key',
+      message: "Provide the compressed recipient's transmission key",
+      default: nf3.zkpKeys.compressedPkd,
       when: answers => answers.task === 'Transfer',
-      validate: input => web3.utils.isHexStrict(input) || input === 'my key',
-    },
-    {
-      name: 'pkdY',
-      type: 'input',
-      message: "Provide the y coordinate of the recipient's transmission key",
-      default: 'my key',
-      when: answers => answers.task === 'Transfer' && answers.pkdX !== 'my key',
       validate: input => web3.utils.isHexStrict(input),
     },
     {
@@ -163,12 +155,10 @@ async function loop(nf3, ercAddress) {
     value = 0,
     tokenId = '0x00',
     privateKey,
-    pkdX,
-    pkdY,
+    compressedPkd,
     withdrawTransactionHash,
     offchain,
   } = await askQuestions(nf3);
-  let [x, y] = [pkdX, pkdY]; // make these variable - we may need to change them
   if (privateKey) {
     await nf3.setEthereumSigningKey(privateKey); // we'll remember the key so we don't keep asking for it
     nf3.addPeer('http://optimist1:80'); // add a Proposer for direct transfers and withdraws
@@ -188,7 +178,6 @@ async function loop(nf3, ercAddress) {
         value.toString(),
         await getDecimals(ercAddress[tokenType], tokenType, web3),
       );
-      if (x === 'my key') [x, y] = nf3.zkpKeys.pkd;
       try {
         receiptPromise = nf3.transfer(
           offchain,
@@ -196,7 +185,7 @@ async function loop(nf3, ercAddress) {
           tokenType,
           valueWei,
           tokenId,
-          [x, y], // this holds the recipient's pkd point.
+          compressedPkd,
           fee,
         );
       } catch (err) {

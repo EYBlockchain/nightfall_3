@@ -83,9 +83,7 @@ function Login({ login, onLoadWallet, onDeleteWallet, onLoadTokens }) {
       await nf3.setzkpKeysFromMnemonic(mnemonic, DEFAULT_NF_ADDRESS_INDEX);
       onLoadWallet(nf3);
       const tokenPool = Storage.tokensGet(nf3.zkpKeys.compressedPkd);
-      if (!tokenPool) {
-        onLoadTokens(tokens);
-      }
+      onLoadTokens(tokenPool || tokens);
     } catch (err) {
       console.log('Failed', err);
       setModalEnable(false);

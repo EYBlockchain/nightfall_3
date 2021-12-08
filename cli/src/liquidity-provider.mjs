@@ -11,9 +11,11 @@ import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import Nf3 from '../lib/nf3.mjs';
 import { setEnvironment, getCurrentEnvironment } from '../lib/environment.mjs';
+import { approve } from '../lib/tokens.mjs';
 
 const defaultKey = '0xfbc1ee1c7332e2e5a76a99956f50b3ba2639aff73d56477e877ef8390c41e0c6';
 const defaultMnemonic = 'toy vivid real shove evolve kidney captain flock hungry evoke lawn plunge';
+const erc20Address = '0xb5acbe9a0f1f8b98f3fc04471f7fe5d2c222cb44';
 const program = new Command();
 program.option('-k, --key', 'Ethereum signing key', defaultKey);
 program.option('-h', '--help', 'Help');
@@ -39,6 +41,15 @@ async function startProvider(testEnvironment) {
   await nf3.init(defaultMnemonic);
   if (await nf3.healthcheck('optimist')) console.log('Healthcheck passed');
   else throw new Error('Healthcheck failed');
+
+  await approve(
+    erc20Address,
+    nf3.ethereumAddress,
+    nf3.shieldContractAddress,
+    'ERC20',
+    '1000000000000',
+    nf3.web3,
+  );
   // set up a listener to service requests for an instant withdrawal
   const emitter = await nf3.getInstantWithdrawalRequestedEmitter();
   emitter.on('data', async (withdrawTransactionHash, paidBy, amount) => {

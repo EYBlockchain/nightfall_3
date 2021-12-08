@@ -289,8 +289,7 @@ class Nf3 {
   @param {string} tokenId - The ID of an ERC721 or ERC1155 token.  In the case of
   an 'ERC20' coin, this should be set to '0x00'.
   @param {object} keys - The ZKP private key set of the sender.
-  @param {array} pkd - The transmission key of the recipient (this is a curve point
-  represented as an array of two hex strings).
+  @param {string} compressedPkd - The compressed transmission key of the recipient
   @returns {Promise} Resolves into the Ethereum transaction receipt.
   */
   async transfer(
@@ -299,7 +298,7 @@ class Nf3 {
     tokenType,
     value,
     tokenId,
-    pkd,
+    compressedPkd,
     fee = this.defaultFee,
   ) {
     const res = await axios.post(`${this.clientBaseUrl}/transfer`, {
@@ -308,7 +307,7 @@ class Nf3 {
       tokenId,
       recipientData: {
         values: [value],
-        recipientPkds: [pkd],
+        recipientCompressedPkds: [compressedPkd],
       },
       nsk: this.zkpKeys.nsk,
       ask: this.zkpKeys.ask,

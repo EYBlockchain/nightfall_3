@@ -26,6 +26,7 @@ const tokens = [
     tokenBalanceL2: '0',
     // decimals: 9,
   },
+  /*
   // DUMMY
   {
     // id: 3,
@@ -38,6 +39,7 @@ const tokens = [
     tokenBalanceL2: '0',
     // decimals: 9,
   },
+  */
 ];
 
 export default tokens;

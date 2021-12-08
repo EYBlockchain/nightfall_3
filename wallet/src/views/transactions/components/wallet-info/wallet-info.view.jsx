@@ -2,6 +2,8 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { Table, Button, Container, Icon } from 'semantic-ui-react';
 import PropTypes from 'prop-types';
+import tokens from '../../../../utils/tokens';
+import * as Storage from '../../../../utils/lib/local-storage';
 import {
   addToken,
   selectToken,
@@ -42,7 +44,8 @@ function WalletInfo({
 
   // TODO : substitute reload button by periodic function
   const reload = () => {
-    onLoadTokens([]);
+    const tokenPool = Storage.tokensGet(login.nf3.zkpKeys.compressedPkd);
+    onLoadTokens(tokenPool || tokens);
   };
 
   const toggleTokenSelected = () => {
@@ -67,6 +70,8 @@ function WalletInfo({
       const tokenTypeId = `token type${item.tokenAddress}`;
       const l1BalanceId = `l1 balance${item.tokenAddress}`;
       const l2BalanceId = `l2 balance${item.tokenAddress}`;
+      const pendingDepositId = `pending deposit${item.tokenAddress}`;
+      const pendingTransferredOutId = `pending transferred out${item.tokenAddress}`;
       return (
         <Table.Row
           key={item.tokenAddress}
@@ -85,6 +90,12 @@ function WalletInfo({
             {item.tokenBalanceL1}
           </Table.Cell>
           <Table.Cell colSpan="1" title={item.tokenBalanceL2} id={l2BalanceId}>
+            {item.tokenBalanceL2}
+          </Table.Cell>
+          <Table.Cell colSpan="1" title={item.tokenBalanceL2} id={pendingDepositId}>
+            {item.tokenBalanceL2}
+          </Table.Cell>
+          <Table.Cell colSpan="1" title={item.tokenBalanceL2} id={pendingTransferredOutId}>
             {item.tokenBalanceL2}
           </Table.Cell>
         </Table.Row>
@@ -128,16 +139,17 @@ function WalletInfo({
         <Table.Header>
           <Table.Row>
             <Table.HeaderCell>Account Address:</Table.HeaderCell>
-            <Table.HeaderCell colSpan="3" id="wallet-info-cell-ethaddress">
+            <Table.HeaderCell colSpan="4" id="wallet-info-cell-ethaddress">
               {' '}
               {importedWallet()}{' '}
             </Table.HeaderCell>
-            <Table.HeaderCell colSpan="3">
+            <Table.HeaderCell colSpan="4">
               <Button
                 icon
                 labelPosition="left"
                 onClick={toggleModalTokenAdd}
                 primary
+                floated="right"
                 id="wallet-info-cell-add-token"
               >
                 <Icon name="plus" />
@@ -150,6 +162,7 @@ function WalletInfo({
                 toggle
                 onClick={removeToken}
                 primary
+                floated="right"
                 active={removeTokenEnable && token.tokenPool.length}
                 disabled={token.tokenPool.length === 0}
               >
@@ -171,6 +184,12 @@ function WalletInfo({
             </Table.HeaderCell>
             <Table.HeaderCell colSpan="1" textAlign="left">
               L2 Balance
+            </Table.HeaderCell>
+            <Table.HeaderCell colSpan="1" textAlign="left">
+             Pending Deposit
+            </Table.HeaderCell>
+            <Table.HeaderCell colSpan="1" textAlign="left">
+             Pending Outflow
             </Table.HeaderCell>
           </Table.Row>
         </Table.Header>
