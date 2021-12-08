@@ -186,10 +186,10 @@ function WalletInfo({
               L2 Balance
             </Table.HeaderCell>
             <Table.HeaderCell colSpan="1" textAlign="left">
-             Pending Deposit
+              Pending Deposit
             </Table.HeaderCell>
             <Table.HeaderCell colSpan="1" textAlign="left">
-             Pending Outflow
+              Pending Outflow
             </Table.HeaderCell>
           </Table.Row>
         </Table.Header>
