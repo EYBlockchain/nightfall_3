@@ -1,10 +1,14 @@
 /* ignore unused exports */
 import { GN, generalise } from 'general-number';
+
+// eslint-disable-next-line import/no-extraneous-dependencies
 import config from 'config';
-import mimcHash from '../../common-files/utils/crypto/mimc/mimc';
 import { validateMnemonic, mnemonicToSeed } from 'bip39';
 import pkg from 'ethereumjs-wallet';
+
+import mimcHash from '../../common-files/utils/crypto/mimc/mimc';
 import { scalarMult, edwardsCompress } from '../utils/crypto/encryption/elgamal';
+
 const { hdkey } = pkg;
 export const ivks = [];
 export const nsks = [];

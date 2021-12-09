@@ -6,11 +6,13 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
  * @module deposit
  * @author westlad, Chaitanya-Konda, iAmMichaelConnor, will-kim
  */
+
+// eslint-disable-next-line import/no-extraneous-dependencies
 import config from 'config';
 import gen from 'general-number';
+// import { generateProof, computeWitness } from 'zokrates-js';
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
-import { generateProof, computeWitness } from 'zokrates-js';
 import { Nullifier, PublicInputs, Transaction } from '../classes/index';
 import {
   findUsableCommitmentsMutex,
@@ -85,8 +87,8 @@ async function withdraw(withdrawParams) {
   let folderpath = 'withdraw';
   // eslint-disable-next-line no-unused-vars
   if (USE_STUBS) folderpath = `${folderpath}_stub`;
-  let artifacts;
-  let keypair;
+  // let artifacts;
+  // let keypair;
   // const { witness } = computeWitness(artifacts, witnessInput);
   const proof = ''; // generateProof(artifacts.program, witness, keypair.pk);
   // const res = await axios.post(`${PROTOCOL}${ZOKRATES_WORKER_HOST}/generate-proof`, {

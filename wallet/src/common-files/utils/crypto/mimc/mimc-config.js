@@ -1,3 +1,4 @@
+// ignore unused exports default
 export default {
   BLS12_377: {
     exponent: 11,

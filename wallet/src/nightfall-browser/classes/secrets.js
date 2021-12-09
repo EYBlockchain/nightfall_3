@@ -1,16 +1,14 @@
+// ignore unused exports default
+
 /**
  A secrets class
  */
+// eslint-disable-next-line import/no-extraneous-dependencies
 import config from 'config';
 import { GN, generalise } from 'general-number';
 import rand from '../../common-files/utils/crypto/crypto-random';
 import Commitment from './commitment';
-import {
-  enc,
-  dec,
-  edwardsCompress,
-  edwardsDecompress,
-} from '../utils/crypto/encryption/elgamal';
+import { enc, dec, edwardsCompress, edwardsDecompress } from '../utils/crypto/encryption/elgamal';
 import { calculatePkd } from '../services/keys';
 
 const { ZKP_KEY_LENGTH, BN128_GROUP_ORDER } = config;

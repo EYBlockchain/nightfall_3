@@ -3,6 +3,7 @@
  * This module enables setting instant withdrawals fees
  */
 
+// eslint-disable-next-line import/no-extraneous-dependencies
 import config from 'config';
 import { getContractInstance } from '../../common-files/utils/contract';
 import { Transaction } from '../classes/index';
