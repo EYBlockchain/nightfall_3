@@ -44,8 +44,7 @@ function WalletInfo({
 
   // TODO : substitute reload button by periodic function
   const reload = () => {
-    const tokenPool = Storage.tokensGet(login.nf3.zkpKeys.compressedPkd);
-    onLoadTokens(tokenPool || tokens);
+    onLoadTokens();
   };
 
   const toggleTokenSelected = () => {
@@ -93,10 +92,10 @@ function WalletInfo({
             {item.tokenBalanceL2}
           </Table.Cell>
           <Table.Cell colSpan="1" title={item.tokenBalanceL2} id={pendingDepositId}>
-            {item.tokenBalanceL2}
+            {item.tokenPendingDepositL2}
           </Table.Cell>
           <Table.Cell colSpan="1" title={item.tokenBalanceL2} id={pendingTransferredOutId}>
-            {item.tokenBalanceL2}
+            {item.tokenPendingSpentL2}
           </Table.Cell>
         </Table.Row>
       );
@@ -120,6 +119,8 @@ function WalletInfo({
       '0x0',
       tokenName,
       tokenBalance,
+      '-',
+      '-',
       '-',
     );
   };
@@ -234,6 +235,8 @@ const mapDispatchToProps = dispatch => ({
     tokenName,
     l1Balance,
     l2Balance,
+    l2PendingDeposit,
+    l2PendingSpent,
   ) =>
     dispatch(
       addToken(
@@ -245,6 +248,8 @@ const mapDispatchToProps = dispatch => ({
         tokenName,
         l1Balance,
         l2Balance,
+        l2PendingDeposit,
+        l2PendingSpent,
       ),
     ),
   onDeleteToken: (compressedPkd, tokenRowId) => dispatch(deleteToken(compressedPkd, tokenRowId)),
