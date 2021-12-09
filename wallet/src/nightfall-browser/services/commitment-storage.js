@@ -136,11 +136,18 @@ export async function setSiblingInfo(commitment, siblingPath, leafIndex, root) {
 // function to mark a commitment as pending nullication for a mongo db
 async function markPending(commitment) {
   const db = await connectDB();
-  const { isPendingNullification, ...rest } = await db.get(COMMITMENTS_COLLECTION, commitment.hash.hex(32));
-  return db.put(COMMITMENTS_COLLECTION, {
-    isPendingNullification: true,
-    ...rest,
-  }, commitment.hash.hex(32));
+  const { isPendingNullification, ...rest } = await db.get(
+    COMMITMENTS_COLLECTION,
+    commitment.hash.hex(32),
+  );
+  return db.put(
+    COMMITMENTS_COLLECTION,
+    {
+      isPendingNullification: true,
+      ...rest,
+    },
+    commitment.hash.hex(32),
+  );
   // const query = { _id: commitment.hash.hex(32) };
   // const update = { $set: { isPendingNullification: true } };
   // const db = connection.db(COMMITMENTS_DB);
@@ -249,14 +256,19 @@ export async function clearNullified(blockNumberL2) {
     return Promise.all(
       filtered.map(f => {
         const { isNullifiedOnChain: a, blockNumber: b, ...rest } = f;
-        return db.put(COMMITMENTS_COLLECTION, {
-          isNullifiedOnChain: -1,
-          blockNumber: -1,
-          ...rest,
-        }, f._id);
+        return db.put(
+          COMMITMENTS_COLLECTION,
+          {
+            isNullifiedOnChain: -1,
+            blockNumber: -1,
+            ...rest,
+          },
+          f._id,
+        );
       }),
     );
   }
+  return null;
   // const connection = await mongo.connection(MONGO_URL);
   // const query = { isNullifiedOnChain: { $gte: Number(blockNumberL2) } };
   // const update = {
@@ -275,14 +287,19 @@ export async function clearOnChain(blockNumberL2) {
     return Promise.all(
       filtered.map(f => {
         const { isNullifiedOnChain: a, blockNumber: b, ...rest } = f;
-        return db.put(COMMITMENTS_COLLECTION, {
-          isOnChain: -1,
-          blockNumber: -1,
-          ...rest,
-        }, f._id);
+        return db.put(
+          COMMITMENTS_COLLECTION,
+          {
+            isOnChain: -1,
+            blockNumber: -1,
+            ...rest,
+          },
+          f._id,
+        );
       }),
     );
   }
+  return null;
   // const connection = await mongo.connection(MONGO_URL);
   // const query = { isOnChain: { $gte: Number(blockNumberL2) }, isDeposited: true };
   // Clear all onchains
@@ -301,10 +318,14 @@ export async function clearPending(commitment) {
     COMMITMENTS_COLLECTION,
     commitment.hash.hex(32),
   );
-  return db.put(COMMITMENTS_COLLECTION, {
-    isPendingNullification: false,
-    ...rest,
-  }, commitment.hash.hex(32));
+  return db.put(
+    COMMITMENTS_COLLECTION,
+    {
+      isPendingNullification: false,
+      ...rest,
+    },
+    commitment.hash.hex(32),
+  );
 
   // const connection = await mongo.connection(MONGO_URL);
   // const query = { _id: commitment.hash.hex(32) };
@@ -320,19 +341,25 @@ export async function markNullifiedOnChain(
   blockNumber,
   transactionHashNullifiedL1, // the tx in which the nullification happened
 ) {
+  console.log(blockNumber, transactionHashNullifiedL1);
   const db = await connectDB();
   const res = await db.getAll(COMMITMENTS_COLLECTION);
   const filtered = res.filter(r => nullifiers.include(r.nullifier) && r.isNullifiedOnChain === -1);
   if (filtered.length > 0) {
     return Promise.all(
       filtered.map(f => {
-        const { isNullifiedOnChain: a, blockNumber: b } = f;
-        return db.put(COMMITMENTS_COLLECTION, {
-          isNullifiedOnChain: Number(blockNumberL2),
-        }, f._id)
-      })
-    )
+        // const { isNullifiedOnChain: a, blockNumber: b } = f;
+        return db.put(
+          COMMITMENTS_COLLECTION,
+          {
+            isNullifiedOnChain: Number(blockNumberL2),
+          },
+          f._id,
+        );
+      }),
+    );
   }
+  return null;
   // const connection = await mongo.connection(MONGO_URL);
   // const query = { nullifier: { $in: nullifiers }, isNullifiedOnChain: { $eq: -1 } };
   // const update = {
