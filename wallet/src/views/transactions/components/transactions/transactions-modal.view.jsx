@@ -142,7 +142,8 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
       <Modal.Content>
         <Form>
           <Form.Group widths="equal">
-            {transactions.txType === Nf3.Constants.TX_TYPES.WITHDRAW && tokenInfo.tokenType !== Nf3.Constants.TOKEN_TYPE.ERC721 ? (
+            {transactions.txType === Nf3.Constants.TX_TYPES.WITHDRAW &&
+            tokenInfo.tokenType !== Nf3.Constants.TOKEN_TYPE.ERC721 ? (
               <Form.Field>
                 <Checkbox
                   label="Instant Withdraw"

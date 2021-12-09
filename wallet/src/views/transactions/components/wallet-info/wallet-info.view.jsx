@@ -2,8 +2,6 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { Table, Button, Container, Icon } from 'semantic-ui-react';
 import PropTypes from 'prop-types';
-import tokens from '../../../../utils/tokens';
-import * as Storage from '../../../../utils/lib/local-storage';
 import {
   addToken,
   selectToken,
