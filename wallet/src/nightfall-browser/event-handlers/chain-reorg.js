@@ -1,3 +1,5 @@
+// ignore unused exports default
+
 /**
 @module chain-reorg
 @desc This module contains functions for handling updates to the layer 2 state as
