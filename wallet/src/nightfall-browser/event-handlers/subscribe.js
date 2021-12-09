@@ -1,8 +1,11 @@
 /* eslint-disable no-await-in-loop */
 
+// ignore unused exports startEventQueue
+
 /**
  * Module to subscribe to blockchain events
  */
+// eslint-disable-next-line import/no-extraneous-dependencies
 import config from 'config';
 import { getContractInstance, getContractAddress } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';

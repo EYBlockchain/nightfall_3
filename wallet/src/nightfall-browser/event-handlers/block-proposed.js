@@ -1,3 +1,6 @@
+// ignore unused exports default
+
+// eslint-disable-next-line import/no-extraneous-dependencies
 import config from 'config';
 import logger from '../../common-files/utils/logger';
 import Timber from '../../common-files/classes/timber';

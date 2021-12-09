@@ -1,5 +1,7 @@
 /* eslint import/no-extraneous-dependencies: "off" */
 
+// ignore unused exports default
+
 import Web3 from 'web3';
 import config from 'config';
 import logger from './logger';
