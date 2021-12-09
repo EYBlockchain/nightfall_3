@@ -79,7 +79,7 @@ async function deposit(items) {
   // computation
   const { witness } = zokratesProvider.computeWitness(artifacts, witnessInput);
   // generate proof
-  let proof = (zokratesProvider.generateProof(artifacts.program, witness, keypair.pk)).proof;
+  let { proof } = zokratesProvider.generateProof(artifacts.program, witness, keypair.pk);
   proof = [...proof.a, ...proof.b, ...proof.c];
   proof = proof.flat(Infinity);
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
