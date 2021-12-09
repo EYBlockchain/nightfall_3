@@ -592,13 +592,8 @@ class Nf3 {
       let { txDataToSign } = msg;
       if (type === 'block') {
         const { block, transactions } = msg;
-        if (counter === 0) {
-          console.log(`Created good block with blockHash ${block.blockHash}`);
-        } else if (counter === 1) {
-          console.log(`Created good block with blockHash ${block.blockHash}`);
-          // } else if (counter === 2) {
-          // console.log(`Created good block with blockHash ${block.blockHash}`);
-        } else if (counter === 2) {
+        if (counter === 3) {
+          // 4th BLOCK is a bad block
           const res = await createBadBlock(
             'IncorrectRoot',
             `${this.optimistBaseUrl}`,
@@ -613,8 +608,7 @@ class Nf3 {
             `Created flawed block with incorrect root and blockHash ${res.block.blockHash}`,
           );
         } else {
-          txDataToSign = msg.txDataToSign;
-          console.log(`Created good block with blockHash ${block.blockHash}`);
+          console.log(`Created good block ${block.blockHash}`);
         }
         await this.submitTransaction(txDataToSign, this.stateContractAddress, this.BLOCK_STAKE);
         counter++;
@@ -690,7 +684,7 @@ class Nf3 {
       const msg = JSON.parse(message.data);
       const { type, txDataToSign } = msg;
       if (type === 'commit' || type === 'challenge') {
-        await this.submitTransaction(txDataToSign, this.stateContractAddress, 0);
+        await this.submitTransaction(txDataToSign, this.challengesContractAddress, 0);
       }
     };
   }
