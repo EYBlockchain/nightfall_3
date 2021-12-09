@@ -61,7 +61,6 @@ function txSubmit(txParams) {
     dispatch(txActions.txDispatch());
     switch (txParams.txType) {
       case Nf3.Constants.TX_TYPES.DEPOSIT:
-        console.log('in here');
         // TODO: dispatch error
         nf3
           .deposit(
