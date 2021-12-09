@@ -9,10 +9,10 @@ const nERC721 = 100;
 
 module.exports = function(deployer) {
   deployer.then(async () => {
-    await deployer.deploy(ERC20Mock, 1000000000000000); // initialSupply
+    await deployer.deploy(ERC20Mock, 1001010000000000); // initialSupply
     await deployer.deploy(ERC721Mock);
     await deployer.deploy(ERC1155Mock);
-    
+
     const ERC20deployed = await ERC20Mock.deployed();
     const ERC721deployed = await ERC721Mock.deployed();
     const ERC1155deployed = await ERC1155Mock.deployed();
