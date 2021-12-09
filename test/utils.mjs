@@ -160,7 +160,7 @@ export async function timeJump(secs) {
   });
 }
 
-export async function createBadBlock(badBlockType, block, transactions, args) {
+export async function createBadBlock(badBlockType, link = {}, block, transactions, args) {
   const badBlock = block;
   const badTransactions = transactions;
   switch (badBlockType) {
@@ -222,12 +222,21 @@ export async function createBadBlock(badBlockType, block, transactions, args) {
     default:
       break;
   }
+  let result;
+  if (!link) {
+    result = await chai
+      .request('http://localhost:8081')
+      .post('/proposer/encode')
+      .send({ block: badBlock, transactions: badTransactions });
+  } else {
+    result = await chai
+      .request(link)
+      .post('/proposer/encode')
+      .send({ block: badBlock, transactions: badTransactions });
+  }
   const {
     body: { txDataToSign, block: newBlock, transactions: newTransactions },
-  } = await chai
-    .request('http://localhost:8081')
-    .post('/proposer/encode')
-    .send({ block: badBlock, transactions: badTransactions });
+  } = result;
   return { txDataToSign, block: newBlock, transactions: newTransactions };
 }
 

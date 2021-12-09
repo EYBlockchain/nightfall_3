@@ -8,6 +8,9 @@ import erc20 from './abis/ERC20.mjs';
 import erc721 from './abis/ERC721.mjs';
 import erc1155 from './abis/ERC1155.mjs';
 import { ENVIRONMENTS } from './constants.mjs';
+import { createBadBlock } from './utils.mjs';
+
+let counter = 0;
 
 /**
 @class
@@ -585,9 +588,36 @@ class Nf3 {
     };
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
-      const { type, txDataToSign } = msg;
+      const { type } = msg;
+      let { txDataToSign } = msg;
       if (type === 'block') {
+        const { block, transactions } = msg;
+        if (counter === 0) {
+          console.log(`Created good block with blockHash ${block.blockHash}`);
+        } else if (counter === 1) {
+          console.log(`Created good block with blockHash ${block.blockHash}`);
+          // } else if (counter === 2) {
+          // console.log(`Created good block with blockHash ${block.blockHash}`);
+        } else if (counter === 2) {
+          const res = await createBadBlock(
+            'IncorrectRoot',
+            `${this.optimistBaseUrl}`,
+            block,
+            transactions,
+            {
+              leafIndex: 1,
+            },
+          );
+          txDataToSign = res.txDataToSign;
+          console.log(
+            `Created flawed block with incorrect root and blockHash ${res.block.blockHash}`,
+          );
+        } else {
+          txDataToSign = msg.txDataToSign;
+          console.log(`Created good block with blockHash ${block.blockHash}`);
+        }
         await this.submitTransaction(txDataToSign, this.stateContractAddress, this.BLOCK_STAKE);
+        counter++;
       }
     };
     // add this proposer to the list of peers that can accept direct transfers and withdraws
@@ -659,7 +689,7 @@ class Nf3 {
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
       const { type, txDataToSign } = msg;
-      if (type === 'challenge') {
+      if (type === 'commit' || type === 'challenge') {
         await this.submitTransaction(txDataToSign, this.stateContractAddress, 0);
       }
     };
