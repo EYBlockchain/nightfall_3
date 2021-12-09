@@ -1,7 +1,6 @@
 /* eslint import/no-extraneous-dependencies: "off" */
 /* ignore unused exports */
 
-import fs from 'fs';
 import config from 'config';
 
 import Web3 from './web3';

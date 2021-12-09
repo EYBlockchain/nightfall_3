@@ -1,5 +1,6 @@
 /* eslint import/no-extraneous-dependencies: "off" */
 
+// ignore unused exports default
 /*
   Pulled from https://github.com/winstonjs/winston/issues/1427 with some edits.
 */
@@ -48,4 +49,4 @@ export default {
   debug: console.log,
   info: console.log,
   silly: console.log,
-}
+};

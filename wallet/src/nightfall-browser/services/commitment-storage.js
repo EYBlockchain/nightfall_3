@@ -3,6 +3,7 @@
 Logic for storing and retrieving commitments from a mongo DB.  Abstracted from
 deposit/transfer/withdraw
 */
+// eslint-disable-next-line import/no-extraneous-dependencies
 import config from 'config';
 import { Mutex } from 'async-mutex';
 import gen from 'general-number';
@@ -85,12 +86,16 @@ export async function markOnChain(
   return Promise.all(
     filtered.map(f => {
       const { isOnChain, blockNumber: oldBN, transactionHashCommittedL1: oldTxHash, ...rest } = f;
-      return db.put(COMMITMENTS_COLLECTION, {
-        isOnChain: Number(blockNumberL2),
-        blockNumber,
-        transactionHashCommittedL1,
-        ...rest,
-      }, f._id);
+      return db.put(
+        COMMITMENTS_COLLECTION,
+        {
+          isOnChain: Number(blockNumberL2),
+          blockNumber,
+          transactionHashCommittedL1,
+          ...rest,
+        },
+        f._id,
+      );
     }),
   );
   // const connection = await mongo.connection(MONGO_URL);
@@ -109,13 +114,18 @@ export async function setSiblingInfo(commitment, siblingPath, leafIndex, root) {
   const filtered = res.filter(r => r._id === commitment && r.isOnChain !== -1);
   if (filtered.length === 1) {
     const { siblingPath: a, leafIndex: b, root: c, ...rest } = filtered[0];
-    return db.put(COMMITMENTS_COLLECTION, {
-      siblingPath,
-      leafIndex,
-      root,
-      ...rest,
-    }, filtered[0]._id);
+    return db.put(
+      COMMITMENTS_COLLECTION,
+      {
+        siblingPath,
+        leafIndex,
+        root,
+        ...rest,
+      },
+      filtered[0]._id,
+    );
   }
+  return null;
   // const connection = await mongo.connection(MONGO_URL);
   // const query = { _id: commitment, isOnChain: { $ne: -1 } };
   // const update = { $set: { siblingPath, leafIndex, root } };
@@ -126,11 +136,18 @@ export async function setSiblingInfo(commitment, siblingPath, leafIndex, root) {
 // function to mark a commitment as pending nullication for a mongo db
 async function markPending(commitment) {
   const db = await connectDB();
-  const { isPendingNullification, ...rest } = await db.get(COMMITMENTS_COLLECTION, commitment.hash.hex(32));
-  return db.put(COMMITMENTS_COLLECTION, {
-    isPendingNullification: true,
-    ...rest,
-  }, commitment.hash.hex(32));
+  const { isPendingNullification, ...rest } = await db.get(
+    COMMITMENTS_COLLECTION,
+    commitment.hash.hex(32),
+  );
+  return db.put(
+    COMMITMENTS_COLLECTION,
+    {
+      isPendingNullification: true,
+      ...rest,
+    },
+    commitment.hash.hex(32),
+  );
   // const query = { _id: commitment.hash.hex(32) };
   // const update = { $set: { isPendingNullification: true } };
   // const db = connection.db(COMMITMENTS_DB);
@@ -147,13 +164,17 @@ export async function markNullified(commitment, transaction) {
     transactionHash,
     ...rest
   } = await db.get(COMMITMENTS_COLLECTION, commitment.hash.hex(32));
-  return db.put(COMMITMENTS_COLLECTION, {
-    isPendingNullification: false,
-    isNullified: true,
-    nullifierTransactionType: BigInt(transaction.transactionType).toString(),
-    transactionHash: transaction.transactionHash,
-    ...rest,
-  }, commitment.hash.hex(32));
+  return db.put(
+    COMMITMENTS_COLLECTION,
+    {
+      isPendingNullification: false,
+      isNullified: true,
+      nullifierTransactionType: BigInt(transaction.transactionType).toString(),
+      transactionHash: transaction.transactionHash,
+      ...rest,
+    },
+    commitment.hash.hex(32),
+  );
   // const connection = await mongo.connection(MONGO_URL);
   // const query = { _id: commitment.hash.hex(32) };
   // const update = {
@@ -235,14 +256,19 @@ export async function clearNullified(blockNumberL2) {
     return Promise.all(
       filtered.map(f => {
         const { isNullifiedOnChain: a, blockNumber: b, ...rest } = f;
-        return db.put(COMMITMENTS_COLLECTION, {
-          isNullifiedOnChain: -1,
-          blockNumber: -1,
-          ...rest,
-        }, f._id);
+        return db.put(
+          COMMITMENTS_COLLECTION,
+          {
+            isNullifiedOnChain: -1,
+            blockNumber: -1,
+            ...rest,
+          },
+          f._id,
+        );
       }),
     );
   }
+  return null;
   // const connection = await mongo.connection(MONGO_URL);
   // const query = { isNullifiedOnChain: { $gte: Number(blockNumberL2) } };
   // const update = {
@@ -261,14 +287,19 @@ export async function clearOnChain(blockNumberL2) {
     return Promise.all(
       filtered.map(f => {
         const { isNullifiedOnChain: a, blockNumber: b, ...rest } = f;
-        return db.put(COMMITMENTS_COLLECTION, {
-          isOnChain: -1,
-          blockNumber: -1,
-          ...rest,
-        }, f._id);
+        return db.put(
+          COMMITMENTS_COLLECTION,
+          {
+            isOnChain: -1,
+            blockNumber: -1,
+            ...rest,
+          },
+          f._id,
+        );
       }),
     );
   }
+  return null;
   // const connection = await mongo.connection(MONGO_URL);
   // const query = { isOnChain: { $gte: Number(blockNumberL2) }, isDeposited: true };
   // Clear all onchains
@@ -287,10 +318,14 @@ export async function clearPending(commitment) {
     COMMITMENTS_COLLECTION,
     commitment.hash.hex(32),
   );
-  return db.put(COMMITMENTS_COLLECTION, {
-    isPendingNullification: false,
-    ...rest,
-  }, commitment.hash.hex(32));
+  return db.put(
+    COMMITMENTS_COLLECTION,
+    {
+      isPendingNullification: false,
+      ...rest,
+    },
+    commitment.hash.hex(32),
+  );
 
   // const connection = await mongo.connection(MONGO_URL);
   // const query = { _id: commitment.hash.hex(32) };
@@ -306,19 +341,25 @@ export async function markNullifiedOnChain(
   blockNumber,
   transactionHashNullifiedL1, // the tx in which the nullification happened
 ) {
+  console.log(blockNumber, transactionHashNullifiedL1);
   const db = await connectDB();
   const res = await db.getAll(COMMITMENTS_COLLECTION);
   const filtered = res.filter(r => nullifiers.include(r.nullifier) && r.isNullifiedOnChain === -1);
   if (filtered.length > 0) {
     return Promise.all(
       filtered.map(f => {
-        const { isNullifiedOnChain: a, blockNumber: b } = f;
-        return db.put(COMMITMENTS_COLLECTION, {
-          isNullifiedOnChain: Number(blockNumberL2),
-        }, f._id)
-      })
-    )
+        // const { isNullifiedOnChain: a, blockNumber: b } = f;
+        return db.put(
+          COMMITMENTS_COLLECTION,
+          {
+            isNullifiedOnChain: Number(blockNumberL2),
+          },
+          f._id,
+        );
+      }),
+    );
   }
+  return null;
   // const connection = await mongo.connection(MONGO_URL);
   // const query = { nullifier: { $in: nullifiers }, isNullifiedOnChain: { $eq: -1 } };
   // const update = {
@@ -330,6 +371,7 @@ export async function markNullifiedOnChain(
 
 // function to get the balance of commitments for each ERC address
 export async function getWalletBalance() {
+  // eslint-disable-next-line no-undef
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const query = { isNullified: false, isOnChain: { $gte: 0 } };
@@ -370,6 +412,7 @@ export async function getWalletBalance() {
 
 // function to get the commitments for each ERC address of a pkd
 export async function getWalletCommitments() {
+  // eslint-disable-next-line no-undef
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const query = { isNullified: false, isOnChain: { $gte: 0 } };
@@ -410,6 +453,7 @@ export async function getWalletCommitments() {
 
 // function to get the withdraw commitments for each ERC address of a pkd
 export async function getWithdrawCommitments() {
+  // eslint-disable-next-line no-undef
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const query = {
@@ -464,6 +508,7 @@ export async function getWithdrawCommitments() {
 
 // as above, but removes output commitments
 export async function deleteCommitments(commitments) {
+  // eslint-disable-next-line no-undef
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const query = { _id: { $in: commitments }, isOnChain: { $eq: -1 } };
@@ -471,6 +516,7 @@ export async function deleteCommitments(commitments) {
 }
 
 export async function getCommitmentsFromBlockNumberL2(blockNumberL2) {
+  // eslint-disable-next-line no-undef
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const query = { isOnChain: { $gte: blockNumberL2 } };
@@ -485,6 +531,7 @@ export async function getCommitmentsFromBlockNumberL2(blockNumberL2) {
 // findUsableCommitmentsMutex, which calls this function.
 async function findUsableCommitments(compressedPkd, ercAddress, tokenId, _value, onlyOne) {
   const value = generalise(_value); // sometimes this is sent as a BigInt.
+  // eslint-disable-next-line no-undef
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const commitmentArray = await db

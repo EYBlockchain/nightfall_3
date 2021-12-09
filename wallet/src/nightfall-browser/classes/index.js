@@ -1,3 +1,4 @@
+// ignore unused exports PublicInputs, Transaction, Commitment, Nullifier, Secrets
 import PublicInputs from '../../common-files/classes/public-inputs';
 import Transaction from '../../common-files/classes/transaction';
 

@@ -1,3 +1,5 @@
+// ignore unused exports default
+
 /**
 Each time the Shield contract removes a block from the blockHash linked-list,
 as a result of a rollback, this event gets fired.  We can use it to remove the
