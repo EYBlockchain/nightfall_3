@@ -106,7 +106,9 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
 
       default: {
         const compressedPkd =
-          destinationAddress.value === '' ? login.nf3.zkpKeys.compressedPkd : destinationAddress;
+          destinationAddress.value === ''
+            ? login.nf3.zkpKeys.compressedPkd
+            : destinationAddress.value;
         const { txType } = transactions;
         onSubmitTx({
           txType,
