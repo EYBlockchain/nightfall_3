@@ -1,14 +1,17 @@
 const path = require('path');
 const webConfig = require('../config/default');
 
-BigInt.prototype.toJSON = function() {
+// eslint-disable-next-line no-extend-native
+BigInt.prototype.toJSON = function () {
   return this.toString();
 };
 
 module.exports = function override(config) {
   const wasmExtensionRegExp = /\.wasm$/;
   config.resolve.extensions.push('.wasm');
-  config.externals = {};
+  // eslint-disable-next-line no-param-reassign
+  config.externals = config.externals || {};
+  // eslint-disable-next-line no-param-reassign
   config.externals.config = JSON.stringify(webConfig);
 
   config.module.rules.forEach(rule => {

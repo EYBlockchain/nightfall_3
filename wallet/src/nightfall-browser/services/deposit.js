@@ -1,3 +1,5 @@
+// ignore unused exports default
+
 /**
  This module contains the logic needed create a zkp deposit, i.e. to pay
  a token to the Shield contract and have it create a zkp commitment for the
@@ -6,13 +8,15 @@
  * @module deposit
  * @author westlad, Chaitanya-Konda, iAmMichaelConnor, will-kim
  */
+
+// eslint-disable-next-line import/no-extraneous-dependencies
 import config from 'config';
 import gen from 'general-number';
+import { initialize } from 'zokrates-js';
 
 import rand from '../../common-files/utils/crypto/crypto-random';
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
-import { initialize } from 'zokrates-js';
 // import { generateProof, computeWitness } from 'zokrates-js';
 import { Commitment, PublicInputs, Transaction } from '../classes/index';
 import { storeCommitment } from './commitment-storage';
@@ -23,7 +27,7 @@ import programFile from '../../views/zokrates/deposit/artifacts/program';
 import pkFile from '../../views/zokrates/deposit/keypair/pk';
 import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
 
-const { ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, USE_STUBS, BN128_GROUP_ORDER } = config;
+const { ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER } = config;
 const { generalise } = gen;
 
 async function deposit(items) {
@@ -76,7 +80,7 @@ async function deposit(items) {
   // computation
   const { witness } = zokratesProvider.computeWitness(artifacts, witnessInput);
   // generate proof
-  let proof = (zokratesProvider.generateProof(artifacts.program, witness, keypair.pk)).proof;
+  let { proof } = zokratesProvider.generateProof(artifacts.program, witness, keypair.pk);
   proof = [...proof.a, ...proof.b, ...proof.c];
   proof = proof.flat(Infinity);
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
