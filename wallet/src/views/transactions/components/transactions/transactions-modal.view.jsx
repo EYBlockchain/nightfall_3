@@ -125,6 +125,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
     setInstantWithdrawEnable(false);
     setDirectTransactionEnable(false);
     setTokenId({ value: 0, error: null });
+    setDestinationAddress({ value: '', error: null });
   };
 
   const tokenInfo = getTokenInfo();
