@@ -59,6 +59,8 @@ const mergeTokens = (tokens1, tokens2) => {
   const tokenPool = [...tokens2].map(token => {
     const obj = { ...token };
     obj.tokenBalanceL2 = '0';
+    obj.tokenPendingDepositL2 = '0';
+    obj.tokenPendingSpentL2 = '0';
     return obj;
   });
   for (const token1 of tokens1) {
@@ -105,10 +107,9 @@ function tokensLoad(initTokens) {
             ...Object.keys(myL2PendingSpent),
           ]),
         ]);
-
         const tokenPool = mergeTokens(getTokens(l2Details), [
-          ...getTokens(storedTokens, 'balance'),
-          ...getTokens(initTokens, 'balance'),
+          ...getTokens(storedTokens),
+          ...getTokens(initTokens),
         ]);
         if (tokenPool.length) {
           tokenPool.forEach(el => {
