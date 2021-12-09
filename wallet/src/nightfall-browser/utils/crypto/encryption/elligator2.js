@@ -1,4 +1,6 @@
-// import config from './config';
+// ignore unused exports hashToCurve, hashToCurveYSqrt, curveToHash
+
+// eslint-disable-next-line import/no-extraneous-dependencies
 import config from 'config';
 import {
   squareRootModPrime,

@@ -1,3 +1,5 @@
+// ignore unused exports startEventQueue, eventHandlers
+
 import { startEventQueue } from './subscribe';
 import blockProposedEventHandler from './block-proposed';
 import rollbackEventHandler from './rollback';
