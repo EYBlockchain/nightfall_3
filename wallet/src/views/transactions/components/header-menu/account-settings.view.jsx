@@ -4,7 +4,6 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import * as Storage from '../../../../utils/lib/local-storage';
 import tokensLoad from '../../../../store/token/token.thunks';
-import tokens from '../../../../utils/tokens';
 
 function AccountSettingsModal({
   login,
@@ -21,8 +20,7 @@ function AccountSettingsModal({
   const handleSubmit = async () => {
     if (login.nf3.mnemonic.addressIndex !== addressIndex) {
       login.nf3.setzkpKeysFromMnemonic('', addressIndex);
-      const tokenPool = Storage.tokensGet(login.nf3.zkpKeys.compressedPkd);
-      onLoadTokens(tokenPool || tokens);
+      onLoadTokens([]);
     }
 
     if (clearLocalStorage) {

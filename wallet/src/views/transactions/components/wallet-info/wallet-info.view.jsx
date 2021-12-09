@@ -42,7 +42,7 @@ function WalletInfo({
 
   // TODO : substitute reload button by periodic function
   const reload = () => {
-    onLoadTokens();
+    onLoadTokens([]);
   };
 
   const toggleTokenSelected = () => {
