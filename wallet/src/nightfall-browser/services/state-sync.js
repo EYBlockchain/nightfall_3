@@ -1,12 +1,15 @@
+// ignore unused exports initialClientSync
+
 /**
 Resync code so that restarted client instances are able to read past events and update
 their local commitments databsae.
 */
 
+// eslint-disable-next-line import/no-extraneous-dependencies
 import config from 'config';
 import logger from '../../common-files/utils/logger';
 import { getContractInstance } from '../../common-files/utils/contract';
-import mongo from '../../common-files/utils/mongo';
+// import mongo from '../../common-files/utils/mongo';
 import blockProposedEventHandler from '../event-handlers/block-proposed';
 import rollbackEventHandler from '../event-handlers/rollback';
 
@@ -38,6 +41,7 @@ const syncState = async (fromBlock = 'earliest', toBlock = 'latest', eventFilter
 };
 
 const genGetCommitments = async (query = {}, proj = {}) => {
+  // eslint-disable-next-line no-undef
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).find(query, proj).toArray();
