@@ -1,6 +1,6 @@
 /* ignore unused exports */
 import * as Nf3 from 'nf3';
-import config from 'config';
+// import config from 'config';
 import deposit from '../../nightfall-browser/services/deposit';
 import { TRANSACTION_RETRY_PERIOD, TRANSACTION_MAX_RETRIES } from '../../constants';
 import toBaseUnit from '../../utils/lib/utils';
@@ -62,6 +62,7 @@ function txSubmit(txParams) {
     dispatch(txActions.txDispatch());
     switch (txParams.txType) {
       case Nf3.Constants.TX_TYPES.DEPOSIT:
+        console.log('in here');
         // TODO: dispatch error
         Nf3.Tokens.approve(
           txParams.tokenAddress,
@@ -69,34 +70,34 @@ function txSubmit(txParams) {
           nf3.shieldContractAddress,
           txParams.tokenType,
           tokenAmountWei,
-          nf3.web3
+          nf3.web3,
         )
-        .then(() => {
-          return deposit({
-            ercAddress: txParams.tokenAddress,
-            tokenId: txParams.tokenId,
-            value: tokenAmountWei,
-            pkd: nf3.zkpKeys.pkd,
-            nsk: nf3.zkpKeys.nsk,
-            fee: txParams.fee,
-            tokenType: txParams.tokenType,
+          .then(() => {
+            return deposit({
+              ercAddress: txParams.tokenAddress,
+              tokenId: txParams.tokenId,
+              value: tokenAmountWei,
+              pkd: nf3.zkpKeys.pkd,
+              nsk: nf3.zkpKeys.nsk,
+              fee: txParams.fee,
+              tokenType: txParams.tokenType,
+            });
           })
-        })
-        .then(async ({rawTransaction}) => {
-          console.log('rawTransaction', rawTransaction);
-          return nf3.submitTransaction(rawTransaction, nf3.shieldContractAddress, txParams.fee);
-          // dispatch(txActions.txSuccess(Nf3.Constants.TX_TYPES.DEPOSIT, txReceipt));
-          // TODO: dispatch error
-        })
-        .then(txReceipt => {
-          console.log('txReceipt', txReceipt);
-          dispatch(txActions.txSuccess(Nf3.Constants.TX_TYPES.DEPOSIT, txReceipt));
-        })
-        .catch(err => {
-          dispatch(txActions.txFailed());
-          // TODO: dispatch error
-          console.log(err);
-        });
+          .then(async ({ rawTransaction }) => {
+            console.log('rawTransaction', rawTransaction);
+            return nf3.submitTransaction(rawTransaction, nf3.shieldContractAddress, txParams.fee);
+            // dispatch(txActions.txSuccess(Nf3.Constants.TX_TYPES.DEPOSIT, txReceipt));
+            // TODO: dispatch error
+          })
+          .then(txReceipt => {
+            console.log('txReceipt', txReceipt);
+            dispatch(txActions.txSuccess(Nf3.Constants.TX_TYPES.DEPOSIT, txReceipt));
+          })
+          .catch(err => {
+            dispatch(txActions.txFailed());
+            // TODO: dispatch error
+            console.log(err);
+          });
         break;
 
       case Nf3.Constants.TX_TYPES.TRANSFER:

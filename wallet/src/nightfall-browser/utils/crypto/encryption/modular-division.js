@@ -1,3 +1,5 @@
+// ignore unused exports default
+
 // modular division
 
 const one = BigInt(1);

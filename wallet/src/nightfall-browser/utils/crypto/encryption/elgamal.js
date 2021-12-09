@@ -1,10 +1,17 @@
+// ignore unused exports dec, enc, scalarMult, edwardsCompress, edwardsDecompress
+
 /**
 functions to support El-Gamal cipherText over a BabyJubJub curve
 */
 
+// eslint-disable-next-line import/no-extraneous-dependencies
 import config from 'config';
 import utils from '../../../../common-files/utils/crypto/merkle-tree/utils';
-import { squareRootModPrime, addMod, mulMod } from '../../../../common-files/utils/crypto/number-theory';
+import {
+  squareRootModPrime,
+  addMod,
+  mulMod,
+} from '../../../../common-files/utils/crypto/number-theory';
 import modDivide from './modular-division'; // TODO REPLACE WITH NPM VERSION
 import { hashToCurve, hashToCurveYSqrt, curveToHash } from './elligator2';
 
