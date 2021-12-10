@@ -39,8 +39,32 @@ export async function finaliseWithdrawal({ transactionHash }) {
         index,
       )
       .encodeABI();
+
+    let tokenType = 'ERC20';
+    switch (transactions[index].tokenType) {
+      case '1':
+        tokenType = 'ERC20';
+        break;
+      case '2':
+        tokenType = 'ERC1155';
+        break;
+      default:
+        tokenType = 'ERC20';
+        break;
+    }
+
     // store the commitment on successful computation of the transaction
-    return { rawTransaction };
+    return {
+      rawTransaction,
+      transaction: {
+        ercAddress: `0x${BigInt(transactions[index].ercAddress).toString(16).padStart(40, '0')}`,
+        recipientAddress: `0x${BigInt(transactions[index].recipientAddress)
+          .toString(16)
+          .padStart(40, '0')}`,
+        tokenType,
+        value: transactions[index].value,
+      },
+    };
   } catch (err) {
     throw new Error(err); // let the caller handle the error
   }
