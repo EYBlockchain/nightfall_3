@@ -8,7 +8,7 @@ const ERC20Mock = artifacts.require('ERC20Mock.sol');
 const ERC721Mock = artifacts.require('ERC721Mock.sol');
 const ERC1155Mock = artifacts.require('ERC1155Mock.sol');
 
-const recipientAddress = config.ETH_ADDRESS || '0x9c8b2276d490141ae1440da660e470e7c0349c63'; 
+const recipientAddress = config.ETH_ADDRESS || '0x9c8b2276d490141ae1440da660e470e7c0349c63';
 const walletTestAddress = config.userAddress || '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9';
 const liquidityProviderAddress = '0x4789FD18D5d71982045d85d5218493fD69F55AC4';
 const nERC721 = 100;
