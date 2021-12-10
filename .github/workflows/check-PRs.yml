@@ -56,7 +56,7 @@ jobs:
         uses: actions/upload-artifact@master
         with:
           name: e2e-test-logs
-          path: ./e2e-test.log          
+          path: ./e2e-test.log
   ganache-test:
     runs-on: ubuntu-18.04
     steps:
@@ -70,8 +70,8 @@ jobs:
           docker-compose build
           ./start-nightfall -g &> ganache-test.log &disown
 
-      - name: wait 1000s for Containers startup and setup completion
-        run: sleep 1000
+      - name: wait 2000s for Containers startup and setup completion
+        run: sleep 2000
 
       - name: debug logs - after container startup
         if: always()
