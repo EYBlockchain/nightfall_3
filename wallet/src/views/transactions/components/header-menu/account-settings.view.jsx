@@ -51,7 +51,7 @@ function AccountSettingsModal({
           </Form.Field>
           <Form.Field>
             <Input
-              label="Compressd Pkd"
+              label="Compressed Pkd"
               type="text"
               readOnly
               value={login.nf3.zkpKeys.compressedPkd}
