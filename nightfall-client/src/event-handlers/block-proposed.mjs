@@ -49,8 +49,10 @@ async function blockProposedEventHandler(data) {
             key,
             nonZeroCommitments[0],
           );
-          if (commitment === {}) logger.info("This encrypted message isn't for this recipient");
+          if (Object.keys(commitment).length === 0)
+            logger.info("This encrypted message isn't for this recipient");
           else {
+            // console.log('PUSHED', commitment, 'nsks', nsks[i]);
             storeCommitments.push(storeCommitment(commitment, nsks[i]));
           }
         } catch (err) {
@@ -59,8 +61,8 @@ async function blockProposedEventHandler(data) {
         }
       });
     }
-    return [
-      Promise.all(storeCommitments),
+    await Promise.all(storeCommitments);
+    return Promise.all([
       markOnChain(nonZeroCommitments, block.blockNumberL2, data.blockNumber, data.transactionHash),
       markNullifiedOnChain(
         nonZeroNullifiers,
@@ -68,7 +70,7 @@ async function blockProposedEventHandler(data) {
         data.blockNumber,
         data.transactionHash,
       ),
-    ];
+    ]);
   });
 
   // await Promise.all(toStore);

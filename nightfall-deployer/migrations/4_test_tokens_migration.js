@@ -8,8 +8,8 @@ const ERC20Mock = artifacts.require('ERC20Mock.sol');
 const ERC721Mock = artifacts.require('ERC721Mock.sol');
 const ERC1155Mock = artifacts.require('ERC1155Mock.sol');
 
-const recipientAddress = config.ETH_ADDRESS || '0x9c8b2276d490141ae1440da660e470e7c0349c63'; 
-const walletTestAddress = config.userAddress || '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9';
+const recipientAddress = '0x9c8b2276d490141ae1440da660e470e7c0349c63';
+const walletTestAddress = '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9';
 
 module.exports = function(deployer) {
   deployer.then(async () => {
@@ -24,16 +24,18 @@ module.exports = function(deployer) {
     for (const address of UserEthereumAddresses) {
       await ERC20deployed.transfer(address, 1000000);
     }
-    // For e2e tests
-    await ERC721deployed.awardItem(recipientAddress, 'https://erc721mock/item-id-1.json');
-    await ERC721deployed.awardItem(recipientAddress, 'https://erc721mock/item-id-2.json');
-    await ERC721deployed.awardItem(recipientAddress, 'https://erc721mock/item-id-3.json');
-    // For testing the wallet
-    await ERC20deployed.transfer(walletTestAddress, 1000000000);
-    await ERC721deployed.awardItem(walletTestAddress, 'https://erc721mock/item-id-1.json');
-    await ERC721deployed.awardItem(walletTestAddress, 'https://erc721mock/item-id-2.json');
-    await ERC721deployed.awardItem(walletTestAddress, 'https://erc721mock/item-id-3.json');
-    await ERC1155deployed.safeBatchTransferFrom(recipientAddress, walletTestAddress, [0, 1, 4],
-      [5000000, 200000, 100000], []);
-    });
+    if (!config.ETH_ADDRESS) {// indicates we're running a wallet test that uses hardcoded addresses
+      // For e2e tests
+      await ERC721deployed.awardItem(recipientAddress, 'https://erc721mock/item-id-1.json');
+      await ERC721deployed.awardItem(recipientAddress, 'https://erc721mock/item-id-2.json');
+      await ERC721deployed.awardItem(recipientAddress, 'https://erc721mock/item-id-3.json');
+      // For testing the wallet
+      await ERC20deployed.transfer(walletTestAddress, 1000000000);
+      await ERC721deployed.awardItem(walletTestAddress, 'https://erc721mock/item-id-1.json');
+      await ERC721deployed.awardItem(walletTestAddress, 'https://erc721mock/item-id-2.json');
+      await ERC721deployed.awardItem(walletTestAddress, 'https://erc721mock/item-id-3.json');
+        await ERC1155deployed.safeBatchTransferFrom(recipientAddress, walletTestAddress, [0, 1, 4],
+        [5000000, 200000, 100000], []);
+    }
+  });
 };
