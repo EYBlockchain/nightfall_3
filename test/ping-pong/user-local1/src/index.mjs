@@ -19,7 +19,7 @@ const {
   TRANSACTIONS_PER_BLOCK,
 } = config;
 
-const { TEST_LENGTH, ERC20_NAME } = process.env;
+const { TEST_LENGTH, ERC20_NAME, TX_WAIT = 10000 } = process.env;
 const recipientPkd = process.env.RECIPIENT_PKD.split(',');
 
 /**
@@ -31,13 +31,11 @@ async function localTest() {
   const tokenType = 'ERC20';
   const value = 1;
   const tokenId = '0x0000000000000000000000000000000000000000000000000000000000000000';
-  const nf3 = new Nf3(
-    clientBaseUrl,
-    optimistBaseUrl,
+  const nf3 = new Nf3(web3WsUrl, userEthereumSigningKey, {
+    clientApiUrl: clientBaseUrl,
+    optimistApiUrl: optimistBaseUrl,
     optimistWsUrl,
-    web3WsUrl,
-    userEthereumSigningKey,
-  );
+  });
 
   await nf3.init(zkpMnemonic);
   if (await nf3.healthcheck('client')) logger.info('Healthcheck passed');
@@ -56,7 +54,7 @@ async function localTest() {
     await waitForSufficientBalance(nf3, value);
     await nf3.transfer(false, ercAddress, tokenType, value, tokenId, recipientPkd);
     await nf3.deposit(ercAddress, tokenType, value, tokenId);
-    await new Promise(resolve => setTimeout(resolve, 10000));
+    await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
   }
 
   // Wait for sometime at the end to retrieve balance to include any transactions sent by the other use

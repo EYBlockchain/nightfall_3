@@ -1,7 +1,6 @@
 version: '3.5'
 # Use this script for running up nightfall_3 with our geth node on ropsten
 services:
-
   client:
     environment:
       BLOCKCHAIN_WS_HOST: ropsten1-ws.testnet.nightfall3.com
@@ -17,13 +16,10 @@ services:
       BLOCKCHAIN_WS_HOST: ropsten1-ws.testnet.nightfall3.com
       BLOCKCHAIN_PORT: 80
       ETH_PRIVATE_KEY: abf4ed9f30bd1e4a290310d726c7bbdf39cd75a25eebd9a3a4874e10b4a0c4ce
-      # this should be the address corresponding to the above provate key
       ETH_ADDRESS: '0xdb080dC48961bC1D67a0A4151572eCb824cC76E8'
-      USE_ROPSTEN: enable
       GAS_PRICE: 20000000000
       # This is only needed for test purposes - it gives tokens to the user at startup
-      USER_ETHEREUM_SIGNING_KEY: abf4ed9f30bd1e4a290310d726c7bbdf39cd75a25eebd9a3a4874e10b4a0c4ce
-      USER_ADDRESS: '0xdb080dC48961bC1D67a0A4151572eCb824cC76E8'
+      USER_ETHEREUM_ADDRESSES: 0xE35B7c8338E4B952C03E73B50f454B1df086fef2,0x4637Ee1126723e098A152f33F326fb767A6A2b8A
 
   optimist:
     environment:
@@ -37,9 +33,27 @@ services:
       BLOCKCHAIN_PORT: 80
       PROPOSER_ETHEREUM_SIGNING_KEY: 645ac79fa9fd87dd1cf30bdca51d326bd501cd328d6dbc9f5f517c7da0dafa6f
 
-  user-local:
+  user-local1:
     environment:
       BLOCKCHAIN_WS_HOST: ropsten1-ws.testnet.nightfall3.com
       BLOCKCHAIN_PORT: 80
-      USER_ETHEREUM_SIGNING_KEY: abf4ed9f30bd1e4a290310d726c7bbdf39cd75a25eebd9a3a4874e10b4a0c4ce
-      USER_ADDRESS: '0xdb080dC48961bC1D67a0A4151572eCb824cC76E8'
+      TEST_LENGTH: 3
+      ERC20_NAME: ERC20Mock
+      USER_ETHEREUM_SIGNING_KEY: adf9b65664deaa27d37f2c3bae4f70ca22cbe9d956a1be5873770f6fd68df271
+      USER_ADDRESS: '0xE35B7c8338E4B952C03E73B50f454B1df086fef2'
+      RECIPIENT_PKD: 0x105651c0c5bb97582b3270e0f5a07ca81410ffd1920e86697efddaec03dccef8,0x1ac3b61ecba1448e697b23d37efe290fb86554b2f905aaca3a6df59805eca366
+      ZKP_MNEMONIC: tone shadow woman critic glare utility brass scheme edge brisk enforce champion
+      TX_WAIT: 120000
+
+
+  user-local2:
+    environment:
+      BLOCKCHAIN_WS_HOST: ropsten1-ws.testnet.nightfall3.com
+      BLOCKCHAIN_PORT: 80
+      USER_ETHEREUM_SIGNING_KEY: eed50965cbe8268a3ee0a24afc2f31c434a7d568bdff73a89783711c91ca1c67
+      USER_ADDRESS: '0x4637Ee1126723e098A152f33F326fb767A6A2b8A'
+      TEST_LENGTH: 3
+      ERC20_NAME: ERC20Mock
+      RECIPIENT_PKD: 0x193a37cd7973373aceae05d133f3d69ab6e7ef2f4321461173871ec7611244e2,0x27234a8721e73c9aa160154ee63d2470101fc5fd841221eeb675a91ec2d66e78
+      ZKP_MNEMONIC: tiger victory velvet tank ritual column horse conduct athlete position soul shaft
+      TX_WAIT: 120000

@@ -3,6 +3,9 @@ version: '3.5'
 services:
   client:
     image: ghcr.io/eyblockchain/nightfall3-client:latest
+    build:
+      dockerfile: client.Dockerfile
+      context: ../../
     volumes:
       - type: volume
         source: build
@@ -12,9 +15,6 @@ services:
         target: /app/mongodb
     networks:
       - pong_network
-    # ports:
-    #   - 27017:27017
-    #   - 8080:80
     depends_on:
       - worker
       - rabbitmq
@@ -37,20 +37,16 @@ services:
 
   rabbitmq:
     image: rabbitmq
-    #    ports:
-    #      - '15674:15674'
-    #      - '5672:5672'
     networks:
       - pong_network
 
   optimist:
     image: ghcr.io/eyblockchain/nightfall3-optimist:latest
+    build:
+      dockerfile: optimist.Dockerfile
+      context: ../../
     networks:
       - pong_network
-    #    ports:
-    #      - 8081:80
-    # websocket port for Optimist is on localhost:8082
-    #      - 8082:8080
     volumes:
       - type: volume
         source: build
@@ -67,25 +63,6 @@ services:
       TIMBER_PORT: 80
     command: ['npm', 'run', 'dev']
 
-  # # Temporary container to deploy contracts and circuits and populate volumes
-  # deployer:
-  #   image: ghcr.io/eyblockchain/nightfall3-deployer
-  #   volumes:
-  #     - type: volume
-  #       source: build
-  #       target: /app/build/
-  #   networks:
-  #     - nightfall_network
-  #   environment:
-  #     LOG_LEVEL: debug
-  #     # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
-  #     # startup routines will wait for a blockchain client to be reachable on this network
-  #     ETH_NETWORK: blockchain1
-  #     BLOCKCHAIN_WS_HOST: blockchain1
-  #     BLOCKCHAIN_PORT: 8546
-  #     ZOKRATES_WORKER_HOST: worker
-  #     USE_STUBS: 'false'
-
   # Temporary container to deploy contracts and circuits and populate volumes
   deployer:
     image: ghcr.io/eyblockchain/nightfall3-deployer:latest
@@ -96,30 +73,6 @@ services:
       - type: volume
         source: build
         target: /app/build/
-      - type: bind
-        source: ../../nightfall-deployer/contracts
-        target: /app/contracts/
-      - type: bind
-        source: ../../nightfall-deployer/circuits
-        target: /app/circuits/
-      - type: bind
-        source: ../../nightfall-deployer/src
-        target: /app/src/
-      - type: bind
-        source: ../../common-files
-        target: /common-files
-      - type: bind
-        source: ../../config/default.js
-        target: /app/config/default.js
-      - type: bind
-        source: ../../nightfall-deployer/migrations
-        target: /app/migrations
-      - type: bind
-        source: ../../nightfall-deployer/truffle-config.js
-        target: /app/truffle-config.js
-      - type: bind
-        source: ../../nightfall-deployer/entrypoint.sh
-        target: /app/entrypoint.sh
     networks:
       - pong_network
     environment:
@@ -131,8 +84,6 @@ services:
       BLOCKCHAIN_PORT: 8546
       ZOKRATES_WORKER_HOST: worker
       USE_STUBS: 'false'
-      USER_ETHEREUM_ADDRESSES: 0x4ca4902a6f456b488947074ad4140317c7e21996,0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9
-      ETH_ADDRESS: '0xdb080dC48961bC1D67a0A4151572eCb824cC76E8'
 
   worker:
     image: ghcr.io/eyblockchain/nightfall3-worker:latest
@@ -155,13 +106,6 @@ services:
       context: ../../
     networks:
       - pong_network
-    #    volumes:
-    #      - type: bind
-    #        source: ../../common-files
-    #        target: /app/common-files
-    #      - type: bind
-    #        source: ./proposer/src
-    #        target: /app/test/ping-pong/proposer/src
     environment:
       OPTIMIST_HOST: optimist
       OPTIMIST_WS_PORT: 8080
@@ -170,45 +114,14 @@ services:
       CLIENT_PORT: 80
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
-
-  #   user-local:
-  #     image: ghcr.io/eyblockchain/nightfall3-user-local:latest
-  #    build:
-  #      dockerfile: user-local.Dockerfile
-  #      context: ../../
-  #     networks:
-  #       - pong_network
-  # #    volumes:
-  # #      - type: bind
-  # #        source: ../../common-files
-  # #        target: /app/common-files
-  # #      - type: bind
-  # #        source: ./user-local/src
-  # #        target: /app/test/ping-pong/user-local/src
-  #     environment:
-  #       OPTIMIST_HOST: optimist
-  #       OPTIMIST_WS_PORT: 8080
-  #       OPTIMIST_HTTP_PORT: 80
-  #       CLIENT_HOST: client
-  #       CLIENT_PORT: 80
-  #       BLOCKCHAIN_WS_HOST: blockchain1
-  #       BLOCKCHAIN_PORT: 8546
-  #       ZKP_MNEMONIC: tiger victory velvet tank ritual column horse conduct athlete position soul shaft
 
   user-local1:
-    # image: ghcr.io/eyblockchain/nightfall3-user-local1:latest
+    image: ghcr.io/eyblockchain/nightfall3-user-local1:latest
     build:
       dockerfile: user-local1.Dockerfile
       context: ../../
     networks:
       - pong_network
-    # volumes:
-    #   - type: bind
-    #     source: ../../common-files
-    #     target: /app/common-files
-    #   - type: bind
-    #     source: ./user-local1/src
-    #     target: /app/test/ping-pong/user-local1/src
     environment:
       OPTIMIST_HOST: optimist
       OPTIMIST_WS_PORT: 8080
@@ -217,26 +130,14 @@ services:
       CLIENT_PORT: 80
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
-      TEST_LENGTH: 3
-      ERC20_NAME: ERC20Mock
-      USER_ETHEREUM_SIGNING_KEY: '0xb0fa8745bd6e77a67ec6a27e701971d659937140cc3159d9f85210da3444eb45'
-      RECIPIENT_PKD: 0x105651c0c5bb97582b3270e0f5a07ca81410ffd1920e86697efddaec03dccef8,0x1ac3b61ecba1448e697b23d37efe290fb86554b2f905aaca3a6df59805eca366
-      ZKP_MNEMONIC: tone shadow woman critic glare utility brass scheme edge brisk enforce champion
 
   user-local2:
-    # image: ghcr.io/eyblockchain/nightfall3-user-local1:latest
+    image: ghcr.io/eyblockchain/nightfall3-user-local2:latest
     build:
       dockerfile: user-local1.Dockerfile
       context: ../../
     networks:
       - pong_network
-    # volumes:
-    #   - type: bind
-    #     source: ../../common-files
-    #     target: /app/common-files
-    #   - type: bind
-    #     source: ./user-local1/src
-    #     target: /app/test/ping-pong/user-local1/src
     environment:
       OPTIMIST_HOST: optimist
       OPTIMIST_WS_PORT: 8080
@@ -245,12 +146,6 @@ services:
       CLIENT_PORT: 80
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
-      TEST_LENGTH: 3
-      ERC20_NAME: ERC20Mock
-      USER_ETHEREUM_SIGNING_KEY: '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb'
-      RECIPIENT_PKD: 0x193a37cd7973373aceae05d133f3d69ab6e7ef2f4321461173871ec7611244e2,0x27234a8721e73c9aa160154ee63d2470101fc5fd841221eeb675a91ec2d66e78
-      ZKP_MNEMONIC:
-        tiger victory velvet tank ritual column horse conduct athlete position soul shaft
 
 volumes:
   mongodb:
