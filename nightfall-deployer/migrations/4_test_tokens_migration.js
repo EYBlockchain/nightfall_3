@@ -34,7 +34,7 @@ module.exports = function(deployer) {
       }
       // For testing the wallet
       await ERC20deployed.transfer(walletTestAddress, 10000000000);
-      await ERC20deployed.transfer(liquidityProviderAddress, 1000000000000);
+      await ERC20deployed.transfer(liquidityProviderAddress, 10000000000);
       for (let i=0; i < 100; i++){
         await ERC721deployed.awardItem(walletTestAddress, `https://erc721mock/item-id-${i}.json`);
       }

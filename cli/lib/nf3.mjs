@@ -754,8 +754,7 @@ class Nf3 {
   Set a Web3 Provider URL
   */
   setWeb3Provider() {
-    this.web3 = new Web3(this.web3WsUrl);
-    this.web3.eth.transactionBlockTimeout = 200; // set a longer timeout
+    this.web3 = new Web3(this.web3WsUrl, { transactionBlockTimeout: 200 }); // set a longer timeout
     if (typeof window !== 'undefined') {
       if (window.ethereum && this.ethereumSigningKey === '') {
         this.web3 = new Web3(window.ethereum);
