@@ -66,11 +66,17 @@ export async function createChallenge(block, transactions, err) {
       case 0: {
         logger.debug('Challenging incorrect root');
         // Getting prior block for the current block
-        const priorBlock = await getBlockByBlockNumberL2(Number(block.blockNumberL2) - 1);
-        if (priorBlock === null)
-          throw new Error(
-            `Could not find prior block with block number ${Number(block.blockNumberL2) - 1}`,
-          );
+        let priorBlock = await getBlockByBlockNumberL2(Number(block.blockNumberL2) - 1);
+        if (priorBlock === null) {
+          if (block.blockNumberL2 === 0) {
+            priorBlock = block;
+            priorBlock.leafCount = 0;
+            priorBlock.transactionHashes = [ZERO];
+          } else
+            throw new Error(
+              `Could not find prior block with block number ${Number(block.blockNumberL2) - 1}`,
+            );
+        }
         // Retrieve last transaction from prior block using its transaction hash.
         // Note that not all transactions in a block will have commitments. Loop until one is found
         const priorBlockTransactions = await getTransactionsByTransactionHashes(
@@ -296,7 +302,12 @@ export async function createChallenge(block, transactions, err) {
       }
       // challenge incorrect leaf count
       case 7: {
-        const priorBlockL2 = await getBlockByBlockNumberL2(block.blockNumberL2 - 1);
+        let priorBlockL2 = await getBlockByBlockNumberL2(block.blockNumberL2 - 1);
+        if (block.blockNumberL2 === 0) {
+          priorBlockL2 = block;
+          priorBlockL2.leafCount = 0;
+          priorBlockL2.transactionHashes = [ZERO];
+        }
         const priorBlockTransactions = await getTransactionsByTransactionHashes(
           priorBlockL2.transactionHashes,
         );

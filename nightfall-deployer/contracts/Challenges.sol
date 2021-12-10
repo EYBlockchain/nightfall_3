@@ -35,7 +35,9 @@ contract Challenges is Stateful, Key_Registry, Config {
   ) external {
     checkCommit(msg.data, salt);
     // check if the block hash is correct and the block hash exists for the block and prior block
+    if(priorBlockL2.blockNumberL2 != blockL2.blockNumberL2) {
     state.isBlockReal(priorBlockL2, priorBlockTransactions, blockNumberL2 - 1);
+    }
     state.isBlockReal(blockL2, transactions, blockNumberL2);
     ChallengesUtil.libChallengeLeafCountCorrect(priorBlockL2, priorBlockTransactions, blockL2.leafCount);
     // Now, we have an incorrect leafCount, but Timber relies on the leafCount
@@ -64,7 +66,9 @@ contract Challenges is Stateful, Key_Registry, Config {
   ) external {
     checkCommit(msg.data, salt);
     // check if the block hash is correct and the block hash exists for the block and prior block
+    if(priorBlockL2.blockNumberL2 != blockL2.blockNumberL2) {
     state.isBlockReal(priorBlockL2, priorBlockTransactions, blockNumberL2 - 1);
+    }
     state.isBlockReal(blockL2, transactions, blockNumberL2);
     // see if the challenge is valid
     ChallengesUtil.libChallengeNewRootCorrect(

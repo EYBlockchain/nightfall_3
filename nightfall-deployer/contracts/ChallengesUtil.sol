@@ -31,14 +31,19 @@ library ChallengesUtil {
         // next check the sibling path is valid and get the Frontier
         bool valid;
         bytes32[33] memory _frontier;
-        (valid, _frontier) = MerkleTree_Stateless.checkPath(
-            Utils.filterCommitments(priorBlockTransactions),
-            frontierPriorBlock,
-            priorBlockL2.leafCount,
-            priorBlockL2.root
-        );
-        require(valid, 'The sibling path is invalid');
-        uint256 commitmentIndex = priorBlockL2.leafCount + Utils.filterCommitments(priorBlockTransactions).length;
+        uint256 commitmentIndex;
+        if (priorBlockL2.blockNumberL2 != blockL2.blockNumberL2) {
+            (valid, _frontier) = MerkleTree_Stateless.checkPath(
+                Utils.filterCommitments(priorBlockTransactions),
+                frontierPriorBlock,
+                priorBlockL2.leafCount,
+                priorBlockL2.root
+            );
+            require(valid, 'The sibling path is invalid');
+            commitmentIndex =
+                priorBlockL2.leafCount +
+                Utils.filterCommitments(priorBlockTransactions).length;
+        } else commitmentIndex = 0;
         // At last, we can check if the root itself is correct!
         (bytes32 root, , ) =
             MerkleTree_Stateless.insertLeaves(
