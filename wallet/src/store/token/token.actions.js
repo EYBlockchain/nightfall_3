@@ -11,13 +11,23 @@ export function addToken(
   tokenAddress,
   tokenType,
   tokenId,
+  l2TokenId,
   tokenName,
   l1Balance,
   l2Balance,
 ) {
   return {
     type: tokenActionTypes.TOKEN_ADD,
-    payload: { compressedPkd, tokenAddress, tokenType, tokenId, tokenName, l1Balance, l2Balance },
+    payload: {
+      compressedPkd,
+      tokenAddress,
+      tokenType,
+      tokenId,
+      l2TokenId,
+      tokenName,
+      l1Balance,
+      l2Balance,
+    },
   };
 }
 
