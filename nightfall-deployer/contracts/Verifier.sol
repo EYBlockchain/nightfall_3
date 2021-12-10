@@ -21,7 +21,7 @@ Harry R
 
 /**
 @title Verifier
-@dev Example Verifier Implementation - GM17 proof verification.
+@dev Example Verifier Implementation - G16 proof verification.
 @notice Do not use this example in any production code!
 */
 
@@ -34,19 +34,18 @@ library Verifier {
 
   using Pairing for *;
 
-  struct Proof_GM17 {
+  struct Proof_G16 {
       Pairing.G1Point A;
       Pairing.G2Point B;
       Pairing.G1Point C;
   }
 
-  struct Verification_Key_GM17 {
-      Pairing.G2Point H;
-      Pairing.G1Point Galpha;
-      Pairing.G2Point Hbeta;
-      Pairing.G1Point Ggamma;
-      Pairing.G2Point Hgamma;
-      Pairing.G1Point[2] query;
+  struct Verification_Key_G16 {
+      Pairing.G1Point alpha;
+        Pairing.G2Point beta;
+        Pairing.G2Point gamma;
+        Pairing.G2Point delta;
+        Pairing.G1Point[] gamma_abc;
   }
 
   function verify(uint256[] memory _proof, uint256 _publicInputsHash, uint256[] memory _vk) public returns (bool result) {
@@ -59,9 +58,9 @@ library Verifier {
 
   function verificationCalculation(uint256[] memory _proof, uint256 _publicInputsHash, uint256[] memory _vk) public returns (uint) {
 
-      Proof_GM17 memory proof;
+      Proof_G16 memory proof;
       Pairing.G1Point memory vk_dot_inputs;
-      Verification_Key_GM17 memory vk;
+      Verification_Key_G16 memory vk;
 
       vk_dot_inputs = Pairing.G1Point(0, 0); //initialise
 
@@ -69,21 +68,23 @@ library Verifier {
       proof.B = Pairing.G2Point([_proof[2], _proof[3]], [_proof[4], _proof[5]]);
       proof.C = Pairing.G1Point(_proof[6], _proof[7]);
 
-      vk.H = Pairing.G2Point([_vk[0],_vk[1]],[_vk[2],_vk[3]]);
-      vk.Galpha = Pairing.G1Point(_vk[4],_vk[5]);
-      vk.Hbeta = Pairing.G2Point([_vk[6],_vk[7]],[_vk[8],_vk[9]]);
-      vk.Ggamma = Pairing.G1Point(_vk[10],_vk[11]);
-      vk.Hgamma = Pairing.G2Point([_vk[12],_vk[13]],[_vk[14],_vk[15]]);
+      vk.alpha = Pairing.G1Point(_vk[0],_vk[1]);
+      vk.beta = Pairing.G2Point([_vk[2],_vk[3]],[_vk[4],_vk[5]]);
+      vk.gamma = Pairing.G2Point([_vk[6],_vk[7]],[_vk[8],_vk[9]]);
+      vk.delta = Pairing.G2Point([_vk[10],_vk[11]],[_vk[12],_vk[13]]);
 
-      // vk.query.length = (_vk.length - 16)/2;
-      uint j = 0;
-      for (uint i = 16; i < _vk.length; i+=2) {
-        vk.query[j++] = Pairing.G1Point(_vk[i], _vk[i+1]);
+      // vk.gamma_abc.length = (_vk.length - 14)/2;
+      if (_vk.length > 14) {
+        vk.gamma_abc = new Pairing.G1Point[]((_vk.length - 14)/2); // num public inputs + 1
+        for (uint i = 14; i < _vk.length; i+=2) {
+          vk.gamma_abc[(i-14)/2] = Pairing.G1Point(
+              _vk[i], _vk[i+1]
+          );
+        }
       }
-
-      /* require(vk.query.length == 2, "Length of vk.query is incorrect!"); */
+      /* require(vk.gamma.abc.length == 2, "Length of vk.gamma.abc is incorrect!"); */
       // Replacing for the above require statement so that the proof verification returns false. Removing require statements to ensure a wrong proof verification challenge's require statement correctly works
-      if (vk.query.length != 2) {
+      if (vk.gamma_abc.length != 2) {
         return 1;
       }
 
@@ -92,7 +93,7 @@ library Verifier {
           // The following success variables replace require statements with corresponding functions called. Removing require statements to ensure a wrong proof verification challenge's require statement correctly works
           bool success_sm_qpih;
           bool success_vkdi_sm_qpih;
-          (sm_qpih, success_sm_qpih) = Pairing.scalar_mul(vk.query[1], _publicInputsHash);
+          (sm_qpih, success_sm_qpih) = Pairing.scalar_mul(vk.gamma_abc[1], _publicInputsHash);
           (vk_dot_inputs, success_vkdi_sm_qpih) = Pairing.addition(
             vk_dot_inputs,
             sm_qpih
@@ -105,7 +106,7 @@ library Verifier {
       {
           // The following success variables replace require statements with corresponding functions called. Removing require statements to ensure a wrong proof verification challenge's require statement correctly works
           bool success_vkdi_q;
-          (vk_dot_inputs, success_vkdi_q) = Pairing.addition(vk_dot_inputs, vk.query[0]);
+          (vk_dot_inputs, success_vkdi_q) = Pairing.addition(vk_dot_inputs, vk.gamma_abc[0]);
           if (!success_vkdi_q) {
           return 3;
          }
@@ -118,36 +119,18 @@ library Verifier {
        * where psi = \sum_{i=0}^l input_i pvk.query[i]
        */
       {
-        Pairing.G1Point memory add_A_Galpha;
         // The following success variables replace require statements with corresponding functions called. Removing require statements to ensure a wrong proof verification challenge's require statement correctly works
         bool success_pp4_out_not_0;
         bool success_pp4_pairing;
-        {
-          bool success_add_A_Galpha;
-          (add_A_Galpha, success_add_A_Galpha) = Pairing.addition(proof.A, vk.Galpha);
-          if (!success_add_A_Galpha) {
-            return 4;
-           }
-        }
-        (success_pp4_out_not_0, success_pp4_pairing) = Pairing.pairingProd4(vk.Galpha, vk.Hbeta, vk_dot_inputs, vk.Hgamma, proof.C, vk.H, Pairing.negate(add_A_Galpha), Pairing.addition2(proof.B, vk.Hbeta));
+        (success_pp4_out_not_0, success_pp4_pairing)  = Pairing.pairingProd4(
+             proof.A, proof.B,
+             Pairing.negate(vk_dot_inputs), vk.gamma,
+             Pairing.negate(proof.C), vk.delta,
+             Pairing.negate(vk.alpha), vk.beta);
         if (!success_pp4_out_not_0 || !success_pp4_pairing) {
             return 5;
         }
       }
-
-      /**
-       * e(A, H^{gamma}) = e(G^{gamma}, B)
-       */
-      {
-        // The following success variables replace require statements with corresponding functions called. Removing require statements to ensure a wrong proof verification challenge's require statement correctly works
-        bool success_pp2_out_not_0;
-        bool success_pp2_pairing;
-        (success_pp2_out_not_0, success_pp2_pairing) = Pairing.pairingProd2(proof.A, vk.Hgamma, Pairing.negate(vk.Ggamma), proof.B);
-        if (!success_pp2_out_not_0 || !success_pp2_pairing) {
-            return 6;
-        }
-      }
-
       return 0;
   }
 }

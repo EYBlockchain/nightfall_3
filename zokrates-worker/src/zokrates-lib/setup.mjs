@@ -22,8 +22,8 @@ const { spawn } = childProcess;
 export default async function setup(
   codePath,
   outputPath = './',
-  provingScheme = 'gm17',
-  backend = 'ark',
+  provingScheme = 'g16',
+  backend = 'bellman',
   vkName = 'verification.key',
   pkName = 'proving.key',
   options = {},
