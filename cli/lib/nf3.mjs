@@ -166,8 +166,8 @@ class Nf3 {
 
       let gasPrice = 20000000000;
       const gas = (await this.web3.eth.getBlock('latest')).gasLimit;
-      const blockGasPrice = 2 * Number(await this.web3.eth.getGasPrice());
-      if (blockGasPrice > gasPrice) gasPrice = blockGasPrice;
+      const blockGasPrice = Number(await this.web3.eth.getGasPrice());
+      if (blockGasPrice > gasPrice) gasPrice = 2 * blockGasPrice;
 
       tx = {
         from: this.ethereumAddress,
