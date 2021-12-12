@@ -32,7 +32,7 @@ jobs:
         if: always()
         run: cat testnet-test.log
 
-      - run: sleep 1000
+      - run: sleep 1200
       - name: debug logs - after container startup 2
         if: always()
         run: cat testnet-test.log
