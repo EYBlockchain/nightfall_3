@@ -70,8 +70,8 @@ jobs:
           docker-compose build
           ./start-nightfall -g &> ganache-test.log &disown
 
-      - name: wait 1500s for Containers startup and setup completion
-        run: sleep 1500
+      - name: wait 2000s for Containers startup and setup completion
+        run: sleep 2000
 
       - name: debug logs - after container startup
         if: always()
