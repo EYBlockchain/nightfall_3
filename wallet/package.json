@@ -4,6 +4,7 @@
   "private": true,
   "main": "./src/index.jsx",
   "dependencies": {
+    "@craco/craco": "^6.4.3",
     "@semantic-ui-react/craco-less": "^1.2.3",
     "@testing-library/jest-dom": "^5.14.1",
     "async-mutex": "^0.3.2",
