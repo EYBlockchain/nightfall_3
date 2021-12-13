@@ -104,7 +104,6 @@ describe('Testing the http API', () => {
       for (let i = 0; i < TRANSACTIONS_PER_BLOCK; i++) {
         // eslint-disable-next-line no-await-in-loop
         const res = await nf3User1.deposit(ercAddress, tokenType, value, tokenId, fee);
-        // setNonce(privateKey, nf3User1.nonce);
         expectTransaction(res);
         console.log(`Gas used was ${Number(res.gasUsed)}`);
 
@@ -116,7 +115,6 @@ describe('Testing the http API', () => {
   });
 
   after(() => {
-    // console.log('end');
     closeWeb3Connection();
     nf3User1.close();
     nf3Proposer1.close();
