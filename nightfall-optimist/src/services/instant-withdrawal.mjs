@@ -13,30 +13,7 @@ export const advanceWithdrawal = async transaction => {
       .encodeABI();
     logger.info(`txDataToSign : ${txDataToSign}`);
 
-    let tokenType = 'ERC20';
-    switch (transaction.tokenType) {
-      case '1':
-        tokenType = 'ERC20';
-        break;
-      case '2':
-        tokenType = 'ERC1155';
-        break;
-      default:
-        tokenType = 'ERC20';
-        break;
-    }
-
-    return {
-      txDataToSign,
-      transaction: {
-        ercAddress: `0x${BigInt(transaction.ercAddress).toString(16).padStart(40, '0')}`,
-        recipientAddress: `0x${BigInt(transaction.recipientAddress)
-          .toString(16)
-          .padStart(40, '0')}`,
-        tokenType,
-        value: transaction.value,
-      },
-    };
+    return { txDataToSign };
   } catch (error) {
     throw new Error(error);
   }

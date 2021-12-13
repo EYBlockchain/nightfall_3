@@ -416,20 +416,6 @@ class Nf3 {
     const res = await axios.post(`${this.optimistBaseUrl}/transaction/advanceWithdrawal`, {
       transactionHash: withdrawTransactionHash,
     });
-
-    try {
-      await approve(
-        res.data.transaction.ercAddress,
-        this.ethereumAddress,
-        this.shieldContractAddress,
-        res.data.transaction.tokenType,
-        res.data.transaction.value,
-        this.web3,
-      );
-    } catch (err) {
-      throw new Error(err);
-    }
-
     return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, 0);
   }
 
