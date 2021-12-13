@@ -14,7 +14,6 @@ import { APPROVE_AMOUNT, TOKEN_TYPE } from '../lib/constants.mjs';
 import { setEnvironment, getCurrentEnvironment } from '../lib/environment.mjs';
 import { approve } from '../lib/tokens.mjs';
 
-
 const defaultKey = '0xfbc1ee1c7332e2e5a76a99956f50b3ba2639aff73d56477e877ef8390c41e0c6';
 const defaultMnemonic = 'toy vivid real shove evolve kidney captain flock hungry evoke lawn plunge';
 const erc20Address = '0xb5acbe9a0f1f8b98f3fc04471f7fe5d2c222cb44';
