@@ -47,7 +47,7 @@ async function startProvider(testEnvironment) {
     erc20Address,
     nf3.ethereumAddress,
     nf3.shieldContractAddress,
-    TOKEN_TYPE,
+    TOKEN_TYPE.ERC20,
     APPROVE_AMOUNT,
     nf3.web3,
   );
