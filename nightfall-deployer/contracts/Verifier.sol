@@ -72,7 +72,7 @@ library Verifier {
       vk.beta = Pairing.G2Point([_vk[2],_vk[3]],[_vk[4],_vk[5]]);
       vk.gamma = Pairing.G2Point([_vk[6],_vk[7]],[_vk[8],_vk[9]]);
       vk.delta = Pairing.G2Point([_vk[10],_vk[11]],[_vk[12],_vk[13]]);
-      
+
        if (_vk.length > 14) {
         vk.gamma_abc = new Pairing.G1Point[]((_vk.length - 14)/2); // num public inputs + 1
         for (uint i = 14; i < _vk.length; i+=2) {
