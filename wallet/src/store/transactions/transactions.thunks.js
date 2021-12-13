@@ -14,6 +14,9 @@ function txInstantWithdrawSubmit(withdrawTransactionHash, fee) {
     nf3
       .requestInstantWithdrawal(withdrawTransactionHash, fee)
       .then(txReceipt => {
+        if (txReceipt === null) {
+          throw new Error('Non existent hash');
+        }
         // TODO dispatch error
         dispatch(txActions.txSuccess(Nf3.Constants.TX_TYPES.INSTANT_WITHDRAW, txReceipt));
       })

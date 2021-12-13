@@ -2,7 +2,7 @@
 /* ignore unused exports */
 
 /**
-Class representing a GM17 proof.  Depending on the local definition of 'proof',
+Class representing a G16 proof.  Depending on the local definition of 'proof',
 an object from this class may contain the public inputs as well as the a, b, c
 terms.  Verifier.sol expects the public inputs to be separate, zokrates verify
 expects them to be in the same object.  This class can accomodate either.

@@ -22,12 +22,12 @@ function tokenReducer(state = initialState, action) {
             tokenAddress: action.payload.tokenAddress,
             tokenType: action.payload.tokenType,
             tokenId: action.payload.tokenId,
+            l2TokenId: action.payload.l2TokenId,
             tokenName: action.payload.tokenName,
             tokenBalanceL1: action.payload.l1Balance,
             tokenBalanceL2: action.payload.l2Balance,
           },
         ];
-
         Storage.tokensSet(action.payload.compressedPkd, newTokenPool);
         return {
           ...state,
@@ -40,6 +40,7 @@ function tokenReducer(state = initialState, action) {
         tokenAddress: action.payload.tokenAddress,
         tokenType: action.payload.tokenType,
         tokenId: action.payload.tokenId,
+        l2TokenId: action.payload.l2TokenId,
         tokenName: action.payload.tokenName,
         tokenBalanceL1: action.payload.l1Balance,
         tokenBalanceL2: action.payload.l2Balance,

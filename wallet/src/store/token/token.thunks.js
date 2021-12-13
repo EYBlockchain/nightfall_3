@@ -16,7 +16,11 @@ const getTokens = tokens => {
 };
 
 const mergeTokens = (tokens1, tokens2) => {
-  const tokenPool = [...tokens2];
+  const tokenPool = [...tokens2].map(token => {
+    const obj = { ...token };
+    obj.tokenBalanceL2 = '0';
+    return obj;
+  });
   for (const token1 of tokens1) {
     const duplicatedIndex = tokens2.findIndex(
       token2 => token2.tokenAddress === token1.tokenAddress,
@@ -25,7 +29,6 @@ const mergeTokens = (tokens1, tokens2) => {
       tokenPool.push(token1);
     } else if (tokenPool[duplicatedIndex].tokenBalanceL2 !== token1.tokenBalanceL2) {
       tokenPool[duplicatedIndex].tokenBalanceL2 = token1.tokenBalanceL2;
-      tokenPool[duplicatedIndex].updated = true;
     }
   }
   return tokenPool;
@@ -36,7 +39,6 @@ function tokensLoad(initTokens) {
     const {
       login: { nf3 },
     } = getState();
-
     if (typeof nf3.ethereumAddress === 'undefined') return;
     const storedTokens = Storage.tokensGet(nf3.zkpKeys.compressedPkd);
     nf3
@@ -50,28 +52,42 @@ function tokensLoad(initTokens) {
           ...getTokens(storedTokens),
           ...getTokens(initTokens),
         ]);
-
         if (tokenPool.length) {
           tokenPool.forEach(el => {
             // TODO: Pending retrieve tokenIds
             Nf3.Tokens.getERCInfo(el.tokenAddress, nf3.ethereumAddress, nf3.web3, {
               toEth: true,
               tokenId: 0,
+              details: true,
+              tokenType: el.tokenType,
             })
-              .then(l1Balance => {
-                if (el.tokenBalanceL1 !== l1Balance.balance || el.updated) {
-                  dispatch(
-                    tokenActions.addToken(
-                      compressedPkd,
-                      el.tokenAddress.toLowerCase(),
-                      el.tokenType,
-                      '0x00',
-                      el.tokenName,
-                      l1Balance.balance,
-                      Nf3.Units.fromBaseUnit(el.tokenBalanceL2, l1Balance.decimals),
-                    ),
-                  );
-                }
+              .then(tokenInfo => {
+                nf3
+                  .getLayer2BalancesDetails([el.tokenAddress])
+                  .then(tokenL2Details => {
+                    let l2TokenId = null;
+                    if (el.tokenBalanceL2 !== '0') {
+                      l2TokenId = tokenL2Details[nf3.zkpKeys.compressedPkd][el.tokenAddress].map(
+                        l2Token => l2Token.tokenId.toString(),
+                      );
+                    } else {
+                      l2TokenId = [];
+                    }
+                    const l1TokenId = tokenInfo.details.map(tokenDetails => tokenDetails.tokenId);
+                    dispatch(
+                      tokenActions.addToken(
+                        compressedPkd,
+                        el.tokenAddress.toLowerCase(),
+                        el.tokenType,
+                        l1TokenId,
+                        l2TokenId,
+                        el.tokenName,
+                        tokenInfo.balance,
+                        Nf3.Units.fromBaseUnit(el.tokenBalanceL2, tokenInfo.decimals),
+                      ),
+                    );
+                  })
+                  .catch(console.log);
               })
               .catch(console.log());
           });

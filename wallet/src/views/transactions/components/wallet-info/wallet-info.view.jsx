@@ -51,6 +51,7 @@ function WalletInfo({
   };
 
   function setActiveRow(id) {
+    reload();
     if (id !== token.activeTokenRowId) {
       onSelectToken(id);
       if (removeTokenEnable) {
@@ -106,6 +107,7 @@ function WalletInfo({
       tokenAddress.toLowerCase(),
       tokenType,
       '0x0',
+      '0x0',
       tokenName,
       tokenBalance,
       '-',
@@ -126,37 +128,34 @@ function WalletInfo({
       <Table padded fixed selectable>
         <Table.Header>
           <Table.Row>
-            <Table.HeaderCell colSpan="4">
-              <Table.Cell>Account Address:</Table.Cell>
-              <Table.Cell id="wallet-info-cell-ethaddress"> {importedWallet()} </Table.Cell>
+            <Table.HeaderCell>Account Address:</Table.HeaderCell>
+            <Table.HeaderCell colSpan="3" id="wallet-info-cell-ethaddress">
+              {' '}
+              {importedWallet()}{' '}
             </Table.HeaderCell>
             <Table.HeaderCell colSpan="3">
-              <Table.Cell />
-              <Table.Cell />
-              <Table.Cell>
-                <Button
-                  icon
-                  labelPosition="left"
-                  onClick={toggleModalTokenAdd}
-                  id="wallet-info-cell-add-token"
-                >
-                  <Icon name="plus" />
-                  Add Token
-                </Button>
-              </Table.Cell>
-              <Table.Cell>
-                <Button
-                  icon
-                  labelPosition="left"
-                  id="wallet-info-cell-remove-token"
-                  toggle
-                  onClick={removeToken}
-                  active={removeTokenEnable && token.tokenPool.length}
-                  disabled={token.tokenPool.length === 0}
-                >
-                  <Icon name="minus" /> Remove Token
-                </Button>
-              </Table.Cell>
+              <Button
+                icon
+                labelPosition="left"
+                onClick={toggleModalTokenAdd}
+                primary
+                id="wallet-info-cell-add-token"
+              >
+                <Icon name="plus" />
+                Add Token
+              </Button>
+              <Button
+                icon
+                labelPosition="left"
+                id="wallet-info-cell-remove-token"
+                toggle
+                onClick={removeToken}
+                primary
+                active={removeTokenEnable && token.tokenPool.length}
+                disabled={token.tokenPool.length === 0}
+              >
+                <Icon name="minus" /> Remove Token
+              </Button>
             </Table.HeaderCell>
           </Table.Row>
         </Table.Header>
@@ -215,9 +214,27 @@ const mapStateToProps = state => ({
 const mapDispatchToProps = dispatch => ({
   onSelectToken: tokenRowId => dispatch(selectToken(tokenRowId)),
   onUnselectToken: () => dispatch(unselectToken()),
-  onAddToken: (compressedPkd, tokenAddress, tokenType, tokenId, tokenName, l1Balance, l2Balance) =>
+  onAddToken: (
+    compressedPkd,
+    tokenAddress,
+    tokenType,
+    tokenId,
+    l2TokenId,
+    tokenName,
+    l1Balance,
+    l2Balance,
+  ) =>
     dispatch(
-      addToken(compressedPkd, tokenAddress, tokenType, tokenId, tokenName, l1Balance, l2Balance),
+      addToken(
+        compressedPkd,
+        tokenAddress,
+        tokenType,
+        tokenId,
+        l2TokenId,
+        tokenName,
+        l1Balance,
+        l2Balance,
+      ),
     ),
   onDeleteToken: (compressedPkd, tokenRowId) => dispatch(deleteToken(compressedPkd, tokenRowId)),
   onLoadTokens: initTokens => dispatch(tokensLoad(initTokens)),
