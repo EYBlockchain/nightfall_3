@@ -22,7 +22,7 @@ function HeaderMenu({ onDeleteWallet, onClearError }) {
   return (
     <Menu secondary>
       <Menu.Menu position="right">
-        <Button name="logout"  primary onClick={onLogoutClick}>
+        <Button name="logout" primary onClick={onLogoutClick}>
           <Icon name="upload" size="large" />
           Logout
         </Button>
