@@ -517,7 +517,7 @@ describe('Testing the challenge http API', () => {
       });
     });
 
-    describe('Challenge 6: Proof verification failure', () => {
+    describe('Challenge 5: Proof verification failure', () => {
       it('Should delete the flawed block and rollback the leaves', async () => {
         await testForEvents(stateAddress, [
           web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
@@ -526,7 +526,7 @@ describe('Testing the challenge http API', () => {
       });
     });
 
-    describe('Challenge 7: Duplicate Nullifier', () => {
+    describe('Challenge 6: Duplicate Nullifier', () => {
       it('Should delete the flawed block and rollback the leaves', async () => {
         await testForEvents(stateAddress, [
           web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
@@ -551,7 +551,7 @@ describe('Testing the challenge http API', () => {
       });
     });
 
-    describe('Challenge 8: Incorrect Leaf Count', () => {
+    describe('Challenge 7: Incorrect Leaf Count', () => {
       it('Should delete the flawed block and rollback the leaves', async () => {
         await testForEvents(stateAddress, [
           web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),

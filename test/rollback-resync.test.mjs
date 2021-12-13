@@ -272,7 +272,7 @@ describe('Running rollback and resync test', () => {
     it('compare the mempools', async () => {
       await new Promise(resolve => setTimeout(resolve, 50000));
       const optimistMempool = (
-        await chai.request(optimistUrl).get('/proposer/mempool')
+        await chai.request(environment.optimistApiUrl).get('/proposer/mempool')
       ).body.result.filter(m => m.mempool);
       expect(optimistMempool.map(o => o.transactionHash)).eql(
         validTransactions.map(v => v.transaction.transactionHash),
