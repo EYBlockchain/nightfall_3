@@ -97,15 +97,6 @@ library Utils {
     return filtered;
   }
 
-  // function countPublicInputs(Structures.Transaction memory ts) internal pure returns(uint) {
-  //   if (ts.transactionType == Structures.TransactionTypes.DEPOSIT)
-  //     return 4;
-  //   else if (ts.transactionType == Structures.TransactionTypes.SINGLE_TRANSFER)
-  //     return 12;
-  //   else if (ts.transactionType == Structures.TransactionTypes.DOUBLE_TRANSFER)
-  //     return 16;
-  //   else return 6;
-  // }
   // gathers public inputs for each tx type
   // required now we have removed the publicInputHash
   function getPublicInputs(Structures.Transaction calldata ts, uint256[2] memory roots) internal pure returns(uint256[] memory inputs) {

@@ -42,7 +42,6 @@ async function checkTransactionType(transaction) {
     // But points can such as compressedSecrets, Proofs
     case 0: // deposit
       if (
-        transaction.publicInputHash === ZERO ||
         (Number(transaction.tokenType) !== 0 &&
           transaction.tokenId === ZERO &&
           Number(transaction.value) === 0) ||
@@ -66,7 +65,6 @@ async function checkTransactionType(transaction) {
       break;
     case 1: // single token transaction
       if (
-        transaction.publicInputHash === ZERO ||
         transaction.tokenId !== ZERO ||
         Number(transaction.value) !== 0 ||
         transaction.ercAddress === ZERO ||
@@ -88,7 +86,6 @@ async function checkTransactionType(transaction) {
       break;
     case 2: // double token transaction
       if (
-        transaction.publicInputHash === ZERO ||
         transaction.tokenId !== ZERO ||
         Number(transaction.value) !== 0 ||
         transaction.ercAddress === ZERO ||
@@ -108,7 +105,6 @@ async function checkTransactionType(transaction) {
       break;
     case 3: // withdraw transaction
       if (
-        transaction.publicInputHash === ZERO ||
         (Number(transaction.tokenType) !== 0 &&
           transaction.tokenId === ZERO &&
           Number(transaction.value) === 0) ||
@@ -221,7 +217,7 @@ async function verifyProof(transaction) {
     inputs: inputs.all.hex(32),
   });
   const { verifies } = res.data;
-  if (!verifies) throw new TransactionError('The proof did not verify', 5);
+  if (!verifies) throw new TransactionError('The proof did not verify', 4);
 }
 
 async function checkTransaction(transaction) {

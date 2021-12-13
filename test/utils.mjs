@@ -187,11 +187,6 @@ export async function createBadBlock(badBlockType, block, transactions, args) {
       badTransactions[1].historicRootBlockNumberL2[0] = (await rand(8)).hex();
       break;
     }
-    // case 'IncorrectPublicInputHash': {
-    //   // if both tokenID and value are 0 for deposit, then this is an invalid deposit transaction
-    //   badTransactions[0].publicInputHash = (await rand(32)).hex();
-    //   break;
-    // }
     case 'IncorrectProof': {
       // use the proof of a prior transaction
       badTransactions[0].proof = args.proof;
