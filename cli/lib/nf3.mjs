@@ -80,7 +80,7 @@ class Nf3 {
   @returns {Promise}
   */
   async init(mnemonic) {
-    this.setWeb3Provider();
+    await this.setWeb3Provider();
     this.shieldContractAddress = await this.getContractAddress('Shield');
     this.proposersContractAddress = await this.getContractAddress('Proposers');
     this.challengesContractAddress = await this.getContractAddress('Challenges');
@@ -792,12 +792,13 @@ class Nf3 {
   /**
   Set a Web3 Provider URL
   */
-  setWeb3Provider() {
+  async setWeb3Provider() {
     this.web3 = new Web3(this.web3WsUrl);
     if (typeof window !== 'undefined') {
       if (window.ethereum && this.ethereumSigningKey === '') {
         this.web3 = new Web3(window.ethereum);
-        window.ethereum.request({ method: 'eth_accounts' });
+        await window.ethereum.enable();
+        await window.ethereum.request({ method: 'eth_accounts' });
       } else {
         // Metamask not available
         throw new Error('No Web3 provider found');

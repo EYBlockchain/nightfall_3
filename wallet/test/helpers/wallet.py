@@ -10,7 +10,7 @@ from decimal import Decimal
 def loginNightfallWallet(driver, findElements, metamaskTab, nightfallTab, walletURL):
     driver.switch_to.window(nightfallTab)
     driver.get(walletURL)
-    findElements.element_exist_xpath('//*[local-name()="svg"]').click() # nightfall Metamask button
+    findElements.element_exist_xpath('(//*[local-name()="svg"])[2]').click() # nightfall Metamask button
     sleep(3)
 
     ## Connect Account to network
@@ -22,9 +22,11 @@ def loginNightfallWallet(driver, findElements, metamaskTab, nightfallTab, wallet
         findElements.element_exist_xpath('//button[text()="Connect"]').click() # Connect
 
     driver.switch_to.window(nightfallTab)
-    findElements.element_exist_xpath('//button[text()="Cancel"]').click() # Cancel
+    cancelButton = findElements.element_exist_xpath('//button[text()="Cancel"]')
+    if cancelButton:
+      cancelButton.click()
     sleep(1)
-    findElements.element_exist_xpath('//*[local-name()="svg"]').click() # nightfall Metamask button
+    findElements.element_exist_xpath('(//*[local-name()="svg"])[2]').click() # nightfall Metamask button
     sleep(1)
     findElements.element_exist_xpath('//button[text()="New"]').click() # New Mnemonic
     sleep(1)
