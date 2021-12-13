@@ -2,7 +2,7 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import Nf3 from '../../cli/lib/nf3.mjs';
-import { getERCInfo } from '../../cli/lib/tokens.mjs';
+import { getERCInfo, approve } from '../../cli/lib/tokens.mjs';
 import {
   getBalance,
   connectWeb3,
@@ -57,6 +57,7 @@ describe('Testing the Nightfall SDK', () => {
   let stateAddress;
   let eventLogs = [];
   let nodeInfo;
+  let diffBalanceInstantWithdraw = 0;
   const transactions = [];
 
   const miniStateABI = [
@@ -120,7 +121,12 @@ describe('Testing the Nightfall SDK', () => {
     // Proposer registration
     await nf3Proposer1.registerProposer();
     // Proposer listening for incoming events
-    nf3Proposer1.startProposer();
+    const newGasBlockEmitter = await nf3Proposer1.startProposer();
+    newGasBlockEmitter.on('gascost', async gasUsed => {
+      console.log(
+        `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
+      );
+    });
     // Challenger registration
     await nf3Challenger.registerChallenger();
     // Chalenger listening for incoming events
@@ -130,13 +136,37 @@ describe('Testing the Nightfall SDK', () => {
     // we will use this as a key in our dictionary so it's important they match.
     ercAddress = res.toLowerCase();
 
-    const balances = await getERCInfo(ercAddress, nf3Proposer1.ethereumAddress, web3);
-    console.log('BALANCES: ', balances);
+    const balances = await getERCInfo(ercAddress, nf3LiquidityProvider.ethereumAddress, web3);
+    console.log(`BALANCES LIQUIDITY PROVIDER FOR ERC20 (${ercAddress}): `, balances);
 
     // Liquidity provider for instant withdraws
     const emitter = await nf3User1.getInstantWithdrawalRequestedEmitter();
     emitter.on('data', async (withdrawTransactionHash, paidBy, amount) => {
-      await nf3LiquidityProvider.advanceInstantWithdrawal(withdrawTransactionHash);
+      const balancesBefore = await getERCInfo(ercAddress, nf3User1.ethereumAddress, web3);
+      // TODO: remove this approve once david/liquidity provider merged to master
+      try {
+        await approve(
+          ercAddress,
+          nf3LiquidityProvider.ethereumAddress,
+          nf3LiquidityProvider.shieldContractAddress,
+          tokenType,
+          value,
+          web3,
+        );
+        await nf3LiquidityProvider.advanceInstantWithdrawal(withdrawTransactionHash);
+      } catch (e) {
+        console.log(e);
+      }
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      const balancesAfter = await getERCInfo(ercAddress, nf3User1.ethereumAddress, web3);
+
+      while (eventLogs.length > 0) {
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+      // difference in balance in L1 account to check instant withdraw is ok
+      diffBalanceInstantWithdraw = Number(balancesBefore.balance) - Number(balancesAfter.balance);
+      eventLogs.push('instantWithdraw');
       console.log(`     Serviced instant-withdrawal request from ${paidBy}, with fee ${amount}`);
     });
 
@@ -424,7 +454,7 @@ describe('Testing the Nightfall SDK', () => {
         fee,
       );
       latestWithdrawTransactionHash = nf3User1.getLatestWithdrawHash();
-      console.log(`ilatestWithdrawTransactionHash: ${latestWithdrawTransactionHash}`);
+      console.log(`latestWithdrawTransactionHash: ${latestWithdrawTransactionHash}`);
       expect(latestWithdrawTransactionHash).to.be.a('string').and.to.include('0x');
 
       await depositNTransactions(nf3User1, txPerBlock, ercAddress, tokenType, value, tokenId, fee);
@@ -435,7 +465,11 @@ describe('Testing the Nightfall SDK', () => {
       console.log(`     Gas used was ${Number(res.gasUsed)}`);
 
       await depositNTransactions(nf3User1, txPerBlock, ercAddress, tokenType, value, tokenId, fee);
+      console.log('     Waiting for blockProposed event...');
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      console.log('     Waiting for instantWithdraw event...');
+      eventLogs = await waitForEvent(eventLogs, ['instantWithdraw']);
+      expect(diffBalanceInstantWithdraw).to.be.equal(value);
     });
 
     it('should not allow instant withdraw of non existing withdraw or not in block yet', async function () {

@@ -1,6 +1,7 @@
 /**
 Test suite for measuring the gas per transaction
 */
+import config from 'config';
 import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
@@ -25,6 +26,7 @@ import {
   expectTransaction,
 } from './utils.mjs';
 
+const { TRANSACTIONS_PER_BLOCK } = config;
 const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
@@ -38,17 +40,20 @@ describe('Testing the http API', () => {
   const nf3User1 = new Nf3(web3WsUrl, ethereumSigningKeyUser1, environment);
   const nf3Proposer1 = new Nf3(web3WsUrl, ethereumSigningKeyProposer1, environment);
 
-  // this is the openethereum test account (but could be anything)
-  // this is what we pay the proposer for incorporating a transaction
-  const TRANSACTIONS_PER_BLOCK = 32;
-
   before(async () => {
     await connectWeb3();
 
     await nf3User1.init(mnemonicUser1);
     await nf3Proposer1.init(mnemonicProposer);
     // Proposer listening for incoming events
-    nf3Proposer1.startProposer();
+    const newGasBlockEmitter = await nf3Proposer1.startProposer();
+    newGasBlockEmitter.on('gascost', async gasUsed => {
+      console.log(
+        `Block proposal gas cost was ${gasUsed}, cost per transaction was ${
+          gasUsed / TRANSACTIONS_PER_BLOCK
+        }`,
+      );
+    });
   });
 
   describe('Miscellaneous tests', () => {
