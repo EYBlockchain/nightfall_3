@@ -383,7 +383,7 @@ async function findUsableCommitments(compressedPkd, ercAddress, tokenId, _value,
     return [singleCommitment];
   }
   // If we get here it means that we have not been able to find a single commitment that matches the required value
-  if (onlyOne) return null; // sometimes we require just one commitment
+  if (onlyOne || commitmentArray.length < 1) return null; // sometimes we require just one commitment
 
   /* if not, maybe we can do a two-commitment transfer. The current strategy aims to prioritise smaller commitments while also
      minimising the creation of low value commitments (dust)
@@ -420,7 +420,7 @@ async function findUsableCommitments(compressedPkd, ercAddress, tokenId, _value,
   // then we will need to use a commitment of greater value than the target
   if (twoGreatestSum < value.bigInt) {
     if (commitsLessThanTargetValue.length === sortedCommits.length) return null; // We don't have any more commitments
-    if (commitsLessThanTargetValue.length === 0) return [sortedCommits[0]]; // return smallest in GT if LT array is empty
+    if (commitsLessThanTargetValue.length === 0) return [sortedCommits[0], sortedCommits[1]]; // return smallest in GT if LT array is empty
     return [sortedCommits[commitsLessThanTargetValue.length], sortedCommits[0]]; // This should guarantee that we will replace our smallest commitment with a greater valued one.
   }
 

@@ -80,17 +80,10 @@ async function checkBlock(block, transactions) {
   // to check a block against itself (hence the second filter).
   const storedMinedNullifiers = await retrieveMinedNullifiers(); // List of Nullifiers stored by blockProposer
   const blockNullifiers = transactions.map(tNull => tNull.nullifiers).flat(Infinity); // List of Nullifiers in block
-  const transactionNullifiers = blockNullifiers.filter(
-    hash => hash !== '0x0000000000000000000000000000000000000000000000000000000000000000',
-  );
-  const uniqueNullifiers = Array.from(new Set(transactionNullifiers));
   const alreadyMinedNullifiers = storedMinedNullifiers
     .filter(sNull => blockNullifiers.includes(sNull.hash))
     .filter(aNull => aNull.blockHash !== block.blockHash);
-  if (
-    alreadyMinedNullifiers.length > 0 ||
-    uniqueNullifiers.length !== transactionNullifiers.length
-  ) {
+  if (alreadyMinedNullifiers.length > 0) {
     throw new BlockError(
       `Some Nullifiers included in ${block.blockHash} have been included in previous blocks.`,
       6,
