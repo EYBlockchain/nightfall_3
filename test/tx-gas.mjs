@@ -1,7 +1,6 @@
 /**
 Test suite for measuring the gas per transaction
 */
-import config from 'config';
 import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
@@ -26,12 +25,13 @@ import {
   expectTransaction,
 } from './utils.mjs';
 
-const { TRANSACTIONS_PER_BLOCK } = config;
 const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 const environment = getCurrentEnvironment();
 const { web3WsUrl } = process.env;
+
+const TRANSACTIONS_PER_BLOCK = 32;
 
 describe('Testing the http API', () => {
   let ercAddress;
@@ -101,7 +101,7 @@ describe('Testing the http API', () => {
     );
 
     it('should deposit some crypto into a ZKP commitment', async () => {
-      for (let i = 0; i < TRANSACTIONS_PER_BLOCK * 10; i++) {
+      for (let i = 0; i < TRANSACTIONS_PER_BLOCK; i++) {
         // eslint-disable-next-line no-await-in-loop
         const res = await nf3User1.deposit(ercAddress, tokenType, value, tokenId, fee);
         // setNonce(privateKey, nf3User1.nonce);
