@@ -3,6 +3,7 @@ import * as Nf3 from 'nf3';
 import { TRANSACTION_RETRY_PERIOD, TRANSACTION_MAX_RETRIES } from '../../constants';
 import toBaseUnit from '../../utils/lib/utils';
 import * as txActions from './transactions.actions';
+import * as errorActions from '../error/error.actions';
 
 function txInstantWithdrawSubmit(withdrawTransactionHash, fee) {
   return async (dispatch, getState) => {
@@ -60,11 +61,13 @@ function txSubmit(txParams) {
           )
           .then(txReceipt => {
             dispatch(txActions.txSuccess(Nf3.Constants.TX_TYPES.DEPOSIT, txReceipt));
+            dispatch(errorActions.clearError());
             // TODO: dispatch error
             console.log(txReceipt);
           })
           .catch(err => {
             dispatch(txActions.txFailed());
+            dispatch(errorActions.newError('Deposit Failed'));
             // TODO: dispatch error
             console.log(err);
           });
@@ -84,11 +87,13 @@ function txSubmit(txParams) {
           )
           .then(txReceipt => {
             dispatch(txActions.txSuccess(Nf3.Constants.TX_TYPES.TRANSFER, txReceipt));
+            dispatch(errorActions.clearError());
             // TODO: dispatch error
             console.log(txReceipt);
           })
           .catch(err => {
             dispatch(txActions.txFailed());
+            dispatch(errorActions.newError('Transfer Failed'));
             // TODO: dispatch error
             console.log(err);
           });
@@ -119,6 +124,7 @@ function txSubmit(txParams) {
                   nRetries,
                 ),
               );
+              dispatch(errorActions.clearError());
               // TODO: dispatch error
               console.log(txReceipt);
 
@@ -133,6 +139,7 @@ function txSubmit(txParams) {
             })
             .catch(err => {
               dispatch(txActions.txFailed());
+              dispatch(errorActions.newError('Withdraw Failed'));
               // TODO: dispatch error
               console.log(err);
             });
