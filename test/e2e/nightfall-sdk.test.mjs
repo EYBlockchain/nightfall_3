@@ -142,7 +142,11 @@ describe('Testing the Nightfall SDK', () => {
     // Liquidity provider for instant withdraws
     const emitter = await nf3User1.getInstantWithdrawalRequestedEmitter();
     emitter.on('data', async (withdrawTransactionHash, paidBy, amount) => {
-      const balancesBefore = await getERCInfo(ercAddress, nf3User1.ethereumAddress, web3);
+      const balancesBefore = await getERCInfo(
+        ercAddress,
+        nf3LiquidityProvider.ethereumAddress,
+        web3,
+      );
       // TODO: remove this approve once david/liquidity provider merged to master
       try {
         await approve(
@@ -158,7 +162,11 @@ describe('Testing the Nightfall SDK', () => {
         console.log(e);
       }
       await new Promise(resolve => setTimeout(resolve, 5000));
-      const balancesAfter = await getERCInfo(ercAddress, nf3User1.ethereumAddress, web3);
+      const balancesAfter = await getERCInfo(
+        ercAddress,
+        nf3LiquidityProvider.ethereumAddress,
+        web3,
+      );
 
       while (eventLogs.length > 0) {
         // eslint-disable-next-line no-await-in-loop
