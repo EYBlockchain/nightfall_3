@@ -111,6 +111,8 @@ describe('Testing the http API', () => {
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
+      // wait for gascost event for the block
+      await new Promise(resolve => setTimeout(resolve, 10000));
     });
   });
 
