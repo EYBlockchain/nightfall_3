@@ -23,6 +23,7 @@ import {
   getBalance,
   getCurrentEnvironment,
   expectTransaction,
+  waitForEvent,
 } from './utils.mjs';
 
 const { expect } = chai;
@@ -32,6 +33,9 @@ const environment = getCurrentEnvironment();
 const { web3WsUrl } = process.env;
 
 const TRANSACTIONS_PER_BLOCK = 32;
+const expectedGasCostPerTx = 10000;
+let currentGasCostPerTx = 0;
+let eventLogs = [];
 
 describe('Testing the http API', () => {
   let ercAddress;
@@ -48,11 +52,11 @@ describe('Testing the http API', () => {
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer1.startProposer();
     newGasBlockEmitter.on('gascost', async gasUsed => {
+      currentGasCostPerTx = gasUsed / TRANSACTIONS_PER_BLOCK;
       console.log(
-        `Block proposal gas cost was ${gasUsed}, cost per transaction was ${
-          gasUsed / TRANSACTIONS_PER_BLOCK
-        }`,
+        `Block proposal gas cost was ${gasUsed}, cost per transaction was ${currentGasCostPerTx}`,
       );
+      eventLogs.push('gascost');
     });
   });
 
@@ -111,8 +115,12 @@ describe('Testing the http API', () => {
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
+    });
+
+    it(`gas cost per transaction should be less than ${expectedGasCostPerTx / 1000}k`, async () => {
       // wait for gascost event for the block
-      await new Promise(resolve => setTimeout(resolve, 10000));
+      eventLogs = await waitForEvent(eventLogs, ['gascost']);
+      expect(currentGasCostPerTx).to.be.lessThan(expectedGasCostPerTx);
     });
   });
 
