@@ -101,7 +101,7 @@ describe('Testing the http API', () => {
     );
 
     it('should deposit some crypto into a ZKP commitment', async () => {
-      for (let i = 0; i < TRANSACTIONS_PER_BLOCK; i++) {
+      for (let i = 0; i < TRANSACTIONS_PER_BLOCK * 10; i++) {
         // eslint-disable-next-line no-await-in-loop
         const res = await nf3User1.deposit(ercAddress, tokenType, value, tokenId, fee);
         // setNonce(privateKey, nf3User1.nonce);
@@ -112,8 +112,6 @@ describe('Testing the http API', () => {
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
-      // give time to generate gascost event
-      await new Promise(resolve => setTimeout(resolve, 10000));
     });
   });
 
