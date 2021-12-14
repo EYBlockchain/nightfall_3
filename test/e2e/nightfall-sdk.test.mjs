@@ -34,6 +34,7 @@ import {
   mnemonicProposer,
   mnemonicLiquidityProvider,
   mnemonicChallenger,
+  BLOCK_STAKE,
 } from '../constants.mjs';
 
 const { expect } = chai;
@@ -60,6 +61,7 @@ describe('Testing the Nightfall SDK', () => {
   let diffBalanceInstantWithdraw = 0;
   const transactions = [];
   let initialValidCommitments = 0;
+  let stateBalance = 0;
 
   const miniStateABI = [
     {
@@ -121,6 +123,7 @@ describe('Testing the Nightfall SDK', () => {
 
     // Proposer registration
     await nf3Proposer1.registerProposer();
+    stateBalance += bond;
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer1.startProposer();
     newGasBlockEmitter.on('gascost', async gasUsed => {
@@ -150,7 +153,7 @@ describe('Testing the Nightfall SDK', () => {
         nf3LiquidityProvider.ethereumAddress,
         web3,
       );
-      // TODO: remove this approve once david/liquidity provider merged to master
+      // approve tokens to be advanced by liquidity provider in the instant withdraw
       try {
         await approve(
           ercAddress,
@@ -224,6 +227,7 @@ describe('Testing the Nightfall SDK', () => {
       // we have to pay 10 ETH to be registered
       const startBalance = await getBalance(nf3Proposer2.ethereumAddress);
       const res = await nf3Proposer2.registerProposer();
+      stateBalance += bond;
       expectTransaction(res);
       ({ proposers } = await nf3Proposer2.getProposers());
       const endBalance = await getBalance(nf3Proposer2.ethereumAddress);
@@ -238,6 +242,7 @@ describe('Testing the Nightfall SDK', () => {
       // we have to pay 10 ETH to be registered
       const startBalance = await getBalance(nf3Proposer3.ethereumAddress);
       const res = await nf3Proposer3.registerProposer();
+      stateBalance += bond;
       expectTransaction(res);
       ({ proposers } = await nf3Proposer3.getProposers());
       const endBalance = await getBalance(nf3Proposer3.ethereumAddress);
@@ -294,6 +299,7 @@ describe('Testing the Nightfall SDK', () => {
       await nf3Proposer2.deregisterProposer();
       await nf3Proposer3.deregisterProposer();
       await nf3Proposer1.registerProposer();
+      stateBalance += bond;
     });
   });
 
@@ -334,6 +340,7 @@ describe('Testing the Nightfall SDK', () => {
           tokenId,
           fee,
         );
+        stateBalance += fee * txPerBlock + BLOCK_STAKE;
         eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
         for (let i = 0; i < txPerBlock; i++) {
           // eslint-disable-next-line no-await-in-loop
@@ -348,6 +355,7 @@ describe('Testing the Nightfall SDK', () => {
           );
           expectTransaction(res);
         }
+        stateBalance += fee * txPerBlock + BLOCK_STAKE;
         eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
         balances = await nf3User1.getLayer2Balances();
         const afterPkdBalance = balances[nf3User1.zkpKeys.compressedPkd][ercAddress];
@@ -366,6 +374,9 @@ describe('Testing the Nightfall SDK', () => {
             tokenId,
             fee,
           );
+          stateBalance +=
+            fee * ((txPerBlock * value - (afterPkdBalance - beforePkdBalance)) / value) +
+            BLOCK_STAKE;
           eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
         }
       }
@@ -389,10 +400,11 @@ describe('Testing the Nightfall SDK', () => {
         tokenId,
         fee,
       );
+      stateBalance += (fee * txPerBlock + BLOCK_STAKE) * numDeposits;
       // Wait until we see the right number of blocks appear
       eventLogs = await waitForEvent(eventLogs, ['blockProposed'], numDeposits);
       const totalGas = depositTransactions.reduce((acc, { gasUsed }) => acc + Number(gasUsed), 0);
-
+      stateBalance += fee * txPerBlock + BLOCK_STAKE;
       console.log(`     Average Gas used was ${Math.ceil(totalGas / (txPerBlock * numDeposits))}`);
     });
   });
@@ -403,6 +415,7 @@ describe('Testing the Nightfall SDK', () => {
       const currentPkdBalance = balances[nf3User1.zkpKeys.compressedPkd][ercAddress];
       // We do txPerBlock deposits of 10 each
       await depositNTransactions(nf3User1, txPerBlock, ercAddress, tokenType, value, tokenId, fee);
+      stateBalance += fee * txPerBlock + BLOCK_STAKE;
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
       balances = await nf3User1.getLayer2Balances();
       const afterPkdBalance = balances[nf3User1.zkpKeys.compressedPkd][ercAddress];
@@ -412,6 +425,7 @@ describe('Testing the Nightfall SDK', () => {
     it('should decrement the balance after transfer to other wallet and increment the other wallet', async function () {
       let balances = await nf3User1.getLayer2Balances();
       await depositNTransactions(nf3User1, txPerBlock, ercAddress, tokenType, value, tokenId, fee);
+      stateBalance += fee * txPerBlock + BLOCK_STAKE;
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
       balances = await nf3User1.getLayer2Balances();
       const currentPkdBalancePkd = balances[nf3User1.zkpKeys.compressedPkd][ercAddress];
@@ -437,6 +451,7 @@ describe('Testing the Nightfall SDK', () => {
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
+      stateBalance += fee * txPerBlock + BLOCK_STAKE;
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
       // transfer to self address to avoid race conditions issue
       for (let i = 0; i < txPerBlock; i++) {
@@ -454,6 +469,7 @@ describe('Testing the Nightfall SDK', () => {
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
+      stateBalance += fee * txPerBlock + BLOCK_STAKE;
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
       await new Promise(resolve => setTimeout(resolve, 10000));
       balances = await nf3User1.getLayer2Balances();
@@ -489,6 +505,7 @@ describe('Testing the Nightfall SDK', () => {
         expectTransaction(res);
         console.log(`     Gas used was ${Number(res.gasUsed)}`);
       }
+      stateBalance += fee * txPerBlock + BLOCK_STAKE;
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
     });
 
@@ -503,8 +520,9 @@ describe('Testing the Nightfall SDK', () => {
         fee,
       );
       expect(res).to.be.equal(200);
-
+      stateBalance += fee;
       await depositNTransactions(nf3User1, txPerBlock, ercAddress, tokenType, value, tokenId, fee);
+      stateBalance += fee * txPerBlock + BLOCK_STAKE;
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
     });
   });
@@ -519,6 +537,7 @@ describe('Testing the Nightfall SDK', () => {
         tokenId,
         nf3User1.ethereumAddress,
       );
+      stateBalance += fee;
       transactions.push(nf3User1.getLatestWithdrawHash()); // the new transaction
       expectTransaction(rec);
       console.log(`     Gas used was ${Number(rec.gasUsed)}`);
@@ -532,12 +551,14 @@ describe('Testing the Nightfall SDK', () => {
         tokenId,
         fee,
       );
+      stateBalance += fee + BLOCK_STAKE;
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
     });
 
     it('should allow instant withdraw of existing withdraw', async function () {
       // We create enough transactions to fill numDeposits blocks full of deposits.
       await depositNTransactions(nf3User1, txPerBlock, ercAddress, tokenType, value, tokenId, fee);
+      stateBalance += fee * txPerBlock + BLOCK_STAKE;
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
 
       let latestWithdrawTransactionHash = ''; // for instant withdrawals
@@ -551,19 +572,23 @@ describe('Testing the Nightfall SDK', () => {
         nf3User1.ethereumAddress,
         fee,
       );
+      stateBalance += fee;
       latestWithdrawTransactionHash = nf3User1.getLatestWithdrawHash();
       console.log(`latestWithdrawTransactionHash: ${latestWithdrawTransactionHash}`);
       expect(latestWithdrawTransactionHash).to.be.a('string').and.to.include('0x');
 
       await depositNTransactions(nf3User1, txPerBlock, ercAddress, tokenType, value, tokenId, fee);
+      stateBalance += fee * txPerBlock + BLOCK_STAKE;
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
 
       // We request the instant withdraw and should wait for the liquidity provider to send the instant withdraw
       const res = await nf3User1.requestInstantWithdrawal(latestWithdrawTransactionHash, fee);
+      stateBalance += fee;
       expectTransaction(res);
       console.log(`     Gas used was ${Number(res.gasUsed)}`);
 
       await depositNTransactions(nf3User1, txPerBlock, ercAddress, tokenType, value, tokenId, fee);
+      stateBalance += fee * txPerBlock + BLOCK_STAKE;
       console.log('     Waiting for blockProposed event...');
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
       // we wait for the liquidity provider to send the instant withdraw
@@ -584,10 +609,12 @@ describe('Testing the Nightfall SDK', () => {
         nf3User1.ethereumAddress,
         fee,
       );
+      stateBalance += fee;
       latestWithdrawTransactionHash = nf3User1.getLatestWithdrawHash();
       expect(latestWithdrawTransactionHash).to.be.a('string').and.to.include('0x');
 
       const res = await nf3User1.requestInstantWithdrawal(latestWithdrawTransactionHash, fee);
+      stateBalance += fee + BLOCK_STAKE;
       expect(res).to.be.equal(null);
     });
   });
@@ -610,6 +637,7 @@ describe('Testing the Nightfall SDK', () => {
       let error = null;
       try {
         const res = await nf3User1.finaliseWithdrawal(transactions[0]);
+        stateBalance += fee;
         expectTransaction(res);
       } catch (err) {
         error = err;
@@ -640,7 +668,7 @@ describe('Testing the Nightfall SDK', () => {
           tokenId,
           fee,
         );
-
+        stateBalance += fee * txPerBlock + BLOCK_STAKE;
         eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
 
         const commitments = await nf3User1.getPendingWithdraws();
@@ -661,6 +689,7 @@ describe('Testing the Nightfall SDK', () => {
       startBalance = await getBalance(nf3User1.ethereumAddress);
       if (nodeInfo.includes('TestRPC')) {
         const res = await nf3User1.finaliseWithdrawal(transactions[0]);
+        stateBalance += fee;
         expectTransaction(res);
         eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
       } else {
@@ -679,6 +708,17 @@ describe('Testing the Nightfall SDK', () => {
         console.log('     Not using a time-jump capable test client so this test is skipped');
         this.skip();
       }
+    });
+  });
+
+  describe('Check all balances in contracts', () => {
+    it('Should be zero for shield and proposer and non-zero for state', async () => {
+      const shieldContractBalance = await getBalance(nf3User1.shieldContractAddress);
+      const stateContractBalance = await getBalance(nf3User1.stateContractAddress);
+      const proposerContractBalance = await getBalance(nf3User1.proposersContractAddress);
+      expect(Number(shieldContractBalance)).to.be.eq(0);
+      expect(Number(proposerContractBalance)).to.be.eq(0);
+      expect(Number(stateContractBalance)).to.be.gte(stateBalance);
     });
   });
 
