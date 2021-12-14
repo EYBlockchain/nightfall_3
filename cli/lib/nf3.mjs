@@ -164,9 +164,9 @@ class Nf3 {
       // if we don't have a nonce, we must get one from the ethereum client
       if (!this.nonce) this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
 
-      let gasPrice = 10000000000;
+      let gasPrice = 20000000000;
       const gas = (await this.web3.eth.getBlock('latest')).gasLimit;
-      const blockGasPrice = Number(await this.web3.eth.getGasPrice());
+      const blockGasPrice = 2 * Number(await this.web3.eth.getGasPrice());
       if (blockGasPrice > gasPrice) gasPrice = blockGasPrice;
 
       tx = {
@@ -249,8 +249,9 @@ class Nf3 {
   @returns {Promise} Resolves into the Ethereum transaction receipt.
   */
   async deposit(ercAddress, tokenType, value, tokenId, fee = this.defaultFee) {
+    let txDataToSign;
     try {
-      await approve(
+      txDataToSign = await approve(
         ercAddress,
         this.ethereumAddress,
         this.shieldContractAddress,
@@ -261,7 +262,7 @@ class Nf3 {
     } catch (err) {
       throw new Error(err);
     }
-
+    if (txDataToSign) await this.submitTransaction(txDataToSign, ercAddress, 0);
     const res = await axios.post(`${this.clientBaseUrl}/deposit`, {
       ercAddress,
       tokenId,
@@ -753,7 +754,7 @@ class Nf3 {
   Set a Web3 Provider URL
   */
   setWeb3Provider() {
-    this.web3 = new Web3(this.web3WsUrl);
+    this.web3 = new Web3(this.web3WsUrl, { transactionBlockTimeout: 200 }); // set a longer timeout
     if (typeof window !== 'undefined') {
       if (window.ethereum && this.ethereumSigningKey === '') {
         this.web3 = new Web3(window.ethereum);
