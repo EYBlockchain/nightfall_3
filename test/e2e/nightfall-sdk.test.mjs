@@ -421,6 +421,7 @@ describe('Testing the Nightfall SDK', () => {
       } catch {
         currentPkdBalancePkd2 = 0;
       }
+      console.log('balances before: ', balances);
       for (let i = 0; i < txPerBlock; i++) {
         // eslint-disable-next-line no-await-in-loop
         const res = await nf3User1.transfer(
@@ -437,7 +438,26 @@ describe('Testing the Nightfall SDK', () => {
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      // transfer to self address to avoid race conditions issue
+      for (let i = 0; i < txPerBlock; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        const res = await nf3User1.transfer(
+          false,
+          ercAddress,
+          tokenType,
+          value,
+          tokenId,
+          nf3User1.zkpKeys.pkd,
+          fee,
+        );
+        expectTransaction(res);
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      await new Promise(resolve => setTimeout(resolve, 10000));
       balances = await nf3User1.getLayer2Balances();
+      console.log('balances after 2 transfers: ', balances);
       const afterPkdBalancePkd = balances[nf3User1.zkpKeys.compressedPkd][ercAddress];
       const afterPkdBalancePkd2 = balances[nf3User2.zkpKeys.compressedPkd][ercAddress];
       expect(afterPkdBalancePkd - currentPkdBalancePkd).to.be.equal(-txPerBlock * value);
