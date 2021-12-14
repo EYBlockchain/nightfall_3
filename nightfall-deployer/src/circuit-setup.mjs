@@ -137,7 +137,7 @@ async function setupCircuits() {
       if (config.USE_INFURA) {
         await Web3.submitRawTransaction(await tx.encodeABI(), keyRegistryAddress);
       } else {
-        await tx.send();
+        await tx.send({ gas: 10000000 });
       }
     } catch (err) {
       logger.error(err);
