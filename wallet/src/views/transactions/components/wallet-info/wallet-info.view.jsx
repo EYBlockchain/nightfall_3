@@ -50,7 +50,6 @@ function WalletInfo({
   };
 
   function setActiveRow(id) {
-    reload();
     if (id !== token.activeTokenRowId) {
       onSelectToken(id);
       if (removeTokenEnable) {
@@ -60,6 +59,7 @@ function WalletInfo({
     } else {
       onUnselectToken();
     }
+    reload();
   }
 
   function renderRowTable() {
@@ -116,10 +116,10 @@ function WalletInfo({
       '0x0',
       '0x0',
       tokenName,
-      tokenBalance,
-      '-',
-      '-',
-      '-',
+      '0',
+      '0',
+      '0',
+      '0',
     );
   };
 

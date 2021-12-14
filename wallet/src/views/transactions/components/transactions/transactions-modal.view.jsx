@@ -162,6 +162,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
                   <input
                     type="text"
                     placeholder={instantWithdrawFee}
+                    id="instant withdraw fee"
                     onChange={event => setInstantWithdrawFee(event.target.value)}
                   />
                 </label>
@@ -182,6 +183,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
               <Form.Field
                 control={Input}
                 label={keyLabel}
+                id="destination address"
                 placeholder={
                   transactions.txType === Nf3.Constants.TX_TYPES.WITHDRAW
                     ? login.nf3.ethereumAddress
@@ -209,6 +211,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
                 <Dropdown
                   control={Input}
                   selection
+                  id="token-id"
                   options={
                     tokenIdPool.length
                       ? tokenIdPool.map(function (id) {

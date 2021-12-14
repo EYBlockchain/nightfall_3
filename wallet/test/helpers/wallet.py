@@ -37,21 +37,33 @@ def logoutNightfallWallet(driver, findElements, nightfallTab):
     findElements.element_exist_xpath('//button[text()="Logout"]').click() # Cancel
 
 def submitTxWallet(txParams, findElements, driver, metamaskTab, nightfallTab, cancel=0):
-    #TODO - read PL-X and PK-Y when there are deterministic
     findElements.element_exist_xpath('//*[@title="' + txParams['tokenAddress'] + '"]').click() # Select token
     txType = txParams["txType"]
-    if txParams["txType"] == "instant-withdraw":
+    if txParams["txType"] == "Instant-withdraw":
         txType="Withdraw"
 
-    depositButtonEn = findElements.element_exist_xpath('//button[text()="' + txType + '"]') # Deposit
-    if depositButtonEn.get_attribute("disabled"):
+    transactionButtonEn = findElements.element_exist_xpath('//button[text()="' + txType + '"]') # Transaction
+    if transactionButtonEn.get_attribute("disabled"):
       findElements.element_exist_xpath('//*[@title="' + txParams['tokenAddress'] + '"]').click() # Select token
-    depositButtonEn.click()
+    transactionButtonEn.click()
 
     if txParams["tokenType"].lower() != "erc721":
       findElements.element_exist_xpath('//*[@id="amount"]').send_keys(txParams['amount']) # Amount
 
+    if txParams["tokenType"].lower() == "erc721":
+      findElements.element_exist_xpath('//*[@id="token-id"]').click()
+
     findElements.element_exist_xpath('//*[@id="fee"]').send_keys(txParams['fee']) # Fee
+    if txParams["txType"] == "Transfer":
+      findElements.element_exist_xpath('//*[@id="destination address"]').send_keys(txParams['compressedPkd']) # compressedPkd
+    elif txParams["txType"] == "Withdraw" or txParams["txType"] == "Instant-withdraw":
+      findElements.element_exist_xpath('//*[@id="destination address"]').send_keys(txParams['ethereumAddress']) # Ethereum Address
+
+    if txParams["txType"] == "Instant-withdraw":
+      findElements.element_exist_xpath('(//div[contains(@class, "ui checkbox")])[1]').click() # Instant Withdraw
+      findElements.element_exist_xpath('//*[@id="instant withdraw fee"]').send_keys(txParams['instantWithdrawFee']) # Fee
+
+
     testTokenType = findElements.element_exist_xpath('//*[@id="token-type"]').get_attribute("value") # Read Token Type
     testTokenAddress = findElements.element_exist_xpath('//*[@id="token-address"]').get_attribute("value") # Read Token Address
     assert(testTokenType.lower() == txParams['tokenType'].lower())
@@ -70,15 +82,25 @@ def submitTxWallet(txParams, findElements, driver, metamaskTab, nightfallTab, ca
     signTransactionMetamask(driver, findElements, stop) # sign transaction
     driver.switch_to.window(nightfallTab)
 
+def tokenRefresh(txParams,findElements):
+    findElements.element_exist_xpath('//*[@title="' + txParams['tokenAddress'] + '"]').click() # Select token
+    transactionButtonEn = findElements.element_exist_xpath('//button[text()="Deposit"]') # Transaction
+    if transactionButtonEn.get_attribute("disabled"):
+      findElements.element_exist_xpath('//*[@title="' + txParams['tokenAddress'] + '"]').click() # Select token
+
 def getNightfallBalance(findElements, tokenInfo):
   niter=0
   while True:
     l1BalanceId="l1 balance" + tokenInfo["tokenAddress"]
     l2BalanceId="l2 balance" + tokenInfo["tokenAddress"]
+    pendingDepositId="pending deposit" + tokenInfo["tokenAddress"]
+    pendingTransferredOutId="pending transferred out" + tokenInfo["tokenAddress"]
     l1Balance = findElements.element_exist_xpath('//*[@id="' +l1BalanceId + '"]').get_attribute("title")
     l2Balance = findElements.element_exist_xpath('//*[@id="' +l2BalanceId + '"]').get_attribute("title")
+    pendingDeposit = findElements.element_exist_xpath('//*[@id="' +pendingDepositId + '"]').get_attribute("title")
+    pendingTransferredOut = findElements.element_exist_xpath('//*[@id="' +pendingTransferredOutId + '"]').get_attribute("title")
     try:
-      return Decimal(l1Balance), Decimal(l2Balance)
+      return Decimal(l1Balance), Decimal(l2Balance), Decimal(pendingDeposit), Decimal(pendingTransferredOut)
     except:
       niter+=1
       if niter == 10:
@@ -89,14 +111,14 @@ def addTokenNightfallWallet(driver, findElements, tokenInfo):
   findElements.element_exist_xpath('//button[text()="Add Token"]').click() # Add Token
   findElements.element_exist_xpath('//*[@id="Token Name"]').send_keys(tokenInfo['tokenName']) # Set Token Name
   findElements.element_exist_xpath('//*[@id="Token Address"]').send_keys(tokenInfo['tokenAddress']) # Set Address
-  sleep(1)
+  sleep(3)
   findElements.element_exist_xpath('//button[text()="Submit"]').click() # Submit
 
 def addAndCheckTokenNightfallWallet(driver, findElements, tokenInfo):
   findElements.element_exist_xpath('//button[text()="Add Token"]').click() # Add Token
   findElements.element_exist_xpath('//*[@id="Token Name"]').send_keys(tokenInfo['tokenName']) # Set Token Name
   findElements.element_exist_xpath('//*[@id="Token Address"]').send_keys(tokenInfo['tokenAddress']) # Set Address
-  sleep(1)
+  sleep(3)
   testTokenType = findElements.element_exist_xpath('//*[@id="token-type"]').get_attribute("value") # Read Token Type
   if tokenInfo['tokenType'] != '':
     assert(testTokenType.lower() == tokenInfo['tokenType'].lower())
