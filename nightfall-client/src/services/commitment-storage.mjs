@@ -383,7 +383,7 @@ async function findUsableCommitments(compressedPkd, ercAddress, tokenId, _value,
     return [singleCommitment];
   }
   // If we get here it means that we have not been able to find a single commitment that matches the required value
-  if (onlyOne || commitmentArray.length < 2) return null; // sometimes we require just one commitment
+  if (onlyOne || commitments.length < 2) return null; // sometimes we require just one commitment
 
   /* if not, maybe we can do a two-commitment transfer. The current strategy aims to prioritise smaller commitments while also
      minimising the creation of low value commitments (dust)
