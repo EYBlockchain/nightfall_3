@@ -59,6 +59,7 @@ describe('Testing the Nightfall SDK', () => {
   let nodeInfo;
   let diffBalanceInstantWithdraw = 0;
   const transactions = [];
+  let initialValidCommitments = 0;
 
   const miniStateABI = [
     {
@@ -127,6 +128,7 @@ describe('Testing the Nightfall SDK', () => {
         `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
       );
     });
+    await nf3Proposer1.addPeer('http://optimist1:80');
     // Challenger registration
     await nf3Challenger.registerChallenger();
     // Chalenger listening for incoming events
@@ -195,6 +197,11 @@ describe('Testing the Nightfall SDK', () => {
 
     it('should get the address of the shield contract', async function () {
       const res = await nf3User1.getContractAddress('Shield');
+      expect(res).to.be.a('string').and.to.include('0x');
+    });
+
+    it('should get the address of the test ERC contract stub', async function () {
+      const res = await nf3User1.getContractAddress('ERCStub');
       expect(res).to.be.a('string').and.to.include('0x');
     });
 
@@ -414,7 +421,6 @@ describe('Testing the Nightfall SDK', () => {
       } catch {
         currentPkdBalancePkd2 = 0;
       }
-      console.log('currentPkdBalancePkd2: ', currentPkdBalancePkd2);
       for (let i = 0; i < txPerBlock; i++) {
         // eslint-disable-next-line no-await-in-loop
         const res = await nf3User1.transfer(
@@ -567,14 +573,13 @@ describe('Testing the Nightfall SDK', () => {
   });
 
   describe('Get pending withdraw commitments tests', () => {
-    it('should get current pending withdraw commitments for the account (with 0 valid commitments)', async function () {
+    it('should get current pending withdraw commitments for the account', async function () {
       const commitments = await nf3User1.getPendingWithdraws();
       console.log(`commitments: ${JSON.stringify(commitments)}`);
       expect(commitments[nf3User1.zkpKeys.compressedPkd][ercAddress].length).to.be.greaterThan(0);
-      expect(
-        commitments[nf3User1.zkpKeys.compressedPkd][ercAddress].filter(c => c.valid === true)
-          .length,
-      ).to.be.equal(0);
+      initialValidCommitments = commitments[nf3User1.zkpKeys.compressedPkd][ercAddress].filter(
+        c => c.valid === true,
+      ).length;
     });
   });
 
@@ -623,7 +628,7 @@ describe('Testing the Nightfall SDK', () => {
         expect(
           commitments[nf3User1.zkpKeys.compressedPkd][ercAddress].filter(c => c.valid === true)
             .length,
-        ).to.be.greaterThan(0);
+        ).to.be.greaterThan(initialValidCommitments);
       } else {
         console.log('     Not using a time-jump capable test client so this test is skipped');
         this.skip();
