@@ -79,6 +79,23 @@ function Login({
     return hashedSignature;
   };
 
+  const preloadTokens = async () => {
+    const erc20Address = await nf3.getContractAddress('ERC20Mock');
+    const erc721Address = await nf3.getContractAddress('ERC721Mock');
+    const erc1155Address = await nf3.getContractAddress('ERC1155Mock');
+    const tokenPreload = tokens.map(el => {
+      const obj = { ...el };
+      if (el.tokenType === Nf3.Constants.TOKEN_TYPE.ERC20)
+        obj.tokenAddress = erc20Address.toLowerCase();
+      else if (el.tokenType === Nf3.Constants.TOKEN_TYPE.ERC721)
+        obj.tokenAddress = erc721Address.toLowerCase();
+      else if (el.tokenType === Nf3.Constants.TOKEN_TYPE.ERC1155)
+        obj.tokenAddress = erc1155Address.toLowerCase();
+      return obj;
+    });
+    return tokenPreload;
+  };
+
   /**
    * Imports a nightfall wallet based on an Ethereum Private Key
    * @param {string} privateKey - Ethereum Private Key
@@ -92,9 +109,9 @@ function Login({
       await nf3.setzkpKeysFromMnemonic(mnemonic, DEFAULT_NF_ADDRESS_INDEX);
       onLoadWallet(nf3);
       const tokenPool = Storage.tokensGet(nf3.zkpKeys.compressedPkd);
-      if (!tokenPool) {
-        onLoadTokens(tokens);
-      }
+      // TODO Remove at some point (we dont need prloaded tokens)
+      const tokenPreload = await preloadTokens();
+      onLoadTokens(tokenPool || tokenPreload);
     } catch (err) {
       console.log('Failed', err);
       setModalEnable(false);
