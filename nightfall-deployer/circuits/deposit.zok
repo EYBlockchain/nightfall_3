@@ -1,7 +1,6 @@
 from "./common/hashes/sha256/pad1280ThenHash.zok" import main as sha256of1280
-from "./common/hashes/sha256/pad1024ThenHash.zok" import main as sha256of1024
-from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256
-from "utils/pack/bool/pack256.zok" import main as bool_256_to_field
+from "utils/casts/u32_to_bits.zok" import main as u32_to_bool_32
+from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8
 
 // Inputs for main:
 // - ercContractAddress (public) is the ERCx contract address
@@ -11,37 +10,29 @@ from "utils/pack/bool/pack256.zok" import main as bool_256_to_field
 // - newCommitment (public) is the newCommitment
 
 def main(\
-	field publicInputsHash,\
-	private u32[8] ercContractAddress,\
-	private u32[8] id,\
- 	private u32[8] value,\
+	field ercContractAddress,\
+	field id,\
+ 	field value,\
 	private u32[8] compressedPkd,\
 	private u32[8] salt,\
-	private u32[8] newCommitment\
+	field newCommitment\
 )->():
 
-	// validate the new commitment:
-	assert(newCommitment == sha256of1280([\
-		...ercContractAddress,\
-		...id,\
-		...value,\
+	u32[8] newCommitmentU32 = field_to_u32_8(newCommitment)
+	u32[8] newCommitmentCheck = sha256of1280([\
+		...field_to_u32_8(ercContractAddress),\
+		...field_to_u32_8(id),\
+		...field_to_u32_8(value),\
 		...compressedPkd,\
 		...salt\
-	]))
-
-	// Check that the 'public inputs' hash to the publicInputHash:
-	// Check that the 'public inputs' hash to the publicInputHash:
-	u32[8] publicInputsHashU32 = sha256of1024([\
-			...ercContractAddress,\
-			...id,\
-			...value,\
-			...newCommitment\
 	])
-	bool[256] publicInputsHashBool256 = u32_8_to_bool_256(publicInputsHashU32)
-	bool[256] publicInputsHashBool256Sliced = [\
-        ...[false; 8],\
-        ...publicInputsHashBool256[8..256]\
-    ]
-	assert(publicInputsHash == bool_256_to_field(publicInputsHashBool256Sliced))
+
+	// new commitments are truncated to 248 bits since they are public inputs
+	// so we must check the 248 bits while minimising constraints/comp time - casting to bool[256] is a slower operation than comparing u32s
+
+	// last 224 bits:
+	assert(newCommitmentCheck[1..8] == newCommitmentU32[1..8])
+	// first 24 bits:
+	assert(u32_to_bool_32(newCommitmentCheck[0])[8..32] == u32_to_bool_32(newCommitmentU32[0])[8..32])
 
 	return
