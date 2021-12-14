@@ -1,5 +1,5 @@
 # install zokrates for local verify
-FROM zokrates/zokrates:0.6.4 as builder
+FROM zokrates/zokrates:0.7.7 as builder
 FROM mongo:4.4.1-bionic
 
 # install node
