@@ -27,7 +27,7 @@ export function TokenAddModal({
     setTokenType('');
     setTokenAddress({ value: '', error: null });
     toggleModalTokenAdd();
-    handleOnTokenAddSubmit(tokenName.value, tokenType, tokenAddress.value, tokenBalance);
+    handleOnTokenAddSubmit(tokenName.value, tokenType, tokenAddress.value);
   };
 
   const cancelTokenSubmit = () => {

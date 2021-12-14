@@ -108,7 +108,7 @@ function WalletInfo({
     return () => clearInterval(retrieveBalance);
   }, []);
 
-  const handleOnTokenAddSubmit = (tokenName, tokenType, tokenAddress, tokenBalance) => {
+  const handleOnTokenAddSubmit = (tokenName, tokenType, tokenAddress) => {
     onAddToken(
       login.nf3.zkpKeys.compressedPkd,
       tokenAddress.toLowerCase(),
