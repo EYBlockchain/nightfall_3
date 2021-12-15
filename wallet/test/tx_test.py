@@ -12,7 +12,8 @@ class txTest(walletTest):
 def transactionsTest(findElementsInstance, driver, metamaskTab, nightfallTab):
     #tokenTypes = ["erc20", "erc721", "erc1155"]
     # TODO: Waiting for all toke types to be correctly configured. For now, only ERC20 amd ERC721 works
-    tokenTypes = ["erc20", "erc721"]
+    #tokenTypes = ["erc20", "erc721"]
+    tokenTypes = ["erc721"]
     txTypes = ["Deposit", "Instant-withdraw", "Transfer", "Withdraw"]
   
     txParams = {
@@ -48,7 +49,7 @@ def transactionsTest(findElementsInstance, driver, metamaskTab, nightfallTab):
         logging.info(tokenType, txType)
         sleep(10)
         submitTxWallet(txParams, findElementsInstance, driver, metamaskTab, nightfallTab)
-        sleep(10)
+        sleep(15)
         logging.info(tokenType, txType)
         if txParams["txType"] == "Instant-withdraw":
           txParams["txType"] = "Deposit"
@@ -59,7 +60,7 @@ def transactionsTest(findElementsInstance, driver, metamaskTab, nightfallTab):
         status, errorMsg = waitBalanceChange(l1Balance, l2Balance, txParams, 2, findElementsInstance)
         if status == 0:
           return errorMsg
-        sleep(10)
+        sleep(15)
 
 def transactionsErrorTest(findElementsInstance, driver, metamaskTab, nightfallTab):
     #tokenTypes = ["erc20", "erc721", "erc1155"]

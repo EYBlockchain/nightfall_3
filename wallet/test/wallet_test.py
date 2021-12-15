@@ -36,6 +36,12 @@ for arg in sys.argv:
 #####################
 # Declare variables #
 #####################
+driver=None
+findElementsInstance=None
+nightfallTab=None
+metamaskTab=None
+networkConfig = networkConfigLocalhost
+walletUrl = walletUrlLocalhost
 
 try:
   ###################
@@ -45,8 +51,8 @@ try:
   driver = initializeSelenium()
   
   # Load find elements with the default wait
-  defualtWaitSeconds = 5
-  defaultWaitObject = WebDriverWait(driver, defualtWaitSeconds)
+  defaultWaitSeconds = 5
+  defaultWaitObject = WebDriverWait(driver, defaultWaitSeconds)
   findElementsInstance = findElements(defaultWaitObject)
   
   # Identify the current tabs open
@@ -55,8 +61,6 @@ try:
   driver.switch_to.window(metamaskTab)
   
   # Configure variables depending on test environment
-  networkConfig = networkConfigLocalhost
-  walletUrl = walletUrlLocalhost
   if testEnvironment == "docker":
       networkConfig = networkConfigDocker
       walletUrl = walletUrlDocker
@@ -83,6 +87,7 @@ try:
   loginNightfallWallet(driver, findElementsInstance, metamaskTab, nightfallTab, walletUrl)
   testEthAddress = findElementsInstance.element_exist_xpath('//*[@id="wallet-info-cell-ethaddress"]').text
   assert(testEthAddress.lower() == ethAccount2Params["ethereumAddress"].lower())
+
 except Exception:
   print("FAILED")
 
@@ -90,9 +95,9 @@ except Exception:
 ########################
 # Start Tests          
 ########################
-effectTest(findElementsInstance, driver, metamaskTab, nightfallTab, walletUrl)
-loginTest(findElementsInstance, driver, metamaskTab, nightfallTab)
-tokenTest(findElementsInstance, driver, metamaskTab, nightfallTab)
+#effectTest(findElementsInstance, driver, metamaskTab, nightfallTab, walletUrl)
+#loginTest(findElementsInstance, driver, metamaskTab, nightfallTab)
+#tokenTest(findElementsInstance, driver, metamaskTab, nightfallTab)
 txTest(findElementsInstance, driver, metamaskTab, nightfallTab)
 
 driver.quit()

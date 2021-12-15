@@ -49,8 +49,8 @@ RUN BROWSER_MAJOR=$(google-chrome --version | sed 's/Google Chrome \([0-9]*\).*/
     wget https://chromedriver.storage.googleapis.com/`cat chrome_version`/chromedriver_linux64.zip -O /opt/selenium/chromedriver_linux64.zip && \
     cd /opt/selenium; unzip /opt/selenium/chromedriver_linux64.zip; rm -rf chromedriver_linux64.zip; ln -fs /opt/selenium/chromedriver /src/test/drivers/chromedriver; cd - && \
     DRIVER_MAJOR=$(/opt/selenium/chromedriver --version | sed 's/ChromeDriver \([0-9]*\).*/\1/g') && \
-    echo "chrome version: $BROWSER_MAJOR" && \
-    echo "chromedriver version: $DRIVER_MAJOR" && \
+    echo "chrome version: $BROWSER_MAJOR" > /src/chrome_version.txt && \
+    echo "chromedriver version: $DRIVER_MAJOR" > /src/chromedriver_version.txt && \
     if [ $BROWSER_MAJOR != $DRIVER_MAJOR ]; then echo "VERSION MISMATCH"; exit 1; fi
 
 # Metamask plugin

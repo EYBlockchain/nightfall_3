@@ -50,9 +50,9 @@ ethAccount2Params = {
 }
 
 tokens = {
-  "erc20": "0xb5acbe9a0f1f8b98f3fc04471f7fe5d2c222cb44",
-  "erc1155": "0x9635c600697587dd8e603120ed0e76cc3a9efe4c",
-  "erc721": "0x103ac4b398bca487df8b27fd484549e33c234b0d",
+  "erc20": "0xf05e9fb485502e5a93990c714560b7ce654173c3",
+  "erc1155": "0x4f3c4f8d4575cf73c2faf9f36cc505e19e65b9c0",
+  "erc721": "0x4f3c4f8d4575cf73c2faf9f36cc505e19e65b9c0",
 }
 
 BALANCE_INTERVAL = 30000
