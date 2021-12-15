@@ -20,6 +20,7 @@ import {
   connectWeb3,
   getCurrentEnvironment,
   expectTransaction,
+  waitForEvent,
 } from './utils.mjs';
 
 const { expect } = chai;
@@ -28,6 +29,11 @@ chai.use(chaiAsPromised);
 const environment = getCurrentEnvironment();
 const { web3WsUrl } = process.env;
 
+const TRANSACTIONS_PER_BLOCK = 32;
+const expectedGasCostPerTx = 10000;
+let currentGasCostPerTx = 0;
+let eventLogs = [];
+
 describe('Testing the http API', () => {
   let ercAddress;
 
@@ -35,17 +41,20 @@ describe('Testing the http API', () => {
   const nf3User1 = new Nf3(web3WsUrl, ethereumSigningKeyUser1, environment);
   const nf3Proposer1 = new Nf3(web3WsUrl, ethereumSigningKeyProposer1, environment);
 
-  // this is the openethereum test account (but could be anything)
-  // this is what we pay the proposer for incorporating a transaction
-  const TRANSACTIONS_PER_BLOCK = 32;
-
   before(async () => {
     await connectWeb3();
 
     await nf3User1.init(mnemonicUser1);
     await nf3Proposer1.init(mnemonicProposer);
     // Proposer listening for incoming events
-    nf3Proposer1.startProposer();
+    const newGasBlockEmitter = await nf3Proposer1.startProposer();
+    newGasBlockEmitter.on('gascost', async gasUsed => {
+      currentGasCostPerTx = gasUsed / TRANSACTIONS_PER_BLOCK;
+      console.log(
+        `Block proposal gas cost was ${gasUsed}, cost per transaction was ${currentGasCostPerTx}`,
+      );
+      eventLogs.push('gascost');
+    });
   });
 
   describe('Miscellaneous tests', () => {
@@ -92,7 +101,6 @@ describe('Testing the http API', () => {
       for (let i = 0; i < TRANSACTIONS_PER_BLOCK; i++) {
         // eslint-disable-next-line no-await-in-loop
         const res = await nf3User1.deposit(ercAddress, tokenType, value, tokenId, fee);
-        // setNonce(privateKey, nf3User1.nonce);
         expectTransaction(res);
         console.log(`Gas used was ${Number(res.gasUsed)}`);
 
@@ -101,10 +109,15 @@ describe('Testing the http API', () => {
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
     });
+
+    it(`gas cost per transaction should be less than ${expectedGasCostPerTx / 1000}k`, async () => {
+      // wait for gascost event for the block
+      eventLogs = await waitForEvent(eventLogs, ['gascost']);
+      expect(currentGasCostPerTx).to.be.lessThan(expectedGasCostPerTx);
+    });
   });
 
   after(() => {
-    // console.log('end');
     closeWeb3Connection();
     nf3User1.close();
     nf3Proposer1.close();

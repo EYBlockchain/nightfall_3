@@ -7,7 +7,6 @@ Here are the things that could be wrong with a transaction:
 - the public inputs hash is correct
 */
 import config from 'config';
-import axios from 'axios';
 import gen from 'general-number';
 import logger from 'common-files/utils/logger.mjs';
 import {
@@ -19,10 +18,10 @@ import {
 } from '../classes/index.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import { getBlockByBlockNumberL2 } from './database.mjs';
+import verify from './verify.mjs';
 
-const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, CURVE, ZERO, CHALLENGES_CONTRACT_NAME } =
-  config;
 const { generalise } = gen;
+const { PROVING_SCHEME, BACKEND, CURVE, ZERO, CHALLENGES_CONTRACT_NAME } = config;
 
 // first, let's check the hash. That's nice and easy:
 // NB as we actually now comput the hash on receipt of the transaction this
@@ -208,7 +207,7 @@ async function verifyProof(transaction) {
     default:
       throw new TransactionError('Unknown transaction type', 2);
   }
-  const res = await axios.post(`http://${ZOKRATES_WORKER_HOST}/verify`, {
+  const res = await verify({
     vk: new VerificationKey(vkArray),
     proof: new Proof(transaction.proof),
     provingScheme: PROVING_SCHEME,
@@ -216,8 +215,7 @@ async function verifyProof(transaction) {
     curve: CURVE,
     inputs: inputs.all.hex(32),
   });
-  const { verifies } = res.data;
-  if (!verifies) throw new TransactionError('The proof did not verify', 4);
+  if (!res) throw new TransactionError('The proof did not verify', 4);
 }
 
 async function checkTransaction(transaction) {

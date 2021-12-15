@@ -579,6 +579,7 @@ class Nf3 {
   @async
   */
   async startProposer() {
+    const newGasBlockEmitter = new EventEmitter();
     const connection = new WebSocket(this.optimistWsUrl);
     this.websockets.push(connection); // save so we can close it properly later
     connection.onopen = () => {
@@ -588,10 +589,16 @@ class Nf3 {
       const msg = JSON.parse(message.data);
       const { type, txDataToSign } = msg;
       if (type === 'block') {
-        await this.submitTransaction(txDataToSign, this.stateContractAddress, this.BLOCK_STAKE);
+        const res = await this.submitTransaction(
+          txDataToSign,
+          this.stateContractAddress,
+          this.BLOCK_STAKE,
+        );
+        newGasBlockEmitter.emit('gascost', res.gasUsed);
       }
     };
     // add this proposer to the list of peers that can accept direct transfers and withdraws
+    return newGasBlockEmitter;
   }
 
   /**
