@@ -49,14 +49,14 @@ describe('compression tests', () => {
     assert.deepStrictEqual(testProof.b, decompressedG2b);
   });
 
-  it('should compress and decompress a GM17 proof object', async () => {
+  it('should compress and decompress a G16 proof object', async () => {
     const compressedProof = await compressProof(testProof);
     const decompressedProof = decompressProof(compressedProof);
     const flatProof = [testProof.a, testProof.b, testProof.c].flat(2);
     assert.deepStrictEqual(flatProof, decompressedProof);
   });
 
-  it('should compress and decompress a flattened GM17 proof array', async () => {
+  it('should compress and decompress a flattened G16 proof array', async () => {
     const compressedProof = await compressProof(Object.values(testProof).flat(Infinity));
     const decompressedProof = decompressProof(compressedProof);
     const flatProof = [testProof.a, testProof.b, testProof.c].flat(2);

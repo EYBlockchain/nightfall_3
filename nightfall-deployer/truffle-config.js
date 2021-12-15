@@ -44,12 +44,13 @@ module.exports = {
     // tab if you use this network and you must also set the `host`, `port` and `network_id`
     // options below to some value.
     //
+
     blockchain1: {
       // host: 'blockchain', // Localhost (default: none)
       // port: 8546, // Standard Ethereum port (default: none)
       url: 'ws://blockchain1:8546',
       network_id: 4378921, // Any network (default: none)
-      gas: 8000000,
+      gas: 1000000000,
       websockets: true,
     },
 
@@ -89,6 +90,9 @@ module.exports = {
       networkCheckTimeout: 1000000000,
       timeoutBlocks: 200,
       skipDryRun: true,
+      websockets: true,
+      gasPrice: config.WEB3_OPTIONS.gasPrice,
+      gas: 7000000,
     },
 
     // Another network with more advanced options...
@@ -130,13 +134,14 @@ module.exports = {
     solc: {
       version: '0.8.3', // Fetch exact version from solc-bin (default: truffle's version)
       // docker: true,        // Use "0.5.1" you've installed locally with docker (default: false)
-      // settings: {          // See the solidity docs for advice about optimization and evmVersion
-      //  optimizer: {
-      //    enabled: false,
-      //    runs: 200
-      //  },
-      //  evmVersion: "byzantium"
-      // }
+      settings: {
+        // See the solidity docs for advice about optimization and evmVersion
+        optimizer: {
+          enabled: true,
+          runs: 1,
+        },
+        // evmVersion: 'byzantium',
+      },
     },
   },
   plugins: ['truffle-contract-size'],

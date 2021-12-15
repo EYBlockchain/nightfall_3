@@ -268,9 +268,19 @@ describe('Running rollback and resync test', () => {
         }
       });
     });
+
+    it('compare the mempools', async () => {
+      await new Promise(resolve => setTimeout(resolve, 50000));
+      const optimistMempool = (
+        await chai.request(environment.optimistApiUrl).get('/proposer/mempool')
+      ).body.result.filter(m => m.mempool);
+      expect(optimistMempool.map(o => o.transactionHash)).eql(
+        validTransactions.map(v => v.transaction.transactionHash),
+      );
+    });
   });
 
-  describe('Make a bad block that is not on the chain tip', () => {
+  describe.skip('Make a bad block that is not on the chain tip', () => {
     it('should re-register ourselves as a proposer and reopen the websocket', async function () {
       // Need to wait for the resync process to finish processing
       await new Promise(resolve => setTimeout(resolve, 25000));
@@ -369,7 +379,7 @@ describe('Running rollback and resync test', () => {
     });
   });
 
-  describe('Perform a final full resync and compare the results', () => {
+  describe.skip('Perform a final full resync and compare the results', () => {
     it('should drop everything in the database', async () => {
       // We need to wait here so we do not drop tables before the rollback is finished
       await new Promise(resolve => setTimeout(resolve, 15000));

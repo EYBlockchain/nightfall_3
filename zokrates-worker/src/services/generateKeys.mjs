@@ -5,9 +5,9 @@ import logger from '../utils/logger.mjs';
 
 export default async function generateKeys({
   filepath,
-  curve = 'bls12_377',
-  backend = 'ark',
-  provingScheme = 'gm17',
+  curve = 'bn128',
+  backend = 'bellman',
+  provingScheme = 'g16',
 }) {
   const outputPath = `./output`;
   const circuitsPath = `./circuits`;
@@ -18,7 +18,7 @@ export default async function generateKeys({
 
   fs.mkdirSync(`${outputPath}/${circuitDir}`, { recursive: true });
 
-  logger.debug(
+  logger.info(
     `${circuitsPath}/${filepath}`,
     `${outputPath}/${circuitDir}`,
     `${circuitName}_out`,

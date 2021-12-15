@@ -49,13 +49,12 @@ async function deposit(items) {
   logger.debug(`Hash of new commitment is ${commitment.hash.hex()}`);
   // now we can compute a Witness so that we can generate the proof
   const witness = [
-    publicInputs.hash.decimal,
-    ercAddress.limbs(32, 8),
-    tokenId.limbs(32, 8),
-    value.limbs(32, 8),
+    ercAddress.integer,
+    tokenId.integer,
+    value.integer,
     compressedPkd.limbs(32, 8),
     salt.limbs(32, 8),
-    commitment.hash.limbs(32, 8),
+    commitment.hash.integer, // not truncating here as we already ensured hash < group order
   ].flat(Infinity);
   logger.debug(`witness input is ${witness.join(' ')}`);
   // call a zokrates worker to generate the proof
