@@ -33,7 +33,7 @@ class walletTest:
           print(Fore.BLUE + "Result: " + self.results[-1])
       except Exception as e:
         if PRINT_EXCEPTIONS:
-          logging.error("Exception",e)
+          print("Exception",e)
         print(Fore.RED + "Result: FAILED\n")
       print(Style.RESET_ALL)
 

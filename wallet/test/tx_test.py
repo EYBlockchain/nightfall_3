@@ -56,7 +56,9 @@ def transactionsTest(findElementsInstance, driver, metamaskTab, nightfallTab):
           submitTxWallet(txParams, findElementsInstance, driver, metamaskTab, nightfallTab)
           txParams["txType"] = "Instant-withdraw"
         else:
+          print("111")
           submitTxWallet(txParams, findElementsInstance, driver, metamaskTab, nightfallTab)
+          print("222")
         status, errorMsg = waitBalanceChange(l1Balance, l2Balance, txParams, 2, findElementsInstance)
         if status == 0:
           return errorMsg
