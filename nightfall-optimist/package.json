@@ -40,6 +40,7 @@
     "express-fileupload": "^1.1.7-alpha.4",
     "general-number": "^1.0.1",
     "hex-to-binary": "^1.0.1",
+    "jsonfile": "^6.1.0",
     "keccak": "^3.0.1",
     "mongodb": "^3.6.3",
     "queue": "^6.0.2",
