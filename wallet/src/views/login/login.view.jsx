@@ -63,7 +63,7 @@ function Login({
       }
     } catch (err) {
       // TODO display error message
-      throw new Error('Cannot access Network. Expecting to connect to ' + nf3Env.web3WsUrl);
+      throw new Error(`Cannot access Network. Expecting to connect to ${nf3Env.web3WsUrl}`);
     }
   };
 
