@@ -560,7 +560,7 @@ describe('Testing the challenge http API', () => {
             tokenId,
             recipientData: {
               values: [value],
-              recipientPkds: [pkd1],
+              recipientCompressedPkds: [compressedPkd1],
             },
             nsk: nsk1,
             ask: ask1,
