@@ -1,6 +1,7 @@
 import logger from 'common-files/utils/logger.mjs';
 import Timber from 'common-files/classes/timber.mjs';
 import config from 'config';
+import { enqueueEvent } from 'common-files/utils/event-queue.mjs';
 import checkBlock from '../services/check-block.mjs';
 import BlockError from '../classes/block-error.mjs';
 import { createChallenge } from '../services/challenges.mjs';
@@ -33,18 +34,12 @@ async function blockProposedEventHandler(data) {
     // asociated with a failed block, and we can't do that if we haven't
     // associated them with a blockHash.
     await stampNullifiers(
-      transactions
-        .map(tx =>
-          tx.nullifiers.filter(
-            nulls => nulls !== '0x0000000000000000000000000000000000000000000000000000000000000000',
-          ),
-        )
-        .flat(Infinity),
+      transactions.map(tx => tx.nullifiers.filter(nulls => nulls !== ZERO)).flat(Infinity),
       block.blockHash,
     );
     // mark transactions so that they are out of the mempool,
     // so we don't try to use them in a block which we're proposing.
-    await removeTransactionsFromMemPool(block); // TODO is await needed?
+    await removeTransactionsFromMemPool(block.transactionHashes, block.blockNumberL2); // TODO is await needed?
 
     const latestTree = await getLatestTree();
     const blockCommitments = transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat();
@@ -59,6 +54,11 @@ async function blockProposedEventHandler(data) {
   } catch (err) {
     if (err instanceof BlockError) {
       logger.warn(`Block Checker - Block invalid, with code ${err.code}! ${err.message}`);
+      logger.info(`Block is invalid, stopping any block production`);
+      // We enqueue an event onto the stopQueue to halt block production.
+      // This message will not be printed because event dequeuing does not run the job.
+      // This is fine as we are just using it to stop running.
+      await enqueueEvent(() => logger.info('Stop Until Rollback'), 2);
       await createChallenge(block, transactions, err);
     } else {
       logger.error(err.stack);

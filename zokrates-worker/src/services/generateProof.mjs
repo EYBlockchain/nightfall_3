@@ -14,8 +14,8 @@ export default async ({
   transactionInputs,
   outputDirectoryPath,
   proofFileName,
-  backend = 'ark',
-  provingScheme = 'gm17',
+  backend = 'bellman',
+  provingScheme = 'g16',
 }) => {
   const outputPath = `./output`;
   let proof;

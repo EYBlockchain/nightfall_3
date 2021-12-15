@@ -4,9 +4,8 @@ from "ecc/edwardsScalarMult" import main as scalarMult
 from "ecc/edwardsCompress" import main as edwardsCompress
 from "./common/encryption/el-gamal4" import main as enc4
 
-from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256
+from "utils/casts/u32_to_bits.zok" import main as u32_to_bool_32
 from "utils/casts/bool_256_to_u32_8.zok" import main as bool_256_to_u32_8
-from "utils/pack/bool/pack256.zok" import main as bool_256_to_field
 from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
 from "utils/pack/u32/pack256.zok" import main as u32_8_to_field
 from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8
@@ -14,12 +13,10 @@ from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8
 from "./common/hashes/mimc/mimc-hash-2.zok" import main as mimc2
 from "./common/hashes/sha256/pad512ThenHash.zok" import main as sha256of512
 from "./common/hashes/sha256/pad1280ThenHash.zok" import main as sha256of1280
-from "./common/hashes/sha256/pad4096ThenHash.zok" import main as sha256of4096
 
 from "./common/merkle-tree/mimc-path-check.zok" import main as pathCheck
 
-struct OldCommitment {
-	u32[8] ercAddress
+struct OldCommitmentPreimage {
 	u32[8] id
 	u32[8] value
 	u32[8] salt
@@ -27,16 +24,10 @@ struct OldCommitment {
 	field ask
 }
 
-struct NewCommitment {
+struct NewCommitmentPreimage {
 	field[2] pkdRecipient
 	u32[8] value
 	u32[8] salt
-	u32[8] hash
-}
-
-struct Nullifier {
-	u32[8] nsk
-	u32[8] hash
 }
 
 struct Secrets {
@@ -52,28 +43,36 @@ struct Secrets {
 }
 
 def main(\
-	field publicInputsHash,\
-	private OldCommitment[2] oldCommitment,\
-	private NewCommitment[2] newCommitment,\
-	private Nullifier[2] nullifier,\
-	private field[2][33] path,\
+	field[2] fErcAddress,\
+	private OldCommitmentPreimage[2] oldCommitment,\
+	private NewCommitmentPreimage[2] newCommitment,\
+	field[2] fNewCommitmentHash,\
+	private u32[2][8] nsk,\
+	field[2] fNullifier,\
+	field[2] root,\
+	private field[2][32] path,\
 	private field[2] order,\
-	private Secrets secrets\
+	private Secrets secrets,\
+	field[8] compressedCipherText\
 )->():
 
 	BabyJubJubParams context = curveParams()
 	field[2] g = [context.Gu, context.Gv]
 
 	// Calculation of ivk from ask and nsk
-	field nsk = u32_8_to_field(nullifier[0].nsk)
-	field ivk = mimc2([oldCommitment[0].ask, nsk])
+	field nskField = u32_8_to_field(nsk[0])
+	field ivk = mimc2([oldCommitment[0].ask, nskField])
 	bool[256] ivkBool = field_to_bool_256(ivk)
 	field[2] pkd = scalarMult(ivkBool, g, context)
-	bool[256] nskBool = u32_8_to_bool_256(nullifier[0].nsk)
 	bool[256] pkdBool = edwardsCompress(pkd)
 	u32[8] pkdU32 = bool_256_to_u32_8(pkdBool)
 
 	assert(oldCommitment[1].ask == oldCommitment[0].ask)
+
+	// we convert the types to hash friendly u32s
+	u32[2][8] ercAddress = [field_to_u32_8(fErcAddress[0]), field_to_u32_8(fErcAddress[1])]
+	u32[2][8] newCommitmentHash = [field_to_u32_8(fNewCommitmentHash[0]), field_to_u32_8(fNewCommitmentHash[1])]
+	u32[2][8] nullifier = [field_to_u32_8(fNullifier[0]), field_to_u32_8(fNullifier[1])]
 
 	// Convert (x,y) public key of recipient to a single element using Edwards compress
 	// Recipient (x,y) form public key is used for encryption input while single element
@@ -86,10 +85,10 @@ def main(\
 	// the value to be <224 bits (Most Significant U32 = 0). TODO is it worth
 	// passing it in, should we allow more than 224 bits, might be a bit more
 	// efficient?
-	assert(0 == if oldCommitment[0].value[0] == 0x00000000 then 0 else 1 fi)
-	assert(0 == if oldCommitment[1].value[0] == 0x00000000 then 0 else 1 fi)
-	assert(0 == if newCommitment[0].value[0] == 0x00000000 then 0 else 1 fi)
-	assert(0 == if newCommitment[1].value[0] == 0x00000000 then 0 else 1 fi)
+	assert(oldCommitment[0].value[0] == 0x00000000)
+	assert(oldCommitment[1].value[0] == 0x00000000)
+	assert(newCommitment[0].value[0] == 0x00000000)
+	assert(newCommitment[1].value[0] == 0x00000000)
 
 	// check the summation is correct
 	assert(\
@@ -100,47 +99,66 @@ def main(\
 	)
 
 	// check the two old commitments relate to the same ERC contract
-	assert(oldCommitment[0].ercAddress == oldCommitment[1].ercAddress)
+	assert(ercAddress[0] == ercAddress[1])
 	// and are of the same type (they might not be for ERC1155)
 	assert(oldCommitment[0].id == oldCommitment[1].id)
 	// commitments can never be equal
-	assert(newCommitment[0].hash != newCommitment[1].hash)
+	assert(newCommitmentHash[0] != newCommitmentHash[1])
 	// nullifiers can never be equal
-	assert(nullifier[0].hash != nullifier[1].hash)
+	assert(nullifier[0] != nullifier[1])
 
 	// check the nullifiers are valid
-	for field i in 0..2 do
+	for u32 i in 0..2 do
 		u32[8] sha = sha256of512([\
-			...nullifier[i].nsk,\
+			...nsk[i],\
 			...oldCommitment[i].hash\
 		])
-		assert(sha == nullifier[i].hash)
+		// nullifiers are truncated to 248 bits since they are public inputs
+		// so we must check the 248 bits while minimising constraints/comp time - casting to bool[256] is a slower operation than comparing u32s
+
+		// last 224 bits:
+		assert(sha[1..8] == nullifier[i][1..8])
+		// first 24 bits:
+		assert(u32_to_bool_32(sha[0])[8..32] == u32_to_bool_32(nullifier[i][0])[8..32])
 	endfor
 
 	// check the new commitment for recipient is valid
 	u32[8] sha = sha256of1280([\
-		...oldCommitment[0].ercAddress,\
+		...ercAddress[0],\
 		...oldCommitment[0].id,\
 		...newCommitment[0].value,\
 		...pkdRecipientU32,\
 		...newCommitment[0].salt\
 	])
-	assert(sha == newCommitment[0].hash )
+		// new commitments are truncated to 248 bits since they are public inputs
+		// so we must check the 248 bits while minimising constraints/comp time - casting to bool[256] is a slower operation than comparing u32s
+
+		// last 224 bits:
+		assert(sha[1..8] == newCommitmentHash[0][1..8])
+		// first 24 bits:
+		assert(u32_to_bool_32(sha[0])[8..32] == u32_to_bool_32(newCommitmentHash[0][0])[8..32])
 
 	// check the new commitment for sender is valid
 	sha = sha256of1280([\
-		...oldCommitment[1].ercAddress,\
+		...ercAddress[1],\
 		...oldCommitment[1].id,\
 		...newCommitment[1].value,\
 		...pkdU32,\
 		...newCommitment[1].salt\
 	])
-	assert(sha == newCommitment[1].hash )
+	// new commitments are truncated to 248 bits since they are public inputs
+	// so we must check the 248 bits while minimising constraints/comp time - casting to bool[256] is a slower operation than comparing u32s
+
+	// last 224 bits:
+	assert(sha[1..8] == newCommitmentHash[1][1..8])
+	// first 24 bits:
+	assert(u32_to_bool_32(sha[0])[8..32] == u32_to_bool_32(newCommitmentHash[1][0])[8..32])
 
 	// check the old commitments are valid
-	for field i in 0..2 do
+	// old commitments are private inputs, so they are u32[8] and not truncated
+	for u32 i in 0..2 do
 		sha = sha256of1280([\
-			...oldCommitment[i].ercAddress,\
+			...ercAddress[i],\
 			...oldCommitment[i].id,\
 			...oldCommitment[i].value,\
 			...pkdU32,\
@@ -150,59 +168,27 @@ def main(\
 	endfor
 
 	// And the encryption of the transaction (extend the value up to 256 bits)
-	assert(secrets.cipherText == enc4(oldCommitment[0].ercAddress, oldCommitment[0].id, newCommitment[0].value, newCommitment[0].salt, newCommitment[0].pkdRecipient, secrets.ephemeralKey1, secrets.ephemeralKey2, secrets.ephemeralKey3, secrets.ephemeralKey4, secrets.sqrtMessage1, secrets.sqrtMessage2, secrets.sqrtMessage3, secrets.sqrtMessage4))
+	assert(secrets.cipherText == enc4(ercAddress[0], oldCommitment[0].id, newCommitment[0].value, newCommitment[0].salt, newCommitment[0].pkdRecipient, secrets.ephemeralKey1, secrets.ephemeralKey2, secrets.ephemeralKey3, secrets.ephemeralKey4, secrets.sqrtMessage1, secrets.sqrtMessage2, secrets.sqrtMessage3, secrets.sqrtMessage4))
 
-	// check the public input hash
-	// To make the hash smaller, let's 'compress' each curve point ordered pair into a single 256 bit array (rather than two)...
-	bool[256] compressedSecretsBool1 = edwardsCompress(secrets.cipherText[0..2])
-	bool[256] compressedSecretsBool2 = edwardsCompress(secrets.cipherText[2..4])
-	bool[256] compressedSecretsBool3 = edwardsCompress(secrets.cipherText[4..6])
-	bool[256] compressedSecretsBool4 = edwardsCompress(secrets.cipherText[6..8])
-	bool[256] compressedSecretsBool5 = edwardsCompress(secrets.cipherText[8..10])
-	bool[256] compressedSecretsBool6 = edwardsCompress(secrets.cipherText[10..12])
-	bool[256] compressedSecretsBool7 = edwardsCompress(secrets.cipherText[12..14])
-	bool[256] compressedSecretsBool8 = edwardsCompress(secrets.cipherText[14..16])
 
-	u32[8] compressedSecret1 = bool_256_to_u32_8(compressedSecretsBool1)
-  	u32[8] compressedSecret2 = bool_256_to_u32_8(compressedSecretsBool2)
-	u32[8] compressedSecret3 = bool_256_to_u32_8(compressedSecretsBool3)
-	u32[8] compressedSecret4 = bool_256_to_u32_8(compressedSecretsBool4)
-	u32[8] compressedSecret5 = bool_256_to_u32_8(compressedSecretsBool5)
-	u32[8] compressedSecret6 = bool_256_to_u32_8(compressedSecretsBool6)
-	u32[8] compressedSecret7 = bool_256_to_u32_8(compressedSecretsBool7)
-	u32[8] compressedSecret8 = bool_256_to_u32_8(compressedSecretsBool8)
-
-	// check the public input hash (TODO no need to include both ERCAddresses as
-	// they are proven equal) so we can save 25k constraints
-	u32[8] publicInputsHashU32 = sha256of4096([\
-		...oldCommitment[0].ercAddress,\
-		...oldCommitment[1].ercAddress,\
-		...newCommitment[0].hash,\
-		...newCommitment[1].hash,\
-		...nullifier[0].hash,\
-		...nullifier[1].hash,\
-		...field_to_u32_8(path[0][0]),\
-		...field_to_u32_8(path[1][0]),\
-		...compressedSecret1,\
-		...compressedSecret2,\
-		...compressedSecret3,\
-		...compressedSecret4,\
-		...compressedSecret5,\
-		...compressedSecret6,\
-		...compressedSecret7,\
-		...compressedSecret8\
-	])
-	bool[256] publicInputsHashBool256 = u32_8_to_bool_256(publicInputsHashU32)
-	bool[256] publicInputsHashBool256Sliced = [\
-	     ...[false; 8],\
-	     ...publicInputsHashBool256[8..256]\
-	]
-	assert(publicInputsHash == bool_256_to_field(publicInputsHashBool256Sliced))
+	// check the compressed cipherText
+	// we pass in 8x compressed points rather than 16x uncompressed points to save time / gas
+	for u32 i in 0..8 do
+		// these intermediate vars really speed up compile time
+		// there is likely a compiler bug with zokrates 0.6.4 which makes using spreads (e.g. [8..256]) inside a function (e.g. assert()) very slow
+		u32 j = 2*i
+		bool[256] compressed256 = edwardsCompress([secrets.cipherText[j], secrets.cipherText[j+1]])
+		bool[256] compressedCheck256 = field_to_bool_256(compressedCipherText[i])
+		bool[248] compressed = compressed256[8..256]
+		bool[248] compressedCheck = compressedCheck256[8..256]
+		assert(compressed == compressedCheck)
+	endfor
 
 	// check that the old commitments are in the merkle tree
-	for field i in 0..2 do
+	// assert(root[0] == root[1]) // these should both be the root
+	for u32 i in 0..2 do
 		field mimcHash = u32_8_to_field(oldCommitment[i].hash)
-		assert(pathCheck(path[i], order[i], mimcHash))
+		assert(pathCheck([root[i], ...path[i]], order[i], mimcHash))
 	endfor
 
 	return

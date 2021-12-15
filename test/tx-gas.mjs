@@ -9,8 +9,6 @@ import {
   ethereumSigningKeyProposer1,
   mnemonicUser1,
   mnemonicProposer,
-  bond,
-  gasCosts,
   tokenType,
   value,
   tokenId,
@@ -20,7 +18,6 @@ import Nf3 from '../cli/lib/nf3.mjs';
 import {
   closeWeb3Connection,
   connectWeb3,
-  getBalance,
   getCurrentEnvironment,
   expectTransaction,
 } from './utils.mjs';
@@ -78,13 +75,9 @@ describe('Testing the http API', () => {
     it('should register a proposer', async () => {
       let proposers;
       ({ proposers } = await nf3Proposer1.getProposers());
-      // we have to pay 10 ETH to be registered
-      const startBalance = await getBalance(nf3Proposer1.ethereumAddress);
       const res = await nf3Proposer1.registerProposer();
       expectTransaction(res);
       ({ proposers } = await nf3Proposer1.getProposers());
-      const endBalance = await getBalance(nf3Proposer1.ethereumAddress);
-      expect(endBalance - startBalance).to.closeTo(-bond, gasCosts);
       const thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer1.ethereumAddress);
       expect(thisProposer.length).to.be.equal(1);
     });
