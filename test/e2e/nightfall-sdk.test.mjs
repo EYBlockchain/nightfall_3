@@ -62,6 +62,9 @@ describe('Testing the Nightfall SDK', () => {
   const transactions = [];
   let initialValidCommitments = 0;
   let stateBalance = 0;
+  const logCounts = {
+    instantWithdaw: 0,
+  };
 
   const miniStateABI = [
     {
@@ -83,6 +86,13 @@ describe('Testing the Nightfall SDK', () => {
     const stateContractInstance = new web3.eth.Contract(miniStateABI, stateAddress);
     const onChainBlockCount = await stateContractInstance.methods.getNumberOfL2Blocks().call();
     return onChainBlockCount;
+  };
+
+  const waitForTxExecution = async (count, txType) => {
+    while (count === logCounts[txType]) {
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
   };
 
   before(async () => {
@@ -180,7 +190,7 @@ describe('Testing the Nightfall SDK', () => {
       }
       // difference in balance in L1 account to check instant withdraw is ok
       diffBalanceInstantWithdraw = Number(balancesBefore.balance) - Number(balancesAfter.balance);
-      eventLogs.push('instantWithdraw');
+      logCounts.instantWithdaw += 1;
       console.log(`     Serviced instant-withdrawal request from ${paidBy}, with fee ${amount}`);
     });
 
@@ -581,6 +591,7 @@ describe('Testing the Nightfall SDK', () => {
       stateBalance += fee * txPerBlock + BLOCK_STAKE;
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
 
+      const count = logCounts.instantWithdaw;
       // We request the instant withdraw and should wait for the liquidity provider to send the instant withdraw
       const res = await nf3User1.requestInstantWithdrawal(latestWithdrawTransactionHash, fee);
       stateBalance += fee;
@@ -593,7 +604,7 @@ describe('Testing the Nightfall SDK', () => {
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
       // we wait for the liquidity provider to send the instant withdraw
       console.log('     Waiting for instantWithdraw event...');
-      eventLogs = await waitForEvent(eventLogs, ['instantWithdraw']);
+      await waitForTxExecution(count, 'instantWithdraw');
       expect(diffBalanceInstantWithdraw).to.be.equal(value);
     });
 
