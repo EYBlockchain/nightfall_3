@@ -43,7 +43,7 @@ def transactionsTest(findElementsInstance, driver, metamaskTab, nightfallTab):
         if txParams["txType"] == "Instant-withdraw" and txParams["tokenType"] == "erc721":
           continue
         l1Balance, l2Balance, pendingDeposit, pendingTransferredOut = getNightfallBalance(findElementsInstance, txParams)
-        print(txType, l1Balance, l2Balance, pendingDeposit, pendingTransferredOut)
+        #print(txType, l1Balance, l2Balance, pendingDeposit, pendingTransferredOut)
         logging.info(tokenType, txType)
         submitTxWallet(txParams, findElementsInstance, driver, metamaskTab, nightfallTab, cancel=1)
         logging.info(tokenType, txType)
@@ -56,9 +56,7 @@ def transactionsTest(findElementsInstance, driver, metamaskTab, nightfallTab):
           submitTxWallet(txParams, findElementsInstance, driver, metamaskTab, nightfallTab)
           txParams["txType"] = "Instant-withdraw"
         else:
-          print("111")
           submitTxWallet(txParams, findElementsInstance, driver, metamaskTab, nightfallTab)
-          print("222")
         status, errorMsg = waitBalanceChange(l1Balance, l2Balance, txParams, 2, findElementsInstance)
         if status == 0:
           return errorMsg
@@ -104,13 +102,13 @@ def waitBalanceChange(l1Balance, l2Balance, txParams, nTx, findElementsInstance)
       return 0, errorMsg
     sleep(5) 
     l1BalanceNew, l2BalanceNew, pendingDepositNew, pendingTransferredOutNew = getNightfallBalance(findElementsInstance, txParams)
-    print(txParams["txType"], l1BalanceNew, l2BalanceNew, pendingDepositNew, pendingTransferredOutNew)
+    #print(txParams["txType"], l1BalanceNew, l2BalanceNew, pendingDepositNew, pendingTransferredOutNew)
     if txParams["txType"] == "Deposit":
-      print("Match", l2BalanceNew - nTx*txParams["amount"], l2Balance , l1BalanceNew + nTx*txParams["amount"], l1Balance)
+      #print("Match", l2BalanceNew - nTx*txParams["amount"], l2Balance , l1BalanceNew + nTx*txParams["amount"], l1Balance)
       if l2BalanceNew - nTx*txParams["amount"] == l2Balance and l1BalanceNew + nTx*txParams["amount"] == l1Balance:
         break
     elif txParams["txType"] == "Transfer":
-      print("Match",l2BalanceNew, l2Balance)
+      #print("Match",l2BalanceNew, l2Balance)
       if l1BalanceNew != l1Balance:
         errorMsg = "FAILED - Balances do not match after transfer\n"
         return 0, errorMsg
@@ -119,11 +117,11 @@ def waitBalanceChange(l1Balance, l2Balance, txParams, nTx, findElementsInstance)
     elif txParams["txType"] == "Withdraw":
        #if l1BalanceNew != l1Balance:
         #return "FAILED - Balances do not match after withdraw\n"
-       print("Match",l2BalanceNew + nTx*txParams["amount"],l2Balance)
+       #print("Match",l2BalanceNew + nTx*txParams["amount"],l2Balance)
        if l2BalanceNew + nTx*txParams["amount"] == l2Balance:
          break
     elif txParams["txType"] == "Instant-withdraw":
-      print("Match", l2BalanceNew ,l2Balance ,l1BalanceNew ,l1Balance)
+      #print("Match", l2BalanceNew ,l2Balance ,l1BalanceNew ,l1Balance)
       if l2BalanceNew == l2Balance and l1BalanceNew == l1Balance:
        break
     niter+=1

@@ -95,9 +95,9 @@ except Exception:
 ########################
 # Start Tests          
 ########################
-#effectTest(findElementsInstance, driver, metamaskTab, nightfallTab, walletUrl)
-#loginTest(findElementsInstance, driver, metamaskTab, nightfallTab)
-#tokenTest(findElementsInstance, driver, metamaskTab, nightfallTab)
+effectTest(findElementsInstance, driver, metamaskTab, nightfallTab, walletUrl)
+loginTest(findElementsInstance, driver, metamaskTab, nightfallTab)
+tokenTest(findElementsInstance, driver, metamaskTab, nightfallTab)
 txTest(findElementsInstance, driver, metamaskTab, nightfallTab)
 
 driver.quit()
