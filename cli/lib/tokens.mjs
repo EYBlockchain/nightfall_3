@@ -59,6 +59,7 @@ Get decimals configured  in ERC token
 */
 async function getDecimals(ercAddress, tokenType, provider) {
   const abi = getAbi(tokenType);
+  console.log(`TOken Type DEC: ${tokenType}`);
   const ercContract = new provider.eth.Contract(abi, ercAddress);
   switch (tokenType) {
     case TOKEN_TYPE.ERC20: {
@@ -103,6 +104,7 @@ async function getERCInfo(ercAddress, ethereumAddress, provider, options) {
   let decimals = 0;
   const tokenIds = [];
 
+  console.log(`TOken Type: ${tokenTypeFilter}`);
   if (tokenTypeFilter) {
     switch (tokenTypeFilter.toUpperCase()) {
       case 'ERC721':
@@ -203,7 +205,9 @@ async function getERCInfo(ercAddress, ethereumAddress, provider, options) {
   } else {
     // expected ERC20
     try {
+      console.log(`TOken TypeBEFORE FAILURE: ${TOKEN_TYPE.ERC20}`);
       const abi = getAbi(TOKEN_TYPE.ERC20);
+      console.log(`TOken TypeAfter ABIT: ${abi}`);
       const ercContract = new provider.eth.Contract(abi, ercAddress);
       balance = await ercContract.methods.balanceOf(ethereumAddress).call();
       decimals = await getDecimals(ercAddress, TOKEN_TYPE.ERC20, provider);
