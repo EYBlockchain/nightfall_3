@@ -32,7 +32,7 @@ library ChallengesUtil {
         bool valid;
         bytes32[33] memory _frontier;
         uint256 commitmentIndex;
-        if (priorBlockL2.blockNumberL2 != blockL2.blockNumberL2) {
+        if (blockL2.blockNumberL2 != 0) {
             (valid, _frontier) = MerkleTree_Stateless.checkPath(
                 Utils.filterCommitments(priorBlockTransactions),
                 frontierPriorBlock,
@@ -40,10 +40,10 @@ library ChallengesUtil {
                 priorBlockL2.root
             );
             require(valid, 'The sibling path is invalid');
-            commitmentIndex =
-                priorBlockL2.leafCount +
-                Utils.filterCommitments(priorBlockTransactions).length;
-        } else commitmentIndex = 0;
+        }
+        commitmentIndex =
+            priorBlockL2.leafCount +
+            Utils.filterCommitments(priorBlockTransactions).length;
         // At last, we can check if the root itself is correct!
         (bytes32 root, , ) =
             MerkleTree_Stateless.insertLeaves(

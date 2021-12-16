@@ -15,6 +15,16 @@ import {
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
 
+const IDENTITY_BLOCK = {
+  proposer: '0x0000000000000000000000000000000000000000',
+  root: '0x0000000000000000000000000000000000000000000000000000000000000000',
+  leafCount: 0,
+  blockNumberL2: 0,
+  previousBlockHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
+  blockHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
+  nCommitments: 0,
+  transactionHashes: [],
+};
 const { CHALLENGES_CONTRACT_NAME, TIMBER_HEIGHT, ZERO } = config;
 
 let makeChallenges = process.env.IS_CHALLENGER === 'true';
@@ -64,18 +74,23 @@ export async function createChallenge(block, transactions, err) {
     switch (err.code) {
       // Challenge wrong root
       case 0: {
+        let priorBlock;
+        let priorPriorBlock;
         logger.debug('Challenging incorrect root');
         // Getting prior block for the current block
-        let priorBlock = await getBlockByBlockNumberL2(Number(block.blockNumberL2) - 1);
+        if (block.blockNumberL2 === 0) {
+          priorBlock = IDENTITY_BLOCK;
+          priorPriorBlock = IDENTITY_BLOCK;
+        } else {
+          priorBlock = await getBlockByBlockNumberL2(Number(block.blockNumberL2) - 1);
+          if (block.blockNumberL2 === 1) priorPriorBlock = IDENTITY_BLOCK;
+          // We also need to grab the block 2 before the challenged block as it contains the frontier to
+          else priorPriorBlock = await getBlockByBlockNumberL2(Number(block.blockNumberL2) - 2);
+        }
         if (priorBlock === null) {
-          if (block.blockNumberL2 === 0) {
-            priorBlock = block;
-            priorBlock.leafCount = 0;
-            priorBlock.transactionHashes = [ZERO];
-          } else
-            throw new Error(
-              `Could not find prior block with block number ${Number(block.blockNumberL2) - 1}`,
-            );
+          throw new Error(
+            `Could not find prior block with block number ${Number(block.blockNumberL2) - 1}`,
+          );
         }
         // Retrieve last transaction from prior block using its transaction hash.
         // Note that not all transactions in a block will have commitments. Loop until one is found
@@ -85,7 +100,6 @@ export async function createChallenge(block, transactions, err) {
 
         // We also need to grab the block 2 before the challenged block as it contains the frontier to
         // calculate the root of the prior block.
-        const priorPriorBlock = await getBlockByBlockNumberL2(Number(block.blockNumberL2) - 2);
         if (priorPriorBlock === null) priorPriorBlock.root = ZERO;
 
         const priorPriorTree = await getTreeByRoot(priorPriorBlock.root);
@@ -302,11 +316,11 @@ export async function createChallenge(block, transactions, err) {
       }
       // challenge incorrect leaf count
       case 7: {
-        let priorBlockL2 = await getBlockByBlockNumberL2(block.blockNumberL2 - 1);
+        let priorBlockL2;
         if (block.blockNumberL2 === 0) {
-          priorBlockL2 = block;
-          priorBlockL2.leafCount = 0;
-          priorBlockL2.transactionHashes = [ZERO];
+          priorBlockL2 = IDENTITY_BLOCK;
+        } else {
+          priorBlockL2 = await getBlockByBlockNumberL2(block.blockNumberL2 - 1);
         }
         const priorBlockTransactions = await getTransactionsByTransactionHashes(
           priorBlockL2.transactionHashes,
