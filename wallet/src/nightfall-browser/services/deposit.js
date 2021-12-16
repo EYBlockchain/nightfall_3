@@ -22,9 +22,9 @@ import { Commitment, PublicInputs, Transaction } from '../classes/index';
 import { storeCommitment } from './commitment-storage';
 import { compressPublicKey } from './keys';
 
-import abi from '../../views/zokrates/deposit/artifacts/abi.json';
-import programFile from '../../views/zokrates/deposit/artifacts/program';
-import pkFile from '../../views/zokrates/deposit/keypair/pk';
+import abi from '../../zokrates/deposit_stub/artifacts/deposit_stub-abi.json';
+import programFile from '../../zokrates/deposit_stub/artifacts/deposit_stub-program';
+import pkFile from '../../zokrates/deposit_stub/keypair/deposit_stub-pk';
 import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
 
 const { ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER } = config;
