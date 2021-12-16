@@ -7,6 +7,7 @@ import {
   storeCommitment,
   countCommitments,
   setSiblingInfo,
+  countTransactionHashes,
 } from '../services/commitment-storage.mjs';
 import getProposeBlockCalldata from '../services/process-calldata.mjs';
 import Secrets from '../classes/secrets.mjs';
@@ -26,7 +27,7 @@ async function blockProposedEventHandler(data) {
   const latestTree = await getLatestTree();
   const blockCommitments = transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat();
 
-  if ((await countCommitments(blockCommitments)) > 0) {
+  if ((await countTransactionHashes(block.transactionHashes)) > 0) {
     await saveBlock({ blockNumber: currentBlockCount, transactionHashL1, ...block });
     await Promise.all(transactions.map(t => saveTransaction({ transactionHashL1, ...t })));
   }
