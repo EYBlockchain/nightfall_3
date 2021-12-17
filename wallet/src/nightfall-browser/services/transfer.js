@@ -10,7 +10,8 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
 // eslint-disable-next-line import/no-extraneous-dependencies
 import config from 'config';
 import gen from 'general-number';
-// import { generateProof, computeWitness } from 'zokrates-js';
+import { initialize } from 'zokrates-js';
+
 import rand from '../../common-files/utils/crypto/crypto-random';
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
@@ -22,9 +23,16 @@ import {
   clearPending,
   getSiblingInfo,
 } from './commitment-storage';
+import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
 import { compressPublicKey, calculateIvkPkdfromAskNsk } from './keys';
+import * as singleTransferAbi from '../../zokrates/single_transfer_stub/artifacts/single_transfer_stub-abi.json';
+import * as singleTransferProgramFile from '../../zokrates/single_transfer_stub/artifacts/single_transfer_stub-program';
+import * as singleTransferPkFile from '../../zokrates/single_transfer_stub/keypair/single_transfer_stub-pk';
+import * as doubleTransferAbi from '../../zokrates/double_transfer_stub/artifacts/double_transfer_stub-abi.json';
+import * as doubleTransferProgramFile from '../../zokrates/double_transfer_stub/artifacts/double_transfer_stub-program';
+import * as doubleTransferPkFile from '../../zokrates/double_transfer_stub/keypair/double_transfer_stub-pk';
 
-const { BN128_GROUP_ORDER, ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, USE_STUBS } = config;
+const { BN128_GROUP_ORDER, ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME } = config;
 const { generalise, GN } = gen;
 
 async function transfer(transferParams) {
@@ -163,22 +171,43 @@ async function transfer(transferParams) {
   // call a zokrates worker to generate the proof
   // This is (so far) the only place where we need to get specific about the
   // circuit
-  let folderpath;
   let transactionType;
+  let program;
+  let pk;
+  let abi;
+  const zokratesProvider = await initialize();
   if (oldCommitments.length === 1) {
-    folderpath = 'single_transfer';
     transactionType = 1;
+    program = await fetch(singleTransferProgramFile)
+      .then(response => response.body.getReader())
+      .then(parseData)
+      .then(mergeUint8Array);
+    pk = await fetch(singleTransferPkFile)
+      .then(response => response.body.getReader())
+      .then(parseData)
+      .then(mergeUint8Array);
+    abi = singleTransferAbi;
     blockNumberL2s.push(0); // We need top pad block numbers if we do a single transfer
   } else if (oldCommitments.length === 2) {
-    folderpath = 'double_transfer';
     transactionType = 2;
+    program = await fetch(doubleTransferProgramFile)
+      .then(response => response.body.getReader())
+      .then(parseData)
+      .then(mergeUint8Array);
+    pk = await fetch(doubleTransferPkFile)
+      .then(response => response.body.getReader())
+      .then(parseData)
+      .then(mergeUint8Array);
+    abi = doubleTransferAbi;
   } else throw new Error('Unsupported number of commitments');
-  // eslint-disable-next-line no-unused-vars
-  if (USE_STUBS) folderpath = `${folderpath}_stub`;
-  // let artifacts;
-  // let keypair;
-  // const { witness } = computeWitness(artifacts, witnessInput);
-  const proof = ''; // generateProof(artifacts.program, witness, keypair.pk);
+
+  const artifacts = { program: new Uint8Array(program), abi: JSON.stringify(abi) };
+  const keypair = { pk: new Uint8Array(pk) };
+  const { witness } = zokratesProvider.computeWitness(artifacts, witnessInput);
+  // generate proof
+  let { proof } = zokratesProvider.generateProof(artifacts.program, witness, keypair.pk);
+  proof = [...proof.a, ...proof.b, ...proof.c];
+  proof = proof.flat(Infinity);
 
   // logger.silly(`Received response ${JSON.stringify(res.data, null, 2)}`);
   // const { proof } = res.data;
