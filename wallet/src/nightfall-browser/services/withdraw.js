@@ -10,7 +10,7 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
 // eslint-disable-next-line import/no-extraneous-dependencies
 import config from 'config';
 import gen from 'general-number';
-// import { generateProof, computeWitness } from 'zokrates-js';
+import { initialize } from 'zokrates-js';
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
 import { Nullifier, PublicInputs, Transaction } from '../classes/index';
@@ -22,7 +22,12 @@ import {
 } from './commitment-storage';
 import { calculateIvkPkdfromAskNsk } from './keys';
 
-const { BN128_GROUP_ORDER, SHIELD_CONTRACT_NAME, USE_STUBS } = config;
+import abi from '../../zokrates/withdraw_stub/artifacts/withdraw_stub-abi.json';
+import programFile from '../../zokrates/withdraw_stub/artifacts/withdraw_stub-program';
+import pkFile from '../../zokrates/withdraw_stub/keypair/withdraw_stub-pk';
+import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
+
+const { BN128_GROUP_ORDER, SHIELD_CONTRACT_NAME } = config;
 const { generalise } = gen;
 
 async function withdraw(withdrawParams) {
@@ -84,21 +89,24 @@ async function withdraw(withdrawParams) {
 
   logger.debug(`witness input is ${witnessInput.join(' ')}`);
   // call a zokrates worker to generate the proof
-  let folderpath = 'withdraw';
-  // eslint-disable-next-line no-unused-vars
-  if (USE_STUBS) folderpath = `${folderpath}_stub`;
-  // let artifacts;
-  // let keypair;
-  // const { witness } = computeWitness(artifacts, witnessInput);
-  const proof = ''; // generateProof(artifacts.program, witness, keypair.pk);
-  // const res = await axios.post(`${PROTOCOL}${ZOKRATES_WORKER_HOST}/generate-proof`, {
-  //   folderpath,
-  //   inputs: witness,
-  //   provingScheme: PROVING_SCHEME,
-  //   backend: BACKEND,
-  // });
-  // logger.silly(`Received response ${JSON.stringify(res.data, null, 2)}`);
-  // const { proof } = res.data;
+  const zokratesProvider = await initialize();
+  const program = await fetch(programFile)
+    .then(response => response.body.getReader())
+    .then(parseData)
+    .then(mergeUint8Array);
+  const pk = await fetch(pkFile)
+    .then(response => response.body.getReader())
+    .then(parseData)
+    .then(mergeUint8Array);
+
+  const artifacts = { program: new Uint8Array(program), abi: JSON.stringify(abi) };
+  const keypair = { pk: new Uint8Array(pk) };
+  // computation
+  const { witness } = zokratesProvider.computeWitness(artifacts, witnessInput);
+  // generate proof
+  let { proof } = zokratesProvider.generateProof(artifacts.program, witness, keypair.pk);
+  proof = [...proof.a, ...proof.b, ...proof.c];
+  proof = proof.flat(Infinity);
   // and work out the ABI encoded data that the caller should sign and send to the shield contract
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
   const optimisticWithdrawTransaction = new Transaction({
