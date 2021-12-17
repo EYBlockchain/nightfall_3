@@ -447,9 +447,9 @@ describe('Testing the Nightfall SDK', () => {
         balanceBefore = 0;
       }
       // We create enough transactions to fill numDeposits blocks full of deposits.
-      let res = await nf3User1.deposit(erc721Address, tokenTypeERC721, 0, 1, fee);
+      let res = await nf3User1.deposit(erc721Address, tokenTypeERC721, 1, 1, fee);
       expectTransaction(res);
-      res = await nf3User1.deposit(erc721Address, tokenTypeERC721, 0, 2, fee);
+      res = await nf3User1.deposit(erc721Address, tokenTypeERC721, 1, 2, fee);
       expectTransaction(res);
       stateBalance += fee * 2 + BLOCK_STAKE;
       // Wait until we see the right number of blocks appear
@@ -476,7 +476,6 @@ describe('Testing the Nightfall SDK', () => {
         balanceBefore = 0;
         balanceBefore2 = 0;
       }
-
       // We create enough transactions to fill numDeposits blocks full of deposits.
       let res = await nf3User1.deposit(erc1155Address, tokenTypeERC1155, value, 1, fee);
       expectTransaction(res);
@@ -526,9 +525,9 @@ describe('Testing the Nightfall SDK', () => {
       const currentPkdBalance = balances[nf3User1.zkpKeys.compressedPkd][erc721Address];
 
       // We create enough transactions to fill numDeposits blocks full of deposits.
-      let res = await nf3User1.deposit(erc721Address, tokenTypeERC721, 0, 3, fee);
+      let res = await nf3User1.deposit(erc721Address, tokenTypeERC721, 1, 3, fee);
       expectTransaction(res);
-      res = await nf3User1.deposit(erc721Address, tokenTypeERC721, 0, 4, fee);
+      res = await nf3User1.deposit(erc721Address, tokenTypeERC721, 1, 4, fee);
       expectTransaction(res);
       stateBalance += fee * 2 + BLOCK_STAKE;
       // Wait until we see the right number of blocks appear
@@ -555,7 +554,6 @@ describe('Testing the Nightfall SDK', () => {
         beforePkdBalance1 = 0;
         beforePkdBalance2 = 0;
       }
-
       // We create enough transactions to fill numDeposits blocks full of deposits.
       let res = await nf3User1.deposit(erc1155Address, tokenTypeERC1155, value, Id1, fee);
       expectTransaction(res);
@@ -644,9 +642,9 @@ describe('Testing the Nightfall SDK', () => {
     it('should decrement the balance after transfer ERC721 to other wallet and increment the other wallet', async function () {
       let balances = await nf3User1.getLayer2Balances();
       // We create enough transactions to fill block full of deposits.
-      let res = await nf3User1.deposit(erc721Address, tokenTypeERC721, 0, 5, fee);
+      let res = await nf3User1.deposit(erc721Address, tokenTypeERC721, 1, 5, fee);
       expectTransaction(res);
-      res = await nf3User1.deposit(erc721Address, tokenTypeERC721, 0, 6, fee);
+      res = await nf3User1.deposit(erc721Address, tokenTypeERC721, 1, 6, fee);
       expectTransaction(res);
       stateBalance += fee * 2 + BLOCK_STAKE;
       // Wait until we see the right number of blocks appear
@@ -666,7 +664,7 @@ describe('Testing the Nightfall SDK', () => {
         false,
         erc721Address,
         tokenTypeERC721,
-        0,
+        1,
         5,
         nf3User2.zkpKeys.pkd,
         fee,
@@ -677,7 +675,7 @@ describe('Testing the Nightfall SDK', () => {
         false,
         erc721Address,
         tokenTypeERC721,
-        0,
+        1,
         6,
         nf3User2.zkpKeys.pkd,
         fee,

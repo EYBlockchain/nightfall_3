@@ -185,7 +185,7 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
           uint256(t.value)
         );
     } else if(t.tokenType == TokenType.ERC721) {
-      if (t.value != 0 || t.tokenId == ZERO) // value should always be equal to 0 and tokenId cannot be equal to ZERO
+      if (t.value != 1) // value should always be equal to 1
         revert("Invalid inputs for ERC721 deposit");
       else
         tokenContract.safeTransferFrom(
@@ -195,7 +195,7 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
           ''
         );
     } else if (t.tokenType == TokenType.ERC1155) {
-      if (t.tokenId == ZERO && t.value == 0) // disallow this corner case
+      if (t.value == 0) // disallow this corner case
         revert("Depositing zero-value ERC1155 tokens is not allowed");
       else
         tokenContract.safeTransferFrom(
@@ -221,7 +221,7 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
       else
         tokenContract.transferFrom(msg.sender, address(this), uint256(t.value));
     } else if(t.tokenType == TokenType.ERC721) {
-      if (t.value != 0 || t.tokenId == ZERO) // value should always be equal to 0 and tokenId cannot be equal to ZERO
+      if (t.value != 1) // value should always be equal to 1
         revert("Invalid inputs for ERC721 deposit");
       else
         tokenContract.safeTransferFrom(
@@ -231,7 +231,7 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
           ''
         );
     } else if (t.tokenType == TokenType.ERC1155) {
-      if (t.tokenId == ZERO && t.value == 0) // disallow this corner case
+      if (t.value == 0) // disallow this corner case
         revert("Depositing zero-value ERC1155 tokens is not allowed");
       else
         tokenContract.safeTransferFrom(
