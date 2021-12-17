@@ -258,11 +258,14 @@ class Nf3 {
         tokenType,
         value,
         this.web3,
+        !!this.ethereumSigningKey,
       );
     } catch (err) {
       throw new Error(err);
     }
-    if (txDataToSign) await this.submitTransaction(txDataToSign, ercAddress, 0);
+    if (txDataToSign) {
+      await this.submitTransaction(txDataToSign, ercAddress, 0);
+    }
     const res = await axios.post(`${this.clientBaseUrl}/deposit`, {
       ercAddress,
       tokenId,

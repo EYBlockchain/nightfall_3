@@ -262,14 +262,6 @@ export async function getWalletBalanceDetails(compressedPkd, ercList) {
   // work out the balance contribution of each commitment  - a 721 token has no value field in the
   // commitment but each 721 token counts as a balance of 1. Then finally add up the individual
   // commitment balances to get a balance for each erc address.
-  const res1 = wallet.map(e => ({
-    ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
-    compressedPkd: e.preimage.compressedPkd,
-    tokenId: !!BigInt(e.preimage.tokenId),
-    value: Number(BigInt(e.preimage.value)),
-    id: Number(BigInt(e.preimage.tokenId)),
-  }));
-  console.log('RES: ', res1);
 
   const res = wallet
     .map(e => ({
@@ -288,14 +280,23 @@ export async function getWalletBalanceDetails(compressedPkd, ercList) {
     .map(e => ({
       compressedPkd: e.compressedPkd,
       ercAddress: e.ercAddress,
-      balance: e.tokenId ? 1 : e.value,
+      balance: e.tokenId && e.value === 0 ? 1 : e.value, // ERC20 and ERC1155 should get the value
       tokenId: e.id,
+      erc1155: !!(e.tokenId && e.value > 0),
     }))
     .reduce((acc, e) => {
       if (!acc[e.compressedPkd]) acc[e.compressedPkd] = {};
       if (!acc[e.compressedPkd][e.ercAddress]) acc[e.compressedPkd][e.ercAddress] = [];
       if (e.tokenId === 0 && acc[e.compressedPkd][e.ercAddress].length > 0) {
         acc[e.compressedPkd][e.ercAddress][0].balance += e.balance;
+      } else if (e.erc1155) {
+        const list = acc[e.compressedPkd][e.ercAddress];
+        const tokenIdIndex = list.findIndex(c => c.tokenId === e.tokenId);
+        if (tokenIdIndex >= 0) {
+          list[tokenIdIndex].balance += e.balance;
+        } else {
+          acc[e.compressedPkd][e.ercAddress].push({ balance: e.balance, tokenId: e.tokenId });
+        }
       } else {
         acc[e.compressedPkd][e.ercAddress].push({ balance: e.balance, tokenId: e.tokenId });
       }
