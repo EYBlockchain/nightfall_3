@@ -1,7 +1,7 @@
 {
-  "name": "proposer",
+  "name": "User",
   "version": "1.0.0",
-  "description": "'makes a container with proposer functionality'",
+  "description": "'makes a container with user functionality'",
   "main": "index.js",
   "scripts": {
     "prestart": "./pre-start-script.sh",
