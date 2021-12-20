@@ -144,7 +144,7 @@ function printBalances(balances, type) {
   for (const compressedPkd in balances) {
     const table = new Table({ head: ['ERC Contract Address', `${type} Layer 2 Balance`] });
     Object.keys(balances[compressedPkd]).forEach(ercAddress =>
-      table.push({ [ercAddress]: balances[compressedPkd][ercAddress] }),
+      table.push({ [ercAddress]: balances[compressedPkd][ercAddress][0]}),
     );
     console.log(chalk.yellow(`${type} Balances of user ${compressedPkd}`));
     console.log(table.toString());

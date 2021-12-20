@@ -30,10 +30,12 @@ router.get('/salt', async (req, res, next) => {
   }
 });
 
-router.get('/balance', async (req, res, next) => {
-  logger.debug('commitment/balance endpoint received GET');
+router.post('/balance', async (req, res, next) => {
+  logger.debug('commitment/balance endpoint received POST');
   try {
-    const balance = await getWalletBalance();
+    const { compressedPkd, ercList } = req.body;
+    logger.debug(`Details requested with compressedPkd ${compressedPkd} and ercList ${ercList}`);
+    const balance = await getWalletBalance(compressedPkd, ercList);
     res.json({ balance });
   } catch (err) {
     logger.error(err);
@@ -42,7 +44,7 @@ router.get('/balance', async (req, res, next) => {
 });
 
 router.post('/balance-details', async (req, res, next) => {
-  logger.debug('commitment/balance details endpoint received GET');
+  logger.debug('commitment/balance details endpoint received POST');
   try {
     const { compressedPkd, ercList } = req.body;
     const balance = await getWalletBalanceDetails(compressedPkd, ercList);
@@ -53,10 +55,12 @@ router.post('/balance-details', async (req, res, next) => {
   }
 });
 
-router.get('/pending-deposit', async (req, res, next) => {
-  logger.debug('commitment/pending-deposit endpoint received GET');
+router.post('/pending-deposit', async (req, res, next) => {
+  logger.debug('commitment/pending-deposit endpoint received POST');
   try {
-    const balance = await getWalletPendingDepositBalance();
+    const { compressedPkd, ercList } = req.body;
+    logger.debug(`Details requested with compressedPkd ${compressedPkd} and ercList ${ercList}`);
+    const balance = await getWalletPendingDepositBalance(compressedPkd, ercList);
     res.json({ balance });
   } catch (err) {
     logger.error(err);
@@ -64,10 +68,12 @@ router.get('/pending-deposit', async (req, res, next) => {
   }
 });
 
-router.get('/pending-spent', async (req, res, next) => {
-  logger.debug('commitment/pending-spent endpoint received GET');
+router.post('/pending-spent', async (req, res, next) => {
+  logger.debug('commitment/pending-spent endpoint received POST');
   try {
-    const balance = await getWalletPendingSpentBalance();
+    const { compressedPkd, ercList } = req.body;
+    logger.debug(`Details requested with compressedPkd ${compressedPkd} and ercList ${ercList}`);
+    const balance = await getWalletPendingSpentBalance(compressedPkd, ercList);
     res.json({ balance });
   } catch (err) {
     logger.error(err);

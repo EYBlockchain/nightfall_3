@@ -51,7 +51,7 @@ ethAccount2Params = {
 
 tokens = {
   "erc20": "0xf05e9fb485502e5a93990c714560b7ce654173c3",
-  "erc1155": "0x4f3c4f8d4575cf73c2faf9f36cc505e19e65b9c0",
+  "erc1155": "0xf7dd7e7effc870c6c7ab0651018a93b79bde72a2",
   "erc721": "0x4f3c4f8d4575cf73c2faf9f36cc505e19e65b9c0",
 }
 

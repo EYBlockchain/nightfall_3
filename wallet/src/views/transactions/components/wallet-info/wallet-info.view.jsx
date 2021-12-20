@@ -1,7 +1,8 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Table, Button, Container, Icon } from 'semantic-ui-react';
+import { Table, Button, Container, Icon, Accordion } from 'semantic-ui-react';
 import PropTypes from 'prop-types';
+import * as Nf3 from 'nf3';
 import {
   addToken,
   selectToken,
@@ -49,17 +50,31 @@ function WalletInfo({
     setRemoveTokenEnable(!removeTokenEnable);
   };
 
-  function setActiveRow(id) {
-    if (id !== token.activeTokenRowId) {
-      onSelectToken(id);
+  function setActiveRow(id, tokenId) {
+    // set active row if token Ids are different, token Address are different,
+    // or if tokenId is equal to active, but address is different
+    //  (different ERC1155 token with same token Id)
+    if (
+      tokenId !== token.activeTokenId ||
+      id !== token.activeTokenRowId ||
+      (id !== token.activeTokenRowId && tokenId === token.activeTokenId)
+    ) {
+      onSelectToken(id, tokenId);
       if (removeTokenEnable) {
-        onDeleteToken(login.nf3.zkpKeys.compressedPkd, id);
+        onDeleteToken(login.nf3.zkpKeys.compressedPkd, id, tokenId);
         toggleTokenSelected();
       }
     } else {
-      onUnselectToken();
+      onUnselectToken(true);
     }
     reload();
+  }
+
+  function renderItemCaret(tokenAddress) {
+    if (token.detailedErc1155.includes(tokenAddress)) {
+      return <Icon name="caret down" />;
+    }
+    return <Icon name="caret right" />;
   }
 
   function renderRowTable() {
@@ -69,34 +84,79 @@ function WalletInfo({
       const l2BalanceId = `l2 balance${item.tokenAddress}`;
       const pendingDepositId = `pending deposit${item.tokenAddress}`;
       const pendingTransferredOutId = `pending transferred out${item.tokenAddress}`;
-      return (
-        <Table.Row
-          key={item.tokenAddress}
-          active={item.tokenAddress === token.activeTokenRowId}
-          onClick={() => {
-            setActiveRow(item.tokenAddress);
-          }}
-        >
-          <Table.Cell colSpan="4" title={item.tokenAddress} id="address">
-            {item.tokenAddress}
-          </Table.Cell>
-          <Table.Cell colSpan="1" title={item.tokenType} id={tokenTypeId}>
-            {item.tokenType}
-          </Table.Cell>
-          <Table.Cell colSpan="1" title={item.tokenBalanceL1} id={l1BalanceId}>
-            {item.tokenBalanceL1}
-          </Table.Cell>
-          <Table.Cell colSpan="1" title={item.tokenBalanceL2} id={l2BalanceId}>
-            {item.tokenBalanceL2}
-          </Table.Cell>
-          <Table.Cell colSpan="1" title={item.tokenBalanceL2} id={pendingDepositId}>
-            {item.tokenPendingDepositL2}
-          </Table.Cell>
-          <Table.Cell colSpan="1" title={item.tokenBalanceL2} id={pendingTransferredOutId}>
-            {item.tokenPendingSpentL2}
-          </Table.Cell>
-        </Table.Row>
-      );
+      const itemRows = [];
+      if (item.tokenType !== Nf3.Constants.TOKEN_TYPE.ERC1155)
+        itemRows.push(
+          <Table.Row
+            key={item.tokenAddress}
+            active={item.tokenAddress === token.activeTokenRowId}
+            onClick={() => {
+              setActiveRow(item.tokenAddress, null);
+            }}
+          >
+            <Table.Cell colSpan="4" title={item.tokenAddress} id="address">
+              {item.tokenAddress}
+            </Table.Cell>
+            <Table.Cell colSpan="1" title={item.tokenType} id={tokenTypeId}>
+              {item.tokenType}
+            </Table.Cell>
+            <Table.Cell colSpan="1" title={item.tokenBalanceL1} id={l1BalanceId}>
+              {item.tokenBalanceL1}
+            </Table.Cell>
+            <Table.Cell colSpan="1" title={item.tokenBalanceL2} id={l2BalanceId}>
+              {item.tokenBalanceL2}
+            </Table.Cell>
+            <Table.Cell colSpan="1" title={item.tokenBalanceL2} id={pendingDepositId}>
+              {item.tokenPendingDepositL2}
+            </Table.Cell>
+            <Table.Cell colSpan="1" title={item.tokenBalanceL2} id={pendingTransferredOutId}>
+              {item.tokenPendingSpentL2}
+            </Table.Cell>
+          </Table.Row>,
+        );
+      else {
+        // main row
+        itemRows.push(
+          <Table.Row
+            key={item.tokenAddress}
+            active={item.tokenAddress === token.activeTokenRowId && token.activeTokenId === null}
+            onClick={() => {
+              setActiveRow(item.tokenAddress, null);
+            }}
+          >
+            <Table.Cell colSpan="4" title={item.tokenAddress} id="address">
+              {renderItemCaret(item.tokenAddress)}
+              {item.tokenAddress}
+            </Table.Cell>
+            <Table.Cell colSpan="1" title={item.tokenType} id={tokenTypeId}>
+              {item.tokenType}
+            </Table.Cell>
+          </Table.Row>,
+        );
+        // Auxiliary rows
+        if (token.detailedErc1155.includes(item.tokenAddress)) {
+          for (let idx = 0; idx < item.tokenErc1155Details.length; idx++) {
+            itemRows.push(
+              <Table.Row
+                key={item.tokenErc1155Details[idx].tokenId}
+                active={item.tokenErc1155Details[idx].tokenId === token.activeTokenId}
+                onClick={() => {
+                  setActiveRow(item.tokenAddress, item.tokenErc1155Details[idx].tokenId);
+                }}
+              >
+                <Table.Cell colSpan="1"></Table.Cell>
+                <Table.Cell colSpan="1">{item.tokenErc1155Details[idx].tokenId}</Table.Cell>
+                <Table.Cell colSpan="3"></Table.Cell>
+                <Table.Cell colSpan="1">{item.tokenErc1155Details[idx].l1Balance}</Table.Cell>
+                <Table.Cell colSpan="1">{item.tokenErc1155Details[idx].l2Balance}</Table.Cell>
+                <Table.Cell colSpan="1">{item.tokenErc1155Details[idx].pendingDeposit}</Table.Cell>
+                <Table.Cell colSpan="1">{item.tokenErc1155Details[idx].pendingSpent}</Table.Cell>
+              </Table.Row>,
+            );
+          }
+        }
+      }
+      return itemRows;
     });
     return rows;
   }
@@ -108,27 +168,24 @@ function WalletInfo({
     return () => clearInterval(retrieveBalance);
   }, []);
 
-  const handleOnTokenAddSubmit = (tokenName, tokenType, tokenAddress) => {
-    onAddToken(
-      login.nf3.zkpKeys.compressedPkd,
-      tokenAddress.toLowerCase(),
+  const handleOnTokenAddSubmit = (tokenName, tokenType, tokenAddress, tokenErc1155Details) => {
+    const tokenInfo = {
+      tokenId: '0x0',
+      balance: '0',
+      decimals: 0,
+      tokenAddress: tokenAddress.toLowerCase(),
       tokenType,
-      '0x0',
-      '0x0',
       tokenName,
-      '0',
-      '0',
-      '0',
-      '0',
-    );
+      tokenErc1155Details,
+    };
+    onAddToken(login.nf3.zkpKeys.compressedPkd, tokenInfo);
   };
-
   const toggleModalTokenAdd = () => {
     setModalTokenAddEnable(!modalTokenAddEnable);
   };
 
   const removeToken = () => {
-    onUnselectToken();
+    onUnselectToken(false);
     toggleTokenSelected();
   };
 
@@ -162,7 +219,7 @@ function WalletInfo({
                 onClick={removeToken}
                 primary
                 floated="right"
-                active={removeTokenEnable && token.tokenPool.length}
+                active={removeTokenEnable && token.tokenPool.length > 0}
                 disabled={token.tokenPool.length === 0}
               >
                 <Icon name="minus" /> Remove Token
@@ -222,35 +279,11 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
-  onSelectToken: tokenRowId => dispatch(selectToken(tokenRowId)),
-  onUnselectToken: () => dispatch(unselectToken()),
-  onAddToken: (
-    compressedPkd,
-    tokenAddress,
-    tokenType,
-    tokenId,
-    l2TokenId,
-    tokenName,
-    l1Balance,
-    l2Balance,
-    l2PendingDeposit,
-    l2PendingSpent,
-  ) =>
-    dispatch(
-      addToken(
-        compressedPkd,
-        tokenAddress,
-        tokenType,
-        tokenId,
-        l2TokenId,
-        tokenName,
-        l1Balance,
-        l2Balance,
-        l2PendingDeposit,
-        l2PendingSpent,
-      ),
-    ),
-  onDeleteToken: (compressedPkd, tokenRowId) => dispatch(deleteToken(compressedPkd, tokenRowId)),
+  onSelectToken: (tokenRowId, tokenId) => dispatch(selectToken(tokenRowId, tokenId)),
+  onUnselectToken: removeFromDisplayedDetails => dispatch(unselectToken(removeFromDisplayedDetails)),
+  onAddToken: (compressedPkd, tokenInfo) => dispatch(addToken(compressedPkd, tokenInfo)),
+  onDeleteToken: (compressedPkd, tokenRowId, tokenId) =>
+    dispatch(deleteToken(compressedPkd, tokenRowId, tokenId)),
   onLoadTokens: initTokens => dispatch(tokensLoad(initTokens)),
 });
 

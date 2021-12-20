@@ -137,8 +137,8 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
   if (transactions.txType === '') return null;
   const tokenIdPool =
     transactions.txType === Nf3.Constants.TX_TYPES.DEPOSIT
-      ? tokenInfo.tokenId
-      : tokenInfo.l2TokenId;
+      ? tokenInfo.tokenIdL1
+      : tokenInfo.tokenIdL2;
   return (
     <Modal open={transactions.modalTx}>
       <Modal.Header>{transactions.txType.toUpperCase()}</Modal.Header>

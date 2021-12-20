@@ -202,7 +202,9 @@ export async function markNullifiedOnChain(
 }
 
 // function to get the balance of commitments for each ERC address
-export async function getWalletBalance() {
+export async function getWalletBalance(compressedPkd, ercList) {
+  let ercAddressList = ercList || [];
+  ercAddressList = ercAddressList.map(e => e.toUpperCase());
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const query = { isNullified: false, isOnChain: { $gte: 0 } };
@@ -226,23 +228,38 @@ export async function getWalletBalance() {
       compressedPkd: e.preimage.compressedPkd,
       tokenId: !!BigInt(e.preimage.tokenId),
       value: Number(BigInt(e.preimage.value)),
+      id: Number(BigInt(e.preimage.tokenId)),
     }))
-    .filter(e => e.tokenId || e.value > 0) // there should be no commitments with tokenId and value of ZERO
+    .filter(
+      e =>
+        (e.tokenId || e.value > 0) &&
+        (compressedPkd === null || e.compressedPkd === compressedPkd) &&
+        (ercAddressList.length === 0 || ercAddressList.includes(e.ercAddress.toUpperCase())),
+    )
     .map(e => ({
       compressedPkd: e.compressedPkd,
       ercAddress: e.ercAddress,
       balance: e.tokenId ? 1 : e.value,
+      tokenId: e.id,
     }))
     .reduce((acc, e) => {
       if (!acc[e.compressedPkd]) acc[e.compressedPkd] = {};
-      if (!acc[e.compressedPkd][e.ercAddress]) acc[e.compressedPkd][e.ercAddress] = 0;
-      acc[e.compressedPkd][e.ercAddress] += e.balance;
+      if (!acc[e.compressedPkd][e.ercAddress]) acc[e.compressedPkd][e.ercAddress] = [0];
+      acc[e.compressedPkd][e.ercAddress][0] += e.balance;
+      const idx = acc[e.compressedPkd][e.ercAddress].findIndex(el => el.tokenId === e.tokenId);
+      if (idx === -1) {
+        acc[e.compressedPkd][e.ercAddress].push({ balance: e.balance, tokenId: e.tokenId });
+      } else {
+        acc[e.compressedPkd][e.ercAddress][idx].balance += e.balance;
+      }
       return acc;
     }, {});
 }
 
 // function to get the balance of pending deposits commitments for each ERC address
-export async function getWalletPendingDepositBalance() {
+export async function getWalletPendingDepositBalance(compressedPkd, ercList) {
+  let ercAddressList = ercList || [];
+  ercAddressList = ercAddressList.map(e => e.toUpperCase());
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const query = { isDeposited: true, isNullified: false, isOnChain: { $eq: -1 } };
@@ -254,8 +271,8 @@ export async function getWalletPendingDepositBalance() {
   };
   const wallet = await db.collection(COMMITMENTS_COLLECTION).find(query, options).toArray();
   // the below is a little complex.  First we extract the ercAddress, tokenId and value
-  // from the preimage.  Then we format them nicely. We don't care about the value of the
-  // tokenId, other than if it's zero or not (indicating the token type). Then we filter
+  // from the preimage.  Then we format them nicely.
+  // Then we filter
   // any commitments of zero value and tokenId (meaningless commitments), then we
   // work out the balance contribution of each commitment  - a 721 token has no value field in the
   // commitment but each 721 token counts as a balance of 1. Then finally add up the individual
@@ -266,23 +283,38 @@ export async function getWalletPendingDepositBalance() {
       compressedPkd: e.preimage.compressedPkd,
       tokenId: !!BigInt(e.preimage.tokenId),
       value: Number(BigInt(e.preimage.value)),
+      id: Number(BigInt(e.preimage.tokenId)),
     }))
-    .filter(e => e.tokenId || e.value > 0) // there should be no commitments with tokenId and value of ZERO
+    .filter(
+      e =>
+        (e.tokenId || e.value > 0) &&
+        (compressedPkd === null || e.compressedPkd === compressedPkd) &&
+        (ercAddressList.length === 0 || ercAddressList.includes(e.ercAddress.toUpperCase())),
+    )
     .map(e => ({
       compressedPkd: e.compressedPkd,
       ercAddress: e.ercAddress,
       balance: e.tokenId ? 1 : e.value,
+      tokenId: e.id,
     }))
     .reduce((acc, e) => {
       if (!acc[e.compressedPkd]) acc[e.compressedPkd] = {};
-      if (!acc[e.compressedPkd][e.ercAddress]) acc[e.compressedPkd][e.ercAddress] = 0;
-      acc[e.compressedPkd][e.ercAddress] += e.balance;
+      if (!acc[e.compressedPkd][e.ercAddress]) acc[e.compressedPkd][e.ercAddress] = [0];
+      acc[e.compressedPkd][e.ercAddress][0] += e.balance;
+      const idx = acc[e.compressedPkd][e.ercAddress].findIndex(el => el.tokenId === e.tokenId);
+      if (idx === -1) {
+        acc[e.compressedPkd][e.ercAddress].push({ balance: e.balance, tokenId: e.tokenId });
+      } else {
+        acc[e.compressedPkd][e.ercAddress][idx].balance += e.balance;
+      }
       return acc;
     }, {});
 }
 
 // function to get the balance of pending spent commitments from transfer and withdraw for each ERC address
-export async function getWalletPendingSpentBalance() {
+export async function getWalletPendingSpentBalance(compressedPkd, ercList) {
+  let ercAddressList = ercList || [];
+  ercAddressList = ercAddressList.map(e => e.toUpperCase());
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const query = { isNullified: true, isNullifiedOnChain: { $eq: -1 } };
@@ -306,17 +338,30 @@ export async function getWalletPendingSpentBalance() {
       compressedPkd: e.preimage.compressedPkd,
       tokenId: !!BigInt(e.preimage.tokenId),
       value: Number(BigInt(e.preimage.value)),
+      id: Number(BigInt(e.preimage.tokenId)),
     }))
-    .filter(e => e.tokenId || e.value > 0) // there should be no commitments with tokenId and value of ZERO
+    .filter(
+      e =>
+        (e.tokenId || e.value > 0) &&
+        (compressedPkd === null || e.compressedPkd === compressedPkd) &&
+        (ercAddressList.length === 0 || ercAddressList.includes(e.ercAddress.toUpperCase())),
+    )
     .map(e => ({
       compressedPkd: e.compressedPkd,
       ercAddress: e.ercAddress,
       balance: e.tokenId ? 1 : e.value,
+      tokenId: e.id,
     }))
     .reduce((acc, e) => {
       if (!acc[e.compressedPkd]) acc[e.compressedPkd] = {};
-      if (!acc[e.compressedPkd][e.ercAddress]) acc[e.compressedPkd][e.ercAddress] = 0;
-      acc[e.compressedPkd][e.ercAddress] += e.balance;
+      if (!acc[e.compressedPkd][e.ercAddress]) acc[e.compressedPkd][e.ercAddress] = [0];
+      acc[e.compressedPkd][e.ercAddress][0] += e.balance;
+      const idx = acc[e.compressedPkd][e.ercAddress].findIndex(el => el.tokenId === e.tokenId);
+      if (idx === -1) {
+        acc[e.compressedPkd][e.ercAddress].push({ balance: e.balance, tokenId: e.tokenId });
+      } else {
+        acc[e.compressedPkd][e.ercAddress][idx].balance += e.balance;
+      }
       return acc;
     }, {});
 }
@@ -342,15 +387,6 @@ export async function getWalletBalanceDetails(compressedPkd, ercList) {
   // work out the balance contribution of each commitment  - a 721 token has no value field in the
   // commitment but each 721 token counts as a balance of 1. Then finally add up the individual
   // commitment balances to get a balance for each erc address.
-  const res1 = wallet.map(e => ({
-    ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
-    compressedPkd: e.preimage.compressedPkd,
-    tokenId: !!BigInt(e.preimage.tokenId),
-    value: Number(BigInt(e.preimage.value)),
-    id: Number(BigInt(e.preimage.tokenId)),
-  }));
-  console.log('RES: ', res1);
-
   const res = wallet
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length

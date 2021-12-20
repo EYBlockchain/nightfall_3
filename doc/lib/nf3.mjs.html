@@ -727,7 +727,7 @@ class Nf3 {
   value of each propery is the number of tokens originating from that contract.
   */
   async getLayer2Balances() {
-    const res = await axios.get(`${this.clientBaseUrl}/commitment/balance`);
+    const res = await axios.post(`${this.clientBaseUrl}/commitment/balance`);
     return res.data.balance;
   }
 

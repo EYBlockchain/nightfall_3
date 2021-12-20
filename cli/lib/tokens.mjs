@@ -191,7 +191,11 @@ async function getERCInfo(ercAddress, ethereumAddress, provider, options) {
 
       await Promise.all(
         tokenIdsEvents.map(async Id => {
-          const amount = await ercContract.methods.balanceOf(ethereumAddress, Id).call();
+          let amount = await ercContract.methods.balanceOf(ethereumAddress, Id).call();
+          if (toEth) {
+            decimals = await getDecimals(ercAddress, TOKEN_TYPE.ERC1155, provider);
+            amount = fromBaseUnit(amount, decimals);
+          }
           tokenIds.push({ tokenId: Id, amount });
         }),
       );

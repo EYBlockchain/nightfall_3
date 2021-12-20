@@ -704,12 +704,19 @@ class Nf3 {
   Returns the balance of tokens held in layer 2
   @method
   @async
+  @param {Array} ercList - list of erc contract addresses to filter.
+  @param {Boolean} filterByCompressedPkd - flag to indicate if request is filtered 
+  ones compressed pkd
   @returns {Promise} This promise resolves into an object whose properties are the
   addresses of the ERC contracts of the tokens held by this account in Layer 2. The
   value of each propery is the number of tokens originating from that contract.
   */
-  async getLayer2Balances() {
-    const res = await axios.get(`${this.clientBaseUrl}/commitment/balance`);
+  async getLayer2Balances(ercList, filterByCompressedPkd) {
+    const params = {
+      compressedPkd: filterByCompressedPkd === true ? this.zkpKeys.compressedPkd : null,
+      ercList,
+    };
+    const res = await axios.post(`${this.clientBaseUrl}/commitment/balance`, params);
     return res.data.balance;
   }
 
@@ -734,12 +741,19 @@ class Nf3 {
   Returns the balance of tokens held in layer 2
   @method
   @async
+  @param {Array} ercList - list of erc contract addresses to filter.
+  @param {Boolean} filterByCompressedPkd - flag to indicate if request is filtered 
+  ones compressed pkd
   @returns {Promise} This promise resolves into an object whose properties are the
   addresses of the ERC contracts of the tokens held by this account in Layer 2. The
   value of each propery is the number of tokens pending deposit from that contract.
   */
-  async getLayer2PendingDepositBalances() {
-    const res = await axios.get(`${this.clientBaseUrl}/commitment/pending-deposit`);
+  async getLayer2PendingDepositBalances(ercList, filterByCompressedPkd) {
+    const params = {
+      compressedPkd: filterByCompressedPkd === true ? this.zkpKeys.compressedPkd : null,
+      ercList,
+    };
+    const res = await axios.post(`${this.clientBaseUrl}/commitment/pending-deposit`, params);
     return res.data.balance;
   }
 
@@ -747,13 +761,20 @@ class Nf3 {
   Returns the balance of tokens held in layer 2
   @method
   @async
+  @param {Array} ercList - list of erc contract addresses to filter.
+  @param {Boolean} filterByCompressedPkd - flag to indicate if request is filtered 
+  ones compressed pkd
   @returns {Promise} This promise resolves into an object whose properties are the
   addresses of the ERC contracts of the tokens held by this account in Layer 2. The
   value of each propery is the number of tokens pending spent (transfer & withdraw)
   from that contract.
   */
-  async getLayer2PendingSpentBalances() {
-    const res = await axios.get(`${this.clientBaseUrl}/commitment/pending-spent`);
+  async getLayer2PendingSpentBalances(ercList, filterByCompressedPkd) {
+    const params = {
+      compressedPkd: filterByCompressedPkd === true ? this.zkpKeys.compressedPkd : null,
+      ercList,
+    };
+    const res = await axios.post(`${this.clientBaseUrl}/commitment/pending-spent`, params);
     return res.data.balance;
   }
 
