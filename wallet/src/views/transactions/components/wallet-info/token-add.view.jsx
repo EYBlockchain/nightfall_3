@@ -91,7 +91,6 @@ export function TokenAddModal({
       }
       const tokenFound = token.tokenPool.find(el => el.tokenName === tokenName.value);
       if (!tokenFound || tokenFound.tokenErc1155Details.filter(el => el.tokenId === value).length) {
-        console.log("ERERER", tokenFound)
         return setTokenId({ value: '', error: duplicatedError });
       }
     }
@@ -172,7 +171,13 @@ export function TokenAddModal({
       }
     }
 
-    handleOnTokenAddSubmit(tokenName.value, tokenType, tokenAddress.value, tokenErc1155Details);
+    handleOnTokenAddSubmit(
+      tokenName.value,
+      tokenType,
+      tokenAddress.value,
+      tokenErc1155Details,
+      tokenBalance,
+    );
     setTokenType('');
     setTokenAddress({ value: '', error: null });
     setAddTokenIdEnable(false);

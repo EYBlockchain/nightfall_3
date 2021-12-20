@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Table, Button, Container, Icon, Accordion } from 'semantic-ui-react';
+import { Table, Button, Container, Icon } from 'semantic-ui-react';
 import PropTypes from 'prop-types';
 import * as Nf3 from 'nf3';
 import {
@@ -280,7 +280,8 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = dispatch => ({
   onSelectToken: (tokenRowId, tokenId) => dispatch(selectToken(tokenRowId, tokenId)),
-  onUnselectToken: removeFromDisplayedDetails => dispatch(unselectToken(removeFromDisplayedDetails)),
+  onUnselectToken: removeFromDisplayedDetails =>
+    dispatch(unselectToken(removeFromDisplayedDetails)),
   onAddToken: (compressedPkd, tokenInfo) => dispatch(addToken(compressedPkd, tokenInfo)),
   onDeleteToken: (compressedPkd, tokenRowId, tokenId) =>
     dispatch(deleteToken(compressedPkd, tokenRowId, tokenId)),

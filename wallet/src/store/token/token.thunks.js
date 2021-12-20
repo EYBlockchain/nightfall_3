@@ -71,7 +71,7 @@ const mergeTokens = (tokens1, tokens2) => {
   const tokenPool = [...tokens2].map(token => {
     const obj = { ...token };
     obj.tokenBalanceL2 = '0';
-    obj.tokenName=token.tokenName;
+    obj.tokenName = token.tokenName;
     obj.tokenPendingDepositL2 = '0';
     obj.tokenPendingSpentL2 = '0';
     obj.tokenDetailsL2 = {
@@ -103,7 +103,7 @@ const mergeTokens = (tokens1, tokens2) => {
 const mergeErc1155Details = details => {
   // map L1 details
   const tokenInfo = { ...details };
-  if (!tokenInfo.tokenErc1155Details){
+  if (!tokenInfo.tokenErc1155Details) {
     tokenInfo.tokenErc1155Details = [];
   }
 

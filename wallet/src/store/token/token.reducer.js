@@ -1,5 +1,4 @@
 /* ignore unused exports */
-import * as Nf3 from 'nf3';
 import { tokenActionTypes } from './token.actions';
 import * as Storage from '../../utils/lib/local-storage';
 
