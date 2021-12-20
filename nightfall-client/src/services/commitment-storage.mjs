@@ -34,6 +34,7 @@ export async function storeCommitment(commitment, nsk) {
     nullifier: nullifierHash,
     blockNumber: -1,
   };
+  logger.debug(`Storing commitment ${data._id}`);
   // a chain reorg may cause an attempted overwrite. We should allow this, hence
   // the use of replaceOne.
   return db.collection(COMMITMENTS_COLLECTION).insertOne(data);

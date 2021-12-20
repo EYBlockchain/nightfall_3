@@ -40,6 +40,7 @@ async function blockProposedEventHandler(data) {
       (transaction.transactionType === '1' || transaction.transactionType === '2') &&
       (await countCommitments(nonZeroCommitments)) === 0
     ) {
+      let keysTried = 0;
       ivks.forEach((key, i) => {
         // decompress the secrets first and then we will decryp t the secrets from this
         const decompressedSecrets = Secrets.decompressSecrets(transaction.compressedSecrets);
@@ -50,14 +51,26 @@ async function blockProposedEventHandler(data) {
             nonZeroCommitments[0],
           );
           if (Object.keys(commitment).length === 0)
-            logger.info("This encrypted message isn't for this recipient");
+            logger.info(
+              `This encrypted message isn't for recipient ${JSON.stringify(
+                key,
+                null,
+                2,
+              )}, keys tried = ${keysTried++}`,
+            );
           else {
             // console.log('PUSHED', commitment, 'nsks', nsks[i]);
             storeCommitments.push(storeCommitment(commitment, nsks[i]));
           }
         } catch (err) {
           logger.info(err);
-          logger.info("This encrypted message isn't for this recipient");
+          logger.info(
+            `*This encrypted message isn't for recipient ${JSON.stringify(
+              key,
+              null,
+              2,
+            )}, keys tried = ${keysTried++}`,
+          );
         }
       });
     }
