@@ -109,7 +109,7 @@ function tokenReducer(state = initialState, action) {
         ...state,
         activeTokenRowId: action.payload.activeTokenRowId,
         activeTokenId: action.payload.activeTokenId,
-        detailedErc1155: state.detailedErc1155.includes(action.payload.activeTokenRowId) 
+        detailedErc1155: state.detailedErc1155.includes(action.payload.activeTokenRowId)
           ? [...state.detailedErc1155]
           : [...state.detailedErc1155, action.payload.activeTokenRowId],
       };

@@ -39,7 +39,10 @@ function txInstantWithdrawSubmit(withdrawTransactionHash, fee) {
 }
 
 function txSubmit(txParams) {
-  const tokenAmountWei = Nf3.Units.toBaseUnit(txParams.tokenAmount, txParams.tokenDecimals).toString();
+  const tokenAmountWei = Nf3.Units.toBaseUnit(
+    txParams.tokenAmount,
+    txParams.tokenDecimals,
+  ).toString();
   // TODO: offchain needs to be a value from form
   const offchain = false;
 
