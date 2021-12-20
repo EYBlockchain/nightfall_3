@@ -33,8 +33,8 @@ const { writeFile } = jsonfile;
 export default async function verify(
   vk,
   proof,
-  provingScheme = 'gm17',
-  backend = 'ark',
+  provingScheme = 'g16',
+  backend = 'bellman',
   curve = 'bn128',
 ) {
   // we've provided a json proof and a verifying key but Zokrates needs to read

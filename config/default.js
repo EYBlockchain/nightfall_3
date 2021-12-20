@@ -29,13 +29,43 @@ module.exports = {
     process.env.BLOCKCHAIN_URL ||
     `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`,
   USE_INFURA: process.env.USE_INFURA === 'true',
-  ETH_PRIVATE_KEY: process.env.ETH_PRIVATE_KEY,
+  ETH_PRIVATE_KEY: process.env.ETH_PRIVATE_KEY, // owner's/deployer's private key
+  ETH_ADDRESS: process.env.ETH_ADDRESS,
   OPTIMIST_HOST: process.env.OPTIMIST_HOST || 'optimist',
   OPTIMIST_PORT: process.env.OPTIMIST_PORT || 80,
+  clientBaseUrl: `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`,
+  optimistBaseUrl: `http://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_HTTP_PORT}`,
+  optimistWsUrl: `ws://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_WS_PORT}`,
+  web3WsUrl: `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`,
+  userEthereumSigningKey:
+    process.env.USER_ETHEREUM_SIGNING_KEY ||
+    '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e', // if changed, change associated userEthereumAddresses
+  userAddress: process.env.USER_ADDRESS,
+  UserEthereumAddresses: process.env.USER_ETHEREUM_ADDRESSES
+    ? process.env.USER_ETHEREUM_ADDRESSES.split(',')
+    : [
+        '0x9c8b2276d490141ae1440da660e470e7c0349c63',
+        // '0x4ca4902a6f456b488947074ad4140317c7e21996', // 0xb0fa8745bd6e77a67ec6a27e701971d659937140cc3159d9f85210da3444eb45
+        // '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9', // 0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb
+      ],
+  zkpMnemonic:
+    process.env.ZKP_MNEMONIC ||
+    'hurt labor ketchup seven scan swap dirt brown brush path goat together',
+  proposerEthereumSigningKey:
+    process.env.PROPOSER_ETHEREUM_SIGNING_KEY ||
+    '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
+  user1Pkd: process.env.RECIPIENT_PKD || [
+    '0x193a37cd7973373aceae05d133f3d69ab6e7ef2f4321461173871ec7611244e2',
+    '0x27234a8721e73c9aa160154ee63d2470101fc5fd841221eeb675a91ec2d66e78',
+  ],
+  user2Pkd: process.env.RECIPIENT_PKD || [
+    '0x105651c0c5bb97582b3270e0f5a07ca81410ffd1920e86697efddaec03dccef8',
+    '0x1ac3b61ecba1448e697b23d37efe290fb86554b2f905aaca3a6df59805eca366',
+  ],
   WEB3_OPTIONS: {
-    gas: process.env.GAS || 1000000,
+    gas: process.env.GAS || 8000000,
     gasPrice: process.env.GAS_PRICE || '20000000000',
-    from: process.env.FROM_ADDRESS || undefined,
+    from: process.env.FROM_ADDRESS || process.env.ETH_ADDRESS,
   },
   WEB3_PROVIDER_OPTIONS: {
     clientConfig: {
@@ -51,8 +81,8 @@ module.exports = {
       onTimeout: false,
     },
   },
-  PROVING_SCHEME: process.env.PROVING_SCHEME || 'gm17',
-  BACKEND: process.env.BACKEND || 'libsnark',
+  PROVING_SCHEME: process.env.PROVING_SCHEME || 'g16',
+  BACKEND: process.env.BACKEND || 'bellman',
   CURVE: process.env.CURVE || 'bn128',
   PROOF_QUEUE: 'generate-proof',
   BN128_GROUP_ORDER: 21888242871839275222246405745257275088548364400416034343698204186575808495617n,
@@ -60,10 +90,10 @@ module.exports = {
   TRANSACTIONS_PER_BLOCK: Number(process.env.TRANSACTIONS_PER_BLOCK) || 2,
   PROPOSE_BLOCK_TYPES: [
     '(uint48,address,bytes32,uint256,bytes32)',
-    '(uint64,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[8],uint[4])[]',
+    '(uint64,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[8],uint[4])[]',
   ], // used to encode/decode proposeBlock signature
   SUBMIT_TRANSACTION_TYPES:
-    '(uint64,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[8],uint[4])',
+    '(uint64,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[8],uint[4])',
   RETRIES: Number(process.env.AUTOSTART_RETRIES) || 50,
   NODE_HASHLENGTH: 32,
   ZERO: '0x0000000000000000000000000000000000000000000000000000000000000000',

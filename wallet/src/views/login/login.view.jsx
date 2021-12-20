@@ -11,6 +11,7 @@ import tokens from '../../utils/tokens';
 import CreateWalletModal from './components/create-wallet.view.jsx';
 import { loadWallet, deleteWallet } from '../../store/login/login.actions';
 import { ReactComponent as MetaMaskLogo } from '../../images/metamask.svg';
+import { ReactComponent as PolygonLogo } from '../../images/polygon.svg';
 import { DEFAULT_NF_ADDRESS_INDEX, METAMASK_MESSAGE } from '../../constants.js';
 import tokensLoad from '../../store/token/token.thunks';
 
@@ -81,7 +82,10 @@ function Login({ login, onLoadWallet, onDeleteWallet, onLoadTokens }) {
       }
       await nf3.setzkpKeysFromMnemonic(mnemonic, DEFAULT_NF_ADDRESS_INDEX);
       onLoadWallet(nf3);
-      onLoadTokens(tokens);
+      const tokenPool = Storage.tokensGet(nf3.zkpKeys.compressedPkd);
+      if (!tokenPool) {
+        onLoadTokens(tokens);
+      }
     } catch (err) {
       console.log('Failed', err);
       setModalEnable(false);
@@ -114,13 +118,15 @@ function Login({ login, onLoadWallet, onDeleteWallet, onLoadTokens }) {
       <Header
         as="h1"
         style={{
-          fontSize: '4em',
-          fontWeight: 'normal',
+          fontSize: '2.5em',
+          fontFamily: 'verdana',
+          fontWeight: 'bold',
           marginBottom: 0,
           marginTop: '3em',
         }}
       >
-        Nightfall Client
+        <PolygonLogo width="250px" height="100px" />
+        Nightfall Wallet
       </Header>
       <Divider />
       <h1> Connect with: </h1>

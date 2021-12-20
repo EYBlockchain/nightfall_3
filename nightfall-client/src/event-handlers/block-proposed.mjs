@@ -7,6 +7,7 @@ import {
   storeCommitment,
   countCommitments,
   setSiblingInfo,
+  countTransactionHashes,
 } from '../services/commitment-storage.mjs';
 import getProposeBlockCalldata from '../services/process-calldata.mjs';
 import Secrets from '../classes/secrets.mjs';
@@ -26,7 +27,7 @@ async function blockProposedEventHandler(data) {
   const latestTree = await getLatestTree();
   const blockCommitments = transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat();
 
-  if ((await countCommitments(blockCommitments)) > 0) {
+  if ((await countTransactionHashes(block.transactionHashes)) > 0) {
     await saveBlock({ blockNumber: currentBlockCount, transactionHashL1, ...block });
     await Promise.all(transactions.map(t => saveTransaction({ transactionHashL1, ...t })));
   }
@@ -49,8 +50,10 @@ async function blockProposedEventHandler(data) {
             key,
             nonZeroCommitments[0],
           );
-          if (commitment === {}) logger.info("This encrypted message isn't for this recipient");
+          if (Object.keys(commitment).length === 0)
+            logger.info("This encrypted message isn't for this recipient");
           else {
+            // console.log('PUSHED', commitment, 'nsks', nsks[i]);
             storeCommitments.push(storeCommitment(commitment, nsks[i]));
           }
         } catch (err) {
@@ -59,8 +62,8 @@ async function blockProposedEventHandler(data) {
         }
       });
     }
-    return [
-      Promise.all(storeCommitments),
+    await Promise.all(storeCommitments);
+    return Promise.all([
       markOnChain(nonZeroCommitments, block.blockNumberL2, data.blockNumber, data.transactionHash),
       markNullifiedOnChain(
         nonZeroNullifiers,
@@ -68,7 +71,7 @@ async function blockProposedEventHandler(data) {
         data.blockNumber,
         data.transactionHash,
       ),
-    ];
+    ]);
   });
 
   // await Promise.all(toStore);

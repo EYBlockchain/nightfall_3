@@ -14,7 +14,8 @@ async function setupCircuits() {
 
   // when deploying on infura
   // do serial registration to predict nonce
-  if (config.USE_INFURA) {
+  // or, if we have the owner's private key, sign with that, rather than use an unlocked account
+  if (config.USE_INFURA || config.ETH_PRIVATE_KEY) {
     await Web3.submitRawTransaction(
       (await waitForContract('Proposers')).methods
         .setStateContract(stateInstance.options.address)
