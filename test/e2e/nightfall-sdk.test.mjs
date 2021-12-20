@@ -335,7 +335,8 @@ describe('Testing the Nightfall SDK', () => {
       let balances = await nf3User1.getLayer2Balances();
       let beforePkdBalance = 0;
       try {
-        beforePkdBalance = balances[nf3User1.zkpKeys.compressedPkd][ercAddress];
+        // eslint-disable-next-line prefer-destructuring
+        beforePkdBalance = balances[nf3User1.zkpKeys.compressedPkd][ercAddress][0];
       } catch {
         beforePkdBalance = 0;
       }
@@ -368,7 +369,7 @@ describe('Testing the Nightfall SDK', () => {
         stateBalance += fee * txPerBlock + BLOCK_STAKE;
         eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
         balances = await nf3User1.getLayer2Balances();
-        const afterPkdBalance = balances[nf3User1.zkpKeys.compressedPkd][ercAddress];
+        const afterPkdBalance = balances[nf3User1.zkpKeys.compressedPkd][ercAddress][0];
         if (afterPkdBalance - beforePkdBalance < txPerBlock * value) {
           console.log(
             `      ${
@@ -422,13 +423,13 @@ describe('Testing the Nightfall SDK', () => {
   describe('Balance tests', () => {
     it('should increment the balance after deposit some crypto', async function () {
       let balances = await nf3User1.getLayer2Balances();
-      const currentPkdBalance = balances[nf3User1.zkpKeys.compressedPkd][ercAddress];
+      const currentPkdBalance = balances[nf3User1.zkpKeys.compressedPkd][ercAddress][0];
       // We do txPerBlock deposits of 10 each
       await depositNTransactions(nf3User1, txPerBlock, ercAddress, tokenType, value, tokenId, fee);
       stateBalance += fee * txPerBlock + BLOCK_STAKE;
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
       balances = await nf3User1.getLayer2Balances();
-      const afterPkdBalance = balances[nf3User1.zkpKeys.compressedPkd][ercAddress];
+      const afterPkdBalance = balances[nf3User1.zkpKeys.compressedPkd][ercAddress][0];
       expect(afterPkdBalance - currentPkdBalance).to.be.equal(txPerBlock * value);
     });
 
@@ -438,14 +439,15 @@ describe('Testing the Nightfall SDK', () => {
       stateBalance += fee * txPerBlock + BLOCK_STAKE;
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
       balances = await nf3User1.getLayer2Balances();
-      const currentPkdBalancePkd = balances[nf3User1.zkpKeys.compressedPkd][ercAddress];
+      const currentPkdBalancePkd = balances[nf3User1.zkpKeys.compressedPkd][ercAddress][0];
       let currentPkdBalancePkd2 = 0;
       try {
-        currentPkdBalancePkd2 = balances[nf3User2.zkpKeys.compressedPkd][ercAddress];
+        // eslint-disable-next-line prefer-destructuring
+        currentPkdBalancePkd2 = balances[nf3User2.zkpKeys.compressedPkd][ercAddress][0];
       } catch {
         currentPkdBalancePkd2 = 0;
       }
-      console.log('balances before: ', balances);
+      console.log('balances before: ', balances[0]);
       for (let i = 0; i < txPerBlock; i++) {
         // eslint-disable-next-line no-await-in-loop
         const res = await nf3User1.transfer(
@@ -483,9 +485,9 @@ describe('Testing the Nightfall SDK', () => {
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
       await new Promise(resolve => setTimeout(resolve, 10000));
       balances = await nf3User1.getLayer2Balances();
-      console.log('balances after 2 transfers: ', balances);
-      const afterPkdBalancePkd = balances[nf3User1.zkpKeys.compressedPkd][ercAddress];
-      const afterPkdBalancePkd2 = balances[nf3User2.zkpKeys.compressedPkd][ercAddress];
+      console.log('balances after 2 transfers: ', balances[0]);
+      const afterPkdBalancePkd = balances[nf3User1.zkpKeys.compressedPkd][ercAddress][0];
+      const afterPkdBalancePkd2 = balances[nf3User2.zkpKeys.compressedPkd][ercAddress][0];
       expect(afterPkdBalancePkd - currentPkdBalancePkd).to.be.equal(-txPerBlock * value);
       expect(afterPkdBalancePkd2 - currentPkdBalancePkd2).to.be.equal(txPerBlock * value);
     });
