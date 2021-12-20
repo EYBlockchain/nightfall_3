@@ -52,11 +52,7 @@ async function blockProposedEventHandler(data) {
           );
           if (Object.keys(commitment).length === 0)
             logger.info(
-              `This encrypted message isn't for recipient ${JSON.stringify(
-                key,
-                null,
-                2,
-              )}, keys tried = ${keysTried++}`,
+              `This encrypted message isn't for this recipient, keys tried = ${keysTried++}`,
             );
           else {
             // console.log('PUSHED', commitment, 'nsks', nsks[i]);
@@ -65,11 +61,7 @@ async function blockProposedEventHandler(data) {
         } catch (err) {
           logger.info(err);
           logger.info(
-            `*This encrypted message isn't for recipient ${JSON.stringify(
-              key,
-              null,
-              2,
-            )}, keys tried = ${keysTried++}`,
+            `*This encrypted message isn't for this recipient, keys tried = ${keysTried++}`,
           );
         }
       });
