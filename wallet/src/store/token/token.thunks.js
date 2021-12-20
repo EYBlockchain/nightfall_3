@@ -110,11 +110,11 @@ const mergeErc1155Details = details => {
   // L1 balance
   details.tokenDetailsL1.forEach(el => {
     const l1BalanceIndex = tokenInfo.tokenErc1155Details.findIndex(
-      el2 => el2.tokenId === el.tokenId,
+      el2 => el2.tokenId === el.tokenId.toString(),
     );
     if (l1BalanceIndex === -1) {
       tokenInfo.tokenErc1155Details.push({
-        tokenId: el.tokenId,
+        tokenId: el.tokenId.toString(),
         l1Balance: el.amount,
         l2Balance: '0',
         pendingDeposit: '0',
@@ -128,19 +128,19 @@ const mergeErc1155Details = details => {
   // L2 balance
   details.tokenDetailsL2.l2BalanceDetails.forEach(el => {
     const l2BalanceIndex = tokenInfo.tokenErc1155Details.findIndex(
-      el2 => el2.tokenId === el.tokenId,
+      el2 => el2.tokenId === el.tokenId.toString(),
     );
     if (l2BalanceIndex === -1) {
       tokenInfo.tokenErc1155Details.push({
-        tokenId: el.tokenId,
+        tokenId: el.tokenId.toString(),
         l1Balance: '0',
-        l2Balance: Nf3.Units.fromBaseUnit(el.balance, details.decimals),
+        l2Balance: Nf3.Units.fromBaseUnit(el.balance.toString(), details.decimals),
         pendingDeposit: '0',
         pendingSpent: '0',
       });
     } else {
       tokenInfo.tokenErc1155Details[l2BalanceIndex].l2Balance = Nf3.Units.fromBaseUnit(
-        el.balance,
+        el.balance.toString(),
         details.decimals,
       );
     }
@@ -149,19 +149,19 @@ const mergeErc1155Details = details => {
   // L2 pending deposits
   details.tokenDetailsL2.l2PendingDepositDetails.forEach(el => {
     const l2PendingDepositIndex = tokenInfo.tokenErc1155Details.findIndex(
-      el2 => el2.tokenId === el.tokenId,
+      el2 => el2.tokenId === el.tokenId.toString(),
     );
     if (l2PendingDepositIndex === -1) {
       tokenInfo.tokenErc1155Details.push({
-        tokenId: el.tokenId,
+        tokenId: el.tokenId.toString(),
         l1Balance: '0',
         l2Balance: '0',
-        pendingDeposit: Nf3.Units.fromBaseUnit(el.balance, details.decimals),
+        pendingDeposit: Nf3.Units.fromBaseUnit(el.balance.toString(), details.decimals),
         pendingSpent: '0',
       });
     } else {
       tokenInfo.tokenErc1155Details[l2PendingDepositIndex].pendingDeposit = Nf3.Units.fromBaseUnit(
-        el.balance,
+        el.balance.toString(),
         details.decimals,
       );
     }
@@ -169,19 +169,19 @@ const mergeErc1155Details = details => {
   // L2 pending spent
   details.tokenDetailsL2.l2PendingSpentDetails.forEach(el => {
     const l2PendingSpentIndex = tokenInfo.tokenErc1155Details.findIndex(
-      el2 => el2.tokenId === el.tokenId,
+      el2 => el2.tokenId === el.tokenId.toString(),
     );
     if (l2PendingSpentIndex === -1) {
       tokenInfo.tokenErc1155Details.push({
-        tokenId: el.tokenId,
+        tokenId: el.tokenId.toString(),
         l1Balance: '0',
         l2Balance: '0',
         pendingDeposit: '0',
-        pendingSpent: Nf3.Units.fromBaseUnit(el.balance, details.decimals),
+        pendingSpent: Nf3.Units.fromBaseUnit(el.balance.toString(), details.decimals),
       });
     } else {
       tokenInfo.tokenErc1155Details[l2PendingSpentIndex].pendingSpent = Nf3.Units.fromBaseUnit(
-        el.balance,
+        el.balance.toString(),
         details.decimals,
       );
     }

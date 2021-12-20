@@ -1,7 +1,6 @@
 /* ignore unused exports */
 import * as Nf3 from 'nf3';
 import { TRANSACTION_RETRY_PERIOD, TRANSACTION_MAX_RETRIES } from '../../constants';
-import toBaseUnit from '../../utils/lib/utils';
 import * as txActions from './transactions.actions';
 
 function txInstantWithdrawSubmit(withdrawTransactionHash, fee) {
@@ -40,7 +39,7 @@ function txInstantWithdrawSubmit(withdrawTransactionHash, fee) {
 }
 
 function txSubmit(txParams) {
-  const tokenAmountWei = toBaseUnit(txParams.tokenAmount).toString();
+  const tokenAmountWei = Nf3.Units.toBaseUnit(txParams.tokenAmount, txParams.tokenDecimals).toString();
   // TODO: offchain needs to be a value from form
   const offchain = false;
 

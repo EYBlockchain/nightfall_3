@@ -44,6 +44,7 @@ function tokenReducer(state = initialState, action) {
             tokenPendingDepositL2: action.payload.tokenInfo.tokenPendingDepositL2,
             tokenPendingSpentL2: action.payload.tokenInfo.tokenPendingSpentL2,
             tokenErc1155Details: action.payload.tokenInfo.tokenErc1155Details,
+            tokenDecimals: action.payload.tokenInfo.decimals,
           },
         ];
         Storage.tokensSet(action.payload.compressedPkd, newTokenPool);
@@ -65,6 +66,7 @@ function tokenReducer(state = initialState, action) {
         tokenPendingDepositL2: action.payload.tokenInfo.tokenPendingDepositL2,
         tokenPendingSpentL2: action.payload.tokenInfo.tokenPendingSpentL2,
         tokenErc1155Details: action.payload.tokenInfo.tokenErc1155Details,
+        tokenDecimals: action.payload.tokenInfo.decimals,
       };
       Storage.tokensSet(action.payload.compressedPkd, oldTokenPool);
       return {
@@ -107,7 +109,9 @@ function tokenReducer(state = initialState, action) {
         ...state,
         activeTokenRowId: action.payload.activeTokenRowId,
         activeTokenId: action.payload.activeTokenId,
-        detailedErc1155: [...state.detailedErc1155, action.payload.activeTokenRowId],
+        detailedErc1155: state.detailedErc1155.includes(action.payload.activeTokenRowId) 
+          ? [...state.detailedErc1155]
+          : [...state.detailedErc1155, action.payload.activeTokenRowId],
       };
 
     case tokenActionTypes.TOKEN_UNSELECT:

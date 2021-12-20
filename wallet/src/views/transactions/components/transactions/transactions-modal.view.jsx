@@ -32,6 +32,12 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
     onCancelTx();
   };
 
+  React.useEffect(() => {
+    if (token.activeTokenId !== null) {
+      setTokenId({ value: token.activeTokenId, error: null });
+    }
+  }, [token]);
+
   function getTokenInfo() {
     try {
       const tokenPool = Storage.tokensGet(login.nf3.zkpKeys.compressedPkd);
@@ -66,7 +72,15 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
       content: 'Please, enter a valid tokenId',
       pointing: 'above',
     };
-    if (tokenInfo.tokenType !== Nf3.Constants.TOKEN_TYPE.ERC20 && tokenId.value === 0) {
+    if (tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC1155 && token.activeTokenId) {
+      setTokenId({ value: token.activeTokenId, error: null });
+      return true;
+    }
+    if (tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC20) {
+      setTokenId({ value: 0, error: null });
+      return true;
+    }
+    if (tokenInfo.tokenId === '') {
       setTokenId({ value: 0, error });
       return false;
     }
@@ -99,6 +113,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
             tokenAmount:
               tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC721 ? '0' : tokenAmount,
             fee,
+            tokenDecimals: tokenInfo.tokenDecimals,
             instantWithdrawFee,
           });
         }
@@ -118,6 +133,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
           tokenId: tokenId.value,
           tokenAmount: tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC721 ? '0' : tokenAmount,
           fee,
+          tokenDecimals: tokenInfo.tokenDecimals,
         });
       }
     }
@@ -208,20 +224,24 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
             <Form.Group>
               <Form.Field width={6}>
                 <label> Token Id </label>
-                <Dropdown
-                  control={Input}
-                  selection
-                  id="token-id"
-                  options={
-                    tokenIdPool.length
-                      ? tokenIdPool.map(function (id) {
-                          return { key: id, text: id, value: id };
-                        })
-                      : []
-                  }
-                  onChange={(e, { value }) => setTokenId({ value, error: null })}
-                  error={tokenId.error !== null}
-                />
+                {!token.activeTokenId ? (
+                  <Dropdown
+                    control={Input}
+                    selection
+                    id="token-id"
+                    options={
+                      tokenIdPool.length
+                        ? tokenIdPool.map(function (id) {
+                            return { key: id, text: id, value: id };
+                          })
+                        : []
+                    }
+                    onChange={(e, { value }) => setTokenId({ value, error: null })}
+                    error={tokenId.error !== null}
+                  />
+                ) : (
+                  <input type="text" value={token.activeTokenId} id="token-id" readOnly />
+                )}
               </Form.Field>
             </Form.Group>
           ) : null}
