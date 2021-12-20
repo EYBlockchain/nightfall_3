@@ -709,7 +709,7 @@ describe('Testing the Nightfall SDK', () => {
       const afterPkdBalancePkd = balances[nf3User1.zkpKeys.compressedPkd][erc721Address];
       const afterPkdBalancePkd2 = balances[nf3User2.zkpKeys.compressedPkd][erc721Address];
       expect(afterPkdBalancePkd - beforePkdBalance).to.be.equal(-2);
-      expect(afterPkdBalancePkd2 - beforePkdBalance2).to.be.equal(2); 
+      expect(afterPkdBalancePkd2 - beforePkdBalance2).to.be.equal(2);
     });
 
     it('should decrement the balance after transfer ERC1155 to other wallet and increment the other wallet', async function () {
