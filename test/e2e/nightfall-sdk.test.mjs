@@ -210,7 +210,6 @@ describe('Testing the Nightfall SDK', () => {
       }
       stateBalance += fee + BLOCK_STAKE;
       eventLogs = await waitForEvent(eventLogs, ['blockProposed'], 3);
-
       const balancesAfter = await getERCInfo(
         erc20Address,
         nf3LiquidityProvider.ethereumAddress,
