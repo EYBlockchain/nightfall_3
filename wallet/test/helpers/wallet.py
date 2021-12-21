@@ -138,7 +138,6 @@ def addAndCheckTokenNightfallWallet(driver, findElements, tokenInfo, erc1155Toke
 
 def removeTokenNightfallWallet(driver, findElements, tokenInfo, erc1155TokenId=None):
   if erc1155TokenId:
-     print("EEE", tokenInfo['tokenAddress'])
      sleep(3)
      findElements.element_exist_xpath('//*[@title="' + tokenInfo['tokenAddress'].lower() + '"]').click() # Select token
      sleep(1)
