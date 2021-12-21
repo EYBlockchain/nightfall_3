@@ -158,6 +158,7 @@ describe('Testing the Nightfall SDK', () => {
     // Liquidity provider for instant withdraws
     const emitter = await nf3User1.getInstantWithdrawalRequestedEmitter();
     emitter.on('data', async (withdrawTransactionHash, paidBy, amount) => {
+      console.log(`     Serviced instant-withdrawal request from ${paidBy}, with fee ${amount}`);
       const balancesBefore = await getERCInfo(
         ercAddress,
         nf3LiquidityProvider.ethereumAddress,
@@ -191,7 +192,9 @@ describe('Testing the Nightfall SDK', () => {
       // difference in balance in L1 account to check instant withdraw is ok
       diffBalanceInstantWithdraw = Number(balancesBefore.balance) - Number(balancesAfter.balance);
       logCounts.instantWithdaw += 1;
-      console.log(`     Serviced instant-withdrawal request from ${paidBy}, with fee ${amount}`);
+      console.log(
+        `     Serviced instant-withdrawal request from ${paidBy}, with fee ${amount} (end)`,
+      );
     });
 
     nodeInfo = await web3.eth.getNodeInfo();
