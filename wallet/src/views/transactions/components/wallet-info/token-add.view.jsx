@@ -20,7 +20,6 @@ export function TokenAddModal({
 
   const [tokenBalance, setTokenBalance] = React.useState('');
   const [addTokenIdEnable, setAddTokenIdEnable] = React.useState(false);
-  const [duplicatedErc1155, setDuplicatedErc1155] = React.useState(false);
   const [tokenAddress, setTokenAddress] = React.useState({
     value: '',
     error: null,
@@ -30,28 +29,36 @@ export function TokenAddModal({
     error: null,
   });
 
-  const cancelTokenSubmit = () => {
+  function resetAll() {
     setTokenType('');
     setTokenAddress({ value: '', error: null });
     setTokenName({ value: '', error: null });
     setAddTokenIdEnable(false);
-    setTokenId({ value: '', error: null });
-    setTokenName({ value: '', error: null });
-    setDuplicatedErc1155(false);
     toggleModalTokenAdd();
-  };
+    setTokenId({ value: '', error: null });
+  }
 
   function validateTokenName(value) {
     const errorDuplicate = {
       content: `Duplicated Token name`,
       pointing: 'above',
     };
+
+    const errorDuplicateAddress = {
+      content: `Duplicated Token address`,
+      pointing: 'above',
+    };
+
     const errorEmpty = {
       content: `Empty Token name`,
       pointing: 'above',
     };
+    const errorTokenId = {
+      content: `Invalid Token Id`,
+      pointing: 'above',
+    };
     if (value === '') {
-      return setTokenName({ value: '', error: errorEmpty });
+      return setTokenName({ value, error: errorEmpty });
     }
     const tokenFound = token.tokenPool.find(
       el => el.tokenName.toLowerCase() === value.toLowerCase(),
@@ -60,13 +67,12 @@ export function TokenAddModal({
       setTokenAddress({ value: tokenFound.tokenAddress, error: null });
       setTokenType(tokenFound.tokenType);
       if (tokenFound.tokenType !== Nf3.Constants.TOKEN_TYPE.ERC1155) {
-        setTokenName({ value: '', error: errorDuplicate });
-      } else {
-        setAddTokenIdEnable(true);
-        setDuplicatedErc1155(true);
+        setTokenAddress({ value: tokenFound.tokenAddress, error: errorDuplicateAddress });
+        return setTokenName({ value, error: errorDuplicate });
       }
+      setAddTokenIdEnable(true);
+      setTokenId({ value: '', error: errorTokenId });
     } else {
-      setDuplicatedErc1155(false);
       setAddTokenIdEnable(false);
     }
     return setTokenName({ value, error: null });
@@ -77,15 +83,17 @@ export function TokenAddModal({
       content: `Invalid Token Id`,
       pointing: 'above',
     };
+
     const duplicatedError = {
       content: `Duplicated Token Id`,
       pointing: 'above',
     };
-    if (!/^-?\d+$/.test(value) && !/^0x([A-Fa-f0-9]+)$/.test(value) && value !== '') {
+
+    if (!/^-?\d+$/.test(value) && !/^0x([A-Fa-f0-9]+)$/.test(value)) {
       return setTokenId({ value: '', error });
     }
 
-    if (duplicatedErc1155) {
+    if (addTokenIdEnable) {
       if (value === '') {
         return setTokenId({ value: '', error });
       }
@@ -94,6 +102,7 @@ export function TokenAddModal({
         return setTokenId({ value: '', error: duplicatedError });
       }
     }
+
     return setTokenId({ value, error: null });
   }
   function validateTokenAddress(value) {
@@ -105,8 +114,14 @@ export function TokenAddModal({
       content: `Duplicated ERC Address`,
       pointing: 'above',
     };
+    const errorTokenId = {
+      content: `Invalid Token Id`,
+      pointing: 'above',
+    };
     if (!/^0x([A-Fa-f0-9]{40})$/.test(value)) {
-      return setTokenAddress({ value: '', error });
+      setTokenType('');
+      setAddTokenIdEnable(false);
+      return setTokenAddress({ value, error });
     }
     Nf3.Tokens.getERCInfo(value, nf3.ethereumAddress, nf3.web3, {
       tokenId: 0,
@@ -124,51 +139,40 @@ export function TokenAddModal({
         if (tokenFound) {
           setTokenName({ value: tokenFound.tokenName, error: null });
           if (ercInfo.tokenType !== Nf3.Constants.TOKEN_TYPE.ERC1155) {
-            setTokenAddress({ value: '', error: errorDuplicate });
+            setTokenAddress({ value, error: errorDuplicate });
+            setTokenType('');
+            setTokenName({ value: '', error: null });
+            setAddTokenIdEnable(false);
           } else {
-            setDuplicatedErc1155(true);
+            setTokenId({ value: '', error: errorTokenId });
           }
+        } else {
+          setAddTokenIdEnable(false);
         }
       })
-      .catch(() => setTokenAddress({ value: '', error }));
+      .catch(() => {
+        setTokenType('');
+        setAddTokenIdEnable(false);
+        setTokenName({ value: '', error: null });
+        setTokenAddress({ value, error });
+      });
     return null;
   }
 
   const newTokenSubmit = () => {
-    const errorDuplicate = {
-      content: `Duplicated Token name`,
-      pointing: 'above',
-    };
-    validateTokenAddress(tokenAddress.value);
-    validateTokenName(tokenName.value);
-    validateTokenId(tokenId.value);
     let tokenErc1155Details = [];
-    const tokenFound = token.tokenPool.find(
-      el => el.tokenAddress.toLowerCase() === tokenAddress.value.toLowerCase(),
-    );
-    if (tokenFound) {
-      if (tokenFound.tokenName !== tokenName.value) {
-        setTokenName({ value: '', errorDuplicate });
-        return false;
-      }
-      if (duplicatedErc1155) {
-        if (
-          tokenId.value !== '' &&
-          !tokenFound.tokenErc1155Details.find(el => el.tokenId === tokenId.value.toString())
-        ) {
-          tokenErc1155Details = tokenFound.tokenErc1155Details;
-          tokenErc1155Details.push({
-            tokenId: tokenId.value,
-            l1Balance: '0',
-            l2Balance: '0',
-            pendingDeposit: '0',
-            pendingSpent: '0',
-          });
-        } else {
-          setTokenName({ value: '', errorDuplicate });
-          return false;
-        }
-      }
+    if (addTokenIdEnable) {
+      const tokenFound = token.tokenPool.find(
+        el => el.tokenAddress.toLowerCase() === tokenAddress.value.toLowerCase(),
+      );
+      tokenErc1155Details = tokenFound.tokenErc1155Details;
+      tokenErc1155Details.push({
+        tokenId: tokenId.value,
+        l1Balance: '0',
+        l2Balance: '0',
+        pendingDeposit: '0',
+        pendingSpent: '0',
+      });
     }
 
     handleOnTokenAddSubmit(
@@ -178,13 +182,7 @@ export function TokenAddModal({
       tokenErc1155Details,
       tokenBalance,
     );
-    setTokenType('');
-    setTokenAddress({ value: '', error: null });
-    setAddTokenIdEnable(false);
-    toggleModalTokenAdd();
-    setTokenId({ value: '', error: null });
-    setDuplicatedErc1155(false);
-    setTokenName({ value: '', error: null });
+    resetAll();
     return null;
   };
 
@@ -202,7 +200,13 @@ export function TokenAddModal({
               id="Token Name"
               error={tokenName.error}
             />
-            <Form.Field control={Input} label="Token Type" value={tokenType} readOnly />
+            <Form.Field
+              control={Input}
+              label="Token Type"
+              id="Token Type"
+              value={tokenType}
+              readOnly
+            />
             {addTokenIdEnable ? (
               <Form.Field
                 control={Input}
@@ -225,7 +229,7 @@ export function TokenAddModal({
       </Modal.Content>
       <Modal.Actions>
         <div>
-          <Button floated="left" color="red" onClick={cancelTokenSubmit}>
+          <Button floated="left" color="red" onClick={resetAll}>
             <Icon name="cancel" />
             Cancel
           </Button>
@@ -233,7 +237,10 @@ export function TokenAddModal({
             floated="right"
             color="blue"
             disabled={
-              tokenAddress.error !== null || tokenAddress.value === '' || tokenName.error !== null
+              tokenAddress.error !== null ||
+              tokenAddress.value === '' ||
+              tokenName.error !== null ||
+              tokenId.error !== null
             }
             onClick={newTokenSubmit}
           >

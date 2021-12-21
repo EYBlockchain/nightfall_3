@@ -110,7 +110,9 @@ def getNightfallBalance(findElements, tokenInfo):
 
 def addTokenNightfallWallet(driver, findElements, tokenInfo):
   findElements.element_exist_xpath('//button[text()="Add Token"]').click() # Add Token
+  sleep(3)
   findElements.element_exist_xpath('//*[@id="Token Name"]').send_keys(tokenInfo['tokenName']) # Set Token Name
+  sleep(3)
   findElements.element_exist_xpath('//*[@id="Token Address"]').send_keys(tokenInfo['tokenAddress']) # Set Address
   sleep(3)
   findElements.element_exist_xpath('//button[text()="Submit"]').click() # Submit
@@ -118,9 +120,10 @@ def addTokenNightfallWallet(driver, findElements, tokenInfo):
 def addAndCheckTokenNightfallWallet(driver, findElements, tokenInfo):
   findElements.element_exist_xpath('//button[text()="Add Token"]').click() # Add Token
   findElements.element_exist_xpath('//*[@id="Token Name"]').send_keys(tokenInfo['tokenName']) # Set Token Name
+  sleep(3)
   findElements.element_exist_xpath('//*[@id="Token Address"]').send_keys(tokenInfo['tokenAddress']) # Set Address
   sleep(3)
-  testTokenType = findElements.element_exist_xpath('//*[@id="token-type"]').get_attribute("value") # Read Token Type
+  testTokenType = findElements.element_exist_xpath('//*[@id="Token Type"]').get_attribute("value") # Read Token Type
   if tokenInfo['tokenType'] != '':
     assert(testTokenType.lower() == tokenInfo['tokenType'].lower())
   findElements.element_exist_xpath('//button[text()="Submit"]').click() # Submit
