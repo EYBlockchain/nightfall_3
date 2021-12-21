@@ -1126,7 +1126,6 @@ describe('Testing the Nightfall SDK', () => {
       // now we need to sign the transaction and send it to the blockchain
       // this will only work if we're using Ganache, otherwiise expect failure
       startBalance = await getBalance(nf3User1.ethereumAddress);
-      console.log('STARTBALANCE:', startBalance);
       if (nodeInfo.includes('TestRPC')) {
         let res = await nf3User1.finaliseWithdrawal(withdrawTransactions[0]);
         stateBalance += fee;
@@ -1151,7 +1150,6 @@ describe('Testing the Nightfall SDK', () => {
         this.skip();
       }
       endBalance = await getBalance(nf3User1.ethereumAddress);
-      console.log('ENDBALANCE:', endBalance);
     });
 
     it('should create a passing ERC721 finalise-withdrawal with a time-jump capable test client (because sufficient time has passed)', async function () {
