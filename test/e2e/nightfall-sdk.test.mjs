@@ -163,8 +163,8 @@ describe('Testing the Nightfall SDK', () => {
         nf3LiquidityProvider.ethereumAddress,
         web3,
       );
-      let txDataToSign;
       // approve tokens to be advanced by liquidity provider in the instant withdraw
+      let txDataToSign;
       try {
         txDataToSign = await approve(
           ercAddress,
@@ -173,30 +173,38 @@ describe('Testing the Nightfall SDK', () => {
           tokenType,
           value,
           web3,
-          true,
+          !!nf3LiquidityProvider.ethereumSigningKey,
         );
         if (txDataToSign) {
           await nf3LiquidityProvider.submitTransaction(txDataToSign, ercAddress, 0);
         }
-
         await nf3LiquidityProvider.advanceInstantWithdrawal(withdrawTransactionHash);
+        stateBalance += fee + BLOCK_STAKE;
       } catch (e) {
         console.log(e);
       }
 
       console.log(`     Serviced instant-withdrawal request from ${paidBy}, with fee ${amount}`);
-
       await new Promise(resolve => setTimeout(resolve, 5000));
+      for (let i = 0; i < txPerBlock; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        await nf3User1.transfer(
+          false,
+          ercAddress,
+          tokenType,
+          value,
+          tokenId,
+          nf3User1.zkpKeys.pkd,
+          fee,
+        );
+      }
+      stateBalance += fee + BLOCK_STAKE;
+      eventLogs = await waitForEvent(eventLogs, ['blockProposed'], 3);
       const balancesAfter = await getERCInfo(
         ercAddress,
         nf3LiquidityProvider.ethereumAddress,
         web3,
       );
-
-      while (eventLogs.length > 0) {
-        // eslint-disable-next-line no-await-in-loop
-        await new Promise(resolve => setTimeout(resolve, 3000));
-      }
       // difference in balance in L1 account to check instant withdraw is ok
       diffBalanceInstantWithdraw = Number(balancesBefore.balance) - Number(balancesAfter.balance);
       logCounts.instantWithdraw += 1;
@@ -617,11 +625,8 @@ describe('Testing the Nightfall SDK', () => {
           nf3User1.zkpKeys.pkd,
           fee,
         );
-        expectTransaction(res);
       }
-      stateBalance += fee * txPerBlock + BLOCK_STAKE;
-      console.log('     Waiting for blockProposed event...');
-      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      stateBalance += fee + BLOCK_STAKE;
       // we wait for the liquidity provider to send the instant withdraw
       console.log('     Waiting for instantWithdraw event...');
       await waitForTxExecution(count, 'instantWithdraw');
@@ -719,9 +724,22 @@ describe('Testing the Nightfall SDK', () => {
       // this will only work if we're using Ganache, otherwiise expect failure
       startBalance = await getBalance(nf3User1.ethereumAddress);
       if (nodeInfo.includes('TestRPC')) {
-        const res = await nf3User1.finaliseWithdrawal(transactions[0]);
+        let res = await nf3User1.finaliseWithdrawal(transactions[0]);
         stateBalance += fee;
         expectTransaction(res);
+        for (let i = 0; i < txPerBlock; i++) {
+          // eslint-disable-next-line no-await-in-loop
+          res = await nf3User1.transfer(
+            false,
+            ercAddress,
+            tokenType,
+            value,
+            tokenId,
+            nf3User1.zkpKeys.pkd,
+            fee,
+          );
+        }
+        stateBalance += fee + BLOCK_STAKE;
         eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
       } else {
         // geth
@@ -733,7 +751,7 @@ describe('Testing the Nightfall SDK', () => {
 
     it('Should have increased our balance', async function () {
       if (nodeInfo.includes('TestRPC')) {
-        const gasCostsTotal = (gasCosts * txPerBlock) / 2;
+        const gasCostsTotal = (gasCosts * txPerBlock * 2) / 2;
         expect(endBalance - startBalance).to.closeTo(Number(value), gasCostsTotal);
       } else {
         console.log('     Not using a time-jump capable test client so this test is skipped');
