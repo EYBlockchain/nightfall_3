@@ -61,10 +61,9 @@ describe('Testing the Nightfall SDK', () => {
   let diffBalanceInstantWithdraw = 0;
   const transactions = [];
   let initialValidCommitments = 0;
-  let requestInstantWithdrawWaitingForBlock = false;
   let stateBalance = 0;
   const logCounts = {
-    instantWithdaw: 0,
+    instantWithdraw: 0,
   };
 
   const miniStateABI = [
@@ -159,26 +158,34 @@ describe('Testing the Nightfall SDK', () => {
     // Liquidity provider for instant withdraws
     const emitter = await nf3User1.getInstantWithdrawalRequestedEmitter();
     emitter.on('data', async (withdrawTransactionHash, paidBy, amount) => {
-      console.log(`     Serviced instant-withdrawal request from ${paidBy}, with fee ${amount}`);
       const balancesBefore = await getERCInfo(
         ercAddress,
         nf3LiquidityProvider.ethereumAddress,
         web3,
       );
+      let txDataToSign;
       // approve tokens to be advanced by liquidity provider in the instant withdraw
       try {
-        await approve(
+        txDataToSign = await approve(
           ercAddress,
           nf3LiquidityProvider.ethereumAddress,
           nf3LiquidityProvider.shieldContractAddress,
           tokenType,
           value,
           web3,
+          true,
         );
+        if (txDataToSign) {
+          await nf3LiquidityProvider.submitTransaction(txDataToSign, ercAddress, 0);
+        }
+
         await nf3LiquidityProvider.advanceInstantWithdrawal(withdrawTransactionHash);
       } catch (e) {
         console.log(e);
       }
+
+      console.log(`     Serviced instant-withdrawal request from ${paidBy}, with fee ${amount}`);
+
       await new Promise(resolve => setTimeout(resolve, 5000));
       const balancesAfter = await getERCInfo(
         ercAddress,
@@ -186,16 +193,13 @@ describe('Testing the Nightfall SDK', () => {
         web3,
       );
 
-      while (requestInstantWithdrawWaitingForBlock) {
+      while (eventLogs.length > 0) {
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
       // difference in balance in L1 account to check instant withdraw is ok
       diffBalanceInstantWithdraw = Number(balancesBefore.balance) - Number(balancesAfter.balance);
-      logCounts.instantWithdaw += 1;
-      console.log(
-        `     Serviced instant-withdrawal request from ${paidBy}, with fee ${amount} (end)`,
-      );
+      logCounts.instantWithdraw += 1;
     });
 
     nodeInfo = await web3.eth.getNodeInfo();
@@ -595,19 +599,29 @@ describe('Testing the Nightfall SDK', () => {
       stateBalance += fee * txPerBlock + BLOCK_STAKE;
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
 
-      requestInstantWithdrawWaitingForBlock = true;
-      const count = logCounts.instantWithdaw;
+      const count = logCounts.instantWithdraw;
       // We request the instant withdraw and should wait for the liquidity provider to send the instant withdraw
-      const res = await nf3User1.requestInstantWithdrawal(latestWithdrawTransactionHash, fee);
+      let res = await nf3User1.requestInstantWithdrawal(latestWithdrawTransactionHash, fee);
       stateBalance += fee;
       expectTransaction(res);
       console.log(`     Gas used was ${Number(res.gasUsed)}`);
 
-      await depositNTransactions(nf3User1, txPerBlock, ercAddress, tokenType, value, tokenId, fee);
+      for (let i = 0; i < txPerBlock; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        res = await nf3User1.transfer(
+          false,
+          ercAddress,
+          tokenType,
+          value,
+          tokenId,
+          nf3User1.zkpKeys.pkd,
+          fee,
+        );
+        expectTransaction(res);
+      }
       stateBalance += fee * txPerBlock + BLOCK_STAKE;
       console.log('     Waiting for blockProposed event...');
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
-      requestInstantWithdrawWaitingForBlock = false;
       // we wait for the liquidity provider to send the instant withdraw
       console.log('     Waiting for instantWithdraw event...');
       await waitForTxExecution(count, 'instantWithdraw');
