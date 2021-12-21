@@ -65,6 +65,7 @@ describe('Testing the Nightfall SDK', () => {
   let diffBalanceInstantWithdraw = 0;
   const withdrawTransactions = [];
   let initialValidCommitments = 0;
+  let requestInstantWithdrawWaitingForBlock = false;
   let stateBalance = 0;
   const logCounts = {
     instantWithdraw: 0,
@@ -270,6 +271,11 @@ describe('Testing the Nightfall SDK', () => {
         nf3LiquidityProvider.ethereumAddress,
         web3,
       );
+
+      while (requestInstantWithdrawWaitingForBlock) {
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
       // difference in balance in L1 account to check instant withdraw is ok
       diffBalanceInstantWithdraw = Number(balancesBefore.balance) - Number(balancesAfter.balance);
       logCounts.instantWithdaw += 1;
@@ -1069,28 +1075,19 @@ describe('Testing the Nightfall SDK', () => {
       stateBalance += fee * txPerBlock + BLOCK_STAKE;
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
 
-      const count = logCounts.instantWithdraw;
+      requestInstantWithdrawWaitingForBlock = true;
+      const count = logCounts.instantWithdaw;
       // We request the instant withdraw and should wait for the liquidity provider to send the instant withdraw
       let res = await nf3User1.requestInstantWithdrawal(latestWithdrawTransactionHash, fee);
       stateBalance += fee;
       expectTransaction(res);
       console.log(`     Gas used was ${Number(res.gasUsed)}`);
 
-      for (let i = 0; i < txPerBlock; i++) {
-        // eslint-disable-next-line no-await-in-loop
-        res = await nf3User1.transfer(
-          false,
-          erc20Address,
-          tokenType,
-          value,
-          tokenId,
-          nf3User1.zkpKeys.compressedPkd,
-          fee,
-        );
-      }
-      stateBalance += fee + BLOCK_STAKE;
-      // console.log('     Waiting for blockProposed event...');
-      // eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      await depositNTransactions(nf3User1, txPerBlock, ercAddress, tokenType, value, tokenId, fee);
+      stateBalance += fee * txPerBlock + BLOCK_STAKE;
+      console.log('     Waiting for blockProposed event...');
+      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      requestInstantWithdrawWaitingForBlock = false;
       // we wait for the liquidity provider to send the instant withdraw
       console.log('     Waiting for instantWithdraw event...');
       await waitForTxExecution(count, 'instantWithdraw');
