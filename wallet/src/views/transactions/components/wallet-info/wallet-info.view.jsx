@@ -131,6 +131,10 @@ function WalletInfo({
             <Table.Cell colSpan="1" title={item.tokenType} id={tokenTypeId}>
               {item.tokenType}
             </Table.Cell>
+            <Table.Cell colSpan="1">{'-'}</Table.Cell>
+            <Table.Cell colSpan="1">{'-'}</Table.Cell>
+            <Table.Cell colSpan="1">{'-'}</Table.Cell>
+            <Table.Cell colSpan="1">{'-'}</Table.Cell>
           </Table.Row>,
         );
         // Auxiliary rows
