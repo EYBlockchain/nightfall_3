@@ -1,5 +1,6 @@
 from time import sleep
 import logging    
+import random
 
 from constants import *
 from helpers.wallet import *
@@ -66,7 +67,8 @@ TokenListERCContract = [
   {
     'tokenName' : 'Token3',
     'tokenType' : 'ERC1155',
-    'tokenAddress' : '0xf7dd7e7effc870c6c7ab0651018a93b79bde72a2'
+    'tokenAddress' : '0xf7dd7e7effc870c6c7ab0651018a93b79bde72a2',
+    'tokenIdUsed': ['0','1','2','3','4'],
   }
 ]
 
@@ -93,6 +95,36 @@ def addTokensTest(findElementsInstance, driver, metamaskTab, nightfallTab):
   addAndCheckTokenNightfallWallet(driver, findElementsInstance, TokenListERCContract[1])
   removeTokenNightfallWallet(driver, findElementsInstance, TokenListERCContract[2])
   addAndCheckTokenNightfallWallet(driver, findElementsInstance, TokenListERCContract[2])
+
+def addErc1155TokensTest(findElementsInstance, driver, metamaskTab, nightfallTab):
+  sleep(4)
+  driver.switch_to.window(nightfallTab)
+  # Add new ERC1155. Don't need tokenId
+  removeTokenNightfallWallet(driver, findElementsInstance, TokenListERCContract[2])
+  addAndCheckTokenNightfallWallet(driver, findElementsInstance, TokenListERCContract[2])
+  sleep(4)
+
+  # Add subtoken
+  erc1155TokenId = 0
+  while True:
+    erc1155TokenId = str(random.randint(0,1000))
+    if not erc1155TokenId in TokenListERCContract[2]['tokenIdUsed']:
+      break
+    sleep(1) 
+
+  addAndCheckTokenNightfallWallet(driver, findElementsInstance, TokenListERCContract[2],erc1155TokenId)
+  sleep(4)
+  removeTokenNightfallWallet(driver, findElementsInstance, TokenListERCContract[2], erc1155TokenId)
+
+  # Add invalid subtoken
+  for erc1155TokenId in TokenListERCContract[2]['tokenIdUsed']:
+     try:
+      addAndCheckTokenNightfallWallet(driver, findElementsInstance, TokenListERCContract[2],erc1155TokenId)
+      sleep(4)
+      removeTokenNightfallWallet(driver, findElementsInstance, TokenListERCContract[2], erc1155TokenId)
+      return "FAILED\n"
+     except:
+      findElementsInstance.element_exist_xpath('//button[text()="Cancel"]').click() # Remove Token
 
 def removeInexistentTokensTest(findElementsInstance, driver, metamaskTab, nightfallTab):
   driver.switch_to.window(nightfallTab)
@@ -163,7 +195,11 @@ tokenTestsList = [
     'name': addTokensTest,
     'description' : 'Add and remove N tokens and check they are added and removed correctly'
   },
- {
+  {
+    'name': addErc1155TokensTest,
+    'description' : 'Add and remove Erc1155 tokens and check they are added and removed correctly'
+  },
+  {
     'name': removeInexistentTokensTest,
     'description' : 'Remove token that does not exist'
   },

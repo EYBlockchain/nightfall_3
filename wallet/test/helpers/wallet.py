@@ -117,17 +117,34 @@ def addTokenNightfallWallet(driver, findElements, tokenInfo):
   sleep(3)
   findElements.element_exist_xpath('//button[text()="Submit"]').click() # Submit
 
-def addAndCheckTokenNightfallWallet(driver, findElements, tokenInfo):
+def addAndCheckTokenNightfallWallet(driver, findElements, tokenInfo, erc1155TokenId=None):
   findElements.element_exist_xpath('//button[text()="Add Token"]').click() # Add Token
   findElements.element_exist_xpath('//*[@id="Token Name"]').send_keys(tokenInfo['tokenName']) # Set Token Name
   sleep(3)
-  findElements.element_exist_xpath('//*[@id="Token Address"]').send_keys(tokenInfo['tokenAddress']) # Set Address
+  if not erc1155TokenId:
+    findElements.element_exist_xpath('//*[@id="Token Address"]').send_keys(tokenInfo['tokenAddress']) # Set Address
+  else:
+    testTokenAddress = findElements.element_exist_xpath('//*[@id="Token Address"]').get_attribute("value") # Read address
+    assert(testTokenAddress.lower() == tokenInfo['tokenAddress'].lower())
   sleep(3)
   testTokenType = findElements.element_exist_xpath('//*[@id="Token Type"]').get_attribute("value") # Read Token Type
   if tokenInfo['tokenType'] != '':
     assert(testTokenType.lower() == tokenInfo['tokenType'].lower())
+
+  if erc1155TokenId:
+     findElements.element_exist_xpath('//*[@id="Token Id"]').send_keys(erc1155TokenId) # Set Address
+
   findElements.element_exist_xpath('//button[text()="Submit"]').click() # Submit
 
-def removeTokenNightfallWallet(driver, findElements, tokenInfo):
+def removeTokenNightfallWallet(driver, findElements, tokenInfo, erc1155TokenId=None):
+  if erc1155TokenId:
+     print("EEE", tokenInfo['tokenAddress'])
+     sleep(3)
+     findElements.element_exist_xpath('//*[@title="' + tokenInfo['tokenAddress'].lower() + '"]').click() # Select token
+     sleep(1)
+     findElements.element_exist_xpath('//*[@title="' + tokenInfo['tokenAddress'].lower() + '"]').click() # Select token
   findElements.element_exist_xpath('//button[@id="wallet-info-cell-remove-token"]').click() # Remove Token
-  findElements.element_exist_xpath('//*[@title="' + tokenInfo['tokenAddress'].lower() + '"]').click() # Select token
+  if not erc1155TokenId:
+    findElements.element_exist_xpath('//*[@title="' + tokenInfo['tokenAddress'].lower() + '"]').click() # Select token
+  else:
+    findElements.element_exist_xpath('//*[@id="token type' + tokenInfo['tokenAddress'].lower() + erc1155TokenId +'"]').click() # Select token

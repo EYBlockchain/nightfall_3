@@ -140,6 +140,12 @@ function WalletInfo({
         // Auxiliary rows
         if (token.detailedErc1155.includes(item.tokenAddress)) {
           for (let idx = 0; idx < item.tokenErc1155Details.length; idx++) {
+            const details = item.tokenErc1155Details[idx];
+            const tokenTypeId = `token type${item.tokenAddress}${details.tokenId}`;
+            const l1BalanceId = `l1 balance${item.tokenAddress}${details.tokenId}`;
+            const l2BalanceId = `l2 balance${item.tokenAddress}${details.tokenId}`;
+            const pendingDepositId = `pending deposit${item.tokenAddress}${details.tokenId}`;
+            const pendingTransferredOutId = `pending transferred out${item.tokenAddress}${details.tokenId}`;
             itemRows.push(
               <Table.Row
                 key={item.tokenErc1155Details[idx].tokenId}
@@ -149,12 +155,22 @@ function WalletInfo({
                 }}
               >
                 <Table.Cell colSpan="1"></Table.Cell>
-                <Table.Cell colSpan="1">{item.tokenErc1155Details[idx].tokenId}</Table.Cell>
+                <Table.Cell colSpan="1" id={tokenTypeId}>
+                  {item.tokenErc1155Details[idx].tokenId}
+                </Table.Cell>
                 <Table.Cell colSpan="3"></Table.Cell>
-                <Table.Cell colSpan="1">{item.tokenErc1155Details[idx].l1Balance}</Table.Cell>
-                <Table.Cell colSpan="1">{item.tokenErc1155Details[idx].l2Balance}</Table.Cell>
-                <Table.Cell colSpan="1">{item.tokenErc1155Details[idx].pendingDeposit}</Table.Cell>
-                <Table.Cell colSpan="1">{item.tokenErc1155Details[idx].pendingSpent}</Table.Cell>
+                <Table.Cell colSpan="1" id={l1BalanceId}>
+                  {item.tokenErc1155Details[idx].l1Balance}
+                </Table.Cell>
+                <Table.Cell colSpan="1" id={l2BalanceId}>
+                  {item.tokenErc1155Details[idx].l2Balance}
+                </Table.Cell>
+                <Table.Cell colSpan="1" id={pendingDepositId}>
+                  {item.tokenErc1155Details[idx].pendingDeposit}
+                </Table.Cell>
+                <Table.Cell colSpan="1" id={pendingTransferredOutId}>
+                  {item.tokenErc1155Details[idx].pendingSpent}
+                </Table.Cell>
               </Table.Row>,
             );
           }

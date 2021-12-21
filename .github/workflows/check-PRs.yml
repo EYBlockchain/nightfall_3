@@ -114,11 +114,11 @@ jobs:
         run: sleep 1500
 
       - name: Retrieve Wallet test logs
-        run: docker logs $(docker ps -aqf "name=wallet-test") > wallet-test.log; ls -l wallet-test.log; cat wallet-test.log
+        run: docker logs $(docker ps -aqf "name=wallet-test") > wallet-test.log; cat wallet-test.log; cat wallet-test.log | grep FAILED;  
 
       - name: debug logs - after container startup
         if: always()
-        run: results=$(cat wallet-test.log | grep FAILED); echo "Results ${results}"; if [ -z "${results}" ]; then exit 0; else exit 1; fi
+        run: results=$(cat wallet-test.log | grep FAILED); if [ -z "${results}" ]; then exit 0; else exit 1; fi
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
