@@ -174,19 +174,27 @@ describe('Testing the Nightfall SDK', () => {
         web3,
       );
       // approve tokens to be advanced by liquidity provider in the instant withdraw
+      let txDataToSign;
       try {
-        await approve(
+        txDataToSign = await approve(
           erc20Address,
           nf3LiquidityProvider.ethereumAddress,
           nf3LiquidityProvider.shieldContractAddress,
           tokenType,
           value,
           web3,
+          !!nf3LiquidityProvider.ethereumSigningKey,
         );
+        if (txDataToSign) {
+          await nf3LiquidityProvider.submitTransaction(txDataToSign, erc20Address, 0);
+        }
         await nf3LiquidityProvider.advanceInstantWithdrawal(withdrawTransactionHash);
       } catch (e) {
         console.log(e);
       }
+
+      console.log(`     Serviced instant-withdrawal request from ${paidBy}, with fee ${amount}`);
+
       await new Promise(resolve => setTimeout(resolve, 5000));
       const balancesAfter = await getERCInfo(
         erc20Address,
@@ -201,7 +209,6 @@ describe('Testing the Nightfall SDK', () => {
       // difference in balance in L1 account to check instant withdraw is ok
       diffBalanceInstantWithdraw = Number(balancesBefore.balance) - Number(balancesAfter.balance);
       logCounts.instantWithdaw += 1;
-      console.log(`     Serviced instant-withdrawal request from ${paidBy}, with fee ${amount}`);
     });
 
     nodeInfo = await web3.eth.getNodeInfo();
