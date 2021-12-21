@@ -16,7 +16,12 @@ router.post('/', async (req, res, next) => {
     res.json({ txDataToSign, transaction, salts });
   } catch (err) {
     logger.error(err);
-    next(err);
+    if (err.message.includes('No suitable commitments')) {
+      logger.info('Handling "No suitable commitments" error');
+      res.json({ error: 'No suitable commitments' });
+    } else {
+      next(err);
+    }
   }
 });
 

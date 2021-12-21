@@ -19,10 +19,10 @@ const { ZERO } = config;
 This handler runs whenever a BlockProposed event is emitted by the blockchain
 */
 async function blockProposedEventHandler(data) {
-  logger.info(`Received Block Proposed event`);
   // ivk will be used to decrypt secrets whilst nsk will be used to calculate nullifiers for commitments and store them
   const { blockNumber: currentBlockCount, transactionHash: transactionHashL1 } = data;
   const { transactions, block } = await getProposeBlockCalldata(data);
+  logger.info(`Received Block Proposed event with layer 2 block number ${block.blockNumberL2}`);
   const latestTree = await getLatestTree();
   const blockCommitments = transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat();
 
@@ -40,7 +40,7 @@ async function blockProposedEventHandler(data) {
       (transaction.transactionType === '1' || transaction.transactionType === '2') &&
       (await countCommitments(nonZeroCommitments)) === 0
     ) {
-      let keysTried = 0;
+      let keysTried = 1;
       ivks.forEach((key, i) => {
         // decompress the secrets first and then we will decryp t the secrets from this
         const decompressedSecrets = Secrets.decompressSecrets(transaction.compressedSecrets);

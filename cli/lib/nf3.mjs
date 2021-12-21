@@ -315,6 +315,9 @@ class Nf3 {
       ask: this.zkpKeys.ask,
       fee,
     });
+    if (res.data.error && res.data.error === 'No suitable commitments') {
+      throw new Error('No suitable commitments');
+    }
     if (!offchain) {
       return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, fee);
     }

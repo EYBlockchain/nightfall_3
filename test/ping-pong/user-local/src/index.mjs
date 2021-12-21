@@ -52,7 +52,21 @@ async function localTest() {
   // Create a block of transfer and deposit transactions
   for (let i = 0; i < TEST_LENGTH; i++) {
     await waitForSufficientBalance(nf3, value);
-    await nf3.transfer(false, ercAddress, tokenType, value, tokenId, recipientPkd);
+    try {
+      await nf3.transfer(false, ercAddress, tokenType, value, tokenId, recipientPkd);
+    } catch (err) {
+      if (err.message.includes('No suitable commitments')) {
+        // if we get here, it's possible that a block we are waiting for has not been proposed yet
+        // let's wait 10x normal and then try again
+        logger.warn(
+          `No suitable commitments were found for transfer. I will wait ${
+            0.01 * TX_WAIT
+          } seconds and try one last time`,
+        );
+        await new Promise(resolve => setTimeout(resolve, 10 * TX_WAIT));
+        await nf3.transfer(false, ercAddress, tokenType, value, tokenId, recipientPkd);
+      }
+    }
     await nf3.deposit(ercAddress, tokenType, value, tokenId);
     await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
   }
