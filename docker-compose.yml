@@ -119,8 +119,8 @@ services:
   deployer:
     #image: docker.pkg.github.com/eyblockchain/nightfall-deployer/nightfall_deployer:1.1.0
     build:
-      context: .
       dockerfile: deployer.Dockerfile
+      context: .
     volumes:
       - type: volume
         source: build
