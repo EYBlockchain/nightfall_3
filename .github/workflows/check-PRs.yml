@@ -118,7 +118,7 @@ jobs:
 
       - name: debug logs - after container startup
         if: always()
-        run: results=$(cat wallet-test.log | grep FAILED); if [ -z "${results}" ]; then exit 0; else exit 1; fi
+        run: results=$(cat wallet-test.log | grep FAILED); echo "Results: ${results}"; if [ -z "${results}" ]; then exit 0; else exit 1; fi
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
