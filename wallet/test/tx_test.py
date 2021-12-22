@@ -10,16 +10,17 @@ class txTest(walletTest):
     super(txTest, self).__init__(findElementsInstance, driver, metamaskTab, nightfallTab, txTestsList)
 
 def transactionsTest(findElementsInstance, driver, metamaskTab, nightfallTab):
-    #tokenTypes = ["erc20", "erc721", "erc1155"]
+    tokenTypes = ["erc20", "erc721", "erc1155"]
     # TODO: Waiting for all toke types to be correctly configured. For now, only ERC20 amd ERC721 works
     #tokenTypes = ["erc20", "erc721"]
-    tokenTypes = ["erc721"]
+    #tokenTypes = ["erc1155"]
     txTypes = ["Deposit", "Instant-withdraw", "Transfer", "Withdraw"]
   
     txParams = {
       "amount": 1,
       "fee": 10,
       "instantWithdrawFee": 1000,
+      "erc1155Id": '0'
     }
 
     txTestParams = {
@@ -39,9 +40,15 @@ def transactionsTest(findElementsInstance, driver, metamaskTab, nightfallTab):
   
       for txType in txTypes:
         txParams["txType"] = txType
-        #If token is erc721 and we request and instant withdraw, skip as it is not possible
-        if txParams["txType"] == "Instant-withdraw" and txParams["tokenType"] == "erc721":
+        #If token is erc721 or erc1155 and we request and instant withdraw, skip as it is not possible
+        if txParams["txType"] == "Instant-withdraw" and txParams["tokenType"] != "erc20":
           continue
+        if txParams["tokenType"] == "erc1155":
+          #Ensure erc1155 menu is displayed
+          erc1155Token = findElementsInstance.element_exist_xpath('//*[@id="token type' + txParams['tokenAddress'].lower() + txParams['erc1155Id'] +'"]') # Find subtoken
+          if not erc1155Token:
+            findElementsInstance.element_exist_xpath('//*[@title="' + txParams['tokenAddress'].lower() + '"]').click() # Select token
+
         l1Balance, l2Balance, pendingDeposit, pendingTransferredOut = getNightfallBalance(findElementsInstance, txParams)
         #print(txType, l1Balance, l2Balance, pendingDeposit, pendingTransferredOut)
         logging.info(tokenType, txType)

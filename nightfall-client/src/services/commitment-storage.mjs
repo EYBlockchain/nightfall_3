@@ -235,21 +235,20 @@ export async function getWalletBalance(compressedPkd, ercList) {
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
       compressedPkd: e.preimage.compressedPkd,
-      tokenId: !!BigInt(e.preimage.tokenId),
+      tokenId: Number(BigInt(e.preimage.tokenId)),
       value: Number(BigInt(e.preimage.value)),
-      id: Number(BigInt(e.preimage.tokenId)),
     }))
     .filter(
       e =>
-        (e.tokenId || e.value > 0) &&
+        e.value > 0 &&
         (compressedPkd === null || e.compressedPkd === compressedPkd) &&
         (ercAddressList.length === 0 || ercAddressList.includes(e.ercAddress.toUpperCase())),
     )
     .map(e => ({
       compressedPkd: e.compressedPkd,
       ercAddress: e.ercAddress,
-      balance: e.tokenId ? 1 : e.value,
-      tokenId: e.id,
+      balance: e.value,
+      tokenId: e.tokenId,
     }))
     .reduce((acc, e) => {
       if (!acc[e.compressedPkd]) acc[e.compressedPkd] = {};
@@ -290,21 +289,20 @@ export async function getWalletPendingDepositBalance(compressedPkd, ercList) {
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
       compressedPkd: e.preimage.compressedPkd,
-      tokenId: !!BigInt(e.preimage.tokenId),
+      tokenId: Number(BigInt(e.preimage.tokenId)),
       value: Number(BigInt(e.preimage.value)),
-      id: Number(BigInt(e.preimage.tokenId)),
     }))
     .filter(
       e =>
-        (e.tokenId || e.value > 0) &&
+        e.value > 0 &&
         (compressedPkd === null || e.compressedPkd === compressedPkd) &&
         (ercAddressList.length === 0 || ercAddressList.includes(e.ercAddress.toUpperCase())),
     )
     .map(e => ({
       compressedPkd: e.compressedPkd,
       ercAddress: e.ercAddress,
-      balance: e.tokenId ? 1 : e.value,
-      tokenId: e.id,
+      balance: e.value,
+      tokenId: e.tokenId,
     }))
     .reduce((acc, e) => {
       if (!acc[e.compressedPkd]) acc[e.compressedPkd] = {};
@@ -345,21 +343,20 @@ export async function getWalletPendingSpentBalance(compressedPkd, ercList) {
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
       compressedPkd: e.preimage.compressedPkd,
-      tokenId: !!BigInt(e.preimage.tokenId),
+      tokenId: Number(BigInt(e.preimage.tokenId)),
       value: Number(BigInt(e.preimage.value)),
-      id: Number(BigInt(e.preimage.tokenId)),
     }))
     .filter(
       e =>
-        (e.tokenId || e.value > 0) &&
+        e.value > 0 &&
         (compressedPkd === null || e.compressedPkd === compressedPkd) &&
         (ercAddressList.length === 0 || ercAddressList.includes(e.ercAddress.toUpperCase())),
     )
     .map(e => ({
       compressedPkd: e.compressedPkd,
       ercAddress: e.ercAddress,
-      balance: e.tokenId ? 1 : e.value,
-      tokenId: e.id,
+      balance: e.value,
+      tokenId: e.tokenId,
     }))
     .reduce((acc, e) => {
       if (!acc[e.compressedPkd]) acc[e.compressedPkd] = {};
@@ -400,27 +397,29 @@ export async function getWalletBalanceDetails(compressedPkd, ercList) {
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
       compressedPkd: e.preimage.compressedPkd,
-      tokenId: !!BigInt(e.preimage.tokenId),
+      tokenId: Number(BigInt(e.preimage.tokenId)),
       value: Number(BigInt(e.preimage.value)),
-      id: Number(BigInt(e.preimage.tokenId)),
     }))
     .filter(
       e =>
-        (e.tokenId || e.value > 0) &&
+        e.value > 0 &&
         e.compressedPkd === compressedPkd &&
         (ercAddressList.length === 0 || ercAddressList.includes(e.ercAddress.toUpperCase())),
     ) // there should be no commitments with tokenId and value of ZERO
     .map(e => ({
       compressedPkd: e.compressedPkd,
       ercAddress: e.ercAddress,
-      balance: e.tokenId ? 1 : e.value,
-      tokenId: e.id,
+      balance: e.value,
+      tokenId: e.tokenId,
     }))
     .reduce((acc, e) => {
       if (!acc[e.compressedPkd]) acc[e.compressedPkd] = {};
       if (!acc[e.compressedPkd][e.ercAddress]) acc[e.compressedPkd][e.ercAddress] = [];
-      if (e.tokenId === 0 && acc[e.compressedPkd][e.ercAddress].length > 0) {
-        acc[e.compressedPkd][e.ercAddress][0].balance += e.balance;
+
+      const list = acc[e.compressedPkd][e.ercAddress];
+      const tokenIdIndex = list.findIndex(c => c.tokenId === e.tokenId);
+      if (tokenIdIndex >= 0) {
+        list[tokenIdIndex].balance += e.balance;
       } else {
         acc[e.compressedPkd][e.ercAddress].push({ balance: e.balance, tokenId: e.tokenId });
       }
@@ -453,14 +452,14 @@ export async function getWalletCommitments() {
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`,
       compressedPkd: e.preimage.compressedPkd,
-      tokenId: !!BigInt(e.preimage.tokenId),
+      tokenId: Number(BigInt(e.preimage.tokenId)),
       value: Number(BigInt(e.preimage.value)),
     }))
     .filter(e => e.tokenId || e.value > 0) // there should be no commitments with tokenId and value of ZERO
     .map(e => ({
       compressedPkd: e.compressedPkd,
       ercAddress: e.ercAddress,
-      balance: e.tokenId ? 1 : e.value,
+      balance: e.value,
     }))
     .reduce((acc, e) => {
       if (!acc[e.compressedPkd]) acc[e.compressedPkd] = {};

@@ -50,7 +50,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
     }
   }
 
-  function validateContractAddress(key, value) {
+  function validateDestinationAddress(key, value) {
     const error = {
       content: `Please enter a valid ${key}`,
       pointing: 'above',
@@ -67,32 +67,9 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
     return null;
   }
 
-  function validateTokenId(tokenInfo) {
-    const error = {
-      content: 'Please, enter a valid tokenId',
-      pointing: 'above',
-    };
-    if (tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC1155 && token.activeTokenId) {
-      setTokenId({ value: token.activeTokenId, error: null });
-      return true;
-    }
-    if (tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC20) {
-      setTokenId({ value: 0, error: null });
-      return true;
-    }
-    if (tokenInfo.tokenId === '') {
-      setTokenId({ value: 0, error });
-      return false;
-    }
-    return true;
-  }
-
   const handleOnSubmit = () => {
     const tokenInfo = getTokenInfo();
     if (!tokenInfo) {
-      return;
-    }
-    if (!validateTokenId(tokenInfo)) {
       return;
     }
     switch (transactions.txType) {
@@ -109,9 +86,9 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
             ethereumAddress,
             tokenType: tokenInfo.tokenType,
             tokenAddress: tokenInfo.tokenAddress,
-            tokenId: tokenId.value,
+            tokenId: tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC20 ? '0' : tokenId.value,
             tokenAmount:
-              tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC721 ? '0' : tokenAmount,
+              tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC721 ? '1' : tokenAmount,
             fee,
             tokenDecimals: tokenInfo.tokenDecimals,
             instantWithdrawFee,
@@ -130,8 +107,8 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
           compressedPkd,
           tokenType: tokenInfo.tokenType,
           tokenAddress: tokenInfo.tokenAddress,
-          tokenId: tokenId.value,
-          tokenAmount: tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC721 ? '0' : tokenAmount,
+          tokenId: tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC20 ? '0' : tokenId.value,
+          tokenAmount: tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC721 ? '1' : tokenAmount,
           fee,
           tokenDecimals: tokenInfo.tokenDecimals,
         });
@@ -205,7 +182,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
                     ? login.nf3.ethereumAddress
                     : login.nf3.zkpKeys.compressedPkd
                 }
-                onChange={event => validateContractAddress(keyLabel, event.target.value)}
+                onChange={event => validateDestinationAddress(keyLabel, event.target.value)}
                 error={destinationAddress.error}
               />
             </Form.Group>

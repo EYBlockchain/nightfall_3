@@ -159,16 +159,16 @@ function WalletInfo({
                   {item.tokenErc1155Details[idx].tokenId}
                 </Table.Cell>
                 <Table.Cell colSpan="3"></Table.Cell>
-                <Table.Cell colSpan="1" id={l1BalanceId2}>
+                <Table.Cell colSpan="1" id={l1BalanceId2} title={details.l1Balance}>
                   {item.tokenErc1155Details[idx].l1Balance}
                 </Table.Cell>
-                <Table.Cell colSpan="1" id={l2BalanceId2}>
+                <Table.Cell colSpan="1" id={l2BalanceId2} title={details.l2Balance}>
                   {item.tokenErc1155Details[idx].l2Balance}
                 </Table.Cell>
-                <Table.Cell colSpan="1" id={pendingDepositId2}>
+                <Table.Cell colSpan="1" id={pendingDepositId2} title={details.pendingDeposit}>
                   {item.tokenErc1155Details[idx].pendingDeposit}
                 </Table.Cell>
-                <Table.Cell colSpan="1" id={pendingTransferredOutId2}>
+                <Table.Cell colSpan="1" id={pendingTransferredOutId2} title={details.pendingSpent}>
                   {item.tokenErc1155Details[idx].pendingSpent}
                 </Table.Cell>
               </Table.Row>,

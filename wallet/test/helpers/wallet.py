@@ -37,21 +37,22 @@ def logoutNightfallWallet(driver, findElements, nightfallTab):
     findElements.element_exist_xpath('//button[text()="Logout"]').click() # Cancel
 
 def submitTxWallet(txParams, findElements, driver, metamaskTab, nightfallTab, cancel=0):
-    findElements.element_exist_xpath('//*[@title="' + txParams['tokenAddress'] + '"]').click() # Select token
     txType = txParams["txType"]
     if txParams["txType"] == "Instant-withdraw":
         txType="Withdraw"
 
     transactionButtonEn = findElements.element_exist_xpath('//button[text()="' + txType + '"]') # Transaction
     if transactionButtonEn.get_attribute("disabled"):
-      findElements.element_exist_xpath('//*[@title="' + txParams['tokenAddress'] + '"]').click() # Select token
+        findElements.element_exist_xpath('//*[@title="' + txParams['tokenAddress'] + '"]').click() # Select token
+        if txParams["tokenType"] == "erc1155":
+          findElements.element_exist_xpath('//*[@id="l1 balance' + txParams['tokenAddress'].lower() + txParams['erc1155Id'] +'"]').click() # Select token
+
     transactionButtonEn.click()
 
     if txParams["tokenType"].lower() != "erc721":
       findElements.element_exist_xpath('//*[@id="amount"]').send_keys(txParams['amount']) # Amount
 
     if txParams["tokenType"].lower() == "erc721":
-      sleep(5)
       findElements.element_exist_xpath('//*[@id="token-id"]').click()
 
     findElements.element_exist_xpath('//*[@id="fee"]').send_keys(txParams['fee']) # Fee
@@ -91,11 +92,17 @@ def tokenRefresh(txParams,findElements):
 
 def getNightfallBalance(findElements, tokenInfo):
   niter=0
+  l1BalanceId="l1 balance" + tokenInfo["tokenAddress"]
+  l2BalanceId="l2 balance" + tokenInfo["tokenAddress"]
+  pendingDepositId="pending deposit" + tokenInfo["tokenAddress"]
+  pendingTransferredOutId="pending transferred out" + tokenInfo["tokenAddress"]
+  if tokenInfo['tokenType'] == 'erc1155':
+    l1BalanceId="l1 balance" + tokenInfo["tokenAddress"] + tokenInfo['erc1155Id']
+    l2BalanceId="l2 balance" + tokenInfo["tokenAddress"] + tokenInfo['erc1155Id']
+    pendingDepositId="pending deposit" + tokenInfo["tokenAddress"] + tokenInfo['erc1155Id']
+    pendingTransferredOutId="pending transferred out" + tokenInfo["tokenAddress"] + tokenInfo['erc1155Id']
+
   while True:
-    l1BalanceId="l1 balance" + tokenInfo["tokenAddress"]
-    l2BalanceId="l2 balance" + tokenInfo["tokenAddress"]
-    pendingDepositId="pending deposit" + tokenInfo["tokenAddress"]
-    pendingTransferredOutId="pending transferred out" + tokenInfo["tokenAddress"]
     l1Balance = findElements.element_exist_xpath('//*[@id="' +l1BalanceId + '"]').get_attribute("title")
     l2Balance = findElements.element_exist_xpath('//*[@id="' +l2BalanceId + '"]').get_attribute("title")
     pendingDeposit = findElements.element_exist_xpath('//*[@id="' +pendingDepositId + '"]').get_attribute("title")
