@@ -10,10 +10,10 @@ class txTest(walletTest):
     super(txTest, self).__init__(findElementsInstance, driver, metamaskTab, nightfallTab, txTestsList)
 
 def transactionsTest(findElementsInstance, driver, metamaskTab, nightfallTab):
-    tokenTypes = ["erc20", "erc721", "erc1155"]
+    #tokenTypes = ["erc20", "erc721", "erc1155"]
     # TODO: Waiting for all toke types to be correctly configured. For now, only ERC20 amd ERC721 works
     #tokenTypes = ["erc20", "erc721"]
-    #tokenTypes = ["erc1155"]
+    tokenTypes = ["erc721","erc1155"]
     txTypes = ["Deposit", "Instant-withdraw", "Transfer", "Withdraw"]
   
     txParams = {
@@ -50,14 +50,17 @@ def transactionsTest(findElementsInstance, driver, metamaskTab, nightfallTab):
             findElementsInstance.element_exist_xpath('//*[@title="' + txParams['tokenAddress'].lower() + '"]').click() # Select token
 
         l1Balance, l2Balance, pendingDeposit, pendingTransferredOut = getNightfallBalance(findElementsInstance, txParams)
-        #print(txType, l1Balance, l2Balance, pendingDeposit, pendingTransferredOut)
+        #print(txType, tokenType, l1Balance, l2Balance, pendingDeposit, pendingTransferredOut)
         logging.info(tokenType, txType)
+        #print("Cancel")
         submitTxWallet(txParams, findElementsInstance, driver, metamaskTab, nightfallTab, cancel=1)
         logging.info(tokenType, txType)
         sleep(10)
+        #print("Tx")
         submitTxWallet(txParams, findElementsInstance, driver, metamaskTab, nightfallTab)
         sleep(15)
         logging.info(tokenType, txType)
+        #print("Tx")
         if txParams["txType"] == "Instant-withdraw":
           txParams["txType"] = "Deposit"
           submitTxWallet(txParams, findElementsInstance, driver, metamaskTab, nightfallTab)
@@ -103,13 +106,18 @@ def transactionsErrorTest(findElementsInstance, driver, metamaskTab, nightfallTa
 
 def waitBalanceChange(l1Balance, l2Balance, txParams, nTx, findElementsInstance):
   niter=0
+  txTestParams = {
+    "tokenAddress": tokens['erc20'],
+  }
   while True:
+    sleep(5)
+    tokenRefresh(txTestParams,findElementsInstance)
     if niter == 15:
       errorMsg = "FAILED - waited too long\n"
       return 0, errorMsg
-    sleep(5) 
+    sleep(1) 
     l1BalanceNew, l2BalanceNew, pendingDepositNew, pendingTransferredOutNew = getNightfallBalance(findElementsInstance, txParams)
-    #print(txParams["txType"], l1BalanceNew, l2BalanceNew, pendingDepositNew, pendingTransferredOutNew)
+    #print(txParams["txType"], txParams["tokenType"],l1BalanceNew, l2BalanceNew, pendingDepositNew, pendingTransferredOutNew)
     if txParams["txType"] == "Deposit":
       #print("Match", l2BalanceNew - nTx*txParams["amount"], l2Balance , l1BalanceNew + nTx*txParams["amount"], l1Balance)
       if l2BalanceNew - nTx*txParams["amount"] == l2Balance and l1BalanceNew + nTx*txParams["amount"] == l1Balance:

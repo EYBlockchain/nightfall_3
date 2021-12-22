@@ -17,7 +17,7 @@ const nERC721 = 35;
 
 module.exports = function(deployer) {
   deployer.then(async () => {
-    await deployer.deploy(ERC20Mock, 1000020000000000); // initialSupply
+    await deployer.deploy(ERC20Mock, 1001010000000000); // initialSupply
     await deployer.deploy(ERC721Mock);
     await deployer.deploy(ERC1155Mock);
 
@@ -44,7 +44,7 @@ module.exports = function(deployer) {
       }
       // For testing the wallet
       await ERC20deployed.transfer(walletTestAddress, 10000000000);
-      await ERC20deployed.transfer(liquidityProviderAddress, 10000000000);
+      await ERC20deployed.transfer(liquidityProviderAddress, 1000000000000);
       for (let i=0; i < nERC721; i++){
         await ERC721deployed.awardItem(walletTestAddress, `https://erc721mock/item-id-${i}.json`);
       }

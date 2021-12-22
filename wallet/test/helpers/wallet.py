@@ -41,18 +41,18 @@ def submitTxWallet(txParams, findElements, driver, metamaskTab, nightfallTab, ca
     if txParams["txType"] == "Instant-withdraw":
         txType="Withdraw"
 
+    # Ensure correct token is selected
+    findElements.element_exist_xpath('//*[@title="' + txParams['tokenAddress'] + '"]').click() # Select token
     transactionButtonEn = findElements.element_exist_xpath('//button[text()="' + txType + '"]') # Transaction
     if transactionButtonEn.get_attribute("disabled"):
         findElements.element_exist_xpath('//*[@title="' + txParams['tokenAddress'] + '"]').click() # Select token
-        if txParams["tokenType"] == "erc1155":
-          findElements.element_exist_xpath('//*[@id="l1 balance' + txParams['tokenAddress'].lower() + txParams['erc1155Id'] +'"]').click() # Select token
 
     transactionButtonEn.click()
 
     if txParams["tokenType"].lower() != "erc721":
       findElements.element_exist_xpath('//*[@id="amount"]').send_keys(txParams['amount']) # Amount
 
-    if txParams["tokenType"].lower() == "erc721":
+    if txParams["tokenType"].lower() != "erc20":
       findElements.element_exist_xpath('//*[@id="token-id"]').click()
 
     findElements.element_exist_xpath('//*[@id="fee"]').send_keys(txParams['fee']) # Fee
@@ -64,7 +64,6 @@ def submitTxWallet(txParams, findElements, driver, metamaskTab, nightfallTab, ca
     if txParams["txType"] == "Instant-withdraw":
       findElements.element_exist_xpath('(//div[contains(@class, "ui checkbox")])[1]').click() # Instant Withdraw
       findElements.element_exist_xpath('//*[@id="instant withdraw fee"]').send_keys(txParams['instantWithdrawFee']) # Fee
-
 
     testTokenType = findElements.element_exist_xpath('//*[@id="token-type"]').get_attribute("value") # Read Token Type
     testTokenAddress = findElements.element_exist_xpath('//*[@id="token-address"]').get_attribute("value") # Read Token Address
@@ -81,8 +80,9 @@ def submitTxWallet(txParams, findElements, driver, metamaskTab, nightfallTab, ca
     if txParams['tokenType'] == "erc20" and txType == "Withdraw":
        stop=0
     # Approve/sign tokens
-    signTransactionMetamask(driver, findElements, stop) # sign transaction
+    ret = signTransactionMetamask(driver, findElements, stop) # sign transaction
     driver.switch_to.window(nightfallTab)
+    return ret
 
 def tokenRefresh(txParams,findElements):
     findElements.element_exist_xpath('//*[@title="' + txParams['tokenAddress'] + '"]').click() # Select token
