@@ -204,7 +204,7 @@ describe('Testing the Nightfall SDK', () => {
           tokenType,
           value,
           tokenId,
-          nf3User1.zkpKeys.pkd,
+          nf3User1.zkpKeys.compressedPkd,
           fee,
         );
       }
@@ -397,7 +397,7 @@ describe('Testing the Nightfall SDK', () => {
             tokenType,
             value,
             tokenId,
-            nf3User1.zkpKeys.pkd,
+            nf3User1.zkpKeys.compressedPkd,
             fee,
           );
           expectTransaction(res);
@@ -458,7 +458,8 @@ describe('Testing the Nightfall SDK', () => {
       let balances = await nf3User1.getLayer2Balances();
       let balanceBefore = 0;
       try {
-        balanceBefore = balances[nf3User1.zkpKeys.compressedPkd][erc721Address];
+        // eslint-disable-next-line prefer-destructuring
+        balanceBefore = balances[nf3User1.zkpKeys.compressedPkd][erc721Address][0];
         if (!balanceBefore) balanceBefore = 0;
       } catch {
         balanceBefore = 0;
@@ -472,7 +473,7 @@ describe('Testing the Nightfall SDK', () => {
       // Wait until we see the right number of blocks appear
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
       balances = await nf3User1.getLayer2Balances();
-      const balanceAfter = balances[nf3User1.zkpKeys.compressedPkd][erc721Address];
+      const balanceAfter = balances[nf3User1.zkpKeys.compressedPkd][erc721Address][0];
       expect(balanceAfter - balanceBefore).to.be.equal(2);
     });
 
@@ -539,7 +540,7 @@ describe('Testing the Nightfall SDK', () => {
 
     it('should increment the balance after deposit some ERC721 crypto', async function () {
       let balances = await nf3User1.getLayer2Balances();
-      const currentPkdBalance = balances[nf3User1.zkpKeys.compressedPkd][erc721Address];
+      const currentPkdBalance = balances[nf3User1.zkpKeys.compressedPkd][erc721Address][0];
 
       // We create enough transactions to fill numDeposits blocks full of deposits.
       let res = await nf3User1.deposit(erc721Address, tokenTypeERC721, 1, 3, fee);
@@ -551,7 +552,7 @@ describe('Testing the Nightfall SDK', () => {
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
 
       balances = await nf3User1.getLayer2Balances();
-      const afterPkdBalance = balances[nf3User1.zkpKeys.compressedPkd][erc721Address];
+      const afterPkdBalance = balances[nf3User1.zkpKeys.compressedPkd][erc721Address][0];
       expect(afterPkdBalance - currentPkdBalance).to.be.equal(2);
     });
 
@@ -612,7 +613,6 @@ describe('Testing the Nightfall SDK', () => {
       } catch {
         currentPkdBalancePkd2 = 0;
       }
-      console.log('balances before: ', balances[0]);
       for (let i = 0; i < txPerBlock; i++) {
         // eslint-disable-next-line no-await-in-loop
         const res = await nf3User1.transfer(
@@ -669,10 +669,11 @@ describe('Testing the Nightfall SDK', () => {
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
 
       balances = await nf3User1.getLayer2Balances();
-      const beforePkdBalance = balances[nf3User1.zkpKeys.compressedPkd][erc721Address];
+      const beforePkdBalance = balances[nf3User1.zkpKeys.compressedPkd][erc721Address][0];
       let beforePkdBalance2;
       try {
-        beforePkdBalance2 = balances[nf3User2.zkpKeys.compressedPkd][erc721Address];
+        // eslint-disable-next-line prefer-destructuring
+        beforePkdBalance2 = balances[nf3User2.zkpKeys.compressedPkd][erc721Address][0];
         if (!beforePkdBalance2) beforePkdBalance2 = 0;
       } catch {
         beforePkdBalance2 = 0;
@@ -684,7 +685,7 @@ describe('Testing the Nightfall SDK', () => {
         tokenTypeERC721,
         1,
         5,
-        nf3User2.zkpKeys.pkd,
+        nf3User2.zkpKeys.compressedPkd,
         fee,
       );
       expectTransaction(res);
@@ -695,7 +696,7 @@ describe('Testing the Nightfall SDK', () => {
         tokenTypeERC721,
         1,
         6,
-        nf3User2.zkpKeys.pkd,
+        nf3User2.zkpKeys.compressedPkd,
         fee,
       );
       expectTransaction(res);
@@ -713,7 +714,7 @@ describe('Testing the Nightfall SDK', () => {
           tokenType,
           value,
           tokenId,
-          nf3User1.zkpKeys.pkd,
+          nf3User1.zkpKeys.compressedPkd,
           fee,
         );
         expectTransaction(res);
@@ -724,8 +725,8 @@ describe('Testing the Nightfall SDK', () => {
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
       await new Promise(resolve => setTimeout(resolve, 10000));
       balances = await nf3User1.getLayer2Balances();
-      const afterPkdBalancePkd = balances[nf3User1.zkpKeys.compressedPkd][erc721Address];
-      const afterPkdBalancePkd2 = balances[nf3User2.zkpKeys.compressedPkd][erc721Address];
+      const afterPkdBalancePkd = balances[nf3User1.zkpKeys.compressedPkd][erc721Address][0];
+      const afterPkdBalancePkd2 = balances[nf3User2.zkpKeys.compressedPkd][erc721Address][0];
       expect(afterPkdBalancePkd - beforePkdBalance).to.be.equal(-2);
       expect(afterPkdBalancePkd2 - beforePkdBalance2).to.be.equal(2);
     });
@@ -765,7 +766,7 @@ describe('Testing the Nightfall SDK', () => {
           tokenTypeERC1155,
           value,
           Id1,
-          nf3User2.zkpKeys.pkd,
+          nf3User2.zkpKeys.compressedPkd,
           fee,
         );
         expectTransaction(res);
@@ -784,7 +785,7 @@ describe('Testing the Nightfall SDK', () => {
           tokenType,
           value,
           tokenId,
-          nf3User1.zkpKeys.pkd,
+          nf3User1.zkpKeys.compressedPkd,
           fee,
         );
         expectTransaction(res);
@@ -896,7 +897,8 @@ describe('Testing the Nightfall SDK', () => {
       let balances = await nf3User1.getLayer2Balances();
       let balanceBefore = 0;
       try {
-        balanceBefore = balances[nf3User1.zkpKeys.compressedPkd][erc721Address];
+        // eslint-disable-next-line prefer-destructuring
+        balanceBefore = balances[nf3User1.zkpKeys.compressedPkd][erc721Address][0];
         if (!balanceBefore) balanceBefore = 0;
       } catch {
         balanceBefore = 0;
@@ -926,7 +928,7 @@ describe('Testing the Nightfall SDK', () => {
       stateBalance += fee + BLOCK_STAKE;
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
       balances = await nf3User1.getLayer2Balances();
-      const balanceAfter = balances[nf3User1.zkpKeys.compressedPkd][erc721Address];
+      const balanceAfter = balances[nf3User1.zkpKeys.compressedPkd][erc721Address][0];
       expect(balanceAfter - balanceBefore).to.be.equal(-1);
     });
 
@@ -1023,7 +1025,7 @@ describe('Testing the Nightfall SDK', () => {
           tokenType,
           value,
           tokenId,
-          nf3User1.zkpKeys.pkd,
+          nf3User1.zkpKeys.compressedPkd,
           fee,
         );
       }
@@ -1140,7 +1142,7 @@ describe('Testing the Nightfall SDK', () => {
             tokenType,
             value,
             tokenId,
-            nf3User1.zkpKeys.pkd,
+            nf3User1.zkpKeys.compressedPkd,
             fee,
           );
         }
@@ -1170,7 +1172,7 @@ describe('Testing the Nightfall SDK', () => {
             tokenType,
             value,
             tokenId,
-            nf3User1.zkpKeys.pkd,
+            nf3User1.zkpKeys.compressedPkd,
             fee,
           );
         }
@@ -1200,7 +1202,7 @@ describe('Testing the Nightfall SDK', () => {
             tokenType,
             value,
             tokenId,
-            nf3User1.zkpKeys.pkd,
+            nf3User1.zkpKeys.compressedPkd,
             fee,
           );
         }
