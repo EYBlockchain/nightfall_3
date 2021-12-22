@@ -110,8 +110,8 @@ jobs:
           docker-compose build
           ./start-nightfall -wt -s &
 
-      - name: wait 1500s for Containers startup and setup completion
-        run: sleep 1500
+      - name: wait 2000s for Containers startup and test completion
+        run: sleep 2000
 
       - name: Retrieve Wallet test logs
         run: docker logs $(docker ps -aqf "name=wallet-test") > wallet-test.log; cat wallet-test.log; 
