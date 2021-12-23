@@ -15,7 +15,7 @@ import tokensLoad from '../../../../store/token/token.thunks';
 function WalletInfo({
   login,
   token,
-  error,
+  message,
   onAddToken,
   onSelectToken,
   onUnselectToken,
@@ -185,9 +185,9 @@ function WalletInfo({
         nf3={login.nf3}
         token={token}
       />
-      {error.errorMsg !== '' ? (
-        <Message error>
-          <Message.Header>{error.errorMsg}</Message.Header>
+      {message.nf3Msg !== '' ? (
+        <Message info={message.nf3MsgType === 'info'} error={message.nf3MsgType === 'error'}>
+          <Message.Header>{message.nf3Msg}</Message.Header>
         </Message>
       ) : null}
     </Container>
@@ -197,7 +197,7 @@ function WalletInfo({
 WalletInfo.propTypes = {
   login: PropTypes.object.isRequired,
   token: PropTypes.object.isRequired,
-  error: PropTypes.object.isRequired,
+  message: PropTypes.object.isRequired,
   onAddToken: PropTypes.func.isRequired,
   onSelectToken: PropTypes.func.isRequired,
   onUnselectToken: PropTypes.func.isRequired,
@@ -208,7 +208,7 @@ WalletInfo.propTypes = {
 const mapStateToProps = state => ({
   token: state.token,
   login: state.login,
-  error: state.error,
+  message: state.message,
 });
 
 const mapDispatchToProps = dispatch => ({

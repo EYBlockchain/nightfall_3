@@ -12,20 +12,20 @@ import CreateWalletModal from './components/create-wallet.view.jsx';
 import { loadWallet, deleteWallet } from '../../store/login/login.actions';
 import { ReactComponent as MetaMaskLogo } from '../../images/metamask.svg';
 import { ReactComponent as PolygonLogo } from '../../images/polygon.svg';
-import { DEFAULT_NF_ADDRESS_INDEX, METAMASK_MESSAGE } from '../../constants.js';
+import { DEFAULT_NF_ADDRESS_INDEX, METAMASK_MESSAGE, ERROR_AUTO_HIDE_PERIOD } from '../../constants.js';
 import tokensLoad from '../../store/token/token.thunks';
-import * as errorActions from '../../store/error/error.actions';
+import * as messageActions from '../../store/message/message.actions';
 
 let nf3;
 
 function Login({
   login,
-  error,
+  message,
   onLoadWallet,
   onDeleteWallet,
   onLoadTokens,
   onNewError,
-  onClearError,
+  onClearMsg,
 }) {
   const [modalEnable, setModalEnable] = React.useState(false);
 
@@ -133,10 +133,12 @@ function Login({
         const mnemonic = Storage.mnemonicGet(nf3.ethereumAddress, passphrase);
         handleClickOnImport(mnemonic, false);
       }
-      onClearError();
     } catch (err) {
       // TODO
       onNewError(err.message);
+      setTimeout(() => {
+        onClearMsg();
+      }, ERROR_AUTO_HIDE_PERIOD);
       console.log('ERROR', err);
     }
   };
@@ -168,9 +170,9 @@ function Login({
         handleClickOnImport={handleClickOnImport}
         toggleModalEnable={toggleModalEnable}
       />
-      {error.errorMsg !== '' ? (
-        <Message error>
-          <Message.Header>{error.errorMsg}</Message.Header>
+      {message.nf3Msg !== '' ? (
+        <Message info={message.nf3MsgType === 'info'} error={message.nf3MsgType === 'error'}>
+          <Message.Header>{message.nf3Msg}</Message.Header>
         </Message>
       ) : null}
       {renderRedirect()}
@@ -180,25 +182,25 @@ function Login({
 
 Login.propTypes = {
   login: PropTypes.object.isRequired,
-  error: PropTypes.object.isRequired,
+  message: PropTypes.object.isRequired,
   onLoadWallet: PropTypes.func.isRequired,
   onDeleteWallet: PropTypes.func.isRequired,
   onLoadTokens: PropTypes.func.isRequired,
   onNewError: PropTypes.func.isRequired,
-  onClearError: PropTypes.func.isRequired,
+  onClearMsg: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = state => ({
   login: state.login,
-  error: state.error,
+  message: state.message,
 });
 
 const mapDispatchToProps = dispatch => ({
   onLoadWallet: nf3Instance => dispatch(loadWallet(nf3Instance)),
   onDeleteWallet: () => dispatch(deleteWallet()),
   onLoadTokens: newTokens => dispatch(tokensLoad(newTokens)),
-  onNewError: errorMsg => dispatch(errorActions.newError(errorMsg)),
-  onClearError: () => dispatch(errorActions.clearError()),
+  onNewError: errorMsg => dispatch(messageActions.newError(errorMsg)),
+  onClearMsg: () => dispatch(messageActions.clearMsg()),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(Login);

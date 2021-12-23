@@ -1,9 +1,13 @@
 /* ignore unused exports */
 import * as Nf3 from 'nf3';
-import { TRANSACTION_RETRY_PERIOD, TRANSACTION_MAX_RETRIES } from '../../constants';
+import {
+  TRANSACTION_RETRY_PERIOD,
+  TRANSACTION_MAX_RETRIES,
+  ERROR_AUTO_HIDE_PERIOD,
+} from '../../constants';
 import toBaseUnit from '../../utils/lib/utils';
 import * as txActions from './transactions.actions';
-import * as errorActions from '../error/error.actions';
+import * as messageActions from '../message/message.actions';
 
 function txInstantWithdrawSubmit(withdrawTransactionHash, fee) {
   return async (dispatch, getState) => {
@@ -19,6 +23,10 @@ function txInstantWithdrawSubmit(withdrawTransactionHash, fee) {
         }
         // TODO dispatch error
         dispatch(txActions.txSuccess(Nf3.Constants.TX_TYPES.INSTANT_WITHDRAW, txReceipt));
+        dispatch(messageActions.newInfo('Instant Withdrawal submitted'));
+        setTimeout(() => {
+          dispatch(messageActions.clearMsg());
+        }, ERROR_AUTO_HIDE_PERIOD);
       })
       .catch(err => {
         // TODO: Wait XXX time and retry YYY times. Else fail
@@ -64,13 +72,19 @@ function txSubmit(txParams) {
           )
           .then(txReceipt => {
             dispatch(txActions.txSuccess(Nf3.Constants.TX_TYPES.DEPOSIT, txReceipt));
-            dispatch(errorActions.clearError());
+            dispatch(messageActions.newInfo('Deposit submitted'));
+            setTimeout(() => {
+              dispatch(messageActions.clearMsg());
+            }, ERROR_AUTO_HIDE_PERIOD);
             // TODO: dispatch error
             console.log(txReceipt);
           })
           .catch(err => {
             dispatch(txActions.txFailed());
-            dispatch(errorActions.newError('Deposit Failed'));
+            dispatch(messageActions.newError('Deposit Failed'));
+            setTimeout(() => {
+              dispatch(messageActions.clearMsg());
+            }, ERROR_AUTO_HIDE_PERIOD);
             // TODO: dispatch error
             console.log(err);
           });
@@ -90,15 +104,22 @@ function txSubmit(txParams) {
           )
           .then(txReceipt => {
             dispatch(txActions.txSuccess(Nf3.Constants.TX_TYPES.TRANSFER, txReceipt));
-            dispatch(errorActions.clearError());
+            dispatch(messageActions.newInfo('Transfer submitted'));
+            setTimeout(() => {
+              dispatch(messageActions.clearMsg());
+            }, ERROR_AUTO_HIDE_PERIOD);
             // TODO: dispatch error
             console.log(txReceipt);
           })
           .catch(err => {
             dispatch(txActions.txFailed());
-            dispatch(errorActions.newError('Transfer Failed'));
+            dispatch(messageActions.newError('Transfer Failed'));
+            setTimeout(() => {
+              dispatch(messageActions.clearMsg());
+            }, ERROR_AUTO_HIDE_PERIOD);
             // TODO: dispatch error
             console.log(err);
+            console.log('SFSDFSDFD');
           });
         break;
 
@@ -127,7 +148,10 @@ function txSubmit(txParams) {
                   nRetries,
                 ),
               );
-              dispatch(errorActions.clearError());
+              dispatch(messageActions.newInfo('Withdrawal submitted'));
+              setTimeout(() => {
+                dispatch(messageActions.clearMsg());
+              }, ERROR_AUTO_HIDE_PERIOD);
               // TODO: dispatch error
               console.log(txReceipt);
 
@@ -142,7 +166,10 @@ function txSubmit(txParams) {
             })
             .catch(err => {
               dispatch(txActions.txFailed());
-              dispatch(errorActions.newError('Withdraw Failed'));
+              dispatch(messageActions.newError('Withdraw Failed'));
+              setTimeout(() => {
+                dispatch(messageActions.clearMsg());
+              }, ERROR_AUTO_HIDE_PERIOD);
               // TODO: dispatch error
               console.log(err);
             });

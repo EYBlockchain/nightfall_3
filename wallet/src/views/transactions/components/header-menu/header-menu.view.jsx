@@ -3,10 +3,10 @@ import { Menu, Icon, Button } from 'semantic-ui-react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { deleteWallet } from '../../../../store/login/login.actions';
-import { clearError } from '../../../../store/error/error.actions';
+import { clearMsg } from '../../../../store/message/message.actions';
 import AccountSettingsModal from './account-settings.view.jsx';
 
-function HeaderMenu({ onDeleteWallet, onClearError }) {
+function HeaderMenu({ onDeleteWallet, onClearMsg }) {
   const [accountSettingsEnable, setAccountSettingsEnable] = React.useState(false);
 
   const toggleAccountSettings = () => {
@@ -16,7 +16,7 @@ function HeaderMenu({ onDeleteWallet, onClearError }) {
   const handleClickNFInfo = () => {};
   const onLogoutClick = () => {
     onDeleteWallet();
-    onClearError();
+    onClearMsg();
   };
 
   return (
@@ -45,14 +45,14 @@ function HeaderMenu({ onDeleteWallet, onClearError }) {
 
 HeaderMenu.propTypes = {
   onDeleteWallet: PropTypes.func.isRequired,
-  onClearError: PropTypes.func.isRequired,
+  onClearMsg: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = () => ({});
 
 const mapDispatchToProps = dispatch => ({
   onDeleteWallet: () => dispatch(deleteWallet()),
-  onClearError: () => dispatch(clearError()),
+  onClearMsg: () => dispatch(clearMsg()),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(HeaderMenu);
