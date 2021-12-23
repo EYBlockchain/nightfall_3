@@ -12,7 +12,11 @@ import CreateWalletModal from './components/create-wallet.view.jsx';
 import { loadWallet, deleteWallet } from '../../store/login/login.actions';
 import { ReactComponent as MetaMaskLogo } from '../../images/metamask.svg';
 import { ReactComponent as PolygonLogo } from '../../images/polygon.svg';
-import { DEFAULT_NF_ADDRESS_INDEX, METAMASK_MESSAGE, ERROR_AUTO_HIDE_PERIOD } from '../../constants.js';
+import {
+  DEFAULT_NF_ADDRESS_INDEX,
+  METAMASK_MESSAGE,
+  ERROR_AUTO_HIDE_PERIOD,
+} from '../../constants.js';
 import tokensLoad from '../../store/token/token.thunks';
 import * as messageActions from '../../store/message/message.actions';
 
