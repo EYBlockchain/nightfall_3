@@ -126,6 +126,7 @@ function txWithdrawUpdate() {
   return async (dispatch, getState) => {
     const {
       login: { nf3 },
+      token: { tokenPool },
     } = getState();
     const filteredPendingWithdrals = [];
     const pendingWithdraws = await nf3.getPendingWithdraws();
@@ -141,18 +142,29 @@ function txWithdrawUpdate() {
 
     const updatedWithdrawalInfo = await Promise.all(
       filteredPendingWithdrals.map(el => {
-        return Nf3.Tokens.getERCInfo(el.ercAddress, nf3.ethereumAddress, nf3.web3, {
-          toEth: true,
-          tokenId: 0,
-          details: true,
-        }).then(info => {
-          return {
-            ...el,
-            decimals: info.decimals,
-            balanceEth: Nf3.Units.fromBaseUnit(el.balance.toString(), info.decimals),
-            tokenType: info.tokenType,
-          };
-        });
+        const tokenInfo = tokenPool.find(poolEl => poolEl.tokenAddress === el.ercAddress);
+        if (!tokenInfo) {
+          return Nf3.Tokens.getERCInfo(el.ercAddress, nf3.ethereumAddress, nf3.web3, {
+            toEth: true,
+            tokenId: 0,
+            details: true,
+          }).then(info => {
+            return {
+              ...el,
+              decimals: info.decimals,
+              balanceEth: Nf3.Units.fromBaseUnit(el.balance.toString(), info.decimals),
+              tokenType: info.tokenType,
+              tokenName: '',
+            };
+          });
+        }
+        return {
+          ...el,
+          decimals: tokenInfo.decimals,
+          balanceEth: Nf3.Units.fromBaseUnit(el.balance.toString(), tokenInfo.tokenDecimals),
+          tokenType: tokenInfo.tokenType,
+          tokenName: tokenInfo.tokenName,
+        };
       }),
     );
     dispatch(txActions.txWithdrawUpdate(updatedWithdrawalInfo));

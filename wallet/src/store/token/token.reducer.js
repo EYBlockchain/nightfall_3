@@ -8,20 +8,7 @@ const initialState = {
   tokenPool: [],
   detailedErc1155: [],
 };
-/*
-tokenAddress: DEFAULT_TOKEN_ADDRESS.ERC721,
-tokenType: Nf3.Constants.TOKEN_TYPE.ERC721,
-tokenId: DEFAULT_TOKEN_ID.ERC721,
-tokenIdL2: [],
-tokenName: 'TOKEN2',
-tokenBalanceL1: '0',
-tokenBalanceL2: '0',
-tokenPendingDepositL2: '0',
-tokenPendingSpentL2: '0',
-tokenDetailsL1: [],
-tokenDetailsL2: [],
-decimals: 0,
-*/
+
 function tokenReducer(state = initialState, action) {
   switch (action.type) {
     case tokenActionTypes.TOKEN_ADD: {

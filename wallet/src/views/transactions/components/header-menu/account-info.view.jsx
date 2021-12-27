@@ -64,8 +64,19 @@ function AccountInfoModal({
         withdrawalRow.push(
           <Card fluid raised>
             <Card.Content>
-              <Card.Description>Token Address: {pendingWithdraw.ercAddress}</Card.Description>
-              <Card.Description>{pendingWithdraw.tokenType}</Card.Description>
+              <Grid column={12}>
+                <Grid.Column width="4">
+                  {pendingWithdraw.tokenName !== '' ? (
+                    <Card.Description>Token Name: {pendingWithdraw.tokenName}</Card.Description>
+                  ) : (
+                    <Card.Description>Token Address: {pendingWithdraw.ercAddress}</Card.Description>
+                  )}
+                </Grid.Column>
+                <Grid.Column width="6" />
+                <Grid.Column width="2">
+                  <Card.Description>{pendingWithdraw.tokenType}</Card.Description>
+                </Grid.Column>
+              </Grid>
             </Card.Content>
             <Grid column={15}>
               <Grid.Column width="1" />
@@ -120,7 +131,7 @@ function AccountInfoModal({
 
   return (
     <Modal open={accountInfoEnable}>
-      <Modal.Header>Account Information</Modal.Header>
+      <Modal.Header>Withdrawal Information</Modal.Header>
       <Modal.Content>
         <Form>
           <Header as="h4" textAlign="right">
