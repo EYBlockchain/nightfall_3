@@ -31,7 +31,7 @@ function HeaderMenu({ onDeleteWallet }) {
         </Button>
         <Button name="account-info" primary onClick={() => toggleAccountInfo()}>
           <Icon name="question" size="large" />
-          Account Information
+          Withdrawal Information
         </Button>
       </Menu.Menu>
       <AccountSettingsModal
