@@ -113,7 +113,7 @@ function AccountInfoModal({
     return withdrawalRow;
   };
 
-  let withdrawRows = []
+  let withdrawRows = [];
   if (accountInfoEnable) {
     withdrawRows = renderWithdraws();
   }
