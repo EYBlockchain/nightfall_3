@@ -13,7 +13,7 @@ const { SHIELD_CONTRACT_NAME } = config;
 export async function isValidWithdrawal({ block, transactions, index }) {
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
   try {
-    const valid = await shieldContractInstance.methods
+    const info = await shieldContractInstance.methods
       .isValidWithdrawal(
         buildSolidityStruct(block),
         block.blockNumberL2,
@@ -21,8 +21,8 @@ export async function isValidWithdrawal({ block, transactions, index }) {
         index,
       )
       .call();
-    return valid;
+    return { valid: info[0], timestamp: info[1] };
   } catch (err) {
-    return false;
+    return { valid: false };
   }
 }

@@ -1,13 +1,11 @@
 /* ignore unused exports */
 import * as Nf3 from 'nf3';
-import { TRANSACTION_RETRY_PERIOD, TRANSACTION_MAX_RETRIES } from '../../constants';
 import * as txActions from './transactions.actions';
 
 function txInstantWithdrawSubmit(withdrawTransactionHash, fee) {
   return async (dispatch, getState) => {
     const {
       login: { nf3 },
-      transactions: { txPool },
     } = getState();
     nf3
       .requestInstantWithdrawal(withdrawTransactionHash, fee)
@@ -19,19 +17,7 @@ function txInstantWithdrawSubmit(withdrawTransactionHash, fee) {
         dispatch(txActions.txSuccess(Nf3.Constants.TX_TYPES.INSTANT_WITHDRAW, txReceipt));
       })
       .catch(err => {
-        // TODO: Wait XXX time and retry YYY times. Else fail
-        const withdrawTx = txPool.filter(
-          tx => tx.withdrawTransactionHash === withdrawTransactionHash,
-        )[0];
-        if (withdrawTx.nRetries < TRANSACTION_MAX_RETRIES) {
-          // update retries of this tx
-          dispatch(txActions.txRetry(withdrawTransactionHash));
-          setTimeout(() => {
-            dispatch(txInstantWithdrawSubmit(withdrawTransactionHash, fee));
-          }, TRANSACTION_RETRY_PERIOD);
-        } else {
-          dispatch(txActions.txFailed());
-        }
+        dispatch(txActions.txFailed());
         // TODO dispatch error
         console.log(err);
       });
@@ -126,20 +112,6 @@ function txSubmit(txParams) {
               );
               // TODO: dispatch error
               console.log(txReceipt);
-
-              if (txParams.txType === Nf3.Constants.TX_TYPES.INSTANT_WITHDRAW) {
-                dispatch(
-                  txInstantWithdrawSubmit(
-                    latestWithdrawTransactionHash,
-                    txParams.instantWithdrawFee,
-                  ),
-                );
-              }
-            })
-            .catch(err => {
-              dispatch(txActions.txFailed());
-              // TODO: dispatch error
-              console.log(err);
             });
         }
         break;
@@ -150,4 +122,41 @@ function txSubmit(txParams) {
   };
 }
 
-export { txSubmit, txInstantWithdrawSubmit };
+function txWithdrawUpdate() {
+  return async (dispatch, getState) => {
+    const {
+      login: { nf3 },
+    } = getState();
+    const filteredPendingWithdrals = [];
+    const pendingWithdraws = await nf3.getPendingWithdraws();
+    if (Object.keys(pendingWithdraws).includes(nf3.zkpKeys.compressedPkd)) {
+      for (const ercContractWithdrawal of Object.keys(
+        pendingWithdraws[nf3.zkpKeys.compressedPkd],
+      )) {
+        filteredPendingWithdrals.push(
+          ...pendingWithdraws[nf3.zkpKeys.compressedPkd][ercContractWithdrawal],
+        );
+      }
+    }
+
+    const updatedWithdrawalInfo = await Promise.all(
+      filteredPendingWithdrals.map(el => {
+        return Nf3.Tokens.getERCInfo(el.ercAddress, nf3.ethereumAddress, nf3.web3, {
+          toEth: true,
+          tokenId: 0,
+          details: true,
+        }).then(info => {
+          return {
+            ...el,
+            decimals: info.decimals,
+            balanceEth: Nf3.Units.fromBaseUnit(el.balance.toString(), info.decimals),
+            tokenType: info.tokenType,
+          };
+        });
+      }),
+    );
+    dispatch(txActions.txWithdrawUpdate(updatedWithdrawalInfo));
+  };
+}
+
+export { txSubmit, txInstantWithdrawSubmit, txWithdrawUpdate };

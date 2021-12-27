@@ -7,13 +7,11 @@ import * as txThunks from '../../../../store/transactions/transactions.thunks';
 import * as txActionTypes from '../../../../store/transactions/transactions.actions';
 import * as Storage from '../../../../utils/lib/local-storage';
 
-import { DEFAULT_DEPOSIT_FEE, DEFAULT_INSTANT_WITHDRAW_FEE } from '../../../../constants';
+import { DEFAULT_DEPOSIT_FEE } from '../../../../constants';
 
 function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx }) {
   const [fee, setFee] = React.useState(DEFAULT_DEPOSIT_FEE);
-  const [tokenAmount, setTokenAmount] = React.useState(0);
-  const [instantWithdrawFee, setInstantWithdrawFee] = React.useState(DEFAULT_INSTANT_WITHDRAW_FEE);
-  const [instantWithdrawEnable, setInstantWithdrawEnable] = React.useState(false);
+  const [tokenAmount, setTokenAmount] = React.useState('0');
   const [directTransactionEnable, setDirectTransactionEnable] = React.useState(false);
   const [tokenId, setTokenId] = React.useState({
     value: 0,
@@ -25,7 +23,6 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
   });
 
   const toggleAll = () => {
-    setInstantWithdrawEnable(false);
     setDirectTransactionEnable(false);
     setDestinationAddress({ value: '', error: null });
     setTokenId({ value: 0, error: null });
@@ -78,11 +75,8 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
         {
           const ethereumAddress =
             destinationAddress.value === '' ? login.nf3.ethereumAddress : destinationAddress.value;
-          const withdrawType = instantWithdrawEnable
-            ? Nf3.Constants.TX_TYPES.INSTANT_WITHDRAW
-            : Nf3.Constants.TX_TYPES.WITHDRAW;
           onSubmitTx({
-            txType: withdrawType,
+            txType: Nf3.Constants.TX_TYPES.WITHDRAW,
             ethereumAddress,
             tokenType: tokenInfo.tokenType,
             tokenAddress: tokenInfo.tokenAddress,
@@ -91,7 +85,6 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
               tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC721 ? '1' : tokenAmount,
             fee,
             tokenDecimals: tokenInfo.tokenDecimals,
-            instantWithdrawFee,
           });
         }
         break;
@@ -115,7 +108,6 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
       }
     }
 
-    setInstantWithdrawEnable(false);
     setDirectTransactionEnable(false);
     setTokenId({ value: 0, error: null });
     setDestinationAddress({ value: '', error: null });
@@ -137,31 +129,6 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
       <Modal.Header>{transactions.txType.toUpperCase()}</Modal.Header>
       <Modal.Content>
         <Form>
-          <Form.Group widths="equal">
-            {transactions.txType === Nf3.Constants.TX_TYPES.WITHDRAW &&
-            tokenInfo.tokenType !== Nf3.Constants.TOKEN_TYPE.ERC721 ? (
-              <Form.Field>
-                <Checkbox
-                  label="Instant Withdraw"
-                  onChange={() => setInstantWithdrawEnable(!instantWithdrawEnable)}
-                  checked={instantWithdrawEnable}
-                />
-              </Form.Field>
-            ) : null}
-            {instantWithdrawEnable ? (
-              <Form.Field>
-                <label htmlFor="instante-withdrawfee">
-                  Instant Withdraw Fee
-                  <input
-                    type="text"
-                    placeholder={instantWithdrawFee}
-                    id="instant withdraw fee"
-                    onChange={event => setInstantWithdrawFee(event.target.value)}
-                  />
-                </label>
-              </Form.Field>
-            ) : null}
-          </Form.Group>
           {transactions.txType !== Nf3.Constants.TX_TYPES.DEPOSIT ? (
             <Form.Field>
               <Checkbox

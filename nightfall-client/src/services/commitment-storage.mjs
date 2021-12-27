@@ -496,7 +496,9 @@ export async function getWithdrawCommitments() {
         index,
         compressedPkd: w.preimage.compressedPkd,
         ercAddress: `0x${BigInt(w.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to be a correct address length
-        balance: w.preimage.tokenId ? 1 : w.preimage.value,
+        balance: w.preimage.value,
+        tokenId: w.preimage.tokenId,
+        transactionHash: transactions[index].transactionHash,
       };
     }),
   );
@@ -505,12 +507,14 @@ export async function getWithdrawCommitments() {
   const withdrawsDetailsValid = await Promise.all(
     blockTxs.map(async wt => {
       const { block, transactions, index } = wt;
-      const valid = await isValidWithdrawal({ block, transactions, index });
+      const withdrawalInfo = await isValidWithdrawal({ block, transactions, index });
       return {
         compressedPkd: wt.compressedPkd,
         ercAddress: wt.ercAddress,
-        balance: wt.balance,
-        valid,
+        balance: parseInt(wt.balance, 16),
+        tokenId: wt.tokenId,
+        transactionHash: wt.transactionHash,
+        withdrawalInfo,
       };
     }),
   );

@@ -2,10 +2,10 @@
 export const txActionTypes = {
   TRANSACTION_SUCCESS: 'TRANSACTION_SUCCESS',
   TRANSACTION_FAILED: 'TRANSACTION_FAILED',
-  TRANSACTION_RETRY: 'TRANSACTION_RETRY',
   TRANSACTION_NEW: 'TRANSACTION_NEW',
   TRANSACTION_CANCELLED: 'TRANSACTION_CANCELLED',
   TRANSACTION_DISPATCHED: 'TRANSACTION_DISPATCHED',
+  TRANSACTION_WITHDRAW_UPDATE: 'TRANSACTION_WITHDRAW_UPDATE',
 };
 
 export function txNew(txType) {
@@ -42,9 +42,9 @@ export function txSuccess(txType, txReceipt, withdrawTransactionHash, nRetries) 
   };
 }
 
-export function txRetry(withdrawTransactionHash) {
+export function txWithdrawUpdate(withdrawInfo) {
   return {
-    type: txActionTypes.TRANSACTION_RETRY,
-    payload: { withdrawTransactionHash },
+    type: txActionTypes.TRANSACTION_WITHDRAW_UPDATE,
+    payload: { withdrawInfo },
   };
 }

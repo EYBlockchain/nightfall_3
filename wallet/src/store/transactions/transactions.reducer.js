@@ -4,9 +4,9 @@ import { txActionTypes } from './transactions.actions';
 const initialState = {
   nTx: 0,
   nFailedTx: 0,
-  txPool: [],
   txType: '',
   modalTx: false,
+  withdrawInfo: [],
 };
 
 function txReducer(state = initialState, action) {
@@ -14,15 +14,6 @@ function txReducer(state = initialState, action) {
     case txActionTypes.TRANSACTION_SUCCESS:
       return {
         ...state,
-        txPool: [
-          ...state.txPool,
-          {
-            txType: action.payload.txType,
-            txReceipt: action.payload.txReceipt,
-            withdrawTransactionHash: action.payload.withdrawTransactionHash,
-            nRetries: action.payload.nRetries,
-          },
-        ],
         nTx: state.nTx + 1,
         modalTx: false,
       };
@@ -33,23 +24,6 @@ function txReducer(state = initialState, action) {
         nFailedTx: state.nFailedTx + 1,
         modalTx: false,
       };
-
-    case txActionTypes.TRANSACTION_RETRY: {
-      const txPool = [...state.txPool];
-      const newTxPool = txPool.map(tx => {
-        if (tx.withdrawTransactionHash === action.payload.withdrawTransactionHash) {
-          const newTx = tx;
-          newTx.nRetries++;
-          return newTx;
-        }
-        return tx;
-      });
-      return {
-        ...state,
-        txPool: newTxPool,
-        modalTx: false,
-      };
-    }
 
     case txActionTypes.TRANSACTION_NEW: {
       return {
@@ -71,6 +45,13 @@ function txReducer(state = initialState, action) {
         ...state,
         txType: '',
         modalTx: false,
+      };
+    }
+
+    case txActionTypes.TRANSACTION_WITHDRAW_UPDATE: {
+      return {
+        ...state,
+        withdrawInfo: action.payload.withdrawInfo.filter(el => el.withdrawalInfo.valid === true),
       };
     }
 

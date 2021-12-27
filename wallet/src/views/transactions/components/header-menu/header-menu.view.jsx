@@ -4,15 +4,20 @@ import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { deleteWallet } from '../../../../store/login/login.actions';
 import AccountSettingsModal from './account-settings.view.jsx';
+import AccountInfoModal from './account-info.view.jsx';
 
 function HeaderMenu({ onDeleteWallet }) {
   const [accountSettingsEnable, setAccountSettingsEnable] = React.useState(false);
+  const [accountInfoEnable, setAccountInfoEnable] = React.useState(false);
 
   const toggleAccountSettings = () => {
     setAccountSettingsEnable(!accountSettingsEnable);
   };
 
-  const handleClickNFInfo = () => {};
+  const toggleAccountInfo = () => {
+    setAccountInfoEnable(!accountInfoEnable);
+  };
+
   return (
     <Menu secondary>
       <Menu.Menu position="right">
@@ -24,14 +29,18 @@ function HeaderMenu({ onDeleteWallet }) {
           <Icon name="settings" size="large" />
           Account Settings
         </Button>
-        <Button name="account-info" primary disabled onClick={() => handleClickNFInfo()}>
+        <Button name="account-info" primary onClick={() => toggleAccountInfo()}>
           <Icon name="question" size="large" />
-          NightFall Information
+          Account Information
         </Button>
       </Menu.Menu>
       <AccountSettingsModal
         accountSettingsEnable={accountSettingsEnable}
         toggleAccountSettings={toggleAccountSettings}
+      />
+      <AccountInfoModal
+        accountInfoEnable={accountInfoEnable}
+        toggleAccountInfo={toggleAccountInfo}
       />
     </Menu>
   );
