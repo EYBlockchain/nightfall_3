@@ -18,7 +18,7 @@ export const ethereumSigningKeyUser1 =
   '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e';
 export const ethereumAddressUser1 = '0x9c8b2276d490141ae1440da660e470e7c0349c63';
 export const ethereumSigningKeyUser2 =
-  '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e';
+  '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb';
 export const ethereumSigningKeyProposer1 =
   '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d';
 // '0x35d9f2b07aaa323d56d031934e0eda93dd3d46a49e5a3f026a45f0e83f3c9ede';
