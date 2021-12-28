@@ -28,7 +28,7 @@ def loginNightfallWallet(driver, findElements, metamaskTab, nightfallTab, wallet
     sleep(1)
     findElements.element_exist_xpath('(//*[local-name()="svg"])[2]').click() # nightfall Metamask button
     sleep(1)
-    findElements.element_exist_xpath('//button[text()="New"]').click() # New Mnemonic
+    findElements.element_exist_xpath('//button[text()="New"]').click() # New Munemonic
     sleep(1)
     findElements.element_exist_xpath('//button[text()="Submit"]').click() # Submit Mnemonic
 
@@ -39,41 +39,60 @@ def logoutNightfallWallet(driver, findElements, nightfallTab):
 def submitTxWallet(txParams, findElements, driver, metamaskTab, nightfallTab, cancel=0):
     txType = txParams["txType"]
     if txParams["txType"] == "Instant-withdraw":
-        txType="Withdraw"
+      findElements.element_exist_xpath('//button[text()="Withdrawal Information"]').click() # Withdrawal information
+      if cancel:
+        findElements.element_exist_xpath('//button[text()="Close"]').click() # Close
+        return
+      sleep(10)
+      testTokenType = findElements.element_exist_xpath('(//*[@id="card type' + txParams['tokenAddress'] + '"])[1]').text # Read Token Type
+      testTokenAmount = findElements.element_exist_xpath('(//*[@id="card amount' + txParams['tokenAddress'] + '"])[1]').text # Read Token Amount
+      testTokenWithdrawButton = findElements.element_exist_xpath('(//*[@id="button withdraw' + txParams['tokenAddress'] + '"])[1]') 
+      testTokenInstantWithdrawButton = findElements.element_exist_xpath('(//*[@id="button instant' + txParams['tokenAddress'] + '"])[1]')
 
-    # Ensure correct token is selected
-    findElements.element_exist_xpath('//*[@title="' + txParams['tokenAddress'] + '"]').click() # Select token
-    transactionButtonEn = findElements.element_exist_xpath('//button[text()="' + txType + '"]') # Transaction
-    if transactionButtonEn.get_attribute("disabled"):
-        findElements.element_exist_xpath('//*[@title="' + txParams['tokenAddress'] + '"]').click() # Select token
+      assert(testTokenType.upper() == txParams['tokenType'].upper())
+      assert(testTokenAmount == "Requested Withdrawal Amount: " + str(txParams['amount']))
+      try:
+        testTokenWithdrawButton.click()
+      except:
+        pass
 
-    transactionButtonEn.click()
+      try:
+        testTokenInstantWithdrawButton.click()
+      except:
+        if txParams['tokenType'] != 'erc20':
+           raise
+      findElements.element_exist_xpath('//button[text()="Close"]').click() # Close
 
-    if txParams["tokenType"].lower() != "erc721":
-      findElements.element_exist_xpath('//*[@id="amount"]').send_keys(txParams['amount']) # Amount
+    else:
+      # Ensure correct token is selected
+      findElements.element_exist_xpath('//*[@title="' + txParams['tokenAddress'] + '"]').click() # Select token
+      transactionButtonEn = findElements.element_exist_xpath('//button[text()="' + txType + '"]') # Transaction
+      if transactionButtonEn.get_attribute("disabled"):
+          findElements.element_exist_xpath('//*[@title="' + txParams['tokenAddress'] + '"]').click() # Select token
+  
+      transactionButtonEn.click()
+  
+      if txParams["tokenType"].lower() != "erc721":
+        findElements.element_exist_xpath('//*[@id="amount"]').send_keys(txParams['amount']) # Amount
+  
+      if txParams["tokenType"].lower() != "erc20":
+        findElements.element_exist_xpath('//*[@id="token-id"]').click()
+  
+      findElements.element_exist_xpath('//*[@id="fee"]').send_keys(txParams['fee']) # Fee
+      if txParams["txType"] == "Transfer":
+        findElements.element_exist_xpath('//*[@id="destination address"]').send_keys(txParams['compressedPkd']) # compressedPkd
+      elif txParams["txType"] == "Withdraw" or txParams["txType"] == "Instant-withdraw":
+        findElements.element_exist_xpath('//*[@id="destination address"]').send_keys(txParams['ethereumAddress']) # Ethereum Address
+  
+      testTokenType = findElements.element_exist_xpath('//*[@id="token-type"]').get_attribute("value") # Read Token Type
+      testTokenAddress = findElements.element_exist_xpath('//*[@id="token-address"]').get_attribute("value") # Read Token Address
+      assert(testTokenType.lower() == txParams['tokenType'].lower())
+      assert(testTokenAddress.lower() == txParams['tokenAddress'].lower())
+      if cancel == 1:
+        findElements.element_exist_xpath('//button[text()="Cancel"]').click() # Cancel
+        return
 
-    if txParams["tokenType"].lower() != "erc20":
-      findElements.element_exist_xpath('//*[@id="token-id"]').click()
-
-    findElements.element_exist_xpath('//*[@id="fee"]').send_keys(txParams['fee']) # Fee
-    if txParams["txType"] == "Transfer":
-      findElements.element_exist_xpath('//*[@id="destination address"]').send_keys(txParams['compressedPkd']) # compressedPkd
-    elif txParams["txType"] == "Withdraw" or txParams["txType"] == "Instant-withdraw":
-      findElements.element_exist_xpath('//*[@id="destination address"]').send_keys(txParams['ethereumAddress']) # Ethereum Address
-
-    if txParams["txType"] == "Instant-withdraw":
-      findElements.element_exist_xpath('(//div[contains(@class, "ui checkbox")])[1]').click() # Instant Withdraw
-      findElements.element_exist_xpath('//*[@id="instant withdraw fee"]').send_keys(txParams['instantWithdrawFee']) # Fee
-
-    testTokenType = findElements.element_exist_xpath('//*[@id="token-type"]').get_attribute("value") # Read Token Type
-    testTokenAddress = findElements.element_exist_xpath('//*[@id="token-address"]').get_attribute("value") # Read Token Address
-    assert(testTokenType.lower() == txParams['tokenType'].lower())
-    assert(testTokenAddress.lower() == txParams['tokenAddress'].lower())
-    if cancel == 1:
-      findElements.element_exist_xpath('//button[text()="Cancel"]').click() # Cancel
-      return
-
-    findElements.element_exist_xpath('//button[text()="Submit"]').click() # Submit
+      findElements.element_exist_xpath('//button[text()="Submit"]').click() # Submit
     driver.switch_to.window(metamaskTab)
 
     stop=0

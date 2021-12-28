@@ -9,12 +9,19 @@ class txTest(walletTest):
   def __init__(self, findElementsInstance, driver, metamaskTab, nightfallTab):
     super(txTest, self).__init__(findElementsInstance, driver, metamaskTab, nightfallTab, txTestsList)
 
+def emptyWithdrawTest(findElementsInstance, driver, metamaskTab, nightfallTab):
+   findElementsInstance.element_exist_xpath('//button[text()="Withdrawal Information"]').click() # Withdrawal information
+   withdrawAvail = findElementsInstance.element_exist_xpath('//div[contains(@class, "ui info message")]') # no wihtrdraw message
+   if not withdrawAvail:
+     return "FAILED\n"
+   findElementsInstance.element_exist_xpath('//button[text()="Close"]').click() # Close
+
+
 def transactionsTest(findElementsInstance, driver, metamaskTab, nightfallTab):
-    #tokenTypes = ["erc20", "erc721", "erc1155"]
-    # TODO: Waiting for all toke types to be correctly configured. For now, only ERC20 amd ERC721 works
-    #tokenTypes = ["erc20", "erc721"]
-    tokenTypes = ["erc721","erc1155"]
-    txTypes = ["Deposit", "Instant-withdraw", "Transfer", "Withdraw"]
+    tokenTypes = ["erc20", "erc721", "erc1155"]
+    #tokenTypes = ["erc20"]
+    txTypes = ["Deposit", "Transfer", "Withdraw", "Instant-withdraw"]
+    #txTypes = ["Deposit", "Withdraw", "Instant-withdraw"]
   
     txParams = {
       "amount": 1,
@@ -61,12 +68,7 @@ def transactionsTest(findElementsInstance, driver, metamaskTab, nightfallTab):
         sleep(15)
         logging.info(tokenType, txType)
         #print("Tx")
-        if txParams["txType"] == "Instant-withdraw":
-          txParams["txType"] = "Deposit"
-          submitTxWallet(txParams, findElementsInstance, driver, metamaskTab, nightfallTab)
-          txParams["txType"] = "Instant-withdraw"
-        else:
-          submitTxWallet(txParams, findElementsInstance, driver, metamaskTab, nightfallTab)
+        submitTxWallet(txParams, findElementsInstance, driver, metamaskTab, nightfallTab)
         status, errorMsg = waitBalanceChange(l1Balance, l2Balance, txParams, 2, findElementsInstance)
         if status == 0:
           return errorMsg
@@ -136,16 +138,20 @@ def waitBalanceChange(l1Balance, l2Balance, txParams, nTx, findElementsInstance)
        if l2BalanceNew + nTx*txParams["amount"] == l2Balance:
          break
     elif txParams["txType"] == "Instant-withdraw":
-      #print("Match", l2BalanceNew ,l2Balance ,l1BalanceNew ,l1Balance)
-      if l2BalanceNew == l2Balance and l1BalanceNew == l1Balance:
+      #print("Match", l2BalanceNew ,l2Balance ,l1BalanceNew ,nTx*txParams["amount"] + l1Balance)
+      if l2BalanceNew == l2Balance and l1BalanceNew == l1Balance + nTx*txParams["amount"]:
        break
     niter+=1
   return 1,""
 
 txTestsList = [
   {
+    'name': emptyWithdrawTest,
+    'description' : 'Attempts to request an instant withdraw, but since no previous withdraws exists, it fails'
+  },
+  {
     'name': transactionsTest,
-    'description' : 'Performs deposit, transfer, withdraw and instant withdraw of ERC20, ERC721 and ERC1155 tokens and check balances'
+    'description' : 'Performs deposit, transfer withdraw and instant withdraw of ERC20, ERC721 and ERC1155 tokens and check balances'
   },
   #{
     #'name': transactionsErrorTest,

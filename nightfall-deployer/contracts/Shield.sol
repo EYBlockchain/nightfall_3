@@ -69,7 +69,8 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
   }
 
   /**
-  This function returns if you are able to withdraw the funds, once a block is finalised
+  This function returns if you are able to withdraw the funds, once a block is finalised and the timestamp at
+  which the withdraw can be claimed
   @param b - the block containing the Withdraw transaction
   @param ts - array of the transactions contained in the block
   @param index - the index of the transaction that locates it in the array of Transactions in Block b
@@ -78,7 +79,7 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
     // check this block is a real one, in the queue, not something made up.
     state.isBlockReal(b, ts, blockNumberL2);
     // check that the block has been finalised
-    uint time = state.getBlockData(blockNumberL2).time;
+    uint time = state.getBlockData(blockNumberL2).time + COOLING_OFF_PERIOD;
     
     bytes32 transactionHash = Utils.hashTransaction(ts[index]);
     // Transaction already paid

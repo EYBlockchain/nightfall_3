@@ -57,9 +57,18 @@ function AccountInfoModal({
             )}`
           : pendingWithdraw.tokenId;
       const pendingClaimWithdraw =
-        Number(pendingWithdraw.withdrawalInfo.timestamp) +
-        Nf3.Constants.WITHDRAW_COOLING_OFF_PERIOD_SECONDS -
-        Math.floor(new Date().getTime() / 1000);
+        Number(pendingWithdraw.withdrawalInfo.timestamp) - Math.floor(new Date().getTime() / 1000);
+      const tokenIdId = `card id${pendingWithdraw.ercAddress}`;
+      const tokenIdValue = `Token Id: ${tokenIdStr}`;
+      const tokenNameId = `card name${pendingWithdraw.ercAddress}`;
+      const tokenNameValue = `Token Name: ${pendingWithdraw.tokenName}`;
+      const tokenAddressId = `card address${pendingWithdraw.ercAddress}`;
+      const tokenAddressValue = `Token Address: ${pendingWithdraw.ercAddress}`;
+      const tokenTypeId = `card type${pendingWithdraw.ercAddress}`;
+      const tokenAmountId = `card amount${pendingWithdraw.ercAddress}`;
+      const tokenAmountValue = `Requested Withdrawal Amount: ${pendingWithdraw.balanceEth}`;
+      const tokenButtonWithdrawId = `button withdraw${pendingWithdraw.ercAddress}`;
+      const tokenButtonInstantWithdrawId = `button instant${pendingWithdraw.ercAddress}`;
       if (pendingWithdraw.withdrawalInfo.valid) {
         withdrawalRow.push(
           <Card fluid raised>
@@ -67,14 +76,14 @@ function AccountInfoModal({
               <Grid column={12}>
                 <Grid.Column width="4">
                   {pendingWithdraw.tokenName !== '' ? (
-                    <Card.Description>Token Name: {pendingWithdraw.tokenName}</Card.Description>
+                    <Card.Description id={tokenNameId} content={tokenNameValue} />
                   ) : (
-                    <Card.Description>Token Address: {pendingWithdraw.ercAddress}</Card.Description>
+                    <Card.Description id={tokenAddressId} content={tokenAddressValue} />
                   )}
                 </Grid.Column>
                 <Grid.Column width="6" />
                 <Grid.Column width="2">
-                  <Card.Description>{pendingWithdraw.tokenType}</Card.Description>
+                  <Card.Description id={tokenTypeId} content={pendingWithdraw.tokenType} />
                 </Grid.Column>
               </Grid>
             </Card.Content>
@@ -82,14 +91,12 @@ function AccountInfoModal({
               <Grid.Column width="1" />
               <Grid.Column width="7">
                 {pendingWithdraw.tokenType === Nf3.Constants.TOKEN_TYPE.ERC20 ? null : (
-                  <Card.Content extra>Token Id: {tokenIdStr}</Card.Content>
+                  <Card.Content extra id={tokenIdId} content={tokenIdValue} />
                 )}
               </Grid.Column>
               <Grid.Column width="5">
                 {pendingWithdraw.tokenType === Nf3.Constants.TOKEN_TYPE.ERC721 ? null : (
-                  <Card.Content extra>
-                    Requested Withdrawal Amount: {pendingWithdraw.balanceEth}
-                  </Card.Content>
+                  <Card.Content extra id={tokenAmountId} content={tokenAmountValue} />
                 )}
               </Grid.Column>
             </Grid>
@@ -98,6 +105,7 @@ function AccountInfoModal({
                 <Button
                   floated="left"
                   transactionHash={pendingWithdraw.transactionHash}
+                  id={tokenButtonWithdrawId}
                   disabled={
                     pendingClaimWithdraw > 0 || pendingWithdraw.withdrawalInfo.valid === false
                   }
@@ -109,6 +117,7 @@ function AccountInfoModal({
                   <Button
                     floated="right"
                     transactionHash={pendingWithdraw.transactionHash}
+                    id={tokenButtonInstantWithdrawId}
                     disabled={pendingWithdraw.withdrawalInfo.valid === false}
                     onClick={(e, { transactionHash }) => onInstantWithdrawClaim(transactionHash)}
                   >
@@ -156,7 +165,6 @@ function AccountInfoModal({
               withdrawRows
             )}
           </Form.Field>
-          ,
           <Modal.Actions>
             <Button floated="right" primary onClick={onClose}>
               <Icon name="close" />
