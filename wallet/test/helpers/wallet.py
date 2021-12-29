@@ -77,7 +77,12 @@ def submitTxWallet(txParams, findElements, driver, metamaskTab, nightfallTab, ca
   
       if txParams["tokenType"].lower() != "erc20":
         findElements.element_exist_xpath('//*[@id="token-id"]').click()
-        sleep(5)
+        if txParams["tokenType"].lower() == "erc721":
+          sleep(30)
+        else :
+          sleep(5)
+        #findElements.element_exist_xpath('(//span[contains(@class,"text")])[' + str(tokenIdx) + ']').click()
+        #findElements.element_exist_xpath('(//div[contains(@role,"option")])[' + str(tokenIdx) + ']').set_attribute()
   
       findElements.element_exist_xpath('//*[@id="fee"]').send_keys(txParams['fee']) # Fee
       if txParams["txType"] == "Transfer":

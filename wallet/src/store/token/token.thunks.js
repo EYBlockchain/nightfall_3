@@ -107,6 +107,14 @@ const mergeErc1155Details = details => {
     tokenInfo.tokenErc1155Details = [];
   }
 
+  tokenInfo.tokenErc1155Details = tokenInfo.tokenErc1155Details.map(el => {
+    const obj = { ...el };
+    obj.l1Balance = '0';
+    obj.l2Balance = '0';
+    obj.pendingDeposit = '0';
+    obj.pendingSpent = '0';
+    return obj;
+  });
   // L1 balance
   details.tokenDetailsL1.forEach(el => {
     const l1BalanceIndex = tokenInfo.tokenErc1155Details.findIndex(
@@ -125,8 +133,8 @@ const mergeErc1155Details = details => {
     }
   });
 
-  // L2 balance
   details.tokenDetailsL2.l2BalanceDetails.forEach(el => {
+    // L2 balance
     const l2BalanceIndex = tokenInfo.tokenErc1155Details.findIndex(
       el2 => el2.tokenId === el.tokenId.toString(),
     );
