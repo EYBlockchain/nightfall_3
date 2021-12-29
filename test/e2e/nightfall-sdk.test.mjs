@@ -1066,7 +1066,7 @@ describe('Testing the Nightfall SDK', () => {
       console.log(`commitments: ${JSON.stringify(commitments)}`);
       expect(commitments[nf3User1.zkpKeys.compressedPkd][erc20Address].length).to.be.greaterThan(0);
       initialValidCommitments = commitments[nf3User1.zkpKeys.compressedPkd][erc20Address].filter(
-        c => c.valid === true,
+        c => c.withdrawalInfo.valid === true,
       ).length;
     });
   });
@@ -1117,8 +1117,9 @@ describe('Testing the Nightfall SDK', () => {
           0,
         );
         expect(
-          commitments[nf3User1.zkpKeys.compressedPkd][erc20Address].filter(c => c.valid === true)
-            .length,
+          commitments[nf3User1.zkpKeys.compressedPkd][erc20Address].filter(
+            c => c.withdrawalInfo.valid === true,
+          ).length,
         ).to.be.greaterThan(initialValidCommitments);
       } else {
         console.log('     Not using a time-jump capable test client so this test is skipped');
