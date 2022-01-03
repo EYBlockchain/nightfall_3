@@ -2,7 +2,7 @@ name: "test one"
 on:
   push:
     branch:
-      - liju.jose/configure-hosted-geth-for-blockchain-client
+      - liju.jose/configure-hosted-geth-for-blockchain-client-2
 
 jobs:
   testnet-test:
@@ -32,7 +32,7 @@ jobs:
         if: always()
         run: cat testnet-test.log
 
-      - run: sleep 4000
+      - run: sleep 6000
       - name: debug logs - after container startup 2
         if: always()
         run: cat testnet-test.log
