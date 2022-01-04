@@ -185,8 +185,8 @@ class Nf3 {
       const signed = await this.web3.eth.accounts.signTransaction(tx, this.ethereumSigningKey);
       // rather than waiting until we have a receipt, wait until we have enough confirmation blocks
       // then return the receipt.
-      let mined; // indicates receipt is mined
-      const confirmationPromise = new Promise(resolve => {
+      // TODO does this still work if there is a chain reorg or do we have to handle that?
+      return new Promise(resolve => {
         this.web3.eth
           .sendSignedTransaction(signed.rawTransaction)
           .on('confirmation', (number, receipt) => {
@@ -194,10 +194,8 @@ class Nf3 {
             if (number === 12) resolve(receipt);
           });
       });
-      await confirmationPromise;
-      return mined;
     }
-    // TODO a wait for confirmations to the wallet functionality
+    // TODO add wait for confirmations to the wallet functionality
     return this.web3.eth.sendTransaction(tx);
   }
 
