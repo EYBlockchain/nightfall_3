@@ -28,9 +28,9 @@ async function removeBlockProposedEventHandler(eventObject) {
   const { transactionHash } = eventObject;
   const commitmentsAddedInBlock = await getCommitmentsByTransactionHashL1(transactionHash);
   const commitmentsNullifiedInBlock = await getNullifiedByTransactionHashL1(transactionHash);
-  logger.debug(
-    `Found these commitments in the db ${JSON.stringify(commitmentsAddedInBlock, null, 2)}`,
-  );
+  // logger.debug(
+  //  `Found these commitments in the db ${JSON.stringify(commitmentsAddedInBlock, null, 2)}`,
+  // );
   // now we have these commitments, we need to reset their properties according to the
   // instructions in doc/chain-reorgs.md.
   await Promise.all([
@@ -40,7 +40,10 @@ async function removeBlockProposedEventHandler(eventObject) {
   // Then the the blocks we have stored and the commitment tree:
   // we need to remove the state associated with this event from the Timber class
   // so find out which L2 block has been removed by this event removal.
-  const block = await getBlockByTransactionHashL1(eventObject.transactionHash);
+  logger.debug(`Looking for block with transactionHash, ${transactionHash}`);
+  const block = await getBlockByTransactionHashL1(transactionHash);
+  if (block) logger.debug(`Found L2 block ${block.blockNumberL2}`);
+  else throw new Error(`Could not find L2 block with L1 transactionHash, ${transactionHash}`);
   // then we delete the Timber record associated with this block
   const res = await deleteTreeByBlockNumberL2(block.blockNumberL2);
   logger.debug(`Deleted tree with block number ${block.blockNumberL2}, ${res}`);

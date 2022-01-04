@@ -183,8 +183,21 @@ class Nf3 {
 
     if (this.ethereumSigningKey) {
       const signed = await this.web3.eth.accounts.signTransaction(tx, this.ethereumSigningKey);
-      return this.web3.eth.sendSignedTransaction(signed.rawTransaction);
+      // rather than waiting until we have a receipt, wait until we have enough confirmation blocks
+      // then return the receipt.
+      let mined; // indicates receipt is mined
+      const confirmationPromise = new Promise(resolve => {
+        this.web3.eth
+          .sendSignedTransaction(signed.rawTransaction)
+          .on('confirmation', (number, receipt) => {
+            console.log(`Confirmed ${number} ${receipt.transactionHash}`);
+            if (number === 12) resolve(receipt);
+          });
+      });
+      await confirmationPromise;
+      return mined;
     }
+    // TODO a wait for confirmations to the wallet functionality
     return this.web3.eth.sendTransaction(tx);
   }
 
@@ -772,6 +785,7 @@ class Nf3 {
   setWeb3Provider() {
     this.web3 = new Web3(this.web3WsUrl);
     this.web3.eth.transactionBlockTimeout = 200;
+    this.web3.eth.transactionConfirmationBlocks = 12;
     if (typeof window !== 'undefined') {
       if (window.ethereum && this.ethereumSigningKey === '') {
         this.web3 = new Web3(window.ethereum);

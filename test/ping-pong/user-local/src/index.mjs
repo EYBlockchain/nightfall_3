@@ -72,6 +72,7 @@ async function localTest() {
   }
 
   // Wait for sometime at the end to retrieve balance to include any transactions sent by the other use
+  // This needs to be much longer than we may have waited for a transfer
   await new Promise(resolving => setTimeout(resolving, 20 * TX_WAIT)); // TODO get balance waiting working well
   const endBalance = await retrieveL2Balance(nf3);
 

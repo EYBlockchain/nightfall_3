@@ -22,12 +22,15 @@ async function blockProposedEventHandler(data) {
   // ivk will be used to decrypt secrets whilst nsk will be used to calculate nullifiers for commitments and store them
   const { blockNumber: currentBlockCount, transactionHash: transactionHashL1 } = data;
   const { transactions, block } = await getProposeBlockCalldata(data);
-  logger.info(`Received Block Proposed event with layer 2 block number ${block.blockNumberL2}`);
+  logger.info(
+    `Received Block Proposed event with layer 2 block number ${block.blockNumberL2} and tx hash ${transactionHashL1}`,
+  );
   const latestTree = await getLatestTree();
   const blockCommitments = transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat();
 
   if ((await countCommitments(blockCommitments)) > 0) {
     await saveBlock({ blockNumber: currentBlockCount, transactionHashL1, ...block });
+    logger.debug(`Saved L2 block ${block.blockNumberL2}, with tx hash ${transactionHashL1}`);
     await Promise.all(transactions.map(t => saveTransaction({ transactionHashL1, ...t })));
   }
 
@@ -82,7 +85,7 @@ async function blockProposedEventHandler(data) {
   await Promise.all(dbUpdates);
   const updatedTimber = Timber.statelessUpdate(latestTree, blockCommitments);
   await saveTree(data.blockNumber, block.blockNumberL2, updatedTimber);
-
+  logger.debug(`Saved tree for L2 block ${block.blockNumberL2}`);
   await Promise.all(
     // eslint-disable-next-line consistent-return
     blockCommitments.map(async (c, i) => {
