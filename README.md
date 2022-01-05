@@ -76,7 +76,7 @@ npm test-chain-reorg
 
 The script `./geth-standalone` will run up a private blockchain consisting of a bootnode, two client nodes and two miners.  This is required for testing chain reorganisations (Ganache does not simulate a chain-reorg) but can be used for other tests or general running.  It's slower than using Ganache but it does provide a more real-life test. Note also that the private chain exposes a client on `host.docker.internal:8546`.  On a Mac this will map to `localhost` but it won't work on any other machine. If you aren't on a Mac then you can do one of these 3 options:
 - If you are on a Linux you can edit `/etc/hosts` file and add a map from your private IP address of your connected interface to the domain `host.docker.internal`. In this case `127.0.0.1` is not valid. You can check your private IP address with `ip address`.  
-- Edit `nightfall-deployer/truffle-config.js` to point to the IP of your `localhost` 
+- Edit `nightfall-deployer/truffle-config.js` to point to the IP of your `localhost`
 - Use the docker-compose line `external_servers` to inject a hostname into the containers host file (see the Github workflows for further clues about how to do that).
 
 To use the private blockchain:
@@ -165,6 +165,8 @@ More information can be found [here](https://github.com/EYBlockchain/nightfall_3
 - Direct transactions are not implemented
 - Instant withdraw is selected when doing a withdraw only. Once submitted the instant withdraw request,the wallet requests a simple withdraw and inmediatelly after converts this withdraw into an instant withdraw. Wallet will attempt to send the instant withdraw request up to 10 times, once every 10 seconds. It is likely that during this period, you need to request a simpler transaction (deposit, withdraw or transfer) so that the original withdraw is processed by the processor and the instant withdraw can be carried out.
 - Tested with node version v14.18.0
+
+Nightfall uses the G16 proof system, and we believe it is [not vulnerable](./doc/G16-malleability.md) to its malleability. 
 
 # Acknowledgements
 
