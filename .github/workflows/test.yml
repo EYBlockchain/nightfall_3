@@ -10,8 +10,7 @@ jobs:
     environment: TESTNET_DEPLOYMENT
     env:
       ETH_PRIVATE_KEY: ${{ secrets.ETH_PRIVATE_KEY }}
-      INFURA_PROJECT_ID: ${{ secrets.INFURA_PROJECT_ID }}
-      INFURA_PROJECT_SECRET: ${{ secrets.INFURA_PROJECT_SECRET }}
+
     steps:
       - uses: actions/checkout@master
       - uses: actions/setup-node@v1
@@ -23,8 +22,8 @@ jobs:
           docker-compose build
           ./start-nightfall -r &> testnet-test.log &disown
 
-      # - name: wait 2000s for Containers startup and setup completion
-      #   run: sleep 2000
+      # - name: wait 7000s for Containers startup and setup completion
+      #   run: sleep 7000
 
       # kept it for future debug
       - run: sleep 1000
