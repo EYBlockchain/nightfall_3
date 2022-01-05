@@ -22,11 +22,11 @@ const {
 Timber functions
 */
 
-export async function saveTree(blockNumber, blockNumberL2, timber) {
+export async function saveTree(transactionHashL1, blockNumberL2, timber) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(TIMBER_COLLECTION).insertOne({
-    _id: blockNumber,
+    _id: transactionHashL1,
     blockNumberL2,
     frontier: timber.frontier,
     leafCount: timber.leafCount,
@@ -73,6 +73,12 @@ export async function deleteTreeByBlockNumberL2(blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(TIMBER_COLLECTION).deleteMany({ blockNumberL2: { $gte: blockNumberL2 } });
+}
+
+export async function deleteTreeByTransactionHashL1(transactionHashL1) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(TIMBER_COLLECTION).deleteOne({ transactionHashL1 });
 }
 
 /**

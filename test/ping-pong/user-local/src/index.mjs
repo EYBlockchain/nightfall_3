@@ -69,22 +69,26 @@ async function localTest() {
     }
     await nf3.deposit(ercAddress, tokenType, value, tokenId);
     await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
+    console.log(`Completed ${i + 1} pings`);
   }
 
   // Wait for sometime at the end to retrieve balance to include any transactions sent by the other use
   // This needs to be much longer than we may have waited for a transfer
-  await new Promise(resolving => setTimeout(resolving, 20 * TX_WAIT)); // TODO get balance waiting working well
-  const endBalance = await retrieveL2Balance(nf3);
-
-  if (endBalance - startBalance === 2 * value + value * TEST_LENGTH) {
-    logger.info('Test passed');
-    logger.info('Balance of User (2*value (2*1) + value received) ', endBalance - startBalance);
-    logger.info('Amount sent to other User', value * TEST_LENGTH);
-    nf3.close();
-  } else {
-    logger.info('The test failed because the L2 balance has not increased');
-    process.exit(1);
-  }
+  let loop = 0;
+  do {
+    const endBalance = await retrieveL2Balance(nf3);
+    if (endBalance - startBalance === 2 * value + value * TEST_LENGTH) {
+      logger.info('Test passed');
+      logger.info('Balance of User (2*value (2*1) + value received) ', endBalance - startBalance);
+      logger.info('Amount sent to other User', value * TEST_LENGTH);
+      nf3.close();
+      break;
+    } else {
+      logger.info('The test has not yet passed because the L2 balance has not increased - waiting');
+      await new Promise(resolving => setTimeout(resolving, 20 * TX_WAIT)); // TODO get balance waiting working well
+      loop++;
+    }
+  } while (loop < 10);
 }
 
 localTest();

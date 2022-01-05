@@ -84,7 +84,7 @@ async function blockProposedEventHandler(data) {
   // await Promise.all(toStore);
   await Promise.all(dbUpdates);
   const updatedTimber = Timber.statelessUpdate(latestTree, blockCommitments);
-  await saveTree(data.blockNumber, block.blockNumberL2, updatedTimber);
+  await saveTree(transactionHashL1, block.blockNumberL2, updatedTimber);
   logger.debug(`Saved tree for L2 block ${block.blockNumberL2}`);
   await Promise.all(
     // eslint-disable-next-line consistent-return

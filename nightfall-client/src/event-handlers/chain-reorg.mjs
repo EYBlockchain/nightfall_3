@@ -16,7 +16,7 @@ import {
 } from '../services/commitment-storage.mjs';
 import {
   getBlockByTransactionHashL1,
-  deleteTreeByBlockNumberL2,
+  deleteTreeByTransactionHashL1,
   clearBlockNumberL1ForBlock,
 } from '../services/database.mjs';
 
@@ -42,14 +42,12 @@ async function removeBlockProposedEventHandler(eventObject) {
   // so find out which L2 block has been removed by this event removal.
   logger.debug(`Looking for block with transactionHash, ${transactionHash}`);
   const block = await getBlockByTransactionHashL1(transactionHash);
-  if (block) logger.debug(`Found L2 block ${block.blockNumberL2}`);
-  else throw new Error(`Could not find L2 block with L1 transactionHash, ${transactionHash}`);
-  // then we delete the Timber record associated with this block
-  const res = await deleteTreeByBlockNumberL2(block.blockNumberL2);
-  logger.debug(`Deleted tree with block number ${block.blockNumberL2}, ${res}`);
   // now we can clear the L1 blocknumber to indicate that the L2 block is no longer
-  // on chain.
-  return clearBlockNumberL1ForBlock(eventObject.transactionHash);
+  // on chain (if it's a block that we have saved)
+  if (block) await clearBlockNumberL1ForBlock(transactionHash);
+  // then we delete the Timber record associated with this block
+  logger.debug(`Deleting tree with proposeBlock transactionHash ${transactionHash}`);
+  return deleteTreeByTransactionHashL1(transactionHash);
 }
 
 export default removeBlockProposedEventHandler;
