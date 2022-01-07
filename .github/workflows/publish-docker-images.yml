@@ -4,6 +4,7 @@ on:
     branches:
       - master
       - westlad/ping-pong-test
+      - miranda/ping-pong-test
 
 jobs:
   release:
