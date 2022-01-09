@@ -8,3 +8,4 @@ cli/build
 wallet/build
 wallet/cli
 __pycache__
+wallet/src/views/zokrates/**
