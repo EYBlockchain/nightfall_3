@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { initialize } from 'zokrates-js';
 
-import abi from './double-transfer/artifacts/abi.json';
-import programFile from './double-transfer/artifacts/program';
-import pkPart1File from './double-transfer/keypair/pk-part-1';
-import pkPart2File from './double-transfer/keypair/pk-part-2';
+import abi from '../../zokrates/double_transfer/artifacts/double_transfer-abi.json';
+import programFile from '../../zokrates/double_transfer/artifacts/double_transfer-program';
+import pkFile from '../../zokrates/double_transfer/keypair/double_transfer-pk';
 import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
 
 export default function Zokrates() {
@@ -371,16 +370,10 @@ export default function Zokrates() {
       .then(response => response.body.getReader())
       .then(parseData)
       .then(mergeUint8Array);
-    const pkPart1 = await fetch(pkPart1File)
+    const pk = await fetch(pkFile)
       .then(response => response.body.getReader())
       .then(parseData)
       .then(mergeUint8Array);
-    const pkPart2 = await fetch(pkPart2File)
-      .then(response => response.body.getReader())
-      .then(parseData)
-      .then(mergeUint8Array);
-
-    const pk = mergeUint8Array([pkPart1, pkPart2]);
 
     const artifacts = { program: new Uint8Array(program), abi: JSON.stringify(abi) };
     const keypair = { pk: new Uint8Array(pk) };
