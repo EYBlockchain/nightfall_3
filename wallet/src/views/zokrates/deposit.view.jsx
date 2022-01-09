@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { initialize } from 'zokrates-js';
 
-import abi from './deposit/artifacts/abi.json';
-import programFile from './deposit/artifacts/program';
-import pkFile from './deposit/keypair/pk';
+import abi from '../../zokrates/deposit/artifacts/deposit-abi.json';
+import programFile from '../../zokrates/deposit/artifacts/deposit-program';
+import pkFile from '../../zokrates/deposit/keypair/deposit-pk';
 import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
 
 export default function Zokrates() {
