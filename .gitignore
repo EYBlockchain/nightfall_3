@@ -9,3 +9,4 @@ wallet/build
 wallet/cli
 __pycache__
 test/adversary/nightfall-adversary
+wallet/src/views/zokrates/**
