@@ -99,6 +99,60 @@ describe('Testing the Nightfall SDK', () => {
     }
   };
 
+  const checkUserBalances = async () => {
+    console.log('User1 balances: ');
+    let balances = await nf3User1.getLayer2BalancesDetails([erc20Address]);
+    let list = [];
+    try {
+      list = balances[nf3User1.zkpKeys.compressedPkd][erc20Address];
+    } catch {
+      list = [];
+    }
+    console.log('     ERC20 balance: ', list);
+
+    balances = await nf3User1.getLayer2BalancesDetails([erc721Address]);
+    try {
+      list = balances[nf3User1.zkpKeys.compressedPkd][erc721Address];
+    } catch {
+      list = [];
+    }
+    console.log('     ERC721 balance: ', list);
+
+    balances = await nf3User1.getLayer2BalancesDetails([erc1155Address]);
+    try {
+      list = balances[nf3User1.zkpKeys.compressedPkd][erc1155Address];
+    } catch {
+      list = [];
+    }
+    console.log('     ERC1155 balance: ', list);
+
+    console.log('User2 balances: ');
+    balances = await nf3User2.getLayer2BalancesDetails([erc20Address]);
+    list = [];
+    try {
+      list = balances[nf3User2.zkpKeys.compressedPkd][erc20Address];
+    } catch {
+      list = [];
+    }
+    console.log('     ERC20 balance: ', list);
+
+    balances = await nf3User2.getLayer2BalancesDetails([erc721Address]);
+    try {
+      list = balances[nf3User2.zkpKeys.compressedPkd][erc721Address];
+    } catch {
+      list = [];
+    }
+    console.log('     ERC721 balance: ', list);
+
+    balances = await nf3User2.getLayer2BalancesDetails([erc1155Address]);
+    try {
+      list = balances[nf3User2.zkpKeys.compressedPkd][erc1155Address];
+    } catch {
+      list = [];
+    }
+    console.log('     ERC1155 balance: ', list);
+  };
+
   before(async () => {
     // to enable getBalance with web3 we should connect first
     web3 = await connectWeb3();
@@ -226,6 +280,9 @@ describe('Testing the Nightfall SDK', () => {
       // For event tracking, we use only care about the logs related to 'blockProposed'
       if (log.topics[0] === topicEventMapping.BlockProposed) eventLogs.push('blockProposed');
     });
+
+    console.log('Check initial balances for users');
+    await checkUserBalances();
   });
 
   describe('Miscellaneous tests', () => {
@@ -1235,6 +1292,73 @@ describe('Testing the Nightfall SDK', () => {
       expect(Number(shieldContractBalance)).to.be.eq(0);
       expect(Number(proposerContractBalance)).to.be.eq(0);
       expect(Number(stateContractBalance)).to.be.gte(stateBalance);
+    });
+  });
+
+  describe('Restoring tokens', () => {
+    it('Should restore tokens ERC721 and ERC1155', async () => {
+      console.log('1');
+      let res = await nf3User2.transfer(
+        false,
+        erc721Address,
+        tokenTypeERC721,
+        1,
+        5,
+        nf3User1.zkpKeys.compressedPkd,
+        fee,
+      );
+      expectTransaction(res);
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      console.log('2');
+      res = await nf3User2.transfer(
+        false,
+        erc721Address,
+        tokenTypeERC721,
+        1,
+        6,
+        nf3User1.zkpKeys.compressedPkd,
+        fee,
+      );
+      expectTransaction(res);
+      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+
+      console.log('3');
+      for (let i = 0; i < txPerBlock + 1; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        res = await nf3User2.transfer(
+          false,
+          erc20Address,
+          tokenType,
+          value,
+          tokenId,
+          nf3User1.zkpKeys.compressedPkd,
+          fee,
+        );
+      }
+      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+
+      console.log('4');
+      for (let i = 0; i < txPerBlock; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        res = await nf3User2.transfer(
+          false,
+          erc1155Address,
+          tokenTypeERC1155,
+          value,
+          1,
+          nf3User1.zkpKeys.compressedPkd,
+          fee,
+        );
+        expectTransaction(res);
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+    });
+
+    after(async () => {
+      console.log('Check final balances for users');
+      await checkUserBalances();
     });
   });
 
