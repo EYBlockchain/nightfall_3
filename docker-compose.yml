@@ -91,6 +91,7 @@ services:
     command: ['npm', 'run', 'dev']
 
   worker:
+    platform: linux/amd64
     #  image: 3800decac71d
     build:
       dockerfile: Dockerfile
@@ -178,6 +179,7 @@ services:
       - nightfall_network
 
   optimist1:
+    platform: linux/amd64
     build:
       context: ./nightfall-optimist
     depends_on:
@@ -212,6 +214,7 @@ services:
     command: ['npm', 'run', 'dev']
 
   optimist2:
+    platform: linux/amd64
     build:
       context: ./nightfall-optimist
     depends_on:
