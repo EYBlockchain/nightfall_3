@@ -54,7 +54,7 @@ function tokensLoad(initTokens) {
         ]);
         if (tokenPool.length) {
           tokenPool.forEach(el => {
-            // TODO: Pending retrieve tokenIds and token name
+            // TODO: Pending retrieve tokenIds
             Nf3.Tokens.getERCInfo(el.tokenAddress, nf3.ethereumAddress, nf3.web3, {
               toEth: true,
               tokenId: 0,
