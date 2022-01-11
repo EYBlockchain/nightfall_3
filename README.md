@@ -135,9 +135,9 @@ npm install
 npm start
 ```
 
-- Launch wallet in localhost connected to testnet deploymen
+- Launch wallet in localhost connected to testnet deployment
 ```
-npm run start-ropsten
+npm run start:ropsten
 ```
 
 - When the wallet starts, connect metamask wallet installed in your browser. You need to have previously configured your metamask wallet to operate with Nightfall's deployment on localhost

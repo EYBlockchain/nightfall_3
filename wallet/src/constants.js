@@ -20,6 +20,7 @@ const DEFAULT_TOKEN_ID = {
 const METAMASK_MESSAGE =
   'This signature is required to unlock your Nightfall account. Sign this message only if you are in a trusted application.';
 
+const ERROR_AUTO_HIDE_PERIOD = 2000; // 2s
 // TODO - verify balance refres rate
 const BALANCE_INTERVAL = 60000;
 
@@ -33,5 +34,6 @@ export {
   DEFAULT_DEPOSIT_AMOUNT,
   DEFAULT_TOKEN_ID,
   METAMASK_MESSAGE,
+  ERROR_AUTO_HIDE_PERIOD,
   BALANCE_INTERVAL,
 };
