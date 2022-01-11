@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Table, Button, Container, Icon } from 'semantic-ui-react';
+import { Table, Button, Container, Icon, Message } from 'semantic-ui-react';
 import PropTypes from 'prop-types';
 import * as Nf3 from 'nf3';
 import {
@@ -16,6 +16,7 @@ import tokensLoad from '../../../../store/token/token.thunks';
 function WalletInfo({
   login,
   token,
+  message,
   onAddToken,
   onSelectToken,
   onUnselectToken,
@@ -279,6 +280,11 @@ function WalletInfo({
         nf3={login.nf3}
         token={token}
       />
+      {message.nf3Msg !== '' ? (
+        <Message info={message.nf3MsgType === 'info'} error={message.nf3MsgType === 'error'}>
+          <Message.Header>{message.nf3Msg}</Message.Header>
+        </Message>
+      ) : null}
     </Container>
   );
 }
@@ -286,6 +292,7 @@ function WalletInfo({
 WalletInfo.propTypes = {
   login: PropTypes.object.isRequired,
   token: PropTypes.object.isRequired,
+  message: PropTypes.object.isRequired,
   onAddToken: PropTypes.func.isRequired,
   onSelectToken: PropTypes.func.isRequired,
   onUnselectToken: PropTypes.func.isRequired,
@@ -296,6 +303,7 @@ WalletInfo.propTypes = {
 const mapStateToProps = state => ({
   token: state.token,
   login: state.login,
+  message: state.message,
 });
 
 const mapDispatchToProps = dispatch => ({
