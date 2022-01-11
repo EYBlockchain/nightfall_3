@@ -1,8 +1,6 @@
 /* ignore unused exports */
 import * as Nf3 from 'nf3';
-import {
-  ERROR_AUTO_HIDE_PERIOD,
-} from '../../constants';
+import { ERROR_AUTO_HIDE_PERIOD } from '../../constants';
 import * as txActions from './transactions.actions';
 import * as messageActions from '../message/message.actions';
 
@@ -141,27 +139,6 @@ function txSubmit(txParams) {
               }, ERROR_AUTO_HIDE_PERIOD);
               // TODO: dispatch error
               console.log(txReceipt);
-<<<<<<< HEAD
-=======
-
-              if (txParams.txType === Nf3.Constants.TX_TYPES.INSTANT_WITHDRAW) {
-                dispatch(
-                  txInstantWithdrawSubmit(
-                    latestWithdrawTransactionHash,
-                    txParams.instantWithdrawFee,
-                  ),
-                );
-              }
-            })
-            .catch(err => {
-              dispatch(txActions.txFailed());
-              dispatch(messageActions.newError('Withdraw Failed'));
-              setTimeout(() => {
-                dispatch(messageActions.clearMsg());
-              }, ERROR_AUTO_HIDE_PERIOD);
-              // TODO: dispatch error
-              console.log(err);
->>>>>>> master
             });
         }
         break;
