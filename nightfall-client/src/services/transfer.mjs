@@ -202,6 +202,7 @@ async function transfer(transferParams) {
     compressedSecrets,
     proof,
   });
+  logger.debug(`Client made transaction ${JSON.stringify(optimisticTransferTransaction, null, 2)}`);
   try {
     if (offchain) {
       // dig up connection peers

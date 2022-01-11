@@ -28,11 +28,11 @@ async function blockProposedEventHandler(data) {
   const latestTree = await getLatestTree();
   const blockCommitments = transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat();
 
-  if ((await countCommitments(blockCommitments)) > 0) {
-    await saveBlock({ blockNumber: currentBlockCount, transactionHashL1, ...block });
-    logger.debug(`Saved L2 block ${block.blockNumberL2}, with tx hash ${transactionHashL1}`);
-    await Promise.all(transactions.map(t => saveTransaction({ transactionHashL1, ...t })));
-  }
+  // if ((await countCommitments(blockCommitments)) > 0) {
+  await saveBlock({ blockNumber: currentBlockCount, transactionHashL1, ...block });
+  logger.debug(`Saved L2 block ${block.blockNumberL2}, with tx hash ${transactionHashL1}`);
+  await Promise.all(transactions.map(t => saveTransaction({ transactionHashL1, ...t })));
+  // }
 
   const dbUpdates = transactions.map(async transaction => {
     // filter out non zero commitments and nullifiers

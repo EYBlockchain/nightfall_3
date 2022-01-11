@@ -84,7 +84,11 @@ async function localTest() {
       nf3.close();
       break;
     } else {
-      logger.info('The test has not yet passed because the L2 balance has not increased - waiting');
+      logger.info(
+        'The test has not yet passed because the L2 balance has not increased - waiting',
+        endBalance - startBalance,
+        2 * value + value * TEST_LENGTH,
+      );
       await new Promise(resolving => setTimeout(resolving, 20 * TX_WAIT)); // TODO get balance waiting working well
       loop++;
     }

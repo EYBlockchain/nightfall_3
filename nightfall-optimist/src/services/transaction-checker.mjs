@@ -184,8 +184,27 @@ async function checkPublicInputHash(transaction) {
             historicRootFirst.root,
             ...transaction.compressedSecrets,
           ]).hash.hex(32)
-        )
+        ) {
+          console.log(
+            'transaction.publicInputHash',
+            transaction.publicInputHash,
+            'computed',
+            new PublicInputs([
+              transaction.ercAddress,
+              transaction.commitments[0],
+              transaction.nullifiers[0],
+              historicRootFirst.root,
+              ...transaction.compressedSecrets,
+            ]).hash.hex(32),
+            'parts',
+            transaction.ercAddress,
+            transaction.commitments[0],
+            transaction.nullifiers[0],
+            historicRootFirst.root,
+            transaction.compressedSecrets,
+          );
           throw new TransactionError('public input hash is incorrect', 4);
+        }
         break;
       case 2: // double transfer transaction
         if (

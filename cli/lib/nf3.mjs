@@ -190,8 +190,12 @@ class Nf3 {
         this.web3.eth
           .sendSignedTransaction(signed.rawTransaction)
           .on('confirmation', (number, receipt) => {
-            console.log(`Confirmed ${number} ${receipt.transactionHash}`);
-            if (number === 12) resolve(receipt);
+            if (number === 12) {
+              console.log(
+                `Transaction ${receipt.transactionHash} has been confirmed ${number} times`,
+              );
+              resolve(receipt);
+            }
           });
       });
     }
