@@ -17,6 +17,7 @@ function HeaderMenu({ onDeleteWallet, onClearMsg }) {
 
   const toggleAccountInfo = () => {
     setAccountInfoEnable(!accountInfoEnable);
+  };
   const onLogoutClick = () => {
     onDeleteWallet();
     onClearMsg();
