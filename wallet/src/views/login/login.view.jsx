@@ -1,5 +1,5 @@
 import React from 'react';
-import { Container, Header, Divider } from 'semantic-ui-react';
+import { Container, Header, Divider, Message } from 'semantic-ui-react';
 import { connect } from 'react-redux';
 import { Redirect } from 'react-router-dom';
 import PropTypes from 'prop-types';
@@ -12,12 +12,25 @@ import CreateWalletModal from './components/create-wallet.view.jsx';
 import { loadWallet, deleteWallet } from '../../store/login/login.actions';
 import { ReactComponent as MetaMaskLogo } from '../../images/metamask.svg';
 import { ReactComponent as PolygonLogo } from '../../images/polygon.svg';
-import { DEFAULT_NF_ADDRESS_INDEX, METAMASK_MESSAGE } from '../../constants.js';
+import {
+  DEFAULT_NF_ADDRESS_INDEX,
+  METAMASK_MESSAGE,
+  ERROR_AUTO_HIDE_PERIOD,
+} from '../../constants.js';
 import tokensLoad from '../../store/token/token.thunks';
+import * as messageActions from '../../store/message/message.actions';
 
 let nf3;
 
-function Login({ login, onLoadWallet, onDeleteWallet, onLoadTokens }) {
+function Login({
+  login,
+  message,
+  onLoadWallet,
+  onDeleteWallet,
+  onLoadTokens,
+  onNewError,
+  onClearMsg,
+}) {
   const [modalEnable, setModalEnable] = React.useState(false);
 
   const renderRedirect = () => {
@@ -54,7 +67,7 @@ function Login({ login, onLoadWallet, onDeleteWallet, onLoadTokens }) {
       }
     } catch (err) {
       // TODO display error message
-      throw new Error('No Connection');
+      throw new Error(`Cannot access Network. Expecting to connect to ${nf3Env.web3WsUrl}`);
     }
   };
 
@@ -70,6 +83,23 @@ function Login({ login, onLoadWallet, onDeleteWallet, onLoadTokens }) {
     return hashedSignature;
   };
 
+  const preloadTokens = async () => {
+    const erc20Address = await nf3.getContractAddress('ERC20Mock');
+    const erc721Address = await nf3.getContractAddress('ERC721Mock');
+    const erc1155Address = await nf3.getContractAddress('ERC1155Mock');
+    const tokenPreload = tokens.map(el => {
+      const obj = { ...el };
+      if (el.tokenType === Nf3.Constants.TOKEN_TYPE.ERC20)
+        obj.tokenAddress = erc20Address.toLowerCase();
+      else if (el.tokenType === Nf3.Constants.TOKEN_TYPE.ERC721)
+        obj.tokenAddress = erc721Address.toLowerCase();
+      else if (el.tokenType === Nf3.Constants.TOKEN_TYPE.ERC1155)
+        obj.tokenAddress = erc1155Address.toLowerCase();
+      return obj;
+    });
+    return tokenPreload;
+  };
+
   /**
    * Imports a nightfall wallet based on an Ethereum Private Key
    * @param {string} privateKey - Ethereum Private Key
@@ -83,7 +113,9 @@ function Login({ login, onLoadWallet, onDeleteWallet, onLoadTokens }) {
       await nf3.setzkpKeysFromMnemonic(mnemonic, DEFAULT_NF_ADDRESS_INDEX);
       onLoadWallet(nf3);
       const tokenPool = Storage.tokensGet(nf3.zkpKeys.compressedPkd);
-      onLoadTokens(tokenPool || tokens);
+      // TODO Remove at some point (we dont need prloaded tokens)
+      const tokenPreload = await preloadTokens();
+      onLoadTokens(tokenPool || tokenPreload);
     } catch (err) {
       console.log('Failed', err);
       setModalEnable(false);
@@ -107,10 +139,13 @@ function Login({ login, onLoadWallet, onDeleteWallet, onLoadTokens }) {
       }
     } catch (err) {
       // TODO
+      onNewError(err.message);
+      setTimeout(() => {
+        onClearMsg();
+      }, ERROR_AUTO_HIDE_PERIOD);
       console.log('ERROR', err);
     }
   };
-
   return (
     <Container textAlign="center">
       <Header
@@ -139,6 +174,11 @@ function Login({ login, onLoadWallet, onDeleteWallet, onLoadTokens }) {
         handleClickOnImport={handleClickOnImport}
         toggleModalEnable={toggleModalEnable}
       />
+      {message.nf3Msg !== '' ? (
+        <Message info={message.nf3MsgType === 'info'} error={message.nf3MsgType === 'error'}>
+          <Message.Header>{message.nf3Msg}</Message.Header>
+        </Message>
+      ) : null}
       {renderRedirect()}
     </Container>
   );
@@ -146,19 +186,25 @@ function Login({ login, onLoadWallet, onDeleteWallet, onLoadTokens }) {
 
 Login.propTypes = {
   login: PropTypes.object.isRequired,
+  message: PropTypes.object.isRequired,
   onLoadWallet: PropTypes.func.isRequired,
   onDeleteWallet: PropTypes.func.isRequired,
   onLoadTokens: PropTypes.func.isRequired,
+  onNewError: PropTypes.func.isRequired,
+  onClearMsg: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = state => ({
   login: state.login,
+  message: state.message,
 });
 
 const mapDispatchToProps = dispatch => ({
   onLoadWallet: nf3Instance => dispatch(loadWallet(nf3Instance)),
   onDeleteWallet: () => dispatch(deleteWallet()),
   onLoadTokens: newTokens => dispatch(tokensLoad(newTokens)),
+  onNewError: errorMsg => dispatch(messageActions.newError(errorMsg)),
+  onClearMsg: () => dispatch(messageActions.clearMsg()),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(Login);
