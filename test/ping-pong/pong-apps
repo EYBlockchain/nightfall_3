@@ -25,5 +25,5 @@ done
 # shut down cleanly in the event of a cntl-c etc. We don't want to leave containers running
 trap "exit 1" SIGHUP SIGINT SIGTERM
 
-docker-compose -f docker-compose.yml $FILE up -d --remove-orphans proposer user-local1 #user-local2
-docker-compose logs -f proposer user-local1 #user-local2
+docker-compose -f docker-compose.yml $FILE up -d --remove-orphans proposer user-local1 user-local2
+docker-compose logs -f proposer user-local1 user-local2
