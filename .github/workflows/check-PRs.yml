@@ -1,9 +1,9 @@
 name: Check PR
 
 on:
-  pull_request:
+  push:
     branch:
-      - master
+      - liju.jose/test-github-actions-ilyas/m1-docker
 
 jobs:
   eslint-check:
