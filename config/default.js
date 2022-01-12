@@ -127,4 +127,5 @@ module.exports = {
     U: BigInt(5), // non square in Fp
   },
   MAX_QUEUE: 5,
+  nERC721: process.env.USE_HOSTED_GETH === 'true' ? 5 : 50,
 };
