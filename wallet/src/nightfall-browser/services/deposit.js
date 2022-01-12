@@ -80,7 +80,7 @@ async function deposit(items) {
   // computation
   const { witness } = zokratesProvider.computeWitness(artifacts, witnessInput);
   // generate proof
-  let { proof } = zokratesProvider.generateProof(artifacts.program, witness, keypair.pk);
+  const { proof } = zokratesProvider.generateProof(artifacts.program, witness, keypair.pk);
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
 
   // next we need to compute the optimistic Transaction object
