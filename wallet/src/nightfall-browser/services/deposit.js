@@ -51,12 +51,12 @@ async function deposit(items) {
   logger.debug(`Hash of new commitment is ${commitment.hash.hex()}`);
   // now we can compute a Witness so that we can generate the proof
   const witnessInput = [
-    ercAddress.limbs(32, 8),
-    tokenId.limbs(32, 8),
-    value.limbs(32, 8),
+    ercAddress.integer,
+    tokenId.integer,
+    value.integer,
     compressedPkd.limbs(32, 8),
     salt.limbs(32, 8),
-    commitment.hash.limbs(32, 8),
+    commitment.hash.integer,
   ];
   logger.debug(`witness input is ${witnessInput.join(' ')}`);
   // call a zokrates worker to generate the proof
@@ -81,8 +81,6 @@ async function deposit(items) {
   const { witness } = zokratesProvider.computeWitness(artifacts, witnessInput);
   // generate proof
   let { proof } = zokratesProvider.generateProof(artifacts.program, witness, keypair.pk);
-  proof = [...proof.a, ...proof.b, ...proof.c];
-  proof = proof.flat(Infinity);
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
 
   // next we need to compute the optimistic Transaction object
@@ -105,6 +103,7 @@ async function deposit(items) {
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(optimisticDepositTransaction))
       .encodeABI();
+
     // store the commitment on successful computation of the transaction
     commitment.isDeposited = true;
     storeCommitment(commitment, nsk);
