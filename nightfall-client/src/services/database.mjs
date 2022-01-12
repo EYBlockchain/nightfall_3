@@ -40,7 +40,7 @@ export async function getLatestTree() {
   const timberObjArr = await db
     .collection(TIMBER_COLLECTION)
     .find()
-    .sort({ _id: -1 })
+    .sort({ blockNumberL2: -1 })
     .limit(1)
     .toArray();
 
