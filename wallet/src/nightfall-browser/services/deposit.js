@@ -80,8 +80,6 @@ async function deposit(items) {
   const { witness } = zokratesProvider.computeWitness(artifacts, witnessInput);
   // generate proof
   let { proof } = zokratesProvider.generateProof(artifacts.program, witness, keypair.pk);
-  proof = [...proof.a, ...proof.b, ...proof.c];
-  proof = proof.flat(Infinity);
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
 
   // next we need to compute the optimistic Transaction object
@@ -104,6 +102,7 @@ async function deposit(items) {
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(optimisticDepositTransaction))
       .encodeABI();
+
     // store the commitment on successful computation of the transaction
     commitment.isDeposited = true;
     storeCommitment(commitment, nsk);
