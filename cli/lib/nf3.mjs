@@ -64,6 +64,8 @@ class Nf3 {
 
   currentEnvironment;
 
+  notConfirmed = 0;
+
   constructor(web3WsUrl, ethereumSigningKey, environment = ENVIRONMENTS.localhost, zkpKeys) {
     this.clientBaseUrl = environment.clientApiUrl;
     this.optimistBaseUrl = environment.optimistApiUrl;
@@ -187,12 +189,15 @@ class Nf3 {
       // then return the receipt.
       // TODO does this still work if there is a chain reorg or do we have to handle that?
       return new Promise(resolve => {
+        this.notConfirmed++;
         this.web3.eth
           .sendSignedTransaction(signed.rawTransaction)
           .on('confirmation', (number, receipt) => {
             if (number === 12) {
+              this.notConfirmed--;
               console.log(
                 `Transaction ${receipt.transactionHash} has been confirmed ${number} times`,
+                `Number of unconfirmed transactions is ${this.notConfirmed}`,
               );
               resolve(receipt);
             }

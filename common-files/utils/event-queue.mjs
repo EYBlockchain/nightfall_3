@@ -74,7 +74,7 @@ function waitForConfirmation(eventObject) {
         delete removed[transactionHash];
         reject(
           new Error(
-            'The original block in which this event was created no longer exists - probable chain reorg',
+            `Event removed; probable chain reorg.  Event was ${eventObject.event}, transaction hash was ${transactionHash}`,
           ),
         );
       }
