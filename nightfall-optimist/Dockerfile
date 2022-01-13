@@ -1,6 +1,15 @@
-# install zokrates for local verify
-FROM zokrates/zokrates:0.7.7 as builder
-FROM mongo:4.4.1-bionic
+# build zokrates from source for local verify
+FROM rust:1.53.0 as builder
+WORKDIR /app
+COPY . .
+# Zokrates 0.7.10
+RUN git clone --depth 1 --branch 0.7.10 https://github.com/Zokrates/ZoKrates.git
+WORKDIR /app/ZoKrates
+# For Mac Silicon this will default to aarch64-unknown-linux-gnu
+RUN rustup toolchain install nightly
+RUN cargo +nightly build --release
+
+FROM mongo:focal
 
 # install node
 RUN apt-get update
@@ -10,7 +19,7 @@ RUN apt-get install -y ca-certificates
 
 RUN apt-get install -y curl
 RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
-RUN apt-get install -y nodejs
+RUN apt-get install -y nodejs gcc g++ make
 RUN apt-get install -y netcat
 # installs libs required for zokrates
 RUN apt-get install -y libgmpxx4ldbl libgmp3-dev
@@ -21,8 +30,8 @@ RUN echo "{\"name\": \"common-files\"}" > package.json
 WORKDIR /app
 RUN mkdir /app/mongodb
 
-COPY --from=builder /home/zokrates/.zokrates/bin/zokrates /app/zokrates
-COPY --from=builder /home/zokrates/.zokrates/stdlib /app/stdlib/
+COPY --from=builder /app/ZoKrates/zokrates_stdlib/stdlib /root/.zokrates/stdlib
+COPY --from=builder /app/ZoKrates/target/release/zokrates /app/
 
 ENV ZOKRATES_HOME /app
 ENV ZOKRATES_STDLIB /app/stdlib
