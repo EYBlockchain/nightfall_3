@@ -159,6 +159,7 @@ describe('Testing the Nightfall SDK', () => {
     // Liquidity provider for instant withdraws
     const emitter = await nf3User1.getInstantWithdrawalRequestedEmitter();
     emitter.on('data', async (withdrawTransactionHash, paidBy, amount) => {
+      console.log(' in listener getInstantWithdrawalRequestedEmitter');
       const balancesBefore = await getERCInfo(
         ercAddress,
         nf3LiquidityProvider.ethereumAddress,
@@ -186,6 +187,7 @@ describe('Testing the Nightfall SDK', () => {
       );
 
       while (eventLogs.length > 0) {
+        console.log('in while loop');
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
