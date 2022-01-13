@@ -6,7 +6,7 @@
   "scripts": {
     "test": "env-cmd -e development mocha --timeout 0 --bail test/http.mjs test/neg-http.mjs",
     "testnet-test": "EVENT_RETRIEVE_RETRIES=10 USE_INFURA=true FROM_ADDRESS=0x29100E7E3dA6654BF63d9E7804ADe518aCc5AaA5 BLOCKCHAIN_URL=wss://ropsten.infura.io/ws/v3/INFURA_PROJECT_ID mocha --timeout 0 --bail test/http.mjs test/neg-http.mjs",
-    "hosted-geth-test": "EVENT_RETRIEVE_RETRIES=10 USE_HOSTED_GETH=true FROM_ADDRESS=0x29100E7E3dA6654BF63d9E7804ADe518aCc5AaA5 BLOCKCHAIN_URL=wss://ropsten1-ws.testnet.nightfall3.com mocha --timeout 0 --bail test/http.mjs test/neg-http.mjs",
+    "hosted-geth-test": "env-cmd -e ropsten EVENT_RETRIEVE_RETRIES=10 USE_HOSTED_GETH=true FROM_ADDRESS=0x29100E7E3dA6654BF63d9E7804ADe518aCc5AaA5 mocha --timeout 0 --bail test/http.mjs test/neg-http.mjs",
     "test-gas": "env-cmd -e development mocha --timeout 0 --bail test/tx-gas.mjs",
     "test-chain-reorg": "env-cmd -e development mocha --timeout 0 --bail test/chain-reorg.mjs",
     "test-e2e": "env-cmd -e development mocha --timeout 0 --bail test/e2e/nightfall-sdk.test.mjs",

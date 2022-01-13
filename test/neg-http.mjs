@@ -37,6 +37,7 @@ describe('Testing the challenge http API', () => {
   const USE_INFURA = process.env.USE_INFURA === 'true';
   const USE_HOSTED_GETH = process.env.USE_HOSTED_GETH === 'true';
   const { ETH_PRIVATE_KEY, BLOCKCHAIN_URL } = process.env;
+  const web3WsUrl = BLOCKCHAIN_URL || process.env.web3WsUrl;
 
   const url = 'http://localhost:8080';
   const optimistUrl = 'http://localhost:8081';
@@ -85,7 +86,7 @@ describe('Testing the challenge http API', () => {
   };
 
   before(async () => {
-    web3 = await connectWeb3(BLOCKCHAIN_URL);
+    web3 = await connectWeb3(web3WsUrl);
 
     if (USE_INFURA || USE_HOSTED_GETH) {
       if (!ETH_PRIVATE_KEY) {

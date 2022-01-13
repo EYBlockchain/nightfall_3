@@ -47,6 +47,7 @@ describe('Testing the http API', () => {
   const USE_INFURA = process.env.USE_INFURA === 'true';
   const USE_HOSTED_GETH = process.env.USE_HOSTED_GETH === 'true';
   const { ETH_PRIVATE_KEY, BLOCKCHAIN_URL } = process.env;
+  const web3WsUrl = BLOCKCHAIN_URL || process.env.web3WsUrl;
 
   const senderUrl = 'http://localhost:8080';
   const recipientUrl = 'http://localhost:8084';
@@ -88,7 +89,7 @@ describe('Testing the http API', () => {
   const gasCostsTx = 5000000000000000;
 
   before(async function () {
-    web3 = await connectWeb3(BLOCKCHAIN_URL);
+    web3 = await connectWeb3(web3WsUrl);
 
     if (USE_INFURA || USE_HOSTED_GETH) {
       if (!ETH_PRIVATE_KEY) {
