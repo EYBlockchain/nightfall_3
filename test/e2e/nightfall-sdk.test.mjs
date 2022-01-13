@@ -37,6 +37,7 @@ import {
   BLOCK_STAKE,
 } from '../constants.mjs';
 
+console.log('value ..', value);
 const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
@@ -190,6 +191,7 @@ describe('Testing the Nightfall SDK', () => {
       }
       // difference in balance in L1 account to check instant withdraw is ok
       diffBalanceInstantWithdraw = Number(balancesBefore.balance) - Number(balancesAfter.balance);
+      console.log('diffBalanceInstantWithdraw ....', diffBalanceInstantWithdraw);
       logCounts.instantWithdaw += 1;
       console.log(`     Serviced instant-withdrawal request from ${paidBy}, with fee ${amount}`);
     });
