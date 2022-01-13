@@ -34,6 +34,11 @@ If running for first time, do the setup as above and then run this script:
 ```sh
 ./start-nightfall -l | -g [-s]
 ```
+##### Note
+You can also start application with your own hosted geth. steps to follow
+1. set environment variable $HOSTED_ROPSTEN_NODE to your hosted geth URL
+2. start application ```sh ./start-nightfall -r```
+
 This will bring up the application.  You can run it either with a Ganache blockchain simulator or a real blockchain client which exposes a websocket connection on localHost:8546.  See below for more details on how to do the latter as there are some additional considerations.  Use -g for Ganache and -l for localhost.  We recommend using Ganache first to check everything works, because it's considerably faster.  Additionally, you can use the -s flag.  If you do that, Nightfall_3 will run with stubbed ZKP circuits, which generate proofs that always verify.  That's useful for development work because tests will run much faster but clearly you should run without stubs, as a final check.
 
 Startup will take a minute or so, depending on your machine. You'll see lots of warnings as it runs up from the `optimist` and `timber` containers.  That's entirely fine, they're just waiting for the other services that they need to start up. You should see no errors however.  If you do, something has broken.
