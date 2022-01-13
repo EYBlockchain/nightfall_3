@@ -34,8 +34,8 @@ If running for first time, do the setup as above and then run this script:
 ```sh
 ./start-nightfall -l | -g [-s] [-d]
 ```
-This will bring up the application.  You can run it either with a Ganache blockchain simulator or a real blockchain client which exposes a websocket connection on localHost:8546.  See below for more details on how to do the latter as there are some additional considerations.  
-- Use `-g` for Ganache and `-l` for localhost.  We recommend using Ganache first to check everything works, because it's considerably faster.  
+This will bring up the application.  You can run it either with a Ganache blockchain simulator or a real blockchain client which exposes a websocket connection on localHost:8546.  See below for more details on how to do the latter as there are some additional considerations.
+- Use `-g` to use a Ganache client inside the container and `-l` to use some localhost client running on your machine.  We recommend using Ganache first to check everything works, because it's considerably faster.  
 - Additionally, you can use the `-s` flag.  If you do that, Nightfall_3 will run with stubbed ZKP circuits, which generate proofs that always verify.  That's useful for development work because tests will run much faster but clearly you should run without stubs, as a final check.
 - Use the `-d` or `--dev` flag to bind mount the development folders inside the containers, making it useful for development purposes. Omit it to deploy the services using the existing `ghcr` images.
 
@@ -48,6 +48,10 @@ Eventually you will see a message to the effect that the `deployer` container ha
 nightfall_3_deployer_1 exited with code 0
 ```
 This means that deployment is complete and the application is ready to use.  You can run the tests at this point.
+
+### To end the application
+
+To stop the application, you can run ```docker-compose down``` and it should exit cleanly.
 
 ## Testing
 
