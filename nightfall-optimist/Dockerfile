@@ -10,6 +10,7 @@ RUN rustup toolchain install nightly
 RUN cargo +nightly build --release
 
 FROM mongo:focal
+
 # install node
 RUN apt-get update
 
@@ -23,20 +24,20 @@ RUN apt-get install -y netcat
 # installs libs required for zokrates
 RUN apt-get install -y libgmpxx4ldbl libgmp3-dev
 
-WORKDIR /
-COPY common-files common-files
-COPY config/default.js app/config/default.js
+WORKDIR /common-files
+RUN echo "{\"name\": \"common-files\"}" > package.json
 
 WORKDIR /app
 RUN mkdir /app/mongodb
 
-COPY nightfall-optimist/src src
-COPY nightfall-optimist/docker-entrypoint.sh nightfall-optimist/pre-start-script.sh nightfall-optimist/package*.json ./
 COPY --from=builder /app/ZoKrates/zokrates_stdlib/stdlib /root/.zokrates/stdlib
 COPY --from=builder /app/ZoKrates/target/release/zokrates /app/
 
 ENV ZOKRATES_HOME /app
 ENV ZOKRATES_STDLIB /app/stdlib
+
+COPY src src
+COPY docker-entrypoint.sh pre-start-script.sh package.json package-lock.json ./
 
 RUN npm ci
 
