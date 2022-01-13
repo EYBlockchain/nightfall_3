@@ -64,11 +64,12 @@ function waitForConfirmation(eventObject) {
     let confirmedBlocks = 0;
     const id = setInterval(async () => {
       // get the transaction that caused the event
-      const tx = await web3.eth.getTransaction(transactionHash);
+      // const tx = await web3.eth.getTransaction(transactionHash);
       // if it's been in a chain reorg then it won't have a blocknumber, or the
       // blocknumber will have changed but certainly it will have been removed.
-      // TODO we may not need the first too checks in addition
-      if (tx.blockNumber === null || tx.blockNumber !== blockNumber || removed[transactionHash]) {
+      // TODO we may not need the first too checks in addition -done
+      // tx.blockNumber === null || tx.blockNumber !== blockNumber ||
+      if (removed[transactionHash]) {
         clearInterval(id);
         delete removed[transactionHash];
         reject(
