@@ -34,7 +34,6 @@ If running for first time, do the setup as above and then run this script:
 ```sh
 ./start-nightfall -l | -g [-s]
 ```
-##### Note
 You can also start application with your own hosted geth. steps to follow
 1. set environment variable $HOSTED_ROPSTEN_NODE to your hosted geth URL
 2. start application ```sh ./start-nightfall -r```
