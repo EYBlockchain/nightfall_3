@@ -28,6 +28,7 @@ const { MAX_QUEUE, CONFIRMATION_POLL_TIME, CONFIRMATIONS } = config;
 const fastQueue = new Queue({ autostart: true, concurrency: 1 });
 const slowQueue = new Queue({ autostart: true, concurrency: 1 });
 export const queues = [fastQueue, slowQueue];
+const removed = {}; // singleton holding transaction hashes of any removed events
 
 /**
 This function will wait until all the functions currently in a queue have been
@@ -62,9 +63,14 @@ function waitForConfirmation(eventObject) {
   return new Promise((resolve, reject) => {
     let confirmedBlocks = 0;
     const id = setInterval(async () => {
+      // get the transaction that caused the event
       const tx = await web3.eth.getTransaction(transactionHash);
-      if (tx.blockNumber === null || tx.blockNumber !== blockNumber) {
+      // if it's been in a chain reorg then it won't have a blocknumber, or the
+      // blocknumber will have changed but certainly it will have been removed.
+      // TODO we may not need the first too checks in addition
+      if (tx.blockNumber === null || tx.blockNumber !== blockNumber || removed[transactionHash]) {
         clearInterval(id);
+        delete removed[transactionHash];
         reject(
           new Error(
             'The original block in which this event was created no longer exists - probable chain reorg',
@@ -89,7 +95,17 @@ function waitForConfirmation(eventObject) {
 }
 
 async function queueManager(eventObject, eventArgs) {
-  if (eventObject.removed) return; // in this model we don't process removals
+  if (eventObject.removed) {
+    // in this model we don't queue removals but we can use them to reject the
+    // waitForConfirmation Promise. This prevents the event from being processed.
+    // This should be more reliable than polling for null or changed blockNumbers.
+    // Note the event object and its removal have the same transactionHash.
+    removed[eventObject.transactionHash] = true; // store the removal; waitForConfirmation will read this and reject.
+    logger.debug(
+      `Event ${eventObject.event} with transaction hash ${eventObject.transactionHash} was removed`,
+    );
+    return;
+  }
   // First element of eventArgs must be the eventHandlers object
   const [eventHandlers, ...args] = eventArgs;
   // handlers contains the functions needed to handle particular types of event,
