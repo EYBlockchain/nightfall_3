@@ -5,13 +5,13 @@ version: '3.5'
 services:
   client1:
     environment:
-      BLOCKCHAIN_URL: 'wss://ropsten1-ws.testnet.nightfall3.com'
+      BLOCKCHAIN_URL: $HOSTED_ROPSTEN_NODE
       USE_HOSTED_GETH: 'true'
       AUTOSTART_RETRIES: 600
 
   client2:
     environment:
-      BLOCKCHAIN_URL: 'wss://ropsten1-ws.testnet.nightfall3.com'
+      BLOCKCHAIN_URL: $HOSTED_ROPSTEN_NODE
       USE_HOSTED_GETH: 'true'
       AUTOSTART_RETRIES: 600
 
@@ -20,19 +20,19 @@ services:
       # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
       # startup routines will wait for a blockchain client to be reachable on this network
       ETH_NETWORK: ropsten
-      BLOCKCHAIN_URL: 'wss://ropsten1-ws.testnet.nightfall3.com'
+      BLOCKCHAIN_URL: $HOSTED_ROPSTEN_NODE
       USE_HOSTED_GETH: 'true'
       FROM_ADDRESS: '0x29100E7E3dA6654BF63d9E7804ADe518aCc5AaA5'
       ETH_PRIVATE_KEY: $ETH_PRIVATE_KEY
 
   optimist1:
     environment:
-      BLOCKCHAIN_URL: 'wss://ropsten1-ws.testnet.nightfall3.com'
+      BLOCKCHAIN_URL: $HOSTED_ROPSTEN_NODE
       USE_HOSTED_GETH: 'true'
       AUTOSTART_RETRIES: 600
 
   optimist2:
     environment:
-      BLOCKCHAIN_URL: 'wss://ropsten1-ws.testnet.nightfall3.com'
+      BLOCKCHAIN_URL: $HOSTED_ROPSTEN_NODE
       USE_HOSTED_GETH: 'true'
       AUTOSTART_RETRIES: 600
