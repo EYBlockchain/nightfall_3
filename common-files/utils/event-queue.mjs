@@ -99,9 +99,6 @@ async function queueManager(eventObject, eventArgs) {
     // and removed again - so we need to keep count of the removals.
     if (!removed[eventObject.transactionHash]) removed[eventObject.transactionHash] = 0;
     removed[eventObject.transactionHash]++; // store the removal; waitForConfirmation will read this and reject.
-    logger.debug(
-      `Event ${eventObject.event} with transaction hash ${eventObject.transactionHash} was removed`,
-    );
     return;
   }
   // First element of eventArgs must be the eventHandlers object
@@ -114,7 +111,9 @@ async function queueManager(eventObject, eventArgs) {
   }
   // pull up the priority for the event being handled (removers have identical priority)
   const priority = eventHandlers.priority[eventObject.event];
-  logger.info(`Queueing event ${eventObject.event}`);
+  logger.info(
+    `Queueing event ${eventObject.event}, with transaction hash ${eventObject.transactionHash}`,
+  );
   queues[priority].push(async () => {
     // we won't even think about processing an event until it's been confirmed many times
     try {

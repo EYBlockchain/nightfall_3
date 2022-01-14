@@ -189,6 +189,7 @@ class Nf3 {
       // then return the receipt.
       // TODO does this still work if there is a chain reorg or do we have to handle that?
       return new Promise(resolve => {
+        console.log(`Confirming transaction ${signed.transactionHash}`);
         this.notConfirmed++;
         this.web3.eth
           .sendSignedTransaction(signed.rawTransaction)
