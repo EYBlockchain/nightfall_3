@@ -162,9 +162,7 @@ More information can be found [here](https://github.com/EYBlockchain/nightfall_3
 1. Open Metamask in browser
 2. Settings->Advance->Reset Account
 
-- Direct transactions are not implemented
-- Instant withdraw is selected when doing a withdraw only. Once submitted the instant withdraw request,the wallet requests a simple withdraw and inmediatelly after converts this withdraw into an instant withdraw. Wallet will attempt to send the instant withdraw request up to 10 times, once every 10 seconds. It is likely that during this period, you need to request a simpler transaction (deposit, withdraw or transfer) so that the original withdraw is processed by the processor and the instant withdraw can be carried out.
-- Doing a transfer to a third account and an instant withdraw in the same block makes the instant withdraw fail.
+- Direct transactions are not implemented in the wallet
 - Tested with node version v14.18.0
 
 Nightfall uses the G16 proof system, and we believe it is [not vulnerable](./doc/G16-malleability.md) to its malleability. 
