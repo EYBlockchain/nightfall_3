@@ -15,6 +15,8 @@ export function addToken(
   tokenName,
   l1Balance,
   l2Balance,
+  l2PendingDeposit,
+  l2PendingSpent,
 ) {
   return {
     type: tokenActionTypes.TOKEN_ADD,
@@ -27,6 +29,8 @@ export function addToken(
       tokenName,
       l1Balance,
       l2Balance,
+      l2PendingDeposit,
+      l2PendingSpent,
     },
   };
 }

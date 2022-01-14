@@ -454,7 +454,7 @@ describe('Testing the Nightfall SDK', () => {
           tokenType,
           value,
           tokenId,
-          nf3User2.zkpKeys.pkd,
+          nf3User2.zkpKeys.compressedPkd,
           fee,
         );
         expectTransaction(res);
@@ -472,7 +472,7 @@ describe('Testing the Nightfall SDK', () => {
           tokenType,
           value,
           tokenId,
-          nf3User1.zkpKeys.pkd,
+          nf3User1.zkpKeys.compressedPkd,
           fee,
         );
         expectTransaction(res);
@@ -509,7 +509,7 @@ describe('Testing the Nightfall SDK', () => {
           tokenType,
           value,
           tokenId,
-          nf3User1.zkpKeys.pkd,
+          nf3User1.zkpKeys.compressedPkd,
           fee,
         );
         expectTransaction(res);
@@ -526,7 +526,7 @@ describe('Testing the Nightfall SDK', () => {
         tokenType,
         value,
         tokenId,
-        nf3User2.zkpKeys.pkd,
+        nf3User2.zkpKeys.compressedPkd,
         fee,
       );
       expect(res).to.be.equal(200);

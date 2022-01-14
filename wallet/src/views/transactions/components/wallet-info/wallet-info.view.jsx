@@ -68,6 +68,8 @@ function WalletInfo({
       const tokenTypeId = `token type${item.tokenAddress}`;
       const l1BalanceId = `l1 balance${item.tokenAddress}`;
       const l2BalanceId = `l2 balance${item.tokenAddress}`;
+      const pendingDepositId = `pending deposit${item.tokenAddress}`;
+      const pendingTransferredOutId = `pending transferred out${item.tokenAddress}`;
       return (
         <Table.Row
           key={item.tokenAddress}
@@ -87,6 +89,12 @@ function WalletInfo({
           </Table.Cell>
           <Table.Cell colSpan="1" title={item.tokenBalanceL2} id={l2BalanceId}>
             {item.tokenBalanceL2}
+          </Table.Cell>
+          <Table.Cell colSpan="1" title={item.tokenBalanceL2} id={pendingDepositId}>
+            {item.tokenPendingDepositL2}
+          </Table.Cell>
+          <Table.Cell colSpan="1" title={item.tokenBalanceL2} id={pendingTransferredOutId}>
+            {item.tokenPendingSpentL2}
           </Table.Cell>
         </Table.Row>
       );
@@ -111,6 +119,8 @@ function WalletInfo({
       tokenName,
       tokenBalance,
       '-',
+      '-',
+      '-',
     );
   };
 
@@ -129,16 +139,17 @@ function WalletInfo({
         <Table.Header>
           <Table.Row>
             <Table.HeaderCell>Account Address:</Table.HeaderCell>
-            <Table.HeaderCell colSpan="3" id="wallet-info-cell-ethaddress">
+            <Table.HeaderCell colSpan="4" id="wallet-info-cell-ethaddress">
               {' '}
               {importedWallet()}{' '}
             </Table.HeaderCell>
-            <Table.HeaderCell colSpan="3">
+            <Table.HeaderCell colSpan="4">
               <Button
                 icon
                 labelPosition="left"
                 onClick={toggleModalTokenAdd}
                 primary
+                floated="right"
                 id="wallet-info-cell-add-token"
               >
                 <Icon name="plus" />
@@ -151,6 +162,7 @@ function WalletInfo({
                 toggle
                 onClick={removeToken}
                 primary
+                floated="right"
                 active={removeTokenEnable && token.tokenPool.length}
                 disabled={token.tokenPool.length === 0}
               >
@@ -172,6 +184,12 @@ function WalletInfo({
             </Table.HeaderCell>
             <Table.HeaderCell colSpan="1" textAlign="left">
               L2 Balance
+            </Table.HeaderCell>
+            <Table.HeaderCell colSpan="1" textAlign="left">
+              Pending Deposit
+            </Table.HeaderCell>
+            <Table.HeaderCell colSpan="1" textAlign="left">
+              Pending Outflow
             </Table.HeaderCell>
           </Table.Row>
         </Table.Header>
@@ -223,6 +241,8 @@ const mapDispatchToProps = dispatch => ({
     tokenName,
     l1Balance,
     l2Balance,
+    l2PendingDeposit,
+    l2PendingSpent,
   ) =>
     dispatch(
       addToken(
@@ -234,6 +254,8 @@ const mapDispatchToProps = dispatch => ({
         tokenName,
         l1Balance,
         l2Balance,
+        l2PendingDeposit,
+        l2PendingSpent,
       ),
     ),
   onDeleteToken: (compressedPkd, tokenRowId) => dispatch(deleteToken(compressedPkd, tokenRowId)),

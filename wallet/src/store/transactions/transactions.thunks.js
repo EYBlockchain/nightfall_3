@@ -99,7 +99,7 @@ function txSubmit(txParams) {
             txParams.tokenType,
             tokenAmountWei,
             txParams.tokenId,
-            txParams.pkd,
+            txParams.compressedPkd,
             txParams.fee,
           )
           .then(txReceipt => {
