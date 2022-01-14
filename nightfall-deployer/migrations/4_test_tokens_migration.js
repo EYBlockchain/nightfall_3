@@ -18,8 +18,6 @@ const nERC721 = 35;
 module.exports = function(deployer) {
   deployer.then(async () => {
     await deployer.deploy(ERC20Mock, 1001010000000000); // initialSupply
-    await deployer.deploy(ERC721Mock);
-    await deployer.deploy(ERC1155Mock);
 
     const ERC20deployed = await ERC20Mock.deployed();
     // For ping pong tests

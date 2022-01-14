@@ -62,12 +62,12 @@ TokenListERCContract = [
   {
     'tokenName' : 'Token2',
     'tokenType' : 'ERC721',
-    'tokenAddress' : '0x4f3c4f8d4575cf73c2faf9f36cc505e19e65b9c0',
+    'tokenAddress' : '0x103ac4b398bca487df8b27fd484549e33c234b0d',
   },
   {
     'tokenName' : 'Token3',
     'tokenType' : 'ERC1155',
-    'tokenAddress' : '0xf7dd7e7effc870c6c7ab0651018a93b79bde72a2',
+    'tokenAddress' : '0x9635c600697587dd8e603120ed0e76cc3a9efe4c',
     'tokenIdUsed': ['0','1','2','3','4'],
   }
 ]

@@ -20,7 +20,7 @@ RUN mkdir -p /home/apps && chown apps:apps /home/apps
 # Keep CHROME version fixed
 ARG CHROME_VERSION="96.0.4664.45-1"
 RUN wget --no-verbose -O /tmp/chrome.deb https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${CHROME_VERSION}_amd64.deb \
-  && apt install -y /tmp/chrome.deb \
+  && apt-get update && apt-get install -y /tmp/chrome.deb \
   && rm /tmp/chrome.deb   
 
 # Install nodejs
