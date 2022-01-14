@@ -83,7 +83,10 @@ export async function generateKeys(mnemonic, path) {
 }
 
 export function storeMemoryKeysForDecryption(ivk, nsk) {
-  return Promise.all([ivks.push(...ivk), nsks.push(...nsk)]);
+  return Promise.all([
+    ivks.includes(ivk[0]) ? ivks : ivks.push(...ivk),
+    nsks.includes(nsk[0]) ? nsk : nsks.push(...nsk),
+  ]);
 }
 
 export function calculateIvkPkdfromAskNsk(ask, nsk) {
