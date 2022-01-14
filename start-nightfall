@@ -114,5 +114,5 @@ if [[ -d "$DIR" ]]; then
   rm -dr common-files/node_modules
 fi
 #docker-compose -f docker-compose.yml $FILE up -d deployer
-docker-compose $FILE $STUBS $DEV -d --remove-orphans up 
+docker-compose $FILE $STUBS $DEV up -d --remove-orphans
 docker-compose logs -f
