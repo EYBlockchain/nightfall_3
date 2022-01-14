@@ -196,7 +196,7 @@ class Nf3 {
             if (number === 12) {
               this.notConfirmed--;
               console.log(
-                `Transaction ${receipt.transactionHash} has been confirmed ${number} times`,
+                `Transaction ${receipt.transactionHash} has been confirmed ${number} times.`,
                 `Number of unconfirmed transactions is ${this.notConfirmed}`,
               );
               resolve(receipt);

@@ -64,14 +64,10 @@ function waitForConfirmation(eventObject) {
     let confirmedBlocks = 0;
     const id = setInterval(async () => {
       // get the transaction that caused the event
-      // const tx = await web3.eth.getTransaction(transactionHash);
-      // if it's been in a chain reorg then it won't have a blocknumber, or the
-      // blocknumber will have changed but certainly it will have been removed.
-      // TODO we may not need the first too checks in addition -done
-      // tx.blockNumber === null || tx.blockNumber !== blockNumber ||
-      if (removed[transactionHash]) {
+      // if it's been in a chain reorg then it will have been removed.
+      if (removed[transactionHash] > 0) {
         clearInterval(id);
-        delete removed[transactionHash];
+        removed[eventObject.transactionHash]--;
         reject(
           new Error(
             `Event removed; probable chain reorg.  Event was ${eventObject.event}, transaction hash was ${transactionHash}`,
@@ -97,11 +93,12 @@ function waitForConfirmation(eventObject) {
 
 async function queueManager(eventObject, eventArgs) {
   if (eventObject.removed) {
-    // in this model we don't queue removals but we can use them to reject the
-    // waitForConfirmation Promise. This prevents the event from being processed.
-    // This should be more reliable than polling for null or changed blockNumbers.
+    // in this model we don't queue removals but we can use them to reject the event
     // Note the event object and its removal have the same transactionHash.
-    removed[eventObject.transactionHash] = true; // store the removal; waitForConfirmation will read this and reject.
+    // Also note that we can get more than one removal because the event could be re-mined
+    // and removed again - so we need to keep count of the removals.
+    if (!removed[eventObject.transactionHash]) removed[eventObject.transactionHash] = 0;
+    removed[eventObject.transactionHash]++; // store the removal; waitForConfirmation will read this and reject.
     logger.debug(
       `Event ${eventObject.event} with transaction hash ${eventObject.transactionHash} was removed`,
     );
