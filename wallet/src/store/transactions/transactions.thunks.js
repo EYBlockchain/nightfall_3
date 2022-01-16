@@ -62,15 +62,33 @@ function txSubmit(txParams) {
     switch (txParams.txType) {
       case Nf3.Constants.TX_TYPES.DEPOSIT:
         // TODO: dispatch error
-        nf3
-          .deposit(
-            txParams.tokenAddress,
-            txParams.tokenType,
-            tokenAmountWei,
-            txParams.tokenId,
-            txParams.fee,
-          )
+        Nf3.Tokens.approve(
+          txParams.tokenAddress,
+          nf3.ethereumAddress,
+          nf3.shieldContractAddress,
+          txParams.tokenType,
+          tokenAmountWei,
+          nf3.web3,
+        )
+          .then(() => {
+            return deposit({
+              ercAddress: txParams.tokenAddress,
+              tokenId: txParams.tokenId,
+              value: tokenAmountWei,
+              pkd: nf3.zkpKeys.pkd,
+              nsk: nf3.zkpKeys.nsk,
+              fee: txParams.fee,
+              tokenType: txParams.tokenType,
+            });
+          })
+          .then(async ({ rawTransaction }) => {
+            console.log('rawTransaction', rawTransaction);
+            return nf3.submitTransaction(rawTransaction, nf3.shieldContractAddress, txParams.fee);
+            // dispatch(txActions.txSuccess(Nf3.Constants.TX_TYPES.DEPOSIT, txReceipt));
+            // TODO: dispatch error
+          })
           .then(txReceipt => {
+            console.log('txReceipt', txReceipt);
             dispatch(txActions.txSuccess(Nf3.Constants.TX_TYPES.DEPOSIT, txReceipt));
             dispatch(messageActions.newInfo('Deposit submitted'));
             setTimeout(() => {
