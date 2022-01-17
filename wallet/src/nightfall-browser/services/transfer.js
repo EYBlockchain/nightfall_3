@@ -25,11 +25,18 @@ import {
 } from './commitment-storage';
 import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
 import { decompressKey, calculateIvkPkdfromAskNsk } from './keys';
+
+// eslint-disable-next-line
 import * as singleTransferAbi from '../../zokrates/single_transfer_stub/artifacts/single_transfer_stub-abi.json';
+// eslint-disable-next-line
 import * as singleTransferProgramFile from '../../zokrates/single_transfer_stub/artifacts/single_transfer_stub-program';
+// eslint-disable-next-line
 import * as singleTransferPkFile from '../../zokrates/single_transfer_stub/keypair/single_transfer_stub-pk';
+// eslint-disable-next-line
 import * as doubleTransferAbi from '../../zokrates/double_transfer_stub/artifacts/double_transfer_stub-abi.json';
+// eslint-disable-next-line
 import * as doubleTransferProgramFile from '../../zokrates/double_transfer_stub/artifacts/double_transfer_stub-program';
+// eslint-disable-next-line
 import * as doubleTransferPkFile from '../../zokrates/double_transfer_stub/keypair/double_transfer_stub-pk';
 
 const { BN128_GROUP_ORDER, ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME } = config;

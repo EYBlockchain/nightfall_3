@@ -6,6 +6,7 @@ import { TRANSACTION_RETRY_PERIOD, TRANSACTION_MAX_RETRIES } from '../../constan
 import toBaseUnit from '../../utils/lib/utils';
 import * as txActions from './transactions.actions';
 import * as messageActions from '../message/message.actions';
+import deposit from '../../nightfall-browser/services/deposit';
 
 function txInstantWithdrawSubmit(withdrawTransactionHash, fee) {
   return async (dispatch, getState) => {
