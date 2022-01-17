@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { initialize } from 'zokrates-js';
 
+// eslint-disable-next-line
 import abi from '../../zokrates/deposit/artifacts/deposit-abi.json';
+// eslint-disable-next-line
 import programFile from '../../zokrates/deposit/artifacts/deposit-program';
+// eslint-disable-next-line
 import pkFile from '../../zokrates/deposit/keypair/deposit-pk';
 import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
 

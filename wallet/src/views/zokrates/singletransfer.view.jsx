@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { initialize } from 'zokrates-js';
 
+// eslint-disable-next-line
 import abi from '../../zokrates/single_transfer/artifacts/single_transfer-abi.json';
+// eslint-disable-next-line
 import programFile from '../../zokrates/single_transfer/artifacts/single_transfer-program';
+// eslint-disable-next-line
 import pkFile from '../../zokrates/single_transfer/keypair/single_transfer-pk';
 import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
 
