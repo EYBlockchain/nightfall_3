@@ -5,6 +5,8 @@ Route for setting the decryption key that will be used to decrypt secrets during
 import express from 'express';
 import { generalise } from 'general-number';
 import logger from 'common-files/utils/logger.mjs';
+import { enqueueEvent } from 'common-files/utils/event-queue.mjs';
+import { initialClientSync } from '../services/state-sync.mjs';
 import { storeMemoryKeysForDecryption } from '../services/keys.mjs';
 
 const router = express.Router();
@@ -17,6 +19,7 @@ router.post('/', async (req, res, next) => {
       ivks.map(ivk => ivk.bigInt),
       nsks.map(nsk => nsk.bigInt),
     );
+    enqueueEvent(initialClientSync, 0);
     res.json({ status: 'success' });
   } catch (err) {
     logger.error(err);
