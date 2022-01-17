@@ -9,11 +9,10 @@
  * @author westlad, Chaitanya-Konda, iAmMichaelConnor, will-kim
  */
 
-// eslint-disable-next-line import/no-extraneous-dependencies
-import config from 'config';
 import gen from 'general-number';
 import { initialize } from 'zokrates-js';
 
+import config from '../utils/parseConfigs';
 import rand from '../../common-files/utils/crypto/crypto-random';
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
