@@ -8,6 +8,7 @@ import {
 import toBaseUnit from '../../utils/lib/utils';
 import * as txActions from './transactions.actions';
 import * as messageActions from '../message/message.actions';
+import deposit from '../../nightfall-browser/services/deposit';
 
 function txInstantWithdrawSubmit(withdrawTransactionHash, fee) {
   return async (dispatch, getState) => {
