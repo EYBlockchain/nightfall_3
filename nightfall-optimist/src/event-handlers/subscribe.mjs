@@ -97,3 +97,15 @@ export async function subscribeToInstantWithDrawalWebSocketConnection(callback, 
   );
   logger.debug('Subscribed to InstantWithDrawal WebSocket connection');
 }
+
+export async function subscribeToProposedBlockWebSocketConnection(callback, ...args) {
+  wss.on('connection', ws =>
+    ws.on('message', message => {
+      if (message === 'proposedBlock') {
+        logger.info(`SUBSCRIBING TO PROPOSEDBLOCK`);
+        callback(ws, args);
+      }
+    }),
+  );
+  logger.debug('Subscribed to ProposedBlock WebSocket connection');
+}
