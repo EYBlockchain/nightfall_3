@@ -8,9 +8,9 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
  */
 
 // eslint-disable-next-line import/no-extraneous-dependencies
-import config from 'config';
 import gen from 'general-number';
 import { initialize } from 'zokrates-js';
+import config from '../utils/parseConfigs';
 
 import rand from '../../common-files/utils/crypto/crypto-random';
 import { getContractInstance } from '../../common-files/utils/contract';

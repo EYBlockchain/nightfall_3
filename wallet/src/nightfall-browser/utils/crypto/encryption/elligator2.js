@@ -15,7 +15,7 @@ const { BABYJUBJUB, BN128_GROUP_ORDER, ELLIGATOR2 } = config;
 const one = BigInt(1);
 const { MONTA, MONTB } = BABYJUBJUB;
 const { U } = ELLIGATOR2;
-const Fp = BigInt(BN128_GROUP_ORDER); // the prime field used with the curve E(Fp)
+const Fp = BN128_GROUP_ORDER; // the prime field used with the curve E(Fp)
 
 // χ : Fq → Fq by χ(a) = a^((q−1)/2)
 function chi(a) {
