@@ -10,12 +10,12 @@ const ERC1155Mock = artifacts.require('ERC1155Mock.sol');
 const ERC721_2Mock = artifacts.require('ERC721_2Mock.sol');
 const ERC1155_2Mock = artifacts.require('ERC1155_2Mock.sol');
 
-const recipientAddress = '0x9c8b2276d490141ae1440da660e470e7c0349c63';
+// const recipientAddress = '0x9c8b2276d490141ae1440da660e470e7c0349c63';
 const walletTestAddress = '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9';
 const liquidityProviderAddress = '0x4789FD18D5d71982045d85d5218493fD69F55AC4';
 const nERC721 = 35;
 
-module.exports = function(deployer) {
+module.exports = function(deployer, _, accounts) {
   deployer.then(async () => {
     await deployer.deploy(ERC20Mock, 1001010000000000); // initialSupply
 
@@ -54,7 +54,6 @@ module.exports = function(deployer) {
       }
       await ERC1155_2deployed.safeBatchTransferFrom(recipientAddress, walletTestAddress, [0, 1, 4],
         [100000, 200000, 100000], []);
-  
     }
   });
 };
