@@ -13,7 +13,14 @@ import { Commitment, Nullifier } from '../classes/index';
 import { isValidWithdrawal } from './valid-withdrawal';
 import { getBlockByBlockNumberL2, getTransactionByTransactionHash } from './database';
 
-const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
+const {
+  MONGO_URL,
+  COMMITMENTS_DB,
+  TIMBER_COLLECTION,
+  SUBMITTED_BLOCKS_COLLECTION,
+  TRANSACTIONS_COLLECTION,
+  COMMITMENTS_COLLECTION,
+} = config;
 const { generalise } = gen;
 const mutex = new Mutex();
 
@@ -21,6 +28,9 @@ const connectDB = async () => {
   return openDB(COMMITMENTS_DB, 1, {
     upgrade(newDb) {
       newDb.createObjectStore(COMMITMENTS_COLLECTION);
+      newDb.createObjectStore(TIMBER_COLLECTION);
+      newDb.createObjectStore(SUBMITTED_BLOCKS_COLLECTION);
+      newDb.createObjectStore(TRANSACTIONS_COLLECTION);
     },
   });
 };
@@ -65,7 +75,7 @@ export async function updateCommitment(commitment, updates) {
 export async function countCommitments(commitments) {
   const db = await connectDB();
   const res = await db.getAll(COMMITMENTS_COLLECTION);
-  const filtered = res.filter(r => commitments.include(r._id));
+  const filtered = res.filter(r => commitments.includes(r._id));
   return filtered.length;
   // const connection = await mongo.connection(MONGO_URL);
   // const query = { _id: { $in: commitments } };
@@ -78,7 +88,7 @@ export async function countCommitments(commitments) {
 export async function countTransactionHashes(transactionHashes) {
   const db = await connectDB();
   const res = await db.getAll(COMMITMENTS_COLLECTION);
-  const filtered = res.filter(r => transactionHashes.include(r.transactionHash));
+  const filtered = res.filter(r => transactionHashes.includes(r.transactionHash));
   return filtered.length;
 }
 
@@ -91,7 +101,7 @@ export async function markOnChain(
 ) {
   const db = await connectDB();
   const res = await db.getAll(COMMITMENTS_COLLECTION);
-  const filtered = res.filter(r => commitments.include(r._id) && r.isOnChain === -1);
+  const filtered = res.filter(r => commitments.includes(r._id) && r.isOnChain === -1);
   return Promise.all(
     filtered.map(f => {
       const { isOnChain, blockNumber: oldBN, transactionHashCommittedL1: oldTxHash, ...rest } = f;
@@ -353,7 +363,7 @@ export async function markNullifiedOnChain(
   console.log(blockNumber, transactionHashNullifiedL1);
   const db = await connectDB();
   const res = await db.getAll(COMMITMENTS_COLLECTION);
-  const filtered = res.filter(r => nullifiers.include(r.nullifier) && r.isNullifiedOnChain === -1);
+  const filtered = res.filter(r => nullifiers.includes(r.nullifier) && r.isNullifiedOnChain === -1);
   if (filtered.length > 0) {
     return Promise.all(
       filtered.map(f => {
@@ -541,24 +551,33 @@ export async function getCommitmentsFromBlockNumberL2(blockNumberL2) {
 async function findUsableCommitments(compressedPkd, ercAddress, tokenId, _value, onlyOne) {
   const value = generalise(_value); // sometimes this is sent as a BigInt.
   // eslint-disable-next-line no-undef
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(COMMITMENTS_DB);
-  const commitmentArray = await db
-    .collection(COMMITMENTS_COLLECTION)
-    .find({
-      'preimage.compressedPkd': compressedPkd.hex(32),
-      'preimage.ercAddress': ercAddress.hex(32),
-      'preimage.tokenId': tokenId.hex(32),
-      isNullified: false,
-      isPendingNullification: false,
-    })
-    .toArray();
+  const db = await connectDB();
+  const res = await db.getAll(COMMITMENTS_COLLECTION);
+  const commitmentArray = res.filter(
+    r =>
+      r.preimage.compressedPkd === compressedPkd.hex(32) &&
+      r.preimage.ercAddress === ercAddress.hex(32) &&
+      r.preimage.tokenId === tokenId.hex(32),
+  );
+  // const connection = await mongo.connection(MONGO_URL);
+  // const db = connection.db(COMMITMENTS_DB);
+  // const commitmentArray = await db
+  //   .collection(COMMITMENTS_COLLECTION)
+  //   .find({
+  //     'preimage.compressedPkd': compressedPkd.hex(32),
+  //     'preimage.ercAddress': ercAddress.hex(32),
+  //     'preimage.tokenId': tokenId.hex(32),
+  //     isNullified: false,
+  //     isPendingNullification: false,
+  //   })
+  //   .toArray();
   if (commitmentArray === []) return null;
   // turn the commitments into real commitment objects
   const commitments = commitmentArray
     .filter(commitment => Number(commitment.isOnChain) > Number(-1)) // filters for on chain commitments
     .map(ct => new Commitment(ct.preimage));
   // if we have an exact match, we can do a single-commitment transfer.
+  console.log(`Looking for ${value.hex(32)}`);
   const [singleCommitment] = commitments.filter(c => c.preimage.value.hex(32) === value.hex(32));
   if (singleCommitment) {
     logger.info('Found commitment suitable for single transfer or withdraw');
