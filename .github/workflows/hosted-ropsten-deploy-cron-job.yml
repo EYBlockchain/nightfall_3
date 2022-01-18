@@ -9,7 +9,7 @@ jobs:
     environment: TESTNET_DEPLOYMENT
     env:
       ETH_PRIVATE_KEY: ${{ secrets.ETH_PRIVATE_KEY }}
-      HOSTED_ROPSTEN_NODE: ${{ secrets.HOSTED_ROPSTEN_NODE }}
+      ROPSTEN_NODE: ${{ secrets.ROPSTEN_NODE }}
 
     steps:
       - uses: actions/checkout@master

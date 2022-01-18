@@ -45,7 +45,7 @@ describe('Testing the http API', () => {
   let compressedPkd2;
 
   const USE_INFURA = process.env.USE_INFURA === 'true';
-  const USE_HOSTED_GETH = process.env.USE_HOSTED_GETH === 'true';
+  const USE_ROPSTEN_NODE = process.env.USE_ROPSTEN_NODE === 'true';
   const { ETH_PRIVATE_KEY, BLOCKCHAIN_URL } = process.env;
   const web3WsUrl = BLOCKCHAIN_URL || process.env.web3WsUrl;
 
@@ -91,7 +91,7 @@ describe('Testing the http API', () => {
   before(async function () {
     web3 = await connectWeb3(web3WsUrl);
 
-    if (USE_INFURA || USE_HOSTED_GETH) {
+    if (USE_INFURA || USE_ROPSTEN_NODE) {
       if (!ETH_PRIVATE_KEY) {
         throw Error(
           'Cannot use default private key, please set environment variable ETH_PRIVATE_KEY',
