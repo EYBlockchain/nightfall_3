@@ -719,7 +719,7 @@ class Nf3 {
       compressedPkd: filterByCompressedPkd === true ? this.zkpKeys.compressedPkd : null,
       ercList,
     };
-    const res = await axios.get(`${this.clientBaseUrl}/commitment/balance`, params);
+    const res = await axios.post(`${this.clientBaseUrl}/commitment/balance`, params);
     return res.data.balance;
   }
 
@@ -733,7 +733,7 @@ class Nf3 {
   value of each propery is the number of tokens originating from that contract.
   */
   async getLayer2BalancesDetails(ercList) {
-    const res = await axios.get(`${this.clientBaseUrl}/commitment/balance-details`, {
+    const res = await axios.post(`${this.clientBaseUrl}/commitment/balance-details`, {
       compressedPkd: this.zkpKeys.compressedPkd,
       ercList,
     });
@@ -756,7 +756,7 @@ class Nf3 {
       compressedPkd: filterByCompressedPkd === true ? this.zkpKeys.compressedPkd : null,
       ercList,
     };
-    const res = await axios.get(`${this.clientBaseUrl}/commitment/pending-deposit`, params);
+    const res = await axios.post(`${this.clientBaseUrl}/commitment/pending-deposit`, params);
     return res.data.balance;
   }
 
@@ -777,7 +777,7 @@ class Nf3 {
       compressedPkd: filterByCompressedPkd === true ? this.zkpKeys.compressedPkd : null,
       ercList,
     };
-    const res = await axios.get(`${this.clientBaseUrl}/commitment/pending-spent`, params);
+    const res = await axios.post(`${this.clientBaseUrl}/commitment/pending-spent`, params);
     return res.data.balance;
   }
 
