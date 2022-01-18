@@ -63,12 +63,6 @@ export async function getLatestTree() {
   const keys = await db.getAllKeys(TIMBER_COLLECTION);
   const maxKey = Math.max(...keys);
   const timberObjArr = await db.get(TIMBER_COLLECTION, maxKey);
-  // const timberObjArr = await db
-  //   .collection(TIMBER_COLLECTION)
-  //   .find()
-  //   .sort({ _id: -1 })
-  //   .limit(1)
-  //   .toArray();
 
   const timberObj = timberObjArr || { root: 0, frontier: [], leafCount: 0 };
   const t = new Timber(timberObj.root, timberObj.frontier, timberObj.leafCount);
@@ -79,11 +73,7 @@ export async function getTreeByRoot(treeRoot) {
   const db = await connectDB();
   const vals = await db.getAll(TIMBER_COLLECTION);
   const { root, frontier, leafCount } = vals.filter(v => v.root === treeRoot);
-  // const connection = await mongo.connection(MONGO_URL);
-  // const db = await openDB(COMMITMENTS_DB);
-  // const { root, frontier, leafCount } = (await db
-  //   .collection(TIMBER_COLLECTION)
-  //   .findOne({ root: treeRoot })) ?? { root: 0, frontier: [], leafCount: 0 };
+  if (!root) return new Timber(0, [], 0);
   const t = new Timber(root, frontier, leafCount);
   return t;
 }
@@ -92,10 +82,6 @@ export async function getTreeByBlockNumberL2(blockNumberL2) {
   const db = await connectDB();
   const vals = await db.getAll(TIMBER_COLLECTION);
   const { root, frontier, leafCount } = vals.filter(v => v.blockNumberL2 === blockNumberL2);
-  // const connection = await mongo.connection(MONGO_URL);
-  // const db = await openDB(COMMITMENTS_DB);
-  // const { root, frontier, leafCount } =
-  //   (await db.collection(TIMBER_COLLECTION).findOne({ blockNumberL2 })) ?? {};
   const t = new Timber(root, frontier, leafCount);
   return t;
 }
@@ -105,9 +91,6 @@ export async function deleteTreeByBlockNumberL2(blockNumberL2) {
   const vals = await db.getAll(TIMBER_COLLECTION);
   const [match] = vals.filter(v => v.blockNumberL2 === blockNumberL2);
   return db.delete(TIMBER_COLLECTION, match);
-  // const connection = await mongo.connection(MONGO_URL);
-  // const db = await openDB(COMMITMENTS_DB);
-  // return db.collection(TIMBER_COLLECTION).deleteMany({ blockNumberL2: { $gte: blockNumberL2 } });
 }
 
 /**
@@ -127,19 +110,13 @@ export async function saveBlock(_block) {
     throw new Error('Layer 2 blocks must be saved with a valid Layer 1 block number');
   const db = await connectDB();
   const existing = await db.get(SUBMITTED_BLOCKS_COLLECTION, block._id);
-  // const connection = await mongo.connection(MONGO_URL);
-  // const db = await openDB(COMMITMENTS_DB);
   // there are three possibilities here:
   // 1) We're just saving a block for the first time.  This is fine
   // 2) We're trying to save a replayed block.  This will correctly fail because the _id will be duplicated
   // 3) We're trying to save a block that we've seen before but it was re-mined due to a chain reorg. In
   //    this case, it's fine, we just update the layer 1 blocknumber and transactionHash to the new values
-  // const query = { _id: block._id };
-  // const update = { $set: block };
-  // const existing = await db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
   if (!existing || !existing.blockNumber) {
     return db.put(SUBMITTED_BLOCKS_COLLECTION, block, block._id);
-    // return db.collection(SUBMITTED_BLOCKS_COLLECTION).updateOne(query, update, { upsert: true });
   }
   throw new Error('Attempted to replay existing layer 2 block');
 }
@@ -149,7 +126,6 @@ function to get a block by blockNumberL2, if you know the number of the block. T
 */
 export async function getBlockByBlockNumberL2(blockNumberL2) {
   const db = await connectDB();
-  // const query = { blockNumberL2: Number(blockNumberL2) };
   return db.get(SUBMITTED_BLOCKS_COLLECTION, blockNumberL2);
 }
 
@@ -162,8 +138,6 @@ export async function deleteBlocksByBlockNumberL2(blockNumberL2) {
   const res = await db.getAll(SUBMITTED_BLOCKS_COLLECTION);
   const toDelete = res.filter(r => r.blockNumberL2 >= blockNumberL2);
   return Promise.all(toDelete.map(d => db.delete(SUBMITTED_BLOCKS_COLLECTION, d._id)));
-  // const query = { _id: { $gte: blockNumberL2 } };
-  // return db.collection(SUBMITTED_BLOCKS_COLLECTION).deleteMany(query);
 }
 
 /**
@@ -173,13 +147,6 @@ export async function findBlocksFromBlockNumberL2(blockNumberL2) {
   const db = await connectDB();
   const res = await db.getAll(SUBMITTED_BLOCKS_COLLECTION);
   return res.filter(r => r.blockNumberL2 >= blockNumberL2);
-  // const connection = await mongo.connection(MONGO_URL);
-  // const db = await openDB(COMMITMENTS_DB);
-  // const query = { blockNumberL2: { $gte: Number(blockNumberL2) } };
-  // return db
-  //   .collection(SUBMITTED_BLOCKS_COLLECTION)
-  //   .find(query, { sort: { blockNumberL2: 1 } })
-  //   .toArray();
 }
 
 export async function getBlockByTransactionHash(transactionHash) {
@@ -207,10 +174,7 @@ export async function saveTransaction(_transaction) {
   //    this case, it's fine, we just update the layer 1 blocknumber and transactionHash to the new values
   const db = await connectDB();
   const query = await db.getAll(TRANSACTIONS_COLLECTION);
-  // const query = { transactionHash: transaction.transactionHash };
-  // const update = { $set: transaction };
   const existing = query.filter(q => q.transactionHash === transaction.transactionHash);
-  // const existing = await db.collection(TRANSACTIONS_COLLECTION).findOne(query);
   if (!existing) return db.put(TRANSACTIONS_COLLECTION, transaction, transaction._id);
   if (!existing.blockNumber) {
     return db.put(TRANSACTIONS_COLLECTION, transaction, transaction._id);
@@ -227,36 +191,20 @@ export async function deleteTransactionsByTransactionHashes(transactionHashes) {
   const res = await db.getAll(TRANSACTIONS_COLLECTION);
   const toDelete = transactionHashes.map(t => res.findIndex(r => t === r.transactionHash));
   return Promise.all(toDelete.map(i => db.delete(TRANSACTIONS_COLLECTION, res[i]._id)));
-  // const query = { transactionHash: { $in: transactionHashes } };
-  // return db.collection(TRANSACTIONS_COLLECTION).deleteMany(query);
 }
 
 export async function getTransactionByCommitment(commitmentHash) {
   const db = await connectDB();
   const res = await db.getAll(TRANSACTIONS_COLLECTION);
   return res.filter(r => r.commitments.include(commitmentHash));
-  // We should not delete from a spent mempool
-  // const query = { commitments: commitmentHash };
-  // return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
 }
 
 export async function getTransactionByNullifier(nullifierHash) {
   const db = await connectDB();
   const res = await db.getAll(TRANSACTIONS_COLLECTION);
   return res.filter(r => r.nullifiers.include(nullifierHash));
-  // const connection = await mongo.connection(MONGO_URL);
-  // const db = await openDB(COMMITMENTS_DB);
-  // We should not delete from a spent mempool
-  // const query = { nullifiers: nullifierHash };
-  // return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
 }
 export async function getTransactionByTransactionHash(transactionHash) {
   const db = await connectDB();
   return db.get(TRANSACTIONS_COLLECTION, transactionHash);
-  // return res.filter(r => r.nullifiers.include(nullifierHash));
-  // const connection = await mongo.connection(MONGO_URL);
-  // const db = await openDB(COMMITMENTS_DB);
-  // // We should not delete from a spent mempool
-  // const query = { _id: transactionHash };
-  // return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
 }
