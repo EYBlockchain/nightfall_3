@@ -27,17 +27,17 @@ import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
 import { decompressKey, calculateIvkPkdfromAskNsk } from './keys';
 
 // eslint-disable-next-line
-import * as singleTransferAbi from '../../zokrates/single_transfer_stub/artifacts/single_transfer_stub-abi.json';
+import singleTransferAbi from '../../zokrates/single_transfer_stub/artifacts/single_transfer_stub-abi.json';
 // eslint-disable-next-line
-import * as singleTransferProgramFile from '../../zokrates/single_transfer_stub/artifacts/single_transfer_stub-program';
+import singleTransferProgramFile from '../../zokrates/single_transfer_stub/artifacts/single_transfer_stub-program';
 // eslint-disable-next-line
-import * as singleTransferPkFile from '../../zokrates/single_transfer_stub/keypair/single_transfer_stub-pk';
+import singleTransferPkFile from '../../zokrates/single_transfer_stub/keypair/single_transfer_stub-pk';
 // eslint-disable-next-line
-import * as doubleTransferAbi from '../../zokrates/double_transfer_stub/artifacts/double_transfer_stub-abi.json';
+import doubleTransferAbi from '../../zokrates/double_transfer_stub/artifacts/double_transfer_stub-abi.json';
 // eslint-disable-next-line
-import * as doubleTransferProgramFile from '../../zokrates/double_transfer_stub/artifacts/double_transfer_stub-program';
+import doubleTransferProgramFile from '../../zokrates/double_transfer_stub/artifacts/double_transfer_stub-program';
 // eslint-disable-next-line
-import * as doubleTransferPkFile from '../../zokrates/double_transfer_stub/keypair/double_transfer_stub-pk';
+import doubleTransferPkFile from '../../zokrates/double_transfer_stub/keypair/double_transfer_stub-pk';
 
 const { BN128_GROUP_ORDER, ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME } = config;
 const { generalise, GN } = gen;
@@ -144,37 +144,57 @@ async function transfer(transferParams) {
 
   // now we have everything we need to create a Witness and compute a proof
   const witnessInput = [
-    publicInputs.hash.decimal, // TODO safer to make this a prime field??
-    oldCommitments.map(commitment => [
-      commitment.preimage.ercAddress.limbs(32, 8),
-      commitment.preimage.tokenId.limbs(32, 8),
-      commitment.preimage.value.limbs(32, 8),
-      commitment.preimage.salt.limbs(32, 8),
-      commitment.hash.limbs(32, 8),
-      ask.field(BN128_GROUP_ORDER),
-    ]),
-    newCommitments.map(commitment => [
-      [
-        commitment.preimage.pkd[0].field(BN128_GROUP_ORDER),
-        commitment.preimage.pkd[1].field(BN128_GROUP_ORDER),
-      ],
-      commitment.preimage.value.limbs(32, 8),
-      commitment.preimage.salt.limbs(32, 8),
-      commitment.hash.limbs(32, 8),
-    ]),
-    nullifiers.map(nullifier => [nullifier.preimage.nsk.limbs(32, 8), nullifier.hash.limbs(32, 8)]),
+    oldCommitments.map(commitment => commitment.preimage.ercAddress.integer).flat(),
+    oldCommitments.map(commitment => {
+      return {
+        id: commitment.preimage.tokenId.limbs(32, 8),
+        value: commitment.preimage.value.limbs(32, 8),
+        salt: commitment.preimage.salt.limbs(32, 8),
+        hash: commitment.hash.limbs(32, 8),
+        ask: ask.field(BN128_GROUP_ORDER),
+      };
+    }),
+    newCommitments.map(commitment => {
+      return {
+        pkdRecipient: [
+          commitment.preimage.pkd[0].field(BN128_GROUP_ORDER),
+          commitment.preimage.pkd[1].field(BN128_GROUP_ORDER),
+        ],
+        value: commitment.preimage.value.limbs(32, 8),
+        salt: commitment.preimage.salt.limbs(32, 8),
+      };
+    }),
+    newCommitments.map(commitment => commitment.hash.integer),
+    nullifiers.map(nullifier => nullifier.preimage.nsk.limbs(32, 8)),
+    nullifiers.map(nullifier => generalise(nullifier.hash.hex(32, 31)).integer),
+    localSiblingPaths.map(siblingPath => siblingPath[0].field(BN128_GROUP_ORDER, false)),
     localSiblingPaths.map(siblingPath =>
-      siblingPath.map(node => node.field(BN128_GROUP_ORDER, false)),
+      siblingPath.slice(1).map(node => node.field(BN128_GROUP_ORDER, false)),
     ), // siblingPAth[32] is a sha hash and will overflow a field but it's ok to take the mod here - hence the 'false' flag
-    leafIndices,
-    [
-      ...secrets.ephemeralKeys.map(key => key.limbs(32, 8)),
-      secrets.cipherText.flat().map(text => text.field(BN128_GROUP_ORDER)),
-      ...secrets.squareRootsElligator2.map(sqroot => sqroot.field(BN128_GROUP_ORDER)),
-    ],
-  ].flat(Infinity);
+    leafIndices.map(leaf => leaf.toString()),
+    {
+      ephemeralKey1: secrets.ephemeralKeys[0].limbs(32, 8),
+      ephemeralKey2: secrets.ephemeralKeys[1].limbs(32, 8),
+      ephemeralKey3: secrets.ephemeralKeys[2].limbs(32, 8),
+      ephemeralKey4: secrets.ephemeralKeys[3].limbs(32, 8),
+      cipherText: secrets.cipherText.flat().map(text => text.field(BN128_GROUP_ORDER)),
+      sqrtMessage1: secrets.squareRootsElligator2[0].field(BN128_GROUP_ORDER),
+      sqrtMessage2: secrets.squareRootsElligator2[1].field(BN128_GROUP_ORDER),
+      sqrtMessage3: secrets.squareRootsElligator2[2].field(BN128_GROUP_ORDER),
+      sqrtMessage4: secrets.squareRootsElligator2[3].field(BN128_GROUP_ORDER),
+    },
+    compressedSecrets.map(text => generalise(text.hex(32, 31)).field(BN128_GROUP_ORDER)),
+  ];
 
-  console.log(`witness input is ${JSON.stringify(witnessInput)}`);
+  const flattenInput = witnessInput.map(w => {
+    if (w.length === 1) {
+      const [w_] = w;
+      return w_;
+    }
+    return w;
+  });
+
+  console.log(`witness input is ${JSON.stringify(flattenInput)}`);
   // call a zokrates worker to generate the proof
   // This is (so far) the only place where we need to get specific about the
   // circuit
@@ -185,17 +205,14 @@ async function transfer(transferParams) {
   const zokratesProvider = await initialize();
   if (oldCommitments.length === 1) {
     transactionType = 1;
-    console.log('Getting single transfer program file');
     program = await fetch(singleTransferProgramFile)
       .then(response => response.body.getReader())
       .then(parseData)
       .then(mergeUint8Array);
-    console.log('Getting single transfer pk file');
     pk = await fetch(singleTransferPkFile)
       .then(response => response.body.getReader())
       .then(parseData)
       .then(mergeUint8Array);
-    console.log('Getting single transfer abi file');
     abi = singleTransferAbi;
     blockNumberL2s.push(0); // We need top pad block numbers if we do a single transfer
   } else if (oldCommitments.length === 2) {
@@ -211,20 +228,13 @@ async function transfer(transferParams) {
     abi = doubleTransferAbi;
   } else throw new Error('Unsupported number of commitments');
 
-  console.log('Artifacts');
   const artifacts = { program: new Uint8Array(program), abi: JSON.stringify(abi) };
-  console.log('keypair');
   const keypair = { pk: new Uint8Array(pk) };
-  console.log('Witness');
-  const { witness } = zokratesProvider.computeWitness(artifacts, witnessInput);
+  const { witness } = zokratesProvider.computeWitness(artifacts, flattenInput);
   // generate proof
-  console.log('Proof');
   let { proof } = zokratesProvider.generateProof(artifacts.program, witness, keypair.pk);
   proof = [...proof.a, ...proof.b, ...proof.c];
   proof = proof.flat(Infinity);
-  console.log('Output');
-  // logger.silly(`Received response ${JSON.stringify(res.data, null, 2)}`);
-  // const { proof } = res.data;
   // and work out the ABI encoded data that the caller should sign and send to the shield contract
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
   const optimisticTransferTransaction = new Transaction({
