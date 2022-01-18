@@ -174,7 +174,7 @@ async function transfer(transferParams) {
     ],
   ].flat(Infinity);
 
-  logger.debug(`witness input is ${witnessInput.join(' ')}`);
+  console.log(`witness input is ${JSON.stringify(witnessInput)}`);
   // call a zokrates worker to generate the proof
   // This is (so far) the only place where we need to get specific about the
   // circuit
@@ -185,14 +185,17 @@ async function transfer(transferParams) {
   const zokratesProvider = await initialize();
   if (oldCommitments.length === 1) {
     transactionType = 1;
+    console.log('Getting single transfer program file');
     program = await fetch(singleTransferProgramFile)
       .then(response => response.body.getReader())
       .then(parseData)
       .then(mergeUint8Array);
+    console.log('Getting single transfer pk file');
     pk = await fetch(singleTransferPkFile)
       .then(response => response.body.getReader())
       .then(parseData)
       .then(mergeUint8Array);
+    console.log('Getting single transfer abi file');
     abi = singleTransferAbi;
     blockNumberL2s.push(0); // We need top pad block numbers if we do a single transfer
   } else if (oldCommitments.length === 2) {
@@ -208,14 +211,18 @@ async function transfer(transferParams) {
     abi = doubleTransferAbi;
   } else throw new Error('Unsupported number of commitments');
 
+  console.log('Artifacts');
   const artifacts = { program: new Uint8Array(program), abi: JSON.stringify(abi) };
+  console.log('keypair');
   const keypair = { pk: new Uint8Array(pk) };
+  console.log('Witness');
   const { witness } = zokratesProvider.computeWitness(artifacts, witnessInput);
   // generate proof
+  console.log('Proof');
   let { proof } = zokratesProvider.generateProof(artifacts.program, witness, keypair.pk);
   proof = [...proof.a, ...proof.b, ...proof.c];
   proof = proof.flat(Infinity);
-
+  console.log('Output');
   // logger.silly(`Received response ${JSON.stringify(res.data, null, 2)}`);
   // const { proof } = res.data;
   // and work out the ABI encoded data that the caller should sign and send to the shield contract
