@@ -1,6 +1,5 @@
 name: "testing"
 on:
-on:
   push:
     branches:
       - liju.jose/configure-hosted-geth-for-blockchain-client
