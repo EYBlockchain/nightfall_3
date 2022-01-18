@@ -1,7 +1,4 @@
 version: '3.5'
-# Use this script for running up nightfall_3 in 'ropsten' mode with local
-# Use it as an override file for docker-compose.yml
-# See the readme for more information.
 services:
   client1:
     environment:
