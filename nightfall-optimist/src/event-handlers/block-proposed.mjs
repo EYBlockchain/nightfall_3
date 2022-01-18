@@ -15,12 +15,29 @@ import {
 import { getProposeBlockCalldata } from '../services/process-calldata.mjs';
 
 const { ZERO } = config;
+
+let ws;
+
+export function setBlockProposedWebSocketConnection(_ws) {
+  ws = _ws;
+}
+
 /**
 This handler runs whenever a BlockProposed event is emitted by the blockchain
 */
 async function blockProposedEventHandler(data) {
   const { blockNumber: currentBlockCount, transactionHash: transactionHashL1 } = data;
   const { block, transactions } = await getProposeBlockCalldata(data);
+  if (ws)
+    await ws.send(
+      JSON.stringify({
+        type: 'proposedBlock',
+        blockNumber: currentBlockCount,
+        transactionHash: transactionHashL1,
+        block,
+        transactions,
+      }),
+    );
   logger.info('Received BlockProposed event');
   try {
     // and save the block to facilitate later lookup of block data
