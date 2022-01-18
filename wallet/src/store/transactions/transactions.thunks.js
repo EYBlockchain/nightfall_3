@@ -10,6 +10,7 @@ import * as txActions from './transactions.actions';
 import * as messageActions from '../message/message.actions';
 import deposit from '../../nightfall-browser/services/deposit';
 import transfer from '../../nightfall-browser/services/transfer';
+import withdraw from '../../nightfall-browser/services/withdraw';
 
 function txInstantWithdrawSubmit(withdrawTransactionHash, fee) {
   return async (dispatch, getState) => {
@@ -158,16 +159,23 @@ function txSubmit(txParams) {
         {
           // TODO: dispatch error
           const nRetries = 0;
-          nf3
-            .withdraw(
-              offchain,
-              txParams.tokenAddress,
-              txParams.tokenType,
-              tokenAmountWei,
-              txParams.tokenId,
-              txParams.ethereumAddress,
-              txParams.fee,
-            )
+          // { ercAddress, tokenId, value, recipientAddress, nsk, ask, fee, tokenType }
+          withdraw({
+            ercAddress: txParams.tokenAddress,
+            tokenId: txParams.tokenId,
+            value: tokenAmountWei,
+            recipientAddress: txParams.ethereumAddress,
+            nsk: nf3.zkpKeys.nsk,
+            ask: nf3.zkpKeys.ask,
+            tokenType: txParams.tokenType,
+            fees: txParams.fee,
+          })
+            .then(async ({ rawTransaction }) => {
+              console.log('rawTransaction', rawTransaction);
+              return nf3.submitTransaction(rawTransaction, nf3.shieldContractAddress, txParams.fee);
+              // dispatch(txActions.txSuccess(Nf3.Constants.TX_TYPES.DEPOSIT, txReceipt));
+              // TODO: dispatch error
+            })
             .then(txReceipt => {
               const latestWithdrawTransactionHash = nf3.getLatestWithdrawHash();
               dispatch(
