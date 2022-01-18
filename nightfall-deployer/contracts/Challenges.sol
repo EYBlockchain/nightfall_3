@@ -34,8 +34,9 @@ contract Challenges is Stateful, Key_Registry, Config {
     bytes32 salt
   ) external {
     checkCommit(msg.data);
+    require(blockL2.blockNumberL2 == priorBlockL2.blockNumberL2+1 || (blockL2.blockNumberL2 == 0 && priorBlockL2.blockNumberL2 == 0),'previous block number is incorrect');
     // check if the block hash is correct and the block hash exists for the block and prior block
-    if (blockL2.blockNumberL2 != 0) {
+    if (blockL2.blockNumberL2 != 0 || Utils.countCommitments(priorBlockTransactions)!=0 || priorBlockL2.leafCount!=0) {
     state.isBlockReal(priorBlockL2, priorBlockTransactions, blockNumberL2 - 1);
     }
     state.isBlockReal(blockL2, transactions, blockNumberL2);
@@ -66,7 +67,8 @@ contract Challenges is Stateful, Key_Registry, Config {
   ) external {
     checkCommit(msg.data);
     // check if the block hash is correct and the block hash exists for the block and prior block
-    if (blockL2.blockNumberL2 != 0) {
+    require(blockL2.blockNumberL2 == priorBlockL2.blockNumberL2+1 || (blockL2.blockNumberL2 == 0 && priorBlockL2.blockNumberL2 == 0),'previous block number is incorrect');
+    if (blockL2.blockNumberL2 != 0 || Utils.countCommitments(priorBlockTransactions)!=0 || priorBlockL2.leafCount!=0) {
     state.isBlockReal(priorBlockL2, priorBlockTransactions, blockNumberL2 - 1);
     }
     state.isBlockReal(blockL2, transactions, blockNumberL2);
