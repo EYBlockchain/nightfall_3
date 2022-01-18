@@ -30,8 +30,8 @@ router.get('/salt', async (req, res, next) => {
   }
 });
 
-router.post('/balance', async (req, res, next) => {
-  logger.debug('commitment/balance endpoint received POST');
+router.get('/balance', async (req, res, next) => {
+  logger.debug('commitment/balance endpoint received GET');
   try {
     const { compressedPkd, ercList } = req.body;
     logger.debug(`Details requested with compressedPkd ${compressedPkd} and ercList ${ercList}`);
@@ -43,8 +43,8 @@ router.post('/balance', async (req, res, next) => {
   }
 });
 
-router.post('/balance-details', async (req, res, next) => {
-  logger.debug('commitment/balance details endpoint received POST');
+router.get('/balance-details', async (req, res, next) => {
+  logger.debug('commitment/balance details endpoint received GET');
   try {
     const { compressedPkd, ercList } = req.body;
     const balance = await getWalletBalanceDetails(compressedPkd, ercList);
@@ -55,8 +55,8 @@ router.post('/balance-details', async (req, res, next) => {
   }
 });
 
-router.post('/pending-deposit', async (req, res, next) => {
-  logger.debug('commitment/pending-deposit endpoint received POST');
+router.get('/pending-deposit', async (req, res, next) => {
+  logger.debug('commitment/pending-deposit endpoint received GET');
   try {
     const { compressedPkd, ercList } = req.body;
     logger.debug(`Details requested with compressedPkd ${compressedPkd} and ercList ${ercList}`);
@@ -68,8 +68,8 @@ router.post('/pending-deposit', async (req, res, next) => {
   }
 });
 
-router.post('/pending-spent', async (req, res, next) => {
-  logger.debug('commitment/pending-spent endpoint received POST');
+router.get('/pending-spent', async (req, res, next) => {
+  logger.debug('commitment/pending-spent endpoint received GET');
   try {
     const { compressedPkd, ercList } = req.body;
     logger.debug(`Details requested with compressedPkd ${compressedPkd} and ercList ${ercList}`);
