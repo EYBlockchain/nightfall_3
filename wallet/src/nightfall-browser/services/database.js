@@ -9,14 +9,20 @@ import config from 'config';
 import { openDB } from 'idb';
 import Timber from '../../common-files/classes/timber';
 
-const { COMMITMENTS_DB, TIMBER_COLLECTION, SUBMITTED_BLOCKS_COLLECTION, TRANSACTIONS_COLLECTION } =
-  config;
+const {
+  COMMITMENTS_DB,
+  TIMBER_COLLECTION,
+  SUBMITTED_BLOCKS_COLLECTION,
+  TRANSACTIONS_COLLECTION,
+  COMMITMENTS_COLLECTION,
+} = config;
 
 // This needs to have better indexDB performance.
 
 const connectDB = async () => {
   return openDB(COMMITMENTS_DB, 1, {
     upgrade(newDb) {
+      newDb.createObjectStore(COMMITMENTS_COLLECTION);
       newDb.createObjectStore(TIMBER_COLLECTION);
       newDb.createObjectStore(SUBMITTED_BLOCKS_COLLECTION);
       newDb.createObjectStore(TRANSACTIONS_COLLECTION);
@@ -30,13 +36,17 @@ Timber functions
 
 export async function saveTree(blockNumber, blockNumberL2, timber) {
   const db = await connectDB();
-  return db.put(TIMBER_COLLECTION, blockNumber, {
-    _id: blockNumber,
-    blockNumberL2,
-    frontier: timber.frontier,
-    leafCount: timber.leafCount,
-    root: timber.root,
-  });
+  return db.put(
+    TIMBER_COLLECTION,
+    {
+      _id: blockNumber,
+      blockNumberL2,
+      frontier: timber.frontier,
+      leafCount: timber.leafCount,
+      root: timber.root,
+    },
+    blockNumber,
+  );
   // const connection = await openDB(MONGO_URL);
   // const db = await openDB(COMMITMENTS_DB);
   // return db.collection(TIMBER_COLLECTION).insertOne({
@@ -60,8 +70,7 @@ export async function getLatestTree() {
   //   .limit(1)
   //   .toArray();
 
-  const timberObj =
-    timberObjArr.length === 1 ? timberObjArr[0] : { root: 0, frontier: [], leafCount: 0 };
+  const timberObj = timberObjArr || { root: 0, frontier: [], leafCount: 0 };
   const t = new Timber(timberObj.root, timberObj.frontier, timberObj.leafCount);
   return t;
 }
@@ -129,7 +138,7 @@ export async function saveBlock(_block) {
   // const update = { $set: block };
   // const existing = await db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
   if (!existing || !existing.blockNumber) {
-    return db.put(SUBMITTED_BLOCKS_COLLECTION, block._id, block);
+    return db.put(SUBMITTED_BLOCKS_COLLECTION, block, block._id);
     // return db.collection(SUBMITTED_BLOCKS_COLLECTION).updateOne(query, update, { upsert: true });
   }
   throw new Error('Attempted to replay existing layer 2 block');
@@ -202,9 +211,9 @@ export async function saveTransaction(_transaction) {
   // const update = { $set: transaction };
   const existing = query.filter(q => q.transactionHash === transaction.transactionHash);
   // const existing = await db.collection(TRANSACTIONS_COLLECTION).findOne(query);
-  if (!existing) return db.put(TRANSACTIONS_COLLECTION, transaction._id, transaction);
+  if (!existing) return db.put(TRANSACTIONS_COLLECTION, transaction, transaction._id);
   if (!existing.blockNumber) {
-    return db.put(TRANSACTIONS_COLLECTION, transaction._id, transaction);
+    return db.put(TRANSACTIONS_COLLECTION, transaction, transaction._id);
   }
   throw new Error('Attempted to replay existing transaction');
 }
