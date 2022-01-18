@@ -32,6 +32,7 @@ describe('Testing the challenge http API', () => {
   let nsk1;
   let ivk1;
   let pkd1;
+  let compressedPkd1;
 
   const USE_INFURA = process.env.USE_INFURA === 'true';
   const { ETH_PRIVATE_KEY, BLOCKCHAIN_URL } = process.env;
@@ -140,6 +141,7 @@ describe('Testing the challenge http API', () => {
       nsk: nsk1,
       ivk: ivk1,
       pkd: pkd1,
+      compressedPkd: compressedPkd1,
     } = (
       await chai.request(url).post('/generate-keys').send({ mnemonic, path: `m/44'/60'/0'/0` })
     ).body);
@@ -345,7 +347,7 @@ describe('Testing the challenge http API', () => {
           tokenId,
           recipientData: {
             values: [value],
-            recipientPkds: [pkd1],
+            recipientCompressedPkds: [compressedPkd1],
           },
           nsk: nsk1,
           ask: ask1,
@@ -418,7 +420,7 @@ describe('Testing the challenge http API', () => {
           tokenId,
           recipientData: {
             values: [value],
-            recipientPkds: [pkd1],
+            recipientCompressedPkds: [compressedPkd1],
           },
           nsk: nsk1,
           ask: ask1,
@@ -489,7 +491,7 @@ describe('Testing the challenge http API', () => {
             tokenId,
             recipientData: {
               values: [value],
-              recipientPkds: [pkd1],
+              recipientCompressedPkds: [compressedPkd1],
             },
             nsk: nsk1,
             ask: ask1,
@@ -505,6 +507,24 @@ describe('Testing the challenge http API', () => {
           web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
           web3.eth.abi.encodeParameter('bytes32', topicsBlockHashInvalidTransaction),
         ]);
+
+        const res = await chai
+          .request(url)
+          .post('/transfer')
+          .send({
+            ercAddress,
+            tokenId,
+            recipientData: {
+              values: [value],
+              recipientCompressedPkds: [compressedPkd1],
+            },
+            nsk: nsk1,
+            ask: ask1,
+            fee,
+          });
+        const { txDataToSign } = res.body;
+        expect(txDataToSign).to.be.a('string');
+        await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
       });
     });
 
@@ -540,7 +560,7 @@ describe('Testing the challenge http API', () => {
             tokenId,
             recipientData: {
               values: [value],
-              recipientPkds: [pkd1],
+              recipientCompressedPkds: [compressedPkd1],
             },
             nsk: nsk1,
             ask: ask1,

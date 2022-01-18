@@ -3,7 +3,11 @@ import config from 'config';
 import mimcHash from 'common-files/utils/crypto/mimc/mimc.mjs';
 import bip39Pkg from 'bip39';
 import pkg from 'ethereumjs-wallet';
-import { scalarMult, edwardsCompress } from '../utils/crypto/encryption/elgamal.mjs';
+import {
+  scalarMult,
+  edwardsCompress,
+  edwardsDecompress,
+} from '../utils/crypto/encryption/elgamal.mjs';
 
 const { hdkey } = pkg;
 const { validateMnemonic, mnemonicToSeed } = bip39Pkg;
@@ -29,6 +33,10 @@ function calculatePublicKey(privateKey) {
 
 export function compressPublicKey(publicKey) {
   return new GN(edwardsCompress([publicKey[0].bigInt, publicKey[1].bigInt]));
+}
+
+export function decompressKey(key) {
+  return generalise(edwardsDecompress(key.bigInt));
 }
 
 // path structure is m / purpose' / coin_type' / account' / change / address_index
@@ -75,7 +83,10 @@ export async function generateKeys(mnemonic, path) {
 }
 
 export function storeMemoryKeysForDecryption(ivk, nsk) {
-  return Promise.all([ivks.push(...ivk), nsks.push(...nsk)]);
+  return Promise.all([
+    ivks.includes(ivk[0]) ? ivks : ivks.push(...ivk),
+    nsks.includes(nsk[0]) ? nsk : nsks.push(...nsk),
+  ]);
 }
 
 export function calculateIvkPkdfromAskNsk(ask, nsk) {

@@ -93,6 +93,7 @@ async function checkTransactionType(transaction) {
         transaction.commitments.length !== 2 ||
         transaction.nullifiers.some(n => n === ZERO) ||
         transaction.nullifiers.length !== 2 ||
+        transaction.nullifiers[0] === transaction.nullifiers[1] ||
         transaction.compressedSecrets.every(cs => cs === ZERO) ||
         transaction.compressedSecrets.length !== 8 ||
         transaction.proof.every(p => p === ZERO)

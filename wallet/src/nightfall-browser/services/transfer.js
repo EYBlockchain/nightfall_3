@@ -24,12 +24,19 @@ import {
   getSiblingInfo,
 } from './commitment-storage';
 import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
-import { compressPublicKey, calculateIvkPkdfromAskNsk } from './keys';
+import { decompressKey, calculateIvkPkdfromAskNsk } from './keys';
+
+// eslint-disable-next-line
 import * as singleTransferAbi from '../../zokrates/single_transfer_stub/artifacts/single_transfer_stub-abi.json';
+// eslint-disable-next-line
 import * as singleTransferProgramFile from '../../zokrates/single_transfer_stub/artifacts/single_transfer_stub-program';
+// eslint-disable-next-line
 import * as singleTransferPkFile from '../../zokrates/single_transfer_stub/keypair/single_transfer_stub-pk';
+// eslint-disable-next-line
 import * as doubleTransferAbi from '../../zokrates/double_transfer_stub/artifacts/double_transfer_stub-abi.json';
+// eslint-disable-next-line
 import * as doubleTransferProgramFile from '../../zokrates/double_transfer_stub/artifacts/double_transfer_stub-program';
+// eslint-disable-next-line
 import * as doubleTransferPkFile from '../../zokrates/double_transfer_stub/keypair/double_transfer_stub-pk';
 
 const { BN128_GROUP_ORDER, ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME } = config;
@@ -41,8 +48,8 @@ async function transfer(transferParams) {
   const { ...items } = transferParams;
   const { ercAddress, tokenId, recipientData, nsk, ask, fee } = generalise(items);
   const { pkd, compressedPkd } = calculateIvkPkdfromAskNsk(ask, nsk);
-  const { recipientPkds, values } = recipientData;
-  const recipientCompressedPkds = recipientPkds.map(key => compressPublicKey(key));
+  const { recipientCompressedPkds, values } = recipientData;
+  const recipientPkds = recipientCompressedPkds.map(key => decompressKey(key));
   if (recipientCompressedPkds.length > 1)
     throw new Error(`Batching is not supported yet: only one recipient is allowed`); // this will not always be true so we try to make the following code agnostic to the number of commitments
 

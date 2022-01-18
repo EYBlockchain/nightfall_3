@@ -12,6 +12,8 @@ const tokens = [
     tokenName: 'TOKEN1',
     tokenBalanceL1: '0',
     tokenBalanceL2: '0',
+    tokenPendingDepositL2: '0',
+    tokenPendingSpentL2: '0',
     // decimals: 9,
   },
   // DUMMY
@@ -24,8 +26,11 @@ const tokens = [
     tokenName: 'TOKEN2',
     tokenBalanceL1: '0',
     tokenBalanceL2: '0',
+    tokenPendingDepositL2: '0',
+    tokenPendingSpentL2: '0',
     // decimals: 9,
   },
+  /*
   // DUMMY
   {
     // id: 3,
@@ -38,6 +43,7 @@ const tokens = [
     tokenBalanceL2: '0',
     // decimals: 9,
   },
+  */
 ];
 
 export default tokens;
