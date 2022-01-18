@@ -1,10 +1,10 @@
-name: "hosted ropsten deployment at end of every day"
+name: "ropsten deployment at end of every day"
 on:
   schedule:
   - cron: "0 0 * * *"
 
 jobs:
-  testnet-test:
+  ropsten-test:
     runs-on: ubuntu-18.04
     environment: TESTNET_DEPLOYMENT
     env:
@@ -20,7 +20,7 @@ jobs:
       - name: Start Containers
         run: |
           docker-compose build
-          ./start-nightfall -r &> testnet-test.log &disown
+          ./start-nightfall -r &> ropsten-test.log &disown
 
       - name: wait 7000s for Containers startup and setup completion
         run: sleep 7000
@@ -29,21 +29,21 @@ jobs:
       # - run: sleep 1000
       # - name: debug logs - after container startup 1
       #   if: always()
-      #   run: cat testnet-test.log
+      #   run: cat ropsten-test.log
 
       # - run: sleep 1000
       # - name: debug logs - after container startup 2
       #   if: always()
-      #   run: cat testnet-test.log
+      #   run: cat ropsten-test.log
 
       - name: Run integration test
         run: |
           npm ci
-          npm run hosted-geth-test
+          npm run ropsten-test
 
       - name: debug logs - after integration test run
         if: always()
-        run: cat testnet-test.log
+        run: cat ropsten-test.log
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
@@ -53,5 +53,5 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@master
         with:
-          name: testnet-test-logs
-          path: ./testnet-test.log
+          name: ropsten-test-logs
+          path: ./ropsten-test.log
