@@ -14,7 +14,6 @@ import { isValidWithdrawal } from './valid-withdrawal';
 import { getBlockByBlockNumberL2, getTransactionByTransactionHash } from './database';
 
 const {
-  MONGO_URL,
   COMMITMENTS_DB,
   TIMBER_COLLECTION,
   SUBMITTED_BLOCKS_COLLECTION,
@@ -263,12 +262,6 @@ export async function clearPending(commitment) {
     },
     commitment.hash.hex(32),
   );
-
-  // const connection = await mongo.connection(MONGO_URL);
-  // const query = { _id: commitment.hash.hex(32) };
-  // const update = { $set: { isPendingNullification: false } };
-  // const db = connection.db(COMMITMENTS_DB);
-  // return db.collection(COMMITMENTS_COLLECTION).updateOne(query, update);
 }
 
 // function to mark a commitments as nullified on chain for a mongo db
@@ -303,17 +296,9 @@ export async function markNullifiedOnChain(
 
 // function to get the balance of commitments for each ERC address
 export async function getWalletBalance() {
-  // eslint-disable-next-line no-undef
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(COMMITMENTS_DB);
-  const query = { isNullified: false, isOnChain: { $gte: 0 } };
-  const options = {
-    projection: {
-      preimage: { ercAddress: 1, compressedPkd: 1, tokenId: 1, value: 1 },
-      _id: 0,
-    },
-  };
-  const wallet = await db.collection(COMMITMENTS_COLLECTION).find(query, options).toArray();
+  const db = await connectDB();
+  const vals = db.getAll(COMMITMENTS_COLLECTION);
+  const wallet = vals.filter(v => !v.isNullified && v.isOnChain >= 0);
   // the below is a little complex.  First we extract the ercAddress, tokenId and value
   // from the preimage.  Then we format them nicely. We don't care about the value of the
   // tokenId, other than if it's zero or not (indicating the token type). Then we filter
@@ -344,17 +329,9 @@ export async function getWalletBalance() {
 
 // function to get the commitments for each ERC address of a pkd
 export async function getWalletCommitments() {
-  // eslint-disable-next-line no-undef
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(COMMITMENTS_DB);
-  const query = { isNullified: false, isOnChain: { $gte: 0 } };
-  const options = {
-    projection: {
-      preimage: { ercAddress: 1, compressedPkd: 1, tokenId: 1, value: 1 },
-      _id: 0,
-    },
-  };
-  const wallet = await db.collection(COMMITMENTS_COLLECTION).find(query, options).toArray();
+  const db = await connectDB();
+  const vals = db.getAll(COMMITMENTS_COLLECTION);
+  const wallet = vals.filter(v => !v.isNullified && v.isOnChain >= 0);
   // the below is a little complex.  First we extract the ercAddress, tokenId and value
   // from the preimage.  Then we format them nicely. We don't care about the value of the
   // tokenId, other than if it's zero or not (indicating the token type). Then we filter
@@ -385,16 +362,11 @@ export async function getWalletCommitments() {
 
 // function to get the withdraw commitments for each ERC address of a pkd
 export async function getWithdrawCommitments() {
-  // eslint-disable-next-line no-undef
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(COMMITMENTS_DB);
-  const query = {
-    isNullified: true,
-    nullifierTransactionType: '3',
-    isNullifiedOnChain: { $gte: 0 },
-  };
-  // Get associated nullifiers of commitments that have been spent on-chain and are used for withdrawals.
-  const withdraws = await db.collection(COMMITMENTS_COLLECTION).find(query).toArray();
+  const db = await connectDB();
+  const vals = db.getAll(COMMITMENTS_COLLECTION);
+  const withdraws = vals.filter(
+    v => v.isNullified && v.isOnChain >= 0 && v.nullifierTransactionType === '3',
+  );
 
   // To check validity we need the withdrawal transaction, the block the transaction is in and all other
   // transactions in the block. We need this for on-chain validity checks.
@@ -440,19 +412,17 @@ export async function getWithdrawCommitments() {
 
 // as above, but removes output commitments
 export async function deleteCommitments(commitments) {
-  // eslint-disable-next-line no-undef
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(COMMITMENTS_DB);
-  const query = { _id: { $in: commitments }, isOnChain: { $eq: -1 } };
-  return db.collection(COMMITMENTS_COLLECTION).deleteMany(query);
+  const db = await connectDB();
+  const vals = db.getAll(COMMITMENTS_COLLECTION);
+  const f = vals.filter(v => commitments.includes(v._id) && v.isOnChain === -1);
+  return Promise.all(f.map(deleteC => db.delete(COMMITMENTS_COLLECTION, deleteC._id)));
 }
 
 export async function getCommitmentsFromBlockNumberL2(blockNumberL2) {
-  // eslint-disable-next-line no-undef
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(COMMITMENTS_DB);
-  const query = { isOnChain: { $gte: blockNumberL2 } };
-  return db.collection(COMMITMENTS_COLLECTION).find(query).toArray();
+  const db = await connectDB();
+  const vals = db.getAll(COMMITMENTS_COLLECTION);
+  const f = vals.filter(v => v.isOnChain >= blockNumberL2);
+  return f;
 }
 
 // function to find commitments that can be used in the proposed transfer
