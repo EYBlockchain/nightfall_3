@@ -5,7 +5,7 @@ functions to support El-Gamal cipherText over a BabyJubJub curve
 */
 
 // eslint-disable-next-line import/no-extraneous-dependencies
-import config from 'config';
+import config from '../../parseConfigs';
 import utils from '../../../../common-files/utils/crypto/merkle-tree/utils';
 import {
   squareRootModPrime,
@@ -19,7 +19,7 @@ const { BABYJUBJUB, BN128_GROUP_ORDER } = config;
 
 const one = BigInt(1);
 const { JUBJUBE, JUBJUBC, JUBJUBD, JUBJUBA, GENERATOR } = BABYJUBJUB;
-const Fp = BigInt(BN128_GROUP_ORDER); // the prime field used with the curve E(Fp)
+const Fp = BN128_GROUP_ORDER; // the prime field used with the curve E(Fp)
 const Fq = JUBJUBE / JUBJUBC;
 
 function isOnCurve(p) {
