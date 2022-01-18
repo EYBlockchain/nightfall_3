@@ -47,15 +47,6 @@ export async function saveTree(blockNumber, blockNumberL2, timber) {
     },
     blockNumber,
   );
-  // const connection = await openDB(MONGO_URL);
-  // const db = await openDB(COMMITMENTS_DB);
-  // return db.collection(TIMBER_COLLECTION).insertOne({
-  //   _id: blockNumber,
-  //   blockNumberL2,
-  //   frontier: timber.frontier,
-  //   leafCount: timber.leafCount,
-  //   root: timber.root,
-  // });
 }
 
 export async function getLatestTree() {

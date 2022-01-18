@@ -16,8 +16,8 @@ function HeaderMenu({ onDeleteWallet, onClearMsg }) {
   };
 
   const handleClickNFInfo = () => {
-    console.log('Clicking');
-    alert('clicked');
+    // eslint-disable-next-line no-alert
+    alert('Opening Portal');
 
     const socket = new WebSocket('ws://localhost:8082');
 
