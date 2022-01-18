@@ -1296,6 +1296,7 @@ describe('Testing the Nightfall SDK', () => {
   });
 
   describe('Restoring tokens', () => {
+    // Restore original token values to allow running tests multiple times without redeploying
     it('Should restore tokens ERC721 and ERC1155', async () => {
       console.log('1');
       let res = await nf3User2.transfer(
