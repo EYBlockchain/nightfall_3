@@ -88,7 +88,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
             tokenAddress: tokenInfo.tokenAddress,
             tokenId: tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC20 ? '0' : tokenId.value,
             tokenAmount:
-              tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC721 ? '0' : tokenAmount,
+              tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC721 ? '1' : tokenAmount,
             fee,
             tokenDecimals: tokenInfo.tokenDecimals,
             instantWithdrawFee,
@@ -108,7 +108,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
           tokenType: tokenInfo.tokenType,
           tokenAddress: tokenInfo.tokenAddress,
           tokenId: tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC20 ? '0' : tokenId.value,
-          tokenAmount: tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC721 ? '0' : tokenAmount,
+          tokenAmount: tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC721 ? '1' : tokenAmount,
           fee,
           tokenDecimals: tokenInfo.tokenDecimals,
         });

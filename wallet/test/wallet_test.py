@@ -24,6 +24,13 @@ from token_test import *
 from pyvirtualdisplay import Display
 
 testEnvironment="localhost"
+testToRun = { 
+    'all': True,
+    'effects': False,
+    'tokens': False,
+    'tx': False,
+    'login': False,
+}
 for arg in sys.argv:
     if arg.lower() == "server":
         display = Display(visible=0, size=(1920, 1080))
@@ -32,6 +39,19 @@ for arg in sys.argv:
         testEnvironment="docker"
     if arg.lower() == "ropsten":
         testEnvironment="ropsten"
+    if arg.lower() == "effects":
+        testToRun['effects'] = True
+        testToRun['all'] = False
+    if arg.lower() == "tokens":
+        testToRun['tokens'] = True
+        testToRun['all'] = False
+    if arg.lower() == "tx":
+        testToRun['tx'] = True
+        testToRun['all'] = False
+    if arg.lower() == "login":
+        testToRun['tokens'] = True
+        testToRun['all'] = False
+
 
 #####################
 # Declare variables #
@@ -95,9 +115,13 @@ except Exception:
 ########################
 # Start Tests          
 ########################
-effectTest(findElementsInstance, driver, metamaskTab, nightfallTab, walletUrl)
-loginTest(findElementsInstance, driver, metamaskTab, nightfallTab)
-tokenTest(findElementsInstance, driver, metamaskTab, nightfallTab)
-txTest(findElementsInstance, driver, metamaskTab, nightfallTab)
+if testToRun['all'] or testToRun['effects']:
+  effectTest(findElementsInstance, driver, metamaskTab, nightfallTab, walletUrl)
+if testToRun['all'] or testToRun['login']:
+  loginTest(findElementsInstance, driver, metamaskTab, nightfallTab)
+if testToRun['all'] or testToRun['tokens']:
+  tokenTest(findElementsInstance, driver, metamaskTab, nightfallTab)
+if testToRun['all'] or testToRun['tx']:
+  txTest(findElementsInstance, driver, metamaskTab, nightfallTab)
 
 driver.quit()
