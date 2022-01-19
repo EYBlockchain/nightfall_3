@@ -27,8 +27,9 @@ import { web3 } from 'common-files/utils/contract.mjs';
 const { MAX_QUEUE, CONFIRMATION_POLL_TIME, CONFIRMATIONS } = config;
 const fastQueue = new Queue({ autostart: true, concurrency: 1 });
 const slowQueue = new Queue({ autostart: true, concurrency: 1 });
-export const queues = [fastQueue, slowQueue];
 const removed = {}; // singleton holding transaction hashes of any removed events
+const stopQueue = new Queue({ autostart: false, concurrency: 1 });
+export const queues = [fastQueue, slowQueue, stopQueue];
 
 /**
 This function will wait until all the functions currently in a queue have been
@@ -91,6 +92,10 @@ function waitForConfirmation(eventObject) {
   });
 }
 
+async function dequeueEvent(priority) {
+  queues[priority].shift();
+}
+
 async function queueManager(eventObject, eventArgs) {
   if (eventObject.removed) {
     // in this model we don't queue removals but we can use them to reject the event
@@ -130,4 +135,4 @@ async function queueManager(eventObject, eventArgs) {
 }
 
 /* ignore unused exports */
-export { flushQueue, enqueueEvent, queueManager, waitForConfirmation };
+export { flushQueue, enqueueEvent, queueManager, dequeueEvent, waitForConfirmation };

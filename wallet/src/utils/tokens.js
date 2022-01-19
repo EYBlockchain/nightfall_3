@@ -8,9 +8,12 @@ const tokens = [
     tokenAddress: DEFAULT_TOKEN_ADDRESS.ERC20,
     tokenType: Nf3.Constants.TOKEN_TYPE.ERC20,
     tokenId: DEFAULT_TOKEN_ID.ERC20,
+    tokenIdL2: [],
     tokenName: 'TOKEN1',
-    tokenBalanceL1: '-',
-    tokenBalanceL2: '-',
+    tokenBalanceL1: '0',
+    tokenBalanceL2: '0',
+    tokenPendingDepositL2: '0',
+    tokenPendingSpentL2: '0',
     // decimals: 9,
   },
   // DUMMY
@@ -19,22 +22,28 @@ const tokens = [
     tokenAddress: DEFAULT_TOKEN_ADDRESS.ERC721,
     tokenType: Nf3.Constants.TOKEN_TYPE.ERC721,
     tokenId: DEFAULT_TOKEN_ID.ERC721,
+    tokenIdL2: [],
     tokenName: 'TOKEN2',
-    tokenBalanceL1: '-',
-    tokenBalanceL2: '-',
+    tokenBalanceL1: '0',
+    tokenBalanceL2: '0',
+    tokenPendingDepositL2: '0',
+    tokenPendingSpentL2: '0',
     // decimals: 9,
   },
+  /*
   // DUMMY
   {
     // id: 3,
     tokenAddress: DEFAULT_TOKEN_ADDRESS.ERC1155,
     tokenType: Nf3.Constants.TOKEN_TYPE.ERC1155,
     tokenId: DEFAULT_TOKEN_ID.ERC1155,
+    tokenIdL2: [],
     tokenName: 'TOKEN3',
-    tokenBalanceL1: '-',
-    tokenBalanceL2: '-',
+    tokenBalanceL1: '0',
+    tokenBalanceL2: '0',
     // decimals: 9,
   },
+  */
 ];
 
 export default tokens;

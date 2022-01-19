@@ -15,6 +15,7 @@ let web3;
 // This will be a mapping of privateKeys to nonces;
 const nonceDict = {};
 const USE_INFURA = process.env.USE_INFURA === 'true';
+const USE_ROPSTEN_NODE = process.env.USE_ROPSTEN_NODE === 'true';
 const { INFURA_PROJECT_SECRET, INFURA_PROJECT_ID } = process.env;
 let isSubmitTxLocked = false;
 
@@ -119,7 +120,7 @@ export async function submitTransaction(
       const accountAddress = await web3.eth.accounts.privateKeyToAccount(privateKey);
       nonce = await web3.eth.getTransactionCount(accountAddress.address);
     }
-    if (USE_INFURA) {
+    if (USE_INFURA || USE_ROPSTEN_NODE) {
       // get gaslimt from latest block as gaslimt may vary
       gas = (await web3.eth.getBlock('latest')).gasLimit;
       const blockGasPrice = Number(await web3.eth.getGasPrice());
@@ -185,11 +186,6 @@ export async function createBadBlock(badBlockType, block, transactions, args) {
     case 'IncorrectHistoricRoot': {
       // Replace the historic root with a wrong historic root
       badTransactions[1].historicRootBlockNumberL2[0] = (await rand(8)).hex();
-      break;
-    }
-    case 'IncorrectPublicInputHash': {
-      // if both tokenID and value are 0 for deposit, then this is an invalid deposit transaction
-      badTransactions[0].publicInputHash = (await rand(32)).hex();
       break;
     }
     case 'IncorrectProof': {

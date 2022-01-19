@@ -12,7 +12,8 @@ usage()
   echo "  -l or --localhost; to connect to an already running blockchain on ws://localhost:8546"
   echo "  -s or --stubs; runs with circuits stubbed out (faster but no checking of ZKP code) - use with either -g or -l"
   echo "  -h or --help; to print this message"
-  echo "  -t or --testnet; to connect infura ropsten testnet"
+  echo "  -i or --infura; to connect infura ropsten testnet"
+  echo "  -r or --ropsten to connect testnet node (Note: please set environment variable ROPSTEN_NODE, FROM_ADDRESS, and ETH_PRIVATE_KEY. Find more description in README.md)"
 }
 
 # select a Geth or Ganache client
@@ -39,7 +40,9 @@ while [ -n "$1" ]; do
                                     ;;
       -l  | --localhost )           FILE="-f docker-compose.yml -f docker-compose.host.docker.internal.yml"
                                     ;;
-      -t  | --testnet )             FILE="-f docker-compose.yml -f docker-compose.testnet.yml"
+      -r  | --ropsten )              FILE="-f docker-compose.yml -f docker-compose.ropsten.yml"
+                                    ;;
+      -i  | --infura )             FILE="-f docker-compose.yml -f docker-compose.infura.yml"
                                     ;;
       -h  | --help )                usage
                                     ;;

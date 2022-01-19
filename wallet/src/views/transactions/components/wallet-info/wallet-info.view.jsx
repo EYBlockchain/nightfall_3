@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Table, Button, Container, Icon } from 'semantic-ui-react';
+import { Table, Button, Container, Icon, Message } from 'semantic-ui-react';
 import PropTypes from 'prop-types';
 import {
   addToken,
@@ -15,6 +15,7 @@ import tokensLoad from '../../../../store/token/token.thunks';
 function WalletInfo({
   login,
   token,
+  message,
   onAddToken,
   onSelectToken,
   onUnselectToken,
@@ -50,6 +51,7 @@ function WalletInfo({
   };
 
   function setActiveRow(id) {
+    reload();
     if (id !== token.activeTokenRowId) {
       onSelectToken(id);
       if (removeTokenEnable) {
@@ -66,6 +68,8 @@ function WalletInfo({
       const tokenTypeId = `token type${item.tokenAddress}`;
       const l1BalanceId = `l1 balance${item.tokenAddress}`;
       const l2BalanceId = `l2 balance${item.tokenAddress}`;
+      const pendingDepositId = `pending deposit${item.tokenAddress}`;
+      const pendingTransferredOutId = `pending transferred out${item.tokenAddress}`;
       return (
         <Table.Row
           key={item.tokenAddress}
@@ -86,6 +90,12 @@ function WalletInfo({
           <Table.Cell colSpan="1" title={item.tokenBalanceL2} id={l2BalanceId}>
             {item.tokenBalanceL2}
           </Table.Cell>
+          <Table.Cell colSpan="1" title={item.tokenBalanceL2} id={pendingDepositId}>
+            {item.tokenPendingDepositL2}
+          </Table.Cell>
+          <Table.Cell colSpan="1" title={item.tokenBalanceL2} id={pendingTransferredOutId}>
+            {item.tokenPendingSpentL2}
+          </Table.Cell>
         </Table.Row>
       );
     });
@@ -105,8 +115,11 @@ function WalletInfo({
       tokenAddress.toLowerCase(),
       tokenType,
       '0x0',
+      '0x0',
       tokenName,
       tokenBalance,
+      '-',
+      '-',
       '-',
     );
   };
@@ -125,37 +138,36 @@ function WalletInfo({
       <Table padded fixed selectable>
         <Table.Header>
           <Table.Row>
-            <Table.HeaderCell colSpan="4">
-              <Table.Cell>Account Address:</Table.Cell>
-              <Table.Cell id="wallet-info-cell-ethaddress"> {importedWallet()} </Table.Cell>
+            <Table.HeaderCell>Account Address:</Table.HeaderCell>
+            <Table.HeaderCell colSpan="4" id="wallet-info-cell-ethaddress">
+              {' '}
+              {importedWallet()}{' '}
             </Table.HeaderCell>
-            <Table.HeaderCell colSpan="3">
-              <Table.Cell />
-              <Table.Cell />
-              <Table.Cell>
-                <Button
-                  icon
-                  labelPosition="left"
-                  onClick={toggleModalTokenAdd}
-                  id="wallet-info-cell-add-token"
-                >
-                  <Icon name="plus" />
-                  Add Token
-                </Button>
-              </Table.Cell>
-              <Table.Cell>
-                <Button
-                  icon
-                  labelPosition="left"
-                  id="wallet-info-cell-remove-token"
-                  toggle
-                  onClick={removeToken}
-                  active={removeTokenEnable && token.tokenPool.length}
-                  disabled={token.tokenPool.length === 0}
-                >
-                  <Icon name="minus" /> Remove Token
-                </Button>
-              </Table.Cell>
+            <Table.HeaderCell colSpan="4">
+              <Button
+                icon
+                labelPosition="left"
+                onClick={toggleModalTokenAdd}
+                primary
+                floated="right"
+                id="wallet-info-cell-add-token"
+              >
+                <Icon name="plus" />
+                Add Token
+              </Button>
+              <Button
+                icon
+                labelPosition="left"
+                id="wallet-info-cell-remove-token"
+                toggle
+                onClick={removeToken}
+                primary
+                floated="right"
+                active={removeTokenEnable && token.tokenPool.length}
+                disabled={token.tokenPool.length === 0}
+              >
+                <Icon name="minus" /> Remove Token
+              </Button>
             </Table.HeaderCell>
           </Table.Row>
         </Table.Header>
@@ -173,6 +185,12 @@ function WalletInfo({
             <Table.HeaderCell colSpan="1" textAlign="left">
               L2 Balance
             </Table.HeaderCell>
+            <Table.HeaderCell colSpan="1" textAlign="left">
+              Pending Deposit
+            </Table.HeaderCell>
+            <Table.HeaderCell colSpan="1" textAlign="left">
+              Pending Outflow
+            </Table.HeaderCell>
           </Table.Row>
         </Table.Header>
         <Table.Body> {renderRowTable()} </Table.Body>
@@ -185,6 +203,11 @@ function WalletInfo({
         nf3={login.nf3}
         token={token}
       />
+      {message.nf3Msg !== '' ? (
+        <Message info={message.nf3MsgType === 'info'} error={message.nf3MsgType === 'error'}>
+          <Message.Header>{message.nf3Msg}</Message.Header>
+        </Message>
+      ) : null}
     </Container>
   );
 }
@@ -192,6 +215,7 @@ function WalletInfo({
 WalletInfo.propTypes = {
   login: PropTypes.object.isRequired,
   token: PropTypes.object.isRequired,
+  message: PropTypes.object.isRequired,
   onAddToken: PropTypes.func.isRequired,
   onSelectToken: PropTypes.func.isRequired,
   onUnselectToken: PropTypes.func.isRequired,
@@ -202,14 +226,37 @@ WalletInfo.propTypes = {
 const mapStateToProps = state => ({
   token: state.token,
   login: state.login,
+  message: state.message,
 });
 
 const mapDispatchToProps = dispatch => ({
   onSelectToken: tokenRowId => dispatch(selectToken(tokenRowId)),
   onUnselectToken: () => dispatch(unselectToken()),
-  onAddToken: (compressedPkd, tokenAddress, tokenType, tokenId, tokenName, l1Balance, l2Balance) =>
+  onAddToken: (
+    compressedPkd,
+    tokenAddress,
+    tokenType,
+    tokenId,
+    l2TokenId,
+    tokenName,
+    l1Balance,
+    l2Balance,
+    l2PendingDeposit,
+    l2PendingSpent,
+  ) =>
     dispatch(
-      addToken(compressedPkd, tokenAddress, tokenType, tokenId, tokenName, l1Balance, l2Balance),
+      addToken(
+        compressedPkd,
+        tokenAddress,
+        tokenType,
+        tokenId,
+        l2TokenId,
+        tokenName,
+        l1Balance,
+        l2Balance,
+        l2PendingDeposit,
+        l2PendingSpent,
+      ),
     ),
   onDeleteToken: (compressedPkd, tokenRowId) => dispatch(deleteToken(compressedPkd, tokenRowId)),
   onLoadTokens: initTokens => dispatch(tokensLoad(initTokens)),

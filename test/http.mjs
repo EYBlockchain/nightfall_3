@@ -41,10 +41,13 @@ describe('Testing the http API', () => {
   let ivk1;
   let ivk2;
   let pkd1;
-  let pkd2;
+  let compressedPkd1;
+  let compressedPkd2;
 
   const USE_INFURA = process.env.USE_INFURA === 'true';
+  const USE_ROPSTEN_NODE = process.env.USE_ROPSTEN_NODE === 'true';
   const { ETH_PRIVATE_KEY, BLOCKCHAIN_URL } = process.env;
+  const web3WsUrl = BLOCKCHAIN_URL || process.env.web3WsUrl;
 
   const senderUrl = 'http://localhost:8080';
   const recipientUrl = 'http://localhost:8084';
@@ -86,9 +89,9 @@ describe('Testing the http API', () => {
   const gasCostsTx = 5000000000000000;
 
   before(async function () {
-    web3 = await connectWeb3(BLOCKCHAIN_URL);
+    web3 = await connectWeb3(web3WsUrl);
 
-    if (USE_INFURA) {
+    if (USE_INFURA || USE_ROPSTEN_NODE) {
       if (!ETH_PRIVATE_KEY) {
         throw Error(
           'Cannot use default private key, please set environment variable ETH_PRIVATE_KEY',
@@ -134,6 +137,7 @@ describe('Testing the http API', () => {
       nsk: nsk1,
       ivk: ivk1,
       pkd: pkd1,
+      compressedPkd: compressedPkd1,
     } = (
       await chai
         .request(senderUrl)
@@ -144,7 +148,7 @@ describe('Testing the http API', () => {
     ({
       nsk: nsk2,
       ivk: ivk2,
-      pkd: pkd2,
+      compressedPkd: compressedPkd2,
     } = (
       await chai
         .request(senderUrl)
@@ -373,7 +377,7 @@ describe('Testing the http API', () => {
           tokenId,
           recipientData: {
             values: [value],
-            recipientPkds: [pkd1],
+            recipientCompressedPkds: [compressedPkd1],
           },
           nsk: nsk1,
           ask: ask1,
@@ -403,7 +407,7 @@ describe('Testing the http API', () => {
           tokenId,
           recipientData: {
             values: [value],
-            recipientPkds: [pkd2],
+            recipientCompressedPkds: [compressedPkd2],
           },
           nsk: nsk1,
           ask: ask1,
@@ -469,7 +473,7 @@ describe('Testing the http API', () => {
           tokenId,
           recipientData: {
             values: [value2],
-            recipientPkds: [pkd1],
+            recipientCompressedPkds: [compressedPkd1],
           },
           nsk: nsk1,
           ask: ask1,
@@ -503,7 +507,7 @@ describe('Testing the http API', () => {
           recipientData: {
             // Add one here so we dont use the output of the previous double transfer as a single transfer input
             values: [value2 + 2],
-            recipientPkds: [pkd2],
+            recipientCompressedPkds: [compressedPkd2],
           },
           nsk: nsk1,
           ask: ask1,

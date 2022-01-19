@@ -18,7 +18,7 @@ function FooterMenu() {
           fontSize: '4em',
           fontWeight: 'normal',
           marginBottom: 0,
-          marginTop: '4em',
+          marginTop: '1em',
         }}
       />
       <Menu secondary>

@@ -17,7 +17,7 @@ jobs:
         run: |
           npm ci
           npm run lint
-
+         
   ganache-test:
     runs-on: ubuntu-18.04
     steps:
@@ -31,8 +31,8 @@ jobs:
           docker-compose build
           ./start-nightfall -g &> ganache-test.log &disown
 
-      - name: wait 1000s for Containers startup and setup completion
-        run: sleep 1000
+      - name: wait 2000s for Containers startup and setup completion
+        run: sleep 2000
 
       - name: debug logs - after container startup
         if: always()
@@ -71,8 +71,8 @@ jobs:
           docker-compose build
           ./start-nightfall -wt -s &
 
-      - name: wait 1000s for Containers startup and setup completion
-        run: sleep 1000
+      - name: wait 1500s for Containers startup and setup completion
+        run: sleep 1500
 
       - name: Retrieve Wallet test logs
         run: docker logs $(docker ps -aqf "name=wallet-test") > wallet-test.log
@@ -109,8 +109,8 @@ jobs:
         env:
           TRANSACTIONS_PER_BLOCK: 32
 
-      - name: wait 1000s for Containers startup and setup completion
-        run: sleep 1000
+      - name: wait 1500s for Containers startup and setup completion
+        run: sleep 1500
 
       - name: debug logs - after container startup
         if: always()

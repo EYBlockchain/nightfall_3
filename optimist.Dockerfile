@@ -1,3 +1,6 @@
+# install zokrates for local verify
+FROM zokrates/zokrates:0.7.7 as builder
+
 FROM mongo:4.4.1-bionic
 
 # install node
@@ -10,6 +13,8 @@ RUN apt-get install -y curl
 RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
 RUN apt-get install -y nodejs
 RUN apt-get install -y netcat
+# installs libs required for zokrates
+RUN apt-get install -y libgmpxx4ldbl libgmp3-dev
 
 WORKDIR /
 COPY common-files common-files
@@ -20,6 +25,11 @@ RUN mkdir /app/mongodb
 
 COPY nightfall-optimist/src src
 COPY nightfall-optimist/docker-entrypoint.sh nightfall-optimist/pre-start-script.sh nightfall-optimist/package*.json ./
+COPY --from=builder /home/zokrates/.zokrates/bin/zokrates /app/zokrates
+COPY --from=builder /home/zokrates/.zokrates/stdlib /app/stdlib/
+
+ENV ZOKRATES_HOME /app
+ENV ZOKRATES_STDLIB /app/stdlib
 
 RUN npm ci
 

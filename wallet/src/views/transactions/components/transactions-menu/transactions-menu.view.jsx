@@ -3,8 +3,14 @@ import { Table, Button, Icon } from 'semantic-ui-react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import * as txActionTypes from '../../../../store/transactions/transactions.actions';
+import tokensLoad from '../../../../store/token/token.thunks';
 
-function TransactionsMenu({ token, onNewTx }) {
+function TransactionsMenu({ token, onNewTx, onLoadTokens }) {
+  const newTransaction = name => {
+    onLoadTokens([]);
+    onNewTx(name);
+  };
+
   return (
     <Table padded textAlign="center" celled fixed>
       <Table.Body>
@@ -14,7 +20,8 @@ function TransactionsMenu({ token, onNewTx }) {
               <Button
                 name="deposit"
                 disabled={token.activeTokenRowId === ''}
-                onClick={(e, { name }) => onNewTx(name)}
+                onClick={(e, { name }) => newTransaction(name)}
+                primary
               >
                 <Icon name="sign-in" size="big" />
                 Deposit
@@ -22,7 +29,8 @@ function TransactionsMenu({ token, onNewTx }) {
               <Button
                 name="transfer"
                 disabled={token.activeTokenRowId === ''}
-                onClick={(e, { name }) => onNewTx(name)}
+                onClick={(e, { name }) => newTransaction(name)}
+                primary
               >
                 <Icon name="share" size="big" />
                 Transfer
@@ -30,7 +38,8 @@ function TransactionsMenu({ token, onNewTx }) {
               <Button
                 name="withdraw"
                 disabled={token.activeTokenRowId === ''}
-                onClick={(e, { name }) => onNewTx(name)}
+                onClick={(e, { name }) => newTransaction(name)}
+                primary
               >
                 <Icon name="sign-out" size="big" />
                 Withdraw
@@ -46,6 +55,7 @@ function TransactionsMenu({ token, onNewTx }) {
 TransactionsMenu.propTypes = {
   token: PropTypes.object.isRequired,
   onNewTx: PropTypes.func.isRequired,
+  onLoadTokens: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = state => ({
@@ -54,6 +64,7 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = dispatch => ({
   onNewTx: txType => dispatch(txActionTypes.txNew(txType)),
+  onLoadTokens: initTokens => dispatch(tokensLoad(initTokens)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(TransactionsMenu);

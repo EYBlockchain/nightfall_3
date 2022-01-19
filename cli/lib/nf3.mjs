@@ -311,8 +311,7 @@ class Nf3 {
   @param {string} tokenId - The ID of an ERC721 or ERC1155 token.  In the case of
   an 'ERC20' coin, this should be set to '0x00'.
   @param {object} keys - The ZKP private key set of the sender.
-  @param {array} pkd - The transmission key of the recipient (this is a curve point
-  represented as an array of two hex strings).
+  @param {string} compressedPkd - The compressed transmission key of the recipient
   @returns {Promise} Resolves into the Ethereum transaction receipt.
   */
   async transfer(
@@ -321,7 +320,7 @@ class Nf3 {
     tokenType,
     value,
     tokenId,
-    pkd,
+    compressedPkd,
     fee = this.defaultFee,
   ) {
     const res = await axios.post(`${this.clientBaseUrl}/transfer`, {
@@ -330,7 +329,7 @@ class Nf3 {
       tokenId,
       recipientData: {
         values: [value],
-        recipientPkds: [pkd],
+        recipientCompressedPkds: [compressedPkd],
       },
       nsk: this.zkpKeys.nsk,
       ask: this.zkpKeys.ask,
@@ -421,17 +420,15 @@ class Nf3 {
   @param {number} fee - the amount being paid for the instant withdrawal service
   */
   async requestInstantWithdrawal(withdrawTransactionHash, fee) {
-    // find the L2 block containing the L2 transaction hash
-    let res = await axios.get(
-      `${this.optimistBaseUrl}/block/transaction-hash/${withdrawTransactionHash}`,
-    );
-    const { block } = res.data;
-    if (!block) return null; // block not found
-    // set the instant withdrawal fee
-    res = await axios.post(`${this.clientBaseUrl}/set-instant-withdrawal`, {
-      transactionHash: withdrawTransactionHash,
-    });
-    return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, fee);
+    try {
+      // set the instant withdrawal fee
+      const res = await axios.post(`${this.clientBaseUrl}/set-instant-withdrawal`, {
+        transactionHash: withdrawTransactionHash,
+      });
+      return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, fee);
+    } catch {
+      return null;
+    }
   }
 
   /**
@@ -606,6 +603,7 @@ class Nf3 {
   @async
   */
   async startProposer() {
+    const newGasBlockEmitter = new EventEmitter();
     const connection = new WebSocket(this.optimistWsUrl);
     this.websockets.push(connection); // save so we can close it properly later
     connection.onopen = () => {
@@ -615,10 +613,16 @@ class Nf3 {
       const msg = JSON.parse(message.data);
       const { type, txDataToSign } = msg;
       if (type === 'block') {
-        await this.submitTransaction(txDataToSign, this.stateContractAddress, this.BLOCK_STAKE);
+        const res = await this.submitTransaction(
+          txDataToSign,
+          this.stateContractAddress,
+          this.BLOCK_STAKE,
+        );
+        newGasBlockEmitter.emit('gascost', res.gasUsed);
       }
     };
     // add this proposer to the list of peers that can accept direct transfers and withdraws
+    return newGasBlockEmitter;
   }
 
   /**
@@ -721,43 +725,59 @@ class Nf3 {
   }
 
   /**
-  Get if it's a valid withdraw transaction for finalising the
-  withdrawal of funds to L1 (only relevant for ERC20).
+  Returns the balance of tokens held in layer 2
   @method
   @async
-  @param {string} withdrawTransactionHash - the hash of the Layer 2 transaction in question
+  @returns {Promise} This promise resolves into an object whose properties are the
+  addresses of the ERC contracts of the tokens held by this account in Layer 2. The
+  value of each propery is the number of tokens originating from that contract.
   */
-  async isValidWithdrawal(withdrawTransactionHash) {
-    let res;
-    let valid = false;
+  async getLayer2Balances() {
+    const res = await axios.get(`${this.clientBaseUrl}/commitment/balance`);
+    return res.data.balance;
+  }
 
-    res = await axios.get(
-      `${this.optimistBaseUrl}/block/transaction-hash/${withdrawTransactionHash}`,
-    );
-    const { block, transactions, index } = res.data;
-
-    if (block) {
-      res = await axios.post(`${this.clientBaseUrl}/valid-withdrawal`, {
-        block,
-        transactions,
-        index,
-      });
-      valid = res.data.valid;
-    }
-
-    return valid;
+  /**
+  Returns the balance details of tokens held in layer 2
+  @method
+  @async
+  @param {Array} ercList - list of erc contract addresses to filter.
+  @returns {Promise} This promise resolves into an object whose properties are the
+  addresses of the ERC contracts of the tokens held by this account in Layer 2. The
+  value of each propery is the number of tokens originating from that contract.
+  */
+  async getLayer2BalancesDetails(ercList) {
+    const res = await axios.post(`${this.clientBaseUrl}/commitment/balance-details`, {
+      compressedPkd: this.zkpKeys.compressedPkd,
+      ercList,
+    });
+    return res.data.balance;
   }
 
   /**
   Returns the balance of tokens held in layer 2
   @method
   @async
-  @returns {Promise} This promise rosolves into an object whose properties are the
+  @returns {Promise} This promise resolves into an object whose properties are the
   addresses of the ERC contracts of the tokens held by this account in Layer 2. The
-  value of each propery is the number of tokens originating from that contract.
+  value of each propery is the number of tokens pending deposit from that contract.
   */
-  async getLayer2Balances() {
-    const res = await axios.get(`${this.clientBaseUrl}/commitment/balance`);
+  async getLayer2PendingDepositBalances() {
+    const res = await axios.get(`${this.clientBaseUrl}/commitment/pending-deposit`);
+    return res.data.balance;
+  }
+
+  /**
+  Returns the balance of tokens held in layer 2
+  @method
+  @async
+  @returns {Promise} This promise resolves into an object whose properties are the
+  addresses of the ERC contracts of the tokens held by this account in Layer 2. The
+  value of each propery is the number of tokens pending spent (transfer & withdraw)
+  from that contract.
+  */
+  async getLayer2PendingSpentBalances() {
+    const res = await axios.get(`${this.clientBaseUrl}/commitment/pending-spent`);
     return res.data.balance;
   }
 
@@ -797,7 +817,7 @@ class Nf3 {
     if (typeof window !== 'undefined') {
       if (window.ethereum && this.ethereumSigningKey === '') {
         this.web3 = new Web3(window.ethereum);
-        window.ethereum.send('eth_requestAccounts');
+        window.ethereum.request({ method: 'eth_accounts' });
       } else {
         // Metamask not available
         throw new Error('No Web3 provider found');

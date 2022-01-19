@@ -20,7 +20,7 @@ import {
   getSiblingInfo,
 } from './commitment-storage.mjs';
 import { discoverPeers } from './peers.mjs';
-import { compressPublicKey, calculateIvkPkdfromAskNsk } from './keys.mjs';
+import { decompressKey, calculateIvkPkdfromAskNsk } from './keys.mjs';
 
 const {
   BN128_GROUP_ORDER,
@@ -40,8 +40,8 @@ async function transfer(transferParams) {
   const { offchain = false, ...items } = transferParams;
   const { ercAddress, tokenId, recipientData, nsk, ask, fee } = generalise(items);
   const { pkd, compressedPkd } = calculateIvkPkdfromAskNsk(ask, nsk);
-  const { recipientPkds, values } = recipientData;
-  const recipientCompressedPkds = recipientPkds.map(key => compressPublicKey(key));
+  const { recipientCompressedPkds, values } = recipientData;
+  const recipientPkds = recipientCompressedPkds.map(key => decompressKey(key));
   if (recipientCompressedPkds.length > 1)
     throw new Error(`Batching is not supported yet: only one recipient is allowed`); // this will not always be true so we try to make the following code agnostic to the number of commitments
 
@@ -125,9 +125,9 @@ async function transfer(transferParams) {
   const publicInputs = new PublicInputs([
     oldCommitments.map(commitment => commitment.preimage.ercAddress),
     newCommitments.map(commitment => commitment.hash),
-    nullifiers.map(nullifier => nullifier.hash),
+    nullifiers.map(nullifier => generalise(nullifier.hash.hex(32, 31)).integer),
     roots,
-    compressedSecrets.map(compressedSecret => compressedSecret.hex()),
+    compressedSecrets.map(compressedSecret => compressedSecret.hex(32, 31)),
   ]);
   // time for a quick sanity check.  We expect the number of old commitments,
   // new commitments and nullifiers to be equal.
@@ -142,9 +142,8 @@ async function transfer(transferParams) {
 
   // now we have everything we need to create a Witness and compute a proof
   const witness = [
-    publicInputs.hash.decimal, // TODO safer to make this a prime field??
+    oldCommitments.map(commitment => commitment.preimage.ercAddress.integer),
     oldCommitments.map(commitment => [
-      commitment.preimage.ercAddress.limbs(32, 8),
       commitment.preimage.tokenId.limbs(32, 8),
       commitment.preimage.value.limbs(32, 8),
       commitment.preimage.salt.limbs(32, 8),
@@ -158,11 +157,13 @@ async function transfer(transferParams) {
       ],
       commitment.preimage.value.limbs(32, 8),
       commitment.preimage.salt.limbs(32, 8),
-      commitment.hash.limbs(32, 8),
     ]),
-    nullifiers.map(nullifier => [nullifier.preimage.nsk.limbs(32, 8), nullifier.hash.limbs(32, 8)]),
+    newCommitments.map(commitment => commitment.hash.integer),
+    nullifiers.map(nullifier => nullifier.preimage.nsk.limbs(32, 8)),
+    nullifiers.map(nullifier => generalise(nullifier.hash.hex(32, 31)).integer),
+    localSiblingPaths.map(siblingPath => siblingPath[0].field(BN128_GROUP_ORDER, false)),
     localSiblingPaths.map(siblingPath =>
-      siblingPath.map(node => node.field(BN128_GROUP_ORDER, false)),
+      siblingPath.slice(1).map(node => node.field(BN128_GROUP_ORDER, false)),
     ), // siblingPAth[32] is a sha hash and will overflow a field but it's ok to take the mod here - hence the 'false' flag
     leafIndices,
     [
@@ -170,6 +171,7 @@ async function transfer(transferParams) {
       secrets.cipherText.flat().map(text => text.field(BN128_GROUP_ORDER)),
       ...secrets.squareRootsElligator2.map(sqroot => sqroot.field(BN128_GROUP_ORDER)),
     ],
+    compressedSecrets.map(text => generalise(text.hex(32, 31)).field(BN128_GROUP_ORDER)),
   ].flat(Infinity);
 
   logger.debug(`witness input is ${witness.join(' ')}`);
