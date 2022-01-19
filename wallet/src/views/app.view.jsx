@@ -8,6 +8,7 @@ import Transactions from './transactions/transactions.view.jsx';
 import Login from './login/login.view.jsx';
 import { NF3_GITHUB_ISSUES_URL } from '../constants';
 import * as loginActions from '../store/login/login.actions';
+import MainPage from './initialPage.jsx';
 
 function App({ onDeleteWallet }) {
   Nf3.Environment.setEnvironment(process.env.REACT_APP_ENVIRONMENT);
@@ -37,6 +38,7 @@ function App({ onDeleteWallet }) {
     <React.Fragment>
       <Switch>
         <Route path="/login" render={() => <Login />} />
+        <Route path="/" render={() => <MainPage />} />
         <Route path="/transactions" render={() => <Transactions />} />
         <Route
           path="/issues"
@@ -44,7 +46,7 @@ function App({ onDeleteWallet }) {
             window.location = NF3_GITHUB_ISSUES_URL;
           }}
         />
-        <Redirect to="/login" />
+        
       </Switch>
     </React.Fragment>
   );
