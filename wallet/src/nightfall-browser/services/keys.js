@@ -1,8 +1,6 @@
 /* ignore unused exports */
-import { GN, generalise } from 'general-number';
 
-// eslint-disable-next-line import/no-extraneous-dependencies
-import config from 'config';
+import { GN, generalise } from 'general-number';
 import { validateMnemonic, mnemonicToSeed } from 'bip39';
 import pkg from 'ethereumjs-wallet';
 
@@ -12,7 +10,7 @@ import { scalarMult, edwardsCompress, edwardsDecompress } from '../utils/crypto/
 const { hdkey } = pkg;
 export const ivks = [];
 export const nsks = [];
-const { BABYJUBJUB, BN128_GROUP_ORDER } = config;
+const { BABYJUBJUB, BN128_GROUP_ORDER } = global.config;
 
 function generateHexSeed(mnemonic) {
   return mnemonicToSeed(mnemonic);

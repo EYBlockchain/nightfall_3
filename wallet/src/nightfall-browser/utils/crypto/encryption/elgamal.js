@@ -4,8 +4,6 @@
 functions to support El-Gamal cipherText over a BabyJubJub curve
 */
 
-// eslint-disable-next-line import/no-extraneous-dependencies
-import config from '../../parseConfigs';
 import utils from '../../../../common-files/utils/crypto/merkle-tree/utils';
 import {
   squareRootModPrime,
@@ -15,7 +13,7 @@ import {
 import modDivide from './modular-division'; // TODO REPLACE WITH NPM VERSION
 import { hashToCurve, hashToCurveYSqrt, curveToHash } from './elligator2';
 
-const { BABYJUBJUB, BN128_GROUP_ORDER } = config;
+const { BABYJUBJUB, BN128_GROUP_ORDER } = global.config;
 
 const one = BigInt(1);
 const { JUBJUBE, JUBJUBC, JUBJUBD, JUBJUBA, GENERATOR } = BABYJUBJUB;

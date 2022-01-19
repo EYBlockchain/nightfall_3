@@ -4,8 +4,6 @@
 Functions for interacting with the local client data stores
 // TODO move functionality from commitment-storage.
 */
-// eslint-disable-next-line import/no-extraneous-dependencies
-import config from 'config';
 import { openDB } from 'idb';
 import Timber from '../../common-files/classes/timber';
 
@@ -15,7 +13,7 @@ const {
   SUBMITTED_BLOCKS_COLLECTION,
   TRANSACTIONS_COLLECTION,
   COMMITMENTS_COLLECTION,
-} = config;
+} = global.config;
 
 // This needs to have better indexDB performance.
 
