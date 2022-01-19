@@ -189,7 +189,7 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
           uint256(t.value)
         );
     } else if(t.tokenType == TokenType.ERC721) {
-      if (t.value != 1) // value should always be equal to 1
+      if (t.value != 0) // value should always be equal to 0
         revert("Invalid inputs for ERC721 deposit");
       else
         tokenContract.safeTransferFrom(
@@ -222,7 +222,7 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
       else
         tokenContract.transferFrom(msg.sender, address(this), uint256(t.value));
     } else if(t.tokenType == TokenType.ERC721) {
-      if (t.value != 1) // value should always be equal to 1
+      if (t.value != 0) // value should always be equal to 0
         revert("Invalid inputs for ERC721 deposit");
       else
         tokenContract.safeTransferFrom(

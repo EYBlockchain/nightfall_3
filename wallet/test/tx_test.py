@@ -18,10 +18,8 @@ def emptyWithdrawTest(findElementsInstance, driver, metamaskTab, nightfallTab):
 
 
 def transactionsTest(findElementsInstance, driver, metamaskTab, nightfallTab):
-    tokenTypes = ["erc721", "erc20", "erc1155"]
-    #tokenTypes = ["erc1155"]
+    tokenTypes = ["erc20", "erc1155"]
     txTypes = ["Deposit", "Transfer", "Withdraw", "Instant-withdraw"]
-    #txTypes = ["Deposit", "Withdraw"]
   
     txParams = {
       "amount": 1,
