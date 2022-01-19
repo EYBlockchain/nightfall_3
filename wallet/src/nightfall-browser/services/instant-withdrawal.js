@@ -1,16 +1,14 @@
 /* ignore unused exports */
+
 /**
  * This module enables setting instant withdrawals fees
  */
-
-// eslint-disable-next-line import/no-extraneous-dependencies
-import config from 'config';
 import { getContractInstance } from '../../common-files/utils/contract';
 import { Transaction } from '../classes/index';
 import { buildSolidityStruct } from './finalise-withdrawal';
 import { getTransactionByTransactionHash, getBlockByTransactionHash } from './database';
 
-const { SHIELD_CONTRACT_NAME } = config;
+const { SHIELD_CONTRACT_NAME } = global.config;
 
 const setInstantWithdrawl = async ({ transactionHash }) => {
   const block = await getBlockByTransactionHash(transactionHash);

@@ -1,10 +1,9 @@
 /* ignore unused exports */
+
 /**
 Logic for storing and retrieving commitments from a mongo DB.  Abstracted from
 deposit/transfer/withdraw
 */
-// eslint-disable-next-line import/no-extraneous-dependencies
-import config from 'config';
 import { Mutex } from 'async-mutex';
 import gen from 'general-number';
 import { openDB } from 'idb';
@@ -19,7 +18,8 @@ const {
   SUBMITTED_BLOCKS_COLLECTION,
   TRANSACTIONS_COLLECTION,
   COMMITMENTS_COLLECTION,
-} = config;
+} = global.config
+
 const { generalise } = gen;
 const mutex = new Mutex();
 
