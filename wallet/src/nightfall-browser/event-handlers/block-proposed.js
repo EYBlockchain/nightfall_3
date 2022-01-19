@@ -1,7 +1,5 @@
 // ignore unused exports default
 
-// eslint-disable-next-line import/no-extraneous-dependencies
-import config from 'config';
 import logger from '../../common-files/utils/logger';
 import Timber from '../../common-files/classes/timber';
 import {
@@ -17,7 +15,7 @@ import Secrets from '../classes/secrets';
 import { ivks, nsks } from '../services/keys';
 import { getLatestTree, saveTree, saveTransaction, saveBlock } from '../services/database';
 
-const { ZERO } = config;
+const { ZERO } = global.config;
 
 /**
 This handler runs whenever a BlockProposed event is emitted by the blockchain

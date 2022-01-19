@@ -1,4 +1,3 @@
-/* eslint import/no-extraneous-dependencies: "off" */
 /* ignore unused exports */
 
 /**
@@ -6,12 +5,12 @@
 @author Westlad,Chaitanya-Konda,iAmMichaelConnor
 @desc Set of utilities
 */
-import config from 'config';
 import createKeccakHash from 'keccak';
 import crypto from 'crypto';
 import sb from 'safe-buffer';
 
 const { Buffer } = sb;
+const { CURVE, HASH_TYPE } = global.config;
 
 // BW6 not yet implemented
 
@@ -240,9 +239,8 @@ function mimcpemp(x, k, seed, roundCount, exponent, m) {
 }
 
 function mimcHash(...msgs) {
-  const { rounds, exponent, modulus } = !config.CURVE
-    ? mimcCurves.ALT_BN_254
-    : mimcCurves[config.CURVE];
+  const { rounds, exponent, modulus } = !CURVE ? mimcCurves.ALT_BN_254 : mimcCurves[CURVE];
+  logger.silly(`curve: ${CURVE} rounds: ${rounds} exp ${exponent} mod ${modulus}`);
   const mimc = '0x6d696d63'; // this is 'mimc' in hex as a nothing-up-my-sleeve seed
   return `0x${mimcpemp(
     msgs.map(BigInt),
@@ -266,7 +264,7 @@ function shaHash(...items) {
 
 function concatenateThenHash(...items) {
   let h;
-  if (config.HASH_TYPE === 'mimc') {
+  if (HASH_TYPE === 'mimc') {
     h = mimcHash(...items);
   } else {
     h = shaHash(...items);

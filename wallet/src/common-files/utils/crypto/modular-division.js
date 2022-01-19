@@ -1,12 +1,9 @@
-// modular division
-
 // ignore unused exports modDivide, complexDivMod
 
-// eslint-disable-next-line import/no-extraneous-dependencies
-import config from 'config';
+// modular division
 import { mulMod, addMod } from './number-theory';
 
-const { BN128_PRIME_FIELD } = config;
+const { BN128_PRIME_FIELD } = global.config;
 
 // function for extended Euclidean Algorithm
 // (used to find modular inverse.

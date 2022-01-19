@@ -12,7 +12,6 @@
 import gen from 'general-number';
 import { initialize } from 'zokrates-js';
 
-import config from '../utils/parseConfigs';
 import rand from '../../common-files/utils/crypto/crypto-random';
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
@@ -29,7 +28,7 @@ import programFile from '../../zokrates/deposit_stub/artifacts/deposit_stub-prog
 import pkFile from '../../zokrates/deposit_stub/keypair/deposit_stub-pk';
 import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
 
-const { ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER } = config;
+const { ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER } = global.config;
 const { generalise } = gen;
 
 async function deposit(items) {
