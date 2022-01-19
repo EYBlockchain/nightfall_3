@@ -6,6 +6,7 @@
   "dependencies": {
     "@semantic-ui-react/craco-less": "^1.2.3",
     "@testing-library/jest-dom": "^5.14.1",
+    "@testing-library/react": "^12.1.2",
     "bip39": "^3.0.4",
     "bootstrap": "^5.1.3",
     "bootstrap-social": "^5.1.1",
