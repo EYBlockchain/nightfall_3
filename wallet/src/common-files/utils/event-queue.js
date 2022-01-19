@@ -1,5 +1,3 @@
-/* eslint import/no-extraneous-dependencies: "off" */
-
 /**
 If we're changing the layer 2 state, we want to make sure that we can complete
 that change before the state is further altered by incoming events.  A good
@@ -20,10 +18,9 @@ event with its `removed` property set to true. In the code below, we look out fo
 and catch these removals, processing them appropriately.
 */
 import Queue from 'queue';
-import config from 'config';
-import logger from 'common-files/utils/logger';
+import logger from './logger';
 
-const { MAX_QUEUE } = config;
+const { MAX_QUEUE } = global.config;
 const fastQueue = new Queue({ autostart: true, concurrency: 1 });
 const slowQueue = new Queue({ autostart: true, concurrency: 1 });
 export const queues = [fastQueue, slowQueue];

@@ -1,5 +1,3 @@
-// ignore unused exports default
-
 // eslint-disable-next-line import/no-extraneous-dependencies
 import config from 'config';
 
@@ -16,5 +14,4 @@ function parse(configs) {
   }
 }
 parse(config);
-
-export default config;
+global.config = config;

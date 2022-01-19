@@ -4,16 +4,13 @@
 Resync code so that restarted client instances are able to read past events and update
 their local commitments databsae.
 */
-
-// eslint-disable-next-line import/no-extraneous-dependencies
-import config from 'config';
 import logger from '../../common-files/utils/logger';
 import { getContractInstance } from '../../common-files/utils/contract';
 // import mongo from '../../common-files/utils/mongo';
 import blockProposedEventHandler from '../event-handlers/block-proposed';
 import rollbackEventHandler from '../event-handlers/rollback';
 
-const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION, STATE_CONTRACT_NAME } = config;
+const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION, STATE_CONTRACT_NAME } = global.config;
 
 const syncState = async (fromBlock = 'earliest', toBlock = 'latest', eventFilter = 'allEvents') => {
   const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME); // Rollback, BlockProposed

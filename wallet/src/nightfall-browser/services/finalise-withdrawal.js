@@ -1,16 +1,14 @@
 /* ignore unused exports */
+
 /**
 Module to endable withdrawal of funds from the Shield contract to the user's
 address.
 */
-
-// eslint-disable-next-line import/no-extraneous-dependencies
-import config from 'config';
 import { getContractInstance } from '../../common-files/utils/contract';
 import { Transaction } from '../classes/index';
 import { getTransactionByTransactionHash, getBlockByTransactionHash } from './database';
 
-const { SHIELD_CONTRACT_NAME } = config;
+const { SHIELD_CONTRACT_NAME } = global.config;
 
 // TODO move classes to their own folder so this is not needed (it's already a
 // static function in the Block class)

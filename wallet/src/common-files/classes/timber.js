@@ -1,14 +1,11 @@
-/* eslint import/no-extraneous-dependencies: "off" */
 /* ignore unused exports */
 
 /**
 A class for timber-like merkle trees.
 */
-
-import config from 'config';
 import utils from '../utils/crypto/merkle-tree/utils';
 
-const { TIMBER_HEIGHT } = config;
+const { TIMBER_HEIGHT } = global.config;
 export const TIMBER_WIDTH = 2 ** TIMBER_HEIGHT;
 
 /** 
