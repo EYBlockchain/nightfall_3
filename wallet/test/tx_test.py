@@ -14,7 +14,7 @@ def transactionsTest(findElementsInstance, driver, metamaskTab, nightfallTab):
     # TODO: Waiting for all toke types to be correctly configured. For now, only ERC20 amd ERC721 works
     #tokenTypes = ["erc20", "erc721"]
     tokenTypes = ["erc20","erc1155"]
-    txTypes = ["Deposit", "Transfer", "Withdraw"]
+    txTypes = ["Deposit", "Instant-withdraw", "Transfer", "Withdraw"]
   
     txParams = {
       "amount": 1,
