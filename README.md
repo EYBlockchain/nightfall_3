@@ -32,9 +32,10 @@ You need to run a setup script the first time that you use nightfall_3.  This wi
 
 If running for first time, do the setup as above and then run this script:
 ```sh
-./start-nightfall -l | -g [-s]
+./start-nightfall -l | -g | -r [-s]
 ```
-This will bring up the application.  You can run it either with a Ganache blockchain simulator or a real blockchain client which exposes a websocket connection on localHost:8546.  See below for more details on how to do the latter as there are some additional considerations.  Use -g for Ganache and -l for localhost.  We recommend using Ganache first to check everything works, because it's considerably faster.  Additionally, you can use the -s flag.  If you do that, Nightfall_3 will run with stubbed ZKP circuits, which generate proofs that always verify.  That's useful for development work because tests will run much faster but clearly you should run without stubs, as a final check.
+
+This will bring up the application.  You can run it either with a Ganache blockchain simulator, a real blockchain client which exposes a websocket connection on localHost:8546, or a public/private VM runing public testnet node (for example Ropsten, Rinkeby, Kovan, etc. Code is tested on Ropsten testnet, but ideally it should work on all testnet network).  See below for more details on how to do the latter as there are some additional considerations.  Use -g for Ganache, -l for localhost and -r for testnet node (Note: with option -r set environment variable $ROPSTEN_NODE, $FROM_ADDRESS and $ETH_PRIVATE_KEY to testnet node URL, EOA address and EOA address's private key, respectively).  We recommend using Ganache first to check everything works, because it's considerably faster.  Additionally, you can use the -s flag.  If you do that, Nightfall_3 will run with stubbed ZKP circuits, which generate proofs that always verify.  That's useful for development work because tests will run much faster but clearly you should run without stubs, as a final check.
 
 Startup will take a minute or so, depending on your machine. You'll see lots of warnings as it runs up from the `optimist` and `timber` containers.  That's entirely fine, they're just waiting for the other services that they need to start up. You should see no errors however.  If you do, something has broken.
 

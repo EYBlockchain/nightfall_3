@@ -199,9 +199,6 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
           ''
         );
     } else if (t.tokenType == TokenType.ERC1155) {
-      if (t.value == 0) // disallow this corner case
-        revert("Depositing zero-value ERC1155 tokens is not allowed");
-      else
         tokenContract.safeTransferFrom(
           address(this),
           recipientAddress,
@@ -235,9 +232,6 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
           ''
         );
     } else if (t.tokenType == TokenType.ERC1155) {
-      if (t.value == 0) // disallow this corner case
-        revert("Depositing zero-value ERC1155 tokens is not allowed");
-      else
         tokenContract.safeTransferFrom(
           msg.sender,
           address(this),

@@ -715,11 +715,12 @@ class Nf3 {
   value of each propery is the number of tokens originating from that contract.
   */
   async getLayer2Balances(ercList, filterByCompressedPkd) {
-    const params = {
-      compressedPkd: filterByCompressedPkd === true ? this.zkpKeys.compressedPkd : null,
-      ercList,
-    };
-    const res = await axios.post(`${this.clientBaseUrl}/commitment/balance`, params);
+    const res = await axios.get(`${this.clientBaseUrl}/commitment/balance`, {
+      params: {
+        compressedPkd: filterByCompressedPkd === true ? this.zkpKeys.compressedPkd : null,
+        ercList,
+      },
+    });
     return res.data.balance;
   }
 
@@ -733,9 +734,11 @@ class Nf3 {
   value of each propery is the number of tokens originating from that contract.
   */
   async getLayer2BalancesDetails(ercList) {
-    const res = await axios.post(`${this.clientBaseUrl}/commitment/balance-details`, {
-      compressedPkd: this.zkpKeys.compressedPkd,
-      ercList,
+    const res = await axios.get(`${this.clientBaseUrl}/commitment/balance-details`, {
+      params: {
+        compressedPkd: this.zkpKeys.compressedPkd,
+        ercList,
+      },
     });
     return res.data.balance;
   }
@@ -752,11 +755,12 @@ class Nf3 {
   value of each propery is the number of tokens pending deposit from that contract.
   */
   async getLayer2PendingDepositBalances(ercList, filterByCompressedPkd) {
-    const params = {
-      compressedPkd: filterByCompressedPkd === true ? this.zkpKeys.compressedPkd : null,
-      ercList,
-    };
-    const res = await axios.post(`${this.clientBaseUrl}/commitment/pending-deposit`, params);
+    const res = await axios.get(`${this.clientBaseUrl}/commitment/pending-deposit`, {
+      params: {
+        compressedPkd: filterByCompressedPkd === true ? this.zkpKeys.compressedPkd : null,
+        ercList,
+      },
+    });
     return res.data.balance;
   }
 
@@ -773,11 +777,12 @@ class Nf3 {
   from that contract.
   */
   async getLayer2PendingSpentBalances(ercList, filterByCompressedPkd) {
-    const params = {
-      compressedPkd: filterByCompressedPkd === true ? this.zkpKeys.compressedPkd : null,
-      ercList,
-    };
-    const res = await axios.post(`${this.clientBaseUrl}/commitment/pending-spent`, params);
+    const res = await axios.get(`${this.clientBaseUrl}/commitment/pending-spent`, {
+      params: {
+        compressedPkd: filterByCompressedPkd === true ? this.zkpKeys.compressedPkd : null,
+        ercList,
+      },
+    });
     return res.data.balance;
   }
 
@@ -815,8 +820,7 @@ class Nf3 {
     if (typeof window !== 'undefined') {
       if (window.ethereum && this.ethereumSigningKey === '') {
         this.web3 = new Web3(window.ethereum);
-        await window.ethereum.enable();
-        await window.ethereum.request({ method: 'eth_accounts' });
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
       } else {
         // Metamask not available
         throw new Error('No Web3 provider found');
