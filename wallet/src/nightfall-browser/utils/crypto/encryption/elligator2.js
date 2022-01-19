@@ -1,7 +1,5 @@
 // ignore unused exports hashToCurve, hashToCurveYSqrt, curveToHash
 
-// eslint-disable-next-line import/no-extraneous-dependencies
-import config from 'config';
 import {
   squareRootModPrime,
   addMod,
@@ -10,7 +8,7 @@ import {
 } from '../../../../common-files/utils/crypto/number-theory';
 import modDivide from './modular-division';
 
-const { BABYJUBJUB, BN128_GROUP_ORDER, ELLIGATOR2 } = config;
+const { BABYJUBJUB, BN128_GROUP_ORDER, ELLIGATOR2 } = global.config;
 
 const one = BigInt(1);
 const { MONTA, MONTB } = BABYJUBJUB;
