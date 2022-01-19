@@ -1,18 +1,14 @@
-/* eslint import/no-extraneous-dependencies: "off" */
 /* ignore unused exports */
-
-import config from 'config';
 
 import Web3 from './web3';
 import logger from './logger';
-
 import Shield from '../../contracts/Shield.json';
 
 const contractAbi = { Shield };
 
 const web3 = Web3.connection();
 
-const options = config.WEB3_OPTIONS;
+const options = global.config.WEB3_OPTIONS;
 
 export async function getContractInterface(contractName) {
   const contractInterface = contractAbi[contractName];

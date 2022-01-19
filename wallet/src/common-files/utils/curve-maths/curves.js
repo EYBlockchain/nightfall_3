@@ -5,13 +5,11 @@ module for manupulating elliptic curve points for an alt-bn128 curve. This
 is the curve that Ethereum currently has pairing precompiles for. All the
 return values are BigInts (or arrays of BigInts).
 */
-// eslint-disable-next-line import/no-extraneous-dependencies
-import config from 'config';
 import { mulMod, addMod, squareRootModPrime } from '../crypto/number-theory';
 import Fq2 from '../../classes/fq2';
 import Proof from '../../classes/proof';
 
-const { BN128_PRIME_FIELD } = config;
+const { BN128_PRIME_FIELD } = global.config;
 
 /**
 function to compress a G1 point. If we throw away the y coodinate, we can

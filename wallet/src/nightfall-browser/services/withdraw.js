@@ -1,4 +1,5 @@
 /* ignore unused exports */
+
 /**
 This module contains the logic needed create a zkp transfer, i.e. to nullify
 two input commitments and create two new output commitments to the same value.
@@ -6,9 +7,6 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
  * @module deposit
  * @author westlad, Chaitanya-Konda, iAmMichaelConnor, will-kim
  */
-
-// eslint-disable-next-line import/no-extraneous-dependencies
-import config from 'config';
 import gen from 'general-number';
 import { initialize } from 'zokrates-js';
 import { getContractInstance } from '../../common-files/utils/contract';
@@ -30,7 +28,7 @@ import programFile from '../../zokrates/withdraw_stub/artifacts/withdraw_stub-pr
 import pkFile from '../../zokrates/withdraw_stub/keypair/withdraw_stub-pk';
 import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
 
-const { BN128_GROUP_ORDER, SHIELD_CONTRACT_NAME } = config;
+const { BN128_GROUP_ORDER, SHIELD_CONTRACT_NAME } = global.config;
 const { generalise } = gen;
 
 async function withdraw(withdrawParams) {
