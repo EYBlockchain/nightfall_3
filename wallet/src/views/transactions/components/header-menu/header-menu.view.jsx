@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import { deleteWallet } from '../../../../store/login/login.actions';
 import { clearMsg } from '../../../../store/message/message.actions';
 import AccountSettingsModal from './account-settings.view.jsx';
+import blockProposedEventHandler from '../../../../nightfall-browser/event-handlers/block-proposed';
 
 function HeaderMenu({ onDeleteWallet, onClearMsg }) {
   const [accountSettingsEnable, setAccountSettingsEnable] = React.useState(false);
@@ -14,7 +15,24 @@ function HeaderMenu({ onDeleteWallet, onClearMsg }) {
     setAccountSettingsEnable(!accountSettingsEnable);
   };
 
-  const handleClickNFInfo = () => {};
+  const handleClickNFInfo = () => {
+    // eslint-disable-next-line no-alert
+    alert('Opening Portal');
+
+    const socket = new WebSocket('ws://localhost:8082');
+
+    // Connection opened
+    socket.addEventListener('open', function () {
+      console.log(`Websocket is open`);
+      socket.send('proposedBlock');
+    });
+
+    // Listen for messages
+    socket.addEventListener('message', async function (event) {
+      console.log('Message from server ', event.data);
+      await blockProposedEventHandler(JSON.parse(event.data));
+    });
+  };
   const onLogoutClick = () => {
     onDeleteWallet();
     onClearMsg();
@@ -47,7 +65,7 @@ function HeaderMenu({ onDeleteWallet, onClearMsg }) {
           <Icon name="settings" size="large" />
           <Link to="/doubletransfer">Double Transfer</Link>
         </Button>
-        <Button name="account-info" primary disabled onClick={() => handleClickNFInfo()}>
+        <Button name="account-info" primary onClick={() => handleClickNFInfo()}>
           <Icon name="question" size="large" />
           NightFall Information
         </Button>
