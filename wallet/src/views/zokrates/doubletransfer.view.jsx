@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { initialize } from 'zokrates-js';
 
 // eslint-disable-next-line
-import abi from './double_transfer/artifacts/double_transfer-abi.json';
+import abi from '../../zokrates/double_transfer/artifacts/double_transfer-abi.json';
 // eslint-disable-next-line
-import programFile from './double_transfer/artifacts/double_transfer-program';
+import programFile from '../../zokrates/double_transfer/artifacts/double_transfer-program';
 // eslint-disable-next-line
-import pkFile from './double_transfer/keypair/double_transfer-pk';
+import pkFile from '../../zokrates/double_transfer/keypair/double_transfer-pk';
 import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
 
 export default function Zokrates() {

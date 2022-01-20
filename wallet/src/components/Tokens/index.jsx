@@ -1,15 +1,14 @@
-import styles from '../../styles/tokens.module.scss'
-import TokenItem from '../TokenItem'
+import React from 'react';
+import styles from '../../styles/tokens.module.scss';
+import TokenItem from '../TokenItem/index.jsx';
 
 export default function Tokens() {
-    return (        
-        <div className={styles.maticTokensList}>
-            <div className={styles.formHeader}>
-                <div className={styles.leftSection}>
-                    <div className={styles.headerH5}>
-                        Balances on Polygon networkName
-                    </div>
-                    {/* <div
+  return (
+    <div className={styles.maticTokensList}>
+      <div className={styles.formHeader}>
+        <div className={styles.leftSection}>
+          <div className={styles.headerH5}>Balances on Polygon networkName</div>
+          {/* <div
                     v-click-outside.stop="closeMobileFilterMenu"
                     class="mobile-filter-section"
                     @click.stop="toggleMobileFilterMenu"
@@ -20,9 +19,9 @@ export default function Tokens() {
                         class="filter-icon"
                     /> */}
 
-                    {/* filter options are redundant in this file to accomodate responsive screen */}
-                    {/* this filter is for mobile screens */}
-                    {/* <div v-if="showMobileFilterMenu" class="filter-menu">
+          {/* filter options are redundant in this file to accomodate responsive screen */}
+          {/* this filter is for mobile screens */}
+          {/* <div v-if="showMobileFilterMenu" class="filter-menu">
                         <div
                         class="plasma-only font-body-small light-gray-900 no-wrap"
                         @click.stop="onTogglePlasmaOnly"
@@ -53,9 +52,9 @@ export default function Tokens() {
                         </div>
                     </div>
                     </div> */}
-                </div> 
+        </div>
 
-                {/* <div class="right-section">
+        {/* <div class="right-section">
                     <!-- this filter is for desktop screens -->
                     <div
                     class="plasma-only font-body-small light-gray-900 no-wrap cursor-pointer"
@@ -89,23 +88,24 @@ export default function Tokens() {
                     :change="val => (searchInput = val)"
                     />
                 </div> */}
-            </div>
-            <div className={styles.seperator} />
-            <div className={styles.tokenListSection}>
-                    <div className={styles.tokenListHeader}>
-                    <div className={styles.headerName}>
-                    Name
-                    </div>
-                    <div className={styles.headerBalance}>
-                    Balance
-                    </div>
-                    <div className={styles.headerActions}>
-                    Actions
-                    </div>
-                </div>
-                <TokenItem token={{maticChainUsdBalance: '1', maticChainBalance: '10' , name: 'MATIC', symbol: 'teste'}}/>
-                                
-                {/*<MaticTokensListItem
+      </div>
+      <div className={styles.seperator} />
+      <div className={styles.tokenListSection}>
+        <div className={styles.tokenListHeader}>
+          <div className={styles.headerName}>Name</div>
+          <div className={styles.headerBalance}>Balance</div>
+          <div className={styles.headerActions}>Actions</div>
+        </div>
+        <TokenItem
+          token={{
+            maticChainUsdBalance: '1',
+            maticChainBalance: '10',
+            name: 'MATIC',
+            symbol: 'teste',
+          }}
+        />
+
+        {/* <MaticTokensListItem
                     v-for="token in filteredTokens"
                     :key="`${token.id}-${token.isPoS}`"
                     :token="token"
@@ -117,13 +117,13 @@ export default function Tokens() {
                     @markFavourite="handleMarkFavourite(token)"
                     @markUnfavourite="handleMarkUnfavourite(token)"
                 /> */}
-            </div>
-            {/* <div
+      </div>
+      {/* <div
             v-if="formattedTokens.length !== 0"
             class="seperator footer-seperator"
             /> */}
 
-            {/* <div v-if="formattedTokens.length !== 0" class="footer">
+      {/* <div v-if="formattedTokens.length !== 0" class="footer">
                 <div class="pagination-summary">
                     <div>
                     Showing {{ currentItemStartCount }}-{{ currentItemEndCount }} of
@@ -192,7 +192,7 @@ export default function Tokens() {
                     </a> -->
                 </div>
             </div> */}
-            {/* <div v-else class="no-tokens-section">
+      {/* <div v-else class="no-tokens-section">
             No tokens found
             </div>
             <send-token-modal
@@ -200,7 +200,7 @@ export default function Tokens() {
             :cancel="toggleSendTokenModal"
             :defaultToken="selectedToken"
             /> */}
-            {/* <div v-if="selectedToken && isMobileScreen" class="mobile-cta-menu">
+      {/* <div v-if="selectedToken && isMobileScreen" class="mobile-cta-menu">
                 <Button class="close-button" @onClick="handleCloseMobileCta">
                     <img src="~/assets/svg/close-square.svg" alt="close icon">
                 </Button>
@@ -261,6 +261,6 @@ export default function Tokens() {
                 </div>
             </div>
             <div v-if="selectedToken && isMobileScreen" class="s-mobile-cta-backdrop" /> */}
-        </div>        
-    )
+    </div>
+  );
 }
