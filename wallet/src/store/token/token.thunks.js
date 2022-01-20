@@ -2,6 +2,12 @@
 import * as Nf3 from 'nf3';
 import * as tokenActions from './token.actions';
 import * as Storage from '../../utils/lib/local-storage';
+import {
+  getWalletBalance,
+  getWalletBalanceDetails,
+  getWalletPendingDepositBalance,
+  getWalletPendingSpentBalance,
+} from '../../nightfall-browser/services/commitment-storage';
 
 const getTokens = tokens => {
   if (tokens === null || typeof tokens === 'undefined' || Object.keys(tokens).length === 0)
@@ -198,37 +204,74 @@ function tokensLoad(initTokens) {
 
     if (typeof nf3.ethereumAddress === 'undefined') return;
     const storedTokens = Storage.tokensGet(nf3.zkpKeys.compressedPkd);
-    const l2PendingDeposit = await nf3.getLayer2PendingDepositBalances(null, true);
-    const l2PendingSpent = await nf3.getLayer2PendingSpentBalances(null, true);
-    const l2Balances = await nf3.getLayer2Balances(null, true);
+    const l2PendingDeposit = await getWalletPendingDepositBalance();
+    const l2PendingSpent = await getWalletPendingSpentBalance();
+    getWalletBalance()
+      .then(l2Balance => {
+        console.log(`L2 BALANCE: ${JSON.stringify(l2Balance)}`);
+        const { compressedPkd } = nf3.zkpKeys;
+        const myL2Balance =
+          typeof l2Balance[compressedPkd] === 'undefined' ? {} : l2Balance[compressedPkd];
+        console.log(`myL2Balance: ${JSON.stringify(myL2Balance)}`);
+        const myL2PendingDeposit =
+          typeof l2PendingDeposit[compressedPkd] === 'undefined'
+            ? {}
+            : l2PendingDeposit[compressedPkd];
+        const myL2PendingSpent =
+          typeof l2PendingSpent[compressedPkd] === 'undefined' ? {} : l2PendingSpent[compressedPkd];
 
-    const { compressedPkd } = nf3.zkpKeys;
-    const myL2Balance =
-      typeof l2Balances[compressedPkd] === 'undefined' ? {} : l2Balances[compressedPkd];
-    const myL2PendingDeposit =
-      typeof l2PendingDeposit[compressedPkd] === 'undefined' ? {} : l2PendingDeposit[compressedPkd];
-    const myL2PendingSpent =
-      typeof l2PendingSpent[compressedPkd] === 'undefined' ? {} : l2PendingSpent[compressedPkd];
-    const l2Details = getDetails(myL2Balance, myL2PendingDeposit, myL2PendingSpent, [
-      ...new Set([
-        ...Object.keys(myL2Balance),
-        ...Object.keys(myL2PendingDeposit),
-        ...Object.keys(myL2PendingSpent),
-      ]),
-    ]);
-    const tokenPool = mergeTokens(getTokens(l2Details), [
-      ...getTokens(storedTokens),
-      ...getTokens(initTokens),
-    ]);
-    if (tokenPool.length) {
-      tokenPool.forEach(el2 => {
-        let tokenInfo = { ...el2 };
-        if (tokenInfo.tokenBalanceL2 !== '0') {
-          tokenInfo.tokenIdL2 = l2Balances[nf3.zkpKeys.compressedPkd][tokenInfo.tokenAddress]
-            .slice(1)
-            .map(l2Token => l2Token.tokenId.toString());
-        } else {
-          tokenInfo.tokenIdL2 = [];
+        const l2Details = getDetails(myL2Balance, myL2PendingDeposit, myL2PendingSpent, [
+          ...new Set([
+            ...Object.keys(myL2Balance),
+            ...Object.keys(myL2PendingDeposit),
+            ...Object.keys(myL2PendingSpent),
+          ]),
+        ]);
+        console.log(`L2Details: ${JSON.stringify(l2Details)}`);
+        const tokenPool = mergeTokens(getTokens(l2Details), [
+          ...getTokens(storedTokens),
+          ...getTokens(initTokens),
+        ]);
+        if (tokenPool.length) {
+          tokenPool.forEach(el => {
+            // TODO: Pending retrieve tokenIds
+            Nf3.Tokens.getERCInfo(el.tokenAddress, nf3.ethereumAddress, nf3.web3, {
+              toEth: true,
+              tokenId: 0,
+              details: true,
+              tokenType: el.tokenType,
+            })
+              .then(tokenInfo => {
+                getWalletBalanceDetails(nf3.zkpKeys.compressedPkd, [el.tokenAddress])
+                  .then(tokenL2Details => {
+                    let l2TokenId = null;
+                    if (el.tokenBalanceL2 !== '0') {
+                      l2TokenId = tokenL2Details[nf3.zkpKeys.compressedPkd][el.tokenAddress].map(
+                        l2Token => l2Token.tokenId.toString(),
+                      );
+                    } else {
+                      l2TokenId = [];
+                    }
+                    const l1TokenId = tokenInfo.details.map(tokenDetails => tokenDetails.tokenId);
+                    dispatch(
+                      tokenActions.addToken(
+                        compressedPkd,
+                        el.tokenAddress.toLowerCase(),
+                        el.tokenType,
+                        l1TokenId,
+                        l2TokenId,
+                        el.tokenName,
+                        tokenInfo.balance,
+                        Nf3.Units.fromBaseUnit(el.tokenBalanceL2, tokenInfo.decimals),
+                        Nf3.Units.fromBaseUnit(el.tokenPendingDepositL2, tokenInfo.decimals),
+                        Nf3.Units.fromBaseUnit(el.tokenPendingSpentL2, tokenInfo.decimals),
+                      ),
+                    );
+                  })
+                  .catch(console.log);
+              })
+              .catch(console.log());
+          });
         }
         // TODO: Pending retrieve tokenIds and token name
         Nf3.Tokens.getERCInfo(tokenInfo.tokenAddress, nf3.ethereumAddress, nf3.web3, {
