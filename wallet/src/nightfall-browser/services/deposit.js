@@ -21,11 +21,11 @@ import { storeCommitment } from './commitment-storage';
 import { compressPublicKey } from './keys';
 
 // eslint-disable-next-line
-import abi from '../../../src/views/zokrates/deposit_stub/artifacts/deposit_stub-abi.json';
+import abi from '../../zokrates/deposit_stub/artifacts/deposit_stub-abi.json';
 // eslint-disable-next-line
-import programFile from '../../../src/views/zokrates/deposit_stub/artifacts/deposit_stub-program';
+import programFile from '../../zokrates/deposit_stub/artifacts/deposit_stub-program';
 // eslint-disable-next-line
-import pkFile from '../../../src/views/zokrates/deposit_stub/keypair/deposit_stub-pk';
+import pkFile from '../../zokrates/deposit_stub/keypair/deposit_stub-pk';
 import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
 
 const { ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER } = global.config;

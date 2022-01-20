@@ -1,14 +1,14 @@
 import React from 'react';
 import styles from '../styles/initialPage.module.scss';
-import polyNightfallWallet from '../static/img/homepage/polyNightfallWallet.png'
-import polyBridge from '../static/img/homepage/polyBridge.png'
-import polyStaking from '../static/img/homepage/polyStaking.png'
-import polyWallet from '../static/img/homepage/polyWallet.png'
-import polyWidgetDashboard from '../static/img/homepage/polyWidgetDashboard.png'
+import polyNightfallWallet from '../static/img/homepage/polyNightfallWallet.png';
+import polyBridge from '../static/img/homepage/polyBridge.png';
+import polyStaking from '../static/img/homepage/polyStaking.png';
+import polyWallet from '../static/img/homepage/polyWallet.png';
+import polyWidgetDashboard from '../static/img/homepage/polyWidgetDashboard.png';
 // fix: problems with page redirect and images presentation
 
 // I changed all the names of the mainpage images for camelCase. Imported each one with the same name. And in the list of options
-// to be presented in the cards of the mainpage I changed the imageName attribute to be equal of the name of the png image. So at the moment 
+// to be presented in the cards of the mainpage I changed the imageName attribute to be equal of the name of the png image. So at the moment
 // of present the image I doing some conditionals to present the correct image based on the imageName.
 
 // About problem with redirection. I added the exec tag in the '/' route. This way the pege only be redirect to the main page if the path
@@ -19,7 +19,7 @@ const cardsData = [
     title: 'Polygon Wallet',
     desc: 'Send and receive crypto assets on Polygon network',
     route: 'wallet',
-  },  
+  },
   {
     imageName: 'polyBridge',
     title: 'Polygon Bridge',
@@ -54,35 +54,41 @@ export default function MainPage() {
       <div className={styles.headerh2}>Getting started with Polygon PoS chain</div>
       <div className="font-body-medium text-center text-gray-500 ms-t-12 ms-b-38">
         The safe, fast, and most secure way to use Polygon PoS.
-      </div>      
-        <div className={styles.cardsContainer}>
-          {cardsData.map((card, index) => (
-            <a href={ card.imageName === 'polyNightfallWallet' && '/login' }>
-                <div className={styles.mcard} key={index}>
-                <div style={{ marginTop: '20px', marginBottom: '15px' }}>
-                    {/* TODO fix the .tag and width and height */}
-                    <img                         
-                        src={card.imageName === 'polyNightfallWallet' ? polyNightfallWallet 
-                            :card.imageName === 'polyBridge' ? polyBridge 
-                            :card.imageName === 'polyStaking' ? polyStaking
-                            :card.imageName === 'polyWallet' ? polyWallet
-                            :card.imageName === 'polyWidgetDashboard' && polyWidgetDashboard}
-                        width={105} 
-                        height={110} 
-                        alt={card.title} 
-                    />
-                </div>
-                <div className={styles.headerh4}>{card.title}</div>
-                <div className={styles.desc}>{card.desc}</div>
-                {card.tag && (
-                    // <div v-if="data.tag" className="tag ms-t-44 d-inline-block"></div>
-                    <div className={styles.tag}>{card.tag}</div>
-                )}
-                </div>
-            </a>
-          ))}
-        </div>
-      
+      </div>
+      <div className={styles.cardsContainer}>
+        {cardsData.map((card, index) => (
+          <a key={index} href={card.imageName === 'polyNightfallWallet' && '/login'}>
+            <div className={styles.mcard}>
+              <div style={{ marginTop: '20px', marginBottom: '15px' }}>
+                {/* TODO fix the .tag and width and height */}
+                <img
+                  src={
+                    // eslint-disable-line no-nested-ternary
+                    card.imageName === 'polyNightfallWallet' // eslint-disable-line no-nested-ternary
+                      ? polyNightfallWallet // eslint-disable-line no-nested-ternary
+                      : card.imageName === 'polyBridge' // eslint-disable-line no-nested-ternary
+                      ? polyBridge // eslint-disable-line no-nested-ternary
+                      : card.imageName === 'polyStaking' // eslint-disable-line no-nested-ternary
+                      ? polyStaking // eslint-disable-line no-nested-ternary
+                      : card.imageName === 'polyWallet' // eslint-disable-line no-nested-ternary
+                      ? polyWallet // eslint-disable-line no-nested-ternary
+                      : card.imageName === 'polyWidgetDashboard' && polyWidgetDashboard // eslint-disable-line no-nested-ternary
+                  }
+                  width={105}
+                  height={110}
+                  alt={card.title}
+                />
+              </div>
+              <div className={styles.headerh4}>{card.title}</div>
+              <div className={styles.desc}>{card.desc}</div>
+              {card.tag && (
+                // <div v-if="data.tag" className="tag ms-t-44 d-inline-block"></div>
+                <div className={styles.tag}>{card.tag}</div>
+              )}
+            </div>
+          </a>
+        ))}
+      </div>
     </div>
   );
 }
