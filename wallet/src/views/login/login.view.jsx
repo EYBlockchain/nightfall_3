@@ -35,7 +35,7 @@ function Login({
 
   const renderRedirect = () => {
     if (login.isWalletInitialized) {
-      return <Redirect to="/transactions" />;
+      return <Redirect to="/wallet" />;
     }
     return <Redirect to="/login" />;
   };
