@@ -241,7 +241,7 @@ export async function getWalletBalance(compressedPkd, ercList) {
     .filter(
       e =>
         e.value > 0 &&
-        (compressedPkd === null || e.compressedPkd === compressedPkd) &&
+        (typeof compressedPkd === 'undefined' || e.compressedPkd === compressedPkd) &&
         (ercAddressList.length === 0 || ercAddressList.includes(e.ercAddress.toUpperCase())),
     )
     .map(e => ({
@@ -295,7 +295,7 @@ export async function getWalletPendingDepositBalance(compressedPkd, ercList) {
     .filter(
       e =>
         e.value > 0 &&
-        (compressedPkd === null || e.compressedPkd === compressedPkd) &&
+        (typeof compressedPkd === 'undefined' || e.compressedPkd === compressedPkd) &&
         (ercAddressList.length === 0 || ercAddressList.includes(e.ercAddress.toUpperCase())),
     )
     .map(e => ({
@@ -349,7 +349,7 @@ export async function getWalletPendingSpentBalance(compressedPkd, ercList) {
     .filter(
       e =>
         e.value > 0 &&
-        (compressedPkd === null || e.compressedPkd === compressedPkd) &&
+        (typeof compressedPkd === 'undefined' || e.compressedPkd === compressedPkd) &&
         (ercAddressList.length === 0 || ercAddressList.includes(e.ercAddress.toUpperCase())),
     )
     .map(e => ({

@@ -1,8 +1,6 @@
 import figlet from 'figlet';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
-import yargs from 'yargs';
-import { hideBin } from 'yargs/helpers';
 import clear from 'clear';
 import Web3 from 'web3';
 import Table from 'cli-table';
@@ -15,8 +13,7 @@ import { setEnvironment, getCurrentEnvironment } from '../lib/environment.mjs';
 const web3 = new Web3('ws://localhost:8546');
 let latestWithdrawTransactionHash; // we'll remember this globally so it can be used for instant withdrawals
 
-const argv = yargs(hideBin(process.argv)).parse();
-const { environment } = argv;
+const environment = process.argv[2];
 /**
 Initialises the CLI
 */

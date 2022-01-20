@@ -3,8 +3,6 @@ Module that runs up as a challenger
 */
 import { Command } from 'commander/esm.mjs';
 import clear from 'clear';
-import yargs from 'yargs';
-import { hideBin } from 'yargs/helpers';
 import Nf3 from '../lib/nf3.mjs';
 import { setEnvironment, getCurrentEnvironment } from '../lib/environment.mjs';
 
@@ -17,8 +15,7 @@ program.option('-h', '--help', 'Help');
 if (program.opts().help) console.log('-k | --key input an Ethereum signing key to use');
 const ethereumSigningKey = program.opts().key || defaultKey;
 
-const argv = yargs(hideBin(process.argv)).parse();
-const { environment } = argv;
+const environment = process.argv[2];
 /**
 Does the preliminary setup and starts listening on the websocket
 @param {string} testEnvironment - Environment where propose is launched ('Testnet','Localhost','Docker')
