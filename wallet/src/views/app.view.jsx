@@ -14,6 +14,7 @@ import Doubletransfer from './zokrates/doubletransfer.view.jsx';
 import { NF3_GITHUB_ISSUES_URL } from '../constants';
 import * as loginActions from '../store/login/login.actions';
 import MainPage from './initialPage.jsx';
+import Wallet from './wallet';
 
 function App({ onDeleteWallet }) {
   Nf3.Environment.setEnvironment(process.env.REACT_APP_ENVIRONMENT);
@@ -45,6 +46,7 @@ function App({ onDeleteWallet }) {
         <Route path="/login" render={() => <Login />} />
         <Route path="/" exact="/" render={() => <MainPage />} />
         <Route path="/transactions" render={() => <Transactions />} />
+        <Route path="/wallet" render={() => <Wallet />} />
         <Route
           path="/issues"
           render={() => {
