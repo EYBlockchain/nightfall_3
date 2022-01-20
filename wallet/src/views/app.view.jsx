@@ -43,7 +43,7 @@ function App({ onDeleteWallet }) {
     <React.Fragment>
       <Switch>
         <Route path="/login" render={() => <Login />} />
-        <Route path="/" render={() => <MainPage />} />
+        <Route path="/" exact="/" render={() => <MainPage />} />
         <Route path="/transactions" render={() => <Transactions />} />
         <Route
           path="/issues"
@@ -51,6 +51,11 @@ function App({ onDeleteWallet }) {
             window.location = NF3_GITHUB_ISSUES_URL;
           }}
         />
+        <Route path="/deposit" render={() => <Deposit />} />
+        <Route path="/withdraw" render={() => <Withdraw />} />
+        <Route path="/singletransfer" render={() => <Singletransfer />} />
+        <Route path="/doubletransfer" render={() => <Doubletransfer />} />        
+        <Redirect to="/" />
       </Switch>
     </React.Fragment>
   );
