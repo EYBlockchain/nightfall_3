@@ -21,11 +21,11 @@ import {
 import { calculateIvkPkdfromAskNsk } from './keys';
 
 // eslint-disable-next-line
-import abi from '../../zokrates/withdraw_stub/artifacts/withdraw_stub-abi.json';
+import abi from '../../views/zokrates/withdraw_stub/artifacts/withdraw_stub-abi.json';
 // eslint-disable-next-line
-import programFile from '../../zokrates/withdraw_stub/artifacts/withdraw_stub-program';
+import programFile from '../../views/zokrates/withdraw_stub/artifacts/withdraw_stub-program';
 // eslint-disable-next-line
-import pkFile from '../../zokrates/withdraw_stub/keypair/withdraw_stub-pk';
+import pkFile from '../../views/zokrates/withdraw_stub/keypair/withdraw_stub-pk';
 import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
 
 const { BN128_GROUP_ORDER, SHIELD_CONTRACT_NAME } = global.config;
