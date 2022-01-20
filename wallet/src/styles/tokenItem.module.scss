@@ -1,4 +1,4 @@
-@import '~/src/assets/css/theme/_theme';
+@import '~/../../assets/css/theme/_theme';
 
 .maticTokensListItem {
   &:hover {
@@ -198,7 +198,7 @@
   }
 
   .star {
-    margin: 5px 15px 0;
+    margin: 0px 15px;
     
     &.mobileView {
       margin: auto 0 auto 8px;
@@ -247,7 +247,7 @@
     @media #{$lg-devices} {
       display: block;
       visibility: hidden;
-      margin: 5px 15px 0;
+      margin: 0 15px;
     }
 
     .metamaskIcon {

@@ -1,6 +1,5 @@
 import styles from '../../styles/tokenItem.module.scss'
 import starFilled from '../../assets/svg/star-filled.svg'
-import Image from 'next/image'
 import metamaskIcon from '../../assets/svg/metamask.svg'
 
 export default function TokenItem({ token }) {
@@ -10,7 +9,7 @@ export default function TokenItem({ token }) {
             {/* <div class="matic-tokens-list-item" @click="onTokenClick"> */}
             <div className={styles.maticTokensListItem} onClick={() => {}}>    
                 <div className={styles.star}>
-                    <Image src={starFilled} alt="" /> 
+                    <img src={starFilled} alt="" /> 
                 </div>
                 {/* <img
                     v-if="isFavourite"
@@ -102,25 +101,25 @@ export default function TokenItem({ token }) {
                         }"
                         :event="isDepositDisabled(token) ? '' : 'click'" 
                         v-tooltip="isDepositDisabled(token) ? 'Not Supported' : null"*/}
-                        <a                        
+                        <button                       
                             className={styles.tokenListButton}                        
                         >
                             Deposit
-                        </a>
+                        </button>
                         {/* v-tooltip="isWithdrawDisabled(token) ? 'Not Supported' : null"
                         :to="{
                             name: 'bridge',
                             params: { type: TRANSACTION_TYPE.WITHDRAW, token },
                         }"
                         :event="isWithdrawDisabled(token) ? '' : 'click'" */}
-                        <a                    
+                        <button                    
                             className={styles.tokenListButton}
                         >
                         Withdraw
-                        </a>
+                        </button>
                         {/* onClick="handleSendToken" */}
                         <button className={styles.tokenListButton} onClick={() => {}}>
-                        Send
+                            Send
                         </button>
                     </div>
                 </div>
@@ -131,10 +130,8 @@ export default function TokenItem({ token }) {
                     className={styles.addToMetamask}
                     onClick={() => {}}
                 >
-                    {/* <Icon name="login/metamask" class="metamask-icon" /> */}
-                    <div className={styles.metamaskIcon}>
-                        <Image src={metamaskIcon} alt="" />
-                    </div>
+                    {/* <Icon name="login/metamask" class="metamask-icon" /> */}                    
+                    <img className={styles.metamaskIcon} src={metamaskIcon} alt="" />                    
                 </div>
                 {/* <div class="">
                 {{ token }}
