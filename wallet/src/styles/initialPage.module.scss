@@ -32,6 +32,10 @@
         font-weight: 400;
         line-height: 20px;
         letter-spacing: 0em;
+        // ms-t-8
+        margin-top: 8px;
+        // text-gray-500 
+        color: dark-color('500');
       }
 
       &.polyWallet {        
