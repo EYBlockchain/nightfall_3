@@ -17,6 +17,7 @@ let latestWithdrawTransactionHash; // we'll remember this globally so it can be 
 
 const argv = yargs(hideBin(process.argv)).parse();
 const { environment } = argv;
+
 /**
 Initialises the CLI
 */

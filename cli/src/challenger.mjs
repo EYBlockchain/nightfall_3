@@ -18,7 +18,7 @@ if (program.opts().help) console.log('-k | --key input an Ethereum signing key t
 const ethereumSigningKey = program.opts().key || defaultKey;
 
 const argv = yargs(hideBin(process.argv)).parse();
-const environment = argv._[0];
+const { environment } = argv;
 
 /**
 Does the preliminary setup and starts listening on the websocket
