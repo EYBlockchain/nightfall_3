@@ -1,0 +1,14 @@
+@import '~/src/assets/css/theme/_theme';
+
+$light-gray-100: #ffffff;
+
+.wallet {
+  width: 100%;
+  margin-bottom: 60px;
+  min-height: calc(100vh - #{$navbar-local-height});
+  background: $light-gray-100;
+
+  @media #{$lg-devices} {
+    padding-bottom: 100px;
+  }
+}
