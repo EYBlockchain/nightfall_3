@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { initialize } from 'zokrates-js';
 
 // eslint-disable-next-line
-import abi from './deposit/artifacts/deposit-abi.json';
+import abi from '../../zokrates/deposit/artifacts/deposit-abi.json';
 // eslint-disable-next-line
-import programFile from './deposit/artifacts/deposit-program';
+import programFile from '../../zokrates/deposit/artifacts/deposit-program';
 // eslint-disable-next-line
-import pkFile from './deposit/keypair/deposit-pk';
+import pkFile from '../../zokrates/deposit/keypair/deposit-pk';
 import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
 
 export default function Zokrates() {
