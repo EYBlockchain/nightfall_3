@@ -5,7 +5,14 @@ import polyBridge from '../static/img/homepage/polyBridge.png'
 import polyStaking from '../static/img/homepage/polyStaking.png'
 import polyWallet from '../static/img/homepage/polyWallet.png'
 import polyWidgetDashboard from '../static/img/homepage/polyWidgetDashboard.png'
+// fix: problems with page redirect and images presentation
 
+// I changed all the names of the mainpage images for camelCase. Imported each one with the same name. And in the list of options
+// to be presented in the cards of the mainpage I changed the imageName attribute to be equal of the name of the png image. So at the moment 
+// of present the image I doing some conditionals to present the correct image based on the imageName.
+
+// About problem with redirection. I added the exec tag in the '/' route. This way the pege only be redirect to the main page if the path
+// was exactly '/'.
 const cardsData = [
   {
     imageName: 'polyWallet',
