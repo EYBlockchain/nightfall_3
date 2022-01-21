@@ -45,7 +45,7 @@ function App({ onDeleteWallet }) {
     <React.Fragment>
       <Switch>
         <Route path="/login" render={() => <Login />} />
-        <Route path="/" exact="/" render={() => <MainPage />} />
+        <Route path="/" exact={true} render={() => <MainPage />} />
         <Route path="/transactions" render={() => <Transactions />} />
         <Route path="/wallet" render={() => <Wallet />} />
         <Route path="/bridge" render={() => <Bridge />} />
