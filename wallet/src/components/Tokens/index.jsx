@@ -1,8 +1,10 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import styles from '../../styles/tokens.module.scss';
 import TokenItem from '../TokenItem/index.jsx';
 
-export default function Tokens() {
+export default function Tokens(token) {
+  console.log('Tokens in Asset', token);
   return (
     <div className={styles.maticTokensList}>
       <div className={styles.formHeader}>
@@ -96,14 +98,15 @@ export default function Tokens() {
           <div className={styles.headerBalance}>Balance</div>
           <div className={styles.headerActions}>Actions</div>
         </div>
-        <TokenItem
-          token={{
-            maticChainUsdBalance: '1',
-            maticChainBalance: '10',
-            name: 'MATIC',
-            symbol: 'teste',
-          }}
-        />
+        {token.tokenList.map((t, index) => (
+          <TokenItem
+            maticChainUsdBalance={t.maticChainUsdBalance}
+            maticChainBalance={t.maticChainBalance}
+            name={t.name}
+            symbol={t.symbol}
+            key={index}
+          />
+        ))}
 
         {/* <MaticTokensListItem
                     v-for="token in filteredTokens"
@@ -264,3 +267,7 @@ export default function Tokens() {
     </div>
   );
 }
+
+Tokens.propTypes = {
+  tokenList: PropTypes.element.isRequired,
+};
