@@ -11,11 +11,17 @@ RUN mkdir -p /home/apps && chown apps:apps /home/apps
 
 
 # Set the Chrome repo.
-RUN wget -qO - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list
+#RUN wget -qO - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    #&& echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list
 
 # Install Chrome.
-RUN apt-get update && apt-get -y install google-chrome-stable
+#RUN apt-get update && apt-get -y install google-chrome-stable
+
+# Keep CHROME version fixed
+ARG CHROME_VERSION="96.0.4664.45-1"
+RUN wget --no-verbose -O /tmp/chrome.deb https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${CHROME_VERSION}_amd64.deb \
+  && apt-get update && apt-get install -y /tmp/chrome.deb \
+  && rm /tmp/chrome.deb   
 
 # Install nodejs
 RUN wget -qO - https://deb.nodesource.com/setup_14.x | bash -
@@ -50,13 +56,14 @@ RUN BROWSER_MAJOR=$(google-chrome --version | sed 's/Google Chrome \([0-9]*\).*/
     cd /opt/selenium; unzip /opt/selenium/chromedriver_linux64.zip; rm -rf chromedriver_linux64.zip; ln -fs /opt/selenium/chromedriver /src/test/drivers/chromedriver; cd - && \
     DRIVER_MAJOR=$(/opt/selenium/chromedriver --version | sed 's/ChromeDriver \([0-9]*\).*/\1/g') && \
     echo "chrome version: $BROWSER_MAJOR" && \
-    echo "chromedriver version: $DRIVER_MAJOR" && \
+    echo "chromedriver version: $DRIVER_MAJOR"  && \
     if [ $BROWSER_MAJOR != $DRIVER_MAJOR ]; then echo "VERSION MISMATCH"; exit 1; fi
 
 # Metamask plugin
-RUN   ID=nkbihfbeogaeaoehlefnkodbefgpgknn && CHROME_VERSION=$(cat chrome_version) && \
-      URL="https://clients2.google.com/service/update2/crx?response=redirect&prodversion=$CHROME_VERSION&acceptformat=crx2,crx3&x=id%3D$ID%26uc" && \
-      curl -L "$URL" > /src/test/extensions/metamask.crx
+#RUN   ID=nkbihfbeogaeaoehlefnkodbefgpgknn && CHROME_VERSION=$(cat chrome_version) && \
+      #URL="https://clients2.google.com/service/update2/crx?response=redirect&prodversion=$CHROME_VERSION&acceptformat=crx2,crx3&x=id%3D$ID%26uc" && \
+      #curl -L "$URL" > /src/test/extensions/metamask.crx
+COPY test/extensions/metamask.crx   /src/test/extensions/metamask.crx
 
 # Install python dependencies
 RUN pip install setuptools pip --upgrade --force-reinstall
