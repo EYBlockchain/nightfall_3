@@ -9,6 +9,8 @@ import createKeccakHash from 'keccak';
 import crypto from 'crypto';
 import sb from 'safe-buffer';
 
+import logger from '../../logger';
+
 const { Buffer } = sb;
 const { CURVE, HASH_TYPE } = global.config;
 
