@@ -10,7 +10,7 @@ import {
 import CountDownTimer from './countdowntimer.view.jsx';
 import { DEFAULT_INSTANT_WITHDRAW_FEE } from '../../../../constants';
 
-function AccountInfoModal({
+function WithdrawInfoModal({
   transactions,
   login,
   accountInfoEnable,
@@ -177,7 +177,7 @@ function AccountInfoModal({
   );
 }
 
-AccountInfoModal.propTypes = {
+WithdrawInfoModal.propTypes = {
   transactions: PropTypes.object.isRequired,
   login: PropTypes.object.isRequired,
   accountInfoEnable: PropTypes.bool.isRequired,
@@ -197,4 +197,4 @@ const mapDispatchToProps = dispatch => ({
     dispatch(txInstantWithdrawSubmit(transactionHash, fee)),
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(AccountInfoModal);
+export default connect(mapStateToProps, mapDispatchToProps)(WithdrawInfoModal);

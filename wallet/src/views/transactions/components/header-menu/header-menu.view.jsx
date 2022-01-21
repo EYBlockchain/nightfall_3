@@ -5,7 +5,7 @@ import PropTypes from 'prop-types';
 import { deleteWallet } from '../../../../store/login/login.actions';
 import { clearMsg } from '../../../../store/message/message.actions';
 import AccountSettingsModal from './account-settings.view.jsx';
-import AccountInfoModal from './account-info.view.jsx';
+import WithdrawInfoModal from './withdraw-info.view.jsx';
 
 function HeaderMenu({ onDeleteWallet, onClearMsg }) {
   const [accountSettingsEnable, setAccountSettingsEnable] = React.useState(false);
@@ -43,7 +43,7 @@ function HeaderMenu({ onDeleteWallet, onClearMsg }) {
         accountSettingsEnable={accountSettingsEnable}
         toggleAccountSettings={toggleAccountSettings}
       />
-      <AccountInfoModal
+      <WithdrawInfoModal
         accountInfoEnable={accountInfoEnable}
         toggleAccountInfo={toggleAccountInfo}
       />
