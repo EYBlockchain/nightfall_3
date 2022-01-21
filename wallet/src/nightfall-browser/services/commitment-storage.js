@@ -18,7 +18,7 @@ const {
   SUBMITTED_BLOCKS_COLLECTION,
   TRANSACTIONS_COLLECTION,
   COMMITMENTS_COLLECTION,
-} = global.config
+} = global.config;
 
 const { generalise } = gen;
 const mutex = new Mutex();
