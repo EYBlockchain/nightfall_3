@@ -5,46 +5,34 @@ import { AiOutlineDown } from 'react-icons/ai';
 import styles from '../../styles/tokenItem.module.scss';
 import stylesModal from '../../styles/modal.module.scss';
 import starFilled from '../../assets/svg/star-filled.svg';
+// import starFilled from '../../assets/svg/star-filled.svg';
+import matic from '../../assets/svg/matic.svg';
+import usdt from '../../assets/svg/usdt.svg';
+import link from '../../assets/svg/link.svg';
+import aave from '../../assets/svg/aave.svg';
 import metamaskIcon from '../../assets/svg/metamask.svg';
 import ethereumImg from '../../assets/img/ethereum-chain.svg';
 import polyImg from '../../assets/img/polygon-chain.svg';
 
-export default function TokenItem({ token }) {
-  const [showSendModal, setShowSendModal] = useState(false);
+// export default function TokenItem({ token }) {
 
+const symbols = {
+  matic,
+  usdt,
+  link,
+  aave,
+};
+
+export default function TokenItem(token) {
+  const [showSendModal, setShowSendModal] = useState(false);
   return (
     <div>
       {/* <div class="matic-tokens-list-item" @click="onTokenClick"> */}
       <div className={styles.maticTokensListItem} onClick={() => {}}>
-        <div className={styles.star}>
-          <img src={starFilled} alt="" />
+        <div className={styles.star}>{/* <img src={starFilled} alt="" /> */}</div>
+        <div className={styles.maticTokensListItem}>
+          <img src={symbols[token.symbol.toLowerCase()]} alt="token icon" />
         </div>
-        {/* <img
-                    v-if="isFavourite"
-                    src="~/assets/svg/star-filled.svg"
-                    alt="favourite"
-                    class="star desktop-view cursor-pointer"
-                    @click="handleMarkUnfavourite"
-                />
-                <img
-                    v-else
-                    src="~/assets/svg/star.svg"
-                    alt="unfavourite"
-                    class="star desktop-view on-hover-only cursor-pointer"
-                    @click="handleMarkFavourite"
-                /> */}
-
-        {/* <div class="token-image">
-                    <img
-                        v-if="!!tokenImage(token)"
-                        class="token-img"
-                        :src="tokenImage(token)"
-                        alt="token icon"
-                    >
-                    <div v-else-if="token.symbol" class="token-image-letter font-semibold">
-                        {{ token.symbol[0] }}
-                    </div>
-                </div> */}
 
         <div className={styles.tokenDetails}>
           <div className={styles.tokenNameDetails}>
@@ -55,22 +43,12 @@ export default function TokenItem({ token }) {
               <div v-if="!token.isPoS" className={styles.plasmaTag}>
                 plasma
               </div>
-              {/* <img
-                                v-if="isFavourite"
-                                src="~/src/assets/svg/star-filled.svg"
-                                alt=""
-                                className={styles.star, styles.mobileView}
-                            /> */}
             </div>
             <div className={styles.tokenNameLowerSection}>
               <span className={styles.seperatingDot}> • </span>
               {token.name}
             </div>
-            {true && (
-              // v-if="!token.isPoS"
-              // styles.desktopView See how TODO it
-              <div className={styles.plasmaTag}>plasma</div>
-            )}
+            {true && <div className={styles.plasmaTag}>plasma</div>}
           </div>
           <div className={styles.balancesDetails}>
             <div className={styles.balancesWrapper}>
@@ -92,8 +70,7 @@ export default function TokenItem({ token }) {
                             </v-popover> */}
               <div className={styles.balancesDetailsLowerSection}>
                 {/* {{ token.maticChainUsdBalance | fixed(2) | dollarSymbol }} */}
-                <span className={styles.seperatingDot}> • </span>
-                {token.maticChainUsdBalance}
+                <span className={styles.seperatingDot}> • </span>${token.maticChainUsdBalance}
               </div>
             </div>
           </div>
