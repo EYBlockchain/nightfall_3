@@ -6,51 +6,33 @@ export const tokenActionTypes = {
   TOKEN_UNSELECT: 'TOKEN_UNSELECT',
 };
 
-export function addToken(
-  compressedPkd,
-  tokenAddress,
-  tokenType,
-  tokenId,
-  l2TokenId,
-  tokenName,
-  l1Balance,
-  l2Balance,
-  l2PendingDeposit,
-  l2PendingSpent,
-) {
+export function addToken(compressedPkd, tokenInfo) {
   return {
     type: tokenActionTypes.TOKEN_ADD,
     payload: {
       compressedPkd,
-      tokenAddress,
-      tokenType,
-      tokenId,
-      l2TokenId,
-      tokenName,
-      l1Balance,
-      l2Balance,
-      l2PendingDeposit,
-      l2PendingSpent,
+      tokenInfo,
     },
   };
 }
 
-export function deleteToken(compressedPkd, activeTokenRowId) {
+export function deleteToken(compressedPkd, activeTokenRowId, activeTokenId) {
   return {
     type: tokenActionTypes.TOKEN_DELETE,
-    payload: { compressedPkd, activeTokenRowId },
+    payload: { compressedPkd, activeTokenRowId, activeTokenId },
   };
 }
 
-export function selectToken(activeTokenRowId) {
+export function selectToken(activeTokenRowId, activeTokenId) {
   return {
     type: tokenActionTypes.TOKEN_SELECT,
-    payload: { activeTokenRowId },
+    payload: { activeTokenRowId, activeTokenId },
   };
 }
 
-export function unselectToken() {
+export function unselectToken(removeFromDisplayedDetails) {
   return {
     type: tokenActionTypes.TOKEN_UNSELECT,
+    payload: { removeFromDisplayedDetails },
   };
 }

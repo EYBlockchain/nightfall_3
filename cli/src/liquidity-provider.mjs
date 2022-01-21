@@ -43,6 +43,7 @@ async function startProvider(testEnvironment) {
   else throw new Error('Healthcheck failed');
   const erc20Address = await nf3.getContractAddress('ERC20Mock');
 
+  // Aprove ERC20 contract
   await approve(
     erc20Address,
     nf3.ethereumAddress,
@@ -51,6 +52,7 @@ async function startProvider(testEnvironment) {
     APPROVE_AMOUNT,
     nf3.web3,
   );
+
   // set up a listener to service requests for an instant withdrawal
   const emitter = await nf3.getInstantWithdrawalRequestedEmitter();
   emitter.on('data', async (withdrawTransactionHash, paidBy, amount) => {

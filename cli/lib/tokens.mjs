@@ -13,7 +13,15 @@ Sends an approve transaction to an ERC20/ERC721/ERC1155 contract for a certain a
 * @param {object} provider  - web3 provider
 * @returns {Promise} transaction
 */
-async function approve(ercAddress, ownerAddress, spenderAddress, tokenType, value, provider) {
+async function approve(
+  ercAddress,
+  ownerAddress,
+  spenderAddress,
+  tokenType,
+  value,
+  provider,
+  encodeABI,
+) {
   const abi = getAbi(tokenType);
   const ercContract = new provider.eth.Contract(abi, ercAddress);
 
@@ -23,7 +31,7 @@ async function approve(ercAddress, ownerAddress, spenderAddress, tokenType, valu
       const allowanceBN = new Web3.utils.BN(allowance);
       const valueBN = new Web3.utils.BN(value);
       if (allowanceBN.lt(valueBN)) {
-        if (process.env.USER_ETHEREUM_SIGNING_KEY)
+        if (process.env.USER_ETHEREUM_SIGNING_KEY || encodeABI)
           return ercContract.methods.approve(spenderAddress, APPROVE_AMOUNT).encodeABI();
         await ercContract.methods
           .approve(spenderAddress, APPROVE_AMOUNT)
@@ -35,7 +43,7 @@ async function approve(ercAddress, ownerAddress, spenderAddress, tokenType, valu
     case TOKEN_TYPE.ERC721:
     case TOKEN_TYPE.ERC1155: {
       if (!(await ercContract.methods.isApprovedForAll(ownerAddress, spenderAddress).call())) {
-        if (process.env.USER_ETHEREUM_SIGNING_KEY)
+        if (process.env.USER_ETHEREUM_SIGNING_KEY || encodeABI)
           return ercContract.methods.setApprovalForAll(spenderAddress, true).encodeABI();
         await ercContract.methods
           .setApprovalForAll(spenderAddress, true)
@@ -191,7 +199,11 @@ async function getERCInfo(ercAddress, ethereumAddress, provider, options) {
 
       await Promise.all(
         tokenIdsEvents.map(async Id => {
-          const amount = await ercContract.methods.balanceOf(ethereumAddress, Id).call();
+          let amount = await ercContract.methods.balanceOf(ethereumAddress, Id).call();
+          if (toEth) {
+            decimals = await getDecimals(ercAddress, TOKEN_TYPE.ERC1155, provider);
+            amount = fromBaseUnit(amount, decimals);
+          }
           tokenIds.push({ tokenId: Id, amount });
         }),
       );
