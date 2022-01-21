@@ -117,7 +117,7 @@ async function queueManager(eventObject, eventArgs) {
   // pull up the priority for the event being handled (removers have identical priority)
   const priority = eventHandlers.priority[eventObject.event];
   logger.info(
-    `Queueing event ${eventObject.event}, with transaction hash ${eventObject.transactionHash}`,
+    `Queueing event ${eventObject.event}, with transaction hash ${eventObject.transactionHash} and priority ${priority}`,
   );
   queues[priority].push(async () => {
     // we won't even think about processing an event until it's been confirmed many times

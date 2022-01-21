@@ -17,7 +17,7 @@ router.post('/', async (req, res, next) => {
   } catch (err) {
     logger.error(err);
     if (err.message.includes('No suitable commitments')) {
-      logger.info('Handling "No suitable commitments" error');
+      logger.info('Returning "No suitable commitments" error');
       res.json({ error: 'No suitable commitments' });
     } else {
       next(err);

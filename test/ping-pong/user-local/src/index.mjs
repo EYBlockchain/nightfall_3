@@ -20,7 +20,7 @@ const {
 } = config;
 
 const { TEST_LENGTH, ERC20_NAME, TX_WAIT = 10000 } = process.env;
-const recipientPkd = process.env.RECIPIENT_PKD.split(',');
+const recipientPkd = process.env.RECIPIENT_PKD; // .split(',');
 
 /**
 Does the preliminary setup and starts listening on the websocket
