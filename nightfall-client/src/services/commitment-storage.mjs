@@ -56,6 +56,7 @@ export async function countCommitments(commitments) {
   return db.collection(COMMITMENTS_COLLECTION).countDocuments(query);
 }
 
+/*
 // function to get count of transaction hashes. Used to decide if we should store
 // incoming blocks or transactions.
 export async function countTransactionHashes(transactionHashes) {
@@ -64,6 +65,7 @@ export async function countTransactionHashes(transactionHashes) {
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).countDocuments(query);
 }
+*/
 
 // function to mark a commitments as on chain for a mongo db
 export async function markOnChain(
