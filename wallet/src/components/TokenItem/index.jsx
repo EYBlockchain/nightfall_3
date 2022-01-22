@@ -97,14 +97,18 @@ export default function TokenItem({ token }) {
                         }"
                         :event="isDepositDisabled(token) ? '' : 'click'" 
                         v-tooltip="isDepositDisabled(token) ? 'Not Supported' : null" */}
-            <button className={styles.tokenListButton}>Deposit</button>
+            <a href="/bridge" className={styles.tokenListButton}>
+              Deposit
+            </a>
             {/* v-tooltip="isWithdrawDisabled(token) ? 'Not Supported' : null"
                         :to="{
                             name: 'bridge',
                             params: { type: TRANSACTION_TYPE.WITHDRAW, token },
                         }"
                         :event="isWithdrawDisabled(token) ? '' : 'click'" */}
-            <button className={styles.tokenListButton}>Withdraw</button>
+            <a href="/bridge" className={styles.tokenListButton}>
+              Withdraw
+            </a>
             {/* onClick="handleSendToken" */}
             <button className={styles.tokenListButton} onClick={() => {}}>
               Send
