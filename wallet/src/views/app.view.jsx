@@ -15,6 +15,7 @@ import { NF3_GITHUB_ISSUES_URL } from '../constants';
 import * as loginActions from '../store/login/login.actions';
 import MainPage from './initialPage.jsx';
 import Wallet from './wallet/index.jsx';
+import Bridge from './bridge/index.jsx';
 
 function App({ onDeleteWallet }) {
   Nf3.Environment.setEnvironment(process.env.REACT_APP_ENVIRONMENT);
@@ -47,6 +48,7 @@ function App({ onDeleteWallet }) {
         <Route path="/" exact="/" render={() => <MainPage />} />
         <Route path="/transactions" render={() => <Transactions />} />
         <Route path="/wallet" render={() => <Wallet />} />
+        <Route path="/bridge" render={() => <Bridge />} />
         <Route
           path="/issues"
           render={() => {
