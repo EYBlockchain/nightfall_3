@@ -2,12 +2,11 @@
 
 import { GN, generalise } from 'general-number';
 import { validateMnemonic, mnemonicToSeed } from 'bip39';
-import pkg from 'ethereumjs-wallet';
+import { hdkey } from 'ethereumjs-wallet';
 
 import mimcHash from '../../common-files/utils/crypto/mimc/mimc';
 import { scalarMult, edwardsCompress, edwardsDecompress } from '../utils/crypto/encryption/elgamal';
 
-const { hdkey } = pkg;
 export const ivks = [];
 export const nsks = [];
 const { BABYJUBJUB, BN128_GROUP_ORDER } = global.config;

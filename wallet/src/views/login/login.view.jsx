@@ -19,6 +19,7 @@ import {
 } from '../../constants.js';
 import tokensLoad from '../../store/token/token.thunks';
 import * as messageActions from '../../store/message/message.actions';
+import { UserContext } from '../../hooks/User';
 
 let nf3;
 
@@ -32,10 +33,10 @@ function Login({
   onClearMsg,
 }) {
   const [modalEnable, setModalEnable] = React.useState(false);
-
+  const [state, setState] = React.useContext(UserContext);
   const renderRedirect = () => {
     if (login.isWalletInitialized) {
-      return <Redirect to="/wallet" />;
+      return <Redirect to="/transactions" />;
     }
     return <Redirect to="/login" />;
   };
@@ -157,6 +158,7 @@ function Login({
           marginTop: '3em',
         }}
       >
+        <button onClick={() => setState(!state.active)}>{state.active ? 'On' : 'Off'}</button>
         <PolygonLogo width="250px" height="100px" />
         Nightfall Wallet
       </Header>
