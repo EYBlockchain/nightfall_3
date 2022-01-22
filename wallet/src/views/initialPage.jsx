@@ -1,10 +1,12 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import styles from '../styles/initialPage.module.scss';
 import polyNightfallWallet from '../static/img/homepage/polyNightfallWallet.png';
 import polyBridge from '../static/img/homepage/polyBridge.png';
 import polyStaking from '../static/img/homepage/polyStaking.png';
 import polyWallet from '../static/img/homepage/polyWallet.png';
 import polyWidgetDashboard from '../static/img/homepage/polyWidgetDashboard.png';
+
 // fix: problems with page redirect and images presentation
 
 // I changed all the names of the mainpage images for camelCase. Imported each one with the same name. And in the list of options
@@ -47,6 +49,7 @@ const cardsData = [
     tag: 'Supported only on desktop',
   },
 ];
+
 // src={require('../static/img/homepage/poly-bridge.png')}
 export default function MainPage() {
   return (
@@ -57,7 +60,7 @@ export default function MainPage() {
       </div>
       <div className={styles.cardsContainer}>
         {cardsData.map((card, index) => (
-          <a key={index} href={card.imageName === 'polyNightfallWallet' && '/login'}>
+          <Link key={index} to="/wallet">
             <div className={styles.mcard}>
               <div style={{ marginTop: '20px', marginBottom: '15px' }}>
                 {/* TODO fix the .tag and width and height */}
@@ -86,7 +89,7 @@ export default function MainPage() {
                 <div className={styles.tag}>{card.tag}</div>
               )}
             </div>
-          </a>
+          </Link>
         ))}
       </div>
     </div>
