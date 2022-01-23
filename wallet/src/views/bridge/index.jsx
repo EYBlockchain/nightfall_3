@@ -1,13 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
+import Modal from 'react-bootstrap/Modal';
+import { MdArrowForwardIos } from 'react-icons/md';
 import styles from '../../styles/bridge.module.scss';
 import bridgeInfoImage from '../../assets/img/bridge-info.png';
 import polygonChainImage from '../../assets/img/polygon-chain.svg';
 import ethChainImage from '../../assets/img/ethereum-chain.svg';
 import discloserBottomImage from '../../assets/img/discloser-bottom.svg';
 import lightArrowImage from '../../assets/img/light-arrow.svg';
-import { useState } from 'react';
+import testImage from '../../assets/img/fast-withdraw/evodefi.png';
 
 export default function Bridge() {
+  const [show, setShow] = useState(false);
+
+  const handleClose = () => setShow(false);
+  const handleShow = () => setShow(true);
 
   return (
     // containerFluid
@@ -140,13 +146,13 @@ export default function Bridge() {
                   {/* @click="onChooseTokenOpen" */}
                   <div className={styles.tokenDetails} onClick={() => {}}>
                     {/* <img
-                                            v-if="!!tokenImage(selectedToken)"
-                                            class="token-details__token-img"
-                                            :src="tokenImage(selectedToken)"
-                                            alt="token icon"
-                                            height="24"
-                                            width="24"
-                                        > */}
+                          v-if="!!tokenImage(selectedToken)"
+                          class="token-details__token-img"
+                          :src="tokenImage(selectedToken)"
+                          alt="token icon"
+                          height="24"
+                          width="24"
+                      > */}
                     {/* src={"tokenImage(selectedToken)"} */}
                     <img
                       className="token-details__token-img"
@@ -205,8 +211,8 @@ export default function Bridge() {
               </div>
               <div className={styles.toLabel}>To</div>
               <div className={styles.toChainAndBalanceDetails}>
-                                <div className={styles.chainDetails}>
-                                    {/* <img
+                <div className={styles.chainDetails}>
+                  {/* <img
                                         v-if="transferType === TRANSACTION_TYPE.DEPOSIT"
                                         src="~/assets/img/polygon-chain.svg"
                                         alt="polygon chain logo"
@@ -221,7 +227,7 @@ export default function Bridge() {
                                         width="24"
                                     > */}
 
-                                    {/* <div class="chain-details__chain-name font-label-small">
+                  {/* <div class="chain-details__chain-name font-label-small">
                                     {{
                                         transferType === TRANSACTION_TYPE.WITHDRAW
                                         ? parentNetwork.name
@@ -229,52 +235,44 @@ export default function Bridge() {
                                     }}
                                         chain
                                     </div> */}
-                                    <div className={styles.chainDetails__chainName}>                            
-                                        Polygon mock chain
-                                    </div>
-                                </div>
-                                {/* <div
-                                    v-if="selectedToken"
-                                    class="balance-details font-label-extra-small"
-                                >
-                                    <span class="balance-details__label"> Balance: </span>
-                                    <span
-                                        v-tooltip="formattedReceiverFullBalance"
-                                        class="balance-details__balance"
-                                    >{{ selectedToken.getBalance(receiverNetworkId).dp(5) }}
-                                        {{ selectedToken.symbol }}
-                                    </span>
-                                </div>  SAME OF BELOW */}                                 
-                                <div                                    
-                                    className={styles.balanceDetails}
-                                >
-                                    <span className={styles.balanceDetails__label}> Balance: </span>
-                                    <span                                        
-                                        className={styles.balanceDetails__balance}
-                                    >
-                                        10 MATIC
-                                    </span>
-                                </div>
-                            </div>
+                  <div className={styles.chainDetails__chainName}>Polygon mock chain</div>
+                </div>
+                {/* <div
+                    v-if="selectedToken"
+                    class="balance-details font-label-extra-small"
+                >
+                  <span class="balance-details__label"> Balance: </span>
+                  <span
+                      v-tooltip="formattedReceiverFullBalance"
+                      class="balance-details__balance"
+                  >{{ selectedToken.getBalance(receiverNetworkId).dp(5) }}
+                      {{ selectedToken.symbol }}
+                  </span>
+                </div>  SAME OF BELOW */}
+                <div className={styles.balanceDetails}>
+                  <span className={styles.balanceDetails__label}> Balance: </span>
+                  <span className={styles.balanceDetails__balance}>10 MATIC</span>
+                </div>
+              </div>
             </div>
             <div className={styles.transferMode}>
-                            {/* <span class="transfer-mode__label"> Transfer Mode: </span>
+              {/* <span class="transfer-mode__label"> Transfer Mode: </span>
                             <span class="bridge-type">{{ selectedMode }} Bridge</span> */}
-                            <span className={styles.transferMode__label}> Transfer Mode: </span>
-                            <span className={styles.bridgeType}>Deposit Bridge</span>
-                            {/* <span
-                                v-if="
-                                isPosPlasmaCommonToken &&
-                                    (!plasmaDepositDisabledTokens ||
-                                    transferType === TRANSACTION_TYPE.WITHDRAW)
-                                "
-                                id="switch-transfer-mode"
-                                class="switch-bridge cursor-pointer cap-xs"
-                                @click="onTransferModeOpen"
-                            >
-                                (Switch Bridge)
-                            </span> */}
-                        </div>
+              <span className={styles.transferMode__label}> Transfer Mode: </span>
+              <span className={styles.bridgeType}>Deposit Bridge</span>
+              {/* <span
+                  v-if="
+                  isPosPlasmaCommonToken &&
+                      (!plasmaDepositDisabledTokens ||
+                      transferType === TRANSACTION_TYPE.WITHDRAW)
+                  "
+                  id="switch-transfer-mode"
+                  class="switch-bridge cursor-pointer cap-xs"
+                  @click="onTransferModeOpen"
+              >
+                  (Switch Bridge)
+              </span> */}
+            </div>
             <div>
               {/* <Button
                                 id="transfer-token"
@@ -285,10 +283,9 @@ export default function Bridge() {
                                 :disabled="disableTransferButton || isTokenDisabled"
                                 @onClick="transferToken"
                             /> */}
-                            <button                                                         
-                                className={styles.transferButton}                                                                
-                                onClick={() => {}}
-                            >Transfer</button>
+              <button className={styles.transferButton} onClick={handleShow}>
+                Transfer
+              </button>
 
               {/* <div v-if="error" class="error-message text-danger font-caption">
                                 {{ error }}
@@ -313,7 +310,6 @@ export default function Bridge() {
             /> */}
 
         {/* FAST or NORMAL */}
-             
 
         {/* <deposit-modal
                     v-else-if="showDepositModal"
@@ -325,6 +321,77 @@ export default function Bridge() {
                     :overviewCheck="false"
                     :allowanceCheck="allowance"
                 /> */}
+        <Modal contentClassName={styles.modalFather} show={show} onHide={handleClose}>
+          <Modal.Header closeButton>
+            <div className={styles.modalTitle}>Confirm transaction</div>
+          </Modal.Header>
+          <Modal.Body>
+            <div className={styles.modalBody}>
+              <div className={styles.tokenDetails}>
+                {/* d-flex justify-content-center align-self-center mx-auto */}
+                <div className={styles.tokenDetails__img}>
+                  {/* <img
+                                      v-if="
+                                      selectedToken.symbol &&
+                                          !!tokenImage(selectedToken)
+                                      "
+                                      class="align-self-center"
+                                      :src="tokenImage(selectedToken)"
+                                      alt="Token Image"
+                                  > */}
+                  <img src={testImage} alt="Token Image" />
+                  {/* <span
+                                      v-else-if="selectedToken.symbol"
+                                      class="align-self-center font-heading-large ps-t-2 font-semibold"
+                                  >{{ selectedToken.symbol[0] }}</span> */}
+                </div>
+                {/* font-heading-large font-bold ps-t-16 ps-b-6 */}
+                <div className={styles.tokenDetails__val}>10 ETHER</div>
+                {/* font-body-small */}
+                <div className={styles.tokenDetails__usd}>$ 30000</div>
+              </div>
+
+              {/* Buttons */}
+              <div>
+                <div className={styles.networkButtons}>
+                  <div className={styles.networkButtons__button1}>
+                    <span>GOERLI network</span>
+                  </div>
+                  <MdArrowForwardIos />
+                  <div className={styles.networkButtons__button2}>
+                    <span>MUMBAI network</span>
+                  </div>
+                </div>
+              </div>
+              <div className={styles.divider}></div>
+              <div className={styles.transferModeModal}>
+                <div className={styles.transferModeModal__title}>
+                  <div className={styles.transferModeModal__title__main}>Transfer Mode</div>
+                  <div className={styles.transferModeModal__title__light}>PoS chain</div>
+                </div>
+                <div className={styles.transferModeModal__text}>
+                  <span>PoS security is provided by the PoS validators.</span>
+                  {/* <span v-else>
+                                  Plasma provides advanced security with plasma exit
+                                  mechanism. </span>It will take approximately */}
+                  <span> It will take approximately </span>
+                  <span className="text-primary"> 3 hours</span> when you have to transfer your
+                  funds back to Ethereum.
+                </div>
+              </div>
+              <div className={styles.divider}></div>
+              <div className={styles.estimationFee}>
+                <div className={styles.estimationFee__title}>
+                  <div className={styles.estimationFee__title__main}>
+                    Estimation Transaction fee
+                  </div>
+                  <div className={styles.estimationFee__title__light}>~ $113,59</div>
+                </div>
+                <button className={styles.continueTrasferButton}>Continue</button>
+              </div>
+            </div>
+          </Modal.Body>
+        </Modal>
 
         {/* <fast-deposit-modal
                     v-else-if="showFastDepositModal"
