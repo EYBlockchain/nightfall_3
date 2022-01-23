@@ -1,10 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
+import Modal from 'react-bootstrap/Modal';
+import { AiOutlineDown } from 'react-icons/ai';
 import styles from '../../styles/tokenItem.module.scss';
+import stylesModal from '../../styles/modal.module.scss';
 import starFilled from '../../assets/svg/star-filled.svg';
 import metamaskIcon from '../../assets/svg/metamask.svg';
+import ethereumImg from '../../assets/img/ethereum-chain.svg';
+import polyImg from '../../assets/img/polygon-chain.svg';
 
 export default function TokenItem({ token }) {
+  const [showSendModal, setShowSendModal] = useState(false);
+
   return (
     <div>
       {/* <div class="matic-tokens-list-item" @click="onTokenClick"> */}
@@ -110,7 +117,12 @@ export default function TokenItem({ token }) {
               Withdraw
             </a>
             {/* onClick="handleSendToken" */}
-            <button className={styles.tokenListButton} onClick={() => {}}>
+            <button
+              className={styles.tokenListButton}
+              onClick={() => {
+                setShowSendModal(true);
+              }}
+            >
               Send
             </button>
           </div>
@@ -129,6 +141,51 @@ export default function TokenItem({ token }) {
       {/* <div v-if="isMobileScreen">
                 <div>Hellp {{ isMobileScreen }} {{ screenInnerWidth }}</div>
             </div> */}
+
+      {/* SEND BUTTON */}
+      <Modal
+        contentClassName={stylesModal.modalFather}
+        show={showSendModal}
+        onHide={() => setShowSendModal(false)}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Send</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className={stylesModal.modalBody}>
+            <div className={stylesModal.sendModal}>
+              <div>
+                <input type="text" />
+                <p>Enter valid address existing on the Polygon Network</p>
+              </div>
+              <div className={stylesModal.sendModalBalance}>
+                <div className={stylesModal.letfItems}>
+                  <input type="text" placeholder="0.00" />
+                  <div className={stylesModal.maxButton}>MAX</div>
+                </div>
+                <div className={stylesModal.rightItems}>
+                  <img src={ethereumImg} />
+                  <div>Ether (PoS-WETH)</div>
+                  <AiOutlineDown />
+                </div>
+              </div>
+              <div className={stylesModal.balanceText}>
+                <p>$ 0 </p>
+                <div className={stylesModal.right}>
+                  <p>Available Balance:</p>
+                  <p>0.0105 ETH</p>
+                </div>
+              </div>
+
+              <div className={stylesModal.sendModalfooter}>
+                <img src={polyImg} />
+                <p className={stylesModal.gasFee}>0.00000000 nameToken Gas Fee</p>
+              </div>
+            </div>
+            <button className={stylesModal.continueTrasferButton}>Continue</button>
+          </div>
+        </Modal.Body>
+      </Modal>
     </div>
   );
 }
