@@ -14,7 +14,6 @@ export const reducer = (state, action) => {
 
 export const initialState = {
   active: false,
-  mnemonic: 'dummy',
   nf: {},
 };
 
