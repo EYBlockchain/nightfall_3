@@ -1,3 +1,5 @@
+@import '~/../theme/_theme';
+
 .s-modal{
   width: 446px;
   height: 588px;
@@ -11,21 +13,21 @@
     width:100%;
   }
 
-  .box-header {
+  .boxHeader {
     flex-basis: 88px;
     height: 88px;
 
-    .left-arrow,
-    .right-arrow {
+    .leftArrow,
+    .rightArrow {
       height: 24px;
       width: 24px;
     }
 
-    .right-arrow {
+    .rightArrow {
       margin-top: -2px;
     }
 
-    .modal-step-title {
+    .modalStepTitle {
       line-height: 1.5rem;
     }
 
@@ -35,16 +37,17 @@
     }
   }
 
-  .overview-header {
+  .overviewHeader {
     padding: 32px !important;
   }
 
-  .network-icon {
+  .networkIcon {
     height: 24px;
     width: 24px;
   }
 
-  .box-body{
+  .boxBody{
+    background-color: black;
     flex-basis:auto;
     height: calc(100% - 88px);
     .container{
@@ -59,7 +62,7 @@
       height: calc(100% - 65px);
     }
 
-    .token-details {
+    .tokenDetails {
       &__img {
         background-color: light-color('500');
         box-sizing: border-box;
@@ -85,10 +88,10 @@
       height: 42px;
       border-radius: 13px;
 
-      &.ethereum-pill {
+      &.ethereumPill {
         background-color: supportive-color('100');
       }
-      &.matic-pill {
+      &.maticPill {
         background-color: primary-color('200');
       }
     }
@@ -97,16 +100,16 @@
       width: 45%;
     }
 
-    .continue-button {
+    .continueButton {
       line-height: 145%;
     }
 
-    .logo-wrapper-bottom {
+    .logoWrapperBottom {
       padding-top: 52px;
       padding-bottom: 28px;
     }
 
-    .modal-body-content{
+    .modalBodyContent{
       height: auto;
       padding-bottom:20px;
       width:100%;
@@ -114,7 +117,7 @@
   }
 }
 
-.new-modal{
+.newModal{
   &__container{
     height: 100%;
     display:flex;
@@ -128,13 +131,13 @@
       display:flex;
       flex-direction: column;
 
-      .new-modal__fixed-section{
+      .newModal__fixedSection{
         padding-bottom:10px;
       }
     }
   }
 
-  &__scroll-section{
+  &__scrollSection{
     flex-basis: auto;
     height:auto;
     padding-bottom:10px;
@@ -155,7 +158,7 @@
     }
   }
 
-  &__fixed-section{
+  &__fixedSection{
     flex-basis:auto;
     height:auto;
     border-top: 1px solid #dee2e6;
