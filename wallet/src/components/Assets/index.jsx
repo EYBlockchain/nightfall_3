@@ -1,14 +1,20 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import styles from '../../styles/assets.module.scss';
 
-export default function Assets() {
+export default function Assets(token) {
+  console.log(token.tokenList);
+  const total = token.tokenList.reduce(
+    (acc, curr) => acc + Number(curr.maticChainUsdBalance) * Number(curr.maticChainBalance),
+    0,
+  );
   return (
     <div className={styles.dashboardTopSection}>
       <div className={styles.container}>
         <div className="row">
           <div className="col-lg-6">
             <div className={styles.heading}>Nightfall</div>
-            <div className={styles.amount}>&#36;{10}</div>
+            <div className={styles.amount}>&#36;{total.toFixed(2)}</div>
             <div className={styles.buttonsWrapper}>
               <button className="" icon-name="navbar/qr" onClick={() => {}}>
                 Receive
@@ -50,3 +56,7 @@ export default function Assets() {
     </div>
   );
 }
+
+Assets.propTypes = {
+  token: PropTypes.array.isRequired,
+};

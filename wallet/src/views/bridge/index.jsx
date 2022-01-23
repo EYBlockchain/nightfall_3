@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
 import Modal from 'react-bootstrap/Modal';
 import { MdArrowForwardIos } from 'react-icons/md';
+import * as Nf3 from 'nf3';
+import { Link, useLocation } from 'react-router-dom';
+import Button from 'react-bootstrap/esm/Button';
+import ToggleButton from 'react-bootstrap/ToggleButton';
+import ButtonGroup from 'react-bootstrap/ButtonGroup';
 import styles from '../../styles/bridge.module.scss';
 import stylesModal from '../../styles/modal.module.scss';
 import bridgeInfoImage from '../../assets/img/bridge-info.png';
@@ -9,9 +14,75 @@ import ethChainImage from '../../assets/img/ethereum-chain.svg';
 import discloserBottomImage from '../../assets/img/discloser-bottom.svg';
 import lightArrowImage from '../../assets/img/light-arrow.svg';
 import testImage from '../../assets/img/fast-withdraw/evodefi.png';
+import { UserContext } from '../../hooks/User';
+import deposit from '../../nightfall-browser/services/deposit';
+import withdraw from '../../nightfall-browser/services/withdraw';
 
 export default function Bridge() {
+  const [state] = React.useContext(UserContext);
+  const [txType, setTxType] = useState('deposit');
+  const [tokenAmountWei, setTransferValue] = useState(0);
   const [show, setShow] = useState(false);
+
+  const handleClose = () => setShow(false);
+  const handleShow = () => setShow(true);
+
+  const location = useLocation();
+  console.log('Location', location);
+  console.log('Bridge State', state);
+  async function triggerTx() {
+    switch (txType) {
+      case 'deposit': {
+        await Nf3.Tokens.approve(
+          location.tokenState.tokenAddress,
+          state.nf3.ethereumAddress,
+          state.nf3.shieldContractAddress,
+          'ERC20',
+          tokenAmountWei,
+          state.nf3.web3,
+        );
+        const { rawTransaction } = await deposit({
+          ercAddress: location.tokenState.tokenAddress,
+          tokenId: 0,
+          value: tokenAmountWei,
+          pkd: state.zkpKeys.pkd,
+          nsk: state.zkpKeys.nsk,
+          fee: 1,
+          tokenType: 'ERC20',
+        });
+        return state.nf3.submitTransaction(rawTransaction, state.nf3.shieldContractAddress, 1);
+      }
+
+      case 'withdraw': {
+        await withdraw({
+          ercAddress: location.tokenState.tokenAddress,
+          tokenId: 0,
+          value: tokenAmountWei,
+          recipientAddress: state.nf3.ethereumAddress,
+          nsk: state.zkpKeys.nsk,
+          ask: state.zkpKeys.ask,
+          tokenType: 'ERC20',
+          fees: 1,
+        });
+        const { rawTransaction } = await deposit({
+          ercAddress: location.tokenState.tokenAddress,
+          tokenId: 0,
+          value: tokenAmountWei,
+          pkd: state.zkpKeys.pkd,
+          nsk: state.zkpKeys.nsk,
+          fee: 1,
+          tokenType: 'ERC20',
+        });
+        console.log('rawTransaction', rawTransaction);
+        console.log('props', location);
+        return state.nf3.submitTransaction(rawTransaction, state.nf3.shieldContractAddress, 1);
+      }
+
+      default:
+        break;
+    }
+    return true;
+  }
 
   return (
     // containerFluid
@@ -76,14 +147,33 @@ export default function Bridge() {
                                 transferType === TRANSACTION_TYPE.WITHDRAW,
                         }" for div below */}
             <div className={styles.bridgeTabs}>
-              {/* onclick = "onSwitchTransferType" */}
-              <div className={styles.bridgeTabs__tab} onClick={() => {}}>
-                Deposit
-              </div>
-              {/* onclick = "onSwitchTransferType" */}
+              <ButtonGroup className={styles.bridgeTabs__tab}>
+                <ToggleButton
+                  type="radio"
+                  variant="outline-secondary"
+                  value={'deposit'}
+                  checked={txType === 'deposit'}
+                  onClick={() => setTxType('deposit')}
+                  // onChange={e => setRadioValue(e.currentTarget.value)}
+                >
+                  Deposit
+                </ToggleButton>
+                <ToggleButton
+                  type="radio"
+                  variant="outline-secondary"
+                  value="withdraw"
+                  checked={txType === 'withdraw'}
+                  onClick={() => setTxType('withdraw')}
+                  // onChange={e => setRadioValue(e.currentTarget.value)}
+                >
+                  Withdraw
+                </ToggleButton>
+              </ButtonGroup>
+              {/* <div className={styles.bridgeTabs__tab} onClick={() => {}}>
+                Deposit"outline-secondary"              </div>
               <div className={styles.bridgeTabs__tab} onClick={() => {}}>
                 Withdraw
-              </div>
+              </div> */}
             </div>
 
             <div className={styles.bridgeBody}>
@@ -177,15 +267,9 @@ export default function Bridge() {
                       className={styles.amountDetails__textfield}
                       type="text"
                       placeholder="0.00"
+                      value={tokenAmountWei}
+                      onChange={e => setTransferValue(e.target.value)}
                     />
-                    {/* <input
-                                            className={styles.amountDetails__textfield}
-                                            type="text"
-                                            value="toSendInToken"
-                                            placeholder="0.00"
-                                            input="setAmount"
-                                        /> */}
-
                     <button
                       className={styles.amountDetails__maxButton}
                       onClick={() => {}}
@@ -193,14 +277,6 @@ export default function Bridge() {
                     >
                       MAX
                     </button>
-                    {/* <Button
-                                            v-if="showMax"
-                                            class="amount-details__max-button"
-                                            label="MAX"
-                                            nature="link"
-                                            size="small"
-                                            @onClick="handleMaxClick"
-                                        /> */}
                   </div>
                 </div>
               </div>
@@ -236,17 +312,17 @@ export default function Bridge() {
                   <div className={styles.chainDetails__chainName}>Polygon mock chain</div>
                 </div>
                 {/* <div
-                    v-if="selectedToken"
-                    class="balance-details font-label-extra-small"
-                >
-                  <span class="balance-details__label"> Balance: </span>
-                  <span
-                      v-tooltip="formattedReceiverFullBalance"
-                      class="balance-details__balance"
-                  >{{ selectedToken.getBalance(receiverNetworkId).dp(5) }}
-                      {{ selectedToken.symbol }}
-                  </span>
-                </div>  SAME OF BELOW */}
+                                    v-if="selectedToken"
+                                    class="balance-details font-label-extra-small"
+                                >
+                                    <span class="balance-details__label"> Balance: </span>
+                                    <span
+                                        v-tooltip="formattedReceiverFullBalance"
+                                        class="balance-details__balance"
+                                    >{{ selectedToken.getBalance(receiverNetworkId).dp(5) }}
+                                        {{ selectedToken.symbol }}
+                                    </span>
+                                </div>  SAME OF BELOW */}
                 <div className={styles.balanceDetails}>
                   <span className={styles.balanceDetails__label}> Balance: </span>
                   <span className={styles.balanceDetails__balance}>10 MATIC</span>
@@ -259,17 +335,17 @@ export default function Bridge() {
               <span className={styles.transferMode__label}> Transfer Mode: </span>
               <span className={styles.bridgeType}>Deposit Bridge</span>
               {/* <span
-                  v-if="
-                  isPosPlasmaCommonToken &&
-                      (!plasmaDepositDisabledTokens ||
-                      transferType === TRANSACTION_TYPE.WITHDRAW)
-                  "
-                  id="switch-transfer-mode"
-                  class="switch-bridge cursor-pointer cap-xs"
-                  @click="onTransferModeOpen"
-              >
-                  (Switch Bridge)
-              </span> */}
+                                v-if="
+                                isPosPlasmaCommonToken &&
+                                    (!plasmaDepositDisabledTokens ||
+                                    transferType === TRANSACTION_TYPE.WITHDRAW)
+                                "
+                                id="switch-transfer-mode"
+                                class="switch-bridge cursor-pointer cap-xs"
+                                @click="onTransferModeOpen"
+                            >
+                                (Switch Bridge)
+                            </span> */}
             </div>
             <div>
               {/* <Button
@@ -281,13 +357,24 @@ export default function Bridge() {
                                 :disabled="disableTransferButton || isTokenDisabled"
                                 @onClick="transferToken"
                             /> */}
-              <button className={styles.transferButton} onClick={() => setShow(true)}>
-                Transfer
+              <button className={styles.transferButton} onClick={handleShow}>
+                {/* <button
+                className={styles.transferButton}
+                onClick={() => {
+                  triggerTx();
+                }}
+              >
+                Transfer */}
               </button>
 
               {/* <div v-if="error" class="error-message text-danger font-caption">
                                 {{ error }}
                             </div> */}
+            </div>
+            <div>
+              <Link to="/wallet">
+                <Button variant="outline-secondary">Return to Wallet</Button>{' '}
+              </Link>
             </div>
           </div>
         </div>
@@ -321,7 +408,9 @@ export default function Bridge() {
                 /> */}
         <Modal contentClassName={stylesModal.modalFather} show={show} onHide={() => setShow(false)}>
           <Modal.Header closeButton>
-            <div className={stylesModal.modalTitle}>Confirm transaction</div>
+            <div className={styles.modalTitle} onClick={triggerTx()}>
+              Confirm transaction
+            </div>
           </Modal.Header>
           <Modal.Body>
             <div className={stylesModal.modalBody}>
