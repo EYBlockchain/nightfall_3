@@ -269,5 +269,5 @@ export default function Tokens(token) {
 }
 
 Tokens.propTypes = {
-  tokenList: PropTypes.element.isRequired,
+  tokenList: PropTypes.array.isRequired,
 };
