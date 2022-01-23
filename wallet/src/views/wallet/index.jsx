@@ -13,6 +13,7 @@ import * as Storage from '../../utils/lib/local-storage';
 import { METAMASK_MESSAGE, DEFAULT_NF_ADDRESS_INDEX } from '../../constants.js';
 import { UserContext } from '../../hooks/User';
 import { generateKeys } from '../../nightfall-browser/services/keys.js';
+import blockProposedEventHandler from '../../nightfall-browser/event-handlers/block-proposed.js';
 
 /*
 These are some default values for now
@@ -21,37 +22,41 @@ const tokenMapping = {
   '0xf05e9fb485502e5a93990c714560b7ce654173c3': {
     name: 'Matic Token',
     tokenType: 'ERC20',
-    maticChainUsdBalance: '20',
+    maticChainUsdBalance: '1.8',
     maticChainBalance: '10',
     symbol: 'MATIC',
   },
 };
 
-const compressedPkd = '0xa4f0567cec890e2f61c696f8f4005245774b08bb6bbd47495f861394e4b68a53';
+const compressedPkd = '0x9e989c1cdde6b046489665f71799783935c96574e94d85654c45b440c06b796d';
 const initialTokenState = [
   {
-    maticChainUsdBalance: '100',
-    maticChainBalance: '10',
+    maticChainUsdBalance: '0',
+    maticChainBalance: '0',
     name: 'ChainLink Token',
     symbol: 'LINK',
+    order: 2,
   },
   {
-    maticChainUsdBalance: '100',
-    maticChainBalance: '10',
+    maticChainUsdBalance: '0',
+    maticChainBalance: '0',
     name: 'USDT',
     symbol: 'USDT',
+    order: 2,
   },
   {
-    maticChainUsdBalance: '100',
-    maticChainBalance: '10',
+    maticChainUsdBalance: '0',
+    maticChainBalance: '0',
     name: 'Aave Token',
     symbol: 'AAVE',
+    order: 2,
   },
   {
-    maticChainUsdBalance: '100',
-    maticChainBalance: '10',
+    maticChainUsdBalance: '0',
+    maticChainBalance: '0',
     name: 'Matic Token',
     symbol: 'MATIC',
+    order: 1,
   },
 ];
 
@@ -79,6 +84,8 @@ function WalletModal(props) {
               nf3: state.nf3,
               walletInitialised: state.walletInitialised,
               mnemonic: generateMnemonic(),
+              socket: state.socket,
+              zkpKeys: state.zkpKeys,
             })
           }
         >
@@ -94,7 +101,13 @@ function WalletModal(props) {
             );
             const hashedSignature = jsSha3.keccak256(signature);
             Storage.mnemonicSet(state.nf3.ethereumAddress, state.mnemonic, hashedSignature);
-            setState({ nf3: state.nf3, mnemonic: state.mnemonic, walletInitialised: true });
+            setState({
+              nf3: state.nf3,
+              mnemonic: state.mnemonic,
+              walletInitialised: true,
+              socket: state.socket,
+              zkpKeys: state.zkpKeys,
+            });
             props.onHide();
           }}
         >
@@ -106,7 +119,9 @@ function WalletModal(props) {
 }
 
 export default function Wallet() {
-  const [tokens, setTokens] = useState(initialTokenState);
+  const [tokens, setTokens] = useState(
+    initialTokenState.sort((a, b) => Number(a.order) - Number(b.order)),
+  );
   const [state, setState] = React.useContext(UserContext);
   const [modalShow, setModalShow] = React.useState(false);
 
@@ -119,11 +134,43 @@ export default function Wallet() {
         await nf3.init();
         Nf3.Environment.setContractAddresses(nf3);
         console.log('nf3', nf3);
-        setState({ nf3 });
+        setState({
+          zkpKeys: state.zkpKeys,
+          walletInitialised: state.walletInitialised,
+          mnemonic: state.mnemonic,
+          socket: state.socket,
+          nf3,
+        });
       }
     }
     setupNF3();
   }, []);
+
+  useEffect(() => {
+    console.log('State Socket', state);
+    if (!state.socket) {
+      const socket = new WebSocket('ws://localhost:8082');
+
+      // Connection opened
+      socket.addEventListener('open', function () {
+        console.log(`Websocket is open`);
+        socket.send('proposedBlock');
+      });
+
+      // Listen for messages
+      socket.addEventListener('message', async function (event) {
+        console.log('Message from server ', event.data);
+        await blockProposedEventHandler(JSON.parse(event.data));
+      });
+      setState({
+        zkpKeys: state.zkpKeys,
+        walletInitialised: state.walletInitialised,
+        nf3: state.nf3,
+        mnemonic: state.mnemonic,
+        socket,
+      });
+    }
+  });
 
   useEffect(() => {
     async function checkWalletExists() {
@@ -131,23 +178,34 @@ export default function Wallet() {
         const mnemonicExists = Storage.mnemonicGet(state.nf3.ethereumAddress);
         if (mnemonicExists) state.walletInitialised = true;
         if (state.walletInitialised) {
-          const signature = await state.nf3.signMessage(
-            METAMASK_MESSAGE,
-            state.nf3.ethereumAddress,
-          );
-          const passphrase = jsSha3.keccak256(signature);
-          const mnemonic = Storage.mnemonicGet(state.nf3.ethereumAddress, passphrase);
-          const zkpKeys = await generateKeys(
-            mnemonic,
-            `m/44'/60'/0'/${DEFAULT_NF_ADDRESS_INDEX.toString()}`,
-          );
-          // const currentState = state;
+          if (state.mnemonic) {
+            console.log('State Mnemonic', state.mnemonic);
+            const zkpKeys = await generateKeys(
+              state.mnemonic,
+              `m/44'/60'/0'/${DEFAULT_NF_ADDRESS_INDEX.toString()}`,
+            );
+            state.zkpKeys = zkpKeys;
+          } else {
+            const signature = await state.nf3.signMessage(
+              METAMASK_MESSAGE,
+              state.nf3.ethereumAddress,
+            );
+            const passphrase = jsSha3.keccak256(signature);
+            state.mnemonic = Storage.mnemonicGet(state.nf3.ethereumAddress, passphrase);
+            const zkpKeys = await generateKeys(
+              state.mnemonic,
+              `m/44'/60'/0'/${DEFAULT_NF_ADDRESS_INDEX.toString()}`,
+            );
+            state.zkpKeys = zkpKeys;
+          }
           setState({
-            zkpKeys,
+            zkpKeys: state.zkpKeys,
             walletInitialised: state.walletInitialised,
             nf3: state.nf3,
-            mnemonic,
+            mnemonic: state.mnemonic,
+            socket: state.socket,
           });
+          console.log('State After Wallet is created', state);
         } else setModalShow(true);
       } else console.log('NF3 is not setup');
     }
@@ -157,24 +215,28 @@ export default function Wallet() {
   useEffect(() => {
     async function getL2Balance() {
       const l2Balance = await getWalletBalance();
-      // eslint-disable-next-line consistent-return, array-callback-return
-      const updatedState = Object.keys(tokenMapping).map(t => {
-        const token = l2Balance[compressedPkd][t];
-        const tokenInfo = tokenMapping[t];
-        if (token) {
-          const { maticChainBalance, ...rest } = tokenInfo;
-          return {
-            maticChainBalance: token.toString(),
-            ...rest,
-          };
-        }
-      });
-      const newState = initialTokenState.map(i => {
-        const s = updatedState.find(u => i.symbol === u.symbol);
-        if (s) return s;
-        return i;
-      });
-      setTokens(newState.sort((a, b) => Number(b.maticChainBalance) - Number(a.maticChainBalance)));
+      console.log('L2Balance', l2Balance);
+      if (Object.keys(l2Balance).length !== 0) {
+        // eslint-disable-next-line consistent-return, array-callback-return
+        const updatedState = Object.keys(tokenMapping).map(t => {
+          const token = l2Balance[compressedPkd][t];
+          const tokenInfo = tokenMapping[t];
+          if (token) {
+            const { maticChainBalance, ...rest } = tokenInfo;
+            return {
+              maticChainBalance: token.toString(),
+              ...rest,
+            };
+          }
+        });
+        const newState = initialTokenState.map(i => {
+          const s = updatedState.find(u => i.symbol === u.symbol);
+          if (s) return s;
+          return i;
+        });
+        setTokens(newState.sort((a, b) => Number(a.order) - Number(b.order)));
+        console.log('tokens', tokens);
+      }
     }
     getL2Balance();
   }, []);
@@ -184,7 +246,7 @@ export default function Wallet() {
       <div>
         <WalletModal show={modalShow} onHide={() => setModalShow(false)} />
       </div>
-      <Assets />
+      <Assets tokenList={tokens} />
       <Tokens tokenList={tokens} />
     </div>
   );

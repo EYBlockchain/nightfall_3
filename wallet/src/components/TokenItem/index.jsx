@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from 'react-bootstrap/Modal';
 import { AiOutlineDown } from 'react-icons/ai';
+import { Link } from 'react-router-dom';
 import styles from '../../styles/tokenItem.module.scss';
 import stylesModal from '../../styles/modal.module.scss';
 import starFilled from '../../assets/svg/star-filled.svg';
@@ -23,7 +24,13 @@ const symbols = {
   aave,
 };
 
-export default function TokenItem(token) {
+export default function TokenItem({
+  maticChainUsdBalance,
+  maticChainBalance,
+  name,
+  symbol,
+  tokenAddress,
+}) {
   const [showSendModal, setShowSendModal] = useState(false);
   return (
     <div>
@@ -31,14 +38,14 @@ export default function TokenItem(token) {
       <div className={styles.maticTokensListItem} onClick={() => {}}>
         <div className={styles.star}>{/* <img src={starFilled} alt="" /> */}</div>
         <div className={styles.maticTokensListItem}>
-          <img src={symbols[token.symbol.toLowerCase()]} alt="token icon" />
+          <img src={symbols[symbol.toLowerCase()]} alt="token icon" />
         </div>
 
         <div className={styles.tokenDetails}>
           <div className={styles.tokenNameDetails}>
             <div className={styles.tokenNameUpperSection}>
               {/* <div class="token-symbol header-h6"> */}
-              <div className={styles.headerH6}>{token.symbol}</div>
+              <div className={styles.headerH6}>{symbol}</div>
               {/* styles.mobileView See how to do it */}
               <div v-if="!token.isPoS" className={styles.plasmaTag}>
                 plasma
@@ -46,7 +53,7 @@ export default function TokenItem(token) {
             </div>
             <div className={styles.tokenNameLowerSection}>
               <span className={styles.seperatingDot}> • </span>
-              {token.name}
+              {name}
             </div>
             {true && <div className={styles.plasmaTag}>plasma</div>}
           </div>
@@ -54,7 +61,7 @@ export default function TokenItem(token) {
             <div className={styles.balancesWrapper}>
               <div className={styles.balancesDetailsUpperSection}>
                 {/* {{ token.getMaticChainBalance | fixed(4) }} */}
-                {token.maticChainBalance}
+                {Number(maticChainBalance).toFixed(4)}
               </div>
               {/* <v-popover
                                 trigger="hover"
@@ -70,7 +77,8 @@ export default function TokenItem(token) {
                             </v-popover> */}
               <div className={styles.balancesDetailsLowerSection}>
                 {/* {{ token.maticChainUsdBalance | fixed(2) | dollarSymbol }} */}
-                <span className={styles.seperatingDot}> • </span>${token.maticChainUsdBalance}
+                <span className={styles.seperatingDot}> • </span>$
+                {(Number(maticChainUsdBalance) * Number(maticChainBalance)).toFixed(2)}
               </div>
             </div>
           </div>
@@ -81,18 +89,26 @@ export default function TokenItem(token) {
                         }"
                         :event="isDepositDisabled(token) ? '' : 'click'" 
                         v-tooltip="isDepositDisabled(token) ? 'Not Supported' : null" */}
-            <a href="/bridge" className={styles.tokenListButton}>
+            <Link
+              to={{
+                pathname: '/bridge',
+                tokenState: {
+                  tokenAddress,
+                },
+              }}
+              className={styles.tokenListButton}
+            >
               Deposit
-            </a>
+            </Link>
             {/* v-tooltip="isWithdrawDisabled(token) ? 'Not Supported' : null"
                         :to="{
                             name: 'bridge',
                             params: { type: TRANSACTION_TYPE.WITHDRAW, token },
                         }"
                         :event="isWithdrawDisabled(token) ? '' : 'click'" */}
-            <a href="/bridge" className={styles.tokenListButton}>
+            <Link to="/bridge" className={styles.tokenListButton}>
               Withdraw
-            </a>
+            </Link>
             {/* onClick="handleSendToken" */}
             <button
               className={styles.tokenListButton}
@@ -168,5 +184,9 @@ export default function TokenItem(token) {
 }
 
 TokenItem.propTypes = {
-  token: PropTypes.element.isRequired,
+  maticChainUsdBalance: PropTypes.string.isRequired,
+  maticChainBalance: PropTypes.string.isRequired,
+  name: PropTypes.string.isRequired,
+  symbol: PropTypes.string.isRequired,
+  tokenAddress: PropTypes.string.isRequired,
 };
