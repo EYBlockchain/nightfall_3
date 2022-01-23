@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Modal from 'react-bootstrap/Modal';
 import { MdArrowForwardIos } from 'react-icons/md';
 import styles from '../../styles/bridge.module.scss';
+import stylesModal from '../../styles/modal.module.scss';
 import bridgeInfoImage from '../../assets/img/bridge-info.png';
 import polygonChainImage from '../../assets/img/polygon-chain.svg';
 import ethChainImage from '../../assets/img/ethereum-chain.svg';
@@ -11,9 +12,6 @@ import testImage from '../../assets/img/fast-withdraw/evodefi.png';
 
 export default function Bridge() {
   const [show, setShow] = useState(false);
-
-  const handleClose = () => setShow(false);
-  const handleShow = () => setShow(true);
 
   return (
     // containerFluid
@@ -283,7 +281,7 @@ export default function Bridge() {
                                 :disabled="disableTransferButton || isTokenDisabled"
                                 @onClick="transferToken"
                             /> */}
-              <button className={styles.transferButton} onClick={handleShow}>
+              <button className={styles.transferButton} onClick={() => setShow(true)}>
                 Transfer
               </button>
 
@@ -321,15 +319,15 @@ export default function Bridge() {
                     :overviewCheck="false"
                     :allowanceCheck="allowance"
                 /> */}
-        <Modal contentClassName={styles.modalFather} show={show} onHide={handleClose}>
+        <Modal contentClassName={stylesModal.modalFather} show={show} onHide={() => setShow(false)}>
           <Modal.Header closeButton>
-            <div className={styles.modalTitle}>Confirm transaction</div>
+            <div className={stylesModal.modalTitle}>Confirm transaction</div>
           </Modal.Header>
           <Modal.Body>
-            <div className={styles.modalBody}>
-              <div className={styles.tokenDetails}>
+            <div className={stylesModal.modalBody}>
+              <div className={stylesModal.tokenDetails}>
                 {/* d-flex justify-content-center align-self-center mx-auto */}
-                <div className={styles.tokenDetails__img}>
+                <div className={stylesModal.tokenDetails__img}>
                   {/* <img
                                       v-if="
                                       selectedToken.symbol &&
@@ -346,30 +344,30 @@ export default function Bridge() {
                                   >{{ selectedToken.symbol[0] }}</span> */}
                 </div>
                 {/* font-heading-large font-bold ps-t-16 ps-b-6 */}
-                <div className={styles.tokenDetails__val}>10 ETHER</div>
+                <div className={stylesModal.tokenDetails__val}>10 ETHER</div>
                 {/* font-body-small */}
-                <div className={styles.tokenDetails__usd}>$ 30000</div>
+                <div className={stylesModal.tokenDetails__usd}>$ 30000</div>
               </div>
 
               {/* Buttons */}
               <div>
-                <div className={styles.networkButtons}>
-                  <div className={styles.networkButtons__button1}>
+                <div className={stylesModal.networkButtons}>
+                  <div className={stylesModal.networkButtons__button1}>
                     <span>GOERLI network</span>
                   </div>
                   <MdArrowForwardIos />
-                  <div className={styles.networkButtons__button2}>
+                  <div className={stylesModal.networkButtons__button2}>
                     <span>MUMBAI network</span>
                   </div>
                 </div>
               </div>
-              <div className={styles.divider}></div>
-              <div className={styles.transferModeModal}>
-                <div className={styles.transferModeModal__title}>
-                  <div className={styles.transferModeModal__title__main}>Transfer Mode</div>
-                  <div className={styles.transferModeModal__title__light}>PoS chain</div>
+              <div className={stylesModal.divider}></div>
+              <div className={stylesModal.transferModeModal}>
+                <div className={stylesModal.transferModeModal__title}>
+                  <div className={stylesModal.transferModeModal__title__main}>Transfer Mode</div>
+                  <div className={stylesModal.transferModeModal__title__light}>PoS chain</div>
                 </div>
-                <div className={styles.transferModeModal__text}>
+                <div className={stylesModal.transferModeModal__text}>
                   <span>PoS security is provided by the PoS validators.</span>
                   {/* <span v-else>
                                   Plasma provides advanced security with plasma exit
@@ -379,15 +377,15 @@ export default function Bridge() {
                   funds back to Ethereum.
                 </div>
               </div>
-              <div className={styles.divider}></div>
-              <div className={styles.estimationFee}>
-                <div className={styles.estimationFee__title}>
-                  <div className={styles.estimationFee__title__main}>
+              <div className={stylesModal.divider}></div>
+              <div className={stylesModal.estimationFee}>
+                <div className={stylesModal.estimationFee__title}>
+                  <div className={stylesModal.estimationFee__title__main}>
                     Estimation Transaction fee
                   </div>
-                  <div className={styles.estimationFee__title__light}>~ $113,59</div>
+                  <div className={stylesModal.estimationFee__title__light}>~ $113,59</div>
                 </div>
-                <button className={styles.continueTrasferButton}>Continue</button>
+                <button className={stylesModal.continueTrasferButton}>Continue</button>
               </div>
             </div>
           </Modal.Body>
