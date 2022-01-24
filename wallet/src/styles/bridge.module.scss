@@ -85,7 +85,7 @@
 
   .description {
     margin-top: 17px;
-    max-width: 304px;
+    max-width: 320px;
     opacity: 0.6;
     // font-body-small
     font-size: small;
@@ -295,7 +295,7 @@
 
         &__tokenName {
           margin-left: 8px;
-          text-align: center;
+          text-align: left;
           white-space: nowrap;
           width: 100px;
           overflow: hidden;
@@ -370,10 +370,13 @@
     .chainDetails {
       display: flex;
       align-items: center;
-      font-size: x-small;
+      font-size: small;
 
       &__chainName {
-        margin-left: 8px;        
+        margin-left: 8px;
+        //font-label-small
+        font-size: small;
+        font-weight: bold;
       }
     }
 
