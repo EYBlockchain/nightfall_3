@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import styles from '../styles/initialPage.module.scss';
-import polyNightfallWallet from '../static/img/homepage/polyNightfallWallet.png';
 import polyBridge from '../static/img/homepage/polyBridge.png';
 import polyStaking from '../static/img/homepage/polyStaking.png';
 import polyWallet from '../static/img/homepage/polyWallet.png';
@@ -31,8 +30,9 @@ const cardsData = [
   {
     imageName: 'polyNightfallWallet',
     title: 'Polygon Nightfall Wallet',
-    desc: 'Send and receive crypto assets on Polygon Nightfall network',
+    desc: 'Privately send and receive crypto assets on Ethereum',
     route: 'walletNF3',
+    tag: 'Live on ETHEREUM chain',
   },
   {
     imageName: 'polyStaking',
@@ -68,7 +68,7 @@ export default function MainPage() {
                   src={
                     // eslint-disable-line no-nested-ternary
                     card.imageName === 'polyNightfallWallet' // eslint-disable-line no-nested-ternary
-                      ? polyNightfallWallet // eslint-disable-line no-nested-ternary
+                      ? polyWallet // eslint-disable-line no-nested-ternary
                       : card.imageName === 'polyBridge' // eslint-disable-line no-nested-ternary
                       ? polyBridge // eslint-disable-line no-nested-ternary
                       : card.imageName === 'polyStaking' // eslint-disable-line no-nested-ternary
