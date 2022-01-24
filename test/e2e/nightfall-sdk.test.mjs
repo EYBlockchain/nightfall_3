@@ -19,7 +19,6 @@ import {
   ethereumSigningKeyUser2,
   ethereumSigningKeyProposer1,
   ethereumSigningKeyProposer2,
-  ethereumSigningKeyProposer3,
   ethereumSigningKeyLiquidityProvider,
   ethereumSigningKeyChallenger,
   txPerBlock,
