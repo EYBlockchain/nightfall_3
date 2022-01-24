@@ -453,32 +453,32 @@ export default function Bridge() {
                                   >{{ selectedToken.symbol[0] }}</span> */}
                 </div>
                 {/* font-heading-large font-bold ps-t-16 ps-b-6 */}
-                <div className={styles.tokenDetails__val}>{tokenAmountWei}</div>
+                <div className={stylesModal.tokenDetails__val}>{tokenAmountWei}</div>
                 {/* font-body-small */}
-                <div className={styles.tokenDetails__usd}>$xx.xx</div>
+                <div className={stylesModal.tokenDetails__usd}>$xx.xx</div>
               </div>
 
               {/* Buttons */}
               <div>
-                <div className={styles.networkButtons}>
-                  <div className={styles.networkButtons__button1}>
+                <div className={stylesModal.networkButtons}>
+                  <div className={stylesModal.networkButtons__button1}>
                     <span>
                       {txType === 'deposit' ? 'Ethereum Mainnet' : 'Polygon Nightfall L2'}
                     </span>
                   </div>
                   <MdArrowForwardIos />
-                  <div className={styles.networkButtons__button2}>
+                  <div className={stylesModal.networkButtons__button2}>
                     <span>
                       {txType === 'deposit' ? 'Polygon Nightfall L2' : 'Ethereum Mainnet'}
                     </span>
                   </div>
                 </div>
               </div>
-              <div className={styles.divider}></div>
-              <div className={styles.transferModeModal}>
-                <div className={styles.transferModeModal__title}>
-                  <div className={styles.transferModeModal__title__main}>Transfer Mode</div>
-                  <div className={styles.transferModeModal__title__light}>
+              <div className={stylesModal.divider}></div>
+              <div className={stylesModal.transferModeModal}>
+                <div className={stylesModal.transferModeModal__title}>
+                  <div className={stylesModal.transferModeModal__title__main}>Transfer Mode</div>
+                  <div className={stylesModal.transferModeModal__title__light}>
                     <DropdownButton variant="light" title={transferMethod}>
                       <Dropdown.Item onClick={() => setMethod('On-Chain')}>On-Chain</Dropdown.Item>
                       <Dropdown.Item onClick={() => setMethod('Direct Transfer')}>
@@ -506,9 +506,9 @@ export default function Bridge() {
                   <div className={stylesModal.estimationFee__title__main}>
                     Estimation Transaction fee
                   </div>
-                  <div className={styles.estimationFee__title__light}>~ $x.xx</div>
+                  <div className={stylesModal.estimationFee__title__light}>~ $113,59</div>
                 </div>
-                <button className={styles.continueTrasferButton} onClick={() => triggerTx()}>
+                <button className={stylesModal.continueTrasferButton} onClick={() => triggerTx()}>
                   Continue
                 </button>
               </div>
