@@ -9,6 +9,7 @@ import * as messageActions from '../message/message.actions';
 import deposit from '../../nightfall-browser/services/deposit';
 import transfer from '../../nightfall-browser/services/transfer';
 import withdraw from '../../nightfall-browser/services/withdraw';
+import { approve, submitTransaction } from '../../common-files/utils/contract';
 
 function txInstantWithdrawSubmit(withdrawTransactionHash, fee) {
   return async (dispatch, getState) => {
@@ -65,14 +66,13 @@ function txSubmit(txParams) {
     dispatch(txActions.txDispatch());
     switch (txParams.txType) {
       case Nf3.Constants.TX_TYPES.DEPOSIT:
-        // TODO: dispatch error
-        Nf3.Tokens.approve(
+        approve(
           txParams.tokenAddress,
           nf3.ethereumAddress,
+          nf3.ethereumSigningKey,
           nf3.shieldContractAddress,
           txParams.tokenType,
           tokenAmountWei,
-          nf3.web3,
         )
           .then(() => {
             return deposit({
@@ -86,13 +86,17 @@ function txSubmit(txParams) {
             });
           })
           .then(async ({ rawTransaction }) => {
-            console.log('rawTransaction', rawTransaction);
-            return nf3.submitTransaction(rawTransaction, nf3.shieldContractAddress, txParams.fee);
+            return submitTransaction(
+              rawTransaction,
+              nf3.shieldContractAddress,
+              nf3.ethereumAddress,
+              nf3.ethereumSigningKey,
+              txParams.fee,
+            );
             // dispatch(txActions.txSuccess(Nf3.Constants.TX_TYPES.DEPOSIT, txReceipt));
             // TODO: dispatch error
           })
           .then(txReceipt => {
-            console.log('txReceipt', txReceipt);
             dispatch(txActions.txSuccess(Nf3.Constants.TX_TYPES.DEPOSIT, txReceipt));
           })
           .catch(err => {
