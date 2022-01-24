@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import Modal from 'react-bootstrap/Modal';
+import Dropdown from 'react-bootstrap/Dropdown';
+import DropdownButton from 'react-bootstrap/DropdownButton';
 import { MdArrowForwardIos } from 'react-icons/md';
 import * as Nf3 from 'nf3';
 import { Link, useLocation } from 'react-router-dom';
@@ -20,17 +22,22 @@ import withdraw from '../../nightfall-browser/services/withdraw';
 
 export default function Bridge() {
   const [state] = React.useContext(UserContext);
-  const [txType, setTxType] = useState('deposit');
+  const [transferMethod, setMethod] = React.useState('On-Chain');
+  const location = useLocation();
+
+  const initialTx = location.tokenState?.initialTxType || 'deposit';
+
+  const [txType, setTxType] = useState(initialTx);
   const [tokenAmountWei, setTransferValue] = useState(0);
   const [show, setShow] = useState(false);
 
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
 
-  const location = useLocation();
   console.log('Location', location);
   console.log('Bridge State', state);
   async function triggerTx() {
+    console.log('Tx Triggered');
     switch (txType) {
       case 'deposit': {
         await Nf3.Tokens.approve(
@@ -94,7 +101,7 @@ export default function Bridge() {
           <div className={styles.innerWrapper}>
             <div className={styles.headerH2}>Nightfall Bridge</div>
             <div className={styles.description}>
-              The safe, fast and most secure way to bring cross-chain assets to Ethereum.
+              Safe, fast and private token transfers on Ethereum.
             </div>
             <div className={styles.points}>
               {/* v-tooltip="{
@@ -146,7 +153,7 @@ export default function Bridge() {
                             'bridge-tabs__withdraw-active':
                                 transferType === TRANSACTION_TYPE.WITHDRAW,
                         }" for div below */}
-            <div className={styles.bridgeTabs}>
+            <div>
               <ButtonGroup className={styles.bridgeTabs__tab}>
                 <ToggleButton
                   type="radio"
@@ -183,7 +190,16 @@ export default function Bridge() {
                   <div className={styles.chainDetails}>
                     {/* The first is a mock after we need to figure out how to 
                                         make this conditional */}
-                    <img src={polygonChainImage} alt="polygon chain logo" height="24" width="24" />
+                    {txType === 'deposit' ? (
+                      <img src={ethChainImage} alt="ethereum chain logo" height="24" width="24" />
+                    ) : (
+                      <img
+                        src={polygonChainImage}
+                        alt="polygon chain logo"
+                        height="24"
+                        width="24"
+                      />
+                    )}
                     {/* <img
                                             v-if="transferType === TRANSACTION_TYPE.WITHDRAW"
                                             src="~/assets/img/polygon-chain.svg"
@@ -203,7 +219,9 @@ export default function Bridge() {
                                                 ? parentNetwork.name
                                                 : childNetwork.name
                                         }} For div below */}
-                    <div className={styles.chainDetails__chainName}>Polygon mock chain</div>
+                    <div className={styles.chainDetails__chainName}>
+                      {txType === 'deposit' ? 'Ethereum Mainnet' : 'Polygon Nightfall L2'}
+                    </div>
                   </div>
                   {/* The first is mock. After we need to refactor for the scond div below */}
                   <div className={styles.balanceDetails}>
@@ -242,17 +260,11 @@ export default function Bridge() {
                           width="24"
                       > */}
                     {/* src={"tokenImage(selectedToken)"} */}
-                    <img
-                      className="token-details__token-img"
-                      src={ethChainImage}
-                      alt="token icon"
-                      height="24"
-                      width="24"
-                    />
+                    <img src={polygonChainImage} alt="polygon chain logo" height="24" width="24" />
 
                     <div className={styles.tokenDetails__tokenName}>
                       {/* {{ isDepositEther ? isDepositEther : selectedToken.name }} */}
-                      ETH
+                      MATIC
                     </div>
                     <img
                       className={styles.tokenDetails__arrow}
@@ -286,6 +298,11 @@ export default function Bridge() {
               <div className={styles.toLabel}>To</div>
               <div className={styles.toChainAndBalanceDetails}>
                 <div className={styles.chainDetails}>
+                  {txType === 'withdraw' ? (
+                    <img src={ethChainImage} alt="ethereum chain logo" height="24" width="24" />
+                  ) : (
+                    <img src={polygonChainImage} alt="polygon chain logo" height="24" width="24" />
+                  )}
                   {/* <img
                                         v-if="transferType === TRANSACTION_TYPE.DEPOSIT"
                                         src="~/assets/img/polygon-chain.svg"
@@ -309,7 +326,9 @@ export default function Bridge() {
                                     }}
                                         chain
                                     </div> */}
-                  <div className={styles.chainDetails__chainName}>Polygon mock chain</div>
+                  <div className={styles.chainDetails__chainName}>
+                    {txType === 'deposit' ? 'Polygon Nightfall L2' : 'Ethereum Mainnet'}
+                  </div>
                 </div>
                 {/* <div
                                     v-if="selectedToken"
@@ -333,7 +352,9 @@ export default function Bridge() {
               {/* <span class="transfer-mode__label"> Transfer Mode: </span>
                             <span class="bridge-type">{{ selectedMode }} Bridge</span> */}
               <span className={styles.transferMode__label}> Transfer Mode: </span>
-              <span className={styles.bridgeType}>Deposit Bridge</span>
+              <span className={styles.bridgeType}>
+                {txType.charAt(0).toUpperCase() + txType.slice(1)} Bridge
+              </span>
               {/* <span
                                 v-if="
                                 isPosPlasmaCommonToken &&
@@ -358,6 +379,7 @@ export default function Bridge() {
                                 @onClick="transferToken"
                             /> */}
               <button className={styles.transferButton} onClick={handleShow}>
+                Transfer
                 {/* <button
                 className={styles.transferButton}
                 onClick={() => {
@@ -408,9 +430,7 @@ export default function Bridge() {
                 /> */}
         <Modal contentClassName={stylesModal.modalFather} show={show} onHide={() => setShow(false)}>
           <Modal.Header closeButton>
-            <div className={styles.modalTitle} onClick={triggerTx()}>
-              Confirm transaction
-            </div>
+            <div className={styles.modalTitle}>Confirm transaction</div>
           </Modal.Header>
           <Modal.Body>
             <div className={stylesModal.modalBody}>
@@ -433,28 +453,42 @@ export default function Bridge() {
                                   >{{ selectedToken.symbol[0] }}</span> */}
                 </div>
                 {/* font-heading-large font-bold ps-t-16 ps-b-6 */}
-                <div className={stylesModal.tokenDetails__val}>10 ETHER</div>
+                <div className={styles.tokenDetails__val}>{tokenAmountWei}</div>
                 {/* font-body-small */}
-                <div className={stylesModal.tokenDetails__usd}>$ 30000</div>
+                <div className={styles.tokenDetails__usd}>$xx.xx</div>
               </div>
 
               {/* Buttons */}
               <div>
-                <div className={stylesModal.networkButtons}>
-                  <div className={stylesModal.networkButtons__button1}>
-                    <span>GOERLI network</span>
+                <div className={styles.networkButtons}>
+                  <div className={styles.networkButtons__button1}>
+                    <span>
+                      {txType === 'deposit' ? 'Ethereum Mainnet' : 'Polygon Nightfall L2'}
+                    </span>
                   </div>
                   <MdArrowForwardIos />
-                  <div className={stylesModal.networkButtons__button2}>
-                    <span>MUMBAI network</span>
+                  <div className={styles.networkButtons__button2}>
+                    <span>
+                      {txType === 'deposit' ? 'Polygon Nightfall L2' : 'Ethereum Mainnet'}
+                    </span>
                   </div>
                 </div>
               </div>
-              <div className={stylesModal.divider}></div>
-              <div className={stylesModal.transferModeModal}>
-                <div className={stylesModal.transferModeModal__title}>
-                  <div className={stylesModal.transferModeModal__title__main}>Transfer Mode</div>
-                  <div className={stylesModal.transferModeModal__title__light}>PoS chain</div>
+              <div className={styles.divider}></div>
+              <div className={styles.transferModeModal}>
+                <div className={styles.transferModeModal__title}>
+                  <div className={styles.transferModeModal__title__main}>Transfer Mode</div>
+                  <div className={styles.transferModeModal__title__light}>
+                    <DropdownButton variant="light" title={transferMethod}>
+                      <Dropdown.Item onClick={() => setMethod('On-Chain')}>On-Chain</Dropdown.Item>
+                      <Dropdown.Item onClick={() => setMethod('Direct Transfer')}>
+                        Direct Transfer
+                      </Dropdown.Item>
+                      <Dropdown.Item onClick={() => setMethod('Instant Withdrawal')}>
+                        Instant Withdrawal
+                      </Dropdown.Item>
+                    </DropdownButton>
+                  </div>
                 </div>
                 <div className={stylesModal.transferModeModal__text}>
                   <span>PoS security is provided by the PoS validators.</span>
@@ -472,9 +506,11 @@ export default function Bridge() {
                   <div className={stylesModal.estimationFee__title__main}>
                     Estimation Transaction fee
                   </div>
-                  <div className={stylesModal.estimationFee__title__light}>~ $113,59</div>
+                  <div className={styles.estimationFee__title__light}>~ $x.xx</div>
                 </div>
-                <button className={stylesModal.continueTrasferButton}>Continue</button>
+                <button className={styles.continueTrasferButton} onClick={() => triggerTx()}>
+                  Continue
+                </button>
               </div>
             </div>
           </Modal.Body>

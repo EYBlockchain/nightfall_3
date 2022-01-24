@@ -2,9 +2,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styles from '../../styles/assets.module.scss';
 
-export default function Assets(token) {
-  console.log(token.tokenList);
-  const total = token.tokenList.reduce(
+export default function Assets({ tokenList }) {
+  console.log(tokenList);
+  const total = tokenList.reduce(
     (acc, curr) => acc + Number(curr.maticChainUsdBalance) * Number(curr.maticChainBalance),
     0,
   );
@@ -58,5 +58,5 @@ export default function Assets(token) {
 }
 
 Assets.propTypes = {
-  token: PropTypes.array.isRequired,
+  tokenList: PropTypes.array.isRequired,
 };
