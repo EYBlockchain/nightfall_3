@@ -1,0 +1,13 @@
+.item {  
+  display: flex;
+  
+  border-radius: 10px;
+  padding: 10px 100px;
+  margin-top: 20px;
+
+  font-size: medium;
+  &:hover {
+    cursor: pointer;
+    background-color: #eee;
+  }
+}
