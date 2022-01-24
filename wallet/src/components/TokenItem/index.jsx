@@ -5,20 +5,14 @@ import { AiOutlineDown } from 'react-icons/ai';
 import { Link } from 'react-router-dom';
 import styles from '../../styles/tokenItem.module.scss';
 import stylesModal from '../../styles/modal.module.scss';
-import starFilled from '../../assets/svg/star-filled.svg';
-// import starFilled from '../../assets/svg/star-filled.svg';
 import matic from '../../assets/svg/matic.svg';
 import usdt from '../../assets/svg/usdt.svg';
 import link from '../../assets/svg/link.svg';
 import aave from '../../assets/svg/aave.svg';
 import metamaskIcon from '../../assets/svg/metamask.svg';
-import ethereumImg from '../../assets/img/ethereum-chain.svg';
 import maticImg from '../../assets/img/polygon-chain.svg';
-import polyImg from '../../assets/img/polygon-chain.svg';
 import { UserContext } from '../../hooks/User';
 import transfer from '../../nightfall-browser/services/transfer';
-
-// export default function TokenItem({ token }) {
 
 const symbols = {
   matic,
@@ -36,8 +30,8 @@ export default function TokenItem({
 }) {
   const [showSendModal, setShowSendModal] = useState(false);
   const [state] = React.useContext(UserContext);
-  const [sendAddress, setSendAddress] = useState(state?.zkpKeys?.compressedPkd)
-  const [valueToSend, setTransferValue] = useState(0)
+  const defaultSend = state?.zkpKeys?.compressedPkd;
+  const [valueToSend, setTransferValue] = useState(0);
 
   async function sendTx() {
     const { rawTransaction } = await transfer({
@@ -45,7 +39,7 @@ export default function TokenItem({
       ercAddress: tokenAddress,
       tokenId: 0,
       recipientData: {
-        recipientCompressedPkds: [sendAddress],
+        recipientCompressedPkds: [defaultSend],
         values: [valueToSend],
       },
       nsk: state.zkpKeys.nsk,
@@ -180,12 +174,16 @@ export default function TokenItem({
           <div className={stylesModal.modalBody}>
             <div className={stylesModal.sendModal}>
               <div>
-                <input type="text" placeholder={state?.zkpKeys?.compressedPkd} onChange={e => setSendAddress(e.target.value)}/>
+                <input type="text" placeholder={state?.zkpKeys?.compressedPkd} />
                 <p>Enter a valid address existing on the Polygon Nightfall L2</p>
               </div>
               <div className={stylesModal.sendModalBalance}>
                 <div className={stylesModal.letfItems}>
-                  <input type="text" placeholder="0.00" onChange={e => setTransferValue(e.target.value)}/>
+                  <input
+                    type="text"
+                    placeholder="0.00"
+                    onChange={e => setTransferValue(e.target.value)}
+                  />
                   <div className={stylesModal.maxButton}>MAX</div>
                 </div>
                 <div className={stylesModal.rightItems}>
@@ -203,11 +201,13 @@ export default function TokenItem({
               </div>
 
               <div className={stylesModal.sendModalfooter}>
-                <img src={polyImg} />
+                <img src={maticImg} />
                 <p className={stylesModal.gasFee}>x.xxx {name} Gas Fee</p>
               </div>
             </div>
-            <button className={stylesModal.continueTrasferButton} onClick={() => sendTx()}>Continue</button>
+            <button className={stylesModal.continueTrasferButton} onClick={() => sendTx()}>
+              Continue
+            </button>
           </div>
         </Modal.Body>
       </Modal>

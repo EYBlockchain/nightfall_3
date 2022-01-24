@@ -208,7 +208,7 @@ export default function Wallet() {
   }, [state.mnemonic, state.nf3]);
 
   useEffect(() => {
-    if (typeof state.socket === 'undefined') {
+    if (typeof state.socket === 'undefined' && typeof state.zkpKeys !== 'undefined') {
       const socket = new WebSocket('ws://localhost:8082');
       // Connection opened
       socket.addEventListener('open', function () {
@@ -219,7 +219,11 @@ export default function Wallet() {
       // Listen for messages
       socket.addEventListener('message', async function (event) {
         console.log('Message from server ', event.data);
-        await blockProposedEventHandler(JSON.parse(event.data));
+        await blockProposedEventHandler(
+          JSON.parse(event.data),
+          state.zkpKeys.ivk,
+          state.zkpKeys.nsk,
+        );
       });
       setState({
         zkpKeys: state.zkpKeys,
