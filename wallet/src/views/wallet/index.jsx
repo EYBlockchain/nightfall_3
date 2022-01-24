@@ -11,6 +11,8 @@ import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import Assets from '../../components/Assets/index.jsx';
+import Header from '../../components/Header/header.jsx';
+import SideBar from '../../components/SideBar/index.jsx';
 import Tokens from '../../components/Tokens/index.jsx';
 import { getWalletBalance } from '../../nightfall-browser/services/commitment-storage.js';
 import styles from '../../styles/wallet.module.scss';
@@ -267,11 +269,19 @@ export default function Wallet() {
 
   return (
     <div className={styles.wallet}>
-      <div>
-        <WalletModal show={modalShow} onHide={() => setModalShow(false)} />
+      <Header />
+      <div className={styles.walletComponents}>
+        <div className={styles.walletComponents__left}>
+          <SideBar />
+        </div>
+        <div>
+          <WalletModal show={modalShow} onHide={() => setModalShow(false)} />
+        </div>
+        <div className={styles.walletComponents__right}>
+          <Assets tokenList={tokens} />
+          <Tokens tokenList={tokens} />
+        </div>
       </div>
-      <Assets tokenList={tokens} />
-      <Tokens tokenList={tokens} />
     </div>
   );
 }
