@@ -19,7 +19,6 @@ import {
   ethereumSigningKeyUser2,
   ethereumSigningKeyProposer1,
   ethereumSigningKeyProposer2,
-  ethereumSigningKeyProposer3,
   ethereumSigningKeyLiquidityProvider,
   ethereumSigningKeyChallenger,
   txPerBlock,
@@ -51,7 +50,6 @@ describe('Testing the Nightfall SDK', () => {
   const nf3User2 = new Nf3(web3WsUrl, ethereumSigningKeyUser2, environment);
   const nf3Proposer1 = new Nf3(web3WsUrl, ethereumSigningKeyProposer1, environment);
   const nf3Proposer2 = new Nf3(web3WsUrl, ethereumSigningKeyProposer2, environment);
-  const nf3Proposer3 = new Nf3(web3WsUrl, ethereumSigningKeyProposer3, environment);
   const nf3Challenger = new Nf3(web3WsUrl, ethereumSigningKeyChallenger, environment);
   const nf3LiquidityProvider = new Nf3(web3WsUrl, ethereumSigningKeyLiquidityProvider, environment);
 
@@ -161,7 +159,6 @@ describe('Testing the Nightfall SDK', () => {
     await nf3User2.init(mnemonicUser2); // 2nd client to do transfer tests and checks
     await nf3Proposer1.init(mnemonicProposer);
     await nf3Proposer2.init(mnemonicProposer);
-    await nf3Proposer3.init(mnemonicProposer);
     await nf3Challenger.init(mnemonicChallenger);
     await nf3LiquidityProvider.init(mnemonicLiquidityProvider);
 
@@ -176,7 +173,6 @@ describe('Testing the Nightfall SDK', () => {
     if (!(await nf3User2.healthcheck('client'))) throw new Error('Healthcheck failed');
     if (!(await nf3Proposer1.healthcheck('optimist'))) throw new Error('Healthcheck failed');
     if (!(await nf3Proposer2.healthcheck('optimist'))) throw new Error('Healthcheck failed');
-    if (!(await nf3Proposer3.healthcheck('optimist'))) throw new Error('Healthcheck failed');
     if (!(await nf3Challenger.healthcheck('optimist'))) throw new Error('Healthcheck failed');
     if (!(await nf3LiquidityProvider.healthcheck('optimist')))
       throw new Error('Healthcheck failed');
@@ -219,6 +215,19 @@ describe('Testing the Nightfall SDK', () => {
     const balances = await getERCInfo(erc20Address, nf3LiquidityProvider.ethereumAddress, web3);
     console.log(`BALANCES LIQUIDITY PROVIDER FOR ERC20 (${erc20Address}): `, balances);
 
+    const txDataToSign = await approve(
+      erc20Address,
+      nf3LiquidityProvider.ethereumAddress,
+      nf3LiquidityProvider.shieldContractAddress,
+      tokenType,
+      value,
+      web3,
+      !!nf3LiquidityProvider.ethereumSigningKey,
+    );
+    if (txDataToSign) {
+      await nf3LiquidityProvider.submitTransaction(txDataToSign, erc20Address, 0);
+    }
+
     // Liquidity provider for instant withdraws
     const emitter = await nf3User1.getInstantWithdrawalRequestedEmitter();
     emitter.on('data', async (withdrawTransactionHash, paidBy, amount) => {
@@ -228,25 +237,8 @@ describe('Testing the Nightfall SDK', () => {
         web3,
       );
       // approve tokens to be advanced by liquidity provider in the instant withdraw
-      let txDataToSign;
-      try {
-        txDataToSign = await approve(
-          erc20Address,
-          nf3LiquidityProvider.ethereumAddress,
-          nf3LiquidityProvider.shieldContractAddress,
-          tokenType,
-          value,
-          web3,
-          !!nf3LiquidityProvider.ethereumSigningKey,
-        );
-        if (txDataToSign) {
-          await nf3LiquidityProvider.submitTransaction(txDataToSign, erc20Address, 0);
-        }
-        await nf3LiquidityProvider.advanceInstantWithdrawal(withdrawTransactionHash);
-        stateBalance += fee + BLOCK_STAKE;
-      } catch (e) {
-        console.log(e);
-      }
+      await nf3LiquidityProvider.advanceInstantWithdrawal(withdrawTransactionHash);
+      stateBalance += fee + BLOCK_STAKE;
 
       console.log(`     Serviced instant-withdrawal request from ${paidBy}, with fee ${amount}`);
       await new Promise(resolve => setTimeout(resolve, 5000));
@@ -339,21 +331,6 @@ describe('Testing the Nightfall SDK', () => {
       expect(thisProposer.length).to.be.equal(1);
     });
 
-    it('should register other proposer', async () => {
-      let proposers;
-      ({ proposers } = await nf3Proposer3.getProposers());
-      // we have to pay 10 ETH to be registered
-      const startBalance = await getBalance(nf3Proposer3.ethereumAddress);
-      const res = await nf3Proposer3.registerProposer();
-      stateBalance += bond;
-      expectTransaction(res);
-      ({ proposers } = await nf3Proposer3.getProposers());
-      const endBalance = await getBalance(nf3Proposer3.ethereumAddress);
-      expect(endBalance - startBalance).to.closeTo(-bond, gasCosts);
-      const thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer3.ethereumAddress);
-      expect(thisProposer.length).to.be.equal(1);
-    });
-
     it('should de-register a proposer', async () => {
       let proposers;
       ({ proposers } = await nf3Proposer1.getProposers());
@@ -400,7 +377,6 @@ describe('Testing the Nightfall SDK', () => {
     after(async () => {
       // After the proposer tests, re-register proposers
       await nf3Proposer2.deregisterProposer();
-      await nf3Proposer3.deregisterProposer();
       await nf3Proposer1.registerProposer();
       stateBalance += bond;
     });
@@ -1366,7 +1342,6 @@ describe('Testing the Nightfall SDK', () => {
     nf3User2.close();
     nf3Proposer1.close();
     nf3Proposer2.close();
-    nf3Proposer3.close();
     nf3Challenger.close();
     nf3LiquidityProvider.close();
     closeWeb3Connection();
