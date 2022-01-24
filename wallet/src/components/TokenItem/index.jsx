@@ -13,7 +13,10 @@ import link from '../../assets/svg/link.svg';
 import aave from '../../assets/svg/aave.svg';
 import metamaskIcon from '../../assets/svg/metamask.svg';
 import ethereumImg from '../../assets/img/ethereum-chain.svg';
+import maticImg from '../../assets/img/polygon-chain.svg';
 import polyImg from '../../assets/img/polygon-chain.svg';
+import { UserContext } from '../../hooks/User';
+import transfer from '../../nightfall-browser/services/transfer';
 
 // export default function TokenItem({ token }) {
 
@@ -32,6 +35,25 @@ export default function TokenItem({
   tokenAddress,
 }) {
   const [showSendModal, setShowSendModal] = useState(false);
+  const [state] = React.useContext(UserContext);
+  const [sendAddress, setSendAddress] = useState(state?.zkpKeys?.compressedPkd)
+  const [valueToSend, setTransferValue] = useState(0)
+
+  async function sendTx() {
+    const { rawTransaction } = await transfer({
+      offchain: true,
+      ercAddress: tokenAddress,
+      tokenId: 0,
+      recipientData: {
+        recipientCompressedPkds: [sendAddress],
+        values: [valueToSend],
+      },
+      nsk: state.zkpKeys.nsk,
+      ask: state.zkpKeys.ask,
+      fee: 1,
+    });
+    return state.nf3.submitTransaction(rawTransaction, state.nf3.shieldContractAddress, 1);
+  }
   return (
     <div>
       {/* <div class="matic-tokens-list-item" @click="onTokenClick"> */}
@@ -158,17 +180,17 @@ export default function TokenItem({
           <div className={stylesModal.modalBody}>
             <div className={stylesModal.sendModal}>
               <div>
-                <input type="text" />
-                <p>Enter valid address existing on the Polygon Network</p>
+                <input type="text" placeholder={state?.zkpKeys?.compressedPkd} onChange={e => setSendAddress(e.target.value)}/>
+                <p>Enter a valid address existing on the Polygon Nightfall L2</p>
               </div>
               <div className={stylesModal.sendModalBalance}>
                 <div className={stylesModal.letfItems}>
-                  <input type="text" placeholder="0.00" />
+                  <input type="text" placeholder="0.00" onChange={e => setTransferValue(e.target.value)}/>
                   <div className={stylesModal.maxButton}>MAX</div>
                 </div>
                 <div className={stylesModal.rightItems}>
-                  <img src={ethereumImg} />
-                  <div>Ether (PoS-WETH)</div>
+                  <img src={maticImg} />
+                  <div>Matic (L2)</div>
                   <AiOutlineDown />
                 </div>
               </div>
@@ -182,10 +204,10 @@ export default function TokenItem({
 
               <div className={stylesModal.sendModalfooter}>
                 <img src={polyImg} />
-                <p className={stylesModal.gasFee}>0.00000000 nameToken Gas Fee</p>
+                <p className={stylesModal.gasFee}>x.xxx {name} Gas Fee</p>
               </div>
             </div>
-            <button className={stylesModal.continueTrasferButton}>Continue</button>
+            <button className={stylesModal.continueTrasferButton} onClick={() => sendTx()}>Continue</button>
           </div>
         </Modal.Body>
       </Modal>
