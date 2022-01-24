@@ -37,7 +37,7 @@ export default function Bridge() {
   console.log('Location', location);
   console.log('Bridge State', state);
   async function triggerTx() {
-    console.log('Tx Triggered');
+    console.log('Tx Triggered', txType);
     switch (txType) {
       case 'deposit': {
         await Nf3.Tokens.approve(
@@ -61,7 +61,7 @@ export default function Bridge() {
       }
 
       case 'withdraw': {
-        await withdraw({
+        const { rawTransaction } = await withdraw({
           ercAddress: location.tokenState.tokenAddress,
           tokenId: 0,
           value: tokenAmountWei,
@@ -71,15 +71,6 @@ export default function Bridge() {
           tokenType: 'ERC20',
           fees: 1,
         });
-        const { rawTransaction } = await deposit({
-          ercAddress: location.tokenState.tokenAddress,
-          tokenId: 0,
-          value: tokenAmountWei,
-          pkd: state.zkpKeys.pkd,
-          nsk: state.zkpKeys.nsk,
-          fee: 1,
-          tokenType: 'ERC20',
-        });
         console.log('rawTransaction', rawTransaction);
         console.log('props', location);
         return state.nf3.submitTransaction(rawTransaction, state.nf3.shieldContractAddress, 1);
@@ -88,6 +79,7 @@ export default function Bridge() {
       default:
         break;
     }
+    handleClose();
     return true;
   }
 
