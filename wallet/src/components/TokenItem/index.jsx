@@ -94,6 +94,7 @@ export default function TokenItem({
                 pathname: '/bridge',
                 tokenState: {
                   tokenAddress,
+                  initialTxType: 'deposit',
                 },
               }}
               className={styles.tokenListButton}
@@ -106,7 +107,16 @@ export default function TokenItem({
                             params: { type: TRANSACTION_TYPE.WITHDRAW, token },
                         }"
                         :event="isWithdrawDisabled(token) ? '' : 'click'" */}
-            <Link to="/bridge" className={styles.tokenListButton}>
+            <Link
+              to={{
+                pathname: '/bridge',
+                tokenState: {
+                  tokenAddress,
+                  initialTxType: 'withdraw',
+                },
+              }}
+              className={styles.tokenListButton}
+            >
               Withdraw
             </Link>
             {/* onClick="handleSendToken" */}

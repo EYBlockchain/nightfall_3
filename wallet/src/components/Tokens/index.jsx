@@ -4,7 +4,6 @@ import styles from '../../styles/tokens.module.scss';
 import TokenItem from '../TokenItem/index.jsx';
 
 export default function Tokens(token) {
-  console.log('Tokens in Asset', token);
   return (
     <div className={styles.maticTokensList}>
       <div className={styles.formHeader}>
@@ -104,6 +103,7 @@ export default function Tokens(token) {
             maticChainBalance={t.maticChainBalance}
             name={t.name}
             symbol={t.symbol}
+            tokenAddress={t.tokenAddress}
             key={index}
           />
         ))}
