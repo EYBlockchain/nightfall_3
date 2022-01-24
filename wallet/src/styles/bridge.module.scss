@@ -6,7 +6,19 @@
   transform: translate(-50%);
 }
 
+.bridgeComponent {
+  display: flex;
 
+  &__left {
+    min-width: 270px;
+    width: 15%;
+  }
+
+  &__right {
+    
+    width: 85%;
+  }
+}
 .warningBanner {
   margin: 0 -15px;
 }
