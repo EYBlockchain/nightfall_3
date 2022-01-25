@@ -297,8 +297,9 @@ export async function markNullifiedOnChain(
 // function to get the balance of commitments for each ERC address
 export async function getWalletBalance() {
   const db = await connectDB();
-  const vals = db.getAll(COMMITMENTS_COLLECTION);
-  const wallet = vals.filter(v => !v.isNullified && v.isOnChain >= 0);
+  const vals = await db.getAll(COMMITMENTS_COLLECTION);
+  const wallet =
+    Object.keys(vals).length > 0 ? vals.filter(v => !v.isNullified && v.isOnChain >= 0) : [];
   // the below is a little complex.  First we extract the ercAddress, tokenId and value
   // from the preimage.  Then we format them nicely. We don't care about the value of the
   // tokenId, other than if it's zero or not (indicating the token type). Then we filter
@@ -327,11 +328,146 @@ export async function getWalletBalance() {
     }, {});
 }
 
+// function to get the balance of pending deposits commitments for each ERC address
+export async function getWalletPendingDepositBalance() {
+  const db = await connectDB();
+  const vals = await db.getAll(COMMITMENTS_COLLECTION);
+  const wallet =
+    Object.keys(vals).length > 0
+      ? vals.filter(v => v.isDeposited && !v.isNullified && v.isOnChain === -1)
+      : [];
+  // the below is a little complex.  First we extract the ercAddress, tokenId and value
+  // from the preimage.  Then we format them nicely. We don't care about the value of the
+  // tokenId, other than if it's zero or not (indicating the token type). Then we filter
+  // any commitments of zero value and tokenId (meaningless commitments), then we
+  // work out the balance contribution of each commitment  - a 721 token has no value field in the
+  // commitment but each 721 token counts as a balance of 1. Then finally add up the individual
+  // commitment balances to get a balance for each erc address.
+  console.log(`Wallet: ${JSON.stringify(wallet)}`);
+  return wallet
+    .map(e => ({
+      ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
+      compressedPkd: e.preimage.compressedPkd,
+      tokenId: !!BigInt(e.preimage.tokenId),
+      value: Number(BigInt(e.preimage.value)),
+    }))
+    .filter(e => e.tokenId || e.value > 0) // there should be no commitments with tokenId and value of ZERO
+    .map(e => ({
+      compressedPkd: e.compressedPkd,
+      ercAddress: e.ercAddress,
+      balance: e.tokenId ? 1 : e.value,
+    }))
+    .reduce((acc, e) => {
+      if (!acc[e.compressedPkd]) acc[e.compressedPkd] = {};
+      if (!acc[e.compressedPkd][e.ercAddress]) acc[e.compressedPkd][e.ercAddress] = 0;
+      acc[e.compressedPkd][e.ercAddress] += e.balance;
+      return acc;
+    }, {});
+}
+
+export async function getWalletPendingSpentBalance() {
+  const db = await connectDB();
+  const vals = await db.getAll(COMMITMENTS_COLLECTION);
+  const wallet =
+    Object.keys(vals).length > 0 ? vals.filter(v => v.isNullified && v.isOnChain === -1) : [];
+  // the below is a little complex.  First we extract the ercAddress, tokenId and value
+  // from the preimage.  Then we format them nicely. We don't care about the value of the
+  // tokenId, other than if it's zero or not (indicating the token type). Then we filter
+  // any commitments of zero value and tokenId (meaningless commitments), then we
+  // work out the balance contribution of each commitment  - a 721 token has no value field in the
+  // commitment but each 721 token counts as a balance of 1. Then finally add up the individual
+  // commitment balances to get a balance for each erc address.
+  return wallet
+    .map(e => ({
+      ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
+      compressedPkd: e.preimage.compressedPkd,
+      tokenId: !!BigInt(e.preimage.tokenId),
+      value: Number(BigInt(e.preimage.value)),
+    }))
+    .filter(e => e.tokenId || e.value > 0) // there should be no commitments with tokenId and value of ZERO
+    .map(e => ({
+      compressedPkd: e.compressedPkd,
+      ercAddress: e.ercAddress,
+      balance: e.tokenId ? 1 : e.value,
+    }))
+    .reduce((acc, e) => {
+      if (!acc[e.compressedPkd]) acc[e.compressedPkd] = {};
+      if (!acc[e.compressedPkd][e.ercAddress]) acc[e.compressedPkd][e.ercAddress] = 0;
+      acc[e.compressedPkd][e.ercAddress] += e.balance;
+      return acc;
+    }, {});
+}
+
+// function to get the balance of commitments for each ERC address
+export async function getWalletBalanceDetails(compressedPkd, ercList) {
+  let ercAddressList = ercList || [];
+  ercAddressList = ercAddressList.map(e => e.toUpperCase());
+  const db = await connectDB();
+  const vals = await db.getAll(COMMITMENTS_COLLECTION);
+  const wallet =
+    Object.keys(vals).length > 0 ? vals.filter(v => !v.isNullified && v.isOnChain >= 0) : [];
+
+  // the below is a little complex.  First we extract the ercAddress, tokenId and value
+  // from the preimage.  Then we format them nicely. We don't care about the value of the
+  // tokenId, other than if it's zero or not (indicating the token type). Then we filter
+  // any commitments of zero value and tokenId (meaningless commitments), then we
+  // work out the balance contribution of each commitment  - a 721 token has no value field in the
+  // commitment but each 721 token counts as a balance of 1. Then finally add up the individual
+  // commitment balances to get a balance for each erc address.
+  const res1 = wallet.map(e => ({
+    ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
+    compressedPkd: e.preimage.compressedPkd,
+    tokenId: !!BigInt(e.preimage.tokenId),
+    value: Number(BigInt(e.preimage.value)),
+    id: Number(BigInt(e.preimage.tokenId)),
+  }));
+  const res2 = res1.filter(
+    e =>
+      (e.tokenId || e.value > 0) &&
+      e.compressedPkd === compressedPkd &&
+      (ercAddressList.length === 0 || ercAddressList.includes(e.ercAddress.toUpperCase())),
+  );
+  console.log('RES2: ', res2);
+  const res = wallet
+    .map(e => ({
+      ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
+      compressedPkd: e.preimage.compressedPkd,
+      tokenId: !!BigInt(e.preimage.tokenId),
+      value: Number(BigInt(e.preimage.value)),
+      id: Number(BigInt(e.preimage.tokenId)),
+    }))
+    .filter(
+      e =>
+        (e.tokenId || e.value > 0) &&
+        e.compressedPkd === compressedPkd &&
+        (ercAddressList.length === 0 || ercAddressList.includes(e.ercAddress.toUpperCase())),
+    ) // there should be no commitments with tokenId and value of ZERO
+    .map(e => ({
+      compressedPkd: e.compressedPkd,
+      ercAddress: e.ercAddress,
+      balance: e.tokenId ? 1 : e.value,
+      tokenId: e.id,
+    }))
+    .reduce((acc, e) => {
+      if (!acc[e.compressedPkd]) acc[e.compressedPkd] = {};
+      if (!acc[e.compressedPkd][e.ercAddress]) acc[e.compressedPkd][e.ercAddress] = [];
+      if (e.tokenId === 0 && acc[e.compressedPkd][e.ercAddress].length > 0) {
+        acc[e.compressedPkd][e.ercAddress][0].balance += e.balance;
+      } else {
+        acc[e.compressedPkd][e.ercAddress].push({ balance: e.balance, tokenId: e.tokenId });
+      }
+      return acc;
+    }, {});
+
+  return res;
+}
+
 // function to get the commitments for each ERC address of a pkd
 export async function getWalletCommitments() {
   const db = await connectDB();
-  const vals = db.getAll(COMMITMENTS_COLLECTION);
-  const wallet = vals.filter(v => !v.isNullified && v.isOnChain >= 0);
+  const vals = await db.getAll(COMMITMENTS_COLLECTION);
+  const wallet =
+    Object.keys(vals).length > 0 ? vals.filter(v => !v.isNullified && v.isOnChain >= 0) : [];
   // the below is a little complex.  First we extract the ercAddress, tokenId and value
   // from the preimage.  Then we format them nicely. We don't care about the value of the
   // tokenId, other than if it's zero or not (indicating the token type). Then we filter
@@ -363,10 +499,11 @@ export async function getWalletCommitments() {
 // function to get the withdraw commitments for each ERC address of a pkd
 export async function getWithdrawCommitments() {
   const db = await connectDB();
-  const vals = db.getAll(COMMITMENTS_COLLECTION);
-  const withdraws = vals.filter(
-    v => v.isNullified && v.isOnChain >= 0 && v.nullifierTransactionType === '3',
-  );
+  const vals = await db.getAll(COMMITMENTS_COLLECTION);
+  const withdraws =
+    Object.keys(vals).length > 0
+      ? vals.filter(v => v.isNullified && v.isOnChain >= 0 && v.nullifierTransactionType === '3')
+      : [];
 
   // To check validity we need the withdrawal transaction, the block the transaction is in and all other
   // transactions in the block. We need this for on-chain validity checks.
@@ -413,14 +550,14 @@ export async function getWithdrawCommitments() {
 // as above, but removes output commitments
 export async function deleteCommitments(commitments) {
   const db = await connectDB();
-  const vals = db.getAll(COMMITMENTS_COLLECTION);
+  const vals = await db.getAll(COMMITMENTS_COLLECTION);
   const f = vals.filter(v => commitments.includes(v._id) && v.isOnChain === -1);
   return Promise.all(f.map(deleteC => db.delete(COMMITMENTS_COLLECTION, deleteC._id)));
 }
 
 export async function getCommitmentsFromBlockNumberL2(blockNumberL2) {
   const db = await connectDB();
-  const vals = db.getAll(COMMITMENTS_COLLECTION);
+  const vals = await db.getAll(COMMITMENTS_COLLECTION);
   const f = vals.filter(v => v.isOnChain >= blockNumberL2);
   return f;
 }

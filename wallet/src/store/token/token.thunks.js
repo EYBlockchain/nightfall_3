@@ -2,6 +2,12 @@
 import * as Nf3 from 'nf3';
 import * as tokenActions from './token.actions';
 import * as Storage from '../../utils/lib/local-storage';
+import {
+  getWalletBalance,
+  getWalletBalanceDetails,
+  getWalletPendingDepositBalance,
+  getWalletPendingSpentBalance,
+} from '../../nightfall-browser/services/commitment-storage';
 
 const getTokens = tokens => {
   if (tokens === null || typeof tokens === 'undefined' || Object.keys(tokens).length === 0)
@@ -85,14 +91,15 @@ function tokensLoad(initTokens) {
     } = getState();
     if (typeof nf3.ethereumAddress === 'undefined') return;
     const storedTokens = Storage.tokensGet(nf3.zkpKeys.compressedPkd);
-    const l2PendingDeposit = await nf3.getLayer2PendingDepositBalances();
-    const l2PendingSpent = await nf3.getLayer2PendingSpentBalances();
-    nf3
-      .getLayer2Balances()
+    const l2PendingDeposit = await getWalletPendingDepositBalance();
+    const l2PendingSpent = await getWalletPendingSpentBalance();
+    getWalletBalance()
       .then(l2Balance => {
+        console.log(`L2 BALANCE: ${JSON.stringify(l2Balance)}`);
         const { compressedPkd } = nf3.zkpKeys;
         const myL2Balance =
           typeof l2Balance[compressedPkd] === 'undefined' ? {} : l2Balance[compressedPkd];
+        console.log(`myL2Balance: ${JSON.stringify(myL2Balance)}`);
         const myL2PendingDeposit =
           typeof l2PendingDeposit[compressedPkd] === 'undefined'
             ? {}
@@ -107,6 +114,7 @@ function tokensLoad(initTokens) {
             ...Object.keys(myL2PendingSpent),
           ]),
         ]);
+        console.log(`L2Details: ${JSON.stringify(l2Details)}`);
         const tokenPool = mergeTokens(getTokens(l2Details), [
           ...getTokens(storedTokens),
           ...getTokens(initTokens),
@@ -121,8 +129,7 @@ function tokensLoad(initTokens) {
               tokenType: el.tokenType,
             })
               .then(tokenInfo => {
-                nf3
-                  .getLayer2BalancesDetails([el.tokenAddress])
+                getWalletBalanceDetails(nf3.zkpKeys.compressedPkd, [el.tokenAddress])
                   .then(tokenL2Details => {
                     let l2TokenId = null;
                     if (el.tokenBalanceL2 !== '0') {

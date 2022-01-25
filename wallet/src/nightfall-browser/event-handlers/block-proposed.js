@@ -14,7 +14,7 @@ import {
 } from '../services/commitment-storage';
 // import getProposeBlockCalldata from '../services/process-calldata';
 import Secrets from '../classes/secrets';
-import { ivks, nsks } from '../services/keys';
+// import { ivks, nsks } from '../services/keys';
 import { getLatestTree, saveTree, saveTransaction, saveBlock } from '../services/database';
 
 const { ZERO } = config;
@@ -22,7 +22,7 @@ const { ZERO } = config;
 /**
 This handler runs whenever a BlockProposed event is emitted by the blockchain
 */
-async function blockProposedEventHandler(data) {
+async function blockProposedEventHandler(data, ivks, nsks) {
   console.log(`Received Block Proposed event: ${JSON.stringify(data)}`);
   // ivk will be used to decrypt secrets whilst nsk will be used to calculate nullifiers for commitments and store them
   const { blockNumber: currentBlockCount, transactionHash: transactionHashL1 } = data;
