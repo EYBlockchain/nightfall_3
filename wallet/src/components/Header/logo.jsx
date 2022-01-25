@@ -9,7 +9,7 @@ export default function Logo() {
         <img src={logo} />
       </div>
       <div className={styles.logoText}>
-        <div className={styles.logoTitle}>polygon nighfall</div>
+        <div className={styles.logoTitle}>nightfall</div>
         <span>Wallet</span>
       </div>
     </div>

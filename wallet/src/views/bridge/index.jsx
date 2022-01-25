@@ -4,8 +4,7 @@ import Dropdown from 'react-bootstrap/Dropdown';
 import DropdownButton from 'react-bootstrap/DropdownButton';
 import { MdArrowForwardIos } from 'react-icons/md';
 import * as Nf3 from 'nf3';
-import { Link, useLocation } from 'react-router-dom';
-import Button from 'react-bootstrap/esm/Button';
+import { useLocation } from 'react-router-dom';
 import ToggleButton from 'react-bootstrap/ToggleButton';
 import ButtonGroup from 'react-bootstrap/ButtonGroup';
 import styles from '../../styles/bridge.module.scss';
@@ -286,11 +285,6 @@ export default function Bridge() {
                       <button className={styles.transferButton} onClick={handleShow}>
                         Transfer
                       </button>
-                    </div>
-                    <div>
-                      <Link to="/wallet">
-                        <Button variant="outline-secondary">Return to Wallet</Button>{' '}
-                      </Link>
                     </div>
                   </div>
                 </div>
