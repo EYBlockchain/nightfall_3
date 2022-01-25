@@ -20,6 +20,10 @@ import deposit from '../../nightfall-browser/services/deposit';
 import withdraw from '../../nightfall-browser/services/withdraw';
 import Header from '../../components/Header/header.jsx';
 import SideBar from '../../components/SideBar/index.jsx';
+import approveImg from '../../assets/img/modalImages/adeposit_approve1.png';
+import depositConfirmed from '../../assets/img/modalImages/adeposit_confirmed.png';
+import successHand from '../../assets/img/modalImages/success-hand.png';
+import transferCompletedImg from '../../assets/img/modalImages/tranferCompleted.png';
 
 export default function Bridge() {
   const [state] = React.useContext(UserContext);
@@ -34,6 +38,34 @@ export default function Bridge() {
 
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
+
+  const [showModalConfirm, setShowModalConfirm] = useState(false);
+  const [showModalTransferInProgress, setShowModalTransferInProgress] = useState(true);
+  const [showModalTransferEnRoute, setShowModalTransferEnRoute] = useState(false);
+  const [showModalTransferConfirmed, setShowModalTransferConfirmed] = useState(false);
+
+  function timeout(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  const handleCloseConfirmModal = () => {
+    setShowModalConfirm(false);
+    setShowModalTransferInProgress(false);
+    setShowModalTransferEnRoute(false);
+    setShowModalTransferConfirmed(false);
+  };
+
+  const handleShowModalConfirm = async () => {
+    setShowModalConfirm(true);
+    setShowModalTransferInProgress(true);
+    await timeout(3000);
+    setShowModalTransferInProgress(false);
+    setShowModalTransferEnRoute(true);
+
+    await timeout(3000);
+    setShowModalTransferEnRoute(false);
+    setShowModalTransferConfirmed(true);
+  };
 
   console.log('Location', location);
   console.log('Bridge State', state);
@@ -290,6 +322,9 @@ export default function Bridge() {
                       <button className={styles.transferButton} onClick={handleShow}>
                         Transfer
                       </button>
+                      <button className={styles.transferButton} onClick={handleShowModalConfirm}>
+                        testModal
+                      </button>
                     </div>
                   </div>
                   <img
@@ -429,16 +464,149 @@ export default function Bridge() {
               <div className={stylesModal.tokenDetails__usd}>$ 30000</div>
             </div>
 
-            {/* Buttons */}
-            <div>
-              <div className={stylesModal.networkButtons}>
-                <div className={stylesModal.networkButtons__button1}>
-                  <span>GOERLI network</span>
-                </div>
-                <MdArrowForwardIos />
-                <div className={stylesModal.networkButtons__button2}>
-                  <span>MUMBAI network</span>
-                </div>
+                      {/* Buttons */}
+                      <div>
+                        <div className={stylesModal.networkButtons}>
+                          <div className={stylesModal.networkButtons__button1}>
+                            <span>
+                              {txType === 'deposit' ? 'Ethereum Mainnet' : 'Polygon Nightfall L2'}
+                            </span>
+                          </div>
+                          <MdArrowForwardIos />
+                          <div className={stylesModal.networkButtons__button2}>
+                            <span>
+                              {txType === 'deposit' ? 'Polygon Nightfall L2' : 'Ethereum Mainnet'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className={stylesModal.divider}></div>
+                      <div className={stylesModal.transferModeModal}>
+                        <div className={stylesModal.transferModeModal__title}>
+                          <div className={stylesModal.transferModeModal__title__main}>
+                            Transfer Mode
+                          </div>
+                          <div className={stylesModal.transferModeModal__title__light}>
+                            <DropdownButton variant="light" title={transferMethod}>
+                              <Dropdown.Item onClick={() => setMethod('On-Chain')}>
+                                On-Chain
+                              </Dropdown.Item>
+                              <Dropdown.Item onClick={() => setMethod('Direct Transfer')}>
+                                Direct Transfer
+                              </Dropdown.Item>
+                              <Dropdown.Item onClick={() => setMethod('Instant Withdrawal')}>
+                                Instant Withdrawal
+                              </Dropdown.Item>
+                            </DropdownButton>
+                          </div>
+                        </div>
+                        <div className={stylesModal.transferModeModal__text}>
+                          <span>PoS security is provided by the PoS validators.</span>
+                          {/* <span v-else>
+                                  Plasma provides advanced security with plasma exit
+                                  mechanism. </span>It will take approximately */}
+                          <span> It will take approximately </span>
+                          <span className="text-primary"> 3 hours</span> when you have to transfer
+                          your funds back to Ethereum.
+                        </div>
+                      </div>
+                      <div className={stylesModal.divider}></div>
+                      <div className={stylesModal.estimationFee}>
+                        <div className={stylesModal.estimationFee__title}>
+                          <div className={stylesModal.estimationFee__title__main}>
+                            Estimation Transaction fee
+                          </div>
+                          <div className={stylesModal.estimationFee__title__light}>~ $113,59</div>
+                        </div>
+                        <button
+                          className={stylesModal.continueTrasferButton}
+                          onClick={() => triggerTx()}
+                        >
+                          Continue
+                        </button>
+                      </div>
+                    </div>
+                  </Modal.Body>
+                </Modal>
+
+                {/* TRANSFER IN PROGRESS MODAL */}
+                <Modal
+                  contentClassName={stylesModal.modalFather}
+                  show={showModalConfirm}
+                  onHide={handleCloseConfirmModal}
+                >
+                  <Modal.Header closeButton>
+                    <div className={styles.modalTitle}>Transfer in progress</div>
+                  </Modal.Header>
+                  {showModalTransferInProgress && (
+                    <Modal.Body>
+                      <div className={stylesModal.modalBody}>
+                        <div className={styles.processImages}>
+                          <img src={approveImg} />
+                        </div>
+                        <div className={stylesModal.divider}></div>
+                        <div className={styles.spinnerBox}>
+                          <div className={styles.spinnerBoard}>
+                            <div className={styles.spinner}></div>
+                          </div>
+                        </div>
+
+                        <div className={stylesModal.transferModeModal}>
+                          <h3>Transaction in progress</h3>
+                          <div className={stylesModal.modalText}>
+                            Ethereum transactions can take longer time to complete based upon
+                            network congestion. Please wait or increase the gas price of the
+                            transaction
+                          </div>
+                          <a className={styles.footerText}>View on etherscan</a>
+                        </div>
+                      </div>
+                    </Modal.Body>
+                  )}
+
+                  {showModalTransferEnRoute && (
+                    <Modal.Body>
+                      <div className={stylesModal.modalBody}>
+                        <div className={styles.processImages}>
+                          <img src={depositConfirmed} />
+                        </div>
+                        <div className={stylesModal.divider}></div>
+                        <div className={styles.spinnerBox}>
+                          <img src={successHand} />
+                        </div>
+                        <div className={stylesModal.transferModeModal}>
+                          <h3>Transaction in route</h3>
+                          <div className={stylesModal.modalText}>
+                            Your transfer is en-route. It will take ~7-8 minutes for the deposit to
+                            get completed. On completion, your balance will be updated.
+                          </div>
+                          <a className={styles.footerText}>View on etherscan</a>
+                        </div>
+                      </div>
+                    </Modal.Body>
+                  )}
+
+                  {showModalTransferConfirmed && (
+                    <Modal.Body>
+                      <div className={stylesModal.modalBody}>
+                        <div className={styles.processImages}>
+                          <img src={transferCompletedImg} />
+                        </div>
+                        <div className={stylesModal.divider}></div>
+                        <div className={styles.spinnerBox}>
+                          <img src={successHand} />
+                        </div>
+                        <div className={stylesModal.transferModeModal}>
+                          <h3>Transfer completed sucessfully.</h3>
+                          <div className={stylesModal.modalText}>
+                            Your transfer is completed sucessfully.
+                          </div>
+                          <a className={styles.footerText}>View on etherscan</a>
+                        </div>
+                      </div>
+                    </Modal.Body>
+                  )}
+                </Modal>
               </div>
             </div>
             <div className={stylesModal.divider}></div>
