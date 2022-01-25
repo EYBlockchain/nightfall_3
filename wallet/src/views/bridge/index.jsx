@@ -4,8 +4,7 @@ import Dropdown from 'react-bootstrap/Dropdown';
 import DropdownButton from 'react-bootstrap/DropdownButton';
 import { MdArrowForwardIos } from 'react-icons/md';
 import * as Nf3 from 'nf3';
-import { Link, useLocation } from 'react-router-dom';
-import Button from 'react-bootstrap/esm/Button';
+import { useLocation } from 'react-router-dom';
 import ToggleButton from 'react-bootstrap/ToggleButton';
 import ButtonGroup from 'react-bootstrap/ButtonGroup';
 import styles from '../../styles/bridge.module.scss';
@@ -212,7 +211,77 @@ export default function Bridge() {
 
                           <div className={styles.tokenDetails__tokenName}>
                             {/* {{ isDepositEther ? isDepositEther : selectedToken.name }} */}
-                    MATIC
+                            MATIC
+                          </div>
+                          <img
+                            className={styles.tokenDetails__arrow}
+                            src={discloserBottomImage}
+                            alt="discloser icon"
+                            height="24"
+                            width="24"
+                          />
+                        </div>
+                        <div className={styles.amountDetails}>
+                          <input
+                            className={styles.amountDetails__textfield}
+                            type="text"
+                            placeholder="0.00"
+                            value={tokenAmountWei}
+                            onChange={e => setTransferValue(e.target.value)}
+                          />
+                          <button
+                            className={styles.amountDetails__maxButton}
+                            onClick={() => {}}
+                            variant="light"
+                          >
+                            MAX
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <div className={styles.downArrowSection}>
+                      <img src={lightArrowImage} alt="to arrow" />
+                    </div>
+                    <div className={styles.toLabel}>To</div>
+                    <div className={styles.toChainAndBalanceDetails}>
+                      <div className={styles.chainDetails}>
+                        {txType === 'withdraw' ? (
+                          <img
+                            src={ethChainImage}
+                            alt="ethereum chain logo"
+                            height="24"
+                            width="24"
+                          />
+                        ) : (
+                          <img
+                            src={polygonChainImage}
+                            alt="polygon chain logo"
+                            height="24"
+                            width="24"
+                          />
+                        )}
+                        <div className={styles.chainDetails__chainName}>
+                          {txType === 'deposit' ? 'Polygon Nightfall L2' : 'Ethereum Mainnet'}
+                        </div>
+                      </div>
+                      <div className={styles.balanceDetails}>
+                        <span className={styles.balanceDetails__label}> Balance: </span>
+                        <span className={styles.balanceDetails__balance}>10 MATIC</span>
+                      </div>
+                    </div>
+                    <div className={styles.transferMode}>
+                      {/* <span class="transfer-mode__label"> Transfer Mode: </span>
+                            <span class="bridge-type">{{ selectedMode }} Bridge</span> */}
+                      <span className={styles.transferMode__label}> Transfer Mode: </span>
+                      <span className={styles.bridgeType}>
+                        {txType.charAt(0).toUpperCase() + txType.slice(1)} Bridge
+                      </span>
+                    </div>
+                    <div>
+                      <button className={styles.transferButton} onClick={handleShow}>
+                        Transfer
+                      </button>
+                    </div>
                   </div>
                   <img
                     className={styles.tokenDetails__arrow}
