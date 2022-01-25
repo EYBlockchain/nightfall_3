@@ -7,7 +7,8 @@ export default function SideItem({ text, link, Icon }) {
   return (
     <Link to={link}>
       <div className={window.location.pathname !== link ? styles.itemInactive : styles.itemActive}>
-        <Icon size={24} />
+        {/* <Icon size={24} /> */}
+        <img src={window.location.pathname !== link ? Icon[1] : Icon[0]} />
         <div className={styles.itemText}>{text}</div>
       </div>
     </Link>
