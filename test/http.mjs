@@ -81,6 +81,7 @@ describe('Testing the http API', () => {
     // next we need to wait for 12 blocks for confirmation
     // TODO this is only suitable for running on ganache; it won't cope with a
     // chain reorganisation.
+    /*
     console.log('waiting 12 blocks');
     const startBlock = await web3.eth.getBlock('latest');
     await new Promise(resolve => {
@@ -92,9 +93,11 @@ describe('Testing the http API', () => {
         }
       }, 1000);
     });
+    */
   };
 
   const waitForTxExecution = async (count, txType) => {
+    console.log('waiting for twelve confirmations of event');
     while (count === logCounts[txType]) {
       // eslint-disable-next-line no-await-in-loop
       await new Promise(resolve => setTimeout(resolve, 3000));
@@ -102,7 +105,7 @@ describe('Testing the http API', () => {
     // next we need to wait for 12 blocks for confirmation
     // TODO this is only suitable for running on ganache; it won't cope with a
     // chain reorganisation.
-    console.log('waiting for twelve confirmations of event');
+    /*
     const startBlock = await web3.eth.getBlock('latest');
     await new Promise(resolve => {
       const id = setInterval(async () => {
@@ -113,6 +116,7 @@ describe('Testing the http API', () => {
         }
       }, 1000);
     });
+    */
     console.log('event confirmed');
   };
 
