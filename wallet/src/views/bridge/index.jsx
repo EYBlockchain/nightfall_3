@@ -150,10 +150,6 @@ export default function Bridge() {
               </div>
               <div className={styles.bridgeWrapper}>
                 <div>
-                  {/* class="{
-                                  'bridge-tabs__withdraw-active':
-                                      transferType === TRANSACTION_TYPE.WITHDRAW,
-                              }" for div below */}
                   <div>
                     <ButtonGroup className={styles.bridgeTabs__tab}>
                       <ToggleButton
@@ -189,8 +185,6 @@ export default function Bridge() {
                     <div className={styles.fromSection}>
                       <div className={styles.chainAndBalanceDetails}>
                         <div className={styles.chainDetails}>
-                          {/* The first is a mock after we need to figure out how to 
-                                              make this conditional */}
                           {txType === 'deposit' ? (
                             <img
                               src={ethChainImage}
@@ -206,204 +200,78 @@ export default function Bridge() {
                               width="24"
                             />
                           )}
-                          {/* <img
-                                                  v-if="transferType === TRANSACTION_TYPE.WITHDRAW"
-                                                  src="~/assets/img/polygon-chain.svg"
-                                                  alt="polygon chain logo"
-                                                  height="24"
-                                                  width="24"
-                                              > */}
-                          {/* <img
-                                                  v-else-if="transferType === TRANSACTION_TYPE.DEPOSIT"
-                                                  src="~/assets/img/ethereum-chain.svg"
-                                                  alt="ethereum chain logo"
-                                                  height="24"
-                                                  width="24"
-                                              > */}
-                          {/* {{
-                                                  transferType === TRANSACTION_TYPE.DEPOSIT
-                                                      ? parentNetwork.name
-                                                      : childNetwork.name
-                                              }} For div below */}
                           <div className={styles.chainDetails__chainName}>
                             {txType === 'deposit' ? 'Ethereum Mainnet' : 'Polygon Nightfall L2'}
                           </div>
                         </div>
-                        <div className={styles.points}>
-                          {/* v-tooltip="{
-                                      content: fastWithdrawInfoMsg,
-                                      placement: 'top-center',
-                                  }"
-                                  :to="{ name: 'fast-withdraw' }" 
-                                  For link below */}
-                          <a className={styles.linkButton}>Fast Withdraw</a>
-                          {/* :to="{ name: 'on-ramp' }" 
-                                  For link below */}
-                          <a className={styles.linkButton}>On Ramp Transfers</a>
-                          <a
-                            id="youtube-video-tutorial"
-                            className={styles.linkButton}
-                            href="YOUTUBE_VIDEO_TUTORIAL"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            How it works?
-                          </a>
-                          <a
-                            id="faq-docs"
-                            className={styles.linkButton}
-                            href="FAQ_DOCS_LINK"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            FAQ
-                          </a>
-                          <a
-                            id="user-guide"
-                            className={styles.linkButton}
-                            href="USER_GUIDE_DOCS_LINK"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            User guide
-                          </a>
-                        </div>
                       </div>
-                      <div className={styles.bottomSection}>
-                        <img src={bridgeInfoImage} alt="" height="219" width="326" />
+                      <div className={styles.tokenAndAmountDetails}>
+                        <div className={styles.tokenDetails} onClick={() => {}}>
+                          <img
+                            src={polygonChainImage}
+                            alt="polygon chain logo"
+                            height="24"
+                            width="24"
+                          />
+
+                          <div className={styles.tokenDetails__tokenName}>
+                            {/* {{ isDepositEther ? isDepositEther : selectedToken.name }} */}
+                            MATIC
+                          </div>
+                          <img
+                            className={styles.tokenDetails__arrow}
+                            src={discloserBottomImage}
+                            alt="discloser icon"
+                            height="24"
+                            width="24"
+                          />
+                        </div>
+                        <div className={styles.amountDetails}>
+                          <input
+                            className={styles.amountDetails__textfield}
+                            type="text"
+                            placeholder="0.00"
+                            value={tokenAmountWei}
+                            onChange={e => setTransferValue(e.target.value)}
+                          />
+                          <button
+                            className={styles.amountDetails__maxButton}
+                            onClick={() => {}}
+                            variant="light"
+                          >
+                            MAX
+                          </button>
+                        </div>
                       </div>
                     </div>
-                    <div className={styles.bridgeWrapper}>
-                      <div>
-                        {/* class="{
-                                  'bridge-tabs__withdraw-active':
-                                      transferType === TRANSACTION_TYPE.WITHDRAW,
-                              }" for div below */}
-                        <div className={styles.bridgeTabs}>
-                          {/* onclick = "onSwitchTransferType" */}
-                          <div className={styles.bridgeTabs__tab} onClick={() => {}}>
-                            Deposit
-                          </div>
-                          {/* onclick = "onSwitchTransferType" */}
-                          <div className={styles.bridgeTabs__tab} onClick={() => {}}>
-                            Withdraw
-                          </div>
-                        </div>
-
-                        {/* <div v-if="selectedToken" class="token-and-amount-details">  */}
-                        <div className={styles.tokenAndAmountDetails}>
-                          {/* @click="onChooseTokenOpen" */}
-                          <div className={styles.tokenDetails} onClick={() => {}}>
-                            {/* <img
-                          v-if="!!tokenImage(selectedToken)"
-                          class="token-details__token-img"
-                          :src="tokenImage(selectedToken)"
-                          alt="token icon"
-                          height="24"
-                          width="24"
-                      > */}
-                            {/* src={"tokenImage(selectedToken)"} */}
-                            <img
-                              src={polygonChainImage}
-                              alt="polygon chain logo"
-                              height="24"
-                              width="24"
-                            />
-
-                            <div className={styles.tokenDetails__tokenName}>
-                              {/* {{ isDepositEther ? isDepositEther : selectedToken.name }} */}
-                              MATIC
-                            </div>
-                            <img
-                              className={styles.tokenDetails__arrow}
-                              src={discloserBottomImage}
-                              alt="discloser icon"
-                              height="24"
-                              width="24"
-                            />
-                          </div>
-                          <div className={styles.amountDetails}>
-                            <input
-                              className={styles.amountDetails__textfield}
-                              type="text"
-                              placeholder="0.00"
-                              value={tokenAmountWei}
-                              onChange={e => setTransferValue(e.target.value)}
-                            />
-                            <button
-                              className={styles.amountDetails__maxButton}
-                              onClick={() => {}}
-                              variant="light"
-                            >
-                              MAX
-                            </button>
-                          </div>
+                    <div className={styles.downArrowSection}>
+                      <img src={lightArrowImage} alt="to arrow" />
+                    </div>
+                    <div className={styles.toLabel}>To</div>
+                    <div className={styles.toChainAndBalanceDetails}>
+                      <div className={styles.chainDetails}>
+                        {txType === 'withdraw' ? (
+                          <img
+                            src={ethChainImage}
+                            alt="ethereum chain logo"
+                            height="24"
+                            width="24"
+                          />
+                        ) : (
+                          <img
+                            src={polygonChainImage}
+                            alt="polygon chain logo"
+                            height="24"
+                            width="24"
+                          />
+                        )}
+                        <div className={styles.chainDetails__chainName}>
+                          {txType === 'deposit' ? 'Polygon Nightfall L2' : 'Ethereum Mainnet'}
                         </div>
                       </div>
-                      <div className={styles.downArrowSection}>
-                        <img src={lightArrowImage} alt="to arrow" />
-                      </div>
-                      <div className={styles.toLabel}>To</div>
-                      <div className={styles.toChainAndBalanceDetails}>
-                        <div className={styles.chainDetails}>
-                          {txType === 'withdraw' ? (
-                            <img
-                              src={ethChainImage}
-                              alt="ethereum chain logo"
-                              height="24"
-                              width="24"
-                            />
-                          ) : (
-                            <img
-                              src={polygonChainImage}
-                              alt="polygon chain logo"
-                              height="24"
-                              width="24"
-                            />
-                          )}
-                          {/* <img
-                                        v-if="transferType === TRANSACTION_TYPE.DEPOSIT"
-                                        src="~/assets/img/polygon-chain.svg"
-                                        alt="polygon chain logo"
-                                        height="24"
-                                        width="24"
-                                    >
-                                    <img
-                                        v-else-if="transferType === TRANSACTION_TYPE.WITHDRAW"
-                                        src="~/assets/img/ethereum-chain.svg"
-                                        alt="ethereum chain logo"
-                                        height="24"
-                                        width="24"
-                                    > */}
-
-                          {/* <div class="chain-details__chain-name font-label-small">
-                                    {{
-                                        transferType === TRANSACTION_TYPE.WITHDRAW
-                                        ? parentNetwork.name
-                                        : childNetwork.name
-                                    }}
-                                        chain
-                                    </div> */}
-                          <div className={styles.chainDetails__chainName}>
-                            {txType === 'deposit' ? 'Polygon Nightfall L2' : 'Ethereum Mainnet'}
-                          </div>
-                        </div>
-                        {/* <div
-                                    v-if="selectedToken"
-                                    class="balance-details font-label-extra-small"
-                                >
-                                    <span class="balance-details__label"> Balance: </span>
-                                    <span
-                                        v-tooltip="formattedReceiverFullBalance"
-                                        class="balance-details__balance"
-                                    >{{ selectedToken.getBalance(receiverNetworkId).dp(5) }}
-                                        {{ selectedToken.symbol }}
-                                    </span>
-                                </div>  SAME OF BELOW */}
-                        <div className={styles.balanceDetails}>
-                          <span className={styles.balanceDetails__label}> Balance: </span>
-                          <span className={styles.balanceDetails__balance}>10 MATIC</span>
-                        </div>
+                      <div className={styles.balanceDetails}>
+                        <span className={styles.balanceDetails__label}> Balance: </span>
+                        <span className={styles.balanceDetails__balance}>10 MATIC</span>
                       </div>
                     </div>
                     <div className={styles.transferMode}>
@@ -413,43 +281,11 @@ export default function Bridge() {
                       <span className={styles.bridgeType}>
                         {txType.charAt(0).toUpperCase() + txType.slice(1)} Bridge
                       </span>
-                      {/* <span
-                                v-if="
-                                isPosPlasmaCommonToken &&
-                                    (!plasmaDepositDisabledTokens ||
-                                    transferType === TRANSACTION_TYPE.WITHDRAW)
-                                "
-                                id="switch-transfer-mode"
-                                class="switch-bridge cursor-pointer cap-xs"
-                                @click="onTransferModeOpen"
-                            >
-                                (Switch Bridge)
-                            </span> */}
                     </div>
                     <div>
-                      {/* <Button
-                                id="transfer-token"
-                                nature="primary"
-                                size="large"
-                                class="transfer-button w-100"
-                                label="Transfer"
-                                :disabled="disableTransferButton || isTokenDisabled"
-                                @onClick="transferToken"
-                            /> */}
                       <button className={styles.transferButton} onClick={handleShow}>
                         Transfer
-                        {/* <button
-                className={styles.transferButton}
-                onClick={() => {
-                  triggerTx();
-                }}
-              >
-                Transfer */}
                       </button>
-
-                      {/* <div v-if="error" class="error-message text-danger font-caption">
-                                {{ error }}
-                            </div> */}
                     </div>
                     <div>
                       <Link to="/wallet">
@@ -458,34 +294,6 @@ export default function Bridge() {
                     </div>
                   </div>
                 </div>
-
-                {/* Add 'onSelect' prop here */}
-                {/* <choose-token
-                      :show="showChooseToken"
-                      :onSelect="onSelectToken"
-                      :cancel="onTokenClose"
-                      :transactionType="transferType"
-                  /> */}
-
-                {/* POS or PLASMA */}
-                {/* <transfer-mode-modal
-                      v-if="showTransferMode"
-                      :cancel="onTransferModeClose"
-                      :change="onTransferModeChange"
-                  /> */}
-
-                {/* FAST or NORMAL */}
-
-                {/* <deposit-modal
-                    v-else-if="showDepositModal"
-                    :show="showDepositModal"
-                    :cancel="onDepositClose"
-                    :transferMode="transferMode"
-                    :toSendInToken="toSendInToken"
-                    :selectedToken="currentSelectedToken"
-                    :overviewCheck="false"
-                    :allowanceCheck="allowance"
-                /> */}
                 <Modal
                   contentClassName={stylesModal.modalFather}
                   show={show}
@@ -584,36 +392,6 @@ export default function Bridge() {
                     </div>
                   </Modal.Body>
                 </Modal>
-
-                {/* <fast-deposit-modal
-                          v-else-if="showFastDepositModal"
-                          :show="showFastDepositModal"
-                          :cancel="onFastDepositClose"
-                          :transferMode="transferMode"
-                          :toSendInToken="toSendInToken"
-                          :selectedToken="currentSelectedToken"
-                          :overviewCheck="false"
-                          :allowanceCheck="allowance"
-                      /> */}
-
-                {/* <withdraw-modal
-                          v-else-if="showWithdrawModal"
-                          :show="showWithdrawModal"
-                          :cancel="onWithdrawClose"
-                          :transferMode="transferMode"
-                          :toSendInToken="toSendInToken"
-                          :selectedToken="currentSelectedToken"
-                          :overviewCheck="false"
-                      /> */}
-                {/* <fast-withdraw-modal
-                          v-else-if="showFastWithdrawModal"
-                          :show="showFastWithdrawModal"
-                          :cancel="onFastWithdrawClose"
-                          :transferMode="transferMode"
-                          :toSendInToken="toSendInToken"
-                          :selectedToken="currentSelectedToken"
-                          :overviewCheck="false"
-                      /> */}
               </div>
             </div>
           </div>
