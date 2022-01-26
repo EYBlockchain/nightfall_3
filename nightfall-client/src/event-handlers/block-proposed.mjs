@@ -62,7 +62,9 @@ async function blockProposedEventHandler(data) {
         }
       });
     }
-    await Promise.all(storeCommitments);
+    await Promise.all(storeCommitments).catch(function (err) {
+      logger.info(err);
+    }); // control errors when storing commitments in order to ensure next Promise being executed
     return Promise.all([
       markOnChain(nonZeroCommitments, block.blockNumberL2, data.blockNumber, data.transactionHash),
       markNullifiedOnChain(

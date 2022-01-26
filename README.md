@@ -32,10 +32,13 @@ You need to run a setup script the first time that you use nightfall_3.  This wi
 
 If running for first time, do the setup as above and then run this script:
 ```sh
-./start-nightfall -l | -g [-s] [-d]
+./start-nightfall -l | -g | -r [-s] [-d]
 ```
 This will bring up the application.  You can run it either with a Ganache blockchain simulator or a real blockchain client which exposes a websocket connection on localHost:8546.  See below for more details on how to do the latter as there are some additional considerations.
-- Use `-g` to use a Ganache client inside the container and `-l` to use some localhost client running on your machine.  We recommend using Ganache first to check everything works, because it's considerably faster.  
+- Environment
+  - Use `-g` to use a Ganache client inside the container 
+  - Use `-l` to use some localhost client running on your machine.  We recommend using Ganache first to check everything works, because it's considerably faster.  
+  - Use `-r` to use ropsten node hosted by the dev team. Note: with option -r set environment variable $ROPSTEN_NODE, $FROM_ADDRESS and $ETH_PRIVATE_KEY to testnet node URL, EOA address and EOA address's private key, respectively
 - Additionally, you can use the `-s` flag.  If you do that, Nightfall_3 will run with stubbed ZKP circuits, which generate proofs that always verify.  That's useful for development work because tests will run much faster but clearly you should run without stubs, as a final check.
 - Use the `-d` or `--dev` flag to bind mount the development folders inside the containers, making it useful for development purposes. Omit it to deploy the services using the existing `ghcr` images.
 
@@ -83,7 +86,7 @@ npm test-chain-reorg
 
 The script `./geth-standalone` will run up a private blockchain consisting of a bootnode, two client nodes and two miners.  This is required for testing chain reorganisations (Ganache does not simulate a chain-reorg) but can be used for other tests or general running.  It's slower than using Ganache but it does provide a more real-life test. Note also that the private chain exposes a client on `host.docker.internal:8546`.  On a Mac this will map to `localhost` but it won't work on any other machine. If you aren't on a Mac then you can do one of these 3 options:
 - If you are on a Linux you can edit `/etc/hosts` file and add a map from your private IP address of your connected interface to the domain `host.docker.internal`. In this case `127.0.0.1` is not valid. You can check your private IP address with `ip address`.  
-- Edit `nightfall-deployer/truffle-config.js` to point to the IP of your `localhost` 
+- Edit `nightfall-deployer/truffle-config.js` to point to the IP of your `localhost`
 - Use the docker-compose line `external_servers` to inject a hostname into the containers host file (see the Github workflows for further clues about how to do that).
 
 To use the private blockchain:
@@ -171,7 +174,10 @@ More information can be found [here](https://github.com/EYBlockchain/nightfall_3
 
 - Direct transactions are not implemented
 - Instant withdraw is selected when doing a withdraw only. Once submitted the instant withdraw request,the wallet requests a simple withdraw and inmediatelly after converts this withdraw into an instant withdraw. Wallet will attempt to send the instant withdraw request up to 10 times, once every 10 seconds. It is likely that during this period, you need to request a simpler transaction (deposit, withdraw or transfer) so that the original withdraw is processed by the processor and the instant withdraw can be carried out.
+- Doing a transfer to a third account and an instant withdraw in the same block makes the instant withdraw fail.
 - Tested with node version v14.18.0
+
+Nightfall uses the G16 proof system, and we believe it is [not vulnerable](./doc/G16-malleability.md) to its malleability. 
 
 # Acknowledgements
 

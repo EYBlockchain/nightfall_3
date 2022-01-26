@@ -39,6 +39,7 @@ export async function finaliseWithdrawal({ transactionHash }) {
         index,
       )
       .encodeABI();
+
     // store the commitment on successful computation of the transaction
     return { rawTransaction };
   } catch (err) {

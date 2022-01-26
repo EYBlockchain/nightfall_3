@@ -19,11 +19,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
     value: 0,
     error: null,
   });
-  const [pkdX, setPkdX] = React.useState({
-    value: '',
-    error: null,
-  });
-  const [pkdY, setPkdY] = React.useState({
+  const [destinationAddress, setDestinationAddress] = React.useState({
     value: '',
     error: null,
   });
@@ -31,11 +27,16 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
   const toggleAll = () => {
     setInstantWithdrawEnable(false);
     setDirectTransactionEnable(false);
-    setPkdX({ value: '', error: null });
-    setPkdY({ value: '', error: null });
+    setDestinationAddress({ value: '', error: null });
     setTokenId({ value: 0, error: null });
     onCancelTx();
   };
+
+  React.useEffect(() => {
+    if (token.activeTokenId !== null) {
+      setTokenId({ value: token.activeTokenId, error: null });
+    }
+  }, [token]);
 
   function getTokenInfo() {
     try {
@@ -49,36 +50,21 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
     }
   }
 
-  function validateContractAddress(key, value) {
+  function validateDestinationAddress(key, value) {
     const error = {
       content: `Please enter a valid ${key}`,
       pointing: 'above',
     };
-    if (key === 'PK-Y') {
-      if (!/^0x([A-Fa-f0-9]{63,64})$/.test(value)) return setPkdY({ value: '', error });
-      setPkdY({ value, error: null });
-    }
-    if (key === 'PK-X') {
-      if (!/^0x([A-Fa-f0-9]{63,64})$/.test(value)) return setPkdX({ value: '', error });
-      setPkdX({ value, error: null });
+    if (key === 'Compressed Pkd') {
+      if (!/^0x([A-Fa-f0-9]{63,64})$/.test(value))
+        return setDestinationAddress({ value: '', error });
+      setDestinationAddress({ value, error: null });
     }
     if (transactions.txType === 'withdraw') {
-      if (!/^0x([A-Fa-f0-9]{40})$/.test(value)) return setPkdX({ value: '', error });
-      setPkdX({ value, error: null });
+      if (!/^0x([A-Fa-f0-9]{40})$/.test(value)) return setDestinationAddress({ value: '', error });
+      setDestinationAddress({ value, error: null });
     }
     return null;
-  }
-
-  function validateTokenId(tokenInfo) {
-    const error = {
-      content: 'Please, enter a valid tokenId',
-      pointing: 'above',
-    };
-    if (tokenInfo.tokenType !== Nf3.Constants.TOKEN_TYPE.ERC20 && tokenId.value === 0) {
-      setTokenId({ value: 0, error });
-      return false;
-    }
-    return true;
   }
 
   const handleOnSubmit = () => {
@@ -86,14 +72,12 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
     if (!tokenInfo) {
       return;
     }
-    if (!validateTokenId(tokenInfo)) {
-      return;
-    }
     switch (transactions.txType) {
       // TODO : pending select correct tokenId index. For now, i select 0, but it could be different
       case Nf3.Constants.TX_TYPES.WITHDRAW:
         {
-          const ethereumAddress = pkdX.value === '' ? login.nf3.ethereumAddress : pkdX.value;
+          const ethereumAddress =
+            destinationAddress.value === '' ? login.nf3.ethereumAddress : destinationAddress.value;
           const withdrawType = instantWithdrawEnable
             ? Nf3.Constants.TX_TYPES.INSTANT_WITHDRAW
             : Nf3.Constants.TX_TYPES.WITHDRAW;
@@ -102,27 +86,31 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
             ethereumAddress,
             tokenType: tokenInfo.tokenType,
             tokenAddress: tokenInfo.tokenAddress,
-            tokenId: tokenId.value,
+            tokenId: tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC20 ? '0' : tokenId.value,
             tokenAmount:
-              tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC721 ? '0' : tokenAmount,
+              tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC721 ? '1' : tokenAmount,
             fee,
+            tokenDecimals: tokenInfo.tokenDecimals,
             instantWithdrawFee,
           });
         }
         break;
 
       default: {
-        const pkd =
-          pkdX.value === '' || pkdY.value === '' ? login.nf3.zkpKeys.pkd : [pkdX.value, pkdY.value];
+        const compressedPkd =
+          destinationAddress.value === ''
+            ? login.nf3.zkpKeys.compressedPkd
+            : destinationAddress.value;
         const { txType } = transactions;
         onSubmitTx({
           txType,
-          pkd,
+          compressedPkd,
           tokenType: tokenInfo.tokenType,
           tokenAddress: tokenInfo.tokenAddress,
-          tokenId: tokenId.value,
-          tokenAmount: tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC721 ? '0' : tokenAmount,
+          tokenId: tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC20 ? '0' : tokenId.value,
+          tokenAmount: tokenInfo.tokenType === Nf3.Constants.TOKEN_TYPE.ERC721 ? '1' : tokenAmount,
           fee,
+          tokenDecimals: tokenInfo.tokenDecimals,
         });
       }
     }
@@ -130,6 +118,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
     setInstantWithdrawEnable(false);
     setDirectTransactionEnable(false);
     setTokenId({ value: 0, error: null });
+    setDestinationAddress({ value: '', error: null });
   };
 
   const tokenInfo = getTokenInfo();
@@ -137,20 +126,20 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
     return null;
   }
   const keyLabel =
-    transactions.txType === Nf3.Constants.TX_TYPES.WITHDRAW ? 'Ethereum Address' : 'PK-X';
-  const pkd = login.isWalletInitialized ? login.nf3.zkpKeys.pkd : '';
+    transactions.txType === Nf3.Constants.TX_TYPES.WITHDRAW ? 'Ethereum Address' : 'Compressed Pkd';
   if (transactions.txType === '') return null;
   const tokenIdPool =
     transactions.txType === Nf3.Constants.TX_TYPES.DEPOSIT
-      ? tokenInfo.tokenId
-      : tokenInfo.l2TokenId;
+      ? tokenInfo.tokenIdL1
+      : tokenInfo.tokenIdL2;
   return (
     <Modal open={transactions.modalTx}>
       <Modal.Header>{transactions.txType.toUpperCase()}</Modal.Header>
       <Modal.Content>
         <Form>
           <Form.Group widths="equal">
-            {transactions.txType === Nf3.Constants.TX_TYPES.WITHDRAW ? (
+            {transactions.txType === Nf3.Constants.TX_TYPES.WITHDRAW &&
+            tokenInfo.tokenType !== Nf3.Constants.TOKEN_TYPE.ERC721 ? (
               <Form.Field>
                 <Checkbox
                   label="Instant Withdraw"
@@ -166,6 +155,7 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
                   <input
                     type="text"
                     placeholder={instantWithdrawFee}
+                    id="instant withdraw fee"
                     onChange={event => setInstantWithdrawFee(event.target.value)}
                   />
                 </label>
@@ -181,29 +171,22 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
               />
             </Form.Field>
           ) : null}
-          <Form.Group widths="equal">
-            <Form.Field
-              control={Input}
-              label={keyLabel}
-              placeholder={
-                transactions.txType === Nf3.Constants.TX_TYPES.WITHDRAW
-                  ? login.nf3.ethereumAddress
-                  : pkd[0]
-              }
-              onChange={event => validateContractAddress(keyLabel, event.target.value)}
-              error={pkdX.error}
-            />
-
-            {transactions.txType !== Nf3.Constants.TX_TYPES.WITHDRAW ? (
+          {transactions.txType !== Nf3.Constants.TX_TYPES.DEPOSIT ? (
+            <Form.Group widths="equal">
               <Form.Field
                 control={Input}
-                label="PK-Y"
-                placeholder={pkd[1]}
-                onChange={event => validateContractAddress('PK-Y', event.target.value)}
-                error={pkdY.error}
+                label={keyLabel}
+                id="destination address"
+                placeholder={
+                  transactions.txType === Nf3.Constants.TX_TYPES.WITHDRAW
+                    ? login.nf3.ethereumAddress
+                    : login.nf3.zkpKeys.compressedPkd
+                }
+                onChange={event => validateDestinationAddress(keyLabel, event.target.value)}
+                error={destinationAddress.error}
               />
-            ) : null}
-          </Form.Group>
+            </Form.Group>
+          ) : null}
           <Form.Group widths="equal">
             <Form.Field>
               <label> Token Type </label>
@@ -218,19 +201,24 @@ function TransactionsModal({ token, login, transactions, onSubmitTx, onCancelTx 
             <Form.Group>
               <Form.Field width={6}>
                 <label> Token Id </label>
-                <Dropdown
-                  control={Input}
-                  selection
-                  options={
-                    tokenIdPool.length
-                      ? tokenIdPool.map(function (id) {
-                          return { key: id, text: id, value: id };
-                        })
-                      : []
-                  }
-                  onChange={(e, { value }) => setTokenId({ value, error: null })}
-                  error={tokenId.error !== null}
-                />
+                {!token.activeTokenId ? (
+                  <Dropdown
+                    control={Input}
+                    selection
+                    id="token-id"
+                    options={
+                      tokenIdPool.length
+                        ? tokenIdPool.map(function (id) {
+                            return { key: id, text: id, value: id };
+                          })
+                        : []
+                    }
+                    onChange={(e, { value }) => setTokenId({ value, error: null })}
+                    error={tokenId.error !== null}
+                  />
+                ) : (
+                  <input type="text" value={token.activeTokenId} id="token-id" readOnly />
+                )}
               </Form.Field>
             </Form.Group>
           ) : null}

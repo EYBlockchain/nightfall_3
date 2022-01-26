@@ -139,12 +139,16 @@ def signTransactionMetamask(driver, findElements, stop=0):
          activityButton.click()
 
     while True:
-      sleep(4)
+      sleep(6)
       pendingTx = findElements.element_exist_xpath('//div[contains(@class, "list-item transaction-list-item transaction-list-item--unconfirmed")]')
       approve = findElements.element_exist_xpath('//button[text()="Confirm"]') # Confirm approve
-      if pendingTx:
-        pendingTx.click()
-      elif approve:
+      try:
+        if pendingTx:
+          pendingTx.click()
+        elif approve:
           approve.click()
-      else:
-        break
+        else:
+          break
+      except Exception:
+          return False
+    return True
