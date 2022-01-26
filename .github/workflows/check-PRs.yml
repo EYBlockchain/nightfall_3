@@ -69,6 +69,7 @@ jobs:
 
       - name: Start Containers
         run: |
+          docker build --no-cache	-t ghcr.io/eyblockchain/local-zokrates -f zokrates.Dockerfile .
           docker-compose build
           ./start-nightfall -wt -s &
 
@@ -105,6 +106,7 @@ jobs:
 
       - name: Start Containers with ganache
         run: |
+          docker build --no-cache	-t ghcr.io/eyblockchain/local-zokrates -f zokrates.Dockerfile .
           docker-compose build
           ./start-nightfall -g &> test-gas.log &disown
         env:
