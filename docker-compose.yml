@@ -4,9 +4,6 @@ version: '3.5'
 services:
   client1:
     image: ghcr.io/eyblockchain/nightfall3-client:latest
-    build:
-      dockerfile: client.Dockerfile
-      context: .
     volumes:
       - type: volume
         source: build
@@ -40,9 +37,6 @@ services:
 
   client2:
     image: ghcr.io/eyblockchain/nightfall3-client:latest
-    build:
-      dockerfile: client.Dockerfile
-      context: .
     volumes:
       - type: volume
         source: build
@@ -77,9 +71,6 @@ services:
   worker:
     #  image: 3800decac71d
     image: ghcr.io/eyblockchain/nightfall3-worker:latest
-    build:
-      dockerfile: worker.Dockerfile
-      context: .
     volumes:
       - type: volume
         source: proving_files
@@ -95,9 +86,6 @@ services:
   deployer:
     #image: docker.pkg.github.com/eyblockchain/nightfall-deployer/nightfall_deployer:1.1.0
     image: ghcr.io/eyblockchain/nightfall3-deployer:latest
-    build:
-      dockerfile: deployer.Dockerfile
-      context: .
     volumes:
       - type: volume
         source: build
@@ -132,9 +120,6 @@ services:
 
   optimist1:
     image: ghcr.io/eyblockchain/nightfall3-optimist:latest
-    build:
-      dockerfile: optimist.Dockerfile
-      context: .
     depends_on:
       - deployer
     networks:
@@ -158,11 +143,7 @@ services:
     command: [ 'npm', 'run', 'dev' ]
 
   optimist2:
-
     image: ghcr.io/eyblockchain/nightfall3-optimist:latest
-    build:
-      dockerfile: optimist.Dockerfile
-      context: .
     depends_on:
       - deployer
     networks:
