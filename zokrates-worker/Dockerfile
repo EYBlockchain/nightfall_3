@@ -1,11 +1,5 @@
 # build zokrates from source for local verify
-FROM rust:1.53.0 as builder
-WORKDIR /app
-COPY . .
-RUN git clone --depth 1 --branch 0.7.10 https://github.com/Zokrates/ZoKrates.git
-WORKDIR /app/ZoKrates
-RUN rustup toolchain install nightly
-RUN cargo +nightly build --release
+FROM ghcr.io/eyblockchain/local-zokrates as builder
 
 FROM ubuntu:20.04
 WORKDIR /app

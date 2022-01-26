@@ -26,6 +26,13 @@ jobs:
 
     - run: echo ${{ steps.semantic.outputs.release-version }}
 
+    - name: Docker push latest
+      run: |
+        docker build -t ghcr.io/eyblockchain/local-zokrates . -f zokrates.Dockerfile
+        docker push ghcr.io/eyblockchain/local-zokrates
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Docker push version
       if: steps.semantic.outputs.new-release-published == 'true'
       run: |
