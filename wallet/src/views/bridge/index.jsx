@@ -13,7 +13,7 @@ import polygonChainImage from '../../assets/img/polygon-chain.svg';
 import ethChainImage from '../../assets/img/ethereum-chain.svg';
 import discloserBottomImage from '../../assets/img/discloser-bottom.svg';
 import lightArrowImage from '../../assets/img/light-arrow.svg';
-import testImage from '../../assets/img/fast-withdraw/evodefi.png';
+import matic from '../../assets/svg/matic.svg';
 import { UserContext } from '../../hooks/User/index.jsx';
 import { approve, submitTransaction } from '../../common-files/utils/contract';
 import deposit from '../../nightfall-browser/services/deposit';
@@ -307,7 +307,7 @@ export default function Bridge() {
                       </div>
                       <div className={styles.balanceDetails}>
                         <span className={styles.balanceDetails__label}> Balance: </span>
-                        <span className={styles.balanceDetails__balance}>10 MATIC</span>
+                        <span className={styles.balanceDetails__balance}>xx MATIC</span>
                       </div>
                     </div>
                     <div className={styles.transferMode}>
@@ -321,9 +321,6 @@ export default function Bridge() {
                     <div>
                       <button className={styles.transferButton} onClick={handleShow}>
                         Transfer
-                      </button>
-                      <button className={styles.transferButton} onClick={handleShowModalConfirm}>
-                        testModal
                       </button>
                     </div>
                   </div>
@@ -447,22 +444,19 @@ export default function Bridge() {
                                       :src="tokenImage(selectedToken)"
                                       alt="Token Image"
                                   > */}
-                  <img src={testImage} alt="Token Image" />
-                  {/* <span
+                          <img src={matic} alt="Token Image" />
+                          {/* <span
                                       v-else-if="selectedToken.symbol"
                                       class="align-self-center font-heading-large ps-t-2 font-semibold"
                                   >{{ selectedToken.symbol[0] }}</span> */}
-                </div>
-                {/* font-heading-large font-bold ps-t-16 ps-b-6 */}
-                <div className={stylesModal.tokenDetails__val}>{tokenAmountWei}</div>
-                {/* font-body-small */}
-                <div className={stylesModal.tokenDetails__usd}>$xx.xx</div>
-              </div>
-              {/* font-heading-large font-bold ps-t-16 ps-b-6 */}
-              <div className={stylesModal.tokenDetails__val}>10 ETHER</div>
-              {/* font-body-small */}
-              <div className={stylesModal.tokenDetails__usd}>$ 30000</div>
-            </div>
+                        </div>
+                        {/* font-heading-large font-bold ps-t-16 ps-b-6 */}
+                        <div className={stylesModal.tokenDetails__val}>
+                          {Number(tokenAmountWei).toFixed(2)}
+                        </div>
+                        {/* font-body-small */}
+                        <div className={stylesModal.tokenDetails__usd}>$xx.xx</div>
+                      </div>
 
                       {/* Buttons */}
                       <div>
@@ -501,13 +495,17 @@ export default function Bridge() {
                           </div>
                         </div>
                         <div className={stylesModal.transferModeModal__text}>
-                          <span>PoS security is provided by the PoS validators.</span>
+                          <span>Transfer security is provided by the Ethereum miners.</span>
                           {/* <span v-else>
                                   Plasma provides advanced security with plasma exit
                                   mechanism. </span>It will take approximately */}
-                          <span> It will take approximately </span>
-                          <span className="text-primary"> 3 hours</span> when you have to transfer
-                          your funds back to Ethereum.
+                          <span>
+                            {' '}
+                            To minimise the risk of chain reorganisations, your transfer will wait
+                            for{' '}
+                          </span>
+                          <span className="text-primary"> 12 block confirmations</span> before being
+                          finalized.
                         </div>
                       </div>
                       <div className={stylesModal.divider}></div>
@@ -516,13 +514,17 @@ export default function Bridge() {
                           <div className={stylesModal.estimationFee__title__main}>
                             Estimation Transaction fee
                           </div>
-                          <div className={stylesModal.estimationFee__title__light}>~ $113,59</div>
+                          <div className={stylesModal.estimationFee__title__light}>~ $x.xx</div>
                         </div>
                         <button
                           className={stylesModal.continueTrasferButton}
-                          onClick={() => triggerTx()}
+                          // onClick={() => triggerTx()}
+                          onClick={() => {
+                            handleClose();
+                            handleShowModalConfirm();
+                          }}
                         >
-                          Continue
+                          Create Transaction
                         </button>
                       </div>
                     </div>
@@ -552,13 +554,11 @@ export default function Bridge() {
                         </div>
 
                         <div className={stylesModal.transferModeModal}>
-                          <h3>Transaction in progress</h3>
+                          <h3>Creating Transaction</h3>
                           <div className={stylesModal.modalText}>
-                            Ethereum transactions can take longer time to complete based upon
-                            network congestion. Please wait or increase the gas price of the
-                            transaction
+                            Retrieving your commitments and generating transaction inputs.
                           </div>
-                          <a className={styles.footerText}>View on etherscan</a>
+                          {/* <a className={styles.footerText}>View on etherscan</a> */}
                         </div>
                       </div>
                     </Modal.Body>
@@ -572,15 +572,17 @@ export default function Bridge() {
                         </div>
                         <div className={stylesModal.divider}></div>
                         <div className={styles.spinnerBox}>
-                          <img src={successHand} />
+                          <div className={styles.spinnerBoard}>
+                            <div className={styles.spinner}></div>
+                          </div>
                         </div>
                         <div className={stylesModal.transferModeModal}>
-                          <h3>Transaction in route</h3>
+                          <h3>Generating Zk Proof</h3>
                           <div className={stylesModal.modalText}>
-                            Your transfer is en-route. It will take ~7-8 minutes for the deposit to
-                            get completed. On completion, your balance will be updated.
+                            Proof generation may take up to 2 mins to complete. Do not navigate
+                            away.
                           </div>
-                          <a className={styles.footerText}>View on etherscan</a>
+                          {/* <a className={styles.footerText}>View on etherscan</a> */}
                         </div>
                       </div>
                     </Modal.Body>
@@ -597,11 +599,18 @@ export default function Bridge() {
                           <img src={successHand} />
                         </div>
                         <div className={stylesModal.transferModeModal}>
-                          <h3>Transfer completed sucessfully.</h3>
+                          <h3>Transaction created sucessfully.</h3>
                           <div className={stylesModal.modalText}>
-                            Your transfer is completed sucessfully.
+                            Your transfer is ready to send.
                           </div>
-                          <a className={styles.footerText}>View on etherscan</a>
+                          <button
+                            className={stylesModal.continueTrasferButton}
+                            // onClick={() => triggerTx()}
+                            onClick={() => triggerTx()}
+                          >
+                            Send Transaction
+                          </button>
+                          {/* <a className={styles.footerText}>View on etherscan</a> */}
                         </div>
                       </div>
                     </Modal.Body>
