@@ -22,9 +22,13 @@ main() {
     if [ ${RUN_SELENIUM_TESTS} -eq 1 ]; then
       wait_ready
       tmux select-pane -t 1
-      tmux send-keys "node  ../cli/src/proposer.mjs --environment Docker" Enter
+      sudo touch test/.proposer_log
+      sudo chown apps test/.proposer_log
+      sudo touch test/.liquidity-provider_log
+      sudo chown apps test/.liquidity-provider_log
+      tmux send-keys "node  ../cli/src/proposer.mjs --environment Docker | tee test/.proposer_log" Enter
       tmux select-pane -t 2
-      tmux send-keys "node ../cli/src/liquidity-provider.mjs --environment Docker" Enter 
+      tmux send-keys "node ../cli/src/liquidity-provider.mjs --environment Docker | tee test/.liquidity-provider_log" Enter 
       tmux select-pane -t 3
       sudo touch test/.test_results
       sudo chown apps test/.test_results
@@ -50,6 +54,8 @@ wait_tests_done() {
      fi
      sleep 10
    done
+   cat test/.proposer_log
+   cat test/.liquidity-provider_log
    cat test/.test_results
    testResults=$(cat test/.test_results | grep FAILED)
    if [ -z "${testResults}" ]; then
@@ -68,17 +74,21 @@ wait_ready() {
     app_deployed=$(curl http://wallet-test:3010 2> /dev/null | grep favicon)
   done
   echo "Wallet deployed"
-  sleep 60
-  #wscommand='{"jsonrpc":  "2.0", "id": 0, "method":  "eth_blockNumber"}'
-  #block=0
-  #while [ ! -z "${block}" ] && [ "${block}" -lt 36 ]; do
+  wscommand='{"jsonrpc":  "2.0", "id": 0, "method":  "eth_blockNumber"}'
+  block=0
+  while [ ! -z "${block}" ] && [ "${block}" -lt 300 ]; do
+    res=$(curl --location --request POST 'http://blockchain1:8546' --header 'Content-Type: application/json' --data-raw '{
+	"jsonrpc":"2.0",
+	"method":"eth_blockNumber",
+	"id":1
+    }')
     #res=$(wscat -c 'ws://blockchain1:8546' -w 1 -x "${wscommand}" | grep result)
-    #echo "RES ${res}"
-    #blockHex=$(echo ${res} | awk '{split($0,a,":"); print a[4]}' | tr -d '"' | tr -d '}' | tr -d '0x')	
-    #echo "Busy ${wscommand} ${blockHex} ${block}"
-    #block=$(printf $((16#${blockHex})))
-    #sleep 10
-  #done
+    echo "RES ${res}"
+    blockHex=$(echo ${res} | awk '{split($0,a,":"); print a[4]}' | tr -d '"' | tr -d '}' | tr -d '0x')	
+    block=$(printf $((16#${blockHex})))
+    echo "Busy ${blockHex} ${block}"
+    sleep 10
+  done
   echo "Contracts deployed"
 }
 
