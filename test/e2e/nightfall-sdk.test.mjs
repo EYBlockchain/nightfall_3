@@ -237,20 +237,24 @@ describe('Testing the Nightfall SDK', () => {
         web3,
       );
       // approve tokens to be advanced by liquidity provider in the instant withdraw
-      await nf3LiquidityProvider.advanceInstantWithdrawal(withdrawTransactionHash);
-      stateBalance += fee + BLOCK_STAKE;
+      try {
+        await nf3LiquidityProvider.advanceInstantWithdrawal(withdrawTransactionHash);
+        stateBalance += fee + BLOCK_STAKE;
+      } catch (e) {
+        console.log('ERROR Liquidity Provider: ', e);
+      }
 
       console.log(`     Serviced instant-withdrawal request from ${paidBy}, with fee ${amount}`);
       await new Promise(resolve => setTimeout(resolve, 5000));
       for (let i = 0; i < txPerBlock; i++) {
         // eslint-disable-next-line no-await-in-loop
-        res = await nf3User1.transfer(
+        await nf3User1.transfer(
           false,
           erc20Address,
           tokenType,
           value,
           tokenId,
-          nf3User1.zkpKeys.compressedPkd,
+          nf3User1.zkpKeys.pkd,
           fee,
         );
       }
