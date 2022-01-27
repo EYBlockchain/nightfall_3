@@ -3,7 +3,6 @@ import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import { createRequire } from 'module';
 import Nf3 from '../../cli/lib/nf3.mjs';
-import { ethereumSigningKeyUser1 } from '../constants.mjs';
 
 // so we can use require with mjs file
 const require = createRequire(import.meta.url);
@@ -15,9 +14,10 @@ const { web3WsUrl, network } = process.env;
 // we need require here to import jsons
 const environments = require('./environments.json');
 const mnemonics = require('./mnemonics.json');
-const environment = environments[network];
+const signingKeys = require('./signingKeys.json');
 
-const nf3User1 = new Nf3(web3WsUrl, ethereumSigningKeyUser1, environment);
+const environment = environments[network];
+const nf3User1 = new Nf3(web3WsUrl, signingKeys.user1, environment);
 
 before(async () => {
   await nf3User1.init(mnemonics.user1);
