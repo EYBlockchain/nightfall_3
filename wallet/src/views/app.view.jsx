@@ -17,6 +17,7 @@ import MainPage from './initialPage.jsx';
 import Wallet from './wallet/index.jsx';
 import Bridge from './bridge/index.jsx';
 import { UserProvider } from '../hooks/User/index.jsx';
+import TransactionPage from './transactionPage/index.jsx';
 
 function App({ onDeleteWallet }) {
   Nf3.Environment.setEnvironment(process.env.REACT_APP_ENVIRONMENT);
@@ -51,6 +52,7 @@ function App({ onDeleteWallet }) {
           <Route path="/transactions" render={() => <Transactions />} />
           <Route path="/wallet" render={() => <Wallet />} />
           <Route path="/bridge" render={() => <Bridge />} />
+          <Route path="/transactionPage" render={() => <TransactionPage />} />
           <Route
             path="/issues"
             render={() => {

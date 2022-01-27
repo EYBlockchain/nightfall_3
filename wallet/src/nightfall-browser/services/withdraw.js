@@ -27,6 +27,7 @@ import programFile from '../../zokrates/withdraw_stub/artifacts/withdraw_stub-pr
 // eslint-disable-next-line
 import pkFile from '../../zokrates/withdraw_stub/keypair/withdraw_stub-pk';
 import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
+import { saveTransaction } from './database';
 
 const { BN128_GROUP_ORDER, SHIELD_CONTRACT_NAME } = global.config;
 const { generalise } = gen;
@@ -125,6 +126,7 @@ async function withdraw(withdrawParams) {
     nullifiers: [nullifier],
     proof,
   });
+  await saveTransaction(optimisticWithdrawTransaction);
   try {
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(optimisticWithdrawTransaction))

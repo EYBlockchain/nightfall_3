@@ -38,6 +38,7 @@ import doubleTransferAbi from '../../zokrates/double_transfer_stub/artifacts/dou
 import doubleTransferProgramFile from '../../zokrates/double_transfer_stub/artifacts/double_transfer_stub-program';
 // eslint-disable-next-line
 import doubleTransferPkFile from '../../zokrates/double_transfer_stub/keypair/double_transfer_stub-pk';
+import { saveTransaction } from './database';
 
 const { BN128_GROUP_ORDER, ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME } = global.config;
 const { generalise, GN } = gen;
@@ -260,6 +261,7 @@ async function transfer(transferParams) {
     await Promise.all(
       oldCommitments.map(commitment => markNullified(commitment, optimisticTransferTransaction)),
     );
+    await saveTransaction(optimisticTransferTransaction);
     return {
       rawTransaction,
       transaction: optimisticTransferTransaction,
