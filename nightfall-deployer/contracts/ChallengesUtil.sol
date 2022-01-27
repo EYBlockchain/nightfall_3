@@ -70,12 +70,19 @@ library ChallengesUtil {
         for (uint256 i = 0; i < transaction.proof.length; i++) {
             if (transaction.proof[i] == 0) nZeroProof++;
         }
+        uint256 nZeroCompressedSecrets;
+        for (uint256 i = 0; i < transaction.compressedSecrets.length; i++) {
+            if (transaction.compressedSecrets[i] == 0) nZeroCompressedSecrets++;
+        }
         require(
                 (transaction.tokenId == ZERO && transaction.value == 0) ||
                 transaction.ercAddress == ZERO ||
                 transaction.recipientAddress != ZERO ||
                 transaction.commitments[0] == ZERO ||
                 transaction.commitments[1] != ZERO ||
+                transaction.nullifiers[0] != ZERO ||
+                transaction.nullifiers[1] != ZERO ||
+                transaction.compressedSecrets.length != nZeroCompressedSecrets ||
                 nZeroProof == 4 || // We assume that 3 out of the 4 proof elements can be a valid ZERO. Deals with exception cases
                 transaction.historicRootBlockNumberL2[0] != 0 ||
                 transaction.historicRootBlockNumberL2[1] != 0,
@@ -149,12 +156,19 @@ library ChallengesUtil {
         for (uint256 i = 0; i < transaction.proof.length; i++) {
             if (transaction.proof[i] == 0) nZeroProof++;
         }
+        uint256 nZeroCompressedSecrets;
+        for (uint256 i = 0; i < transaction.compressedSecrets.length; i++) {
+            if (transaction.compressedSecrets[i] == 0) nZeroCompressedSecrets++;
+        }
         require(
                 (transaction.tokenId == ZERO && transaction.value == 0) ||
                 transaction.ercAddress == ZERO ||
                 transaction.recipientAddress == ZERO ||
+                transaction.commitments[0] != ZERO ||
+                transaction.commitments[1] != ZERO ||
                 transaction.nullifiers[0] == ZERO ||
                 transaction.nullifiers[1] != ZERO ||
+                transaction.compressedSecrets.length != nZeroCompressedSecrets ||
                 nZeroProof == 4 || // We assume that 3 out of the 4 proof elements can be a valid ZERO. Deals with exception cases
                 transaction.historicRootBlockNumberL2[1] != 0, // A withdraw has a similar constraint as a single transfer
             'This withdraw transaction type is valid'
