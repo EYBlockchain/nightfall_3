@@ -69,8 +69,10 @@ export async function countCommitments(commitments) {
 // incoming blocks or transactions.
 export async function countTransactionHashes(transactionHashes) {
   const db = await connectDB();
-  const res = await db.getAll(COMMITMENTS_COLLECTION);
-  const filtered = res.filter(r => transactionHashes.includes(r.transactionHash));
+  // const res = await db.getAll(COMMITMENTS_COLLECTION);
+  const txs = await db.getAll(TRANSACTIONS_COLLECTION);
+  const filtered = txs.filter(tx => transactionHashes.includes(tx.transactionHash));
+  // const filtered = res.filter(r => transactionHashes.includes(r.transactionHash));
   return filtered.length;
 }
 
