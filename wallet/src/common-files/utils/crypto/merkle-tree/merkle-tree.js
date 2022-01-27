@@ -1,17 +1,15 @@
-/* eslint import/no-extraneous-dependencies: "off" */
 /* ignore unused exports */
+/* eslint-disable no-bitwise */ // bit operations are essential for merkle-tree computations.
 
 /**
 @module utils.js
 @author iAmMichaelConnor, 'stateless' modifications by Westlad
 @desc Set of utilities for merkle-tree calculations
 */
-
-/* eslint-disable no-bitwise */ // bit operations are essential for merkle-tree computations.
-
-import config from 'config';
 import logger from '../../logger';
 import utils from './utils';
+
+const { NODE_HASHLENGTH, ZERO } = global.config;
 
 function rightShift(integer, shift) {
   return Math.floor(integer / 2 ** shift);
@@ -176,12 +174,12 @@ async function updateNodes(
     leafIndex++
   ) {
     nodeValueFull = leafValues[leafIndex - currentLeafCount];
-    logger.silly(`nodeValueFull: ${nodeValueFull}, hashlength: ${config.NODE_HASHLENGTH}`);
+    logger.silly(`nodeValueFull: ${nodeValueFull}, hashlength: ${NODE_HASHLENGTH}`);
     if (!utils.isHex(nodeValueFull)) {
       nodeValueFull = utils.convertBase(nodeValueFull.toString(), 10, 16);
-      logger.silly(`nodeValueFull: ${nodeValueFull}, hashlength: ${config.NODE_HASHLENGTH}`);
+      logger.silly(`nodeValueFull: ${nodeValueFull}, hashlength: ${NODE_HASHLENGTH}`);
     }
-    nodeValue = `0x${nodeValueFull.slice(-config.NODE_HASHLENGTH * 2)}`; // truncate hashed value, so it 'fits' into the next hash.
+    nodeValue = `0x${nodeValueFull.slice(-NODE_HASHLENGTH * 2)}`; // truncate hashed value, so it 'fits' into the next hash.
     logger.silly(`nodeValue: ${nodeValue})`);
     nodeIndex = leafIndexToNodeIndex(leafIndex, height); // convert the leafIndex to a nodeIndex
 
@@ -208,16 +206,16 @@ async function updateNodes(
         logger.silly(`left input ${frontier[level - 1]}`);
         logger.silly(`right input ${nodeValue}`);
         nodeValueFull = utils.concatenateThenHash(frontier[level - 1], nodeValue); // the parentValue, but will become the nodeValue of the next level
-        nodeValue = `0x${nodeValueFull.slice(-config.NODE_HASHLENGTH * 2)}`; // truncate hashed value, so it 'fits' into the next hash.
+        nodeValue = `0x${nodeValueFull.slice(-NODE_HASHLENGTH * 2)}`; // truncate hashed value, so it 'fits' into the next hash.
         logger.silly(`output ${nodeValue}`);
       } else {
         // odd nodeIndex
         logger.silly(`leafIndex ${leafIndex}`);
         logger.silly(`nodeIndex ${nodeIndex}`);
         logger.silly(`left input ${nodeValue}`);
-        logger.silly(`right input ${config.ZERO}`);
-        nodeValueFull = utils.concatenateThenHash(nodeValue, config.ZERO); // the parentValue, but will become the nodeValue of the next level
-        nodeValue = `0x${nodeValueFull.slice(-config.NODE_HASHLENGTH * 2)}`; // truncate hashed value, so it 'fits' into the next hash.
+        logger.silly(`right input ${ZERO}`);
+        nodeValueFull = utils.concatenateThenHash(nodeValue, ZERO); // the parentValue, but will become the nodeValue of the next level
+        nodeValue = `0x${nodeValueFull.slice(-NODE_HASHLENGTH * 2)}`; // truncate hashed value, so it 'fits' into the next hash.
         logger.silly(`output ${nodeValue}`);
       }
       nodeIndex = parentNodeIndex(nodeIndex); // move one row up the tree
@@ -250,15 +248,15 @@ async function updateNodes(
       logger.silly(`left input, ${frontier[level - 1]}`);
       logger.silly(`right input, ${nodeValue}`);
       nodeValueFull = utils.concatenateThenHash(frontier[level - 1], nodeValue); // the parentValue, but will become the nodeValue of the next level
-      nodeValue = `0x${nodeValueFull.slice(-config.NODE_HASHLENGTH * 2)}`; // truncate hashed value, so it 'fits' into the next hash.
+      nodeValue = `0x${nodeValueFull.slice(-NODE_HASHLENGTH * 2)}`; // truncate hashed value, so it 'fits' into the next hash.
       logger.silly(`output: ${nodeValue}`);
     } else {
       // odd nodeIndex
       logger.silly(`nodeIndex, ${nodeIndex}`);
       logger.silly(`left input, ${nodeValue}`);
-      logger.silly(`right input, ${config.ZERO}`);
-      nodeValueFull = utils.concatenateThenHash(nodeValue, config.ZERO); // the parentValue, but will become the nodeValue of the next level
-      nodeValue = `0x${nodeValueFull.slice(-config.NODE_HASHLENGTH * 2)}`; // truncate hashed value, so it 'fits' into the next hash.
+      logger.silly(`right input, ${ZERO}`);
+      nodeValueFull = utils.concatenateThenHash(nodeValue, ZERO); // the parentValue, but will become the nodeValue of the next level
+      nodeValue = `0x${nodeValueFull.slice(-NODE_HASHLENGTH * 2)}`; // truncate hashed value, so it 'fits' into the next hash.
       logger.silly(`output, ${nodeValue}`);
     }
     nodeIndex = parentNodeIndex(nodeIndex); // move one row up the tree
