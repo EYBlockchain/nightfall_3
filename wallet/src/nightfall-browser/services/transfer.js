@@ -25,6 +25,7 @@ import {
 import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
 import { decompressKey, calculateIvkPkdfromAskNsk } from './keys';
 
+// zokrates/single_transfer_stub/artifacts/single_transfer_stub-abi.json';
 // eslint-disable-next-line
 import singleTransferAbi from '../../zokrates/single_transfer_stub/artifacts/single_transfer_stub-abi.json';
 // eslint-disable-next-line

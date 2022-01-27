@@ -13,6 +13,10 @@ import Doubletransfer from './zokrates/doubletransfer.view.jsx';
 
 import { NF3_GITHUB_ISSUES_URL } from '../constants';
 import * as loginActions from '../store/login/login.actions';
+import MainPage from './initialPage.jsx';
+import Wallet from './wallet/index.jsx';
+import Bridge from './bridge/index.jsx';
+import { UserProvider } from '../hooks/User/index.js';
 
 function App({ onDeleteWallet }) {
   Nf3.Environment.setEnvironment(process.env.REACT_APP_ENVIRONMENT);
@@ -39,31 +43,28 @@ function App({ onDeleteWallet }) {
   }, [onDeleteWallet]);
 
   return (
-    <React.Fragment>
-      <Switch>
-        <Route path="/login" render={() => <Login />} />
-        <Route path="/transactions" render={() => <Transactions />} />
-        <Route
-          path="/issues"
-          render={() => {
-            window.location = NF3_GITHUB_ISSUES_URL;
-          }}
-        />
-        <Route path="/deposit">
-          <Deposit />
-        </Route>
-        <Route path="/withdraw">
-          <Withdraw />
-        </Route>
-        <Route path="/singletransfer">
-          <Singletransfer />
-        </Route>
-        <Route path="/doubletransfer">
-          <Doubletransfer />
-        </Route>
-        <Redirect to="/login" />
-      </Switch>
-    </React.Fragment>
+    <UserProvider>
+      <React.Fragment>
+        <Switch>
+          <Route path="/login" render={() => <Login />} />
+          <Route path="/" exact={true} render={() => <MainPage />} />
+          <Route path="/transactions" render={() => <Transactions />} />
+          <Route path="/wallet" render={() => <Wallet />} />
+          <Route path="/bridge" render={() => <Bridge />} />
+          <Route
+            path="/issues"
+            render={() => {
+              window.location = NF3_GITHUB_ISSUES_URL;
+            }}
+          />
+          <Route path="/deposit" render={() => <Deposit />} />
+          <Route path="/withdraw" render={() => <Withdraw />} />
+          <Route path="/singletransfer" render={() => <Singletransfer />} />
+          <Route path="/doubletransfer" render={() => <Doubletransfer />} />
+          <Redirect to="/" />
+        </Switch>
+      </React.Fragment>
+    </UserProvider>
   );
 }
 
