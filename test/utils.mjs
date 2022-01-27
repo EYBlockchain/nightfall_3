@@ -5,8 +5,6 @@ import path from 'path';
 import config from 'config';
 import { fileURLToPath } from 'url';
 import rand from '../common-files/utils/crypto/crypto-random.mjs';
-import { ENVIRONMENTS } from '../cli/lib/constants.mjs';
-
 const { dirname } = path;
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const { expect } = chai;
@@ -18,25 +16,6 @@ const USE_INFURA = process.env.USE_INFURA === 'true';
 const USE_ROPSTEN_NODE = process.env.USE_ROPSTEN_NODE === 'true';
 const { INFURA_PROJECT_SECRET, INFURA_PROJECT_ID } = process.env;
 let isSubmitTxLocked = false;
-
-export const getCurrentEnvironment = () => {
-  let environment;
-  switch (process.env.network) {
-    case 'localhost':
-      environment = ENVIRONMENTS.localhost;
-      break;
-    case 'ropsten':
-      environment = ENVIRONMENTS.ropsten;
-      break;
-    case 'mainnet':
-      environment = ENVIRONMENTS.mainnet;
-      break;
-    default:
-      environment = ENVIRONMENTS.localhost;
-      break;
-  }
-  return environment;
-};
 
 export function connectWeb3(url) {
   if (!url) {

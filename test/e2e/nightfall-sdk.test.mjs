@@ -285,43 +285,6 @@ describe('Testing the Nightfall SDK', () => {
     await checkUserBalances();
   });
 
-  describe('Miscellaneous tests', () => {
-    it('should respond with "true" the health check', async function () {
-      const res = await nf3User1.healthcheck('client');
-      expect(res).to.be.equal(true);
-    });
-
-    it('should get the address of the shield contract', async function () {
-      const res = await nf3User1.getContractAddress('Shield');
-      expect(res).to.be.a('string').and.to.include('0x');
-    });
-
-    it('should get the address of the test ERC contract stub', async function () {
-      const res = await nf3User1.getContractAddress('ERCStub');
-      expect(res).to.be.a('string').and.to.include('0x');
-    });
-
-    it('should get the address of the test ERC20 mock contract', async function () {
-      const res = await nf3User1.getContractAddress('ERC20Mock');
-      expect(res).to.be.a('string').and.to.include('0x');
-    });
-
-    it('should get the address of the test ERC721 mock contract', async function () {
-      const res = await nf3User1.getContractAddress('ERC721Mock');
-      expect(res).to.be.a('string').and.to.include('0x');
-    });
-
-    it('should get the address of the test ERC1155 mock contract', async function () {
-      const res = await nf3User1.getContractAddress('ERC1155Mock');
-      expect(res).to.be.a('string').and.to.include('0x');
-    });
-
-    it('should subscribe to block proposed event with the provided incoming viewing key for client', async function () {
-      const res = await nf3User1.subscribeToIncomingViewingKeys();
-      expect(res.data.status).to.be.a('string');
-      expect(res.data.status).to.be.equal('success');
-    });
-  });
 
   describe('Basic Proposer tests', () => {
     it('should register a proposer', async () => {
