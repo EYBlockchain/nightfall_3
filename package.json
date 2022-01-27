@@ -11,7 +11,6 @@
     "test-chain-reorg": "env-cmd -e development mocha --timeout 0 --bail test/chain-reorg.mjs",
     "test-e2e": "env-cmd -e development mocha --timeout 0 --bail test/e2e/nightfall-sdk.test.mjs",
     "test-e2e-ropsten": "env-cmd -e ropsten mocha --timeout 0 --bail test/e2e/nightfall-sdk.test.mjs",
-    "test-ercmocks": "env-cmd -e development mocha --timeout 0 --bail test/e2e/ercmocks.test.mjs",
     "lint": "eslint . --ext js,mjs,jsx && find-unused-exports",
     "prepare": "husky install",
     "doc:build:sdk": "jsdoc -c jsdoc.json cli/lib/nf3.mjs"
