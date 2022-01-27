@@ -27,6 +27,7 @@ import programFile from '../../zokrates/deposit_stub/artifacts/deposit_stub-prog
 // eslint-disable-next-line
 import pkFile from '../../zokrates/deposit_stub/keypair/deposit_stub-pk';
 import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
+import { saveTransaction } from './database';
 
 const { ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER } = global.config;
 const { generalise } = gen;
@@ -107,7 +108,8 @@ async function deposit(items) {
 
     // store the commitment on successful computation of the transaction
     commitment.isDeposited = true;
-    storeCommitment(commitment, nsk);
+    await storeCommitment(commitment, nsk);
+    await saveTransaction(optimisticDepositTransaction);
     return { rawTransaction, transaction: optimisticDepositTransaction };
   } catch (err) {
     throw new Error(err); // let the caller handle the error
