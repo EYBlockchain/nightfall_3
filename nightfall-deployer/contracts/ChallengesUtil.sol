@@ -76,9 +76,6 @@ library ChallengesUtil {
                 transaction.recipientAddress != ZERO ||
                 transaction.commitments[0] == ZERO ||
                 transaction.commitments[1] != ZERO ||
-                transaction.commitments.length != 1 ||
-                transaction.nullifiers.length != 0 ||
-                transaction.compressedSecrets.length != 0 ||
                 nZeroProof == 4 || // We assume that 3 out of the 4 proof elements can be a valid ZERO. Deals with exception cases
                 transaction.historicRootBlockNumberL2[0] != 0 ||
                 transaction.historicRootBlockNumberL2[1] != 0,
@@ -106,10 +103,8 @@ library ChallengesUtil {
                 transaction.recipientAddress != ZERO ||
                 transaction.commitments[0] == ZERO ||
                 transaction.commitments[1] != ZERO ||
-                transaction.commitments.length != 1 ||
                 transaction.nullifiers[0] == ZERO ||
                 transaction.nullifiers[1] != ZERO ||
-                transaction.nullifiers.length != 1 ||
                 nZeroCompressedSecrets == 8 || // We assume that 7 out of the 8 compressed secrets elements can be a valid ZERO. Deals with exception cases
                 nZeroProof == 4 || // We assume that 3 out of the 4 proof elements can be a valid ZERO. Deals with exception cases
                 transaction.historicRootBlockNumberL2[1] != 0, // If this is a single, the second historicBlockNumber needs to be zero
@@ -137,10 +132,8 @@ library ChallengesUtil {
                 transaction.recipientAddress != ZERO ||
                 transaction.commitments[0] == ZERO ||
                 transaction.commitments[1] == ZERO ||
-                transaction.commitments.length != 2 ||
                 transaction.nullifiers[0] == ZERO ||
                 transaction.nullifiers[1] == ZERO ||
-                transaction.nullifiers.length != 2 ||
                 nZeroCompressedSecrets == 8 || // We assume that 7 out of the 8 compressed secrets elements can be a valid ZERO. Deals with exception cases
                 nZeroProof == 4, // We assume that 3 out of the 4 proof elements can be a valid ZERO. Deals with exception cases
             'This double transfer transaction type is valid'
@@ -160,11 +153,8 @@ library ChallengesUtil {
                 (transaction.tokenId == ZERO && transaction.value == 0) ||
                 transaction.ercAddress == ZERO ||
                 transaction.recipientAddress == ZERO ||
-                transaction.commitments.length != 0 ||
                 transaction.nullifiers[0] == ZERO ||
                 transaction.nullifiers[1] != ZERO ||
-                transaction.nullifiers.length != 1 ||
-                transaction.compressedSecrets.length != 0 ||
                 nZeroProof == 4 || // We assume that 3 out of the 4 proof elements can be a valid ZERO. Deals with exception cases
                 transaction.historicRootBlockNumberL2[1] != 0, // A withdraw has a similar constraint as a single transfer
             'This withdraw transaction type is valid'
