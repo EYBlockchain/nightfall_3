@@ -164,6 +164,7 @@ export async function saveTransaction(_transaction) {
   const db = await connectDB();
   const query = await db.getAll(TRANSACTIONS_COLLECTION);
   const existing = query.filter(q => q.transactionHash === transaction.transactionHash);
+  transaction.createdTime = Date.now(); // TODO REMOVE THIS ONCE WE HAVE A BETTER SOLUTION.
   if (!existing) return db.put(TRANSACTIONS_COLLECTION, transaction, transaction._id);
   if (!existing.blockNumber) {
     return db.put(TRANSACTIONS_COLLECTION, transaction, transaction._id);
@@ -196,4 +197,11 @@ export async function getTransactionByNullifier(nullifierHash) {
 export async function getTransactionByTransactionHash(transactionHash) {
   const db = await connectDB();
   return db.get(TRANSACTIONS_COLLECTION, transactionHash);
+}
+
+export async function getAllTransactions() {
+  const db = await connectDB();
+  const res = await db.getAll(TRANSACTIONS_COLLECTION);
+  if (Object.keys(res).length > 0) return res;
+  return [];
 }

@@ -8,7 +8,7 @@ export default function Tokens(token) {
     <div className={styles.maticTokensList}>
       <div className={styles.formHeader}>
         <div className={styles.leftSection}>
-          <div className={styles.headerH5}>Balances on Polygon networkName</div>
+          <div className={styles.headerH5}>Balances on Polygon Nightfall</div>
           {/* <div
                     v-click-outside.stop="closeMobileFilterMenu"
                     class="mobile-filter-section"
