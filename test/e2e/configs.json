@@ -1,0 +1,5 @@
+{
+  "bond": 10,
+  "gasCosts": 8000000000000000,
+  "txPerBlock": 2
+}

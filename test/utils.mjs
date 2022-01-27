@@ -5,139 +5,157 @@ import path from 'path';
 import config from 'config';
 import { fileURLToPath } from 'url';
 import rand from '../common-files/utils/crypto/crypto-random.mjs';
+
 const { dirname } = path;
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const { expect } = chai;
 
-let web3;
-// This will be a mapping of privateKeys to nonces;
-const nonceDict = {};
 const USE_INFURA = process.env.USE_INFURA === 'true';
 const USE_ROPSTEN_NODE = process.env.USE_ROPSTEN_NODE === 'true';
-const { INFURA_PROJECT_SECRET, INFURA_PROJECT_ID } = process.env;
-let isSubmitTxLocked = false;
 
-export function connectWeb3(url) {
-  if (!url) {
-    // eslint-disable-next-line no-param-reassign
-    url = process.env.web3WsUrl;
+export class Web3Client {
+  constructor(url) {
+    this.url = url || process.env.web3WsUrl;
+    this.provider = new Web3.providers.WebsocketProvider(this.url, config.WEB3_PROVIDER_OPTIONS);
+    this.web3 = new Web3(this.provider);
+    this.isSubmitTxLocked = false;
   }
-  return new Promise(resolve => {
-    console.log('Blockchain Connecting ...');
 
-    let provider;
-    if (USE_INFURA) {
-      if (!INFURA_PROJECT_SECRET) throw Error('env INFURA_PROJECT_SECRET not set');
-      if (!INFURA_PROJECT_ID) throw Error('env INFURA_PROJECT_ID not set');
+  getInfo() {
+    return this.web3.eth.getNodeInfo();
+  }
 
-      const infuraUrl = url.replace('INFURA_PROJECT_ID', INFURA_PROJECT_ID);
+  // eslint-disable-next-line consistent-return
+  connectWeb3(useState = true) {
+    if (useState) {
+      return new Promise(resolve => {
+        console.log('Blockchain Connecting ...');
 
-      provider = new Web3.providers.WebsocketProvider(infuraUrl, {
-        ...config.WEB3_PROVIDER_OPTIONS,
-        headers: {
-          authorization: `Basic ${Buffer.from(`:${INFURA_PROJECT_SECRET}`).toString('base64')}`,
-        },
+        this.provider.on('error', err => console.error(`web3 error: ${JSON.stringify(err)}`));
+        this.provider.on('connect', () => {
+          console.log('Blockchain Connected ...');
+          resolve(this.web3);
+        });
+        this.provider.on('end', () => console.log('Blockchain disconnected'));
       });
-    } else {
-      provider = new Web3.providers.WebsocketProvider(url, config.WEB3_PROVIDER_OPTIONS);
     }
+  }
 
-    web3 = new Web3(provider);
-    provider.on('error', err => console.error(`web3 error: ${JSON.stringify(err)}`));
-    provider.on('connect', () => {
-      console.log('Blockchain Connected ...');
-      resolve(web3);
+  closeWeb3() {
+    this.web3.currentProvider.connection.close();
+  }
+
+  setNonce(privateKey, _nonce) {
+    // This will be a mapping of privateKeys to nonces;
+    this.nonceDict[privateKey] = _nonce;
+  }
+
+  getAccounts() {
+    if (process.env.FROM_ADDRESS) return [process.env.FROM_ADDRESS];
+    const accounts = this.web3.eth.getAccounts();
+    return accounts;
+  }
+
+  getBalance(account) {
+    return this.web3.eth.getBalance(account);
+  }
+
+  getIsSubmitTxLocked() {
+    return this.isSubmitTxLocked;
+  }
+
+  async submitTransaction(unsignedTransaction, privateKey, shieldAddress, gasCount, value = 0) {
+    while (this.isSubmitTxLocked) {
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    this.isSubmitTxLocked = true;
+    let gas = gasCount;
+    let gasPrice = 10000000000;
+    let receipt;
+    let nonce = this.nonceDict[privateKey];
+    // if the nonce hasn't been set, then use the transaction count
+    try {
+      if (nonce === undefined) {
+        const accountAddress = await this.web3.eth.accounts.privateKeyToAccount(privateKey);
+        nonce = await this.web3.eth.getTransactionCount(accountAddress.address);
+      }
+      if (USE_INFURA || USE_ROPSTEN_NODE) {
+        // get gaslimt from latest block as gaslimt may vary
+        gas = (await this.web3.eth.getBlock('latest')).gasLimit;
+        const blockGasPrice = Number(await this.web3.eth.getGasPrice());
+        if (blockGasPrice > gasPrice) gasPrice = blockGasPrice;
+      }
+      const tx = {
+        to: shieldAddress,
+        data: unsignedTransaction,
+        value,
+        gas,
+        gasPrice,
+        nonce,
+      };
+      const signed = await this.web3.eth.accounts.signTransaction(tx, privateKey);
+      nonce++;
+      this.nonceDict[privateKey] = nonce;
+      receipt = await this.web3.eth.sendSignedTransaction(signed.rawTransaction);
+    } finally {
+      this.isSubmitTxLocked = false;
+    }
+    return receipt;
+  }
+
+  // This only works with Ganache but it can move block time forwards
+  async timeJump(secs) {
+    await this.web3.currentProvider.send({
+      jsonrpc: '2.0',
+      method: 'evm_increaseTime',
+      params: [secs],
+      id: 0,
     });
-    provider.on('end', () => console.log('Blockchain disconnected'));
-  });
-}
 
-export function connectWeb3NoState(url = 'ws://localhost:8546') {
-  return new Web3(new Web3.providers.WebsocketProvider(url));
-}
-
-export function closeWeb3Connection(w = web3) {
-  w.currentProvider.connection.close();
-}
-
-export function setNonce(privateKey, _nonce) {
-  nonceDict[privateKey] = _nonce;
-}
-
-export async function getAccounts() {
-  if (process.env.FROM_ADDRESS) return [process.env.FROM_ADDRESS];
-  const accounts = web3.eth.getAccounts();
-  return accounts;
-}
-export async function getBalance(account) {
-  return web3.eth.getBalance(account);
-}
-
-export function getIsSubmitTxLocked() {
-  return isSubmitTxLocked;
-}
-
-export async function submitTransaction(
-  unsignedTransaction,
-  privateKey,
-  shieldAddress,
-  gasCount,
-  value = 0,
-) {
-  while (isSubmitTxLocked) {
-    // eslint-disable-next-line no-await-in-loop
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await this.web3.currentProvider.send({
+      jsonrpc: '2.0',
+      method: 'evm_mine',
+      params: [],
+      id: 0,
+    });
   }
-  isSubmitTxLocked = true;
-  let gas = gasCount;
-  let gasPrice = 10000000000;
-  let receipt;
-  let nonce = nonceDict[privateKey];
-  // if the nonce hasn't been set, then use the transaction count
-  try {
-    if (nonce === undefined) {
-      const accountAddress = await web3.eth.accounts.privateKeyToAccount(privateKey);
-      nonce = await web3.eth.getTransactionCount(accountAddress.address);
+
+  // This function polls for a particular event to be emitted by the blockchain
+  // from a specified contract.  After retries, it will give up and error.
+  // TODO could we make a neater job with setInterval()?
+  async testForEvents(contractAddress, topics, retries) {
+    // console.log('Listening for events');
+    const WAIT = 1000;
+    let counter = retries || Number(process.env.EVENT_RETRIEVE_RETRIES) || 3;
+    let events;
+    while (
+      counter < 0 ||
+      events === undefined ||
+      events[0] === undefined ||
+      events[0].transactionHash === undefined
+    ) {
+      // eslint-disable-next-line no-await-in-loop
+      events = await this.web3.eth.getPastLogs({
+        fromBlock: this.web3.utils.toHex(0),
+        address: contractAddress,
+        topics,
+      });
+      // console.log('EVENTS WERE', events);
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise(resolve => setTimeout(resolve, WAIT));
+      counter--;
     }
-    if (USE_INFURA || USE_ROPSTEN_NODE) {
-      // get gaslimt from latest block as gaslimt may vary
-      gas = (await web3.eth.getBlock('latest')).gasLimit;
-      const blockGasPrice = Number(await web3.eth.getGasPrice());
-      if (blockGasPrice > gasPrice) gasPrice = blockGasPrice;
+    if (counter < 0) {
+      throw new Error(
+        `No events found with in ${
+          retries || Number(process.env.EVENT_RETRIEVE_RETRIES) || 3
+        }retries of ${WAIT}ms wait`,
+      );
     }
-    const tx = {
-      to: shieldAddress,
-      data: unsignedTransaction,
-      value,
-      gas,
-      gasPrice,
-      nonce,
-    };
-    const signed = await web3.eth.accounts.signTransaction(tx, privateKey);
-    nonce++;
-    nonceDict[privateKey] = nonce;
-    receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction);
-  } finally {
-    isSubmitTxLocked = false;
+    // console.log('Events found');
+    return events;
   }
-  return receipt;
-}
-
-// This only works with Ganache but it can move block time forwards
-export async function timeJump(secs) {
-  await web3.currentProvider.send({
-    jsonrpc: '2.0',
-    method: 'evm_increaseTime',
-    params: [secs],
-    id: 0,
-  });
-
-  await web3.currentProvider.send({
-    jsonrpc: '2.0',
-    method: 'evm_mine',
-    params: [],
-    id: 0,
-  });
 }
 
 export async function createBadBlock(badBlockType, block, transactions, args) {
@@ -206,42 +224,6 @@ export async function createBadBlock(badBlockType, block, transactions, args) {
   return { txDataToSign, block: newBlock, transactions: newTransactions };
 }
 
-// This function polls for a particular event to be emitted by the blockchain
-// from a specified contract.  After retries, it will give up and error.
-// TODO could we make a neater job with setInterval()?
-export async function testForEvents(contractAddress, topics, retries) {
-  // console.log('Listening for events');
-  const WAIT = 1000;
-  let counter = retries || Number(process.env.EVENT_RETRIEVE_RETRIES) || 3;
-  let events;
-  while (
-    counter < 0 ||
-    events === undefined ||
-    events[0] === undefined ||
-    events[0].transactionHash === undefined
-  ) {
-    // eslint-disable-next-line no-await-in-loop
-    events = await web3.eth.getPastLogs({
-      fromBlock: web3.utils.toHex(0),
-      address: contractAddress,
-      topics,
-    });
-    // console.log('EVENTS WERE', events);
-    // eslint-disable-next-line no-await-in-loop
-    await new Promise(resolve => setTimeout(resolve, WAIT));
-    counter--;
-  }
-  if (counter < 0) {
-    throw new Error(
-      `No events found with in ${
-        retries || Number(process.env.EVENT_RETRIEVE_RETRIES) || 3
-      }retries of ${WAIT}ms wait`,
-    );
-  }
-  // console.log('Events found');
-  return events;
-}
-
 export const topicEventMapping = {
   BlockProposed: '0x566d835e602d4aa5802ee07d3e452e755bc77623507825de7bc163a295d76c0b',
   Rollback: '0xea34b0bc565cb5f2ac54eaa86422ae05651f84522ef100e16b54a422f2053852',
@@ -296,12 +278,12 @@ export const makeTransactions = async (txType, numTxs, url, txArgs) => {
   return transactions;
 };
 
-export const sendTransactions = async (transactions, submitArgs) => {
+export const sendTransactions = async (transactions, submitArgs, web3) => {
   const receiptArr = [];
   for (let i = 0; i < transactions.length; i++) {
     const { txDataToSign } = transactions[i];
     // eslint-disable-next-line no-await-in-loop
-    const receipt = await submitTransaction(txDataToSign, ...submitArgs);
+    const receipt = await web3.submitTransaction(txDataToSign, ...submitArgs);
     receiptArr.push(receipt);
   }
   return receiptArr;
