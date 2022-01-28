@@ -60,3 +60,7 @@ describe('Health and Contract Checks', () => {
     expect(res.data.status).to.be.equal('success');
   });
 });
+
+after(async () => {
+  await nf3User1.close();
+});

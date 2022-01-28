@@ -22,21 +22,16 @@ const environment = environments[network] || environments.localhost;
 const nf3Proposer1 = new Nf3(web3WsUrl, signingKeys.proposer1, environment);
 const nf3Proposer2 = new Nf3(web3WsUrl, signingKeys.proposer2, environment);
 const nf3Proposer3 = new Nf3(web3WsUrl, signingKeys.proposer3, environment);
-const nf3Challenger = new Nf3(web3WsUrl, signingKeys.challenger, environment);
 
 const web3Client = new Web3Client();
-
-let stateContractBalance = 0;
 
 before(async () => {
   await nf3Proposer1.init(mnemonics.proposer);
   await nf3Proposer2.init(mnemonics.proposer);
   await nf3Proposer3.init(mnemonics.proposer);
-  await nf3Challenger.init(mnemonics.challenger);
 
   // Proposer registration
   await nf3Proposer1.registerProposer();
-  stateContractBalance += bond;
 
   // Proposer listening for incoming events
   const newGasBlockEmitter = await nf3Proposer1.startProposer();
@@ -46,10 +41,6 @@ before(async () => {
     );
   });
   await nf3Proposer1.addPeer(environment.optimistApiUrl);
-  // Challenger registration
-  await nf3Challenger.registerChallenger();
-  // Chalenger listening for incoming events
-  nf3Challenger.startChallenger();
 });
 
 describe('Basic Proposer tests', () => {
@@ -59,7 +50,6 @@ describe('Basic Proposer tests', () => {
     // we have to pay 10 ETH to be registered
     const startBalance = await web3Client.getBalance(nf3Proposer2.ethereumAddress);
     const res = await nf3Proposer2.registerProposer();
-    stateContractBalance += bond;
     expectTransaction(res);
     ({ proposers } = await nf3Proposer2.getProposers());
     const endBalance = await web3Client.getBalance(nf3Proposer2.ethereumAddress);
@@ -74,7 +64,6 @@ describe('Basic Proposer tests', () => {
     // we have to pay 10 ETH to be registered
     const startBalance = await web3Client.getBalance(nf3Proposer3.ethereumAddress);
     const res = await nf3Proposer3.registerProposer();
-    stateContractBalance += bond;
     expectTransaction(res);
     ({ proposers } = await nf3Proposer3.getProposers());
     const endBalance = await web3Client.getBalance(nf3Proposer3.ethereumAddress);
@@ -125,12 +114,15 @@ describe('Basic Proposer tests', () => {
       expect(error.message).to.include('Transaction has been reverted by the EVM');
     }
   });
+});
 
-  after(async () => {
-    // After the proposer tests, re-register proposers
-    await nf3Proposer2.deregisterProposer();
-    await nf3Proposer3.deregisterProposer();
-    await nf3Proposer1.registerProposer();
-    stateContractBalance += bond;
-  });
+after(async () => {
+  // After the proposer tests, re-register proposers
+  await nf3Proposer2.deregisterProposer();
+  await nf3Proposer3.deregisterProposer();
+  await nf3Proposer1.registerProposer();
+  nf3Proposer2.close();
+  nf3Proposer3.close();
+  nf3Proposer1.close();
+  web3Client.closeWeb3();
 });

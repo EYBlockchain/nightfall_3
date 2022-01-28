@@ -9,7 +9,7 @@
     "ropsten-test": "env-cmd -e ropsten mocha --timeout 0 --bail test/http.mjs test/neg-http.mjs",
     "test-gas": "env-cmd -e development mocha --timeout 0 --bail test/tx-gas.mjs",
     "test-chain-reorg": "env-cmd -e development mocha --timeout 0 --bail test/chain-reorg.mjs",
-    "test-e2e": "env-cmd -e development mocha --timeout 2000 --bail test/e2e/health-and-contracts.test.mjs test/e2e/proposer.test.mjs ",
+    "test-e2e": "env-cmd -e development mocha --timeout 2000 --bail test/e2e/health-and-contracts.test.mjs test/e2e/proposer.test.mjs test/e2e/challenger.test.mjs ",
     "test-e2e-ropsten": "env-cmd -e ropsten mocha --timeout 0 --bail test/e2e/nightfall-sdk.test.mjs",
     "lint": "eslint . --ext js,mjs,jsx && find-unused-exports",
     "prepare": "husky install",
