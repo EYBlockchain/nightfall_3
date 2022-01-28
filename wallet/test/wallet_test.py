@@ -19,13 +19,19 @@ from tx_test import *
 from effect_test import *
 from login_test import *
 from token_test import *
+from new_tx_test import *
+from new_effect_test import *
+from new_login_test import *
+from new_token_test import *
 
 # virtual display
 from pyvirtualdisplay import Display
 
 testEnvironment="localhost"
 testToRun = { 
-    'all': True,
+    'all': True,   # Run all tests
+    'new': False,  # Run new wallet tests
+    'old': True,   # Run old wallet tests
     'effects': False,
     'tokens': False,
     'tx': False,
@@ -39,6 +45,12 @@ for arg in sys.argv:
         testEnvironment="docker"
     if arg.lower() == "ropsten":
         testEnvironment="ropsten"
+    if arg.lower() == "new-wallet":
+       testToRun['new'] = True
+       testToRun['old'] = False 
+    if arg.lower() == "old-wallet":
+       testToRun['new'] = False 
+       testToRun['old'] = True
     if arg.lower() == "effects":
         testToRun['effects'] = True
         testToRun['all'] = False
@@ -51,7 +63,6 @@ for arg in sys.argv:
     if arg.lower() == "login":
         testToRun['tokens'] = True
         testToRun['all'] = False
-
 
 #####################
 # Declare variables #
@@ -104,9 +115,13 @@ try:
   ########################
   # Log in wallet #
   ########################
-  loginNightfallWallet(driver, findElementsInstance, metamaskTab, nightfallTab, walletUrl)
-  testEthAddress = findElementsInstance.element_exist_xpath('//*[@id="wallet-info-cell-ethaddress"]').text
-  assert(testEthAddress.lower() == ethAccount2Params["ethereumAddress"].lower())
+  if testToRun['old']:
+    loginNightfallWallet(driver, findElementsInstance, metamaskTab, nightfallTab, walletUrl)
+    testEthAddress = findElementsInstance.element_exist_xpath('//*[@id="wallet-info-cell-ethaddress"]').text
+    assert(testEthAddress.lower() == ethAccount2Params["ethereumAddress"].lower())
+  else:
+    # TODO Add login mechanism to new wallet
+    pass
 
 except Exception:
   print("FAILED")
@@ -116,12 +131,24 @@ except Exception:
 # Start Tests          
 ########################
 if testToRun['all'] or testToRun['effects']:
-  effectTest(findElementsInstance, driver, metamaskTab, nightfallTab, walletUrl)
+  if testToRun['old']:
+    effectTest(findElementsInstance, driver, metamaskTab, nightfallTab, walletUrl)
+  else:
+    newEffectTest(findElementsInstance, driver, metamaskTab, nightfallTab, walletUrl)
 if testToRun['all'] or testToRun['login']:
-  loginTest(findElementsInstance, driver, metamaskTab, nightfallTab)
+  if testToRun['old']:
+    loginTest(findElementsInstance, driver, metamaskTab, nightfallTab)
+  else:
+    newLoginTest(findElementsInstance, driver, metamaskTab, nightfallTab)
 if testToRun['all'] or testToRun['tokens']:
-  tokenTest(findElementsInstance, driver, metamaskTab, nightfallTab)
+  if testToRun['old']:
+    tokenTest(findElementsInstance, driver, metamaskTab, nightfallTab)
+  else:
+    newTokenTest(findElementsInstance, driver, metamaskTab, nightfallTab)
 if testToRun['all'] or testToRun['tx']:
-  txTest(findElementsInstance, driver, metamaskTab, nightfallTab)
+  if testToRun['old']:
+    txTest(findElementsInstance, driver, metamaskTab, nightfallTab)
+  else:
+    newTxTest(findElementsInstance, driver, metamaskTab, nightfallTab)
 
 driver.quit()

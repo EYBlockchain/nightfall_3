@@ -36,6 +36,9 @@ ADD ./cli /cli
 RUN npm i
 RUN npm run build
 
+WORKDIR /config
+ADD ./config /config
+
 WORKDIR /src
 ADD . /src
 
