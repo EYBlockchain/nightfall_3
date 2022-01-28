@@ -11,7 +11,7 @@ import link from '../../assets/svg/link.svg';
 import aave from '../../assets/svg/aave.svg';
 import metamaskIcon from '../../assets/svg/metamask.svg';
 import maticImg from '../../assets/img/polygon-chain.svg';
-import { UserContext } from '../../hooks/User';
+import { UserContext } from '../../hooks/User/index.jsx';
 import transfer from '../../nightfall-browser/services/transfer';
 
 const symbols = {

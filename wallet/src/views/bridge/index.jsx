@@ -14,7 +14,7 @@ import ethChainImage from '../../assets/img/ethereum-chain.svg';
 import discloserBottomImage from '../../assets/img/discloser-bottom.svg';
 import lightArrowImage from '../../assets/img/light-arrow.svg';
 import testImage from '../../assets/img/fast-withdraw/evodefi.png';
-import { UserContext } from '../../hooks/User';
+import { UserContext } from '../../hooks/User/index.jsx';
 import { approve, submitTransaction } from '../../common-files/utils/contract';
 import deposit from '../../nightfall-browser/services/deposit';
 import withdraw from '../../nightfall-browser/services/withdraw';
