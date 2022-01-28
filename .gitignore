@@ -7,5 +7,6 @@ cli/build
 # wallet
 wallet/build
 wallet/cli
+wallet/config
 __pycache__
 wallet/src/zokrates

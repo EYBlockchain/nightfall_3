@@ -28,7 +28,7 @@ def loginNightfallWallet(driver, findElements, metamaskTab, nightfallTab, wallet
     sleep(1)
     findElements.element_exist_xpath('(//*[local-name()="svg"])[2]').click() # nightfall Metamask button
     sleep(1)
-    findElements.element_exist_xpath('//button[text()="New"]').click() # New Mnemonic
+    findElements.element_exist_xpath('//button[text()="New"]').click() # New Munemonic
     sleep(1)
     findElements.element_exist_xpath('//button[text()="Submit"]').click() # Submit Mnemonic
 
