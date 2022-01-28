@@ -4,8 +4,8 @@ version: '3.5'
 services:
   client1:
     build:
-      dockerfile: Dockerfile
-      context: ./nightfall-client
+      dockerfile: client.Dockerfile
+      context: .
     volumes:
       - type: bind
         source: ./nightfall-client/src
@@ -48,8 +48,8 @@ services:
 
   client2:
     build:
-      dockerfile: Dockerfile
-      context: ./nightfall-client
+      dockerfile: client.Dockerfile
+      context: .
     volumes:
       - type: bind
         source: ./nightfall-client/src
@@ -93,8 +93,8 @@ services:
   worker:
     #  image: 3800decac71d
     build:
-      dockerfile: Dockerfile
-      context: ./zokrates-worker
+      dockerfile: worker.Dockerfile
+      context: .
     volumes:
       - type: volume
         source: proving_files
@@ -119,8 +119,8 @@ services:
   deployer:
     #image: docker.pkg.github.com/eyblockchain/nightfall-deployer/nightfall_deployer:1.1.0
     build:
-      context: ./nightfall-deployer
-      dockerfile: Dockerfile
+      dockerfile: deployer.Dockerfile
+      context: .
     volumes:
       - type: volume
         source: build
@@ -179,7 +179,8 @@ services:
 
   optimist1:
     build:
-      context: ./nightfall-optimist
+      dockerfile: optimist.Dockerfile
+      context: .
     depends_on:
       - deployer
     networks:
@@ -213,7 +214,8 @@ services:
 
   optimist2:
     build:
-      context: ./nightfall-optimist
+      dockerfile: optimist.Dockerfile
+      context: .
     depends_on:
       - deployer
     networks:
