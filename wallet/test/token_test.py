@@ -1,5 +1,6 @@
 from time import sleep
 import logging    
+import random
 
 from constants import *
 from helpers.wallet import *
@@ -56,7 +57,7 @@ TokenListERCContract = [
   {
     'tokenName' : 'Token1',
     'tokenType' : 'ERC20',
-    'tokenAddress' : '0xb5acbe9a0f1f8b98f3fc04471f7fe5d2c222cb44',
+    'tokenAddress' : '0xf05e9fb485502e5a93990c714560b7ce654173c3',
   },
   {
     'tokenName' : 'Token2',
@@ -66,7 +67,8 @@ TokenListERCContract = [
   {
     'tokenName' : 'Token3',
     'tokenType' : 'ERC1155',
-    'tokenAddress' : '0x9635c600697587dd8e603120ed0e76cc3a9efe4c'
+    'tokenAddress' : '0x9635c600697587dd8e603120ed0e76cc3a9efe4c',
+    'tokenIdUsed': ['0','1','2','3','4'],
   }
 ]
 
@@ -85,11 +87,44 @@ def addTokenCancelTest(findElementsInstance, driver, metamaskTab, nightfallTab):
     return "FAILED\n"
 
 def addTokensTest(findElementsInstance, driver, metamaskTab, nightfallTab):
+  sleep(4)
   driver.switch_to.window(nightfallTab)
   removeTokenNightfallWallet(driver, findElementsInstance, TokenListERCContract[0])
   addAndCheckTokenNightfallWallet(driver, findElementsInstance, TokenListERCContract[0])
   removeTokenNightfallWallet(driver, findElementsInstance, TokenListERCContract[1])
   addAndCheckTokenNightfallWallet(driver, findElementsInstance, TokenListERCContract[1])
+  removeTokenNightfallWallet(driver, findElementsInstance, TokenListERCContract[2])
+  addAndCheckTokenNightfallWallet(driver, findElementsInstance, TokenListERCContract[2])
+
+def addErc1155TokensTest(findElementsInstance, driver, metamaskTab, nightfallTab):
+  sleep(4)
+  driver.switch_to.window(nightfallTab)
+  # Add new ERC1155. Don't need tokenId
+  removeTokenNightfallWallet(driver, findElementsInstance, TokenListERCContract[2])
+  addAndCheckTokenNightfallWallet(driver, findElementsInstance, TokenListERCContract[2])
+  sleep(4)
+
+  # Add subtoken
+  erc1155TokenId = 0
+  while True:
+    erc1155TokenId = str(random.randint(0,1000))
+    if not erc1155TokenId in TokenListERCContract[2]['tokenIdUsed']:
+      break
+    sleep(1) 
+
+  addAndCheckTokenNightfallWallet(driver, findElementsInstance, TokenListERCContract[2],erc1155TokenId)
+  sleep(4)
+  removeTokenNightfallWallet(driver, findElementsInstance, TokenListERCContract[2], erc1155TokenId)
+
+  # Add invalid subtoken
+  for erc1155TokenId in TokenListERCContract[2]['tokenIdUsed']:
+     try:
+      addAndCheckTokenNightfallWallet(driver, findElementsInstance, TokenListERCContract[2],erc1155TokenId)
+      sleep(4)
+      removeTokenNightfallWallet(driver, findElementsInstance, TokenListERCContract[2], erc1155TokenId)
+      return "FAILED\n"
+     except:
+      findElementsInstance.element_exist_xpath('//button[text()="Cancel"]').click() # Remove Token
 
 def removeInexistentTokensTest(findElementsInstance, driver, metamaskTab, nightfallTab):
   driver.switch_to.window(nightfallTab)
@@ -122,9 +157,6 @@ def addNoContractAddressTokenTest(findElementsInstance, driver, metamaskTab, nig
       pass
 
 
-def addNoERCContractAddressTokenTest(findElementsInstance, driver, metamaskTab, nightfallTab):
-  return "NOT IMPLEMENTED\n"
-
 def addDuplicateByAddressTokenTest(findElementsInstance, driver, metamaskTab, nightfallTab):
   driver.switch_to.window(nightfallTab)
   try:
@@ -139,18 +171,20 @@ def addDuplicateByAddressTokenTest(findElementsInstance, driver, metamaskTab, ni
 
 def addDuplicateByNameTokenTest(findElementsInstance, driver, metamaskTab, nightfallTab):
   driver.switch_to.window(nightfallTab)
-  duplicateTokenListERCContract = TokenListERCContract.copy() 
-  token1 = TokenListERCContract[0]
-  token2 = duplicateTokenListERCContract[1]
-  token2['tokenAddress'] = token1['tokenAddress']
-  removeTokenNightfallWallet(driver, findElementsInstance, token1)
-  try:
-    addTokenNightfallWallet(driver, findElementsInstance, token2)
-    return "FAILED\n"
-  except Exception:
-    findElementsInstance.element_exist_xpath('//button[text()="Cancel"]').click() # Cancel 
-    addTokenNightfallWallet(driver, findElementsInstance, token1)
-    pass
+  for tokenIdx in range(len(TokenListERCContract)):
+    sleep(3)
+    token1 = TokenListERCContract[tokenIdx].copy()
+    token2 = TokenListERCContract[(tokenIdx+1)%len(TokenListERCContract)].copy()
+    token2['tokenAddress'] = token1['tokenAddress']
+    removeTokenNightfallWallet(driver, findElementsInstance, token1)
+    try:
+      sleep(3)
+      addTokenNightfallWallet(driver, findElementsInstance, token2)
+      return "FAILED\n"
+    except Exception:
+      sleep(3)
+      findElementsInstance.element_exist_xpath('//button[text()="Cancel"]').click() # Cancel 
+      addTokenNightfallWallet(driver, findElementsInstance, token1)
 
 tokenTestsList = [
   {
@@ -160,6 +194,10 @@ tokenTestsList = [
   {
     'name': addTokensTest,
     'description' : 'Add and remove N tokens and check they are added and removed correctly'
+  },
+  {
+    'name': addErc1155TokensTest,
+    'description' : 'Add and remove Erc1155 tokens and check they are added and removed correctly'
   },
   {
     'name': removeInexistentTokensTest,
@@ -173,10 +211,6 @@ tokenTestsList = [
     'name': addNoContractAddressTokenTest,
     'description' : 'Add invalid token => not a contract address. Tokens should not be added'
   },
-  #{
-    #'name': addNoERCContractAddressTokenTest,
-    #'description' : 'Add invalid token => not ERC20, ERC721 or ERC1155 contract address. Tokens should not be added'
-  #},
   {
     'name': addDuplicateByAddressTokenTest,
     'description' : 'Add duplicate token (same address) test. Tokens should not be added'

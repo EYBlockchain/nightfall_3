@@ -20,6 +20,8 @@ main() {
     fi
     # Start selenium tests (after ganache has started and app has been deployed)
     if [ ${RUN_SELENIUM_TESTS} -eq 1 ]; then
+      # Give some time to contracts to deploy
+      sleep 300
       wait_ready
       tmux select-pane -t 1
       tmux send-keys "node  ../cli/src/proposer.mjs --environment Docker" Enter
@@ -28,7 +30,7 @@ main() {
       tmux select-pane -t 3
       sudo touch test/.test_results
       sudo chown apps test/.test_results
-      tmux send-keys "cd test && python3 wallet_test.py server docker | tee .test_results" Enter
+      tmux send-keys "cd test && python3 wallet_test.py server docker new-wallet| tee .test_results" Enter
       tmux send-keys "sudo touch .done; sudo chown apps .done" Enter
       #tmux send-keys "touch .done" Enter
       wait_tests_done
@@ -68,7 +70,6 @@ wait_ready() {
     app_deployed=$(curl http://wallet-test:3010 2> /dev/null | grep favicon)
   done
   echo "Wallet deployed"
-  sleep 60
   #wscommand='{"jsonrpc":  "2.0", "id": 0, "method":  "eth_blockNumber"}'
   #block=0
   #while [ ! -z "${block}" ] && [ "${block}" -lt 36 ]; do
