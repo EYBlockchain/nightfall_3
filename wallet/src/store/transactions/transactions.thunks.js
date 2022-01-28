@@ -67,9 +67,9 @@ function txSubmit(txParams) {
       case Nf3.Constants.TX_TYPES.DEPOSIT:
         approve(
           txParams.tokenAddress,
+          nf3.shieldContractAddress,
           nf3.ethereumAddress,
           nf3.ethereumSigningKey,
-          nf3.shieldContractAddress,
           txParams.tokenType,
           tokenAmountWei,
         )
