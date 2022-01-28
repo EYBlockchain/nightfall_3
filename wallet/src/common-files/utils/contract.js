@@ -164,9 +164,9 @@ export async function submitTransaction(
  */
 export async function approve(
   ercAddress,
+  spenderAddress,
   ownerAddress,
   ownerSigningKey,
-  spenderAddress,
   tokenType,
   value,
 ) {
