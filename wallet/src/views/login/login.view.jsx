@@ -19,7 +19,7 @@ import {
 } from '../../constants.js';
 import tokensLoad from '../../store/token/token.thunks';
 import * as messageActions from '../../store/message/message.actions';
-import { UserContext } from '../../hooks/User';
+import { UserContext } from '../../hooks/User/index.jsx';
 
 let nf3;
 

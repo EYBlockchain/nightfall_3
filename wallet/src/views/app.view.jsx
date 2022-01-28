@@ -16,7 +16,7 @@ import * as loginActions from '../store/login/login.actions';
 import MainPage from './initialPage.jsx';
 import Wallet from './wallet/index.jsx';
 import Bridge from './bridge/index.jsx';
-import { UserProvider } from '../hooks/User/index.js';
+import { UserProvider } from '../hooks/User/index.jsx';
 
 function App({ onDeleteWallet }) {
   Nf3.Environment.setEnvironment(process.env.REACT_APP_ENVIRONMENT);
