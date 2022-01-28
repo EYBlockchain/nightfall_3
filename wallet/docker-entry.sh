@@ -28,7 +28,7 @@ main() {
       tmux select-pane -t 3
       sudo touch test/.test_results
       sudo chown apps test/.test_results
-      tmux send-keys "cd test && python3 wallet_test.py server docker | tee .test_results" Enter
+      tmux send-keys "cd test && python3 wallet_test.py server docker new-wallet| tee .test_results" Enter
       tmux send-keys "sudo touch .done; sudo chown apps .done" Enter
       #tmux send-keys "touch .done" Enter
       wait_tests_done

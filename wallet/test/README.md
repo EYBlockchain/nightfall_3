@@ -111,5 +111,11 @@ pip3 install selenium
 
 Both scripts support server mode or UI mode (which display the browser to the user). Server mode is not relevant for a Mac
 
-- Server mode: `python3 wallet_test.py server localhost`
-- UI mode: `python3 wallet_test.py localhost`
+- Server mode: `python3 wallet_test.py server localhost <OPTIONS>`
+- UI mode: `python3 wallet_test.py localhost <OPTIONS>`
+
+### Options
+- old-wallet : Old wallet test suite
+- new-wallet : New wallet test suite
+- all : Run all tests in a test suite
+
