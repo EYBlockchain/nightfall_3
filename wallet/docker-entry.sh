@@ -20,6 +20,8 @@ main() {
     fi
     # Start selenium tests (after ganache has started and app has been deployed)
     if [ ${RUN_SELENIUM_TESTS} -eq 1 ]; then
+      # Give some time to contracts to deploy
+      sleep 300
       wait_ready
       tmux select-pane -t 1
       sudo touch test/.proposer_log
@@ -74,14 +76,9 @@ wait_ready() {
     app_deployed=$(curl http://wallet-test:3010 2> /dev/null | grep favicon)
   done
   echo "Wallet deployed"
-  wscommand='{"jsonrpc":  "2.0", "id": 0, "method":  "eth_blockNumber"}'
-  block=0
-  while [ ! -z "${block}" ] && [ "${block}" -lt 300 ]; do
-    res=$(curl --location --request POST 'http://blockchain1:8546' --header 'Content-Type: application/json' --data-raw '{
-	"jsonrpc":"2.0",
-	"method":"eth_blockNumber",
-	"id":1
-    }')
+  #wscommand='{"jsonrpc":  "2.0", "id": 0, "method":  "eth_blockNumber"}'
+  #block=0
+  #while [ ! -z "${block}" ] && [ "${block}" -lt 36 ]; do
     #res=$(wscat -c 'ws://blockchain1:8546' -w 1 -x "${wscommand}" | grep result)
     echo "RES ${res}"
     blockHex=$(echo ${res} | awk '{split($0,a,":"); print a[4]}' | tr -d '"' | tr -d '}' | tr -d '0x')	
