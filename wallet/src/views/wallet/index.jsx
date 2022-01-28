@@ -18,7 +18,7 @@ import { getWalletBalance } from '../../nightfall-browser/services/commitment-st
 import styles from '../../styles/wallet.module.scss';
 import * as Storage from '../../utils/lib/local-storage';
 import { METAMASK_MESSAGE, DEFAULT_NF_ADDRESS_INDEX } from '../../constants.js';
-import { UserContext } from '../../hooks/User';
+import { UserContext } from '../../hooks/User/index.jsx';
 import { generateKeys } from '../../nightfall-browser/services/keys.js';
 import blockProposedEventHandler from '../../nightfall-browser/event-handlers/block-proposed.js';
 
