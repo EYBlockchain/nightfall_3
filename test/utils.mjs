@@ -13,6 +13,11 @@ const { expect } = chai;
 const USE_INFURA = process.env.USE_INFURA === 'true';
 const USE_ROPSTEN_NODE = process.env.USE_ROPSTEN_NODE === 'true';
 
+export const topicEventMapping = {
+  BlockProposed: '0x566d835e602d4aa5802ee07d3e452e755bc77623507825de7bc163a295d76c0b',
+  Rollback: '0xea34b0bc565cb5f2ac54eaa86422ae05651f84522ef100e16b54a422f2053852',
+  CommittedToChallenge: '0d5ea452ac7e354069d902d41e41e24f605467acd037b8f5c1c6fee5e27fb5e2',
+};
 export class Web3Client {
   constructor(url) {
     this.url = url || process.env.web3WsUrl;
@@ -39,6 +44,12 @@ export class Web3Client {
         this.provider.on('end', () => console.log('Blockchain disconnected'));
       });
     }
+  }
+
+  subscribeTo(event, queue, options) {
+    this.web3.eth.subscribe(event, options).on('data', log => {
+      if (log.topics[0] === topicEventMapping.BlockProposed) queue.push('blockProposed');
+    });
   }
 
   closeWeb3() {
@@ -223,12 +234,6 @@ export async function createBadBlock(badBlockType, block, transactions, args) {
     .send({ block: badBlock, transactions: badTransactions });
   return { txDataToSign, block: newBlock, transactions: newTransactions };
 }
-
-export const topicEventMapping = {
-  BlockProposed: '0x566d835e602d4aa5802ee07d3e452e755bc77623507825de7bc163a295d76c0b',
-  Rollback: '0xea34b0bc565cb5f2ac54eaa86422ae05651f84522ef100e16b54a422f2053852',
-  CommittedToChallenge: '0d5ea452ac7e354069d902d41e41e24f605467acd037b8f5c1c6fee5e27fb5e2',
-};
 
 /**
 function to pause one client and one miner in the Geth blockchain for the
