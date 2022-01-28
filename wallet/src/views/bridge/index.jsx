@@ -15,6 +15,10 @@ import ethChainImage from '../../assets/img/ethereum-chain.svg';
 import discloserBottomImage from '../../assets/img/discloser-bottom.svg';
 import lightArrowImage from '../../assets/img/light-arrow.svg';
 import testImage from '../../assets/img/fast-withdraw/evodefi.png';
+import { UserContext } from '../../hooks/User';
+import { approve, submitTransaction } from '../../common-files/utils/contract';
+import deposit from '../../nightfall-browser/services/deposit';
+import withdraw from '../../nightfall-browser/services/withdraw';
 import Header from '../../components/Header/header.jsx';
 import SideBar from '../../components/SideBar/index.jsx';
 
@@ -38,13 +42,13 @@ export default function Bridge() {
     console.log('Tx Triggered', txType);
     switch (txType) {
       case 'deposit': {
-        await Nf3.Tokens.approve(
+        await approve(
           location.tokenState.tokenAddress,
-          state.nf3.ethereumAddress,
           state.nf3.shieldContractAddress,
+          state.nf3.ethereumAddress,
+          state.nf3.ethereumSigningKey,
           'ERC20',
           tokenAmountWei,
-          state.nf3.web3,
         );
         const { rawTransaction } = await deposit({
           ercAddress: location.tokenState.tokenAddress,
@@ -55,7 +59,13 @@ export default function Bridge() {
           fee: 1,
           tokenType: 'ERC20',
         });
-        return state.nf3.submitTransaction(rawTransaction, state.nf3.shieldContractAddress, 1);
+        return submitTransaction(
+          rawTransaction,
+          state.nf3.shieldContractAddress,
+          state.nf3.ethereumAddress,
+          state.nf3.ethereumSigningKey,
+          1,
+        );
       }
 
       case 'withdraw': {
