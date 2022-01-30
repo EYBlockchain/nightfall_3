@@ -31,7 +31,7 @@ import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
 const { BN128_GROUP_ORDER, SHIELD_CONTRACT_NAME } = global.config;
 const { generalise } = gen;
 
-async function withdraw(withdrawParams) {
+async function withdraw(withdrawParams, shieldContractAddress) {
   logger.info('Creating a withdraw transaction');
   // let's extract the input items
   const { ...items } = withdrawParams;
@@ -111,7 +111,10 @@ async function withdraw(withdrawParams) {
   proof = [...proof.a, ...proof.b, ...proof.c];
   proof = proof.flat(Infinity);
   // and work out the ABI encoded data that the caller should sign and send to the shield contract
-  const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
+  const shieldContractInstance = await getContractInstance(
+    SHIELD_CONTRACT_NAME,
+    shieldContractAddress,
+  );
   const optimisticWithdrawTransaction = new Transaction({
     fee,
     historicRootBlockNumberL2: [isOnChain, 0],

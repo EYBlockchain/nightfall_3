@@ -49,15 +49,18 @@ export default function Bridge() {
           'ERC20',
           tokenAmountWei,
         );
-        const { rawTransaction } = await deposit({
-          ercAddress: location.tokenState.tokenAddress,
-          tokenId: 0,
-          value: tokenAmountWei,
-          pkd: state.zkpKeys.pkd,
-          nsk: state.zkpKeys.nsk,
-          fee: 1,
-          tokenType: 'ERC20',
-        });
+        const { rawTransaction } = await deposit(
+          {
+            ercAddress: location.tokenState.tokenAddress,
+            tokenId: 0,
+            value: tokenAmountWei,
+            pkd: state.zkpKeys.pkd,
+            nsk: state.zkpKeys.nsk,
+            fee: 1,
+            tokenType: 'ERC20',
+          },
+          state.nf3.shieldContractAddress,
+        );
         return submitTransaction(
           rawTransaction,
           state.nf3.shieldContractAddress,
@@ -68,16 +71,19 @@ export default function Bridge() {
       }
 
       case 'withdraw': {
-        const { rawTransaction } = await withdraw({
-          ercAddress: location.tokenState.tokenAddress,
-          tokenId: 0,
-          value: tokenAmountWei,
-          recipientAddress: state.nf3.ethereumAddress,
-          nsk: state.zkpKeys.nsk,
-          ask: state.zkpKeys.ask,
-          tokenType: 'ERC20',
-          fees: 1,
-        });
+        const { rawTransaction } = await withdraw(
+          {
+            ercAddress: location.tokenState.tokenAddress,
+            tokenId: 0,
+            value: tokenAmountWei,
+            recipientAddress: state.nf3.ethereumAddress,
+            nsk: state.zkpKeys.nsk,
+            ask: state.zkpKeys.ask,
+            tokenType: 'ERC20',
+            fees: 1,
+          },
+          state.nf3.shieldContractAddress,
+        );
         console.log('rawTransaction', rawTransaction);
         console.log('props', location);
         return state.nf3.submitTransaction(rawTransaction, state.nf3.shieldContractAddress, 1);

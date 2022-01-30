@@ -31,7 +31,7 @@ import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
 const { ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER } = global.config;
 const { generalise } = gen;
 
-async function deposit(items) {
+async function deposit(items, shieldContractAddress) {
   logger.info('Creating a deposit transaction');
   // before we do anything else, long hex strings should be generalised to make
   // subsequent manipulations easier
@@ -82,7 +82,10 @@ async function deposit(items) {
   const { witness } = zokratesProvider.computeWitness(artifacts, witnessInput);
   // generate proof
   const { proof } = zokratesProvider.generateProof(artifacts.program, witness, keypair.pk);
-  const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
+  const shieldContractInstance = await getContractInstance(
+    SHIELD_CONTRACT_NAME,
+    shieldContractAddress,
+  );
 
   // next we need to compute the optimistic Transaction object
   const optimisticDepositTransaction = new Transaction({

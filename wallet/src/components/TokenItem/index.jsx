@@ -34,18 +34,21 @@ export default function TokenItem({
   const [valueToSend, setTransferValue] = useState(0);
 
   async function sendTx() {
-    const { rawTransaction } = await transfer({
-      offchain: true,
-      ercAddress: tokenAddress,
-      tokenId: 0,
-      recipientData: {
-        recipientCompressedPkds: [defaultSend],
-        values: [valueToSend],
+    const { rawTransaction } = await transfer(
+      {
+        offchain: true,
+        ercAddress: tokenAddress,
+        tokenId: 0,
+        recipientData: {
+          recipientCompressedPkds: [defaultSend],
+          values: [valueToSend],
+        },
+        nsk: state.zkpKeys.nsk,
+        ask: state.zkpKeys.ask,
+        fee: 1,
       },
-      nsk: state.zkpKeys.nsk,
-      ask: state.zkpKeys.ask,
-      fee: 1,
-    });
+      state.nf3.shieldContractAddress,
+    );
     return state.nf3.submitTransaction(rawTransaction, state.nf3.shieldContractAddress, 1);
   }
   return (

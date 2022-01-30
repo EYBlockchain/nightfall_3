@@ -42,7 +42,7 @@ import doubleTransferPkFile from '../../zokrates/double_transfer_stub/keypair/do
 const { BN128_GROUP_ORDER, ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME } = global.config;
 const { generalise, GN } = gen;
 
-async function transfer(transferParams) {
+async function transfer(transferParams, shieldContractAddress) {
   logger.info('Creating a transfer transaction');
   // let's extract the input items
   const { ...items } = transferParams;
@@ -236,7 +236,10 @@ async function transfer(transferParams) {
   proof = [...proof.a, ...proof.b, ...proof.c];
   proof = proof.flat(Infinity);
   // and work out the ABI encoded data that the caller should sign and send to the shield contract
-  const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
+  const shieldContractInstance = await getContractInstance(
+    SHIELD_CONTRACT_NAME,
+    shieldContractAddress,
+  );
   const optimisticTransferTransaction = new Transaction({
     fee,
     historicRootBlockNumberL2: blockNumberL2s,
