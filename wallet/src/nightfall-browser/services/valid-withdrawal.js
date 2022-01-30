@@ -11,8 +11,11 @@ import { buildSolidityStruct } from './finalise-withdrawal';
 const { SHIELD_CONTRACT_NAME } = global.config;
 
 // eslint-disable-next-line import/prefer-default-export
-export async function isValidWithdrawal({ block, transactions, index }) {
-  const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
+export async function isValidWithdrawal({ block, transactions, index }, shieldContractAddress) {
+  const shieldContractInstance = await getContractInstance(
+    SHIELD_CONTRACT_NAME,
+    shieldContractAddress,
+  );
   try {
     const valid = await shieldContractInstance.methods
       .isValidWithdrawal(
