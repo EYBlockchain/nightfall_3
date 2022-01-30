@@ -12,8 +12,16 @@ import rollbackEventHandler from '../event-handlers/rollback';
 
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION, STATE_CONTRACT_NAME } = global.config;
 
-const syncState = async (fromBlock = 'earliest', toBlock = 'latest', eventFilter = 'allEvents') => {
-  const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME); // Rollback, BlockProposed
+const syncState = async (
+  shieldContractAddress,
+  fromBlock = 'earliest',
+  toBlock = 'latest',
+  eventFilter = 'allEvents',
+) => {
+  const stateContractInstance = await getContractInstance(
+    STATE_CONTRACT_NAME,
+    shieldContractAddress,
+  ); // Rollback, BlockProposed
 
   const pastStateEvents = await stateContractInstance.getPastEvents(eventFilter, {
     fromBlock,
