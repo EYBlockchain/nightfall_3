@@ -162,7 +162,7 @@ class Nf3 {
     let tx;
     await this.nonceMutex.runExclusive(async () => {
       // if we don't have a nonce, we must get one from the ethereum client
-      if (!this.nonce) this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
+      this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
 
       let gasPrice = 20000000000;
       const gas = (await this.web3.eth.getBlock('latest')).gasLimit;

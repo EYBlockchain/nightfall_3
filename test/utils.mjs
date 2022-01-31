@@ -26,6 +26,10 @@ export class Web3Client {
     this.isSubmitTxLocked = false;
   }
 
+  getWeb3() {
+    return this.web3;
+  }
+
   getInfo() {
     return this.web3.eth.getNodeInfo();
   }

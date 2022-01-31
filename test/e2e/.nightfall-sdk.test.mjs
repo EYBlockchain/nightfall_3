@@ -285,254 +285,254 @@ describe('Testing the Nightfall SDK', () => {
     await checkUserBalances();
   });
 
-  describe('Miscellaneous tests', () => {
-    it('should respond with "true" the health check', async function () {
-      const res = await nf3User1.healthcheck('client');
-      expect(res).to.be.equal(true);
-    });
+  // describe('Miscellaneous tests', () => {
+  //   it('should respond with "true" the health check', async function () {
+  //     const res = await nf3User1.healthcheck('client');
+  //     expect(res).to.be.equal(true);
+  //   });
 
-    it('should get the address of the shield contract', async function () {
-      const res = await nf3User1.getContractAddress('Shield');
-      expect(res).to.be.a('string').and.to.include('0x');
-    });
+  //   it('should get the address of the shield contract', async function () {
+  //     const res = await nf3User1.getContractAddress('Shield');
+  //     expect(res).to.be.a('string').and.to.include('0x');
+  //   });
 
-    it('should get the address of the test ERC contract stub', async function () {
-      const res = await nf3User1.getContractAddress('ERCStub');
-      expect(res).to.be.a('string').and.to.include('0x');
-    });
+  //   it('should get the address of the test ERC contract stub', async function () {
+  //     const res = await nf3User1.getContractAddress('ERCStub');
+  //     expect(res).to.be.a('string').and.to.include('0x');
+  //   });
 
-    it('should get the address of the test ERC20 mock contract', async function () {
-      const res = await nf3User1.getContractAddress('ERC20Mock');
-      expect(res).to.be.a('string').and.to.include('0x');
-    });
+  //   it('should get the address of the test ERC20 mock contract', async function () {
+  //     const res = await nf3User1.getContractAddress('ERC20Mock');
+  //     expect(res).to.be.a('string').and.to.include('0x');
+  //   });
 
-    it('should get the address of the test ERC721 mock contract', async function () {
-      const res = await nf3User1.getContractAddress('ERC721Mock');
-      expect(res).to.be.a('string').and.to.include('0x');
-    });
+  //   it('should get the address of the test ERC721 mock contract', async function () {
+  //     const res = await nf3User1.getContractAddress('ERC721Mock');
+  //     expect(res).to.be.a('string').and.to.include('0x');
+  //   });
 
-    it('should get the address of the test ERC1155 mock contract', async function () {
-      const res = await nf3User1.getContractAddress('ERC1155Mock');
-      expect(res).to.be.a('string').and.to.include('0x');
-    });
+  //   it('should get the address of the test ERC1155 mock contract', async function () {
+  //     const res = await nf3User1.getContractAddress('ERC1155Mock');
+  //     expect(res).to.be.a('string').and.to.include('0x');
+  //   });
 
-    it('should subscribe to block proposed event with the provided incoming viewing key for client', async function () {
-      const res = await nf3User1.subscribeToIncomingViewingKeys();
-      expect(res.data.status).to.be.a('string');
-      expect(res.data.status).to.be.equal('success');
-    });
-  });
+  //   it('should subscribe to block proposed event with the provided incoming viewing key for client', async function () {
+  //     const res = await nf3User1.subscribeToIncomingViewingKeys();
+  //     expect(res.data.status).to.be.a('string');
+  //     expect(res.data.status).to.be.equal('success');
+  //   });
+  // });
 
-  describe('Basic Proposer tests', () => {
-    it('should register a proposer', async () => {
-      let proposers;
-      ({ proposers } = await nf3Proposer2.getProposers());
-      // we have to pay 10 ETH to be registered
-      const startBalance = await getBalance(nf3Proposer2.ethereumAddress);
-      const res = await nf3Proposer2.registerProposer();
-      stateBalance += bond;
-      expectTransaction(res);
-      ({ proposers } = await nf3Proposer2.getProposers());
-      const endBalance = await getBalance(nf3Proposer2.ethereumAddress);
-      expect(endBalance - startBalance).to.closeTo(-bond, gasCosts);
-      const thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer2.ethereumAddress);
-      expect(thisProposer.length).to.be.equal(1);
-    });
+  // describe('Basic Proposer tests', () => {
+  //   it('should register a proposer', async () => {
+  //     let proposers;
+  //     ({ proposers } = await nf3Proposer2.getProposers());
+  //     // we have to pay 10 ETH to be registered
+  //     const startBalance = await getBalance(nf3Proposer2.ethereumAddress);
+  //     const res = await nf3Proposer2.registerProposer();
+  //     stateBalance += bond;
+  //     expectTransaction(res);
+  //     ({ proposers } = await nf3Proposer2.getProposers());
+  //     const endBalance = await getBalance(nf3Proposer2.ethereumAddress);
+  //     expect(endBalance - startBalance).to.closeTo(-bond, gasCosts);
+  //     const thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer2.ethereumAddress);
+  //     expect(thisProposer.length).to.be.equal(1);
+  //   });
 
-    it('should register other proposer', async () => {
-      let proposers;
-      ({ proposers } = await nf3Proposer3.getProposers());
-      // we have to pay 10 ETH to be registered
-      const startBalance = await getBalance(nf3Proposer3.ethereumAddress);
-      const res = await nf3Proposer3.registerProposer();
-      stateBalance += bond;
-      expectTransaction(res);
-      ({ proposers } = await nf3Proposer3.getProposers());
-      const endBalance = await getBalance(nf3Proposer3.ethereumAddress);
-      expect(endBalance - startBalance).to.closeTo(-bond, gasCosts);
-      const thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer3.ethereumAddress);
-      expect(thisProposer.length).to.be.equal(1);
-    });
+  //   it('should register other proposer', async () => {
+  //     let proposers;
+  //     ({ proposers } = await nf3Proposer3.getProposers());
+  //     // we have to pay 10 ETH to be registered
+  //     const startBalance = await getBalance(nf3Proposer3.ethereumAddress);
+  //     const res = await nf3Proposer3.registerProposer();
+  //     stateBalance += bond;
+  //     expectTransaction(res);
+  //     ({ proposers } = await nf3Proposer3.getProposers());
+  //     const endBalance = await getBalance(nf3Proposer3.ethereumAddress);
+  //     expect(endBalance - startBalance).to.closeTo(-bond, gasCosts);
+  //     const thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer3.ethereumAddress);
+  //     expect(thisProposer.length).to.be.equal(1);
+  //   });
 
-    it('should de-register a proposer', async () => {
-      let proposers;
-      ({ proposers } = await nf3Proposer1.getProposers());
-      let thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer1.ethereumAddress);
-      expect(thisProposer.length).to.be.equal(1);
-      const res = await nf3Proposer1.deregisterProposer();
-      expectTransaction(res);
-      ({ proposers } = await nf3Proposer1.getProposers());
-      thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer1.ethereumAddress);
-      expect(thisProposer.length).to.be.equal(0);
-    });
+  //   it('should de-register a proposer', async () => {
+  //     let proposers;
+  //     ({ proposers } = await nf3Proposer1.getProposers());
+  //     let thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer1.ethereumAddress);
+  //     expect(thisProposer.length).to.be.equal(1);
+  //     const res = await nf3Proposer1.deregisterProposer();
+  //     expectTransaction(res);
+  //     ({ proposers } = await nf3Proposer1.getProposers());
+  //     thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer1.ethereumAddress);
+  //     expect(thisProposer.length).to.be.equal(0);
+  //   });
 
-    it('Should create a failing withdrawBond (because insufficient time has passed)', async () => {
-      let error = null;
-      try {
-        await nf3Proposer1.withdrawBond();
-      } catch (err) {
-        error = err;
-      }
-      expect(error.message).to.satisfy(
-        message =>
-          message.includes(
-            'Returned error: VM Exception while processing transaction: revert It is too soon to withdraw your bond',
-          ) || message.includes('Transaction has been reverted by the EVM'),
-      );
-    });
+  //   it('Should create a failing withdrawBond (because insufficient time has passed)', async () => {
+  //     let error = null;
+  //     try {
+  //       await nf3Proposer1.withdrawBond();
+  //     } catch (err) {
+  //       error = err;
+  //     }
+  //     expect(error.message).to.satisfy(
+  //       message =>
+  //         message.includes(
+  //           'Returned error: VM Exception while processing transaction: revert It is too soon to withdraw your bond',
+  //         ) || message.includes('Transaction has been reverted by the EVM'),
+  //     );
+  //   });
 
-    it('Should create a passing withdrawBond (because sufficient time has passed)', async () => {
-      if (nodeInfo.includes('TestRPC')) await timeJump(3600 * 24 * 10); // jump in time by 7 days
-      if (nodeInfo.includes('TestRPC')) {
-        const res = await nf3Proposer1.withdrawBond();
-        expectTransaction(res);
-      } else {
-        let error = null;
-        try {
-          await nf3Proposer1.withdrawBond();
-        } catch (err) {
-          error = err;
-        }
-        expect(error.message).to.include('Transaction has been reverted by the EVM');
-      }
-    });
+  //   it('Should create a passing withdrawBond (because sufficient time has passed)', async () => {
+  //     if (nodeInfo.includes('TestRPC')) await timeJump(3600 * 24 * 10); // jump in time by 7 days
+  //     if (nodeInfo.includes('TestRPC')) {
+  //       const res = await nf3Proposer1.withdrawBond();
+  //       expectTransaction(res);
+  //     } else {
+  //       let error = null;
+  //       try {
+  //         await nf3Proposer1.withdrawBond();
+  //       } catch (err) {
+  //         error = err;
+  //       }
+  //       expect(error.message).to.include('Transaction has been reverted by the EVM');
+  //     }
+  //   });
 
-    after(async () => {
-      // After the proposer tests, re-register proposers
-      await nf3Proposer2.deregisterProposer();
-      await nf3Proposer3.deregisterProposer();
-      await nf3Proposer1.registerProposer();
-      stateBalance += bond;
-    });
-  });
+  //   after(async () => {
+  //     // After the proposer tests, re-register proposers
+  //     await nf3Proposer2.deregisterProposer();
+  //     await nf3Proposer3.deregisterProposer();
+  //     await nf3Proposer1.registerProposer();
+  //     stateBalance += bond;
+  //   });
+  // });
 
-  describe('Basic Challenger tests', () => {
-    it('should register a challenger', async () => {
-      const res = await nf3Challenger.registerChallenger();
-      expect(res.status).to.be.equal(200);
-    });
+  // describe('Basic Challenger tests', () => {
+  //   it('should register a challenger', async () => {
+  //     const res = await nf3Challenger.registerChallenger();
+  //     expect(res.status).to.be.equal(200);
+  //   });
 
-    it('should de-register a challenger', async () => {
-      const res = await nf3Challenger.deregisterChallenger();
-      expect(res.status).to.be.equal(200);
-    });
+  //   it('should de-register a challenger', async () => {
+  //     const res = await nf3Challenger.deregisterChallenger();
+  //     expect(res.status).to.be.equal(200);
+  //   });
 
-    after(async () => {
-      // After the challenger tests, re-register challenger
-      await nf3Challenger.registerChallenger();
-    });
-  });
+  //   after(async () => {
+  //     // After the challenger tests, re-register challenger
+  //     await nf3Challenger.registerChallenger();
+  //   });
+  // });
 
-  describe('Synchronize with block proposed', () => {
-    it('should get correct balance after deposit or synchronize with block proposed', async () => {
-      let balances = await nf3User1.getLayer2Balances();
-      let beforePkdBalance = 0;
-      try {
-        // eslint-disable-next-line prefer-destructuring
-        beforePkdBalance = balances[nf3User1.zkpKeys.compressedPkd][erc20Address][0];
-      } catch {
-        beforePkdBalance = 0;
-      }
+  // describe('Synchronize with block proposed', () => {
+  //   it('should get correct balance after deposit or synchronize with block proposed', async () => {
+  //     let balances = await nf3User1.getLayer2Balances();
+  //     let beforePkdBalance = 0;
+  //     try {
+  //       // eslint-disable-next-line prefer-destructuring
+  //       beforePkdBalance = balances[nf3User1.zkpKeys.compressedPkd][erc20Address][0];
+  //     } catch {
+  //       beforePkdBalance = 0;
+  //     }
 
-      if (beforePkdBalance !== 0) {
-        await depositNTransactions(
-          nf3User1,
-          txPerBlock,
-          erc20Address,
-          tokenType,
-          value,
-          tokenId,
-          fee,
-        );
-        stateBalance += fee * txPerBlock + BLOCK_STAKE;
-        eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
-        for (let i = 0; i < txPerBlock; i++) {
-          // eslint-disable-next-line no-await-in-loop
-          const res = await nf3User1.transfer(
-            false,
-            erc20Address,
-            tokenType,
-            value,
-            tokenId,
-            nf3User1.zkpKeys.compressedPkd,
-            fee,
-          );
-          expectTransaction(res);
-        }
-        stateBalance += fee * txPerBlock + BLOCK_STAKE;
-        eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
-        balances = await nf3User1.getLayer2Balances();
-        const afterPkdBalance = balances[nf3User1.zkpKeys.compressedPkd][erc20Address][0];
-        if (afterPkdBalance - beforePkdBalance < txPerBlock * value) {
-          console.log(
-            `      ${
-              (txPerBlock * value - (afterPkdBalance - beforePkdBalance)) / value
-            } tx missing for block`,
-          );
-          await depositNTransactions(
-            nf3User1,
-            (txPerBlock * value - (afterPkdBalance - beforePkdBalance)) / value,
-            erc20Address,
-            tokenType,
-            value,
-            tokenId,
-            fee,
-          );
-          stateBalance +=
-            fee * ((txPerBlock * value - (afterPkdBalance - beforePkdBalance)) / value) +
-            BLOCK_STAKE;
-          eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
-        }
-      }
-    });
-  });
+  //     if (beforePkdBalance !== 0) {
+  //       await depositNTransactions(
+  //         nf3User1,
+  //         txPerBlock,
+  //         erc20Address,
+  //         tokenType,
+  //         value,
+  //         tokenId,
+  //         fee,
+  //       );
+  //       stateBalance += fee * txPerBlock + BLOCK_STAKE;
+  //       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+  //       for (let i = 0; i < txPerBlock; i++) {
+  //         // eslint-disable-next-line no-await-in-loop
+  //         const res = await nf3User1.transfer(
+  //           false,
+  //           erc20Address,
+  //           tokenType,
+  //           value,
+  //           tokenId,
+  //           nf3User1.zkpKeys.compressedPkd,
+  //           fee,
+  //         );
+  //         expectTransaction(res);
+  //       }
+  //       stateBalance += fee * txPerBlock + BLOCK_STAKE;
+  //       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+  //       balances = await nf3User1.getLayer2Balances();
+  //       const afterPkdBalance = balances[nf3User1.zkpKeys.compressedPkd][erc20Address][0];
+  //       if (afterPkdBalance - beforePkdBalance < txPerBlock * value) {
+  //         console.log(
+  //           `      ${
+  //             (txPerBlock * value - (afterPkdBalance - beforePkdBalance)) / value
+  //           } tx missing for block`,
+  //         );
+  //         await depositNTransactions(
+  //           nf3User1,
+  //           (txPerBlock * value - (afterPkdBalance - beforePkdBalance)) / value,
+  //           erc20Address,
+  //           tokenType,
+  //           value,
+  //           tokenId,
+  //           fee,
+  //         );
+  //         stateBalance +=
+  //           fee * ((txPerBlock * value - (afterPkdBalance - beforePkdBalance)) / value) +
+  //           BLOCK_STAKE;
+  //         eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+  //       }
+  //     }
+  //   });
+  // });
 
   describe('Deposit tests', () => {
     // Need at least 5 deposits to perform all the necessary transfers
     // set the number of deposit transactions blocks to perform.
     const numDeposits = txPerBlock >= 5 ? 1 : Math.ceil(5 / txPerBlock);
 
-    it('should deposit some ERC20 crypto into a ZKP commitment', async function () {
-      console.log(`      Sending ${txPerBlock * numDeposits} deposits...`);
-      // We create enough transactions to fill numDeposits blocks full of deposits.
-      const depositTransactions = await depositNTransactions(
-        nf3User1,
-        txPerBlock * numDeposits,
-        erc20Address,
-        tokenType,
-        value,
-        tokenId,
-        fee,
-      );
-      stateBalance += (fee * txPerBlock + BLOCK_STAKE) * numDeposits;
-      // Wait until we see the right number of blocks appear
-      eventLogs = await waitForEvent(eventLogs, ['blockProposed'], numDeposits);
-      const totalGas = depositTransactions.reduce((acc, { gasUsed }) => acc + Number(gasUsed), 0);
-      console.log(`     Average Gas used was ${Math.ceil(totalGas / (txPerBlock * numDeposits))}`);
-    });
+    // it('should deposit some ERC20 crypto into a ZKP commitment', async function () {
+    //   console.log(`      Sending ${txPerBlock * numDeposits} deposits...`);
+    //   // We create enough transactions to fill numDeposits blocks full of deposits.
+    //   const depositTransactions = await depositNTransactions(
+    //     nf3User1,
+    //     txPerBlock * numDeposits,
+    //     erc20Address,
+    //     tokenType,
+    //     value,
+    //     tokenId,
+    //     fee,
+    //   );
+    //   stateBalance += (fee * txPerBlock + BLOCK_STAKE) * numDeposits;
+    //   // Wait until we see the right number of blocks appear
+    //   eventLogs = await waitForEvent(eventLogs, ['blockProposed'], numDeposits);
+    //   const totalGas = depositTransactions.reduce((acc, { gasUsed }) => acc + Number(gasUsed), 0);
+    //   console.log(`     Average Gas used was ${Math.ceil(totalGas / (txPerBlock * numDeposits))}`);
+    // });
 
-    it('should deposit some ERC721 crypto into a ZKP commitment', async function () {
-      let balances = await nf3User1.getLayer2Balances();
-      let balanceBefore = 0;
-      try {
-        // eslint-disable-next-line prefer-destructuring
-        balanceBefore = balances[nf3User1.zkpKeys.compressedPkd][erc721Address][0];
-        if (!balanceBefore) balanceBefore = 0;
-      } catch {
-        balanceBefore = 0;
-      }
-      // We create enough transactions to fill numDeposits blocks full of deposits.
-      let res = await nf3User1.deposit(erc721Address, tokenTypeERC721, 1, 1, fee);
-      expectTransaction(res);
-      res = await nf3User1.deposit(erc721Address, tokenTypeERC721, 1, 2, fee);
-      expectTransaction(res);
-      stateBalance += fee * 2 + BLOCK_STAKE;
-      // Wait until we see the right number of blocks appear
-      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
-      balances = await nf3User1.getLayer2Balances();
-      const balanceAfter = balances[nf3User1.zkpKeys.compressedPkd][erc721Address][0];
-      expect(balanceAfter - balanceBefore).to.be.equal(2);
-    });
+    // it('should deposit some ERC721 crypto into a ZKP commitment', async function () {
+    //   let balances = await nf3User1.getLayer2Balances();
+    //   let balanceBefore = 0;
+    //   try {
+    //     // eslint-disable-next-line prefer-destructuring
+    //     balanceBefore = balances[nf3User1.zkpKeys.compressedPkd][erc721Address][0];
+    //     if (!balanceBefore) balanceBefore = 0;
+    //   } catch {
+    //     balanceBefore = 0;
+    //   }
+    //   // We create enough transactions to fill numDeposits blocks full of deposits.
+    //   let res = await nf3User1.deposit(erc721Address, tokenTypeERC721, 1, 1, fee);
+    //   expectTransaction(res);
+    //   res = await nf3User1.deposit(erc721Address, tokenTypeERC721, 1, 2, fee);
+    //   expectTransaction(res);
+    //   stateBalance += fee * 2 + BLOCK_STAKE;
+    //   // Wait until we see the right number of blocks appear
+    //   eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+    //   balances = await nf3User1.getLayer2Balances();
+    //   const balanceAfter = balances[nf3User1.zkpKeys.compressedPkd][erc721Address][0];
+    //   expect(balanceAfter - balanceBefore).to.be.equal(2);
+    // });
 
     it('should deposit some ERC1155 crypto into a ZKP commitment', async function () {
       const Id1 = 1;
@@ -575,25 +575,25 @@ describe('Testing the Nightfall SDK', () => {
   });
 
   describe('Balance tests', () => {
-    it('should increment the balance after deposit some ERC20 crypto', async function () {
-      let balances = await nf3User1.getLayer2Balances();
-      const currentPkdBalance = balances[nf3User1.zkpKeys.compressedPkd][erc20Address][0];
-      // We do txPerBlock deposits of 10 each
-      await depositNTransactions(
-        nf3User1,
-        txPerBlock,
-        erc20Address,
-        tokenType,
-        value,
-        tokenId,
-        fee,
-      );
-      stateBalance += fee * txPerBlock + BLOCK_STAKE;
-      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
-      balances = await nf3User1.getLayer2Balances();
-      const afterPkdBalance = balances[nf3User1.zkpKeys.compressedPkd][erc20Address][0];
-      expect(afterPkdBalance - currentPkdBalance).to.be.equal(txPerBlock * value);
-    });
+    // it('should increment the balance after deposit some ERC20 crypto', async function () {
+    //   let balances = await nf3User1.getLayer2Balances();
+    //   const currentPkdBalance = balances[nf3User1.zkpKeys.compressedPkd][erc20Address][0];
+    //   // We do txPerBlock deposits of 10 each
+    //   await depositNTransactions(
+    //     nf3User1,
+    //     txPerBlock,
+    //     erc20Address,
+    //     tokenType,
+    //     value,
+    //     tokenId,
+    //     fee,
+    //   );
+    //   stateBalance += fee * txPerBlock + BLOCK_STAKE;
+    //   eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+    //   balances = await nf3User1.getLayer2Balances();
+    //   const afterPkdBalance = balances[nf3User1.zkpKeys.compressedPkd][erc20Address][0];
+    //   expect(afterPkdBalance - currentPkdBalance).to.be.equal(txPerBlock * value);
+    // });
 
     it('should increment the balance after deposit some ERC721 crypto', async function () {
       let balances = await nf3User1.getLayer2Balances();

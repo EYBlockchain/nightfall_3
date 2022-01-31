@@ -19,15 +19,15 @@ const mnemonics = require('./mnemonics.json');
 const environment = environments[network] || environments.localhost;
 const nf3Challenger = new Nf3(web3WsUrl, signingKeys.challenger, environment);
 
-before(async () => {
-  await nf3Challenger.init(mnemonics.challenger);
-  // Challenger registration
-  await nf3Challenger.registerChallenger();
-  // Chalenger listening for incoming events
-  nf3Challenger.startChallenger();
-});
-
 describe('Basic Challenger tests', () => {
+  before(async () => {
+    await nf3Challenger.init(mnemonics.challenger);
+    // Challenger registration
+    await nf3Challenger.registerChallenger();
+    // Chalenger listening for incoming events
+    nf3Challenger.startChallenger();
+  });
+
   it('should register a challenger', async () => {
     const res = await nf3Challenger.registerChallenger();
     expect(res.status).to.be.equal(200);
@@ -37,10 +37,8 @@ describe('Basic Challenger tests', () => {
     const res = await nf3Challenger.deregisterChallenger();
     expect(res.status).to.be.equal(200);
   });
-});
 
-after(async () => {
-  // After the challenger tests, re-register challenger
-  await nf3Challenger.registerChallenger();
-  await nf3Challenger.close();
+  after(async () => {
+    await nf3Challenger.close();
+  });
 });
