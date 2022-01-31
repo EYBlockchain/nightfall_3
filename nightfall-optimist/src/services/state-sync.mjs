@@ -106,7 +106,7 @@ export default async proposer => {
   const lastBlockNumberL2 = Number(
     (await stateContractInstance.methods.getNumberOfL2Blocks().call()) - 1,
   );
-  if (lastBlockNumberL2 === 0) return; // The blockchain is empty
+  if (lastBlockNumberL2 === -1) return; // The blockchain is empty
 
   const missingBlocks = await checkBlocks(); // Stores any gaps of missing blocks
   // const [fromBlock] = missingBlocks[0];
