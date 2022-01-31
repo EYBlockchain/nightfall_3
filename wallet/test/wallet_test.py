@@ -99,10 +99,11 @@ try:
       networkConfig = networkConfigRopsten
       walletUrl = walletUrlRopsten
      
-  
+
   ###################
   # Load Metamask   #
   ###################
+  driver.switch_to.window(metamaskTab)
   initializeMetamask(driver, findElementsInstance, metamaskConfig)
   #deleteNetworkMetamask(driver, findElementsInstance, deleteNetworkConfig)
   #selectTestNetworkMetamask(driver, findElementsInstance, networkConfigRopsten)
@@ -121,34 +122,35 @@ try:
     assert(testEthAddress.lower() == ethAccount2Params["ethereumAddress"].lower())
   else:
     # TODO Add login mechanism to new wallet
-    pass
-
+    loginNewNightfallWallet(driver, findElementsInstance, metamaskTab, nightfallTab, walletUrl)
+  skipTest=False
 except Exception:
   print("FAILED")
-
+  skipTest=True
   
 ########################
 # Start Tests          
 ########################
-if testToRun['all'] or testToRun['effects']:
-  if testToRun['old']:
-    effectTest(findElementsInstance, driver, metamaskTab, nightfallTab, walletUrl)
-  else:
-    newEffectTest(findElementsInstance, driver, metamaskTab, nightfallTab, walletUrl)
-if testToRun['all'] or testToRun['login']:
-  if testToRun['old']:
-    loginTest(findElementsInstance, driver, metamaskTab, nightfallTab)
-  else:
-    newLoginTest(findElementsInstance, driver, metamaskTab, nightfallTab)
-if testToRun['all'] or testToRun['tokens']:
-  if testToRun['old']:
-    tokenTest(findElementsInstance, driver, metamaskTab, nightfallTab)
-  else:
-    newTokenTest(findElementsInstance, driver, metamaskTab, nightfallTab)
-if testToRun['all'] or testToRun['tx']:
-  if testToRun['old']:
-    txTest(findElementsInstance, driver, metamaskTab, nightfallTab)
-  else:
-    newTxTest(findElementsInstance, driver, metamaskTab, nightfallTab)
+if not skipTest:
+  if testToRun['all'] or testToRun['effects']:
+    if testToRun['old']:
+      effectTest(findElementsInstance, driver, metamaskTab, nightfallTab, walletUrl)
+    else:
+      newEffectTest(findElementsInstance, driver, metamaskTab, nightfallTab, walletUrl)
+  if testToRun['all'] or testToRun['login']:
+    if testToRun['old']:
+      loginTest(findElementsInstance, driver, metamaskTab, nightfallTab)
+    else:
+      newLoginTest(findElementsInstance, driver, metamaskTab, nightfallTab)
+  if testToRun['all'] or testToRun['tokens']:
+    if testToRun['old']:
+      tokenTest(findElementsInstance, driver, metamaskTab, nightfallTab)
+    else:
+      newTokenTest(findElementsInstance, driver, metamaskTab, nightfallTab)
+  if testToRun['all'] or testToRun['tx']:
+    if testToRun['old']:
+      txTest(findElementsInstance, driver, metamaskTab, nightfallTab)
+    else:
+      newTxTest(findElementsInstance, driver, metamaskTab, nightfallTab)
 
 driver.quit()
