@@ -137,6 +137,9 @@ function WalletModal(props) {
             });
             props.onHide();
           }}
+          disabled={
+            typeof state.nf3 === 'undefined' || typeof state.nf3.ethereumAddress === 'undefined'
+          }
         >
           Create Wallet
         </Button>
@@ -246,16 +249,19 @@ export default function Wallet() {
       ) {
         // eslint-disable-next-line consistent-return, array-callback-return
         const updatedState = Object.keys(tokenMapping).map(t => {
-          const token = l2Balance[state.zkpKeys.compressedPkd][t];
-          const tokenInfo = tokenMapping[t];
-          if (token) {
-            const { maticChainBalance, ...rest } = tokenInfo;
-            return {
-              maticChainBalance: token.toString(),
-              ...rest,
-            };
+          if (Object.keys(l2Balance).includes(state.zkpKeys.compressedPkd)) {
+            const token = l2Balance[state.zkpKeys.compressedPkd][t];
+            const tokenInfo = tokenMapping[t];
+            if (token) {
+              const { maticChainBalance, ...rest } = tokenInfo;
+              return {
+                maticChainBalance: token.toString(),
+                ...rest,
+              };
+            }
           }
         });
+        if (typeof updatedState[0] === 'undefined') return;
         const newState = initialTokenState.map(i => {
           const s = updatedState.find(u => i.symbol === u.symbol);
           if (s) return s;
