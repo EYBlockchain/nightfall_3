@@ -791,6 +791,7 @@ class Nf3 {
     if (typeof window !== 'undefined') {
       if (window.ethereum && this.ethereumSigningKey === '') {
         this.web3 = new Web3(window.ethereum);
+        window.ethereum.enable();
         window.ethereum.request({ method: 'eth_accounts' });
       } else {
         // Metamask not available

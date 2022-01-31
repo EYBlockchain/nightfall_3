@@ -7,6 +7,41 @@ from .find_elements import *
 from .metamask import *
 from decimal import Decimal
 
+def loginNewNightfallWallet(driver, findElements, metamaskTab, nightfallTab, walletURL):
+    driver.switch_to.window(nightfallTab)
+    driver.get(walletURL)
+    findElements.element_exist_xpath('//*[contains(text(), "Polygon Nightfall Wallet")]').click() # nightfall Metamask button
+
+    ## Connect Account to network
+    driver.switch_to.window(metamaskTab)
+    driver.get('chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn/popup.html#')
+    nextButton = findElements.element_exist_xpath('//button[text()="Next"]') # Select new account
+    if nextButton:
+        nextButton.click()
+        findElements.element_exist_xpath('//button[text()="Connect"]').click() # Connect
+
+    sleep(3)
+    driver.switch_to.window(nightfallTab)
+    driver.get(walletURL)
+    sleep(3)
+    findElements.element_exist_xpath('//*[contains(text(), "Polygon Nightfall Wallet")]').click() # nightfall Metamask button
+    sleep(3)
+    findElements.element_exist_xpath('//button[text()="Generate Mnemonic"]').click() # New Mnemonic
+    sleep(1)
+    findElements.element_exist_xpath('//button[text()="Create Wallet"]').click() # Create Wallet
+    sleep(3)
+    driver.switch_to.window(metamaskTab)
+    driver.get('chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn/popup.html#')
+    findElements.element_exist_xpath('//button[text()="Sign"]').click() # Sign
+
+    sleep(1)
+    driver.switch_to.window(nightfallTab)
+    sleep(1)
+    assets = findElements.element_exist_xpath('//*[contains(text(), "Nightfall Assets")]') # Check if login is correct
+    if assets == None:
+        raise ValueError("Incorrect login")
+
+
 def loginNightfallWallet(driver, findElements, metamaskTab, nightfallTab, walletURL):
     driver.switch_to.window(nightfallTab)
     driver.get(walletURL)
