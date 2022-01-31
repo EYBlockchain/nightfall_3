@@ -3,8 +3,8 @@ import React from 'react';
 import { GiElectric } from 'react-icons/gi';
 import { RiWallet3Line } from 'react-icons/ri';
 import { MdOutlineSupport } from 'react-icons/md';
-// import TransactionImg from '../../assets/svg/transactions-side.svg';
-// import TransactionImgGrey from '../../assets/svg/transactions-side-grey.svg';
+import TransactionImg from '../../assets/svg/transactions-side.svg';
+import TransactionImgGrey from '../../assets/svg/transactions-side-grey.svg';
 import WalletImg from '../../assets/svg/wallet-side.svg';
 import WalletImgGrey from '../../assets/svg/wallet-side-grey.svg';
 import BridgeImg from '../../assets/svg/bridge-side.svg';
@@ -18,12 +18,17 @@ export default function SideBar() {
     <div className={styles.sideBar}>
       <div className={styles.sideItems}>
         <SideItem text={'Nightfall Assets'} link={'/wallet'} Icon={[WalletImg, WalletImgGrey]} />
-        <SideItem text={'L2 Bridge'} link={'/bridge'} Icon={[BridgeImg, BridgeImgGrey]} />
-        {/* <SideItem
-          text={'Transactions'}
+        <SideItem
+          text={'L2 Bridge'}
           link={'/bridge'}
+          Icon={[BridgeImg, BridgeImgGrey]}
+          SideState={'0xf05e9fb485502e5a93990c714560b7ce654173c3'}
+        />
+        <SideItem
+          text={'Transactions'}
+          link={'/transactionPage'}
           Icon={[TransactionImg, TransactionImgGrey]}
-        /> */}
+        />
       </div>
       <div
         style={{
