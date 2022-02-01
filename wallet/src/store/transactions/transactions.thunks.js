@@ -69,8 +69,6 @@ function txSubmit(txParams) {
         approve(
           txParams.tokenAddress,
           nf3.shieldContractAddress,
-          nf3.ethereumAddress,
-          nf3.ethereumSigningKey,
           txParams.tokenType,
           tokenAmountWei,
         )
@@ -92,8 +90,6 @@ function txSubmit(txParams) {
             return submitTransaction(
               rawTransaction,
               nf3.shieldContractAddress,
-              nf3.ethereumAddress,
-              nf3.ethereumSigningKey,
               txParams.fee,
             );
             // dispatch(txActions.txSuccess(Nf3.Constants.TX_TYPES.DEPOSIT, txReceipt));
