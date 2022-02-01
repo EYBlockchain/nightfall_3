@@ -86,11 +86,7 @@ function txSubmit(txParams) {
             );
           })
           .then(async ({ rawTransaction }) => {
-            return submitTransaction(
-              rawTransaction,
-              nf3.shieldContractAddress,
-              txParams.fee,
-            );
+            return submitTransaction(rawTransaction, nf3.shieldContractAddress, txParams.fee);
             // dispatch(txActions.txSuccess(Nf3.Constants.TX_TYPES.DEPOSIT, txReceipt));
             // TODO: dispatch error
           })
