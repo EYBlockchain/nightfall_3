@@ -78,7 +78,7 @@ export async function approve(ercAddress, spenderAddress, tokenType, value) {
         const rawTransaction = await ercContract.methods
           .approve(spenderAddress, APPROVE_AMOUNT)
           .encodeABI();
-        return submitTransaction(rawTransaction, ercAddress, from);
+        return submitTransaction(rawTransaction, ercAddress);
       }
       return Promise.resolve(false);
     }
@@ -89,7 +89,7 @@ export async function approve(ercAddress, spenderAddress, tokenType, value) {
         const rawTransaction = await ercContract.methods
           .setApprovalForAll(spenderAddress, true)
           .encodeABI();
-        return submitTransaction(rawTransaction, ercAddress, from);
+        return submitTransaction(rawTransaction, ercAddress);
       }
       break;
     }
