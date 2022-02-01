@@ -35,11 +35,7 @@ export function getContractAddress() {}
  * @param {number} fee - the value of the transaction.
  * @returns {Promise} This will resolve into a transaction receipt
  */
-export async function submitTransaction(
-  unsignedTransaction,
-  contractAddress,
-  fee,
-) {
+export async function submitTransaction(unsignedTransaction, contractAddress, fee) {
   let gasPrice = 20000000000;
   const gas = (await web3.eth.getBlock('latest')).gasLimit;
   const blockGasPrice = 2 * Number(await web3.eth.getGasPrice());
@@ -69,12 +65,7 @@ export async function submitTransaction(
  * @param {string} value  - Amount of tokens to be approved (in Wei)
  * @returns {Promise} transaction
  */
-export async function approve(
-  ercAddress,
-  spenderAddress,
-  tokenType,
-  value,
-) {
+export async function approve(ercAddress, spenderAddress, tokenType, value) {
   const abi = contractABIs[tokenType];
   const ercContract = new web3.eth.Contract(abi, ercAddress);
   const from = await Web3.getAccount();
