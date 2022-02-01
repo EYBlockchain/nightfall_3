@@ -1,10 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import styles from '../styles/initialPage.module.scss';
-import polyBridge from '../static/img/homepage/polyBridge.png';
-import polyStaking from '../static/img/homepage/polyStaking.png';
-import polyWallet from '../static/img/homepage/polyWallet.png';
-import polyWidgetDashboard from '../static/img/homepage/polyWidgetDashboard.png';
+
+import polyBridge from '../static/img/homepage/poly-bridge.png';
+import polyStaking from '../static/img/homepage/poly-staking.png';
+import polyWallet from '../static/img/homepage/poly-wallet.png';
+import polyWidgetDashboard from '../static/img/homepage/poly-widget-dashboard.png';
+
+import './initial.scss'
 
 // fix: problems with page redirect and images presentation
 
@@ -16,33 +18,33 @@ import polyWidgetDashboard from '../static/img/homepage/polyWidgetDashboard.png'
 // was exactly '/'.
 const cardsData = [
   {
-    imageName: 'polyWallet',
+    imageName: 'poly-wallet',
     title: 'Polygon Wallet',
     desc: 'Send and receive crypto assets on Polygon network',
     route: 'wallet',
   },
   {
-    imageName: 'polyBridge',
+    imageName: 'poly-bridge',
     title: 'Polygon Bridge',
     desc: 'Deposit and withdraw between networks',
     route: 'bridge',
   },
   {
-    imageName: 'polyNightfallWallet',
+    imageName: 'poly-wallet',
     title: 'Polygon Nightfall Wallet',
     desc: 'Privately send and receive crypto assets on Ethereum',
     route: 'walletNF3',
     tag: 'Live on ETHEREUM chain',
   },
   {
-    imageName: 'polyStaking',
+    imageName: 'poly-staking',
     title: 'Polygon Staking',
     desc: 'Stake MATIC to earn rewards',
     route: 'staking',
     tag: 'Live on ETHEREUM chain',
   },
   {
-    imageName: 'polyWidgetDashboard',
+    imageName: 'poly-widget-dashboard',
     title: 'Widget Dashboard',
     desc: 'Manage all your Polygon wallet widgets at one place',
     route: 'widget-dashboard',
@@ -53,42 +55,41 @@ const cardsData = [
 // src={require('../static/img/homepage/poly-bridge.png')}
 export default function MainPage() {
   return (
-    <div className={styles.homepage}>
-      <div className={styles.headerh2}>Getting started with Polygon PoS chain</div>
-      <div className="font-body-medium text-center text-gray-500 ms-t-12 ms-b-38">
+    <div className="homepage">
+      <div className="header-h2 text-center">Getting started with Polygon PoS chain</div>
+      <div className="font-body-medium text-center text-gray-500" style={{ marginTop: '12px', marginBottom: '38px' }}>      
         The safe, fast, and most secure way to use Polygon PoS.
       </div>
-      <div className={styles.cardsContainer}>
+      <div className="cards-container d-flex flex-column flex-lg-row justify-content-center"
+        style={{ marginTop: '44px' }}
+      >
         {cardsData.map((card, index) => (
-          <Link key={index} to="/wallet">
-            <div className={styles.mcard}>
-              <div style={{ marginTop: '20px', marginBottom: '15px' }}>
+          <Link className={`m-card text-center ${card.imageName.toString()}`} key={index} to="/wallet">
+                     
                 {/* TODO fix the .tag and width and height */}
                 <img
                   src={
                     // eslint-disable-line no-nested-ternary
-                    card.imageName === 'polyNightfallWallet' // eslint-disable-line no-nested-ternary
+                    card.imageName === 'poly-nightfall-wallet' // eslint-disable-line no-nested-ternary
                       ? polyWallet // eslint-disable-line no-nested-ternary
-                      : card.imageName === 'polyBridge' // eslint-disable-line no-nested-ternary
+                      : card.imageName === 'poly-bridge' // eslint-disable-line no-nested-ternary
                       ? polyBridge // eslint-disable-line no-nested-ternary
-                      : card.imageName === 'polyStaking' // eslint-disable-line no-nested-ternary
+                      : card.imageName === 'poly-staking' // eslint-disable-line no-nested-ternary
                       ? polyStaking // eslint-disable-line no-nested-ternary
-                      : card.imageName === 'polyWallet' // eslint-disable-line no-nested-ternary
+                      : card.imageName === 'poly-wallet' // eslint-disable-line no-nested-ternary
                       ? polyWallet // eslint-disable-line no-nested-ternary
-                      : card.imageName === 'polyWidgetDashboard' && polyWidgetDashboard // eslint-disable-line no-nested-ternary
-                  }
-                  width={105}
-                  height={110}
+                      : card.imageName === 'poly-widget-dashboard' && polyWidgetDashboard // eslint-disable-line no-nested-ternary
+                  }                
                   alt={card.title}
                 />
-              </div>
-              <div className={styles.headerh4}>{card.title}</div>
-              <div className={styles.desc}>{card.desc}</div>
+              
+              <div className="header-h4 dark-700">{card.title}</div>
+              <div className="desc text-gray-500" style={{ marginTop: '8px' }}>{card.desc}</div>
               {card.tag && (
                 // <div v-if="data.tag" className="tag ms-t-44 d-inline-block"></div>
-                <div className={styles.tag}>{card.tag}</div>
+                <div className="tag d-inline-block" style={{ marginTop: '44px' }}>{card.tag}</div>
               )}
-            </div>
+            
           </Link>
         ))}
       </div>
