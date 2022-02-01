@@ -68,8 +68,6 @@ function txSubmit(txParams) {
         approve(
           txParams.tokenAddress,
           nf3.shieldContractAddress,
-          nf3.ethereumAddress,
-          nf3.ethereumSigningKey,
           txParams.tokenType,
           tokenAmountWei,
         )
@@ -88,13 +86,7 @@ function txSubmit(txParams) {
             );
           })
           .then(async ({ rawTransaction }) => {
-            return submitTransaction(
-              rawTransaction,
-              nf3.shieldContractAddress,
-              nf3.ethereumAddress,
-              nf3.ethereumSigningKey,
-              txParams.fee,
-            );
+            return submitTransaction(rawTransaction, nf3.shieldContractAddress, txParams.fee);
             // dispatch(txActions.txSuccess(Nf3.Constants.TX_TYPES.DEPOSIT, txReceipt));
             // TODO: dispatch error
           })

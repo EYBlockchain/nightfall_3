@@ -76,8 +76,6 @@ export default function Bridge() {
         await approve(
           location.tokenState.tokenAddress,
           state.nf3.shieldContractAddress,
-          state.nf3.ethereumAddress,
-          state.nf3.ethereumSigningKey,
           'ERC20',
           tokenAmountWei,
         );
@@ -93,13 +91,7 @@ export default function Bridge() {
           },
           state.nf3.shieldContractAddress,
         );
-        return submitTransaction(
-          rawTransaction,
-          state.nf3.shieldContractAddress,
-          state.nf3.ethereumAddress,
-          state.nf3.ethereumSigningKey,
-          1,
-        );
+        return submitTransaction(rawTransaction, state.nf3.shieldContractAddress, 1);
       }
 
       case 'withdraw': {
