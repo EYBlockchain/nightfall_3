@@ -3,10 +3,8 @@
 import Web3 from 'web3';
 
 const { ethereum } = global;
-const { INFURA_PROJECT_SECRET } = process.env;
 
 export default {
-
   connection() {
     if (!this.web3) this.connect();
     return this.web3;
@@ -38,12 +36,15 @@ export default {
     }
     return false;
   },
+
+  // TODO: fix it - not working the browser logic
   disconnect() {
     this.web3.currentProvider.connection.close();
   },
+
   // get account address to which MetaMask is connected
   async getAccount() {
     const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
     return accounts[0];
-  }
+  },
 };
