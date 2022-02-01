@@ -510,6 +510,17 @@ class Nf3 {
   }
 
   /**
+  Get current proposer
+  @method
+  @async
+  @returns {array} A promise that resolves to the Ethereum transaction receipt.
+  */
+  async getCurrentProposer() {
+    const res = await axios.get(`${this.optimistBaseUrl}/proposer/current-proposer`);
+    return res.data.currentProposer;
+  }
+
+  /**
   Get all the list of existing proposers.
   @method
   @async
@@ -630,8 +641,8 @@ class Nf3 {
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
       const { type, txDataToSign } = msg;
-      if (type === 'challenge') {
-        await this.submitTransaction(txDataToSign, this.stateContractAddress, 0);
+      if (type === 'commit' || type === 'challenge') {
+        const res = await this.submitTransaction(txDataToSign, this.challengesContractAddress, 0);
       }
     };
   }

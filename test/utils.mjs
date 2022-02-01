@@ -321,3 +321,76 @@ export const waitForEvent = async (eventLogs, expectedEvents) => {
 
   return eventLogs;
 };
+
+/**
+  function to wait until a proposer is the current proposer
+*/
+const waitForProposerToBeCurrent = proposer => {
+  return new Promise(resolve => {
+    async function isCurrentProposer() {
+      const currentProposer = await proposer.getCurrentProposer();
+      if (currentProposer === proposer.ethereumAddress) {
+        // console.log('condition met for currentProposer', currentProposer);
+        resolve();
+      } else {
+        // console.log('condition not met for currentProposer', currentProposer);
+        await new Promise(resolving => setTimeout(resolving, 1000));
+      }
+    }
+    isCurrentProposer();
+  });
+};
+
+/**
+  function to register a proposer and wait until this proposer is the current proposer
+*/
+export const waitForProposer = async proposer => {
+  if ((await proposer.getCurrentProposer()) !== proposer.ethereumAddress) {
+    await proposer.registerProposer();
+  }
+  await waitForProposerToBeCurrent(proposer);
+};
+
+/**
+  function to wait until sufficient balance is achieved from
+  transactions
+*/
+export const waitForSufficientBalance = (client, value, depositFunction) => {
+  let retries = 0;
+  return new Promise(resolve => {
+    // in case there are no pending deposit or transfer transactions to satisfy
+    // sufficient balance, then we will send a deposit transaction after sometime
+    async function isSufficientBalance() {
+      if (retries > 20) {
+        await depositFunction();
+        await new Promise(resolving => setTimeout(resolving, 10000));
+      }
+      const balances = await client.getLayer2Balances();
+      // if layer 2 balances don't exist, then wait a bit and look for balances again
+      if (Object.keys(balances).length === 0) {
+        await new Promise(resolving => setTimeout(resolving, 10000));
+        retries += 1;
+        isSufficientBalance();
+      }
+      // if client does not have layer 2 balances, then wait a bit and look again
+      const clientBalances = balances[client.zkpKeys.compressedPkd];
+      if (clientBalances === undefined || Object.keys(clientBalances).length === 0) {
+        await new Promise(resolving => setTimeout(resolving, 10000));
+        retries += 1;
+        isSufficientBalance();
+      }
+      const balance = clientBalances[Object.keys(clientBalances)[0]];
+      // if client has layer 2 balances and if it is equal to value required
+      if (balance > value) {
+        // console.log('sufficient balance');
+        resolve();
+      } else {
+        // console.log('insufficient balance', balance);
+        await new Promise(resolving => setTimeout(resolving, 10000));
+        retries += 1;
+        isSufficientBalance();
+      }
+    }
+    isSufficientBalance();
+  });
+};
