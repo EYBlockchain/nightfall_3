@@ -37,7 +37,7 @@ export default {
     return false;
   },
 
-  // TODO: fix it - not working the browser logic
+  // TODO: fix it - not working with the browser logic
   disconnect() {
     this.web3.currentProvider.connection.close();
   },
