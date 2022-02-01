@@ -74,15 +74,18 @@ function txSubmit(txParams) {
           tokenAmountWei,
         )
           .then(() => {
-            return deposit({
-              ercAddress: txParams.tokenAddress,
-              tokenId: txParams.tokenId,
-              value: tokenAmountWei,
-              pkd: nf3.zkpKeys.pkd,
-              nsk: nf3.zkpKeys.nsk,
-              fee: txParams.fee,
-              tokenType: txParams.tokenType,
-            });
+            return deposit(
+              {
+                ercAddress: txParams.tokenAddress,
+                tokenId: txParams.tokenId,
+                value: tokenAmountWei,
+                pkd: nf3.zkpKeys.pkd,
+                nsk: nf3.zkpKeys.nsk,
+                fee: txParams.fee,
+                tokenType: txParams.tokenType,
+              },
+              nf3.shieldContractAddress,
+            );
           })
           .then(async ({ rawTransaction }) => {
             return submitTransaction(
@@ -118,18 +121,21 @@ function txSubmit(txParams) {
         // TODO: dispatch error
         // { ercAddress, tokenId, recipientData, nsk, ask, fee }
         // { recipientCompressedPkds, values }
-        transfer({
-          offchain,
-          ercAddress: txParams.tokenAddress,
-          tokenId: txParams.tokenId,
-          recipientData: {
-            recipientCompressedPkds: [txParams.compressedPkd],
-            values: [tokenAmountWei],
+        transfer(
+          {
+            offchain,
+            ercAddress: txParams.tokenAddress,
+            tokenId: txParams.tokenId,
+            recipientData: {
+              recipientCompressedPkds: [txParams.compressedPkd],
+              values: [tokenAmountWei],
+            },
+            nsk: nf3.zkpKeys.nsk,
+            ask: nf3.zkpKeys.ask,
+            fee: txParams.fee,
           },
-          nsk: nf3.zkpKeys.nsk,
-          ask: nf3.zkpKeys.ask,
-          fee: txParams.fee,
-        })
+          nf3.shieldContractAddress,
+        )
           .then(async ({ rawTransaction }) => {
             console.log('rawTransaction', rawTransaction);
             return nf3.submitTransaction(rawTransaction, nf3.shieldContractAddress, txParams.fee);
@@ -163,16 +169,19 @@ function txSubmit(txParams) {
           // TODO: dispatch error
           const nRetries = 0;
           // { ercAddress, tokenId, value, recipientAddress, nsk, ask, fee, tokenType }
-          withdraw({
-            ercAddress: txParams.tokenAddress,
-            tokenId: txParams.tokenId,
-            value: tokenAmountWei,
-            recipientAddress: txParams.ethereumAddress,
-            nsk: nf3.zkpKeys.nsk,
-            ask: nf3.zkpKeys.ask,
-            tokenType: txParams.tokenType,
-            fees: txParams.fee,
-          })
+          withdraw(
+            {
+              ercAddress: txParams.tokenAddress,
+              tokenId: txParams.tokenId,
+              value: tokenAmountWei,
+              recipientAddress: txParams.ethereumAddress,
+              nsk: nf3.zkpKeys.nsk,
+              ask: nf3.zkpKeys.ask,
+              tokenType: txParams.tokenType,
+              fees: txParams.fee,
+            },
+            nf3.shieldContractAddress,
+          )
             .then(async ({ rawTransaction }) => {
               console.log('rawTransaction', rawTransaction);
               return nf3.submitTransaction(rawTransaction, nf3.shieldContractAddress, txParams.fee);
