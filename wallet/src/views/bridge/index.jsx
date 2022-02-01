@@ -91,11 +91,7 @@ export default function Bridge() {
           },
           state.nf3.shieldContractAddress,
         );
-        return submitTransaction(
-          rawTransaction,
-          state.nf3.shieldContractAddress,
-          1,
-        );
+        return submitTransaction(rawTransaction, state.nf3.shieldContractAddress, 1);
       }
 
       case 'withdraw': {
