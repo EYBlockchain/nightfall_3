@@ -43,6 +43,7 @@ ADD . /src
 RUN npm install --save
 
 # Install python3
+RUN apt-get update
 RUN apt-get install -y  python3 python3-dev python3-distutils
 RUN curl -sL https://bootstrap.pypa.io/get-pip.py |  python3
 RUN pip -V
