@@ -80,7 +80,7 @@ class Nf3 {
   @returns {Promise}
   */
   async init(mnemonic) {
-    this.setWeb3Provider();
+    await this.setWeb3Provider();
     this.shieldContractAddress = await this.getContractAddress('Shield');
     this.proposersContractAddress = await this.getContractAddress('Proposers');
     this.challengesContractAddress = await this.getContractAddress('Challenges');
@@ -258,11 +258,14 @@ class Nf3 {
         tokenType,
         value,
         this.web3,
+        !!this.ethereumSigningKey,
       );
     } catch (err) {
       throw new Error(err);
     }
-    if (txDataToSign) await this.submitTransaction(txDataToSign, ercAddress, 0);
+    if (txDataToSign) {
+      await this.submitTransaction(txDataToSign, ercAddress, 0);
+    }
     const res = await axios.post(`${this.clientBaseUrl}/deposit`, {
       ercAddress,
       tokenId,
@@ -290,8 +293,7 @@ class Nf3 {
   @param {string} tokenId - The ID of an ERC721 or ERC1155 token.  In the case of
   an 'ERC20' coin, this should be set to '0x00'.
   @param {object} keys - The ZKP private key set of the sender.
-  @param {array} pkd - The transmission key of the recipient (this is a curve point
-  represented as an array of two hex strings).
+  @param {string} compressedPkd - The compressed transmission key of the recipient
   @returns {Promise} Resolves into the Ethereum transaction receipt.
   */
   async transfer(
@@ -300,7 +302,7 @@ class Nf3 {
     tokenType,
     value,
     tokenId,
-    pkd,
+    compressedPkd,
     fee = this.defaultFee,
   ) {
     const res = await axios.post(`${this.clientBaseUrl}/transfer`, {
@@ -309,7 +311,7 @@ class Nf3 {
       tokenId,
       recipientData: {
         values: [value],
-        recipientPkds: [pkd],
+        recipientCompressedPkds: [compressedPkd],
       },
       nsk: this.zkpKeys.nsk,
       ask: this.zkpKeys.ask,
@@ -705,12 +707,20 @@ class Nf3 {
   Returns the balance of tokens held in layer 2
   @method
   @async
-  @returns {Promise} This promise rosolves into an object whose properties are the
+  @param {Array} ercList - list of erc contract addresses to filter.
+  @param {Boolean} filterByCompressedPkd - flag to indicate if request is filtered 
+  ones compressed pkd
+  @returns {Promise} This promise resolves into an object whose properties are the
   addresses of the ERC contracts of the tokens held by this account in Layer 2. The
   value of each propery is the number of tokens originating from that contract.
   */
-  async getLayer2Balances() {
-    const res = await axios.get(`${this.clientBaseUrl}/commitment/balance`);
+  async getLayer2Balances(ercList, filterByCompressedPkd) {
+    const res = await axios.get(`${this.clientBaseUrl}/commitment/balance`, {
+      params: {
+        compressedPkd: filterByCompressedPkd === true ? this.zkpKeys.compressedPkd : null,
+        ercList,
+      },
+    });
     return res.data.balance;
   }
 
@@ -719,14 +729,59 @@ class Nf3 {
   @method
   @async
   @param {Array} ercList - list of erc contract addresses to filter.
-  @returns {Promise} This promise rosolves into an object whose properties are the
+  @returns {Promise} This promise resolves into an object whose properties are the
   addresses of the ERC contracts of the tokens held by this account in Layer 2. The
   value of each propery is the number of tokens originating from that contract.
   */
   async getLayer2BalancesDetails(ercList) {
-    const res = await axios.post(`${this.clientBaseUrl}/commitment/balance-details`, {
-      compressedPkd: this.zkpKeys.compressedPkd,
-      ercList,
+    const res = await axios.get(`${this.clientBaseUrl}/commitment/balance-details`, {
+      params: {
+        compressedPkd: this.zkpKeys.compressedPkd,
+        ercList,
+      },
+    });
+    return res.data.balance;
+  }
+
+  /**
+  Returns the balance of tokens held in layer 2
+  @method
+  @async
+  @param {Array} ercList - list of erc contract addresses to filter.
+  @param {Boolean} filterByCompressedPkd - flag to indicate if request is filtered 
+  ones compressed pkd
+  @returns {Promise} This promise resolves into an object whose properties are the
+  addresses of the ERC contracts of the tokens held by this account in Layer 2. The
+  value of each propery is the number of tokens pending deposit from that contract.
+  */
+  async getLayer2PendingDepositBalances(ercList, filterByCompressedPkd) {
+    const res = await axios.get(`${this.clientBaseUrl}/commitment/pending-deposit`, {
+      params: {
+        compressedPkd: filterByCompressedPkd === true ? this.zkpKeys.compressedPkd : null,
+        ercList,
+      },
+    });
+    return res.data.balance;
+  }
+
+  /**
+  Returns the balance of tokens held in layer 2
+  @method
+  @async
+  @param {Array} ercList - list of erc contract addresses to filter.
+  @param {Boolean} filterByCompressedPkd - flag to indicate if request is filtered 
+  ones compressed pkd
+  @returns {Promise} This promise resolves into an object whose properties are the
+  addresses of the ERC contracts of the tokens held by this account in Layer 2. The
+  value of each propery is the number of tokens pending spent (transfer & withdraw)
+  from that contract.
+  */
+  async getLayer2PendingSpentBalances(ercList, filterByCompressedPkd) {
+    const res = await axios.get(`${this.clientBaseUrl}/commitment/pending-spent`, {
+      params: {
+        compressedPkd: filterByCompressedPkd === true ? this.zkpKeys.compressedPkd : null,
+        ercList,
+      },
     });
     return res.data.balance;
   }
@@ -760,12 +815,12 @@ class Nf3 {
   /**
   Set a Web3 Provider URL
   */
-  setWeb3Provider() {
+  async setWeb3Provider() {
     this.web3 = new Web3(this.web3WsUrl, { transactionBlockTimeout: 200 }); // set a longer timeout
     if (typeof window !== 'undefined') {
       if (window.ethereum && this.ethereumSigningKey === '') {
         this.web3 = new Web3(window.ethereum);
-        window.ethereum.request({ method: 'eth_accounts' });
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
       } else {
         // Metamask not available
         throw new Error('No Web3 provider found');

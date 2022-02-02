@@ -19,7 +19,7 @@ class effectTest(walletTest):
 def reloadTest(findElementsInstance, driver, metamaskTab, nightfallTab):
     driver.switch_to.window(nightfallTab)
     driver.refresh()
-    nightfallWalletStartButton = findElementsInstance.element_exist_xpath('//*[local-name()="svg"]') # nightfall Metamask button
+    nightfallWalletStartButton = findElementsInstance.element_exist_xpath('(//*[local-name()="svg"])[2]') # nightfall Metamask button
     if not nightfallWalletStartButton:
       return "FAILED"
     return localhostTest(findElementsInstance, driver, metamaskTab, nightfallTab)
@@ -36,7 +36,7 @@ def ropstenTest(findElementsInstance, driver, metamaskTab, nightfallTab):
     driver.switch_to.window(metamaskTab)
     selectNetworkMetamask(driver, findElementsInstance, networkConfigRopsten)
     driver.switch_to.window(nightfallTab)
-    nightfallWalletStartButton = findElementsInstance.element_exist_xpath('//*[local-name()="svg"]') # nightfall Metamask button
+    nightfallWalletStartButton = findElementsInstance.element_exist_xpath('(//*[local-name()="svg"])[2]') # nightfall Metamask button
     if not nightfallWalletStartButton:
       return "FAILED"
     return localhostTest(findElementsInstance, driver, metamaskTab, nightfallTab)
@@ -45,7 +45,7 @@ def changeAccountTest(findElementsInstance, driver, metamaskTab, nightfallTab):
     driver.switch_to.window(metamaskTab)
     selectEthAccountMetamask(driver, findElementsInstance, ethAccount1Params)
     driver.switch_to.window(nightfallTab)
-    nightfallWalletStartButton = findElementsInstance.element_exist_xpath('//*[local-name()="svg"]') # nightfall Metamask button
+    nightfallWalletStartButton = findElementsInstance.element_exist_xpath('(//*[local-name()="svg"])[2]') # nightfall Metamask button
     if not nightfallWalletStartButton:
       return "FAILED"
     driver.switch_to.window(metamaskTab)

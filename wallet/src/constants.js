@@ -20,7 +20,7 @@ const DEFAULT_TOKEN_ID = {
 const METAMASK_MESSAGE =
   'This signature is required to unlock your Nightfall account. Sign this message only if you are in a trusted application.';
 
-const TRANSACTION_MAX_RETRIES = 10;
+const TRANSACTION_MAX_RETRIES = 30;
 const TRANSACTION_RETRY_PERIOD = 10000; // 10s
 const ERROR_AUTO_HIDE_PERIOD = 2000; // 2s
 // TODO - verify balance refres rate

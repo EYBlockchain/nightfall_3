@@ -18,16 +18,16 @@ def logoutTest(findElementsInstance, driver, metamaskTab, nightfallTab):
 
 def cancelLoginTest(findElementsInstance, driver, metamaskTab, nightfallTab):
   driver.switch_to.window(nightfallTab)
-  findElementsInstance.element_exist_xpath('//*[local-name()="svg"]').click() # nightfall Metamask button
+  findElementsInstance.element_exist_xpath('(//*[local-name()="svg"])[2]').click() # nightfall Metamask button
   findElementsInstance.element_exist_xpath('//button[text()="Cancel"]').click() # Cancel
-  nightfallWalletStartButton = findElementsInstance.element_exist_xpath('//*[local-name()="svg"]') # nightfall Metamask button
+  nightfallWalletStartButton = findElementsInstance.element_exist_xpath('(//*[local-name()="svg"])[2]') # nightfall Metamask button
   if not nightfallWalletStartButton:
     return "FAILED\n"
 
 def mnemonicTest(findElementsInstance, driver, metamaskTab, nightfallTab):
   driver.switch_to.window(nightfallTab)
   mnemonic = []
-  findElementsInstance.element_exist_xpath('//*[local-name()="svg"]').click() # nightfall Metamask button
+  findElementsInstance.element_exist_xpath('(//*[local-name()="svg"])[2]').click() # nightfall Metamask button
   for i in range(10):
     findElementsInstance.element_exist_xpath('//button[text()="New"]').click() # New Mnemonic
     mnemonic.append(findElementsInstance.element_exist_xpath('//textarea').text)
@@ -37,15 +37,37 @@ def mnemonicTest(findElementsInstance, driver, metamaskTab, nightfallTab):
     return "FAILED\n"
   findElementsInstance.element_exist_xpath('//button[text()="Cancel"]').click() # Cancel
 
+def repeatedMnemonicTest(findElementsInstance, driver, metamaskTab, nightfallTab):
+  driver.switch_to.window(nightfallTab)
+  for i in range(10):
+    findElementsInstance.element_exist_xpath('(//*[local-name()="svg"])[2]').click() # nightfall Metamask button
+    findElementsInstance.element_exist_xpath('//button[text()="New"]').click() # New Mnemonic
+    mnemonic = findElementsInstance.element_exist_xpath('//textarea').text
+    findElementsInstance.element_exist_xpath('//button[text()="Submit"]').click() # Submit button
+    findElementsInstance.element_exist_xpath('//button[text()="Account Settings"]').click() # Account Settings
+    compressedPkd = findElementsInstance.element_exist_xpath('//input[@type="text"]').get_attribute("value") # read compressed Pkd
+    findElementsInstance.element_exist_xpath('//button[text()="Save"]').click() # Save
+    #logout
+    logoutNightfallWallet(driver, findElementsInstance, nightfallTab)
+    findElementsInstance.element_exist_xpath('(//*[local-name()="svg"])[2]').click() # nightfall Metamask button
+    findElementsInstance.element_exist_xpath('//textarea').send_keys(mnemonic)
+    findElementsInstance.element_exist_xpath('//button[text()="Submit"]').click() # Submit button
+    findElementsInstance.element_exist_xpath('//button[text()="Account Settings"]').click() # Account Settings
+    testCompressedPkd = findElementsInstance.element_exist_xpath('//input[@type="text"]').get_attribute("value") # read compressed Pkd
+    findElementsInstance.element_exist_xpath('//button[text()="Save"]').click() # Save
+    logoutNightfallWallet(driver, findElementsInstance, nightfallTab)
+    if compressedPkd != testCompressedPkd:
+      return "FAILED\n"
+
 def toggleTest(findElementsInstance, driver, metamaskTab, nightfallTab):
   driver.switch_to.window(nightfallTab)
-  findElementsInstance.element_exist_xpath('//*[local-name()="svg"]').click() # nightfall Metamask button
+  findElementsInstance.element_exist_xpath('(//*[local-name()="svg"])[2]').click() # nightfall Metamask button
   findElementsInstance.element_exist_xpath('//div[contains(@class, "ui toggle checkbox")]').click() # Enable backup
   findElementsInstance.element_exist_xpath('//div[contains(@class, "ui checked toggle checkbox")]').click() # Disable backup
   findElementsInstance.element_exist_xpath('//div[contains(@class, "ui toggle checkbox")]').click() # Enable backup
   findElementsInstance.element_exist_xpath('//button[text()="Cancel"]').click() # Cancel
 
-  findElementsInstance.element_exist_xpath('//*[local-name()="svg"]').click() # nightfall Metamask button
+  findElementsInstance.element_exist_xpath('(//*[local-name()="svg"])[2]').click() # nightfall Metamask button
   backupToggleDisabled = findElementsInstance.element_exist_xpath('//div[contains(@class, "ui toggle checkbox")]') # Backup is disabled
   if not backupToggleDisabled:
     logging.error("Backup button is not disabled")
@@ -56,7 +78,7 @@ def toggleTest(findElementsInstance, driver, metamaskTab, nightfallTab):
 
 def initialConditionsTest(findElementsInstance, driver, metamaskTab, nightfallTab):
   driver.switch_to.window(nightfallTab)
-  findElementsInstance.element_exist_xpath('//*[local-name()="svg"]').click() # nightfall Metamask button
+  findElementsInstance.element_exist_xpath('(//*[local-name()="svg"])[2]').click() # nightfall Metamask button
   mnemonic = findElementsInstance.element_exist_xpath('//textarea').text
   submitButton = findElementsInstance.element_exist_xpath('//button[text()="Submit"]') # Submit button
   backupToggleDisabled = findElementsInstance.element_exist_xpath('//div[contains(@class, "ui toggle checkbox")]') # Backup is disabled
@@ -81,19 +103,19 @@ def initialConditionsTest(findElementsInstance, driver, metamaskTab, nightfallTa
 
 def loginNoBackupTest(findElementsInstance, driver, metamaskTab, nightfallTab):
   driver.switch_to.window(nightfallTab)
-  findElementsInstance.element_exist_xpath('//*[local-name()="svg"]').click() # nightfall Metamask button
+  findElementsInstance.element_exist_xpath('(//*[local-name()="svg"])[2]').click() # nightfall Metamask button
   findElementsInstance.element_exist_xpath('//button[text()="New"]').click() # New Mnemonic
   findElementsInstance.element_exist_xpath('//button[text()="Submit"]').click() # Submit button
   logoutNightfallWallet(driver, findElementsInstance, nightfallTab)
 
-  findElementsInstance.element_exist_xpath('//*[local-name()="svg"]').click() # nightfall Metamask button
+  findElementsInstance.element_exist_xpath('(//*[local-name()="svg"])[2]').click() # nightfall Metamask button
   findElementsInstance.element_exist_xpath('//button[text()="New"]').click() # New Mnemonic
   findElementsInstance.element_exist_xpath('//button[text()="Submit"]').click() # Submit button
   logoutNightfallWallet(driver, findElementsInstance, nightfallTab)
 
 def loginBackupCancelTest(findElementsInstance, driver, metamaskTab, nightfallTab):
   driver.switch_to.window(nightfallTab)
-  findElementsInstance.element_exist_xpath('//*[local-name()="svg"]').click() # nightfall Metamask button
+  findElementsInstance.element_exist_xpath('(//*[local-name()="svg"])[2]').click() # nightfall Metamask button
   findElementsInstance.element_exist_xpath('//button[text()="New"]').click() # New Mnemonic
   findElementsInstance.element_exist_xpath('//div[contains(@class, "ui toggle checkbox")]').click() # Enable backup
   findElementsInstance.element_exist_xpath('//button[text()="Submit"]').click() # Submit button
@@ -108,12 +130,12 @@ def loginBackupCancelTest(findElementsInstance, driver, metamaskTab, nightfallTa
   
   # log back in and check that i am asked mnemonic
   driver.switch_to.window(nightfallTab)
-  findElementsInstance.element_exist_xpath('//*[local-name()="svg"]').click() # nightfall Metamask button
+  findElementsInstance.element_exist_xpath('(//*[local-name()="svg"])[2]').click() # nightfall Metamask button
   findElementsInstance.element_exist_xpath('//button[text()="Cancel"]').click() # Cancel
 
 def loginBackupTest(findElementsInstance, driver, metamaskTab, nightfallTab):
   driver.switch_to.window(nightfallTab)
-  findElementsInstance.element_exist_xpath('//*[local-name()="svg"]').click() # nightfall Metamask button
+  findElementsInstance.element_exist_xpath('(//*[local-name()="svg"])[2]').click() # nightfall Metamask button
   findElementsInstance.element_exist_xpath('//button[text()="New"]').click() # New Mnemonic
   findElementsInstance.element_exist_xpath('//div[contains(@class, "ui toggle checkbox")]').click() # Enable backup
   findElementsInstance.element_exist_xpath('//button[text()="Submit"]').click() # Submit button
@@ -126,7 +148,7 @@ def loginBackupTest(findElementsInstance, driver, metamaskTab, nightfallTab):
 
   driver.switch_to.window(nightfallTab)
   logoutNightfallWallet(driver, findElementsInstance, nightfallTab)
-  findElementsInstance.element_exist_xpath('//*[local-name()="svg"]').click() # nightfall Metamask button
+  findElementsInstance.element_exist_xpath('(//*[local-name()="svg"])[2]').click() # nightfall Metamask button
   driver.switch_to.window(metamaskTab)
   signButton = findElementsInstance.element_exist_xpath('//button[text()="Sign"]')
   if not signButton:
@@ -138,7 +160,7 @@ def loginBackupTest(findElementsInstance, driver, metamaskTab, nightfallTab):
 
 def clearBackupTest(findElementsInstance, driver, metamaskTab, nightfallTab):
   driver.switch_to.window(nightfallTab)
-  findElementsInstance.element_exist_xpath('//*[local-name()="svg"]').click() # nightfall Metamask button
+  findElementsInstance.element_exist_xpath('(//*[local-name()="svg"])[2]').click() # nightfall Metamask button
   driver.switch_to.window(metamaskTab)
   signButton = findElementsInstance.element_exist_xpath('//button[text()="Sign"]')
   if not signButton:
@@ -150,7 +172,7 @@ def clearBackupTest(findElementsInstance, driver, metamaskTab, nightfallTab):
   findElementsInstance.element_exist_xpath('//label[text()="Clear Local Storage"]').click() # Clear local storage
   findElementsInstance.element_exist_xpath('//button[text()="Save"]').click() # Save
   logoutNightfallWallet(driver, findElementsInstance, nightfallTab)
-  findElementsInstance.element_exist_xpath('//*[local-name()="svg"]').click() # nightfall Metamask button
+  findElementsInstance.element_exist_xpath('(//*[local-name()="svg"])[2]').click() # nightfall Metamask button
   findElementsInstance.element_exist_xpath('//button[text()="New"]').click() # New Mnemonic
   findElementsInstance.element_exist_xpath('//button[text()="Submit"]').click() # Submit button
 
@@ -158,7 +180,7 @@ def clearBackupTest(findElementsInstance, driver, metamaskTab, nightfallTab):
 loginTestsList = [
   {
     'name': logoutTest,
-    'description' : 'Verify that logout works'
+    'description' : 'Verify that logout works. This test needs to go first'
   },
   {
     'name': cancelLoginTest,
@@ -167,6 +189,10 @@ loginTestsList = [
   {
    'name': mnemonicTest,
    'description' : 'Verify that every time we press New button, there is a new mnemonic'
+  },
+  {
+   'name': repeatedMnemonicTest,
+   'description' : 'Verify that a repeated mnemonic generates the same compressed PKD'
   },
   {
    'name': toggleTest,

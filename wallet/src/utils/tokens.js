@@ -12,7 +12,11 @@ const tokens = [
     tokenName: 'TOKEN1',
     tokenBalanceL1: '0',
     tokenBalanceL2: '0',
-    // decimals: 9,
+    tokenPendingDepositL2: '0',
+    tokenPendingSpentL2: '0',
+    tokenDetailsL1: [],
+    tokenDetailsL2: [],
+    decimals: 0,
   },
   // DUMMY
   {
@@ -24,7 +28,11 @@ const tokens = [
     tokenName: 'TOKEN2',
     tokenBalanceL1: '0',
     tokenBalanceL2: '0',
-    // decimals: 9,
+    tokenPendingDepositL2: '0',
+    tokenPendingSpentL2: '0',
+    tokenDetailsL1: [],
+    tokenDetailsL2: [],
+    decimals: 0,
   },
   // DUMMY
   {
@@ -36,7 +44,11 @@ const tokens = [
     tokenName: 'TOKEN3',
     tokenBalanceL1: '0',
     tokenBalanceL2: '0',
-    // decimals: 9,
+    tokenPendingDepositL2: '0',
+    tokenPendingSpentL2: '0',
+    tokenDetailsL1: [],
+    tokenDetailsL2: [],
+    decimals: 0,
   },
 ];
 
