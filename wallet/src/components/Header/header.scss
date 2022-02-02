@@ -8,5 +8,11 @@
   
   width: 100%;  
   padding: 15px;            
+  
+  background-color: $light-gray-100;  
+  position: sticky;
+  top: 0px;
+  z-index: 1;
+
 }
   
