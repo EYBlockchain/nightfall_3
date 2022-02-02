@@ -1,5 +1,5 @@
 {
-  "tokenId": "0x00",
+  "tokenId": "0",
   "tokenType": "ERC20",
   "tokenTypeERC721": "ERC721",
   "tokenTypeERC1155": "ERC1155"

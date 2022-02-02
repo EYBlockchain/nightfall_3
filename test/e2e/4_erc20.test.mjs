@@ -7,6 +7,7 @@ import { waitForEvent, expectTransaction, depositNTransactions, Web3Client } fro
 
 // so we can use require with mjs file
 const require = createRequire(import.meta.url);
+const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 const { web3WsUrl, network } = process.env;
@@ -19,7 +20,10 @@ const { fee, transferValue, txPerBlock } = require('./configs.json');
 const { tokenType, tokenId } = require('./tokenConfigs.json');
 
 const environment = environments[network];
-const nf3User1 = new Nf3(web3WsUrl, signingKeys.user1, environment);
+const nf3Users = [
+  new Nf3(web3WsUrl, signingKeys.user1, environment),
+  new Nf3(web3WsUrl, signingKeys.user2, environment),
+];
 const nf3Proposer1 = new Nf3(web3WsUrl, signingKeys.proposer1, environment);
 
 const web3Client = new Web3Client();
@@ -37,31 +41,29 @@ describe('ERC20 tests', () => {
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer1.startProposer();
     newGasBlockEmitter.on('gascost', async gasUsed => {
-      console.log(
-        `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
-      );
+      if (process.env.GAS_COSTS)
+        console.log(
+          `Block proposal gas cost was ${gasUsed}, cost per transaction was ${
+            gasUsed / txPerBlock
+          }`,
+        );
     });
 
-    await nf3User1.init(mnemonics.user1);
-    erc20Address = await nf3User1.getContractAddress('ERC20Mock');
+    await nf3Users[0].init(mnemonics.user1);
+    await nf3Users[1].init(mnemonics.user2);
+    erc20Address = await nf3Users[0].getContractAddress('ERC20Mock');
 
-    stateAddress = await nf3User1.stateContractAddress;
+    stateAddress = await nf3Users[0].stateContractAddress;
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
   });
 
-  it('should get correct balance after deposit or synchronize with block proposed', async () => {
-    let balances = await nf3User1.getLayer2Balances();
-    let beforePkdBalance = 0;
-    try {
-      // eslint-disable-next-line prefer-destructuring
-      beforePkdBalance = balances[nf3User1.zkpKeys.compressedPkd][erc20Address][0];
-    } catch {
-      beforePkdBalance = 0;
-    }
+  it.skip('should get correct balance after deposit or synchronize with block proposed', async () => {
+    const beforePkdBalance =
+      (await nf3Users[0].getLayer2Balances())?.[erc20Address]?.[0].balance || 0;
 
     if (beforePkdBalance !== 0) {
       await depositNTransactions(
-        nf3User1,
+        nf3Users[0],
         txPerBlock,
         erc20Address,
         tokenType,
@@ -73,21 +75,22 @@ describe('ERC20 tests', () => {
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
       for (let i = 0; i < txPerBlock; i++) {
         // eslint-disable-next-line no-await-in-loop
-        const res = await nf3User1.transfer(
+        const res = await nf3Users[0].transfer(
           false,
           erc20Address,
           tokenType,
           transferValue,
           tokenId,
-          nf3User1.zkpKeys.compressedPkd,
+          nf3Users[0].zkpKeys.compressedPkd,
           fee,
         );
         expectTransaction(res);
       }
       //   stateBalance += fee * txPerBlock + BLOCK_STAKE;
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
-      balances = await nf3User1.getLayer2Balances();
-      const afterPkdBalance = balances[nf3User1.zkpKeys.compressedPkd][erc20Address][0];
+
+      const afterPkdBalance = (await nf3Users[0].getLayer2Balances())?.[erc20Address]?.[0].balance;
+
       if (afterPkdBalance - beforePkdBalance < txPerBlock * transferValue) {
         console.log(
           `      ${
@@ -95,7 +98,7 @@ describe('ERC20 tests', () => {
           } tx missing for block`,
         );
         await depositNTransactions(
-          nf3User1,
+          nf3Users[0],
           (txPerBlock * transferValue - (afterPkdBalance - beforePkdBalance)) / transferValue,
           erc20Address,
           tokenType,
@@ -118,7 +121,7 @@ describe('ERC20 tests', () => {
     console.log(`      Sending ${txPerBlock * numDeposits} deposits...`);
     // We create enough transactions to fill numDeposits blocks full of deposits.
     const depositTransactions = await depositNTransactions(
-      nf3User1,
+      nf3Users[0],
       txPerBlock * numDeposits,
       erc20Address,
       tokenType,
@@ -130,16 +133,40 @@ describe('ERC20 tests', () => {
     // Wait until we see the right number of blocks appear
     eventLogs = await waitForEvent(eventLogs, ['blockProposed'], numDeposits);
     const totalGas = depositTransactions.reduce((acc, { gasUsed }) => acc + Number(gasUsed), 0);
-    console.log(`     Average Gas used was ${Math.ceil(totalGas / (txPerBlock * numDeposits))}`);
+    if (process.env.GAS_COSTS)
+      console.log(`     Average Gas used was ${Math.ceil(totalGas / (txPerBlock * numDeposits))}`);
   });
 
-  // Skipping because of #437
   it.skip('should increment the balance after deposit some ERC20 crypto', async function () {
-    let balances = await nf3User1.getLayer2Balances();
-    const currentPkdBalance = balances[nf3User1.zkpKeys.compressedPkd][erc20Address][0];
+    const currentPkdBalance = (await nf3Users[0].getLayer2Balances())[erc20Address][0].balance;
     // We do txPerBlock deposits of 10 each
     await depositNTransactions(
-      nf3User1,
+      nf3Users[0],
+      txPerBlock,
+      erc20Address,
+      tokenType,
+      transferValue,
+      tokenId,
+      fee,
+    );
+    eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+    const afterPkdBalance = (await nf3Users[0].getLayer2Balances())[erc20Address][0].balance;
+    expect(afterPkdBalance - currentPkdBalance).to.be.equal(txPerBlock * transferValue);
+  });
+
+  it.skip('should decrement the balance after transfer ERC20 to other wallet and increment the other wallet', async function () {
+    let balances;
+    async function getBalances() {
+      balances = [
+        (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0,
+        (await nf3Users[1].getLayer2Balances())[erc20Address]?.[0].balance || 0,
+      ];
+    }
+
+    await getBalances();
+
+    await depositNTransactions(
+      nf3Users[0],
       txPerBlock,
       erc20Address,
       tokenType,
@@ -149,14 +176,138 @@ describe('ERC20 tests', () => {
     );
     // stateBalance += fee * txPerBlock + BLOCK_STAKE;
     eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
-    balances = await nf3User1.getLayer2Balances();
-    const afterPkdBalance = balances[nf3User1.zkpKeys.compressedPkd][erc20Address][0];
-    expect(afterPkdBalance - currentPkdBalance).to.be.equal(txPerBlock * transferValue);
+
+    await getBalances();
+
+    try {
+      // eslint-disable-next-line prefer-destructuring
+      if (!balances[1]) balances[1] = 0;
+    } catch {
+      balances[1] = 0;
+    }
+
+    const beforeBalances = [...balances];
+
+    for (let i = 0; i < txPerBlock; i++) {
+      // eslint-disable-next-line no-await-in-loop
+      const res = await nf3Users[0].transfer(
+        false,
+        erc20Address,
+        tokenType,
+        transferValue,
+        tokenId,
+        nf3Users[1].zkpKeys.compressedPkd,
+        fee,
+      );
+      expectTransaction(res);
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
+    // stateBalance += fee * txPerBlock + BLOCK_STAKE;
+    eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+    // transfer to self address to avoid race conditions issue
+    for (let i = 0; i < txPerBlock; i++) {
+      // eslint-disable-next-line no-await-in-loop
+      const res = await nf3Users[0].transfer(
+        false,
+        erc20Address,
+        tokenType,
+        transferValue,
+        tokenId,
+        nf3Users[0].zkpKeys.compressedPkd,
+        fee,
+      );
+      expectTransaction(res);
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
+    // stateBalance += fee * txPerBlock + BLOCK_STAKE;
+    eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+    await new Promise(resolve => setTimeout(resolve, 10000));
+
+    await getBalances();
+
+    expect(balances[0] - beforeBalances[0]).to.be.equal(-txPerBlock * transferValue);
+    expect(balances[1] - beforeBalances[1]).to.be.equal(txPerBlock * transferValue);
   });
+
+  it.skip('should transfer some ERC20 crypto (back to us) using ZKP', async function () {
+    for (let i = 0; i < txPerBlock; i++) {
+      // eslint-disable-next-line no-await-in-loop
+      const res = await nf3Users[0].transfer(
+        false,
+        erc20Address,
+        tokenType,
+        transferValue,
+        tokenId,
+        nf3Users[0].zkpKeys.compressedPkd,
+        fee,
+      );
+      expectTransaction(res);
+      if (process.env.GAS_COSTS) console.log(`     Gas used was ${Number(res.gasUsed)}`);
+    }
+    // stateBalance += fee * txPerBlock + BLOCK_STAKE;
+    eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+  });
+
+  it.skip('should send a single ERC20 transfer directly to a proposer - offchain and a receiver different from the sender should successfully receive that transfer', async function () {
+    const res = await nf3Users[0].transfer(
+      true,
+      erc20Address,
+      tokenType,
+      transferValue,
+      tokenId,
+      nf3Users[1].zkpKeys.compressedPkd,
+      fee,
+    );
+    expect(res).to.be.equal(200);
+    // stateBalance += fee;
+    await depositNTransactions(
+      nf3Users[0],
+      txPerBlock,
+      erc20Address,
+      tokenType,
+      transferValue,
+      tokenId,
+      fee,
+    );
+    // stateBalance += fee * txPerBlock + BLOCK_STAKE;
+    eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+  });
+
+  it('should withdraw some ERC20 crypto from a ZKP commitment', async function () {
+    const beforeBalance = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance;
+    const rec = await nf3Users[0].withdraw(
+      false,
+      erc20Address,
+      tokenType,
+      transferValue,
+      tokenId,
+      nf3Users[0].ethereumAddress,
+    );
+    expectTransaction(rec);
+    if (process.env.GAS_COSTS) console.log(`     Gas used was ${Number(rec.gasUsed)}`);
+
+    await depositNTransactions(
+      nf3Users[0],
+      txPerBlock - 1,
+      erc20Address,
+      tokenType,
+      transferValue,
+      tokenId,
+      fee,
+    );
+
+    eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+    const afterBalance = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance;
+    expect(afterBalance).to.be.lessThan(beforeBalance);
+  });
+
   after(async () => {
     await nf3Proposer1.deregisterProposer();
     await nf3Proposer1.close();
-    await nf3User1.close();
+    await nf3Users[0].close();
+    await nf3Users[1].close();
     await web3Client.closeWeb3();
   });
 });

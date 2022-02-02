@@ -227,7 +227,7 @@ class Nf3 {
   */
   async getContractAddress(contractName) {
     const res = await axios.get(`${this.clientBaseUrl}/contract-address/${contractName}`);
-    return res.data.address;
+    return res.data.address.toLowerCase();
   }
 
   /**
@@ -708,33 +708,12 @@ class Nf3 {
   @method
   @async
   @param {Array} ercList - list of erc contract addresses to filter.
-  @param {Boolean} filterByCompressedPkd - flag to indicate if request is filtered 
-  ones compressed pkd
   @returns {Promise} This promise resolves into an object whose properties are the
   addresses of the ERC contracts of the tokens held by this account in Layer 2. The
   value of each propery is the number of tokens originating from that contract.
   */
-  async getLayer2Balances(ercList, filterByCompressedPkd) {
+  async getLayer2Balances({ ercList } = {}) {
     const res = await axios.get(`${this.clientBaseUrl}/commitment/balance`, {
-      params: {
-        compressedPkd: filterByCompressedPkd === true ? this.zkpKeys.compressedPkd : null,
-        ercList,
-      },
-    });
-    return res.data.balance;
-  }
-
-  /**
-  Returns the balance details of tokens held in layer 2
-  @method
-  @async
-  @param {Array} ercList - list of erc contract addresses to filter.
-  @returns {Promise} This promise resolves into an object whose properties are the
-  addresses of the ERC contracts of the tokens held by this account in Layer 2. The
-  value of each propery is the number of tokens originating from that contract.
-  */
-  async getLayer2BalancesDetails(ercList) {
-    const res = await axios.get(`${this.clientBaseUrl}/commitment/balance-details`, {
       params: {
         compressedPkd: this.zkpKeys.compressedPkd,
         ercList,

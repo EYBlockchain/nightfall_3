@@ -40,9 +40,12 @@ describe('Basic Proposer tests', () => {
     // Proposer listening for incoming events
     const newGasBlockEmitter = await testProposers[0].startProposer();
     newGasBlockEmitter.on('gascost', async gasUsed => {
-      console.log(
-        `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
-      );
+      if (process.env.GAS_COSTS)
+        console.log(
+          `Block proposal gas cost was ${gasUsed}, cost per transaction was ${
+            gasUsed / txPerBlock
+          }`,
+        );
     });
     await testProposers[0].addPeer(environment.optimistApiUrl);
   });

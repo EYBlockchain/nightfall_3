@@ -50,9 +50,10 @@ describe('Testing the http API', () => {
     const newGasBlockEmitter = await nf3Proposer1.startProposer();
     newGasBlockEmitter.on('gascost', async gasUsed => {
       currentGasCostPerTx = gasUsed / TRANSACTIONS_PER_BLOCK;
-      console.log(
-        `Block proposal gas cost was ${gasUsed}, cost per transaction was ${currentGasCostPerTx}`,
-      );
+      if (process.env.GAS_COSTS)
+        console.log(
+          `Block proposal gas cost was ${gasUsed}, cost per transaction was ${currentGasCostPerTx}`,
+        );
       eventLogs.push('gascost');
     });
   });
