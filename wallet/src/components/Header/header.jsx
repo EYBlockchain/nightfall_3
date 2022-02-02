@@ -1,16 +1,17 @@
 import React from 'react';
 import { useMediaQuery } from 'react-responsive';
 import { CgMenu } from 'react-icons/cg';
-import styles from '../../styles/header/navHeader.module.scss';
 import Logo from './logo.jsx';
 import NavItems from './navItems.jsx';
 
+import './header.scss';
+
 export default function Header() {
-  const isSmallScreen = useMediaQuery({ query: '(max-width: 900px)' });
+  const isSmallScreen = useMediaQuery({ query: '(max-width: 768px)' });
 
   if (!isSmallScreen) {
     return (
-      <div className={styles.navHead}>
+      <div className="navHead">
         <Logo />
         <NavItems />
 
@@ -19,7 +20,7 @@ export default function Header() {
     );
   }
   return (
-    <div className={styles.navHead}>
+    <div className="navHead">
       <CgMenu />
       <Logo />
       <NavItems />
