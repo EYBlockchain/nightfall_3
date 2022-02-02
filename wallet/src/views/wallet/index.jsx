@@ -142,7 +142,7 @@ function WalletModal(props) {
             typeof state.nf3 === 'undefined' || typeof state.nf3.ethereumAddress === 'undefined'
           }
         >
-          Create Wallet 
+          Create Wallet
         </Button>
       </Modal.Footer>
     </Modal>
@@ -276,22 +276,21 @@ export default function Wallet() {
 
   return (
     <>
-    <Header />
-    <div className="wallet">
-      
-      <div className="walletComponents">
-        <div className="walletComponents__left">
-          <SideBar />
-        </div>        
-        <div className="walletComponents__right">
-          <Assets tokenList={tokens} />
-          <Tokens tokenList={tokens} />
+      <Header />
+      <div className="wallet">
+        <div className="walletComponents">
+          <div className="walletComponents__left">
+            <SideBar />
+          </div>
+          <div className="walletComponents__right">
+            <Assets tokenList={tokens} />
+            <Tokens tokenList={tokens} />
+          </div>
+        </div>
+        <div>
+          <WalletModal show={modalShow} onHide={() => setModalShow(false)} />
         </div>
       </div>
-      <div>
-          <WalletModal show={modalShow} onHide={() => setModalShow(false)} />
-      </div>
-    </div>
     </>
   );
 }
