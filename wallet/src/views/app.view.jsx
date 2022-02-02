@@ -13,7 +13,7 @@ import Doubletransfer from './zokrates/doubletransfer.view.jsx';
 
 import { NF3_GITHUB_ISSUES_URL } from '../constants';
 import * as loginActions from '../store/login/login.actions';
-import MainPage from './initialPage.jsx';
+import MainPage from './initialPage/index.jsx';
 import Wallet from './wallet/index.jsx';
 import Bridge from './bridge/index.jsx';
 import { UserProvider } from '../hooks/User/index.jsx';
