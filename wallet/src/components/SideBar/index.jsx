@@ -3,6 +3,7 @@ import React from 'react';
 import { GiElectric } from 'react-icons/gi';
 import { RiWallet3Line } from 'react-icons/ri';
 import { MdOutlineSupport } from 'react-icons/md';
+import { useMediaQuery } from 'react-responsive';
 import TransactionImg from '../../assets/svg/transactions-side.svg';
 import TransactionImgGrey from '../../assets/svg/transactions-side-grey.svg';
 import WalletImg from '../../assets/svg/wallet-side.svg';
@@ -12,12 +13,11 @@ import BridgeImgGrey from '../../assets/svg/bridge-side-grey.svg';
 import SideItem from './sideItem.jsx';
 
 import './index.scss';
-import { useMediaQuery } from 'react-responsive';
 
 export default function SideBar() {
   const isSmallScreen = useMediaQuery({ query: '(min-width: 768px)' });
-  
-  if(isSmallScreen) {
+
+  if (isSmallScreen) {
     return (
       <div className="sideBar">
         <div className="sideItems">
@@ -34,8 +34,7 @@ export default function SideBar() {
             Icon={[TransactionImg, TransactionImgGrey]}
           />
         </div>
-        <div          
-        >
+        <div>
           <div className="links">
             <GiElectric size={24} />
             <div className="linkText">{"What's new?"}</div>
@@ -51,10 +50,6 @@ export default function SideBar() {
         </div>
       </div>
     );
-  }else{
-    return(
-      <div></div>
-    )
-  }  
-  
+  }
+  return <div></div>;
 }

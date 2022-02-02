@@ -33,7 +33,7 @@ const cardsData = [
     imageName: 'poly-wallet',
     title: 'Polygon Nightfall Wallet',
     desc: 'Privately send and receive crypto assets on Ethereum',
-    route: 'walletNF3',    
+    route: 'walletNF3',
   },
   {
     imageName: 'poly-staking',
