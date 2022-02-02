@@ -4,15 +4,14 @@ import Timber from 'common-files/classes/timber.mjs';
 import {
   markNullifiedOnChain,
   markOnChain,
-  storeCommitment,
   countCommitments,
   setSiblingInfo,
   countTransactionHashes,
 } from '../services/commitment-storage.mjs';
 import getProposeBlockCalldata from '../services/process-calldata.mjs';
-import Secrets from '../classes/secrets.mjs';
 import { ivks, nsks } from '../services/keys.mjs';
 import { getLatestTree, saveTree, saveTransaction, saveBlock } from '../services/database.mjs';
+import { decryptCommitment } from '../services/commitment-sync.mjs';
 
 const { ZERO } = config;
 
@@ -36,33 +35,11 @@ async function blockProposedEventHandler(data) {
     // filter out non zero commitments and nullifiers
     const nonZeroCommitments = transaction.commitments.flat().filter(n => n !== ZERO);
     const nonZeroNullifiers = transaction.nullifiers.flat().filter(n => n !== ZERO);
-    const storeCommitments = [];
     if (
       (transaction.transactionType === '1' || transaction.transactionType === '2') &&
       (await countCommitments(nonZeroCommitments)) === 0
-    ) {
-      ivks.forEach((key, i) => {
-        // decompress the secrets first and then we will decryp t the secrets from this
-        const decompressedSecrets = Secrets.decompressSecrets(transaction.compressedSecrets);
-        try {
-          const commitment = Secrets.decryptSecrets(
-            decompressedSecrets,
-            key,
-            nonZeroCommitments[0],
-          );
-          if (Object.keys(commitment).length === 0)
-            logger.info("This encrypted message isn't for this recipient");
-          else {
-            // console.log('PUSHED', commitment, 'nsks', nsks[i]);
-            storeCommitments.push(storeCommitment(commitment, nsks[i]));
-          }
-        } catch (err) {
-          logger.info(err);
-          logger.info("This encrypted message isn't for this recipient");
-        }
-      });
-    }
-    await Promise.all(storeCommitments);
+    )
+      await decryptCommitment(transaction, ivks, nsks);
     return Promise.all([
       markOnChain(nonZeroCommitments, block.blockNumberL2, data.blockNumber, data.transactionHash),
       markNullifiedOnChain(

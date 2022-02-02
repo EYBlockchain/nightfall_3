@@ -177,6 +177,16 @@ export async function saveTransaction(_transaction) {
 }
 
 /*
+To get all transactions in the collection. This can be used
+to decrypt commitments when new ivk is received.
+*/
+export async function getAllTransactions() {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(TRANSACTIONS_COLLECTION).find().toArray();
+}
+
+/*
 For added safety we only delete mempool: true, we should never be deleting
 transactions from our local db that have been spent.
 */
