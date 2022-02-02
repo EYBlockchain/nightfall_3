@@ -1,0 +1,32 @@
+service: nightfall-publisher
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  region: eu-west-1
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - 'iot:DescribeEndpoint'
+      Resource: "*"
+    - Effect: "Allow"
+      Action:
+        - 'sts:AssumeRole'
+      Resource: "*"
+
+functions:
+  auth:
+    handler: handler.auth
+    events:
+      - http: GET iot/keys
+    memorySize: 128
+    timeout: 10
+
+package:
+  exclude:
+    - .git/**
+    - create-role/**
+    - frontend/**
+    - iot/**
+    - LICENSE
+    - README.md
