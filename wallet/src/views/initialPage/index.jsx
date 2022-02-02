@@ -1,10 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-import polyBridge from '../static/img/homepage/poly-bridge.png';
-import polyStaking from '../static/img/homepage/poly-staking.png';
-import polyWallet from '../static/img/homepage/poly-wallet.png';
-import polyWidgetDashboard from '../static/img/homepage/poly-widget-dashboard.png';
+import polyBridge from '../../static/img/homepage/poly-bridge.png';
+import polyStaking from '../../static/img/homepage/poly-staking.png';
+import polyWallet from '../../static/img/homepage/poly-wallet.png';
+import polyWidgetDashboard from '../../static/img/homepage/poly-widget-dashboard.png';
 
 import './initial.scss';
 
@@ -33,8 +33,7 @@ const cardsData = [
     imageName: 'poly-wallet',
     title: 'Polygon Nightfall Wallet',
     desc: 'Privately send and receive crypto assets on Ethereum',
-    route: 'walletNF3',
-    tag: 'Live on ETHEREUM chain',
+    route: 'walletNF3',    
   },
   {
     imageName: 'poly-staking',
