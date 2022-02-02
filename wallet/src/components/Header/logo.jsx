@@ -1,15 +1,16 @@
 import React from 'react';
 import logo from '../../assets/img/polygonLogo.png';
-import styles from '../../styles/header/logo.module.scss';
+
+import './logo.scss';
 
 export default function Logo() {
   return (
-    <div className={styles.container}>
-      <div className={styles.boxLogo}>
+    <div className="container">
+      <div className="boxLogo">
         <img src={logo} />
       </div>
-      <div className={styles.logoText}>
-        <div className={styles.logoTitle}>nightfall</div>
+      <div className="logoText">
+        <div className="logoTitle">nightfall</div>
         <span>Wallet</span>
       </div>
     </div>
