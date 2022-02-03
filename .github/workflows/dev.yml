@@ -114,7 +114,7 @@ jobs:
           SSH_HOST: ohio.nightfall3.com
       - name: Copy files
         run: |
-          scp dev.env pull-images.sh docker-compose.beta.yml dev
+          scp dev.env pull-images.sh docker-compose.beta.yml dev:~/
           ssh dev 'mv dev.env .env'
           ssh dev 'mv docker-compose.beta.yml docker-compose.yml'
       - name: Login to docker registry
