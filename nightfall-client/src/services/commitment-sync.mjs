@@ -45,15 +45,13 @@ from commitments collection and decrypts commitments belonging to the new ivk(s)
 */
 export async function clientCommitmentSync(ivk, nsk) {
   const transactions = await getAllTransactions();
-  if (typeof transactions !== 'undefined') {
-    for (let i = 0; i < transactions.length; i++) {
-      // filter out non zero commitments and nullifiers
-      const nonZeroCommitments = transactions[i].commitments.flat().filter(n => n !== ZERO);
-      if (
-        (transactions[i].transactionType === '1' || transactions[i].transactionType === '2') &&
-        countCommitments(nonZeroCommitments) === 0
-      )
-        decryptCommitment(transactions[i], ivk, nsk);
-    }
+  for (let i = 0; i < transactions.length; i++) {
+    // filter out non zero commitments and nullifiers
+    const nonZeroCommitments = transactions[i].commitments.flat().filter(n => n !== ZERO);
+    if (
+      (transactions[i].transactionType === '1' || transactions[i].transactionType === '2') &&
+      countCommitments(nonZeroCommitments) === 0
+    )
+      decryptCommitment(transactions[i], ivk, nsk);
   }
 }
