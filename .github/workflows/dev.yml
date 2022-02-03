@@ -114,16 +114,16 @@ jobs:
           SSH_HOST: ohio.nightfall3.com
       - name: Copy files
         run: |
-          scp dev.env pull-images.sh docker-compose.beta.yml dev:~/
+          scp dev.env pull-images.sh docker-compose.beta.yml await-deployer.sh dev:~/
           ssh dev 'mv dev.env .env'
           ssh dev 'mv docker-compose.beta.yml docker-compose.yml'
       - name: Login to docker registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $DOCKER_ACTOR --password-stdin
       - name: Pull docker images
-        run: ssh dev './pull-images'
+        run: ssh dev './pull-images.sh'
       - name: Run up nightfall
         run: ssh 'docker-compose up -d deployer optimist'
       - name: Run up applications
         run: |
-          ssh dev 'await-deployer'
+          ssh dev './await-deployer.sh'
           ssh dev 'docker-compose up -d proposer'
