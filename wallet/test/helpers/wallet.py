@@ -189,7 +189,7 @@ def submitTxNewWallet(txParams, findElements, driver, metamaskTab, nightfallTab,
     return
 
   findElements.element_exist_xpath('//button[text()="Transfer"]').click() # Submit
-  sleep(2)
+
   # Confirm Amount and transfer method
   tokenAmount = findElements.element_exist_xpath('//*[@id="Bridge_modal_tokenAmount"]').text
   transferMode = findElements.element_exist_xpath('//*[@id="Bridge_modal_transferMode"]').text
@@ -208,10 +208,14 @@ def submitTxNewWallet(txParams, findElements, driver, metamaskTab, nightfallTab,
 
   findElements.element_exist_xpath('//*[@id="Bridge_modal_continueTransferButton"]').click() # Continue
   sleep(2)
+  driver.switch_to.window(metamaskTab)
+  ret = signTransactionMetamask(driver, findElements, stop=0) # sign transaction
+  driver.switch_to.window(nightfallTab)
 
   findElements.element_exist_xpath('//button[contains(@class,"btn-close")]').click() # Close
   sleep(1)
   findElements.element_exist_xpath('//*[@id="Nightfall Assets"]').click() # Cancel
+  return ret
 
 def tokenRefresh(txParams,findElements):
     findElements.element_exist_xpath('//*[@title="' + txParams['tokenAddress'] + '"]').click() # Select token
