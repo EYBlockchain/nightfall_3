@@ -1,10 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import Modal from 'react-bootstrap/Modal';
-import jsSha3 from 'js-sha3';
 import PropTypes from 'prop-types';
 import Button from 'react-bootstrap/Button';
 import { generateMnemonic } from 'bip39';
-import * as Nf3 from 'nf3';
 import InputGroup from 'react-bootstrap/InputGroup';
 import FormControl from 'react-bootstrap/FormControl';
 import Container from 'react-bootstrap/Container';
@@ -15,11 +13,7 @@ import Header from '../../components/Header/header.jsx';
 import SideBar from '../../components/SideBar/index.jsx';
 import Tokens from '../../components/Tokens/index.jsx';
 import { getWalletBalance } from '../../nightfall-browser/services/commitment-storage.js';
-import * as Storage from '../../utils/lib/local-storage';
-import { METAMASK_MESSAGE, DEFAULT_NF_ADDRESS_INDEX } from '../../constants.js';
 import { UserContext } from '../../hooks/User/index.jsx';
-import { generateKeys } from '../../nightfall-browser/services/keys.js';
-import blockProposedEventHandler from '../../nightfall-browser/event-handlers/block-proposed.js';
 
 import './wallet.scss';
 
@@ -78,8 +72,8 @@ This is a modal to detect if a wallet (mnemonic and passphrase) has been initial
 */
 
 function WalletModal(props) {
-  const [state, setState] = React.useContext(UserContext);
-  const [screenMnemonic, setScreenMnemonic] = React.useState();
+  const [, , configureMnemonic] = useContext(UserContext);
+  const [screenMnemonic, setScreenMnemonic] = useState();
   return (
     <Modal {...props} size="lg" aria-labelledby="contained-modal-title-vcenter" centered>
       <Modal.Header closeButton>
@@ -121,24 +115,10 @@ function WalletModal(props) {
       <Modal.Footer>
         <Button
           onClick={async () => {
-            const signature = await state.nf3.signMessage(
-              METAMASK_MESSAGE,
-              state.nf3.ethereumAddress,
-            );
-            const hashedSignature = jsSha3.keccak256(signature);
-            Storage.mnemonicSet(state.nf3.ethereumAddress, screenMnemonic, hashedSignature);
-            setState({
-              nf3: state.nf3,
-              mnemonic: screenMnemonic,
-              walletInitialised: true,
-              socket: state.socket,
-              zkpKeys: state.zkpKeys,
-            });
+            await configureMnemonic(screenMnemonic);
             props.onHide();
           }}
-          disabled={
-            typeof state.nf3 === 'undefined' || typeof state.nf3.ethereumAddress === 'undefined'
-          }
+          disabled={typeof screenMnemonic === 'undefined'}
         >
           Create Wallet
         </Button>
@@ -151,126 +131,43 @@ export default function Wallet() {
   const [tokens, setTokens] = useState(
     initialTokenState.sort((a, b) => Number(a.order) - Number(b.order)),
   );
-  const [state, setState] = React.useContext(UserContext);
-  const [modalShow, setModalShow] = React.useState(false);
+  const [state] = useContext(UserContext);
+  const [modalShow, setModalShow] = useState(false);
 
   useEffect(() => {
-    async function setupNF3() {
-      if (!state.nf3) {
-        const nf3Env = Nf3.Environment.getCurrentEnvironment().currentEnvironment;
-        const nf3 = await new Nf3.Nf3(nf3Env.web3WsUrl, '', nf3Env);
-        await nf3.init();
-        Nf3.Environment.setContractAddresses(nf3);
-        setState({
-          zkpKeys: state.zkpKeys,
-          walletInitialised: state.walletInitialised,
-          mnemonic: state.mnemonic,
-          socket: state.socket,
-          nf3,
-        });
-      }
-    }
-    setupNF3();
+    if (typeof state.mnemonic === 'undefined') setModalShow(true);
   }, []);
 
-  useEffect(() => {
-    async function checkWalletExists() {
-      if (state.nf3) {
-        const mnemonicExists = Storage.mnemonicGet(state.nf3.ethereumAddress);
-        if (mnemonicExists) state.walletInitialised = true;
-        if (state.walletInitialised) {
-          if (typeof state.mnemonic !== 'undefined') {
-            const zkpKeys = await generateKeys(
-              state.mnemonic,
-              `m/44'/60'/0'/${DEFAULT_NF_ADDRESS_INDEX.toString()}`,
-            );
-            state.zkpKeys = zkpKeys;
-          } else {
-            const signature = await state.nf3.signMessage(
-              METAMASK_MESSAGE,
-              state.nf3.ethereumAddress,
-            );
-            const passphrase = jsSha3.keccak256(signature);
-            state.mnemonic = Storage.mnemonicGet(state.nf3.ethereumAddress, passphrase);
-            const zkpKeys = await generateKeys(
-              state.mnemonic,
-              `m/44'/60'/0'/${DEFAULT_NF_ADDRESS_INDEX.toString()}`,
-            );
-            state.zkpKeys = zkpKeys;
+  useEffect(async () => {
+    console.log('in getBalance');
+    const l2Balance = await getWalletBalance();
+    if (
+      Object.keys(l2Balance).length !== 0 &&
+      Object.prototype.hasOwnProperty.call(state, 'zkpKeys')
+    ) {
+      // eslint-disable-next-line consistent-return, array-callback-return
+      const updatedState = Object.keys(tokenMapping).map(t => {
+        if (Object.keys(l2Balance).includes(state.zkpKeys.compressedPkd)) {
+          const token = l2Balance[state.zkpKeys.compressedPkd][t];
+          const tokenInfo = tokenMapping[t];
+          if (token) {
+            const { maticChainBalance, ...rest } = tokenInfo;
+            return {
+              maticChainBalance: token.toString(),
+              ...rest,
+            };
           }
-          setState({
-            zkpKeys: state.zkpKeys,
-            walletInitialised: state.walletInitialised,
-            nf3: state.nf3,
-            mnemonic: state.mnemonic,
-            socket: state.socket,
-          });
-        } else setModalShow(true);
-      } else console.log('NF3 is not setup');
-    }
-    checkWalletExists();
-  }, [state.mnemonic, state.nf3]);
-
-  useEffect(() => {
-    if (typeof state.socket === 'undefined' && typeof state.zkpKeys !== 'undefined') {
-      const socket = new WebSocket('ws://localhost:8082');
-      // Connection opened
-      socket.addEventListener('open', function () {
-        console.log(`Websocket is open`);
-        socket.send('proposedBlock');
+        }
       });
-
-      // Listen for messages
-      socket.addEventListener('message', async function (event) {
-        console.log('Message from server ', event.data);
-        await blockProposedEventHandler(
-          JSON.parse(event.data),
-          state.zkpKeys.ivk,
-          state.zkpKeys.nsk,
-        );
+      if (typeof updatedState[0] === 'undefined') return;
+      const newState = initialTokenState.map(i => {
+        const s = updatedState.find(u => i.symbol === u.symbol);
+        if (s) return s;
+        return i;
       });
-      setState({
-        zkpKeys: state.zkpKeys,
-        walletInitialised: state.walletInitialised,
-        nf3: state.nf3,
-        mnemonic: state.mnemonic,
-        socket,
-      });
+      setTokens(newState.sort((a, b) => Number(a.order) - Number(b.order)));
     }
-  });
-
-  useEffect(() => {
-    async function getL2Balance() {
-      const l2Balance = await getWalletBalance();
-      if (
-        Object.keys(l2Balance).length !== 0 &&
-        Object.prototype.hasOwnProperty.call(state, 'zkpKeys')
-      ) {
-        // eslint-disable-next-line consistent-return, array-callback-return
-        const updatedState = Object.keys(tokenMapping).map(t => {
-          if (Object.keys(l2Balance).includes(state.zkpKeys.compressedPkd)) {
-            const token = l2Balance[state.zkpKeys.compressedPkd][t];
-            const tokenInfo = tokenMapping[t];
-            if (token) {
-              const { maticChainBalance, ...rest } = tokenInfo;
-              return {
-                maticChainBalance: token.toString(),
-                ...rest,
-              };
-            }
-          }
-        });
-        if (typeof updatedState[0] === 'undefined') return;
-        const newState = initialTokenState.map(i => {
-          const s = updatedState.find(u => i.symbol === u.symbol);
-          if (s) return s;
-          return i;
-        });
-        setTokens(newState.sort((a, b) => Number(a.order) - Number(b.order)));
-      }
-    }
-    getL2Balance();
-  }, [state.zkpKeys]);
+  }, []);
 
   return (
     <>
