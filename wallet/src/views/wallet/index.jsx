@@ -15,12 +15,13 @@ import Header from '../../components/Header/header.jsx';
 import SideBar from '../../components/SideBar/index.jsx';
 import Tokens from '../../components/Tokens/index.jsx';
 import { getWalletBalance } from '../../nightfall-browser/services/commitment-storage.js';
-import styles from '../../styles/wallet.module.scss';
 import * as Storage from '../../utils/lib/local-storage';
 import { METAMASK_MESSAGE, DEFAULT_NF_ADDRESS_INDEX } from '../../constants.js';
 import { UserContext } from '../../hooks/User/index.jsx';
 import { generateKeys } from '../../nightfall-browser/services/keys.js';
 import blockProposedEventHandler from '../../nightfall-browser/event-handlers/block-proposed.js';
+
+import './wallet.scss';
 
 /*
 These are some default values for now
@@ -274,21 +275,23 @@ export default function Wallet() {
   }, [state.zkpKeys]);
 
   return (
-    <div className={styles.wallet}>
+    <>
       <Header />
-      <div className={styles.walletComponents}>
-        <div className={styles.walletComponents__left}>
-          <SideBar />
+      <div className="wallet">
+        <div className="walletComponents">
+          <div className="walletComponents__left">
+            <SideBar />
+          </div>
+          <div className="walletComponents__right">
+            <Assets tokenList={tokens} />
+            <Tokens tokenList={tokens} />
+          </div>
         </div>
         <div>
           <WalletModal show={modalShow} onHide={() => setModalShow(false)} />
         </div>
-        <div className={styles.walletComponents__right}>
-          <Assets tokenList={tokens} />
-          <Tokens tokenList={tokens} />
-        </div>
       </div>
-    </div>
+    </>
   );
 }
 
