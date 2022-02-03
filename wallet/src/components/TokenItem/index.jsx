@@ -51,6 +51,12 @@ export default function TokenItem({
     );
     return state.nf3.submitTransaction(rawTransaction, state.nf3.shieldContractAddress, 1);
   }
+  const tokenNameId = `TokenItem_tokenName${symbol}`;
+  const tokenBalanceId = `TokenItem_tokenBalance${symbol}`;
+  const tokenBalanceUsdId = `TokenItem_tokenBalanceUsd${symbol}`;
+  const tokenDepositId = `TokenItem_tokenDeposit${symbol}`;
+  const tokenWithdrawId = `TokenItem_tokenWithdraw${symbol}`;
+  const tokenSendId = `TokenItem_tokenSend${symbol}`;
   return (
     <div>
       {/* <div class="matic-tokens-list-item" @click="onTokenClick"> */}
@@ -64,7 +70,9 @@ export default function TokenItem({
           <div className={styles.tokenNameDetails}>
             <div className={styles.tokenNameUpperSection}>
               {/* <div class="token-symbol header-h6"> */}
-              <div className={styles.headerH6}>{symbol}</div>
+              <div className={styles.headerH6} id={tokenNameId}>
+                {symbol}
+              </div>
               {/* styles.mobileView See how to do it */}
               <div v-if="!token.isPoS" className={styles.plasmaTag}>
                 plasma
@@ -78,7 +86,7 @@ export default function TokenItem({
           </div>
           <div className={styles.balancesDetails}>
             <div className={styles.balancesWrapper}>
-              <div className={styles.balancesDetailsUpperSection}>
+              <div className={styles.balancesDetailsUpperSection} id={tokenBalanceId}>
                 {/* {{ token.getMaticChainBalance | fixed(4) }} */}
                 {Number(maticChainBalance).toFixed(4)}
               </div>
@@ -96,8 +104,11 @@ export default function TokenItem({
                             </v-popover> */}
               <div className={styles.balancesDetailsLowerSection}>
                 {/* {{ token.maticChainUsdBalance | fixed(2) | dollarSymbol }} */}
-                <span className={styles.seperatingDot}> • </span>$
-                {(Number(maticChainUsdBalance) * Number(maticChainBalance)).toFixed(2)}
+                <span className={styles.seperatingDot} id={tokenBalanceUsdId}>
+                  {' '}
+                  •{' '}
+                </span>
+                ${(Number(maticChainUsdBalance) * Number(maticChainBalance)).toFixed(2)}
               </div>
             </div>
           </div>
@@ -117,6 +128,7 @@ export default function TokenItem({
                 },
               }}
               className={styles.tokenListButton}
+              id={tokenDepositId}
             >
               Deposit
             </Link>
@@ -135,12 +147,14 @@ export default function TokenItem({
                 },
               }}
               className={styles.tokenListButton}
+              id={tokenWithdrawId}
             >
               Withdraw
             </Link>
             {/* onClick="handleSendToken" */}
             <button
               className={styles.tokenListButton}
+              id={tokenSendId}
               onClick={() => {
                 setShowSendModal(true);
               }}
@@ -177,7 +191,11 @@ export default function TokenItem({
           <div className={stylesModal.modalBody}>
             <div className={stylesModal.sendModal}>
               <div>
-                <input type="text" placeholder={state?.zkpKeys?.compressedPkd} />
+                <input
+                  type="text"
+                  placeholder={state?.zkpKeys?.compressedPkd}
+                  id="TokenItem_modalSend_compressedPkd"
+                />
                 <p>Enter a valid address existing on the Polygon Nightfall L2</p>
               </div>
               <div className={stylesModal.sendModalBalance}>
@@ -186,10 +204,11 @@ export default function TokenItem({
                     type="text"
                     placeholder="0.00"
                     onChange={e => setTransferValue(e.target.value)}
+                    id="TokenItem_modalSend_tokenAmount"
                   />
                   <div className={stylesModal.maxButton}>MAX</div>
                 </div>
-                <div className={stylesModal.rightItems}>
+                <div className={stylesModal.rightItems} id="TokenItem_modalSend_tokenName">
                   <img src={maticImg} />
                   <div>Matic (L2)</div>
                   <AiOutlineDown />

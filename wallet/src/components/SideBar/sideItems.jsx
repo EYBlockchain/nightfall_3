@@ -17,7 +17,9 @@ export default function SideItem({ text, link, Icon, SideState }) {
       <div className={window.location.pathname !== link ? styles.itemInactive : styles.itemActive}>
         {/* <Icon size={24} /> */}
         <img src={window.location.pathname !== link ? Icon[1] : Icon[0]} />
-        <div className={styles.itemText}>{text}</div>
+        <div className={styles.itemText} id={text}>
+          {text}
+        </div>
       </div>
     </Link>
   );
