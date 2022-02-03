@@ -14,6 +14,5 @@ class newTokenTest(walletTest):
   def __init__(self, findElementsInstance, driver, metamaskTab, nightfallTab):
     super(newTokenTest, self).__init__(findElementsInstance, driver, metamaskTab, nightfallTab, newTokenTestsList)
 
-
 newTokenTestsList = [
 ]

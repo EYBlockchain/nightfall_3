@@ -153,4 +153,5 @@ if not skipTest:
     else:
       newTxTest(findElementsInstance, driver, metamaskTab, nightfallTab)
 
-driver.quit()
+if driver is not None:
+  driver.quit()

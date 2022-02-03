@@ -248,7 +248,10 @@ export default function Bridge() {
                             width="24"
                           />
 
-                          <div className={styles.tokenDetails__tokenName}>
+                          <div
+                            className={styles.tokenDetails__tokenName}
+                            id="Bridge_tokenDetails_tokenName"
+                          >
                             {/* {{ isDepositEther ? isDepositEther : selectedToken.name }} */}
                             MATIC
                           </div>
@@ -263,6 +266,7 @@ export default function Bridge() {
                         <div className={styles.amountDetails}>
                           <input
                             className={styles.amountDetails__textfield}
+                            id="Bridge_amountDetails_tokenAmount"
                             type="text"
                             placeholder="0.00"
                             value={tokenAmountWei}
@@ -449,7 +453,10 @@ export default function Bridge() {
                                   >{{ selectedToken.symbol[0] }}</span> */}
                         </div>
                         {/* font-heading-large font-bold ps-t-16 ps-b-6 */}
-                        <div className={stylesModal.tokenDetails__val}>
+                        <div
+                          className={stylesModal.tokenDetails__val}
+                          id="Bridge_modal_tokenAmount"
+                        >
                           {Number(tokenAmountWei).toFixed(2)}
                         </div>
                         {/* font-body-small */}
@@ -479,7 +486,11 @@ export default function Bridge() {
                             Transfer Mode
                           </div>
                           <div className={stylesModal.transferModeModal__title__light}>
-                            <DropdownButton variant="light" title={transferMethod}>
+                            <DropdownButton
+                              variant="light"
+                              title={transferMethod}
+                              id="Bridge_modal_transferMode"
+                            >
                               <Dropdown.Item onClick={() => setMethod('On-Chain')}>
                                 On-Chain
                               </Dropdown.Item>
@@ -596,13 +607,14 @@ export default function Bridge() {
                         <div className={styles.spinnerBox}>
                           <img src={successHand} />
                         </div>
-                        <div className={stylesModal.transferModeModal}>
+                        <div className={stylesModal.transferModeModal} id="Bridge_modal_success">
                           <h3>Transaction created sucessfully.</h3>
                           <div className={stylesModal.modalText}>
                             Your transfer is ready to send.
                           </div>
                           <button
                             className={stylesModal.continueTrasferButton}
+                            id="Bridge_modal_continueTransferButton"
                             // onClick={() => triggerTx()}
                             onClick={() => triggerTx()}
                           >
