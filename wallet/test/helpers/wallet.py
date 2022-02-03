@@ -144,6 +144,79 @@ def submitTxWallet(txParams, findElements, driver, metamaskTab, nightfallTab, ca
     driver.switch_to.window(nightfallTab)
     return ret
 
+def submitTxNewWallet(txParams, findElements, driver, metamaskTab, nightfallTab, cancel=0):
+  tokenDepositId = "TokenItem_tokenDeposit" + txParams["tokenName"]
+  tokenWithdrawId = "TokenItem_tokenWithdraw" + txParams["tokenName"]
+  tokenSendId = "TokenItem_tokenSend" + txParams["tokenName"]
+
+  tokenDepositButton = findElements.element_exist_xpath('//*[@id="' +tokenDepositId + '"]')
+  tokenWithdrawButton = findElements.element_exist_xpath('//*[@id="' +tokenWithdrawId + '"]')
+  tokenSendButton = findElements.element_exist_xpath('//*[@id="' +tokenSendId + '"]')
+  transactionButton = None
+
+  if txParams["txType"] == "Deposit":
+    transactionButton = tokenDepositButton
+  elif txParams["txType"] == "Transfer":
+    transactionButton = tokenSendButton
+  elif txParams["txType"] == "Withdraw":
+    transactionButton = tokenWithdrawButton
+  else:
+    raise ValueError("Unexpected transaction type")
+
+  # Ensure correct token is selected
+  driver.execute_script("arguments[0].click();", transactionButton)
+
+  if txParams["txType"] == "Deposit" or txParams["txType"] == "Withdraw":
+    tokenName = findElements.element_exist_xpath('//*[@id="Bridge_tokenDetails_tokenName"]').text
+    if tokenName != txParams["tokenName"]:
+      raise ValueError("Unexpected token name")
+
+    findElements.element_exist_xpath('//*[@id="Bridge_amountDetails_tokenAmount"]').send_keys(txParams['amount']) # Amount
+
+  if txParams["txType"] == "Transfer":
+    compressedPkd = findElements.element_exist_xpath('//*[@id="TokenItem_modalSend_compressedPkd"]').text
+    tokenName = findElements.element_exist_xpath('//*[@id="TokenItem_modalSend_tokenName"]').text
+    if not txParams["tokenName"].lower() in tokenName.lower():
+      raise ValueError("Unexpected token name")
+    findElements.element_exist_xpath('//*[@id="TokenItem_modalSend_tokenAmount"]').send_keys(txParams['amount']) # Amount
+
+  elif txParams["txType"] == "Withdraw" or txParams["txType"] == "Instant-withdraw":
+    findElements.element_exist_xpath('//*[@id="destination address"]').send_keys(txParams['ethereumAddress']) # Ethereum Address
+
+  sleep(2)
+  if cancel == 1:
+    findElements.element_exist_xpath('//*[@id="Nightfall Assets"]').click() # Cancel
+    return
+
+  findElements.element_exist_xpath('//button[text()="Transfer"]').click() # Submit
+
+  # Confirm Amount and transfer method
+  tokenAmount = findElements.element_exist_xpath('//*[@id="Bridge_modal_tokenAmount"]').text
+  transferMode = findElements.element_exist_xpath('//*[@id="Bridge_modal_transferMode"]').text
+  assert(transferMode == txParams["transferMode"])
+  assert(Decimal(tokenAmount) == Decimal(txParams["amount"]))
+  findElements.element_exist_xpath('//button[text()="Create Transaction"]').click() # Submit
+  niter = 0
+  while True:
+    success = findElements.element_exist_xpath('//*[@id="Bridge_modal_success"]')
+    if success :
+      break
+    niter+=1
+    if niter > 10:
+      raise ValueError("Timeout reached")
+    sleep(10)
+
+  findElements.element_exist_xpath('//*[@id="Bridge_modal_continueTransferButton"]').click() # Continue
+  sleep(2)
+  driver.switch_to.window(metamaskTab)
+  ret = signTransactionMetamask(driver, findElements, stop=0) # sign transaction
+  driver.switch_to.window(nightfallTab)
+
+  findElements.element_exist_xpath('//button[contains(@class,"btn-close")]').click() # Close
+  sleep(1)
+  findElements.element_exist_xpath('//*[@id="Nightfall Assets"]').click() # Cancel
+  return ret
+
 def tokenRefresh(txParams,findElements):
     findElements.element_exist_xpath('//*[@title="' + txParams['tokenAddress'] + '"]').click() # Select token
     transactionButtonEn = findElements.element_exist_xpath('//button[text()="Deposit"]') # Transaction
@@ -169,6 +242,20 @@ def getNightfallBalance(findElements, tokenInfo):
     pendingTransferredOut = findElements.element_exist_xpath('//*[@id="' +pendingTransferredOutId + '"]').get_attribute("title")
     try:
       return Decimal(l1Balance), Decimal(l2Balance), Decimal(pendingDeposit), Decimal(pendingTransferredOut)
+    except:
+      niter+=1
+      if niter == 10:
+        raise ValueError("Unexpected balance")
+    sleep(3)
+
+def getNewNightfallBalance(findElements, tokenInfo):
+  niter=0
+  tokenBalanceId = "TokenItem_tokenBalance" + tokenInfo["tokenName"]
+
+  while True:
+    tokenBalance = findElements.element_exist_xpath('//*[@id="' +tokenBalanceId + '"]').text
+    try:
+      return Decimal(tokenBalance)
     except:
       niter+=1
       if niter == 10:
