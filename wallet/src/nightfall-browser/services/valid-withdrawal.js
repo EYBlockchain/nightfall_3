@@ -6,12 +6,18 @@ address.
 */
 import { getContractInstance } from '../../common-files/utils/contract';
 import { Transaction } from '../classes/index';
+import { getBlockByTransactionHash, getTransactionByTransactionHash } from './database';
 import { buildSolidityStruct } from './finalise-withdrawal';
 
 const { SHIELD_CONTRACT_NAME } = global.config;
 
 // eslint-disable-next-line import/prefer-default-export
-export async function isValidWithdrawal({ block, transactions, index }, shieldContractAddress) {
+export async function isValidWithdrawal(transactionHash, shieldContractAddress) {
+  const block = await getBlockByTransactionHash(transactionHash);
+  const transactions = await Promise.all(
+    block.transactionHashes.map(t => getTransactionByTransactionHash(t)),
+  );
+  const index = transactions.findIndex(f => f.transactionHash === transactionHash);
   const shieldContractInstance = await getContractInstance(
     SHIELD_CONTRACT_NAME,
     shieldContractAddress,

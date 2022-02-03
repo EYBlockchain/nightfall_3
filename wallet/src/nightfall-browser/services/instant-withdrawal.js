@@ -10,7 +10,7 @@ import { getTransactionByTransactionHash, getBlockByTransactionHash } from './da
 
 const { SHIELD_CONTRACT_NAME } = global.config;
 
-const setInstantWithdrawl = async ({ transactionHash }, shieldContractAddress) => {
+const setInstantWithdrawl = async (transactionHash, shieldContractAddress) => {
   const block = await getBlockByTransactionHash(transactionHash);
   const transactions = await Promise.all(
     block.transactionHashes.map(t => getTransactionByTransactionHash(t)),

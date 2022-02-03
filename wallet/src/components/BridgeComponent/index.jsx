@@ -4,6 +4,7 @@ import Dropdown from 'react-bootstrap/Dropdown';
 import DropdownButton from 'react-bootstrap/DropdownButton';
 import { MdArrowForwardIos } from 'react-icons/md';
 import { toast } from 'react-toastify';
+import { useLocation } from 'react-router-dom';
 import styles from '../../styles/bridge.module.scss';
 import stylesModal from '../../styles/modal.module.scss';
 import polygonChainImage from '../../assets/img/polygon-chain.svg';
@@ -27,16 +28,27 @@ import { useAccount } from '../../hooks/Account/index.tsx';
 import { getWalletBalance } from '../../nightfall-browser/services/commitment-storage';
 import './toast.css';
 import ERC20 from '../../contract-abis/ERC20.json';
+import tokensList from '../Modals/Bridge/TokensList/tokensList.ts';
 
 const BridgeComponent = () => {
   const [state] = useContext(UserContext);
   const { setAccountInstance, accountInstance } = useAccount();
-  const [token, setToken] = useState(null);
   const [l1Balance, setL1Balance] = useState(0);
   const [l2Balance, setL2Balance] = useState(0);
+  const location = useLocation();
+  console.log(location);
 
-  const initialTx = 'deposit';
+  const initialTx = location?.tokenState?.initialTxType ?? 'deposit';
+  const [initialToken] =
+    tokensList.tokens.findIndex(
+      t => t.address.toLowerCase() === location?.tokenState?.tokenAddress,
+    ) > 0
+      ? tokensList.tokens.filter(
+          t => t.address.toLowerCase() === location?.tokenState?.tokenAddress,
+        )
+      : [null];
 
+  const [token, setToken] = useState(initialToken);
   const [txType, setTxType] = useState(initialTx);
   const [transferMethod, setMethod] = useState('On-Chain');
   const [transferValue, setTransferValue] = useState(0);

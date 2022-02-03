@@ -83,7 +83,7 @@ export const UserProvider = ({ children }) => {
             await acc; // Acc is a promise so we await it before processing the next one;
             return blockProposedEventHandler(curr, [state.zkpKeys.ivk], [state.zkpKeys.nsk]); // TODO Should be array
           }, Promise.resolve());
-      } else if (parsed.type === 'blockProposed') await blockProposedEventHandler(parsed.data, state.zkpKeys.ivk, state.zkpKeys.nsk);
+      } else if (parsed.type === 'blockProposed') await blockProposedEventHandler(parsed.data, [state.zkpKeys.ivk], [state.zkpKeys.nsk]);
       // TODO Rollback Handler
     });
     setState(previousState => {

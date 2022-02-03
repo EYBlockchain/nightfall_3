@@ -685,3 +685,8 @@ export async function findUsableCommitmentsMutex(
     findUsableCommitments(compressedPkd, ercAddress, tokenId, _value, onlyOne),
   );
 }
+
+export async function getAllCommitments() {
+  const db = await connectDB();
+  return db.getAll(COMMITMENTS_COLLECTION);
+}

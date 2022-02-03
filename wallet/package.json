@@ -28,7 +28,6 @@
     "react-redux": "7.2.5",
     "react-responsive": "^9.0.0-beta.6",
     "react-router-dom": "5.3.0",
-    "react-scripts": "4.0.3",
     "react-to-webcomponent": "^1.5.1",
     "react-toastify": "^8.2.0",
     "redux": "4.1.1",
@@ -68,6 +67,7 @@
   "devDependencies": {
     "@craco/craco": "^6.4.2",
     "@synthetixio/synpress": "^1.1.1",
-    "@testing-library/react": "^12.1.2"
+    "@testing-library/react": "^12.1.2",
+    "react-scripts": "4.0.3"
   }
 }

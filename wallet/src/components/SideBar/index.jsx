@@ -13,15 +13,9 @@ import BridgeImgGrey from '../../assets/svg/bridge-side-grey.svg';
 import SideItem from './sideItem.jsx';
 
 import './index.scss';
-import { getContractAddress } from '../../common-files/utils/contract';
 
 export default function SideBar() {
   const isSmallScreen = useMediaQuery({ query: '(min-width: 768px)' });
-  const [tokenAddress, setTokenAddres] = React.useState('');
-  React.useEffect(async () => {
-    const { address } = (await getContractAddress('ERC20Mock')).data; // TODO Temporary while we use ERC20 Mocks.
-    setTokenAddres(address);
-  });
   if (isSmallScreen) {
     return (
       <div className="sideBar">
@@ -31,7 +25,7 @@ export default function SideBar() {
             text={'L2 Bridge'}
             link={'/bridge'}
             Icon={[BridgeImg, BridgeImgGrey]}
-            SideState={tokenAddress}
+            SideState={''}
           />
           <SideItem
             text={'Transactions'}

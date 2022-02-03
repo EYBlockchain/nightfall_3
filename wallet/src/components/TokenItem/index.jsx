@@ -125,7 +125,7 @@ export default function TokenItem({
             <Link
               to={{
                 pathname: '/bridge',
-                state: {
+                tokenState: {
                   tokenAddress,
                   initialTxType: 'deposit',
                 },
@@ -144,7 +144,7 @@ export default function TokenItem({
             <Link
               to={{
                 pathname: '/bridge',
-                state: {
+                statokenStatete: {
                   tokenAddress,
                   initialTxType: 'withdraw',
                 },
