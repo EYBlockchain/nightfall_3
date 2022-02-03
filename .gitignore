@@ -11,3 +11,4 @@ __pycache__
 
 # Pub Sub
 test/pub-sub/.serverless
+test/pub-sub/admin/.serverless
