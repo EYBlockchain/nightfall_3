@@ -48,7 +48,6 @@ export const UserProvider = ({ children }) => {
   };
 
   const syncState = async () => {
-    console.log('in syncState', state);
     const mnemonicExists = Storage.mnemonicGet(await Web3.getAccount());
     if (mnemonicExists) {
       const signature = await Web3.signMessage(METAMASK_MESSAGE);
@@ -64,9 +63,7 @@ export const UserProvider = ({ children }) => {
   };
 
   const setupWebSocket = () => {
-    console.log('in setupWebSocket 1');
     if (!state.zkpKeys) return;
-    console.log('in setupWebSocket 2');
     const socket = new WebSocket(optimistWsUrl);
 
     // Connection opened
@@ -89,9 +86,7 @@ export const UserProvider = ({ children }) => {
   };
 
   const configureZkpKeys = async mnemonic => {
-    console.log('in configureZkpKeys 1');
     if (!mnemonic) return;
-    console.log('in configureZkpKeys 2');
     const zkpKeys = await generateKeys(
       mnemonic,
       `m/44'/60'/0'/${DEFAULT_NF_ADDRESS_INDEX.toString()}`,
@@ -105,18 +100,15 @@ export const UserProvider = ({ children }) => {
   };
 
   React.useEffect(async () => {
-    console.log('in hook useEffect 1', state);
     await syncState();
     setIsSyncComplete({ isSyncComplete: true });
   }, []);
 
   React.useEffect(() => {
-    console.log('in hook useEffect 2', state);
     setupWebSocket();
   }, [state.zkpKeys]);
 
   React.useEffect(() => {
-    console.log('in hook useEffect 3', state);
     configureZkpKeys(state.mnemonic);
   }, [state.mnemonic]);
 

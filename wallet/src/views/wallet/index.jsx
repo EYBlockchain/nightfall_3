@@ -139,7 +139,6 @@ export default function Wallet() {
   }, []);
 
   useEffect(async () => {
-    console.log('in getBalance');
     const l2Balance = await getWalletBalance();
     if (
       Object.keys(l2Balance).length !== 0 &&
