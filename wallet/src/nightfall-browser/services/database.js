@@ -144,7 +144,9 @@ export async function findBlocksFromBlockNumberL2(blockNumberL2) {
 export async function getBlockByTransactionHash(transactionHash) {
   const db = await connectDB();
   const res = await db.getAll(SUBMITTED_BLOCKS_COLLECTION);
-  return res.filter(r => r.transactionHashes.include(transactionHash));
+  const [block] = res.filter(r => r.transactionHashes.includes(transactionHash));
+  if (!block) throw new Error('Block Not Found');
+  return block;
 }
 
 export async function getMaxBlock() {
@@ -199,13 +201,13 @@ export async function deleteTransactionsByTransactionHashes(transactionHashes) {
 export async function getTransactionByCommitment(commitmentHash) {
   const db = await connectDB();
   const res = await db.getAll(TRANSACTIONS_COLLECTION);
-  return res.filter(r => r.commitments.include(commitmentHash));
+  return res.filter(r => r.commitments.includes(commitmentHash));
 }
 
 export async function getTransactionByNullifier(nullifierHash) {
   const db = await connectDB();
   const res = await db.getAll(TRANSACTIONS_COLLECTION);
-  return res.filter(r => r.nullifiers.include(nullifierHash));
+  return res.filter(r => r.nullifiers.includes(nullifierHash));
 }
 export async function getTransactionByTransactionHash(transactionHash) {
   const db = await connectDB();
@@ -217,4 +219,17 @@ export async function getAllTransactions() {
   const res = await db.getAll(TRANSACTIONS_COLLECTION);
   if (Object.keys(res).length > 0) return res;
   return [];
+}
+
+export async function markWithdrawState(transactionHash, withdrawState) {
+  const db = await connectDB();
+  const tx = await db.get(TRANSACTIONS_COLLECTION, transactionHash);
+  return db.put(
+    TRANSACTIONS_COLLECTION,
+    {
+      ...tx,
+      withdrawState,
+    },
+    tx._id,
+  );
 }

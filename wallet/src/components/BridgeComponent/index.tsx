@@ -216,7 +216,11 @@ const BridgeComponent = (props: any) => {
                   type="text"
                   placeholder="0.00"
                   value={tokenAmountWei}
-                  onChange={e => setTransferValue(parseFloat(e.target.value))}
+                  onChange={e =>
+                    e.target.value
+                      ? setTransferValue(parseFloat(e.target.value))
+                      : setTransferValue(0)
+                  }
                 />
                 <button type="button" className={styles.amountDetails__maxButton}>
                   MAX

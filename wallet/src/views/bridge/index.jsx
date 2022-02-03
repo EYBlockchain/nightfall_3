@@ -13,7 +13,6 @@ const Bridge = () => {
 
   return (
     // containerFluid
-
     <div>
       <Header />
       <div className={styles.bridgeComponent}>
