@@ -141,6 +141,16 @@ class Nf3 {
   }
 
   /**
+  Gets the number of unprocessed transactions on the optimist
+  @async
+  */
+
+  async unprocessedTransactionCount() {
+    const res = (await axios.get(`${this.optimistBaseUrl}/block/unprocessed`)).data;
+    return res;
+  }
+
+  /**
   Method for signing and submitting an Ethereum transaction to the
   blockchain.
   @method
@@ -365,7 +375,7 @@ class Nf3 {
     });
     this.latestWithdrawHash = res.data.transaction.transactionHash;
     if (!offchain) {
-      const receiptPromise = this.submitTransaction(
+      const receiptPromise = await this.submitTransaction(
         res.data.txDataToSign,
         this.shieldContractAddress,
         fee,

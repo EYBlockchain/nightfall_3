@@ -98,7 +98,7 @@ describe('ERC721 tests', () => {
     expect(balanceAfter - balanceBefore).to.be.equal(2);
   });
 
-  it.skip('should decrement the balance after transfer ERC721 to other wallet and increment the other wallet', async function () {
+  it('should decrement the balance after transfer ERC721 to other wallet and increment the other wallet', async function () {
     let balances;
     async function getBalances() {
       balances = [
