@@ -1,7 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
-import styles from '../../styles/sidebar/sideItem.module.scss';
+
+import './sideItem.scss';
 
 export default function SideItem({ text, link, Icon, SideState }) {
   return (
@@ -14,10 +15,10 @@ export default function SideItem({ text, link, Icon, SideState }) {
         },
       }}
     >
-      <div className={window.location.pathname !== link ? styles.itemInactive : styles.itemActive}>
+      <div className={window.location.pathname !== link ? 'itemInactive' : 'itemActive'}>
         {/* <Icon size={24} /> */}
         <img src={window.location.pathname !== link ? Icon[1] : Icon[0]} />
-        <div className={styles.itemText} id={text}>
+        <div className="itemText" id={text}>
           {text}
         </div>
       </div>
