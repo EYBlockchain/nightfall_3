@@ -112,7 +112,7 @@ jobs:
           SSH_USER: pong
           SSH_KEY: ${{ secrets.DEV_SSH_KEY }}
           SSH_HOST: ohio.nightfall3.com
-      - name: Copy files
+      - name: Copy and rename files
         run: |
           scp dev.env pull-images.sh docker-compose.beta.yml await-deployer.sh dev:~/
           ssh dev 'mv dev.env .env'
@@ -122,7 +122,7 @@ jobs:
       - name: Pull docker images
         run: ssh dev './pull-images.sh'
       - name: Run up nightfall
-        run: ssh 'docker-compose up -d deployer optimist'
+        run: ssh dev 'docker-compose up -d deployer optimist'
       - name: Run up applications
         run: |
           ssh dev './await-deployer.sh'
