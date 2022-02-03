@@ -190,14 +190,6 @@ use it:
 
 Nightfall_3 provides a Wallet to exercise its features. To use it:
 
-- Generate browser version of SDK:
-
-```
-cd cli
-npm install
-npm run build
-```
-
 - Deploy nightfall (only ganache for now) from Nightfall's root folder
 
 ```
@@ -223,6 +215,11 @@ npm run build
 ```
 cd wallet
 npm install
+```
+
+- Copy proving keys and compiled circuits into ./wallet/src/zokrates
+```
+./docker-copy-zokrates.sh
 ```
 
 - Launch wallet in ganache (localhost)
@@ -265,6 +262,12 @@ More information can be found [here](https://github.com/EYBlockchain/nightfall_3
   whereas ganache has reset it. If nonce is not reset, you will see an error message after signing
   the transaction. To reset the nonce in metamask:
 
+### Limitations
+- If you restart Ganache, you will need to manually delete the IndexedDB state in your browser storage as it will persist.
+1. Open Developer Console in your Chrome browser.
+2. Click on the Application tab and then click IndexedDB in the left sidebar.
+3. Clicking on the Nightfall Commitments storage should enable you to delete the database.
+- You need to reset the nonce every time you restart Nightfall, as Metamask will keep previous nonce whereas ganache has reset it. If nonce is not reset, you will see an error message after signing the transaction. To reset the nonce in metamask:
 1. Open Metamask in browser
 2. Settings->Advance->Reset Account
 
