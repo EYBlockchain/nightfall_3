@@ -16,6 +16,7 @@ decrypt commitments for a transaction given ivks and nsks.
 */
 export async function decryptCommitment(transaction, ivk, nsk) {
   const nonZeroCommitments = transaction.commitments.flat().filter(n => n !== ZERO);
+  const storeCommitments = [];
   ivk.forEach((key, j) => {
     // decompress the secrets first and then we will decryp t the secrets from this
     const decompressedSecrets = Secrets.decompressSecrets(transaction.compressedSecrets);
@@ -26,13 +27,15 @@ export async function decryptCommitment(transaction, ivk, nsk) {
         logger.info("This encrypted message isn't for this recipient");
       else {
         // console.log('PUSHED', commitment, 'nsks', nsks[i]);
-        logger.info('This is encrpted and stored');
-        storeCommitment(commitment, nsk[j]);
+        storeCommitments.push(storeCommitment(commitment, nsk[j]));
       }
     } catch (err) {
       logger.info(err);
-      logger.info('catch error');
+      logger.info("This encrypted message isn't for this recipient");
     }
+  });
+  await Promise.all(storeCommitments).catch(function (err) {
+    logger.info(err);
   });
 }
 
