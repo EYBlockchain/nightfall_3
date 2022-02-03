@@ -1,0 +1,129 @@
+# Deploys containers to the development environment.
+#
+name: Deploy to Staging
+on:
+  push:
+    branches:
+      - dev
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  DOCKER_ACTOR: ${{ secrets.DOCKER_ACTOR }}
+
+jobs:
+
+  build-worker:
+    name: Build deployer
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Login to docker registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $DOCKER_ACTOR --password-stdin
+      - name: Docker push worker
+        run: |
+          docker build -t ghcr.io/eyblockchain/nightfall3-worker . -f worker.Dockerfile
+          docker push ghcr.io/eyblockchain/nightfall3-worker
+
+  build-deployer:
+    name: Build deployer
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Login to docker registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $DOCKER_ACTOR --password-stdin
+      - name: Docker push deployer
+        run: |
+          docker build -t ghcr.io/eyblockchain/nightfall3-deployer . -f deployer.Dockerfile
+          docker push ghcr.io/eyblockchain/nightfall3-deployer
+
+  build-optimist:
+    name: Build optimist
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Login to docker registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $DOCKER_ACTOR --password-stdin
+      - name: Docker push optimist
+        run: |
+          docker build -t ghcr.io/eyblockchain/nightfall3-optimist . -f optimist.Dockerfile
+          docker push ghcr.io/eyblockchain/nightfall3-optimist
+
+  build-proposer:
+    name: Build proposer
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Login to docker registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $DOCKER_ACTOR --password-stdin
+      - name: Docker push proposer
+        run: |
+          docker build -t ghcr.io/eyblockchain/nightfall3-proposer . -f proposer.Dockerfile
+          docker push ghcr.io/eyblockchain/nightfall3-proposer
+
+#  build-challenger:
+#    name: Build challenger
+#    runs-on: ubuntu-20.04
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v2
+#      - name: Login to docker registry
+#        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $DOCKER_ACTOR --password-stdin
+#      - name: Docker push challenger
+#        run: |
+#          docker build -t ghcr.io/eyblockchain/nightfall3-challenger . -f challenger.Dockerfile
+#          docker push ghcr.io/eyblockchain/nightfall3-challenger
+
+#  build-liquidity:
+#    name: Build liquidity provider
+#    runs-on: ubuntu-20.04
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v2
+#      - name: Login to docker registry
+#        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $DOCKER_ACTOR --password-stdin
+#      - name: Docker push liqidity
+#        run: |
+#          docker build -t ghcr.io/eyblockchain/nightfall3-liquidity . -f liquidity.Dockerfile
+#          docker push ghcr.io/eyblockchain/nightfall3-liquidity
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-20.04
+    needs: [build-deployer, build-optimist, build-proposer, build-challenger, build-liquidity]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/dev.key
+          chmod 600 ~/.ssh/dev.key
+          cat >>~/.ssh/config <<END
+          Host dev
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/dev.key
+            StrictHostKeyChecking no
+          END
+        env:
+          SSH_USER: pong
+          SSH_KEY: ${{ secrets.DEV_SSH_KEY }}
+          SSH_HOST: ohio.nightfall3.com
+      - name: Copy files
+        run: |
+          scp dev.env pull-images.sh docker-compose.beta.yml dev
+          ssh dev 'mv dev.env .env'
+          ssh dev 'mv docker-compose.beta.yml docker-compose.yml'
+      - name: Login to docker registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $DOCKER_ACTOR --password-stdin
+      - name: Pull docker images
+        run: ssh dev './pull-images'
+      - name: Run up nightfall
+        run: ssh 'docker-compose up -d deployer optimist'
+      - name: Run up applications
+        run: |
+          ssh dev 'await-deployer'
+          ssh dev 'docker-compose up -d proposer'
