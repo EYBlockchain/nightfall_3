@@ -94,12 +94,10 @@ function WalletModal(props) {
           securely store these words. Losing access to these words will result in a loss of access
           to your funds. Do not reveal them to anyone.
         </p>
-        <Container>
+        <Container style={{ display: 'inline-block', margin: '0' }}>
           {[0, 1].map((r, key) => (
-            // eslint-disable-next-line react/jsx-key
             <Row key={key}>
               {[0, 1, 2, 3, 4, 5].map((c, innerKey) => (
-                // eslint-disable-next-line react/jsx-key
                 <Col key={innerKey}>
                   <InputGroup className="mb-3">
                     <FormControl
