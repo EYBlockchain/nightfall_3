@@ -31,6 +31,8 @@ services:
     build:
       dockerfile: deployer.Dockerfile
       context: ./
+    depends_on:
+      - worker
     volumes:
       - type: volume
         source: build
