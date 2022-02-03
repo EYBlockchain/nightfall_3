@@ -92,7 +92,7 @@ jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-20.04
-    needs: [build-deployer, build-optimist, build-proposer, build-challenger, build-liquidity]
+    needs: [build-deployer, build-optimist, build-proposer, build-worker]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
