@@ -5,8 +5,8 @@ import Web3 from 'web3';
 const { ethereum } = global;
 
 export default {
+  connectedAccount: undefined,
   connection() {
-    if (!this.web3) this.connect();
     return this.web3;
   },
 
@@ -14,13 +14,17 @@ export default {
    * Setup web3 with metamask provider
    * Note: function only supposed to call once
    */
-  connect() {
-    console.log('Setting up web3 ...');
+  async connect() {
     if (!ethereum) {
       throw Error('MetaMask is not connected');
     }
     this.web3 = new Web3(ethereum);
-    global.web3 = this.web3;
+    global.web3 = this.web3; // for now global.web3 is only set and not referenced anywhere
+
+    [this.connectedAccount] = await ethereum.request({ method: 'eth_requestAccounts' });
+    ethereum.on('accountsChanged', ([account]) => {
+      this.connectedAccount = account;
+    });
 
     return ethereum;
   },
@@ -44,7 +48,12 @@ export default {
 
   // get account address to which MetaMask is connected
   async getAccount() {
-    const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-    return accounts[0];
+    if (!this.connectedAccount)
+      [this.connectedAccount] = await ethereum.request({ method: 'eth_requestAccounts' });
+    return this.connectedAccount;
+  },
+
+  signMessage(msg) {
+    return this.web3.eth.personal.sign(msg, this.connectedAccount);
   },
 };

@@ -13,6 +13,9 @@ import metamaskIcon from '../../assets/svg/metamask.svg';
 import maticImg from '../../assets/img/polygon-chain.svg';
 import { UserContext } from '../../hooks/User/index.jsx';
 import transfer from '../../nightfall-browser/services/transfer';
+import { submitTransaction } from '../../common-files/utils/contract';
+
+const { shieldContractAddress } = global.config;
 
 const symbols = {
   matic,
@@ -47,9 +50,9 @@ export default function TokenItem({
         ask: state.zkpKeys.ask,
         fee: 1,
       },
-      state.nf3.shieldContractAddress,
+      shieldContractAddress,
     );
-    return state.nf3.submitTransaction(rawTransaction, state.nf3.shieldContractAddress, 1);
+    return submitTransaction(rawTransaction, shieldContractAddress, 1);
   }
   const tokenNameId = `TokenItem_tokenName${symbol}`;
   const tokenBalanceId = `TokenItem_tokenBalance${symbol}`;
