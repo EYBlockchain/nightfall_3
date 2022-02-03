@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import Modal from 'react-bootstrap/Modal';
 import Dropdown from 'react-bootstrap/Dropdown';
 import DropdownButton from 'react-bootstrap/DropdownButton';
@@ -25,9 +25,11 @@ import depositConfirmed from '../../assets/img/modalImages/adeposit_confirmed.pn
 import successHand from '../../assets/img/modalImages/success-hand.png';
 import transferCompletedImg from '../../assets/img/modalImages/tranferCompleted.png';
 
+const { shieldContractAddress } = global.config;
+
 export default function Bridge() {
-  const [state] = React.useContext(UserContext);
-  const [transferMethod, setMethod] = React.useState('On-Chain');
+  const [state] = useContext(UserContext);
+  const [transferMethod, setMethod] = useState('On-Chain');
   const location = useLocation();
 
   const initialTx = location.tokenState?.initialTxType || 'deposit';
@@ -75,7 +77,7 @@ export default function Bridge() {
       case 'deposit': {
         await approve(
           location.tokenState.tokenAddress,
-          state.nf3.shieldContractAddress,
+          shieldContractAddress,
           'ERC20',
           tokenAmountWei,
         );
@@ -89,9 +91,9 @@ export default function Bridge() {
             fee: 1,
             tokenType: 'ERC20',
           },
-          state.nf3.shieldContractAddress,
+          shieldContractAddress,
         );
-        return submitTransaction(rawTransaction, state.nf3.shieldContractAddress, 1);
+        return submitTransaction(rawTransaction, shieldContractAddress, 1);
       }
 
       case 'withdraw': {
@@ -106,11 +108,11 @@ export default function Bridge() {
             tokenType: 'ERC20',
             fees: 1,
           },
-          state.nf3.shieldContractAddress,
+          shieldContractAddress,
         );
         console.log('rawTransaction', rawTransaction);
         console.log('props', location);
-        return state.nf3.submitTransaction(rawTransaction, state.nf3.shieldContractAddress, 1);
+        return submitTransaction(rawTransaction, shieldContractAddress, 1);
       }
 
       default:
