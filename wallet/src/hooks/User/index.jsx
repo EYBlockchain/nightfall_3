@@ -1,11 +1,12 @@
 import React from 'react';
 import jsSha3 from 'js-sha3';
+import { useLocation } from 'react-router-dom';
 
 import Web3 from '../../common-files/utils/web3';
-import { METAMASK_MESSAGE, DEFAULT_NF_ADDRESS_INDEX } from '../../constants.js';
+import { METAMASK_MESSAGE, DEFAULT_NF_ADDRESS_INDEX } from '../../constants';
 import * as Storage from '../../utils/lib/local-storage';
-import { generateKeys } from '../../nightfall-browser/services/keys.js';
-import blockProposedEventHandler from '../../nightfall-browser/event-handlers/block-proposed.js';
+import { generateKeys } from '../../nightfall-browser/services/keys';
+import blockProposedEventHandler from '../../nightfall-browser/event-handlers/block-proposed';
 
 const { optimistWsUrl } = global.config;
 
@@ -34,6 +35,8 @@ export const UserProvider = ({ children }) => {
   // const [state, dispatch] = React.useReducer(reducer, initialState);
   const [state, setState] = React.useState(initialState);
   const [isSyncComplete, setIsSyncComplete] = React.useState(false);
+  const location = useLocation();
+  // const [isRoot, setIsRoot] = React.useState(location.pathname === '/');
 
   const configureMnemonic = async mnemonic => {
     const signature = await Web3.signMessage(METAMASK_MESSAGE);
@@ -100,9 +103,11 @@ export const UserProvider = ({ children }) => {
   };
 
   React.useEffect(async () => {
-    await syncState();
-    setIsSyncComplete({ isSyncComplete: true });
-  }, []);
+    if (location.pathname !== '/' && !state.mnemonic) {
+      await syncState();
+    }
+    if (!isSyncComplete) setIsSyncComplete({ isSyncComplete: true });
+  }, [location]);
 
   React.useEffect(() => {
     setupWebSocket();
@@ -112,9 +117,16 @@ export const UserProvider = ({ children }) => {
     configureZkpKeys(state.mnemonic);
   }, [state.mnemonic]);
 
+  /*
+   * TODO: children should render when sync is complete
+   * like implement a loader till sync is not complete
+   * for example with blank page:
+   *  '{isSyncComplete || true ? children : <div> Signing to MetaMask </div>}'
+   *  instead of '{children}'
+   */
   return (
     <UserContext.Provider value={[state, setState, configureMnemonic]}>
-      {isSyncComplete ? children : <div> Signing to MetaMask </div>}
+      {children}
     </UserContext.Provider>
   );
 };
