@@ -124,6 +124,4 @@ jobs:
       - name: Stop previous nightfall, delete build volume
         run: ssh dev './down.sh'
       - name: Start new instance
-        run: |
-          ssh dev 'nohup ./start.sh &'
-          ssh dev 'exit'
+        run: ssh dev 'nohup ./start.sh > /dev/null 2>&1 > start.log &'
