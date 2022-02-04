@@ -31,13 +31,13 @@ import singleTransferAbi from '../../zokrates/single_transfer_stub/artifacts/sin
 // eslint-disable-next-line
 import singleTransferProgramFile from '../../zokrates/single_transfer_stub/artifacts/single_transfer_stub-program';
 // eslint-disable-next-line
-import singleTransferPkFile from '../../zokrates/single_transfer_stub/keypair/single_transfer_stub-pk';
+import singleTransferPkFile from '../../zokrates/single_transfer_stub/keypair/single_transfer_stub_pk.key';
 // eslint-disable-next-line
 import doubleTransferAbi from '../../zokrates/double_transfer_stub/artifacts/double_transfer_stub-abi.json';
 // eslint-disable-next-line
 import doubleTransferProgramFile from '../../zokrates/double_transfer_stub/artifacts/double_transfer_stub-program';
 // eslint-disable-next-line
-import doubleTransferPkFile from '../../zokrates/double_transfer_stub/keypair/double_transfer_stub-pk';
+import doubleTransferPkFile from '../../zokrates/double_transfer_stub/keypair/double_transfer_stub_pk.key';
 import { saveTransaction } from './database';
 
 const { BN128_GROUP_ORDER, ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME } = global.config;
