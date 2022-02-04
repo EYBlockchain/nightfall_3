@@ -16,6 +16,7 @@ import lightArrowImage from '../../assets/img/light-arrow.svg';
 import matic from '../../assets/svg/matic.svg';
 import { UserContext } from '../../hooks/User/index.jsx';
 import { approve, submitTransaction } from '../../common-files/utils/contract';
+import Web3 from '../../common-files/utils/web3';
 import deposit from '../../nightfall-browser/services/deposit';
 import withdraw from '../../nightfall-browser/services/withdraw';
 import Header from '../../components/Header/header.jsx';
@@ -102,7 +103,7 @@ export default function Bridge() {
             ercAddress: location.tokenState.tokenAddress,
             tokenId: 0,
             value: tokenAmountWei,
-            recipientAddress: state.nf3.ethereumAddress,
+            recipientAddress: await Web3.getAccount(),
             nsk: state.zkpKeys.nsk,
             ask: state.zkpKeys.ask,
             tokenType: 'ERC20',
