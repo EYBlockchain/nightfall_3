@@ -190,6 +190,16 @@ use it:
 
 Nightfall_3 provides a Wallet to exercise its features. To use it:
 
+- If this is the first time you are using the wallet and do not have the wallet/src/zokrates directory. From the project root:
+```
+mkdir ./wallet/src/zokrates
+```
+- If you have access to the S3 bucket that contains the precompiled circuit outputs:
+
+```
+aws s3 cp s3://nightfallv3/circuits ./wallet/src/zokrates --recursive
+```
+
 - Deploy nightfall (only ganache for now) from Nightfall's root folder
 
 ```
@@ -203,9 +213,7 @@ Nightfall_3 provides a Wallet to exercise its features. To use it:
 ./proposer
 ```
 
-- In a different terminal, start the liquitidy provider from Nightfall's root folder. Liquidity
-  provider is needed to use `instant withdraw` feature
-
+- In a different terminal, start the liquidity provider from Nightfall's root folder. Liquidity provider is needed to use `instant withdraw` feature
 ```
 ./liquidity-provider
 ```
@@ -219,7 +227,7 @@ npm install
 
 - Copy proving keys and compiled circuits into ./wallet/src/zokrates
 ```
-./docker-copy-zokrates.sh
+./copy-zokrates-local.sh
 ```
 
 - Launch wallet in ganache (localhost)
@@ -246,8 +254,7 @@ More information can be found [here](https://github.com/EYBlockchain/nightfall_3
    test account with private key
    `0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e`
 3. Next step is to configure Nightfall's RPC network. Go to `Settings->Networks->Add Network`
-4. Enter the following information and press `Savle`
-
+4. Enter the following information and press `Save`
 - `Network Name` : nightfall-localhost
 - `New RPC URL` : http://localhost:8546
 - `Chain ID`: 1337
@@ -267,6 +274,7 @@ More information can be found [here](https://github.com/EYBlockchain/nightfall_3
 1. Open Developer Console in your Chrome browser.
 2. Click on the Application tab and then click IndexedDB in the left sidebar.
 3. Clicking on the Nightfall Commitments storage should enable you to delete the database.
+
 - You need to reset the nonce every time you restart Nightfall, as Metamask will keep previous nonce whereas ganache has reset it. If nonce is not reset, you will see an error message after signing the transaction. To reset the nonce in metamask:
 1. Open Metamask in browser
 2. Settings->Advance->Reset Account
