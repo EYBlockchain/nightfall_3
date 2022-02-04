@@ -87,7 +87,6 @@ services:
       PROPOSER_ETHEREUM_SIGNING_KEY: ${PROPOSER_ETHEREUM_SIGNING_KEY}
 
 volumes:
-  mongodb:
   proving_files:
   build:
 
