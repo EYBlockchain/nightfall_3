@@ -25,7 +25,7 @@ import abi from '../../zokrates/deposit_stub/artifacts/deposit_stub-abi.json';
 // eslint-disable-next-line
 import programFile from '../../zokrates/deposit_stub/artifacts/deposit_stub-program';
 // eslint-disable-next-line
-import pkFile from '../../zokrates/deposit_stub/keypair/deposit_stub-pk';
+import pkFile from '../../zokrates/deposit_stub/keypair/deposit_stub_pk.key';
 import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
 import { saveTransaction } from './database';
 
