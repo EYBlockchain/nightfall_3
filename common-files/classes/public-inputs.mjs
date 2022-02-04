@@ -16,6 +16,7 @@ class PublicInputs {
   hash;
 
   constructor(publicInputs) {
+    // some inputs may be general numbers and some strings.  We convert all to string, process and generalise.
     this.publicInputs = generalise(publicInputs.flat(Infinity));
     [, this.hash] = generalise(sha256(this.publicInputs).limbs(248, 2));
   }

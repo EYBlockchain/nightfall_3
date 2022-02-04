@@ -7,6 +7,7 @@ import logger from 'common-files/utils/logger.mjs';
 import {
   getCommitmentBySalt,
   getWalletBalance,
+  getWalletBalanceUnfiltered,
   getWalletCommitments,
   getWithdrawCommitments,
   getWalletBalanceDetails,
@@ -35,7 +36,9 @@ router.get('/balance', async (req, res, next) => {
   try {
     const { compressedPkd, ercList } = req.query;
     logger.debug(`Details requested with compressedPkd ${compressedPkd} and ercList ${ercList}`);
-    const balance = await getWalletBalance(compressedPkd, ercList);
+    let balance;
+    if (compressedPkd) balance = await getWalletBalance(compressedPkd, ercList);
+    else balance = await getWalletBalanceUnfiltered(compressedPkd, ercList);
     res.json({ balance });
   } catch (err) {
     logger.error(err);

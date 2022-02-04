@@ -78,14 +78,48 @@ describe('Testing the http API', () => {
       // eslint-disable-next-line no-await-in-loop
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
+    // next we need to wait for 12 blocks for confirmation
+    // TODO this is only suitable for running on ganache; it won't cope with a
+    // chain reorganisation.
+    /*
+    console.log('waiting 12 blocks');
+    const startBlock = await web3.eth.getBlock('latest');
+    await new Promise(resolve => {
+      const id = setInterval(async () => {
+        const block = await web3.eth.getBlock('latest');
+        if (block.number - startBlock.number > 12) {
+          clearInterval(id);
+          resolve();
+        }
+      }, 1000);
+    });
+    */
   };
 
   const waitForTxExecution = async (count, txType) => {
+    console.log('waiting for twelve confirmations of event');
     while (count === logCounts[txType]) {
       // eslint-disable-next-line no-await-in-loop
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
+    // next we need to wait for 12 blocks for confirmation
+    // TODO this is only suitable for running on ganache; it won't cope with a
+    // chain reorganisation.
+    /*
+    const startBlock = await web3.eth.getBlock('latest');
+    await new Promise(resolve => {
+      const id = setInterval(async () => {
+        const block = await web3.eth.getBlock('latest');
+        if (block.number - startBlock.number > 12) {
+          clearInterval(id);
+          resolve();
+        }
+      }, 1000);
+    });
+    */
+    console.log('event confirmed');
   };
+
   const gasCostsTx = 5000000000000000;
 
   before(async function () {
@@ -251,6 +285,7 @@ describe('Testing the http API', () => {
       const startBalance = await getBalance(myAddress);
       const count = logCounts.registerProposer;
       // now we need to sign the transaction and send it to the blockchain
+      console.log('submitting tx');
       const receipt = await submitTransaction(
         txDataToSign,
         privateKey,
@@ -258,7 +293,9 @@ describe('Testing the http API', () => {
         gas,
         bond,
       );
+      console.log('waiting for execution');
       await waitForTxExecution(count, 'registerProposer');
+      console.log('executed');
       const endBalance = await getBalance(myAddress);
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
