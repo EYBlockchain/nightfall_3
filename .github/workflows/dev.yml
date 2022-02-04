@@ -1,5 +1,5 @@
 # Deploys containers to the development environment.
-#
+# 
 name: Deploy to Staging
 on:
   push:
