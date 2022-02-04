@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - master
-      - westlad/ping-pong
+      - westlad/ping-pong-test
 
 jobs:
   release:

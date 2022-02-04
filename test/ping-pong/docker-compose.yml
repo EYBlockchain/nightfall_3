@@ -116,9 +116,9 @@ services:
       BLOCKCHAIN_PORT: 8546
 
   user-local1:
-    image: ghcr.io/eyblockchain/nightfall3-user-local1:latest
+    image: ghcr.io/eyblockchain/nightfall3-user-local:latest
     build:
-      dockerfile: user-local1.Dockerfile
+      dockerfile: user-local.Dockerfile
       context: ../../
     networks:
       - pong_network
@@ -132,9 +132,9 @@ services:
       BLOCKCHAIN_PORT: 8546
 
   user-local2:
-    image: ghcr.io/eyblockchain/nightfall3-user-local2:latest
+    image: ghcr.io/eyblockchain/nightfall3-user-local:latest
     build:
-      dockerfile: user-local1.Dockerfile
+      dockerfile: user-local.Dockerfile
       context: ../../
     networks:
       - pong_network
