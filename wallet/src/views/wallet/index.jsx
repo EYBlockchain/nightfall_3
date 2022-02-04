@@ -136,7 +136,8 @@ export default function Wallet() {
 
   useEffect(() => {
     if (typeof state.mnemonic === 'undefined') setModalShow(true);
-  }, []);
+    else setModalShow(false);
+  }, [state.mnemonic]);
 
   useEffect(async () => {
     const l2Balance = await getWalletBalance();
