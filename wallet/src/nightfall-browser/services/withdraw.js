@@ -60,7 +60,6 @@ async function withdraw(withdrawParams, shieldContractAddress) {
       commitmentTreeInfo.siblingPath.path.map(p => p.value).reverse(),
     ),
   );
-  logger.silly(`SiblingPath was: ${JSON.stringify(siblingPath)}`);
 
   // public inputs
   const { root, leafIndex, isOnChain } = commitmentTreeInfo;
