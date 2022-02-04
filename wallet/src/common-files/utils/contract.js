@@ -1,14 +1,12 @@
 /* ignore unused exports */
-import { Constants } from 'nf3';
-
 import Web3 from './web3';
 import logger from './logger';
 import contractABIs from '../../contract-abis';
+import { TOKEN_TYPE, APPROVE_AMOUNT } from '../../constants';
 
 const { ethereum } = global;
 
 const options = global.config.WEB3_OPTIONS;
-const { TOKEN_TYPE, APPROVE_AMOUNT } = Constants;
 
 // returns a web3 contract instance
 export async function getContractInstance(contractName, deployedAddress) {
