@@ -35,8 +35,12 @@ module.exports = {
   OPTIMIST_HOST: process.env.OPTIMIST_HOST || 'optimist',
   OPTIMIST_PORT: process.env.OPTIMIST_PORT || 80,
   clientBaseUrl: `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`,
-  optimistBaseUrl: `http://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_HTTP_PORT}`,
-  optimistWsUrl: `ws://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_WS_PORT}`,
+  optimistBaseUrl:
+    process.env.OPTIMIST_API_URL ||
+    `http://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_HTTP_PORT}`,
+  optimistWsUrl:
+    process.env.OPTIMIST_WS_URL ||
+    `ws://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_WS_PORT}`,
   web3WsUrl: `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`,
   userEthereumSigningKey:
     process.env.USER_ETHEREUM_SIGNING_KEY ||
@@ -127,4 +131,7 @@ module.exports = {
     U: BigInt(5), // non square in Fp
   },
   MAX_QUEUE: 5,
+
+  // for Browser use
+  shieldContractAddress: process.env.SHIELD_CONTRACT_ADDRESS,
 };

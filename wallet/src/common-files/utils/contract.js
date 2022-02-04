@@ -1,18 +1,16 @@
 /* ignore unused exports */
-import { Constants } from 'nf3';
-
 import Web3 from './web3';
 import logger from './logger';
 import contractABIs from '../../contract-abis';
+import { TOKEN_TYPE, APPROVE_AMOUNT } from '../../constants';
 
 const { ethereum } = global;
-const web3 = Web3.connection();
 
 const options = global.config.WEB3_OPTIONS;
-const { TOKEN_TYPE, APPROVE_AMOUNT } = Constants;
 
 // returns a web3 contract instance
 export async function getContractInstance(contractName, deployedAddress) {
+  const web3 = Web3.connection();
   // grab a 'from' account if one isn't set
   if (!options.from) {
     const accounts = await web3.eth.getAccounts();
@@ -36,6 +34,7 @@ export function getContractAddress() {}
  * @returns {Promise} This will resolve into a transaction receipt
  */
 export async function submitTransaction(unsignedTransaction, contractAddress, fee) {
+  const web3 = Web3.connection();
   let gasPrice = 20000000000;
   const gas = (await web3.eth.getBlock('latest')).gasLimit;
   const blockGasPrice = 2 * Number(await web3.eth.getGasPrice());
@@ -66,6 +65,7 @@ export async function submitTransaction(unsignedTransaction, contractAddress, fe
  * @returns {Promise} transaction
  */
 export async function approve(ercAddress, spenderAddress, tokenType, value) {
+  const web3 = Web3.connection();
   const abi = contractABIs[tokenType];
   const ercContract = new web3.eth.Contract(abi, ercAddress);
   const from = await Web3.getAccount();
