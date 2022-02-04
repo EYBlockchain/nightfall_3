@@ -7,6 +7,8 @@ services:
     build:
       dockerfile: optimist.Dockerfile
       context: ./
+    profiles:
+      - servers
     networks:
       - pong_network
     volumes:
@@ -31,6 +33,8 @@ services:
     build:
       dockerfile: deployer.Dockerfile
       context: ./
+    profiles:
+      - servers
     depends_on:
       - worker
     volumes:
@@ -60,6 +64,8 @@ services:
     build:
       dockerfile: worker.Dockerfile
       context: ./
+    profiles:
+      - servers
     volumes:
       - type: volume
         source: proving_files
@@ -74,6 +80,8 @@ services:
     build:
       dockerfile: proposer.Dockerfile
       context: ./
+    profiles:
+      - applications
     networks:
       - pong_network
     environment:
