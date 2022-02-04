@@ -218,7 +218,7 @@ class Nf3 {
   }
 
   /**
-  Returns the address of a Nightfall_3 contract.
+  Returns the address of a Nightfall_3 contract calling the client.
   @method
   @async
   @param {string} contractName - the name of the smart contract in question. Possible
@@ -227,6 +227,19 @@ class Nf3 {
   */
   async getContractAddress(contractName) {
     const res = await axios.get(`${this.clientBaseUrl}/contract-address/${contractName}`);
+    return res.data.address;
+  }
+
+  /**
+  Returns the address of a Nightfall_3 contract calling the optimist.
+  @method
+  @async
+  @param {string} contractName - the name of the smart contract in question. Possible
+  values are 'Shield', 'State', 'Proposers', 'Challengers'.
+  @returns {Promise} Resolves into the Ethereum address of the contract
+  */
+  async getContractAddressOptimist(contractName) {
+    const res = await axios.get(`${this.optimistBaseUrl}/contract-address/${contractName}`);
     return res.data.address;
   }
 
