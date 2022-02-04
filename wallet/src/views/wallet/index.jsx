@@ -16,6 +16,8 @@ import { getWalletBalance } from '../../nightfall-browser/services/commitment-st
 import { UserContext } from '../../hooks/User/index.jsx';
 
 import './wallet.scss';
+import * as Storage from '../../utils/lib/local-storage';
+import Web3 from '../../common-files/utils/web3';
 
 /*
 These are some default values for now
@@ -134,8 +136,9 @@ export default function Wallet() {
   const [state] = useContext(UserContext);
   const [modalShow, setModalShow] = useState(false);
 
-  useEffect(() => {
-    if (typeof state.mnemonic === 'undefined') setModalShow(true);
+  useEffect(async () => {
+    const mnemonicExists = Storage.mnemonicGet(await Web3.getAccount());
+    if (typeof state.mnemonic === 'undefined' && !mnemonicExists) setModalShow(true);
     else setModalShow(false);
   }, [state.mnemonic]);
 
