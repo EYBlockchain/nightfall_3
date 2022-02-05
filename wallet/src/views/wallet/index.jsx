@@ -170,7 +170,7 @@ export default function Wallet() {
       });
       setTokens(newState.sort((a, b) => Number(a.order) - Number(b.order)));
     }
-  }, []);
+  }, [state.zkpKeys]);
 
   return (
     <>
