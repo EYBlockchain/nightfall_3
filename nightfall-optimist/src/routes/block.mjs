@@ -10,7 +10,6 @@ import {
   getBlockByTransactionHash,
   getBlockByRoot,
   getTransactionsByTransactionHashes,
-  numberOfUnprocessedTransactions,
 } from '../services/database.mjs';
 
 const router = express.Router();
@@ -22,15 +21,6 @@ router.post('/check', async (req, res, next) => {
     const result = await checkBlock(block, transactions);
     logger.debug(`Result of block check was ${JSON.stringify(result, null, 2)}`);
     res.json(result);
-  } catch (err) {
-    next(err);
-  }
-});
-
-router.get('/unprocessed', async (req, res, next) => {
-  try {
-    const count = await numberOfUnprocessedTransactions();
-    res.json(count);
   } catch (err) {
     next(err);
   }

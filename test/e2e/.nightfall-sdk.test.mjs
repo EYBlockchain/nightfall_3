@@ -1014,180 +1014,180 @@ describe('Testing the Nightfall SDK', () => {
       expect(afterPkdBalance1 - beforePkdBalance1).to.be.equal(-value);
     });
 
-    it('should allow instant withdraw of existing withdraw', async function () {
-      // We create enough transactions to fill numDeposits blocks full of deposits.
-      await depositNTransactions(
-        nf3User1,
-        txPerBlock,
-        erc20Address,
-        tokenType,
-        value,
-        tokenId,
-        fee,
-      );
-      stateBalance += fee * txPerBlock + BLOCK_STAKE;
-      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+    // it('should allow instant withdraw of existing withdraw', async function () {
+    //   // We create enough transactions to fill numDeposits blocks full of deposits.
+    //   await depositNTransactions(
+    //     nf3User1,
+    //     txPerBlock,
+    //     erc20Address,
+    //     tokenType,
+    //     value,
+    //     tokenId,
+    //     fee,
+    //   );
+    //   stateBalance += fee * txPerBlock + BLOCK_STAKE;
+    //   eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
 
-      let latestWithdrawTransactionHash = ''; // for instant withdrawals
-      console.log(`instant withdrawal call`);
-      await nf3User1.withdraw(
-        false,
-        erc20Address,
-        tokenType,
-        value,
-        tokenId,
-        nf3User1.ethereumAddress,
-        fee,
-      );
-      stateBalance += fee;
-      latestWithdrawTransactionHash = nf3User1.getLatestWithdrawHash();
-      console.log(`latestWithdrawTransactionHash: ${latestWithdrawTransactionHash}`);
-      expect(latestWithdrawTransactionHash).to.be.a('string').and.to.include('0x');
+    //   let latestWithdrawTransactionHash = ''; // for instant withdrawals
+    //   console.log(`instant withdrawal call`);
+    //   await nf3User1.withdraw(
+    //     false,
+    //     erc20Address,
+    //     tokenType,
+    //     value,
+    //     tokenId,
+    //     nf3User1.ethereumAddress,
+    //     fee,
+    //   );
+    //   stateBalance += fee;
+    //   latestWithdrawTransactionHash = nf3User1.getLatestWithdrawHash();
+    //   console.log(`latestWithdrawTransactionHash: ${latestWithdrawTransactionHash}`);
+    //   expect(latestWithdrawTransactionHash).to.be.a('string').and.to.include('0x');
 
-      await depositNTransactions(
-        nf3User1,
-        txPerBlock,
-        erc20Address,
-        tokenType,
-        value,
-        tokenId,
-        fee,
-      );
-      stateBalance += fee * txPerBlock + BLOCK_STAKE;
-      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+    //   await depositNTransactions(
+    //     nf3User1,
+    //     txPerBlock,
+    //     erc20Address,
+    //     tokenType,
+    //     value,
+    //     tokenId,
+    //     fee,
+    //   );
+    //   stateBalance += fee * txPerBlock + BLOCK_STAKE;
+    //   eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
 
-      const count = logCounts.instantWithdraw;
-      // We request the instant withdraw and should wait for the liquidity provider to send the instant withdraw
-      let res = await nf3User1.requestInstantWithdrawal(latestWithdrawTransactionHash, fee);
-      stateBalance += fee;
-      expectTransaction(res);
-      console.log(`     Gas used was ${Number(res.gasUsed)}`);
+    //   const count = logCounts.instantWithdraw;
+    //   // We request the instant withdraw and should wait for the liquidity provider to send the instant withdraw
+    //   let res = await nf3User1.requestInstantWithdrawal(latestWithdrawTransactionHash, fee);
+    //   stateBalance += fee;
+    //   expectTransaction(res);
+    //   console.log(`     Gas used was ${Number(res.gasUsed)}`);
 
-      for (let i = 0; i < txPerBlock; i++) {
-        // eslint-disable-next-line no-await-in-loop
-        res = await nf3User1.transfer(
-          false,
-          erc20Address,
-          tokenType,
-          value,
-          tokenId,
-          nf3User1.zkpKeys.pkd,
-          fee,
-        );
-      }
-      stateBalance += fee + BLOCK_STAKE;
-      // we wait for the liquidity provider to send the instant withdraw
-      console.log('     Waiting for instantWithdraw event...');
-      await waitForTxExecution(count, 'instantWithdraw');
-      expect(diffBalanceInstantWithdraw).to.be.equal(value);
-    });
+    //   for (let i = 0; i < txPerBlock; i++) {
+    //     // eslint-disable-next-line no-await-in-loop
+    //     res = await nf3User1.transfer(
+    //       false,
+    //       erc20Address,
+    //       tokenType,
+    //       value,
+    //       tokenId,
+    //       nf3User1.zkpKeys.pkd,
+    //       fee,
+    //     );
+    //   }
+    //   stateBalance += fee + BLOCK_STAKE;
+    //   // we wait for the liquidity provider to send the instant withdraw
+    //   console.log('     Waiting for instantWithdraw event...');
+    //   await waitForTxExecution(count, 'instantWithdraw');
+    //   expect(diffBalanceInstantWithdraw).to.be.equal(value);
+    // });
 
-    it('should not allow instant withdraw of non existing withdraw or not in block yet', async function () {
-      // We create enough transactions to fill numDeposits blocks full of deposits.
-      let latestWithdrawTransactionHash = ''; // for instant withdrawals
-      await nf3User1.withdraw(
-        false,
-        erc20Address,
-        tokenType,
-        value,
-        tokenId,
-        nf3User1.ethereumAddress,
-        fee,
-      );
-      stateBalance += fee;
-      latestWithdrawTransactionHash = nf3User1.getLatestWithdrawHash();
-      expect(latestWithdrawTransactionHash).to.be.a('string').and.to.include('0x');
+    // it('should not allow instant withdraw of non existing withdraw or not in block yet', async function () {
+    //   // We create enough transactions to fill numDeposits blocks full of deposits.
+    //   let latestWithdrawTransactionHash = ''; // for instant withdrawals
+    //   await nf3User1.withdraw(
+    //     false,
+    //     erc20Address,
+    //     tokenType,
+    //     value,
+    //     tokenId,
+    //     nf3User1.ethereumAddress,
+    //     fee,
+    //   );
+    //   stateBalance += fee;
+    //   latestWithdrawTransactionHash = nf3User1.getLatestWithdrawHash();
+    //   expect(latestWithdrawTransactionHash).to.be.a('string').and.to.include('0x');
 
-      const res = await nf3User1.requestInstantWithdrawal(latestWithdrawTransactionHash, fee);
-      stateBalance += fee + BLOCK_STAKE;
-      expect(res).to.be.equal(null);
-    });
+    //   const res = await nf3User1.requestInstantWithdrawal(latestWithdrawTransactionHash, fee);
+    //   stateBalance += fee + BLOCK_STAKE;
+    //   expect(res).to.be.equal(null);
+    // });
   });
 
   // when the widthdraw transaction is finalised, we want to be able to pull the
   // funds into layer1
   describe('Withdraw funds to layer 1 failing (because insufficient time has passed)', () => {
-    it('Should create a failing finalise-withdrawal (because insufficient time has passed)', async function () {
-      let error = null;
-      try {
-        const res = await nf3User1.finaliseWithdrawal(withdrawTransactions[0]);
-        stateBalance += fee;
-        expectTransaction(res);
-      } catch (err) {
-        error = err;
-      }
-      expect(error.message).to.satisfy(
-        message =>
-          message.includes(
-            'Returned error: VM Exception while processing transaction: revert It is too soon to withdraw funds from this block',
-          ) || message.includes('Transaction has been reverted by the EVM'),
-      );
-    });
+    // it('Should create a failing finalise-withdrawal (because insufficient time has passed)', async function () {
+    //   let error = null;
+    //   try {
+    //     const res = await nf3User1.finaliseWithdrawal(withdrawTransactions[0]);
+    //     stateBalance += fee;
+    //     expectTransaction(res);
+    //   } catch (err) {
+    //     error = err;
+    //   }
+    //   expect(error.message).to.satisfy(
+    //     message =>
+    //       message.includes(
+    //         'Returned error: VM Exception while processing transaction: revert It is too soon to withdraw funds from this block',
+    //       ) || message.includes('Transaction has been reverted by the EVM'),
+    //   );
+    // });
   });
 
   describe('Withdraw funds to layer 1 with a time-jump capable test client (because sufficient time has passed)', () => {
     let startBalance;
     let endBalance;
 
-    it('should get a valid withdraw commitment with a time-jump capable test client (because sufficient time has passed)', async function () {
-      if (nodeInfo.includes('TestRPC')) {
-        await timeJump(3600 * 24 * 10); // jump in time by 50 days
-        console.log(`timeJump`);
-        await depositNTransactions(
-          nf3User1,
-          txPerBlock,
-          erc20Address,
-          tokenType,
-          value,
-          tokenId,
-          fee,
-        );
-        stateBalance += fee * txPerBlock + BLOCK_STAKE;
-        eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+    // it('should get a valid withdraw commitment with a time-jump capable test client (because sufficient time has passed)', async function () {
+    //   if (nodeInfo.includes('TestRPC')) {
+    //     await timeJump(3600 * 24 * 10); // jump in time by 50 days
+    //     console.log(`timeJump`);
+    //     await depositNTransactions(
+    //       nf3User1,
+    //       txPerBlock,
+    //       erc20Address,
+    //       tokenType,
+    //       value,
+    //       tokenId,
+    //       fee,
+    //     );
+    //     stateBalance += fee * txPerBlock + BLOCK_STAKE;
+    //     eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
 
-        const commitments = await nf3User1.getPendingWithdraws();
-        expect(commitments[nf3User1.zkpKeys.compressedPkd][erc20Address].length).to.be.greaterThan(
-          0,
-        );
-        expect(
-          commitments[nf3User1.zkpKeys.compressedPkd][erc20Address].filter(c => c.valid === true)
-            .length,
-        ).to.be.greaterThan(initialValidCommitments);
-      } else {
-        console.log('     Not using a time-jump capable test client so this test is skipped');
-        this.skip();
-      }
-    });
+    //     const commitments = await nf3User1.getPendingWithdraws();
+    //     expect(commitments[nf3User1.zkpKeys.compressedPkd][erc20Address].length).to.be.greaterThan(
+    //       0,
+    //     );
+    //     expect(
+    //       commitments[nf3User1.zkpKeys.compressedPkd][erc20Address].filter(c => c.valid === true)
+    //         .length,
+    //     ).to.be.greaterThan(initialValidCommitments);
+    //   } else {
+    //     console.log('     Not using a time-jump capable test client so this test is skipped');
+    //     this.skip();
+    //   }
+    // });
 
-    it('should create a passing ERC20 finalise-withdrawal with a time-jump capable test client (because sufficient time has passed)', async function () {
-      // now we need to sign the transaction and send it to the blockchain
-      // this will only work if we're using Ganache, otherwiise expect failure
-      startBalance = await getBalance(nf3User1.ethereumAddress);
-      if (nodeInfo.includes('TestRPC')) {
-        let res = await nf3User1.finaliseWithdrawal(withdrawTransactions[0]);
-        stateBalance += fee;
-        expectTransaction(res);
-        for (let i = 0; i < txPerBlock; i++) {
-          // eslint-disable-next-line no-await-in-loop
-          res = await nf3User1.transfer(
-            false,
-            erc20Address,
-            tokenType,
-            value,
-            tokenId,
-            nf3User1.zkpKeys.compressedPkd,
-            fee,
-          );
-        }
-        stateBalance += fee + BLOCK_STAKE;
-        eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
-      } else {
-        // geth
-        console.log('     Not using a time-jump capable test client so this test is skipped');
-        this.skip();
-      }
-      endBalance = await getBalance(nf3User1.ethereumAddress);
-    });
+    // it('should create a passing ERC20 finalise-withdrawal with a time-jump capable test client (because sufficient time has passed)', async function () {
+    //   // now we need to sign the transaction and send it to the blockchain
+    //   // this will only work if we're using Ganache, otherwiise expect failure
+    //   startBalance = await getBalance(nf3User1.ethereumAddress);
+    //   if (nodeInfo.includes('TestRPC')) {
+    //     let res = await nf3User1.finaliseWithdrawal(withdrawTransactions[0]);
+    //     stateBalance += fee;
+    //     expectTransaction(res);
+    //     for (let i = 0; i < txPerBlock; i++) {
+    //       // eslint-disable-next-line no-await-in-loop
+    //       res = await nf3User1.transfer(
+    //         false,
+    //         erc20Address,
+    //         tokenType,
+    //         value,
+    //         tokenId,
+    //         nf3User1.zkpKeys.compressedPkd,
+    //         fee,
+    //       );
+    //     }
+    //     stateBalance += fee + BLOCK_STAKE;
+    //     eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+    //   } else {
+    //     // geth
+    //     console.log('     Not using a time-jump capable test client so this test is skipped');
+    //     this.skip();
+    //   }
+    //   endBalance = await getBalance(nf3User1.ethereumAddress);
+    // });
 
     it('should create a passing ERC721 finalise-withdrawal with a time-jump capable test client (because sufficient time has passed)', async function () {
       // now we need to sign the transaction and send it to the blockchain
@@ -1249,15 +1249,15 @@ describe('Testing the Nightfall SDK', () => {
       // endBalance = await getBalance(nf3User1.ethereumAddress);
     });
 
-    it('Should have increased our balance', async function () {
-      if (nodeInfo.includes('TestRPC')) {
-        const gasCostsTotal = (gasCosts * txPerBlock * 2) / 2;
-        expect(endBalance - startBalance).to.closeTo(Number(value), gasCostsTotal);
-      } else {
-        console.log('     Not using a time-jump capable test client so this test is skipped');
-        this.skip();
-      }
-    });
+    // it('Should have increased our balance', async function () {
+    //   if (nodeInfo.includes('TestRPC')) {
+    //     const gasCostsTotal = (gasCosts * txPerBlock * 2) / 2;
+    //     expect(endBalance - startBalance).to.closeTo(Number(value), gasCostsTotal);
+    //   } else {
+    //     console.log('     Not using a time-jump capable test client so this test is skipped');
+    //     this.skip();
+    //   }
+    // });
   });
 
   describe('Check all balances in contracts', () => {

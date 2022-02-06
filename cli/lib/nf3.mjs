@@ -146,8 +146,8 @@ class Nf3 {
   */
 
   async unprocessedTransactionCount() {
-    const res = (await axios.get(`${this.optimistBaseUrl}/block/unprocessed`)).data;
-    return res;
+    const { result: mempool } = (await axios.get(`${this.optimistBaseUrl}/proposer/mempool`)).data;
+    return mempool.filter(e => e.mempool).length;
   }
 
   /**
