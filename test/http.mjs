@@ -41,10 +41,13 @@ describe('Testing the http API', () => {
   let ivk1;
   let ivk2;
   let pkd1;
-  let pkd2;
+  let compressedPkd1;
+  let compressedPkd2;
 
   const USE_INFURA = process.env.USE_INFURA === 'true';
+  const USE_ROPSTEN_NODE = process.env.USE_ROPSTEN_NODE === 'true';
   const { ETH_PRIVATE_KEY, BLOCKCHAIN_URL } = process.env;
+  const web3WsUrl = BLOCKCHAIN_URL || process.env.web3WsUrl;
 
   const senderUrl = 'http://localhost:8080';
   const recipientUrl = 'http://localhost:8084';
@@ -75,20 +78,54 @@ describe('Testing the http API', () => {
       // eslint-disable-next-line no-await-in-loop
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
+    // next we need to wait for 12 blocks for confirmation
+    // TODO this is only suitable for running on ganache; it won't cope with a
+    // chain reorganisation.
+    /*
+    console.log('waiting 12 blocks');
+    const startBlock = await web3.eth.getBlock('latest');
+    await new Promise(resolve => {
+      const id = setInterval(async () => {
+        const block = await web3.eth.getBlock('latest');
+        if (block.number - startBlock.number > 12) {
+          clearInterval(id);
+          resolve();
+        }
+      }, 1000);
+    });
+    */
   };
 
   const waitForTxExecution = async (count, txType) => {
+    console.log('waiting for twelve confirmations of event');
     while (count === logCounts[txType]) {
       // eslint-disable-next-line no-await-in-loop
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
+    // next we need to wait for 12 blocks for confirmation
+    // TODO this is only suitable for running on ganache; it won't cope with a
+    // chain reorganisation.
+    /*
+    const startBlock = await web3.eth.getBlock('latest');
+    await new Promise(resolve => {
+      const id = setInterval(async () => {
+        const block = await web3.eth.getBlock('latest');
+        if (block.number - startBlock.number > 12) {
+          clearInterval(id);
+          resolve();
+        }
+      }, 1000);
+    });
+    */
+    console.log('event confirmed');
   };
+
   const gasCostsTx = 5000000000000000;
 
   before(async function () {
-    web3 = await connectWeb3(BLOCKCHAIN_URL);
+    web3 = await connectWeb3(web3WsUrl);
 
-    if (USE_INFURA) {
+    if (USE_INFURA || USE_ROPSTEN_NODE) {
       if (!ETH_PRIVATE_KEY) {
         throw Error(
           'Cannot use default private key, please set environment variable ETH_PRIVATE_KEY',
@@ -134,6 +171,7 @@ describe('Testing the http API', () => {
       nsk: nsk1,
       ivk: ivk1,
       pkd: pkd1,
+      compressedPkd: compressedPkd1,
     } = (
       await chai
         .request(senderUrl)
@@ -144,7 +182,7 @@ describe('Testing the http API', () => {
     ({
       nsk: nsk2,
       ivk: ivk2,
-      pkd: pkd2,
+      compressedPkd: compressedPkd2,
     } = (
       await chai
         .request(senderUrl)
@@ -247,6 +285,7 @@ describe('Testing the http API', () => {
       const startBalance = await getBalance(myAddress);
       const count = logCounts.registerProposer;
       // now we need to sign the transaction and send it to the blockchain
+      console.log('submitting tx');
       const receipt = await submitTransaction(
         txDataToSign,
         privateKey,
@@ -254,7 +293,9 @@ describe('Testing the http API', () => {
         gas,
         bond,
       );
+      console.log('waiting for execution');
       await waitForTxExecution(count, 'registerProposer');
+      console.log('executed');
       const endBalance = await getBalance(myAddress);
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
@@ -373,7 +414,7 @@ describe('Testing the http API', () => {
           tokenId,
           recipientData: {
             values: [value],
-            recipientPkds: [pkd1],
+            recipientCompressedPkds: [compressedPkd1],
           },
           nsk: nsk1,
           ask: ask1,
@@ -403,7 +444,7 @@ describe('Testing the http API', () => {
           tokenId,
           recipientData: {
             values: [value],
-            recipientPkds: [pkd2],
+            recipientCompressedPkds: [compressedPkd2],
           },
           nsk: nsk1,
           ask: ask1,
@@ -469,7 +510,7 @@ describe('Testing the http API', () => {
           tokenId,
           recipientData: {
             values: [value2],
-            recipientPkds: [pkd1],
+            recipientCompressedPkds: [compressedPkd1],
           },
           nsk: nsk1,
           ask: ask1,
@@ -503,7 +544,7 @@ describe('Testing the http API', () => {
           recipientData: {
             // Add one here so we dont use the output of the previous double transfer as a single transfer input
             values: [value2 + 2],
-            recipientPkds: [pkd2],
+            recipientCompressedPkds: [compressedPkd2],
           },
           nsk: nsk1,
           ask: ask1,

@@ -20,6 +20,7 @@
     "express-fileupload": "^1.1.7-alpha.4",
     "jsonfile": "^6.1.0",
     "tar": "^6.1.6",
+    "web3": "^1.4.0",
     "winston": "^3.3.3"
   },
   "devDependencies": {

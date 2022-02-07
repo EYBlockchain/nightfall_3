@@ -22,28 +22,14 @@ and catch these removals, processing them appropriately.
 import Queue from 'queue';
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
+import { web3 } from 'common-files/utils/contract.mjs';
 
-const { MAX_QUEUE } = config;
+const { MAX_QUEUE, CONFIRMATION_POLL_TIME, CONFIRMATIONS } = config;
 const fastQueue = new Queue({ autostart: true, concurrency: 1 });
 const slowQueue = new Queue({ autostart: true, concurrency: 1 });
-export const queues = [fastQueue, slowQueue];
-
-/**
-This function will return a promise that resolves to true when the next highest
-priority queue is empty (priority goes in reverse order, prioity 0 is highest
-priority)
-*/
-function nextHigherPriorityQueueHasEmptied(priority) {
-  return new Promise(resolve => {
-    const listener = () => resolve();
-    if (priority === 0) resolve(); // resolve if we're the highest priority queue
-    queues[priority - 1].once('end', listener); // or when the higher priority queue empties
-    if (queues[priority - 1].length === 0) {
-      queues[priority - 1].removeListener('end', listener);
-      resolve(); // or if it's already empty
-    }
-  });
-}
+const removed = {}; // singleton holding transaction hashes of any removed events
+const stopQueue = new Queue({ autostart: false, concurrency: 1 });
+export const queues = [fastQueue, slowQueue, stopQueue];
 
 /**
 This function will wait until all the functions currently in a queue have been
@@ -62,13 +48,64 @@ function flushQueue(priority) {
 
 async function enqueueEvent(callback, priority, args) {
   queues[priority].push(async () => {
-    // await nextHigherPriorityQueueHasEmptied(priority);
-    // prevent conditionalmakeblock from running until fastQueue is emptied
     return callback(args);
   });
 }
 
+/**
+This function will return when the event has been on chain for <confirmations> blocks
+It's useful to call this if you want to be sure that your event has been confirmed
+multiple times before you go ahead and process it.
+*/
+
+function waitForConfirmation(eventObject) {
+  logger.debug(`Confirming event ${eventObject.event}`);
+  const { transactionHash, blockNumber } = eventObject;
+  return new Promise((resolve, reject) => {
+    let confirmedBlocks = 0;
+    const id = setInterval(async () => {
+      // get the transaction that caused the event
+      // if it's been in a chain reorg then it will have been removed.
+      if (removed[transactionHash] > 0) {
+        clearInterval(id);
+        removed[eventObject.transactionHash]--;
+        reject(
+          new Error(
+            `Event removed; probable chain reorg.  Event was ${eventObject.event}, transaction hash was ${transactionHash}`,
+          ),
+        );
+      }
+      const currentBlock = await web3.eth.getBlock('latest');
+      if (currentBlock.number - blockNumber > confirmedBlocks) {
+        confirmedBlocks = currentBlock.number - blockNumber;
+      }
+      if (confirmedBlocks >= CONFIRMATIONS) {
+        clearInterval(id);
+        logger.debug(
+          `Event ${eventObject.event} has been confirmed ${
+            currentBlock.number - blockNumber
+          } times`,
+        );
+        resolve(eventObject);
+      }
+    }, CONFIRMATION_POLL_TIME);
+  });
+}
+
+async function dequeueEvent(priority) {
+  queues[priority].shift();
+}
+
 async function queueManager(eventObject, eventArgs) {
+  if (eventObject.removed) {
+    // in this model we don't queue removals but we can use them to reject the event
+    // Note the event object and its removal have the same transactionHash.
+    // Also note that we can get more than one removal because the event could be re-mined
+    // and removed again - so we need to keep count of the removals.
+    if (!removed[eventObject.transactionHash]) removed[eventObject.transactionHash] = 0;
+    removed[eventObject.transactionHash]++; // store the removal; waitForConfirmation will read this and reject.
+    return;
+  }
   // First element of eventArgs must be the eventHandlers object
   const [eventHandlers, ...args] = eventArgs;
   // handlers contains the functions needed to handle particular types of event,
@@ -79,30 +116,23 @@ async function queueManager(eventObject, eventArgs) {
   }
   // pull up the priority for the event being handled (removers have identical priority)
   const priority = eventHandlers.priority[eventObject.event];
-  // if the event was removed then we have a chain reorg and need to reset our
-  // layer 2 state accordingly.
-  if (eventObject.removed) {
-    if (!eventHandlers.removers[eventObject.event]) {
-      logger.debug(`Unknown event removal ${eventObject.event} ignored`);
-      return;
-    }
-    logger.info(`Queueing event removal ${eventObject.event}`);
-    queues[priority].push(async () => {
-      await nextHigherPriorityQueueHasEmptied(priority); // prevent eventHandlers running until the higher priority queue has emptied
-      return eventHandlers.removers[eventObject.event](eventObject, args);
-    });
-    // otherwise queue the event for processing.
-  } else {
-    logger.info(`Queueing event ${eventObject.event}`);
-    queues[priority].push(async () => {
-      // await nextHigherPriorityQueueHasEmptied(priority); // prevent eventHandlers running until the higher priority queue has emptied
+  logger.info(
+    `Queueing event ${eventObject.event}, with transaction hash ${eventObject.transactionHash} and priority ${priority}`,
+  );
+  queues[priority].push(async () => {
+    // we won't even think about processing an event until it's been confirmed many times
+    try {
+      await waitForConfirmation(eventObject);
       return eventHandlers[eventObject.event](eventObject, args);
-    });
-  }
+    } catch (err) {
+      return logger.warn(err.message);
+    }
+  });
+  // }
   // the queue shouldn't get too long if we're keeping up with the blockchain.
   if (queues[priority].length > MAX_QUEUE)
     logger.warn(`The event queue has more than ${MAX_QUEUE} events`);
 }
 
 /* ignore unused exports */
-export { flushQueue, enqueueEvent, queueManager };
+export { flushQueue, enqueueEvent, queueManager, dequeueEvent, waitForConfirmation };

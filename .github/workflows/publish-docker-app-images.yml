@@ -1,0 +1,59 @@
+name: "Publish docker app images"
+on:
+  push:
+    branches:
+      - master
+      - westlad/ping-pong-test
+
+jobs:
+  release:
+    runs-on: ubuntu-18.04
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - uses: codfish/semantic-release-action@master
+      id: semantic
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+    - name: Login to docker registry
+      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $DOCKER_ACTOR --password-stdin
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        DOCKER_ACTOR: ${{ secrets.DOCKER_ACTOR }}
+
+    - run: echo ${{ steps.semantic.outputs.release-version }}
+
+    - name: Docker push latest
+      run: |
+        docker build -t ghcr.io/eyblockchain/nightfall3-proposer . -f proposer.Dockerfile
+        docker push ghcr.io/eyblockchain/nightfall3-proposer
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Docker push versioned
+      if: steps.semantic.outputs.new-release-published == 'true'
+      run: |
+        docker build -t ghcr.io/eyblockchain/nightfall3-proposer:$RELEASE_VERSION . -f proposer.Dockerfile
+        docker push ghcr.io/eyblockchain/nightfall3-proposer:$RELEASE_VERSION
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - run: echo ${{ steps.semantic.outputs.release-version }}
+
+    - name: Docker push latest
+      run: |
+        docker build -t ghcr.io/eyblockchain/nightfall3-user-local . -f user-local.Dockerfile
+        docker push ghcr.io/eyblockchain/nightfall3-user-local
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Docker push versioned
+      if: steps.semantic.outputs.new-release-published == 'true'
+      run: |
+        docker build -t ghcr.io/eyblockchain/nightfall3-user-local:$RELEASE_VERSION . -f user-local.Dockerfile
+        docker push ghcr.io/eyblockchain/nightfall3-user-local:$RELEASE_VERSION
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

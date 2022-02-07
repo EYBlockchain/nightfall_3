@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - master
+      - westlad/ping-pong-test
 
 jobs:
   release:
@@ -23,9 +24,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         DOCKER_ACTOR: ${{ secrets.DOCKER_ACTOR }}
 
-    - name: Build docker client image
-      run: docker build . -f client.Dockerfile
-
     - run: echo ${{ steps.semantic.outputs.release-version }}
 
     - name: Docker push version
@@ -36,8 +34,12 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Build docker zokrates worker image
-      run: docker build . -f worker.Dockerfile
+    - name: Docker push latest
+      run: |
+        docker build -t ghcr.io/eyblockchain/nightfall3-client . -f client.Dockerfile
+        docker push ghcr.io/eyblockchain/nightfall3-client
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - run: echo ${{ steps.semantic.outputs.release-version }}
 
@@ -49,8 +51,12 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Build docker deployer image
-      run: docker build . -f deployer.Dockerfile
+    - name: Docker push latest
+      run: |
+        docker build -t ghcr.io/eyblockchain/nightfall3-worker . -f worker.Dockerfile
+        docker push ghcr.io/eyblockchain/nightfall3-worker
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - run: echo ${{ steps.semantic.outputs.release-version }}
 
@@ -62,8 +68,12 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Build docker optimist image
-      run: docker build . -f optimist.Dockerfile
+    - name: Docker push latest
+      run: |
+        docker build -t ghcr.io/eyblockchain/nightfall3-deployer . -f deployer.Dockerfile
+        docker push ghcr.io/eyblockchain/nightfall3-deployer
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - run: echo ${{ steps.semantic.outputs.release-version }}
 
@@ -72,5 +82,12 @@ jobs:
       run: |
         docker build -t ghcr.io/eyblockchain/nightfall3-optimist:$RELEASE_VERSION . -f optimist.Dockerfile
         docker push ghcr.io/eyblockchain/nightfall3-optimist:$RELEASE_VERSION
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Docker push latest
+      run: |
+        docker build -t ghcr.io/eyblockchain/nightfall3-optimist . -f optimist.Dockerfile
+        docker push ghcr.io/eyblockchain/nightfall3-optimist
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

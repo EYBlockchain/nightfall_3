@@ -4,6 +4,7 @@ import { Header, Container, Divider } from 'semantic-ui-react';
 import { Redirect } from 'react-router-dom';
 import PropTypes from 'prop-types';
 
+import { ReactComponent as PolygonLogo } from '../../images/polygon.svg';
 import HeaderMenu from './components/header-menu/header-menu.view.jsx';
 import FooterMenu from './components/footer-menu/footer-menu.view.jsx';
 import TransactionsMenu from './components/transactions-menu/transactions-menu.view.jsx';
@@ -24,13 +25,15 @@ function Transactions({ login }) {
       <Header
         as="h1"
         style={{
-          fontSize: '4em',
-          fontWeight: 'normal',
+          fontSize: '2.5em',
+          fontFamily: 'verdana',
+          fontWeight: 'bold',
           marginBottom: 0,
           marginTop: '1em',
         }}
       >
-        Nightfall Client
+        <PolygonLogo width="250px" height="100px" />
+        Nightfall Wallet
       </Header>
       <Divider />
       <TransactionsMenu />

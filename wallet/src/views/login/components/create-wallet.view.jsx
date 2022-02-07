@@ -39,7 +39,7 @@ function CreateWalletModal({ modalEnable, handleClickOnImport, toggleModalEnable
 
   return (
     <Modal open={modalEnable}>
-      <Modal.Header>Enter Nightfall Mnemonic</Modal.Header>
+      <Modal.Header>Enter Polygon Nightfall Mnemonic</Modal.Header>
       <Modal.Content>
         <Form warning>
           <Form.Field>
@@ -55,12 +55,16 @@ function CreateWalletModal({ modalEnable, handleClickOnImport, toggleModalEnable
           <Grid>
             <Grid.Column width={12}>
               <Form.Field>
-                <TextArea value={mnemonic} style={{ minheight: 100 }} />
+                <TextArea
+                  value={mnemonic}
+                  onChange={event => setMnemonic(event.target.value.replace(/\s+/g, ' '))}
+                  style={{ minheight: 100 }}
+                />
               </Form.Field>
             </Grid.Column>
             <Grid.Column width={4}>
               <Form.Field>
-                <Button color="green" onClick={newMnemonic}>
+                <Button primary onClick={newMnemonic}>
                   <Icon name="question" />
                   New
                 </Button>
@@ -82,7 +86,7 @@ function CreateWalletModal({ modalEnable, handleClickOnImport, toggleModalEnable
               <Icon name="cancel" />
               Cancel
             </Button>
-            <Button floated="right" color="blue" disabled={mnemonic === ''} onClick={handleSubmit}>
+            <Button floated="right" primary disabled={mnemonic === ''} onClick={handleSubmit}>
               <Icon name="send" />
               Submit
             </Button>

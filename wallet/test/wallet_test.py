@@ -5,8 +5,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import TimeoutException
-from time import sleep    
 import sys
+from time import sleep
 
 from helpers.find_elements import *
 from helpers.selenium import *
@@ -14,78 +14,114 @@ from helpers.metamask import *
 from helpers.wallet import *
 from constants import *
 
+# import tests
+from tx_test import *
+from effect_test import *
+from login_test import *
+from token_test import *
+
 # virtual display
 from pyvirtualdisplay import Display
 
+testEnvironment="localhost"
+testToRun = { 
+    'all': True,
+    'effects': False,
+    'tokens': False,
+    'tx': False,
+    'login': False,
+}
 for arg in sys.argv:
     if arg.lower() == "server":
         display = Display(visible=0, size=(1920, 1080))
         display.start()
+    if arg.lower() == "docker":
+        testEnvironment="docker"
+    if arg.lower() == "ropsten":
+        testEnvironment="ropsten"
+    if arg.lower() == "effects":
+        testToRun['effects'] = True
+        testToRun['all'] = False
+    if arg.lower() == "tokens":
+        testToRun['tokens'] = True
+        testToRun['all'] = False
+    if arg.lower() == "tx":
+        testToRun['tx'] = True
+        testToRun['all'] = False
+    if arg.lower() == "login":
+        testToRun['tokens'] = True
+        testToRun['all'] = False
 
-###################
-# Load selenium  #
-###################
-# Load chrome driver
-driver = initializeSelenium()
 
-# Load find elements with the default wait
-defualtWaitSeconds = 5
-defaultWaitObject = WebDriverWait(driver, defualtWaitSeconds)
-findElementsInstance = findElements(defaultWaitObject)
+#####################
+# Declare variables #
+#####################
+driver=None
+findElementsInstance=None
+nightfallTab=None
+metamaskTab=None
+networkConfig = networkConfigLocalhost
+walletUrl = walletUrlLocalhost
 
-# Identify the current tabs open
-nightfallTab=driver.window_handles[1]
-metamaskTab=driver.window_handles[0]
-driver.switch_to.window(metamaskTab)
+try:
+  ###################
+  # Load selenium  #
+  ###################
+  # Load chrome driver
+  driver = initializeSelenium()
+  
+  # Load find elements with the default wait
+  defaultWaitSeconds = 5
+  defaultWaitObject = WebDriverWait(driver, defaultWaitSeconds)
+  findElementsInstance = findElements(defaultWaitObject)
+  
+  # Identify the current tabs open
+  nightfallTab=driver.window_handles[1]
+  metamaskTab=driver.window_handles[0]
+  driver.switch_to.window(metamaskTab)
+  
+  # Configure variables depending on test environment
+  if testEnvironment == "docker":
+      networkConfig = networkConfigDocker
+      walletUrl = walletUrlDocker
+  elif testEnvironment == "ropsten":
+      networkConfig = networkConfigRopsten
+      walletUrl = walletUrlRopsten
+     
+  
+  ###################
+  # Load Metamask   #
+  ###################
+  initializeMetamask(driver, findElementsInstance, metamaskConfig)
+  #deleteNetworkMetamask(driver, findElementsInstance, deleteNetworkConfig)
+  #selectTestNetworkMetamask(driver, findElementsInstance, networkConfigRopsten)
+  selectNetworkMetamask(driver, findElementsInstance, networkConfig)
+  #addEthAccountMetamask(driver, findElementsInstance, ethAccount1Params)
+  addEthAccountMetamask(driver, findElementsInstance, ethAccount2Params)
+  
+  # Add tokens to metamask
+  #addTokenMetamask("0x4232AF76301fd6c2B144A7A5A7796331B2A43D90", findElementsInstance)
+  ########################
+  # Log in wallet #
+  ########################
+  loginNightfallWallet(driver, findElementsInstance, metamaskTab, nightfallTab, walletUrl)
+  testEthAddress = findElementsInstance.element_exist_xpath('//*[@id="wallet-info-cell-ethaddress"]').text
+  assert(testEthAddress.lower() == ethAccount2Params["ethereumAddress"].lower())
 
-###################
-# Load Metamask   #
-###################
-initializeMetamask(driver, findElementsInstance, metamaskConfig)
-deleteNetworkMetamask(driver, findElementsInstance, deleteNetworkConfig)
-selectNetworkMetamask(driver, findElementsInstance, networkConfig)
-addEthAccountMetamask(driver, findElementsInstance, ethAccount2Params)
+except Exception:
+  print("FAILED")
 
-# Add tokens to metamask
-#addTokenMetamask("0x4232AF76301fd6c2B144A7A5A7796331B2A43D90", findElementsInstance)
-
+  
 ########################
-# Log in wallet #
+# Start Tests          
 ########################
-loginNightfallWallet(driver, findElementsInstance, metamaskTab, nightfallTab, walletURL)
-testEthAddress = findElementsInstance.element_exist_xpath('//*[@id="wallet-info-cell-ethaddress"]').text
-assert(testEthAddress.lower() == ethAccount2Params["ethereumAddress"].lower())
-
-########################
-# Use wallet   #
-########################
-#tokenTypes = ["erc20", "erc721", "erc1155"]
-# TODO: Waiting for all toke types to be correctly configured. For now, only ERC20 works
-tokenTypes = ["erc20"]
-txTypes = ["Deposit", "Transfer", "Withdraw"]
-
-txParams = {
-  "amount": 10,
-  "fee": 10,
-}
-
-for tokenType in tokenTypes:
-  txParams["tokenType"] = tokenType
-  txParams["tokenAddress"] =  tokens[txParams["tokenType"]]
-
-  for txType in txTypes:
-    txParams["txType"] = txType
-
-    print(tokenType, txType)
-    submitTxWallet(txParams, findElementsInstance, driver, metamaskTab, nightfallTab, cancel=1)
-    print(tokenType, txType)
-    sleep(10)
-    submitTxWallet(txParams, findElementsInstance, driver, metamaskTab, nightfallTab)
-    sleep(10)
-    print(tokenType, txType)
-    submitTxWallet(txParams, findElementsInstance, driver, metamaskTab, nightfallTab)
-    sleep(10)
-
-    # Instant withdraw
+if testToRun['all'] or testToRun['effects']:
+  effectTest(findElementsInstance, driver, metamaskTab, nightfallTab, walletUrl)
+if testToRun['all'] or testToRun['login']:
+  loginTest(findElementsInstance, driver, metamaskTab, nightfallTab)
+if testToRun['all'] or testToRun['tokens']:
+  tokenTest(findElementsInstance, driver, metamaskTab, nightfallTab)
+if testToRun['all'] or testToRun['tx']:
+  txTest(findElementsInstance, driver, metamaskTab, nightfallTab)
 
 driver.quit()

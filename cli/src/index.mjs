@@ -1,6 +1,8 @@
 import figlet from 'figlet';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
 import clear from 'clear';
 import Web3 from 'web3';
 import Table from 'cli-table';
@@ -8,10 +10,13 @@ import { generateMnemonic } from 'bip39';
 import Nf3 from '../lib/nf3.mjs';
 import { toBaseUnit } from '../lib/units.mjs';
 import { getDecimals } from '../lib/tokens.mjs';
+import { setEnvironment, getCurrentEnvironment } from '../lib/environment.mjs';
 
 const web3 = new Web3('ws://localhost:8546');
 let latestWithdrawTransactionHash; // we'll remember this globally so it can be used for instant withdrawals
 
+const argv = yargs(hideBin(process.argv)).parse();
+const { environment } = argv;
 /**
 Initialises the CLI
 */
@@ -45,7 +50,16 @@ async function askQuestions(nf3) {
       name: 'task',
       type: 'list',
       message: 'What would you like to do?',
-      choices: ['Deposit', 'Transfer', 'Withdraw', 'Instant-Withdraw', 'View my wallet', 'Exit'],
+      choices: [
+        'Deposit',
+        'Transfer',
+        'Withdraw',
+        'Instant-Withdraw',
+        'View my wallet',
+        'View my pending deposits',
+        'View my pending spent',
+        'Exit',
+      ],
     },
     {
       name: 'recipientAddress',
@@ -56,19 +70,11 @@ async function askQuestions(nf3) {
       validate: input => web3.utils.isAddress(input),
     },
     {
-      name: 'pkdX',
+      name: 'compressedPkd',
       type: 'input',
-      message: "Provide the x coordinate of the recipient's transmission key",
-      default: 'my key',
+      message: "Provide the compressed recipient's transmission key",
+      default: nf3.zkpKeys.compressedPkd,
       when: answers => answers.task === 'Transfer',
-      validate: input => web3.utils.isHexStrict(input) || input === 'my key',
-    },
-    {
-      name: 'pkdY',
-      type: 'input',
-      message: "Provide the y coordinate of the recipient's transmission key",
-      default: 'my key',
-      when: answers => answers.task === 'Transfer' && answers.pkdX !== 'my key',
       validate: input => web3.utils.isHexStrict(input),
     },
     {
@@ -128,19 +134,19 @@ async function askQuestions(nf3) {
 /**
 Simple function to print out the balances object
 */
-function printBalances(balances) {
-  console.log('BALANCES', balances);
+function printBalances(balances, type) {
+  console.log(`${type} BALANCES ${balances}`);
   if (Object.keys(balances).length === 0) {
     console.log('You have no balances yet - try depositing some tokens into Layer 2 from Layer 1');
     return;
   }
   // eslint-disable-next-line guard-for-in
   for (const compressedPkd in balances) {
-    const table = new Table({ head: ['ERC Contract Address', 'Layer 2 Balance'] });
+    const table = new Table({ head: ['ERC Contract Address', `${type} Layer 2 Balance`] });
     Object.keys(balances[compressedPkd]).forEach(ercAddress =>
-      table.push({ [ercAddress]: balances[compressedPkd][ercAddress] }),
+      table.push({ [ercAddress]: balances[compressedPkd][ercAddress][0] }),
     );
-    console.log(chalk.yellow('Balances of user', compressedPkd));
+    console.log(chalk.yellow(`${type} Balances of user ${compressedPkd}`));
     console.log(table.toString());
   }
 }
@@ -158,12 +164,10 @@ async function loop(nf3, ercAddress) {
     value = 0,
     tokenId = '0x00',
     privateKey,
-    pkdX,
-    pkdY,
+    compressedPkd,
     withdrawTransactionHash,
     offchain,
   } = await askQuestions(nf3);
-  let [x, y] = [pkdX, pkdY]; // make these variable - we may need to change them
   if (privateKey) {
     await nf3.setEthereumSigningKey(privateKey); // we'll remember the key so we don't keep asking for it
     nf3.addPeer('http://optimist1:80'); // add a Proposer for direct transfers and withdraws
@@ -183,7 +187,6 @@ async function loop(nf3, ercAddress) {
         value.toString(),
         await getDecimals(ercAddress[tokenType], tokenType, web3),
       );
-      if (x === 'my key') [x, y] = nf3.zkpKeys.pkd;
       try {
         receiptPromise = nf3.transfer(
           offchain,
@@ -191,7 +194,7 @@ async function loop(nf3, ercAddress) {
           tokenType,
           valueWei,
           tokenId,
-          [x, y], // this holds the recipient's pkd point.
+          compressedPkd,
           fee,
         );
       } catch (err) {
@@ -242,7 +245,13 @@ async function loop(nf3, ercAddress) {
       }
       break;
     case 'View my wallet':
-      printBalances(await nf3.getLayer2Balances());
+      printBalances(await nf3.getLayer2Balances(), '');
+      return [false, null];
+    case 'View my pending deposits':
+      printBalances(await nf3.getLayer2PendingDepositBalances(), 'Pending Deposit');
+      return [false, null];
+    case 'View my pending spent':
+      printBalances(await nf3.getLayer2PendingSpentBalances(), 'Pending Spent');
       return [false, null];
     case 'Exit':
       return [true, null];
@@ -252,15 +261,16 @@ async function loop(nf3, ercAddress) {
   return [false, receiptPromise];
 }
 
-async function main() {
+async function main(testEnvironment) {
   // intialisation
   init();
-  const nf3 = new Nf3(
-    'http://localhost:8080',
-    'http://localhost:8081',
-    'ws://localhost:8082',
-    'ws://localhost:8546',
-  ); // create an nf3 instance
+  if (typeof testEnvironment !== 'undefined') {
+    setEnvironment(testEnvironment);
+  } else {
+    setEnvironment('Localhost');
+  }
+  const nf3Env = getCurrentEnvironment().currentEnvironment;
+  const nf3 = new Nf3(nf3Env.web3WsUrl, '', nf3Env);
   const mnemonic = generateMnemonic();
   await nf3.init(mnemonic);
   const erc20Address = await nf3.getContractAddress('ERC20Mock');
@@ -283,4 +293,4 @@ async function main() {
   nf3.close();
 }
 
-main();
+main(environment);

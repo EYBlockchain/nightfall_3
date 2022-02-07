@@ -6,6 +6,7 @@ leafCount values in the Block class
 */
 import logger from 'common-files/utils/logger.mjs';
 import config from 'config';
+import { dequeueEvent, enqueueEvent } from 'common-files/utils/event-queue.mjs';
 import {
   addTransactionsToMemPool,
   deleteBlock,
@@ -163,6 +164,10 @@ async function rollbackEventHandler(data) {
     un => !validTransactionNullifiers.includes(un) && !nullifierArray.includes(un),
   );
   await deleteNullifiers(deletedNullifiers);
+  await dequeueEvent(2); // Remove an event from the stopQueue.
+  // A Rollback triggers a NewCurrentProposer event which shoudl trigger queue[0].end()
+  // But to be safe we enqueue a helper event to guarantee queue[0].end() runs.
+  await enqueueEvent(() => logger.info(`Rollback Completed`), 0);
 }
 
 export default rollbackEventHandler;

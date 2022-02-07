@@ -1,4 +1,3 @@
-const BN256G2 = artifacts.require('BN256G2');
 const Verifier = artifacts.require('Verifier.sol');
 const Shield = artifacts.require('Shield.sol');
 const MerkleTree_Stateless = artifacts.require('MerkleTree_Stateless.sol');
@@ -13,8 +12,6 @@ const State = artifacts.require('State.sol');
 
 module.exports = function(deployer) {
   deployer.then(async () => {
-    await deployer.deploy(BN256G2);
-    await deployer.link(BN256G2, Verifier);
     await deployer.deploy(Verifier);
     await deployer.link(Verifier, [Challenges,ChallengesUtil]);
     await deployer.deploy(MiMC);

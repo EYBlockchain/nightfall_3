@@ -4,6 +4,10 @@ import WebSocket from 'ws';
 import EventEmitter from 'events';
 import { Mutex } from 'async-mutex';
 import { approve } from './tokens.mjs';
+import erc20 from './abis/ERC20.mjs';
+import erc721 from './abis/ERC721.mjs';
+import erc1155 from './abis/ERC1155.mjs';
+import { ENVIRONMENTS } from './constants.mjs';
 
 /**
 @class
@@ -56,20 +60,20 @@ class Nf3 {
 
   mnemonic = {};
 
-  constructor(
-    clientBaseUrl,
-    optimistBaseUrl,
-    optimistWsUrl,
-    web3WsUrl,
-    ethereumSigningKey,
-    zkpKeys,
-  ) {
-    this.clientBaseUrl = clientBaseUrl;
-    this.optimistBaseUrl = optimistBaseUrl;
-    this.optimistWsUrl = optimistWsUrl;
+  contracts = { ERC20: erc20, ERC721: erc721, ERC1155: erc1155 };
+
+  currentEnvironment;
+
+  notConfirmed = 0;
+
+  constructor(web3WsUrl, ethereumSigningKey, environment = ENVIRONMENTS.localhost, zkpKeys) {
+    this.clientBaseUrl = environment.clientApiUrl;
+    this.optimistBaseUrl = environment.optimistApiUrl;
+    this.optimistWsUrl = environment.optimistWsUrl;
     this.web3WsUrl = web3WsUrl;
     this.ethereumSigningKey = ethereumSigningKey;
     this.zkpKeys = zkpKeys;
+    this.currentEnvironment = environment;
   }
 
   /**
@@ -78,7 +82,7 @@ class Nf3 {
   @returns {Promise}
   */
   async init(mnemonic) {
-    this.setWeb3Provider();
+    await this.setWeb3Provider();
     this.shieldContractAddress = await this.getContractAddress('Shield');
     this.proposersContractAddress = await this.getContractAddress('Proposers');
     this.challengesContractAddress = await this.getContractAddress('Challenges');
@@ -162,13 +166,18 @@ class Nf3 {
       // if we don't have a nonce, we must get one from the ethereum client
       if (!this.nonce) this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
 
+      let gasPrice = 20000000000;
+      const gas = (await this.web3.eth.getBlock('latest')).gasLimit;
+      const blockGasPrice = 2 * Number(await this.web3.eth.getGasPrice());
+      if (blockGasPrice > gasPrice) gasPrice = blockGasPrice;
+
       tx = {
         from: this.ethereumAddress,
         to: contractAddress,
         data: unsignedTransaction,
         value: fee,
-        gas: 10000000,
-        gasPrice: 10000000000,
+        gas,
+        gasPrice,
         nonce: this.nonce,
       };
       this.nonce++;
@@ -176,8 +185,27 @@ class Nf3 {
 
     if (this.ethereumSigningKey) {
       const signed = await this.web3.eth.accounts.signTransaction(tx, this.ethereumSigningKey);
-      return this.web3.eth.sendSignedTransaction(signed.rawTransaction);
+      // rather than waiting until we have a receipt, wait until we have enough confirmation blocks
+      // then return the receipt.
+      // TODO does this still work if there is a chain reorg or do we have to handle that?
+      return new Promise(resolve => {
+        console.log(`Confirming transaction ${signed.transactionHash}`);
+        this.notConfirmed++;
+        this.web3.eth
+          .sendSignedTransaction(signed.rawTransaction)
+          .on('confirmation', (number, receipt) => {
+            if (number === 12) {
+              this.notConfirmed--;
+              console.log(
+                `Transaction ${receipt.transactionHash} has been confirmed ${number} times.`,
+                `Number of unconfirmed transactions is ${this.notConfirmed}`,
+              );
+              resolve(receipt);
+            }
+          });
+      });
     }
+    // TODO add wait for confirmations to the wallet functionality
     return this.web3.eth.sendTransaction(tx);
   }
 
@@ -242,15 +270,23 @@ class Nf3 {
   @returns {Promise} Resolves into the Ethereum transaction receipt.
   */
   async deposit(ercAddress, tokenType, value, tokenId, fee = this.defaultFee) {
-    await approve(
-      ercAddress,
-      this.ethereumAddress,
-      this.shieldContractAddress,
-      tokenType,
-      value,
-      this.web3,
-    );
-
+    let txDataToSign;
+    try {
+      txDataToSign = await approve(
+        ercAddress,
+        this.ethereumAddress,
+        this.shieldContractAddress,
+        tokenType,
+        value,
+        this.web3,
+        !!this.ethereumSigningKey,
+      );
+    } catch (err) {
+      throw new Error(err);
+    }
+    if (txDataToSign) {
+      await this.submitTransaction(txDataToSign, ercAddress, 0);
+    }
     const res = await axios.post(`${this.clientBaseUrl}/deposit`, {
       ercAddress,
       tokenId,
@@ -278,8 +314,7 @@ class Nf3 {
   @param {string} tokenId - The ID of an ERC721 or ERC1155 token.  In the case of
   an 'ERC20' coin, this should be set to '0x00'.
   @param {object} keys - The ZKP private key set of the sender.
-  @param {array} pkd - The transmission key of the recipient (this is a curve point
-  represented as an array of two hex strings).
+  @param {string} compressedPkd - The compressed transmission key of the recipient
   @returns {Promise} Resolves into the Ethereum transaction receipt.
   */
   async transfer(
@@ -288,7 +323,7 @@ class Nf3 {
     tokenType,
     value,
     tokenId,
-    pkd,
+    compressedPkd,
     fee = this.defaultFee,
   ) {
     const res = await axios.post(`${this.clientBaseUrl}/transfer`, {
@@ -297,12 +332,15 @@ class Nf3 {
       tokenId,
       recipientData: {
         values: [value],
-        recipientPkds: [pkd],
+        recipientCompressedPkds: [compressedPkd],
       },
       nsk: this.zkpKeys.nsk,
       ask: this.zkpKeys.ask,
       fee,
     });
+    if (res.data.error && res.data.error === 'No suitable commitments') {
+      throw new Error('No suitable commitments');
+    }
     if (!offchain) {
       return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, fee);
     }
@@ -385,11 +423,15 @@ class Nf3 {
   @param {number} fee - the amount being paid for the instant withdrawal service
   */
   async requestInstantWithdrawal(withdrawTransactionHash, fee) {
-    // set the instant withdrawal fee
-    const res = await axios.post(`${this.clientBaseUrl}/set-instant-withdrawal`, {
-      transactionHash: withdrawTransactionHash,
-    });
-    return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, fee);
+    try {
+      // set the instant withdrawal fee
+      const res = await axios.post(`${this.clientBaseUrl}/set-instant-withdrawal`, {
+        transactionHash: withdrawTransactionHash,
+      });
+      return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, fee);
+    } catch {
+      return null;
+    }
   }
 
   /**
@@ -496,6 +538,21 @@ class Nf3 {
   }
 
   /**
+  Change current proposer.
+  It will use the address of the Ethereum Signing key that is holds to change the current
+  proposer.
+  @method
+  @async
+  @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
+  */
+  async changeCurrentProposer() {
+    const res = await axios.get(`${this.optimistBaseUrl}/proposer/change`, {
+      address: this.ethereumAddress,
+    });
+    return this.submitTransaction(res.data.txDataToSign, this.proposersContractAddress, 0);
+  }
+
+  /**
   Withdraw the bond left by the proposer.
   It will use the address of the Ethereum Signing key that is holds to withdraw the bond.
   @method
@@ -560,6 +617,7 @@ class Nf3 {
   @async
   */
   async startProposer() {
+    const newGasBlockEmitter = new EventEmitter();
     const connection = new WebSocket(this.optimistWsUrl);
     this.websockets.push(connection); // save so we can close it properly later
     connection.onopen = () => {
@@ -569,10 +627,16 @@ class Nf3 {
       const msg = JSON.parse(message.data);
       const { type, txDataToSign } = msg;
       if (type === 'block') {
-        await this.submitTransaction(txDataToSign, this.stateContractAddress, this.BLOCK_STAKE);
+        const res = await this.submitTransaction(
+          txDataToSign,
+          this.stateContractAddress,
+          this.BLOCK_STAKE,
+        );
+        newGasBlockEmitter.emit('gascost', res.gasUsed);
       }
     };
     // add this proposer to the list of peers that can accept direct transfers and withdraws
+    return newGasBlockEmitter;
   }
 
   /**
@@ -675,48 +739,85 @@ class Nf3 {
   }
 
   /**
-  Get if it's a valid withdraw transaction for finalising the
-  withdrawal of funds to L1 (only relevant for ERC20).
+  Returns the balance of tokens held in layer 2
   @method
   @async
-  @param {string} withdrawTransactionHash - the hash of the Layer 2 transaction in question
+  @param {Array} ercList - list of erc contract addresses to filter.
+  @param {Boolean} filterByCompressedPkd - flag to indicate if request is filtered
+  ones compressed pkd
+  @returns {Promise} This promise resolves into an object whose properties are the
+  addresses of the ERC contracts of the tokens held by this account in Layer 2. The
+  value of each propery is the number of tokens originating from that contract.
   */
-  async isValidWithdrawal(withdrawTransactionHash) {
-    let res;
-    let valid = false;
+  async getLayer2Balances(ercList, filterByCompressedPkd) {
+    const res = await axios.get(`${this.clientBaseUrl}/commitment/balance`, {
+      params: {
+        compressedPkd: filterByCompressedPkd === true ? this.zkpKeys.compressedPkd : null,
+        ercList,
+      },
+    });
+    return res.data.balance;
+  }
 
-    try {
-      res = await axios.get(
-        `${this.optimistBaseUrl}/block/transaction-hash/${withdrawTransactionHash}`,
-      );
-    } catch (e) {
-      // transaction is not in block yet
-      valid = false;
-    }
-
-    if (res) {
-      const { block, transactions, index } = res.data;
-      res = await axios.post(`${this.clientBaseUrl}/valid-withdrawal`, {
-        block,
-        transactions,
-        index,
-      });
-      valid = res.data.valid;
-    }
-
-    return valid;
+  /**
+  Returns the balance details of tokens held in layer 2
+  @method
+  @async
+  @param {Array} ercList - list of erc contract addresses to filter.
+  @returns {Promise} This promise resolves into an object whose properties are the
+  addresses of the ERC contracts of the tokens held by this account in Layer 2. The
+  value of each propery is the number of tokens originating from that contract.
+  */
+  async getLayer2BalancesDetails(ercList) {
+    const res = await axios.get(`${this.clientBaseUrl}/commitment/balance-details`, {
+      params: {
+        compressedPkd: this.zkpKeys.compressedPkd,
+        ercList,
+      },
+    });
+    return res.data.balance;
   }
 
   /**
   Returns the balance of tokens held in layer 2
   @method
   @async
-  @returns {Promise} This promise rosolves into an object whose properties are the
+  @param {Array} ercList - list of erc contract addresses to filter.
+  @param {Boolean} filterByCompressedPkd - flag to indicate if request is filtered
+  ones compressed pkd
+  @returns {Promise} This promise resolves into an object whose properties are the
   addresses of the ERC contracts of the tokens held by this account in Layer 2. The
-  value of each propery is the number of tokens originating from that contract.
+  value of each propery is the number of tokens pending deposit from that contract.
   */
-  async getLayer2Balances() {
-    const res = await axios.get(`${this.clientBaseUrl}/commitment/balance`);
+  async getLayer2PendingDepositBalances(ercList, filterByCompressedPkd) {
+    const res = await axios.get(`${this.clientBaseUrl}/commitment/pending-deposit`, {
+      params: {
+        compressedPkd: filterByCompressedPkd === true ? this.zkpKeys.compressedPkd : null,
+        ercList,
+      },
+    });
+    return res.data.balance;
+  }
+
+  /**
+  Returns the balance of tokens held in layer 2
+  @method
+  @async
+  @param {Array} ercList - list of erc contract addresses to filter.
+  @param {Boolean} filterByCompressedPkd - flag to indicate if request is filtered
+  ones compressed pkd
+  @returns {Promise} This promise resolves into an object whose properties are the
+  addresses of the ERC contracts of the tokens held by this account in Layer 2. The
+  value of each propery is the number of tokens pending spent (transfer & withdraw)
+  from that contract.
+  */
+  async getLayer2PendingSpentBalances(ercList, filterByCompressedPkd) {
+    const res = await axios.get(`${this.clientBaseUrl}/commitment/pending-spent`, {
+      params: {
+        compressedPkd: filterByCompressedPkd === true ? this.zkpKeys.compressedPkd : null,
+        ercList,
+      },
+    });
     return res.data.balance;
   }
 
@@ -749,12 +850,14 @@ class Nf3 {
   /**
   Set a Web3 Provider URL
   */
-  setWeb3Provider() {
+  async setWeb3Provider() {
     this.web3 = new Web3(this.web3WsUrl);
+    this.web3.eth.transactionBlockTimeout = 200;
+    this.web3.eth.transactionConfirmationBlocks = 12;
     if (typeof window !== 'undefined') {
       if (window.ethereum && this.ethereumSigningKey === '') {
         this.web3 = new Web3(window.ethereum);
-        window.ethereum.send('eth_requestAccounts');
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
       } else {
         // Metamask not available
         throw new Error('No Web3 provider found');

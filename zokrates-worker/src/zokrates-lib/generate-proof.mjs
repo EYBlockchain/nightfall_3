@@ -34,8 +34,8 @@ export default async function generateProof(
   provingKeyPath,
   codePath,
   witnessPath,
-  provingScheme = 'gm17',
-  backend = 'ark',
+  provingScheme = 'g16',
+  backend = 'bellman',
   options = {},
 ) {
   if (!fs.existsSync(codePath)) {

@@ -1,11 +1,11 @@
 import Web3 from 'web3';
-import axios from 'axios';
 import chai from 'chai';
 import compose from 'docker-compose';
 import path from 'path';
 import config from 'config';
 import { fileURLToPath } from 'url';
 import rand from '../common-files/utils/crypto/crypto-random.mjs';
+import { ENVIRONMENTS } from '../cli/lib/constants.mjs';
 
 const { dirname } = path;
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -15,10 +15,34 @@ let web3;
 // This will be a mapping of privateKeys to nonces;
 const nonceDict = {};
 const USE_INFURA = process.env.USE_INFURA === 'true';
+const USE_ROPSTEN_NODE = process.env.USE_ROPSTEN_NODE === 'true';
 const { INFURA_PROJECT_SECRET, INFURA_PROJECT_ID } = process.env;
 let isSubmitTxLocked = false;
 
-export function connectWeb3(url = 'ws://localhost:8546') {
+export const getCurrentEnvironment = () => {
+  let environment;
+  switch (process.env.network) {
+    case 'localhost':
+      environment = ENVIRONMENTS.localhost;
+      break;
+    case 'ropsten':
+      environment = ENVIRONMENTS.ropsten;
+      break;
+    case 'mainnet':
+      environment = ENVIRONMENTS.mainnet;
+      break;
+    default:
+      environment = ENVIRONMENTS.localhost;
+      break;
+  }
+  return environment;
+};
+
+export function connectWeb3(url) {
+  if (!url) {
+    // eslint-disable-next-line no-param-reassign
+    url = process.env.web3WsUrl;
+  }
   return new Promise(resolve => {
     console.log('Blockchain Connecting ...');
 
@@ -96,7 +120,7 @@ export async function submitTransaction(
       const accountAddress = await web3.eth.accounts.privateKeyToAccount(privateKey);
       nonce = await web3.eth.getTransactionCount(accountAddress.address);
     }
-    if (USE_INFURA) {
+    if (USE_INFURA || USE_ROPSTEN_NODE) {
       // get gaslimt from latest block as gaslimt may vary
       gas = (await web3.eth.getBlock('latest')).gasLimit;
       const blockGasPrice = Number(await web3.eth.getGasPrice());
@@ -113,7 +137,22 @@ export async function submitTransaction(
     const signed = await web3.eth.accounts.signTransaction(tx, privateKey);
     nonce++;
     nonceDict[privateKey] = nonce;
+    // receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction);
     receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction);
+    // the confirmations Promivent doesn't seem to terminate in Ganache, so we'll
+    // just count 12 blocks before returning. TODO this won't handle a chain reorg.
+    console.log('waiting for twelve confirmations of transaction');
+    const startBlock = await web3.eth.getBlock('latest');
+    await new Promise(resolve => {
+      const id = setInterval(async () => {
+        const block = await web3.eth.getBlock('latest');
+        if (block.number - startBlock.number > 12) {
+          clearInterval(id);
+          resolve();
+        }
+      }, 1000);
+    });
+    console.log('transaction confirmed');
   } finally {
     isSubmitTxLocked = false;
   }
@@ -122,11 +161,18 @@ export async function submitTransaction(
 
 // This only works with Ganache but it can move block time forwards
 export async function timeJump(secs) {
-  axios.post('http://localhost:8546', {
-    id: 1337,
+  await web3.currentProvider.send({
     jsonrpc: '2.0',
     method: 'evm_increaseTime',
     params: [secs],
+    id: 0,
+  });
+
+  await web3.currentProvider.send({
+    jsonrpc: '2.0',
+    method: 'evm_mine',
+    params: [],
+    id: 0,
   });
 }
 
@@ -155,11 +201,6 @@ export async function createBadBlock(badBlockType, block, transactions, args) {
     case 'IncorrectHistoricRoot': {
       // Replace the historic root with a wrong historic root
       badTransactions[1].historicRootBlockNumberL2[0] = (await rand(8)).hex();
-      break;
-    }
-    case 'IncorrectPublicInputHash': {
-      // if both tokenID and value are 0 for deposit, then this is an invalid deposit transaction
-      badTransactions[0].publicInputHash = (await rand(32)).hex();
       break;
     }
     case 'IncorrectProof': {
@@ -302,10 +343,30 @@ export const sendTransactions = async (transactions, submitArgs) => {
   return receiptArr;
 };
 
-export const waitForEvent = async (eventLogs, expectedEvents) => {
-  while (eventLogs.length < expectedEvents.length) {
+export const expectTransaction = res => {
+  expect(res).to.have.property('transactionHash');
+  expect(res).to.have.property('blockHash');
+};
+
+export const depositNTransactions = async (nf3, N, ercAddress, tokenType, value, tokenId, fee) => {
+  const depositTransactions = [];
+  for (let i = 0; i < N; i++) {
+    // eslint-disable-next-line no-await-in-loop
+    const res = await nf3.deposit(ercAddress, tokenType, value, tokenId, fee);
+    expectTransaction(res);
+    depositTransactions.push(res);
+  }
+  return depositTransactions;
+};
+
+export const waitForEvent = async (eventLogs, expectedEvents, count = 1) => {
+  const length = count !== 1 ? count : expectedEvents.length;
+  let timeout = 10;
+  while (eventLogs.length < length) {
     // eslint-disable-next-line no-await-in-loop
     await new Promise(resolve => setTimeout(resolve, 3000));
+    timeout--;
+    if (timeout === 0) throw new Error('Timeout in waitForEvent');
   }
 
   while (eventLogs[0] !== expectedEvents[0]) {
@@ -315,10 +376,12 @@ export const waitForEvent = async (eventLogs, expectedEvents) => {
 
   expect(eventLogs[0]).to.equal(expectedEvents[0]);
 
-  for (let i = 0; i < expectedEvents.length; i++) {
+  for (let i = 0; i < length; i++) {
     eventLogs.shift();
   }
 
+  // Have to wait here as client block proposal takes longer now
+  await new Promise(resolve => setTimeout(resolve, 3000));
   return eventLogs;
 };
 

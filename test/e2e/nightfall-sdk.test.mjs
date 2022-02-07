@@ -1,132 +1,274 @@
 import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
-// import config from 'config';
 import Nf3 from '../../cli/lib/nf3.mjs';
+import { getERCInfo, approve } from '../../cli/lib/tokens.mjs';
 import {
   getBalance,
   connectWeb3,
   closeWeb3Connection,
   topicEventMapping,
   timeJump,
+  waitForEvent,
+  expectTransaction,
+  depositNTransactions,
+  getCurrentEnvironment,
 } from '../utils.mjs';
-// import { generateKeys } from '../../nightfall-client/src/services/keys.mjs';
-
-const { BLOCKCHAIN_TESTNET_URL } = process.env;
+import {
+  ethereumSigningKeyUser1,
+  ethereumSigningKeyUser2,
+  ethereumSigningKeyProposer1,
+  ethereumSigningKeyProposer2,
+  ethereumSigningKeyLiquidityProvider,
+  ethereumSigningKeyChallenger,
+  txPerBlock,
+  fee,
+  value,
+  bond,
+  gasCosts,
+  tokenId,
+  tokenType,
+  tokenTypeERC721,
+  tokenTypeERC1155,
+  mnemonicUser1,
+  mnemonicUser2,
+  mnemonicProposer,
+  mnemonicLiquidityProvider,
+  mnemonicChallenger,
+  BLOCK_STAKE,
+} from '../constants.mjs';
 
 const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
+const environment = getCurrentEnvironment();
+const { web3WsUrl } = process.env;
 
 describe('Testing the Nightfall SDK', () => {
-  const ethereumSigningKeyUser1 =
-    '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e';
-  const ethereumSigningKeyUser2 =
-    '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e';
-  const ethereumSigningKeyProposer =
-    '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d';
-  const ethereumSigningKeyChallenger =
-    '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb';
-  const ethereumSigningKeyLiquidityProvider =
-    '0xfbc1ee1c7332e2e5a76a99956f50b3ba2639aff73d56477e877ef8390c41e0c6';
-  const mnemonicUser1 =
-    'trip differ bamboo bundle bonus luxury strike mad merry muffin nose auction';
-  const mnemonicUser2 =
-    'control series album tribe category saddle prosper enforce moon eternal talk fame';
-  const mnemonicProposer =
-    'high return hold whale promote payment hat panel reduce oyster ramp mouse';
-  const mnemonicChallenger =
-    'crush power outer gadget enter maze advance rather divert monster indoor axis';
-  const mnemonicLiquidityProvider =
-    'smart base soup sister army address member poem point quick save penalty';
-
-  const nf3User1 = new Nf3(
-    'http://localhost:8080',
-    'http://localhost:8081',
-    'ws://localhost:8082',
-    'ws://localhost:8546',
-    ethereumSigningKeyUser1,
-  );
-
-  const nf3User2 = new Nf3(
-    'http://localhost:8080',
-    'http://localhost:8081',
-    'ws://localhost:8082',
-    'ws://localhost:8546',
-    ethereumSigningKeyUser2,
-  );
-
-  const nf3Proposer = new Nf3(
-    'http://localhost:8080',
-    'http://localhost:8081',
-    'ws://localhost:8082',
-    'ws://localhost:8546',
-    ethereumSigningKeyProposer,
-  );
-
-  const nf3Challenger = new Nf3(
-    'http://localhost:8080',
-    'http://localhost:8081',
-    'ws://localhost:8082',
-    'ws://localhost:8546',
-    ethereumSigningKeyChallenger,
-  );
-
-  const nf3LiquidityProvider = new Nf3(
-    'http://localhost:8080',
-    'http://localhost:8081',
-    'ws://localhost:8082',
-    'ws://localhost:8546',
-    ethereumSigningKeyLiquidityProvider,
-  );
+  console.log('ENVIRONMENT: ', environment);
+  const nf3User1 = new Nf3(web3WsUrl, ethereumSigningKeyUser1, environment);
+  const nf3User2 = new Nf3(web3WsUrl, ethereumSigningKeyUser2, environment);
+  const nf3Proposer1 = new Nf3(web3WsUrl, ethereumSigningKeyProposer1, environment);
+  const nf3Proposer2 = new Nf3(web3WsUrl, ethereumSigningKeyProposer2, environment);
+  const nf3Challenger = new Nf3(web3WsUrl, ethereumSigningKeyChallenger, environment);
+  const nf3LiquidityProvider = new Nf3(web3WsUrl, ethereumSigningKeyLiquidityProvider, environment);
 
   let web3;
-  let ercAddress;
+  let erc20Address;
+  let erc721Address;
+  let erc1155Address;
   let stateAddress;
-  const txPerBlock = 2;
-  const tokenId = '0x00';
-  const tokenType = 'ERC20'; // it can be 'ERC721' or 'ERC1155'
-  const value = 10;
-  const fee = 1;
-  const eventLogs = [];
-  // let pkd2;
-  // let compressedPkd2;
+  let eventLogs = [];
   let nodeInfo;
-  const transactions = [];
+  let diffBalanceInstantWithdraw = 0;
+  const withdrawTransactions = [];
+  let initialValidCommitments = 0;
+  let stateBalance = 0;
+  const logCounts = {
+    instantWithdraw: 0,
+  };
+
+  const miniStateABI = [
+    {
+      inputs: [],
+      name: 'getNumberOfL2Blocks',
+      outputs: [
+        {
+          internalType: 'uint256',
+          name: '',
+          type: 'uint256',
+        },
+      ],
+      stateMutability: 'view',
+      type: 'function',
+    },
+  ];
+
+  const getOnChainBlockCount = async () => {
+    const stateContractInstance = new web3.eth.Contract(miniStateABI, stateAddress);
+    const onChainBlockCount = await stateContractInstance.methods.getNumberOfL2Blocks().call();
+    return onChainBlockCount;
+  };
+
+  const waitForTxExecution = async (count, txType) => {
+    while (count === logCounts[txType]) {
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
+  };
+
+  const checkUserBalances = async () => {
+    console.log('User1 balances: ');
+    let balances = await nf3User1.getLayer2BalancesDetails([erc20Address]);
+    let list = [];
+    try {
+      list = balances[nf3User1.zkpKeys.compressedPkd][erc20Address];
+    } catch {
+      list = [];
+    }
+    console.log('     ERC20 balance: ', list);
+
+    balances = await nf3User1.getLayer2BalancesDetails([erc721Address]);
+    try {
+      list = balances[nf3User1.zkpKeys.compressedPkd][erc721Address];
+    } catch {
+      list = [];
+    }
+    console.log('     ERC721 balance: ', list);
+
+    balances = await nf3User1.getLayer2BalancesDetails([erc1155Address]);
+    try {
+      list = balances[nf3User1.zkpKeys.compressedPkd][erc1155Address];
+    } catch {
+      list = [];
+    }
+    console.log('     ERC1155 balance: ', list);
+
+    console.log('User2 balances: ');
+    balances = await nf3User2.getLayer2BalancesDetails([erc20Address]);
+    list = [];
+    try {
+      list = balances[nf3User2.zkpKeys.compressedPkd][erc20Address];
+    } catch {
+      list = [];
+    }
+    console.log('     ERC20 balance: ', list);
+
+    balances = await nf3User2.getLayer2BalancesDetails([erc721Address]);
+    try {
+      list = balances[nf3User2.zkpKeys.compressedPkd][erc721Address];
+    } catch {
+      list = [];
+    }
+    console.log('     ERC721 balance: ', list);
+
+    balances = await nf3User2.getLayer2BalancesDetails([erc1155Address]);
+    try {
+      list = balances[nf3User2.zkpKeys.compressedPkd][erc1155Address];
+    } catch {
+      list = [];
+    }
+    console.log('     ERC1155 balance: ', list);
+  };
 
   before(async () => {
     // to enable getBalance with web3 we should connect first
-    web3 = await connectWeb3(BLOCKCHAIN_TESTNET_URL);
-    stateAddress = await nf3User1.getContractAddress('State');
+    web3 = await connectWeb3();
 
     await nf3User1.init(mnemonicUser1);
     await nf3User2.init(mnemonicUser2); // 2nd client to do transfer tests and checks
-    await nf3Proposer.init(mnemonicProposer);
+    await nf3Proposer1.init(mnemonicProposer);
+    await nf3Proposer2.init(mnemonicProposer);
     await nf3Challenger.init(mnemonicChallenger);
     await nf3LiquidityProvider.init(mnemonicLiquidityProvider);
 
+    stateAddress = await nf3User1.stateContractAddress;
+
+    console.log('     Last block on chain: ', await getOnChainBlockCount());
+    console.log('     Shield address: ', nf3User1.shieldContractAddress);
+    console.log('     State address: ', nf3User1.stateContractAddress);
+    console.log('     Proposers address: ', nf3User1.proposersContractAddress);
+
     if (!(await nf3User1.healthcheck('client'))) throw new Error('Healthcheck failed');
     if (!(await nf3User2.healthcheck('client'))) throw new Error('Healthcheck failed');
-    if (!(await nf3Proposer.healthcheck('optimist'))) throw new Error('Healthcheck failed');
+    if (!(await nf3Proposer1.healthcheck('optimist'))) throw new Error('Healthcheck failed');
+    if (!(await nf3Proposer2.healthcheck('optimist'))) throw new Error('Healthcheck failed');
     if (!(await nf3Challenger.healthcheck('optimist'))) throw new Error('Healthcheck failed');
     if (!(await nf3LiquidityProvider.healthcheck('optimist')))
       throw new Error('Healthcheck failed');
+
+    console.log('     Proposer address: ', nf3Proposer1.ethereumAddress);
+    console.log('        Proposer optimistBaseUrl: ', nf3Proposer1.optimistBaseUrl);
+    console.log('        Proposer optimistWsUrl: ', nf3Proposer1.optimistWsUrl);
+    console.log('     Challenger address: ', nf3Challenger.ethereumAddress);
+    console.log('     LiquidityProvider address: ', nf3LiquidityProvider.ethereumAddress);
+    console.log('     User1 address: ', nf3User1.ethereumAddress);
+    console.log('     User2 address: ', nf3User2.ethereumAddress);
+
     // Proposer registration
-    await nf3Proposer.registerProposer();
+    await nf3Proposer1.registerProposer();
+    stateBalance += bond;
     // Proposer listening for incoming events
-    nf3Proposer.startProposer();
+    const newGasBlockEmitter = await nf3Proposer1.startProposer();
+    newGasBlockEmitter.on('gascost', async gasUsed => {
+      console.log(
+        `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
+      );
+    });
+    await nf3Proposer1.addPeer('http://optimist1:80');
     // Challenger registration
     await nf3Challenger.registerChallenger();
     // Chalenger listening for incoming events
     nf3Challenger.startChallenger();
+    let res = await nf3User1.getContractAddress('ERC20Mock');
+    // Lowercase is useful here because BigInt(erc20Address).toString(16) applies a lowercase check
+    // we will use this as a key in our dictionary so it's important they match.
+    erc20Address = res.toLowerCase();
+    res = await nf3User1.getContractAddress('ERC721Mock');
+    erc721Address = res.toLowerCase();
+    res = await nf3User1.getContractAddress('ERC1155Mock');
+    erc1155Address = res.toLowerCase();
+    console.log('     ERC20Mock address: ', erc20Address);
+    console.log('     ERC721Mock address: ', erc721Address);
+    console.log('     ERC1155Mock address: ', erc1155Address);
+
+    const balances = await getERCInfo(erc20Address, nf3LiquidityProvider.ethereumAddress, web3);
+    console.log(`BALANCES LIQUIDITY PROVIDER FOR ERC20 (${erc20Address}): `, balances);
+
+    const txDataToSign = await approve(
+      erc20Address,
+      nf3LiquidityProvider.ethereumAddress,
+      nf3LiquidityProvider.shieldContractAddress,
+      tokenType,
+      value,
+      web3,
+      !!nf3LiquidityProvider.ethereumSigningKey,
+    );
+    if (txDataToSign) {
+      await nf3LiquidityProvider.submitTransaction(txDataToSign, erc20Address, 0);
+    }
+
     // Liquidity provider for instant withdraws
     const emitter = await nf3User1.getInstantWithdrawalRequestedEmitter();
     emitter.on('data', async (withdrawTransactionHash, paidBy, amount) => {
-      await nf3LiquidityProvider.advanceInstantWithdrawal(withdrawTransactionHash);
-      console.log(`Serviced instant-withdrawal request from ${paidBy}, with fee ${amount}`);
-    });
+      const balancesBefore = await getERCInfo(
+        erc20Address,
+        nf3LiquidityProvider.ethereumAddress,
+        web3,
+      );
+      // approve tokens to be advanced by liquidity provider in the instant withdraw
+      try {
+        await nf3LiquidityProvider.advanceInstantWithdrawal(withdrawTransactionHash);
+        stateBalance += fee + BLOCK_STAKE;
+      } catch (e) {
+        console.log('ERROR Liquidity Provider: ', e);
+      }
 
-    // ({ pkd: pkd2, compressedPkd: compressedPkd2 } = await generateKeys(ZKP_KEY_LENGTH));
+      console.log(`     Serviced instant-withdrawal request from ${paidBy}, with fee ${amount}`);
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      for (let i = 0; i < txPerBlock; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        await nf3User1.transfer(
+          false,
+          erc20Address,
+          tokenType,
+          value,
+          tokenId,
+          nf3User1.zkpKeys.pkd,
+          fee,
+        );
+      }
+      stateBalance += fee + BLOCK_STAKE;
+      eventLogs = await waitForEvent(eventLogs, ['blockProposed'], 3);
+      const balancesAfter = await getERCInfo(
+        erc20Address,
+        nf3LiquidityProvider.ethereumAddress,
+        web3,
+      );
+      // difference in balance in L1 account to check instant withdraw is ok
+      diffBalanceInstantWithdraw = Number(balancesBefore.balance) - Number(balancesAfter.balance);
+      logCounts.instantWithdraw += 1;
+    });
 
     nodeInfo = await web3.eth.getNodeInfo();
 
@@ -134,6 +276,9 @@ describe('Testing the Nightfall SDK', () => {
       // For event tracking, we use only care about the logs related to 'blockProposed'
       if (log.topics[0] === topicEventMapping.BlockProposed) eventLogs.push('blockProposed');
     });
+
+    console.log('Check initial balances for users');
+    await checkUserBalances();
   });
 
   describe('Miscellaneous tests', () => {
@@ -149,9 +294,21 @@ describe('Testing the Nightfall SDK', () => {
 
     it('should get the address of the test ERC contract stub', async function () {
       const res = await nf3User1.getContractAddress('ERCStub');
-      // Lowercase is useful here because BigInt(ercAddress).toString(16) applies a lowercase check
-      // we will use this as a key in our dictionary so it's important they match.
-      ercAddress = res.toLowerCase();
+      expect(res).to.be.a('string').and.to.include('0x');
+    });
+
+    it('should get the address of the test ERC20 mock contract', async function () {
+      const res = await nf3User1.getContractAddress('ERC20Mock');
+      expect(res).to.be.a('string').and.to.include('0x');
+    });
+
+    it('should get the address of the test ERC721 mock contract', async function () {
+      const res = await nf3User1.getContractAddress('ERC721Mock');
+      expect(res).to.be.a('string').and.to.include('0x');
+    });
+
+    it('should get the address of the test ERC1155 mock contract', async function () {
+      const res = await nf3User1.getContractAddress('ERC1155Mock');
       expect(res).to.be.a('string').and.to.include('0x');
     });
 
@@ -164,62 +321,68 @@ describe('Testing the Nightfall SDK', () => {
 
   describe('Basic Proposer tests', () => {
     it('should register a proposer', async () => {
+      let proposers;
+      ({ proposers } = await nf3Proposer2.getProposers());
       // we have to pay 10 ETH to be registered
-      const bond = 10;
-      const gasCosts = 5000000000000000;
-      const startBalance = await getBalance(nf3Proposer.ethereumAddress);
-      const res = await nf3Proposer.registerProposer();
-      const endBalance = await getBalance(nf3Proposer.ethereumAddress);
-
-      expect(res).to.have.property('transactionHash');
-      expect(res).to.have.property('blockHash');
+      const startBalance = await getBalance(nf3Proposer2.ethereumAddress);
+      const res = await nf3Proposer2.registerProposer();
+      stateBalance += bond;
+      expectTransaction(res);
+      ({ proposers } = await nf3Proposer2.getProposers());
+      const endBalance = await getBalance(nf3Proposer2.ethereumAddress);
       expect(endBalance - startBalance).to.closeTo(-bond, gasCosts);
+      const thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer2.ethereumAddress);
+      expect(thisProposer.length).to.be.equal(1);
     });
 
     it('should de-register a proposer', async () => {
       let proposers;
-      ({ proposers } = await nf3Proposer.getProposers());
-      let thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer.ethereumAddress);
+      ({ proposers } = await nf3Proposer1.getProposers());
+      let thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer1.ethereumAddress);
       expect(thisProposer.length).to.be.equal(1);
-      const res = await nf3Proposer.deregisterProposer();
-      expect(res).to.have.property('transactionHash');
-      ({ proposers } = await nf3Proposer.getProposers());
-      thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer.ethereumAddress);
+      const res = await nf3Proposer1.deregisterProposer();
+      expectTransaction(res);
+      ({ proposers } = await nf3Proposer1.getProposers());
+      thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer1.ethereumAddress);
       expect(thisProposer.length).to.be.equal(0);
     });
 
     it('Should create a failing withdrawBond (because insufficient time has passed)', async () => {
       let error = null;
       try {
-        await nf3Proposer.withdrawBond();
+        await nf3Proposer1.withdrawBond();
       } catch (err) {
         error = err;
       }
-      expect(error.message).to.be.equal(
-        'Returned error: VM Exception while processing transaction: revert It is too soon to withdraw your bond',
+      expect(error.message).to.satisfy(
+        message =>
+          message.includes(
+            'Returned error: VM Exception while processing transaction: revert It is too soon to withdraw your bond',
+          ) || message.includes('Transaction has been reverted by the EVM'),
       );
     });
 
     it('Should create a passing withdrawBond (because sufficient time has passed)', async () => {
       if (nodeInfo.includes('TestRPC')) await timeJump(3600 * 24 * 10); // jump in time by 7 days
       if (nodeInfo.includes('TestRPC')) {
-        const res = await nf3Proposer.withdrawBond();
-        expect(res).to.have.property('transactionHash');
-        expect(res).to.have.property('blockHash');
+        const res = await nf3Proposer1.withdrawBond();
+        expectTransaction(res);
       } else {
         let error = null;
         try {
-          await nf3Proposer.withdrawBond();
+          await nf3Proposer1.withdrawBond();
         } catch (err) {
           error = err;
         }
-        expect(error.message).to.be.equal('Transaction has been reverted by the EVM');
+        expect(error.message).to.include('Transaction has been reverted by the EVM');
       }
     });
 
     after(async () => {
       // After the proposer tests, re-register proposers
-      await nf3Proposer.registerProposer();
+      await nf3Proposer2.deregisterProposer();
+      await nf3Proposer1.registerProposer();
+      stateBalance += bond;
     });
   });
 
@@ -240,279 +403,674 @@ describe('Testing the Nightfall SDK', () => {
     });
   });
 
+  describe('Synchronize with block proposed', () => {
+    it('should get correct balance after deposit or synchronize with block proposed', async () => {
+      let balances = await nf3User1.getLayer2Balances();
+      let beforePkdBalance = 0;
+      try {
+        // eslint-disable-next-line prefer-destructuring
+        beforePkdBalance = balances[nf3User1.zkpKeys.compressedPkd][erc20Address][0];
+      } catch {
+        beforePkdBalance = 0;
+      }
+
+      if (beforePkdBalance !== 0) {
+        await depositNTransactions(
+          nf3User1,
+          txPerBlock,
+          erc20Address,
+          tokenType,
+          value,
+          tokenId,
+          fee,
+        );
+        stateBalance += fee * txPerBlock + BLOCK_STAKE;
+        eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+        for (let i = 0; i < txPerBlock; i++) {
+          // eslint-disable-next-line no-await-in-loop
+          const res = await nf3User1.transfer(
+            false,
+            erc20Address,
+            tokenType,
+            value,
+            tokenId,
+            nf3User1.zkpKeys.compressedPkd,
+            fee,
+          );
+          expectTransaction(res);
+        }
+        stateBalance += fee * txPerBlock + BLOCK_STAKE;
+        eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+        balances = await nf3User1.getLayer2Balances();
+        const afterPkdBalance = balances[nf3User1.zkpKeys.compressedPkd][erc20Address][0];
+        if (afterPkdBalance - beforePkdBalance < txPerBlock * value) {
+          console.log(
+            `      ${
+              (txPerBlock * value - (afterPkdBalance - beforePkdBalance)) / value
+            } tx missing for block`,
+          );
+          await depositNTransactions(
+            nf3User1,
+            (txPerBlock * value - (afterPkdBalance - beforePkdBalance)) / value,
+            erc20Address,
+            tokenType,
+            value,
+            tokenId,
+            fee,
+          );
+          stateBalance +=
+            fee * ((txPerBlock * value - (afterPkdBalance - beforePkdBalance)) / value) +
+            BLOCK_STAKE;
+          eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+        }
+      }
+    });
+  });
+
   describe('Deposit tests', () => {
     // Need at least 5 deposits to perform all the necessary transfers
     // set the number of deposit transactions blocks to perform.
     const numDeposits = txPerBlock >= 5 ? 1 : Math.ceil(5 / txPerBlock);
 
-    it('should deposit some crypto into a ZKP commitment', async function () {
+    it('should deposit some ERC20 crypto into a ZKP commitment', async function () {
+      console.log(`      Sending ${txPerBlock * numDeposits} deposits...`);
       // We create enough transactions to fill numDeposits blocks full of deposits.
-      const depositTransactions = [];
-      for (let i = 0; i < txPerBlock * numDeposits; i++) {
-        // eslint-disable-next-line no-await-in-loop
-        const res = await nf3User1.deposit(ercAddress, tokenType, value, tokenId, fee);
-        expect(res).to.have.property('transactionHash');
-        expect(res).to.have.property('blockHash');
-        depositTransactions.push(res);
-      }
-
-      const totalGas = depositTransactions.reduce((acc, { gasUsed }) => acc + Number(gasUsed), 0);
-
-      console.log(`     Average Gas used was ${Math.ceil(totalGas / (txPerBlock * numDeposits))}`);
-
+      const depositTransactions = await depositNTransactions(
+        nf3User1,
+        txPerBlock * numDeposits,
+        erc20Address,
+        tokenType,
+        value,
+        tokenId,
+        fee,
+      );
+      stateBalance += (fee * txPerBlock + BLOCK_STAKE) * numDeposits;
       // Wait until we see the right number of blocks appear
-      while (eventLogs.length !== numDeposits) {
-        // eslint-disable-next-line no-await-in-loop
-        await new Promise(resolve => setTimeout(resolve, 3000));
+      eventLogs = await waitForEvent(eventLogs, ['blockProposed'], numDeposits);
+      const totalGas = depositTransactions.reduce((acc, { gasUsed }) => acc + Number(gasUsed), 0);
+      console.log(`     Average Gas used was ${Math.ceil(totalGas / (txPerBlock * numDeposits))}`);
+    });
+
+    it('should deposit some ERC721 crypto into a ZKP commitment', async function () {
+      let balances = await nf3User1.getLayer2Balances();
+      let balanceBefore = 0;
+      try {
+        // eslint-disable-next-line prefer-destructuring
+        balanceBefore = balances[nf3User1.zkpKeys.compressedPkd][erc721Address][0];
+        if (!balanceBefore) balanceBefore = 0;
+      } catch {
+        balanceBefore = 0;
       }
-      // Now we can empty the event queue
-      for (let i = 0; i < numDeposits; i++) {
-        eventLogs.shift();
+      // We create enough transactions to fill numDeposits blocks full of deposits.
+      let res = await nf3User1.deposit(erc721Address, tokenTypeERC721, 1, 1, fee);
+      expectTransaction(res);
+      res = await nf3User1.deposit(erc721Address, tokenTypeERC721, 1, 2, fee);
+      expectTransaction(res);
+      stateBalance += fee * 2 + BLOCK_STAKE;
+      // Wait until we see the right number of blocks appear
+      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      balances = await nf3User1.getLayer2Balances();
+      const balanceAfter = balances[nf3User1.zkpKeys.compressedPkd][erc721Address][0];
+      expect(balanceAfter - balanceBefore).to.be.equal(2);
+    });
+
+    it('should deposit some ERC1155 crypto into a ZKP commitment', async function () {
+      const Id1 = 1;
+      const Id2 = 4;
+
+      let balances = await nf3User1.getLayer2BalancesDetails([erc1155Address]);
+      let list = [];
+      let balanceBefore = 0;
+      let balanceBefore2 = 0;
+      try {
+        list = balances[nf3User1.zkpKeys.compressedPkd][erc1155Address];
+        balanceBefore = list.find(tkInfo => tkInfo.tokenId === Id1).balance;
+        balanceBefore2 = list.find(tkInfo => tkInfo.tokenId === Id2).balance;
+      } catch {
+        list = [];
+        balanceBefore = 0;
+        balanceBefore2 = 0;
       }
+      // We create enough transactions to fill numDeposits blocks full of deposits.
+      let res = await nf3User1.deposit(erc1155Address, tokenTypeERC1155, value, 1, fee);
+      expectTransaction(res);
+      res = await nf3User1.deposit(erc1155Address, tokenTypeERC1155, value * 2, 4, fee);
+      expectTransaction(res);
+      stateBalance += fee * 2 + BLOCK_STAKE;
+      // Wait until we see the right number of blocks appear
+      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+
+      balances = await nf3User1.getLayer2BalancesDetails([erc1155Address]);
+      list = balances[nf3User1.zkpKeys.compressedPkd][erc1155Address];
+
+      const balanceAfter = balances[nf3User1.zkpKeys.compressedPkd][erc1155Address].find(
+        tkInfo => tkInfo.tokenId === Id1,
+      ).balance;
+      const balanceAfter2 = balances[nf3User1.zkpKeys.compressedPkd][erc1155Address].find(
+        tkInfo => tkInfo.tokenId === Id2,
+      ).balance;
+      expect(Number(BigInt(balanceAfter) - BigInt(balanceBefore))).to.be.equal(Number(value));
+      expect(Number(BigInt(balanceAfter2) - BigInt(balanceBefore2))).to.be.equal(Number(value * 2));
     });
   });
 
   describe('Balance tests', () => {
-    it('should increment the balance after deposit some crypto', async function () {
+    it('should increment the balance after deposit some ERC20 crypto', async function () {
       let balances = await nf3User1.getLayer2Balances();
-      const currentPkdBalance = balances[nf3User1.zkpKeys.compressedPkd][ercAddress];
-      // We do 2 deposits of 10 each
-      for (let i = 0; i < txPerBlock; i++) {
-        // eslint-disable-next-line no-await-in-loop
-        const res = await nf3User1.deposit(ercAddress, tokenType, value, tokenId, fee);
-        expect(res).to.have.property('transactionHash');
-        expect(res).to.have.property('blockHash');
-      }
-      // Wait until we see the right number of blocks appear
-      while (eventLogs[0] !== 'blockProposed') {
-        // eslint-disable-next-line no-await-in-loop
-        await new Promise(resolve => setTimeout(resolve, 3000));
-      }
-      eventLogs.shift();
+      const currentPkdBalance = balances[nf3User1.zkpKeys.compressedPkd][erc20Address][0];
+      // We do txPerBlock deposits of 10 each
+      await depositNTransactions(
+        nf3User1,
+        txPerBlock,
+        erc20Address,
+        tokenType,
+        value,
+        tokenId,
+        fee,
+      );
+      stateBalance += fee * txPerBlock + BLOCK_STAKE;
+      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
       balances = await nf3User1.getLayer2Balances();
-      const afterPkdBalance = balances[nf3User1.zkpKeys.compressedPkd][ercAddress];
+      const afterPkdBalance = balances[nf3User1.zkpKeys.compressedPkd][erc20Address][0];
       expect(afterPkdBalance - currentPkdBalance).to.be.equal(txPerBlock * value);
     });
 
-    it('should decrement the balance after transfer to other wallet and increment the other wallet', async function () {
-      let res;
+    it('should increment the balance after deposit some ERC721 crypto', async function () {
+      let balances = await nf3User1.getLayer2Balances();
+      const currentPkdBalance = balances[nf3User1.zkpKeys.compressedPkd][erc721Address][0];
+
+      // We create enough transactions to fill numDeposits blocks full of deposits.
+      let res = await nf3User1.deposit(erc721Address, tokenTypeERC721, 1, 3, fee);
+      expectTransaction(res);
+      res = await nf3User1.deposit(erc721Address, tokenTypeERC721, 1, 4, fee);
+      expectTransaction(res);
+      stateBalance += fee * 2 + BLOCK_STAKE;
+      // Wait until we see the right number of blocks appear
+      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+
+      balances = await nf3User1.getLayer2Balances();
+      const afterPkdBalance = balances[nf3User1.zkpKeys.compressedPkd][erc721Address][0];
+      expect(afterPkdBalance - currentPkdBalance).to.be.equal(2);
+    });
+
+    it('should increment the balance after deposit some ERC1155 crypto', async function () {
+      const Id1 = 1;
+      const Id2 = 4;
+      let balances = await nf3User1.getLayer2BalancesDetails([erc1155Address]);
+      let list = [];
+      let beforePkdBalance1 = 0;
+      let beforePkdBalance2 = 0;
+      try {
+        list = balances[nf3User1.zkpKeys.compressedPkd][erc1155Address];
+        beforePkdBalance1 = list.find(tkInfo => tkInfo.tokenId === Id1).balance;
+        beforePkdBalance2 = list.find(tkInfo => tkInfo.tokenId === Id2).balance;
+      } catch {
+        list = [];
+        beforePkdBalance1 = 0;
+        beforePkdBalance2 = 0;
+      }
+      // We create enough transactions to fill numDeposits blocks full of deposits.
+      let res = await nf3User1.deposit(erc1155Address, tokenTypeERC1155, value, Id1, fee);
+      expectTransaction(res);
+      res = await nf3User1.deposit(erc1155Address, tokenTypeERC1155, value * 2, Id2, fee);
+      expectTransaction(res);
+      stateBalance += fee * 2 + BLOCK_STAKE;
+      // Wait until we see the right number of blocks appear
+      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+
+      balances = await nf3User1.getLayer2BalancesDetails([erc1155Address]);
+      list = balances[nf3User1.zkpKeys.compressedPkd][erc1155Address];
+      const afterPkdBalance1 = list.find(tkInfo => tkInfo.tokenId === Id1).balance;
+      const afterPkdBalance2 = list.find(tkInfo => tkInfo.tokenId === Id2).balance;
+
+      expect(Number(BigInt(afterPkdBalance1) - BigInt(beforePkdBalance1))).to.be.equal(value);
+      expect(Number(BigInt(afterPkdBalance2) - BigInt(beforePkdBalance2))).to.be.equal(value * 2);
+    });
+
+    it('should decrement the balance after transfer ERC20 to other wallet and increment the other wallet', async function () {
+      let balances = await nf3User1.getLayer2Balances();
+      await depositNTransactions(
+        nf3User1,
+        txPerBlock,
+        erc20Address,
+        tokenType,
+        value,
+        tokenId,
+        fee,
+      );
+      stateBalance += fee * txPerBlock + BLOCK_STAKE;
+      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      balances = await nf3User1.getLayer2Balances();
+      const currentPkdBalancePkd = balances[nf3User1.zkpKeys.compressedPkd][erc20Address][0];
+      let currentPkdBalancePkd2 = 0;
+      try {
+        // eslint-disable-next-line prefer-destructuring
+        currentPkdBalancePkd2 = balances[nf3User2.zkpKeys.compressedPkd][erc20Address][0];
+        if (!currentPkdBalancePkd2) currentPkdBalancePkd2 = 0;
+      } catch {
+        currentPkdBalancePkd2 = 0;
+      }
       for (let i = 0; i < txPerBlock; i++) {
         // eslint-disable-next-line no-await-in-loop
-        res = await nf3User1.deposit(ercAddress, tokenType, value, tokenId, fee);
-        expect(res).to.have.property('transactionHash');
-        expect(res).to.have.property('blockHash');
-      }
-      while (eventLogs[0] !== 'blockProposed') {
+        const res = await nf3User1.transfer(
+          false,
+          erc20Address,
+          tokenType,
+          value,
+          tokenId,
+          nf3User2.zkpKeys.compressedPkd,
+          fee,
+        );
+        expectTransaction(res);
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
-      eventLogs.shift();
+      stateBalance += fee * txPerBlock + BLOCK_STAKE;
+      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      // transfer to self address to avoid race conditions issue
+      for (let i = 0; i < txPerBlock; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        const res = await nf3User1.transfer(
+          false,
+          erc20Address,
+          tokenType,
+          value,
+          tokenId,
+          nf3User1.zkpKeys.compressedPkd,
+          fee,
+        );
+        expectTransaction(res);
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+      stateBalance += fee * txPerBlock + BLOCK_STAKE;
+      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      await new Promise(resolve => setTimeout(resolve, 10000));
+      balances = await nf3User1.getLayer2Balances();
+      // console.log('balances after 2 transfers: ', balances[0]);
+      const afterPkdBalancePkd = balances[nf3User1.zkpKeys.compressedPkd][erc20Address][0];
+      const afterPkdBalancePkd2 = balances[nf3User2.zkpKeys.compressedPkd][erc20Address][0];
+      expect(afterPkdBalancePkd - currentPkdBalancePkd).to.be.equal(-txPerBlock * value);
+      expect(afterPkdBalancePkd2 - currentPkdBalancePkd2).to.be.equal(txPerBlock * value);
+    });
 
+    it('should decrement the balance after transfer ERC721 to other wallet and increment the other wallet', async function () {
       let balances = await nf3User1.getLayer2Balances();
-      const currentPkdBalancePkd = balances[nf3User1.zkpKeys.compressedPkd][ercAddress];
-      const currentPkdBalancePkd2 = 0; // balances[compressedPkd2][ercAddress];
+      // We create enough transactions to fill block full of deposits.
+      let res = await nf3User1.deposit(erc721Address, tokenTypeERC721, 1, 5, fee);
+      expectTransaction(res);
+      res = await nf3User1.deposit(erc721Address, tokenTypeERC721, 1, 6, fee);
+      expectTransaction(res);
+      stateBalance += fee * 2 + BLOCK_STAKE;
+      // Wait until we see the right number of blocks appear
+      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+
+      balances = await nf3User1.getLayer2Balances();
+      const beforePkdBalance = balances[nf3User1.zkpKeys.compressedPkd][erc721Address][0];
+      let beforePkdBalance2;
+      try {
+        // eslint-disable-next-line prefer-destructuring
+        beforePkdBalance2 = balances[nf3User2.zkpKeys.compressedPkd][erc721Address][0];
+        if (!beforePkdBalance2) beforePkdBalance2 = 0;
+      } catch {
+        beforePkdBalance2 = 0;
+      }
+
+      res = await nf3User1.transfer(
+        false,
+        erc721Address,
+        tokenTypeERC721,
+        1,
+        5,
+        nf3User2.zkpKeys.compressedPkd,
+        fee,
+      );
+      expectTransaction(res);
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      res = await nf3User1.transfer(
+        false,
+        erc721Address,
+        tokenTypeERC721,
+        1,
+        6,
+        nf3User2.zkpKeys.compressedPkd,
+        fee,
+      );
+      expectTransaction(res);
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
+      stateBalance += fee * 2 + BLOCK_STAKE;
+      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+
+      // transfer to self address to avoid race conditions issue
       for (let i = 0; i < txPerBlock; i++) {
         // eslint-disable-next-line no-await-in-loop
         res = await nf3User1.transfer(
           false,
-          ercAddress,
+          erc20Address,
           tokenType,
           value,
           tokenId,
-          nf3User2.zkpKeys.pkd,
+          nf3User1.zkpKeys.compressedPkd,
           fee,
         );
-        expect(res).to.have.property('transactionHash');
-        expect(res).to.have.property('blockHash');
-      }
-      // Wait until we see the right number of blocks appear
-      while (eventLogs[0] !== 'blockProposed') {
+        expectTransaction(res);
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
-      eventLogs.shift();
+      stateBalance += fee * txPerBlock + BLOCK_STAKE;
+      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      await new Promise(resolve => setTimeout(resolve, 10000));
       balances = await nf3User1.getLayer2Balances();
-      const afterPkdBalancePkd = balances[nf3User1.zkpKeys.compressedPkd][ercAddress];
-      const afterPkdBalancePkd2 = balances[nf3User2.zkpKeys.compressedPkd][ercAddress];
-      expect(afterPkdBalancePkd - currentPkdBalancePkd).to.be.equal(-txPerBlock * value);
-      expect(afterPkdBalancePkd2 - currentPkdBalancePkd2).to.be.equal(txPerBlock * value);
+      const afterPkdBalancePkd = balances[nf3User1.zkpKeys.compressedPkd][erc721Address][0];
+      const afterPkdBalancePkd2 = balances[nf3User2.zkpKeys.compressedPkd][erc721Address][0];
+      expect(afterPkdBalancePkd - beforePkdBalance).to.be.equal(-2);
+      expect(afterPkdBalancePkd2 - beforePkdBalance2).to.be.equal(2);
+    });
+
+    it('should decrement the balance after transfer ERC1155 to other wallet and increment the other wallet', async function () {
+      const Id1 = 1;
+
+      // We create enough transactions to fill numDeposits blocks full of deposits.
+      for (let i = 0; i < txPerBlock; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        const res = await nf3User1.deposit(erc1155Address, tokenTypeERC1155, value, Id1, fee);
+        expectTransaction(res);
+      }
+      stateBalance += fee * 2 + BLOCK_STAKE;
+      // Wait until we see the right number of blocks appear
+      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+
+      let balancesUser1 = await nf3User1.getLayer2BalancesDetails([erc1155Address]);
+      let balancesUser2 = await nf3User2.getLayer2BalancesDetails([erc1155Address]);
+      let list1 = balancesUser1[nf3User1.zkpKeys.compressedPkd][erc1155Address];
+      const beforePkdBalance1 = list1.find(tkInfo => tkInfo.tokenId === Id1).balance;
+      let list2 = [];
+      let beforePkdBalance2 = 0;
+      try {
+        list2 = balancesUser2[nf3User2.zkpKeys.compressedPkd][erc1155Address];
+        beforePkdBalance2 = list2.find(tkInfo => tkInfo.tokenId === Id1).balance;
+      } catch {
+        list2 = [];
+        beforePkdBalance2 = 0;
+      }
+
+      for (let i = 0; i < txPerBlock; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        const res = await nf3User1.transfer(
+          false,
+          erc1155Address,
+          tokenTypeERC1155,
+          value,
+          Id1,
+          nf3User2.zkpKeys.compressedPkd,
+          fee,
+        );
+        expectTransaction(res);
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+      stateBalance += fee * 2 + BLOCK_STAKE;
+      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+
+      // transfer to self address to avoid race conditions issue
+      for (let i = 0; i < txPerBlock; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        const res = await nf3User1.transfer(
+          false,
+          erc20Address,
+          tokenType,
+          value,
+          tokenId,
+          nf3User1.zkpKeys.compressedPkd,
+          fee,
+        );
+        expectTransaction(res);
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+      stateBalance += fee * txPerBlock + BLOCK_STAKE;
+      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      await new Promise(resolve => setTimeout(resolve, 10000));
+      balancesUser1 = await nf3User1.getLayer2BalancesDetails([erc1155Address]);
+      balancesUser2 = await nf3User2.getLayer2BalancesDetails([erc1155Address]);
+      list1 = balancesUser1[nf3User1.zkpKeys.compressedPkd][erc1155Address];
+      list2 = balancesUser2[nf3User2.zkpKeys.compressedPkd][erc1155Address];
+      const afterPkdBalancePkd1 = list1.find(tkInfo => tkInfo.tokenId === Id1).balance;
+      const afterPkdBalancePkd2 = list2.find(tkInfo => tkInfo.tokenId === Id1).balance;
+
+      expect(Number(BigInt(afterPkdBalancePkd1) - BigInt(beforePkdBalance1))).to.be.equal(
+        -2 * value,
+      );
+      expect(Number(BigInt(afterPkdBalancePkd2) - BigInt(beforePkdBalance2))).to.be.equal(
+        2 * value,
+      );
     });
   });
 
   describe('Get commitments tests', () => {
     it('should get current commitments for the account', async function () {
       const commitments = await nf3User1.getLayer2Commitments();
-      expect(commitments[nf3User1.zkpKeys.compressedPkd]).to.have.property(ercAddress);
+      expect(commitments[nf3User1.zkpKeys.compressedPkd]).to.have.property(erc20Address);
     });
   });
 
   // now we have some deposited tokens, we can transfer one of them:
   describe('Single transfer tests', () => {
     it('should transfer some crypto (back to us) using ZKP', async function () {
-      const res = await nf3User1.transfer(
-        false,
-        ercAddress,
-        tokenType,
-        value,
-        tokenId,
-        nf3User1.zkpKeys.pkd,
-        fee,
-      );
-      expect(res).to.have.property('transactionHash');
-      expect(res).to.have.property('blockHash');
-      console.log(`     Gas used was ${Number(res.gasUsed)}`);
+      for (let i = 0; i < txPerBlock; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        const res = await nf3User1.transfer(
+          false,
+          erc20Address,
+          tokenType,
+          value,
+          tokenId,
+          nf3User1.zkpKeys.compressedPkd,
+          fee,
+        );
+        expectTransaction(res);
+        console.log(`     Gas used was ${Number(res.gasUsed)}`);
+      }
+      stateBalance += fee * txPerBlock + BLOCK_STAKE;
+      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
     });
 
     it('should send a single transfer directly to a proposer - offchain and a receiver different from the sender should successfully receive that transfer', async function () {
       const res = await nf3User1.transfer(
         true,
-        ercAddress,
+        erc20Address,
         tokenType,
         value,
         tokenId,
-        nf3User2.zkpKeys.pkd,
+        nf3User2.zkpKeys.compressedPkd,
         fee,
       );
       expect(res).to.be.equal(200);
-
-      const depositTransactions = [];
-      for (let i = 0; i < txPerBlock; i++) {
-        depositTransactions.push(
-          // eslint-disable-next-line no-await-in-loop
-          await nf3User1.deposit(ercAddress, tokenType, value, tokenId, fee),
-        );
-      }
-      depositTransactions.forEach(receipt => {
-        expect(receipt).to.have.property('transactionHash');
-        expect(receipt).to.have.property('blockHash');
-      });
-
-      // wait for the block proposed event with transfer function to be recognised by nightfall client of recipient
-      while (eventLogs.length !== 1) {
-        // eslint-disable-next-line no-await-in-loop
-        await new Promise(resolve => setTimeout(resolve, 3000));
-      }
-      eventLogs.shift();
+      stateBalance += fee;
+      await depositNTransactions(
+        nf3User1,
+        txPerBlock,
+        erc20Address,
+        tokenType,
+        value,
+        tokenId,
+        fee,
+      );
+      stateBalance += fee * txPerBlock + BLOCK_STAKE;
+      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
     });
   });
 
   describe('Withdraw tests', () => {
-    it('should withdraw some crypto from a ZKP commitment', async function () {
+    it('should withdraw some ERC20 crypto from a ZKP commitment', async function () {
       const rec = await nf3User1.withdraw(
         false,
-        ercAddress,
+        erc20Address,
         tokenType,
         value,
         tokenId,
         nf3User1.ethereumAddress,
       );
-      transactions.push(nf3User1.getLatestWithdrawHash()); // the new transaction
-      expect(rec).to.have.property('transactionHash');
-      expect(rec).to.have.property('blockHash');
+      stateBalance += fee;
+      withdrawTransactions.push(nf3User1.getLatestWithdrawHash()); // the new transaction
+      expectTransaction(rec);
       console.log(`     Gas used was ${Number(rec.gasUsed)}`);
 
-      const depositTransactions = [];
-      for (let i = 0; i < txPerBlock - 1; i++) {
-        depositTransactions.push(
-          // eslint-disable-next-line no-await-in-loop
-          await nf3User1.deposit(ercAddress, tokenType, value, tokenId, fee),
-        );
-      }
+      await depositNTransactions(
+        nf3User1,
+        txPerBlock - 1,
+        erc20Address,
+        tokenType,
+        value,
+        tokenId,
+        fee,
+      );
+      stateBalance += fee + BLOCK_STAKE;
+      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+    });
 
-      depositTransactions.forEach(receipt => {
-        expect(receipt).to.have.property('transactionHash');
-        expect(receipt).to.have.property('blockHash');
-      });
-
-      while (eventLogs[0] !== 'blockProposed') {
-        // eslint-disable-next-line no-await-in-loop
-        await new Promise(resolve => setTimeout(resolve, 3000));
+    it('should withdraw some ERC721 crypto from a ZKP commitment', async function () {
+      let balances = await nf3User1.getLayer2Balances();
+      let balanceBefore = 0;
+      try {
+        // eslint-disable-next-line prefer-destructuring
+        balanceBefore = balances[nf3User1.zkpKeys.compressedPkd][erc721Address][0];
+        if (!balanceBefore) balanceBefore = 0;
+      } catch {
+        balanceBefore = 0;
       }
-      eventLogs.shift();
+      const rec = await nf3User1.withdraw(
+        false,
+        erc721Address,
+        tokenTypeERC721,
+        1,
+        3,
+        nf3User1.ethereumAddress,
+      );
+      stateBalance += fee;
+      withdrawTransactions.push(nf3User1.getLatestWithdrawHash()); // the new transaction
+      expectTransaction(rec);
+      console.log(`     Gas used was ${Number(rec.gasUsed)}`);
+
+      await depositNTransactions(
+        nf3User1,
+        txPerBlock - 1,
+        erc20Address,
+        tokenType,
+        value,
+        tokenId,
+        fee,
+      );
+      stateBalance += fee + BLOCK_STAKE;
+      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      balances = await nf3User1.getLayer2Balances();
+      const balanceAfter = balances[nf3User1.zkpKeys.compressedPkd][erc721Address][0];
+      expect(balanceAfter - balanceBefore).to.be.equal(-1);
+    });
+
+    it('should withdraw some ERC1155 crypto from a ZKP commitment', async function () {
+      const Id1 = 1;
+      let balancesUser1 = await nf3User1.getLayer2BalancesDetails([erc1155Address]);
+      let list1 = balancesUser1[nf3User1.zkpKeys.compressedPkd][erc1155Address];
+      const beforePkdBalance1 = list1.find(tkInfo => tkInfo.tokenId === Id1).balance;
+
+      const rec = await nf3User1.withdraw(
+        false,
+        erc1155Address,
+        tokenTypeERC1155,
+        value,
+        1,
+        nf3User1.ethereumAddress,
+      );
+      stateBalance += fee;
+      withdrawTransactions.push(nf3User1.getLatestWithdrawHash()); // the new transaction
+      expectTransaction(rec);
+      console.log(`     Gas used was ${Number(rec.gasUsed)}`);
+
+      await depositNTransactions(
+        nf3User1,
+        txPerBlock - 1,
+        erc20Address,
+        tokenType,
+        value,
+        tokenId,
+        fee,
+      );
+      stateBalance += fee + BLOCK_STAKE;
+      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      balancesUser1 = await nf3User1.getLayer2BalancesDetails([erc1155Address]);
+      list1 = balancesUser1[nf3User1.zkpKeys.compressedPkd][erc1155Address];
+      const afterPkdBalance1 = list1.find(tkInfo => tkInfo.tokenId === Id1).balance;
+      expect(afterPkdBalance1 - beforePkdBalance1).to.be.equal(-value);
     });
 
     it('should allow instant withdraw of existing withdraw', async function () {
       // We create enough transactions to fill numDeposits blocks full of deposits.
-      let depositTransactions = [];
-      for (let i = 0; i < txPerBlock; i++) {
-        depositTransactions.push(
-          // eslint-disable-next-line no-await-in-loop
-          await nf3User1.deposit(ercAddress, tokenType, value, tokenId, fee),
-        );
-      }
-
-      depositTransactions.forEach(receipt => {
-        expect(receipt).to.have.property('transactionHash');
-        expect(receipt).to.have.property('blockHash');
-      });
-
-      while (eventLogs[0] !== 'blockProposed') {
-        // eslint-disable-next-line no-await-in-loop
-        await new Promise(resolve => setTimeout(resolve, 3000));
-      }
-      eventLogs.shift();
+      await depositNTransactions(
+        nf3User1,
+        txPerBlock,
+        erc20Address,
+        tokenType,
+        value,
+        tokenId,
+        fee,
+      );
+      stateBalance += fee * txPerBlock + BLOCK_STAKE;
+      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
 
       let latestWithdrawTransactionHash = ''; // for instant withdrawals
       console.log(`instant withdrawal call`);
       await nf3User1.withdraw(
         false,
-        ercAddress,
+        erc20Address,
         tokenType,
         value,
         tokenId,
         nf3User1.ethereumAddress,
         fee,
       );
+      stateBalance += fee;
       latestWithdrawTransactionHash = nf3User1.getLatestWithdrawHash();
-      console.log(`ilatestWithdrawTransactionHash: ${latestWithdrawTransactionHash}`);
+      console.log(`latestWithdrawTransactionHash: ${latestWithdrawTransactionHash}`);
       expect(latestWithdrawTransactionHash).to.be.a('string').and.to.include('0x');
 
-      if (eventLogs[0] !== 'blockProposed') {
-        depositTransactions = [];
-        for (let i = 0; i < txPerBlock; i++) {
-          depositTransactions.push(
-            // eslint-disable-next-line no-await-in-loop
-            await nf3User1.deposit(ercAddress, tokenType, value, tokenId, fee),
-          );
-        }
+      await depositNTransactions(
+        nf3User1,
+        txPerBlock,
+        erc20Address,
+        tokenType,
+        value,
+        tokenId,
+        fee,
+      );
+      stateBalance += fee * txPerBlock + BLOCK_STAKE;
+      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
 
-        depositTransactions.forEach(receipt => {
-          expect(receipt).to.have.property('transactionHash');
-          expect(receipt).to.have.property('blockHash');
-        });
-
-        while (eventLogs[0] !== 'blockProposed') {
-          // eslint-disable-next-line no-await-in-loop
-          await new Promise(resolve => setTimeout(resolve, 3000));
-        }
-        eventLogs.shift();
-      } else {
-        eventLogs.shift();
-      }
-
-      const res = await nf3User1.requestInstantWithdrawal(latestWithdrawTransactionHash, fee);
-      expect(res).to.have.property('transactionHash');
-      expect(res).to.have.property('blockHash');
+      const count = logCounts.instantWithdraw;
+      // We request the instant withdraw and should wait for the liquidity provider to send the instant withdraw
+      let res = await nf3User1.requestInstantWithdrawal(latestWithdrawTransactionHash, fee);
+      stateBalance += fee;
+      expectTransaction(res);
       console.log(`     Gas used was ${Number(res.gasUsed)}`);
 
-      depositTransactions = [];
       for (let i = 0; i < txPerBlock; i++) {
-        depositTransactions.push(
-          // eslint-disable-next-line no-await-in-loop
-          await nf3User1.deposit(ercAddress, tokenType, value, tokenId, fee),
+        // eslint-disable-next-line no-await-in-loop
+        res = await nf3User1.transfer(
+          false,
+          erc20Address,
+          tokenType,
+          value,
+          tokenId,
+          nf3User1.zkpKeys.pkd,
+          fee,
         );
       }
-
-      depositTransactions.forEach(receipt => {
-        expect(receipt).to.have.property('transactionHash');
-        expect(receipt).to.have.property('blockHash');
-      });
-
-      while (eventLogs[0] !== 'blockProposed') {
-        // eslint-disable-next-line no-await-in-loop
-        await new Promise(resolve => setTimeout(resolve, 3000));
-      }
-      eventLogs.shift();
+      stateBalance += fee + BLOCK_STAKE;
+      // we wait for the liquidity provider to send the instant withdraw
+      console.log('     Waiting for instantWithdraw event...');
+      await waitForTxExecution(count, 'instantWithdraw');
+      expect(diffBalanceInstantWithdraw).to.be.equal(value);
     });
 
     it('should not allow instant withdraw of non existing withdraw or not in block yet', async function () {
@@ -520,37 +1078,31 @@ describe('Testing the Nightfall SDK', () => {
       let latestWithdrawTransactionHash = ''; // for instant withdrawals
       await nf3User1.withdraw(
         false,
-        ercAddress,
+        erc20Address,
         tokenType,
         value,
         tokenId,
         nf3User1.ethereumAddress,
         fee,
       );
+      stateBalance += fee;
       latestWithdrawTransactionHash = nf3User1.getLatestWithdrawHash();
       expect(latestWithdrawTransactionHash).to.be.a('string').and.to.include('0x');
 
-      let error;
-      try {
-        const res = await nf3User1.requestInstantWithdrawal(latestWithdrawTransactionHash, fee);
-        expect(res).to.have.property('transactionHash');
-        expect(res).to.have.property('blockHash');
-      } catch (e) {
-        error = e;
-      }
-      expect(error.response.status).to.be.equal(500);
+      const res = await nf3User1.requestInstantWithdrawal(latestWithdrawTransactionHash, fee);
+      stateBalance += fee + BLOCK_STAKE;
+      expect(res).to.be.equal(null);
     });
   });
 
   describe('Get pending withdraw commitments tests', () => {
-    it('should get current pending withdraw commitments for the account (with 0 valid commitments)', async function () {
+    it('should get current pending withdraw commitments for the account', async function () {
       const commitments = await nf3User1.getPendingWithdraws();
       console.log(`commitments: ${JSON.stringify(commitments)}`);
-      expect(commitments[nf3User1.zkpKeys.compressedPkd][ercAddress].length).to.be.greaterThan(0);
-      expect(
-        commitments[nf3User1.zkpKeys.compressedPkd][ercAddress].filter(c => c.valid === true)
-          .length,
-      ).to.be.equal(0);
+      expect(commitments[nf3User1.zkpKeys.compressedPkd][erc20Address].length).to.be.greaterThan(0);
+      initialValidCommitments = commitments[nf3User1.zkpKeys.compressedPkd][erc20Address].filter(
+        c => c.valid === true,
+      ).length;
     });
   });
 
@@ -560,14 +1112,17 @@ describe('Testing the Nightfall SDK', () => {
     it('Should create a failing finalise-withdrawal (because insufficient time has passed)', async function () {
       let error = null;
       try {
-        const res = await nf3User1.finaliseWithdrawal(transactions[0]);
-        expect(res).to.have.property('transactionHash');
-        expect(res).to.have.property('blockHash');
+        const res = await nf3User1.finaliseWithdrawal(withdrawTransactions[0]);
+        stateBalance += fee;
+        expectTransaction(res);
       } catch (err) {
         error = err;
       }
-      expect(error.message).to.be.equal(
-        'Returned error: VM Exception while processing transaction: revert It is too soon to withdraw funds from this block',
+      expect(error.message).to.satisfy(
+        message =>
+          message.includes(
+            'Returned error: VM Exception while processing transaction: revert It is too soon to withdraw funds from this block',
+          ) || message.includes('Transaction has been reverted by the EVM'),
       );
     });
   });
@@ -577,58 +1132,220 @@ describe('Testing the Nightfall SDK', () => {
     let endBalance;
 
     it('should get a valid withdraw commitment with a time-jump capable test client (because sufficient time has passed)', async function () {
-      if (nodeInfo.includes('TestRPC')) await timeJump(3600 * 24 * 10); // jump in time by 50 days
-      console.log(`timeJump`);
-      for (let i = 0; i < txPerBlock; i++) {
-        // eslint-disable-next-line no-await-in-loop
-        await nf3User1.deposit(ercAddress, tokenType, value, tokenId, fee);
+      if (nodeInfo.includes('TestRPC')) {
+        await timeJump(3600 * 24 * 10); // jump in time by 50 days
+        console.log(`timeJump`);
+        await depositNTransactions(
+          nf3User1,
+          txPerBlock,
+          erc20Address,
+          tokenType,
+          value,
+          tokenId,
+          fee,
+        );
+        stateBalance += fee * txPerBlock + BLOCK_STAKE;
+        eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+
+        const commitments = await nf3User1.getPendingWithdraws();
+        expect(commitments[nf3User1.zkpKeys.compressedPkd][erc20Address].length).to.be.greaterThan(
+          0,
+        );
+        expect(
+          commitments[nf3User1.zkpKeys.compressedPkd][erc20Address].filter(c => c.valid === true)
+            .length,
+        ).to.be.greaterThan(initialValidCommitments);
+      } else {
+        console.log('     Not using a time-jump capable test client so this test is skipped');
+        this.skip();
       }
-      const commitments = await nf3User1.getPendingWithdraws();
-      expect(commitments[nf3User1.zkpKeys.compressedPkd][ercAddress].length).to.be.greaterThan(0);
-      expect(
-        commitments[nf3User1.zkpKeys.compressedPkd][ercAddress].filter(c => c.valid === true)
-          .length,
-      ).to.be.greaterThan(0);
     });
 
-    it('should create a passing finalise-withdrawal with a time-jump capable test client (because sufficient time has passed)', async function () {
+    it('should create a passing ERC20 finalise-withdrawal with a time-jump capable test client (because sufficient time has passed)', async function () {
       // now we need to sign the transaction and send it to the blockchain
       // this will only work if we're using Ganache, otherwiise expect failure
       startBalance = await getBalance(nf3User1.ethereumAddress);
       if (nodeInfo.includes('TestRPC')) {
-        const res = await nf3User1.finaliseWithdrawal(transactions[0]);
-        expect(res).to.have.property('transactionHash');
-        expect(res).to.have.property('blockHash');
-      } else {
-        let error = null;
-        try {
-          const res = await nf3User1.finaliseWithdrawal(transactions[0]);
-          expect(res).to.have.property('transactionHash');
-          expect(res).to.have.property('blockHash');
-        } catch (err) {
-          error = err;
+        let res = await nf3User1.finaliseWithdrawal(withdrawTransactions[0]);
+        stateBalance += fee;
+        expectTransaction(res);
+        for (let i = 0; i < txPerBlock; i++) {
+          // eslint-disable-next-line no-await-in-loop
+          res = await nf3User1.transfer(
+            false,
+            erc20Address,
+            tokenType,
+            value,
+            tokenId,
+            nf3User1.zkpKeys.compressedPkd,
+            fee,
+          );
         }
-        console.log(error.message);
-        expect(error.message).to.be.equal('Transaction has been reverted by the EVM');
+        stateBalance += fee + BLOCK_STAKE;
+        eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      } else {
+        // geth
+        console.log('     Not using a time-jump capable test client so this test is skipped');
+        this.skip();
       }
       endBalance = await getBalance(nf3User1.ethereumAddress);
     });
 
+    it('should create a passing ERC721 finalise-withdrawal with a time-jump capable test client (because sufficient time has passed)', async function () {
+      // now we need to sign the transaction and send it to the blockchain
+      // this will only work if we're using Ganache, otherwiise expect failure
+      // startBalance = await getBalance(nf3User1.ethereumAddress);
+      if (nodeInfo.includes('TestRPC')) {
+        let res = await nf3User1.finaliseWithdrawal(withdrawTransactions[1]);
+        stateBalance += fee;
+        expectTransaction(res);
+        for (let i = 0; i < txPerBlock; i++) {
+          // eslint-disable-next-line no-await-in-loop
+          res = await nf3User1.transfer(
+            false,
+            erc20Address,
+            tokenType,
+            value,
+            tokenId,
+            nf3User1.zkpKeys.compressedPkd,
+            fee,
+          );
+        }
+        stateBalance += 2 * fee + BLOCK_STAKE;
+        eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      } else {
+        // geth
+        console.log('     Not using a time-jump capable test client so this test is skipped');
+        this.skip();
+      }
+      // endBalance = await getBalance(nf3User1.ethereumAddress);
+    });
+
+    it('should create a passing ERC1155 finalise-withdrawal with a time-jump capable test client (because sufficient time has passed)', async function () {
+      // now we need to sign the transaction and send it to the blockchain
+      // this will only work if we're using Ganache, otherwiise expect failure
+      // startBalance = await getBalance(nf3User1.ethereumAddress);
+      if (nodeInfo.includes('TestRPC')) {
+        let res = await nf3User1.finaliseWithdrawal(withdrawTransactions[2]);
+        stateBalance += fee;
+        expectTransaction(res);
+        for (let i = 0; i < txPerBlock; i++) {
+          // eslint-disable-next-line no-await-in-loop
+          res = await nf3User1.transfer(
+            false,
+            erc20Address,
+            tokenType,
+            value,
+            tokenId,
+            nf3User1.zkpKeys.compressedPkd,
+            fee,
+          );
+        }
+        stateBalance += txPerBlock * fee + BLOCK_STAKE;
+        eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      } else {
+        // geth
+        console.log('     Not using a time-jump capable test client so this test is skipped');
+        this.skip();
+      }
+      // endBalance = await getBalance(nf3User1.ethereumAddress);
+    });
+
     it('Should have increased our balance', async function () {
       if (nodeInfo.includes('TestRPC')) {
-        const gasCosts = (5000000000000000 * txPerBlock) / 2;
-        expect(endBalance - startBalance).to.closeTo(Number(value), gasCosts);
+        const gasCostsTotal = (gasCosts * txPerBlock * 2) / 2;
+        expect(endBalance - startBalance).to.closeTo(Number(value), gasCostsTotal);
       } else {
-        console.log('Not using a time-jump capable test client so this test is skipped');
+        console.log('     Not using a time-jump capable test client so this test is skipped');
         this.skip();
       }
     });
   });
 
-  after(() => {
+  describe('Check all balances in contracts', () => {
+    it('Should be zero for shield and proposer and non-zero for state', async () => {
+      const shieldContractBalance = await getBalance(nf3User1.shieldContractAddress);
+      const stateContractBalance = await getBalance(nf3User1.stateContractAddress);
+      const proposerContractBalance = await getBalance(nf3User1.proposersContractAddress);
+      expect(Number(shieldContractBalance)).to.be.eq(0);
+      expect(Number(proposerContractBalance)).to.be.eq(0);
+      expect(Number(stateContractBalance)).to.be.gte(stateBalance);
+    });
+  });
+
+  describe('Restoring tokens', () => {
+    // Restore original token values to allow running tests multiple times without redeploying
+    it('Should restore tokens ERC721 and ERC1155', async () => {
+      console.log('1');
+      let res = await nf3User2.transfer(
+        false,
+        erc721Address,
+        tokenTypeERC721,
+        1,
+        5,
+        nf3User1.zkpKeys.compressedPkd,
+        fee,
+      );
+      expectTransaction(res);
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      console.log('2');
+      res = await nf3User2.transfer(
+        false,
+        erc721Address,
+        tokenTypeERC721,
+        1,
+        6,
+        nf3User1.zkpKeys.compressedPkd,
+        fee,
+      );
+      expectTransaction(res);
+      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+
+      console.log('3');
+      for (let i = 0; i < txPerBlock + 1; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        res = await nf3User2.transfer(
+          false,
+          erc20Address,
+          tokenType,
+          value,
+          tokenId,
+          nf3User1.zkpKeys.compressedPkd,
+          fee,
+        );
+      }
+      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+
+      console.log('4');
+      for (let i = 0; i < txPerBlock; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        res = await nf3User2.transfer(
+          false,
+          erc1155Address,
+          tokenTypeERC1155,
+          value,
+          1,
+          nf3User1.zkpKeys.compressedPkd,
+          fee,
+        );
+        expectTransaction(res);
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+    });
+
+    after(async () => {
+      console.log('Check final balances for users');
+      await checkUserBalances();
+    });
+  });
+
+  after(async () => {
     nf3User1.close();
     nf3User2.close();
-    nf3Proposer.close();
+    nf3Proposer1.close();
+    nf3Proposer2.close();
     nf3Challenger.close();
     nf3LiquidityProvider.close();
     closeWeb3Connection();
