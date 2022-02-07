@@ -15,6 +15,8 @@ services:
       - type: volume
         source: build
         target: /app/build/
+    ports:
+      - 80:80
     environment:
       WEBSOCKET_PORT: 8080
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST}
@@ -51,7 +53,7 @@ services:
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST}
       BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT}
       ZOKRATES_WORKER_HOST: worker
-      USE_STUBS: 'false'
+      USE_STUBS: 'true'
       ETH_PRIVATE_KEY: ${ETH_PRIVATE_KEY}
       ETH_ADDRESS: ${ETH_ADDRESS}
       GAS_PRICE: 20000000000
@@ -88,8 +90,6 @@ services:
       OPTIMIST_HOST: optimist
       OPTIMIST_WS_PORT: 8080
       OPTIMIST_HTTP_PORT: 80
-      CLIENT_HOST: client
-      CLIENT_PORT: 80
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST}
       BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT}
       PROPOSER_ETHEREUM_SIGNING_KEY: ${PROPOSER_ETHEREUM_SIGNING_KEY}
