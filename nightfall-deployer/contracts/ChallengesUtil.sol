@@ -82,7 +82,7 @@ library ChallengesUtil {
                 transaction.commitments[1] != ZERO ||
                 transaction.nullifiers[0] != ZERO ||
                 transaction.nullifiers[1] != ZERO ||
-                transaction.compressedSecrets.length != nZeroCompressedSecrets ||
+                nZeroCompressedSecrets != 8 ||
                 nZeroProof == 4 || // We assume that 3 out of the 4 proof elements can be a valid ZERO. Deals with exception cases
                 transaction.historicRootBlockNumberL2[0] != 0 ||
                 transaction.historicRootBlockNumberL2[1] != 0,
@@ -168,7 +168,7 @@ library ChallengesUtil {
                 transaction.commitments[1] != ZERO ||
                 transaction.nullifiers[0] == ZERO ||
                 transaction.nullifiers[1] != ZERO ||
-                transaction.compressedSecrets.length != nZeroCompressedSecrets ||
+                nZeroCompressedSecrets != 8 ||
                 nZeroProof == 4 || // We assume that 3 out of the 4 proof elements can be a valid ZERO. Deals with exception cases
                 transaction.historicRootBlockNumberL2[1] != 0, // A withdraw has a similar constraint as a single transfer
             'This withdraw transaction type is valid'
