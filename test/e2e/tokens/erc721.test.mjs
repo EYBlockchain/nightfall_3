@@ -2,9 +2,9 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import { createRequire } from 'module';
-import Nf3 from '../../cli/lib/nf3.mjs';
-import { waitForEvent, expectTransaction, Web3Client, depositNTransactions } from '../utils.mjs';
-import { getERCInfo } from '../../cli/lib/tokens.mjs';
+import Nf3 from '../../../cli/lib/nf3.mjs';
+import { waitForEvent, expectTransaction, Web3Client, depositNTransactions } from '../../utils.mjs';
+import { getERCInfo } from '../../../cli/lib/tokens.mjs';
 
 // so we can use require with mjs file
 const require = createRequire(import.meta.url);
@@ -14,12 +14,12 @@ chai.use(chaiAsPromised);
 const { web3WsUrl, network } = process.env;
 
 // we need require here to import jsons
-const environments = require('./environments.json');
-const mnemonics = require('./mnemonics.json');
-const signingKeys = require('./signingKeys.json');
-const { fee, txPerBlock, transferValue } = require('./configs.json');
-const { tokenTypeERC721 } = require('./tokenConfigs.json');
-const { tokenType, tokenId } = require('./tokenConfigs.json');
+const environments = require('../environments.json');
+const mnemonics = require('../mnemonics.json');
+const signingKeys = require('../signingKeys.json');
+const { fee, txPerBlock, transferValue } = require('../configs.json');
+const { tokenTypeERC721 } = require('../tokenConfigs.json');
+const { tokenType, tokenId } = require('../tokenConfigs.json');
 
 const environment = environments[network];
 const nf3Users = [
@@ -38,6 +38,12 @@ let stateAddress;
 let eventLogs = [];
 let availableTokenIds;
 
+/* 
+  This function tries to zero the number of unprocessed transactions in the optimist node
+  that nf3 is connected to. We call it extensively on the tests, as we want to query stuff from the
+  L2 layer, which is dependent on a block being made. We also need 0 unprocessed transactions by the end
+  of the tests, otherwise the optimist will become out of sync with the L2 block count on-chain.
+*/
 const evenTheBlock = async nf3Instance => {
   let count = await nf3Instance.unprocessedTransactionCount();
   while (count !== 0) {
@@ -61,6 +67,17 @@ const evenTheBlock = async nf3Instance => {
     // eslint-disable-next-line no-await-in-loop
     count = await nf3Instance.unprocessedTransactionCount();
   }
+
+  await depositNTransactions(
+    nf3Instance,
+    txPerBlock,
+    erc20Address,
+    tokenType,
+    transferValue,
+    tokenId,
+    fee,
+  );
+  eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
 };
 
 describe('ERC721 tests', () => {
@@ -93,6 +110,12 @@ describe('ERC721 tests', () => {
         details: true,
       })
     ).details.map(t => t.tokenId);
+
+    for (let i = 0; i < txPerBlock * 2; i++) {
+      // eslint-disable-next-line no-await-in-loop
+      await nf3Users[0].deposit(erc721Address, tokenTypeERC721, 0, availableTokenIds.shift(), fee);
+    }
+    eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
 
     await evenTheBlock(nf3Users[0]);
   });
@@ -141,22 +164,6 @@ describe('ERC721 tests', () => {
           (await nf3Users[1].getLayer2Balances())[erc721Address],
         ];
       }
-
-      // We create enough transactions to fill block full of deposits.
-      for (let i = 0; i < txPerBlock; i++) {
-        // eslint-disable-next-line no-await-in-loop
-        const res = await nf3Users[0].deposit(
-          erc721Address,
-          tokenTypeERC721,
-          0,
-          availableTokenIds.shift(),
-          fee,
-        );
-        expectTransaction(res);
-      }
-
-      // Wait until we see the right number of blocks appear
-      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
 
       await getBalances();
       // weird way to clone an array, but we need a deep clone as it's a multidimensional array
@@ -207,50 +214,55 @@ describe('ERC721 tests', () => {
       expectTransaction(rec);
       if (process.env.GAS_COSTS) console.log(`     Gas used was ${Number(rec.gasUsed)}`);
 
-      // depositing some ERC20 transactions to fill the block
-      await depositNTransactions(
-        nf3Users[0],
-        txPerBlock - 1,
-        erc20Address,
-        tokenType,
-        transferValue,
-        tokenId,
-        fee,
-      );
-      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      await evenTheBlock(nf3Users[0]);
+
       const balanceAfter = (await nf3Users[0].getLayer2Balances())[erc721Address].length;
       expect(balanceAfter).to.be.lessThan(beforeBalance);
     });
 
-    // it('should withdraw from L2, checking for L1 balance (only with time-jump client)', async function () {
-    //   // now we need to sign the transaction and send it to the blockchain
-    //   // this will only work if we're using Ganache, otherwiise expect failure
-    //   // startBalance = await getBalance(nf3User1.ethereumAddress);
-    //   if (nodeInfo.includes('TestRPC')) {
-    //     let res = await nf3User1.finaliseWithdrawal(withdrawTransactions[1]);
-    //     stateBalance += fee;
-    //     expectTransaction(res);
-    //     for (let i = 0; i < txPerBlock; i++) {
-    //       // eslint-disable-next-line no-await-in-loop
-    //       res = await nf3User1.transfer(
-    //         false,
-    //         erc20Address,
-    //         tokenType,
-    //         value,
-    //         tokenId,
-    //         nf3User1.zkpKeys.compressedPkd,
-    //         fee,
-    //       );
-    //     }
-    //     stateBalance += 2 * fee + BLOCK_STAKE;
-    //     eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
-    //   } else {
-    //     // geth
-    //     console.log('     Not using a time-jump capable test client so this test is skipped');
-    //     this.skip();
-    //   }
-    //   // endBalance = await getBalance(nf3User1.ethereumAddress);
-    // });
+    it('should withdraw from L2, checking for L1 balance (only with time-jump client)', async function () {
+      const nodeInfo = await web3Client.getInfo();
+      if (nodeInfo.includes('TestRPC')) {
+        let erc721balances = (await nf3Users[0].getLayer2Balances())[erc721Address];
+        const beforeBalance = erc721balances.length;
+        const tokenToWithdraw = erc721balances.shift().tokenId;
+
+        const rec = await nf3Users[0].withdraw(
+          false,
+          erc721Address,
+          tokenTypeERC721,
+          0,
+          tokenToWithdraw,
+          nf3Users[0].ethereumAddress,
+        );
+        expectTransaction(rec);
+        const withdrawal = await nf3Users[0].getLatestWithdrawHash();
+
+        await evenTheBlock(nf3Users[0]);
+
+        await web3Client.timeJump(3600 * 24 * 10); // jump in time by 50 days
+
+        const commitments = await nf3Users[0].getPendingWithdraws();
+        expect(
+          commitments[nf3Users[0].zkpKeys.compressedPkd][erc721Address].length,
+        ).to.be.greaterThan(0);
+        expect(
+          commitments[nf3Users[0].zkpKeys.compressedPkd][erc721Address].filter(
+            c => c.valid === true,
+          ).length,
+        ).to.be.greaterThan(0);
+
+        const res = await nf3Users[0].finaliseWithdrawal(withdrawal);
+        expectTransaction(res);
+
+        erc721balances = (await nf3Users[0].getLayer2Balances())[erc721Address];
+        const endBalance = erc721balances.length;
+        expect(parseInt(endBalance, 10)).to.be.lessThan(parseInt(beforeBalance, 10));
+      } else {
+        console.log('     Not using a time-jump capable test client so this test is skipped');
+        this.skip();
+      }
+    });
   });
 
   after(async () => {

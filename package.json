@@ -9,8 +9,8 @@
     "ropsten-test": "env-cmd -e ropsten mocha --timeout 0 --bail test/http.mjs test/neg-http.mjs",
     "test-gas": "env-cmd -e development mocha --timeout 0 --bail test/tx-gas.mjs",
     "test-chain-reorg": "env-cmd -e development mocha --timeout 0 --bail test/chain-reorg.mjs",
-    "test-e2e": "nyc env-cmd -e development mocha --timeout 0  --bail test/e2e/index.test.mjs ",
-    "test-e2e-ropsten": "env-cmd -e ropsten mocha --timeout 0 --bail test/e2e/nightfall-sdk.test.mjs",
+    "test-e2e-protocol": "env-cmd -e development mocha --timeout 0 --bail test/e2e/protocol/index.test.mjs ",
+    "test-e2e-tokens": "env-cmd -e development mocha --timeout 0 --bail test/e2e/tokens/index.test.mjs ",
     "lint": "eslint . --ext js,mjs,jsx && find-unused-exports",
     "prepare": "husky install",
     "doc:build:sdk": "jsdoc -c jsdoc.json cli/lib/nf3.mjs"
@@ -49,7 +49,6 @@
     "husky": "^6.0.0",
     "jsdoc": "^3.6.7",
     "mocha": "^8.3.2",
-    "nyc": "^15.1.0",
     "prettier": "^2.2.1",
     "prettier-plugin-solidity": "^1.0.0-beta.10",
     "queue": "^6.0.2",
