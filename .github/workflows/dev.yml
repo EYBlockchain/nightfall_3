@@ -121,6 +121,8 @@ jobs:
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $DOCKER_ACTOR --password-stdin
       - name: Pull docker images
         run: ssh dev './pull-images.sh'
+      - name: Kill any start scripts
+        run: ssh dev 'pkill -KILL start.sh'
       - name: Stop previous nightfall, delete build volume
         run: ssh dev './down.sh'
       - name: Start new instance
