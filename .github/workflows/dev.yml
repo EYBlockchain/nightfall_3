@@ -5,9 +5,8 @@ on:
   push:
     branches:
       - dev
-  pull_request:
-    branches:
       - master
+
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   DOCKER_ACTOR: ${{ secrets.DOCKER_ACTOR }}
