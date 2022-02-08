@@ -5,6 +5,9 @@ on:
   push:
     branches:
       - dev
+  pull_request:
+    branches:
+      - master
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   DOCKER_ACTOR: ${{ secrets.DOCKER_ACTOR }}
@@ -92,6 +95,8 @@ jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-20.04
+    environment:
+      name: Development
     needs: [build-deployer, build-optimist, build-proposer, build-worker]
     steps:
       - name: Checkout
