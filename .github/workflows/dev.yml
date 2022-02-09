@@ -1,8 +1,7 @@
 # Deploys containers to the development environment.
 #
 name: Deploy to Development
-on:
-  workflow_dispatch:
+on: workflow_dispatch
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
