@@ -223,4 +223,13 @@ module.exports = {
       amount: 200,
     },
   ],
+
+  // for Browser use
+  optimistUrl:
+    process.env.LOCAL_OPTIMIST === 'true'
+      ? process.env.LOCAL_API_URL
+      : process.env.OPTIMIST_API_URL,
+
+  eventWsUrl:
+    process.env.LOCAL_OPTIMIST === 'true' ? process.env.LOCAL_WS_URL : process.env.OPTIMIST_WS_URL,
 };
