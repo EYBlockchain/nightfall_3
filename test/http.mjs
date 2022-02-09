@@ -312,29 +312,9 @@ describe('Testing the http API', () => {
       });
     });
 
-    it('should fail to register a proposer twice', async () => {
+    it('should unstake a proposer', async () => {
       const myAddress = (await getAccounts())[0];
-      const res = await chai
-        .request(optimistUrl)
-        .post('/proposer/register')
-        .send({ address: myAddress });
-      const { txDataToSign } = res.body;
-      expect(txDataToSign).to.be.a('string');
-      // we have to pay 10 ETH to be registered
-      const bond = 10;
-      // now we need to sign the transaction and send it to the blockchain
-      console.log('submitting tx');
-      try {
-        await submitTransaction(txDataToSign, privateKey, proposersAddress, gas, bond);
-        expect.fail('Submitting the same proposer registration should have caused an EVM revert');
-      } catch (err) {
-        expect(err.message).to.include('Transaction has been reverted by the EVM');
-      }
-    });
-
-    it('should de-register a proposer', async () => {
-      const myAddress = (await getAccounts())[0];
-      const res = await chai.request(optimistUrl).post('/proposer/de-register');
+      const res = await chai.request(optimistUrl).post('/proposer/unstake');
       const { txDataToSign } = res.body;
       expect(txDataToSign).to.be.a('string');
       const receipt = await submitTransaction(txDataToSign, privateKey, proposersAddress, gas);
@@ -344,8 +324,8 @@ describe('Testing the http API', () => {
       const thisProposer = proposers.filter(p => p.thisAddresss === myAddress);
       expect(thisProposer.length).to.be.equal(0);
     });
-    it('Should create a failing withdrawBond (because insufficient time has passed)', async () => {
-      const res = await chai.request(optimistUrl).post('/proposer/withdrawBond');
+    it('Should create a failing withdrawStake (because insufficient time has passed)', async () => {
+      const res = await chai.request(optimistUrl).post('/proposer/withdrawStake');
       const { txDataToSign } = res.body;
       expect(txDataToSign).to.be.a('string');
       await expect(
@@ -354,9 +334,9 @@ describe('Testing the http API', () => {
         /Returned error: VM Exception while processing transaction: revert It is too soon to withdraw your bond|Transaction has been reverted by the EVM/,
       );
     });
-    it('Should create a passing withdrawBond (because sufficient time has passed)', async () => {
+    it('Should create a passing withdrawStake (because sufficient time has passed)', async () => {
       if (nodeInfo.includes('TestRPC')) await timeJump(3600 * 24 * 10); // jump in time by 7 days
-      const res = await chai.request(optimistUrl).post('/proposer/withdrawBond');
+      const res = await chai.request(optimistUrl).post('/proposer/withdrawStake');
       const { txDataToSign } = res.body;
       expect(txDataToSign).to.be.a('string');
       if (nodeInfo.includes('TestRPC')) {

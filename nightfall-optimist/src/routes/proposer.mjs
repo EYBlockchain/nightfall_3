@@ -91,14 +91,14 @@ router.post('/unstake', async (req, res, next) => {
 });
 
 /**
- * Function to withdraw bond for a de-registered proposer
+ * Function to withdraw stake for a unstaked proposer
  */
 
-router.post('/withdrawBond', async (req, res, next) => {
-  logger.debug(`withdrawBond endpoint received GET`);
+router.post('/withdrawStake', async (req, res, next) => {
+  logger.debug(`withdrawStake endpoint received GET`);
   try {
     const stateContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
-    const txDataToSign = await stateContractInstance.methods.withdrawBond().encodeABI();
+    const txDataToSign = await stateContractInstance.methods.withdrawStake().encodeABI();
     res.json({ txDataToSign });
   } catch (error) {
     logger.error(error);
