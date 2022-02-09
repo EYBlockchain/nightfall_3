@@ -8,7 +8,7 @@ import * as Storage from '../../utils/lib/local-storage';
 import { generateKeys } from '../../nightfall-browser/services/keys';
 import blockProposedEventHandler from '../../nightfall-browser/event-handlers/block-proposed';
 
-const { optimistWsUrl } = global.config;
+const { eventWsUrl } = global.config;
 
 export const reducer = (state, action) => {
   switch (action.type) {
@@ -67,7 +67,7 @@ export const UserProvider = ({ children }) => {
 
   const setupWebSocket = () => {
     if (!state.zkpKeys) return;
-    const socket = new WebSocket(optimistWsUrl);
+    const socket = new WebSocket(eventWsUrl);
 
     // Connection opened
     socket.addEventListener('open', function () {

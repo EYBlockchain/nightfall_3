@@ -1,10 +1,12 @@
 /* ignore unused exports */
+import axios from 'axios';
 import Web3 from './web3';
 import logger from './logger';
 import contractABIs from '../../contract-abis';
 import { TOKEN_TYPE, APPROVE_AMOUNT } from '../../constants';
 
 const { ethereum } = global;
+const { optimistUrl } = global.config;
 
 const options = global.config.WEB3_OPTIONS;
 
@@ -24,7 +26,9 @@ export async function getContractInstance(contractName, deployedAddress) {
 }
 
 // TODO: temporary function create to avoid eslint issue for now
-export function getContractAddress() {}
+export function getContractAddress(contractName) {
+  return axios.get(`${optimistUrl}/contract-address/${contractName}`);
+}
 
 /**
  * Method for signing and submitting an Ethereum transaction to the blockchain.
