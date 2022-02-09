@@ -110,7 +110,7 @@ def waitBalanceChange(l1Balance, l2Balance, txParams, nTx, findElementsInstance)
     "tokenAddress": tokens['erc20'],
   }
   while True:
-    sleep(5)
+    sleep(10)
     tokenRefresh(txTestParams,findElementsInstance)
     if niter == 15:
       errorMsg = "FAILED - waited too long\n"

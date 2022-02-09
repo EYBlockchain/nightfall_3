@@ -64,6 +64,8 @@ class Nf3 {
 
   currentEnvironment;
 
+  notConfirmed = 0;
+
   constructor(web3WsUrl, ethereumSigningKey, environment = ENVIRONMENTS.localhost, zkpKeys) {
     this.clientBaseUrl = environment.clientApiUrl;
     this.optimistBaseUrl = environment.optimistApiUrl;
@@ -193,8 +195,27 @@ class Nf3 {
 
     if (this.ethereumSigningKey) {
       const signed = await this.web3.eth.accounts.signTransaction(tx, this.ethereumSigningKey);
-      return this.web3.eth.sendSignedTransaction(signed.rawTransaction);
+      // rather than waiting until we have a receipt, wait until we have enough confirmation blocks
+      // then return the receipt.
+      // TODO does this still work if there is a chain reorg or do we have to handle that?
+      return new Promise(resolve => {
+        console.log(`Confirming transaction ${signed.transactionHash}`);
+        this.notConfirmed++;
+        this.web3.eth
+          .sendSignedTransaction(signed.rawTransaction)
+          .on('confirmation', (number, receipt) => {
+            if (number === 12) {
+              this.notConfirmed--;
+              console.log(
+                `Transaction ${receipt.transactionHash} has been confirmed ${number} times.`,
+                `Number of unconfirmed transactions is ${this.notConfirmed}`,
+              );
+              resolve(receipt);
+            }
+          });
+      });
     }
+    // TODO add wait for confirmations to the wallet functionality
     return this.web3.eth.sendTransaction(tx);
   }
 
@@ -228,7 +249,7 @@ class Nf3 {
   }
 
   /**
-  Returns the address of a Nightfall_3 contract.
+  Returns the address of a Nightfall_3 contract calling the client.
   @method
   @async
   @param {string} contractName - the name of the smart contract in question. Possible
@@ -238,6 +259,19 @@ class Nf3 {
   async getContractAddress(contractName) {
     const res = await axios.get(`${this.clientBaseUrl}/contract-address/${contractName}`);
     return res.data.address.toLowerCase();
+  }
+
+  /**
+  Returns the address of a Nightfall_3 contract calling the optimist.
+  @method
+  @async
+  @param {string} contractName - the name of the smart contract in question. Possible
+  values are 'Shield', 'State', 'Proposers', 'Challengers'.
+  @returns {Promise} Resolves into the Ethereum address of the contract
+  */
+  async getContractAddressOptimist(contractName) {
+    const res = await axios.get(`${this.optimistBaseUrl}/contract-address/${contractName}`);
+    return res.data.address;
   }
 
   /**
@@ -327,6 +361,9 @@ class Nf3 {
       ask: this.zkpKeys.ask,
       fee,
     });
+    if (res.data.error && res.data.error === 'No suitable commitments') {
+      throw new Error('No suitable commitments');
+    }
     if (!offchain) {
       return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, fee);
     }
@@ -737,7 +774,7 @@ class Nf3 {
   @method
   @async
   @param {Array} ercList - list of erc contract addresses to filter.
-  @param {Boolean} filterByCompressedPkd - flag to indicate if request is filtered 
+  @param {Boolean} filterByCompressedPkd - flag to indicate if request is filtered
   ones compressed pkd
   @returns {Promise} This promise resolves into an object whose properties are the
   addresses of the ERC contracts of the tokens held by this account in Layer 2. The
@@ -758,7 +795,7 @@ class Nf3 {
   @method
   @async
   @param {Array} ercList - list of erc contract addresses to filter.
-  @param {Boolean} filterByCompressedPkd - flag to indicate if request is filtered 
+  @param {Boolean} filterByCompressedPkd - flag to indicate if request is filtered
   ones compressed pkd
   @returns {Promise} This promise resolves into an object whose properties are the
   addresses of the ERC contracts of the tokens held by this account in Layer 2. The
@@ -805,7 +842,9 @@ class Nf3 {
   Set a Web3 Provider URL
   */
   async setWeb3Provider() {
-    this.web3 = new Web3(this.web3WsUrl, { transactionBlockTimeout: 200 }); // set a longer timeout
+    this.web3 = new Web3(this.web3WsUrl);
+    this.web3.eth.transactionBlockTimeout = 200;
+    this.web3.eth.transactionConfirmationBlocks = 12;
     if (typeof window !== 'undefined') {
       if (window.ethereum && this.ethereumSigningKey === '') {
         this.web3 = new Web3(window.ethereum);

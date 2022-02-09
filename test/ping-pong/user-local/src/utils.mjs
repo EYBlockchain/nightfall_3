@@ -26,6 +26,7 @@ export const waitForSufficientBalance = (client, value) => {
   return new Promise(resolve => {
     async function isSufficientBalance() {
       const balances = await client.getLayer2Balances();
+      console.log('Balance', balances, value);
       if (
         Object.keys(balances).length === 0 ||
         balances[client.zkpKeys.compressedPkd] === undefined ||

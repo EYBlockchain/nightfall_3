@@ -56,6 +56,7 @@
   "dependencies": {
     "async-mutex": "^0.3.2",
     "web3": "^1.4.0",
-    "docker-compose": "^0.23.13"
+    "docker-compose": "^0.23.13",
+    "general-number": "^1.0.1"
   }
 }
