@@ -1,11 +1,8 @@
 # Deploys containers to the development environment.
 #
-name: Deploy to Staging
+name: Deploy to Development
 on:
-  push:
-    branches:
-      - dev
-      - master
+  workflow_dispatch:
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
