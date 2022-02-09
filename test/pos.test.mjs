@@ -21,6 +21,8 @@ import {
   connectWeb3,
   getCurrentEnvironment,
   expectTransaction,
+  waitForEvent,
+  topicEventMapping,
 } from './utils.mjs';
 
 const { expect } = chai;
@@ -34,6 +36,7 @@ const MINIMUM_STAKE = 10;
 let currentGasCostPerTx = 0;
 let web3;
 let stateAddress;
+let eventLogs = [];
 
 const miniStateABI = [
   {
@@ -97,6 +100,11 @@ describe('Testing the http API', () => {
         `Block proposal gas cost was ${gasUsed}, cost per transaction was ${currentGasCostPerTx}`,
       );
     });
+
+    web3.eth.subscribe('logs', { address: stateAddress }).on('data', log => {
+      // For event tracking, we use only care about the logs related to 'blockProposed'
+      if (log.topics[0] === topicEventMapping.BlockProposed) eventLogs.push('blockProposed');
+    });
   });
 
   describe('Basic Proposer staking tests', () => {
@@ -139,6 +147,8 @@ describe('Testing the http API', () => {
         const res = await nf3User1.deposit(ercAddress, tokenType, value, tokenId, fee);
         expectTransaction(res);
       }
+
+      eventLogs = await waitForEvent(eventLogs, ['blockProposed'], 2);
       const stakeAccount2 = await getStakeAccount(nf3Proposer1.ethereumAddress);
       expect(Number(stakeAccount2.amount)).equal(Number(stakeAccount1.amount) - 2 * BLOCK_STAKE);
       expect(Number(stakeAccount2.challengeLocked)).equal(
