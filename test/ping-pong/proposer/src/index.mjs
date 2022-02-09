@@ -20,7 +20,7 @@ async function startProposer() {
   await nf3.init(undefined, 'optimist');
   if (await nf3.healthcheck('optimist')) logger.info('Healthcheck passed');
   else throw new Error('Healthcheck failed');
-  await nf3.registerProposer();
+  await nf3.stakeProposer(1000);
   logger.debug('Proposer registration complete');
   // TODO subscribe to layer 1 blocks and call change proposer
   nf3.startProposer();

@@ -40,7 +40,7 @@ describe('Testing the Nightfall ERCMocks', () => {
     await nf3.init();
     if (!(await nf3.healthcheck('optimist'))) throw new Error('Healthcheck failed');
     // Proposer registration
-    await nf3.registerProposer();
+    await nf3.stakeProposer(1000);
     // Proposer listening for incoming events
     nf3.startProposer();
     // Challenger registration

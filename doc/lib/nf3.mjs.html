@@ -502,21 +502,21 @@ class Nf3 {
   }
 
   /**
-  Registers a new proposer and pays the Bond required to register.
+  Registers a new proposer and pays a stake.
   It will use the address of the Ethereum Signing key that is holds to register
   the proposer.
   @method
   @async
   @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
   */
-  async registerProposer() {
-    const res = await axios.post(`${this.optimistBaseUrl}/proposer/register`, {
+  async stakeProposer(amount) {
+    const res = await axios.post(`${this.optimistBaseUrl}/proposer/stake`, {
       address: this.ethereumAddress,
     });
     return this.submitTransaction(
       res.data.txDataToSign,
       this.proposersContractAddress,
-      this.PROPOSER_BOND,
+      amount,
     );
   }
 

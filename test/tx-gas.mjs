@@ -82,10 +82,10 @@ describe('Testing the http API', () => {
   });
 
   describe('Basic Proposer tests', () => {
-    it('should register a proposer', async () => {
+    it('should stake a proposer', async () => {
       let proposers;
       ({ proposers } = await nf3Proposer1.getProposers());
-      const res = await nf3Proposer1.registerProposer();
+      const res = await nf3Proposer1.stakeProposer();
       expectTransaction(res);
       ({ proposers } = await nf3Proposer1.getProposers());
       const thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer1.ethereumAddress);

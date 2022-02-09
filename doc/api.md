@@ -123,9 +123,9 @@ the calling application, along with the fee for the Proposer (as `msg.value`).
 
 # nightfall-optimist
 
-## POST /proposer/register
+## POST /proposer/stake
 
-Creates a transaction to register a Proposer, so that they can start producing blocks.
+Creates a transaction to stake a Proposer, so that they can start producing blocks.
 
 ## Parameters
 

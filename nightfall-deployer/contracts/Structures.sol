@@ -21,7 +21,7 @@ contract Structures {
 
     event CommittedToChallenge(bytes32 commitHash, address sender);
 
-    event InstantWithdrawalRequested(bytes32 withdrawTransactionHash, address paidBy, uint amount);
+    event InstantWithdrawalRequested(bytes32 withdrawTransactionHash, address paidBy, uint256 amount);
 
     /**
   These events are what the merkle-tree microservice's filters will listen for.
@@ -65,8 +65,9 @@ contract Structures {
         address nextAddress;
     }
 
-    struct TimeLockedBond {
+    struct TimeLockedStake {
         uint256 amount; // The amount held
+        uint256 challengeLocked; // The amount locked by block proposed still in CHALLENGE_PERIOD and not claimed
         uint256 time; // The time the funds were locked from
     }
 }

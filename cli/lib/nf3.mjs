@@ -539,34 +539,30 @@ class Nf3 {
   }
 
   /**
-  Registers a new proposer and pays the Bond required to register.
+  Stakes as a proposer the amount passed.
   It will use the address of the Ethereum Signing key that is holds to register
   the proposer.
   @method
   @async
   @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
   */
-  async registerProposer() {
-    const res = await axios.post(`${this.optimistBaseUrl}/proposer/register`, {
+  async stakeProposer(amount) {
+    const res = await axios.post(`${this.optimistBaseUrl}/proposer/stake`, {
       address: this.ethereumAddress,
     });
-    return this.submitTransaction(
-      res.data.txDataToSign,
-      this.proposersContractAddress,
-      this.PROPOSER_BOND,
-    );
+    return this.submitTransaction(res.data.txDataToSign, this.proposersContractAddress, amount);
   }
 
   /**
-  De-registers an existing proposer.
-  It will use the address of the Ethereum Signing key that is holds to de-register
+  Unstake an existing proposer.
+  It will use the address of the Ethereum Signing key that is holds to unstake
   the proposer.
   @method
   @async
   @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
   */
-  async deregisterProposer() {
-    const res = await axios.post(`${this.optimistBaseUrl}/proposer/de-register`, {
+  async unstakeProposer() {
+    const res = await axios.post(`${this.optimistBaseUrl}/proposer/unstake`, {
       address: this.ethereumAddress,
     });
     return this.submitTransaction(res.data.txDataToSign, this.proposersContractAddress, 0);
