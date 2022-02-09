@@ -195,8 +195,6 @@ describe('ERC721 tests', () => {
     });
   });
 
-  // TODO I believe we should also test on-chain and off-chain transfers like we do for ERC20
-
   describe('Withdraw', () => {
     it('should withdraw from L2, checking for missing commitment', async function () {
       const erc721balances = (await nf3Users[0].getLayer2Balances())[erc721Address];

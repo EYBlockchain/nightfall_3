@@ -43,7 +43,7 @@ const waitForTxExecution = async (count, txType) => {
   }
 };
 
-/* 
+/*
   This function tries to zero the number of unprocessed transactions in the optimist node
   that nf3 is connected to. We call it extensively on the tests, as we want to query stuff from the
   L2 layer, which is dependent on a block being made. We also need 0 unprocessed transactions by the end
@@ -192,6 +192,8 @@ describe('ERC20 tests', () => {
     });
 
     it('should transfer some ERC20 crypto (back to us) using ZKP', async function () {
+      const before = (await nf3Users[0].getLayer2Balances())[erc20Address][0].balance;
+
       for (let i = 0; i < txPerBlock; i++) {
         // eslint-disable-next-line no-await-in-loop
         const res = await nf3Users[0].transfer(
@@ -206,33 +208,59 @@ describe('ERC20 tests', () => {
         expectTransaction(res);
         if (process.env.GAS_COSTS) console.log(`     Gas used was ${Number(res.gasUsed)}`);
       }
+      const after = (await nf3Users[0].getLayer2Balances())[erc20Address][0].balance;
+
       // stateBalance += fee * txPerBlock + BLOCK_STAKE;
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      expect(after).to.be.lessThan(before);
     });
 
-    it('should send a single ERC20 transfer directly to a proposer - offchain and a receiver different from the sender should successfully receive that transfer', async function () {
-      const res = await nf3Users[0].transfer(
-        true,
-        erc20Address,
-        tokenType,
-        transferValue,
-        tokenId,
-        nf3Users[1].zkpKeys.compressedPkd,
-        fee,
-      );
-      expect(res).to.be.equal(200);
-      // stateBalance += fee;
-      await depositNTransactions(
-        nf3Users[0],
-        txPerBlock,
-        erc20Address,
-        tokenType,
-        transferValue,
-        tokenId,
-        fee,
-      );
-      // stateBalance += fee * txPerBlock + BLOCK_STAKE;
-      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+    it('should send a single ERC20 transfer directly to a proposer', async function () {
+      const before = (await nf3Users[0].getLayer2Balances())[erc20Address][0].balance;
+
+      // here we don't need to evenTheBlock because we're sending two transactions
+      for (let i = 0; i < txPerBlock; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        const res = await nf3Users[0].transfer(
+          true,
+          erc20Address,
+          tokenType,
+          transferValue,
+          tokenId,
+          nf3Users[1].zkpKeys.compressedPkd,
+          fee,
+        );
+        expect(res).to.be.equal(200);
+      }
+
+      const after = (await nf3Users[0].getLayer2Balances())[erc20Address][0].balance;
+      expect(after).to.be.lessThan(before);
+    });
+
+    it('should send a double ERC20 transfer directly to a proposer', async function () {
+      // we get some different transferValue than the commitments we have (all should be of value transferValue)
+      // then we send it, the client should pick two commitments to send the transaction
+      const doubleTransferValue = Math.ceil(transferValue * 1.2);
+
+      const before = (await nf3Users[0].getLayer2Balances())[erc20Address][0].balance;
+
+      // here we don't need to evenTheBlock because we're sending two transactions
+      for (let i = 0; i < txPerBlock; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        const res = await nf3Users[0].transfer(
+          true,
+          erc20Address,
+          tokenType,
+          doubleTransferValue,
+          tokenId,
+          nf3Users[1].zkpKeys.compressedPkd,
+          fee,
+        );
+        expect(res).to.be.equal(200);
+      }
+
+      const after = (await nf3Users[0].getLayer2Balances())[erc20Address][0].balance;
+      expect(after).to.be.lessThan(before);
     });
   });
 

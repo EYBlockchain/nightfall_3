@@ -212,8 +212,6 @@ describe('ERC1155 tests', () => {
     });
   });
 
-  // // TODO I believe we should also test on-chain and off-chain transfers like we do for ERC20
-
   describe('Withdraw', () => {
     it('should withdraw from L2, checking for missing commitment', async function () {
       const beforeBalance = (await nf3Users[0].getLayer2Balances())[erc1155Address].find(

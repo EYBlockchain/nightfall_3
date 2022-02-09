@@ -17,7 +17,7 @@ jobs:
         run: |
           npm ci
           npm run lint
-         
+
   ganache-test:
     runs-on: ubuntu-18.04
     steps:
@@ -41,7 +41,8 @@ jobs:
       - name: Run integration test
         run: |
           npm ci
-          npm test
+          npm run test-e2e-protocol
+          npm run test-e2e-tokens
 
       - name: debug logs - after integration test run
         if: always()
@@ -75,7 +76,8 @@ jobs:
         run: sleep 2500
 
       - name: Retrieve Wallet test logs
-        run: docker logs $(docker ps -aqf "name=wallet-test") > wallet-test.log; cat wallet-test.log; 
+        run:
+          docker logs $(docker ps -aqf "name=wallet-test") > wallet-test.log; cat wallet-test.log;
 
       - name: debug logs - after container startup
         if: always()
@@ -83,7 +85,9 @@ jobs:
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
-        run: docker-compose -f docker-compose.yml -f docker-compose.ganache.yml -f docker-compose.wallet-test.yml down -v
+        run:
+          docker-compose -f docker-compose.yml -f docker-compose.ganache.yml -f
+          docker-compose.wallet-test.yml down -v
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
@@ -91,7 +95,6 @@ jobs:
         with:
           name: wallet-test-logs
           path: ./wallet-test.log
-
 
   test-gas:
     name: check gas for 32 transactions per block
