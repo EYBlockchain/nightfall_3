@@ -13,9 +13,7 @@ import metamaskIcon from '../../assets/svg/metamask.svg';
 import maticImg from '../../assets/img/polygon-chain.svg';
 import { UserContext } from '../../hooks/User/index.jsx';
 import transfer from '../../nightfall-browser/services/transfer';
-import { submitTransaction } from '../../common-files/utils/contract';
-
-const { shieldContractAddress } = global.config;
+import { getContractAddress, submitTransaction } from '../../common-files/utils/contract';
 
 const symbols = {
   matic,
@@ -37,6 +35,7 @@ export default function TokenItem({
   const [valueToSend, setTransferValue] = useState(0);
 
   async function sendTx() {
+    const { address: shieldContractAddress } = (await getContractAddress('Shield')).data;
     const { rawTransaction } = await transfer(
       {
         offchain: true,
