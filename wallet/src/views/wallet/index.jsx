@@ -149,11 +149,11 @@ export default function Wallet() {
       // TODO just map the mock address over all tokens.
       const { tokenAddress, ...rest } = i;
       return {
-        newTokenAddress,
+        tokenAddress: newTokenAddress,
         ...rest,
       };
     });
-
+    console.log('UpdatedTokneState', updatedTokenState);
     if (
       Object.keys(l2Balance).length !== 0 &&
       Object.prototype.hasOwnProperty.call(state, 'zkpKeys')
@@ -179,6 +179,8 @@ export default function Wallet() {
         return i;
       });
       setTokens(newState.sort((a, b) => Number(a.order) - Number(b.order)));
+    } else {
+      setTokens(updatedTokenState.sort((a, b) => Number(a.order) - Number(b.order)));
     }
   }, [state.zkpKeys]);
 
