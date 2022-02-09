@@ -24,6 +24,7 @@ export class Web3Client {
     this.provider = new Web3.providers.WebsocketProvider(this.url, config.WEB3_PROVIDER_OPTIONS);
     this.web3 = new Web3(this.provider);
     this.isSubmitTxLocked = false;
+    this.nonceDict = [];
   }
 
   getWeb3() {

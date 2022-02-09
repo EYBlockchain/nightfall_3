@@ -4,22 +4,15 @@ import chaiAsPromised from 'chai-as-promised';
 import Queue from 'queue';
 import WebSocket from 'ws';
 import { generateMnemonic } from 'bip39';
-import {
-  closeWeb3Connection,
-  submitTransaction,
-  getAccounts,
-  createBadBlock,
-  testForEvents,
-  connectWeb3,
-  topicEventMapping,
-  setNonce,
-} from './utils.mjs';
+import { createBadBlock, topicEventMapping, Web3Client } from './utils.mjs';
 
 const { expect } = chai;
 const txQueue = new Queue({ autostart: true, concurrency: 1 });
 const ZERO = '0x0000000000000000000000000000000000000000000000000000000000000000';
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
+
+const web3Client = new Web3Client();
 
 describe('Testing the challenge http API', () => {
   let shieldAddress;
@@ -86,7 +79,7 @@ describe('Testing the challenge http API', () => {
   };
 
   before(async () => {
-    web3 = await connectWeb3(web3WsUrl);
+    web3 = await web3Client.connectWeb3(web3WsUrl);
 
     if (USE_INFURA || USE_ROPSTEN_NODE) {
       if (!ETH_PRIVATE_KEY) {
@@ -133,7 +126,10 @@ describe('Testing the challenge http API', () => {
     res = await chai.request(url).get('/contract-address/ERCStub');
     ercAddress = res.body.address;
     // set the current nonce before we start the test
-    setNonce(await web3.eth.getTransactionCount((await getAccounts())[0]));
+    web3Client.setNonce(
+      privateKey,
+      await web3.eth.getTransactionCount((await web3Client.getAccounts())[0]),
+    );
 
     // Generate a random mnemonic (uses crypto.randomBytes under the hood), defaults to 128-bits of entropy
     const mnemonic = generateMnemonic();
@@ -157,11 +153,11 @@ describe('Testing the challenge http API', () => {
     });
 
     // should register a proposer
-    const myAddress = (await getAccounts())[0];
+    const myAddress = (await web3Client.getAccounts())[0];
     const bond = 10;
     res = await chai.request(optimistUrl).post('/proposer/register').send({ address: myAddress });
     txToSign = res.body.txDataToSign;
-    await submitTransaction(txToSign, privateKey, proposersAddress, gas, bond);
+    await web3Client.submitTransaction(txToSign, privateKey, proposersAddress, gas, bond);
 
     // should subscribe to block proposed event with the provided incoming viewing key
     await chai
@@ -257,15 +253,21 @@ describe('Testing the challenge http API', () => {
               txDataToSign = msg.txDataToSign;
               console.log(`Created good block with blockHash ${block.blockHash}`);
             }
-            await submitTransaction(txDataToSign, privateKey, stateAddress, gas, BLOCK_STAKE);
+            await web3Client.submitTransaction(
+              txDataToSign,
+              privateKey,
+              stateAddress,
+              gas,
+              BLOCK_STAKE,
+            );
             counter++;
             // console.log('tx hash of propose block is', txReceipt.transactionHash);
           } else if (type === 'commit') {
             const count = logCounts.challenge;
-            await submitTransaction(txDataToSign, privateKey1, challengeAddress, gas);
+            await web3Client.submitTransaction(txDataToSign, privateKey1, challengeAddress, gas);
             await waitForTxExecution(count, 'challenge');
           } else if (type === 'challenge') {
-            await submitTransaction(txDataToSign, privateKey1, challengeAddress, gas);
+            await web3Client.submitTransaction(txDataToSign, privateKey1, challengeAddress, gas);
             // When a challenge succeeds, the challenger is removed. We are adding them back for subsequent for challenges
             const result = await chai
               .request(optimistUrl)
@@ -273,7 +275,7 @@ describe('Testing the challenge http API', () => {
               .send({ address: myAddress });
             txToSign = result.body.txDataToSign;
             const count = logCounts.registerProposer;
-            await submitTransaction(txToSign, privateKey, proposersAddress, gas, bond);
+            await web3Client.submitTransaction(txToSign, privateKey, proposersAddress, gas, bond);
             await waitForTxExecution(count, 'registerProposer');
             // console.log('tx hash of challenge block is', txReceipt.transactionHash);
           } else throw new Error(`Unhandled transaction type: ${type}`);
@@ -286,7 +288,7 @@ describe('Testing the challenge http API', () => {
 
   describe('Basic Challenger tests', () => {
     it('should add a Challenger address', async () => {
-      const myAddress = (await getAccounts())[0];
+      const myAddress = (await web3Client.getAccounts())[0];
       const res = await chai
         .request(optimistUrl)
         .post('/challenger/add')
@@ -328,7 +330,7 @@ describe('Testing the challenge http API', () => {
         const count = logCounts.txSubmitted;
         receiptArrays.push(
           // eslint-disable-next-line no-await-in-loop
-          await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee),
+          await web3Client.submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee),
         );
         // eslint-disable-next-line no-await-in-loop
         await waitForTxExecution(count, 'txSubmitted');
@@ -356,7 +358,7 @@ describe('Testing the challenge http API', () => {
           fee,
         });
       // now we need to sign the transaction and send it to the blockchain
-      await submitTransaction(res.body.txDataToSign, privateKey, shieldAddress, gas);
+      await web3Client.submitTransaction(res.body.txDataToSign, privateKey, shieldAddress, gas);
 
       const depositTransactions = (
         await Promise.all(
@@ -376,7 +378,7 @@ describe('Testing the challenge http API', () => {
         const { txDataToSign } = depositTransactions[i];
         receiptArrays.push(
           // eslint-disable-next-line no-await-in-loop
-          await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee),
+          await web3Client.submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee),
           // we need to await here as we need transactions to be submitted sequentially or we run into nonce issues.
         );
       }
@@ -405,7 +407,7 @@ describe('Testing the challenge http API', () => {
         const { txDataToSign } = depositTransactions[i];
         receiptArrays.push(
           // eslint-disable-next-line no-await-in-loop
-          await submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee),
+          await web3Client.submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee),
         );
         // eslint-disable-next-line no-await-in-loop
         await waitForTxExecution(count, 'txSubmitted');
@@ -431,7 +433,12 @@ describe('Testing the challenge http API', () => {
       const { txDataToSign } = res.body;
       expect(txDataToSign).to.be.a('string');
       const count = logCounts.txSubmitted;
-      const receipt = await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
+      const receipt = await web3Client.submitTransaction(
+        txDataToSign,
+        privateKey,
+        shieldAddress,
+        gas,
+      );
       await waitForTxExecution(count, 'txSubmitted');
       expect(receipt).to.have.property('transactionHash');
       expect(receipt).to.have.property('blockHash');
@@ -469,7 +476,7 @@ describe('Testing the challenge http API', () => {
 
     describe('Challenge 1: Incorrect root challenge', () => {
       it('Should delete the flawed block and rollback the leaves', async () => {
-        await testForEvents(stateAddress, [
+        await web3Client.testForEvents(stateAddress, [
           web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
           web3.eth.abi.encodeParameter('bytes32', topicsBlockHashIncorrectRootInBlock),
         ]);
@@ -481,7 +488,7 @@ describe('Testing the challenge http API', () => {
         txQueue.push(async () => {
           await holdupTxQueue('txSubmitted', logCounts.txSubmitted + 1);
         });
-        await testForEvents(stateAddress, [
+        await web3Client.testForEvents(stateAddress, [
           web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
           web3.eth.abi.encodeParameter('bytes32', topicsBlockHashDuplicateTransaction),
         ]);
@@ -500,12 +507,12 @@ describe('Testing the challenge http API', () => {
             fee,
           });
         const { txDataToSign } = res.body;
-        await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
+        await web3Client.submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
       });
     });
     describe('Challenge 3: Invalid transaction submitted', () => {
       it('Should delete the flawed block and rollback the leaves', async () => {
-        await testForEvents(stateAddress, [
+        await web3Client.testForEvents(stateAddress, [
           web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
           web3.eth.abi.encodeParameter('bytes32', topicsBlockHashInvalidTransaction),
         ]);
@@ -526,13 +533,13 @@ describe('Testing the challenge http API', () => {
           });
         const { txDataToSign } = res.body;
         expect(txDataToSign).to.be.a('string');
-        await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
+        await web3Client.submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
       });
     });
 
     describe('Challenge 4: Challenge historic root used in a transaction', () => {
       it('Should delete the wrong block', async () => {
-        await testForEvents(stateAddress, [
+        await web3Client.testForEvents(stateAddress, [
           web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
           web3.eth.abi.encodeParameter('bytes32', topicsBlockHashesIncorrectHistoricRoot),
         ]);
@@ -541,7 +548,7 @@ describe('Testing the challenge http API', () => {
 
     describe('Challenge 5: Proof verification failure', () => {
       it('Should delete the flawed block and rollback the leaves', async () => {
-        await testForEvents(stateAddress, [
+        await web3Client.testForEvents(stateAddress, [
           web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
           web3.eth.abi.encodeParameter('bytes32', topicsBlockHashIncorrectProof),
         ]);
@@ -550,7 +557,7 @@ describe('Testing the challenge http API', () => {
 
     describe('Challenge 6: Duplicate Nullifier', () => {
       it('Should delete the flawed block and rollback the leaves', async () => {
-        await testForEvents(stateAddress, [
+        await web3Client.testForEvents(stateAddress, [
           web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
           web3.eth.abi.encodeParameter('bytes32', topicsBlockHashDuplicateNullifier),
         ]);
@@ -569,13 +576,13 @@ describe('Testing the challenge http API', () => {
             fee,
           });
         const { txDataToSign } = res.body;
-        await submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
+        await web3Client.submitTransaction(txDataToSign, privateKey, shieldAddress, gas);
       });
     });
 
     describe('Challenge 7: Incorrect Leaf Count', () => {
       it('Should delete the flawed block and rollback the leaves', async () => {
-        await testForEvents(stateAddress, [
+        await web3Client.testForEvents(stateAddress, [
           web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
           web3.eth.abi.encodeParameter('bytes32', topicsBlockHashIncorrectLeafCount),
         ]);
@@ -587,12 +594,12 @@ describe('Testing the challenge http API', () => {
     // if the queue is still running, let's close down after it ends
     // if it's empty, close down immediately
     if (txQueue.length === 0) {
-      closeWeb3Connection();
+      web3Client.closeWeb3();
       connection.close();
     } else {
       // TODO work out what's still running and close it properly
       txQueue.on('end', () => {
-        closeWeb3Connection();
+        web3Client.closeWeb3();
         connection.close();
       });
       txQueue.end();
