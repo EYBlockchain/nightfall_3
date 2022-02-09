@@ -1,3 +1,4 @@
+import config from 'config';
 import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
@@ -11,22 +12,18 @@ import {
   expectTransaction,
   submitTransaction,
 } from '../utils.mjs';
-import {
-  ethereumAddressUser1,
-  ethereumSigningKeyUser1,
-  walletTestAddress,
-  walletTestSigningkey,
-} from '../constants.mjs';
+
+const { ethereumAddressUser1, ethereumSigningKeyUser1, walletTestAddress, walletTestSigningkey } =
+  config.TEST_OPTIONS;
 
 const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 const environment = getCurrentEnvironment();
-const { web3WsUrl } = process.env;
 
 describe('Testing the Nightfall ERCMocks', () => {
   console.log('ENVIRONMENT: ', environment);
-  const nf3 = new Nf3(web3WsUrl, ethereumSigningKeyUser1, environment);
+  const nf3 = new Nf3(environment.web3WsUrl, ethereumSigningKeyUser1, environment);
 
   let web3;
   let erc20Address;

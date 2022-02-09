@@ -5,7 +5,8 @@ import path from 'path';
 import config from 'config';
 import { fileURLToPath } from 'url';
 import rand from '../common-files/utils/crypto/crypto-random.mjs';
-import { ENVIRONMENTS } from '../cli/lib/constants.mjs';
+
+const { ENVIRONMENTS } = config;
 
 const { dirname } = path;
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -40,8 +41,9 @@ export const getCurrentEnvironment = () => {
 
 export function connectWeb3(url) {
   if (!url) {
+    const environment = getCurrentEnvironment();
     // eslint-disable-next-line no-param-reassign
-    url = process.env.web3WsUrl;
+    url = environment.web3WsUrl || process.env.web3WsUrl;
   }
   return new Promise(resolve => {
     console.log('Blockchain Connecting ...');
