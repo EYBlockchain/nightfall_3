@@ -18,22 +18,22 @@ import { UserContext } from '../../hooks/User/index.jsx';
 import './wallet.scss';
 import * as Storage from '../../utils/lib/local-storage';
 import Web3 from '../../common-files/utils/web3';
+import { getContractAddress } from '../../common-files/utils/contract.js';
 
 /*
 These are some default values for now
 */
 const tokenMapping = {
-  '0xf05e9fb485502e5a93990c714560b7ce654173c3': {
+  MATIC: {
     name: 'Matic Token',
     tokenType: 'ERC20',
     maticChainUsdBalance: '1.8',
     maticChainBalance: '10',
     symbol: 'MATIC',
-    tokenAddress: '0xf05e9fb485502e5a93990c714560b7ce654173c3',
+    tokenAddress: '',
   },
 };
 
-// const compressedPkd = '0x9e989c1cdde6b046489665f71799783935c96574e94d85654c45b440c06b796d';
 const initialTokenState = [
   {
     maticChainUsdBalance: '0',
@@ -41,7 +41,7 @@ const initialTokenState = [
     name: 'ChainLink Token',
     symbol: 'LINK',
     order: 2,
-    tokenAddress: '0xf05e9fb485502e5a93990c714560b7ce654173c3',
+    tokenAddress: '',
   },
   {
     maticChainUsdBalance: '0',
@@ -49,7 +49,7 @@ const initialTokenState = [
     name: 'USDT',
     symbol: 'USDT',
     order: 2,
-    tokenAddress: '0xf05e9fb485502e5a93990c714560b7ce654173c3',
+    tokenAddress: '',
   },
   {
     maticChainUsdBalance: '0',
@@ -57,7 +57,7 @@ const initialTokenState = [
     name: 'Aave Token',
     symbol: 'AAVE',
     order: 2,
-    tokenAddress: '0xf05e9fb485502e5a93990c714560b7ce654173c3',
+    tokenAddress: '',
   },
   {
     maticChainUsdBalance: '0',
@@ -65,7 +65,7 @@ const initialTokenState = [
     name: 'Matic Token',
     symbol: 'MATIC',
     order: 1,
-    tokenAddress: '0xf05e9fb485502e5a93990c714560b7ce654173c3',
+    tokenAddress: '',
   },
 ];
 
@@ -144,6 +144,16 @@ export default function Wallet() {
 
   useEffect(async () => {
     const l2Balance = await getWalletBalance();
+    const { address: newTokenAddress } = (await getContractAddress('ERC20Mock')).data; // TODO This is just until we get a list from Polygon
+    const updatedTokenState = initialTokenState.map(i => {
+      // TODO just map the mock address over all tokens.
+      const { tokenAddress, ...rest } = i;
+      return {
+        newTokenAddress,
+        ...rest,
+      };
+    });
+
     if (
       Object.keys(l2Balance).length !== 0 &&
       Object.prototype.hasOwnProperty.call(state, 'zkpKeys')
@@ -163,7 +173,7 @@ export default function Wallet() {
         }
       });
       if (typeof updatedState[0] === 'undefined') return;
-      const newState = initialTokenState.map(i => {
+      const newState = updatedTokenState.map(i => {
         const s = updatedState.find(u => i.symbol === u.symbol);
         if (s) return s;
         return i;
