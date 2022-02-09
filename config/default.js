@@ -133,5 +133,11 @@ module.exports = {
   MAX_QUEUE: 5,
 
   // for Browser use
-  shieldContractAddress: process.env.SHIELD_CONTRACT_ADDRESS,
+  optimistUrl:
+    process.env.LOCAL_OPTIMIST === 'true'
+      ? process.env.LOCAL_API_URL
+      : process.env.OPTIMIST_API_URL,
+
+  eventWsUrl:
+    process.env.LOCAL_OPTIMIST === 'true' ? process.env.LOCAL_WS_URL : process.env.OPTIMIST_WS_URL,
 };
