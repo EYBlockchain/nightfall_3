@@ -67,7 +67,7 @@ describe('Testing the challenge http API', () => {
   let web3;
   const logCounts = {
     txSubmitted: 0,
-    registerProposer: 0,
+    stakeProposer: 0,
     challenge: 0,
   };
 
@@ -155,7 +155,7 @@ describe('Testing the challenge http API', () => {
     proposersAddress = res.body.address;
     web3.eth.subscribe('logs', { address: proposersAddress }).on('data', log => {
       if (log.topics[0] === web3.eth.abi.encodeEventSignature('NewCurrentProposer(address)')) {
-        logCounts.registerProposer += 1;
+        logCounts.stakeProposer += 1;
       }
     });
 
@@ -192,7 +192,7 @@ describe('Testing the challenge http API', () => {
     // should register a proposer
     const myAddress = (await getAccounts())[0];
     const bond = 10;
-    res = await chai.request(optimistUrl).post('/proposer/register').send({ address: myAddress });
+    res = await chai.request(optimistUrl).post('/proposer/stake').send({ address: myAddress });
     txToSign = res.body.txDataToSign;
     await submitTransaction(txToSign, privateKey, proposersAddress, gas, bond);
 
@@ -302,12 +302,12 @@ describe('Testing the challenge http API', () => {
             // When a challenge succeeds, the challenger is removed. We are adding them back for subsequent for challenges
             const result = await chai
               .request(optimistUrl)
-              .post('/proposer/register')
+              .post('/proposer/stake')
               .send({ address: myAddress });
             txToSign = result.body.txDataToSign;
-            const count = logCounts.registerProposer;
+            const count = logCounts.stakeProposer;
             await submitTransaction(txToSign, privateKey, proposersAddress, gas, bond);
-            await waitForTxExecution(count, 'registerProposer');
+            await waitForTxExecution(count, 'stakeProposer');
             // console.log('tx hash of challenge block is', txReceipt.transactionHash);
           } else throw new Error(`Unhandled transaction type: ${type}`);
         } catch (err) {

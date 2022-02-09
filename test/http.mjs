@@ -70,7 +70,7 @@ describe('Testing the http API', () => {
   let stateBalance = 0;
   const logCounts = {
     deposit: 0,
-    registerProposer: 0,
+    stakeProposer: 0,
   };
 
   const holdupTxQueue = async (txType, waitTillCount) => {
@@ -151,7 +151,7 @@ describe('Testing the http API', () => {
       .address;
     web3.eth.subscribe('logs', { address: proposersAddress }).on('data', log => {
       if (log.topics[0] === web3.eth.abi.encodeEventSignature('NewCurrentProposer(address)')) {
-        logCounts.registerProposer += 1;
+        logCounts.stakeProposer += 1;
       }
     });
 
@@ -261,29 +261,29 @@ describe('Testing the http API', () => {
       const myAddress = (await getAccounts())[0];
       const res = await chai
         .request(optimistUrl)
-        .post('/proposer/register')
+        .post('/proposer/stake')
         .send({ address: myAddress });
       const { txDataToSign } = res.body;
       expect(txDataToSign).to.be.a('string');
       const bond = 10;
-      const count = logCounts.registerProposer;
+      const count = logCounts.stakeProposer;
       await submitTransaction(txDataToSign, privateKey, proposersAddress, gas, bond);
-      await waitForTxExecution(count, 'registerProposer');
+      await waitForTxExecution(count, 'stakeProposer');
       stateBalance += bond;
     });
 
-    it('should register a proposer', async () => {
+    it('should stake a proposer', async () => {
       const myAddress = (await getAccounts())[0];
       const res = await chai
         .request(optimistUrl)
-        .post('/proposer/register')
+        .post('/proposer/stake')
         .send({ address: myAddress });
       const { txDataToSign } = res.body;
       expect(txDataToSign).to.be.a('string');
       // we have to pay 10 ETH to be registered
       const bond = 10;
       const startBalance = await getBalance(myAddress);
-      const count = logCounts.registerProposer;
+      const count = logCounts.stakeProposer;
       // now we need to sign the transaction and send it to the blockchain
       console.log('submitting tx');
       const receipt = await submitTransaction(
@@ -294,7 +294,7 @@ describe('Testing the http API', () => {
         bond,
       );
       console.log('waiting for execution');
-      await waitForTxExecution(count, 'registerProposer');
+      await waitForTxExecution(count, 'stakeProposer');
       console.log('executed');
       const endBalance = await getBalance(myAddress);
       expect(receipt).to.have.property('transactionHash');

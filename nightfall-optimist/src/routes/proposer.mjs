@@ -11,7 +11,7 @@ import { getContractInstance } from 'common-files/utils/contract.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction, TransactionError } from '../classes/index.mjs';
 import {
-  setRegisteredProposerAddress,
+  setStakeProposerAddress,
   getMempoolTransactions,
   getLatestTree,
 } from '../services/database.mjs';
@@ -27,16 +27,16 @@ const { STATE_CONTRACT_NAME, PROPOSERS_CONTRACT_NAME, SHIELD_CONTRACT_NAME, ZERO
  * amount.  The user must post the address being registered.  This is for the
  * Optimist app to use for it to decide when to start proposing blocks.  It is * not part of the unsigned blockchain transaction that is returned.
  */
-router.post('/register', async (req, res, next) => {
-  logger.debug(`register proposer endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
+router.post('/stake', async (req, res, next) => {
+  logger.debug(`stake proposer endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
   try {
     const { address } = req.body;
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
-    const txDataToSign = await proposersContractInstance.methods.registerProposer().encodeABI();
+    const txDataToSign = await proposersContractInstance.methods.stakeProposer().encodeABI();
     logger.debug('returning raw transaction data');
     logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
     res.json({ txDataToSign });
-    setRegisteredProposerAddress(address); // save the registration address
+    setStakeProposerAddress(address); // save the stake address
   } catch (err) {
     logger.error(err);
     next(err);
@@ -76,11 +76,11 @@ router.get('/proposers', async (req, res, next) => {
  * Function to return a raw transaction that de-registers a proposer.  This just
  * provides the tx data. The user has to call the blockchain client.
  */
-router.post('/de-register', async (req, res, next) => {
-  logger.debug(`de-register proposer endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
+router.post('/unstake', async (req, res, next) => {
+  logger.debug(`unstake proposer endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
   try {
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
-    const txDataToSign = await proposersContractInstance.methods.deRegisterProposer().encodeABI();
+    const txDataToSign = await proposersContractInstance.methods.unstakeProposer().encodeABI();
     logger.debug('returning raw transaction data');
     logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
     res.json({ txDataToSign });

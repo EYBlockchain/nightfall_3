@@ -17,10 +17,10 @@ contract State is Structures, Config {
   BlockData[] public blockHashes; // array containing mainly blockHashes
   mapping(address => uint) public pendingWithdrawals;
   mapping(address => LinkedAddress) public proposers;
-  mapping(address => TimeLockedBond) public bondAccounts;
+  mapping(address => TimeLockedStake) public stakeAccounts;
   mapping(bytes32 => bool) public claimedBlockStakes;
   LinkedAddress public currentProposer; // who can propose a new shield state
-  uint public proposerStartBlock; // L1 block where currentProposer became current
+  uint256 public proposerStartBlock; // L1 block where currentProposer became current
   // local state variables
   address public proposersAddress;
   address public challengesAddress;
@@ -33,13 +33,15 @@ contract State is Structures, Config {
   }
 
   modifier onlyRegistered {
-    require(msg.sender == proposersAddress || msg.sender == challengesAddress || msg.sender == shieldAddress, 'This address is not authorised to call this function');
+    require(msg.sender == proposersAddress || msg.sender == challengesAddress || 
+      msg.sender == shieldAddress, 
+      'State: Not authorised to call this function');
     _;
   }
 
 
   modifier onlyCurrentProposer { // Modifier
-    require(msg.sender == currentProposer.thisAddress, "Only the current proposer can call this.");
+    require(msg.sender == currentProposer.thisAddress, "State: Only current proposer authorised.");
       _;
   }
 
@@ -54,11 +56,18 @@ contract State is Structures, Config {
   * minimum.
   */
   function proposeBlock(Block calldata b, Transaction[] calldata t) external payable onlyCurrentProposer {
-    require(b.blockNumberL2 == blockHashes.length, 'The block is out of order'); // this will fail if a tx is re-mined out of order due to a chain reorg.
+    require(b.blockNumberL2 == blockHashes.length, 'State: Block out of order'); // this will fail if a tx is re-mined out of order due to a chain reorg.
     bytes32 previousBlockHash;
-    if (blockHashes.length != 0) require(b.previousBlockHash == blockHashes[blockHashes.length - 1].blockHash, 'The block is flawed or out of order'); // this will fail if a tx is re-mined out of order due to a chain reorg.
-    require(BLOCK_STAKE <= msg.value, 'The stake payment is incorrect');
-    require(b.proposer == msg.sender, 'The proposer address is not the sender');
+    if (blockHashes.length != 0) require(b.previousBlockHash == blockHashes[blockHashes.length - 1].blockHash, 
+      'State: Block flawed or out of order'); // this will fail if a tx is re-mined out of order due to a chain reorg.
+
+    TimeLockedStake memory stake = getStakeAccount(msg.sender);
+    require(BLOCK_STAKE <= stake.amount, 'State: Need BLOCK_STAKE');
+    require(b.proposer == msg.sender, 'State: Proposer is not the sender');
+    stake.amount -= BLOCK_STAKE;
+    stake.challengeLocked += BLOCK_STAKE;
+    stakeAccounts[msg.sender] = TimeLockedStake(stake.amount, stake.challengeLocked, 0);
+
     // We need to set the blockHash on chain here, because there is no way to
     // convince a challenge function of the (in)correctness by an offchain
     // computation; the on-chain code doesn't save the pre-image of the hash so
@@ -81,8 +90,8 @@ contract State is Structures, Config {
   // block number and Timber the leaf count). It's helpful when testing to make
   // sure we have the correct event.
   function emitRollback(
-    uint blockNumberL2ToRollbackTo,
-    uint leafCountToRollbackTo
+    uint256 blockNumberL2ToRollbackTo,
+    uint256 leafCountToRollbackTo
   ) public onlyRegistered {
     emit Rollback(blockHashes[blockNumberL2ToRollbackTo].blockHash, blockNumberL2ToRollbackTo, leafCountToRollbackTo);
   }
@@ -118,7 +127,7 @@ contract State is Structures, Config {
     return popped;
   }
 
-  function getBlockData(uint blockNumberL2) public view returns(BlockData memory) {
+  function getBlockData(uint256 blockNumberL2) public view returns(BlockData memory) {
     return blockHashes[blockNumberL2];
   }
 
@@ -139,21 +148,21 @@ contract State is Structures, Config {
     else return Config.ZERO;
   }
 
-  function addPendingWithdrawal(address addr, uint amount) public onlyRegistered {
+  function addPendingWithdrawal(address addr, uint256 amount) public onlyRegistered {
     pendingWithdrawals[addr] += amount;
   }
 
   function withdraw() external {
-    uint amount = pendingWithdrawals[msg.sender];
+    uint256 amount = pendingWithdrawals[msg.sender];
     pendingWithdrawals[msg.sender] = 0;
     payable(msg.sender).transfer(amount);
   }
 
-  function setProposerStartBlock(uint sb) public onlyRegistered {
+  function setProposerStartBlock(uint256 sb) public onlyRegistered {
     proposerStartBlock = sb;
   }
 
-  function getProposerStartBlock() public view returns(uint) {
+  function getProposerStartBlock() public view returns(uint256) {
     return proposerStartBlock;
   }
 
@@ -172,30 +181,31 @@ contract State is Structures, Config {
   // Checks if a block is actually referenced in the queue of blocks waiting
   // to go into the Shield state (stops someone challenging with a non-existent
   // block).
-  function isBlockReal(Block memory b, Transaction[] memory t, uint blockNumberL2) public view {
+  function isBlockReal(Block memory b, Transaction[] memory t, uint256 blockNumberL2) public view {
     bytes32 blockHash = Utils.hashBlock(b, t);
-    require(blockHashes[blockNumberL2].blockHash == blockHash, 'This block does not exist');
+    require(blockHashes[blockNumberL2].blockHash == blockHash, 'State: Block does not exist');
   }
 
-  function setBondAccount(address addr, uint amount) public onlyRegistered {
-    bondAccounts[addr] = TimeLockedBond(amount,0);
+  function setStakeAccount(address addr, uint256 amount, uint256 challengeLocked) public onlyRegistered {
+    stakeAccounts[addr] = TimeLockedStake(amount, challengeLocked, 0);
   }
 
-  function getBondAccount(address addr) public view returns (TimeLockedBond memory){
-    return bondAccounts[addr];
+  function getStakeAccount(address addr) public view returns (TimeLockedStake memory){
+    return stakeAccounts[addr];
   }
 
   function rewardChallenger(address challengerAddr, address proposer, uint256 numRemoved) public onlyRegistered {
     removeProposer(proposer);
-    TimeLockedBond memory bond = bondAccounts[proposer];
-    bondAccounts[proposer] = TimeLockedBond(0,0);
-    pendingWithdrawals[challengerAddr] += bond.amount + numRemoved * BLOCK_STAKE;
+    TimeLockedStake memory stake = stakeAccounts[proposer];
+    // Give reward to challenger from the stake locked for challenges
+    stakeAccounts[proposer] = TimeLockedStake(stake.amount, stake.challengeLocked - numRemoved * BLOCK_STAKE, 0);
+    pendingWithdrawals[challengerAddr] += numRemoved * BLOCK_STAKE;
   }
 
-  function updateBondAccountTime(address addr, uint time) public onlyRegistered {
-    TimeLockedBond memory bond = bondAccounts[addr];
-    bond.time = time;
-    bondAccounts[addr] = bond;
+  function updateStakeAccountTime(address addr, uint256 time) public onlyRegistered {
+    TimeLockedStake memory stake = stakeAccounts[addr];
+    stake.time = time;
+    stakeAccounts[addr] = stake;
   }
 
   function isBlockStakeWithdrawn(bytes32 blockHash) public view returns (bool){

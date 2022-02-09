@@ -36,7 +36,7 @@ async function startProposer(testEnvironment) {
   await nf3.init(defaultMnemonic);
   if (await nf3.healthcheck('optimist')) console.log('Healthcheck passed');
   else throw new Error('Healthcheck failed');
-  await nf3.registerProposer();
+  await nf3.stakeProposer(1000);
   console.log('Proposer registration complete');
   // TODO subscribe to layer 1 blocks and call change proposer
   nf3.startProposer();

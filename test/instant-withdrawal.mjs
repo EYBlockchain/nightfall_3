@@ -98,7 +98,7 @@ describe('Test instant withdrawals', () => {
     // register a proposer d
     const res = await chai
       .request(optimistUrl)
-      .post('/proposer/register')
+      .post('/proposer/stake')
       .send({ address: myAddress });
     const propRegTxDataToSign = res.body.txDataToSign;
     const bond = 10000000000000000000;
