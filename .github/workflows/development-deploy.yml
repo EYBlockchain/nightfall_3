@@ -4,8 +4,8 @@ name: Deploy to Development
 on: workflow_dispatch
 
 env:
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  DOCKER_ACTOR: ${{ secrets.DOCKER_ACTOR }}
+  GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+  DOCKER_ACTOR: "${{ secrets.DOCKER_ACTOR }}"
 
 jobs:
 
@@ -109,9 +109,9 @@ jobs:
             StrictHostKeyChecking no
           END
         env:
-          SSH_USER: pong
-          SSH_KEY: ${{ secrets.DEV_SSH_KEY }}
-          SSH_HOST: ohio.nightfall3.com
+          SSH_USER: "pong"
+          SSH_KEY: "${{ secrets.DEV_SSH_KEY }}"
+          SSH_HOST: "ohio.nightfall3.com"
       - name: Copy and rename files
         run: |
           scp deployment-scripts/* dev:~/
