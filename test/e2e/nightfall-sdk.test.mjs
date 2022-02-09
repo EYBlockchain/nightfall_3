@@ -342,7 +342,7 @@ describe('Testing the Nightfall SDK', () => {
       expect(thisProposer.length).to.be.equal(1);
     });
 
-    it('should de-register a proposer', async () => {
+    it('should unstake a proposer', async () => {
       let proposers;
       ({ proposers } = await nf3Proposer1.getProposers());
       let thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer1.ethereumAddress);
@@ -354,10 +354,10 @@ describe('Testing the Nightfall SDK', () => {
       expect(thisProposer.length).to.be.equal(0);
     });
 
-    it('Should create a failing withdrawBond (because insufficient time has passed)', async () => {
+    it('Should create a failing withdrawStake (because insufficient time has passed)', async () => {
       let error = null;
       try {
-        await nf3Proposer1.withdrawBond();
+        await nf3Proposer1.withdrawStake();
       } catch (err) {
         error = err;
       }
@@ -369,15 +369,15 @@ describe('Testing the Nightfall SDK', () => {
       );
     });
 
-    it('Should create a passing withdrawBond (because sufficient time has passed)', async () => {
+    it('Should create a passing withdrawStake (because sufficient time has passed)', async () => {
       if (nodeInfo.includes('TestRPC')) await timeJump(3600 * 24 * 10); // jump in time by 7 days
       if (nodeInfo.includes('TestRPC')) {
-        const res = await nf3Proposer1.withdrawBond();
+        const res = await nf3Proposer1.withdrawStake();
         expectTransaction(res);
       } else {
         let error = null;
         try {
-          await nf3Proposer1.withdrawBond();
+          await nf3Proposer1.withdrawStake();
         } catch (err) {
           error = err;
         }
