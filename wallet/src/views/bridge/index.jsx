@@ -15,7 +15,7 @@ import discloserBottomImage from '../../assets/img/discloser-bottom.svg';
 import lightArrowImage from '../../assets/img/light-arrow.svg';
 import matic from '../../assets/svg/matic.svg';
 import { UserContext } from '../../hooks/User/index.jsx';
-import { approve, submitTransaction } from '../../common-files/utils/contract';
+import { approve, getContractAddress, submitTransaction } from '../../common-files/utils/contract';
 import Web3 from '../../common-files/utils/web3';
 import deposit from '../../nightfall-browser/services/deposit';
 import withdraw from '../../nightfall-browser/services/withdraw';
@@ -25,8 +25,6 @@ import approveImg from '../../assets/img/modalImages/adeposit_approve1.png';
 import depositConfirmed from '../../assets/img/modalImages/adeposit_confirmed.png';
 import successHand from '../../assets/img/modalImages/success-hand.png';
 import transferCompletedImg from '../../assets/img/modalImages/tranferCompleted.png';
-
-const { shieldContractAddress } = global.config;
 
 export default function Bridge() {
   const [state] = useContext(UserContext);
@@ -74,6 +72,7 @@ export default function Bridge() {
   console.log('Bridge State', state);
   async function triggerTx() {
     console.log('Tx Triggered', txType);
+    const { address: shieldContractAddress } = (await getContractAddress('Shield')).data;
     switch (txType) {
       case 'deposit': {
         await approve(
