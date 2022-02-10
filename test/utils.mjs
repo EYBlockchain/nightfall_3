@@ -393,10 +393,10 @@ const waitForProposerToBeCurrent = proposer => {
     async function isCurrentProposer() {
       const currentProposer = await proposer.getCurrentProposer();
       if (currentProposer === proposer.ethereumAddress) {
-        // console.log('condition met for currentProposer', currentProposer);
+        console.log('condition met for currentProposer', currentProposer);
         resolve();
       } else {
-        // console.log('condition not met for currentProposer', currentProposer);
+        console.log('condition not met for currentProposer', currentProposer);
         await new Promise(resolving => setTimeout(resolving, 1000));
       }
     }
@@ -445,10 +445,10 @@ export const waitForSufficientBalance = (client, value, depositFunction) => {
       const balance = clientBalances[Object.keys(clientBalances)[0]];
       // if client has layer 2 balances and if it is equal to value required
       if (balance > value) {
-        // console.log('sufficient balance');
+        console.log('sufficient balance');
         resolve();
       } else {
-        // console.log('insufficient balance', balance);
+        console.log('insufficient balance', balance);
         await new Promise(resolving => setTimeout(resolving, 10000));
         retries += 1;
         isSufficientBalance();

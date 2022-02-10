@@ -1,12 +1,9 @@
-import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
-import { getContractInstance } from 'common-files/utils/contract.mjs';
+import Block from '../classes/block.mjs';
 import {
   isRegisteredProposerAddressMine,
-  addTransactionsToMemPoolFromBlockNumberL2,
+  resetUnsuccessfulBlockProposedTransactions,
 } from '../services/database.mjs';
-
-const { STATE_CONTRACT_NAME } = config;
 
 /**
 This handler runs whenever a BlockProposed event is emitted by the blockchain
@@ -27,16 +24,10 @@ async function newCurrentProposerEventHandler(data, args) {
 
     // If we were the last proposer return any transactions that were removed from the mempool
     // because they were included in proposed blocks that did not eventually make it on chain.
-    if (weWereLastProposer && !proposer.isMe) {
-      const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
-      const onChainBlockCount = Number(
-        await stateContractInstance.methods.getNumberOfL2Blocks().call(),
-      );
-      // All transactions greater or equal to this block count need to be reset.
-      logger.info(`Resetting Transactions from :${onChainBlockCount}`);
-      await addTransactionsToMemPoolFromBlockNumberL2(onChainBlockCount);
+    if (weWereLastProposer) {
+      Block.rollback();
+      await resetUnsuccessfulBlockProposedTransactions();
     }
-
     // !! converts this to a "is not null" check - i.e. false if is null
     // are we the next proposer?
     proposer.isMe = !!(await isRegisteredProposerAddressMine(currentProposer));

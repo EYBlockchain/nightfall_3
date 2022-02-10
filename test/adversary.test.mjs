@@ -8,6 +8,7 @@
 /* eslint-disable no-await-in-loop */
 import chai from 'chai';
 import chaiHttp from 'chai-http';
+import config from 'config';
 import chaiAsPromised from 'chai-as-promised';
 import Nf3 from '../cli/lib/nf3.mjs';
 import { waitForProposer, waitForSufficientBalance } from './utils.mjs';
@@ -15,6 +16,8 @@ import { waitForProposer, waitForSufficientBalance } from './utils.mjs';
 const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
+
+const { TRANSACTIONS_PER_BLOCK } = config;
 
 // Number of transfer filled transaction blocks required.
 // This is equal to the number of blocks required for test that
@@ -49,30 +52,25 @@ describe('Testing the challenge http API', () => {
 
   // this is what we pay the proposer for incorporating a transaction
   const fee = 1;
-  const txPerBlock = 2;
 
   before(async () => {
-    nf3User1 = new Nf3(
-      'http://localhost:8080',
-      'http://localhost:8081',
-      'ws://localhost:8082',
-      'ws://localhost:8546',
-      ethereumSigningKeyUser1,
-    );
-    nf3AdversarialProposer = new Nf3(
-      'http://localhost:8080',
-      'http://localhost:8088',
-      'ws://localhost:8089',
-      'ws://localhost:8546',
-      ethereumSigningKeyProposer,
-    );
-    nf3Challenger = new Nf3(
-      'http://localhost:8080',
-      'http://localhost:8081',
-      'ws://localhost:8082',
-      'ws://localhost:8546',
-      ethereumSigningKeyChallenger,
-    );
+    nf3User1 = new Nf3('ws://localhost:8546', ethereumSigningKeyUser1, {
+      clientApiUrl: 'http://localhost:8080',
+      optimistApiUrl: 'http://localhost:8081',
+      optimistWsUrl: 'ws://localhost:8082',
+    });
+
+    nf3AdversarialProposer = new Nf3('ws://localhost:8546', ethereumSigningKeyProposer, {
+      clientApiUrl: 'http://localhost:8080',
+      optimistApiUrl: 'http://localhost:8088',
+      optimistWsUrl: 'ws://localhost:8089',
+    });
+
+    nf3Challenger = new Nf3('ws://localhost:8546', ethereumSigningKeyChallenger, {
+      clientApiUrl: 'http://localhost:8080',
+      optimistApiUrl: 'http://localhost:8081',
+      optimistWsUrl: 'ws://localhost:8082',
+    });
 
     // Generate a random mnemonic (uses crypto.randomBytes under the hood), defaults to 128-bits of entropy
     await nf3User1.init(mnemonicUser1);
@@ -101,18 +99,18 @@ describe('Testing the challenge http API', () => {
       // we are creating a block of tests such that there will always be
       // enough balance for a transfer. We do this by submitting and mining (waiting until)
       // deposits of value required for a transfer
-      // let count = 0;
+      let count = 0;
       const depositFunction = async () => {
         await nf3User1.deposit(ercAddress, tokenType, value1, tokenId, fee);
       };
-      for (let j = 0; j < txPerBlock; j++) {
+      for (let j = 0; j < TRANSACTIONS_PER_BLOCK; j++) {
         // TODO set this loop to TRANSACTIONS_PER_BLOCK
         await waitForProposer(nf3AdversarialProposer);
         const res = await nf3User1.deposit(ercAddress, tokenType, value1, tokenId, fee);
         expect(res).to.have.property('transactionHash');
         expect(res).to.have.property('blockHash');
-        // count += 1;
-        // console.log('count', count);
+        console.log('HERE count', count);
+        count++;
       }
       for (let j = 0; j < 8; j++) {
         for (let i = 0; i < 2; i++) {
@@ -125,14 +123,14 @@ describe('Testing the challenge http API', () => {
             tokenType,
             value2,
             tokenId,
-            nf3User1.zkpKeys.pkd,
+            nf3User1.zkpKeys.compressedPkd,
             fee,
           );
           expect(res).to.have.property('transactionHash');
           expect(res).to.have.property('blockHash');
           await new Promise(resolve => setTimeout(resolve, 20000));
-          // count += 1;
-          // console.log('count', count);
+          console.log('HERE count', count);
+          count++;
         }
       }
     });

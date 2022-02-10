@@ -76,7 +76,7 @@ export async function conditionalMakeBlock(proposer) {
       logger.debug('Send unsigned block-assembler transaction to ws client');
       // remove the transactiosn from the mempool so we don't keep making new
       // blocks with them
-      await removeTransactionsFromMemPool(block);
+      await removeTransactionsFromMemPool(block.transactionHashes);
     }
   }
   // Let's slow down here so we don't slam the database.

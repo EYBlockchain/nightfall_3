@@ -217,7 +217,6 @@ class Block {
         historicRootBlockNumberL2,
         transactionType,
         tokenType,
-        publicInputHash,
         tokenId,
         ercAddress,
         recipientAddress,
@@ -231,7 +230,6 @@ class Block {
         historicRootBlockNumberL2,
         transactionType,
         tokenType,
-        publicInputHash,
         tokenId,
         ercAddress,
         recipientAddress,
@@ -253,9 +251,9 @@ class Block {
   static buildSolidityStruct(block) {
     const { proposer, root, leafCount, blockNumberL2, previousBlockHash } = block;
     return {
+      leafCount: Number(leafCount),
       proposer,
       root,
-      leafCount: Number(leafCount),
       blockNumberL2: Number(blockNumberL2),
       previousBlockHash,
     };

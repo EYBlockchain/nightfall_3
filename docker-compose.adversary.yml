@@ -3,7 +3,8 @@ version: '3.5'
 services:
   adversary1:
     build:
-      context: ./test/adversary/nightfall-adversary
+      dockerfile: optimist.Dockerfile
+      context: .
     depends_on:
       - deployer
     networks:
