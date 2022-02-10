@@ -5,6 +5,7 @@
   "main": "./src/index.jsx",
   "dependencies": {
     "@craco/craco": "^6.4.3",
+    "@synthetixio/synpress": "^1.1.1",
     "@testing-library/jest-dom": "^5.14.1",
     "@testing-library/react": "^12.1.2",
     "async-mutex": "^0.3.2",
