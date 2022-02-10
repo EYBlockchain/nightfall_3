@@ -54,7 +54,7 @@ const evenTheBlock = async nf3Instance => {
   while (count !== 0) {
     if (count % txPerBlock) {
       // eslint-disable-next-line no-await-in-loop
-      await depositNTransactions(
+      const res = await depositNTransactions(
         nf3Instance,
         count % txPerBlock ? count % txPerBlock : txPerBlock,
         erc20Address,
@@ -63,6 +63,7 @@ const evenTheBlock = async nf3Instance => {
         tokenId,
         fee,
       );
+      console.log('depositing', res);
       // eslint-disable-next-line no-await-in-loop
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
     } else {
@@ -73,7 +74,7 @@ const evenTheBlock = async nf3Instance => {
     count = await nf3Instance.unprocessedTransactionCount();
   }
 
-  await depositNTransactions(
+  const res = await depositNTransactions(
     nf3Instance,
     txPerBlock,
     erc20Address,
@@ -82,6 +83,7 @@ const evenTheBlock = async nf3Instance => {
     tokenId,
     fee,
   );
+  console.log('depositing', res);
   eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
 };
 
@@ -154,7 +156,7 @@ describe('ERC20 tests', () => {
     });
   });
 
-  describe('Transfers', () => {
+  describe.only('Transfers', () => {
     it('should decrement the balance after transfer ERC20 to other wallet and increment the other wallet', async function () {
       let balances;
       async function getBalances() {
@@ -165,6 +167,8 @@ describe('ERC20 tests', () => {
       }
 
       await getBalances();
+      console.log('BEFORE', balances);
+      console.log('USER 1 PKD', nf3Users[1].zkpKeys.compressedPkd);
       const beforeBalances = JSON.parse(JSON.stringify(balances));
 
       for (let i = 0; i < txPerBlock; i++) {
@@ -186,6 +190,7 @@ describe('ERC20 tests', () => {
       eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
 
       await getBalances();
+      console.log('AFTER', balances);
 
       expect(balances[0] - beforeBalances[0]).to.be.equal(-txPerBlock * transferValue);
       expect(balances[1] - beforeBalances[1]).to.be.equal(txPerBlock * transferValue);

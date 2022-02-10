@@ -766,6 +766,8 @@ class Nf3 {
         ercList,
       },
     });
+    console.log('L2 BALANCES FOR PKD', this.zkpKeys.compressedPkd);
+    console.log(res.data);
     return res.data.balance;
   }
 

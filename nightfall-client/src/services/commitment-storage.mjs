@@ -274,8 +274,7 @@ export async function getWalletBalance(compressedPkd, ercList) {
   // work out the balance contribution of each commitment  - a 721 token has no value field in the
   // commitment but each 721 token counts as a balance of 1. Then finally add up the individual
   // commitment balances to get a balance for each erc address.
-
-  // console.log('FILTERRR', wallet);
+  console.log('WALLET', wallet);
   const res = wallet
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
@@ -290,20 +289,11 @@ export async function getWalletBalance(compressedPkd, ercList) {
         (ercAddressList.length === 0 || ercAddressList.includes(e.ercAddress.toUpperCase())),
     )
     .map(e => {
-      let tokenType;
-      if (e.value === 0) {
-        tokenType = 'ERC20';
-      } else if (e.tokenId === 0) {
-        tokenType = 'ERC721';
-      } else {
-        tokenType = 'ERC1155';
-      }
       return {
         compressedPkd: e.compressedPkd,
         ercAddress: e.ercAddress,
         balance: e.value,
         tokenId: e.tokenId,
-        tokenType,
       };
     })
     .reduce((acc, e) => {
