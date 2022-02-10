@@ -15,7 +15,7 @@ import discloserBottomImage from '../../assets/img/discloser-bottom.svg';
 import lightArrowImage from '../../assets/img/light-arrow.svg';
 import matic from '../../assets/svg/matic.svg';
 import { UserContext } from '../../hooks/User/index.jsx';
-import { approve, submitTransaction } from '../../common-files/utils/contract';
+import { approve, getContractAddress, submitTransaction } from '../../common-files/utils/contract';
 import Web3 from '../../common-files/utils/web3';
 import deposit from '../../nightfall-browser/services/deposit';
 import withdraw from '../../nightfall-browser/services/withdraw';
@@ -25,8 +25,6 @@ import approveImg from '../../assets/img/modalImages/adeposit_approve1.png';
 import depositConfirmed from '../../assets/img/modalImages/adeposit_confirmed.png';
 import successHand from '../../assets/img/modalImages/success-hand.png';
 import transferCompletedImg from '../../assets/img/modalImages/tranferCompleted.png';
-
-const { shieldContractAddress } = global.config;
 
 export default function Bridge() {
   const [state] = useContext(UserContext);
@@ -51,6 +49,7 @@ export default function Bridge() {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
+  // TODO Make this dependent on proof generation time.
   const handleCloseConfirmModal = () => {
     setShowModalConfirm(false);
     setShowModalTransferInProgress(false);
@@ -74,17 +73,19 @@ export default function Bridge() {
   console.log('Bridge State', state);
   async function triggerTx() {
     console.log('Tx Triggered', txType);
+    const { address: shieldContractAddress } = (await getContractAddress('Shield')).data;
+    const { address: defaultTokenAddress } = (await getContractAddress('ERC20Mock')).data; // TODO Only for testing now
+    const ercAddress =
+      location.tokenState?.tokenAddress === ''
+        ? defaultTokenAddress
+        : location.tokenState.tokenAddress; // TODO Location to be removed later
+    console.log('TokenAddress', ercAddress);
     switch (txType) {
       case 'deposit': {
-        await approve(
-          location.tokenState.tokenAddress,
-          shieldContractAddress,
-          'ERC20',
-          tokenAmountWei,
-        );
+        await approve(ercAddress, shieldContractAddress, 'ERC20', tokenAmountWei);
         const { rawTransaction } = await deposit(
           {
-            ercAddress: location.tokenState.tokenAddress,
+            ercAddress,
             tokenId: 0,
             value: tokenAmountWei,
             pkd: state.zkpKeys.pkd,
@@ -100,7 +101,7 @@ export default function Bridge() {
       case 'withdraw': {
         const { rawTransaction } = await withdraw(
           {
-            ercAddress: location.tokenState.tokenAddress,
+            ercAddress,
             tokenId: 0,
             value: tokenAmountWei,
             recipientAddress: await Web3.getAccount(),

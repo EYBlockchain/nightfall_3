@@ -25,7 +25,7 @@ import abi from '../../zokrates/withdraw_stub/artifacts/withdraw_stub-abi.json';
 // eslint-disable-next-line
 import programFile from '../../zokrates/withdraw_stub/artifacts/withdraw_stub-program';
 // eslint-disable-next-line
-import pkFile from '../../zokrates/withdraw_stub/keypair/withdraw_stub-pk';
+import pkFile from '../../zokrates/withdraw_stub/keypair/withdraw_stub_pk.key';
 import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
 import { saveTransaction } from './database';
 
@@ -60,7 +60,6 @@ async function withdraw(withdrawParams, shieldContractAddress) {
       commitmentTreeInfo.siblingPath.path.map(p => p.value).reverse(),
     ),
   );
-  logger.silly(`SiblingPath was: ${JSON.stringify(siblingPath)}`);
 
   // public inputs
   const { root, leafIndex, isOnChain } = commitmentTreeInfo;

@@ -18,22 +18,12 @@ import { UserContext } from '../../hooks/User/index.jsx';
 import './wallet.scss';
 import * as Storage from '../../utils/lib/local-storage';
 import Web3 from '../../common-files/utils/web3';
+import { getContractAddress } from '../../common-files/utils/contract.js';
 
 /*
 These are some default values for now
 */
-const tokenMapping = {
-  '0xf05e9fb485502e5a93990c714560b7ce654173c3': {
-    name: 'Matic Token',
-    tokenType: 'ERC20',
-    maticChainUsdBalance: '1.8',
-    maticChainBalance: '10',
-    symbol: 'MATIC',
-    tokenAddress: '0xf05e9fb485502e5a93990c714560b7ce654173c3',
-  },
-};
 
-// const compressedPkd = '0x9e989c1cdde6b046489665f71799783935c96574e94d85654c45b440c06b796d';
 const initialTokenState = [
   {
     maticChainUsdBalance: '0',
@@ -41,7 +31,7 @@ const initialTokenState = [
     name: 'ChainLink Token',
     symbol: 'LINK',
     order: 2,
-    tokenAddress: '0xf05e9fb485502e5a93990c714560b7ce654173c3',
+    tokenAddress: '',
   },
   {
     maticChainUsdBalance: '0',
@@ -49,7 +39,7 @@ const initialTokenState = [
     name: 'USDT',
     symbol: 'USDT',
     order: 2,
-    tokenAddress: '0xf05e9fb485502e5a93990c714560b7ce654173c3',
+    tokenAddress: '',
   },
   {
     maticChainUsdBalance: '0',
@@ -57,15 +47,15 @@ const initialTokenState = [
     name: 'Aave Token',
     symbol: 'AAVE',
     order: 2,
-    tokenAddress: '0xf05e9fb485502e5a93990c714560b7ce654173c3',
+    tokenAddress: '',
   },
   {
-    maticChainUsdBalance: '0',
+    maticChainUsdBalance: '1.8',
     maticChainBalance: '0',
     name: 'Matic Token',
     symbol: 'MATIC',
     order: 1,
-    tokenAddress: '0xf05e9fb485502e5a93990c714560b7ce654173c3',
+    tokenAddress: '',
   },
 ];
 
@@ -144,15 +134,26 @@ export default function Wallet() {
 
   useEffect(async () => {
     const l2Balance = await getWalletBalance();
+    const { address: newTokenAddress } = (await getContractAddress('ERC20Mock')).data; // TODO This is just until we get a list from Polygon
+    const updatedTokenState = initialTokenState.map(i => {
+      const { tokenAddress, ...rest } = i;
+      if (i.symbol === 'MATIC')
+        // TODO just map the mock address over the MATIC token.
+        return {
+          tokenAddress: newTokenAddress,
+          ...rest,
+        };
+      return i;
+    });
     if (
       Object.keys(l2Balance).length !== 0 &&
       Object.prototype.hasOwnProperty.call(state, 'zkpKeys')
     ) {
       // eslint-disable-next-line consistent-return, array-callback-return
-      const updatedState = Object.keys(tokenMapping).map(t => {
+      const updatedState = updatedTokenState.map(t => {
         if (Object.keys(l2Balance).includes(state.zkpKeys.compressedPkd)) {
-          const token = l2Balance[state.zkpKeys.compressedPkd][t];
-          const tokenInfo = tokenMapping[t];
+          const token = l2Balance[state.zkpKeys.compressedPkd][t.tokenAddress.toLowerCase()];
+          const tokenInfo = t;
           if (token) {
             const { maticChainBalance, ...rest } = tokenInfo;
             return {
@@ -160,15 +161,18 @@ export default function Wallet() {
               ...rest,
             };
           }
+          return t;
         }
       });
       if (typeof updatedState[0] === 'undefined') return;
-      const newState = initialTokenState.map(i => {
+      const newState = updatedTokenState.map(i => {
         const s = updatedState.find(u => i.symbol === u.symbol);
         if (s) return s;
         return i;
       });
       setTokens(newState.sort((a, b) => Number(a.order) - Number(b.order)));
+    } else {
+      setTokens(updatedTokenState.sort((a, b) => Number(a.order) - Number(b.order)));
     }
   }, [state.zkpKeys]);
 
