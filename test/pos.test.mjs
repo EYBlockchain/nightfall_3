@@ -108,7 +108,7 @@ describe('Testing the http API', () => {
   });
 
   describe('Basic Proposer staking tests', () => {
-    it('should accept stake as a proposer', async () => {
+    it('should accept proposer stake', async () => {
       let proposers;
       ({ proposers } = await nf3Proposer1.getProposers());
       const currentProposer = proposers.filter(p => p.thisAddress === nf3Proposer1.ethereumAddress);
