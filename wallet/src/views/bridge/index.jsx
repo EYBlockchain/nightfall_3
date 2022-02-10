@@ -49,6 +49,7 @@ export default function Bridge() {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
+  // TODO Make this dependent on proof generation time.
   const handleCloseConfirmModal = () => {
     setShowModalConfirm(false);
     setShowModalTransferInProgress(false);
@@ -73,17 +74,18 @@ export default function Bridge() {
   async function triggerTx() {
     console.log('Tx Triggered', txType);
     const { address: shieldContractAddress } = (await getContractAddress('Shield')).data;
+    const { address: defaultTokenAddress } = (await getContractAddress('ERC20Mock')).data; // TODO Only for testing now
+    const ercAddress =
+      location.tokenState?.tokenAddress === ''
+        ? defaultTokenAddress
+        : location.tokenState.tokenAddress; // TODO Location to be removed later
+    console.log('TokenAddress', ercAddress);
     switch (txType) {
       case 'deposit': {
-        await approve(
-          location.tokenState.tokenAddress,
-          shieldContractAddress,
-          'ERC20',
-          tokenAmountWei,
-        );
+        await approve(ercAddress, shieldContractAddress, 'ERC20', tokenAmountWei);
         const { rawTransaction } = await deposit(
           {
-            ercAddress: location.tokenState.tokenAddress,
+            ercAddress,
             tokenId: 0,
             value: tokenAmountWei,
             pkd: state.zkpKeys.pkd,
@@ -99,7 +101,7 @@ export default function Bridge() {
       case 'withdraw': {
         const { rawTransaction } = await withdraw(
           {
-            ercAddress: location.tokenState.tokenAddress,
+            ercAddress,
             tokenId: 0,
             value: tokenAmountWei,
             recipientAddress: await Web3.getAccount(),
