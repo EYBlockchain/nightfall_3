@@ -87,7 +87,7 @@ async function setupCircuits() {
   for (let i = 0; i < vks.length; i++) {
     const circuit = circuitsToSetup[i];
     if (!vks[i] || config.ALWAYS_DO_TRUSTED_SETUP) {
-      // we don't have an existing vk so let's generate one (TODO in parallel)
+      // we don't have an existing vk so let's generate one
       try {
         logger.info(
           `no existing verification key. Fear not, I will make a new one: calling generate keys on ${circuit}`,

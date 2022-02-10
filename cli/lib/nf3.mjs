@@ -81,12 +81,27 @@ class Nf3 {
   blockchain.
   @returns {Promise}
   */
-  async init(mnemonic) {
+  async init(mnemonic, contractAddressProvider) {
     await this.setWeb3Provider();
-    this.shieldContractAddress = await this.getContractAddress('Shield');
-    this.proposersContractAddress = await this.getContractAddress('Proposers');
-    this.challengesContractAddress = await this.getContractAddress('Challenges');
-    this.stateContractAddress = await this.getContractAddress('State');
+    // this code will call client to get contract addresses, or optimist if client isn't deployed
+    switch (contractAddressProvider) {
+      case undefined:
+        this.contractGetter = this.getContractAddress;
+        break;
+      case 'client':
+        this.contractGetter = this.getContractAddress;
+        break;
+      case 'optimist':
+        this.contractGetter = this.getContractAddressOptimist;
+        break;
+      default:
+        throw new Error('Unknown contract address server');
+    }
+    // once we know where to ask, we can get the contract addresses
+    this.shieldContractAddress = await this.contractGetter('Shield');
+    this.proposersContractAddress = await this.contractGetter('Proposers');
+    this.challengesContractAddress = await this.contractGetter('Challenges');
+    this.stateContractAddress = await this.contractGetter('State');
     // set the ethereumAddress iff we have a signing key
     if (typeof this.ethereumSigningKey === 'string') {
       this.ethereumAddress = await this.getAccounts();
