@@ -23,16 +23,6 @@ import { getContractAddress } from '../../common-files/utils/contract.js';
 /*
 These are some default values for now
 */
-const tokenMapping = {
-  MATIC: {
-    name: 'Matic Token',
-    tokenType: 'ERC20',
-    maticChainUsdBalance: '1.8',
-    maticChainBalance: '10',
-    symbol: 'MATIC',
-    tokenAddress: '',
-  },
-};
 
 const initialTokenState = [
   {
@@ -60,7 +50,7 @@ const initialTokenState = [
     tokenAddress: '',
   },
   {
-    maticChainUsdBalance: '0',
+    maticChainUsdBalance: '1.8',
     maticChainBalance: '0',
     name: 'Matic Token',
     symbol: 'MATIC',
@@ -146,23 +136,24 @@ export default function Wallet() {
     const l2Balance = await getWalletBalance();
     const { address: newTokenAddress } = (await getContractAddress('ERC20Mock')).data; // TODO This is just until we get a list from Polygon
     const updatedTokenState = initialTokenState.map(i => {
-      // TODO just map the mock address over all tokens.
       const { tokenAddress, ...rest } = i;
-      return {
-        tokenAddress: newTokenAddress,
-        ...rest,
-      };
+      if (i.symbol === 'MATIC')
+        // TODO just map the mock address over the MATIC token.
+        return {
+          tokenAddress: newTokenAddress,
+          ...rest,
+        };
+      return i;
     });
-    console.log('UpdatedTokneState', updatedTokenState);
     if (
       Object.keys(l2Balance).length !== 0 &&
       Object.prototype.hasOwnProperty.call(state, 'zkpKeys')
     ) {
       // eslint-disable-next-line consistent-return, array-callback-return
-      const updatedState = Object.keys(tokenMapping).map(t => {
+      const updatedState = updatedTokenState.map(t => {
         if (Object.keys(l2Balance).includes(state.zkpKeys.compressedPkd)) {
-          const token = l2Balance[state.zkpKeys.compressedPkd][t];
-          const tokenInfo = tokenMapping[t];
+          const token = l2Balance[state.zkpKeys.compressedPkd][t.tokenAddress.toLowerCase()];
+          const tokenInfo = t;
           if (token) {
             const { maticChainBalance, ...rest } = tokenInfo;
             return {
@@ -170,6 +161,7 @@ export default function Wallet() {
               ...rest,
             };
           }
+          return t;
         }
       });
       if (typeof updatedState[0] === 'undefined') return;
