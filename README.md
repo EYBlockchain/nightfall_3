@@ -222,7 +222,7 @@ aws s3 cp s3://nightfallv3/circuits ./wallet/src/zokrates --recursive
 
 ```
 cd wallet
-npm install
+npm ci
 ```
 
 - Copy proving keys and compiled circuits into ./wallet/src/zokrates
