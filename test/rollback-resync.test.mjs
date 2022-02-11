@@ -141,7 +141,7 @@ describe('Running rollback and resync test', () => {
         await web3Client.submitTransaction(txDataToSign, privateKey, challengesAddress, gas);
       } else if (type === 'challenge') {
         commitTxDataToSign = txDataToSign;
-        console.log('Challenge held');
+        if (process.env.VERBOSE) console.log('Challenge held');
       }
     };
     const res = await chai
@@ -202,9 +202,10 @@ describe('Running rollback and resync test', () => {
         const newBlockRes = await createBadBlock('DuplicateTransaction', block, transactions, {
           duplicateTransaction: duplicateTransaction.transaction,
         });
-        console.log(
-          `Created flawed block with duplicate transactions and blockHash ${newBlockRes.block.blockHash}`,
-        );
+        if (process.env.VERBOSE)
+          console.log(
+            `Created flawed block with duplicate transactions and blockHash ${newBlockRes.block.blockHash}`,
+          );
         topicsBlockHashDuplicateTransaction = newBlockRes.block.blockHash;
         return web3Client.submitTransaction(newBlockRes.txDataToSign, b, c, d, e, f);
       };
@@ -301,7 +302,7 @@ describe('Running rollback and resync test', () => {
           await web3Client.submitTransaction(txDataToSign, privateKey, challengesAddress, gas);
         } else if (type === 'challenge') {
           commitTxDataToSign = txDataToSign;
-          console.log('Challenge held');
+          if (process.env.VERBOSE) console.log('Challenge held');
         }
       };
 

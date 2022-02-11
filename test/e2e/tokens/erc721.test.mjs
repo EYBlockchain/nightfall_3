@@ -44,7 +44,7 @@ let availableTokenIds;
   L2 layer, which is dependent on a block being made. We also need 0 unprocessed transactions by the end
   of the tests, otherwise the optimist will become out of sync with the L2 block count on-chain.
 */
-const evenTheBlock = async nf3Instance => {
+const emptyL2 = async nf3Instance => {
   let count = await nf3Instance.unprocessedTransactionCount();
   while (count !== 0) {
     if (count % txPerBlock) {
@@ -114,11 +114,11 @@ describe('ERC721 tests', () => {
     }
     eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
-    await evenTheBlock(nf3Users[0]);
+    await emptyL2(nf3Users[0]);
   });
 
   afterEach(async () => {
-    await evenTheBlock(nf3Users[0]);
+    await emptyL2(nf3Users[0]);
   });
 
   describe('Deposit', () => {
@@ -144,7 +144,7 @@ describe('ERC721 tests', () => {
       expectTransaction(res);
       // Wait until we see the right number of blocks appear
       eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-      await evenTheBlock(nf3Users[0]);
+      await emptyL2(nf3Users[0]);
       balances = await nf3Users[0].getLayer2Balances();
 
       const balanceAfter = balances[erc721Address].length;
@@ -182,7 +182,7 @@ describe('ERC721 tests', () => {
       // await new Promise(resolve => setTimeout(resolve, 3000));
 
       // depositing some ERC20 transactions to fill the block
-      await evenTheBlock(nf3Users[0]);
+      await emptyL2(nf3Users[0]);
 
       await getBalances();
 
@@ -208,7 +208,7 @@ describe('ERC721 tests', () => {
       expectTransaction(rec);
       if (process.env.VERBOSE) console.log(`     Gas used was ${Number(rec.gasUsed)}`);
 
-      await evenTheBlock(nf3Users[0]);
+      await emptyL2(nf3Users[0]);
 
       const balanceAfter = (await nf3Users[0].getLayer2Balances())[erc721Address].length;
       expect(balanceAfter).to.be.lessThan(beforeBalance);
@@ -232,7 +232,7 @@ describe('ERC721 tests', () => {
         expectTransaction(rec);
         const withdrawal = await nf3Users[0].getLatestWithdrawHash();
 
-        await evenTheBlock(nf3Users[0]);
+        await emptyL2(nf3Users[0]);
 
         await web3Client.timeJump(3600 * 24 * 10); // jump in time by 50 days
 

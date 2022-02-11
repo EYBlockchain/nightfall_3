@@ -58,55 +58,24 @@ describe('Testing the challenge http API', () => {
   let topicsBlockHashDuplicateNullifier;
   let topicsBlockHashIncorrectLeafCount;
   let web3;
-  const logCounts = {
+  const logs = {
     txSubmitted: [],
     registerProposer: [],
     challenge: [],
   };
 
   const holdupTxQueue = async (txType, waitTillCount) => {
-    while (logCounts[txType].length < waitTillCount) {
+    while (logs[txType].length < waitTillCount) {
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
-    // next we need to wait for 12 blocks for confirmation
-    // TODO this is only suitable for running on ganache; it won't cope with a
-    // chain reorganisation.
-    /*
-    console.log('waiting 12 blocks');
-    const startBlock = await web3.eth.getBlock('latest');
-    await new Promise(resolve => {
-      const id = setInterval(async () => {
-        const block = await web3.eth.getBlock('latest');
-        if (block.number - startBlock.number > 12) {
-          clearInterval(id);
-          resolve();
-        }
-      }, 1000);
-    });
-    */
   };
 
   const waitForTxExecution = async (count, txType) => {
-    console.log('waiting for twelve confirmations of event');
-    while (count === logCounts[txType].length) {
+    if (process.env.VERBOSE) console.log('waiting for twelve confirmations of event');
+    while (count === logs[txType].length) {
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
-    /*
-    // next we need to wait for 12 blocks for confirmation
-    // TODO this is only suitable for running on ganache; it won't cope with a
-    // chain reorganisation.
-    const startBlock = await web3.eth.getBlock('latest');
-    await new Promise(resolve => {
-      const id = setInterval(async () => {
-        const block = await web3.eth.getBlock('latest');
-        if (block.number - startBlock.number > 12) {
-          clearInterval(id);
-          resolve();
-        }
-      }, 1000);
-    });
-    */
-    console.log('event confirmed');
+    if (process.env.VERBOSE) console.log('event confirmed');
   };
 
   before(async () => {
@@ -130,28 +99,15 @@ describe('Testing the challenge http API', () => {
 
     res = await chai.request(url).get('/contract-address/Shield');
     shieldAddress = res.body.address;
-    // web3.eth.subscribe('logs', { address: shieldAddress }).on('data', log => {
-    //   if (log.topics[0] === web3.eth.abi.encodeEventSignature('TransactionSubmitted()')) {
-    //     logCounts.txSubmitted += 1;
-    //   }
-    // });
-    web3Client.subscribeTo('logs', logCounts.txSubmitted, { address: shieldAddress });
+    web3Client.subscribeTo('logs', logs.txSubmitted, { address: shieldAddress });
 
     res = await chai.request(url).get('/contract-address/Challenges');
     challengeAddress = res.body.address;
-    // web3.eth.subscribe('logs', { address: challengeAddress }).on('data', () => {
-    //   logCounts.challenge.push('Challenge');
-    // });
-    web3Client.subscribeTo('logs', logCounts.challenge, { address: challengeAddress });
+    web3Client.subscribeTo('logs', logs.challenge, { address: challengeAddress });
 
     res = await chai.request(url).get('/contract-address/Proposers');
     proposersAddress = res.body.address;
-    // web3.eth.subscribe('logs', { address: proposersAddress }).on('data', log => {
-    //   if (log.topics[0] === web3.eth.abi.encodeEventSignature('NewCurrentProposer(address)')) {
-    //     logCounts.registerProposer.push('NewCurrentProposer(address)');
-    //   }
-    // });
-    web3Client.subscribeTo('logs', logCounts.registerProposer, { address: proposersAddress });
+    web3Client.subscribeTo('logs', logs.registerProposer, { address: proposersAddress });
 
     res = await chai.request(url).get('/contract-address/State');
     stateAddress = res.body.address;
@@ -218,74 +174,86 @@ describe('Testing the challenge http API', () => {
             const { block, transactions } = msg;
             if (counter === 0) {
               [duplicateTransaction] = transactions;
-              console.log(
-                `Created good block to extract duplicate tx from with blockHash ${block.blockHash}`,
-              );
+              if (process.env.VERBOSE)
+                console.log(
+                  `Created good block to extract duplicate tx from with blockHash ${block.blockHash}`,
+                );
             } else if (counter === 1) {
               [duplicateNullifier] = transactions
                 .map(t => t.nullifiers.filter(n => n !== ZERO))
                 .flat(Infinity);
-              console.log(
-                `Created good block to extract duplicate nullifier ${duplicateNullifier} from with blockHash ${block.blockHash}`,
-              );
+              if (process.env.VERBOSE)
+                console.log(
+                  `Created good block to extract duplicate nullifier ${duplicateNullifier} from with blockHash ${block.blockHash}`,
+                );
             } else if (counter === 2) {
               res = await createBadBlock('IncorrectRoot', block, transactions, {
                 leafIndex: 1,
               });
               topicsBlockHashIncorrectRootInBlock = res.block.blockHash;
               txDataToSign = res.txDataToSign;
-              console.log(
-                `Created flawed block with incorrect root and blockHash ${res.block.blockHash}`,
-              );
+              if (process.env.VERBOSE)
+                console.log(
+                  `Created flawed block with incorrect root and blockHash ${res.block.blockHash}`,
+                );
             } else if (counter === 3) {
               res = await createBadBlock('DuplicateTransaction', block, transactions, {
                 duplicateTransaction,
               });
               topicsBlockHashDuplicateTransaction = res.block.blockHash;
               txDataToSign = res.txDataToSign;
-              console.log(
-                `Created flawed block containing duplicate transaction and blockHash ${res.block.blockHash}`,
-              );
+              if (process.env.VERBOSE)
+                console.log(
+                  `Created flawed block containing duplicate transaction and blockHash ${res.block.blockHash}`,
+                );
             } else if (counter === 4) {
               res = await createBadBlock('InvalidDepositTransaction', block, transactions);
               topicsBlockHashInvalidTransaction = res.block.blockHash;
               txDataToSign = res.txDataToSign;
-              console.log(
-                `Created flawed block with invalid deposit transaction and blockHash ${res.block.blockHash}`,
-              );
+              if (process.env.VERBOSE)
+                console.log(
+                  `Created flawed block with invalid deposit transaction and blockHash ${res.block.blockHash}`,
+                );
             } else if (counter === 5) {
               res = await createBadBlock('IncorrectHistoricRoot', block, transactions);
               topicsBlockHashesIncorrectHistoricRoot = res.block.blockHash;
               txDataToSign = res.txDataToSign;
-              console.log(`Created flawed block with invalid historic root ${res.block.blockHash}`);
+              if (process.env.VERBOSE)
+                console.log(
+                  `Created flawed block with invalid historic root ${res.block.blockHash}`,
+                );
             } else if (counter === 6) {
               res = await createBadBlock('IncorrectProof', block, transactions, {
                 proof: duplicateTransaction.proof,
               });
               topicsBlockHashIncorrectProof = res.block.blockHash;
               txDataToSign = res.txDataToSign;
-              console.log(
-                `Created flawed block with incorrect proof and blockHash ${res.block.blockHash}`,
-              );
+              if (process.env.VERBOSE)
+                console.log(
+                  `Created flawed block with incorrect proof and blockHash ${res.block.blockHash}`,
+                );
             } else if (counter === 7) {
               res = await createBadBlock('DuplicateNullifier', block, transactions, {
                 duplicateNullifier,
               });
               topicsBlockHashDuplicateNullifier = res.block.blockHash;
               txDataToSign = res.txDataToSign;
-              console.log(
-                `Created flawed block with duplicate nullifier and blockHash ${res.block.blockHash}`,
-              );
+              if (process.env.VERBOSE)
+                console.log(
+                  `Created flawed block with duplicate nullifier and blockHash ${res.block.blockHash}`,
+                );
             } else if (counter === 8) {
               res = await createBadBlock('IncorrectLeafCount', block, transactions);
               topicsBlockHashIncorrectLeafCount = res.block.blockHash;
               txDataToSign = res.txDataToSign;
-              console.log(
-                `Created flawed block with incorrect leaf count and blockHash ${res.block.blockHash}`,
-              );
+              if (process.env.VERBOSE)
+                console.log(
+                  `Created flawed block with incorrect leaf count and blockHash ${res.block.blockHash}`,
+                );
             } else {
               txDataToSign = msg.txDataToSign;
-              console.log(`Created good block with blockHash ${block.blockHash}`);
+              if (process.env.VERBOSE)
+                console.log(`Created good block with blockHash ${block.blockHash}`);
             }
             await web3Client.submitTransaction(
               txDataToSign,
@@ -295,9 +263,8 @@ describe('Testing the challenge http API', () => {
               BLOCK_STAKE,
             );
             counter++;
-            // console.log('tx hash of propose block is', txReceipt.transactionHash);
           } else if (type === 'commit') {
-            const count = logCounts.challenge.length;
+            const count = logs.challenge.length;
             await web3Client.submitTransaction(txDataToSign, privateKey1, challengeAddress, gas);
             await waitForTxExecution(count, 'challenge');
           } else if (type === 'challenge') {
@@ -308,10 +275,9 @@ describe('Testing the challenge http API', () => {
               .post('/proposer/register')
               .send({ address: myAddress });
             txToSign = result.body.txDataToSign;
-            const count = logCounts.registerProposer.length;
+            const count = logs.registerProposer.length;
             await web3Client.submitTransaction(txToSign, privateKey, proposersAddress, gas, bond);
             await waitForTxExecution(count, 'registerProposer');
-            // console.log('tx hash of challenge block is', txReceipt.transactionHash);
           } else throw new Error(`Unhandled transaction type: ${type}`);
         } catch (err) {
           console.error(`neg-http.mjs onmessage error: ${err}`);
@@ -355,14 +321,11 @@ describe('Testing the challenge http API', () => {
 
       const receiptArrays = [];
       txQueue.push(async () => {
-        await holdupTxQueue(
-          'txSubmitted',
-          logCounts.txSubmitted.length + depositTransactions.length,
-        );
+        await holdupTxQueue('txSubmitted', logs.txSubmitted.length + depositTransactions.length);
       });
       for (let i = 0; i < depositTransactions.length; i++) {
         const { txDataToSign } = depositTransactions[i];
-        const count = logCounts.txSubmitted.length;
+        const count = logs.txSubmitted.length;
         receiptArrays.push(
           await web3Client.submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee),
         );
@@ -441,7 +404,7 @@ describe('Testing the challenge http API', () => {
 
       const receiptArrays = [];
       for (let i = 0; i < depositTransactions.length; i++) {
-        const count = logCounts.txSubmitted.length;
+        const count = logs.txSubmitted.length;
         const { txDataToSign } = depositTransactions[i];
         receiptArrays.push(
           await web3Client.submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee),
@@ -469,7 +432,7 @@ describe('Testing the challenge http API', () => {
         });
       const { txDataToSign } = res.body;
       expect(txDataToSign).to.be.a('string');
-      const count = logCounts.txSubmitted.length;
+      const count = logs.txSubmitted.length;
       const receipt = await web3Client.submitTransaction(
         txDataToSign,
         privateKey,

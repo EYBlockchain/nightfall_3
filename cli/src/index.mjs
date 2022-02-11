@@ -136,7 +136,6 @@ Simple function to print out the balances object
 */
 function printBalances(balances, type) {
   console.log(`${type} BALANCES ${balances}`);
-  console.log(JSON.stringify(balances, null, 4));
   if (Object.keys(balances).length === 0) {
     console.log('You have no balances yet - try depositing some tokens into Layer 2 from Layer 1');
     return;

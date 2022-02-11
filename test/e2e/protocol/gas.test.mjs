@@ -40,7 +40,7 @@ let eventLogs = [];
   L2 layer, which is dependent on a block being made. We also need 0 unprocessed transactions by the end
   of the tests, otherwise the optimist will become out of sync with the L2 block count on-chain.
 */
-const evenTheBlock = async nf3Instance => {
+const emptyL2 = async nf3Instance => {
   let count = await nf3Instance.unprocessedTransactionCount();
   while (count !== 0) {
     if (count % txPerBlock) {
@@ -111,7 +111,7 @@ describe('Gas test', () => {
   });
 
   after(async () => {
-    await evenTheBlock(nf3Users[0]);
+    await emptyL2(nf3Users[0]);
     await nf3Proposer1.deregisterProposer();
     await nf3Proposer1.close();
     await nf3Users[0].close();

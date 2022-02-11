@@ -33,11 +33,11 @@ const web3Client = new Web3Client();
 let erc20Address;
 let stateAddress;
 let eventLogs = [];
-const logCounts = {
+const logs = {
   instantWithdraw: 0,
 };
 const waitForTxExecution = async (count, txType) => {
-  while (count === logCounts[txType]) {
+  while (count === logs[txType]) {
     await new Promise(resolve => setTimeout(resolve, 3000));
   }
 };
@@ -48,7 +48,7 @@ const waitForTxExecution = async (count, txType) => {
   L2 layer, which is dependent on a block being made. We also need 0 unprocessed transactions by the end
   of the tests, otherwise the optimist will become out of sync with the L2 block count on-chain.
 */
-const evenTheBlock = async nf3Instance => {
+const emptyL2 = async nf3Instance => {
   let count = await nf3Instance.unprocessedTransactionCount();
   while (count !== 0) {
     if (count % txPerBlock) {
@@ -106,11 +106,11 @@ describe('ERC20 tests', () => {
     stateAddress = await nf3Users[0].stateContractAddress;
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
 
-    await evenTheBlock(nf3Users[0]);
+    await emptyL2(nf3Users[0]);
   });
 
   afterEach(async () => {
-    await evenTheBlock(nf3Users[0]);
+    await emptyL2(nf3Users[0]);
   });
 
   describe('Deposits', () => {
@@ -213,7 +213,7 @@ describe('ERC20 tests', () => {
     it('should send a single ERC20 transfer directly to a proposer', async function () {
       const before = (await nf3Users[0].getLayer2Balances())[erc20Address][0].balance;
 
-      // here we don't need to evenTheBlock because we're sending two transactions
+      // here we don't need to emptyL2 because we're sending two transactions
       for (let i = 0; i < txPerBlock; i++) {
         const res = await nf3Users[0].transfer(
           true,
@@ -238,7 +238,7 @@ describe('ERC20 tests', () => {
 
       const before = (await nf3Users[0].getLayer2Balances())[erc20Address][0].balance;
 
-      // here we don't need to evenTheBlock because we're sending two transactions
+      // here we don't need to emptyL2 because we're sending two transactions
       for (let i = 0; i < txPerBlock; i++) {
         const res = await nf3Users[0].transfer(
           true,
@@ -288,7 +288,7 @@ describe('ERC20 tests', () => {
         );
         expectTransaction(rec);
         const withdrawal = await nf3Users[0].getLatestWithdrawHash();
-        await evenTheBlock(nf3Users[0]);
+        await emptyL2(nf3Users[0]);
         const res = await nf3Users[0].finaliseWithdrawal(withdrawal);
         expectTransaction(res);
       } catch (err) {
@@ -318,7 +318,7 @@ describe('ERC20 tests', () => {
         expectTransaction(rec);
         const withdrawal = await nf3Users[0].getLatestWithdrawHash();
 
-        await evenTheBlock(nf3Users[0]);
+        await emptyL2(nf3Users[0]);
 
         await web3Client.timeJump(3600 * 24 * 10); // jump in time by 50 days
 
@@ -371,7 +371,7 @@ describe('ERC20 tests', () => {
           console.log('ERROR Liquidity Provider: ', e);
         }
 
-        logCounts.instantWithdraw += 1;
+        logs.instantWithdraw += 1;
       });
 
       web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
@@ -392,15 +392,15 @@ describe('ERC20 tests', () => {
       const latestWithdrawTransactionHash = nf3Users[0].getLatestWithdrawHash();
       expect(latestWithdrawTransactionHash).to.be.a('string').and.to.include('0x');
 
-      const count = logCounts.instantWithdraw;
+      const count = logs.instantWithdraw;
 
-      await evenTheBlock(nf3Users[0]);
+      await emptyL2(nf3Users[0]);
       // We request the instant withdraw and should wait for the liquidity provider to send the instant withdraw
       const res = await nf3Users[0].requestInstantWithdrawal(latestWithdrawTransactionHash, fee);
       expectTransaction(res);
       if (process.env.VERBOSE) console.log(`     Gas used was ${Number(res.gasUsed)}`);
 
-      await evenTheBlock(nf3Users[0]);
+      await emptyL2(nf3Users[0]);
 
       await waitForTxExecution(count, 'instantWithdraw');
 
@@ -428,7 +428,7 @@ describe('ERC20 tests', () => {
     });
 
     after(async () => {
-      await evenTheBlock(nf3Users[0]);
+      await emptyL2(nf3Users[0]);
       await nf3LiquidityProvider.close();
     });
   });
