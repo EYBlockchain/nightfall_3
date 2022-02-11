@@ -136,6 +136,7 @@ Simple function to print out the balances object
 */
 function printBalances(balances, type) {
   console.log(`${type} BALANCES ${balances}`);
+  console.log(JSON.stringify(balances, null, 4));
   if (Object.keys(balances).length === 0) {
     console.log('You have no balances yet - try depositing some tokens into Layer 2 from Layer 1');
     return;
@@ -285,7 +286,6 @@ async function main(testEnvironment) {
   let receiptPromise;
   // main CLI loop
   do {
-    // eslint-disable-next-line no-await-in-loop
     [exit, receiptPromise] = await loop(nf3, ercAddress);
   } while (!exit);
   // cleanup

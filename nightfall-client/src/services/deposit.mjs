@@ -30,7 +30,6 @@ const { generalise } = gen;
 
 async function deposit(items) {
   logger.info('Creating a deposit transaction');
-  console.log('ITEMS', items);
   // before we do anything else, long hex strings should be generalised to make
   // subsequent manipulations easier
   const { ercAddress, tokenId, value, pkd, nsk, fee } = generalise(items);

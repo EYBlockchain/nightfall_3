@@ -30,7 +30,6 @@ const web3Client = new Web3Client();
 describe('Basic Proposer tests', () => {
   before(async () => {
     for (const prop of testProposers) {
-      // eslint-disable-next-line no-await-in-loop
       await prop.init(mnemonics.proposer);
     }
 
@@ -126,9 +125,7 @@ describe('Basic Proposer tests', () => {
     const { proposers } = await testProposers[0].getProposers();
 
     for (const prop of testProposers) {
-      // eslint-disable-next-line no-await-in-loop
       if (Object.values(proposers[0]).includes(prop.ethereumAddress))
-        // eslint-disable-next-line no-await-in-loop
         await prop.deregisterProposer();
       prop.close();
     }

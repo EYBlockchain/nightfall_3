@@ -42,17 +42,15 @@ let eventLogs = [];
 */
 const evenTheBlock = async nf3Instance => {
   let count = await nf3Instance.unprocessedTransactionCount();
-  console.log('BEFORE', count);
   while (count !== 0) {
     if (count % txPerBlock) {
       const tx = (count % txPerBlock) - 1;
       for (let i = 0; i < tx; i++) {
-        // eslint-disable-next-line no-await-in-loop
         eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       }
     } else {
       const tx = txPerBlock - count;
-      // eslint-disable-next-line no-await-in-loop
+
       await depositNTransactions(
         nf3Instance,
         tx,
@@ -63,11 +61,9 @@ const evenTheBlock = async nf3Instance => {
         fee,
       );
 
-      // eslint-disable-next-line no-await-in-loop
       eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-      // eslint-disable-next-line no-await-in-loop
+
       count = await nf3Instance.unprocessedTransactionCount();
-      console.log('AFTER', count);
     }
   }
 };

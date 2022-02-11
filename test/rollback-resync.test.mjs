@@ -222,7 +222,6 @@ describe('Running rollback and resync test', () => {
     });
     it('should send the commit-challenge', async function () {
       while (!commitTxDataToSign) {
-        // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
       await web3Client.submitTransaction(commitTxDataToSign, privateKey, challengesAddress, gas);
@@ -252,12 +251,11 @@ describe('Running rollback and resync test', () => {
         let healthCheck;
         while (healthCheck !== 200) {
           try {
-            // eslint-disable-next-line no-await-in-loop
             healthCheck = (await chai.request(environment.optimistApiUrl).get('/healthcheck'))
               .status;
           } catch (error) {
             console.log(`Wait for Optimist to restart`);
-            // eslint-disable-next-line no-await-in-loop
+
             await new Promise(resolve => setTimeout(resolve, 5000));
           }
         }
@@ -359,7 +357,6 @@ describe('Running rollback and resync test', () => {
 
     it('should fire off the commit-challenge', async function () {
       while (!commitTxDataToSign) {
-        // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
       await web3Client.submitTransaction(commitTxDataToSign, privateKey, challengesAddress, gas);
@@ -388,12 +385,11 @@ describe('Running rollback and resync test', () => {
         let healthCheck;
         while (healthCheck !== 200) {
           try {
-            // eslint-disable-next-line no-await-in-loop
             healthCheck = (await chai.request(environment.optimistApiUrl).get('/healthcheck'))
               .status;
           } catch (error) {
             console.log(`Wait for Optimist to restart`);
-            // eslint-disable-next-line no-await-in-loop
+
             await new Promise(resolve => setTimeout(resolve, 5000));
           }
         }

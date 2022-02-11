@@ -125,7 +125,6 @@ async function rollbackEventHandler(data) {
   for (let i = 0; i < maybeValidTransactions.length; i++) {
     let checkTransactionCorrect = true;
     try {
-      // eslint-disable-next-line no-await-in-loop
       await checkTransaction(maybeValidTransactions[i]);
     } catch (error) {
       checkTransactionCorrect = false;

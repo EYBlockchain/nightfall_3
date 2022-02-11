@@ -48,7 +48,6 @@ const evenTheBlock = async nf3Instance => {
   let count = await nf3Instance.unprocessedTransactionCount();
   while (count !== 0) {
     if (count % txPerBlock) {
-      // eslint-disable-next-line no-await-in-loop
       await depositNTransactions(
         nf3Instance,
         count % txPerBlock ? count % txPerBlock : txPerBlock,
@@ -58,13 +57,12 @@ const evenTheBlock = async nf3Instance => {
         tokenId,
         fee,
       );
-      // eslint-disable-next-line no-await-in-loop
+
       eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
     } else {
-      // eslint-disable-next-line no-await-in-loop
       eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
     }
-    // eslint-disable-next-line no-await-in-loop
+
     count = await nf3Instance.unprocessedTransactionCount();
   }
 
@@ -112,7 +110,6 @@ describe('ERC721 tests', () => {
     ).details.map(t => t.tokenId);
 
     for (let i = 0; i < txPerBlock * 2; i++) {
-      // eslint-disable-next-line no-await-in-loop
       await nf3Users[0].deposit(erc721Address, tokenTypeERC721, 0, availableTokenIds.shift(), fee);
     }
     eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
@@ -170,7 +167,6 @@ describe('ERC721 tests', () => {
       const beforeBalances = JSON.parse(JSON.stringify(balances));
 
       for (let i = 0; i < txPerBlock; i++) {
-        // eslint-disable-next-line no-await-in-loop
         const res = await nf3Users[0].transfer(
           false,
           erc721Address,

@@ -80,7 +80,6 @@ async function transfer(transferParams) {
   for (let i = 0; i < recipientCompressedPkds.length; i++) {
     // loop to find a new salt until the commitment hash is smaller than the BN128_GROUP_ORDER
     do {
-      // eslint-disable-next-line no-await-in-loop
       potentialSalt = new GN((await rand(ZKP_KEY_LENGTH)).bigInt % BN128_GROUP_ORDER);
       potentialCommitment = new Commitment({
         ercAddress,
@@ -92,7 +91,6 @@ async function transfer(transferParams) {
       });
       // encrypt secrets such as erc20Address, tokenId, value, salt for recipient
       if (i === 0) {
-        // eslint-disable-next-line no-await-in-loop
         secrets = await Secrets.encryptSecrets(
           [ercAddress.bigInt, tokenId.bigInt, values[i].bigInt, potentialSalt.bigInt],
           [recipientPkds[0][0].bigInt, recipientPkds[0][1].bigInt],

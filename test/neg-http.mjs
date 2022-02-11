@@ -66,7 +66,6 @@ describe('Testing the challenge http API', () => {
 
   const holdupTxQueue = async (txType, waitTillCount) => {
     while (logCounts[txType].length < waitTillCount) {
-      // eslint-disable-next-line no-await-in-loop
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
     // next we need to wait for 12 blocks for confirmation
@@ -90,7 +89,6 @@ describe('Testing the challenge http API', () => {
   const waitForTxExecution = async (count, txType) => {
     console.log('waiting for twelve confirmations of event');
     while (count === logCounts[txType].length) {
-      // eslint-disable-next-line no-await-in-loop
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
     /*
@@ -336,16 +334,12 @@ describe('Testing the challenge http API', () => {
   describe('Pre-populate L2 state with valid blocks and transactions', () => {
     afterEach(async () => {
       while (eventLogs[0] !== 'blockProposed') {
-        console.log('waiting');
-        console.log(eventLogs);
-        // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 10000));
       }
       eventLogs.shift();
     });
 
     it('should create an initial block of deposits', async () => {
-      // eslint-disable-next-line no-await-in-loop
       const depositTransactions = (
         await Promise.all(
           Array.from({ length: txPerBlock }, () =>
@@ -370,13 +364,11 @@ describe('Testing the challenge http API', () => {
         const { txDataToSign } = depositTransactions[i];
         const count = logCounts.txSubmitted.length;
         receiptArrays.push(
-          // eslint-disable-next-line no-await-in-loop
           await web3Client.submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee),
         );
-        // eslint-disable-next-line no-await-in-loop
+
         await waitForTxExecution(count, 'txSubmitted');
       }
-      console.log('1');
       receiptArrays.forEach(receipt => {
         expect(receipt).to.have.property('transactionHash');
         expect(receipt).to.have.property('blockHash');
@@ -386,12 +378,9 @@ describe('Testing the challenge http API', () => {
 
     it('should create a block with a single transfer', async () => {
       let res;
-      console.log('2');
       do {
-        // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 3000));
-        console.log('3');
-        // eslint-disable-next-line no-await-in-loop
+
         res = await chai
           .request(url)
           .post('/transfer')
@@ -406,13 +395,10 @@ describe('Testing the challenge http API', () => {
             ask: ask1,
             fee,
           });
-        console.log('4');
       } while (res.body.error === 'No suitable commitments');
-      console.log('5');
       // now we need to sign the transaction and send it to the blockchain
       await web3Client.submitTransaction(res.body.txDataToSign, privateKey, shieldAddress, gas);
 
-      console.log('6');
       const depositTransactions = (
         await Promise.all(
           Array.from({ length: txPerBlock - 1 }, () =>
@@ -424,14 +410,12 @@ describe('Testing the challenge http API', () => {
         )
       ).map(depRes => depRes.body);
 
-      console.log('7');
       depositTransactions.forEach(({ txDataToSign }) => expect(txDataToSign).to.be.a('string'));
 
       const receiptArrays = [];
       for (let i = 0; i < depositTransactions.length; i++) {
         const { txDataToSign } = depositTransactions[i];
         receiptArrays.push(
-          // eslint-disable-next-line no-await-in-loop
           await web3Client.submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee),
           // we need to await here as we need transactions to be submitted sequentially or we run into nonce issues.
         );
@@ -460,10 +444,9 @@ describe('Testing the challenge http API', () => {
         const count = logCounts.txSubmitted.length;
         const { txDataToSign } = depositTransactions[i];
         receiptArrays.push(
-          // eslint-disable-next-line no-await-in-loop
           await web3Client.submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee),
         );
-        // eslint-disable-next-line no-await-in-loop
+
         await waitForTxExecution(count, 'txSubmitted');
       }
       receiptArrays.forEach(receipt => {
@@ -504,11 +487,10 @@ describe('Testing the challenge http API', () => {
       while (eventLogs.length < 2) {
         // Wait for us to have ['blockProposed', 'Rollback'] in the eventLogs
         // Safer to wait as the 2nd while loop may pass when eventLogs[1] is undefined
-        // eslint-disable-next-line no-await-in-loop
+
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
       while (eventLogs[0] !== 'blockProposed' && eventLogs[1] !== 'Rollback') {
-        // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
       // Double shift to take off from our queue
@@ -520,7 +502,6 @@ describe('Testing the challenge http API', () => {
     after(async () => {
       // At the very end make sure we wait for any good blocks before dropping out of the test.
       while (eventLogs[0] !== 'blockProposed') {
-        // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
 

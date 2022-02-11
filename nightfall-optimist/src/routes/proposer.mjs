@@ -57,7 +57,6 @@ router.get('/proposers', async (req, res, next) => {
     let thisPtr = currentProposer.thisAddress;
     // Loop through the circular list until we run back into the currentProposer.
     do {
-      // eslint-disable-next-line no-await-in-loop
       const proposer = await proposersContractInstance.methods.proposers(thisPtr).call();
       proposers.push(proposer);
       thisPtr = proposer.nextAddress;

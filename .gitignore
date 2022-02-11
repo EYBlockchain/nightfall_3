@@ -2,7 +2,6 @@
 node_modules
 cli/build
 .*swp
-.nyc_output
 
 
 # wallet

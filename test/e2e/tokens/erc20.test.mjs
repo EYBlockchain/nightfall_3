@@ -38,7 +38,6 @@ const logCounts = {
 };
 const waitForTxExecution = async (count, txType) => {
   while (count === logCounts[txType]) {
-    // eslint-disable-next-line no-await-in-loop
     await new Promise(resolve => setTimeout(resolve, 3000));
   }
 };
@@ -53,7 +52,6 @@ const evenTheBlock = async nf3Instance => {
   let count = await nf3Instance.unprocessedTransactionCount();
   while (count !== 0) {
     if (count % txPerBlock) {
-      // eslint-disable-next-line no-await-in-loop
       await depositNTransactions(
         nf3Instance,
         count % txPerBlock ? count % txPerBlock : txPerBlock,
@@ -63,13 +61,12 @@ const evenTheBlock = async nf3Instance => {
         tokenId,
         fee,
       );
-      // eslint-disable-next-line no-await-in-loop
+
       eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
     } else {
-      // eslint-disable-next-line no-await-in-loop
       eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
     }
-    // eslint-disable-next-line no-await-in-loop
+
     count = await nf3Instance.unprocessedTransactionCount();
   }
 
@@ -118,7 +115,7 @@ describe('ERC20 tests', () => {
 
   describe('Deposits', () => {
     it('should deposit some ERC20 crypto into a ZKP commitment', async function () {
-      console.log(`      Sending ${txPerBlock} deposits...`);
+      if (process.env.VERBOSE) console.log(`      Sending ${txPerBlock} deposits...`);
       // We create enough transactions to fill blocks full of deposits.
       const depositTransactions = await depositNTransactions(
         nf3Users[0],
@@ -168,7 +165,6 @@ describe('ERC20 tests', () => {
       const beforeBalances = JSON.parse(JSON.stringify(balances));
 
       for (let i = 0; i < txPerBlock; i++) {
-        // eslint-disable-next-line no-await-in-loop
         const res = await nf3Users[0].transfer(
           false,
           erc20Address,
@@ -179,7 +175,7 @@ describe('ERC20 tests', () => {
           fee,
         );
         expectTransaction(res);
-        // eslint-disable-next-line no-await-in-loop
+
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
       // stateBalance += fee * txPerBlock + BLOCK_STAKE;
@@ -195,7 +191,6 @@ describe('ERC20 tests', () => {
       const before = (await nf3Users[0].getLayer2Balances())[erc20Address][0].balance;
 
       for (let i = 0; i < txPerBlock; i++) {
-        // eslint-disable-next-line no-await-in-loop
         const res = await nf3Users[0].transfer(
           false,
           erc20Address,
@@ -220,7 +215,6 @@ describe('ERC20 tests', () => {
 
       // here we don't need to evenTheBlock because we're sending two transactions
       for (let i = 0; i < txPerBlock; i++) {
-        // eslint-disable-next-line no-await-in-loop
         const res = await nf3Users[0].transfer(
           true,
           erc20Address,
@@ -246,7 +240,6 @@ describe('ERC20 tests', () => {
 
       // here we don't need to evenTheBlock because we're sending two transactions
       for (let i = 0; i < txPerBlock; i++) {
-        // eslint-disable-next-line no-await-in-loop
         const res = await nf3Users[0].transfer(
           true,
           erc20Address,

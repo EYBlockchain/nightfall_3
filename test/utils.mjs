@@ -100,7 +100,6 @@ export class Web3Client {
 
   async submitTransaction(unsignedTransaction, privateKey, shieldAddress, gasCount, value = 0) {
     while (this.isSubmitTxLocked) {
-      // eslint-disable-next-line no-await-in-loop
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
     this.isSubmitTxLocked = true;
@@ -184,14 +183,13 @@ export class Web3Client {
       events[0] === undefined ||
       events[0].transactionHash === undefined
     ) {
-      // eslint-disable-next-line no-await-in-loop
       events = await this.web3.eth.getPastLogs({
         fromBlock: this.web3.utils.toHex(0),
         address: contractAddress,
         topics,
       });
       // console.log('EVENTS WERE', events);
-      // eslint-disable-next-line no-await-in-loop
+
       await new Promise(resolve => setTimeout(resolve, WAIT));
       counter--;
     }
@@ -210,14 +208,12 @@ export class Web3Client {
     const length = count !== 1 ? count : expectedEvents.length;
     let timeout = 10;
     while (eventLogs.length < length) {
-      // eslint-disable-next-line no-await-in-loop
       await new Promise(resolve => setTimeout(resolve, 3000));
       timeout--;
       if (timeout === 0) throw new Error('Timeout in waitForEvent');
     }
 
     while (eventLogs[0] !== expectedEvents[0]) {
-      // eslint-disable-next-line no-await-in-loop
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
 
@@ -231,12 +227,7 @@ export class Web3Client {
 
     await this.subscribeTo('newBlockHeaders', blockHeaders);
 
-    // eslint-disable-next-line no-loop-func
-    // em.on('data', () => {
-    //   console.log('counter', blockHeaders.length);
-    // });
     while (blockHeaders.length < 12) {
-      // eslint-disable-next-line no-await-in-loop
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
 
@@ -330,7 +321,7 @@ export const sendTransactions = async (transactions, submitArgs, web3) => {
   const receiptArr = [];
   for (let i = 0; i < transactions.length; i++) {
     const { txDataToSign } = transactions[i];
-    // eslint-disable-next-line no-await-in-loop
+
     const receipt = await web3.submitTransaction(txDataToSign, ...submitArgs);
     receiptArr.push(receipt);
   }
@@ -345,7 +336,6 @@ export const expectTransaction = res => {
 export const depositNTransactions = async (nf3, N, ercAddress, tokenType, value, tokenId, fee) => {
   const depositTransactions = [];
   for (let i = 0; i < N; i++) {
-    // eslint-disable-next-line no-await-in-loop
     const res = await nf3.deposit(ercAddress, tokenType, value, tokenId, fee);
     expectTransaction(res);
     depositTransactions.push(res);
