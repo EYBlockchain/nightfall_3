@@ -8,6 +8,7 @@ on:
 jobs:
   e2e-test:
     runs-on: ubuntu-18.04
+    environment: AWS
     steps:
       - uses: actions/checkout@master
       - uses: actions/setup-node@v2
@@ -16,12 +17,23 @@ jobs:
         with:
           args: install
           node-version: '14.17.0'
+
       - name: Install aws-cli
         run: |
           curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
           unzip awscliv2.zip
           sudo ./aws/install
-      - name: verify aws-cli installation
+
+      - name: Verify aws-cli installation
         run: aws --version
-      - name: download precompiled circuit outputs
+
+      - name: Set AWS keys
+        run: |
+          aws configure set aws_access_key_id $ACCESS_KEY
+          aws configure set aws_secret_access_key $SECRET_ACCESS_KEY
+        env:
+          ACCESS_KEY: ${{ secrets.ACCESS_KEY }}
+          SECRET_ACCESS_KEY: ${{ secrets.SECRET_ACCESS_KEY }}
+
+      - name: Download precompiled circuit outputs
         run: aws s3 cp s3://nightfallv3/circuits ./wallet/src/zokrates --recursive
