@@ -1,0 +1,25 @@
+name: Browser e2e test
+
+on:
+  push:
+    branch:
+      - liju.jose/nightfall-browser/e2e-test-demo
+
+jobs:
+  e2e-test:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/setup-node@v2
+        env:
+        PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'true'
+        with:
+          args: install
+          node-version: '14.17.0'
+      - name: Install aws-cli
+        run: |
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install
+      - name: verify aws-cli installation
+        run: aws --version
