@@ -102,11 +102,13 @@ function WalletModal(props) {
             </Row>
           ))}
         </Container>
-        <Button id='generateMnemonic' onClick={() => setScreenMnemonic(generateMnemonic())}>Generate Mnemonic</Button>
+        <Button id="generateMnemonic" onClick={() => setScreenMnemonic(generateMnemonic())}>
+          Generate Mnemonic
+        </Button>
       </Modal.Body>
       <Modal.Footer>
         <Button
-          id='createWallet'
+          id="createWallet"
           onClick={async () => {
             await configureMnemonic(screenMnemonic);
             props.onHide();
