@@ -3,7 +3,7 @@ import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import { createRequire } from 'module';
 import Nf3 from '../../../cli/lib/nf3.mjs';
-import { waitForEvent, expectTransaction, depositNTransactions, Web3Client } from '../../utils.mjs';
+import { expectTransaction, depositNTransactions, Web3Client } from '../../utils.mjs';
 
 import { approve } from '../../../cli/lib/tokens.mjs';
 
@@ -54,7 +54,7 @@ const evenTheBlock = async nf3Instance => {
   while (count !== 0) {
     if (count % txPerBlock) {
       // eslint-disable-next-line no-await-in-loop
-      const res = await depositNTransactions(
+      await depositNTransactions(
         nf3Instance,
         count % txPerBlock ? count % txPerBlock : txPerBlock,
         erc20Address,
@@ -63,18 +63,17 @@ const evenTheBlock = async nf3Instance => {
         tokenId,
         fee,
       );
-      console.log('depositing', res);
       // eslint-disable-next-line no-await-in-loop
-      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
     } else {
       // eslint-disable-next-line no-await-in-loop
-      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
     }
     // eslint-disable-next-line no-await-in-loop
     count = await nf3Instance.unprocessedTransactionCount();
   }
 
-  const res = await depositNTransactions(
+  await depositNTransactions(
     nf3Instance,
     txPerBlock,
     erc20Address,
@@ -83,8 +82,7 @@ const evenTheBlock = async nf3Instance => {
     tokenId,
     fee,
   );
-  console.log('depositing', res);
-  eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+  eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 };
 
 describe('ERC20 tests', () => {
@@ -96,7 +94,7 @@ describe('ERC20 tests', () => {
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer1.startProposer();
     newGasBlockEmitter.on('gascost', async gasUsed => {
-      if (process.env.GAS_COSTS)
+      if (process.env.VERBOSE)
         console.log(
           `Block proposal gas cost was ${gasUsed}, cost per transaction was ${
             gasUsed / txPerBlock
@@ -132,9 +130,9 @@ describe('ERC20 tests', () => {
         fee,
       );
       // Wait until we see the right number of blocks appear
-      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       const totalGas = depositTransactions.reduce((acc, { gasUsed }) => acc + Number(gasUsed), 0);
-      if (process.env.GAS_COSTS)
+      if (process.env.VERBOSE)
         console.log(`     Average Gas used was ${Math.ceil(totalGas / txPerBlock)}`);
     });
 
@@ -150,13 +148,13 @@ describe('ERC20 tests', () => {
         tokenId,
         fee,
       );
-      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       const afterPkdBalance = (await nf3Users[0].getLayer2Balances())[erc20Address][0].balance;
       expect(afterPkdBalance - currentPkdBalance).to.be.equal(txPerBlock * transferValue);
     });
   });
 
-  describe.only('Transfers', () => {
+  describe('Transfers', () => {
     it('should decrement the balance after transfer ERC20 to other wallet and increment the other wallet', async function () {
       let balances;
       async function getBalances() {
@@ -167,8 +165,6 @@ describe('ERC20 tests', () => {
       }
 
       await getBalances();
-      console.log('BEFORE', balances);
-      console.log('USER 1 PKD', nf3Users[1].zkpKeys.compressedPkd);
       const beforeBalances = JSON.parse(JSON.stringify(balances));
 
       for (let i = 0; i < txPerBlock; i++) {
@@ -187,10 +183,9 @@ describe('ERC20 tests', () => {
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
       // stateBalance += fee * txPerBlock + BLOCK_STAKE;
-      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       await getBalances();
-      console.log('AFTER', balances);
 
       expect(balances[0] - beforeBalances[0]).to.be.equal(-txPerBlock * transferValue);
       expect(balances[1] - beforeBalances[1]).to.be.equal(txPerBlock * transferValue);
@@ -211,12 +206,12 @@ describe('ERC20 tests', () => {
           fee,
         );
         expectTransaction(res);
-        if (process.env.GAS_COSTS) console.log(`     Gas used was ${Number(res.gasUsed)}`);
+        if (process.env.VERBOSE) console.log(`     Gas used was ${Number(res.gasUsed)}`);
       }
       const after = (await nf3Users[0].getLayer2Balances())[erc20Address][0].balance;
 
       // stateBalance += fee * txPerBlock + BLOCK_STAKE;
-      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       expect(after).to.be.lessThan(before);
     });
 
@@ -282,7 +277,7 @@ describe('ERC20 tests', () => {
       );
       expectTransaction(rec);
 
-      if (process.env.GAS_COSTS) console.log(`     Gas used was ${Number(rec.gasUsed)}`);
+      if (process.env.VERBOSE) console.log(`     Gas used was ${Number(rec.gasUsed)}`);
       const afterBalance = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance;
       expect(afterBalance).to.be.lessThan(beforeBalance);
     });
@@ -300,9 +295,7 @@ describe('ERC20 tests', () => {
         );
         expectTransaction(rec);
         const withdrawal = await nf3Users[0].getLatestWithdrawHash();
-
         await evenTheBlock(nf3Users[0]);
-
         const res = await nf3Users[0].finaliseWithdrawal(withdrawal);
         expectTransaction(res);
       } catch (err) {
@@ -412,7 +405,7 @@ describe('ERC20 tests', () => {
       // We request the instant withdraw and should wait for the liquidity provider to send the instant withdraw
       const res = await nf3Users[0].requestInstantWithdrawal(latestWithdrawTransactionHash, fee);
       expectTransaction(res);
-      if (process.env.GAS_COSTS) console.log(`     Gas used was ${Number(res.gasUsed)}`);
+      if (process.env.VERBOSE) console.log(`     Gas used was ${Number(res.gasUsed)}`);
 
       await evenTheBlock(nf3Users[0]);
 

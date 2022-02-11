@@ -40,7 +40,7 @@ describe('Basic Proposer tests', () => {
     // Proposer listening for incoming events
     const newGasBlockEmitter = await testProposers[0].startProposer();
     newGasBlockEmitter.on('gascost', async gasUsed => {
-      if (process.env.GAS_COSTS)
+      if (process.env.VERBOSE)
         console.log(
           `Block proposal gas cost was ${gasUsed}, cost per transaction was ${
             gasUsed / txPerBlock

@@ -1,13 +1,8 @@
 import Web3 from 'web3';
 import chai from 'chai';
-import compose from 'docker-compose';
-import path from 'path';
 import config from 'config';
-import { fileURLToPath } from 'url';
 import rand from '../common-files/utils/crypto/crypto-random.mjs';
 
-const { dirname } = path;
-const __dirname = dirname(fileURLToPath(import.meta.url));
 const { expect } = chai;
 
 const USE_INFURA = process.env.USE_INFURA === 'true';
@@ -17,6 +12,8 @@ export const topicEventMapping = {
   BlockProposed: '0x566d835e602d4aa5802ee07d3e452e755bc77623507825de7bc163a295d76c0b',
   Rollback: '0xea34b0bc565cb5f2ac54eaa86422ae05651f84522ef100e16b54a422f2053852',
   CommittedToChallenge: '0d5ea452ac7e354069d902d41e41e24f605467acd037b8f5c1c6fee5e27fb5e2',
+  TransactionSubmitted: '0xd9364d1faedd45a064f9090dd61ade3de8d1c1fd83caaa8ebdc4b9808f4eb989',
+  NewCurrentProposer: '0xeaa94fa30970548bf8b78ce068ba600b923a4a62ce3c523d09bf308102ff1bab',
 };
 export class Web3Client {
   constructor(url) {
@@ -52,9 +49,30 @@ export class Web3Client {
   }
 
   subscribeTo(event, queue, options) {
-    this.web3.eth.subscribe(event, options).on('data', log => {
-      if (log.topics[0] === topicEventMapping.BlockProposed) queue.push('blockProposed');
-    });
+    if (event === 'newBlockHeaders') {
+      this.web3.eth.subscribe('newBlockHeaders').on('data', () => {
+        queue.push('newBlockHeaders');
+      });
+    } else {
+      this.web3.eth.subscribe(event, options).on('data', log => {
+        for (const topic of log.topics) {
+          switch (topic) {
+            case topicEventMapping.BlockProposed:
+              queue.push('blockProposed');
+              break;
+            case topicEventMapping.TransactionSubmitted:
+              queue.push('TransactionSubmitted');
+              break;
+            case topicEventMapping.NewCurrentProposer:
+              queue.push('NewCurrentProposer');
+              break;
+            default:
+              queue.push('Challenge');
+              break;
+          }
+        }
+      });
+    }
   }
 
   closeWeb3() {
@@ -187,6 +205,45 @@ export class Web3Client {
     // console.log('Events found');
     return events;
   }
+
+  async waitForEvent(eventLogs, expectedEvents, count = 1) {
+    const length = count !== 1 ? count : expectedEvents.length;
+    let timeout = 10;
+    while (eventLogs.length < length) {
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      timeout--;
+      if (timeout === 0) throw new Error('Timeout in waitForEvent');
+    }
+
+    while (eventLogs[0] !== expectedEvents[0]) {
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
+
+    expect(eventLogs[0]).to.equal(expectedEvents[0]);
+
+    for (let i = 0; i < length; i++) {
+      eventLogs.shift();
+    }
+
+    const blockHeaders = [];
+
+    await this.subscribeTo('newBlockHeaders', blockHeaders);
+
+    // eslint-disable-next-line no-loop-func
+    // em.on('data', () => {
+    //   console.log('counter', blockHeaders.length);
+    // });
+    while (blockHeaders.length < 12) {
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
+
+    // Have to wait here as client block proposal takes longer now
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    return eventLogs;
+  }
 }
 
 export async function createBadBlock(badBlockType, block, transactions, args) {
@@ -256,40 +313,6 @@ export async function createBadBlock(badBlockType, block, transactions, args) {
 }
 
 /**
-function to pause one client and one miner in the Geth blockchain for the
-purposes of rollback testing.  This creates a sort of split-brain, that we can
-use to force a change reorg when we reconnect the two halves.
-It will only work with the standalone geth network!
-*/
-export async function pauseBlockchain(side) {
-  const options = {
-    cwd: path.join(__dirname),
-    log: false,
-    config: ['../docker-compose.standalone.geth.yml'],
-    composeOptions: ['-p geth'],
-  };
-  const client = `blockchain${side}`;
-  const miner = `blockchain-miner${side}`;
-  try {
-    await Promise.all([compose.pauseOne(client, options), compose.pauseOne(miner, options)]);
-  } catch (err) {
-    console.log(err);
-    throw new Error(err);
-  }
-}
-export async function unpauseBlockchain(side) {
-  const options = {
-    cwd: path.join(__dirname),
-    log: false,
-    config: ['../docker-compose.standalone.geth.yml'],
-    composeOptions: ['-p geth'],
-  };
-  const client = `blockchain${side}`;
-  const miner = `blockchain-miner${side}`;
-  return Promise.all([compose.unpauseOne(client, options), compose.unpauseOne(miner, options)]);
-}
-
-/**
 These are helper functions to reduce the repetitive code bloat in test files
  */
 
@@ -328,30 +351,4 @@ export const depositNTransactions = async (nf3, N, ercAddress, tokenType, value,
     depositTransactions.push(res);
   }
   return depositTransactions;
-};
-
-export const waitForEvent = async (eventLogs, expectedEvents, count = 1) => {
-  const length = count !== 1 ? count : expectedEvents.length;
-  let timeout = 10;
-  while (eventLogs.length < length) {
-    // eslint-disable-next-line no-await-in-loop
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    timeout--;
-    if (timeout === 0) throw new Error('Timeout in waitForEvent');
-  }
-
-  while (eventLogs[0] !== expectedEvents[0]) {
-    // eslint-disable-next-line no-await-in-loop
-    await new Promise(resolve => setTimeout(resolve, 3000));
-  }
-
-  expect(eventLogs[0]).to.equal(expectedEvents[0]);
-
-  for (let i = 0; i < length; i++) {
-    eventLogs.shift();
-  }
-
-  // Have to wait here as client block proposal takes longer now
-  await new Promise(resolve => setTimeout(resolve, 3000));
-  return eventLogs;
 };

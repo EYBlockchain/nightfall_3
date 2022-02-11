@@ -3,7 +3,7 @@ import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import { createRequire } from 'module';
 import Nf3 from '../../../cli/lib/nf3.mjs';
-import { waitForEvent, depositNTransactions, Web3Client } from '../../utils.mjs';
+import { depositNTransactions, Web3Client } from '../../utils.mjs';
 
 // so we can use require with mjs file
 const require = createRequire(import.meta.url);
@@ -48,7 +48,7 @@ const evenTheBlock = async nf3Instance => {
       const tx = (count % txPerBlock) - 1;
       for (let i = 0; i < tx; i++) {
         // eslint-disable-next-line no-await-in-loop
-        eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+        eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       }
     } else {
       const tx = txPerBlock - count;
@@ -64,7 +64,7 @@ const evenTheBlock = async nf3Instance => {
       );
 
       // eslint-disable-next-line no-await-in-loop
-      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       // eslint-disable-next-line no-await-in-loop
       count = await nf3Instance.unprocessedTransactionCount();
       console.log('AFTER', count);
@@ -108,7 +108,7 @@ describe('Gas test', () => {
         tokenId,
         fee,
       );
-      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
     });

@@ -59,13 +59,13 @@ describe('Testing the challenge http API', () => {
   let topicsBlockHashIncorrectLeafCount;
   let web3;
   const logCounts = {
-    txSubmitted: 0,
-    registerProposer: 0,
-    challenge: 0,
+    txSubmitted: [],
+    registerProposer: [],
+    challenge: [],
   };
 
   const holdupTxQueue = async (txType, waitTillCount) => {
-    while (logCounts[txType] < waitTillCount) {
+    while (logCounts[txType].length < waitTillCount) {
       // eslint-disable-next-line no-await-in-loop
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
@@ -89,7 +89,7 @@ describe('Testing the challenge http API', () => {
 
   const waitForTxExecution = async (count, txType) => {
     console.log('waiting for twelve confirmations of event');
-    while (count === logCounts[txType]) {
+    while (count === logCounts[txType].length) {
       // eslint-disable-next-line no-await-in-loop
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
@@ -112,7 +112,7 @@ describe('Testing the challenge http API', () => {
   };
 
   before(async () => {
-    web3 = await web3Client.connectWeb3(web3WsUrl);
+    web3 = await web3Client.getWeb3(web3WsUrl);
 
     if (USE_INFURA || USE_ROPSTEN_NODE) {
       if (!ETH_PRIVATE_KEY) {
@@ -132,25 +132,28 @@ describe('Testing the challenge http API', () => {
 
     res = await chai.request(url).get('/contract-address/Shield');
     shieldAddress = res.body.address;
-    web3.eth.subscribe('logs', { address: shieldAddress }).on('data', log => {
-      if (log.topics[0] === web3.eth.abi.encodeEventSignature('TransactionSubmitted()')) {
-        logCounts.txSubmitted += 1;
-      }
-    });
+    // web3.eth.subscribe('logs', { address: shieldAddress }).on('data', log => {
+    //   if (log.topics[0] === web3.eth.abi.encodeEventSignature('TransactionSubmitted()')) {
+    //     logCounts.txSubmitted += 1;
+    //   }
+    // });
+    web3Client.subscribeTo('logs', logCounts.txSubmitted, { address: shieldAddress });
 
     res = await chai.request(url).get('/contract-address/Challenges');
     challengeAddress = res.body.address;
-    web3.eth.subscribe('logs', { address: challengeAddress }).on('data', () => {
-      logCounts.challenge += 1;
-    });
+    // web3.eth.subscribe('logs', { address: challengeAddress }).on('data', () => {
+    //   logCounts.challenge.push('Challenge');
+    // });
+    web3Client.subscribeTo('logs', logCounts.challenge, { address: challengeAddress });
 
     res = await chai.request(url).get('/contract-address/Proposers');
     proposersAddress = res.body.address;
-    web3.eth.subscribe('logs', { address: proposersAddress }).on('data', log => {
-      if (log.topics[0] === web3.eth.abi.encodeEventSignature('NewCurrentProposer(address)')) {
-        logCounts.registerProposer += 1;
-      }
-    });
+    // web3.eth.subscribe('logs', { address: proposersAddress }).on('data', log => {
+    //   if (log.topics[0] === web3.eth.abi.encodeEventSignature('NewCurrentProposer(address)')) {
+    //     logCounts.registerProposer.push('NewCurrentProposer(address)');
+    //   }
+    // });
+    web3Client.subscribeTo('logs', logCounts.registerProposer, { address: proposersAddress });
 
     res = await chai.request(url).get('/contract-address/State');
     stateAddress = res.body.address;
@@ -296,7 +299,7 @@ describe('Testing the challenge http API', () => {
             counter++;
             // console.log('tx hash of propose block is', txReceipt.transactionHash);
           } else if (type === 'commit') {
-            const count = logCounts.challenge;
+            const count = logCounts.challenge.length;
             await web3Client.submitTransaction(txDataToSign, privateKey1, challengeAddress, gas);
             await waitForTxExecution(count, 'challenge');
           } else if (type === 'challenge') {
@@ -307,7 +310,7 @@ describe('Testing the challenge http API', () => {
               .post('/proposer/register')
               .send({ address: myAddress });
             txToSign = result.body.txDataToSign;
-            const count = logCounts.registerProposer;
+            const count = logCounts.registerProposer.length;
             await web3Client.submitTransaction(txToSign, privateKey, proposersAddress, gas, bond);
             await waitForTxExecution(count, 'registerProposer');
             // console.log('tx hash of challenge block is', txReceipt.transactionHash);
@@ -333,6 +336,8 @@ describe('Testing the challenge http API', () => {
   describe('Pre-populate L2 state with valid blocks and transactions', () => {
     afterEach(async () => {
       while (eventLogs[0] !== 'blockProposed') {
+        console.log('waiting');
+        console.log(eventLogs);
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 10000));
       }
@@ -356,11 +361,14 @@ describe('Testing the challenge http API', () => {
 
       const receiptArrays = [];
       txQueue.push(async () => {
-        await holdupTxQueue('txSubmitted', logCounts.txSubmitted + depositTransactions.length);
+        await holdupTxQueue(
+          'txSubmitted',
+          logCounts.txSubmitted.length + depositTransactions.length,
+        );
       });
       for (let i = 0; i < depositTransactions.length; i++) {
         const { txDataToSign } = depositTransactions[i];
-        const count = logCounts.txSubmitted;
+        const count = logCounts.txSubmitted.length;
         receiptArrays.push(
           // eslint-disable-next-line no-await-in-loop
           await web3Client.submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee),
@@ -368,6 +376,7 @@ describe('Testing the challenge http API', () => {
         // eslint-disable-next-line no-await-in-loop
         await waitForTxExecution(count, 'txSubmitted');
       }
+      console.log('1');
       receiptArrays.forEach(receipt => {
         expect(receipt).to.have.property('transactionHash');
         expect(receipt).to.have.property('blockHash');
@@ -377,9 +386,11 @@ describe('Testing the challenge http API', () => {
 
     it('should create a block with a single transfer', async () => {
       let res;
+      console.log('2');
       do {
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 3000));
+        console.log('3');
         // eslint-disable-next-line no-await-in-loop
         res = await chai
           .request(url)
@@ -395,10 +406,13 @@ describe('Testing the challenge http API', () => {
             ask: ask1,
             fee,
           });
+        console.log('4');
       } while (res.body.error === 'No suitable commitments');
+      console.log('5');
       // now we need to sign the transaction and send it to the blockchain
       await web3Client.submitTransaction(res.body.txDataToSign, privateKey, shieldAddress, gas);
 
+      console.log('6');
       const depositTransactions = (
         await Promise.all(
           Array.from({ length: txPerBlock - 1 }, () =>
@@ -410,6 +424,7 @@ describe('Testing the challenge http API', () => {
         )
       ).map(depRes => depRes.body);
 
+      console.log('7');
       depositTransactions.forEach(({ txDataToSign }) => expect(txDataToSign).to.be.a('string'));
 
       const receiptArrays = [];
@@ -442,7 +457,7 @@ describe('Testing the challenge http API', () => {
 
       const receiptArrays = [];
       for (let i = 0; i < depositTransactions.length; i++) {
-        const count = logCounts.txSubmitted;
+        const count = logCounts.txSubmitted.length;
         const { txDataToSign } = depositTransactions[i];
         receiptArrays.push(
           // eslint-disable-next-line no-await-in-loop
@@ -471,7 +486,7 @@ describe('Testing the challenge http API', () => {
         });
       const { txDataToSign } = res.body;
       expect(txDataToSign).to.be.a('string');
-      const count = logCounts.txSubmitted;
+      const count = logCounts.txSubmitted.length;
       const receipt = await web3Client.submitTransaction(
         txDataToSign,
         privateKey,
@@ -524,7 +539,7 @@ describe('Testing the challenge http API', () => {
 
     describe('Challenge 2: Duplicate transaction submitted', () => {
       it('Should delete the flawed block and rollback the leaves', async () => {
-        await testForEvents(stateAddress, [
+        await web3Client.testForEvents(stateAddress, [
           web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
           web3.eth.abi.encodeParameter('bytes32', topicsBlockHashDuplicateTransaction),
         ]);

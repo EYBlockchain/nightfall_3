@@ -5,18 +5,11 @@ import childProcess from 'child_process';
 import WebSocket from 'ws';
 import { generateMnemonic } from 'bip39';
 import {
-  closeWeb3Connection,
-  submitTransaction,
-  connectWeb3,
-  getAccounts,
   topicEventMapping,
-  setNonce,
   createBadBlock,
-  testForEvents,
   makeTransactions,
   sendTransactions,
-  waitForEvent,
-  getCurrentEnvironment,
+  Web3Client,
 } from './utils.mjs';
 
 import {
@@ -34,6 +27,8 @@ const { spawn } = childProcess;
 const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
+
+const web3Client = new Web3Client();
 
 describe('Running rollback and resync test', () => {
   let shieldAddress;
@@ -57,10 +52,10 @@ describe('Running rollback and resync test', () => {
   let pkd1;
   const txPerBlock = 2;
   const validTransactions = [];
-  const environment = getCurrentEnvironment();
+  const environment = web3Client.getCurrentEnvironment();
 
   before(async function () {
-    web3 = await connectWeb3();
+    web3 = await web3Client.connectWeb3();
 
     shieldAddress = (await chai.request(environment.clientApiUrl).get('/contract-address/Shield'))
       .body.address;
@@ -79,9 +74,9 @@ describe('Running rollback and resync test', () => {
     ercAddress = (await chai.request(environment.clientApiUrl).get('/contract-address/ERCStub'))
       .body.address;
 
-    [myAddress] = await getAccounts();
+    [myAddress] = await web3Client.getAccounts();
 
-    setNonce(await web3.eth.getTransactionCount(myAddress));
+    web3Client.setNonce(await web3.eth.getTransactionCount(myAddress));
 
     // Generate a random mnemonic (uses crypto.randomBytes under the hood), defaults to 128-bits of entropy
     const mnemonic = generateMnemonic();
@@ -143,7 +138,7 @@ describe('Running rollback and resync test', () => {
           transactions,
         );
       } else if (type === 'commit') {
-        await submitTransaction(txDataToSign, privateKey, challengesAddress, gas);
+        await web3Client.submitTransaction(txDataToSign, privateKey, challengesAddress, gas);
       } else if (type === 'challenge') {
         commitTxDataToSign = txDataToSign;
         console.log('Challenge held');
@@ -154,7 +149,7 @@ describe('Running rollback and resync test', () => {
       .post('/proposer/register')
       .send({ address: myAddress });
     const { txDataToSign } = res.body;
-    await submitTransaction(txDataToSign, privateKey, proposersAddress, gas, bond);
+    await web3Client.submitTransaction(txDataToSign, privateKey, proposersAddress, gas, bond);
 
     // Register keys
     await chai
@@ -174,7 +169,7 @@ describe('Running rollback and resync test', () => {
 
   describe('Prepare some boiler plate transactions', () => {
     blockSubmissionFunction = async (txDataToSign, b, c, d, e, f) =>
-      submitTransaction(txDataToSign, b, c, d, e, f);
+      web3Client.submitTransaction(txDataToSign, b, c, d, e, f);
     it('should make a block of deposits to start us off', async function () {
       const depositTransactions = await makeTransactions(
         'deposit',
@@ -184,7 +179,7 @@ describe('Running rollback and resync test', () => {
       );
 
       await sendTransactions(depositTransactions, [privateKey, shieldAddress, gas, fee]);
-      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
     });
 
     it('should make a block of transfers so we can make some bad blocks', async function () {
@@ -197,7 +192,7 @@ describe('Running rollback and resync test', () => {
       // eslint-disable-next-line prefer-destructuring
       duplicateTransaction = transferTransactions[0];
       await sendTransactions(transferTransactions, [privateKey, shieldAddress, gas, fee]);
-      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
     });
   });
 
@@ -211,7 +206,7 @@ describe('Running rollback and resync test', () => {
           `Created flawed block with duplicate transactions and blockHash ${newBlockRes.block.blockHash}`,
         );
         topicsBlockHashDuplicateTransaction = newBlockRes.block.blockHash;
-        return submitTransaction(newBlockRes.txDataToSign, b, c, d, e, f);
+        return web3Client.submitTransaction(newBlockRes.txDataToSign, b, c, d, e, f);
       };
       const transferTransactions = await makeTransactions(
         'transfer',
@@ -223,19 +218,19 @@ describe('Running rollback and resync test', () => {
       validTransactions.push(...transferTransactions);
       await sendTransactions(transferTransactions, [privateKey, shieldAddress, gas, fee]);
 
-      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
     });
     it('should send the commit-challenge', async function () {
       while (!commitTxDataToSign) {
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
-      await submitTransaction(commitTxDataToSign, privateKey, challengesAddress, gas);
+      await web3Client.submitTransaction(commitTxDataToSign, privateKey, challengesAddress, gas);
       commitTxDataToSign = null;
     });
     it('Should delete the flawed block and rollback the leaves', async () => {
-      eventLogs = await waitForEvent(eventLogs, ['Rollback']);
-      await testForEvents(stateAddress, [
+      eventLogs = await web3Client.waitForEvent(eventLogs, ['Rollback']);
+      await web3Client.testForEvents(stateAddress, [
         web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
         web3.eth.abi.encodeParameter('bytes32', topicsBlockHashDuplicateTransaction),
       ]);
@@ -305,7 +300,7 @@ describe('Running rollback and resync test', () => {
             transactions,
           );
         } else if (type === 'commit') {
-          await submitTransaction(txDataToSign, privateKey, challengesAddress, gas);
+          await web3Client.submitTransaction(txDataToSign, privateKey, challengesAddress, gas);
         } else if (type === 'challenge') {
           commitTxDataToSign = txDataToSign;
           console.log('Challenge held');
@@ -319,7 +314,7 @@ describe('Running rollback and resync test', () => {
       const { txDataToSign } = res.body;
       expect(txDataToSign).to.be.a('string');
       // now we need to sign the transaction and send it to the blockchain
-      await submitTransaction(txDataToSign, privateKey, proposersAddress, gas, bond);
+      await web3Client.submitTransaction(txDataToSign, privateKey, proposersAddress, gas, bond);
       await chai
         .request(environment.clientApiUrl)
         .post('/incoming-viewing-key')
@@ -336,12 +331,12 @@ describe('Running rollback and resync test', () => {
 
     it('should automatically create a bad block, as the resync will re-populate our local db', async () => {
       // This block will be a bad block as it uses the blockSubmissionFunction from the first bad block.
-      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
     });
 
     it('should make another good block on top of the bad block', async function () {
       blockSubmissionFunction = async (txDataToSign, b, c, d, e, f) =>
-        submitTransaction(txDataToSign, b, c, d, e, f);
+        web3Client.submitTransaction(txDataToSign, b, c, d, e, f);
       const transferTransactions = await makeTransactions(
         'transfer',
         1,
@@ -359,7 +354,7 @@ describe('Running rollback and resync test', () => {
       );
       await sendTransactions(depositTransactions, [privateKey, shieldAddress, gas, fee]);
       validTransactions.push(...depositTransactions);
-      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
     });
 
     it('should fire off the commit-challenge', async function () {
@@ -367,12 +362,12 @@ describe('Running rollback and resync test', () => {
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
-      await submitTransaction(commitTxDataToSign, privateKey, challengesAddress, gas);
+      await web3Client.submitTransaction(commitTxDataToSign, privateKey, challengesAddress, gas);
       commitTxDataToSign = null;
     });
 
     it('Should delete the flawed block and rollback the leaves', async () => {
-      await testForEvents(stateAddress, [
+      await web3Client.testForEvents(stateAddress, [
         web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
         web3.eth.abi.encodeParameter('bytes32', topicsBlockHashDuplicateTransaction),
       ]);
@@ -417,7 +412,7 @@ describe('Running rollback and resync test', () => {
   });
 
   after(() => {
-    closeWeb3Connection();
+    web3Client.closeWeb3Connection();
     connection.close();
   });
 });

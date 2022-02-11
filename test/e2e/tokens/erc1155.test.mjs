@@ -3,7 +3,7 @@ import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import { createRequire } from 'module';
 import Nf3 from '../../../cli/lib/nf3.mjs';
-import { waitForEvent, expectTransaction, Web3Client, depositNTransactions } from '../../utils.mjs';
+import { expectTransaction, Web3Client, depositNTransactions } from '../../utils.mjs';
 import { getERCInfo } from '../../../cli/lib/tokens.mjs';
 
 // so we can use require with mjs file
@@ -59,10 +59,10 @@ const evenTheBlock = async nf3Instance => {
         fee,
       );
       // eslint-disable-next-line no-await-in-loop
-      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
     } else {
       // eslint-disable-next-line no-await-in-loop
-      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
     }
     // eslint-disable-next-line no-await-in-loop
     count = await nf3Instance.unprocessedTransactionCount();
@@ -77,7 +77,7 @@ const evenTheBlock = async nf3Instance => {
     tokenId,
     fee,
   );
-  eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+  eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 };
 
 describe('ERC1155 tests', () => {
@@ -89,7 +89,7 @@ describe('ERC1155 tests', () => {
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer1.startProposer();
     newGasBlockEmitter.on('gascost', async gasUsed => {
-      if (process.env.GAS_COSTS)
+      if (process.env.VERBOSE)
         console.log(
           `Block proposal gas cost was ${gasUsed}, cost per transaction was ${
             gasUsed / txPerBlock
@@ -123,7 +123,7 @@ describe('ERC1155 tests', () => {
         fee,
       );
     }
-    eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+    eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
     await evenTheBlock(nf3Users[0]);
   });
@@ -158,7 +158,7 @@ describe('ERC1155 tests', () => {
       );
       expectTransaction(res);
       // Wait until we see the right number of blocks appear
-      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       await evenTheBlock(nf3Users[0]);
       balances = await nf3Users[0].getLayer2Balances();
@@ -202,7 +202,7 @@ describe('ERC1155 tests', () => {
         );
         expectTransaction(res);
       }
-      eventLogs = await waitForEvent(eventLogs, ['blockProposed']);
+      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       // await evenTheBlock(nf3Users[0]);
       await getBalances();
@@ -227,7 +227,7 @@ describe('ERC1155 tests', () => {
         nf3Users[0].ethereumAddress,
       );
       expectTransaction(rec);
-      if (process.env.GAS_COSTS) console.log(`     Gas used was ${Number(rec.gasUsed)}`);
+      if (process.env.VERBOSE) console.log(`     Gas used was ${Number(rec.gasUsed)}`);
 
       await evenTheBlock(nf3Users[0]);
 

@@ -5,7 +5,7 @@
   "main": "./nightfall-client/src/index.mjs",
   "scripts": {
     "neg-test": "env-cmd -e development mocha --timeout 0 --bail test/neg-http.mjs",
-    "neg-test-ropsten": "env-cmd -e ropsten mocha --timeout 0 --bail test/http.mjs test/neg-http.mjs",
+    "neg-test-ropsten": "env-cmd -e ropsten mocha --timeout 0 --bail test/neg-http.mjs",
     "test-e2e-protocol": "env-cmd -e development mocha --timeout 0 --bail test/e2e/protocol/index.test.mjs ",
     "test-gas": "env-cmd -e development mocha --timeout 0 --bail test/e2e/protocol/gas.test.mjs ",
     "test-e2e-tokens": "env-cmd -e development mocha --timeout 0 --bail test/e2e/tokens/index.test.mjs ",

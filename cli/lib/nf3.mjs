@@ -198,20 +198,24 @@ class Nf3 {
       // rather than waiting until we have a receipt, wait until we have enough confirmation blocks
       // then return the receipt.
       // TODO does this still work if there is a chain reorg or do we have to handle that?
-      return new Promise(resolve => {
-        console.log(`Confirming transaction ${signed.transactionHash}`);
+      return new Promise((resolve, reject) => {
+        if (process.env.VERBOSE) console.log(`Confirming transaction ${signed.transactionHash}`);
         this.notConfirmed++;
         this.web3.eth
           .sendSignedTransaction(signed.rawTransaction)
           .on('confirmation', (number, receipt) => {
             if (number === 12) {
               this.notConfirmed--;
-              console.log(
-                `Transaction ${receipt.transactionHash} has been confirmed ${number} times.`,
-                `Number of unconfirmed transactions is ${this.notConfirmed}`,
-              );
+              if (process.env.VERBOSE)
+                console.log(
+                  `Transaction ${receipt.transactionHash} has been confirmed ${number} times.`,
+                  `Number of unconfirmed transactions is ${this.notConfirmed}`,
+                );
               resolve(receipt);
             }
+          })
+          .on('error', err => {
+            reject(err);
           });
       });
     }
@@ -766,8 +770,6 @@ class Nf3 {
         ercList,
       },
     });
-    console.log('L2 BALANCES FOR PKD', this.zkpKeys.compressedPkd);
-    console.log(res.data);
     return res.data.balance;
   }
 
