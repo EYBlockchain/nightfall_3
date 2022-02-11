@@ -23,3 +23,5 @@ jobs:
           sudo ./aws/install
       - name: verify aws-cli installation
         run: aws --version
+      - name: download precompiled circuit outputs
+        run: aws s3 cp s3://nightfallv3/circuits ./wallet/src/zokrates --recursive
