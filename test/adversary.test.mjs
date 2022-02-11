@@ -18,6 +18,8 @@ chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
 const { TRANSACTIONS_PER_BLOCK } = config;
+const TX_WAIT = 12000;
+const TEST_LENGTH = 16;
 
 // Number of transfer filled transaction blocks required.
 // This is equal to the number of blocks required for test that
@@ -99,39 +101,58 @@ describe('Testing the challenge http API', () => {
       // we are creating a block of tests such that there will always be
       // enough balance for a transfer. We do this by submitting and mining (waiting until)
       // deposits of value required for a transfer
-      let count = 0;
-      const depositFunction = async () => {
-        await nf3User1.deposit(ercAddress, tokenType, value1, tokenId, fee);
-      };
+      // let count = 0;
       for (let j = 0; j < TRANSACTIONS_PER_BLOCK; j++) {
         // TODO set this loop to TRANSACTIONS_PER_BLOCK
         await waitForProposer(nf3AdversarialProposer);
         const res = await nf3User1.deposit(ercAddress, tokenType, value1, tokenId, fee);
         expect(res).to.have.property('transactionHash');
         expect(res).to.have.property('blockHash');
-        console.log('HERE count', count);
-        count++;
+        // console.log('HERE count', count);
+        // count++;
       }
-      for (let j = 0; j < 8; j++) {
-        for (let i = 0; i < 2; i++) {
-          // TODO set this loop to TRANSACTIONS_PER_BLOCK
-          await waitForProposer(nf3AdversarialProposer);
-          await waitForSufficientBalance(nf3User1, value2, depositFunction);
-          const res = await nf3User1.transfer(
+
+      for (let i = 0; i < TEST_LENGTH; i++) {
+        await waitForProposer(nf3AdversarialProposer);
+        await waitForSufficientBalance(nf3User1, value2);
+        try {
+          await nf3User1.transfer(
             false,
             ercAddress,
             tokenType,
             value2,
             tokenId,
             nf3User1.zkpKeys.compressedPkd,
-            fee,
           );
-          expect(res).to.have.property('transactionHash');
-          expect(res).to.have.property('blockHash');
-          await new Promise(resolve => setTimeout(resolve, 20000));
-          console.log('HERE count', count);
-          count++;
+          // console.log('HERE count', count);
+          // count++;
+        } catch (err) {
+          if (err.message.includes('No suitable commitments')) {
+            // if we get here, it's possible that a block we are waiting for has not been proposed yet
+            // let's wait 10x normal and then try again
+            console.log(
+              `No suitable commitments were found for transfer. I will wait ${
+                0.01 * TX_WAIT
+              } seconds and try one last time`,
+            );
+            await new Promise(resolve => setTimeout(resolve, 10 * TX_WAIT));
+            await waitForProposer(nf3AdversarialProposer);
+            await new Promise(resolve => setTimeout(resolve, TX_WAIT));
+            await nf3User1.transfer(
+              false,
+              ercAddress,
+              tokenType,
+              value2,
+              tokenId,
+              nf3User1.zkpKeys.compressedPkd,
+            );
+            // console.log('HERE count', count);
+            // count++;
+          }
         }
+        await nf3User1.deposit(ercAddress, tokenType, value2, tokenId);
+        await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
+        console.log(`Completed ${i + 1} pings`);
       }
     });
   });

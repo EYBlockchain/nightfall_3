@@ -25,7 +25,6 @@ export function setBlockAssembledWebSocketConnection(_ws) {
 }
 
 let count = 0;
-
 async function makeBlock(proposer, number = TRANSACTIONS_PER_BLOCK) {
   logger.debug('Block Assembler - about to make a new block');
   // pick a random number between 0 to 6 (error length - 1)

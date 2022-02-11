@@ -31,6 +31,7 @@ async function newCurrentProposerEventHandler(data, args) {
     // !! converts this to a "is not null" check - i.e. false if is null
     // are we the next proposer?
     proposer.isMe = !!(await isRegisteredProposerAddressMine(currentProposer));
+    console.log('HERE proposer.isMe', proposer.isMe);
   } catch (err) {
     // handle errors
     logger.error(err);
