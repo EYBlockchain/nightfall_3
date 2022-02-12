@@ -59,9 +59,10 @@ jobs:
       - name: Start browser app
         run: npm start &> browser-app.log &disown
 
+      - run: ls -l
+
       - name: Run e2e test
         uses: mujo-code/puppeteer-headful@v2
         env:
           CI: 'true'
-        with:
-          args: npm run e2e-test
+        run: npm run e2e-test
