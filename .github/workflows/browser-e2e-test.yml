@@ -42,22 +42,33 @@ jobs:
           docker-compose build
           ./start-nightfall -g -s &> docker-compose.log &disown
 
-      - name: wait 1000s for Containers startup and setup completion
-        run: sleep 1000
+      - name: wait 500s for Containers startup and setup completion
+        run: sleep 500
+
+      - name: debug logs - after container startup
+        if: always()
+        run: docker-compose.log
 
       - name: Run proposer
         run:  |
           ./proposer > /dev/null 2>&1 &disown
-          sleep 500
+          sleep 200
 
       - name: Setup browser app
         run: |
           cd wallet/
+          rm package-lock.json
           npm i
           ./copy-zokrates-local.sh
 
       - name: Start browser app
-        run: npm start &> browser-app.log &disown
+        run: |
+          npm start &> browser-app.log &disown
+          sleep 200
+
+       name: debug logs - after browser startup
+        if: always()
+        run: browser-app.log
 
       - run: ls -l
 
