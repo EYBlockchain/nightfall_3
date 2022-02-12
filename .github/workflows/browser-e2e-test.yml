@@ -38,6 +38,8 @@ jobs:
 
       - run: ls -l
 
+      - run: aws configure get aws_access_key_id
+      - run: aws configure get aws_secret_access_key
       - run: aws configure get aws_region
 
       - name: Download precompiled circuit outputs
