@@ -34,20 +34,31 @@ jobs:
           aws-secret-access-key: ${{ secrets.SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      # - name: configure AWS cli
-      #   run: |
-      #     aws configure set aws_access_key_id $ACCESS_KEY
-      #     aws configure set aws_secret_access_key $SECRET_ACCESS_KEY
-      #     aws configure set aws_region us-west-2
-      #   env:
-      #     ACCESS_KEY: ${{ secrets.ACCESS_KEY }}
-      #     SECRET_ACCESS_KEY: ${{ secrets.SECRET_ACCESS_KEY }}
-
-      - run: ls -l
-
-      # - run: aws configure get aws_access_key_id
-      # - run: aws configure get aws_secret_access_key
-      # - run: aws configure get aws_region
-
       - name: Download precompiled circuit outputs
         run: aws s3 cp s3://nightfallv3/circuits ./wallet/src/zokrates --recursive
+
+      - name: Start Containers
+        run: |
+          docker-compose build
+          ./start-nightfall -g -s &> docker-compose.log &disown
+
+      - name: wait 2000s for Containers startup and setup completion
+        run: sleep 2000
+
+      - name: Run proposer
+        run:  |
+          ./proposer > /dev/null 2>&1 &disown
+          sleep 1000
+
+      - name: Setup browser app
+        run: |
+          cd wallet/
+          npm ci
+          ./copy-zokrates-local.sh
+
+      - name: Start browser app
+        run: npm start &> browser-app.log &disown
+
+      - name: Run e2e test
+        run: npm run e2e-test
+
