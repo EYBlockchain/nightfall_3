@@ -65,4 +65,7 @@ jobs:
         uses: mujo-code/puppeteer-headful@v2
         env:
           CI: 'true'
-        run: npm run e2e-test
+        with:
+          args: npm test
+
+      - run: npm run e2e-test
