@@ -27,20 +27,26 @@ jobs:
       - name: Verify aws-cli installation
         run: aws --version
 
-      - name: configure AWS cli
-        run: |
-          aws configure set aws_access_key_id $ACCESS_KEY
-          aws configure set aws_secret_access_key $SECRET_ACCESS_KEY
-          aws configure set aws_region us-west-2
-        env:
-          ACCESS_KEY: ${{ secrets.ACCESS_KEY }}
-          SECRET_ACCESS_KEY: ${{ secrets.SECRET_ACCESS_KEY }}
+      - name: Configure AWS credentials from Test account
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::111111111111:role/my-github-actions-role-test
+          aws-region: us-east-1
+
+      # - name: configure AWS cli
+      #   run: |
+      #     aws configure set aws_access_key_id $ACCESS_KEY
+      #     aws configure set aws_secret_access_key $SECRET_ACCESS_KEY
+      #     aws configure set aws_region us-west-2
+      #   env:
+      #     ACCESS_KEY: ${{ secrets.ACCESS_KEY }}
+      #     SECRET_ACCESS_KEY: ${{ secrets.SECRET_ACCESS_KEY }}
 
       - run: ls -l
 
-      - run: aws configure get aws_access_key_id
-      - run: aws configure get aws_secret_access_key
-      - run: aws configure get aws_region
+      # - run: aws configure get aws_access_key_id
+      # - run: aws configure get aws_secret_access_key
+      # - run: aws configure get aws_region
 
       - name: Download precompiled circuit outputs
         run: aws s3 cp s3://nightfallv3/circuits ./wallet/src/zokrates --recursive
