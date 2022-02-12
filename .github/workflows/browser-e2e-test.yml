@@ -38,5 +38,7 @@ jobs:
 
       - run: ls -l
 
+      - run: aws configure get aws_region
+
       - name: Download precompiled circuit outputs
         run: aws s3 cp s3://nightfallv3/circuits ./wallet/src/zokrates --recursive
