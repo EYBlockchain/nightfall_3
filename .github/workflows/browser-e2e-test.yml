@@ -27,10 +27,11 @@ jobs:
       - name: Verify aws-cli installation
         run: aws --version
 
-      - name: Set AWS keys
+      - name: configure AWS cli
         run: |
           aws configure set aws_access_key_id $ACCESS_KEY
           aws configure set aws_secret_access_key $SECRET_ACCESS_KEY
+          aws configure set aws_region us-west-2
         env:
           ACCESS_KEY: ${{ secrets.ACCESS_KEY }}
           SECRET_ACCESS_KEY: ${{ secrets.SECRET_ACCESS_KEY }}
