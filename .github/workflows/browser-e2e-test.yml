@@ -42,23 +42,26 @@ jobs:
           docker-compose build
           ./start-nightfall -g -s &> docker-compose.log &disown
 
-      - name: wait 2000s for Containers startup and setup completion
-        run: sleep 2000
+      - name: wait 1000s for Containers startup and setup completion
+        run: sleep 1000
 
       - name: Run proposer
         run:  |
           ./proposer > /dev/null 2>&1 &disown
-          sleep 1000
+          sleep 500
 
       - name: Setup browser app
         run: |
           cd wallet/
-          npm ci
+          npm i
           ./copy-zokrates-local.sh
 
       - name: Start browser app
         run: npm start &> browser-app.log &disown
 
       - name: Run e2e test
-        run: npm run e2e-test
-
+        uses: mujo-code/puppeteer-headful@v2
+        env:
+          CI: 'true'
+        with:
+          args: npm run e2e-test
