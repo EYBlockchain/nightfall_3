@@ -66,6 +66,7 @@ jobs:
 
       - name: Start browser app
         run: |
+          cd wallet/
           ls -l
           pwd
           npm start &> browser-app.log &disown
@@ -84,4 +85,4 @@ jobs:
         with:
           args: npm test
 
-      - run: npm run e2e-test
+      - run: cd wallet && npm run e2e-test
