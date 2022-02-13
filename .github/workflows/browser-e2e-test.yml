@@ -83,6 +83,4 @@ jobs:
         env:
           CI: 'true'
         with:
-          args: npm test
-
-      - run: cd wallet && npm run e2e-test
+          args: cd wallet && npm run e2e-test
