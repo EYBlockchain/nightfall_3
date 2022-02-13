@@ -74,7 +74,7 @@ jobs:
 
       - name: debug logs - after browser startup
         if: always()
-        run: cat browser-app.log
+        run: cat wallet/browser-app.log
 
       - run: ls -l
 
