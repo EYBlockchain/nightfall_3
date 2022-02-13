@@ -61,10 +61,13 @@ jobs:
           rm package-lock.json
           ls -l
           npm i
+          npm audit fix
           ./copy-zokrates-local.sh
 
       - name: Start browser app
         run: |
+          ls -l
+          pwd
           npm start &> browser-app.log &disown
           sleep 500
 
