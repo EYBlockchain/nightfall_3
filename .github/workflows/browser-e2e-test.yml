@@ -57,7 +57,9 @@ jobs:
       - name: Setup browser app
         run: |
           cd wallet/
+          ls -l
           rm package-lock.json
+          ls -l
           npm i
           ./copy-zokrates-local.sh
 
