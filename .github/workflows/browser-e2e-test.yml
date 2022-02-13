@@ -47,7 +47,7 @@ jobs:
 
       - name: debug logs - after container startup
         if: always()
-        run: docker-compose.log
+        run: cat docker-compose.log
 
       - name: Run proposer
         run:  |
@@ -68,7 +68,7 @@ jobs:
 
       - name: debug logs - after browser startup
         if: always()
-        run: browser-app.log
+        run: cat browser-app.log
 
       - run: ls -l
 
