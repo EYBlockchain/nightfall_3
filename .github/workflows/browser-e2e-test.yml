@@ -42,8 +42,8 @@ jobs:
           docker-compose build
           ./start-nightfall -g -s &> docker-compose.log &disown
 
-      - name: wait 500s for Containers startup and setup completion
-        run: sleep 500
+      - name: wait 1000s for Containers startup and setup completion
+        run: sleep 1000
 
       - name: debug logs - after container startup
         if: always()
@@ -64,7 +64,7 @@ jobs:
       - name: Start browser app
         run: |
           npm start &> browser-app.log &disown
-          sleep 200
+          sleep 500
 
       - name: debug logs - after browser startup
         if: always()
