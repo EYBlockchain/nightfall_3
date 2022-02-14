@@ -37,6 +37,7 @@ jobs:
 
       - name: Start Containers
         run: |
+          npm ci
           docker-compose build
           ./start-nightfall -g -s &> docker-compose.log &disown
 
@@ -48,17 +49,14 @@ jobs:
         run: cat docker-compose.log
 
       - name: Setup proposer
-        run: |
-          cd cli
-          rm package-lock.json
-          npm i
+        run: cd cli && npm ci
 
       - name: Run proposer
         run:  |
           ./proposer > proposer.log &disown
           sleep 200
 
-      - name: proposer.log
+      - name: debug logs - proposer.log
         if: always()
         run: cat proposer.log
 
@@ -68,22 +66,11 @@ jobs:
           npm ci
           ./copy-zokrates-local.sh
 
-      - name: list webpack dependencies
-        run: cd wallet/ && npm list webpack
-
-      - name: node_modules
-        run: |
-          cd wallet
-          ls -l
-          cd node_modules
-          ls -l
-
       - name: Start browser app
         run: |
-          npm ci
           cd wallet/
           npm start &> browser-app.log &disown
-          sleep 500
+          sleep 400
         env:
           BROWSER: none
           CHOKIDAR_USEPOLLING: false
@@ -92,4 +79,5 @@ jobs:
         if: always()
         run: cat wallet/browser-app.log
 
-      - run: cd wallet && npm run e2e-test
+      - name: Run e2e test
+        run: cd wallet && npm run e2e-test
