@@ -59,6 +59,52 @@ jobs:
           name: ganache-test-logs
           path: ./ganache-test.log
 
+  adversary-test:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '14.17.0'
+
+      - name: Build Adversary
+        run: npm run build-adversary
+
+      - name: Start Containers
+        run: |
+          docker build --no-cache	-t ghcr.io/eyblockchain/local-zokrates -f zokrates.Dockerfile .
+          docker-compose build
+          ./start-nightfall -g -a &> adversary-test.log &disown
+
+      - name: wait 2000s for Containers startup and setup completion
+        run: sleep 2000
+
+      - name: debug logs - after container startup
+        if: always()
+        run: cat adversary-test.log
+
+      - name: Run adversary test
+        run: |
+          npm ci
+          npm run adversary-test
+
+      - name: debug logs - after integration test run
+        if: always()
+        run: cat adversary-test.log
+
+      - name: If integration test failed, shutdown the Containers
+        if: failure()
+        run:
+          docker-compose -f docker-compose.yml -f docker-compose.ganache.yml -f
+          docker-compose.adversary.yml down -v
+
+      - name: If integration test failed, upload logs files as artifacts
+        if: failure()
+        uses: actions/upload-artifact@master
+        with:
+          name: adversary-test-logs
+          path: ./adversary-test.log
+
   wallet-test:
     runs-on: ubuntu-18.04
     steps:
@@ -77,7 +123,8 @@ jobs:
         run: sleep 2500
 
       - name: Retrieve Wallet test logs
-        run: docker logs $(docker ps -aqf "name=wallet-test") > wallet-test.log; cat wallet-test.log;
+        run:
+          docker logs $(docker ps -aqf "name=wallet-test") > wallet-test.log; cat wallet-test.log;
 
       - name: debug logs - after container startup
         if: always()
@@ -85,7 +132,9 @@ jobs:
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
-        run: docker-compose -f docker-compose.yml -f docker-compose.ganache.yml -f docker-compose.wallet-test.yml down -v
+        run:
+          docker-compose -f docker-compose.yml -f docker-compose.ganache.yml -f
+          docker-compose.wallet-test.yml down -v
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
@@ -93,7 +142,6 @@ jobs:
         with:
           name: wallet-test-logs
           path: ./wallet-test.log
-
 
   test-gas:
     name: check gas for 32 transactions per block

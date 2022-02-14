@@ -142,7 +142,7 @@ are fewer than 'number' transactions, all are returned.
 */
 // eslint-disable-next-line import/prefer-default-export
 export async function getMostProfitableTransactions(number, errorIndex) {
-  logger.debug('Choosing a bad transaction of type', error[errorIndex]);
+  logger.debug('Creating a transaction of type', error[errorIndex]);
   switch (error[errorIndex]) {
     case 'DuplicateTransaction':
       return duplicateTransaction(number);

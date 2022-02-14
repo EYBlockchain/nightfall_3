@@ -1,8 +1,7 @@
-/* This is an example script written to show how to send blockConfig which provides a configuration
- * for valid and invalid blocks to be built by adversary. This does not perform negative tests because testing
- * if the adversary is able to create successful bad blocks or not is not the objective of nightfall 3 tests
- * Any test written should verify the state of client's expected balance against the balance that blockchain says
- * the client should have
+/* This adversary test relies on the bad block and bad tranasction types as defined in
+ * test/adversary/adversary-code/database.mjs and test/adversary/adversary-code/block.mjs
+ * files. Later this test will work against random selection of bad block and bad
+ * tranasction types
  */
 
 /* eslint-disable no-await-in-loop */
@@ -23,20 +22,16 @@ chai.use(chaiAsPromised);
 
 const { TRANSACTIONS_PER_BLOCK } = config;
 const TX_WAIT = 12000;
-const TEST_LENGTH = 7;
+const TEST_LENGTH = 8;
 
-// Number of transfer filled transaction blocks required.
-// This is equal to the number of blocks required for test that
-// uses blockConfig - 1. We reduce by 1 because we want the first
-// block to hold deposit big enough for the subsequent transfers
-// and will create this ahead of the transfer blocks separately
-
-describe('Testing the challenge http API', () => {
+describe('Testing with an adversary', () => {
   let nf3User1;
   let nf3AdversarialProposer;
   let ercAddress;
   let nf3Challenger;
   let startBalance;
+  let expectedBalance = 0;
+  let intervalId;
 
   // this is the etherum private key for accounts[0] and so on
   const ethereumSigningKeyUser1 =
@@ -84,6 +79,7 @@ describe('Testing the challenge http API', () => {
     await nf3AdversarialProposer.init(mnemonicProposer);
     await nf3Challenger.init(mnemonicChallenger);
 
+    // retrieve initial balance
     startBalance = await retrieveL2Balance(nf3User1);
 
     if (!(await nf3User1.healthcheck('optimist'))) throw new Error('Healthcheck failed');
@@ -103,27 +99,21 @@ describe('Testing the challenge http API', () => {
     nf3Challenger.startChallenger();
   });
 
-  describe('Create L2 state with valid blocks and transactions', () => {
-    it('should create a block with 2 deposits then as many transfers as set by TEST_LENGTH', async () => {
-      // registerProposerOnNoProposer(nf3AdversarialProposer);
-      const intervalId = setInterval(() => {
+  describe('User creates deposit and transfer transctions', () => {
+    it('User should have the correct balance after a series of rollbacks', async () => {
+      // Because rollbacks removes the only registered proposer,
+      // the proposer is registered again after each remova
+      intervalId = setInterval(() => {
         registerProposerOnNoProposer(nf3AdversarialProposer);
       }, 5000);
 
-      // we are creating a block of tests such that there will always be
-      // enough balance for a transfer. We do this by submitting and mining (waiting until)
-      // deposits of value required for a transfer
+      // we are creating a block of deposits with high values such that there is
+      // enough balance for a lot of transfers with low value.
       for (let j = 0; j < TRANSACTIONS_PER_BLOCK; j++) {
-        // TODO set this loop to TRANSACTIONS_PER_BLOCK
-        const res = await nf3User1.deposit(ercAddress, tokenType, value1, tokenId, fee);
-        expect(res).to.have.property('transactionHash');
-        expect(res).to.have.property('blockHash');
+        await nf3User1.deposit(ercAddress, tokenType, value1, tokenId, fee);
+        expectedBalance += value1;
       }
 
-      // Balance from good block commitments only
-      // Balance by two commitments not total (which might be only one commit)
-      // wait for sufficient balance and proposer has to wait for 12 block confirmations
-      // proposer to not be zero
       for (let i = 0; i < TEST_LENGTH; i++) {
         await waitForSufficientBalance(nf3User1, value2);
         try {
@@ -135,6 +125,7 @@ describe('Testing the challenge http API', () => {
             tokenId,
             nf3User1.zkpKeys.compressedPkd,
           );
+          // expectedBalance += value2;
         } catch (err) {
           if (err.message.includes('No suitable commitments')) {
             // if we get here, it's possible that a block we are waiting for has not been proposed yet
@@ -153,51 +144,27 @@ describe('Testing the challenge http API', () => {
               tokenId,
               nf3User1.zkpKeys.compressedPkd,
             );
+            // expectedBalance += value2; // transfer to self, so balance does not increase
           }
         }
         await nf3User1.deposit(ercAddress, tokenType, value2, tokenId);
-        await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
-
-        // More transactions for a block to ensure there are commitments to be spent for upcoming transfer
-        // When continuous rollbacks happen, there are no commitments for transfer as the prior commitments from deposits
-        // are in a state of pending to be in added in a block. These deposits ensure there are enough commitments. Otherwise
-        // we rely on the intial deposit of 2000 which ends being 1995 subsequently and is not sufficient for a tranfers of 5 because
-        // two commitments are needed
-        await waitForSufficientBalance(nf3User1, value2);
-        await nf3User1.deposit(ercAddress, tokenType, value2, tokenId);
-        await nf3User1.deposit(ercAddress, tokenType, value2, tokenId);
+        expectedBalance += value2;
         await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
         console.log(`Completed ${i + 1} pings`);
       }
-      clearInterval(intervalId);
+
+      // waiting sometime to ensure that all the good transactions from bad
+      // blocks were proposed in other good blocks
+      await new Promise(resolve => setTimeout(resolve, 20 * TX_WAIT));
+      const endBalance = await retrieveL2Balance(nf3User1);
+
+      expect(expectedBalance).to.be.equal(endBalance - startBalance);
     });
   });
 
   after(async () => {
-    // wait for pending transactions before closing
-    await new Promise(resolve => setTimeout(resolve, 60000));
-    const endBalance = await retrieveL2Balance(nf3User1);
-
-    // + 1000 Deposit
-    // + 1000 Deposit
-
-    //  The following 7 times
-    //   5 Transfer to self. So no change
-    // + 5 Deposit
-    // + 5 Deposit
-    // + 5 Deposit
-
-    // 2000 + 15 * 7 = 2105
-
-    if (endBalance - startBalance === 2105) {
-      console.log('Test passed');
-      console.log('Balance of User ', endBalance - startBalance);
-    } else {
-      console.log(
-        'The test has not yet passed because the L2 balance has not increased - waiting',
-        endBalance - startBalance,
-      );
-    }
+    // stopping registerProposerOnNoProposer
+    clearInterval(intervalId);
     nf3User1.close();
     nf3AdversarialProposer.close();
     nf3Challenger.close();

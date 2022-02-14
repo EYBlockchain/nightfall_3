@@ -41,7 +41,7 @@ const incorrectLeafCount = block => {
 
 // eslint-disable-next-line import/prefer-default-export
 export const createBadBlock = (block, errorIndex) => {
-  logger.debug('createBadBlock of type', error[errorIndex]);
+  logger.debug('Creating a block of type', error[errorIndex]);
   switch (error[errorIndex]) {
     case 'IncorrectTreeRoot':
       return incorrectTreeRoot(block);
