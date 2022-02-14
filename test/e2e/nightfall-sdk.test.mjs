@@ -1,3 +1,4 @@
+import config from 'config';
 import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
@@ -14,7 +15,8 @@ import {
   depositNTransactions,
   getCurrentEnvironment,
 } from '../utils.mjs';
-import {
+
+const {
   ethereumSigningKeyUser1,
   ethereumSigningKeyUser2,
   ethereumSigningKeyProposer1,
@@ -36,22 +38,28 @@ import {
   mnemonicLiquidityProvider,
   mnemonicChallenger,
   BLOCK_STAKE,
-} from '../constants.mjs';
+} = config.TEST_OPTIONS;
 
 const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 const environment = getCurrentEnvironment();
-const { web3WsUrl } = process.env;
 
 describe('Testing the Nightfall SDK', () => {
   console.log('ENVIRONMENT: ', environment);
-  const nf3User1 = new Nf3(web3WsUrl, ethereumSigningKeyUser1, environment);
-  const nf3User2 = new Nf3(web3WsUrl, ethereumSigningKeyUser2, environment);
-  const nf3Proposer1 = new Nf3(web3WsUrl, ethereumSigningKeyProposer1, environment);
-  const nf3Proposer2 = new Nf3(web3WsUrl, ethereumSigningKeyProposer2, environment);
-  const nf3Challenger = new Nf3(web3WsUrl, ethereumSigningKeyChallenger, environment);
-  const nf3LiquidityProvider = new Nf3(web3WsUrl, ethereumSigningKeyLiquidityProvider, environment);
+  if (environment.name === 'Ropsten' && !process.env.ROPSTEN_NODE)
+    throw new Error('Undefined WEB3_URL. You should define this WEB3_URL to run the test.');
+
+  const nf3User1 = new Nf3(environment.web3WsUrl, ethereumSigningKeyUser1, environment);
+  const nf3User2 = new Nf3(environment.web3WsUrl, ethereumSigningKeyUser2, environment);
+  const nf3Proposer1 = new Nf3(environment.web3WsUrl, ethereumSigningKeyProposer1, environment);
+  const nf3Proposer2 = new Nf3(environment.web3WsUrl, ethereumSigningKeyProposer2, environment);
+  const nf3Challenger = new Nf3(environment.web3WsUrl, ethereumSigningKeyChallenger, environment);
+  const nf3LiquidityProvider = new Nf3(
+    environment.web3WsUrl,
+    ethereumSigningKeyLiquidityProvider,
+    environment,
+  );
 
   let web3;
   let erc20Address;
@@ -163,7 +171,6 @@ describe('Testing the Nightfall SDK', () => {
     await nf3LiquidityProvider.init(mnemonicLiquidityProvider);
 
     stateAddress = await nf3User1.stateContractAddress;
-
     console.log('     Last block on chain: ', await getOnChainBlockCount());
     console.log('     Shield address: ', nf3User1.shieldContractAddress);
     console.log('     State address: ', nf3User1.stateContractAddress);

@@ -60,7 +60,6 @@ function Login({
     // Start NF3
     try {
       await nf3.init();
-      Nf3.Environment.setContractAddresses(nf3);
       // Run checks if Metamask selected
       if (ethereumSigningKey === '') {
         await chainIdCheck(nf3Env.chainId);

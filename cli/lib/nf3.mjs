@@ -7,7 +7,7 @@ import { approve } from './tokens.mjs';
 import erc20 from './abis/ERC20.mjs';
 import erc721 from './abis/ERC721.mjs';
 import erc1155 from './abis/ERC1155.mjs';
-import { ENVIRONMENTS } from './constants.mjs';
+import { DEFAULT_BLOCK_STAKE, DEFAULT_PROPOSER_BOND, DEFAULT_FEE } from './constants.mjs';
 
 /**
 @class
@@ -46,11 +46,11 @@ class Nf3 {
 
   zkpKeys;
 
-  defaultFee = 10;
+  defaultFee = DEFAULT_FEE;
 
-  PROPOSER_BOND = 10;
+  PROPOSER_BOND = DEFAULT_PROPOSER_BOND;
 
-  BLOCK_STAKE = 1;
+  BLOCK_STAKE = DEFAULT_BLOCK_STAKE;
 
   nonce = 0;
 
@@ -64,9 +64,16 @@ class Nf3 {
 
   currentEnvironment;
 
-  notConfirmed = 0;
-
-  constructor(web3WsUrl, ethereumSigningKey, environment = ENVIRONMENTS.localhost, zkpKeys) {
+  constructor(
+    web3WsUrl,
+    ethereumSigningKey,
+    environment = {
+      clientApiUrl: 'http://localhost:8080',
+      optimistApiUrl: 'http://localhost:8081',
+      optimistWsUrl: 'ws://localhost:8082',
+    },
+    zkpKeys,
+  ) {
     this.clientBaseUrl = environment.clientApiUrl;
     this.optimistBaseUrl = environment.optimistApiUrl;
     this.optimistWsUrl = environment.optimistWsUrl;

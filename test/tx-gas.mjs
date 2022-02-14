@@ -1,19 +1,10 @@
 /**
 Test suite for measuring the gas per transaction
 */
+import config from 'config';
 import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
-import {
-  ethereumSigningKeyUser1,
-  ethereumSigningKeyProposer1,
-  mnemonicUser1,
-  mnemonicProposer,
-  tokenType,
-  value,
-  tokenId,
-  fee,
-} from './constants.mjs';
 import Nf3 from '../cli/lib/nf3.mjs';
 import {
   closeWeb3Connection,
@@ -23,11 +14,21 @@ import {
   waitForEvent,
 } from './utils.mjs';
 
+const {
+  ethereumSigningKeyUser1,
+  ethereumSigningKeyProposer1,
+  mnemonicUser1,
+  mnemonicProposer,
+  tokenType,
+  value,
+  tokenId,
+  fee,
+} = config.TEST_OPTIONS;
+
 const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 const environment = getCurrentEnvironment();
-const { web3WsUrl } = process.env;
 
 const TRANSACTIONS_PER_BLOCK = 32;
 const expectedGasCostPerTx = 10000;
@@ -38,8 +39,8 @@ describe('Testing the http API', () => {
   let ercAddress;
 
   console.log('ENVIRONMENT: ', environment);
-  const nf3User1 = new Nf3(web3WsUrl, ethereumSigningKeyUser1, environment);
-  const nf3Proposer1 = new Nf3(web3WsUrl, ethereumSigningKeyProposer1, environment);
+  const nf3User1 = new Nf3(environment.web3WsUrl, ethereumSigningKeyUser1, environment);
+  const nf3Proposer1 = new Nf3(environment.web3WsUrl, ethereumSigningKeyProposer1, environment);
 
   before(async () => {
     await connectWeb3();
