@@ -13,7 +13,6 @@ jobs:
       - uses: actions/checkout@master
       - uses: actions/setup-node@v2
         with:
-          args: install
           node-version: '14.17.0'
 
       - name: Install aws-cli
