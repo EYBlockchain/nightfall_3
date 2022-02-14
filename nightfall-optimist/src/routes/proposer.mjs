@@ -14,6 +14,7 @@ import {
   setStakeProposerAddress,
   getMempoolTransactions,
   getLatestTree,
+  findBlocksByProposer,
 } from '../services/database.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
@@ -119,6 +120,49 @@ router.get('/withdraw', async (req, res, next) => {
     logger.debug('returning raw transaction data');
     logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
     res.json({ txDataToSign });
+  } catch (err) {
+    logger.error(err);
+    next(err);
+  }
+});
+
+/**
+ * Function to get pending blocks payments for a proposer.
+ */
+router.get('/pending-payments', async (req, res, next) => {
+  logger.debug(`pending-payments endpoint received GET`);
+  const { proposer } = req.query;
+  logger.debug(`requested pending payments for proposer ${proposer}`);
+
+  const pendingPayments = [];
+  // get blocks by proposer
+  try {
+    const blocks = await findBlocksByProposer(proposer);
+    const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
+
+    for (let i = 0; i < blocks.length; i++) {
+      let pending;
+      let challengePeriod = false;
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        pending = await shieldContractInstance.methods
+          .isBlockPaymentPending(blocks[i].blockHash, blocks[i].blockNumberL2)
+          .call();
+      } catch (e) {
+        if (e.message.includes('Too soon to get paid for this block')) {
+          challengePeriod = true;
+          pending = true;
+        } else {
+          pending = false;
+        }
+      }
+
+      if (pending) {
+        pendingPayments.push({ blockHash: blocks[i].blockHash, challengePeriod });
+      }
+    }
+    logger.debug('returning pending blocks payments');
+    res.json({ pendingPayments });
   } catch (err) {
     logger.error(err);
     next(err);
