@@ -83,7 +83,7 @@ jobs:
         run: |
           cd wallet/
           ls -l
-          REACT_APP_ENVIRONMENT=Localhost craco build
+          REACT_APP_ENVIRONMENT=Localhost npx craco build
           ls -l
 
       - name: Start browser app
