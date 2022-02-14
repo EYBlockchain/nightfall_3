@@ -2,7 +2,7 @@
 node_modules
 cli/build
 .*swp
-
+.vscode/*
 
 # wallet
 wallet/build

@@ -1,6 +1,6 @@
+/* eslint-disable @babel/no-unused-expressions */
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { BrowserRouter } from 'react-router-dom';
 
 import './utils/parseConfigs';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -8,16 +8,13 @@ import 'font-awesome/css/font-awesome.min.css';
 import 'bootstrap-social/bootstrap-social.css';
 import './index.css';
 import './views/app.style.css';
+
 import App from './views/app.view.jsx';
 import reportWebVitals from './reportWebVitals';
 
 ReactDOM.render(
   <React.StrictMode>
-    <BrowserRouter>
-      <div>
-        <App />
-      </div>
-    </BrowserRouter>
+    <App />
   </React.StrictMode>,
   document.getElementById('root'),
 );
