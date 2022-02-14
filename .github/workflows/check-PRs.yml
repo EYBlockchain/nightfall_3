@@ -42,8 +42,8 @@ jobs:
       - name: Run integration test
         run: |
           npm ci
-          npm run test-e2e-protocol
-          npm run test-e2e-tokens
+          VERBOSE=true npm run test-e2e-protocol
+          VERBOSE=true npm run test-e2e-tokens
 
       - name: debug logs - after integration test run
         if: always()

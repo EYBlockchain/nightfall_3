@@ -120,7 +120,7 @@ describe('ERC1155 tests', () => {
         fee,
       );
     }
-    eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+    eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed'], 2);
 
     await emptyL2(nf3Users[0]);
   });
