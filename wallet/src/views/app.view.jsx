@@ -1,23 +1,25 @@
+/* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from 'react';
-import { Route, Switch, Redirect } from 'react-router-dom';
-
+import { Route, Switch, Redirect, BrowserRouter } from 'react-router-dom';
 import { NF3_GITHUB_ISSUES_URL } from '../constants';
 import MainPage from './initialPage/index.jsx';
 import Wallet from './wallet/index.jsx';
-import Bridge from './bridge/index.jsx';
-import { UserProvider } from '../hooks/User/index.jsx';
+import { UserContext, UserProvider } from '../hooks/User/index.jsx';
 import TransactionPage from './transactionPage/index.jsx';
 import Web3 from '../common-files/utils/web3';
+import Bridge from './bridge/index.jsx';
+import generateWebComponents from '../utils/generateWebComponents';
 
 export default function App() {
   // eslint-disable-next-line no-unused-vars
-  const [isWeb3Connected, setIsWeb3Connected] = useState(false);
+  const [, setIsWeb3Connected] = useState(false);
 
   useEffect(async () => {
     await Web3.connect();
     setIsWeb3Connected({
       isWeb3Connected: true,
     });
+    generateWebComponents();
   }, []);
 
   /*
@@ -29,10 +31,10 @@ export default function App() {
    *   instead of '<Route path="/wallet" render={() => <Wallet />} />'
    */
   return (
-    <UserProvider>
-      <React.Fragment>
+    <BrowserRouter>
+      <UserProvider>
         <Switch>
-          <Route path="/" exact={true} render={() => <MainPage />} />
+          <Route path="/" exact render={() => <MainPage />} />
           <Route path="/wallet" render={() => <Wallet />} />
           <Route path="/bridge" render={() => <Bridge />} />
           <Route path="/transactionPage" render={() => <TransactionPage />} />
@@ -44,7 +46,7 @@ export default function App() {
           />
           <Redirect to="/" />
         </Switch>
-      </React.Fragment>
-    </UserProvider>
+      </UserProvider>
+    </BrowserRouter>
   );
 }

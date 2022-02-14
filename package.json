@@ -12,7 +12,7 @@
     "test-e2e": "env-cmd -e development mocha --timeout 0 --bail test/e2e/nightfall-sdk.test.mjs",
     "test-e2e-ropsten": "env-cmd -e ropsten mocha --timeout 0 --bail test/e2e/nightfall-sdk.test.mjs",
     "test-ercmocks": "env-cmd -e development mocha --timeout 0 --bail test/e2e/ercmocks.test.mjs",
-    "lint": "eslint . --ext js,mjs,jsx && find-unused-exports",
+    "lint": "eslint . --ext js,mjs,jsx,ts,tsx && find-unused-exports",
     "prepare": "husky install",
     "doc:build:sdk": "jsdoc -c jsdoc.json cli/lib/nf3.mjs"
   },
@@ -41,7 +41,9 @@
     "config": "^3.3.1",
     "eslint": "^7.25.0",
     "eslint-config-codfish": "^10.0.0",
+    "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-import": "^2.25.2",
+    "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-react": "^7.26.1",
     "fast-check": "^2.18.0",
     "find-unused-exports": "^2.0.0",
