@@ -79,16 +79,6 @@ jobs:
           cd node_modules
           ls -l
 
-      - name: debug keccak 1.4.0
-        run: |
-          cd wallet/
-          npm keccak@1.4.0
-
-      - name: debug keccak 3.0.2
-        run: |
-          cd wallet/
-          npm keccak@3.0.2
-
       - name: Start browser app
         run: |
           cd wallet/
@@ -98,6 +88,7 @@ jobs:
           sleep 500
         env:
           BROWSER: none
+          CHOKIDAR_USEPOLLING: true
 
       - name: debug logs - after browser startup
         if: always()
