@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Route, Switch, Redirect } from 'react-router-dom';
+import { Route, Switch, Redirect, BrowserRouter } from 'react-router-dom';
+import ReactDOM from 'react-dom';
 
 import { NF3_GITHUB_ISSUES_URL } from '../constants';
 import MainPage from './initialPage/index.jsx';
@@ -8,6 +9,8 @@ import Bridge from './bridge/index.jsx';
 import { UserProvider } from '../hooks/User/index.jsx';
 import TransactionPage from './transactionPage/index.jsx';
 import Web3 from '../common-files/utils/web3';
+import reactToWebcomponent from 'react-to-webcomponent';
+import { BridgeComponent } from '../components/BridgeComponent/index.tsx';
 
 export default function App() {
   // eslint-disable-next-line no-unused-vars
@@ -18,7 +21,19 @@ export default function App() {
     setIsWeb3Connected({
       isWeb3Connected: true,
     });
+    //defineComponents();
   }, []);
+
+  // function defineComponents() {
+  //   customElements.define(
+  //     'bridge-component',
+  //     reactToWebcomponent(
+  //       BridgeComponent, 
+  //       React, 
+  //       ReactDOM
+  //     )
+  //   )
+  // }
 
   /*
    * TODO: for path /wallet and /bridge component should render when web3connect is complete
@@ -29,22 +44,24 @@ export default function App() {
    *   instead of '<Route path="/wallet" render={() => <Wallet />} />'
    */
   return (
-    <UserProvider>
-      <React.Fragment>
-        <Switch>
-          <Route path="/" exact={true} render={() => <MainPage />} />
-          <Route path="/wallet" render={() => <Wallet />} />
-          <Route path="/bridge" render={() => <Bridge />} />
-          <Route path="/transactionPage" render={() => <TransactionPage />} />
-          <Route
-            path="/issues"
-            render={() => {
-              window.location = NF3_GITHUB_ISSUES_URL;
-            }}
-          />
-          <Redirect to="/" />
-        </Switch>
-      </React.Fragment>
-    </UserProvider>
+    <BrowserRouter>
+      <UserProvider>        
+        <React.Fragment>
+          <Switch>
+            <Route path="/" exact={true} render={() => <MainPage />} />
+            <Route path="/wallet" render={() => <Wallet />} />
+            <Route path="/bridge" render={() => <Bridge />} />
+            <Route path="/transactionPage" render={() => <TransactionPage />} />            
+            <Route
+              path="/issues"
+              render={() => {
+                window.location = NF3_GITHUB_ISSUES_URL;
+              }}
+            />
+            <Redirect to="/" />
+          </Switch>          
+        </React.Fragment>
+      </UserProvider>
+    </BrowserRouter>
   );
 }

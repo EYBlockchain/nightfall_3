@@ -130,3 +130,17 @@ export const UserProvider = ({ children }) => {
     </UserContext.Provider>
   );
 };
+
+function useUser() {
+  const context = useContext(UserContext);
+
+  if (!context) {
+    throw new Error(
+      'O hook useAuth deve ser usado dentro do componente AuthProvider',
+    );
+  }
+  return context;
+}
+
+export { useUser }
+

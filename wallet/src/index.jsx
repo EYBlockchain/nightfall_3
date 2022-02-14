@@ -1,6 +1,5 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { BrowserRouter } from 'react-router-dom';
 
 import './utils/parseConfigs';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -12,12 +11,8 @@ import App from './views/app.view.jsx';
 import reportWebVitals from './reportWebVitals';
 
 ReactDOM.render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <div>
-        <App />
-      </div>
-    </BrowserRouter>
+  <React.StrictMode>          
+    <App />          
   </React.StrictMode>,
   document.getElementById('root'),
 );
