@@ -6,6 +6,7 @@ import express from 'express';
 import { generalise } from 'general-number';
 import logger from 'common-files/utils/logger.mjs';
 import { storeMemoryKeysForDecryption } from '../services/keys.mjs';
+import { clientCommitmentSync } from '../services/commitment-sync.mjs';
 
 const router = express.Router();
 
@@ -14,6 +15,10 @@ router.post('/', async (req, res, next) => {
   try {
     const { ivks, nsks } = generalise(req.body);
     await storeMemoryKeysForDecryption(
+      ivks.map(ivk => ivk.bigInt),
+      nsks.map(nsk => nsk.bigInt),
+    );
+    await clientCommitmentSync(
       ivks.map(ivk => ivk.bigInt),
       nsks.map(nsk => nsk.bigInt),
     );

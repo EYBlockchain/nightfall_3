@@ -5,8 +5,7 @@ import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import Nf3 from '../../../../cli/lib/nf3.mjs';
 
-const { proposerEthereumSigningKey, optimistWsUrl, web3WsUrl, clientBaseUrl, optimistBaseUrl } =
-  config;
+const { proposerEthereumSigningKey, optimistWsUrl, web3WsUrl, optimistBaseUrl } = config;
 
 /**
 Does the preliminary setup and starts listening on the websocket
@@ -14,13 +13,12 @@ Does the preliminary setup and starts listening on the websocket
 async function startProposer() {
   logger.info('Starting Proposer...');
   const nf3 = new Nf3(web3WsUrl, proposerEthereumSigningKey, {
-    clientApiUrl: clientBaseUrl,
+    // clientApiUrl: clientBaseUrl,
     optimistApiUrl: optimistBaseUrl,
     optimistWsUrl,
   });
-  await nf3.init();
-  if ((await nf3.healthcheck('optimist')) && (await nf3.healthcheck('client')))
-    logger.info('Healthcheck passed');
+  await nf3.init(undefined, 'optimist');
+  if (await nf3.healthcheck('optimist')) logger.info('Healthcheck passed');
   else throw new Error('Healthcheck failed');
   await nf3.registerProposer();
   logger.debug('Proposer registration complete');
