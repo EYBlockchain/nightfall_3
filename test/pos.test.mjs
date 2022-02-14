@@ -32,7 +32,6 @@ const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 const environment = getCurrentEnvironment();
-const { web3WsUrl } = process.env;
 
 const TRANSACTIONS_PER_BLOCK = 2;
 const MINIMUM_STAKE = 10;
@@ -79,8 +78,8 @@ describe('Testing the http API', () => {
   let nodeInfo;
 
   console.log('ENVIRONMENT: ', environment);
-  const nf3User1 = new Nf3(web3WsUrl, ethereumSigningKeyUser1, environment);
-  const nf3Proposer1 = new Nf3(web3WsUrl, ethereumSigningKeyProposer1, environment);
+  const nf3User1 = new Nf3(environment.web3WsUrl, ethereumSigningKeyUser1, environment);
+  const nf3Proposer1 = new Nf3(environment.web3WsUrl, ethereumSigningKeyProposer1, environment);
 
   const getStakeAccount = async ethAccount => {
     const stateContractInstance = new web3.eth.Contract(miniStateABI, stateAddress);
