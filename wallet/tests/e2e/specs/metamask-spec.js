@@ -20,6 +20,7 @@ describe('Metamask', () => {
 
   it('generate Mnemonic and set state', () => {
     cy.visit('/wallet');
+    cy.get('#generateMnemonic').should('not.exist');
     cy.get('#generateMnemonic').contains('Generate Mnemonic');
     cy.get('#generateMnemonic').click();
     cy.get('#createWallet').click();
