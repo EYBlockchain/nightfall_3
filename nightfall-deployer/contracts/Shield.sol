@@ -61,6 +61,7 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
     stake.amount += BLOCK_STAKE;
     stake.challengeLocked -= BLOCK_STAKE;
     state.setStakeAccount(msg.sender, stake.amount, stake.challengeLocked);
+    state.setBlockStakeWithdrawn(blockHash);
 
     state.addPendingWithdrawal(msg.sender, payment);
   }
