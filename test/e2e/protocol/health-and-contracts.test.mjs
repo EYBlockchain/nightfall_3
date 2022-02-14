@@ -1,5 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import chai from 'chai';
+import config from 'config';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import { createRequire } from 'module';
@@ -10,15 +11,13 @@ const require = createRequire(import.meta.url);
 const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
-const { web3WsUrl, network } = process.env;
 
 // we need require here to import jsons
-const environments = require('../environments.json');
+const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 const mnemonics = require('../mnemonics.json');
 const signingKeys = require('../signingKeys.json');
 
-const environment = environments[network];
-const nf3User1 = new Nf3(web3WsUrl, signingKeys.user1, environment);
+const nf3User1 = new Nf3(signingKeys.user1, environment);
 
 before(async () => {
   await nf3User1.init(mnemonics.user1);

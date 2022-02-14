@@ -32,9 +32,6 @@ jobs:
           docker-compose build
           ./start-nightfall -g &> ganache-test.log &disown
 
-      - name: wait 2000s for Containers startup and setup completion
-        run: sleep 2000
-
       - name: debug logs - after container startup
         if: always()
         run: cat ganache-test.log
@@ -42,6 +39,7 @@ jobs:
       - name: Run integration test
         run: |
           npm ci
+          docker wait nightfall_3_deployer_1
           VERBOSE=true npm run test-e2e-protocol
           VERBOSE=true npm run test-e2e-tokens
 

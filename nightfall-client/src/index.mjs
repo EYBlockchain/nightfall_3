@@ -14,9 +14,11 @@ const main = async () => {
       await rabbitmq.connect();
       queues();
     }
-    initialClientSync().then(async () => {
-      await startEventQueue(queueManager, eventHandlers);
-    });
+    await initialClientSync();
+    await startEventQueue(queueManager, eventHandlers);
+
+    app.get('/healthcheck', (req, res) => res.sendStatus(200));
+
     await mongo.connection(config.MONGO_URL); // get a db connection
     app.listen(80);
   } catch (err) {

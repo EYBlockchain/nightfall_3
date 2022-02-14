@@ -2,6 +2,7 @@
 import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
+import config from 'config';
 import { createRequire } from 'module';
 import Nf3 from '../../../cli/lib/nf3.mjs';
 import { Web3Client, expectTransaction } from '../../utils.mjs';
@@ -11,19 +12,18 @@ const require = createRequire(import.meta.url);
 const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
-const { web3WsUrl, network } = process.env;
 
 // we need require here to import jsons
-const environments = require('../environments.json');
+const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
+
 const mnemonics = require('../mnemonics.json');
 const signingKeys = require('../signingKeys.json');
 const { bond, gasCosts, txPerBlock } = require('../configs.json');
 
-const environment = environments[network] || environments.localhost;
 const testProposers = [
-  new Nf3(web3WsUrl, signingKeys.proposer1, environment),
-  new Nf3(web3WsUrl, signingKeys.proposer2, environment),
-  new Nf3(web3WsUrl, signingKeys.proposer3, environment),
+  new Nf3(signingKeys.proposer1, environment),
+  new Nf3(signingKeys.proposer2, environment),
+  new Nf3(signingKeys.proposer3, environment),
 ];
 
 const web3Client = new Web3Client();

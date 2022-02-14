@@ -6,7 +6,7 @@ import rand from '../common-files/utils/crypto/crypto-random.mjs';
 
 const { expect } = chai;
 const { WEB3_PROVIDER_OPTIONS } = config;
-const ENVIRONMENT = config.ENVIRONMENTS[process.env.ENVIRONMENT];
+const ENVIRONMENT = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
 const USE_INFURA = config.USE_INFURA === 'true';
 const USE_ROPSTEN_NODE = config.USE_ROPSTEN_NODE === 'true';

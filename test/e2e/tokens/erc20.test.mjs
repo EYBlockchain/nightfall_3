@@ -15,7 +15,7 @@ const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
-const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT];
+const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
 // we need require here to import jsons
 const mnemonics = require('../mnemonics.json');
@@ -24,7 +24,7 @@ const { fee, transferValue, txPerBlock } = require('../configs.json');
 const { tokenType, tokenId } = require('../tokenConfigs.json');
 
 const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
-const nf3Proposer1 = new Nf3(signingKeys.proposer1, environment);
+const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
 
 const web3Client = new Web3Client();
 
@@ -82,12 +82,12 @@ const emptyL2 = async nf3Instance => {
 
 describe('ERC20 tests', () => {
   before(async () => {
-    await nf3Proposer1.init(mnemonics.proposer);
-    await nf3Proposer1.registerProposer();
-    await nf3Proposer1.addPeer(environment.optimistApiUrl);
+    await nf3Proposer.init(mnemonics.proposer);
+    await nf3Proposer.registerProposer();
+    await nf3Proposer.addPeer(environment.optimistApiUrl);
 
     // Proposer listening for incoming events
-    const newGasBlockEmitter = await nf3Proposer1.startProposer();
+    const newGasBlockEmitter = await nf3Proposer.startProposer();
     newGasBlockEmitter.on('gascost', async gasUsed => {
       if (process.env.VERBOSE)
         console.log(
@@ -432,8 +432,8 @@ describe('ERC20 tests', () => {
   });
 
   after(async () => {
-    await nf3Proposer1.deregisterProposer();
-    await nf3Proposer1.close();
+    await nf3Proposer.deregisterProposer();
+    await nf3Proposer.close();
     await nf3Users[0].close();
     await nf3Users[1].close();
     await web3Client.closeWeb3();

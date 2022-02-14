@@ -14,7 +14,7 @@ const require = createRequire(import.meta.url);
 const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
-const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT];
+const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
 // we need require here to import jsons
 const mnemonics = require('../mnemonics.json');
