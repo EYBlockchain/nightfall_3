@@ -66,10 +66,7 @@ jobs:
         run: |
           cd wallet/
           ls -l
-          rm package-lock.json
-          ls -l
-          npm i
-          npm audit fix
+          npm ci
           ./copy-zokrates-local.sh
 
       - name: list webpack dependencies
