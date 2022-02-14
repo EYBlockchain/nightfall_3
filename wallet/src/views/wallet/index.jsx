@@ -81,10 +81,10 @@ function WalletModal(props) {
           to your funds. Do not reveal them to anyone.
         </p>
         <Container style={{ display: 'inline-block', margin: '0' }}>
-          {[0, 1].map((r, key) => (
-            <Row key={key}>
-              {[0, 1, 2, 3, 4, 5].map((c, innerKey) => (
-                <Col key={innerKey}>
+          {[0, 1].map(r => (
+            <Row key={r}>
+              {[0, 1, 2, 3, 4, 5].map(c => (
+                <Col key={c}>
                   <InputGroup className="mb-3">
                     <FormControl
                       value={
@@ -177,7 +177,7 @@ export default function Wallet() {
   }, [state.zkpKeys]);
 
   return (
-    <>
+    <div>
       <Header />
       <div className="wallet">
         <div className="walletComponents">
@@ -193,7 +193,7 @@ export default function Wallet() {
           <WalletModal show={modalShow} onHide={() => setModalShow(false)} />
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
