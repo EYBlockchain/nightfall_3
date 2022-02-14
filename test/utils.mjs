@@ -386,26 +386,6 @@ export const waitForEvent = async (eventLogs, expectedEvents, count = 1) => {
 };
 
 /**
-  function to wait until a proposer is the current proposer
-*/
-const waitForProposerToBeCurrent = proposer => {
-  return new Promise(resolve => {
-    async function isCurrentProposer() {
-      const currentProposer = await proposer.getCurrentProposer();
-      if (currentProposer === proposer.ethereumAddress) {
-        console.log('condition met for currentProposer', currentProposer);
-        resolve();
-      } else {
-        console.log('condition not met for currentProposer', currentProposer);
-        await new Promise(resolving => setTimeout(resolving, 1000));
-        isCurrentProposer();
-      }
-    }
-    isCurrentProposer();
-  });
-};
-
-/**
   function to retrieve balance of user because getLayer2Balances returns
   balances of all users
 */

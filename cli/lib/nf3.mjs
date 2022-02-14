@@ -706,7 +706,7 @@ class Nf3 {
       const msg = JSON.parse(message.data);
       const { type, txDataToSign } = msg;
       if (type === 'commit' || type === 'challenge') {
-        const res = await this.submitTransaction(txDataToSign, this.challengesContractAddress, 0);
+        await this.submitTransaction(txDataToSign, this.challengesContractAddress, 0);
       }
     };
   }
