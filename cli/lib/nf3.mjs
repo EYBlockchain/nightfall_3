@@ -626,6 +626,20 @@ class Nf3 {
   }
 
   /**
+  Request block payment.
+  @method
+  @async
+  @return {Promise} A promise that resolves to an axios response.
+  */
+  async requestBlockPayment(blockHash) {
+    const res = await axios.post(`${this.optimistBaseUrl}/proposer/payment`, {
+      address: this.ethereumAddress,
+      blockHash,
+    });
+    return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, 0);
+  }
+
+  /**
   Adds a new Proposer peer to a list of proposers that are available for accepting
   offchain (direct) transfers and withdraws. The client will submit direct transfers
   and withdraws to all of these peers.

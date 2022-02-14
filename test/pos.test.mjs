@@ -112,7 +112,7 @@ describe('Testing the http API', () => {
   });
 
   describe('Basic Proposer staking tests', () => {
-    it('should accept proposer stake', async () => {
+    it('should stake as proposer', async () => {
       let proposers;
       ({ proposers } = await nf3Proposer1.getProposers());
       const currentProposer = proposers.filter(p => p.thisAddress === nf3Proposer1.ethereumAddress);
@@ -134,7 +134,7 @@ describe('Testing the http API', () => {
       );
     });
 
-    it('should increase stake for the same proposer', async () => {
+    it('should increase stake for a proposer', async () => {
       const stakeAccount1 = await getStakeAccount(nf3Proposer1.ethereumAddress);
       const res = await nf3Proposer1.stakeProposer(MINIMUM_STAKE);
       expectTransaction(res);
@@ -144,7 +144,7 @@ describe('Testing the http API', () => {
       );
     });
 
-    it('should increase stake locked for challenge period and decrease the stake amount', async () => {
+    it('should increase stake locked in challenge period', async () => {
       const stakeAccount1 = await getStakeAccount(nf3Proposer1.ethereumAddress);
       for (let i = 0; i < TRANSACTIONS_PER_BLOCK * 2; i++) {
         // eslint-disable-next-line no-await-in-loop
@@ -169,16 +169,30 @@ describe('Testing the http API', () => {
       expect(pendingChallengePeriod.length).greaterThan(0);
     });
 
-    it('should get pending payments for this proposer beyond challenge period', async () => {
+    it('should get and pay pending payments for this proposer after challenge period', async () => {
       if (nodeInfo.includes('TestRPC')) {
-        await timeJump(3600 * 24 * 10); // jump in time by 50 days
-        console.log(`timeJump`);
+        await timeJump(3600 * 24 * 10); // jump in time by 10 days
         const pending = await nf3Proposer1.getProposerPendingPayments();
         const pendingChallengePeriod = pending.pendingPayments.filter(
           p => p.challengePeriod === true,
         );
         expect(pending.pendingPayments.length).greaterThan(0);
         expect(pendingChallengePeriod.length).equal(0);
+
+        const stakeAccountIni = await getStakeAccount(nf3Proposer1.ethereumAddress);
+        for (let i = 0; i < pending.pendingPayments.length; i++) {
+          // eslint-disable-next-line no-await-in-loop
+          const res = await nf3Proposer1.requestBlockPayment(pending.pendingPayments[i].blockHash);
+          expectTransaction(res);
+        }
+
+        const stakeAccountEnd = await getStakeAccount(nf3Proposer1.ethereumAddress);
+        expect(Number(stakeAccountEnd.amount)).equal(
+          Number(stakeAccountIni.amount) + pending.pendingPayments.length * BLOCK_STAKE,
+        );
+        expect(Number(stakeAccountEnd.challengeLocked)).equal(
+          Number(stakeAccountIni.challengeLocked) - pending.pendingPayments.length * BLOCK_STAKE,
+        );
       } else {
         console.log('     Not using a time-jump capable test client so this test is skipped');
         this.skip();

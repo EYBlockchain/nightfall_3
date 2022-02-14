@@ -15,6 +15,8 @@ import {
   getMempoolTransactions,
   getLatestTree,
   findBlocksByProposer,
+  getBlockByBlockHash,
+  getTransactionsByTransactionHashes,
 } from '../services/database.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
@@ -96,7 +98,7 @@ router.post('/unstake', async (req, res, next) => {
  */
 
 router.post('/withdrawStake', async (req, res, next) => {
-  logger.debug(`withdrawStake endpoint received GET`);
+  logger.debug(`withdrawStake endpoint received POST`);
   try {
     const stateContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
     const txDataToSign = await stateContractInstance.methods.withdrawStake().encodeABI();
@@ -175,12 +177,19 @@ router.get('/pending-payments', async (req, res, next) => {
  * withdrawal and then /withdraw needs to be called to recover the money.
  */
 router.post('/payment', async (req, res, next) => {
-  logger.debug(`payment endpoint received GET ${JSON.stringify(req.body, null, 2)}`);
-  const { block, blockNumberL2, transactions } = req.body;
+  logger.debug(`payment endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
+  const { blockHash } = req.body;
+
   try {
+    const block = await getBlockByBlockHash(blockHash);
+    const transactions = await getTransactionsByTransactionHashes(block.transactionHashes);
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
     const txDataToSign = await shieldContractInstance.methods
-      .requestBlockPayment(block, blockNumberL2, transactions)
+      .requestBlockPayment(
+        Block.buildSolidityStruct(block),
+        block.blockNumberL2,
+        transactions.map(t => Transaction.buildSolidityStruct(t)),
+      )
       .encodeABI();
     logger.debug('returning raw transaction data');
     logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
