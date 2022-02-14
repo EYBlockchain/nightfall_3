@@ -42,7 +42,9 @@
     "env-cmd": "^10.1.0",
     "eslint": "^7.25.0",
     "eslint-config-codfish": "^10.0.0",
+    "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-import": "^2.25.2",
+    "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-react": "^7.26.1",
     "fast-check": "^2.18.0",
     "find-unused-exports": "^2.0.0",
@@ -58,7 +60,7 @@
   },
   "dependencies": {
     "async-mutex": "^0.3.2",
-    "web3": "^1.4.0",
-    "docker-compose": "^0.23.13"
+    "docker-compose": "^0.23.13",
+    "web3": "^1.4.0"
   }
 }

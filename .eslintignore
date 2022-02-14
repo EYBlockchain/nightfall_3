@@ -5,3 +5,4 @@ node_modules/*
 cli/build/*
 wallet/src/index.js
 wallet/cli/*
+/**/*.d.ts

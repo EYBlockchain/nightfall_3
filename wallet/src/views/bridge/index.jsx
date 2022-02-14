@@ -1,33 +1,28 @@
+/* eslint-disable react/jsx-no-undef */
+/* eslint-disable react/jsx-pascal-case */
 import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom';
+import reactToWebcomponent from 'react-to-webcomponent';
 import styles from '../../styles/bridge.module.scss';
 import bridgeInfoImage from '../../assets/img/bridge-info.png';
 import Header from '../../components/Header/header.jsx';
 import SideBar from '../../components/SideBar/index.jsx';
-import reactToWebcomponent from 'react-to-webcomponent';
-import { BridgeComponent } from '../../components/BridgeComponent/index.tsx';
-import { useLocation } from 'react-router-dom';
+// eslint-disable-next-line import/no-unresolved
+import BridgeComponent from '../../components/BridgeComponent';
 
-const Bridge = () => {    
+const Bridge = () => {
+  // const location = useLocation();
 
-  const location = useLocation();
+  function defineComponents() {
+    const BridgeElement = reactToWebcomponent(BridgeComponent, React, ReactDOM);
+    customElements.define('bridge-component', BridgeElement);
+    // const bridgeComponent = document.createElement('bridge-component');
+    // bridgeComponent.location = location;
+  }
 
   useEffect(() => {
     defineComponents();
-  }, [])
-
-  function defineComponents() {
-    customElements.define(
-      'bridge-component',
-      reactToWebcomponent(
-        BridgeComponent, 
-        React, 
-        ReactDOM
-      )
-    )
-    const bridgeComponent = document.createElement("bridge-component");    
-    bridgeComponent.location = location;    
-  }
+  }, []);
 
   return (
     // containerFluid
@@ -55,10 +50,14 @@ const Bridge = () => {
                                   }"
                                   :to="{ name: 'fast-withdraw' }" 
                                   For link below */}
-                    <a className={styles.linkButton}>Fast Withdraw</a>
+                    <a href="fast" className={styles.linkButton}>
+                      Fast Withdraw
+                    </a>
                     {/* :to="{ name: 'on-ramp' }" 
                                   For link below */}
-                    <a className={styles.linkButton}>On Ramp Transfers</a>
+                    <a href="ramp" className={styles.linkButton}>
+                      On Ramp Transfers
+                    </a>
                     <a
                       id="youtube-video-tutorial"
                       className={styles.linkButton}
@@ -92,13 +91,15 @@ const Bridge = () => {
                   <img src={bridgeInfoImage} alt="" height="219" width="326" />
                 </div>
               </div>
-              <div><bridge-component /></div>
+              <div>
+                <bridge-component />
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
   );
-}
+};
 
-export default Bridge
+export default Bridge;

@@ -1,9 +1,8 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext } from 'react';
 import Modal from 'react-bootstrap/Modal';
 import Dropdown from 'react-bootstrap/Dropdown';
 import DropdownButton from 'react-bootstrap/DropdownButton';
 import { MdArrowForwardIos } from 'react-icons/md';
-import { useLocation } from 'react-router-dom';
 import ToggleButton from 'react-bootstrap/ToggleButton';
 import ButtonGroup from 'react-bootstrap/ButtonGroup';
 import styles from '../../styles/bridge.module.scss';
@@ -23,20 +22,13 @@ import depositConfirmed from '../../assets/img/modalImages/adeposit_confirmed.pn
 import successHand from '../../assets/img/modalImages/success-hand.png';
 import transferCompletedImg from '../../assets/img/modalImages/tranferCompleted.png';
 
-interface IBridgeComponent {
-  location
-}
-
-const BridgeComponent: React.FC<IBridgeComponent> = () => {
-
-  useEffect(() => {
-    console.log("Location within BridgeComponent: ", location)
-  }, [])
+const BridgeComponent = () => {
   const { state } = useContext(UserContext);
   const [transferMethod, setMethod] = useState('On-Chain');
 
-  // const initialTx = location.tokenState?.initialTxType || 'deposit';
-  const initialTx = location.tokenState?.initialTxType || 'deposit';
+  // const initialTx = location.state?.initialTxType || 'deposit';
+  // const initialTx = location.state ? location.state.initialTxType : 'deposit';
+  const initialTx = 'deposit';
 
   const [txType, setTxType] = useState(initialTx);
   const [tokenAmountWei, setTransferValue] = useState(0);
@@ -50,7 +42,7 @@ const BridgeComponent: React.FC<IBridgeComponent> = () => {
   const [showModalTransferEnRoute, setShowModalTransferEnRoute] = useState(false);
   const [showModalTransferConfirmed, setShowModalTransferConfirmed] = useState(false);
 
-  function timeout(ms) {
+  function timeout(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
@@ -74,16 +66,16 @@ const BridgeComponent: React.FC<IBridgeComponent> = () => {
     setShowModalTransferConfirmed(true);
   };
 
-  console.log('Location', location);
-  console.log('Bridge State', state);
   async function triggerTx() {
     console.log('Tx Triggered', txType);
     const { address: shieldContractAddress } = (await getContractAddress('Shield')).data;
     const { address: defaultTokenAddress } = (await getContractAddress('ERC20Mock')).data; // TODO Only for testing now
-    const ercAddress =
-      location.tokenState?.tokenAddress === ''
-        ? defaultTokenAddress
-        : location.tokenState.tokenAddress; // TODO Location to be removed later
+    // const ercAddress =
+    //   location.state?.tokenAddress === ''
+    //     ? defaultTokenAddress
+    //     : location.state.tokenAddress; // TODO Location to be removed later
+    // const ercAddress = location.state ? location.state.tokenAddress : defaultTokenAddress;
+    const ercAddress = defaultTokenAddress; // TODO Location to be removed later
     console.log('TokenAddress', ercAddress);
     switch (txType) {
       case 'deposit': {
@@ -118,7 +110,6 @@ const BridgeComponent: React.FC<IBridgeComponent> = () => {
           shieldContractAddress,
         );
         console.log('rawTransaction', rawTransaction);
-        console.log('props', location);
         return submitTransaction(rawTransaction, shieldContractAddress, 1);
       }
 
@@ -137,7 +128,7 @@ const BridgeComponent: React.FC<IBridgeComponent> = () => {
             <ToggleButton
               type="radio"
               variant="outline-secondary"
-              value={'deposit'}
+              value="deposit"
               checked={txType === 'deposit'}
               onClick={() => setTxType('deposit')}
               // onChange={e => setRadioValue(e.currentTarget.value)}
@@ -168,19 +159,9 @@ const BridgeComponent: React.FC<IBridgeComponent> = () => {
             <div className={styles.chainAndBalanceDetails}>
               <div className={styles.chainDetails}>
                 {txType === 'deposit' ? (
-                  <img
-                    src={ethChainImage}
-                    alt="ethereum chain logo"
-                    height="24"
-                    width="24"
-                  />
+                  <img src={ethChainImage} alt="ethereum chain logo" height="24" width="24" />
                 ) : (
-                  <img
-                    src={polygonChainImage}
-                    alt="polygon chain logo"
-                    height="24"
-                    width="24"
-                  />
+                  <img src={polygonChainImage} alt="polygon chain logo" height="24" width="24" />
                 )}
                 <div className={styles.chainDetails__chainName}>
                   {txType === 'deposit' ? 'Ethereum Mainnet' : 'Polygon Nightfall L2'}
@@ -188,18 +169,10 @@ const BridgeComponent: React.FC<IBridgeComponent> = () => {
               </div>
             </div>
             <div className={styles.tokenAndAmountDetails}>
-              <div className={styles.tokenDetails} onClick={() => {}}>
-                <img
-                  src={polygonChainImage}
-                  alt="polygon chain logo"
-                  height="24"
-                  width="24"
-                />
+              <div className={styles.tokenDetails}>
+                <img src={polygonChainImage} alt="polygon chain logo" height="24" width="24" />
 
-                <div
-                  className={styles.tokenDetails__tokenName}
-                  id="Bridge_tokenDetails_tokenName"
-                >
+                <div className={styles.tokenDetails__tokenName} id="Bridge_tokenDetails_tokenName">
                   {/* {{ isDepositEther ? isDepositEther : selectedToken.name }} */}
                   MATIC
                 </div>
@@ -220,10 +193,7 @@ const BridgeComponent: React.FC<IBridgeComponent> = () => {
                   value={tokenAmountWei}
                   onChange={e => setTransferValue(parseFloat(e.target.value))}
                 />
-                <button
-                  className={styles.amountDetails__maxButton}
-                  onClick={() => {}}                            
-                >
+                <button type="button" className={styles.amountDetails__maxButton}>
                   MAX
                 </button>
               </div>
@@ -236,19 +206,9 @@ const BridgeComponent: React.FC<IBridgeComponent> = () => {
           <div className={styles.toChainAndBalanceDetails}>
             <div className={styles.chainDetails}>
               {txType === 'withdraw' ? (
-                <img
-                  src={ethChainImage}
-                  alt="ethereum chain logo"
-                  height="24"
-                  width="24"
-                />
+                <img src={ethChainImage} alt="ethereum chain logo" height="24" width="24" />
               ) : (
-                <img
-                  src={polygonChainImage}
-                  alt="polygon chain logo"
-                  height="24"
-                  width="24"
-                />
+                <img src={polygonChainImage} alt="polygon chain logo" height="24" width="24" />
               )}
               <div className={styles.chainDetails__chainName}>
                 {txType === 'deposit' ? 'Polygon Nightfall L2' : 'Ethereum Mainnet'}
@@ -268,17 +228,13 @@ const BridgeComponent: React.FC<IBridgeComponent> = () => {
             </span>
           </div>
           <div>
-            <button className={styles.transferButton} onClick={handleShow}>
+            <button type="button" className={styles.transferButton} onClick={handleShow}>
               Transfer
             </button>
           </div>
         </div>
       </div>
-      <Modal
-        contentClassName={stylesModal.modalFather}
-        show={show}
-        onHide={() => setShow(false)}
-      >
+      <Modal contentClassName={stylesModal.modalFather} show={show} onHide={() => setShow(false)}>
         <Modal.Header closeButton>
           <div className={styles.modalTitle}>Confirm transaction</div>
         </Modal.Header>
@@ -296,17 +252,14 @@ const BridgeComponent: React.FC<IBridgeComponent> = () => {
                             :src="tokenImage(selectedToken)"
                             alt="Token Image"
                         > */}
-                <img src={matic} alt="Token Image" />
+                <img src={matic} alt="Token" />
                 {/* <span
                             v-else-if="selectedToken.symbol"
                             class="align-self-center font-heading-large ps-t-2 font-semibold"
                         >{{ selectedToken.symbol[0] }}</span> */}
               </div>
               {/* font-heading-large font-bold ps-t-16 ps-b-6 */}
-              <div
-                className={stylesModal.tokenDetails__val}
-                id="Bridge_modal_tokenAmount"
-              >
+              <div className={stylesModal.tokenDetails__val} id="Bridge_modal_tokenAmount">
                 {Number(tokenAmountWei).toFixed(2)}
               </div>
               {/* font-body-small */}
@@ -317,33 +270,25 @@ const BridgeComponent: React.FC<IBridgeComponent> = () => {
             <div>
               <div className={stylesModal.networkButtons}>
                 <div className={stylesModal.networkButtons__button1}>
-                  <span>
-                    {txType === 'deposit' ? 'Ethereum Mainnet' : 'Polygon Nightfall L2'}
-                  </span>
+                  <span>{txType === 'deposit' ? 'Ethereum Mainnet' : 'Polygon Nightfall L2'}</span>
                 </div>
                 <MdArrowForwardIos />
                 <div className={stylesModal.networkButtons__button2}>
-                  <span>
-                    {txType === 'deposit' ? 'Polygon Nightfall L2' : 'Ethereum Mainnet'}
-                  </span>
+                  <span>{txType === 'deposit' ? 'Polygon Nightfall L2' : 'Ethereum Mainnet'}</span>
                 </div>
               </div>
             </div>
-            <div className={stylesModal.divider}></div>
+            <div className={stylesModal.divider} />
             <div className={stylesModal.transferModeModal}>
               <div className={stylesModal.transferModeModal__title}>
-                <div className={stylesModal.transferModeModal__title__main}>
-                  Transfer Mode
-                </div>
+                <div className={stylesModal.transferModeModal__title__main}>Transfer Mode</div>
                 <div className={stylesModal.transferModeModal__title__light}>
                   <DropdownButton
                     variant="light"
                     title={transferMethod}
                     id="Bridge_modal_transferMode"
                   >
-                    <Dropdown.Item onClick={() => setMethod('On-Chain')}>
-                      On-Chain
-                    </Dropdown.Item>
+                    <Dropdown.Item onClick={() => setMethod('On-Chain')}>On-Chain</Dropdown.Item>
                     <Dropdown.Item onClick={() => setMethod('Direct Transfer')}>
                       Direct Transfer
                     </Dropdown.Item>
@@ -360,14 +305,13 @@ const BridgeComponent: React.FC<IBridgeComponent> = () => {
                         mechanism. </span>It will take approximately */}
                 <span>
                   {' '}
-                  To minimise the risk of chain reorganisations, your transfer will wait
-                  for{' '}
+                  To minimise the risk of chain reorganisations, your transfer will wait for{' '}
                 </span>
                 <span className="text-primary"> 12 block confirmations</span> before being
                 finalized.
               </div>
             </div>
-            <div className={stylesModal.divider}></div>
+            <div className={stylesModal.divider} />
             <div className={stylesModal.estimationFee}>
               <div className={stylesModal.estimationFee__title}>
                 <div className={stylesModal.estimationFee__title__main}>
@@ -376,6 +320,7 @@ const BridgeComponent: React.FC<IBridgeComponent> = () => {
                 <div className={stylesModal.estimationFee__title__light}>~ $x.xx</div>
               </div>
               <button
+                type="button"
                 className={stylesModal.continueTrasferButton}
                 // onClick={() => triggerTx()}
                 onClick={() => {
@@ -403,12 +348,12 @@ const BridgeComponent: React.FC<IBridgeComponent> = () => {
           <Modal.Body>
             <div className={stylesModal.modalBody}>
               <div className={styles.processImages}>
-                <img src={approveImg} />
+                <img src={approveImg} alt="approve" />
               </div>
-              <div className={stylesModal.divider}></div>
+              <div className={stylesModal.divider} />
               <div className={styles.spinnerBox}>
                 <div className={styles.spinnerBoard}>
-                  <div className={styles.spinner}></div>
+                  <div className={styles.spinner} />
                 </div>
               </div>
 
@@ -427,19 +372,18 @@ const BridgeComponent: React.FC<IBridgeComponent> = () => {
           <Modal.Body>
             <div className={stylesModal.modalBody}>
               <div className={styles.processImages}>
-                <img src={depositConfirmed} />
+                <img src={depositConfirmed} alt="deposit confirmed" />
               </div>
-              <div className={stylesModal.divider}></div>
+              <div className={stylesModal.divider} />
               <div className={styles.spinnerBox}>
                 <div className={styles.spinnerBoard}>
-                  <div className={styles.spinner}></div>
+                  <div className={styles.spinner} />
                 </div>
               </div>
               <div className={stylesModal.transferModeModal}>
                 <h3>Generating Zk Proof</h3>
                 <div className={stylesModal.modalText}>
-                  Proof generation may take up to 2 mins to complete. Do not navigate
-                  away.
+                  Proof generation may take up to 2 mins to complete. Do not navigate away.
                 </div>
                 {/* <a className={styles.footerText}>View on etherscan</a> */}
               </div>
@@ -451,18 +395,17 @@ const BridgeComponent: React.FC<IBridgeComponent> = () => {
           <Modal.Body>
             <div className={stylesModal.modalBody}>
               <div className={styles.processImages}>
-                <img src={transferCompletedImg} />
+                <img src={transferCompletedImg} alt="transfer completed" />
               </div>
-              <div className={stylesModal.divider}></div>
+              <div className={stylesModal.divider} />
               <div className={styles.spinnerBox}>
-                <img src={successHand} />
+                <img src={successHand} alt="success hand" />
               </div>
               <div className={stylesModal.transferModeModal} id="Bridge_modal_success">
                 <h3>Transaction created sucessfully.</h3>
-                <div className={stylesModal.modalText}>
-                  Your transfer is ready to send.
-                </div>
+                <div className={stylesModal.modalText}>Your transfer is ready to send.</div>
                 <button
+                  type="button"
                   className={stylesModal.continueTrasferButton}
                   id="Bridge_modal_continueTransferButton"
                   // onClick={() => triggerTx()}
@@ -477,7 +420,7 @@ const BridgeComponent: React.FC<IBridgeComponent> = () => {
         )}
       </Modal>
     </div>
-  )
-}
+  );
+};
 
-export { BridgeComponent }
+export default BridgeComponent;

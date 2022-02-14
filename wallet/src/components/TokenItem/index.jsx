@@ -62,7 +62,7 @@ export default function TokenItem({
   return (
     <div>
       {/* <div class="matic-tokens-list-item" @click="onTokenClick"> */}
-      <div className={styles.maticTokensListItem} onClick={() => {}}>
+      <div className={styles.maticTokensListItem}>
         <div className={styles.star}>{/* <img src={starFilled} alt="" /> */}</div>
         <div className={styles.maticTokensListItem}>
           <img src={symbols[symbol.toLowerCase()]} alt="token icon" />
@@ -124,7 +124,7 @@ export default function TokenItem({
             <Link
               to={{
                 pathname: '/bridge',
-                tokenState: {
+                state: {
                   tokenAddress,
                   initialTxType: 'deposit',
                 },
@@ -143,7 +143,7 @@ export default function TokenItem({
             <Link
               to={{
                 pathname: '/bridge',
-                tokenState: {
+                state: {
                   tokenAddress,
                   initialTxType: 'withdraw',
                 },
@@ -155,6 +155,7 @@ export default function TokenItem({
             </Link>
             {/* onClick="handleSendToken" */}
             <button
+              type="button"
               className={styles.tokenListButton}
               id={tokenSendId}
               onClick={() => {
@@ -168,7 +169,7 @@ export default function TokenItem({
         {/* cursor-pointer below */}
         {/* class="{ 'hide-it': !isLoginStrategyMetaMask }" */}
         {/* @click="handleAddTokenToMetamask" */}
-        <div className={styles.addToMetamask} onClick={() => {}}>
+        <div className={styles.addToMetamask}>
           {/* <Icon name="login/metamask" class="metamask-icon" /> */}
           <img className={styles.metamaskIcon} src={metamaskIcon} alt="" />
         </div>
@@ -211,7 +212,7 @@ export default function TokenItem({
                   <div className={stylesModal.maxButton}>MAX</div>
                 </div>
                 <div className={stylesModal.rightItems} id="TokenItem_modalSend_tokenName">
-                  <img src={maticImg} />
+                  <img src={maticImg} alt="matic" />
                   <div>Matic (L2)</div>
                   <AiOutlineDown />
                 </div>
@@ -225,11 +226,15 @@ export default function TokenItem({
               </div>
 
               <div className={stylesModal.sendModalfooter}>
-                <img src={maticImg} />
+                <img src={maticImg} alt="matic icon" />
                 <p className={stylesModal.gasFee}>x.xxx {name} Gas Fee</p>
               </div>
             </div>
-            <button className={stylesModal.continueTrasferButton} onClick={() => sendTx()}>
+            <button
+              type="button"
+              className={stylesModal.continueTrasferButton}
+              onClick={() => sendTx()}
+            >
               Continue
             </button>
           </div>

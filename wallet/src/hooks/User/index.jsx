@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import jsSha3 from 'js-sha3';
 import { useLocation } from 'react-router-dom';
 
@@ -24,6 +24,11 @@ export const reducer = (state, action) => {
 
 export const initialState = {
   active: false,
+  zkpKeys: {
+    pkd: '',
+    nsk: '',
+    ask: '',
+  },
 };
 
 export const UserContext = React.createContext({
@@ -135,12 +140,9 @@ function useUser() {
   const context = useContext(UserContext);
 
   if (!context) {
-    throw new Error(
-      'O hook useAuth deve ser usado dentro do componente AuthProvider',
-    );
+    throw new Error('O hook useAuth deve ser usado dentro do componente AuthProvider');
   }
   return context;
 }
 
-export { useUser }
-
+export { useUser };
