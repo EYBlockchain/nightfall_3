@@ -47,6 +47,12 @@ jobs:
         if: always()
         run: cat docker-compose.log
 
+      - name: Setup proposer
+        run: |
+          cd cli
+          rm package-lock.json
+          npm i
+
       - name: Run proposer
         run:  |
           ./proposer > proposer.log &disown
