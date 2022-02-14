@@ -23,6 +23,7 @@ import {
   expectTransaction,
   waitForEvent,
   topicEventMapping,
+  timeJump,
 } from './utils.mjs';
 
 const { expect } = chai;
@@ -73,6 +74,7 @@ const miniStateABI = [
 
 describe('Testing the http API', () => {
   let ercAddress;
+  let nodeInfo;
 
   console.log('ENVIRONMENT: ', environment);
   const nf3User1 = new Nf3(web3WsUrl, ethereumSigningKeyUser1, environment);
@@ -89,6 +91,8 @@ describe('Testing the http API', () => {
 
     stateAddress = await nf3User1.getContractAddress('State');
     ercAddress = await nf3User1.getContractAddress('ERC20Mock');
+
+    nodeInfo = await web3.eth.getNodeInfo();
 
     await nf3User1.init(mnemonicUser1);
     await nf3Proposer1.init(mnemonicProposer);
@@ -154,6 +158,31 @@ describe('Testing the http API', () => {
       expect(Number(stakeAccount2.challengeLocked)).equal(
         Number(stakeAccount1.challengeLocked) + 2 * BLOCK_STAKE,
       );
+    });
+
+    it('should get pending payments for this proposer in challenge period', async () => {
+      const pending = await nf3Proposer1.getProposerPendingPayments();
+      const pendingChallengePeriod = pending.pendingPayments.filter(
+        p => p.challengePeriod === true,
+      );
+      expect(pending.pendingPayments.length).greaterThan(0);
+      expect(pendingChallengePeriod.length).greaterThan(0);
+    });
+
+    it('should get pending payments for this proposer beyond challenge period', async () => {
+      if (nodeInfo.includes('TestRPC')) {
+        await timeJump(3600 * 24 * 10); // jump in time by 50 days
+        console.log(`timeJump`);
+        const pending = await nf3Proposer1.getProposerPendingPayments();
+        const pendingChallengePeriod = pending.pendingPayments.filter(
+          p => p.challengePeriod === true,
+        );
+        expect(pending.pendingPayments.length).greaterThan(0);
+        expect(pendingChallengePeriod.length).equal(0);
+      } else {
+        console.log('     Not using a time-jump capable test client so this test is skipped');
+        this.skip();
+      }
     });
   });
 

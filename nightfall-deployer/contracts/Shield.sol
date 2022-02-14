@@ -65,6 +65,17 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
     state.addPendingWithdrawal(msg.sender, payment);
   }
 
+  /** 
+   * @dev Check if a block has been paid to the proposer
+   */
+  function isBlockPaymentPending(bytes32 blockHash, uint256 blockNumberL2) view external returns(bool) {
+    uint256 time = state.getBlockData(blockNumberL2).time;
+    require(time + CHALLENGE_PERIOD < block.timestamp, 'Shield: Too soon to get paid for this block');
+    require(state.isBlockStakeWithdrawn(blockHash) == false, 'Shield: Block stake for this block already claimed');
+
+    return true;
+  }
+
   function onERC721Received(address, address _from, uint256 _tokenId, bytes calldata) external returns(bytes4) {
 
     return 0x150b7a02;

@@ -611,6 +611,21 @@ class Nf3 {
   }
 
   /**
+  Get all the list of existing proposers.
+  @method
+  @async
+  @returns {array} A promise that resolves to the Ethereum transaction receipt.
+  */
+  async getProposerPendingPayments() {
+    const res = await axios.get(`${this.optimistBaseUrl}/proposer/pending-payments`, {
+      params: {
+        proposer: this.ethereumAddress,
+      },
+    });
+    return res.data;
+  }
+
+  /**
   Adds a new Proposer peer to a list of proposers that are available for accepting
   offchain (direct) transfers and withdraws. The client will submit direct transfers
   and withdraws to all of these peers.
