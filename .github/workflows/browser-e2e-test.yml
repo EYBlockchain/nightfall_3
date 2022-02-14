@@ -65,7 +65,6 @@ jobs:
       - name: Setup browser app
         run: |
           cd wallet/
-          ls -l
           npm ci
           ./copy-zokrates-local.sh
 
@@ -78,18 +77,6 @@ jobs:
           ls -l
           cd node_modules
           ls -l
-
-      # - name: Build browser app
-      #   run: |
-      #     cd wallet/
-      #     ls -l
-      #     REACT_APP_ENVIRONMENT=Localhost npx craco build
-      #     ls -l
-
-      # - name: Start static server
-      #   run: |
-      #     npm install -g serve
-      #     serve -s wallet/build
 
       - name: Start browser app
         run: |
@@ -106,16 +93,3 @@ jobs:
         run: cat wallet/browser-app.log
 
       - run: cd wallet && npm run e2e-test
-
-      # - name: Cypress run
-      #   uses: cypress-io/github-action@v2
-      #   with:
-      #     start: npm start
-
-
-      # - name: Run e2e test
-      #   uses: mujo-code/puppeteer-headful@v2
-      #   env:
-      #     CI: 'true'
-      #   with:
-      #     args: cd wallet && npm run e2e-test
