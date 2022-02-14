@@ -72,6 +72,9 @@ jobs:
           npm audit fix
           ./copy-zokrates-local.sh
 
+      - name: list webpack dependencies
+        run: cd wallet/ && npm list webpack
+
       - name: node_modules
         run: |
           cd wallet
@@ -86,10 +89,10 @@ jobs:
           REACT_APP_ENVIRONMENT=Localhost npx craco build
           ls -l
 
-      - name: Start static server
-        run: |
-          npm install -g serve
-          serve -s wallet/build
+      # - name: Start static server
+      #   run: |
+      #     npm install -g serve
+      #     serve -s wallet/build
 
       # - name: Start browser app
       #   run: |
