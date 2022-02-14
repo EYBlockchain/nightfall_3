@@ -4,11 +4,17 @@ import logger from 'common-files/utils/logger.mjs';
 const error = [
   'ValidBlock',
   'ValidBlock',
+  'ValidBlock',
   'IncorrectTreeRoot', // Needs two prior blocks
+  'ValidBlock',
   'IncorrectLeafCount', //  Needs one prior block
+  'ValidBlock',
   'DuplicateTransaction', // yes
+  'ValidBlock',
   'DuplicateNullifier', // needs atleast one non deposit transaction in a prior block
+  'ValidBlock',
   'HistoricRootError', // needs atleast one non deposit transaction in a prior block
+  'ValidBlock',
   'IncorrectProof', // yes
   'ValidBlock', // yes
 ];
@@ -35,7 +41,7 @@ const incorrectLeafCount = block => {
 
 // eslint-disable-next-line import/prefer-default-export
 export const createBadBlock = (block, errorIndex) => {
-  console.log('HERE createBadBlock error[r]', error[errorIndex]);
+  logger.debug('createBadBlock of type', error[errorIndex]);
   switch (error[errorIndex]) {
     case 'IncorrectTreeRoot':
       return incorrectTreeRoot(block);

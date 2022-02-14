@@ -8,11 +8,17 @@ const { MONGO_URL, OPTIMIST_DB, TRANSACTIONS_COLLECTION } = config;
 const error = [
   'ValidTransaction',
   'ValidTransaction',
+  'ValidTransaction',
   'IncorrectTreeRoot',
+  'ValidTransaction',
   'IncorrectLeafCount',
+  'ValidTransaction',
   'DuplicateTransaction',
+  'ValidTransaction',
   'DuplicateNullifier',
+  'ValidTransaction',
   'HistoricRootError',
+  'ValidTransaction',
   'IncorrectProof',
   'ValidTransaction',
 ];
@@ -118,8 +124,12 @@ const historicRootError = async number => {
       .toArray();
   }
   const [{ historicRootBlockNumberL2, ...rest }, ...transactions] = res;
+  const { transactionType } = rest;
   const incorrectHistoricRoot = {
-    historicRootBlockNumberL2: Array(2).fill(Math.floor(Math.random() * 100).toString()),
+    historicRootBlockNumberL2:
+      Number(transactionType) === 1 || Number(transactionType) === 3
+        ? [Math.floor(Math.random() * 100).toString(), '0']
+        : Array(2).fill(Math.floor(Math.random() * 100).toString()),
     ...rest,
   };
   transactions.push(incorrectHistoricRoot);
@@ -132,7 +142,7 @@ are fewer than 'number' transactions, all are returned.
 */
 // eslint-disable-next-line import/prefer-default-export
 export async function getMostProfitableTransactions(number, errorIndex) {
-  console.log('HERE getMostProfitableTransactions error[r]', error[errorIndex]);
+  logger.debug('Choosing a bad transaction of type', error[errorIndex]);
   switch (error[errorIndex]) {
     case 'DuplicateTransaction':
       return duplicateTransaction(number);

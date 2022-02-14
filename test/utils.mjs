@@ -398,6 +398,7 @@ const waitForProposerToBeCurrent = proposer => {
       } else {
         console.log('condition not met for currentProposer', currentProposer);
         await new Promise(resolving => setTimeout(resolving, 1000));
+        isCurrentProposer();
       }
     }
     isCurrentProposer();
@@ -405,25 +406,38 @@ const waitForProposerToBeCurrent = proposer => {
 };
 
 /**
-  function to register a proposer and wait until this proposer is the current proposer
+  function to retrieve balance of user because getLayer2Balances returns
+  balances of all users
 */
-export const waitForProposer = async proposer => {
-  console.log('HERE in waitForProposer');
-  console.log('HERE in await proposer.getCurrentProposer()', await proposer.getCurrentProposer());
-  console.log('HERE in proposer.ethereumAddress', proposer.ethereumAddress);
-  if ((await proposer.getCurrentProposer()) !== proposer.ethereumAddress) {
-    console.log('HERE to register proposer');
-    await proposer.registerProposer();
-    console.log('HERE registered proposer');
+export const retrieveL2Balance = async client => {
+  const balances = await client.getLayer2Balances();
+  // if there are no balances
+  if (Object.keys(balances).length === 0) {
+    return 0;
   }
-  await waitForProposerToBeCurrent(proposer);
+  const clientBalances = balances[client.zkpKeys.compressedPkd];
+  // if this user has no balance
+  if (clientBalances === undefined || Object.keys(clientBalances).length === 0) {
+    return 0;
+  }
+  // TODO return address by contract address
+  const balance = clientBalances[Object.keys(clientBalances)[0]];
+  return balance;
+};
+
+/**
+  function to register a proposer if there is no proposer
+*/
+export const registerProposerOnNoProposer = async proposer => {
+  if ((await proposer.getCurrentProposer()) === '0x0000000000000000000000000000000000000000') {
+    await proposer.registerProposer();
+  }
 };
 
 export const waitForSufficientBalance = (client, value) => {
   return new Promise(resolve => {
     async function isSufficientBalance() {
       const balances = await client.getLayer2Balances();
-      console.log('Balance', balances, value);
       if (
         Object.keys(balances).length === 0 ||
         balances[client.zkpKeys.compressedPkd] === undefined ||
@@ -438,7 +452,6 @@ export const waitForSufficientBalance = (client, value) => {
         await new Promise(resolving => setTimeout(resolving, 10000));
         isSufficientBalance();
       } else {
-        console.log('HERE sufficient balances', balances);
         resolve();
       }
     }

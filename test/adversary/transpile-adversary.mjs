@@ -25,7 +25,8 @@ const transpileBlockAssembler = (_pathToSrc, _pathToInject) => {
   let srcFile = fs.readFileSync(_pathToSrc, 'utf-8');
   const injectFile = fs.readFileSync(_pathToInject, 'utf-8');
 
-  const regexInjectFileNoPreamble = /(.*function makeBlock.*)(\n|.)*/g;
+  // const regexInjectFileNoPreamble = /(.*function makeBlock.*)(\n|.)*/g;
+  const regexInjectFileNoPreamble = /(.*let count = 0;.*)(\n|.)*/g;
   const [postAmble] = injectFile.match(regexInjectFileNoPreamble);
 
   const regexReplaceCall = /(.*function makeBlock.*)(\n|.)*(?=\n\/\*\*)/g;

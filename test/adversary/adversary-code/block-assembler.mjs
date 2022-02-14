@@ -10,8 +10,8 @@ import { getMostProfitableTransactions } from './database.mjs';
 import Block from './block.mjs';
 
 const { TRANSACTIONS_PER_BLOCK } = config;
-let count = 0;
 
+let count = 0;
 async function makeBlock(proposer, number = TRANSACTIONS_PER_BLOCK) {
   logger.debug('Block Assembler - about to make a new block');
   // pick a random number between 0 to 6 (error length - 1)

@@ -29,10 +29,6 @@ const main = async () => {
     initialBlockSync(proposer).then(async () => {
       await startEventQueue(queueManager, eventHandlers, proposer);
       queues[0].on('end', () => {
-        console.log('HERE in optimist');
-        console.log('HERE proposer.isMe', proposer.isMe);
-        console.log('HERE queues[2].length', queues[2].length);
-        console.log('HERE queues[2].length === 0)', queues[2].length === 0);
         // We do the proposer isMe check here to fail fast instead of re-enqueing.
         // We check if the queue[2] is empty, this is safe it is manually enqueued/dequeued.
         if (proposer.isMe && queues[2].length === 0) {
