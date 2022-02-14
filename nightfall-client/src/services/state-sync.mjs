@@ -24,9 +24,11 @@ const syncState = async (fromBlock = 'earliest', toBlock = 'latest', eventFilter
   for (let i = 0; i < pastStateEvents.length; i++) {
     switch (pastStateEvents[i].event) {
       case 'BlockProposed':
+        // eslint-disable-next-line no-await-in-loop
         await blockProposedEventHandler(pastStateEvents[i]);
         break;
       case 'Rollback':
+        // eslint-disable-next-line no-await-in-loop
         await rollbackEventHandler(pastStateEvents[i]);
         break;
       default:

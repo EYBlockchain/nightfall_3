@@ -1,10 +1,12 @@
+/* eslint-disable no-await-in-loop */
 import Web3 from 'web3';
 import chai from 'chai';
 import config from 'config';
 import rand from '../common-files/utils/crypto/crypto-random.mjs';
 
 const { expect } = chai;
-const { ENVIRONMENTS, WEB3_PROVIDER_OPTIONS } = config;
+const { WEB3_PROVIDER_OPTIONS } = config;
+const ENVIRONMENT = config.ENVIRONMENTS[process.env.ENVIRONMENT];
 
 const USE_INFURA = config.USE_INFURA === 'true';
 const USE_ROPSTEN_NODE = config.USE_ROPSTEN_NODE === 'true';
@@ -18,7 +20,7 @@ export const topicEventMapping = {
 };
 export class Web3Client {
   constructor(url) {
-    this.url = url || process.env.web3WsUrl;
+    this.url = url || ENVIRONMENT.web3WsUrl;
     this.provider = new Web3.providers.WebsocketProvider(this.url, WEB3_PROVIDER_OPTIONS);
     this.web3 = new Web3(this.provider);
     this.isSubmitTxLocked = false;

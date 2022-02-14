@@ -285,6 +285,7 @@ async function main(testEnvironment) {
   let receiptPromise;
   // main CLI loop
   do {
+    // eslint-disable-next-line no-await-in-loop
     [exit, receiptPromise] = await loop(nf3, ercAddress);
   } while (!exit);
   // cleanup

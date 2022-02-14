@@ -90,6 +90,7 @@ export async function getProposeBlockCalldata(eventData) {
   do {
     counter++;
     try {
+      // eslint-disable-next-line no-await-in-loop
       onChainBlockData = await stateContractInstance.methods.blockHashes(counter).call();
     } catch (error) {
       // Getting to this means the block hash doesnt exist (perhaps its was rolled back)

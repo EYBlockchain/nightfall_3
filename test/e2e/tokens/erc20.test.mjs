@@ -1,7 +1,9 @@
+/* eslint-disable no-await-in-loop */
 import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import { createRequire } from 'module';
+import config from 'config';
 import Nf3 from '../../../cli/lib/nf3.mjs';
 import { expectTransaction, depositNTransactions, Web3Client } from '../../utils.mjs';
 
@@ -12,21 +14,17 @@ const require = createRequire(import.meta.url);
 const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
-const { web3WsUrl, network } = process.env;
+
+const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT];
 
 // we need require here to import jsons
-const environments = require('../environments.json');
 const mnemonics = require('../mnemonics.json');
 const signingKeys = require('../signingKeys.json');
 const { fee, transferValue, txPerBlock } = require('../configs.json');
 const { tokenType, tokenId } = require('../tokenConfigs.json');
 
-const environment = environments[network];
-const nf3Users = [
-  new Nf3(web3WsUrl, signingKeys.user1, environment),
-  new Nf3(web3WsUrl, signingKeys.user2, environment),
-];
-const nf3Proposer1 = new Nf3(web3WsUrl, signingKeys.proposer1, environment);
+const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
+const nf3Proposer1 = new Nf3(signingKeys.proposer1, environment);
 
 const web3Client = new Web3Client();
 
@@ -344,7 +342,7 @@ describe('ERC20 tests', () => {
   });
 
   describe('Instant withdrawals from L2', () => {
-    const nf3LiquidityProvider = new Nf3(web3WsUrl, signingKeys.liquidityProvider, environment);
+    const nf3LiquidityProvider = new Nf3(signingKeys.liquidityProvider, environment);
     before(async () => {
       await nf3LiquidityProvider.init(mnemonics.liquidityProvider);
 

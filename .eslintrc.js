@@ -7,7 +7,6 @@ module.exports = {
     'no-restricted-syntax': 'off',
     'no-plusplus': 'off',
     'func-names': 'off',
-    'no-await-in-loop': 'off',
   },
   parser: 'babel-eslint', // Uses babel-eslint transforms.
   parserOptions: {

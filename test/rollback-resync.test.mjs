@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 import config from 'config';
 import chai from 'chai';
 import chaiHttp from 'chai-http';

@@ -65,19 +65,19 @@ class Nf3 {
   currentEnvironment;
 
   constructor(
-    web3WsUrl,
     ethereumSigningKey,
     environment = {
       clientApiUrl: 'http://localhost:8080',
       optimistApiUrl: 'http://localhost:8081',
       optimistWsUrl: 'ws://localhost:8082',
+      web3WsUrl: 'ws://localhost:8546',
     },
     zkpKeys,
   ) {
     this.clientBaseUrl = environment.clientApiUrl;
     this.optimistBaseUrl = environment.optimistApiUrl;
     this.optimistWsUrl = environment.optimistWsUrl;
-    this.web3WsUrl = web3WsUrl;
+    this.web3WsUrl = environment.web3WsUrl;
     this.ethereumSigningKey = ethereumSigningKey;
     this.zkpKeys = zkpKeys;
     this.currentEnvironment = environment;
