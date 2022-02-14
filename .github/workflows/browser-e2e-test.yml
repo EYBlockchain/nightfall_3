@@ -72,6 +72,23 @@ jobs:
           npm audit fix
           ./copy-zokrates-local.sh
 
+      - name: node_modules
+        run: |
+          cd wallet
+          ls -l
+          cd node_modules
+          ls -l
+
+      - name: debug keccak 1.4.0
+        run: |
+          cd wallet/
+          npm keccak@1.4.0
+
+      - name: debug keccak 3.0.2
+        run: |
+          cd wallet/
+          npm keccak@3.0.2
+
       - name: Start browser app
         run: |
           cd wallet/
