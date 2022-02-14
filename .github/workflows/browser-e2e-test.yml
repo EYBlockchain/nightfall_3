@@ -79,12 +79,12 @@ jobs:
           cd node_modules
           ls -l
 
-      - name: Build browser app
-        run: |
-          cd wallet/
-          ls -l
-          REACT_APP_ENVIRONMENT=Localhost npx craco build
-          ls -l
+      # - name: Build browser app
+      #   run: |
+      #     cd wallet/
+      #     ls -l
+      #     REACT_APP_ENVIRONMENT=Localhost npx craco build
+      #     ls -l
 
       # - name: Start static server
       #   run: |
@@ -100,7 +100,7 @@ jobs:
           sleep 500
         env:
           BROWSER: none
-          # CHOKIDAR_USEPOLLING: true
+          CHOKIDAR_USEPOLLING: false
 
       - name: debug logs - after browser startup
         if: always()
