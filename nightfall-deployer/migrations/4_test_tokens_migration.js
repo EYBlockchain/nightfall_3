@@ -16,7 +16,7 @@ module.exports = function (deployer, _, accounts) {
     const ERC20deployed = await ERC20Mock.deployed();
     // For ping pong tests
     for (const address of UserEthereumAddresses) {
-      await ERC20deployed.transfer(address, 1000000);
+      await ERC20deployed.transfer(address, 1000000000000);
     }
     if (!config.ETH_ADDRESS) {
       // indicates we're running a wallet test that uses hardcoded addresses

@@ -7,7 +7,7 @@ import { approve } from './tokens.mjs';
 import erc20 from './abis/ERC20.mjs';
 import erc721 from './abis/ERC721.mjs';
 import erc1155 from './abis/ERC1155.mjs';
-import { ENVIRONMENTS } from './constants.mjs';
+import { DEFAULT_BLOCK_STAKE, DEFAULT_PROPOSER_BOND, DEFAULT_FEE } from './constants.mjs';
 
 /**
 @class
@@ -46,11 +46,11 @@ class Nf3 {
 
   zkpKeys;
 
-  defaultFee = 10;
+  defaultFee = DEFAULT_FEE;
 
-  PROPOSER_BOND = 10;
+  PROPOSER_BOND = DEFAULT_PROPOSER_BOND;
 
-  BLOCK_STAKE = 1;
+  BLOCK_STAKE = DEFAULT_BLOCK_STAKE;
 
   nonce = 0;
 
@@ -64,9 +64,16 @@ class Nf3 {
 
   currentEnvironment;
 
-  notConfirmed = 0;
-
-  constructor(web3WsUrl, ethereumSigningKey, environment = ENVIRONMENTS.localhost, zkpKeys) {
+  constructor(
+    web3WsUrl,
+    ethereumSigningKey,
+    environment = {
+      clientApiUrl: 'http://localhost:8080',
+      optimistApiUrl: 'http://localhost:8081',
+      optimistWsUrl: 'ws://localhost:8082',
+    },
+    zkpKeys,
+  ) {
     this.clientBaseUrl = environment.clientApiUrl;
     this.optimistBaseUrl = environment.optimistApiUrl;
     this.optimistWsUrl = environment.optimistWsUrl;
@@ -81,12 +88,27 @@ class Nf3 {
   blockchain.
   @returns {Promise}
   */
-  async init(mnemonic) {
+  async init(mnemonic, contractAddressProvider) {
     await this.setWeb3Provider();
-    this.shieldContractAddress = await this.getContractAddress('Shield');
-    this.proposersContractAddress = await this.getContractAddress('Proposers');
-    this.challengesContractAddress = await this.getContractAddress('Challenges');
-    this.stateContractAddress = await this.getContractAddress('State');
+    // this code will call client to get contract addresses, or optimist if client isn't deployed
+    switch (contractAddressProvider) {
+      case undefined:
+        this.contractGetter = this.getContractAddress;
+        break;
+      case 'client':
+        this.contractGetter = this.getContractAddress;
+        break;
+      case 'optimist':
+        this.contractGetter = this.getContractAddressOptimist;
+        break;
+      default:
+        throw new Error('Unknown contract address server');
+    }
+    // once we know where to ask, we can get the contract addresses
+    this.shieldContractAddress = await this.contractGetter('Shield');
+    this.proposersContractAddress = await this.contractGetter('Proposers');
+    this.challengesContractAddress = await this.contractGetter('Challenges');
+    this.stateContractAddress = await this.contractGetter('State');
     // set the ethereumAddress iff we have a signing key
     if (typeof this.ethereumSigningKey === 'string') {
       this.ethereumAddress = await this.getAccounts();
