@@ -79,6 +79,13 @@ jobs:
           cd node_modules
           ls -l
 
+      - name: Build browser app
+        run: |
+          cd wallet/
+          ls -l
+          REACT_APP_ENVIRONMENT=Localhost craco build
+          ls -l
+
       - name: Start browser app
         run: |
           cd wallet/
