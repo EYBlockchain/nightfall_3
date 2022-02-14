@@ -93,9 +93,8 @@ jobs:
 
       - name: Start browser app
         run: |
+          npm ci
           cd wallet/
-          ls -l
-          pwd
           npm start &> browser-app.log &disown
           sleep 500
         env:
@@ -105,6 +104,13 @@ jobs:
       - name: debug logs - after browser startup
         if: always()
         run: cat wallet/browser-app.log
+
+      - run: cd wallet && npm run e2e-test
+
+      # - name: Cypress run
+      #   uses: cypress-io/github-action@v2
+      #   with:
+      #     start: npm start
 
 
       # - name: Run e2e test
