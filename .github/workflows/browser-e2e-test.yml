@@ -91,20 +91,20 @@ jobs:
       #     npm install -g serve
       #     serve -s wallet/build
 
-      # - name: Start browser app
-      #   run: |
-      #     cd wallet/
-      #     ls -l
-      #     pwd
-      #     npm start &> browser-app.log &disown
-      #     sleep 500
-      #   env:
-      #     BROWSER: none
-      #     CHOKIDAR_USEPOLLING: true
+      - name: Start browser app
+        run: |
+          cd wallet/
+          ls -l
+          pwd
+          npm start &> browser-app.log &disown
+          sleep 500
+        env:
+          BROWSER: none
+          # CHOKIDAR_USEPOLLING: true
 
-      # - name: debug logs - after browser startup
-      #   if: always()
-      #   run: cat wallet/browser-app.log
+      - name: debug logs - after browser startup
+        if: always()
+        run: cat wallet/browser-app.log
 
 
       # - name: Run e2e test
