@@ -42,20 +42,6 @@ const SUPPORTED_ENVIRONMENTS = {
   },
 };
 
-const ContractNames = {
-  Shield: 'Shield',
-  Proposers: 'Proposers',
-  Challenges: 'Challenges',
-  State: 'State',
-};
-
-const CONTRACT_ADDRESSES = {
-  [ContractNames.Shield]: '',
-  [ContractNames.Proposers]: '',
-  [ContractNames.Challenges]: '',
-  [ContractNames.State]: '',
-};
-
 const currentEnvironment = {
   clientApiUrl: '',
   optimistApiUrl: '',
@@ -85,26 +71,6 @@ function isEnvironmentSupportedByNetworkName(env) {
     return true;
   }
   return false;
-}
-
-/**
- * Stores the addresses of NF contract by type
- * @param {Object} nf3 - Nightfall instance to retrieve contract addresses from
- * @param {String} contractName - Name of contract
- */
-async function setContractAddress(nf3, contractName) {
-  CONTRACT_ADDRESSES[contractName] = await nf3.getContractAddress(contractName);
-}
-
-/**
- * Stores the addresses of NF contracts
- * @param {Object} nf3 - Nightfall instance to retrieve contract addresses from
- */
-async function setContractAddresses(nf3) {
-  setContractAddress(nf3, ContractNames.Shield);
-  setContractAddress(nf3, ContractNames.Proposers);
-  setContractAddress(nf3, ContractNames.Challenges);
-  setContractAddress(nf3, ContractNames.State);
 }
 
 /**
@@ -192,9 +158,8 @@ function setEnvironment(env) {
  */
 function getCurrentEnvironment() {
   return {
-    contracts: CONTRACT_ADDRESSES,
     currentEnvironment,
   };
 }
 
-export { setEnvironment, getCurrentEnvironment, getSupportedEnvironments, setContractAddresses };
+export { setEnvironment, getCurrentEnvironment, getSupportedEnvironments };

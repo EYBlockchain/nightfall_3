@@ -1,3 +1,4 @@
+import config from 'config';
 import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
@@ -19,16 +20,7 @@ import {
   getCurrentEnvironment,
 } from './utils.mjs';
 
-import {
-  privateKey,
-  gas,
-  BLOCK_STAKE,
-  fee,
-  tokenId,
-  value,
-  tokenType,
-  bond,
-} from './constants.mjs';
+const { privateKey, gas, BLOCK_STAKE, fee, tokenId, value, tokenType, bond } = config.TEST_OPTIONS;
 
 const { spawn } = childProcess;
 const { expect } = chai;
