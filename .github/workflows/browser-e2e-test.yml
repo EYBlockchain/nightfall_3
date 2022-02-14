@@ -58,7 +58,7 @@ jobs:
           ./proposer > proposer.log &disown
           sleep 200
 
-      - name: debug logs - after container startup
+      - name: proposer.log
         if: always()
         run: cat proposer.log
 
@@ -86,20 +86,25 @@ jobs:
           REACT_APP_ENVIRONMENT=Localhost npx craco build
           ls -l
 
-      - name: Start browser app
+      - name: Start static server
         run: |
-          cd wallet/
-          ls -l
-          pwd
-          npm start &> browser-app.log &disown
-          sleep 500
-        env:
-          BROWSER: none
-          CHOKIDAR_USEPOLLING: true
+          npm install -g serve
+          serve -s wallet/build
 
-      - name: debug logs - after browser startup
-        if: always()
-        run: cat wallet/browser-app.log
+      # - name: Start browser app
+      #   run: |
+      #     cd wallet/
+      #     ls -l
+      #     pwd
+      #     npm start &> browser-app.log &disown
+      #     sleep 500
+      #   env:
+      #     BROWSER: none
+      #     CHOKIDAR_USEPOLLING: true
+
+      # - name: debug logs - after browser startup
+      #   if: always()
+      #   run: cat wallet/browser-app.log
 
 
       # - name: Run e2e test
