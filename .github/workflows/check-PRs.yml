@@ -17,6 +17,7 @@ jobs:
         run: |
           npm ci
           npm run lint
+
   ganache-test:
     runs-on: ubuntu-18.04
     steps:

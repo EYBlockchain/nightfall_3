@@ -1,5 +1,10 @@
 module.exports = {
-  extends: ['codfish', 'eslint:recommended', 'plugin:react/recommended'],
+  extends: [
+    'codfish',
+    'eslint:recommended',
+    'plugin:react/recommended',
+    'plugin:prettier/recommended',
+  ],
   rules: {
     'no-underscore-dangle': 'off',
     'no-console': 'off',
