@@ -1,20 +1,10 @@
 /**
 Test suite for measuring the gas per transaction
 */
+import config from 'config';
 import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
-import {
-  ethereumSigningKeyUser1,
-  ethereumSigningKeyProposer1,
-  mnemonicUser1,
-  mnemonicProposer,
-  tokenType,
-  value,
-  tokenId,
-  fee,
-  BLOCK_STAKE,
-} from './constants.mjs';
 import Nf3 from '../cli/lib/nf3.mjs';
 import {
   closeWeb3Connection,
@@ -25,6 +15,18 @@ import {
   topicEventMapping,
   timeJump,
 } from './utils.mjs';
+
+const {
+  ethereumSigningKeyUser1,
+  ethereumSigningKeyProposer1,
+  mnemonicUser1,
+  mnemonicProposer,
+  tokenType,
+  value,
+  tokenId,
+  fee,
+  BLOCK_STAKE,
+} = config.TEST_OPTIONS;
 
 const { expect } = chai;
 chai.use(chaiHttp);
