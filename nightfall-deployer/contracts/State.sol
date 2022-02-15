@@ -183,6 +183,7 @@ contract State is Structures, Config {
     address previousAddress = proposers[proposer].previousAddress;
     address nextAddress = proposers[proposer].nextAddress;
     delete proposers[proposer];
+    numProposers--;
     proposers[previousAddress].nextAddress = proposers[nextAddress].thisAddress;
     proposers[nextAddress].previousAddress = proposers[previousAddress].thisAddress;
 
@@ -246,8 +247,8 @@ contract State is Structures, Config {
     "Proposers: Too soon to rotate proposer");
   
     address addressBestPeer;
-
-    if( numProposers == 1 ){
+    
+    if( numProposers <= 1 ){
         currentSprint = 0; // We don't have sprints because always same proposer
         addressBestPeer = currentProposer.thisAddress;
     } else {

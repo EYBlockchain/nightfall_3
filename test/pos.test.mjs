@@ -224,12 +224,15 @@ describe('Testing the http API', () => {
 
       let proposers;
       ({ proposers } = await nf3Proposer2.getProposers());
+      let thisProposer;
+      thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer3.ethereumAddress);
+      expect(thisProposer.length).to.be.equal(0);
       const stakeAccount1 = await getStakeAccount(nf3Proposer2.ethereumAddress);
       const res = await nf3Proposer2.stakeProposer(MINIMUM_STAKE);
       expectTransaction(res);
       const stakeAccount2 = await getStakeAccount(nf3Proposer2.ethereumAddress);
       ({ proposers } = await nf3Proposer2.getProposers());
-      const thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer2.ethereumAddress);
+      thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer2.ethereumAddress);
       expect(thisProposer.length).to.be.equal(1);
       expect(Number(stakeAccount2.amount)).equal(
         Number(stakeAccount1.amount) + Number(MINIMUM_STAKE),
@@ -248,14 +251,15 @@ describe('Testing the http API', () => {
 
       let proposers;
       ({ proposers } = await nf3Proposer2.getProposers());
-
+      let thisProposer;
+      thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer3.ethereumAddress);
+      expect(thisProposer.length).to.be.equal(0);
       const stakeAccount1 = await getStakeAccount(nf3Proposer3.ethereumAddress);
       const res = await nf3Proposer3.stakeProposer(MINIMUM_STAKE);
       expectTransaction(res);
       const stakeAccount2 = await getStakeAccount(nf3Proposer3.ethereumAddress);
       ({ proposers } = await nf3Proposer3.getProposers());
-      console.log('PROPOSERS: ', proposers);
-      const thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer3.ethereumAddress);
+      thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer3.ethereumAddress);
       expect(thisProposer.length).to.be.equal(1);
       expect(Number(stakeAccount2.amount)).equal(
         Number(stakeAccount1.amount) + Number(MINIMUM_STAKE),
@@ -266,6 +270,7 @@ describe('Testing the http API', () => {
       try {
         await nf3Proposer3.unstakeProposer();
         await nf3Proposer2.unstakeProposer();
+        await nf3Proposer1.unstakeProposer();
       } catch (e) {
         console.log(e);
       }
