@@ -36,14 +36,10 @@ describe('End to End tests', () => {
       // cy.confirmMetamaskSignatureRequest().then(confirmed => expect(confirmed).to.be.true);
       cy.get('#TokenItem_tokenDepositMATIC').click();
       cy.url().should('include', '/bridge');
-      cy.get('#Bridge_amountDetails_tokenAmount').type(4)
+      cy.get('#Bridge_amountDetails_tokenAmount').type(4);
       cy.contains('Transfer').click();
-      cy.confirmMetamaskPermissionToSpend().then(approved => {
-        expect(approved).to.be.true;
-      });
-      cy.confirmMetamaskTransaction().then(confirmed => {
-        expect(confirmed).to.be.true;
-      });
+      cy.confirmMetamaskPermissionToSpend().then(approved => expect(approved).to.be.true);
+      cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
     });
   });
 });
