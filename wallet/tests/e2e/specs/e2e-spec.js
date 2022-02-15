@@ -38,8 +38,25 @@ describe('End to End tests', () => {
       cy.get('button').contains('Transfer').click();
       cy.get('button').contains('Create Transaction').click();
       cy.get('#Bridge_modal_continueTransferButton').click();
+      cy.wait(10000);
       cy.confirmMetamaskPermissionToSpend().then(approved => expect(approved).to.be.true);
-      // cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
+      cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
+      cy.wait(10000);
+      cy.get('.btn-close').click();
+    });
+
+    it('second deposit which will create a new block', () => {
+      cy.get('#Bridge_amountDetails_tokenAmount').clear().type(4);
+      cy.get('button').contains('Transfer').click();
+      cy.get('button').contains('Create Transaction').click();
+      cy.get('#Bridge_modal_continueTransferButton').click();
+      cy.wait(10000);
+      cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
+      cy.wait(10000);
+      cy.get('.btn-close').click();
+      cy.contains('Nightfall Assets').click();
+      cy.url().should('include', '/wallet');
+      cy.get('#TokenItem_tokenBalanceMATIC').invoke('value').should('8.0000');
     });
   });
 });
