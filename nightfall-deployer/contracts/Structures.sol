@@ -7,44 +7,44 @@ pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
 contract Structures {
-    enum TransactionTypes {DEPOSIT, SINGLE_TRANSFER, DOUBLE_TRANSFER, WITHDRAW}
+  enum TransactionTypes {DEPOSIT, SINGLE_TRANSFER, DOUBLE_TRANSFER, WITHDRAW}
 
-    enum TokenType {ERC20, ERC721, ERC1155}
+  enum TokenType {ERC20, ERC721, ERC1155}
 
-    event Rollback(bytes32 indexed blockHash, uint256 blockNumberL2, uint256 leafCount);
+  event Rollback(bytes32 indexed blockHash, uint256 blockNumberL2, uint256 leafCount);
 
-    event BlockProposed();
+  event BlockProposed();
 
-    event TransactionSubmitted();
+  event TransactionSubmitted();
 
-    event NewCurrentProposer(address proposer);
+  event NewCurrentProposer(address proposer);
 
-    event CommittedToChallenge(bytes32 commitHash, address sender);
+  event CommittedToChallenge(bytes32 commitHash, address sender);
 
-    event InstantWithdrawalRequested(bytes32 withdrawTransactionHash, address paidBy, uint256 amount);
+  event InstantWithdrawalRequested(bytes32 withdrawTransactionHash, address paidBy, uint256 amount);
 
-    /**
+  /**
   These events are what the merkle-tree microservice's filters will listen for.
   */
-    event NewLeaf(uint256 leafIndex, bytes32 leafValue, bytes32 root);
-    event NewLeaves(uint256 minLeafIndex, bytes32[] leafValues, bytes32 root);
+  event NewLeaf(uint256 leafIndex, bytes32 leafValue, bytes32 root);
+  event NewLeaves(uint256 minLeafIndex, bytes32[] leafValues, bytes32 root);
 
-    // a struct representing a generic transaction, some of these data items
-    // will hold default values for any specific tranaction, e.g. there are no
-    // nullifiers for a Deposit transaction.
-    struct Transaction {
-        uint64 value;
-        uint64[2] historicRootBlockNumberL2; // number of L2 block containing historic root
-        TransactionTypes transactionType;
-        TokenType tokenType;
-        bytes32 tokenId;
-        bytes32 ercAddress;
-        bytes32 recipientAddress;
-        bytes32[2] commitments;
-        bytes32[2] nullifiers;
-        bytes32[8] compressedSecrets;
-        uint256[4] proof;
-    }
+  // a struct representing a generic transaction, some of these data items
+  // will hold default values for any specific tranaction, e.g. there are no
+  // nullifiers for a Deposit transaction.
+  struct Transaction {
+    uint64 value;
+    uint64[2] historicRootBlockNumberL2; // number of L2 block containing historic root
+    TransactionTypes transactionType;
+    TokenType tokenType;
+    bytes32 tokenId;
+    bytes32 ercAddress;
+    bytes32 recipientAddress;
+    bytes32[2] commitments;
+    bytes32[2] nullifiers;
+    bytes32[8] compressedSecrets;
+    uint256[4] proof;
+  }
 
   struct Block {
     uint48 leafCount; // note this is defined to be the number of leaves BEFORE the commitments in this block are added
@@ -59,15 +59,27 @@ contract Structures {
     uint256 time; // time the block was created
   }
 
-    struct LinkedAddress {
-        address thisAddress;
-        address previousAddress;
-        address nextAddress;
-    }
+  struct LinkedAddress {
+      address thisAddress;
+      address previousAddress;
+      address nextAddress;
+      bool inProposerSet;
+      uint256 indexProposerSet;
+  }
 
-    struct TimeLockedStake {
-        uint256 amount; // The amount held
-        uint256 challengeLocked; // The amount locked by block proposed still in CHALLENGE_PERIOD and not claimed
-        uint256 time; // The time the funds were locked from
-    }
+  struct TimeLockedStake {
+      uint256 amount; // The amount held
+      uint256 challengeLocked; // The amount locked by block proposed still in CHALLENGE_PERIOD and not claimed
+      uint256 time; // The time the funds were locked from
+  }
+  
+  /**
+   * @dev Element of the proposer set for next span
+   */
+  struct ProposerSet {
+      address thisAddress;
+      uint256 weight;
+      int256 currentWeight;
+      uint256 effectiveWeight;
+  }
 }

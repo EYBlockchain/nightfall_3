@@ -580,7 +580,7 @@ class Nf3 {
     const res = await axios.get(`${this.optimistBaseUrl}/proposer/change`, {
       address: this.ethereumAddress,
     });
-    return this.submitTransaction(res.data.txDataToSign, this.proposersContractAddress, 0);
+    return this.submitTransaction(res.data.txDataToSign, this.stateContractAddress, 0);
   }
 
   /**

@@ -241,10 +241,8 @@ router.post('/propose', async (req, res, next) => {
 router.get('/change', async (req, res, next) => {
   logger.debug(`proposer/change endpoint received GET ${JSON.stringify(req.body, null, 2)}`);
   try {
-    const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
-    const txDataToSign = await proposersContractInstance.methods
-      .changeCurrentProposer()
-      .encodeABI();
+    const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
+    const txDataToSign = await stateContractInstance.methods.changeCurrentProposer().encodeABI();
     logger.debug('returning raw transaction data');
     logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
     res.json({ txDataToSign });
