@@ -19,27 +19,27 @@ describe('End to End tests', () => {
     });
 
     it('generate Mnemonic and set state', () => {
-      cy.visit('/wallet');
+      cy.contains('Polygon Nightfall Wallet').click();
       cy.get('#generateMnemonic').contains('Generate Mnemonic');
       cy.get('#generateMnemonic').click();
       cy.get('#createWallet').click();
       cy.confirmMetamaskSignatureRequest().then(confirmed => expect(confirmed).to.be.true);
       cy.get('#TokenItem_tokenDepositMATIC').click();
       cy.url().should('include', '/bridge');
-      cy.get('#Nightfall Assets').click();
+      cy.contains('Nightfall Assets').click();
       cy.get('#generateMnemonic').should('not.exist');
     });
   });
   context('Deposit', () => {
     it('initial deposit with approve', () => {
-      // cy.visit('/wallet');
-      // cy.confirmMetamaskSignatureRequest().then(confirmed => expect(confirmed).to.be.true);
       cy.get('#TokenItem_tokenDepositMATIC').click();
       cy.url().should('include', '/bridge');
-      cy.get('#Bridge_amountDetails_tokenAmount').type(4);
-      cy.contains('Transfer').click();
+      cy.get('#Bridge_amountDetails_tokenAmount').clear().type(4);
+      cy.get('button').contains('Transfer').click();
+      cy.get('button').contains('Create Transaction').click();
+      cy.get('#Bridge_modal_continueTransferButton').click();
       cy.confirmMetamaskPermissionToSpend().then(approved => expect(approved).to.be.true);
-      cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
+      // cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
     });
   });
 });
