@@ -46,7 +46,7 @@ describe('End to End tests', () => {
       cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
       cy.wait(10000);
       cy.get('.btn-close').should('exist');
-      cy.get('.btn-close', { timeout: 10000 }).click();
+      cy.get('.btn-close').click();
       cy.get('.btn-close').should('not.exist');
       cy.get('#Bridge_amountDetails_tokenAmount').should('exist');
     });
@@ -61,10 +61,11 @@ describe('End to End tests', () => {
       cy.get('#Bridge_modal_continueTransferButton').click();
       cy.wait(10000);
       cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
-      cy.get('.btn-close', { timeout: 10000 }).click();
+      cy.wait(10000);
+      cy.get('.btn-close').click();
       cy.contains('Nightfall Assets').click();
       cy.url().should('include', '/wallet');
-      cy.get('#TokenItem_tokenBalanceMATIC').invoke('value').should('8.0011');
+      cy.get('#TokenItem_tokenBalanceMATIC').contains('8.0000');
     });
   });
 });
