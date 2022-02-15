@@ -26,6 +26,11 @@ contract State is Structures, Config {
   address public challengesAddress;
   address public shieldAddress;
 
+  uint256 public numProposers; // number of proposers  
+  address[] public slots; // slots based on proposers stake
+  ProposerSet[] public proposersSet; // proposer set for next span
+  uint256 public currentSprint; // the current sprint of the span
+
   constructor(address _proposersAddress, address _challengesAddress, address _shieldAddress) {
     proposersAddress = _proposersAddress;
     challengesAddress = _challengesAddress;
@@ -166,17 +171,25 @@ contract State is Structures, Config {
     return proposerStartBlock;
   }
 
+  function setNumProposers(uint256 np) public onlyRegistered {
+    numProposers = np;
+  }
+  
+  function getNumProposers() public view returns(uint256) {
+    return numProposers;
+  }
+
   function removeProposer(address proposer) public onlyRegistered {
     address previousAddress = proposers[proposer].previousAddress;
     address nextAddress = proposers[proposer].nextAddress;
     delete proposers[proposer];
     proposers[previousAddress].nextAddress = proposers[nextAddress].thisAddress;
     proposers[nextAddress].previousAddress = proposers[previousAddress].thisAddress;
-      // Cannot just call changeCurrentProposer directly due to the require time check
-      //change currentProposer to next aaddress irrespective of whether proposer is currentProposer
-      proposerStartBlock = block.number;
-      currentProposer = proposers[nextAddress];
-      emit NewCurrentProposer(currentProposer.thisAddress);
+
+    if (proposer == currentProposer.thisAddress) {
+      proposerStartBlock = proposerStartBlock + ROTATE_PROPOSER_BLOCKS + 1; // force to rotate currentProposer
+      changeCurrentProposer();
+    }
   }
   // Checks if a block is actually referenced in the queue of blocks waiting
   // to go into the Shield state (stops someone challenging with a non-existent
@@ -186,10 +199,16 @@ contract State is Structures, Config {
     require(blockHashes[blockNumberL2].blockHash == blockHash, 'State: Block does not exist');
   }
 
+  /**
+   * @dev Set stake account for the address addr with amount of stake and challengeLocked
+   */
   function setStakeAccount(address addr, uint256 amount, uint256 challengeLocked) public onlyRegistered {
     stakeAccounts[addr] = TimeLockedStake(amount, challengeLocked, 0);
   }
 
+  /**
+   * @dev Get stake account for the address addr
+   */
   function getStakeAccount(address addr) public view returns (TimeLockedStake memory){
     return stakeAccounts[addr];
   }
@@ -216,4 +235,135 @@ contract State is Structures, Config {
     claimedBlockStakes[blockHash] = true;
   }
 
+  /**
+   * Each proposer gets a chance to propose blocks for a certain time, defined
+   * in Ethereum blocks.  After a certain number of blocks has passed, the
+   * proposer can be rotated by calling this function. The method for choosing
+   * the next proposer is simple rotation for now.
+   */
+  function changeCurrentProposer() public {
+    require(block.number - proposerStartBlock > ROTATE_PROPOSER_BLOCKS,
+    "Proposers: Too soon to rotate proposer");
+  
+    address addressBestPeer;
+
+    if( numProposers == 1 ){
+        currentSprint = 0; // We don't have sprints because always same proposer
+        addressBestPeer = currentProposer.thisAddress;
+    } else {
+      ProposerSet memory peer;
+      uint256 totalEffectiveWeight = 0;
+
+      if (currentSprint == SPRINTS_IN_SPAN) currentSprint = 0;
+      if (currentSprint == 0) initializeSpan();
+
+      for (uint256 i = 0; i < proposersSet.length; i++) {
+        peer = proposersSet[i];
+        totalEffectiveWeight += peer.effectiveWeight;
+        peer.currentWeight += int256(peer.effectiveWeight);
+
+        if (peer.effectiveWeight < peer.weight)
+            peer.effectiveWeight++;
+        if (addressBestPeer == address(0) || proposersSet[proposers[addressBestPeer].indexProposerSet].currentWeight < peer.currentWeight) {
+            addressBestPeer = peer.thisAddress;
+        }      
+      }
+
+      if (proposersSet[proposers[addressBestPeer].indexProposerSet].weight!=0)
+          proposersSet[proposers[addressBestPeer].indexProposerSet].currentWeight -= int256(totalEffectiveWeight);        
+
+      currentSprint += 1;
+    }
+
+    currentProposer = proposers[addressBestPeer];
+    proposerStartBlock = block.number;
+    emit NewCurrentProposer(currentProposer.thisAddress);    
+  }
+
+  /**
+   * @dev Initialize a new span
+   */
+  function initializeSpan() internal {
+      fillSlots();        // 1) initialize slots based on the stake and VALUE_PER_SLOT
+      shuffleSlots();     // 2) shuffle the slots
+      spanProposerSet();  // 3) pop the proposer set from shuffled slots
+  }
+
+  /**
+   * @dev Fill slots based on the weight
+   */
+  function fillSlots() public {
+    require(currentProposer.thisAddress != address(0), "State: Current proposer not initialized");
+    LinkedAddress memory p = currentProposer;
+    TimeLockedStake memory stake = getStakeAccount(p.thisAddress);
+ 
+    uint256 weight;
+    
+    // 1) remove all slots
+    delete slots;
+    // 2) assign slots based on the stake of the proposers
+    if (numProposers == 1) {
+        weight = stake.amount / VALUE_PER_SLOT;
+        for (uint256 i = 0; i < weight; i++) {
+            slots.push(p.thisAddress);
+        }
+    }
+    else {
+        while (p.nextAddress != currentProposer.thisAddress) {
+            weight = stake.amount / VALUE_PER_SLOT;
+            for (uint256 i = 0; i < weight; i++) {
+                slots.push(p.thisAddress);
+            }
+            p = proposers[p.nextAddress];
+        }
+        weight = stake.amount / VALUE_PER_SLOT;
+        for (uint256 i = 0; i < weight; i++) {
+            slots.push(p.thisAddress);
+        }
+    }
+  }
+
+  /**
+   * @dev Shuffle the slots of all proposers
+   */
+  function shuffleSlots() internal {
+    for (uint256 i = 0; i < slots.length; i++) {
+        uint256 n = i + uint256(keccak256(abi.encodePacked(block.timestamp))) % (slots.length - i);
+        address temp = slots[n];
+        slots[n] = slots[i];
+        slots[i] = temp;
+    }
+  }  
+
+  /**
+   * @dev Pop the proposer set for next Span
+   */
+  function spanProposerSet() internal {
+    for (uint256 i = 0; i < proposersSet.length; i++) {
+        proposers[proposersSet[i].thisAddress].inProposerSet = false;
+        proposers[proposersSet[i].thisAddress].indexProposerSet = 0;            
+    }
+    
+    delete proposersSet;
+
+    // add proposersSet
+    for(uint256 i = 0; i < PROPOSER_SET_COUNT; i++) {
+        LinkedAddress memory p = proposers[slots[i]];
+        if (p.inProposerSet == false) {                
+            p.inProposerSet = true;
+            p.indexProposerSet = proposersSet.length;               
+            ProposerSet memory ps = ProposerSet(p.thisAddress, 1, 0, 0);
+            proposersSet.push(ps);
+            proposers[slots[i]] = p;
+        } else {
+            proposersSet[p.indexProposerSet].weight += 1;
+        }
+    }
+
+    // initialize weights for WRR
+    for(uint256 i = 0; i < proposersSet.length; i++) {
+        proposersSet[i].currentWeight = int256(proposersSet[i].weight);
+        proposersSet[i].effectiveWeight = proposersSet[i].weight;
+    }     
+  }  
 }

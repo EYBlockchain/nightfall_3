@@ -11,21 +11,6 @@ import './Stateful.sol';
 
 contract Proposers is Stateful, Structures, Config {
   /**
-  * Each proposer gets a chance to propose blocks for a certain time, defined
-  * in Ethereum blocks.  After a certain number of blocks has passed, the
-  * proposer can be rotated by calling this function. The method for choosing
-  * the next proposer is simple rotation for now.
-  */
-  function changeCurrentProposer() external {
-    require(block.number - state.getProposerStartBlock() > ROTATE_PROPOSER_BLOCKS,
-    "Proposers: Too soon to rotate proposer");
-    state.setProposerStartBlock(block.number);
-    LinkedAddress memory currentProposer = state.getCurrentProposer();
-    state.setCurrentProposer(currentProposer.nextAddress);
-    emit NewCurrentProposer(currentProposer.nextAddress);    
-  }
-
-  /**
    * @dev increment stake for proposer
    */
   function stakeProposer() external payable {
@@ -38,9 +23,10 @@ contract Proposers is Stateful, Structures, Config {
 
    // cope with this being the first proposer
     if (currentProposer.thisAddress == address(0)) {
-      currentProposer = LinkedAddress(msg.sender, msg.sender, msg.sender);
+      currentProposer = LinkedAddress(msg.sender, msg.sender, msg.sender, false, 0);
       state.setProposer(msg.sender, currentProposer);
       state.setProposerStartBlock(block.number);
+      state.setNumProposers(1);
       emit NewCurrentProposer(currentProposer.thisAddress);
     } else {
       // else, splice the new proposer into the circular linked list of proposers just behind the current proposer
@@ -65,6 +51,7 @@ contract Proposers is Stateful, Structures, Config {
       }
       state.setProposer(proposersCurrent.thisAddress, proposersCurrent);
       state.setProposer(msg.sender, proposer);
+      state.setNumProposers(state.getNumProposers() + 1);
     }
     state.setCurrentProposer(currentProposer.thisAddress);
   }

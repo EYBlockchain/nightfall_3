@@ -19,8 +19,12 @@ import {
 const {
   ethereumSigningKeyUser1,
   ethereumSigningKeyProposer1,
+  ethereumSigningKeyChallenger,
+  ethereumSigningKeyLiquidityProvider,
   mnemonicUser1,
   mnemonicProposer,
+  mnemonicChallenger,
+  mnemonicLiquidityProvider,
   tokenType,
   value,
   tokenId,
@@ -80,6 +84,12 @@ describe('Testing the http API', () => {
   console.log('ENVIRONMENT: ', environment);
   const nf3User1 = new Nf3(environment.web3WsUrl, ethereumSigningKeyUser1, environment);
   const nf3Proposer1 = new Nf3(environment.web3WsUrl, ethereumSigningKeyProposer1, environment);
+  const nf3Proposer2 = new Nf3(environment.web3WsUrl, ethereumSigningKeyChallenger, environment);
+  const nf3Proposer3 = new Nf3(
+    environment.web3WsUrl,
+    ethereumSigningKeyLiquidityProvider,
+    environment,
+  );
 
   const getStakeAccount = async ethAccount => {
     const stateContractInstance = new web3.eth.Contract(miniStateABI, stateAddress);
@@ -97,6 +107,8 @@ describe('Testing the http API', () => {
 
     await nf3User1.init(mnemonicUser1);
     await nf3Proposer1.init(mnemonicProposer);
+    await nf3Proposer2.init(mnemonicChallenger);
+    await nf3Proposer3.init(mnemonicLiquidityProvider);
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer1.startProposer();
     newGasBlockEmitter.on('gascost', async gasUsed => {
@@ -199,11 +211,72 @@ describe('Testing the http API', () => {
         this.skip();
       }
     });
+
+    it('should stake second proposer', async () => {
+      // Proposer listening for incoming events
+      const newGasBlockEmitter = await nf3Proposer2.startProposer();
+      newGasBlockEmitter.on('gascost', async gasUsed => {
+        currentGasCostPerTx = gasUsed / TRANSACTIONS_PER_BLOCK;
+        console.log(
+          `(2) Block proposal gas cost was ${gasUsed}, cost per transaction was ${currentGasCostPerTx}`,
+        );
+      });
+
+      let proposers;
+      ({ proposers } = await nf3Proposer2.getProposers());
+      const stakeAccount1 = await getStakeAccount(nf3Proposer2.ethereumAddress);
+      const res = await nf3Proposer2.stakeProposer(MINIMUM_STAKE);
+      expectTransaction(res);
+      const stakeAccount2 = await getStakeAccount(nf3Proposer2.ethereumAddress);
+      ({ proposers } = await nf3Proposer2.getProposers());
+      const thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer2.ethereumAddress);
+      expect(thisProposer.length).to.be.equal(1);
+      expect(Number(stakeAccount2.amount)).equal(
+        Number(stakeAccount1.amount) + Number(MINIMUM_STAKE),
+      );
+    });
+
+    it('should stake third proposer', async () => {
+      // Proposer listening for incoming events
+      const newGasBlockEmitter = await nf3Proposer3.startProposer();
+      newGasBlockEmitter.on('gascost', async gasUsed => {
+        currentGasCostPerTx = gasUsed / TRANSACTIONS_PER_BLOCK;
+        console.log(
+          `(3) Block proposal gas cost was ${gasUsed}, cost per transaction was ${currentGasCostPerTx}`,
+        );
+      });
+
+      let proposers;
+      ({ proposers } = await nf3Proposer2.getProposers());
+
+      const stakeAccount1 = await getStakeAccount(nf3Proposer3.ethereumAddress);
+      const res = await nf3Proposer3.stakeProposer(MINIMUM_STAKE);
+      expectTransaction(res);
+      const stakeAccount2 = await getStakeAccount(nf3Proposer3.ethereumAddress);
+      ({ proposers } = await nf3Proposer3.getProposers());
+      console.log('PROPOSERS: ', proposers);
+      const thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer3.ethereumAddress);
+      expect(thisProposer.length).to.be.equal(1);
+      expect(Number(stakeAccount2.amount)).equal(
+        Number(stakeAccount1.amount) + Number(MINIMUM_STAKE),
+      );
+    });
+
+    it('should unstake proposers', async () => {
+      try {
+        await nf3Proposer3.unstakeProposer();
+        await nf3Proposer2.unstakeProposer();
+      } catch (e) {
+        console.log(e);
+      }
+    });
   });
 
-  after(() => {
+  after(async () => {
     closeWeb3Connection();
     nf3User1.close();
     nf3Proposer1.close();
+    nf3Proposer2.close();
+    nf3Proposer3.close();
   });
 });
