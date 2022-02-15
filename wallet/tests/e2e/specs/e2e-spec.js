@@ -1,3 +1,5 @@
+/* eslint-disable cypress/no-unnecessary-waiting */
+
 describe('End to End tests', () => {
   context('MetaMask', () => {
     it('getNetwork should return network by default', () => {
@@ -40,9 +42,9 @@ describe('End to End tests', () => {
       cy.get('#Bridge_modal_continueTransferButton').click();
       cy.wait(10000);
       cy.confirmMetamaskPermissionToSpend().then(approved => expect(approved).to.be.true);
-      cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
       cy.wait(10000);
-      cy.get('.btn-close').click();
+      cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
+      cy.get('.btn-close', { timeout: 10000 }).click();
     });
 
     it('second deposit which will create a new block', () => {
@@ -52,7 +54,7 @@ describe('End to End tests', () => {
       cy.get('#Bridge_modal_continueTransferButton').click();
       cy.wait(10000);
       cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
-      cy.wait(10000);
+      cy.get('.btn-close', { timeout: 10000 }).click();
       cy.get('.btn-close').click();
       cy.contains('Nightfall Assets').click();
       cy.url().should('include', '/wallet');
