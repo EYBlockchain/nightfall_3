@@ -43,7 +43,7 @@ describe('End to End tests', () => {
       cy.wait(10000);
       cy.confirmMetamaskPermissionToSpend().then(approved => expect(approved).to.be.true);
       cy.wait(10000);
-      cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
+      // cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
       cy.get('.btn-close', { timeout: 10000 }).click();
     });
 
