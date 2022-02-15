@@ -257,19 +257,25 @@ describe('Testing the http API', () => {
 
   describe('Basic Proposer tests', () => {
     after(async () => {
-      // After the proposer tests, re-register proposers
-      const myAddress = (await getAccounts())[0];
-      const res = await chai
-        .request(optimistUrl)
-        .post('/proposer/register')
-        .send({ address: myAddress });
-      const { txDataToSign } = res.body;
-      expect(txDataToSign).to.be.a('string');
-      const bond = 10;
-      const count = logCounts.registerProposer;
-      await submitTransaction(txDataToSign, privateKey, proposersAddress, gas, bond);
-      await waitForTxExecution(count, 'registerProposer');
-      stateBalance += bond;
+      // After the proposer tests, re-register proposers, if needed
+      try {
+        const myAddress = (await getAccounts())[0];
+        const res = await chai
+          .request(optimistUrl)
+          .post('/proposer/register')
+          .send({ address: myAddress });
+        const { txDataToSign } = res.body;
+        expect(txDataToSign).to.be.a('string');
+        const bond = 10;
+        const count = logCounts.registerProposer;
+        await submitTransaction(txDataToSign, privateKey, proposersAddress, gas, bond);
+        await waitForTxExecution(count, 'registerProposer');
+        stateBalance += bond;
+      } catch (err) {
+        // an EVM revert almost certainly indicates that the proposer is already registered.  That's
+        // fine, it's ok to continue
+        if (!err.message.includes('Transaction has been reverted by the EVM')) throw new Error(err);
+      }
     });
 
     it('should register a proposer', async () => {
@@ -304,6 +310,26 @@ describe('Testing the http API', () => {
         address: myAddress,
         enode: 'http://optimist1:80',
       });
+    });
+
+    it('should fail to register a proposer twice', async () => {
+      const myAddress = (await getAccounts())[0];
+      const res = await chai
+        .request(optimistUrl)
+        .post('/proposer/register')
+        .send({ address: myAddress });
+      const { txDataToSign } = res.body;
+      expect(txDataToSign).to.be.a('string');
+      // we have to pay 10 ETH to be registered
+      const bond = 10;
+      // now we need to sign the transaction and send it to the blockchain
+      console.log('submitting tx');
+      try {
+        await submitTransaction(txDataToSign, privateKey, proposersAddress, gas, bond);
+        expect.fail('Submitting the same proposer registration should have caused an EVM revert');
+      } catch (err) {
+        expect(err.message).to.include('Transaction has been reverted by the EVM');
+      }
     });
 
     it('should de-register a proposer', async () => {
