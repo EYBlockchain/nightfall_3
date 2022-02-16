@@ -68,7 +68,7 @@ describe('End to End tests', () => {
       cy.contains('Nightfall Assets').click();
       cy.url().should('include', '/wallet');
       cy.wait(20000);
-      cy.get('#TokenItem_tokenBalanceMATIC').contains('8.0000');
+      cy.get('#TokenItem_tokenBalanceMATIC').contains('8.1000');
     });
   });
 });
