@@ -1,5 +1,12 @@
 /* eslint-disable cypress/no-unnecessary-waiting */
 
+/*
+ * This is the e2e test for nightfall browser
+ * Note: to run it locally
+ *  1. start all the containers from scratch.
+ *  2. start wallet/nightfall_browser app (follow readme.md)
+ *  3. In different terminal in wallet/ dir, run `npm run e2e-test`
+ */
 describe('End to End tests', () => {
   context('MetaMask', () => {
     it('getNetwork should return network by default', () => {
