@@ -7,6 +7,7 @@
  *  2. start wallet/nightfall_browser app (follow readme.md)
  *  3. In different terminal in wallet/ dir, run `npm run e2e-test`
  */
+
 describe('End to End tests', () => {
   context('MetaMask', () => {
     it('getNetwork should return network by default', () => {
@@ -39,10 +40,12 @@ describe('End to End tests', () => {
     });
   });
   context('Deposit', () => {
+    const depositValue = 4;
+
     it('initial deposit with approve', () => {
       cy.get('#TokenItem_tokenDepositMATIC').click();
       cy.url().should('include', '/bridge');
-      cy.get('#Bridge_amountDetails_tokenAmount').clear().type(4);
+      cy.get('#Bridge_amountDetails_tokenAmount').clear().type(depositValue);
       cy.get('button').contains('Transfer').click();
       cy.get('button').contains('Create Transaction').click();
       cy.get('#Bridge_modal_continueTransferButton').click();
@@ -56,8 +59,8 @@ describe('End to End tests', () => {
 
     it('second deposit which will create a new block', () => {
       cy.wait(10000);
-      // cy.url().should('include', '/bridge');
-      cy.get('#Bridge_amountDetails_tokenAmount').clear().type(4);
+      cy.url().should('include', '/bridge');
+      cy.get('#Bridge_amountDetails_tokenAmount').clear().type(depositValue);
       cy.get('button').contains('Transfer').click();
       cy.get('button').contains('Create Transaction').click();
       cy.get('#Bridge_modal_continueTransferButton').click();
@@ -65,6 +68,9 @@ describe('End to End tests', () => {
       cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
       cy.wait(10000);
       cy.get('.btn-close').click();
+    });
+
+    it('check token balance after deposit', () => {
       cy.contains('Nightfall Assets').click();
       cy.url().should('include', '/wallet');
       cy.wait(20000);
