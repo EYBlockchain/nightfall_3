@@ -42,7 +42,7 @@ describe('End to End tests', () => {
   context('Deposit', () => {
     const depositValue = 4;
 
-    it('initial deposit with approve', () => {
+    it('initial deposit with approve to spend', () => {
       cy.get('#TokenItem_tokenDepositMATIC').click();
       cy.url().should('include', '/bridge');
       cy.get('#Bridge_amountDetails_tokenAmount').clear().type(depositValue);
@@ -75,8 +75,12 @@ describe('End to End tests', () => {
       cy.url().should('include', '/wallet');
       cy.wait(20000);
       cy.get('#TokenItem_tokenBalanceMATIC').should($div => {
-        const totalBalance = Number($div.text());
+        cy.log($div.text());
+        const c = Number($div.text());
+        cy.log(totalBalance);
+        cy.log(depositValue * 3);
         expect(totalBalance).to.equal(depositValue * 3);
+        cy.log('after expect');
       });
     });
   });
