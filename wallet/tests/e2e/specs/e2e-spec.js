@@ -29,14 +29,13 @@ describe('End to End tests', () => {
 
     it('generate Mnemonic and set state', () => {
       cy.contains('Polygon Nightfall Wallet').click();
-      cy.get('#generateMnemonic').contains('Generate Mnemonic');
-      cy.get('#generateMnemonic').click();
-      cy.get('#createWallet').click();
+      cy.get('button').contains('Generate Mnemonic').click();
+      cy.get('button').contains('Create Wallet').click();
       cy.confirmMetamaskSignatureRequest().then(confirmed => expect(confirmed).to.be.true);
       cy.get('#TokenItem_tokenDepositMATIC').click();
       cy.url().should('include', '/bridge');
       cy.contains('Nightfall Assets').click();
-      cy.get('#generateMnemonic').should('not.exist');
+      cy.get('button').contains('Generate Mnemonic').should('not.exist');
     });
   });
   context('Deposit', () => {
