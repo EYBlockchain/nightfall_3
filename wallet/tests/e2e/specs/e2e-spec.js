@@ -56,7 +56,7 @@ describe('End to End tests', () => {
 
     it('second deposit which will create a new block', () => {
       cy.wait(10000);
-      cy.url().should('include', '/bridge');
+      // cy.url().should('include', '/bridge');
       cy.get('#Bridge_amountDetails_tokenAmount').clear().type(4);
       cy.get('button').contains('Transfer').click();
       cy.get('button').contains('Create Transaction').click();
