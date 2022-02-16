@@ -210,7 +210,7 @@ class Nf3 {
       // rather than waiting until we have a receipt, wait until we have enough confirmation blocks
       // then return the receipt.
       // TODO does this still work if there is a chain reorg or do we have to handle that?
-      return new Promise(resolve => {
+      return new Promise((resolve, reject) => {
         console.log(`Confirming transaction ${signed.transactionHash}`);
         this.notConfirmed++;
         this.web3.eth
@@ -224,6 +224,9 @@ class Nf3 {
               );
               resolve(receipt);
             }
+          })
+          .on('error', function (error) {
+            reject(error);
           });
       });
     }
