@@ -20,9 +20,16 @@ async function startProposer() {
   await nf3.init(undefined, 'optimist');
   if (await nf3.healthcheck('optimist')) logger.info('Healthcheck passed');
   else throw new Error('Healthcheck failed');
-  await nf3.registerProposer();
-  logger.debug('Proposer registration complete');
-  // TODO subscribe to layer 1 blocks and call change proposer
+  try {
+    await nf3.registerProposer();
+    logger.debug('Proposer registration complete');
+  } catch (err) {
+    if (err.message.includes('Transaction has been reverted by the EVM'))
+      logger.warn(
+        'Registration of Proposer caused a revert. This is most likely because the proposer is already registered',
+      );
+    else throw new Error(err);
+  }
   nf3.startProposer();
   logger.info('Listening for incoming events');
 }
