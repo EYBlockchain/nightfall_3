@@ -188,7 +188,7 @@ contract State is Structures, Config {
     proposers[nextAddress].previousAddress = proposers[previousAddress].thisAddress;
 
     if (proposer == currentProposer.thisAddress) {
-      proposerStartBlock = proposerStartBlock + ROTATE_PROPOSER_BLOCKS + 1; // force to rotate currentProposer
+      proposerStartBlock = 0;
       changeCurrentProposer();
     }
   }
@@ -243,9 +243,9 @@ contract State is Structures, Config {
    * the next proposer is simple rotation for now.
    */
   function changeCurrentProposer() public {
-    require(block.number - proposerStartBlock > ROTATE_PROPOSER_BLOCKS,
+   require(block.number - proposerStartBlock > ROTATE_PROPOSER_BLOCKS || proposerStartBlock == 0,
     "Proposers: Too soon to rotate proposer");
-  
+    
     address addressBestPeer;
     
     if( numProposers <= 1 ){
@@ -275,10 +275,10 @@ contract State is Structures, Config {
 
       currentSprint += 1;
     }
-
+    
     currentProposer = proposers[addressBestPeer];
     proposerStartBlock = block.number;
-    emit NewCurrentProposer(currentProposer.thisAddress);    
+    emit NewCurrentProposer(currentProposer.thisAddress);        
   }
 
   /**

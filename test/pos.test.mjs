@@ -132,7 +132,11 @@ describe('Testing the http API', () => {
       // In order to begin from 0 producing L2 blocks
       if (currentProposer.length === 1) {
         console.log('Unstaking proposer...');
-        nf3Proposer1.unstakeProposer();
+        try {
+          await nf3Proposer1.unstakeProposer();
+        } catch (e) {
+          console.log(e);
+        }
       }
 
       const stakeAccount1 = await getStakeAccount(nf3Proposer1.ethereumAddress);
@@ -263,6 +267,19 @@ describe('Testing the http API', () => {
       expect(thisProposer.length).to.be.equal(1);
       expect(Number(stakeAccount2.amount)).equal(
         Number(stakeAccount1.amount) + Number(MINIMUM_STAKE),
+      );
+    });
+
+    it('Should create a failing changeCurrentProposer (because insufficient time has passed)', async function () {
+      let error = null;
+      try {
+        const res = await nf3Proposer2.changeCurrentProposer();
+        expectTransaction(res);
+      } catch (err) {
+        error = err;
+      }
+      expect(error.message).to.satisfy(message =>
+        message.includes('Transaction has been reverted by the EVM'),
       );
     });
 
