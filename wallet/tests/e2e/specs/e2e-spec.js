@@ -76,7 +76,7 @@ describe('End to End tests', () => {
       cy.wait(20000);
       cy.get('#TokenItem_tokenBalanceMATIC').should($div => {
         cy.log($div.text());
-        const c = Number($div.text());
+        const totalBalance = Number($div.text());
         cy.log(totalBalance);
         cy.log(depositValue * 3);
         expect(totalBalance).to.equal(depositValue * 3);
