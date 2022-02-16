@@ -44,6 +44,7 @@ services:
       OPTIMIST_HOST: optimist1
       OPTIMIST_PORT: 80
       USE_STUBS: 'false' # make sure this flag is the same as in deployer service
+      AUTOSTART_RETRIES: 500
     command: ['npm', 'run', 'dev']
 
   client2:
@@ -88,6 +89,7 @@ services:
       OPTIMIST_HOST: optimist2
       OPTIMIST_PORT: 80
       USE_STUBS: 'false' # make sure this flag is the same as in deployer service
+      AUTOSTART_RETRIES: 500
     command: ['npm', 'run', 'dev']
 
   worker:
@@ -209,6 +211,7 @@ services:
       LOG_LEVEL: debug
       IS_CHALLENGER: 'true'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
+      AUTOSTART_RETRIES: 500
     command: ['npm', 'run', 'dev']
 
   optimist2:
@@ -243,6 +246,7 @@ services:
       LOG_LEVEL: error
       IS_CHALLENGER: 'true'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
+      AUTOSTART_RETRIES: 500
     command: ['npm', 'run', 'dev']
 
 volumes:

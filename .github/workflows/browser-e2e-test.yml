@@ -1,0 +1,82 @@
+name: Browser e2e test
+
+on:
+  pull_request:
+    branch:
+      - wallet/nf-browser-v2
+
+jobs:
+  e2e-test:
+    runs-on: ubuntu-18.04
+    environment: AWS
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '14.17.0'
+
+      - name: Install aws-cli
+        run: |
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install
+
+      - name: Verify aws-cli installation
+        run: aws --version
+
+      - name: Configure AWS credentials from Test account
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Download precompiled circuit outputs
+        run: aws s3 cp s3://nightfallv3/circuits ./wallet/src/zokrates --recursive
+
+      - name: Start Containers
+        run: |
+          npm ci
+          docker-compose build
+          ./start-nightfall -g -s &> docker-compose.log &disown
+
+      - name: wait 1000s for Containers startup and setup completion
+        run: sleep 1000
+
+      - name: debug logs - after container startup
+        if: always()
+        run: cat docker-compose.log
+
+      - name: Setup proposer
+        run: cd cli && npm ci
+
+      - name: Run proposer
+        run:  |
+          ./proposer > proposer.log &disown
+          sleep 200
+
+      - name: debug logs - proposer.log
+        if: always()
+        run: cat proposer.log
+
+      - name: Setup browser app
+        run: |
+          cd wallet/
+          npm ci
+          ./copy-zokrates-local.sh
+
+      - name: Start browser app
+        run: |
+          cd wallet/
+          npm start &> browser-app.log &disown
+          sleep 400
+        env:
+          BROWSER: none
+          CHOKIDAR_USEPOLLING: false
+
+      - name: debug logs - after browser startup
+        if: always()
+        run: cat wallet/browser-app.log
+
+      - name: Run e2e test
+        run: cd wallet && npm run e2e-test

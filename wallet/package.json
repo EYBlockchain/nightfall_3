@@ -46,7 +46,8 @@
     "build": "REACT_APP_ENVIRONMENT=Ropsten craco build",
     "deploy": "npm run build && aws s3 sync build/ s3://nightfallv3-wallet --cache-control max-age=172800 --delete && aws configure set preview.cloudfront true && aws cloudfront create-invalidation --distribution-id E9K9C7N0TG7LG --paths \"/*\"",
     "test": "craco test --env=jsdom",
-    "eject": "craco eject"
+    "eject": "craco eject",
+    "e2e-test": "NETWORK_NAME=ganache-nightfall RPC_URL=http://localhost:8546 CHAIN_ID=1337 PRIVATE_KEY=0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e npx synpress run"
   },
   "browserslist": {
     "production": [
@@ -59,5 +60,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@synthetixio/synpress": "^1.1.1"
   }
 }
