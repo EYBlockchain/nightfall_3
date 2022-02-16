@@ -1,47 +1,56 @@
-# Updating contracts
+# Upgrading and Migrating contracts
 
-We may need to update contracts, for example to fix a bug. This creates a degree of
-centralisation but is an acceptable tradeoff for a beta phase.
+We consider two approaches:  *Upgrading* existing contracts to a new version but retaining
+state data as-is, and; *migrating* users to a completely new set of contracts.
 
-## Considerations
+We would only migrate in the event of a key loss, which prevents upgrading contracts.
 
-If we move to a new set of contracts then we need to ensure that:
+## Upgrade contracts approach
 
-1. Any stored state is copied over so that users retain their commitments and the contract
-correctly holds nullifiers etc.
-1. Any re-syncing `optimist` or `client` is able to parse calldata originating from the
-current contract and earlier ones.
-1. Updates to the old contract are stopped before the changeover happens.
-1. Nightfall and clients should be able to discover the new contract address.
-1. Service disruption should be minimised.
+Our contracts are already mostly divided into contracts that contain data and contracts that
+contain logic. This is fortuitous for the pattern we are going to use.
 
-Note: We assume that the contracts' ABIs are not changing. If they do change, then the
-Nightfall components will also need upgrading and re-syncing. That is a conventional upgrade though.
+`State.sol` contains most of the state, with some in `Shield.sol`.
+This division could be made complete by moving the `proposeBlock` function out of `State.sol`
+and moving the `Shield.sol` data into `State.sol` (there may be a few other minor adjustments
+TBC). `State.sol` will then only contain storage data and getters/setters for the same.
+It will also need modifying so that the addresses of the logic contracts, which it allows to
+set state, can be updated by a registered contract containing an `upgrade` function (see later).
 
-## Solution
+After that is done, we will never upgrade the `State.sol` contract but will upgrade the
+stateless logic contracts. The logic contracts call `State.sol` and thus we avoid the use of
+`delegateCall`. If, in the future, `State.sol` becomes insufficient for our needs, another
+data contract can be deployed alongside, which adds the new storage variables needed.
 
-First we need to signal to users that this contract is deprecated and will be destroyed (`selfdestruct`)
-soon. This should be done by emitting an event `Deprecated`, which will list the addresses of the
-deprecated contracts, and should be about 150 blocks (10 mins) before the `upgrade` function is called.
-This is because the `upgrade` function will selfdestruct the `State`, `Shield`, `Proposers` and `Challenges`
-contracts and any ETH sent to those contracts (e.g. by a Proposer registration) will be lost (actually
-the address owner could repay them so it's maybe not a total disaster). Thus Proposers, Challengers and
-Users should check for such an event immediately before sending ETH and, if found, they should wait until
-they see a `ContractsUgraded` event (see below), at which point they should update their contract addresses
-with a write to the `build` volume.
+We will create another contract, which proxies calls to the logic contracts. This avoids users
+having to repoint their applications to the new contracts. The `Proxy.sol` contract will also
+contain the `upgrade` function.
 
-After sufficient time has passed, and assuming a new set of contracts is deployed, the `upgrade` function
-should be called.  This is an `onlyOwner` function in `State.sol` that will, atomically, do the following:
-1. Copy the address of the current `State`, `Shield`, `Proposers` and `Challenges` contracts to the new `State` contract.
-These will be stored to assist devices that are syncing, and which will need to sync call data emitted by both old
-and new contracts.
-1. Write the current block number into the new `State` contract. Again, this will help syncing devices
-to know which events to listen for (specifically the Event's address).
-1. Copy all storage variables to the new contract (including the addresses of any previous contracts, if these exist);
-1. Emit an event `ContractsUgraded` which broadcasts the addresses of the new `State`, `Shield`, `Proposers`
-and `Challenges` contracts;
-1. Call `selfdestruct` on `State`, `Shield`, `Proposers` and `Challenges` contracts, paying the Ether held by
-`State` into the new `State` contract.
+![contract interaction](./contract-upgrade.png)
 
-The syncing functions in `Optimist`, `Client` and `Nightfall-browser` must be modified to cope with
-syncing across different contract addresses, swapping contracts at particular block numbers.
+### upgrade function
+
+This function will, atomically, carry out the following actions:
+
+1. Repoint `State.sol`'s registered logic contracts to the new logic contracts;
+1. Repoint `Proxy.sol` to the new contracts;
+1. Change the addresses of the contracts registered with `State.sol` to the new contract addresses;
+1. Store the address of the old contracts and the block number at which the swap-over occurred in `State.sol`; this
+will be used to help nightfall applications parse historic events and calldata. This will be in the form of
+an array, added to each time the contracts are upgraded.
+1. Call `selfdestruct` on the old logic contracts (just to return gas);
+1. Emit an event advertising the upgrade;
+
+We will ensure that a unique private key is needed to call `upgrade`.
+
+Note: The nightfall applications will need to be updated so that they can sync events and calldata on startup,
+which may have changing contract addresses, reflecting historic contract upgrades.
+
+## Migrate contracts approach
+
+In rare circumstances an upgrade may not be possible; the only use-case is probably compromise of the upgrade
+private key.  If this happens we would deploy an entirely new set of contracts. Rather than attempt to
+migrate storage data (which would be difficult because of the number of mapping types, and the need to
+freeze updates for the old contract data, which would require a wait of one finalisation period, ~1 week and may not be
+possible if the relevant key is compromised), we will simply advertise the new contract addresses and recommend
+that people upgrade by removing their funds from the old contract.
