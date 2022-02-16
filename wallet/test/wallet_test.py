@@ -30,8 +30,8 @@ from pyvirtualdisplay import Display
 testEnvironment="localhost"
 testToRun = { 
     'all': True,   # Run all tests
-    'new': False,  # Run new wallet tests
-    'old': True,   # Run old wallet tests
+    'new': True,  # Run new wallet tests
+    'old': False,   # Run old wallet tests
     'effects': False,
     'tokens': False,
     'tx': False,
@@ -124,8 +124,8 @@ try:
     # TODO Add login mechanism to new wallet
     loginNewNightfallWallet(driver, findElementsInstance, metamaskTab, nightfallTab, walletUrl)
   skipTest=False
-except Exception:
-  print("FAILED")
+except Exception as e:
+  print("FAILED", e)
   skipTest=True
   
 ########################
