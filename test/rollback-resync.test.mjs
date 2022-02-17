@@ -14,7 +14,8 @@ import {
   Web3Client,
 } from './utils.mjs';
 
-const { privateKey, gas, BLOCK_STAKE, fee, tokenId, value, tokenType, bond } = config.TEST_OPTIONS;
+const { privateKey, gas, BLOCK_STAKE, fee, tokenId, transferValue, tokenType, bond } =
+  config.TEST_OPTIONS;
 
 const { spawn } = childProcess;
 const { expect } = chai;
@@ -86,12 +87,20 @@ describe('Running rollback and resync test', () => {
         .send({ mnemonic, path: `m/44'/60'/0'/0` })
     ).body);
 
-    defaultDepositArgs = { ercAddress, tokenId, tokenType, value, pkd: pkd1, nsk: nsk1, fee };
+    defaultDepositArgs = {
+      ercAddress,
+      tokenId,
+      tokenType,
+      transferValue,
+      pkd: pkd1,
+      nsk: nsk1,
+      fee,
+    };
     defaultTransferArgs = {
       ercAddress,
       tokenId,
       recipientData: {
-        values: [value],
+        transferValues: [transferValue],
         recipientPkds: [pkd1],
       },
       nsk: nsk1,
@@ -118,7 +127,7 @@ describe('Running rollback and resync test', () => {
       const msg = JSON.parse(message.data);
       const { type, txDataToSign, block, transactions } = msg;
       if (type === 'block') {
-        // third last input is msg.value
+        // third last input is msg.transferValue
         // eslint-disable-next-line prettier/prettier
         await blockSubmissionFunction(
           txDataToSign,

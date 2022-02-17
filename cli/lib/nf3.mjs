@@ -190,12 +190,10 @@ class Nf3 {
     contractAddress = this.shieldContractAddress,
     fee = this.defaultFee,
   ) {
-    // We'll manage the nonce ourselves because we can run too fast for the blockchain client to update
     // we need a Mutex so that we don't get a nonce-updating race.
 
     let tx;
     await this.nonceMutex.runExclusive(async () => {
-      // if we don't have a nonce, we must get one from the ethereum client
       this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
 
       let gasPrice = 20000000000;
@@ -438,7 +436,7 @@ class Nf3 {
     });
     this.latestWithdrawHash = res.data.transaction.transactionHash;
     if (!offchain) {
-      const receiptPromise = await this.submitTransaction(
+      const receiptPromise = this.submitTransaction(
         res.data.txDataToSign,
         this.shieldContractAddress,
         fee,

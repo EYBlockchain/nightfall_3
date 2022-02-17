@@ -3,22 +3,24 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import config from 'config';
 import chaiAsPromised from 'chai-as-promised';
-import { createRequire } from 'module';
 import Nf3 from '../../cli/lib/nf3.mjs';
 import { depositNTransactions, Web3Client } from '../utils.mjs';
 
 // so we can use require with mjs file
-const require = createRequire(import.meta.url);
 const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
 // we need require here to import jsons
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
-const mnemonics = require('./mnemonics.json');
-const signingKeys = require('./signingKeys.json');
-const { fee, transferValue } = require('./configs.json');
-const { tokenType, tokenId } = require('./tokenConfigs.json');
+
+const {
+  fee,
+  transferValue,
+  tokenConfigs: { tokenType, tokenId },
+  mnemonics,
+  signingKeys,
+} = config.TEST_OPTIONS;
 
 const txPerBlock = 32;
 const expectedGasCostPerTx = 10000 * txPerBlock;

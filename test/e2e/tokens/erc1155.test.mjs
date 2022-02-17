@@ -4,25 +4,25 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
-import { createRequire } from 'module';
 import Nf3 from '../../../cli/lib/nf3.mjs';
 import { expectTransaction, Web3Client, depositNTransactions } from '../../utils.mjs';
 import { getERCInfo } from '../../../cli/lib/tokens.mjs';
 
 // so we can use require with mjs file
-const require = createRequire(import.meta.url);
 const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
-// we need require here to import jsons
-const mnemonics = require('../mnemonics.json');
-const signingKeys = require('../signingKeys.json');
-const { fee, txPerBlock, transferValue } = require('../configs.json');
-const { tokenTypeERC1155 } = require('../tokenConfigs.json');
-const { tokenType, tokenId } = require('../tokenConfigs.json');
+const {
+  fee,
+  txPerBlock,
+  transferValue,
+  tokenConfigs: { tokenTypeERC1155, tokenType, tokenId },
+  mnemonics,
+  signingKeys,
+} = config.TEST_OPTIONS;
 
 const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
 const nf3Proposer1 = new Nf3(signingKeys.proposer1, environment);
