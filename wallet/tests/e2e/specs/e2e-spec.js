@@ -37,7 +37,7 @@ describe('End to End tests', () => {
       cy.url().should('include', '/bridge');
       cy.contains('Nightfall Assets').click();
       cy.url().should('include', '/wallet');
-      cy.get('button').contains('Generate Mnemonic').should('exist');
+      cy.get('button').contains('Generate Mnemonic').should('not.exist');
     });
   });
   context('Deposit', () => {
@@ -72,7 +72,7 @@ describe('End to End tests', () => {
       cy.contains('Nightfall Assets').click();
       cy.get('#TokenItem_tokenBalanceMATIC').should($div => {
         const totalBalance = Number($div.text());
-        expect(totalBalance).to.equal(depositValue * 3);
+        expect(totalBalance).to.equal(depositValue * 2);
       });
     });
   });
