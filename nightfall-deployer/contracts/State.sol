@@ -222,17 +222,17 @@ contract State is Structures, Config {
     pendingWithdrawals[challengerAddr] += numRemoved * BLOCK_STAKE;
   }
 
-  function updateStakeAccountTime(address addr, uint256 time) public onlyRegistered {
+  function updateStakeAccountTime(address addr, uint256 time) external onlyRegistered {
     TimeLockedStake memory stake = stakeAccounts[addr];
     stake.time = time;
     stakeAccounts[addr] = stake;
   }
 
-  function isBlockStakeWithdrawn(bytes32 blockHash) public view returns (bool){
+  function isBlockStakeWithdrawn(bytes32 blockHash) external view returns (bool){
     return claimedBlockStakes[blockHash];
   }
 
-  function setBlockStakeWithdrawn(bytes32 blockHash) public onlyRegistered {
+  function setBlockStakeWithdrawn(bytes32 blockHash) external onlyRegistered {
     claimedBlockStakes[blockHash] = true;
   }
 
@@ -296,31 +296,33 @@ contract State is Structures, Config {
   function fillSlots() public {
     require(currentProposer.thisAddress != address(0), "State: Current proposer not initialized");
     LinkedAddress memory p = currentProposer;
-    TimeLockedStake memory stake = getStakeAccount(p.thisAddress);
- 
+    TimeLockedStake memory stake;
     uint256 weight;
     
     // 1) remove all slots
     delete slots;
     // 2) assign slots based on the stake of the proposers
     if (numProposers == 1) {
-        weight = stake.amount / VALUE_PER_SLOT;
-        for (uint256 i = 0; i < weight; i++) {
-            slots.push(p.thisAddress);
-        }
+      stake = getStakeAccount(p.thisAddress);
+      weight = stake.amount / VALUE_PER_SLOT;
+      for (uint256 i = 0; i < weight; i++) {
+          slots.push(p.thisAddress);
+      }
     }
     else {
-        while (p.nextAddress != currentProposer.thisAddress) {
-            weight = stake.amount / VALUE_PER_SLOT;
-            for (uint256 i = 0; i < weight; i++) {
-                slots.push(p.thisAddress);
-            }
-            p = proposers[p.nextAddress];
-        }
+      while (p.nextAddress != currentProposer.thisAddress) {
+        stake = getStakeAccount(p.thisAddress);
         weight = stake.amount / VALUE_PER_SLOT;
         for (uint256 i = 0; i < weight; i++) {
             slots.push(p.thisAddress);
         }
+        p = proposers[p.nextAddress];
+      }
+      stake = getStakeAccount(p.thisAddress);
+      weight = stake.amount / VALUE_PER_SLOT;
+      for (uint256 i = 0; i < weight; i++) {
+          slots.push(p.thisAddress);
+      }
     }
   }
 

@@ -75,6 +75,59 @@ const miniStateABI = [
     stateMutability: 'view',
     type: 'function',
   },
+  {
+    inputs: [],
+    name: 'getCurrentProposer',
+    outputs: [
+      {
+        components: [
+          {
+            internalType: 'address',
+            name: 'thisAddress',
+            type: 'address',
+          },
+          {
+            internalType: 'address',
+            name: 'previousAddress',
+            type: 'address',
+          },
+          {
+            internalType: 'address',
+            name: 'nextAddress',
+            type: 'address',
+          },
+          {
+            internalType: 'bool',
+            name: 'inProposerSet',
+            type: 'bool',
+          },
+          {
+            internalType: 'uint256',
+            name: 'indexProposerSet',
+            type: 'uint256',
+          },
+        ],
+        internalType: 'struct Structures.LinkedAddress',
+        name: '',
+        type: 'tuple',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'currentSprint',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
 ];
 
 describe('Testing the http API', () => {
@@ -95,6 +148,18 @@ describe('Testing the http API', () => {
     const stateContractInstance = new web3.eth.Contract(miniStateABI, stateAddress);
     const stakeAccount = await stateContractInstance.methods.getStakeAccount(ethAccount).call();
     return stakeAccount;
+  };
+
+  const getCurrentProposer = async () => {
+    const stateContractInstance = new web3.eth.Contract(miniStateABI, stateAddress);
+    const currentProposer = await stateContractInstance.methods.getCurrentProposer().call();
+    return currentProposer;
+  };
+
+  const getCurrentSprint = async () => {
+    const stateContractInstance = new web3.eth.Contract(miniStateABI, stateAddress);
+    const currentSprint = await stateContractInstance.methods.currentSprint().call();
+    return currentSprint;
   };
 
   before(async () => {
@@ -153,11 +218,60 @@ describe('Testing the http API', () => {
 
     it('should increase stake for a proposer', async () => {
       const stakeAccount1 = await getStakeAccount(nf3Proposer1.ethereumAddress);
-      const res = await nf3Proposer1.stakeProposer(MINIMUM_STAKE);
+      const res = await nf3Proposer1.stakeProposer(MINIMUM_STAKE * 3);
       expectTransaction(res);
       const stakeAccount2 = await getStakeAccount(nf3Proposer1.ethereumAddress);
       expect(Number(stakeAccount2.amount)).equal(
-        Number(stakeAccount1.amount) + Number(MINIMUM_STAKE),
+        Number(stakeAccount1.amount) + Number(MINIMUM_STAKE * 3),
+      );
+    });
+
+    it('should stake second proposer', async () => {
+      let proposers;
+      ({ proposers } = await nf3Proposer2.getProposers());
+      let thisProposer;
+      thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer3.ethereumAddress);
+      expect(thisProposer.length).to.be.equal(0);
+      const stakeAccount1 = await getStakeAccount(nf3Proposer2.ethereumAddress);
+      const res = await nf3Proposer2.stakeProposer(MINIMUM_STAKE * 2);
+      expectTransaction(res);
+      const stakeAccount2 = await getStakeAccount(nf3Proposer2.ethereumAddress);
+      ({ proposers } = await nf3Proposer2.getProposers());
+      thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer2.ethereumAddress);
+      expect(thisProposer.length).to.be.equal(1);
+      expect(Number(stakeAccount2.amount)).equal(
+        Number(stakeAccount1.amount) + Number(MINIMUM_STAKE * 2),
+      );
+    });
+
+    it('should stake third proposer', async () => {
+      let proposers;
+      ({ proposers } = await nf3Proposer3.getProposers());
+      let thisProposer;
+      thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer3.ethereumAddress);
+      expect(thisProposer.length).to.be.equal(0);
+      const stakeAccount1 = await getStakeAccount(nf3Proposer3.ethereumAddress);
+      const res = await nf3Proposer3.stakeProposer(MINIMUM_STAKE * 2);
+      expectTransaction(res);
+      const stakeAccount2 = await getStakeAccount(nf3Proposer3.ethereumAddress);
+      ({ proposers } = await nf3Proposer3.getProposers());
+      thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer3.ethereumAddress);
+      expect(thisProposer.length).to.be.equal(1);
+      expect(Number(stakeAccount2.amount)).equal(
+        Number(stakeAccount1.amount) + Number(MINIMUM_STAKE * 2),
+      );
+    });
+
+    it('Should create a failing changeCurrentProposer (because insufficient blocks has passed)', async function () {
+      let error = null;
+      try {
+        const res = await nf3Proposer2.changeCurrentProposer();
+        expectTransaction(res);
+      } catch (err) {
+        error = err;
+      }
+      expect(error.message).to.satisfy(message =>
+        message.includes('Transaction has been reverted by the EVM'),
       );
     });
 
@@ -216,71 +330,26 @@ describe('Testing the http API', () => {
       }
     });
 
-    it('should stake second proposer', async () => {
-      // Proposer listening for incoming events
-      const newGasBlockEmitter = await nf3Proposer2.startProposer();
-      newGasBlockEmitter.on('gascost', async gasUsed => {
-        currentGasCostPerTx = gasUsed / TRANSACTIONS_PER_BLOCK;
-        console.log(
-          `(2) Block proposal gas cost was ${gasUsed}, cost per transaction was ${currentGasCostPerTx}`,
-        );
-      });
-
-      let proposers;
-      ({ proposers } = await nf3Proposer2.getProposers());
-      let thisProposer;
-      thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer3.ethereumAddress);
-      expect(thisProposer.length).to.be.equal(0);
-      const stakeAccount1 = await getStakeAccount(nf3Proposer2.ethereumAddress);
-      const res = await nf3Proposer2.stakeProposer(MINIMUM_STAKE);
-      expectTransaction(res);
-      const stakeAccount2 = await getStakeAccount(nf3Proposer2.ethereumAddress);
-      ({ proposers } = await nf3Proposer2.getProposers());
-      thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer2.ethereumAddress);
-      expect(thisProposer.length).to.be.equal(1);
-      expect(Number(stakeAccount2.amount)).equal(
-        Number(stakeAccount1.amount) + Number(MINIMUM_STAKE),
-      );
-    });
-
-    it('should stake third proposer', async () => {
-      // Proposer listening for incoming events
-      const newGasBlockEmitter = await nf3Proposer3.startProposer();
-      newGasBlockEmitter.on('gascost', async gasUsed => {
-        currentGasCostPerTx = gasUsed / TRANSACTIONS_PER_BLOCK;
-        console.log(
-          `(3) Block proposal gas cost was ${gasUsed}, cost per transaction was ${currentGasCostPerTx}`,
-        );
-      });
-
-      let proposers;
-      ({ proposers } = await nf3Proposer2.getProposers());
-      let thisProposer;
-      thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer3.ethereumAddress);
-      expect(thisProposer.length).to.be.equal(0);
-      const stakeAccount1 = await getStakeAccount(nf3Proposer3.ethereumAddress);
-      const res = await nf3Proposer3.stakeProposer(MINIMUM_STAKE);
-      expectTransaction(res);
-      const stakeAccount2 = await getStakeAccount(nf3Proposer3.ethereumAddress);
-      ({ proposers } = await nf3Proposer3.getProposers());
-      thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer3.ethereumAddress);
-      expect(thisProposer.length).to.be.equal(1);
-      expect(Number(stakeAccount2.amount)).equal(
-        Number(stakeAccount1.amount) + Number(MINIMUM_STAKE),
-      );
-    });
-
-    it('Should create a failing changeCurrentProposer (because insufficient time has passed)', async function () {
-      let error = null;
-      try {
-        const res = await nf3Proposer2.changeCurrentProposer();
-        expectTransaction(res);
-      } catch (err) {
-        error = err;
+    it('Should create a valid changeCurrentProposer (because blocks has passed)', async function () {
+      for (let i = 0; i < 10; i++) {
+        try {
+          // eslint-disable-next-line no-await-in-loop
+          const currentSprint = await getCurrentSprint();
+          // eslint-disable-next-line no-await-in-loop
+          const currentProposer = await getCurrentProposer();
+          console.log(
+            `     [ Current sprint: ${currentSprint}, Current proposer: ${currentProposer.thisAddress} ]`,
+          );
+          // eslint-disable-next-line no-await-in-loop
+          const res = await nf3Proposer2.changeCurrentProposer();
+          expectTransaction(res);
+          console.log('Waiting blocks to rotate current proposer...');
+        } catch (err) {
+          console.log(err);
+        }
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise(resolve => setTimeout(resolve, 90000));
       }
-      expect(error.message).to.satisfy(message =>
-        message.includes('Transaction has been reverted by the EVM'),
-      );
     });
 
     it('should unstake proposers', async () => {
