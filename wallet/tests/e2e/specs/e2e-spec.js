@@ -72,7 +72,7 @@ describe('End to End tests', () => {
     it(`check token balance equal to ${depositValue * 2}`, () => {
       cy.get('#TokenItem_tokenBalanceMATIC').should($div => {
         const totalBalance = Number($div.text());
-        expect(totalBalance).to.equal(depositValue * 3);
+        expect(totalBalance).to.equal(depositValue * 2);
       });
     });
   });
