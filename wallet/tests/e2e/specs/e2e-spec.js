@@ -37,7 +37,7 @@ describe('End to End tests', () => {
       cy.url().should('include', '/bridge');
       cy.contains('Nightfall Assets').click();
       cy.url().should('include', '/wallet');
-      cy.get('button').contains('Generate Mnemonic').should('not.exist');
+      cy.get('button').contains('Generate Mnemonic').should('exist');
     });
   });
   context('Deposit', () => {
