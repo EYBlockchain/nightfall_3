@@ -66,13 +66,13 @@ describe('End to End tests', () => {
       cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
       cy.wait(10000);
       cy.get('.btn-close').click();
+      cy.contains('Nightfall Assets').click();
     });
 
     it(`check token balance equal to ${depositValue * 2}`, () => {
-      cy.contains('Nightfall Assets').click();
       cy.get('#TokenItem_tokenBalanceMATIC').should($div => {
         const totalBalance = Number($div.text());
-        expect(totalBalance).to.equal(depositValue * 2);
+        expect(totalBalance).to.equal(depositValue * 3);
       });
     });
   });
