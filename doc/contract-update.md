@@ -22,9 +22,10 @@ stateless logic contracts. The logic contracts call `State.sol` and thus we avoi
 `delegateCall`. If, in the future, `State.sol` becomes insufficient for our needs, another
 data contract can be deployed alongside, which adds the new storage variables needed.
 
-We will create another contract, which proxies calls to the logic contracts. This avoids users
-having to repoint their applications to the new contracts. The `Proxy.sol` contract will also
-contain the `upgrade` function.
+We will create a set of contracts, which proxy calls to the logic contracts (one for each logic contract). This avoids users
+having to repoint their applications to the new contracts. The `Proxy.sol` contracts will also
+contain the `upgrade` function (we could have a single `Proxy.sol` which deals with all contracts but this
+is less flexible if we want to add new logic contracts).
 
 ![contract interaction](./contract-upgrade.png)
 
@@ -33,7 +34,7 @@ contain the `upgrade` function.
 This function will, atomically, carry out the following actions:
 
 1. Repoint `State.sol`'s registered logic contracts to the new logic contracts;
-1. Repoint `Proxy.sol` to the new contracts;
+1. Repoint `Proxy.sol` contracts to the new contracts;
 1. Change the addresses of the contracts registered with `State.sol` to the new contract addresses;
 1. Store the address of the old contracts and the block number at which the swap-over occurred in `State.sol`; this
 will be used to help nightfall applications parse historic events and calldata. This will be in the form of
@@ -45,6 +46,9 @@ We will ensure that a unique private key is needed to call `upgrade`.
 
 Note: The nightfall applications will need to be updated so that they can sync events and calldata on startup,
 which may have changing contract addresses, reflecting historic contract upgrades.
+
+Note: it must be possible to change the key that enables `upgrade` to be called. This is so we can
+remove the ability to upgrade in the future and enable full decentralisation.
 
 ## Migrate contracts approach
 
