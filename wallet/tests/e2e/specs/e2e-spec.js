@@ -36,15 +36,15 @@ describe('End to End tests', () => {
       cy.get('#TokenItem_tokenDepositMATIC').click();
       cy.url().should('include', '/bridge');
       cy.contains('Nightfall Assets').click();
+      cy.url().should('include', '/wallet');
       cy.get('button').contains('Generate Mnemonic').should('not.exist');
     });
   });
   context('Deposit', () => {
     const depositValue = 4;
 
-    it('initial deposit with approve to spend', () => {
+    it(`initial deposit of value ${depositValue}`, () => {
       cy.get('#TokenItem_tokenDepositMATIC').click();
-      cy.url().should('include', '/bridge');
       cy.get('#Bridge_amountDetails_tokenAmount').clear().type(depositValue);
       cy.get('button').contains('Transfer').click();
       cy.get('button').contains('Create Transaction').click();
@@ -57,9 +57,7 @@ describe('End to End tests', () => {
       cy.get('.btn-close').click();
     });
 
-    it('second deposit which will create a new block', () => {
-      cy.wait(10000);
-      cy.url().should('include', '/bridge');
+    it(`second deposit of value ${depositValue}`, () => {
       cy.get('#Bridge_amountDetails_tokenAmount').clear().type(depositValue);
       cy.get('button').contains('Transfer').click();
       cy.get('button').contains('Create Transaction').click();
@@ -70,17 +68,11 @@ describe('End to End tests', () => {
       cy.get('.btn-close').click();
     });
 
-    it('check token balance after deposit', () => {
+    it(`check token balance equal to ${depositValue * 2}`, () => {
       cy.contains('Nightfall Assets').click();
-      cy.url().should('include', '/wallet');
-      cy.wait(20000);
       cy.get('#TokenItem_tokenBalanceMATIC').should($div => {
-        cy.log($div.text());
         const totalBalance = Number($div.text());
-        cy.log(totalBalance);
-        cy.log(depositValue * 3);
         expect(totalBalance).to.equal(depositValue * 3);
-        cy.log('after expect');
       });
     });
   });
