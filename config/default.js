@@ -42,15 +42,15 @@ module.exports = {
   // In production and staging environements, we require https/wss and no port, as traffic will be routed to the correct service
   // given a URL.
   optimistBaseUrl:
-    process.env.DOMAIN_NAME === ''
+    DOMAIN_NAME === ''
       ? `http://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_HTTP_PORT}`
       : `https://${process.env.OPTIMIST_HTTP_HOST}`,
   optimistWsUrl:
-    process.env.DOMAIN_NAME === ''
+    DOMAIN_NAME === ''
       ? `ws://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_WS_PORT}`
       : `wss://${process.env.OPTIMIST_HOST}`,
   web3WsUrl:
-    process.env.DOMAIN_NAME === ''
+    DOMAIN_NAME === ''
       ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`
       : `wss://${process.env.BLOCKCHAIN_WS_HOST}`,
   userEthereumSigningKey:
