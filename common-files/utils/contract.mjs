@@ -26,7 +26,7 @@ export async function getContractInterface(contractName) {
 export async function getContractAddress(contractName) {
   let deployedAddress;
   const contractInterface = await getContractInterface(contractName);
-  const networkId = CHAIN_ID ==='' ? await web3.eth.net.getId() : CHAIN_ID;
+  const networkId = CHAIN_ID === '' ? await web3.eth.net.getId() : CHAIN_ID;
   logger.silly('networkId:', networkId);
 
   if (contractInterface && contractInterface.networks && contractInterface.networks[networkId]) {

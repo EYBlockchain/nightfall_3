@@ -91,7 +91,7 @@ module.exports = {
       gas: 8000000,
       websockets: true,
     },
-    
+
     ropsten: {
       provider: () => new HDWalletProvider(config.ETH_PRIVATE_KEY, config.BLOCKCHAIN_URL),
       network_id: 3,
