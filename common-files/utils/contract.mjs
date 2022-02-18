@@ -10,6 +10,7 @@ import logger from './logger.mjs';
 export const web3 = Web3.connection();
 
 const options = config.WEB3_OPTIONS;
+const { CHAIN_ID } = process.env;
 
 export const contractPath = contractName => {
   return `${config.CONTRACT_ARTIFACTS}/${contractName}.json`;
@@ -25,8 +26,7 @@ export async function getContractInterface(contractName) {
 export async function getContractAddress(contractName) {
   let deployedAddress;
   const contractInterface = await getContractInterface(contractName);
-
-  const networkId = await web3.eth.net.getId();
+  const networkId = CHAIN_ID ==='' ? await web3.eth.net.getId() : CHAIN_ID;
   logger.silly('networkId:', networkId);
 
   if (contractInterface && contractInterface.networks && contractInterface.networks[networkId]) {
