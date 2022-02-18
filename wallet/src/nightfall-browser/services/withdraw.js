@@ -102,7 +102,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     .then(parseData)
     .then(mergeUint8Array);
 
-  const artifacts = { program: new Uint8Array(program), abi: JSON.stringify(abi) };
+  const artifacts = { program: new Uint8Array(program), abi };
   const keypair = { pk: new Uint8Array(pk) };
   // computation
   const { witness } = zokratesProvider.computeWitness(artifacts, witnessInput);
