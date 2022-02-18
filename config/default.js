@@ -1,3 +1,5 @@
+const { DOMAIN_NAME = '' } = process.env;
+
 module.exports = {
   COMMITMENTS_DB: 'nightfall_commitments',
   OPTIMIST_DB: 'optimist_data',
