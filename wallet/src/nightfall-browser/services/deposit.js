@@ -76,7 +76,7 @@ async function deposit(items, shieldContractAddress) {
     .then(parseData)
     .then(mergeUint8Array);
 
-  const artifacts = { program: new Uint8Array(program), abi: JSON.stringify(abi) };
+  const artifacts = { program: new Uint8Array(program), abi };
   const keypair = { pk: new Uint8Array(pk) };
 
   // computation

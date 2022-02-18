@@ -75,10 +75,7 @@ export default function Bridge() {
     console.log('Tx Triggered', txType);
     const { address: shieldContractAddress } = (await getContractAddress('Shield')).data;
     const { address: defaultTokenAddress } = (await getContractAddress('ERC20Mock')).data; // TODO Only for testing now
-    const ercAddress =
-      location.tokenState?.tokenAddress === ''
-        ? defaultTokenAddress
-        : location.tokenState.tokenAddress; // TODO Location to be removed later
+    const ercAddress = defaultTokenAddress; // TODO Location to be removed later
     console.log('TokenAddress', ercAddress);
     switch (txType) {
       case 'deposit': {
