@@ -267,9 +267,9 @@ describe('Testing the http API', () => {
         const { txDataToSign } = res.body;
         expect(txDataToSign).to.be.a('string');
         const bond = 10;
-        const count = logCounts.registerProposer;
+        const count = logCounts.stakeProposer;
         await submitTransaction(txDataToSign, privateKey, proposersAddress, gas, bond);
-        await waitForTxExecution(count, 'registerProposer');
+        await waitForTxExecution(count, 'stakeProposer');
         stateBalance += bond;
       } catch (err) {
         // an EVM revert almost certainly indicates that the proposer is already registered.  That's
