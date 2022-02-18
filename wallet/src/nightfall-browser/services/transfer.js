@@ -229,7 +229,7 @@ async function transfer(transferParams, shieldContractAddress) {
     abi = doubleTransferAbi;
   } else throw new Error('Unsupported number of commitments');
 
-  const artifacts = { program: new Uint8Array(program), abi: JSON.stringify(abi) };
+  const artifacts = { program: new Uint8Array(program), abi };
   const keypair = { pk: new Uint8Array(pk) };
   const { witness } = zokratesProvider.computeWitness(artifacts, flattenInput);
   // generate proof

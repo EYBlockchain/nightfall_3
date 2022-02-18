@@ -72,7 +72,7 @@ export const UserProvider = ({ children }) => {
     // Connection opened
     socket.addEventListener('open', function () {
       console.log(`Websocket is open`);
-      socket.send('proposedBlock');
+      // socket.send('proposedBlock');
     });
 
     // Listen for messages
