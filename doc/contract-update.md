@@ -11,9 +11,16 @@ Our contracts are already mostly divided into contracts that contain data and co
 contain logic. This is fortuitous for the pattern we are going to use.
 
 `State.sol` contains most of the state, with some in `Shield.sol`.
-This division could be made complete by moving the `proposeBlock` function out of `State.sol`
-and moving the `Shield.sol` data into `State.sol` (there may be a few other minor adjustments
-TBC). `State.sol` will then only contain storage data and getters/setters for the same.
+This division could be made complete by moving the following functions out of `State.sol`
+- `proposeBlock`
+- `removeProposer`
+- `emitRollback`
+- `isBlockReal`
+- `rewardChallenger`
+- `removeProposer`
+
+and moving the `Shield.sol` data into `State.sol`. `State.sol` will then only contain storage data
+and getters/setters for the same. Note that it also holds nightfall's escrow pool and so needs to host `withdraw`.
 It will also need modifying so that the addresses of the logic contracts, which it allows to
 set state, can be updated by a registered contract containing an `upgrade` function (see later).
 
@@ -25,7 +32,7 @@ data contract can be deployed alongside, which adds the new storage variables ne
 We will create a set of contracts, which proxy calls to the logic contracts (one for each logic contract). This avoids users
 having to repoint their applications to the new contracts. The `Proxy.sol` contracts will also
 contain the `upgrade` function (we could have a single `Proxy.sol` which deals with all contracts but this
-is less flexible if we want to add new logic contracts).
+is less flexible if we want to add new logic contracts). These contracts must be ERC1967 compliant.
 
 ![contract interaction](./contract-upgrade.png)
 
@@ -39,7 +46,7 @@ This function will, atomically, carry out the following actions:
 1. Store the address of the old contracts and the block number at which the swap-over occurred in `State.sol`; this
 will be used to help nightfall applications parse historic events and calldata. This will be in the form of
 an array, added to each time the contracts are upgraded.
-1. Call `selfdestruct` on the old logic contracts (just to return gas);
+1. Call `selfdestruct` on the old logic contracts (to return gas and to ensure that the old contracts cannot be used to scam people);
 1. Emit an event advertising the upgrade;
 
 We will ensure that a unique private key is needed to call `upgrade`.
@@ -58,3 +65,7 @@ migrate storage data (which would be difficult because of the number of mapping 
 freeze updates for the old contract data, which would require a wait of one finalisation period, ~1 week and may not be
 possible if the relevant key is compromised), we will simply advertise the new contract addresses and recommend
 that people upgrade by removing their funds from the old contract.
+
+## other
+
+We will include a function to pause nightfall, in case we need to copy over finalised state at any time.
