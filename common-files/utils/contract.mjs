@@ -10,7 +10,7 @@ import logger from './logger.mjs';
 export const web3 = Web3.connection();
 
 const options = config.WEB3_OPTIONS;
-const { CHAIN_ID } = process.env;
+const { CHAIN_ID = '' } = process.env;
 
 export const contractPath = contractName => {
   return `${config.CONTRACT_ARTIFACTS}/${contractName}.json`;
