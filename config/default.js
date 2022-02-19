@@ -163,11 +163,13 @@ module.exports = {
     },
   },
   TEST_OPTIONS: {
-    tokenId: '0x00',
-    tokenType: 'ERC20', // it can be 'ERC721' or 'ERC1155'
-    tokenTypeERC721: 'ERC721',
-    tokenTypeERC1155: 'ERC1155',
-    value: 10,
+    tokenConfigs: {
+      tokenId: '0x00',
+      tokenType: 'ERC20', // it can be 'ERC721' or 'ERC1155'
+      tokenTypeERC721: 'ERC721',
+      tokenTypeERC1155: 'ERC1155',
+    },
+    transferValue: 10,
     // this is the etherum private key for accounts[0]
     privateKey: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e',
     gas: 10000000,
@@ -176,28 +178,22 @@ module.exports = {
     BLOCK_STAKE: 1, // 1 wei
     bond: 10, // 10 wei
     txPerBlock: 2,
-    walletTestAddress: '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
-    walletTestSigningkey: '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
-    ethereumSigningKeyUser1: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e',
-    ethereumAddressUser1: '0x9c8b2276d490141ae1440da660e470e7c0349c63',
-    ethereumSigningKeyUser2: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e',
-    ethereumSigningKeyProposer1:
-      '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
-    ethereumSigningKeyProposer2:
-      '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
-    ethereumSigningKeyProposer3:
-      '0xfbc1ee1c7332e2e5a76a99956f50b3ba2639aff73d56477e877ef8390c41e0c6',
-    ethereumSigningKeyChallenger:
-      '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
-    ethereumSigningKeyLiquidityProvider:
-      '0xfbc1ee1c7332e2e5a76a99956f50b3ba2639aff73d56477e877ef8390c41e0c6',
-    mnemonicUser1: 'trip differ bamboo bundle bonus luxury strike mad merry muffin nose auction',
-    mnemonicUser2:
-      'control series album tribe category saddle prosper enforce moon eternal talk fame',
-    mnemonicProposer: 'high return hold whale promote payment hat panel reduce oyster ramp mouse',
-    mnemonicChallenger:
-      'crush power outer gadget enter maze advance rather divert monster indoor axis',
-    mnemonicLiquidityProvider:
-      'smart base soup sister army address member poem point quick save penalty',
+    signingKeys: {
+      walletTest: '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
+      user1: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e',
+      user2: '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
+      proposer1: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
+      proposer2: '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
+      proposer3: '0xfbc1ee1c7332e2e5a76a99956f50b3ba2639aff73d56477e877ef8390c41e0c6',
+      challenger: '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
+      liquidityProvider: '0xfbc1ee1c7332e2e5a76a99956f50b3ba2639aff73d56477e877ef8390c41e0c6',
+    },
+    mnemonics: {
+      user1: 'trip differ bamboo bundle bonus luxury strike mad merry muffin nose auction',
+      user2: 'control series album tribe category saddle prosper enforce moon eternal talk fame',
+      proposer: 'high return hold whale promote payment hat panel reduce oyster ramp mouse',
+      challenger: 'crush power outer gadget enter maze advance rather divert monster indoor axis',
+      liquidityProvider: 'smart base soup sister army address member poem point quick save penalty',
+    },
   },
 };

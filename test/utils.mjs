@@ -1,181 +1,243 @@
+/* eslint-disable no-await-in-loop */
 import Web3 from 'web3';
 import chai from 'chai';
-import compose from 'docker-compose';
-import path from 'path';
 import config from 'config';
-import { fileURLToPath } from 'url';
 import rand from '../common-files/utils/crypto/crypto-random.mjs';
 
-const { ENVIRONMENTS } = config;
-
-const { dirname } = path;
-const __dirname = dirname(fileURLToPath(import.meta.url));
 const { expect } = chai;
+const { WEB3_PROVIDER_OPTIONS } = config;
+const ENVIRONMENT = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
-let web3;
-// This will be a mapping of privateKeys to nonces;
-const nonceDict = {};
-const USE_INFURA = process.env.USE_INFURA === 'true';
-const USE_ROPSTEN_NODE = process.env.USE_ROPSTEN_NODE === 'true';
-const { INFURA_PROJECT_SECRET, INFURA_PROJECT_ID } = process.env;
-let isSubmitTxLocked = false;
+const USE_INFURA = config.USE_INFURA === 'true';
+const USE_ROPSTEN_NODE = config.USE_ROPSTEN_NODE === 'true';
 
-export const getCurrentEnvironment = () => {
-  let environment;
-  switch (process.env.network) {
-    case 'localhost':
-      environment = ENVIRONMENTS.localhost;
-      break;
-    case 'ropsten':
-      environment = ENVIRONMENTS.ropsten;
-      break;
-    case 'mainnet':
-      environment = ENVIRONMENTS.mainnet;
-      break;
-    default:
-      environment = ENVIRONMENTS.localhost;
-      break;
-  }
-  return environment;
+export const topicEventMapping = {
+  BlockProposed: '0x566d835e602d4aa5802ee07d3e452e755bc77623507825de7bc163a295d76c0b',
+  Rollback: '0xea34b0bc565cb5f2ac54eaa86422ae05651f84522ef100e16b54a422f2053852',
+  CommittedToChallenge: '0d5ea452ac7e354069d902d41e41e24f605467acd037b8f5c1c6fee5e27fb5e2',
+  TransactionSubmitted: '0xd9364d1faedd45a064f9090dd61ade3de8d1c1fd83caaa8ebdc4b9808f4eb989',
+  NewCurrentProposer: '0xeaa94fa30970548bf8b78ce068ba600b923a4a62ce3c523d09bf308102ff1bab',
 };
-
-export function connectWeb3(url) {
-  if (!url) {
-    const environment = getCurrentEnvironment();
-    // eslint-disable-next-line no-param-reassign
-    url = environment.web3WsUrl || process.env.web3WsUrl;
+export class Web3Client {
+  constructor(url) {
+    this.url = url || ENVIRONMENT.web3WsUrl;
+    this.provider = new Web3.providers.WebsocketProvider(this.url, WEB3_PROVIDER_OPTIONS);
+    this.web3 = new Web3(this.provider);
+    this.isSubmitTxLocked = false;
+    this.nonceDict = [];
   }
-  return new Promise(resolve => {
-    console.log('Blockchain Connecting ...');
 
-    let provider;
-    if (USE_INFURA) {
-      if (!INFURA_PROJECT_SECRET) throw Error('env INFURA_PROJECT_SECRET not set');
-      if (!INFURA_PROJECT_ID) throw Error('env INFURA_PROJECT_ID not set');
+  getWeb3() {
+    return this.web3;
+  }
 
-      const infuraUrl = url.replace('INFURA_PROJECT_ID', INFURA_PROJECT_ID);
+  getInfo() {
+    return this.web3.eth.getNodeInfo();
+  }
 
-      provider = new Web3.providers.WebsocketProvider(infuraUrl, {
-        ...config.WEB3_PROVIDER_OPTIONS,
-        headers: {
-          authorization: `Basic ${Buffer.from(`:${INFURA_PROJECT_SECRET}`).toString('base64')}`,
-        },
+  // eslint-disable-next-line consistent-return
+  connectWeb3(useState = true) {
+    if (useState) {
+      return new Promise(resolve => {
+        console.log('Blockchain Connecting ...');
+
+        this.provider.on('error', err => console.error(`web3 error: ${JSON.stringify(err)}`));
+        this.provider.on('connect', () => {
+          console.log('Blockchain Connected ...');
+          resolve(this.web3);
+        });
+        this.provider.on('end', () => console.log('Blockchain disconnected'));
+      });
+    }
+  }
+
+  subscribeTo(event, queue, options) {
+    if (event === 'newBlockHeaders') {
+      this.web3.eth.subscribe('newBlockHeaders').on('data', () => {
+        queue.push('newBlockHeaders');
       });
     } else {
-      provider = new Web3.providers.WebsocketProvider(url, config.WEB3_PROVIDER_OPTIONS);
-    }
-
-    web3 = new Web3(provider);
-    provider.on('error', err => console.error(`web3 error: ${JSON.stringify(err)}`));
-    provider.on('connect', () => {
-      console.log('Blockchain Connected ...');
-      resolve(web3);
-    });
-    provider.on('end', () => console.log('Blockchain disconnected'));
-  });
-}
-
-export function connectWeb3NoState(url = 'ws://localhost:8546') {
-  return new Web3(new Web3.providers.WebsocketProvider(url));
-}
-
-export function closeWeb3Connection(w = web3) {
-  w.currentProvider.connection.close();
-}
-
-export function setNonce(privateKey, _nonce) {
-  nonceDict[privateKey] = _nonce;
-}
-
-export async function getAccounts() {
-  if (process.env.FROM_ADDRESS) return [process.env.FROM_ADDRESS];
-  const accounts = web3.eth.getAccounts();
-  return accounts;
-}
-export async function getBalance(account) {
-  return web3.eth.getBalance(account);
-}
-
-export function getIsSubmitTxLocked() {
-  return isSubmitTxLocked;
-}
-
-export async function submitTransaction(
-  unsignedTransaction,
-  privateKey,
-  shieldAddress,
-  gasCount,
-  value = 0,
-) {
-  while (isSubmitTxLocked) {
-    // eslint-disable-next-line no-await-in-loop
-    await new Promise(resolve => setTimeout(resolve, 1000));
-  }
-  isSubmitTxLocked = true;
-  let gas = gasCount;
-  let gasPrice = 10000000000;
-  let receipt;
-  let nonce = nonceDict[privateKey];
-  // if the nonce hasn't been set, then use the transaction count
-  try {
-    if (nonce === undefined) {
-      const accountAddress = await web3.eth.accounts.privateKeyToAccount(privateKey);
-      nonce = await web3.eth.getTransactionCount(accountAddress.address);
-    }
-    if (USE_INFURA || USE_ROPSTEN_NODE) {
-      // get gaslimt from latest block as gaslimt may vary
-      gas = (await web3.eth.getBlock('latest')).gasLimit;
-      const blockGasPrice = Number(await web3.eth.getGasPrice());
-      if (blockGasPrice > gasPrice) gasPrice = blockGasPrice;
-    }
-    const tx = {
-      to: shieldAddress,
-      data: unsignedTransaction,
-      value,
-      gas,
-      gasPrice,
-      nonce,
-    };
-    const signed = await web3.eth.accounts.signTransaction(tx, privateKey);
-    nonce++;
-    nonceDict[privateKey] = nonce;
-    // receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction);
-    receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction);
-    // the confirmations Promivent doesn't seem to terminate in Ganache, so we'll
-    // just count 12 blocks before returning. TODO this won't handle a chain reorg.
-    console.log('waiting for twelve confirmations of transaction');
-    const startBlock = await web3.eth.getBlock('latest');
-    await new Promise(resolve => {
-      const id = setInterval(async () => {
-        const block = await web3.eth.getBlock('latest');
-        if (block.number - startBlock.number > 12) {
-          clearInterval(id);
-          resolve();
+      this.web3.eth.subscribe(event, options).on('data', log => {
+        for (const topic of log.topics) {
+          switch (topic) {
+            case topicEventMapping.BlockProposed:
+              queue.push('blockProposed');
+              break;
+            case topicEventMapping.TransactionSubmitted:
+              queue.push('TransactionSubmitted');
+              break;
+            case topicEventMapping.NewCurrentProposer:
+              queue.push('NewCurrentProposer');
+              break;
+            default:
+              queue.push('Challenge');
+              break;
+          }
         }
-      }, 1000);
-    });
-    console.log('transaction confirmed');
-  } finally {
-    isSubmitTxLocked = false;
+      });
+    }
   }
-  return receipt;
-}
 
-// This only works with Ganache but it can move block time forwards
-export async function timeJump(secs) {
-  await web3.currentProvider.send({
-    jsonrpc: '2.0',
-    method: 'evm_increaseTime',
-    params: [secs],
-    id: 0,
-  });
+  closeWeb3() {
+    this.web3.currentProvider.connection.close();
+  }
 
-  await web3.currentProvider.send({
-    jsonrpc: '2.0',
-    method: 'evm_mine',
-    params: [],
-    id: 0,
-  });
+  setNonce(privateKey, _nonce) {
+    // This will be a mapping of privateKeys to nonces;
+    this.nonceDict[privateKey] = _nonce;
+  }
+
+  getAccounts() {
+    if (process.env.FROM_ADDRESS) return [process.env.FROM_ADDRESS];
+    const accounts = this.web3.eth.getAccounts();
+    return accounts;
+  }
+
+  getBalance(account) {
+    return this.web3.eth.getBalance(account);
+  }
+
+  getIsSubmitTxLocked() {
+    return this.isSubmitTxLocked;
+  }
+
+  async submitTransaction(unsignedTransaction, privateKey, shieldAddress, gasCount, value = 0) {
+    while (this.isSubmitTxLocked) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    this.isSubmitTxLocked = true;
+    let gas = gasCount;
+    let gasPrice = 10000000000;
+    let receipt;
+    let nonce = this.nonceDict[privateKey];
+    // if the nonce hasn't been set, then use the transaction count
+    try {
+      if (nonce === undefined) {
+        const accountAddress = await this.web3.eth.accounts.privateKeyToAccount(privateKey);
+        nonce = await this.web3.eth.getTransactionCount(accountAddress.address);
+      }
+      if (USE_INFURA || USE_ROPSTEN_NODE) {
+        // get gaslimt from latest block as gaslimt may vary
+        gas = (await this.web3.eth.getBlock('latest')).gasLimit;
+        const blockGasPrice = Number(await this.web3.eth.getGasPrice());
+        if (blockGasPrice > gasPrice) gasPrice = blockGasPrice;
+      }
+      const tx = {
+        to: shieldAddress,
+        data: unsignedTransaction,
+        value,
+        gas,
+        gasPrice,
+        nonce,
+      };
+      const signed = await this.web3.eth.accounts.signTransaction(tx, privateKey);
+      nonce++;
+      this.nonceDict[privateKey] = nonce;
+      // receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction);
+      receipt = await this.web3.eth.sendSignedTransaction(signed.rawTransaction);
+      // the confirmations Promivent doesn't seem to terminate in Ganache, so we'll
+      // just count 12 blocks before returning. TODO this won't handle a chain reorg.
+      console.log('waiting for twelve confirmations of transaction');
+      const startBlock = await this.web3.eth.getBlock('latest');
+      await new Promise(resolve => {
+        const id = setInterval(async () => {
+          const block = await this.web3.eth.getBlock('latest');
+          if (block.number - startBlock.number > 12) {
+            clearInterval(id);
+            resolve();
+          }
+        }, 1000);
+      });
+      console.log('transaction confirmed');
+    } finally {
+      this.isSubmitTxLocked = false;
+    }
+    return receipt;
+  }
+
+  // This only works with Ganache but it can move block time forwards
+  async timeJump(secs) {
+    await this.web3.currentProvider.send({
+      jsonrpc: '2.0',
+      method: 'evm_increaseTime',
+      params: [secs],
+      id: 0,
+    });
+
+    await this.web3.currentProvider.send({
+      jsonrpc: '2.0',
+      method: 'evm_mine',
+      params: [],
+      id: 0,
+    });
+  }
+
+  // This function polls for a particular event to be emitted by the blockchain
+  // from a specified contract.  After retries, it will give up and error.
+  // TODO could we make a neater job with setInterval()?
+  async testForEvents(contractAddress, topics, retries) {
+    // console.log('Listening for events');
+    const WAIT = 1000;
+    let counter = retries || Number(process.env.EVENT_RETRIEVE_RETRIES) || 3;
+    let events;
+    while (
+      counter < 0 ||
+      events === undefined ||
+      events[0] === undefined ||
+      events[0].transactionHash === undefined
+    ) {
+      events = await this.web3.eth.getPastLogs({
+        fromBlock: this.web3.utils.toHex(0),
+        address: contractAddress,
+        topics,
+      });
+      // console.log('EVENTS WERE', events);
+
+      await new Promise(resolve => setTimeout(resolve, WAIT));
+      counter--;
+    }
+    if (counter < 0) {
+      throw new Error(
+        `No events found with in ${
+          retries || Number(process.env.EVENT_RETRIEVE_RETRIES) || 3
+        }retries of ${WAIT}ms wait`,
+      );
+    }
+    // console.log('Events found');
+    return events;
+  }
+
+  async waitForEvent(eventLogs, expectedEvents, count = 1) {
+    const length = count !== 1 ? count : expectedEvents.length;
+    let timeout = 10;
+    while (eventLogs.length < length) {
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      timeout--;
+      if (timeout === 0) throw new Error('Timeout in waitForEvent');
+    }
+
+    while (eventLogs[0] !== expectedEvents[0]) {
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
+
+    expect(eventLogs[0]).to.equal(expectedEvents[0]);
+
+    for (let i = 0; i < length; i++) {
+      eventLogs.shift();
+    }
+
+    const blockHeaders = [];
+
+    await this.subscribeTo('newBlockHeaders', blockHeaders);
+
+    while (blockHeaders.length < 12) {
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
+
+    // Have to wait here as client block proposal takes longer now
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    return eventLogs;
+  }
 }
 
 export async function createBadBlock(badBlockType, block, transactions, args) {
@@ -244,82 +306,6 @@ export async function createBadBlock(badBlockType, block, transactions, args) {
   return { txDataToSign, block: newBlock, transactions: newTransactions };
 }
 
-// This function polls for a particular event to be emitted by the blockchain
-// from a specified contract.  After retries, it will give up and error.
-// TODO could we make a neater job with setInterval()?
-export async function testForEvents(contractAddress, topics, retries) {
-  // console.log('Listening for events');
-  const WAIT = 1000;
-  let counter = retries || Number(process.env.EVENT_RETRIEVE_RETRIES) || 3;
-  let events;
-  while (
-    counter < 0 ||
-    events === undefined ||
-    events[0] === undefined ||
-    events[0].transactionHash === undefined
-  ) {
-    // eslint-disable-next-line no-await-in-loop
-    events = await web3.eth.getPastLogs({
-      fromBlock: web3.utils.toHex(0),
-      address: contractAddress,
-      topics,
-    });
-    // console.log('EVENTS WERE', events);
-    // eslint-disable-next-line no-await-in-loop
-    await new Promise(resolve => setTimeout(resolve, WAIT));
-    counter--;
-  }
-  if (counter < 0) {
-    throw new Error(
-      `No events found with in ${
-        retries || Number(process.env.EVENT_RETRIEVE_RETRIES) || 3
-      }retries of ${WAIT}ms wait`,
-    );
-  }
-  // console.log('Events found');
-  return events;
-}
-
-export const topicEventMapping = {
-  BlockProposed: '0x566d835e602d4aa5802ee07d3e452e755bc77623507825de7bc163a295d76c0b',
-  Rollback: '0xea34b0bc565cb5f2ac54eaa86422ae05651f84522ef100e16b54a422f2053852',
-  CommittedToChallenge: '0d5ea452ac7e354069d902d41e41e24f605467acd037b8f5c1c6fee5e27fb5e2',
-};
-
-/**
-function to pause one client and one miner in the Geth blockchain for the
-purposes of rollback testing.  This creates a sort of split-brain, that we can
-use to force a change reorg when we reconnect the two halves.
-It will only work with the standalone geth network!
-*/
-export async function pauseBlockchain(side) {
-  const options = {
-    cwd: path.join(__dirname),
-    log: false,
-    config: ['../docker-compose.standalone.geth.yml'],
-    composeOptions: ['-p geth'],
-  };
-  const client = `blockchain${side}`;
-  const miner = `blockchain-miner${side}`;
-  try {
-    await Promise.all([compose.pauseOne(client, options), compose.pauseOne(miner, options)]);
-  } catch (err) {
-    console.log(err);
-    throw new Error(err);
-  }
-}
-export async function unpauseBlockchain(side) {
-  const options = {
-    cwd: path.join(__dirname),
-    log: false,
-    config: ['../docker-compose.standalone.geth.yml'],
-    composeOptions: ['-p geth'],
-  };
-  const client = `blockchain${side}`;
-  const miner = `blockchain-miner${side}`;
-  return Promise.all([compose.unpauseOne(client, options), compose.unpauseOne(miner, options)]);
-}
-
 /**
 These are helper functions to reduce the repetitive code bloat in test files
  */
@@ -334,12 +320,12 @@ export const makeTransactions = async (txType, numTxs, url, txArgs) => {
   return transactions;
 };
 
-export const sendTransactions = async (transactions, submitArgs) => {
+export const sendTransactions = async (transactions, submitArgs, web3) => {
   const receiptArr = [];
   for (let i = 0; i < transactions.length; i++) {
     const { txDataToSign } = transactions[i];
-    // eslint-disable-next-line no-await-in-loop
-    const receipt = await submitTransaction(txDataToSign, ...submitArgs);
+
+    const receipt = await web3.submitTransaction(txDataToSign, ...submitArgs);
     receiptArr.push(receipt);
   }
   return receiptArr;
@@ -353,36 +339,9 @@ export const expectTransaction = res => {
 export const depositNTransactions = async (nf3, N, ercAddress, tokenType, value, tokenId, fee) => {
   const depositTransactions = [];
   for (let i = 0; i < N; i++) {
-    // eslint-disable-next-line no-await-in-loop
     const res = await nf3.deposit(ercAddress, tokenType, value, tokenId, fee);
     expectTransaction(res);
     depositTransactions.push(res);
   }
   return depositTransactions;
-};
-
-export const waitForEvent = async (eventLogs, expectedEvents, count = 1) => {
-  const length = count !== 1 ? count : expectedEvents.length;
-  let timeout = 10;
-  while (eventLogs.length < length) {
-    // eslint-disable-next-line no-await-in-loop
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    timeout--;
-    if (timeout === 0) throw new Error('Timeout in waitForEvent');
-  }
-
-  while (eventLogs[0] !== expectedEvents[0]) {
-    // eslint-disable-next-line no-await-in-loop
-    await new Promise(resolve => setTimeout(resolve, 3000));
-  }
-
-  expect(eventLogs[0]).to.equal(expectedEvents[0]);
-
-  for (let i = 0; i < length; i++) {
-    eventLogs.shift();
-  }
-
-  // Have to wait here as client block proposal takes longer now
-  await new Promise(resolve => setTimeout(resolve, 3000));
-  return eventLogs;
 };

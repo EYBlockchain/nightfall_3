@@ -48,6 +48,7 @@ const getProposers = async () => {
     .call();
   while (currentProposer.thisAddress !== nextProposer.thisAddress) {
     proposerList.push(nextProposer.thisAddress);
+
     // eslint-disable-next-line no-await-in-loop
     nextProposer = await proposersContractInstance.methods
       .proposers(nextProposer.nextAddress)
