@@ -73,6 +73,17 @@ describe('Basic Proposer tests', () => {
     expect(thisProposer.length).to.be.equal(1);
   });
 
+  it('should fail to register a proposer twice', async () => {
+    try {
+      const res = await testProposers[2].registerProposer();
+      expectTransaction(res);
+
+      expect.fail('Submitting the same proposer registration should have caused an EVM revert');
+    } catch (err) {
+      expect(err.message).to.include('Transaction has been reverted by the EVM');
+    }
+  });
+
   it('should unregister a proposer', async () => {
     let proposers;
     ({ proposers } = await testProposers[0].getProposers());

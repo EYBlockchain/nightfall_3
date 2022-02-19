@@ -146,10 +146,15 @@ describe('Testing the challenge http API', () => {
     // should register a proposer
     const myAddress = (await web3Client.getAccounts())[0];
     const bond = 10;
-    res = await chai.request(optimistUrl).post('/proposer/register').send({ address: myAddress });
-    txToSign = res.body.txDataToSign;
-    await web3Client.submitTransaction(txToSign, privateKey, proposersAddress, gas, bond);
-
+    try {
+      res = await chai.request(optimistUrl).post('/proposer/register').send({ address: myAddress });
+      txToSign = res.body.txDataToSign;
+      await web3Client.submitTransaction(txToSign, privateKey, proposersAddress, gas, bond);
+    } catch (err) {
+      // an EVM revert almost certainly indicates that the proposer is already registered.  That's
+      // fine, it's ok to continue
+      if (!err.message.includes('Transaction has been reverted by the EVM')) throw new Error(err);
+    }
     // should subscribe to block proposed event with the provided incoming viewing key
     await chai
       .request(url)
