@@ -1,5 +1,13 @@
 @import '~/../../../assets/css/theme/theme';
 
+
+a {
+  text-decoration: none;
+}
+a:hover{
+  text-decoration: none;
+}
+
 .sideBar{
   display: flex;
   flex-direction: column;

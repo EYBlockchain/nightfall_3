@@ -7,6 +7,7 @@ import { METAMASK_MESSAGE, DEFAULT_NF_ADDRESS_INDEX } from '../../constants';
 import * as Storage from '../../utils/lib/local-storage';
 import { generateKeys } from '../../nightfall-browser/services/keys';
 import blockProposedEventHandler from '../../nightfall-browser/event-handlers/block-proposed';
+import { getMaxBlock } from '../../nightfall-browser/services/database';
 
 const { eventWsUrl } = global.config;
 
@@ -70,15 +71,26 @@ export const UserProvider = ({ children }) => {
     const socket = new WebSocket(eventWsUrl);
 
     // Connection opened
-    socket.addEventListener('open', function () {
+    socket.addEventListener('open', async function () {
       console.log(`Websocket is open`);
-      // socket.send('proposedBlock');
+      const lastBlock = (await getMaxBlock())?._id ?? -1;
+      console.log('LasBlock', lastBlock);
+      socket.send(JSON.stringify({ type: 'sync', lastBlock }));
     });
 
     // Listen for messages
     socket.addEventListener('message', async function (event) {
-      console.log('Message from server ', event.data);
-      await blockProposedEventHandler(JSON.parse(event.data), state.zkpKeys.ivk, state.zkpKeys.nsk);
+      console.log('Message from server ', JSON.parse(event.data));
+      const parsed = JSON.parse(event.data);
+      if (parsed.type === 'sync')
+        await Promise.all(
+          parsed.historicalData.map(e => {
+            return blockProposedEventHandler(e, state.zkpKeys.ivk, state.zkpKeys.nsk);
+          }),
+        );
+      else if (parsed.type === 'blockProposed')
+        await blockProposedEventHandler(parsed.data, state.zkpKeys.ivk, state.zkpKeys.nsk);
+      // TODO Rollback Handler
     });
     setState(previousState => {
       return {
