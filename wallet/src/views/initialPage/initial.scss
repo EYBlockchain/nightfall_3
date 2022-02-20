@@ -1,5 +1,14 @@
 @import '../../assets/css/theme/_theme';
 
+
+a {
+  text-decoration: none;
+  color: inherit; 
+}
+a:hover{
+  text-decoration: none;
+}
+
 .homepage {
   min-height: calc(100vh - #{$navbar-local-height});
   padding: 44px 0;

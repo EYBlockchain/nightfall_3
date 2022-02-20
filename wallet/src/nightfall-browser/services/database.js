@@ -144,6 +144,13 @@ export async function getBlockByTransactionHash(transactionHash) {
   return res.filter(r => r.transactionHashes.include(transactionHash));
 }
 
+export async function getMaxBlock() {
+  const db = await connectDB();
+  const keys = await db.getAllKeys(SUBMITTED_BLOCKS_COLLECTION);
+  const maxKey = Math.max(...keys);
+  return db.get(SUBMITTED_BLOCKS_COLLECTION, maxKey);
+}
+
 /**
 Transaction Collection
 */

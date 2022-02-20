@@ -128,9 +128,9 @@ async function transfer(transferParams, shieldContractAddress) {
   const publicInputs = new PublicInputs([
     oldCommitments.map(commitment => commitment.preimage.ercAddress),
     newCommitments.map(commitment => commitment.hash),
-    nullifiers.map(nullifier => nullifier.hash),
+    nullifiers.map(nullifier => generalise(nullifier.hash.hex(32, 31)).integer),
     roots,
-    compressedSecrets.map(compressedSecret => compressedSecret.hex()),
+    compressedSecrets.map(compressedSecret => compressedSecret.hex(32, 31)),
   ]);
   // time for a quick sanity check.  We expect the number of old commitments,
   // new commitments and nullifiers to be equal.
