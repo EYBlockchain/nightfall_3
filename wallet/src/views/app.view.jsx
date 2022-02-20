@@ -1,12 +1,14 @@
+/* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from 'react';
 import { Route, Switch, Redirect, BrowserRouter } from 'react-router-dom';
 import { NF3_GITHUB_ISSUES_URL } from '../constants';
 import MainPage from './initialPage/index.jsx';
 import Wallet from './wallet/index.jsx';
-import { UserProvider } from '../hooks/User/index.jsx';
+import { UserContext, UserProvider } from '../hooks/User/index.jsx';
 import TransactionPage from './transactionPage/index.jsx';
 import Web3 from '../common-files/utils/web3';
-import Bridge from './bridge';
+import XSearch from '../webComponents/component1';
+import Bridge from './bridge/index.jsx';
 
 export default function App() {
   // eslint-disable-next-line no-unused-vars
@@ -17,19 +19,7 @@ export default function App() {
     setIsWeb3Connected({
       isWeb3Connected: true,
     });
-    // defineComponents();
   }, []);
-
-  // function defineComponents() {
-  //   customElements.define(
-  //     'bridge-component',
-  //     reactToWebcomponent(
-  //       BridgeComponent,
-  //       React,
-  //       ReactDOM
-  //     )
-  //   )
-  // }
 
   /*
    * TODO: for path /wallet and /bridge component should render when web3connect is complete

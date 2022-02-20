@@ -113,10 +113,10 @@ export default function TransactionPage() {
                           All Transactions
                         </div>
                       </Col>
-                      <Col></Col>
-                      <Col></Col>
-                      <Col></Col>
-                      <Col></Col>
+                      <Col />
+                      <Col />
+                      <Col />
+                      <Col />
                     </Row>
                     {/* <Row> */}
                     {/* <div
@@ -133,9 +133,9 @@ export default function TransactionPage() {
                     {/* </Row> */}
                   </div>
                   <div className={styles.innerWrapper}>
-                    {txs.map((tx, index) => (
+                    {txs.map(tx => (
                       <Row
-                        key={index}
+                        key={tx}
                         style={{
                           display: 'flex',
                           flexWrap: 'wrap',
@@ -257,7 +257,12 @@ export default function TransactionPage() {
                               }}
                             >
                               {/* Tooltip */}
-                              <img src={polygonChainImage} height="16" width="16" />
+                              <img
+                                src={polygonChainImage}
+                                alt="Polygon Chain"
+                                height="16"
+                                width="16"
+                              />
                               <div style={{ marginLeft: '4px' }}>{tx.truncTransactionHash}</div>
                             </div>
                           </div>

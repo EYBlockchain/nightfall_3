@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import Modal from 'react-bootstrap/Modal';
 import Dropdown from 'react-bootstrap/Dropdown';
 import DropdownButton from 'react-bootstrap/DropdownButton';
@@ -12,7 +12,6 @@ import ethChainImage from '../../assets/img/ethereum-chain.svg';
 import discloserBottomImage from '../../assets/img/discloser-bottom.svg';
 import lightArrowImage from '../../assets/img/light-arrow.svg';
 import matic from '../../assets/svg/matic.svg';
-import { UserContext } from '../../hooks/User/index.jsx';
 import { approve, getContractAddress, submitTransaction } from '../../common-files/utils/contract';
 import Web3 from '../../common-files/utils/web3';
 import deposit from '../../nightfall-browser/services/deposit';
@@ -22,8 +21,9 @@ import depositConfirmed from '../../assets/img/modalImages/adeposit_confirmed.pn
 import successHand from '../../assets/img/modalImages/success-hand.png';
 import transferCompletedImg from '../../assets/img/modalImages/tranferCompleted.png';
 
-const BridgeComponent = () => {
-  const { state } = useContext(UserContext);
+const BridgeComponent = (props: any) => {
+  const [state] = useState(() => props[Object.keys(props)[1].toString()].value);
+
   const [transferMethod, setMethod] = useState('On-Chain');
 
   // const initialTx = location.state?.initialTxType || 'deposit';
@@ -84,7 +84,7 @@ const BridgeComponent = () => {
           {
             ercAddress,
             tokenId: 0,
-            value: tokenAmountWei,
+            state: tokenAmountWei,
             pkd: state.zkpKeys.pkd,
             nsk: state.zkpKeys.nsk,
             fee: 1,
@@ -100,7 +100,7 @@ const BridgeComponent = () => {
           {
             ercAddress,
             tokenId: 0,
-            value: tokenAmountWei,
+            state: tokenAmountWei,
             recipientAddress: await Web3.getAccount(),
             nsk: state.zkpKeys.nsk,
             ask: state.zkpKeys.ask,
@@ -147,10 +147,10 @@ const BridgeComponent = () => {
             </ToggleButton>
           </ButtonGroup>
           {/* <div className={styles.bridgeTabs__tab} onClick={() => {}}>
-            Deposit"outline-secondary"              </div>
-          <div className={styles.bridgeTabs__tab} onClick={() => {}}>
-            Withdraw
-          </div> */}
+                Deposit"outline-secondary"              </div>
+              <div className={styles.bridgeTabs__tab} onClick={() => {}}>
+                Withdraw
+              </div> */}
         </div>
 
         <div className={styles.bridgeBody}>
@@ -221,7 +221,7 @@ const BridgeComponent = () => {
           </div>
           <div className={styles.transferMode}>
             {/* <span class="transfer-mode__label"> Transfer Mode: </span>
-                  <span class="bridge-type">{{ selectedMode }} Bridge</span> */}
+                      <span class="bridge-type">{{ selectedMode }} Bridge</span> */}
             <span className={styles.transferMode__label}> Transfer Mode: </span>
             <span className={styles.bridgeType}>
               {txType.charAt(0).toUpperCase() + txType.slice(1)} Bridge
@@ -244,19 +244,19 @@ const BridgeComponent = () => {
               {/* d-flex justify-content-center align-self-center mx-auto */}
               <div className={stylesModal.tokenDetails__img}>
                 {/* <img
-                            v-if="
-                            selectedToken.symbol &&
-                                !!tokenImage(selectedToken)
-                            "
-                            class="align-self-center"
-                            :src="tokenImage(selectedToken)"
-                            alt="Token Image"
-                        > */}
+                                v-if="
+                                selectedToken.symbol &&
+                                    !!tokenImage(selectedToken)
+                                "
+                                class="align-self-center"
+                                :src="tokenImage(selectedToken)"
+                                alt="Token Image"
+                            > */}
                 <img src={matic} alt="Token" />
                 {/* <span
-                            v-else-if="selectedToken.symbol"
-                            class="align-self-center font-heading-large ps-t-2 font-semibold"
-                        >{{ selectedToken.symbol[0] }}</span> */}
+                                v-else-if="selectedToken.symbol"
+                                class="align-self-center font-heading-large ps-t-2 font-semibold"
+                            >{{ selectedToken.symbol[0] }}</span> */}
               </div>
               {/* font-heading-large font-bold ps-t-16 ps-b-6 */}
               <div className={stylesModal.tokenDetails__val} id="Bridge_modal_tokenAmount">
@@ -301,8 +301,8 @@ const BridgeComponent = () => {
               <div className={stylesModal.transferModeModal__text}>
                 <span>Transfer security is provided by the Ethereum miners.</span>
                 {/* <span v-else>
-                        Plasma provides advanced security with plasma exit
-                        mechanism. </span>It will take approximately */}
+                            Plasma provides advanced security with plasma exit
+                            mechanism. </span>It will take approximately */}
                 <span>
                   {' '}
                   To minimise the risk of chain reorganisations, your transfer will wait for{' '}

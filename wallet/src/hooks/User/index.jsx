@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import jsSha3 from 'js-sha3';
 import { useLocation } from 'react-router-dom';
 
@@ -10,17 +10,17 @@ import blockProposedEventHandler from '../../nightfall-browser/event-handlers/bl
 
 const { eventWsUrl } = global.config;
 
-export const reducer = (state, action) => {
-  switch (action.type) {
-    case 'toggle_button':
-      return {
-        ...state,
-        active: !state.active,
-      };
-    default:
-      return state;
-  }
-};
+// export const reducer = (state, action) => {
+//   switch (action.type) {
+//     case 'toggle_button':
+//       return {
+//         ...state,
+//         active: !state.active,
+//       };
+//     default:
+//       return state;
+//   }
+// };
 
 export const initialState = {
   active: false,
@@ -135,14 +135,3 @@ export const UserProvider = ({ children }) => {
     </UserContext.Provider>
   );
 };
-
-function useUser() {
-  const context = useContext(UserContext);
-
-  if (!context) {
-    throw new Error('O hook useAuth deve ser usado dentro do componente AuthProvider');
-  }
-  return context;
-}
-
-export { useUser };
