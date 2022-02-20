@@ -67,7 +67,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     oldCommitment.preimage.ercAddress,
     oldCommitment.preimage.tokenId,
     oldCommitment.preimage.value,
-    nullifier.hash,
+    generalise(nullifier.hash.hex(32, 31)).integer,
     recipientAddress,
     root,
   ]);

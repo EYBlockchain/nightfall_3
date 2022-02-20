@@ -38,7 +38,6 @@ export default function TokenItem({
     const { address: shieldContractAddress } = (await getContractAddress('Shield')).data;
     const { rawTransaction } = await transfer(
       {
-        offchain: true,
         ercAddress: tokenAddress,
         tokenId: 0,
         recipientData: {
