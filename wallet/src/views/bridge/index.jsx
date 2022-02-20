@@ -122,6 +122,7 @@ export default function Bridge() {
   }
 
   return (
+    // containerFluid
     <div>
       <Header />
       <div className={styles.bridgeComponent}>
@@ -137,7 +138,7 @@ export default function Bridge() {
                 <div className={styles.innerWrapper}>
                   <div className={styles.headerH2}>Nightfall Bridge</div>
                   <div className={styles.description}>
-                    The safe, fast and most secure way to bring cross-chain assets to Ethereum.
+                    Safe, fast and private token transfers on Ethereum.
                   </div>
                   <div className={styles.points}>
                     {/* v-tooltip="{
@@ -212,7 +213,7 @@ export default function Bridge() {
                       Deposit"outline-secondary"              </div>
                     <div className={styles.bridgeTabs__tab} onClick={() => {}}>
                       Withdraw
-                    </div>
+                    </div> */}
                   </div>
 
                   <div className={styles.bridgeBody}>
@@ -327,118 +328,21 @@ export default function Bridge() {
                       </button>
                     </div>
                   </div>
-                  <img
-                    className={styles.tokenDetails__arrow}
-                    src={discloserBottomImage}
-                    alt="discloser icon"
-                    height="24"
-                    width="24"
-                  />
                 </div>
-                <div className={styles.amountDetails}>
-                  <input
-                    className={styles.amountDetails__textfield}
-                    type="text"
-                    placeholder="0.00"
-                    value={tokenAmountWei}
-                    onChange={e => setTransferValue(e.target.value)}
-                  />
-                  <button
-                    className={styles.amountDetails__maxButton}
-                    onClick={() => {}}
-                    variant="light"
-                  >
-                    MAX
-                  </button>
-                </div>
-              </div>
-            </div>
-            <div className={styles.downArrowSection}>
-              <img src={lightArrowImage} alt="to arrow" />
-            </div>
-            <div className={styles.toLabel}>To</div>
-            <div className={styles.toChainAndBalanceDetails}>
-              <div className={styles.chainDetails}>
-                {txType === 'withdraw' ? (
-                  <img src={ethChainImage} alt="ethereum chain logo" height="24" width="24" />
-                ) : (
-                  <img src={polygonChainImage} alt="polygon chain logo" height="24" width="24" />
-                )}
-                <div className={styles.chainDetails__chainName}>
-                  {txType === 'deposit' ? 'Polygon Nightfall L2' : 'Ethereum Mainnet'}
-                </div>
-              </div>
-              <div className={styles.balanceDetails}>
-                <span className={styles.balanceDetails__label}> Balance: </span>
-                <span className={styles.balanceDetails__balance}>10 MATIC</span>
-              </div>
-            </div>
-            <div className={styles.transferMode}>
-              {/* <span class="transfer-mode__label"> Transfer Mode: </span>
-                            <span class="bridge-type">{{ selectedMode }} Bridge</span> */}
-              <span className={styles.transferMode__label}> Transfer Mode: </span>
-              <span className={styles.bridgeType}>
-                {txType.charAt(0).toUpperCase() + txType.slice(1)} Bridge
-              </span>
-            </div>
-            <div>
-              <button className={styles.transferButton} onClick={handleShow}>
-                Transfer
-              </button>
-            </div>
-            <div>
-              <Link to="/wallet">
-                <Button variant="outline-secondary">Return to Wallet</Button>{' '}
-              </Link>
-            </div>
-          </div>
-          <div className={styles.transferMode}>
-            {/* <span class="transfer-mode__label"> Transfer Mode: </span>
-                                  <span class="bridge-type">{{ selectedMode }} Bridge</span> */}
-            <span className={styles.transferMode__label}> Transfer Mode: </span>
-            <span className={styles.bridgeType}>Deposit Bridge</span>
-            {/* <span
-                        v-if="
-                        isPosPlasmaCommonToken &&
-                            (!plasmaDepositDisabledTokens ||
-                            transferType === TRANSACTION_TYPE.WITHDRAW)
-                        "
-                        id="switch-transfer-mode"
-                        class="switch-bridge cursor-pointer cap-xs"
-                        @click="onTransferModeOpen"
-                    >
-                        (Switch Bridge)
-                    </span> */}
-          </div>
-          <div>
-            {/* <Button
-                                      id="transfer-token"
-                                      nature="primary"
-                                      size="large"
-                                      class="transfer-button w-100"
-                                      label="Transfer"
-                                      :disabled="disableTransferButton || isTokenDisabled"
-                                      @onClick="transferToken"
-                                  /> */}
-            <button className={styles.transferButton} onClick={() => setShow(true)}>
-              Transfer
-            </button>
-
-            {/* <div v-if="error" class="error-message text-danger font-caption">
-                                      {{ error }}
-                                  </div> */}
-          </div>
-        </div>
-        <Modal contentClassName={stylesModal.modalFather} show={show} onHide={() => setShow(false)}>
-          <Modal.Header closeButton>
-            <div className={styles.modalTitle}>Confirm transaction</div>
-          </Modal.Header>
-          <Modal.Body>
-            <div className={stylesModal.modalBody}>
-              <div className={stylesModal.tokenDetails}>
-                {/* d-flex justify-content-center align-self-center mx-auto */}
-                <div className={stylesModal.tokenDetails__img}>
-                  {/* <img
+                <Modal
+                  contentClassName={stylesModal.modalFather}
+                  show={show}
+                  onHide={() => setShow(false)}
+                >
+                  <Modal.Header closeButton>
+                    <div className={styles.modalTitle}>Confirm transaction</div>
+                  </Modal.Header>
+                  <Modal.Body>
+                    <div className={stylesModal.modalBody}>
+                      <div className={stylesModal.tokenDetails}>
+                        {/* d-flex justify-content-center align-self-center mx-auto */}
+                        <div className={stylesModal.tokenDetails__img}>
+                          {/* <img
                                       v-if="
                                       selectedToken.symbol &&
                                           !!tokenImage(selectedToken)
@@ -629,34 +533,8 @@ export default function Bridge() {
                 </Modal>
               </div>
             </div>
-            <div className={stylesModal.divider}></div>
-            <div className={stylesModal.transferModeModal}>
-              <div className={stylesModal.transferModeModal__title}>
-                <div className={stylesModal.transferModeModal__title__main}>Transfer Mode</div>
-                <div className={stylesModal.transferModeModal__title__light}>PoS chain</div>
-              </div>
-              <div className={stylesModal.transferModeModal__text}>
-                <span>PoS security is provided by the PoS validators.</span>
-                {/* <span v-else>
-                                        Plasma provides advanced security with plasma exit
-                                        mechanism. </span>It will take approximately */}
-                <span> It will take approximately </span>
-                <span className="text-primary"> 3 hours</span> when you have to transfer your funds
-                back to Ethereum.
-              </div>
-            </div>
-            <div className={stylesModal.divider}></div>
-            <div className={stylesModal.estimationFee}>
-              <div className={stylesModal.estimationFee__title}>
-                <div className={stylesModal.estimationFee__title__main}>
-                  Estimation Transaction fee
-                </div>
-                <div className={stylesModal.estimationFee__title__light}>~ $113,59</div>
-              </div>
-              <button className={stylesModal.continueTrasferButton}>Continue</button>
-            </div>
-          </Modal.Body>
-        </Modal>
+          </div>
+        </div>
       </div>
     </div>
   );
