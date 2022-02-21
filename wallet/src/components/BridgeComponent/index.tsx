@@ -35,7 +35,10 @@ const BridgeComponent = (props: any) => {
   const [show, setShow] = useState(false);
 
   const handleClose = () => setShow(false);
-  const handleShow = () => setShow(true);
+  const handleShow = () => {
+    console.log('AQUIIIIIIII: ', tokenAmountWei);
+    setShow(true);
+  };
 
   const [showModalConfirm, setShowModalConfirm] = useState(false);
   const [showModalTransferInProgress, setShowModalTransferInProgress] = useState(true);
@@ -84,7 +87,7 @@ const BridgeComponent = (props: any) => {
           {
             ercAddress,
             tokenId: 0,
-            state: tokenAmountWei,
+            value: tokenAmountWei,
             pkd: state.zkpKeys.pkd,
             nsk: state.zkpKeys.nsk,
             fee: 1,
@@ -100,7 +103,7 @@ const BridgeComponent = (props: any) => {
           {
             ercAddress,
             tokenId: 0,
-            state: tokenAmountWei,
+            value: tokenAmountWei,
             recipientAddress: await Web3.getAccount(),
             nsk: state.zkpKeys.nsk,
             ask: state.zkpKeys.ask,
