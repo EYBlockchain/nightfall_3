@@ -36,8 +36,8 @@ jobs:
         if: always()
         run: cat ganache-test.log
 
-      - name: wait 120s for Containers startup and setup completion
-        run: sleep 120
+      - name: wait 1200s for Containers startup and setup completion
+        run: sleep 1200
 
       - name: Run integration test
         run: |
