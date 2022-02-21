@@ -26,7 +26,7 @@ async function startProposer() {
   logger.debug('Proposer registration complete');
   if (PROPOSER_PORT !== '') {
     logger.debug('Proposer healthcheck up');
-    app.listen(process.env.PROPOSER_PORT);
+    app.listen(PROPOSER_PORT);
   }
   // TODO subscribe to layer 1 blocks and call change proposer
   nf3.startProposer();
