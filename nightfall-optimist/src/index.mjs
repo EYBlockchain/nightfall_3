@@ -32,7 +32,7 @@ const main = async () => {
         // We do the proposer isMe check here to fail fast instead of re-enqueing.
         // We check if the queue[2] is empty, this is safe it is manually enqueued/dequeued.
         if (proposer.isMe && queues[2].length === 0) {
-          logger.info('Queue has emptied. Queueing block assembler.');
+          // logger.info('Queue has emptied. Queueing block assembler.');
           return enqueueEvent(conditionalMakeBlock, 0, proposer);
         }
         // eslint-disable-next-line no-void, no-useless-return

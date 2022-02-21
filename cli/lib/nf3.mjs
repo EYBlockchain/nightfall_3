@@ -7,7 +7,7 @@ import { approve } from './tokens.mjs';
 import erc20 from './abis/ERC20.mjs';
 import erc721 from './abis/ERC721.mjs';
 import erc1155 from './abis/ERC1155.mjs';
-import { ENVIRONMENTS } from './constants.mjs';
+import { DEFAULT_BLOCK_STAKE, DEFAULT_PROPOSER_BOND, DEFAULT_FEE } from './constants.mjs';
 
 /**
 @class
@@ -46,11 +46,11 @@ class Nf3 {
 
   zkpKeys;
 
-  defaultFee = 10;
+  defaultFee = DEFAULT_FEE;
 
-  PROPOSER_BOND = 10;
+  PROPOSER_BOND = DEFAULT_PROPOSER_BOND;
 
-  BLOCK_STAKE = 1;
+  BLOCK_STAKE = DEFAULT_BLOCK_STAKE;
 
   nonce = 0;
 
@@ -64,11 +64,20 @@ class Nf3 {
 
   currentEnvironment;
 
-  constructor(web3WsUrl, ethereumSigningKey, environment = ENVIRONMENTS.localhost, zkpKeys) {
+  constructor(
+    ethereumSigningKey,
+    environment = {
+      clientApiUrl: 'http://localhost:8080',
+      optimistApiUrl: 'http://localhost:8081',
+      optimistWsUrl: 'ws://localhost:8082',
+      web3WsUrl: 'ws://localhost:8546',
+    },
+    zkpKeys,
+  ) {
     this.clientBaseUrl = environment.clientApiUrl;
     this.optimistBaseUrl = environment.optimistApiUrl;
     this.optimistWsUrl = environment.optimistWsUrl;
-    this.web3WsUrl = web3WsUrl;
+    this.web3WsUrl = environment.web3WsUrl;
     this.ethereumSigningKey = ethereumSigningKey;
     this.zkpKeys = zkpKeys;
     this.currentEnvironment = environment;
@@ -79,12 +88,27 @@ class Nf3 {
   blockchain.
   @returns {Promise}
   */
-  async init(mnemonic) {
+  async init(mnemonic, contractAddressProvider) {
     await this.setWeb3Provider();
-    this.shieldContractAddress = await this.getContractAddress('Shield');
-    this.proposersContractAddress = await this.getContractAddress('Proposers');
-    this.challengesContractAddress = await this.getContractAddress('Challenges');
-    this.stateContractAddress = await this.getContractAddress('State');
+    // this code will call client to get contract addresses, or optimist if client isn't deployed
+    switch (contractAddressProvider) {
+      case undefined:
+        this.contractGetter = this.getContractAddress;
+        break;
+      case 'client':
+        this.contractGetter = this.getContractAddress;
+        break;
+      case 'optimist':
+        this.contractGetter = this.getContractAddressOptimist;
+        break;
+      default:
+        throw new Error('Unknown contract address server');
+    }
+    // once we know where to ask, we can get the contract addresses
+    this.shieldContractAddress = await this.contractGetter('Shield');
+    this.proposersContractAddress = await this.contractGetter('Proposers');
+    this.challengesContractAddress = await this.contractGetter('Challenges');
+    this.stateContractAddress = await this.contractGetter('State');
     // set the ethereumAddress iff we have a signing key
     if (typeof this.ethereumSigningKey === 'string') {
       this.ethereumAddress = await this.getAccounts();
@@ -141,6 +165,16 @@ class Nf3 {
   }
 
   /**
+  Gets the number of unprocessed transactions on the optimist
+  @async
+  */
+
+  async unprocessedTransactionCount() {
+    const { result: mempool } = (await axios.get(`${this.optimistBaseUrl}/proposer/mempool`)).data;
+    return mempool.filter(e => e.mempool).length;
+  }
+
+  /**
   Method for signing and submitting an Ethereum transaction to the
   blockchain.
   @method
@@ -156,13 +190,11 @@ class Nf3 {
     contractAddress = this.shieldContractAddress,
     fee = this.defaultFee,
   ) {
-    // We'll manage the nonce ourselves because we can run too fast for the blockchain client to update
     // we need a Mutex so that we don't get a nonce-updating race.
 
     let tx;
     await this.nonceMutex.runExclusive(async () => {
-      // if we don't have a nonce, we must get one from the ethereum client
-      if (!this.nonce) this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
+      this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
 
       let gasPrice = 20000000000;
       const gas = (await this.web3.eth.getBlock('latest')).gasLimit;
@@ -183,8 +215,31 @@ class Nf3 {
 
     if (this.ethereumSigningKey) {
       const signed = await this.web3.eth.accounts.signTransaction(tx, this.ethereumSigningKey);
-      return this.web3.eth.sendSignedTransaction(signed.rawTransaction);
+      // rather than waiting until we have a receipt, wait until we have enough confirmation blocks
+      // then return the receipt.
+      // TODO does this still work if there is a chain reorg or do we have to handle that?
+      return new Promise((resolve, reject) => {
+        if (process.env.VERBOSE) console.log(`Confirming transaction ${signed.transactionHash}`);
+        this.notConfirmed++;
+        this.web3.eth
+          .sendSignedTransaction(signed.rawTransaction)
+          .on('confirmation', (number, receipt) => {
+            if (number === 12) {
+              this.notConfirmed--;
+              if (process.env.VERBOSE)
+                console.log(
+                  `Transaction ${receipt.transactionHash} has been confirmed ${number} times.`,
+                  `Number of unconfirmed transactions is ${this.notConfirmed}`,
+                );
+              resolve(receipt);
+            }
+          })
+          .on('error', err => {
+            reject(err);
+          });
+      });
     }
+    // TODO add wait for confirmations to the wallet functionality
     return this.web3.eth.sendTransaction(tx);
   }
 
@@ -218,7 +273,7 @@ class Nf3 {
   }
 
   /**
-  Returns the address of a Nightfall_3 contract.
+  Returns the address of a Nightfall_3 contract calling the client.
   @method
   @async
   @param {string} contractName - the name of the smart contract in question. Possible
@@ -227,6 +282,19 @@ class Nf3 {
   */
   async getContractAddress(contractName) {
     const res = await axios.get(`${this.clientBaseUrl}/contract-address/${contractName}`);
+    return res.data.address.toLowerCase();
+  }
+
+  /**
+  Returns the address of a Nightfall_3 contract calling the optimist.
+  @method
+  @async
+  @param {string} contractName - the name of the smart contract in question. Possible
+  values are 'Shield', 'State', 'Proposers', 'Challengers'.
+  @returns {Promise} Resolves into the Ethereum address of the contract
+  */
+  async getContractAddressOptimist(contractName) {
+    const res = await axios.get(`${this.optimistBaseUrl}/contract-address/${contractName}`);
     return res.data.address;
   }
 
@@ -317,6 +385,9 @@ class Nf3 {
       ask: this.zkpKeys.ask,
       fee,
     });
+    if (res.data.error && res.data.error === 'No suitable commitments') {
+      throw new Error('No suitable commitments');
+    }
     if (!offchain) {
       return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, fee);
     }
@@ -708,33 +779,12 @@ class Nf3 {
   @method
   @async
   @param {Array} ercList - list of erc contract addresses to filter.
-  @param {Boolean} filterByCompressedPkd - flag to indicate if request is filtered 
-  ones compressed pkd
   @returns {Promise} This promise resolves into an object whose properties are the
   addresses of the ERC contracts of the tokens held by this account in Layer 2. The
   value of each propery is the number of tokens originating from that contract.
   */
-  async getLayer2Balances(ercList, filterByCompressedPkd) {
+  async getLayer2Balances({ ercList } = {}) {
     const res = await axios.get(`${this.clientBaseUrl}/commitment/balance`, {
-      params: {
-        compressedPkd: filterByCompressedPkd === true ? this.zkpKeys.compressedPkd : null,
-        ercList,
-      },
-    });
-    return res.data.balance;
-  }
-
-  /**
-  Returns the balance details of tokens held in layer 2
-  @method
-  @async
-  @param {Array} ercList - list of erc contract addresses to filter.
-  @returns {Promise} This promise resolves into an object whose properties are the
-  addresses of the ERC contracts of the tokens held by this account in Layer 2. The
-  value of each propery is the number of tokens originating from that contract.
-  */
-  async getLayer2BalancesDetails(ercList) {
-    const res = await axios.get(`${this.clientBaseUrl}/commitment/balance-details`, {
       params: {
         compressedPkd: this.zkpKeys.compressedPkd,
         ercList,
@@ -748,7 +798,7 @@ class Nf3 {
   @method
   @async
   @param {Array} ercList - list of erc contract addresses to filter.
-  @param {Boolean} filterByCompressedPkd - flag to indicate if request is filtered 
+  @param {Boolean} filterByCompressedPkd - flag to indicate if request is filtered
   ones compressed pkd
   @returns {Promise} This promise resolves into an object whose properties are the
   addresses of the ERC contracts of the tokens held by this account in Layer 2. The
@@ -769,7 +819,7 @@ class Nf3 {
   @method
   @async
   @param {Array} ercList - list of erc contract addresses to filter.
-  @param {Boolean} filterByCompressedPkd - flag to indicate if request is filtered 
+  @param {Boolean} filterByCompressedPkd - flag to indicate if request is filtered
   ones compressed pkd
   @returns {Promise} This promise resolves into an object whose properties are the
   addresses of the ERC contracts of the tokens held by this account in Layer 2. The
@@ -816,7 +866,9 @@ class Nf3 {
   Set a Web3 Provider URL
   */
   async setWeb3Provider() {
-    this.web3 = new Web3(this.web3WsUrl, { transactionBlockTimeout: 200 }); // set a longer timeout
+    this.web3 = new Web3(this.web3WsUrl);
+    this.web3.eth.transactionBlockTimeout = 200;
+    this.web3.eth.transactionConfirmationBlocks = 12;
     if (typeof window !== 'undefined') {
       if (window.ethereum && this.ethereumSigningKey === '') {
         this.web3 = new Web3(window.ethereum);

@@ -23,14 +23,13 @@ async function waitForZokrates() {
   logger.info('checking for zokrates_worker');
   try {
     while (
-      // eslint-disable-next-line no-await-in-loop
       (await axios.get(`${config.PROTOCOL}${config.ZOKRATES_WORKER_HOST}/healthcheck`)).status !==
       200
     ) {
       logger.warn(
         `No response from zokratesworker yet.  That's ok. We'll wait three seconds and try again...`,
       );
-      // eslint-disable-next-line no-await-in-loop
+
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
   } catch (err) {
@@ -87,12 +86,12 @@ async function setupCircuits() {
   for (let i = 0; i < vks.length; i++) {
     const circuit = circuitsToSetup[i];
     if (!vks[i] || config.ALWAYS_DO_TRUSTED_SETUP) {
-      // we don't have an existing vk so let's generate one (TODO in parallel)
+      // we don't have an existing vk so let's generate one
       try {
         logger.info(
           `no existing verification key. Fear not, I will make a new one: calling generate keys on ${circuit}`,
         );
-        // eslint-disable-next-line no-await-in-loop
+
         const res2 = await axios.post(
           `${config.PROTOCOL}${config.ZOKRATES_WORKER_HOST}/generate-keys`,
           {
@@ -135,7 +134,7 @@ async function setupCircuits() {
 
       // when deploying on infura - do serial tx execution to avoid nonce issue
       // when using a private key, we shouldn't assume an unlocked account and we sign the transaction directly
-      if (config.USE_INFURA || config.ETH_PRIVATE_KEY || config.USE_ROPSTEN_NODE) {
+      if (config.USE_INFURA || config.ETH_PRIVATE_KEY) {
         await Web3.submitRawTransaction(await tx.encodeABI(), keyRegistryAddress);
       } else await tx.send();
     } catch (err) {

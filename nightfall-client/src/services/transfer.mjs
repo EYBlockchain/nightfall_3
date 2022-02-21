@@ -114,6 +114,12 @@ async function transfer(transferParams) {
   const leafIndices = commitmentTreeInfo.map(l => l.leafIndex);
   const blockNumberL2s = commitmentTreeInfo.map(l => l.isOnChain);
   const roots = commitmentTreeInfo.map(l => l.root);
+  console.log(
+    'Constructing transfer transaction with blockNumberL2s',
+    blockNumberL2s,
+    'and roots',
+    roots,
+  );
 
   // public inputs
   const publicInputs = new PublicInputs([
@@ -204,6 +210,7 @@ async function transfer(transferParams) {
     compressedSecrets,
     proof,
   });
+  logger.debug(`Client made transaction ${JSON.stringify(optimisticTransferTransaction, null, 2)}`);
   try {
     if (offchain) {
       // dig up connection peers

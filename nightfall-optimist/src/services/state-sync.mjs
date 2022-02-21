@@ -47,22 +47,18 @@ const syncState = async (
     const pastEvent = splicedList[i];
     switch (pastEvent.event) {
       case 'NewCurrentProposer':
-        // eslint-disable-next-line no-await-in-loop
         await newCurrentProposerEventHandler(pastEvent, [proposer]);
         break;
       case 'Rollback':
         await rollbackEventHandler(pastEvent);
         break;
       case 'BlockProposed':
-        // eslint-disable-next-line no-await-in-loop
         await blockProposedEventHandler(pastEvent);
         break;
       case 'CommittedToChallenge':
-        // eslint-disable-next-line no-await-in-loop
         await committedToChallengeEventHandler(pastEvent);
         break;
       case 'TransactionSubmitted':
-        // eslint-disable-next-line no-await-in-loop
         await transactionSubmittedEventHandler(pastEvent);
         break;
       default:
@@ -106,7 +102,7 @@ export default async proposer => {
   const lastBlockNumberL2 = Number(
     (await stateContractInstance.methods.getNumberOfL2Blocks().call()) - 1,
   );
-  if (lastBlockNumberL2 === 0) return; // The blockchain is empty
+  if (lastBlockNumberL2 === -1) return; // The blockchain is empty
 
   const missingBlocks = await checkBlocks(); // Stores any gaps of missing blocks
   // const [fromBlock] = missingBlocks[0];
@@ -118,7 +114,7 @@ export default async proposer => {
     for (let i = 0; i < missingBlocks.length; i++) {
       const [fromBlock, toBlock] = missingBlocks[i];
       // Sync the state inbetween these blocks
-      // eslint-disable-next-line no-await-in-loop
+
       await syncState(proposer, fromBlock, toBlock);
     }
     await startMakingChallenges();

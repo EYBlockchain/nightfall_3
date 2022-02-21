@@ -22,6 +22,8 @@ module.exports = {
   LOG_LEVEL: process.env.LOG_LEVEL || 'debug',
   MONGO_URL: process.env.MONGO_URL || 'mongodb://localhost:27017/',
   ZKP_KEY_LENGTH: 32, // use a 32 byte key length for SHA compatibility
+  CONFIRMATION_POLL_TIME: 1000, // time to wait before querying the blockchain (ms). Must be << block interval
+  CONFIRMATIONS: 12, // number of confirmations to wait before accepting a transaction
   PROTOCOL: 'http://', // connect to zokrates microservice like this
   WEBSOCKET_PORT: process.env.WEBSOCKET_PORT || 8080,
   ZOKRATES_WORKER_HOST: process.env.ZOKRATES_WORKER_HOST || 'worker',
@@ -31,7 +33,6 @@ module.exports = {
   USE_INFURA: process.env.USE_INFURA === 'true',
   ETH_PRIVATE_KEY: process.env.ETH_PRIVATE_KEY, // owner's/deployer's private key
   ETH_ADDRESS: process.env.ETH_ADDRESS,
-  USE_ROPSTEN_NODE: process.env.USE_ROPSTEN_NODE === 'true',
   OPTIMIST_HOST: process.env.OPTIMIST_HOST || 'optimist',
   OPTIMIST_PORT: process.env.OPTIMIST_PORT || 80,
   clientBaseUrl: `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`,
@@ -127,4 +128,72 @@ module.exports = {
     U: BigInt(5), // non square in Fp
   },
   MAX_QUEUE: 5,
+  ENVIRONMENTS: {
+    mainnet: {
+      name: 'Mainnet',
+      chainId: 1,
+      clientApiUrl: '',
+      optimistApiUrl: '',
+      optimistWsUrl: '',
+      web3WsUrl: '',
+    },
+    ropsten: {
+      name: 'Ropsten',
+      chainId: 3,
+      clientApiUrl: 'https://client1.testnet.nightfall3.com',
+      optimistApiUrl: 'https://optimist1.testnet.nightfall3.com',
+      optimistWsUrl: 'wss://optimist1-ws.testnet.nightfall3.com',
+      web3WsUrl: `${process.env.ROPSTEN_NODE}`,
+    },
+    rinkeby: {
+      name: 'Rinkeby',
+      chainId: 4,
+      clientApiUrl: '',
+      optimistApiUrl: '',
+      optimistWsUrl: '',
+      web3WsUrl: '',
+    },
+    localhost: {
+      name: 'Localhost',
+      chainId: 4378921,
+      clientApiUrl: 'http://localhost:8080',
+      optimistApiUrl: 'http://localhost:8081',
+      optimistWsUrl: 'ws://localhost:8082',
+      web3WsUrl: 'ws://localhost:8546',
+    },
+  },
+  TEST_OPTIONS: {
+    tokenConfigs: {
+      tokenId: '0x00',
+      tokenType: 'ERC20', // it can be 'ERC721' or 'ERC1155'
+      tokenTypeERC721: 'ERC721',
+      tokenTypeERC1155: 'ERC1155',
+    },
+    transferValue: 10,
+    // this is the etherum private key for accounts[0]
+    privateKey: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e',
+    gas: 10000000,
+    gasCosts: 8000000000000000,
+    fee: 1,
+    BLOCK_STAKE: 1, // 1 wei
+    bond: 10, // 10 wei
+    txPerBlock: 2,
+    signingKeys: {
+      walletTest: '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
+      user1: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e',
+      user2: '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
+      proposer1: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
+      proposer2: '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
+      proposer3: '0xfbc1ee1c7332e2e5a76a99956f50b3ba2639aff73d56477e877ef8390c41e0c6',
+      challenger: '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
+      liquidityProvider: '0xfbc1ee1c7332e2e5a76a99956f50b3ba2639aff73d56477e877ef8390c41e0c6',
+    },
+    mnemonics: {
+      user1: 'trip differ bamboo bundle bonus luxury strike mad merry muffin nose auction',
+      user2: 'control series album tribe category saddle prosper enforce moon eternal talk fame',
+      proposer: 'high return hold whale promote payment hat panel reduce oyster ramp mouse',
+      challenger: 'crush power outer gadget enter maze advance rather divert monster indoor axis',
+      liquidityProvider: 'smart base soup sister army address member poem point quick save penalty',
+    },
+  },
 };
