@@ -19,7 +19,7 @@ app.use(
 );
 
 app.get('/healthcheck', (req, res) => {
-  res.sendStatus(200)
+  res.sendStatus(200);
 });
 
 export default app;
