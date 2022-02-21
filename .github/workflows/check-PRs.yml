@@ -30,7 +30,7 @@ jobs:
         run: |
           docker build --no-cache	-t ghcr.io/eyblockchain/local-zokrates -f zokrates.Dockerfile .
           docker-compose build
-          ./start-nightfall -g &> ganache-test.log &disown
+          ./start-nightfall -g -d &> ganache-test.log &disown
 
       - name: debug logs - after container startup
         if: always()
