@@ -36,6 +36,9 @@ jobs:
         if: always()
         run: cat ganache-test.log
 
+      - name: wait 1500s for Containers startup and setup completion
+        run: sleep 1500
+
       - name: Run integration test
         run: |
           npm ci
