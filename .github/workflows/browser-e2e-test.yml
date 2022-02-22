@@ -83,4 +83,5 @@ jobs:
       - name: Run e2e test
         uses: cypress-io/github-action@v2
         with:
-          build: ls -l && cd wallet && npm run e2e-test
+          working-directory: wallet
+          build: npm run e2e-test
