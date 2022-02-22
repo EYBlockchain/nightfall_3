@@ -9,6 +9,8 @@
  */
 
 describe('End to End tests', () => {
+  let currentTokenBalance = 0;
+
   context('MetaMask', () => {
     it('getNetwork should return network by default', () => {
       cy.getNetwork().then(network => {
@@ -40,10 +42,12 @@ describe('End to End tests', () => {
       cy.get('button').contains('Generate Mnemonic').should('not.exist');
     });
   });
+
   context('Deposit', () => {
     const depositValue = 4;
 
     it(`initial deposit of value ${depositValue}`, () => {
+      cy.wait(100000);
       cy.get('#TokenItem_tokenDepositMATIC').click();
       cy.get('#Bridge_amountDetails_tokenAmount').clear().type(depositValue);
       cy.get('button').contains('Transfer').click();
@@ -53,7 +57,7 @@ describe('End to End tests', () => {
       cy.confirmMetamaskPermissionToSpend().then(approved => expect(approved).to.be.true);
       cy.wait(10000);
       cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
-      cy.wait(10000);
+      cy.wait(50000);
       cy.get('.btn-close').click();
     });
 
@@ -64,7 +68,7 @@ describe('End to End tests', () => {
       cy.get('#Bridge_modal_continueTransferButton').click();
       cy.wait(20000);
       cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
-      cy.wait(10000);
+      cy.wait(50000);
       cy.get('.btn-close').click();
       cy.contains('Nightfall Assets').click();
     });
@@ -73,6 +77,60 @@ describe('End to End tests', () => {
       cy.get('#TokenItem_tokenBalanceMATIC').should($div => {
         const totalBalance = Number($div.text());
         expect(totalBalance).to.equal(depositValue * 2);
+        currentTokenBalance = totalBalance;
+      });
+    });
+  });
+
+  context('Withdraw', () => {
+    const withdrawValue = 4;
+
+    it(`withdraw token of value ${withdrawValue}`, () => {
+      cy.get('#TokenItem_tokenWithdrawMATIC').click();
+      cy.get('#Bridge_amountDetails_tokenAmount').clear().type(withdrawValue);
+      cy.get('button').contains('Transfer').click();
+      cy.get('button').contains('Create Transaction').click();
+      cy.get('#Bridge_modal_continueTransferButton').click();
+      cy.wait(20000);
+      cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
+      cy.wait(50000);
+      cy.get('.btn-close').click();
+      cy.contains('Nightfall Assets').click();
+    });
+
+    it(`check token balance equal to ${currentTokenBalance - withdrawValue}`, () => {
+      cy.log(currentTokenBalance);
+      cy.log(withdrawValue);
+      cy.get('#TokenItem_tokenBalanceMATIC').should($div => {
+        const totalBalance = Number($div.text());
+        expect(totalBalance).to.equal(currentTokenBalance - withdrawValue);
+        currentTokenBalance = totalBalance;
+      });
+    });
+  });
+
+  context('Transfer', () => {
+    const transferValue = 4;
+
+    it(`transfer token of value ${transferValue}`, () => {
+      cy.get('#TokenItem_tokenSendMATIC').click();
+      cy.get('#TokenItem_modalSend_tokenAmount').clear().type(transferValue);
+      cy.get('button').contains('Continue').click();
+      cy.wait(20000);
+      cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
+      cy.wait(50000);
+      cy.get('.btn-close').click();
+      cy.contains('L2 Bridge').click();
+      cy.contains('Nightfall Assets').click();
+    });
+
+    it(`check token balance equal to ${currentTokenBalance - transferValue}`, () => {
+      cy.log(currentTokenBalance);
+      cy.log(transferValue);
+      cy.get('#TokenItem_tokenBalanceMATIC').should($div => {
+        const totalBalance = Number($div.text());
+        expect(totalBalance).to.equal(currentTokenBalance - transferValue);
+        currentTokenBalance = totalBalance;
       });
     });
   });
