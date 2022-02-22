@@ -11,6 +11,7 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
 import gen from 'general-number';
 import { initialize } from 'zokrates-js';
 
+import axios from 'axios';
 import rand from '../../common-files/utils/crypto/crypto-random';
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
@@ -40,13 +41,13 @@ import doubleTransferProgramFile from '../../zokrates/double_transfer_stub/artif
 import doubleTransferPkFile from '../../zokrates/double_transfer_stub/keypair/double_transfer_stub_pk.key';
 import { saveTransaction } from './database';
 
-const { BN128_GROUP_ORDER, ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME } = global.config;
+const { BN128_GROUP_ORDER, ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, optimistUrl } = global.config;
 const { generalise, GN } = gen;
 
 async function transfer(transferParams, shieldContractAddress) {
   logger.info('Creating a transfer transaction');
   // let's extract the input items
-  const { ...items } = transferParams;
+  const { offchain = false, ...items } = transferParams;
   const { ercAddress, tokenId, recipientData, nsk, ask, fee } = generalise(items);
   const { pkd, compressedPkd } = calculateIvkPkdfromAskNsk(ask, nsk);
   const { recipientCompressedPkds, values } = recipientData;
@@ -253,6 +254,31 @@ async function transfer(transferParams, shieldContractAddress) {
     proof,
   });
   try {
+    if (offchain) {
+      await axios
+        .post(
+          `${optimistUrl}/proposer/offchain-transaction`,
+          { transaction: optimisticTransferTransaction },
+          { timeout: 3600000 },
+        )
+        .catch(err => {
+          throw new Error(err);
+        });
+      // we only want to store our own commitments so filter those that don't
+      // have our public key
+      newCommitments
+        .filter(commitment => commitment.preimage.compressedPkd.hex(32) === compressedPkd.hex(32))
+        .forEach(commitment => storeCommitment(commitment, nsk)); // TODO insertMany
+      // mark the old commitments as nullified
+      await Promise.all(
+        oldCommitments.map(commitment => markNullified(commitment, optimisticTransferTransaction)),
+      );
+      await saveTransaction(optimisticTransferTransaction);
+      return {
+        transaction: optimisticTransferTransaction,
+        salts: salts.map(salt => salt.hex(32)),
+      };
+    }
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(optimisticTransferTransaction))
       .encodeABI();
