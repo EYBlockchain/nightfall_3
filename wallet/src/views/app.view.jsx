@@ -9,6 +9,7 @@ import TransactionPage from './transactionPage/index.jsx';
 import Web3 from '../common-files/utils/web3';
 import XSearch from '../webComponents/component1';
 import Bridge from './bridge/index.jsx';
+import generateWebComponents from '../utils/generateWebComponents';
 
 export default function App() {
   // eslint-disable-next-line no-unused-vars
@@ -19,6 +20,7 @@ export default function App() {
     setIsWeb3Connected({
       isWeb3Connected: true,
     });
+    generateWebComponents();
   }, []);
 
   /*

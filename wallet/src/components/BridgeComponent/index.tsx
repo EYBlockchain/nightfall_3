@@ -36,7 +36,7 @@ const BridgeComponent = (props: any) => {
 
   const handleClose = () => setShow(false);
   const handleShow = () => {
-    console.log('AQUIIIIIIII: ', tokenAmountWei);
+    console.log('AQUIIIIIIII: ', state);
     setShow(true);
   };
 

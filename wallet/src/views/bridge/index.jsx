@@ -1,30 +1,15 @@
 /* eslint-disable react/jsx-no-undef */
 /* eslint-disable react/jsx-pascal-case */
-import React, { useContext, useEffect } from 'react';
-import ReactDOM from 'react-dom';
-import reactToWebcomponent from 'react-to-webcomponent';
+import React, { useContext } from 'react';
 import styles from '../../styles/bridge.module.scss';
 import bridgeInfoImage from '../../assets/img/bridge-info.png';
 import Header from '../../components/Header/header.jsx';
 import SideBar from '../../components/SideBar/index.jsx';
 // eslint-disable-next-line import/no-unresolved
-import BridgeComponent from '../../components/BridgeComponent';
-import { UserContext, UserProvider } from '../../hooks/User/index.jsx';
+import { UserContext } from '../../hooks/User/index.jsx';
 
 const Bridge = () => {
   const [state] = useContext(UserContext);
-
-  function defineComponents() {
-    console.log('BRIDGE COMPONENT ELEMENT', customElements.get('bridge-component'));
-    if (customElements.get('bridge-component') === undefined) {
-      const BridgeElement = reactToWebcomponent(BridgeComponent, React, ReactDOM);
-      customElements.define('bridge-component', BridgeElement);
-    }
-  }
-
-  useEffect(() => {
-    defineComponents();
-  }, []);
 
   return (
     // containerFluid
@@ -95,9 +80,7 @@ const Bridge = () => {
                 </div>
               </div>
               <div>
-                <UserProvider>
-                  <bridge-component value={state} />
-                </UserProvider>
+                <bridge-component value={state} />
               </div>
             </div>
           </div>
