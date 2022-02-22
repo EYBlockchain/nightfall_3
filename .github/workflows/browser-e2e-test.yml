@@ -81,4 +81,6 @@ jobs:
         run: cat wallet/browser-app.log
 
       - name: Run e2e test
-        run: cd wallet && npm run e2e-test
+        uses: cypress-io/github-action@v2
+        with:
+          build: ls -l && cd wallet && npm run e2e-test
