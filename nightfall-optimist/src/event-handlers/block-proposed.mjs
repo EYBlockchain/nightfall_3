@@ -28,14 +28,18 @@ This handler runs whenever a BlockProposed event is emitted by the blockchain
 async function blockProposedEventHandler(data) {
   const { blockNumber: currentBlockCount, transactionHash: transactionHashL1 } = data;
   const { block, transactions } = await getProposeBlockCalldata(data);
+
+  // If a service is subscribed to this websocket and listening for events.
   if (ws)
     await ws.send(
       JSON.stringify({
-        type: 'proposedBlock',
-        blockNumber: currentBlockCount,
-        transactionHash: transactionHashL1,
-        block,
-        transactions,
+        type: 'blockProposed',
+        data: {
+          blockNumber: currentBlockCount,
+          transactionHash: transactionHashL1,
+          block,
+          transactions,
+        },
       }),
     );
   logger.info('Received BlockProposed event');
