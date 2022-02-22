@@ -96,22 +96,40 @@ export default function Bridge() {
       }
 
       case 'withdraw': {
-        const { rawTransaction } = await withdraw(
-          {
-            ercAddress,
-            tokenId: 0,
-            value: tokenAmountWei,
-            recipientAddress: await Web3.getAccount(),
-            nsk: state.zkpKeys.nsk,
-            ask: state.zkpKeys.ask,
-            tokenType: 'ERC20',
-            fees: 1,
-          },
-          shieldContractAddress,
-        );
-        console.log('rawTransaction', rawTransaction);
-        console.log('props', location);
-        return submitTransaction(rawTransaction, shieldContractAddress, 1);
+        if (transferMethod === 'Direct Transfer') {
+          await withdraw(
+            {
+              offchain: true,
+              ercAddress,
+              tokenId: 0,
+              value: tokenAmountWei,
+              recipientAddress: await Web3.getAccount(),
+              nsk: state.zkpKeys.nsk,
+              ask: state.zkpKeys.ask,
+              tokenType: 'ERC20',
+              fees: 1,
+            },
+            shieldContractAddress,
+          );
+        } else {
+          const { rawTransaction } = await withdraw(
+            {
+              ercAddress,
+              tokenId: 0,
+              value: tokenAmountWei,
+              recipientAddress: await Web3.getAccount(),
+              nsk: state.zkpKeys.nsk,
+              ask: state.zkpKeys.ask,
+              tokenType: 'ERC20',
+              fees: 1,
+            },
+            shieldContractAddress,
+          );
+          console.log('rawTransaction', rawTransaction);
+          console.log('props', location);
+          return submitTransaction(rawTransaction, shieldContractAddress, 1);
+        }
+        break;
       }
 
       default:

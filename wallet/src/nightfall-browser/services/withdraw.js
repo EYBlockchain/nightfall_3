@@ -9,6 +9,7 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
  */
 import gen from 'general-number';
 import { initialize } from 'zokrates-js';
+import axios from 'axios';
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
 import { Nullifier, PublicInputs, Transaction } from '../classes/index';
@@ -29,13 +30,13 @@ import pkFile from '../../zokrates/withdraw_stub/keypair/withdraw_stub_pk.key';
 import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
 import { saveTransaction } from './database';
 
-const { BN128_GROUP_ORDER, SHIELD_CONTRACT_NAME } = global.config;
+const { BN128_GROUP_ORDER, SHIELD_CONTRACT_NAME, optimistUrl } = global.config;
 const { generalise } = gen;
 
 async function withdraw(withdrawParams, shieldContractAddress) {
   logger.info('Creating a withdraw transaction');
   // let's extract the input items
-  const { ...items } = withdrawParams;
+  const { offchain = false, ...items } = withdrawParams;
   const { ercAddress, tokenId, value, recipientAddress, nsk, ask, fee } = generalise(items);
   const { compressedPkd } = await calculateIvkPkdfromAskNsk(ask, nsk);
 
@@ -128,13 +129,29 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     nullifiers: [nullifier],
     proof,
   });
-  await saveTransaction(optimisticWithdrawTransaction);
   try {
+    if (offchain) {
+      await axios
+        .post(
+          `${optimistUrl}/proposer/offchain-transaction`,
+          { transaction: optimisticWithdrawTransaction },
+          { timeout: 3600000 },
+        )
+        .catch(err => {
+          throw new Error(err);
+        });
+      const th = optimisticWithdrawTransaction.transactionHash;
+      delete optimisticWithdrawTransaction.transactionHash;
+      optimisticWithdrawTransaction.transactionHash = th;
+      await saveTransaction(optimisticWithdrawTransaction);
+      return { transaction: optimisticWithdrawTransaction };
+    }
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(optimisticWithdrawTransaction))
       .encodeABI();
     // on successful computation of the transaction mark the old commitments as nullified
     await markNullified(oldCommitment, optimisticWithdrawTransaction);
+    await saveTransaction(optimisticWithdrawTransaction);
     return { rawTransaction, transaction: optimisticWithdrawTransaction };
   } catch (err) {
     await clearPending(oldCommitment);
