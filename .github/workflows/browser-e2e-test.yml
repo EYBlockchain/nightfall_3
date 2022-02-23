@@ -59,11 +59,11 @@ jobs:
         if: always()
         run: cat proposer.log
 
-      - name: Setup browser app
-        run: |
-          cd wallet/
-          npm ci
-          ./copy-zokrates-local.sh
+      # - name: Setup browser app
+      #   run: |
+      #     cd wallet/
+      #     npm ci
+      #     ./copy-zokrates-local.sh
 
       # - name: Start browser app
       #   run: |
@@ -83,3 +83,4 @@ jobs:
         with:
           working-directory: wallet
           build: ./copy-zokrates-local.sh
+          command: npm run e2e-test
