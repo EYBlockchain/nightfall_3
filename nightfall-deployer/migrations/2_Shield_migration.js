@@ -10,23 +10,32 @@ const Proposers = artifacts.require('Proposers.sol');
 const Challenges = artifacts.require('Challenges.sol');
 const State = artifacts.require('State.sol');
 
-module.exports = function(deployer) {
+const config = require('config');
+
+const { RESTRICTIONS: contractRestrictions } = config;
+
+module.exports = function (deployer) {
   deployer.then(async () => {
     await deployer.deploy(Verifier);
-    await deployer.link(Verifier, [Challenges,ChallengesUtil]);
+    await deployer.link(Verifier, [Challenges, ChallengesUtil]);
     await deployer.deploy(MiMC);
     await deployer.link(MiMC, MerkleTree_Stateless);
     await deployer.deploy(MerkleTree_Stateless);
-    await deployer.link(MerkleTree_Stateless, [Challenges,ChallengesUtil]);
+    await deployer.link(MerkleTree_Stateless, [Challenges, ChallengesUtil]);
     await deployer.deploy(Structures);
     await deployer.deploy(Config);
     await deployer.deploy(Utils);
-    await deployer.link(Utils, [Shield,Challenges,ChallengesUtil]);
+    await deployer.link(Utils, [Shield, Challenges, ChallengesUtil]);
     await deployer.deploy(ChallengesUtil);
     await deployer.link(ChallengesUtil, Challenges);
-    await deployer.deploy(Proposers)
+    await deployer.deploy(Proposers);
     await deployer.deploy(Challenges);
     await deployer.deploy(Shield);
     await deployer.deploy(State, Proposers.address, Challenges.address, Shield.address);
+
+    const restrictions = await Shield.deployed();
+    for (let c of contractRestrictions) {
+      await restrictions.setRestriction(c.address, c.amount);
+    }
   });
 };

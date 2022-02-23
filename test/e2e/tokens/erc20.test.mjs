@@ -24,6 +24,8 @@ const {
   signingKeys,
 } = config.TEST_OPTIONS;
 
+const { RESTRICTIONS: defaultRestrictions } = config;
+
 const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
 const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
 
@@ -429,6 +431,118 @@ describe('ERC20 tests', () => {
     after(async () => {
       await emptyL2(nf3Users[0]);
       await nf3LiquidityProvider.close();
+    });
+  });
+
+  /* 
+    What is this, you wonder? We're just testing restrictions, since for an initial release phase
+    we want to restrict the amount of deposits/withdraws. Take a look at #516 if you want to know more
+    */
+  describe('Restrictions', () => {
+    describe('Testing new restrictions', async () => {
+      let newAmount;
+      before(() => {
+        const defaultERC20restriction = defaultRestrictions.find(
+          e => e.address.toLowerCase() === erc20Address,
+        );
+
+        newAmount = Math.ceil(
+          Math.random() * (defaultERC20restriction - transferValue) + transferValue,
+        );
+      });
+
+      it('should restrict deposits', async () => {
+        // anything equal or above the restricted amount should fail
+        try {
+          await depositNTransactions(
+            nf3Users[0],
+            txPerBlock,
+            erc20Address,
+            tokenType,
+            newAmount,
+            tokenId,
+            fee,
+          );
+          expect.fail('Transaction has been reverted by the EVM');
+        } catch (error) {
+          expect(error.message).to.satisfy(message =>
+            message.includes('Transaction has been reverted by the EVM'),
+          );
+        }
+
+        // and everything below should pass
+        await depositNTransactions(
+          nf3Users[0],
+          txPerBlock,
+          erc20Address,
+          tokenType,
+          newAmount - 1,
+          tokenId,
+          fee,
+        );
+      });
+
+      it('should restrict withdrawals', async () => {
+        const nodeInfo = await web3Client.getInfo();
+        if (nodeInfo.includes('TestRPC')) {
+          try {
+            // we need two transactions to serve as commitments to the withdrawal
+            // but we can't deposit the whole amount because... that's the limit 😅
+            // so let's just split it
+            await depositNTransactions(
+              nf3Users[0],
+              txPerBlock,
+              erc20Address,
+              tokenType,
+              Math.ceil(newAmount / txPerBlock),
+              tokenId,
+              fee,
+            );
+
+            // we also need a commitment of the specific amount we need to withdraw
+            // so we should transfer that amount to ourselves
+            await nf3Users[0].transfer(
+              false,
+              erc20Address,
+              tokenType,
+              newAmount,
+              tokenId,
+              nf3Users[0].zkpKeys.compressedPkd,
+              fee,
+            );
+
+            await emptyL2(nf3Users[0]);
+
+            const rec = await nf3Users[0].withdraw(
+              false,
+              erc20Address,
+              tokenType,
+              newAmount,
+              tokenId,
+              nf3Users[0].ethereumAddress,
+              fee,
+            );
+
+            expectTransaction(rec);
+            const withdrawal = await nf3Users[0].getLatestWithdrawHash();
+
+            await emptyL2(nf3Users[0]);
+
+            await web3Client.timeJump(3600 * 24 * 10); // jump in time by 50 days
+
+            // anything equal or above the restricted amount should fail
+            await nf3Users[0].finaliseWithdrawal(withdrawal);
+            expect.fail('Transaction has been reverted by the EVM');
+          } catch (error) {
+            expect(error.message).to.satisfy(message =>
+              message.includes('Transaction has been reverted by the EVM'),
+            );
+          }
+        } else {
+          console.log('     Not using a time-jump capable test client so this test is skipped');
+          this.skip();
+        }
+      });
     });
   });
 
