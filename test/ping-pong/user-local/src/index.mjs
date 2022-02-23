@@ -19,7 +19,7 @@ const {
   TRANSACTIONS_PER_BLOCK,
 } = config;
 
-const { TEST_LENGTH, ERC20_NAME, TX_WAIT = 10000 } = process.env;
+const { TEST_LENGTH, ERC20_NAME, TX_WAIT = 1000 } = process.env;
 const recipientPkd = process.env.RECIPIENT_PKD; // .split(',');
 
 /**
@@ -31,7 +31,8 @@ async function localTest() {
   const tokenType = 'ERC20';
   const value = 1;
   const tokenId = '0x0000000000000000000000000000000000000000000000000000000000000000';
-  const nf3 = new Nf3(web3WsUrl, userEthereumSigningKey, {
+  const nf3 = new Nf3(userEthereumSigningKey, {
+    web3WsUrl,
     clientApiUrl: clientBaseUrl,
     optimistApiUrl: optimistBaseUrl,
     optimistWsUrl,

@@ -12,8 +12,8 @@ Does the preliminary setup and starts listening on the websocket
 */
 async function startProposer() {
   logger.info('Starting Proposer...');
-  const nf3 = new Nf3(web3WsUrl, proposerEthereumSigningKey, {
-    // clientApiUrl: clientBaseUrl,
+  const nf3 = new Nf3(proposerEthereumSigningKey, {
+    web3WsUrl,
     optimistApiUrl: optimistBaseUrl,
     optimistWsUrl,
   });
