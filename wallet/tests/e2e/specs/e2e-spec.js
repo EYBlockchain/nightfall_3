@@ -47,7 +47,6 @@ describe('End to End tests', () => {
     const depositValue = 4;
 
     it(`initial deposit of value ${depositValue}`, () => {
-      cy.wait(100000);
       cy.get('#TokenItem_tokenDepositMATIC').click();
       cy.get('#Bridge_amountDetails_tokenAmount').clear().type(depositValue);
       cy.get('button').contains('Transfer').click();
@@ -55,7 +54,7 @@ describe('End to End tests', () => {
       cy.get('#Bridge_modal_continueTransferButton').click();
       cy.wait(20000);
       cy.confirmMetamaskPermissionToSpend().then(approved => expect(approved).to.be.true);
-      cy.wait(10000);
+      cy.wait(30000);
       cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
       cy.wait(50000);
       cy.get('.btn-close').click();
@@ -98,7 +97,7 @@ describe('End to End tests', () => {
       cy.contains('Nightfall Assets').click();
     });
 
-    it(`check token balance equal to ${currentTokenBalance - withdrawValue}`, () => {
+    it(`check token balance after withdraw`, () => {
       cy.log(currentTokenBalance);
       cy.log(withdrawValue);
       cy.get('#TokenItem_tokenBalanceMATIC').should($div => {
@@ -124,7 +123,7 @@ describe('End to End tests', () => {
       cy.contains('Nightfall Assets').click();
     });
 
-    it(`check token balance equal to ${currentTokenBalance - transferValue}`, () => {
+    it(`check token balance after transfer`, () => {
       cy.log(currentTokenBalance);
       cy.log(transferValue);
       cy.get('#TokenItem_tokenBalanceMATIC').should($div => {
