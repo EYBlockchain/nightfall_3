@@ -82,5 +82,5 @@ jobs:
         uses: cypress-io/github-action@v2
         with:
           working-directory: wallet
-          build: ./copy-zokrates-local.sh
+          build: sh ./copy-zokrates-local.sh
           command: npm run e2e-test
