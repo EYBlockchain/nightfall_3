@@ -80,7 +80,7 @@ jobs:
 
       - name: debug logs - after container startup
         if: always()
-        run: cat ping-pong-test.log
+        run: cat test/ping-pong/ping-pong-test.log
 
       - name: wait 1200s for Containers startup and setup completion
         run: sleep 1200
@@ -88,6 +88,7 @@ jobs:
       - name: Run ping-pong test
         run: |
           docker wait nightfall_3_deployer_1
+          cd test/ping-pong
           ./pong-apps
 
       - name: debug logs - after integration test run
@@ -97,6 +98,7 @@ jobs:
       - name: If integration test failed, shutdown the Containers
         if: failure()
         run: |
+          cd test/ping-pong
           ./pong-down -v
           ./ganache-standalone -d
 
@@ -105,7 +107,7 @@ jobs:
         uses: actions/upload-artifact@master
         with:
           name: ping-pong-test-logs
-          path: ./ping-pong-test.log
+          path: test/ping-pong/ping-pong-test.log
 
   test-gas:
     name: check gas for 32 transactions per block
