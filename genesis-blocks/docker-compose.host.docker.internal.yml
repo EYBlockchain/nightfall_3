@@ -1,0 +1,16 @@
+version: '3.5'
+# Use this script for running up nightfall_3 with our geth node on ropsten
+services:
+  user-local1:
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    environment:
+      BLOCKCHAIN_WS_HOST: host.docker.internal
+      BLOCKCHAIN_PORT: 8546
+      TEST_LENGTH: 1
+      ERC20_NAME: ERC20Mock
+      USER_ETHEREUM_SIGNING_KEY: adf9b65664deaa27d37f2c3bae4f70ca22cbe9d956a1be5873770f6fd68df271
+      USER_ADDRESS: '0xE35B7c8338E4B952C03E73B50f454B1df086fef2'
+      # RECIPIENT_PKD: 0x105651c0c5bb97582b3270e0f5a07ca81410ffd1920e86697efddaec03dccef8,0x1ac3b61ecba1448e697b23d37efe290fb86554b2f905aaca3a6df59805eca366
+      RECIPIENT_PKD: '0x1ac3b61ecba1448e697b23d37efe290fb86554b2f905aaca3a6df59805eca366'
+      ZKP_MNEMONIC: tone shadow woman critic glare utility brass scheme edge brisk enforce champion
