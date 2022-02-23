@@ -3,6 +3,9 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import * as fs from 'fs';
 import Nf3 from '../../../cli/lib/nf3.mjs';
 import { expectTransaction, depositNTransactions, Web3Client } from '../../utils.mjs';
 
@@ -23,6 +26,8 @@ const {
   mnemonics,
   signingKeys,
 } = config.TEST_OPTIONS;
+
+const { RESTRICTIONS: defaultRestrictions } = config;
 
 const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
 const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
@@ -51,6 +56,7 @@ const emptyL2 = async nf3Instance => {
   let count = await nf3Instance.unprocessedTransactionCount();
   while (count !== 0) {
     if (count % txPerBlock) {
+      console.log('EMPTYING');
       await depositNTransactions(
         nf3Instance,
         count % txPerBlock ? count % txPerBlock : txPerBlock,
@@ -429,6 +435,167 @@ describe('ERC20 tests', () => {
     after(async () => {
       await emptyL2(nf3Users[0]);
       await nf3LiquidityProvider.close();
+    });
+  });
+
+  /* 
+    What is this, you wonder? We're just testing restrictions, since for an initial release phase
+    we want to restrict the amount of deposits/withdraws. Take a look at #516 if you want to know more
+    */
+  describe('Restrictions', () => {
+    let shieldContract;
+    let contractOwner;
+    let defaultERC20restriction;
+
+    // we need some setup to get a dummy interface we can work with
+    before(async () => {
+      const w3 = web3Client.getWeb3();
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+
+      const interf = await fs.readFileSync(
+        `${__dirname}/__mocks__/restrictionsInterface.json`,
+        'utf8',
+      );
+      const shieldContractAddress = await nf3Users[0].shieldContractAddress;
+      shieldContract = new w3.eth.Contract(JSON.parse(interf), shieldContractAddress);
+
+      contractOwner = await nf3Users[0].getAccounts();
+
+      defaultERC20restriction = defaultRestrictions.find(
+        e => e.address.toLowerCase() === erc20Address,
+      );
+    });
+
+    // we should check if the restriction of this particular ERC20 token is the same as
+    // initially defined in config
+    it('should get the restriction for a ERC20 token', async function () {
+      const res = await shieldContract.methods.getRestriction(erc20Address).call();
+
+      expect(res).to.equal(defaultERC20restriction.amount.toString());
+    });
+
+    describe('Testing new restrictions', async () => {
+      // get a random amount so we don't accidentally hit whatever default value it set
+      const newAmount = Math.ceil(Math.random() * (200 - transferValue) + transferValue);
+
+      // now we want to know that we can change that restriction, and check that deposits
+      // fail miserably
+      it('should change the restriction for a ERC20 token', async function () {
+        await shieldContract.methods.setRestriction(erc20Address, newAmount).send({
+          from: contractOwner,
+        });
+
+        const res = await shieldContract.methods.getRestriction(erc20Address).call();
+
+        expect(res).to.equal(newAmount.toString());
+      });
+
+      it('should restrict deposits', async () => {
+        // anything equal or above the restricted amount should fail
+        try {
+          await depositNTransactions(
+            nf3Users[0],
+            txPerBlock,
+            erc20Address,
+            tokenType,
+            newAmount,
+            tokenId,
+            fee,
+          );
+          expect.fail('Transaction has been reverted by the EVM');
+        } catch (error) {
+          expect(error.message).to.satisfy(message =>
+            message.includes('Transaction has been reverted by the EVM'),
+          );
+        }
+
+        // and everything below should pass
+        await depositNTransactions(
+          nf3Users[0],
+          txPerBlock,
+          erc20Address,
+          tokenType,
+          newAmount - 1,
+          tokenId,
+          fee,
+        );
+      });
+
+      it('should restrict withdrawals', async () => {
+        const nodeInfo = await web3Client.getInfo();
+        if (nodeInfo.includes('TestRPC')) {
+          try {
+            // we need two transactions to serve as commitments to the withdrawal
+            // but we can't deposit the whole amount because... that's the limit 😅
+            // so let's just split it
+            await depositNTransactions(
+              nf3Users[0],
+              txPerBlock,
+              erc20Address,
+              tokenType,
+              Math.ceil(newAmount / txPerBlock),
+              tokenId,
+              fee,
+            );
+
+            // we also need a commitment of the specific amount we need to withdraw
+            // so we should transfer that amount to ourselves
+            await nf3Users[0].transfer(
+              false,
+              erc20Address,
+              tokenType,
+              newAmount,
+              tokenId,
+              nf3Users[0].zkpKeys.compressedPkd,
+              fee,
+            );
+
+            await emptyL2(nf3Users[0]);
+
+            const rec = await nf3Users[0].withdraw(
+              false,
+              erc20Address,
+              tokenType,
+              newAmount,
+              tokenId,
+              nf3Users[0].ethereumAddress,
+              fee,
+            );
+
+            expectTransaction(rec);
+            const withdrawal = await nf3Users[0].getLatestWithdrawHash();
+
+            await emptyL2(nf3Users[0]);
+
+            await web3Client.timeJump(3600 * 24 * 10); // jump in time by 50 days
+
+            // anything equal or above the restricted amount should fail
+            await nf3Users[0].finaliseWithdrawal(withdrawal);
+            expect.fail('Transaction has been reverted by the EVM');
+          } catch (error) {
+            expect(error.message).to.satisfy(message =>
+              message.includes('Transaction has been reverted by the EVM'),
+            );
+          }
+        } else {
+          console.log('     Not using a time-jump capable test client so this test is skipped');
+          this.skip();
+        }
+      });
+
+      // now we just reset it back to how it was so we can keep testing
+      after(async () => {
+        await shieldContract.methods
+          .setRestriction(erc20Address, defaultERC20restriction.amount)
+          .send({
+            from: contractOwner,
+          });
+
+        const res = await shieldContract.methods.getRestriction(erc20Address).call();
+
+        expect(res).to.equal(defaultERC20restriction.amount.toString());
+      });
     });
   });
 

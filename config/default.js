@@ -196,4 +196,11 @@ module.exports = {
       liquidityProvider: 'smart base soup sister army address member poem point quick save penalty',
     },
   },
+  RESTRICTIONS: [
+    {
+      name: 'MockERC20',
+      address: '0xB5Acbe9a0F1F8B98F3fC04471F7fE5d2c222cB44',
+      amount: 100,
+    },
+  ],
 };
