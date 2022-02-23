@@ -61,6 +61,52 @@ jobs:
           name: ganache-test-logs
           path: ./ganache-test.log
 
+  ping-pong-test:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '14.17.0'
+
+      - name: Start Containers
+        run: |
+          docker build --no-cache	-t ghcr.io/eyblockchain/local-zokrates -f zokrates.Dockerfile .
+          cd test/ping-pong
+          docker-compose build
+          ./ganache-standalone -s
+          sleep 10
+          ./pong-nightfall -d -s &> ping-pong-test.log &disown
+
+      - name: debug logs - after container startup
+        if: always()
+        run: cat ping-pong-test.log
+
+      - name: wait 1200s for Containers startup and setup completion
+        run: sleep 1200
+
+      - name: Run ping-pong test
+        run: |
+          docker wait nightfall_3_deployer_1
+          ./pong-apps
+
+      - name: debug logs - after integration test run
+        if: always()
+        run: cat ping-pong-test.log
+
+      - name: If integration test failed, shutdown the Containers
+        if: failure()
+        run: |
+          ./pong-down -v
+          ./ganache-standalone -d
+
+      - name: If integration test failed, upload logs files as artifacts
+        if: failure()
+        uses: actions/upload-artifact@master
+        with:
+          name: ping-pong-test-logs
+          path: ./ping-pong-test.log
+
   test-gas:
     name: check gas for 32 transactions per block
     runs-on: ubuntu-20.04
