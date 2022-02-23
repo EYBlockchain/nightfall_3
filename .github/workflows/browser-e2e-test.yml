@@ -65,14 +65,14 @@ jobs:
           npm ci
           ./copy-zokrates-local.sh
 
-      - name: Start browser app
-        run: |
-          cd wallet/
-          npm start &> browser-app.log &disown
-          sleep 400
-        env:
-          BROWSER: none
-          CHOKIDAR_USEPOLLING: false
+      # - name: Start browser app
+      #   run: |
+      #     cd wallet/
+      #     npm start &> browser-app.log &disown
+      #     sleep 400
+      #   env:
+      #     BROWSER: none
+      #     CHOKIDAR_USEPOLLING: false
 
       - name: debug logs - after browser startup
         if: always()
@@ -82,4 +82,4 @@ jobs:
         uses: cypress-io/github-action@v2
         with:
           working-directory: wallet
-          build: npm run e2e-test
+          build: ./copy-zokrates-local.sh
