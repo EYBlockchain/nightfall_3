@@ -81,12 +81,8 @@ jobs:
       - name: Run e2e test
         uses: cypress-io/github-action@v2
         with:
-          browser: chrome
-          headless: true
           working-directory: wallet
           command: npm run e2e-test
-        env:
-          DEBUG: '@cypress/github-action'
 
       - name: test video
         if: always()
@@ -94,3 +90,7 @@ jobs:
         with:
           name: e2e-video
           path: wallet/tests/e2e/videos/e2e-spec.js.mp4
+
+      - name: debug logs - after container startup
+        if: always()
+        run: cat docker-compose.log

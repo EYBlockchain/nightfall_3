@@ -53,7 +53,7 @@ describe('End to End tests', () => {
       cy.get('button').contains('Create Transaction').click();
       cy.get('#Bridge_modal_continueTransferButton').click();
       cy.wait(20000);
-      cy.confirmMetamaskPermissionToSpend().then(approved => expect(approved).to.be.true);
+      // cy.confirmMetamaskPermissionToSpend().then(approved => expect(approved).to.be.true);
       cy.wait(30000);
       cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
       cy.wait(50000);
