@@ -83,7 +83,7 @@ async function localTest() {
       logger.info('Balance of User (2*value (2*1) + value received) ', endBalance - startBalance);
       logger.info('Amount sent to other User', value * TEST_LENGTH);
       nf3.close();
-      break;
+      process.exit(0);
     } else {
       logger.info(
         'The test has not yet passed because the L2 balance has not increased - waiting',
@@ -94,6 +94,7 @@ async function localTest() {
       loop++;
     }
   } while (loop < 10);
+  process.exit(1);
 }
 
 localTest();
