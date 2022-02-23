@@ -74,9 +74,9 @@ jobs:
       #     BROWSER: none
       #     CHOKIDAR_USEPOLLING: false
 
-      - name: debug logs - after browser startup
-        if: always()
-        run: cat wallet/browser-app.log
+      # - name: debug logs - after browser startup
+      #   if: always()
+      #   run: cat wallet/browser-app.log
 
       - name: Run e2e test
         uses: cypress-io/github-action@v2
