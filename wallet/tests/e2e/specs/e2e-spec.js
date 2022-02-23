@@ -115,12 +115,14 @@ describe('End to End tests', () => {
       cy.get('#TokenItem_tokenSendMATIC').click();
       cy.get('#TokenItem_modalSend_tokenAmount').clear().type(transferValue);
       cy.get('button').contains('Continue').click();
-      cy.wait(20000);
+      cy.wait(70000);
       cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
-      cy.wait(50000);
+      cy.wait(70000);
       cy.get('.btn-close').click();
       cy.contains('L2 Bridge').click();
+      cy.wait(20000);
       cy.contains('Nightfall Assets').click();
+      cy.wait(20000);
     });
 
     it(`check token balance after transfer`, () => {

@@ -83,3 +83,12 @@ jobs:
         with:
           working-directory: wallet
           command: npm run e2e-test
+        env:
+          DEBUG: '@cypress/github-action'
+
+      - name: test video
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: e2e-video
+          path: wallet/tests/e2e/videos/e2e-spec.js.mp4
