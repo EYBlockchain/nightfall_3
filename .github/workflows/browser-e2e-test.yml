@@ -82,7 +82,7 @@ jobs:
         uses: cypress-io/github-action@v2
         with:
           browser: chrome
-          headless: false
+          headless: true
           working-directory: wallet
           command: npm run e2e-test
         env:
