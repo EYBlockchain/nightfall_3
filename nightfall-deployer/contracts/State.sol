@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: CC0-1.0
-
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 /**
 Contract to hold global state that is needed by a number of other contracts,
 together with functions for mutating it.
@@ -26,7 +26,7 @@ contract State is Structures, Config {
   address public challengesAddress;
   address public shieldAddress;
 
-  constructor(address _proposersAddress, address _challengesAddress, address _shieldAddress) {
+  function initialise(address _proposersAddress, address _challengesAddress, address _shieldAddress) public initializer {
     proposersAddress = _proposersAddress;
     challengesAddress = _challengesAddress;
     shieldAddress = _shieldAddress;

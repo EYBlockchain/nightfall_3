@@ -2,12 +2,13 @@
 
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /**
  * @title Ownable
  * @dev This contract has the owner address providing basic authorization control
  */
-contract Ownable {
+contract Ownable is Initializable {
   /**
    * @dev Event to show ownership has been transferred
    * @param previousOwner representing the address of the previous owner
@@ -29,7 +30,7 @@ contract Ownable {
   /**
    * @dev The constructor sets the original owner of the contract to the sender account.
    */
-  constructor() {
+  function initialize() public initializer {
     setOwner(msg.sender);
   }
 

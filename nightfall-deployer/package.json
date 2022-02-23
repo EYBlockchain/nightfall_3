@@ -34,6 +34,7 @@
   },
   "devDependencies": {
     "@truffle/hdwallet-provider": "^1.5.0",
-    "truffle-contract-size": "^2.0.1"
+    "truffle-contract-size": "^2.0.1",
+    "@openzeppelin/truffle-upgrades" : "^1.12.0"
   }
 }

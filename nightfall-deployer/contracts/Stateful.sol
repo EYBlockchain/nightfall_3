@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: CC0-1.0
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /**
 Contract that should be extended by contracts that require access to global state.
@@ -9,12 +10,12 @@ pragma solidity ^0.8.0;
 
 import './State.sol';
 
-abstract contract Stateful {
+abstract contract Stateful is Intitializable {
   State public state;
   address deployer;
   bool done;
 
-  constructor() {
+  function initialise() public initializer {
     deployer = msg.sender;
     done = false;
   }

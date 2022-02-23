@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: CC0
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 /*
 Contract to manage the creation and managment of Proposals
 */
@@ -10,8 +11,10 @@ import './Structures.sol';
 import './Stateful.sol';
 
 contract Proposers is Stateful, Structures, Config {
-  // mapping(address => TimeLockedBond) public bondAccounts;
 
+  function initialize() public initializer {
+    Stateful.initialize();
+  }
   /**
   * Each proposer gets a chance to propose blocks for a certain time, defined
   * in Ethereum blocks.  After a certain number of blocks has passed, the

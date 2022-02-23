@@ -11,6 +11,9 @@ contract Key_Registry is Ownable, Structures {
 
   mapping(TransactionTypes => uint256[]) public vks;
 
+  function initialize() public initializer {
+    Ownable.initialize();
+  }
   /**
   Stores verification keys (for the 'deposit', 'transfer' and 'withdraw' computations).
   */

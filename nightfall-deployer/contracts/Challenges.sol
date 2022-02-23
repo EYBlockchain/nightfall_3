@@ -18,6 +18,10 @@ import './Stateful.sol';
 contract Challenges is Stateful, Key_Registry, Config {
   mapping(bytes32 => address) public committers;
 
+  function initialize() public initializer {
+    Stateful.initialize();
+  }
+
   /**
   Check that the block correctly updates the leafCount.  Note that the leafCount
   is actually the value BEFORE the commitments are added to the Merkle tree.
