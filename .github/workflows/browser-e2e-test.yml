@@ -59,28 +59,27 @@ jobs:
         if: always()
         run: cat proposer.log
 
-      # - name: Setup browser app
-      #   run: |
-      #     cd wallet/
-      #     npm ci
-      #     ./copy-zokrates-local.sh
+      - name: Setup browser app
+        run: |
+          cd wallet/
+          npm ci
+          ./copy-zokrates-local.sh
 
-      # - name: Start browser app
-      #   run: |
-      #     cd wallet/
-      #     npm start &> browser-app.log &disown
-      #     sleep 400
-      #   env:
-      #     BROWSER: none
-      #     CHOKIDAR_USEPOLLING: false
+      - name: Start browser app
+        run: |
+          cd wallet/
+          npm start &> browser-app.log &disown
+          sleep 400
+        env:
+          BROWSER: none
+          CHOKIDAR_USEPOLLING: false
 
-      # - name: debug logs - after browser startup
-      #   if: always()
-      #   run: cat wallet/browser-app.log
+      - name: debug logs - after browser startup
+        if: always()
+        run: cat wallet/browser-app.log
 
       - name: Run e2e test
         uses: cypress-io/github-action@v2
         with:
           working-directory: wallet
-          build: ls -l
           command: npm run e2e-test
