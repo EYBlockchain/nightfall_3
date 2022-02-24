@@ -56,7 +56,6 @@ const emptyL2 = async nf3Instance => {
   let count = await nf3Instance.unprocessedTransactionCount();
   while (count !== 0) {
     if (count % txPerBlock) {
-      console.log('EMPTYING');
       await depositNTransactions(
         nf3Instance,
         count % txPerBlock ? count % txPerBlock : txPerBlock,
