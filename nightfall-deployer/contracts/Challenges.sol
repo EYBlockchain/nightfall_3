@@ -18,8 +18,9 @@ import './Stateful.sol';
 contract Challenges is Stateful, Key_Registry, Config {
   mapping(bytes32 => address) public committers;
 
-  function initialize() public initializer {
+  function initialize() override(Stateful, Key_Registry) public initializer {
     Stateful.initialize();
+    Key_Registry.initialize();
   }
 
   /**

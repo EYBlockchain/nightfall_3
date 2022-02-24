@@ -24,9 +24,9 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
   mapping(bytes32 => address) public advancedWithdrawals;
   mapping(bytes32 => uint) public advancedFeeWithdrawals;
 
-  function initialize() public initializer {
+  function initialize() override(Stateful, Key_Registry) public initializer {
     Stateful.initialize();
-    Key_registry.initialize();
+    Key_Registry.initialize();
   }
 
   function submitTransaction(Transaction memory t) external payable {

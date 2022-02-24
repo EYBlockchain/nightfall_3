@@ -19,7 +19,7 @@ module.exports = async function(deployer) {
   await deployer.link(MiMC, MerkleTree_Stateless);
   await deployer.deploy(MerkleTree_Stateless);
   await deployer.link(MerkleTree_Stateless, [Challenges,ChallengesUtil]);
-  await deployer.deploy(Utils);
+    await deployer.deploy(Utils);
   await deployer.link(Utils, [Shield,Challenges,ChallengesUtil]);
   await deployer.deploy(ChallengesUtil);
   await deployer.link(ChallengesUtil, Challenges);

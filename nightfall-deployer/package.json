@@ -22,6 +22,7 @@
   "homepage": "https://github.com/EYBlockchain/nightfall-deployer#readme",
   "dependencies": {
     "@openzeppelin/contracts": "^4.3.2",
+    "@openzeppelin/contracts-upgradeable": "^4.5.1",
     "axios": "^0.21.1",
     "big-integer": "^1.6.48",
     "common-files": "file:../common-files",

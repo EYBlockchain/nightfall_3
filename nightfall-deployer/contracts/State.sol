@@ -12,7 +12,7 @@ import './Structures.sol';
 import './Utils.sol';
 import './Config.sol';
 
-contract State is Structures, Config {
+contract State is Structures, Config, Initializable {
   // global state variables
   BlockData[] public blockHashes; // array containing mainly blockHashes
   mapping(address => uint) public pendingWithdrawals;
@@ -26,7 +26,7 @@ contract State is Structures, Config {
   address public challengesAddress;
   address public shieldAddress;
 
-  function initialise(address _proposersAddress, address _challengesAddress, address _shieldAddress) public initializer {
+  function initialize(address _proposersAddress, address _challengesAddress, address _shieldAddress) public initializer {
     proposersAddress = _proposersAddress;
     challengesAddress = _challengesAddress;
     shieldAddress = _shieldAddress;

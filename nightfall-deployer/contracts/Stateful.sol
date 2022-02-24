@@ -10,12 +10,12 @@ pragma solidity ^0.8.0;
 
 import './State.sol';
 
-abstract contract Stateful is Intitializable {
+abstract contract Stateful is Initializable {
   State public state;
   address deployer;
   bool done;
 
-  function initialise() public initializer {
+  function initialize() virtual public initializer {
     deployer = msg.sender;
     done = false;
   }

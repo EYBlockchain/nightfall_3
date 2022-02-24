@@ -12,7 +12,7 @@ import './Stateful.sol';
 
 contract Proposers is Stateful, Structures, Config {
 
-  function initialize() public initializer {
+  function initialize() override public initializer {
     Stateful.initialize();
   }
   /**
