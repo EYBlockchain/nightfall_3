@@ -87,6 +87,7 @@ jobs:
 
       - name: Run ping-pong test
         run: |
+          docker ps
           docker wait pong_deployer_1
           cd test/ping-pong
           ./pong-apps
