@@ -234,7 +234,7 @@ describe('End to End tests', () => {
       cy.contains('Nightfall Assets').click();
       cy.get('#TokenItem_tokenBalanceMATIC').should($div => {
         const totalBalance = Number($div.text());
-        expect(totalBalance).to.equal(currentTokenBalance + transferValue);
+        expect(totalBalance).to.equal(currentTokenBalance + depositValue + transferValue);
         currentTokenBalance = totalBalance;
       });
     });
