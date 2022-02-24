@@ -1,0 +1,40 @@
+#! /bin/bash
+
+# script to delete volumes so that state can be reset
+docker-compose -f docker-compose.yml down
+VOLUME_LIST=$(docker volume ls -q)
+
+usage()
+{
+  echo "Usage:"
+  echo "  -v or --volumes; deletes all volumes, including the zkp trusted setup, otherwise they are kept"
+  echo "  -h or --help; to print this message"
+}
+while [ -n "$1" ]; do
+  case $1 in
+      -v | --volumes )        if [[ $(echo $VOLUME_LIST | grep genesis-blocks_proving_files) ]]; then
+                              echo -n 'Removing '
+                              docker volume rm genesis-blocks_proving_files
+                              fi
+                              if [[ $(echo $VOLUME_LIST | grep genesis-blocks_mongodb) ]]; then
+                                echo -n 'Removing '
+                                docker volume rm genesis-blocks_mongodb
+                              fi
+                              if [[ $(echo $VOLUME_LIST | grep genesis-blocks_build) ]]; then
+                                echo -n 'Removing '
+                                docker volume rm genesis-blocks_build
+                              fi
+                              ;;
+      -h | --help )           usage
+                              exit 0
+                              ;;
+      * )                     usage
+                              exit 1
+    esac
+  shift
+done
+
+DIR=./common-files/node_modules
+if [[ -d "$DIR" ]]; then
+  rm -dr common-files/node_modules
+fi

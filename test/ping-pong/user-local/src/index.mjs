@@ -72,7 +72,10 @@ async function localTest() {
         );
       }
     }
-    await nf3.deposit(ercAddress, tokenType, value, tokenId);
+    // Create enough deposits to fill block
+    for (let j = 0; j < txPerBlock - 1; j++) {
+      await nf3.deposit(ercAddress, tokenType, value, tokenId);
+    }
     await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
     console.log(`Completed ${i + 1} pings`);
     offchainTx = !offchainTx;
@@ -85,20 +88,23 @@ async function localTest() {
   if (IS_TEST_RUNNER) loopMax = 10; // the TEST_RUNNER must finish first so that its exit status is returned to the tester
   do {
     const endBalance = await retrieveL2Balance(nf3);
-    if (endBalance - startBalance === txPerBlock * value + value * TEST_LENGTH && IS_TEST_RUNNER) {
+    if (
+      endBalance - startBalance === txPerBlock * value + (txPerBlock - 1) * value * TEST_LENGTH &&
+      IS_TEST_RUNNER
+    ) {
       logger.info('Test passed');
       logger.info(
-        'Balance of User (txPerBlock*value (txPerBlock*1) + value received) ',
+        'Balance of User (TRANSACTIONS_PER_BLOCK * value (TRANSACTIONS_PER_BLOCK * 1) + value received) ',
         endBalance - startBalance,
       );
-      logger.info('Amount sent to other User', value * TEST_LENGTH);
+      logger.info('Amount sent to other User', (txPerBlock - 1) * value * TEST_LENGTH);
       nf3.close();
       process.exit(0);
     } else {
       logger.info(
         'The test has not yet passed because the L2 balance has not increased, or I am not the test runner - waiting',
         endBalance - startBalance,
-        txPerBlock * value + value * TEST_LENGTH,
+        txPerBlock * value + (txPerBlock - 1) * value * TEST_LENGTH,
       );
       await new Promise(resolving => setTimeout(resolving, 20 * TX_WAIT)); // TODO get balance waiting working well
       loop++;
