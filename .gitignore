@@ -10,3 +10,5 @@ wallet/cli
 wallet/config
 __pycache__
 wallet/src/zokrates
+wallet/tests/e2e/videos
+wallet/tests/e2e/screenshots
