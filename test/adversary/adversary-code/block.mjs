@@ -9,14 +9,14 @@ const error = [
   'ValidBlock',
   'IncorrectLeafCount', //  Needs one prior block
   'ValidBlock',
-  'DuplicateTransaction', // yes
+  'DuplicateTransaction', // needs atleast one transaction in a prior block
   'ValidBlock',
   'DuplicateNullifier', // needs atleast one non deposit transaction in a prior block
   'ValidBlock',
-  'HistoricRootError', // needs atleast one non deposit transaction in a prior block
+  'HistoricRootError',
   'ValidBlock',
-  'IncorrectProof', // yes
-  'ValidBlock', // yes
+  'IncorrectProof',
+  'ValidBlock',
 ];
 
 const incorrectTreeRoot = block => {
