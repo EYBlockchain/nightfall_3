@@ -54,7 +54,7 @@ describe('End to End tests', () => {
       cy.get('#Bridge_modal_continueTransferButton').click();
       cy.wait(20000);
       cy.confirmMetamaskPermissionToSpend().then(approved => expect(approved).to.be.true);
-      cy.wait(20000);
+      cy.wait(30000);
       cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
       cy.wait(50000);
       cy.get('.btn-close').click();
@@ -65,7 +65,7 @@ describe('End to End tests', () => {
       cy.get('button').contains('Transfer').click();
       cy.get('button').contains('Create Transaction').click();
       cy.get('#Bridge_modal_continueTransferButton').click();
-      cy.wait(20000);
+      cy.wait(30000);
       cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
       cy.wait(50000);
       cy.get('.btn-close').click();
@@ -76,7 +76,7 @@ describe('End to End tests', () => {
       cy.get('button').contains('Transfer').click();
       cy.get('button').contains('Create Transaction').click();
       cy.get('#Bridge_modal_continueTransferButton').click();
-      cy.wait(20000);
+      cy.wait(30000);
       cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
       cy.wait(50000);
       cy.get('.btn-close').click();
@@ -87,7 +87,7 @@ describe('End to End tests', () => {
       cy.get('button').contains('Transfer').click();
       cy.get('button').contains('Create Transaction').click();
       cy.get('#Bridge_modal_continueTransferButton').click();
-      cy.wait(20000);
+      cy.wait(30000);
       cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
       cy.wait(50000);
       cy.get('.btn-close').click();
@@ -114,7 +114,7 @@ describe('End to End tests', () => {
       cy.get('button').contains('Transfer').click();
       cy.get('button').contains('Create Transaction').click();
       cy.get('#Bridge_modal_continueTransferButton').click();
-      cy.wait(20000);
+      cy.wait(30000);
       cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
       cy.wait(50000);
       cy.get('.btn-close').click();
@@ -148,7 +148,7 @@ describe('End to End tests', () => {
       cy.get('#TokenItem_modalSend_tokenAmount').clear().type(transferValue);
       cy.get('#TokenItem_modalSend_compressedPkd').clear().type(recipientPkd);
       cy.get('button').contains('Continue').click();
-      cy.wait(20000);
+      cy.wait(30000);
       cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
       cy.get('.btn-close').click();
       cy.contains('L2 Bridge').click();
@@ -157,7 +157,6 @@ describe('End to End tests', () => {
 
     // check1
     it(`check token balance after transfer - before block proposed event`, () => {
-      cy.wait(10000);
       cy.get('#TokenItem_tokenBalanceMATIC').should($div => {
         const totalBalance = Number($div.text());
         expect(totalBalance).to.equal(currentTokenBalance - transferValue);
@@ -169,7 +168,7 @@ describe('End to End tests', () => {
     // This case because recipient and sender both are same
     // logged in user
     it(`check token balance after transfer - after block proposed event`, () => {
-      cy.wait(10000);
+      cy.wait(50000);
       cy.contains('L2 Bridge').click();
       cy.contains('Nightfall Assets').click();
       cy.get('#TokenItem_tokenBalanceMATIC').should($div => {
@@ -198,7 +197,7 @@ describe('End to End tests', () => {
       cy.get('#TokenItem_modalSend_tokenAmount').clear().type(transferValue);
       cy.get('#TokenItem_modalSend_compressedPkd').clear().type(recipientPkd);
       cy.get('button').contains('Continue').click();
-      cy.wait(20000);
+      cy.wait(30000);
       cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
       cy.get('.btn-close').click();
       cy.contains('L2 Bridge').click();
@@ -206,7 +205,6 @@ describe('End to End tests', () => {
     });
 
     it(`check token balance after transfer - before block proposed event`, () => {
-      cy.wait(10000);
       cy.get('#TokenItem_tokenBalanceMATIC').should($div => {
         const totalBalance = Number($div.text());
         expect(totalBalance).to.equal(currentTokenBalance - depositValue * 2);
@@ -221,7 +219,7 @@ describe('End to End tests', () => {
       cy.get('button').contains('Transfer').click();
       cy.get('button').contains('Create Transaction').click();
       cy.get('#Bridge_modal_continueTransferButton').click();
-      cy.wait(20000);
+      cy.wait(30000);
       cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
       cy.wait(50000);
       cy.get('.btn-close').click();
