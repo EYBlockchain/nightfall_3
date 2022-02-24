@@ -225,13 +225,13 @@ describe('End to End tests', () => {
       cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
       cy.wait(50000);
       cy.get('.btn-close').click();
+      cy.contains('Nightfall Assets').click();
     });
 
     // check2
     // This case because recipient and sender both are same
     // logged in user
     it(`check token balance after transfer - after block proposed event`, () => {
-      cy.contains('Nightfall Assets').click();
       cy.get('#TokenItem_tokenBalanceMATIC').should($div => {
         const totalBalance = Number($div.text());
         expect(totalBalance).to.equal(currentTokenBalance + depositValue + transferValue);
