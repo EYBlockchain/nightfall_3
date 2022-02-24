@@ -7,10 +7,10 @@ if [ -z "${USE_INFURA}" ] && [ -z "${ETH_PRIVATE_KEY}" ]; then
   while ! nc -z ${BLOCKCHAIN_WS_HOST} ${BLOCKCHAIN_PORT}; do sleep 3; done
 fi
 npx truffle compile --all
-npx truffle migrate --to 5 --network=${ETH_NETWORK}
+npx truffle migrate --to 3 --network=${ETH_NETWORK}
 
 if [ -z "${UPGRADE}" ]; then
-  npx truffle migrate -f 5 --reset --network=${ETH_NETWORK}
+  npx truffle migrate -f 4 --reset --network=${ETH_NETWORK}
 fi
 
 #sleep 10
