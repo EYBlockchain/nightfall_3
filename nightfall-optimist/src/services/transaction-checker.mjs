@@ -66,7 +66,7 @@ async function checkTransactionType(transaction) {
       if (
         transaction.tokenId !== ZERO ||
         Number(transaction.value) !== 0 ||
-        transaction.ercAddress === ZERO ||
+        transaction.ercAddress !== ZERO ||
         transaction.recipientAddress !== ZERO ||
         transaction.commitments[0] === ZERO ||
         transaction.commitments[1] !== ZERO ||
@@ -87,7 +87,7 @@ async function checkTransactionType(transaction) {
       if (
         transaction.tokenId !== ZERO ||
         Number(transaction.value) !== 0 ||
-        transaction.ercAddress === ZERO ||
+        transaction.ercAddress !== ZERO ||
         transaction.recipientAddress !== ZERO ||
         transaction.commitments.some(c => c === ZERO) ||
         transaction.commitments.length !== 2 ||
@@ -173,7 +173,7 @@ async function verifyProof(transaction) {
       break;
     case 1: // single transfer transaction
       inputs = new PublicInputs([
-        transaction.ercAddress,
+        // transaction.ercAddress,
         transaction.commitments[0], // not truncating here as we already ensured hash < group order
         generalise(transaction.nullifiers[0]).hex(32, 31),
         historicRootFirst.root,
@@ -184,8 +184,8 @@ async function verifyProof(transaction) {
       break;
     case 2: // double transfer transaction
       inputs = new PublicInputs([
-        transaction.ercAddress, // this is correct; ercAddress appears twice
-        transaction.ercAddress, // in a double-transfer public input hash
+        // transaction.ercAddress, // this is correct; ercAddress appears twice
+        // transaction.ercAddress, // in a double-transfer public input hash
         transaction.commitments, // not truncating here as we already ensured hash < group order
         transaction.nullifiers.map(nullifier => generalise(nullifier).hex(32, 31)),
         historicRootFirst.root,

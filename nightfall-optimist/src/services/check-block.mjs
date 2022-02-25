@@ -51,6 +51,7 @@ async function checkBlock(block, transactions) {
       history = await getTreeByLeafCount(block.leafCount + block.nCommitments);
       logger.debug(`Block has commitments - retrieved history from Timber`);
       logger.silly(`Timber history was ${JSON.stringify(history, null, 2)}`);
+
       // eslint-disable-next-line no-await-in-loop
       await new Promise(resolve => setTimeout(resolve, 3000));
     }

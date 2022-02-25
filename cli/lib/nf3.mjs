@@ -65,19 +65,19 @@ class Nf3 {
   currentEnvironment;
 
   constructor(
-    web3WsUrl,
     ethereumSigningKey,
     environment = {
       clientApiUrl: 'http://localhost:8080',
       optimistApiUrl: 'http://localhost:8081',
       optimistWsUrl: 'ws://localhost:8082',
+      web3WsUrl: 'ws://localhost:8546',
     },
     zkpKeys,
   ) {
     this.clientBaseUrl = environment.clientApiUrl;
     this.optimistBaseUrl = environment.optimistApiUrl;
     this.optimistWsUrl = environment.optimistWsUrl;
-    this.web3WsUrl = web3WsUrl;
+    this.web3WsUrl = environment.web3WsUrl;
     this.ethereumSigningKey = ethereumSigningKey;
     this.zkpKeys = zkpKeys;
     this.currentEnvironment = environment;
@@ -165,6 +165,16 @@ class Nf3 {
   }
 
   /**
+  Gets the number of unprocessed transactions on the optimist
+  @async
+  */
+
+  async unprocessedTransactionCount() {
+    const { result: mempool } = (await axios.get(`${this.optimistBaseUrl}/proposer/mempool`)).data;
+    return mempool.filter(e => e.mempool).length;
+  }
+
+  /**
   Method for signing and submitting an Ethereum transaction to the
   blockchain.
   @method
@@ -180,13 +190,11 @@ class Nf3 {
     contractAddress = this.shieldContractAddress,
     fee = this.defaultFee,
   ) {
-    // We'll manage the nonce ourselves because we can run too fast for the blockchain client to update
     // we need a Mutex so that we don't get a nonce-updating race.
 
     let tx;
     await this.nonceMutex.runExclusive(async () => {
-      // if we don't have a nonce, we must get one from the ethereum client
-      if (!this.nonce) this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
+      this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
 
       let gasPrice = 20000000000;
       const gas = (await this.web3.eth.getBlock('latest')).gasLimit;
@@ -210,20 +218,24 @@ class Nf3 {
       // rather than waiting until we have a receipt, wait until we have enough confirmation blocks
       // then return the receipt.
       // TODO does this still work if there is a chain reorg or do we have to handle that?
-      return new Promise(resolve => {
-        // console.log(`Confirming transaction ${signed.transactionHash}`);
+      return new Promise((resolve, reject) => {
+        if (process.env.VERBOSE) console.log(`Confirming transaction ${signed.transactionHash}`);
         this.notConfirmed++;
         this.web3.eth
           .sendSignedTransaction(signed.rawTransaction)
           .on('confirmation', (number, receipt) => {
             if (number === 12) {
               this.notConfirmed--;
-              // console.log(
-              //   `Transaction ${receipt.transactionHash} has been confirmed ${number} times.`,
-              //   `Number of unconfirmed transactions is ${this.notConfirmed}`,
-              // );
+              if (process.env.VERBOSE)
+                console.log(
+                  `Transaction ${receipt.transactionHash} has been confirmed ${number} times.`,
+                  `Number of unconfirmed transactions is ${this.notConfirmed}`,
+                );
               resolve(receipt);
             }
+          })
+          .on('error', err => {
+            reject(err);
           });
       });
     }
@@ -270,7 +282,7 @@ class Nf3 {
   */
   async getContractAddress(contractName) {
     const res = await axios.get(`${this.clientBaseUrl}/contract-address/${contractName}`);
-    return res.data.address;
+    return res.data.address.toLowerCase();
   }
 
   /**
@@ -778,33 +790,12 @@ class Nf3 {
   @method
   @async
   @param {Array} ercList - list of erc contract addresses to filter.
-  @param {Boolean} filterByCompressedPkd - flag to indicate if request is filtered
-  ones compressed pkd
   @returns {Promise} This promise resolves into an object whose properties are the
   addresses of the ERC contracts of the tokens held by this account in Layer 2. The
   value of each propery is the number of tokens originating from that contract.
   */
-  async getLayer2Balances(ercList, filterByCompressedPkd) {
+  async getLayer2Balances({ ercList } = {}) {
     const res = await axios.get(`${this.clientBaseUrl}/commitment/balance`, {
-      params: {
-        compressedPkd: filterByCompressedPkd === true ? this.zkpKeys.compressedPkd : null,
-        ercList,
-      },
-    });
-    return res.data.balance;
-  }
-
-  /**
-  Returns the balance details of tokens held in layer 2
-  @method
-  @async
-  @param {Array} ercList - list of erc contract addresses to filter.
-  @returns {Promise} This promise resolves into an object whose properties are the
-  addresses of the ERC contracts of the tokens held by this account in Layer 2. The
-  value of each propery is the number of tokens originating from that contract.
-  */
-  async getLayer2BalancesDetails(ercList) {
-    const res = await axios.get(`${this.clientBaseUrl}/commitment/balance-details`, {
       params: {
         compressedPkd: this.zkpKeys.compressedPkd,
         ercList,

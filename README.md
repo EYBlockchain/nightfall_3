@@ -32,10 +32,15 @@ You need to run a setup script the first time that you use nightfall_3.  This wi
 
 If running for first time, do the setup as above and then run this script:
 ```sh
-./start-nightfall -l | -g | -r [-s]
+./start-nightfall -l | -g | -r [-s] [-d]
 ```
-
-This will bring up the application.  You can run it either with a Ganache blockchain simulator, a real blockchain client which exposes a websocket connection on localHost:8546, or a public/private VM runing public testnet node (for example Ropsten, Rinkeby, Kovan, etc. Code is tested on Ropsten testnet, but ideally it should work on all testnet network).  See below for more details on how to do the latter as there are some additional considerations.  Use -g for Ganache, -l for localhost and -r for testnet node (Note: with option -r set environment variable $ROPSTEN_NODE, $FROM_ADDRESS and $ETH_PRIVATE_KEY to testnet node URL, EOA address and EOA address's private key, respectively).  We recommend using Ganache first to check everything works, because it's considerably faster.  Additionally, you can use the -s flag.  If you do that, Nightfall_3 will run with stubbed ZKP circuits, which generate proofs that always verify.  That's useful for development work because tests will run much faster but clearly you should run without stubs, as a final check.
+This will bring up the application.  You can run it either with a Ganache blockchain simulator or a real blockchain client which exposes a websocket connection on localHost:8546.  See below for more details on how to do the latter as there are some additional considerations.
+- Environment
+  - Use `-g` to use a Ganache client inside the container 
+  - Use `-l` to use some localhost client running on your machine.  We recommend using Ganache first to check everything works, because it's considerably faster.  
+  - Use `-r` to use ropsten node hosted by the dev team. Note: with option -r set environment variable $ROPSTEN_NODE, $FROM_ADDRESS and $ETH_PRIVATE_KEY to testnet node URL, EOA address and EOA address's private key, respectively
+- Additionally, you can use the `-s` flag.  If you do that, Nightfall_3 will run with stubbed ZKP circuits, which generate proofs that always verify.  That's useful for development work because tests will run much faster but clearly you should run without stubs, as a final check.
+- Use the `-d` or `--dev` flag to bind mount the development folders inside the containers, making it useful for development purposes. Omit it to deploy the services using the existing `ghcr` images.
 
 Startup will take a minute or so, depending on your machine. You'll see lots of warnings as it runs up from the `optimist` and `timber` containers.  That's entirely fine, they're just waiting for the other services that they need to start up. You should see no errors however.  If you do, something has broken.
 
@@ -46,6 +51,10 @@ Eventually you will see a message to the effect that the `deployer` container ha
 nightfall_3_deployer_1 exited with code 0
 ```
 This means that deployment is complete and the application is ready to use.  You can run the tests at this point.
+
+### To end the application
+
+To stop the application, you can run ```docker-compose down``` and it should exit cleanly.
 
 ## Testing
 

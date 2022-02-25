@@ -12,6 +12,7 @@ usage()
   echo "  -l or --localhost; to connect to an already running blockchain on ws://localhost:8546"
   echo "  -s or --stubs; runs with circuits stubbed out (faster but no checking of ZKP code) - use with either -g or -l"
   echo "  -h or --help; to print this message"
+  echo "  -d or --dev; to bind mount the filesystem and use it for development"
   echo "  -i or --infura; to connect infura ropsten testnet"
   echo "  -r or --ropsten to connect testnet node (Note: please set environment variable ROPSTEN_NODE, FROM_ADDRESS, and ETH_PRIVATE_KEY. Find more description in README.md)"
 }
@@ -48,7 +49,9 @@ while [ -n "$1" ]; do
                                     ;;
       -s  | --stubs )               STUBS="-f docker-compose.stubs.yml"
                                     ;;
-      -a | --adversary)             ADVERSARY="-f docker-compose.adversary.yml"
+      -d  | --dev )                 DEV="-f docker-compose.dev.yml"
+                                    ;;
+      -a  | --adversary)            ADVERSARY="-f docker-compose.adversary.yml"
                                     ;;
       * )                           usage
                               exit 1
@@ -61,9 +64,9 @@ if [ -z "$FILE" ]; then
   exit 1
 fi
 # shut down cleanly in the event of a cntl-c etc. We don't want to leave containers running
-trap "docker-compose $FILE $STUBS $ADVERSARY down --remove-orphans -t 1; exit 1" SIGHUP SIGINT SIGTERM
+trap "docker-compose $FILE $STUBS $DEV $ADVERSARY down --remove-orphans -t 1; exit 1" SIGHUP SIGINT SIGTERM
 
-docker-compose -f docker-compose.yml $FILE $STUBS $ADVERSARY down --remove-orphans
+docker-compose -f docker-compose.yml $FILE $STUBS $DEV $ADVERSARY down --remove-orphans
 
 # if-else block checks - volume exist and then removes it.
 if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb1) ]]; then
@@ -116,4 +119,5 @@ if [[ -d "$DIR" ]]; then
   rm -dr common-files/node_modules
 fi
 #docker-compose -f docker-compose.yml $FILE up -d deployer
-docker-compose $FILE $STUBS $ADVERSARY  up
+docker-compose $FILE $STUBS $DEV $ADVERSARY up -d --remove-orphans
+docker-compose logs -f
