@@ -13,7 +13,7 @@ describe('End to End tests', () => {
   const depositValue = 4;
 
   beforeEach(() => {
-    cy.on('window:before:load', (win) => {
+    cy.on('window:before:load', win => {
       cy.spy(win.console, 'log');
     });
   });
