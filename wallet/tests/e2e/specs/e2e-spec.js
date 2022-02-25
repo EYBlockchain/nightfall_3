@@ -27,7 +27,12 @@ describe('End to End tests', () => {
     });
 
     it('acceptMetamaskAccess should accept connection request to metamask', () => {
-      cy.visit('/');
+      cy.visit('/', {
+        onBeforeLoad(win) {
+          cy.stub(win.console, 'log');
+          cy.stub(win.console, 'error');
+        }
+      });
       cy.acceptMetamaskAccess().then(connected => expect(connected).to.be.true);
     });
 
