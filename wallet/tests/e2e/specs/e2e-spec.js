@@ -210,6 +210,8 @@ describe('End to End tests', () => {
     it(`check token balance after transfer - before block proposed event`, () => {
       cy.get('#TokenItem_tokenBalanceMATIC').should($div => {
         const totalBalance = Number($div.text());
+        cy.log(currentTokenBalance);
+        cy.log(totalBalance);
         expect(totalBalance).to.equal(currentTokenBalance - depositValue * 2);
         currentTokenBalance = totalBalance;
       });
@@ -236,7 +238,10 @@ describe('End to End tests', () => {
     it(`check token balance after transfer - after block proposed event`, () => {
       cy.get('#TokenItem_tokenBalanceMATIC').should($div => {
         const totalBalance = Number($div.text());
-        expect(totalBalance).to.equal(currentTokenBalance + depositValue + transferValue);
+        const returnCommitmentValue = depositValue * 2 - transferValue;
+        expect(totalBalance).to.equal(
+          currentTokenBalance + depositValue + transferValue + returnCommitmentValue,
+        );
         currentTokenBalance = totalBalance;
       });
     });
