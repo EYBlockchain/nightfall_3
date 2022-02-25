@@ -2,8 +2,7 @@ name: Check PR
 
 on:
   pull_request:
-    branch:
-      - master
+    branches: [master]
 
 jobs:
   eslint-check:
@@ -28,25 +27,28 @@ jobs:
 
       - name: Start Containers
         run: |
-          docker build --no-cache	-t ghcr.io/eyblockchain/local-zokrates -f zokrates.Dockerfile .
-          docker-compose build
+          ./setup-nightfall
           ./start-nightfall -g -d &> ganache-test.log &disown
 
-      - name: debug logs - after container startup
+      - name: Wait for images to be ready
+        uses: Wandalen/wretry.action@v1.0.11
+        with:
+          command: |
+            docker wait nightfall_3_deployer_1
+          attempt_limit: 100
+          attempt_delay: 20000
+
+      - name: Debug logs - after image builds
         if: always()
         run: cat ganache-test.log
-
-      - name: wait 1200s for Containers startup and setup completion
-        run: sleep 1200
 
       - name: Run integration test
         run: |
           npm ci
-          docker wait nightfall_3_deployer_1
           VERBOSE=true npm run test-e2e-protocol
           VERBOSE=true npm run test-e2e-tokens
 
-      - name: debug logs - after integration test run
+      - name: Debug logs - after integration test run
         if: always()
         run: cat ganache-test.log
 
@@ -72,25 +74,29 @@ jobs:
 
       - name: Start Containers with ganache
         run: |
-          docker build --no-cache	-t ghcr.io/eyblockchain/local-zokrates -f zokrates.Dockerfile .
-          docker-compose build
-          ./start-nightfall -g &> test-gas.log &disown
+          ./setup-nightfall
+          ./start-nightfall -g -d &> ganache-test.log &disown
         env:
           TRANSACTIONS_PER_BLOCK: 32
 
-      - name: wait 1500s for Containers startup and setup completion
-        run: sleep 1500
+      - name: Wait for images to be ready
+        uses: Wandalen/wretry.action@v1.0.11
+        with:
+          command: |
+            docker wait nightfall_3_deployer_1
+          attempt_limit: 100
+          attempt_delay: 20000
 
-      - name: debug logs - after container startup
+      - name: Debug logs - after container startup
         if: always()
         run: cat test-gas.log
 
       - name: Run tx-gas.mjs test suites
         run: |
           npm ci
-          npm run test-gas
+          VERBOSE=true npm run test-gas
 
-      - name: debug logs - after integration test run
+      - name: Debug logs - after integration test run
         if: always()
         run: cat test-gas.log
 
