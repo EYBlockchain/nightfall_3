@@ -148,7 +148,7 @@ describe('End to End tests', () => {
       cy.get('#TokenItem_modalSend_tokenAmount').clear().type(transferValue);
       cy.get('#TokenItem_modalSend_compressedPkd').clear().type(recipientPkd);
       cy.get('button').contains('Continue').click();
-      cy.wait(30000);
+      cy.wait(50000);
       cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
       cy.get('.btn-close').click();
       cy.contains('L2 Bridge').click();
@@ -197,7 +197,7 @@ describe('End to End tests', () => {
       cy.get('#TokenItem_modalSend_tokenAmount').clear().type(transferValue);
       cy.get('#TokenItem_modalSend_compressedPkd').clear().type(recipientPkd);
       cy.get('button').contains('Continue').click();
-      cy.wait(30000);
+      cy.wait(50000);
       cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
       cy.get('.btn-close').click();
       cy.contains('L2 Bridge').click();
