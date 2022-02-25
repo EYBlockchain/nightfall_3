@@ -26,7 +26,7 @@ struct Secrets {
 }
 
 def main(\
-	field[2] fErcAddress,\
+	private field[2] fErcAddress,\
 	private OldCommitmentPreimage[2] oldCommitment,\
 	private NewCommitmentPreimage[2] newCommitment,\
 	field[2] fNewCommitmentHash,\

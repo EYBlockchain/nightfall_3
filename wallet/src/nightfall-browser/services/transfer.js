@@ -41,7 +41,8 @@ import doubleTransferProgramFile from '../../zokrates/double_transfer_stub/artif
 import doubleTransferPkFile from '../../zokrates/double_transfer_stub/keypair/double_transfer_stub_pk.key';
 import { saveTransaction } from './database';
 
-const { BN128_GROUP_ORDER, ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, optimistUrl } = global.config;
+const { BN128_GROUP_ORDER, ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, optimistUrl, ZERO } =
+  global.config;
 const { generalise, GN } = gen;
 
 async function transfer(transferParams, shieldContractAddress) {
@@ -247,7 +248,7 @@ async function transfer(transferParams, shieldContractAddress) {
     historicRootBlockNumberL2: blockNumberL2s,
     transactionType,
     publicInputs,
-    ercAddress,
+    ercAddress: ZERO,
     commitments: newCommitments,
     nullifiers,
     compressedSecrets,
