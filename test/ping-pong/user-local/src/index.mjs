@@ -13,7 +13,7 @@ const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIR
 
 const { mnemonics, signingKeys, txPerBlock, pkds } = config.TEST_OPTIONS;
 
-const { TEST_LENGTH, ERC20_NAME, TX_WAIT = 1000, IS_TEST_RUNNER = '' } = process.env;
+const { TEST_LENGTH, ERC20_NAME, ERC20_ADDRESS, TX_WAIT = 1000, IS_TEST_RUNNER = '' } = process.env;
 
 /**
 Does the preliminary setup and starts listening on the websocket
@@ -30,8 +30,8 @@ async function localTest() {
   await nf3.init(IS_TEST_RUNNER ? mnemonics.user1 : mnemonics.user2);
   if (await nf3.healthcheck('client')) logger.info('Healthcheck passed');
   else throw new Error('Healthcheck failed');
-
-  const ercAddress = await nf3.getContractAddress(ERC20_NAME);
+  console.log('ERC20_ADDRESS: ', ERC20_ADDRESS);
+  const ercAddress = ERC20_ADDRESS || (await nf3.getContractAddress(ERC20_NAME));
   const startBalance = await retrieveL2Balance(nf3);
 
   let offchainTx = !!IS_TEST_RUNNER;
@@ -94,7 +94,7 @@ async function localTest() {
     ) {
       logger.info('Test passed');
       logger.info(
-        'Balance of User (TRANSACTIONS_PER_BLOCK * value (TRANSACTIONS_PER_BLOCK * 1) + value received) ',
+        'Balance of User (txPerBlock * value (txPerBlock * 1) + value received) ',
         endBalance - startBalance,
       );
       logger.info('Amount sent to other User', (txPerBlock - 1) * value * TEST_LENGTH);

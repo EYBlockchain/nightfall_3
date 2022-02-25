@@ -26,4 +26,4 @@ done
 trap "exit 1" SIGHUP SIGINT SIGTERM
 
 docker-compose -f docker-compose.yml $FILE up --abort-on-container-exit --exit-code-from user-local1 --remove-orphans proposer user-local1
-docker-compose logs -f proposer user-local1
+# docker-compose logs -f user-local1
