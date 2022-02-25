@@ -153,7 +153,6 @@ describe('End to End tests', () => {
       cy.get('.btn-close').click();
       cy.contains('L2 Bridge').click();
       cy.contains('Nightfall Assets').click();
-      cy.wait(10000);
     });
 
     // check1
@@ -172,7 +171,6 @@ describe('End to End tests', () => {
       cy.wait(50000);
       cy.contains('L2 Bridge').click();
       cy.contains('Nightfall Assets').click();
-      cy.wait(10000);
       cy.get('#TokenItem_tokenBalanceMATIC').should($div => {
         const totalBalance = Number($div.text());
         expect(totalBalance).to.equal(currentTokenBalance + transferValue);
@@ -204,7 +202,6 @@ describe('End to End tests', () => {
       cy.get('.btn-close').click();
       cy.contains('L2 Bridge').click();
       cy.contains('Nightfall Assets').click();
-      cy.wait(10000);
     });
 
     it(`check token balance after transfer - before block proposed event`, () => {
@@ -229,7 +226,6 @@ describe('End to End tests', () => {
       cy.wait(50000);
       cy.get('.btn-close').click();
       cy.contains('Nightfall Assets').click();
-      cy.wait(10000);
     });
 
     // check2
