@@ -31,7 +31,7 @@ describe('End to End tests', () => {
         onBeforeLoad(win) {
           cy.stub(win.console, 'log');
           cy.stub(win.console, 'error');
-        }
+        },
       });
       cy.acceptMetamaskAccess().then(connected => expect(connected).to.be.true);
     });
