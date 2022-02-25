@@ -1,9 +1,9 @@
 name: Browser e2e test
 
 on:
-  push:
+  pull_request:
     branch:
-      - liju.jose/nightfall-browser/e2e-test
+      - wallet/nf-browser-v2
 
 jobs:
   e2e-test:
