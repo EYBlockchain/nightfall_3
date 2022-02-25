@@ -5,5 +5,6 @@
 # OPTIONAL_ARGUMENTS:
 #  --environment : test environment (such us localhost, docker, testnet). If no argument given
 #     proposer is launched in localhost environment
+#  --stake : amount of stake to put as proposer. If no argument given default is 1000 
 
 /usr/bin/env node cli/src/proposer.mjs "${@:1}"
