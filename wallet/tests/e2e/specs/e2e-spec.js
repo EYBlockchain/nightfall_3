@@ -12,6 +12,12 @@ describe('End to End tests', () => {
   let currentTokenBalance = 0;
   const depositValue = 4;
 
+  beforeEach(() => {
+    cy.on('window:before:load', (win) => {
+      cy.spy(win.console, 'log');
+    });
+  });
+
   context('MetaMask', () => {
     it('getNetwork should return network by default', () => {
       cy.getNetwork().then(network => {
@@ -27,12 +33,7 @@ describe('End to End tests', () => {
     });
 
     it('acceptMetamaskAccess should accept connection request to metamask', () => {
-      cy.visit('/', {
-        onBeforeLoad(win) {
-          cy.stub(win.console, 'log');
-          cy.stub(win.console, 'error');
-        },
-      });
+      cy.visit('/');
       cy.acceptMetamaskAccess().then(connected => expect(connected).to.be.true);
     });
 
