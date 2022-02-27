@@ -19,7 +19,10 @@ export async function getContractInstance(contractName, deployedAddress) {
     logger.debug('blockchain accounts are: ', accounts);
     [options.from] = accounts;
   }
-  if (!deployedAddress) throw Error('deployedAddress not passed');
+  if (!deployedAddress) {
+    deployedAddress = (await getContractAddress(contractName)).data.address;
+    // throw Error('deployedAddress not passed');
+  }
 
   const abi = contractABIs[contractName];
   return new web3.eth.Contract(abi, deployedAddress, options);

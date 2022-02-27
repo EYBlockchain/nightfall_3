@@ -212,3 +212,8 @@ export async function getAllTransactions() {
   if (Object.keys(res).length > 0) return res;
   return [];
 }
+
+export async function genGetCommitments() {
+  const db = await connectDB();
+  return db.getAll(TRANSACTIONS_COLLECTION);
+}

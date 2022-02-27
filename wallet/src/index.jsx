@@ -8,6 +8,7 @@ import 'font-awesome/css/font-awesome.min.css';
 import 'bootstrap-social/bootstrap-social.css';
 import './index.css';
 import './views/app.style.css';
+import './nightfall-browser';
 
 import App from './views/app.view.jsx';
 import reportWebVitals from './reportWebVitals';

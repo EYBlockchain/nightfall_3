@@ -9,6 +9,7 @@ import { getContractInstance } from '../../common-files/utils/contract';
 // import mongo from '../../common-files/utils/mongo';
 import blockProposedEventHandler from '../event-handlers/block-proposed';
 import rollbackEventHandler from '../event-handlers/rollback';
+import { genGetCommitments } from './database';
 
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION, STATE_CONTRACT_NAME } = global.config;
 
@@ -45,12 +46,12 @@ const syncState = async (
   }
 };
 
-const genGetCommitments = async (query = {}, proj = {}) => {
-  // eslint-disable-next-line no-undef
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(COMMITMENTS_DB);
-  return db.collection(COMMITMENTS_COLLECTION).find(query, proj).toArray();
-};
+// const genGetCommitments = async (query = {}, proj = {}) => {
+//   // eslint-disable-next-line no-undef
+//   const connection = await mongo.connection(MONGO_URL);
+//   const db = connection.db(COMMITMENTS_DB);
+//   return db.collection(COMMITMENTS_COLLECTION).find(query, proj).toArray();
+// };
 
 // eslint-disable-next-line import/prefer-default-export
 export const initialClientSync = async () => {

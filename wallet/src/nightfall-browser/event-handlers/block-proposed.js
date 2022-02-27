@@ -26,6 +26,8 @@ async function blockProposedEventHandler(data, ivks, nsks) {
   const { blockNumber: currentBlockCount, transactionHash: transactionHashL1 } = data;
   // const { transactions, block } = await getProposeBlockCalldata(data);
   const { transactions, block } = data;
+  console.log(transactions, 'transactions');
+  if (!transactions) return;
   const latestTree = await getLatestTree();
   const blockCommitments = transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat();
 
