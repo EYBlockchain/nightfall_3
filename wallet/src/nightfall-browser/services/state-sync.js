@@ -11,7 +11,7 @@ import blockProposedEventHandler from '../event-handlers/block-proposed';
 import rollbackEventHandler from '../event-handlers/rollback';
 import { genGetCommitments } from './database';
 
-const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION, STATE_CONTRACT_NAME } = global.config;
+const { STATE_CONTRACT_NAME } = global.config;
 
 const syncState = async (
   shieldContractAddress,

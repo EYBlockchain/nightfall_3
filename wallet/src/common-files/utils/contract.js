@@ -10,8 +10,14 @@ const { optimistUrl } = global.config;
 
 const options = global.config.WEB3_OPTIONS;
 
+// TODO: temporary function create to avoid eslint issue for now
+export function getContractAddress(contractName) {
+  return axios.get(`${optimistUrl}/contract-address/${contractName}`);
+}
+
 // returns a web3 contract instance
 export async function getContractInstance(contractName, deployedAddress) {
+  let address = deployedAddress;
   const web3 = Web3.connection();
   // grab a 'from' account if one isn't set
   if (!options.from) {
@@ -19,18 +25,13 @@ export async function getContractInstance(contractName, deployedAddress) {
     logger.debug('blockchain accounts are: ', accounts);
     [options.from] = accounts;
   }
-  if (!deployedAddress) {
-    deployedAddress = (await getContractAddress(contractName)).data.address;
+  if (!address) {
+    ({ address } = (await getContractAddress(contractName)).data);
     // throw Error('deployedAddress not passed');
   }
 
   const abi = contractABIs[contractName];
-  return new web3.eth.Contract(abi, deployedAddress, options);
-}
-
-// TODO: temporary function create to avoid eslint issue for now
-export function getContractAddress(contractName) {
-  return axios.get(`${optimistUrl}/contract-address/${contractName}`);
+  return new web3.eth.Contract(abi, address, options);
 }
 
 /**
