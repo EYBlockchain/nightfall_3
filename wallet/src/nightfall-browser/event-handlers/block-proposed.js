@@ -13,7 +13,7 @@ import {
 // import getProposeBlockCalldata from '../services/process-calldata';
 import Secrets from '../classes/secrets';
 // import { ivks, nsks } from '../services/keys';
-import { getLatestTree, saveTree, saveTransaction, saveBlock } from '../services/database';
+import { getTreeByBlockNumberL2, saveTree, saveTransaction, saveBlock } from '../services/database';
 
 const { ZERO } = global.config;
 
@@ -26,14 +26,13 @@ async function blockProposedEventHandler(data, ivks, nsks) {
   const { blockNumber: currentBlockCount, transactionHash: transactionHashL1 } = data;
   // const { transactions, block } = await getProposeBlockCalldata(data);
   const { transactions, block } = data;
-  const latestTree = await getLatestTree();
+  const latestTree = await getTreeByBlockNumberL2(block.blockNumberL2 - 1);
   const blockCommitments = transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat();
 
   if ((await countTransactionHashes(block.transactionHashes)) > 0) {
     await saveBlock({ blockNumber: currentBlockCount, transactionHashL1, ...block });
     await Promise.all(transactions.map(t => saveTransaction({ transactionHashL1, ...t })));
   }
-
   const dbUpdates = transactions.map(async transaction => {
     // filter out non zero commitments and nullifiers
     const nonZeroCommitments = transaction.commitments.flat().filter(n => n !== ZERO);
