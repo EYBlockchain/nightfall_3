@@ -8,4 +8,4 @@ cli/build
 wallet/build
 wallet/cli
 __pycache__
-test/nightfall-adversary
+test/adversary/nightfall-adversary

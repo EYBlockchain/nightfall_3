@@ -4,14 +4,14 @@
   "description": "Optimistic Nightfall",
   "main": "./nightfall-client/src/index.mjs",
   "scripts": {
-    "adversary-test": "mocha --timeout 0 --bail --exit test/adversary.test.mjs",
     "test-e2e-protocol": "mocha --timeout 0 --bail --parallel --exit test/e2e/protocol/*.test.mjs ",
     "test-gas": "mocha --timeout 0 --bail --exit test/e2e/gas.test.mjs ",
     "test-e2e-tokens": "mocha --timeout 0 --bail --exit test/e2e/tokens/*.test.mjs ",
     "lint": "eslint . --ext js,mjs,jsx && find-unused-exports",
     "prepare": "husky install",
     "doc:build:sdk": "jsdoc -c jsdoc.json cli/lib/nf3.mjs",
-    "build-adversary": "node test/adversary/transpile-adversary.mjs"
+    "build-adversary": "node test/adversary/transpile-adversary.mjs",
+    "adversary-test": "mocha --timeout 0 --bail --exit test/adversary.test.mjs"
   },
   "repository": {
     "type": "git",

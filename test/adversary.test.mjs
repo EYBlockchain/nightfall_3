@@ -24,8 +24,10 @@ const { TRANSACTIONS_PER_BLOCK } = config;
 const TX_WAIT = 12000;
 const TEST_LENGTH = 8;
 
+const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
+
 describe('Testing with an adversary', () => {
-  let nf3User1;
+  let nf3User;
   let nf3AdversarialProposer;
   let ercAddress;
   let nf3Challenger;
@@ -34,13 +36,13 @@ describe('Testing with an adversary', () => {
   let intervalId;
 
   // this is the etherum private key for accounts[0] and so on
-  const ethereumSigningKeyUser1 =
+  const ethereumSigningKeyUser =
     '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e';
   const ethereumSigningKeyProposer =
     '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d';
   const ethereumSigningKeyChallenger =
     '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb';
-  const mnemonicUser1 =
+  const mnemonicUser =
     'trip differ bamboo bundle bonus luxury strike mad merry muffin nose auction';
   const mnemonicProposer =
     'high return hold whale promote payment hat panel reduce oyster ramp mouse';
@@ -56,33 +58,32 @@ describe('Testing with an adversary', () => {
   const fee = 1;
 
   before(async () => {
-    nf3User1 = new Nf3('ws://localhost:8546', ethereumSigningKeyUser1, {
-      clientApiUrl: 'http://localhost:8080',
-      optimistApiUrl: 'http://localhost:8081',
-      optimistWsUrl: 'ws://localhost:8082',
+    nf3User = new Nf3(ethereumSigningKeyUser, environment);
+
+    const {
+      optimistApiUrl,
+      optimistWsUrl,
+      adversarialOptimistApiUrl,
+      adversarialOptimistWsUrl,
+      ...others
+    } = environment;
+    nf3AdversarialProposer = new Nf3(ethereumSigningKeyProposer, {
+      ...others,
+      optimistApiUrl: adversarialOptimistApiUrl,
+      optimistWsUrl: adversarialOptimistWsUrl,
     });
 
-    nf3AdversarialProposer = new Nf3('ws://localhost:8546', ethereumSigningKeyProposer, {
-      clientApiUrl: 'http://localhost:8080',
-      optimistApiUrl: 'http://localhost:8088',
-      optimistWsUrl: 'ws://localhost:8089',
-    });
-
-    nf3Challenger = new Nf3('ws://localhost:8546', ethereumSigningKeyChallenger, {
-      clientApiUrl: 'http://localhost:8080',
-      optimistApiUrl: 'http://localhost:8081',
-      optimistWsUrl: 'ws://localhost:8082',
-    });
+    nf3Challenger = new Nf3(ethereumSigningKeyChallenger, environment);
 
     // Generate a random mnemonic (uses crypto.randomBytes under the hood), defaults to 128-bits of entropy
-    await nf3User1.init(mnemonicUser1);
+    await nf3User.init(mnemonicUser);
     await nf3AdversarialProposer.init(mnemonicProposer);
     await nf3Challenger.init(mnemonicChallenger);
 
     // retrieve initial balance
-    startBalance = await retrieveL2Balance(nf3User1);
+    startBalance = await retrieveL2Balance(nf3User);
 
-    if (!(await nf3User1.healthcheck('optimist'))) throw new Error('Healthcheck failed');
+    if (!(await nf3User.healthcheck('optimist'))) throw new Error('Healthcheck failed');
     if (!(await nf3AdversarialProposer.healthcheck('optimist')))
       throw new Error('Healthcheck failed');
     if (!(await nf3Challenger.healthcheck('optimist'))) throw new Error('Healthcheck failed');
@@ -91,7 +92,7 @@ describe('Testing with an adversary', () => {
     await nf3AdversarialProposer.registerProposer();
     // Proposer listening for incoming events
     nf3AdversarialProposer.startProposer();
-    ercAddress = await nf3User1.getContractAddress('ERC20Mock');
+    ercAddress = await nf3User.getContractAddress('ERC20Mock');
 
     // Challenger registration
     await nf3Challenger.registerChallenger();
@@ -110,20 +111,20 @@ describe('Testing with an adversary', () => {
       // we are creating a block of deposits with high values such that there is
       // enough balance for a lot of transfers with low value.
       for (let j = 0; j < TRANSACTIONS_PER_BLOCK; j++) {
-        await nf3User1.deposit(ercAddress, tokenType, value1, tokenId, fee);
+        await nf3User.deposit(ercAddress, tokenType, value1, tokenId, fee);
         expectedBalance += value1;
       }
 
       for (let i = 0; i < TEST_LENGTH; i++) {
-        await waitForSufficientBalance(nf3User1, value2);
+        await waitForSufficientBalance(nf3User, value2);
         try {
-          await nf3User1.transfer(
+          await nf3User.transfer(
             false,
             ercAddress,
             tokenType,
             value2,
             tokenId,
-            nf3User1.zkpKeys.compressedPkd,
+            nf3User.zkpKeys.compressedPkd,
           );
           // expectedBalance += value2;
         } catch (err) {
@@ -136,18 +137,18 @@ describe('Testing with an adversary', () => {
               } seconds and try one last time`,
             );
             await new Promise(resolve => setTimeout(resolve, 10 * TX_WAIT));
-            await nf3User1.transfer(
+            await nf3User.transfer(
               false,
               ercAddress,
               tokenType,
               value2,
               tokenId,
-              nf3User1.zkpKeys.compressedPkd,
+              nf3User.zkpKeys.compressedPkd,
             );
             // expectedBalance += value2; // transfer to self, so balance does not increase
           }
         }
-        await nf3User1.deposit(ercAddress, tokenType, value2, tokenId);
+        await nf3User.deposit(ercAddress, tokenType, value2, tokenId);
         expectedBalance += value2;
         await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
         console.log(`Completed ${i + 1} pings`);
@@ -156,7 +157,7 @@ describe('Testing with an adversary', () => {
       // waiting sometime to ensure that all the good transactions from bad
       // blocks were proposed in other good blocks
       await new Promise(resolve => setTimeout(resolve, 20 * TX_WAIT));
-      const endBalance = await retrieveL2Balance(nf3User1);
+      const endBalance = await retrieveL2Balance(nf3User);
 
       expect(expectedBalance).to.be.equal(endBalance - startBalance);
     });
@@ -165,7 +166,7 @@ describe('Testing with an adversary', () => {
   after(async () => {
     // stopping registerProposerOnNoProposer
     clearInterval(intervalId);
-    nf3User1.close();
+    nf3User.close();
     nf3AdversarialProposer.close();
     nf3Challenger.close();
   });
