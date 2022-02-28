@@ -62,6 +62,45 @@ jobs:
           path: ./ganache-test.log
 
   adversary-test:
+    - name: Build Adversary
+      run: npm run build-adversary
+
+    - name: Start Containers
+      run: |
+        docker build --no-cache	-t ghcr.io/eyblockchain/local-zokrates -f zokrates.Dockerfile .
+        docker-compose build
+        ./start-nightfall -g -a &> adversary-test.log &disown
+
+    - name: wait 2000s for Containers startup and setup completion
+      run: sleep 2000
+
+    - name: debug logs - after container startup
+      if: always()
+      run: cat adversary-test.log
+
+    - name: Run adversary test
+      run: |
+        npm ci
+        npm run adversary-test
+
+    - name: debug logs - after integration test run
+      if: always()
+      run: cat adversary-test.log
+
+    - name: If integration test failed, shutdown the Containers
+      if: failure()
+      run:
+        docker-compose -f docker-compose.yml -f docker-compose.ganache.yml -f
+        docker-compose.adversary.yml down -v
+
+    - name: If integration test failed, upload logs files as artifacts
+      if: failure()
+      uses: actions/upload-artifact@master
+      with:
+        name: ping-pong-test-logs
+        path: test/ping-pong/ping-pong-test.log
+
+  ping-pong-test:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@master
@@ -69,43 +108,46 @@ jobs:
         with:
           node-version: '14.17.0'
 
-      - name: Build Adversary
-        run: npm run build-adversary
-
       - name: Start Containers
         run: |
           docker build --no-cache	-t ghcr.io/eyblockchain/local-zokrates -f zokrates.Dockerfile .
+          cd test/ping-pong
           docker-compose build
-          ./start-nightfall -g -a &> adversary-test.log &disown
-
-      - name: wait 2000s for Containers startup and setup completion
-        run: sleep 2000
+          ./ganache-standalone -s
+          sleep 10
+          ./pong-nightfall -d -s &> ping-pong-test.log &disown
 
       - name: debug logs - after container startup
         if: always()
-        run: cat adversary-test.log
+        run: cat test/ping-pong/ping-pong-test.log
 
-      - name: Run adversary test
+      - name: wait 1200s for Containers startup and setup completion
+        run: sleep 1200
+
+      - name: Run ping-pong test
         run: |
-          npm ci
-          npm run adversary-test
+          docker ps
+          docker wait ping-pong_deployer_1
+          cd test/ping-pong
+          ./pong-apps
 
       - name: debug logs - after integration test run
         if: always()
-        run: cat adversary-test.log
+        run: cat test/ping-pong/ping-pong-test.log
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
-        run:
-          docker-compose -f docker-compose.yml -f docker-compose.ganache.yml -f
-          docker-compose.adversary.yml down -v
+        run: |
+          cd test/ping-pong
+          ./pong-down -v
+          ./ganache-standalone -d
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
         uses: actions/upload-artifact@master
         with:
-          name: adversary-test-logs
-          path: ./adversary-test.log
+          name: ping-pong-test-logs
+          path: test/ping-pong/ping-pong-test.log
 
   test-gas:
     name: check gas for 32 transactions per block
