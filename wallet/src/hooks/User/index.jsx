@@ -11,18 +11,6 @@ import { getMaxBlock } from '../../nightfall-browser/services/database';
 
 const { eventWsUrl } = global.config;
 
-// export const reducer = (state, action) => {
-//   switch (action.type) {
-//     case 'toggle_button':
-//       return {
-//         ...state,
-//         active: !state.active,
-//       };
-//     default:
-//       return state;
-//   }
-// };
-
 export const initialState = {
   active: false,
   zkpKeys: {
@@ -112,6 +100,9 @@ export const UserProvider = ({ children }) => {
       mnemonic,
       `m/44'/60'/0'/${DEFAULT_NF_ADDRESS_INDEX.toString()}`,
     );
+
+    // Save Pkd
+    Storage.pkdSet(await Web3.getAccount(), zkpKeys.compressedPkd);
     setState(previousState => {
       return {
         ...previousState,

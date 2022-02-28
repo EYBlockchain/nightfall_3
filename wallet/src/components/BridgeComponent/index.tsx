@@ -20,6 +20,12 @@ import approveImg from '../../assets/img/modalImages/adeposit_approve1.png';
 import depositConfirmed from '../../assets/img/modalImages/adeposit_confirmed.png';
 import successHand from '../../assets/img/modalImages/success-hand.png';
 import transferCompletedImg from '../../assets/img/modalImages/tranferCompleted.png';
+import { pkdGet } from '../../utils/lib/local-storage';
+import { decompressKey } from '../../nightfall-browser/services/keys';
+
+const gen = require('general-number');
+
+const { generalise } = gen;
 
 const BridgeComponent = (props: any) => {
   const [state] = useState(() => props[Object.keys(props)[1].toString()].value);
@@ -76,13 +82,14 @@ const BridgeComponent = (props: any) => {
     console.log('TokenAddress', ercAddress);
     switch (txType) {
       case 'deposit': {
+        const pkd = decompressKey(generalise(pkdGet(await Web3.getAccount())));
         await approve(ercAddress, shieldContractAddress, 'ERC20', tokenAmountWei.toString());
         const { rawTransaction } = await deposit(
           {
             ercAddress,
             tokenId: 0,
             value: tokenAmountWei,
-            pkd: state.zkpKeys.pkd,
+            pkd,
             nsk: state.zkpKeys.nsk,
             fee: 1,
             tokenType: 'ERC20',
