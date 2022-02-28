@@ -353,16 +353,10 @@ export const depositNTransactions = async (nf3, N, ercAddress, tokenType, value,
 export const retrieveL2Balance = async client => {
   const balances = await client.getLayer2Balances();
   // if there are no balances
-  if (Object.keys(balances).length === 0) {
+  if (Object.values(balances).length === 0) {
     return 0;
   }
-  const clientBalances = balances[client.zkpKeys.compressedPkd];
-  // if this user has no balance
-  if (clientBalances === undefined || Object.keys(clientBalances).length === 0) {
-    return 0;
-  }
-  // TODO return address by contract address
-  const balance = clientBalances[Object.keys(clientBalances)[0]];
+  const { balance } = Object.values(balances)[0][0];
   return balance;
 };
 
@@ -382,23 +376,12 @@ export const registerProposerOnNoProposer = async proposer => {
 export const waitForSufficientBalance = (client, value) => {
   return new Promise(resolve => {
     async function isSufficientBalance() {
-      const balances = await client.getLayer2Balances();
-      if (
-        Object.keys(balances).length === 0 ||
-        balances[client.zkpKeys.compressedPkd] === undefined ||
-        Object.keys(balances[client.zkpKeys.compressedPkd]).length === 0 ||
-        balances[client.zkpKeys.compressedPkd][
-          Object.keys(balances[client.zkpKeys.compressedPkd])[0]
-        ] === undefined ||
-        balances[client.zkpKeys.compressedPkd][
-          Object.keys(balances[client.zkpKeys.compressedPkd])[0]
-        ] < value
-      ) {
+      const balance = await retrieveL2Balance(client);
+      if (process.env.VERBOSE) console.log(` Balance needed ${value}. Current balance ${balance}.`);
+      if (balance < value) {
         await new Promise(resolving => setTimeout(resolving, 10000));
         isSufficientBalance();
-      } else {
-        resolve();
-      }
+      } else resolve();
     }
     isSufficientBalance();
   });

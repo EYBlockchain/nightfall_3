@@ -67,9 +67,8 @@ jobs:
 
     - name: Start Containers
       run: |
-        docker build --no-cache	-t ghcr.io/eyblockchain/local-zokrates -f zokrates.Dockerfile .
-        docker-compose build
-        ./start-nightfall -g -a &> adversary-test.log &disown
+        ./setup-nightfall
+        ./start-nightfall -g -a -d &> adversary-test.log &disown
 
     - name: wait 2000s for Containers startup and setup completion
       run: sleep 2000
@@ -81,7 +80,7 @@ jobs:
     - name: Run adversary test
       run: |
         npm ci
-        npm run adversary-test
+        VERBOSE=true npm run adversary-test
 
     - name: debug logs - after integration test run
       if: always()
@@ -162,7 +161,7 @@ jobs:
         run: |
           docker build --no-cache	-t ghcr.io/eyblockchain/local-zokrates -f zokrates.Dockerfile .
           docker-compose build
-          ./start-nightfall -g &> test-gas.log &disown
+          ./start-nightfall -g -d &> test-gas.log &disown
         env:
           TRANSACTIONS_PER_BLOCK: 32
 
