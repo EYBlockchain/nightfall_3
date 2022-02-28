@@ -296,11 +296,13 @@ export async function markNullifiedOnChain(
 }
 
 // function to get the balance of commitments for each ERC address
-export async function getWalletBalance() {
+export async function getWalletBalance(pkd) {
   const db = await connectDB();
   const vals = await db.getAll(COMMITMENTS_COLLECTION);
   const wallet =
-    Object.keys(vals).length > 0 ? vals.filter(v => !v.isNullified && v.isOnChain >= 0) : [];
+    Object.keys(vals).length > 0
+      ? vals.filter(v => !v.isNullified && v.isOnChain >= 0 && v.preimage.compressedPkd === pkd)
+      : [];
   // the below is a little complex.  First we extract the ercAddress, tokenId and value
   // from the preimage.  Then we format them nicely. We don't care about the value of the
   // tokenId, other than if it's zero or not (indicating the token type). Then we filter

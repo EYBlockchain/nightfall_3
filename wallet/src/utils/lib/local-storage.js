@@ -61,4 +61,12 @@ function clear() {
   storage.clear();
 }
 
-export { mnemonicGet, mnemonicSet, mnemonicRemove, tokensSet, tokensGet, clear };
+function pkdSet(userKey, pkd) {
+  storage.setItem(`${userKey}/pkd`, pkd);
+}
+
+function pkdGet(userKey) {
+  return storage.getItem(`${userKey}/pkd`);
+}
+
+export { mnemonicGet, mnemonicSet, mnemonicRemove, tokensSet, tokensGet, clear, pkdGet, pkdSet };
