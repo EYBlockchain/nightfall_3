@@ -89,7 +89,8 @@ const BridgeComponent = (props: any) => {
           },
           shieldContractAddress,
         );
-        return submitTransaction(rawTransaction, shieldContractAddress, 1);
+        await submitTransaction(rawTransaction, shieldContractAddress, 1);
+        break;
       }
 
       case 'withdraw': {
@@ -123,7 +124,8 @@ const BridgeComponent = (props: any) => {
             shieldContractAddress,
           );
           console.log('rawTransaction', rawTransaction);
-          return submitTransaction(rawTransaction, shieldContractAddress, 1);
+          await submitTransaction(rawTransaction, shieldContractAddress, 1);
+          break;
         }
         break;
       }
@@ -131,6 +133,7 @@ const BridgeComponent = (props: any) => {
       default:
         break;
     }
+    handleCloseConfirmModal();
     handleClose();
     return true;
   }
@@ -423,7 +426,6 @@ const BridgeComponent = (props: any) => {
                   type="button"
                   className={stylesModal.continueTrasferButton}
                   id="Bridge_modal_continueTransferButton"
-                  // onClick={() => triggerTx()}
                   onClick={() => triggerTx()}
                 >
                   Send Transaction
