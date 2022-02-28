@@ -279,14 +279,13 @@ export async function markNullifiedOnChain(
   if (filtered.length > 0) {
     return Promise.all(
       filtered.map(f => {
-        // const { isNullifiedOnChain: a, blockNumber: b } = f;
         return db.put(
           COMMITMENTS_COLLECTION,
           {
+            ...f,
             isNullifiedOnChain: Number(blockNumberL2),
             blockNumber,
             transactionHashNullifiedL1,
-            ...f,
           },
           f._id,
         );

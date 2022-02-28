@@ -143,6 +143,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
       const th = optimisticWithdrawTransaction.transactionHash;
       delete optimisticWithdrawTransaction.transactionHash;
       optimisticWithdrawTransaction.transactionHash = th;
+      await markNullified(oldCommitment, optimisticWithdrawTransaction);
       await saveTransaction(optimisticWithdrawTransaction);
       return { transaction: optimisticWithdrawTransaction };
     }
