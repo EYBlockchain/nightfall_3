@@ -4,7 +4,6 @@
   "description": "'makes a container with proposer functionality'",
   "main": "index.js",
   "scripts": {
-    "prestart": "./pre-start-script.sh",
     "start": "node --trace-warnings src/index.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -16,7 +15,6 @@
     "web3": "^1.6.1",
     "ws": "^8.2.3",
     "winston": "^3.3.3",
-    "config": "^3.3.1",
-    "common-files": "file:../../../common-files"
+    "config": "^3.3.1"
   }
 }
