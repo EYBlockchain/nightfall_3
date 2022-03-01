@@ -11,3 +11,5 @@ wallet/config
 __pycache__
 test/adversary/nightfall-adversary
 wallet/src/zokrates
+wallet/tests/e2e/videos
+wallet/tests/e2e/screenshots
