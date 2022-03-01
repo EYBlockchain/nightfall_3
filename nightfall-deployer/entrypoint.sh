@@ -9,7 +9,7 @@ fi
 npx truffle compile --all
 npx truffle migrate --to 3 --network=${ETH_NETWORK}
 
-if [ -z "${UPGRADE}" ]; then
+if [ -n "${UPGRADE}" ]; then
   npx truffle migrate -f 4 --reset --network=${ETH_NETWORK}
 fi
 
