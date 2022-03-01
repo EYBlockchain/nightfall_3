@@ -8,7 +8,6 @@ import {
   withdraw,
   finaliseWithdrawal,
   isValidWithdrawal,
-  peers,
   commitment,
   incomingViewingKey,
   setInstantWithdrawl,
@@ -31,7 +30,6 @@ app.use('/transfer', transfer);
 app.use('/withdraw', withdraw);
 app.use('/finalise-withdrawal', finaliseWithdrawal);
 app.use('/valid-withdrawal', isValidWithdrawal);
-app.use('/peers', peers);
 app.use('/commitment', commitment);
 app.use('/incoming-viewing-key', incomingViewingKey);
 app.use('/set-instant-withdrawal', setInstantWithdrawl);

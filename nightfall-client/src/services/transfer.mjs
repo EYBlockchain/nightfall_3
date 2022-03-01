@@ -19,7 +19,7 @@ import {
   clearPending,
   getSiblingInfo,
 } from './commitment-storage.mjs';
-import { discoverPeers } from './peers.mjs';
+import getProposers from './peers.mjs';
 import { decompressKey, calculateIvkPkdfromAskNsk } from './keys.mjs';
 
 const {
@@ -34,6 +34,8 @@ const {
   ZERO,
 } = config;
 const { generalise, GN } = gen;
+
+const NEXT_N_PROPOSERS = 3;
 
 async function transfer(transferParams) {
   logger.info('Creating a transfer transaction');
@@ -215,14 +217,18 @@ async function transfer(transferParams) {
   try {
     if (offchain) {
       // dig up connection peers
-      const peerList = await discoverPeers('Local');
+      const peerList = await getProposers(NEXT_N_PROPOSERS);
+      console.log("PEER", peerList)
       Object.keys(peerList).forEach(async address => {
+        console.log("ADDRESS", address)
+        console.log("ADDRESS", peerList[address])
         logger.debug(
           `offchain transaction - calling ${peerList[address]}/proposer/offchain-transaction`,
         );
         await axios
           .post(
             `${peerList[address]}/proposer/offchain-transaction`,
+            //`http://optimist1:80/proposer/offchain-transaction`,
             { transaction: optimisticTransferTransaction },
             { timeout: 3600000 },
           )

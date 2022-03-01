@@ -72,7 +72,6 @@ describe('Gas test', () => {
   before(async () => {
     await nf3Proposer1.init(mnemonics.proposer);
     await nf3Proposer1.registerProposer();
-    await nf3Proposer1.addPeer(environment.optimistApiUrl);
 
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer1.startProposer();

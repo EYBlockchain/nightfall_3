@@ -11,6 +11,7 @@ import './Stateful.sol';
 
 contract Proposers is Stateful, Structures, Config {
   // mapping(address => TimeLockedBond) public bondAccounts;
+  mapping(address => string) public proposerUrl;
 
   /**
   * Each proposer gets a chance to propose blocks for a certain time, defined
@@ -29,11 +30,12 @@ contract Proposers is Stateful, Structures, Config {
 
 
   //add the proposer to the circular linked list
-  function registerProposer() external payable {
+  function registerProposer(string memory url) external payable {
     require(REGISTRATION_BOND <= msg.value, 'The registration payment is incorrect');
     require(state.getProposer(msg.sender).thisAddress == address(0), 'This proposer is already registered');
     payable(address(state)).transfer(REGISTRATION_BOND);
     state.setBondAccount(msg.sender,REGISTRATION_BOND);
+    proposerUrl[msg.sender] = url;
     LinkedAddress memory currentProposer = state.getCurrentProposer();
     // cope with this being the first proposer
     if (currentProposer.thisAddress == address(0)) {
@@ -85,5 +87,10 @@ contract Proposers is Stateful, Structures, Config {
     // Zero out the entry in the bond escrow
     state.setBondAccount(msg.sender,0);
     state.addPendingWithdrawal(msg.sender,bond.amount);
+  }
+
+  // Proposers can change REST API URL
+  function updateProposer(string memory url) external {
+    proposerUrl[msg.sender] = url;
   }
 }

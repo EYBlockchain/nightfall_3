@@ -58,6 +58,7 @@ async function askQuestions(nf3) {
         'View my wallet',
         'View my pending deposits',
         'View my pending spent',
+        'View registered proposers',
         'Exit',
       ],
     },
@@ -143,9 +144,11 @@ function printBalances(balances, type) {
   // eslint-disable-next-line guard-for-in
   for (const compressedPkd in balances) {
     const table = new Table({ head: ['ERC Contract Address', `${type} Layer 2 Balance`] });
-    Object.keys(balances[compressedPkd]).forEach(ercAddress =>
-      table.push({ [ercAddress]: balances[compressedPkd][ercAddress][0] }),
-    );
+    Object.keys(balances[compressedPkd]).forEach(ercAddress => {
+      if (typeof balances[compressedPkd][ercAddress][0] !== 'undefined')
+        table.push({ [ercAddress]: balances[compressedPkd][ercAddress][0] });
+      else table.push({ [ercAddress]: balances[compressedPkd][ercAddress] });
+    });
     console.log(chalk.yellow(`${type} Balances of user ${compressedPkd}`));
     console.log(table.toString());
   }
@@ -170,7 +173,6 @@ async function loop(nf3, ercAddress) {
   } = await askQuestions(nf3);
   if (privateKey) {
     await nf3.setEthereumSigningKey(privateKey); // we'll remember the key so we don't keep asking for it
-    nf3.addPeer('http://optimist1:80'); // add a Proposer for direct transfers and withdraws
   }
   // handle the task that the user has asked for
   switch (task) {
@@ -245,13 +247,16 @@ async function loop(nf3, ercAddress) {
       }
       break;
     case 'View my wallet':
-      printBalances(await nf3.getLayer2Balances(), '');
+      printBalances(await nf3.getLayer2BalancesUnfiltered(), '');
       return [false, null];
     case 'View my pending deposits':
-      printBalances(await nf3.getLayer2PendingDepositBalances(), 'Pending Deposit');
+      printBalances(await nf3.getLayer2PendingDepositBalances([], true), 'Pending Deposit');
       return [false, null];
     case 'View my pending spent':
-      printBalances(await nf3.getLayer2PendingSpentBalances(), 'Pending Spent');
+      printBalances(await nf3.getLayer2PendingSpentBalances([], true), 'Pending Spent');
+      return [false, null];
+    case 'View registered proposers':
+      console.log('Proposers', await nf3.getProposers());
       return [false, null];
     case 'Exit':
       return [true, null];
@@ -270,7 +275,12 @@ async function main(testEnvironment) {
     setEnvironment('Localhost');
   }
   const nf3Env = getCurrentEnvironment().currentEnvironment;
-  const nf3 = new Nf3(nf3Env.web3WsUrl, '', nf3Env);
+  const nf3 = new Nf3('', {
+    web3WsUrl: nf3Env.web3WsUrl,
+    optimistApiUrl: nf3Env.optimistApiUrl,
+    optimistWsUrl: nf3Env.optimistWsUrl,
+    clientApiUrl: nf3Env.clientApiUrl,
+  });
   const mnemonic = generateMnemonic();
   await nf3.init(mnemonic);
   const erc20Address = await nf3.getContractAddress('ERC20Mock');

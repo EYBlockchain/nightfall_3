@@ -556,11 +556,13 @@ class Nf3 {
   the proposer.
   @method
   @async
+  @param {string} Proposer REST API URL with format https://xxxx.xxx.xx  
   @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
   */
-  async registerProposer() {
+  async registerProposer(url) {
     const res = await axios.post(`${this.optimistBaseUrl}/proposer/register`, {
       address: this.ethereumAddress,
+      url,
     });
     return this.submitTransaction(
       res.data.txDataToSign,
@@ -624,26 +626,6 @@ class Nf3 {
       address: this.ethereumAddress,
     });
     return res.data;
-  }
-
-  /**
-  Adds a new Proposer peer to a list of proposers that are available for accepting
-  offchain (direct) transfers and withdraws. The client will submit direct transfers
-  and withdraws to all of these peers.
-  @method
-  @async
-  @param {string} peerUrl - the URL of the Proposer being added. This will be from
-  the point of view of nightfall-client, not the SDK user (e.g. 'http://optimist1:80').
-  Nightfall-client will use this URL to contact the Proposer.
-  */
-  async addPeer(peerUrl) {
-    if (!this.ethereumAddress)
-      throw new Error('Cannot add peer if the Ethereum address for the user is not defined');
-    // the peerUrl is from the point of view of the Client e.g. 'http://optimist1:80'
-    return axios.post(`${this.clientBaseUrl}/peers/addPeers`, {
-      address: this.ethereumAddress,
-      enode: peerUrl,
-    });
   }
 
   /**
@@ -788,6 +770,15 @@ class Nf3 {
       params: {
         compressedPkd: this.zkpKeys.compressedPkd,
         ercList,
+      },
+    });
+    return res.data.balance;
+  }
+
+  async getLayer2BalancesUnfiltered({ ercList } = {}) {
+    const res = await axios.get(`${this.clientBaseUrl}/commitment/balance`, {
+      params: {
+        compressedPkd: ercList,
       },
     });
     return res.data.balance;
