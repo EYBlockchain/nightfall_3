@@ -173,7 +173,7 @@ module.exports = {
     // this is the etherum private key for accounts[0]
     privateKey: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e',
     gas: 10000000,
-    gasCosts: 8000000000000000,
+    gasCosts: 80000000000000000,
     fee: 1,
     BLOCK_STAKE: 1, // 1 wei
     bond: 10, // 10 wei
@@ -194,6 +194,16 @@ module.exports = {
       proposer: 'high return hold whale promote payment hat panel reduce oyster ramp mouse',
       challenger: 'crush power outer gadget enter maze advance rather divert monster indoor axis',
       liquidityProvider: 'smart base soup sister army address member poem point quick save penalty',
+    },
+  },
+  TEMPORARY_RESTRICTIONS: {
+    signingKeys: {
+      bootProposerKey: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
+      bootChallengerKey: '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
+    },
+    addresses: {
+      bootProposer: '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0',
+      bootChallenger: '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0',
     },
   },
 };

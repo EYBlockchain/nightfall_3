@@ -13,69 +13,52 @@ chai.use(chaiAsPromised);
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
-const { bond, gasCosts, txPerBlock, mnemonics, signingKeys } = config.TEST_OPTIONS;
+const { signingKeys } = config.TEMPORARY_RESTRICTIONS;
+const { bond, gasCosts, mnemonics, signingKeys: testSigningKeys } = config.TEST_OPTIONS;
 
-const testProposers = [
-  new Nf3(signingKeys.proposer1, environment),
-  new Nf3(signingKeys.proposer2, environment),
-  new Nf3(signingKeys.proposer3, environment),
-];
+const bootProposer = new Nf3(signingKeys.bootProposerKey, environment);
+const testProposer = new Nf3(testSigningKeys.proposer1, environment);
 
 const web3Client = new Web3Client();
 
 describe('Basic Proposer tests', () => {
   before(async () => {
-    for (const prop of testProposers) {
-      await prop.init(mnemonics.proposer);
-    }
-
-    // Proposer registration
-    await testProposers[0].registerProposer();
-
-    // Proposer listening for incoming events
-    const newGasBlockEmitter = await testProposers[0].startProposer();
-    newGasBlockEmitter.on('gascost', async gasUsed => {
-      if (process.env.VERBOSE)
-        console.log(
-          `Block proposal gas cost was ${gasUsed}, cost per transaction was ${
-            gasUsed / txPerBlock
-          }`,
-        );
-    });
-    await testProposers[0].addPeer(environment.optimistApiUrl);
+    await testProposer.init(mnemonics.proposer);
+    await bootProposer.init(mnemonics.proposer);
   });
 
-  it('should register a proposer', async () => {
+  it('should register the boot proposer', async () => {
     let proposers;
-    ({ proposers } = await testProposers[1].getProposers());
+    ({ proposers } = await bootProposer.getProposers());
+
     // we have to pay 10 ETH to be registered
-    const startBalance = await web3Client.getBalance(testProposers[1].ethereumAddress);
-    const res = await testProposers[1].registerProposer();
+    const startBalance = await web3Client.getBalance(bootProposer.ethereumAddress);
+    const res = await bootProposer.registerProposer();
     expectTransaction(res);
-    ({ proposers } = await testProposers[1].getProposers());
-    const endBalance = await web3Client.getBalance(testProposers[1].ethereumAddress);
-    expect(endBalance - startBalance).to.closeTo(-bond, gasCosts);
-    const thisProposer = proposers.filter(p => p.thisAddress === testProposers[1].ethereumAddress);
+
+    await bootProposer.addPeer(environment.optimistApiUrl);
+
+    ({ proposers } = await bootProposer.getProposers());
+    const endBalance = await web3Client.getBalance(bootProposer.ethereumAddress);
+    expect(startBalance - endBalance).to.closeTo(bond, gasCosts);
+    const thisProposer = proposers.filter(p => p.thisAddress === bootProposer.ethereumAddress);
     expect(thisProposer.length).to.be.equal(1);
   });
 
-  it('should register other proposer', async () => {
-    let proposers;
-    ({ proposers } = await testProposers[2].getProposers());
-    // we have to pay 10 ETH to be registered
-    const startBalance = await web3Client.getBalance(testProposers[2].ethereumAddress);
-    const res = await testProposers[2].registerProposer();
-    expectTransaction(res);
-    ({ proposers } = await testProposers[2].getProposers());
-    const endBalance = await web3Client.getBalance(testProposers[2].ethereumAddress);
-    expect(endBalance - startBalance).to.closeTo(-bond, gasCosts);
-    const thisProposer = proposers.filter(p => p.thisAddress === testProposers[2].ethereumAddress);
-    expect(thisProposer.length).to.be.equal(1);
-  });
-
-  it('should fail to register a proposer twice', async () => {
+  it('should fail to register a proposer other than the boot proposer', async () => {
     try {
-      const res = await testProposers[2].registerProposer();
+      const res = await testProposer.registerProposer();
+      expectTransaction(res);
+    } catch (error) {
+      expect(error.message).to.satisfy(message =>
+        message.includes('Transaction has been reverted by the EVM'),
+      );
+    }
+  });
+
+  it('should fail to register the boot proposer twice', async () => {
+    try {
+      const res = await bootProposer.registerProposer();
       expectTransaction(res);
 
       expect.fail('Submitting the same proposer registration should have caused an EVM revert');
@@ -84,22 +67,22 @@ describe('Basic Proposer tests', () => {
     }
   });
 
-  it('should unregister a proposer', async () => {
+  it('should unregister the boot proposer', async () => {
     let proposers;
-    ({ proposers } = await testProposers[0].getProposers());
-    let thisProposer = proposers.filter(p => p.thisAddress === testProposers[0].ethereumAddress);
+    ({ proposers } = await bootProposer.getProposers());
+    let thisProposer = proposers.filter(p => p.thisAddress === bootProposer.ethereumAddress);
     expect(thisProposer.length).to.be.equal(1);
-    const res = await testProposers[0].deregisterProposer();
+    const res = await bootProposer.deregisterProposer();
     expectTransaction(res);
-    ({ proposers } = await testProposers[0].getProposers());
-    thisProposer = proposers.filter(p => p.thisAddress === testProposers[0].ethereumAddress);
+    ({ proposers } = await bootProposer.getProposers());
+    thisProposer = proposers.filter(p => p.thisAddress === bootProposer.ethereumAddress);
     expect(thisProposer.length).to.be.equal(0);
   });
 
   it('Should create a failing withdrawBond (because insufficient time has passed)', async () => {
     let error = null;
     try {
-      await testProposers[0].withdrawBond();
+      await bootProposer.withdrawBond();
     } catch (err) {
       error = err;
     }
@@ -114,12 +97,12 @@ describe('Basic Proposer tests', () => {
   it('Should create a passing withdrawBond (because sufficient time has passed)', async () => {
     if ((await web3Client.getInfo()).includes('TestRPC')) await web3Client.timeJump(3600 * 24 * 10); // jump in time by 7 days
     if ((await web3Client.getInfo()).includes('TestRPC')) {
-      const res = await testProposers[0].withdrawBond();
+      const res = await bootProposer.withdrawBond();
       expectTransaction(res);
     } else {
       let error = null;
       try {
-        await testProposers[0].withdrawBond();
+        await bootProposer.withdrawBond();
       } catch (err) {
         error = err;
       }
@@ -128,15 +111,9 @@ describe('Basic Proposer tests', () => {
   });
 
   after(async () => {
-    // After the proposer tests, de-register proposers
-    const { proposers } = await testProposers[0].getProposers();
-
-    for (const prop of testProposers) {
-      if (Object.values(proposers[0]).includes(prop.ethereumAddress))
-        await prop.deregisterProposer();
-      prop.close();
-    }
-
+    // After the proposer tests, unregister proposers
+    await testProposer.close();
+    await bootProposer.close();
     web3Client.closeWeb3();
   });
 });
