@@ -203,7 +203,7 @@ aws s3 cp s3://nightfallv3/circuits ./wallet/src/zokrates --recursive
 - Deploy nightfall (only ganache for now) from Nightfall's root folder
 
 ```
-./start-nightfall -g -s
+./start-nightfall -g -d -s
 ```
 
 - In a different terminal, start proposer from Nightfall's root folder once Nightfall deployment is
