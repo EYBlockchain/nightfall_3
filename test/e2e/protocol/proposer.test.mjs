@@ -26,19 +26,13 @@ const web3Client = new Web3Client();
 describe('Basic Proposer tests', () => {
   before(async () => {
     for (const prop of testProposers) {
-      console.log('INITIALISING');
       await prop.init(mnemonics.proposer);
-      console.log('INITIALISED');
     }
 
     // Proposer registration
-    console.log('REGISTERING');
     await testProposers[0].registerProposer();
-    console.log('REGISTERED');
     // Proposer listening for incoming events
-    console.log('STARTING PROPOSER');
     const newGasBlockEmitter = await testProposers[0].startProposer();
-    console.log('STARTED');
     newGasBlockEmitter.on('gascost', async gasUsed => {
       if (process.env.VERBOSE)
         console.log(
