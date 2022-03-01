@@ -671,15 +671,19 @@ class Nf3 {
     };
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
-      const { type, txDataToSign } = msg;
+      const { type, txDataToSignList } = msg;
       logger.debug(`Proposer received websocket message of type ${type}`);
       if (type === 'block') {
-        const res = await this.submitTransaction(
-          txDataToSign,
-          this.stateContractAddress,
-          this.BLOCK_STAKE,
-        );
-        newGasBlockEmitter.emit('gascost', res.gasUsed);
+        if (process.env.VERBOSE) console.log(`Found ${txDataToSignList.length} blocks to process`);
+        for (let i = 0; i < txDataToSignList.length; i++) {
+          // eslint-disable-next-line no-await-in-loop
+          const res = await this.submitTransaction(
+            txDataToSignList[i],
+            this.stateContractAddress,
+            this.BLOCK_STAKE,
+          );
+          newGasBlockEmitter.emit('gascost', res.gasUsed);
+        }
       }
     };
     connection.onerror = () => logger.error('websocket connection error');
@@ -723,9 +727,11 @@ class Nf3 {
     };
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
-      const { type, txDataToSign } = msg;
+      const { type, txDataToSignList } = msg;
       if (type === 'block') {
-        newBlockEmitter.emit('data', txDataToSign);
+        for (let i = 0; i < txDataToSignList.length; i++) {
+          newBlockEmitter.emit('data', txDataToSignList[i]);
+        }
       }
     };
     return newBlockEmitter;

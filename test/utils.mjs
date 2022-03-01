@@ -209,7 +209,7 @@ export class Web3Client {
 
   async waitForEvent(eventLogs, expectedEvents, count = 1) {
     const length = count !== 1 ? count : expectedEvents.length;
-    let timeout = 10;
+    let timeout = 20;
     while (eventLogs.length < length) {
       await new Promise(resolve => setTimeout(resolve, 3000));
       timeout--;
