@@ -38,7 +38,7 @@ jobs:
         run: |
           npm ci
           docker-compose build
-          ./start-nightfall -g -s &> docker-compose.log &disown
+          ./start-nightfall -g -d -s &> docker-compose.log &disown
 
       - name: wait 1000s for Containers startup and setup completion
         run: sleep 1000
