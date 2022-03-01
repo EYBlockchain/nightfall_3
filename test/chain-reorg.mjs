@@ -223,7 +223,7 @@ describe('Testing the http API', () => {
       const myAddress = (await getAccounts())[0];
       const res = await chai
         .request(optimistUrl)
-        .post('/proposer/register')
+        .post('/proposer/stake')
         .send({ address: myAddress });
       txDataToSign = res.body.txDataToSign;
       expect(txDataToSign).to.be.a('string');

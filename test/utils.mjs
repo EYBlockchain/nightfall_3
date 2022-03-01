@@ -382,6 +382,18 @@ export const waitForEvent = async (eventLogs, expectedEvents, count = 1) => {
     eventLogs.shift();
   }
 
+  const em = web3.eth.subscribe('newBlockHeaders');
+  let blockCounter = 0;
+  // eslint-disable-next-line no-loop-func
+  em.on('data', () => {
+    blockCounter++;
+  });
+  console.log('waitForEvent - Waiting for 12 blocks confirmation...');
+  while (blockCounter < 12) {
+    // eslint-disable-next-line no-await-in-loop
+    await new Promise(resolve => setTimeout(resolve, 3000));
+  }
+  em.unsubscribe();
   // Have to wait here as client block proposal takes longer now
   await new Promise(resolve => setTimeout(resolve, 3000));
   return eventLogs;

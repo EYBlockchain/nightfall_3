@@ -143,7 +143,7 @@ describe('Running rollback and resync test', () => {
     };
     const res = await chai
       .request(environment.optimistApiUrl)
-      .post('/proposer/register')
+      .post('/proposer/stake')
       .send({ address: myAddress });
     const { txDataToSign } = res.body;
     await submitTransaction(txDataToSign, privateKey, proposersAddress, gas, bond);
@@ -306,7 +306,7 @@ describe('Running rollback and resync test', () => {
 
       const res = await chai
         .request(environment.optimistApiUrl)
-        .post('/proposer/register')
+        .post('/proposer/stake')
         .send({ address: myAddress });
       const { txDataToSign } = res.body;
       expect(txDataToSign).to.be.a('string');

@@ -40,23 +40,41 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
   }
 
   // function to enable a proposer to get paid for proposing a block
-  function requestBlockPayment(Block memory b, uint blockNumberL2, Transaction[] memory ts) external {
+  function requestBlockPayment(Block memory b, uint256 blockNumberL2, Transaction[] memory ts) external {
     bytes32 blockHash = Utils.hashBlock(b, ts);
     state.isBlockReal(b, ts, blockNumberL2);
     // check that the block has been finalised
-    uint time = state.getBlockData(blockNumberL2).time;
-    require(time + COOLING_OFF_PERIOD < block.timestamp, 'It is too soon to get paid for this block');
-    require(b.proposer == msg.sender, 'You are not the proposer of this block');
-    require(state.isBlockStakeWithdrawn(blockHash) == false, 'The block stake for this block is already claimed');
+    uint256 time = state.getBlockData(blockNumberL2).time;
+    require(time + CHALLENGE_PERIOD < block.timestamp, 'Shield: Too soon to get paid for this block');
+    require(b.proposer == msg.sender, 'Shield: Not the proposer of this block');
+    require(state.isBlockStakeWithdrawn(blockHash) == false, 'Shield: Block stake for this block already claimed');
     // add up how much the proposer is owed.
-    uint payment;
-    for (uint i = 0; i < ts.length; i++) {
+    uint256 payment;
+    for (uint256 i = 0; i < ts.length; i++) {
       bytes32 transactionHash = Utils.hashTransaction(ts[i]);
       payment += feeBook[transactionHash];
       feeBook[transactionHash] = 0; // clear the payment
     }
-    payment += BLOCK_STAKE;
+    
+    // recover the stake for that block
+    TimeLockedStake memory stake = state.getStakeAccount(msg.sender);
+    stake.amount += BLOCK_STAKE;
+    stake.challengeLocked -= BLOCK_STAKE;
+    state.setStakeAccount(msg.sender, stake.amount, stake.challengeLocked);
+    state.setBlockStakeWithdrawn(blockHash);
+
     state.addPendingWithdrawal(msg.sender, payment);
+  }
+
+  /** 
+   * @dev Check if a block has been paid to the proposer
+   */
+  function isBlockPaymentPending(bytes32 blockHash, uint256 blockNumberL2) view external returns(bool) {
+    uint256 time = state.getBlockData(blockNumberL2).time;
+    require(time + CHALLENGE_PERIOD < block.timestamp, 'Shield: Too soon to get paid for this block');
+    require(state.isBlockStakeWithdrawn(blockHash) == false, 'Shield: Block stake for this block already claimed');
+
+    return true;
   }
 
   function onERC721Received(address, address _from, uint256 _tokenId, bytes calldata) external returns(bytes4) {
@@ -74,16 +92,16 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
   @param ts - array of the transactions contained in the block
   @param index - the index of the transaction that locates it in the array of Transactions in Block b
   */
-  function isValidWithdrawal(Block memory b, uint blockNumberL2, Transaction[] memory ts, uint index) view external returns(bool) {    
+  function isValidWithdrawal(Block memory b, uint256 blockNumberL2, Transaction[] memory ts, uint256 index) view external returns(bool) {    
     // check this block is a real one, in the queue, not something made up.
     state.isBlockReal(b, ts, blockNumberL2);
     // check that the block has been finalised
-    uint time = state.getBlockData(blockNumberL2).time;
-    require(time + COOLING_OFF_PERIOD < block.timestamp, 'It is too soon to withdraw funds from this block');
+    uint256 time = state.getBlockData(blockNumberL2).time;
+    require(time + CHALLENGE_PERIOD < block.timestamp, 'Shield: Too soon to withdraw funds from this block');
     
     bytes32 transactionHash = Utils.hashTransaction(ts[index]);
-    require(!withdrawn[transactionHash], 'This transaction has already paid out');
-    require(ts[index].transactionType == TransactionTypes.WITHDRAW, 'This transaction is not a valid WITHDRAW');
+    require(!withdrawn[transactionHash], 'Shield: Transaction already paid out');
+    require(ts[index].transactionType == TransactionTypes.WITHDRAW, 'Shield: Transaction is not a valid WITHDRAW');
    
     return true;
   }
@@ -95,14 +113,14 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
   @param index - the index of the transaction that locates it in the array of Transactions in Block b
   TODO do we need to pass in  all the block data?
   */
-  function finaliseWithdrawal(Block memory b, uint blockNumberL2, Transaction[] memory ts, uint index) external {
+  function finaliseWithdrawal(Block memory b, uint256 blockNumberL2, Transaction[] memory ts, uint256 index) external {
     // check this block is a real one, in the queue, not something made up.
     state.isBlockReal(b, ts, blockNumberL2);
     // check that the block has been finalised
-    uint time = state.getBlockData(blockNumberL2).time;
-    require(time + COOLING_OFF_PERIOD < block.timestamp, 'It is too soon to withdraw funds from this block');
+    uint256 time = state.getBlockData(blockNumberL2).time;
+    require(time + CHALLENGE_PERIOD < block.timestamp, 'Shield: Too soon to withdraw funds from this block');
     bytes32 transactionHash = Utils.hashTransaction(ts[index]);
-    require(!withdrawn[transactionHash], 'This transaction has already paid out');
+    require(!withdrawn[transactionHash], 'Shield: Transaction already paid out');
     withdrawn[transactionHash] = true;
     if (ts[index].transactionType == TransactionTypes.WITHDRAW) {
       address originalRecipientAddress = address(uint160(uint256(ts[index].recipientAddress)));
@@ -119,10 +137,10 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
     bytes32 withdrawTransactionHash = Utils.hashTransaction(withdrawTransaction);
 
     // if no fee is set, then the withdrawal is not tagged as advanceable - else someone could just steal withdrawals
-    require(advancedFeeWithdrawals[withdrawTransactionHash] > 0, 'No advanced fee has been set for this withdrawal');
-    require(withdrawTransaction.tokenType == TokenType.ERC20, 'Can only advance withdrawals for fungible tokens');
+    require(advancedFeeWithdrawals[withdrawTransactionHash] > 0, 'Shield: No advanced fee has been set for this withdrawal');
+    require(withdrawTransaction.tokenType == TokenType.ERC20, 'Shield: Can only advance withdrawals for fungible tokens');
     // The withdrawal has not been withdrawn
-    require(!withdrawn[withdrawTransactionHash], 'Cannot double withdraw');
+    require(!withdrawn[withdrawTransactionHash], 'Shield: Cannot double withdraw');
 
     // TODO should we check if the withdrawal is not in a finalised block
     // this might incentives sniping freshly finalised blocks by liquidity providers
@@ -135,7 +153,7 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
 
     // Send the token from the msg.sender to the receipient
     if (withdrawTransaction.tokenId != ZERO)
-      revert("ERC20 deposit should have tokenId equal to ZERO");
+      revert("Shield: ERC20 deposit should have tokenId equal to ZERO");
     else {
       tokenContract.transferFrom(
         address(msg.sender),
@@ -150,20 +168,20 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
   }
 
   // TODO Is there a better way to set this fee, e.g. at the point of making a transaction.
-  function setAdvanceWithdrawalFee(Block memory b, uint256 blockNumberL2, Transaction[] memory ts, uint index) external payable {
+  function setAdvanceWithdrawalFee(Block memory b, uint256 blockNumberL2, Transaction[] memory ts, uint256 index) external payable {
     // The transaction is a withdrawal transaction
-    require(ts[index].transactionType == TransactionTypes.WITHDRAW, 'Can only advance withdrawals');
+    require(ts[index].transactionType == TransactionTypes.WITHDRAW, 'Shield: Can only advance withdrawals');
     // The block and transactions are real
     state.isBlockReal(b,ts,blockNumberL2);
 
     bytes32 withdrawTransactionHash = Utils.hashTransaction(ts[index]);
     // The withdrawal has not been withdrawn
-    require(!withdrawn[withdrawTransactionHash], 'Cannot double withdraw');
+    require(!withdrawn[withdrawTransactionHash], 'Shield: Cannot double withdraw');
     address originalRecipientAddress =  address(uint160(uint256(ts[index].recipientAddress)));
     address currentOwner = advancedWithdrawals[withdrawTransactionHash] == address(0) ? originalRecipientAddress : advancedWithdrawals[withdrawTransactionHash];
 
     // Only the owner of the withdraw can set the advanced withdrawal
-    require(msg.sender == currentOwner, 'You are not the current owner of this withdrawal');
+    require(msg.sender == currentOwner, 'Shield: Not the current owner of this withdrawal');
     advancedFeeWithdrawals[withdrawTransactionHash] = msg.value;
     payable(address(state)).transfer(msg.value);
     emit InstantWithdrawalRequested(withdrawTransactionHash, msg.sender, msg.value);
@@ -178,7 +196,7 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
 
     if(t.tokenType == TokenType.ERC20) {
       if (t.tokenId != ZERO)
-        revert("ERC20 deposit should have tokenId equal to ZERO");
+        revert("Shield: ERC20 deposit should have tokenId equal to ZERO");
       else
         tokenContract.transfer(
           recipientAddress,
@@ -186,7 +204,7 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
         );
     } else if(t.tokenType == TokenType.ERC721) {
       if (t.value != 0) // value should always be equal to 0
-        revert("Invalid inputs for ERC721 deposit");
+        revert("Shield: Invalid inputs for ERC721 deposit");
       else
         tokenContract.safeTransferFrom(
           address(this),
@@ -203,7 +221,7 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
           ''
         );
     } else {
-      revert("Invalid Token Type");
+      revert("Shield: Invalid Token Type");
     }
   }
 
@@ -214,12 +232,12 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
 
     if(t.tokenType == TokenType.ERC20) {
       if (t.tokenId != ZERO)
-        revert("ERC20 deposit should have tokenId equal to ZERO");
+        revert("Shield: ERC20 deposit should have tokenId equal to ZERO");
       else
         tokenContract.transferFrom(msg.sender, address(this), uint256(t.value));
     } else if(t.tokenType == TokenType.ERC721) {
       if (t.value != 0) // value should always be equal to 0
-        revert("Invalid inputs for ERC721 deposit");
+        revert("Shield: Invalid inputs for ERC721 deposit");
       else
         tokenContract.safeTransferFrom(
           msg.sender,
@@ -236,7 +254,7 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
           ''
         );
     } else {
-      revert("Invalid Token Type");
+      revert("Shield: Invalid Token Type");
     }
   }
 }

@@ -11,9 +11,12 @@ import { getContractInstance } from 'common-files/utils/contract.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction, TransactionError } from '../classes/index.mjs';
 import {
-  setRegisteredProposerAddress,
+  setStakeProposerAddress,
   getMempoolTransactions,
   getLatestTree,
+  findBlocksByProposer,
+  getBlockByBlockHash,
+  getTransactionsByTransactionHashes,
 } from '../services/database.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
@@ -27,16 +30,16 @@ const { STATE_CONTRACT_NAME, PROPOSERS_CONTRACT_NAME, SHIELD_CONTRACT_NAME, ZERO
  * amount.  The user must post the address being registered.  This is for the
  * Optimist app to use for it to decide when to start proposing blocks.  It is * not part of the unsigned blockchain transaction that is returned.
  */
-router.post('/register', async (req, res, next) => {
-  logger.debug(`register proposer endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
+router.post('/stake', async (req, res, next) => {
+  logger.debug(`stake proposer endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
   try {
     const { address } = req.body;
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
-    const txDataToSign = await proposersContractInstance.methods.registerProposer().encodeABI();
+    const txDataToSign = await proposersContractInstance.methods.stakeProposer().encodeABI();
     logger.debug('returning raw transaction data');
     logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
     res.json({ txDataToSign });
-    setRegisteredProposerAddress(address); // save the registration address
+    setStakeProposerAddress(address); // save the stake address
   } catch (err) {
     logger.error(err);
     next(err);
@@ -76,11 +79,11 @@ router.get('/proposers', async (req, res, next) => {
  * Function to return a raw transaction that de-registers a proposer.  This just
  * provides the tx data. The user has to call the blockchain client.
  */
-router.post('/de-register', async (req, res, next) => {
-  logger.debug(`de-register proposer endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
+router.post('/unstake', async (req, res, next) => {
+  logger.debug(`unstake proposer endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
   try {
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
-    const txDataToSign = await proposersContractInstance.methods.deRegisterProposer().encodeABI();
+    const txDataToSign = await proposersContractInstance.methods.unstakeProposer().encodeABI();
     logger.debug('returning raw transaction data');
     logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
     res.json({ txDataToSign });
@@ -91,14 +94,14 @@ router.post('/de-register', async (req, res, next) => {
 });
 
 /**
- * Function to withdraw bond for a de-registered proposer
+ * Function to withdraw stake for a unstaked proposer
  */
 
-router.post('/withdrawBond', async (req, res, next) => {
-  logger.debug(`withdrawBond endpoint received GET`);
+router.post('/withdrawStake', async (req, res, next) => {
+  logger.debug(`withdrawStake endpoint received POST`);
   try {
     const stateContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
-    const txDataToSign = await stateContractInstance.methods.withdrawBond().encodeABI();
+    const txDataToSign = await stateContractInstance.methods.withdrawStake().encodeABI();
     res.json({ txDataToSign });
   } catch (error) {
     logger.error(error);
@@ -126,17 +129,67 @@ router.get('/withdraw', async (req, res, next) => {
 });
 
 /**
+ * Function to get pending blocks payments for a proposer.
+ */
+router.get('/pending-payments', async (req, res, next) => {
+  logger.debug(`pending-payments endpoint received GET`);
+  const { proposer } = req.query;
+  logger.debug(`requested pending payments for proposer ${proposer}`);
+
+  const pendingPayments = [];
+  // get blocks by proposer
+  try {
+    const blocks = await findBlocksByProposer(proposer);
+    const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
+
+    for (let i = 0; i < blocks.length; i++) {
+      let pending;
+      let challengePeriod = false;
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        pending = await shieldContractInstance.methods
+          .isBlockPaymentPending(blocks[i].blockHash, blocks[i].blockNumberL2)
+          .call();
+      } catch (e) {
+        if (e.message.includes('Too soon to get paid for this block')) {
+          challengePeriod = true;
+          pending = true;
+        } else {
+          pending = false;
+        }
+      }
+
+      if (pending) {
+        pendingPayments.push({ blockHash: blocks[i].blockHash, challengePeriod });
+      }
+    }
+    logger.debug('returning pending blocks payments');
+    res.json({ pendingPayments });
+  } catch (err) {
+    logger.error(err);
+    next(err);
+  }
+});
+
+/**
  * Function to get payment for proposing a L2 block.  This should be called only
  * after the block is finalised. It will authorise the payment as a pending
  * withdrawal and then /withdraw needs to be called to recover the money.
  */
 router.post('/payment', async (req, res, next) => {
-  logger.debug(`payment endpoint received GET ${JSON.stringify(req.body, null, 2)}`);
-  const { block, blockNumberL2, transactions } = req.body;
+  logger.debug(`payment endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
+  const { blockHash } = req.body;
+
   try {
+    const block = await getBlockByBlockHash(blockHash);
+    const transactions = await getTransactionsByTransactionHashes(block.transactionHashes);
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
     const txDataToSign = await shieldContractInstance.methods
-      .requestBlockPayment(block, blockNumberL2, transactions)
+      .requestBlockPayment(
+        Block.buildSolidityStruct(block),
+        block.blockNumberL2,
+        transactions.map(t => Transaction.buildSolidityStruct(t)),
+      )
       .encodeABI();
     logger.debug('returning raw transaction data');
     logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
@@ -188,10 +241,8 @@ router.post('/propose', async (req, res, next) => {
 router.get('/change', async (req, res, next) => {
   logger.debug(`proposer/change endpoint received GET ${JSON.stringify(req.body, null, 2)}`);
   try {
-    const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
-    const txDataToSign = await proposersContractInstance.methods
-      .changeCurrentProposer()
-      .encodeABI();
+    const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
+    const txDataToSign = await stateContractInstance.methods.changeCurrentProposer().encodeABI();
     logger.debug('returning raw transaction data');
     logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
     res.json({ txDataToSign });

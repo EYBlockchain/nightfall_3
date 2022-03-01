@@ -70,7 +70,7 @@ describe('Testing the http API', () => {
   let stateBalance = 0;
   const logCounts = {
     deposit: 0,
-    registerProposer: 0,
+    stakeProposer: 0,
   };
 
   const holdupTxQueue = async (txType, waitTillCount) => {
@@ -151,7 +151,7 @@ describe('Testing the http API', () => {
       .address;
     web3.eth.subscribe('logs', { address: proposersAddress }).on('data', log => {
       if (log.topics[0] === web3.eth.abi.encodeEventSignature('NewCurrentProposer(address)')) {
-        logCounts.registerProposer += 1;
+        logCounts.stakeProposer += 1;
       }
     });
 
@@ -257,33 +257,39 @@ describe('Testing the http API', () => {
 
   describe('Basic Proposer tests', () => {
     after(async () => {
-      // After the proposer tests, re-register proposers
-      const myAddress = (await getAccounts())[0];
-      const res = await chai
-        .request(optimistUrl)
-        .post('/proposer/register')
-        .send({ address: myAddress });
-      const { txDataToSign } = res.body;
-      expect(txDataToSign).to.be.a('string');
-      const bond = 10;
-      const count = logCounts.registerProposer;
-      await submitTransaction(txDataToSign, privateKey, proposersAddress, gas, bond);
-      await waitForTxExecution(count, 'registerProposer');
-      stateBalance += bond;
+      // After the proposer tests, re-register proposers, if needed
+      try {
+        const myAddress = (await getAccounts())[0];
+        const res = await chai
+          .request(optimistUrl)
+          .post('/proposer/stake')
+          .send({ address: myAddress });
+        const { txDataToSign } = res.body;
+        expect(txDataToSign).to.be.a('string');
+        const bond = 10;
+        const count = logCounts.stakeProposer;
+        await submitTransaction(txDataToSign, privateKey, proposersAddress, gas, bond);
+        await waitForTxExecution(count, 'stakeProposer');
+        stateBalance += bond;
+      } catch (err) {
+        // an EVM revert almost certainly indicates that the proposer is already registered.  That's
+        // fine, it's ok to continue
+        if (!err.message.includes('Transaction has been reverted by the EVM')) throw new Error(err);
+      }
     });
 
-    it('should register a proposer', async () => {
+    it('should stake a proposer', async () => {
       const myAddress = (await getAccounts())[0];
       const res = await chai
         .request(optimistUrl)
-        .post('/proposer/register')
+        .post('/proposer/stake')
         .send({ address: myAddress });
       const { txDataToSign } = res.body;
       expect(txDataToSign).to.be.a('string');
       // we have to pay 10 ETH to be registered
       const bond = 10;
       const startBalance = await getBalance(myAddress);
-      const count = logCounts.registerProposer;
+      const count = logCounts.stakeProposer;
       // now we need to sign the transaction and send it to the blockchain
       console.log('submitting tx');
       const receipt = await submitTransaction(
@@ -294,7 +300,7 @@ describe('Testing the http API', () => {
         bond,
       );
       console.log('waiting for execution');
-      await waitForTxExecution(count, 'registerProposer');
+      await waitForTxExecution(count, 'stakeProposer');
       console.log('executed');
       const endBalance = await getBalance(myAddress);
       expect(receipt).to.have.property('transactionHash');
@@ -306,9 +312,9 @@ describe('Testing the http API', () => {
       });
     });
 
-    it('should de-register a proposer', async () => {
+    it('should unstake a proposer', async () => {
       const myAddress = (await getAccounts())[0];
-      const res = await chai.request(optimistUrl).post('/proposer/de-register');
+      const res = await chai.request(optimistUrl).post('/proposer/unstake');
       const { txDataToSign } = res.body;
       expect(txDataToSign).to.be.a('string');
       const receipt = await submitTransaction(txDataToSign, privateKey, proposersAddress, gas);
@@ -318,8 +324,8 @@ describe('Testing the http API', () => {
       const thisProposer = proposers.filter(p => p.thisAddresss === myAddress);
       expect(thisProposer.length).to.be.equal(0);
     });
-    it('Should create a failing withdrawBond (because insufficient time has passed)', async () => {
-      const res = await chai.request(optimistUrl).post('/proposer/withdrawBond');
+    it('Should create a failing withdrawStake (because insufficient time has passed)', async () => {
+      const res = await chai.request(optimistUrl).post('/proposer/withdrawStake');
       const { txDataToSign } = res.body;
       expect(txDataToSign).to.be.a('string');
       await expect(
@@ -328,9 +334,9 @@ describe('Testing the http API', () => {
         /Returned error: VM Exception while processing transaction: revert It is too soon to withdraw your bond|Transaction has been reverted by the EVM/,
       );
     });
-    it('Should create a passing withdrawBond (because sufficient time has passed)', async () => {
+    it('Should create a passing withdrawStake (because sufficient time has passed)', async () => {
       if (nodeInfo.includes('TestRPC')) await timeJump(3600 * 24 * 10); // jump in time by 7 days
-      const res = await chai.request(optimistUrl).post('/proposer/withdrawBond');
+      const res = await chai.request(optimistUrl).post('/proposer/withdrawStake');
       const { txDataToSign } = res.body;
       expect(txDataToSign).to.be.a('string');
       if (nodeInfo.includes('TestRPC')) {

@@ -208,13 +208,26 @@ export async function findBlocksFromBlockNumberL2(blockNumberL2) {
 }
 
 /**
+function to find blocks produced by a proposer
+*/
+export async function findBlocksByProposer(proposer) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { proposer };
+  return db
+    .collection(SUBMITTED_BLOCKS_COLLECTION)
+    .find(query, { sort: { blockNumberL2: 1 } })
+    .toArray();
+}
+
+/**
 function to store addresses of proposers that are registered through this
 app. These are needed because the app needs to know when one of them is the
 current (active) proposer, at which point it will automatically start to
 assemble blocks on behalf of the proposer. It listens for the NewCurrentProposer
 event to determine who is the current proposer.
 */
-export async function setRegisteredProposerAddress(address) {
+export async function setStakeProposerAddress(address) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   logger.debug(`Saving proposer address ${address}`);

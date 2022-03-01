@@ -192,8 +192,8 @@ describe('Testing the Nightfall SDK', () => {
     console.log('     User1 address: ', nf3User1.ethereumAddress);
     console.log('     User2 address: ', nf3User2.ethereumAddress);
 
-    // Proposer registration
-    await nf3Proposer1.registerProposer();
+    // Proposer staking
+    await nf3Proposer1.stakeProposer(1000);
     stateBalance += bond;
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer1.startProposer();
@@ -332,7 +332,7 @@ describe('Testing the Nightfall SDK', () => {
       ({ proposers } = await nf3Proposer2.getProposers());
       // we have to pay 10 ETH to be registered
       const startBalance = await getBalance(nf3Proposer2.ethereumAddress);
-      const res = await nf3Proposer2.registerProposer();
+      const res = await nf3Proposer2.stakeProposer(1000);
       stateBalance += bond;
       expectTransaction(res);
       ({ proposers } = await nf3Proposer2.getProposers());
@@ -342,22 +342,22 @@ describe('Testing the Nightfall SDK', () => {
       expect(thisProposer.length).to.be.equal(1);
     });
 
-    it('should de-register a proposer', async () => {
+    it('should unstake a proposer', async () => {
       let proposers;
       ({ proposers } = await nf3Proposer1.getProposers());
       let thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer1.ethereumAddress);
       expect(thisProposer.length).to.be.equal(1);
-      const res = await nf3Proposer1.deregisterProposer();
+      const res = await nf3Proposer1.unstakeProposer();
       expectTransaction(res);
       ({ proposers } = await nf3Proposer1.getProposers());
       thisProposer = proposers.filter(p => p.thisAddress === nf3Proposer1.ethereumAddress);
       expect(thisProposer.length).to.be.equal(0);
     });
 
-    it('Should create a failing withdrawBond (because insufficient time has passed)', async () => {
+    it('Should create a failing withdrawStake (because insufficient time has passed)', async () => {
       let error = null;
       try {
-        await nf3Proposer1.withdrawBond();
+        await nf3Proposer1.withdrawStake();
       } catch (err) {
         error = err;
       }
@@ -369,15 +369,15 @@ describe('Testing the Nightfall SDK', () => {
       );
     });
 
-    it('Should create a passing withdrawBond (because sufficient time has passed)', async () => {
+    it('Should create a passing withdrawStake (because sufficient time has passed)', async () => {
       if (nodeInfo.includes('TestRPC')) await timeJump(3600 * 24 * 10); // jump in time by 7 days
       if (nodeInfo.includes('TestRPC')) {
-        const res = await nf3Proposer1.withdrawBond();
+        const res = await nf3Proposer1.withdrawStake();
         expectTransaction(res);
       } else {
         let error = null;
         try {
-          await nf3Proposer1.withdrawBond();
+          await nf3Proposer1.withdrawStake();
         } catch (err) {
           error = err;
         }
@@ -387,8 +387,8 @@ describe('Testing the Nightfall SDK', () => {
 
     after(async () => {
       // After the proposer tests, re-register proposers
-      await nf3Proposer2.deregisterProposer();
-      await nf3Proposer1.registerProposer();
+      await nf3Proposer2.unstakeProposer();
+      await nf3Proposer1.stakeProposer(1000);
       stateBalance += bond;
     });
   });

@@ -17,7 +17,7 @@ if (program.opts().help) console.log('-k | --key input an Ethereum signing key t
 const ethereumSigningKey = program.opts().key || defaultKey;
 
 const argv = yargs(hideBin(process.argv)).parse();
-const { environment } = argv;
+const { environment, stake } = argv;
 /**
 Does the preliminary setup and starts listening on the websocket
 @param {string} testEnvironment - Environment where propose is launched ('Testnet','Localhost','Docker')
@@ -36,7 +36,9 @@ async function startProposer(testEnvironment) {
   await nf3.init(defaultMnemonic);
   if (await nf3.healthcheck('optimist')) console.log('Healthcheck passed');
   else throw new Error('Healthcheck failed');
-  await nf3.registerProposer();
+  let amount = 1000;
+  if (stake) amount = Number(stake);
+  await nf3.stakeProposer(amount);
   console.log('Proposer registration complete');
   // TODO subscribe to layer 1 blocks and call change proposer
   nf3.startProposer();

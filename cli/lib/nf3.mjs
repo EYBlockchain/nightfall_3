@@ -210,7 +210,7 @@ class Nf3 {
       // rather than waiting until we have a receipt, wait until we have enough confirmation blocks
       // then return the receipt.
       // TODO does this still work if there is a chain reorg or do we have to handle that?
-      return new Promise(resolve => {
+      return new Promise((resolve, reject) => {
         console.log(`Confirming transaction ${signed.transactionHash}`);
         this.notConfirmed++;
         this.web3.eth
@@ -224,6 +224,9 @@ class Nf3 {
               );
               resolve(receipt);
             }
+          })
+          .on('error', function (error) {
+            reject(error);
           });
       });
     }
@@ -539,34 +542,30 @@ class Nf3 {
   }
 
   /**
-  Registers a new proposer and pays the Bond required to register.
+  Stakes as a proposer the amount passed.
   It will use the address of the Ethereum Signing key that is holds to register
   the proposer.
   @method
   @async
   @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
   */
-  async registerProposer() {
-    const res = await axios.post(`${this.optimistBaseUrl}/proposer/register`, {
+  async stakeProposer(amount) {
+    const res = await axios.post(`${this.optimistBaseUrl}/proposer/stake`, {
       address: this.ethereumAddress,
     });
-    return this.submitTransaction(
-      res.data.txDataToSign,
-      this.proposersContractAddress,
-      this.PROPOSER_BOND,
-    );
+    return this.submitTransaction(res.data.txDataToSign, this.proposersContractAddress, amount);
   }
 
   /**
-  De-registers an existing proposer.
-  It will use the address of the Ethereum Signing key that is holds to de-register
+  Unstake an existing proposer.
+  It will use the address of the Ethereum Signing key that is holds to unstake
   the proposer.
   @method
   @async
   @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
   */
-  async deregisterProposer() {
-    const res = await axios.post(`${this.optimistBaseUrl}/proposer/de-register`, {
+  async unstakeProposer() {
+    const res = await axios.post(`${this.optimistBaseUrl}/proposer/unstake`, {
       address: this.ethereumAddress,
     });
     return this.submitTransaction(res.data.txDataToSign, this.proposersContractAddress, 0);
@@ -584,18 +583,18 @@ class Nf3 {
     const res = await axios.get(`${this.optimistBaseUrl}/proposer/change`, {
       address: this.ethereumAddress,
     });
-    return this.submitTransaction(res.data.txDataToSign, this.proposersContractAddress, 0);
+    return this.submitTransaction(res.data.txDataToSign, this.stateContractAddress, 0);
   }
 
   /**
-  Withdraw the bond left by the proposer.
-  It will use the address of the Ethereum Signing key that is holds to withdraw the bond.
+  Withdraw the stake left by the proposer.
+  It will use the address of the Ethereum Signing key that is holds to withdraw the stake.
   @method
   @async
   @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
   */
-  async withdrawBond() {
-    const res = await axios.post(`${this.optimistBaseUrl}/proposer/withdrawBond`, {
+  async withdrawStake() {
+    const res = await axios.post(`${this.optimistBaseUrl}/proposer/withdrawStake`, {
       address: this.ethereumAddress,
     });
     return this.submitTransaction(res.data.txDataToSign, this.proposersContractAddress, 0);
@@ -612,6 +611,35 @@ class Nf3 {
       address: this.ethereumAddress,
     });
     return res.data;
+  }
+
+  /**
+  Get all the list of existing proposers.
+  @method
+  @async
+  @returns {array} A promise that resolves to the Ethereum transaction receipt.
+  */
+  async getProposerPendingPayments() {
+    const res = await axios.get(`${this.optimistBaseUrl}/proposer/pending-payments`, {
+      params: {
+        proposer: this.ethereumAddress,
+      },
+    });
+    return res.data;
+  }
+
+  /**
+  Request block payment.
+  @method
+  @async
+  @return {Promise} A promise that resolves to an axios response.
+  */
+  async requestBlockPayment(blockHash) {
+    const res = await axios.post(`${this.optimistBaseUrl}/proposer/payment`, {
+      address: this.ethereumAddress,
+      blockHash,
+    });
+    return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, 0);
   }
 
   /**
