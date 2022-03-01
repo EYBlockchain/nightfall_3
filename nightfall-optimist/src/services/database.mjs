@@ -256,18 +256,6 @@ export async function deleteRegisteredProposerAddress(address) {
 }
 
 /**
-  Get proposer information from dB
-*/
-export async function getRegisteredProposerInfo(address) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  const query = { 'proposer.address': address };
-  const metadata = await db.collection(METADATA_COLLECTION).findOne(query);
-  logger.silly(`found registered proposer ${JSON.stringify(metadata, null, 2)}`);
-  return metadata;
-}
-
-/**
 Function to return 'number' transactions, ordered by the highest fee. If there
 are fewer than 'number' transactions, all are returned.
 */
