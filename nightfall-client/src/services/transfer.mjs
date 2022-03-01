@@ -213,11 +213,18 @@ async function transfer(transferParams) {
     compressedSecrets,
     proof,
   });
-  logger.debug(`Client made transaction ${JSON.stringify(optimisticTransferTransaction, null, 2)}`);
+  logger.debug(
+    `Client made transaction ${JSON.stringify(
+      optimisticTransferTransaction,
+      null,
+      2,
+    )} offchain ${offchain}`,
+  );
   try {
     if (offchain) {
       // dig up connection peers
       const peerList = await getProposers(NEXT_N_PROPOSERS);
+      logger.debug(`Peer List: ${peerList}`);
       Object.keys(peerList).forEach(async address => {
         logger.debug(
           `offchain transaction - calling ${peerList[address]}/proposer/offchain-transaction`,

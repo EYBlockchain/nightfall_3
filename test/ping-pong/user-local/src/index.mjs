@@ -51,10 +51,13 @@ async function localTest() {
   }
 
   // Create a block of transfer and deposit transactions
+  let offchain = false;
   for (let i = 0; i < TEST_LENGTH; i++) {
     await waitForSufficientBalance(nf3, value);
     try {
-      await nf3.transfer(false, ercAddress, tokenType, value, tokenId, recipientPkd);
+      logger.info(`Transfer is sent offchain : ${offchain}`);
+      await nf3.transfer(offchain, ercAddress, tokenType, value, tokenId, recipientPkd);
+      offchain = !offchain;
     } catch (err) {
       if (err.message.includes('No suitable commitments')) {
         // if we get here, it's possible that a block we are waiting for has not been proposed yet

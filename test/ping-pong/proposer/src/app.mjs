@@ -2,6 +2,7 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import fileUpload from 'express-fileupload';
+import * as proposer from './routes/proposer.mjs';
 
 const app = express();
 app.use((req, res, next) => {
@@ -22,4 +23,10 @@ app.get('/healthcheck', (req, res) => {
   res.sendStatus(200);
 });
 
-export default app;
+app.use('/proposer', proposer.router);
+
+function setOptimistUrl(url) {
+  proposer.setOptimistUrl(url);
+}
+
+export { app, setOptimistUrl };
