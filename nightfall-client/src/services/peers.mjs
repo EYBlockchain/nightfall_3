@@ -37,4 +37,3 @@ const getProposers = async N => {
 };
 
 export default getProposers;
-

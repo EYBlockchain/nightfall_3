@@ -218,17 +218,13 @@ async function transfer(transferParams) {
     if (offchain) {
       // dig up connection peers
       const peerList = await getProposers(NEXT_N_PROPOSERS);
-      console.log("PEER", peerList)
       Object.keys(peerList).forEach(async address => {
-        console.log("ADDRESS", address)
-        console.log("ADDRESS", peerList[address])
         logger.debug(
           `offchain transaction - calling ${peerList[address]}/proposer/offchain-transaction`,
         );
         await axios
           .post(
             `${peerList[address]}/proposer/offchain-transaction`,
-            //`http://optimist1:80/proposer/offchain-transaction`,
             { transaction: optimisticTransferTransaction },
             { timeout: 3600000 },
           )
