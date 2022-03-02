@@ -130,7 +130,7 @@ describe('End to End tests', () => {
      *   check1: before Block Proposed event
      *   check2: after Block Proposed event
      */
-    const recipientPkd = process.env.RECIPIENT_PKD || '';
+    const recipientPkd = process.env.RECIPIENT_PKD || ' ';
 
     it(`transfer token of value ${transferValue}`, () => {
       cy.get('#TokenItem_tokenSendMATIC').click();
@@ -185,7 +185,7 @@ describe('End to End tests', () => {
      *   check1: before Block Proposed event
      *   check2: after Block Proposed event
      */
-    const recipientPkd = process.env.RECIPIENT_PKD || '';
+    const recipientPkd = process.env.RECIPIENT_PKD || ' ';
 
     it(`transfer token of value ${transferValue}`, () => {
       cy.get('#TokenItem_tokenSendMATIC').click();
