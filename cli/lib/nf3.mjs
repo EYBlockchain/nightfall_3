@@ -741,9 +741,7 @@ class Nf3 {
       const msg = JSON.parse(message.data);
       const { type, txDataToSignList } = msg;
       if (type === 'block') {
-        for (let i = 0; i < txDataToSignList.length; i++) {
-          newBlockEmitter.emit('data', txDataToSignList[i]);
-        }
+        txDataToSignList.map(txtDataToSign => newBlockEmitter.emit('data', txtDataToSign));
       }
     };
     return newBlockEmitter;
