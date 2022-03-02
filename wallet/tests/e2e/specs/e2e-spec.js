@@ -208,8 +208,13 @@ describe('End to End tests', () => {
       });
     });
 
-    const noOfDeposit = txCount > txPerBlock ? txCount % txPerBlock : txPerBlock - txCount;
-    it(`initiate deposit of value ${depositValue} to satisfy ${txPerBlock} tx per block`, () => {
+    let noOfDeposit = 0;
+    it(`do some deposit of value ${depositValue} to satisfy ${txPerBlock} tx per block`, () => {
+      noOfDeposit = txCount > txPerBlock ? txCount % txPerBlock : txPerBlock - txCount;
+      cy.log(noOfDeposit);
+      cy.log(txCount);
+      cy.log(txCount % txPerBlock);
+      cy.log(txPerBlock - txCount);
       if (!noOfDeposit) this.skip();
 
       cy.get('#TokenItem_tokenDepositMATIC').click();
@@ -223,8 +228,8 @@ describe('End to End tests', () => {
         cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
         cy.wait(50000);
         cy.get('.btn-close').click();
-        cy.contains('Nightfall Assets').click();
       }
+      cy.contains('Nightfall Assets').click();
     });
 
     // check2
