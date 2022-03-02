@@ -64,10 +64,10 @@ describe('End to End tests', () => {
     it(`do ${noOfDeposit} deposit of value ${depositValue}`, () => {
       cy.get('#TokenItem_tokenDepositMATIC').click();
 
-      // for now in browser if once typed deposit value in text box
-      // we can do muptiple deposit on after another
+      // for now in browser if once we typed deposit value in text box
+      // we can do muptiple deposit one after another
       // without need to re-type
-      // that is the reason below code is the part of for loop
+      // that is the reason below code is not the part of for loop
       cy.get('#Bridge_amountDetails_tokenAmount').type(depositValue);
 
       for (let i = 0; i < noOfDeposit; i++) {
@@ -131,7 +131,7 @@ describe('End to End tests', () => {
 
     /*
      * dummy pkd of user who does not exist
-     * Note: even though we are passing recipientPkd but in code
+     * Note: even though we are passing recipientPkd, but in code
      *   it gets override by sender's pdk for now
      *   hence two check
      */
@@ -149,7 +149,6 @@ describe('End to End tests', () => {
       cy.contains('Nightfall Assets').click();
     });
 
-    // check1
     it(`check token balance after transfer`, () => {
       cy.get('#TokenItem_tokenBalanceMATIC').should($div => {
         const totalBalance = Number($div.text());
@@ -159,9 +158,8 @@ describe('End to End tests', () => {
       });
     });
 
-    // check2
     // This case because recipient and sender both are same
-    // NOTE: when browser fixes it recipent logic to be different person then please skip below test
+    // NOTE: when browser fixes its recipent logic to be different person then please remove below test
     it(`recepient: check token balance`, () => {
       cy.wait(50000);
       cy.contains('L2 Bridge').click();
@@ -178,13 +176,13 @@ describe('End to End tests', () => {
     const transferValue = 6;
 
     // hardcode 2 here is because it is double transfer
-    // case is it always will pick sutiable commitments
+    // case is: it always will pick two sutiable commitments
     const commitmentValues = depositValue * 2;
     const returnValue = commitmentValues - transferValue;
 
     /*
      * dummy pkd of user who does not exist
-     * Note: even though we are passing recipientPkd but in code
+     * Note: even though we are passing recipientPkd, but in code
      *   it gets override by sender's pdk for now
      *   hence two check
      */
@@ -207,7 +205,7 @@ describe('End to End tests', () => {
         const totalBalance = Number($div.text());
         expect(totalBalance).to.equal(currentTokenBalance - commitmentValues);
         currentTokenBalance = totalBalance;
-        txCount += 2;
+        txCount += 1;
       });
     });
 
@@ -231,10 +229,8 @@ describe('End to End tests', () => {
       cy.contains('Nightfall Assets').click();
     });
 
-    // check2
     // in case because recipient and sender both are same
     // avoid transferValue from assertion
-    // logged in user
     it(`check token balance after change return`, () => {
       cy.get('#TokenItem_tokenBalanceMATIC').should($div => {
         const totalBalance = Number($div.text());
