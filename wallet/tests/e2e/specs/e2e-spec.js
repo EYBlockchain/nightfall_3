@@ -75,7 +75,7 @@ describe('End to End tests', () => {
       cy.wait(20000);
       cy.get('#TokenItem_tokenBalanceMATIC').should($div => {
         const totalBalance = Number($div.text());
-        expect(totalBalance).to.equal(depositValue * noOfDeposit);
+        expect(totalBalance).to.equal(depositValue * noOfDeposit + 1);
         currentTokenBalance = totalBalance;
       });
     });
