@@ -13,6 +13,8 @@
 describe('End to End tests', () => {
   let currentTokenBalance = 0;
   const depositValue = 4;
+  const txPerBlock = Number(process.env.TRANSACTIONS_PER_BLOCK || 2);
+  let txCount = 0;
 
   beforeEach(() => {
     cy.on('window:before:load', win => {
@@ -51,7 +53,7 @@ describe('End to End tests', () => {
      * 2nd for single transfer
      * 3rd and 4th for double trransfer
      */
-    const noOfDeposit = 4;
+    const noOfDeposit = txPerBlock > 4 ? txPerBlock : 4;
     it(`do ${noOfDeposit} deposit of value ${depositValue}`, () => {
       cy.get('#TokenItem_tokenDepositMATIC').click();
 
@@ -84,6 +86,7 @@ describe('End to End tests', () => {
         const totalBalance = Number($div.text());
         expect(totalBalance).to.equal(depositValue * noOfDeposit);
         currentTokenBalance = totalBalance;
+        txCount += noOfDeposit;
       });
     });
   });
@@ -111,6 +114,7 @@ describe('End to End tests', () => {
         const totalBalance = Number($div.text());
         expect(totalBalance).to.equal(currentTokenBalance - withdrawValue);
         currentTokenBalance = totalBalance;
+        txCount += 1;
       });
     });
   });
@@ -126,7 +130,7 @@ describe('End to End tests', () => {
      *   check1: before Block Proposed event
      *   check2: after Block Proposed event
      */
-    const recipientPkd = process.env.RECIPIENT_PKD;
+    const recipientPkd = process.env.RECIPIENT_PKD || '';
 
     it(`transfer token of value ${transferValue}`, () => {
       cy.get('#TokenItem_tokenSendMATIC').click();
@@ -146,14 +150,13 @@ describe('End to End tests', () => {
         const totalBalance = Number($div.text());
         expect(totalBalance).to.equal(currentTokenBalance - transferValue);
         currentTokenBalance = totalBalance;
+        txCount += 1;
       });
     });
 
     // check2
     // This case because recipient and sender both are same
-    // logged in user
-    // NOTE: when browser fixes it recipent logic to be different
-    // person, please skip below test
+    // NOTE: when browser fixes it recipent logic to be different person then please skip below test
     it(`recepient: check token balance`, () => {
       cy.wait(50000);
       cy.contains('L2 Bridge').click();
@@ -168,13 +171,11 @@ describe('End to End tests', () => {
 
   context('Double Transfer', () => {
     const transferValue = 6;
-    const retries = 3;
-    let retriesCount = 0;
 
     // hardcode 2 here is because it is double transfer
     // case is it always will pick sutiable commitments
     const commitmentValues = depositValue * 2;
-    // const returnValue = commitmentValues - transferValue;
+    const returnValue = commitmentValues - transferValue;
 
     /*
      * dummy pkd of user who does not exist
@@ -184,7 +185,7 @@ describe('End to End tests', () => {
      *   check1: before Block Proposed event
      *   check2: after Block Proposed event
      */
-    const recipientPkd = process.env.RECIPIENT_PKD;
+    const recipientPkd = process.env.RECIPIENT_PKD || '';
 
     it(`transfer token of value ${transferValue}`, () => {
       cy.get('#TokenItem_tokenSendMATIC').click();
@@ -203,48 +204,40 @@ describe('End to End tests', () => {
         const totalBalance = Number($div.text());
         expect(totalBalance).to.equal(currentTokenBalance - commitmentValues);
         currentTokenBalance = totalBalance;
+        txCount += 1;
       });
     });
 
-    const waitForBlockProposedEvent = async () => {
-      retriesCount++;
-      cy.wait(10000);
-      cy.contains('L2 Bridge').click();
-      cy.contains('Nightfall Assets').click();
-      cy.log(await cy.get('#TokenItem_tokenBalanceMATIC'));
-      if (retriesCount !== retries) waitForBlockProposedEvent();
-    };
+    const noOfDeposit = txCount > txPerBlock ? txCount % txPerBlock : txPerBlock - txCount;
+    it(`initiate deposit of value ${depositValue} to satisfy ${txPerBlock} tx per block`, () => {
+      if (!noOfDeposit) this.skip();
 
-    it('check', async () => {
-      waitForBlockProposedEvent();
+      cy.get('#TokenItem_tokenDepositMATIC').click();
+      cy.get('#Bridge_amountDetails_tokenAmount').type(depositValue);
+
+      for (let i = 0; i < noOfDeposit; i++) {
+        cy.get('button').contains('Transfer').click();
+        cy.get('button').contains('Create Transaction').click();
+        cy.get('#Bridge_modal_continueTransferButton').click();
+        cy.wait(30000);
+        cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
+        cy.wait(50000);
+        cy.get('.btn-close').click();
+        cy.contains('Nightfall Assets').click();
+      }
     });
 
-    // it(`initiate deposit of value ${depositValue} to satisfy 2 tx per block`, () => {
-    //   cy.get('#TokenItem_tokenDepositMATIC').click();
-    //   // cy.get('#Bridge_amountDetails_tokenAmount').clear().type(depositValue);
-    //   cy.get('#Bridge_amountDetails_tokenAmount').type(depositValue);
-    //   cy.get('button').contains('Transfer').click();
-    //   cy.get('button').contains('Create Transaction').click();
-    //   cy.get('#Bridge_modal_continueTransferButton').click();
-    //   cy.wait(30000);
-    //   cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
-    //   cy.wait(50000);
-    //   cy.get('.btn-close').click();
-    //   cy.contains('Nightfall Assets').click();
-    // });
-
-    // // check2
-    // // This case because recipient and sender both are same
-    // // logged in user
-    // it(`check token balance after transfer - after block proposed event`, () => {
-    //   cy.get('#TokenItem_tokenBalanceMATIC').should($div => {
-    //     const totalBalance = Number($div.text());
-    //     const returnCommitmentValue = depositValue * 2 - transferValue;
-    //     expect(totalBalance).to.equal(
-    //       currentTokenBalance + depositValue + transferValue + returnCommitmentValue,
-    //     );
-    //     currentTokenBalance = totalBalance;
-    //   });
-    // });
+    // check2
+    // This case because recipient and sender both are same
+    // logged in user
+    it(`check token balance after change return`, () => {
+      cy.get('#TokenItem_tokenBalanceMATIC').should($div => {
+        const totalBalance = Number($div.text());
+        expect(totalBalance).to.equal(
+          currentTokenBalance + depositValue * noOfDeposit + transferValue + returnValue,
+        );
+        currentTokenBalance = totalBalance;
+      });
+    });
   });
 });
