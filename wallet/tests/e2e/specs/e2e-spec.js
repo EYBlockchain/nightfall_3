@@ -13,6 +13,13 @@
 describe('End to End tests', () => {
   let currentTokenBalance = 0;
   const depositValue = 4;
+
+  // currently e2e browser test need to know transaction per block configuration
+  // because wallet websocket receive block proposed event silently
+  // and update the IndexDB
+  // check for balance and keep doing one transaction(for example deposit) to satisfy
+  // tx count per block will be impractical.
+  // reason is, it through blance change we doing assertion of logic
   const txPerBlock = Number(process.env.TRANSACTIONS_PER_BLOCK || 2);
   let txCount = 0;
 
@@ -204,7 +211,7 @@ describe('End to End tests', () => {
         const totalBalance = Number($div.text());
         expect(totalBalance).to.equal(currentTokenBalance - commitmentValues);
         currentTokenBalance = totalBalance;
-        txCount += 1;
+        txCount += 2;
       });
     });
 
@@ -242,6 +249,7 @@ describe('End to End tests', () => {
           currentTokenBalance + depositValue * noOfDeposit + transferValue + returnValue,
         );
         currentTokenBalance = totalBalance;
+        txCount += noOfDeposit;
       });
     });
   });
