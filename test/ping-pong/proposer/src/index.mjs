@@ -2,7 +2,7 @@
 Module that runs up as a proposer
 */
 import config from 'config';
-import logger from 'common-files/utils/logger.mjs';
+import logger from '../../../../common-files/utils/logger.mjs';
 import Nf3 from '../../../../cli/lib/nf3.mjs';
 import { app, setOptimistUrl } from './app.mjs';
 
@@ -22,8 +22,17 @@ async function startProposer() {
   await nf3.init(undefined, 'optimist');
   if (await nf3.healthcheck('optimist')) logger.info('Healthcheck passed');
   else throw new Error('Healthcheck failed');
-  await nf3.registerProposer(`${PROPOSER_URL}:${PROPOSER_PORT}`);
-  logger.debug('Proposer registration complete');
+  logger.info('Attempting to register proposer');
+  // let's see if the proposer has been registered before
+  const { proposers } = await nf3.getProposers();
+  // if not, let's register them
+  if (proposers.length === 0) {
+    await nf3.registerProposer();
+    logger.info('Proposer registration complete');
+  } else if (!proposers.map(p => p.thisAddress).includes(nf3.ethereumAddress)) {
+    await nf3.registerProposer();
+    logger.info('Proposer registration complete');
+  } else logger.warn('Proposer appears to be registerd already');
   if (PROPOSER_PORT !== '') {
     setOptimistUrl(optimistBaseUrl);
     app.listen(PROPOSER_PORT);

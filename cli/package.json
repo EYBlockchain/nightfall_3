@@ -23,7 +23,8 @@
     "inquirer": "^8.1.4",
     "web3": "^1.5.2",
     "ws": "^8.2.2",
-    "yargs": "^17.2.1"
+    "yargs": "^17.2.1",
+    "winston": "^3.6.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.15.7",

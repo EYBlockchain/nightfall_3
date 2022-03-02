@@ -70,7 +70,7 @@ router.post('/update', async (req, res, next) => {
  * Returns a list of the registered proposers
  */
 router.get('/proposers', async (req, res, next) => {
-  logger.debug(`list proposals endpoint received GET ${JSON.stringify(req.body, null, 2)}`);
+  logger.debug(`list proposals endpoint received GET`);
   try {
     const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
