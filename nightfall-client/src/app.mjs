@@ -25,7 +25,6 @@ app.use(cors());
 app.use(bodyParser.json({ limit: '2mb' }));
 app.use(bodyParser.urlencoded({ limit: '2mb', extended: true }));
 
-app.get('/healthcheck', (req, res) => res.sendStatus(200));
 app.use('/deposit', deposit);
 app.use('/contract-address', getContractAddress);
 app.use('/transfer', transfer);

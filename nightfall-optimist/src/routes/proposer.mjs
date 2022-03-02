@@ -47,7 +47,7 @@ router.post('/register', async (req, res, next) => {
  * Returns a list of the registered proposers
  */
 router.get('/proposers', async (req, res, next) => {
-  logger.debug(`list proposals endpoint received GET ${JSON.stringify(req.body, null, 2)}`);
+  logger.debug(`list proposals endpoint received GET`);
   try {
     const proposersContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
     // proposers is an on-chain mapping so to get proposers we need to key to start iterating

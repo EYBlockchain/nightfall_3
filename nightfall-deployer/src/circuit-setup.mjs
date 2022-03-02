@@ -23,14 +23,13 @@ async function waitForZokrates() {
   logger.info('checking for zokrates_worker');
   try {
     while (
-      // eslint-disable-next-line no-await-in-loop
       (await axios.get(`${config.PROTOCOL}${config.ZOKRATES_WORKER_HOST}/healthcheck`)).status !==
       200
     ) {
       logger.warn(
         `No response from zokratesworker yet.  That's ok. We'll wait three seconds and try again...`,
       );
-      // eslint-disable-next-line no-await-in-loop
+
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
   } catch (err) {
@@ -92,7 +91,7 @@ async function setupCircuits() {
         logger.info(
           `no existing verification key. Fear not, I will make a new one: calling generate keys on ${circuit}`,
         );
-        // eslint-disable-next-line no-await-in-loop
+
         const res2 = await axios.post(
           `${config.PROTOCOL}${config.ZOKRATES_WORKER_HOST}/generate-keys`,
           {

@@ -30,19 +30,21 @@ jobs:
         run: |
           docker build --no-cache	-t ghcr.io/eyblockchain/local-zokrates -f zokrates.Dockerfile .
           docker-compose build
-          ./start-nightfall -g &> ganache-test.log &disown
-
-      - name: wait 2000s for Containers startup and setup completion
-        run: sleep 2000
+          ./start-nightfall -g -d &> ganache-test.log &disown
 
       - name: debug logs - after container startup
         if: always()
         run: cat ganache-test.log
 
+      - name: wait 1200s for Containers startup and setup completion
+        run: sleep 1200
+
       - name: Run integration test
         run: |
           npm ci
-          npm test
+          docker wait nightfall_3_deployer_1
+          VERBOSE=true npm run test-e2e-protocol
+          VERBOSE=true npm run test-e2e-tokens
 
       - name: debug logs - after integration test run
         if: always()
@@ -59,7 +61,7 @@ jobs:
           name: ganache-test-logs
           path: ./ganache-test.log
 
-  wallet-test:
+  ping-pong-test:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@master
@@ -70,30 +72,43 @@ jobs:
       - name: Start Containers
         run: |
           docker build --no-cache	-t ghcr.io/eyblockchain/local-zokrates -f zokrates.Dockerfile .
+          cd test/ping-pong
           docker-compose build
-          ./start-nightfall -wt -s &
-
-      - name: wait 2500s for Containers startup and test completion
-        run: sleep 2500
-
-      - name: Retrieve Wallet test logs
-        run: docker logs $(docker ps -aqf "name=wallet-test") > wallet-test.log; cat wallet-test.log;
+          ./ganache-standalone -s
+          sleep 10
+          ./pong-nightfall -d -s &> ping-pong-test.log &disown
 
       - name: debug logs - after container startup
         if: always()
-        run: if [ -z "$(cat wallet-test.log | grep FAILED)" ]; then exit 0; else exit 1; fi
+        run: cat test/ping-pong/ping-pong-test.log
+
+      - name: wait 1200s for Containers startup and setup completion
+        run: sleep 1200
+
+      - name: Run ping-pong test
+        run: |
+          docker ps
+          docker wait ping-pong_deployer_1
+          cd test/ping-pong
+          ./pong-apps
+
+      - name: debug logs - after integration test run
+        if: always()
+        run: cat test/ping-pong/ping-pong-test.log
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
-        run: docker-compose -f docker-compose.yml -f docker-compose.ganache.yml -f docker-compose.wallet-test.yml down -v
+        run: |
+          cd test/ping-pong
+          ./pong-down -v
+          ./ganache-standalone -d
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
         uses: actions/upload-artifact@master
         with:
-          name: wallet-test-logs
-          path: ./wallet-test.log
-
+          name: ping-pong-test-logs
+          path: test/ping-pong/ping-pong-test.log
 
   test-gas:
     name: check gas for 32 transactions per block

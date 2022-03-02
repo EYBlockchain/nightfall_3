@@ -15,7 +15,11 @@ router.get('/:contract', async (req, res, next) => {
   try {
     const address = await getContractAddress(contract);
     logger.debug(`returning address ${address}`);
-    res.json({ address });
+    if (address) {
+      res.json({ address });
+    } else {
+      res.sendStatus(404);
+    }
   } catch (err) {
     logger.error(err);
     next(err);

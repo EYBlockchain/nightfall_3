@@ -31,6 +31,7 @@ const {
   SHIELD_CONTRACT_NAME,
   PROTOCOL,
   USE_STUBS,
+  ZERO,
 } = config;
 const { generalise, GN } = gen;
 
@@ -204,7 +205,7 @@ async function transfer(transferParams) {
     historicRootBlockNumberL2: blockNumberL2s,
     transactionType,
     publicInputs,
-    ercAddress,
+    ercAddress: ZERO, // we don't want to expose the ERC address during a transfer
     commitments: newCommitments,
     nullifiers,
     compressedSecrets,

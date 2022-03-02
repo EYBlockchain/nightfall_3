@@ -47,22 +47,18 @@ const syncState = async (
     const pastEvent = splicedList[i];
     switch (pastEvent.event) {
       case 'NewCurrentProposer':
-        // eslint-disable-next-line no-await-in-loop
         await newCurrentProposerEventHandler(pastEvent, [proposer]);
         break;
       case 'Rollback':
         await rollbackEventHandler(pastEvent);
         break;
       case 'BlockProposed':
-        // eslint-disable-next-line no-await-in-loop
         await blockProposedEventHandler(pastEvent);
         break;
       case 'CommittedToChallenge':
-        // eslint-disable-next-line no-await-in-loop
         await committedToChallengeEventHandler(pastEvent);
         break;
       case 'TransactionSubmitted':
-        // eslint-disable-next-line no-await-in-loop
         await transactionSubmittedEventHandler(pastEvent);
         break;
       default:
@@ -118,7 +114,7 @@ export default async proposer => {
     for (let i = 0; i < missingBlocks.length; i++) {
       const [fromBlock, toBlock] = missingBlocks[i];
       // Sync the state inbetween these blocks
-      // eslint-disable-next-line no-await-in-loop
+
       await syncState(proposer, fromBlock, toBlock);
     }
     await startMakingChallenges();

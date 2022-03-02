@@ -96,6 +96,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+      - name: Add secret environment variables
+        run: |
+          echo "ETH_PRIVATE_KEY=${{ secrets.ETH_PRIVATE_KEY }}" >> deployment-scripts/dev.env
+          echo "PROPOSER_ETHEREUM_SIGNING_KEY=${{ secrets.PROPOSER_ETHEREUM_SIGNING_KEY }}" >> deployment-scripts/dev.env
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh/

@@ -4,7 +4,6 @@
   "description": "'makes a container with proposer functionality'",
   "main": "index.js",
   "scripts": {
-    "prestart": "./pre-start-script.sh",
     "start": "node --trace-warnings src/index.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

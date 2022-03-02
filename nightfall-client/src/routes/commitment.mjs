@@ -10,7 +10,6 @@ import {
   getWalletBalanceUnfiltered,
   getWalletCommitments,
   getWithdrawCommitments,
-  getWalletBalanceDetails,
   getWalletPendingDepositBalance,
   getWalletPendingSpentBalance,
 } from '../services/commitment-storage.mjs';
@@ -39,18 +38,6 @@ router.get('/balance', async (req, res, next) => {
     let balance;
     if (compressedPkd) balance = await getWalletBalance(compressedPkd, ercList);
     else balance = await getWalletBalanceUnfiltered(compressedPkd, ercList);
-    res.json({ balance });
-  } catch (err) {
-    logger.error(err);
-    next(err);
-  }
-});
-
-router.get('/balance-details', async (req, res, next) => {
-  logger.debug('commitment/balance details endpoint received GET');
-  try {
-    const { compressedPkd, ercList } = req.query;
-    const balance = await getWalletBalanceDetails(compressedPkd, ercList);
     res.json({ balance });
   } catch (err) {
     logger.error(err);

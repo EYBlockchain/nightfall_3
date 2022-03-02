@@ -4,8 +4,8 @@ Module that runs up as a user
 
 /* eslint-disable no-await-in-loop */
 
-import logger from 'common-files/utils/logger.mjs';
 import config from 'config';
+import logger from '../../../../common-files/utils/logger.mjs';
 import Nf3 from '../../../../cli/lib/nf3.mjs';
 import { waitForSufficientBalance, retrieveL2Balance } from './utils.mjs';
 
@@ -19,7 +19,7 @@ const {
   TRANSACTIONS_PER_BLOCK,
 } = config;
 
-const { TEST_LENGTH, ERC20_NAME, TX_WAIT = 10000 } = process.env;
+const { TEST_LENGTH, ERC20_NAME, TX_WAIT = 1000, IS_TEST_RUNNER = '' } = process.env;
 const recipientPkd = process.env.RECIPIENT_PKD; // .split(',');
 
 /**
@@ -31,7 +31,8 @@ async function localTest() {
   const tokenType = 'ERC20';
   const value = 1;
   const tokenId = '0x0000000000000000000000000000000000000000000000000000000000000000';
-  const nf3 = new Nf3(web3WsUrl, userEthereumSigningKey, {
+  const nf3 = new Nf3(userEthereumSigningKey, {
+    web3WsUrl,
     clientApiUrl: clientBaseUrl,
     optimistApiUrl: optimistBaseUrl,
     optimistWsUrl,
@@ -75,24 +76,27 @@ async function localTest() {
   // Wait for sometime at the end to retrieve balance to include any transactions sent by the other use
   // This needs to be much longer than we may have waited for a transfer
   let loop = 0;
+  let loopMax = 10000;
+  if (IS_TEST_RUNNER) loopMax = 10; // the TEST_RUNNER must finish first so that its exit status is returned to the tester
   do {
     const endBalance = await retrieveL2Balance(nf3);
-    if (endBalance - startBalance === 2 * value + value * TEST_LENGTH) {
+    if (endBalance - startBalance === 2 * value + value * TEST_LENGTH && IS_TEST_RUNNER) {
       logger.info('Test passed');
       logger.info('Balance of User (2*value (2*1) + value received) ', endBalance - startBalance);
       logger.info('Amount sent to other User', value * TEST_LENGTH);
       nf3.close();
-      break;
+      process.exit(0);
     } else {
       logger.info(
-        'The test has not yet passed because the L2 balance has not increased - waiting',
+        'The test has not yet passed because the L2 balance has not increased, or I am not the test runner - waiting',
         endBalance - startBalance,
         2 * value + value * TEST_LENGTH,
       );
       await new Promise(resolving => setTimeout(resolving, 20 * TX_WAIT)); // TODO get balance waiting working well
       loop++;
     }
-  } while (loop < 10);
+  } while (loop < loopMax);
+  process.exit(1);
 }
 
 localTest();
