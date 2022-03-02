@@ -9,15 +9,19 @@ import 'bootstrap-social/bootstrap-social.css';
 import './index.css';
 import './views/app.style.css';
 
-import App from './views/app.view.jsx';
 import reportWebVitals from './reportWebVitals';
+import generateWebComponents from './utils/generateWebComponents';
 
-ReactDOM.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-  document.getElementById('root'),
-);
+// ReactDOM.render(
+//   <React.StrictMode>
+//     <App />
+//   </React.StrictMode>,
+//   document.getElementById('root'),
+// );
+
+generateWebComponents();
+const el = document.createElement('nightfall-app')
+document.body.appendChild(el)
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

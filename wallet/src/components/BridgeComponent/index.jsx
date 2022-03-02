@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import Modal from 'react-bootstrap/Modal';
 import Dropdown from 'react-bootstrap/Dropdown';
 import DropdownButton from 'react-bootstrap/DropdownButton';
@@ -20,9 +20,11 @@ import approveImg from '../../assets/img/modalImages/adeposit_approve1.png';
 import depositConfirmed from '../../assets/img/modalImages/adeposit_confirmed.png';
 import successHand from '../../assets/img/modalImages/success-hand.png';
 import transferCompletedImg from '../../assets/img/modalImages/tranferCompleted.png';
+import { UserContext } from '../../hooks/User';
 
-const BridgeComponent = (props: any) => {
-  const [state] = useState(() => props[Object.keys(props)[1].toString()].value);
+const BridgeComponent = (props) => {
+  // const [state] = useState(() => props[Object.keys(props)[1].toString()].value);
+  const [state] = useContext(UserContext);
 
   const [transferMethod, setMethod] = useState('On-Chain');
 
@@ -44,7 +46,7 @@ const BridgeComponent = (props: any) => {
   const [showModalTransferEnRoute, setShowModalTransferEnRoute] = useState(false);
   const [showModalTransferConfirmed, setShowModalTransferConfirmed] = useState(false);
 
-  function timeout(ms: number) {
+  function timeout(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 

@@ -1,0 +1,13 @@
+.bridge-wrapper {
+  position: absolute;
+  width: 512px;
+  height: 672px;
+  left: 408px;
+  top: 100px;
+
+  background: rgba(255, 255, 255, 0.24);
+  backdrop-filter: blur(16px);
+  /* Note: backdrop-filter has minimal browser support */
+
+  border-radius: 20px;
+}

@@ -7,6 +7,7 @@ import Header from '../../components/Header/header.jsx';
 import SideBar from '../../components/SideBar/index.jsx';
 // eslint-disable-next-line import/no-unresolved
 import { UserContext } from '../../hooks/User/index.jsx';
+import BridgeComponent from '../../components/BridgeComponent/index.jsx';
 
 const Bridge = () => {
   const [state] = useContext(UserContext);
@@ -80,7 +81,8 @@ const Bridge = () => {
                 </div>
               </div>
               <div>
-                <bridge-component value={state} />
+              
+                <BridgeComponent value={state} />
               </div>
             </div>
           </div>
