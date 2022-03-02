@@ -4,6 +4,7 @@ import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
 import Nf3 from '../../../cli/lib/nf3.mjs';
+import logger from '../../../common-files/utils/logger.mjs';
 import { Web3Client, expectTransaction } from '../../utils.mjs';
 
 // so we can use require with mjs file
@@ -35,12 +36,9 @@ describe('Basic Proposer tests', () => {
     // Proposer listening for incoming events
     const newGasBlockEmitter = await testProposers[0].startProposer();
     newGasBlockEmitter.on('gascost', async gasUsed => {
-      if (process.env.VERBOSE)
-        console.log(
-          `Block proposal gas cost was ${gasUsed}, cost per transaction was ${
-            gasUsed / txPerBlock
-          }`,
-        );
+      logger.debug(
+        `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
+      );
     });
     await testProposers[0].addPeer(environment.optimistApiUrl);
   });
