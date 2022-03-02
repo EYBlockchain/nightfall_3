@@ -25,7 +25,7 @@ export function setBlockAssembledWebSocketConnection(_ws) {
   ws = _ws;
 }
 
-async function makeBlock(proposer, unprocessed, number = TRANSACTIONS_PER_BLOCK) {
+async function makeBlock(proposer, unprocessed) {
   logger.debug('Block Assembler - about to make a new block');
   // we retrieve un-processed transactions from our local database, relying on
   // the transaction service to keep the database current
@@ -37,8 +37,11 @@ async function makeBlock(proposer, unprocessed, number = TRANSACTIONS_PER_BLOCK)
 
   // then we make new block objects until we run out of unprocessed
   // transactions
-  for (let i = 0; i < unprocessedTransactions.length / number; i++) {
-    const transactions = unprocessedTransactions.slice(i * number, i * number + number);
+  for (let i = 0; i < Math.floor(unprocessedTransactions.length / TRANSACTIONS_PER_BLOCK); i++) {
+    const transactions = unprocessedTransactions.slice(
+      i * TRANSACTIONS_PER_BLOCK,
+      (i + 1) * TRANSACTIONS_PER_BLOCK,
+    );
     const { block, updatedTimber } = Block.build({
       proposer,
       transactions,

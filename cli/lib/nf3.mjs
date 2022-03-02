@@ -675,7 +675,7 @@ class Nf3 {
       const { type, txDataToSignList } = msg;
       logger.debug(`Proposer received websocket message of type ${type}`);
       if (type === 'block') {
-        if (process.env.VERBOSE) console.log(`Found ${txDataToSignList.length} blocks to process`);
+        logger.debug(`Found ${txDataToSignList.length} blocks to process`);
         const submitTxList = [];
         // Send all transactions at once
         for (let i = 0; i < txDataToSignList.length; i++) {
