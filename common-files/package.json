@@ -8,6 +8,7 @@
   "license": "ISC",
   "description": "nightfall_3 common files",
   "dependencies": {
+    "aws-sdk": "^2.1084.0",
     "config": "^3.3.7",
     "winston": "^3.6.0"
   }
