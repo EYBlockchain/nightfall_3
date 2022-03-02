@@ -48,13 +48,13 @@ class Nf3 {
 
   zkpKeys;
 
+  txsNotConfirmed = 0;
+
   defaultFee = DEFAULT_FEE;
 
   PROPOSER_BOND = DEFAULT_PROPOSER_BOND;
 
   BLOCK_STAKE = DEFAULT_BLOCK_STAKE;
-
-  nonce = 0;
 
   nonceMutex = new Mutex();
 
@@ -130,8 +130,6 @@ class Nf3 {
   async setEthereumSigningKey(key) {
     this.ethereumSigningKey = key;
     this.ethereumAddress = await this.getAccounts();
-    // clear the nonce as we're using a fresh account
-    this.nonce = 0;
   }
 
   /**
@@ -195,9 +193,10 @@ class Nf3 {
     // we need a Mutex so that we don't get a nonce-updating race.
 
     let tx;
+    let nonce;
     await this.nonceMutex.runExclusive(async () => {
-      this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
-
+      nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
+      nonce += this.txsNotConfirmed; // we need to add the number of transactions not confirmed yet
       let gasPrice = 20000000000;
       const gas = (await this.web3.eth.getBlock('latest')).gasLimit;
       const blockGasPrice = 2 * Number(await this.web3.eth.getGasPrice());
@@ -210,9 +209,9 @@ class Nf3 {
         value: fee,
         gas,
         gasPrice,
-        nonce: this.nonce,
+        nonce,
       };
-      this.nonce++;
+      this.txsNotConfirmed++;
     });
 
     if (this.ethereumSigningKey) {
@@ -236,10 +235,12 @@ class Nf3 {
             }
           })
           .on('error', err => {
+            this.txsNotConfirmed--;
             reject(err);
           });
       });
     }
+    this.txsNotConfirmed--;
     // TODO add wait for confirmations to the wallet functionality
     return this.web3.eth.sendTransaction(tx);
   }
@@ -675,14 +676,25 @@ class Nf3 {
       logger.debug(`Proposer received websocket message of type ${type}`);
       if (type === 'block') {
         if (process.env.VERBOSE) console.log(`Found ${txDataToSignList.length} blocks to process`);
+        const submitTxList = [];
+        // Send all transactions at once
         for (let i = 0; i < txDataToSignList.length; i++) {
-          // eslint-disable-next-line no-await-in-loop
-          const res = await this.submitTransaction(
+          const submitTx = this.submitTransaction(
             txDataToSignList[i],
             this.stateContractAddress,
             this.BLOCK_STAKE,
           );
-          newGasBlockEmitter.emit('gascost', res.gasUsed);
+          submitTxList.push(submitTx);
+        }
+
+        try {
+          // wait for all tx to be confirmed (12 confirmations)
+          const resultSubmitTxs = await Promise.all(submitTxList);
+          // emit all events for all the tx about gascost
+          resultSubmitTxs.map(res => newGasBlockEmitter.emit('gascost', res.gasUsed));
+        } catch (error) {
+          console.log(error);
+          throw new Error(error);
         }
       }
     };
