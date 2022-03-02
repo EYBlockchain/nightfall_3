@@ -58,7 +58,7 @@ describe('End to End tests', () => {
       cy.get('#TokenItem_tokenDepositMATIC').click();
       cy.get('#Bridge_amountDetails_tokenAmount').type(depositValue);
 
-      for(let i = 0; i < noOfDeposit; i++) {
+      for (let i = 0; i < noOfDeposit; i++) {
         cy.get('button').contains('Transfer').click();
         cy.get('button').contains('Create Transaction').click();
         cy.get('#Bridge_modal_continueTransferButton').click();
