@@ -134,8 +134,6 @@ describe('End to End tests', () => {
      * Note: even though we are passing recipientPkd but in code
      *   it gets override by sender's pdk for now
      *   hence two check
-     *   check1: before Block Proposed event
-     *   check2: after Block Proposed event
      */
     const recipientPkd = process.env.RECIPIENT_PKD || ' ';
 
@@ -189,8 +187,6 @@ describe('End to End tests', () => {
      * Note: even though we are passing recipientPkd but in code
      *   it gets override by sender's pdk for now
      *   hence two check
-     *   check1: before Block Proposed event
-     *   check2: after Block Proposed event
      */
     const recipientPkd = process.env.RECIPIENT_PKD || ' ';
 
@@ -218,11 +214,7 @@ describe('End to End tests', () => {
     let noOfDeposit = 0;
     it(`do some deposit of value ${depositValue} to satisfy ${txPerBlock} tx per block`, () => {
       noOfDeposit = txCount > txPerBlock ? txCount % txPerBlock : txPerBlock - txCount;
-      cy.log(noOfDeposit);
-      cy.log(txCount);
-      cy.log(txCount % txPerBlock);
-      cy.log(txPerBlock - txCount);
-      if (!noOfDeposit) this.skip();
+      if (!noOfDeposit) return;
 
       cy.get('#TokenItem_tokenDepositMATIC').click();
       cy.get('#Bridge_amountDetails_tokenAmount').type(depositValue);
@@ -240,7 +232,8 @@ describe('End to End tests', () => {
     });
 
     // check2
-    // This case because recipient and sender both are same
+    // in case because recipient and sender both are same
+    // avoid transferValue from assertion
     // logged in user
     it(`check token balance after change return`, () => {
       cy.get('#TokenItem_tokenBalanceMATIC').should($div => {
