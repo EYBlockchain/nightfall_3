@@ -32,7 +32,7 @@ async function startProposer() {
   } else if (!proposers.map(p => p.thisAddress).includes(nf3.ethereumAddress)) {
     await nf3.registerProposer();
     logger.info('Proposer registration complete');
-  } else logger.warn('Proposer appears to be registerd already');
+  } else logger.warn('Proposer appears to be registered already');
   if (PROPOSER_PORT !== '') {
     logger.debug('Proposer healthcheck up');
     app.listen(PROPOSER_PORT);
