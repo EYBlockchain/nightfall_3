@@ -53,60 +53,39 @@ describe('End to End tests', () => {
   });
 
   context('Deposit', () => {
-    it(`initial deposit of value ${depositValue}`, () => {
+    /*
+     * four depsoits, i.e four commitments for value 4
+     * 1st commitment will use withdraw
+     * 2nd for single transfer
+     * 3rd and 4th for double trransfer
+     */
+    const noOfDeposit = 4;
+    it(`do ${noOfDeposit} deposit of value ${depositValue}`, () => {
       cy.get('#TokenItem_tokenDepositMATIC').click();
-      // cy.get('#Bridge_amountDetails_tokenAmount').clear().type(depositValue);
       cy.get('#Bridge_amountDetails_tokenAmount').type(depositValue);
-      cy.get('button').contains('Transfer').click();
-      cy.get('button').contains('Create Transaction').click();
-      cy.get('#Bridge_modal_continueTransferButton').click();
-      cy.wait(20000);
-      cy.confirmMetamaskPermissionToSpend().then(approved => expect(approved).to.be.true);
-      cy.wait(30000);
-      cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
-      cy.wait(50000);
-      cy.get('.btn-close').click();
-    });
 
-    it(`second deposit of value ${depositValue}`, () => {
-      // cy.get('#Bridge_amountDetails_tokenAmount').clear().type(depositValue);
-      cy.get('button').contains('Transfer').click();
-      cy.get('button').contains('Create Transaction').click();
-      cy.get('#Bridge_modal_continueTransferButton').click();
-      cy.wait(30000);
-      cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
-      cy.wait(50000);
-      cy.get('.btn-close').click();
-    });
-
-    it(`third deposit of value ${depositValue}`, () => {
-      // cy.get('#Bridge_amountDetails_tokenAmount').clear().type(depositValue);
-      cy.get('button').contains('Transfer').click();
-      cy.get('button').contains('Create Transaction').click();
-      cy.get('#Bridge_modal_continueTransferButton').click();
-      cy.wait(30000);
-      cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
-      cy.wait(50000);
-      cy.get('.btn-close').click();
-    });
-
-    it(`fourth deposit of value ${depositValue}`, () => {
-      // cy.get('#Bridge_amountDetails_tokenAmount').clear().type(depositValue);
-      cy.get('button').contains('Transfer').click();
-      cy.get('button').contains('Create Transaction').click();
-      cy.get('#Bridge_modal_continueTransferButton').click();
-      cy.wait(30000);
-      cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
-      cy.wait(50000);
-      cy.get('.btn-close').click();
+      for (let i = 0; i < noOfDeposit; i++) {
+        cy.get('button').contains('Transfer').click();
+        cy.get('button').contains('Create Transaction').click();
+        cy.get('#Bridge_modal_continueTransferButton').click();
+        cy.wait(30000);
+        if (i === 0) {
+          // for first depsoit we need approve ERC20
+          cy.confirmMetamaskPermissionToSpend().then(approved => expect(approved).to.be.true);
+          cy.wait(30000);
+        }
+        cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
+        cy.wait(50000);
+        cy.get('.btn-close').click();
+      }
       cy.contains('Nightfall Assets').click();
       cy.wait(20000);
     });
 
-    it(`check token balance equal to ${depositValue * 4}`, () => {
+    it(`check token balance equal to ${depositValue * noOfDeposit}`, () => {
       cy.get('#TokenItem_tokenBalanceMATIC').should($div => {
         const totalBalance = Number($div.text());
-        expect(totalBalance).to.equal(depositValue * 4);
+        expect(totalBalance).to.equal(depositValue * noOfDeposit);
         currentTokenBalance = totalBalance;
       });
     });
