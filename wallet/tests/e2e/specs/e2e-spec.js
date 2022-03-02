@@ -8,7 +8,7 @@
  *  3. In different terminal in wallet/ dir, run `npm run e2e-test`
  */
 
- // Note: for now test will work with env variable RECIPIENT_PKD undefined
+// Note: for now test will work with env variable RECIPIENT_PKD undefined
 
 describe('End to End tests', () => {
   let currentTokenBalance = 0;
@@ -174,7 +174,7 @@ describe('End to End tests', () => {
     // hardcode 2 here is because it is double transfer
     // case is it always will pick sutiable commitments
     const commitmentValues = depositValue * 2;
-    const returnValue = commitmentValues - transferValue;
+    // const returnValue = commitmentValues - transferValue;
 
     /*
      * dummy pkd of user who does not exist
@@ -212,9 +212,8 @@ describe('End to End tests', () => {
       cy.contains('L2 Bridge').click();
       cy.contains('Nightfall Assets').click();
       cy.log(await cy.get('#TokenItem_tokenBalanceMATIC'));
-      if (retriesCount !== retries)
-        waitForBlockProposedEvent();
-    }
+      if (retriesCount !== retries) waitForBlockProposedEvent();
+    };
 
     it('check', async () => {
       waitForBlockProposedEvent();
