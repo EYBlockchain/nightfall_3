@@ -677,12 +677,14 @@ class Nf3 {
       if (type === 'block') {
         logger.debug(`Found ${txDataToSignList.length} blocks to process`);
 
-        txDataToSignList.reduce((submitTx, txDataToSign) => {
-          return this.submitTransaction(
-            txDataToSign,
-            this.stateContractAddress,
-            this.BLOCK_STAKE,
-          ).then(res => newGasBlockEmitter.emit('gascost', res.gasUsed));
+        txDataToSignList.reduce((seq, txDataToSign) => {
+          return seq.then(() => {
+            return this.submitTransaction(
+              txDataToSign,
+              this.stateContractAddress,
+              this.BLOCK_STAKE,
+            ).then(res => newGasBlockEmitter.emit('gascost', res.gasUsed));
+          });
         }, Promise.resolve());
       }
     };
