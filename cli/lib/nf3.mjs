@@ -565,6 +565,7 @@ class Nf3 {
       address: this.ethereumAddress,
       url,
     });
+    logger.debug(`Proposer Registered with address ${this.ethereumAddress} and URL ${url}`);
     return this.submitTransaction(
       res.data.txDataToSign,
       this.proposersContractAddress,

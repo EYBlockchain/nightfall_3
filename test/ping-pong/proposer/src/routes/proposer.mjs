@@ -5,6 +5,7 @@ module but handle the entire request here.
 */
 import express from 'express';
 import axios from 'axios';
+import logger from '../../../../../common-files/utils/logger.mjs';
 
 let optimistUrl = '';
 const router = express.Router();
@@ -15,7 +16,7 @@ router.post('/offchain-transaction', async req => {
   const { transaction } = req.body;
 
   if (!transaction) return;
-  console.log(`offchain transaction - calling ${optimistUrl}/proposer/offchain-transaction`);
+  logger.debug(`offchain transaction - calling ${optimistUrl}/proposer/offchain-transaction`);
   await axios
     .post(`${optimistUrl}/proposer/offchain-transaction`, { transaction }, { timeout: 3600000 })
     .catch(err => {
@@ -24,7 +25,7 @@ router.post('/offchain-transaction', async req => {
 });
 
 function setOptimistUrl(url) {
-  console.log(`Optimist URL: ${url}`);
+  logger.debug(`Optimist URL: ${url}`);
   optimistUrl = url;
 }
 

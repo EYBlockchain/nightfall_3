@@ -224,7 +224,7 @@ async function transfer(transferParams) {
     if (offchain) {
       // dig up connection peers
       const peerList = await getProposers(NEXT_N_PROPOSERS);
-      logger.debug(`Peer List: ${peerList}`);
+      logger.debug(`Peer List: ${JSON.stringify(peerList, null, 2)}`);
       Object.keys(peerList).forEach(async address => {
         logger.debug(
           `offchain transaction - calling ${peerList[address]}/proposer/offchain-transaction`,

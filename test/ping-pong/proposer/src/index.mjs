@@ -25,12 +25,13 @@ async function startProposer() {
   logger.info('Attempting to register proposer');
   // let's see if the proposer has been registered before
   const { proposers } = await nf3.getProposers();
+  const proposerUrl = PROPOSER_PORT !== '' ? `${PROPOSER_URL}:${PROPOSER_PORT}` : '';
   // if not, let's register them
   if (proposers.length === 0) {
-    await nf3.registerProposer();
+    await nf3.registerProposer(proposerUrl);
     logger.info('Proposer registration complete');
   } else if (!proposers.map(p => p.thisAddress).includes(nf3.ethereumAddress)) {
-    await nf3.registerProposer();
+    await nf3.registerProposer(proposerUrl);
     logger.info('Proposer registration complete');
   } else logger.warn('Proposer appears to be registerd already');
   if (PROPOSER_PORT !== '') {
