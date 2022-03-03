@@ -447,7 +447,7 @@ describe('ERC20 tests', () => {
         );
 
         newAmount = Math.ceil(
-          Math.random() * (defaultERC20restriction - transferValue) + transferValue,
+          Math.random() * (defaultERC20restriction.amount - transferValue) + transferValue,
         );
       });
 
@@ -469,17 +469,6 @@ describe('ERC20 tests', () => {
             message.includes('Transaction has been reverted by the EVM'),
           );
         }
-
-        // and everything below should pass
-        await depositNTransactions(
-          nf3Users[0],
-          txPerBlock,
-          erc20Address,
-          tokenType,
-          newAmount - 1,
-          tokenId,
-          fee,
-        );
       });
 
       it('should restrict withdrawals', async () => {
