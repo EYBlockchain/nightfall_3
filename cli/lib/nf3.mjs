@@ -676,26 +676,14 @@ class Nf3 {
       logger.debug(`Proposer received websocket message of type ${type}`);
       if (type === 'block') {
         logger.debug(`Found ${txDataToSignList.length} blocks to process`);
-        const submitTxList = [];
-        // Send all transactions at once
-        for (let i = 0; i < txDataToSignList.length; i++) {
-          const submitTx = this.submitTransaction(
-            txDataToSignList[i],
+
+        txDataToSignList.reduce((submitTx, txDataToSign) => {
+          return this.submitTransaction(
+            txDataToSign,
             this.stateContractAddress,
             this.BLOCK_STAKE,
-          );
-          submitTxList.push(submitTx);
-        }
-
-        try {
-          // wait for all tx to be confirmed (12 confirmations)
-          const resultSubmitTxs = await Promise.all(submitTxList);
-          // emit all events for all the tx about gascost
-          resultSubmitTxs.map(res => newGasBlockEmitter.emit('gascost', res.gasUsed));
-        } catch (error) {
-          console.log(error);
-          throw new Error(error);
-        }
+          ).then(res => newGasBlockEmitter.emit('gascost', res.gasUsed));
+        }, Promise.resolve());
       }
     };
     connection.onerror = () => logger.error('websocket connection error');
