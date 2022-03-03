@@ -10,6 +10,14 @@
 
 // Note: for now test will work with env variable RECIPIENT_PKD undefined
 
+// for the case txPerBlock < noOfTx
+function toAccommodateTx(txPerBlock, noOfTx) {
+  let i = 2;
+  if (txPerBlock > noOfTx) return txPerBlock;
+  while (txPerBlock * i < noOfTx) i++;
+  return txPerBlock * i;
+}
+
 describe('End to End tests', () => {
   let currentTokenBalance = 0;
   const depositValue = 4;
@@ -20,7 +28,7 @@ describe('End to End tests', () => {
   // check for balance and keep doing one transaction(for example deposit) to satisfy
   // tx count per block will be impractical.
   // reason is, it through blance change we doing assertion of logic
-  const txPerBlock = Number(process.env.TRANSACTIONS_PER_BLOCK || 2);
+  const txPerBlock = Number(Cypress.env('TRANSACTIONS_PER_BLOCK') || 2);
   let txCount = 0;
 
   beforeEach(() => {
@@ -60,7 +68,10 @@ describe('End to End tests', () => {
      * 2nd for single transfer
      * 3rd and 4th for double trransfer
      */
-    const noOfDeposit = txPerBlock > 4 ? txPerBlock : 4;
+
+    let noOfDeposit = 4;
+    // for now in nightfall browser deposit balance reflect only after receiving block proposed event
+    noOfDeposit = txPerBlock > noOfDeposit ? txPerBlock : toAccommodateTx(txPerBlock, noOfDeposit);
     it(`do ${noOfDeposit} deposit of value ${depositValue}`, () => {
       cy.get('#TokenItem_tokenDepositMATIC').click();
 
@@ -135,7 +146,7 @@ describe('End to End tests', () => {
      *   it gets override by sender's pdk for now
      *   hence two check
      */
-    const recipientPkd = process.env.RECIPIENT_PKD || ' ';
+    const recipientPkd = Cypress.env('RECIPIENT_PKD') || ' ';
 
     it(`transfer token of value ${transferValue}`, () => {
       cy.get('#TokenItem_tokenSendMATIC').click();
@@ -186,7 +197,7 @@ describe('End to End tests', () => {
      *   it gets override by sender's pdk for now
      *   hence two check
      */
-    const recipientPkd = process.env.RECIPIENT_PKD || ' ';
+    const recipientPkd = Cypress.env('RECIPIENT_PKD') || ' ';
 
     it(`transfer token of value ${transferValue}`, () => {
       cy.get('#TokenItem_tokenSendMATIC').click();
@@ -212,7 +223,10 @@ describe('End to End tests', () => {
     let noOfDeposit = 0;
     it(`do some deposit of value ${depositValue} to satisfy ${txPerBlock} tx per block`, () => {
       noOfDeposit = txCount > txPerBlock ? txCount % txPerBlock : txPerBlock - txCount;
-      if (!noOfDeposit) return;
+      if (!noOfDeposit) {
+        cy.log('Skipping this block');
+        return;
+      }
 
       cy.get('#TokenItem_tokenDepositMATIC').click();
       cy.get('#Bridge_amountDetails_tokenAmount').type(depositValue);
