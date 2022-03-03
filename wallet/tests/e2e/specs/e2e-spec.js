@@ -216,7 +216,7 @@ describe('End to End tests', () => {
         const totalBalance = Number($div.text());
         expect(totalBalance).to.equal(currentTokenBalance - commitmentValues);
         currentTokenBalance = totalBalance;
-        txCount += 1;
+        txCount += 2;
       });
     });
 
