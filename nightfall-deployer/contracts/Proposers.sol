@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: CC0
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 /*
 Contract to manage the creation and managment of Proposals
 */
@@ -10,9 +12,11 @@ import './Structures.sol';
 import './Stateful.sol';
 
 contract Proposers is Stateful, Structures, Config {
-  // mapping(address => TimeLockedBond) public bondAccounts;
   mapping(address => string) public proposerUrl;
 
+  function initialize() override public initializer {
+    Stateful.initialize();
+  }
   /**
   * Each proposer gets a chance to propose blocks for a certain time, defined
   * in Ethereum blocks.  After a certain number of blocks has passed, the
@@ -30,10 +34,16 @@ contract Proposers is Stateful, Structures, Config {
 
 
   //add the proposer to the circular linked list
+<<<<<<< HEAD
   function registerProposer(string memory url) external payable {
+=======
+  function registerProposer() external payable nonReentrant {
+>>>>>>> master
     require(REGISTRATION_BOND <= msg.value, 'The registration payment is incorrect');
     require(state.getProposer(msg.sender).thisAddress == address(0), 'This proposer is already registered');
-    payable(address(state)).transfer(REGISTRATION_BOND);
+    // send the bond to the state contract
+    (bool success, ) = payable(address(state)).call{ value: REGISTRATION_BOND }("");
+    require(success, "Transfer failed.");
     state.setBondAccount(msg.sender,REGISTRATION_BOND);
     proposerUrl[msg.sender] = url;
     LinkedAddress memory currentProposer = state.getCurrentProposer();

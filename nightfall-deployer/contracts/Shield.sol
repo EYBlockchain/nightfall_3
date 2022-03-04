@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
-
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 /**
 Contract to enable someone to submit a ZKP transaction for processing.
 It is possible we will move this off-chain in the future as blockchain
@@ -17,14 +18,19 @@ import './Structures.sol';
 import './Config.sol';
 import './Stateful.sol';
 
-contract Shield is Stateful, Structures, Config, Key_Registry {
+contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUpgradeable {
 
   mapping(bytes32 => bool) public withdrawn;
   mapping(bytes32 => uint) public feeBook;
   mapping(bytes32 => address) public advancedWithdrawals;
   mapping(bytes32 => uint) public advancedFeeWithdrawals;
 
-  function submitTransaction(Transaction memory t) external payable {
+  function initialize() override(Stateful, Key_Registry) public initializer {
+    Stateful.initialize();
+    Key_Registry.initialize();
+  }
+
+  function submitTransaction(Transaction memory t) external payable nonReentrant {
     // let everyone know what you did
     emit TransactionSubmitted();
     // if this is a deposit transaction, take payment now (TODO: is there a
@@ -36,7 +42,8 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
     // slow down or stop our transaction)
     bytes32 transactionHash = Utils.hashTransaction(t);
     if (feeBook[transactionHash] < msg.value) feeBook[transactionHash] = msg.value;
-    payable(address(state)).transfer(msg.value);
+    (bool success, ) = payable(address(state)).call{ value: msg.value }("");
+    require(success, "Transfer failed.");
   }
 
   // function to enable a proposer to get paid for proposing a block
@@ -74,17 +81,17 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
   @param ts - array of the transactions contained in the block
   @param index - the index of the transaction that locates it in the array of Transactions in Block b
   */
-  function isValidWithdrawal(Block memory b, uint blockNumberL2, Transaction[] memory ts, uint index) view external returns(bool) {    
+  function isValidWithdrawal(Block memory b, uint blockNumberL2, Transaction[] memory ts, uint index) view external returns(bool) {
     // check this block is a real one, in the queue, not something made up.
     state.isBlockReal(b, ts, blockNumberL2);
     // check that the block has been finalised
     uint time = state.getBlockData(blockNumberL2).time;
     require(time + COOLING_OFF_PERIOD < block.timestamp, 'It is too soon to withdraw funds from this block');
-    
+
     bytes32 transactionHash = Utils.hashTransaction(ts[index]);
     require(!withdrawn[transactionHash], 'This transaction has already paid out');
     require(ts[index].transactionType == TransactionTypes.WITHDRAW, 'This transaction is not a valid WITHDRAW');
-   
+
     return true;
   }
 
@@ -150,7 +157,7 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
   }
 
   // TODO Is there a better way to set this fee, e.g. at the point of making a transaction.
-  function setAdvanceWithdrawalFee(Block memory b, uint256 blockNumberL2, Transaction[] memory ts, uint index) external payable {
+  function setAdvanceWithdrawalFee(Block memory b, uint256 blockNumberL2, Transaction[] memory ts, uint index) external payable nonReentrant {
     // The transaction is a withdrawal transaction
     require(ts[index].transactionType == TransactionTypes.WITHDRAW, 'Can only advance withdrawals');
     // The block and transactions are real
@@ -165,7 +172,8 @@ contract Shield is Stateful, Structures, Config, Key_Registry {
     // Only the owner of the withdraw can set the advanced withdrawal
     require(msg.sender == currentOwner, 'You are not the current owner of this withdrawal');
     advancedFeeWithdrawals[withdrawTransactionHash] = msg.value;
-    payable(address(state)).transfer(msg.value);
+    (bool success, ) = payable(address(state)).call{ value: msg.value }("");
+    require(success, "Transfer failed.");
     emit InstantWithdrawalRequested(withdrawTransactionHash, msg.sender, msg.value);
   }
 
