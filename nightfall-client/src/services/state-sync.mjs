@@ -5,21 +5,20 @@ their local commitments databsae.
 
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
-import { getContractInstance } from 'common-files/utils/contract.mjs';
 import mongo from 'common-files/utils/mongo.mjs';
+import { waitForContract } from '../event-handlers/subscribe.mjs';
 import blockProposedEventHandler from '../event-handlers/block-proposed.mjs';
 import rollbackEventHandler from '../event-handlers/rollback.mjs';
 
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION, STATE_CONTRACT_NAME } = config;
 
 const syncState = async (fromBlock = 'earliest', toBlock = 'latest', eventFilter = 'allEvents') => {
-  const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME); // Rollback, BlockProposed
+  const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME); // Rollback, BlockProposed
 
   const pastStateEvents = await stateContractInstance.getPastEvents(eventFilter, {
     fromBlock,
     toBlock,
   });
-  logger.info(`pastStateEvents: ${JSON.stringify(pastStateEvents)}`);
 
   for (let i = 0; i < pastStateEvents.length; i++) {
     switch (pastStateEvents[i].event) {
@@ -46,8 +45,6 @@ const genGetCommitments = async (query = {}, proj = {}) => {
 // eslint-disable-next-line import/prefer-default-export
 export const initialClientSync = async () => {
   const allCommitments = await genGetCommitments();
-  if (allCommitments.length === 0) return {};
-
   const commitmentBlockNumbers = allCommitments.map(a => a.blockNumber).filter(n => n >= 0);
   logger.info(`commitmentBlockNumbers: ${commitmentBlockNumbers}`);
   const firstSeenBlockNumber = Math.min(...commitmentBlockNumbers);

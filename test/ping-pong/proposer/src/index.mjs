@@ -24,7 +24,7 @@ async function startProposer() {
   else throw new Error('Healthcheck failed');
   logger.info('Attempting to register proposer');
   // let's see if the proposer has been registered before
-  const { proposers } = await nf3.getProposers();
+  const { proposers } = await nf3.getProposers(); // read proposer list from the blockchain
   // if not, let's register them
   if (proposers.length === 0) {
     await nf3.registerProposer();
@@ -32,7 +32,10 @@ async function startProposer() {
   } else if (!proposers.map(p => p.thisAddress).includes(nf3.ethereumAddress)) {
     await nf3.registerProposer();
     logger.info('Proposer registration complete');
-  } else logger.warn('Proposer appears to be registered already');
+  } else {
+    logger.warn('Proposer appears to be registered on the blockchain already');
+    await nf3.registerProposerLocally();
+  }
   if (PROPOSER_PORT !== '') {
     logger.debug('Proposer healthcheck up');
     app.listen(PROPOSER_PORT);

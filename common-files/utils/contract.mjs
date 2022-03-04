@@ -104,7 +104,6 @@ export async function waitForContract(contractName) {
     try {
       error = undefined;
       const address = await getContractAddress(contractName); // eslint-disable-line no-await-in-loop
-      logger.debug(`${contractName} contract address is ${address}`);
       if (address === undefined) throw new Error(`${contractName} contract address was undefined`);
       instance = getContractInstance(contractName, address);
       return instance;

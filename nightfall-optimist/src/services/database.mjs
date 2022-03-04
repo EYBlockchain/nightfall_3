@@ -12,7 +12,8 @@ const {
   MONGO_URL,
   OPTIMIST_DB,
   TRANSACTIONS_COLLECTION,
-  METADATA_COLLECTION,
+  PROPOSER_COLLECTION,
+  CHALLENGER_COLLECTION,
   SUBMITTED_BLOCKS_COLLECTION,
   NULLIFIER_COLLECTION,
   COMMIT_COLLECTION,
@@ -54,7 +55,7 @@ export async function addChallengerAddress(address) {
   const db = connection.db(OPTIMIST_DB);
   logger.debug(`Saving challenger address ${address}`);
   const data = { challenger: address };
-  return db.collection(METADATA_COLLECTION).insertOne(data);
+  return db.collection(CHALLENGER_COLLECTION).insertOne(data);
 }
 
 /**
@@ -67,7 +68,7 @@ export async function removeChallengerAddress(address) {
   const db = connection.db(OPTIMIST_DB);
   logger.debug(`Removing challenger address ${address}`);
   const data = { challenger: address };
-  return db.collection(METADATA_COLLECTION).deleteOne(data);
+  return db.collection(CHALLENGER_COLLECTION).deleteOne(data);
 }
 
 /**
@@ -76,7 +77,7 @@ Function to tell us if an address used to commit to a challenge belongs to us
 export async function isChallengerAddressMine(address) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  const metadata = await db.collection(METADATA_COLLECTION).findOne({ challenger: address });
+  const metadata = await db.collection(CHALLENGER_COLLECTION).findOne({ challenger: address });
   return metadata !== null;
 }
 
@@ -218,8 +219,8 @@ export async function setRegisteredProposerAddress(address) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   logger.debug(`Saving proposer address ${address}`);
-  const data = { proposer: address };
-  return db.collection(METADATA_COLLECTION).insertOne(data);
+  const data = { _id: address };
+  return db.collection(PROPOSER_COLLECTION).insertOne(data);
 }
 
 /**
@@ -229,7 +230,7 @@ thus it should start assembling blocks of transactions.
 export async function isRegisteredProposerAddressMine(address) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  const metadata = await db.collection(METADATA_COLLECTION).findOne({ proposer: address });
+  const metadata = await db.collection(PROPOSER_COLLECTION).findOne({ _id: address });
   logger.silly(`found registered proposer ${JSON.stringify(metadata, null, 2)}`);
   return metadata;
 }
