@@ -34,11 +34,7 @@ contract Proposers is Stateful, Structures, Config {
 
 
   //add the proposer to the circular linked list
-<<<<<<< HEAD
   function registerProposer(string memory url) external payable {
-=======
-  function registerProposer() external payable nonReentrant {
->>>>>>> master
     require(REGISTRATION_BOND <= msg.value, 'The registration payment is incorrect');
     require(state.getProposer(msg.sender).thisAddress == address(0), 'This proposer is already registered');
     // send the bond to the state contract
