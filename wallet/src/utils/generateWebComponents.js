@@ -1,9 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import reactToWebcomponent from 'react-to-webcomponent';
-
-
-import App from '../views/app.view.jsx'
+import App from '../views/app.view.jsx';
 
 const generateWebComponents = () => {
   // if (customElements.get('transactions-component') === undefined) {
@@ -20,7 +18,6 @@ const generateWebComponents = () => {
     const AppEl = reactToWebcomponent(App, React, ReactDOM);
     customElements.define('nightfall-app', AppEl);
   }
-
 };
 // ignore unused exports
 export default generateWebComponents;

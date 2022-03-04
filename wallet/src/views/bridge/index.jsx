@@ -1,16 +1,16 @@
 /* eslint-disable react/jsx-no-undef */
 /* eslint-disable react/jsx-pascal-case */
 import React, { useContext } from 'react';
+import { BsArrowRight } from 'react-icons/bs';
 import styles from '../../styles/bridge.module.scss';
-import pgIcon from '../../static/img/bridgepage/pg_coin4x2.png'
-import ethIcon from '../../static/img/bridgepage/eth_coin4x2.png'
+import pgIcon from '../../static/img/bridgepage/pg_coin4x2.png';
+import ethIcon from '../../static/img/bridgepage/eth_coin4x2.png';
 import Header from '../../components/Header/header.jsx';
 import SideBar from '../../components/SideBar/index.jsx';
 // eslint-disable-next-line import/no-unresolved
 import { UserContext } from '../../hooks/User/index.jsx';
 import BridgeComponent from '../../components/BridgeComponent/index.jsx';
-import { BsArrowRight } from 'react-icons/bs';
-import './styles.scss'
+import './styles.scss';
 
 const Bridge = () => {
   const [state] = useContext(UserContext);
@@ -30,10 +30,9 @@ const Bridge = () => {
 
             <div className={styles.pagePartition}>
               <div>
-                
                 <BridgeComponent value={state} />
               </div>
-              <div className="info_wrapper">                
+              <div className="info_wrapper">
                 <div className="info_painel_title">Nightfall Bridge</div>
                 <div className="info_painel_description">
                   The safe, fast and most secure way to bring cross-chain assets to Polygon chain.
@@ -66,7 +65,7 @@ const Bridge = () => {
                     <div>
                       <BsArrowRight />
                     </div>
-                  </div>                               
+                  </div>
                   <div className="each_item_wrapper">
                     <a
                       id="user-guide"
@@ -81,14 +80,14 @@ const Bridge = () => {
                       <BsArrowRight />
                     </div>
                   </div>
-                </div>                
+                </div>
                 <div className="img1">
                   <img src={ethIcon} alt="" />
                 </div>
                 <div className="img2">
                   <img src={pgIcon} alt="" />
                 </div>
-              </div>              
+              </div>
             </div>
           </div>
         </div>

@@ -4,9 +4,7 @@ import Dropdown from 'react-bootstrap/Dropdown';
 import DropdownButton from 'react-bootstrap/DropdownButton';
 import { MdArrowForwardIos } from 'react-icons/md';
 import { BsCheck } from 'react-icons/bs';
-import { AiOutlineInfo } from 'react-icons/ai'
-import ToggleButton from 'react-bootstrap/ToggleButton';
-import ButtonGroup from 'react-bootstrap/ButtonGroup';
+import { AiOutlineInfo } from 'react-icons/ai';
 import styles from '../../styles/bridge.module.scss';
 import stylesModal from '../../styles/modal.module.scss';
 import polygonChainImage from '../../assets/img/polygon-chain.svg';
@@ -22,11 +20,11 @@ import approveImg from '../../assets/img/modalImages/adeposit_approve1.png';
 import depositConfirmed from '../../assets/img/modalImages/adeposit_confirmed.png';
 import successHand from '../../assets/img/modalImages/success-hand.png';
 import transferCompletedImg from '../../assets/img/modalImages/tranferCompleted.png';
-import { UserContext } from '../../hooks/User';
-import "./styles.scss";
-import Input from '../Input';
+import { UserContext } from '../../hooks/User/index.jsx';
+import './styles.scss';
+import Input from '../Input/index.tsx';
 
-const BridgeComponent = (props) => {
+const BridgeComponent = () => {
   // const [state] = useState(() => props[Object.keys(props)[1].toString()].value);
   const [state] = useContext(UserContext);
 
@@ -142,33 +140,11 @@ const BridgeComponent = (props) => {
     return true;
   }
 
-  const handleTransferValue = (event) => {
-    console.log("TAMANHO: ", event.target.value.toString().length);
-    console.log("VALUE: ", event.target.value.toString());
-    let value = event.target.value.toString();
-    let finalValue = 0;
-    if(value.length === 1) {
-      finalValue = value.concat(",", "00");
-      setTransferValue(finalValue);
-      console.log("FINAL LENGTH 1:", finalValue);
-      return;
-    }
-    if(value.length === 2) {
-      let lastDecimal = value.charAt(value.length-1);
-      finalValue = value.charAt(0).concat(","+lastDecimal, "0");      
-      setTransferValue(finalValue);
-      return;
-    }
-    let lastTwoDecimals = value.charAt(value.length-2, value.length-1);
-    finalValue = value.substr(0, value.length-3).concat(",", lastTwoDecimals);
-    setTransferValue(finalValue);
-  }
-
   const handleChange = useCallback(
-    (e) => {
+    e => {
       setTransferValue(e.target.value);
     },
-    [transferValue]
+    [transferValue],
   );
 
   return (
@@ -177,28 +153,25 @@ const BridgeComponent = (props) => {
         <div>
           <div className="tabs">
             <div
-              className={txType === 'deposit' ? "tabs_button_checked" : "tabs_button"}
-              value="deposit"              
-              onClick={() => setTxType('deposit')}              
+              className={txType === 'deposit' ? 'tabs_button_checked' : 'tabs_button'}
+              value="deposit"
+              onClick={() => setTxType('deposit')}
             >
               <p>Deposit</p>
             </div>
             <div
-              className={txType === 'withdraw' ? "tabs_button_checked" : "tabs_button"}
-              value="withdraw"              
-              onClick={() => setTxType('withdraw')}              
+              className={txType === 'withdraw' ? 'tabs_button_checked' : 'tabs_button'}
+              value="withdraw"
+              onClick={() => setTxType('withdraw')}
             >
               <p>Withdraw</p>
             </div>
-          </div>          
+          </div>
         </div>
 
         <div className="brige_body">
-
           {/* FROM SECTION */}
-          <div className="from_label">
-            From
-          </div>
+          <div className="from_label">From</div>
           <div className="from_section">
             <div className="chain_balance_details">
               <div className="chain_details">
@@ -206,27 +179,26 @@ const BridgeComponent = (props) => {
                   <img src={ethChainImage} alt="ethereum chain logo" />
                 ) : (
                   <img src={polygonChainImage} alt="polygon chain logo" height="24" width="24" />
-                )}                
-                <p>{txType === 'deposit' ? 'Ethereum Mainnet' : 'Polygon Nightfall L2'}</p>                
+                )}
+                <p>{txType === 'deposit' ? 'Ethereum Mainnet' : 'Polygon Nightfall L2'}</p>
               </div>
               <div className="balance_details">
-                  <p>Balance: </p><p>200 ETH</p>
+                <p>Balance: </p>
+                <p>200 ETH</p>
               </div>
             </div>
             <div className="from_section_line"></div>
             <div className="token_amount_details">
-            <div className="amount_details">
+              <div className="amount_details">
                 <div className="amount_value_wrapper">
-                  <Input                    
+                  <Input
                     name="price"
                     mask="currency"
                     prefix="$"
                     placeholder="0,00"
                     onChange={handleChange}
-                  />                  
-                  <div className="amount_details_max">
-                    MAX
-                  </div>
+                  />
+                  <div className="amount_details_max">MAX</div>
                 </div>
               </div>
               <div className="token_details">
@@ -237,15 +209,9 @@ const BridgeComponent = (props) => {
                     {/* {{ isDepositEther ? isDepositEther : selectedToken.name }} */}
                     MATIC
                   </div>
-                  <img
-                    
-                    src={discloserBottomImage}
-                    alt="discloser icon"
-                    height="24"
-                    width="24"
-                  />
+                  <img src={discloserBottomImage} alt="discloser icon" height="24" width="24" />
                 </div>
-              </div>              
+              </div>
             </div>
           </div>
 
@@ -255,32 +221,41 @@ const BridgeComponent = (props) => {
 
           {/* TO SECTION */}
           <div className="to_text">To</div>
-          <div className="to_wrapper">            
-              <div className="chain_details">            
-                {txType === 'withdraw' ? (
-                  <img src={ethChainImage} alt="ethereum chain logo" height="24" width="24" />
-                ) : (
-                  <img src={polygonChainImage} alt="polygon chain logo" height="24" width="24" />
-                )}                
-                  <p>{txType === 'deposit' ? 'Polygon Nightfall L2' : 'Ethereum Mainnet'}</p>                
-              </div>
-              <div className="balance_details">
-                    <p>Balance: </p><p>XX MATIC</p>
-              </div>                       
-          </div>                    
+          <div className="to_wrapper">
+            <div className="chain_details">
+              {txType === 'withdraw' ? (
+                <img src={ethChainImage} alt="ethereum chain logo" height="24" width="24" />
+              ) : (
+                <img src={polygonChainImage} alt="polygon chain logo" height="24" width="24" />
+              )}
+              <p>{txType === 'deposit' ? 'Polygon Nightfall L2' : 'Ethereum Mainnet'}</p>
+            </div>
+            <div className="balance_details">
+              <p>Balance: </p>
+              <p>XX MATIC</p>
+            </div>
+          </div>
         </div>
 
         {/* WARN WRAPPER */}
         <div className="warn_wrapper">
           <div className="warn_line1">
             <div className="warn_line1_text">
-              {!checkBox ?
-                <div className="warn_line1_text__div_unchecked" type="checkbox" onClick={() => setCheckBox(!checkBox)}/>
-                :
-                <div className="warn_line1_text__div_checked" type="checkbox" onClick={() => setCheckBox(!checkBox)}>
+              {!checkBox ? (
+                <div
+                  className="warn_line1_text__div_unchecked"
+                  type="checkbox"
+                  onClick={() => setCheckBox(!checkBox)}
+                />
+              ) : (
+                <div
+                  className="warn_line1_text__div_checked"
+                  type="checkbox"
+                  onClick={() => setCheckBox(!checkBox)}
+                >
                   <BsCheck />
                 </div>
-              }      
+              )}
               <p>Swap some MATIC token?</p>
             </div>
             <div className="warn_info">
@@ -293,20 +268,20 @@ const BridgeComponent = (props) => {
         </div>
         {/* TRANSFER MODE */}
         <div className="transfer_mode">
-            {/* <span class="transfer-mode__label"> Transfer Mode: </span>
+          {/* <span class="transfer-mode__label"> Transfer Mode: </span>
                       <span class="bridge-type">{{ selectedMode }} Bridge</span> */}
-            <span className="transfer_mode_text"> Transfer Mode: </span>
-            <span className="transfer_bridge_text">
-              {txType.charAt(0).toUpperCase() + txType.slice(1)} Bridge
-            </span>
-          </div>
+          <span className="transfer_mode_text"> Transfer Mode: </span>
+          <span className="transfer_bridge_text">
+            {txType.charAt(0).toUpperCase() + txType.slice(1)} Bridge
+          </span>
+        </div>
 
-          {/* TRANSFER BUTTON */}
-          <div>
-            <button type="button" className="transfer_button" onClick={handleShow}>
-              Transfer
-            </button>
-          </div>
+        {/* TRANSFER BUTTON */}
+        <div>
+          <button type="button" className="transfer_button" onClick={handleShow}>
+            Transfer
+          </button>
+        </div>
       </div>
       <Modal contentClassName={stylesModal.modalFather} show={show} onHide={() => setShow(false)}>
         <Modal.Header closeButton>
