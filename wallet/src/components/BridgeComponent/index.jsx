@@ -1,8 +1,10 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useCallback } from 'react';
 import Modal from 'react-bootstrap/Modal';
 import Dropdown from 'react-bootstrap/Dropdown';
 import DropdownButton from 'react-bootstrap/DropdownButton';
 import { MdArrowForwardIos } from 'react-icons/md';
+import { BsCheck } from 'react-icons/bs';
+import { AiOutlineInfo } from 'react-icons/ai'
 import ToggleButton from 'react-bootstrap/ToggleButton';
 import ButtonGroup from 'react-bootstrap/ButtonGroup';
 import styles from '../../styles/bridge.module.scss';
@@ -21,19 +23,22 @@ import depositConfirmed from '../../assets/img/modalImages/adeposit_confirmed.pn
 import successHand from '../../assets/img/modalImages/success-hand.png';
 import transferCompletedImg from '../../assets/img/modalImages/tranferCompleted.png';
 import { UserContext } from '../../hooks/User';
+import "./styles.scss";
+import Input from '../Input';
 
 const BridgeComponent = (props) => {
   // const [state] = useState(() => props[Object.keys(props)[1].toString()].value);
   const [state] = useContext(UserContext);
 
   const [transferMethod, setMethod] = useState('On-Chain');
+  const [checkBox, setCheckBox] = useState(false);
 
   // const initialTx = location.state?.initialTxType || 'deposit';
   // const initialTx = location.state ? location.state.initialTxType : 'deposit';
   const initialTx = 'deposit';
 
   const [txType, setTxType] = useState(initialTx);
-  const [tokenAmountWei, setTransferValue] = useState(0);
+  const [transferValue, setTransferValue] = useState(0);
   const [show, setShow] = useState(false);
 
   const handleClose = () => setShow(false);
@@ -78,12 +83,12 @@ const BridgeComponent = (props) => {
     console.log('TokenAddress', ercAddress);
     switch (txType) {
       case 'deposit': {
-        await approve(ercAddress, shieldContractAddress, 'ERC20', tokenAmountWei.toString());
+        await approve(ercAddress, shieldContractAddress, 'ERC20', transferValue.toString());
         const { rawTransaction } = await deposit(
           {
             ercAddress,
             tokenId: 0,
-            value: tokenAmountWei,
+            value: transferValue,
             pkd: state.zkpKeys.pkd,
             nsk: state.zkpKeys.nsk,
             fee: 1,
@@ -101,7 +106,7 @@ const BridgeComponent = (props) => {
               offchain: true,
               ercAddress,
               tokenId: 0,
-              value: tokenAmountWei,
+              value: transferValue,
               recipientAddress: await Web3.getAccount(),
               nsk: state.zkpKeys.nsk,
               ask: state.zkpKeys.ask,
@@ -115,7 +120,7 @@ const BridgeComponent = (props) => {
             {
               ercAddress,
               tokenId: 0,
-              value: tokenAmountWei,
+              value: transferValue,
               recipientAddress: await Web3.getAccount(),
               nsk: state.zkpKeys.nsk,
               ask: state.zkpKeys.ask,
@@ -137,119 +142,171 @@ const BridgeComponent = (props) => {
     return true;
   }
 
+  const handleTransferValue = (event) => {
+    console.log("TAMANHO: ", event.target.value.toString().length);
+    console.log("VALUE: ", event.target.value.toString());
+    let value = event.target.value.toString();
+    let finalValue = 0;
+    if(value.length === 1) {
+      finalValue = value.concat(",", "00");
+      setTransferValue(finalValue);
+      console.log("FINAL LENGTH 1:", finalValue);
+      return;
+    }
+    if(value.length === 2) {
+      let lastDecimal = value.charAt(value.length-1);
+      finalValue = value.charAt(0).concat(","+lastDecimal, "0");      
+      setTransferValue(finalValue);
+      return;
+    }
+    let lastTwoDecimals = value.charAt(value.length-2, value.length-1);
+    finalValue = value.substr(0, value.length-3).concat(",", lastTwoDecimals);
+    setTransferValue(finalValue);
+  }
+
+  const handleChange = useCallback(
+    (e) => {
+      setTransferValue(e.target.value);
+    },
+    [transferValue]
+  );
+
   return (
-    <div className={styles.bridgeWrapper}>
+    <div className="bridge-wrapper">
       <div>
         <div>
-          <ButtonGroup className={styles.bridgeTabs__tab}>
-            <ToggleButton
-              type="radio"
-              variant="outline-secondary"
-              value="deposit"
-              checked={txType === 'deposit'}
-              onClick={() => setTxType('deposit')}
-              // onChange={e => setRadioValue(e.currentTarget.value)}
+          <div className="tabs">
+            <div
+              className={txType === 'deposit' ? "tabs_button_checked" : "tabs_button"}
+              value="deposit"              
+              onClick={() => setTxType('deposit')}              
             >
-              Deposit
-            </ToggleButton>
-            <ToggleButton
-              type="radio"
-              variant="outline-secondary"
-              value="withdraw"
-              checked={txType === 'withdraw'}
-              onClick={() => setTxType('withdraw')}
-              // onChange={e => setRadioValue(e.currentTarget.value)}
+              <p>Deposit</p>
+            </div>
+            <div
+              className={txType === 'withdraw' ? "tabs_button_checked" : "tabs_button"}
+              value="withdraw"              
+              onClick={() => setTxType('withdraw')}              
             >
-              Withdraw
-            </ToggleButton>
-          </ButtonGroup>
-          {/* <div className={styles.bridgeTabs__tab} onClick={() => {}}>
-                Deposit"outline-secondary"              </div>
-              <div className={styles.bridgeTabs__tab} onClick={() => {}}>
-                Withdraw
-              </div> */}
+              <p>Withdraw</p>
+            </div>
+          </div>          
         </div>
 
-        <div className={styles.bridgeBody}>
-          <div className={styles.fromLabel}>From</div>
-          <div className={styles.fromSection}>
-            <div className={styles.chainAndBalanceDetails}>
-              <div className={styles.chainDetails}>
+        <div className="brige_body">
+
+          {/* FROM SECTION */}
+          <div className="from_label">
+            From
+          </div>
+          <div className="from_section">
+            <div className="chain_balance_details">
+              <div className="chain_details">
                 {txType === 'deposit' ? (
+                  <img src={ethChainImage} alt="ethereum chain logo" />
+                ) : (
+                  <img src={polygonChainImage} alt="polygon chain logo" height="24" width="24" />
+                )}                
+                <p>{txType === 'deposit' ? 'Ethereum Mainnet' : 'Polygon Nightfall L2'}</p>                
+              </div>
+              <div className="balance_details">
+                  <p>Balance: </p><p>200 ETH</p>
+              </div>
+            </div>
+            <div className="from_section_line"></div>
+            <div className="token_amount_details">
+            <div className="amount_details">
+                <div className="amount_value_wrapper">
+                  <Input                    
+                    name="price"
+                    mask="currency"
+                    prefix="$"
+                    placeholder="0,00"
+                    onChange={handleChange}
+                  />                  
+                  <div className="amount_details_max">
+                    MAX
+                  </div>
+                </div>
+              </div>
+              <div className="token_details">
+                <div className="token_details_wapper">
+                  <img src={polygonChainImage} alt="polygon chain logo" height="24" width="24" />
+
+                  <div className="token_details_text" id="bridge_tokenDetails_tokenName">
+                    {/* {{ isDepositEther ? isDepositEther : selectedToken.name }} */}
+                    MATIC
+                  </div>
+                  <img
+                    
+                    src={discloserBottomImage}
+                    alt="discloser icon"
+                    height="24"
+                    width="24"
+                  />
+                </div>
+              </div>              
+            </div>
+          </div>
+
+          <div className="arrow_icon_wrapper">
+            <img src={lightArrowImage} alt="to arrow" />
+          </div>
+
+          {/* TO SECTION */}
+          <div className="to_text">To</div>
+          <div className="to_wrapper">            
+              <div className="chain_details">            
+                {txType === 'withdraw' ? (
                   <img src={ethChainImage} alt="ethereum chain logo" height="24" width="24" />
                 ) : (
                   <img src={polygonChainImage} alt="polygon chain logo" height="24" width="24" />
-                )}
-                <div className={styles.chainDetails__chainName}>
-                  {txType === 'deposit' ? 'Ethereum Mainnet' : 'Polygon Nightfall L2'}
-                </div>
+                )}                
+                  <p>{txType === 'deposit' ? 'Polygon Nightfall L2' : 'Ethereum Mainnet'}</p>                
               </div>
-            </div>
-            <div className={styles.tokenAndAmountDetails}>
-              <div className={styles.tokenDetails}>
-                <img src={polygonChainImage} alt="polygon chain logo" height="24" width="24" />
+              <div className="balance_details">
+                    <p>Balance: </p><p>XX MATIC</p>
+              </div>                       
+          </div>                    
+        </div>
 
-                <div className={styles.tokenDetails__tokenName} id="Bridge_tokenDetails_tokenName">
-                  {/* {{ isDepositEther ? isDepositEther : selectedToken.name }} */}
-                  MATIC
+        {/* WARN WRAPPER */}
+        <div className="warn_wrapper">
+          <div className="warn_line1">
+            <div className="warn_line1_text">
+              {!checkBox ?
+                <div className="warn_line1_text__div_unchecked" type="checkbox" onClick={() => setCheckBox(!checkBox)}/>
+                :
+                <div className="warn_line1_text__div_checked" type="checkbox" onClick={() => setCheckBox(!checkBox)}>
+                  <BsCheck />
                 </div>
-                <img
-                  className={styles.tokenDetails__arrow}
-                  src={discloserBottomImage}
-                  alt="discloser icon"
-                  height="24"
-                  width="24"
-                />
-              </div>
-              <div className={styles.amountDetails}>
-                <input
-                  className={styles.amountDetails__textfield}
-                  id="Bridge_amountDetails_tokenAmount"
-                  type="text"
-                  placeholder="0.00"
-                  value={tokenAmountWei}
-                  onChange={e => setTransferValue(parseFloat(e.target.value))}
-                />
-                <button type="button" className={styles.amountDetails__maxButton}>
-                  MAX
-                </button>
-              </div>
+              }      
+              <p>Swap some MATIC token?</p>
+            </div>
+            <div className="warn_info">
+              <AiOutlineInfo />
             </div>
           </div>
-          <div className={styles.downArrowSection}>
-            <img src={lightArrowImage} alt="to arrow" />
+          <div className="warn_line2">
+            <p>MATIC is required to perform transaction on polygon chain.</p>
           </div>
-          <div className={styles.toLabel}>To</div>
-          <div className={styles.toChainAndBalanceDetails}>
-            <div className={styles.chainDetails}>
-              {txType === 'withdraw' ? (
-                <img src={ethChainImage} alt="ethereum chain logo" height="24" width="24" />
-              ) : (
-                <img src={polygonChainImage} alt="polygon chain logo" height="24" width="24" />
-              )}
-              <div className={styles.chainDetails__chainName}>
-                {txType === 'deposit' ? 'Polygon Nightfall L2' : 'Ethereum Mainnet'}
-              </div>
-            </div>
-            <div className={styles.balanceDetails}>
-              <span className={styles.balanceDetails__label}> Balance: </span>
-              <span className={styles.balanceDetails__balance}>xx MATIC</span>
-            </div>
-          </div>
-          <div className={styles.transferMode}>
+        </div>
+        {/* TRANSFER MODE */}
+        <div className="transfer_mode">
             {/* <span class="transfer-mode__label"> Transfer Mode: </span>
                       <span class="bridge-type">{{ selectedMode }} Bridge</span> */}
-            <span className={styles.transferMode__label}> Transfer Mode: </span>
-            <span className={styles.bridgeType}>
+            <span className="transfer_mode_text"> Transfer Mode: </span>
+            <span className="transfer_bridge_text">
               {txType.charAt(0).toUpperCase() + txType.slice(1)} Bridge
             </span>
           </div>
+
+          {/* TRANSFER BUTTON */}
           <div>
-            <button type="button" className={styles.transferButton} onClick={handleShow}>
+            <button type="button" className="transfer_button" onClick={handleShow}>
               Transfer
             </button>
           </div>
-        </div>
       </div>
       <Modal contentClassName={stylesModal.modalFather} show={show} onHide={() => setShow(false)}>
         <Modal.Header closeButton>
@@ -277,7 +334,7 @@ const BridgeComponent = (props) => {
               </div>
               {/* font-heading-large font-bold ps-t-16 ps-b-6 */}
               <div className={stylesModal.tokenDetails__val} id="Bridge_modal_tokenAmount">
-                {Number(tokenAmountWei).toFixed(2)}
+                {Number(transferValue).toFixed(2)}
               </div>
               {/* font-body-small */}
               <div className={stylesModal.tokenDetails__usd}>$xx.xx</div>

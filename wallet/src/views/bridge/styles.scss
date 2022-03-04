@@ -1,0 +1,144 @@
+.info_wrapper {
+  width: 332px;
+  height: 672px;
+  left: 940px;
+  top: 100px;
+
+  background: rgba(255, 255, 255, 0.24);
+  backdrop-filter: blur(16px);
+  /* Note: backdrop-filter has minimal browser support */
+
+  border-radius: 20px;
+  padding: 24px;
+  margin-left: 20px;
+}
+
+.info_painel_title {
+  width: 175px;
+  height: 32px;
+  left: 964px;
+  top: 124px;
+
+  /* Header/H3 */
+
+  font-family: Manrope;
+  font-style: normal;
+  font-weight: 800;
+  font-size: 24px;
+  line-height: 32px;
+  /* identical to box height, or 133% */
+
+  letter-spacing: -0.01em;
+
+  /* light/gray-900 */
+
+  color: #0A0B0D;
+}
+
+.info_painel_description {
+  width: 284px;
+  height: 40px;
+  left: 964px;
+  top: 164px;
+
+  /* Body/Small */
+
+  font-family: Manrope;
+  font-style: normal;
+  font-weight: normal;
+  font-size: 14px;
+  line-height: 20px;
+  /* or 143% */
+
+
+  /* light/gray-900 */
+
+  color: #0A0B0D;
+
+  opacity: 0.6;
+  margin-top: 8px;
+}
+
+.items {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  width: 100%;
+
+  a {
+    width: 40%;    
+    text-decoration: none;
+    color: #0A0B0D;
+    
+    &:hover {      
+      color: #0A0B0D;
+      text-decoration:none;       
+      cursor: pointer;
+    }
+  }  
+}
+
+.each_item_wrapper {
+  margin-top: 24px;
+  display: flex;  
+  flex-direction: row;  
+  align-items: center;
+
+  svg {
+    font-family: Manrope;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 20px;
+    /* identical to box height, or 143% */
+
+
+    /* light/gray-900 */
+
+    color: #0A0B0D;
+  }
+}
+
+.items_text {
+  width: 83px;
+  height: 20px;
+  right: 393px;
+  top: 228px;  
+
+  /* Label/Small */
+
+  font-family: Manrope;
+  font-style: normal;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;    
+
+
+  /* light/gray-900 */
+
+  color: #0A0B0D;
+}
+
+.img1 {
+  display: flex;
+  justify-content: flex-end;
+  
+  margin-top: 67px;
+  width: 100%;
+
+  img {     
+    margin-right: -24px;
+  }
+}
+
+.img2 {
+  display: flex;
+  justify-content: flex-start;
+  
+  width: 100%;
+
+  img {        
+    margin-left: -24px;
+  }
+}

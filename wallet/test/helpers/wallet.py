@@ -167,11 +167,11 @@ def submitTxNewWallet(txParams, findElements, driver, metamaskTab, nightfallTab,
   driver.execute_script("arguments[0].click();", transactionButton)
 
   if txParams["txType"] == "Deposit" or txParams["txType"] == "Withdraw":
-    tokenName = findElements.element_exist_xpath('//*[@id="Bridge_tokenDetails_tokenName"]').text
+    tokenName = findElements.element_exist_xpath('//*[@id="bridge_tokenDetails_tokenName"]').text
     if tokenName != txParams["tokenName"]:
       raise ValueError("Unexpected token name")
 
-    findElements.element_exist_xpath('//*[@id="Bridge_amountDetails_tokenAmount"]').send_keys(txParams['amount']) # Amount
+    findElements.element_exist_xpath('//*[@id="bridge_amountDetails_tokenAmount"]').send_keys(txParams['amount']) # Amount
 
   if txParams["txType"] == "Transfer":
     compressedPkd = findElements.element_exist_xpath('//*[@id="TokenItem_modalSend_compressedPkd"]').text

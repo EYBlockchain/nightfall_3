@@ -2,12 +2,15 @@
 /* eslint-disable react/jsx-pascal-case */
 import React, { useContext } from 'react';
 import styles from '../../styles/bridge.module.scss';
-import bridgeInfoImage from '../../assets/img/bridge-info.png';
+import pgIcon from '../../static/img/bridgepage/pg_coin4x2.png'
+import ethIcon from '../../static/img/bridgepage/eth_coin4x2.png'
 import Header from '../../components/Header/header.jsx';
 import SideBar from '../../components/SideBar/index.jsx';
 // eslint-disable-next-line import/no-unresolved
 import { UserContext } from '../../hooks/User/index.jsx';
 import BridgeComponent from '../../components/BridgeComponent/index.jsx';
+import { BsArrowRight } from 'react-icons/bs';
+import './styles.scss'
 
 const Bridge = () => {
   const [state] = useContext(UserContext);
@@ -26,64 +29,66 @@ const Bridge = () => {
             {/* <WarningBanner className="warning-banner" /> */}
 
             <div className={styles.pagePartition}>
-              <div className={styles.infoWrapper}>
-                <div className={styles.innerWrapper}>
-                  <div className={styles.headerH2}>Nightfall Bridge</div>
-                  <div className={styles.description}>
-                    Safe, fast and private token transfers on Ethereum.
-                  </div>
-                  <div className={styles.points}>
-                    {/* v-tooltip="{
-                                      content: fastWithdrawInfoMsg,
-                                      placement: 'top-center',
-                                  }"
-                                  :to="{ name: 'fast-withdraw' }" 
-                                  For link below */}
-                    <a href="fast" className={styles.linkButton}>
-                      Fast Withdraw
-                    </a>
-                    {/* :to="{ name: 'on-ramp' }" 
-                                  For link below */}
-                    <a href="ramp" className={styles.linkButton}>
-                      On Ramp Transfers
-                    </a>
+              <div>
+                
+                <BridgeComponent value={state} />
+              </div>
+              <div className="info_wrapper">                
+                <div className="info_painel_title">Nightfall Bridge</div>
+                <div className="info_painel_description">
+                  The safe, fast and most secure way to bring cross-chain assets to Polygon chain.
+                </div>
+                <div className="items">
+                  <div className="each_item_wrapper">
                     <a
                       id="youtube-video-tutorial"
-                      className={styles.linkButton}
+                      className="items_text"
                       href="YOUTUBE_VIDEO_TUTORIAL"
                       target="_blank"
                       rel="noopener noreferrer"
                     >
                       How it works?
                     </a>
+                    <div>
+                      <BsArrowRight />
+                    </div>
+                  </div>
+                  <div className="each_item_wrapper">
                     <a
                       id="faq-docs"
-                      className={styles.linkButton}
+                      className="items_text"
                       href="FAQ_DOCS_LINK"
                       target="_blank"
                       rel="noopener noreferrer"
                     >
                       FAQ
                     </a>
+                    <div>
+                      <BsArrowRight />
+                    </div>
+                  </div>                               
+                  <div className="each_item_wrapper">
                     <a
                       id="user-guide"
-                      className={styles.linkButton}
+                      className="items_text"
                       href="USER_GUIDE_DOCS_LINK"
                       target="_blank"
                       rel="noopener noreferrer"
                     >
                       User guide
                     </a>
+                    <div>
+                      <BsArrowRight />
+                    </div>
                   </div>
+                </div>                
+                <div className="img1">
+                  <img src={ethIcon} alt="" />
                 </div>
-                <div className={styles.bottomSection}>
-                  <img src={bridgeInfoImage} alt="" height="219" width="326" />
+                <div className="img2">
+                  <img src={pgIcon} alt="" />
                 </div>
-              </div>
-              <div>
-              
-                <BridgeComponent value={state} />
-              </div>
+              </div>              
             </div>
           </div>
         </div>
