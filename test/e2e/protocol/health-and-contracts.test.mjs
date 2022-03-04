@@ -30,11 +30,6 @@ describe('Health and Contract Checks', () => {
     expect(res).to.be.a('string').and.to.include('0x');
   });
 
-  it('should get the address of the test ERC contract stub', async function () {
-    const res = await nf3User1.getContractAddress('ERCStub');
-    expect(res).to.be.a('string').and.to.include('0x');
-  });
-
   it('should get the address of the test ERC20 mock contract', async function () {
     const res = await nf3User1.getContractAddress('ERC20Mock');
     expect(res).to.be.a('string').and.to.include('0x');
