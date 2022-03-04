@@ -15,7 +15,7 @@ const { STATE_CONTRACT_NAME, RETRIES } = config;
  * This is useful in case nightfall-client comes up before the contract
  * is fully deployed.
  */
-async function waitForContract(contractName) {
+export async function waitForContract(contractName) {
   let errorCount = 0;
   let error;
   let instance;
@@ -23,7 +23,6 @@ async function waitForContract(contractName) {
     try {
       error = undefined;
       const address = await getContractAddress(contractName);
-      logger.debug(`${contractName} contract address is ${address}`);
       if (address === undefined) throw new Error(`${contractName} contract address was undefined`);
       instance = getContractInstance(contractName, address);
       return instance;

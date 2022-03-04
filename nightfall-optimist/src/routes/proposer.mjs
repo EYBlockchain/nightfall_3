@@ -8,6 +8,7 @@ import config from 'config';
 import Timber from 'common-files/classes/timber.mjs';
 import logger from 'common-files/utils/logger.mjs';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
+import { enqueueEvent } from 'common-files/utils/event-queue.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction, TransactionError } from '../classes/index.mjs';
 import {
@@ -20,6 +21,11 @@ import transactionSubmittedEventHandler from '../event-handlers/transaction-subm
 
 const router = express.Router();
 const { STATE_CONTRACT_NAME, PROPOSERS_CONTRACT_NAME, SHIELD_CONTRACT_NAME, ZERO } = config;
+
+let proposer;
+export function setProposer(p) {
+  proposer = p;
+}
 
 /**
  * Function to return a raw transaction that registers a proposer.  This just
@@ -34,13 +40,52 @@ router.post('/register', async (req, res, next) => {
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
     const txDataToSign = await proposersContractInstance.methods.registerProposer().encodeABI();
     logger.debug('returning raw transaction data');
-    logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
     res.json({ txDataToSign });
-    setRegisteredProposerAddress(address); // save the registration address
-    console.log('REGISTERED ADDRESS', address);
+    await setRegisteredProposerAddress(address); // save the registration address
   } catch (err) {
-    logger.error(err);
-    next(err);
+    if (err.message.includes('E11000 duplicate key error'))
+      // if we get a duplicate key error then the EVM will have reverted so we don't need to handle this separately
+      logger.warn(
+        'Duplicate key detected. You are probably trying to to register the proposer twice. Second attempt ignored',
+      );
+    else {
+      logger.error(err);
+      next(err);
+    }
+  }
+});
+
+/**
+ * Function to locally register a proposer with optimist. This call is similar to
+ * /register but it won't touch the blockchain. It will just cause optimist to make
+ * blocks when this proposer is the current proposer.  It's useful if you are starting
+ * a new optimist instance but your proposer address is already registed with the blockchain
+ * It's idempotent:  attempting to re-register a proposer will have no effect.
+ */
+router.post('/registerlocally', async (req, res, next) => {
+  logger.debug(
+    `local register proposer endpoint received POST ${JSON.stringify(req.body, null, 2)}`,
+  );
+  const { address } = req.body;
+  try {
+    await setRegisteredProposerAddress(address); // save the registration address
+    // we should also check if we're the current proposer because we're registered on
+    // the blockchain so we could be
+    const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
+    const currentProposer = await stateContractInstance.methods.getCurrentProposer().call();
+    if (address === currentProposer.thisAddress) {
+      proposer.isMe = true;
+      await enqueueEvent(() => logger.info('Start Queue'), 0); // kickstart the queue
+    }
+    res.sendStatus(200);
+  } catch (err) {
+    if (err.message.includes('duplicate key')) {
+      logger.warn(`Proposer ${address} is already registered locally`);
+      res.sendStatus(200);
+    } else {
+      logger.error(err);
+      next(err);
+    }
   }
 });
 
@@ -79,9 +124,9 @@ router.get('/proposers', async (req, res, next) => {
     // Loop through the circular list until we run back into the currentProposer.
     do {
       // eslint-disable-next-line no-await-in-loop
-      const proposer = await proposersContractInstance.methods.proposers(thisPtr).call();
-      proposers.push(proposer);
-      thisPtr = proposer.nextAddress;
+      const prop = await proposersContractInstance.methods.proposers(thisPtr).call();
+      proposers.push(prop);
+      thisPtr = prop.nextAddress;
     } while (thisPtr !== currentProposer.thisAddress);
 
     logger.debug('returning raw transaction data');
@@ -178,12 +223,12 @@ router.post('/propose', async (req, res, next) => {
   logger.debug(`propose endpoint received POST`);
   logger.silly(`With content ${JSON.stringify(req.body, null, 2)}`);
   try {
-    const { transactions, proposer, currentLeafCount } = req.body;
+    const { transactions, proposer: prop, currentLeafCount } = req.body;
     // use the information we've been POSTED to assemble a block
     // we use a Builder pattern because an async constructor is bad form
     const block = await Block.build({
       transactions,
-      proposer,
+      proposer: prop,
       currentLeafCount,
     });
     logger.debug(`New block assembled ${JSON.stringify(block, null, 2)}`);

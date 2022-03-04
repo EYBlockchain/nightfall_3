@@ -16,10 +16,12 @@ import {
 import { setChallengeWebSocketConnection } from './services/challenges.mjs';
 import initialBlockSync from './services/state-sync.mjs';
 import { setInstantWithdrawalWebSocketConnection } from './services/instant-withdrawal.mjs';
+import { setProposer } from './routes/proposer.mjs';
 
 const main = async () => {
   try {
     const proposer = new Proposer();
+    setProposer(proposer); // passes the proposer instance int the proposer routes
     // subscribe to WebSocket events first
     await subscribeToBlockAssembledWebSocketConnection(setBlockAssembledWebSocketConnection);
     await subscribeToChallengeWebSocketConnection(setChallengeWebSocketConnection);
@@ -31,7 +33,6 @@ const main = async () => {
       queues[0].on('end', () => {
         // We do the proposer isMe check here to fail fast instead of re-enqueing.
         // We check if the queue[2] is empty, this is safe it is manually enqueued/dequeued.
-        console.log('PROPOSER', proposer, queues[2].length);
         if (proposer.isMe && queues[2].length === 0) {
           // logger.info('Queue has emptied. Queueing block assembler.');
           return enqueueEvent(conditionalMakeBlock, 0, proposer);

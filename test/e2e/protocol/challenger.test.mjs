@@ -21,7 +21,7 @@ describe('Basic Challenger tests', () => {
     await nf3Challenger.init(mnemonics.challenger);
     // Challenger registration
     await nf3Challenger.registerChallenger();
-    // Chalenger listening for incoming events
+    // Challenger listening for incoming events
     nf3Challenger.startChallenger();
   });
 

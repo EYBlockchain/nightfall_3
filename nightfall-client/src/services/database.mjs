@@ -109,7 +109,8 @@ export async function saveBlock(_block) {
   if (!existing || !existing.blockNumber) {
     return db.collection(SUBMITTED_BLOCKS_COLLECTION).updateOne(query, update, { upsert: true });
   }
-  throw new Error('Attempted to replay existing layer 2 block');
+  logger.warn('Attempted to replay existing layer 2 block.  This is expected if we are syncing');
+  return true;
 }
 
 /**
