@@ -40,7 +40,6 @@ class Transaction {
     historicRootBlockNumberL2,
     transactionType,
     tokenType,
-    publicInputs, // this must be an object of the PublicInputs calls
     tokenId,
     value,
     ercAddress,
@@ -52,7 +51,6 @@ class Transaction {
   }) {
     if (proof === undefined) throw new Error('Proof cannot be undefined');
     const flatProof = Object.values(proof).flat(Infinity);
-    if (publicInputs === undefined) throw new Error('PublicInputs cannot be undefined');
     let commitments;
     let nullifiers;
     let compressedSecrets;
@@ -74,7 +72,6 @@ class Transaction {
       historicRootBlockNumberL2: historicRootBlockNumberL2 || [0, 0],
       transactionType: transactionType || 0,
       tokenType: TOKEN_TYPES[tokenType] || 0, // tokenType does not matter for transfer
-      publicInputs: publicInputs.publicInputs ?? publicInputs,
       tokenId: tokenId || 0,
       value: value || 0,
       ercAddress: ercAddress || 0,

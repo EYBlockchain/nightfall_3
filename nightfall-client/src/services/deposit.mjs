@@ -12,7 +12,7 @@ import gen from 'general-number';
 import rand from 'common-files/utils/crypto/crypto-random.mjs';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
 import logger from 'common-files/utils/logger.mjs';
-import { Commitment, PublicInputs, Transaction } from '../classes/index.mjs';
+import { Commitment, Transaction } from '../classes/index.mjs';
 import { storeCommitment } from './commitment-storage.mjs';
 import { compressPublicKey } from './keys.mjs';
 
@@ -41,11 +41,11 @@ async function deposit(items) {
     // we also need a salt to make the commitment unique and increase its entropy
     // eslint-disable-next-line
     salt = await rand(ZKP_KEY_LENGTH);
-    // next, let's compute the zkp commitment we're going to store and the hash of the public inputs (truncated to 248 bits)
+    // next, let's compute the zkp commitment we're going to store
     commitment = new Commitment({ ercAddress, tokenId, value, compressedPkd, salt });
   } while (commitment.hash.bigInt > BN128_GROUP_ORDER);
 
-  const publicInputs = new PublicInputs([ercAddress, tokenId, value, commitment.hash]);
+  // const publicInputs = generalise([ercAddress, tokenId, value, commitment.hash]);
   logger.debug(`Hash of new commitment is ${commitment.hash.hex()}`);
   // now we can compute a Witness so that we can generate the proof
   const witness = [
@@ -77,7 +77,7 @@ async function deposit(items) {
     fee,
     transactionType: 0,
     tokenType: items.tokenType,
-    publicInputs,
+    // publicInputs,
     tokenId,
     value,
     ercAddress,

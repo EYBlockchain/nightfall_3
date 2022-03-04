@@ -10,7 +10,7 @@ import axios from 'axios';
 import gen from 'general-number';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
 import logger from 'common-files/utils/logger.mjs';
-import { Nullifier, PublicInputs, Transaction } from '../classes/index.mjs';
+import { Nullifier, Transaction } from '../classes/index.mjs';
 import {
   findUsableCommitmentsMutex,
   markNullified,
@@ -63,14 +63,14 @@ async function withdraw(withdrawParams) {
 
   // public inputs
   const { root, leafIndex, isOnChain } = commitmentTreeInfo;
-  const publicInputs = new PublicInputs([
-    oldCommitment.preimage.ercAddress,
-    oldCommitment.preimage.tokenId,
-    oldCommitment.preimage.value,
-    generalise(nullifier.hash.hex(32, 31)).integer,
-    recipientAddress,
-    root,
-  ]);
+  // const publicInputs = generalise([
+  //   oldCommitment.preimage.ercAddress,
+  //   oldCommitment.preimage.tokenId,
+  //   oldCommitment.preimage.value,
+  //   generalise(nullifier.hash.hex(32, 31)).integer,
+  //   recipientAddress,
+  //   root,
+  // ]);
 
   // now we have everything we need to create a Witness and compute a proof
   const witness = [
@@ -107,7 +107,7 @@ async function withdraw(withdrawParams) {
     historicRootBlockNumberL2: [isOnChain, 0],
     transactionType: 3,
     tokenType: items.tokenType,
-    publicInputs,
+    // publicInputs,
     tokenId,
     value,
     ercAddress,
