@@ -17,7 +17,7 @@ import {
   clearPending,
   getSiblingInfo,
 } from './commitment-storage.mjs';
-import getProposers from './peers.mjs';
+import getProposersUrl from './peers.mjs';
 import { calculateIvkPkdfromAskNsk } from './keys.mjs';
 
 const {
@@ -119,7 +119,7 @@ async function withdraw(withdrawParams) {
   });
   try {
     if (offchain) {
-      const peerList = await getProposers(NEXT_N_PROPOSERS);
+      const peerList = await getProposersUrl(NEXT_N_PROPOSERS);
       Object.keys(peerList).forEach(async address => {
         logger.debug(
           `offchain transaction - calling ${peerList[address]}/proposer/offchain-transaction`,

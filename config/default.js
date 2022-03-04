@@ -187,7 +187,7 @@ module.exports = {
     // this is the etherum private key for accounts[0]
     privateKey: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e',
     gas: 10000000,
-    gasCosts: 9500000000000000,
+    gasCosts: 15000000000000000,
     fee: 1,
     BLOCK_STAKE: 1, // 1 wei
     bond: 10, // 10 wei

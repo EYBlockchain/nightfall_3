@@ -217,7 +217,7 @@ event to determine who is the current proposer.
 export async function setRegisteredProposerAddress(address, url) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  logger.debug(`Saving proposer address ${address}`);
+  logger.debug(`Saving proposer address ${address} and url ${url}`);
   const data = {
     proposer: {
       address,
@@ -250,7 +250,7 @@ export async function deleteRegisteredProposerAddress(address) {
   const query = { 'proposer.address': address };
   const foundProposer = !!(await db.collection(METADATA_COLLECTION).findOne(query));
   if (foundProposer) {
-    await db.collection(METADATA_COLLECTION).remove(query);
+    await db.collection(METADATA_COLLECTION).deleteOne(query);
   }
   logger.silly(`deleted registered proposer`);
 }

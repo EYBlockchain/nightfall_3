@@ -19,7 +19,7 @@ import {
   clearPending,
   getSiblingInfo,
 } from './commitment-storage.mjs';
-import getProposers from './peers.mjs';
+import getProposersUrl from './peers.mjs';
 import { decompressKey, calculateIvkPkdfromAskNsk } from './keys.mjs';
 
 const {
@@ -223,7 +223,7 @@ async function transfer(transferParams) {
   try {
     if (offchain) {
       // dig up connection peers
-      const peerList = await getProposers(NEXT_N_PROPOSERS);
+      const peerList = await getProposersUrl(NEXT_N_PROPOSERS);
       logger.debug(`Peer List: ${JSON.stringify(peerList, null, 2)}`);
       Object.keys(peerList).forEach(async address => {
         logger.debug(

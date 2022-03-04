@@ -12,8 +12,6 @@ import './Structures.sol';
 import './Stateful.sol';
 
 contract Proposers is Stateful, Structures, Config {
-  mapping(address => string) public proposerUrl;
-
   function initialize() override public initializer {
     Stateful.initialize();
   }
@@ -41,11 +39,10 @@ contract Proposers is Stateful, Structures, Config {
     (bool success, ) = payable(address(state)).call{ value: REGISTRATION_BOND }("");
     require(success, "Transfer failed.");
     state.setBondAccount(msg.sender,REGISTRATION_BOND);
-    proposerUrl[msg.sender] = url;
     LinkedAddress memory currentProposer = state.getCurrentProposer();
     // cope with this being the first proposer
     if (currentProposer.thisAddress == address(0)) {
-      currentProposer = LinkedAddress(msg.sender, msg.sender, msg.sender);
+      currentProposer = LinkedAddress(msg.sender, msg.sender, msg.sender, url);
       state.setProposer(msg.sender, currentProposer);
       state.setProposerStartBlock(block.number);
       emit NewCurrentProposer(currentProposer.thisAddress);
@@ -56,6 +53,7 @@ contract Proposers is Stateful, Structures, Config {
       proposer.thisAddress = msg.sender; // proposer: (_,B,_)
       proposer.nextAddress = currentProposer.thisAddress;  // proposer: (_,B,A)
       proposer.previousAddress = currentProposer.previousAddress; // proposer: (x,B,A)
+      proposer.url = url;
       // pull global state
       LinkedAddress memory proposersPrevious = state.getProposer(currentProposer.previousAddress);
       LinkedAddress memory proposersCurrent = state.getProposer(currentProposer.thisAddress);
@@ -97,6 +95,7 @@ contract Proposers is Stateful, Structures, Config {
 
   // Proposers can change REST API URL
   function updateProposer(string memory url) external {
-    proposerUrl[msg.sender] = url;
+    require(state.getProposer(msg.sender).thisAddress != address(0), 'This proposer is not registered or you are not that proposer');
+    state.updateProposer(msg.sender, url);
   }
 }

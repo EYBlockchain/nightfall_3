@@ -25,6 +25,7 @@ const testProposersUrl = [
   'http://test-proposer1',
   'http://test-proposer2',
   'http://test-proposer3',
+  'http://test-proposer4',
 ];
 
 const web3Client = new Web3Client();
@@ -52,44 +53,50 @@ describe('Basic Proposer tests', () => {
 
   it('should register a proposer', async () => {
     let proposers;
-    let proposersInfo;
-    ({ proposers, proposersInfo } = await testProposers[1].getProposers());
+    ({ proposers } = await testProposers[1].getProposers());
     // we have to pay 10 ETH to be registered
     const startBalance = await web3Client.getBalance(testProposers[1].ethereumAddress);
     const res = await testProposers[1].registerProposer(testProposersUrl[1]);
     expectTransaction(res);
-    ({ proposers, proposersInfo } = await testProposers[1].getProposers());
+    ({ proposers } = await testProposers[1].getProposers());
     const endBalance = await web3Client.getBalance(testProposers[1].ethereumAddress);
     expect(endBalance - startBalance).to.closeTo(-bond, gasCosts);
     const thisProposer = proposers.filter(p => p.thisAddress === testProposers[1].ethereumAddress);
     expect(thisProposer.length).to.be.equal(1);
-    expect(proposers[0].thisAddress).to.be.equal(Object.keys(proposersInfo[0])[0]);
-    expect(proposersInfo[0][Object.keys(proposersInfo[0])[0]]).to.be.equal(testProposersUrl[0]);
-    expect(proposers[1].thisAddress).to.be.equal(Object.keys(proposersInfo[1])[0]);
-    expect(proposersInfo[1][Object.keys(proposersInfo[1])[0]]).to.be.equal(testProposersUrl[1]);
+    expect(proposers[0].url).to.be.equal(testProposersUrl[0]);
+    expect(proposers[1].url).to.be.equal(testProposersUrl[1]);
   });
 
   it('should register other proposer', async () => {
     let proposers;
-    let proposersInfo;
-    ({ proposers, proposersInfo } = await testProposers[2].getProposers());
+    ({ proposers } = await testProposers[2].getProposers());
     // we have to pay 10 ETH to be registered
     const startBalance = await web3Client.getBalance(testProposers[2].ethereumAddress);
     const res = await testProposers[2].registerProposer(testProposersUrl[2]);
     expectTransaction(res);
-    ({ proposers, proposersInfo } = await testProposers[2].getProposers());
+    ({ proposers } = await testProposers[2].getProposers());
     const endBalance = await web3Client.getBalance(testProposers[2].ethereumAddress);
     expect(endBalance - startBalance).to.closeTo(-bond, gasCosts);
     const thisProposer = proposers.filter(p => p.thisAddress === testProposers[2].ethereumAddress);
     expect(thisProposer.length).to.be.equal(1);
-    expect(proposers[0].thisAddress).to.be.equal(Object.keys(proposersInfo[0])[0]);
-    expect(proposersInfo[0][Object.keys(proposersInfo[0])[0]]).to.be.equal(testProposersUrl[0]);
-    expect(proposers[1].thisAddress).to.be.equal(Object.keys(proposersInfo[1])[0]);
-    expect(proposersInfo[1][Object.keys(proposersInfo[1])[0]]).to.be.equal(testProposersUrl[1]);
-    expect(proposers[2].thisAddress).to.be.equal(Object.keys(proposersInfo[2])[0]);
-    expect(proposersInfo[2][Object.keys(proposersInfo[2])[0]]).to.be.equal(testProposersUrl[2]);
+    expect(proposers[0].url).to.be.equal(testProposersUrl[0]);
+    expect(proposers[1].url).to.be.equal(testProposersUrl[1]);
+    expect(proposers[2].url).to.be.equal(testProposersUrl[2]);
   });
 
+  it('should update proposers url', async () => {
+    let proposers;
+    ({ proposers } = await testProposers[2].getProposers());
+    // we have to pay 10 ETH to be registered
+    const res = await testProposers[2].updateProposer(testProposersUrl[3]);
+    expectTransaction(res);
+    ({ proposers } = await testProposers[2].getProposers());
+    const thisProposer = proposers.filter(p => p.thisAddress === testProposers[2].ethereumAddress);
+    expect(thisProposer.length).to.be.equal(1);
+    expect(proposers[0].url).to.be.equal(testProposersUrl[0]);
+    expect(proposers[1].url).to.be.equal(testProposersUrl[1]);
+    expect(proposers[2].url).to.be.equal(testProposersUrl[3]);
+  });
   it('should fail to register a proposer twice', async () => {
     try {
       const res = await testProposers[2].registerProposer(testProposersUrl[2]);
@@ -103,19 +110,16 @@ describe('Basic Proposer tests', () => {
 
   it('should unregister a proposer', async () => {
     let proposers;
-    let proposersInfo;
-    ({ proposers, proposersInfo } = await testProposers[0].getProposers());
+    ({ proposers } = await testProposers[0].getProposers());
     let thisProposer = proposers.filter(p => p.thisAddress === testProposers[0].ethereumAddress);
     expect(thisProposer.length).to.be.equal(1);
     const res = await testProposers[0].deregisterProposer();
     expectTransaction(res);
-    ({ proposers, proposersInfo } = await testProposers[0].getProposers());
+    ({ proposers } = await testProposers[0].getProposers());
     thisProposer = proposers.filter(p => p.thisAddress === testProposers[0].ethereumAddress);
     expect(thisProposer.length).to.be.equal(0);
-    expect(proposers[0].thisAddress).to.be.equal(Object.keys(proposersInfo[0])[0]);
-    expect(proposersInfo[0][Object.keys(proposersInfo[0])[0]]).to.be.equal(testProposersUrl[1]);
-    expect(proposers[1].thisAddress).to.be.equal(Object.keys(proposersInfo[1])[0]);
-    expect(proposersInfo[1][Object.keys(proposersInfo[1])[0]]).to.be.equal(testProposersUrl[2]);
+    expect(proposers[0].url).to.be.equal(testProposersUrl[1]);
+    expect(proposers[1].url).to.be.equal(testProposersUrl[3]);
   });
 
   it('Should create a failing withdrawBond (because insufficient time has passed)', async () => {
@@ -151,16 +155,16 @@ describe('Basic Proposer tests', () => {
 
   after(async () => {
     // After the proposer tests, de-register proposers
-    const { proposers } = await testProposers[0].getProposers();
+    let { proposers } = await testProposers[0].getProposers();
 
     for (const prop of testProposers) {
       if (Object.values(proposers[0]).includes(prop.ethereumAddress))
         await prop.deregisterProposer();
       prop.close();
     }
-    const { proposersInfo } = await testProposers[0].getProposers();
+    ({ proposers } = await testProposers[0].getProposers());
 
-    expect(proposersInfo[0][Object.keys(proposersInfo[0])[0]]).to.be.equal('');
+    expect(proposers[0].url).to.be.equal('');
     web3Client.closeWeb3();
   });
 });

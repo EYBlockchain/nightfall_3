@@ -73,27 +73,22 @@ router.get('/proposers', async (req, res, next) => {
   logger.debug(`list proposals endpoint received GET`);
   try {
     const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
-    const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
     // proposers is an on-chain mapping so to get proposers we need to key to start iterating
     // the safest to start with is the currentProposer
     const currentProposer = await stateContractInstance.methods.currentProposer().call();
     const proposers = [];
-    const proposersInfo = [];
     let thisPtr = currentProposer.thisAddress;
     // Loop through the circular list until we run back into the currentProposer.
     do {
       // eslint-disable-next-line no-await-in-loop
       const proposer = await stateContractInstance.methods.proposers(thisPtr).call();
-      // eslint-disable-next-line no-await-in-loop
-      const proposerUrl = await proposersContractInstance.methods.proposerUrl(thisPtr).call();
       proposers.push(proposer);
-      proposersInfo.push({ [thisPtr]: proposerUrl });
       thisPtr = proposer.nextAddress;
     } while (thisPtr !== currentProposer.thisAddress);
 
     logger.debug('returning raw transaction data');
     logger.silly(`raw transaction is ${JSON.stringify(proposers, null, 2)}`);
-    res.json({ proposers, proposersInfo });
+    res.json({ proposers });
   } catch (err) {
     logger.error(err);
     next(err);

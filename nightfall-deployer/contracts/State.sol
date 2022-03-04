@@ -171,6 +171,11 @@ contract State is Structures, Config, Initializable, ReentrancyGuardUpgradeable 
       currentProposer = proposers[nextAddress];
       emit NewCurrentProposer(currentProposer.thisAddress);
   }
+
+  function updateProposer(address proposer, string memory url) public onlyRegistered {
+    proposers[proposer].url = url;
+  }
+
   // Checks if a block is actually referenced in the queue of blocks waiting
   // to go into the Shield state (stops someone challenging with a non-existent
   // block).

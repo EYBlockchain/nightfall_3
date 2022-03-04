@@ -629,6 +629,22 @@ class Nf3 {
   }
 
   /**
+  Update Proposers URL
+  @method
+  @async
+  @param {string} Proposer REST API URL with format https://xxxx.xxx.xx  
+  @returns {array} A promise that resolves to the Ethereum transaction receipt.
+  */
+  async updateProposer(url) {
+    const res = await axios.post(`${this.optimistBaseUrl}/proposer/update`, {
+      address: this.ethereumAddress,
+      url,
+    });
+    logger.debug(`Proposer with address ${this.ethereumAddress} updated to URL ${url}`);
+    return this.submitTransaction(res.data.txDataToSign, this.proposersContractAddress, 0);
+  }
+
+  /**
   Starts a Proposer that listens for blocks and submits block proposal
   transactions to the blockchain.
   @method
