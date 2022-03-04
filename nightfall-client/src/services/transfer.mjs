@@ -122,14 +122,6 @@ async function transfer(transferParams) {
     roots,
   );
 
-  // // public inputs
-  // const publicInputs = generalise([
-  //   oldCommitments.map(commitment => commitment.preimage.ercAddress),
-  //   newCommitments.map(commitment => commitment.hash),
-  //   nullifiers.map(nullifier => generalise(nullifier.hash.hex(32, 31)).integer),
-  //   roots,
-  //   compressedSecrets.map(compressedSecret => compressedSecret.hex(32, 31)),
-  // ]);
   // time for a quick sanity check.  We expect the number of old commitments,
   // new commitments and nullifiers to be equal.
   if (nullifiers.length !== oldCommitments.length || nullifiers.length !== newCommitments.length) {
@@ -204,7 +196,6 @@ async function transfer(transferParams) {
     fee,
     historicRootBlockNumberL2: blockNumberL2s,
     transactionType,
-    // publicInputs,
     ercAddress: ZERO, // we don't want to expose the ERC address during a transfer
     commitments: newCommitments,
     nullifiers,
