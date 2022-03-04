@@ -33,7 +33,7 @@ services:
       BLOCKCHAIN_PORT: 80
       PROPOSER_ETHEREUM_SIGNING_KEY: 645ac79fa9fd87dd1cf30bdca51d326bd501cd328d6dbc9f5f517c7da0dafa6f
 
-  user-local1:
+  deployer-first-blocks:
     environment:
       BLOCKCHAIN_WS_HOST: ropsten1-ws.testnet.nightfall3.com
       BLOCKCHAIN_PORT: 80

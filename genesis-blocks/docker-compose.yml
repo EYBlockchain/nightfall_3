@@ -100,9 +100,9 @@ services:
       LOG_LEVEL: info
 
   proposer:
-    image: ghcr.io/eyblockchain/nightfall3-proposer:latest
+    image: ghcr.io/eyblockchain/nightfall3-deployer-proposer:latest
     build:
-      dockerfile: proposer.Dockerfile
+      dockerfile: deployer-proposer.Dockerfile
       context: ../
     networks:
       - pong_network
@@ -113,10 +113,10 @@ services:
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
 
-  user-local1:
-    image: ghcr.io/eyblockchain/nightfall3-user-local:latest
+  deployer-first-blocks:
+    image: ghcr.io/eyblockchain/nightfall3-deployer-first-blocks:latest
     build:
-      dockerfile: user-local.Dockerfile
+      dockerfile: deployer-first-blocks.Dockerfile
       context: ../
     networks:
       - pong_network

@@ -41,7 +41,7 @@ services:
       BLOCKCHAIN_PORT: 8546
       PROPOSER_ETHEREUM_SIGNING_KEY: 645ac79fa9fd87dd1cf30bdca51d326bd501cd328d6dbc9f5f517c7da0dafa6f
 
-  user-local1:
+  deployer-first-blocks:
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     environment:
