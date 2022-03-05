@@ -4,7 +4,6 @@ version: '3.5'
 # Use it as an override file for docker-compose.yml
 # See the readme for more information.
 services:
-
   client1:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
@@ -32,3 +31,19 @@ services:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
       AUTOSTART_RETRIES: 100
+
+  proposer:
+    environment:
+      BLOCKCHAIN_WS_HOST: host.docker.internal
+      BLOCKCHAIN_PORT: 8546
+      PROPOSER_ETHEREUM_SIGNING_KEY: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d'
+
+  deployer-first-blocks:
+    environment:
+      BLOCKCHAIN_WS_HOST: host.docker.internal
+      BLOCKCHAIN_PORT: 8546
+      ERC20_NAME: ERC20Mock
+      USER_ETHEREUM_SIGNING_KEY: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e'
+      USER_ADDRESS: '0x9C8B2276D490141Ae1440Da660E470E7C0349C63'
+      RECIPIENT_PKD: '0x0d27fb8112bf3274e27094ab05cc72db4d573ba081a659c3210a7bdbc1a9ec48'
+      ZKP_MNEMONIC: trip differ bamboo bundle bonus luxury strike mad merry muffin nose auction

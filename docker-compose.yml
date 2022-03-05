@@ -33,7 +33,7 @@ services:
       OPTIMIST_HOST: optimist1
       OPTIMIST_PORT: 80
       USE_STUBS: 'false' # make sure this flag is the same as in deployer service
-    command: [ 'npm', 'run', 'dev' ]
+    command: ['npm', 'run', 'dev']
 
   client2:
     image: ghcr.io/eyblockchain/nightfall3-client:latest
@@ -66,7 +66,7 @@ services:
       OPTIMIST_HOST: optimist2
       OPTIMIST_PORT: 80
       USE_STUBS: 'false' # make sure this flag is the same as in deployer service
-    command: [ 'npm', 'run', 'dev' ]
+    command: ['npm', 'run', 'dev']
 
   worker:
     #  image: 3800decac71d
@@ -141,7 +141,7 @@ services:
       LOG_LEVEL: debug
       IS_CHALLENGER: 'true'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
-    command: [ 'npm', 'run', 'dev' ]
+    command: ['npm', 'run', 'dev']
 
   optimist2:
     image: ghcr.io/eyblockchain/nightfall3-optimist:latest
@@ -165,7 +165,36 @@ services:
       LOG_LEVEL: error
       IS_CHALLENGER: 'true'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
-    command: [ 'npm', 'run', 'dev' ]
+    command: ['npm', 'run', 'dev']
+
+  proposer:
+    image: ghcr.io/eyblockchain/nightfall3-deployer-proposer:latest
+    networks:
+      - nightfall_network
+    environment:
+      OPTIMIST_HOST: optimist1
+      OPTIMIST_WS_PORT: 8080
+      OPTIMIST_HTTP_PORT: 80
+      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_PORT: 8546
+      CLIENT_HOST: client1
+      DEPLOYER_HOST: deployer
+
+  deployer-first-blocks:
+    image: ghcr.io/eyblockchain/nightfall3-deployer-first-blocks:latest
+    networks:
+      - nightfall_network
+    environment:
+      OPTIMIST_HOST: optimist1
+      OPTIMIST_WS_PORT: 8080
+      OPTIMIST_HTTP_PORT: 80
+      CLIENT_HOST: client1
+      DEPLOYER_HOST: deployer
+      CLIENT_PORT: 80
+      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_PORT: 8546
+      IS_TEST_RUNNER: 'yes'
+      TEST_LENGTH: 1
 
   hosted-utils-api-server:
     build:
@@ -184,9 +213,7 @@ volumes:
   mongodb1: null
   mongodb2: null
   proving_files: null
-  build:
-
-    null
+  build: null
 networks:
   nightfall_network:
     driver: bridge
