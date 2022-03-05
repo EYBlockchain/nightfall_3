@@ -56,6 +56,8 @@ class Nf3 {
 
   BLOCK_STAKE = DEFAULT_BLOCK_STAKE;
 
+  nonce = 0;
+
   nonceMutex = new Mutex();
 
   latestWithdrawHash;
@@ -130,6 +132,8 @@ class Nf3 {
   async setEthereumSigningKey(key) {
     this.ethereumSigningKey = key;
     this.ethereumAddress = await this.getAccounts();
+    // clear the nonce as we're using a fresh account
+    this.nonce = 0;
   }
 
   /**
@@ -193,10 +197,8 @@ class Nf3 {
     // we need a Mutex so that we don't get a nonce-updating race.
 
     let tx;
-    let nonce;
     await this.nonceMutex.runExclusive(async () => {
-      nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
-      nonce += this.txsNotConfirmed; // we need to add the number of transactions not confirmed yet
+      if (!this.nonce) this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
       let gasPrice = 20000000000;
       const gas = (await this.web3.eth.getBlock('latest')).gasLimit;
       const blockGasPrice = 2 * Number(await this.web3.eth.getGasPrice());
@@ -209,8 +211,9 @@ class Nf3 {
         value: fee,
         gas,
         gasPrice,
-        nonce,
+        nonce: this.nonce,
       };
+      this.nonce++;
       this.txsNotConfirmed++;
     });
 
@@ -236,6 +239,7 @@ class Nf3 {
           })
           .on('error', err => {
             this.txsNotConfirmed--;
+            if (err.message.includes('nonce')) this.nonce--;
             reject(err);
           });
       });
