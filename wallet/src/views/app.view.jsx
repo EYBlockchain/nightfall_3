@@ -9,7 +9,7 @@ import TransactionPage from './transactionPage/index.jsx';
 import Web3 from '../common-files/utils/web3';
 import Bridge from './bridge/index.jsx';
 import generateWebComponents from '../utils/generateWebComponents';
-import TokensList from '../components/Modals/Bridge/TokensList';
+import TokensList from '../components/Modals/Bridge/TokensList/index.tsx';
 
 export default function App() {
   // eslint-disable-next-line no-unused-vars

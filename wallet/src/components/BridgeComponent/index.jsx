@@ -1,4 +1,4 @@
-import React, { useContext, useState, useCallback, useEffect } from 'react';
+import React, { useContext, useState, useCallback } from 'react';
 import Modal from 'react-bootstrap/Modal';
 import Dropdown from 'react-bootstrap/Dropdown';
 import DropdownButton from 'react-bootstrap/DropdownButton';
@@ -23,7 +23,7 @@ import transferCompletedImg from '../../assets/img/modalImages/tranferCompleted.
 import { UserContext } from '../../hooks/User/index.jsx';
 import './styles.scss';
 import Input from '../Input/index.tsx';
-import TokensList from '../Modals/Bridge/TokensList';
+import TokensList from '../Modals/Bridge/TokensList/index.tsx';
 
 const BridgeComponent = () => {
   // const [state] = useState(() => props[Object.keys(props)[1].toString()].value);
@@ -44,7 +44,7 @@ const BridgeComponent = () => {
 
   const openTokensListModal = () => {
     setShowTokensListModal(true);
-  }
+  };
 
   const handleClose = () => setShow(false);
   const handleShow = () => {
@@ -156,14 +156,13 @@ const BridgeComponent = () => {
 
   return (
     <div>
-      
-        {showTokensListModal &&
-          <div className="modalWrapper">
-            <TokensList handleClose={setShowTokensListModal} />
-          </div>
-        }
-      
-      <div className="bridge-wrapper">      
+      {showTokensListModal && (
+        <div className="modalWrapper">
+          <TokensList handleClose={setShowTokensListModal} />
+        </div>
+      )}
+
+      <div className="bridge-wrapper">
         <div>
           <div>
             <div className="tabs">
@@ -334,11 +333,15 @@ const BridgeComponent = () => {
               <div>
                 <div className={stylesModal.networkButtons}>
                   <div className={stylesModal.networkButtons__button1}>
-                    <span>{txType === 'deposit' ? 'Ethereum Mainnet' : 'Polygon Nightfall L2'}</span>
+                    <span>
+                      {txType === 'deposit' ? 'Ethereum Mainnet' : 'Polygon Nightfall L2'}
+                    </span>
                   </div>
                   <MdArrowForwardIos />
                   <div className={stylesModal.networkButtons__button2}>
-                    <span>{txType === 'deposit' ? 'Polygon Nightfall L2' : 'Ethereum Mainnet'}</span>
+                    <span>
+                      {txType === 'deposit' ? 'Polygon Nightfall L2' : 'Ethereum Mainnet'}
+                    </span>
                   </div>
                 </div>
               </div>
