@@ -37,7 +37,7 @@ export default function App() {
           <Route path="/" exact render={() => <MainPage />} />
           <Route path="/wallet" render={() => <Wallet />} />
           <Route path="/bridge" render={() => <Bridge />} />
-          <Route path="/transactionPage" render={() => <TransactionPage />} />          
+          <Route path="/transactionPage" render={() => <TransactionPage />} />
           <Route
             path="/issues"
             render={() => {
