@@ -2,7 +2,7 @@
 /* eslint-disable react/jsx-pascal-case */
 import React, { useContext } from 'react';
 import { BsArrowRight } from 'react-icons/bs';
-import styles from '../../styles/bridge.module.scss';
+import { useMediaQuery } from 'react-responsive';
 import pgIcon from '../../static/img/bridgepage/pg_coin4x2.png';
 import ethIcon from '../../static/img/bridgepage/eth_coin4x2.png';
 import Header from '../../components/Header/header.jsx';
@@ -14,21 +14,24 @@ import './styles.scss';
 
 const Bridge = () => {
   const [state] = useContext(UserContext);
+  const isTabletOrMobile = useMediaQuery({ query: '(min-width: 1000px)' });
 
   return (
     // containerFluid
 
     <div>
       <Header />
-      <div className={styles.bridgeComponent}>
-        <div className={styles.bridgeComponent__left}>
-          <SideBar />
-        </div>
-        <div className={styles.bridgeComponent__right}>
-          <div className={styles.blueBack}>
+      <div className="bridgeComponent">
+        {isTabletOrMobile && (
+          <div className="bridgeComponent__left">
+            <SideBar />
+          </div>
+        )}
+        <div className="bridgeComponent__right">
+          <div className="blue_back">
             {/* <WarningBanner className="warning-banner" /> */}
 
-            <div className={styles.pagePartition}>
+            <div className="page_partition">
               <div>
                 <BridgeComponent value={state} />
               </div>
@@ -81,12 +84,16 @@ const Bridge = () => {
                     </div>
                   </div>
                 </div>
-                <div className="img1">
-                  <img src={ethIcon} alt="" />
-                </div>
-                <div className="img2">
-                  <img src={pgIcon} alt="" />
-                </div>
+                {isTabletOrMobile && (
+                  <>
+                    <div className="img1">
+                      <img src={ethIcon} alt="" />
+                    </div>
+                    <div className="img2">
+                      <img src={pgIcon} alt="" />
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>

@@ -1,11 +1,16 @@
 .modal-content  {
   -webkit-border-radius: 0px !important;
   -moz-border-radius: 0px !important;
-  border-radius: 20px !important;     
+  border-radius: 20px !important;
+  max-height: 600px;   
 }
 
 .modal-header {
   padding: 12px 32px;
+}
+
+.modal-body {
+  overflow: auto;  
 }
 
 .tokens_itens_modal_header {
@@ -98,7 +103,7 @@
 }
 
 .tokens_list {
-  padding-right: 24px;  
+  padding-right: 24px;
 }
 
 .tokens_line {

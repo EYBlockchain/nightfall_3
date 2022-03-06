@@ -49,9 +49,9 @@
 }
 
 .pagePartition {
-  padding: 20px 0;
+  padding: 20px;
   display: flex;
-  flex-direction: column-reverse;
+  flex-direction: column;
 
   @media #{$lg-devices} {
     padding-top: 62px;

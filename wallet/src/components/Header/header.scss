@@ -14,5 +14,17 @@
   top: 0px;
   z-index: 1;
 
+  @media screen and (max-width: '1000px'){
+    svg {
+      width: 30px;
+      height: 30px;
+
+      &:hover {
+        cursor: pointer;
+        color: #ddd;
+      }
+    }
+  }
+
 }
   

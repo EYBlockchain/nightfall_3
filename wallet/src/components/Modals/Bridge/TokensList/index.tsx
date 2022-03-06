@@ -1,4 +1,4 @@
-import React, { useState, Dispatch, SetStateAction } from 'react';
+import React, { useState, Dispatch, SetStateAction, ChangeEvent } from 'react';
 import "./styles.scss";
 import { AiOutlineClose } from 'react-icons/ai'
 import { FiSearch } from 'react-icons/fi';
@@ -10,6 +10,13 @@ type TokenListType = {
 }
 
 const TokensList = ({ handleClose }: TokenListType) => {    
+
+  const [filteredTokens, setFilteredTokens] = useState(tokensList.tokens);
+  
+  const filterTokens = (e: ChangeEvent<HTMLInputElement>) => {
+    setFilteredTokens(tokensList.tokens.filter(token => token.name.toLowerCase().includes(e.target.value.toLocaleLowerCase())));    
+    console.log("E: ",e.target.value);
+  }
 
   return (
     <div>
@@ -26,10 +33,11 @@ const TokensList = ({ handleClose }: TokenListType) => {
             <input 
               type="text" 
               placeholder="Search here"
+              onChange={(e) => filterTokens(e)}
             />
           </div>      
           <ul className="tokens_list">
-            {tokensList.tokens.map((token: any, index: number) => (
+            {filteredTokens.map((token: any, index: number) => (
               <li className="tokens_line" key={index}>
                 <div>
                   <img src={token.logoURI} alt="token image" />

@@ -69,6 +69,124 @@ const tokensList =
         }
       }
     },
+    {
+      "chainId": 137,
+      "name": "USD Coin",
+      "symbol": "USDC",
+      "decimals": 6,
+      "address": "0x2791bca1f2de4661ed88a30c99a7a9449aa84174",
+      "logoURI": "https://wallet-asset.matic.network/img/tokens/usdc.svg",
+      "tags": [
+        "pos",
+        "erc20",
+        "swapable",
+        "metaTx",
+        "stablecoin"
+      ],
+      "extensions": {
+        "parentAddress": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+        "project": {
+          "name": "Centre",
+          "summary": "-",
+          "contact": "-",
+          "website": "https://www.centre.io"
+        }
+      }
+    },
+    {
+      "chainId": 137,
+      "name": "Tether USD",
+      "symbol": "USDT",
+      "decimals": 6,
+      "address": "0xc2132d05d31c914a87c6611c10748aeb04b58e8f",
+      "logoURI": "https://wallet-asset.matic.network/img/tokens/usdt.svg",
+      "tags": [
+        "pos",
+        "stablecoin",
+        "erc20",
+        "swapable",
+        "metaTx"
+      ],
+      "extensions": {
+        "parentAddress": "0xdac17f958d2ee523a2206206994597c13d831ec7",
+        "project": {
+          "name": "Tether",
+          "summary": "-",
+          "contact": "support@tether.to",
+          "website": "https://tether.to/"
+        }
+      }
+    },
+    {
+      "chainId": 137,
+      "name": "Dai - PoS",
+      "symbol": "DAI",
+      "decimals": 18,
+      "address": "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063",
+      "logoURI": "https://wallet-asset.matic.network/img/tokens/dai.svg",
+      "tags": [
+        "pos",
+        "stablecoin",
+        "erc20",
+        "swapable",
+        "metaTx"
+      ],
+      "extensions": {
+        "parentAddress": "0x6b175474e89094c44da98b954eedeac495271d0f",
+        "project": {
+          "name": "-",
+          "summary": "-",
+          "contact": "-",
+          "website": "https://makerdao.com/"
+        }
+      }
+    },
+    {
+      "chainId": 137,
+      "name": "Dai - Plasma",
+      "symbol": "DAI",
+      "decimals": 18,
+      "address": "0x84000b263080bc37d1dd73a29d92794a6cf1564e",
+      "logoURI": "https://wallet-asset.matic.network/img/tokens/dai.svg",
+      "tags": [
+        "plasma",
+        "stablecoin",
+        "erc20",
+        "noDeposit"
+      ],
+      "extensions": {
+        "parentAddress": "0x6b175474e89094c44da98b954eedeac495271d0f",
+        "project": {
+          "name": "-",
+          "summary": "-",
+          "contact": "-",
+          "website": "https://makerdao.com/"
+        }
+      }
+    },
+    {
+      "chainId": 137,
+      "name": "Aave",
+      "symbol": "AAVE",
+      "decimals": 18,
+      "address": "0xd6df932a45c0f255f85145f286ea0b292b21c90b",
+      "logoURI": "https://wallet-asset.matic.network/img/tokens/aave.svg",
+      "tags": [
+        "pos",
+        "erc20",
+        "swapable",
+        "metaTx"
+      ],
+      "extensions": {
+        "parentAddress": "0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9",
+        "project": {
+          "name": "Aave",
+          "summary": "-",
+          "contact": "wecare@aave.com",
+          "website": "https://aave.com/"
+        }
+      }
+    },
   ]
 };
 
