@@ -173,6 +173,8 @@ module.exports = {
       clientApiUrl: 'http://localhost:8080',
       optimistApiUrl: 'http://localhost:8081',
       optimistWsUrl: 'ws://localhost:8082',
+      adversarialOptimistApiUrl: 'http://localhost:8088',
+      adversarialOptimistWsUrl: 'ws://localhost:8089',
       web3WsUrl: 'ws://localhost:8546',
     },
   },
