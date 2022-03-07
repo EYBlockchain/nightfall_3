@@ -678,6 +678,25 @@ class Nf3 {
   }
 
   /**
+  Send offchain transaction to Optimist
+  @method
+  @async
+  @param {string} transaction 
+  */
+  async sendOffchainTransaction(transaction) {
+    console.log(`Proposer/offchain-transaction endpoint received POST`);
+    console.log(`With content ${JSON.stringify(transaction, null, 2)}`);
+    console.log(
+      `offchain transaction - calling ${this.optimistBaseUrl}/proposer/offchain-transaction`,
+    );
+    await axios.post(
+      `${this.optimistBaseUrl}/proposer/offchain-transaction`,
+      { transaction },
+      { timeout: 3600000 },
+    );
+  }
+
+  /**
   Returns an emitter, whose 'data' event fires whenever a block is
   detected, passing out the transaction needed to propose the block. This
   is a lower level method than `Nf3.startProposer` because it does not sign and

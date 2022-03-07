@@ -4,9 +4,8 @@ Some transactions are so simple that, we don't split out a separate service
 module but handle the entire request here.
 */
 import express from 'express';
-import axios from 'axios';
 
-let optimistUrl = '';
+let nf3Instance = '';
 const router = express.Router();
 
 router.post('/offchain-transaction', async req => {
@@ -15,16 +14,11 @@ router.post('/offchain-transaction', async req => {
   const { transaction } = req.body;
 
   if (!transaction) return;
-  console.log(`offchain transaction - calling ${optimistUrl}/proposer/offchain-transaction`);
-  await axios
-    .post(`${optimistUrl}/proposer/offchain-transaction`, { transaction }, { timeout: 3600000 })
-    .catch(err => {
-      throw new Error(err);
-    });
+  await nf3Instance.sendOffchainTransaction(transaction);
 });
 
-function setOptimistUrl(url) {
-  optimistUrl = url;
+function setNf3Instance(nf3) {
+  nf3Instance = nf3;
 }
 
-export { router, setOptimistUrl };
+export { router, setNf3Instance };

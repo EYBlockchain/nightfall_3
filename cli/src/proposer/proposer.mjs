@@ -6,7 +6,7 @@ import clear from 'clear';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import Nf3 from '../../lib/nf3.mjs';
-import { app, setOptimistUrl } from './app.mjs';
+import { app, setNf3Instance } from './app.mjs';
 
 import { setEnvironment, getCurrentEnvironment } from '../../lib/environment.mjs';
 
@@ -50,7 +50,7 @@ async function startProposer(testEnvironment) {
   console.log('Proposer registration complete');
   // Configure Optimist URL so that proposer listener
   // knows where to route queries
-  setOptimistUrl(nf3Env.optimistApiUrl);
+  setNf3Instance(nf3);
   app.listen(Number(proposerPort));
   console.log(`Proposer's API running at ${proposerUrl}:${proposerPort}`);
   // TODO subscribe to layer 1 blocks and call change proposer

@@ -22,8 +22,8 @@ app.use(
 app.get('/healthcheck', (req, res) => res.sendStatus(200));
 app.use('/proposer', proposer.router);
 
-function setOptimistUrl(url) {
-  proposer.setOptimistUrl(url);
+function setNf3Instance(nf3) {
+  proposer.setNf3Instancel(nf3);
 }
 
-export { app, setOptimistUrl };
+export { app, setNf3Instance };
