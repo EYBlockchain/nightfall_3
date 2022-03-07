@@ -682,18 +682,15 @@ class Nf3 {
   @method
   @async
   @param {string} transaction 
+  @returns {array} A promise that resolves to the API call status
   */
   async sendOffchainTransaction(transaction) {
-    console.log(`Proposer/offchain-transaction endpoint received POST`);
-    console.log(`With content ${JSON.stringify(transaction, null, 2)}`);
-    console.log(
-      `offchain transaction - calling ${this.optimistBaseUrl}/proposer/offchain-transaction`,
-    );
-    await axios.post(
+    const res = axios.post(
       `${this.optimistBaseUrl}/proposer/offchain-transaction`,
       { transaction },
       { timeout: 3600000 },
     );
+    return res.status;
   }
 
   /**

@@ -13,7 +13,7 @@ router.post('/offchain-transaction', async req => {
   console.log(`With content ${JSON.stringify(req.body, null, 2)}`);
   const { transaction } = req.body;
 
-  if (!transaction) return;
+  if (!transaction || nf3Instance === '') return;
   await nf3Instance.sendOffchainTransaction(transaction);
 });
 

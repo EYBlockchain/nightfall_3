@@ -23,7 +23,7 @@ app.get('/healthcheck', (req, res) => res.sendStatus(200));
 app.use('/proposer', proposer.router);
 
 function setNf3Instance(nf3) {
-  proposer.setNf3Instancel(nf3);
+  proposer.setNf3Instance(nf3);
 }
 
 export { app, setNf3Instance };

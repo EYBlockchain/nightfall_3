@@ -4,7 +4,7 @@ Module that runs up as a proposer
 import config from 'config';
 import logger from '../../../../common-files/utils/logger.mjs';
 import Nf3 from '../../../../cli/lib/nf3.mjs';
-import { app, setOptimistUrl } from './app.mjs';
+import { app, setNf3Instance } from './app.mjs';
 
 const { proposerEthereumSigningKey, optimistWsUrl, web3WsUrl, optimistBaseUrl } = config;
 const { PROPOSER_PORT = '', PROPOSER_URL = '' } = process.env;
@@ -35,7 +35,7 @@ async function startProposer() {
     logger.info('Proposer registration complete');
   } else logger.warn('Proposer appears to be registerd already');
   if (PROPOSER_PORT !== '') {
-    setOptimistUrl(optimistBaseUrl);
+    setNf3Instance(nf3);
     app.listen(PROPOSER_PORT);
     logger.debug(`Proposer API up at URL ${PROPOSER_URL} and port ${PROPOSER_PORT}`);
   }
