@@ -345,3 +345,44 @@ export const depositNTransactions = async (nf3, N, ercAddress, tokenType, value,
   }
   return depositTransactions;
 };
+
+/**
+  function to retrieve balance of user because getLayer2Balances returns
+  balances of all users
+*/
+export const retrieveL2Balance = async client => {
+  const balances = await client.getLayer2Balances();
+  // if there are no balances
+  if (Object.values(balances).length === 0) {
+    return 0;
+  }
+  const { balance } = Object.values(balances)[0][0];
+  return balance;
+};
+
+/**
+  function to register a proposer if there is no proposer
+*/
+export const registerProposerOnNoProposer = async proposer => {
+  if ((await proposer.getCurrentProposer()) === '0x0000000000000000000000000000000000000000') {
+    await proposer.registerProposer();
+  }
+};
+
+/**
+  function to wait for sufficient balance by waiting for pending transaction
+  to be proposed
+*/
+export const waitForSufficientBalance = (client, value) => {
+  return new Promise(resolve => {
+    async function isSufficientBalance() {
+      const balance = await retrieveL2Balance(client);
+      if (process.env.VERBOSE) console.log(` Balance needed ${value}. Current balance ${balance}.`);
+      if (balance < value) {
+        await new Promise(resolving => setTimeout(resolving, 10000));
+        isSufficientBalance();
+      } else resolve();
+    }
+    isSufficientBalance();
+  });
+};
