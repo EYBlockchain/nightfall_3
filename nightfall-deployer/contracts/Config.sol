@@ -13,6 +13,10 @@ contract Config is Ownable {
 
     mapping(address => uint256) erc20limit;
 
+    function initialize() public virtual override initializer {
+        Ownable.initialize();
+    }
+
     function getRestriction(address tokenAddr) public view returns (uint256) {
         return erc20limit[tokenAddr];
     }

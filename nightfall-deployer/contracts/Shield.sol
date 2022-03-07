@@ -24,9 +24,10 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
     mapping(bytes32 => address) public advancedWithdrawals;
     mapping(bytes32 => uint256) public advancedFeeWithdrawals;
 
-    function initialize() public override(Stateful, Key_Registry) initializer {
+    function initialize() public override(Stateful, Key_Registry, Config) initializer {
         Stateful.initialize();
         Key_Registry.initialize();
+        Config.initialize();
     }
 
     function submitTransaction(Transaction memory t) external payable nonReentrant {
@@ -43,34 +44,6 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
         if (feeBook[transactionHash] < msg.value) feeBook[transactionHash] = msg.value;
         (bool success, ) = payable(address(state)).call{value: msg.value}('');
         require(success, 'Transfer failed.');
-    }
-
-    // function to enable a proposer to get paid for proposing a block
-    function requestBlockPayment(
-        Block memory b,
-        uint256 blockNumberL2,
-        Transaction[] memory ts
-    ) external {
-        bytes32 blockHash = Utils.hashBlock(b, ts);
-        state.isBlockReal(b, ts, blockNumberL2);
-        // check that the block has been finalised
-        uint256 time = state.getBlockData(blockNumberL2).time;
-        require(
-            time + COOLING_OFF_PERIOD < block.timestamp,
-            'It is too soon to get paid for this block'
-        );
-        require(b.proposer == msg.sender, 'You are not the proposer of this block');
-        require(
-            state.isBlockStakeWithdrawn(blockHash) == false,
-            'The block stake for this block is already claimed'
-        );
-        // add up how much the proposer is owed.
-        uint256 payment;
-        for (uint256 i = 0; i < ts.length; i++) {
-            bytes32 transactionHash = Utils.hashTransaction(ts[i]);
-            payment += feeBook[transactionHash];
-            feeBook[transactionHash] = 0; // clear the payment
-        }
     }
 
     // function to enable a proposer to get paid for proposing a block

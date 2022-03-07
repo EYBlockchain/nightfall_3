@@ -2,6 +2,8 @@ const config = require('config');
 
 const { UserEthereumAddresses } = config;
 
+const Shield = artifacts.require('Shield.sol');
+
 const ERC20Mock = artifacts.require('ERC20Mock.sol');
 const ERC721Mock = artifacts.require('ERC721Mock.sol');
 const ERC1155Mock = artifacts.require('ERC1155Mock.sol');
@@ -13,11 +15,16 @@ module.exports = function (deployer, _, accounts) {
   deployer.then(async () => {
     await deployer.deploy(ERC20Mock, 1001010000000000); // initialSupply
 
+    const restrictions = await Shield.deployed();
     const ERC20deployed = await ERC20Mock.deployed();
+
     // For ping pong tests
     for (const address of UserEthereumAddresses) {
       await ERC20deployed.transfer(address, 1000000000000);
     }
+    // Set a restriction for ping-pong
+    await restrictions.setRestriction(ERC20deployed.address, 200);
+
     if (!config.ETH_ADDRESS) {
       // indicates we're running a wallet test that uses hardcoded addresses
       // For e2e tests
