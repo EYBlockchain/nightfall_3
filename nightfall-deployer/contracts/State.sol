@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
-
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 /**
 Contract to hold global state that is needed by a number of other contracts,
 together with functions for mutating it.
@@ -12,7 +13,7 @@ import './Structures.sol';
 import './Utils.sol';
 import './Config.sol';
 
-contract State is Structures, Config {
+contract State is Structures, Config, Initializable, ReentrancyGuardUpgradeable {
   // global state variables
   BlockData[] public blockHashes; // array containing mainly blockHashes
   mapping(address => uint) public pendingWithdrawals;
@@ -26,7 +27,7 @@ contract State is Structures, Config {
   address public challengesAddress;
   address public shieldAddress;
 
-  constructor(address _proposersAddress, address _challengesAddress, address _shieldAddress) {
+  function initialize(address _proposersAddress, address _challengesAddress, address _shieldAddress) public initializer {
     proposersAddress = _proposersAddress;
     challengesAddress = _challengesAddress;
     shieldAddress = _shieldAddress;
@@ -143,10 +144,11 @@ contract State is Structures, Config {
     pendingWithdrawals[addr] += amount;
   }
 
-  function withdraw() external {
+  function withdraw() external nonReentrant {
     uint amount = pendingWithdrawals[msg.sender];
     pendingWithdrawals[msg.sender] = 0;
-    payable(msg.sender).transfer(amount);
+    (bool success, ) = payable(msg.sender).call{ value: amount}("");
+    require(success, "Transfer failed.");
   }
 
   function setProposerStartBlock(uint sb) public onlyRegistered {
