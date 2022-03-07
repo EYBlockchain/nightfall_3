@@ -1,6 +1,11 @@
 const config = require('config');
 
-const { UserEthereumAddresses } = config;
+const {
+  UserEthereumAddresses,
+  TEST_OPTIONS: {
+    restrictions: { erc20default },
+  },
+} = config;
 
 const Shield = artifacts.require('Shield.sol');
 
@@ -23,7 +28,7 @@ module.exports = function (deployer, _, accounts) {
       await ERC20deployed.transfer(address, 1000000000000);
     }
     // Set a restriction for ping-pong
-    await restrictions.setRestriction(ERC20deployed.address, 200);
+    await restrictions.setRestriction(ERC20deployed.address, erc20default);
 
     if (!config.ETH_ADDRESS) {
       // indicates we're running a wallet test that uses hardcoded addresses

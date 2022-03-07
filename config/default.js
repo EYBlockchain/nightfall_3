@@ -209,6 +209,9 @@ module.exports = {
       challenger: 'crush power outer gadget enter maze advance rather divert monster indoor axis',
       liquidityProvider: 'smart base soup sister army address member poem point quick save penalty',
     },
+    restrictions: {
+      erc20default: 200,
+    },
   },
   RESTRICTIONS: [
     {

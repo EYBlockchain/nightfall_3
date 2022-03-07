@@ -22,6 +22,7 @@ const {
   tokenConfigs: { tokenType, tokenId },
   mnemonics,
   signingKeys,
+  restrictions: { erc20default },
 } = config.TEST_OPTIONS;
 
 const { RESTRICTIONS: defaultRestrictions } = config;
@@ -442,12 +443,12 @@ describe('ERC20 tests', () => {
     describe('Testing new restrictions', async () => {
       let newAmount;
       before(() => {
-        const defaultERC20restriction = defaultRestrictions.find(
-          e => e.address.toLowerCase() === erc20Address,
-        );
+        const defaultERC20restriction =
+          defaultRestrictions.find(e => e.address.toLowerCase() === erc20Address)?.amount ||
+          erc20default;
 
         newAmount = Math.ceil(
-          Math.random() * (defaultERC20restriction.amount - transferValue) + transferValue,
+          Math.random() * (defaultERC20restriction - transferValue) + transferValue,
         );
       });
 
