@@ -11,7 +11,7 @@ RUN npm ci
 WORKDIR /app/test/ping-pong/proposer
 RUN apt-get update -y
 RUN apt-get install -y netcat-openbsd
-COPY test/ping-pong/proposer/package*.json test/ping-pong/proposer/pre-start-script.sh ./
+COPY test/ping-pong/proposer/package*.json ./
 COPY test/ping-pong/proposer/src src
 COPY genesis-blocks/docker-entrypoint.sh docker-entrypoint.sh
 

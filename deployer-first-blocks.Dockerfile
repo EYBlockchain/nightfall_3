@@ -11,7 +11,7 @@ RUN npm ci
 WORKDIR /app/test/ping-pong/user-local
 RUN apt-get update -y
 RUN apt-get install -y netcat-openbsd
-COPY test/ping-pong/user-local/package*.json test/ping-pong/user-local/pre-start-script.sh ./
+COPY test/ping-pong/user-local/package*.json ./
 COPY test/ping-pong/user-local/src src
 COPY genesis-blocks/docker-entrypoint.sh docker-entrypoint.sh
 
