@@ -5,6 +5,8 @@ COPY common-files common-files
 COPY config/default.js config/default.js
 COPY config/default.js /app/test/ping-pong/user-local/config/default.js
 COPY cli cli
+WORKDIR /app/common-files
+RUN npm ci
 WORKDIR /app/cli
 RUN npm ci
 
