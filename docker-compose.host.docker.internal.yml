@@ -32,7 +32,7 @@ services:
       BLOCKCHAIN_WS_HOST: host.docker.internal
       AUTOSTART_RETRIES: 100
 
-  proposer:
+  deployer-proposer:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
       BLOCKCHAIN_PORT: 8546

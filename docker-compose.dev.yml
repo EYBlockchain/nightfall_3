@@ -112,7 +112,7 @@ services:
         source: ./config/default.js
         target: /app/config/default.js
 
-  proposer:
+  deployer-proposer:
     build:
       dockerfile: deployer-proposer.Dockerfile
       context: .

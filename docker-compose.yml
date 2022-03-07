@@ -167,7 +167,7 @@ services:
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
     command: ['npm', 'run', 'dev']
 
-  proposer:
+  deployer-proposer:
     image: ghcr.io/eyblockchain/nightfall3-deployer-proposer:latest
     networks:
       - nightfall_network
@@ -179,6 +179,7 @@ services:
       BLOCKCHAIN_PORT: 8546
       CLIENT_HOST: client1
       DEPLOYER_HOST: deployer
+      TEST_BLOCKS: 2
 
   deployer-first-blocks:
     image: ghcr.io/eyblockchain/nightfall3-deployer-first-blocks:latest
