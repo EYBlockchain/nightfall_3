@@ -48,7 +48,7 @@ class Nf3 {
 
   zkpKeys;
 
-  txsNotConfirmed = 0;
+  notConfirmed = 0;
 
   defaultFee = DEFAULT_FEE;
 
@@ -214,7 +214,6 @@ class Nf3 {
         nonce: this.nonce,
       };
       this.nonce++;
-      this.txsNotConfirmed++;
     });
 
     if (this.ethereumSigningKey) {
@@ -238,13 +237,11 @@ class Nf3 {
             }
           })
           .on('error', err => {
-            this.txsNotConfirmed--;
-            if (err.message.includes('nonce')) this.nonce--;
+            this.notConfirmed--;
             reject(err);
           });
       });
     }
-    this.txsNotConfirmed--;
     // TODO add wait for confirmations to the wallet functionality
     return this.web3.eth.sendTransaction(tx);
   }
