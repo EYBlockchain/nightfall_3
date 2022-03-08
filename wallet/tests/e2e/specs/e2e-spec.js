@@ -18,6 +18,8 @@ function toAccommodateTx(txPerBlock, noOfTx) {
   return txPerBlock * i;
 }
 
+Cypress.LocalStorage.clear = function () {};
+
 describe('End to End tests', () => {
   let currentTokenBalance = 0;
   const depositValue = 4;
@@ -47,17 +49,19 @@ describe('End to End tests', () => {
 
     it('generate Mnemonic and set state', () => {
       cy.contains('Polygon Nightfall Wallet').click();
-      cy.get('button').contains('Generate Mnemonic').click();
-      cy.get('button').contains('Create Wallet').click();
+      cy.get('button').contains('Generate Mnemonic', { timeout: 10000 }).click();
+      cy.get('button').contains('Create Wallet', { timeout: 10000 }).click();
       cy.confirmMetamaskSignatureRequest().then(confirmed => expect(confirmed).to.be.true);
       cy.get('#TokenItem_tokenDepositMATIC').click();
       cy.url().should('include', '/bridge');
-      cy.contains('Nightfall Assets').click();
+      cy.wait(10000);
+      cy.contains('Nightfall Assets', { timeout: 10000 }).click();
       cy.url().should('include', '/wallet');
 
       // once state get set for mnemonic visiting wallet page again
       // will not open Generate Mnemonic modal, hence the below assertion
       cy.get('button').contains('Generate Mnemonic').should('not.exist');
+      cy.get('#TokenItem_tokenDepositMATIC', { timeout: 10000 }).should('be.visible');
     });
   });
 
@@ -74,7 +78,6 @@ describe('End to End tests', () => {
     noOfDeposit = txPerBlock > noOfDeposit ? txPerBlock : toAccommodateTx(txPerBlock, noOfDeposit);
     it(`do ${noOfDeposit} deposit of value ${depositValue}`, () => {
       cy.get('#TokenItem_tokenDepositMATIC').click();
-
       // for now in browser if once we typed deposit value in text box
       // we can do muptiple deposit one after another
       // without need to re-type
@@ -93,7 +96,6 @@ describe('End to End tests', () => {
         }
         cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
         cy.wait(50000);
-        cy.get('.btn-close').click();
       }
       cy.contains('Nightfall Assets').click();
       cy.wait(20000);
@@ -114,7 +116,6 @@ describe('End to End tests', () => {
 
     it(`withdraw token of value ${withdrawValue}`, () => {
       cy.get('#TokenItem_tokenWithdrawMATIC').click();
-      // cy.get('#Bridge_amountDetails_tokenAmount').clear().type(withdrawValue);
       cy.get('label').contains('Withdraw').click();
       cy.get('#Bridge_amountDetails_tokenAmount').type(withdrawValue);
       cy.get('button').contains('Transfer').click();
@@ -123,7 +124,6 @@ describe('End to End tests', () => {
       cy.wait(30000);
       cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
       cy.wait(50000);
-      cy.get('.btn-close').click();
       cy.contains('Nightfall Assets').click();
     });
 
@@ -153,10 +153,8 @@ describe('End to End tests', () => {
       cy.get('#TokenItem_modalSend_tokenAmount').clear().type(transferValue);
       cy.get('#TokenItem_modalSend_compressedPkd').clear().type(recipientPkd);
       cy.get('button').contains('Continue').click();
-      cy.wait(50000);
-      cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
-      cy.get('.btn-close').click();
-      cy.contains('L2 Bridge').click();
+      cy.contains('L2 Bridge', { timeout: 10000 }).click();
+      cy.wait(10000);
       cy.contains('Nightfall Assets').click();
     });
 
@@ -174,6 +172,7 @@ describe('End to End tests', () => {
     it(`recepient: check token balance`, () => {
       cy.wait(50000);
       cy.contains('L2 Bridge').click();
+      cy.wait(10000);
       cy.contains('Nightfall Assets').click();
       cy.get('#TokenItem_tokenBalanceMATIC').should($div => {
         const totalBalance = Number($div.text());
@@ -205,9 +204,8 @@ describe('End to End tests', () => {
       cy.get('#TokenItem_modalSend_compressedPkd').clear().type(recipientPkd);
       cy.get('button').contains('Continue').click();
       cy.wait(50000);
-      cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
-      cy.get('.btn-close').click();
       cy.contains('L2 Bridge').click();
+      cy.wait(10000);
       cy.contains('Nightfall Assets').click();
     });
 
@@ -238,7 +236,6 @@ describe('End to End tests', () => {
         cy.wait(30000);
         cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
         cy.wait(50000);
-        cy.get('.btn-close').click();
       }
       cy.contains('Nightfall Assets').click();
     });
