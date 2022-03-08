@@ -18,9 +18,9 @@ function toAccommodateTx(txPerBlock, noOfTx) {
   return txPerBlock * i;
 }
 
-Cypress.LocalStorage.clear = function (keys, ls, rs) {
+Cypress.LocalStorage.clear = function (keys) {
   console.log(keys);
-}
+};
 
 describe('End to End tests', () => {
   let currentTokenBalance = 0;
@@ -51,13 +51,13 @@ describe('End to End tests', () => {
 
     it('generate Mnemonic and set state', () => {
       cy.contains('Polygon Nightfall Wallet').click();
-      cy.get('button').contains('Generate Mnemonic', {timeout: 10000}).click();
-      cy.get('button').contains('Create Wallet', {timeout: 10000}).click();
+      cy.get('button').contains('Generate Mnemonic', { timeout: 10000 }).click();
+      cy.get('button').contains('Create Wallet', { timeout: 10000 }).click();
       cy.confirmMetamaskSignatureRequest().then(confirmed => expect(confirmed).to.be.true);
       cy.get('#TokenItem_tokenDepositMATIC').click();
       cy.url().should('include', '/bridge');
       cy.wait(30000);
-      cy.contains('Nightfall Assets', {timeout: 10000}).click();
+      cy.contains('Nightfall Assets', { timeout: 10000 }).click();
       cy.url().should('include', '/wallet');
 
       // once state get set for mnemonic visiting wallet page again
