@@ -54,7 +54,7 @@ describe('End to End tests', () => {
       cy.confirmMetamaskSignatureRequest().then(confirmed => expect(confirmed).to.be.true);
       cy.get('#TokenItem_tokenDepositMATIC').click();
       cy.url().should('include', '/bridge');
-      cy.wait(30000);
+      cy.wait(10000);
       cy.contains('Nightfall Assets', { timeout: 10000 }).click();
       cy.url().should('include', '/wallet');
 
@@ -153,10 +153,8 @@ describe('End to End tests', () => {
       cy.get('#TokenItem_modalSend_tokenAmount').clear().type(transferValue);
       cy.get('#TokenItem_modalSend_compressedPkd').clear().type(recipientPkd);
       cy.get('button').contains('Continue').click();
-      cy.wait(50000);
-      cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
-      cy.get('.btn-close').click();
       cy.contains('L2 Bridge').click();
+      cy.wait(10000);
       cy.contains('Nightfall Assets').click();
     });
 
@@ -174,6 +172,7 @@ describe('End to End tests', () => {
     it(`recepient: check token balance`, () => {
       cy.wait(50000);
       cy.contains('L2 Bridge').click();
+      cy.wait(10000);
       cy.contains('Nightfall Assets').click();
       cy.get('#TokenItem_tokenBalanceMATIC').should($div => {
         const totalBalance = Number($div.text());
@@ -205,9 +204,8 @@ describe('End to End tests', () => {
       cy.get('#TokenItem_modalSend_compressedPkd').clear().type(recipientPkd);
       cy.get('button').contains('Continue').click();
       cy.wait(50000);
-      cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
-      cy.get('.btn-close').click();
       cy.contains('L2 Bridge').click();
+      cy.wait(10000);
       cy.contains('Nightfall Assets').click();
     });
 
@@ -238,7 +236,6 @@ describe('End to End tests', () => {
         cy.wait(30000);
         cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
         cy.wait(50000);
-        cy.get('.btn-close').click();
       }
       cy.contains('Nightfall Assets').click();
     });
