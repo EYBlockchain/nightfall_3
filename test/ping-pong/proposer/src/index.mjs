@@ -33,13 +33,10 @@ async function startProposer() {
     await nf3.registerProposer();
     logger.info('Proposer registration complete');
   } else logger.warn('Proposer appears to be registerd already');
-<<<<<<< HEAD
-=======
   if (PROPOSER_PORT !== '') {
     logger.debug('Proposer healthcheck up');
     app.listen(PROPOSER_PORT);
   }
->>>>>>> origin
   // TODO subscribe to layer 1 blocks and call change proposer
   nf3.startProposer();
   logger.info('Listening for incoming events');

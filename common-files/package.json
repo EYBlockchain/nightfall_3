@@ -8,10 +8,7 @@
   "license": "ISC",
   "description": "nightfall_3 common files",
   "dependencies": {
-<<<<<<< HEAD
-=======
     "aws-sdk": "^2.1084.0",
->>>>>>> origin
     "config": "^3.3.7",
     "winston": "^3.6.0"
   }
