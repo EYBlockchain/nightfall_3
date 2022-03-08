@@ -18,12 +18,12 @@ import './Stateful.sol';
 contract Challenges is Stateful, Key_Registry, Config {
     mapping(bytes32 => address) public committers;
 
-  function initialize() override(Stateful, Key_Registry) public initializer {
-    Stateful.initialize();
-    Key_Registry.initialize();
-  }
+    function initialize() public override(Stateful, Key_Registry) initializer {
+        Stateful.initialize();
+        Key_Registry.initialize();
+    }
 
-  /**
+    /**
   Check that the block correctly updates the leafCount.  Note that the leafCount
   is actually the value BEFORE the commitments are added to the Merkle tree.
   Thus we need the prior block so that we can check it because the value should
@@ -265,7 +265,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         uint256 transactionIndex2,
         uint256 nullifierIndex2,
         bytes32 salt
-    ) public {
+    ) external {
         checkCommit(msg.data);
         ChallengesUtil.libChallengeNullifier(
             txs1[transactionIndex1],

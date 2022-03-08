@@ -38,7 +38,8 @@ library ChallengesUtil {
             priorBlockL2.root
         );
         require(valid, 'The sibling path is invalid');
-        uint256 commitmentIndex = priorBlockL2.leafCount + Utils.filterCommitments(priorBlockTransactions).length;
+        uint256 commitmentIndex =
+            priorBlockL2.leafCount + Utils.filterCommitments(priorBlockTransactions).length;
         // At last, we can check if the root itself is correct!
         (bytes32 root, , ) =
             MerkleTree_Stateless.insertLeaves(
@@ -66,16 +67,16 @@ library ChallengesUtil {
         public
         pure
     {
-        uint256 nZeroProof;
+        uint256 nZeroProof = 0;
         for (uint256 i = 0; i < transaction.proof.length; i++) {
             if (transaction.proof[i] == 0) nZeroProof++;
         }
-        uint256 nZeroCompressedSecrets;
+        uint256 nZeroCompressedSecrets = 0;
         for (uint256 i = 0; i < transaction.compressedSecrets.length; i++) {
             if (transaction.compressedSecrets[i] == 0) nZeroCompressedSecrets++;
         }
         require(
-                (transaction.tokenId == ZERO && transaction.value == 0) ||
+            (transaction.tokenId == ZERO && transaction.value == 0) ||
                 transaction.ercAddress == ZERO ||
                 transaction.recipientAddress != ZERO ||
                 transaction.commitments[0] == ZERO ||
@@ -95,16 +96,16 @@ library ChallengesUtil {
         public
         pure
     {
-        uint256 nZeroCompressedSecrets;
+        uint256 nZeroCompressedSecrets = 0;
         for (uint256 i = 0; i < transaction.compressedSecrets.length; i++) {
             if (transaction.compressedSecrets[i] == 0) nZeroCompressedSecrets++;
         }
-        uint256 nZeroProof;
+        uint256 nZeroProof = 0;
         for (uint256 i = 0; i < transaction.proof.length; i++) {
             if (transaction.proof[i] == 0) nZeroProof++;
         }
         require(
-                transaction.tokenId != ZERO ||
+            transaction.tokenId != ZERO ||
                 transaction.value != 0 ||
                 transaction.ercAddress == ZERO ||
                 transaction.recipientAddress != ZERO ||
@@ -124,16 +125,16 @@ library ChallengesUtil {
         public
         pure
     {
-        uint256 nZeroCompressedSecrets;
+        uint256 nZeroCompressedSecrets = 0;
         for (uint256 i = 0; i < transaction.compressedSecrets.length; i++) {
             if (transaction.compressedSecrets[i] == 0) nZeroCompressedSecrets++;
         }
-        uint256 nZeroProof;
+        uint256 nZeroProof = 0;
         for (uint256 i = 0; i < transaction.proof.length; i++) {
             if (transaction.proof[i] == 0) nZeroProof++;
         }
         require(
-                transaction.tokenId != ZERO ||
+            transaction.tokenId != ZERO ||
                 transaction.value != 0 ||
                 transaction.ercAddress == ZERO ||
                 transaction.recipientAddress != ZERO ||
@@ -152,16 +153,16 @@ library ChallengesUtil {
         public
         pure
     {
-        uint256 nZeroProof;
+        uint256 nZeroProof = 0;
         for (uint256 i = 0; i < transaction.proof.length; i++) {
             if (transaction.proof[i] == 0) nZeroProof++;
         }
-        uint256 nZeroCompressedSecrets;
+        uint256 nZeroCompressedSecrets = 0;
         for (uint256 i = 0; i < transaction.compressedSecrets.length; i++) {
             if (transaction.compressedSecrets[i] == 0) nZeroCompressedSecrets++;
         }
         require(
-                (transaction.tokenId == ZERO && transaction.value == 0) ||
+            (transaction.tokenId == ZERO && transaction.value == 0) ||
                 transaction.ercAddress == ZERO ||
                 transaction.recipientAddress == ZERO ||
                 transaction.commitments[0] != ZERO ||
