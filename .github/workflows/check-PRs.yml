@@ -168,7 +168,7 @@ jobs:
 
   test-gas:
     name: check gas for 32 transactions per block
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@master
       - uses: actions/setup-node@v1
