@@ -18,6 +18,10 @@ function toAccommodateTx(txPerBlock, noOfTx) {
   return txPerBlock * i;
 }
 
+Cypress.LocalStorage.clear = function (keys, ls, rs) {
+  console.log(keys);
+}
+
 describe('End to End tests', () => {
   let currentTokenBalance = 0;
   const depositValue = 4;
@@ -47,17 +51,21 @@ describe('End to End tests', () => {
 
     it('generate Mnemonic and set state', () => {
       cy.contains('Polygon Nightfall Wallet').click();
-      cy.get('button').contains('Generate Mnemonic').click();
-      cy.get('button').contains('Create Wallet').click();
+      cy.get('button').contains('Generate Mnemonic', {timeout: 10000}).click();
+      cy.get('button').contains('Create Wallet', {timeout: 10000}).click();
       cy.confirmMetamaskSignatureRequest().then(confirmed => expect(confirmed).to.be.true);
       cy.get('#TokenItem_tokenDepositMATIC').click();
       cy.url().should('include', '/bridge');
-      cy.contains('Nightfall Assets').click();
+      cy.wait(30000);
+      cy.contains('Nightfall Assets', {timeout: 10000}).click();
       cy.url().should('include', '/wallet');
 
       // once state get set for mnemonic visiting wallet page again
       // will not open Generate Mnemonic modal, hence the below assertion
+      // cy.wait(30000);
       cy.get('button').contains('Generate Mnemonic').should('not.exist');
+      cy.get('#TokenItem_tokenDepositMATIC', { timeout: 10000 }).should('be.visible');
+      cy.wait(70000);
     });
   });
 
@@ -73,8 +81,9 @@ describe('End to End tests', () => {
     // for now in nightfall browser deposit balance reflect only after receiving block proposed event
     noOfDeposit = txPerBlock > noOfDeposit ? txPerBlock : toAccommodateTx(txPerBlock, noOfDeposit);
     it(`do ${noOfDeposit} deposit of value ${depositValue}`, () => {
+      cy.wait(70000);
+      // cy.wait(30000);
       cy.get('#TokenItem_tokenDepositMATIC').click();
-
       // for now in browser if once we typed deposit value in text box
       // we can do muptiple deposit one after another
       // without need to re-type
