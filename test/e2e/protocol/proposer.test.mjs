@@ -32,7 +32,6 @@ describe('Basic Proposer tests', () => {
 
     // Proposer registration
     await testProposers[0].registerProposer();
-
     // Proposer listening for incoming events
     const newGasBlockEmitter = await testProposers[0].startProposer();
     newGasBlockEmitter.on('gascost', async gasUsed => {
