@@ -1,4 +1,4 @@
-const ManifestPlugin = require('webpack-manifest-plugin');
+const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
 /* eslint-disable global-require */
 const { addBeforeLoader, loaderByName } = require('@craco/craco');
 // eslint-disable-next-line no-extend-native
@@ -11,7 +11,7 @@ module.exports = {
     alias: {},
     plugins: {
       add: [
-        new ManifestPlugin({
+        new WebpackManifestPlugin({
           fileName: 'assets_test.json',
           generate: (seed, files) => {
             const js = [];

@@ -43,7 +43,7 @@ const AccountProvider = ({ children }: any) => {
 /**
 * Hook to allow the context call   
 */
-function useAccount() {
+const useAccount = () => {
   const context = useContext(AccountContext);
       
   if (!context) {

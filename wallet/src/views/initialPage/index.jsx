@@ -53,27 +53,27 @@ const cardsData = [
   },
 ];
 
-const { setAccountInstance } = useAccount();
-
-async function loadBlockchainData() {
-  if (window.web3) {
-    const { web3 } = window;
-
-    //   Load account
-    const accounts = await web3.eth.getAccounts();
-    console.log('ACCOUNT1: ', accounts);
-    setAccountInstance({
-      address: accounts[0],
-    });
-  }
-}
-
 // src={require('../static/img/homepage/poly-bridge.png')}
 export default function MainPage() {
   useEffect(() => {
     loadWeb3();
     loadBlockchainData();
   }, []);
+
+  const { setAccountInstance } = useAccount();
+
+  async function loadBlockchainData() {
+    if (window.web3) {
+      const { web3 } = window;
+
+      //   Load account
+      const accounts = await web3.eth.getAccounts();
+      console.log('ACCOUNT1: ', accounts);
+      setAccountInstance({
+        address: accounts[0],
+      });
+    }
+  }
 
   return (
     <div className="homepage">
