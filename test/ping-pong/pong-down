@@ -20,6 +20,10 @@ while [ -n "$1" ]; do
                                 echo -n 'Removing '
                                 docker volume rm ping-pong_build
                               fi
+                              if [[ $(echo $VOLUME_LIST | grep ping-pong_openzeppelin) ]]; then
+                                echo -n 'Removing '
+                                docker volume rm ping-pong_openzeppelin
+                              fi
                               ;;
       -h | --help )           usage
                               exit 0

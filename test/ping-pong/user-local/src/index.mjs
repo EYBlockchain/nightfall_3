@@ -45,6 +45,8 @@ async function localTest() {
   const ercAddress = await nf3.getContractAddress(ERC20_NAME);
   const startBalance = await retrieveL2Balance(nf3);
 
+  logger.info(`State contract version is ${await nf3.getContractVersion('State')}`);
+
   // Create a block of deposits
   for (let i = 0; i < TRANSACTIONS_PER_BLOCK; i++) {
     await nf3.deposit(ercAddress, tokenType, value, tokenId);

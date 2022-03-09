@@ -60,3 +60,17 @@ Note, `TEST_LENGTH` variable can be set for `user_local1` and `user_local2` in
 Testing on a Linux machine will require the `/etc/hosts` file in each container to be edited to
 point `host.docker.internal` to the external IP address of the host machine. Hopefully someone will
 push detailed instructions when they've done this.
+
+# Upgrade test
+
+This is a simple test that upgrading a contract works successfully.  It's not intended to be a
+regular test. To test, simply run the script:
+```sh
+cd test/ping-pong
+./upgrade-test.sh
+```
+It will run the ping-pong test twice, upgrading the `State` contract in between. The only difference
+between the two is a constant value `version`, which gets incremented. The first time
+the test runs, look for the `info` log output `State contract version is 0.0.1`.  The second time the test
+runs, the contract's version will be `0.0.2`. The test takes a little while (~5 mins) so be patient.
+The console output should provide helpful hints about progress.

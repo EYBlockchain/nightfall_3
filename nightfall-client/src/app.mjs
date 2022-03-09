@@ -4,6 +4,7 @@ import cors from 'cors';
 import {
   deposit,
   getContractAddress,
+  getContractVersion,
   transfer,
   withdraw,
   finaliseWithdrawal,
@@ -27,6 +28,7 @@ app.use(bodyParser.urlencoded({ limit: '2mb', extended: true }));
 
 app.use('/deposit', deposit);
 app.use('/contract-address', getContractAddress);
+app.use('/contract-version', getContractVersion);
 app.use('/transfer', transfer);
 app.use('/withdraw', withdraw);
 app.use('/finalise-withdrawal', finaliseWithdrawal);

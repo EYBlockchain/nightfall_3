@@ -114,6 +114,11 @@ if [[ $(echo $VOLUME_LIST | grep nightfall_3_dag2) ]]; then
   docker volume rm nightfall_3_dag2
 fi
 
+if [[ $(echo $VOLUME_LIST | grep nightfall_3_openzeppelin) ]]; then
+  echo -n 'Removing '
+  docker volume rm nightfall_3_openzeppelin
+fi
+
 DIR=./common-files/node_modules
 if [[ -d "$DIR" ]]; then
   rm -dr common-files/node_modules

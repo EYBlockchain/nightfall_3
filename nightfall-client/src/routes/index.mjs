@@ -1,5 +1,6 @@
 import deposit from './deposit.mjs';
 import getContractAddress from './contract-address.mjs';
+import getContractVersion from './contract-version.mjs';
 import transfer from './transfer.mjs';
 import withdraw from './withdraw.mjs';
 import finaliseWithdrawal from './finalise-withdrawal.mjs';
@@ -15,6 +16,7 @@ export {
   deposit,
   withdraw,
   getContractAddress,
+  getContractVersion,
   finaliseWithdrawal,
   isValidWithdrawal,
   peers,

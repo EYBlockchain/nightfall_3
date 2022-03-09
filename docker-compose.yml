@@ -90,6 +90,9 @@ services:
       - type: volume
         source: build
         target: /app/build/
+      - type: volume
+        source: openzeppelin
+        target: /app/.openzeppelin
     networks:
       - nightfall_network
     environment:
@@ -170,9 +173,9 @@ volumes:
   mongodb1: null
   mongodb2: null
   proving_files: null
-  build:
+  build: null
+  openzeppelin: null
 
-    null
 networks:
   nightfall_network:
     driver: bridge
