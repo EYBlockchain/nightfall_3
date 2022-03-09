@@ -13,7 +13,7 @@ chai.use(chaiAsPromised);
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
-const { signingKeys } = config.TEMPORARY_RESTRICTIONS;
+const { signingKeys } = config.RESTRICTIONS;
 const { bond, gasCosts, mnemonics, signingKeys: testSigningKeys } = config.TEST_OPTIONS;
 
 const bootProposer = new Nf3(signingKeys.bootProposerKey, environment);
