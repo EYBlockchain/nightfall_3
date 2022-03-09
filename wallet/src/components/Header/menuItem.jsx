@@ -10,7 +10,7 @@ export default function MenuItem() {
   return (
     <div className="menuBox">
       <CgMenuGridO />
-      {!isSmallScreen && <p>Apps</p>}
+      {!isSmallScreen && <span>Apps</span>}
     </div>
   );
 }

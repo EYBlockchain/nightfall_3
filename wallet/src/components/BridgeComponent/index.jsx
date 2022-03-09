@@ -1,4 +1,4 @@
-import React, { useContext, useState, useCallback } from 'react';
+import React, { useContext, useState, useCallback, useEffect } from 'react';
 import Modal from 'react-bootstrap/Modal';
 import Dropdown from 'react-bootstrap/Dropdown';
 import DropdownButton from 'react-bootstrap/DropdownButton';
@@ -24,6 +24,10 @@ import { UserContext } from '../../hooks/User/index.jsx';
 import './styles.scss';
 import Input from '../Input/index.tsx';
 import TokensList from '../Modals/Bridge/TokensList/index.tsx';
+import { useAccount } from '../../hooks/Account/index.tsx';
+import loadAccount from '../../utils/loadAccount.ts';
+import minERC20ABI from '../../utils/getMinABIErc20.ts';
+import { getWalletBalance } from '../../nightfall-browser/services/commitment-storage';
 
 const BridgeComponent = () => {
   // const [state] = useState(() => props[Object.keys(props)[1].toString()].value);
@@ -154,11 +158,63 @@ const BridgeComponent = () => {
     [transferValue],
   );
 
+  /** ******* ABOUT GET L1 BALANCE ******** */
+  const { accountInstance, setAccountInstance } = useAccount();
+  const [l1Balance, setL1Balance] = useState(0);
+  const [token, setToken] = useState(null);
+  const [l2Balance, setL2Balance] = useState(0);
+
+  async function setAccount() {
+    setAccountInstance(await loadAccount());
+  }
+
+  async function updateL1Balance() {
+    setAccount();
+    if (token && token.address) {
+      const contract = new window.web3.eth.Contract(minERC20ABI, token.address);
+      const result = await contract.methods.balanceOf(accountInstance.address).call(); // 29803630997051883414242659
+      const format = window.web3.utils.fromWei(result); // 29803630.997051883414242659
+      setL1Balance(format);
+    } else {
+      setL1Balance(0);
+    }
+  }
+
+  async function updateL2Balance() {
+    if (token && token.address) {
+      const l2bal = await getWalletBalance();
+      console.log('L2BAL: ', Object.values(l2bal));
+      console.log(token.address.toString());
+      new Promise(resolve => {
+        let balanceAmount = 0;
+        Object.values(l2bal).forEach(obj => {
+          balanceAmount += Object.values(obj)[0];
+        });
+        resolve(balanceAmount);
+      }).then(value => setL2Balance(value));
+    } else {
+      setL2Balance(0);
+    }
+  }
+
+  useEffect(() => {
+    updateL1Balance();
+    updateL2Balance();
+    console.log('TOKEN: ', token);
+  }, [token]);
+
+  const updateInputValue = () => {
+    document.getElementById('inputValue').value = l1Balance;
+    setTransferValue(l1Balance);
+  };
+
+  /** ************************************ */
+
   return (
     <div>
       {showTokensListModal && (
         <div className="modalWrapper">
-          <TokensList handleClose={setShowTokensListModal} />
+          <TokensList handleClose={setShowTokensListModal} setToken={setToken} />
         </div>
       )}
 
@@ -198,7 +254,12 @@ const BridgeComponent = () => {
                 </div>
                 <div className="balance_details">
                   <p>Balance: </p>
-                  <p>200 ETH</p>
+                  {token && (
+                    <p>
+                      {txType === 'deposit' ? `${l1Balance} ${token.symbol}` : `${l2Balance} MATIC`}
+                    </p>
+                  )}
+                  {!token && <p>{txType === 'deposit' ? `${l1Balance}` : `${l2Balance}`}</p>}
                 </div>
               </div>
               <div className="from_section_line"></div>
@@ -206,23 +267,35 @@ const BridgeComponent = () => {
                 <div className="amount_details">
                   <div className="amount_value_wrapper">
                     <Input
+                      id="inputValue"
                       name="price"
-                      mask="currency"
                       prefix="$"
                       placeholder="0,00"
                       onChange={handleChange}
                     />
-                    <div className="amount_details_max">MAX</div>
+                    <div className="amount_details_max" onClick={() => updateInputValue()}>
+                      <span>MAX</span>
+                    </div>
                   </div>
                 </div>
                 <div className="token_details">
                   <div className="token_details_wapper" onClick={() => openTokensListModal()}>
-                    <img src={polygonChainImage} alt="polygon chain logo" height="24" width="24" />
-
-                    <div className="token_details_text" id="bridge_tokenDetails_tokenName">
-                      {/* {{ isDepositEther ? isDepositEther : selectedToken.name }} */}
-                      MATIC
-                    </div>
+                    {token && token.logoURI && token.symbol && (
+                      <>
+                        <img src={token.logoURI} alt="chain logo" height="24" width="24" />
+                        <div className="token_details_text" id="bridge_tokenDetails_tokenName">
+                          <span>{token.symbol}</span>
+                        </div>
+                      </>
+                    )}
+                    {!token && (
+                      <>
+                        <div></div>
+                        <div className="token_details_text" id="bridge_tokenDetails_tokenName">
+                          <span>Select</span>
+                        </div>
+                      </>
+                    )}
                     <img src={discloserBottomImage} alt="discloser icon" height="24" width="24" />
                   </div>
                 </div>
@@ -246,7 +319,7 @@ const BridgeComponent = () => {
               </div>
               <div className="balance_details">
                 <p>Balance: </p>
-                <p>XX MATIC</p>
+                <p>{txType === 'deposit' ? `${l2Balance} MATIC` : `${l1Balance}`}</p>
               </div>
             </div>
           </div>

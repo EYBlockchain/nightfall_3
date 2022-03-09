@@ -2,17 +2,17 @@
 
 .menuBox {
   display: flex;
-  align-items: center;
+  align-items: center;  
   color: $light-gray-900;
   
   svg {
-    font-size: 36px; 
-    margin-right: 4px;       
+    font-size: 32px; 
+    margin-right: 4px;    
   }
 
-  p {
+  span {
     font-size: medium;
-    font-weight: normal;
+    font-weight: normal;    
   }  
 
   &:hover {
@@ -26,7 +26,7 @@
       font-size: 24px;    
     }
   
-    p {
+    span {
       font-size: small;
       font-weight: normal;
     }

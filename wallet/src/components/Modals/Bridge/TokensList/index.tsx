@@ -1,21 +1,27 @@
 import React, { useState, Dispatch, SetStateAction, ChangeEvent } from 'react';
 import "./styles.scss";
-import { AiOutlineClose } from 'react-icons/ai'
 import { FiSearch } from 'react-icons/fi';
 import tokensList from './tokensList';
 import Modal from 'react-bootstrap/Modal';
+import TokenType from './TokenType';
 
 type TokenListType = {
-  handleClose: Dispatch<SetStateAction<boolean>>;  
+  handleClose: Dispatch<SetStateAction<boolean>>;
+  setToken: Dispatch<SetStateAction<TokenType>>;
 }
 
-const TokensList = ({ handleClose }: TokenListType) => {    
+const TokensList = ({ handleClose, setToken }: TokenListType) => {    
 
   const [filteredTokens, setFilteredTokens] = useState(tokensList.tokens);
   
   const filterTokens = (e: ChangeEvent<HTMLInputElement>) => {
     setFilteredTokens(tokensList.tokens.filter(token => token.name.toLowerCase().includes(e.target.value.toLocaleLowerCase())));    
     console.log("E: ",e.target.value);
+  }
+
+  const handleTokenSelection = (token: any) => {    
+    setToken(token);
+    handleClose(false);
   }
 
   return (
@@ -38,7 +44,7 @@ const TokensList = ({ handleClose }: TokenListType) => {
           </div>      
           <ul className="tokens_list">
             {filteredTokens.map((token: any, index: number) => (
-              <li className="tokens_line" key={index}>
+              <li className="tokens_line" key={index} onClick={() => handleTokenSelection(token)}>
                 <div>
                   <img src={token.logoURI} alt="token image" />
                   <p>{token.name}</p>

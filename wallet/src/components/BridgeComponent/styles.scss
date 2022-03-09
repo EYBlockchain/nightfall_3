@@ -292,9 +292,11 @@ $medium: 900px;
 }
 
 .amount_details_max {
+  display: flex;
+  align-items: center;
   /* MAX */
-  width: 31px;
-  height: 20px;
+  width: 40px;
+  height: 30px;
   left: 679px;
   top: 314px;
 
@@ -312,6 +314,16 @@ $medium: 900px;
   /* light/primary-500 */
 
   color: #7B3FE4;
+
+  span {
+    padding: 3px;
+  }
+
+  &:hover {
+    cursor: pointer;
+    background-color: #F7F7F7;
+    border-radius: 5px;
+  }
 }
 
 .amount_value_wrapper {

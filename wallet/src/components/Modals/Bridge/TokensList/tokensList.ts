@@ -1,7 +1,30 @@
 const tokensList = 
 {
   "tokens": 
-  [
+  [    
+    {
+      "chainId": 137,
+      "name": "Ether - ERC20 Mock",
+      "symbol": "ETH",
+      "decimals": 18,
+      "address": "0xf05e9FB485502E5A93990C714560b7cE654173c3",
+      "logoURI": "https://wallet-asset.matic.network/img/tokens/eth.svg",
+      "tags": [
+        "pos",
+        "erc20",
+        "swapable", 
+        "metaTx"
+      ],
+      "extensions": {
+        "parentAddress": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "project": {
+          "name": "-",
+          "summary": "-",
+          "contact": "-",
+          "website": "https://weth.io/"
+        }
+      }
+    },
     {
       "chainId": 137,
       "name": "Ether - PoS",
