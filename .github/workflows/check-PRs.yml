@@ -33,6 +33,8 @@ jobs:
         run: |
           ./setup-nightfall
           ./start-nightfall -g -d &> test-gas.log &disown
+        env:
+          TRANSACTIONS_PER_BLOCK: 32
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
