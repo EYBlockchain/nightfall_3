@@ -196,6 +196,7 @@ services:
       BLOCKCHAIN_PORT: 8546
       IS_TEST_RUNNER: 'yes'
       TEST_LENGTH: 1
+      TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
 
   hosted-utils-api-server:
     build:
