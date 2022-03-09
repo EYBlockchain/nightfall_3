@@ -54,11 +54,7 @@ const cardsData = [
 ];
 
 // src={require('../static/img/homepage/poly-bridge.png')}
-export default function MainPage() {
-  useEffect(() => {
-    loadWeb3();
-    loadBlockchainData();
-  }, []);
+export default function MainPage() {  
 
   const { setAccountInstance } = useAccount();
 
@@ -75,6 +71,11 @@ export default function MainPage() {
     }
   }
 
+  useEffect(() => {
+    loadWeb3();
+    loadBlockchainData();
+  }, []);
+  
   return (
     <div className="homepage">
       <div className="header-h2 text-center">Getting started with Polygon PoS chain</div>
