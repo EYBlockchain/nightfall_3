@@ -5,6 +5,7 @@ import chaiAsPromised from 'chai-as-promised';
 import Queue from 'queue';
 import WebSocket from 'ws';
 import { generateMnemonic } from 'bip39';
+import logger from '../common-files/utils/logger.mjs';
 import { createBadBlock, topicEventMapping, Web3Client } from './utils.mjs';
 
 const { expect } = chai;
@@ -72,11 +73,11 @@ describe('Testing the challenge http API', () => {
   };
 
   const waitForTxExecution = async (count, txType) => {
-    if (process.env.VERBOSE) console.log('waiting for twelve confirmations of event');
+    logger.debug('waiting for twelve confirmations of event');
     while (count === logs[txType].length) {
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
-    if (process.env.VERBOSE) console.log('event confirmed');
+    logger.debug('event confirmed');
   };
 
   before(async () => {
@@ -180,86 +181,76 @@ describe('Testing the challenge http API', () => {
             const { block, transactions } = msg;
             if (counter === 0) {
               [duplicateTransaction] = transactions;
-              if (process.env.VERBOSE)
-                console.log(
-                  `Created good block to extract duplicate tx from with blockHash ${block.blockHash}`,
-                );
+              logger.debug(
+                `Created good block to extract duplicate tx from with blockHash ${block.blockHash}`,
+              );
             } else if (counter === 1) {
               [duplicateNullifier] = transactions
                 .map(t => t.nullifiers.filter(n => n !== ZERO))
                 .flat(Infinity);
-              if (process.env.VERBOSE)
-                console.log(
-                  `Created good block to extract duplicate nullifier ${duplicateNullifier} from with blockHash ${block.blockHash}`,
-                );
+              logger.debug(
+                `Created good block to extract duplicate nullifier ${duplicateNullifier} from with blockHash ${block.blockHash}`,
+              );
             } else if (counter === 2) {
               res = await createBadBlock('IncorrectRoot', block, transactions, {
                 leafIndex: 1,
               });
               topicsBlockHashIncorrectRootInBlock = res.block.blockHash;
               txDataToSign = res.txDataToSign;
-              if (process.env.VERBOSE)
-                console.log(
-                  `Created flawed block with incorrect root and blockHash ${res.block.blockHash}`,
-                );
+              logger.debug(
+                `Created flawed block with incorrect root and blockHash ${res.block.blockHash}`,
+              );
             } else if (counter === 3) {
               res = await createBadBlock('DuplicateTransaction', block, transactions, {
                 duplicateTransaction,
               });
               topicsBlockHashDuplicateTransaction = res.block.blockHash;
               txDataToSign = res.txDataToSign;
-              if (process.env.VERBOSE)
-                console.log(
-                  `Created flawed block containing duplicate transaction and blockHash ${res.block.blockHash}`,
-                );
+              logger.debug(
+                `Created flawed block containing duplicate transaction and blockHash ${res.block.blockHash}`,
+              );
             } else if (counter === 4) {
               res = await createBadBlock('InvalidDepositTransaction', block, transactions);
               topicsBlockHashInvalidTransaction = res.block.blockHash;
               txDataToSign = res.txDataToSign;
-              if (process.env.VERBOSE)
-                console.log(
-                  `Created flawed block with invalid deposit transaction and blockHash ${res.block.blockHash}`,
-                );
+              logger.debug(
+                `Created flawed block with invalid deposit transaction and blockHash ${res.block.blockHash}`,
+              );
             } else if (counter === 5) {
               res = await createBadBlock('IncorrectHistoricRoot', block, transactions);
               topicsBlockHashesIncorrectHistoricRoot = res.block.blockHash;
               txDataToSign = res.txDataToSign;
-              if (process.env.VERBOSE)
-                console.log(
-                  `Created flawed block with invalid historic root ${res.block.blockHash}`,
-                );
+              logger.debug(
+                `Created flawed block with invalid historic root ${res.block.blockHash}`,
+              );
             } else if (counter === 6) {
               res = await createBadBlock('IncorrectProof', block, transactions, {
                 proof: duplicateTransaction.proof,
               });
               topicsBlockHashIncorrectProof = res.block.blockHash;
               txDataToSign = res.txDataToSign;
-              if (process.env.VERBOSE)
-                console.log(
-                  `Created flawed block with incorrect proof and blockHash ${res.block.blockHash}`,
-                );
+              logger.debug(
+                `Created flawed block with incorrect proof and blockHash ${res.block.blockHash}`,
+              );
             } else if (counter === 7) {
               res = await createBadBlock('DuplicateNullifier', block, transactions, {
                 duplicateNullifier,
               });
               topicsBlockHashDuplicateNullifier = res.block.blockHash;
               txDataToSign = res.txDataToSign;
-              if (process.env.VERBOSE)
-                console.log(
-                  `Created flawed block with duplicate nullifier and blockHash ${res.block.blockHash}`,
-                );
+              logger.debug(
+                `Created flawed block with duplicate nullifier and blockHash ${res.block.blockHash}`,
+              );
             } else if (counter === 8) {
               res = await createBadBlock('IncorrectLeafCount', block, transactions);
               topicsBlockHashIncorrectLeafCount = res.block.blockHash;
               txDataToSign = res.txDataToSign;
-              if (process.env.VERBOSE)
-                console.log(
-                  `Created flawed block with incorrect leaf count and blockHash ${res.block.blockHash}`,
-                );
+              logger.debug(
+                `Created flawed block with incorrect leaf count and blockHash ${res.block.blockHash}`,
+              );
             } else {
               txDataToSign = msg.txDataToSign;
-              if (process.env.VERBOSE)
-                console.log(`Created good block with blockHash ${block.blockHash}`);
+              logger.debug(`Created good block with blockHash ${block.blockHash}`);
             }
             await web3Client.submitTransaction(
               txDataToSign,

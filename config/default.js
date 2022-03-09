@@ -1,3 +1,5 @@
+const { DOMAIN_NAME = '' } = process.env;
+
 module.exports = {
   COMMITMENTS_DB: 'nightfall_commitments',
   OPTIMIST_DB: 'optimist_data',
@@ -36,9 +38,21 @@ module.exports = {
   OPTIMIST_HOST: process.env.OPTIMIST_HOST || 'optimist',
   OPTIMIST_PORT: process.env.OPTIMIST_PORT || 80,
   clientBaseUrl: `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`,
-  optimistBaseUrl: `http://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_HTTP_PORT}`,
-  optimistWsUrl: `ws://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_WS_PORT}`,
-  web3WsUrl: `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`,
+  // Define Urls and Url format (http/ws vs https/wss, with vs without port) depending on whether a DOMAIN_NAME has been defined.
+  // In production and staging environements, we require https/wss and no port, as traffic will be routed to the correct service
+  // given a URL.
+  optimistBaseUrl:
+    DOMAIN_NAME === ''
+      ? `http://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_HTTP_PORT}`
+      : `https://${process.env.OPTIMIST_HTTP_HOST}`,
+  optimistWsUrl:
+    DOMAIN_NAME === ''
+      ? `ws://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_WS_PORT}`
+      : `wss://${process.env.OPTIMIST_HOST}`,
+  web3WsUrl:
+    DOMAIN_NAME === ''
+      ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`
+      : `wss://${process.env.BLOCKCHAIN_WS_HOST}`,
   userEthereumSigningKey:
     process.env.USER_ETHEREUM_SIGNING_KEY ||
     '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e', // if changed, change associated userEthereumAddresses
@@ -159,6 +173,8 @@ module.exports = {
       clientApiUrl: 'http://localhost:8080',
       optimistApiUrl: 'http://localhost:8081',
       optimistWsUrl: 'ws://localhost:8082',
+      adversarialOptimistApiUrl: 'http://localhost:8088',
+      adversarialOptimistWsUrl: 'ws://localhost:8089',
       web3WsUrl: 'ws://localhost:8546',
     },
   },
@@ -195,8 +211,11 @@ module.exports = {
       challenger: 'crush power outer gadget enter maze advance rather divert monster indoor axis',
       liquidityProvider: 'smart base soup sister army address member poem point quick save penalty',
     },
+    restrictions: {
+      erc20default: 2000,
+    },
   },
-  TEMPORARY_RESTRICTIONS: {
+  RESTRICTIONS: {
     signingKeys: {
       bootProposerKey: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
       bootChallengerKey: '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
@@ -205,5 +224,12 @@ module.exports = {
       bootProposer: '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0',
       bootChallenger: '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0',
     },
+    tokens: [
+      {
+        name: 'MockERC20',
+        address: '0xB5Acbe9a0F1F8B98F3fC04471F7fE5d2c222cB44',
+        amount: 200,
+      },
+    ],
   },
 };

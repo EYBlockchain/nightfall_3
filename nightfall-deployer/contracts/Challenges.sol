@@ -16,9 +16,15 @@ import './Config.sol';
 import './Stateful.sol';
 
 contract Challenges is Stateful, Key_Registry, Config {
-  mapping(bytes32 => address) public committers;
+    mapping(bytes32 => address) public committers;
 
-  /**
+    function initialize() public override(Stateful, Key_Registry, Config) initializer {
+        Stateful.initialize();
+        Key_Registry.initialize();
+        Config.initialize();
+    }
+
+    /**
   Check that the block correctly updates the leafCount.  Note that the leafCount
   is actually the value BEFORE the commitments are added to the Merkle tree.
   Thus we need the prior block so that we can check it because the value should
@@ -46,7 +52,7 @@ contract Challenges is Stateful, Key_Registry, Config {
     challengeAccepted(blockL2, blockNumberL2);
   }
 
-  /**
+    /**
   Checks that the new merkle tree root of a block is incorrect. This could be because the
   merkle tree that stores commitments has been incorrectly updated. To verify this, we first calculate
   this challenged block's frontier using the prior block. Using this frontier, we can work out what the root
@@ -77,7 +83,7 @@ contract Challenges is Stateful, Key_Registry, Config {
     challengeAccepted(blockL2, blockNumberL2);
   }
 
-  /**
+    /**
   Checks that a tranasction has not been seen before (i.e. a duplicate). If the duplicate transaction
   occurs within the same block, there is an additional check to ensure they are not at the same index
   (i.e. a trivial duplicate).
@@ -101,18 +107,18 @@ contract Challenges is Stateful, Key_Registry, Config {
     if(block1NumberL2 == block2NumberL2)
       require(transactionIndex1 != transactionIndex2, 'Cannot be the same index');
 
-    require(
-      Utils.hashTransaction(transactions1[transactionIndex1]) ==
-      Utils.hashTransaction(transactions2[transactionIndex2]),
-      'Transactions are not the same'
-    );
-    // Delete the latest block of the two
-    if (block1NumberL2 > block2NumberL2) {
-      challengeAccepted(block1, block1NumberL2);
-    } else {
-      challengeAccepted(block2, block2NumberL2);
+        require(
+            Utils.hashTransaction(transactions1[transactionIndex1]) ==
+                Utils.hashTransaction(transactions2[transactionIndex2]),
+            'Transactions are not the same'
+        );
+        // Delete the latest block of the two
+        if (block1NumberL2 > block2NumberL2) {
+            challengeAccepted(block1, block1NumberL2);
+        } else {
+            challengeAccepted(block2, block2NumberL2);
+        }
     }
-  }
 
   function challengeTransactionType(
     Block memory blockL2,
@@ -233,7 +239,7 @@ contract Challenges is Stateful, Key_Registry, Config {
     challengeAccepted(blockL2, blockNumberL2);
   }
 
-  /*
+    /*
   This is a challenge that a nullifier has already been spent
   For this challenge to succeed a challenger provides:
   the indices for the same nullifier in two **different** transactions contained in two blocks (note it should also be ok for the blocks to be the same)
@@ -261,16 +267,16 @@ contract Challenges is Stateful, Key_Registry, Config {
     state.isBlockReal(block1, txs1, block1NumberL2);
     state.isBlockReal(block2, txs2, block2NumberL2);
 
-    // The blocks are different and we prune the later block of the two
-    // as we have a block number, it's easy to see which is the latest.
-    if (block1NumberL2 < block2NumberL2) {
-      challengeAccepted(block2, block2NumberL2);
-    } else {
-      challengeAccepted(block1, block1NumberL2);
+        // The blocks are different and we prune the later block of the two
+        // as we have a block number, it's easy to see which is the latest.
+        if (block1NumberL2 < block2NumberL2) {
+            challengeAccepted(block2, block2NumberL2);
+        } else {
+            challengeAccepted(block1, block1NumberL2);
+        }
     }
-  }
 
-  /*
+    /*
   This checks if the historic root blockNumberL2 provided is greater than the numbe of blocks on-chain.
   If the root stored in the block is itself invalid, that is challengeable by challengeNewRootCorrect.
   the indices for the same nullifier in two **different** transactions contained in two blocks (note it should also be ok for the blocks to be the same)
@@ -299,44 +305,42 @@ contract Challenges is Stateful, Key_Registry, Config {
         'Historic root exists'
       );
     }
-    challengeAccepted(blockL2, blockNumberL2);
-  }
 
-  // This gets called when a challenge succeeds
-  function challengeAccepted(Block memory badBlock, uint256 badBlockNumberL2) private {
-    // Check to ensure that the block being challenged is less than a week old
-    require(
-      state.getBlockData(badBlockNumberL2).time >= (block.timestamp - 7 days),
-      'Cannot challenge block'
-    );
-    // emit the leafCount where the bad block was added. Timber will pick this
-    // up and rollback its database to that point.  We emit the event from
-    // State.sol because Timber gets confused if its events come from two
-    // different contracts (it uses the contract name as part of the db
-    // connection - we need to change that).
-    state.emitRollback(badBlockNumberL2, badBlock.leafCount);
-    // we need to remove the block that has been successfully
-    // challenged from the linked list of blocks and all of the subsequent
-    // blocks
-    uint numRemoved = removeBlockHashes(badBlockNumberL2);
-    // remove the proposer and give the proposer's block stake to the challenger
-    state.rewardChallenger(msg.sender, badBlock.proposer, numRemoved);
+    // This gets called when a challenge succeeds
+    function challengeAccepted(Block memory badBlock, uint256 badBlockNumberL2) private {
+        // Check to ensure that the block being challenged is less than a week old
+        require(
+            state.getBlockData(badBlockNumberL2).time >= (block.timestamp - 7 days),
+            'Cannot challenge block'
+        );
+        // emit the leafCount where the bad block was added. Timber will pick this
+        // up and rollback its database to that point.  We emit the event from
+        // State.sol because Timber gets confused if its events come from two
+        // different contracts (it uses the contract name as part of the db
+        // connection - we need to change that).
+        state.emitRollback(badBlockNumberL2, badBlock.leafCount);
+        // we need to remove the block that has been successfully
+        // challenged from the linked list of blocks and all of the subsequent
+        // blocks
+        uint256 numRemoved = removeBlockHashes(badBlockNumberL2);
+        // remove the proposer and give the proposer's block stake to the challenger
+        state.rewardChallenger(msg.sender, badBlock.proposer, numRemoved);
 
-    // TODO repay the fees of the transactors and any escrowed funds held by the
-    // Shield contract.
-  }
-
-  function removeBlockHashes(uint256 blockNumberL2) internal returns (uint256){
-    uint256 lastBlock = state.getNumberOfL2Blocks() - 1;
-    for (uint256 i = lastBlock; i >= blockNumberL2; i--) {
-      state.setBlockStakeWithdrawn(state.popBlockData().blockHash);
+        // TODO repay the fees of the transactors and any escrowed funds held by the
+        // Shield contract.
     }
-    require(
-      state.getNumberOfL2Blocks() == blockNumberL2,
-      'The number remaining is not as expected.'
-    );
-    return (lastBlock + 1 - blockNumberL2);
-  }
+
+    function removeBlockHashes(uint256 blockNumberL2) internal returns (uint256) {
+        uint256 lastBlock = state.getNumberOfL2Blocks() - 1;
+        for (uint256 i = lastBlock; i >= blockNumberL2; i--) {
+            state.setBlockStakeWithdrawn(state.popBlockData().blockHash);
+        }
+        require(
+            state.getNumberOfL2Blocks() == blockNumberL2,
+            'The number remaining is not as expected.'
+        );
+        return (lastBlock + 1 - blockNumberL2);
+    }
 
   //To prevent frontrunning, we need to commit to a challenge before we send it
   function commitToChallenge(bytes32 commitHash) external onlyBootChallenger {
@@ -345,12 +349,12 @@ contract Challenges is Stateful, Key_Registry, Config {
     emit CommittedToChallenge(commitHash, msg.sender);
   }
 
-  // and having sent it, we need to check that commitment to a challenge from
-  // within the challenge function using this function:
-  function checkCommit(bytes calldata messageData) private {
-    bytes32 hash = keccak256(messageData);
-    // salt = 0; // not really required as salt is in msg.data but stops the unused variable compiler warning. Bit of a waste of gas though.
-    require(committers[hash] == msg.sender, 'Commitment hash is invalid');
-    delete committers[hash];
-  }
+    // and having sent it, we need to check that commitment to a challenge from
+    // within the challenge function using this function:
+    function checkCommit(bytes calldata messageData) private {
+        bytes32 hash = keccak256(messageData);
+        // salt = 0; // not really required as salt is in msg.data but stops the unused variable compiler warning. Bit of a waste of gas though.
+        require(committers[hash] == msg.sender, 'Commitment hash is invalid');
+        delete committers[hash];
+    }
 }

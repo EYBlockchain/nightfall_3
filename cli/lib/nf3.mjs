@@ -8,6 +8,7 @@ import { approve } from './tokens.mjs';
 import erc20 from './abis/ERC20.mjs';
 import erc721 from './abis/ERC721.mjs';
 import erc1155 from './abis/ERC1155.mjs';
+
 import { DEFAULT_BLOCK_STAKE, DEFAULT_PROPOSER_BOND, DEFAULT_FEE } from './constants.mjs';
 
 /**
@@ -220,18 +221,17 @@ class Nf3 {
       // then return the receipt.
       // TODO does this still work if there is a chain reorg or do we have to handle that?
       return new Promise((resolve, reject) => {
-        if (process.env.VERBOSE) console.log(`Confirming transaction ${signed.transactionHash}`);
+        logger.debug(`Confirming transaction ${signed.transactionHash}`);
         this.notConfirmed++;
         this.web3.eth
           .sendSignedTransaction(signed.rawTransaction)
           .on('confirmation', (number, receipt) => {
             if (number === 12) {
               this.notConfirmed--;
-              if (process.env.VERBOSE)
-                console.log(
-                  `Transaction ${receipt.transactionHash} has been confirmed ${number} times.`,
-                  `Number of unconfirmed transactions is ${this.notConfirmed}`,
-                );
+              logger.debug(
+                `Transaction ${receipt.transactionHash} has been confirmed ${number} times.`,
+                `Number of unconfirmed transactions is ${this.notConfirmed}`,
+              );
               resolve(receipt);
             }
           })
@@ -615,6 +615,17 @@ class Nf3 {
   }
 
   /**
+  Get current proposer
+  @method
+  @async
+  @returns {array} A promise that resolves to the Ethereum transaction receipt.
+  */
+  async getCurrentProposer() {
+    const res = await axios.get(`${this.optimistBaseUrl}/proposer/current-proposer`);
+    return res.data.currentProposer;
+  }
+
+  /**
   Get all the list of existing proposers.
   @method
   @async
@@ -744,8 +755,8 @@ class Nf3 {
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
       const { type, txDataToSign } = msg;
-      if (type === 'challenge') {
-        await this.submitTransaction(txDataToSign, this.stateContractAddress, 0);
+      if (type === 'commit' || type === 'challenge') {
+        await this.submitTransaction(txDataToSign, this.challengesContractAddress, 0);
       }
     };
   }

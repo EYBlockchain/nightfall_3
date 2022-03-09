@@ -84,9 +84,27 @@ module.exports = {
       websockets: true,
     },
 
+    staging: {
+      url: config.BLOCKCHAIN_URL,
+      network_id: 4378921, // Any network (default: none)
+      gas: 8000000,
+      websockets: true,
+    },
+
     ropsten: {
       provider: () => new HDWalletProvider(config.ETH_PRIVATE_KEY, config.BLOCKCHAIN_URL),
       network_id: 3,
+      networkCheckTimeout: 1000000000,
+      timeoutBlocks: 2000,
+      skipDryRun: true,
+      websockets: true,
+      gasPrice: config.WEB3_OPTIONS.gasPrice,
+      gas: 7000000,
+    },
+
+    mainnet: {
+      provider: () => new HDWalletProvider(config.ETH_PRIVATE_KEY, config.BLOCKCHAIN_URL),
+      network_id: 1,
       networkCheckTimeout: 1000000000,
       timeoutBlocks: 2000,
       skipDryRun: true,

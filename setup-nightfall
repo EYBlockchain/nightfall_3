@@ -3,4 +3,4 @@
 # Install node dependencies
 npm ci
 docker build --no-cache	-t ghcr.io/eyblockchain/local-zokrates -f zokrates.Dockerfile .
-docker-compose build --no-cache
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml build --no-cache

@@ -13,6 +13,21 @@ contract Config is Ownable {
 
     address bootProposer;
     address bootChallenger;
+    mapping(address => uint256) erc20limit;
+
+    function initialize() public virtual override initializer {
+        Ownable.initialize();
+    }
+
+    modifier onlyBootProposer() {
+        require(msg.sender == bootProposer, 'You are not the boot proposer');
+        _;
+    }
+
+    modifier onlyBootChallenger() {
+        require(msg.sender == bootChallenger, 'You are not the boot challenger');
+        _;
+    }
 
     function setBootEntities(address proposer, address challenger) external onlyOwner {
         bootProposer = proposer;
@@ -27,13 +42,15 @@ contract Config is Ownable {
         return bootChallenger;
     }
 
-    modifier onlyBootProposer() {
-        require(msg.sender == bootProposer, 'You are not the boot proposer');
-        _;
+    function getRestriction(address tokenAddr) public view returns (uint256) {
+        return erc20limit[tokenAddr];
     }
 
-    modifier onlyBootChallenger() {
-        require(msg.sender == bootChallenger, 'You are not the boot challenger');
-        _;
+    function setRestriction(address tokenAddr, uint256 amount) external onlyOwner {
+        erc20limit[tokenAddr] = amount;
+    }
+
+    function removeRestriction(address tokenAddr) external onlyOwner {
+        delete erc20limit[tokenAddr];
     }
 }
