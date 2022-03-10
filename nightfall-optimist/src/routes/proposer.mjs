@@ -19,7 +19,7 @@ import {
 } from '../services/database.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
-import { getProposers } from '../services/proposer.mjs';
+import getProposers from '../services/proposer.mjs';
 
 const router = express.Router();
 const { STATE_CONTRACT_NAME, PROPOSERS_CONTRACT_NAME, SHIELD_CONTRACT_NAME, ZERO } = config;

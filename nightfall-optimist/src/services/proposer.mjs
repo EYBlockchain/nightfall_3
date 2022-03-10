@@ -6,7 +6,7 @@ import { waitForContract } from 'common-files/utils/contract.mjs';
 
 const { STATE_CONTRACT_NAME } = config;
 
-export async function getProposers() {
+async function getProposers() {
   const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
   // proposers is an on-chain mapping so to get proposers we need to key to start iterating
   // the safest to start with is the currentProposer
