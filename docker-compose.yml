@@ -167,8 +167,10 @@ services:
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
     command: ['npm', 'run', 'dev']
 
-  deployer-proposer:
-    image: ghcr.io/eyblockchain/nightfall3-deployer-proposer:latest
+  proposer:
+    image: ghcr.io/eyblockchain/nightfall3-proposer:latest
+    depends_on:
+      - optimist1
     networks:
       - nightfall_network
     environment:
@@ -179,10 +181,10 @@ services:
       BLOCKCHAIN_PORT: 8546
       CLIENT_HOST: client1
       DEPLOYER_HOST: deployer
-      TEST_BLOCKS: 2
+      GENESIS_BLOCKS: 2
 
   genesis-blocks-deployer:
-    image: ghcr.io/eyblockchain/nightfall3-genesis-blocks-deployer:latest
+    image: ghcr.io/eyblockchain/nightfall3-user-local:latest
     networks:
       - nightfall_network
     environment:

@@ -112,16 +112,16 @@ services:
         source: ./config/default.js
         target: /app/config/default.js
 
-  deployer-proposer:
+  proposer:
     build:
-      dockerfile: deployer-proposer.Dockerfile
+      dockerfile: proposer.Dockerfile
       context: .
     environment:
       PROPOSER_ETHEREUM_SIGNING_KEY: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d'
 
   genesis-blocks-deployer:
     build:
-      dockerfile: genesis-blocks-deployer.Dockerfile
+      dockerfile: user-local.Dockerfile
       context: .
     environment:
       ERC20_NAME: ERC20Mock
