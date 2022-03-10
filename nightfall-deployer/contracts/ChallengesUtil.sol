@@ -2,10 +2,10 @@
 pragma solidity ^0.8.0;
 //pragma experimental ABIEncoderV2;
 
-import './Utils.sol';
-import './Verifier.sol';
-import './MerkleTree_Stateless.sol';
-import './Structures.sol';
+import "./Utils.sol";
+import "./Verifier.sol";
+import "./MerkleTree_Stateless.sol";
+import "./Structures.sol";
 
 library ChallengesUtil {
     bytes32 public constant ZERO =
@@ -18,7 +18,7 @@ library ChallengesUtil {
     ) public pure {
         uint256 expectedLeafCount =
             priorBlockL2.leafCount + Utils.countCommitments(priorBlockTransactions);
-        require(expectedLeafCount != leafCount, 'The leafCount is actually correct');
+        require(expectedLeafCount != leafCount, "The leafCount is actually correct");
     }
 
     function libChallengeNewRootCorrect(
@@ -37,7 +37,7 @@ library ChallengesUtil {
             priorBlockL2.leafCount,
             priorBlockL2.root
         );
-        require(valid, 'The sibling path is invalid');
+        require(valid, "The sibling path is invalid");
         uint256 commitmentIndex =
             priorBlockL2.leafCount + Utils.filterCommitments(priorBlockTransactions).length;
         // At last, we can check if the root itself is correct!
@@ -47,7 +47,7 @@ library ChallengesUtil {
                 _frontier,
                 commitmentIndex
             );
-        require(root != blockL2.root, 'The root is actually fine');
+        require(root != blockL2.root, "The root is actually fine");
     }
 
     // the transaction type is challenged to not be valid
@@ -87,7 +87,7 @@ library ChallengesUtil {
                 nZeroProof == 4 || // We assume that 3 out of the 4 proof elements can be a valid ZERO. Deals with exception cases
                 transaction.historicRootBlockNumberL2[0] != 0 ||
                 transaction.historicRootBlockNumberL2[1] != 0,
-            'This deposit transaction type is valid'
+            "This deposit transaction type is valid"
         );
     }
 
@@ -116,7 +116,7 @@ library ChallengesUtil {
                 nZeroCompressedSecrets == 8 || // We assume that 7 out of the 8 compressed secrets elements can be a valid ZERO. Deals with exception cases
                 nZeroProof == 4 || // We assume that 3 out of the 4 proof elements can be a valid ZERO. Deals with exception cases
                 transaction.historicRootBlockNumberL2[1] != 0, // If this is a single, the second historicBlockNumber needs to be zero
-            'This single transfer transaction type is valid'
+            "This single transfer transaction type is valid"
         );
     }
 
@@ -144,7 +144,7 @@ library ChallengesUtil {
                 transaction.nullifiers[1] == ZERO ||
                 nZeroCompressedSecrets == 8 || // We assume that 7 out of the 8 compressed secrets elements can be a valid ZERO. Deals with exception cases
                 nZeroProof == 4, // We assume that 3 out of the 4 proof elements can be a valid ZERO. Deals with exception cases
-            'This double transfer transaction type is valid'
+            "This double transfer transaction type is valid"
         );
     }
 
@@ -172,7 +172,7 @@ library ChallengesUtil {
                 nZeroCompressedSecrets != 8 ||
                 nZeroProof == 4 || // We assume that 3 out of the 4 proof elements can be a valid ZERO. Deals with exception cases
                 transaction.historicRootBlockNumberL2[1] != 0, // A withdraw has a similar constraint as a single transfer
-            'This withdraw transaction type is valid'
+            "This withdraw transaction type is valid"
         );
     }
 
@@ -200,7 +200,7 @@ library ChallengesUtil {
         require(
             keccak256(abi.encodePacked(compressedProof)) ==
                 keccak256(abi.encodePacked(Utils.compressProof(uncompressedProof))),
-            'Cannot recreate compressed proof from uncompressed proof'
+            "Cannot recreate compressed proof from uncompressed proof"
         );
     }
 
@@ -212,11 +212,11 @@ library ChallengesUtil {
     ) public pure {
         require(
             tx1.nullifiers[nullifierIndex1] == tx2.nullifiers[nullifierIndex2],
-            'Not matching nullifiers'
+            "Not matching nullifiers"
         );
         require(
             Utils.hashTransaction(tx1) != Utils.hashTransaction(tx2),
-            'Transactions need to be different'
+            "Transactions need to be different"
         );
     }
 }

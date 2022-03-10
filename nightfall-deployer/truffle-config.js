@@ -98,7 +98,7 @@ module.exports = {
       timeoutBlocks: 2000,
       skipDryRun: true,
       websockets: true,
-      gasPrice: config.WEB3_OPTIONS.gasPrice,
+      gasPrice: 20000000000,
       gas: 7000000,
     },
 
@@ -109,7 +109,7 @@ module.exports = {
       timeoutBlocks: 2000,
       skipDryRun: true,
       websockets: true,
-      gasPrice: config.WEB3_OPTIONS.gasPrice,
+      gasPrice: 20000000000,
       gas: 7000000,
     },
 

@@ -27,8 +27,8 @@ Harry R
 
 pragma solidity ^0.8.0;
 
-import './Ownable.sol';
-import './Pairing.sol';
+import "./Ownable.sol";
+import "./Pairing.sol";
 
 library Verifier {
     using Pairing for *;

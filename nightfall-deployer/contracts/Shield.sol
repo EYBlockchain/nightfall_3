@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
-import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
-import '@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol';
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 /**
 Contract to enable someone to submit a ZKP transaction for processing.
 It is possible we will move this off-chain in the future as blockchain
@@ -11,12 +11,12 @@ functionality is not really required - it's just a data availability aid.
 pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
-import './Utils.sol';
-import './ERCInterface.sol';
-import './Key_Registry.sol';
-import './Structures.sol';
-import './Config.sol';
-import './Stateful.sol';
+import "./Utils.sol";
+import "./ERCInterface.sol";
+import "./Key_Registry.sol";
+import "./Structures.sol";
+import "./Config.sol";
+import "./Stateful.sol";
 
 contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUpgradeable {
     mapping(bytes32 => bool) public withdrawn;
@@ -42,7 +42,7 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
         bytes32 transactionHash = Utils.hashTransaction(t);
         if (feeBook[transactionHash] < msg.value) feeBook[transactionHash] = msg.value;
         (bool success, ) = payable(address(state)).call{value: msg.value}('');
-        require(success, 'Transfer failed.');
+        require(success, "Transfer failed.");
     }
 
     // function to enable a proposer to get paid for proposing a block
@@ -57,12 +57,12 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
         uint256 time = state.getBlockData(blockNumberL2).time;
         require(
             time + COOLING_OFF_PERIOD < block.timestamp,
-            'It is too soon to get paid for this block'
+            "It is too soon to get paid for this block"
         );
-        require(b.proposer == msg.sender, 'You are not the proposer of this block');
+        require(b.proposer == msg.sender, "You are not the proposer of this block");
         require(
             state.isBlockStakeWithdrawn(blockHash) == false,
-            'The block stake for this block is already claimed'
+            "The block stake for this block is already claimed"
         );
         // add up how much the proposer is owed.
         uint256 payment;
@@ -112,14 +112,14 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
         uint256 time = state.getBlockData(blockNumberL2).time;
         require(
             time + COOLING_OFF_PERIOD < block.timestamp,
-            'It is too soon to withdraw funds from this block'
+            "It is too soon to withdraw funds from this block"
         );
 
         bytes32 transactionHash = Utils.hashTransaction(ts[index]);
-        require(!withdrawn[transactionHash], 'This transaction has already paid out');
+        require(!withdrawn[transactionHash], "This transaction has already paid out");
         require(
             ts[index].transactionType == TransactionTypes.WITHDRAW,
-            'This transaction is not a valid WITHDRAW'
+            "This transaction is not a valid WITHDRAW"
         );
 
         return true;
@@ -144,10 +144,10 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
         uint256 time = state.getBlockData(blockNumberL2).time;
         require(
             time + COOLING_OFF_PERIOD < block.timestamp,
-            'It is too soon to withdraw funds from this block'
+            "It is too soon to withdraw funds from this block"
         );
         bytes32 transactionHash = Utils.hashTransaction(ts[index]);
-        require(!withdrawn[transactionHash], 'This transaction has already paid out');
+        require(!withdrawn[transactionHash], "This transaction has already paid out");
         withdrawn[transactionHash] = true;
         if (ts[index].transactionType == TransactionTypes.WITHDRAW) {
             address originalRecipientAddress =
@@ -170,14 +170,14 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
         // if no fee is set, then the withdrawal is not tagged as advanceable - else someone could just steal withdrawals
         require(
             advancedFeeWithdrawals[withdrawTransactionHash] > 0,
-            'No advanced fee has been set for this withdrawal'
+            "No advanced fee has been set for this withdrawal"
         );
         require(
             withdrawTransaction.tokenType == TokenType.ERC20,
-            'Can only advance withdrawals for fungible tokens'
+            "Can only advance withdrawals for fungible tokens"
         );
         // The withdrawal has not been withdrawn
-        require(!withdrawn[withdrawTransactionHash], 'Cannot double withdraw');
+        require(!withdrawn[withdrawTransactionHash], "Cannot double withdraw");
 
         // TODO should we check if the withdrawal is not in a finalised block
         // this might incentives sniping freshly finalised blocks by liquidity providers
@@ -195,7 +195,7 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
 
         // Send the token from the msg.sender to the receipient
         if (withdrawTransaction.tokenId != ZERO)
-            revert('ERC20 deposit should have tokenId equal to ZERO');
+            revert("ERC20 deposit should have tokenId equal to ZERO");
         else {
             bool result =
                 tokenContract.transferFrom(
@@ -221,14 +221,14 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
         // The transaction is a withdrawal transaction
         require(
             ts[index].transactionType == TransactionTypes.WITHDRAW,
-            'Can only advance withdrawals'
+            "Can only advance withdrawals"
         );
         // The block and transactions are real
         state.isBlockReal(b, ts, blockNumberL2);
 
         bytes32 withdrawTransactionHash = Utils.hashTransaction(ts[index]);
         // The withdrawal has not been withdrawn
-        require(!withdrawn[withdrawTransactionHash], 'Cannot double withdraw');
+        require(!withdrawn[withdrawTransactionHash], "Cannot double withdraw");
         address originalRecipientAddress = address(uint160(uint256(ts[index].recipientAddress)));
         address currentOwner =
             advancedWithdrawals[withdrawTransactionHash] == address(0)
@@ -236,10 +236,10 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
                 : advancedWithdrawals[withdrawTransactionHash];
 
         // Only the owner of the withdraw can set the advanced withdrawal
-        require(msg.sender == currentOwner, 'You are not the current owner of this withdrawal');
+        require(msg.sender == currentOwner, "You are not the current owner of this withdrawal");
         advancedFeeWithdrawals[withdrawTransactionHash] = msg.value;
         (bool success, ) = payable(address(state)).call{value: msg.value}('');
-        require(success, 'Transfer failed.');
+        require(success, "Transfer failed.");
         emit InstantWithdrawalRequested(withdrawTransactionHash, msg.sender, msg.value);
     }
 
@@ -248,21 +248,21 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
         ERCInterface tokenContract = ERCInterface(address(uint160(uint256(t.ercAddress))));
         // address recipientAddress = address(uint160(uint256(t.recipientAddress)));
         if (t.tokenType == TokenType.ERC20) {
-            if (t.tokenId != ZERO) revert('ERC20 deposit should have tokenId equal to ZERO');
+            if (t.tokenId != ZERO) revert("ERC20 deposit should have tokenId equal to ZERO");
             else {
                 bool result = tokenContract.transfer(recipientAddress, uint256(t.value));
-                if (!result) revert('Shield: Error in transfer');
+                if (!result) revert("Shield: Error in transfer");
             }
         } else if (t.tokenType == TokenType.ERC721) {
             if (t.value != 0)
                 // value should always be equal to 0
-                revert('Invalid inputs for ERC721 deposit');
+                revert("Invalid inputs for ERC721 deposit");
             else
                 tokenContract.safeTransferFrom(
                     address(this),
                     recipientAddress,
                     uint256(t.tokenId),
-                    ''
+                    ""
                 );
         } else if (t.tokenType == TokenType.ERC1155) {
             tokenContract.safeTransferFrom(
@@ -270,10 +270,10 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
                 recipientAddress,
                 uint256(t.tokenId),
                 uint256(t.value),
-                ''
+                ""
             );
         } else {
-            revert('Invalid Token Type');
+            revert("Invalid Token Type");
         }
     }
 
@@ -281,17 +281,17 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
         ERCInterface tokenContract = ERCInterface(address(uint160(uint256(t.ercAddress))));
 
         if (t.tokenType == TokenType.ERC20) {
-            if (t.tokenId != ZERO) revert('ERC20 deposit should have tokenId equal to ZERO');
+            if (t.tokenId != ZERO) revert("ERC20 deposit should have tokenId equal to ZERO");
             else {
                 bool result =
                     tokenContract.transferFrom(msg.sender, address(this), uint256(t.value));
-                if (!result) revert('Shield: Error in transfer');
+                if (!result) revert("Shield: Error in transfer");
             }
         } else if (t.tokenType == TokenType.ERC721) {
             if (t.value != 0)
                 // value should always be equal to 0
-                revert('Invalid inputs for ERC721 deposit');
-            else tokenContract.safeTransferFrom(msg.sender, address(this), uint256(t.tokenId), '');
+                revert("Invalid inputs for ERC721 deposit");
+            else tokenContract.safeTransferFrom(msg.sender, address(this), uint256(t.tokenId), "");
         } else if (t.tokenType == TokenType.ERC1155) {
             tokenContract.safeTransferFrom(
                 msg.sender,
@@ -301,7 +301,7 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
                 ''
             );
         } else {
-            revert('Invalid Token Type');
+            revert("Invalid Token Type");
         }
     }
 }

@@ -8,7 +8,7 @@ Contract that should be extended by contracts that require access to global stat
 
 pragma solidity ^0.8.0;
 
-import './State.sol';
+import "./State.sol";
 
 abstract contract Stateful is Initializable {
   State public state;

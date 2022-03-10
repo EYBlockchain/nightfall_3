@@ -6,10 +6,10 @@ Contract to manage the creation and managment of Proposals
 */
 pragma solidity ^0.8.0;
 
-import './Config.sol';
-import './Utils.sol';
-import './Structures.sol';
-import './Stateful.sol';
+import "./Config.sol";
+import "./Utils.sol";
+import "./Structures.sol";
+import "./Stateful.sol";
 
 contract Proposers is Stateful, Structures, Config, ReentrancyGuardUpgradeable {
 
@@ -34,8 +34,8 @@ contract Proposers is Stateful, Structures, Config, ReentrancyGuardUpgradeable {
 
   //add the proposer to the circular linked list
   function registerProposer() external payable nonReentrant {
-    require(REGISTRATION_BOND <= msg.value, 'The registration payment is incorrect');
-    require(state.getProposer(msg.sender).thisAddress == address(0), 'This proposer is already registered');
+    require(REGISTRATION_BOND <= msg.value, "The registration payment is incorrect");
+    require(state.getProposer(msg.sender).thisAddress == address(0), "This proposer is already registered");
     // send the bond to the state contract
     (bool success, ) = payable(address(state)).call{ value: REGISTRATION_BOND }("");
     require(success, "Transfer failed.");
@@ -78,7 +78,7 @@ contract Proposers is Stateful, Structures, Config, ReentrancyGuardUpgradeable {
   // However, their bond is only withdrawable after the COOLING_OFF_PERIOD has passed. This ensures
   // they are not the proposer of any blocks that could be challenged.
   function deRegisterProposer() external {
-    require(state.getProposer(msg.sender).thisAddress != address(0), 'This proposer is not registered or you are not that proposer');
+    require(state.getProposer(msg.sender).thisAddress != address(0), "This proposer is not registered or you are not that proposer");
     state.removeProposer(msg.sender);
     // The msg.sender has to wait a COOLING_OFF_PERIOD from current block.timestamp
     state.updateBondAccountTime(msg.sender, block.timestamp);
@@ -86,8 +86,8 @@ contract Proposers is Stateful, Structures, Config, ReentrancyGuardUpgradeable {
 
   function withdrawBond() external {
     TimeLockedBond memory bond = state.getBondAccount(msg.sender);
-    require(bond.time + COOLING_OFF_PERIOD < block.timestamp, 'It is too soon to withdraw your bond');
-    require(state.getProposer(msg.sender).thisAddress == address(0), 'Cannot withdraw bond while a registered proposer');
+    require(bond.time + COOLING_OFF_PERIOD < block.timestamp, "It is too soon to withdraw your bond");
+    require(state.getProposer(msg.sender).thisAddress == address(0), "Cannot withdraw bond while a registered proposer");
     // Zero out the entry in the bond escrow
     state.setBondAccount(msg.sender,0);
     state.addPendingWithdrawal(msg.sender,bond.amount);

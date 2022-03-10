@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
-import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
-import '@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol';
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 /**
 Contract to hold global state that is needed by a number of other contracts,
 together with functions for mutating it.
@@ -9,9 +9,9 @@ together with functions for mutating it.
 
 pragma solidity ^0.8.0;
 
-import './Structures.sol';
-import './Utils.sol';
-import './Config.sol';
+import "./Structures.sol";
+import "./Utils.sol";
+import "./Config.sol";
 
 contract State is Structures, Config, Initializable, ReentrancyGuardUpgradeable {
     // global state variables
@@ -42,7 +42,7 @@ contract State is Structures, Config, Initializable, ReentrancyGuardUpgradeable 
             msg.sender == proposersAddress ||
                 msg.sender == challengesAddress ||
                 msg.sender == shieldAddress,
-            'This address is not authorised to call this function'
+            "This address is not authorised to call this function"
         );
         _;
     }
@@ -51,7 +51,7 @@ contract State is Structures, Config, Initializable, ReentrancyGuardUpgradeable 
         // Modifier
         require(
             msg.sender == currentProposer.thisAddress,
-            'Only the current proposer can call this.'
+            "Only the current proposer can call this."
         );
         _;
     }
@@ -76,10 +76,10 @@ contract State is Structures, Config, Initializable, ReentrancyGuardUpgradeable 
         if (blockHashes.length != 0)
             require(
                 b.previousBlockHash == blockHashes[blockHashes.length - 1].blockHash,
-                'The block is flawed or out of order'
+                "The block is flawed or out of order"
             ); // this will fail if a tx is re-mined out of order due to a chain reorg.
-        require(BLOCK_STAKE <= msg.value, 'The stake payment is incorrect');
-        require(b.proposer == msg.sender, 'The proposer address is not the sender');
+        require(BLOCK_STAKE <= msg.value, "The stake payment is incorrect");
+        require(b.proposer == msg.sender, "The proposer address is not the sender");
         // We need to set the blockHash on chain here, because there is no way to
         // convince a challenge function of the (in)correctness by an offchain
         // computation; the on-chain code doesn't save the pre-image of the hash so
@@ -169,7 +169,7 @@ contract State is Structures, Config, Initializable, ReentrancyGuardUpgradeable 
         uint256 amount = pendingWithdrawals[msg.sender];
         pendingWithdrawals[msg.sender] = 0;
         (bool success, ) = payable(msg.sender).call{value: amount}('');
-        require(success, 'Transfer failed.');
+        require(success, "Transfer failed.");
     }
 
     function setProposerStartBlock(uint256 sb) external onlyRegistered {
@@ -202,7 +202,7 @@ contract State is Structures, Config, Initializable, ReentrancyGuardUpgradeable 
         uint256 blockNumberL2
     ) external view {
         bytes32 blockHash = Utils.hashBlock(b, t);
-        require(blockHashes[blockNumberL2].blockHash == blockHash, 'This block does not exist');
+        require(blockHashes[blockNumberL2].blockHash == blockHash, "This block does not exist");
     }
 
     function setBondAccount(address addr, uint256 amount) external onlyRegistered {

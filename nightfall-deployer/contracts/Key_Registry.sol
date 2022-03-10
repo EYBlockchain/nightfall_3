@@ -2,8 +2,8 @@
 // Module for registering verification keys
 pragma solidity ^0.8.0;
 
-import './Structures.sol';
-import './Ownable.sol';
+import "./Structures.sol";
+import "./Ownable.sol";
 
 contract Key_Registry is Ownable, Structures {
 

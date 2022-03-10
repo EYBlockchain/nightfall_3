@@ -9,11 +9,11 @@ grounds.
 pragma solidity ^0.8.0;
 //pragma experimental ABIEncoderV2;
 
-import './Key_Registry.sol';
-import './Utils.sol';
-import './ChallengesUtil.sol';
-import './Config.sol';
-import './Stateful.sol';
+import "./Key_Registry.sol";
+import "./Utils.sol";
+import "./ChallengesUtil.sol";
+import "./Config.sol";
+import "./Stateful.sol";
 
 contract Challenges is Stateful, Key_Registry, Config {
     mapping(bytes32 => address) public committers;
@@ -110,12 +110,12 @@ contract Challenges is Stateful, Key_Registry, Config {
         state.isBlockReal(block2, transactions2, block2NumberL2);
         // If the duplicate exists in the same block, the index cannot be the same
         if (block1NumberL2 == block2NumberL2)
-            require(transactionIndex1 != transactionIndex2, 'Cannot be the same index');
+            require(transactionIndex1 != transactionIndex2, "Cannot be the same index");
 
         require(
             Utils.hashTransaction(transactions1[transactionIndex1]) ==
                 Utils.hashTransaction(transactions2[transactionIndex2]),
-            'Transactions are not the same'
+            "Transactions are not the same"
         );
         // Delete the latest block of the two
         if (block1NumberL2 > block2NumberL2) {
@@ -233,7 +233,7 @@ contract Challenges is Stateful, Key_Registry, Config {
                 blockNumberL2ContainingHistoricRoot[0] &&
                 transactions[transactionIndex].historicRootBlockNumberL2[1] ==
                 blockNumberL2ContainingHistoricRoot[1],
-            'Incorrect historic root block'
+            "Incorrect historic root block"
         );
         // now we need to check that the proof is correct
         ChallengesUtil.libChallengeProofVerification(
@@ -308,7 +308,7 @@ contract Challenges is Stateful, Key_Registry, Config {
                     uint256(transactions[transactionIndex].historicRootBlockNumberL2[0]) ||
                     state.getNumberOfL2Blocks() <
                     uint256(transactions[transactionIndex].historicRootBlockNumberL2[1]),
-                'Historic root exists'
+                "Historic root exists"
             );
         } else if (
             transactions[transactionIndex].transactionType == Structures.TransactionTypes.DEPOSIT
@@ -316,14 +316,14 @@ contract Challenges is Stateful, Key_Registry, Config {
             require(
                 uint256(transactions[transactionIndex].historicRootBlockNumberL2[0]) == 0 &&
                     uint256(transactions[transactionIndex].historicRootBlockNumberL2[1]) == 0,
-                'Historic root exists'
+                "Historic root exists"
             );
         } else {
             require(
                 state.getNumberOfL2Blocks() <
                     uint256(transactions[transactionIndex].historicRootBlockNumberL2[0]) &&
                     uint256(transactions[transactionIndex].historicRootBlockNumberL2[1]) == 0,
-                'Historic root exists'
+                "Historic root exists"
             );
         }
         challengeAccepted(blockL2, blockNumberL2);
@@ -334,7 +334,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         // Check to ensure that the block being challenged is less than a week old
         require(
             state.getBlockData(badBlockNumberL2).time >= (block.timestamp - 7 days),
-            'Cannot challenge block'
+            "Cannot challenge block"
         );
         // emit the leafCount where the bad block was added. Timber will pick this
         // up and rollback its database to that point.  We emit the event from
@@ -360,14 +360,14 @@ contract Challenges is Stateful, Key_Registry, Config {
         }
         require(
             state.getNumberOfL2Blocks() == blockNumberL2,
-            'The number remaining is not as expected.'
+            "The number remaining is not as expected."
         );
         return (lastBlock + 1 - blockNumberL2);
     }
 
     //To prevent frontrunning, we need to commit to a challenge before we send it
     function commitToChallenge(bytes32 commitHash) external {
-        require(committers[commitHash] == address(0), 'Hash is already committed to');
+        require(committers[commitHash] == address(0), "Hash is already committed to");
         committers[commitHash] = msg.sender;
         emit CommittedToChallenge(commitHash, msg.sender);
     }
@@ -377,7 +377,7 @@ contract Challenges is Stateful, Key_Registry, Config {
     function checkCommit(bytes calldata messageData) private {
         bytes32 hash = keccak256(messageData);
         // salt = 0; // not really required as salt is in msg.data but stops the unused variable compiler warning. Bit of a waste of gas though.
-        require(committers[hash] == msg.sender, 'Commitment hash is invalid');
+        require(committers[hash] == msg.sender, "Commitment hash is invalid");
         delete committers[hash];
     }
 }
