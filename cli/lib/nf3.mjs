@@ -563,6 +563,7 @@ class Nf3 {
     const res = await axios.post(`${this.optimistBaseUrl}/proposer/register`, {
       address: this.ethereumAddress,
     });
+    if (res.data.txDataToSign === '') return false; // already registered
     return this.submitTransaction(
       res.data.txDataToSign,
       this.proposersContractAddress,

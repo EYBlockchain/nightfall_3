@@ -13,11 +13,13 @@ import Block from '../classes/block.mjs';
 import { Transaction, TransactionError } from '../classes/index.mjs';
 import {
   setRegisteredProposerAddress,
+  isRegisteredProposerAddressMine,
   getMempoolTransactions,
   getLatestTree,
 } from '../services/database.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
+import { getProposers } from '../services/proposer.mjs';
 
 const router = express.Router();
 const { STATE_CONTRACT_NAME, PROPOSERS_CONTRACT_NAME, SHIELD_CONTRACT_NAME, ZERO } = config;
@@ -37,55 +39,42 @@ router.post('/register', async (req, res, next) => {
   logger.debug(`register proposer endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
   try {
     const { address } = req.body;
-    const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
-    const txDataToSign = await proposersContractInstance.methods.registerProposer().encodeABI();
-    logger.debug('returning raw transaction data');
-    res.json({ txDataToSign });
-    await setRegisteredProposerAddress(address); // save the registration address
-  } catch (err) {
-    if (err.message.includes('E11000 duplicate key error'))
-      // if we get a duplicate key error then the EVM will have reverted so we don't need to handle this separately
+    const proposersContractInstance = await waitForContract(PROPOSERS_CONTRACT_NAME);
+    // the first thing to do is to check if the proposer is already registered on the blockchain
+    const proposers = (await getProposers()).map(p => p.thisAddress);
+    // if not, let's register it
+    let txDataToSign = '';
+    if (!proposers.includes(address)) {
+      txDataToSign = await proposersContractInstance.methods.registerProposer().encodeABI();
+    } else
       logger.warn(
-        'Duplicate key detected. You are probably trying to to register the proposer twice. Second attempt ignored',
+        'Proposer was already registered on the blockchain - registration attempt ignored',
       );
-    else {
-      logger.error(err);
-      next(err);
+    // when we get to here, either the proposer was already registered (txDataToSign === '')
+    // or we're just about to register them. We may or may not be registed locally
+    // with optimist though. Let's check and fix that if needed.
+    if (!(await isRegisteredProposerAddressMine(address))) {
+      logger.debug('Registering proposer locally');
+      await setRegisteredProposerAddress(address); // save the registration address
+      // We've just registered with optimist but if we were already registered on the blockchain,
+      // we should check if we're the current proposer and, if so, set things up so we start
+      // making blocks immediately
+      if (txDataToSign === '') {
+        logger.warn(
+          'Proposer was already registered on the blockchain but not with this Optimist instance - registering locally',
+        );
+        const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
+        const currentProposer = await stateContractInstance.methods.getCurrentProposer().call();
+        if (address === currentProposer.thisAddress) {
+          proposer.isMe = true;
+          await enqueueEvent(() => logger.info('Start Queue'), 0); // kickstart the queue
+        }
+      }
     }
-  }
-});
-
-/**
- * Function to locally register a proposer with optimist. This call is similar to
- * /register but it won't touch the blockchain. It will just cause optimist to make
- * blocks when this proposer is the current proposer.  It's useful if you are starting
- * a new optimist instance but your proposer address is already registed with the blockchain
- * It's idempotent:  attempting to re-register a proposer will have no effect.
- */
-router.post('/registerlocally', async (req, res, next) => {
-  logger.debug(
-    `local register proposer endpoint received POST ${JSON.stringify(req.body, null, 2)}`,
-  );
-  const { address } = req.body;
-  try {
-    await setRegisteredProposerAddress(address); // save the registration address
-    // we should also check if we're the current proposer because we're registered on
-    // the blockchain so we could be
-    const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
-    const currentProposer = await stateContractInstance.methods.getCurrentProposer().call();
-    if (address === currentProposer.thisAddress) {
-      proposer.isMe = true;
-      await enqueueEvent(() => logger.info('Start Queue'), 0); // kickstart the queue
-    }
-    res.sendStatus(200);
+    res.json({ txDataToSign });
   } catch (err) {
-    if (err.message.includes('duplicate key')) {
-      logger.warn(`Proposer ${address} is already registered locally`);
-      res.sendStatus(200);
-    } else {
-      logger.error(err);
-      next(err);
-    }
+    logger.error(err);
+    next(err);
   }
 });
 
@@ -95,22 +84,8 @@ router.post('/registerlocally', async (req, res, next) => {
 router.get('/proposers', async (req, res, next) => {
   logger.debug(`list proposals endpoint received GET`);
   try {
-    const proposersContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
-    // proposers is an on-chain mapping so to get proposers we need to key to start iterating
-    // the safest to start with is the currentProposer
-    const currentProposer = await proposersContractInstance.methods.currentProposer().call();
-    const proposers = [];
-    let thisPtr = currentProposer.thisAddress;
-    // Loop through the circular list until we run back into the currentProposer.
-    do {
-      // eslint-disable-next-line no-await-in-loop
-      const prop = await proposersContractInstance.methods.proposers(thisPtr).call();
-      proposers.push(prop);
-      thisPtr = prop.nextAddress;
-    } while (thisPtr !== currentProposer.thisAddress);
-
+    const proposers = getProposers();
     logger.debug('returning raw transaction data');
-    logger.silly(`raw transaction is ${JSON.stringify(proposers, null, 2)}`);
     res.json({ proposers });
   } catch (err) {
     logger.error(err);
