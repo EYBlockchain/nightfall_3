@@ -35,7 +35,7 @@ contract Proposers is Stateful, Structures, Config, ReentrancyGuardUpgradeable {
     }
 
     //add the proposer to the circular linked list
-    function registerProposer() external payable nonReentrant {
+    function registerProposer(string memory url) external payable nonReentrant {
         require(REGISTRATION_BOND <= msg.value, 'The registration payment is incorrect');
         require(
             state.getProposer(msg.sender).thisAddress == address(0),
@@ -48,7 +48,7 @@ contract Proposers is Stateful, Structures, Config, ReentrancyGuardUpgradeable {
         LinkedAddress memory currentProposer = state.getCurrentProposer();
         // cope with this being the first proposer
         if (currentProposer.thisAddress == address(0)) {
-            currentProposer = LinkedAddress(msg.sender, msg.sender, msg.sender);
+            currentProposer = LinkedAddress(msg.sender, msg.sender, msg.sender, url);
             state.setProposer(msg.sender, currentProposer);
             state.setProposerStartBlock(block.number);
             emit NewCurrentProposer(currentProposer.thisAddress);
@@ -59,6 +59,7 @@ contract Proposers is Stateful, Structures, Config, ReentrancyGuardUpgradeable {
             proposer.thisAddress = msg.sender; // proposer: (_,B,_)
             proposer.nextAddress = currentProposer.thisAddress; // proposer: (_,B,A)
             proposer.previousAddress = currentProposer.previousAddress; // proposer: (x,B,A)
+            proposer.url = url;
             // pull global state
             LinkedAddress memory proposersPrevious =
                 state.getProposer(currentProposer.previousAddress);
@@ -108,5 +109,14 @@ contract Proposers is Stateful, Structures, Config, ReentrancyGuardUpgradeable {
         // Zero out the entry in the bond escrow
         state.setBondAccount(msg.sender, 0);
         state.addPendingWithdrawal(msg.sender, bond.amount);
+    }
+
+    // Proposers can change REST API URL
+    function updateProposer(string memory url) external {
+      require(
+        state.getProposer(msg.sender).thisAddress != address(0),
+        'This proposer is not registered or you are not that proposer'
+      );
+      state.updateProposer(msg.sender, url);
     }
 }

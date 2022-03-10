@@ -17,7 +17,7 @@ import {
   clearPending,
   getSiblingInfo,
 } from './commitment-storage.mjs';
-import { discoverPeers } from './peers.mjs';
+import getProposersUrl from './peers.mjs';
 import { calculateIvkPkdfromAskNsk } from './keys.mjs';
 
 const {
@@ -30,6 +30,8 @@ const {
   USE_STUBS,
 } = config;
 const { generalise } = gen;
+
+const NEXT_N_PROPOSERS = 3;
 
 async function withdraw(withdrawParams) {
   logger.info('Creating a withdraw transaction');
@@ -117,7 +119,7 @@ async function withdraw(withdrawParams) {
   });
   try {
     if (offchain) {
-      const peerList = await discoverPeers('Local');
+      const peerList = await getProposersUrl(NEXT_N_PROPOSERS);
       Object.keys(peerList).forEach(async address => {
         logger.debug(
           `offchain transaction - calling ${peerList[address]}/proposer/offchain-transaction`,

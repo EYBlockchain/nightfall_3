@@ -63,6 +63,7 @@ contract Structures {
         address thisAddress;
         address previousAddress;
         address nextAddress;
+        string url;
     }
 
     struct TimeLockedBond {
