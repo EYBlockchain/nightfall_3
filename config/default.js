@@ -222,7 +222,7 @@ module.exports = {
     },
     addresses: {
       bootProposer: '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0',
-      bootChallenger: '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0',
+      bootChallenger: '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
     },
     tokens: [
       {

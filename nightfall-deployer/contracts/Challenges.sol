@@ -311,6 +311,14 @@ contract Challenges is Stateful, Key_Registry, Config {
                     uint256(transactions[transactionIndex].historicRootBlockNumberL2[1]),
                 'Historic root exists'
             );
+        } else if (
+            transactions[transactionIndex].transactionType == Structures.TransactionTypes.DEPOSIT
+        ) {
+            require(
+                uint256(transactions[transactionIndex].historicRootBlockNumberL2[0]) == 0 &&
+                    uint256(transactions[transactionIndex].historicRootBlockNumberL2[1]) == 0,
+                'Historic root exists'
+            );
         } else {
             require(
                 state.getNumberOfL2Blocks() <
@@ -319,6 +327,7 @@ contract Challenges is Stateful, Key_Registry, Config {
                 'Historic root exists'
             );
         }
+        challengeAccepted(blockL2, blockNumberL2);
     }
 
     // This gets called when a challenge succeeds

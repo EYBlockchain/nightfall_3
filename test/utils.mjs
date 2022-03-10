@@ -2,6 +2,7 @@
 import Web3 from 'web3';
 import chai from 'chai';
 import config from 'config';
+import logger from '../common-files/utils/logger.mjs';
 import rand from '../common-files/utils/crypto/crypto-random.mjs';
 
 const { expect } = chai;
@@ -377,7 +378,7 @@ export const waitForSufficientBalance = (client, value) => {
   return new Promise(resolve => {
     async function isSufficientBalance() {
       const balance = await retrieveL2Balance(client);
-      if (process.env.VERBOSE) console.log(` Balance needed ${value}. Current balance ${balance}.`);
+      logger.debug(` Balance needed ${value}. Current balance ${balance}.`);
       if (balance < value) {
         await new Promise(resolving => setTimeout(resolving, 10000));
         isSufficientBalance();

@@ -19,29 +19,35 @@ contract Config is Ownable {
         Ownable.initialize();
     }
 
+    // restricting proposers
     modifier onlyBootProposer() {
         require(msg.sender == bootProposer, 'You are not the boot proposer');
         _;
     }
 
-    modifier onlyBootChallenger() {
-        require(msg.sender == bootChallenger, 'You are not the boot challenger');
-        _;
-    }
-
-    function setBootEntities(address proposer, address challenger) external onlyOwner {
+    function setBootProposer(address proposer) external onlyOwner {
         bootProposer = proposer;
-        bootChallenger = challenger;
     }
 
     function getBootProposer() external view returns (address) {
         return bootProposer;
     }
 
+    // restricting challengers
+    modifier onlyBootChallenger() {
+        require(msg.sender == bootChallenger, 'You are not the boot challenger');
+        _;
+    }
+
+    function setBootChallenger(address challenger) external onlyOwner {
+        bootChallenger = challenger;
+    }
+
     function getBootChallenger() external view returns (address) {
         return bootChallenger;
     }
 
+    // restricting tokens
     function getRestriction(address tokenAddr) public view returns (uint256) {
         return erc20limit[tokenAddr];
     }
