@@ -5,6 +5,7 @@ import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
 import Nf3 from '../../../cli/lib/nf3.mjs';
 import { expectTransaction, depositNTransactions, Web3Client } from '../../utils.mjs';
+import logger from '../../../common-files/utils/logger.mjs';
 
 import { approve } from '../../../cli/lib/tokens.mjs';
 
@@ -22,7 +23,10 @@ const {
   tokenConfigs: { tokenType, tokenId },
   mnemonics,
   signingKeys,
+  restrictions: { erc20default },
 } = config.TEST_OPTIONS;
+
+const { RESTRICTIONS: defaultRestrictions } = config;
 
 const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
 const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
@@ -90,12 +94,9 @@ describe('ERC20 tests', () => {
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer.startProposer();
     newGasBlockEmitter.on('gascost', async gasUsed => {
-      if (process.env.VERBOSE)
-        console.log(
-          `Block proposal gas cost was ${gasUsed}, cost per transaction was ${
-            gasUsed / txPerBlock
-          }`,
-        );
+      logger.debug(
+        `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
+      );
     });
 
     await nf3Users[0].init(mnemonics.user1);
@@ -114,7 +115,7 @@ describe('ERC20 tests', () => {
 
   describe('Deposits', () => {
     it('should deposit some ERC20 crypto into a ZKP commitment', async function () {
-      if (process.env.VERBOSE) console.log(`      Sending ${txPerBlock} deposits...`);
+      logger.debug(`      Sending ${txPerBlock} deposits...`);
       // We create enough transactions to fill blocks full of deposits.
       const depositTransactions = await depositNTransactions(
         nf3Users[0],
@@ -128,8 +129,7 @@ describe('ERC20 tests', () => {
       // Wait until we see the right number of blocks appear
       eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       const totalGas = depositTransactions.reduce((acc, { gasUsed }) => acc + Number(gasUsed), 0);
-      if (process.env.VERBOSE)
-        console.log(`     Average Gas used was ${Math.ceil(totalGas / txPerBlock)}`);
+      logger.debug(`     Average Gas used was ${Math.ceil(totalGas / txPerBlock)}`);
     });
 
     it('should increment the balance after deposit some ERC20 crypto', async function () {
@@ -200,7 +200,7 @@ describe('ERC20 tests', () => {
           fee,
         );
         expectTransaction(res);
-        if (process.env.VERBOSE) console.log(`     Gas used was ${Number(res.gasUsed)}`);
+        logger.debug(`     Gas used was ${Number(res.gasUsed)}`);
       }
       const after = (await nf3Users[0].getLayer2Balances())[erc20Address][0].balance;
 
@@ -269,7 +269,7 @@ describe('ERC20 tests', () => {
       );
       expectTransaction(rec);
 
-      if (process.env.VERBOSE) console.log(`     Gas used was ${Number(rec.gasUsed)}`);
+      logger.debug(`     Gas used was ${Number(rec.gasUsed)}`);
       const afterBalance = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance;
       expect(afterBalance).to.be.lessThan(beforeBalance);
     });
@@ -397,7 +397,7 @@ describe('ERC20 tests', () => {
       // We request the instant withdraw and should wait for the liquidity provider to send the instant withdraw
       const res = await nf3Users[0].requestInstantWithdrawal(latestWithdrawTransactionHash, fee);
       expectTransaction(res);
-      if (process.env.VERBOSE) console.log(`     Gas used was ${Number(res.gasUsed)}`);
+      logger.debug(`     Gas used was ${Number(res.gasUsed)}`);
 
       await emptyL2(nf3Users[0]);
 
@@ -429,6 +429,107 @@ describe('ERC20 tests', () => {
     after(async () => {
       await emptyL2(nf3Users[0]);
       await nf3LiquidityProvider.close();
+    });
+  });
+
+  /* 
+    What is this, you wonder? We're just testing restrictions, since for an initial release phase
+    we want to restrict the amount of deposits/withdraws. Take a look at #516 if you want to know more
+    */
+  describe('Restrictions', () => {
+    describe('Testing new restrictions', async () => {
+      let newAmount;
+      before(() => {
+        const defaultERC20restriction =
+          defaultRestrictions.find(e => e.address.toLowerCase() === erc20Address)?.amount ||
+          erc20default;
+
+        newAmount = Math.ceil(
+          Math.random() * (defaultERC20restriction - transferValue) + transferValue,
+        );
+      });
+
+      it('should restrict deposits', async () => {
+        // anything equal or above the restricted amount should fail
+        try {
+          await depositNTransactions(
+            nf3Users[0],
+            txPerBlock,
+            erc20Address,
+            tokenType,
+            newAmount,
+            tokenId,
+            fee,
+          );
+          expect.fail('Transaction has been reverted by the EVM');
+        } catch (error) {
+          expect(error.message).to.satisfy(message =>
+            message.includes('Transaction has been reverted by the EVM'),
+          );
+        }
+      });
+
+      it('should restrict withdrawals', async () => {
+        const nodeInfo = await web3Client.getInfo();
+        if (nodeInfo.includes('TestRPC')) {
+          try {
+            // we need two transactions to serve as commitments to the withdrawal
+            // but we can't deposit the whole amount because... that's the limit 😅
+            // so let's just split it
+            await depositNTransactions(
+              nf3Users[0],
+              txPerBlock,
+              erc20Address,
+              tokenType,
+              Math.ceil(newAmount / txPerBlock),
+              tokenId,
+              fee,
+            );
+
+            // we also need a commitment of the specific amount we need to withdraw
+            // so we should transfer that amount to ourselves
+            await nf3Users[0].transfer(
+              false,
+              erc20Address,
+              tokenType,
+              newAmount,
+              tokenId,
+              nf3Users[0].zkpKeys.compressedPkd,
+              fee,
+            );
+
+            await emptyL2(nf3Users[0]);
+
+            const rec = await nf3Users[0].withdraw(
+              false,
+              erc20Address,
+              tokenType,
+              newAmount,
+              tokenId,
+              nf3Users[0].ethereumAddress,
+              fee,
+            );
+
+            expectTransaction(rec);
+            const withdrawal = await nf3Users[0].getLatestWithdrawHash();
+
+            await emptyL2(nf3Users[0]);
+
+            await web3Client.timeJump(3600 * 24 * 10); // jump in time by 50 days
+
+            // anything equal or above the restricted amount should fail
+            await nf3Users[0].finaliseWithdrawal(withdrawal);
+            expect.fail('Transaction has been reverted by the EVM');
+          } catch (error) {
+            expect(error.message).to.satisfy(message =>
+              message.includes('Transaction has been reverted by the EVM'),
+            );
+          }
+        } else {
+          console.log('     Not using a time-jump capable test client so this test is skipped');
+          this.skip();
+        }
+      });
     });
   });
 

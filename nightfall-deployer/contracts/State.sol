@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
+import '@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol';
 /**
 Contract to hold global state that is needed by a number of other contracts,
 together with functions for mutating it.
@@ -13,7 +13,7 @@ import "./Structures.sol";
 import "./Utils.sol";
 import "./Config.sol";
 
-contract State is Structures, Config, Initializable, ReentrancyGuardUpgradeable {
+contract State is Structures, Initializable, ReentrancyGuardUpgradeable, Config {
     // global state variables
     BlockData[] public blockHashes; // array containing mainly blockHashes
     mapping(address => uint256) public pendingWithdrawals;

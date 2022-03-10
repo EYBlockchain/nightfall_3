@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
+import '@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol';
 /**
 Contract to enable someone to submit a ZKP transaction for processing.
 It is possible we will move this off-chain in the future as blockchain
@@ -24,9 +24,10 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
     mapping(bytes32 => address) public advancedWithdrawals;
     mapping(bytes32 => uint256) public advancedFeeWithdrawals;
 
-    function initialize() public override(Stateful, Key_Registry) initializer {
+    function initialize() public override(Stateful, Key_Registry, Config) initializer {
         Stateful.initialize();
         Key_Registry.initialize();
+        Config.initialize();
     }
 
     function submitTransaction(Transaction memory t) external payable nonReentrant {
@@ -83,6 +84,7 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
     ) external returns (bytes4) {
         return 0x150b7a02;
     }
+
 
     function onERC1155Received(
         address _operator,
@@ -203,7 +205,7 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
                     currentOwner,
                     uint256(withdrawTransaction.value)
                 );
-            if (!result) revert('Shield: Error in transfer');
+            if (!result) revert("Shield: Error in transfer");
         }
         // set new owner of transaction, settign fee to zero.
         advancedFeeWithdrawals[withdrawTransactionHash] = 0;
@@ -238,21 +240,22 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
         // Only the owner of the withdraw can set the advanced withdrawal
         require(msg.sender == currentOwner, "You are not the current owner of this withdrawal");
         advancedFeeWithdrawals[withdrawTransactionHash] = msg.value;
-        (bool success, ) = payable(address(state)).call{value: msg.value}('');
+        (bool success, ) = payable(address(state)).call{value: msg.value}("");
         require(success, "Transfer failed.");
         emit InstantWithdrawalRequested(withdrawTransactionHash, msg.sender, msg.value);
     }
 
     function payOut(Transaction memory t, address recipientAddress) internal {
         // Now pay out the value of the commitment
-        ERCInterface tokenContract = ERCInterface(address(uint160(uint256(t.ercAddress))));
+        address addr = address(uint160(uint256(t.ercAddress)));
+        ERCInterface tokenContract = ERCInterface(addr);
         // address recipientAddress = address(uint160(uint256(t.recipientAddress)));
+
         if (t.tokenType == TokenType.ERC20) {
             if (t.tokenId != ZERO) revert("ERC20 deposit should have tokenId equal to ZERO");
-            else {
-                bool result = tokenContract.transfer(recipientAddress, uint256(t.value));
-                if (!result) revert("Shield: Error in transfer");
-            }
+            if (t.value >= super.getRestriction(addr))
+                revert("Value is above current restrictions for withdrawals");
+            else tokenContract.transfer(recipientAddress, uint256(t.value));
         } else if (t.tokenType == TokenType.ERC721) {
             if (t.value != 0)
                 // value should always be equal to 0
@@ -278,15 +281,14 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
     }
 
     function payIn(Transaction memory t) internal {
-        ERCInterface tokenContract = ERCInterface(address(uint160(uint256(t.ercAddress))));
+        address addr = address(uint160(uint256(t.ercAddress)));
+        ERCInterface tokenContract = ERCInterface(addr);
 
         if (t.tokenType == TokenType.ERC20) {
             if (t.tokenId != ZERO) revert("ERC20 deposit should have tokenId equal to ZERO");
-            else {
-                bool result =
-                    tokenContract.transferFrom(msg.sender, address(this), uint256(t.value));
-                if (!result) revert("Shield: Error in transfer");
-            }
+            if (t.value >= super.getRestriction(addr))
+                revert("Value is above current restrictions for deposits");
+            else tokenContract.transferFrom(msg.sender, address(this), uint256(t.value));
         } else if (t.tokenType == TokenType.ERC721) {
             if (t.value != 0)
                 // value should always be equal to 0
@@ -298,7 +300,7 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
                 address(this),
                 uint256(t.tokenId),
                 uint256(t.value),
-                ''
+                ""
             );
         } else {
             revert("Invalid Token Type");
