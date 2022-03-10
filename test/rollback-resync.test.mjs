@@ -6,6 +6,7 @@ import chaiAsPromised from 'chai-as-promised';
 import childProcess from 'child_process';
 import WebSocket from 'ws';
 import { generateMnemonic } from 'bip39';
+import logger from '../common-files/utils/logger.mjs';
 import {
   topicEventMapping,
   createBadBlock,
@@ -143,7 +144,7 @@ describe('Running rollback and resync test', () => {
         await web3Client.submitTransaction(txDataToSign, privateKey, challengesAddress, gas);
       } else if (type === 'challenge') {
         commitTxDataToSign = txDataToSign;
-        if (process.env.VERBOSE) console.log('Challenge held');
+        logger.debug('Challenge held');
       }
     };
     const res = await chai
@@ -204,10 +205,9 @@ describe('Running rollback and resync test', () => {
         const newBlockRes = await createBadBlock('DuplicateTransaction', block, transactions, {
           duplicateTransaction: duplicateTransaction.transaction,
         });
-        if (process.env.VERBOSE)
-          console.log(
-            `Created flawed block with duplicate transactions and blockHash ${newBlockRes.block.blockHash}`,
-          );
+        logger.debug(
+          `Created flawed block with duplicate transactions and blockHash ${newBlockRes.block.blockHash}`,
+        );
         topicsBlockHashDuplicateTransaction = newBlockRes.block.blockHash;
         return web3Client.submitTransaction(newBlockRes.txDataToSign, b, c, d, e, f);
       };
@@ -304,7 +304,7 @@ describe('Running rollback and resync test', () => {
           await web3Client.submitTransaction(txDataToSign, privateKey, challengesAddress, gas);
         } else if (type === 'challenge') {
           commitTxDataToSign = txDataToSign;
-          if (process.env.VERBOSE) console.log('Challenge held');
+          logger.debug('Challenge held');
         }
       };
 

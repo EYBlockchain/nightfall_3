@@ -173,6 +173,8 @@ module.exports = {
       clientApiUrl: 'http://localhost:8080',
       optimistApiUrl: 'http://localhost:8081',
       optimistWsUrl: 'ws://localhost:8082',
+      adversarialOptimistApiUrl: 'http://localhost:8088',
+      adversarialOptimistWsUrl: 'ws://localhost:8089',
       web3WsUrl: 'ws://localhost:8546',
     },
   },
@@ -209,5 +211,15 @@ module.exports = {
       challenger: 'crush power outer gadget enter maze advance rather divert monster indoor axis',
       liquidityProvider: 'smart base soup sister army address member poem point quick save penalty',
     },
+    restrictions: {
+      erc20default: 2000,
+    },
   },
+  RESTRICTIONS: [
+    {
+      name: 'MockERC20',
+      address: '0xB5Acbe9a0F1F8B98F3fC04471F7fE5d2c222cB44',
+      amount: 200,
+    },
+  ],
 };

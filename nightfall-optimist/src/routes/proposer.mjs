@@ -67,6 +67,26 @@ router.post('/update', async (req, res, next) => {
 });
 
 /**
+ * Returns the current proposer
+ */
+router.get('/current-proposer', async (req, res, next) => {
+  logger.debug(`list proposals endpoint received GET ${JSON.stringify(req.body, null, 2)}`);
+  try {
+    const proposersContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
+    const { thisAddress: currentProposer } = await proposersContractInstance.methods
+      .currentProposer()
+      .call();
+
+    logger.debug('returning current proposer');
+    logger.silly(`current proposer is ${JSON.stringify(currentProposer, null, 2)}`);
+    res.json({ currentProposer });
+  } catch (err) {
+    logger.error(err);
+    next(err);
+  }
+});
+
+/**
  * Returns a list of the registered proposers
  */
 router.get('/proposers', async (req, res, next) => {
