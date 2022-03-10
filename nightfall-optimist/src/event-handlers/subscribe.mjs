@@ -72,28 +72,58 @@ export async function startEventQueue(callback, ...arg) {
 }
 
 export async function subscribeToChallengeWebSocketConnection(callback, ...args) {
-  wss.on('connection', ws =>
-    ws.on('message', message => {
-      if (message === 'challenge') callback(ws, args);
-    }),
+  wss.on('connection', ws => {
+      ws.on('message', message => {
+        if (message === 'challenge') callback(ws, args);
+      });
+      ws.on('error', () => {
+        logger.debug('ERROR challenge WS');
+      });
+      ws.on('open', () => {
+        logger.debug('OPEN challenge WS');
+      });
+      ws.on('close', (err) => {
+        logger.debug(`CLOSE challenge WS: ${err}`);
+      });
+    }
   );
   logger.debug('Subscribed to Challenge WebSocket connection');
 }
 
 export async function subscribeToBlockAssembledWebSocketConnection(callback, ...args) {
-  wss.on('connection', ws =>
-    ws.on('message', message => {
-      if (message === 'blocks') callback(ws, args);
-    }),
+  wss.on('connection', ws => {
+      ws.on('message', message => {
+        if (message === 'blocks') callback(ws, args);
+      });
+      ws.on('error', () => {
+        logger.debug('ERROR block-assembly  WS');
+      });
+      ws.on('open', () => {
+        logger.debug('OPEN block-assembly WS');
+      });
+      ws.on('close', (msg) => {
+        logger.debug(`CLOSE block-assembly ${msg}`);
+      });
+    }
   );
   logger.debug('Subscribed to BlockAssembled WebSocket connection');
 }
 
 export async function subscribeToInstantWithDrawalWebSocketConnection(callback, ...args) {
-  wss.on('connection', ws =>
-    ws.on('message', message => {
-      if (message === 'instant') callback(ws, args);
-    }),
+  wss.on('connection', ws => {
+      ws.on('message', message => {
+        if (message === 'instant') callback(ws, args);
+      });
+      ws.on('error', () => {
+        logger.debug('ERROR instant-withdraw');
+      });
+      ws.on('open', () => {
+        logger.debug('OPEN instant-withdraw');
+      });
+      ws.on('close', (err) => {
+        logger.debug(`CLOSE instant-withdraw ${err}`);
+      });
+    }
   );
   logger.debug('Subscribed to InstantWithDrawal WebSocket connection');
 }

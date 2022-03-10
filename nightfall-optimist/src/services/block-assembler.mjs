@@ -58,7 +58,9 @@ export async function conditionalMakeBlock(proposer) {
           transactions.map(t => Transaction.buildSolidityStruct(t)),
         )
         .encodeABI();
-      if (ws)
+      // TODO - check ws readyState is OPEN => CLOSED .WebSocket.OPEN(1), CONNECTING(0), CLOSING(2), CLOSED(3)
+      //  before sending Poposed block. If not Open, try to open it
+      if (ws){
         await ws.send(
           JSON.stringify({
             type: 'block',
@@ -67,7 +69,8 @@ export async function conditionalMakeBlock(proposer) {
             transactions,
           }),
         );
-      logger.debug('Send unsigned block-assembler transaction to ws client');
+        logger.debug('Send unsigned block-assembler transaction to ws client');
+      }
       // remove the transactiosn from the mempool so we don't keep making new
       // blocks with them
       await removeTransactionsFromMemPool(block.transactionHashes);

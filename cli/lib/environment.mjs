@@ -16,6 +16,14 @@ const SUPPORTED_ENVIRONMENTS = {
     optimistWsUrl: 'wss://optimist1-ws.testnet.nightfall3.com',
     web3WsUrl: 'wss://ropsten1-ws.testnet.nightfall3.com',
   },
+  staging: {
+    name: 'Staging',
+    chainId: 4378921,
+    clientApiUrl: 'https://client1.testnet.nightfall3.com',
+    optimistApiUrl: 'https://optimist-api.ropsten.nightfall3.com',
+    optimistWsUrl: 'wss://optimist-ws.ropsten.nightfall3.com',
+    web3WsUrl: 'wss://ganache-ws.ropsten.nightfall3.com',
+  },
   rinkeby: {
     name: 'Rinkeby',
     chainId: 4,
