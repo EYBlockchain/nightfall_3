@@ -19,7 +19,9 @@ async function makeBlock(proposer, unprocessed) {
   // we retrieve un-processed transactions from our local database, relying on
   // the transaction service to keep the database current
   const unprocessedTransactions = await getMostProfitableTransactions(unprocessed, count);
+  // eslint-disable-next-line no-undef
   let { blockNumberL2, blockHash } = await getLatestBlockInfo();
+  // eslint-disable-next-line no-undef
   let latestTree = await getLatestTree();
   const blockList = [];
   const transactionsList = [];
