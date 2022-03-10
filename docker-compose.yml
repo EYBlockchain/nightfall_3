@@ -181,8 +181,8 @@ services:
       DEPLOYER_HOST: deployer
       TEST_BLOCKS: 2
 
-  deployer-first-blocks:
-    image: ghcr.io/eyblockchain/nightfall3-deployer-first-blocks:latest
+  genesis-blocks-deployer:
+    image: ghcr.io/eyblockchain/nightfall3-genesis-blocks-deployer:latest
     networks:
       - nightfall_network
     environment:

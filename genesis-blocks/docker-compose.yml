@@ -115,10 +115,10 @@ services:
       CLIENT_HOST: client
       DEPLOYER_HOST: deployer
 
-  deployer-first-blocks:
-    image: ghcr.io/eyblockchain/nightfall3-deployer-first-blocks:latest
+  genesis-blocks-deployer:
+    image: ghcr.io/eyblockchain/nightfall3-genesis-blocks-deployer:latest
     build:
-      dockerfile: deployer-first-blocks.Dockerfile
+      dockerfile: genesis-blocks-deployer.Dockerfile
       context: ../
     networks:
       - pong_network

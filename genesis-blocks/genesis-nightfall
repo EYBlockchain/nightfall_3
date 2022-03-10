@@ -17,7 +17,7 @@ while [ -n "$1" ]; do
       -h | --help )           usage
                               exit 0
                               ;;
-      -d | --deployer )       DEPLOYER="deployer deployer-first-blocks proposer"
+      -d | --deployer )       DEPLOYER="deployer genesis-blocks-deployer proposer"
                               ;;
       -s | --stubs )          STUBS="-f docker-compose.stubs.yml"
                               ;;

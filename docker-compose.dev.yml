@@ -119,9 +119,9 @@ services:
     environment:
       PROPOSER_ETHEREUM_SIGNING_KEY: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d'
 
-  deployer-first-blocks:
+  genesis-blocks-deployer:
     build:
-      dockerfile: deployer-first-blocks.Dockerfile
+      dockerfile: genesis-blocks-deployer.Dockerfile
       context: .
     environment:
       ERC20_NAME: ERC20Mock
