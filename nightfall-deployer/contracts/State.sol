@@ -15,6 +15,7 @@ import './Config.sol';
 
 contract State is Structures, Initializable, ReentrancyGuardUpgradeable, Config {
     // global state variables
+    string public constant version  = '0.0.1';
     BlockData[] public blockHashes; // array containing mainly blockHashes
     mapping(address => uint256) public pendingWithdrawals;
     mapping(address => LinkedAddress) public proposers;
