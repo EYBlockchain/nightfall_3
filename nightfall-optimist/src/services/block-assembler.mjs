@@ -60,7 +60,7 @@ export async function conditionalMakeBlock(proposer) {
         .encodeABI();
       // TODO - check ws readyState is OPEN => CLOSED .WebSocket.OPEN(1), CONNECTING(0), CLOSING(2), CLOSED(3)
       //  before sending Poposed block. If not Open, try to open it
-      if (ws){
+      if (ws) {
         await ws.send(
           JSON.stringify({
             type: 'block',

@@ -660,14 +660,14 @@ class Nf3 {
     const heartbeat = async () => {
       if (!connection) return;
       if (connection.readyState !== WebSocket.OPEN) return;
-      connection.send("heartbeat");
+      connection.send('heartbeat');
       setTimeout(heartbeat, 15000);
-    }
+    };
 
     connection.onopen = () => {
       logger.debug('websocket connection opened');
       connection.send('blocks');
-      heartbeat()
+      heartbeat();
     };
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
