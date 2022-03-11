@@ -183,6 +183,8 @@ services:
 
   genesis-blocks-deployer:
     image: ghcr.io/eyblockchain/nightfall3-user-local:latest
+    depends_on:
+      - client1
     networks:
       - nightfall_network
     environment:
