@@ -3,8 +3,6 @@ import Modal from 'react-bootstrap/Modal';
 import Dropdown from 'react-bootstrap/Dropdown';
 import DropdownButton from 'react-bootstrap/DropdownButton';
 import { MdArrowForwardIos } from 'react-icons/md';
-import { BsCheck } from 'react-icons/bs';
-import { AiOutlineInfo } from 'react-icons/ai';
 import { toast } from 'react-toastify';
 import styles from '../../styles/bridge.module.scss';
 import stylesModal from '../../styles/modal.module.scss';
@@ -37,7 +35,7 @@ const BridgeComponent = () => {
   const [state] = useContext(UserContext);
 
   const [transferMethod, setMethod] = useState('On-Chain');
-  const [checkBox, setCheckBox] = useState(false);
+  // const [checkBox, setCheckBox] = useState(false);
 
   // const initialTx = location.state?.initialTxType || 'deposit';
   // const initialTx = location.state ? location.state.initialTxType : 'deposit';
@@ -328,7 +326,7 @@ const BridgeComponent = () => {
                       <>
                         <div></div>
                         <div className="token_details_text" id="bridge_tokenDetails_tokenName">
-                          <span>Select</span>
+                          <span>Selec</span>
                         </div>
                       </>
                     )}
@@ -369,7 +367,7 @@ const BridgeComponent = () => {
           </div>
 
           {/* WARN WRAPPER */}
-          <div className="warn_wrapper">
+          {/* <div className="warn_wrapper">
             <div className="warn_line1">
               <div className="warn_line1_text">
                 {!checkBox ? (
@@ -396,7 +394,7 @@ const BridgeComponent = () => {
             <div className="warn_line2">
               <p>MATIC is required to perform transaction on polygon chain.</p>
             </div>
-          </div>
+          </div> */}
           {/* TRANSFER MODE */}
           <div className="transfer_mode">
             {/* <span class="transfer-mode__label"> Transfer Mode: </span>
@@ -440,7 +438,11 @@ const BridgeComponent = () => {
                 </div>
                 {/* font-heading-large font-bold ps-t-16 ps-b-6 */}
                 <div className={stylesModal.tokenDetails__val} id="Bridge_modal_tokenAmount">
-                  {Number(transferValue).toFixed(4)}
+                  {
+                    Number(transferValue)
+                      .toString()
+                      .match(/^-?\d+(?:\.\d{0,4})?/)[0]
+                  }
                 </div>
                 {/* font-body-small */}
                 <div className={stylesModal.tokenDetails__usd}>$xx.xx</div>
