@@ -12,7 +12,7 @@ import { initialize } from 'zokrates-js';
 import axios from 'axios';
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
-import { Nullifier, PublicInputs, Transaction } from '../classes/index';
+import { Nullifier, Transaction } from '../classes/index';
 import {
   findUsableCommitmentsMutex,
   markNullified,
@@ -63,15 +63,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
   );
 
   // public inputs
-  const { root, leafIndex, isOnChain } = commitmentTreeInfo;
-  const publicInputs = new PublicInputs([
-    oldCommitment.preimage.ercAddress,
-    oldCommitment.preimage.tokenId,
-    oldCommitment.preimage.value,
-    generalise(nullifier.hash.hex(32, 31)).integer,
-    recipientAddress,
-    root,
-  ]);
+  const { leafIndex, isOnChain } = commitmentTreeInfo;
 
   // now we have everything we need to create a Witness and compute a proof
   const witnessInput = [
@@ -121,7 +113,6 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     historicRootBlockNumberL2: [isOnChain, 0],
     transactionType: 3,
     tokenType: items.tokenType,
-    publicInputs,
     tokenId,
     value,
     ercAddress,
