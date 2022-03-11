@@ -38,7 +38,7 @@ const testProposersUrl = [
   'http://test-proposer4',
 ];
 
-const totalDeposits = 6;
+const totalDeposits = txPerBlock * 3;
 const nf3User = new Nf3(signingKeys.user1, environment);
 let erc20Address;
 let stateAddress;
@@ -79,9 +79,11 @@ describe('Basic Proposer tests', () => {
     // Proposer registration
     await testProposers[0].registerProposer(testProposersUrl[0]);
 
+    let blocksReceivedToPropose = 0;
     // Proposer listening for incoming events
     const newGasBlockEmitter = await testProposers[0].startProposer();
-    newGasBlockEmitter.on('gascost', async gasUsed => {
+    newGasBlockEmitter.on('gascost', async (gasUsed, blocksToPropose) => {
+      blocksReceivedToPropose = blocksToPropose;
       logger.debug(
         `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
       );
@@ -90,10 +92,11 @@ describe('Basic Proposer tests', () => {
     eventLogs = await web3Client.waitForEvent(
       eventLogs,
       ['blockProposed'],
-      totalDeposits / txPerBlock,
+      Math.floor(totalDeposits / txPerBlock),
     );
     const afterPkdBalance = (await nf3User.getLayer2Balances())[erc20Address][0].balance;
     expect(afterPkdBalance - currentPkdBalance).to.be.equal(totalDeposits * transferValue);
+    expect(blocksReceivedToPropose).to.be.equal(Math.floor(totalDeposits / txPerBlock));
   });
 
   it('should register a proposer', async () => {

@@ -684,7 +684,7 @@ class Nf3 {
               txDataToSign,
               this.stateContractAddress,
               this.BLOCK_STAKE,
-            ).then(res => newGasBlockEmitter.emit('gascost', res.gasUsed));
+            ).then(res => newGasBlockEmitter.emit('gascost', res.gasUsed, txDataToSignList.length));
           });
         }, Promise.resolve());
       }
