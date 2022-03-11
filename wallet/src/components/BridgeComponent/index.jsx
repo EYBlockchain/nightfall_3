@@ -287,9 +287,7 @@ const BridgeComponent = () => {
                   <p>Balance: </p>
                   {token && txType === 'deposit' && (
                     <p>
-                      {l1Balance.toString().length >= 13
-                        ? `${l1Balance.toString().slice(0, 12)} ${token.symbol}`
-                        : `${l1Balance} ${token.symbol}`}
+                      {`${l1Balance.toString().match(/^-?\d+(?:\.\d{0,4})?/)[0]} ${token.symbol}`}
                     </p>
                   )}
                   {token && txType === 'withdraw' && <p>{`${l2Balance} MATIC`}</p>}
@@ -326,7 +324,7 @@ const BridgeComponent = () => {
                       <>
                         <div></div>
                         <div className="token_details_text" id="bridge_tokenDetails_tokenName">
-                          <span>Selec</span>
+                          <span>Select</span>
                         </div>
                       </>
                     )}
@@ -356,9 +354,12 @@ const BridgeComponent = () => {
                 {token && txType === 'deposit' && <p>{`${l2Balance} MATIC`}</p>}
                 {token && txType === 'withdraw' && (
                   <p>
-                    {l1Balance.toString().length >= 13
-                      ? `${l1Balance.toString().slice(0, 12)} ${token.symbol}`
-                      : `${l1Balance} ${token.symbol}`}
+                    {`${
+                      l1Balance
+                        .toString()
+                        .toString()
+                        .match(/^-?\d+(?:\.\d{0,4})?/)[0]
+                    } ${token.symbol}`}
                   </p>
                 )}
                 {!token && <p>{txType === 'withdraw' ? `${l2Balance}` : `${l1Balance}`}</p>}
