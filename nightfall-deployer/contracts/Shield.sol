@@ -255,7 +255,11 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
             if (t.tokenId != ZERO) revert("ERC20 deposit should have tokenId equal to ZERO");
             if (t.value >= super.getRestriction(addr))
                 revert("Value is above current restrictions for withdrawals");
-            else tokenContract.transfer(recipientAddress, uint256(t.value));
+            else {
+                bool result =
+                tokenContract.transfer(recipientAddress, uint256(t.value));
+                if (!result) revert("Shield: Error in transfer");
+            }
         } else if (t.tokenType == TokenType.ERC721) {
             if (t.value != 0)
                 // value should always be equal to 0
@@ -288,7 +292,11 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
             if (t.tokenId != ZERO) revert("ERC20 deposit should have tokenId equal to ZERO");
             if (t.value >= super.getRestriction(addr))
                 revert("Value is above current restrictions for deposits");
-            else tokenContract.transferFrom(msg.sender, address(this), uint256(t.value));
+            else {
+                bool result =
+                tokenContract.transferFrom(msg.sender, address(this), uint256(t.value));
+                if (!result) revert("Shield: Error in transfer");                                
+            }
         } else if (t.tokenType == TokenType.ERC721) {
             if (t.value != 0)
                 // value should always be equal to 0
