@@ -670,7 +670,6 @@ class Nf3 {
     const ping = async () => {
       if (!connection) return;
       if (connection.readyState !== WebSocket.OPEN) return;
-      // connection.send('heartbeat');
       connection.ping();
       setTimeout(ping, 15000);
     };
