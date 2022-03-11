@@ -6,7 +6,7 @@ import contractABIs from '../../contract-abis';
 import { TOKEN_TYPE, APPROVE_AMOUNT } from '../../constants';
 
 const { ethereum } = global;
-const { optimistUrl } = global.config;
+const { proposerUrl } = global.config;
 
 const options = global.config.WEB3_OPTIONS;
 
@@ -27,7 +27,7 @@ export async function getContractInstance(contractName, deployedAddress) {
 
 // TODO: temporary function create to avoid eslint issue for now
 export function getContractAddress(contractName) {
-  return axios.get(`${optimistUrl}/contract-address/${contractName}`);
+  return axios.get(`${proposerUrl}/contract-address/${contractName}`);
 }
 
 /**

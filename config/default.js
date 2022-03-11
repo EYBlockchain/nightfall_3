@@ -224,11 +224,11 @@ module.exports = {
   ],
 
   // for Browser use
-  optimistUrl:
-    process.env.LOCAL_OPTIMIST === 'true'
+  proposerUrl:
+    process.env.LOCAL_PROPOSER === 'true'
       ? process.env.LOCAL_API_URL
-      : process.env.OPTIMIST_API_URL,
+      : process.env.PROPOSER_API_URL,
 
   eventWsUrl:
-    process.env.LOCAL_OPTIMIST === 'true' ? process.env.LOCAL_WS_URL : process.env.OPTIMIST_WS_URL,
+    process.env.LOCAL_PROPOSER === 'true' ? process.env.LOCAL_WS_URL : process.env.PROPOSER_WS_URL,
 };

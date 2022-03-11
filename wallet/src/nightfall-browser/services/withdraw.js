@@ -30,7 +30,7 @@ import pkFile from '../../zokrates/withdraw_stub/keypair/withdraw_stub_pk.key';
 import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
 import { saveTransaction } from './database';
 
-const { BN128_GROUP_ORDER, SHIELD_CONTRACT_NAME, optimistUrl } = global.config;
+const { BN128_GROUP_ORDER, SHIELD_CONTRACT_NAME, proposerUrl } = global.config;
 const { generalise } = gen;
 
 async function withdraw(withdrawParams, shieldContractAddress) {
@@ -124,7 +124,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     if (offchain) {
       await axios
         .post(
-          `${optimistUrl}/proposer/offchain-transaction`,
+          `${proposerUrl}/proposer/offchain-transaction`,
           { transaction: optimisticWithdrawTransaction },
           { timeout: 3600000 },
         )

@@ -41,7 +41,7 @@ import doubleTransferProgramFile from '../../zokrates/double_transfer_stub/artif
 import doubleTransferPkFile from '../../zokrates/double_transfer_stub/keypair/double_transfer_stub_pk.key';
 import { saveTransaction } from './database';
 
-const { BN128_GROUP_ORDER, ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, optimistUrl, ZERO } =
+const { BN128_GROUP_ORDER, ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, proposerUrl, ZERO } =
   global.config;
 const { generalise, GN } = gen;
 
@@ -248,7 +248,7 @@ async function transfer(transferParams, shieldContractAddress) {
     if (offchain) {
       await axios
         .post(
-          `${optimistUrl}/proposer/offchain-transaction`,
+          `${proposerUrl}/proposer/offchain-transaction`,
           { transaction: optimisticTransferTransaction },
           { timeout: 3600000 },
         )
