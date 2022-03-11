@@ -1,7 +1,6 @@
 /* eslint-disable react/jsx-no-undef */
 /* eslint-disable react/jsx-pascal-case */
 import React, { useContext } from 'react';
-import { BsArrowRight } from 'react-icons/bs';
 import { useMediaQuery } from 'react-responsive';
 import pgIcon from '../../static/img/bridgepage/pg_coin4x2.png';
 import ethIcon from '../../static/img/bridgepage/eth_coin4x2.png';
@@ -41,11 +40,11 @@ const Bridge = () => {
                   The safe, fast and most secure way to bring cross-chain assets to Polygon chain.
                 </div>
                 <div className="items">
-                  <div className="each_item_wrapper">
+                  {/* <div className="each_item_wrapper">
                     <a
                       id="youtube-video-tutorial"
                       className="items_text"
-                      href="YOUTUBE_VIDEO_TUTORIAL"
+                      href=""
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -59,7 +58,7 @@ const Bridge = () => {
                     <a
                       id="faq-docs"
                       className="items_text"
-                      href="FAQ_DOCS_LINK"
+                      href=""
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -82,7 +81,7 @@ const Bridge = () => {
                     <div>
                       <BsArrowRight />
                     </div>
-                  </div>
+                  </div> */}
                 </div>
                 {isTabletOrMobile && (
                   <>

@@ -5,6 +5,7 @@ import DropdownButton from 'react-bootstrap/DropdownButton';
 import { MdArrowForwardIos } from 'react-icons/md';
 import { BsCheck } from 'react-icons/bs';
 import { AiOutlineInfo } from 'react-icons/ai';
+import { toast } from 'react-toastify';
 import styles from '../../styles/bridge.module.scss';
 import stylesModal from '../../styles/modal.module.scss';
 import polygonChainImage from '../../assets/img/polygon-chain.svg';
@@ -28,6 +29,8 @@ import { useAccount } from '../../hooks/Account/index.tsx';
 import loadAccount from '../../utils/loadAccount.ts';
 import minERC20ABI from '../../utils/getMinABIErc20.ts';
 import { getWalletBalance } from '../../nightfall-browser/services/commitment-storage';
+import './toast.css';
+import verifyIfValueIsGreaterThen from './utils/verifyIfValueIsGreaterThen.ts';
 
 const BridgeComponent = () => {
   // const [state] = useState(() => props[Object.keys(props)[1].toString()].value);
@@ -46,13 +49,11 @@ const BridgeComponent = () => {
 
   const [showTokensListModal, setShowTokensListModal] = useState(false);
 
+  useEffect(() => {
+    document.getElementById('inputValue').value = 0;
+  }, [txType]);
   const openTokensListModal = () => {
     setShowTokensListModal(true);
-  };
-
-  const handleClose = () => setShow(false);
-  const handleShow = () => {
-    setShow(true);
   };
 
   const [showModalConfirm, setShowModalConfirm] = useState(false);
@@ -84,12 +85,12 @@ const BridgeComponent = () => {
     setShowModalTransferConfirmed(true);
   };
 
+  const handleClose = () => setShow(false);
+
   async function triggerTx() {
-    console.log('Tx Triggered', txType);
     const { address: shieldContractAddress } = (await getContractAddress('Shield')).data;
     const { address: defaultTokenAddress } = (await getContractAddress('ERC20Mock')).data; // TODO Only for testing now
     const ercAddress = defaultTokenAddress; // TODO Location to be removed later
-    console.log('TokenAddress', ercAddress);
     switch (txType) {
       case 'deposit': {
         await approve(ercAddress, shieldContractAddress, 'ERC20', transferValue.toString());
@@ -138,7 +139,6 @@ const BridgeComponent = () => {
             },
             shieldContractAddress,
           );
-          console.log('rawTransaction', rawTransaction);
           return submitTransaction(rawTransaction, shieldContractAddress, 1);
         }
         break;
@@ -164,6 +164,26 @@ const BridgeComponent = () => {
   const [token, setToken] = useState(null);
   const [l2Balance, setL2Balance] = useState(0);
 
+  const isValueGreaterThen = () => {
+    if (txType === 'deposit') {
+      return verifyIfValueIsGreaterThen(transferValue, l1Balance);
+    }
+    return verifyIfValueIsGreaterThen(transferValue, l2Balance);
+  };
+
+  const handleShow = () => {
+    if (isValueGreaterThen()) {
+      toast.error("Input value can't be greater than balance!");
+      return;
+    }
+
+    if (transferValue) {
+      setShow(true);
+    } else {
+      toast.warn('Input a value for transfer, please.');
+    }
+  };
+
   async function setAccount() {
     setAccountInstance(await loadAccount());
   }
@@ -173,7 +193,7 @@ const BridgeComponent = () => {
     if (token && token.address) {
       const contract = new window.web3.eth.Contract(minERC20ABI, token.address);
       const result = await contract.methods.balanceOf(accountInstance.address).call(); // 29803630997051883414242659
-      const format = window.web3.utils.fromWei(result); // 29803630.997051883414242659
+      const format = window.web3.utils.fromWei(result, 'Gwei'); // 29803630.997051883414242659
       setL1Balance(format);
     } else {
       setL1Balance(0);
@@ -183,12 +203,15 @@ const BridgeComponent = () => {
   async function updateL2Balance() {
     if (token && token.address) {
       const l2bal = await getWalletBalance();
-      console.log('L2BAL: ', Object.values(l2bal));
-      console.log(token.address.toString());
+      const l2balFilteredByCompressedKey = Object.entries(l2bal).filter(
+        obj => obj[0] === state.zkpKeys.compressedPkd,
+      );
       new Promise(resolve => {
         let balanceAmount = 0;
-        Object.values(l2bal).forEach(obj => {
-          balanceAmount += Object.values(obj)[0];
+        l2balFilteredByCompressedKey.forEach(obj => {
+          if (Object.keys(obj[1])[0].toLocaleLowerCase() === token.address.toLocaleLowerCase()) {
+            balanceAmount += Object.values(obj[1])[0];
+          }
         });
         resolve(balanceAmount);
       }).then(value => setL2Balance(value));
@@ -200,12 +223,16 @@ const BridgeComponent = () => {
   useEffect(() => {
     updateL1Balance();
     updateL2Balance();
-    console.log('TOKEN: ', token);
   }, [token]);
 
   const updateInputValue = () => {
-    document.getElementById('inputValue').value = l1Balance;
-    setTransferValue(l1Balance);
+    if (txType === 'deposit') {
+      document.getElementById('inputValue').value = l1Balance;
+      setTransferValue(l1Balance);
+      return;
+    }
+    document.getElementById('inputValue').value = l2Balance;
+    setTransferValue(l2Balance);
   };
 
   /** ************************************ */
@@ -254,11 +281,14 @@ const BridgeComponent = () => {
                 </div>
                 <div className="balance_details">
                   <p>Balance: </p>
-                  {token && (
+                  {token && txType === 'deposit' && (
                     <p>
-                      {txType === 'deposit' ? `${l1Balance} ${token.symbol}` : `${l2Balance} MATIC`}
+                      {l1Balance.toString().length >= 13
+                        ? `${l1Balance.toString().slice(0, 12)} ${token.symbol}`
+                        : `${l1Balance} ${token.symbol}`}
                     </p>
                   )}
+                  {token && txType === 'withdraw' && <p>{`${l2Balance} MATIC`}</p>}
                   {!token && <p>{txType === 'deposit' ? `${l1Balance}` : `${l2Balance}`}</p>}
                 </div>
               </div>
@@ -319,7 +349,15 @@ const BridgeComponent = () => {
               </div>
               <div className="balance_details">
                 <p>Balance: </p>
-                <p>{txType === 'deposit' ? `${l2Balance} MATIC` : `${l1Balance}`}</p>
+                {token && txType === 'withdraw' && <p>`${l2Balance} MATIC`</p>}
+                {token && txType === 'deposit' && (
+                  <p>
+                    {l1Balance.toString().length >= 13
+                      ? `${l1Balance.toString().slice(0, 12)} ${token.symbol}`
+                      : `${l1Balance} ${token.symbol}`}
+                  </p>
+                )}
+                {!token && <p>{txType === 'deposit' ? `${l2Balance}` : `${l1Balance}`}</p>}
               </div>
             </div>
           </div>
@@ -396,7 +434,7 @@ const BridgeComponent = () => {
                 </div>
                 {/* font-heading-large font-bold ps-t-16 ps-b-6 */}
                 <div className={stylesModal.tokenDetails__val} id="Bridge_modal_tokenAmount">
-                  {Number(transferValue).toFixed(2)}
+                  {Number(transferValue).toFixed(4)}
                 </div>
                 {/* font-body-small */}
                 <div className={stylesModal.tokenDetails__usd}>$xx.xx</div>
