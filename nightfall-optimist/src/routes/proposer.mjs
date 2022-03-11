@@ -84,8 +84,8 @@ router.post('/register', async (req, res, next) => {
 router.get('/proposers', async (req, res, next) => {
   logger.debug(`list proposals endpoint received GET`);
   try {
-    const proposers = getProposers();
-    logger.debug('returning raw transaction data');
+    const proposers = await getProposers();
+    logger.debug(`Returning proposer list of length ${proposers.length}`);
     res.json({ proposers });
   } catch (err) {
     logger.error(err);
