@@ -11,7 +11,7 @@ import gen from 'general-number';
 import rand from 'common-files/utils/crypto/crypto-random.mjs';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
 import logger from 'common-files/utils/logger.mjs';
-import { Secrets, Nullifier, Commitment, PublicInputs, Transaction } from '../classes/index.mjs';
+import { Secrets, Nullifier, Commitment, Transaction } from '../classes/index.mjs';
 import {
   findUsableCommitmentsMutex,
   storeCommitment,
@@ -19,7 +19,7 @@ import {
   clearPending,
   getSiblingInfo,
 } from './commitment-storage.mjs';
-import { discoverPeers } from './peers.mjs';
+import getProposersUrl from './peers.mjs';
 import { decompressKey, calculateIvkPkdfromAskNsk } from './keys.mjs';
 
 const {
@@ -34,6 +34,8 @@ const {
   ZERO,
 } = config;
 const { generalise, GN } = gen;
+
+const NEXT_N_PROPOSERS = 3;
 
 async function transfer(transferParams) {
   logger.info('Creating a transfer transaction');
@@ -122,14 +124,6 @@ async function transfer(transferParams) {
     roots,
   );
 
-  // public inputs
-  const publicInputs = new PublicInputs([
-    oldCommitments.map(commitment => commitment.preimage.ercAddress),
-    newCommitments.map(commitment => commitment.hash),
-    nullifiers.map(nullifier => generalise(nullifier.hash.hex(32, 31)).integer),
-    roots,
-    compressedSecrets.map(compressedSecret => compressedSecret.hex(32, 31)),
-  ]);
   // time for a quick sanity check.  We expect the number of old commitments,
   // new commitments and nullifiers to be equal.
   if (nullifiers.length !== oldCommitments.length || nullifiers.length !== newCommitments.length) {
@@ -204,18 +198,24 @@ async function transfer(transferParams) {
     fee,
     historicRootBlockNumberL2: blockNumberL2s,
     transactionType,
-    publicInputs,
     ercAddress: ZERO, // we don't want to expose the ERC address during a transfer
     commitments: newCommitments,
     nullifiers,
     compressedSecrets,
     proof,
   });
-  logger.debug(`Client made transaction ${JSON.stringify(optimisticTransferTransaction, null, 2)}`);
+  logger.debug(
+    `Client made transaction ${JSON.stringify(
+      optimisticTransferTransaction,
+      null,
+      2,
+    )} offchain ${offchain}`,
+  );
   try {
     if (offchain) {
       // dig up connection peers
-      const peerList = await discoverPeers('Local');
+      const peerList = await getProposersUrl(NEXT_N_PROPOSERS);
+      logger.debug(`Peer List: ${JSON.stringify(peerList, null, 2)}`);
       Object.keys(peerList).forEach(async address => {
         logger.debug(
           `offchain transaction - calling ${peerList[address]}/proposer/offchain-transaction`,

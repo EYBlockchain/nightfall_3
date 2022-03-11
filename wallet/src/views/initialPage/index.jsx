@@ -62,8 +62,7 @@ export default function MainPage() {
       const { web3 } = window;
 
       //   Load account
-      const accounts = await web3.eth.getAccounts();
-      console.log('ACCOUNT1: ', accounts);
+      const accounts = await web3.eth.getAccounts();      
       setAccountInstance({
         address: accounts[0],
       });

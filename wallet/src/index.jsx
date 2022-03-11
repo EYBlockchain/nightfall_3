@@ -8,13 +8,6 @@ import './views/app.style.css';
 import reportWebVitals from './reportWebVitals';
 import generateWebComponents from './utils/generateWebComponents';
 
-// ReactDOM.render(
-//   <React.StrictMode>
-//     <App />
-//   </React.StrictMode>,
-//   document.getElementById('root'),
-// );
-
 generateWebComponents();
 const el = document.createElement('nightfall-app');
 document.body.appendChild(el);

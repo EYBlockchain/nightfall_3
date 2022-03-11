@@ -1,7 +1,7 @@
 import React from 'react';
 import Header from '../../components/Header/header.jsx';
 import SideBar from '../../components/SideBar/index.jsx';
-import TransactionsComponent from '../../components/Transactions/index.jsx';
+import Transactions from '../../components/Transactions/index.jsx';
 import styles from '../../styles/transactionPage.module.scss';
 
 export default function TransactionPage() {
@@ -27,7 +27,7 @@ export default function TransactionPage() {
                 Transactions
               </div>
               <div>
-                <TransactionsComponent />
+                <Transactions />
               </div>
             </div>
           </div>

@@ -133,7 +133,8 @@ export default function Wallet() {
   }, [state.mnemonic]);
 
   useEffect(async () => {
-    const l2Balance = await getWalletBalance();
+    const pkd = Storage.pkdGet(await Web3.getAccount());
+    const l2Balance = await getWalletBalance(pkd);
     const { address: newTokenAddress } = (await getContractAddress('ERC20Mock')).data; // TODO This is just until we get a list from Polygon
     const updatedTokenState = initialTokenState.map(i => {
       const { tokenAddress, ...rest } = i;

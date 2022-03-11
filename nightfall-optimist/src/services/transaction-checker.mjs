@@ -4,18 +4,11 @@ Here are the things that could be wrong with a transaction:
 - the proof doesn't verify
 - the transaction hash doesn't match with the preimage
 - the transaction type is inconsistent with the fields populated
-- the public inputs hash is correct
 */
 import config from 'config';
 import gen from 'general-number';
 import logger from 'common-files/utils/logger.mjs';
-import {
-  Transaction,
-  VerificationKey,
-  Proof,
-  TransactionError,
-  PublicInputs,
-} from '../classes/index.mjs';
+import { Transaction, VerificationKey, Proof, TransactionError } from '../classes/index.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import { getBlockByBlockNumberL2 } from './database.mjs';
 import verify from './verify.mjs';
@@ -164,46 +157,54 @@ async function verifyProof(transaction) {
 
   switch (Number(transaction.transactionType)) {
     case 0: // deposit transaction
-      inputs = new PublicInputs([
-        transaction.ercAddress,
-        transaction.tokenId,
-        transaction.value,
-        transaction.commitments[0], // not truncating here as we already ensured hash < group order
-      ]).publicInputs;
+      inputs = generalise(
+        [
+          transaction.ercAddress,
+          transaction.tokenId,
+          transaction.value,
+          transaction.commitments[0], // not truncating here as we already ensured hash < group order
+        ].flat(Infinity),
+      );
       break;
     case 1: // single transfer transaction
-      inputs = new PublicInputs([
-        // transaction.ercAddress,
-        transaction.commitments[0], // not truncating here as we already ensured hash < group order
-        generalise(transaction.nullifiers[0]).hex(32, 31),
-        historicRootFirst.root,
-        ...transaction.compressedSecrets.map(compressedSecret =>
-          generalise(compressedSecret).hex(32, 31),
-        ),
-      ]).publicInputs;
+      inputs = generalise(
+        [
+          // transaction.ercAddress,
+          transaction.commitments[0], // not truncating here as we already ensured hash < group order
+          generalise(transaction.nullifiers[0]).hex(32, 31),
+          historicRootFirst.root,
+          ...transaction.compressedSecrets.map(compressedSecret =>
+            generalise(compressedSecret).hex(32, 31),
+          ),
+        ].flat(Infinity),
+      );
       break;
     case 2: // double transfer transaction
-      inputs = new PublicInputs([
-        // transaction.ercAddress, // this is correct; ercAddress appears twice
-        // transaction.ercAddress, // in a double-transfer public input hash
-        transaction.commitments, // not truncating here as we already ensured hash < group order
-        transaction.nullifiers.map(nullifier => generalise(nullifier).hex(32, 31)),
-        historicRootFirst.root,
-        historicRootSecond.root,
-        ...transaction.compressedSecrets.map(compressedSecret =>
-          generalise(compressedSecret).hex(32, 31),
-        ),
-      ]).publicInputs;
+      inputs = generalise(
+        [
+          // transaction.ercAddress, // this is correct; ercAddress appears twice
+          // transaction.ercAddress, // in a double-transfer public input hash
+          transaction.commitments, // not truncating here as we already ensured hash < group order
+          transaction.nullifiers.map(nullifier => generalise(nullifier).hex(32, 31)),
+          historicRootFirst.root,
+          historicRootSecond.root,
+          ...transaction.compressedSecrets.map(compressedSecret =>
+            generalise(compressedSecret).hex(32, 31),
+          ),
+        ].flat(Infinity),
+      );
       break;
     case 3: // withdraw transaction
-      inputs = new PublicInputs([
-        transaction.ercAddress,
-        transaction.tokenId,
-        transaction.value,
-        generalise(transaction.nullifiers[0]).hex(32, 31),
-        transaction.recipientAddress,
-        historicRootFirst.root,
-      ]).publicInputs;
+      inputs = generalise(
+        [
+          transaction.ercAddress,
+          transaction.tokenId,
+          transaction.value,
+          generalise(transaction.nullifiers[0]).hex(32, 31),
+          transaction.recipientAddress,
+          historicRootFirst.root,
+        ].flat(Infinity),
+      );
       break;
     default:
       throw new TransactionError('Unknown transaction type', 2);

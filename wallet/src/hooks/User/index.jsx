@@ -11,18 +11,6 @@ import { getMaxBlock } from '../../nightfall-browser/services/database';
 
 const { eventWsUrl } = global.config;
 
-// export const reducer = (state, action) => {
-//   switch (action.type) {
-//     case 'toggle_button':
-//       return {
-//         ...state,
-//         active: !state.active,
-//       };
-//     default:
-//       return state;
-//   }
-// };
-
 export const initialState = {
   active: false,
   zkpKeys: {
@@ -78,8 +66,8 @@ export const UserProvider = ({ children }) => {
     // Connection opened
     socket.addEventListener('open', async function () {
       console.log(`Websocket is open`);
-      const lastBlock = (await getMaxBlock())?._id ?? -1;
-      console.log('LasBlock', lastBlock);
+      const lastBlock = (await getMaxBlock()) ?? -1;
+      console.log('LastBlock', lastBlock);
       socket.send(JSON.stringify({ type: 'sync', lastBlock }));
     });
 
@@ -87,14 +75,15 @@ export const UserProvider = ({ children }) => {
     socket.addEventListener('message', async function (event) {
       console.log('Message from server ', JSON.parse(event.data));
       const parsed = JSON.parse(event.data);
-      if (parsed.type === 'sync')
-        await Promise.all(
-          parsed.historicalData.map(e => {
-            return blockProposedEventHandler(e, state.zkpKeys.ivk, state.zkpKeys.nsk);
-          }),
-        );
-      else if (parsed.type === 'blockProposed')
-        await blockProposedEventHandler(parsed.data, state.zkpKeys.ivk, state.zkpKeys.nsk);
+      if (parsed.type === 'sync') {
+        parsed.historicalData
+          .sort((a, b) => a.blockNumberL2 - b.blockNumberL2)
+          .reduce(async (acc, curr) => {
+            console.log('State', state.zkpKeys.ivk);
+            await acc; // Acc is a promise so we await it before processing the next one;
+            return blockProposedEventHandler(curr, [state.zkpKeys.ivk], [state.zkpKeys.nsk]); // TODO Should be array
+          }, Promise.resolve());
+      } else if (parsed.type === 'blockProposed') await blockProposedEventHandler(parsed.data, state.zkpKeys.ivk, state.zkpKeys.nsk);
       // TODO Rollback Handler
     });
     setState(previousState => {
@@ -111,6 +100,9 @@ export const UserProvider = ({ children }) => {
       mnemonic,
       `m/44'/60'/0'/${DEFAULT_NF_ADDRESS_INDEX.toString()}`,
     );
+
+    // Save Pkd
+    Storage.pkdSet(await Web3.getAccount(), zkpKeys.compressedPkd);
     setState(previousState => {
       return {
         ...previousState,

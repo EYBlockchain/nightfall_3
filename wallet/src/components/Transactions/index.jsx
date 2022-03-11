@@ -24,7 +24,7 @@ const displayTime = (start, end) => {
   return `${Math.floor(diff / 3600)} mins ago`;
 };
 
-const TransactionsComponent = () => {
+const Transactions = () => {
   const [txs, setTxs] = React.useState([]);
 
   useEffect(async () => {
@@ -246,4 +246,4 @@ const TransactionsComponent = () => {
   );
 };
 
-export default TransactionsComponent;
+export default Transactions;

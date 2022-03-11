@@ -12,7 +12,7 @@ import { initialize } from 'zokrates-js';
 import axios from 'axios';
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
-import { Nullifier, PublicInputs, Transaction } from '../classes/index';
+import { Nullifier, Transaction } from '../classes/index';
 import {
   findUsableCommitmentsMutex,
   markNullified,
@@ -30,7 +30,7 @@ import pkFile from '../../zokrates/withdraw_stub/keypair/withdraw_stub_pk.key';
 import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
 import { saveTransaction } from './database';
 
-const { BN128_GROUP_ORDER, SHIELD_CONTRACT_NAME, optimistUrl } = global.config;
+const { BN128_GROUP_ORDER, SHIELD_CONTRACT_NAME, proposerUrl } = global.config;
 const { generalise } = gen;
 
 async function withdraw(withdrawParams, shieldContractAddress) {
@@ -63,15 +63,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
   );
 
   // public inputs
-  const { root, leafIndex, isOnChain } = commitmentTreeInfo;
-  const publicInputs = new PublicInputs([
-    oldCommitment.preimage.ercAddress,
-    oldCommitment.preimage.tokenId,
-    oldCommitment.preimage.value,
-    generalise(nullifier.hash.hex(32, 31)).integer,
-    recipientAddress,
-    root,
-  ]);
+  const { leafIndex, isOnChain } = commitmentTreeInfo;
 
   // now we have everything we need to create a Witness and compute a proof
   const witnessInput = [
@@ -121,7 +113,6 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     historicRootBlockNumberL2: [isOnChain, 0],
     transactionType: 3,
     tokenType: items.tokenType,
-    publicInputs,
     tokenId,
     value,
     ercAddress,
@@ -133,7 +124,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     if (offchain) {
       await axios
         .post(
-          `${optimistUrl}/proposer/offchain-transaction`,
+          `${proposerUrl}/proposer/offchain-transaction`,
           { transaction: optimisticWithdrawTransaction },
           { timeout: 3600000 },
         )
@@ -143,6 +134,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
       const th = optimisticWithdrawTransaction.transactionHash;
       delete optimisticWithdrawTransaction.transactionHash;
       optimisticWithdrawTransaction.transactionHash = th;
+      await markNullified(oldCommitment, optimisticWithdrawTransaction);
       await saveTransaction(optimisticWithdrawTransaction);
       return { transaction: optimisticWithdrawTransaction };
     }

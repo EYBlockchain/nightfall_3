@@ -15,7 +15,7 @@ import axios from 'axios';
 import rand from '../../common-files/utils/crypto/crypto-random';
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
-import { Secrets, Nullifier, Commitment, PublicInputs, Transaction } from '../classes/index';
+import { Secrets, Nullifier, Commitment, Transaction } from '../classes/index';
 import {
   findUsableCommitmentsMutex,
   storeCommitment,
@@ -41,7 +41,7 @@ import doubleTransferProgramFile from '../../zokrates/double_transfer_stub/artif
 import doubleTransferPkFile from '../../zokrates/double_transfer_stub/keypair/double_transfer_stub_pk.key';
 import { saveTransaction } from './database';
 
-const { BN128_GROUP_ORDER, ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, optimistUrl, ZERO } =
+const { BN128_GROUP_ORDER, ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, proposerUrl, ZERO } =
   global.config;
 const { generalise, GN } = gen;
 
@@ -124,16 +124,6 @@ async function transfer(transferParams, shieldContractAddress) {
   });
   const leafIndices = commitmentTreeInfo.map(l => l.leafIndex);
   const blockNumberL2s = commitmentTreeInfo.map(l => l.isOnChain);
-  const roots = commitmentTreeInfo.map(l => l.root);
-
-  // public inputs
-  const publicInputs = new PublicInputs([
-    oldCommitments.map(commitment => commitment.preimage.ercAddress),
-    newCommitments.map(commitment => commitment.hash),
-    nullifiers.map(nullifier => generalise(nullifier.hash.hex(32, 31)).integer),
-    roots,
-    compressedSecrets.map(compressedSecret => compressedSecret.hex(32, 31)),
-  ]);
   // time for a quick sanity check.  We expect the number of old commitments,
   // new commitments and nullifiers to be equal.
   if (nullifiers.length !== oldCommitments.length || nullifiers.length !== newCommitments.length) {
@@ -247,7 +237,6 @@ async function transfer(transferParams, shieldContractAddress) {
     fee,
     historicRootBlockNumberL2: blockNumberL2s,
     transactionType,
-    publicInputs,
     ercAddress: ZERO,
     commitments: newCommitments,
     nullifiers,
@@ -258,7 +247,7 @@ async function transfer(transferParams, shieldContractAddress) {
     if (offchain) {
       await axios
         .post(
-          `${optimistUrl}/proposer/offchain-transaction`,
+          `${proposerUrl}/proposer/offchain-transaction`,
           { transaction: optimisticTransferTransaction },
           { timeout: 3600000 },
         )

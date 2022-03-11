@@ -43,7 +43,7 @@ export async function saveTree(blockNumber, blockNumberL2, timber) {
       leafCount: timber.leafCount,
       root: timber.root,
     },
-    blockNumber,
+    blockNumberL2,
   );
 }
 
@@ -69,17 +69,20 @@ export async function getTreeByRoot(treeRoot) {
 
 export async function getTreeByBlockNumberL2(blockNumberL2) {
   const db = await connectDB();
-  const vals = await db.getAll(TIMBER_COLLECTION);
-  const { root, frontier, leafCount } = vals.filter(v => v.blockNumberL2 === blockNumberL2);
-  const t = new Timber(root, frontier, leafCount);
-  return t;
+  if (blockNumberL2 < 0) return new Timber(0, [], 0);
+  try {
+    const { root, frontier, leafCount } = await db.get(TIMBER_COLLECTION, blockNumberL2);
+    const t = new Timber(root, frontier, leafCount);
+    return t;
+  } catch (error) {
+    throw Error('Tree not Found');
+    // TODO Should handle this throw
+  }
 }
 
 export async function deleteTreeByBlockNumberL2(blockNumberL2) {
   const db = await connectDB();
-  const vals = await db.getAll(TIMBER_COLLECTION);
-  const [match] = vals.filter(v => v.blockNumberL2 === blockNumberL2);
-  return db.delete(TIMBER_COLLECTION, match);
+  return db.delete(TIMBER_COLLECTION, blockNumberL2);
 }
 
 /**
@@ -146,9 +149,12 @@ export async function getBlockByTransactionHash(transactionHash) {
 
 export async function getMaxBlock() {
   const db = await connectDB();
-  const keys = await db.getAllKeys(SUBMITTED_BLOCKS_COLLECTION);
+  const timbers = await db.getAll(TIMBER_COLLECTION);
+  if (timbers.length === 0) return -1;
+  const keys = timbers.map(t => t.blockNumberL2);
   const maxKey = Math.max(...keys);
-  return db.get(SUBMITTED_BLOCKS_COLLECTION, maxKey);
+  return maxKey;
+  // return db.get(SUBMITTED_BLOCKS_COLLECTION, maxKey);
 }
 
 /**

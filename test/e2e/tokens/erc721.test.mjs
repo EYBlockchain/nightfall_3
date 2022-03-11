@@ -6,6 +6,7 @@ import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
 import Nf3 from '../../../cli/lib/nf3.mjs';
 import { expectTransaction, Web3Client, depositNTransactions } from '../../utils.mjs';
+import logger from '../../../common-files/utils/logger.mjs';
 import { getERCInfo } from '../../../cli/lib/tokens.mjs';
 
 // so we can use require with mjs file
@@ -80,17 +81,13 @@ describe('ERC721 tests', () => {
   before(async () => {
     await nf3Proposer1.init(mnemonics.proposer);
     await nf3Proposer1.registerProposer();
-    await nf3Proposer1.addPeer(environment.optimistApiUrl);
 
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer1.startProposer();
     newGasBlockEmitter.on('gascost', async gasUsed => {
-      if (process.env.VERBOSE)
-        console.log(
-          `Block proposal gas cost was ${gasUsed}, cost per transaction was ${
-            gasUsed / txPerBlock
-          }`,
-        );
+      logger.debug(
+        `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
+      );
     });
 
     await nf3Users[0].init(mnemonics.user1);
@@ -204,7 +201,7 @@ describe('ERC721 tests', () => {
         nf3Users[0].ethereumAddress,
       );
       expectTransaction(rec);
-      if (process.env.VERBOSE) console.log(`     Gas used was ${Number(rec.gasUsed)}`);
+      logger.debug(`     Gas used was ${Number(rec.gasUsed)}`);
 
       await emptyL2(nf3Users[0]);
 

@@ -16,7 +16,7 @@ import rand from '../../common-files/utils/crypto/crypto-random';
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
 // import { generateProof, computeWitness } from 'zokrates-js';
-import { Commitment, PublicInputs, Transaction } from '../classes/index';
+import { Commitment, Transaction } from '../classes/index';
 import { storeCommitment } from './commitment-storage';
 import { compressPublicKey } from './keys';
 
@@ -49,7 +49,6 @@ async function deposit(items, shieldContractAddress) {
     commitment = new Commitment({ ercAddress, tokenId, value, compressedPkd, salt });
   } while (commitment.hash.bigInt > BN128_GROUP_ORDER);
 
-  const publicInputs = new PublicInputs([ercAddress, tokenId, value, commitment.hash]);
   logger.debug(`Hash of new commitment is ${commitment.hash.hex()}`);
   // now we can compute a Witness so that we can generate the proof
   const witnessInput = [
@@ -93,7 +92,6 @@ async function deposit(items, shieldContractAddress) {
     fee,
     transactionType: 0,
     tokenType: items.tokenType,
-    publicInputs,
     tokenId,
     value,
     ercAddress,

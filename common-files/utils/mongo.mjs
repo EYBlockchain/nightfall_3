@@ -13,8 +13,22 @@ const connection = {};
 export default {
   async connection(url) {
     if (connection[url]) return connection[url];
-    const client = await new MongoClient(url, { useUnifiedTopology: true });
-    connection[url] = await client.connect();
+    // Check if we are connecting to MongoDb or DocumentDb
+    if (url.includes('amazonaws')) {
+      // retrieve user and password from secrets
+      const { MONGO_INITDB_ROOT_PASSWORD, MONGO_INITDB_ROOT_USERNAME, MONGO_CA } = process.env;
+      const client = await new MongoClient(
+        `mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@${url}:27017/?tls=true&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false`,
+        {
+          tlsCAFile: `${MONGO_CA}`, // Specify the DocDB; cert
+          useUnifiedTopology: true,
+        },
+      );
+      connection[url] = await client.connect();
+    } else {
+      const client = await new MongoClient(url, { useUnifiedTopology: true });
+      connection[url] = await client.connect();
+    }
     return connection[url];
   },
   async disconnect(url) {

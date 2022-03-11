@@ -169,7 +169,7 @@ the calling application.
   from `nightfall-optimist` back to the Challenger/Proposer. These must be signed and sent to the
   blockchain to either raise a challenger or to create a new block. This cannot be done by
   `nightfall-optimist` because it does not have access to Ethereum private keys. See the test suite
-  `neg-http.mjs` for an example of this working. The basic code is:
+  `adversary.test.mjs` for an example of this working. The basic code is:
 
 ```js
 connection = new WebSocket(optimistWsUrl);

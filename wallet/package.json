@@ -45,14 +45,15 @@
     "zokrates-js": "^1.0.39"
   },
   "scripts": {
-    "start": "REACT_APP_ENVIRONMENT=Localhost craco start",
+    "start": "LOCAL_PROPOSER=true craco start",
     "start:docker": "REACT_APP_ENVIRONMENT=Docker PORT=3010 craco start",
     "start:ropsten": "REACT_APP_ENVIRONMENT=Ropsten craco start",
-    "build": "REACT_APP_ENVIRONMENT=Ropsten craco build",
-    "deploy": "npm run build && aws s3 sync build/ s3://nightfallv3-wallet --cache-control max-age=172800 --delete && aws configure set preview.cloudfront true && aws cloudfront create-invalidation --distribution-id E9K9C7N0TG7LG --paths \"/*\"",
+    "build": "LOCAL_PROPOSER=false craco build",
+    "deploy": "npm run build && aws s3 sync build s3://pnf-dev-browser --cache-control max-age=172800 --delete && aws configure set preview.cloudfront true && aws cloudfront create-invalidation --distribution-id ENV3X13MLR5YT --paths \"/*\"",
     "test": "craco test --env=jsdom",
     "test:jest": "jest",
-    "eject": "craco eject"
+    "eject": "craco eject",    
+    "e2e-test": "npx synpress run --env TRANSACTIONS_PER_BLOCK=2"
   },
   "browserslist": {
     "production": [
@@ -76,6 +77,7 @@
     "babel-jest": "^27.5.1",
     "jest": "^26.6.0",
     "react-error-overlay": "^6.0.9",
-    "single-spa-react": "^4.6.1"
+    "single-spa-react": "^4.6.1",
+    "@synthetixio/synpress": "^1.1.1"    
   }
 }
