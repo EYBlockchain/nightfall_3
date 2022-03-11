@@ -177,11 +177,17 @@ const BridgeComponent = () => {
       return;
     }
 
-    if (transferValue) {
-      setShow(true);
-    } else {
+    if (!transferValue) {
       toast.warn('Input a value for transfer, please.');
+      return;
     }
+
+    if (transferValue === 0) {
+      toast.warn("Input a value can't be zero.");
+      return;
+    }
+
+    setShow(true);
   };
 
   async function setAccount() {
@@ -349,15 +355,15 @@ const BridgeComponent = () => {
               </div>
               <div className="balance_details">
                 <p>Balance: </p>
-                {token && txType === 'withdraw' && <p>`${l2Balance} MATIC`</p>}
-                {token && txType === 'deposit' && (
+                {token && txType === 'deposit' && <p>{`${l2Balance} MATIC`}</p>}
+                {token && txType === 'withdraw' && (
                   <p>
                     {l1Balance.toString().length >= 13
                       ? `${l1Balance.toString().slice(0, 12)} ${token.symbol}`
                       : `${l1Balance} ${token.symbol}`}
                   </p>
                 )}
-                {!token && <p>{txType === 'deposit' ? `${l2Balance}` : `${l1Balance}`}</p>}
+                {!token && <p>{txType === 'withdraw' ? `${l2Balance}` : `${l1Balance}`}</p>}
               </div>
             </div>
           </div>
