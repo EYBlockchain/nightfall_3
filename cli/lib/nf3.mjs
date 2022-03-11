@@ -666,17 +666,18 @@ class Nf3 {
     const newGasBlockEmitter = new EventEmitter();
     const connection = new WebSocket(this.optimistWsUrl);
     this.websockets.push(connection); // save so we can close it properly later
-    // Heartbeat function to keep WS open. Send beat every 15 seconds
-    const heartbeat = async () => {
+    // Ping function to keep WS open. Send beat every 15 seconds
+    const ping = async () => {
       if (!connection) return;
       if (connection.readyState !== WebSocket.OPEN) return;
-      connection.send('heartbeat');
-      setTimeout(heartbeat, 15000);
+      //connection.send('heartbeat');
+      connection.ping();
+      setTimeout(ping, 15000);
     };
     connection.onopen = () => {
       logger.debug('websocket connection opened');
       connection.send('blocks');
-      heartbeat();
+      ping();
     };
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
