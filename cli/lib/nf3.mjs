@@ -222,15 +222,12 @@ class Nf3 {
       // TODO does this still work if there is a chain reorg or do we have to handle that?
       return new Promise((resolve, reject) => {
         logger.debug(`Confirming transaction ${signed.transactionHash}`);
-        this.notConfirmed++;
         this.web3.eth
           .sendSignedTransaction(signed.rawTransaction)
           .on('confirmation', (number, receipt) => {
             if (number === 12) {
-              this.notConfirmed--;
               logger.debug(
                 `Transaction ${receipt.transactionHash} has been confirmed ${number} times.`,
-                `Number of unconfirmed transactions is ${this.notConfirmed}`,
               );
               resolve(receipt);
             }
