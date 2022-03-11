@@ -8,6 +8,7 @@ import { approve } from './tokens.mjs';
 import erc20 from './abis/ERC20.mjs';
 import erc721 from './abis/ERC721.mjs';
 import erc1155 from './abis/ERC1155.mjs';
+
 import { DEFAULT_BLOCK_STAKE, DEFAULT_PROPOSER_BOND, DEFAULT_FEE } from './constants.mjs';
 
 /**
@@ -220,18 +221,17 @@ class Nf3 {
       // then return the receipt.
       // TODO does this still work if there is a chain reorg or do we have to handle that?
       return new Promise((resolve, reject) => {
-        if (process.env.VERBOSE) console.log(`Confirming transaction ${signed.transactionHash}`);
+        logger.debug(`Confirming transaction ${signed.transactionHash}`);
         this.notConfirmed++;
         this.web3.eth
           .sendSignedTransaction(signed.rawTransaction)
           .on('confirmation', (number, receipt) => {
             if (number === 12) {
               this.notConfirmed--;
-              if (process.env.VERBOSE)
-                console.log(
-                  `Transaction ${receipt.transactionHash} has been confirmed ${number} times.`,
-                  `Number of unconfirmed transactions is ${this.notConfirmed}`,
-                );
+              logger.debug(
+                `Transaction ${receipt.transactionHash} has been confirmed ${number} times.`,
+                `Number of unconfirmed transactions is ${this.notConfirmed}`,
+              );
               resolve(receipt);
             }
           })
@@ -557,11 +557,13 @@ class Nf3 {
   the proposer.
   @method
   @async
+  @param {string} Proposer REST API URL with format https://xxxx.xxx.xx
   @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
   */
-  async registerProposer() {
+  async registerProposer(url) {
     const res = await axios.post(`${this.optimistBaseUrl}/proposer/register`, {
       address: this.ethereumAddress,
+      url,
     });
     if (res.data.txDataToSign === '') return false; // already registered
     return this.submitTransaction(
@@ -635,6 +637,17 @@ class Nf3 {
   }
 
   /**
+  Get current proposer
+  @method
+  @async
+  @returns {array} A promise that resolves to the Ethereum transaction receipt.
+  */
+  async getCurrentProposer() {
+    const res = await axios.get(`${this.optimistBaseUrl}/proposer/current-proposer`);
+    return res.data.currentProposer;
+  }
+
+  /**
   Get all the list of existing proposers.
   @method
   @async
@@ -646,23 +659,19 @@ class Nf3 {
   }
 
   /**
-  Adds a new Proposer peer to a list of proposers that are available for accepting
-  offchain (direct) transfers and withdraws. The client will submit direct transfers
-  and withdraws to all of these peers.
+  Update Proposers URL
   @method
   @async
-  @param {string} peerUrl - the URL of the Proposer being added. This will be from
-  the point of view of nightfall-client, not the SDK user (e.g. 'http://optimist1:80').
-  Nightfall-client will use this URL to contact the Proposer.
+  @param {string} Proposer REST API URL with format https://xxxx.xxx.xx
+  @returns {array} A promise that resolves to the Ethereum transaction receipt.
   */
-  async addPeer(peerUrl) {
-    if (!this.ethereumAddress)
-      throw new Error('Cannot add peer if the Ethereum address for the user is not defined');
-    // the peerUrl is from the point of view of the Client e.g. 'http://optimist1:80'
-    return axios.post(`${this.clientBaseUrl}/peers/addPeers`, {
+  async updateProposer(url) {
+    const res = await axios.post(`${this.optimistBaseUrl}/proposer/update`, {
       address: this.ethereumAddress,
-      enode: peerUrl,
+      url,
     });
+    logger.debug(`Proposer with address ${this.ethereumAddress} updated to URL ${url}`);
+    return this.submitTransaction(res.data.txDataToSign, this.proposersContractAddress, 0);
   }
 
   /**
@@ -696,6 +705,22 @@ class Nf3 {
     connection.onclosed = () => logger.warn('websocket connection closed');
     // add this proposer to the list of peers that can accept direct transfers and withdraws
     return newGasBlockEmitter;
+  }
+
+  /**
+  Send offchain transaction to Optimist
+  @method
+  @async
+  @param {string} transaction
+  @returns {array} A promise that resolves to the API call status
+  */
+  async sendOffchainTransaction(transaction) {
+    const res = axios.post(
+      `${this.optimistBaseUrl}/proposer/offchain-transaction`,
+      { transaction },
+      { timeout: 3600000 },
+    );
+    return res.status;
   }
 
   /**
@@ -764,8 +789,8 @@ class Nf3 {
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
       const { type, txDataToSign } = msg;
-      if (type === 'challenge') {
-        await this.submitTransaction(txDataToSign, this.stateContractAddress, 0);
+      if (type === 'commit' || type === 'challenge') {
+        await this.submitTransaction(txDataToSign, this.challengesContractAddress, 0);
       }
     };
   }
@@ -811,6 +836,15 @@ class Nf3 {
       params: {
         compressedPkd: this.zkpKeys.compressedPkd,
         ercList,
+      },
+    });
+    return res.data.balance;
+  }
+
+  async getLayer2BalancesUnfiltered({ ercList } = {}) {
+    const res = await axios.get(`${this.clientBaseUrl}/commitment/balance`, {
+      params: {
+        compressedPkd: ercList,
       },
     });
     return res.data.balance;

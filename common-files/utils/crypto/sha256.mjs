@@ -43,4 +43,5 @@ const sha256 = generalValues => {
   return new GN(h);
 };
 
+// ignore unused exports
 export default sha256;

@@ -209,18 +209,19 @@ export async function findBlocksFromBlockNumberL2(blockNumberL2) {
 }
 
 /**
-function to store addresses of proposers that are registered through this
+function to store addresses and URL of proposers that are registered through this
 app. These are needed because the app needs to know when one of them is the
 current (active) proposer, at which point it will automatically start to
 assemble blocks on behalf of the proposer. It listens for the NewCurrentProposer
 event to determine who is the current proposer.
 */
-export async function setRegisteredProposerAddress(address) {
+export async function setRegisteredProposerAddress(address, url) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   logger.debug(`Saving proposer address ${address}`);
   const data = { _id: address };
-  return db.collection(PROPOSER_COLLECTION).insertOne(data);
+  const update = { $set: { url } };
+  return db.collection(PROPOSER_COLLECTION).updateOne(data, update, { upsert: true });
 }
 
 /**
@@ -233,6 +234,20 @@ export async function isRegisteredProposerAddressMine(address) {
   const metadata = await db.collection(PROPOSER_COLLECTION).findOne({ _id: address });
   logger.silly(`found registered proposer ${JSON.stringify(metadata, null, 2)}`);
   return metadata;
+}
+
+/**
+  Remove proposer from dB
+*/
+export async function deleteRegisteredProposerAddress(address) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { _id: address };
+  const foundProposer = !!(await db.collection(PROPOSER_COLLECTION).findOne(query));
+  if (foundProposer) {
+    await db.collection(PROPOSER_COLLECTION).deleteOne(query);
+  }
+  logger.silly(`deleted registered proposer`);
 }
 
 /**

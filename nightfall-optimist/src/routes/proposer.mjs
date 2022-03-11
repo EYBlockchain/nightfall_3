@@ -14,6 +14,7 @@ import { Transaction, TransactionError } from '../classes/index.mjs';
 import {
   setRegisteredProposerAddress,
   isRegisteredProposerAddressMine,
+  deleteRegisteredProposerAddress,
   getMempoolTransactions,
   getLatestTree,
 } from '../services/database.mjs';
@@ -38,14 +39,14 @@ export function setProposer(p) {
 router.post('/register', async (req, res, next) => {
   logger.debug(`register proposer endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
   try {
-    const { address } = req.body;
+    const { address, url = '' } = req.body;
     const proposersContractInstance = await waitForContract(PROPOSERS_CONTRACT_NAME);
     // the first thing to do is to check if the proposer is already registered on the blockchain
     const proposers = (await getProposers()).map(p => p.thisAddress);
     // if not, let's register it
     let txDataToSign = '';
     if (!proposers.includes(address)) {
-      txDataToSign = await proposersContractInstance.methods.registerProposer().encodeABI();
+      txDataToSign = await proposersContractInstance.methods.registerProposer(url).encodeABI();
     } else
       logger.warn(
         'Proposer was already registered on the blockchain - registration attempt ignored',
@@ -55,7 +56,7 @@ router.post('/register', async (req, res, next) => {
     // with optimist though. Let's check and fix that if needed.
     if (!(await isRegisteredProposerAddressMine(address))) {
       logger.debug('Registering proposer locally');
-      await setRegisteredProposerAddress(address); // save the registration address
+      await setRegisteredProposerAddress(address, url); // save the registration address
       // We've just registered with optimist but if we were already registered on the blockchain,
       // we should check if we're the current proposer and, if so, set things up so we start
       // making blocks immediately
@@ -72,6 +73,48 @@ router.post('/register', async (req, res, next) => {
       }
     }
     res.json({ txDataToSign });
+  } catch (err) {
+    logger.error(err);
+    next(err);
+  }
+});
+
+/**
+ * Function to update proposer's URL
+ */
+router.post('/update', async (req, res, next) => {
+  logger.debug(`update proposer endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
+  try {
+    const { address, url = '' } = req.body;
+    if (url === '') {
+      throw new Error('Rest API URL not provided');
+    }
+    const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
+    const txDataToSign = await proposersContractInstance.methods.updateProposer(url).encodeABI();
+    logger.debug('returning raw transaction data');
+    logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
+    res.json({ txDataToSign });
+    setRegisteredProposerAddress(address, url); // save the registration address and URL
+  } catch (err) {
+    logger.error(err);
+    next(err);
+  }
+});
+
+/**
+ * Returns the current proposer
+ */
+router.get('/current-proposer', async (req, res, next) => {
+  logger.debug(`list proposals endpoint received GET ${JSON.stringify(req.body, null, 2)}`);
+  try {
+    const proposersContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
+    const { thisAddress: currentProposer } = await proposersContractInstance.methods
+      .currentProposer()
+      .call();
+
+    logger.debug('returning current proposer');
+    logger.silly(`current proposer is ${JSON.stringify(currentProposer, null, 2)}`);
+    res.json({ currentProposer });
   } catch (err) {
     logger.error(err);
     next(err);
@@ -100,8 +143,10 @@ router.get('/proposers', async (req, res, next) => {
 router.post('/de-register', async (req, res, next) => {
   logger.debug(`de-register proposer endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
   try {
+    const { address = '' } = req.body;
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
     const txDataToSign = await proposersContractInstance.methods.deRegisterProposer().encodeABI();
+    await deleteRegisteredProposerAddress(address);
     logger.debug('returning raw transaction data');
     logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
     res.json({ txDataToSign });
