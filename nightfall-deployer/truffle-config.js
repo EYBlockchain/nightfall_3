@@ -89,6 +89,7 @@ module.exports = {
       network_id: 4378921, // Any network (default: none)
       gas: 8000000,
       websockets: true,
+      networkCheckTimeout: 1000000000,
     },
 
     ropsten: {
