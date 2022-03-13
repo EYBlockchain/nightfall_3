@@ -34,6 +34,8 @@ module.exports = {
   ETH_ADDRESS: process.env.ETH_ADDRESS,
   OPTIMIST_HOST: process.env.OPTIMIST_HOST || 'optimist',
   OPTIMIST_PORT: process.env.OPTIMIST_PORT || 80,
+  PROPOSER_HOST: process.env.PROPOSER_HOST || 'proposer',
+  PROPOSER_PORT: process.env.PROPOSER_PORT || 8080,
   clientBaseUrl: `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`,
   WEB3_OPTIONS: {
     gas: process.env.GAS || 8000000,
