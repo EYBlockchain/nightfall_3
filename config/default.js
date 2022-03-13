@@ -1,6 +1,3 @@
-/* eslint-disable no-nested-ternary */
-const { DOMAIN_NAME = '' } = process.env;
-
 module.exports = {
   COMMITMENTS_DB: 'nightfall_commitments',
   OPTIMIST_DB: 'optimist_data',
@@ -38,9 +35,7 @@ module.exports = {
   OPTIMIST_HOST: process.env.OPTIMIST_HOST || 'optimist',
   OPTIMIST_PORT: process.env.OPTIMIST_PORT || 80,
   clientBaseUrl: `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`,
-  // Define Urls and Url format (http/ws vs https/wss, with vs without port) depending on whether a DOMAIN_NAME has been defined.
-  // In production and staging environements, we require https/wss and no port, as traffic will be routed to the correct service
-  // given a URL.
+
   WEB3_OPTIONS: {
     gas: process.env.GAS || 8000000,
     gasPrice: process.env.GAS_PRICE || '20000000000',
@@ -134,27 +129,38 @@ module.exports = {
       name: 'Localhost',
       chainId: 4378921,
       clientApiUrl: process.env.CLIENT_HOST
-        ? DOMAIN_NAME === ''
-          ? `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`
-          : `https://${process.env.CLIENT_HOST}`
+        ? `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`
         : 'http://localhost:8080',
       optimistApiUrl: process.env.OPTIMIST_HOST
-        ? DOMAIN_NAME === ''
-          ? `http://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_PORT}`
-          : `https://${process.env.OPTIMIST_HOST}`
+        ? `http://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_PORT}`
         : 'http://localhost:8081',
       optimistWsUrl: process.env.OPTIMIST_HOST
-        ? DOMAIN_NAME === ''
-          ? `ws://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_WS_PORT}`
-          : `wss://${process.env.OPTIMIST_HOST}`
+        ? `ws://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_WS_PORT}`
         : 'ws://localhost:8082',
-      adversarialOptimistApiUrl: 'http://localhost:8088',
-      adversarialOptimistWsUrl: 'ws://localhost:8089',
+      proposerBaseUrl: process.env.PROPOSER_HOST
+        ? `http://${process.env.PROPOSER_HOST}:${process.env.PROPOSER_PORT}`
+        : 'http://172.16.238.1:8100',
       web3WsUrl: process.env.BLOCKCHAIN_WS_HOST
-        ? DOMAIN_NAME === ''
-          ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`
-          : `wss://${process.env.BLOCKCHAIN_WS_HOST}`
+        ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`
         : 'ws://localhost:8546',
+    },
+    aws_testnet: {
+      name: 'AWS_TESTNET',
+      chainId: 5,
+      clientApiUrl: `https://${process.env.CLIENT_HOST}`,
+      optimistApiUrl: `https://${process.env.OPTIMIST_HOST}`,
+      optimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
+      proposerBaseUrl: `https://${process.env.PROPOSER_HOST}`,
+      web3WsUrl: `wss://${process.env.BLOCKCHAIN_WS_HOST}`,
+    },
+    aws_mainnet: {
+      name: 'AWS_MAINNET',
+      chainId: 1,
+      clientApiUrl: `https://${process.env.CLIENT_HOST}`,
+      optimistApiUrl: `https://${process.env.OPTIMIST_HOST}`,
+      optimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
+      proposerBaseUrl: `https://${process.env.PROPOSER_HOST}`,
+      web3WsUrl: `wss://${process.env.BLOCKCHAIN_WS_HOST}`,
     },
   },
   TEST_OPTIONS: {
@@ -234,3 +240,4 @@ module.exports = {
   eventWsUrl:
     process.env.LOCAL_PROPOSER === 'true' ? process.env.LOCAL_WS_URL : process.env.PROPOSER_WS_URL,
 };
+

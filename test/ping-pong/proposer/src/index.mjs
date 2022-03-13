@@ -9,7 +9,7 @@ import app from './app.mjs';
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
 const { mnemonics, signingKeys } = config.TEST_OPTIONS;
-const { PROPOSER_PORT = '', PROPOSER_URL = '' } = process.env;
+const { PROPOSER_PORT } = process.env;
 
 /**
 Does the preliminary setup and starts listening on the websocket
@@ -23,20 +23,17 @@ async function startProposer() {
   else throw new Error('Healthcheck failed');
   logger.info('Attempting to register proposer');
   // let's see if the proposer has been registered before
-  const proposerUrl = PROPOSER_PORT !== '' ? `${PROPOSER_URL}:${PROPOSER_PORT}` : '';
   const { proposers } = await nf3.getProposers();
   // if not, let's register them
   if (proposers.length === 0) {
-    await nf3.registerProposer(proposerUrl);
+    await nf3.registerProposer(environment.proposerBaseUrl);
     logger.info('Proposer registration complete');
   } else if (!proposers.map(p => p.thisAddress).includes(nf3.ethereumAddress)) {
-    await nf3.registerProposer(proposerUrl);
+    await nf3.registerProposer(environment.proposerBaseUrl);
     logger.info('Proposer registration complete');
   } else logger.warn('Proposer appears to be registerd already');
-  if (PROPOSER_PORT !== '') {
-    logger.debug('Proposer healthcheck up');
-    app.listen(PROPOSER_PORT);
-  }
+  app.listen(PROPOSER_PORT);
+  logger.debug(`Proposer API up at URL ${environment.proposerBaseUrl}`);
   // TODO subscribe to layer 1 blocks and call change proposer
   nf3.startProposer();
   logger.info('Listening for incoming events');
