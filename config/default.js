@@ -35,7 +35,6 @@ module.exports = {
   OPTIMIST_HOST: process.env.OPTIMIST_HOST || 'optimist',
   OPTIMIST_PORT: process.env.OPTIMIST_PORT || 80,
   clientBaseUrl: `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`,
-
   WEB3_OPTIONS: {
     gas: process.env.GAS || 8000000,
     gasPrice: process.env.GAS_PRICE || '20000000000',
@@ -240,4 +239,3 @@ module.exports = {
   eventWsUrl:
     process.env.LOCAL_PROPOSER === 'true' ? process.env.LOCAL_WS_URL : process.env.PROPOSER_WS_URL,
 };
-
