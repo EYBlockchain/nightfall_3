@@ -512,8 +512,15 @@ class Nf3 {
     const emitter = new EventEmitter();
     const connection = new WebSocket(this.optimistWsUrl);
     this.websockets.push(connection); // save so we can close it properly later
+    const ping = async () => {
+      if (!connection) return;
+      if (connection.readyState !== WebSocket.OPEN) return;
+      connection.ping();
+      setTimeout(ping, 15000);
+    };
     connection.onopen = () => {
       connection.send('instant');
+      ping();
     };
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
@@ -711,8 +718,15 @@ class Nf3 {
     const newBlockEmitter = new EventEmitter();
     const connection = new WebSocket(this.optimistWsUrl);
     this.websockets.push(connection); // save so we can close it properly later
+    const ping = async () => {
+      if (!connection) return;
+      if (connection.readyState !== WebSocket.OPEN) return;
+      connection.ping();
+      setTimeout(ping, 15000);
+    };
     connection.onopen = () => {
       connection.send('blocks');
+      ping();
     };
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
@@ -757,8 +771,15 @@ class Nf3 {
   async startChallenger() {
     const connection = new WebSocket(this.optimistWsUrl);
     this.websockets.push(connection); // save so we can close it properly later
+    const ping = async () => {
+      if (!connection) return;
+      if (connection.readyState !== WebSocket.OPEN) return;
+      connection.ping();
+      setTimeout(ping, 15000);
+    };
     connection.onopen = () => {
       connection.send('challenge');
+      ping();
     };
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
@@ -783,8 +804,15 @@ class Nf3 {
     const newChallengeEmitter = new EventEmitter();
     const connection = new WebSocket(this.optimistWsUrl);
     this.websockets.push(connection); // save so we can close it properly later
+    const ping = async () => {
+      if (!connection) return;
+      if (connection.readyState !== WebSocket.OPEN) return;
+      connection.ping();
+      setTimeout(ping, 15000);
+    };
     connection.onopen = () => {
       connection.send('blocks');
+      ping();
     };
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
