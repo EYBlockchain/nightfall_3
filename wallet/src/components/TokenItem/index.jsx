@@ -10,15 +10,17 @@ import maticImg from '../../assets/img/polygon-chain.svg';
 import { UserContext } from '../../hooks/User/index.jsx';
 import transfer from '../../nightfall-browser/services/transfer';
 import { getContractAddress } from '../../common-files/utils/contract';
+import { retrieveAndDecrypt } from '../../utils/lib/key-storage';
 
 export default function TokenItem(props) {
   const [showSendModal, setShowSendModal] = useState(false);
   const [state] = React.useContext(UserContext);
-  const defaultSend = state?.zkpKeys?.compressedPkd;
+  const defaultSend = state?.compressedPkd;
   const [valueToSend, setTransferValue] = useState(0);
 
   async function sendTx() {
     const { address: shieldContractAddress } = (await getContractAddress('Shield')).data;
+    const { nsk, ask } = await retrieveAndDecrypt(state.compressedPkd);
     await transfer(
       {
         offchain: true,
@@ -28,8 +30,8 @@ export default function TokenItem(props) {
           recipientCompressedPkds: [defaultSend],
           values: [(Number(valueToSend) * 10 ** props.decimals).toString()],
         },
-        nsk: state.zkpKeys.nsk,
-        ask: state.zkpKeys.ask,
+        nsk,
+        ask,
         fee: 1,
       },
       shieldContractAddress,
@@ -146,7 +148,7 @@ export default function TokenItem(props) {
               <div>
                 <input
                   type="text"
-                  placeholder={state?.zkpKeys?.compressedPkd}
+                  placeholder={state?.compressedPkd}
                   id="TokenItem_modalSend_compressedPkd"
                 />
                 <p>Enter a valid address existing on the Polygon Nightfall L2</p>

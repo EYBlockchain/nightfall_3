@@ -22,6 +22,9 @@ import { useAccount } from '../../hooks/Account/index.tsx';
 import tokensList from '../../components/Modals/Bridge/TokensList/tokensList';
 import { getContractAddress } from '../../common-files/utils/contract.js';
 import getPrice from '../../utils/pricingAPI';
+
+const { DEFAULT_ACCOUNT_NUM } = global.config;
+
 /*
 These are some default values for now
 */
@@ -62,11 +65,11 @@ These are some default values for now
 // ];
 
 /**
-This is a modal to detect if a wallet (mnemonic and passphrase) has been initialized
+This is a modal to detect if a wallet has been initialized
 */
 
 function WalletModal(props) {
-  const [, , configureMnemonic] = useContext(UserContext);
+  const [, , deriveAccounts] = useContext(UserContext);
   const [screenMnemonic, setScreenMnemonic] = useState();
   return (
     <Modal {...props} size="lg" aria-labelledby="contained-modal-title-vcenter" centered>
@@ -109,7 +112,8 @@ function WalletModal(props) {
       <Modal.Footer>
         <Button
           onClick={async () => {
-            await configureMnemonic(screenMnemonic);
+            // await configureMnemonic(screenMnemonic);
+            await deriveAccounts(screenMnemonic, DEFAULT_ACCOUNT_NUM)
             props.onHide();
           }}
           disabled={typeof screenMnemonic === 'undefined'}
@@ -143,14 +147,15 @@ export default function Wallet() {
   }, []);
 
   useEffect(async () => {
-    const mnemonicExists = Storage.mnemonicGet(await Web3.getAccount());
-    if (typeof state.mnemonic === 'undefined' && !mnemonicExists) setModalShow(true);
+    const pkdsDerived = Storage.pkdArrayGet(await Web3.getAccount());
+    console.log('pkdsDerived', pkdsDerived);
+    if (typeof state.compressedPkd === 'undefined' && !pkdsDerived) setModalShow(true);
     else setModalShow(false);
-  }, [state.mnemonic]);
+    console.log('SSTAETE', state);
+  }, []);
 
   useEffect(async () => {
-    const pkd = Storage.pkdGet(await Web3.getAccount());
-    const l2BalanceObj = await getWalletBalance(pkd);
+    const l2BalanceObj = await getWalletBalance(state.compressedPkd);
     const updatedState = await Promise.all(
       tokens.map(async t => {
         const currencyValue = await getPrice(t.id);
