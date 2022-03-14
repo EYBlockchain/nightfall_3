@@ -10,14 +10,14 @@ import axios from 'axios';
 import gen from 'general-number';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
 import logger from 'common-files/utils/logger.mjs';
-import { Nullifier, PublicInputs, Transaction } from '../classes/index.mjs';
+import { Nullifier, Transaction } from '../classes/index.mjs';
 import {
   findUsableCommitmentsMutex,
   markNullified,
   clearPending,
   getSiblingInfo,
 } from './commitment-storage.mjs';
-import { discoverPeers } from './peers.mjs';
+import getProposersUrl from './peers.mjs';
 import { calculateIvkPkdfromAskNsk } from './keys.mjs';
 
 const {
@@ -30,6 +30,8 @@ const {
   USE_STUBS,
 } = config;
 const { generalise } = gen;
+
+const NEXT_N_PROPOSERS = 3;
 
 async function withdraw(withdrawParams) {
   logger.info('Creating a withdraw transaction');
@@ -61,16 +63,7 @@ async function withdraw(withdrawParams) {
   );
   logger.silly(`SiblingPath was: ${JSON.stringify(siblingPath)}`);
 
-  // public inputs
-  const { root, leafIndex, isOnChain } = commitmentTreeInfo;
-  const publicInputs = new PublicInputs([
-    oldCommitment.preimage.ercAddress,
-    oldCommitment.preimage.tokenId,
-    oldCommitment.preimage.value,
-    generalise(nullifier.hash.hex(32, 31)).integer,
-    recipientAddress,
-    root,
-  ]);
+  const { leafIndex, isOnChain } = commitmentTreeInfo;
 
   // now we have everything we need to create a Witness and compute a proof
   const witness = [
@@ -107,7 +100,6 @@ async function withdraw(withdrawParams) {
     historicRootBlockNumberL2: [isOnChain, 0],
     transactionType: 3,
     tokenType: items.tokenType,
-    publicInputs,
     tokenId,
     value,
     ercAddress,
@@ -117,7 +109,7 @@ async function withdraw(withdrawParams) {
   });
   try {
     if (offchain) {
-      const peerList = await discoverPeers('Local');
+      const peerList = await getProposersUrl(NEXT_N_PROPOSERS);
       Object.keys(peerList).forEach(async address => {
         logger.debug(
           `offchain transaction - calling ${peerList[address]}/proposer/offchain-transaction`,

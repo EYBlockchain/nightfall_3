@@ -19,6 +19,13 @@ const { bond, gasCosts, mnemonics, signingKeys: testSigningKeys } = config.TEST_
 const bootProposer = new Nf3(signingKeys.bootProposerKey, environment);
 const testProposer = new Nf3(testSigningKeys.proposer1, environment);
 
+const testProposersUrl = [
+  'http://test-proposer1',
+  'http://test-proposer2',
+  'http://test-proposer3',
+  'http://test-proposer4',
+];
+
 const web3Client = new Web3Client();
 
 describe('Basic Proposer tests', () => {
@@ -33,7 +40,7 @@ describe('Basic Proposer tests', () => {
 
     // we have to pay 10 ETH to be registered
     const startBalance = await web3Client.getBalance(bootProposer.ethereumAddress);
-    const res = await bootProposer.registerProposer();
+    const res = await bootProposer.registerProposer(testProposersUrl[1]);
     expectTransaction(res);
 
     await bootProposer.addPeer(environment.optimistApiUrl);
@@ -43,6 +50,8 @@ describe('Basic Proposer tests', () => {
     expect(startBalance - endBalance).to.closeTo(bond, gasCosts);
     const thisProposer = proposers.filter(p => p.thisAddress === bootProposer.ethereumAddress);
     expect(thisProposer.length).to.be.equal(1);
+    expect(proposers[0].url).to.be.equal(testProposersUrl[0]);
+    expect(proposers[1].url).to.be.equal(testProposersUrl[1]);
   });
 
   it('should fail to register a proposer other than the boot proposer', async () => {
@@ -56,9 +65,23 @@ describe('Basic Proposer tests', () => {
     }
   });
 
-  it('should fail to register the boot proposer twice', async () => {
+  it('should update proposers url', async () => {
+    let proposers;
+    ({ proposers } = await bootProposer.getProposers());
+    // we have to pay 10 ETH to be registered
+    const res = await bootProposer.updateProposer(testProposersUrl[3]);
+    expectTransaction(res);
+    ({ proposers } = await bootProposer.getProposers());
+    const thisProposer = proposers.filter(p => p.thisAddress === bootProposer.ethereumAddress);
+    expect(thisProposer.length).to.be.equal(1);
+    expect(proposers[0].url).to.be.equal(testProposersUrl[0]);
+    expect(proposers[1].url).to.be.equal(testProposersUrl[1]);
+    expect(proposers[2].url).to.be.equal(testProposersUrl[3]);
+  });
+
+  it('should fail to register a proposer twice', async () => {
     try {
-      const res = await bootProposer.registerProposer();
+      const res = await bootProposer.registerProposer(testProposersUrl[2]);
       expectTransaction(res);
 
       expect.fail('Submitting the same proposer registration should have caused an EVM revert');
@@ -77,6 +100,8 @@ describe('Basic Proposer tests', () => {
     ({ proposers } = await bootProposer.getProposers());
     thisProposer = proposers.filter(p => p.thisAddress === bootProposer.ethereumAddress);
     expect(thisProposer.length).to.be.equal(0);
+    expect(proposers[0].url).to.be.equal(testProposersUrl[1]);
+    expect(proposers[1].url).to.be.equal(testProposersUrl[3]);
   });
 
   it('Should create a failing withdrawBond (because insufficient time has passed)', async () => {

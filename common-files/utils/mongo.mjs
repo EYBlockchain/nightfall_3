@@ -6,7 +6,6 @@ Mongo database functions
 */
 
 import mongo from 'mongodb';
-import getAwsParameter from './aws-secrets.mjs';
 
 const { MongoClient } = mongo;
 const connection = {};
@@ -17,22 +16,9 @@ export default {
     // Check if we are connecting to MongoDb or DocumentDb
     if (url.includes('amazonaws')) {
       // retrieve user and password from secrets
-      const {
-        ENVIRONMENT_NAME,
-        MONGO_INITDB_ROOT_PASSWORD_PARAM,
-        MONGO_INITDB_ROOT_USERNAME_PARAM,
-        MONGO_CA,
-      } = process.env;
-      const mongoUser = await getAwsParameter(
-        `/${ENVIRONMENT_NAME}/${MONGO_INITDB_ROOT_USERNAME_PARAM}`,
-        false,
-      );
-      const mongoPwd = await getAwsParameter(
-        `/${ENVIRONMENT_NAME}/${MONGO_INITDB_ROOT_PASSWORD_PARAM}`,
-        true,
-      );
+      const { MONGO_INITDB_ROOT_PASSWORD, MONGO_INITDB_ROOT_USERNAME, MONGO_CA } = process.env;
       const client = await new MongoClient(
-        `mongodb://${mongoUser}:${mongoPwd}@${url}:27017/?tls=true&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false`,
+        `mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@${url}:27017/?tls=true&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false`,
         {
           tlsCAFile: `${MONGO_CA}`, // Specify the DocDB; cert
           useUnifiedTopology: true,

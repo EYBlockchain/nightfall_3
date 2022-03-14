@@ -91,7 +91,6 @@ describe('ERC20 tests', () => {
   before(async () => {
     await nf3Proposer.init(mnemonics.proposer);
     await nf3Proposer.registerProposer();
-    await nf3Proposer.addPeer(environment.optimistApiUrl);
 
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer.startProposer();

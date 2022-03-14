@@ -4,12 +4,12 @@ Module that runs up as a proposer
 import config from 'config';
 import logger from '../../../../common-files/utils/logger.mjs';
 import Nf3 from '../../../../cli/lib/nf3.mjs';
-import app from './app.mjs';
+import { app, setNf3Instance } from './app.mjs';
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
 const { mnemonics, signingKeys: testSigningKeys, addresses } = config.TEST_OPTIONS;
-const { PROPOSER_PORT = '' } = process.env;
+const { PROPOSER_PORT = '', PROPOSER_URL = '' } = process.env;
 
 /**
 Does the preliminary setup and starts listening on the websocket
@@ -23,23 +23,25 @@ async function startProposer() {
   logger.info('Attempting to register proposer');
   // let's see if the proposer has been registered before
   const { proposers } = await nf3.getProposers();
+  const proposerUrl = PROPOSER_PORT !== '' ? `${PROPOSER_URL}:${PROPOSER_PORT}` : '';
   // if not, let's register them
   console.log('PROPOSERS: ', proposers);
   if (proposers.length === 0) {
     console.log('1');
-    const r = await nf3.registerProposer();
+    const r = await nf3.registerProposer(proposerUrl);
     console.log('RES:', r);
 
     logger.info('Proposer registration complete');
   } else if (!proposers.map(p => p.thisAddress).includes(addresses.proposer1)) {
     console.log('2');
-    const r = await nf3.registerProposer();
+    const r = await nf3.registerProposer(proposerUrl);
     console.log('RES2:', r);
     logger.info('Proposer registration complete');
   } else logger.warn('Proposer appears to be registerd already');
   if (PROPOSER_PORT !== '') {
-    logger.debug('Proposer healthcheck up');
+    setNf3Instance(nf3);
     app.listen(PROPOSER_PORT);
+    logger.debug(`Proposer API up at URL ${PROPOSER_URL} and port ${PROPOSER_PORT}`);
   }
   // TODO subscribe to layer 1 blocks and call change proposer
   nf3.startProposer();
