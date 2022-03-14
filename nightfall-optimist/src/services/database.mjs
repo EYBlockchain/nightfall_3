@@ -208,18 +208,24 @@ export async function findBlocksFromBlockNumberL2(blockNumberL2) {
 }
 
 /**
-function to store addresses of proposers that are registered through this
+function to store addresses and URL of proposers that are registered through this
 app. These are needed because the app needs to know when one of them is the
 current (active) proposer, at which point it will automatically start to
 assemble blocks on behalf of the proposer. It listens for the NewCurrentProposer
 event to determine who is the current proposer.
 */
-export async function setRegisteredProposerAddress(address) {
+export async function setRegisteredProposerAddress(address, url) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  logger.debug(`Saving proposer address ${address}`);
-  const data = { proposer: address };
-  return db.collection(METADATA_COLLECTION).insertOne(data);
+  logger.debug(`Saving proposer address ${address} and url ${url}`);
+  const data = {
+    proposer: {
+      address,
+      url,
+    },
+  };
+  const update = { $set: { 'proposer.url': url } };
+  return db.collection(METADATA_COLLECTION).updateOne(data, update, { upsert: true });
 }
 
 /**
@@ -229,9 +235,24 @@ thus it should start assembling blocks of transactions.
 export async function isRegisteredProposerAddressMine(address) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  const metadata = await db.collection(METADATA_COLLECTION).findOne({ proposer: address });
+  const query = { 'proposer.address': address };
+  const metadata = await db.collection(METADATA_COLLECTION).findOne(query);
   logger.silly(`found registered proposer ${JSON.stringify(metadata, null, 2)}`);
   return metadata;
+}
+
+/**
+  Remove proposer from dB
+*/
+export async function deleteRegisteredProposerAddress(address) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { 'proposer.address': address };
+  const foundProposer = !!(await db.collection(METADATA_COLLECTION).findOne(query));
+  if (foundProposer) {
+    await db.collection(METADATA_COLLECTION).deleteOne(query);
+  }
+  logger.silly(`deleted registered proposer`);
 }
 
 /**

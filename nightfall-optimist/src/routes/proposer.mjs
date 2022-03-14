@@ -12,8 +12,10 @@ import Block from '../classes/block.mjs';
 import { Transaction, TransactionError } from '../classes/index.mjs';
 import {
   setRegisteredProposerAddress,
+  deleteRegisteredProposerAddress,
   getMempoolTransactions,
   getLatestTree,
+  getLatestBlockInfo,
 } from '../services/database.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
@@ -30,13 +32,35 @@ const { STATE_CONTRACT_NAME, PROPOSERS_CONTRACT_NAME, SHIELD_CONTRACT_NAME, ZERO
 router.post('/register', async (req, res, next) => {
   logger.debug(`register proposer endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
   try {
-    const { address } = req.body;
+    const { address, url = '' } = req.body;
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
-    const txDataToSign = await proposersContractInstance.methods.registerProposer().encodeABI();
+    const txDataToSign = await proposersContractInstance.methods.registerProposer(url).encodeABI();
     logger.debug('returning raw transaction data');
     logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
     res.json({ txDataToSign });
-    setRegisteredProposerAddress(address); // save the registration address
+    setRegisteredProposerAddress(address, url); // save the registration address and URL
+  } catch (err) {
+    logger.error(err);
+    next(err);
+  }
+});
+
+/**
+ * Function to update proposer's URL
+ */
+router.post('/update', async (req, res, next) => {
+  logger.debug(`update proposer endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
+  try {
+    const { address, url = '' } = req.body;
+    if (url === '') {
+      throw new Error('Rest API URL not provided');
+    }
+    const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
+    const txDataToSign = await proposersContractInstance.methods.updateProposer(url).encodeABI();
+    logger.debug('returning raw transaction data');
+    logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
+    res.json({ txDataToSign });
+    setRegisteredProposerAddress(address, url); // save the registration address and URL
   } catch (err) {
     logger.error(err);
     next(err);
@@ -69,16 +93,16 @@ router.get('/current-proposer', async (req, res, next) => {
 router.get('/proposers', async (req, res, next) => {
   logger.debug(`list proposals endpoint received GET`);
   try {
-    const proposersContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
+    const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
     // proposers is an on-chain mapping so to get proposers we need to key to start iterating
     // the safest to start with is the currentProposer
-    const currentProposer = await proposersContractInstance.methods.currentProposer().call();
+    const currentProposer = await stateContractInstance.methods.currentProposer().call();
     const proposers = [];
     let thisPtr = currentProposer.thisAddress;
     // Loop through the circular list until we run back into the currentProposer.
     do {
       // eslint-disable-next-line no-await-in-loop
-      const proposer = await proposersContractInstance.methods.proposers(thisPtr).call();
+      const proposer = await stateContractInstance.methods.proposers(thisPtr).call();
       proposers.push(proposer);
       thisPtr = proposer.nextAddress;
     } while (thisPtr !== currentProposer.thisAddress);
@@ -99,8 +123,10 @@ router.get('/proposers', async (req, res, next) => {
 router.post('/de-register', async (req, res, next) => {
   logger.debug(`de-register proposer endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
   try {
+    const { address = '' } = req.body;
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
     const txDataToSign = await proposersContractInstance.methods.deRegisterProposer().encodeABI();
+    await deleteRegisteredProposerAddress(address);
     logger.debug('returning raw transaction data');
     logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
     res.json({ txDataToSign });
@@ -178,12 +204,19 @@ router.post('/propose', async (req, res, next) => {
   logger.silly(`With content ${JSON.stringify(req.body, null, 2)}`);
   try {
     const { transactions, proposer, currentLeafCount } = req.body;
+    const latestBlockInfo = await getLatestBlockInfo();
+    const latestTree = await getLatestTree();
     // use the information we've been POSTED to assemble a block
     // we use a Builder pattern because an async constructor is bad form
-    const block = await Block.build({
+    const { block } = await Block.build({
       transactions,
       proposer,
       currentLeafCount,
+      latestBlockInfo: {
+        blockNumberL2: latestBlockInfo.blockNumberL2,
+        blockHash: latestBlockInfo.blockHash,
+      },
+      latestTree,
     });
     logger.debug(`New block assembled ${JSON.stringify(block, null, 2)}`);
     const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);

@@ -48,6 +48,8 @@ class Nf3 {
 
   zkpKeys;
 
+  notConfirmed = 0;
+
   defaultFee = DEFAULT_FEE;
 
   PROPOSER_BOND = DEFAULT_PROPOSER_BOND;
@@ -196,8 +198,7 @@ class Nf3 {
 
     let tx;
     await this.nonceMutex.runExclusive(async () => {
-      this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
-
+      if (!this.nonce) this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
       let gasPrice = 20000000000;
       const gas = (await this.web3.eth.getBlock('latest')).gasLimit;
       const blockGasPrice = 2 * Number(await this.web3.eth.getGasPrice());
@@ -236,6 +237,7 @@ class Nf3 {
             }
           })
           .on('error', err => {
+            this.notConfirmed--;
             reject(err);
           });
       });
@@ -564,12 +566,15 @@ class Nf3 {
   the proposer.
   @method
   @async
+  @param {string} Proposer REST API URL with format https://xxxx.xxx.xx  
   @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
   */
-  async registerProposer() {
+  async registerProposer(url) {
     const res = await axios.post(`${this.optimistBaseUrl}/proposer/register`, {
       address: this.ethereumAddress,
+      url,
     });
+    logger.debug(`Proposer Registered with address ${this.ethereumAddress} and URL ${url}`);
     return this.submitTransaction(
       res.data.txDataToSign,
       this.proposersContractAddress,
@@ -644,23 +649,19 @@ class Nf3 {
   }
 
   /**
-  Adds a new Proposer peer to a list of proposers that are available for accepting
-  offchain (direct) transfers and withdraws. The client will submit direct transfers
-  and withdraws to all of these peers.
+  Update Proposers URL
   @method
   @async
-  @param {string} peerUrl - the URL of the Proposer being added. This will be from
-  the point of view of nightfall-client, not the SDK user (e.g. 'http://optimist1:80').
-  Nightfall-client will use this URL to contact the Proposer.
+  @param {string} Proposer REST API URL with format https://xxxx.xxx.xx  
+  @returns {array} A promise that resolves to the Ethereum transaction receipt.
   */
-  async addPeer(peerUrl) {
-    if (!this.ethereumAddress)
-      throw new Error('Cannot add peer if the Ethereum address for the user is not defined');
-    // the peerUrl is from the point of view of the Client e.g. 'http://optimist1:80'
-    return axios.post(`${this.clientBaseUrl}/peers/addPeers`, {
+  async updateProposer(url) {
+    const res = await axios.post(`${this.optimistBaseUrl}/proposer/update`, {
       address: this.ethereumAddress,
-      enode: peerUrl,
+      url,
     });
+    logger.debug(`Proposer with address ${this.ethereumAddress} updated to URL ${url}`);
+    return this.submitTransaction(res.data.txDataToSign, this.proposersContractAddress, 0);
   }
 
   /**
@@ -687,21 +688,42 @@ class Nf3 {
     };
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
-      const { type, txDataToSign } = msg;
+      const { type, txDataToSignList } = msg;
       logger.debug(`Proposer received websocket message of type ${type}`);
       if (type === 'block') {
-        const res = await this.submitTransaction(
-          txDataToSign,
-          this.stateContractAddress,
-          this.BLOCK_STAKE,
-        );
-        newGasBlockEmitter.emit('gascost', res.gasUsed);
+        logger.debug(`Found ${txDataToSignList.length} blocks to process`);
+
+        txDataToSignList.reduce((seq, txDataToSign) => {
+          return seq.then(() => {
+            return this.submitTransaction(
+              txDataToSign,
+              this.stateContractAddress,
+              this.BLOCK_STAKE,
+            ).then(res => newGasBlockEmitter.emit('gascost', res.gasUsed, txDataToSignList.length));
+          });
+        }, Promise.resolve());
       }
     };
     connection.onerror = () => logger.error('websocket connection error');
     connection.onclosed = () => logger.warn('websocket connection closed');
     // add this proposer to the list of peers that can accept direct transfers and withdraws
     return newGasBlockEmitter;
+  }
+
+  /**
+  Send offchain transaction to Optimist
+  @method
+  @async
+  @param {string} transaction 
+  @returns {array} A promise that resolves to the API call status
+  */
+  async sendOffchainTransaction(transaction) {
+    const res = axios.post(
+      `${this.optimistBaseUrl}/proposer/offchain-transaction`,
+      { transaction },
+      { timeout: 3600000 },
+    );
+    return res.status;
   }
 
   /**
@@ -730,9 +752,9 @@ class Nf3 {
     };
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
-      const { type, txDataToSign } = msg;
+      const { type, txDataToSignList } = msg;
       if (type === 'block') {
-        newBlockEmitter.emit('data', txDataToSign);
+        txDataToSignList.map(txtDataToSign => newBlockEmitter.emit('data', txtDataToSign));
       }
     };
     return newBlockEmitter;
@@ -838,6 +860,15 @@ class Nf3 {
       params: {
         compressedPkd: this.zkpKeys.compressedPkd,
         ercList,
+      },
+    });
+    return res.data.balance;
+  }
+
+  async getLayer2BalancesUnfiltered({ ercList } = {}) {
+    const res = await axios.get(`${this.clientBaseUrl}/commitment/balance`, {
+      params: {
+        compressedPkd: ercList,
       },
     });
     return res.data.balance;
