@@ -43,7 +43,7 @@ module.exports = {
   // given a URL.
   optimistBaseUrl:
     DOMAIN_NAME === ''
-      ? `http://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_HTTP_PORT}`
+      ? `http://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_PORT}`
       : `https://${process.env.OPTIMIST_HTTP_HOST}`,
   optimistWsUrl:
     DOMAIN_NAME === ''

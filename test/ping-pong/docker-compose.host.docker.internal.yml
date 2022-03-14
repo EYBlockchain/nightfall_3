@@ -39,7 +39,7 @@ services:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
       BLOCKCHAIN_PORT: 8546
-      PROPOSER_ETHEREUM_SIGNING_KEY: 645ac79fa9fd87dd1cf30bdca51d326bd501cd328d6dbc9f5f517c7da0dafa6f
+      PROPOSER_ETHEREUM_SIGNING_KEY: "0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d"
 
   user-local1:
     extra_hosts:
@@ -55,7 +55,6 @@ services:
       RECIPIENT_PKD: '0x1ac3b61ecba1448e697b23d37efe290fb86554b2f905aaca3a6df59805eca366'
       ZKP_MNEMONIC: tone shadow woman critic glare utility brass scheme edge brisk enforce champion
 
-
   user-local2:
     extra_hosts:
       - 'host.docker.internal:host-gateway'
@@ -68,5 +67,4 @@ services:
       ERC20_NAME: ERC20Mock
       # RECIPIENT_PKD: 0x193a37cd7973373aceae05d133f3d69ab6e7ef2f4321461173871ec7611244e2,0x27234a8721e73c9aa160154ee63d2470101fc5fd841221eeb675a91ec2d66e78
       RECIPIENT_PKD: '0x27234a8721e73c9aa160154ee63d2470101fc5fd841221eeb675a91ec2d66e78'
-      ZKP_MNEMONIC:
-        tiger victory velvet tank ritual column horse conduct athlete position soul shaft
+      ZKP_MNEMONIC: tiger victory velvet tank ritual column horse conduct athlete position soul shaft
