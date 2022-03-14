@@ -8,16 +8,12 @@ import * as Storage from '../../utils/lib/local-storage';
 import { generateKeys } from '../../nightfall-browser/services/keys';
 import blockProposedEventHandler from '../../nightfall-browser/event-handlers/block-proposed';
 import { getMaxBlock } from '../../nightfall-browser/services/database';
+import { encryptAndStore, retrieveAndDecrypt, storeBrowserKey } from '../../utils/lib/key-storage';
 
 const { eventWsUrl } = global.config;
 
 export const initialState = {
   active: false,
-  zkpKeys: {
-    pkd: '',
-    nsk: '',
-    ask: '',
-  },
 };
 
 export const UserContext = React.createContext({
@@ -32,35 +28,36 @@ export const UserProvider = ({ children }) => {
   const location = useLocation();
   // const [isRoot, setIsRoot] = React.useState(location.pathname === '/');
 
-  const configureMnemonic = async mnemonic => {
-    const signature = await Web3.signMessage(METAMASK_MESSAGE);
-    const passphrase = jsSha3.keccak256(signature);
-    Storage.mnemonicSet(await Web3.getAccount(), mnemonic, passphrase);
+  const deriveAccounts = async (mnemonic, numAccts) => {
+    const accountRange = Array.from({length: numAccts}, (v, i) => i)
+    const zkpKeys = await Promise.all(accountRange.map( i => generateKeys(mnemonic,`m/44'/60'/0'/${i.toString()}`)));
+    const aesGenParams = { name: 'AES-GCM', length: 128 };
+    const key = await crypto.subtle.generateKey(aesGenParams, false, ['encrypt', 'decrypt']);
+    await storeBrowserKey(key);
+    await Promise.all(zkpKeys.map(zkpKey => encryptAndStore(zkpKey)));
+    Storage.pkdArraySet(await Web3.getAccount(), zkpKeys.map(z => z.compressedPkd));
     setState(previousState => {
       return {
         ...previousState,
-        mnemonic,
+        compressedPkd: zkpKeys[0].compressedPkd,
       };
     });
   };
 
   const syncState = async () => {
-    const mnemonicExists = Storage.mnemonicGet(await Web3.getAccount());
-    if (mnemonicExists) {
-      const signature = await Web3.signMessage(METAMASK_MESSAGE);
-      const passphrase = jsSha3.keccak256(signature);
-      const mnemonic = Storage.mnemonicGet(await Web3.getAccount(), passphrase);
+    const pkds = Storage.pkdArrayGet(await Web3.getAccount());
+    if (pkds) {
       setState(previousState => {
         return {
           ...previousState,
-          mnemonic,
+          compressedPkd: pkds[0],
         };
-      });
+      })
     }
   };
 
   const setupWebSocket = () => {
-    if (!state.zkpKeys) return;
+    if (!state.compressedPkd) return;
     const socket = new WebSocket(eventWsUrl);
 
     // Connection opened
@@ -75,15 +72,15 @@ export const UserProvider = ({ children }) => {
     socket.addEventListener('message', async function (event) {
       console.log('Message from server ', JSON.parse(event.data));
       const parsed = JSON.parse(event.data);
+      const { ivk, nsk } = await retrieveAndDecrypt(state.compressedPkd)
       if (parsed.type === 'sync') {
         parsed.historicalData
           .sort((a, b) => a.blockNumberL2 - b.blockNumberL2)
           .reduce(async (acc, curr) => {
-            console.log('State', state.zkpKeys.ivk);
             await acc; // Acc is a promise so we await it before processing the next one;
-            return blockProposedEventHandler(curr, [state.zkpKeys.ivk], [state.zkpKeys.nsk]); // TODO Should be array
+            return blockProposedEventHandler(curr, [ivk], [nsk]); // TODO Should be array
           }, Promise.resolve());
-      } else if (parsed.type === 'blockProposed') await blockProposedEventHandler(parsed.data, state.zkpKeys.ivk, state.zkpKeys.nsk);
+      } else if (parsed.type === 'blockProposed') await blockProposedEventHandler(parsed.data, [ivk], [nsk]);
       // TODO Rollback Handler
     });
     setState(previousState => {
@@ -94,25 +91,8 @@ export const UserProvider = ({ children }) => {
     });
   };
 
-  const configureZkpKeys = async mnemonic => {
-    if (!mnemonic) return;
-    const zkpKeys = await generateKeys(
-      mnemonic,
-      `m/44'/60'/0'/${DEFAULT_NF_ADDRESS_INDEX.toString()}`,
-    );
-
-    // Save Pkd
-    Storage.pkdSet(await Web3.getAccount(), zkpKeys.compressedPkd);
-    setState(previousState => {
-      return {
-        ...previousState,
-        zkpKeys,
-      };
-    });
-  };
-
   React.useEffect(async () => {
-    if (location.pathname !== '/' && !state.mnemonic) {
+    if (location.pathname !== '/' && !state.compressedPkd) {
       await syncState();
     }
     if (!isSyncComplete) setIsSyncComplete({ isSyncComplete: true });
@@ -120,11 +100,8 @@ export const UserProvider = ({ children }) => {
 
   React.useEffect(() => {
     setupWebSocket();
-  }, [state.zkpKeys]);
+  }, [state.compressedPkd]);
 
-  React.useEffect(() => {
-    configureZkpKeys(state.mnemonic);
-  }, [state.mnemonic]);
 
   /*
    * TODO: children should render when sync is complete
@@ -134,7 +111,7 @@ export const UserProvider = ({ children }) => {
    *  instead of '{children}'
    */
   return (
-    <UserContext.Provider value={[state, setState, configureMnemonic]}>
+    <UserContext.Provider value={[state, setState, deriveAccounts]}>
       {children}
     </UserContext.Provider>
   );

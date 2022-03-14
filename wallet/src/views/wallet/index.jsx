@@ -20,6 +20,8 @@ import * as Storage from '../../utils/lib/local-storage';
 import Web3 from '../../common-files/utils/web3';
 import { getContractAddress } from '../../common-files/utils/contract.js';
 
+const { DEFAULT_ACCOUNT_NUM } = global.config;
+
 /*
 These are some default values for now
 */
@@ -60,11 +62,11 @@ const initialTokenState = [
 ];
 
 /**
-This is a modal to detect if a wallet (mnemonic and passphrase) has been initialized
+This is a modal to detect if a wallet has been initialized
 */
 
 function WalletModal(props) {
-  const [, , configureMnemonic] = useContext(UserContext);
+  const [, , deriveAccounts] = useContext(UserContext);
   const [screenMnemonic, setScreenMnemonic] = useState();
   return (
     <Modal {...props} size="lg" aria-labelledby="contained-modal-title-vcenter" centered>
@@ -107,7 +109,8 @@ function WalletModal(props) {
       <Modal.Footer>
         <Button
           onClick={async () => {
-            await configureMnemonic(screenMnemonic);
+            // await configureMnemonic(screenMnemonic);
+            await deriveAccounts(screenMnemonic, DEFAULT_ACCOUNT_NUM)
             props.onHide();
           }}
           disabled={typeof screenMnemonic === 'undefined'}
@@ -127,14 +130,15 @@ export default function Wallet() {
   const [modalShow, setModalShow] = useState(false);
 
   useEffect(async () => {
-    const mnemonicExists = Storage.mnemonicGet(await Web3.getAccount());
-    if (typeof state.mnemonic === 'undefined' && !mnemonicExists) setModalShow(true);
+    const pkdsDerived = Storage.pkdArrayGet(await Web3.getAccount());
+    console.log('pkdsDerived', pkdsDerived);
+    if (typeof state.compressedPkd === 'undefined' && !pkdsDerived) setModalShow(true);
     else setModalShow(false);
-  }, [state.mnemonic]);
+    console.log('SSTAETE', state);
+  }, []);
 
   useEffect(async () => {
-    const pkd = Storage.pkdGet(await Web3.getAccount());
-    const l2Balance = await getWalletBalance(pkd);
+    const l2Balance = await getWalletBalance(state.compressedPkd);
     const { address: newTokenAddress } = (await getContractAddress('ERC20Mock')).data; // TODO This is just until we get a list from Polygon
     const updatedTokenState = initialTokenState.map(i => {
       const { tokenAddress, ...rest } = i;
@@ -148,12 +152,12 @@ export default function Wallet() {
     });
     if (
       Object.keys(l2Balance).length !== 0 &&
-      Object.prototype.hasOwnProperty.call(state, 'zkpKeys')
+      Object.prototype.hasOwnProperty.call(state, 'compressedPkd')
     ) {
       // eslint-disable-next-line consistent-return, array-callback-return
       const updatedState = updatedTokenState.map(t => {
-        if (Object.keys(l2Balance).includes(state.zkpKeys.compressedPkd)) {
-          const token = l2Balance[state.zkpKeys.compressedPkd][t.tokenAddress.toLowerCase()];
+        if (Object.keys(l2Balance).includes(state.compressedPkd)) {
+          const token = l2Balance[state.compressedPkd][t.tokenAddress.toLowerCase()];
           const tokenInfo = t;
           if (token) {
             const { maticChainBalance, ...rest } = tokenInfo;
@@ -175,7 +179,7 @@ export default function Wallet() {
     } else {
       setTokens(updatedTokenState.sort((a, b) => Number(a.order) - Number(b.order)));
     }
-  }, [state.zkpKeys]);
+  }, [state.compressedPkd]);
 
   return (
     <div>

@@ -4,6 +4,7 @@ module.exports = {
     'eslint:recommended',
     'plugin:react/recommended',
     'plugin:prettier/recommended',
+    'plugin:@typescript-eslint/recommended',
   ],
   rules: {
     'no-underscore-dangle': 'off',
@@ -35,5 +36,5 @@ module.exports = {
     node: true,
     jest: true,
   },
-  plugins: ['import'],
+  plugins: ['import', '@typescript-eslint'],
 };

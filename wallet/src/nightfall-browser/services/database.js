@@ -13,6 +13,7 @@ const {
   SUBMITTED_BLOCKS_COLLECTION,
   TRANSACTIONS_COLLECTION,
   COMMITMENTS_COLLECTION,
+  KEYS_COLLECTION,
 } = global.config;
 
 // This needs to have better indexDB performance.
@@ -24,6 +25,7 @@ const connectDB = async () => {
       newDb.createObjectStore(TIMBER_COLLECTION);
       newDb.createObjectStore(SUBMITTED_BLOCKS_COLLECTION);
       newDb.createObjectStore(TRANSACTIONS_COLLECTION);
+      newDb.createObjectStore(KEYS_COLLECTION);
     },
   });
 };

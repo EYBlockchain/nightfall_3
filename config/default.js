@@ -233,4 +233,8 @@ module.exports = {
 
   eventWsUrl:
     process.env.LOCAL_PROPOSER === 'true' ? process.env.LOCAL_WS_URL : process.env.PROPOSER_WS_URL,
+
+  KEYS_COLLECTION: 'keys',
+  DEFAULT_ACCOUNT_NUM: 10,
+
 };

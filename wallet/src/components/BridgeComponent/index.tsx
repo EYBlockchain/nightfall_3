@@ -20,8 +20,8 @@ import approveImg from '../../assets/img/modalImages/adeposit_approve1.png';
 import depositConfirmed from '../../assets/img/modalImages/adeposit_confirmed.png';
 import successHand from '../../assets/img/modalImages/success-hand.png';
 import transferCompletedImg from '../../assets/img/modalImages/tranferCompleted.png';
-import { pkdGet } from '../../utils/lib/local-storage';
 import { decompressKey } from '../../nightfall-browser/services/keys';
+import { retrieveAndDecrypt } from '../../utils/lib/key-storage';
 
 const gen = require('general-number');
 
@@ -80,9 +80,10 @@ const BridgeComponent = (props: any) => {
     const { address: defaultTokenAddress } = (await getContractAddress('ERC20Mock')).data; // TODO Only for testing now
     const ercAddress = defaultTokenAddress; // TODO Location to be removed later
     console.log('TokenAddress', ercAddress);
+    const zkpKeys = await retrieveAndDecrypt(state.compressedPkd)
     switch (txType) {
       case 'deposit': {
-        const pkd = decompressKey(generalise(pkdGet(await Web3.getAccount())));
+        const pkd = decompressKey(generalise(state.compressedPkd));
         await approve(ercAddress, shieldContractAddress, 'ERC20', tokenAmountWei.toString());
         const { rawTransaction } = await deposit(
           {
@@ -90,7 +91,7 @@ const BridgeComponent = (props: any) => {
             tokenId: 0,
             value: tokenAmountWei,
             pkd,
-            nsk: state.zkpKeys.nsk,
+            nsk: zkpKeys.nsk,
             fee: 1,
             tokenType: 'ERC20',
           },
@@ -109,8 +110,8 @@ const BridgeComponent = (props: any) => {
               tokenId: 0,
               value: tokenAmountWei,
               recipientAddress: await Web3.getAccount(),
-              nsk: state.zkpKeys.nsk,
-              ask: state.zkpKeys.ask,
+              nsk: zkpKeys.nsk,
+              ask: zkpKeys.ask,
               tokenType: 'ERC20',
               fees: 1,
             },
@@ -123,8 +124,8 @@ const BridgeComponent = (props: any) => {
               tokenId: 0,
               value: tokenAmountWei,
               recipientAddress: await Web3.getAccount(),
-              nsk: state.zkpKeys.nsk,
-              ask: state.zkpKeys.ask,
+              nsk: zkpKeys.nsk,
+              ask: zkpKeys.ask,
               tokenType: 'ERC20',
               fees: 1,
             },
