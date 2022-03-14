@@ -196,7 +196,6 @@ class Nf3 {
 
     let tx;
     await this.nonceMutex.runExclusive(async () => {
-      logger.debug('TXCOUNT: ', await this.web3.eth.getTransactionCount(this.ethereumAddress));
       this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
 
       let gasPrice = 20000000000;

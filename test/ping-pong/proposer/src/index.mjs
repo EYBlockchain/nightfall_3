@@ -8,7 +8,7 @@ import app from './app.mjs';
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
-const { mnemonics, signingKeys: testSigningKeys } = config.TEST_OPTIONS;
+const { mnemonics, signingKeys: testSigningKeys, addresses } = config.TEST_OPTIONS;
 const { PROPOSER_PORT = '' } = process.env;
 
 /**
@@ -24,13 +24,17 @@ async function startProposer() {
   // let's see if the proposer has been registered before
   const { proposers } = await nf3.getProposers();
   // if not, let's register them
+  console.log('PROPOSERS: ', proposers);
   if (proposers.length === 0) {
+    console.log('1');
     const r = await nf3.registerProposer();
     console.log('RES:', r);
 
     logger.info('Proposer registration complete');
-  } else if (!proposers.map(p => p.thisAddress).includes(nf3.ethereumAddress)) {
-    await nf3.registerProposer();
+  } else if (!proposers.map(p => p.thisAddress).includes(addresses.proposer1)) {
+    console.log('2');
+    const r = await nf3.registerProposer();
+    console.log('RES2:', r);
     logger.info('Proposer registration complete');
   } else logger.warn('Proposer appears to be registerd already');
   if (PROPOSER_PORT !== '') {

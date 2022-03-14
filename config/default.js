@@ -201,6 +201,16 @@ module.exports = {
       challenger: '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
       liquidityProvider: '0xfbc1ee1c7332e2e5a76a99956f50b3ba2639aff73d56477e877ef8390c41e0c6',
     },
+    addresses: {
+      walletTest: '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
+      user1: '0x9C8B2276D490141Ae1440Da660E470E7C0349C63',
+      user2: '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
+      proposer1: '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0',
+      proposer2: '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
+      proposer3: '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
+      challenger: '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
+      liquidityProvider: '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
+    },
     mnemonics: {
       user1: 'trip differ bamboo bundle bonus luxury strike mad merry muffin nose auction',
       user2: 'control series album tribe category saddle prosper enforce moon eternal talk fame',
