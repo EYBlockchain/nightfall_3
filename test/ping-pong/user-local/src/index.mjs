@@ -30,7 +30,6 @@ async function localTest() {
   await nf3.init(IS_TEST_RUNNER ? mnemonics.user1 : mnemonics.user2);
   if (await nf3.healthcheck('client')) logger.info('Healthcheck passed');
   else throw new Error('Healthcheck failed');
-
   const ercAddress = ERC20_ADDRESS || (await nf3.getContractAddress(ERC20_NAME));
   const startBalance = await retrieveL2Balance(nf3);
 
