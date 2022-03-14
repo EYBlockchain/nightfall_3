@@ -5,7 +5,7 @@ import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
 import Nf3 from '../../../cli/lib/nf3.mjs';
 import logger from '../../../common-files/utils/logger.mjs';
-import { Web3Client, expectTransaction } from '../../utils.mjs';
+import { Web3Client, expectTransaction, depositNTransactions } from '../../utils.mjs';
 
 // so we can use require with mjs file
 const { expect } = chai;
@@ -14,7 +14,16 @@ chai.use(chaiAsPromised);
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
-const { bond, gasCosts, txPerBlock, mnemonics, signingKeys } = config.TEST_OPTIONS;
+const {
+  bond,
+  gasCosts,
+  txPerBlock,
+  mnemonics,
+  signingKeys,
+  tokenConfigs: { tokenType, tokenId },
+  transferValue,
+  fee,
+} = config.TEST_OPTIONS;
 
 const testProposers = [
   new Nf3(signingKeys.proposer1, environment),
@@ -29,10 +38,40 @@ const testProposersUrl = [
   'http://test-proposer4',
 ];
 
+const totalDeposits = txPerBlock * 3;
+const nf3User = new Nf3(signingKeys.user1, environment);
+let erc20Address;
+let stateAddress;
+let eventLogs = [];
+
 const web3Client = new Web3Client();
 
 describe('Basic Proposer tests', () => {
   before(async () => {
+    await nf3User.init(mnemonics.user1);
+    erc20Address = await nf3User.getContractAddress('ERC20Mock');
+    stateAddress = await nf3User.stateContractAddress;
+    web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
+  });
+
+  it('proposer should propose multiple L2 blocks after deposits', async function () {
+    let currentPkdBalance;
+    try {
+      currentPkdBalance = (await nf3User.getLayer2Balances())[erc20Address][0].balance;
+    } catch (e) {
+      currentPkdBalance = 0;
+    }
+    // We create enough transactions to fill blocks full of deposits.
+    await depositNTransactions(
+      nf3User,
+      totalDeposits,
+      erc20Address,
+      tokenType,
+      transferValue,
+      tokenId,
+      fee,
+    );
+
     for (const prop of testProposers) {
       await prop.init(mnemonics.proposer);
     }
@@ -40,13 +79,24 @@ describe('Basic Proposer tests', () => {
     // Proposer registration
     await testProposers[0].registerProposer(testProposersUrl[0]);
 
+    let blocksReceivedToPropose = 0;
     // Proposer listening for incoming events
     const newGasBlockEmitter = await testProposers[0].startProposer();
-    newGasBlockEmitter.on('gascost', async gasUsed => {
+    newGasBlockEmitter.on('gascost', async (gasUsed, blocksToPropose) => {
+      blocksReceivedToPropose = blocksToPropose;
       logger.debug(
         `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
       );
     });
+
+    eventLogs = await web3Client.waitForEvent(
+      eventLogs,
+      ['blockProposed'],
+      Math.floor(totalDeposits / txPerBlock),
+    );
+    const afterPkdBalance = (await nf3User.getLayer2Balances())[erc20Address][0].balance;
+    expect(afterPkdBalance - currentPkdBalance).to.be.equal(totalDeposits * transferValue);
+    expect(blocksReceivedToPropose).to.be.equal(Math.floor(totalDeposits / txPerBlock));
   });
 
   it('should register a proposer', async () => {
