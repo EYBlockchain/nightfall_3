@@ -196,6 +196,7 @@ class Nf3 {
 
     let tx;
     await this.nonceMutex.runExclusive(async () => {
+      logger.debug('TXCOUNT: ', await this.web3.eth.getTransactionCount(this.ethereumAddress));
       this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
 
       let gasPrice = 20000000000;
@@ -217,6 +218,7 @@ class Nf3 {
 
     if (this.ethereumSigningKey) {
       const signed = await this.web3.eth.accounts.signTransaction(tx, this.ethereumSigningKey);
+      console.log('SIGNED', signed);
       // rather than waiting until we have a receipt, wait until we have enough confirmation blocks
       // then return the receipt.
       // TODO does this still work if there is a chain reorg or do we have to handle that?
@@ -225,6 +227,8 @@ class Nf3 {
         this.notConfirmed++;
         this.web3.eth
           .sendSignedTransaction(signed.rawTransaction)
+          .once('sent', p => console.log('SENT', p))
+          .once('receipt', receipt => console.log('RECEIPT', receipt))
           .on('confirmation', (number, receipt) => {
             if (number === 12) {
               this.notConfirmed--;
@@ -236,6 +240,7 @@ class Nf3 {
             }
           })
           .on('error', err => {
+            console.log('ERR', err);
             reject(err);
           });
       });

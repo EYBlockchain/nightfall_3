@@ -6,7 +6,9 @@ import logger from '../../../../common-files/utils/logger.mjs';
 import Nf3 from '../../../../cli/lib/nf3.mjs';
 import app from './app.mjs';
 
-const { proposerEthereumSigningKey, optimistWsUrl, web3WsUrl, optimistBaseUrl } = config;
+const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
+
+const { mnemonics, signingKeys: testSigningKeys } = config.TEST_OPTIONS;
 const { PROPOSER_PORT = '' } = process.env;
 
 /**
@@ -14,12 +16,8 @@ Does the preliminary setup and starts listening on the websocket
 */
 async function startProposer() {
   logger.info('Starting Proposer...');
-  const nf3 = new Nf3(proposerEthereumSigningKey, {
-    web3WsUrl,
-    optimistApiUrl: optimistBaseUrl,
-    optimistWsUrl,
-  });
-  await nf3.init(undefined, 'optimist');
+  const nf3 = new Nf3(testSigningKeys.proposer1, environment);
+  await nf3.init(mnemonics.proposer, 'optimist');
   if (await nf3.healthcheck('optimist')) logger.info('Healthcheck passed');
   else throw new Error('Healthcheck failed');
   logger.info('Attempting to register proposer');
@@ -27,7 +25,9 @@ async function startProposer() {
   const { proposers } = await nf3.getProposers();
   // if not, let's register them
   if (proposers.length === 0) {
-    await nf3.registerProposer();
+    const r = await nf3.registerProposer();
+    console.log('RES:', r);
+
     logger.info('Proposer registration complete');
   } else if (!proposers.map(p => p.thisAddress).includes(nf3.ethereumAddress)) {
     await nf3.registerProposer();

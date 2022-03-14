@@ -41,7 +41,6 @@ module.exports = async function (deployer) {
   const proposers = await Proposers.deployed();
   const challengers = await Challenges.deployed();
   const { bootProposer, bootChallenger } = addresses;
-  console.log('ADDRESSES: ', addresses);
   await proposers.setBootProposer(bootProposer);
   await challengers.setBootChallenger(bootChallenger);
 };

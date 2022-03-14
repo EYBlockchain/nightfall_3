@@ -41,18 +41,6 @@ module.exports = {
   // Define Urls and Url format (http/ws vs https/wss, with vs without port) depending on whether a DOMAIN_NAME has been defined.
   // In production and staging environements, we require https/wss and no port, as traffic will be routed to the correct service
   // given a URL.
-  optimistBaseUrl:
-    DOMAIN_NAME === ''
-      ? `http://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_HTTP_PORT}`
-      : `https://${process.env.OPTIMIST_HTTP_HOST}`,
-  optimistWsUrl:
-    DOMAIN_NAME === ''
-      ? `ws://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_WS_PORT}`
-      : `wss://${process.env.OPTIMIST_HOST}`,
-  web3WsUrl:
-    DOMAIN_NAME === ''
-      ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`
-      : `wss://${process.env.BLOCKCHAIN_WS_HOST}`,
   userEthereumSigningKey:
     process.env.USER_ETHEREUM_SIGNING_KEY ||
     '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e', // if changed, change associated userEthereumAddresses
@@ -67,9 +55,6 @@ module.exports = {
   zkpMnemonic:
     process.env.ZKP_MNEMONIC ||
     'hurt labor ketchup seven scan swap dirt brown brush path goat together',
-  proposerEthereumSigningKey:
-    process.env.PROPOSER_ETHEREUM_SIGNING_KEY ||
-    '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
   user1Pkd: process.env.RECIPIENT_PKD || [
     '0x193a37cd7973373aceae05d133f3d69ab6e7ef2f4321461173871ec7611244e2',
     '0x27234a8721e73c9aa160154ee63d2470101fc5fd841221eeb675a91ec2d66e78',
@@ -170,12 +155,24 @@ module.exports = {
     localhost: {
       name: 'Localhost',
       chainId: 4378921,
-      clientApiUrl: 'http://localhost:8080',
-      optimistApiUrl: 'http://localhost:8081',
-      optimistWsUrl: 'ws://localhost:8082',
+      clientApiUrl:
+        DOMAIN_NAME === ''
+          ? `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`
+          : `https://${process.env.CLIENT_HOST}`,
+      optimistApiUrl:
+        DOMAIN_NAME === ''
+          ? `http://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_PORT}`
+          : `https://${process.env.OPTIMIST_HOST}`,
+      optimistWsUrl:
+        DOMAIN_NAME === ''
+          ? `ws://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_WS_PORT}`
+          : `wss://${process.env.OPTIMIST_HOST}`,
       adversarialOptimistApiUrl: 'http://localhost:8088',
       adversarialOptimistWsUrl: 'ws://localhost:8089',
-      web3WsUrl: 'ws://localhost:8546',
+      web3WsUrl:
+        DOMAIN_NAME === ''
+          ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`
+          : `wss://${process.env.BLOCKCHAIN_WS_HOST}`,
     },
   },
   TEST_OPTIONS: {
@@ -193,7 +190,7 @@ module.exports = {
     fee: 1,
     BLOCK_STAKE: 1, // 1 wei
     bond: 10, // 10 wei
-    txPerBlock: 2,
+    txPerBlock: process.env.TRANSACTIONS_PER_BLOCK || 2,
     signingKeys: {
       walletTest: '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
       user1: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e',
