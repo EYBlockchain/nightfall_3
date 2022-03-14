@@ -45,10 +45,10 @@ library MerkleTree_Stateless {
 
     */
 
-    // event Output(bytes32[2] input, bytes32[1] output, uint prevNodeIndex, uint nodeIndex); // for debugging only
+    // event Output(bytes32[2] input, bytes32[1] output, uint256 prevNodeIndex, uint256 nodeIndex); // for debugging only
 
-    uint constant treeHeight = 32; //change back to 32 after testing
-    uint constant treeWidth = 2 ** treeHeight; // 2 ** treeHeight
+    uint256 constant treeHeight = 32; //change back to 32 after testing
+    uint256 constant treeWidth = 2 ** treeHeight; // 2 ** treeHeight
     /*
     Whilst ordinarily, we'd work solely with bytes32, we need to truncate nodeValues up the tree. Therefore, we need to declare certain variables with lower byte-lengths:
     LEAF_HASHLENGTH = 32 bytes;
@@ -64,14 +64,14 @@ library MerkleTree_Stateless {
 
     /**
     @notice Get the index of the frontier (or 'storage slot') into which we will next store a nodeValue (based on the leafIndex currently being inserted). See the top-level README for a detailed explanation.
-    @return slot uint - the index of the frontier (or 'storage slot') into which we will next store a nodeValue
+    @return slot uint256 - the index of the frontier (or 'storage slot') into which we will next store a nodeValue
     */
-    function getFrontierSlot(uint leafIndex) public pure returns (uint slot) {
+    function getFrontierSlot(uint256 leafIndex) public pure returns (uint256 slot) {
         slot = 0;
         if ( leafIndex % 2 == 1 ) {
-            uint exp1 = 1;
-            uint pow1 = 2;
-            uint pow2 = pow1 << 1;
+            uint256 exp1 = 1;
+            uint256 pow1 = 2;
+            uint256 pow2 = pow1 << 1;
             while (slot == 0) {
                 if ( (leafIndex + 1 - pow1) % pow2 == 0 ) {
                     slot = exp1;
@@ -92,14 +92,14 @@ library MerkleTree_Stateless {
     @return root bytes32 - the root of the merkle tree, after the insert.
     @return _frontier bytes32[33] - the updated frontier
     */
-    function insertLeaf(bytes32 leafValue, bytes32[33] memory _frontier, uint _leafCount) public pure returns (bytes32 root, bytes32[33] memory, uint) {
+    function insertLeaf(bytes32 leafValue, bytes32[33] memory _frontier, uint256 _leafCount) public pure returns (bytes32 root, bytes32[33] memory, uint256) {
 
         // check that space exists in the tree:
         require(treeWidth > _leafCount, "There is no space left in the tree.");
 
-        uint slot = getFrontierSlot(_leafCount);
-        uint nodeIndex = _leafCount + treeWidth - 1;
-        uint prevNodeIndex;
+        uint256 slot = getFrontierSlot(_leafCount);
+        uint256 nodeIndex = _leafCount + treeWidth - 1;
+        uint256 prevNodeIndex;
         bytes32 nodeValue = leafValue; // nodeValue is the hash, which iteratively gets overridden to the top of the tree until it becomes the root.
 
         //bytes32 leftInput; //can remove these and just use input[0] input[1]
@@ -107,7 +107,7 @@ library MerkleTree_Stateless {
         bytes32[2] memory input; //input of the hash fuction
         bytes32[1] memory output; // output of the hash function
 
-        for (uint level = 0; level < treeHeight; level++) {
+        for (uint256 level = 0; level < treeHeight; level++) {
 
             if (level == slot) _frontier[slot] = nodeValue;
 
@@ -149,16 +149,16 @@ library MerkleTree_Stateless {
     @param _frontier - the current Frontier value
     @return root bytes32[] - the root of the merkle tree, after all the inserts.
     */
-    function insertLeaves(bytes32[] memory leafValues, bytes32[33] memory _frontier, uint _leafCount) public pure returns (bytes32 root, bytes32[33] memory, uint) {
+    function insertLeaves(bytes32[] memory leafValues, bytes32[33] memory _frontier, uint256 _leafCount) public pure returns (bytes32 root, bytes32[33] memory, uint256) {
 
-        uint numberOfLeaves = leafValues.length;
+        uint256 numberOfLeaves = leafValues.length;
 
         // check that space exists in the tree:
         require(treeWidth > _leafCount, "There is no space left in the tree.");
         if (numberOfLeaves > treeWidth - _leafCount) {
-            uint numberOfExcessLeaves = numberOfLeaves - (treeWidth - _leafCount);
+            uint256 numberOfExcessLeaves = numberOfLeaves - (treeWidth - _leafCount);
             // remove the excess leaves, because we only want to emit those we've added as an event:
-            for (uint xs = 0; xs < numberOfExcessLeaves; xs++) {
+            for (uint256 xs = 0; xs < numberOfExcessLeaves; xs++) {
                 /*
                   CAUTION!!! This attempts to succinctly achieve leafValues.pop() on a **memory** dynamic array. Not thoroughly tested!
                   Credit: https://ethereum.stackexchange.com/a/51897/45916
@@ -171,9 +171,9 @@ library MerkleTree_Stateless {
             numberOfLeaves = treeWidth - _leafCount;
         }
 
-        uint slot;
-        uint nodeIndex;
-        uint prevNodeIndex;
+        uint256 slot;
+        uint256 nodeIndex;
+        uint256 prevNodeIndex;
         bytes32 nodeValue;
 
         //bytes32 leftInput;
@@ -182,7 +182,7 @@ library MerkleTree_Stateless {
         bytes32[1] memory output; // the output of the hash
 
         // consider each new leaf in turn, from left to right:
-        for (uint leafIndex = _leafCount; leafIndex < _leafCount + numberOfLeaves; leafIndex++) {
+        for (uint256 leafIndex = _leafCount; leafIndex < _leafCount + numberOfLeaves; leafIndex++) {
             nodeValue = leafValues[leafIndex - _leafCount];
             nodeIndex = leafIndex + treeWidth - 1; // convert the leafIndex to a nodeIndex
 
@@ -194,7 +194,7 @@ library MerkleTree_Stateless {
             }
 
             // hash up to the level whose nodeValue we'll store in the frontier slot:
-            for (uint level = 1; level <= slot; level++) {
+            for (uint256 level = 1; level <= slot; level++) {
                 if (nodeIndex % 2 == 0) {
                     // even nodeIndex
                     input[0] = _frontier[level - 1]; //replace with push?
@@ -221,7 +221,7 @@ library MerkleTree_Stateless {
         }
 
         // So far we've added all leaves, and hashed up to a particular level of the tree. We now need to continue hashing from that level until the root:
-        for (uint level = slot + 1; level <= treeHeight; level++) {
+        for (uint256 level = slot + 1; level <= treeHeight; level++) {
 
             if (nodeIndex % 2 == 0) {
                 // even nodeIndex
@@ -255,29 +255,16 @@ library MerkleTree_Stateless {
         return (root, _frontier, _leafCount); //the root of the tree
     }
 
-    /* function checkPath(bytes32[33] memory siblingPath, uint leafIndex, bytes32 node, bytes32 root) public pure returns(bool, bytes32[33] memory) {
-      bytes32[33] memory _frontier;
-      if (siblingPath[0] != root) return (false, _frontier); // check root of sibling path is actually the prior block root
-      for (uint i = 32; i > 0; i--) {
-        _frontier[i] = node;
-        if (leafIndex % 2 == 0) node = MiMC.mimcHash2([ node, siblingPath[i]]);
-        else node = MiMC.mimcHash2([ siblingPath[i], node]);
-        leafIndex >> 1;
-      }
-      _frontier[0] = node;
-      return (siblingPath[0] == node, _frontier);
-    } */
+    function checkPath(bytes32[] memory leafValues, bytes32[33] memory _frontier, uint256 _leafCount, bytes32 _root) public pure returns(bool, bytes32[33] memory) {
 
-    function checkPath(bytes32[] memory leafValues, bytes32[33] memory _frontier, uint _leafCount, bytes32 _root) public pure returns(bool, bytes32[33] memory) {
-
-      uint numberOfLeaves = leafValues.length;
+      uint256 numberOfLeaves = leafValues.length;
 
       // check that space exists in the tree:
       require(treeWidth > _leafCount, "There is no space left in the tree.");
       if (numberOfLeaves > treeWidth - _leafCount) {
-        uint numberOfExcessLeaves = numberOfLeaves - (treeWidth - _leafCount);
+        uint256 numberOfExcessLeaves = numberOfLeaves - (treeWidth - _leafCount);
         // remove the excess leaves, because we only want to emit those we've added as an event:
-        for (uint xs = 0; xs < numberOfExcessLeaves; xs++) {
+        for (uint256 xs = 0; xs < numberOfExcessLeaves; xs++) {
           /*
           CAUTION!!! This attempts to succinctly achieve leafValues.pop() on a **memory** dynamic array. Not thoroughly tested!
           Credit: https://ethereum.stackexchange.com/a/51897/45916
@@ -290,9 +277,9 @@ library MerkleTree_Stateless {
         numberOfLeaves = treeWidth - _leafCount;
       }
 
-      uint slot;
-      uint nodeIndex;
-      uint prevNodeIndex;
+      uint256 slot;
+      uint256 nodeIndex;
+      uint256 prevNodeIndex;
       bytes32 nodeValue;
 
       //bytes32 leftInput;
@@ -301,7 +288,7 @@ library MerkleTree_Stateless {
       bytes32[1] memory output; // the output of the hash
 
       // consider each new leaf in turn, from left to right:
-      for (uint leafIndex = _leafCount; leafIndex < _leafCount + numberOfLeaves; leafIndex++) {
+      for (uint256 leafIndex = _leafCount; leafIndex < _leafCount + numberOfLeaves; leafIndex++) {
         nodeValue = leafValues[leafIndex - _leafCount];
         nodeIndex = leafIndex + treeWidth - 1; // convert the leafIndex to a nodeIndex
 
@@ -313,7 +300,7 @@ library MerkleTree_Stateless {
         }
 
         // hash up to the level whose nodeValue we'll store in the frontier slot:
-        for (uint level = 1; level <= slot; level++) {
+        for (uint256 level = 1; level <= slot; level++) {
           if (nodeIndex % 2 == 0) {
             // even nodeIndex
             input[0] = _frontier[level - 1]; //replace with push?
@@ -340,7 +327,7 @@ library MerkleTree_Stateless {
         }
 
         // So far we've added all leaves, and hashed up to a particular level of the tree. We now need to continue hashing from that level until the root:
-        for (uint level = slot + 1; level <= treeHeight; level++) {
+        for (uint256 level = slot + 1; level <= treeHeight; level++) {
 
           if (nodeIndex % 2 == 0) {
             // even nodeIndex

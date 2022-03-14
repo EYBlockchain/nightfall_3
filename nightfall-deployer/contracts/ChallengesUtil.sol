@@ -183,7 +183,7 @@ library ChallengesUtil {
         uint256[] memory vk
     ) internal {
         libCheckCompressedProof(transaction.proof, proof);
-        // TODO convert from uint[8] to uint[] - make unnecessary.
+        // TODO convert from uint256[8] to uint256[] - make unnecessary.
         uint256[] memory proof1 = new uint256[](proof.length);
         for (uint256 i = 0; i < proof.length; i++) {
             proof1[i] = proof[i];

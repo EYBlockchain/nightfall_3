@@ -61,8 +61,8 @@ library Utils {
   }
 
   // counts the number of non-zero values (useful for counting real commitments and nullifiers)
-  function countNonZeroValues(bytes32[2] memory vals) internal pure returns(uint) {
-    uint count;
+  function countNonZeroValues(bytes32[2] memory vals) internal pure returns(uint256) {
+    uint256 count;
     if (vals[0] != ZERO) count++;
     if (vals[1] != ZERO) count++;
     return count;
@@ -71,16 +71,16 @@ library Utils {
   // filters the number of non-zero values (useful for getting real commitments and nullifiers)
   function filterNonZeroValues(bytes32[2] memory vals) internal pure returns(bytes32[] memory) {
     bytes32[] memory filtered = new bytes32[](countNonZeroValues(vals));
-    uint count;
+    uint256 count;
     if (vals[0] != ZERO) filtered[count++] = vals[0]; // a bit faster than looping?
     if (vals[1] != ZERO) filtered[count++] = vals[1];
     return filtered;
   }
 
   // counts the number of non-zero commitments in a block containing the ts transactions)
-  function countCommitments(Structures.Transaction[] memory ts) internal pure returns(uint) {
-    uint count;
-    for (uint i = 0; i < ts.length; i++) {
+  function countCommitments(Structures.Transaction[] memory ts) internal pure returns(uint256) {
+    uint256 count;
+    for (uint256 i = 0; i < ts.length; i++) {
       count += countNonZeroValues(ts[i].commitments);
     }
     return count;
@@ -89,8 +89,8 @@ library Utils {
   // filters the non-zero commitments in a block containing the ts transactions)
   function filterCommitments(Structures.Transaction[] memory ts) internal pure returns(bytes32[] memory) {
     bytes32[] memory filtered = new bytes32[](countCommitments(ts));
-    uint count;
-    for (uint i = 0; i < ts.length; i++) {
+    uint256 count;
+    for (uint256 i = 0; i < ts.length; i++) {
       if (ts[i].commitments[0] != ZERO) filtered[count++] = ts[i].commitments[0];
       if (ts[i].commitments[1] != ZERO) filtered[count++] = ts[i].commitments[1];
     }
@@ -127,7 +127,7 @@ library Utils {
       inputs[1] = uint256(ts.commitments[0]);
       inputs[2] = uint256(ts.nullifiers[0]);
       inputs[3] = roots[0];
-      for (uint i = 4; i < 12; i++) {
+      for (uint256 i = 4; i < 12; i++) {
         inputs[i] = uint256(ts.compressedSecrets[i-4]);
       }
       return inputs;
@@ -154,7 +154,7 @@ library Utils {
       inputs[5] = uint256(ts.nullifiers[1]);
       inputs[6] = roots[0];
       inputs[7] = roots[1];
-      for (uint i = 8; i < 16; i++) {
+      for (uint256 i = 8; i < 16; i++) {
         inputs[i] = uint256(ts.compressedSecrets[i-8]);
       }
       return inputs;

@@ -249,7 +249,6 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
         // Now pay out the value of the commitment
         address addr = address(uint160(uint256(t.ercAddress)));
         ERCInterface tokenContract = ERCInterface(addr);
-        // address recipientAddress = address(uint160(uint256(t.recipientAddress)));
 
         if (t.tokenType == TokenType.ERC20) {
             if (t.tokenId != ZERO) revert("ERC20 deposit should have tokenId equal to ZERO");

@@ -16,13 +16,13 @@ pragma solidity ^0.8.0;
 library Pairing {
 
     struct G1Point {
-        uint X;
-        uint Y;
+        uint256 X;
+        uint256 Y;
     }
     // Encoding of field elements is: X[0] * z + X[1]
     struct G2Point {
-        uint[2] X;
-        uint[2] Y;
+        uint256[2] X;
+        uint256[2] Y;
     }
 
     /// @return the generator of G1
@@ -41,14 +41,14 @@ library Pairing {
     /// @return the negation of p, i.e. p.addition(p.negate()) should be zero.
     function negate(G1Point memory p) pure internal returns (G1Point memory) {
         // The prime q in the base field F_q for G1
-        uint q = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
+        uint256 q = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
         if (p.X == 0 && p.Y == 0)
             return G1Point(0, 0);
         return G1Point(p.X, q - (p.Y % q));
     }
     /// @return r the sum of two points of G1
     function addition(G1Point memory p1, G1Point memory p2) internal returns (G1Point memory r, bool success) {
-        uint[4] memory input;
+        uint256[4] memory input;
         input[0] = p1.X;
         input[1] = p1.Y;
         input[2] = p2.X;
@@ -64,8 +64,8 @@ library Pairing {
     }
     /// @return r the product of a point on G1 and a scalar, i.e.
     /// p == p.scalar_mul(1) and p.addition(p) == p.scalar_mul(2) for all points p.
-    function scalar_mul(G1Point memory p, uint s) internal returns (G1Point memory r, bool success) {
-        uint[3] memory input;
+    function scalar_mul(G1Point memory p, uint256 s) internal returns (G1Point memory r, bool success) {
+        uint256[3] memory input;
         input[0] = p.X;
         input[1] = p.Y;
         input[2] = s;
@@ -85,10 +85,10 @@ library Pairing {
     function pairing(G1Point[] memory p1, G2Point[] memory p2) internal returns (bool, bool) {
         // pairingProd2 and pairingProd4 are called with correct lengths in Verifier.sol. Removing this check to ensure a wrong proof verification challenge's require statement correctly works. Adding this check runs a stack too deep error in Verifier.sol. So we are avoiding this because we know this is correctly called
         /* require(p1.length == p2.length, "EC pairing p1 length != p2 length"); */
-        uint elements = p1.length;
-        uint inputSize = elements * 6;
-        uint[] memory input = new uint[](inputSize);
-        for (uint i = 0; i < elements; i++)
+        uint256 elements = p1.length;
+        uint256 inputSize = elements * 6;
+        uint256[] memory input = new uint256[](inputSize);
+        for (uint256 i = 0; i < elements; i++)
         {
             input[i * 6 + 0] = p1[i].X;
             input[i * 6 + 1] = p1[i].Y;
@@ -97,7 +97,7 @@ library Pairing {
             input[i * 6 + 4] = p2[i].Y[1];
             input[i * 6 + 5] = p2[i].Y[0];
         }
-        uint[1] memory out;
+        uint256[1] memory out;
         bool success;
         assembly {
             success := call(sub(gas(), 2000), 8, 0, add(input, 0x20), mul(inputSize, 0x20), out, 0x20)
