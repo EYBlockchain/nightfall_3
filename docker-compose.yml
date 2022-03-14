@@ -179,11 +179,10 @@ services:
       OPTIMIST_HTTP_PORT: 80
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
-      CLIENT_HOST: client1
       DEPLOYER_HOST: deployer
       GENESIS_BLOCKS: 2
 
-  genesis-blocks-deployer:
+  genesis-transactions-creator:
     image: ghcr.io/eyblockchain/nightfall3-user-local:latest
     depends_on:
       - client1

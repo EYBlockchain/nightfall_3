@@ -119,7 +119,7 @@ services:
     environment:
       PROPOSER_ETHEREUM_SIGNING_KEY: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d'
 
-  genesis-blocks-deployer:
+  genesis-transactions-creator:
     build:
       dockerfile: user-local.Dockerfile
       context: .

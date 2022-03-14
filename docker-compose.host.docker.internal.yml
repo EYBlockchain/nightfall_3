@@ -38,7 +38,7 @@ services:
       BLOCKCHAIN_PORT: 8546
       PROPOSER_ETHEREUM_SIGNING_KEY: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d'
 
-  genesis-blocks-deployer:
+  genesis-transactions-creator:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
       BLOCKCHAIN_PORT: 8546
