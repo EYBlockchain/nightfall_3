@@ -198,7 +198,7 @@ class Nf3 {
     await this.nonceMutex.runExclusive(async () => {
       this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
 
-      let gasPrice = 20000000000;
+      let gasPrice = 200000000000;
       const gas = (await this.web3.eth.getBlock('latest')).gasLimit;
       const blockGasPrice = 2 * Number(await this.web3.eth.getGasPrice());
       if (blockGasPrice > gasPrice) gasPrice = blockGasPrice;
@@ -212,6 +212,7 @@ class Nf3 {
         gasPrice,
         nonce: this.nonce,
       };
+      console.log('TX: ', tx);
       this.nonce++;
     });
 
@@ -228,6 +229,7 @@ class Nf3 {
           .sendSignedTransaction(signed.rawTransaction)
           .once('sent', p => console.log('SENT', p))
           .once('receipt', receipt => console.log('RECEIPT', receipt))
+          .once('transactionHash', hash => console.log('HASH', hash))
           .on('confirmation', (number, receipt) => {
             if (number === 12) {
               this.notConfirmed--;
