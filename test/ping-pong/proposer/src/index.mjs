@@ -4,9 +4,11 @@ Module that runs up as a proposer
 import config from 'config';
 import logger from '../../../../common-files/utils/logger.mjs';
 import Nf3 from '../../../../cli/lib/nf3.mjs';
-import { app, setNf3Instance } from './app.mjs';
+import { app } from './app.mjs';
 
-const { proposerEthereumSigningKey, optimistWsUrl, web3WsUrl, optimistBaseUrl } = config;
+const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
+
+const { mnemonics, signingKeys } = config.TEST_OPTIONS;
 const { PROPOSER_PORT = '', PROPOSER_URL = '' } = process.env;
 
 /**
@@ -14,18 +16,15 @@ Does the preliminary setup and starts listening on the websocket
 */
 async function startProposer() {
   logger.info('Starting Proposer...');
-  const nf3 = new Nf3(proposerEthereumSigningKey, {
-    web3WsUrl,
-    optimistApiUrl: optimistBaseUrl,
-    optimistWsUrl,
-  });
-  await nf3.init(undefined, 'optimist');
+  const nf3 = new Nf3(signingKeys.proposer1, environment);
+  await nf3.init(mnemonics.proposer);
+
   if (await nf3.healthcheck('optimist')) logger.info('Healthcheck passed');
   else throw new Error('Healthcheck failed');
   logger.info('Attempting to register proposer');
   // let's see if the proposer has been registered before
-  const { proposers } = await nf3.getProposers();
   const proposerUrl = PROPOSER_PORT !== '' ? `${PROPOSER_URL}:${PROPOSER_PORT}` : '';
+  const { proposers } = await nf3.getProposers();
   // if not, let's register them
   if (proposers.length === 0) {
     await nf3.registerProposer(proposerUrl);
@@ -35,9 +34,8 @@ async function startProposer() {
     logger.info('Proposer registration complete');
   } else logger.warn('Proposer appears to be registerd already');
   if (PROPOSER_PORT !== '') {
-    setNf3Instance(nf3);
+    logger.debug('Proposer healthcheck up');
     app.listen(PROPOSER_PORT);
-    logger.debug(`Proposer API up at URL ${PROPOSER_URL} and port ${PROPOSER_PORT}`);
   }
   // TODO subscribe to layer 1 blocks and call change proposer
   nf3.startProposer();

@@ -1,9 +1,9 @@
 const config = require('config');
 
 const {
-  UserEthereumAddresses,
   TEST_OPTIONS: {
     restrictions: { erc20default },
+    addresses,
   },
 } = config;
 
@@ -24,8 +24,9 @@ module.exports = function (deployer, _, accounts) {
     const ERC20deployed = await ERC20Mock.deployed();
 
     // For ping pong tests
-    for (const address of UserEthereumAddresses) {
-      await ERC20deployed.transfer(address, 1000000000000);
+    for (const address in addresses) {
+      console.log(addresses[address]);
+      await ERC20deployed.transfer(addresses[address], 1000000000000);
     }
     // Set a restriction for ping-pong
     await restrictions.setRestriction(ERC20deployed.address, erc20default);
@@ -39,14 +40,14 @@ module.exports = function (deployer, _, accounts) {
       const ERC1155deployed = await ERC1155Mock.deployed();
       // For e2e tests
       for (let i = 0; i < nERC721; i++) {
-        for (const address of UserEthereumAddresses) {
+        for (const address of addresses) {
           await ERC721deployed.awardItem(address, `https://erc721mock/item-id-${i}.json`);
         }
       }
       // For testing the wallet
       await ERC20deployed.transfer(liquidityProviderAddress, 1000000000000);
 
-      for (const address of UserEthereumAddresses) {
+      for (const address of addresses) {
         await ERC1155deployed.safeBatchTransferFrom(
           accounts[0],
           address,

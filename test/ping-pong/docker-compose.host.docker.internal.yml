@@ -22,8 +22,6 @@ services:
       ETH_PRIVATE_KEY: abf4ed9f30bd1e4a290310d726c7bbdf39cd75a25eebd9a3a4874e10b4a0c4ce
       ETH_ADDRESS: '0xdb080dC48961bC1D67a0A4151572eCb824cC76E8'
       GAS_PRICE: 20000000000
-      # This is only needed for test purposes - it gives tokens to the user at startup
-      USER_ETHEREUM_ADDRESSES: 0xE35B7c8338E4B952C03E73B50f454B1df086fef2,0x4637Ee1126723e098A152f33F326fb767A6A2b8A
 
   optimist:
     extra_hosts:
@@ -39,7 +37,6 @@ services:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
       BLOCKCHAIN_PORT: 8546
-      PROPOSER_ETHEREUM_SIGNING_KEY: "0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d"
 
   user-local1:
     extra_hosts:

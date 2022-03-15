@@ -32,7 +32,6 @@ module.exports = {
   BLOCKCHAIN_URL:
     process.env.BLOCKCHAIN_URL ||
     `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`,
-  USE_INFURA: process.env.USE_INFURA === 'true',
   ETH_PRIVATE_KEY: process.env.ETH_PRIVATE_KEY, // owner's/deployer's private key
   ETH_ADDRESS: process.env.ETH_ADDRESS,
   OPTIMIST_HOST: process.env.OPTIMIST_HOST || 'optimist',
@@ -41,43 +40,6 @@ module.exports = {
   // Define Urls and Url format (http/ws vs https/wss, with vs without port) depending on whether a DOMAIN_NAME has been defined.
   // In production and staging environements, we require https/wss and no port, as traffic will be routed to the correct service
   // given a URL.
-  optimistBaseUrl:
-    DOMAIN_NAME === ''
-      ? `http://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_PORT}`
-      : `https://${process.env.OPTIMIST_HTTP_HOST}`,
-  optimistWsUrl:
-    DOMAIN_NAME === ''
-      ? `ws://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_WS_PORT}`
-      : `wss://${process.env.OPTIMIST_HOST}`,
-  web3WsUrl:
-    DOMAIN_NAME === ''
-      ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`
-      : `wss://${process.env.BLOCKCHAIN_WS_HOST}`,
-  userEthereumSigningKey:
-    process.env.USER_ETHEREUM_SIGNING_KEY ||
-    '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e', // if changed, change associated userEthereumAddresses
-  userAddress: process.env.USER_ADDRESS,
-  UserEthereumAddresses: process.env.USER_ETHEREUM_ADDRESSES
-    ? process.env.USER_ETHEREUM_ADDRESSES.split(',')
-    : [
-        '0x9c8b2276d490141ae1440da660e470e7c0349c63',
-        // '0x4ca4902a6f456b488947074ad4140317c7e21996', // 0xb0fa8745bd6e77a67ec6a27e701971d659937140cc3159d9f85210da3444eb45
-        // '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9', // 0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb
-      ],
-  zkpMnemonic:
-    process.env.ZKP_MNEMONIC ||
-    'hurt labor ketchup seven scan swap dirt brown brush path goat together',
-  proposerEthereumSigningKey:
-    process.env.PROPOSER_ETHEREUM_SIGNING_KEY ||
-    '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
-  user1Pkd: process.env.RECIPIENT_PKD || [
-    '0x193a37cd7973373aceae05d133f3d69ab6e7ef2f4321461173871ec7611244e2',
-    '0x27234a8721e73c9aa160154ee63d2470101fc5fd841221eeb675a91ec2d66e78',
-  ],
-  user2Pkd: process.env.RECIPIENT_PKD || [
-    '0x105651c0c5bb97582b3270e0f5a07ca81410ffd1920e86697efddaec03dccef8',
-    '0x1ac3b61ecba1448e697b23d37efe290fb86554b2f905aaca3a6df59805eca366',
-  ],
   WEB3_OPTIONS: {
     gas: process.env.GAS || 8000000,
     gasPrice: process.env.GAS_PRICE || '20000000000',
@@ -170,12 +132,24 @@ module.exports = {
     localhost: {
       name: 'Localhost',
       chainId: 4378921,
-      clientApiUrl: 'http://localhost:8080',
-      optimistApiUrl: 'http://localhost:8081',
-      optimistWsUrl: 'ws://localhost:8082',
+      clientApiUrl:
+        DOMAIN_NAME === ''
+          ? `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`
+          : `https://${process.env.CLIENT_HOST}`,
+      optimistApiUrl:
+        DOMAIN_NAME === ''
+          ? `http://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_PORT}`
+          : `https://${process.env.OPTIMIST_HOST}`,
+      optimistWsUrl:
+        DOMAIN_NAME === ''
+          ? `ws://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_WS_PORT}`
+          : `wss://${process.env.OPTIMIST_HOST}`,
       adversarialOptimistApiUrl: 'http://localhost:8088',
       adversarialOptimistWsUrl: 'ws://localhost:8089',
-      web3WsUrl: 'ws://localhost:8546',
+      web3WsUrl:
+        DOMAIN_NAME === ''
+          ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`
+          : `wss://${process.env.BLOCKCHAIN_WS_HOST}`,
     },
   },
   TEST_OPTIONS: {
@@ -189,7 +163,7 @@ module.exports = {
     // this is the etherum private key for accounts[0]
     privateKey: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e',
     gas: 10000000,
-    gasCosts: 15000000000000000,
+    gasCosts: 80000000000000000,
     fee: 1,
     BLOCK_STAKE: 1, // 1 wei
     bond: 10, // 10 wei
@@ -213,6 +187,9 @@ module.exports = {
       proposer3: '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
       challenger: '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
       liquidityProvider: '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
+    },
+    pkds: {
+      user1: '0x1ac3b61ecba1448e697b23d37efe290fb86554b2f905aaca3a6df59805eca366',
     },
     mnemonics: {
       user1: 'trip differ bamboo bundle bonus luxury strike mad merry muffin nose auction',
