@@ -20,17 +20,19 @@ router.get('/:circuit', async (req, res, next) => {
   logger.debug(`AWS get URL for ${circuit} circuit endpoint received GET`);
   try {
     const fileSets = circuitsAWSFiles[circuit];
-    if (!fileSets)
-      throw Error('file sets missing');
+    if (!fileSets) throw Error('file sets missing');
 
     const returnObj = {};
-    for (let key in fileSets) {
-      returnObj[key] = await s3.getSignedUrlPromise('getObject', {
-        Bucket: myBucket,
-        Key: fileSets[key],
-        Expires: 60 * 20, // your expiry time in seconds.
-      });
-      logger.debug(`signed circuit url ${returnObj[key]}`);
+    for (const key in fileSets) {
+      if ({}.hasOwnProperty.call(fileSets, key)) {
+        // eslint-disable-next-line no-await-in-loop
+        returnObj[key] = await s3.getSignedUrlPromise('getObject', {
+          Bucket: myBucket,
+          Key: fileSets[key],
+          Expires: 60 * 20, // your expiry time in seconds.
+        });
+        logger.debug(`signed circuit url ${returnObj[key]}`);
+      }
     }
 
     res.json(returnObj);

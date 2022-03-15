@@ -274,5 +274,5 @@ module.exports = {
       program: 'circuits/double_transfer/artifacts/double_transfer-program',
       pkKey: 'circuits/double_transfer/keypair/double_transfer_pk.key',
     },
-  }
+  },
 };
