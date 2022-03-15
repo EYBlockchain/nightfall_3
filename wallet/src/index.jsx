@@ -11,6 +11,7 @@ import './views/app.style.css';
 
 import App from './views/app.view.jsx';
 import reportWebVitals from './reportWebVitals';
+import './web-worker';
 
 ReactDOM.render(
   <React.StrictMode>

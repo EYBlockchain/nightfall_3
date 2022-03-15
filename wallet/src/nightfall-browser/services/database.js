@@ -13,6 +13,7 @@ const {
   SUBMITTED_BLOCKS_COLLECTION,
   TRANSACTIONS_COLLECTION,
   COMMITMENTS_COLLECTION,
+  CIRCUIT_COLLECTION,
 } = global.config;
 
 // This needs to have better indexDB performance.
@@ -24,14 +25,31 @@ const connectDB = async () => {
       newDb.createObjectStore(TIMBER_COLLECTION);
       newDb.createObjectStore(SUBMITTED_BLOCKS_COLLECTION);
       newDb.createObjectStore(TRANSACTIONS_COLLECTION);
+      newDb.createObjectStore(CIRCUIT_COLLECTION);
     },
   });
 };
 
+export async function storeCircuit(key, data) {
+  const db = await connectDB();
+  return db.put(
+    CIRCUIT_COLLECTION,
+    {
+      _id: key,
+      data,
+    },
+    key,
+  );
+}
+
+export async function getStoreCircuit(key) {
+  const db = await connectDB();
+  return db.get(CIRCUIT_COLLECTION, key);
+}
+
 /**
 Timber functions
 */
-
 export async function saveTree(blockNumber, blockNumberL2, timber) {
   const db = await connectDB();
   return db.put(
