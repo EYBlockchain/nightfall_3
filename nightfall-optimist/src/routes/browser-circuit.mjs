@@ -3,11 +3,9 @@ import logger from 'common-files/utils/logger.mjs';
 import AWS from 'aws-sdk';
 import config from 'config';
 
-AWS.config.update({
-  accessKeyId: 'AKIA52WWLUYZ3YIMPDPE',
-  secretAccessKey: '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',
-});
+const { accessKeyId, secretAccessKey } = config;
 
+AWS.config.update({ accessKeyId, secretAccessKey });
 const s3 = new AWS.S3();
 
 const myBucket = 'nightfallv3';

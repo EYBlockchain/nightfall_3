@@ -275,4 +275,9 @@ module.exports = {
       pkKey: 'circuits/double_transfer/keypair/double_transfer_pk.key',
     },
   },
+
+  AWS: {
+    accessKeyId: 'AKIA52WWLUYZ3YIMPDPE',
+    secretAccessKey: '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',
+  },
 };
