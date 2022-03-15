@@ -39,6 +39,9 @@ jobs:
           npm ci
           docker-compose -f docker-compose.dev.yml build
           ./start-nightfall -g -d -s &> docker-compose.log &disown
+        env:
+          AWS_ACCESS_KEY: ${{ secrets.ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.SECRET_ACCESS_KEY }}
 
       - name: wait 1000s for Containers startup and setup completion
         run: sleep 1000

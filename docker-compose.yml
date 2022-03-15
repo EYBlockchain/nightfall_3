@@ -140,6 +140,8 @@ services:
       LOG_LEVEL: debug
       IS_CHALLENGER: 'true'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
+      AWS_ACCESS_KEY: ${AWS_ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
     command: [ 'npm', 'run', 'dev' ]
 
   optimist2:
@@ -164,6 +166,8 @@ services:
       LOG_LEVEL: error
       IS_CHALLENGER: 'true'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
+      AWS_ACCESS_KEY: ${AWS_ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
     command: [ 'npm', 'run', 'dev' ]
 
 volumes:

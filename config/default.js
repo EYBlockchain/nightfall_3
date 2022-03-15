@@ -277,7 +277,7 @@ module.exports = {
   },
 
   AWS: {
-    accessKeyId: 'AKIA52WWLUYZ3YIMPDPE',
-    secretAccessKey: '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',
+    accessKeyId: process.env.AWS_ACCESS_KEY,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   },
 };
