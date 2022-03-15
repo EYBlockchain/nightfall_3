@@ -4,8 +4,6 @@ import Web3 from 'web3';
 import config from 'config';
 import logger from './logger.mjs';
 
-const { INFURA_PROJECT_SECRET } = process.env;
-
 export default {
   connection() {
     if (!this.web3) this.connect();
@@ -20,9 +18,7 @@ export default {
 
     logger.info('Blockchain Connecting ...');
 
-    let provider;
-
-    provider = new Web3.providers.WebsocketProvider(
+    const provider = new Web3.providers.WebsocketProvider(
       config.BLOCKCHAIN_URL,
       config.WEB3_PROVIDER_OPTIONS,
     );

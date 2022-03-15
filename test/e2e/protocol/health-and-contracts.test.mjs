@@ -16,6 +16,7 @@ const { mnemonics, signingKeys } = config.TEST_OPTIONS;
 const nf3User1 = new Nf3(signingKeys.user1, environment);
 
 before(async () => {
+  console.log(environment);
   await nf3User1.init(mnemonics.user1);
 });
 

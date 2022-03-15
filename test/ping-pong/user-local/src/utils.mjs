@@ -3,7 +3,6 @@
 */
 export const retrieveL2Balance = async client => {
   const balances = await client.getLayer2Balances();
-  console.log('BALANCES: ', balances);
   // if there are no balances
   if (Object.values(balances).length === 0) {
     return 0;

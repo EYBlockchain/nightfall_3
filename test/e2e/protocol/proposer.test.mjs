@@ -40,18 +40,15 @@ describe('Basic Proposer tests', () => {
 
     // we have to pay 10 ETH to be registered
     const startBalance = await web3Client.getBalance(bootProposer.ethereumAddress);
-    const res = await bootProposer.registerProposer(testProposersUrl[1]);
+    const res = await bootProposer.registerProposer(testProposersUrl[0]);
     expectTransaction(res);
-
-    await bootProposer.addPeer(environment.optimistApiUrl);
 
     ({ proposers } = await bootProposer.getProposers());
     const endBalance = await web3Client.getBalance(bootProposer.ethereumAddress);
     expect(startBalance - endBalance).to.closeTo(bond, gasCosts);
     const thisProposer = proposers.filter(p => p.thisAddress === bootProposer.ethereumAddress);
     expect(thisProposer.length).to.be.equal(1);
-    expect(proposers[0].url).to.be.equal(testProposersUrl[0]);
-    expect(proposers[1].url).to.be.equal(testProposersUrl[1]);
+    expect(thisProposer[0].url).to.be.equal(testProposersUrl[0]);
   });
 
   it('should fail to register a proposer other than the boot proposer', async () => {
@@ -74,9 +71,7 @@ describe('Basic Proposer tests', () => {
     ({ proposers } = await bootProposer.getProposers());
     const thisProposer = proposers.filter(p => p.thisAddress === bootProposer.ethereumAddress);
     expect(thisProposer.length).to.be.equal(1);
-    expect(proposers[0].url).to.be.equal(testProposersUrl[0]);
-    expect(proposers[1].url).to.be.equal(testProposersUrl[1]);
-    expect(proposers[2].url).to.be.equal(testProposersUrl[3]);
+    expect(proposers[0].url).to.be.equal(testProposersUrl[3]);
   });
 
   it('should fail to register a proposer twice', async () => {
@@ -100,8 +95,6 @@ describe('Basic Proposer tests', () => {
     ({ proposers } = await bootProposer.getProposers());
     thisProposer = proposers.filter(p => p.thisAddress === bootProposer.ethereumAddress);
     expect(thisProposer.length).to.be.equal(0);
-    expect(proposers[0].url).to.be.equal(testProposersUrl[1]);
-    expect(proposers[1].url).to.be.equal(testProposersUrl[3]);
   });
 
   it('Should create a failing withdrawBond (because insufficient time has passed)', async () => {

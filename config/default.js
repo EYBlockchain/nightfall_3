@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 const { DOMAIN_NAME = '' } = process.env;
 
 module.exports = {
@@ -132,24 +133,28 @@ module.exports = {
     localhost: {
       name: 'Localhost',
       chainId: 4378921,
-      clientApiUrl:
-        DOMAIN_NAME === ''
+      clientApiUrl: process.env.CLIENT_HOST
+        ? DOMAIN_NAME === ''
           ? `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`
-          : `https://${process.env.CLIENT_HOST}`,
-      optimistApiUrl:
-        DOMAIN_NAME === ''
+          : `https://${process.env.CLIENT_HOST}`
+        : 'http://localhost:8080',
+      optimistApiUrl: process.env.OPTIMIST_HOST
+        ? DOMAIN_NAME === ''
           ? `http://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_PORT}`
-          : `https://${process.env.OPTIMIST_HOST}`,
-      optimistWsUrl:
-        DOMAIN_NAME === ''
+          : `https://${process.env.OPTIMIST_HOST}`
+        : 'http://localhost:8081',
+      optimistWsUrl: process.env.OPTIMIST_HOST
+        ? DOMAIN_NAME === ''
           ? `ws://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_WS_PORT}`
-          : `wss://${process.env.OPTIMIST_HOST}`,
+          : `wss://${process.env.OPTIMIST_HOST}`
+        : 'ws://localhost:8082',
       adversarialOptimistApiUrl: 'http://localhost:8088',
       adversarialOptimistWsUrl: 'ws://localhost:8089',
-      web3WsUrl:
-        DOMAIN_NAME === ''
+      web3WsUrl: process.env.BLOCKCHAIN_WS_HOST
+        ? DOMAIN_NAME === ''
           ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`
-          : `wss://${process.env.BLOCKCHAIN_WS_HOST}`,
+          : `wss://${process.env.BLOCKCHAIN_WS_HOST}`
+        : 'ws://localhost:8546',
     },
   },
   TEST_OPTIONS: {
