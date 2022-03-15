@@ -1,9 +1,8 @@
 /*
  * main thread file
  */
-import * as Comlink from 'comlink';
 import { getStoreCircuit, storeCircuit } from '../nightfall-browser/services/database';
-import downloadCircuitWorker from 'worker-loader!./circuit.comlink.worker';
+import fetchCircuit from 'comlink-loader?singleton!../nightfall-browser/services/fetch-circuit';
 
 const { circuitsAWSFiles } = global.config;
 
@@ -25,8 +24,7 @@ function checkIndexDBForCircuit(circuit) {
 async function init() {
   for (const circuit in circuitsAWSFiles) {
     if (await checkIndexDBForCircuit(circuit)) continue;
-    const downloadCircuit = Comlink.wrap(new downloadCircuitWorker());
-    const { abi, program, pkKey } = await downloadCircuit(circuit, global.config);
+    const { abi, program, pkKey } = await fetchCircuit(circuit, global.config);
     await storeCircuit(`${circuit}-abi`, abi);
     await storeCircuit(`${circuit}-program`, program);
     await storeCircuit(`${circuit}-pkKey`, pkKey);

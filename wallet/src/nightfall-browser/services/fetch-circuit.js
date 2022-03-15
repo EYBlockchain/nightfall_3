@@ -1,13 +1,12 @@
 /*
- * worker file to download circuits files from AWS (a worker thread).
+ * can also be used as worker file to download circuits files from AWS (a worker thread).
  */
 
 import axios from 'axios';
-import * as Comlink from 'comlink';
 
-import { parseData, mergeUint8Array } from '../utils/lib/file-reader-utils';
+import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
 
-async function downloadCircuit(circuit, { proposerUrl }) {
+export default async function fetchCircuit(circuit, { proposerUrl }) {
   console.log('in worker thread', circuit);
   let {abi, program, pkKey} = (await axios.get(`${proposerUrl}/browser-circuit/${circuit}`)).data;
   abi = (await axios.get(abi)).data;
@@ -25,5 +24,3 @@ async function downloadCircuit(circuit, { proposerUrl }) {
 
   return { abi, program, pkKey };
 }
-
-Comlink.expose(downloadCircuit);
