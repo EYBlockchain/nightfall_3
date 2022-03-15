@@ -3,8 +3,7 @@ import logger from 'common-files/utils/logger.mjs';
 import AWS from 'aws-sdk';
 import config from 'config';
 
-const { accessKeyId, secretAccessKey } = config;
-
+const { accessKeyId, secretAccessKey } = config.AWS;
 AWS.config.update({ accessKeyId, secretAccessKey });
 const s3 = new AWS.S3();
 
