@@ -15,8 +15,6 @@ chai.use(chaiAsPromised);
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
 const {
-  bond,
-  gasCosts,
   txPerBlock,
   mnemonics,
   signingKeys,
@@ -25,8 +23,8 @@ const {
   fee,
 } = config.TEST_OPTIONS;
 
-const bootProposer = new Nf3(signingKeys.bootProposerKey, environment);
-const testProposer = new Nf3(signingKeys.proposer1, environment);
+const bootProposer = new Nf3(signingKeys.proposer1, environment);
+const testProposer = new Nf3(signingKeys.proposer2, environment);
 
 const testProposersUrl = [
   'http://test-proposer1',
@@ -38,31 +36,17 @@ const testProposersUrl = [
 const totalDeposits = txPerBlock * 3;
 const nf3User = new Nf3(signingKeys.user1, environment);
 let erc20Address;
+let stateAddress;
 let eventLogs = [];
 
 const web3Client = new Web3Client();
 
 describe('Basic Proposer tests', () => {
   before(async () => {
-    await testProposer.init(mnemonics.proposer);
-    await bootProposer.init(mnemonics.proposer);
-  });
-
-  it('should register the boot proposer', async () => {
-    let proposers;
-    ({ proposers } = await bootProposer.getProposers());
-
-    // we have to pay 10 ETH to be registered
-    const startBalance = await web3Client.getBalance(bootProposer.ethereumAddress);
-    const res = await bootProposer.registerProposer(testProposersUrl[0]);
-    expectTransaction(res);
-
-    ({ proposers } = await bootProposer.getProposers());
-    const endBalance = await web3Client.getBalance(bootProposer.ethereumAddress);
-    expect(startBalance - endBalance).to.closeTo(bond, gasCosts);
-    const thisProposer = proposers.filter(p => p.thisAddress === bootProposer.ethereumAddress);
-    expect(thisProposer.length).to.be.equal(1);
-    expect(thisProposer[0].url).to.be.equal(testProposersUrl[0]);
+    await nf3User.init(mnemonics.user1);
+    erc20Address = await nf3User.getContractAddress('ERC20Mock');
+    stateAddress = await nf3User.stateContractAddress;
+    web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
   });
 
   it('proposer should propose multiple L2 blocks after deposits', async function () {
@@ -82,6 +66,11 @@ describe('Basic Proposer tests', () => {
       tokenId,
       fee,
     );
+    await bootProposer.init(mnemonics.proposer);
+    await testProposer.init(mnemonics.proposer);
+
+    // Proposer registration
+    await bootProposer.registerProposer(testProposersUrl[0]);
 
     let blocksReceivedToPropose = 0;
     // Proposer listening for incoming events
