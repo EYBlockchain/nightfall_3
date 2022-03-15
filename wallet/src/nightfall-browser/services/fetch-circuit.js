@@ -7,10 +7,8 @@ import axios from 'axios';
 import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
 
 export default async function fetchCircuit(circuit, { proposerUrl }) {
-  console.log('in worker thread', circuit);
   let {abi, program, pkKey} = (await axios.get(`${proposerUrl}/browser-circuit/${circuit}`)).data;
   abi = (await axios.get(abi)).data;
-  console.log(circuit, ' abi fetched ');
   program = await fetch(program)
     .then(response => response.body.getReader())
     .then(parseData)
