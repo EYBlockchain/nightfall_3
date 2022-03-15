@@ -15,6 +15,9 @@ jobs:
       - name: eslint check
         run: |
           npm ci
+          cd wallet/
+          npm ci
+          cd ..
           npm run lint
 
   ganache-test:

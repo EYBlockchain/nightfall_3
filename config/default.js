@@ -224,4 +224,13 @@ module.exports = {
       },
     ],
   },
+
+  // for Browser use
+  proposerUrl:
+    process.env.LOCAL_PROPOSER === 'true'
+      ? process.env.LOCAL_API_URL
+      : process.env.PROPOSER_API_URL,
+
+  eventWsUrl:
+    process.env.LOCAL_PROPOSER === 'true' ? process.env.LOCAL_WS_URL : process.env.PROPOSER_WS_URL,
 };

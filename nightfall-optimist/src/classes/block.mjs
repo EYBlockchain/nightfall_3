@@ -5,7 +5,6 @@ import config from 'config';
 import Timber from 'common-files/classes/timber.mjs';
 import Web3 from 'common-files/utils/web3.mjs';
 import { compressProof } from 'common-files/utils/curve-maths/curves.mjs';
-import { getLatestTree, getLatestBlockInfo } from '../services/database.mjs';
 
 const { ZERO, PROPOSE_BLOCK_TYPES } = config;
 
@@ -69,13 +68,11 @@ class Block {
   // bad form to return a promise from a constructor -
   // which should return a fully-formed object. Also, we're too cool for an
   // init() function.
-  static async build(components) {
-    const { proposer, transactions } = components;
+  static build(components) {
+    const { proposer, transactions, latestBlockInfo, latestTree } = components;
     // This is blockNumberL2 and blockHash of the last block we have.
-    const { blockNumberL2: dbPrevBlockNumberL2, blockHash: dbBlockHash } =
-      await getLatestBlockInfo();
-    let blockNumberL2 = dbPrevBlockNumberL2 + 1; // We increment it as this is what the next block should be
-    let previousBlockHash = dbBlockHash;
+    let blockNumberL2 = latestBlockInfo.blockNumberL2 + 1; // We increment it as this is what the next block should be
+    let previousBlockHash = latestBlockInfo.blockHash;
 
     // It's possible that the previously made block hasn't been added to the blockchain yet.
     // In that case, this block will have the same block number as the previous block
@@ -87,7 +84,7 @@ class Block {
       // Make blocks with our on-chain values.
       this.localBlockNumberL2 = blockNumberL2;
       this.localPreviousBlockHash = previousBlockHash;
-      timber = await getLatestTree();
+      timber = latestTree;
     } else {
       // Make blocks with our local values.
       blockNumberL2 = this.localBlockNumberL2;
@@ -124,16 +121,19 @@ class Block {
     // note that the transactionHashes array is not part of the on-chain block
     // but we compute it here for convenience. It needs removing before sending
     // a block object to the blockchain.
-    return new Block({
-      proposer,
-      transactionHashes: transactions.map(t => t.transactionHash),
-      leafCount: timber.leafCount,
-      root: updatedTimber.root,
-      blockHash,
-      nCommitments,
-      blockNumberL2,
-      previousBlockHash,
-    });
+    return {
+      block: new Block({
+        proposer,
+        transactionHashes: transactions.map(t => t.transactionHash),
+        leafCount: timber.leafCount,
+        root: updatedTimber.root,
+        blockHash,
+        nCommitments,
+        blockNumberL2,
+        previousBlockHash,
+      }),
+      updatedTimber,
+    };
   }
 
   // we cache the leafCount in case Timber isn't up to date, however we
