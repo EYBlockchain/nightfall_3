@@ -1,0 +1,25 @@
+@import '~/../../../assets/css/theme/theme';
+
+.accountBox {
+  margin-left: 32px;
+  display: flex;
+  align-items: center;
+  background-color: #eee;
+  border-radius: 20px;
+  padding: 10px;
+
+  &:hover {
+    cursor: pointer;
+    background-color: #ddd;
+  }
+
+  .accountAddress {
+    font-size: medium;
+    margin-right: 8px;
+  }
+
+  img {
+    width: 25px;
+    height: 25px;
+  }
+}

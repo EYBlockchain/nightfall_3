@@ -1,28 +1,20 @@
+/* eslint-disable @babel/no-unused-expressions */
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { BrowserRouter } from 'react-router-dom';
-import { Provider } from 'react-redux';
-import configureStore from './store';
+
+import './utils/parseConfigs';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'font-awesome/css/font-awesome.min.css';
 import 'bootstrap-social/bootstrap-social.css';
-import 'semantic-ui-less/semantic.less';
 import './index.css';
 import './views/app.style.css';
+
 import App from './views/app.view.jsx';
 import reportWebVitals from './reportWebVitals';
 
-const store = configureStore();
-
 ReactDOM.render(
   <React.StrictMode>
-    <Provider store={store}>
-      <BrowserRouter>
-        <div>
-          <App />
-        </div>
-      </BrowserRouter>
-    </Provider>
+    <App />
   </React.StrictMode>,
   document.getElementById('root'),
 );

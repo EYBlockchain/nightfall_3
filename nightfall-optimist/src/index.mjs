@@ -6,6 +6,7 @@ import {
   subscribeToBlockAssembledWebSocketConnection,
   subscribeToChallengeWebSocketConnection,
   subscribeToInstantWithDrawalWebSocketConnection,
+  subscribeToProposedBlockWebSocketConnection,
   eventHandlers,
 } from './event-handlers/index.mjs';
 import Proposer from './classes/proposer.mjs';
@@ -17,6 +18,7 @@ import { setChallengeWebSocketConnection } from './services/challenges.mjs';
 import initialBlockSync from './services/state-sync.mjs';
 import { setInstantWithdrawalWebSocketConnection } from './services/instant-withdrawal.mjs';
 import { setProposer } from './routes/proposer.mjs';
+import { setBlockProposedWebSocketConnection } from './event-handlers/block-proposed.mjs';
 
 const main = async () => {
   try {
@@ -26,6 +28,7 @@ const main = async () => {
     await subscribeToBlockAssembledWebSocketConnection(setBlockAssembledWebSocketConnection);
     await subscribeToChallengeWebSocketConnection(setChallengeWebSocketConnection);
     await subscribeToInstantWithDrawalWebSocketConnection(setInstantWithdrawalWebSocketConnection);
+    await subscribeToProposedBlockWebSocketConnection(setBlockProposedWebSocketConnection);
     // try to sync any missing blockchain state
     // only then start making blocks and listening to new proposers
     initialBlockSync(proposer).then(async () => {

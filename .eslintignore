@@ -6,3 +6,5 @@ cli/build/*
 wallet/src/index.js
 wallet/cli/*
 test/adversary/nightfall-adversary/*
+wallet/build
+/**/*.d.ts

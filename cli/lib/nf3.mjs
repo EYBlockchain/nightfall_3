@@ -48,6 +48,8 @@ class Nf3 {
 
   zkpKeys;
 
+  notConfirmed = 0;
+
   defaultFee = DEFAULT_FEE;
 
   PROPOSER_BOND = DEFAULT_PROPOSER_BOND;
@@ -196,8 +198,7 @@ class Nf3 {
 
     let tx;
     await this.nonceMutex.runExclusive(async () => {
-      this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
-
+      if (!this.nonce) this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
       let gasPrice = 20000000000;
       const gas = (await this.web3.eth.getBlock('latest')).gasLimit;
       const blockGasPrice = 2 * Number(await this.web3.eth.getGasPrice());
@@ -233,6 +234,7 @@ class Nf3 {
             }
           })
           .on('error', err => {
+            this.notConfirmed--;
             reject(err);
           });
       });
@@ -687,15 +689,20 @@ class Nf3 {
     };
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
-      const { type, txDataToSign } = msg;
+      const { type, txDataToSignList } = msg;
       logger.debug(`Proposer received websocket message of type ${type}`);
       if (type === 'block') {
-        const res = await this.submitTransaction(
-          txDataToSign,
-          this.stateContractAddress,
-          this.BLOCK_STAKE,
-        );
-        newGasBlockEmitter.emit('gascost', res.gasUsed);
+        logger.debug(`Found ${txDataToSignList.length} blocks to process`);
+
+        txDataToSignList.reduce((seq, txDataToSign) => {
+          return seq.then(() => {
+            return this.submitTransaction(
+              txDataToSign,
+              this.stateContractAddress,
+              this.BLOCK_STAKE,
+            ).then(res => newGasBlockEmitter.emit('gascost', res.gasUsed, txDataToSignList.length));
+          });
+        }, Promise.resolve());
       }
     };
     connection.onerror = () => logger.error('websocket connection error');
@@ -739,9 +746,9 @@ class Nf3 {
     };
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
-      const { type, txDataToSign } = msg;
+      const { type, txDataToSignList } = msg;
       if (type === 'block') {
-        newBlockEmitter.emit('data', txDataToSign);
+        txDataToSignList.map(txtDataToSign => newBlockEmitter.emit('data', txtDataToSign));
       }
     };
     return newBlockEmitter;

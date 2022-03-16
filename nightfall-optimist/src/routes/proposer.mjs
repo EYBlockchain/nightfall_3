@@ -17,6 +17,7 @@ import {
   deleteRegisteredProposerAddress,
   getMempoolTransactions,
   getLatestTree,
+  getLatestBlockInfo,
 } from '../services/database.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
@@ -224,12 +225,19 @@ router.post('/propose', async (req, res, next) => {
   logger.silly(`With content ${JSON.stringify(req.body, null, 2)}`);
   try {
     const { transactions, proposer: prop, currentLeafCount } = req.body;
+    const latestBlockInfo = await getLatestBlockInfo();
+    const latestTree = await getLatestTree();
     // use the information we've been POSTED to assemble a block
     // we use a Builder pattern because an async constructor is bad form
-    const block = await Block.build({
+    const { block } = await Block.build({
       transactions,
       proposer: prop,
       currentLeafCount,
+      latestBlockInfo: {
+        blockNumberL2: latestBlockInfo.blockNumberL2,
+        blockHash: latestBlockInfo.blockHash,
+      },
+      latestTree,
     });
     logger.debug(`New block assembled ${JSON.stringify(block, null, 2)}`);
     const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
