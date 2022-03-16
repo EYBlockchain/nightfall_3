@@ -17,7 +17,7 @@ async function getContractAddressOptimist(contract) {
   if (nf3Instance !== '') {
     const address = await nf3Instance.getContractAddressOptimist(contract);
     return address;
-  } 
+  }
   return null;
 }
 
