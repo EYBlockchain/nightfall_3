@@ -52,7 +52,7 @@ async function startProposer(testEnvironment) {
   // knows where to route queries
   app.listen(Number(proposerPort));
   console.log(`Proposer's API running at ${proposerUrl}:${proposerPort}`);
-  // TODO subscribe to layer 1 blocks and call change proposer
+  // TODO subscribe to layer 1 blocks and call change proposer 
   nf3.startProposer();
   console.log('Listening for incoming events');
 }
