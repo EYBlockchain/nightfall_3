@@ -15,12 +15,12 @@ export default async function fetchCircuit(circuit, { proposerUrl }) {
     .then(response => response.body.getReader())
     .then(parseData)
     .then(mergeUint8Array);
-  console.log(circuit, ' program fetched ');
+  console.log(circuit, ' program fetched');
   pkKey = await fetch(pkKey)
     .then(response => response.body.getReader())
     .then(parseData)
     .then(mergeUint8Array);
-  console.log(circuit, ' pkKey fetched ');
+  console.log(circuit, ' pkKey fetched');
 
   return { abi, program, pkKey };
 }

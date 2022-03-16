@@ -1,4 +1,5 @@
 /* eslint-disable import/no-webpack-loader-syntax, no-await-in-loop */
+// ignore unused exports default
 
 /*
  * main thread file
@@ -22,7 +23,7 @@ function checkIndexDBForCircuit(circuit) {
   });
 }
 
-async function init() {
+export default async function fetchCircuitFileAndStoreInIndexedDB() {
   for (const circuit in circuitsAWSFiles) {
     if (!(await checkIndexDBForCircuit(circuit))) {
       const { abi, program, pkKey } = await fetchCircuit(circuit, global.config);
@@ -32,5 +33,3 @@ async function init() {
     }
   }
 }
-
-init();
