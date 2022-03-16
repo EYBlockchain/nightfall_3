@@ -1,5 +1,4 @@
 import express from 'express';
-import logger from 'common-files/utils/logger.mjs';
 import AWS from 'aws-sdk';
 import config from 'config';
 
@@ -14,7 +13,7 @@ const router = express.Router();
 
 router.get('/:circuit', async (req, res, next) => {
   const { circuit } = req.params;
-  logger.debug(`AWS get URL for ${circuit} circuit endpoint received GET`);
+  console.log(`AWS get URL for ${circuit} circuit endpoint received GET`);
   try {
     const fileSets = circuitsAWSFiles[circuit];
     if (!fileSets) throw Error('file sets missing');
@@ -28,13 +27,13 @@ router.get('/:circuit', async (req, res, next) => {
           Key: fileSets[key],
           Expires: 60 * 20, // your expiry time in seconds.
         });
-        logger.debug(`signed circuit url ${returnObj[key]}`);
+        console.log(`signed circuit url ${returnObj[key]}`);
       }
     }
 
     res.json(returnObj);
   } catch (err) {
-    logger.error(err);
+    console.error(err);
     next(err);
   }
 });

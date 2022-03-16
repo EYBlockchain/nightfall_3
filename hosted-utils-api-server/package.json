@@ -1,0 +1,17 @@
+{
+  "name": "serve-proving-key",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.mjs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/index.mjs"
+  },
+  "author": "“Liju <“liju.jose@gds.ey.com”>",
+  "license": "CC0-1.0",
+  "dependencies": {
+    "aws-sdk": "^2.1095.0",
+    "config": "^3.3.7",
+    "express": "^4.17.3"
+  }
+}

@@ -31,7 +31,6 @@
     ]
   },
   "dependencies": {
-    "aws-sdk": "^2.1090.0",
     "axios": "^0.21.1",
     "body-parser": "1.19.0",
     "common-files": "file:../common-files",

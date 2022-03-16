@@ -140,8 +140,6 @@ services:
       LOG_LEVEL: debug
       IS_CHALLENGER: 'true'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
-      AWS_ACCESS_KEY: ${AWS_ACCESS_KEY}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
     command: [ 'npm', 'run', 'dev' ]
 
   optimist2:
@@ -166,9 +164,27 @@ services:
       LOG_LEVEL: error
       IS_CHALLENGER: 'true'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
+    command: [ 'npm', 'run', 'dev' ]
+
+  hosted-utils-api-server:
+    build:
+      context: ./hosted-utils-api-server
+    depends_on:
+      - worker
+    ports:
+      - 8087:80
+    volumes:
+      - type: volume
+        source: proving_files
+        target: /app/public/
+      - type: bind
+        source: ./config/default.js
+        target: /app/config/default.js
+    environment:
       AWS_ACCESS_KEY: ${AWS_ACCESS_KEY}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-    command: [ 'npm', 'run', 'dev' ]
+
+
 
 volumes:
   mongodb1: null

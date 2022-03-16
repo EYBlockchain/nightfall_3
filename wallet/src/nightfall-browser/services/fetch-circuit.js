@@ -8,19 +8,25 @@ import axios from 'axios';
 
 import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
 
-export default async function fetchCircuit(circuit, { proposerUrl }) {
-  let { abi, program, pkKey } = (await axios.get(`${proposerUrl}/browser-circuit/${circuit}`)).data;
+export default async function fetchCircuit(circuit, { utilApiServerUrl, isLocalRun }) {
+  let { abi, program, pk } = (await axios.get(`${utilApiServerUrl}/browser-circuit/${circuit}`))
+    .data;
   abi = (await axios.get(abi)).data;
   program = await fetch(program)
     .then(response => response.body.getReader())
     .then(parseData)
     .then(mergeUint8Array);
   console.log(circuit, ' program fetched');
-  pkKey = await fetch(pkKey)
+
+  if (isLocalRun) {
+    pk = `${utilApiServerUrl}/${circuit}/${circuit}_pk.key`;
+  }
+
+  pk = await fetch(pk)
     .then(response => response.body.getReader())
     .then(parseData)
     .then(mergeUint8Array);
-  console.log(circuit, ' pkKey fetched');
+  console.log(circuit, ' pk fetched');
 
-  return { abi, program, pkKey };
+  return { abi, program, pk };
 }
