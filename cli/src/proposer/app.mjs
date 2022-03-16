@@ -2,7 +2,7 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import fileUpload from 'express-fileupload';
-import * as proposer from './routes/proposer.mjs';
+import { proposer, contracts } from './routes/index.mjs';
 
 const app = express();
 app.use((req, res, next) => {
@@ -20,10 +20,7 @@ app.use(
 );
 
 app.get('/healthcheck', (req, res) => res.sendStatus(200));
-app.use('/proposer', proposer.router);
+app.use('/proposer', proposer);
+app.use('/contract-address', contracts);
 
-function setNf3Instance(nf3) {
-  proposer.setNf3Instance(nf3);
-}
-
-export { app, setNf3Instance };
+export default app;

@@ -5,8 +5,8 @@ import { Command } from 'commander/esm.mjs';
 import clear from 'clear';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import Nf3 from '../../lib/nf3.mjs';
-import { app, setNf3Instance } from './app.mjs';
+import { Nf3Instance } from './nf3-wrapper.mjs';
+import app from './app.mjs';
 
 import { setEnvironment, getCurrentEnvironment } from '../../lib/environment.mjs';
 
@@ -36,7 +36,7 @@ async function startProposer(testEnvironment) {
   console.log('Starting Proposer...');
   setEnvironment(testEnvironment);
   const nf3Env = getCurrentEnvironment().currentEnvironment;
-  const nf3 = new Nf3(ethereumSigningKey, {
+  const nf3 = Nf3Instance(ethereumSigningKey, {
     web3WsUrl: nf3Env.web3WsUrl,
     optimistApiUrl: nf3Env.optimistApiUrl,
     optimistWsUrl: nf3Env.optimistWsUrl,
@@ -50,7 +50,6 @@ async function startProposer(testEnvironment) {
   console.log('Proposer registration complete');
   // Configure Optimist URL so that proposer listener
   // knows where to route queries
-  setNf3Instance(nf3);
   app.listen(Number(proposerPort));
   console.log(`Proposer's API running at ${proposerUrl}:${proposerPort}`);
   // TODO subscribe to layer 1 blocks and call change proposer
