@@ -1,9 +1,7 @@
 import React from 'react';
-import jsSha3 from 'js-sha3';
 import { useLocation } from 'react-router-dom';
 
 import Web3 from '../../common-files/utils/web3';
-import { METAMASK_MESSAGE, DEFAULT_NF_ADDRESS_INDEX } from '../../constants';
 import * as Storage from '../../utils/lib/local-storage';
 import { generateKeys } from '../../nightfall-browser/services/keys';
 import blockProposedEventHandler from '../../nightfall-browser/event-handlers/block-proposed';
@@ -22,20 +20,23 @@ export const UserContext = React.createContext({
 
 // eslint-disable-next-line react/prop-types
 export const UserProvider = ({ children }) => {
-  // const [state, dispatch] = React.useReducer(reducer, initialState);
   const [state, setState] = React.useState(initialState);
   const [isSyncComplete, setIsSyncComplete] = React.useState(false);
   const location = useLocation();
-  // const [isRoot, setIsRoot] = React.useState(location.pathname === '/');
 
   const deriveAccounts = async (mnemonic, numAccts) => {
-    const accountRange = Array.from({length: numAccts}, (v, i) => i)
-    const zkpKeys = await Promise.all(accountRange.map( i => generateKeys(mnemonic,`m/44'/60'/0'/${i.toString()}`)));
+    const accountRange = Array.from({ length: numAccts }, (v, i) => i);
+    const zkpKeys = await Promise.all(
+      accountRange.map(i => generateKeys(mnemonic, `m/44'/60'/0'/${i.toString()}`)),
+    );
     const aesGenParams = { name: 'AES-GCM', length: 128 };
     const key = await crypto.subtle.generateKey(aesGenParams, false, ['encrypt', 'decrypt']);
     await storeBrowserKey(key);
     await Promise.all(zkpKeys.map(zkpKey => encryptAndStore(zkpKey)));
-    Storage.pkdArraySet(await Web3.getAccount(), zkpKeys.map(z => z.compressedPkd));
+    Storage.pkdArraySet(
+      await Web3.getAccount(),
+      zkpKeys.map(z => z.compressedPkd),
+    );
     setState(previousState => {
       return {
         ...previousState,
@@ -52,7 +53,7 @@ export const UserProvider = ({ children }) => {
           ...previousState,
           compressedPkd: pkds[0],
         };
-      })
+      });
     }
   };
 
@@ -72,7 +73,7 @@ export const UserProvider = ({ children }) => {
     socket.addEventListener('message', async function (event) {
       console.log('Message from server ', JSON.parse(event.data));
       const parsed = JSON.parse(event.data);
-      const { ivk, nsk } = await retrieveAndDecrypt(state.compressedPkd)
+      const { ivk, nsk } = await retrieveAndDecrypt(state.compressedPkd);
       if (parsed.type === 'sync') {
         parsed.historicalData
           .sort((a, b) => a.block.blockNumberL2 - b.block.blockNumberL2)
@@ -101,7 +102,6 @@ export const UserProvider = ({ children }) => {
   React.useEffect(() => {
     setupWebSocket();
   }, [state.compressedPkd]);
-
 
   /*
    * TODO: children should render when sync is complete

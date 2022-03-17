@@ -237,5 +237,4 @@ module.exports = {
 
   KEYS_COLLECTION: 'keys',
   DEFAULT_ACCOUNT_NUM: 10,
-
 };

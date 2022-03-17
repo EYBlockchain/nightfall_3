@@ -113,7 +113,7 @@ function WalletModal(props) {
         <Button
           onClick={async () => {
             // await configureMnemonic(screenMnemonic);
-            await deriveAccounts(screenMnemonic, DEFAULT_ACCOUNT_NUM)
+            await deriveAccounts(screenMnemonic, DEFAULT_ACCOUNT_NUM);
             props.onHide();
           }}
           disabled={typeof screenMnemonic === 'undefined'}
@@ -148,10 +148,8 @@ export default function Wallet() {
 
   useEffect(async () => {
     const pkdsDerived = Storage.pkdArrayGet(await Web3.getAccount());
-    console.log('pkdsDerived', pkdsDerived);
     if (typeof state.compressedPkd === 'undefined' && !pkdsDerived) setModalShow(true);
     else setModalShow(false);
-    console.log('SSTAETE', state);
   }, []);
 
   useEffect(async () => {
