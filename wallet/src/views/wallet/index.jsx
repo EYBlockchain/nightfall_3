@@ -19,6 +19,7 @@ import './wallet.scss';
 import * as Storage from '../../utils/lib/local-storage';
 import Web3 from '../../common-files/utils/web3';
 import { getContractAddress } from '../../common-files/utils/contract.js';
+import { useAccount } from '../../hooks/Account/index.tsx';
 
 /*
 These are some default values for now
@@ -120,11 +121,20 @@ function WalletModal(props) {
 }
 
 export default function Wallet() {
+  const { setAccountInstance } = useAccount();
   const [tokens, setTokens] = useState(
     initialTokenState.sort((a, b) => Number(a.order) - Number(b.order)),
   );
   const [state] = useContext(UserContext);
   const [modalShow, setModalShow] = useState(false);
+
+  useEffect(async () => {
+    const web3 = Web3.connection();
+    const accounts = await web3.eth.getAccounts();
+    setAccountInstance({
+      address: accounts[0],
+    });
+  }, []);
 
   useEffect(async () => {
     const mnemonicExists = Storage.mnemonicGet(await Web3.getAccount());

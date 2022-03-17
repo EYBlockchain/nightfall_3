@@ -124,7 +124,6 @@ async function transfer(transferParams, shieldContractAddress) {
   });
   const leafIndices = commitmentTreeInfo.map(l => l.leafIndex);
   const blockNumberL2s = commitmentTreeInfo.map(l => l.isOnChain);
-
   // time for a quick sanity check.  We expect the number of old commitments,
   // new commitments and nullifiers to be equal.
   if (nullifiers.length !== oldCommitments.length || nullifiers.length !== newCommitments.length) {

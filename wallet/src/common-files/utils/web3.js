@@ -7,6 +7,7 @@ const { ethereum } = global;
 export default {
   connectedAccount: undefined,
   connection() {
+    if (!this.web3) this.connect();
     return this.web3;
   },
 
