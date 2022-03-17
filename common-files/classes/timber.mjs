@@ -700,12 +700,16 @@ class Timber {
     if (leaves.length === 0 || leafIndex < 0 || leafIndex >= timber.leafCount) return siblingPath;
 
     const leavesInsertOrder = batchLeaves(timber.leafCount, leaves, []);
+    // Turn the frontier into a tree-like structure
     const newTree = frontierToTree(timber);
+    // Add the sibling path to the frontier tree-like structure
     const siblingTree = insertSiblingPath(newTree, siblingPath, leafIndex, leafValue);
+    // Add all the new incoming leaves to this tree-like structure
     const finalTree = leavesInsertOrder.reduce(
       (acc, curr) => acc.insertLeaves(curr),
       new Timber(timber.root, timber.frontier, timber.leafCount, siblingTree),
     );
+    // Get the sibling path for leafIndex from this tree.
     return finalTree.getSiblingPath(leafValue, leafIndex);
   }
 }
