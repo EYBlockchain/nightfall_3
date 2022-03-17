@@ -1,3 +1,4 @@
+/* eslint import/no-extraneous-dependencies: "off" */
 /* ignore unused exports */
 
 /**
@@ -48,6 +49,36 @@ const _insertLeaf = (leafVal, tree, path) => {
       return path[0] === '0'
         ? Branch(_insertLeaf(leafVal, Leaf('0'), path.slice(1)), Leaf('0'))
         : Branch(Leaf('0'), _insertLeaf(leafVal, Leaf('0'), path.slice(1)));
+    default:
+      return tree;
+  }
+};
+
+/**
+This function is like _insertLeaf but it doesnt prune children on insertion
+@function _safeInsertLeaf
+@param {string} leafVal - The commitment hash to be inserted into the tree
+@param {object} tree - The tree where leafVal will be inserted
+@param {string} path - The path down tree that leafVal will be inserted into
+@returns {object} An updated tree post-insertion but deepest branches are preserved.
+*/
+const _safeInsertLeaf = (leafVal, tree, path) => {
+  if (path.length === 0) {
+    if (tree.value === '0') return Leaf(leafVal);
+    return tree;
+  }
+  switch (tree.tag) {
+    // If we are at a branch, we use the next element in path to decide if we go down the left or right subtree.
+    case 'branch':
+      return path[0] === '0'
+        ? Branch(_safeInsertLeaf(leafVal, tree.left, path.slice(1)), tree.right)
+        : Branch(tree.left, _safeInsertLeaf(leafVal, tree.right, path.slice(1)));
+    // If we are at a leaf AND path.length > 0, we need to expand the undeveloped subtree
+    // We then use the next element in path to decided which subtree to traverse
+    case 'leaf':
+      return path[0] === '0'
+        ? Branch(_safeInsertLeaf(leafVal, Leaf('0'), path.slice(1)), Leaf('0'))
+        : Branch(Leaf('0'), _safeInsertLeaf(leafVal, Leaf('0'), path.slice(1)));
     default:
       return tree;
   }
@@ -138,6 +169,30 @@ const frontierToTree = timber => {
   return timber.frontier.reduce((acc, curr, index) => {
     return _insertLeaf(curr, acc, frontierPaths[index]);
   }, timber.tree);
+};
+
+/**
+ This function converts a siblingPath into a tree-like structure.
+ @function
+ * @param {object} tree - The tree this sibling path will be inserted into.
+ * @param {object} siblingPath - The sibling path to be inserted.
+ * @param {number} index - The leafIndex corresponding to this valid sibling path.
+ * @param {string} value - The leafValue corresponding to this valid sibling path.
+ * @returns A tree object updated with this sibling path.
+ */
+const insertSiblingPath = (tree, siblingPath, index, value) => {
+  const pathToIndex = Number(index).toString(2).padStart(TIMBER_HEIGHT, '0');
+  const siblingIndexPath = siblingPath.path
+    .filter(s => s.value !== '0')
+    .map((s, idx) =>
+      s.dir === 'left'
+        ? { value: s.value, path: `${pathToIndex.slice(0, TIMBER_HEIGHT - idx - 1)}0` }
+        : { value: s.value, path: `${pathToIndex.slice(0, TIMBER_HEIGHT - idx - 1)}1` },
+    );
+  const allPaths = [{ value, path: pathToIndex }].concat(siblingIndexPath);
+  return allPaths.reduce((acc, curr) => {
+    return _safeInsertLeaf(curr.value, acc, curr.path);
+  }, tree);
 };
 
 /**
@@ -627,6 +682,29 @@ class Timber {
   toArray() {
     if (this.leafCount === 0) return [];
     return Timber.reduceTree((a, b) => [].concat([a, b]).flat(), this.tree);
+  }
+
+  /**
+   @method
+   Updates a sibling path statelessly, given the previous path and a set of leaves to update the tree.
+   * @param {object} timber - The timber instance that contains the frontier and leafCount.
+   * @param {Array<string>} leaves - The elements that will be inserted.
+   * @param {number} leafIndex - The index in leaves that the sibling path will be calculated for.
+   * @param {string} leafValue - The value of the leaf sibling path will be calculated for.
+   * @param {object} siblingPath - The latest sibling path that for leafIndex that will be updated.
+   * @returns {object} - Updated siblingPath for leafIndex with leafValue.
+   */
+  static statelessIncrementSiblingPath(timber, leaves, leafIndex, leafValue, siblingPath) {
+    if (leaves.length === 0 || leafIndex < 0 || leafIndex >= timber.leafCount) return siblingPath;
+
+    const leavesInsertOrder = batchLeaves(timber.leafCount, leaves, []);
+    const newTree = frontierToTree(timber);
+    const siblingTree = insertSiblingPath(newTree, siblingPath, leafIndex, leafValue);
+    const finalTree = leavesInsertOrder.reduce(
+      (acc, curr) => acc.insertLeaves(curr),
+      new Timber(timber.root, timber.frontier, timber.leafCount, siblingTree),
+    );
+    return finalTree.getSiblingPath(leafValue, leafIndex);
   }
 }
 
