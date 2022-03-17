@@ -8,7 +8,7 @@ import { waitForSufficientBalance, retrieveL2Balance } from './utils.mjs';
 import logger from '../common-files/utils/logger.mjs';
 import { app, setNf3Instance } from './ping-pong/proposer/src/app.mjs';
 
-const { expect } = chai;
+// const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
