@@ -29,7 +29,6 @@ describe('Testing the challenge http API', () => {
   let pkd1;
   let compressedPkd1;
 
-  const USE_INFURA = process.env.USE_INFURA === 'true';
   const USE_ROPSTEN_NODE = process.env.USE_ROPSTEN_NODE === 'true';
   const { ETH_PRIVATE_KEY, BLOCKCHAIN_URL } = process.env;
   const web3WsUrl = BLOCKCHAIN_URL || process.env.web3WsUrl;
@@ -83,7 +82,7 @@ describe('Testing the challenge http API', () => {
   before(async () => {
     web3 = await web3Client.getWeb3(web3WsUrl);
 
-    if (USE_INFURA || USE_ROPSTEN_NODE) {
+    if (USE_ROPSTEN_NODE) {
       if (!ETH_PRIVATE_KEY) {
         throw Error(
           'Cannot use default private key, please set environment variable ETH_PRIVATE_KEY',

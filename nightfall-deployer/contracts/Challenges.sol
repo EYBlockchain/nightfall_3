@@ -38,7 +38,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         uint256 blockNumberL2,
         Transaction[] memory transactions,
         bytes32 salt
-    ) external {
+    ) external onlyBootChallenger {
         checkCommit(msg.data);
         // check if the block hash is correct and the block hash exists for the block and prior block
         state.isBlockReal(priorBlockL2, priorBlockTransactions, blockNumberL2 - 1);
@@ -73,7 +73,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         uint256 blockNumberL2,
         Transaction[] memory transactions,
         bytes32 salt
-    ) external {
+    ) external onlyBootChallenger {
         checkCommit(msg.data);
         // check if the block hash is correct and the block hash exists for the block and prior block
         state.isBlockReal(priorBlockL2, priorBlockTransactions, blockNumberL2 - 1);
@@ -104,7 +104,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         uint256 transactionIndex1,
         uint256 transactionIndex2,
         bytes32 salt
-    ) external {
+    ) external onlyBootChallenger {
         checkCommit(msg.data);
         // first, check we have real, in-train, contiguous blocks
         state.isBlockReal(block1, transactions1, block1NumberL2);
@@ -132,7 +132,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         Transaction[] memory transactions,
         uint256 transactionIndex,
         bytes32 salt
-    ) external {
+    ) external onlyBootChallenger {
         checkCommit(msg.data);
         state.isBlockReal(blockL2, transactions, blockNumberL2);
         ChallengesUtil.libChallengeTransactionType(transactions[transactionIndex]);
@@ -148,7 +148,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         uint256 transactionIndex,
         uint256[8] memory uncompressedProof,
         bytes32 salt
-    ) external {
+    ) external onlyBootChallenger {
         checkCommit(msg.data);
         state.isBlockReal(blockL2, transactions, blockNumberL2);
         // now we need to check that the proof is correct
@@ -176,7 +176,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         Transaction[] memory transactionsOfblockL2ContainingHistoricRoot,
         uint256[8] memory uncompressedProof,
         bytes32 salt
-    ) external {
+    ) external onlyBootChallenger {
         checkCommit(msg.data);
         state.isBlockReal(blockL2, transactions, blockNumberL2);
         state.isBlockReal(
@@ -215,7 +215,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         Transaction[] memory transactionsOfblockL2ContainingHistoricRoot2,
         uint256[8] memory uncompressedProof,
         bytes32 salt
-    ) external {
+    ) external onlyBootChallenger {
         checkCommit(msg.data);
         state.isBlockReal(blockL2, transactions, blockNumberL2);
         state.isBlockReal(
@@ -266,7 +266,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         uint256 transactionIndex2,
         uint256 nullifierIndex2,
         bytes32 salt
-    ) public {
+    ) public onlyBootChallenger {
         checkCommit(msg.data);
         ChallengesUtil.libChallengeNullifier(
             txs1[transactionIndex1],
@@ -297,7 +297,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         Transaction[] memory transactions,
         uint256 transactionIndex,
         bytes32 salt
-    ) external {
+    ) external onlyBootChallenger {
         checkCommit(msg.data);
         state.isBlockReal(blockL2, transactions, blockNumberL2);
         if (
@@ -367,7 +367,7 @@ contract Challenges is Stateful, Key_Registry, Config {
     }
 
     //To prevent frontrunning, we need to commit to a challenge before we send it
-    function commitToChallenge(bytes32 commitHash) external {
+    function commitToChallenge(bytes32 commitHash) external onlyBootChallenger {
         require(committers[commitHash] == address(0), 'Hash is already committed to');
         committers[commitHash] = msg.sender;
         emit CommittedToChallenge(commitHash, msg.sender);
