@@ -12,6 +12,7 @@ module.exports = {
   COMMITMENTS_COLLECTION: 'commitments',
   PEERS_COLLECTION: 'peers',
   TIMBER_COLLECTION: 'timber',
+  CIRCUIT_COLLECTION: 'circuit_storage',
   CONTRACT_ARTIFACTS: '/app/build/contracts',
   PROPOSERS_CONTRACT_NAME: 'Proposers',
   SHIELD_CONTRACT_NAME: 'Shield',
@@ -231,4 +232,58 @@ module.exports = {
 
   eventWsUrl:
     process.env.LOCAL_PROPOSER === 'true' ? process.env.LOCAL_WS_URL : process.env.PROPOSER_WS_URL,
+
+  circuitsAWSFiles: {
+    deposit_stub: {
+      abi: 'circuits/deposit_stub/artifacts/deposit_stub-abi.json',
+      program: 'circuits/deposit_stub/artifacts/deposit_stub-program',
+      pk: 'circuits/deposit_stub/keypair/deposit_stub_pk.key',
+    },
+    withdraw_stub: {
+      abi: 'circuits/withdraw_stub/artifacts/withdraw_stub-abi.json',
+      program: 'circuits/withdraw_stub/artifacts/withdraw_stub-program',
+      pk: 'circuits/withdraw_stub/keypair/withdraw_stub_pk.key',
+    },
+    single_transfer_stub: {
+      abi: 'circuits/single_transfer_stub/artifacts/single_transfer_stub-abi.json',
+      program: 'circuits/single_transfer_stub/artifacts/single_transfer_stub-program',
+      pk: 'circuits/single_transfer_stub/keypair/single_transfer_stub_pk.key',
+    },
+    double_transfer_stub: {
+      abi: 'circuits/double_transfer_stub/artifacts/double_transfer_stub-abi.json',
+      program: 'circuits/double_transfer_stub/artifacts/double_transfer_stub-program',
+      pk: 'circuits/double_transfer_stub/keypair/double_transfer_stub_pk.key',
+    },
+    deposit: {
+      abi: 'circuits/deposit/artifacts/deposit-abi.json',
+      program: 'circuits/deposit/artifacts/deposit-program',
+      pk: 'circuits/deposit/keypair/deposit_pk.key',
+    },
+    withdraw: {
+      abi: 'circuits/withdraw/artifacts/withdraw-abi.json',
+      program: 'circuits/withdraw/artifacts/withdraw-program',
+      pk: 'circuits/withdraw/keypair/withdraw_pk.key',
+    },
+    single_transfer: {
+      abi: 'circuits/single_transfer/artifacts/single_transfer-abi.json',
+      program: 'circuits/single_transfer/artifacts/single_transfer-program',
+      pk: 'circuits/single_transfer/keypair/single_transfer_pk.key',
+    },
+    double_transfer: {
+      abi: 'circuits/double_transfer/artifacts/double_transfer-abi.json',
+      program: 'circuits/double_transfer/artifacts/double_transfer-program',
+      pk: 'circuits/double_transfer/keypair/double_transfer_pk.key',
+    },
+  },
+
+  AWS: {
+    accessKeyId: process.env.AWS_ACCESS_KEY,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+
+  utilApiServerUrl: process.env.LOCAL_UTIL_API_URL,
+
+  // assumption is if LOCAL_PROPOSER is true, wallet UI app
+  // is running in local machine
+  isLocalRun: process.env.LOCAL_PROPOSER === 'true',
 };
