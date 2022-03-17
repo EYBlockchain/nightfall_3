@@ -24,7 +24,7 @@ const {
   proposerPort = 8100, // Default port
   // Default Proposer URL. Client Docker needs to connect
   // to host, and this is the configured gateway IP in docker compose
-  proposerUrl = 'http://172.16.238.1',
+  proposerBaseUrl = 'http://172.16.238.1',
 } = argv;
 
 /**
@@ -46,12 +46,12 @@ async function startProposer(testEnvironment) {
   await nf3.init(defaultMnemonic);
   if (await nf3.healthcheck('optimist')) console.log('Healthcheck passed');
   else throw new Error('Healthcheck failed');
-  await nf3.registerProposer(`${proposerUrl}:${proposerPort}`);
+  await nf3.registerProposer(`${proposerBaseUrl}:${proposerPort}`);
   console.log('Proposer registration complete');
   // Configure Optimist URL so that proposer listener
   // knows where to route queries
   app.listen(Number(proposerPort));
-  console.log(`Proposer's API running at ${proposerUrl}:${proposerPort}`);
+  console.log(`Proposer's API running at ${proposerBaseUrl}:${proposerPort}`);
   // TODO subscribe to layer 1 blocks and call change proposer
   nf3.startProposer();
   console.log('Listening for incoming events');
