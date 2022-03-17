@@ -23,10 +23,12 @@ import transferCompletedImg from '../../assets/img/modalImages/tranferCompleted.
 import { decompressKey } from '../../nightfall-browser/services/keys';
 import { retrieveAndDecrypt } from '../../utils/lib/key-storage';
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const gen = require('general-number');
 
 const { generalise } = gen;
 
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 const BridgeComponent = (props: any) => {
   const [state] = useState(() => props[Object.keys(props)[1].toString()].value);
 
@@ -80,7 +82,7 @@ const BridgeComponent = (props: any) => {
     const { address: defaultTokenAddress } = (await getContractAddress('ERC20Mock')).data; // TODO Only for testing now
     const ercAddress = defaultTokenAddress; // TODO Location to be removed later
     console.log('TokenAddress', ercAddress);
-    const zkpKeys = await retrieveAndDecrypt(state.compressedPkd)
+    const zkpKeys = await retrieveAndDecrypt(state.compressedPkd);
     switch (txType) {
       case 'deposit': {
         const pkd = decompressKey(generalise(state.compressedPkd));
