@@ -40,7 +40,7 @@ const NEXT_N_PROPOSERS = 3;
 async function transfer(transferParams) {
   logger.info('Creating a transfer transaction');
   // let's extract the input items
-  const { offchain = false, ...items } = transferParams;
+  const { offchain = false, paymentTransactionHash = null, ...items } = transferParams;
   const { ercAddress, tokenId, recipientData, nsk, ask, fee } = generalise(items);
   const { pkd, compressedPkd } = calculateIvkPkdfromAskNsk(ask, nsk);
   const { recipientCompressedPkds, values } = recipientData;
@@ -223,7 +223,7 @@ async function transfer(transferParams) {
         await axios
           .post(
             `${peerList[address]}/proposer/offchain-transaction`,
-            { transaction: optimisticTransferTransaction },
+            { transaction: optimisticTransferTransaction, paymentTransactionHash },
             { timeout: 3600000 },
           )
           .catch(err => {

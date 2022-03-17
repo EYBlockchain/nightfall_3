@@ -36,7 +36,7 @@ const NEXT_N_PROPOSERS = 3;
 async function withdraw(withdrawParams) {
   logger.info('Creating a withdraw transaction');
   // let's extract the input items
-  const { offchain = false, ...items } = withdrawParams;
+  const { offchain = false, paymentTransactionHash = null, ...items } = withdrawParams;
   const { ercAddress, tokenId, value, recipientAddress, nsk, ask, fee } = generalise(items);
   const { compressedPkd } = await calculateIvkPkdfromAskNsk(ask, nsk);
 
@@ -117,7 +117,7 @@ async function withdraw(withdrawParams) {
         await axios
           .post(
             `${peerList[address]}/proposer/offchain-transaction`,
-            { transaction: optimisticWithdrawTransaction },
+            { transaction: optimisticWithdrawTransaction, paymentTransactionHash },
             { timeout: 3600000 },
           )
           .catch(err => {

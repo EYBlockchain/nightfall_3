@@ -38,7 +38,11 @@ class Nf3 {
 
   web3WsUrl;
 
+  web3PaymentWsUrl;
+
   web3;
+
+  web3Payment;
 
   websockets = [];
 
@@ -56,13 +60,15 @@ class Nf3 {
 
   zkpKeys;
 
+  notConfirmed = 0;
+
+  notConfirmedPayment = 0;
+
   defaultFee = DEFAULT_FEE;
 
   PROPOSER_BOND = DEFAULT_PROPOSER_BOND;
 
   BLOCK_STAKE = DEFAULT_BLOCK_STAKE;
-
-  // nonce = 0;
 
   latestWithdrawHash;
 
@@ -79,6 +85,7 @@ class Nf3 {
       optimistApiUrl: 'http://localhost:8081',
       optimistWsUrl: 'ws://localhost:8082',
       web3WsUrl: 'ws://localhost:8546',
+      web3PaymentWsUrl: 'ws://localhost:8547',
     },
     zkpKeys,
   ) {
@@ -86,6 +93,7 @@ class Nf3 {
     this.optimistBaseUrl = environment.optimistApiUrl;
     this.optimistWsUrl = environment.optimistWsUrl;
     this.web3WsUrl = environment.web3WsUrl;
+    this.web3PaymentWsUrl = environment.web3PaymentWsUrl;
     this.ethereumSigningKey = ethereumSigningKey;
     this.zkpKeys = zkpKeys;
     this.currentEnvironment = environment;
@@ -98,6 +106,7 @@ class Nf3 {
     */
   async init(mnemonic, contractAddressProvider) {
     await this.setWeb3Provider();
+    await this.setWeb3PaymentProvider(); // blockchain for payments
     // this code will call client to get contract addresses, or optimist if client isn't deployed
     switch (contractAddressProvider) {
       case undefined:
@@ -136,8 +145,6 @@ class Nf3 {
   async setEthereumSigningKey(key) {
     this.ethereumSigningKey = key;
     this.ethereumAddress = await this.getAccounts();
-    // clear the nonce as we're using a fresh account
-    // this.nonce = 0;
   }
 
   /**
@@ -198,8 +205,6 @@ class Nf3 {
     contractAddress = this.shieldContractAddress,
     fee = this.defaultFee,
   ) {
-    // if (!this.nonce)
-    //   this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress, 'pending');
     let gasPrice = 20000000000;
     const gas = (await this.web3.eth.getBlock('latest')).gasLimit;
     const blockGasPrice = 2 * Number(await this.web3.eth.getGasPrice());
@@ -212,11 +217,8 @@ class Nf3 {
       value: fee,
       gas,
       gasPrice,
-      // nonce: this.nonce,
     };
 
-    // logger.debug(`The nonce for the unsigned transaction ${tx.data} is ${this.nonce}`);
-    // this.nonce++;
     if (this.ethereumSigningKey) {
       const signed = await this.web3.eth.accounts.signTransaction(tx, this.ethereumSigningKey);
       const promiseTest = new Promise((resolve, reject) => {
@@ -378,10 +380,12 @@ class Nf3 {
     value,
     tokenId,
     compressedPkd,
+    paymentTransactionHash,
     fee = this.defaultFee,
   ) {
     const res = await axios.post(`${this.clientBaseUrl}/transfer`, {
       offchain,
+      paymentTransactionHash,
       ercAddress,
       tokenId,
       recipientData: {
@@ -441,10 +445,12 @@ class Nf3 {
     value,
     tokenId,
     recipientAddress,
+    paymentTransactionHash,
     fee = this.defaultFee,
   ) {
     const res = await axios.post(`${this.clientBaseUrl}/withdraw`, {
       offchain,
+      paymentTransactionHash,
       ercAddress,
       tokenId,
       tokenType,
@@ -629,6 +635,7 @@ class Nf3 {
     */
   close() {
     this.web3.currentProvider.connection.close();
+    this.web3Payment.currentProvider.connection.close();
     this.websockets.forEach(websocket => websocket.close());
   }
 
@@ -1131,13 +1138,87 @@ class Nf3 {
   }
 
   /**
-    Returns the pending withdraws commitments
-    @method
-    @async
-    @returns {Promise} This promise resolves into an object whose properties are the
-    addresses of the ERC contracts of the tokens held by this account in Layer 2. The
-    value of each propery is an array of withdraw commitments originating from that contract.
-    */
+  Set a Web3 Payment Provider URL
+  */
+  async setWeb3PaymentProvider() {
+    this.web3Payment = new Web3(this.web3PaymentWsUrl);
+    this.web3Payment.eth.transactionBlockTimeout = 200;
+    this.web3Payment.eth.transactionConfirmationBlocks = 12;
+    if (typeof window !== 'undefined') {
+      if (window.ethereum && this.ethereumSigningKey === '') {
+        this.web3Payment = new Web3(window.ethereum);
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+      } else {
+        // Metamask not available
+        throw new Error('No Web3 payment provider found');
+      }
+    }
+  }
+
+  /**
+  Get payment balance
+  @param {String } account - Ethereum address of account
+  @returns {Promise} - string with the signature
+  */
+  async getPaymentBalance(account) {
+    return this.web3Payment.eth.getBalance(account).then(function (balanceWei) {
+      return Web3.utils.fromWei(balanceWei);
+    });
+  }
+
+  /**
+  Send payment to the proposer account
+  @param {String } account - Ethereum address of account
+  @returns {Promise} - string with the signature
+  */
+  async sendPayment(account, amount) {
+    let gasPrice = 20000000000;
+    const gas = (await this.web3Payment.eth.getBlock('latest')).gasLimit;
+    const blockGasPrice = 2 * Number(await this.web3Payment.eth.getGasPrice());
+    if (blockGasPrice > gasPrice) gasPrice = blockGasPrice;
+
+    const tx = {
+      from: this.ethereumAddress,
+      to: account,
+      value: amount,
+      gas,
+      gasPrice,
+    };
+
+    const signed = await this.web3Payment.eth.accounts.signTransaction(tx, this.ethereumSigningKey);
+    // rather than waiting until we have a receipt, wait until we have enough confirmation blocks
+    // then return the receipt.
+    // TODO does this still work if there is a chain reorg or do we have to handle that?
+    return new Promise((resolve, reject) => {
+      logger.debug(`Confirming transaction payment ${signed.transactionHash}`);
+      this.notConfirmedPayment++;
+      this.web3Payment.eth
+        .sendSignedTransaction(signed.rawTransaction)
+        .on('confirmation', (number, receipt) => {
+          if (number === 12) {
+            this.notConfirmedPayment--;
+            logger.debug(
+              `Transaction payment ${receipt.transactionHash} has been confirmed ${number} times.`,
+              `Number of unconfirmed transactions payments is ${this.notConfirmedPayment}`,
+            );
+            resolve(receipt);
+          }
+        })
+        .on('error', err => {
+          this.notConfirmedPayment--;
+          reject(err);
+        });
+    });
+  }
+
+  /**
+  Returns the pending withdraws commitments
+  @method
+  @async
+  @returns {Promise} This promise resolves into an object whose properties are the
+  addresses of the ERC contracts of the tokens held by this account in Layer 2. The
+  value of each propery is an array of withdraw commitments originating from that contract.
+  */
   async getPendingWithdraws() {
     const res = await axios.get(`${this.clientBaseUrl}/commitment/withdraws`);
     return res.data.commitments;

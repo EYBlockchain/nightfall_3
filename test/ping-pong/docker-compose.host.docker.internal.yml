@@ -51,6 +51,8 @@ services:
       # RECIPIENT_PKD: 0x105651c0c5bb97582b3270e0f5a07ca81410ffd1920e86697efddaec03dccef8,0x1ac3b61ecba1448e697b23d37efe290fb86554b2f905aaca3a6df59805eca366
       RECIPIENT_PKD: '0x1ac3b61ecba1448e697b23d37efe290fb86554b2f905aaca3a6df59805eca366'
       ZKP_MNEMONIC: tone shadow woman critic glare utility brass scheme edge brisk enforce champion
+      BLOCKCHAIN_PAYMENTS_WS_HOST: host.docker.internal
+      BLOCKCHAIN_PAYMENTS_PORT: 8547
 
   user-local2:
     extra_hosts:
@@ -64,4 +66,7 @@ services:
       ERC20_NAME: ERC20Mock
       # RECIPIENT_PKD: 0x193a37cd7973373aceae05d133f3d69ab6e7ef2f4321461173871ec7611244e2,0x27234a8721e73c9aa160154ee63d2470101fc5fd841221eeb675a91ec2d66e78
       RECIPIENT_PKD: '0x27234a8721e73c9aa160154ee63d2470101fc5fd841221eeb675a91ec2d66e78'
-      ZKP_MNEMONIC: tiger victory velvet tank ritual column horse conduct athlete position soul shaft
+      ZKP_MNEMONIC:
+        tiger victory velvet tank ritual column horse conduct athlete position soul shaft
+      BLOCKCHAIN_PAYMENTS_WS_HOST: host.docker.internal
+      BLOCKCHAIN_PAYMENTS_PORT: 8547

@@ -14,6 +14,7 @@ const {
   TRANSACTIONS_COLLECTION,
   PROPOSER_COLLECTION,
   CHALLENGER_COLLECTION,
+  PAYMENTS_COLLECTION,
   SUBMITTED_BLOCKS_COLLECTION,
   NULLIFIER_COLLECTION,
   COMMIT_COLLECTION,
@@ -248,6 +249,28 @@ export async function deleteRegisteredProposerAddress(address) {
     await db.collection(PROPOSER_COLLECTION).deleteOne(query);
   }
   logger.silly(`deleted registered proposer`);
+}
+
+/**
+Function to check if the payment transaction hash is already spent in another transaction
+*/
+export async function getPaymentByPaymentTransactionHash(paymentTransactionHash) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { paymentTransactionHash };
+  const metadata = await db.collection(PAYMENTS_COLLECTION).findOne(query);
+  logger.silly(`found payment ${JSON.stringify(metadata, null, 2)}`);
+  return metadata;
+}
+
+/**
+Function to save a transaction payment
+*/
+export async function savePayment(paymentTransactionHash, transactionHash) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  logger.debug(`saving payment ${paymentTransactionHash}, ${transactionHash}`);
+  return db.collection(PAYMENTS_COLLECTION).insertOne({ paymentTransactionHash, transactionHash });
 }
 
 /**

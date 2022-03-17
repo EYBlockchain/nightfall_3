@@ -4,6 +4,7 @@ module.exports = {
   PROPOSER_COLLECTION: 'proposers',
   CHALLENGER_COLLECTION: 'challengers',
   TRANSACTIONS_COLLECTION: 'transactions',
+  PAYMENTS_COLLECTION: 'payments',
   SUBMITTED_BLOCKS_COLLECTION: 'blocks',
   NULLIFIER_COLLECTION: 'nullifiers',
   COMMIT_COLLECTION: 'commits',
@@ -111,6 +112,7 @@ module.exports = {
       optimistApiUrl: '',
       optimistWsUrl: '',
       web3WsUrl: '',
+      web3PaymentWsUrl: '',
     },
     ropsten: {
       name: 'Ropsten',
@@ -119,6 +121,7 @@ module.exports = {
       optimistApiUrl: 'https://optimist1.testnet.nightfall3.com',
       optimistWsUrl: 'wss://optimist1-ws.testnet.nightfall3.com',
       web3WsUrl: `${process.env.ROPSTEN_NODE}`,
+      web3PaymentWsUrl: `${process.env.RINKEBY_NODE}`,
     },
     rinkeby: {
       name: 'Rinkeby',
@@ -127,6 +130,7 @@ module.exports = {
       optimistApiUrl: '',
       optimistWsUrl: '',
       web3WsUrl: '',
+      web3PaymentWsUrl: '',
     },
     localhost: {
       name: 'Localhost',
@@ -148,6 +152,9 @@ module.exports = {
       web3WsUrl: process.env.BLOCKCHAIN_WS_HOST
         ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`
         : 'ws://localhost:8546',
+      web3PaymentWsUrl: process.env.BLOCKCHAIN_PAYMENTS_WS_HOST
+        ? `ws://${process.env.BLOCKCHAIN_PAYMENTS_WS_HOST}:${process.env.BLOCKCHAIN_PAYMENTS_PORT}`
+        : 'ws://localhost:8547',
     },
     aws: {
       name: 'AWS',
