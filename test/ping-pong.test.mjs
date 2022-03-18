@@ -8,7 +8,7 @@ import { waitForSufficientBalance, retrieveL2Balance } from './utils.mjs';
 import logger from '../common-files/utils/logger.mjs';
 import { app, setNf3Instance } from './ping-pong/proposer/src/app.mjs';
 
-// const { expect } = chai;
+const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
@@ -22,7 +22,7 @@ const {
 } = config.TEST_OPTIONS;
 
 const TX_WAIT = 10000;
-const TEST_LENGTH = 8;
+const TEST_LENGTH = 4;
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 const recipientPkd = '0x1ac3b61ecba1448e697b23d37efe290fb86554b2f905aaca3a6df59805eca366';
@@ -34,17 +34,33 @@ describe('Testing ping-pong', () => {
 
   const PROPOSER_PORT = 8088;
   const PROPOSER_URL = 'http://host.docker.internal';
+  const paymentUrl = 'https://rpc-mumbai.maticvigil.com'; // already in environment in config for localhost
+
+  /* 
+  Polygon Mumbai Testnet RPC - HTTP, WS
+  --------------------------------------
+  https://rpc-mumbai.matic.today or
+  https://matic-mumbai.chainstacklabs.com or
+  https://rpc-mumbai.maticvigil.com or
+  https://matic-testnet-archive-rpc.bwarelabs.com
+  wss://rpc-mumbai.matic.today or
+  wss://ws-matic-mumbai.chainstacklabs.com or
+  wss://rpc-mumbai.maticvigil.com/ws or
+  wss://matic-testnet-archive-ws.bwarelabs.com
+
+  Block Explorer
+  ---------------
+  https://mumbai.polygonscan.com/
+  */
 
   before(async () => {
+    environment.web3PaymentWsUrl = paymentUrl;
     nf3User = new Nf3(userEthereumSigningKey, environment);
     nf3Proposer = new Nf3(proposerEthereumSigningKey, environment);
 
     await nf3User.init(zkpMnemonic);
     if (await nf3User.healthcheck('client')) logger.info('Healthcheck passed');
     else throw new Error('Healthcheck failed');
-
-    const currentAmount = await nf3User.getPaymentBalance(nf3User.ethereumAddress);
-    console.log('CURRENT AMOUNT:', currentAmount);
 
     await nf3Proposer.init(undefined, 'optimist');
     if (await nf3Proposer.healthcheck('optimist')) logger.info('Healthcheck passed');
@@ -75,11 +91,16 @@ describe('Testing ping-pong', () => {
 
   describe('Test deposits and transfers', () => {
     it('User should have the correct balance after deposits / transfers', async () => {
+      let expectedIncBalance = 0;
+      let expectedDecPaymentBalance = 0;
       const startBalance = await retrieveL2Balance(nf3User);
-      console.log('START BALANCE', startBalance);
+      console.log('START L2 BALANCE', startBalance);
+      const startPaymentBalance = await nf3User.getPaymentBalance(nf3User.ethereumAddress);
+      console.log('START L1 PAYMENT BALANCE:', startPaymentBalance);
       // Create a block of deposits
       for (let i = 0; i < TRANSACTIONS_PER_BLOCK; i++) {
         await nf3User.deposit(ercAddress, tokenType, transferValue, tokenId);
+        expectedIncBalance += transferValue;
       }
 
       // Create a block of transfer and deposit transactions
@@ -89,13 +110,11 @@ describe('Testing ping-pong', () => {
         try {
           logger.info(`Transfer is sent offchain : ${offchain}`);
           if (offchain) {
-            logger.info(`Ready to send the payment fee`);
-            const currentAmount = await nf3User.getPaymentBalance(nf3User.ethereumAddress);
-            console.log('CURRENT AMOUNT:', currentAmount);
             let paymentTransactionHash;
             try {
               const paymentTx = await nf3User.sendPayment(nf3User.ethereumAddress, fee);
               paymentTransactionHash = paymentTx.transactionHash;
+              expectedDecPaymentBalance += fee;
               logger.info(`Payment TransactionHash: ${paymentTransactionHash}`);
             } catch (e) {
               logger.error(e);
@@ -141,10 +160,35 @@ describe('Testing ping-pong', () => {
             );
           }
         }
+        expectedIncBalance -= transferValue;
         await nf3User.deposit(ercAddress, tokenType, transferValue, tokenId);
+        expectedIncBalance += transferValue;
         await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
         console.log(`Completed ${i + 1} pings`);
       }
+
+      // Wait for sometime at the end to retrieve balance to include any pending transactions
+      let loop = 0;
+      const loopMax = 10;
+      do {
+        const endBalance = await retrieveL2Balance(nf3User);
+        if (endBalance - startBalance !== expectedIncBalance) {
+          logger.info(
+            'The test has not yet passed because the L2 balance has not increased',
+            endBalance - startBalance,
+            expectedIncBalance,
+          );
+          await new Promise(resolving => setTimeout(resolving, TX_WAIT)); // TODO get balance waiting working well
+          loop++;
+        } else break;
+      } while (loop < loopMax);
+
+      const endBalance = await retrieveL2Balance(nf3User);
+      console.log('END L2 BALANCE', endBalance);
+      const endPaymentBalance = await nf3User.getPaymentBalance(nf3User.ethereumAddress);
+      console.log('END L1 PAYMENT BALANCE:', endPaymentBalance);
+      expect(expectedIncBalance).to.be.equal(endBalance - startBalance);
+      expect(expectedDecPaymentBalance).to.be.lessThan(startPaymentBalance - endPaymentBalance);
     });
   });
 
