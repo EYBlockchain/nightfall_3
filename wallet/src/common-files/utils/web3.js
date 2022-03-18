@@ -30,6 +30,30 @@ export default {
   },
 
   /**
+   * Returns the chainId of the network currenctly connected
+   */
+  async getChain() {
+    return parseInt(ethereum.chainId, 16); // returning in decimal for readability
+  },
+
+  /**
+   * Changes to localhost chain
+   */
+  async changeChain(newChainId) {
+    console.log('NEW', `0x${newChainId.toString(16)}`);
+    const res = await ethereum.request({
+      method: 'wallet_switchEthereumChain',
+      params: [
+        {
+          chainId: `0x${newChainId.toString(16)}`,
+        },
+      ], // chainId must be in hexadecimal numbers
+    });
+    console.log('RES', res);
+    return res;
+  },
+
+  /**
    * Checks the status of connection
    *
    * @return {Boolean} - Resolves to true or false

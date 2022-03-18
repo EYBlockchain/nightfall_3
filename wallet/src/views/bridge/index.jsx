@@ -1,6 +1,7 @@
 /* eslint-disable react/jsx-no-undef */
 /* eslint-disable react/jsx-pascal-case */
 import React, { useContext } from 'react';
+import PropTypes from 'prop-types';
 import styles from '../../styles/bridge.module.scss';
 import bridgeInfoImage from '../../assets/img/bridge-info.png';
 import Header from '../../components/Header/header.jsx';
@@ -8,7 +9,7 @@ import SideBar from '../../components/SideBar/index.jsx';
 // eslint-disable-next-line import/no-unresolved
 import { UserContext } from '../../hooks/User/index.jsx';
 
-const Bridge = () => {
+const Bridge = ({ changeChain }) => {
   const [state] = useContext(UserContext);
 
   return (
@@ -80,7 +81,7 @@ const Bridge = () => {
                 </div>
               </div>
               <div>
-                <bridge-component value={state} />
+                <bridge-component value={state} changeChain={changeChain} />
               </div>
             </div>
           </div>
@@ -88,6 +89,10 @@ const Bridge = () => {
       </div>
     </div>
   );
+};
+
+Bridge.propTypes = {
+  changeChain: PropTypes.func.isRequired,
 };
 
 export default Bridge;

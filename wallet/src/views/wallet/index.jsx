@@ -119,7 +119,7 @@ function WalletModal(props) {
   );
 }
 
-export default function Wallet() {
+export default function Wallet({ changeChain }) {
   const [tokens, setTokens] = useState(
     initialTokenState.sort((a, b) => Number(a.order) - Number(b.order)),
   );
@@ -187,7 +187,7 @@ export default function Wallet() {
           </div>
           <div className="walletComponents__right">
             <Assets tokenList={tokens} />
-            <Tokens tokenList={tokens} />
+            <Tokens tokenList={tokens} changeChain={changeChain} />
           </div>
         </div>
         <div>
@@ -200,4 +200,8 @@ export default function Wallet() {
 
 WalletModal.propTypes = {
   onHide: PropTypes.func.isRequired,
+};
+
+Wallet.propTypes = {
+  changeChain: PropTypes.func.isRequired,
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from 'react-bootstrap/Modal';
 import Dropdown from 'react-bootstrap/Dropdown';
 import DropdownButton from 'react-bootstrap/DropdownButton';
@@ -84,6 +84,7 @@ const BridgeComponent = (props: any) => {
       case 'deposit': {
         const pkd = decompressKey(generalise(pkdGet(await Web3.getAccount())));
         await approve(ercAddress, shieldContractAddress, 'ERC20', tokenAmountWei.toString());
+
         const { rawTransaction } = await deposit(
           {
             ercAddress,
@@ -144,6 +145,15 @@ const BridgeComponent = (props: any) => {
     handleClose();
     return true;
   }
+
+  useEffect(() => {
+    const { changeChain } = props[Object.keys(props)[1].toString()];
+    if (txType === 'deposit') {
+      changeChain('ethereum');
+    } else {
+      changeChain('polygon');
+    }
+  }, [txType]);
 
   return (
     <div className={styles.bridgeWrapper}>

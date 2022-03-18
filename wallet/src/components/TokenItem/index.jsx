@@ -28,6 +28,7 @@ export default function TokenItem({
   name,
   symbol,
   tokenAddress,
+  changeChain,
 }) {
   const [showSendModal, setShowSendModal] = useState(false);
   const [state] = React.useContext(UserContext);
@@ -160,6 +161,7 @@ export default function TokenItem({
               className={styles.tokenListButton}
               id={tokenSendId}
               onClick={() => {
+                changeChain('polygon');
                 setShowSendModal(true);
               }}
             >
@@ -251,4 +253,5 @@ TokenItem.propTypes = {
   name: PropTypes.string.isRequired,
   symbol: PropTypes.string.isRequired,
   tokenAddress: PropTypes.string.isRequired,
+  changeChain: PropTypes.func.isRequired,
 };
