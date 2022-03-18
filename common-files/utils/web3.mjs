@@ -4,8 +4,6 @@ import Web3 from 'web3';
 import config from 'config';
 import logger from './logger.mjs';
 
-const { INFURA_PROJECT_SECRET } = process.env;
-
 export default {
   connection() {
     if (!this.web3) this.connect();
@@ -20,22 +18,10 @@ export default {
 
     logger.info('Blockchain Connecting ...');
 
-    let provider;
-    if (config.USE_INFURA) {
-      if (!INFURA_PROJECT_SECRET) throw Error('env INFURA_PROJECT_SECRET not set');
-
-      provider = new Web3.providers.WebsocketProvider(config.BLOCKCHAIN_URL, {
-        ...config.WEB3_PROVIDER_OPTIONS,
-        headers: {
-          authorization: `Basic ${Buffer.from(`:${INFURA_PROJECT_SECRET}`).toString('base64')}`,
-        },
-      });
-    } else {
-      provider = new Web3.providers.WebsocketProvider(
-        config.BLOCKCHAIN_URL,
-        config.WEB3_PROVIDER_OPTIONS,
-      );
-    }
+    const provider = new Web3.providers.WebsocketProvider(
+      config.BLOCKCHAIN_URL,
+      config.WEB3_PROVIDER_OPTIONS,
+    );
 
     provider.on('error', err => logger.error(`web3 error: ${err}`));
     provider.on('connect', () => logger.info('Blockchain Connected ...'));

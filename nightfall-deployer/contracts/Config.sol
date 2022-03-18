@@ -11,12 +11,43 @@ contract Config is Ownable {
     uint256 constant COOLING_OFF_PERIOD = 1 weeks;
     bytes32 constant ZERO = bytes32(0);
 
+    address bootProposer;
+    address bootChallenger;
     mapping(address => uint256) erc20limit;
 
     function initialize() public virtual override initializer {
         Ownable.initialize();
     }
 
+    // restricting proposers
+    modifier onlyBootProposer() {
+        require(msg.sender == bootProposer, 'You are not the boot proposer');
+        _;
+    }
+
+    function setBootProposer(address proposer) external onlyOwner {
+        bootProposer = proposer;
+    }
+
+    function getBootProposer() external view returns (address) {
+        return bootProposer;
+    }
+
+    // restricting challengers
+    modifier onlyBootChallenger() {
+        require(msg.sender == bootChallenger, 'You are not the boot challenger');
+        _;
+    }
+
+    function setBootChallenger(address challenger) external onlyOwner {
+        bootChallenger = challenger;
+    }
+
+    function getBootChallenger() external view returns (address) {
+        return bootChallenger;
+    }
+
+    // restricting tokens
     function getRestriction(address tokenAddr) public view returns (uint256) {
         return erc20limit[tokenAddr];
     }

@@ -9,36 +9,25 @@ import logger from '../../../../common-files/utils/logger.mjs';
 import Nf3 from '../../../../cli/lib/nf3.mjs';
 import { waitForSufficientBalance, retrieveL2Balance } from './utils.mjs';
 
-const {
-  zkpMnemonic,
-  userEthereumSigningKey,
-  optimistWsUrl,
-  web3WsUrl,
-  clientBaseUrl,
-  optimistBaseUrl,
-  TRANSACTIONS_PER_BLOCK,
-} = config;
+const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
+
+const { mnemonics, signingKeys, txPerBlock, recipients } = config.TEST_OPTIONS;
 
 const { TEST_LENGTH, ERC20_NAME, TX_WAIT = 1000, IS_TEST_RUNNER = '' } = process.env;
-const recipientPkd = process.env.RECIPIENT_PKD; // .split(',');
 
 /**
 Does the preliminary setup and starts listening on the websocket
 */
 async function localTest() {
   logger.info('Starting local test...');
+  logger.debug('ENVV', environment);
 
   const tokenType = 'ERC20';
   const value = 1;
   const tokenId = '0x0000000000000000000000000000000000000000000000000000000000000000';
-  const nf3 = new Nf3(userEthereumSigningKey, {
-    web3WsUrl,
-    clientApiUrl: clientBaseUrl,
-    optimistApiUrl: optimistBaseUrl,
-    optimistWsUrl,
-  });
+  const nf3 = new Nf3(IS_TEST_RUNNER ? signingKeys.user1 : signingKeys.user2, environment);
 
-  await nf3.init(zkpMnemonic);
+  await nf3.init(IS_TEST_RUNNER ? mnemonics.user1 : mnemonics.user2);
   if (await nf3.healthcheck('client')) logger.info('Healthcheck passed');
   else throw new Error('Healthcheck failed');
 
@@ -46,18 +35,15 @@ async function localTest() {
   const startBalance = await retrieveL2Balance(nf3);
 
   // Create a block of deposits
-  for (let i = 0; i < TRANSACTIONS_PER_BLOCK; i++) {
+  for (let i = 0; i < txPerBlock; i++) {
     await nf3.deposit(ercAddress, tokenType, value, tokenId);
   }
 
   // Create a block of transfer and deposit transactions
-  let offchain = false;
   for (let i = 0; i < TEST_LENGTH; i++) {
     await waitForSufficientBalance(nf3, value);
     try {
-      logger.info(`Transfer is sent offchain : ${offchain}`);
-      await nf3.transfer(offchain, ercAddress, tokenType, value, tokenId, recipientPkd);
-      offchain = !offchain;
+      await nf3.transfer(false, ercAddress, tokenType, value, tokenId, recipients.user1);
     } catch (err) {
       if (err.message.includes('No suitable commitments')) {
         // if we get here, it's possible that a block we are waiting for has not been proposed yet
@@ -68,7 +54,7 @@ async function localTest() {
           } seconds and try one last time`,
         );
         await new Promise(resolve => setTimeout(resolve, 10 * TX_WAIT));
-        await nf3.transfer(false, ercAddress, tokenType, value, tokenId, recipientPkd);
+        await nf3.transfer(false, ercAddress, tokenType, value, tokenId, recipients.user1);
       }
     }
     await nf3.deposit(ercAddress, tokenType, value, tokenId);
