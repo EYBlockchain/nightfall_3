@@ -8,7 +8,7 @@ import { Nf3Instance } from './nf3-wrapper.mjs';
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
-const { signingKeys } = config.TEST_OPTIONS;
+const { mnemonics, signingKeys } = config.TEST_OPTIONS;
 const { PROPOSER_PORT } = process.env;
 
 /**
@@ -17,7 +17,7 @@ Does the preliminary setup and starts listening on the websocket
 async function startProposer() {
   logger.info('Starting Proposer...');
   const nf3 = new Nf3Instance(signingKeys.proposer1, environment);
-  await nf3.init(undefined, 'optimist');
+  await nf3.init(mnemonics.proposer);
   if (await nf3.healthcheck('optimist')) logger.info('Healthcheck passed');
   else throw new Error('Healthcheck failed');
   logger.info('Attempting to register proposer');
