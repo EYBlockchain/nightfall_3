@@ -176,11 +176,15 @@ services:
     environment:
       OPTIMIST_HOST: optimist1
       OPTIMIST_WS_PORT: 8080
-      OPTIMIST_HTTP_PORT: 80
+      OPTIMIST_PORT: 80
+      CLIENT_HOST: client1
+      CLIENT_PORT: 80
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
       DEPLOYER_HOST: deployer
       GENESIS_BLOCKS: 2
+      PROPOSER_PORT: 8080
+      PROPOSER_URL: http://proposer
 
   genesis-transactions-creator:
     image: ghcr.io/eyblockchain/nightfall3-user-local:latest
@@ -191,7 +195,7 @@ services:
     environment:
       OPTIMIST_HOST: optimist1
       OPTIMIST_WS_PORT: 8080
-      OPTIMIST_HTTP_PORT: 80
+      OPTIMIST_PORT: 80
       CLIENT_HOST: client1
       DEPLOYER_HOST: deployer
       CLIENT_PORT: 80

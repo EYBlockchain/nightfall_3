@@ -60,7 +60,6 @@ services:
       # This is only needed for test purposes - it gives tokens to the user at startup
       #USER_ETHEREUM_ADDRESSES: 0xE35B7c8338E4B952C03E73B50f454B1df086fef2,0x4637Ee1126723e098A152f33F326fb767A6A2b8A
 
-
   worker:
     image: ghcr.io/eyblockchain/nightfall3-worker:latest
     build:
@@ -93,6 +92,8 @@ services:
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST}
       BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT}
       PROPOSER_ETHEREUM_SIGNING_KEY: ${PROPOSER_ETHEREUM_SIGNING_KEY}
+      PROPOSER_PORT: 8080
+      PROPOSER_URL: http://proposer
 
 volumes:
   proving_files:
