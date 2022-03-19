@@ -148,6 +148,7 @@ module.exports = {
     },
     aws: {
       name: 'AWS',
+      clientApiUrl:`http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`,
       optimistApiUrl: `https://${process.env.OPTIMIST_HTTP_HOST}`,
       optimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
       proposerBaseUrl: `https://${process.env.PROPOSER_HOST}`,
