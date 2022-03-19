@@ -18,7 +18,7 @@ async function startProposer() {
   logger.info('Starting Proposer...');
   const nf3 = new Nf3Instance(signingKeys.proposer1, environment);
   // Mnemonic are only required for services connecting to a client that
-  // can generate a compressed PKD. 
+  // can generate a compressed PKD.
   await nf3.init(undefined, 'optimist');
   if (await nf3.healthcheck('optimist')) logger.info('Healthcheck passed');
   else throw new Error('Healthcheck failed');
