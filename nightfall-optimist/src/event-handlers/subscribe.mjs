@@ -101,7 +101,7 @@ export async function subscribeToBlockAssembledWebSocketConnection(callback, ...
       logger.debug('OPEN block-assembly WS');
     });
     ws.on('close', msg => {
-      logger.debug(`CLOSE block-assembly ${msg}`);
+      logger.debug(`CLOSE block-assembly WS: ${msg}`);
     });
   });
   logger.debug('Subscribed to BlockAssembled WebSocket connection');
@@ -113,20 +113,20 @@ export async function subscribeToInstantWithDrawalWebSocketConnection(callback, 
       if (message === 'instant') callback(ws, args);
     });
     ws.on('error', () => {
-      logger.debug('ERROR instant-withdraw');
+      logger.debug('ERROR instant-withdraw WS');
     });
     ws.on('open', () => {
-      logger.debug('OPEN instant-withdraw');
+      logger.debug('OPEN instant-withdraw WS');
     });
     ws.on('close', err => {
-      logger.debug(`CLOSE instant-withdraw ${err}`);
+      logger.debug(`CLOSE instant-withdraw WS: ${err}`);
     });
   });
   logger.debug('Subscribed to InstantWithDrawal WebSocket connection');
 }
 
 export async function subscribeToProposedBlockWebSocketConnection(callback, ...args) {
-  wss.on('connection', ws =>
+  wss.on('connection', ws => {
     ws.on('message', message => {
       try {
         if (JSON.parse(message).type === 'sync') {
@@ -136,7 +136,16 @@ export async function subscribeToProposedBlockWebSocketConnection(callback, ...a
       } catch (error) {
         logger.debug('Not JSON Message');
       }
-    }),
-  );
+    });
+    ws.on('error', () => {
+      logger.debug('ERROR proposed-block WS');
+    });
+    ws.on('open', () => {
+      logger.debug('OPEN proposed-block WS');
+    });
+    ws.on('close', err => {
+      logger.debug(`CLOSE proposed-block WS: ${err}`);
+    });
+  });
   logger.debug('Subscribed to ProposedBlock WebSocket connection');
 }
