@@ -9,7 +9,7 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   next();
 });
-app.use(express.static('public'));
+app.use(express.static('public')); // serves proving key
 app.use('/browser-circuit', getCircuitsFromAWS);
 
 app.listen(80);
