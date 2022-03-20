@@ -21,7 +21,7 @@ module.exports = function (deployer, _, accounts) {
   deployer.then(async () => {
     const restrictions = await Shield.deployed();
 
-    if (!DEPLOY_MOCK_TOKENS) return;
+    if (DEPLOY_MOCK_TOKENS === 'false') return;
     await deployer.deploy(ERC20Mock, 1001010000000000); // initialSupply
 
     const ERC20deployed = await ERC20Mock.deployed();
