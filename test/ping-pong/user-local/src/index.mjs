@@ -26,7 +26,6 @@ async function localTest() {
   const value = 1;
   const tokenId = '0x0000000000000000000000000000000000000000000000000000000000000000';
   const nf3 = new Nf3(IS_TEST_RUNNER ? signingKeys.user1 : signingKeys.user2, environment);
-
   await nf3.init(IS_TEST_RUNNER ? mnemonics.user1 : mnemonics.user2);
   if (await nf3.healthcheck('client')) logger.info('Healthcheck passed');
   else throw new Error('Healthcheck failed');
