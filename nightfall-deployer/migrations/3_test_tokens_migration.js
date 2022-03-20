@@ -6,6 +6,7 @@ const {
     addresses,
   },
 } = config;
+const { DEPLOY_MOCK_TOKENS = true } = process.env;
 
 const Shield = artifacts.require('Shield.sol');
 
@@ -18,11 +19,12 @@ const nERC721 = 35;
 
 module.exports = function (deployer, _, accounts) {
   deployer.then(async () => {
+    const restrictions = await Shield.deployed();
+
+    if (!DEPLOY_MOCK_TOKENS) return;
     await deployer.deploy(ERC20Mock, 1001010000000000); // initialSupply
 
-    const restrictions = await Shield.deployed();
     const ERC20deployed = await ERC20Mock.deployed();
-
     // For ping pong tests
     await ERC20deployed.transfer(addresses.user1, 1000000000000);
     await ERC20deployed.transfer(addresses.user2, 1000000000000);
