@@ -182,13 +182,11 @@ const frontierToTree = timber => {
  */
 const insertSiblingPath = (tree, siblingPath, index, value) => {
   const pathToIndex = Number(index).toString(2).padStart(TIMBER_HEIGHT, '0');
-  const siblingIndexPath = siblingPath.path
-    .filter(s => s.value !== '0')
-    .map((s, idx) =>
-      s.dir === 'left'
-        ? { value: s.value, path: `${pathToIndex.slice(0, TIMBER_HEIGHT - idx - 1)}0` }
-        : { value: s.value, path: `${pathToIndex.slice(0, TIMBER_HEIGHT - idx - 1)}1` },
-    );
+  const siblingIndexPath = siblingPath.path.map((s, idx) =>
+    s.dir === 'left'
+      ? { value: s.value, path: `${pathToIndex.slice(0, TIMBER_HEIGHT - idx - 1)}0` }
+      : { value: s.value, path: `${pathToIndex.slice(0, TIMBER_HEIGHT - idx - 1)}1` },
+  );
   const allPaths = [{ value, path: pathToIndex }].concat(siblingIndexPath);
   return allPaths.reduce((acc, curr) => {
     return _safeInsertLeaf(curr.value, acc, curr.path);
