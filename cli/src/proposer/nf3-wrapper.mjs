@@ -1,4 +1,4 @@
-import Nf3 from '../../../../cli/lib/nf3.mjs';
+import Nf3 from '../../lib/nf3.mjs';
 
 let nf3Instance = '';
 
