@@ -16,25 +16,19 @@ Does the preliminary setup and starts listening on the websocket
 */
 async function startProposer() {
   logger.info('Starting Proposer...');
-  const nf3 = new Nf3Instance(signingKeys.proposer1, environment);
+  const nf3 = Nf3Instance(signingKeys.proposer1, environment);
   // Mnemonic are only required for services connecting to a client that
   // can generate a compressed PKD.
   await nf3.init(undefined, 'optimist');
   if (await nf3.healthcheck('optimist')) logger.info('Healthcheck passed');
   else throw new Error('Healthcheck failed');
   logger.info('Attempting to register proposer');
-  // let's see if the proposer has been registered before
-  const { proposers } = await nf3.getProposers();
-  // if not, let's register them
-  if (proposers.length === 0) {
-    await nf3.registerProposer(environment.proposerBaseUrl);
-    logger.info('Proposer registration complete');
-  } else if (!proposers.map(p => p.thisAddress).includes(nf3.ethereumAddress)) {
-    await nf3.registerProposer(environment.proposerBaseUrl);
-    logger.info('Proposer registration complete');
-  } else logger.warn('Proposer appears to be registerd already');
-  app.listen(PROPOSER_PORT);
-  logger.debug(`Proposer API up at URL ${environment.proposerBaseUrl}`);
+
+  await nf3.registerProposer(environment.proposerBaseUrl);
+  if (PROPOSER_PORT !== '') {
+    logger.debug('Proposer healthcheck up');
+    app.listen(PROPOSER_PORT);
+  }
   // TODO subscribe to layer 1 blocks and call change proposer
   nf3.startProposer();
   logger.info('Listening for incoming events');
