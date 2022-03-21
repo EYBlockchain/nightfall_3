@@ -77,7 +77,7 @@ export const UserProvider = ({ children }) => {
       const parsed = JSON.parse(event.data);
       if (parsed.type === 'sync') {
         parsed.historicalData
-          .sort((a, b) => a.blockNumberL2 - b.blockNumberL2)
+          .sort((a, b) => a.block.blockNumberL2 - b.block.blockNumberL2)
           .reduce(async (acc, curr) => {
             console.log('State', state.zkpKeys.ivk);
             await acc; // Acc is a promise so we await it before processing the next one;
