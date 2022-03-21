@@ -3,7 +3,6 @@ import Queue from 'queue';
 import Web3 from 'web3';
 import WebSocket from 'ws';
 import EventEmitter from 'events';
-import { Mutex } from 'async-mutex';
 import logger from '../../common-files/utils/logger.mjs';
 import { approve } from './tokens.mjs';
 import erc20 from './abis/ERC20.mjs';
@@ -196,9 +195,6 @@ class Nf3 {
     fee = this.defaultFee,
     resolutionStatus = 'confirmation',
   ) {
-    // we need a Mutex so that we don't get a nonce-updating race.
-
-    let tx;
     if (!this.nonce)
       this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress, 'pending');
     let gasPrice = 20000000000;
@@ -206,7 +202,7 @@ class Nf3 {
     const blockGasPrice = 2 * Number(await this.web3.eth.getGasPrice());
     if (blockGasPrice > gasPrice) gasPrice = blockGasPrice;
 
-    tx = {
+    const tx = {
       from: this.ethereumAddress,
       to: contractAddress,
       data: unsignedTransaction,
@@ -229,13 +225,13 @@ class Nf3 {
           .sendSignedTransaction(signed.rawTransaction)
           .once('receipt', receipt => {
             if (resolutionStatus === 'receipt') {
-              this.notConfirmed = 0; //unset confirmation because receipt does not give confirmations
+              this.notConfirmed = 0; // unset confirmation because receipt does not give confirmations
               logger.debug(`Transaction ${receipt.transactionHash} has been received.`);
               resolve(receipt);
             }
           })
           .on('confirmation', (number, receipt) => {
-            if (resolutionStatus == 'confirmation' && number === 12) {
+            if (resolutionStatus === 'confirmation' && number === 12) {
               this.notConfirmed--;
               logger.debug(
                 `Transaction ${receipt.transactionHash} has been confirmed ${number} times.`,
@@ -740,7 +736,7 @@ class Nf3 {
         proposerQueue.push(
           txDataToSignList.reduce((seq, txDataToSign, currentIndex) => {
             return seq.then(() => {
-              let resolutionStatus =
+              const resolutionStatus =
                 currentIndex - 1 === txDataToSignList.length ? 'confirmation' : 'receipt'; // wait for confirmations only on the last block
               return this.submitTransaction(
                 txDataToSign,
