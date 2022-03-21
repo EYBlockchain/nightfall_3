@@ -9,7 +9,6 @@ import { UserContext, UserProvider } from '../hooks/User/index.jsx';
 import TransactionPage from './transactionPage/index.jsx';
 import Web3 from '../common-files/utils/web3';
 import Bridge from './bridge/index.jsx';
-import generateWebComponents from '../utils/generateWebComponents';
 import { AccountProvider } from '../hooks/Account/index.tsx';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -22,7 +21,6 @@ export default function App() {
     setIsWeb3Connected({
       isWeb3Connected: true,
     });
-    generateWebComponents();
   }, []);
 
   /*
