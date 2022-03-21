@@ -223,15 +223,12 @@ class Nf3 {
       // TODO does this still work if there is a chain reorg or do we have to handle that?
       return new Promise((resolve, reject) => {
         logger.debug(`Confirming transaction ${signed.transactionHash}`);
-        this.notConfirmed++;
         this.web3.eth
           .sendSignedTransaction(signed.rawTransaction)
           .on('confirmation', (number, receipt) => {
             if (number === 12) {
-              this.notConfirmed--;
               logger.debug(
                 `Transaction ${receipt.transactionHash} has been confirmed ${number} times.`,
-                `Number of unconfirmed transactions is ${this.notConfirmed}`,
               );
               resolve(receipt);
             }
@@ -566,7 +563,7 @@ class Nf3 {
   the proposer.
   @method
   @async
-  @param {string} Proposer REST API URL with format https://xxxx.xxx.xx  
+  @param {string} Proposer REST API URL with format https://xxxx.xxx.xx
   @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
   */
   async registerProposer(url) {
@@ -574,12 +571,31 @@ class Nf3 {
       address: this.ethereumAddress,
       url,
     });
-    logger.debug(`Proposer Registered with address ${this.ethereumAddress} and URL ${url}`);
+    if (res.data.txDataToSign === '') return false; // already registered
     return this.submitTransaction(
       res.data.txDataToSign,
       this.proposersContractAddress,
       this.PROPOSER_BOND,
     );
+  }
+
+  /**
+  Registers a proposer locally with the Optimist instance only.  This will cause
+  Optimist to make blocks when this proposer is current but these will revert if
+  the proposer isn't registered on the blockchain too.  This method is useful only
+  if the proposer is already registered on the blockchain (has paid their bond) and
+  for some reason the Optimist instance does not know about them, e.g. a new instance
+  has been created. The method 'registerProposer' will both register the proposer
+  with the blockchain and register locally with the optimist instance. So, if
+  that method has been used successfully, there is no need to also call this method
+  @method
+  @async
+  @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
+  */
+  async registerProposerLocally() {
+    return axios.post(`${this.optimistBaseUrl}/proposer/registerlocally`, {
+      address: this.ethereumAddress,
+    });
   }
 
   /**
@@ -652,7 +668,7 @@ class Nf3 {
   Update Proposers URL
   @method
   @async
-  @param {string} Proposer REST API URL with format https://xxxx.xxx.xx  
+  @param {string} Proposer REST API URL with format https://xxxx.xxx.xx
   @returns {array} A promise that resolves to the Ethereum transaction receipt.
   */
   async updateProposer(url) {
@@ -714,7 +730,7 @@ class Nf3 {
   Send offchain transaction to Optimist
   @method
   @async
-  @param {string} transaction 
+  @param {string} transaction
   @returns {array} A promise that resolves to the API call status
   */
   async sendOffchainTransaction(transaction) {

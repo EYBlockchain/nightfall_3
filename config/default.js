@@ -4,7 +4,8 @@ const { DOMAIN_NAME = '' } = process.env;
 module.exports = {
   COMMITMENTS_DB: 'nightfall_commitments',
   OPTIMIST_DB: 'optimist_data',
-  METADATA_COLLECTION: 'metadata',
+  PROPOSER_COLLECTION: 'proposers',
+  CHALLENGER_COLLECTION: 'challengers',
   TRANSACTIONS_COLLECTION: 'transactions',
   SUBMITTED_BLOCKS_COLLECTION: 'blocks',
   NULLIFIER_COLLECTION: 'nullifiers',
