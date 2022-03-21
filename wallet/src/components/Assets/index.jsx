@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import styles from '../../styles/assets.module.scss';
-import ReceiveModal from '../Modals/Assets/ReceiveModal';
+import ReceiveModal from '../Modals/Assets/ReceiveModal/index.jsx';
 
 export default function Assets({ tokenList }) {
-
   const [showReceiveModal, setShowReceiveModal] = useState(false);
 
   console.log(tokenList);
@@ -27,7 +26,11 @@ export default function Assets({ tokenList }) {
               <div className={styles.heading}>Nightfall</div>
               <div className={styles.amount}>&#36;{total.toFixed(2)}</div>
               <div className={styles.buttonsWrapper}>
-                <button className="" icon-name="navbar/qr" onClick={() => setShowReceiveModal(true)}>
+                <button
+                  className=""
+                  icon-name="navbar/qr"
+                  onClick={() => setShowReceiveModal(true)}
+                >
                   Receive
                 </button>
                 <button icon-name="navbar/send" onClick={() => {}}>

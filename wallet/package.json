@@ -20,6 +20,7 @@
     "js-sha3": "^0.8.0",
     "keccak": "^3.0.2",
     "prop-types": "^15.7.2",
+    "qrcode.react": "^2.0.0",
     "queue": "^6.0.2",
     "react": "^17.0.2",
     "react-bootstrap": "^2.1.1",
@@ -52,7 +53,7 @@
     "deploy": "npm run build && aws s3 sync build s3://pnf-dev-browser --cache-control max-age=172800 --delete && aws configure set preview.cloudfront true && aws cloudfront create-invalidation --distribution-id ENV3X13MLR5YT --paths \"/*\"",
     "test": "craco test --env=jsdom",
     "test:jest": "jest",
-    "eject": "craco eject",    
+    "eject": "craco eject",
     "e2e-test": "npx synpress run --env TRANSACTIONS_PER_BLOCK=2"
   },
   "browserslist": {
@@ -72,12 +73,12 @@
     "@babel/preset-env": "^7.16.11",
     "@babel/preset-typescript": "^7.16.7",
     "@craco/craco": "^6.4.2",
+    "@synthetixio/synpress": "^1.1.1",
     "@testing-library/react": "^12.1.3",
     "@types/react-router-dom": "^5.3.3",
     "babel-jest": "^27.5.1",
     "jest": "^26.6.0",
     "react-error-overlay": "^6.0.9",
-    "single-spa-react": "^4.6.1",
-    "@synthetixio/synpress": "^1.1.1"    
+    "single-spa-react": "^4.6.1"
   }
 }
