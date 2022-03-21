@@ -1,4 +1,5 @@
 import axios from 'axios';
+import Queue from 'queue';
 import Web3 from 'web3';
 import WebSocket from 'ws';
 import EventEmitter from 'events';
@@ -10,6 +11,8 @@ import erc721 from './abis/ERC721.mjs';
 import erc1155 from './abis/ERC1155.mjs';
 
 import { DEFAULT_BLOCK_STAKE, DEFAULT_PROPOSER_BOND, DEFAULT_FEE } from './constants.mjs';
+
+const proposerQueue = new Queue({ autostart: true, concurrency: 1 });
 
 /**
 @class
@@ -57,8 +60,6 @@ class Nf3 {
   BLOCK_STAKE = DEFAULT_BLOCK_STAKE;
 
   nonce = 0;
-
-  nonceMutex = new Mutex();
 
   latestWithdrawHash;
 
@@ -193,28 +194,29 @@ class Nf3 {
     unsignedTransaction,
     contractAddress = this.shieldContractAddress,
     fee = this.defaultFee,
+    resolutionStatus = 'confirmation',
   ) {
     // we need a Mutex so that we don't get a nonce-updating race.
 
     let tx;
-    await this.nonceMutex.runExclusive(async () => {
-      if (!this.nonce) this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
-      let gasPrice = 20000000000;
-      const gas = (await this.web3.eth.getBlock('latest')).gasLimit;
-      const blockGasPrice = 2 * Number(await this.web3.eth.getGasPrice());
-      if (blockGasPrice > gasPrice) gasPrice = blockGasPrice;
+    if (!this.nonce)
+      this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress, 'pending');
+    let gasPrice = 20000000000;
+    const gas = (await this.web3.eth.getBlock('latest')).gasLimit;
+    const blockGasPrice = 2 * Number(await this.web3.eth.getGasPrice());
+    if (blockGasPrice > gasPrice) gasPrice = blockGasPrice;
 
-      tx = {
-        from: this.ethereumAddress,
-        to: contractAddress,
-        data: unsignedTransaction,
-        value: fee,
-        gas,
-        gasPrice,
-        nonce: this.nonce,
-      };
-      this.nonce++;
-    });
+    tx = {
+      from: this.ethereumAddress,
+      to: contractAddress,
+      data: unsignedTransaction,
+      value: fee,
+      gas,
+      gasPrice,
+      nonce: this.nonce,
+    };
+    logger.debug(`The nonce for the unsigned transaction ${tx.data} is ${this.nonce}`);
+    this.nonce++;
 
     if (this.ethereumSigningKey) {
       const signed = await this.web3.eth.accounts.signTransaction(tx, this.ethereumSigningKey);
@@ -225,8 +227,16 @@ class Nf3 {
         logger.debug(`Confirming transaction ${signed.transactionHash}`);
         this.web3.eth
           .sendSignedTransaction(signed.rawTransaction)
+          .once('receipt', receipt => {
+            if (resolutionStatus === 'receipt') {
+              this.notConfirmed = 0; //unset confirmation because receipt does not give confirmations
+              logger.debug(`Transaction ${receipt.transactionHash} has been received.`);
+              resolve(receipt);
+            }
+          })
           .on('confirmation', (number, receipt) => {
-            if (number === 12) {
+            if (resolutionStatus == 'confirmation' && number === 12) {
+              this.notConfirmed--;
               logger.debug(
                 `Transaction ${receipt.transactionHash} has been confirmed ${number} times.`,
               );
@@ -724,16 +734,25 @@ class Nf3 {
       logger.debug(`Proposer received websocket message of type ${type}`);
       if (type === 'block') {
         logger.debug(`Found ${txDataToSignList.length} blocks to process`);
+        console.log(`Found ${txDataToSignList.length} blocks to process`);
 
-        txDataToSignList.reduce((seq, txDataToSign) => {
-          return seq.then(() => {
-            return this.submitTransaction(
-              txDataToSign,
-              this.stateContractAddress,
-              this.BLOCK_STAKE,
-            ).then(res => newGasBlockEmitter.emit('gascost', res.gasUsed, txDataToSignList.length));
-          });
-        }, Promise.resolve());
+        // add txDataToSignList to queue to ensure the next txDataToSignList doesn't get the wrong nonce value
+        proposerQueue.push(
+          txDataToSignList.reduce((seq, txDataToSign, currentIndex) => {
+            return seq.then(() => {
+              let resolutionStatus =
+                currentIndex - 1 === txDataToSignList.length ? 'confirmation' : 'receipt'; // wait for confirmations only on the last block
+              return this.submitTransaction(
+                txDataToSign,
+                this.stateContractAddress,
+                this.BLOCK_STAKE,
+                resolutionStatus,
+              ).then(res =>
+                newGasBlockEmitter.emit('gascost', res.gasUsed, txDataToSignList.length),
+              );
+            });
+          }, Promise.resolve()),
+        );
       }
     };
     connection.onerror = () => logger.error('websocket connection error');
