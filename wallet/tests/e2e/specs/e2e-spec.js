@@ -89,11 +89,11 @@ describe('End to End tests', () => {
         cy.get('button').contains('Create Transaction').click();
         cy.get('#Bridge_modal_continueTransferButton').click();
         cy.wait(30000);
-        if (i === 0) {
+        /* if (i === 0) {
           // for first depsoit we need approve ERC20
           cy.confirmMetamaskPermissionToSpend().then(approved => expect(approved).to.be.true);
           cy.wait(30000);
-        }
+        } */
         cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
         cy.wait(50000);
       }
