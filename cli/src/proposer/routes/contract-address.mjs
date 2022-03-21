@@ -4,7 +4,7 @@ Some transactions are so simple that, we don't split out a separate service
 module but handle the entire request here.
 */
 import express from 'express';
-import { getContractAddressOptimist } from '../nf3-wrapper.mjs';
+import { nf3GetContractAddressOptimist } from '../nf3-wrapper.mjs';
 
 const router = express.Router();
 
@@ -16,7 +16,7 @@ router.get('/:contract', async (req, res) => {
     res.sendStatus(404);
     return;
   }
-  const address = await getContractAddressOptimist(contract);
+  const address = await nf3GetContractAddressOptimist(contract);
   res.json({ address });
 });
 

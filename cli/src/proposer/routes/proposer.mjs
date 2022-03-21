@@ -4,7 +4,7 @@ Some transactions are so simple that, we don't split out a separate service
 module but handle the entire request here.
 */
 import express from 'express';
-import { sendOffchainTransaction } from '../nf3-wrapper.mjs';
+import { nf3SendOffchainTransaction } from '../nf3-wrapper.mjs';
 
 const router = express.Router();
 
@@ -17,7 +17,7 @@ router.post('/offchain-transaction', async (req, res) => {
     res.sendStatus(404);
     return;
   }
-  await sendOffchainTransaction(transaction);
+  await nf3SendOffchainTransaction(transaction);
   res.sendStatus(200);
 });
 
