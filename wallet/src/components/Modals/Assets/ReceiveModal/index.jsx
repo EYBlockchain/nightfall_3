@@ -2,7 +2,8 @@ import React, { Dispatch, SetStateAction, useContext } from 'react';
 import "./styles.scss";
 import Modal from 'react-bootstrap/Modal';
 import QRCode from 'qrcode.react';
-import { useUser } from '../../../../hooks/User';
+import { UserContext } from '../../../../hooks/User';
+
 
 // type ReceiveModalType = {
 //   handleClose: Dispatch<SetStateAction<boolean>>;
@@ -10,7 +11,7 @@ import { useUser } from '../../../../hooks/User';
 
 const ReceiveModal = ({ handleClose }) => {  
 
-  const { userInstance } = useUser();
+  const [state] = useContext(UserContext);
   
   return (
     <div>
@@ -20,9 +21,16 @@ const ReceiveModal = ({ handleClose }) => {
             <p className="tokens_itens_modal_title">My QR Code</p>                    
           </div>
         </Modal.Header>
-        <Modal.Body>        
-          <p className="input_search_title">Choose token from <span>{userInstance.zkpKeys.compressedPkd}</span></p>                    
-          <QRCode value={userInstance.zkpKeys.compressedPkd} />,
+        <Modal.Body>
+          <div className='qrcode'>
+            <QRCode value={state.zkpKeys.compressedPkd} />
+          </div>
+          <p>
+            Wallet Address
+          </p>
+          <p>
+            {state.zkpKeys.compressedPkd}
+          </p>
         </Modal.Body>
       </Modal>    
     </div>
