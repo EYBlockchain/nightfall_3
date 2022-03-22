@@ -183,6 +183,7 @@ services:
     environment:
       AWS_ACCESS_KEY: ${AWS_ACCESS_KEY}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_S3_BUCKET: nightfallv3
 
 
 volumes:
