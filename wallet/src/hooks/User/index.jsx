@@ -120,7 +120,7 @@ export const UserProvider = ({ children }) => {
 
   React.useEffect(() => {
     setupWebSocket();
-  }, [state.zkpKeys]);
+  }, []);
 
   React.useEffect(() => {
     configureZkpKeys(state.mnemonic);

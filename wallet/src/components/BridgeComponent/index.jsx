@@ -115,7 +115,7 @@ const BridgeComponent = () => {
           {
             ercAddress,
             tokenId: 0,
-            value: Number(transferValue) * 10 ** token.decimals,
+            value: (Number(transferValue) * 10 ** token.decimals).toString(),
             pkd: state.zkpKeys.pkd,
             nsk: state.zkpKeys.nsk,
             fee: 1,
@@ -133,7 +133,7 @@ const BridgeComponent = () => {
               offchain: true,
               ercAddress,
               tokenId: 0,
-              value: Number(transferValue) * 10 ** token.decimals,
+              value: (Number(transferValue) * 10 ** token.decimals).toString(),
               recipientAddress: await Web3.getAccount(),
               nsk: state.zkpKeys.nsk,
               ask: state.zkpKeys.ask,
@@ -147,7 +147,7 @@ const BridgeComponent = () => {
             {
               ercAddress,
               tokenId: 0,
-              value: Number(transferValue) * 10 ** token.decimals,
+              value: (Number(transferValue) * 10 ** token.decimals).toString(),
               recipientAddress: await Web3.getAccount(),
               nsk: state.zkpKeys.nsk,
               ask: state.zkpKeys.ask,
@@ -202,11 +202,9 @@ const BridgeComponent = () => {
     if (token && token.address) {
       const { address } = (await getContractAddress('ERC20Mock')).data; // TODO REMOVE THIS WHEN OFFICIAL ADDRESSES
       const l2bal = await getWalletBalance(state.zkpKeys.compressedPkd);
-      console.log(state);
-      if (Object.hasOwnProperty.call(l2bal, state.zkpKeys.compressedPkd)) {
-        console.log('l2Bal', l2bal[state.zkpKeys.compressedPkd][address.toLowerCase()]); // TODO REMOVE ADDRESS WHEN OFFICIAL CONTRACT ADDRESSES AVAILABLE
+      if (Object.hasOwnProperty.call(l2bal, state.zkpKeys.compressedPkd))
         setL2Balance(l2bal[state.zkpKeys.compressedPkd][address.toLowerCase()] ?? 0);
-      } else setL2Balance(0);
+      else setL2Balance(0);
     }
   }
 

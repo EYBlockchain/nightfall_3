@@ -155,7 +155,9 @@ export default function Wallet() {
       tokens.map(async t => {
         const currencyValue = await getPrice(t.id);
         if (Object.keys(l2BalanceObj).includes(pkd)) {
+          console.log('l2Balance', l2BalanceObj);
           const token = l2BalanceObj[pkd][t.address.toLowerCase()] ?? 0;
+          console.log('Token', token);
           return {
             ...t,
             l2Balance: token.toString(),
@@ -165,14 +167,13 @@ export default function Wallet() {
         return t;
       }),
     );
-    // Trapdoor
-    console.log('updatedState', updatedState);
+    // Trapdoor for testing
     const { address: trapdoorAddress } = (await getContractAddress('ERC20Mock')).data; // TODO Only for testing now
     setTokens(
       updatedState.map(({ address, ...rest }) => {
         return {
-          address: trapdoorAddress,
           ...rest,
+          address: trapdoorAddress,
         };
       }),
     );

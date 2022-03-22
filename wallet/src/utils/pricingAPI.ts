@@ -6,7 +6,6 @@ const getPrice = async (coinID: string, currency: string = 'usd'): Promise<any> 
   const res: Record<string, Record<string, number>> = (
     await axios.get(`${BASE_URL}/price?ids=${coinID}&vs_currencies=${currency}`)
   ).data;
-  console.log('rest', res);
   return res[coinID][currency];
 };
 

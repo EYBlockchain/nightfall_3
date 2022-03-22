@@ -16,7 +16,6 @@ export default function TokenItem(props) {
   const [state] = React.useContext(UserContext);
   const defaultSend = state?.zkpKeys?.compressedPkd;
   const [valueToSend, setTransferValue] = useState(0);
-  console.log('props', props);
 
   async function sendTx() {
     const { address: shieldContractAddress } = (await getContractAddress('Shield')).data;
@@ -27,7 +26,7 @@ export default function TokenItem(props) {
         tokenId: 0,
         recipientData: {
           recipientCompressedPkds: [defaultSend],
-          values: [Number(valueToSend) * 10 ** props.decimals],
+          values: [(Number(valueToSend) * 10 ** props.decimals).toString()],
         },
         nsk: state.zkpKeys.nsk,
         ask: state.zkpKeys.ask,

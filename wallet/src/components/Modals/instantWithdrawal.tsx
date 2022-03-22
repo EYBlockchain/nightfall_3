@@ -8,7 +8,6 @@ import './index.scss';
 export default function InstantWithdraw(props: any) {
   const [fee, setFee] = useState(0);
   const setInstantWithdrawal = async () => {
-    console.log();
     const { address: shieldContractAddress } = (await getContractAddress('Shield')).data;
     const { rawTransaction } = await setInstantWithdrawl(
       props.transactionhash,

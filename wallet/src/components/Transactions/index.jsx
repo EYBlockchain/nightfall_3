@@ -3,7 +3,6 @@ import { Row, Spinner, Image } from 'react-bootstrap';
 import WithdrawTransaction from './withdraw.tsx';
 import bridgeInfoImage from '../../assets/img/bridge-info.png';
 import polygonChainImage from '../../assets/img/polygon-chain.svg';
-import maticImage from '../../assets/svg/matic.svg';
 import tickBox from '../../assets/svg/tickBox.svg';
 import etherscanArrow from '../../assets/svg/etherscanGo.svg';
 import {
@@ -17,6 +16,8 @@ import { getAllCommitments } from '../../nightfall-browser/services/commitment-s
 import { getContractAddress, getContractInstance } from '../../common-files/utils/contract';
 import { isValidWithdrawal } from '../../nightfall-browser/services/valid-withdrawal';
 import useInterval from '../../hooks/useInterval';
+import tokensList from '../Modals/Bridge/TokensList/tokensList';
+import getPrice from '../../utils/pricingAPI';
 
 const { SHIELD_CONTRACT_NAME, ZERO } = global.config;
 
@@ -39,7 +40,7 @@ const Transactions = () => {
   const [txs, setTxs] = React.useState([]);
   const [isActive, setActive] = React.useState('all');
   const [showModal, setShowModal] = React.useState({ show: false });
-  const [delay, setDelay] = React.useState(100);
+  const [delay, setDelay] = React.useState(50);
   useInterval(async () => {
     const transactionsDB = await getAllTransactions();
     const transactions = Array.from(new Set(transactionsDB));
@@ -50,7 +51,6 @@ const Transactions = () => {
       SHIELD_CONTRACT_NAME,
       shieldContractAddress,
     );
-    // console.log('Transaction', transactions);
 
     const blocks = await findBlocksFromBlockNumberL2(-1);
     const promisedTxs = transactions.map(async tx => {
@@ -66,6 +66,11 @@ const Transactions = () => {
         });
 
       const safeValue = value.toString();
+      const { ercAddress } = commitmentsDB.find(c => {
+        return tx.commitments.includes(c._id) || tx.nullifiers.includes(c.nullifier);
+      })?.preimage ?? {
+        ercAddress: '0x00',
+      };
       blocks.forEach(b => {
         console.log('b.transactionHashes', b.transactionHashes);
         console.log('tx_id', tx._id);
@@ -95,12 +100,32 @@ const Transactions = () => {
           // eslint-disable-next-line no-param-reassign
           tx.withdrawState = 'fulfilled';
       }
+
+      const { address: mockAddress } = (await getContractAddress('ERC20Mock')).data;
+      const testList = tokensList.tokens.map(t => {
+        return {
+          ...t,
+          address: mockAddress,
+        };
+      });
+      const { logoURI, decimals, id, symbol } = testList.find(
+        t => t.address.toLowerCase() === `0x${ercAddress.slice(-40).toLowerCase()}`,
+      ) ?? {
+        logoURI: null,
+        decimals: 0,
+        id: '',
+      };
+      const currencyValue = id !== '' ? await getPrice(id) : 0;
       return {
         ...tx,
         transactionHash: tx._id,
         txType: safeTransactionType,
         value: safeValue,
         now: Date.now(),
+        logoURI,
+        decimals,
+        currencyValue,
+        symbol,
         withdrawReady,
       };
     });
@@ -110,7 +135,7 @@ const Transactions = () => {
 
     console.log('Transactions', transactions);
     setTxs(mappedTxs);
-    setDelay(5000);
+    setDelay(10000);
   }, delay);
 
   return (
@@ -228,7 +253,7 @@ const Transactions = () => {
                     {/* details-section */}
                     <div style={{ display: 'block' }}>
                       {/* token-image */}
-                      <img src={maticImage} alt="" height="32" width="32" />
+                      <img src={tx.logoURI} alt="" height="32" width="32" />
                     </div>
                     <div
                       style={{
@@ -239,7 +264,7 @@ const Transactions = () => {
                     >
                       {/* amount-details */}
                       <div style={{ fontWeight: '600', fontSize: '14px', lineHeight: '20px' }}>
-                        {tx.value} MATIC
+                        {(Number(tx.value) / 10 ** tx.decimals).toFixed(4)} {tx.symbol}
                       </div>
                       <div
                         style={{
@@ -251,7 +276,11 @@ const Transactions = () => {
                           lineHeight: '16px',
                         }}
                       >
-                        $x.xx
+                        $
+                        {(
+                          (Number(tx.value) / 10 ** tx.decimals) *
+                          Number(tx.currencyValue)
+                        ).toFixed(4)}
                       </div>
                     </div>
                     <div
