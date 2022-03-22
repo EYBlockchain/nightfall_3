@@ -5,45 +5,29 @@ import { AiOutlineDown } from 'react-icons/ai';
 import { Link } from 'react-router-dom';
 import styles from '../../styles/tokenItem.module.scss';
 import stylesModal from '../../styles/modal.module.scss';
-import matic from '../../assets/svg/matic.svg';
-import usdt from '../../assets/svg/usdt.svg';
-import link from '../../assets/svg/link.svg';
-import aave from '../../assets/svg/aave.svg';
 import metamaskIcon from '../../assets/svg/metamask.svg';
 import maticImg from '../../assets/img/polygon-chain.svg';
 import { UserContext } from '../../hooks/User/index.jsx';
 import transfer from '../../nightfall-browser/services/transfer';
 import { getContractAddress } from '../../common-files/utils/contract';
 
-const symbols = {
-  matic,
-  usdt,
-  link,
-  aave,
-};
-
-export default function TokenItem({
-  maticChainUsdBalance,
-  maticChainBalance,
-  name,
-  symbol,
-  tokenAddress,
-}) {
+export default function TokenItem(props) {
   const [showSendModal, setShowSendModal] = useState(false);
   const [state] = React.useContext(UserContext);
   const defaultSend = state?.zkpKeys?.compressedPkd;
   const [valueToSend, setTransferValue] = useState(0);
+  console.log('props', props);
 
   async function sendTx() {
     const { address: shieldContractAddress } = (await getContractAddress('Shield')).data;
     await transfer(
       {
         offchain: true,
-        ercAddress: tokenAddress,
+        ercAddress: props.address,
         tokenId: 0,
         recipientData: {
           recipientCompressedPkds: [defaultSend],
-          values: [valueToSend],
+          values: [Number(valueToSend) * 10 ** props.decimals],
         },
         nsk: state.zkpKeys.nsk,
         ask: state.zkpKeys.ask,
@@ -54,19 +38,19 @@ export default function TokenItem({
     console.log('Transfer Complete');
     setShowSendModal(false);
   }
-  const tokenNameId = `TokenItem_tokenName${symbol}`;
-  const tokenBalanceId = `TokenItem_tokenBalance${symbol}`;
-  const tokenBalanceUsdId = `TokenItem_tokenBalanceUsd${symbol}`;
-  const tokenDepositId = `TokenItem_tokenDeposit${symbol}`;
-  const tokenWithdrawId = `TokenItem_tokenWithdraw${symbol}`;
-  const tokenSendId = `TokenItem_tokenSend${symbol}`;
+  const tokenNameId = `TokenItem_tokenName${props.symbol}`;
+  const tokenBalanceId = `TokenItem_tokenBalance${props.symbol}`;
+  const tokenBalanceUsdId = `TokenItem_tokenBalanceUsd${props.symbol}`;
+  const tokenDepositId = `TokenItem_tokenDeposit${props.symbol}`;
+  const tokenWithdrawId = `TokenItem_tokenWithdraw${props.symbol}`;
+  const tokenSendId = `TokenItem_tokenSend${props.symbol}`;
   return (
     <div>
       {/* <div class="matic-tokens-list-item" @click="onTokenClick"> */}
       <div className={styles.maticTokensListItem}>
         <div className={styles.star}>{/* <img src={starFilled} alt="" /> */}</div>
         <div className={styles.maticTokensListItem}>
-          <img src={symbols[symbol.toLowerCase()]} alt="token icon" />
+          <img src={props.logoURI} alt="token icon" />
         </div>
 
         <div className={styles.tokenDetails}>
@@ -74,7 +58,7 @@ export default function TokenItem({
             <div className={styles.tokenNameUpperSection}>
               {/* <div class="token-symbol header-h6"> */}
               <div className={styles.headerH6} id={tokenNameId}>
-                {symbol}
+                {props.symbol}
               </div>
               {/* styles.mobileView See how to do it */}
               <div v-if="!token.isPoS" className={styles.plasmaTag}>
@@ -83,50 +67,34 @@ export default function TokenItem({
             </div>
             <div className={styles.tokenNameLowerSection}>
               <span className={styles.seperatingDot}> • </span>
-              {name}
+              {props.name}
             </div>
             {true && <div className={styles.plasmaTag}>plasma</div>}
           </div>
           <div className={styles.balancesDetails}>
             <div className={styles.balancesWrapper}>
               <div className={styles.balancesDetailsUpperSection} id={tokenBalanceId}>
-                {/* {{ token.getMaticChainBalance | fixed(4) }} */}
-                {Number(maticChainBalance).toFixed(4)}
+                {(Number(props.l2Balance) / 10 ** Number(props.decimals)).toFixed(4)}
               </div>
-              {/* <v-popover
-                                trigger="hover"
-                                placement="top"
-                                :disabled="isMobileScreen"
-                                class="hide-in-mobile"
-                            >
-                                <span class="seperating-dot light-gray-600"> • </span>
-                                <template slot="popover">
-                                <span>{{ token.getMaticChainBalance }} {{ token.symbol }}</span><br>
-                                <span class="gray-color">${{ token.maticChainUsdBalance }}</span>
-                                </template>
-                            </v-popover> */}
               <div className={styles.balancesDetailsLowerSection}>
-                {/* {{ token.maticChainUsdBalance | fixed(2) | dollarSymbol }} */}
                 <span className={styles.seperatingDot} id={tokenBalanceUsdId}>
                   {' '}
                   •{' '}
                 </span>
-                ${(Number(maticChainUsdBalance) * Number(maticChainBalance)).toFixed(2)}
+                $
+                {(
+                  Number(props.currencyValue) *
+                  (Number(props.l2Balance) / 10 ** props.decimals)
+                ).toFixed(4)}
               </div>
             </div>
           </div>
           <div className={styles.buttonsSection}>
-            {/* :to="{
-                            name: 'bridge',
-                            params: { type: TRANSACTION_TYPE.DEPOSIT, token },
-                        }"
-                        :event="isDepositDisabled(token) ? '' : 'click'" 
-                        v-tooltip="isDepositDisabled(token) ? 'Not Supported' : null" */}
             <Link
               to={{
                 pathname: '/bridge',
                 tokenState: {
-                  tokenAddress,
+                  tokenAddress: props.address,
                   initialTxType: 'deposit',
                 },
               }}
@@ -135,17 +103,11 @@ export default function TokenItem({
             >
               Deposit
             </Link>
-            {/* v-tooltip="isWithdrawDisabled(token) ? 'Not Supported' : null"
-                        :to="{
-                            name: 'bridge',
-                            params: { type: TRANSACTION_TYPE.WITHDRAW, token },
-                        }"
-                        :event="isWithdrawDisabled(token) ? '' : 'click'" */}
             <Link
               to={{
                 pathname: '/bridge',
-                statokenStatete: {
-                  tokenAddress,
+                tokenState: {
+                  tokenAddress: props.address,
                   initialTxType: 'withdraw',
                 },
               }}
@@ -154,7 +116,6 @@ export default function TokenItem({
             >
               Withdraw
             </Link>
-            {/* onClick="handleSendToken" */}
             <button
               type="button"
               className={styles.tokenListButton}
@@ -167,21 +128,10 @@ export default function TokenItem({
             </button>
           </div>
         </div>
-        {/* cursor-pointer below */}
-        {/* class="{ 'hide-it': !isLoginStrategyMetaMask }" */}
-        {/* @click="handleAddTokenToMetamask" */}
         <div className={styles.addToMetamask}>
-          {/* <Icon name="login/metamask" class="metamask-icon" /> */}
           <img className={styles.metamaskIcon} src={metamaskIcon} alt="" />
         </div>
-        {/* <div class="">
-                {{ token }}
-                </div> */}
       </div>
-      {/* <div v-if="isMobileScreen">
-                <div>Hellp {{ isMobileScreen }} {{ screenInnerWidth }}</div>
-            </div> */}
-
       {/* SEND BUTTON */}
       <Modal
         contentClassName={stylesModal.modalFather}
@@ -228,7 +178,7 @@ export default function TokenItem({
 
               <div className={stylesModal.sendModalfooter}>
                 <img src={maticImg} alt="matic icon" />
-                <p className={stylesModal.gasFee}>x.xxx {name} Gas Fee</p>
+                <p className={stylesModal.gasFee}>x.xxx {props.name} Gas Fee</p>
               </div>
             </div>
             <button
@@ -246,9 +196,11 @@ export default function TokenItem({
 }
 
 TokenItem.propTypes = {
-  maticChainUsdBalance: PropTypes.string.isRequired,
-  maticChainBalance: PropTypes.string.isRequired,
+  currencyValue: PropTypes.number.isRequired,
+  l2Balance: PropTypes.string.isRequired,
   name: PropTypes.string.isRequired,
   symbol: PropTypes.string.isRequired,
-  tokenAddress: PropTypes.string.isRequired,
+  address: PropTypes.string.isRequired,
+  logoURI: PropTypes.string.isRequired,
+  decimals: PropTypes.number.isRequired,
 };

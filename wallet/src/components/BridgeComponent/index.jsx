@@ -29,6 +29,7 @@ import { getWalletBalance } from '../../nightfall-browser/services/commitment-st
 import './toast.css';
 import ERC20 from '../../contract-abis/ERC20.json';
 import tokensList from '../Modals/Bridge/TokensList/tokensList.ts';
+import { APPROVE_AMOUNT } from '../../constants';
 
 const BridgeComponent = () => {
   const [state] = useContext(UserContext);
@@ -109,12 +110,12 @@ const BridgeComponent = () => {
     const ercAddress = defaultTokenAddress; // TODO Location to be removed later
     switch (txType) {
       case 'deposit': {
-        await approve(ercAddress, shieldContractAddress, 'ERC20', transferValue.toString());
+        await approve(ercAddress, shieldContractAddress, 'ERC20', APPROVE_AMOUNT);
         const { rawTransaction } = await deposit(
           {
             ercAddress,
             tokenId: 0,
-            value: transferValue,
+            value: Number(transferValue) * 10 ** token.decimals,
             pkd: state.zkpKeys.pkd,
             nsk: state.zkpKeys.nsk,
             fee: 1,
@@ -132,7 +133,7 @@ const BridgeComponent = () => {
               offchain: true,
               ercAddress,
               tokenId: 0,
-              value: transferValue,
+              value: Number(transferValue) * 10 ** token.decimals,
               recipientAddress: await Web3.getAccount(),
               nsk: state.zkpKeys.nsk,
               ask: state.zkpKeys.ask,
@@ -146,7 +147,7 @@ const BridgeComponent = () => {
             {
               ercAddress,
               tokenId: 0,
-              value: transferValue,
+              value: Number(transferValue) * 10 ** token.decimals,
               recipientAddress: await Web3.getAccount(),
               nsk: state.zkpKeys.nsk,
               ask: state.zkpKeys.ask,
@@ -492,7 +493,6 @@ const BridgeComponent = () => {
                 <button
                   type="button"
                   className={stylesModal.continueTrasferButton}
-                  // onClick={() => triggerTx()}
                   onClick={() => {
                     handleClose();
                     handleShowModalConfirm();
@@ -578,7 +578,6 @@ const BridgeComponent = () => {
                     type="button"
                     className={stylesModal.continueTrasferButton}
                     id="Bridge_modal_continueTransferButton"
-                    // onClick={() => triggerTx()}
                     onClick={() => triggerTx()}
                   >
                     Send Transaction

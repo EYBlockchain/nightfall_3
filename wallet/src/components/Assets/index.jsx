@@ -5,7 +5,8 @@ import styles from '../../styles/assets.module.scss';
 export default function Assets({ tokenList }) {
   console.log(tokenList);
   const total = tokenList.reduce(
-    (acc, curr) => acc + Number(curr.maticChainUsdBalance) * Number(curr.maticChainBalance),
+    (acc, curr) =>
+      acc + (Number(curr.currencyValue) * Number(curr.l2Balance)) / 10 ** Number(curr.decimals),
     0,
   );
   return (
