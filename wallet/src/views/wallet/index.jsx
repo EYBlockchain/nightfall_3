@@ -157,9 +157,9 @@ export default function Wallet() {
     const updatedState = await Promise.all(
       tokens.map(async t => {
         const currencyValue = await getPrice(t.id);
-        if (Object.keys(l2BalanceObj).includes(pkd)) {
+        if (Object.keys(l2BalanceObj).includes(state.compressedPkd)) {
           console.log('l2Balance', l2BalanceObj);
-          const token = l2BalanceObj[pkd][t.address.toLowerCase()] ?? 0;
+          const token = l2BalanceObj[state.compressedPkd][t.address.toLowerCase()] ?? 0;
           console.log('Token', token);
           return {
             ...t,

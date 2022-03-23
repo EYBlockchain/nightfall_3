@@ -30,6 +30,13 @@ import './toast.css';
 import ERC20 from '../../contract-abis/ERC20.json';
 import tokensList from '../Modals/Bridge/TokensList/tokensList.ts';
 import { APPROVE_AMOUNT } from '../../constants';
+import { retrieveAndDecrypt } from '../../utils/lib/key-storage';
+import { decompressKey } from '../../nightfall-browser/services/keys';
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const gen = require('general-number');
+
+const { generalise } = gen;
 
 const BridgeComponent = () => {
   const [state] = useContext(UserContext);
@@ -108,16 +115,18 @@ const BridgeComponent = () => {
     const { address: shieldContractAddress } = (await getContractAddress('Shield')).data;
     const { address: defaultTokenAddress } = (await getContractAddress('ERC20Mock')).data; // TODO Only for testing now
     const ercAddress = defaultTokenAddress; // TODO Location to be removed later
+    const zkpKeys = await retrieveAndDecrypt(state.compressedPkd);
     switch (txType) {
       case 'deposit': {
+        const pkd = decompressKey(generalise(state.compressedPkd));
         await approve(ercAddress, shieldContractAddress, 'ERC20', APPROVE_AMOUNT);
         const { rawTransaction } = await deposit(
           {
             ercAddress,
             tokenId: 0,
             value: (Number(transferValue) * 10 ** token.decimals).toString(),
-            pkd: state.zkpKeys.pkd,
-            nsk: state.zkpKeys.nsk,
+            pkd,
+            nsk: zkpKeys.nsk,
             fee: 1,
             tokenType: 'ERC20',
           },
@@ -135,8 +144,8 @@ const BridgeComponent = () => {
               tokenId: 0,
               value: (Number(transferValue) * 10 ** token.decimals).toString(),
               recipientAddress: await Web3.getAccount(),
-              nsk: state.zkpKeys.nsk,
-              ask: state.zkpKeys.ask,
+              nsk: zkpKeys.nsk,
+              ask: zkpKeys.ask,
               tokenType: 'ERC20',
               fees: 1,
             },
@@ -149,8 +158,8 @@ const BridgeComponent = () => {
               tokenId: 0,
               value: (Number(transferValue) * 10 ** token.decimals).toString(),
               recipientAddress: await Web3.getAccount(),
-              nsk: state.zkpKeys.nsk,
-              ask: state.zkpKeys.ask,
+              nsk: zkpKeys.nsk,
+              ask: zkpKeys.ask,
               tokenType: 'ERC20',
               fees: 1,
             },
@@ -201,9 +210,9 @@ const BridgeComponent = () => {
   async function updateL2Balance() {
     if (token && token.address) {
       const { address } = (await getContractAddress('ERC20Mock')).data; // TODO REMOVE THIS WHEN OFFICIAL ADDRESSES
-      const l2bal = await getWalletBalance(state.zkpKeys.compressedPkd);
-      if (Object.hasOwnProperty.call(l2bal, state.zkpKeys.compressedPkd))
-        setL2Balance(l2bal[state.zkpKeys.compressedPkd][address.toLowerCase()] ?? 0);
+      const l2bal = await getWalletBalance(state.compressedPkd);
+      if (Object.hasOwnProperty.call(l2bal, state.compressedPkd))
+        setL2Balance(l2bal[state.compressedPkd][address.toLowerCase()] ?? 0);
       else setL2Balance(0);
     }
   }
