@@ -9,8 +9,6 @@ import reportWebVitals from './reportWebVitals';
 import generateWebComponents from './utils/generateWebComponents';
 
 generateWebComponents();
-const el = document.createElement('nightfall-app');
-document.body.appendChild(el);
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))
