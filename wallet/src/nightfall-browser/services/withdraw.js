@@ -20,18 +20,11 @@ import {
   getSiblingInfo,
 } from './commitment-storage';
 import { calculateIvkPkdfromAskNsk } from './keys';
+import { saveTransaction, checkIndexDBForCircuit } from './database';
 
-// eslint-disable-next-line
-import abi from '../../zokrates/withdraw_stub/artifacts/withdraw_stub-abi.json';
-// eslint-disable-next-line
-import programFile from '../../zokrates/withdraw_stub/artifacts/withdraw_stub-program';
-// eslint-disable-next-line
-import pkFile from '../../zokrates/withdraw_stub/keypair/withdraw_stub_pk.key';
-import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
-import { saveTransaction } from './database';
-
-const { BN128_GROUP_ORDER, SHIELD_CONTRACT_NAME, proposerUrl } = global.config;
+const { BN128_GROUP_ORDER, SHIELD_CONTRACT_NAME, proposerUrl, USE_STUBS } = global.config;
 const { generalise } = gen;
+const circuitName = USE_STUBS ? 'withdraw_stub' : 'withdraw';
 
 async function withdraw(withdrawParams, shieldContractAddress) {
   logger.info('Creating a withdraw transaction');
@@ -39,6 +32,10 @@ async function withdraw(withdrawParams, shieldContractAddress) {
   const { offchain = false, ...items } = withdrawParams;
   const { ercAddress, tokenId, value, recipientAddress, nsk, ask, fee } = generalise(items);
   const { compressedPkd } = await calculateIvkPkdfromAskNsk(ask, nsk);
+
+  const circuitData = await checkIndexDBForCircuit(circuitName);
+  if (!circuitData) throw Error('Some circuit data are missing from IndexedDB');
+  const [abi, program, pk] = circuitData;
 
   // the first thing we need to do is to find and input commitment which
   // will enable us to conduct our withdraw.  Let's rummage in the db...
@@ -86,15 +83,6 @@ async function withdraw(withdrawParams, shieldContractAddress) {
   logger.debug(`witness input is ${JSON.stringify(witnessInput)}`);
   // call a zokrates worker to generate the proof
   const zokratesProvider = await initialize();
-  const program = await fetch(programFile)
-    .then(response => response.body.getReader())
-    .then(parseData)
-    .then(mergeUint8Array);
-  const pk = await fetch(pkFile)
-    .then(response => response.body.getReader())
-    .then(parseData)
-    .then(mergeUint8Array);
-
   const artifacts = { program: new Uint8Array(program), abi };
   const keypair = { pk: new Uint8Array(pk) };
   // computation

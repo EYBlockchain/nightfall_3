@@ -14,6 +14,7 @@ const {
   TRANSACTIONS_COLLECTION,
   COMMITMENTS_COLLECTION,
   KEYS_COLLECTION,
+  CIRCUIT_COLLECTION,
 } = global.config;
 
 // This needs to have better indexDB performance.
@@ -26,9 +27,45 @@ const connectDB = async () => {
       newDb.createObjectStore(SUBMITTED_BLOCKS_COLLECTION);
       newDb.createObjectStore(TRANSACTIONS_COLLECTION);
       newDb.createObjectStore(KEYS_COLLECTION);
+      newDb.createObjectStore(CIRCUIT_COLLECTION);
     },
   });
 };
+
+export async function storeCircuit(key, data) {
+  const db = await connectDB();
+  return db.put(
+    CIRCUIT_COLLECTION,
+    {
+      _id: key,
+      data,
+    },
+    key,
+  );
+}
+
+export async function getStoreCircuit(key) {
+  const db = await connectDB();
+  return db.get(CIRCUIT_COLLECTION, key);
+}
+
+/*
+ * function checks indexedDb for all files(stored as Uint8Aray)
+ * for a particular circuit
+ * return array of arrays if all files found, else return false
+ */
+export async function checkIndexDBForCircuit(circuit) {
+  return Promise.all([
+    getStoreCircuit(`${circuit}-abi`),
+    getStoreCircuit(`${circuit}-program`),
+    getStoreCircuit(`${circuit}-pk`),
+  ]).then(record => {
+    if (record[0] === undefined) return false;
+    if (record[1] === undefined) return false;
+    if (record[2] === undefined) return false;
+    return record.map(data => data.data);
+  });
+}
 
 /**
 Timber functions

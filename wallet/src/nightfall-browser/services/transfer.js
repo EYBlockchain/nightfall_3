@@ -23,27 +23,15 @@ import {
   clearPending,
   getSiblingInfo,
 } from './commitment-storage';
-import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
 import { decompressKey, calculateIvkPkdfromAskNsk } from './keys';
+import { saveTransaction, checkIndexDBForCircuit } from './database';
 
-// zokrates/single_transfer_stub/artifacts/single_transfer_stub-abi.json';
-// eslint-disable-next-line
-import singleTransferAbi from '../../zokrates/single_transfer_stub/artifacts/single_transfer_stub-abi.json';
-// eslint-disable-next-line
-import singleTransferProgramFile from '../../zokrates/single_transfer_stub/artifacts/single_transfer_stub-program';
-// eslint-disable-next-line
-import singleTransferPkFile from '../../zokrates/single_transfer_stub/keypair/single_transfer_stub_pk.key';
-// eslint-disable-next-line
-import doubleTransferAbi from '../../zokrates/double_transfer_stub/artifacts/double_transfer_stub-abi.json';
-// eslint-disable-next-line
-import doubleTransferProgramFile from '../../zokrates/double_transfer_stub/artifacts/double_transfer_stub-program';
-// eslint-disable-next-line
-import doubleTransferPkFile from '../../zokrates/double_transfer_stub/keypair/double_transfer_stub_pk.key';
-import { saveTransaction } from './database';
-
-const { BN128_GROUP_ORDER, ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, proposerUrl, ZERO } =
+const { BN128_GROUP_ORDER, ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, proposerUrl, ZERO, USE_STUBS } =
   global.config;
 const { generalise, GN } = gen;
+
+const singleTransfer = USE_STUBS ? 'single_transfer_stub' : 'single_transfer';
+const doubleTransfer = USE_STUBS ? 'double_transfer_stub' : 'double_transfer';
 
 async function transfer(transferParams, shieldContractAddress) {
   logger.info('Creating a transfer transaction');
@@ -67,6 +55,7 @@ async function transfer(transferParams, shieldContractAddress) {
   );
   if (oldCommitments) logger.debug(`Found commitments ${JSON.stringify(oldCommitments, null, 2)}`);
   else throw new Error('No suitable commitments were found'); // caller to handle - need to get the user to make some commitments or wait until they've been posted to the blockchain and Timber knows about them
+
   // Having found either 1 or 2 commitments, which are suitable inputs to the
   // proof, the next step is to compute their nullifiers;
   const nullifiers = oldCommitments.map(commitment => new Nullifier(commitment, nsk));
@@ -191,36 +180,21 @@ async function transfer(transferParams, shieldContractAddress) {
   // call a zokrates worker to generate the proof
   // This is (so far) the only place where we need to get specific about the
   // circuit
+  let circuitData;
   let transactionType;
-  let program;
-  let pk;
-  let abi;
-  const zokratesProvider = await initialize();
   if (oldCommitments.length === 1) {
     transactionType = 1;
-    program = await fetch(singleTransferProgramFile)
-      .then(response => response.body.getReader())
-      .then(parseData)
-      .then(mergeUint8Array);
-    pk = await fetch(singleTransferPkFile)
-      .then(response => response.body.getReader())
-      .then(parseData)
-      .then(mergeUint8Array);
-    abi = singleTransferAbi;
     blockNumberL2s.push(0); // We need top pad block numbers if we do a single transfer
+    circuitData = await checkIndexDBForCircuit(singleTransfer);
   } else if (oldCommitments.length === 2) {
     transactionType = 2;
-    program = await fetch(doubleTransferProgramFile)
-      .then(response => response.body.getReader())
-      .then(parseData)
-      .then(mergeUint8Array);
-    pk = await fetch(doubleTransferPkFile)
-      .then(response => response.body.getReader())
-      .then(parseData)
-      .then(mergeUint8Array);
-    abi = doubleTransferAbi;
+    circuitData = await checkIndexDBForCircuit(doubleTransfer);
   } else throw new Error('Unsupported number of commitments');
 
+  if (!circuitData) throw Error('Some circuit data are missing from IndexedDB');
+  const [abi, program, pk] = circuitData;
+
+  const zokratesProvider = await initialize();
   const artifacts = { program: new Uint8Array(program), abi };
   const keypair = { pk: new Uint8Array(pk) };
   const { witness } = zokratesProvider.computeWitness(artifacts, flattenInput);

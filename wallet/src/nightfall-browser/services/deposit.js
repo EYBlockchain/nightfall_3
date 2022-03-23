@@ -15,22 +15,14 @@ import { initialize } from 'zokrates-js';
 import rand from '../../common-files/utils/crypto/crypto-random';
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
-// import { generateProof, computeWitness } from 'zokrates-js';
 import { Commitment, Transaction } from '../classes/index';
 import { storeCommitment } from './commitment-storage';
 import { compressPublicKey } from './keys';
+import { saveTransaction, checkIndexDBForCircuit } from './database';
 
-// eslint-disable-next-line
-import abi from '../../zokrates/deposit_stub/artifacts/deposit_stub-abi.json';
-// eslint-disable-next-line
-import programFile from '../../zokrates/deposit_stub/artifacts/deposit_stub-program';
-// eslint-disable-next-line
-import pkFile from '../../zokrates/deposit_stub/keypair/deposit_stub_pk.key';
-import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
-import { saveTransaction } from './database';
-
-const { ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER } = global.config;
+const { ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER, USE_STUBS } = global.config;
 const { generalise } = gen;
+const circuitName = USE_STUBS ? 'deposit_stub' : 'deposit';
 
 async function deposit(items, shieldContractAddress) {
   logger.info('Creating a deposit transaction');
@@ -38,6 +30,10 @@ async function deposit(items, shieldContractAddress) {
   // subsequent manipulations easier
   const { ercAddress, tokenId, value, pkd, nsk, fee } = generalise(items);
   const compressedPkd = compressPublicKey(pkd);
+
+  const circuitData = await checkIndexDBForCircuit(circuitName);
+  if (!circuitData) throw Error('Some circuit data are missing from IndexedDB');
+  const [abi, program, pk] = circuitData;
 
   let commitment;
   let salt;
@@ -60,21 +56,8 @@ async function deposit(items, shieldContractAddress) {
     commitment.hash.integer,
   ];
   logger.debug(`witness input is ${witnessInput.join(' ')}`);
-  // call a zokrates worker to generate the proof
-  // let folderpath = 'deposit';
-  // eslint-disable-next-line no-unused-vars
-  // if (USE_STUBS) folderpath = `${folderpath}_stub`;
 
   const zokratesProvider = await initialize();
-  const program = await fetch(programFile)
-    .then(response => response.body.getReader())
-    .then(parseData)
-    .then(mergeUint8Array);
-  const pk = await fetch(pkFile)
-    .then(response => response.body.getReader())
-    .then(parseData)
-    .then(mergeUint8Array);
-
   const artifacts = { program: new Uint8Array(program), abi };
   const keypair = { pk: new Uint8Array(pk) };
 
