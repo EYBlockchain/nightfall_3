@@ -1,4 +1,4 @@
-const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
+//const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
 /* eslint-disable global-require */
 const { addBeforeLoader, loaderByName } = require('@craco/craco');
 // eslint-disable-next-line no-extend-native
@@ -8,28 +8,7 @@ BigInt.prototype.toJSON = function () {
 
 module.exports = {
   webpack: {
-    alias: {},
-    plugins: {
-      add: [
-        new WebpackManifestPlugin({
-          fileName: 'assets_test.json',
-          generate: (seed, files) => {
-            const js = [];
-            const css = [];
-            files.forEach(file => {
-              if (file.path.endsWith('.js') && file.isInitial) {
-                js.push({ value: file.path, type: 'entry' });
-              }
-              if (file.path.endsWith('.css') && file.isInitial) {
-                css.push({ value: file.path, type: 'entry' });
-              }
-            });
-            return { js, css };
-          },
-        }),
-      ],
-      remove: ['ManifestPlugin'],
-    },
+    alias: {},    
     configure: (webpackConfig, { paths }) => {
       const wasmExtensionRegExp = /\.wasm$/;
       const config = require('../config/default');
