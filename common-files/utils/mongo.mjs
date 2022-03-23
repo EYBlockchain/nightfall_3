@@ -6,6 +6,7 @@ Mongo database functions
 */
 
 import mongo from 'mongodb';
+import logger from './logger.mjs';
 
 const { MongoClient } = mongo;
 const connection = {};
@@ -17,6 +18,10 @@ export default {
     if (url.includes('amazonaws')) {
       // retrieve user and password from secrets
       const { MONGO_INITDB_ROOT_PASSWORD, MONGO_INITDB_ROOT_USERNAME, MONGO_CA } = process.env;
+      logger.debug(`Received AWS url ${url}`);
+      logger.debug(
+        `username ${MONGO_INITDB_ROOT_USERNAME}, password ${MONGO_INITDB_ROOT_PASSWORD}`,
+      );
       const client = await new MongoClient(
         `mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@${url}:27017/?tls=true&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false`,
         {
