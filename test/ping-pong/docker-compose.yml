@@ -133,7 +133,7 @@ services:
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
       BLOCKCHAIN_PAYMENTS_WS_HOST: blockchain2
-      BLOCKCHAIN_PAYMENTS_PORT: 8547
+      BLOCKCHAIN_PAYMENTS_PORT: 8546
       IS_TEST_RUNNER: 'yes'
 
   user-local2:
@@ -152,7 +152,7 @@ services:
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
       BLOCKCHAIN_PAYMENTS_WS_HOST: blockchain2
-      BLOCKCHAIN_PAYMENTS_PORT: 8547
+      BLOCKCHAIN_PAYMENTS_PORT: 8546
 
 volumes:
   mongodb:

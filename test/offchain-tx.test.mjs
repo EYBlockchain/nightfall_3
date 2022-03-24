@@ -22,7 +22,7 @@ const {
 } = config.TEST_OPTIONS;
 
 const TX_WAIT = 10000;
-const TEST_LENGTH = 4;
+const TEST_LENGTH = 2;
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 const recipientPkd = '0x1ac3b61ecba1448e697b23d37efe290fb86554b2f905aaca3a6df59805eca366';
@@ -34,7 +34,6 @@ describe('Testing ping-pong', () => {
 
   const PROPOSER_PORT = 8088;
   const PROPOSER_URL = 'http://host.docker.internal';
-  const paymentUrl = 'https://rpc-mumbai.maticvigil.com'; // already in environment in config for localhost
 
   /* 
   Polygon Mumbai Testnet RPC - HTTP, WS
@@ -54,7 +53,6 @@ describe('Testing ping-pong', () => {
   */
 
   before(async () => {
-    environment.web3PaymentWsUrl = paymentUrl;
     nf3User = new Nf3(userEthereumSigningKey, environment);
     nf3Proposer = new Nf3(proposerEthereumSigningKey, environment);
 
@@ -82,7 +80,7 @@ describe('Testing ping-pong', () => {
       app.listen(PROPOSER_PORT);
       logger.debug(`Proposer API up at URL ${PROPOSER_URL} and port ${PROPOSER_PORT}`);
     }
-    // TODO subscribe to layer 1 blocks and call change proposer
+
     nf3Proposer.startProposer();
     logger.info('Listening for incoming events');
 
@@ -94,9 +92,11 @@ describe('Testing ping-pong', () => {
       let expectedIncBalance = 0;
       let expectedDecPaymentBalance = 0;
       const startBalance = await retrieveL2Balance(nf3User);
-      console.log('START L2 BALANCE', startBalance);
-      const startPaymentBalance = await nf3User.getPaymentBalance(nf3User.ethereumAddress);
-      console.log('START L1 PAYMENT BALANCE:', startPaymentBalance);
+      const startPaymentBalance = BigInt(await nf3User.getPaymentBalance(nf3User.ethereumAddress));
+      const proposerAddress = nf3Proposer.ethereumAddress; // It's the only proposer
+      const proposerStartPaymentBalance = BigInt(
+        await nf3Proposer.getPaymentBalance(proposerAddress),
+      );
       // Create a block of deposits
       for (let i = 0; i < TRANSACTIONS_PER_BLOCK; i++) {
         await nf3User.deposit(ercAddress, tokenType, transferValue, tokenId);
@@ -104,42 +104,21 @@ describe('Testing ping-pong', () => {
       }
 
       // Create a block of transfer and deposit transactions
-      let offchain = false;
+      const offchain = true;
       for (let i = 0; i < TEST_LENGTH; i++) {
         await waitForSufficientBalance(nf3User, transferValue);
         try {
           logger.info(`Transfer is sent offchain : ${offchain}`);
-          if (offchain) {
-            let paymentTransactionHash;
-            try {
-              const paymentTx = await nf3User.sendPayment(nf3User.ethereumAddress, fee);
-              paymentTransactionHash = paymentTx.transactionHash;
-              expectedDecPaymentBalance += fee;
-              logger.info(`Payment TransactionHash: ${paymentTransactionHash}`);
-            } catch (e) {
-              logger.error(e);
-            }
-            // '0x213a91fa26370baa8fb42ff8bcc11b57247ab8dfc3f20676a523130145dcd2b0'; // We simulate payment
-            await nf3User.transfer(
-              offchain,
-              ercAddress,
-              tokenType,
-              transferValue,
-              tokenId,
-              recipientPkd,
-              paymentTransactionHash,
-            );
-          } else
-            await nf3User.transfer(
-              offchain,
-              ercAddress,
-              tokenType,
-              transferValue,
-              tokenId,
-              recipientPkd,
-            );
-
-          offchain = !offchain;
+          await nf3User.transfer(
+            offchain,
+            ercAddress,
+            tokenType,
+            transferValue,
+            tokenId,
+            recipientPkd,
+            fee,
+          );
+          if (offchain) expectedDecPaymentBalance += fee;
         } catch (err) {
           if (err.message.includes('No suitable commitments')) {
             // if we get here, it's possible that a block we are waiting for has not been proposed yet
@@ -157,9 +136,13 @@ describe('Testing ping-pong', () => {
               transferValue,
               tokenId,
               recipientPkd,
+              fee,
             );
           }
         }
+
+        // offchain = !offchain;
+
         expectedIncBalance -= transferValue;
         await nf3User.deposit(ercAddress, tokenType, transferValue, tokenId);
         expectedIncBalance += transferValue;
@@ -184,11 +167,17 @@ describe('Testing ping-pong', () => {
       } while (loop < loopMax);
 
       const endBalance = await retrieveL2Balance(nf3User);
-      console.log('END L2 BALANCE', endBalance);
-      const endPaymentBalance = await nf3User.getPaymentBalance(nf3User.ethereumAddress);
-      console.log('END L1 PAYMENT BALANCE:', endPaymentBalance);
+      const endPaymentBalance = BigInt(await nf3User.getPaymentBalance(nf3User.ethereumAddress));
+      const proposerEndPaymentBalance = BigInt(
+        await nf3Proposer.getPaymentBalance(proposerAddress),
+      );
       expect(expectedIncBalance).to.be.equal(endBalance - startBalance);
-      expect(expectedDecPaymentBalance).to.be.lessThan(startPaymentBalance - endPaymentBalance);
+      expect(expectedDecPaymentBalance).to.be.lessThan(
+        Number(startPaymentBalance - endPaymentBalance),
+      );
+      expect(expectedDecPaymentBalance).to.be.equal(
+        Number(proposerEndPaymentBalance - proposerStartPaymentBalance),
+      );
     });
   });
 

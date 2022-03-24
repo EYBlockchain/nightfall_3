@@ -8,8 +8,6 @@ import {
   saveNullifiers,
   getBlockByTransactionHash,
   getTransactionByTransactionHash,
-  getPaymentByPaymentTransactionHash,
-  savePayment,
 } from '../services/database.mjs';
 // import mappedTransaction from '../event-mappers/transaction-submitted.mjs';
 import checkTransaction from '../services/transaction-checker.mjs';
@@ -41,25 +39,10 @@ async function checkAlreadyInBlock(_transaction) {
 }
 
 /**
-Check that the payment is not already in another transaction
-*/
-async function checkPayment(paymentTransactionHash) {
-  if (!paymentTransactionHash)
-    throw new TransactionError('There is no payment for this transaction', 7);
-  const isAlreadyPaid = !!(await getPaymentByPaymentTransactionHash(paymentTransactionHash));
-  if (isAlreadyPaid)
-    throw new TransactionError('This payment has already been used in another transaction', 8);
-  return true;
-}
-
-/**
 This handler runs whenever a new transaction is submitted to the blockchain
 */
 async function transactionSubmittedEventHandler(eventParams) {
-  const { offchain = false, paymentTransactionHash = null, ...data } = eventParams;
-  logger.info(
-    `Transaction offchain: ${offchain}, Payment transactionHash: ${paymentTransactionHash}`,
-  );
+  const { offchain = false, ...data } = eventParams;
   let transaction;
   if (offchain) {
     transaction = data;
@@ -73,7 +56,6 @@ async function transactionSubmittedEventHandler(eventParams) {
   logger.info(`Transaction Handler - New transaction received.`);
   logger.debug(`Transaction was ${JSON.stringify(transaction, null, 2)}`);
   try {
-    if (offchain) await checkPayment(paymentTransactionHash); // Check if the payment tx hash is already in another transaction
     transaction = await checkAlreadyInBlock(transaction);
     await checkTransaction(transaction);
     logger.info('Transaction checks passed');
@@ -91,7 +73,6 @@ async function transactionSubmittedEventHandler(eventParams) {
     if (transactionNullifiers.length > 0)
       saveNullifiers(transactionNullifiers, transaction.blockNumber); // we can now safely store the nullifiers IFF they are present
     saveTransaction({ ...transaction }); // then we need to save it
-    if (offchain) savePayment(paymentTransactionHash, transaction.transactionHash);
   } catch (err) {
     if (err instanceof TransactionError)
       logger.warn(

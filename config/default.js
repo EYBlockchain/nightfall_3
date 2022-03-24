@@ -4,7 +4,6 @@ module.exports = {
   PROPOSER_COLLECTION: 'proposers',
   CHALLENGER_COLLECTION: 'challengers',
   TRANSACTIONS_COLLECTION: 'transactions',
-  PAYMENTS_COLLECTION: 'payments',
   SUBMITTED_BLOCKS_COLLECTION: 'blocks',
   NULLIFIER_COLLECTION: 'nullifiers',
   COMMIT_COLLECTION: 'commits',
@@ -18,6 +17,7 @@ module.exports = {
   SHIELD_CONTRACT_NAME: 'Shield',
   CHALLENGES_CONTRACT_NAME: 'Challenges',
   STATE_CONTRACT_NAME: 'State',
+  PAYMENT_CONTRACT_NAME: 'FeeBook',
   BLOCK_PROPOSED_EVENT_NAME: 'BlockProposed',
   CIRCUITS_HOME: process.env.CIRCUITS_HOME || '/app/circuits/',
   ALWAYS_DO_TRUSTED_SETUP: process.env.ALWAYS_DO_TRUSTED_SETUP || false,
@@ -33,6 +33,10 @@ module.exports = {
   BLOCKCHAIN_URL:
     process.env.BLOCKCHAIN_URL ||
     `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`,
+  BLOCKCHAIN_PAYMENTS_URL:
+    process.env.BLOCKCHAIN_PAYMENTS_URL ||
+    `ws://${process.env.BLOCKCHAIN_PAYMENTS_WS_HOST}:${process.env.BLOCKCHAIN_PAYMENTS_PORT}`,
+  USE_INFURA: process.env.USE_INFURA === 'true',
   ETH_PRIVATE_KEY: process.env.ETH_PRIVATE_KEY, // owner's/deployer's private key
   ETH_ADDRESS: process.env.ETH_ADDRESS,
   OPTIMIST_HOST: process.env.OPTIMIST_HOST || 'optimist',
@@ -112,7 +116,7 @@ module.exports = {
       optimistApiUrl: '',
       optimistWsUrl: '',
       web3WsUrl: '',
-      web3PaymentWsUrl: '',
+      web3PaymentsWsUrl: '',
     },
     ropsten: {
       name: 'Ropsten',
@@ -121,7 +125,7 @@ module.exports = {
       optimistApiUrl: 'https://optimist1.testnet.nightfall3.com',
       optimistWsUrl: 'wss://optimist1-ws.testnet.nightfall3.com',
       web3WsUrl: `${process.env.ROPSTEN_NODE}`,
-      web3PaymentWsUrl: `${process.env.RINKEBY_NODE}`,
+      web3PaymentsWsUrl: `${process.env.RINKEBY_NODE}`,
     },
     rinkeby: {
       name: 'Rinkeby',
@@ -130,7 +134,7 @@ module.exports = {
       optimistApiUrl: '',
       optimistWsUrl: '',
       web3WsUrl: '',
-      web3PaymentWsUrl: '',
+      web3PaymentsWsUrl: '',
     },
     localhost: {
       name: 'Localhost',

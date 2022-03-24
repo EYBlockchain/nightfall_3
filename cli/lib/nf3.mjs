@@ -38,7 +38,7 @@ class Nf3 {
 
   web3WsUrl;
 
-  web3PaymentWsUrl;
+  web3PaymentsWsUrl;
 
   web3;
 
@@ -53,6 +53,8 @@ class Nf3 {
   challengesContractAddress;
 
   stateContractAddress;
+
+  paymentContractAddress;
 
   ethereumSigningKey;
 
@@ -85,7 +87,7 @@ class Nf3 {
       optimistApiUrl: 'http://localhost:8081',
       optimistWsUrl: 'ws://localhost:8082',
       web3WsUrl: 'ws://localhost:8546',
-      web3PaymentWsUrl: 'ws://localhost:8547',
+      web3PaymentsWsUrl: 'ws://localhost:8547',
     },
     zkpKeys,
   ) {
@@ -93,7 +95,7 @@ class Nf3 {
     this.optimistBaseUrl = environment.optimistApiUrl;
     this.optimistWsUrl = environment.optimistWsUrl;
     this.web3WsUrl = environment.web3WsUrl;
-    this.web3PaymentWsUrl = environment.web3PaymentWsUrl;
+    this.web3PaymentsWsUrl = environment.web3PaymentsWsUrl;
     this.ethereumSigningKey = ethereumSigningKey;
     this.zkpKeys = zkpKeys;
     this.currentEnvironment = environment;
@@ -110,10 +112,9 @@ class Nf3 {
     // this code will call client to get contract addresses, or optimist if client isn't deployed
     switch (contractAddressProvider) {
       case undefined:
-        this.contractGetter = this.getContractAddress;
-        break;
       case 'client':
         this.contractGetter = this.getContractAddress;
+        this.paymentContractAddress = await this.contractGetter('FeeBook');
         break;
       case 'optimist':
         this.contractGetter = this.getContractAddressOptimist;
@@ -380,12 +381,11 @@ class Nf3 {
     value,
     tokenId,
     compressedPkd,
-    paymentTransactionHash,
     fee = this.defaultFee,
   ) {
-    const res = await axios.post(`${this.clientBaseUrl}/transfer`, {
+    let res;
+    res = await axios.post(`${this.clientBaseUrl}/transfer`, {
       offchain,
-      paymentTransactionHash,
       ercAddress,
       tokenId,
       recipientData: {
@@ -415,6 +415,26 @@ class Nf3 {
         });
       });
     }
+
+    const { peerList, transaction } = res.data;
+    const proposerAddress = Object.keys(peerList)[0]; // we only have 1 proposer in the first version
+    res = await this.sendPayment(proposerAddress, transaction.transactionHash, fee);
+
+    Object.keys(peerList).forEach(async address => {
+      console.log(
+        `offchain transaction - calling ${peerList[address]}/proposer/offchain-transaction`,
+      );
+      await axios
+        .post(
+          `${peerList[address]}/proposer/offchain-transaction`,
+          { transaction },
+          { timeout: 3600000 },
+        )
+        .catch(err => {
+          throw new Error(err);
+        });
+    });
+
     return res.status;
   }
 
@@ -445,12 +465,10 @@ class Nf3 {
     value,
     tokenId,
     recipientAddress,
-    paymentTransactionHash,
     fee = this.defaultFee,
   ) {
     const res = await axios.post(`${this.clientBaseUrl}/withdraw`, {
       offchain,
-      paymentTransactionHash,
       ercAddress,
       tokenId,
       tokenType,
@@ -1141,7 +1159,7 @@ class Nf3 {
   Set a Web3 Payment Provider URL
   */
   async setWeb3PaymentProvider() {
-    this.web3Payment = new Web3(this.web3PaymentWsUrl);
+    this.web3Payment = new Web3(this.web3PaymentsWsUrl);
     this.web3Payment.eth.transactionBlockTimeout = 200;
     this.web3Payment.eth.transactionConfirmationBlocks = 12;
     if (typeof window !== 'undefined') {
@@ -1161,9 +1179,7 @@ class Nf3 {
   @returns {Promise} - string with the signature
   */
   async getPaymentBalance(account) {
-    return this.web3Payment.eth.getBalance(account).then(function (balanceWei) {
-      return Web3.utils.fromWei(balanceWei);
-    });
+    return this.web3Payment.eth.getBalance(account);
   }
 
   /**

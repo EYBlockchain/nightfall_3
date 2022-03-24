@@ -12,6 +12,7 @@ import {
   incomingViewingKey,
   setInstantWithdrawl,
   generateKeys,
+  payment,
 } from './routes/index.mjs';
 
 const app = express();
@@ -34,5 +35,6 @@ app.use('/commitment', commitment);
 app.use('/incoming-viewing-key', incomingViewingKey);
 app.use('/set-instant-withdrawal', setInstantWithdrawl);
 app.use('/generate-keys', generateKeys);
+app.use('/payment', payment);
 
 export default app;

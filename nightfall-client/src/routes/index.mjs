@@ -8,6 +8,7 @@ import commitment from './commitment.mjs';
 import incomingViewingKey from './incoming-viewing-key.mjs';
 import setInstantWithdrawl from './instant-withdrawal.mjs';
 import generateKeys from './generate-keys.mjs';
+import payment from './payment.mjs';
 
 export {
   transfer,
@@ -20,4 +21,5 @@ export {
   incomingViewingKey,
   setInstantWithdrawl,
   generateKeys,
+  payment,
 };

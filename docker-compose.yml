@@ -26,6 +26,8 @@ services:
       LOG_LEVEL: debug
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
+      BLOCKCHAIN_PAYMENTS_WS_HOST: blockchain2
+      BLOCKCHAIN_PAYMENTS_PORT: 8546
       ZOKRATES_WORKER_HOST: worker
       RABBITMQ_HOST: amqp://rabbitmq1
       RABBITMQ_PORT: 5672
@@ -59,6 +61,8 @@ services:
       LOG_LEVEL: error
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
+      BLOCKCHAIN_PAYMENTS_WS_HOST: blockchain2
+      BLOCKCHAIN_PAYMENTS_PORT: 8546
       ZOKRATES_WORKER_HOST: worker
       RABBITMQ_HOST: amqp://rabbitmq2
       RABBITMQ_PORT: 5672
@@ -99,6 +103,9 @@ services:
       ETH_NETWORK: blockchain1
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
+      MATIC_NETWORK: blockchain2
+      BLOCKCHAIN_PAYMENTS_WS_HOST: blockchain2
+      BLOCKCHAIN_PAYMENTS_PORT: 8546
       ZOKRATES_WORKER_HOST: worker
       USE_STUBS: 'false'
 
