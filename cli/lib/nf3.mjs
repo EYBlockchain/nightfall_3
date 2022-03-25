@@ -127,7 +127,6 @@ class Nf3 {
     this.proposersContractAddress = await this.contractGetter('Proposers');
     this.challengesContractAddress = await this.contractGetter('Challenges');
     this.stateContractAddress = await this.contractGetter('State');
-    console.log(typeof this.ethereumSigningKey);
     // set the ethereumAddress iff we have a signing key
     if (typeof this.ethereumSigningKey === 'string') {
       this.ethereumAddress = await this.getAccounts();
@@ -421,21 +420,18 @@ class Nf3 {
     const proposerAddress = Object.keys(peerList)[0]; // we only have 1 proposer in the first version
     res = await this.sendPayment(proposerAddress, transaction.transactionHash, fee);
 
-    Object.keys(peerList).forEach(async address => {
-      console.log(
-        `offchain transaction - calling ${peerList[address]}/proposer/offchain-transaction`,
-      );
-      await axios
-        .post(
-          `${peerList[address]}/proposer/offchain-transaction`,
-          { transaction },
-          { timeout: 3600000 },
-        )
-        .catch(err => {
-          throw new Error(err);
-        });
-    });
-
+    logger.debug(
+      `offchain transaction - calling ${peerList[proposerAddress]}/proposer/offchain-transaction`,
+    );
+    res = await axios
+      .post(
+        `${peerList[proposerAddress]}/proposer/offchain-transaction`,
+        { transaction },
+        { timeout: 3600000 },
+      )
+      .catch(err => {
+        throw new Error(err);
+      });
     return res.status;
   }
 
@@ -502,21 +498,18 @@ class Nf3 {
     const proposerAddress = Object.keys(peerList)[0]; // we only have 1 proposer in the first version
     res = await this.sendPayment(proposerAddress, transaction.transactionHash, fee);
 
-    Object.keys(peerList).forEach(async address => {
-      console.log(
-        `offchain transaction - calling ${peerList[address]}/proposer/offchain-transaction`,
-      );
-      await axios
-        .post(
-          `${peerList[address]}/proposer/offchain-transaction`,
-          { transaction },
-          { timeout: 3600000 },
-        )
-        .catch(err => {
-          throw new Error(err);
-        });
-    });
-
+    logger.debug(
+      `offchain transaction - calling ${peerList[proposerAddress]}/proposer/offchain-transaction`,
+    );
+    res = await axios
+      .post(
+        `${peerList[proposerAddress]}/proposer/offchain-transaction`,
+        { transaction },
+        { timeout: 3600000 },
+      )
+      .catch(err => {
+        throw new Error(err);
+      });
     return res.status;
   }
 
@@ -1220,7 +1213,7 @@ class Nf3 {
       });
       return res.data.checkPayment;
     } catch (e) {
-      console.log(e);
+      logger.error(e);
       return false;
     }
   }
