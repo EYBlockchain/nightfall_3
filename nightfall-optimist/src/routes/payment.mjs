@@ -19,13 +19,11 @@ router.get('/check', async (req, res, next) => {
   logger.debug(`check payment endpoint received GET ${JSON.stringify(req.body, null, 2)}`);
   try {
     const { transactionHashL2, transactionFee } = req.query;
-    console.log('111111', transactionHashL2, transactionFee);
     const paymentContractInstance = await getContractInstance(PAYMENT_CONTRACT_NAME);
 
     const checkPayment = await paymentContractInstance.methods
       .checkPayment(transactionHashL2, transactionFee)
       .call();
-    console.log('33333');
 
     logger.debug('returning check payment');
     logger.silly(`check payment is ${JSON.stringify(checkPayment, null, 2)}`);
