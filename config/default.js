@@ -42,7 +42,7 @@ module.exports = {
   OPTIMIST_HOST: process.env.OPTIMIST_HOST || 'optimist',
   OPTIMIST_PORT: process.env.OPTIMIST_PORT || 80,
   PROPOSER_HOST: process.env.PROPOSER_HOST || 'proposer',
-  PROPOSER_PORT: process.env.PROPOSER_PORT || 8080,
+  PROPOSER_PORT: process.env.PROPOSER_PORT || 8100,
   WEB3_OPTIONS: {
     gas: process.env.GAS || 8000000,
     gasPrice: process.env.GAS_PRICE || '20000000000',
@@ -150,13 +150,13 @@ module.exports = {
         : 'ws://localhost:8082',
       proposerBaseUrl: process.env.PROPOSER_HOST
         ? `http://${process.env.PROPOSER_HOST}:${process.env.PROPOSER_PORT}`
-        : 'http://172.16.238.1:8100',
+        : 'http://host.docker.internal:8100',
       adversarialOptimistApiUrl: 'http://localhost:8088',
       adversarialOptimistWsUrl: 'ws://localhost:8089',
       web3WsUrl: process.env.BLOCKCHAIN_WS_HOST
         ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`
         : 'ws://localhost:8546',
-      web3PaymentWsUrl: process.env.BLOCKCHAIN_PAYMENTS_WS_HOST
+      web3PaymentsWsUrl: process.env.BLOCKCHAIN_PAYMENTS_WS_HOST
         ? `ws://${process.env.BLOCKCHAIN_PAYMENTS_WS_HOST}:${process.env.BLOCKCHAIN_PAYMENTS_PORT}`
         : 'ws://localhost:8547',
     },

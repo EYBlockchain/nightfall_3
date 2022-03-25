@@ -25,10 +25,23 @@ async function nf3GetContractAddressOptimist(contract) {
   return null;
 }
 
+function nf3GetEthereumAddress() {
+  if (nf3Instance !== '') {
+    return nf3Instance.ethereumAddress;
+  }
+  return null;
+}
+
 async function nf3Init(proposerEthereumSigningKey, Urls, mnemonic, contractAddressProvider) {
   nf3Instance = new Nf3(proposerEthereumSigningKey, Urls);
   if (nf3Instance !== '') {
     await nf3Instance.init(mnemonic, contractAddressProvider);
+  }
+}
+
+async function nf3Close() {
+  if (nf3Instance !== '') {
+    await nf3Instance.close();
   }
 }
 
@@ -63,4 +76,6 @@ export {
   nf3Healthcheck,
   nf3RegisterProposer,
   nf3StartProposer,
+  nf3Close,
+  nf3GetEthereumAddress,
 };
