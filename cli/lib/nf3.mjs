@@ -1080,22 +1080,21 @@ class Nf3 {
     }
 
     provider.on('error', err => {
-      logger.error(`web3 error: ${err}`)
+      logger.error(`web3 error: ${err}`);
       try {
         this.web3.setProvider(provider);
       } catch (e) {
-        logger.error(`Couldn't restart Web3: ${e}`)
+        logger.error(`Couldn't restart Web3: ${e}`);
       }
     });
 
     provider.on('connect', () => logger.info('Blockchain Connected ...'));
     provider.on('end', () => {
-      logger.info('Blockchain disconnected')
+      logger.info('Blockchain disconnected');
       try {
         this.web3.setProvider(provider);
       } catch (e) {
-        logger.error(`Couldn't restart Web3: ${e}`)
-
+        logger.error(`Couldn't restart Web3: ${e}`);
       }
     });
   }
