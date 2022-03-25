@@ -116,14 +116,9 @@ describe('Basic Proposer tests', () => {
   });
 
   it('should fail to register a proposer twice', async () => {
-    try {
-      const res = await bootProposer.registerProposer(testProposersUrl[2]);
-      expectTransaction(res);
-
-      expect.fail('Submitting the same proposer registration should have caused an EVM revert');
-    } catch (err) {
-      expect(err.message).to.include('Transaction has been reverted by the EVM');
-    }
+    const res = await bootProposer.registerProposer(testProposersUrl[2]);
+    // eslint-disable-next-line @babel/no-unused-expressions
+    expect(res).to.be.false;
   });
 
   it('should unregister the boot proposer', async () => {

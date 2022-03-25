@@ -22,17 +22,8 @@ async function startProposer() {
   if (await nf3.healthcheck('optimist')) logger.info('Healthcheck passed');
   else throw new Error('Healthcheck failed');
   logger.info('Attempting to register proposer');
-  // let's see if the proposer has been registered before
   const proposerUrl = PROPOSER_PORT !== '' ? `${PROPOSER_URL}:${PROPOSER_PORT}` : '';
-  const { proposers } = await nf3.getProposers();
-  // if not, let's register them
-  if (proposers.length === 0) {
-    await nf3.registerProposer(proposerUrl);
-    logger.info('Proposer registration complete');
-  } else if (!proposers.map(p => p.thisAddress).includes(nf3.ethereumAddress)) {
-    await nf3.registerProposer(proposerUrl);
-    logger.info('Proposer registration complete');
-  } else logger.warn('Proposer appears to be registerd already');
+  await nf3.registerProposer(proposerUrl);
   if (PROPOSER_PORT !== '') {
     logger.debug('Proposer healthcheck up');
     app.listen(PROPOSER_PORT);

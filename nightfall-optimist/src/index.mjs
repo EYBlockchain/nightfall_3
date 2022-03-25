@@ -17,11 +17,13 @@ import {
 import { setChallengeWebSocketConnection } from './services/challenges.mjs';
 import initialBlockSync from './services/state-sync.mjs';
 import { setInstantWithdrawalWebSocketConnection } from './services/instant-withdrawal.mjs';
+import { setProposer } from './routes/proposer.mjs';
 import { setBlockProposedWebSocketConnection } from './event-handlers/block-proposed.mjs';
 
 const main = async () => {
   try {
     const proposer = new Proposer();
+    setProposer(proposer); // passes the proposer instance int the proposer routes
     // subscribe to WebSocket events first
     await subscribeToBlockAssembledWebSocketConnection(setBlockAssembledWebSocketConnection);
     await subscribeToChallengeWebSocketConnection(setChallengeWebSocketConnection);
