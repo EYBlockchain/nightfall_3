@@ -23,20 +23,26 @@ export default {
       config.WEB3_PROVIDER_OPTIONS,
     );
 
-    provider.on('error', err => logger.error(`web3 error: ${err}`));
-    provider.on('connect', () => logger.info('Blockchain Connected ...'));
-    provider.on('end', () => logger.info('Blockchain disconnected'));
-
     this.web3 = new Web3(provider);
 
-    // Web3 socket restart in case socket dies
-    const checkActive = () => {
-      if (!this.web3.currentProvider.connected) {
+    provider.on('error', err => {
+      logger.error(`web3 error: ${err}`);
+      try {
         this.web3.setProvider(provider);
+      } catch (e) {
+        logger.error(`Couldn't restart Web3: ${e}`);
       }
-      setTimeout(checkActive, 2000);
-    };
-    checkActive();
+    });
+
+    provider.on('connect', () => logger.info('Blockchain Connected ...'));
+    provider.on('end', () => {
+      logger.info('Blockchain disconnected');
+      try {
+        this.web3.setProvider(provider);
+      } catch (e) {
+        logger.error(`Couldn't restart Web3: ${e}`);
+      }
+    });
 
     return provider;
   },
