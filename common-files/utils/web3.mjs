@@ -29,6 +29,15 @@ export default {
 
     this.web3 = new Web3(provider);
 
+    // Web3 socket restart in case socket dies
+    const checkActive = () => {
+      if (!this.web3.currentProvider.connected) {
+        this.web3.setProvider(provider);
+      }
+      setTimeout(checkActive, 2000);
+    };
+    checkActive();
+
     return provider;
   },
 

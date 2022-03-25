@@ -51,7 +51,8 @@ module.exports = {
     clientConfig: {
       // Useful to keep a connection alive
       keepalive: true,
-      keepaliveInterval: 60000,
+      // Keep keepalive interval small so that socket doesn't die
+      keepaliveInterval: 1500,
     },
     timeout: 3600000,
     reconnect: {

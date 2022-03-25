@@ -509,11 +509,28 @@ class Nf3 {
   */
   async getInstantWithdrawalRequestedEmitter() {
     const emitter = new EventEmitter();
-    const connection = new WebSocket(this.optimistWsUrl);
+    let connection = new WebSocket(this.optimistWsUrl);
     this.websockets.push(connection); // save so we can close it properly later
     const ping = async () => {
-      if (!connection) return;
-      if (connection.readyState !== WebSocket.OPEN) return;
+      if (!connection) {
+        // Attempt to fix https://github.com/EYBlockchain/nightfall_3/issues/569
+        try {
+          connection = new WebSocket(this.optimistWsUrl);
+          this.websockets.push(connection);
+        } catch (e) {
+          logger.debug('Error opening socket ', e);
+          return;
+        }
+      }
+      if (connection.readyState !== WebSocket.OPEN) {
+        try {
+          connection = new WebSocket(this.optimistWsUrl);
+          this.websockets.push(connection);
+        } catch (e) {
+          logger.debug('Error opening socket ', e);
+          return;
+        }
+      }
       connection.ping();
       setTimeout(ping, 15000);
     };
@@ -688,12 +705,29 @@ class Nf3 {
   */
   async startProposer() {
     const newGasBlockEmitter = new EventEmitter();
-    const connection = new WebSocket(this.optimistWsUrl);
+    let connection = new WebSocket(this.optimistWsUrl);
     this.websockets.push(connection); // save so we can close it properly later
     // Ping function to keep WS open. Send beat every 15 seconds
     const ping = async () => {
-      if (!connection) return;
-      if (connection.readyState !== WebSocket.OPEN) return;
+      if (!connection) {
+        // Attempt to fix https://github.com/EYBlockchain/nightfall_3/issues/569
+        try {
+          connection = new WebSocket(this.optimistWsUrl);
+          this.websockets.push(connection);
+        } catch (e) {
+          logger.debug('Error opening socket ', e);
+          return;
+        }
+      }
+      if (connection.readyState !== WebSocket.OPEN) {
+        try {
+          connection = new WebSocket(this.optimistWsUrl);
+          this.websockets.push(connection);
+        } catch (e) {
+          logger.debug('Error opening socket ', e);
+          return;
+        }
+      }
       connection.ping();
       setTimeout(ping, 15000);
     };
@@ -754,11 +788,28 @@ class Nf3 {
   */
   async getNewBlockEmitter() {
     const newBlockEmitter = new EventEmitter();
-    const connection = new WebSocket(this.optimistWsUrl);
+    let connection = new WebSocket(this.optimistWsUrl);
     this.websockets.push(connection); // save so we can close it properly later
     const ping = async () => {
-      if (!connection) return;
-      if (connection.readyState !== WebSocket.OPEN) return;
+      if (!connection) {
+        // Attempt to fix https://github.com/EYBlockchain/nightfall_3/issues/569
+        try {
+          connection = new WebSocket(this.optimistWsUrl);
+          this.websockets.push(connection);
+        } catch (e) {
+          logger.debug('Error opening socket ', e);
+          return;
+        }
+      }
+      if (connection.readyState !== WebSocket.OPEN) {
+        try {
+          connection = new WebSocket(this.optimistWsUrl);
+          this.websockets.push(connection);
+        } catch (e) {
+          logger.debug('Error opening socket ', e);
+          return;
+        }
+      }
       connection.ping();
       setTimeout(ping, 15000);
     };
@@ -807,11 +858,28 @@ class Nf3 {
   @async
   */
   async startChallenger() {
-    const connection = new WebSocket(this.optimistWsUrl);
+    let connection = new WebSocket(this.optimistWsUrl);
     this.websockets.push(connection); // save so we can close it properly later
     const ping = async () => {
-      if (!connection) return;
-      if (connection.readyState !== WebSocket.OPEN) return;
+      if (!connection) {
+        // Attempt to fix https://github.com/EYBlockchain/nightfall_3/issues/569
+        try {
+          connection = new WebSocket(this.optimistWsUrl);
+          this.websockets.push(connection);
+        } catch (e) {
+          logger.debug('Error opening socket ', e);
+          return;
+        }
+      }
+      if (connection.readyState !== WebSocket.OPEN) {
+        try {
+          connection = new WebSocket(this.optimistWsUrl);
+          this.websockets.push(connection);
+        } catch (e) {
+          logger.debug('Error opening socket ', e);
+          return;
+        }
+      }
       connection.ping();
       setTimeout(ping, 15000);
     };
@@ -840,11 +908,28 @@ class Nf3 {
   */
   async getChallengeEmitter() {
     const newChallengeEmitter = new EventEmitter();
-    const connection = new WebSocket(this.optimistWsUrl);
+    let connection = new WebSocket(this.optimistWsUrl);
     this.websockets.push(connection); // save so we can close it properly later
     const ping = async () => {
-      if (!connection) return;
-      if (connection.readyState !== WebSocket.OPEN) return;
+      if (!connection) {
+        // Attempt to fix https://github.com/EYBlockchain/nightfall_3/issues/569
+        try {
+          connection = new WebSocket(this.optimistWsUrl);
+          this.websockets.push(connection);
+        } catch (e) {
+          logger.debug('Error opening socket ', e);
+          return;
+        }
+      }
+      if (connection.readyState !== WebSocket.OPEN) {
+        try {
+          connection = new WebSocket(this.optimistWsUrl);
+          this.websockets.push(connection);
+        } catch (e) {
+          logger.debug('Error opening socket ', e);
+          return;
+        }
+      }
       connection.ping();
       setTimeout(ping, 15000);
     };
@@ -963,8 +1048,27 @@ class Nf3 {
   Set a Web3 Provider URL
   */
   async setWeb3Provider() {
+    // initialization of web3 provider has been taken from common-files/utils/web3.mjs
+    //  Target is to mainain web3 socker alive
+    const WEB3_PROVIDER_OPTIONS = {
+      clientConfig: {
+        // Useful to keep a connection alive
+        keepalive: true,
+        keepaliveInterval: 10,
+      },
+      timeout: 3600000,
+      reconnect: {
+        auto: true,
+        delay: 5000, // ms
+        maxAttempts: 120,
+        onTimeout: false,
+      },
+    };
+    const provider = new Web3.providers.WebsocketProvider(this.web3WsUrl, WEB3_PROVIDER_OPTIONS);
+
+    this.web3 = new Web3(provider);
     this.web3 = new Web3(this.web3WsUrl);
-    this.web3.eth.transactionBlockTimeout = 200;
+    this.web3.eth.transactionBlockTimeout = 2000;
     this.web3.eth.transactionConfirmationBlocks = 12;
     if (typeof window !== 'undefined') {
       if (window.ethereum && this.ethereumSigningKey === '') {
@@ -975,6 +1079,19 @@ class Nf3 {
         throw new Error('No Web3 provider found');
       }
     }
+
+    // Web3 socket restart in case socket dies
+    const checkActive = () => {
+      if (!this.web3.currentProvider.connected) {
+        this.web3.setProvider(provider);
+      }
+      setTimeout(checkActive, 2000);
+    };
+    checkActive();
+
+    provider.on('error', err => logger.error(`web3 error: ${err}`));
+    provider.on('connect', () => logger.info('Blockchain Connected ...'));
+    provider.on('end', () => logger.info('Blockchain disconnected'));
   }
 
   /**

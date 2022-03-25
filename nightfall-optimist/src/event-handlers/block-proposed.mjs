@@ -1,3 +1,4 @@
+import WebSocket from 'ws';
 import logger from 'common-files/utils/logger.mjs';
 import Timber from 'common-files/classes/timber.mjs';
 import config from 'config';
@@ -30,7 +31,7 @@ async function blockProposedEventHandler(data) {
   const { block, transactions } = await getProposeBlockCalldata(data);
 
   // If a service is subscribed to this websocket and listening for events.
-  if (ws)
+  if (ws && ws.readyState === WebSocket.OPEN) {
     await ws.send(
       JSON.stringify({
         type: 'blockProposed',
@@ -42,6 +43,7 @@ async function blockProposedEventHandler(data) {
         },
       }),
     );
+  }
   logger.info('Received BlockProposed event');
   try {
     // and save the block to facilitate later lookup of block data
