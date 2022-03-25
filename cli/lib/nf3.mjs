@@ -467,7 +467,8 @@ class Nf3 {
     recipientAddress,
     fee = this.defaultFee,
   ) {
-    const res = await axios.post(`${this.clientBaseUrl}/withdraw`, {
+    let res;
+    res = await axios.post(`${this.clientBaseUrl}/withdraw`, {
       offchain,
       ercAddress,
       tokenId,
@@ -495,6 +496,26 @@ class Nf3 {
         });
       });
     }
+
+    const { peerList, transaction } = res.data;
+    const proposerAddress = Object.keys(peerList)[0]; // we only have 1 proposer in the first version
+    res = await this.sendPayment(proposerAddress, transaction.transactionHash, fee);
+
+    Object.keys(peerList).forEach(async address => {
+      console.log(
+        `offchain transaction - calling ${peerList[address]}/proposer/offchain-transaction`,
+      );
+      await axios
+        .post(
+          `${peerList[address]}/proposer/offchain-transaction`,
+          { transaction },
+          { timeout: 3600000 },
+        )
+        .catch(err => {
+          throw new Error(err);
+        });
+    });
+
     return res.status;
   }
 
@@ -1183,9 +1204,32 @@ class Nf3 {
   }
 
   /**
+  Check payment to the proposer account
+  @param {String} transactionHashL2 - L2 Transaction hash that pay the fee
+  @param {Number} fee - fee to pay for the transaction to the proposer
+  @returns {Promise} - string with the signatureStringStringString
+  */
+  async checkPayment(transactionHashL2, transactionFee) {
+    try {
+      const res = await axios.get(`${this.optimistBaseUrl}/payment/check`, {
+        params: {
+          transactionHashL2,
+          transactionFee,
+        },
+      });
+      return res.data.checkPayment;
+    } catch (e) {
+      console.log(e);
+      return false;
+    }
+  }
+
+  /**
   Send payment to the proposer account
-  @param {String } account - Ethereum address of account
-  @returns {Promise} - string with the signature
+  @param {String} proposerAddress - Ethereum address of the proposer to pay
+  @param {String} transactionHashL2 - L2 Transaction hash that pay the fee
+  @param {Number} fee - fee to pay for the transaction to the proposer
+  @returns {Promise} - string with the signatureStringStringString
   */
   async sendPayment(account, amount) {
     let gasPrice = 20000000000;

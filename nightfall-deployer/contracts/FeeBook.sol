@@ -21,17 +21,26 @@ contract FeeBook is Ownable, ReentrancyGuardUpgradeable {
     }
 
     /**
-     * @dev Allows to change the fee amount to be paid
+     * @dev Allows to change the fee amount to be paid for the transactions to proposer
      */
     function setFee(uint256 newFee) external onlyOwner {
         fee = newFee;
     }
 
     /**
-     * @dev Get fee amount to be paid
+     * @dev Get fee amount to be paid for the transactions to proposer
      */
     function getFee() external view returns(uint256) {
         return fee;
+    }
+
+    /**
+     * @dev Check payment fee amount to be paid
+     */
+    function checkPayment(bytes32 transactionHashL2, uint256 transactionFee) external view returns(bool) {
+        require(feeBook[transactionHashL2] > 0, "FeeBook: payment not found");
+        require(feeBook[transactionHashL2] >= transactionFee, "FeeBook: fee lower than expected");
+        return true;
     }
 
     /**

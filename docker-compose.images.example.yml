@@ -141,6 +141,8 @@ services:
       WEBSOCKET_PORT: 8080
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
+      BLOCKCHAIN_PAYMENTS_WS_HOST: blockchain2
+      BLOCKCHAIN_PAYMENTS_PORT: 8546
       HASH_TYPE: mimc
       LOG_LEVEL: debug
       IS_CHALLENGER: 'true'
@@ -166,6 +168,8 @@ services:
       WEBSOCKET_PORT: 8080
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
+      BLOCKCHAIN_PAYMENTS_WS_HOST: blockchain2
+      BLOCKCHAIN_PAYMENTS_PORT: 8546
       HASH_TYPE: mimc
       LOG_LEVEL: error
       IS_CHALLENGER: 'true'

@@ -7,6 +7,8 @@ services:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
       BLOCKCHAIN_PORT: 8546
+      BLOCKCHAIN_PAYMENTS_WS_HOST: host.docker.internal
+      BLOCKCHAIN_PAYMENTS_PORT: 8547
       AUTOSTART_RETRIES: 10000
 
   deployer:
@@ -19,6 +21,8 @@ services:
       ETH_NETWORK: development
       BLOCKCHAIN_WS_HOST: host.docker.internal
       BLOCKCHAIN_PORT: 8546
+      BLOCKCHAIN_PAYMENTS_WS_HOST: host.docker.internal
+      BLOCKCHAIN_PAYMENTS_PORT: 8547
       ETH_PRIVATE_KEY: abf4ed9f30bd1e4a290310d726c7bbdf39cd75a25eebd9a3a4874e10b4a0c4ce
       ETH_ADDRESS: '0xdb080dC48961bC1D67a0A4151572eCb824cC76E8'
       GAS_PRICE: 20000000000
@@ -29,6 +33,8 @@ services:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
       BLOCKCHAIN_PORT: 8546
+      BLOCKCHAIN_PAYMENTS_WS_HOST: host.docker.internal
+      BLOCKCHAIN_PAYMENTS_PORT: 8547
       AUTOSTART_RETRIES: 10000
 
   proposer:

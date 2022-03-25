@@ -25,32 +25,15 @@ const TX_WAIT = 10000;
 const TEST_LENGTH = 2;
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
-const recipientPkd = '0x1ac3b61ecba1448e697b23d37efe290fb86554b2f905aaca3a6df59805eca366';
+const recipientPkd = '0x1ac3b61ecba1448e697b23d37efe290fb86554b2f905aaca3a6df59805eca366'; // user2 pkd
 
-describe('Testing ping-pong', () => {
+describe('Testing off-chain transactions', () => {
   let nf3User;
   let nf3Proposer;
   let ercAddress;
 
   const PROPOSER_PORT = 8088;
   const PROPOSER_URL = 'http://host.docker.internal';
-
-  /* 
-  Polygon Mumbai Testnet RPC - HTTP, WS
-  --------------------------------------
-  https://rpc-mumbai.matic.today or
-  https://matic-mumbai.chainstacklabs.com or
-  https://rpc-mumbai.maticvigil.com or
-  https://matic-testnet-archive-rpc.bwarelabs.com
-  wss://rpc-mumbai.matic.today or
-  wss://ws-matic-mumbai.chainstacklabs.com or
-  wss://rpc-mumbai.maticvigil.com/ws or
-  wss://matic-testnet-archive-ws.bwarelabs.com
-
-  Block Explorer
-  ---------------
-  https://mumbai.polygonscan.com/
-  */
 
   before(async () => {
     nf3User = new Nf3(userEthereumSigningKey, environment);
@@ -75,6 +58,7 @@ describe('Testing ping-pong', () => {
       await nf3Proposer.registerProposer(proposerUrl);
       logger.info('Proposer registration complete');
     } else logger.warn('Proposer appears to be registerd already');
+    // proposer listens for off-chain transactions
     if (PROPOSER_PORT !== '') {
       setNf3Instance(nf3Proposer);
       app.listen(PROPOSER_PORT);
@@ -87,8 +71,8 @@ describe('Testing ping-pong', () => {
     ercAddress = await nf3User.getContractAddress('ERC20Mock');
   });
 
-  describe('Test deposits and transfers', () => {
-    it('User should have the correct balance after deposits / transfers', async () => {
+  describe('Test off-chain transfers / withdraws', () => {
+    it('User should have the correct balance after deposits / off-chain transfers', async () => {
       let expectedIncBalance = 0;
       let expectedDecPaymentBalance = 0;
       const startBalance = await retrieveL2Balance(nf3User);
@@ -172,6 +156,42 @@ describe('Testing ping-pong', () => {
         await nf3Proposer.getPaymentBalance(proposerAddress),
       );
       expect(expectedIncBalance).to.be.equal(endBalance - startBalance);
+      expect(expectedDecPaymentBalance).to.be.lessThan(
+        Number(startPaymentBalance - endPaymentBalance),
+      );
+      expect(expectedDecPaymentBalance).to.be.equal(
+        Number(proposerEndPaymentBalance - proposerStartPaymentBalance),
+      );
+    });
+
+    it('User should have the correct balance after off-chain withdraw', async () => {
+      // let expectedIncBalance = 0;
+      let expectedDecPaymentBalance = 0;
+      // const startBalance = await retrieveL2Balance(nf3User);
+      const startPaymentBalance = BigInt(await nf3User.getPaymentBalance(nf3User.ethereumAddress));
+      const proposerAddress = nf3Proposer.ethereumAddress; // It's the only proposer
+      const proposerStartPaymentBalance = BigInt(
+        await nf3Proposer.getPaymentBalance(proposerAddress),
+      );
+      // console.log('START: ', startBalance, startPaymentBalance, proposerStartPaymentBalance);
+      await nf3User.withdraw(
+        true,
+        ercAddress,
+        tokenType,
+        transferValue,
+        tokenId,
+        recipientPkd,
+        fee,
+      );
+      expectedDecPaymentBalance += fee;
+      // expectedIncBalance -= transferValue;
+      // const endBalance = await retrieveL2Balance(nf3User);
+      const endPaymentBalance = BigInt(await nf3User.getPaymentBalance(nf3User.ethereumAddress));
+      const proposerEndPaymentBalance = BigInt(
+        await nf3Proposer.getPaymentBalance(proposerAddress),
+      );
+      // console.log('END: ', endBalance, endPaymentBalance, proposerEndPaymentBalance);
+      // expect(expectedIncBalance).to.be.equal(startBalance - endBalance);
       expect(expectedDecPaymentBalance).to.be.lessThan(
         Number(startPaymentBalance - endPaymentBalance),
       );

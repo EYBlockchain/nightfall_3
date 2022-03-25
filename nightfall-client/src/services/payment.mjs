@@ -1,12 +1,10 @@
 /**
-This module contains the logic needed create a zkp transfer, i.e. to nullify
-two input commitments and create two new output commitments to the same value.
-It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
- * @module deposit.mjs
- * @author westlad, Chaitanya-Konda, iAmMichaelConnor, will-kim
+This module contains the logic needed to create fee payment for the proposer
+ * @module payments.mjs
+ * @author daveroga
  */
 import config from 'config';
-import { getContractInstance } from 'common-files/utils/contract.mjs';
+import { getContractInstance } from 'common-files/utils/contract-payments.mjs';
 import logger from 'common-files/utils/logger.mjs';
 
 const { PAYMENT_CONTRACT_NAME } = config;

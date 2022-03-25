@@ -30,9 +30,11 @@ services:
   optimist1:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
+      BLOCKCHAIN_PAYMENTS_WS_HOST: host.docker.internal
       AUTOSTART_RETRIES: 100
 
   optimist2:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
+      BLOCKCHAIN_PAYMENTS_WS_HOST: host.docker.internal
       AUTOSTART_RETRIES: 100
