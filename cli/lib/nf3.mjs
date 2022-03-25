@@ -1067,7 +1067,6 @@ class Nf3 {
     const provider = new Web3.providers.WebsocketProvider(this.web3WsUrl, WEB3_PROVIDER_OPTIONS);
 
     this.web3 = new Web3(provider);
-    this.web3 = new Web3(this.web3WsUrl);
     this.web3.eth.transactionBlockTimeout = 2000;
     this.web3.eth.transactionConfirmationBlocks = 12;
     if (typeof window !== 'undefined') {
