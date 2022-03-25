@@ -160,9 +160,8 @@ export default function TokenItem({
               type="button"
               className={styles.tokenListButton}
               id={tokenSendId}
-              onClick={() => {
-                changeChain('polygon');
-                setShowSendModal(true);
+              onClick={async () => {
+                await changeChain('polygon', setShowSendModal);
               }}
             >
               Send

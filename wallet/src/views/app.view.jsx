@@ -27,9 +27,9 @@ export default function App() {
     generateWebComponents();
   }, []);
 
-  const changeChain = network => {
+  const changeChain = (network, cb) => {
     Web3.getChain().then(e => {
-      Web3.changeChain(networks[network]);
+      Web3.changeChain(networks[network], cb);
     });
   };
 

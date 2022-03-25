@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Modal from 'react-bootstrap/Modal';
 import Dropdown from 'react-bootstrap/Dropdown';
 import DropdownButton from 'react-bootstrap/DropdownButton';
@@ -41,8 +41,13 @@ const BridgeComponent = (props: any) => {
   const [show, setShow] = useState(false);
 
   const handleClose = () => setShow(false);
-  const handleShow = () => {
-    setShow(true);
+  const handleShow = async () => {
+    const { changeChain } = props[Object.keys(props)[1].toString()];
+    if (txType === 'deposit') {
+      await changeChain('ethereum', setShow);
+    } else {
+      await changeChain('polygon', setShow);
+    }
   };
 
   const [showModalConfirm, setShowModalConfirm] = useState(false);
@@ -145,15 +150,6 @@ const BridgeComponent = (props: any) => {
     handleClose();
     return true;
   }
-
-  useEffect(() => {
-    const { changeChain } = props[Object.keys(props)[1].toString()];
-    if (txType === 'deposit') {
-      changeChain('ethereum');
-    } else {
-      changeChain('polygon');
-    }
-  }, [txType]);
 
   return (
     <div className={styles.bridgeWrapper}>

@@ -48,7 +48,7 @@
     "deploy": "npm run build && aws s3 sync build s3://pnf-dev-browser --cache-control max-age=172800 --delete && aws configure set preview.cloudfront true && aws cloudfront create-invalidation --distribution-id ENV3X13MLR5YT --paths \"/*\"",
     "test": "craco test --env=jsdom",
     "eject": "craco eject",
-    "e2e-test": "npx synpress run --env TRANSACTIONS_PER_BLOCK=2"
+    "e2e-test": "npx synpress run --env USE_STUBS=true,TRANSACTIONS_PER_BLOCK=2,NETWORK_NAME_POLYGON=ganache-polygon,RPC_URL_POLYGON=http://localhost:8547,CHAIN_ID_POLYGON=6773,NETWORK_NAME_ETH=ganache-nightfall,RPC_URL_ETH=http://localhost:8547,NETWORK_NAME_ETH=ganache-ethereum,RPC_URL_ETH=http://localhost:8546,CHAIN_ID_ETH=5773,RECIPIENT_PKD=0x1ac3b61ecba1448e697b23d37efe290fb86554b2f905aaca3a6df59805eca366"
   },
   "browserslist": {
     "production": [

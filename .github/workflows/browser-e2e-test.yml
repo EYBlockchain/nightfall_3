@@ -51,7 +51,7 @@ jobs:
         run: cd cli && npm ci
 
       - name: Run proposer
-        run:  |
+        run: |
           ./proposer > proposer.log &disown
           sleep 200
 
@@ -80,9 +80,12 @@ jobs:
       - name: Run e2e test
         run: cd wallet && npm run e2e-test
         env:
-          NETWORK_NAME: 'ganache-nightfall'
-          RPC_URL: 'http://localhost:8546'
-          CHAIN_ID: 1337
+          NETWORK_NAME_ETH: 'ganache-ethereum'
+          RPC_URL_ETH: 'http://localhost:8546'
+          CHAIN_ID_ETH: 5773
+          NETWORK_NAME_POLYGON: 'ganache-polygon'
+          RPC_URL_POLYGON: 'http://localhost:8547'
+          CHAIN_ID_POLYGON: 6773
           PRIVATE_KEY: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e'
 
       - name: test video

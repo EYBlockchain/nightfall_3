@@ -37,20 +37,24 @@ export default {
   },
 
   /**
-   * Changes to localhost chain
+   * Changes web3 chain, returns an object with the response and the underlying
+   * ethereum object (for event listening)
    */
-  async changeChain(newChainId) {
-    console.log('NEW', `0x${newChainId.toString(16)}`);
-    const res = await ethereum.request({
-      method: 'wallet_switchEthereumChain',
-      params: [
-        {
-          chainId: `0x${newChainId.toString(16)}`,
-        },
-      ], // chainId must be in hexadecimal numbers
-    });
-    console.log('RES', res);
-    return res;
+  async changeChain(newChainId, cb) {
+    try {
+      const res = await ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [
+          {
+            chainId: `0x${newChainId.toString(16)}`,
+          },
+        ], // chainId must be in hexadecimal numbers
+      });
+
+      cb(!res);
+    } catch (err) {
+      cb(false);
+    }
   },
 
   /**

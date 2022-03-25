@@ -20,7 +20,22 @@ function toAccommodateTx(txPerBlock, noOfTx) {
 
 Cypress.LocalStorage.clear = function () {};
 
+before(() => {
+  console.log(Cypress.env('CHAIN_ID_ETH'));
+  cy.addMetamaskNetwork({
+    networkName: Cypress.env('NETWORK_NAME_ETH'),
+    rpcUrl: Cypress.env('RPC_URL_ETH'),
+    chainId: Cypress.env('CHAIN_ID_ETH').toString(),
+  }).then(c => console.log(c));
+  cy.addMetamaskNetwork({
+    networkName: Cypress.env('NETWORK_NAME_POLYGON'),
+    rpcUrl: Cypress.env('RPC_URL_POLYGON'),
+    chainId: Cypress.env('CHAIN_ID_POLYGON').toString(),
+  });
+});
+
 describe('End to End tests', () => {
+  console.log(Cypress.env());
   let currentTokenBalance = 0;
   const depositValue = 4;
 
@@ -86,6 +101,8 @@ describe('End to End tests', () => {
 
       for (let i = 0; i < noOfDeposit; i++) {
         cy.get('button').contains('Transfer').click();
+        if (i === 0)
+          cy.allowMetamaskToSwitchNetwork().then(confirmed => expect(confirmed).to.be.true);
         cy.get('button').contains('Create Transaction').click();
         cy.get('#Bridge_modal_continueTransferButton').click();
         cy.wait(30000);
@@ -119,6 +136,7 @@ describe('End to End tests', () => {
       cy.get('label').contains('Withdraw').click();
       cy.get('#Bridge_amountDetails_tokenAmount').type(withdrawValue);
       cy.get('button').contains('Transfer').click();
+      cy.allowMetamaskToSwitchNetwork().then(confirmed => expect(confirmed).to.be.true);
       cy.get('button').contains('Create Transaction').click();
       cy.get('#Bridge_modal_continueTransferButton').click();
       cy.wait(30000);
@@ -230,6 +248,8 @@ describe('End to End tests', () => {
       cy.get('#Bridge_amountDetails_tokenAmount').type(depositValue);
 
       for (let i = 0; i < noOfDeposit; i++) {
+        if (i === 0)
+          cy.allowMetamaskToSwitchNetwork().then(confirmed => expect(confirmed).to.be.true);
         cy.get('button').contains('Transfer').click();
         cy.get('button').contains('Create Transaction').click();
         cy.get('#Bridge_modal_continueTransferButton').click();
