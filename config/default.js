@@ -206,7 +206,7 @@ module.exports = {
       liquidityProvider: 'smart base soup sister army address member poem point quick save penalty',
     },
     restrictions: {
-      erc20default: 2000,
+      erc20default: process.env.ERC20_RESTRICTION || 100000000000,
     },
   },
   RESTRICTIONS: {
