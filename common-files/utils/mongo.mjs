@@ -13,7 +13,7 @@ const connection = {};
 export default {
   async connection(url) {
     if (connection[url]) return connection[url];
-    // Check if we are connecting to MongoDb or DocumentDb
+    // Check if we are connecting to MongoDb or DocumentDB
     if (url.includes('amazonaws')) {
       // retrieve user and password from secrets
       const { MONGO_INITDB_ROOT_PASSWORD, MONGO_INITDB_ROOT_USERNAME } = process.env;
