@@ -512,17 +512,8 @@ class Nf3 {
     let connection = new WebSocket(this.optimistWsUrl);
     this.websockets.push(connection); // save so we can close it properly later
     const ping = async () => {
-      if (!connection) {
+      if (!connection || connection.readyState !== WebSocket.OPEN) {
         // Attempt to fix https://github.com/EYBlockchain/nightfall_3/issues/569
-        try {
-          connection = new WebSocket(this.optimistWsUrl);
-          this.websockets.push(connection);
-        } catch (e) {
-          logger.debug('Error opening socket ', e);
-          return;
-        }
-      }
-      if (connection.readyState !== WebSocket.OPEN) {
         try {
           connection = new WebSocket(this.optimistWsUrl);
           this.websockets.push(connection);
@@ -709,17 +700,8 @@ class Nf3 {
     this.websockets.push(connection); // save so we can close it properly later
     // Ping function to keep WS open. Send beat every 15 seconds
     const ping = async () => {
-      if (!connection) {
+      if (!connection || connection.readyState !== WebSocket.OPEN) {
         // Attempt to fix https://github.com/EYBlockchain/nightfall_3/issues/569
-        try {
-          connection = new WebSocket(this.optimistWsUrl);
-          this.websockets.push(connection);
-        } catch (e) {
-          logger.debug('Error opening socket ', e);
-          return;
-        }
-      }
-      if (connection.readyState !== WebSocket.OPEN) {
         try {
           connection = new WebSocket(this.optimistWsUrl);
           this.websockets.push(connection);
@@ -791,17 +773,8 @@ class Nf3 {
     let connection = new WebSocket(this.optimistWsUrl);
     this.websockets.push(connection); // save so we can close it properly later
     const ping = async () => {
-      if (!connection) {
+      if (!connection || connection.readyState !== WebSocket.OPEN) {
         // Attempt to fix https://github.com/EYBlockchain/nightfall_3/issues/569
-        try {
-          connection = new WebSocket(this.optimistWsUrl);
-          this.websockets.push(connection);
-        } catch (e) {
-          logger.debug('Error opening socket ', e);
-          return;
-        }
-      }
-      if (connection.readyState !== WebSocket.OPEN) {
         try {
           connection = new WebSocket(this.optimistWsUrl);
           this.websockets.push(connection);
@@ -861,17 +834,8 @@ class Nf3 {
     let connection = new WebSocket(this.optimistWsUrl);
     this.websockets.push(connection); // save so we can close it properly later
     const ping = async () => {
-      if (!connection) {
+      if (!connection || connection.readyState !== WebSocket.OPEN) {
         // Attempt to fix https://github.com/EYBlockchain/nightfall_3/issues/569
-        try {
-          connection = new WebSocket(this.optimistWsUrl);
-          this.websockets.push(connection);
-        } catch (e) {
-          logger.debug('Error opening socket ', e);
-          return;
-        }
-      }
-      if (connection.readyState !== WebSocket.OPEN) {
         try {
           connection = new WebSocket(this.optimistWsUrl);
           this.websockets.push(connection);
@@ -911,17 +875,8 @@ class Nf3 {
     let connection = new WebSocket(this.optimistWsUrl);
     this.websockets.push(connection); // save so we can close it properly later
     const ping = async () => {
-      if (!connection) {
+      if (!connection || connection.readyState !== WebSocket.OPEN) {
         // Attempt to fix https://github.com/EYBlockchain/nightfall_3/issues/569
-        try {
-          connection = new WebSocket(this.optimistWsUrl);
-          this.websockets.push(connection);
-        } catch (e) {
-          logger.debug('Error opening socket ', e);
-          return;
-        }
-      }
-      if (connection.readyState !== WebSocket.OPEN) {
         try {
           connection = new WebSocket(this.optimistWsUrl);
           this.websockets.push(connection);
