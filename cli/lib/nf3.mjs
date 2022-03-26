@@ -1082,6 +1082,14 @@ class Nf3 {
     provider.on('error', err => logger.error(`web3 error: ${err}`));
     provider.on('connect', () => logger.info('Blockchain Connected ...'));
     provider.on('end', () => logger.info('Blockchain disconnected'));
+
+    const checkActive = () => {
+      if (!this.web3.currentProvider.connected) {
+        this.web3.setProvider(provider);
+      }
+      setTimeout(checkActive, 2000);
+    };
+    checkActive();
   }
 
   /**
