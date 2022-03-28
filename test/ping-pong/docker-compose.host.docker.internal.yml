@@ -44,6 +44,8 @@ services:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
       BLOCKCHAIN_PORT: 8546
+      BLOCKCHAIN_PAYMENTS_WS_HOST: host.docker.internal
+      BLOCKCHAIN_PAYMENTS_PORT: 8547
 
   user-local1:
     extra_hosts:
