@@ -15,8 +15,8 @@ import { retrieveAndDecrypt } from '../../utils/lib/key-storage';
 export default function TokenItem(props) {
   const [showSendModal, setShowSendModal] = useState(false);
   const [state] = React.useContext(UserContext);
-  const defaultSend = state?.compressedPkd;
   const [valueToSend, setTransferValue] = useState(0);
+  const [recipient, setRecipient] = useState('');
 
   async function sendTx() {
     const { address: shieldContractAddress } = (await getContractAddress('Shield')).data;
@@ -27,7 +27,7 @@ export default function TokenItem(props) {
         ercAddress: props.address,
         tokenId: 0,
         recipientData: {
-          recipientCompressedPkds: [defaultSend],
+          recipientCompressedPkds: [recipient],
           values: [(Number(valueToSend) * 10 ** props.decimals).toString()],
         },
         nsk,
@@ -149,6 +149,7 @@ export default function TokenItem(props) {
                 <input
                   type="text"
                   placeholder={state?.compressedPkd}
+                  onChange={e => setRecipient(e.target.value)}
                   id="TokenItem_modalSend_compressedPkd"
                 />
                 <p>Enter a valid address existing on the Polygon Nightfall L2</p>

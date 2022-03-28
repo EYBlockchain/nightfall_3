@@ -1,5 +1,7 @@
 /* ignore unused exports */
 
+import getPrice from '../pricingAPI';
+
 const STORAGE_VERSION_KEY = 'nightfallStorageVersion';
 const STORAGE_VERSION = 1;
 const TOKEN_POOL_KEY = 'nightfallTokensPool';
@@ -35,4 +37,34 @@ function pkdArrayGet(userKey) {
   return JSON.parse(storage.getItem(`${userKey}/pkds`));
 }
 
-export { tokensSet, tokensGet, clear, pkdArrayGet, pkdArraySet };
+async function setPricing(tokenIDs) {
+  init();
+  const now = Date.now();
+  const pricingArray = await Promise.all(
+    tokenIDs.map(async t => {
+      const price = await getPrice(t);
+      return {
+        id: t,
+        price,
+      };
+    }),
+  );
+  const pricingObject = pricingArray.reduce((acc, curr) => {
+    acc[curr.id] = curr.price;
+    return acc;
+  }, {});
+  storage.setItem(
+    'pricing',
+    JSON.stringify({
+      time: now,
+      ...pricingObject,
+    }),
+  );
+}
+
+function getPricing() {
+  const retrievedPrice = storage.getItem('pricing');
+  return JSON.parse(retrievedPrice);
+}
+
+export { tokensSet, tokensGet, clear, pkdArrayGet, pkdArraySet, setPricing, getPricing };

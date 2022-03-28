@@ -24,7 +24,7 @@ import {
   getSiblingInfo,
 } from './commitment-storage';
 import { decompressKey, calculateIvkPkdfromAskNsk } from './keys';
-import { saveTransaction, checkIndexDBForCircuit } from './database';
+import { saveTransaction, checkIndexDBForCircuit, getStoreCircuit } from './database';
 
 const { BN128_GROUP_ORDER, ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, proposerUrl, ZERO, USE_STUBS } =
   global.config;
@@ -180,19 +180,36 @@ async function transfer(transferParams, shieldContractAddress) {
   // call a zokrates worker to generate the proof
   // This is (so far) the only place where we need to get specific about the
   // circuit
-  let circuitData;
+  let abi;
+  let program;
+  let pk;
   let transactionType;
   if (oldCommitments.length === 1) {
     transactionType = 1;
     blockNumberL2s.push(0); // We need top pad block numbers if we do a single transfer
-    circuitData = await checkIndexDBForCircuit(singleTransfer);
+    if (!(await checkIndexDBForCircuit(singleTransfer)))
+      throw Error('Some circuit data are missing from IndexedDB');
+    const [abiData, programData, pkData] = await Promise.all([
+      getStoreCircuit(`${singleTransfer}-abi`),
+      getStoreCircuit(`${singleTransfer}-program`),
+      getStoreCircuit(`${singleTransfer}-pk`),
+    ]);
+    abi = abiData.data;
+    program = programData.data;
+    pk = pkData.data;
   } else if (oldCommitments.length === 2) {
     transactionType = 2;
-    circuitData = await checkIndexDBForCircuit(doubleTransfer);
+    if (!(await checkIndexDBForCircuit(doubleTransfer)))
+      throw Error('Some circuit data are missing from IndexedDB');
+    const [abiData, programData, pkData] = await Promise.all([
+      getStoreCircuit(`${doubleTransfer}-abi`),
+      getStoreCircuit(`${doubleTransfer}-program`),
+      getStoreCircuit(`${doubleTransfer}-pk`),
+    ]);
+    abi = abiData.data;
+    program = programData.data;
+    pk = pkData.data;
   } else throw new Error('Unsupported number of commitments');
-
-  if (!circuitData) throw Error('Some circuit data are missing from IndexedDB');
-  const [abi, program, pk] = circuitData;
 
   const zokratesProvider = await initialize();
   const artifacts = { program: new Uint8Array(program), abi };

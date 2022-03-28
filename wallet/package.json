@@ -8,6 +8,7 @@
     "@testing-library/jest-dom": "^5.14.1",
     "@testing-library/react": "^12.1.2",
     "async-mutex": "^0.3.2",
+    "aws-sdk": "^2.1098.0",
     "axios": "^0.25.0",
     "bip39": "^3.0.4",
     "bootstrap": "^5.1.3",
@@ -44,10 +45,10 @@
     "zokrates-js": "^1.0.39"
   },
   "scripts": {
-    "start": "LOCAL_PROPOSER=true USE_STUBS=true craco start",
+    "start": "LOCAL_PROPOSER=false USE_STUBS=true craco start",
     "start:docker": "REACT_APP_ENVIRONMENT=Docker PORT=3010 craco start",
     "start:ropsten": "REACT_APP_ENVIRONMENT=Ropsten craco start",
-    "build": "LOCAL_PROPOSER=false craco build",
+    "build": "LOCAL_PROPOSER=false USE_STUBS=true craco build",
     "deploy": "npm run build && aws s3 sync build s3://pnf-dev-browser --cache-control max-age=172800 --delete && aws configure set preview.cloudfront true && aws cloudfront create-invalidation --distribution-id ENV3X13MLR5YT --paths \"/*\"",
     "test": "craco test --env=jsdom",
     "eject": "craco eject",

@@ -17,7 +17,7 @@ import { getContractAddress, getContractInstance } from '../../common-files/util
 import { isValidWithdrawal } from '../../nightfall-browser/services/valid-withdrawal';
 import useInterval from '../../hooks/useInterval';
 import tokensList from '../Modals/Bridge/TokensList/tokensList';
-import getPrice from '../../utils/pricingAPI';
+import { getPricing, setPricing } from '../../utils/lib/local-storage';
 
 const { SHIELD_CONTRACT_NAME, ZERO } = global.config;
 
@@ -41,16 +41,40 @@ const Transactions = () => {
   const [isActive, setActive] = React.useState('all');
   const [showModal, setShowModal] = React.useState({ show: false });
   const [delay, setDelay] = React.useState(50);
+
+  const initialPrices = {};
+  tokensList.tokens.forEach(t => {
+    initialPrices[t.id] = 0;
+  }, {});
+
+  const [currencyValues, setCurrencyValues] = React.useState({ now: 0, ...initialPrices });
+
+  React.useEffect(async () => {
+    if (!getPricing()) await setPricing(tokensList.tokens.map(t => t.id));
+    else if (Date.now() - getPricing().time > 86400)
+      await setPricing(tokensList.tokens.map(t => t.id));
+    setCurrencyValues(getPricing());
+  }, []);
+
   useInterval(async () => {
+    console.log('currencyVals', currencyValues);
     const transactionsDB = await getAllTransactions();
-    const transactions = Array.from(new Set(transactionsDB));
     const commitmentsDB = await getAllCommitments();
+    const commits = commitmentsDB.map(c => c._id);
+    const nullifiers = commitmentsDB.map(c => c.nullifier);
+
+    const transactions = Array.from(new Set(transactionsDB)).filter(
+      t =>
+        t.commitments.some(c => commits.includes(c)) ||
+        t.nullifiers.some(n => nullifiers.includes(n)),
+    );
     const { address: shieldContractAddress } = (await getContractAddress(SHIELD_CONTRACT_NAME))
       .data;
     const shieldContractInstance = await getContractInstance(
       SHIELD_CONTRACT_NAME,
       shieldContractAddress,
     );
+    setDelay(20000);
 
     const blocks = await findBlocksFromBlockNumberL2(-1);
     const promisedTxs = transactions.map(async tx => {
@@ -72,8 +96,6 @@ const Transactions = () => {
         ercAddress: '0x00',
       };
       blocks.forEach(b => {
-        console.log('b.transactionHashes', b.transactionHashes);
-        console.log('tx_id', tx._id);
         if (tx.isOnChain >= 0) return;
         if (b.transactionHashes.includes(tx._id)) {
           // eslint-disable-next-line no-param-reassign
@@ -82,14 +104,13 @@ const Transactions = () => {
         // eslint-disable-next-line no-param-reassign
         else tx.isOnChain = -1;
       });
-      console.log('isOnChain', tx.isOnChain);
 
       let withdrawReady = false;
       if (
         safeTransactionType === '3' &&
         tx.isOnChain > 0 &&
         tx.withdrawState !== 'finalised' &&
-        Date.now() - tx.createdTime > 1000 * 3600 * 24 * 7
+        Date.now() - tx.createdTime > 1000 * 3600 * 24 * 0
       ) {
         withdrawReady = await isValidWithdrawal(tx._id, shieldContractAddress);
       }
@@ -108,6 +129,7 @@ const Transactions = () => {
           address: mockAddress,
         };
       });
+
       const { logoURI, decimals, id, symbol } = testList.find(
         t => t.address.toLowerCase() === `0x${ercAddress.slice(-40).toLowerCase()}`,
       ) ?? {
@@ -115,7 +137,8 @@ const Transactions = () => {
         decimals: 0,
         id: '',
       };
-      const currencyValue = id !== '' ? await getPrice(id) : 0;
+      const currencyValue = id !== '' ? currencyValues[id] : 0;
+      console.log(currencyValue);
       return {
         ...tx,
         transactionHash: tx._id,
@@ -135,7 +158,6 @@ const Transactions = () => {
 
     console.log('Transactions', transactions);
     setTxs(mappedTxs);
-    setDelay(10000);
   }, delay);
 
   return (
@@ -198,7 +220,11 @@ const Transactions = () => {
                 onClick={() =>
                   setShowModal({
                     show: true,
-                    ...tx,
+                    transactionhash: tx.transactionHash,
+                    _id: tx._id,
+                    recipientaddress: tx.recipientAddress,
+                    isonChain: tx.isOnChain,
+                    withdrawready: tx.withdrawReady,
                   })
                 }
               >

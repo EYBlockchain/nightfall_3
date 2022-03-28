@@ -113,8 +113,10 @@ const BridgeComponent = () => {
 
   async function triggerTx() {
     const { address: shieldContractAddress } = (await getContractAddress('Shield')).data;
-    const { address: defaultTokenAddress } = (await getContractAddress('ERC20Mock')).data; // TODO Only for testing now
-    const ercAddress = defaultTokenAddress; // TODO Location to be removed later
+    const { address } = (await getContractAddress('ERC20Mock')).data; // TODO Only for testing now
+    const ercAddress = address; // TODO Location to be removed later
+    // const ercAddress = token.address;
+    console.log('ercAddress', ercAddress);
     const zkpKeys = await retrieveAndDecrypt(state.compressedPkd);
     switch (txType) {
       case 'deposit': {
@@ -124,7 +126,7 @@ const BridgeComponent = () => {
           {
             ercAddress,
             tokenId: 0,
-            value: (Number(transferValue) * 10 ** token.decimals).toString(),
+            value: (transferValue * 10 ** token.decimals).toString(),
             pkd,
             nsk: zkpKeys.nsk,
             fee: 1,
@@ -132,7 +134,8 @@ const BridgeComponent = () => {
           },
           shieldContractAddress,
         );
-        return submitTransaction(rawTransaction, shieldContractAddress, 1);
+        await submitTransaction(rawTransaction, shieldContractAddress, 1);
+        break;
       }
 
       case 'withdraw': {
@@ -142,7 +145,7 @@ const BridgeComponent = () => {
               offchain: true,
               ercAddress,
               tokenId: 0,
-              value: (Number(transferValue) * 10 ** token.decimals).toString(),
+              value: (transferValue * 10 ** token.decimals).toString(),
               recipientAddress: await Web3.getAccount(),
               nsk: zkpKeys.nsk,
               ask: zkpKeys.ask,
@@ -156,7 +159,7 @@ const BridgeComponent = () => {
             {
               ercAddress,
               tokenId: 0,
-              value: (Number(transferValue) * 10 ** token.decimals).toString(),
+              value: (transferValue * 10 ** token.decimals).toString(),
               recipientAddress: await Web3.getAccount(),
               nsk: zkpKeys.nsk,
               ask: zkpKeys.ask,
@@ -165,7 +168,7 @@ const BridgeComponent = () => {
             },
             shieldContractAddress,
           );
-          return submitTransaction(rawTransaction, shieldContractAddress, 1);
+          await submitTransaction(rawTransaction, shieldContractAddress, 1);
         }
         break;
       }
@@ -174,6 +177,7 @@ const BridgeComponent = () => {
         break;
     }
     handleClose();
+    handleCloseConfirmModal();
     return true;
   }
 
@@ -196,9 +200,11 @@ const BridgeComponent = () => {
   };
 
   async function updateL1Balance() {
+    console.log('L1 Balance');
     if (token && token?.address) {
-      const { address: defaultTokenAddress } = (await getContractAddress('ERC20Mock')).data; // TODO REMOVE THIS WHEN OFFICIAL ADDRESSES
-      const contract = new window.web3.eth.Contract(ERC20, defaultTokenAddress);
+      const { address } = (await getContractAddress('ERC20Mock')).data; // TODO REMOVE THIS WHEN OFFICIAL ADDRESSES
+      // console.log('ERC20', defaultTokenAddress);
+      const contract = new window.web3.eth.Contract(ERC20, address);
       const result = await contract.methods.balanceOf(accountInstance.address).call(); // 29803630997051883414242659
       const format = window.web3.utils.fromWei(result, 'Gwei'); // 29803630.997051883414242659
       setL1Balance(format);
@@ -430,11 +436,7 @@ const BridgeComponent = () => {
                 </div>
                 {/* font-heading-large font-bold ps-t-16 ps-b-6 */}
                 <div className={stylesModal.tokenDetails__val} id="Bridge_modal_tokenAmount">
-                  {
-                    Number(transferValue)
-                      .toString()
-                      .match(/^-?\d+(?:\.\d{0,4})?/)[0]
-                  }
+                  {Number(transferValue).toFixed(4)}
                 </div>
                 {/* font-body-small */}
                 <div className={stylesModal.tokenDetails__usd}>$xx.xx</div>

@@ -21,7 +21,7 @@ import Web3 from '../../common-files/utils/web3';
 import { useAccount } from '../../hooks/Account/index.tsx';
 import tokensList from '../../components/Modals/Bridge/TokensList/tokensList';
 import { getContractAddress } from '../../common-files/utils/contract.js';
-import getPrice from '../../utils/pricingAPI';
+import useInterval from '../../hooks/useInterval.js';
 
 const { DEFAULT_ACCOUNT_NUM } = global.config;
 
@@ -127,16 +127,24 @@ function WalletModal(props) {
 
 export default function Wallet() {
   const { setAccountInstance } = useAccount();
+  const initialPrices = {};
+  tokensList.tokens.forEach(t => {
+    initialPrices[t.id] = 0;
+  }, {});
+
+  const [currencyValues, setCurrencyValues] = useState({ now: 0, ...initialPrices });
+
   const initialTokenState = tokensList.tokens.map(t => {
     return {
       l2Balance: '0',
-      currencyValue: 0,
+      currencyValue: currencyValues[t.id],
       ...t,
     };
   });
   const [tokens, setTokens] = useState(initialTokenState);
   const [state] = useContext(UserContext);
   const [modalShow, setModalShow] = useState(false);
+  const [delay, setDelay] = React.useState(50);
 
   useEffect(async () => {
     const web3 = Web3.connection();
@@ -153,14 +161,20 @@ export default function Wallet() {
   }, []);
 
   useEffect(async () => {
+    if (!Storage.getPricing()) await Storage.setPricing(tokensList.tokens.map(t => t.id));
+    else if (Date.now() - Storage.getPricing().time > 86400)
+      await Storage.setPricing(tokensList.tokens.map(t => t.id));
+    setCurrencyValues(Storage.getPricing);
+  }, []);
+
+  useInterval(async () => {
+    console.log('l2Balance', state.compressedPkd);
     const l2BalanceObj = await getWalletBalance(state.compressedPkd);
     const updatedState = await Promise.all(
       tokens.map(async t => {
-        const currencyValue = await getPrice(t.id);
+        const currencyValue = currencyValues[t.id];
         if (Object.keys(l2BalanceObj).includes(state.compressedPkd)) {
-          console.log('l2Balance', l2BalanceObj);
           const token = l2BalanceObj[state.compressedPkd][t.address.toLowerCase()] ?? 0;
-          console.log('Token', token);
           return {
             ...t,
             l2Balance: token.toString(),
@@ -180,7 +194,9 @@ export default function Wallet() {
         };
       }),
     );
-  }, []);
+    // setTokens(updatedState);
+    setDelay(10000);
+  }, delay);
 
   return (
     <div>

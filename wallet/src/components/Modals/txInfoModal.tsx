@@ -6,7 +6,15 @@ import { finaliseWithdrawal } from '../../nightfall-browser/services/finalise-wi
 import { isValidWithdrawal } from '../../nightfall-browser/services/valid-withdrawal';
 import stylesModal from '../../styles/modal.module.scss';
 
-export default function TxInfoModal(props: any) {
+interface TxModalProps {
+  transactionhash: string;
+  _id: string;
+  recipientaddress: string;
+  isonChain: string;
+  withdrawready: boolean;
+}
+
+export default function TxInfoModal(props: TxModalProps): JSX.Element {
   const confirmWithdraw = async () => {
     const { address: shieldContractAddress } = (await getContractAddress('Shield')).data;
     const isValid = await isValidWithdrawal(props.transactionhash, shieldContractAddress);
@@ -37,11 +45,11 @@ export default function TxInfoModal(props: any) {
           </Row>
           <Row className={stylesModal.transferModeModal__text}>
             <Col xs={3}>Transaction Recipient</Col>
-            <Col xs={9}>{props.recipientAddress}</Col>
+            <Col xs={9}>{props.recipientaddress}</Col>
           </Row>
           <Row className={stylesModal.transferModeModal__text}>
             <Col xs={3}>Nightfall Block Number</Col>
-            <Col xs={9}>{props.isOnChain}</Col>
+            <Col xs={9}>{props.isonChain}</Col>
           </Row>
           <Row>
             {props.withdrawready ? (

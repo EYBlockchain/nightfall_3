@@ -20,7 +20,7 @@ import {
   getSiblingInfo,
 } from './commitment-storage';
 import { calculateIvkPkdfromAskNsk } from './keys';
-import { saveTransaction, checkIndexDBForCircuit } from './database';
+import { saveTransaction, checkIndexDBForCircuit, getStoreCircuit } from './database';
 
 const { BN128_GROUP_ORDER, SHIELD_CONTRACT_NAME, proposerUrl, USE_STUBS } = global.config;
 const { generalise } = gen;
@@ -33,9 +33,17 @@ async function withdraw(withdrawParams, shieldContractAddress) {
   const { ercAddress, tokenId, value, recipientAddress, nsk, ask, fee } = generalise(items);
   const { compressedPkd } = await calculateIvkPkdfromAskNsk(ask, nsk);
 
-  const circuitData = await checkIndexDBForCircuit(circuitName);
-  if (!circuitData) throw Error('Some circuit data are missing from IndexedDB');
-  const [abi, program, pk] = circuitData;
+  if (!(await checkIndexDBForCircuit(circuitName)))
+    throw Error('Some circuit data are missing from IndexedDB');
+  const [abiData, programData, pkData] = await Promise.all([
+    getStoreCircuit(`${circuitName}-abi`),
+    getStoreCircuit(`${circuitName}-program`),
+    getStoreCircuit(`${circuitName}-pk`),
+  ]);
+
+  const abi = abiData.data;
+  const program = programData.data;
+  const pk = pkData.data;
 
   // the first thing we need to do is to find and input commitment which
   // will enable us to conduct our withdraw.  Let's rummage in the db...

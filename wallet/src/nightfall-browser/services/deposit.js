@@ -18,7 +18,7 @@ import logger from '../../common-files/utils/logger';
 import { Commitment, Transaction } from '../classes/index';
 import { storeCommitment } from './commitment-storage';
 import { compressPublicKey } from './keys';
-import { saveTransaction, checkIndexDBForCircuit } from './database';
+import { saveTransaction, checkIndexDBForCircuit, getStoreCircuit } from './database';
 
 const { ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER, USE_STUBS } = global.config;
 const { generalise } = gen;
@@ -31,9 +31,17 @@ async function deposit(items, shieldContractAddress) {
   const { ercAddress, tokenId, value, pkd, nsk, fee } = generalise(items);
   const compressedPkd = compressPublicKey(pkd);
 
-  const circuitData = await checkIndexDBForCircuit(circuitName);
-  if (!circuitData) throw Error('Some circuit data are missing from IndexedDB');
-  const [abi, program, pk] = circuitData;
+  if (!(await checkIndexDBForCircuit('deposit_stub')))
+    throw Error('Some circuit data are missing from IndexedDB');
+  const [abiData, programData, pkData] = await Promise.all([
+    getStoreCircuit(`${circuitName}-abi`),
+    getStoreCircuit(`${circuitName}-program`),
+    getStoreCircuit(`${circuitName}-pk`),
+  ]);
+
+  const abi = abiData.data;
+  const program = programData.data;
+  const pk = pkData.data;
 
   let commitment;
   let salt;

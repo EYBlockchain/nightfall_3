@@ -5,7 +5,13 @@ import { markWithdrawState } from '../../nightfall-browser/services/database';
 import setInstantWithdrawl from '../../nightfall-browser/services/instant-withdrawal';
 import './index.scss';
 
-export default function InstantWithdraw(props: any) {
+interface InstantWithdrawProps {
+  transactionhash: string;
+  onHide: () => void;
+  show: boolean;
+}
+
+export default function InstantWithdraw(props: InstantWithdrawProps): JSX.Element {
   const [fee, setFee] = useState(0);
   const setInstantWithdrawal = async () => {
     const { address: shieldContractAddress } = (await getContractAddress('Shield')).data;

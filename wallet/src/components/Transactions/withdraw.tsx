@@ -3,16 +3,19 @@ import { Button } from 'react-bootstrap';
 import InstantWithdraw from '../Modals/instantWithdrawal';
 import './withdraw.scss';
 
-export default function WithdrawTransaction(props: any) {
+interface WithdrawProps {
+  withdrawready: boolean;
+  transactionhash: string;
+}
+
+export default function WithdrawTransaction(props: WithdrawProps): JSX.Element {
   const [showInstant, setInstant] = useState(false);
-  console.log('props.withdrawready', props.withdrawready);
   return (
     <>
       <div onClick={e => e.stopPropagation()}>
         <InstantWithdraw
           onHide={() => setInstant(false)}
           show={showInstant}
-          {...props}
           transactionhash={props.transactionhash}
         ></InstantWithdraw>
       </div>
