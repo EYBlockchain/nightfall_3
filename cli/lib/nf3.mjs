@@ -866,6 +866,7 @@ class Nf3 {
           });
         });
       }
+      return null;
     };
     connection.onerror = () => logger.error('websocket connection error');
     connection.onclosed = () => logger.warn('websocket connection closed');
@@ -1001,6 +1002,7 @@ class Nf3 {
           });
         });
       }
+      return null;
     };
   }
 

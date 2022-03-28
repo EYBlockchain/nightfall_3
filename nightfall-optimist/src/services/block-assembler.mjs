@@ -11,8 +11,6 @@ import {
   removeTransactionsFromMemPool,
   getMostProfitableTransactions,
   numberOfUnprocessedTransactions,
-  getLatestBlockInfo,
-  getLatestTree,
 } from './database.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
