@@ -23,11 +23,11 @@ export default {
       config.WEB3_PROVIDER_OPTIONS,
     );
 
-    this.web3 = new Web3(provider);
-
     provider.on('error', err => logger.error(`web3 error: ${err}`));
     provider.on('connect', () => logger.info('Blockchain Connected ...'));
     provider.on('end', () => logger.info('Blockchain disconnected'));
+
+    this.web3 = new Web3(provider);
 
     return provider;
   },
