@@ -83,8 +83,7 @@ describe('Testing with an adversary', () => {
 
     // retrieve initial balance
     startBalance = await retrieveL2Balance(nf3User);
-
-    if (!(await nf3User.healthcheck('optimist'))) throw new Error('Healthcheck failed');
+    if (!(await nf3User.healthcheck('client'))) throw new Error('Healthcheck failed');
     if (!(await nf3AdversarialProposer.healthcheck('optimist')))
       throw new Error('Healthcheck failed');
     if (!(await nf3Challenger.healthcheck('optimist'))) throw new Error('Healthcheck failed');
