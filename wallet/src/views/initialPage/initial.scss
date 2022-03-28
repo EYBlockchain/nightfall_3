@@ -10,11 +10,21 @@ a:hover{
 }
 
 .homepage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   min-height: calc(100vh - #{$navbar-local-height});
-  padding: 44px 0;
+  padding: 44px 0;  
 
   .cards-container {
+
+    display: flex;
+    
     .m-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
       height: 350px;
       width: 306px;
       background: light-color('700');

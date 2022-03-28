@@ -6,7 +6,7 @@ import { MdArrowForwardIos } from 'react-icons/md';
 import ToggleButton from 'react-bootstrap/ToggleButton';
 import ButtonGroup from 'react-bootstrap/ButtonGroup';
 import styles from '../../styles/bridge.module.scss';
-import stylesModal from '../../styles/modal.module.scss';
+import stylesModal from '../../styles/modal.scss';
 import polygonChainImage from '../../assets/img/polygon-chain.svg';
 import ethChainImage from '../../assets/img/ethereum-chain.svg';
 import discloserBottomImage from '../../assets/img/discloser-bottom.svg';

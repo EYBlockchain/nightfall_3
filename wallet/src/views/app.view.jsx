@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from 'react';
-import { Route, Switch, Redirect, BrowserRouter } from 'react-router-dom';
+import { Route, Switch, Redirect, BrowserRouter, MemoryRouter } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import { NF3_GITHUB_ISSUES_URL } from '../constants';
 import MainPage from './initialPage/index.jsx';
@@ -9,7 +9,6 @@ import { UserContext, UserProvider } from '../hooks/User/index.jsx';
 import TransactionPage from './transactionPage/index.jsx';
 import Web3 from '../common-files/utils/web3';
 import Bridge from './bridge/index.jsx';
-import generateWebComponents from '../utils/generateWebComponents';
 import { AccountProvider } from '../hooks/Account/index.tsx';
 import '../../node_modules/react-toastify/dist/ReactToastify.css';
 
@@ -21,8 +20,7 @@ export default function App() {
     await Web3.connect();
     setIsWeb3Connected({
       isWeb3Connected: true,
-    });
-    generateWebComponents();
+    });    
   }, []);
 
   /*
@@ -49,7 +47,7 @@ export default function App() {
                 window.location = NF3_GITHUB_ISSUES_URL;
               }}
             />
-            <Redirect to="/" />
+            {/* <Redirect to="/" /> */}
           </Switch>
         </AccountProvider>
       </UserProvider>

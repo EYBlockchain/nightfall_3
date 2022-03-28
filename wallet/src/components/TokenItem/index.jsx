@@ -3,8 +3,6 @@ import PropTypes from 'prop-types';
 import Modal from 'react-bootstrap/Modal';
 import { AiOutlineDown } from 'react-icons/ai';
 import { Link } from 'react-router-dom';
-import styles from '../../styles/tokenItem.module.scss';
-import stylesModal from '../../styles/modal.module.scss';
 import matic from '../../assets/svg/matic.svg';
 import usdt from '../../assets/svg/usdt.svg';
 import link from '../../assets/svg/link.svg';
@@ -14,6 +12,8 @@ import maticImg from '../../assets/img/polygon-chain.svg';
 import { UserContext } from '../../hooks/User/index.jsx';
 import transfer from '../../nightfall-browser/services/transfer';
 import { getContractAddress } from '../../common-files/utils/contract';
+import '../../styles/tokenItem.scss';
+import '../../styles/modal.scss';
 
 const symbols = {
   matic,
@@ -63,33 +63,33 @@ export default function TokenItem({
   return (
     <div>
       {/* <div class="matic-tokens-list-item" @click="onTokenClick"> */}
-      <div className={styles.maticTokensListItem}>
-        <div className={styles.star}>{/* <img src={starFilled} alt="" /> */}</div>
-        <div className={styles.maticTokensListItem}>
+      <div className="maticTokensListItem">
+        <div className="star">{/* <img src={starFilled} alt="" /> */}</div>
+        <div className="maticTokensListItem">
           <img src={symbols[symbol.toLowerCase()]} alt="token icon" />
         </div>
 
-        <div className={styles.tokenDetails}>
-          <div className={styles.tokenNameDetails}>
-            <div className={styles.tokenNameUpperSection}>
+        <div className="tokenDetails">
+          <div className="tokenNameDetails">
+            <div className="tokenNameUpperSection">
               {/* <div class="token-symbol header-h6"> */}
-              <div className={styles.headerH6} id={tokenNameId}>
+              <div className="headerH6" id={tokenNameId}>
                 {symbol}
               </div>
-              {/* styles.mobileView See how to do it */}
-              <div v-if="!token.isPoS" className={styles.plasmaTag}>
+              {/*"mobileView"See how to do it */}
+              <div v-if="!token.isPoS" className="plasmaTag">
                 plasma
               </div>
             </div>
-            <div className={styles.tokenNameLowerSection}>
-              <span className={styles.seperatingDot}> • </span>
+            <div className="tokenNameLowerSection">
+              <span className="seperatingDot"> • </span>
               {name}
             </div>
-            {true && <div className={styles.plasmaTag}>plasma</div>}
+            {true && <div className="plasmaTag">plasma</div>}
           </div>
-          <div className={styles.balancesDetails}>
-            <div className={styles.balancesWrapper}>
-              <div className={styles.balancesDetailsUpperSection} id={tokenBalanceId}>
+          <div className="balancesDetails">
+            <div className="balancesWrapper">
+              <div className="balancesDetailsUpperSection" id={tokenBalanceId}>
                 {/* {{ token.getMaticChainBalance | fixed(4) }} */}
                 {Number(maticChainBalance).toFixed(4)}
               </div>
@@ -105,9 +105,9 @@ export default function TokenItem({
                                 <span class="gray-color">${{ token.maticChainUsdBalance }}</span>
                                 </template>
                             </v-popover> */}
-              <div className={styles.balancesDetailsLowerSection}>
+              <div className="balancesDetailsLowerSection">
                 {/* {{ token.maticChainUsdBalance | fixed(2) | dollarSymbol }} */}
-                <span className={styles.seperatingDot} id={tokenBalanceUsdId}>
+                <span className="seperatingDot" id={tokenBalanceUsdId}>
                   {' '}
                   •{' '}
                 </span>
@@ -115,7 +115,7 @@ export default function TokenItem({
               </div>
             </div>
           </div>
-          <div className={styles.buttonsSection}>
+          <div className="buttonsSection">
             {/* :to="{
                             name: 'bridge',
                             params: { type: TRANSACTION_TYPE.DEPOSIT, token },
@@ -130,7 +130,7 @@ export default function TokenItem({
                   initialTxType: 'deposit',
                 },
               }}
-              className={styles.tokenListButton}
+              className="tokenListButton"
               id={tokenDepositId}
             >
               Deposit
@@ -149,7 +149,7 @@ export default function TokenItem({
                   initialTxType: 'withdraw',
                 },
               }}
-              className={styles.tokenListButton}
+              className="tokenListButton"
               id={tokenWithdrawId}
             >
               Withdraw
@@ -157,7 +157,7 @@ export default function TokenItem({
             {/* onClick="handleSendToken" */}
             <button
               type="button"
-              className={styles.tokenListButton}
+              className="tokenListButton"
               id={tokenSendId}
               onClick={() => {
                 setShowSendModal(true);
@@ -170,9 +170,9 @@ export default function TokenItem({
         {/* cursor-pointer below */}
         {/* class="{ 'hide-it': !isLoginStrategyMetaMask }" */}
         {/* @click="handleAddTokenToMetamask" */}
-        <div className={styles.addToMetamask}>
+        <div className="addToMetamask">
           {/* <Icon name="login/metamask" class="metamask-icon" /> */}
-          <img className={styles.metamaskIcon} src={metamaskIcon} alt="" />
+          <img className="metamaskIcon" src={metamaskIcon} alt="" />
         </div>
         {/* <div class="">
                 {{ token }}
@@ -184,7 +184,7 @@ export default function TokenItem({
 
       {/* SEND BUTTON */}
       <Modal
-        contentClassName={stylesModal.modalFather}
+        contentClassName="modalFather"
         show={showSendModal}
         onHide={() => setShowSendModal(false)}
       >
@@ -192,8 +192,8 @@ export default function TokenItem({
           <Modal.Title>Send</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <div className={stylesModal.modalBody}>
-            <div className={stylesModal.sendModal}>
+          <div className="modalBody">
+            <div className="sendModal">
               <div>
                 <input
                   type="text"
@@ -202,38 +202,38 @@ export default function TokenItem({
                 />
                 <p>Enter a valid address existing on the Polygon Nightfall L2</p>
               </div>
-              <div className={stylesModal.sendModalBalance}>
-                <div className={stylesModal.letfItems}>
+              <div className="sendModalBalance">
+                <div className="letfItems">
                   <input
                     type="text"
                     placeholder="0.00"
                     onChange={e => setTransferValue(e.target.value)}
                     id="TokenItem_modalSend_tokenAmount"
                   />
-                  <div className={stylesModal.maxButton}>MAX</div>
+                  <div className="maxButton">MAX</div>
                 </div>
-                <div className={stylesModal.rightItems} id="TokenItem_modalSend_tokenName">
+                <div className="rightItems" id="TokenItem_modalSend_tokenName">
                   <img src={maticImg} alt="matic" />
                   <div>Matic (L2)</div>
                   <AiOutlineDown />
                 </div>
               </div>
-              <div className={stylesModal.balanceText}>
+              <div className="balanceText">
                 <p>$ 0 </p>
-                <div className={stylesModal.right}>
+                <div className="right">
                   <p>Available Balance:</p>
                   <p>0.0105 ETH</p>
                 </div>
               </div>
 
-              <div className={stylesModal.sendModalfooter}>
+              <div className="sendModalfooter">
                 <img src={maticImg} alt="matic icon" />
-                <p className={stylesModal.gasFee}>x.xxx {name} Gas Fee</p>
+                <p className="gasFee">x.xxx {name} Gas Fee</p>
               </div>
             </div>
             <button
               type="button"
-              className={stylesModal.continueTrasferButton}
+              className="continueTrasferButton"
               onClick={() => sendTx()}
             >
               Continue

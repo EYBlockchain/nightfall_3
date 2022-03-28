@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { Col, Row } from 'react-bootstrap';
-import styles from '../../styles/transactionPage.module.scss';
 import bridgeInfoImage from '../../assets/img/bridge-info.png';
 import polygonChainImage from '../../assets/img/polygon-chain.svg';
 import maticImage from '../../assets/svg/matic.svg';
@@ -8,6 +7,7 @@ import {
   getAllTransactions,
   findBlocksFromBlockNumberL2,
 } from '../../nightfall-browser/services/database.js';
+import '../../styles/transactionPage.scss';
 
 const txTypeOptions = ['Deposit', 'Transfer', 'Transfer', 'Withdraw'];
 const txTypeDest = [
@@ -27,50 +27,52 @@ const displayTime = (start, end) => {
 const Transactions = () => {
   const [txs, setTxs] = React.useState([]);
 
-  useEffect(async () => {
-    const transactionsDB = await getAllTransactions();
-    const transactions = Array.from(new Set(transactionsDB));
-    console.log('Transaction', transactions);
-
-    const blocks = await findBlocksFromBlockNumberL2(-1);
-    // console.log()
-    const mappedTxs = transactions
-      .map(tx => {
-        const trucString = `${tx._id.slice(0, 5)}...${tx._id.slice(-5)}`;
-        const safeTransactionType = BigInt(tx.transactionType).toString();
-        const safeValue = BigInt(tx.value).toString();
-        blocks.forEach(b => {
-          console.log('b.transactionHashes', b.transactionHashes);
-          console.log('tx_id', tx._id);
-          if (tx.isOnChain >= 0) return;
-          if (b.transactionHashes.includes(tx._id)) {
+  useEffect(() => {
+    async function load() {
+      const transactionsDB = await getAllTransactions();
+      const transactions = Array.from(new Set(transactionsDB));
+      console.log('Transaction', transactions);
+  
+      const blocks = await findBlocksFromBlockNumberL2(-1);
+      // console.log()
+      const mappedTxs = transactions
+        .map(tx => {
+          const trucString = `${tx._id.slice(0, 5)}...${tx._id.slice(-5)}`;
+          const safeTransactionType = BigInt(tx.transactionType).toString();
+          const safeValue = BigInt(tx.value).toString();
+          blocks.forEach(b => {
+            console.log('b.transactionHashes', b.transactionHashes);
+            console.log('tx_id', tx._id);
+            if (tx.isOnChain >= 0) return;
+            if (b.transactionHashes.includes(tx._id)) {
+              // eslint-disable-next-line no-param-reassign
+              tx.isOnChain = b.blockNumberL2;
+            }
             // eslint-disable-next-line no-param-reassign
-            tx.isOnChain = b.blockNumberL2;
-          }
-          // eslint-disable-next-line no-param-reassign
-          else tx.isOnChain = -1;
-        });
-        console.log('isOnChain', tx.isOnChain);
-        return {
-          transactionHash: tx._id,
-          truncTransactionHash: trucString,
-          txType: safeTransactionType,
-          value: safeValue,
-          isOnChain: tx.isOnChain,
-          createdTime: tx.createdTime,
-          now: Date.now(),
-        };
-      })
-      .sort((a, b) => b.createdTime - a.createdTime);
-
-    console.log('Transactions', transactions);
-    setTxs(mappedTxs);
+            else tx.isOnChain = -1;
+          });
+          console.log('isOnChain', tx.isOnChain);
+          return {
+            transactionHash: tx._id,
+            truncTransactionHash: trucString,
+            txType: safeTransactionType,
+            value: safeValue,
+            isOnChain: tx.isOnChain,
+            createdTime: tx.createdTime,
+            now: Date.now(),
+          };
+        })
+        .sort((a, b) => b.createdTime - a.createdTime);
+        console.log('Transactions', transactions);
+        setTxs(mappedTxs);
+    };
+    load();
   }, []);
 
   return (
-    <div className={styles.pagePartition} style={{ width: '100%' }}>
-      <div className={styles.infoWrapper}>
-        <div className={styles.innerWrapper} style={{ padding: '21px 22px 0px 24px' }}>
+    <div className="pagePartition" style={{ width: '100%' }}>
+      <div className="infoWrapper">
+        <div className="innerWrapper" style={{ padding: '21px 22px 0px 24px' }}>
           <Row>
             <Col>
               <div
@@ -110,7 +112,7 @@ const Transactions = () => {
                       </div> */}
           {/* </Row> */}
         </div>
-        <div className={styles.innerWrapper}>
+        <div className="innerWrapper">
           {txs.map(tx => (
             <Row
               key={tx}
@@ -237,7 +239,7 @@ const Transactions = () => {
           ))}
         </div>
         <Row>
-          <div className={styles.bottomSection}>
+          <div className="bottomSection">
             <img src={bridgeInfoImage} alt="" height="219" width="326" />
           </div>
         </Row>

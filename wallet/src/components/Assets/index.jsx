@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import styles from '../../styles/assets.module.scss';
+import '../../styles/assets.scss';
 import ReceiveModal from '../Modals/Assets/ReceiveModal/index.jsx';
 
 export default function Assets({ tokenList }) {
@@ -19,13 +19,13 @@ export default function Assets({ tokenList }) {
           <ReceiveModal handleClose={setShowReceiveModal} />
         </div>
       )}
-      <div className={styles.dashboardTopSection}>
-        <div className={styles.container}>
+      <div className="dashboardTopSection">
+        <div className="container">
           <div className="row">
             <div className="col-lg-6">
-              <div className={styles.heading}>Nightfall</div>
-              <div className={styles.amount}>&#36;{total.toFixed(2)}</div>
-              <div className={styles.buttonsWrapper}>
+              <div className="heading">Nightfall</div>
+              <div className="amount">&#36;{total.toFixed(2)}</div>
+              <div className="buttonsWrapper">
                 <button
                   className=""
                   icon-name="navbar/qr"
@@ -40,9 +40,9 @@ export default function Assets({ tokenList }) {
             </div>
 
             <div className="col-lg-6">
-              <div className={styles.depositWrapper}>
+              <div className="depositWrapper">
                 <a
-                  className={styles.linkButton}
+                  className="linkButton"
                   href="USER_GUIDE_DOCS_LINK"
                   target="_blank"
                   rel="noopener noreferrer"
@@ -54,7 +54,7 @@ export default function Assets({ tokenList }) {
                                   /> */}
                 </a>
 
-                <button className={styles.linkButton} onClick={() => {}}>
+                <button className="linkButton" onClick={() => {}}>
                   Move funds from
                 </button>
               </div>

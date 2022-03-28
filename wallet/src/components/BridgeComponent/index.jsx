@@ -4,8 +4,7 @@ import Dropdown from 'react-bootstrap/Dropdown';
 import DropdownButton from 'react-bootstrap/DropdownButton';
 import { MdArrowForwardIos } from 'react-icons/md';
 import { toast } from 'react-toastify';
-import styles from '../../styles/bridge.module.scss';
-import stylesModal from '../../styles/modal.module.scss';
+// import styles from '../../styles/bridge.module.scss';
 import polygonChainImage from '../../assets/img/polygon-chain.svg';
 import ethChainImage from '../../assets/img/ethereum-chain.svg';
 import discloserBottomImage from '../../assets/img/discloser-bottom.svg';
@@ -20,7 +19,7 @@ import depositConfirmed from '../../assets/img/modalImages/adeposit_confirmed.pn
 import successHand from '../../assets/img/modalImages/success-hand.png';
 import transferCompletedImg from '../../assets/img/modalImages/tranferCompleted.png';
 import { UserContext } from '../../hooks/User/index.jsx';
-import './styles.scss';
+
 import Input from '../Input/index.tsx';
 import TokensList from '../Modals/Bridge/TokensList/index.tsx';
 import { useAccount } from '../../hooks/Account/index.tsx';
@@ -28,7 +27,10 @@ import loadAccount from '../../utils/loadAccount.ts';
 import minERC20ABI from '../../utils/getMinABIErc20.ts';
 import { getWalletBalance } from '../../nightfall-browser/services/commitment-storage';
 import './toast.css';
+import '../../styles/modal.scss';
+import './styles.scss';
 import verifyIfValueIsGreaterThen from './utils/verifyIfValueIsGreaterThen.ts';
+
 
 const BridgeComponent = () => {
   // const [state] = useState(() => props[Object.keys(props)[1].toString()].value);
@@ -48,7 +50,9 @@ const BridgeComponent = () => {
   const [showTokensListModal, setShowTokensListModal] = useState(false);
 
   useEffect(() => {
-    document.getElementById('inputValue').value = 0;
+    if(document.getElementById('inputValue')) {
+      document.getElementById('inputValue').value = 0;
+    }    
   }, [txType]);
   const openTokensListModal = () => {
     setShowTokensListModal(true);
@@ -244,7 +248,7 @@ const BridgeComponent = () => {
   return (
     <div>
       {showTokensListModal && (
-        <div className="modalWrapper">
+        <div className="modalWrapper">          
           <TokensList handleClose={setShowTokensListModal} setToken={setToken} />
         </div>
       )}
@@ -413,15 +417,15 @@ const BridgeComponent = () => {
             </button>
           </div>
         </div>
-        <Modal contentClassName={stylesModal.modalFather} show={show} onHide={() => setShow(false)}>
+        <Modal contentClassName="modalFather" show={show} onHide={() => setShow(false)}>
           <Modal.Header closeButton>
-            <div className={styles.modalTitle}>Confirm transaction</div>
+            <div className="modalTitle">Confirm transaction</div>
           </Modal.Header>
           <Modal.Body>
-            <div className={stylesModal.modalBody}>
-              <div className={stylesModal.tokenDetails}>
+            <div className="modalBody">
+              <div className="tokenDetails">
                 {/* d-flex justify-content-center align-self-center mx-auto */}
-                <div className={stylesModal.tokenDetails__img}>
+                <div className="tokenDetails__img">
                   {/* <img
                                   v-if="
                                   selectedToken.symbol &&
@@ -438,7 +442,7 @@ const BridgeComponent = () => {
                               >{{ selectedToken.symbol[0] }}</span> */}
                 </div>
                 {/* font-heading-large font-bold ps-t-16 ps-b-6 */}
-                <div className={stylesModal.tokenDetails__val} id="Bridge_modal_tokenAmount">
+                <div className="tokenDetails__val" id="Bridge_modal_tokenAmount">
                   {
                     Number(transferValue)
                       .toString()
@@ -446,30 +450,30 @@ const BridgeComponent = () => {
                   }
                 </div>
                 {/* font-body-small */}
-                <div className={stylesModal.tokenDetails__usd}>$xx.xx</div>
+                <div className="tokenDetails__usd">$xx.xx</div>
               </div>
 
               {/* Buttons */}
               <div>
-                <div className={stylesModal.networkButtons}>
-                  <div className={stylesModal.networkButtons__button1}>
+                <div className="networkButtons">
+                  <div className="networkButtons__button1">
                     <span>
                       {txType === 'deposit' ? 'Ethereum Mainnet' : 'Polygon Nightfall L2'}
                     </span>
                   </div>
                   <MdArrowForwardIos />
-                  <div className={stylesModal.networkButtons__button2}>
+                  <div className="networkButtons__button2">
                     <span>
                       {txType === 'deposit' ? 'Polygon Nightfall L2' : 'Ethereum Mainnet'}
                     </span>
                   </div>
                 </div>
               </div>
-              <div className={stylesModal.divider} />
-              <div className={stylesModal.transferModeModal}>
-                <div className={stylesModal.transferModeModal__title}>
-                  <div className={stylesModal.transferModeModal__title__main}>Transfer Mode</div>
-                  <div className={stylesModal.transferModeModal__title__light}>
+              <div className="divider" />
+              <div className="transferModeModal">
+                <div className="transferModeModal__title">
+                  <div className="transferModeModal__title__main">Transfer Mode</div>
+                  <div className="transferModeModal__title__light">
                     <DropdownButton
                       variant="light"
                       title={transferMethod}
@@ -485,7 +489,7 @@ const BridgeComponent = () => {
                     </DropdownButton>
                   </div>
                 </div>
-                <div className={stylesModal.transferModeModal__text}>
+                <div className="transferModeModal__text">
                   <span>Transfer security is provided by the Ethereum miners.</span>
                   {/* <span v-else>
                               Plasma provides advanced security with plasma exit
@@ -498,17 +502,17 @@ const BridgeComponent = () => {
                   finalized.
                 </div>
               </div>
-              <div className={stylesModal.divider} />
-              <div className={stylesModal.estimationFee}>
-                <div className={stylesModal.estimationFee__title}>
-                  <div className={stylesModal.estimationFee__title__main}>
+              <div className="divider" />
+              <div className="estimationFee">
+                <div className="estimationFee__title">
+                  <div className="estimationFee__title__main">
                     Estimation Transaction fee
                   </div>
-                  <div className={stylesModal.estimationFee__title__light}>~ $x.xx</div>
+                  <div className="estimationFee__title__light">~ $x.xx</div>
                 </div>
                 <button
                   type="button"
-                  className={stylesModal.continueTrasferButton}
+                  className="continueTrasferButton"
                   // onClick={() => triggerTx()}
                   onClick={() => {
                     handleClose();
@@ -524,29 +528,29 @@ const BridgeComponent = () => {
 
         {/* TRANSFER IN PROGRESS MODAL */}
         <Modal
-          contentClassName={stylesModal.modalFather}
+          contentClassName="modalFather"
           show={showModalConfirm}
           onHide={handleCloseConfirmModal}
         >
           <Modal.Header closeButton>
-            <div className={styles.modalTitle}>Transfer in progress</div>
+            <div className="modalTitle">Transfer in progress</div>
           </Modal.Header>
           {showModalTransferInProgress && (
             <Modal.Body>
-              <div className={stylesModal.modalBody}>
-                <div className={styles.processImages}>
+              <div className="modalBody">
+                <div className="processImages">
                   <img src={approveImg} alt="approve" />
                 </div>
-                <div className={stylesModal.divider} />
-                <div className={styles.spinnerBox}>
-                  <div className={styles.spinnerBoard}>
-                    <div className={styles.spinner} />
+                <div className="divider" />
+                <div className="spinnerBox">
+                  <div className="spinnerBoard">
+                    <div className="spinner" />
                   </div>
                 </div>
 
-                <div className={stylesModal.transferModeModal}>
+                <div className="transferModeModal">
                   <h3>Creating Transaction</h3>
-                  <div className={stylesModal.modalText}>
+                  <div className="modalText">
                     Retrieving your commitments and generating transaction inputs.
                   </div>
                   {/* <a className={styles.footerText}>View on etherscan</a> */}
@@ -557,22 +561,22 @@ const BridgeComponent = () => {
 
           {showModalTransferEnRoute && (
             <Modal.Body>
-              <div className={stylesModal.modalBody}>
-                <div className={styles.processImages}>
+              <div className="modalBody">
+                <div className="processImages">
                   <img src={depositConfirmed} alt="deposit confirmed" />
                 </div>
-                <div className={stylesModal.divider} />
-                <div className={styles.spinnerBox}>
-                  <div className={styles.spinnerBoard}>
-                    <div className={styles.spinner} />
+                <div className="divider" />
+                <div className="spinnerBox">
+                  <div className="spinnerBoard">
+                    <div className="spinner" />
                   </div>
                 </div>
-                <div className={stylesModal.transferModeModal}>
+                <div className="transferModeModal">
                   <h3>Generating Zk Proof</h3>
-                  <div className={stylesModal.modalText}>
+                  <div className="modalText">
                     Proof generation may take up to 2 mins to complete. Do not navigate away.
                   </div>
-                  {/* <a className={styles.footerText}>View on etherscan</a> */}
+                  {/* <a className="footerText">View on etherscan</a> */}
                 </div>
               </div>
             </Modal.Body>
@@ -580,27 +584,27 @@ const BridgeComponent = () => {
 
           {showModalTransferConfirmed && (
             <Modal.Body>
-              <div className={stylesModal.modalBody}>
-                <div className={styles.processImages}>
+              <div className="modalBody">
+                <div className="processImages">
                   <img src={transferCompletedImg} alt="transfer completed" />
                 </div>
-                <div className={stylesModal.divider} />
-                <div className={styles.spinnerBox}>
+                <div className="divider" />
+                <div className="spinnerBox">
                   <img src={successHand} alt="success hand" />
                 </div>
-                <div className={stylesModal.transferModeModal} id="Bridge_modal_success">
+                <div className="transferModeModal" id="Bridge_modal_success">
                   <h3>Transaction created sucessfully.</h3>
-                  <div className={stylesModal.modalText}>Your transfer is ready to send.</div>
+                  <div className="modalText">Your transfer is ready to send.</div>
                   <button
                     type="button"
-                    className={stylesModal.continueTrasferButton}
+                    className="continueTrasferButton"
                     id="Bridge_modal_continueTransferButton"
                     // onClick={() => triggerTx()}
                     onClick={() => triggerTx()}
                   >
                     Send Transaction
                   </button>
-                  {/* <a className={styles.footerText}>View on etherscan</a> */}
+                  {/* <a className="footerText">View on etherscan</a> */}
                 </div>
               </div>
             </Modal.Body>

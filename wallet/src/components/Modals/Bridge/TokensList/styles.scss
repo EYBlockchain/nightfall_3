@@ -1,4 +1,4 @@
-.modal-content  {
+.modal-wrapper  {
   -webkit-border-radius: 0px !important;
   -moz-border-radius: 0px !important;
   border-radius: 20px !important;
@@ -120,21 +120,21 @@
   &:hover {
     cursor: pointer;
     background: #ddd;
-  }
-  
-  p {
-    margin-top: 17px;
-  }
+  }  
+}
 
-  div {
-    display: flex;
-    align-items: center;
+.tokens_line_div {
+  display: flex;
+  align-items: center;     
+}
 
-    img {
-      margin-right: 12px;
-      
-      width: 40px;
-      height: 40px;
-    }    
-  }
+.tokens_line_div_img {
+  margin-right: 12px;
+    
+  width: 40px;
+  height: 40px;
+}
+
+.tokens_line_div_p {
+  margin-top: 17px;
 }

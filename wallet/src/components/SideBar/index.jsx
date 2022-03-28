@@ -18,10 +18,15 @@ import { getContractAddress } from '../../common-files/utils/contract';
 export default function SideBar() {
   const isSmallScreen = useMediaQuery({ query: '(min-width: 768px)' });
   const [tokenAddress, setTokenAddres] = React.useState('');
-  React.useEffect(async () => {
-    const { address } = (await getContractAddress('ERC20Mock')).data; // TODO Temporary while we use ERC20 Mocks.
-    setTokenAddres(address);
-  });
+  
+  React.useEffect(() => {
+    async function fecthData() {
+      const { address } = (await getContractAddress('ERC20Mock')).data; // TODO Temporary while we use ERC20 Mocks.
+      setTokenAddres(address);
+    }
+    fecthData();
+  }, []);
+
   if (isSmallScreen) {
     return (
       <div className="sideBar">
