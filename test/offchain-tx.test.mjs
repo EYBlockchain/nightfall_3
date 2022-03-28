@@ -21,8 +21,7 @@ chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
 // eslint-disable-next-line prettier/prettier
-const { TRANSACTIONS_PER_BLOCK, PROPOSER_PORT } =
-  config;
+const { TRANSACTIONS_PER_BLOCK, PROPOSER_PORT } = config;
 
 const {
   tokenConfigs: { tokenType, tokenId },
@@ -60,7 +59,7 @@ describe('Testing off-chain transactions', () => {
       app.listen(PROPOSER_PORT);
     }
 
-    nf3StartProposer();
+    await nf3StartProposer();
     logger.info('Listening for incoming events');
 
     ercAddress = await nf3User.getContractAddress('ERC20Mock');

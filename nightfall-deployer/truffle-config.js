@@ -120,6 +120,18 @@ module.exports = {
       gasPrice: config.WEB3_OPTIONS.gasPrice,
       gas: 7000000,
     },
+
+    mumbai: {
+      provider: () => new HDWalletProvider(config.ETH_PRIVATE_KEY, config.BLOCKCHAIN_PAYMENTS_URL),
+      network_id: 80001,
+      confirmations: 2,
+      timeoutBlocks: 200,
+      skipDryRun: true,
+      websockets: true,
+      gasPrice: config.WEB3_OPTIONS.gasPrice,
+      gas: 7000000,
+    },
+
     mainnet: {
       provider: () => new HDWalletProvider(config.ETH_PRIVATE_KEY, config.BLOCKCHAIN_URL),
       network_id: 1,

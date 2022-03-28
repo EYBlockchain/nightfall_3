@@ -4,7 +4,6 @@ version: '3.5'
 # Use it as an override file for docker-compose.yml
 # See the readme for more information.
 services:
-
   client1:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
@@ -24,7 +23,7 @@ services:
       # startup routines will wait for a blockchain client to be reachable on this network
       ETH_NETWORK: development
       BLOCKCHAIN_WS_HOST: host.docker.internal
-      PAYMENTS_NETWORK: development2
+      MATIC_NETWORK: development2
       BLOCKCHAIN_PAYMENTS_WS_HOST: host.docker.internal
 
   optimist1:

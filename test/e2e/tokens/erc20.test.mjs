@@ -6,7 +6,15 @@ import config from 'config';
 import Nf3 from '../../../cli/lib/nf3.mjs';
 import { expectTransaction, depositNTransactions, Web3Client } from '../../utils.mjs';
 import logger from '../../../common-files/utils/logger.mjs';
-
+import app from '../../../cli/src/proposer/app.mjs';
+import {
+  nf3Init,
+  nf3Healthcheck,
+  nf3RegisterProposer,
+  nf3StartProposer,
+  nf3Close,
+  nf3DeregisterProposer,
+} from '../../../cli/src/proposer/nf3-wrapper.mjs';
 import { approve } from '../../../cli/lib/tokens.mjs';
 
 // so we can use require with mjs file
@@ -28,10 +36,10 @@ const {
 
 const {
   RESTRICTIONS: { tokens: defaultRestrictions },
+  PROPOSER_PORT,
 } = config;
 
 const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
-const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
 
 const web3Client = new Web3Client();
 
@@ -89,11 +97,21 @@ const emptyL2 = async nf3Instance => {
 
 describe('ERC20 tests', () => {
   before(async () => {
-    await nf3Proposer.init(mnemonics.proposer);
-    await nf3Proposer.registerProposer();
+    await nf3Init(signingKeys.proposer1, environment, undefined, 'optimist');
+    if (await nf3Healthcheck('optimist')) logger.info('Healthcheck optimist passed');
+    else throw new Error('Healthcheck failed');
+    logger.info('Attempting to register proposer');
+
+    await nf3RegisterProposer(environment.proposerBaseUrl);
+    if (PROPOSER_PORT !== '') {
+      logger.debug('Proposer healthcheck up');
+      app.listen(PROPOSER_PORT);
+    }
 
     // Proposer listening for incoming events
-    const newGasBlockEmitter = await nf3Proposer.startProposer();
+    const newGasBlockEmitter = await nf3StartProposer();
+    logger.info('Listening for incoming events');
+
     newGasBlockEmitter.on('gascost', async gasUsed => {
       logger.debug(
         `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
@@ -541,8 +559,8 @@ describe('ERC20 tests', () => {
   });
 
   after(async () => {
-    await nf3Proposer.deregisterProposer();
-    await nf3Proposer.close();
+    nf3DeregisterProposer();
+    nf3Close();
     await nf3Users[0].close();
     await nf3Users[1].close();
     await web3Client.closeWeb3();

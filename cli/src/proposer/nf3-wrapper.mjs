@@ -61,6 +61,14 @@ async function nf3RegisterProposer(url) {
   return false;
 }
 
+async function nf3DeregisterProposer() {
+  if (nf3Instance !== '') {
+    const res = await nf3Instance.deregisterProposer();
+    return res;
+  }
+  return false;
+}
+
 async function nf3StartProposer() {
   if (nf3Instance !== '') {
     const res = await nf3Instance.startProposer();
@@ -78,4 +86,5 @@ export {
   nf3StartProposer,
   nf3Close,
   nf3GetEthereumAddress,
+  nf3DeregisterProposer,
 };
