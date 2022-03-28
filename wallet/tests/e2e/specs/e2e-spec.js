@@ -137,10 +137,12 @@ describe('End to End tests', () => {
       cy.get('#Bridge_amountDetails_tokenAmount').type(withdrawValue);
       cy.get('button').contains('Transfer').click();
       cy.allowMetamaskToSwitchNetwork().then(confirmed => expect(confirmed).to.be.true);
+      cy.get('#Bridge_modal_transferMode').click();
+      cy.get('a').contains('Direct Transfer').click();
       cy.get('button').contains('Create Transaction').click();
       cy.get('#Bridge_modal_continueTransferButton').click();
       cy.wait(30000);
-      cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
+      // cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
       cy.wait(50000);
       cy.contains('Nightfall Assets').click();
     });
@@ -248,9 +250,9 @@ describe('End to End tests', () => {
       cy.get('#Bridge_amountDetails_tokenAmount').type(depositValue);
 
       for (let i = 0; i < noOfDeposit; i++) {
+        cy.get('button').contains('Transfer').click();
         if (i === 0)
           cy.allowMetamaskToSwitchNetwork().then(confirmed => expect(confirmed).to.be.true);
-        cy.get('button').contains('Transfer').click();
         cy.get('button').contains('Create Transaction').click();
         cy.get('#Bridge_modal_continueTransferButton').click();
         cy.wait(30000);
