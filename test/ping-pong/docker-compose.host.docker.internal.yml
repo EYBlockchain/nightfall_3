@@ -21,6 +21,7 @@ services:
       ETH_NETWORK: development
       BLOCKCHAIN_WS_HOST: host.docker.internal
       BLOCKCHAIN_PORT: 8546
+      MATIC_NETWORK: development2
       BLOCKCHAIN_PAYMENTS_WS_HOST: host.docker.internal
       BLOCKCHAIN_PAYMENTS_PORT: 8547
       ETH_PRIVATE_KEY: abf4ed9f30bd1e4a290310d726c7bbdf39cd75a25eebd9a3a4874e10b4a0c4ce
