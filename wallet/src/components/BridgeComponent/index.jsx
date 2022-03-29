@@ -113,9 +113,9 @@ const BridgeComponent = () => {
 
   async function triggerTx() {
     const { address: shieldContractAddress } = (await getContractAddress('Shield')).data;
-    const { address } = (await getContractAddress('ERC20Mock')).data; // TODO Only for testing now
-    const ercAddress = address; // TODO Location to be removed later
-    // const ercAddress = token.address;
+    // const { address } = (await getContractAddress('ERC20Mock')).data; // TODO Only for testing now
+    // const ercAddress = address; // TODO Location to be removed later
+    const ercAddress = token.address;
     console.log('ercAddress', ercAddress);
     const zkpKeys = await retrieveAndDecrypt(state.compressedPkd);
     switch (txType) {
@@ -202,11 +202,11 @@ const BridgeComponent = () => {
   async function updateL1Balance() {
     console.log('L1 Balance');
     if (token && token?.address) {
-      const { address } = (await getContractAddress('ERC20Mock')).data; // TODO REMOVE THIS WHEN OFFICIAL ADDRESSES
+      // const { address } = (await getContractAddress('ERC20Mock')).data; // TODO REMOVE THIS WHEN OFFICIAL ADDRESSES
       // console.log('ERC20', defaultTokenAddress);
-      const contract = new window.web3.eth.Contract(ERC20, address);
+      const contract = new window.web3.eth.Contract(ERC20, token.address);
       const result = await contract.methods.balanceOf(accountInstance.address).call(); // 29803630997051883414242659
-      const format = window.web3.utils.fromWei(result, 'Gwei'); // 29803630.997051883414242659
+      const format = result / 10 ** token.decimals; // 29803630.997051883414242659
       setL1Balance(format);
     } else {
       setL1Balance(0);
@@ -215,10 +215,10 @@ const BridgeComponent = () => {
 
   async function updateL2Balance() {
     if (token && token.address) {
-      const { address } = (await getContractAddress('ERC20Mock')).data; // TODO REMOVE THIS WHEN OFFICIAL ADDRESSES
+      // const { address } = (await getContractAddress('ERC20Mock')).data; // TODO REMOVE THIS WHEN OFFICIAL ADDRESSES
       const l2bal = await getWalletBalance(state.compressedPkd);
       if (Object.hasOwnProperty.call(l2bal, state.compressedPkd))
-        setL2Balance(l2bal[state.compressedPkd][address.toLowerCase()] ?? 0);
+        setL2Balance(l2bal[state.compressedPkd][token.address.toLowerCase()] ?? 0);
       else setL2Balance(0);
     }
   }
@@ -283,11 +283,9 @@ const BridgeComponent = () => {
                 <div className="balance_details">
                   <p>Balance: </p>
                   {token && txType === 'deposit' && (
-                    <p>
-                      {`${l1Balance.toString().match(/^-?\d+(?:\.\d{0,4})?/)[0]} ${token.symbol}`}
-                    </p>
+                    <p>{`${l1Balance.toFixed(4)} ${token.symbol}`}</p>
                   )}
-                  {token && txType === 'withdraw' && <p>{`${l2Balance} MATIC`}</p>}
+                  {token && txType === 'withdraw' && <p>{`${l2Balance} ${token.symbol}`}</p>}
                   {!token && <p>{txType === 'deposit' ? `${l1Balance}` : `${l2Balance}`}</p>}
                 </div>
               </div>
@@ -348,16 +346,9 @@ const BridgeComponent = () => {
               </div>
               <div className="balance_details">
                 <p>Balance: </p>
-                {token && txType === 'deposit' && <p>{`${l2Balance} MATIC`}</p>}
+                {token && txType === 'deposit' && <p>{`${l2Balance} ${token.symbol}`}</p>}
                 {token && txType === 'withdraw' && (
-                  <p>
-                    {`${
-                      l1Balance
-                        .toString()
-                        .toString()
-                        .match(/^-?\d+(?:\.\d{0,4})?/)[0]
-                    } ${token.symbol}`}
-                  </p>
+                  <p>{`${l1Balance.toFixed(4)} ${token.symbol}`}</p>
                 )}
                 {!token && <p>{txType === 'withdraw' ? `${l2Balance}` : `${l1Balance}`}</p>}
               </div>

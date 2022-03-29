@@ -20,7 +20,7 @@ import * as Storage from '../../utils/lib/local-storage';
 import Web3 from '../../common-files/utils/web3';
 import { useAccount } from '../../hooks/Account/index.tsx';
 import tokensList from '../../components/Modals/Bridge/TokensList/tokensList';
-import { getContractAddress } from '../../common-files/utils/contract.js';
+// import { getContractAddress } from '../../common-files/utils/contract.js';
 import useInterval from '../../hooks/useInterval.js';
 
 const { DEFAULT_ACCOUNT_NUM } = global.config;
@@ -105,7 +105,7 @@ export default function Wallet() {
   const [tokens, setTokens] = useState(initialTokenState);
   const [state] = useContext(UserContext);
   const [modalShow, setModalShow] = useState(false);
-  const [delay, setDelay] = React.useState(50);
+  const [delay, setDelay] = React.useState(50000);
 
   useEffect(async () => {
     const web3 = Web3.connection();
@@ -146,16 +146,16 @@ export default function Wallet() {
       }),
     );
     // Trapdoor for testing
-    const { address: trapdoorAddress } = (await getContractAddress('ERC20Mock')).data; // TODO Only for testing now
-    setTokens(
-      updatedState.map(({ address, ...rest }) => {
-        return {
-          ...rest,
-          address: trapdoorAddress,
-        };
-      }),
-    );
-    // setTokens(updatedState);
+    // const { address: trapdoorAddress } = (await getContractAddress('ERC20Mock')).data; // TODO Only for testing now
+    // setTokens(
+    //   updatedState.map(({ address, ...rest }) => {
+    //     return {
+    //       ...rest,
+    //       address: trapdoorAddress,
+    //     };
+    //   }),
+    // );
+    setTokens(updatedState);
     setDelay(10000);
   }, delay);
 

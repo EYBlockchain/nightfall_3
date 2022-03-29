@@ -122,15 +122,15 @@ const Transactions = () => {
           tx.withdrawState = 'fulfilled';
       }
 
-      const { address: mockAddress } = (await getContractAddress('ERC20Mock')).data;
-      const testList = tokensList.tokens.map(t => {
-        return {
-          ...t,
-          address: mockAddress,
-        };
-      });
+      // const { address: mockAddress } = (await getContractAddress('ERC20Mock')).data;
+      // const testList = tokensList.tokens.map(t => {
+      //   return {
+      //     ...t,
+      //     address: mockAddress,
+      //   };
+      // });
 
-      const { logoURI, decimals, id, symbol } = testList.find(
+      const { logoURI, decimals, id, symbol } = tokensList.tokens.find(
         t => t.address.toLowerCase() === `0x${ercAddress.slice(-40).toLowerCase()}`,
       ) ?? {
         logoURI: null,

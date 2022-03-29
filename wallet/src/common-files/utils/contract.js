@@ -51,8 +51,8 @@ export async function submitTransaction(unsignedTransaction, contractAddress, fe
     to: contractAddress,
     data: unsignedTransaction,
     gas: web3.utils.toHex(gas),
-    // gasPrice: web3.utils.toHex(gasPrice),
-    maxPriorityFeePerGas: web3.utils.toHex(1 * 10 ** 9),
+    gasPrice: web3.utils.toHex(gasPrice),
+    // maxPriorityFeePerGas: web3.utils.toHex(1 * 10 ** 9),
   };
 
   if (fee) tx.value = web3.utils.toHex(fee);
