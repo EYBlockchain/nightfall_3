@@ -20,7 +20,7 @@ router.get('/check', async (req, res, next) => {
   try {
     const { transactionHashL2, transactionFee } = req.query;
     const paymentContractInstance = await getContractInstance(PAYMENT_CONTRACT_NAME);
-
+    logger.debug(`check payment ${transactionHashL2}, ${transactionFee}`);
     const checkPayment = await paymentContractInstance.methods
       .checkPayment(transactionHashL2, transactionFee)
       .call();

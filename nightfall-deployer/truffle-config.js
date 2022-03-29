@@ -122,10 +122,12 @@ module.exports = {
     },
 
     mumbai: {
-      provider: () => new HDWalletProvider(config.ETH_PRIVATE_KEY, config.BLOCKCHAIN_PAYMENTS_URL),
+      provider: () =>
+        new HDWalletProvider(config.MATIC_PRIVATE_KEY, config.BLOCKCHAIN_PAYMENTS_URL),
       network_id: 80001,
       confirmations: 2,
-      timeoutBlocks: 200,
+      timeoutBlocks: 200000,
+      networkCheckTimeout: 1000000000,
       skipDryRun: true,
       websockets: true,
       gasPrice: config.WEB3_OPTIONS.gasPrice,

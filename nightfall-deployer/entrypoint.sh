@@ -6,7 +6,7 @@ if [ -z "${ETH_PRIVATE_KEY}" ]; then
   # wait until there's a blockchain client up
   while ! nc -z ${BLOCKCHAIN_WS_HOST} ${BLOCKCHAIN_PORT}; do sleep 3; done
 fi
-if [ -z "${USE_INFURA}" ] && [ -z "${ETH_PRIVATE_KEY}" ]; then
+if [ -z "${USE_INFURA}" ] && [ -z "${MATIC_PRIVATE_KEY}" ]; then
   # wait until payments blockchain client up
   while ! nc -z ${BLOCKCHAIN_PAYMENTS_WS_HOST} ${BLOCKCHAIN_PAYMENTS_PORT}; do sleep 3; done
 fi

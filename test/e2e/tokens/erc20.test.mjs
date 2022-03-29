@@ -14,6 +14,7 @@ import {
   nf3StartProposer,
   nf3Close,
   nf3DeregisterProposer,
+  nf3GetEthereumAddress,
 } from '../../../cli/src/proposer/nf3-wrapper.mjs';
 import { approve } from '../../../cli/lib/tokens.mjs';
 
@@ -228,7 +229,7 @@ describe('ERC20 tests', () => {
       expect(after).to.be.lessThan(before);
     });
 
-    it('should send a single ERC20 transfer directly to a proposer', async function () {
+    it('should send a single ERC20 off-chain transfer directly to a proposer', async function () {
       const before = (await nf3Users[0].getLayer2Balances())[erc20Address][0].balance;
 
       // here we don't need to emptyL2 because we're sending two transactions
@@ -249,7 +250,7 @@ describe('ERC20 tests', () => {
       expect(after).to.be.lessThan(before);
     });
 
-    it('should send a double ERC20 transfer directly to a proposer', async function () {
+    it('should send a double ERC20 off-chain transfer directly to a proposer', async function () {
       // we get some different transferValue than the commitments we have (all should be of value transferValue)
       // then we send it, the client should pick two commitments to send the transaction
       const doubleTransferValue = Math.ceil(transferValue * 1.2);
@@ -291,6 +292,41 @@ describe('ERC20 tests', () => {
       logger.debug(`     Gas used was ${Number(rec.gasUsed)}`);
       const afterBalance = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance;
       expect(afterBalance).to.be.lessThan(beforeBalance);
+    });
+
+    it('User should have the correct balance after off-chain withdraw directly to a proposer', async () => {
+      let expectedDecPaymentBalance = 0;
+      const startPaymentBalance = BigInt(
+        await nf3Users[0].getPaymentBalance(nf3Users[0].ethereumAddress),
+      );
+      const proposerAddress = nf3GetEthereumAddress(); // It's the only proposer
+      const proposerStartPaymentBalance = BigInt(
+        await nf3Users[0].getPaymentBalance(proposerAddress),
+      );
+
+      await nf3Users[0].withdraw(
+        true,
+        erc20Address,
+        tokenType,
+        transferValue,
+        tokenId,
+        nf3Users[0].ethereumAddress,
+        fee,
+      );
+      expectedDecPaymentBalance += fee;
+
+      const endPaymentBalance = BigInt(
+        await nf3Users[0].getPaymentBalance(nf3Users[0].ethereumAddress),
+      );
+      const proposerEndPaymentBalance = BigInt(
+        await nf3Users[0].getPaymentBalance(proposerAddress),
+      );
+      expect(expectedDecPaymentBalance).to.be.lessThan(
+        Number(startPaymentBalance - endPaymentBalance),
+      );
+      expect(expectedDecPaymentBalance).to.be.equal(
+        Number(proposerEndPaymentBalance - proposerStartPaymentBalance),
+      );
     });
 
     it('Should create a failing finalise-withdrawal (because insufficient time has passed)', async function () {

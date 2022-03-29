@@ -39,6 +39,7 @@ module.exports = {
   USE_INFURA: process.env.USE_INFURA === 'true',
   ETH_PRIVATE_KEY: process.env.ETH_PRIVATE_KEY, // owner's/deployer's private key
   ETH_ADDRESS: process.env.ETH_ADDRESS,
+  MATIC_PRIVATE_KEY: process.env.MATIC_PRIVATE_KEY, // owner's deployer's private key MATIC network
   OPTIMIST_HOST: process.env.OPTIMIST_HOST || 'optimist',
   OPTIMIST_PORT: process.env.OPTIMIST_PORT || 80,
   PROPOSER_HOST: process.env.PROPOSER_HOST || 'proposer',

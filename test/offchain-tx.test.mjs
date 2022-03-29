@@ -155,21 +155,16 @@ describe('Testing off-chain transactions', () => {
     });
 
     it('User should have the correct balance after off-chain withdraw', async () => {
-      // let expectedIncBalance = 0;
       let expectedDecPaymentBalance = 0;
-      // const startBalance = await retrieveL2Balance(nf3User);
       const startPaymentBalance = BigInt(await nf3User.getPaymentBalance(nf3User.ethereumAddress));
       const proposerAddress = nf3GetEthereumAddress(); // It's the only proposer
       const proposerStartPaymentBalance = BigInt(await nf3User.getPaymentBalance(proposerAddress));
-      // console.log('START: ', startBalance, startPaymentBalance, proposerStartPaymentBalance);
+
       await nf3User.withdraw(true, ercAddress, tokenType, transferValue, tokenId, pkds.user1, fee);
       expectedDecPaymentBalance += fee;
-      // expectedIncBalance -= transferValue;
-      // const endBalance = await retrieveL2Balance(nf3User);
+
       const endPaymentBalance = BigInt(await nf3User.getPaymentBalance(nf3User.ethereumAddress));
       const proposerEndPaymentBalance = BigInt(await nf3User.getPaymentBalance(proposerAddress));
-      // console.log('END: ', endBalance, endPaymentBalance, proposerEndPaymentBalance);
-      // expect(expectedIncBalance).to.be.equal(startBalance - endBalance);
       expect(expectedDecPaymentBalance).to.be.lessThan(
         Number(startPaymentBalance - endPaymentBalance),
       );

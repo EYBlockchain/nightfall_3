@@ -16,7 +16,7 @@ export default {
   connect() {
     if (this.web3) return this.web3.currentProvider;
 
-    logger.info('Blockchain Connecting ...');
+    logger.info('Blockchain Payments Connecting ...');
 
     const provider = new Web3.providers.WebsocketProvider(
       config.BLOCKCHAIN_PAYMENTS_URL,
@@ -24,8 +24,8 @@ export default {
     );
 
     provider.on('error', err => logger.error(`web3 error: ${err}`));
-    provider.on('connect', () => logger.info('Blockchain Connected ...'));
-    provider.on('end', () => logger.info('Blockchain disconnected'));
+    provider.on('connect', () => logger.info('Blockchain Payments Connected ...'));
+    provider.on('end', () => logger.info('Blockchain Payments disconnected'));
 
     this.web3 = new Web3(provider);
 
@@ -52,7 +52,7 @@ export default {
     if (!rawTransaction) throw Error('No tx data to sign');
     if (!contractAddress) throw Error('No contract address passed');
     if (!config.WEB3_OPTIONS.from) throw Error('config WEB3_OPTIONS.from is not set');
-    if (!config.ETH_PRIVATE_KEY) throw Error('config ETH_PRIVATE_KEY not set');
+    if (!config.MATIC_PRIVATE_KEY) throw Error('config MATIC_PRIVATE_KEY not set');
 
     const tx = {
       to: contractAddress,
@@ -62,7 +62,7 @@ export default {
       gasPrice: config.WEB3_OPTIONS.gasPrice,
     };
 
-    const signed = await this.web3.eth.accounts.signTransaction(tx, config.ETH_PRIVATE_KEY);
+    const signed = await this.web3.eth.accounts.signTransaction(tx, config.MATIC_PRIVATE_KEY);
     return this.web3.eth.sendSignedTransaction(signed.rawTransaction);
   },
 };
