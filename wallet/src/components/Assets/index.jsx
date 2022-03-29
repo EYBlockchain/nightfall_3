@@ -16,7 +16,7 @@ export default function Assets({ tokenList }) {
     <div>
       {showReceiveModal && (
         <div className="modalWrapper">
-          <ReceiveModal handleClose={setShowReceiveModal} />
+          <ReceiveModal show={showReceiveModal} handleClose={setShowReceiveModal} />
         </div>
       )}
       <div className="dashboardTopSection">

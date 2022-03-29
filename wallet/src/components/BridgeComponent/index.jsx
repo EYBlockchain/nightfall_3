@@ -27,9 +27,9 @@ import loadAccount from '../../utils/loadAccount.ts';
 import minERC20ABI from '../../utils/getMinABIErc20.ts';
 import { getWalletBalance } from '../../nightfall-browser/services/commitment-storage';
 import './toast.css';
-import '../../styles/modal.scss';
 import './styles.scss';
 import verifyIfValueIsGreaterThen from './utils/verifyIfValueIsGreaterThen.ts';
+import TransferModal from '../Modals/Bridge/Transfer/index.jsx';
 
 
 const BridgeComponent = () => {
@@ -174,20 +174,20 @@ const BridgeComponent = () => {
   };
 
   const handleShow = () => {
-    if (isValueGreaterThen()) {
-      toast.error("Input value can't be greater than balance!");
-      return;
-    }
+    // if (isValueGreaterThen()) {
+    //   toast.error("Input value can't be greater than balance!");
+    //   return;
+    // }
 
-    if (!transferValue) {
-      toast.warn('Input a value for transfer, please.');
-      return;
-    }
+    // if (!transferValue) {
+    //   toast.warn('Input a value for transfer, please.');
+    //   return;
+    // }
 
-    if (transferValue === 0) {
-      toast.warn("Input a value can't be zero.");
-      return;
-    }
+    // if (transferValue === 0) {
+    //   toast.warn("Input a value can't be zero.");
+    //   return;
+    // }
 
     setShow(true);
   };
@@ -416,115 +416,19 @@ const BridgeComponent = () => {
               <p>Transfer</p>
             </button>
           </div>
-        </div>
-        <Modal contentClassName="modalFather" show={show} onHide={() => setShow(false)}>
-          <Modal.Header closeButton>
-            <div className="modalTitle">Confirm transaction</div>
-          </Modal.Header>
-          <Modal.Body>
-            <div className="modalBody">
-              <div className="tokenDetails">
-                {/* d-flex justify-content-center align-self-center mx-auto */}
-                <div className="tokenDetails__img">
-                  {/* <img
-                                  v-if="
-                                  selectedToken.symbol &&
-                                      !!tokenImage(selectedToken)
-                                  "
-                                  class="align-self-center"
-                                  :src="tokenImage(selectedToken)"
-                                  alt="Token Image"
-                              > */}
-                  <img src={matic} alt="Token" />
-                  {/* <span
-                                  v-else-if="selectedToken.symbol"
-                                  class="align-self-center font-heading-large ps-t-2 font-semibold"
-                              >{{ selectedToken.symbol[0] }}</span> */}
-                </div>
-                {/* font-heading-large font-bold ps-t-16 ps-b-6 */}
-                <div className="tokenDetails__val" id="Bridge_modal_tokenAmount">
-                  {
-                    Number(transferValue)
-                      .toString()
-                      .match(/^-?\d+(?:\.\d{0,4})?/)[0]
-                  }
-                </div>
-                {/* font-body-small */}
-                <div className="tokenDetails__usd">$xx.xx</div>
-              </div>
-
-              {/* Buttons */}
-              <div>
-                <div className="networkButtons">
-                  <div className="networkButtons__button1">
-                    <span>
-                      {txType === 'deposit' ? 'Ethereum Mainnet' : 'Polygon Nightfall L2'}
-                    </span>
-                  </div>
-                  <MdArrowForwardIos />
-                  <div className="networkButtons__button2">
-                    <span>
-                      {txType === 'deposit' ? 'Polygon Nightfall L2' : 'Ethereum Mainnet'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="divider" />
-              <div className="transferModeModal">
-                <div className="transferModeModal__title">
-                  <div className="transferModeModal__title__main">Transfer Mode</div>
-                  <div className="transferModeModal__title__light">
-                    <DropdownButton
-                      variant="light"
-                      title={transferMethod}
-                      id="Bridge_modal_transferMode"
-                    >
-                      <Dropdown.Item onClick={() => setMethod('On-Chain')}>On-Chain</Dropdown.Item>
-                      <Dropdown.Item onClick={() => setMethod('Direct Transfer')}>
-                        Direct Transfer
-                      </Dropdown.Item>
-                      <Dropdown.Item onClick={() => setMethod('Instant Withdrawal')}>
-                        Instant Withdrawal
-                      </Dropdown.Item>
-                    </DropdownButton>
-                  </div>
-                </div>
-                <div className="transferModeModal__text">
-                  <span>Transfer security is provided by the Ethereum miners.</span>
-                  {/* <span v-else>
-                              Plasma provides advanced security with plasma exit
-                              mechanism. </span>It will take approximately */}
-                  <span>
-                    {' '}
-                    To minimise the risk of chain reorganisations, your transfer will wait for{' '}
-                  </span>
-                  <span className="text-primary"> 12 block confirmations</span> before being
-                  finalized.
-                </div>
-              </div>
-              <div className="divider" />
-              <div className="estimationFee">
-                <div className="estimationFee__title">
-                  <div className="estimationFee__title__main">
-                    Estimation Transaction fee
-                  </div>
-                  <div className="estimationFee__title__light">~ $x.xx</div>
-                </div>
-                <button
-                  type="button"
-                  className="continueTrasferButton"
-                  // onClick={() => triggerTx()}
-                  onClick={() => {
-                    handleClose();
-                    handleShowModalConfirm();
-                  }}
-                >
-                  Create Transaction
-                </button>
-              </div>
-            </div>
-          </Modal.Body>
-        </Modal>
+        </div>        
+        {show && 
+          <TransferModal 
+            show={show}
+            setShow={setShow}
+            handleClose={setShow}
+            transferValue={transferValue}
+            txType={txType}
+            setMethod={setMethod}
+            transferMethod={transferMethod}
+            handleShowModalConfirm={handleShowModalConfirm}
+          />
+        }
 
         {/* TRANSFER IN PROGRESS MODAL */}
         <Modal
