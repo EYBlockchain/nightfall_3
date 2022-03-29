@@ -10,8 +10,6 @@
   "author": "“Liju <“liju.jose@gds.ey.com”>",
   "license": "CC0-1.0",
   "dependencies": {
-    "aws-sdk": "^2.1095.0",
-    "config": "^3.3.7",
     "express": "^4.17.3"
   }
 }

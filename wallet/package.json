@@ -9,7 +9,7 @@
     "@testing-library/jest-dom": "^5.14.1",
     "@testing-library/react": "^12.1.2",
     "async-mutex": "^0.3.2",
-    "aws-sdk": "^2.1098.0",
+    "aws-sdk": "^2.1102.0",
     "axios": "^0.25.0",
     "bip39": "^3.0.4",
     "bootstrap": "^5.1.3",
