@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from 'react-bootstrap/Modal';
 import { AiOutlineDown } from 'react-icons/ai';
 import { FiSearch } from 'react-icons/fi';
@@ -9,6 +9,7 @@ import maticImg from '../../assets/img/polygon-chain.svg';
 import transfer from '../../nightfall-browser/services/transfer';
 import { retrieveAndDecrypt } from '../../utils/lib/key-storage';
 import { getContractAddress } from '../../common-files/utils/contract';
+import { getWalletBalance } from '../../nightfall-browser/services/commitment-storage';
 
 type SendModalProps = {
   currencyValue: number;
@@ -58,6 +59,18 @@ const SendModal = (props: SendModalProps): JSX.Element => {
           l2Balance: '0',
         };
       });
+
+  useEffect(() => {
+    const getBalance = async () => {
+      const l2bal: Record<string, Record<string, number>> = await getWalletBalance(
+        state?.compressedPkd,
+      );
+      if (Object.hasOwnProperty.call(l2bal, state?.compressedPkd))
+        setL2Balance(l2bal[state.compressedPkd][sendToken.address.toLowerCase()] ?? 0);
+      else setL2Balance(0);
+    };
+    getBalance();
+  }, [sendToken, state]);
 
   async function sendTx() {
     const { address: shieldContractAddress } = (await getContractAddress('Shield')).data;
