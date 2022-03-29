@@ -17,3 +17,18 @@ export const APPROVE_AMOUNT =
 export const DEFAULT_FEE = 10;
 export const DEFAULT_PROPOSER_BOND = 10;
 export const DEFAULT_BLOCK_STAKE = 1;
+
+export const WEB3_PROVIDER_OPTIONS = {
+  clientConfig: {
+    // Useful to keep a connection alive
+    keepalive: true,
+    keepaliveInterval: 60000,
+  },
+  timeout: 3600000,
+  reconnect: {
+    auto: true,
+    delay: 5000, // ms
+    maxAttempts: 120,
+    onTimeout: false,
+  },
+};

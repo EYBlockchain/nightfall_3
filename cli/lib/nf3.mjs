@@ -9,7 +9,12 @@ import erc20 from './abis/ERC20.mjs';
 import erc721 from './abis/ERC721.mjs';
 import erc1155 from './abis/ERC1155.mjs';
 
-import { DEFAULT_BLOCK_STAKE, DEFAULT_PROPOSER_BOND, DEFAULT_FEE } from './constants.mjs';
+import {
+  DEFAULT_BLOCK_STAKE,
+  DEFAULT_PROPOSER_BOND,
+  DEFAULT_FEE,
+  WEB3_PROVIDER_OPTIONS,
+} from './constants.mjs';
 
 // TODO when SDK is refactored such that these functions are split by user, proposer and challenger,
 // then there will only be one queue here. The constructor does not need to initialise clientBaseUrl
@@ -1174,9 +1179,14 @@ class Nf3 {
   Set a Web3 Payment Provider URL
   */
   async setWeb3PaymentProvider() {
-    this.web3Payment = new Web3(this.web3PaymentsWsUrl);
+    const provider = new Web3.providers.WebsocketProvider(
+      this.web3PaymentsWsUrl,
+      WEB3_PROVIDER_OPTIONS,
+    );
+
+    this.web3Payment = new Web3(provider);
     this.web3Payment.eth.transactionBlockTimeout = 200;
-    this.web3Payment.eth.transactionConfirmationBlocks = 12;
+    this.web3Payment.eth.transactionConfirmationBlocks = 2;
     if (typeof window !== 'undefined') {
       if (window.ethereum && this.ethereumSigningKey === '') {
         this.web3Payment = new Web3(window.ethereum);
@@ -1249,7 +1259,7 @@ class Nf3 {
       this.web3Payment.eth
         .sendSignedTransaction(signed.rawTransaction)
         .on('confirmation', (number, receipt) => {
-          if (number === 12) {
+          if (number === 2) {
             this.notConfirmedPayment--;
             logger.debug(
               `Transaction payment ${receipt.transactionHash} has been confirmed ${number} times.`,
@@ -1259,6 +1269,7 @@ class Nf3 {
           }
         })
         .on('error', err => {
+          console.log(err);
           this.notConfirmedPayment--;
           reject(err);
         });
