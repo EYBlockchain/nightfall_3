@@ -25,45 +25,6 @@ import useInterval from '../../hooks/useInterval.js';
 
 const { DEFAULT_ACCOUNT_NUM } = global.config;
 
-/*
-These are some default values for now
-*/
-
-// const initialTokenState = [
-//   {
-//     maticChainUsdBalance: '0',
-//     maticChainBalance: '0',
-//     name: 'ChainLink Token',
-//     symbol: 'LINK',
-//     order: 2,
-//     tokenAddress: '',
-//   },
-//   {
-//     maticChainUsdBalance: '0',
-//     maticChainBalance: '0',
-//     name: 'USDT',
-//     symbol: 'USDT',
-//     order: 2,
-//     tokenAddress: '',
-//   },
-//   {
-//     maticChainUsdBalance: '0',
-//     maticChainBalance: '0',
-//     name: 'Aave Token',
-//     symbol: 'AAVE',
-//     order: 2,
-//     tokenAddress: '',
-//   },
-//   {
-//     maticChainUsdBalance: '1.8',
-//     maticChainBalance: '0',
-//     name: 'Matic Token',
-//     symbol: 'MATIC',
-//     order: 1,
-//     tokenAddress: '',
-//   },
-// ];
-
 /**
 This is a modal to detect if a wallet has been initialized
 */

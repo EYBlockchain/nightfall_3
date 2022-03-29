@@ -3,7 +3,7 @@
   padding-top: 45px;
   padding-bottom: 19px;
   display: flex;
-  justify-content: space-around;
+  justify-content: center;
 
   @media #{$sm-devices} {
     padding-top: 61px;
@@ -133,6 +133,8 @@
   .container {
     padding-inline-start: 20px;
     padding-inline-end: 20px;
+    flex: 1;
+    // justify-content: space-between;
     @media #{$xl-devices} {
       max-width: 1140px !important;
     }
@@ -152,4 +154,77 @@
   //     }
   //   }
   // }
+}
+
+.qrcode {
+  text-align: center;
+}
+
+.tokens_items_modal_header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;  
+}
+
+.tokens_items_modal_title {
+  left: 17.08%;
+  right: 16.18%;
+  top: 36.36%;
+  bottom: 36.36%;
+
+  margin: 32px 0;
+
+  /* Header/H5 */
+
+  font-family: Manrope;
+  font-style: normal;
+  font-weight: 800;
+  font-size: 16px;  
+  /* identical to box height, or 150% */
+
+  text-align: center;
+  letter-spacing: 0.01em;
+
+  /* Dark_Gray_700 */
+
+  color: #061024;
+}
+
+.copyFooter {
+  color: #fff;
+  background-color: #854ce6;
+  width: 100%;
+  cursor: pointer;
+  text-align: center;
+  border-top-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+  border-bottom-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+.copyButton {
+  color: #fff;
+  background-color: #854ce6;
+  display: block;
+  width: 100%;
+  border: 0!important;
+  cursor: pointer;
+  outline: none;
+  border: none;
+
+  &:focus,
+  &:active,
+  &.focus,
+  &.active,
+  &:hover {
+    cursor: pointer;
+    color: #fff;
+    background-color: #854ce6;
+    box-shadow: none!important;
+    outline: none;
+    border: none;
+  }
+}
+.modal-90w{
+  width: 90%;
 }

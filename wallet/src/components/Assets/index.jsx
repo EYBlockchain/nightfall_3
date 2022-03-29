@@ -1,8 +1,73 @@
-import React from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
+import QRCode from 'qrcode.react';
+import { Button, Modal } from 'react-bootstrap';
+import { CopyToClipboard } from 'react-copy-to-clipboard';
+import Lottie from 'lottie-react';
+import { RiQrCodeLine } from 'react-icons/ri';
+import { FiSend } from 'react-icons/fi';
 import styles from '../../styles/assets.module.scss';
+import { UserContext } from '../../hooks/User';
+import checkMarkYes from '../../assets/lottie/check-mark-yes.json';
 
+function ReceiveModal(props) {
+  const [state] = useContext(UserContext);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (copied)
+      setTimeout(() => {
+        setCopied(false);
+      }, 20000);
+  }, [copied]);
+
+  return (
+    <div>
+      <Modal
+        size="lg"
+        dialogClassName="modal-90w"
+        centered
+        className="modal_wrapper"
+        show={true}
+        {...props}
+      >
+        <Modal.Header closeButton>
+          <div className={styles.tokens_items_modal_header}>
+            <p className={styles.tokens_items_modal_title}>My QR Code</p>
+          </div>
+        </Modal.Header>
+        <Modal.Body>
+          <div className={styles.qrcode}>
+            <QRCode value={state.compressedPkd} />
+          </div>
+          <p>Wallet Address</p>
+          <p>{state.compressedPkd}</p>
+        </Modal.Body>
+        {copied ? (
+          <Modal.Footer className={styles.copyFooter} style={{ background: 'white' }}>
+            <div className="col-lg-12" style={{ background: 'white' }}>
+              <Lottie
+                style={{ height: '32px', width: '32px', margin: '0 auto' }}
+                animationData={checkMarkYes}
+                loop={true}
+              />
+            </div>
+          </Modal.Footer>
+        ) : (
+          <CopyToClipboard text={state.compressedPkd} onCopy={() => setCopied(true)}>
+            <Modal.Footer className={styles.copyFooter}>
+              <div className="col-lg-12">
+                <Button bsPrefix={styles.copyButton}>Copy Address</Button>
+              </div>
+            </Modal.Footer>
+          </CopyToClipboard>
+        )}
+      </Modal>
+    </div>
+  );
+}
 export default function Assets({ tokenList }) {
+  const [modalShow, setModalShow] = useState(false);
   console.log(tokenList);
   const total = tokenList.reduce(
     (acc, curr) =>
@@ -17,10 +82,12 @@ export default function Assets({ tokenList }) {
             <div className={styles.heading}>Nightfall</div>
             <div className={styles.amount}>&#36;{total.toFixed(2)}</div>
             <div className={styles.buttonsWrapper}>
-              <button className="" icon-name="navbar/qr" onClick={() => {}}>
+              <button className="" onClick={() => setModalShow(true)}>
+                <RiQrCodeLine />
                 Receive
               </button>
               <button icon-name="navbar/send" onClick={() => {}}>
+                <FiSend />
                 Send
               </button>
             </div>
@@ -48,6 +115,7 @@ export default function Assets({ tokenList }) {
           </div>
         </div>
       </div>
+      <ReceiveModal show={modalShow} onHide={() => setModalShow(false)} />
       {/* <receive-qr-code
             v-if="showReceiveModal"
             :uri="account.address"
