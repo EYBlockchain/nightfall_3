@@ -5,21 +5,21 @@ module but handle the entire request here.
 */
 import express from 'express';
 import logger from '../../../../../common-files/utils/logger.mjs';
+import { nf3SendOffchainTransaction } from '../nf3-wrapper.mjs';
 
-let nf3Instance = '';
 const router = express.Router();
 
-router.post('/offchain-transaction', async req => {
+router.post('/offchain-transaction', async (req, res) => {
   logger.debug(`Proposer/offchain-transaction endpoint received POST`);
   logger.debug(`With content ${JSON.stringify(req.body, null, 2)}`);
   const { transaction } = req.body;
 
-  if (!transaction || nf3Instance === '') return;
-  await nf3Instance.sendOffchainTransaction(transaction);
+  if (!transaction) {
+    res.sendStatus(404);
+    return;
+  }
+  await nf3SendOffchainTransaction(transaction);
+  res.sendStatus(200);
 });
 
-function setNf3Instance(nf3) {
-  nf3Instance = nf3;
-}
-
-export { router, setNf3Instance };
+export default router;

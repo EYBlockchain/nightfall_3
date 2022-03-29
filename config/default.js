@@ -1,6 +1,3 @@
-/* eslint-disable no-nested-ternary */
-const { DOMAIN_NAME = '' } = process.env;
-
 module.exports = {
   COMMITMENTS_DB: 'nightfall_commitments',
   OPTIMIST_DB: 'optimist_data',
@@ -38,10 +35,8 @@ module.exports = {
   ETH_ADDRESS: process.env.ETH_ADDRESS,
   OPTIMIST_HOST: process.env.OPTIMIST_HOST || 'optimist',
   OPTIMIST_PORT: process.env.OPTIMIST_PORT || 80,
-  clientBaseUrl: `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`,
-  // Define Urls and Url format (http/ws vs https/wss, with vs without port) depending on whether a DOMAIN_NAME has been defined.
-  // In production and staging environements, we require https/wss and no port, as traffic will be routed to the correct service
-  // given a URL.
+  PROPOSER_HOST: process.env.PROPOSER_HOST || 'proposer',
+  PROPOSER_PORT: process.env.PROPOSER_PORT || 8080,
   WEB3_OPTIONS: {
     gas: process.env.GAS || 8000000,
     gasPrice: process.env.GAS_PRICE || '20000000000',
@@ -136,27 +131,30 @@ module.exports = {
       name: 'Localhost',
       chainId: 4378921,
       clientApiUrl: process.env.CLIENT_HOST
-        ? DOMAIN_NAME === ''
-          ? `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`
-          : `https://${process.env.CLIENT_HOST}`
+        ? `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`
         : 'http://localhost:8080',
       optimistApiUrl: process.env.OPTIMIST_HOST
-        ? DOMAIN_NAME === ''
-          ? `http://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_PORT}`
-          : `https://${process.env.OPTIMIST_HOST}`
+        ? `http://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_PORT}`
         : 'http://localhost:8081',
       optimistWsUrl: process.env.OPTIMIST_HOST
-        ? DOMAIN_NAME === ''
-          ? `ws://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_WS_PORT}`
-          : `wss://${process.env.OPTIMIST_HOST}`
+        ? `ws://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_WS_PORT}`
         : 'ws://localhost:8082',
+      proposerBaseUrl: process.env.PROPOSER_HOST
+        ? `http://${process.env.PROPOSER_HOST}:${process.env.PROPOSER_PORT}`
+        : 'http://172.16.238.1:8100',
       adversarialOptimistApiUrl: 'http://localhost:8088',
       adversarialOptimistWsUrl: 'ws://localhost:8089',
       web3WsUrl: process.env.BLOCKCHAIN_WS_HOST
-        ? DOMAIN_NAME === ''
-          ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`
-          : `wss://${process.env.BLOCKCHAIN_WS_HOST}`
+        ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`
         : 'ws://localhost:8546',
+    },
+    aws: {
+      name: 'AWS',
+      clientApiUrl: `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`,
+      optimistApiUrl: `https://${process.env.OPTIMIST_HTTP_HOST}`,
+      optimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
+      proposerBaseUrl: `https://${process.env.PROPOSER_HOST}`,
+      web3WsUrl: `wss://${process.env.BLOCKCHAIN_WS_HOST}`,
     },
   },
   TEST_OPTIONS: {
@@ -176,34 +174,62 @@ module.exports = {
     bond: 10, // 10 wei
     txPerBlock: process.env.TRANSACTIONS_PER_BLOCK || 2,
     signingKeys: {
-      walletTest: '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
-      user1: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e',
-      user2: '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
-      proposer1: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
-      proposer2: '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
-      proposer3: '0xfbc1ee1c7332e2e5a76a99956f50b3ba2639aff73d56477e877ef8390c41e0c6',
-      challenger: '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
-      liquidityProvider: '0xfbc1ee1c7332e2e5a76a99956f50b3ba2639aff73d56477e877ef8390c41e0c6',
+      walletTest:
+        process.env.WALLET_TEST_KEY ||
+        '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
+      user1:
+        process.env.USER1_KEY ||
+        '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e',
+      user2:
+        process.env.USER2_KEY ||
+        '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
+      proposer1:
+        process.env.BOOT_PROPOSER_KEY ||
+        '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
+      proposer2:
+        process.env.PROPOSER2_KEY ||
+        '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
+      proposer3:
+        process.env.PROPOSER3_KEY ||
+        '0xfbc1ee1c7332e2e5a76a99956f50b3ba2639aff73d56477e877ef8390c41e0c6',
+      challenger:
+        process.env.BOOT_CHALLENGER_KEY ||
+        '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
+      liquidityProvider:
+        process.env.LIQUIDITY_PROVIDER_KEY ||
+        '0xfbc1ee1c7332e2e5a76a99956f50b3ba2639aff73d56477e877ef8390c41e0c6',
     },
     addresses: {
-      walletTest: '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
-      user1: '0x9C8B2276D490141Ae1440Da660E470E7C0349C63',
-      user2: '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
-      proposer1: '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0',
-      proposer2: '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
-      proposer3: '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
-      challenger: '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
-      liquidityProvider: '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
+      walletTest: process.env.WALLET_TEST_ADDRESS || '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
+      user1: process.env.USER1_ADDRESS || '0x9C8B2276D490141Ae1440Da660E470E7C0349C63',
+      user2: process.env.USER2_ADDRESS || '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
+      proposer1: process.env.BOOT_PROPOSER_ADDRESS || '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0',
+      proposer2: process.env.PROPOSER2_ADDRESS || '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
+      proposer3: process.env.PROPOSER3_ADDRESS || '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
+      challenger:
+        process.env.BOOT_CHALLENGER_ADDRESS || '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
+      liquidityProvider:
+        process.env.LIQUIDITY_PROVIDER_ADDRESS || '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
     },
     pkds: {
       user1: '0x1ac3b61ecba1448e697b23d37efe290fb86554b2f905aaca3a6df59805eca366',
     },
     mnemonics: {
-      user1: 'trip differ bamboo bundle bonus luxury strike mad merry muffin nose auction',
-      user2: 'control series album tribe category saddle prosper enforce moon eternal talk fame',
-      proposer: 'high return hold whale promote payment hat panel reduce oyster ramp mouse',
-      challenger: 'crush power outer gadget enter maze advance rather divert monster indoor axis',
-      liquidityProvider: 'smart base soup sister army address member poem point quick save penalty',
+      user1:
+        process.env.USER1_MNEMONIC ||
+        'trip differ bamboo bundle bonus luxury strike mad merry muffin nose auction',
+      user2:
+        process.env.USER2_MNEMONIC ||
+        'control series album tribe category saddle prosper enforce moon eternal talk fame',
+      proposer:
+        process.env.BOOT_PROPOSER_MNEMONIC ||
+        'high return hold whale promote payment hat panel reduce oyster ramp mouse',
+      challenger:
+        process.env.BOOT_CHALLENGER_MNEMONIC ||
+        'crush power outer gadget enter maze advance rather divert monster indoor axis',
+      liquidityProvider:
+        process.env.LIQUIDITY_PROVIDER_MNEMONIC ||
+        'smart base soup sister army address member poem point quick save penalty',
     },
     restrictions: {
       erc20default: process.env.ERC20_RESTRICTION || 100000000000,
@@ -211,12 +237,18 @@ module.exports = {
   },
   RESTRICTIONS: {
     signingKeys: {
-      bootProposerKey: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
-      bootChallengerKey: '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
+      bootProposerKey:
+        process.env.BOOT_PROPOSER_KEY ||
+        '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
+      bootChallengerKey:
+        process.env.BOOT_CHALLENGER_KEY ||
+        '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
     },
     addresses: {
-      bootProposer: '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0',
-      bootChallenger: '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
+      bootProposer:
+        process.env.BOOT_PROPOSER_ADDRESS || '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0',
+      bootChallenger:
+        process.env.BOOT_CHALLENGER_ADDRESS || '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
     },
     tokens: [
       {
