@@ -9,6 +9,7 @@ import { FiSend } from 'react-icons/fi';
 import styles from '../../styles/assets.module.scss';
 import { UserContext } from '../../hooks/User';
 import checkMarkYes from '../../assets/lottie/check-mark-yes.json';
+import SendModal from '../Modals/sendModal';
 
 function ReceiveModal(props) {
   const [state] = useContext(UserContext);
@@ -68,6 +69,8 @@ function ReceiveModal(props) {
 }
 export default function Assets({ tokenList }) {
   const [modalShow, setModalShow] = useState(false);
+  const [showSendModal, setShowSendModal] = useState(false);
+
   console.log(tokenList);
   const total = tokenList.reduce(
     (acc, curr) =>
@@ -86,7 +89,7 @@ export default function Assets({ tokenList }) {
                 <RiQrCodeLine />
                 Receive
               </button>
-              <button icon-name="navbar/send" onClick={() => {}}>
+              <button icon-name="navbar/send" onClick={() => setShowSendModal(true)}>
                 <FiSend />
                 Send
               </button>
@@ -116,6 +119,17 @@ export default function Assets({ tokenList }) {
         </div>
       </div>
       <ReceiveModal show={modalShow} onHide={() => setModalShow(false)} />
+      <SendModal
+        show={showSendModal}
+        onHide={() => setShowSendModal(false)}
+        currencyValue={0}
+        l2Balance={''}
+        name={''}
+        symbol={''}
+        address={''}
+        logoURI={''}
+        decimals={0}
+      />
       {/* <receive-qr-code
             v-if="showReceiveModal"
             :uri="account.address"

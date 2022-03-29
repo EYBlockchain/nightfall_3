@@ -28,7 +28,7 @@ import { useAccount } from '../../hooks/Account/index.tsx';
 import { getWalletBalance } from '../../nightfall-browser/services/commitment-storage';
 import './toast.css';
 import ERC20 from '../../contract-abis/ERC20.json';
-import tokensList from '../Modals/Bridge/TokensList/tokensList.ts';
+import tokensList from '../Modals/Bridge/TokensList/tokensList';
 import { APPROVE_AMOUNT } from '../../constants';
 import { retrieveAndDecrypt } from '../../utils/lib/key-storage';
 import { decompressKey } from '../../nightfall-browser/services/keys';
@@ -44,17 +44,11 @@ const BridgeComponent = () => {
   const [l1Balance, setL1Balance] = useState(0);
   const [l2Balance, setL2Balance] = useState(0);
   const location = useLocation();
-  console.log(location);
 
   const initialTx = location?.tokenState?.initialTxType ?? 'deposit';
-  const [initialToken] =
-    tokensList.tokens.findIndex(
-      t => t.address.toLowerCase() === location?.tokenState?.tokenAddress,
-    ) > 0
-      ? tokensList.tokens.filter(
-          t => t.address.toLowerCase() === location?.tokenState?.tokenAddress,
-        )
-      : [null];
+  const initialToken =
+    tokensList.tokens.find(t => t.address.toLowerCase() === location?.tokenState?.tokenAddress) ??
+    tokensList.tokens[0];
 
   const [token, setToken] = useState(initialToken);
   const [txType, setTxType] = useState(initialTx);
@@ -206,8 +200,7 @@ const BridgeComponent = () => {
       // console.log('ERC20', defaultTokenAddress);
       const contract = new window.web3.eth.Contract(ERC20, token.address);
       const result = await contract.methods.balanceOf(accountInstance.address).call(); // 29803630997051883414242659
-      const format = result / 10 ** token.decimals; // 29803630.997051883414242659
-      setL1Balance(format);
+      setL1Balance(result);
     } else {
       setL1Balance(0);
     }
@@ -283,10 +276,20 @@ const BridgeComponent = () => {
                 <div className="balance_details">
                   <p>Balance: </p>
                   {token && txType === 'deposit' && (
-                    <p>{`${l1Balance.toFixed(4)} ${token.symbol}`}</p>
+                    // <p> {token.decimals} </p>
+                    <p>{`${(l1Balance / 10 ** token.decimals).toFixed(4)} ${token.symbol}`}</p>
                   )}
-                  {token && txType === 'withdraw' && <p>{`${l2Balance} ${token.symbol}`}</p>}
-                  {!token && <p>{txType === 'deposit' ? `${l1Balance}` : `${l2Balance}`}</p>}
+                  {token && txType === 'withdraw' && (
+                    <p>{`${(l2Balance / 10 ** token.decimals).toFixed(4)} ${token.symbol}`}</p>
+                  )}
+                  {!token && (
+                    <p>
+                      0
+                      {/* {txType === 'deposit'
+                        ? `${(l1Balance / 10 ** token.decimals).toFixed(4)}`
+                        : `${(l2Balance / 10 ** token.decimals).toFixed(4)}`} */}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="from_section_line"></div>
@@ -346,11 +349,19 @@ const BridgeComponent = () => {
               </div>
               <div className="balance_details">
                 <p>Balance: </p>
-                {token && txType === 'deposit' && <p>{`${l2Balance} ${token.symbol}`}</p>}
-                {token && txType === 'withdraw' && (
-                  <p>{`${l1Balance.toFixed(4)} ${token.symbol}`}</p>
+                {token && txType === 'deposit' && (
+                  <p>{`${(l2Balance / 10 ** token.decimals).toFixed(4)} ${token.symbol}`}</p>
                 )}
-                {!token && <p>{txType === 'withdraw' ? `${l2Balance}` : `${l1Balance}`}</p>}
+                {token && txType === 'withdraw' && (
+                  <p>{`${(l1Balance / 10 ** token.decimals).toFixed(4)} ${token.symbol}`}</p>
+                )}
+                {!token && (
+                  <p>
+                    {txType === 'withdraw'
+                      ? `${(l2Balance / 10 ** token.decimals).toFixed(4)}`
+                      : `${(l1Balance / 10 ** token.decimals).toFixed(4)}`}
+                  </p>
+                )}
               </div>
             </div>
           </div>

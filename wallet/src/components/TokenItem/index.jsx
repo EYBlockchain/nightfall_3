@@ -251,7 +251,7 @@ export default function TokenItem(props) {
                   <div className={stylesModal.right}>
                     <p>Available Balance:</p>
                     <p>
-                      {l2Balance} {sendToken.symbol}
+                      {(l2Balance / 10 ** sendToken.decimals).toFixed(4)} {sendToken.symbol}
                     </p>
                   </div>
                 </div>

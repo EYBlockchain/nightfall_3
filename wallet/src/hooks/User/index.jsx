@@ -11,7 +11,7 @@ import { encryptAndStore, retrieveAndDecrypt, storeBrowserKey } from '../../util
 const { eventWsUrl } = global.config;
 
 export const initialState = {
-  active: false,
+  compressedPkd: '',
 };
 
 export const UserContext = React.createContext({

@@ -105,7 +105,7 @@ export default function Wallet() {
   const [tokens, setTokens] = useState(initialTokenState);
   const [state] = useContext(UserContext);
   const [modalShow, setModalShow] = useState(false);
-  const [delay, setDelay] = React.useState(50000);
+  const [delay, setDelay] = React.useState(50);
 
   useEffect(async () => {
     const web3 = Web3.connection();
