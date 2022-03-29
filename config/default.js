@@ -224,6 +224,21 @@ module.exports = {
         address: '0xB5Acbe9a0F1F8B98F3fC04471F7fE5d2c222cB44',
         amount: 200,
       },
+      {
+        name: 'Test-Eth',
+        address: '0x3f152B63Ec5CA5831061B2DccFb29a874C317502',
+        amount: '10000000000000000000000',
+      },
+      {
+        name: 'MATIC',
+        address: '0x499d11E0b6eAC7c0593d8Fb292DCBbF815Fb29Ae',
+        amount: '10000000000000000000000',
+      },
+      {
+        name: 'USDC',
+        address: '0x07865c6e87b9f70255377e024ace6630c1eaa37f',
+        amount: '1000000000000',
+      },
     ],
   },
 

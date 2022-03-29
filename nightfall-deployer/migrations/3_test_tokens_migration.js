@@ -5,6 +5,7 @@ const {
     restrictions: { erc20default },
     addresses,
   },
+  RESTRICTIONS,
 } = config;
 
 const Shield = artifacts.require('Shield.sol');
@@ -21,6 +22,10 @@ module.exports = function (deployer, _, accounts) {
     await deployer.deploy(ERC20Mock, 1001010000000000); // initialSupply
 
     const restrictions = await Shield.deployed();
+    for (let token of RESTRICTIONS.tokens) {
+      console.log(`Max deposit restriction for ${token.name}: ${token.amount}`);
+      await restrictions.setRestriction(token.address, token.amount);
+    }
     const ERC20deployed = await ERC20Mock.deployed();
 
     // For ping pong tests
