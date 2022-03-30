@@ -31,7 +31,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
   // let's extract the input items
   const { offchain = false, ...items } = withdrawParams;
   const { ercAddress, tokenId, value, recipientAddress, nsk, ask, fee } = generalise(items);
-  const { compressedPkd } = await calculateIvkPkdfromAskNsk(ask, nsk);
+  const { compressedPkd } = calculateIvkPkdfromAskNsk(ask, nsk);
 
   if (!(await checkIndexDBForCircuit(circuitName)))
     throw Error('Some circuit data are missing from IndexedDB');
@@ -117,29 +117,29 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     proof,
   });
   try {
-    if (offchain) {
-      await axios
-        .post(
-          `${proposerUrl}/proposer/offchain-transaction`,
-          { transaction: optimisticWithdrawTransaction },
-          { timeout: 3600000 },
-        )
-        .catch(err => {
-          throw new Error(err);
-        });
-      const th = optimisticWithdrawTransaction.transactionHash;
-      delete optimisticWithdrawTransaction.transactionHash;
-      optimisticWithdrawTransaction.transactionHash = th;
-      await markNullified(oldCommitment, optimisticWithdrawTransaction);
-      await saveTransaction(optimisticWithdrawTransaction);
-      return { transaction: optimisticWithdrawTransaction };
-    }
+    // if (offchain) {
+      // await axios
+      //   .post(
+      //     `${proposerUrl}/proposer/offchain-transaction`,
+      //     { transaction: optimisticWithdrawTransaction },
+      //     { timeout: 3600000 },
+      //   )
+      //   .catch(err => {
+      //     throw new Error(err);
+      //   });
+    //   const th = optimisticWithdrawTransaction.transactionHash;
+    //   delete optimisticWithdrawTransaction.transactionHash;
+    //   optimisticWithdrawTransaction.transactionHash = th;
+    //   await markNullified(oldCommitment, optimisticWithdrawTransaction);
+    //   await saveTransaction(optimisticWithdrawTransaction);
+    //   return { transaction: optimisticWithdrawTransaction };
+    // }
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(optimisticWithdrawTransaction))
       .encodeABI();
     // on successful computation of the transaction mark the old commitments as nullified
     await markNullified(oldCommitment, optimisticWithdrawTransaction);
-    await saveTransaction(optimisticWithdrawTransaction);
+    // await saveTransaction(optimisticWithdrawTransaction);
     return { rawTransaction, transaction: optimisticWithdrawTransaction };
   } catch (err) {
     await clearPending(oldCommitment);

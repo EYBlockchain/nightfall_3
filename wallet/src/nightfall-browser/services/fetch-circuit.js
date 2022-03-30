@@ -23,14 +23,14 @@ export default async function fetchCircuit(circuit, circuitsAWSFiles) {
           // eslint-disable-next-line no-await-in-loop
           await s3
             .makeUnauthenticatedRequest('getObject', {
-              Bucket: 'nightfallv3-staging',
+              Bucket: 'nightfallv3-testnet',
               Key: fileSets[key],
             })
             .promise();
         if (key === 'abi') returnObj[key] = JSON.parse(res.Body);
         else returnObj[key] = res.Body;
 
-        console.log(`signed circuit url ${JSON.stringify(returnObj[key])}`);
+        // console.log(`signed circuit url ${JSON.stringify(returnObj[key])}`);
       }
     }
     console.log(returnObj);

@@ -6,6 +6,7 @@ import { CopyToClipboard } from 'react-copy-to-clipboard';
 import Lottie from 'lottie-react';
 import { RiQrCodeLine } from 'react-icons/ri';
 import { FiSend } from 'react-icons/fi';
+import { Link } from 'react-router-dom';
 import styles from '../../styles/assets.module.scss';
 import { UserContext } from '../../hooks/User';
 import checkMarkYes from '../../assets/lottie/check-mark-yes.json';
@@ -19,7 +20,7 @@ function ReceiveModal(props) {
     if (copied)
       setTimeout(() => {
         setCopied(false);
-      }, 20000);
+      }, 1500);
   }, [copied]);
 
   return (
@@ -72,6 +73,7 @@ export default function Assets({ tokenList }) {
   const [showSendModal, setShowSendModal] = useState(false);
 
   console.log(tokenList);
+  const tokenDepositId = `TokenItem_tokenDeposit${tokenList[0].symbol}`;
   const total = tokenList.reduce(
     (acc, curr) =>
       acc + (Number(curr.currencyValue) * Number(curr.l2Balance)) / 10 ** Number(curr.decimals),
@@ -82,7 +84,7 @@ export default function Assets({ tokenList }) {
       <div className={styles.container}>
         <div className="row">
           <div className="col-lg-6">
-            <div className={styles.heading}>Nightfall</div>
+            <div className={styles.heading}>Polygon Nightfall Testnet</div>
             <div className={styles.amount}>&#36;{total.toFixed(2)}</div>
             <div className={styles.buttonsWrapper}>
               <button className="" onClick={() => setModalShow(true)}>
@@ -100,19 +102,27 @@ export default function Assets({ tokenList }) {
             <div className={styles.depositWrapper}>
               <a
                 className={styles.linkButton}
-                href="USER_GUIDE_DOCS_LINK"
+                href="https://docs.polygon.technology/docs/develop/wallets/polygon-web-wallet/web-wallet-v2-guide"
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 How it works?
-                {/* <svg-sprite-icon
-                                    name="right-arrow-white"
-                                    className="right-arrow-white"
-                                /> */}
               </a>
 
               <button className={styles.linkButton} onClick={() => {}}>
-                Move funds from
+                <Link
+                  to={{
+                    pathname: '/bridge',
+                    tokenState: {
+                      tokenAddress: tokenList[0].address,
+                      initialTxType: 'deposit',
+                    },
+                  }}
+                  className={styles.tokenListButton}
+                  id={tokenDepositId}
+                >
+                  Move funds from Goerli to Nightfall
+                </Link>
               </button>
             </div>
           </div>
@@ -122,20 +132,14 @@ export default function Assets({ tokenList }) {
       <SendModal
         show={showSendModal}
         onHide={() => setShowSendModal(false)}
-        currencyValue={0}
-        l2Balance={''}
-        name={''}
-        symbol={''}
-        address={''}
-        logoURI={''}
-        decimals={0}
+        currencyValue={tokenList[0].currencyValue}
+        l2Balance={tokenList[0].l2Balance}
+        name={tokenList[0].name}
+        symbol={tokenList[0].symbol}
+        address={tokenList[0].address}
+        logoURI={tokenList[0].logoURI}
+        decimals={tokenList[0].decimals}
       />
-      {/* <receive-qr-code
-            v-if="showReceiveModal"
-            :uri="account.address"
-            :close="toggleReceiveTokenModal"
-            />
-            <send-token-modal v-if="showSendModal" :cancel="toggleSendTokenModal" /> */}
     </div>
   );
 }

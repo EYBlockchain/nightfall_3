@@ -117,7 +117,7 @@ export default function Wallet() {
 
   useEffect(async () => {
     const pkdsDerived = Storage.pkdArrayGet(await Web3.getAccount());
-    if (typeof state.compressedPkd === 'undefined' && !pkdsDerived) setModalShow(true);
+    if (state.compressedPkd === '' && !pkdsDerived) setModalShow(true);
     else setModalShow(false);
   }, []);
 

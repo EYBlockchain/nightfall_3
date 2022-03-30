@@ -1,17 +1,15 @@
 import React, { useContext, useState, useCallback, useEffect } from 'react';
 import Modal from 'react-bootstrap/Modal';
-import Dropdown from 'react-bootstrap/Dropdown';
-import DropdownButton from 'react-bootstrap/DropdownButton';
 import { MdArrowForwardIos } from 'react-icons/md';
 import { toast } from 'react-toastify';
 import { useLocation } from 'react-router-dom';
+import axios from 'axios';
 import styles from '../../styles/bridge.module.scss';
 import stylesModal from '../../styles/modal.module.scss';
-import polygonChainImage from '../../assets/img/polygon-chain.svg';
 import ethChainImage from '../../assets/img/ethereum-chain.svg';
+import polygonNightfall from '../../assets/svg/polygon-nightfall.svg';
 import discloserBottomImage from '../../assets/img/discloser-bottom.svg';
 import lightArrowImage from '../../assets/img/light-arrow.svg';
-import matic from '../../assets/svg/matic.svg';
 import { approve, getContractAddress, submitTransaction } from '../../common-files/utils/contract';
 import Web3 from '../../common-files/utils/web3';
 import deposit from '../../nightfall-browser/services/deposit';
@@ -32,6 +30,9 @@ import tokensList from '../Modals/Bridge/TokensList/tokensList';
 import { APPROVE_AMOUNT } from '../../constants';
 import { retrieveAndDecrypt } from '../../utils/lib/key-storage';
 import { decompressKey } from '../../nightfall-browser/services/keys';
+import { saveTransaction } from '../../nightfall-browser/services/database';
+
+const { proposerUrl } = global.config;
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const gen = require('general-number');
@@ -43,6 +44,7 @@ const BridgeComponent = () => {
   const { setAccountInstance, accountInstance } = useAccount();
   const [l1Balance, setL1Balance] = useState(0);
   const [l2Balance, setL2Balance] = useState(0);
+  const [shieldContractAddress, setShieldAddress] = useState('');
   const location = useLocation();
 
   const initialTx = location?.tokenState?.initialTxType ?? 'deposit';
@@ -52,7 +54,6 @@ const BridgeComponent = () => {
 
   const [token, setToken] = useState(initialToken);
   const [txType, setTxType] = useState(initialTx);
-  const [transferMethod, setMethod] = useState('On-Chain');
   const [transferValue, setTransferValue] = useState(0);
   const [show, setShow] = useState(false);
 
@@ -70,19 +71,23 @@ const BridgeComponent = () => {
     document.getElementById('inputValue').value = 0;
   }, [txType]);
 
-  const openTokensListModal = () => {
-    setShowTokensListModal(true);
-  };
+  useEffect(() => {
+    const getShieldAddress = async () => {
+      const { address } = (await getContractAddress('Shield')).data;
+      setShieldAddress(address);
+    };
+    getShieldAddress();
+  }, []);
 
   const [showModalConfirm, setShowModalConfirm] = useState(false);
   const [showModalTransferInProgress, setShowModalTransferInProgress] = useState(true);
   const [showModalTransferEnRoute, setShowModalTransferEnRoute] = useState(false);
   const [showModalTransferConfirmed, setShowModalTransferConfirmed] = useState(false);
+  const [readyTx, setReadyTx] = useState('');
 
   function timeout(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
-
   // TODO Make this dependent on proof generation time.
   const handleCloseConfirmModal = () => {
     setShowModalConfirm(false);
@@ -91,22 +96,55 @@ const BridgeComponent = () => {
     setShowModalTransferConfirmed(false);
   };
 
-  const handleShowModalConfirm = async () => {
-    setShowModalConfirm(true);
-    setShowModalTransferInProgress(true);
-    await timeout(3000);
-    setShowModalTransferInProgress(false);
-    setShowModalTransferEnRoute(true);
+  // const handleShowModalConfirm = async () => {
+  //   setShowModalConfirm(true);
+  //   setShowModalTransferInProgress(true);
+  //   // await timeout(3000);
+  //   setShowModalTransferInProgress(false);
+  //   setShowModalTransferEnRoute(true);
 
-    await timeout(3000);
-    setShowModalTransferEnRoute(false);
-    setShowModalTransferConfirmed(true);
-  };
+  //   // await timeout(3000);
+  //   setShowModalTransferEnRoute(false);
+  //   setShowModalTransferConfirmed(true);
+  // };
 
   const handleClose = () => setShow(false);
 
+  async function submitTx() {
+    console.log('readyTx', readyTx);
+    try {
+      switch (readyTx.type) {
+        case 'onchain':
+          await submitTransaction(readyTx.rawTransaction, shieldContractAddress, 1);
+          break;
+        case 'offchain':
+          await axios
+            .post(
+              `${proposerUrl}/proposer/offchain-transaction`,
+              { transaction: readyTx.transaction },
+              { timeout: 3600000 },
+            )
+            .catch(err => {
+              throw new Error(err);
+            });
+          break;
+        default:
+          console.log('Error when sending');
+      }
+      await saveTransaction(readyTx.transaction);
+      handleClose();
+      handleCloseConfirmModal();
+      return true;
+    } catch (error) {
+      handleClose();
+      handleCloseConfirmModal();
+      return false;
+    }
+  }
+
   async function triggerTx() {
-    const { address: shieldContractAddress } = (await getContractAddress('Shield')).data;
+    if (shieldContractAddress === '')
+      setShieldAddress((await getContractAddress('Shield')).data.address);
     // const { address } = (await getContractAddress('ERC20Mock')).data; // TODO Only for testing now
     // const ercAddress = address; // TODO Location to be removed later
     const ercAddress = token.address;
@@ -116,7 +154,12 @@ const BridgeComponent = () => {
       case 'deposit': {
         const pkd = decompressKey(generalise(state.compressedPkd));
         await approve(ercAddress, shieldContractAddress, 'ERC20', APPROVE_AMOUNT);
-        const { rawTransaction } = await deposit(
+        setShowModalConfirm(true);
+        setShowModalTransferInProgress(true);
+        await timeout(2000);
+        setShowModalTransferInProgress(false);
+        setShowModalTransferEnRoute(true);
+        const { rawTransaction, transaction } = await deposit(
           {
             ercAddress,
             tokenId: 0,
@@ -128,51 +171,45 @@ const BridgeComponent = () => {
           },
           shieldContractAddress,
         );
-        await submitTransaction(rawTransaction, shieldContractAddress, 1);
-        break;
+        setShowModalTransferEnRoute(false);
+        setShowModalTransferConfirmed(true);
+        return {
+          type: 'onchain',
+          rawTransaction,
+          transaction,
+        };
       }
-
       case 'withdraw': {
-        if (transferMethod === 'Direct Transfer') {
-          await withdraw(
-            {
-              offchain: true,
-              ercAddress,
-              tokenId: 0,
-              value: (transferValue * 10 ** token.decimals).toString(),
-              recipientAddress: await Web3.getAccount(),
-              nsk: zkpKeys.nsk,
-              ask: zkpKeys.ask,
-              tokenType: 'ERC20',
-              fees: 1,
-            },
-            shieldContractAddress,
-          );
-        } else {
-          const { rawTransaction } = await withdraw(
-            {
-              ercAddress,
-              tokenId: 0,
-              value: (transferValue * 10 ** token.decimals).toString(),
-              recipientAddress: await Web3.getAccount(),
-              nsk: zkpKeys.nsk,
-              ask: zkpKeys.ask,
-              tokenType: 'ERC20',
-              fees: 1,
-            },
-            shieldContractAddress,
-          );
-          await submitTransaction(rawTransaction, shieldContractAddress, 1);
-        }
-        break;
+        setShowModalConfirm(true);
+        setShowModalTransferInProgress(true);
+        await timeout(2000);
+        setShowModalTransferInProgress(false);
+        setShowModalTransferEnRoute(true);
+        const { transaction } = await withdraw(
+          {
+            offchain: true,
+            ercAddress,
+            tokenId: 0,
+            value: (transferValue * 10 ** token.decimals).toString(),
+            recipientAddress: await Web3.getAccount(),
+            nsk: zkpKeys.nsk,
+            ask: zkpKeys.ask,
+            tokenType: 'ERC20',
+            fees: 1,
+          },
+          shieldContractAddress,
+        );
+        setShowModalTransferEnRoute(false);
+        setShowModalTransferConfirmed(true);
+        return {
+          type: 'offchain',
+          transaction,
+        };
       }
-
       default:
         break;
     }
-    handleClose();
-    handleCloseConfirmModal();
-    return true;
+    return false;
   }
 
   const handleChange = useCallback(
@@ -269,7 +306,7 @@ const BridgeComponent = () => {
                   {txType === 'deposit' ? (
                     <img src={ethChainImage} alt="ethereum chain logo" />
                   ) : (
-                    <img src={polygonChainImage} alt="polygon chain logo" height="24" width="24" />
+                    <img src={polygonNightfall} alt="polygon chain logo" height="24" width="24" />
                   )}
                   <p>{txType === 'deposit' ? 'Ethereum Mainnet' : 'Polygon Nightfall L2'}</p>
                 </div>
@@ -309,7 +346,10 @@ const BridgeComponent = () => {
                   </div>
                 </div>
                 <div className="token_details">
-                  <div className="token_details_wapper" onClick={() => openTokensListModal()}>
+                  <div
+                    className="token_details_wapper"
+                    onClick={() => setShowTokensListModal(true)}
+                  >
                     {token && token.logoURI && token.symbol && (
                       <>
                         <img src={token.logoURI} alt="chain logo" height="24" width="24" />
@@ -343,7 +383,7 @@ const BridgeComponent = () => {
                 {txType === 'withdraw' ? (
                   <img src={ethChainImage} alt="ethereum chain logo" height="24" width="24" />
                 ) : (
-                  <img src={polygonChainImage} alt="polygon chain logo" height="24" width="24" />
+                  <img src={polygonNightfall} alt="polygon chain logo" height="24" width="24" />
                 )}
                 <p>{txType === 'deposit' ? 'Polygon Nightfall L2' : 'Ethereum Mainnet'}</p>
               </div>
@@ -365,40 +405,8 @@ const BridgeComponent = () => {
               </div>
             </div>
           </div>
-
-          {/* WARN WRAPPER */}
-          {/* <div className="warn_wrapper">
-            <div className="warn_line1">
-              <div className="warn_line1_text">
-                {!checkBox ? (
-                  <div
-                    className="warn_line1_text__div_unchecked"
-                    type="checkbox"
-                    onClick={() => setCheckBox(!checkBox)}
-                  />
-                ) : (
-                  <div
-                    className="warn_line1_text__div_checked"
-                    type="checkbox"
-                    onClick={() => setCheckBox(!checkBox)}
-                  >
-                    <BsCheck />
-                  </div>
-                )}
-                <p>Swap some MATIC token?</p>
-              </div>
-              <div className="warn_info">
-                <AiOutlineInfo />
-              </div>
-            </div>
-            <div className="warn_line2">
-              <p>MATIC is required to perform transaction on polygon chain.</p>
-            </div>
-          </div> */}
           {/* TRANSFER MODE */}
           <div className="transfer_mode">
-            {/* <span class="transfer-mode__label"> Transfer Mode: </span>
-                        <span class="bridge-type">{{ selectedMode }} Bridge</span> */}
             <span className="transfer_mode_text"> Transfer Mode: </span>
             <span className="transfer_bridge_text">
               {txType.charAt(0).toUpperCase() + txType.slice(1)} Bridge
@@ -430,7 +438,7 @@ const BridgeComponent = () => {
                                   :src="tokenImage(selectedToken)"
                                   alt="Token Image"
                               > */}
-                  <img src={matic} alt="Token" />
+                  <img src={polygonNightfall} alt="Token" />
                   {/* <span
                                   v-else-if="selectedToken.symbol"
                                   class="align-self-center font-heading-large ps-t-2 font-semibold"
@@ -441,7 +449,9 @@ const BridgeComponent = () => {
                   {Number(transferValue).toFixed(4)}
                 </div>
                 {/* font-body-small */}
-                <div className={stylesModal.tokenDetails__usd}>$xx.xx</div>
+                <div className={stylesModal.tokenDetails__usd}>
+                  {/* ${Number(token.currencyValue) * (Number(token.l2Balance) / 10 ** token.decimals)} */}
+                </div>
               </div>
 
               {/* Buttons */}
@@ -465,19 +475,7 @@ const BridgeComponent = () => {
                 <div className={stylesModal.transferModeModal__title}>
                   <div className={stylesModal.transferModeModal__title__main}>Transfer Mode</div>
                   <div className={stylesModal.transferModeModal__title__light}>
-                    <DropdownButton
-                      variant="light"
-                      title={transferMethod}
-                      id="Bridge_modal_transferMode"
-                    >
-                      <Dropdown.Item onClick={() => setMethod('On-Chain')}>On-Chain</Dropdown.Item>
-                      <Dropdown.Item onClick={() => setMethod('Direct Transfer')}>
-                        Direct Transfer
-                      </Dropdown.Item>
-                      <Dropdown.Item onClick={() => setMethod('Instant Withdrawal')}>
-                        Instant Withdrawal
-                      </Dropdown.Item>
-                    </DropdownButton>
+                    {txType === 'deposit' ? 'On-Chain' : 'Direct Transfer'}
                   </div>
                 </div>
                 <div className={stylesModal.transferModeModal__text}>
@@ -499,14 +497,16 @@ const BridgeComponent = () => {
                   <div className={stylesModal.estimationFee__title__main}>
                     Estimation Transaction fee
                   </div>
-                  <div className={stylesModal.estimationFee__title__light}>~ $x.xx</div>
+                  <div className={stylesModal.estimationFee__title__light}>TBC</div>
                 </div>
                 <button
                   type="button"
                   className={stylesModal.continueTrasferButton}
-                  onClick={() => {
+                  onClick={async () => {
                     handleClose();
-                    handleShowModalConfirm();
+                    setShowModalConfirm(true);
+                    setShowModalTransferInProgress(true);
+                    setReadyTx(await triggerTx());
                   }}
                 >
                   Create Transaction
@@ -589,7 +589,7 @@ const BridgeComponent = () => {
                     type="button"
                     className={stylesModal.continueTrasferButton}
                     id="Bridge_modal_continueTransferButton"
-                    onClick={() => triggerTx()}
+                    onClick={() => submitTx()}
                   >
                     Send Transaction
                   </button>

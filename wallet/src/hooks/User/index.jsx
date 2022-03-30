@@ -58,7 +58,7 @@ export const UserProvider = ({ children }) => {
   };
 
   const setupWebSocket = () => {
-    if (!state.compressedPkd) return;
+    if (state.compressedPkd === '') return;
     const socket = new WebSocket(eventWsUrl);
 
     // Connection opened
@@ -93,7 +93,7 @@ export const UserProvider = ({ children }) => {
   };
 
   React.useEffect(async () => {
-    if (location.pathname !== '/' && !state.compressedPkd) {
+    if (location.pathname !== '/' && state.compressedPkd === '') {
       await syncState();
     }
     if (!isSyncComplete) setIsSyncComplete({ isSyncComplete: true });

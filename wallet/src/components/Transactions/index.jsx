@@ -110,7 +110,7 @@ const Transactions = () => {
         safeTransactionType === '3' &&
         tx.isOnChain > 0 &&
         tx.withdrawState !== 'finalised' &&
-        Date.now() - tx.createdTime > 1000 * 3600 * 24 * 0
+        Date.now() - tx.createdTime > 1000 * 3600 * 24 * 7
       ) {
         withdrawReady = await isValidWithdrawal(tx._id, shieldContractAddress);
       }

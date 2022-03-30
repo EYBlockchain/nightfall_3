@@ -10,7 +10,7 @@ type TokenListType = {
   setToken: Dispatch<SetStateAction<TokenType>>;
 };
 
-const TokensList = ({ handleClose, setToken }: TokenListType) => {
+const TokensList = ({ handleClose, setToken }: TokenListType): JSX.Element => {
   const [filteredTokens, setFilteredTokens] = useState(tokensList.tokens);
 
   const filterTokens = (e: ChangeEvent<HTMLInputElement>) => {
