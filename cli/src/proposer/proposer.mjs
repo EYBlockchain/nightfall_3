@@ -43,6 +43,7 @@ async function startProposer(testEnvironment) {
       optimistApiUrl: nf3Env.optimistApiUrl,
       optimistWsUrl: nf3Env.optimistWsUrl,
       clientApiUrl: nf3Env.clientApiUrl,
+      web3PaymentsWsUrl: nf3Env.web3PaymentsWsUrl,
     },
     defaultMnemonic,
   );
