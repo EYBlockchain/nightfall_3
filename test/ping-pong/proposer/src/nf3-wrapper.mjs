@@ -39,12 +39,26 @@ async function nf3RegisterProposer(url) {
   return false;
 }
 
+async function nf3DeregisterProposer() {
+  if (nf3Instance !== '') {
+    const res = await nf3Instance.deregisterProposer();
+    return res;
+  }
+  return false;
+}
+
 async function nf3StartProposer() {
   if (nf3Instance !== '') {
     const res = await nf3Instance.startProposer();
     return res;
   }
   return false;
+}
+
+async function nf3Close() {
+  if (nf3Instance !== '') {
+    await nf3Instance.close();
+  }
 }
 
 export {
@@ -54,4 +68,6 @@ export {
   nf3Healthcheck,
   nf3RegisterProposer,
   nf3StartProposer,
+  nf3DeregisterProposer,
+  nf3Close,
 };
