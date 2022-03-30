@@ -121,18 +121,6 @@ export async function subscribeToBlockAssembledWebSocketConnection(callback, ...
     ws.on('message', message => {
       if (message === 'blocks') callback(ws, args);
     });
-<<<<<<< HEAD
-    ws.on('error', () => {
-      logger.debug('ERROR block-assembly  WS');
-    });
-    ws.on('open', () => {
-      logger.debug('OPEN block-assembly WS');
-    });
-    ws.on('close', msg => {
-      logger.debug(`CLOSE block-assembly WS: ${msg}`);
-    });
-=======
->>>>>>> 40e67a17 (feat: websocket reconnection)
   });
   logger.debug('Subscribed to BlockAssembled WebSocket connection');
 }
@@ -143,28 +131,13 @@ export async function subscribeToInstantWithDrawalWebSocketConnection(callback, 
     ws.on('message', message => {
       if (message === 'instant') callback(ws, args);
     });
-<<<<<<< HEAD
-    ws.on('error', () => {
-      logger.debug('ERROR instant-withdraw WS');
-    });
-    ws.on('open', () => {
-      logger.debug('OPEN instant-withdraw WS');
-    });
-    ws.on('close', err => {
-      logger.debug(`CLOSE instant-withdraw WS: ${err}`);
-    });
-=======
->>>>>>> 40e67a17 (feat: websocket reconnection)
   });
   logger.debug('Subscribed to InstantWithDrawal WebSocket connection');
 }
 
 export async function subscribeToProposedBlockWebSocketConnection(callback, ...args) {
   wss.on('connection', ws => {
-<<<<<<< HEAD
-=======
     setupWebsocketEvents(ws, 'publisher');
->>>>>>> 40e67a17 (feat: websocket reconnection)
     ws.on('message', message => {
       try {
         if (JSON.parse(message).type === 'sync') {
@@ -175,18 +148,6 @@ export async function subscribeToProposedBlockWebSocketConnection(callback, ...a
         logger.debug('Not JSON Message');
       }
     });
-<<<<<<< HEAD
-    ws.on('error', () => {
-      logger.debug('ERROR proposed-block WS');
-    });
-    ws.on('open', () => {
-      logger.debug('OPEN proposed-block WS');
-    });
-    ws.on('close', err => {
-      logger.debug(`CLOSE proposed-block WS: ${err}`);
-    });
-=======
->>>>>>> 40e67a17 (feat: websocket reconnection)
   });
   logger.debug('Subscribed to ProposedBlock WebSocket connection');
 }
