@@ -4,6 +4,7 @@
 This module does all of the heaving lifting for a Proposer: It assembles blocks
 from posted transactions and proposes these blocks.
 */
+import WebSocket from 'ws';
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import {
@@ -99,7 +100,7 @@ export async function conditionalMakeBlock(proposer) {
       }
       // TODO - check ws readyState is OPEN => CLOSED .WebSocket.OPEN(1), CONNECTING(0), CLOSING(2), CLOSED(3)
       //  before sending Poposed block. If not Open, try to open it
-      if (ws) {
+      if (ws && ws.readyState === WebSocket.OPEN) {
         await ws.send(
           JSON.stringify({
             type: 'block',
@@ -109,6 +110,10 @@ export async function conditionalMakeBlock(proposer) {
           }),
         );
         logger.debug('Send unsigned block-assembler transactions to ws client');
+      } else if (ws) {
+        logger.debug('Block not sent. Socket state', ws.readyState);
+      } else {
+        logger.debug('Block not sent. uinitialized socket');
       }
       // remove the transactions from the mempool so we don't keep making new
       // blocks with them
