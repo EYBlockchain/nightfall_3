@@ -107,9 +107,11 @@ export async function startEventQueue(callback, ...arg) {
 
 export async function subscribeToChallengeWebSocketConnection(callback, ...args) {
   wss.on('connection', ws => {
-    setupWebsocketEvents(ws, 'challenge');
     ws.on('message', message => {
-      if (message === 'challenge') callback(ws, args);
+      if (message === 'challenge') {
+        setupWebsocketEvents(ws, 'challenge');
+        callback(ws, args);
+      }
     });
   });
   logger.debug('Subscribed to Challenge WebSocket connection');
@@ -117,9 +119,11 @@ export async function subscribeToChallengeWebSocketConnection(callback, ...args)
 
 export async function subscribeToBlockAssembledWebSocketConnection(callback, ...args) {
   wss.on('connection', ws => {
-    setupWebsocketEvents(ws, 'proposer');
     ws.on('message', message => {
-      if (message === 'blocks') callback(ws, args);
+      if (message === 'blocks') {
+        setupWebsocketEvents(ws, 'proposer');
+        callback(ws, args);
+      }
     });
   });
   logger.debug('Subscribed to BlockAssembled WebSocket connection');
@@ -127,9 +131,11 @@ export async function subscribeToBlockAssembledWebSocketConnection(callback, ...
 
 export async function subscribeToInstantWithDrawalWebSocketConnection(callback, ...args) {
   wss.on('connection', ws => {
-    setupWebsocketEvents(ws, 'liquidity provider');
     ws.on('message', message => {
-      if (message === 'instant') callback(ws, args);
+      if (message === 'instant') {
+        setupWebsocketEvents(ws, 'liquidity provider');
+        callback(ws, args);
+      }
     });
   });
   logger.debug('Subscribed to InstantWithDrawal WebSocket connection');
@@ -137,11 +143,11 @@ export async function subscribeToInstantWithDrawalWebSocketConnection(callback, 
 
 export async function subscribeToProposedBlockWebSocketConnection(callback, ...args) {
   wss.on('connection', ws => {
-    setupWebsocketEvents(ws, 'publisher');
     ws.on('message', message => {
       try {
         if (JSON.parse(message).type === 'sync') {
           logger.info(`SUBSCRIBING TO PROPOSEDBLOCK`);
+          setupWebsocketEvents(ws, 'publisher');
           callback(ws, args);
         }
       } catch (error) {
