@@ -1174,6 +1174,20 @@ class Nf3 {
   Set a Web3 Payment Provider URL
   */
   async setWeb3PaymentProvider() {
+    const WEB3_PROVIDER_OPTIONS = {
+      clientConfig: {
+        // Useful to keep a connection alive
+        keepalive: true,
+        keepaliveInterval: 60000,
+      },
+      timeout: 3600000,
+      reconnect: {
+        auto: true,
+        delay: 5000, // ms
+        maxAttempts: 120,
+        onTimeout: false,
+      },
+    };
     const provider = new Web3.providers.WebsocketProvider(
       this.web3PaymentsWsUrl,
       WEB3_PROVIDER_OPTIONS,
