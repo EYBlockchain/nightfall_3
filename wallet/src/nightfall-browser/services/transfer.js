@@ -13,7 +13,7 @@ import { initialize } from 'zokrates-js';
 
 import axios from 'axios';
 import rand from '../../common-files/utils/crypto/crypto-random';
-import { getContractInstance } from '../../common-files/utils/contract';
+import { getContractInstance, processProposerPayment } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
 import { Secrets, Nullifier, Commitment, Transaction } from '../classes/index';
 import {
@@ -264,6 +264,7 @@ async function transfer(transferParams, shieldContractAddress) {
       await Promise.all(
         oldCommitments.map(commitment => markNullified(commitment, optimisticTransferTransaction)),
       );
+      await processProposerPayment(fee.decimal);
       await saveTransaction(optimisticTransferTransaction);
       return {
         transaction: optimisticTransferTransaction,

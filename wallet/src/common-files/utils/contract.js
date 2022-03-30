@@ -6,7 +6,12 @@ import contractABIs from '../../contract-abis';
 import { TOKEN_TYPE, APPROVE_AMOUNT } from '../../constants';
 
 const { ethereum } = global;
-const { proposerUrl } = global.config;
+const {
+  proposerUrl,
+  RESTRICTIONS: {
+    addresses: { bootProposer },
+  },
+} = global.config;
 
 const options = global.config.WEB3_OPTIONS;
 
@@ -28,6 +33,28 @@ export async function getContractInstance(contractName, deployedAddress) {
 // TODO: temporary function create to avoid eslint issue for now
 export function getContractAddress(contractName) {
   return axios.get(`${proposerUrl}/contract-address/${contractName}`);
+}
+
+export async function processProposerPayment(fee) {
+  const web3 = Web3.connection();
+  const gas = (await web3.eth.getBlock('latest')).gasLimit;
+  let gasPrice = 20000000000;
+  const blockGasPrice = 2 * Number(await web3.eth.getGasPrice());
+  if (blockGasPrice > gasPrice) gasPrice = blockGasPrice;
+
+  if (!options.from) {
+    const accounts = await web3.eth.getAccounts();
+    logger.debug('blockchain accounts are: ', accounts);
+    [options.from] = accounts;
+  }
+
+  await web3.eth.sendTransaction({
+    from: options.from,
+    to: bootProposer,
+    value: fee,
+    gas: web3.utils.toHex(gas),
+    gasPrice: web3.utils.toHex(gasPrice),
+  });
 }
 
 /**

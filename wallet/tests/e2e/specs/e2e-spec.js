@@ -173,22 +173,14 @@ describe('End to End tests', () => {
       cy.get('#TokenItem_modalSend_tokenAmount').clear().type(transferValue);
       cy.get('#TokenItem_modalSend_compressedPkd').clear().type(recipientPkd);
       cy.get('button').contains('Continue').click();
-      cy.contains('L2 Bridge', { timeout: 10000 }).click();
+      cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
+      cy.contains('L2 Bridge', { timeout: 20000 }).click();
       cy.wait(10000);
       cy.contains('Nightfall Assets').click();
     });
 
-    it(`check token balance after transfer`, () => {
-      cy.get('#TokenItem_tokenBalanceMATIC').should($div => {
-        const totalBalance = Number($div.text());
-        expect(totalBalance).to.equal(currentTokenBalance - transferValue);
-        currentTokenBalance = totalBalance;
-        txCount += 1;
-      });
-    });
-
     // This case because recipient and sender both are same
-    // NOTE: when browser fixes its recipent logic to be different person then please remove below test
+    // balance should stay the same
     it(`recepient: check token balance`, () => {
       cy.wait(50000);
       cy.contains('L2 Bridge').click();
@@ -196,7 +188,7 @@ describe('End to End tests', () => {
       cy.contains('Nightfall Assets').click();
       cy.get('#TokenItem_tokenBalanceMATIC').should($div => {
         const totalBalance = Number($div.text());
-        expect(totalBalance).to.equal(currentTokenBalance + transferValue);
+        expect(totalBalance).to.equal(currentTokenBalance);
         currentTokenBalance = totalBalance;
       });
     });
@@ -223,8 +215,9 @@ describe('End to End tests', () => {
       cy.get('#TokenItem_modalSend_tokenAmount').clear().type(transferValue);
       cy.get('#TokenItem_modalSend_compressedPkd').clear().type(recipientPkd);
       cy.get('button').contains('Continue').click();
-      cy.wait(50000);
-      cy.contains('L2 Bridge').click();
+      cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
+      cy.wait(20000);
+      cy.contains('L2 Bridge', { timeout: 20000 }).click();
       cy.wait(10000);
       cy.contains('Nightfall Assets').click();
     });
