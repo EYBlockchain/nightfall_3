@@ -15,8 +15,43 @@ const {
   WEBSOCKET_PORT,
   CHALLENGES_CONTRACT_NAME,
   STATE_CONTRACT_NAME,
+  WEBSOCKET_PING_TIME,
 } = config;
 const wss = new WebSocket.Server({ port: WEBSOCKET_PORT });
+
+/**
+Function that does some standardised setting up of a websocket's events.
+It logs open, close and error events, sets up a ping and logs the pong. It will
+close the socket on pong failure.  The user is expected to handle the reconnect.
+It does not set up the onmessage event because this tends to be case-specific.
+*/
+function setupWebsocketEvents(ws, socketName) {
+  let timeoutID;
+  // setup a pinger to ping the websocket correspondent
+  const intervalID = setInterval(() => {
+    ws.ping();
+    // set up a timeout - will close the websocket, which will trigger a reconnect
+    timeoutID = setTimeout(() => {
+      logger.warn(`Timed out waiting for ping response from ${socketName}`);
+      ws.terminate();
+    }, 2 * WEBSOCKET_PING_TIME);
+  }, WEBSOCKET_PING_TIME);
+  // check we received a pong in time (clears the timer set by the pinger)
+  ws.on('pong', () => {
+    logger.debug(`Got pong from ${socketName} websocket`);
+    clearTimeout(timeoutID);
+  });
+  ws.on('error', () => {
+    logger.debug(`ERROR ${socketName}`);
+  });
+  ws.on('open', () => {
+    logger.debug(`OPEN ${socketName}`);
+  });
+  ws.on('close', err => {
+    logger.debug(`CLOSE ${socketName} ${err}`);
+    clearInterval(intervalID);
+  });
+}
 
 /**
  * Function that tries to get a (named) contract instance and, if it fails, will
@@ -72,17 +107,9 @@ export async function startEventQueue(callback, ...arg) {
 
 export async function subscribeToChallengeWebSocketConnection(callback, ...args) {
   wss.on('connection', ws => {
+    setupWebsocketEvents(ws, 'challenge');
     ws.on('message', message => {
       if (message === 'challenge') callback(ws, args);
-    });
-    ws.on('error', () => {
-      logger.debug('ERROR challenge WS');
-    });
-    ws.on('open', () => {
-      logger.debug('OPEN challenge WS');
-    });
-    ws.on('close', err => {
-      logger.debug(`CLOSE challenge WS: ${err}`);
     });
   });
   logger.debug('Subscribed to Challenge WebSocket connection');
@@ -90,9 +117,11 @@ export async function subscribeToChallengeWebSocketConnection(callback, ...args)
 
 export async function subscribeToBlockAssembledWebSocketConnection(callback, ...args) {
   wss.on('connection', ws => {
+    setupWebsocketEvents(ws, 'proposer');
     ws.on('message', message => {
       if (message === 'blocks') callback(ws, args);
     });
+<<<<<<< HEAD
     ws.on('error', () => {
       logger.debug('ERROR block-assembly  WS');
     });
@@ -102,15 +131,19 @@ export async function subscribeToBlockAssembledWebSocketConnection(callback, ...
     ws.on('close', msg => {
       logger.debug(`CLOSE block-assembly WS: ${msg}`);
     });
+=======
+>>>>>>> 40e67a17 (feat: websocket reconnection)
   });
   logger.debug('Subscribed to BlockAssembled WebSocket connection');
 }
 
 export async function subscribeToInstantWithDrawalWebSocketConnection(callback, ...args) {
   wss.on('connection', ws => {
+    setupWebsocketEvents(ws, 'liquidity provider');
     ws.on('message', message => {
       if (message === 'instant') callback(ws, args);
     });
+<<<<<<< HEAD
     ws.on('error', () => {
       logger.debug('ERROR instant-withdraw WS');
     });
@@ -120,12 +153,18 @@ export async function subscribeToInstantWithDrawalWebSocketConnection(callback, 
     ws.on('close', err => {
       logger.debug(`CLOSE instant-withdraw WS: ${err}`);
     });
+=======
+>>>>>>> 40e67a17 (feat: websocket reconnection)
   });
   logger.debug('Subscribed to InstantWithDrawal WebSocket connection');
 }
 
 export async function subscribeToProposedBlockWebSocketConnection(callback, ...args) {
   wss.on('connection', ws => {
+<<<<<<< HEAD
+=======
+    setupWebsocketEvents(ws, 'publisher');
+>>>>>>> 40e67a17 (feat: websocket reconnection)
     ws.on('message', message => {
       try {
         if (JSON.parse(message).type === 'sync') {
@@ -136,6 +175,7 @@ export async function subscribeToProposedBlockWebSocketConnection(callback, ...a
         logger.debug('Not JSON Message');
       }
     });
+<<<<<<< HEAD
     ws.on('error', () => {
       logger.debug('ERROR proposed-block WS');
     });
@@ -145,6 +185,8 @@ export async function subscribeToProposedBlockWebSocketConnection(callback, ...a
     ws.on('close', err => {
       logger.debug(`CLOSE proposed-block WS: ${err}`);
     });
+=======
+>>>>>>> 40e67a17 (feat: websocket reconnection)
   });
   logger.debug('Subscribed to ProposedBlock WebSocket connection');
 }
