@@ -1,15 +1,10 @@
 import React, { useContext, useState, useCallback, useEffect } from 'react';
 import Modal from 'react-bootstrap/Modal';
-import Dropdown from 'react-bootstrap/Dropdown';
-import DropdownButton from 'react-bootstrap/DropdownButton';
-import { MdArrowForwardIos } from 'react-icons/md';
-import { toast } from 'react-toastify';
 // import styles from '../../styles/bridge.module.scss';
 import polygonChainImage from '../../assets/img/polygon-chain.svg';
 import ethChainImage from '../../assets/img/ethereum-chain.svg';
 import discloserBottomImage from '../../assets/img/discloser-bottom.svg';
 import lightArrowImage from '../../assets/img/light-arrow.svg';
-import matic from '../../assets/svg/matic.svg';
 import { approve, getContractAddress, submitTransaction } from '../../common-files/utils/contract';
 import Web3 from '../../common-files/utils/web3';
 import deposit from '../../nightfall-browser/services/deposit';
@@ -30,6 +25,93 @@ import './toast.css';
 import './styles.scss';
 import verifyIfValueIsGreaterThen from './utils/verifyIfValueIsGreaterThen.ts';
 import TransferModal from '../Modals/Bridge/Transfer/index.jsx';
+import styled, { keyframes } from 'styled-components';
+
+const ModalTitle = styled.div`
+  width: 50%;
+`;
+
+const MyModalBody = styled.div`
+  flex-direction: column;
+  text-align: center;  
+  padding: 10px;
+`;
+
+const ProcessImage = styled.div`
+  img {
+    width: 340px;
+  }
+`;
+
+const SpinnerBox = styled.div`
+  display: flex;
+  justify-content: center;
+  align-content: center;
+  align-items: center;
+  margin-top: 20px;
+`;
+
+const SpinnerBoard = styled.div`
+  display: flex;
+  justify-content: center;
+  align-content: center;
+  align-items: center;
+  --size: 150px;
+  --border: 2px;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+
+  border: var(--border) solid #eee; 
+`;
+
+const spin = keyframes`
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+`
+const Spinner = styled.div`
+  --size: 100px;
+  --border: 4px;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  position: relative;
+  border: var(--border) solid primary-color('500');
+  border-right: var(--border) solid primary-color('100');
+  animation: ${spin} 1s linear infinite;
+`;
+
+const TransferMode = styled.div`
+  margin-top: 24px;
+`;
+
+const ModalText = styled.div`
+  text-align: center;
+`;
+
+const Divider = styled.div`
+  margin-top: 30px;
+  border-bottom: solid 1px #ddd;
+`;
+
+const ContinueTransferButton = styled.button`
+  margin-top: 12px;
+  border-radius: 12px;
+  align-self: flex-end;
+  width: 100%;
+  background-color: #7b3fe4;
+  color: #fff;
+  padding: 15px;
+  margin-bottom: 12px;
+
+  &:hover {
+    cursor: pointer;
+  }
+`;
 
 
 const BridgeComponent = () => {
@@ -437,80 +519,83 @@ const BridgeComponent = () => {
           onHide={handleCloseConfirmModal}
         >
           <Modal.Header closeButton>
-            <div className="modalTitle">Transfer in progress</div>
+            <ModalTitle>Transfer in progress</ModalTitle>
           </Modal.Header>
           {showModalTransferInProgress && (
             <Modal.Body>
-              <div className="modalBody">
-                <div className="processImages">
+              <MyModalBody>
+                <ProcessImage>
                   <img src={approveImg} alt="approve" />
-                </div>
-                <div className="divider" />
-                <div className="spinnerBox">
-                  <div className="spinnerBoard">
-                    <div className="spinner" />
-                  </div>
-                </div>
+                </ProcessImage>
+                <Divider />
+                <SpinnerBox>
+                  <SpinnerBoard>
+                    <Spinner/>
+                  </SpinnerBoard>
+                </SpinnerBox>
 
-                <div className="transferModeModal">
+                <TransferMode>
                   <h3>Creating Transaction</h3>
-                  <div className="modalText">
+                  <ModalText>
                     Retrieving your commitments and generating transaction inputs.
-                  </div>
+                  </ModalText>
                   {/* <a className={styles.footerText}>View on etherscan</a> */}
-                </div>
-              </div>
+                </TransferMode>
+              </MyModalBody>
             </Modal.Body>
           )}
 
           {showModalTransferEnRoute && (
             <Modal.Body>
-              <div className="modalBody">
-                <div className="processImages">
+              <MyModalBody>
+                <ProcessImage>
                   <img src={depositConfirmed} alt="deposit confirmed" />
-                </div>
-                <div className="divider" />
-                <div className="spinnerBox">
-                  <div className="spinnerBoard">
-                    <div className="spinner" />
-                  </div>
-                </div>
-                <div className="transferModeModal">
+                </ProcessImage>
+                <Divider />
+                <SpinnerBox>
+                  <SpinnerBoard>
+                    <Spinner/>
+                  </SpinnerBoard>
+                </SpinnerBox>
+
+                <TransferMode>
                   <h3>Generating Zk Proof</h3>
-                  <div className="modalText">
+                  <ModalText>
                     Proof generation may take up to 2 mins to complete. Do not navigate away.
-                  </div>
-                  {/* <a className="footerText">View on etherscan</a> */}
-                </div>
-              </div>
+                  </ModalText>
+                  {/* <a className={styles.footerText}>View on etherscan</a> */}
+                </TransferMode>
+              </MyModalBody>              
             </Modal.Body>
           )}
 
           {showModalTransferConfirmed && (
-            <Modal.Body>
-              <div className="modalBody">
-                <div className="processImages">
+            <Modal.Body>              
+              <MyModalBody>
+                <ProcessImage>
                   <img src={transferCompletedImg} alt="transfer completed" />
-                </div>
-                <div className="divider" />
-                <div className="spinnerBox">
+                </ProcessImage>
+                <Divider />
+                <SpinnerBox>
                   <img src={successHand} alt="success hand" />
-                </div>
-                <div className="transferModeModal" id="Bridge_modal_success">
+                </SpinnerBox>
+
+                <TransferMode>
                   <h3>Transaction created sucessfully.</h3>
-                  <div className="modalText">Your transfer is ready to send.</div>
-                  <button
-                    type="button"
-                    className="continueTrasferButton"
+                  <ModalText>
+                    Your transfer is ready to send.
+                  </ModalText>
+                  {/* <a className={styles.footerText}>View on etherscan</a> */}
+                  <ContinueTransferButton
+                    type="button"                    
                     id="Bridge_modal_continueTransferButton"
                     // onClick={() => triggerTx()}
                     onClick={() => triggerTx()}
                   >
                     Send Transaction
-                  </button>
-                  {/* <a className="footerText">View on etherscan</a> */}
-                </div>
-              </div>
+                  </ContinueTransferButton>
+                </TransferMode>
+              </MyModalBody>                                        
             </Modal.Body>
           )}
         </Modal>

@@ -32,7 +32,7 @@ export default function App() {
    *   instead of '<Route path="/wallet" render={() => <Wallet />} />'
    */
   return (
-    <BrowserRouter>
+    <MemoryRouter>
       <ToastContainer></ToastContainer>
       <UserProvider>
         <AccountProvider>
@@ -51,6 +51,6 @@ export default function App() {
           </Switch>
         </AccountProvider>
       </UserProvider>
-    </BrowserRouter>
+    </MemoryRouter>
   );
 }

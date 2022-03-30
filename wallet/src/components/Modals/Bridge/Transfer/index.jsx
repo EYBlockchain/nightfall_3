@@ -1,5 +1,4 @@
-import React, { useState, Dispatch, SetStateAction, ChangeEvent } from 'react';
-import { FiSearch } from 'react-icons/fi';
+import React from 'react';
 import Modal from 'react-bootstrap/Modal';
 import PropTypes from 'prop-types';
 
@@ -241,7 +240,7 @@ export default TransferModal;
 
 TransferModal.propTypes = {
   handleClose: PropTypes.func.isRequired,
-  transferValue: PropTypes.number.isRequired,
+  transferValue: PropTypes.string.isRequired,
   txType: PropTypes.string.isRequired,
   setMethod: PropTypes.func.isRequired,
   transferMethod: PropTypes.string.isRequired,
