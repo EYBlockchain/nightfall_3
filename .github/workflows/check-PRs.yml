@@ -18,6 +18,10 @@ jobs:
           cd wallet/
           npm ci
           cd ..
+          cd cli
+          npm ci
+          cat -n lib/nf3.mjs
+          cd ..
           npm run lint
 
   ganache-test:
