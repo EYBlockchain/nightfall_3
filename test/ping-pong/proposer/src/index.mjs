@@ -38,7 +38,7 @@ async function startProposer() {
     server = app.listen(PROPOSER_PORT);
   }
   // Proposer listening for incoming events
-  const newGasBlockEmitter = nf3StartProposer();
+  const newGasBlockEmitter = await nf3StartProposer();
   if (GENESIS_BLOCKS) {
     logger.debug(`Waiting for ${GENESIS_BLOCKS} blocks to end the test`);
     newGasBlockEmitter.on('gascost', async gasUsed => {
