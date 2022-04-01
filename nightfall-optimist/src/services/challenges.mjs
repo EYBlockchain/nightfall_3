@@ -1,4 +1,5 @@
 import config from 'config';
+import WebSocket from 'ws';
 import rand from 'common-files/utils/crypto/crypto-random.mjs';
 import logger from 'common-files/utils/logger.mjs';
 import Web3 from 'common-files/utils/web3.mjs';
