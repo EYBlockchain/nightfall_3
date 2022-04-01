@@ -79,19 +79,18 @@ describe('End to End tests', () => {
         rpcUrl: Cypress.env('RPC_URL_POLYGON'),
         chainId: Cypress.env('CHAIN_ID_POLYGON').toString(),
         isTestnet: true,
-      }).then(networkAdded => {
-        expect(networkAdded).to.be.true;
-      });
+      }).then(networkAdded => expect(networkAdded).to.be.true);
       cy.getNetwork().then(network => {
         cy.log(network.networkName);
         cy.log(network.networkId);
         cy.log(network.isTestnet);
       });
+    });
 
     it(`changeMetamaskNetwork to ethereum network`, () => {
-      cy.changeMetamaskNetwork(Cypress.env('NETWORK_NAME_ETH')).then(networkChanged => {
-        expect(networkChanged).to.be.true;
-      });
+      cy.changeMetamaskNetwork(Cypress.env('NETWORK_NAME_ETH')).then(
+        networkChanged => expect(networkChanged).to.be.true,
+      );
     });
   });
 
