@@ -20,22 +20,7 @@ function toAccommodateTx(txPerBlock, noOfTx) {
 
 Cypress.LocalStorage.clear = function () {};
 
-before(() => {
-  console.log(Cypress.env('CHAIN_ID_ETH'));
-  cy.addMetamaskNetwork({
-    networkName: Cypress.env('NETWORK_NAME_ETH'),
-    rpcUrl: Cypress.env('RPC_URL_ETH'),
-    chainId: Cypress.env('CHAIN_ID_ETH').toString(),
-  }).then(c => console.log(c));
-  cy.addMetamaskNetwork({
-    networkName: Cypress.env('NETWORK_NAME_POLYGON'),
-    rpcUrl: Cypress.env('RPC_URL_POLYGON'),
-    chainId: Cypress.env('CHAIN_ID_POLYGON').toString(),
-  });
-});
-
 describe('End to End tests', () => {
-  console.log(Cypress.env());
   let currentTokenBalance = 0;
   const depositValue = 4;
 
@@ -78,6 +63,14 @@ describe('End to End tests', () => {
       cy.get('button').contains('Generate Mnemonic').should('not.exist');
       cy.get('#TokenItem_tokenDepositMATIC', { timeout: 10000 }).should('be.visible');
     });
+
+    it(`getNetwork should return valid network`, () => {
+      cy.getNetwork().then(network => {
+        cy.log(network.networkName);
+        cy.log(network.networkId);
+        cy.log(network.isTestnet);
+      });
+    });
   });
 
   context('Deposit', () => {
@@ -101,8 +94,6 @@ describe('End to End tests', () => {
 
       for (let i = 0; i < noOfDeposit; i++) {
         cy.get('button').contains('Transfer').click();
-        if (i === 0)
-          cy.allowMetamaskToSwitchNetwork().then(confirmed => expect(confirmed).to.be.true);
         cy.get('button').contains('Create Transaction').click();
         cy.get('#Bridge_modal_continueTransferButton').click();
         cy.wait(30000);
@@ -136,13 +127,10 @@ describe('End to End tests', () => {
       cy.get('label').contains('Withdraw').click();
       cy.get('#Bridge_amountDetails_tokenAmount').type(withdrawValue);
       cy.get('button').contains('Transfer').click();
-      cy.allowMetamaskToSwitchNetwork().then(confirmed => expect(confirmed).to.be.true);
-      cy.get('#Bridge_modal_transferMode').click();
-      cy.get('a').contains('Direct Transfer').click();
       cy.get('button').contains('Create Transaction').click();
       cy.get('#Bridge_modal_continueTransferButton').click();
       cy.wait(30000);
-      // cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
+      cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
       cy.wait(50000);
       cy.contains('Nightfall Assets').click();
     });
@@ -173,14 +161,22 @@ describe('End to End tests', () => {
       cy.get('#TokenItem_modalSend_tokenAmount').clear().type(transferValue);
       cy.get('#TokenItem_modalSend_compressedPkd').clear().type(recipientPkd);
       cy.get('button').contains('Continue').click();
-      cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
-      cy.contains('L2 Bridge', { timeout: 20000 }).click();
+      cy.contains('L2 Bridge', { timeout: 10000 }).click();
       cy.wait(10000);
       cy.contains('Nightfall Assets').click();
     });
 
+    it(`check token balance after transfer`, () => {
+      cy.get('#TokenItem_tokenBalanceMATIC').should($div => {
+        const totalBalance = Number($div.text());
+        expect(totalBalance).to.equal(currentTokenBalance - transferValue);
+        currentTokenBalance = totalBalance;
+        txCount += 1;
+      });
+    });
+
     // This case because recipient and sender both are same
-    // balance should stay the same
+    // NOTE: when browser fixes its recipent logic to be different person then please remove below test
     it(`recepient: check token balance`, () => {
       cy.wait(50000);
       cy.contains('L2 Bridge').click();
@@ -188,7 +184,7 @@ describe('End to End tests', () => {
       cy.contains('Nightfall Assets').click();
       cy.get('#TokenItem_tokenBalanceMATIC').should($div => {
         const totalBalance = Number($div.text());
-        expect(totalBalance).to.equal(currentTokenBalance);
+        expect(totalBalance).to.equal(currentTokenBalance + transferValue);
         currentTokenBalance = totalBalance;
       });
     });
@@ -215,9 +211,8 @@ describe('End to End tests', () => {
       cy.get('#TokenItem_modalSend_tokenAmount').clear().type(transferValue);
       cy.get('#TokenItem_modalSend_compressedPkd').clear().type(recipientPkd);
       cy.get('button').contains('Continue').click();
-      cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
-      cy.wait(20000);
-      cy.contains('L2 Bridge', { timeout: 20000 }).click();
+      cy.wait(50000);
+      cy.contains('L2 Bridge').click();
       cy.wait(10000);
       cy.contains('Nightfall Assets').click();
     });
@@ -244,8 +239,6 @@ describe('End to End tests', () => {
 
       for (let i = 0; i < noOfDeposit; i++) {
         cy.get('button').contains('Transfer').click();
-        if (i === 0)
-          cy.allowMetamaskToSwitchNetwork().then(confirmed => expect(confirmed).to.be.true);
         cy.get('button').contains('Create Transaction').click();
         cy.get('#Bridge_modal_continueTransferButton').click();
         cy.wait(30000);
