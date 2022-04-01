@@ -75,12 +75,24 @@ export const UserProvider = ({ children }) => {
       const parsed = JSON.parse(event.data);
       const { ivk, nsk } = await retrieveAndDecrypt(state.compressedPkd);
       if (parsed.type === 'sync') {
-        parsed.historicalData
+        await parsed.historicalData
           .sort((a, b) => a.block.blockNumberL2 - b.block.blockNumberL2)
           .reduce(async (acc, curr) => {
             await acc; // Acc is a promise so we await it before processing the next one;
             return blockProposedEventHandler(curr, [ivk], [nsk]); // TODO Should be array
           }, Promise.resolve());
+        if (
+          Number(parsed.maxBlock) !==
+          Number(parsed.historicalData[parsed.historicalData.length - 1].block.blockNumberL2)
+        ) {
+          socket.send(
+            JSON.stringify({
+              type: 'sync',
+              lastBlock:
+                parsed.historicalData[parsed.historicalData.length - 1].block.blockNumberL2,
+            }),
+          );
+        }
       } else if (parsed.type === 'blockProposed') await blockProposedEventHandler(parsed.data, [ivk], [nsk]);
       // TODO Rollback Handler
     });

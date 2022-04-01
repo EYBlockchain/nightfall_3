@@ -85,8 +85,8 @@ const Transactions = () => {
       // Subtract sum of commitments we have.
       if (safeTransactionType === '1' || safeTransactionType === '2')
         commitmentsDB.forEach(c => {
-          if (tx.nullifiers.includes(c.nullifier)) value += BigInt(c.preimage.value);
-          else if (tx.commitments.includes(c._id)) value -= BigInt(c.preimage.value);
+          if (tx.nullifiers.includes(c.nullifier)) value -= BigInt(c.preimage.value);
+          else if (tx.commitments.includes(c._id)) value += BigInt(c.preimage.value);
         });
 
       const safeValue = value.toString();
@@ -95,6 +95,9 @@ const Transactions = () => {
       })?.preimage ?? {
         ercAddress: '0x00',
       };
+
+      // eslint-disable-next-line no-param-reassign
+      if (tx?.blockNumberL2) tx.isOnChain = tx.blockNumberL2; // Temp for handling transfers
       blocks.forEach(b => {
         if (tx.isOnChain >= 0) return;
         if (b.transactionHashes.includes(tx._id)) {
@@ -138,7 +141,6 @@ const Transactions = () => {
         id: '',
       };
       const currencyValue = id !== '' ? currencyValues[id] : 0;
-      console.log(currencyValue);
       return {
         ...tx,
         transactionHash: tx._id,

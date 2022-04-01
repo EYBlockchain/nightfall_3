@@ -569,7 +569,7 @@ async function findUsableCommitments(compressedPkd, ercAddress, tokenId, _value,
   const commitmentArray = res.filter(
     r =>
       r.preimage.compressedPkd === compressedPkd.hex(32) &&
-      r.preimage.ercAddress === ercAddress.hex(32) &&
+      r.preimage.ercAddress.toLowerCase() === ercAddress.hex(32).toLowerCase() &&
       r.preimage.tokenId === tokenId.hex(32) &&
       !r.isNullified &&
       !r.isPendingNullification,
