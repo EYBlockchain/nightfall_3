@@ -33,6 +33,15 @@ describe('End to End tests', () => {
   const txPerBlock = Number(Cypress.env('TRANSACTIONS_PER_BLOCK') || 2);
   let txCount = 0;
 
+  before(() => {
+    cy.addMetamaskNetwork({
+      networkName: Cypress.env('NETWORK_NAME_ETH'),
+      rpcUrl: Cypress.env('RPC_URL_ETH'),
+      chainId: Cypress.env('CHAIN_ID_ETH'),
+      isTestnet: true,
+    });
+  });
+
   beforeEach(() => {
     cy.on('window:before:load', win => {
       cy.spy(win.console, 'log');
@@ -64,11 +73,24 @@ describe('End to End tests', () => {
       cy.get('#TokenItem_tokenDepositMATIC', { timeout: 10000 }).should('be.visible');
     });
 
-    it(`getNetwork should return valid network`, () => {
+    it('add polygon network', () => {
+      cy.addMetamaskNetwork({
+        networkName: Cypress.env('NETWORK_NAME_POLYGON'),
+        rpcUrl: Cypress.env('RPC_URL_POLYGON'),
+        chainId: Cypress.env('CHAIN_ID_POLYGON').toString(),
+        isTestnet: true,
+      }).then(networkAdded => {
+        expect(networkAdded).to.be.true;
+      });
       cy.getNetwork().then(network => {
         cy.log(network.networkName);
         cy.log(network.networkId);
         cy.log(network.isTestnet);
+      });
+
+    it(`changeMetamaskNetwork to ethereum network`, () => {
+      cy.changeMetamaskNetwork(Cypress.env('NETWORK_NAME_ETH')).then(networkChanged => {
+        expect(networkChanged).to.be.true;
       });
     });
   });
@@ -94,6 +116,7 @@ describe('End to End tests', () => {
 
       for (let i = 0; i < noOfDeposit; i++) {
         cy.get('button').contains('Transfer').click();
+        cy.wait(10000);
         cy.get('button').contains('Create Transaction').click();
         cy.get('#Bridge_modal_continueTransferButton').click();
         cy.wait(30000);
