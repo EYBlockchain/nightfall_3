@@ -22,7 +22,7 @@ const { PROPOSER_PORT, GENESIS_BLOCKS } = process.env;
 Does the preliminary setup and starts listening on the websocket
 */
 async function startProposer() {
-  logger.info('Starting Proposer...');
+  logger.info(`Starting Proposer with url ${environment.proposerBaseUrl}...`);
   let server;
   let currentBlocks = 0;
   // Mnemonic are only required for services connecting to a client that
@@ -47,8 +47,12 @@ async function startProposer() {
       if (currentBlocks === Number(GENESIS_BLOCKS)) {
         logger.debug('De-registering proposer...');
         await nf3DeregisterProposer();
+        logger.debug('Closing nf3...');
         await nf3Close();
+        logger.debug('Closing proposer service...');
         server.close(); // close proposer server
+        logger.debug('Service closed');
+        process.exit(0);
       }
     });
   }

@@ -93,7 +93,7 @@ services:
       BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT}
       PROPOSER_ETHEREUM_SIGNING_KEY: ${PROPOSER_ETHEREUM_SIGNING_KEY}
       PROPOSER_PORT: 8080
-      PROPOSER_URL: http://proposer
+      PROPOSER_HOST: proposer
 
 volumes:
   proving_files:

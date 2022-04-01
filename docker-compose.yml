@@ -186,7 +186,7 @@ services:
       DEPLOYER_HOST: deployer
       GENESIS_BLOCKS: 2
       PROPOSER_PORT: 8080
-      PROPOSER_URL: http://proposer
+      PROPOSER_HOST: proposer
 
   genesis-transactions-creator:
     image: ghcr.io/eyblockchain/nightfall3-user-local:latest
