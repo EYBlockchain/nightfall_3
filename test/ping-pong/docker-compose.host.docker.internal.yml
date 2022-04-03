@@ -37,6 +37,8 @@ services:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
       BLOCKCHAIN_PORT: 8546
+      PROPOSER_HOST: host.docker.internal
+      PROPOSER_PORT: 8100
 
   user-local1:
     extra_hosts:
