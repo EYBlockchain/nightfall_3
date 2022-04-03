@@ -35,9 +35,9 @@ describe('End to End tests', () => {
 
   before(() => {
     cy.addMetamaskNetwork({
-      networkName: Cypress.env('NETWORK_NAME_ETH'),
-      rpcUrl: Cypress.env('RPC_URL_ETH'),
-      chainId: Cypress.env('CHAIN_ID_ETH'),
+      networkName: Cypress.env('NETWORK_NAME_POLYGON'),
+      rpcUrl: Cypress.env('RPC_URL_POLYGON'),
+      chainId: Cypress.env('CHAIN_ID_POLYGON').toString(),
       isTestnet: true,
     });
   });
@@ -51,6 +51,15 @@ describe('End to End tests', () => {
   });
 
   context('MetaMask', () => {
+    it('add ethereum network', () => {
+      cy.addMetamaskNetwork({
+        networkName: Cypress.env('NETWORK_NAME'),
+        rpcUrl: Cypress.env('RPC_URL'),
+        chainId: Cypress.env('CHAIN_ID').toString(),
+        isTestnet: true,
+      }).then(networkAdded => expect(networkAdded).to.be.true);
+    });
+
     it('acceptMetamaskAccess should accept connection request to metamask', () => {
       cy.visit('/');
       cy.acceptMetamaskAccess().then(connected => expect(connected).to.be.true);
@@ -71,26 +80,6 @@ describe('End to End tests', () => {
       // will not open Generate Mnemonic modal, hence the below assertion
       cy.get('button').contains('Generate Mnemonic').should('not.exist');
       cy.get('#TokenItem_tokenDepositMATIC', { timeout: 10000 }).should('be.visible');
-    });
-
-    it('add polygon network', () => {
-      cy.addMetamaskNetwork({
-        networkName: Cypress.env('NETWORK_NAME_POLYGON'),
-        rpcUrl: Cypress.env('RPC_URL_POLYGON'),
-        chainId: Cypress.env('CHAIN_ID_POLYGON').toString(),
-        isTestnet: true,
-      }).then(networkAdded => expect(networkAdded).to.be.true);
-      cy.getNetwork().then(network => {
-        cy.log(network.networkName);
-        cy.log(network.networkId);
-        cy.log(network.isTestnet);
-      });
-    });
-
-    it(`changeMetamaskNetwork to ethereum network`, () => {
-      cy.changeMetamaskNetwork(Cypress.env('NETWORK_NAME_ETH')).then(
-        networkChanged => expect(networkChanged).to.be.true,
-      );
     });
   });
 
@@ -149,10 +138,11 @@ describe('End to End tests', () => {
       cy.get('label').contains('Withdraw').click();
       cy.get('#Bridge_amountDetails_tokenAmount').type(withdrawValue);
       cy.get('button').contains('Transfer').click();
+      cy.allowMetamaskToSwitchNetwork();
+      cy.get('#Bridge_modal_transferMode').click();
+      cy.get('a').contains('Direct Transfer').click();
       cy.get('button').contains('Create Transaction').click();
       cy.get('#Bridge_modal_continueTransferButton').click();
-      cy.wait(30000);
-      cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
       cy.wait(50000);
       cy.contains('Nightfall Assets').click();
     });
@@ -183,8 +173,9 @@ describe('End to End tests', () => {
       cy.get('#TokenItem_modalSend_tokenAmount').clear().type(transferValue);
       cy.get('#TokenItem_modalSend_compressedPkd').clear().type(recipientPkd);
       cy.get('button').contains('Continue').click();
-      cy.contains('L2 Bridge', { timeout: 10000 }).click();
-      cy.wait(10000);
+      cy.wait(30000);
+      cy.confirmMetamaskTransaction();
+      cy.contains('L2 Bridge').click();
       cy.contains('Nightfall Assets').click();
     });
 
