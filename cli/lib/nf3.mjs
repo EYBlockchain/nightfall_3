@@ -851,22 +851,22 @@ class Nf3 {
       const { type, txDataToSign, block, transactions } = msg;
       logger.debug(`Proposer received websocket message of type ${type}`);
       if (type === 'block') {
-        new Promise((resolve, reject) => {
-          proposerQueue.push(async () => {
-            try {
-              const receipt = await this.submitTransaction(
-                txDataToSign,
-                this.stateContractAddress,
-                this.BLOCK_STAKE,
-              );
-              blockProposeEmitter.emit('receipt', receipt, block, transactions);
-              resolve(receipt);
-            } catch (err) {
-              blockProposeEmitter.emit('error', err, block, transactions);
-              reject(err);
-            }
-          });
+        // new Promise((resolve, reject) => {
+        proposerQueue.push(async () => {
+          try {
+            const receipt = await this.submitTransaction(
+              txDataToSign,
+              this.stateContractAddress,
+              this.BLOCK_STAKE,
+            );
+            blockProposeEmitter.emit('receipt', receipt, block, transactions);
+            // resolve(receipt);
+          } catch (err) {
+            blockProposeEmitter.emit('error', err, block, transactions);
+            // reject(err);
+          }
         });
+        // });
       }
       return null;
     };

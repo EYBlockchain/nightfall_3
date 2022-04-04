@@ -5,7 +5,7 @@ import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
 import Nf3 from '../../../cli/lib/nf3.mjs';
 import logger from '../../../common-files/utils/logger.mjs';
-import { Web3Client, expectTransaction, depositNTransactions } from '../../utils.mjs';
+import { Web3Client, expectTransaction } from '../../utils.mjs';
 
 // so we can use require with mjs file
 const { expect } = chai;
@@ -18,9 +18,9 @@ const {
   txPerBlock,
   mnemonics,
   signingKeys,
-  tokenConfigs: { tokenType, tokenId },
-  transferValue,
-  fee,
+  // tokenConfigs: { tokenType, tokenId },
+  // transferValue,
+  // fee,
 } = config.TEST_OPTIONS;
 
 const bootProposer = new Nf3(signingKeys.proposer1, environment);
@@ -33,11 +33,11 @@ const testProposersUrl = [
   'http://test-proposer4',
 ];
 
-const totalDeposits = txPerBlock * 3;
+// const totalDeposits = txPerBlock * 3;
 const nf3User = new Nf3(signingKeys.user1, environment);
-let erc20Address;
+// let erc20Address;
 let stateAddress;
-let eventLogs = [];
+// let eventLogs = [];
 
 const web3Client = new Web3Client();
 
@@ -54,12 +54,12 @@ describe('Basic Proposer tests', () => {
     await bootProposer.registerProposer(testProposersUrl[0]);
     const blockProposeEmitter = await bootProposer.startProposer();
     blockProposeEmitter
-      .on('receipt', (receipt, block, transactions) => {
+      .on('receipt', (receipt, block) => {
         logger.debug(
           `L2 Block with L2 block number ${block.blockNumberL2} was proposed. The L1 transaction hash is ${receipt.transactionHash}`,
         );
       })
-      .on('error', (error, block, transactions) => {
+      .on('error', (error, block) => {
         logger.error(
           `Proposing L2 Block with L2 block number ${block.blockNumberL2} failed due to error: ${error} `,
         );

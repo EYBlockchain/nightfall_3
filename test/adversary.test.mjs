@@ -15,6 +15,7 @@ import {
   registerProposerOnNoProposer,
   retrieveL2Balance,
 } from './utils.mjs';
+import logger from '../../../common-files/utils/logger.mjs';
 
 const { expect } = chai;
 chai.use(chaiHttp);
@@ -93,12 +94,12 @@ describe('Testing with an adversary', () => {
     // Proposer listening for incoming events
     const blockProposeEmitter = await nf3AdversarialProposer.startProposer();
     blockProposeEmitter
-      .on('receipt', (receipt, block, transactions) => {
+      .on('receipt', (receipt, block) => {
         logger.debug(
           `L2 Block with L2 block number ${block.blockNumberL2} was proposed. The L1 transaction hash is ${receipt.transactionHash}`,
         );
       })
-      .on('error', (error, block, transactions) => {
+      .on('error', (error, block) => {
         logger.error(
           `Proposing L2 Block with L2 block number ${block.blockNumberL2} failed due to error: ${error} `,
         );
