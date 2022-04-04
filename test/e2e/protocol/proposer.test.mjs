@@ -36,7 +36,7 @@ const testProposersUrl = [
 // const totalDeposits = txPerBlock * 3;
 const nf3User = new Nf3(signingKeys.user1, environment);
 // let erc20Address;
-let stateAddress;
+// let stateAddress;
 // let eventLogs = [];
 
 const web3Client = new Web3Client();
@@ -45,7 +45,7 @@ describe('Basic Proposer tests', () => {
   before(async () => {
     await nf3User.init(mnemonics.user1);
     // erc20Address = await nf3User.getContractAddress('ERC20Mock');
-    stateAddress = await nf3User.stateContractAddress;
+    // stateAddress = await nf3User.stateContractAddress;
     // web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
 
     await bootProposer.init(mnemonics.proposer);
