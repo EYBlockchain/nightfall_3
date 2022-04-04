@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 const { DOMAIN_NAME = '' } = process.env;
 
 BigInt.prototype.toJSON = function () {
@@ -7,7 +8,8 @@ BigInt.prototype.toJSON = function () {
 module.exports = {
   COMMITMENTS_DB: 'nightfall_commitments',
   OPTIMIST_DB: 'optimist_data',
-  METADATA_COLLECTION: 'metadata',
+  PROPOSER_COLLECTION: 'proposers',
+  CHALLENGER_COLLECTION: 'challengers',
   TRANSACTIONS_COLLECTION: 'transactions',
   SUBMITTED_BLOCKS_COLLECTION: 'blocks',
   NULLIFIER_COLLECTION: 'nullifiers',
@@ -16,6 +18,7 @@ module.exports = {
   COMMITMENTS_COLLECTION: 'commitments',
   PEERS_COLLECTION: 'peers',
   TIMBER_COLLECTION: 'timber',
+  CIRCUIT_COLLECTION: 'circuit_storage',
   CONTRACT_ARTIFACTS: '/app/build/contracts',
   PROPOSERS_CONTRACT_NAME: 'Proposers',
   SHIELD_CONTRACT_NAME: 'Shield',
@@ -36,7 +39,6 @@ module.exports = {
   BLOCKCHAIN_URL:
     process.env.BLOCKCHAIN_URL ||
     `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`,
-  USE_INFURA: process.env.USE_INFURA === 'true',
   ETH_PRIVATE_KEY: process.env.ETH_PRIVATE_KEY, // owner's/deployer's private key
   ETH_ADDRESS: process.env.ETH_ADDRESS,
   OPTIMIST_HOST: process.env.OPTIMIST_HOST || 'optimist',
@@ -45,43 +47,6 @@ module.exports = {
   // Define Urls and Url format (http/ws vs https/wss, with vs without port) depending on whether a DOMAIN_NAME has been defined.
   // In production and staging environements, we require https/wss and no port, as traffic will be routed to the correct service
   // given a URL.
-  optimistBaseUrl:
-    DOMAIN_NAME === ''
-      ? `http://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_HTTP_PORT}`
-      : `https://${process.env.OPTIMIST_HTTP_HOST}`,
-  optimistWsUrl:
-    DOMAIN_NAME === ''
-      ? `ws://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_WS_PORT}`
-      : `wss://${process.env.OPTIMIST_HOST}`,
-  web3WsUrl:
-    DOMAIN_NAME === ''
-      ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`
-      : `wss://${process.env.BLOCKCHAIN_WS_HOST}`,
-  userEthereumSigningKey:
-    process.env.USER_ETHEREUM_SIGNING_KEY ||
-    '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e', // if changed, change associated userEthereumAddresses
-  userAddress: process.env.USER_ADDRESS,
-  UserEthereumAddresses: process.env.USER_ETHEREUM_ADDRESSES
-    ? process.env.USER_ETHEREUM_ADDRESSES.split(',')
-    : [
-        '0x9c8b2276d490141ae1440da660e470e7c0349c63',
-        // '0x4ca4902a6f456b488947074ad4140317c7e21996', // 0xb0fa8745bd6e77a67ec6a27e701971d659937140cc3159d9f85210da3444eb45
-        // '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9', // 0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb
-      ],
-  zkpMnemonic:
-    process.env.ZKP_MNEMONIC ||
-    'hurt labor ketchup seven scan swap dirt brown brush path goat together',
-  proposerEthereumSigningKey:
-    process.env.PROPOSER_ETHEREUM_SIGNING_KEY ||
-    '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
-  user1Pkd: process.env.RECIPIENT_PKD || [
-    '0x193a37cd7973373aceae05d133f3d69ab6e7ef2f4321461173871ec7611244e2',
-    '0x27234a8721e73c9aa160154ee63d2470101fc5fd841221eeb675a91ec2d66e78',
-  ],
-  user2Pkd: process.env.RECIPIENT_PKD || [
-    '0x105651c0c5bb97582b3270e0f5a07ca81410ffd1920e86697efddaec03dccef8',
-    '0x1ac3b61ecba1448e697b23d37efe290fb86554b2f905aaca3a6df59805eca366',
-  ],
   WEB3_OPTIONS: {
     gas: process.env.GAS || 8000000,
     gasPrice: process.env.GAS_PRICE || '20000000000',
@@ -174,12 +139,28 @@ module.exports = {
     localhost: {
       name: 'Localhost',
       chainId: 4378921,
-      clientApiUrl: 'http://localhost:8080',
-      optimistApiUrl: 'http://localhost:8081',
-      optimistWsUrl: 'ws://localhost:8082',
+      clientApiUrl: process.env.CLIENT_HOST
+        ? DOMAIN_NAME === ''
+          ? `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`
+          : `https://${process.env.CLIENT_HOST}`
+        : 'http://localhost:8080',
+      optimistApiUrl: process.env.OPTIMIST_HOST
+        ? DOMAIN_NAME === ''
+          ? `http://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_PORT}`
+          : `https://${process.env.OPTIMIST_HOST}`
+        : 'http://localhost:8081',
+      optimistWsUrl: process.env.OPTIMIST_HOST
+        ? DOMAIN_NAME === ''
+          ? `ws://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_WS_PORT}`
+          : `wss://${process.env.OPTIMIST_HOST}`
+        : 'ws://localhost:8082',
       adversarialOptimistApiUrl: 'http://localhost:8088',
       adversarialOptimistWsUrl: 'ws://localhost:8089',
-      web3WsUrl: 'ws://localhost:8546',
+      web3WsUrl: process.env.BLOCKCHAIN_WS_HOST
+        ? DOMAIN_NAME === ''
+          ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`
+          : `wss://${process.env.BLOCKCHAIN_WS_HOST}`
+        : 'ws://localhost:8546',
     },
   },
   TEST_OPTIONS: {
@@ -193,11 +174,11 @@ module.exports = {
     // this is the etherum private key for accounts[0]
     privateKey: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e',
     gas: 10000000,
-    gasCosts: 15000000000000000,
+    gasCosts: 80000000000000000,
     fee: 1,
     BLOCK_STAKE: 1, // 1 wei
     bond: 10, // 10 wei
-    txPerBlock: 2,
+    txPerBlock: process.env.TRANSACTIONS_PER_BLOCK || 2,
     signingKeys: {
       walletTest: '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
       user1: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e',
@@ -207,6 +188,19 @@ module.exports = {
       proposer3: '0xfbc1ee1c7332e2e5a76a99956f50b3ba2639aff73d56477e877ef8390c41e0c6',
       challenger: '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
       liquidityProvider: '0xfbc1ee1c7332e2e5a76a99956f50b3ba2639aff73d56477e877ef8390c41e0c6',
+    },
+    addresses: {
+      walletTest: '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
+      user1: '0x9C8B2276D490141Ae1440Da660E470E7C0349C63',
+      user2: '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
+      proposer1: '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0',
+      proposer2: '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
+      proposer3: '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
+      challenger: '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
+      liquidityProvider: '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
+    },
+    pkds: {
+      user1: '0x1ac3b61ecba1448e697b23d37efe290fb86554b2f905aaca3a6df59805eca366',
     },
     mnemonics: {
       user1: 'trip differ bamboo bundle bonus luxury strike mad merry muffin nose auction',
@@ -219,14 +213,23 @@ module.exports = {
       erc20default: 2000,
     },
   },
-
-  RESTRICTIONS: [
-    {
-      name: 'MockERC20',
-      address: '0xB5Acbe9a0F1F8B98F3fC04471F7fE5d2c222cB44',
-      amount: 200,
+  RESTRICTIONS: {
+    signingKeys: {
+      bootProposerKey: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
+      bootChallengerKey: '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
     },
-  ],
+    addresses: {
+      bootProposer: '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0',
+      bootChallenger: '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
+    },
+    tokens: [
+      {
+        name: 'MockERC20',
+        address: '0xB5Acbe9a0F1F8B98F3fC04471F7fE5d2c222cB44',
+        amount: 200,
+      },
+    ],
+  },
 
   // for Browser use
   proposerUrl:
@@ -236,4 +239,61 @@ module.exports = {
 
   eventWsUrl:
     process.env.LOCAL_PROPOSER === 'true' ? process.env.LOCAL_WS_URL : process.env.PROPOSER_WS_URL,
+
+  KEYS_COLLECTION: 'keys',
+  DEFAULT_ACCOUNT_NUM: 10,
+  circuitsAWSFiles: {
+    deposit_stub: {
+      abi: 'circuits/deposit_stub/artifacts/deposit_stub-abi.json',
+      program: 'circuits/deposit_stub/artifacts/deposit_stub-program',
+      pk: 'circuits/deposit_stub/keypair/deposit_stub_pk.key',
+    },
+    withdraw_stub: {
+      abi: 'circuits/withdraw_stub/artifacts/withdraw_stub-abi.json',
+      program: 'circuits/withdraw_stub/artifacts/withdraw_stub-program',
+      pk: 'circuits/withdraw_stub/keypair/withdraw_stub_pk.key',
+    },
+    single_transfer_stub: {
+      abi: 'circuits/single_transfer_stub/artifacts/single_transfer_stub-abi.json',
+      program: 'circuits/single_transfer_stub/artifacts/single_transfer_stub-program',
+      pk: 'circuits/single_transfer_stub/keypair/single_transfer_stub_pk.key',
+    },
+    double_transfer_stub: {
+      abi: 'circuits/double_transfer_stub/artifacts/double_transfer_stub-abi.json',
+      program: 'circuits/double_transfer_stub/artifacts/double_transfer_stub-program',
+      pk: 'circuits/double_transfer_stub/keypair/double_transfer_stub_pk.key',
+    },
+    deposit: {
+      abi: 'circuits/deposit/artifacts/deposit-abi.json',
+      program: 'circuits/deposit/artifacts/deposit-program',
+      pk: 'circuits/deposit/keypair/deposit_pk.key',
+    },
+    withdraw: {
+      abi: 'circuits/withdraw/artifacts/withdraw-abi.json',
+      program: 'circuits/withdraw/artifacts/withdraw-program',
+      pk: 'circuits/withdraw/keypair/withdraw_pk.key',
+    },
+    single_transfer: {
+      abi: 'circuits/single_transfer/artifacts/single_transfer-abi.json',
+      program: 'circuits/single_transfer/artifacts/single_transfer-program',
+      pk: 'circuits/single_transfer/keypair/single_transfer_pk.key',
+    },
+    double_transfer: {
+      abi: 'circuits/double_transfer/artifacts/double_transfer-abi.json',
+      program: 'circuits/double_transfer/artifacts/double_transfer-program',
+      pk: 'circuits/double_transfer/keypair/double_transfer_pk.key',
+    },
+  },
+
+  AWS: {
+    accessKeyId: process.env.AWS_ACCESS_KEY,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    s3Bucket: process.env.AWS_S3_BUCKET,
+  },
+
+  utilApiServerUrl: process.env.LOCAL_UTIL_API_URL,
+
+  // assumption is if LOCAL_PROPOSER is true, wallet UI app
+  // is running in local machine
+  isLocalRun: process.env.LOCAL_PROPOSER === 'true',
 };

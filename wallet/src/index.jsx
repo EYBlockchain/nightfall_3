@@ -32,3 +32,7 @@ window.customElements.define('nightfall-app', DemoAppSolution);
 // to log results (for example: reportWebVitals(console.log))
 // or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals();
+
+// init from web-worker runs worker to download/fetch circuits files
+// frrom AWS S3 bucket and store in indexedDB
+init();

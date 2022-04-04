@@ -2,13 +2,13 @@
 import Web3 from 'web3';
 import chai from 'chai';
 import config from 'config';
+import logger from '../common-files/utils/logger.mjs';
 import rand from '../common-files/utils/crypto/crypto-random.mjs';
 
 const { expect } = chai;
 const { WEB3_PROVIDER_OPTIONS } = config;
 const ENVIRONMENT = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
-const USE_INFURA = config.USE_INFURA === 'true';
 const USE_ROPSTEN_NODE = config.USE_ROPSTEN_NODE === 'true';
 
 export const topicEventMapping = {
@@ -116,7 +116,7 @@ export class Web3Client {
         const accountAddress = await this.web3.eth.accounts.privateKeyToAccount(privateKey);
         nonce = await this.web3.eth.getTransactionCount(accountAddress.address);
       }
-      if (USE_INFURA || USE_ROPSTEN_NODE) {
+      if (USE_ROPSTEN_NODE) {
         // get gaslimt from latest block as gaslimt may vary
         gas = (await this.web3.eth.getBlock('latest')).gasLimit;
         const blockGasPrice = Number(await this.web3.eth.getGasPrice());
@@ -209,7 +209,7 @@ export class Web3Client {
 
   async waitForEvent(eventLogs, expectedEvents, count = 1) {
     const length = count !== 1 ? count : expectedEvents.length;
-    let timeout = 10;
+    let timeout = 100;
     while (eventLogs.length < length) {
       await new Promise(resolve => setTimeout(resolve, 3000));
       timeout--;
@@ -377,7 +377,7 @@ export const waitForSufficientBalance = (client, value) => {
   return new Promise(resolve => {
     async function isSufficientBalance() {
       const balance = await retrieveL2Balance(client);
-      if (process.env.VERBOSE) console.log(` Balance needed ${value}. Current balance ${balance}.`);
+      logger.debug(` Balance needed ${value}. Current balance ${balance}.`);
       if (balance < value) {
         await new Promise(resolving => setTimeout(resolving, 10000));
         isSufficientBalance();

@@ -7,7 +7,7 @@ services:
     image: trufflesuite/ganache-cli:v6.12.1
     ports:
       - 8546:8546
-    command:
+    command: 
       ganache-cli --accounts=10 --defaultBalanceEther=1000 --gasLimit=0x3B9ACA00 --deterministic -i 4378921 -p 8546 -b 1
       --account="0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e,10000000000000000000000"
       --account="0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d,10000000000000000000000"

@@ -26,7 +26,9 @@ const {
   restrictions: { erc20default },
 } = config.TEST_OPTIONS;
 
-const { RESTRICTIONS: defaultRestrictions } = config;
+const {
+  RESTRICTIONS: { tokens: defaultRestrictions },
+} = config;
 
 const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
 const nf3Proposer = new Nf3(signingKeys.proposer1, environment);

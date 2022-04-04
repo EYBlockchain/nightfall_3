@@ -17,7 +17,6 @@ const Bridge = () => {
 
   return (
     // containerFluid
-
     <div>
       <Header />
       <div className="bridgeComponent">
@@ -38,50 +37,6 @@ const Bridge = () => {
                 <div className="info_painel_title">Nightfall Bridge</div>
                 <div className="info_painel_description">
                   The safe, fast and most secure way to bring cross-chain assets to Polygon chain.
-                </div>
-                <div className="items">
-                  {/* <div className="each_item_wrapper">
-                    <a
-                      id="youtube-video-tutorial"
-                      className="items_text"
-                      href=""
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      How it works?
-                    </a>
-                    <div>
-                      <BsArrowRight />
-                    </div>
-                  </div>
-                  <div className="each_item_wrapper">
-                    <a
-                      id="faq-docs"
-                      className="items_text"
-                      href=""
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      FAQ
-                    </a>
-                    <div>
-                      <BsArrowRight />
-                    </div>
-                  </div>
-                  <div className="each_item_wrapper">
-                    <a
-                      id="user-guide"
-                      className="items_text"
-                      href="USER_GUIDE_DOCS_LINK"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      User guide
-                    </a>
-                    <div>
-                      <BsArrowRight />
-                    </div>
-                  </div> */}
                 </div>
                 {isTabletOrMobile && (
                   <>

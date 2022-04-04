@@ -35,7 +35,7 @@ contract Proposers is Stateful, Structures, Config, ReentrancyGuardUpgradeable {
     }
 
     //add the proposer to the circular linked list
-    function registerProposer(string memory url) external payable nonReentrant {
+    function registerProposer(string memory url) external payable nonReentrant onlyBootProposer {
         require(REGISTRATION_BOND <= msg.value, 'The registration payment is incorrect');
         require(
             state.getProposer(msg.sender).thisAddress == address(0),
@@ -113,10 +113,10 @@ contract Proposers is Stateful, Structures, Config, ReentrancyGuardUpgradeable {
 
     // Proposers can change REST API URL
     function updateProposer(string memory url) external {
-      require(
-        state.getProposer(msg.sender).thisAddress != address(0),
-        'This proposer is not registered or you are not that proposer'
-      );
-      state.updateProposer(msg.sender, url);
+        require(
+            state.getProposer(msg.sender).thisAddress != address(0),
+            'This proposer is not registered or you are not that proposer'
+        );
+        state.updateProposer(msg.sender, url);
     }
 }

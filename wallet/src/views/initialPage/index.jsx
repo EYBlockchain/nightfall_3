@@ -1,12 +1,10 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { useAccount } from '../../hooks/Account/index.tsx';
 
 import polyBridge from '../../static/img/homepage/poly-bridge.png';
 import polyStaking from '../../static/img/homepage/poly-staking.png';
 import polyWallet from '../../static/img/homepage/poly-wallet.png';
 import polyWidgetDashboard from '../../static/img/homepage/poly-widget-dashboard.png';
-import loadWeb3 from '../../utils/loadWeb3.ts';
 
 import './initial.scss';
 
@@ -53,27 +51,7 @@ const cardsData = [
   },
 ];
 
-// src={require('../static/img/homepage/poly-bridge.png')}
 export default function MainPage() {
-  const { setAccountInstance } = useAccount();
-
-  async function loadBlockchainData() {
-    if (window.web3) {
-      const { web3 } = window;
-
-      //   Load account
-      const accounts = await web3.eth.getAccounts();
-      setAccountInstance({
-        address: accounts[0],
-      });
-    }
-  }
-
-  useEffect(() => {
-    loadWeb3();
-    loadBlockchainData();
-  }, []);
-
   return (
     <div className="homepage">
       <div className="header-h2 text-center">Getting started with Polygon PoS chain</div>

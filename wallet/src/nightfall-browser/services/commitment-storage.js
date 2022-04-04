@@ -18,6 +18,8 @@ const {
   SUBMITTED_BLOCKS_COLLECTION,
   TRANSACTIONS_COLLECTION,
   COMMITMENTS_COLLECTION,
+  KEYS_COLLECTION,
+  CIRCUIT_COLLECTION,
 } = global.config;
 
 const { generalise } = gen;
@@ -30,6 +32,8 @@ const connectDB = async () => {
       newDb.createObjectStore(TIMBER_COLLECTION);
       newDb.createObjectStore(SUBMITTED_BLOCKS_COLLECTION);
       newDb.createObjectStore(TRANSACTIONS_COLLECTION);
+      newDb.createObjectStore(KEYS_COLLECTION);
+      newDb.createObjectStore(CIRCUIT_COLLECTION);
     },
   });
 };
@@ -417,20 +421,6 @@ export async function getWalletBalanceDetails(compressedPkd, ercList) {
   // work out the balance contribution of each commitment  - a 721 token has no value field in the
   // commitment but each 721 token counts as a balance of 1. Then finally add up the individual
   // commitment balances to get a balance for each erc address.
-  const res1 = wallet.map(e => ({
-    ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
-    compressedPkd: e.preimage.compressedPkd,
-    tokenId: !!BigInt(e.preimage.tokenId),
-    value: Number(BigInt(e.preimage.value)),
-    id: Number(BigInt(e.preimage.tokenId)),
-  }));
-  const res2 = res1.filter(
-    e =>
-      (e.tokenId || e.value > 0) &&
-      e.compressedPkd === compressedPkd &&
-      (ercAddressList.length === 0 || ercAddressList.includes(e.ercAddress.toUpperCase())),
-  );
-  console.log('RES2: ', res2);
   const res = wallet
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
@@ -579,7 +569,7 @@ async function findUsableCommitments(compressedPkd, ercAddress, tokenId, _value,
   const commitmentArray = res.filter(
     r =>
       r.preimage.compressedPkd === compressedPkd.hex(32) &&
-      r.preimage.ercAddress === ercAddress.hex(32) &&
+      r.preimage.ercAddress.toLowerCase() === ercAddress.hex(32).toLowerCase() &&
       r.preimage.tokenId === tokenId.hex(32) &&
       !r.isNullified &&
       !r.isPendingNullification,
@@ -591,7 +581,7 @@ async function findUsableCommitments(compressedPkd, ercAddress, tokenId, _value,
     .filter(commitment => Number(commitment.isOnChain) > Number(-1)) // filters for on chain commitments
     .map(ct => new Commitment(ct.preimage));
   // if we have an exact match, we can do a single-commitment transfer.
-  console.log(`Looking for ${value.hex(32)}`);
+  console.log(`Looking for ${value.hex(32)}, with ercAddress ${ercAddress.hex(32)}`);
   const [singleCommitment] = commitments.filter(c => {
     console.log(`COmmitment: ${c.preimage.value.hex(32)}`);
     return c.preimage.value.hex(32) === value.hex(32);
@@ -602,7 +592,7 @@ async function findUsableCommitments(compressedPkd, ercAddress, tokenId, _value,
     return [singleCommitment];
   }
   // If we get here it means that we have not been able to find a single commitment that matches the required value
-  if (onlyOne) return null; // sometimes we require just one commitment
+  if (onlyOne || commitments.length < 2) return null; // sometimes we require just one commitment
 
   /* if not, maybe we can do a two-commitment transfer. The current strategy aims to prioritise smaller commitments while also
      minimising the creation of low value commitments (dust)
@@ -639,6 +629,7 @@ async function findUsableCommitments(compressedPkd, ercAddress, tokenId, _value,
   // then we will need to use a commitment of greater value than the target
   if (twoGreatestSum < value.bigInt) {
     if (commitsLessThanTargetValue.length === sortedCommits.length) return null; // We don't have any more commitments
+    if (commitsLessThanTargetValue.length === 0) return [sortedCommits[0], sortedCommits[1]]; // return smallest in GT if LT array is empty
     return [sortedCommits[commitsLessThanTargetValue.length], sortedCommits[0]]; // This should guarantee that we will replace our smallest commitment with a greater valued one.
   }
 
@@ -684,4 +675,9 @@ export async function findUsableCommitmentsMutex(
   return mutex.runExclusive(async () =>
     findUsableCommitments(compressedPkd, ercAddress, tokenId, _value, onlyOne),
   );
+}
+
+export async function getAllCommitments() {
+  const db = await connectDB();
+  return db.getAll(COMMITMENTS_COLLECTION);
 }

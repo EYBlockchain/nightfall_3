@@ -26,6 +26,12 @@ module.exports = {
     react: {
       version: 'latest',
     },
+    'import/resolver': {
+      node: {
+        extensions: ['.js', '.jsx', '.ts', '.tsx'],
+        moduleDirectory: ['./wallet/node_modules', './wallet/src/'],
+      },
+    },
   },
   globals: {
     BigInt: 'true',

@@ -8,19 +8,28 @@ import config from 'config';
 import Timber from 'common-files/classes/timber.mjs';
 import logger from 'common-files/utils/logger.mjs';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
+import { enqueueEvent } from 'common-files/utils/event-queue.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction, TransactionError } from '../classes/index.mjs';
 import {
   setRegisteredProposerAddress,
+  isRegisteredProposerAddressMine,
   deleteRegisteredProposerAddress,
   getMempoolTransactions,
   getLatestTree,
+  getLatestBlockInfo,
 } from '../services/database.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
+import getProposers from '../services/proposer.mjs';
 
 const router = express.Router();
 const { STATE_CONTRACT_NAME, PROPOSERS_CONTRACT_NAME, SHIELD_CONTRACT_NAME, ZERO } = config;
+
+let proposer;
+export function setProposer(p) {
+  proposer = p;
+}
 
 /**
  * Function to return a raw transaction that registers a proposer.  This just
@@ -32,12 +41,39 @@ router.post('/register', async (req, res, next) => {
   logger.debug(`register proposer endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
   try {
     const { address, url = '' } = req.body;
-    const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
-    const txDataToSign = await proposersContractInstance.methods.registerProposer(url).encodeABI();
-    logger.debug('returning raw transaction data');
-    logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
+    const proposersContractInstance = await waitForContract(PROPOSERS_CONTRACT_NAME);
+    // the first thing to do is to check if the proposer is already registered on the blockchain
+    const proposers = (await getProposers()).map(p => p.thisAddress);
+    // if not, let's register it
+    let txDataToSign = '';
+    if (!proposers.includes(address)) {
+      txDataToSign = await proposersContractInstance.methods.registerProposer(url).encodeABI();
+    } else
+      logger.warn(
+        'Proposer was already registered on the blockchain - registration attempt ignored',
+      );
+    // when we get to here, either the proposer was already registered (txDataToSign === '')
+    // or we're just about to register them. We may or may not be registed locally
+    // with optimist though. Let's check and fix that if needed.
+    if (!(await isRegisteredProposerAddressMine(address))) {
+      logger.debug('Registering proposer locally');
+      await setRegisteredProposerAddress(address, url); // save the registration address
+      // We've just registered with optimist but if we were already registered on the blockchain,
+      // we should check if we're the current proposer and, if so, set things up so we start
+      // making blocks immediately
+      if (txDataToSign === '') {
+        logger.warn(
+          'Proposer was already registered on the blockchain but not with this Optimist instance - registering locally',
+        );
+        const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
+        const currentProposer = await stateContractInstance.methods.getCurrentProposer().call();
+        if (address === currentProposer.thisAddress) {
+          proposer.isMe = true;
+          await enqueueEvent(() => logger.info('Start Queue'), 0); // kickstart the queue
+        }
+      }
+    }
     res.json({ txDataToSign });
-    setRegisteredProposerAddress(address, url); // save the registration address and URL
   } catch (err) {
     logger.error(err);
     next(err);
@@ -92,22 +128,8 @@ router.get('/current-proposer', async (req, res, next) => {
 router.get('/proposers', async (req, res, next) => {
   logger.debug(`list proposals endpoint received GET`);
   try {
-    const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
-    // proposers is an on-chain mapping so to get proposers we need to key to start iterating
-    // the safest to start with is the currentProposer
-    const currentProposer = await stateContractInstance.methods.currentProposer().call();
-    const proposers = [];
-    let thisPtr = currentProposer.thisAddress;
-    // Loop through the circular list until we run back into the currentProposer.
-    do {
-      // eslint-disable-next-line no-await-in-loop
-      const proposer = await stateContractInstance.methods.proposers(thisPtr).call();
-      proposers.push(proposer);
-      thisPtr = proposer.nextAddress;
-    } while (thisPtr !== currentProposer.thisAddress);
-
-    logger.debug('returning raw transaction data');
-    logger.silly(`raw transaction is ${JSON.stringify(proposers, null, 2)}`);
+    const proposers = await getProposers();
+    logger.debug(`Returning proposer list of length ${proposers.length}`);
     res.json({ proposers });
   } catch (err) {
     logger.error(err);
@@ -202,13 +224,20 @@ router.post('/propose', async (req, res, next) => {
   logger.debug(`propose endpoint received POST`);
   logger.silly(`With content ${JSON.stringify(req.body, null, 2)}`);
   try {
-    const { transactions, proposer, currentLeafCount } = req.body;
+    const { transactions, proposer: prop, currentLeafCount } = req.body;
+    const latestBlockInfo = await getLatestBlockInfo();
+    const latestTree = await getLatestTree();
     // use the information we've been POSTED to assemble a block
     // we use a Builder pattern because an async constructor is bad form
-    const block = await Block.build({
+    const { block } = await Block.build({
       transactions,
-      proposer,
+      proposer: prop,
       currentLeafCount,
+      latestBlockInfo: {
+        blockNumberL2: latestBlockInfo.blockNumberL2,
+        blockHash: latestBlockInfo.blockHash,
+      },
+      latestTree,
     });
     logger.debug(`New block assembled ${JSON.stringify(block, null, 2)}`);
     const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);

@@ -12,7 +12,7 @@ export default function AccountDetails() {
       <img src={metamkaskLogo} />
       {accountInstance.address && (
         <div className="accountAddress">
-          account {accountInstance.address.slice(2, accountInstance.address.length)}
+          {`${accountInstance.address.slice(0, 6)}...${accountInstance.address.slice(-6)}`}
         </div>
       )}
       {!accountInstance.address && <div className="accountAddress">sign in</div>}

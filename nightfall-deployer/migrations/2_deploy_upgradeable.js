@@ -12,6 +12,10 @@ const Proposers = artifacts.require('Proposers.sol');
 const Challenges = artifacts.require('Challenges.sol');
 const State = artifacts.require('State.sol');
 
+const config = require('config');
+
+const { addresses } = config.RESTRICTIONS;
+
 module.exports = async function (deployer) {
   await deployer.deploy(Verifier);
   await deployer.link(Verifier, [Challenges, ChallengesUtil]);
@@ -33,4 +37,10 @@ module.exports = async function (deployer) {
     deployer,
     unsafeAllowLinkedLibraries: true,
   });
+
+  const proposers = await Proposers.deployed();
+  const challengers = await Challenges.deployed();
+  const { bootProposer, bootChallenger } = addresses;
+  await proposers.setBootProposer(bootProposer);
+  await challengers.setBootChallenger(bootChallenger);
 };

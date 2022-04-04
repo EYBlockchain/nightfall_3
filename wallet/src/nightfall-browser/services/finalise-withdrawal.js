@@ -23,7 +23,7 @@ export function buildSolidityStruct(block) {
   };
 }
 
-export async function finaliseWithdrawal({ transactionHash }, shieldContractAddress) {
+export async function finaliseWithdrawal(transactionHash, shieldContractAddress) {
   const block = await getBlockByTransactionHash(transactionHash);
   const transactions = await Promise.all(
     block.transactionHashes.map(t => getTransactionByTransactionHash(t)),

@@ -190,16 +190,6 @@ use it:
 
 Nightfall_3 provides a Wallet to exercise its features. To use it:
 
-- If this is the first time you are using the wallet and do not have the wallet/src/zokrates directory. From the project root:
-```
-mkdir ./wallet/src/zokrates
-```
-- If you have access to the S3 bucket that contains the precompiled circuit outputs:
-
-```
-aws s3 cp s3://nightfallv3/circuits ./wallet/src/zokrates --recursive
-```
-
 - Deploy nightfall (only ganache for now) from Nightfall's root folder
 
 ```
@@ -223,11 +213,14 @@ aws s3 cp s3://nightfallv3/circuits ./wallet/src/zokrates --recursive
 ```
 cd wallet
 npm ci
+<<<<<<< HEAD
 ```
 
 - Copy proving keys and compiled circuits into ./wallet/src/zokrates
 ```
 ./copy-zokrates-local.sh
+=======
+>>>>>>> origin/wallet/deployment
 ```
 
 - Launch wallet in ganache (localhost)

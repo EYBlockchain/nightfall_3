@@ -2,21 +2,21 @@ import React from 'react';
 import Header from '../../components/Header/header.jsx';
 import SideBar from '../../components/SideBar/index.jsx';
 import Transactions from '../../components/Transactions/index.jsx';
-import '../../styles/transactionPage.scss';
+import styles from '../../styles/transactionPage.module.scss';
 
 export default function TransactionPage() {
   return (
     <div>
       <Header />
-      <div className="bridgeComponent">
-        <div className="bridgeComponent__left">
+      <div className={styles.bridgeComponent}>
+        <div className={styles.bridgeComponent__left}>
           <SideBar />
         </div>
-        <div className="bridgeComponent__right">
-          <div className="blueBack">
+        <div className={styles.bridgeComponent__right}>
+          <div className={styles.blueBack}>
             <div style={{ padding: '32px 80px' }}>
               <div
-                className="headerH2"
+                className={styles.headerH2}
                 style={{
                   fontWeight: '700',
                   fontSize: '36px',

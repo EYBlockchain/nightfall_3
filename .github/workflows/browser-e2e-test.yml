@@ -3,7 +3,11 @@ name: Browser e2e test
 on:
   pull_request:
     branch:
+<<<<<<< HEAD
       - wallet/nf-browser-v2
+=======
+      - master
+>>>>>>> origin/wallet/deployment
 
 jobs:
   e2e-test:
@@ -15,6 +19,7 @@ jobs:
         with:
           node-version: '14.17.0'
 
+<<<<<<< HEAD
       - name: Install aws-cli
         run: |
           curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
@@ -34,11 +39,19 @@ jobs:
       - name: Download precompiled circuit outputs
         run: aws s3 cp s3://nightfallv3/circuits ./wallet/src/zokrates --recursive
 
+=======
+>>>>>>> origin/wallet/deployment
       - name: Start Containers
         run: |
           npm ci
           docker-compose -f docker-compose.dev.yml build
           ./start-nightfall -g -d -s &> docker-compose.log &disown
+<<<<<<< HEAD
+=======
+        env:
+          AWS_ACCESS_KEY: ${{ secrets.ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.SECRET_ACCESS_KEY }}
+>>>>>>> origin/wallet/deployment
 
       - name: wait 1000s for Containers startup and setup completion
         run: sleep 1000
@@ -63,7 +76,10 @@ jobs:
         run: |
           cd wallet/
           npm ci
+<<<<<<< HEAD
           ./copy-zokrates-local.sh
+=======
+>>>>>>> origin/wallet/deployment
 
       - name: Start browser app
         run: |

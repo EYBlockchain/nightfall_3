@@ -12,30 +12,29 @@ chai.use(chaiAsPromised);
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
-const { mnemonics, signingKeys } = config.TEST_OPTIONS;
+const { signingKeys } = config.RESTRICTIONS;
+const { mnemonics } = config.TEST_OPTIONS;
 
-const nf3Challenger = new Nf3(signingKeys.challenger, environment);
+const bootChallenger = new Nf3(signingKeys.bootChallengerKey, environment);
 
 describe('Basic Challenger tests', () => {
   before(async () => {
-    await nf3Challenger.init(mnemonics.challenger);
-    // Challenger registration
-    await nf3Challenger.registerChallenger();
-    // Chalenger listening for incoming events
-    nf3Challenger.startChallenger();
+    await bootChallenger.init(mnemonics.challenger);
   });
 
-  it('should register a challenger', async () => {
-    const res = await nf3Challenger.registerChallenger();
-    expect(res.status).to.be.equal(200);
+  it('should register the boot challenger', async () => {
+    // Challenger registration
+    await bootChallenger.registerChallenger();
+    // Chalenger listening for incoming events
+    bootChallenger.startChallenger();
   });
 
   it('should de-register a challenger', async () => {
-    const res = await nf3Challenger.deregisterChallenger();
+    const res = await bootChallenger.deregisterChallenger();
     expect(res.status).to.be.equal(200);
   });
 
   after(async () => {
-    await nf3Challenger.close();
+    await bootChallenger.close();
   });
 });

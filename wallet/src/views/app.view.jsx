@@ -1,6 +1,10 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from 'react';
+<<<<<<< HEAD
 import { Route, Switch, Redirect, BrowserRouter, MemoryRouter } from 'react-router-dom';
+=======
+import { Route, Switch, Redirect, BrowserRouter } from 'react-router-dom';
+>>>>>>> origin/wallet/deployment
 import { ToastContainer } from 'react-toastify';
 import { NF3_GITHUB_ISSUES_URL } from '../constants';
 import MainPage from './initialPage/index.jsx';
@@ -10,7 +14,11 @@ import TransactionPage from './transactionPage/index.jsx';
 import Web3 from '../common-files/utils/web3';
 import Bridge from './bridge/index.jsx';
 import { AccountProvider } from '../hooks/Account/index.tsx';
+<<<<<<< HEAD
 import '../../node_modules/react-toastify/dist/ReactToastify.css';
+=======
+import 'react-toastify/dist/ReactToastify.css';
+>>>>>>> origin/wallet/deployment
 
 export default function App() {
   // eslint-disable-next-line no-unused-vars
@@ -20,7 +28,11 @@ export default function App() {
     await Web3.connect();
     setIsWeb3Connected({
       isWeb3Connected: true,
+<<<<<<< HEAD
     });    
+=======
+    });
+>>>>>>> origin/wallet/deployment
   }, []);
 
   /*
@@ -32,7 +44,11 @@ export default function App() {
    *   instead of '<Route path="/wallet" render={() => <Wallet />} />'
    */
   return (
+<<<<<<< HEAD
     <MemoryRouter>
+=======
+    <BrowserRouter>
+>>>>>>> origin/wallet/deployment
       <ToastContainer></ToastContainer>
       <UserProvider>
         <AccountProvider>
@@ -47,10 +63,18 @@ export default function App() {
                 window.location = NF3_GITHUB_ISSUES_URL;
               }}
             />
+<<<<<<< HEAD
             {/* <Redirect to="/" /> */}
           </Switch>
         </AccountProvider>
       </UserProvider>
     </MemoryRouter>
+=======
+            <Redirect to="/" />
+          </Switch>
+        </AccountProvider>
+      </UserProvider>
+    </BrowserRouter>
+>>>>>>> origin/wallet/deployment
   );
 }

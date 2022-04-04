@@ -1,8 +1,13 @@
 import React, { useContext, useState, useCallback, useEffect } from 'react';
 import Modal from 'react-bootstrap/Modal';
-// import styles from '../../styles/bridge.module.scss';
-import polygonChainImage from '../../assets/img/polygon-chain.svg';
+import { MdArrowForwardIos } from 'react-icons/md';
+import { toast } from 'react-toastify';
+import { useLocation } from 'react-router-dom';
+import axios from 'axios';
+import styles from '../../styles/bridge.module.scss';
+import stylesModal from '../../styles/modal.module.scss';
 import ethChainImage from '../../assets/img/ethereum-chain.svg';
+import polygonNightfall from '../../assets/svg/polygon-nightfall.svg';
 import discloserBottomImage from '../../assets/img/discloser-bottom.svg';
 import lightArrowImage from '../../assets/img/light-arrow.svg';
 import { approve, getContractAddress, submitTransaction } from '../../common-files/utils/contract';
@@ -26,6 +31,13 @@ import './styles.scss';
 import verifyIfValueIsGreaterThen from './utils/verifyIfValueIsGreaterThen.ts';
 import TransferModal from '../Modals/Bridge/Transfer/index.jsx';
 import styled, { keyframes } from 'styled-components';
+
+import ERC20 from '../../contract-abis/ERC20.json';
+import tokensList from '../Modals/Bridge/TokensList/tokensList';
+import { APPROVE_AMOUNT } from '../../constants';
+import { retrieveAndDecrypt } from '../../utils/lib/key-storage';
+import { decompressKey } from '../../nightfall-browser/services/keys';
+import { saveTransaction } from '../../nightfall-browser/services/database';
 
 const ModalTitle = styled.div`
   width: 50%;
@@ -113,37 +125,62 @@ const ContinueTransferButton = styled.button`
   }
 `;
 
+const { proposerUrl } = global.config;
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const gen = require('general-number');
+
+const { generalise } = gen;
+
 
 const BridgeComponent = () => {
-  // const [state] = useState(() => props[Object.keys(props)[1].toString()].value);
+  // const [state] = useState(() => props[Object.keys(props)[1].toString()].value);  
+
+  const [transferMethod, setMethod] = useState('On-Chain');    
   const [state] = useContext(UserContext);
+  const { setAccountInstance, accountInstance } = useAccount();
+  const [l1Balance, setL1Balance] = useState(0);
+  const [l2Balance, setL2Balance] = useState(0);
+  const [shieldContractAddress, setShieldAddress] = useState('');
+  const location = useLocation();
 
-  const [transferMethod, setMethod] = useState('On-Chain');
-  // const [checkBox, setCheckBox] = useState(false);
+  const initialTx = location?.tokenState?.initialTxType ?? 'deposit';
+  const initialToken =
+    tokensList.tokens.find(t => t.address.toLowerCase() === location?.tokenState?.tokenAddress) ??
+    tokensList.tokens[0];
 
-  // const initialTx = location.state?.initialTxType || 'deposit';
-  // const initialTx = location.state ? location.state.initialTxType : 'deposit';
-  const initialTx = 'deposit';
-
+  const [token, setToken] = useState(initialToken);
   const [txType, setTxType] = useState(initialTx);
   const [transferValue, setTransferValue] = useState(0);
   const [show, setShow] = useState(false);
 
   const [showTokensListModal, setShowTokensListModal] = useState(false);
 
+  useEffect(async () => {
+    const web3 = Web3.connection();
+    const accounts = await web3.eth.getAccounts();
+    setAccountInstance({
+      address: accounts[0],
+    });
+  }, []);
+
   useEffect(() => {
-    if(document.getElementById('inputValue')) {
-      document.getElementById('inputValue').value = 0;
-    }    
+    document.getElementById('inputValue').value = 0;
   }, [txType]);
-  const openTokensListModal = () => {
-    setShowTokensListModal(true);
-  };
+
+  useEffect(() => {
+    const getShieldAddress = async () => {
+      const { address } = (await getContractAddress('Shield')).data;
+      setShieldAddress(address);
+    };
+    getShieldAddress();
+  }, []);
 
   const [showModalConfirm, setShowModalConfirm] = useState(false);
   const [showModalTransferInProgress, setShowModalTransferInProgress] = useState(true);
   const [showModalTransferEnRoute, setShowModalTransferEnRoute] = useState(false);
   const [showModalTransferConfirmed, setShowModalTransferConfirmed] = useState(false);
+  const [readyTx, setReadyTx] = useState('');
 
   function timeout(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -157,82 +194,120 @@ const BridgeComponent = () => {
     setShowModalTransferConfirmed(false);
   };
 
-  const handleShowModalConfirm = async () => {
-    setShowModalConfirm(true);
-    setShowModalTransferInProgress(true);
-    await timeout(3000);
-    setShowModalTransferInProgress(false);
-    setShowModalTransferEnRoute(true);
+  // const handleShowModalConfirm = async () => {
+  //   setShowModalConfirm(true);
+  //   setShowModalTransferInProgress(true);
+  //   // await timeout(3000);
+  //   setShowModalTransferInProgress(false);
+  //   setShowModalTransferEnRoute(true);
 
-    await timeout(3000);
-    setShowModalTransferEnRoute(false);
-    setShowModalTransferConfirmed(true);
-  };
+  //   // await timeout(3000);
+  //   setShowModalTransferEnRoute(false);
+  //   setShowModalTransferConfirmed(true);
+  // };
 
   const handleClose = () => setShow(false);
 
+  async function submitTx() {
+    console.log('readyTx', readyTx);
+    try {
+      switch (readyTx.type) {
+        case 'onchain':
+          await submitTransaction(readyTx.rawTransaction, shieldContractAddress, 1);
+          break;
+        case 'offchain':
+          await axios
+            .post(
+              `${proposerUrl}/proposer/offchain-transaction`,
+              { transaction: readyTx.transaction },
+              { timeout: 3600000 },
+            )
+            .catch(err => {
+              throw new Error(err);
+            });
+          break;
+        default:
+          console.log('Error when sending');
+      }
+      await saveTransaction(readyTx.transaction);
+      handleClose();
+      handleCloseConfirmModal();
+      return true;
+    } catch (error) {
+      handleClose();
+      handleCloseConfirmModal();
+      return false;
+    }
+  }
+
   async function triggerTx() {
-    const { address: shieldContractAddress } = (await getContractAddress('Shield')).data;
-    const { address: defaultTokenAddress } = (await getContractAddress('ERC20Mock')).data; // TODO Only for testing now
-    const ercAddress = defaultTokenAddress; // TODO Location to be removed later
+    if (shieldContractAddress === '')
+      setShieldAddress((await getContractAddress('Shield')).data.address);
+    // const { address } = (await getContractAddress('ERC20Mock')).data; // TODO Only for testing now
+    // const ercAddress = address; // TODO Location to be removed later
+    const ercAddress = token.address;
+    console.log('ercAddress', ercAddress);
+    const zkpKeys = await retrieveAndDecrypt(state.compressedPkd);
     switch (txType) {
       case 'deposit': {
-        await approve(ercAddress, shieldContractAddress, 'ERC20', transferValue.toString());
-        const { rawTransaction } = await deposit(
+        const pkd = decompressKey(generalise(state.compressedPkd));
+        await approve(ercAddress, shieldContractAddress, 'ERC20', APPROVE_AMOUNT);
+        setShowModalConfirm(true);
+        setShowModalTransferInProgress(true);
+        await timeout(2000);
+        setShowModalTransferInProgress(false);
+        setShowModalTransferEnRoute(true);
+        const { rawTransaction, transaction } = await deposit(
           {
             ercAddress,
             tokenId: 0,
-            value: transferValue,
-            pkd: state.zkpKeys.pkd,
-            nsk: state.zkpKeys.nsk,
+            value: (transferValue * 10 ** token.decimals).toString(),
+            pkd,
+            nsk: zkpKeys.nsk,
             fee: 1,
             tokenType: 'ERC20',
           },
           shieldContractAddress,
         );
-        return submitTransaction(rawTransaction, shieldContractAddress, 1);
+        setShowModalTransferEnRoute(false);
+        setShowModalTransferConfirmed(true);
+        return {
+          type: 'onchain',
+          rawTransaction,
+          transaction,
+        };
       }
-
       case 'withdraw': {
-        if (transferMethod === 'Direct Transfer') {
-          await withdraw(
-            {
-              offchain: true,
-              ercAddress,
-              tokenId: 0,
-              value: transferValue,
-              recipientAddress: await Web3.getAccount(),
-              nsk: state.zkpKeys.nsk,
-              ask: state.zkpKeys.ask,
-              tokenType: 'ERC20',
-              fees: 1,
-            },
-            shieldContractAddress,
-          );
-        } else {
-          const { rawTransaction } = await withdraw(
-            {
-              ercAddress,
-              tokenId: 0,
-              value: transferValue,
-              recipientAddress: await Web3.getAccount(),
-              nsk: state.zkpKeys.nsk,
-              ask: state.zkpKeys.ask,
-              tokenType: 'ERC20',
-              fees: 1,
-            },
-            shieldContractAddress,
-          );
-          return submitTransaction(rawTransaction, shieldContractAddress, 1);
-        }
-        break;
+        setShowModalConfirm(true);
+        setShowModalTransferInProgress(true);
+        await timeout(2000);
+        setShowModalTransferInProgress(false);
+        setShowModalTransferEnRoute(true);
+        const { transaction } = await withdraw(
+          {
+            offchain: true,
+            ercAddress,
+            tokenId: 0,
+            value: (transferValue * 10 ** token.decimals).toString(),
+            recipientAddress: await Web3.getAccount(),
+            nsk: zkpKeys.nsk,
+            ask: zkpKeys.ask,
+            tokenType: 'ERC20',
+            fees: 1,
+          },
+          shieldContractAddress,
+        );
+        setShowModalTransferEnRoute(false);
+        setShowModalTransferConfirmed(true);
+        return {
+          type: 'offchain',
+          transaction,
+        };
       }
-
       default:
         break;
     }
-    handleClose();
-    return true;
+    return false;
   }
 
   const handleChange = useCallback(
@@ -242,49 +317,25 @@ const BridgeComponent = () => {
     [transferValue],
   );
 
-  /** ******* ABOUT GET L1 BALANCE ******** */
-  const { accountInstance, setAccountInstance } = useAccount();
-  const [l1Balance, setL1Balance] = useState(0);
-  const [token, setToken] = useState(null);
-  const [l2Balance, setL2Balance] = useState(0);
-
-  const isValueGreaterThen = () => {
-    if (txType === 'deposit') {
-      return verifyIfValueIsGreaterThen(transferValue, l1Balance);
-    }
-    return verifyIfValueIsGreaterThen(transferValue, l2Balance);
-  };
-
   const handleShow = () => {
-    // if (isValueGreaterThen()) {
-    //   toast.error("Input value can't be greater than balance!");
-    //   return;
-    // }
-
-    // if (!transferValue) {
-    //   toast.warn('Input a value for transfer, please.');
-    //   return;
-    // }
-
-    // if (transferValue === 0) {
-    //   toast.warn("Input a value can't be zero.");
-    //   return;
-    // }
-
+    if (
+      (txType === 'deposit' && transferValue > l1Balance) ||
+      (txType === 'withdraw' && transferValue > l2Balance)
+    )
+      toast.error("Input value can't be greater than balance!");
+    else if (!transferValue) toast.warn('Input a value for transfer, please.');
+    else if (transferValue === 0) toast.warn("Input a value can't be zero.");
     setShow(true);
   };
 
-  async function setAccount() {
-    setAccountInstance(await loadAccount());
-  }
-
   async function updateL1Balance() {
-    setAccount();
-    if (token && token.address) {
-      const contract = new window.web3.eth.Contract(minERC20ABI, token.address);
+    console.log('L1 Balance');
+    if (token && token?.address) {
+      // const { address } = (await getContractAddress('ERC20Mock')).data; // TODO REMOVE THIS WHEN OFFICIAL ADDRESSES
+      // console.log('ERC20', defaultTokenAddress);
+      const contract = new window.web3.eth.Contract(ERC20, token.address);
       const result = await contract.methods.balanceOf(accountInstance.address).call(); // 29803630997051883414242659
-      const format = window.web3.utils.fromWei(result, 'Gwei'); // 29803630.997051883414242659
-      setL1Balance(format);
+      setL1Balance(result);
     } else {
       setL1Balance(0);
     }
@@ -292,28 +343,18 @@ const BridgeComponent = () => {
 
   async function updateL2Balance() {
     if (token && token.address) {
-      const l2bal = await getWalletBalance();
-      const l2balFilteredByCompressedKey = Object.entries(l2bal).filter(
-        obj => obj[0] === state.zkpKeys.compressedPkd,
-      );
-      new Promise(resolve => {
-        let balanceAmount = 0;
-        l2balFilteredByCompressedKey.forEach(obj => {
-          if (Object.keys(obj[1])[0].toLocaleLowerCase() === token.address.toLocaleLowerCase()) {
-            balanceAmount += Object.values(obj[1])[0];
-          }
-        });
-        resolve(balanceAmount);
-      }).then(value => setL2Balance(value));
-    } else {
-      setL2Balance(0);
+      // const { address } = (await getContractAddress('ERC20Mock')).data; // TODO REMOVE THIS WHEN OFFICIAL ADDRESSES
+      const l2bal = await getWalletBalance(state.compressedPkd);
+      if (Object.hasOwnProperty.call(l2bal, state.compressedPkd))
+        setL2Balance(l2bal[state.compressedPkd][token.address.toLowerCase()] ?? 0);
+      else setL2Balance(0);
     }
   }
 
   useEffect(() => {
     updateL1Balance();
     updateL2Balance();
-  }, [token]);
+  }, [token, txType]);
 
   const updateInputValue = () => {
     if (txType === 'deposit') {
@@ -325,12 +366,10 @@ const BridgeComponent = () => {
     setTransferValue(l2Balance);
   };
 
-  /** ************************************ */
-
   return (
     <div>
       {showTokensListModal && (
-        <div className="modalWrapper">          
+        <div className="modalWrapper">
           <TokensList handleClose={setShowTokensListModal} setToken={setToken} />
         </div>
       )}
@@ -365,19 +404,27 @@ const BridgeComponent = () => {
                   {txType === 'deposit' ? (
                     <img src={ethChainImage} alt="ethereum chain logo" />
                   ) : (
-                    <img src={polygonChainImage} alt="polygon chain logo" height="24" width="24" />
+                    <img src={polygonNightfall} alt="polygon chain logo" height="24" width="24" />
                   )}
                   <p>{txType === 'deposit' ? 'Ethereum Mainnet' : 'Polygon Nightfall L2'}</p>
                 </div>
                 <div className="balance_details">
                   <p>Balance: </p>
                   {token && txType === 'deposit' && (
+                    // <p> {token.decimals} </p>
+                    <p>{`${(l1Balance / 10 ** token.decimals).toFixed(4)} ${token.symbol}`}</p>
+                  )}
+                  {token && txType === 'withdraw' && (
+                    <p>{`${(l2Balance / 10 ** token.decimals).toFixed(4)} ${token.symbol}`}</p>
+                  )}
+                  {!token && (
                     <p>
-                      {`${l1Balance.toString().match(/^-?\d+(?:\.\d{0,4})?/)[0]} ${token.symbol}`}
+                      0
+                      {/* {txType === 'deposit'
+                        ? `${(l1Balance / 10 ** token.decimals).toFixed(4)}`
+                        : `${(l2Balance / 10 ** token.decimals).toFixed(4)}`} */}
                     </p>
                   )}
-                  {token && txType === 'withdraw' && <p>{`${l2Balance} MATIC`}</p>}
-                  {!token && <p>{txType === 'deposit' ? `${l1Balance}` : `${l2Balance}`}</p>}
                 </div>
               </div>
               <div className="from_section_line"></div>
@@ -397,7 +444,10 @@ const BridgeComponent = () => {
                   </div>
                 </div>
                 <div className="token_details">
-                  <div className="token_details_wapper" onClick={() => openTokensListModal()}>
+                  <div
+                    className="token_details_wapper"
+                    onClick={() => setShowTokensListModal(true)}
+                  >
                     {token && token.logoURI && token.symbol && (
                       <>
                         <img src={token.logoURI} alt="chain logo" height="24" width="24" />
@@ -431,61 +481,30 @@ const BridgeComponent = () => {
                 {txType === 'withdraw' ? (
                   <img src={ethChainImage} alt="ethereum chain logo" height="24" width="24" />
                 ) : (
-                  <img src={polygonChainImage} alt="polygon chain logo" height="24" width="24" />
+                  <img src={polygonNightfall} alt="polygon chain logo" height="24" width="24" />
                 )}
                 <p>{txType === 'deposit' ? 'Polygon Nightfall L2' : 'Ethereum Mainnet'}</p>
               </div>
               <div className="balance_details">
                 <p>Balance: </p>
-                {token && txType === 'deposit' && <p>{`${l2Balance} MATIC`}</p>}
+                {token && txType === 'deposit' && (
+                  <p>{`${(l2Balance / 10 ** token.decimals).toFixed(4)} ${token.symbol}`}</p>
+                )}
                 {token && txType === 'withdraw' && (
+                  <p>{`${(l1Balance / 10 ** token.decimals).toFixed(4)} ${token.symbol}`}</p>
+                )}
+                {!token && (
                   <p>
-                    {`${
-                      l1Balance
-                        .toString()
-                        .toString()
-                        .match(/^-?\d+(?:\.\d{0,4})?/)[0]
-                    } ${token.symbol}`}
+                    {txType === 'withdraw'
+                      ? `${(l2Balance / 10 ** token.decimals).toFixed(4)}`
+                      : `${(l1Balance / 10 ** token.decimals).toFixed(4)}`}
                   </p>
                 )}
-                {!token && <p>{txType === 'withdraw' ? `${l2Balance}` : `${l1Balance}`}</p>}
               </div>
             </div>
           </div>
-
-          {/* WARN WRAPPER */}
-          {/* <div className="warn_wrapper">
-            <div className="warn_line1">
-              <div className="warn_line1_text">
-                {!checkBox ? (
-                  <div
-                    className="warn_line1_text__div_unchecked"
-                    type="checkbox"
-                    onClick={() => setCheckBox(!checkBox)}
-                  />
-                ) : (
-                  <div
-                    className="warn_line1_text__div_checked"
-                    type="checkbox"
-                    onClick={() => setCheckBox(!checkBox)}
-                  >
-                    <BsCheck />
-                  </div>
-                )}
-                <p>Swap some MATIC token?</p>
-              </div>
-              <div className="warn_info">
-                <AiOutlineInfo />
-              </div>
-            </div>
-            <div className="warn_line2">
-              <p>MATIC is required to perform transaction on polygon chain.</p>
-            </div>
-          </div> */}
           {/* TRANSFER MODE */}
           <div className="transfer_mode">
-            {/* <span class="transfer-mode__label"> Transfer Mode: </span>
-                        <span class="bridge-type">{{ selectedMode }} Bridge</span> */}
             <span className="transfer_mode_text"> Transfer Mode: </span>
             <span className="transfer_bridge_text">
               {txType.charAt(0).toUpperCase() + txType.slice(1)} Bridge
