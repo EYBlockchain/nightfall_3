@@ -53,9 +53,9 @@ describe('End to End tests', () => {
   context('MetaMask', () => {
     it('add ethereum network', () => {
       cy.addMetamaskNetwork({
-        networkName: Cypress.env('NETWORK_NAME'),
-        rpcUrl: Cypress.env('RPC_URL'),
-        chainId: Cypress.env('CHAIN_ID').toString(),
+        networkName: Cypress.env('NETWORK_NAME_ETH'),
+        rpcUrl: Cypress.env('RPC_URL_ETH'),
+        chainId: Cypress.env('CHAIN_ID_ETH').toString(),
         isTestnet: true,
       }).then(networkAdded => expect(networkAdded).to.be.true);
     });
@@ -138,7 +138,6 @@ describe('End to End tests', () => {
       cy.get('label').contains('Withdraw').click();
       cy.get('#Bridge_amountDetails_tokenAmount').type(withdrawValue);
       cy.get('button').contains('Transfer').click();
-      cy.wait(20000);
       cy.allowMetamaskToSwitchNetwork();
       cy.get('#Bridge_modal_transferMode').click();
       cy.get('a').contains('Direct Transfer').click();
@@ -254,7 +253,6 @@ describe('End to End tests', () => {
 
       for (let i = 0; i < noOfDeposit; i++) {
         cy.get('button').contains('Transfer').click();
-        cy.wait(20000);
         cy.allowMetamaskToSwitchNetwork();
         cy.get('button').contains('Create Transaction').click();
         cy.get('#Bridge_modal_continueTransferButton').click();
