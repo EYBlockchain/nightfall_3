@@ -824,7 +824,7 @@ class Nf3 {
     */
   async startProposer() {
     const blockProposeEmitter = new EventEmitter();
-    const connection = new WebSocket(this.optimistWsUrl);
+    let connection = new WebSocket(this.optimistWsUrl);
     this.websockets.push(connection); // save so we can close it properly later
     // Ping function to keep WS open. Send beat every 15 seconds
     const ping = async () => {
