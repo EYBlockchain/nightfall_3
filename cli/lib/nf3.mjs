@@ -418,7 +418,7 @@ class Nf3 {
 
     const { peerList, transaction } = res.data;
     const proposerAddress = Object.keys(peerList)[0]; // we only have 1 proposer in the first version
-    res = await this.sendPayment(proposerAddress, transaction.transactionHash, fee);
+    res = await this.sendPayment(transaction.transactionHash, fee);
 
     logger.debug(
       `offchain transaction - calling ${peerList[proposerAddress]}/proposer/offchain-transaction`,
@@ -496,7 +496,7 @@ class Nf3 {
 
     const { peerList, transaction } = res.data;
     const proposerAddress = Object.keys(peerList)[0]; // we only have 1 proposer in the first version
-    res = await this.sendPayment(proposerAddress, transaction.transactionHash, fee);
+    res = await this.sendPayment(transaction.transactionHash, fee);
 
     logger.debug(
       `offchain transaction - calling ${peerList[proposerAddress]}/proposer/offchain-transaction`,
@@ -1239,7 +1239,6 @@ class Nf3 {
 
   /**
   Send payment to the proposer account
-  @param {String} proposerAddress - Ethereum address of the proposer to pay
   @param {String} transactionHashL2 - L2 Transaction hash that pay the fee
   @param {Number} fee - fee to pay for the transaction to the proposer
   @returns {Promise} - string with the signatureStringStringString

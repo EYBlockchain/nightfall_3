@@ -12,13 +12,11 @@ const { PAYMENT_CONTRACT_NAME } = config;
 async function payment(paymentParams) {
   logger.info('Creating a payment transaction');
   // let's extract the input items
-  const { proposerAddress, transactionHashL2 } = paymentParams;
-  logger.info(`proposerAddress: ${proposerAddress}, transactionHashL2: ${transactionHashL2}`);
+  const { transactionHashL2 } = paymentParams;
+  logger.info(`transactionHashL2: ${transactionHashL2}`);
   const paymentContractInstance = await getContractInstance(PAYMENT_CONTRACT_NAME);
 
-  const rawTransaction = await paymentContractInstance.methods
-    .pay(proposerAddress, transactionHashL2)
-    .encodeABI();
+  const rawTransaction = await paymentContractInstance.methods.pay(transactionHashL2).encodeABI();
 
   return { rawTransaction };
 }
