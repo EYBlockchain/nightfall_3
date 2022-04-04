@@ -12,7 +12,7 @@ import './Ownable.sol';
 contract FeeBook is Ownable, ReentrancyGuardUpgradeable {
     mapping(bytes32 => uint256) public feeBook;
     uint256 public fee;
-    address proposer;
+    address public proposer;
 
     event PaymentSubmitted();
 
@@ -23,10 +23,17 @@ contract FeeBook is Ownable, ReentrancyGuardUpgradeable {
     }
 
     /**
-     * @dev Allows to change the proposer
+     * @dev Allows to change the proposer address
      */
     function setProposer(address newProposer) external onlyOwner {
         proposer = newProposer;
+    }
+
+    /**
+     * @dev Get proposer address
+     */
+    function getProposer() external view returns (address) {
+        return proposer;
     }
 
     /**
