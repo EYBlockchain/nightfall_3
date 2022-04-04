@@ -70,6 +70,7 @@ class Block {
   // which should return a fully-formed object. Also, we're too cool for an
   // init() function.
   static async build(components) {
+    console.log('HERE at the beginning this.localLeafCount', this.localLeafCount);
     const { proposer, transactions } = components;
     // This is blockNumberL2 and blockHash of the last block we have.
     const { blockNumberL2: dbPrevBlockNumberL2, blockHash: dbBlockHash } =
@@ -82,7 +83,7 @@ class Block {
     // Thus, we use our locally stored values to make the new block, updating these local values
     // only if the on-chain value is ahead of our local value.
     let timber;
-    if (blockNumberL2 > this.localBlockNumberL2) {
+    if (blockNumberL2 >= this.localBlockNumberL2) {
       // Make blocks with our on-chain values.
       this.localBlockNumberL2 = blockNumberL2;
       this.localPreviousBlockHash = previousBlockHash;
@@ -92,6 +93,11 @@ class Block {
       blockNumberL2 = this.localBlockNumberL2;
       previousBlockHash = this.localPreviousBlockHash;
       timber = new Timber(this.localRoot, this.localFrontier, this.localLeafCount);
+      console.log(
+        'HERE blockNumberL2 < this.localBlockNumberL2 this.localLeafCount',
+        this.localLeafCount,
+      );
+      console.log('HERE blockNumberL2 < this.localBlockNumberL2 timber', timber);
     }
     // extract the commitment hashes from the transactions
     // we filter out zeroes commitments that can come from withdrawals
@@ -103,7 +109,9 @@ class Block {
     // Stateless update our frontier and root
     const updatedTimber = Timber.statelessUpdate(timber, leafValues);
     // remember the updated values in case we need them for the next block.
+    console.log('HERE before incrementing this.localLeafCount', this.localLeafCount);
     this.localLeafCount += leafValues.length;
+    console.log('HERE after incrementing this.localLeafCount', this.localLeafCount);
     this.localFrontier = updatedTimber.frontier;
     this.localBlockNumberL2 += 1;
     this.localRoot = updatedTimber.root;

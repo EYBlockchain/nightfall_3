@@ -37,7 +37,7 @@ let stateAddress;
 let eventLogs = [];
 let availableTokenIds;
 
-/* 
+/*
   This function tries to zero the number of unprocessed transactions in the optimist node
   that nf3 is connected to. We call it extensively on the tests, as we want to query stuff from the
   L2 layer, which is dependent on a block being made. We also need 0 unprocessed transactions by the end
@@ -240,6 +240,8 @@ describe('ERC721 tests', () => {
             c => c.valid === true,
           ).length,
         ).to.be.greaterThan(0);
+
+        await new Promise(resolve => setTimeout(resolve, 15000));
 
         const res = await nf3Users[0].finaliseWithdrawal(withdrawal);
         expectTransaction(res);
