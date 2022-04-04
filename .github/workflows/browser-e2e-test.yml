@@ -75,7 +75,7 @@ jobs:
         if: always()
         run: cat wallet/browser-app.log
 
-      # in local machine
+      # in local machine other than PRIVATE_KEY all other env has default value set.
       # PRIVATE_KEY=0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e npm run e2e-test
       - name: Run e2e test
         run: cd wallet && npm run e2e-test

@@ -52,12 +52,24 @@ describe('End to End tests', () => {
 
   context('MetaMask', () => {
     it('add ethereum network', () => {
+      cy.getNetwork().then(network => {
+        cy.log(network.networkName);
+        cy.log(network.networkId);
+        cy.log(network.isTestnet);
+      });
+      cy.wait(20000);
       cy.addMetamaskNetwork({
         networkName: Cypress.env('NETWORK_NAME'),
         rpcUrl: Cypress.env('RPC_URL'),
         chainId: Cypress.env('CHAIN_ID').toString(),
         isTestnet: true,
       }).then(networkAdded => expect(networkAdded).to.be.true);
+      cy.getNetwork().then(network => {
+        cy.log(network.networkName);
+        cy.log(network.networkId);
+        cy.log(network.isTestnet);
+      });
+      cy.wait(20000);
     });
 
     it('acceptMetamaskAccess should accept connection request to metamask', () => {
