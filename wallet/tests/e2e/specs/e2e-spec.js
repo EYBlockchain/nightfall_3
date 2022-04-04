@@ -138,6 +138,7 @@ describe('End to End tests', () => {
       cy.get('label').contains('Withdraw').click();
       cy.get('#Bridge_amountDetails_tokenAmount').type(withdrawValue);
       cy.get('button').contains('Transfer').click();
+      cy.wait(20000);
       cy.allowMetamaskToSwitchNetwork();
       cy.get('#Bridge_modal_transferMode').click();
       cy.get('a').contains('Direct Transfer').click();
@@ -253,6 +254,7 @@ describe('End to End tests', () => {
 
       for (let i = 0; i < noOfDeposit; i++) {
         cy.get('button').contains('Transfer').click();
+        cy.wait(20000);
         cy.allowMetamaskToSwitchNetwork();
         cy.get('button').contains('Create Transaction').click();
         cy.get('#Bridge_modal_continueTransferButton').click();
