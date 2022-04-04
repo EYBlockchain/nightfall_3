@@ -84,7 +84,7 @@ const transpileBlockBuilder = (_pathToSrc, _pathToInject) => {
     }, errorIndex);
     this.localLeafCount = badBlock.leafCount;
     this.localFrontier = badBlock.frontier;
-    this.localBlockNumberL2 = badBlock.blockNumberL2;
+    this.localBlockNumberL2 += 1;
     this.localRoot = badBlock.root;`;
   srcFile = srcFile.replace(regexReplaceCalls, reRoute);
 
@@ -97,7 +97,7 @@ const transpileBlockBuilder = (_pathToSrc, _pathToInject) => {
       root: badBlock.root,
       blockHash,
       nCommitments: badBlock.nCommitments,
-      blockNumberL2: badBlock.blockNumberL2,
+      blockNumberL2,
       previousBlockHash,
     });`;
   srcFile = srcFile.replace(regexReplaceReturn, reReturn);

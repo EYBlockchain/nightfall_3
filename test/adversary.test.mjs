@@ -22,7 +22,7 @@ chai.use(chaiAsPromised);
 
 const { TRANSACTIONS_PER_BLOCK } = config;
 const TX_WAIT = 12000;
-const TEST_LENGTH = 8;
+const TEST_LENGTH = 5;
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
@@ -91,7 +91,18 @@ describe('Testing with an adversary', () => {
     // Proposer registration
     await nf3AdversarialProposer.registerProposer();
     // Proposer listening for incoming events
-    nf3AdversarialProposer.startProposer();
+    const blockProposeEmitter = await nf3AdversarialProposer.startProposer();
+    blockProposeEmitter
+      .on('receipt', (receipt, block, transactions) => {
+        logger.debug(
+          `L2 Block with L2 block number ${block.blockNumberL2} was proposed. The L1 transaction hash is ${receipt.transactionHash}`,
+        );
+      })
+      .on('error', (error, block, transactions) => {
+        logger.error(
+          `Proposing L2 Block with L2 block number ${block.blockNumberL2} failed due to error: ${error} `,
+        );
+      });
     ercAddress = await nf3User.getContractAddress('ERC20Mock');
 
     // Challenger registration
@@ -158,7 +169,8 @@ describe('Testing with an adversary', () => {
       // blocks were proposed in other good blocks
       await new Promise(resolve => setTimeout(resolve, 20 * TX_WAIT));
       const endBalance = await retrieveL2Balance(nf3User);
-
+      console.log(`Completed startBalance`, startBalance);
+      console.log(`Completed endBalance`, endBalance);
       expect(expectedBalance).to.be.equal(endBalance - startBalance);
     });
   });

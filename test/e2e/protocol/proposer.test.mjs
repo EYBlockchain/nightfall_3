@@ -47,49 +47,23 @@ describe('Basic Proposer tests', () => {
     erc20Address = await nf3User.getContractAddress('ERC20Mock');
     stateAddress = await nf3User.stateContractAddress;
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
-  });
 
-  it('proposer should propose multiple L2 blocks after deposits', async function () {
-    let currentPkdBalance;
-    try {
-      currentPkdBalance = (await nf3User.getLayer2Balances())[erc20Address][0].balance;
-    } catch (e) {
-      currentPkdBalance = 0;
-    }
-    // We create enough transactions to fill blocks full of deposits.
-    await depositNTransactions(
-      nf3User,
-      totalDeposits,
-      erc20Address,
-      tokenType,
-      transferValue,
-      tokenId,
-      fee,
-    );
     await bootProposer.init(mnemonics.proposer);
     await testProposer.init(mnemonics.proposer);
-
     // Proposer registration
     await bootProposer.registerProposer(testProposersUrl[0]);
-
-    let blocksReceivedToPropose = 0;
-    // Proposer listening for incoming events
-    const newGasBlockEmitter = await bootProposer.startProposer();
-    newGasBlockEmitter.on('gascost', async (gasUsed, blocksToPropose) => {
-      blocksReceivedToPropose = blocksToPropose;
-      logger.debug(
-        `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
-      );
-    });
-
-    eventLogs = await web3Client.waitForEvent(
-      eventLogs,
-      ['blockProposed'],
-      Math.floor(totalDeposits / txPerBlock),
-    );
-    const afterPkdBalance = (await nf3User.getLayer2Balances())[erc20Address][0].balance;
-    expect(afterPkdBalance - currentPkdBalance).to.be.equal(totalDeposits * transferValue);
-    expect(blocksReceivedToPropose).to.be.equal(Math.floor(totalDeposits / txPerBlock));
+    const blockProposeEmitter = await bootProposer.startProposer();
+    blockProposeEmitter
+      .on('receipt', (receipt, block, transactions) => {
+        logger.debug(
+          `L2 Block with L2 block number ${block.blockNumberL2} was proposed. The L1 transaction hash is ${receipt.transactionHash}`,
+        );
+      })
+      .on('error', (error, block, transactions) => {
+        logger.error(
+          `Proposing L2 Block with L2 block number ${block.blockNumberL2} failed due to error: ${error} `,
+        );
+      });
   });
 
   it('should fail to register a proposer other than the boot proposer', async () => {

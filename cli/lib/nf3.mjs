@@ -823,8 +823,8 @@ class Nf3 {
     @async
     */
   async startProposer() {
-    const newGasBlockEmitter = new EventEmitter();
-    let connection = new WebSocket(this.optimistWsUrl);
+    const blockProposeEmitter = new EventEmitter();
+    const connection = new WebSocket(this.optimistWsUrl);
     this.websockets.push(connection); // save so we can close it properly later
     // Ping function to keep WS open. Send beat every 15 seconds
     const ping = async () => {
@@ -848,10 +848,10 @@ class Nf3 {
     };
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
-      const { type, txDataToSign } = msg;
+      const { type, txDataToSign, block, transactions } = msg;
       logger.debug(`Proposer received websocket message of type ${type}`);
       if (type === 'block') {
-        return new Promise((resolve, reject) => {
+        new Promise((resolve, reject) => {
           proposerQueue.push(async () => {
             try {
               const receipt = await this.submitTransaction(
@@ -859,8 +859,10 @@ class Nf3 {
                 this.stateContractAddress,
                 this.BLOCK_STAKE,
               );
+              blockProposeEmitter.emit('receipt', receipt, block, transactions);
               resolve(receipt);
             } catch (err) {
+              blockProposeEmitter.emit('error', err, block, transactions);
               reject(err);
             }
           });
@@ -871,7 +873,7 @@ class Nf3 {
     connection.onerror = () => logger.error('websocket connection error');
     connection.onclosed = () => logger.warn('websocket connection closed');
     // add this proposer to the list of peers that can accept direct transfers and withdraws
-    return newGasBlockEmitter;
+    return blockProposeEmitter;
   }
 
   /**

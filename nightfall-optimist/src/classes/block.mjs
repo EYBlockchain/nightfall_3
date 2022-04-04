@@ -76,14 +76,13 @@ class Block {
       await getLatestBlockInfo();
     let blockNumberL2 = dbPrevBlockNumberL2 + 1; // We increment it as this is what the next block should be
     let previousBlockHash = dbBlockHash;
-
     // It's possible that the previously made block hasn't been added to the blockchain yet.
     // In that case, this block will have the same block number as the previous block
     // and will rightly be reverted when we attempt to add it to the chain.
     // Thus, we use our locally stored values to make the new block, updating these local values
     // only if the on-chain value is ahead of our local value.
     let timber;
-    if (blockNumberL2 >= this.localBlockNumberL2) {
+    if (blockNumberL2 > this.localBlockNumberL2) {
       // Make blocks with our on-chain values.
       this.localBlockNumberL2 = blockNumberL2;
       this.localPreviousBlockHash = previousBlockHash;
