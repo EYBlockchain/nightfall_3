@@ -80,7 +80,7 @@ jobs:
       - name: Run e2e test
         run: cd wallet && npm run e2e-test
         env:
-          NETWORK_NAME_ETH: 'ganache-ethereum-local'
+          NETWORK_NAME_ETH: 'ganache-ethereum'
           RPC_URL_ETH: 'http://localhost:8546'
           CHAIN_ID_ETH: 5773
           NETWORK_NAME_POLYGON: 'ganache-polygon'
