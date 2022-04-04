@@ -59,9 +59,9 @@ describe('End to End tests', () => {
       });
       cy.wait(20000);
       cy.addMetamaskNetwork({
-        networkName: Cypress.env('NETWORK_NAME'),
-        rpcUrl: Cypress.env('RPC_URL'),
-        chainId: Cypress.env('CHAIN_ID').toString(),
+        networkName: Cypress.env('NETWORK_NAME_ETH'),
+        rpcUrl: Cypress.env('RPC_URL_ETH'),
+        chainId: Cypress.env('CHAIN_ID_ETH').toString(),
         isTestnet: true,
       }).then(networkAdded => expect(networkAdded).to.be.true);
       cy.getNetwork().then(network => {
