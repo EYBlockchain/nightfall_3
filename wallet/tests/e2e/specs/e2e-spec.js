@@ -253,8 +253,8 @@ describe('End to End tests', () => {
 
       for (let i = 0; i < noOfDeposit; i++) {
         cy.get('button').contains('Transfer').click();
-        cy.get('button').contains('Create Transaction').click();
         cy.allowMetamaskToSwitchNetwork();
+        cy.get('button').contains('Create Transaction').click();
         cy.get('#Bridge_modal_continueTransferButton').click();
         cy.wait(30000);
         cy.confirmMetamaskTransaction();
