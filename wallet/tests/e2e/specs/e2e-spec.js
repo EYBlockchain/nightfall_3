@@ -193,9 +193,6 @@ describe('End to End tests', () => {
     // This case because recipient and sender both are same
     // NOTE: when browser fixes its recipent logic to be different person then please remove below test
     it(`recepient: check token balance`, () => {
-      cy.contains('L2 Bridge').click();
-      cy.wait(10000);
-      cy.contains('Nightfall Assets').click();
       cy.get('#TokenItem_tokenBalanceMATIC').should($div => {
         const totalBalance = Number($div.text());
         expect(totalBalance).to.equal(currentTokenBalance);
@@ -226,6 +223,8 @@ describe('End to End tests', () => {
       cy.get('#TokenItem_modalSend_tokenAmount').clear().type(transferValue);
       cy.get('#TokenItem_modalSend_compressedPkd').clear().type(recipientPkd);
       cy.get('button').contains('Continue').click();
+      cy.wait(30000);
+      cy.confirmMetamaskTransaction();
       cy.wait(50000);
       cy.contains('L2 Bridge').click();
       cy.wait(10000);
@@ -255,9 +254,10 @@ describe('End to End tests', () => {
       for (let i = 0; i < noOfDeposit; i++) {
         cy.get('button').contains('Transfer').click();
         cy.get('button').contains('Create Transaction').click();
+        cy.allowMetamaskToSwitchNetwork();
         cy.get('#Bridge_modal_continueTransferButton').click();
         cy.wait(30000);
-        cy.confirmMetamaskTransaction().then(confirmed => expect(confirmed).to.be.true);
+        cy.confirmMetamaskTransaction();
         cy.wait(50000);
       }
       cy.contains('Nightfall Assets').click();
