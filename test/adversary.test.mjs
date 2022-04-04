@@ -15,7 +15,7 @@ import {
   registerProposerOnNoProposer,
   retrieveL2Balance,
 } from './utils.mjs';
-import logger from '../../../common-files/utils/logger.mjs';
+import logger from '../common-files/utils/logger.mjs';
 
 const { expect } = chai;
 chai.use(chaiHttp);

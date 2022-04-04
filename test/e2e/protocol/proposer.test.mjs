@@ -15,7 +15,7 @@ chai.use(chaiAsPromised);
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
 const {
-  txPerBlock,
+  // txPerBlock,
   mnemonics,
   signingKeys,
   // tokenConfigs: { tokenType, tokenId },
@@ -44,9 +44,9 @@ const web3Client = new Web3Client();
 describe('Basic Proposer tests', () => {
   before(async () => {
     await nf3User.init(mnemonics.user1);
-    erc20Address = await nf3User.getContractAddress('ERC20Mock');
+    // erc20Address = await nf3User.getContractAddress('ERC20Mock');
     stateAddress = await nf3User.stateContractAddress;
-    web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
+    // web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
 
     await bootProposer.init(mnemonics.proposer);
     await testProposer.init(mnemonics.proposer);
