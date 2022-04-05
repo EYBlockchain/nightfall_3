@@ -11,13 +11,15 @@ import {
 } from '../../nightfall-browser/services/database.js';
 import TxInfoModal from '../Modals/txInfoModal.tsx';
 import Web3 from '../../common-files/utils/web3';
-import './index.scss';
+
 import { getAllCommitments } from '../../nightfall-browser/services/commitment-storage';
 import { getContractAddress, getContractInstance } from '../../common-files/utils/contract';
 import { isValidWithdrawal } from '../../nightfall-browser/services/valid-withdrawal';
 import useInterval from '../../hooks/useInterval';
 import tokensList from '../Modals/Bridge/TokensList/tokensList';
 import { getPricing, setPricing } from '../../utils/lib/local-storage';
+
+import './index.scss';
 
 const { SHIELD_CONTRACT_NAME, ZERO } = global.config;
 

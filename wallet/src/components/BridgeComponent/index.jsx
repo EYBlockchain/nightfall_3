@@ -165,7 +165,9 @@ const BridgeComponent = () => {
   }, []);
 
   useEffect(() => {
-    document.getElementById('inputValue').value = 0;
+    if(document.getElementById('inputValue')) {
+      document.getElementById('inputValue').value = 0;
+    }    
   }, [txType]);
 
   useEffect(() => {
@@ -194,17 +196,17 @@ const BridgeComponent = () => {
     setShowModalTransferConfirmed(false);
   };
 
-  // const handleShowModalConfirm = async () => {
-  //   setShowModalConfirm(true);
-  //   setShowModalTransferInProgress(true);
-  //   // await timeout(3000);
-  //   setShowModalTransferInProgress(false);
-  //   setShowModalTransferEnRoute(true);
+  const handleShowModalConfirm = async () => {
+    setShowModalConfirm(true);
+    setShowModalTransferInProgress(true);
+    // await timeout(3000);
+    setShowModalTransferInProgress(false);
+    setShowModalTransferEnRoute(true);
 
-  //   // await timeout(3000);
-  //   setShowModalTransferEnRoute(false);
-  //   setShowModalTransferConfirmed(true);
-  // };
+    // await timeout(3000);
+    setShowModalTransferEnRoute(false);
+    setShowModalTransferConfirmed(true);
+  };
 
   const handleClose = () => setShow(false);
 

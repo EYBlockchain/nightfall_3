@@ -9,6 +9,7 @@ import 'bootstrap-social/bootstrap-social.css';
 import App from '../src/views/app.view.jsx';
 import mainStyle from './main.scss';
 import reportWebVitals from './reportWebVitals';
+import init from './web-worker/index.js';
 
 class DemoAppSolution extends HTMLElement {
 

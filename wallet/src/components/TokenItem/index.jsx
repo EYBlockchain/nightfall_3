@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
-import styles from '../../styles/tokenItem.module.scss';
+
 import metamaskIcon from '../../assets/svg/metamask.svg';
 import { UserContext } from '../../hooks/User/index.jsx';
 import tokensList from '../Modals/Bridge/TokensList/tokensList';
 import { getWalletBalance } from '../../nightfall-browser/services/commitment-storage';
 import SendModal from '../Modals/sendModal';
+
+import '../../styles/tokenItem.scss';
 
 export default function TokenItem(props) {
   const [showSendModal, setShowSendModal] = useState(false);
@@ -35,35 +37,35 @@ export default function TokenItem(props) {
   return (
     <div>
       {/* <div class="matic-tokens-list-item" @click="onTokenClick"> */}
-      <div className={styles.maticTokensListItem}>
-        <div className={styles.star}>{/* <img src={starFilled} alt="" /> */}</div>
-        <div className={styles.maticTokensListItem}>
+      <div className="maticTokensListItem">
+        <div className="star">{/* <img src={starFilled} alt="" /> */}</div>
+        <div className="maticTokensListItem">
           <img src={props.logoURI} alt="token icon" />
         </div>
 
-        <div className={styles.tokenDetails}>
-          <div className={styles.tokenNameDetails}>
-            <div className={styles.tokenNameUpperSection}>
+        <div className="tokenDetails">
+          <div className="tokenNameDetails">
+            <div className="tokenNameUpperSection">
               {/* <div class="token-symbol header-h6"> */}
-              <div className={styles.headerH6} id={tokenNameId}>
+              <div className="headerH6" id={tokenNameId}>
                 {props.symbol}
               </div>
-              {/* styles.mobileView See how to do it */}
-              {/* <div className={styles.plasmaTag}> plasma </div> */}
+              {/*"mobileView"See how to do it */}
+              {/* <div className="plasmaTag"> plasma </div> */}
             </div>
-            <div className={styles.tokenNameLowerSection}>
-              <span className={styles.seperatingDot}> • </span>
+            <div className="tokenNameLowerSection">
+              <span className="seperatingDot"> • </span>
               {props.name}
             </div>
-            <div className={styles.plasmaTag}>Nightfall</div>
+            <div className="plasmaTag">Nightfall</div>
           </div>
-          <div className={styles.balancesDetails}>
-            <div className={styles.balancesWrapper}>
-              <div className={styles.balancesDetailsUpperSection} id={tokenBalanceId}>
+          <div className="balancesDetails">
+            <div className="balancesWrapper">
+              <div className="balancesDetailsUpperSection" id={tokenBalanceId}>
                 {(Number(props.l2Balance) / 10 ** Number(props.decimals)).toFixed(4)}
               </div>
-              <div className={styles.balancesDetailsLowerSection}>
-                <span className={styles.seperatingDot} id={tokenBalanceUsdId}>
+              <div className="balancesDetailsLowerSection">
+                <span className="seperatingDot" id={tokenBalanceUsdId}>
                   {' '}
                   •{' '}
                 </span>
@@ -75,7 +77,7 @@ export default function TokenItem(props) {
               </div>
             </div>
           </div>
-          <div className={styles.buttonsSection}>
+          <div className="buttonsSection">
             <Link
               to={{
                 pathname: '/bridge',
@@ -84,7 +86,7 @@ export default function TokenItem(props) {
                   initialTxType: 'deposit',
                 },
               }}
-              className={styles.tokenListButton}
+              className="tokenListButton"
               id={tokenDepositId}
             >
               Deposit
@@ -97,14 +99,14 @@ export default function TokenItem(props) {
                   initialTxType: 'withdraw',
                 },
               }}
-              className={styles.tokenListButton}
+              className="tokenListButton"
               id={tokenWithdrawId}
             >
               Withdraw
             </Link>
             <button
               type="button"
-              className={styles.tokenListButton}
+              className="tokenListButton"
               id={tokenSendId}
               onClick={() => {
                 setShowSendModal(true);
@@ -114,8 +116,8 @@ export default function TokenItem(props) {
             </button>
           </div>
         </div>
-        <div className={styles.addToMetamask}>
-          <img className={styles.metamaskIcon} src={metamaskIcon} alt="" />
+        <div className="addToMetamask">
+          <img className="metamaskIcon" src={metamaskIcon} alt="" />
         </div>
       </div>
       {/* SEND BUTTON */}

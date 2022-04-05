@@ -139,19 +139,3 @@ export async function subscribeToProposedBlockWebSocketConnection(callback, ...a
   );
   logger.debug('Subscribed to ProposedBlock WebSocket connection');
 }
-
-export async function subscribeToProposedBlockWebSocketConnection(callback, ...args) {
-  wss.on('connection', ws =>
-    ws.on('message', message => {
-      try {
-        if (JSON.parse(message).type === 'sync') {
-          logger.info(`SUBSCRIBING TO PROPOSEDBLOCK`);
-          callback(ws, args);
-        }
-      } catch (error) {
-        logger.debug('Not JSON Message');
-      }
-    }),
-  );
-  logger.debug('Subscribed to ProposedBlock WebSocket connection');
-}

@@ -43,5 +43,9 @@
 // For the transaction page
 @import '../src/views/transactionPage/styles.scss';
 
+// For transaction component
+@import '../src/components/Transactions/index.scss';
+@import '../src/components/Transactions/withdraw.scss';
+
 // For the toast
 @import '../node_modules/react-toastify/dist/ReactToastify.css';
