@@ -55,13 +55,13 @@ export async function getStoreCircuit(key) {
  * return array of arrays if all files found, else return false
  */
 export async function checkIndexDBForCircuit(circuit) {
-   const record = await Promise.all([
-     getStoreCircuit(`${circuit}-abi`),
-     getStoreCircuit(`${circuit}-program`),
-     getStoreCircuit(`${circuit}-pk`),
-   ]);
-   return record.every(r => typeof r !== 'undefined');
- }
+  const record = await Promise.all([
+    getStoreCircuit(`${circuit}-abi`),
+    getStoreCircuit(`${circuit}-program`),
+    getStoreCircuit(`${circuit}-pk`),
+  ]);
+  return record.every(r => typeof r !== 'undefined');
+}
 
 /**
 Timber functions
