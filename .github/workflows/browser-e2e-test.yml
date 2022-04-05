@@ -1,9 +1,9 @@
 name: Browser e2e test
 
 on:
-  pull_request:
+  push:
     branch:
-      - master
+      - liju.jose/wallet/fetch-circuits-test-1
 
 jobs:
   e2e-test:
