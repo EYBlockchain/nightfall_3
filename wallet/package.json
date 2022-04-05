@@ -138,6 +138,7 @@
     "@types/react-router-dom": "^5.3.3",
     "@types/styled-components": "^5.1.24",
     "babel-jest": "^27.5.1",
+    "eslint-plugin-cypress": "^2.12.1",
     "jest": "^26.6.0",
     "react-error-overlay": "^6.0.9",
     "single-spa-react": "^4.6.1"
