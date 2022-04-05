@@ -595,8 +595,8 @@ describe('ERC20 tests', () => {
   });
 
   after(async () => {
-    nf3DeregisterProposer();
-    nf3Close();
+    await nf3DeregisterProposer();
+    await nf3Close();
     await nf3Users[0].close();
     await nf3Users[1].close();
     await web3Client.closeWeb3();

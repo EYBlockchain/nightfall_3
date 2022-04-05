@@ -176,6 +176,6 @@ describe('Testing off-chain transactions', () => {
 
   after(async () => {
     nf3User.close();
-    nf3Close();
+    await nf3Close();
   });
 });
