@@ -29,15 +29,19 @@ async function blockProposedEventHandler(data, ivks, nsks) {
   const latestTree = await getTreeByBlockNumberL2(block.blockNumberL2 - 1);
   const blockCommitments = transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat();
 
+  let tempBlockSaved = false;
   if ((await countTransactionHashes(block.transactionHashes)) > 0) {
     await saveBlock({ blockNumber: currentBlockCount, transactionHashL1, ...block });
     await Promise.all(transactions.map(t => saveTransaction({ transactionHashL1, ...t })));
+    tempBlockSaved = true;
   }
+
   const dbUpdates = transactions.map(async transaction => {
     // filter out non zero commitments and nullifiers
     const nonZeroCommitments = transaction.commitments.flat().filter(n => n !== ZERO);
     const nonZeroNullifiers = transaction.nullifiers.flat().filter(n => n !== ZERO);
     const storeCommitments = [];
+    const tempTransactionStore = [];
     if (
       (transaction.transactionType === '1' || transaction.transactionType === '2') &&
       (await countCommitments(nonZeroCommitments)) === 0
@@ -51,9 +55,11 @@ async function blockProposedEventHandler(data, ivks, nsks) {
             key,
             nonZeroCommitments[0],
           );
-          if (commitment === {}) logger.info("This encrypted message isn't for this recipient");
+          if (Object.keys(commitment).length === 0)
+            logger.info("This encrypted message isn't for this recipient");
           else {
             storeCommitments.push(storeCommitment(commitment, nsks[i]));
+            tempTransactionStore.push(saveTransaction({ transactionHashL1, ...transaction }));
           }
         } catch (err) {
           logger.info(err);
@@ -64,6 +70,7 @@ async function blockProposedEventHandler(data, ivks, nsks) {
     await Promise.all(storeCommitments).catch(function (err) {
       logger.info(err);
     }); // control errors when storing commitments in order to ensure next Promise being executed
+    if (!tempBlockSaved) await Promise.all(tempTransactionStore);
     return [
       Promise.all(storeCommitments),
       markOnChain(nonZeroCommitments, block.blockNumberL2, data.blockNumber, data.transactionHash),

@@ -13,6 +13,8 @@ const {
   SUBMITTED_BLOCKS_COLLECTION,
   TRANSACTIONS_COLLECTION,
   COMMITMENTS_COLLECTION,
+  KEYS_COLLECTION,
+  CIRCUIT_COLLECTION,
 } = global.config;
 
 // This needs to have better indexDB performance.
@@ -24,9 +26,42 @@ const connectDB = async () => {
       newDb.createObjectStore(TIMBER_COLLECTION);
       newDb.createObjectStore(SUBMITTED_BLOCKS_COLLECTION);
       newDb.createObjectStore(TRANSACTIONS_COLLECTION);
+      newDb.createObjectStore(KEYS_COLLECTION);
+      newDb.createObjectStore(CIRCUIT_COLLECTION);
     },
   });
 };
+
+export async function storeCircuit(key, data) {
+  const db = await connectDB();
+  return db.put(
+    CIRCUIT_COLLECTION,
+    {
+      _id: key,
+      data,
+    },
+    key,
+  );
+}
+
+export async function getStoreCircuit(key) {
+  const db = await connectDB();
+  return db.get(CIRCUIT_COLLECTION, key);
+}
+
+/*
+ * function checks indexedDb for all files(stored as Uint8Aray)
+ * for a particular circuit
+ * return array of arrays if all files found, else return false
+ */
+export async function checkIndexDBForCircuit(circuit) {
+  const record = await Promise.all([
+    getStoreCircuit(`${circuit}-abi`),
+    getStoreCircuit(`${circuit}-program`),
+    getStoreCircuit(`${circuit}-pk`),
+  ]);
+  return record.every(r => typeof r !== 'undefined');
+}
 
 /**
 Timber functions
@@ -95,7 +130,7 @@ find which block a transaction went into. Note, we'll save all blocks, that get
 posted to the blockchain, not just ours.
 */
 export async function saveBlock(_block) {
-  const block = { _id: _block.blockNumberL2, ..._block };
+  const block = { ..._block, _id: _block.blockNumberL2 };
   if (!block.transactionHashL1)
     throw new Error('Layer 2 blocks must be saved with a valid Layer 1 transactionHash');
   if (!block.blockNumber)
@@ -144,7 +179,9 @@ export async function findBlocksFromBlockNumberL2(blockNumberL2) {
 export async function getBlockByTransactionHash(transactionHash) {
   const db = await connectDB();
   const res = await db.getAll(SUBMITTED_BLOCKS_COLLECTION);
-  return res.filter(r => r.transactionHashes.include(transactionHash));
+  const [block] = res.filter(r => r.transactionHashes.includes(transactionHash));
+  if (!block) throw new Error('Block Not Found');
+  return block;
 }
 
 export async function getMaxBlock() {
@@ -199,13 +236,13 @@ export async function deleteTransactionsByTransactionHashes(transactionHashes) {
 export async function getTransactionByCommitment(commitmentHash) {
   const db = await connectDB();
   const res = await db.getAll(TRANSACTIONS_COLLECTION);
-  return res.filter(r => r.commitments.include(commitmentHash));
+  return res.filter(r => r.commitments.includes(commitmentHash));
 }
 
 export async function getTransactionByNullifier(nullifierHash) {
   const db = await connectDB();
   const res = await db.getAll(TRANSACTIONS_COLLECTION);
-  return res.filter(r => r.nullifiers.include(nullifierHash));
+  return res.filter(r => r.nullifiers.includes(nullifierHash));
 }
 export async function getTransactionByTransactionHash(transactionHash) {
   const db = await connectDB();
@@ -217,4 +254,17 @@ export async function getAllTransactions() {
   const res = await db.getAll(TRANSACTIONS_COLLECTION);
   if (Object.keys(res).length > 0) return res;
   return [];
+}
+
+export async function markWithdrawState(transactionHash, withdrawState) {
+  const db = await connectDB();
+  const tx = await db.get(TRANSACTIONS_COLLECTION, transactionHash);
+  return db.put(
+    TRANSACTIONS_COLLECTION,
+    {
+      ...tx,
+      withdrawState,
+    },
+    tx._id,
+  );
 }

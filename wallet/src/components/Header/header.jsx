@@ -7,7 +7,7 @@ import NavItems from './navItems.jsx';
 import './header.scss';
 
 export default function Header() {
-  const isSmallScreen = useMediaQuery({ query: '(max-width: 768px)' });
+  const isSmallScreen = useMediaQuery({ query: '(max-width: 1000px)' });
 
   if (!isSmallScreen) {
     return (
