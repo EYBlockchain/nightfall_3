@@ -1,4 +1,4 @@
-import React, { useContext, useState, useCallback, useEffect } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import Modal from 'react-bootstrap/Modal';
 import { MdArrowForwardIos } from 'react-icons/md';
 import { toast } from 'react-toastify';
@@ -54,7 +54,7 @@ const BridgeComponent = () => {
 
   const [token, setToken] = useState(initialToken);
   const [txType, setTxType] = useState(initialTx);
-  const [transferValue, setTransferValue] = useState(0);
+  const [transferValue, setTransferValue] = useState('0');
   const [show, setShow] = useState(false);
 
   const [showTokensListModal, setShowTokensListModal] = useState(false);
@@ -212,13 +212,6 @@ const BridgeComponent = () => {
     return false;
   }
 
-  const handleChange = useCallback(
-    e => {
-      setTransferValue(e.target.value);
-    },
-    [transferValue],
-  );
-
   const handleShow = () => {
     if (
       (txType === 'deposit' && transferValue > l1Balance) ||
@@ -338,7 +331,15 @@ const BridgeComponent = () => {
                       name="price"
                       prefix="$"
                       placeholder="0,00"
-                      onChange={handleChange}
+                      onKeyDown={e => {
+                        if (
+                          (transferValue.toString().split('.')[1]?.length ?? 0) > 3 &&
+                          /^[0-9]$/i.test(e.key)
+                        ) {
+                          e.preventDefault(); // If exceed input count then stop updates.
+                        }
+                      }}
+                      onChange={e => setTransferValue(e.target.value)}
                     />
                     <div className="amount_details_max" onClick={() => updateInputValue()}>
                       <span>MAX</span>
