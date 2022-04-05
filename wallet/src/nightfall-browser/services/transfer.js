@@ -181,7 +181,9 @@ async function transfer(transferParams, shieldContractAddress) {
   // call a zokrates worker to generate the proof
   // This is (so far) the only place where we need to get specific about the
   // circuit
-  let circuitData;
+  let abi;
+  let program;
+  let pk;
   let transactionType;
   if (oldCommitments.length === 1) {
     transactionType = 1;
@@ -209,9 +211,6 @@ async function transfer(transferParams, shieldContractAddress) {
     program = programData.data;
     pk = pkData.data;
   } else throw new Error('Unsupported number of commitments');
-
-  if (!circuitData) throw Error('Some circuit data are missing from IndexedDB');
-  const [abi, program, pk] = circuitData;
 
   const zokratesProvider = await initialize();
   const artifacts = { program: new Uint8Array(program), abi };

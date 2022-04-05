@@ -32,7 +32,7 @@ async function deposit(items, shieldContractAddress) {
   const compressedPkd = compressPublicKey(pkd);
 
   if (!(await checkIndexDBForCircuit(circuitName)))
-   throw Error('Some circuit data are missing from IndexedDB');
+    throw Error('Some circuit data are missing from IndexedDB');
   const [abiData, programData, pkData] = await Promise.all([
     getStoreCircuit(`${circuitName}-abi`),
     getStoreCircuit(`${circuitName}-program`),
