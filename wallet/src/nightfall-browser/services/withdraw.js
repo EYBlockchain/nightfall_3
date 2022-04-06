@@ -9,7 +9,6 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
  */
 import gen from 'general-number';
 import { initialize } from 'zokrates-js';
-
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
 import { Nullifier, Transaction } from '../classes/index';
@@ -117,23 +116,6 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     proof,
   });
   try {
-    // if (offchain) {
-    // await axios
-    //   .post(
-    //     `${proposerUrl}/proposer/offchain-transaction`,
-    //     { transaction: optimisticWithdrawTransaction },
-    //     { timeout: 3600000 },
-    //   )
-    //   .catch(err => {
-    //     throw new Error(err);
-    //   });
-    //   const th = optimisticWithdrawTransaction.transactionHash;
-    //   delete optimisticWithdrawTransaction.transactionHash;
-    //   optimisticWithdrawTransaction.transactionHash = th;
-    //   await markNullified(oldCommitment, optimisticWithdrawTransaction);
-    //   await saveTransaction(optimisticWithdrawTransaction);
-    //   return { transaction: optimisticWithdrawTransaction };
-    // }
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(optimisticWithdrawTransaction))
       .encodeABI();
