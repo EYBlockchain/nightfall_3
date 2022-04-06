@@ -9,7 +9,6 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
  */
 import gen from 'general-number';
 import { initialize } from 'zokrates-js';
-import axios from 'axios';
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
 import { Nullifier, Transaction } from '../classes/index';
@@ -20,16 +19,16 @@ import {
   getSiblingInfo,
 } from './commitment-storage';
 import { calculateIvkPkdfromAskNsk } from './keys';
-import { saveTransaction, checkIndexDBForCircuit, getStoreCircuit } from './database';
+import { checkIndexDBForCircuit, getStoreCircuit } from './database';
 
-const { BN128_GROUP_ORDER, SHIELD_CONTRACT_NAME, proposerUrl, USE_STUBS } = global.config;
+const { BN128_GROUP_ORDER, SHIELD_CONTRACT_NAME, USE_STUBS } = global.config;
 const { generalise } = gen;
 const circuitName = USE_STUBS ? 'withdraw_stub' : 'withdraw';
 
 async function withdraw(withdrawParams, shieldContractAddress) {
   logger.info('Creating a withdraw transaction');
   // let's extract the input items
-  const { offchain = false, ...items } = withdrawParams;
+  const { ...items } = withdrawParams;
   const { ercAddress, tokenId, value, recipientAddress, nsk, ask, fee } = generalise(items);
   const { compressedPkd } = calculateIvkPkdfromAskNsk(ask, nsk);
 
@@ -118,15 +117,15 @@ async function withdraw(withdrawParams, shieldContractAddress) {
   });
   try {
     // if (offchain) {
-      // await axios
-      //   .post(
-      //     `${proposerUrl}/proposer/offchain-transaction`,
-      //     { transaction: optimisticWithdrawTransaction },
-      //     { timeout: 3600000 },
-      //   )
-      //   .catch(err => {
-      //     throw new Error(err);
-      //   });
+    // await axios
+    //   .post(
+    //     `${proposerUrl}/proposer/offchain-transaction`,
+    //     { transaction: optimisticWithdrawTransaction },
+    //     { timeout: 3600000 },
+    //   )
+    //   .catch(err => {
+    //     throw new Error(err);
+    //   });
     //   const th = optimisticWithdrawTransaction.transactionHash;
     //   delete optimisticWithdrawTransaction.transactionHash;
     //   optimisticWithdrawTransaction.transactionHash = th;

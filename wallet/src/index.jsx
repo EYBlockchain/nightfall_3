@@ -6,24 +6,23 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'font-awesome/css/font-awesome.min.css';
 import 'bootstrap-social/bootstrap-social.css';
 
-import App from '../src/views/app.view.jsx';
+import App from './views/app.view.jsx';
 import mainStyle from './main.scss';
 import reportWebVitals from './reportWebVitals';
 import init from './web-worker/index.js';
 
 class DemoAppSolution extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: 'open' });
+    const { shadowRoot } = this;
+    const container = document.createElement('div');
+    shadowRoot.appendChild(container);
+    ReactDOM.render(<App />, shadowRoot);
 
-  constructor() {      
-      super();
-      this.attachShadow({ mode: 'open' });
-      const { shadowRoot } = this;
-      const container = document.createElement('div');
-      shadowRoot.appendChild(container);
-      ReactDOM.render(<App />, shadowRoot);
-
-      const styleTag = document.createElement('style');
-      styleTag.innerHTML = mainStyle;
-      shadowRoot.appendChild(styleTag);
+    const styleTag = document.createElement('style');
+    styleTag.innerHTML = mainStyle;
+    shadowRoot.appendChild(styleTag);
   }
 }
 

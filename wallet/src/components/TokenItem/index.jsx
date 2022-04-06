@@ -50,7 +50,7 @@ export default function TokenItem(props) {
               <div className="headerH6" id={tokenNameId}>
                 {props.symbol}
               </div>
-              {/*"mobileView"See how to do it */}
+              {/* "mobileView"See how to do it */}
               {/* <div className="plasmaTag"> plasma </div> */}
             </div>
             <div className="tokenNameLowerSection">

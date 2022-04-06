@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 
 import './sideItem.scss';
 
-export default function SideItem({ text, link, Icon, SideState }) {  
+export default function SideItem({ text, link, Icon, SideState }) {
   return (
     <Link
       to={{

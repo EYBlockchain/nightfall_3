@@ -20,7 +20,7 @@ export default function App() {
     await Web3.connect();
     setIsWeb3Connected({
       isWeb3Connected: true,
-    });    
+    });
   }, []);
 
   /*

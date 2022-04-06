@@ -20,8 +20,7 @@ import { saveTransaction } from '../../nightfall-browser/services/database';
 
 import '../../styles/bridge.module.scss';
 import '../../styles/modal.scss';
-import styled from 'styled-components';
-import { BalanceText, BalanceTextRight, ContinueTransferButton, HeaderTitle, InputAddress, InputBalance, InputSearchTitle, InputWrapper, MaxButton, MyBody, SendModalBalance, SendModalBalanceLeft, SendModalBalanceRight, SendModalFooter, SendModalStyle, TokensLine, TokensLineDiv, TokensLineDivImg, TokensList } from './sendModalStyles';
+import { BalanceText, BalanceTextRight, ContinueTransferButton, Divider, HeaderTitle, InputAddress, InputBalance, InputSearchTitle, InputWrapper, MaxButton, MyBody, ProcessImages, SendModalBalance, SendModalBalanceLeft, SendModalBalanceRight, SendModalFooter, SendModalStyle, Spinner, SpineerBox, SpinnerBoard, TokensLine, TokensLineDiv, TokensLineDivImg, TokensList } from './sendModalStyles';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -295,21 +294,20 @@ const SendModal = (props: SendModalProps): JSX.Element => {
         onHide={handleCloseConfirmModal}
       >
         <Modal.Header closeButton>
-          <div className="modalTitle">Transfer in progress</div>
+          <HeaderTitle>Transfer in progress</HeaderTitle>
         </Modal.Header>
         {showModalTransferInProgress && (
           <Modal.Body>
-            <div className="modalBody">
-              <div className="processImages">
+            <MyBody>
+              <ProcessImages>
                 <img src={approveImg} alt="approve" />
-              </div>
-              <div className="divider" />
-              <div className="spinnerBox">
-                <div className="spinnerBoard">
-                  <div className="spinner" />
-                </div>
-              </div>
-
+              </ProcessImages>
+              <Divider/>
+              <SpineerBox>
+                <SpinnerBoard>
+                  <Spinner />
+                </SpinnerBoard>
+              </SpineerBox>
               <div className="transferModeModal">
                 <h3>Creating Transaction</h3>
                 <div className="modalText">
@@ -317,22 +315,22 @@ const SendModal = (props: SendModalProps): JSX.Element => {
                 </div>
                 {/* <a className="footerText">View on etherscan</a> */}
               </div>
-            </div>
+            </MyBody>
           </Modal.Body>
         )}
 
         {showModalTransferEnRoute && (
           <Modal.Body>
-            <div className="modalBody">
-              <div className="processImages">
+            <MyBody>
+              <ProcessImages>
                 <img src={depositConfirmed} alt="deposit confirmed" />
-              </div>
-              <div className="divider" />
-              <div className="spinnerBox">
-                <div className="spinnerBoard">
-                  <div className="spinner" />
-                </div>
-              </div>
+              </ProcessImages>
+              <Divider/>
+              <SpineerBox>
+                <SpinnerBoard>
+                  <Spinner />
+                </SpinnerBoard>
+              </SpineerBox>
               <div className="transferModeModal">
                 <h3>Generating Zk Proof</h3>
                 <div className="modalText">
@@ -340,20 +338,20 @@ const SendModal = (props: SendModalProps): JSX.Element => {
                 </div>
                 {/* <a className="footerText">View on etherscan</a> */}
               </div>
-            </div>
+            </MyBody>
           </Modal.Body>
         )}
 
         {showModalTransferConfirmed && (
           <Modal.Body>
-            <div className="modalBody">
-              <div className="processImages">
+            <MyBody>
+              <ProcessImages>
                 <img src={transferCompletedImg} alt="transfer completed" />
-              </div>
-              <div className="divider" />
-              <div className="spinnerBox">
+              </ProcessImages>
+              <Divider/>
+              <SpineerBox>
                 <img src={successHand} alt="success hand" />
-              </div>
+              </SpineerBox>
               <div className="transferModeModal" id="Bridge_modal_success">
                 <h3>Transaction created sucessfully.</h3>
                 <div className="modalText">Your transfer is ready to send.</div>
@@ -367,7 +365,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
                 </button>
                 {/* <a className="footerText">View on etherscan</a> */}
               </div>
-            </div>
+            </MyBody>
           </Modal.Body>
         )}
       </Modal>

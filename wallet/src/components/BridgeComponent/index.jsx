@@ -1,11 +1,9 @@
 import React, { useContext, useState, useCallback, useEffect } from 'react';
 import Modal from 'react-bootstrap/Modal';
-import { MdArrowForwardIos } from 'react-icons/md';
 import { toast } from 'react-toastify';
 import { useLocation } from 'react-router-dom';
 import axios from 'axios';
-import styles from '../../styles/bridge.module.scss';
-import stylesModal from '../../styles/modal.module.scss';
+import styled, { keyframes } from 'styled-components';
 import ethChainImage from '../../assets/img/ethereum-chain.svg';
 import polygonNightfall from '../../assets/svg/polygon-nightfall.svg';
 import discloserBottomImage from '../../assets/img/discloser-bottom.svg';
@@ -19,18 +17,13 @@ import depositConfirmed from '../../assets/img/modalImages/adeposit_confirmed.pn
 import successHand from '../../assets/img/modalImages/success-hand.png';
 import transferCompletedImg from '../../assets/img/modalImages/tranferCompleted.png';
 import { UserContext } from '../../hooks/User/index.jsx';
-
 import Input from '../Input/index.tsx';
 import TokensList from '../Modals/Bridge/TokensList/index.tsx';
 import { useAccount } from '../../hooks/Account/index.tsx';
-import loadAccount from '../../utils/loadAccount.ts';
-import minERC20ABI from '../../utils/getMinABIErc20.ts';
 import { getWalletBalance } from '../../nightfall-browser/services/commitment-storage';
 import './toast.css';
 import './styles.scss';
-import verifyIfValueIsGreaterThen from './utils/verifyIfValueIsGreaterThen.ts';
 import TransferModal from '../Modals/Bridge/Transfer/index.jsx';
-import styled, { keyframes } from 'styled-components';
 
 import ERC20 from '../../contract-abis/ERC20.json';
 import tokensList from '../Modals/Bridge/TokensList/tokensList';
@@ -45,7 +38,7 @@ const ModalTitle = styled.div`
 
 const MyModalBody = styled.div`
   flex-direction: column;
-  text-align: center;  
+  text-align: center;
   padding: 10px;
 `;
 
@@ -55,7 +48,7 @@ const ProcessImage = styled.div`
   }
 `;
 
-const SpinnerBox = styled.div`
+export const SpinnerBox = styled.div`
   display: flex;
   justify-content: center;
   align-content: center;
@@ -63,7 +56,7 @@ const SpinnerBox = styled.div`
   margin-top: 20px;
 `;
 
-const SpinnerBoard = styled.div`
+export const SpinnerBoard = styled.div`
   display: flex;
   justify-content: center;
   align-content: center;
@@ -74,26 +67,23 @@ const SpinnerBoard = styled.div`
   height: var(--size);
   border-radius: 50%;
 
-  border: var(--border) solid #eee; 
+  border: var(--border) solid #eee;
+`;
+const spin = keyframes`
+  100% {
+    transform: rotate(360deg);
+  }
 `;
 
-const spin = keyframes`
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
-        transform: rotate(360deg);
-    }
-`
-const Spinner = styled.div`
+export const Spinner = styled.div`
   --size: 100px;
   --border: 4px;
   width: var(--size);
   height: var(--size);
   border-radius: 50%;
   position: relative;
-  border: var(--border) solid primary-color('500');
-  border-right: var(--border) solid primary-color('100');
+  border: var(--border) solid #7b3fe4;
+  border-right: var(--border) solid #eae0fb;
   animation: ${spin} 1s linear infinite;
 `;
 
@@ -132,11 +122,7 @@ const gen = require('general-number');
 
 const { generalise } = gen;
 
-
 const BridgeComponent = () => {
-  // const [state] = useState(() => props[Object.keys(props)[1].toString()].value);  
-
-  const [transferMethod, setMethod] = useState('On-Chain');    
   const [state] = useContext(UserContext);
   const { setAccountInstance, accountInstance } = useAccount();
   const [l1Balance, setL1Balance] = useState(0);
@@ -165,9 +151,9 @@ const BridgeComponent = () => {
   }, []);
 
   useEffect(() => {
-    if(document.getElementById('inputValue')) {
+    if (document.getElementById('inputValue')) {
       document.getElementById('inputValue').value = 0;
-    }    
+    }
   }, [txType]);
 
   useEffect(() => {
@@ -196,17 +182,17 @@ const BridgeComponent = () => {
     setShowModalTransferConfirmed(false);
   };
 
-  const handleShowModalConfirm = async () => {
-    setShowModalConfirm(true);
-    setShowModalTransferInProgress(true);
-    // await timeout(3000);
-    setShowModalTransferInProgress(false);
-    setShowModalTransferEnRoute(true);
+  // const handleShowModalConfirm = async () => {
+  //   setShowModalConfirm(true);
+  //   setShowModalTransferInProgress(true);
+  //   // await timeout(3000);
+  //   setShowModalTransferInProgress(false);
+  //   setShowModalTransferEnRoute(true);
 
-    // await timeout(3000);
-    setShowModalTransferEnRoute(false);
-    setShowModalTransferConfirmed(true);
-  };
+  //   // await timeout(3000);
+  //   setShowModalTransferEnRoute(false);
+  //   setShowModalTransferConfirmed(true);
+  // };
 
   const handleClose = () => setShow(false);
 
@@ -519,19 +505,18 @@ const BridgeComponent = () => {
               <p>Transfer</p>
             </button>
           </div>
-        </div>        
-        {show && 
-          <TransferModal 
+        </div>
+        {show && (
+          <TransferModal
             show={show}
             setShow={setShow}
             handleClose={setShow}
             transferValue={transferValue}
             txType={txType}
-            setMethod={setMethod}
-            transferMethod={transferMethod}
-            handleShowModalConfirm={handleShowModalConfirm}
+            triggerTx={triggerTx}
+            setReadyTx={setReadyTx}
           />
-        }
+        )}
 
         {/* TRANSFER IN PROGRESS MODAL */}
         <Modal
@@ -551,7 +536,7 @@ const BridgeComponent = () => {
                 <Divider />
                 <SpinnerBox>
                   <SpinnerBoard>
-                    <Spinner/>
+                    <Spinner />
                   </SpinnerBoard>
                 </SpinnerBox>
 
@@ -575,7 +560,7 @@ const BridgeComponent = () => {
                 <Divider />
                 <SpinnerBox>
                   <SpinnerBoard>
-                    <Spinner/>
+                    <Spinner />
                   </SpinnerBoard>
                 </SpinnerBox>
 
@@ -586,12 +571,12 @@ const BridgeComponent = () => {
                   </ModalText>
                   {/* <a className={styles.footerText}>View on etherscan</a> */}
                 </TransferMode>
-              </MyModalBody>              
+              </MyModalBody>
             </Modal.Body>
           )}
 
           {showModalTransferConfirmed && (
-            <Modal.Body>              
+            <Modal.Body>
               <MyModalBody>
                 <ProcessImage>
                   <img src={transferCompletedImg} alt="transfer completed" />
@@ -603,20 +588,17 @@ const BridgeComponent = () => {
 
                 <TransferMode>
                   <h3>Transaction created sucessfully.</h3>
-                  <ModalText>
-                    Your transfer is ready to send.
-                  </ModalText>
+                  <ModalText>Your transfer is ready to send.</ModalText>
                   {/* <a className={styles.footerText}>View on etherscan</a> */}
                   <ContinueTransferButton
-                    type="button"                    
+                    type="button"
                     id="Bridge_modal_continueTransferButton"
-                    // onClick={() => triggerTx()}
-                    onClick={() => triggerTx()}
+                    onClick={() => submitTx()}
                   >
                     Send Transaction
                   </ContinueTransferButton>
                 </TransferMode>
-              </MyModalBody>                                        
+              </MyModalBody>
             </Modal.Body>
           )}
         </Modal>

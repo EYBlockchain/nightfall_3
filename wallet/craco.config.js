@@ -1,4 +1,4 @@
-//const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
+// const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
 /* eslint-disable global-require */
 const { addBeforeLoader, loaderByName } = require('@craco/craco');
 // eslint-disable-next-line no-extend-native
@@ -8,7 +8,7 @@ BigInt.prototype.toJSON = function () {
 
 module.exports = {
   webpack: {
-    alias: {},    
+    alias: {},
     configure: (webpackConfig, { paths }) => {
       const wasmExtensionRegExp = /\.wasm$/;
       const config = require('../config/default');
