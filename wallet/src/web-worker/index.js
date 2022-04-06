@@ -16,14 +16,10 @@ export default async function fetchCircuitFileAndStoreInIndexedDB() {
       (USE_STUBS && circuit.slice(-4) === 'stub')
     ) {
       if (!(await checkIndexDBForCircuit(circuit))) {
-        console.log('Fetching');
-        const { abi, program, pk } = (await fetchCircuit(circuit, circuitsAWSFiles)) ?? {};
-        console.log('abi', abi);
-        if (abi) {
-          await storeCircuit(`${circuit}-abi`, abi);
-          await storeCircuit(`${circuit}-program`, program);
-          await storeCircuit(`${circuit}-pk`, pk);
-        }
+        const { abi, program, pk } = await fetchCircuit(circuit, global.config);
+        await storeCircuit(`${circuit}-abi`, abi);
+        await storeCircuit(`${circuit}-program`, program);
+        await storeCircuit(`${circuit}-pk`, pk);
       }
     }
   }
