@@ -1243,7 +1243,11 @@ class Nf3 {
   @param {Number} fee - fee to pay for the transaction to the proposer
   @returns {Promise} - string with the signatureStringStringString
   */
-  async sendPayment(account, amount) {
+  async sendPayment(transactionHashL2, fee) {
+    const res = await axios.post(`${this.clientBaseUrl}/payment`, {
+      transactionHashL2,
+    });
+
     let gasPrice = 20000000000;
     const gas = (await this.web3Payment.eth.getBlock('latest')).gasLimit;
     const blockGasPrice = 2 * Number(await this.web3Payment.eth.getGasPrice());
@@ -1251,37 +1255,32 @@ class Nf3 {
 
     const tx = {
       from: this.ethereumAddress,
-      to: account,
-      value: amount,
+      to: this.paymentContractAddress,
+      value: fee,
+      data: res.data.txDataToSign,
       gas,
       gasPrice,
     };
 
-    const signed = await this.web3Payment.eth.accounts.signTransaction(tx, this.ethereumSigningKey);
-    // rather than waiting until we have a receipt, wait until we have enough confirmation blocks
-    // then return the receipt.
-    // TODO does this still work if there is a chain reorg or do we have to handle that?
-    return new Promise((resolve, reject) => {
-      logger.debug(`Confirming transaction payment ${signed.transactionHash}`);
-      this.notConfirmedPayment++;
-      this.web3Payment.eth
-        .sendSignedTransaction(signed.rawTransaction)
-        .on('confirmation', (number, receipt) => {
-          if (number === 2) {
-            this.notConfirmedPayment--;
-            logger.debug(
-              `Transaction payment ${receipt.transactionHash} has been confirmed ${number} times.`,
-              `Number of unconfirmed transactions payments is ${this.notConfirmedPayment}`,
-            );
+    if (this.ethereumSigningKey) {
+      const signed = await this.web3Payment.eth.accounts.signTransaction(
+        tx,
+        this.ethereumSigningKey,
+      );
+      const promiseTest = new Promise((resolve, reject) => {
+        this.web3Payment.eth
+          .sendSignedTransaction(signed.rawTransaction)
+          .once('receipt', receipt => {
+            logger.debug(`Transaction payment ${receipt.transactionHash} has been received.`);
             resolve(receipt);
-          }
-        })
-        .on('error', err => {
-          console.log(err);
-          this.notConfirmedPayment--;
-          reject(err);
-        });
-    });
+          })
+          .on('error', err => {
+            reject(err);
+          });
+      });
+      return promiseTest;
+    }
+    return this.web3Payment.eth.sendTransaction(tx);
   }
 
   /**
