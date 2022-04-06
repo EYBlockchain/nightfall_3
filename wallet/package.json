@@ -54,7 +54,7 @@
     "start:ropsten": "REACT_APP_ENVIRONMENT=Ropsten craco start",
     "build": "LOCAL_PROPOSER=false USE_STUBS=true craco build",
     "deploy": "npm run build && aws s3 sync build s3://pnf-dev-browser --cache-control max-age=172800 --delete && aws configure set preview.cloudfront true && aws cloudfront create-invalidation --distribution-id ENV3X13MLR5YT --paths \"/*\"",
-    "test": "craco test --env=jsdom",
+    "test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register 'tests/**/*.ts'",
     "eject": "craco eject",
     "e2e-test": "npx synpress run --env TRANSACTIONS_PER_BLOCK=2"
   },
@@ -74,7 +74,13 @@
     "@craco/craco": "^6.4.2",
     "@synthetixio/synpress": "^1.1.1",
     "@testing-library/react": "^12.1.2",
+    "@types/chai": "^4.3.0",
+    "@types/mocha": "^9.1.0",
+    "@types/react-router-dom": "^5.3.3",
+    "@typescript-eslint/parser": "^5.15.0",
+    "chai": "^4.3.6",
+    "mocha": "^9.2.2",
     "react-scripts": "4.0.3",
-    "@typescript-eslint/parser": "^5.15.0"
+    "ts-node": "^10.7.0"
   }
 }

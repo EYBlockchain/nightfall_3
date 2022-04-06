@@ -17,6 +17,7 @@ import depositConfirmed from '../../assets/img/modalImages/adeposit_confirmed.pn
 import successHand from '../../assets/img/modalImages/success-hand.png';
 import transferCompletedImg from '../../assets/img/modalImages/tranferCompleted.png';
 import { saveTransaction } from '../../nightfall-browser/services/database';
+import BigFloat from '../../common-files/classes/bigFloat';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 const { proposerUrl } = global.config;
@@ -31,32 +32,6 @@ type SendModalProps = {
   decimals: number;
   show: boolean;
   onHide: () => void;
-};
-
-// This helper function converts a bigint value into a number we can display with a decimals.
-const bnAsNumber = (bn: bigint, numDecimals: number, displayDecimals = 4): number => {
-  const stringBn = bn.toString();
-  const mantissa = stringBn.slice(-numDecimals);
-  const significand = stringBn.slice(0, stringBn.length - numDecimals);
-  const displayMantissa = mantissa.slice(0, displayDecimals);
-  return Number(`${significand}.${displayMantissa}`);
-};
-
-// This helper function converts an inputted decimal value into a bigint.
-const numberAsBN = (numberBn: number, numDecimals: number): bigint => {
-  const [displaySignificand, displayMantissa] = numberBn.toString().split('.');
-  console.log('displaySignificand', displaySignificand);
-  console.log('displayMantissa', displayMantissa);
-  console.log('numberAsBN no mantissa', BigInt(displaySignificand) * 10n ** BigInt(numDecimals));
-  if (typeof displayMantissa === 'undefined')
-    // If it's already an integer, we just scale the significand
-    return BigInt(displaySignificand) * 10n ** BigInt(numDecimals);
-  // Scale just the mantissa by the num decimals, this is fine to be a Number
-  // We don't expect numDecimals to be so large the mantissa will overflow Number.
-  const mantissa = Number(`0.${displayMantissa}`) * 10 ** numDecimals;
-  console.log('numberAsBN', BigInt(`${displaySignificand}${mantissa.toString()}`));
-  // The final bigInt is just the stichting of both strings.
-  return BigInt(`${displaySignificand}${mantissa.toString()}`);
 };
 
 const SendModal = (props: SendModalProps): JSX.Element => {
@@ -187,7 +162,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
         tokenId: 0,
         recipientData: {
           recipientCompressedPkds: [recipient],
-          values: [numberAsBN(valueToSend, sendToken.decimals).toString()],
+          values: [new BigFloat(valueToSend, sendToken.decimals).toBigInt().toString()],
         },
         nsk,
         ask,
@@ -280,14 +255,14 @@ const SendModal = (props: SendModalProps): JSX.Element => {
                 <div className={stylesModal.balanceText}>
                   <p>
                     ${' '}
-                    {(bnAsNumber(l2Balance, sendToken.decimals) * sendToken.currencyValue).toFixed(
-                      4,
-                    )}
+                    {new BigFloat(l2Balance, sendToken.decimals)
+                      .mul(sendToken.currencyValue)
+                      .toFixed(4)}
                   </p>
                   <div className={stylesModal.right}>
                     <p>Available Balance:</p>
                     <p>
-                      {bnAsNumber(l2Balance, sendToken.decimals).toFixed(4)} {sendToken.symbol}
+                      {new BigFloat(l2Balance, sendToken.decimals).toFixed(4)} {sendToken.symbol}
                     </p>
                   </div>
                 </div>
