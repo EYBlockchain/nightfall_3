@@ -15,6 +15,7 @@ If you select to backup your nightfall mnemonic, it will be encrypted in local s
 When you login to nightfall, you will be using account index 0. You can select a different index in `Account Settings` to use a different set of keys.
 
 ## Tests
+*Updates : E2E test is not working, not maintained currently*
 To launch test, set these `NETWORK_NAME`, `RPC_URL`, `CHAIN_ID`, and `PRIVATE_KEY` environment variable in local machine and then run
 ```sh
 npm run e2e-test
