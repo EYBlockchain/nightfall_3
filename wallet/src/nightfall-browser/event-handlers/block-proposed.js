@@ -7,7 +7,6 @@ import {
   markOnChain,
   storeCommitment,
   countCommitments,
-  setSiblingInfo,
   countTransactionHashes,
   countWithdrawTransactionHashes,
   isTransactionHashWithdraw,
@@ -22,6 +21,9 @@ import {
   saveBlock,
   setTransactionHashSiblingInfo,
   updateTransactionTime,
+  saveSiblingPath,
+  updateSiblingPath,
+  getAllSiblingPaths,
 } from '../services/database';
 
 const { ZERO, HASH_TYPE, TIMBER_HEIGHT, TXHASH_TREE_HASH_TYPE, TXHASH_TREE_HEIGHT } = global.config;
@@ -116,19 +118,36 @@ async function blockProposedEventHandler(data, ivks, nsks) {
   );
   await saveTree(data.blockNumber, block.blockNumberL2, updatedTimber);
 
+  // We update all sibling paths to account for the newly inserted leaves.
+  const currentPaths = await getAllSiblingPaths();
+  await Promise.all(
+    currentPaths.map(s => {
+      const siblingPath = s.diffPaths[s.diffPaths.length - 1] ?? s.basePath; // Use basePath if no diffPaths exist
+      const updatedPath = Timber.statelessIncrementSiblingPath(
+        latestTree,
+        blockCommitments,
+        s.leafIndex,
+        s.commitment,
+        siblingPath,
+      );
+      return updateSiblingPath(s.commitment, block.blockNumberL2, updatedPath);
+    }),
+  );
+
+  // For any new commitments resulting from this block, save the siblingPath
   await Promise.all(
     // eslint-disable-next-line consistent-return
     blockCommitments.map(async (c, i) => {
       const count = await countCommitments([c]);
       if (count > 0) {
-        const siblingPath = Timber.statelessSiblingPath(
-          latestTree,
-          blockCommitments,
-          i,
-          HASH_TYPE,
-          TIMBER_HEIGHT,
+        const siblingPath = Timber.statelessSiblingPath(latestTree, blockCommitments, i);
+        return saveSiblingPath(
+          c,
+          block.blockNumberL2,
+          siblingPath,
+          latestTree.leafCount + i,
+          updatedTimber.root,
         );
-        return setSiblingInfo(c, siblingPath, latestTree.leafCount + i, updatedTimber.root);
       }
     }),
   );

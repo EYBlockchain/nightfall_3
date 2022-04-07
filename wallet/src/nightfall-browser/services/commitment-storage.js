@@ -21,6 +21,7 @@ const {
   COMMITMENTS_COLLECTION,
   KEYS_COLLECTION,
   CIRCUIT_COLLECTION,
+  SIBLING_COLLECTION,
 } = global.config;
 
 const { generalise } = gen;
@@ -35,6 +36,7 @@ const connectDB = async () => {
       newDb.createObjectStore(TRANSACTIONS_COLLECTION);
       newDb.createObjectStore(KEYS_COLLECTION);
       newDb.createObjectStore(CIRCUIT_COLLECTION);
+      newDb.createObjectStore(SIBLING_COLLECTION);
     },
   });
 };
@@ -129,27 +131,6 @@ export async function markOnChain(
   );
 }
 
-// function to mark a commitments as on chain for a mongo db
-export async function setSiblingInfo(commitment, siblingPath, leafIndex, root) {
-  const db = await connectDB();
-  const res = await db.getAll(COMMITMENTS_COLLECTION);
-  const filtered = res.filter(r => r._id === commitment && r.isOnChain !== -1);
-  if (filtered.length === 1) {
-    const { siblingPath: a, leafIndex: b, root: c, ...rest } = filtered[0];
-    return db.put(
-      COMMITMENTS_COLLECTION,
-      {
-        siblingPath,
-        leafIndex,
-        root,
-        ...rest,
-      },
-      filtered[0]._id,
-    );
-  }
-  return null;
-}
-
 // function to mark a commitment as pending nullication for a mongo db
 async function markPending(commitment) {
   const db = await connectDB();
@@ -210,10 +191,6 @@ export async function getNullifiedByTransactionHashL1(transactionHashNullifiedL1
   const db = await connectDB();
   const res = await db.getAll(COMMITMENTS_COLLECTION);
   return res.filter(r => r.transactionHashNullifiedL1 === transactionHashNullifiedL1);
-}
-export async function getSiblingInfo(commitment) {
-  const db = await connectDB();
-  return db.get(COMMITMENTS_COLLECTION, commitment.hash.hex(32));
 }
 
 /*

@@ -20,10 +20,9 @@ import {
   storeCommitment,
   markNullified,
   clearPending,
-  getSiblingInfo,
 } from './commitment-storage';
 import { decompressKey, calculateIvkPkdfromAskNsk } from './keys';
-import { checkIndexDBForCircuit, getStoreCircuit } from './database';
+import { checkIndexDBForCircuit, getSiblingPath, getStoreCircuit } from './database';
 
 const { BN128_GROUP_ORDER, ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, ZERO, USE_STUBS } = global.config;
 const { generalise, GN } = gen;
@@ -104,13 +103,15 @@ async function transfer(transferParams, shieldContractAddress) {
     // compress the secrets to save gas
     const compressedSecrets = Secrets.compressSecrets(secrets);
 
-    const commitmentTreeInfo = await Promise.all(oldCommitments.map(c => getSiblingInfo(c)));
+    const commitmentTreeInfo = await Promise.all(
+      oldCommitments.map(c => getSiblingPath(c.hash.hex(32))),
+    );
     const localSiblingPaths = commitmentTreeInfo.map(l => {
       const path = l.siblingPath.path.map(p => p.value);
-      return generalise([l.root].concat(path.reverse()));
+      return generalise([l.siblingPath.root].concat(path.reverse()));
     });
     const leafIndices = commitmentTreeInfo.map(l => l.leafIndex);
-    const blockNumberL2s = commitmentTreeInfo.map(l => l.isOnChain);
+    const blockNumberL2s = commitmentTreeInfo.map(l => l.siblingPath.blockNumberL2);
     // time for a quick sanity check.  We expect the number of old commitments,
     // new commitments and nullifiers to be equal.
     if (
@@ -244,31 +245,7 @@ async function transfer(transferParams, shieldContractAddress) {
       compressedSecrets,
       proof,
     });
-    // if (offchain) {
-    //   await axios
-    //     .post(
-    //       `${proposerUrl}/proposer/offchain-transaction`,
-    //       { transaction: optimisticTransferTransaction },
-    //       { timeout: 3600000 },
-    //     )
-    //     .catch(err => {
-    //       throw new Error(err);
-    //     });
-    //   // we only want to store our own commitments so filter those that don't
-    //   // have our public key
-    //   newCommitments
-    //     .filter(commitment => commitment.preimage.compressedPkd.hex(32) === compressedPkd.hex(32))
-    //     .forEach(commitment => storeCommitment(commitment, nsk)); // TODO insertMany
-    //   // mark the old commitments as nullified
-    //   await Promise.all(
-    //     oldCommitments.map(commitment => markNullified(commitment, optimisticTransferTransaction)),
-    //   );
-    //   await saveTransaction(optimisticTransferTransaction);
-    //   return {
-    //     transaction: optimisticTransferTransaction,
-    //     salts: salts.map(salt => salt.hex(32)),
-    //   };
-    // }
+
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(optimisticTransferTransaction))
       .encodeABI();

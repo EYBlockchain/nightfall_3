@@ -12,14 +12,9 @@ import { initialize } from 'zokrates-js';
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
 import { Nullifier, Transaction } from '../classes/index';
-import {
-  findUsableCommitmentsMutex,
-  markNullified,
-  clearPending,
-  getSiblingInfo,
-} from './commitment-storage';
+import { findUsableCommitmentsMutex, markNullified, clearPending } from './commitment-storage';
 import { calculateIvkPkdfromAskNsk } from './keys';
-import { checkIndexDBForCircuit, getStoreCircuit } from './database';
+import { checkIndexDBForCircuit, getStoreCircuit, getSiblingPath } from './database';
 
 const { BN128_GROUP_ORDER, SHIELD_CONTRACT_NAME, USE_STUBS } = global.config;
 const { generalise } = gen;
@@ -60,15 +55,19 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     // proof, the next step is to compute its nullifier;
     const nullifier = new Nullifier(oldCommitment, nsk);
     // and the Merkle path from the commitment to the root
-    const commitmentTreeInfo = await getSiblingInfo(oldCommitment);
+    const commitmentTreeInfo = await getSiblingPath(oldCommitment.hash.hex(32));
+    // const commitmentTreeInfo = await getSiblingInfo(oldCommitment);
     const siblingPath = generalise(
-      [commitmentTreeInfo.root].concat(
+      [commitmentTreeInfo.siblingPath.root].concat(
         commitmentTreeInfo.siblingPath.path.map(p => p.value).reverse(),
       ),
     );
 
     // public inputs
-    const { leafIndex, isOnChain } = commitmentTreeInfo;
+    const {
+      leafIndex,
+      siblingPath: { blockNumberL2 },
+    } = commitmentTreeInfo;
 
     // now we have everything we need to create a Witness and compute a proof
     const witnessInput = [
@@ -106,7 +105,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     );
     const optimisticWithdrawTransaction = new Transaction({
       fee,
-      historicRootBlockNumberL2: [isOnChain, 0],
+      historicRootBlockNumberL2: [blockNumberL2, 0],
       transactionType: 3,
       tokenType: withdrawParams.tokenType,
       tokenId,

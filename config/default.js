@@ -23,6 +23,7 @@ module.exports = {
   COMMITMENTS_COLLECTION: 'commitments',
   PEERS_COLLECTION: 'peers',
   TIMBER_COLLECTION: 'timber',
+  SIBLING_COLLECTION: 'sibling_paths',
   CIRCUIT_COLLECTION: 'circuit_storage',
   CONTRACT_ARTIFACTS: '/app/build/contracts',
   PROPOSERS_CONTRACT_NAME: 'Proposers',

@@ -15,6 +15,7 @@ const {
   COMMITMENTS_COLLECTION,
   KEYS_COLLECTION,
   CIRCUIT_COLLECTION,
+  SIBLING_COLLECTION,
   HASH_TYPE,
   TIMBER_HEIGHT,
 } = global.config;
@@ -30,6 +31,7 @@ const connectDB = async () => {
       newDb.createObjectStore(TRANSACTIONS_COLLECTION);
       newDb.createObjectStore(KEYS_COLLECTION);
       newDb.createObjectStore(CIRCUIT_COLLECTION);
+      newDb.createObjectStore(SIBLING_COLLECTION);
     },
   });
 };
@@ -329,4 +331,82 @@ export async function setTransactionHashSiblingInfo(
     );
   }
   return null;
+}
+
+/*
+Functions for manipulating the sibling path collection
+*/
+export async function getAllSiblingPaths() {
+  const db = await connectDB();
+  const commitments = await db.getAllKeys(SIBLING_COLLECTION);
+  return Promise.all(
+    commitments.map(async c => {
+      const siblingPath = await db.get(SIBLING_COLLECTION, c);
+      return {
+        commitment: c,
+        ...siblingPath,
+      };
+    }),
+  );
+}
+
+export async function getSiblingPath(commitmentHash, base = false) {
+  const db = await connectDB();
+  const { leafIndex, root, basePath, diffPaths } = await db.get(SIBLING_COLLECTION, commitmentHash);
+  if (base || diffPaths.length === 0) return { leafIndex, root, siblingPath: basePath };
+  return { leafIndex, root, siblingPath: diffPaths[diffPaths.length - 1] };
+}
+export async function saveSiblingPath(commitmentHash, blockNumberL2, siblingPath, leafIndex, root) {
+  const db = await connectDB();
+  return db.put(
+    SIBLING_COLLECTION,
+    {
+      leafIndex,
+      basePath: {
+        blockNumberL2,
+        ...siblingPath,
+        root,
+      },
+      diffPaths: [],
+    },
+    commitmentHash,
+  );
+}
+
+export async function updateSiblingPath(commitmentHash, blockNumberL2, siblingPath, root) {
+  const db = await connectDB();
+  const existingPath = await db.get(SIBLING_COLLECTION, commitmentHash);
+  const updatedDiffs = [...existingPath.diffPaths, { root, blockNumberL2, ...siblingPath }]; // Pushing is mutable and returns array length
+  return db.put(
+    SIBLING_COLLECTION,
+    { ...existingPath, diffPaths: updatedDiffs.slice(-12) }, // The storage window is the last 12 paths.
+    commitmentHash,
+  );
+}
+
+export async function rollbackSiblingPathFromL2Block(blockNumberL2) {
+  const db = await connectDB();
+  const commitmentsSiblingPath = await getAllSiblingPaths();
+  // If blockNumberL2 of the basePath is rolled back, then we delete the entry
+  const deletedPaths = commitmentsSiblingPath.filter(
+    csp => csp.basePath.blockNumberL2 >= blockNumberL2,
+  );
+
+  await Promise.all(deletedPaths.map(d => db.delete(SIBLING_COLLECTION, d.commitment)));
+
+  // For remaining sibling paths, we only keep diffPaths less than the blockNumberL2
+  const updatedSiblingPaths = commitmentsSiblingPath
+    .filter(csp => csp.basePath.blockNumberL2 < blockNumberL2)
+    .map(cs => {
+      return {
+        ...cs,
+        diffPaths: cs.diffPaths.filter(d => d.blockNumberL2 < blockNumberL2),
+      };
+    });
+
+  return Promise.all(
+    updatedSiblingPaths.map(({ commitment, ...siblingPath }) =>
+      db.put(SIBLING_COLLECTION, siblingPath, commitment),
+    ),
+  );
 }
