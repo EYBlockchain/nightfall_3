@@ -5,7 +5,6 @@ import {
   markNullifiedOnChain,
   markOnChain,
   countCommitments,
-  setSiblingInfo,
   countWithdrawTransactionHashes,
   isTransactionHashWithdraw,
 } from '../services/commitment-storage.mjs';
@@ -17,6 +16,9 @@ import {
   saveTransaction,
   saveBlock,
   setTransactionHashSiblingInfo,
+  getAllSiblingPaths,
+  updateSiblingPath,
+  saveSiblingPath,
 } from '../services/database.mjs';
 import { decryptCommitment } from '../services/commitment-sync.mjs';
 
@@ -70,6 +72,23 @@ async function blockProposedEventHandler(data) {
     TIMBER_HEIGHT,
   );
   await saveTree(transactionHashL1, block.blockNumberL2, updatedTimber);
+
+  // We update all sibling paths to account for the newly inserted leaves.
+  const currentPaths = await getAllSiblingPaths();
+  await Promise.all(
+    currentPaths.map(s => {
+      const siblingPath = s.diffPaths[s.diffPaths.length - 1] ?? s.basePath; // Use basePath if no diffPaths exist
+      const updatedPath = Timber.statelessIncrementSiblingPath(
+        latestTree,
+        blockCommitments,
+        s.leafIndex,
+        s._id,
+        siblingPath,
+      );
+      return updateSiblingPath(s._id, block.blockNumberL2, updatedPath, updatedTimber.root);
+    }),
+  );
+
   logger.debug(`Saved tree for L2 block ${block.blockNumberL2}`);
   await Promise.all(
     // eslint-disable-next-line consistent-return
@@ -83,7 +102,13 @@ async function blockProposedEventHandler(data) {
           HASH_TYPE,
           TIMBER_HEIGHT,
         );
-        return setSiblingInfo(c, siblingPath, latestTree.leafCount + i, updatedTimber.root);
+        return saveSiblingPath(
+          c,
+          block.blockNumberL2,
+          siblingPath,
+          latestTree.leafCount + i,
+          updatedTimber.root,
+        );
       }
     }),
   );

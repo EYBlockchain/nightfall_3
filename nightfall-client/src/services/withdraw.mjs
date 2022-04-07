@@ -11,14 +11,10 @@ import gen from 'general-number';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
 import logger from 'common-files/utils/logger.mjs';
 import { Nullifier, Transaction } from '../classes/index.mjs';
-import {
-  findUsableCommitmentsMutex,
-  markNullified,
-  clearPending,
-  getSiblingInfo,
-} from './commitment-storage.mjs';
+import { findUsableCommitmentsMutex, markNullified, clearPending } from './commitment-storage.mjs';
 import getProposersUrl from './peers.mjs';
 import { calculateIvkPkdfromAskNsk } from './keys.mjs';
+import { getSiblingPath } from './database.mjs';
 
 const {
   BN128_GROUP_ORDER,
@@ -55,15 +51,18 @@ async function withdraw(withdrawParams) {
   // proof, the next step is to compute its nullifier;
   const nullifier = new Nullifier(oldCommitment, nsk);
   // and the Merkle path from the commitment to the root
-  const commitmentTreeInfo = await getSiblingInfo(oldCommitment);
+  const commitmentTreeInfo = await getSiblingPath(oldCommitment.hash.hex(32));
   const siblingPath = generalise(
-    [commitmentTreeInfo.root].concat(
+    [commitmentTreeInfo.siblingPath.root].concat(
       commitmentTreeInfo.siblingPath.path.map(p => p.value).reverse(),
     ),
   );
   logger.silly(`SiblingPath was: ${JSON.stringify(siblingPath)}`);
 
-  const { leafIndex, isOnChain } = commitmentTreeInfo;
+  const {
+    leafIndex,
+    siblingPath: { blockNumberL2 },
+  } = commitmentTreeInfo;
 
   // now we have everything we need to create a Witness and compute a proof
   const witness = [
@@ -97,7 +96,7 @@ async function withdraw(withdrawParams) {
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
   const optimisticWithdrawTransaction = new Transaction({
     fee,
-    historicRootBlockNumberL2: [isOnChain, 0],
+    historicRootBlockNumberL2: [blockNumberL2, 0],
     transactionType: 3,
     tokenType: items.tokenType,
     tokenId,

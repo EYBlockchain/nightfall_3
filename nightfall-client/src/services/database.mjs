@@ -16,6 +16,7 @@ const {
   TIMBER_COLLECTION,
   SUBMITTED_BLOCKS_COLLECTION,
   TRANSACTIONS_COLLECTION,
+  SIBLING_COLLECTION,
   HASH_TYPE,
   TIMBER_HEIGHT,
 } = config;
@@ -296,5 +297,75 @@ export async function getTransactionHashSiblingInfo(transactionHash) {
         isOnChain: 1,
       },
     },
+  );
+}
+
+/*
+Functions for manipulating the sibling path collection
+*/
+export async function getAllSiblingPaths() {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(SIBLING_COLLECTION).find().toArray();
+}
+
+export async function getSiblingPath(commitmentHash, base = false) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  const { leafIndex, basePath, diffPaths } = await db
+    .collection(SIBLING_COLLECTION)
+    .findOne({ _id: commitmentHash });
+  if (base || diffPaths.length === 0) return { leafIndex, siblingPath: basePath };
+  return { leafIndex, siblingPath: diffPaths[diffPaths.length - 1] };
+}
+export async function saveSiblingPath(commitmentHash, blockNumberL2, siblingPath, leafIndex, root) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(SIBLING_COLLECTION).insertOne({
+    _id: commitmentHash,
+    basePath: {
+      blockNumberL2,
+      ...siblingPath,
+      root,
+    },
+    leafIndex,
+    diffPaths: [],
+  });
+}
+
+export async function updateSiblingPath(commitmentHash, blockNumberL2, siblingPath, root) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  const existingPath = await db.collection(SIBLING_COLLECTION).findOne({ _id: commitmentHash });
+  const updatedDiffs = [...existingPath.diffPaths, { root, blockNumberL2, ...siblingPath }]; // Pushing is mutable and returns array length
+  const query = { _id: commitmentHash };
+  const update = { $set: { diffPaths: updatedDiffs.slice(-12) } };
+  return db.collection(SIBLING_COLLECTION).updateOne(query, update);
+}
+
+export async function rollbackSiblingPathFromL2Block(blockNumberL2) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  // If blockNumberL2 of the basePath is rolled back, then we delete the entry
+  await db
+    .collection(SIBLING_COLLECTION)
+    .deleteMany({ 'basePath.blockNumberL2': { $gte: blockNumberL2 } });
+
+  const commitmentsSiblingPath = await getAllSiblingPaths();
+  // For remaining sibling paths, we only keep diffPaths less than the blockNumberL2
+  const updatedSiblingPaths = commitmentsSiblingPath
+    .filter(csp => csp.basePath.blockNumberL2 < blockNumberL2)
+    .map(cs => {
+      return {
+        ...cs,
+        diffPaths: cs.diffPaths.filter(d => d.blockNumberL2 < blockNumberL2),
+      };
+    });
+  return Promise.all(
+    updatedSiblingPaths.map(({ commitment, ...siblingPath }) =>
+      db
+        .collection(SUBMITTED_BLOCKS_COLLECTION)
+        .updateOne({ _id: commitment }, { $set: { diffPaths: siblingPath } }),
+    ),
   );
 }

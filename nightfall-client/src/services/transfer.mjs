@@ -17,10 +17,10 @@ import {
   storeCommitment,
   markNullified,
   clearPending,
-  getSiblingInfo,
 } from './commitment-storage.mjs';
 import getProposersUrl from './peers.mjs';
 import { decompressKey, calculateIvkPkdfromAskNsk } from './keys.mjs';
+import { getSiblingPath } from './database.mjs';
 
 const {
   BN128_GROUP_ORDER,
@@ -108,14 +108,18 @@ async function transfer(transferParams) {
 
   // compress the secrets to save gas
   const compressedSecrets = Secrets.compressSecrets(secrets);
-  const commitmentTreeInfo = await Promise.all(oldCommitments.map(c => getSiblingInfo(c)));
+
+  const commitmentTreeInfo = await Promise.all(
+    oldCommitments.map(c => getSiblingPath(c.hash.hex(32))),
+  );
+
   const localSiblingPaths = commitmentTreeInfo.map(l => {
     const path = l.siblingPath.path.map(p => p.value);
-    return generalise([l.root].concat(path.reverse()));
+    return generalise([l.siblingPath.root].concat(path.reverse()));
   });
   const leafIndices = commitmentTreeInfo.map(l => l.leafIndex);
-  const blockNumberL2s = commitmentTreeInfo.map(l => l.isOnChain);
-  const roots = commitmentTreeInfo.map(l => l.root);
+  const blockNumberL2s = commitmentTreeInfo.map(l => l.siblingPath.blockNumberL2);
+  const roots = commitmentTreeInfo.map(l => l.siblingPath.root);
   console.log(
     'Constructing transfer transaction with blockNumberL2s',
     blockNumberL2s,
