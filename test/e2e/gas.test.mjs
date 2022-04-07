@@ -4,7 +4,12 @@ import chaiHttp from 'chai-http';
 import config from 'config';
 import chaiAsPromised from 'chai-as-promised';
 import Nf3 from '../../cli/lib/nf3.mjs';
-import { depositNTransactions, Web3Client } from '../utils.mjs';
+import {
+  depositNTransactions,
+  transferNTransactions,
+  withdrawNTransactions,
+  Web3Client,
+} from '../utils.mjs';
 
 // so we can use require with mjs file
 const { expect } = chai;
@@ -22,8 +27,8 @@ const {
   signingKeys,
 } = config.TEST_OPTIONS;
 
-const txPerBlock = 32;
-const expectedGasCostPerTx = 10000 * txPerBlock;
+const txPerBlock = process.env.TRANSACTIONS_PER_BLOCK || 32;
+const expectedGasCostPerTx = 20000 * txPerBlock;
 const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
 const nf3Proposer1 = new Nf3(signingKeys.proposer1, environment);
 
@@ -75,12 +80,12 @@ describe('Gas test', () => {
 
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer1.startProposer();
-    newGasBlockEmitter.on('gascost', async gasUsed => {
+    newGasBlockEmitter.on('receipt', async receipt => {
+      const { gasUsed } = receipt;
       console.log(
         `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
       );
       gasCost = gasUsed;
-      console.log(gasCost);
     });
 
     await nf3Users[0].init(mnemonics.user1);
@@ -91,7 +96,10 @@ describe('Gas test', () => {
   });
 
   describe('Deposits', () => {
-    it('should get a reasonable amount of gas cost', async function () {
+    // we need more deposits because we won't have enough input transactions until
+    // after this block is made, by which time it's too late.
+    // also,the first  block costs more due to one-off setup costs.
+    it('should make extra deposits so that we can double-transfer', async function () {
       // We create enough transactions to fill blocks full of deposits.
       await depositNTransactions(
         nf3Users[0],
@@ -100,6 +108,78 @@ describe('Gas test', () => {
         tokenType,
         transferValue,
         tokenId,
+        fee,
+      );
+      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+
+      expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
+    });
+    it('should be a reasonable gas cost', async function () {
+      // We create enough transactions to fill blocks full of deposits.
+      await depositNTransactions(
+        nf3Users[0],
+        txPerBlock,
+        erc20Address,
+        tokenType,
+        transferValue,
+        tokenId,
+        fee,
+      );
+      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+
+      expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
+    });
+  });
+
+  describe('Single transfers', () => {
+    it('should be a reasonable gas cost', async function () {
+      // We create enough transactions to fill blocks full of deposits.
+      await transferNTransactions(
+        nf3Users[0],
+        txPerBlock,
+        erc20Address,
+        tokenType,
+        transferValue,
+        tokenId,
+        nf3Users[0].zkpKeys.compressedPkd,
+        fee,
+      );
+      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+
+      expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
+    });
+  });
+
+  describe('Double transfers', () => {
+    it('should be a reasonable gas cost', async function () {
+      // We create enough transactions to fill blocks full of deposits.
+      await transferNTransactions(
+        nf3Users[0],
+        txPerBlock,
+        erc20Address,
+        tokenType,
+        transferValue / 2,
+        tokenId,
+        nf3Users[0].zkpKeys.compressedPkd,
+        fee,
+      );
+      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+
+      expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
+    });
+  });
+
+  describe('Withdraws', () => {
+    it('should be a reasonable gas cost', async function () {
+      // We create enough transactions to fill blocks full of deposits.
+      await withdrawNTransactions(
+        nf3Users[0],
+        txPerBlock,
+        erc20Address,
+        tokenType,
+        transferValue / 2,
+        tokenId,
+        nf3Users[0].ethereumAddress,
         fee,
       );
       eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
