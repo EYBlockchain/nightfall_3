@@ -75,11 +75,13 @@ describe('Gas test', () => {
 
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer1.startProposer();
-    newGasBlockEmitter.on('gascost', async gasUsed => {
+    newGasBlockEmitter.on('receipt', async receipt => {
       console.log(
-        `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
+        `Block proposal gas cost was ${receipt.gasUsed}, cost per transaction was ${
+          receipt.gasUsed / txPerBlock
+        }`,
       );
-      gasCost = gasUsed;
+      gasCost = receipt.gasUsed;
       console.log(gasCost);
     });
 

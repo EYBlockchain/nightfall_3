@@ -41,8 +41,8 @@ async function startProposer() {
   const newGasBlockEmitter = await nf3StartProposer();
   if (GENESIS_BLOCKS) {
     logger.debug(`Waiting for ${GENESIS_BLOCKS} blocks to end the test`);
-    newGasBlockEmitter.on('gascost', async gasUsed => {
-      logger.debug(`Block proposal gas cost was ${gasUsed}`);
+    newGasBlockEmitter.on('receipt', async receipt => {
+      logger.debug(`Block proposal gas cost was ${receipt.gasUsed}`);
       currentBlocks++;
       if (currentBlocks === Number(GENESIS_BLOCKS)) {
         logger.debug('De-registering proposer...');
