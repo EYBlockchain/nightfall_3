@@ -105,6 +105,7 @@ export async function approve(ercAddress, spenderAddress, tokenType, value) {
   const from = await Web3.getAccount();
   switch (tokenType) {
     case TOKEN_TYPE.ERC20: {
+      console.log(from);
       const allowance = await ercContract.methods.allowance(from, spenderAddress).call();
       const allowanceBN = new web3.utils.BN(allowance);
       const valueBN = new web3.utils.BN(value);

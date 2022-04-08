@@ -34,7 +34,7 @@ const Bridge = ({ changeChain }) => {
 
             <div className="page_partition">
               <div>
-                <BridgeComponent value={state} />
+                <BridgeComponent value={state} changeChain={changeChain} />
               </div>
               <div className="info_wrapper">
                 <div className="info_painel_title">Nightfall Bridge</div>

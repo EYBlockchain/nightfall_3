@@ -19,15 +19,7 @@ export default function Tokens({ tokenList, changeChain }) {
           <div className={styles.headerActions}>Actions</div>
         </div>
         {tokenList.map((t, index) => (
-          <TokenItem
-            maticChainUsdBalance={t.maticChainUsdBalance}
-            maticChainBalance={t.maticChainBalance}
-            name={t.name}
-            symbol={t.symbol}
-            tokenAddress={t.tokenAddress}
-            key={index}
-            changeChain={changeChain}
-          />
+          <TokenItem {...t} key={index} changeChain={changeChain} />
         ))}
       </div>
     </div>

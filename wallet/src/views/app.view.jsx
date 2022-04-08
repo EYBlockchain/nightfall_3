@@ -46,19 +46,21 @@ export default function App() {
     <BrowserRouter>
       <ToastContainer></ToastContainer>
       <UserProvider>
-        <Switch>
-          <Route path="/" exact render={() => <MainPage />} />
-          <Route path="/wallet" render={() => <Wallet changeChain={changeChain} />} />
-          <Route path="/bridge" render={() => <Bridge changeChain={changeChain} />} />
-          <Route path="/transactionPage" render={() => <TransactionPage />} />
-          <Route
-            path="/issues"
-            render={() => {
-              window.location = NF3_GITHUB_ISSUES_URL;
-            }}
-          />
-          <Redirect to="/" />
-        </Switch>
+        <AccountProvider>
+          <Switch>
+            <Route path="/" exact render={() => <MainPage />} />
+            <Route path="/wallet" render={() => <Wallet changeChain={changeChain} />} />
+            <Route path="/bridge" render={() => <Bridge changeChain={changeChain} />} />
+            <Route path="/transactionPage" render={() => <TransactionPage />} />
+            <Route
+              path="/issues"
+              render={() => {
+                window.location = NF3_GITHUB_ISSUES_URL;
+              }}
+            />
+            <Redirect to="/" />
+          </Switch>
+        </AccountProvider>
       </UserProvider>
     </BrowserRouter>
   );

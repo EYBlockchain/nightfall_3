@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { useContext, useState, useCallback, useEffect } from 'react';
 import Modal from 'react-bootstrap/Modal';
 import { MdArrowForwardIos } from 'react-icons/md';
@@ -39,7 +40,7 @@ const gen = require('general-number');
 
 const { generalise } = gen;
 
-const BridgeComponent = () => {
+const BridgeComponent = ({ changeChain }) => {
   const [state] = useContext(UserContext);
   const { setAccountInstance, accountInstance } = useAccount();
   const [l1Balance, setL1Balance] = useState(0);
@@ -152,6 +153,7 @@ const BridgeComponent = () => {
     const zkpKeys = await retrieveAndDecrypt(state.compressedPkd);
     switch (txType) {
       case 'deposit': {
+        console.log('shield', shieldContractAddress);
         const pkd = decompressKey(generalise(state.compressedPkd));
         await approve(ercAddress, shieldContractAddress, 'ERC20', APPROVE_AMOUNT);
         setShowModalConfirm(true);
@@ -219,7 +221,13 @@ const BridgeComponent = () => {
     [transferValue],
   );
 
-  const handleShow = () => {
+  const handleShow = async () => {
+    if (txType === 'deposit') {
+      await changeChain('ethereum', setShow);
+    } else {
+      await changeChain('polygon', setShow);
+    }
+
     if (
       (txType === 'deposit' && transferValue > l1Balance) ||
       (txType === 'withdraw' && transferValue > l2Balance)
@@ -227,7 +235,6 @@ const BridgeComponent = () => {
       toast.error("Input value can't be greater than balance!");
     else if (!transferValue) toast.warn('Input a value for transfer, please.');
     else if (transferValue === 0) toast.warn("Input a value can't be zero.");
-    setShow(true);
   };
 
   async function updateL1Balance() {
@@ -602,6 +609,10 @@ const BridgeComponent = () => {
       </div>
     </div>
   );
+};
+
+BridgeComponent.propTypes = {
+  changeChain: PropTypes.func.isRequired,
 };
 
 export default BridgeComponent;
