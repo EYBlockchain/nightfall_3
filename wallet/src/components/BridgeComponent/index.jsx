@@ -42,8 +42,8 @@ const { generalise } = gen;
 const BridgeComponent = () => {
   const [state] = useContext(UserContext);
   const { setAccountInstance, accountInstance } = useAccount();
-  const [l1Balance, setL1Balance] = useState(0);
-  const [l2Balance, setL2Balance] = useState(0);
+  const [l1Balance, setL1Balance] = useState(0n);
+  const [l2Balance, setL2Balance] = useState(0n);
   const [shieldContractAddress, setShieldAddress] = useState('');
   const location = useLocation();
 
@@ -163,7 +163,7 @@ const BridgeComponent = () => {
           {
             ercAddress,
             tokenId: 0,
-            value: (transferValue * 10 ** token.decimals).toString(),
+            value: (BigInt(transferValue) * 10n ** BigInt(token.decimals)).toString(),
             pkd,
             nsk: zkpKeys.nsk,
             fee: 1,
@@ -190,7 +190,7 @@ const BridgeComponent = () => {
             offchain: true,
             ercAddress,
             tokenId: 0,
-            value: (transferValue * 10 ** token.decimals).toString(),
+            value: (BigInt(transferValue) * 10n ** BigInt(token.decimals)).toString(),
             recipientAddress: await Web3.getAccount(),
             nsk: zkpKeys.nsk,
             ask: zkpKeys.ask,
@@ -221,8 +221,8 @@ const BridgeComponent = () => {
 
   const handleShow = () => {
     if (
-      (txType === 'deposit' && transferValue > l1Balance) ||
-      (txType === 'withdraw' && transferValue > l2Balance)
+      (txType === 'deposit' && (BigInt(transferValue) * 10n ** BigInt(token.decimals)) > l1Balance) ||
+      (txType === 'withdraw' && (BigInt(transferValue) * 10n ** BigInt(token.decimals)) > l2Balance)
     )
       toast.error("Input value can't be greater than balance!");
     else if (!transferValue) toast.warn('Input a value for transfer, please.');
@@ -248,8 +248,8 @@ const BridgeComponent = () => {
       // const { address } = (await getContractAddress('ERC20Mock')).data; // TODO REMOVE THIS WHEN OFFICIAL ADDRESSES
       const l2bal = await getWalletBalance(state.compressedPkd);
       if (Object.hasOwnProperty.call(l2bal, state.compressedPkd))
-        setL2Balance(l2bal[state.compressedPkd][token.address.toLowerCase()] ?? 0);
-      else setL2Balance(0);
+        setL2Balance(l2bal[state.compressedPkd][token.address.toLowerCase()] ?? 0n);
+      else setL2Balance(0n);
     }
   }
 
@@ -314,10 +314,18 @@ const BridgeComponent = () => {
                   <p>Balance: </p>
                   {token && txType === 'deposit' && (
                     // <p> {token.decimals} </p>
-                    <p>{`${(l1Balance / 10 ** token.decimals).toFixed(4)} ${token.symbol}`}</p>
+                    // <p>{`${(l1Balance / 10 ** token.decimals).toFixed(4)} ${token.symbol}`}</p>
+                    <p>{
+                      `${l1Balance.toString().slice(0,l1Balance.toString().length - token.decimals)}.
+                      ${(l1Balance.toString().slice(-token.decimals)).slice(0,4)} ${token.symbol}`
+                    }</p>
                   )}
                   {token && txType === 'withdraw' && (
-                    <p>{`${(l2Balance / 10 ** token.decimals).toFixed(4)} ${token.symbol}`}</p>
+                    // <p>{`${(l2Balance / 10 ** token.decimals).toFixed(4)} ${token.symbol}`}</p>
+                    <p>{
+                      `${l2Balance.toString().slice(0,l2Balance.toString().length - token.decimals)}.
+                      ${(l2Balance.toString().slice(-token.decimals)).slice(0,4)} ${token.symbol}`
+                    }</p>
                   )}
                   {!token && (
                     <p>
@@ -390,16 +398,30 @@ const BridgeComponent = () => {
               <div className="balance_details">
                 <p>Balance: </p>
                 {token && txType === 'deposit' && (
-                  <p>{`${(l2Balance / 10 ** token.decimals).toFixed(4)} ${token.symbol}`}</p>
+                  // <p>{`${(l2Balance / 10 ** token.decimals).toFixed(4)} ${token.symbol}`}</p>
+                  <p>{
+                    `${l2Balance.toString().slice(0,l2Balance.toString().length - token.decimals)}.
+                    ${(l2Balance.toString().slice(-token.decimals)).slice(0,4)} ${token.symbol}`
+                  }</p>
                 )}
                 {token && txType === 'withdraw' && (
-                  <p>{`${(l1Balance / 10 ** token.decimals).toFixed(4)} ${token.symbol}`}</p>
+                  // <p>{`${(l1Balance / 10 ** token.decimals).toFixed(4)} ${token.symbol}`}</p>
+                  <p>{
+                    `${l1Balance.toString().slice(0,l1Balance.toString().length - token.decimals)}.
+                    ${(l1Balance.toString().slice(-token.decimals)).slice(0,4)} ${token.symbol}`
+                  }</p>
                 )}
                 {!token && (
+                  // <p>
+                  //   {txType === 'withdraw'
+                  //     ? `${(l2Balance / 10 ** token.decimals).toFixed(4)}`
+                  //     : `${(l1Balance / 10 ** token.decimals).toFixed(4)}`}
+                  // </p>
                   <p>
                     {txType === 'withdraw'
-                      ? `${(l2Balance / 10 ** token.decimals).toFixed(4)}`
-                      : `${(l1Balance / 10 ** token.decimals).toFixed(4)}`}
+                      ? `${l2Balance.toString().slice(0,l2Balance.toString().length - token.decimals)}.${(l2Balance.toString().slice(-token.decimals)).slice(0,4)} ${token.symbol}`
+                      : `${l1Balance.toString().slice(0,l1Balance.toString().length - token.decimals)}.${(l1Balance.toString().slice(-token.decimals)).slice(0,4)} ${token.symbol}`
+                  }
                   </p>
                 )}
               </div>
