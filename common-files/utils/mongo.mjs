@@ -16,11 +16,10 @@ export default {
     // Check if we are connecting to MongoDb or DocumentDb
     if (url.includes('amazonaws')) {
       // retrieve user and password from secrets
-      const { MONGO_INITDB_ROOT_PASSWORD, MONGO_INITDB_ROOT_USERNAME, MONGO_CA } = process.env;
+      const { MONGO_INITDB_ROOT_PASSWORD, MONGO_INITDB_ROOT_USERNAME } = process.env;
       const client = await new MongoClient(
-        `mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@${url}:27017/?tls=true&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false`,
+        `mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@${url}:27017/?replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false`,
         {
-          tlsCAFile: `${MONGO_CA}`, // Specify the DocDB; cert
           useUnifiedTopology: true,
         },
       );

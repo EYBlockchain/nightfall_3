@@ -27,7 +27,9 @@ export async function getContractInstance(contractName, deployedAddress) {
   if (!deployedAddress) throw Error('deployedAddress not passed');
 
   const abi = contractABIs[contractName];
-  return new web3.eth.Contract(abi, deployedAddress, options);
+  return new web3.eth.Contract(abi, deployedAddress, {
+    from: options.from,
+  });
 }
 
 // TODO: temporary function create to avoid eslint issue for now
@@ -77,6 +79,7 @@ export async function submitTransaction(unsignedTransaction, contractAddress, fe
     data: unsignedTransaction,
     gas: web3.utils.toHex(gas),
     gasPrice: web3.utils.toHex(gasPrice),
+    // maxPriorityFeePerGas: web3.utils.toHex(1 * 10 ** 9),
   };
 
   if (fee) tx.value = web3.utils.toHex(fee);

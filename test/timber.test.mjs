@@ -140,5 +140,49 @@ describe('Local Timber Tests', () => {
         { numRuns: 20 },
       );
     });
+    it('Check Sibling Path Increment', () => {
+      fc.assert(
+        fc.property(
+          fc.array(randomLeaf, { minLength: 0, maxLength: MAX_ARRAY }), // Remove Duplicates within both arrays
+          fc.array(randomLeaf, { minLength: 1, maxLength: 32 }), // Remove Duplicates within both arrays
+          fc.array(randomLeaf, { minLength: 1, maxLength: 32 }), // Remove Duplicates within both arrays
+          (leaves, addedLeaves, yetMoreLeaves) => {
+            const leafIndex = Math.max(0, Math.floor(Math.random() * (addedLeaves.length - 1)));
+            const leafValue = addedLeaves[leafIndex];
+            const initialTimber = new Timber().insertLeaves(leaves);
+            // Get a sibling path after new leaves are added
+            const statelessMerklePath = Timber.statelessSiblingPath(
+              initialTimber,
+              addedLeaves,
+              leafIndex,
+            );
+            // Update Timber statelessly (no tree)
+            const statelessUpdate = Timber.statelessUpdate(initialTimber, addedLeaves);
+            // Given the new state (sans tree), try to increment the sibling path
+            const statelessIncrementPath = Timber.statelessIncrementSiblingPath(
+              statelessUpdate,
+              yetMoreLeaves,
+              leaves.length + leafIndex,
+              leafValue,
+              statelessMerklePath,
+            );
+            const timber = new Timber().insertLeaves(
+              leaves.concat(addedLeaves).concat(yetMoreLeaves),
+            );
+            const timberMerklePath = timber.getSiblingPath(leafValue);
+            if (statelessIncrementPath.isMember) {
+              expect(
+                Timber.verifySiblingPath(leafValue, timber.root, statelessIncrementPath),
+              ).to.eql(true);
+              expect(Timber.verifySiblingPath(leafValue, timber.root, timberMerklePath)).to.eql(
+                true,
+              );
+            }
+            expect(statelessIncrementPath.path).to.have.deep.members(timberMerklePath.path);
+          },
+        ),
+        { numRuns: 20 },
+      );
+    });
   });
 });

@@ -18,53 +18,19 @@ import { UserContext } from '../../hooks/User/index.jsx';
 import './wallet.scss';
 import * as Storage from '../../utils/lib/local-storage';
 import Web3 from '../../common-files/utils/web3';
-import { getContractAddress } from '../../common-files/utils/contract.js';
+import { useAccount } from '../../hooks/Account/index.tsx';
+import tokensList from '../../components/Modals/Bridge/TokensList/tokensList';
+// import { getContractAddress } from '../../common-files/utils/contract.js';
+import useInterval from '../../hooks/useInterval.js';
 
-/*
-These are some default values for now
-*/
-
-const initialTokenState = [
-  {
-    maticChainUsdBalance: '0',
-    maticChainBalance: '0',
-    name: 'ChainLink Token',
-    symbol: 'LINK',
-    order: 2,
-    tokenAddress: '',
-  },
-  {
-    maticChainUsdBalance: '0',
-    maticChainBalance: '0',
-    name: 'USDT',
-    symbol: 'USDT',
-    order: 2,
-    tokenAddress: '',
-  },
-  {
-    maticChainUsdBalance: '0',
-    maticChainBalance: '0',
-    name: 'Aave Token',
-    symbol: 'AAVE',
-    order: 2,
-    tokenAddress: '',
-  },
-  {
-    maticChainUsdBalance: '1.8',
-    maticChainBalance: '0',
-    name: 'Matic Token',
-    symbol: 'MATIC',
-    order: 1,
-    tokenAddress: '',
-  },
-];
+const { DEFAULT_ACCOUNT_NUM } = global.config;
 
 /**
-This is a modal to detect if a wallet (mnemonic and passphrase) has been initialized
+This is a modal to detect if a wallet has been initialized
 */
 
 function WalletModal(props) {
-  const [, , configureMnemonic] = useContext(UserContext);
+  const [, , deriveAccounts] = useContext(UserContext);
   const [screenMnemonic, setScreenMnemonic] = useState();
   return (
     <Modal {...props} size="lg" aria-labelledby="contained-modal-title-vcenter" centered>
@@ -107,7 +73,8 @@ function WalletModal(props) {
       <Modal.Footer>
         <Button
           onClick={async () => {
-            await configureMnemonic(screenMnemonic);
+            // await configureMnemonic(screenMnemonic);
+            await deriveAccounts(screenMnemonic, DEFAULT_ACCOUNT_NUM);
             props.onHide();
           }}
           disabled={typeof screenMnemonic === 'undefined'}
@@ -120,62 +87,77 @@ function WalletModal(props) {
 }
 
 export default function Wallet({ changeChain }) {
-  const [tokens, setTokens] = useState(
-    initialTokenState.sort((a, b) => Number(a.order) - Number(b.order)),
-  );
+  const { setAccountInstance } = useAccount();
+  const initialPrices = {};
+  tokensList.tokens.forEach(t => {
+    initialPrices[t.id] = 0;
+  }, {});
+
+  const [currencyValues, setCurrencyValues] = useState({ now: 0, ...initialPrices });
+
+  const initialTokenState = tokensList.tokens.map(t => {
+    return {
+      l2Balance: '0',
+      currencyValue: currencyValues[t.id],
+      ...t,
+    };
+  });
+  const [tokens, setTokens] = useState(initialTokenState);
   const [state] = useContext(UserContext);
   const [modalShow, setModalShow] = useState(false);
+  const [delay, setDelay] = React.useState(50);
 
   useEffect(async () => {
-    const mnemonicExists = Storage.mnemonicGet(await Web3.getAccount());
-    if (typeof state.mnemonic === 'undefined' && !mnemonicExists) setModalShow(true);
-    else setModalShow(false);
-  }, [state.mnemonic]);
-
-  useEffect(async () => {
-    const pkd = Storage.pkdGet(await Web3.getAccount());
-    const l2Balance = await getWalletBalance(pkd);
-    const { address: newTokenAddress } = (await getContractAddress('ERC20Mock')).data; // TODO This is just until we get a list from Polygon
-    const updatedTokenState = initialTokenState.map(i => {
-      const { tokenAddress, ...rest } = i;
-      if (i.symbol === 'MATIC')
-        // TODO just map the mock address over the MATIC token.
-        return {
-          tokenAddress: newTokenAddress,
-          ...rest,
-        };
-      return i;
+    const web3 = Web3.connection();
+    const accounts = await web3.eth.getAccounts();
+    setAccountInstance({
+      address: accounts[0],
     });
-    if (
-      Object.keys(l2Balance).length !== 0 &&
-      Object.prototype.hasOwnProperty.call(state, 'zkpKeys')
-    ) {
-      // eslint-disable-next-line consistent-return, array-callback-return
-      const updatedState = updatedTokenState.map(t => {
-        if (Object.keys(l2Balance).includes(state.zkpKeys.compressedPkd)) {
-          const token = l2Balance[state.zkpKeys.compressedPkd][t.tokenAddress.toLowerCase()];
-          const tokenInfo = t;
-          if (token) {
-            const { maticChainBalance, ...rest } = tokenInfo;
-            return {
-              maticChainBalance: token.toString(),
-              ...rest,
-            };
-          }
-          return t;
+  }, []);
+
+  useEffect(async () => {
+    const pkdsDerived = Storage.pkdArrayGet(await Web3.getAccount());
+    if (state.compressedPkd === '' && !pkdsDerived) setModalShow(true);
+    else setModalShow(false);
+  }, []);
+
+  useEffect(async () => {
+    if (!Storage.getPricing()) await Storage.setPricing(tokensList.tokens.map(t => t.id));
+    else if (Date.now() - Storage.getPricing().time > 86400)
+      await Storage.setPricing(tokensList.tokens.map(t => t.id));
+    setCurrencyValues(Storage.getPricing);
+  }, []);
+
+  useInterval(async () => {
+    console.log('l2Balance', state.compressedPkd);
+    const l2BalanceObj = await getWalletBalance(state.compressedPkd);
+    const updatedState = await Promise.all(
+      tokens.map(async t => {
+        const currencyValue = currencyValues[t.id];
+        if (Object.keys(l2BalanceObj).includes(state.compressedPkd)) {
+          const token = l2BalanceObj[state.compressedPkd][t.address.toLowerCase()] ?? 0;
+          return {
+            ...t,
+            l2Balance: token.toString(),
+            currencyValue,
+          };
         }
-      });
-      if (typeof updatedState[0] === 'undefined') return;
-      const newState = updatedTokenState.map(i => {
-        const s = updatedState.find(u => i.symbol === u.symbol);
-        if (s) return s;
-        return i;
-      });
-      setTokens(newState.sort((a, b) => Number(a.order) - Number(b.order)));
-    } else {
-      setTokens(updatedTokenState.sort((a, b) => Number(a.order) - Number(b.order)));
-    }
-  }, [state.zkpKeys]);
+        return t;
+      }),
+    );
+    // Trapdoor for testing
+    // const { address: trapdoorAddress } = (await getContractAddress('ERC20Mock')).data; // TODO Only for testing now
+    // setTokens(
+    //   updatedState.map(({ address, ...rest }) => {
+    //     return {
+    //       ...rest,
+    //       address: trapdoorAddress,
+    //     };
+    //   }),
+    // );
+    setTokens(updatedState);
+    setDelay(10000);
+  }, delay);
 
   return (
     <div>
@@ -199,9 +181,6 @@ export default function Wallet({ changeChain }) {
 }
 
 WalletModal.propTypes = {
-  onHide: PropTypes.func.isRequired,
-};
-
-Wallet.propTypes = {
   changeChain: PropTypes.func.isRequired,
+  onHide: PropTypes.func.isRequired,
 };

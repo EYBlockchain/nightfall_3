@@ -51,7 +51,6 @@ const cardsData = [
   },
 ];
 
-// src={require('../static/img/homepage/poly-bridge.png')}
 export default function MainPage() {
   return (
     <div className="homepage">

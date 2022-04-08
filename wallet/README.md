@@ -15,4 +15,12 @@ If you select to backup your nightfall mnemonic, it will be encrypted in local s
 When you login to nightfall, you will be using account index 0. You can select a different index in `Account Settings` to use a different set of keys.
 
 ## Tests
-See [here](https://github.com/EYBlockchain/nightfall_3/wallet/test/README.md) for information on how to launch tests.
+*Updates : E2E test is not working, not maintained currently*
+To launch test, set these `NETWORK_NAME`, `RPC_URL`, `CHAIN_ID`, and `PRIVATE_KEY` environment variable in local machine and then run
+```sh
+npm run e2e-test
+```
+### For example
+If launching test (e2e test) locally with Ganache.
+  1. Follow instruction [here](https://github.com/EYBlockchain/nightfall_3#wallet) to start wallet app with ganache.
+  2. Run `e2e-test` npm script in wallet director `NETWORK_NAME=ganache-nightfall RPC_URL=http://localhost:8546 CHAIN_ID=1337 PRIVATE_KEY=0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e npm run e2e-test`

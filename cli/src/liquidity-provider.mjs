@@ -37,12 +37,7 @@ async function startProvider(testEnvironment) {
     setEnvironment('Localhost');
   }
   const nf3Env = getCurrentEnvironment().currentEnvironment;
-  const nf3 = new Nf3(advanceWithdrawalEthereumSigningKey, {
-    web3WsUrl: nf3Env.web3WsUrl,
-    optimistApiUrl: nf3Env.optimistApiUrl,
-    optimistWsUrl: nf3Env.optimistWsUrl,
-    clientApiUrl: nf3Env.clientApiUrl,
-  });
+  const nf3 = new Nf3(advanceWithdrawalEthereumSigningKey, nf3Env);
   await nf3.init(defaultMnemonic);
   if (await nf3.healthcheck('optimist')) console.log('Healthcheck passed');
   else throw new Error('Healthcheck failed');

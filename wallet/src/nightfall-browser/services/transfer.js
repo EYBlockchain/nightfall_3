@@ -11,7 +11,6 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
 import gen from 'general-number';
 import { initialize } from 'zokrates-js';
 
-import axios from 'axios';
 import rand from '../../common-files/utils/crypto/crypto-random';
 import { getContractInstance, processProposerPayment } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
@@ -23,32 +22,19 @@ import {
   clearPending,
   getSiblingInfo,
 } from './commitment-storage';
-import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
 import { decompressKey, calculateIvkPkdfromAskNsk } from './keys';
+import { checkIndexDBForCircuit, getStoreCircuit } from './database';
 
-// zokrates/single_transfer_stub/artifacts/single_transfer_stub-abi.json';
-// eslint-disable-next-line
-import singleTransferAbi from '../../zokrates/single_transfer_stub/artifacts/single_transfer_stub-abi.json';
-// eslint-disable-next-line
-import singleTransferProgramFile from '../../zokrates/single_transfer_stub/artifacts/single_transfer_stub-program';
-// eslint-disable-next-line
-import singleTransferPkFile from '../../zokrates/single_transfer_stub/keypair/single_transfer_stub_pk.key';
-// eslint-disable-next-line
-import doubleTransferAbi from '../../zokrates/double_transfer_stub/artifacts/double_transfer_stub-abi.json';
-// eslint-disable-next-line
-import doubleTransferProgramFile from '../../zokrates/double_transfer_stub/artifacts/double_transfer_stub-program';
-// eslint-disable-next-line
-import doubleTransferPkFile from '../../zokrates/double_transfer_stub/keypair/double_transfer_stub_pk.key';
-import { saveTransaction } from './database';
-
-const { BN128_GROUP_ORDER, ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, proposerUrl, ZERO } =
-  global.config;
+const { BN128_GROUP_ORDER, ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, ZERO, USE_STUBS } = global.config;
 const { generalise, GN } = gen;
+
+const singleTransfer = USE_STUBS ? 'single_transfer_stub' : 'single_transfer';
+const doubleTransfer = USE_STUBS ? 'double_transfer_stub' : 'double_transfer';
 
 async function transfer(transferParams, shieldContractAddress) {
   logger.info('Creating a transfer transaction');
   // let's extract the input items
-  const { offchain = false, ...items } = transferParams;
+  const { ...items } = transferParams;
   const { ercAddress, tokenId, recipientData, nsk, ask, fee } = generalise(items);
   const { pkd, compressedPkd } = calculateIvkPkdfromAskNsk(ask, nsk);
   const { recipientCompressedPkds, values } = recipientData;
@@ -67,6 +53,7 @@ async function transfer(transferParams, shieldContractAddress) {
   );
   if (oldCommitments) logger.debug(`Found commitments ${JSON.stringify(oldCommitments, null, 2)}`);
   else throw new Error('No suitable commitments were found'); // caller to handle - need to get the user to make some commitments or wait until they've been posted to the blockchain and Timber knows about them
+
   // Having found either 1 or 2 commitments, which are suitable inputs to the
   // proof, the next step is to compute their nullifiers;
   const nullifiers = oldCommitments.map(commitment => new Nullifier(commitment, nsk));
@@ -124,7 +111,6 @@ async function transfer(transferParams, shieldContractAddress) {
   });
   const leafIndices = commitmentTreeInfo.map(l => l.leafIndex);
   const blockNumberL2s = commitmentTreeInfo.map(l => l.isOnChain);
-
   // time for a quick sanity check.  We expect the number of old commitments,
   // new commitments and nullifiers to be equal.
   if (nullifiers.length !== oldCommitments.length || nullifiers.length !== newCommitments.length) {
@@ -192,36 +178,38 @@ async function transfer(transferParams, shieldContractAddress) {
   // call a zokrates worker to generate the proof
   // This is (so far) the only place where we need to get specific about the
   // circuit
-  let transactionType;
+  let abi;
   let program;
   let pk;
-  let abi;
-  const zokratesProvider = await initialize();
+  let transactionType;
   if (oldCommitments.length === 1) {
     transactionType = 1;
-    program = await fetch(singleTransferProgramFile)
-      .then(response => response.body.getReader())
-      .then(parseData)
-      .then(mergeUint8Array);
-    pk = await fetch(singleTransferPkFile)
-      .then(response => response.body.getReader())
-      .then(parseData)
-      .then(mergeUint8Array);
-    abi = singleTransferAbi;
     blockNumberL2s.push(0); // We need top pad block numbers if we do a single transfer
+    if (!(await checkIndexDBForCircuit(singleTransfer)))
+      throw Error('Some circuit data are missing from IndexedDB');
+    const [abiData, programData, pkData] = await Promise.all([
+      getStoreCircuit(`${singleTransfer}-abi`),
+      getStoreCircuit(`${singleTransfer}-program`),
+      getStoreCircuit(`${singleTransfer}-pk`),
+    ]);
+    abi = abiData.data;
+    program = programData.data;
+    pk = pkData.data;
   } else if (oldCommitments.length === 2) {
     transactionType = 2;
-    program = await fetch(doubleTransferProgramFile)
-      .then(response => response.body.getReader())
-      .then(parseData)
-      .then(mergeUint8Array);
-    pk = await fetch(doubleTransferPkFile)
-      .then(response => response.body.getReader())
-      .then(parseData)
-      .then(mergeUint8Array);
-    abi = doubleTransferAbi;
+    if (!(await checkIndexDBForCircuit(doubleTransfer)))
+      throw Error('Some circuit data are missing from IndexedDB');
+    const [abiData, programData, pkData] = await Promise.all([
+      getStoreCircuit(`${doubleTransfer}-abi`),
+      getStoreCircuit(`${doubleTransfer}-program`),
+      getStoreCircuit(`${doubleTransfer}-pk`),
+    ]);
+    abi = abiData.data;
+    program = programData.data;
+    pk = pkData.data;
   } else throw new Error('Unsupported number of commitments');
 
+  const zokratesProvider = await initialize();
   const artifacts = { program: new Uint8Array(program), abi };
   const keypair = { pk: new Uint8Array(pk) };
   const { witness } = zokratesProvider.computeWitness(artifacts, flattenInput);
@@ -282,7 +270,7 @@ async function transfer(transferParams, shieldContractAddress) {
     await Promise.all(
       oldCommitments.map(commitment => markNullified(commitment, optimisticTransferTransaction)),
     );
-    await saveTransaction(optimisticTransferTransaction);
+    // await saveTransaction(optimisticTransferTransaction);
     return {
       rawTransaction,
       transaction: optimisticTransferTransaction,

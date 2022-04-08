@@ -4,22 +4,33 @@
   margin-left: 32px;
   display: flex;
   align-items: center;
-  background-color: #eee;
-  border-radius: 20px;
+  background-color: #F7F7F7;
+  border-radius: 50px;
   padding: 10px;
+  height: 40px;
+
+  max-width: 190px;
+  text-overflow: ellipsis;
+  overflow:hidden;
+  white-space:nowrap;
 
   &:hover {
-    cursor: pointer;
-    background-color: #ddd;
-  }
-
-  .accountAddress {
-    font-size: medium;
-    margin-right: 8px;
+    cursor: pointer;   
   }
 
   img {
-    width: 25px;
-    height: 25px;
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+  }
+
+  .accountAddress {
+    font-size: 16px;    
+  }
+
+  svg {
+    font-size: 16px;
+    margin-left: 8px;
+    color: #ddd;
   }
 }

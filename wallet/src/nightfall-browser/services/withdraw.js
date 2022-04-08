@@ -9,7 +9,7 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
  */
 import gen from 'general-number';
 import { initialize } from 'zokrates-js';
-import axios from 'axios';
+
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
 import { Nullifier, Transaction } from '../classes/index';
@@ -20,25 +20,30 @@ import {
   getSiblingInfo,
 } from './commitment-storage';
 import { calculateIvkPkdfromAskNsk } from './keys';
+import { checkIndexDBForCircuit, getStoreCircuit } from './database';
 
-// eslint-disable-next-line
-import abi from '../../zokrates/withdraw_stub/artifacts/withdraw_stub-abi.json';
-// eslint-disable-next-line
-import programFile from '../../zokrates/withdraw_stub/artifacts/withdraw_stub-program';
-// eslint-disable-next-line
-import pkFile from '../../zokrates/withdraw_stub/keypair/withdraw_stub_pk.key';
-import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
-import { saveTransaction } from './database';
-
-const { BN128_GROUP_ORDER, SHIELD_CONTRACT_NAME, proposerUrl } = global.config;
+const { BN128_GROUP_ORDER, SHIELD_CONTRACT_NAME, USE_STUBS } = global.config;
 const { generalise } = gen;
+const circuitName = USE_STUBS ? 'withdraw_stub' : 'withdraw';
 
 async function withdraw(withdrawParams, shieldContractAddress) {
   logger.info('Creating a withdraw transaction');
   // let's extract the input items
-  const { offchain = false, ...items } = withdrawParams;
-  const { ercAddress, tokenId, value, recipientAddress, nsk, ask, fee } = generalise(items);
-  const { compressedPkd } = await calculateIvkPkdfromAskNsk(ask, nsk);
+  const { ercAddress, tokenId, value, recipientAddress, nsk, ask, fee } =
+    generalise(withdrawParams);
+  const { compressedPkd } = calculateIvkPkdfromAskNsk(ask, nsk);
+
+  if (!(await checkIndexDBForCircuit(circuitName)))
+    throw Error('Some circuit data are missing from IndexedDB');
+  const [abiData, programData, pkData] = await Promise.all([
+    getStoreCircuit(`${circuitName}-abi`),
+    getStoreCircuit(`${circuitName}-program`),
+    getStoreCircuit(`${circuitName}-pk`),
+  ]);
+
+  const abi = abiData.data;
+  const program = programData.data;
+  const pk = pkData.data;
 
   // the first thing we need to do is to find and input commitment which
   // will enable us to conduct our withdraw.  Let's rummage in the db...
@@ -86,15 +91,6 @@ async function withdraw(withdrawParams, shieldContractAddress) {
   logger.debug(`witness input is ${JSON.stringify(witnessInput)}`);
   // call a zokrates worker to generate the proof
   const zokratesProvider = await initialize();
-  const program = await fetch(programFile)
-    .then(response => response.body.getReader())
-    .then(parseData)
-    .then(mergeUint8Array);
-  const pk = await fetch(pkFile)
-    .then(response => response.body.getReader())
-    .then(parseData)
-    .then(mergeUint8Array);
-
   const artifacts = { program: new Uint8Array(program), abi };
   const keypair = { pk: new Uint8Array(pk) };
   // computation
@@ -112,7 +108,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     fee,
     historicRootBlockNumberL2: [isOnChain, 0],
     transactionType: 3,
-    tokenType: items.tokenType,
+    tokenType: withdrawParams.tokenType,
     tokenId,
     value,
     ercAddress,
@@ -121,29 +117,29 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     proof,
   });
   try {
-    if (offchain) {
-      await axios
-        .post(
-          `${proposerUrl}/proposer/offchain-transaction`,
-          { transaction: optimisticWithdrawTransaction },
-          { timeout: 3600000 },
-        )
-        .catch(err => {
-          throw new Error(err);
-        });
-      const th = optimisticWithdrawTransaction.transactionHash;
-      delete optimisticWithdrawTransaction.transactionHash;
-      optimisticWithdrawTransaction.transactionHash = th;
-      await markNullified(oldCommitment, optimisticWithdrawTransaction);
-      await saveTransaction(optimisticWithdrawTransaction);
-      return { transaction: optimisticWithdrawTransaction };
-    }
+    // if (offchain) {
+    // await axios
+    //   .post(
+    //     `${proposerUrl}/proposer/offchain-transaction`,
+    //     { transaction: optimisticWithdrawTransaction },
+    //     { timeout: 3600000 },
+    //   )
+    //   .catch(err => {
+    //     throw new Error(err);
+    //   });
+    //   const th = optimisticWithdrawTransaction.transactionHash;
+    //   delete optimisticWithdrawTransaction.transactionHash;
+    //   optimisticWithdrawTransaction.transactionHash = th;
+    //   await markNullified(oldCommitment, optimisticWithdrawTransaction);
+    //   await saveTransaction(optimisticWithdrawTransaction);
+    //   return { transaction: optimisticWithdrawTransaction };
+    // }
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(optimisticWithdrawTransaction))
       .encodeABI();
     // on successful computation of the transaction mark the old commitments as nullified
     await markNullified(oldCommitment, optimisticWithdrawTransaction);
-    await saveTransaction(optimisticWithdrawTransaction);
+    // await saveTransaction(optimisticWithdrawTransaction);
     return { rawTransaction, transaction: optimisticWithdrawTransaction };
   } catch (err) {
     await clearPending(oldCommitment);

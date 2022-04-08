@@ -1,6 +1,7 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from 'react';
 import { Route, Switch, Redirect, BrowserRouter } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
 import { NF3_GITHUB_ISSUES_URL } from '../constants';
 import MainPage from './initialPage/index.jsx';
 import Wallet from './wallet/index.jsx';
@@ -8,7 +9,8 @@ import { UserContext, UserProvider } from '../hooks/User/index.jsx';
 import TransactionPage from './transactionPage/index.jsx';
 import Web3 from '../common-files/utils/web3';
 import Bridge from './bridge/index.jsx';
-import generateWebComponents from '../utils/generateWebComponents';
+import { AccountProvider } from '../hooks/Account/index.tsx';
+import 'react-toastify/dist/ReactToastify.css';
 
 const networks = {
   ethereum: process.env.REACT_APP_ENVIRONMENT === 'testnet' ? 3 : 5773, // ropsten if testnet, ganache if local
@@ -24,7 +26,6 @@ export default function App() {
     setIsWeb3Connected({
       isWeb3Connected: true,
     });
-    generateWebComponents();
   }, []);
 
   const changeChain = (network, cb) => {
@@ -43,6 +44,7 @@ export default function App() {
    */
   return (
     <BrowserRouter>
+      <ToastContainer></ToastContainer>
       <UserProvider>
         <Switch>
           <Route path="/" exact render={() => <MainPage />} />
