@@ -319,7 +319,7 @@ export async function getWalletBalance(pkd) {
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
       compressedPkd: e.preimage.compressedPkd,
       tokenId: !!BigInt(e.preimage.tokenId),
-      value: Number(BigInt(e.preimage.value)),
+      value: BigInt(e.preimage.value),
     }))
     .filter(e => e.tokenId || e.value > 0) // there should be no commitments with tokenId and value of ZERO
     .map(e => ({

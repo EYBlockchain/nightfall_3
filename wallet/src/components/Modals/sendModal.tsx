@@ -161,7 +161,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
         tokenId: 0,
         recipientData: {
           recipientCompressedPkds: [recipient],
-          values: [(Number(valueToSend) * 10 ** sendToken.decimals).toString()],
+          values: [(BigInt(valueToSend) * 10n ** BigInt(sendToken.decimals)).toString()],
         },
         nsk,
         ask,
