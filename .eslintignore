@@ -3,7 +3,6 @@ cd node_modules/*
 **/migrations/*
 **/doc/*
 cli/build/*
-wallet/**
 test/adversary/nightfall-adversary/*
 wallet/build
 /**/*.d.ts

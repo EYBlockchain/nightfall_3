@@ -391,9 +391,9 @@
       {
         "components": [
           {
-            "internalType": "uint64",
+            "internalType": "uint112",
             "name": "value",
-            "type": "uint64"
+            "type": "uint112"
           },
           {
             "internalType": "uint64[2]",

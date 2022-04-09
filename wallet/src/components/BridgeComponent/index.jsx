@@ -39,6 +39,26 @@ const gen = require('general-number');
 
 const { generalise } = gen;
 
+const bnAsNumber = (bn, numDecimals, displayDecimals = 4) => {
+  const stringBn = bn.toString();
+  const mantissa = stringBn.slice(-numDecimals);
+  const significand = stringBn.slice(0, stringBn.length - numDecimals);
+  const displayMantissa = mantissa.slice(0, displayDecimals);
+  return Number(`${significand}.${displayMantissa}`);
+};
+
+const numberAsBN = (numberBn, numDecimals) => {
+  const [displaySignificand, displayMantissa] = numberBn.toString().split('.');
+  console.log('displaySignificand', displaySignificand);
+  console.log('displayMantissa', displayMantissa);
+  console.log('numberAsBN no mantissa', BigInt(displaySignificand) * 10n ** BigInt(numDecimals));
+  if (typeof displayMantissa === 'undefined')
+    return BigInt(displaySignificand) * 10n ** BigInt(numDecimals);
+  const mantissa = Number(`0.${displayMantissa}`) * 10 ** numDecimals;
+  console.log('numberAsBN', BigInt(`${displaySignificand}${mantissa.toString()}`));
+  return BigInt(`${displaySignificand}${mantissa.toString()}`);
+};
+
 const BridgeComponent = () => {
   const [state] = useContext(UserContext);
   const { setAccountInstance, accountInstance } = useAccount();
@@ -163,7 +183,7 @@ const BridgeComponent = () => {
           {
             ercAddress,
             tokenId: 0,
-            value: (BigInt(transferValue) * 10n ** BigInt(token.decimals)).toString(),
+            value: numberAsBN(transferValue, token.decimals).toString(),
             pkd,
             nsk: zkpKeys.nsk,
             fee: 1,
@@ -190,7 +210,7 @@ const BridgeComponent = () => {
             offchain: true,
             ercAddress,
             tokenId: 0,
-            value: (BigInt(transferValue) * 10n ** BigInt(token.decimals)).toString(),
+            value: numberAsBN(transferValue, token.decimals).toString(),
             recipientAddress: await Web3.getAccount(),
             nsk: zkpKeys.nsk,
             ask: zkpKeys.ask,
@@ -221,8 +241,8 @@ const BridgeComponent = () => {
 
   const handleShow = () => {
     if (
-      (txType === 'deposit' && (BigInt(transferValue) * 10n ** BigInt(token.decimals)) > l1Balance) ||
-      (txType === 'withdraw' && (BigInt(transferValue) * 10n ** BigInt(token.decimals)) > l2Balance)
+      (txType === 'deposit' && numberAsBN(transferValue, token.decimals) > l1Balance) ||
+      (txType === 'withdraw' && numberAsBN(transferValue, token.decimals) > l2Balance)
     )
       toast.error("Input value can't be greater than balance!");
     else if (!transferValue) toast.warn('Input a value for transfer, please.');
@@ -313,19 +333,10 @@ const BridgeComponent = () => {
                 <div className="balance_details">
                   <p>Balance: </p>
                   {token && txType === 'deposit' && (
-                    // <p> {token.decimals} </p>
-                    // <p>{`${(l1Balance / 10 ** token.decimals).toFixed(4)} ${token.symbol}`}</p>
-                    <p>{
-                      `${l1Balance.toString().slice(0,l1Balance.toString().length - token.decimals)}.
-                      ${(l1Balance.toString().slice(-token.decimals)).slice(0,4)} ${token.symbol}`
-                    }</p>
+                    <p>{`${bnAsNumber(l1Balance, token.decimals).toFixed(4)} ${token.symbol}`}</p>
                   )}
                   {token && txType === 'withdraw' && (
-                    // <p>{`${(l2Balance / 10 ** token.decimals).toFixed(4)} ${token.symbol}`}</p>
-                    <p>{
-                      `${l2Balance.toString().slice(0,l2Balance.toString().length - token.decimals)}.
-                      ${(l2Balance.toString().slice(-token.decimals)).slice(0,4)} ${token.symbol}`
-                    }</p>
+                    <p>{`${bnAsNumber(l2Balance, token.decimals).toFixed(4)} ${token.symbol}`}</p>
                   )}
                   {!token && (
                     <p>
@@ -398,18 +409,10 @@ const BridgeComponent = () => {
               <div className="balance_details">
                 <p>Balance: </p>
                 {token && txType === 'deposit' && (
-                  // <p>{`${(l2Balance / 10 ** token.decimals).toFixed(4)} ${token.symbol}`}</p>
-                  <p>{
-                    `${l2Balance.toString().slice(0,l2Balance.toString().length - token.decimals)}.
-                    ${(l2Balance.toString().slice(-token.decimals)).slice(0,4)} ${token.symbol}`
-                  }</p>
+                  <p>{`${bnAsNumber(l2Balance, token.decimals).toFixed(4)} ${token.symbol}`}</p>
                 )}
                 {token && txType === 'withdraw' && (
-                  // <p>{`${(l1Balance / 10 ** token.decimals).toFixed(4)} ${token.symbol}`}</p>
-                  <p>{
-                    `${l1Balance.toString().slice(0,l1Balance.toString().length - token.decimals)}.
-                    ${(l1Balance.toString().slice(-token.decimals)).slice(0,4)} ${token.symbol}`
-                  }</p>
+                  <p>{`${bnAsNumber(l1Balance, token.decimals).toFixed(4)} ${token.symbol}`}</p>
                 )}
                 {!token && (
                   // <p>
@@ -419,9 +422,8 @@ const BridgeComponent = () => {
                   // </p>
                   <p>
                     {txType === 'withdraw'
-                      ? `${l2Balance.toString().slice(0,l2Balance.toString().length - token.decimals)}.${(l2Balance.toString().slice(-token.decimals)).slice(0,4)} ${token.symbol}`
-                      : `${l1Balance.toString().slice(0,l1Balance.toString().length - token.decimals)}.${(l1Balance.toString().slice(-token.decimals)).slice(0,4)} ${token.symbol}`
-                  }
+                      ? `${bnAsNumber(l2Balance, token.decimals).toFixed(4)} ${token.symbol}`
+                      : `${bnAsNumber(l1Balance, token.decimals).toFixed(4)} ${token.symbol}`}
                   </p>
                 )}
               </div>
