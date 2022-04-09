@@ -49,7 +49,7 @@
     "zokrates-js": "^1.0.39"
   },
   "scripts": {
-    "start": "LOCAL_PROPOSER=false USE_STUBS=true craco start",
+    "start": "LOCAL_PROPOSER=true USE_STUBS=true craco start",
     "start:docker": "REACT_APP_ENVIRONMENT=Docker PORT=3010 craco start",
     "start:ropsten": "REACT_APP_ENVIRONMENT=Ropsten craco start",
     "build": "LOCAL_PROPOSER=false USE_STUBS=true craco build",

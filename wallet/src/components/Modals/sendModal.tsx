@@ -33,6 +33,32 @@ type SendModalProps = {
   onHide: () => void;
 };
 
+// This helper function converts a bigint value into a number we can display with a decimals.
+const bnAsNumber = (bn: bigint, numDecimals: number, displayDecimals = 4): number => {
+  const stringBn = bn.toString();
+  const mantissa = stringBn.slice(-numDecimals);
+  const significand = stringBn.slice(0, stringBn.length - numDecimals);
+  const displayMantissa = mantissa.slice(0, displayDecimals);
+  return Number(`${significand}.${displayMantissa}`);
+};
+
+// This helper function converts an inputted decimal value into a bigint.
+const numberAsBN = (numberBn: number, numDecimals: number): bigint => {
+  const [displaySignificand, displayMantissa] = numberBn.toString().split('.');
+  console.log('displaySignificand', displaySignificand);
+  console.log('displayMantissa', displayMantissa);
+  console.log('numberAsBN no mantissa', BigInt(displaySignificand) * 10n ** BigInt(numDecimals));
+  if (typeof displayMantissa === 'undefined')
+    // If it's already an integer, we just scale the significand
+    return BigInt(displaySignificand) * 10n ** BigInt(numDecimals);
+  // Scale just the mantissa by the num decimals, this is fine to be a Number
+  // We don't expect numDecimals to be so large the mantissa will overflow Number.
+  const mantissa = Number(`0.${displayMantissa}`) * 10 ** numDecimals;
+  console.log('numberAsBN', BigInt(`${displaySignificand}${mantissa.toString()}`));
+  // The final bigInt is just the stichting of both strings.
+  return BigInt(`${displaySignificand}${mantissa.toString()}`);
+};
+
 const SendModal = (props: SendModalProps): JSX.Element => {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
@@ -54,7 +80,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
       };
     }),
   );
-  const [l2Balance, setL2Balance] = useState(0);
+  const [l2Balance, setL2Balance] = useState(0n);
   const [showTokensListModal, setShowTokensListModal] = useState(false);
 
   const filterTxs = (criteria: string) =>
@@ -75,12 +101,12 @@ const SendModal = (props: SendModalProps): JSX.Element => {
   useEffect(() => {
     console.log('state', state);
     const getBalance = async () => {
-      const l2bal: Record<string, Record<string, number>> = await getWalletBalance(
+      const l2bal: Record<string, Record<string, bigint>> = await getWalletBalance(
         state?.compressedPkd,
       );
       if (Object.hasOwnProperty.call(l2bal, state?.compressedPkd))
-        setL2Balance(l2bal[state.compressedPkd][sendToken.address.toLowerCase()] ?? 0);
-      else setL2Balance(0);
+        setL2Balance(l2bal[state.compressedPkd][sendToken.address.toLowerCase()] ?? 0n);
+      else setL2Balance(0n);
     };
     getBalance();
   }, [sendToken, state]);
@@ -161,7 +187,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
         tokenId: 0,
         recipientData: {
           recipientCompressedPkds: [recipient],
-          values: [(BigInt(valueToSend) * 10n ** BigInt(sendToken.decimals)).toString()],
+          values: [numberAsBN(valueToSend, sendToken.decimals).toString()],
         },
         nsk,
         ask,
@@ -254,12 +280,14 @@ const SendModal = (props: SendModalProps): JSX.Element => {
                 <div className={stylesModal.balanceText}>
                   <p>
                     ${' '}
-                    {((l2Balance / 10 ** sendToken.decimals) * sendToken.currencyValue).toFixed(4)}
+                    {(bnAsNumber(l2Balance, sendToken.decimals) * sendToken.currencyValue).toFixed(
+                      4,
+                    )}
                   </p>
                   <div className={stylesModal.right}>
                     <p>Available Balance:</p>
                     <p>
-                      {(l2Balance / 10 ** sendToken.decimals).toFixed(4)} {sendToken.symbol}
+                      {bnAsNumber(l2Balance, sendToken.decimals).toFixed(4)} {sendToken.symbol}
                     </p>
                   </div>
                 </div>

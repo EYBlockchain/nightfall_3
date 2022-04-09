@@ -329,7 +329,7 @@ export async function getWalletBalance(pkd) {
     }))
     .reduce((acc, e) => {
       if (!acc[e.compressedPkd]) acc[e.compressedPkd] = {};
-      if (!acc[e.compressedPkd][e.ercAddress]) acc[e.compressedPkd][e.ercAddress] = 0;
+      if (!acc[e.compressedPkd][e.ercAddress]) acc[e.compressedPkd][e.ercAddress] = 0n;
       acc[e.compressedPkd][e.ercAddress] += e.balance;
       return acc;
     }, {});
