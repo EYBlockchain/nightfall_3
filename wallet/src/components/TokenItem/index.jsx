@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
+import importTokens from '@TokenList/index';
+import { getWalletBalance } from '@Nightfall/services/commitment-storage';
 import styles from '../../styles/tokenItem.module.scss';
 import metamaskIcon from '../../assets/svg/metamask.svg';
 import { UserContext } from '../../hooks/User/index.jsx';
-import tokensList from '../Modals/Bridge/TokensList/tokensList';
-import { getWalletBalance } from '../../nightfall-browser/services/commitment-storage';
 import SendModal from '../Modals/sendModal';
+
+const supportedTokens = importTokens();
 
 export default function TokenItem(props) {
   const [showSendModal, setShowSendModal] = useState(false);
   const [state] = React.useContext(UserContext);
-  const [filteredTokens, setFilteredTokens] = useState(tokensList.tokens);
+  const [filteredTokens, setFilteredTokens] = useState(supportedTokens);
 
   useEffect(async () => {
     const l2bal = await getWalletBalance(state.compressedPkd);

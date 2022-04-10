@@ -6,9 +6,15 @@ BigInt.prototype.toJSON = function () {
   return this.toString();
 };
 
+const path = require(`path`);
+
 module.exports = {
   webpack: {
-    alias: {},
+    alias: {
+      '@TokenList': path.resolve(__dirname, `src/static/supported-token-lists/`),
+      '@Nightfall': path.resolve(__dirname, `src/nightfall-browser/`),
+      '@Components': path.resolve(__dirname, `src/components/`),
+    },
     plugins: {
       add: [
         new WebpackManifestPlugin({
