@@ -1,6 +1,6 @@
 import React from 'react';
 
-export function cep(e: React.FormEvent<HTMLInputElement>) {
+export function cep(e: React.FormEvent<HTMLInputElement>): React.FormEvent<HTMLInputElement> {
   e.currentTarget.maxLength = 9;
   let { value } = e.currentTarget;
   value = value.replace(/\D/g, '');
@@ -9,7 +9,7 @@ export function cep(e: React.FormEvent<HTMLInputElement>) {
   return e;
 }
 
-export function currency(e: React.FormEvent<HTMLInputElement>) {
+export function currency(e: React.FormEvent<HTMLInputElement>): React.FormEvent<HTMLInputElement> {
   let { value } = e.currentTarget;
   value = value.replace(/\D/g, '');
   value = value.replace(/(\d)(\d{2})$/, '$1,$2');
@@ -19,7 +19,7 @@ export function currency(e: React.FormEvent<HTMLInputElement>) {
   return e;
 }
 
-export function cpf(e: React.FormEvent<HTMLInputElement>) {
+export function cpf(e: React.FormEvent<HTMLInputElement>): React.FormEvent<HTMLInputElement> {
   e.currentTarget.maxLength = 14;
   let { value } = e.currentTarget;
   if (!value.match(/^(\d{3}).(\d{3}).(\d{3})-(\d{2})$/)) {
