@@ -129,6 +129,8 @@ async function blockProposedEventHandler(data, ivks, nsks) {
         s.leafIndex,
         s.commitment,
         siblingPath,
+        HASH_TYPE,
+        TIMBER_HEIGHT,
       );
       return updateSiblingPath(s.commitment, block.blockNumberL2, updatedPath, updatedTimber.root);
     }),
@@ -140,7 +142,13 @@ async function blockProposedEventHandler(data, ivks, nsks) {
     blockCommitments.map(async (c, i) => {
       const count = await countCommitments([c]);
       if (count > 0) {
-        const siblingPath = Timber.statelessSiblingPath(latestTree, blockCommitments, i);
+        const siblingPath = Timber.statelessSiblingPath(
+          latestTree,
+          blockCommitments,
+          i,
+          HASH_TYPE,
+          TIMBER_HEIGHT,
+        );
         return saveSiblingPath(
           c,
           block.blockNumberL2,

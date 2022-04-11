@@ -102,15 +102,6 @@ export async function markOnChain(
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
 }
 
-// function to mark a commitments as on chain for a mongo db
-export async function setSiblingInfo(commitment, siblingPath, leafIndex, root) {
-  const connection = await mongo.connection(MONGO_URL);
-  const query = { _id: commitment, isOnChain: { $ne: -1 } };
-  const update = { $set: { siblingPath, leafIndex, root } };
-  const db = connection.db(COMMITMENTS_DB);
-  return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
-}
-
 // function to mark a commitment as pending nullication for a mongo db
 async function markPending(commitment) {
   const connection = await mongo.connection(MONGO_URL);
@@ -160,17 +151,6 @@ export async function getNullifiedByTransactionHashL1(transactionHashNullifiedL1
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).find({ transactionHashNullifiedL1 }).toArray();
-}
-
-export async function getSiblingInfo(commitment) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(COMMITMENTS_DB);
-  return db
-    .collection(COMMITMENTS_COLLECTION)
-    .findOne(
-      { _id: commitment.hash.hex(32) },
-      { projection: { siblingPath: 1, root: 1, order: 1, isOnChain: 1, leafIndex: 1 } },
-    );
 }
 
 /*

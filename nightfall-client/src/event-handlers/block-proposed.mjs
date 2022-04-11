@@ -84,6 +84,8 @@ async function blockProposedEventHandler(data) {
         s.leafIndex,
         s._id,
         siblingPath,
+        HASH_TYPE,
+        TIMBER_HEIGHT,
       );
       return updateSiblingPath(s._id, block.blockNumberL2, updatedPath, updatedTimber.root);
     }),
