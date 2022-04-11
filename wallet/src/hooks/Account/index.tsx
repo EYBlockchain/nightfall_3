@@ -20,7 +20,8 @@ const AccountContext = createContext<AccountContextType>({} as AccountContextTyp
  * context use
  * @param children
  */
-const AccountProvider = ({ children }: any) => {
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+const AccountProvider = ({ children }: any): JSX.Element => {
   const [accountInstance, setAccountInstance] = useState<AccountType>(accountType);
 
   return (
@@ -38,7 +39,7 @@ const AccountProvider = ({ children }: any) => {
 /**
  * Hook to allow the context call
  */
-const useAccount = () => {
+const useAccount = (): AccountContextType => {
   const context = useContext(AccountContext);
 
   if (!context) {
