@@ -379,7 +379,7 @@ export async function updateSiblingPath(commitmentHash, blockNumberL2, siblingPa
   const updatedDiffs = [...existingPath.diffPaths, { root, blockNumberL2, ...siblingPath }]; // Pushing is mutable and returns array length
   return db.put(
     SIBLING_COLLECTION,
-    { ...existingPath, diffPaths: updatedDiffs.slice(-12) }, // The storage window is the last 12 paths.
+    { ...existingPath, diffPaths: updatedDiffs.slice(-4) }, // The storage window is the last 4 paths.
     commitmentHash,
   );
 }

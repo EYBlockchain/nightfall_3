@@ -130,7 +130,7 @@ async function blockProposedEventHandler(data, ivks, nsks) {
         s.commitment,
         siblingPath,
       );
-      return updateSiblingPath(s.commitment, block.blockNumberL2, updatedPath);
+      return updateSiblingPath(s.commitment, block.blockNumberL2, updatedPath, updatedTimber.root);
     }),
   );
 
