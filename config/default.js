@@ -1,3 +1,10 @@
+function configureAWSBucket() {
+  const bucket = 'nightfallv3';
+  const mode = process.env.MODE; // options are 'local', 'internal', 'preprod', 'production', 'staging', and 'testnet'
+  if (mode === 'local') return bucket;
+  return `${bucket}-${mode}`;
+}
+
 module.exports = {
   COMMITMENTS_DB: 'nightfall_commitments',
   OPTIMIST_DB: 'optimist_data',
@@ -330,9 +337,7 @@ module.exports = {
   },
 
   AWS: {
-    accessKeyId: process.env.AWS_ACCESS_KEY,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    s3Bucket: process.env.AWS_S3_BUCKET,
+    s3Bucket: configureAWSBucket(),
   },
 
   utilApiServerUrl: process.env.LOCAL_UTIL_API_URL,
