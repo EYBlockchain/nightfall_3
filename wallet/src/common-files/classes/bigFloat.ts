@@ -17,7 +17,10 @@ class BigFloat {
       const stringVal: string =
         typeof floatVal === 'string' ? floatVal : floatVal.toFixed(numDecimals);
       const [displaySignificand, displayMantissa] = stringVal.split('.');
-      this.mantissa = displayMantissa.padEnd(numDecimals, '0').slice(0, numDecimals);
+      this.mantissa =
+        typeof displayMantissa === 'undefined'
+          ? '0'.repeat(numDecimals)
+          : displayMantissa.padEnd(numDecimals, '0').slice(0, numDecimals);
       this.significand = displaySignificand;
       this.numDecimals = numDecimals;
     }
