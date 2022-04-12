@@ -23,7 +23,6 @@ export default async function ceremony(path, circuitName, options = {}) {
   const { maxReturn = 10000000, verbose = false } = options;
 
   const fullPath = `${path}/${circuitName}_out`;
-  console.log(fullPath);
   if (!fs.existsSync(fullPath)) {
     throw new Error('Setup input file(s) not found');
   }
@@ -68,7 +67,6 @@ export default async function ceremony(path, circuitName, options = {}) {
       if (output.includes('panicked')) {
         reject(new Error(output.slice(output.indexOf('panicked'))));
       }
-      console.log(output);
       if (verbose) resolve(output);
       else resolve();
     });
