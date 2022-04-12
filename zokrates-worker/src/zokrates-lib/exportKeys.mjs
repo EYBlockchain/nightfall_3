@@ -22,7 +22,16 @@ export default async function exportKeys(path, circuitName, options = {}) {
   const { maxReturn = 10000000, verbose = false } = options;
 
   return new Promise((resolve, reject) => {
-    console.log(`${path}/${circuitName}_vk`);
+    console.log(
+      'mpc',
+      'export',
+      '-i',
+      'final.params',
+      '-v',
+      `${path}/${circuitName}_vk.key`,
+      '-p',
+      `${path}/${circuitName}_pk.key`,
+    );
     const zokrates = spawn(
       '/app/zokrates',
       [
@@ -36,6 +45,7 @@ export default async function exportKeys(path, circuitName, options = {}) {
         `${path}/${circuitName}_pk.key`,
       ],
       {
+        stdio: ['ignore', 'pipe', 'pipe'],
         env: {
           ZOKRATES_STDLIB: process.env.ZOKRATES_STDLIB,
         },

@@ -12,20 +12,30 @@ const main = async () => {
   try {
     if (!fs.existsSync('./src/radix')) fs.mkdirSync('./src/radix');
 
-    ['deposit', 'double_transfer', 'single_transfer', 'withdraw'].forEach(circuit => {
+    const radixPromises = [];
+
+    for (const circuit of ['deposit', 'double_transfer', 'single_transfer', 'withdraw']) {
       if (!fs.existsSync(`./src/radix/${circuit}`)) {
-        axios
-          .get(`${RADIX_FILES_URL}/${circuit}`, {
-            responseType: 'stream',
-          })
-          .then(response => {
-            response.data.pipe(fs.createWriteStream(`./src/radix/${circuit}`));
-          })
-          .catch(error => {
-            throw new Error(error);
-          });
+        radixPromises.push(
+          new Promise((resolve, reject) => {
+            axios
+              .get(`${RADIX_FILES_URL}/${circuit}`, {
+                responseType: 'stream',
+              })
+              .then(response => {
+                resolve();
+                response.data.pipe(fs.createWriteStream(`./src/radix/${circuit}`));
+              })
+              .catch(error => {
+                reject();
+                throw new Error(error);
+              });
+          }),
+        );
       }
-    });
+    }
+
+    await Promise.all(radixPromises);
 
     // 1 means enable it
     // 0 mean keep it disabled
