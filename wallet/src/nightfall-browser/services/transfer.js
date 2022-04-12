@@ -9,7 +9,7 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
  */
 
 import gen from 'general-number';
-import { initialize } from 'zokrates-js';
+import { wrap } from 'comlink';
 
 import rand from '../../common-files/utils/crypto/crypto-random';
 import { getContractInstance } from '../../common-files/utils/contract';
@@ -24,6 +24,9 @@ import {
 } from './commitment-storage';
 import { decompressKey, calculateIvkPkdfromAskNsk } from './keys';
 import { checkIndexDBForCircuit, getStoreCircuit } from './database';
+import generateProofWorker from '../../web-worker/generateProof.shared-worker';
+
+const generateProof = wrap(generateProofWorker().port);
 
 const { BN128_GROUP_ORDER, ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, ZERO, USE_STUBS } = global.config;
 const { generalise, GN } = gen;
@@ -34,8 +37,7 @@ const doubleTransfer = USE_STUBS ? 'double_transfer_stub' : 'double_transfer';
 async function transfer(transferParams, shieldContractAddress) {
   logger.info('Creating a transfer transaction');
   // let's extract the input items
-  const { ...items } = transferParams;
-  const { ercAddress, tokenId, recipientData, nsk, ask, fee } = generalise(items);
+  const { ercAddress, tokenId, recipientData, nsk, ask, fee } = generalise(transferParams);
   const { pkd, compressedPkd } = calculateIvkPkdfromAskNsk(ask, nsk);
   const { recipientCompressedPkds, values } = recipientData;
   const recipientPkds = recipientCompressedPkds.map(key => decompressKey(key));
@@ -221,12 +223,10 @@ async function transfer(transferParams, shieldContractAddress) {
       pk = pkData.data;
     } else throw new Error('Unsupported number of commitments');
 
-    const zokratesProvider = await initialize();
     const artifacts = { program: new Uint8Array(program), abi };
-    const keypair = { pk: new Uint8Array(pk) };
-    const { witness } = zokratesProvider.computeWitness(artifacts, flattenInput);
-    // generate proof
-    let { proof } = zokratesProvider.generateProof(artifacts.program, witness, keypair.pk);
+    const provingKey = new Uint8Array(pk);
+
+    let { proof } = await generateProof(artifacts, flattenInput, provingKey);
     proof = [...proof.a, ...proof.b, ...proof.c];
     proof = proof.flat(Infinity);
     // and work out the ABI encoded data that the caller should sign and send to the shield contract
@@ -244,31 +244,7 @@ async function transfer(transferParams, shieldContractAddress) {
       compressedSecrets,
       proof,
     });
-    // if (offchain) {
-    //   await axios
-    //     .post(
-    //       `${proposerUrl}/proposer/offchain-transaction`,
-    //       { transaction: optimisticTransferTransaction },
-    //       { timeout: 3600000 },
-    //     )
-    //     .catch(err => {
-    //       throw new Error(err);
-    //     });
-    //   // we only want to store our own commitments so filter those that don't
-    //   // have our public key
-    //   newCommitments
-    //     .filter(commitment => commitment.preimage.compressedPkd.hex(32) === compressedPkd.hex(32))
-    //     .forEach(commitment => storeCommitment(commitment, nsk)); // TODO insertMany
-    //   // mark the old commitments as nullified
-    //   await Promise.all(
-    //     oldCommitments.map(commitment => markNullified(commitment, optimisticTransferTransaction)),
-    //   );
-    //   await saveTransaction(optimisticTransferTransaction);
-    //   return {
-    //     transaction: optimisticTransferTransaction,
-    //     salts: salts.map(salt => salt.hex(32)),
-    //   };
-    // }
+
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(optimisticTransferTransaction))
       .encodeABI();

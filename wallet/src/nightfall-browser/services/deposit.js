@@ -10,7 +10,7 @@
  */
 
 import gen from 'general-number';
-import { initialize } from 'zokrates-js';
+import { wrap } from 'comlink';
 
 import rand from '../../common-files/utils/crypto/crypto-random';
 import { getContractInstance } from '../../common-files/utils/contract';
@@ -19,6 +19,9 @@ import { Commitment, Transaction } from '../classes/index';
 import { storeCommitment } from './commitment-storage';
 import { compressPublicKey } from './keys';
 import { checkIndexDBForCircuit, getStoreCircuit } from './database';
+import generateProofWorker from '../../web-worker/generateProof.shared-worker';
+
+const generateProof = wrap(generateProofWorker().port);
 
 const { ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER, USE_STUBS } = global.config;
 const { generalise } = gen;
@@ -65,35 +68,32 @@ async function deposit(items, shieldContractAddress) {
   ];
   logger.debug(`witness input is ${witnessInput.join(' ')}`);
 
+  const artifacts = { program: new Uint8Array(program), abi };
+  const provingKey = new Uint8Array(pk);
+  const { proof } = await generateProof(artifacts, witnessInput, provingKey);
+
+  // next we need to compute the optimistic Transaction object
+  const optimisticDepositTransaction = new Transaction({
+    fee,
+    transactionType: 0,
+    tokenType: items.tokenType,
+    tokenId,
+    value,
+    ercAddress,
+    commitments: [commitment],
+    proof,
+  });
+  logger.silly(
+    `Optimistic deposit transaction ${JSON.stringify(optimisticDepositTransaction, null, 2)}`,
+  );
+
+  const shieldContractInstance = await getContractInstance(
+    SHIELD_CONTRACT_NAME,
+    shieldContractAddress,
+  );
+
+  // and then we can create an unsigned blockchain transaction
   try {
-    const zokratesProvider = await initialize();
-    const artifacts = { program: new Uint8Array(program), abi };
-    const keypair = { pk: new Uint8Array(pk) };
-
-    // computation
-    const { witness } = zokratesProvider.computeWitness(artifacts, witnessInput);
-    // generate proof
-    const { proof } = zokratesProvider.generateProof(artifacts.program, witness, keypair.pk);
-    const shieldContractInstance = await getContractInstance(
-      SHIELD_CONTRACT_NAME,
-      shieldContractAddress,
-    );
-
-    // next we need to compute the optimistic Transaction object
-    const optimisticDepositTransaction = new Transaction({
-      fee,
-      transactionType: 0,
-      tokenType: items.tokenType,
-      tokenId,
-      value,
-      ercAddress,
-      commitments: [commitment],
-      proof,
-    });
-    logger.silly(
-      `Optimistic deposit transaction ${JSON.stringify(optimisticDepositTransaction, null, 2)}`,
-    );
-    // and then we can create an unsigned blockchain transaction
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(optimisticDepositTransaction))
       .encodeABI();

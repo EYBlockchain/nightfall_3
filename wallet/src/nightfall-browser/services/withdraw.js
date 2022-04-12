@@ -8,7 +8,8 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
  * @author westlad, ChaitanyaKonda, iAmMichaelConnor, will-kim
  */
 import gen from 'general-number';
-import { initialize } from 'zokrates-js';
+import { wrap } from 'comlink';
+
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
 import { Nullifier, Transaction } from '../classes/index';
@@ -20,6 +21,9 @@ import {
 } from './commitment-storage';
 import { calculateIvkPkdfromAskNsk } from './keys';
 import { checkIndexDBForCircuit, getStoreCircuit } from './database';
+import generateProofWorker from '../../web-worker/generateProof.shared-worker';
+
+const generateProof = wrap(generateProofWorker().port);
 
 const { BN128_GROUP_ORDER, SHIELD_CONTRACT_NAME, USE_STUBS } = global.config;
 const { generalise } = gen;
@@ -89,14 +93,11 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     ];
 
     logger.debug(`witness input is ${JSON.stringify(witnessInput)}`);
-    // call a zokrates worker to generate the proof
-    const zokratesProvider = await initialize();
+
     const artifacts = { program: new Uint8Array(program), abi };
-    const keypair = { pk: new Uint8Array(pk) };
-    // computation
-    const { witness } = zokratesProvider.computeWitness(artifacts, witnessInput);
-    // generate proof
-    let { proof } = zokratesProvider.generateProof(artifacts.program, witness, keypair.pk);
+    const provingKey = new Uint8Array(pk);
+
+    let { proof } = await generateProof(artifacts, witnessInput, provingKey);
     proof = [...proof.a, ...proof.b, ...proof.c];
     proof = proof.flat(Infinity);
     // and work out the ABI encoded data that the caller should sign and send to the shield contract

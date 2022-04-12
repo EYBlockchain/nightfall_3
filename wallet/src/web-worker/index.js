@@ -4,8 +4,11 @@
 /*
  * main thread file
  */
-import fetchCircuit from 'comlink-loader?singleton!@Nightfall/services/fetch-circuit';
-import { checkIndexDBForCircuit, storeCircuit } from '@Nightfall/services/database';
+import { wrap } from 'comlink';
+import { checkIndexDBForCircuit, storeCircuit } from '../nightfall-browser/services/database';
+import fetchCircuitWorker from './fetch-circuit.worker';
+
+const fetchCircuit = wrap(fetchCircuitWorker());
 
 const {
   circuitsAWSFiles,
