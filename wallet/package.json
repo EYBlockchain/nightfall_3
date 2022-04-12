@@ -13,7 +13,7 @@
     "@typescript-eslint/eslint-plugin": "^4.5.0",
     "@typescript-eslint/parser": "^4.5.0",
     "async-mutex": "^0.3.2",
-    "aws-sdk": "^2.1107.0",
+    "aws-sdk": "^2.1102.0",
     "axios": "^0.25.0",
     "babel-eslint": "^10.1.0",
     "babel-jest": "^26.6.0",

@@ -34,6 +34,7 @@ async function localTest() {
   const ercAddress = await nf3.getContractAddress(ERC20_NAME);
   const startBalance = await retrieveL2Balance(nf3);
 
+  let offchainTx = !!IS_TEST_RUNNER;
   // Create a block of deposits
   for (let i = 0; i < txPerBlock; i++) {
     await nf3.deposit(ercAddress, tokenType, value, tokenId);
@@ -43,7 +44,7 @@ async function localTest() {
   for (let i = 0; i < TEST_LENGTH; i++) {
     await waitForSufficientBalance(nf3, value);
     try {
-      await nf3.transfer(false, ercAddress, tokenType, value, tokenId, recipients.user1);
+      await nf3.transfer(offchainTx, ercAddress, tokenType, value, tokenId, recipients.user1);
     } catch (err) {
       if (err.message.includes('No suitable commitments')) {
         // if we get here, it's possible that a block we are waiting for has not been proposed yet
@@ -54,12 +55,13 @@ async function localTest() {
           } seconds and try one last time`,
         );
         await new Promise(resolve => setTimeout(resolve, 10 * TX_WAIT));
-        await nf3.transfer(false, ercAddress, tokenType, value, tokenId, recipients.user1);
+        await nf3.transfer(offchainTx, ercAddress, tokenType, value, tokenId, recipients.user1);
       }
     }
     await nf3.deposit(ercAddress, tokenType, value, tokenId);
     await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
     console.log(`Completed ${i + 1} pings`);
+    offchainTx = !offchainTx;
   }
 
   // Wait for sometime at the end to retrieve balance to include any transactions sent by the other use

@@ -433,7 +433,7 @@ describe('ERC20 tests', () => {
     });
   });
 
-  /* 
+  /*
     What is this, you wonder? We're just testing restrictions, since for an initial release phase
     we want to restrict the amount of deposits/withdraws. Take a look at #516 if you want to know more
     */
@@ -487,6 +487,8 @@ describe('ERC20 tests', () => {
               fee,
             );
 
+            await new Promise(resolve => setTimeout(resolve, 15000));
+
             // we also need a commitment of the specific amount we need to withdraw
             // so we should transfer that amount to ourselves
             await nf3Users[0].transfer(
@@ -501,6 +503,8 @@ describe('ERC20 tests', () => {
 
             await emptyL2(nf3Users[0]);
 
+            await new Promise(resolve => setTimeout(resolve, 15000));
+
             const rec = await nf3Users[0].withdraw(
               false,
               erc20Address,
@@ -510,6 +514,8 @@ describe('ERC20 tests', () => {
               nf3Users[0].ethereumAddress,
               fee,
             );
+
+            await new Promise(resolve => setTimeout(resolve, 15000));
 
             expectTransaction(rec);
             const withdrawal = await nf3Users[0].getLatestWithdrawHash();

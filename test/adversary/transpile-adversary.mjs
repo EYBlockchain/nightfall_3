@@ -66,8 +66,8 @@ const transpileBlockBuilder = (_pathToSrc, _pathToInject) => {
   srcFile = `${above}\n${tgtPost}\n${below}`;
 
   // We need to re object destructure components in build
-  const regexReplaceComponents = /(const { proposer, transactions, latestBlockInfo, latestTree })/g;
-  const reComponent = `const { proposer, transactions, latestBlockInfo, latestTree, errorIndex }`;
+  const regexReplaceComponents = /(const { proposer, transactions })/g;
+  const reComponent = `const { proposer, transactions, errorIndex }`;
   srcFile = srcFile.replace(regexReplaceComponents, reComponent);
 
   // We need to re-route the references to use our bad block values
@@ -84,22 +84,22 @@ const transpileBlockBuilder = (_pathToSrc, _pathToInject) => {
     }, errorIndex);
     this.localLeafCount = badBlock.leafCount;
     this.localFrontier = badBlock.frontier;
-    this.localBlockNumberL2 = badBlock.blockNumberL2;
+    this.localBlockNumberL2 += 1;
     this.localRoot = badBlock.root;`;
   srcFile = srcFile.replace(regexReplaceCalls, reRoute);
 
   // Modify the return from Block.build to utilise this bad block.
-  const regexReplaceReturn = /new Block(\n|.)*previousBlockHash,\n.*(}\),)/g;
-  const reReturn = `new Block({
+  const regexReplaceReturn = /return new Block(\n|.)*previousBlockHash,\n.*(}\);)/g;
+  const reReturn = `return new Block({
       proposer,
       transactionHashes: transactions.map(t => t.transactionHash),
       leafCount: badBlock.leafCount,
       root: badBlock.root,
       blockHash,
       nCommitments: badBlock.nCommitments,
-      blockNumberL2: badBlock.blockNumberL2,
+      blockNumberL2,
       previousBlockHash,
-    }),`;
+    });`;
   srcFile = srcFile.replace(regexReplaceReturn, reReturn);
 
   fs.writeFileSync(_pathToSrc, srcFile);

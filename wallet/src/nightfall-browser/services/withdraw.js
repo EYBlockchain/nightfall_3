@@ -28,8 +28,8 @@ const circuitName = USE_STUBS ? 'withdraw_stub' : 'withdraw';
 async function withdraw(withdrawParams, shieldContractAddress) {
   logger.info('Creating a withdraw transaction');
   // let's extract the input items
-  const { ...items } = withdrawParams;
-  const { ercAddress, tokenId, value, recipientAddress, nsk, ask, fee } = generalise(items);
+  const { ercAddress, tokenId, value, recipientAddress, nsk, ask, fee } =
+    generalise(withdrawParams);
   const { compressedPkd } = calculateIvkPkdfromAskNsk(ask, nsk);
 
   if (!(await checkIndexDBForCircuit(circuitName)))
@@ -107,7 +107,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     fee,
     historicRootBlockNumberL2: [isOnChain, 0],
     transactionType: 3,
-    tokenType: items.tokenType,
+    tokenType: withdrawParams.tokenType,
     tokenId,
     value,
     ercAddress,
