@@ -17,39 +17,321 @@ import depositConfirmed from '../../assets/img/modalImages/adeposit_confirmed.pn
 import successHand from '../../assets/img/modalImages/success-hand.png';
 import transferCompletedImg from '../../assets/img/modalImages/tranferCompleted.png';
 import { saveTransaction } from '../../nightfall-browser/services/database';
-
+import styled, { keyframes } from 'styled-components';
 import '../../styles/bridge.module.scss';
 import '../../styles/modal.scss';
-import {
-  BalanceText,
-  BalanceTextRight,
-  ContinueTransferButton,
-  Divider,
-  HeaderTitle,
-  InputAddress,
-  InputBalance,
-  InputSearchTitle,
-  InputWrapper,
-  MaxButton,
-  MyBody,
-  ProcessImages,
-  SendModalBalance,
-  SendModalBalanceLeft,
-  SendModalBalanceRight,
-  SendModalFooter,
-  SendModalStyle,
-  Spinner,
-  SpineerBox,
-  SpinnerBoard,
-  TokensLine,
-  TokensLineDiv,
-  TokensLineDivImg,
-  TokensList,
-} from './sendModalStyles.js';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 const { proposerUrl } = global.config;
+
+const HeaderTitle = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 10px;
+  font-weight: bold;
+`;
+
+const MyBody = styled.div`
+  flex-direction: column;
+  text-align: center;
+  padding: 10px;
+`;
+
+const SendModalStyle = styled.div`
+  input {
+    width: 100%;
+    height: 50px;
+    border-radius: 10px;
+    padding: 15px;
+  }
+
+  p {
+    text-align: start;
+    font-size: small;
+    color: #b0b4bb;
+    margin-top: 10px;
+  }
+`;
+
+const InputSearchTitle = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 44px;
+  width: 100%;
+  padding: 24px 12px;
+  /* Header/H2 */
+
+  font-style: normal;
+  font-weight: 800;
+  font-size: 26px;
+
+  /* identical to box height, or 122% */
+
+  letter-spacing: -0.01em;
+
+  /* light/gray-900 */
+
+  color: #0a0b0d;
+
+  span {
+    color: #7b3fe4;
+  }
+
+  svg {
+    &:hover {
+      cursor: pointer;
+      color: 555;
+    }
+  }
+`;
+
+const InputWrapper = styled.div`
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  width: 100%;
+  padding: 32px;
+
+  input {
+    border: 0px;
+    margin-left: 10px;
+
+    &:placeholder {
+      font-family: Manrope;
+      font-style: normal;
+      font-weight: 500;
+      font-size: 14px;
+      line-height: 24px;
+      /* identical to box height, or 171% */
+
+      display: flex;
+      align-items: flex-end;
+
+      color: #000000;
+
+      opacity: 0.5;
+    }
+
+    &:focus {
+      outline: none;
+    }
+  }
+`;
+
+const TokensList = styled.ul`
+  padding-right: 24px;
+`;
+
+const TokensLine = styled.li`
+  width: 100%;
+
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 80px;
+  border-bottom: 1px solid #f3f4f7;
+  padding: 10px;
+
+  &:hover {
+    cursor: pointer;
+    background: #ddd;
+  }
+`;
+
+const TokensLineDiv = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center !important;
+`;
+
+const TokensLineDivImg = styled.img`
+  margin-right: 12px;
+
+  width: 40px;
+  height: 40px;
+`;
+
+const SendModalBalance = styled.div`
+  margin-top: 50px;
+  display: flex;
+  flex-direction: row !important;
+  align-items: center;
+  justify-content: space-between;
+  border: solid 1px #b0b4bb;
+  height: 60px;
+  border-radius: 10px;
+  padding: 5px;
+  width: 100%;
+`;
+
+const SendModalBalanceLeft = styled.div`
+  width: 40%;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  align-content: center;
+`;
+
+const InputBalance = styled.input`
+  border: none;
+  width: 50%;
+  padding: 0 10px;
+
+  ::placeholder {
+    color: $light-gray-900;
+  }
+
+  &:focus {
+    outline: none;
+  }
+`;
+
+const InputAddress = styled.input`
+  border: solid 1px #b0b4bb;
+  height: 20px;
+  padding: 20px;
+  ::placeholder {
+    color: $light-gray-900;
+  }
+
+  &:focus {
+    outline: #b0b4bb;
+  }
+`;
+
+const MaxButton = styled.div`
+  color: #7b3fe4;
+  font-weight: 600;
+  font-size: small;
+  padding: 5px;
+
+  &:hover {
+    cursor: pointer;
+    background-color: $light-gray-200;
+    border-radius: 5px;
+  }
+`;
+
+const SendModalBalanceRight = styled.div`
+  width: 40%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  align-content: flex-end;
+  background-color: #eee;
+  height: 50px;
+  border-radius: 10px;
+  padding: 10px;
+
+  &:hover {
+    cursor: pointer;
+    background-color: #ddd;
+  }
+`;
+
+const BalanceText = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+`;
+
+const BalanceTextRight = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+
+  p {
+    &:first-child {
+      margin-right: 5px;
+    }
+  }
+`;
+
+const SendModalFooter = styled.div`
+  display: flex;
+  flex-direction: row;
+
+  img {
+    width: 20px;
+  }
+
+  padding-top: 90px;
+
+  p {
+    margin-left: 5px;
+    font-size: medium;
+  }
+`;
+
+const ContinueTransferButton = styled.div`
+  margin-top: 12px;
+  border-radius: 12px;
+  align-self: flex-end;
+  width: 100%;
+  background-color: #7b3fe4;
+  color: #fff;
+  padding: 15px;
+  margin-bottom: 12px;
+
+  &:hover {
+    cursor: pointer;
+  }
+`;
+
+const ProcessImages = styled.div`
+  img {
+    width: 340px;
+  }
+`;
+
+const Divider = styled.div`
+  margin-top: 30px;
+  border-bottom: solid 1px #ddd;
+`;
+
+const SpineerBox = styled.div`
+  display: flex;
+  justify-content: center;
+  align-content: center;
+  align-items: center;
+  margin-top: 20px;
+`;
+
+const SpinnerBoard = styled.div`
+  display: flex;
+  justify-content: center;
+  align-content: center;
+  align-items: center;
+  --size: 150px;
+  --border: 2px;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+
+  border: var(--border) solid #eee;
+`;
+const spin = keyframes`
+  100% {
+    transform: rotate(360deg);
+  }
+`;
+
+const Spinner = styled.div`
+  --size: 100px;
+  --border: 4px;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  position: relative;
+  border: var(--border) solid #7b3fe4;
+  border-right: var(--border) solid #eae0fb;
+  animation: ${spin} 1s linear infinite;
+`;
 
 type SendModalProps = {
   currencyValue: number;
