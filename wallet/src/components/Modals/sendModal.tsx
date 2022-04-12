@@ -45,7 +45,7 @@ import {
   TokensLineDiv,
   TokensLineDivImg,
   TokensList,
-} from './sendModalStyles';
+} from './sendModalStyles.js';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
