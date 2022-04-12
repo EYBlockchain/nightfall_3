@@ -320,14 +320,7 @@ const BridgeComponent = () => {
                   {token && txType === 'withdraw' && (
                     <p>{`${new BigFloat(l2Balance, token.decimals).toFixed(4)} ${token.symbol}`}</p>
                   )}
-                  {!token && (
-                    <p>
-                      0
-                      {/* {txType === 'deposit'
-                        ? `${(l1Balance / 10 ** token.decimals).toFixed(4)}`
-                        : `${(l2Balance / 10 ** token.decimals).toFixed(4)}`} */}
-                    </p>
-                  )}
+                  {!token && <p>0</p>}
                 </div>
               </div>
               <div className="from_section_line"></div>
@@ -397,11 +390,6 @@ const BridgeComponent = () => {
                   <p>{`${new BigFloat(l1Balance, token.decimals).toFixed(4)} ${token.symbol}`}</p>
                 )}
                 {!token && (
-                  // <p>
-                  //   {txType === 'withdraw'
-                  //     ? `${(l2Balance / 10 ** token.decimals).toFixed(4)}`
-                  //     : `${(l1Balance / 10 ** token.decimals).toFixed(4)}`}
-                  // </p>
                   <p>
                     {txType === 'withdraw'
                       ? `${new BigFloat(l2Balance, token.decimals).toFixed(4)} ${token.symbol}`
