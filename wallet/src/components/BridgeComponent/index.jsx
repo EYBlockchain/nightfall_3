@@ -421,7 +421,7 @@ const BridgeComponent = () => {
                   <div className="amount_value_wrapper">
                     <Input
                       id="inputValue"
-                      name="price"                      
+                      name="price"
                       placeholder="0,00"
                       onChange={handleChange}
                     />
