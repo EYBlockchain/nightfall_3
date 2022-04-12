@@ -36,7 +36,7 @@ async function checkTransactionType(transaction) {
       if (
         (Number(transaction.tokenType) !== 0 &&
           transaction.tokenId === ZERO &&
-          Number(transaction.value) === 0) ||
+          BigInt(transaction.value) === 0n) ||
         transaction.ercAddress === ZERO ||
         transaction.recipientAddress !== ZERO ||
         transaction.commitments[0] === ZERO ||
@@ -58,7 +58,7 @@ async function checkTransactionType(transaction) {
     case 1: // single token transaction
       if (
         transaction.tokenId !== ZERO ||
-        Number(transaction.value) !== 0 ||
+        BigInt(transaction.value) !== 0n ||
         transaction.ercAddress !== ZERO ||
         transaction.recipientAddress !== ZERO ||
         transaction.commitments[0] === ZERO ||
@@ -79,7 +79,7 @@ async function checkTransactionType(transaction) {
     case 2: // double token transaction
       if (
         transaction.tokenId !== ZERO ||
-        Number(transaction.value) !== 0 ||
+        BigInt(transaction.value) !== 0n ||
         transaction.ercAddress !== ZERO ||
         transaction.recipientAddress !== ZERO ||
         transaction.commitments.some(c => c === ZERO) ||
@@ -100,7 +100,7 @@ async function checkTransactionType(transaction) {
       if (
         (Number(transaction.tokenType) !== 0 &&
           transaction.tokenId === ZERO &&
-          Number(transaction.value) === 0) ||
+          BigInt(transaction.value) === 0n) ||
         transaction.ercAddress === ZERO ||
         transaction.recipientAddress === ZERO ||
         transaction.commitments.some(c => c !== ZERO) ||
