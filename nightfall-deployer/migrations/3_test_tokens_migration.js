@@ -28,15 +28,15 @@ module.exports = function (deployer, _, accounts) {
     }
 
     if (DEPLOY_MOCK_TOKENS === 'false') return;
-    await deployer.deploy(ERC20Mock, 1001010000000000); // initialSupply
+    await deployer.deploy(ERC20Mock, '0x10000000000000000000000000000'); // initialSupply
 
     const ERC20deployed = await ERC20Mock.deployed();
     // For ping pong tests
-    await ERC20deployed.transfer(addresses.user1, 1000000000000);
-    await ERC20deployed.transfer(addresses.user2, 1000000000000);
+    await ERC20deployed.transfer(addresses.user1, '0x400000000000000000000');
+    await ERC20deployed.transfer(addresses.user2, '0x400000000000000000000');
 
     // Set a restriction for ping-pong
-    await restrictions.setRestriction(ERC20deployed.address, erc20default);
+    await restrictions.setRestriction(ERC20deployed.address, '0x8000000000000000000000000000');
 
     if (!config.ETH_ADDRESS) {
       // indicates we're running a wallet test that uses hardcoded addresses
