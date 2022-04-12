@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
+import styled, { keyframes } from 'styled-components';
 import Modal from 'react-bootstrap/Modal';
 import { AiOutlineDown } from 'react-icons/ai';
 import { FiSearch } from 'react-icons/fi';
@@ -17,7 +18,7 @@ import depositConfirmed from '../../assets/img/modalImages/adeposit_confirmed.pn
 import successHand from '../../assets/img/modalImages/success-hand.png';
 import transferCompletedImg from '../../assets/img/modalImages/tranferCompleted.png';
 import { saveTransaction } from '../../nightfall-browser/services/database';
-import styled, { keyframes } from 'styled-components';
+
 import '../../styles/bridge.module.scss';
 import '../../styles/modal.scss';
 
