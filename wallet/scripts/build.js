@@ -1,3 +1,6 @@
+/* eslint-disable no-use-before-define */
+/* eslint-disable import/no-dynamic-require */
+/* eslint-disable global-require */
 // Do this as the first thing so that any code reading it knows the right env.
 process.env.BABEL_ENV = 'production';
 process.env.NODE_ENV = 'production';
@@ -23,8 +26,6 @@ const printHostingInstructions = require('react-dev-utils/printHostingInstructio
 const FileSizeReporter = require('react-dev-utils/FileSizeReporter');
 const printBuildError = require('react-dev-utils/printBuildError');
 
-const paths = require('../config/paths');
-
 const { measureFileSizesBeforeBuild } = FileSizeReporter;
 const { printFileSizesAfterBuild } = FileSizeReporter;
 const useYarn = fs.existsSync(paths.yarnLockFile);
@@ -44,20 +45,13 @@ const argv = process.argv.slice(2);
 const writeStatsJson = argv.indexOf('--stats') !== -1;
 
 // Generate configuration
-const configFactory = require('../config/webpack.config');
-
 const config = configFactory('production');
 
 // We require that you explicitly set browsers and do not fall back to
 // browserslist defaults.
 const { checkBrowsers } = require('react-dev-utils/browsersHelper');
-
-function copyPublicFolder() {
-  fs.copySync(paths.appPublic, paths.appBuild, {
-    dereference: true,
-    filter: file => file !== paths.appHtml,
-  });
-}
+const paths = require('../config/paths');
+const configFactory = require('../config/webpack.config');
 
 checkBrowsers(paths.appPath, isInteractive)
   .then(() => {
@@ -196,5 +190,12 @@ function build(previousFileSizes) {
 
       return resolve(resolveArgs);
     });
+  });
+}
+
+function copyPublicFolder() {
+  fs.copySync(paths.appPublic, paths.appBuild, {
+    dereference: true,
+    filter: file => file !== paths.appHtml,
   });
 }
