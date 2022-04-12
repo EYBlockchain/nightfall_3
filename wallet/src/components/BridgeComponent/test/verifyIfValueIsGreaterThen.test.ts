@@ -1,4 +1,4 @@
-import verifyIfValueIsGreaterThen from "../utils/verifyIfValueIsGreaterThen";
+import verifyIfValueIsGreaterThen from '../utils/verifyIfValueIsGreaterThen';
 
 test('verify 2 is greater than 1', () => {
   expect(verifyIfValueIsGreaterThen(2, 1)).toBeTruthy();

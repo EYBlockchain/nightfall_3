@@ -20,7 +20,32 @@ import { saveTransaction } from '../../nightfall-browser/services/database';
 
 import '../../styles/bridge.module.scss';
 import '../../styles/modal.scss';
-import { BalanceText, BalanceTextRight, ContinueTransferButton, Divider, HeaderTitle, InputAddress, InputBalance, InputSearchTitle, InputWrapper, MaxButton, MyBody, ProcessImages, SendModalBalance, SendModalBalanceLeft, SendModalBalanceRight, SendModalFooter, SendModalStyle, Spinner, SpineerBox, SpinnerBoard, TokensLine, TokensLineDiv, TokensLineDivImg, TokensList } from './sendModalStyles';
+import {
+  BalanceText,
+  BalanceTextRight,
+  ContinueTransferButton,
+  Divider,
+  HeaderTitle,
+  InputAddress,
+  InputBalance,
+  InputSearchTitle,
+  InputWrapper,
+  MaxButton,
+  MyBody,
+  ProcessImages,
+  SendModalBalance,
+  SendModalBalanceLeft,
+  SendModalBalanceRight,
+  SendModalFooter,
+  SendModalStyle,
+  Spinner,
+  SpineerBox,
+  SpinnerBoard,
+  TokensLine,
+  TokensLineDiv,
+  TokensLineDivImg,
+  TokensList,
+} from './sendModalStyles';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -181,7 +206,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
       transaction,
       rawTransaction,
     };
-  }  
+  }
 
   return (
     <>
@@ -194,8 +219,10 @@ const SendModal = (props: SendModalProps): JSX.Element => {
             <MyBody>
               <SendModalStyle>
                 <InputSearchTitle>
-                  <BsArrowReturnLeft title='Back' onClick={() => setShowTokensListModal(false)}/>
-                  <div>Choose token from <span>Ethereum</span></div>                  
+                  <BsArrowReturnLeft title="Back" onClick={() => setShowTokensListModal(false)} />
+                  <div>
+                    Choose token from <span>Ethereum</span>
+                  </div>
                 </InputSearchTitle>
                 <InputWrapper>
                   <FiSearch />
@@ -244,7 +271,6 @@ const SendModal = (props: SendModalProps): JSX.Element => {
                       onChange={e => setTransferValue(Number(e.target.value))}
                       id="TokenItem_modalSend_tokenAmount"
                     />
-                    
                   </SendModalBalanceLeft>
                   <MaxButton>MAX</MaxButton>
                   <SendModalBalanceRight
@@ -302,7 +328,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
               <ProcessImages>
                 <img src={approveImg} alt="approve" />
               </ProcessImages>
-              <Divider/>
+              <Divider />
               <SpineerBox>
                 <SpinnerBoard>
                   <Spinner />
@@ -325,7 +351,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
               <ProcessImages>
                 <img src={depositConfirmed} alt="deposit confirmed" />
               </ProcessImages>
-              <Divider/>
+              <Divider />
               <SpineerBox>
                 <SpinnerBoard>
                   <Spinner />
@@ -348,7 +374,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
               <ProcessImages>
                 <img src={transferCompletedImg} alt="transfer completed" />
               </ProcessImages>
-              <Divider/>
+              <Divider />
               <SpineerBox>
                 <img src={successHand} alt="success hand" />
               </SpineerBox>

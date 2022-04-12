@@ -1,9 +1,11 @@
 /* eslint-disable no-nested-ternary */
 const { DOMAIN_NAME = '' } = process.env;
 
+/* eslint-disable no-extend-native */
 BigInt.prototype.toJSON = function () {
   return `${this.toString()} BigInt`;
 };
+/* eslint-disable no-extend-native */
 
 module.exports = {
   COMMITMENTS_DB: 'nightfall_commitments',

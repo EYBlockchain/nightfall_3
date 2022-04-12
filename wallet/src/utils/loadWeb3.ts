@@ -1,19 +1,22 @@
-import Web3 from "web3"
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
+import Web3 from 'web3';
 
-declare var window: any
+declare let window: any;
 
 const loadWeb3 = async () => {
   if (window.web3) {
-      window.web3 = new Web3(window.ethereum)
-      // await window.ethereum.enable()
-      await window.ethereum.request({ method: 'eth_requestAccounts' })
-  } else if (window.web3) {
-      window.web3 = new Web3(window.web3.currentProvider)
-  } else {
-      window.alert(
-          'Non-Ethereum browser detected. You should consider trying MetaMask!'
-      )
+    window.web3 = new Web3(window.ethereum);
+    // await window.ethereum.enable()
+    await window.ethereum.request({ method: 'eth_requestAccounts' });
+    return;
   }
-}
 
-export default loadWeb3
+  if (window.web3) {
+    window.web3 = new Web3(window.web3.currentProvider);
+    return;
+  }
+
+  window.alert('Non-Ethereum browser detected. You should consider trying MetaMask!');
+};
+
+export default loadWeb3;

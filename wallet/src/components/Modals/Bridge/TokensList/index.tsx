@@ -1,9 +1,9 @@
 import React, { useState, Dispatch, SetStateAction, ChangeEvent } from 'react';
 import { FiSearch } from 'react-icons/fi';
-import tokensList from './tokensList';
 import Modal from 'react-bootstrap/Modal';
-import TokenType from './TokenType';
 import styled from 'styled-components';
+import tokensList from './tokensList';
+import TokenType from './TokenType';
 
 const Header = styled.div`
   display: flex;
@@ -12,26 +12,26 @@ const Header = styled.div`
   width: 100%;
 `;
 
-const HeaderText = styled.div `
+const HeaderText = styled.div`
   left: 17.08%;
   right: 16.18%;
   top: 36.36%;
-  bottom: 36.36%;  
+  bottom: 36.36%;
 
   /* Header/H5 */
 
-  fontFamily: Manrope;
-  fontStyle: normal;
-  fontWeight: 800;
-  fontSize: 16px;  
+  fontfamily: Manrope;
+  fontstyle: normal;
+  fontweight: 800;
+  fontsize: 16px;
   /* identical to box height; or 150% */
 
-  textAlign: center;
-  letterSpacing: 0.01em;
+  textalign: center;
+  letterspacing: 0.01em;
   color: #061024;
 `;
 
-const MyModalBody = styled.div`  
+const MyModalBody = styled.div`
   overflow: auto;
   max-height: 600px;
 `;
@@ -41,19 +41,19 @@ const MyModalBodyText = styled.div`
   width: 100%;
   padding: 24px 32px;
   /* Header/H2 */
-  
+
   font-family: Manrope;
   font-style: normal;
   font-weight: 800;
   font-size: 26px;
-  
+
   /* identical to box height, or 122% */
-  
+
   letter-spacing: -0.01em;
-  
+
   /* light/gray-900 */
-  
-  color: #0A0B0D;
+
+  color: #0a0b0d;
 `;
 
 const SearchBox = styled.div`
@@ -65,23 +65,23 @@ const SearchBox = styled.div`
 `;
 
 const MyModalBodySpan = styled.span`
-  color: #7B3FE4;
+  color: #7b3fe4;
   margin-left: 7px;
 `;
 
 const TokenUl = styled.ul`
-    padding-right: 24px;
-  `;
+  padding-right: 24px;
+`;
 
 const TokenLi = styled.li`
   width: 100%;
-  
+
   list-style: none;
   display: flex;
   justify-content: space-between;
   align-items: center;
   height: 80px;
-  border-bottom: 1px solid #F3F4F7;
+  border-bottom: 1px solid #f3f4f7;
   padding: 10px;
 
   &:hover {
@@ -108,7 +108,7 @@ const SearchInput = styled.input`
     color: #000000;
 
     opacity: 0.5;
-  }    
+  }
 
   &:focus {
     outline: none;
@@ -128,71 +128,64 @@ const LiWrapper = styled.div`
   p {
     margin-top: 17px;
   }
-`
+`;
 
 type TokenListType = {
   handleClose: Dispatch<SetStateAction<boolean>>;
   setToken: Dispatch<SetStateAction<TokenType>>;
-}
+};
 
-const TokensList = ({ handleClose, setToken }: TokenListType) => {    
-
+const TokensList = ({ handleClose, setToken }: TokenListType): JSX.Element => {
   const [filteredTokens, setFilteredTokens] = useState(tokensList.tokens);
-  
-  const filterTokens = (e: ChangeEvent<HTMLInputElement>) => {
-    setFilteredTokens(tokensList.tokens.filter(token => token.name.toLowerCase().includes(e.target.value.toLocaleLowerCase())));    
-    console.log("E: ",e.target.value);
-  }
 
-  const handleTokenSelection = (token: any) => {    
+  const filterTokens = (e: ChangeEvent<HTMLInputElement>) => {
+    setFilteredTokens(
+      tokensList.tokens.filter(token =>
+        token.name.toLowerCase().includes(e.target.value.toLocaleLowerCase()),
+      ),
+    );
+    console.log('E: ', e.target.value);
+  };
+
+  const handleTokenSelection = (token: any) => {
     setToken(token);
     handleClose(false);
-  }  
+  };
 
   return (
     <div>
-      <Modal         
-        show={true} 
-        onHide={() => handleClose(false)}
-      >
-        <Modal.Header closeButton style={{ padding: "35px" }}>
-          <Header>                   
-              <HeaderText>Tokens List</HeaderText>                                
+      <Modal show={true} onHide={() => handleClose(false)}>
+        <Modal.Header closeButton style={{ padding: '35px' }}>
+          <Header>
+            <HeaderText>Tokens List</HeaderText>
           </Header>
         </Modal.Header>
-        <Modal.Body>           
+        <Modal.Body>
           <MyModalBody>
             <MyModalBodyText>
-              Choose token from 
+              Choose token from
               <MyModalBodySpan>Ethereum</MyModalBodySpan>
             </MyModalBodyText>
             <SearchBox>
               <FiSearch />
-              <SearchInput 
-                type="text" 
-                placeholder="Search here"
-                onChange={(e) => filterTokens(e)}
-              />
-            </SearchBox>                
+              <SearchInput type="text" placeholder="Search here" onChange={e => filterTokens(e)} />
+            </SearchBox>
             <TokenUl>
               {filteredTokens.map((token: any, index: number) => (
-                <TokenLi                
-                  key={index} 
-                  onClick={() => handleTokenSelection(token)}
-                >
+                <TokenLi key={index} onClick={() => handleTokenSelection(token)}>
                   <LiWrapper>
                     <img src={token.logoURI} alt={`${token.name} token`} />
                     <p>{token.name}</p>
                   </LiWrapper>
                   <p>Balance</p>
                 </TokenLi>
-              ))}          
+              ))}
             </TokenUl>
           </MyModalBody>
         </Modal.Body>
-      </Modal>    
+      </Modal>
     </div>
-  )
-}
+  );
+};
 
 export default TokensList;

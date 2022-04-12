@@ -1,32 +1,31 @@
-import React, { InputHTMLAttributes, useCallback } from "react";
+import React, { InputHTMLAttributes, useCallback } from 'react';
 
-import { cep, currency, cpf } from "./masks";
+import { cep, currency, cpf } from './masks';
 
-import "./styles.scss";
+import './styles.scss';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
-  mask: "cep" | "currency" | "cpf";
-  prefix?: string;
+  mask: 'cep' | 'currency' | 'cpf';
 }
 
-const Input: React.FC<InputProps> = ({ mask, prefix, ...props }) => {
+const Input: React.FC<InputProps> = ({ mask, ...props }) => {
   const handleKeyUp = useCallback(
     (e: React.FormEvent<HTMLInputElement>) => {
-      if (mask === "cep") {
+      if (mask === 'cep') {
         cep(e);
       }
-      if (mask === "currency") {
+      if (mask === 'currency') {
         currency(e);
       }
-      if (mask === "cpf") {
+      if (mask === 'cpf') {
         cpf(e);
       }
     },
-    [mask]
+    [mask],
   );
 
   return (
-    <div className="input-group prefix">      
+    <div className="input-group prefix">
       <input className="amount_value" {...props} onKeyUp={handleKeyUp} />
     </div>
   );

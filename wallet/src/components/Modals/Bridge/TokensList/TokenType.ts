@@ -1,20 +1,20 @@
 type TokenType = {
-  chainId: number,
-  name: string,
-  symbol: string,
-  decimals: number,
-  address: string,
-  logoURI: string,
-  tags: Array<string>,
+  chainId: number;
+  name: string;
+  symbol: string;
+  decimals: number;
+  address: string;
+  logoURI: string;
+  tags: Array<string>;
   extensions: {
-    parentAddress: string,
+    parentAddress: string;
     project: {
-      name: string,
-      summary: string,
-      contact: string,
-      website: string,
-    }
-  }
+      name: string;
+      summary: string;
+      contact: string;
+      website: string;
+    };
+  };
 };
 
 export default TokenType;
