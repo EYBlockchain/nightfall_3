@@ -1,5 +1,4 @@
 import childProcess from 'child_process';
-import fs from 'fs';
 
 const { spawn } = childProcess;
 
@@ -19,54 +18,14 @@ const { spawn } = childProcess;
  * @param {String} vkName - name of verification key file, defaults to verification.key
  * @param {String} pkName - name of proving key file, defaults to proving.key
  */
-export default async function setup(
-  codePath,
-  outputPath = './',
-  provingScheme = 'g16',
-  backend = 'bellman',
-  vkName = 'verification.key',
-  pkName = 'proving.key',
-  options = {},
-) {
+export default async function ceremony(random, options = {}) {
   const { maxReturn = 10000000, verbose = false } = options;
 
-  if (!fs.existsSync(codePath)) {
-    throw new Error('Setup input file(s) not found');
-  }
-
-  if (codePath.endsWith('.zok')) {
-    throw new Error(
-      'Setup cannot take the .zok version, use the compiled version with no extension.',
-    );
-  }
-
-  // Ensure path ends with '/'
-  const parsedOutputPath = outputPath.endsWith('/') ? outputPath : `${outputPath}/`;
-
-  // Ensure the keys end with `.key`
-  const vkWithKey = vkName.endsWith('.key') ? vkName : `${vkName}.key`;
-  const pkWithKey = pkName.endsWith('.key') ? pkName : `${pkName}.key`;
-
-  const vkPath = `${parsedOutputPath}${vkWithKey}`;
-  const pkPath = `${parsedOutputPath}${pkWithKey}`;
   return new Promise((resolve, reject) => {
     const zokrates = spawn(
       '/app/zokrates',
-      [
-        'setup',
-        '-i',
-        codePath,
-        '--proving-scheme',
-        provingScheme,
-        '--backend',
-        backend,
-        '-v',
-        vkPath,
-        '-p',
-        pkPath,
-      ],
+      ['mpc', 'contribute', '-i', 'mpc.params', '-o', 'contribution.params', '-e', random],
       {
-        stdio: ['ignore', 'pipe', 'pipe'],
         env: {
           ZOKRATES_STDLIB: process.env.ZOKRATES_STDLIB,
         },

@@ -79,3 +79,6 @@ output/*
 #circuits, except for test purposes
 circuits/*
 !circuits/test/
+
+# for now, ignore mpc parameters
+radix

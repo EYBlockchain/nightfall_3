@@ -2,7 +2,20 @@ import compile from './compile.mjs';
 import computeWitness from './compute-witness.mjs';
 import extractVk from './extract-vk.mjs';
 import generateProof from './generate-proof.mjs';
-import setup from './setup.mjs';
 import verify from './verify.mjs';
+import ceremony from './ceremony.mjs';
+import contribution from './contribution.mjs';
+import beacon from './beacon.mjs';
+import exportKeys from './exportKeys.mjs';
 
-export { compile, computeWitness, extractVk, generateProof, setup, verify };
+export {
+  compile,
+  computeWitness,
+  extractVk,
+  generateProof,
+  verify,
+  ceremony,
+  contribution,
+  beacon,
+  exportKeys,
+};

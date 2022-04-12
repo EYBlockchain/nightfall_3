@@ -7,12 +7,13 @@
   "private": true,
   "scripts": {
     "start": "node ./src/index.mjs",
-    "dev": "nodemon ./src/index.mjs",
+    "dev": "nodemon ./src/index.mjs --ignore *.params --ignore ./src/radix/ --ignore ./src/radix/*",
     "setup": "./bin/setup.sh",
     "test": "mocha"
   },
   "dependencies": {
     "amqplib": "^0.8.0",
+    "axios": "^0.26.1",
     "body-parser": "1.19.0",
     "config": "^3.3.2",
     "cors": "2.8.5",
