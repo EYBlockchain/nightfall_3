@@ -50,7 +50,7 @@ services:
     ports:
       # to use with postman and etc
       - 8091:80
-    entrypoint: [ "npm", "run", "dev" ]
+    entrypoint: [ "npm", "run", "start" ]
   deployer:
     #image: docker.pkg.github.com/eyblockchain/nightfall-deployer/nightfall_deployer:1.1.0
 
