@@ -8,6 +8,7 @@ import {
   beacon,
   exportKeys,
   contribution,
+  setup,
 } from '../zokrates-lib/index.mjs';
 import logger from '../utils/logger.mjs';
 
@@ -36,21 +37,33 @@ export default async function generateKeys({ filepath, curve = 'bn128' }) {
     curve,
   );
 
-  logger.info('MPC Ceremony...');
-  await ceremony(`${outputPath}/${circuitDir}`, `${circuitName}`, { verbose: true });
+  if (process.env.MPC) {
+    logger.info('MPC Ceremony...');
+    await ceremony(`${outputPath}/${circuitDir}`, `${circuitName}`, { verbose: true });
 
-  // magic number is the max int for randomInt
-  let randomness = crypto.randomInt(281474976710655);
-  logger.info('Contributing...');
-  await contribution(randomness);
+    // magic number is the max int for randomInt
+    let randomness = crypto.randomInt(281474976710655);
+    logger.info('Contributing...');
+    await contribution(randomness);
 
-  randomness = crypto.randomInt(281474976710655);
-  const hash = crypto.createHash('sha256').update(randomness.toString()).digest('hex');
-  logger.info('MPC Beacon...');
-  await beacon(hash, { verbose: true });
+    randomness = crypto.randomInt(281474976710655);
+    const hash = crypto.createHash('sha256').update(randomness.toString()).digest('hex');
+    logger.info('MPC Beacon...');
+    await beacon(hash, { verbose: true });
 
-  logger.info('Export keys...');
-  await exportKeys(`${outputPath}/${circuitDir}`, `${circuitName}`);
+    logger.info('Export keys...');
+    await exportKeys(`${outputPath}/${circuitDir}`, `${circuitName}`);
+  } else {
+    logger.info('Setup...');
+    await setup(
+      `${outputPath}/${circuitDir}/${circuitName}_out`,
+      `${outputPath}/${circuitDir}`,
+      'g16',
+      'bellman',
+      `${circuitName}_vk`,
+      `${circuitName}_pk`,
+    );
+  }
 
   const vk = await extractVk(`${outputPath}/${circuitDir}/${circuitName}_vk.key`);
 

@@ -7,6 +7,7 @@ import ceremony from './ceremony.mjs';
 import contribution from './contribution.mjs';
 import beacon from './beacon.mjs';
 import exportKeys from './exportKeys.mjs';
+import setup from './setup.mjs';
 
 export {
   compile,
@@ -18,4 +19,5 @@ export {
   contribution,
   beacon,
   exportKeys,
+  setup,
 };

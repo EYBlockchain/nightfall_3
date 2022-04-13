@@ -6,7 +6,7 @@ import rabbitmq from './utils/rabbitmq.mjs';
 import queues from './queues/index.mjs';
 import logger from './utils/logger.mjs';
 
-const { RADIX_FILES_URL } = config;
+const { MPC: RADIX_FILES_URL } = config;
 
 const main = async () => {
   try {
