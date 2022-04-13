@@ -14,7 +14,16 @@ const main = async () => {
 
     const radixPromises = [];
 
-    for (const circuit of ['deposit', 'double_transfer', 'single_transfer', 'withdraw']) {
+    for (const circuit of [
+      'deposit',
+      'double_transfer',
+      'single_transfer',
+      'withdraw',
+      'deposit_stub',
+      'withdraw_stub',
+      'double_transfer_stub',
+      'single_transfer_stub',
+    ]) {
       if (!fs.existsSync(`./src/radix/${circuit}`)) {
         radixPromises.push(
           new Promise((resolve, reject) => {
