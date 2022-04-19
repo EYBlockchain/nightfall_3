@@ -216,20 +216,6 @@ async function transfer(transferParams) {
       // dig up connection peers
       const peerList = await getProposersUrl(NEXT_N_PROPOSERS);
       logger.debug(`Peer List: ${JSON.stringify(peerList, null, 2)}`);
-      Object.keys(peerList).forEach(async address => {
-        logger.debug(
-          `offchain transaction - calling ${peerList[address]}/proposer/offchain-transaction`,
-        );
-        await axios
-          .post(
-            `${peerList[address]}/proposer/offchain-transaction`,
-            { transaction: optimisticTransferTransaction },
-            { timeout: 3600000 },
-          )
-          .catch(err => {
-            throw new Error(err);
-          });
-      });
       // we only want to store our own commitments so filter those that don't
       // have our public key
       newCommitments
@@ -242,6 +228,7 @@ async function transfer(transferParams) {
       return {
         transaction: optimisticTransferTransaction,
         salts: salts.map(salt => salt.hex(32)),
+        peerList,
       };
     }
     const rawTransaction = await shieldContractInstance.methods

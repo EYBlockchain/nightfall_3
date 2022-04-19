@@ -1,0 +1,34 @@
+version: '3.5'
+# Use this script for running up nightfall_3 in 'mumbai' for the payments blockchain
+# and expects a pre-existing blockchain client on localhost.
+# Use it as an override file for docker-compose.yml
+services:
+  client1:
+    environment:
+      BLOCKCHAIN_PAYMENTS_URL: wss://ws-matic-mumbai.chainstacklabs.com
+      AUTOSTART_RETRIES: 100
+
+  client2:
+    environment:
+      BLOCKCHAIN_PAYMENTS_URL: wss://ws-matic-mumbai.chainstacklabs.com
+      AUTOSTART_RETRIES: 100
+
+  deployer:
+    environment:
+      LOG_LEVEL: debug
+      # MATIC_NETWORK sets the network selected by Truffle from truffle-config.js
+      # startup routines will wait for a blockchain client to be reachable on this network
+      MATIC_NETWORK: mumbai
+      BLOCKCHAIN_PAYMENTS_URL: wss://ws-matic-mumbai.chainstacklabs.com
+      MATIC_PRIVATE_KEY: abf4ed9f30bd1e4a290310d726c7bbdf39cd75a25eebd9a3a4874e10b4a0c4ce
+      MATIC_ADDRESS: '0xdb080dC48961bC1D67a0A4151572eCb824cC76E8'
+
+  optimist1:
+    environment:
+      BLOCKCHAIN_PAYMENTS_URL: wss://ws-matic-mumbai.chainstacklabs.com
+      AUTOSTART_RETRIES: 100
+
+  optimist2:
+    environment:
+      BLOCKCHAIN_PAYMENTS_URL: wss://ws-matic-mumbai.chainstacklabs.com
+      AUTOSTART_RETRIES: 100

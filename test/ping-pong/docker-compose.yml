@@ -24,6 +24,8 @@ services:
       LOG_LEVEL: debug
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
+      BLOCKCHAIN_PAYMENTS_WS_HOST: blockchain2
+      BLOCKCHAIN_PAYMENTS_PORT: 8546
       ZOKRATES_WORKER_HOST: worker
       RABBITMQ_HOST: amqp://rabbitmq
       RABBITMQ_PORT: 5672
@@ -33,7 +35,7 @@ services:
       OPTIMIST_HOST: optimist
       OPTIMIST_PORT: 80
       USE_STUBS: 'false' # make sure this flag is the same as in deployer service
-    command: [ 'npm', 'run', 'dev' ]
+    command: ['npm', 'run', 'dev']
 
   rabbitmq:
     image: rabbitmq
@@ -55,13 +57,15 @@ services:
       WEBSOCKET_PORT: 8080
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
+      BLOCKCHAIN_PAYMENTS_WS_HOST: blockchain2
+      BLOCKCHAIN_PAYMENTS_PORT: 8546
       HASH_TYPE: mimc
       LOG_LEVEL: debug
       IS_CHALLENGER: 'true'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
       TIMBER_HOST: timber
       TIMBER_PORT: 80
-    command: [ 'npm', 'run', 'dev' ]
+    command: ['npm', 'run', 'dev']
 
   # Temporary container to deploy contracts and circuits and populate volumes
   deployer:
@@ -82,6 +86,9 @@ services:
       ETH_NETWORK: blockchain1
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
+      MATIC_NETWORK: blockchain2
+      BLOCKCHAIN_PAYMENTS_WS_HOST: blockchain2
+      BLOCKCHAIN_PAYMENTS_PORT: 8546
       ZOKRATES_WORKER_HOST: worker
       USE_STUBS: 'false'
 
@@ -132,6 +139,8 @@ services:
       CLIENT_PORT: 80
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
+      BLOCKCHAIN_PAYMENTS_WS_HOST: blockchain2
+      BLOCKCHAIN_PAYMENTS_PORT: 8546
       IS_TEST_RUNNER: 'yes'
 
   user-local2:
@@ -149,6 +158,8 @@ services:
       CLIENT_PORT: 80
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
+      BLOCKCHAIN_PAYMENTS_WS_HOST: blockchain2
+      BLOCKCHAIN_PAYMENTS_PORT: 8546
 
 volumes:
   mongodb:

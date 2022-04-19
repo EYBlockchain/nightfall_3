@@ -6,7 +6,16 @@ import config from 'config';
 import Nf3 from '../../../cli/lib/nf3.mjs';
 import { expectTransaction, depositNTransactions, Web3Client } from '../../utils.mjs';
 import logger from '../../../common-files/utils/logger.mjs';
-
+import app from '../../../cli/src/proposer/app.mjs';
+import {
+  nf3Init,
+  nf3Healthcheck,
+  nf3RegisterProposer,
+  nf3StartProposer,
+  nf3Close,
+  nf3DeregisterProposer,
+  nf3GetEthereumAddress,
+} from '../../../cli/src/proposer/nf3-wrapper.mjs';
 import { approve } from '../../../cli/lib/tokens.mjs';
 
 // so we can use require with mjs file
@@ -28,10 +37,10 @@ const {
 
 const {
   RESTRICTIONS: { tokens: defaultRestrictions },
+  PROPOSER_PORT,
 } = config;
 
 const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
-const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
 
 const web3Client = new Web3Client();
 
@@ -89,11 +98,21 @@ const emptyL2 = async nf3Instance => {
 
 describe('ERC20 tests', () => {
   before(async () => {
-    await nf3Proposer.init(mnemonics.proposer);
-    await nf3Proposer.registerProposer();
+    await nf3Init(signingKeys.proposer1, environment, undefined, 'optimist');
+    if (await nf3Healthcheck('optimist')) logger.info('Healthcheck optimist passed');
+    else throw new Error('Healthcheck failed');
+    logger.info('Attempting to register proposer');
+
+    await nf3RegisterProposer(environment.proposerBaseUrl);
+    if (PROPOSER_PORT !== '') {
+      logger.debug('Proposer healthcheck up');
+      app.listen(PROPOSER_PORT);
+    }
 
     // Proposer listening for incoming events
-    const newGasBlockEmitter = await nf3Proposer.startProposer();
+    const newGasBlockEmitter = await nf3StartProposer();
+    logger.info('Listening for incoming events');
+
     newGasBlockEmitter.on('gascost', async gasUsed => {
       logger.debug(
         `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
@@ -210,7 +229,7 @@ describe('ERC20 tests', () => {
       expect(after).to.be.lessThan(before);
     });
 
-    it('should send a single ERC20 transfer directly to a proposer', async function () {
+    it('should send a single ERC20 off-chain transfer directly to a proposer', async function () {
       const before = (await nf3Users[0].getLayer2Balances())[erc20Address][0].balance;
 
       // here we don't need to emptyL2 because we're sending two transactions
@@ -231,7 +250,7 @@ describe('ERC20 tests', () => {
       expect(after).to.be.lessThan(before);
     });
 
-    it('should send a double ERC20 transfer directly to a proposer', async function () {
+    it('should send a double ERC20 off-chain transfer directly to a proposer', async function () {
       // we get some different transferValue than the commitments we have (all should be of value transferValue)
       // then we send it, the client should pick two commitments to send the transaction
       const doubleTransferValue = Math.ceil(transferValue * 1.2);
@@ -273,6 +292,41 @@ describe('ERC20 tests', () => {
       logger.debug(`     Gas used was ${Number(rec.gasUsed)}`);
       const afterBalance = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance;
       expect(afterBalance).to.be.lessThan(beforeBalance);
+    });
+
+    it('User should have the correct balance after off-chain withdraw directly to a proposer', async () => {
+      let expectedDecPaymentBalance = 0;
+      const startPaymentBalance = BigInt(
+        await nf3Users[0].getPaymentBalance(nf3Users[0].ethereumAddress),
+      );
+      const proposerAddress = nf3GetEthereumAddress(); // It's the only proposer
+      const proposerStartPaymentBalance = BigInt(
+        await nf3Users[0].getPaymentBalance(proposerAddress),
+      );
+
+      await nf3Users[0].withdraw(
+        true,
+        erc20Address,
+        tokenType,
+        transferValue,
+        tokenId,
+        nf3Users[0].ethereumAddress,
+        fee,
+      );
+      expectedDecPaymentBalance += fee;
+
+      const endPaymentBalance = BigInt(
+        await nf3Users[0].getPaymentBalance(nf3Users[0].ethereumAddress),
+      );
+      const proposerEndPaymentBalance = BigInt(
+        await nf3Users[0].getPaymentBalance(proposerAddress),
+      );
+      expect(expectedDecPaymentBalance).to.be.lessThan(
+        Number(startPaymentBalance - endPaymentBalance),
+      );
+      expect(expectedDecPaymentBalance).to.be.equal(
+        Number(proposerEndPaymentBalance - proposerStartPaymentBalance),
+      );
     });
 
     it('Should create a failing finalise-withdrawal (because insufficient time has passed)', async function () {
@@ -541,8 +595,8 @@ describe('ERC20 tests', () => {
   });
 
   after(async () => {
-    await nf3Proposer.deregisterProposer();
-    await nf3Proposer.close();
+    await nf3DeregisterProposer();
+    await nf3Close();
     await nf3Users[0].close();
     await nf3Users[1].close();
     await web3Client.closeWeb3();

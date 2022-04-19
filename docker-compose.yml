@@ -26,6 +26,8 @@ services:
       LOG_LEVEL: debug
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
+      BLOCKCHAIN_PAYMENTS_WS_HOST: blockchain2
+      BLOCKCHAIN_PAYMENTS_PORT: 8546
       ZOKRATES_WORKER_HOST: worker
       RABBITMQ_HOST: amqp://rabbitmq1
       RABBITMQ_PORT: 5672
@@ -33,7 +35,7 @@ services:
       OPTIMIST_HOST: optimist1
       OPTIMIST_PORT: 80
       USE_STUBS: 'false' # make sure this flag is the same as in deployer service
-    command: [ 'npm', 'run', 'dev' ]
+    command: ['npm', 'run', 'dev']
 
   client2:
     image: ghcr.io/eyblockchain/nightfall3-client:latest
@@ -59,6 +61,8 @@ services:
       LOG_LEVEL: error
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
+      BLOCKCHAIN_PAYMENTS_WS_HOST: blockchain2
+      BLOCKCHAIN_PAYMENTS_PORT: 8546
       ZOKRATES_WORKER_HOST: worker
       RABBITMQ_HOST: amqp://rabbitmq2
       RABBITMQ_PORT: 5672
@@ -66,7 +70,7 @@ services:
       OPTIMIST_HOST: optimist2
       OPTIMIST_PORT: 80
       USE_STUBS: 'false' # make sure this flag is the same as in deployer service
-    command: [ 'npm', 'run', 'dev' ]
+    command: ['npm', 'run', 'dev']
 
   worker:
     #  image: 3800decac71d
@@ -99,6 +103,9 @@ services:
       ETH_NETWORK: blockchain1
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
+      MATIC_NETWORK: blockchain2
+      BLOCKCHAIN_PAYMENTS_WS_HOST: blockchain2
+      BLOCKCHAIN_PAYMENTS_PORT: 8546
       ZOKRATES_WORKER_HOST: worker
       USE_STUBS: 'false'
 
@@ -136,11 +143,13 @@ services:
       WEBSOCKET_PORT: 8080
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
+      BLOCKCHAIN_PAYMENTS_WS_HOST: blockchain2
+      BLOCKCHAIN_PAYMENTS_PORT: 8546
       HASH_TYPE: mimc
       LOG_LEVEL: debug
       IS_CHALLENGER: 'true'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
-    command: [ 'npm', 'run', 'dev' ]
+    command: ['npm', 'run', 'dev']
 
   optimist2:
     image: ghcr.io/eyblockchain/nightfall3-optimist:latest
@@ -160,11 +169,13 @@ services:
       WEBSOCKET_PORT: 8080
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
+      BLOCKCHAIN_PAYMENTS_WS_HOST: blockchain2
+      BLOCKCHAIN_PAYMENTS_PORT: 8546
       HASH_TYPE: mimc
       LOG_LEVEL: error
       IS_CHALLENGER: 'true'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
-    command: [ 'npm', 'run', 'dev' ]
+    command: ['npm', 'run', 'dev']
 
   hosted-utils-api-server:
     build:
@@ -190,9 +201,7 @@ volumes:
   mongodb1: null
   mongodb2: null
   proving_files: null
-  build:
-
-    null
+  build: null
 networks:
   nightfall_network:
     driver: bridge

@@ -17,6 +17,7 @@ module.exports = {
   SHIELD_CONTRACT_NAME: 'Shield',
   CHALLENGES_CONTRACT_NAME: 'Challenges',
   STATE_CONTRACT_NAME: 'State',
+  PAYMENT_CONTRACT_NAME: 'FeeBook',
   BLOCK_PROPOSED_EVENT_NAME: 'BlockProposed',
   CIRCUITS_HOME: process.env.CIRCUITS_HOME || '/app/circuits/',
   ALWAYS_DO_TRUSTED_SETUP: process.env.ALWAYS_DO_TRUSTED_SETUP || false,
@@ -32,12 +33,17 @@ module.exports = {
   BLOCKCHAIN_URL:
     process.env.BLOCKCHAIN_URL ||
     `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`,
+  BLOCKCHAIN_PAYMENTS_URL:
+    process.env.BLOCKCHAIN_PAYMENTS_URL ||
+    `ws://${process.env.BLOCKCHAIN_PAYMENTS_WS_HOST}:${process.env.BLOCKCHAIN_PAYMENTS_PORT}`,
+  USE_INFURA: process.env.USE_INFURA === 'true',
   ETH_PRIVATE_KEY: process.env.ETH_PRIVATE_KEY, // owner's/deployer's private key
   ETH_ADDRESS: process.env.ETH_ADDRESS,
+  MATIC_PRIVATE_KEY: process.env.MATIC_PRIVATE_KEY, // owner's deployer's private key MATIC network
   OPTIMIST_HOST: process.env.OPTIMIST_HOST || 'optimist',
   OPTIMIST_PORT: process.env.OPTIMIST_PORT || 80,
   PROPOSER_HOST: process.env.PROPOSER_HOST || 'proposer',
-  PROPOSER_PORT: process.env.PROPOSER_PORT || 8080,
+  PROPOSER_PORT: process.env.PROPOSER_PORT || 8100,
   WEB3_OPTIONS: {
     gas: process.env.GAS || 8000000,
     gasPrice: process.env.GAS_PRICE || '20000000000',
@@ -111,6 +117,7 @@ module.exports = {
       optimistApiUrl: '',
       optimistWsUrl: '',
       web3WsUrl: '',
+      web3PaymentsWsUrl: '',
     },
     ropsten: {
       name: 'Ropsten',
@@ -119,14 +126,20 @@ module.exports = {
       optimistApiUrl: 'https://optimist1.testnet.nightfall3.com',
       optimistWsUrl: 'wss://optimist1-ws.testnet.nightfall3.com',
       web3WsUrl: `${process.env.ROPSTEN_NODE}`,
+      web3PaymentsWsUrl: `${process.env.RINKEBY_NODE}`,
     },
     rinkeby: {
       name: 'Rinkeby',
       chainId: 4,
-      clientApiUrl: '',
-      optimistApiUrl: '',
-      optimistWsUrl: '',
-      web3WsUrl: '',
+      clientApiUrl: 'https://client1.testnet.nightfall3.com',
+      optimistApiUrl: 'https://optimist1.testnet.nightfall3.com',
+      optimistWsUrl: 'wss://optimist1-ws.testnet.nightfall3.com',
+      web3WsUrl: `${process.env.RINKEBY_NODE}`,
+      web3PaymentsWsUrl:
+        process.env.BLOCKCHAIN_PAYMENTS_URL ||
+        (process.env.BLOCKCHAIN_PAYMENTS_WS_HOST
+          ? `ws://${process.env.BLOCKCHAIN_PAYMENTS_WS_HOST}:${process.env.BLOCKCHAIN_PAYMENTS_PORT}`
+          : `${process.env.RINKEBY_NODE}`),
     },
     localhost: {
       name: 'Localhost',
@@ -142,12 +155,17 @@ module.exports = {
         : 'ws://localhost:8082',
       proposerBaseUrl: process.env.PROPOSER_HOST
         ? `http://${process.env.PROPOSER_HOST}:${process.env.PROPOSER_PORT}`
-        : 'http://172.16.238.1:8100',
+        : 'http://localhost:8100',
       adversarialOptimistApiUrl: 'http://localhost:8088',
       adversarialOptimistWsUrl: 'ws://localhost:8089',
       web3WsUrl: process.env.BLOCKCHAIN_WS_HOST
         ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`
         : 'ws://localhost:8546',
+      web3PaymentsWsUrl:
+        process.env.BLOCKCHAIN_PAYMENTS_URL ||
+        (process.env.BLOCKCHAIN_PAYMENTS_WS_HOST
+          ? `ws://${process.env.BLOCKCHAIN_PAYMENTS_WS_HOST}:${process.env.BLOCKCHAIN_PAYMENTS_PORT}`
+          : 'ws://localhost:8547'),
     },
     aws: {
       name: 'AWS',

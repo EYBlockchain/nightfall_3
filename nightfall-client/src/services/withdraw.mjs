@@ -110,24 +110,11 @@ async function withdraw(withdrawParams) {
   try {
     if (offchain) {
       const peerList = await getProposersUrl(NEXT_N_PROPOSERS);
-      Object.keys(peerList).forEach(async address => {
-        logger.debug(
-          `offchain transaction - calling ${peerList[address]}/proposer/offchain-transaction`,
-        );
-        await axios
-          .post(
-            `${peerList[address]}/proposer/offchain-transaction`,
-            { transaction: optimisticWithdrawTransaction },
-            { timeout: 3600000 },
-          )
-          .catch(err => {
-            throw new Error(err);
-          });
-      });
+      logger.debug(`Peer List: ${JSON.stringify(peerList, null, 2)}`);
       const th = optimisticWithdrawTransaction.transactionHash;
       delete optimisticWithdrawTransaction.transactionHash;
       optimisticWithdrawTransaction.transactionHash = th;
-      return { transaction: optimisticWithdrawTransaction };
+      return { transaction: optimisticWithdrawTransaction, peerList };
     }
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(optimisticWithdrawTransaction))

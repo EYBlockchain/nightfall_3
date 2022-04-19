@@ -198,7 +198,7 @@ router.get('/withdraw', async (req, res, next) => {
  * withdrawal and then /withdraw needs to be called to recover the money.
  */
 router.post('/payment', async (req, res, next) => {
-  logger.debug(`payment endpoint received GET ${JSON.stringify(req.body, null, 2)}`);
+  logger.debug(`payment endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
   const { block, blockNumberL2, transactions } = req.body;
   try {
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);

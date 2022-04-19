@@ -50,6 +50,8 @@ while [ -n "$1" ]; do
                                     ;;
       -a  | --adversary)            ADVERSARY="-f docker-compose.adversary.yml"
                                     ;;
+      -m  | --mumbai)               MUMBAI="-f docker-compose.mumbai.yml"
+                                    ;;
       * )                           usage
                               exit 1
     esac
@@ -61,9 +63,9 @@ if [ -z "$FILE" ]; then
   exit 1
 fi
 # shut down cleanly in the event of a cntl-c etc. We don't want to leave containers running
-trap "docker-compose $FILE $STUBS $DEV $ADVERSARY down --remove-orphans -t 1; exit 1" SIGHUP SIGINT SIGTERM
+trap "docker-compose $FILE $STUBS $DEV $ADVERSARY $MUMBAI down --remove-orphans -t 1; exit 1" SIGHUP SIGINT SIGTERM
 
-docker-compose -f docker-compose.yml $FILE $STUBS $DEV $ADVERSARY down --remove-orphans
+docker-compose -f docker-compose.yml $FILE $STUBS $DEV $ADVERSARY $MUMBAI down --remove-orphans
 
 # if-else block checks - volume exist and then removes it.
 if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb1) ]]; then
@@ -116,5 +118,5 @@ if [[ -d "$DIR" ]]; then
   rm -dr common-files/node_modules
 fi
 #docker-compose -f docker-compose.yml $FILE up -d deployer
-docker-compose $FILE $STUBS $DEV $ADVERSARY up -d --remove-orphans
+docker-compose $FILE $STUBS $DEV $ADVERSARY $MUMBAI up -d --remove-orphans
 docker-compose logs -f

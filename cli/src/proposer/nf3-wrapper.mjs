@@ -4,6 +4,15 @@ let nf3Instance = '';
 
 async function nf3SendOffchainTransaction(transaction) {
   if (nf3Instance !== '') {
+    const validPayment = await nf3Instance.checkPayment(
+      transaction.transactionHash,
+      transaction.fee,
+    );
+
+    if (!validPayment)
+      throw new Error(
+        `No valid payment to send off-chain transaction ${transaction.transactionHash}`,
+      );
     await nf3Instance.sendOffchainTransaction(transaction);
   }
 }
@@ -16,10 +25,23 @@ async function nf3GetContractAddressOptimist(contract) {
   return null;
 }
 
+function nf3GetEthereumAddress() {
+  if (nf3Instance !== '') {
+    return nf3Instance.ethereumAddress;
+  }
+  return null;
+}
+
 async function nf3Init(proposerEthereumSigningKey, Urls, mnemonic, contractAddressProvider) {
   nf3Instance = new Nf3(proposerEthereumSigningKey, Urls);
   if (nf3Instance !== '') {
     await nf3Instance.init(mnemonic, contractAddressProvider);
+  }
+}
+
+async function nf3Close() {
+  if (nf3Instance !== '') {
+    await nf3Instance.close();
   }
 }
 
@@ -34,6 +56,14 @@ async function nf3Healthcheck(server) {
 async function nf3RegisterProposer(url) {
   if (nf3Instance !== '') {
     const res = await nf3Instance.registerProposer(url);
+    return res;
+  }
+  return false;
+}
+
+async function nf3DeregisterProposer() {
+  if (nf3Instance !== '') {
+    const res = await nf3Instance.deregisterProposer();
     return res;
   }
   return false;
@@ -54,4 +84,7 @@ export {
   nf3Healthcheck,
   nf3RegisterProposer,
   nf3StartProposer,
+  nf3Close,
+  nf3GetEthereumAddress,
+  nf3DeregisterProposer,
 };

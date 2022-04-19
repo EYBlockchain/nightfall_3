@@ -31,6 +31,7 @@ const SUPPORTED_ENVIRONMENTS = {
     optimistApiUrl: 'http://localhost:8081',
     optimistWsUrl: 'ws://localhost:8082',
     web3WsUrl: 'ws://localhost:8546',
+    web3PaymentsWsUrl: 'ws://localhost:8547',
   },
   docker: {
     name: 'Docker',
@@ -48,6 +49,7 @@ const currentEnvironment = {
   optimistWsUrl: '',
   web3WsUrl: '',
   chainId: null,
+  web3PaymentsWsUrl: '',
 };
 
 /**
@@ -114,6 +116,14 @@ function setChainId(chainId) {
 }
 
 /**
+ * Stores the NF web3 Payments WebSocket Url
+ * @param {String} web3PaymentsWsUrl - NF network chain ID
+ */
+function setWeb3PaymentsWsUrl(web3PaymentsWsUrl) {
+  currentEnvironment.web3PaymentsWsUrl = web3PaymentsWsUrl;
+}
+
+/**
  * Sets an environment from a chain id or from a custom environment object
  * @param {Object|Number} env - Chain id or a custom environment object
  */
@@ -132,6 +142,7 @@ function setEnvironment(env) {
     setOptimistWsUrl(SUPPORTED_ENVIRONMENTS[env.toLowerCase()].optimistWsUrl);
     setWeb3WsUrl(SUPPORTED_ENVIRONMENTS[env.toLowerCase()].web3WsUrl);
     setChainId(SUPPORTED_ENVIRONMENTS[env.toLowerCase()].chainId);
+    setWeb3PaymentsWsUrl(SUPPORTED_ENVIRONMENTS[env.toLowerCase()].web3PaymentsWsUrl);
   } else if (typeof env === 'object') {
     if (env.clientApiUrl && typeof env.clientApiUrl === 'string') {
       setClientApiUrl(env.clientApiUrl);
@@ -147,6 +158,9 @@ function setEnvironment(env) {
     }
     if (env.chainId && typeof env.chainId === 'string') {
       setChainId(env.chainId);
+    }
+    if (env.web3PaymentsWsUrl && typeof env.web3PaymentsWsUrl === 'string') {
+      setWeb3PaymentsWsUrl(env.web3PaymentsWsUrl);
     }
   }
 }

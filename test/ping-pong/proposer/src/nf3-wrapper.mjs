@@ -4,6 +4,15 @@ let nf3Instance = '';
 
 async function nf3SendOffchainTransaction(transaction) {
   if (nf3Instance !== '') {
+    const validPayment = await nf3Instance.checkPayment(
+      transaction.transactionHash,
+      transaction.fee,
+    );
+
+    if (!validPayment)
+      throw new Error(
+        `No valid payment to send off-chain transaction ${transaction.transactionHash}`,
+      );
     await nf3Instance.sendOffchainTransaction(transaction);
   }
 }
