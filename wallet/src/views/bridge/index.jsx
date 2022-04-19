@@ -2,8 +2,6 @@
 /* eslint-disable react/jsx-pascal-case */
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
-import styles from '../../styles/bridge.module.scss';
-import bridgeInfoImage from '../../assets/img/bridge-info.png';
 import { useMediaQuery } from 'react-responsive';
 import pgIcon from '../../static/img/bridgepage/pg_coin4x2.png';
 import ethIcon from '../../static/img/bridgepage/eth_coin4x2.png';

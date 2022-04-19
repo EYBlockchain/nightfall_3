@@ -181,6 +181,10 @@ export default function Wallet({ changeChain }) {
 }
 
 WalletModal.propTypes = {
+  onHide: PropTypes.func.isRequired,
+};
+
+Wallet.propTypes = {
   changeChain: PropTypes.func.isRequired,
   onHide: PropTypes.func.isRequired,
 };

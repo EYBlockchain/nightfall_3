@@ -9,8 +9,9 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
  */
 
 import gen from 'general-number';
-import { initialize } from 'zokrates-js';
+import { initialize } from 'zokrates';
 
+import axios from 'axios';
 import rand from '../../common-files/utils/crypto/crypto-random';
 import { getContractInstance, processProposerPayment } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
@@ -23,9 +24,10 @@ import {
   getSiblingInfo,
 } from './commitment-storage';
 import { decompressKey, calculateIvkPkdfromAskNsk } from './keys';
-import { checkIndexDBForCircuit, getStoreCircuit } from './database';
+import { checkIndexDBForCircuit, getStoreCircuit, saveTransaction } from './database';
 
-const { BN128_GROUP_ORDER, ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, ZERO, USE_STUBS } = global.config;
+const { BN128_GROUP_ORDER, ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, ZERO, USE_STUBS, proposerUrl } =
+  global.config;
 const { generalise, GN } = gen;
 
 const singleTransfer = USE_STUBS ? 'single_transfer_stub' : 'single_transfer';
@@ -34,7 +36,7 @@ const doubleTransfer = USE_STUBS ? 'double_transfer_stub' : 'double_transfer';
 async function transfer(transferParams, shieldContractAddress) {
   logger.info('Creating a transfer transaction');
   // let's extract the input items
-  const { ...items } = transferParams;
+  const { offchain = false, ...items } = transferParams;
   const { ercAddress, tokenId, recipientData, nsk, ask, fee } = generalise(items);
   const { pkd, compressedPkd } = calculateIvkPkdfromAskNsk(ask, nsk);
   const { recipientCompressedPkds, values } = recipientData;
