@@ -121,7 +121,7 @@ export const UserProvider = ({ children }) => {
     setupWebSocket();
   }, []);
 
-  React.useEffect(async () => { 
+  React.useEffect(async () => {
     if (location.pathname !== '/' && state.compressedPkd === '') {
       await syncState();
     }
