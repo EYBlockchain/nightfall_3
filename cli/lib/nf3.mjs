@@ -916,9 +916,9 @@ class Nf3 {
     };
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
-      const { type, txDataToSignList } = msg;
+      const { type, txDataToSign } = msg;
       if (type === 'block') {
-        txDataToSignList.map(txtDataToSign => newBlockEmitter.emit('data', txtDataToSign));
+        newBlockEmitter.emit('data', txDataToSign);
       }
     };
     return newBlockEmitter;
