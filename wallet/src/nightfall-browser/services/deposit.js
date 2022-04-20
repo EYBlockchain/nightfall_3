@@ -10,7 +10,6 @@
  */
 
 import gen from 'general-number';
-import { wrap } from 'comlink';
 
 import rand from '../../common-files/utils/crypto/crypto-random';
 import { getContractInstance } from '../../common-files/utils/contract';
@@ -19,9 +18,7 @@ import { Commitment, Transaction } from '../classes/index';
 import { storeCommitment } from './commitment-storage';
 import { compressPublicKey } from './keys';
 import { checkIndexDBForCircuit, getStoreCircuit } from './database';
-import generateProofWorker from '../../web-worker/generateProof.shared-worker';
-
-const generateProof = wrap(generateProofWorker().port);
+import generateProof from './generateProof';
 
 const { ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER, USE_STUBS } = global.config;
 const { generalise } = gen;
@@ -70,7 +67,7 @@ async function deposit(items, shieldContractAddress) {
 
   const artifacts = { program: new Uint8Array(program), abi };
   const provingKey = new Uint8Array(pk);
-  const { proof } = await generateProof(artifacts, witnessInput, provingKey);
+  const proof = await generateProof(artifacts, witnessInput, provingKey);
 
   // next we need to compute the optimistic Transaction object
   const optimisticDepositTransaction = new Transaction({

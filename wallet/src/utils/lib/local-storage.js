@@ -6,10 +6,19 @@ import getPrice from '../pricingAPI';
 const STORAGE_VERSION_KEY = 'nightfallStorageVersion';
 const STORAGE_VERSION = 1;
 const TOKEN_POOL_KEY = 'nightfallTokensPool';
+const RAW_TXS = 'rawTransactions';
+const TX_OBJS = 'transactionObject';
 
 const { SHIELD_CONTRACT_NAME } = global.config;
 
 const storage = window.localStorage;
+
+if (storage.getItem(RAW_TXS) === null) {
+  storage.setItem(RAW_TXS, JSON.stringify([]));
+}
+if (storage.getItem(TX_OBJS) === null) {
+  storage.setItem(TX_OBJS, JSON.stringify([]));
+}
 
 function init() {
   if (!storage.getItem(STORAGE_VERSION_KEY)) {
@@ -70,6 +79,14 @@ function getPricing() {
   return JSON.parse(retrievedPrice);
 }
 
+function storeRawTx(tx) {
+  storage.setItem(RAW_TXS, JSON.stringify([...JSON.parse(storage.getItem(RAW_TXS)), tx]));
+}
+
+function storeTxObject(txObj) {
+  storage.setItem(TX_OBJS, JSON.stringify([...JSON.parse(storage.getItem(TX_OBJS)), txObj]));
+}
+
 async function shieldAddressSet() {
   init();
   const now = Date.now();
@@ -97,14 +114,4 @@ function shieldAddressGet() {
   return address;
 }
 
-export {
-  tokensSet,
-  tokensGet,
-  clear,
-  pkdArrayGet,
-  pkdArraySet,
-  setPricing,
-  getPricing,
-  shieldAddressGet,
-  shieldAddressSet,
-};
+export { tokensSet, tokensGet, clear, pkdArrayGet, pkdArraySet, setPricing, getPricing, storeRawTx, storeTxObject, shieldAddressSet, shieldAddressGet };

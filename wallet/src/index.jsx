@@ -10,6 +10,7 @@ import App from './views/app.view.jsx';
 import mainStyle from './main.scss';
 import reportWebVitals from './reportWebVitals';
 import init from './web-worker/index.js';
+import './configurePageRefresh';
 
 class DemoAppSolution extends HTMLElement {
   constructor() {

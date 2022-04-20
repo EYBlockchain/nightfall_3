@@ -9,7 +9,6 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
  */
 
 import gen from 'general-number';
-import { wrap } from 'comlink';
 
 import rand from '../../common-files/utils/crypto/crypto-random';
 import { getContractInstance } from '../../common-files/utils/contract';
@@ -24,9 +23,7 @@ import {
 } from './commitment-storage';
 import { decompressKey, calculateIvkPkdfromAskNsk } from './keys';
 import { checkIndexDBForCircuit, getStoreCircuit } from './database';
-import generateProofWorker from '../../web-worker/generateProof.shared-worker';
-
-const generateProof = wrap(generateProofWorker().port);
+import generateProof from './generateProof';
 
 const { BN128_GROUP_ORDER, ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, ZERO, USE_STUBS } = global.config;
 const { generalise, GN } = gen;
@@ -226,7 +223,7 @@ async function transfer(transferParams, shieldContractAddress) {
     const artifacts = { program: new Uint8Array(program), abi };
     const provingKey = new Uint8Array(pk);
 
-    let { proof } = await generateProof(artifacts, flattenInput, provingKey);
+    let proof = await generateProof(artifacts, flattenInput, provingKey);
     proof = [...proof.a, ...proof.b, ...proof.c];
     proof = proof.flat(Infinity);
     // and work out the ABI encoded data that the caller should sign and send to the shield contract
@@ -257,6 +254,7 @@ async function transfer(transferParams, shieldContractAddress) {
       oldCommitments.map(commitment => markNullified(commitment, optimisticTransferTransaction)),
     );
     // await saveTransaction(optimisticTransferTransaction);
+    console.log(optimisticTransferTransaction);
     return {
       rawTransaction,
       transaction: optimisticTransferTransaction,

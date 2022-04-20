@@ -18,6 +18,7 @@ import { decompressKey } from '@Nightfall/services/keys';
 import { UserContext } from '../../hooks/User';
 import maticImg from '../../assets/img/polygon-chain.svg';
 import { retrieveAndDecrypt } from '../../utils/lib/key-storage';
+import { storeTxObject } from '../../utils/lib/local-storage';
 import approveImg from '../../assets/img/modalImages/adeposit_approve1.png';
 import depositConfirmed from '../../assets/img/modalImages/adeposit_confirmed.png';
 import successHand from '../../assets/img/modalImages/success-hand.png';
@@ -529,6 +530,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
       return { transaction: null, rawTransaction: '' };
     });
     if (transaction === null) return { type: 'failed_transfer' };
+    storeTxObject(transaction);
     setShowModalTransferEnRoute(false);
     setShowModalTransferConfirmed(true);
     return {

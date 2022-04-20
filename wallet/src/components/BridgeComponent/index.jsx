@@ -33,6 +33,7 @@ import checkMarkCross from '../../assets/lottie/check-mark-cross.json';
 
 import ERC20 from '../../contract-abis/ERC20.json';
 import { retrieveAndDecrypt } from '../../utils/lib/key-storage';
+import { storeRawTx } from '../../utils/lib/local-storage';
 import BigFloat from '../../common-files/classes/bigFloat';
 import { shieldAddressGet } from '../../utils/lib/local-storage';
 
@@ -262,6 +263,7 @@ const BridgeComponent = () => {
           return { transaction: null };
         });
         if (transaction === null) return { type: 'failed_transfer' };
+        storeRawTx(rawTransaction);
         setShowModalTransferEnRoute(false);
         setShowModalTransferConfirmed(true);
         console.log('Proof Done');
@@ -297,6 +299,7 @@ const BridgeComponent = () => {
           return { transaction: null };
         });
         if (transaction === null) return { type: 'failed_transfer' };
+        storeRawTx(rawTransaction);
         setShowModalTransferEnRoute(false);
         setShowModalTransferConfirmed(true);
         return {

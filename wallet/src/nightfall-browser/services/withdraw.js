@@ -8,7 +8,6 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
  * @author westlad, ChaitanyaKonda, iAmMichaelConnor, will-kim
  */
 import gen from 'general-number';
-import { wrap } from 'comlink';
 
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
@@ -21,9 +20,7 @@ import {
 } from './commitment-storage';
 import { calculateIvkPkdfromAskNsk } from './keys';
 import { checkIndexDBForCircuit, getStoreCircuit } from './database';
-import generateProofWorker from '../../web-worker/generateProof.shared-worker';
-
-const generateProof = wrap(generateProofWorker().port);
+import generateProof from './generateProof';
 
 const { BN128_GROUP_ORDER, SHIELD_CONTRACT_NAME, USE_STUBS } = global.config;
 const { generalise } = gen;
@@ -97,7 +94,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     const artifacts = { program: new Uint8Array(program), abi };
     const provingKey = new Uint8Array(pk);
 
-    let { proof } = await generateProof(artifacts, witnessInput, provingKey);
+    let proof = await generateProof(artifacts, witnessInput, provingKey);
     proof = [...proof.a, ...proof.b, ...proof.c];
     proof = proof.flat(Infinity);
     // and work out the ABI encoded data that the caller should sign and send to the shield contract
