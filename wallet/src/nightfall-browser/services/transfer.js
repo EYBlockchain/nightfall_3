@@ -254,7 +254,6 @@ async function transfer(transferParams, shieldContractAddress) {
       oldCommitments.map(commitment => markNullified(commitment, optimisticTransferTransaction)),
     );
     // await saveTransaction(optimisticTransferTransaction);
-    console.log(optimisticTransferTransaction);
     return {
       rawTransaction,
       transaction: optimisticTransferTransaction,

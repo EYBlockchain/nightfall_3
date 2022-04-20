@@ -114,4 +114,16 @@ function shieldAddressGet() {
   return address;
 }
 
-export { tokensSet, tokensGet, clear, pkdArrayGet, pkdArraySet, setPricing, getPricing, storeRawTx, storeTxObject, shieldAddressSet, shieldAddressGet };
+export {
+  tokensSet,
+  tokensGet,
+  clear,
+  pkdArrayGet,
+  pkdArraySet,
+  setPricing,
+  getPricing,
+  storeRawTx,
+  storeTxObject,
+  shieldAddressSet,
+  shieldAddressGet,
+};

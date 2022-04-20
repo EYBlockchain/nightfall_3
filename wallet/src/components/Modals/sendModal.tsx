@@ -530,7 +530,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
       return { transaction: null, rawTransaction: '' };
     });
     if (transaction === null) return { type: 'failed_transfer' };
-    storeTxObject(transaction);
+    storeTxObject(transaction); // storing tx object because tx is going to send offchain
     setShowModalTransferEnRoute(false);
     setShowModalTransferConfirmed(true);
     return {
