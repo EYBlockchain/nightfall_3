@@ -11,8 +11,7 @@ module.exports = {
     'import/extensions': 'off',
     'no-restricted-syntax': 'off',
     'no-plusplus': 'off',
-    'func-names': 'off',
-    'import/no-cycle': 'off',
+    'func-names': 'off',    
   },
   parser: 'babel-eslint', // Uses babel-eslint transforms.
   parserOptions: {
