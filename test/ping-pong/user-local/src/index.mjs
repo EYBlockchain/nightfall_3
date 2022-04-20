@@ -13,15 +13,7 @@ const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIR
 
 const { mnemonics, signingKeys, txPerBlock, pkds } = config.TEST_OPTIONS;
 
-const {
-  TEST_LENGTH,
-  ERC20_NAME,
-  TX_WAIT = 1000,
-  IS_TEST_RUNNER = '',
-  USER_ETHEREUM_SIGNING_KEY,
-  RECIPIENT_PKD,
-  ZKP_MNEMONIC,
-} = process.env;
+const { TEST_LENGTH, ERC20_NAME, TX_WAIT = 1000, IS_TEST_RUNNER = '' } = process.env;
 
 /**
 Does the preliminary setup and starts listening on the websocket
@@ -33,13 +25,9 @@ async function localTest() {
   const tokenType = 'ERC20';
   const value = 1;
   const tokenId = '0x0000000000000000000000000000000000000000000000000000000000000000';
-  const signingKey =
-    USER_ETHEREUM_SIGNING_KEY || (IS_TEST_RUNNER ? signingKeys.user1 : signingKeys.user2);
-  const mnemonic = ZKP_MNEMONIC || (IS_TEST_RUNNER ? mnemonics.user1 : mnemonics.user2);
-  const nf3 = new Nf3(signingKey, environment);
-  const recipientPkd = RECIPIENT_PKD || pkds.user1;
+  const nf3 = new Nf3(IS_TEST_RUNNER ? signingKeys.user1 : signingKeys.user2, environment);
 
-  await nf3.init(mnemonic);
+  await nf3.init(IS_TEST_RUNNER ? mnemonics.user1 : mnemonics.user2);
   if (await nf3.healthcheck('client')) logger.info('Healthcheck passed');
   else throw new Error('Healthcheck failed');
 
@@ -56,7 +44,7 @@ async function localTest() {
   for (let i = 0; i < TEST_LENGTH; i++) {
     await waitForSufficientBalance(nf3, value);
     try {
-      await nf3.transfer(offchainTx, ercAddress, tokenType, value, tokenId, recipientPkd);
+      await nf3.transfer(offchainTx, ercAddress, tokenType, value, tokenId, pkds.user1);
     } catch (err) {
       if (err.message.includes('No suitable commitments')) {
         // if we get here, it's possible that a block we are waiting for has not been proposed yet
@@ -67,7 +55,7 @@ async function localTest() {
           } seconds and try one last time`,
         );
         await new Promise(resolve => setTimeout(resolve, 10 * TX_WAIT));
-        await nf3.transfer(offchainTx, ercAddress, tokenType, value, tokenId, recipientPkd);
+        await nf3.transfer(offchainTx, ercAddress, tokenType, value, tokenId, pkds.user1);
       }
     }
     await nf3.deposit(ercAddress, tokenType, value, tokenId);
