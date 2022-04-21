@@ -38,7 +38,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   const [state] = useContext(UserContext); // Why does typescript think this is an object?
-  const [valueToSend, setTransferValue] = useState(0);
+  const [valueToSend, setTransferValue] = useState('0');
   const [recipient, setRecipient] = useState('');
   const { onHide, show, ...initialSendToken } = props;
   const [sendToken, setSendToken] = useState(initialSendToken);
@@ -237,7 +237,15 @@ const SendModal = (props: SendModalProps): JSX.Element => {
                     <input
                       type="text"
                       placeholder="0.00"
-                      onChange={e => setTransferValue(Number(e.target.value))}
+                      onKeyDown={e => {
+                        if (
+                          (valueToSend.toString().split('.')[1]?.length ?? 0) > 3 &&
+                          /^[0-9]$/i.test(e.key)
+                        ) {
+                          e.preventDefault(); // If exceed input count then stop updates.
+                        }
+                      }}
+                      onChange={e => setTransferValue(e.target.value)}
                       id="TokenItem_modalSend_tokenAmount"
                     />
                     <div className={stylesModal.maxButton}>MAX</div>
