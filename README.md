@@ -213,14 +213,6 @@ Nightfall_3 provides a Wallet to exercise its features. To use it:
 ```
 cd wallet
 npm ci
-<<<<<<< HEAD
-```
-
-- Copy proving keys and compiled circuits into ./wallet/src/zokrates
-```
-./copy-zokrates-local.sh
-=======
->>>>>>> origin/wallet/deployment
 ```
 
 - Launch wallet in ganache (localhost)
