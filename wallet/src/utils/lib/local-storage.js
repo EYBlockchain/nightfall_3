@@ -83,8 +83,33 @@ function storeRawTx(tx) {
   storage.setItem(RAW_TXS, JSON.stringify([...JSON.parse(storage.getItem(RAW_TXS)), tx]));
 }
 
+function removeRawTx(tx) {
+  let newTxs;
+  const txs = storage.getItem(RAW_TXS);
+  if (txs.indexOf(tx) === -1)
+    throw Error('rawTransaction is not in localStorage');
+  let txStr = `"${tx}"`;
+  if (txs.indexOf(`${txStr},`) !== -1)
+    txStr = `${txStr},`;
+  else if(txs.indexOf(`,${txStr}`) !== -1)
+    txStr = `,${txStr}`;
+  storage.setItem(RAW_TXS, storage.getItem(RAW_TXS).replace(txStr, ''));
+}
+
 function storeTxObject(txObj) {
   storage.setItem(TX_OBJS, JSON.stringify([...JSON.parse(storage.getItem(TX_OBJS)), txObj]));
+}
+
+function removeTxObject(txObj) {
+  let txObjStr = typeof txObj === 'string' ? txObj : JSON.stringify(txObj);
+  const txObjs = storage.getItem(TX_OBJS);
+  if (txObjs.indexOf(txObjStr) === -1)
+    throw Error('transaction object is not in localStorage');
+  if (txObjs.indexOf(`${txObjStr},`) !== -1)
+    txObjStr = `${txObjStr},`;
+  else if(txObjs.indexOf(`,${txObjStr}`) !== -1)
+    txObjStr = `,${txObjStr}`;
+  storage.setItem(TX_OBJS, storage.getItem(TX_OBJS).replace(txObjStr, ''));
 }
 
 async function shieldAddressSet() {
@@ -123,7 +148,9 @@ export {
   setPricing,
   getPricing,
   storeRawTx,
+  removeRawTx,
   storeTxObject,
+  removeTxObject,
   shieldAddressSet,
   shieldAddressGet,
 };
