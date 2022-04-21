@@ -10,6 +10,10 @@ const { proposerUrl } = global.config;
 
 const options = global.config.WEB3_OPTIONS;
 
+// This is hardcoded because we just use it for all estimation.
+const gasEstimateEndpoint =
+  'https://vqxy02tr5e.execute-api.us-east-2.amazonaws.com/production/estimateGas';
+
 // returns a web3 contract instance
 export async function getContractInstance(contractName, deployedAddress) {
   const web3 = Web3.connection();
@@ -41,18 +45,31 @@ export function getContractAddress(contractName) {
  */
 export async function submitTransaction(unsignedTransaction, contractAddress, fee) {
   const web3 = Web3.connection();
-  let gasPrice = 20000000000;
-  const gas = (await web3.eth.getBlock('latest')).gasLimit;
-  const blockGasPrice = 2 * Number(await web3.eth.getGasPrice());
-  if (blockGasPrice > gasPrice) gasPrice = blockGasPrice;
+  const blockGasPrice = Number(await web3.eth.getGasPrice());
   const from = await Web3.getAccount();
+  let proposedGasPrice = blockGasPrice; // This is the backup value if external estimation fails;
+  try {
+    // Call the endpoint to estimate the gas fee.
+    const res = (await axios.get(gasEstimateEndpoint)).data.result;
+    proposedGasPrice = Number(res?.ProposeGasPrice) * 10 ** 9 || blockGasPrice;
+  } catch (error) {
+    console.log('Gas Estimation Failed: ', error);
+  }
+  // Estimate the gasLimit
+  const gasLimit = await web3.eth.estimateGas({
+    from,
+    to: contractAddress,
+    data: unsignedTransaction,
+  });
+
+  const gasLimitWithBuffer = Math.ceil(Number(gasLimit) * 1.1); // 10% seems a reasonable buffer.
+
   const tx = {
     from,
     to: contractAddress,
     data: unsignedTransaction,
-    gas: web3.utils.toHex(gas),
-    gasPrice: web3.utils.toHex(gasPrice),
-    // maxPriorityFeePerGas: web3.utils.toHex(1 * 10 ** 9),
+    gas: web3.utils.toHex(gasLimitWithBuffer),
+    gasPrice: web3.utils.toHex(proposedGasPrice),
   };
 
   if (fee) tx.value = web3.utils.toHex(fee);
