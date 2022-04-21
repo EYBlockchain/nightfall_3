@@ -16,6 +16,7 @@
     "ws": "^8.2.3",
     "winston": "^3.3.3",
     "config": "^3.3.1",
+    "reconnecting-websocket": "^4.4.0",
     "common-files": "file:../../../common-files"
   }
 }

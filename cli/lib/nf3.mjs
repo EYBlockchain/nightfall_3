@@ -2,6 +2,7 @@ import axios from 'axios';
 import Queue from 'queue';
 import Web3 from 'web3';
 import WebSocket from 'ws';
+import ReconnectingWebSocket from 'reconnecting-websocket';
 import EventEmitter from 'events';
 import logger from '../../common-files/utils/logger.mjs';
 import { approve } from './tokens.mjs';
@@ -9,7 +10,12 @@ import erc20 from './abis/ERC20.mjs';
 import erc721 from './abis/ERC721.mjs';
 import erc1155 from './abis/ERC1155.mjs';
 
-import { DEFAULT_BLOCK_STAKE, DEFAULT_PROPOSER_BOND, DEFAULT_FEE } from './constants.mjs';
+import {
+  DEFAULT_BLOCK_STAKE,
+  DEFAULT_PROPOSER_BOND,
+  DEFAULT_FEE,
+  WEBSOCKET_PING_TIME,
+} from './constants.mjs';
 
 // TODO when SDK is refactored such that these functions are split by user, proposer and challenger,
 // then there will only be one queue here. The constructor does not need to initialise clientBaseUrl
@@ -41,6 +47,8 @@ class Nf3 {
   web3;
 
   websockets = [];
+
+  intervalIDs = [];
 
   shieldContractAddress;
 
@@ -576,25 +584,20 @@ class Nf3 {
     */
   async getInstantWithdrawalRequestedEmitter() {
     const emitter = new EventEmitter();
-    let connection = new WebSocket(this.optimistWsUrl);
+    const connection = new ReconnectingWebSocket(this.optimistWsUrl, [], { WebSocket });
     this.websockets.push(connection); // save so we can close it properly later
-    const ping = async () => {
-      if (!connection || connection.readyState !== WebSocket.OPEN) {
-        // Attempt to fix https://github.com/EYBlockchain/nightfall_3/issues/569
-        try {
-          connection = new WebSocket(this.optimistWsUrl);
-          this.websockets.push(connection);
-        } catch (e) {
-          logger.debug('Error opening socket ', e);
-          return;
-        }
-      }
-      connection.ping();
-      setTimeout(ping, 15000);
-    };
     connection.onopen = () => {
+      // setup a ping every 15s
+      this.intervalIDs.push(
+        setInterval(() => {
+          connection._ws.ping();
+          logger.debug('sent websocket ping');
+        }, WEBSOCKET_PING_TIME),
+      );
+      // and a listener for the pong
+      connection._ws.on('pong', () => logger.debug('websocket received pong'));
+      logger.debug('websocket connection opened');
       connection.send('instant');
-      ping();
     };
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
@@ -625,9 +628,9 @@ class Nf3 {
   /**
     Closes the Nf3 connection to the blockchain and any open websockets to NF_3
     @method
-    @async
     */
   close() {
+    this.intervalIDs.forEach(intervalID => clearInterval(intervalID));
     this.web3.currentProvider.connection.close();
     this.websockets.forEach(websocket => websocket.close());
   }
@@ -824,27 +827,23 @@ class Nf3 {
     */
   async startProposer() {
     const blockProposeEmitter = new EventEmitter();
-    let connection = new WebSocket(this.optimistWsUrl);
+    const connection = new ReconnectingWebSocket(this.optimistWsUrl, [], { WebSocket });
     this.websockets.push(connection); // save so we can close it properly later
-    // Ping function to keep WS open. Send beat every 15 seconds
-    const ping = async () => {
-      if (!connection || connection.readyState !== WebSocket.OPEN) {
-        // Attempt to fix https://github.com/EYBlockchain/nightfall_3/issues/569
-        try {
-          connection = new WebSocket(this.optimistWsUrl);
-          this.websockets.push(connection);
-        } catch (e) {
-          logger.debug('Error opening socket ', e);
-          return;
-        }
-      }
-      connection.ping();
-      setTimeout(ping, 15000);
-    };
+    // we can't setup up a ping until the connection is made because the ping function
+    // only exists in the underlying 'ws' object (_ws) and that is undefined until the
+    // websocket is opened, it seems. Hence, we put all this code inside the onopen.
     connection.onopen = () => {
+      // setup a ping every 15s
+      this.intervalIDs.push(
+        setInterval(() => {
+          connection._ws.ping();
+          logger.debug('sent websocket ping');
+        }, WEBSOCKET_PING_TIME),
+      );
+      // and a listener for the pong
+      connection._ws.on('pong', () => logger.debug('websocket received pong'));
       logger.debug('websocket connection opened');
       connection.send('blocks');
-      ping();
     };
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
@@ -900,31 +899,26 @@ class Nf3 {
     */
   async getNewBlockEmitter() {
     const newBlockEmitter = new EventEmitter();
-    let connection = new WebSocket(this.optimistWsUrl);
+    const connection = new ReconnectingWebSocket(this.optimistWsUrl, [], { WebSocket });
     this.websockets.push(connection); // save so we can close it properly later
-    const ping = async () => {
-      if (!connection || connection.readyState !== WebSocket.OPEN) {
-        // Attempt to fix https://github.com/EYBlockchain/nightfall_3/issues/569
-        try {
-          connection = new WebSocket(this.optimistWsUrl);
-          this.websockets.push(connection);
-        } catch (e) {
-          logger.debug('Error opening socket ', e);
-          return;
-        }
-      }
-      connection.ping();
-      setTimeout(ping, 15000);
-    };
     connection.onopen = () => {
+      // setup a ping every 15s
+      this.intervalIDs.push(
+        setInterval(() => {
+          connection._ws.ping();
+          logger.debug('sent websocket ping');
+        }, WEBSOCKET_PING_TIME),
+      );
+      // and a listener for the pong
+      connection._ws.on('pong', () => logger.debug('websocket received pong'));
+      logger.debug('websocket connection opened');
       connection.send('blocks');
-      ping();
     };
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
-      const { type, txDataToSignList } = msg;
+      const { type, txDataToSign } = msg;
       if (type === 'block') {
-        txDataToSignList.map(txtDataToSign => newBlockEmitter.emit('data', txtDataToSign));
+        newBlockEmitter.emit('data', txDataToSign);
       }
     };
     return newBlockEmitter;
@@ -961,25 +955,20 @@ class Nf3 {
     @async
     */
   async startChallenger() {
-    let connection = new WebSocket(this.optimistWsUrl);
+    const connection = new ReconnectingWebSocket(this.optimistWsUrl, [], { WebSocket });
     this.websockets.push(connection); // save so we can close it properly later
-    const ping = async () => {
-      if (!connection || connection.readyState !== WebSocket.OPEN) {
-        // Attempt to fix https://github.com/EYBlockchain/nightfall_3/issues/569
-        try {
-          connection = new WebSocket(this.optimistWsUrl);
-          this.websockets.push(connection);
-        } catch (e) {
-          logger.debug('Error opening socket ', e);
-          return;
-        }
-      }
-      connection.ping();
-      setTimeout(ping, 15000);
-    };
     connection.onopen = () => {
+      // setup a ping every 15s
+      this.intervalIDs.push(
+        setInterval(() => {
+          connection._ws.ping();
+          logger.debug('sent websocket ping');
+        }, WEBSOCKET_PING_TIME),
+      );
+      // and a listener for the pong
+      connection._ws.on('pong', () => logger.debug('websocket received pong'));
+      logger.debug('websocket connection opened');
       connection.send('challenge');
-      ping();
     };
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
@@ -1016,25 +1005,20 @@ class Nf3 {
     */
   async getChallengeEmitter() {
     const newChallengeEmitter = new EventEmitter();
-    let connection = new WebSocket(this.optimistWsUrl);
+    const connection = new ReconnectingWebSocket(this.optimistWsUrl, [], { WebSocket });
     this.websockets.push(connection); // save so we can close it properly later
-    const ping = async () => {
-      if (!connection || connection.readyState !== WebSocket.OPEN) {
-        // Attempt to fix https://github.com/EYBlockchain/nightfall_3/issues/569
-        try {
-          connection = new WebSocket(this.optimistWsUrl);
-          this.websockets.push(connection);
-        } catch (e) {
-          logger.debug('Error opening socket ', e);
-          return;
-        }
-      }
-      connection.ping();
-      setTimeout(ping, 15000);
-    };
     connection.onopen = () => {
-      connection.send('blocks');
-      ping();
+      // setup a ping every 15s
+      this.intervalIDs.push(
+        setInterval(() => {
+          connection._ws.ping();
+          logger.debug('sent websocket ping');
+        }, WEBSOCKET_PING_TIME),
+      );
+      // and a listener for the pong
+      connection._ws.on('pong', () => logger.debug('websocket received pong'));
+      logger.debug('websocket connection opened');
+      connection.send('challenge');
     };
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
@@ -1200,13 +1184,20 @@ Set a Web3 Provider URL
     provider.on('connect', () => logger.info('Blockchain Connected ...'));
     provider.on('end', () => logger.info('Blockchain disconnected'));
 
-    const checkActive = () => {
-      if (!this.web3.currentProvider.connected) {
-        this.web3.setProvider(provider);
-      }
-      setTimeout(checkActive, 2000);
-    };
-    checkActive();
+    // attempt a reconnect if the socket is down
+    this.intervalIDs.push(() => {
+      setInterval(() => {
+        if (!this.web3.currentProvider.connected) this.web3.setProvider(provider);
+      }, 2000);
+    });
+    // set up a pinger to ping the web3 provider. This will help to further ensure
+    // that the websocket doesn't timeout. We don't use the blockNumber but we save it
+    // anyway. Someone may find a use for it.
+    this.intervalIDs.push(() => {
+      setInterval(() => {
+        this.blockNumber = this.web3.eth.getBlockNumber();
+      }, WEBSOCKET_PING_TIME);
+    });
   }
 
   /**

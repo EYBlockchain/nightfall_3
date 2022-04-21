@@ -21,6 +21,7 @@
     "figlet": "^1.5.2",
     "inquirer": "^8.1.4",
     "queue": "^6.0.2",
+    "reconnecting-websocket": "^4.4.0",
     "web3": "^1.5.2",
     "winston": "^3.6.0",
     "ws": "^8.2.2",

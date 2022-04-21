@@ -35,6 +35,7 @@ module.exports = {
   CONFIRMATIONS: 12, // number of confirmations to wait before accepting a transaction
   PROTOCOL: 'http://', // connect to zokrates microservice like this
   WEBSOCKET_PORT: process.env.WEBSOCKET_PORT || 8080,
+  WEBSOCKET_PING_TIME: 15000,
   ZOKRATES_WORKER_HOST: process.env.ZOKRATES_WORKER_HOST || 'worker',
   BLOCKCHAIN_URL:
     process.env.BLOCKCHAIN_URL ||
