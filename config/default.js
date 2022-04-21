@@ -224,7 +224,12 @@ module.exports = {
         process.env.LIQUIDITY_PROVIDER_ADDRESS || '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
     },
     pkds: {
-      user1: '0x1ac3b61ecba1448e697b23d37efe290fb86554b2f905aaca3a6df59805eca366',
+      user1:
+        process.env.USER1_PKD ||
+        '0x0d27fb8112bf3274e27094ab05cc72db4d573ba081a659c3210a7bdbc1a9ec48',
+      user2:
+        process.env.USER2_PKD ||
+        '0xaa3b5bbf25ee9aab94757487d21c9da7a1166f1cf1f65162c23579149eba8590',
     },
     mnemonics: {
       user1:
