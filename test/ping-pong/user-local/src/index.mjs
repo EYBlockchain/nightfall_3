@@ -44,9 +44,6 @@ async function localTest() {
   for (let i = 0; i < TEST_LENGTH; i++) {
     await waitForSufficientBalance(nf3, value);
     try {
-<<<<<<< HEAD
-      await nf3.transfer(offchainTx, ercAddress, tokenType, value, tokenId, recipients.user1);
-=======
       await nf3.transfer(
         offchainTx,
         ercAddress,
@@ -55,7 +52,6 @@ async function localTest() {
         tokenId,
         IS_TEST_RUNNER ? pkds.user2 : pkds.user1,
       );
->>>>>>> master
     } catch (err) {
       if (err.message.includes('No suitable commitments')) {
         // if we get here, it's possible that a block we are waiting for has not been proposed yet
@@ -66,9 +62,6 @@ async function localTest() {
           } seconds and try one last time`,
         );
         await new Promise(resolve => setTimeout(resolve, 10 * TX_WAIT));
-<<<<<<< HEAD
-        await nf3.transfer(offchainTx, ercAddress, tokenType, value, tokenId, recipients.user1);
-=======
         await nf3.transfer(
           offchainTx,
           ercAddress,
@@ -77,7 +70,6 @@ async function localTest() {
           tokenId,
           IS_TEST_RUNNER ? pkds.user2 : pkds.user1,
         );
->>>>>>> master
       }
     }
     await nf3.deposit(ercAddress, tokenType, value, tokenId);
