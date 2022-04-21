@@ -110,6 +110,9 @@ module.exports = {
     U: BigInt(5), // non square in Fp
   },
   MAX_QUEUE: 5,
+  MPC: {
+    RADIX_FILES_URL: 'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com/radix',
+  },
   ENVIRONMENTS: {
     mainnet: {
       name: 'Mainnet',
