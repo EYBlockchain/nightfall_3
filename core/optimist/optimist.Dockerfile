@@ -15,28 +15,25 @@ RUN apt-get install -y netcat
 # installs libs required for zokrates
 RUN apt-get install -y libgmpxx4ldbl libgmp3-dev
 
-WORKDIR /
-COPY common-files common-files
-COPY config/default.js app/config/default.js
-
 WORKDIR /app
-RUN mkdir /app/mongodb
+COPY ./common-files common-files
+COPY ./config/default.js config/default.js
 
-COPY nightfall-optimist/src src
-COPY nightfall-optimist/docker-entrypoint.sh nightfall-optimist/pre-start-script.sh nightfall-optimist/package*.json ./
+
+COPY ./core/optimist/src src
+COPY ./core/optimist/entrypoint.sh ./core/optimist/package*.json ./
 COPY --from=builder /app/ZoKrates/zokrates_stdlib/stdlib /root/.zokrates/stdlib
 COPY --from=builder /app/ZoKrates/target/release/zokrates /app/
+
+RUN mkdir mongodb
 
 ENV ZOKRATES_HOME /app
 ENV ZOKRATES_STDLIB /app/stdlib
 
-RUN npm ci
+RUN npm i
+RUN npm link /app/common-files --save
 
 EXPOSE 80
-
-# websocket port 8080
 EXPOSE 8080
 
-ENTRYPOINT ["/app/docker-entrypoint.sh"]
-
-CMD ["npm", "start"]
+ENTRYPOINT ["/app/entrypoint.sh"]

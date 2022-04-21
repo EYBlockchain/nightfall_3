@@ -4,8 +4,6 @@
   "description": "A client for interacting with Nightfall",
   "main": "src/index.mjs",
   "scripts": {
-    "prestart": "./pre-start-script.sh",
-    "predev": "./pre-start-script.sh",
     "start": "node src/index.mjs",
     "dev": "nodemon src/index.mjs"
   },

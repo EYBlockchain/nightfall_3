@@ -11,21 +11,19 @@ RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
 RUN apt-get install -y nodejs
 RUN apt-get install -y netcat
 
-WORKDIR /
-COPY common-files common-files
-COPY config/default.js app/config/default.js
-
 WORKDIR /app
-RUN mkdir /app/mongodb
+COPY ./common-files common-files
+COPY ./config/default.js config/default.js
 
-COPY nightfall-client/src src
-COPY nightfall-client/docker-entrypoint.sh nightfall-client/pre-start-script.sh nightfall-client/package.json nightfall-client/package-lock.json ./
+RUN mkdir /mongodb
 
-RUN npm ci
+COPY ./core/client/src src
+COPY ./core/client/entrypoint.sh ./core/client/package*.json ./
 
 EXPOSE 27017
 EXPOSE 80
 
-ENTRYPOINT ["/app/docker-entrypoint.sh"]
+RUN npm i
+RUN npm link /app/common-files --save
 
-CMD ["npm", "start"]
+ENTRYPOINT ["/app/entrypoint.sh"]

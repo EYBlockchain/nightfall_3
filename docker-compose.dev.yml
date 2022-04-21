@@ -4,30 +4,30 @@ version: '3.5'
 services:
   client1:
     build:
-      dockerfile: client.Dockerfile
+      dockerfile: ./core/client/client.Dockerfile
       context: .
     volumes:
       - type: bind
-        source: ./nightfall-client/src
+        source: ./core/client/src
         target: /app/src
       - type: bind
         source: ./common-files
-        target: /common-files
+        target: /app/node_modules/common-files
       - type: bind
         source: ./config/default.js
         target: /app/config/default.js
 
   client2:
     build:
-      dockerfile: client.Dockerfile
+      dockerfile: ./core/client/client.Dockerfile
       context: .
     volumes:
       - type: bind
-        source: ./nightfall-client/src
+        source: ./core/client/src
         target: /app/src
       - type: bind
         source: ./common-files
-        target: /common-files
+        target: /app/node_modules/common-files
       - type: bind
         source: ./config/default.js
         target: /app/config/default.js
@@ -35,14 +35,14 @@ services:
   worker:
     #  image: 3800decac71d
     build:
-      dockerfile: worker.Dockerfile
+      dockerfile: ./core/worker/worker.Dockerfile
       context: .
     volumes:
       - type: bind
-        source: ./nightfall-deployer/circuits
+        source: ./core/deployer/circuits
         target: /app/circuits/
       - type: bind
-        source: ./zokrates-worker/src
+        source: ./core/worker/src
         target: /app/src/
       - type: bind
         source: ./config/default.js
@@ -51,63 +51,63 @@ services:
     #image: docker.pkg.github.com/eyblockchain/nightfall-deployer/nightfall_deployer:1.1.0
 
     build:
-      dockerfile: deployer.Dockerfile
+      dockerfile: core/deployer/deployer.Dockerfile
       context: .
     volumes:
       - type: bind
-        source: ./nightfall-deployer/contracts
+        source: ./core/deployer/contracts
         target: /app/contracts/
       - type: bind
-        source: ./nightfall-deployer/circuits
+        source: ./core/deployer/circuits
         target: /app/circuits/
       - type: bind
-        source: ./nightfall-deployer/src
+        source: ./core/deployer/src
         target: /app/src/
       - type: bind
         source: ./common-files
-        target: /common-files
+        target: /app/common-files
       - type: bind
         source: ./config/default.js
         target: /app/config/default.js
       - type: bind
-        source: ./nightfall-deployer/migrations
+        source: ./core/deployer/migrations
         target: /app/migrations
       - type: bind
-        source: ./nightfall-deployer/truffle-config.js
+        source: ./core/deployer/truffle-config.js
         target: /app/truffle-config.js
       - type: bind
-        source: ./nightfall-deployer/entrypoint.sh
+        source: ./core/deployer/entrypoint.sh
         target: /app/entrypoint.sh
 
   optimist1:
 
     build:
-      dockerfile: optimist.Dockerfile
+      dockerfile: core/optimist/optimist.Dockerfile
       context: .
     volumes:
 
       - type: bind
-        source: ./nightfall-optimist/src
+        source: ./core/optimist/src
         target: /app/src
       - type: bind
         source: ./common-files
-        target: /common-files
+        target: /app/common-files
       - type: bind
         source: ./config/default.js
         target: /app/config/default.js
   optimist2:
 
     build:
-      dockerfile: optimist.Dockerfile
+      dockerfile: core/optimist/optimist.Dockerfile
       context: .
     volumes:
 
       - type: bind
-        source: ./nightfall-optimist/src
+        source: ./core/optimist/src
         target: /app/src
       - type: bind
         source: ./common-files
-        target: /common-files
+        target: /app/common-files
       - type: bind
         source: ./config/default.js
         target: /app/config/default.js

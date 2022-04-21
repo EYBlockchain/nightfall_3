@@ -21,8 +21,8 @@ and catch these removals, processing them appropriately.
 */
 import Queue from 'queue';
 import config from 'config';
-import logger from 'common-files/utils/logger.mjs';
-import { web3 } from 'common-files/utils/contract.mjs';
+import logger from './logger.mjs';
+import { web3 } from './contract.mjs';
 
 const { MAX_QUEUE, CONFIRMATION_POLL_TIME, CONFIRMATIONS } = config;
 const fastQueue = new Queue({ autostart: true, concurrency: 1 });

@@ -9,6 +9,10 @@
   "description": "nightfall_3 common files",
   "dependencies": {
     "config": "^3.3.7",
+    "general-number": "^1.0.1",
+    "mongodb": "^4.5.0",
+    "queue": "^6.0.2",
+    "web3": "^1.7.3",
     "winston": "^3.6.0"
   }
 }
