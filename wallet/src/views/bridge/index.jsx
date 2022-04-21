@@ -1,6 +1,7 @@
 /* eslint-disable react/jsx-no-undef */
 /* eslint-disable react/jsx-pascal-case */
 import React, { useContext } from 'react';
+import PropTypes from 'prop-types';
 import { useMediaQuery } from 'react-responsive';
 import pgIcon from '../../static/img/bridgepage/pg_coin4x2.png';
 import ethIcon from '../../static/img/bridgepage/eth_coin4x2.png';
@@ -11,7 +12,7 @@ import { UserContext } from '../../hooks/User/index.jsx';
 import BridgeComponent from '../../components/BridgeComponent/index.jsx';
 import './styles.scss';
 
-const Bridge = () => {
+const Bridge = ({ changeChain }) => {
   const [state] = useContext(UserContext);
   const isTabletOrMobile = useMediaQuery({ query: '(min-width: 1000px)' });
 
@@ -31,7 +32,7 @@ const Bridge = () => {
 
             <div className="page_partition">
               <div>
-                <BridgeComponent value={state} />
+                <BridgeComponent value={state} changeChain={changeChain} />
               </div>
               <div className="info_wrapper">
                 <div className="info_painel_title">Nightfall Bridge</div>
@@ -55,6 +56,10 @@ const Bridge = () => {
       </div>
     </div>
   );
+};
+
+Bridge.propTypes = {
+  changeChain: PropTypes.func.isRequired,
 };
 
 export default Bridge;

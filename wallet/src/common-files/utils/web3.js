@@ -31,6 +31,34 @@ export default {
   },
 
   /**
+   * Returns the chainId of the network currenctly connected
+   */
+  async getChain() {
+    return parseInt(ethereum.chainId, 16); // returning in decimal for readability
+  },
+
+  /**
+   * Changes web3 chain, returns an object with the response and the underlying
+   * ethereum object (for event listening)
+   */
+  async changeChain(newChainId, cb) {
+    try {
+      const res = await ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [
+          {
+            chainId: `0x${newChainId.toString(16)}`,
+          },
+        ], // chainId must be in hexadecimal numbers
+      });
+
+      cb(!res);
+    } catch (err) {
+      cb(false);
+    }
+  },
+
+  /**
    * Checks the status of connection
    *
    * @return {Boolean} - Resolves to true or false

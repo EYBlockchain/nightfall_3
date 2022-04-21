@@ -9,10 +9,11 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
  */
 
 import gen from 'general-number';
-import { initialize } from 'zokrates-js';
+import { initialize } from 'zokrates';
 
+import axios from 'axios';
 import rand from '../../common-files/utils/crypto/crypto-random';
-import { getContractInstance } from '../../common-files/utils/contract';
+import { getContractInstance, processProposerPayment } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
 import { Secrets, Nullifier, Commitment, Transaction } from '../classes/index';
 import {
@@ -23,9 +24,10 @@ import {
   getSiblingInfo,
 } from './commitment-storage';
 import { decompressKey, calculateIvkPkdfromAskNsk } from './keys';
-import { checkIndexDBForCircuit, getStoreCircuit } from './database';
+import { checkIndexDBForCircuit, getStoreCircuit, saveTransaction } from './database';
 
-const { BN128_GROUP_ORDER, ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, ZERO, USE_STUBS } = global.config;
+const { BN128_GROUP_ORDER, ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, ZERO, USE_STUBS, proposerUrl } =
+  global.config;
 const { generalise, GN } = gen;
 
 const singleTransfer = USE_STUBS ? 'single_transfer_stub' : 'single_transfer';
@@ -34,7 +36,7 @@ const doubleTransfer = USE_STUBS ? 'double_transfer_stub' : 'double_transfer';
 async function transfer(transferParams, shieldContractAddress) {
   logger.info('Creating a transfer transaction');
   // let's extract the input items
-  const { ...items } = transferParams;
+  const { offchain = false, ...items } = transferParams;
   const { ercAddress, tokenId, recipientData, nsk, ask, fee } = generalise(items);
   const { pkd, compressedPkd } = calculateIvkPkdfromAskNsk(ask, nsk);
   const { recipientCompressedPkds, values } = recipientData;
@@ -233,31 +235,32 @@ async function transfer(transferParams, shieldContractAddress) {
     proof,
   });
   try {
-    // if (offchain) {
-    //   await axios
-    //     .post(
-    //       `${proposerUrl}/proposer/offchain-transaction`,
-    //       { transaction: optimisticTransferTransaction },
-    //       { timeout: 3600000 },
-    //     )
-    //     .catch(err => {
-    //       throw new Error(err);
-    //     });
-    //   // we only want to store our own commitments so filter those that don't
-    //   // have our public key
-    //   newCommitments
-    //     .filter(commitment => commitment.preimage.compressedPkd.hex(32) === compressedPkd.hex(32))
-    //     .forEach(commitment => storeCommitment(commitment, nsk)); // TODO insertMany
-    //   // mark the old commitments as nullified
-    //   await Promise.all(
-    //     oldCommitments.map(commitment => markNullified(commitment, optimisticTransferTransaction)),
-    //   );
-    //   await saveTransaction(optimisticTransferTransaction);
-    //   return {
-    //     transaction: optimisticTransferTransaction,
-    //     salts: salts.map(salt => salt.hex(32)),
-    //   };
-    // }
+    if (offchain) {
+      await axios
+        .post(
+          `${proposerUrl}/proposer/offchain-transaction`,
+          { transaction: optimisticTransferTransaction },
+          { timeout: 3600000 },
+        )
+        .catch(err => {
+          throw new Error(err);
+        });
+      // we only want to store our own commitments so filter those that don't
+      // have our public key
+      newCommitments
+        .filter(commitment => commitment.preimage.compressedPkd.hex(32) === compressedPkd.hex(32))
+        .forEach(commitment => storeCommitment(commitment, nsk)); // TODO insertMany
+      // mark the old commitments as nullified
+      await Promise.all(
+        oldCommitments.map(commitment => markNullified(commitment, optimisticTransferTransaction)),
+      );
+      await processProposerPayment(fee.decimal);
+      await saveTransaction(optimisticTransferTransaction);
+      return {
+        transaction: optimisticTransferTransaction,
+        salts: salts.map(salt => salt.hex(32)),
+      };
+    }
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(optimisticTransferTransaction))
       .encodeABI();

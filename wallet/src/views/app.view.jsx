@@ -12,6 +12,11 @@ import Bridge from './bridge/index.jsx';
 import { AccountProvider } from '../hooks/Account/index.tsx';
 import 'react-toastify/dist/ReactToastify.css';
 
+const networks = {
+  ethereum: process.env.REACT_APP_ENVIRONMENT === 'testnet' ? 3 : 5773, // ropsten if testnet, ganache if local
+  polygon: process.env.REACT_APP_ENVIRONMENT === 'testnet' ? 5 : 6773, // goerli if testnet, ganache if local
+};
+
 export default function App() {
   // eslint-disable-next-line no-unused-vars
   const [, setIsWeb3Connected] = useState(false);
@@ -22,6 +27,12 @@ export default function App() {
       isWeb3Connected: true,
     });
   }, []);
+
+  const changeChain = (network, cb) => {
+    Web3.getChain().then(e => {
+      Web3.changeChain(networks[network], cb);
+    });
+  };
 
   /*
    * TODO: for path /wallet and /bridge component should render when web3connect is complete
@@ -38,8 +49,8 @@ export default function App() {
         <AccountProvider>
           <Switch>
             <Route path="/" exact render={() => <MainPage />} />
-            <Route path="/wallet" render={() => <Wallet />} />
-            <Route path="/bridge" render={() => <Bridge />} />
+            <Route path="/wallet" render={() => <Wallet changeChain={changeChain} />} />
+            <Route path="/bridge" render={() => <Bridge changeChain={changeChain} />} />
             <Route path="/transactionPage" render={() => <TransactionPage />} />
             <Route
               path="/issues"

@@ -86,7 +86,7 @@ function WalletModal(props) {
   );
 }
 
-export default function Wallet() {
+export default function Wallet({ changeChain }) {
   const { setAccountInstance } = useAccount();
   const initialPrices = {};
   tokensList.tokens.forEach(t => {
@@ -169,7 +169,7 @@ export default function Wallet() {
           </div>
           <div className="walletComponents__right">
             <Assets tokenList={tokens} />
-            <Tokens tokenList={tokens} />
+            <Tokens tokenList={tokens} changeChain={changeChain} />
           </div>
         </div>
         <div>
@@ -181,5 +181,10 @@ export default function Wallet() {
 }
 
 WalletModal.propTypes = {
+  onHide: PropTypes.func.isRequired,
+};
+
+Wallet.propTypes = {
+  changeChain: PropTypes.func.isRequired,
   onHide: PropTypes.func.isRequired,
 };

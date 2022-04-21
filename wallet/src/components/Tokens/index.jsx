@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import styles from '../../styles/tokens.module.scss';
 import TokenItem from '../TokenItem/index.jsx';
 
-export default function Tokens(token) {
+export default function Tokens({ tokenList, changeChain }) {
   return (
     <div className={styles.maticTokensList}>
       <div className={styles.formHeader}>
@@ -18,8 +18,8 @@ export default function Tokens(token) {
           <div className={styles.headerBalance}>Balance</div>
           <div className={styles.headerActions}>Actions</div>
         </div>
-        {token.tokenList.map((t, index) => (
-          <TokenItem {...t} key={index} />
+        {tokenList.map((t, index) => (
+          <TokenItem {...t} key={index} changeChain={changeChain} />
         ))}
       </div>
     </div>
@@ -28,4 +28,5 @@ export default function Tokens(token) {
 
 Tokens.propTypes = {
   tokenList: PropTypes.array.isRequired,
+  changeChain: PropTypes.func.isRequired,
 };

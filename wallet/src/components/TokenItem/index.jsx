@@ -8,7 +8,7 @@ import tokensList from '../Modals/Bridge/TokensList/tokensList';
 import { getWalletBalance } from '../../nightfall-browser/services/commitment-storage';
 import SendModal from '../Modals/sendModal';
 
-export default function TokenItem(props) {
+export default function TokenItem(props, { changeChain }) {
   const [showSendModal, setShowSendModal] = useState(false);
   const [state] = React.useContext(UserContext);
   const [filteredTokens, setFilteredTokens] = useState(tokensList.tokens);
@@ -106,8 +106,8 @@ export default function TokenItem(props) {
               type="button"
               className={styles.tokenListButton}
               id={tokenSendId}
-              onClick={() => {
-                setShowSendModal(true);
+              onClick={async () => {
+                await changeChain('polygon', setShowSendModal);
               }}
             >
               Send
@@ -139,6 +139,8 @@ TokenItem.propTypes = {
   l2Balance: PropTypes.string.isRequired,
   name: PropTypes.string.isRequired,
   symbol: PropTypes.string.isRequired,
+  tokenAddress: PropTypes.string.isRequired,
+  changeChain: PropTypes.func.isRequired,
   address: PropTypes.string.isRequired,
   logoURI: PropTypes.string.isRequired,
   decimals: PropTypes.number.isRequired,
