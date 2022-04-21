@@ -22,6 +22,7 @@ import { saveTransaction } from '../../nightfall-browser/services/database';
 import '../../styles/bridge.module.scss';
 import '../../styles/modal.scss';
 
+import BigFloat from '../../common-files/classes/bigFloat';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 const { proposerUrl } = global.config;
@@ -350,7 +351,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   const [state] = useContext(UserContext); // Why does typescript think this is an object?
-  const [valueToSend, setTransferValue] = useState(0);
+  const [valueToSend, setTransferValue] = useState('0');
   const [recipient, setRecipient] = useState('');
   const { onHide, show, ...initialSendToken } = props;
   const [sendToken, setSendToken] = useState(initialSendToken);
@@ -367,7 +368,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
       };
     }),
   );
-  const [l2Balance, setL2Balance] = useState(0);
+  const [l2Balance, setL2Balance] = useState(0n);
   const [showTokensListModal, setShowTokensListModal] = useState(false);
 
   const filterTxs = (criteria: string) =>
@@ -388,12 +389,12 @@ const SendModal = (props: SendModalProps): JSX.Element => {
   useEffect(() => {
     console.log('state', state);
     const getBalance = async () => {
-      const l2bal: Record<string, Record<string, number>> = await getWalletBalance(
+      const l2bal: Record<string, Record<string, bigint>> = await getWalletBalance(
         state?.compressedPkd,
       );
       if (Object.hasOwnProperty.call(l2bal, state?.compressedPkd))
-        setL2Balance(l2bal[state.compressedPkd][sendToken.address.toLowerCase()] ?? 0);
-      else setL2Balance(0);
+        setL2Balance(l2bal[state.compressedPkd][sendToken.address.toLowerCase()] ?? 0n);
+      else setL2Balance(0n);
     };
     getBalance();
   }, [sendToken, state]);
@@ -474,7 +475,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
         tokenId: 0,
         recipientData: {
           recipientCompressedPkds: [recipient],
-          values: [(Number(valueToSend) * 10 ** sendToken.decimals).toString()],
+          values: [new BigFloat(valueToSend, sendToken.decimals).toBigInt().toString()],
         },
         nsk,
         ask,
@@ -551,7 +552,15 @@ const SendModal = (props: SendModalProps): JSX.Element => {
                     <InputBalance
                       type="text"
                       placeholder="0.00"
-                      onChange={e => setTransferValue(Number(e.target.value))}
+                      onKeyDown={e => {
+                        if (
+                          (valueToSend.toString().split('.')[1]?.length ?? 0) > 3 &&
+                          /^[0-9]$/i.test(e.key)
+                        ) {
+                          e.preventDefault(); // If exceed input count then stop updates.
+                        }
+                      }}
+                      onChange={e => setTransferValue(e.target.value)}
                       id="TokenItem_modalSend_tokenAmount"
                     />
                   </SendModalBalanceLeft>
@@ -568,12 +577,14 @@ const SendModal = (props: SendModalProps): JSX.Element => {
                 <BalanceText>
                   <p>
                     ${' '}
-                    {((l2Balance / 10 ** sendToken.decimals) * sendToken.currencyValue).toFixed(4)}
+                    {new BigFloat(l2Balance, sendToken.decimals)
+                      .mul(sendToken.currencyValue)
+                      .toFixed(4)}
                   </p>
                   <BalanceTextRight>
                     <p>Available Balance:</p>
                     <p>
-                      {(l2Balance / 10 ** sendToken.decimals).toFixed(4)} {sendToken.symbol}
+                      {new BigFloat(l2Balance, sendToken.decimals).toFixed(4)} {sendToken.symbol}
                     </p>
                   </BalanceTextRight>
                 </BalanceText>

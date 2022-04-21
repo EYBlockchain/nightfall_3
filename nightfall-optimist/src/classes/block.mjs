@@ -70,7 +70,6 @@ class Block {
   // which should return a fully-formed object. Also, we're too cool for an
   // init() function.
   static async build(components) {
-    console.log('HERE at the beginning this.localLeafCount', this.localLeafCount);
     const { proposer, transactions } = components;
     // This is blockNumberL2 and blockHash of the last block we have.
     const { blockNumberL2: dbPrevBlockNumberL2, blockHash: dbBlockHash } =
@@ -109,9 +108,7 @@ class Block {
     // Stateless update our frontier and root
     const updatedTimber = Timber.statelessUpdate(timber, leafValues);
     // remember the updated values in case we need them for the next block.
-    console.log('HERE before incrementing this.localLeafCount', this.localLeafCount);
-    this.localLeafCount += leafValues.length;
-    console.log('HERE after incrementing this.localLeafCount', this.localLeafCount);
+    this.localLeafCount = updatedTimber.leafCount;
     this.localFrontier = updatedTimber.frontier;
     this.localBlockNumberL2 += 1;
     this.localRoot = updatedTimber.root;

@@ -135,9 +135,9 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
   */
 
     function finaliseWithdrawal(
-        Block memory b,
+        Block calldata b,
         uint256 blockNumberL2,
-        Transaction[] memory ts,
+        Transaction[] calldata ts,
         uint256 index
     ) external {
         // check this block is a real one, in the queue, not something made up.

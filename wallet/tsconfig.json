@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es5",
+    "target": "es2020",
     "lib": [
       "dom",
       "dom.iterable",
@@ -24,8 +24,8 @@
   },
   "include": [
     "src",
-    "src/components",
-     "src/custom.d.ts"
+    "src/custom.d.ts",
+    "tests/",
   ]
   
 }

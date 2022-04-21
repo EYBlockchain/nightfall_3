@@ -33,7 +33,7 @@ contract Structures {
     // will hold default values for any specific tranaction, e.g. there are no
     // nullifiers for a Deposit transaction.
     struct Transaction {
-        uint64 value;
+        uint112 value;
         uint64[2] historicRootBlockNumberL2; // number of L2 block containing historic root
         TransactionTypes transactionType;
         TokenType tokenType;
