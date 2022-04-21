@@ -1,10 +1,8 @@
-node_modules/*
+cd node_modules/*
 **/node_modules/*
 **/migrations/*
 **/doc/*
 cli/build/*
-wallet/src/index.js
-wallet/cli/*
 test/adversary/nightfall-adversary/*
-wallet/build
+wallet/**
 /**/*.d.ts

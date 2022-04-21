@@ -31,6 +31,7 @@ import { APPROVE_AMOUNT } from '../../constants';
 import { retrieveAndDecrypt } from '../../utils/lib/key-storage';
 import { decompressKey } from '../../nightfall-browser/services/keys';
 import { saveTransaction } from '../../nightfall-browser/services/database';
+import BigFloat from '../../common-files/classes/bigFloat';
 
 const { proposerUrl } = global.config;
 
@@ -42,8 +43,8 @@ const { generalise } = gen;
 const BridgeComponent = () => {
   const [state] = useContext(UserContext);
   const { setAccountInstance, accountInstance } = useAccount();
-  const [l1Balance, setL1Balance] = useState(0);
-  const [l2Balance, setL2Balance] = useState(0);
+  const [l1Balance, setL1Balance] = useState(0n);
+  const [l2Balance, setL2Balance] = useState(0n);
   const [shieldContractAddress, setShieldAddress] = useState('');
   const location = useLocation();
 
@@ -163,7 +164,7 @@ const BridgeComponent = () => {
           {
             ercAddress,
             tokenId: 0,
-            value: (transferValue * 10 ** token.decimals).toString(),
+            value: new BigFloat(transferValue, token.decimals).toBigInt().toString(),
             pkd,
             nsk: zkpKeys.nsk,
             fee: 1,
@@ -190,7 +191,7 @@ const BridgeComponent = () => {
             offchain: true,
             ercAddress,
             tokenId: 0,
-            value: (transferValue * 10 ** token.decimals).toString(),
+            value: new BigFloat(transferValue, token.decimals).toBigInt().toString(),
             recipientAddress: await Web3.getAccount(),
             nsk: zkpKeys.nsk,
             ask: zkpKeys.ask,
@@ -221,8 +222,9 @@ const BridgeComponent = () => {
 
   const handleShow = () => {
     if (
-      (txType === 'deposit' && transferValue > l1Balance) ||
-      (txType === 'withdraw' && transferValue > l2Balance)
+      (txType === 'deposit' &&
+        new BigFloat(transferValue, token.decimals).toBigInt() > l1Balance) ||
+      (txType === 'withdraw' && new BigFloat(transferValue, token.decimals).toBigInt() > l2Balance)
     )
       toast.error("Input value can't be greater than balance!");
     else if (!transferValue) toast.warn('Input a value for transfer, please.');
@@ -248,8 +250,8 @@ const BridgeComponent = () => {
       // const { address } = (await getContractAddress('ERC20Mock')).data; // TODO REMOVE THIS WHEN OFFICIAL ADDRESSES
       const l2bal = await getWalletBalance(state.compressedPkd);
       if (Object.hasOwnProperty.call(l2bal, state.compressedPkd))
-        setL2Balance(l2bal[state.compressedPkd][token.address.toLowerCase()] ?? 0);
-      else setL2Balance(0);
+        setL2Balance(l2bal[state.compressedPkd][token.address.toLowerCase()] ?? 0n);
+      else setL2Balance(0n);
     }
   }
 
@@ -313,20 +315,12 @@ const BridgeComponent = () => {
                 <div className="balance_details">
                   <p>Balance: </p>
                   {token && txType === 'deposit' && (
-                    // <p> {token.decimals} </p>
-                    <p>{`${(l1Balance / 10 ** token.decimals).toFixed(4)} ${token.symbol}`}</p>
+                    <p>{`${new BigFloat(l1Balance, token.decimals).toFixed(4)} ${token.symbol}`}</p>
                   )}
                   {token && txType === 'withdraw' && (
-                    <p>{`${(l2Balance / 10 ** token.decimals).toFixed(4)} ${token.symbol}`}</p>
+                    <p>{`${new BigFloat(l2Balance, token.decimals).toFixed(4)} ${token.symbol}`}</p>
                   )}
-                  {!token && (
-                    <p>
-                      0
-                      {/* {txType === 'deposit'
-                        ? `${(l1Balance / 10 ** token.decimals).toFixed(4)}`
-                        : `${(l2Balance / 10 ** token.decimals).toFixed(4)}`} */}
-                    </p>
-                  )}
+                  {!token && <p>0</p>}
                 </div>
               </div>
               <div className="from_section_line"></div>
@@ -390,16 +384,16 @@ const BridgeComponent = () => {
               <div className="balance_details">
                 <p>Balance: </p>
                 {token && txType === 'deposit' && (
-                  <p>{`${(l2Balance / 10 ** token.decimals).toFixed(4)} ${token.symbol}`}</p>
+                  <p>{`${new BigFloat(l2Balance, token.decimals).toFixed(4)} ${token.symbol}`}</p>
                 )}
                 {token && txType === 'withdraw' && (
-                  <p>{`${(l1Balance / 10 ** token.decimals).toFixed(4)} ${token.symbol}`}</p>
+                  <p>{`${new BigFloat(l1Balance, token.decimals).toFixed(4)} ${token.symbol}`}</p>
                 )}
                 {!token && (
                   <p>
                     {txType === 'withdraw'
-                      ? `${(l2Balance / 10 ** token.decimals).toFixed(4)}`
-                      : `${(l1Balance / 10 ** token.decimals).toFixed(4)}`}
+                      ? `${new BigFloat(l2Balance, token.decimals).toFixed(4)} ${token.symbol}`
+                      : `${new BigFloat(l1Balance, token.decimals).toFixed(4)} ${token.symbol}`}
                   </p>
                 )}
               </div>
