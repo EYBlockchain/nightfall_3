@@ -33,7 +33,12 @@ import checkMarkCross from '../../assets/lottie/check-mark-cross.json';
 
 import ERC20 from '../../contract-abis/ERC20.json';
 import { retrieveAndDecrypt } from '../../utils/lib/key-storage';
-import { storeRawTx, removeRawTx, storeTxObject, removeTxObject } from '../../utils/lib/local-storage';
+import {
+  storeRawTx,
+  removeRawTx,
+  storeTxObject,
+  removeTxObject,
+} from '../../utils/lib/local-storage';
 import BigFloat from '../../common-files/classes/bigFloat';
 import { shieldAddressGet } from '../../utils/lib/local-storage';
 
