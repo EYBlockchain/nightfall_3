@@ -86,23 +86,20 @@ async function localTest() {
   if (IS_TEST_RUNNER) loopMax = 10; // the TEST_RUNNER must finish first so that its exit status is returned to the tester
   do {
     const endBalance = await retrieveL2Balance(nf3);
-    if (
-      endBalance - startBalance === txPerBlock * value + (txPerBlock - 2) * value * TEST_LENGTH &&
-      IS_TEST_RUNNER
-    ) {
+    if (endBalance - startBalance === txPerBlock * value + (txPerBlock - 1) * value * TEST_LENGTH) {
       logger.info('Test passed');
       logger.info(
         'Balance of User (txPerBlock * value (txPerBlock * 1) + value received) ',
         endBalance - startBalance,
       );
-      logger.info('Amount sent to other User', (txPerBlock - 2) * value * TEST_LENGTH);
+      logger.info('Amount sent to other User', value * TEST_LENGTH);
       nf3.close();
       process.exit(0);
     } else {
       logger.info(
         'The test has not yet passed because the L2 balance has not increased, or I am not the test runner - waiting',
         endBalance - startBalance,
-        txPerBlock * value + (txPerBlock - 2) * value * TEST_LENGTH,
+        txPerBlock * value + (txPerBlock - 1) * value * TEST_LENGTH,
       );
       await new Promise(resolving => setTimeout(resolving, 20 * TX_WAIT)); // TODO get balance waiting working well
       loop++;
