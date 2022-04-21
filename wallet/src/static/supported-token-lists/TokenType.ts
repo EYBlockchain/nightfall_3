@@ -6,6 +6,7 @@ type TokenType = {
   address: string;
   logoURI: string;
   tags: Array<string>;
+  id: string;
   extensions: {
     parentAddress: string;
     project: {

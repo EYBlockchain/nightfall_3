@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./src",
+    "paths": {
+      "@TokenList/*": ["static/supported-token-lists/*"],
+      "@Nightfall/*": ["nightfall-browser/*"],
+      "@Components/*": ["components/*"],
+    }
+  }
+}

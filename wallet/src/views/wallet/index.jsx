@@ -8,20 +8,21 @@ import FormControl from 'react-bootstrap/FormControl';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
-import Assets from '../../components/Assets/index.jsx';
-import Header from '../../components/Header/header.jsx';
-import SideBar from '../../components/SideBar/index.jsx';
-import Tokens from '../../components/Tokens/index.jsx';
-import { getWalletBalance } from '../../nightfall-browser/services/commitment-storage.js';
+import importTokens from '@TokenList/index';
+import Assets from '@Components/Assets/index.jsx';
+import Header from '@Components/Header/header.jsx';
+import SideBar from '@Components/SideBar/index.jsx';
+import Tokens from '@Components/Tokens/index.jsx';
+import { getWalletBalance } from '@Nightfall/services/commitment-storage.js';
 import { UserContext } from '../../hooks/User/index.jsx';
 
 import './wallet.scss';
 import * as Storage from '../../utils/lib/local-storage';
 import Web3 from '../../common-files/utils/web3';
 import { useAccount } from '../../hooks/Account/index.tsx';
-import tokensList from '../../components/Modals/Bridge/TokensList/tokensList';
-// import { getContractAddress } from '../../common-files/utils/contract.js';
 import useInterval from '../../hooks/useInterval.js';
+
+const supportedTokens = importTokens();
 
 const { DEFAULT_ACCOUNT_NUM } = global.config;
 
@@ -89,13 +90,13 @@ function WalletModal(props) {
 export default function Wallet() {
   const { setAccountInstance } = useAccount();
   const initialPrices = {};
-  tokensList.tokens.forEach(t => {
+  supportedTokens.forEach(t => {
     initialPrices[t.id] = 0;
   }, {});
 
   const [currencyValues, setCurrencyValues] = useState({ now: 0, ...initialPrices });
 
-  const initialTokenState = tokensList.tokens.map(t => {
+  const initialTokenState = supportedTokens.map(t => {
     return {
       l2Balance: '0',
       currencyValue: currencyValues[t.id],
@@ -122,9 +123,9 @@ export default function Wallet() {
   }, []);
 
   useEffect(async () => {
-    if (!Storage.getPricing()) await Storage.setPricing(tokensList.tokens.map(t => t.id));
+    if (!Storage.getPricing()) await Storage.setPricing(supportedTokens.map(t => t.id));
     else if (Date.now() - Storage.getPricing().time > 86400)
-      await Storage.setPricing(tokensList.tokens.map(t => t.id));
+      await Storage.setPricing(supportedTokens.map(t => t.id));
     setCurrencyValues(Storage.getPricing);
   }, []);
 
@@ -145,16 +146,6 @@ export default function Wallet() {
         return t;
       }),
     );
-    // Trapdoor for testing
-    // const { address: trapdoorAddress } = (await getContractAddress('ERC20Mock')).data; // TODO Only for testing now
-    // setTokens(
-    //   updatedState.map(({ address, ...rest }) => {
-    //     return {
-    //       ...rest,
-    //       address: trapdoorAddress,
-    //     };
-    //   }),
-    // );
     setTokens(updatedState);
     setDelay(10000);
   }, delay);
