@@ -38,7 +38,7 @@ function setupWebsocketEvents(ws, socketName) {
   }, WEBSOCKET_PING_TIME);
   // check we received a pong in time (clears the timer set by the pinger)
   ws.on('pong', () => {
-    //logger.debug(`Got pong from ${socketName} websocket`);
+    // logger.debug(`Got pong from ${socketName} websocket`);
     clearTimeout(timeoutID);
   });
   ws.on('error', () => {

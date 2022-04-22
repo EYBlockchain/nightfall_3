@@ -591,11 +591,11 @@ class Nf3 {
       this.intervalIDs.push(
         setInterval(() => {
           connection._ws.ping();
-          //logger.debug('sent websocket ping');
+          // logger.debug('sent websocket ping');
         }, WEBSOCKET_PING_TIME),
       );
       // and a listener for the pong
-      //connection._ws.on('pong', () => logger.debug('websocket received pong'));
+      // connection._ws.on('pong', () => logger.debug('websocket received pong'));
       logger.debug('websocket connection opened');
       connection.send('instant');
     };
@@ -837,11 +837,11 @@ class Nf3 {
       this.intervalIDs.push(
         setInterval(() => {
           connection._ws.ping();
-          //logger.debug('sent websocket ping');
+          // logger.debug('sent websocket ping');
         }, WEBSOCKET_PING_TIME),
       );
       // and a listener for the pong
-      //connection._ws.on('pong', () => logger.debug('websocket received pong'));
+      // connection._ws.on('pong', () => logger.debug('websocket received pong'));
       logger.debug('websocket connection opened');
       connection.send('blocks');
     };
@@ -906,11 +906,11 @@ class Nf3 {
       this.intervalIDs.push(
         setInterval(() => {
           connection._ws.ping();
-          //logger.debug('sent websocket ping');
+          // logger.debug('sent websocket ping');
         }, WEBSOCKET_PING_TIME),
       );
       // and a listener for the pong
-      //connection._ws.on('pong', () => logger.debug('websocket received pong'));
+      // connection._ws.on('pong', () => logger.debug('websocket received pong'));
       logger.debug('websocket connection opened');
       connection.send('blocks');
     };
@@ -962,11 +962,11 @@ class Nf3 {
       this.intervalIDs.push(
         setInterval(() => {
           connection._ws.ping();
-          //logger.debug('sent websocket ping');
+          // logger.debug('sent websocket ping');
         }, WEBSOCKET_PING_TIME),
       );
       // and a listener for the pong
-      //connection._ws.on('pong', () => logger.debug('websocket received pong'));
+      // connection._ws.on('pong', () => logger.debug('websocket received pong'));
       logger.debug('websocket connection opened');
       connection.send('challenge');
     };
@@ -1012,11 +1012,11 @@ class Nf3 {
       this.intervalIDs.push(
         setInterval(() => {
           connection._ws.ping();
-          //logger.debug('sent websocket ping');
+          // logger.debug('sent websocket ping');
         }, WEBSOCKET_PING_TIME),
       );
       // and a listener for the pong
-      //connection._ws.on('pong', () => logger.debug('websocket received pong'));
+      // connection._ws.on('pong', () => logger.debug('websocket received pong'));
       logger.debug('websocket connection opened');
       connection.send('challenge');
     };
