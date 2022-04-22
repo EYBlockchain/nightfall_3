@@ -1,6 +1,7 @@
+/* Running in Nightfall */
 function loadScript(src) {
   const script = document.createElement('script');
-  script.src = src;
+  script.src = src.path;
   document.body.appendChild(script);
   return new Promise((res, rej) => {
     script.onload = res;
@@ -8,18 +9,54 @@ function loadScript(src) {
   });
 }
 
+function loadStaticScript() {
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = 'https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css';
+  link.integrity = 'sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3';
+  link.crossOrigin = 'anonymous';
+  document.head.appendChild(link);
+  const wwScript = document.createElement('script');
+  wwScript.type = 'text/javascript';
+  wwScript.innerHTML = `
+    (function() {
+      console.log('THIS IS RUNNING');
+      var _Worker = window.Worker;
+      window.Worker = function (url) {
+        var blob = new Blob(["importScripts(" + JSON.stringify(url) + ")"], {
+          type: "text/javascript"
+        });
+        console.log('blob is', blob);
+        return new _Worker(URL.createObjectURL(blob));
+      }
+    })();`;
+  document.body.appendChild(wwScript);
+  return [
+    'https://unpkg.com/react/umd/react.production.min.js',
+    'https://unpkg.com/react-dom/umd/react-dom.production.min.js',
+    'https://unpkg.com/react-bootstrap@next/dist/react-bootstrap.min.js',
+  ].map(s => {
+    const script = document.createElement('script');
+    script.src = s;
+    document.body.appendChild(script);
+    return new Promise((res, rej) => {
+      script.onload = res;
+      script.onerror = rej;
+    });
+  });
+}
+
 /* eslint-disable no-restricted-globals */
-function loadDemoApp(url) {
-  const urlOrLocation = url || location.origin;
-  const origin = new URL(urlOrLocation).origin || location.origin;
+function loadDemoApp() {
   const srcList = {
     js: [],
   };
-  return fetch(`${urlOrLocation}/asset-manifest.json`)
+  console.log('fetching asset manifest');
+  return fetch(`https://nightfallv3-wallet.s3.eu-west-1.amazonaws.com/asset-manifest.json`)
     .then(response => {
       return response.json();
     })
-    .then(assets => {
+    .then(async assets => {
       // const assets = response.json();
       console.log(assets);
       const { files } = assets;
@@ -30,15 +67,22 @@ function loadDemoApp(url) {
             const splitted = files[file].split('.');
             const last = splitted.pop();
             if (last === 'js') {
-              srcList.js.push(path);
+              if (splitted.pop() === 'worker') srcList.js.unshift({ type: 'worker', path });
+              else srcList.js.push({ type: 'js', path });
             }
           }
         }
       }
-      const promises = srcList.js.map(src => {
-        return loadScript(origin + src);
-      });
-      return Promise.all(promises);
+      await Promise.all(loadStaticScript());
+      try {
+        const promises = srcList.js.map(src => {
+          return loadScript(src);
+        });
+        console.log('waiting on promises');
+        return Promise.all(promises);
+      } catch (error) {
+        console.log('ERROR LOAD', error);
+      }
     });
 }
 

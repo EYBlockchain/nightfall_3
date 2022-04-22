@@ -27,6 +27,7 @@
         window.addEventListener('load', _ => {            
             console.log("within integration");
             loadDemoApp().then(_ => {
+                console.log("done integration");
                 alert('app loaded');
                 const el = document.createElement('nightfall-app');
                 document.body.appendChild(el);
