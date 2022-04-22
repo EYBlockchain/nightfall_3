@@ -229,9 +229,9 @@ const BridgeComponent = () => {
     if (token && token?.address) {
       const contract = new window.web3.eth.Contract(ERC20, token.address);
       const result = await contract.methods.balanceOf(accountInstance.address).call(); // 29803630997051883414242659
-      setL1Balance(result);
+      setL1Balance(BigInt(result));
     } else {
-      setL1Balance(0);
+      setL1Balance(0n);
     }
   }
 
