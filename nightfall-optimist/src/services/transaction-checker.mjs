@@ -15,6 +15,7 @@ import verify from './verify.mjs';
 
 const { generalise } = gen;
 const { PROVING_SCHEME, BACKEND, CURVE, ZERO, ZERO31, CHALLENGES_CONTRACT_NAME } = config;
+const MAX_NULLIFIER = 2n ** 249n - 1n; // constrain to 31 bytes
 
 // first, let's check the hash. That's nice and easy:
 // NB as we actually now comput the hash on receipt of the transaction this
@@ -48,7 +49,9 @@ async function checkTransactionType(transaction) {
         transaction.proof.every(p => p === ZERO) ||
         // This extra check is unique to deposits
         Number(transaction.historicRootBlockNumberL2[0]) !== 0 ||
-        Number(transaction.historicRootBlockNumberL2[1]) !== 0
+        Number(transaction.historicRootBlockNumberL2[1]) !== 0 ||
+        BigInt(transaction.nullifiers[0]) > MAX_NULLIFIER ||
+        BigInt(transaction.nullifiers[1]) > MAX_NULLIFIER
       )
         throw new TransactionError(
           'The data provided was inconsistent with a transaction type of DEPOSIT',
@@ -69,7 +72,9 @@ async function checkTransactionType(transaction) {
         transaction.nullifiers.length !== 2 ||
         transaction.compressedSecrets.every(cs => cs === ZERO) ||
         transaction.compressedSecrets.length !== 8 ||
-        transaction.proof.every(p => p === ZERO)
+        transaction.proof.every(p => p === ZERO) ||
+        BigInt(transaction.nullifiers[0]) > MAX_NULLIFIER ||
+        BigInt(transaction.nullifiers[1]) > MAX_NULLIFIER
       )
         throw new TransactionError(
           'The data provided was inconsistent with a transaction type of SINGLE_TRANSFER',
@@ -89,7 +94,9 @@ async function checkTransactionType(transaction) {
         transaction.nullifiers[0] === transaction.nullifiers[1] ||
         transaction.compressedSecrets.every(cs => cs === ZERO) ||
         transaction.compressedSecrets.length !== 8 ||
-        transaction.proof.every(p => p === ZERO)
+        transaction.proof.every(p => p === ZERO) ||
+        BigInt(transaction.nullifiers[0]) > MAX_NULLIFIER ||
+        BigInt(transaction.nullifiers[1]) > MAX_NULLIFIER
       )
         throw new TransactionError(
           'The data provided was inconsistent with a transaction type of DOUBLE_TRANSFER',
@@ -108,7 +115,9 @@ async function checkTransactionType(transaction) {
         transaction.nullifiers[1] !== ZERO31 ||
         transaction.nullifiers.length !== 2 ||
         transaction.compressedSecrets.some(cs => cs !== ZERO) ||
-        transaction.proof.every(p => p === ZERO)
+        transaction.proof.every(p => p === ZERO) ||
+        BigInt(transaction.nullifiers[0]) > MAX_NULLIFIER ||
+        BigInt(transaction.nullifiers[1]) > MAX_NULLIFIER
       )
         throw new TransactionError(
           'The data provided was inconsistent with a transaction type of WITHDRAW',
