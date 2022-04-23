@@ -106,6 +106,8 @@ services:
       context: ../../
     networks:
       - pong_network
+    ports:
+      - 8100:8100
     environment:
       OPTIMIST_HOST: optimist
       OPTIMIST_WS_PORT: 8080
