@@ -125,7 +125,7 @@ library Utils {
       uint256[] memory inputs = new uint256[](12);
       inputs[0] = uint256(ts.ercAddress);
       inputs[1] = uint256(ts.commitments[0]);
-      inputs[2] = uint256(ts.nullifiers[0]);
+      inputs[2] = uint256(uint248(ts.nullifiers[0]));
       inputs[3] = roots[0];
       for (uint i = 4; i < 12; i++) {
         inputs[i] = uint256(ts.compressedSecrets[i-4]);
@@ -138,7 +138,7 @@ library Utils {
       inputs[0] = uint256(ts.ercAddress);
       inputs[1] = uint256(ts.tokenId);
       inputs[2] = ts.value;
-      inputs[3] = uint256(ts.nullifiers[0]);
+      inputs[3] = uint256(uint248(ts.nullifiers[0]));
       inputs[4] = uint256(ts.recipientAddress);
       inputs[5] = roots[0];
       return inputs;
@@ -150,8 +150,8 @@ library Utils {
       inputs[1] = uint256(ts.ercAddress);
       inputs[2] = uint256(ts.commitments[0]);
       inputs[3] = uint256(ts.commitments[1]);
-      inputs[4] = uint256(ts.nullifiers[0]);
-      inputs[5] = uint256(ts.nullifiers[1]);
+      inputs[4] = uint256(uint248(ts.nullifiers[0]));
+      inputs[5] = uint256(uint248(ts.nullifiers[1]));
       inputs[6] = roots[0];
       inputs[7] = roots[1];
       for (uint i = 8; i < 16; i++) {

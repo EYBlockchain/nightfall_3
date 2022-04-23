@@ -41,7 +41,7 @@ contract Structures {
         bytes32 ercAddress;
         bytes32 recipientAddress;
         bytes32[2] commitments;
-        bytes32[2] nullifiers;
+        bytes31[2] nullifiers;
         bytes32[8] compressedSecrets;
         uint256[4] proof;
     }

@@ -6,7 +6,7 @@ A nullifier class
 import gen from 'general-number';
 import sha256 from '../../common-files/utils/crypto/sha256';
 
-const { generalise } = gen;
+const { generalise, GN } = gen;
 
 class Nullifier {
   preimage;
@@ -18,7 +18,7 @@ class Nullifier {
       nsk,
       commitment: commitment.hash,
     });
-    this.hash = sha256([this.preimage.nsk, this.preimage.commitment]);
+    this.hash = new GN(sha256([this.preimage.nsk, this.preimage.commitment]).hex(31));
   }
 }
 

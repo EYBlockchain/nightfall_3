@@ -10,6 +10,9 @@ import './Structures.sol';
 library ChallengesUtil {
     bytes32 public constant ZERO =
         0x0000000000000000000000000000000000000000000000000000000000000000;
+    bytes32 public constant ZERO31 =
+        0x00000000000000000000000000000000000000000000000000000000000000;
+
 
     function libChallengeLeafCountCorrect(
         Structures.Block memory priorBlockL2,
@@ -80,8 +83,8 @@ library ChallengesUtil {
                 transaction.recipientAddress != ZERO ||
                 transaction.commitments[0] == ZERO ||
                 transaction.commitments[1] != ZERO ||
-                transaction.nullifiers[0] != ZERO ||
-                transaction.nullifiers[1] != ZERO ||
+                transaction.nullifiers[0] != ZERO31 ||
+                transaction.nullifiers[1] != ZERO31 ||
                 nZeroCompressedSecrets != 8 ||
                 nZeroProof == 4 || // We assume that 3 out of the 4 proof elements can be a valid ZERO. Deals with exception cases
                 transaction.historicRootBlockNumberL2[0] != 0 ||
@@ -110,8 +113,8 @@ library ChallengesUtil {
                 transaction.recipientAddress != ZERO ||
                 transaction.commitments[0] == ZERO ||
                 transaction.commitments[1] != ZERO ||
-                transaction.nullifiers[0] == ZERO ||
-                transaction.nullifiers[1] != ZERO ||
+                transaction.nullifiers[0] == ZERO31 ||
+                transaction.nullifiers[1] != ZERO31 ||
                 nZeroCompressedSecrets == 8 || // We assume that 7 out of the 8 compressed secrets elements can be a valid ZERO. Deals with exception cases
                 nZeroProof == 4 || // We assume that 3 out of the 4 proof elements can be a valid ZERO. Deals with exception cases
                 transaction.historicRootBlockNumberL2[1] != 0, // If this is a single, the second historicBlockNumber needs to be zero
@@ -139,8 +142,8 @@ library ChallengesUtil {
                 transaction.recipientAddress != ZERO ||
                 transaction.commitments[0] == ZERO ||
                 transaction.commitments[1] == ZERO ||
-                transaction.nullifiers[0] == ZERO ||
-                transaction.nullifiers[1] == ZERO ||
+                transaction.nullifiers[0] == ZERO31 ||
+                transaction.nullifiers[1] == ZERO31 ||
                 nZeroCompressedSecrets == 8 || // We assume that 7 out of the 8 compressed secrets elements can be a valid ZERO. Deals with exception cases
                 nZeroProof == 4, // We assume that 3 out of the 4 proof elements can be a valid ZERO. Deals with exception cases
             'This double transfer transaction type is valid'
@@ -166,8 +169,8 @@ library ChallengesUtil {
                 transaction.recipientAddress == ZERO ||
                 transaction.commitments[0] != ZERO ||
                 transaction.commitments[1] != ZERO ||
-                transaction.nullifiers[0] == ZERO ||
-                transaction.nullifiers[1] != ZERO ||
+                transaction.nullifiers[0] == ZERO31 ||
+                transaction.nullifiers[1] != ZERO31 ||
                 nZeroCompressedSecrets != 8 ||
                 nZeroProof == 4 || // We assume that 3 out of the 4 proof elements can be a valid ZERO. Deals with exception cases
                 transaction.historicRootBlockNumberL2[1] != 0, // A withdraw has a similar constraint as a single transfer

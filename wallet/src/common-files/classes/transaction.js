@@ -25,7 +25,7 @@ function keccak(preimage) {
     { t: 'bytes32', v: preimage.ercAddress },
     { t: 'bytes32', v: preimage.recipientAddress },
     ...preimage.commitments.map(ch => ({ t: 'bytes32', v: ch })),
-    ...preimage.nullifiers.map(nh => ({ t: 'bytes32', v: nh })),
+    ...preimage.nullifiers.map(nh => ({ t: 'bytes31', v: nh })),
     ...preimage.compressedSecrets.map(es => ({ t: 'bytes32', v: es })),
     ...compressProof(preimage.proof).map(p => ({ t: 'uint', v: p })),
   );
@@ -81,6 +81,8 @@ class Transaction {
       compressedSecrets,
       proof: flatProof,
     }).all.hex(32);
+    // the nullifiers is 31 bytes so fix that:
+    preimage.nullifiers = preimage.nullifiers.map(n => generalise(n).hex(31));
     // compute the solidity hash, using suitable type conversions
     preimage.transactionHash = keccak(preimage);
     return preimage;

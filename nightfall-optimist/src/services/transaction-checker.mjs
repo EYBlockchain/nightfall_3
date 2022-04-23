@@ -14,7 +14,7 @@ import { getBlockByBlockNumberL2 } from './database.mjs';
 import verify from './verify.mjs';
 
 const { generalise } = gen;
-const { PROVING_SCHEME, BACKEND, CURVE, ZERO, CHALLENGES_CONTRACT_NAME } = config;
+const { PROVING_SCHEME, BACKEND, CURVE, ZERO, ZERO31, CHALLENGES_CONTRACT_NAME } = config;
 
 // first, let's check the hash. That's nice and easy:
 // NB as we actually now comput the hash on receipt of the transaction this
@@ -42,7 +42,7 @@ async function checkTransactionType(transaction) {
         transaction.commitments[0] === ZERO ||
         transaction.commitments[1] !== ZERO ||
         transaction.commitments.length !== 2 ||
-        transaction.nullifiers.some(n => n !== ZERO) ||
+        transaction.nullifiers.some(n => n !== ZERO31) ||
         transaction.compressedSecrets.some(cs => cs !== ZERO) ||
         transaction.compressedSecrets.length !== 8 ||
         transaction.proof.every(p => p === ZERO) ||
@@ -64,8 +64,8 @@ async function checkTransactionType(transaction) {
         transaction.commitments[0] === ZERO ||
         transaction.commitments[1] !== ZERO ||
         transaction.commitments.length !== 2 ||
-        transaction.nullifiers[0] === ZERO ||
-        transaction.nullifiers[1] !== ZERO ||
+        transaction.nullifiers[0] === ZERO31 ||
+        transaction.nullifiers[1] !== ZERO31 ||
         transaction.nullifiers.length !== 2 ||
         transaction.compressedSecrets.every(cs => cs === ZERO) ||
         transaction.compressedSecrets.length !== 8 ||
@@ -84,7 +84,7 @@ async function checkTransactionType(transaction) {
         transaction.recipientAddress !== ZERO ||
         transaction.commitments.some(c => c === ZERO) ||
         transaction.commitments.length !== 2 ||
-        transaction.nullifiers.some(n => n === ZERO) ||
+        transaction.nullifiers.some(n => n === ZERO31) ||
         transaction.nullifiers.length !== 2 ||
         transaction.nullifiers[0] === transaction.nullifiers[1] ||
         transaction.compressedSecrets.every(cs => cs === ZERO) ||
@@ -104,8 +104,8 @@ async function checkTransactionType(transaction) {
         transaction.ercAddress === ZERO ||
         transaction.recipientAddress === ZERO ||
         transaction.commitments.some(c => c !== ZERO) ||
-        transaction.nullifiers[0] === ZERO ||
-        transaction.nullifiers[1] !== ZERO ||
+        transaction.nullifiers[0] === ZERO31 ||
+        transaction.nullifiers[1] !== ZERO31 ||
         transaction.nullifiers.length !== 2 ||
         transaction.compressedSecrets.some(cs => cs !== ZERO) ||
         transaction.proof.every(p => p === ZERO)

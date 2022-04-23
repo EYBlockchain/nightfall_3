@@ -61,7 +61,7 @@ async function transactionSubmittedEventHandler(eventParams) {
     logger.info('Transaction checks passed');
     const storedNullifiers = (await retrieveNullifiers()).map(sNull => sNull.hash); // List of Nullifiers stored by blockProposer
     const transactionNullifiers = transaction.nullifiers.filter(
-      hash => hash !== '0x0000000000000000000000000000000000000000000000000000000000000000',
+      hash => hash !== '0x00000000000000000000000000000000000000000000000000000000000000',
     ); // Deposit transactions still have nullifier fields but they are 0
     const dupNullifier = transactionNullifiers.some(txNull => storedNullifiers.includes(txNull)); // Move to Set for performance later.
     if (dupNullifier) {

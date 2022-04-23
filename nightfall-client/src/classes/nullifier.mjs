@@ -17,7 +17,7 @@ class Nullifier {
       commitment: commitment.hash,
     });
     // truncate the hash so that the nullifier fits inside a BN128 group order.
-    this.hash = new GN(sha256([this.preimage.nsk, this.preimage.commitment]).hex(32, 31));
+    this.hash = new GN(sha256([this.preimage.nsk, this.preimage.commitment]).hex(31));
   }
 }
 
