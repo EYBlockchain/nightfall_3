@@ -431,9 +431,9 @@
             "type": "bytes32[2]"
           },
           {
-            "internalType": "bytes32[2]",
+            "internalType": "bytes31[2]",
             "name": "nullifiers",
-            "type": "bytes32[2]"
+            "type": "bytes31[2]"
           },
           {
             "internalType": "bytes32[8]",
@@ -539,9 +539,9 @@
             "type": "bytes32[2]"
           },
           {
-            "internalType": "bytes32[2]",
+            "internalType": "bytes31[2]",
             "name": "nullifiers",
-            "type": "bytes32[2]"
+            "type": "bytes31[2]"
           },
           {
             "internalType": "bytes32[8]",
@@ -719,9 +719,9 @@
             "type": "bytes32[2]"
           },
           {
-            "internalType": "bytes32[2]",
+            "internalType": "bytes31[2]",
             "name": "nullifiers",
-            "type": "bytes32[2]"
+            "type": "bytes31[2]"
           },
           {
             "internalType": "bytes32[8]",
@@ -838,9 +838,9 @@
             "type": "bytes32[2]"
           },
           {
-            "internalType": "bytes32[2]",
+            "internalType": "bytes31[2]",
             "name": "nullifiers",
-            "type": "bytes32[2]"
+            "type": "bytes31[2]"
           },
           {
             "internalType": "bytes32[8]",
@@ -913,9 +913,9 @@
             "type": "bytes32[2]"
           },
           {
-            "internalType": "bytes32[2]",
+            "internalType": "bytes31[2]",
             "name": "nullifiers",
-            "type": "bytes32[2]"
+            "type": "bytes31[2]"
           },
           {
             "internalType": "bytes32[8]",
@@ -1020,9 +1020,9 @@
             "type": "bytes32[2]"
           },
           {
-            "internalType": "bytes32[2]",
+            "internalType": "bytes31[2]",
             "name": "nullifiers",
-            "type": "bytes32[2]"
+            "type": "bytes31[2]"
           },
           {
             "internalType": "bytes32[8]",
