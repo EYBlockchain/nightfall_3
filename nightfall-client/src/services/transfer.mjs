@@ -155,7 +155,7 @@ async function transfer(transferParams) {
     ]),
     newCommitments.map(commitment => commitment.hash.integer),
     nullifiers.map(nullifier => nullifier.preimage.nsk.limbs(32, 8)),
-    nullifiers.map(nullifier => generalise(nullifier.hash.hex(32, 31)).integer),
+    nullifiers.map(nullifier => nullifier.hash.integer),
     localSiblingPaths.map(siblingPath => siblingPath[0].field(BN128_GROUP_ORDER, false)),
     localSiblingPaths.map(siblingPath =>
       siblingPath.slice(1).map(node => node.field(BN128_GROUP_ORDER, false)),

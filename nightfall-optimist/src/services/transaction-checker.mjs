@@ -171,7 +171,7 @@ async function verifyProof(transaction) {
         [
           // transaction.ercAddress,
           transaction.commitments[0], // not truncating here as we already ensured hash < group order
-          generalise(transaction.nullifiers[0]).hex(32, 31),
+          transaction.nullifiers[0],
           historicRootFirst.root,
           ...transaction.compressedSecrets.map(compressedSecret =>
             generalise(compressedSecret).hex(32, 31),
@@ -185,7 +185,7 @@ async function verifyProof(transaction) {
           // transaction.ercAddress, // this is correct; ercAddress appears twice
           // transaction.ercAddress, // in a double-transfer public input hash
           transaction.commitments, // not truncating here as we already ensured hash < group order
-          transaction.nullifiers.map(nullifier => generalise(nullifier).hex(32, 31)),
+          transaction.nullifiers,
           historicRootFirst.root,
           historicRootSecond.root,
           ...transaction.compressedSecrets.map(compressedSecret =>
@@ -200,7 +200,7 @@ async function verifyProof(transaction) {
           transaction.ercAddress,
           transaction.tokenId,
           transaction.value,
-          generalise(transaction.nullifiers[0]).hex(32, 31),
+          transaction.nullifiers[0],
           transaction.recipientAddress,
           historicRootFirst.root,
         ].flat(Infinity),

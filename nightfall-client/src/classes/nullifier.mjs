@@ -4,7 +4,7 @@ A nullifier class
 import gen from 'general-number';
 import sha256 from 'common-files/utils/crypto/sha256.mjs';
 
-const { generalise } = gen;
+const { generalise, GN } = gen;
 
 class Nullifier {
   preimage;
@@ -16,7 +16,8 @@ class Nullifier {
       nsk,
       commitment: commitment.hash,
     });
-    this.hash = sha256([this.preimage.nsk, this.preimage.commitment]);
+    // truncate the hash so that the nullifier fits inside a BN128 group order.
+    this.hash = new GN(sha256([this.preimage.nsk, this.preimage.commitment]).hex(32, 31));
   }
 }
 
