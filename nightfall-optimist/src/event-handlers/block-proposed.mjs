@@ -15,7 +15,7 @@ import {
 } from '../services/database.mjs';
 import { getProposeBlockCalldata } from '../services/process-calldata.mjs';
 
-const { ZERO } = config;
+const { ZERO, ZERO31 } = config;
 
 let ws;
 
@@ -57,7 +57,7 @@ async function blockProposedEventHandler(data) {
     // asociated with a failed block, and we can't do that if we haven't
     // associated them with a blockHash.
     await stampNullifiers(
-      transactions.map(tx => tx.nullifiers.filter(nulls => nulls !== ZERO)).flat(Infinity),
+      transactions.map(tx => tx.nullifiers.filter(nulls => nulls !== ZERO31)).flat(Infinity),
       block.blockHash,
     );
     // mark transactions so that they are out of the mempool,

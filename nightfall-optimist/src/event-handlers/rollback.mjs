@@ -22,7 +22,7 @@ import {
 import Block from '../classes/block.mjs';
 import checkTransaction from '../services/transaction-checker.mjs';
 
-const { ZERO } = config;
+const { ZERO31 } = config;
 
 async function rollbackEventHandler(data) {
   const { blockNumberL2 } = data.returnValues;
@@ -108,7 +108,7 @@ async function rollbackEventHandler(data) {
   // between optimist instances, this is also fine as mempools are locally-contexted anyways
   transactions.forEach(t => {
     const { transactionHash, nullifiers } = t;
-    const nonZeroNullifiers = nullifiers.filter(n => n !== ZERO);
+    const nonZeroNullifiers = nullifiers.filter(n => n !== ZERO31);
     // Is there a duplicate nullifier in our list of mempool: true and block transactions
     const duplicateSeenNullifier = nonZeroNullifiers.some(nz => nulliferSet.has(nz));
     // Is there a duplicate nullifier in our list of already spent nullifier
@@ -158,7 +158,7 @@ async function rollbackEventHandler(data) {
   const validTransactionNullifiers = validTransactions
     .map(v => v.nullifiers)
     .flat(Infinity)
-    .filter(n => n !== ZERO);
+    .filter(n => n !== ZERO31);
 
   const deletedNullifiers = unspentNullifierHashes.filter(
     un => !validTransactionNullifiers.includes(un) && !nullifierArray.includes(un),

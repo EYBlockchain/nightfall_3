@@ -10,7 +10,7 @@ import { createBadBlock, topicEventMapping, Web3Client } from './utils.mjs';
 
 const { expect } = chai;
 const txQueue = new Queue({ autostart: true, concurrency: 1 });
-const ZERO = '0x0000000000000000000000000000000000000000000000000000000000000000';
+const ZERO31 = '0x00000000000000000000000000000000000000000000000000000000000000';
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
@@ -185,7 +185,7 @@ describe('Testing the challenge http API', () => {
               );
             } else if (counter === 1) {
               [duplicateNullifier] = transactions
-                .map(t => t.nullifiers.filter(n => n !== ZERO))
+                .map(t => t.nullifiers.filter(n => n !== ZERO31))
                 .flat(Infinity);
               logger.debug(
                 `Created good block to extract duplicate nullifier ${duplicateNullifier} from with blockHash ${block.blockHash}`,

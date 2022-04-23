@@ -12,7 +12,7 @@ import { ivks, nsks } from '../services/keys.mjs';
 import { getLatestTree, saveTree, saveTransaction, saveBlock } from '../services/database.mjs';
 import { decryptCommitment } from '../services/commitment-sync.mjs';
 
-const { ZERO } = config;
+const { ZERO, ZERO31 } = config;
 
 /**
 This handler runs whenever a BlockProposed event is emitted by the blockchain
@@ -36,7 +36,7 @@ async function blockProposedEventHandler(data) {
   const dbUpdates = transactions.map(async transaction => {
     // filter out non zero commitments and nullifiers
     const nonZeroCommitments = transaction.commitments.flat().filter(n => n !== ZERO);
-    const nonZeroNullifiers = transaction.nullifiers.flat().filter(n => n !== ZERO);
+    const nonZeroNullifiers = transaction.nullifiers.flat().filter(n => n !== ZERO31);
     if (
       (transaction.transactionType === '1' || transaction.transactionType === '2') &&
       (await countCommitments(nonZeroCommitments)) === 0

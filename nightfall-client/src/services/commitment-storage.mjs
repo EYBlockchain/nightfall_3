@@ -22,7 +22,7 @@ export async function storeCommitment(commitment, nsk) {
   // we'll also compute and store the nullifier hash.  This will be useful for
   // spotting if the commitment spend is ever rolled back, which would mean the
   // commitment is once again available to spend
-  const nullifierHash = new Nullifier(commitment, nsk).hash.hex(32);
+  const nullifierHash = new Nullifier(commitment, nsk).hash.hex(31);
   const data = {
     _id: commitment.hash.hex(32),
     preimage: commitment.preimage.all.hex(32),

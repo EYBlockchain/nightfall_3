@@ -15,7 +15,7 @@ import Secrets from '../classes/secrets';
 // import { ivks, nsks } from '../services/keys';
 import { getTreeByBlockNumberL2, saveTree, saveTransaction, saveBlock } from '../services/database';
 
-const { ZERO } = global.config;
+const { ZERO, ZERO31 } = global.config;
 
 /**
 This handler runs whenever a BlockProposed event is emitted by the blockchain
@@ -39,7 +39,7 @@ async function blockProposedEventHandler(data, ivks, nsks) {
   const dbUpdates = transactions.map(async transaction => {
     // filter out non zero commitments and nullifiers
     const nonZeroCommitments = transaction.commitments.flat().filter(n => n !== ZERO);
-    const nonZeroNullifiers = transaction.nullifiers.flat().filter(n => n !== ZERO);
+    const nonZeroNullifiers = transaction.nullifiers.flat().filter(n => n !== ZERO31);
     const storeCommitments = [];
     const tempTransactionStore = [];
     if (

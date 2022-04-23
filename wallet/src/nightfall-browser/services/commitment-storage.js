@@ -40,7 +40,7 @@ const connectDB = async () => {
 
 // function to format a commitment for a mongo db and store it
 export async function storeCommitment(commitment, nsk) {
-  const nullifierHash = new Nullifier(commitment, nsk).hash.hex(32);
+  const nullifierHash = new Nullifier(commitment, nsk).hash.hex(31);
   const data = {
     _id: commitment.hash.hex(32),
     preimage: commitment.preimage.all.hex(32),
