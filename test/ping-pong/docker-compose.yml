@@ -2,9 +2,9 @@ version: '3.5'
 # Use this script for running up nightfall_3 with images and applications
 services:
   client:
-    image: ghcr.io/eyblockchain/nightfall3-client:latest
+    # image: ghcr.io/eyblockchain/nightfall3-client:latest
     build:
-      dockerfile: client.Dockerfile
+      dockerfile: ./core/client/client.Dockerfile
       context: ../../
     volumes:
       - type: volume
@@ -33,7 +33,7 @@ services:
       OPTIMIST_HOST: optimist
       OPTIMIST_PORT: 80
       USE_STUBS: 'false' # make sure this flag is the same as in deployer service
-    command: [ 'npm', 'run', 'dev' ]
+    command: [ 'npm', 'run', 'start' ]
 
   rabbitmq:
     image: rabbitmq
@@ -41,9 +41,9 @@ services:
       - pong_network
 
   optimist:
-    image: ghcr.io/eyblockchain/nightfall3-optimist:latest
+    # image: ghcr.io/eyblockchain/nightfall3-optimist:latest
     build:
-      dockerfile: optimist.Dockerfile
+      dockerfile: ./core/optimist/optimist.Dockerfile
       context: ../../
     networks:
       - pong_network
@@ -61,13 +61,13 @@ services:
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
       TIMBER_HOST: timber
       TIMBER_PORT: 80
-    command: [ 'npm', 'run', 'dev' ]
+    command: [ 'npm', 'run', 'start' ]
 
   # Temporary container to deploy contracts and circuits and populate volumes
   deployer:
-    image: ghcr.io/eyblockchain/nightfall3-deployer:latest
+    # image: ghcr.io/eyblockchain/nightfall3-deployer:latest
     build:
-      dockerfile: deployer.Dockerfile
+      dockerfile: ./core/deployer/deployer.Dockerfile
       context: ../../
     volumes:
       - type: volume
@@ -86,9 +86,9 @@ services:
       USE_STUBS: 'false'
 
   worker:
-    image: ghcr.io/eyblockchain/nightfall3-worker:latest
+    # image: ghcr.io/eyblockchain/nightfall3-worker:latest
     build:
-      dockerfile: worker.Dockerfile
+      dockerfile: ./core/worker/worker.Dockerfile
       context: ../../
     volumes:
       - type: volume
@@ -100,9 +100,9 @@ services:
       LOG_LEVEL: info
 
   proposer:
-    image: ghcr.io/eyblockchain/nightfall3-proposer:latest
+    # image: ghcr.io/eyblockchain/nightfall3-proposer:latest
     build:
-      dockerfile: proposer.Dockerfile
+      dockerfile: ./core/proposer/proposer.Dockerfile
       context: ../../
     networks:
       - pong_network
@@ -118,9 +118,9 @@ services:
       PROPOSER_HOST: proposer
 
   user-local1:
-    image: ghcr.io/eyblockchain/nightfall3-user-local:latest
+    # image: ghcr.io/eyblockchain/nightfall3-user-local:latest
     build:
-      dockerfile: user-local.Dockerfile
+      dockerfile: ./test/ping-pong/user-local/user-local.Dockerfile
       context: ../../
     networks:
       - pong_network
@@ -135,9 +135,9 @@ services:
       IS_TEST_RUNNER: 'yes'
 
   user-local2:
-    image: ghcr.io/eyblockchain/nightfall3-user-local:latest
+    # image: ghcr.io/eyblockchain/nightfall3-user-local:latest
     build:
-      dockerfile: user-local.Dockerfile
+      dockerfile: ./test/ping-pong/user-local/user-local.Dockerfile
       context: ../../
     networks:
       - pong_network
@@ -154,6 +154,7 @@ volumes:
   mongodb:
   proving_files:
   build:
+
 
 networks:
   pong_network:

@@ -3,11 +3,11 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
-import Nf3 from '../../../cli/lib/nf3.mjs';
-import { expectTransaction, depositNTransactions, Web3Client } from '../../utils.mjs';
-import logger from '../../../common-files/utils/logger.mjs';
+import Nf3 from 'nf3/nf3.mjs';
+import logger from 'common-files/utils/logger.mjs';
 
-import { approve } from '../../../cli/lib/tokens.mjs';
+import { approve } from 'nf3/tokens.mjs';
+import { expectTransaction, depositNTransactions, Web3Client } from '../../utils.mjs';
 
 // so we can use require with mjs file
 const { expect } = chai;

@@ -16,7 +16,7 @@ RUN apt-get install -y netcat
 RUN apt-get install -y libgmpxx4ldbl libgmp3-dev
 
 WORKDIR /app
-COPY ./common-files common-files
+COPY ./lib lib
 COPY ./config/default.js config/default.js
 
 
@@ -31,7 +31,7 @@ ENV ZOKRATES_HOME /app
 ENV ZOKRATES_STDLIB /app/stdlib
 
 RUN npm i
-RUN npm link /app/common-files --save
+RUN npm link /app/lib/common-files --save
 
 EXPOSE 80
 EXPOSE 8080

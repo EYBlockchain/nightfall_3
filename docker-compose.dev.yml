@@ -11,8 +11,8 @@ services:
         source: ./core/client/src
         target: /app/src
       - type: bind
-        source: ./common-files
-        target: /app/node_modules/common-files
+        source: ./lib/common-files
+        target: /app/lib/common-files
       - type: bind
         source: ./config/default.js
         target: /app/config/default.js
@@ -26,8 +26,8 @@ services:
         source: ./core/client/src
         target: /app/src
       - type: bind
-        source: ./common-files
-        target: /app/node_modules/common-files
+        source: ./lib/common-files
+        target: /app/lib/common-files
       - type: bind
         source: ./config/default.js
         target: /app/config/default.js
@@ -64,8 +64,8 @@ services:
         source: ./core/deployer/src
         target: /app/src/
       - type: bind
-        source: ./common-files
-        target: /app/common-files
+        source: ./lib/common-files
+        target: /app/lib/common-files
       - type: bind
         source: ./config/default.js
         target: /app/config/default.js
@@ -90,8 +90,8 @@ services:
         source: ./core/optimist/src
         target: /app/src
       - type: bind
-        source: ./common-files
-        target: /app/common-files
+        source: ./lib/common-files
+        target: /app/lib/common-files
       - type: bind
         source: ./config/default.js
         target: /app/config/default.js
@@ -106,8 +106,23 @@ services:
         source: ./core/optimist/src
         target: /app/src
       - type: bind
-        source: ./common-files
-        target: /app/common-files
+        source: ./lib/common-files
+        target: /app/lib/common-files
+      - type: bind
+        source: ./config/default.js
+        target: /app/config/default.js
+  proposer:
+    build:
+      dockerfile: ./core/proposer/proposer.Dockerfile
+      context: .
+    volumes:
+      - type: bind
+        source: ./core/proposer/src
+        target: /app/src
+      - type: bind
+        source: ./lib/common-files
+        target: /app/lib/common-files
+
       - type: bind
         source: ./config/default.js
         target: /app/config/default.js

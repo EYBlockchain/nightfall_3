@@ -2,6 +2,7 @@
 
 VOLUME_LIST=$(docker volume ls -q)
 FILE=
+PROPOSER="-f docker-compose.proposer.yml"
 
 usage()
 {
@@ -39,6 +40,8 @@ while [ -n "$1" ]; do
       -d  | --dev )                 DEV="-f docker-compose.dev.yml"
                                     ;;
       -a  | --adversary)            ADVERSARY="-f docker-compose.adversary.yml"
+                                    ;;
+      -no-p  | --no-proposer)       PROPOSER=""
                                     ;;
       * )                           usage
                               exit 1
@@ -103,5 +106,5 @@ fi
 
 
 #docker-compose -f docker-compose.yml $FILE up -d deployer
-docker-compose $FILE $STUBS $DEV $ADVERSARY up -d --remove-orphans
+docker-compose $FILE $STUBS $DEV $ADVERSARY $PROPOSER up -d --remove-orphans
 docker-compose logs -f

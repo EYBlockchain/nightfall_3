@@ -2,7 +2,7 @@
 Module that runs up as a proposer
 */
 import config from 'config';
-import logger from '../../../../common-files/utils/logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
 import app from './app.mjs';
 import { nf3Init, nf3Healthcheck, nf3RegisterProposer, nf3StartProposer } from './nf3-wrapper.mjs';
 

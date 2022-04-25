@@ -12,7 +12,7 @@ RUN apt-get install -y nodejs
 RUN apt-get install -y netcat
 
 WORKDIR /app
-COPY ./common-files common-files
+COPY ./lib lib
 COPY ./config/default.js config/default.js
 
 RUN mkdir /mongodb
@@ -24,6 +24,6 @@ EXPOSE 27017
 EXPOSE 80
 
 RUN npm i
-RUN npm link /app/common-files --save
+RUN npm link /app/lib/common-files --save
 
 ENTRYPOINT ["/app/entrypoint.sh"]

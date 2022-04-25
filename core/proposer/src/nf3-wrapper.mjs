@@ -1,4 +1,5 @@
-import Nf3 from '../../../../cli/lib/nf3.mjs';
+// eslint-disable-next-line import/no-unresolved
+import Nf3 from 'nf3/nf3.mjs';
 
 let nf3Instance = '';
 
