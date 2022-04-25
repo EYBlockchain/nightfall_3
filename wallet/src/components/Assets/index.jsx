@@ -189,7 +189,7 @@ export default function Assets({ tokenList }) {
             <div className="depositWrapper">
               <a
                 className="linkButton"
-                href="https://docs.polygon.technology/docs/develop/wallets/polygon-web-wallet/web-wallet-v2-guide"
+                href="https://docs.polygon-nightfall.technology/Nightfall/tools/nightfall-wallet/"
                 target="_blank"
                 rel="noopener noreferrer"
               >
