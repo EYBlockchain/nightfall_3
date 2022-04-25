@@ -9,7 +9,7 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
  */
 
 import gen from 'general-number';
-import { initialize } from 'zokrates';
+import { initialize } from 'zokrates-js';
 
 import axios from 'axios';
 import rand from '../../common-files/utils/crypto/crypto-random';

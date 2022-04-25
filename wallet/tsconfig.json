@@ -26,6 +26,6 @@
   "include": [
     "src",
     "src/custom.d.ts",
-    "tests/",
+    "tests/"
   ]
 }
