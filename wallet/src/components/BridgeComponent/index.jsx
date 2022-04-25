@@ -4,33 +4,33 @@ import { toast } from 'react-toastify';
 import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import styled, { keyframes } from 'styled-components';
+import importTokens from '@TokenList/index';
+import deposit from '@Nightfall/services/deposit';
+import withdraw from '@Nightfall/services/withdraw';
+import { getWalletBalance } from '@Nightfall/services/commitment-storage';
+import { decompressKey } from '@Nightfall/services/keys';
+import { saveTransaction } from '@Nightfall/services/database';
 import ethChainImage from '../../assets/img/ethereum-chain.svg';
 import polygonNightfall from '../../assets/svg/polygon-nightfall.svg';
 import discloserBottomImage from '../../assets/img/discloser-bottom.svg';
 import lightArrowImage from '../../assets/img/light-arrow.svg';
 import { approve, getContractAddress, submitTransaction } from '../../common-files/utils/contract';
 import Web3 from '../../common-files/utils/web3';
-import deposit from '../../nightfall-browser/services/deposit';
-import withdraw from '../../nightfall-browser/services/withdraw';
 import approveImg from '../../assets/img/modalImages/adeposit_approve1.png';
 import depositConfirmed from '../../assets/img/modalImages/adeposit_confirmed.png';
 import successHand from '../../assets/img/modalImages/success-hand.png';
 import transferCompletedImg from '../../assets/img/modalImages/tranferCompleted.png';
 import { UserContext } from '../../hooks/User/index.jsx';
 import Input from '../Input/index.tsx';
-import TokensList from '../Modals/Bridge/TokensList/index.tsx';
+import TokensList from '../Modals/Bridge/index.tsx';
 import { useAccount } from '../../hooks/Account/index.tsx';
-import { getWalletBalance } from '../../nightfall-browser/services/commitment-storage';
 import './toast.css';
 import './styles.scss';
 import TransferModal from '../Modals/Bridge/Transfer/index.jsx';
 
 import ERC20 from '../../contract-abis/ERC20.json';
-import tokensList from '../Modals/Bridge/TokensList/tokensList';
 import { APPROVE_AMOUNT } from '../../constants';
 import { retrieveAndDecrypt } from '../../utils/lib/key-storage';
-import { decompressKey } from '../../nightfall-browser/services/keys';
-import { saveTransaction } from '../../nightfall-browser/services/database';
 import BigFloat from '../../common-files/classes/bigFloat';
 
 const ModalTitle = styled.div`
@@ -115,6 +115,7 @@ const ContinueTransferButton = styled.button`
     cursor: pointer;
   }
 `;
+const supportedTokens = importTokens();
 
 const { proposerUrl } = global.config;
 
@@ -130,11 +131,10 @@ const BridgeComponent = () => {
   const [l2Balance, setL2Balance] = useState(0n);
   const [shieldContractAddress, setShieldAddress] = useState('');
   const location = useLocation();
-
   const initialTx = location?.tokenState?.initialTxType ?? 'deposit';
   const initialToken =
-    tokensList.tokens.find(t => t.address.toLowerCase() === location?.tokenState?.tokenAddress) ??
-    tokensList.tokens[0];
+    supportedTokens.find(t => t.address.toLowerCase() === location?.tokenState?.tokenAddress) ??
+    supportedTokens[0];
 
   const [token, setToken] = useState(initialToken);
   const [txType, setTxType] = useState(initialTx);
@@ -232,8 +232,6 @@ const BridgeComponent = () => {
   async function triggerTx() {
     if (shieldContractAddress === '')
       setShieldAddress((await getContractAddress('Shield')).data.address);
-    // const { address } = (await getContractAddress('ERC20Mock')).data; // TODO Only for testing now
-    // const ercAddress = address; // TODO Location to be removed later
     const ercAddress = token.address;
     console.log('ercAddress', ercAddress);
     const zkpKeys = await retrieveAndDecrypt(state.compressedPkd);
@@ -314,8 +312,6 @@ const BridgeComponent = () => {
   async function updateL1Balance() {
     console.log('L1 Balance');
     if (token && token?.address) {
-      // const { address } = (await getContractAddress('ERC20Mock')).data; // TODO REMOVE THIS WHEN OFFICIAL ADDRESSES
-      // console.log('ERC20', defaultTokenAddress);
       const contract = new window.web3.eth.Contract(ERC20, token.address);
       const result = await contract.methods.balanceOf(accountInstance.address).call(); // 29803630997051883414242659
       setL1Balance(result);
@@ -326,7 +322,6 @@ const BridgeComponent = () => {
 
   async function updateL2Balance() {
     if (token && token.address) {
-      // const { address } = (await getContractAddress('ERC20Mock')).data; // TODO REMOVE THIS WHEN OFFICIAL ADDRESSES
       const l2bal = await getWalletBalance(state.compressedPkd);
       if (Object.hasOwnProperty.call(l2bal, state.compressedPkd))
         setL2Balance(l2bal[state.compressedPkd][token.address.toLowerCase()] ?? 0n);

@@ -1,6 +1,6 @@
 function configureAWSBucket() {
   const bucket = 'nightfallv3';
-  const mode = process.env.MODE; // options are 'local', 'internal', 'preprod', 'production', 'staging', and 'testnet'
+  const mode = process.env.REACT_APP_MODE; // options are 'local', 'internal', 'preprod', 'production', 'staging', and 'testnet'
   if (mode === 'local') return bucket;
   return `${bucket}-${mode}`;
 }

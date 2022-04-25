@@ -1,11 +1,11 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 
-import Web3 from '../../common-files/utils/web3';
+import { generateKeys } from '@Nightfall/services/keys';
+import blockProposedEventHandler from '@Nightfall/event-handlers/block-proposed';
+import { getMaxBlock } from '@Nightfall/services/database';
 import * as Storage from '../../utils/lib/local-storage';
-import { generateKeys } from '../../nightfall-browser/services/keys';
-import blockProposedEventHandler from '../../nightfall-browser/event-handlers/block-proposed';
-import { getMaxBlock } from '../../nightfall-browser/services/database';
+import Web3 from '../../common-files/utils/web3';
 import { encryptAndStore, retrieveAndDecrypt, storeBrowserKey } from '../../utils/lib/key-storage';
 
 const { eventWsUrl } = global.config;

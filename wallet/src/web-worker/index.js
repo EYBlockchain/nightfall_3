@@ -4,8 +4,8 @@
 /*
  * main thread file
  */
-import fetchCircuit from 'comlink-loader?singleton!../nightfall-browser/services/fetch-circuit';
-import { checkIndexDBForCircuit, storeCircuit } from '../nightfall-browser/services/database';
+import fetchCircuit from 'comlink-loader?singleton!@Nightfall/services/fetch-circuit';
+import { checkIndexDBForCircuit, storeCircuit } from '@Nightfall/services/database';
 
 const { circuitsAWSFiles, USE_STUBS } = global.config;
 

@@ -6,9 +6,36 @@ BigInt.prototype.toJSON = function () {
   return this.toString();
 };
 
+const path = require(`path`);
+
 module.exports = {
   webpack: {
-    alias: {},
+    alias: {
+      '@TokenList': path.resolve(__dirname, `src/static/supported-token-lists/`),
+      '@Nightfall': path.resolve(__dirname, `src/nightfall-browser/`),
+      '@Components': path.resolve(__dirname, `src/components/`),
+    },
+    plugins: {
+      add: [
+        new WebpackManifestPlugin({
+          fileName: 'assets_test.json',
+          generate: (seed, files) => {
+            const js = [];
+            const css = [];
+            files.forEach(file => {
+              if (file.path.endsWith('.js') && file.isInitial) {
+                js.push({ value: file.path, type: 'entry' });
+              }
+              if (file.path.endsWith('.css') && file.isInitial) {
+                css.push({ value: file.path, type: 'entry' });
+              }
+            });
+            return { js, css };
+          },
+        }),
+      ],
+      remove: ['ManifestPlugin'],
+    },
     configure: (webpackConfig, { paths }) => {
       const wasmExtensionRegExp = /\.wasm$/;
       const config = require('../config/default');

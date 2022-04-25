@@ -1,8 +1,8 @@
 import React from 'react';
-import Header from '../../components/Header/header.jsx';
-import SideBar from '../../components/SideBar/index.jsx';
-import Transactions from '../../components/Transactions/index.jsx';
 import './styles.scss';
+import Header from '@Components/Header/header.jsx';
+import SideBar from '@Components/SideBar/index.jsx';
+import Transactions from '@Components/Transactions/index.jsx';
 
 export default function TransactionPage() {
   return (

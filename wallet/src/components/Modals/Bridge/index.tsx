@@ -2,8 +2,10 @@ import React, { useState, Dispatch, SetStateAction, ChangeEvent } from 'react';
 import { FiSearch } from 'react-icons/fi';
 import Modal from 'react-bootstrap/Modal';
 import styled from 'styled-components';
-import tokensList from './tokensList';
-import TokenType from './TokenType';
+import importTokens from '@TokenList/index';
+import TokenType from '@TokenList/TokenType';
+
+const supportedTokens = importTokens();
 
 const Header = styled.div`
   display: flex;
@@ -136,11 +138,11 @@ type TokenListType = {
 };
 
 const TokensList = ({ handleClose, setToken }: TokenListType): JSX.Element => {
-  const [filteredTokens, setFilteredTokens] = useState(tokensList.tokens);
+  const [filteredTokens, setFilteredTokens] = useState(supportedTokens);
 
   const filterTokens = (e: ChangeEvent<HTMLInputElement>) => {
     setFilteredTokens(
-      tokensList.tokens.filter(token =>
+      supportedTokens.filter((token: any) =>
         token.name.toLowerCase().includes(e.target.value.toLocaleLowerCase()),
       ),
     );

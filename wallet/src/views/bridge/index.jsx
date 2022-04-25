@@ -1,14 +1,11 @@
-/* eslint-disable react/jsx-no-undef */
-/* eslint-disable react/jsx-pascal-case */
 import React, { useContext } from 'react';
 import { useMediaQuery } from 'react-responsive';
+import SideBar from '@Components/SideBar/index.jsx';
+import BridgeComponent from '@Components/BridgeComponent/index.jsx';
+import Header from '@Components/Header/header.jsx';
 import pgIcon from '../../static/img/bridgepage/pg_coin4x2.png';
 import ethIcon from '../../static/img/bridgepage/eth_coin4x2.png';
-import Header from '../../components/Header/header.jsx';
-import SideBar from '../../components/SideBar/index.jsx';
-// eslint-disable-next-line import/no-unresolved
 import { UserContext } from '../../hooks/User/index.jsx';
-import BridgeComponent from '../../components/BridgeComponent/index.jsx';
 import './styles.scss';
 
 const Bridge = () => {

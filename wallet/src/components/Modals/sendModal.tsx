@@ -5,24 +5,25 @@ import { AiOutlineDown } from 'react-icons/ai';
 import { FiSearch } from 'react-icons/fi';
 import { BsArrowReturnLeft } from 'react-icons/bs';
 import axios from 'axios';
-import tokensList from './Bridge/TokensList/tokensList';
-
+import importTokens from '@TokenList/index';
+import TokenType from '@TokenList/TokenType';
+import transfer from '@Nightfall/services/transfer';
+import { getWalletBalance } from '@Nightfall/services/commitment-storage';
+import { saveTransaction } from '@Nightfall/services/database';
+import stylesModal from '../../styles/modal.module.scss';
 import { UserContext } from '../../hooks/User';
 import maticImg from '../../assets/img/polygon-chain.svg';
-import transfer from '../../nightfall-browser/services/transfer';
 import { retrieveAndDecrypt } from '../../utils/lib/key-storage';
 import { getContractAddress } from '../../common-files/utils/contract';
-import { getWalletBalance } from '../../nightfall-browser/services/commitment-storage';
+import styles from '../../styles/bridge.module.scss';
 import approveImg from '../../assets/img/modalImages/adeposit_approve1.png';
 import depositConfirmed from '../../assets/img/modalImages/adeposit_confirmed.png';
 import successHand from '../../assets/img/modalImages/success-hand.png';
 import transferCompletedImg from '../../assets/img/modalImages/tranferCompleted.png';
-import { saveTransaction } from '../../nightfall-browser/services/database';
-
-import '../../styles/bridge.module.scss';
-import '../../styles/modal.scss';
-
 import BigFloat from '../../common-files/classes/bigFloat';
+
+const supportedTokens = importTokens();
+
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 const { proposerUrl } = global.config;
@@ -356,7 +357,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
   const { onHide, show, ...initialSendToken } = props;
   const [sendToken, setSendToken] = useState(initialSendToken);
   const [filteredTokens, setFilteredTokens] = useState(
-    tokensList.tokens.map(({ name, symbol, address, logoURI, decimals }) => {
+    supportedTokens.map(({ name, symbol, address, logoURI, decimals }) => {
       return {
         name,
         symbol,
@@ -371,9 +372,9 @@ const SendModal = (props: SendModalProps): JSX.Element => {
   const [l2Balance, setL2Balance] = useState(0n);
   const [showTokensListModal, setShowTokensListModal] = useState(false);
 
-  const filterTxs = (criteria: string) =>
-    tokensList.tokens
-      .filter(t => t.name.toLowerCase().includes(criteria))
+  const filterTxs = (criteria: string): any[] =>
+    supportedTokens
+      .filter((t: TokenType) => t.name.toLowerCase().includes(criteria))
       .map(({ name, symbol, address, logoURI, decimals }) => {
         return {
           name,
@@ -467,7 +468,6 @@ const SendModal = (props: SendModalProps): JSX.Element => {
     await timeout(2000);
     setShowModalTransferInProgress(false);
     setShowModalTransferEnRoute(true);
-    // const { address } = (await getContractAddress('ERC20Mock')).data; // TODO Only for testing now
     const { transaction, rawTransaction } = await transfer(
       {
         offchain: true,

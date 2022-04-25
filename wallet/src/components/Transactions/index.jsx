@@ -1,25 +1,23 @@
 import React from 'react';
 import { Row, Spinner, Image } from 'react-bootstrap';
+import importTokens from '@TokenList/index';
+import { getAllTransactions, findBlocksFromBlockNumberL2 } from '@Nightfall/services/database.js';
+import { getAllCommitments } from '@Nightfall/services/commitment-storage';
+import { isValidWithdrawal } from '@Nightfall/services/valid-withdrawal';
 import WithdrawTransaction from './withdraw.tsx';
 import bridgeInfoImage from '../../assets/img/bridge-info.png';
 import polygonChainImage from '../../assets/img/polygon-chain.svg';
 import tickBox from '../../assets/svg/tickBox.svg';
 import etherscanArrow from '../../assets/svg/etherscanGo.svg';
-import {
-  getAllTransactions,
-  findBlocksFromBlockNumberL2,
-} from '../../nightfall-browser/services/database.js';
 import TxInfoModal from '../Modals/txInfoModal.tsx';
 import Web3 from '../../common-files/utils/web3';
-
-import { getAllCommitments } from '../../nightfall-browser/services/commitment-storage';
+import './index.scss';
 import { getContractAddress, getContractInstance } from '../../common-files/utils/contract';
-import { isValidWithdrawal } from '../../nightfall-browser/services/valid-withdrawal';
 import useInterval from '../../hooks/useInterval';
-import tokensList from '../Modals/Bridge/TokensList/tokensList';
 import { getPricing, setPricing } from '../../utils/lib/local-storage';
 
 import './index.scss';
+const supportedTokens = importTokens();
 
 const { SHIELD_CONTRACT_NAME, ZERO } = global.config;
 
@@ -45,16 +43,16 @@ const Transactions = () => {
   const [delay, setDelay] = React.useState(50);
 
   const initialPrices = {};
-  tokensList.tokens.forEach(t => {
+  supportedTokens.forEach(t => {
     initialPrices[t.id] = 0;
   }, {});
 
   const [currencyValues, setCurrencyValues] = React.useState({ now: 0, ...initialPrices });
 
   React.useEffect(async () => {
-    if (!getPricing()) await setPricing(tokensList.tokens.map(t => t.id));
+    if (!getPricing()) await setPricing(supportedTokens.map(t => t.id));
     else if (Date.now() - getPricing().time > 86400)
-      await setPricing(tokensList.tokens.map(t => t.id));
+      await setPricing(supportedTokens.map(t => t.id));
     setCurrencyValues(getPricing());
   }, []);
 
@@ -127,15 +125,7 @@ const Transactions = () => {
           tx.withdrawState = 'fulfilled';
       }
 
-      // const { address: mockAddress } = (await getContractAddress('ERC20Mock')).data;
-      // const testList = tokensList.tokens.map(t => {
-      //   return {
-      //     ...t,
-      //     address: mockAddress,
-      //   };
-      // });
-
-      const { logoURI, decimals, id, symbol } = tokensList.tokens.find(
+      const { logoURI, decimals, id, symbol } = supportedTokens.find(
         t => t.address.toLowerCase() === `0x${ercAddress.slice(-40).toLowerCase()}`,
       ) ?? {
         logoURI: null,
