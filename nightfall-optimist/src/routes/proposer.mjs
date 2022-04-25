@@ -358,20 +358,18 @@ router.post('/offchain-transaction', async (req, res) => {
   // When a transaction is built by client, they are generalised into hex(32) interfacing with web3
   // The response from on-chain events converts them to saner string values (e.g. uint64 etc).
   // Since we do the transfer off-chain, we do the conversation manually here.
-  const { transactionType, tokenType, value, historicRootBlockNumberL2, fee, ...tx } = transaction;
+  const { transactionType, fee } = transaction;
   try {
     switch (Number(transactionType)) {
       case 1:
       case 2:
       case 3: {
+        // When comparing this with getTransactionSubmittedCalldata,
+        // note we dont need to decompressProof as proofs are only compressed if they go on-chain.
         await transactionSubmittedEventHandler({
           offchain: true,
-          transactionType: Number(transactionType).toString(),
-          tokenType: Number(tokenType).toString(),
-          value: Number(value).toString(),
-          fee: Number(fee).toString(),
-          historicRootBlockNumberL2: historicRootBlockNumberL2.map(h => Number(h).toString()),
-          ...tx,
+          ...transaction,
+          fee: Number(fee),
         });
         res.sendStatus(200);
         break;

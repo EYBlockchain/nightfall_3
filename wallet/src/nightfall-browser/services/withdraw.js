@@ -116,23 +116,6 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     proof,
   });
   try {
-    // if (offchain) {
-    // await axios
-    //   .post(
-    //     `${proposerUrl}/proposer/offchain-transaction`,
-    //     { transaction: optimisticWithdrawTransaction },
-    //     { timeout: 3600000 },
-    //   )
-    //   .catch(err => {
-    //     throw new Error(err);
-    //   });
-    //   const th = optimisticWithdrawTransaction.transactionHash;
-    //   delete optimisticWithdrawTransaction.transactionHash;
-    //   optimisticWithdrawTransaction.transactionHash = th;
-    //   await markNullified(oldCommitment, optimisticWithdrawTransaction);
-    //   await saveTransaction(optimisticWithdrawTransaction);
-    //   return { transaction: optimisticWithdrawTransaction };
-    // }
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(optimisticWithdrawTransaction))
       .encodeABI();

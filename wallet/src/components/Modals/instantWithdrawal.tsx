@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Button, Col, FormControl, InputGroup, Modal, ProgressBar, Row } from 'react-bootstrap';
+import { markWithdrawState } from '@Nightfall/services/database';
+import setInstantWithdrawl from '@Nightfall/services/instant-withdrawal';
 import { getContractAddress, submitTransaction } from '../../common-files/utils/contract';
-import { markWithdrawState } from '../../nightfall-browser/services/database';
-import setInstantWithdrawl from '../../nightfall-browser/services/instant-withdrawal';
 import './index.scss';
 
 interface InstantWithdrawProps {

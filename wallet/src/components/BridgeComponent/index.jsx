@@ -5,6 +5,12 @@ import { MdArrowForwardIos } from 'react-icons/md';
 import { toast } from 'react-toastify';
 import { useLocation } from 'react-router-dom';
 import axios from 'axios';
+import importTokens from '@TokenList/index';
+import deposit from '@Nightfall/services/deposit';
+import withdraw from '@Nightfall/services/withdraw';
+import { getWalletBalance } from '@Nightfall/services/commitment-storage';
+import { decompressKey } from '@Nightfall/services/keys';
+import { saveTransaction } from '@Nightfall/services/database';
 import styles from '../../styles/bridge.module.scss';
 import stylesModal from '../../styles/modal.module.scss';
 import ethChainImage from '../../assets/img/ethereum-chain.svg';
@@ -13,8 +19,6 @@ import discloserBottomImage from '../../assets/img/discloser-bottom.svg';
 import lightArrowImage from '../../assets/img/light-arrow.svg';
 import { approve, getContractAddress, submitTransaction } from '../../common-files/utils/contract';
 import Web3 from '../../common-files/utils/web3';
-import deposit from '../../nightfall-browser/services/deposit';
-import withdraw from '../../nightfall-browser/services/withdraw';
 import approveImg from '../../assets/img/modalImages/adeposit_approve1.png';
 import depositConfirmed from '../../assets/img/modalImages/adeposit_confirmed.png';
 import successHand from '../../assets/img/modalImages/success-hand.png';
@@ -22,16 +26,15 @@ import transferCompletedImg from '../../assets/img/modalImages/tranferCompleted.
 import { UserContext } from '../../hooks/User/index.jsx';
 import './styles.scss';
 import Input from '../Input/index.tsx';
-import TokensList from '../Modals/Bridge/TokensList/index.tsx';
+import TokensList from '../Modals/Bridge/index.tsx';
 import { useAccount } from '../../hooks/Account/index.tsx';
-import { getWalletBalance } from '../../nightfall-browser/services/commitment-storage';
 import './toast.css';
 import ERC20 from '../../contract-abis/ERC20.json';
-import tokensList from '../Modals/Bridge/TokensList/tokensList';
 import { APPROVE_AMOUNT } from '../../constants';
 import { retrieveAndDecrypt } from '../../utils/lib/key-storage';
-import { decompressKey } from '../../nightfall-browser/services/keys';
-import { saveTransaction } from '../../nightfall-browser/services/database';
+import BigFloat from '../../common-files/classes/bigFloat';
+
+const supportedTokens = importTokens();
 
 const { proposerUrl } = global.config;
 
@@ -43,19 +46,18 @@ const { generalise } = gen;
 const BridgeComponent = ({ changeChain }) => {
   const [state] = useContext(UserContext);
   const { setAccountInstance, accountInstance } = useAccount();
-  const [l1Balance, setL1Balance] = useState(0);
-  const [l2Balance, setL2Balance] = useState(0);
+  const [l1Balance, setL1Balance] = useState(0n);
+  const [l2Balance, setL2Balance] = useState(0n);
   const [shieldContractAddress, setShieldAddress] = useState('');
   const location = useLocation();
-
   const initialTx = location?.tokenState?.initialTxType ?? 'deposit';
   const initialToken =
-    tokensList.tokens.find(t => t.address.toLowerCase() === location?.tokenState?.tokenAddress) ??
-    tokensList.tokens[0];
+    supportedTokens.find(t => t.address.toLowerCase() === location?.tokenState?.tokenAddress) ??
+    supportedTokens[0];
 
   const [token, setToken] = useState(initialToken);
   const [txType, setTxType] = useState(initialTx);
-  const [transferValue, setTransferValue] = useState(0);
+  const [transferValue, setTransferValue] = useState('0');
   const [show, setShow] = useState(false);
 
   const [showTokensListModal, setShowTokensListModal] = useState(false);
@@ -146,8 +148,6 @@ const BridgeComponent = ({ changeChain }) => {
   async function triggerTx() {
     if (shieldContractAddress === '')
       setShieldAddress((await getContractAddress('Shield')).data.address);
-    // const { address } = (await getContractAddress('ERC20Mock')).data; // TODO Only for testing now
-    // const ercAddress = address; // TODO Location to be removed later
     const ercAddress = token.address;
     console.log('ercAddress', ercAddress);
     const zkpKeys = await retrieveAndDecrypt(state.compressedPkd);
@@ -165,7 +165,7 @@ const BridgeComponent = ({ changeChain }) => {
           {
             ercAddress,
             tokenId: 0,
-            value: (transferValue * 10 ** token.decimals).toString(),
+            value: new BigFloat(transferValue, token.decimals).toBigInt().toString(),
             pkd,
             nsk: zkpKeys.nsk,
             fee: 1,
@@ -192,7 +192,7 @@ const BridgeComponent = ({ changeChain }) => {
             offchain: true,
             ercAddress,
             tokenId: 0,
-            value: (transferValue * 10 ** token.decimals).toString(),
+            value: new BigFloat(transferValue, token.decimals).toBigInt().toString(),
             recipientAddress: await Web3.getAccount(),
             nsk: zkpKeys.nsk,
             ask: zkpKeys.ask,
@@ -229,8 +229,9 @@ const BridgeComponent = ({ changeChain }) => {
     }
 
     if (
-      (txType === 'deposit' && transferValue > l1Balance) ||
-      (txType === 'withdraw' && transferValue > l2Balance)
+      (txType === 'deposit' &&
+        new BigFloat(transferValue, token.decimals).toBigInt() > l1Balance) ||
+      (txType === 'withdraw' && new BigFloat(transferValue, token.decimals).toBigInt() > l2Balance)
     )
       toast.error("Input value can't be greater than balance!");
     else if (!transferValue) toast.warn('Input a value for transfer, please.');
@@ -240,8 +241,6 @@ const BridgeComponent = ({ changeChain }) => {
   async function updateL1Balance() {
     console.log('L1 Balance');
     if (token && token?.address) {
-      // const { address } = (await getContractAddress('ERC20Mock')).data; // TODO REMOVE THIS WHEN OFFICIAL ADDRESSES
-      // console.log('ERC20', defaultTokenAddress);
       const contract = new window.web3.eth.Contract(ERC20, token.address);
       const result = await contract.methods.balanceOf(accountInstance.address).call(); // 29803630997051883414242659
       setL1Balance(result);
@@ -252,11 +251,10 @@ const BridgeComponent = ({ changeChain }) => {
 
   async function updateL2Balance() {
     if (token && token.address) {
-      // const { address } = (await getContractAddress('ERC20Mock')).data; // TODO REMOVE THIS WHEN OFFICIAL ADDRESSES
       const l2bal = await getWalletBalance(state.compressedPkd);
       if (Object.hasOwnProperty.call(l2bal, state.compressedPkd))
-        setL2Balance(l2bal[state.compressedPkd][token.address.toLowerCase()] ?? 0);
-      else setL2Balance(0);
+        setL2Balance(l2bal[state.compressedPkd][token.address.toLowerCase()] ?? 0n);
+      else setL2Balance(0n);
     }
   }
 
@@ -320,20 +318,12 @@ const BridgeComponent = ({ changeChain }) => {
                 <div className="balance_details">
                   <p>Balance: </p>
                   {token && txType === 'deposit' && (
-                    // <p> {token.decimals} </p>
-                    <p>{`${(l1Balance / 10 ** token.decimals).toFixed(4)} ${token.symbol}`}</p>
+                    <p>{`${new BigFloat(l1Balance, token.decimals).toFixed(4)} ${token.symbol}`}</p>
                   )}
                   {token && txType === 'withdraw' && (
-                    <p>{`${(l2Balance / 10 ** token.decimals).toFixed(4)} ${token.symbol}`}</p>
+                    <p>{`${new BigFloat(l2Balance, token.decimals).toFixed(4)} ${token.symbol}`}</p>
                   )}
-                  {!token && (
-                    <p>
-                      0
-                      {/* {txType === 'deposit'
-                        ? `${(l1Balance / 10 ** token.decimals).toFixed(4)}`
-                        : `${(l2Balance / 10 ** token.decimals).toFixed(4)}`} */}
-                    </p>
-                  )}
+                  {!token && <p>0</p>}
                 </div>
               </div>
               <div className="from_section_line"></div>
@@ -345,7 +335,15 @@ const BridgeComponent = ({ changeChain }) => {
                       name="price"
                       prefix="$"
                       placeholder="0,00"
-                      onChange={handleChange}
+                      onKeyDown={e => {
+                        if (
+                          (transferValue.toString().split('.')[1]?.length ?? 0) > 3 &&
+                          /^[0-9]$/i.test(e.key)
+                        ) {
+                          e.preventDefault(); // If exceed input count then stop updates.
+                        }
+                      }}
+                      onChange={e => setTransferValue(e.target.value)}
                     />
                     <div className="amount_details_max" onClick={() => updateInputValue()}>
                       <span>MAX</span>
@@ -397,16 +395,16 @@ const BridgeComponent = ({ changeChain }) => {
               <div className="balance_details">
                 <p>Balance: </p>
                 {token && txType === 'deposit' && (
-                  <p>{`${(l2Balance / 10 ** token.decimals).toFixed(4)} ${token.symbol}`}</p>
+                  <p>{`${new BigFloat(l2Balance, token.decimals).toFixed(4)} ${token.symbol}`}</p>
                 )}
                 {token && txType === 'withdraw' && (
-                  <p>{`${(l1Balance / 10 ** token.decimals).toFixed(4)} ${token.symbol}`}</p>
+                  <p>{`${new BigFloat(l1Balance, token.decimals).toFixed(4)} ${token.symbol}`}</p>
                 )}
                 {!token && (
                   <p>
                     {txType === 'withdraw'
-                      ? `${(l2Balance / 10 ** token.decimals).toFixed(4)}`
-                      : `${(l1Balance / 10 ** token.decimals).toFixed(4)}`}
+                      ? `${new BigFloat(l2Balance, token.decimals).toFixed(4)} ${token.symbol}`
+                      : `${new BigFloat(l1Balance, token.decimals).toFixed(4)} ${token.symbol}`}
                   </p>
                 )}
               </div>

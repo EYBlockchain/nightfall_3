@@ -1,12 +1,13 @@
 {
+  "extends": "./tsconfig.path.json",
   "compilerOptions": {
-    "target": "es5",
+    "target": "es2020",
     "lib": [
       "dom",
       "dom.iterable",
       "esnext",
-      "es5", 
-      "es6",
+      "es5",
+      "es6"
     ],
     "allowJs": true,
     "skipLibCheck": true,
@@ -24,8 +25,7 @@
   },
   "include": [
     "src",
-    "src/components",
-     "src/custom.d.ts"
+    "src/custom.d.ts",
+    "tests/",
   ]
-  
 }

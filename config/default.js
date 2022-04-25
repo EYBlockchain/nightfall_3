@@ -1,3 +1,10 @@
+function configureAWSBucket() {
+  const bucket = 'nightfallv3';
+  const mode = process.env.REACT_APP_MODE; // options are 'local', 'internal', 'preprod', 'production', 'staging', and 'testnet'
+  if (mode === 'local') return bucket;
+  return `${bucket}-${mode}`;
+}
+
 module.exports = {
   COMMITMENTS_DB: 'nightfall_commitments',
   OPTIMIST_DB: 'optimist_data',
@@ -29,6 +36,7 @@ module.exports = {
   CONFIRMATIONS: 12, // number of confirmations to wait before accepting a transaction
   PROTOCOL: 'http://', // connect to zokrates microservice like this
   WEBSOCKET_PORT: process.env.WEBSOCKET_PORT || 8080,
+  WEBSOCKET_PING_TIME: 15000,
   ZOKRATES_WORKER_HOST: process.env.ZOKRATES_WORKER_HOST || 'worker',
   BLOCKCHAIN_URL:
     process.env.BLOCKCHAIN_URL ||
@@ -73,10 +81,10 @@ module.exports = {
   TRANSACTIONS_PER_BLOCK: Number(process.env.TRANSACTIONS_PER_BLOCK) || 2,
   PROPOSE_BLOCK_TYPES: [
     '(uint48,address,bytes32,uint256,bytes32)',
-    '(uint64,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[8],uint[4])[]',
+    '(uint112,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[8],uint[4])[]',
   ], // used to encode/decode proposeBlock signature
   SUBMIT_TRANSACTION_TYPES:
-    '(uint64,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[8],uint[4])',
+    '(uint112,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[8],uint[4])',
   RETRIES: Number(process.env.AUTOSTART_RETRIES) || 50,
   NODE_HASHLENGTH: 32,
   ZERO: '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -109,6 +117,9 @@ module.exports = {
     U: BigInt(5), // non square in Fp
   },
   MAX_QUEUE: 5,
+  MPC: {
+    RADIX_FILES_URL: 'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com/radix',
+  },
   ENVIRONMENTS: {
     mainnet: {
       name: 'Mainnet',
@@ -231,7 +242,12 @@ module.exports = {
         process.env.LIQUIDITY_PROVIDER_ADDRESS || '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
     },
     pkds: {
-      user1: '0x1ac3b61ecba1448e697b23d37efe290fb86554b2f905aaca3a6df59805eca366',
+      user1:
+        process.env.USER1_PKD ||
+        '0x0d27fb8112bf3274e27094ab05cc72db4d573ba081a659c3210a7bdbc1a9ec48',
+      user2:
+        process.env.USER2_PKD ||
+        '0xaa3b5bbf25ee9aab94757487d21c9da7a1166f1cf1f65162c23579149eba8590',
     },
     mnemonics: {
       user1:
@@ -348,9 +364,7 @@ module.exports = {
   },
 
   AWS: {
-    accessKeyId: process.env.AWS_ACCESS_KEY,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    s3Bucket: process.env.AWS_S3_BUCKET,
+    s3Bucket: configureAWSBucket(),
   },
 
   utilApiServerUrl: process.env.LOCAL_UTIL_API_URL,

@@ -17,3 +17,5 @@ export const APPROVE_AMOUNT =
 export const DEFAULT_FEE = 10;
 export const DEFAULT_PROPOSER_BOND = 10;
 export const DEFAULT_BLOCK_STAKE = 1;
+
+export const WEBSOCKET_PING_TIME = 15000;

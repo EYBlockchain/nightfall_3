@@ -63,6 +63,11 @@ services:
       ZKP_MNEMONIC: tone shadow woman critic glare utility brass scheme edge brisk enforce champion
       BLOCKCHAIN_PAYMENTS_WS_HOST: host.docker.internal
       BLOCKCHAIN_PAYMENTS_PORT: 8547
+      USER1_KEY: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e'
+      USER1_ADDRESS: '0x9C8B2276D490141Ae1440Da660E470E7C0349C63'
+      USER1_MNEMONIC: 'trip differ bamboo bundle bonus luxury strike mad merry muffin nose auction'
+      USER1_PKD: '0x0d27fb8112bf3274e27094ab05cc72db4d573ba081a659c3210a7bdbc1a9ec48'
+      USER2_PKD: '0xaa3b5bbf25ee9aab94757487d21c9da7a1166f1cf1f65162c23579149eba8590'
 
   user-local2:
     extra_hosts:
@@ -70,13 +75,15 @@ services:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
       BLOCKCHAIN_PORT: 8546
-      USER_ETHEREUM_SIGNING_KEY: eed50965cbe8268a3ee0a24afc2f31c434a7d568bdff73a89783711c91ca1c67
-      USER_ADDRESS: '0x4637Ee1126723e098A152f33F326fb767A6A2b8A'
       TEST_LENGTH: 3
       ERC20_NAME: ERC20Mock
       # RECIPIENT_PKD: 0x193a37cd7973373aceae05d133f3d69ab6e7ef2f4321461173871ec7611244e2,0x27234a8721e73c9aa160154ee63d2470101fc5fd841221eeb675a91ec2d66e78
       RECIPIENT_PKD: '0x27234a8721e73c9aa160154ee63d2470101fc5fd841221eeb675a91ec2d66e78'
-      ZKP_MNEMONIC:
-        tiger victory velvet tank ritual column horse conduct athlete position soul shaft
+      ZKP_MNEMONIC: tiger victory velvet tank ritual column horse conduct athlete position soul shaft
       BLOCKCHAIN_PAYMENTS_WS_HOST: host.docker.internal
       BLOCKCHAIN_PAYMENTS_PORT: 8547
+      USER2_KEY: '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb'
+      USER2_ADDRESS: '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9'
+      USER2_MNEMONIC: 'control series album tribe category saddle prosper enforce moon eternal talk fame'
+      USER1_PKD: '0x0d27fb8112bf3274e27094ab05cc72db4d573ba081a659c3210a7bdbc1a9ec48'
+      USER2_PKD: '0xaa3b5bbf25ee9aab94757487d21c9da7a1166f1cf1f65162c23579149eba8590'

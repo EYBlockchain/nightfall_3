@@ -3,20 +3,25 @@ import Modal from 'react-bootstrap/Modal';
 import { AiOutlineDown } from 'react-icons/ai';
 import { FiSearch } from 'react-icons/fi';
 import axios from 'axios';
-import tokensList from './Bridge/TokensList/tokensList';
+import importTokens from '@TokenList/index';
+import TokenType from '@TokenList/TokenType';
+import transfer from '@Nightfall/services/transfer';
+import { getWalletBalance } from '@Nightfall/services/commitment-storage';
+import { saveTransaction } from '@Nightfall/services/database';
 import stylesModal from '../../styles/modal.module.scss';
 import { UserContext } from '../../hooks/User';
 import maticImg from '../../assets/img/polygon-chain.svg';
-import transfer from '../../nightfall-browser/services/transfer';
 import { retrieveAndDecrypt } from '../../utils/lib/key-storage';
 import { getContractAddress } from '../../common-files/utils/contract';
-import { getWalletBalance } from '../../nightfall-browser/services/commitment-storage';
 import styles from '../../styles/bridge.module.scss';
 import approveImg from '../../assets/img/modalImages/adeposit_approve1.png';
 import depositConfirmed from '../../assets/img/modalImages/adeposit_confirmed.png';
 import successHand from '../../assets/img/modalImages/success-hand.png';
 import transferCompletedImg from '../../assets/img/modalImages/tranferCompleted.png';
-import { saveTransaction } from '../../nightfall-browser/services/database';
+import BigFloat from '../../common-files/classes/bigFloat';
+
+const supportedTokens = importTokens();
+
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 const { proposerUrl } = global.config;
@@ -37,12 +42,12 @@ const SendModal = (props: SendModalProps): JSX.Element => {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   const [state] = useContext(UserContext); // Why does typescript think this is an object?
-  const [valueToSend, setTransferValue] = useState(0);
+  const [valueToSend, setTransferValue] = useState('0');
   const [recipient, setRecipient] = useState('');
   const { onHide, show, ...initialSendToken } = props;
   const [sendToken, setSendToken] = useState(initialSendToken);
   const [filteredTokens, setFilteredTokens] = useState(
-    tokensList.tokens.map(({ name, symbol, address, logoURI, decimals }) => {
+    supportedTokens.map(({ name, symbol, address, logoURI, decimals }) => {
       return {
         name,
         symbol,
@@ -54,12 +59,12 @@ const SendModal = (props: SendModalProps): JSX.Element => {
       };
     }),
   );
-  const [l2Balance, setL2Balance] = useState(0);
+  const [l2Balance, setL2Balance] = useState(0n);
   const [showTokensListModal, setShowTokensListModal] = useState(false);
 
-  const filterTxs = (criteria: string) =>
-    tokensList.tokens
-      .filter(t => t.name.toLowerCase().includes(criteria))
+  const filterTxs = (criteria: string): any[] =>
+    supportedTokens
+      .filter((t: TokenType) => t.name.toLowerCase().includes(criteria))
       .map(({ name, symbol, address, logoURI, decimals }) => {
         return {
           name,
@@ -75,12 +80,12 @@ const SendModal = (props: SendModalProps): JSX.Element => {
   useEffect(() => {
     console.log('state', state);
     const getBalance = async () => {
-      const l2bal: Record<string, Record<string, number>> = await getWalletBalance(
+      const l2bal: Record<string, Record<string, bigint>> = await getWalletBalance(
         state?.compressedPkd,
       );
       if (Object.hasOwnProperty.call(l2bal, state?.compressedPkd))
-        setL2Balance(l2bal[state.compressedPkd][sendToken.address.toLowerCase()] ?? 0);
-      else setL2Balance(0);
+        setL2Balance(l2bal[state.compressedPkd][sendToken.address.toLowerCase()] ?? 0n);
+      else setL2Balance(0n);
     };
     getBalance();
   }, [sendToken, state]);
@@ -153,7 +158,6 @@ const SendModal = (props: SendModalProps): JSX.Element => {
     await timeout(2000);
     setShowModalTransferInProgress(false);
     setShowModalTransferEnRoute(true);
-    // const { address } = (await getContractAddress('ERC20Mock')).data; // TODO Only for testing now
     const { transaction, rawTransaction } = await transfer(
       {
         offchain: true,
@@ -161,7 +165,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
         tokenId: 0,
         recipientData: {
           recipientCompressedPkds: [recipient],
-          values: [(Number(valueToSend) * 10 ** sendToken.decimals).toString()],
+          values: [new BigFloat(valueToSend, sendToken.decimals).toBigInt().toString()],
         },
         nsk,
         ask,
@@ -236,7 +240,15 @@ const SendModal = (props: SendModalProps): JSX.Element => {
                     <input
                       type="text"
                       placeholder="0.00"
-                      onChange={e => setTransferValue(Number(e.target.value))}
+                      onKeyDown={e => {
+                        if (
+                          (valueToSend.toString().split('.')[1]?.length ?? 0) > 3 &&
+                          /^[0-9]$/i.test(e.key)
+                        ) {
+                          e.preventDefault(); // If exceed input count then stop updates.
+                        }
+                      }}
+                      onChange={e => setTransferValue(e.target.value)}
                       id="TokenItem_modalSend_tokenAmount"
                     />
                     <div className={stylesModal.maxButton}>MAX</div>
@@ -254,12 +266,14 @@ const SendModal = (props: SendModalProps): JSX.Element => {
                 <div className={stylesModal.balanceText}>
                   <p>
                     ${' '}
-                    {((l2Balance / 10 ** sendToken.decimals) * sendToken.currencyValue).toFixed(4)}
+                    {new BigFloat(l2Balance, sendToken.decimals)
+                      .mul(sendToken.currencyValue)
+                      .toFixed(4)}
                   </p>
                   <div className={stylesModal.right}>
                     <p>Available Balance:</p>
                     <p>
-                      {(l2Balance / 10 ** sendToken.decimals).toFixed(4)} {sendToken.symbol}
+                      {new BigFloat(l2Balance, sendToken.decimals).toFixed(4)} {sendToken.symbol}
                     </p>
                   </div>
                 </div>

@@ -1,11 +1,11 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 
-import Web3 from '../../common-files/utils/web3';
+import { generateKeys } from '@Nightfall/services/keys';
+import blockProposedEventHandler from '@Nightfall/event-handlers/block-proposed';
+import { getMaxBlock } from '@Nightfall/services/database';
 import * as Storage from '../../utils/lib/local-storage';
-import { generateKeys } from '../../nightfall-browser/services/keys';
-import blockProposedEventHandler from '../../nightfall-browser/event-handlers/block-proposed';
-import { getMaxBlock } from '../../nightfall-browser/services/database';
+import Web3 from '../../common-files/utils/web3';
 import { encryptAndStore, retrieveAndDecrypt, storeBrowserKey } from '../../utils/lib/key-storage';
 
 const { eventWsUrl } = global.config;
@@ -58,7 +58,6 @@ export const UserProvider = ({ children }) => {
   };
 
   const setupWebSocket = () => {
-    if (state.compressedPkd === '') return;
     const socket = new WebSocket(eventWsUrl);
 
     // Connection opened
@@ -69,11 +68,28 @@ export const UserProvider = ({ children }) => {
       socket.send(JSON.stringify({ type: 'sync', lastBlock }));
     });
 
+    setState(previousState => {
+      return {
+        ...previousState,
+        socket,
+      };
+    });
+  };
+
+  let messageEventHandler;
+  const configureMessageListener = () => {
+    const { compressedPkd, socket } = state;
+    if (compressedPkd === '') return;
+
+    if (messageEventHandler) {
+      socket.removeEventListener('message', messageEventHandler);
+    }
+
     // Listen for messages
-    socket.addEventListener('message', async function (event) {
+    messageEventHandler = async function (event) {
       console.log('Message from server ', JSON.parse(event.data));
       const parsed = JSON.parse(event.data);
-      const { ivk, nsk } = await retrieveAndDecrypt(state.compressedPkd);
+      const { ivk, nsk } = await retrieveAndDecrypt(compressedPkd);
       if (parsed.type === 'sync') {
         await parsed.historicalData
           .sort((a, b) => a.block.blockNumberL2 - b.block.blockNumberL2)
@@ -93,16 +109,17 @@ export const UserProvider = ({ children }) => {
             }),
           );
         }
-      } else if (parsed.type === 'blockProposed') await blockProposedEventHandler(parsed.data, [ivk], [nsk]);
+      } else if (parsed.type === 'blockProposed')
+        await blockProposedEventHandler(parsed.data, [ivk], [nsk]);
       // TODO Rollback Handler
-    });
-    setState(previousState => {
-      return {
-        ...previousState,
-        socket,
-      };
-    });
+    };
+
+    socket.addEventListener('message', messageEventHandler);
   };
+
+  React.useEffect(() => {
+    setupWebSocket();
+  }, []);
 
   React.useEffect(async () => {
     if (location.pathname !== '/' && state.compressedPkd === '') {
@@ -112,7 +129,7 @@ export const UserProvider = ({ children }) => {
   }, [location]);
 
   React.useEffect(() => {
-    setupWebSocket();
+    configureMessageListener();
   }, [state.compressedPkd]);
 
   /*

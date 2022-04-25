@@ -1,9 +1,9 @@
 import React from 'react';
 import { Button, Col, Modal, Row } from 'react-bootstrap';
+import { markWithdrawState } from '@Nightfall/services/database';
+import { finaliseWithdrawal } from '@Nightfall/services/finalise-withdrawal';
+import { isValidWithdrawal } from '@Nightfall/services/valid-withdrawal';
 import { getContractAddress, submitTransaction } from '../../common-files/utils/contract';
-import { markWithdrawState } from '../../nightfall-browser/services/database';
-import { finaliseWithdrawal } from '../../nightfall-browser/services/finalise-withdrawal';
-import { isValidWithdrawal } from '../../nightfall-browser/services/valid-withdrawal';
 import stylesModal from '../../styles/modal.module.scss';
 
 interface TxModalProps {

@@ -52,6 +52,8 @@ while [ -n "$1" ]; do
                                     ;;
       -m  | --mumbai)               MUMBAI="-f docker-compose.mumbai.yml"
                                     ;;
+      -mpc)                         export MPC="true"
+                                    ;;
       * )                           usage
                               exit 1
     esac
