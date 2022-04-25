@@ -106,14 +106,10 @@
     "zokrates-js": "^1.0.39"
   },
   "scripts": {
-    "start": "LOCAL_PROPOSER=true PUBLIC_URL='/nightfall/' USE_STUBS=true node scripts/start.js",
-    "start:docker": "REACT_APP_ENVIRONMENT=Docker PORT=3010 craco start",
-    "start:ropsten": "REACT_APP_ENVIRONMENT=Ropsten craco start",
-    "build": "LOCAL_PROPOSER=false craco build",
-    "build:integration": "LOCAL_PROPOSER=false USE_STUBS=false MODE=testnet PUBLIC_URL='/nightfall/' node scripts/build.js",
+    "start": "LOCAL_PROPOSER=true PUBLIC_URL='/nightfall/' USE_STUBS=true node scripts/start.js",    
+    "build": "LOCAL_PROPOSER=false USE_STUBS=false MODE=testnet PUBLIC_URL='/nightfall/' node scripts/build.js",
     "deploy": "npm run build && aws s3 sync build s3://pnf-dev-browser --cache-control max-age=172800 --delete && aws configure set preview.cloudfront true && aws cloudfront create-invalidation --distribution-id ENV3X13MLR5YT --paths \"/*\"",
-    "test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register 'tests/**/*.ts'",
-    "eject": "craco eject",
+    "test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register 'tests/**/*.ts'",    
     "e2e-test": "npx synpress run --env TRANSACTIONS_PER_BLOCK=2"
   },
   "browserslist": {
