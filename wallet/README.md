@@ -1,5 +1,6 @@
 # Wallet
 
+
 ### Running the Wallet locally
 1. Install dependencies
   `npm ci`
