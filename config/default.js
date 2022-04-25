@@ -86,7 +86,11 @@ module.exports = {
   USE_STUBS: process.env.USE_STUBS === 'true',
   VK_IDS: { deposit: 0, single_transfer: 1, double_transfer: 2, withdraw: 3 }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
   TIMBER_HEIGHT: 32,
-
+  MAX_PUBLIC_VALUES: {
+    ERCADDRESS: 2n ** 161n - 1n,
+    COMMITMENT: 2n ** 249n - 1n,
+    NULLIFIER: 2n ** 249n - 1n,
+  },
   // the various parameters needed to describe the Babyjubjub curve that we use for El-Gamal
   // BABYJUBJUB
   // Montgomery EC form is y^2 = x^3 + Ax^2 + Bx
