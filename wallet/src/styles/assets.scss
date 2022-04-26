@@ -27,6 +27,12 @@
       rgba(250, 247, 254, 0) 100%
     );
 
+  .containerLeftSide {
+    display: flex;
+    flex-direction: column;
+    margin: auto;
+  }
+
   .heading {
     color: rgba($static-black, 0.6);
     // font-body-small font-caps ms-b-6
@@ -149,19 +155,25 @@
     backdrop-filter: blur(16px);
 
     width: 100%;
-    padding: 25px 27px;
-    margin-left: auto;
+    padding: 25px 27px; 
+    margin-top: 25px;   
 
-    @media #{$lg-devices} {
+    @media #{$xl-devices} {
       width: 375px;
+      margin-left: auto;
     }
   }
 
   .container {
     padding-inline-start: 20px;
     padding-inline-end: 20px;
+    display: flex;
+    flex-direction: column;
+    
     @media #{$xl-devices} {
       max-width: 1140px !important;
+      display: flex;
+      flex-direction: row;
     }
   }
 

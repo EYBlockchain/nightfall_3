@@ -1,14 +1,21 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import '../../styles/tokens.scss';
 import TokenItem from '../TokenItem/index.jsx';
+import { UserContext } from '../../hooks/User/index.jsx';
 
 export default function Tokens(token) {
+
+  const [state] = useContext(UserContext);
+
+  console.log(state)
+
   return (
     <div className="maticTokensList">
       <div className="formHeader">
         <div className="leftSection">
           <div className="headerH5">Balances on Polygon Nightfall</div>
+          <div className="headerH5 light-gray-500">{`Nightfall address: ${state.compressedPkd.slice(0, 6)}...${state.compressedPkd.slice(-6)}`}</div>
         </div>
       </div>
       <div className="seperator" />

@@ -168,51 +168,49 @@ export default function Assets({ tokenList }) {
   );
   return (
     <div className="dashboardTopSection">
-      <div className="container">
-        <div className="row">
-          <div className="col-lg-6">
-            <div className="heading">Polygon Nightfall Testnet</div>
-            <div className="amount">&#36;{total.toFixed(2)}</div>
-            <div className="buttonsWrapper">
-              <button onClick={() => setModalShow(true)}>
-                <RiQrCodeLine />
-                <span>Receive</span>
-              </button>
-              <button icon-name="navbar/send" onClick={() => setShowSendModal(true)}>
-                <FiSend />
-                <span>Send</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="col-lg-6">
-            <div className="depositWrapper">
-              <a
-                className="linkButton"
-                href="https://docs.polygon-nightfall.technology/Nightfall/tools/nightfall-wallet/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                How it works?
-              </a>
-
-              <button className="linkButton" onClick={() => {}}>
-                <Link
-                  to={{
-                    pathname: '/bridge',
-                    tokenState: {
-                      tokenAddress: tokenList[0].address,
-                      initialTxType: 'deposit',
-                    },
-                  }}
-                  id={tokenDepositId}
-                >
-                  <span>Move funds from Goerli to Nightfall</span>
-                </Link>
-              </button>
-            </div>
+      <div className="container">        
+          
+        <div className='containerLeftSide'>
+          <div className="heading">Polygon Nightfall Testnet</div>
+          <div className="amount">&#36;{total.toFixed(2)}</div>
+          <div className="buttonsWrapper">
+            <button onClick={() => setModalShow(true)}>
+              <RiQrCodeLine />
+              <span>Receive</span>
+            </button>
+            <button icon-name="navbar/send" onClick={() => setShowSendModal(true)}>
+              <FiSend />
+              <span>Send</span>
+            </button>
           </div>
         </div>
+      
+      
+        <div className="depositWrapper">
+          <a
+            className="linkButton"
+            href="https://docs.polygon-nightfall.technology/Nightfall/tools/nightfall-wallet/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            How it works?
+          </a>
+
+          <button className="linkButton" onClick={() => {}}>
+            <Link
+              to={{
+                pathname: '/bridge',
+                tokenState: {
+                  tokenAddress: tokenList[0].address,
+                  initialTxType: 'deposit',
+                },
+              }}
+              id={tokenDepositId}
+            >
+              <span>Move funds from Goerli to Nightfall</span>
+            </Link>
+          </button>
+        </div>                  
       </div>
       <ReceiveModal show={modalShow} onHide={() => setModalShow(false)} />
       <SendModal
