@@ -3,6 +3,7 @@ import ERC1155 from './ERC1155.json';
 import ERC165 from './ERC165.json';
 import ERC20 from './ERC20.json';
 import ERC721 from './ERC721.json';
+import FeeBook from './FeeBook.json';
 
 // ignore unused exports default
 export default {
@@ -11,4 +12,5 @@ export default {
   ERC165,
   ERC20,
   ERC721,
+  FeeBook,
 };

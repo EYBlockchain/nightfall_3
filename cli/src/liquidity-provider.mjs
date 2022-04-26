@@ -41,7 +41,7 @@ async function startProvider(testEnvironment) {
   await nf3.init(defaultMnemonic);
   if (await nf3.healthcheck('optimist')) console.log('Healthcheck passed');
   else throw new Error('Healthcheck failed');
-  const erc20Address = await nf3.getContractAddress('ERC20Mock');
+  const { address: erc20Address } = await nf3.getContractAddress('ERC20Mock');
 
   // Aprove ERC20 contract
   await approve(

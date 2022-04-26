@@ -26,13 +26,13 @@ export async function getContractAddress(contractName) {
   let deployedAddress;
   const contractInterface = await getContractInterface(contractName);
 
-  const networkId = await web3.eth.net.getId();
-  logger.silly('networkId:', networkId);
-
-  if (contractInterface && contractInterface.networks && contractInterface.networks[networkId]) {
-    deployedAddress = contractInterface.networks[networkId].address;
+  if (contractInterface) {
+    // eslint-disable-next-line prefer-destructuring
+    deployedAddress = Object.keys(contractInterface.networks).map(network => {
+      return { contractName, network, address: contractInterface.networks[network].address };
+    })[0];
   }
-  logger.silly('deployed address:', deployedAddress);
+  logger.debug('deployed address:', deployedAddress);
   return deployedAddress;
 }
 
@@ -62,12 +62,12 @@ export async function getContractPaymentsAddress(contractName) {
   let deployedAddress;
   const contractInterface = await getContractInterface(contractName);
 
-  const networkId = await web3.eth.net.getId();
-  logger.silly('networkId:', networkId);
-
-  if (contractInterface && contractInterface.networks && contractInterface.networks[networkId]) {
-    deployedAddress = contractInterface.networks[networkId].address;
+  if (contractInterface) {
+    // eslint-disable-next-line prefer-destructuring
+    deployedAddress = Object.keys(contractInterface.networks).map(network => {
+      return { contractName, network, address: contractInterface.networks[network].address };
+    })[0];
   }
-  logger.silly('deployed address:', deployedAddress);
+  logger.debug('deployed address:', deployedAddress);
   return deployedAddress;
 }

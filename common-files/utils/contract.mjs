@@ -26,13 +26,13 @@ export async function getContractAddress(contractName) {
   let deployedAddress;
   const contractInterface = await getContractInterface(contractName);
 
-  const networkId = await web3.eth.net.getId();
-  logger.silly('networkId:', networkId);
-
-  if (contractInterface && contractInterface.networks && contractInterface.networks[networkId]) {
-    deployedAddress = contractInterface.networks[networkId].address;
+  if (contractInterface) {
+    // eslint-disable-next-line prefer-destructuring
+    deployedAddress = Object.keys(contractInterface.networks).map(network => {
+      return { contractName, network, address: contractInterface.networks[network].address };
+    })[0];
   }
-  logger.silly('deployed address:', deployedAddress);
+  logger.debug('deployed address:', deployedAddress);
   return deployedAddress;
 }
 
@@ -47,7 +47,7 @@ export async function getContractInstance(contractName, deployedAddress) {
   const contractInterface = await getContractInterface(contractName);
   if (!deployedAddress) {
     // eslint-disable-next-line no-param-reassign
-    deployedAddress = await getContractAddress(contractName);
+    deployedAddress = (await getContractAddress(contractName)).address;
   }
 
   const contractInstance = deployedAddress
@@ -103,7 +103,7 @@ export async function waitForContract(contractName) {
   while (errorCount < 50) {
     try {
       error = undefined;
-      const address = await getContractAddress(contractName); // eslint-disable-line no-await-in-loop
+      const { address } = await getContractAddress(contractName); // eslint-disable-line no-await-in-loop
       if (address === undefined) throw new Error(`${contractName} contract address was undefined`);
       instance = getContractInstance(contractName, address);
       return instance;

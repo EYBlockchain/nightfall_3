@@ -109,7 +109,7 @@ async function setupCircuits() {
   }
 
   const keyRegistry = await waitForContract('Challenges');
-  const keyRegistryAddress = await getContractAddress('Challenges');
+  const { address: keyRegistryAddress } = await getContractAddress('Challenges');
 
   // we should register the vk now
   for (let i = 0; i < vks.length; i++) {

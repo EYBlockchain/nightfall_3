@@ -254,7 +254,8 @@ async function transfer(transferParams, shieldContractAddress) {
       await Promise.all(
         oldCommitments.map(commitment => markNullified(commitment, optimisticTransferTransaction)),
       );
-      await processProposerPayment(fee.decimal);
+      console.log('TX', optimisticTransferTransaction.transactionHash);
+      await processProposerPayment(optimisticTransferTransaction.transactionHash, fee.decimal);
       await saveTransaction(optimisticTransferTransaction);
       return {
         transaction: optimisticTransferTransaction,

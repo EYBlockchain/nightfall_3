@@ -20,19 +20,23 @@ async function setupCircuits() {
       (await waitForContract('Proposers')).methods
         .setStateContract(stateInstance.options.address)
         .encodeABI(),
-      await getContractAddress('Proposers'),
+      (
+        await getContractAddress('Proposers')
+      ).address,
     );
     await Web3.submitRawTransaction(
       (await waitForContract('Shield')).methods
         .setStateContract(stateInstance.options.address)
         .encodeABI(),
-      await getContractAddress('Shield'),
+      (
+        await getContractAddress('Shield')
+      ).address,
     );
     return Web3.submitRawTransaction(
       (await waitForContract('Challenges')).methods
         .setStateContract(stateInstance.options.address)
         .encodeABI(),
-      await getContractAddress('Challenges'),
+      (await getContractAddress('Challenges')).address,
     );
   }
   // the following code runs the registrations in parallel

@@ -283,9 +283,9 @@ async function main(testEnvironment) {
   });
   const mnemonic = generateMnemonic();
   await nf3.init(mnemonic);
-  const erc20Address = await nf3.getContractAddress('ERC20Mock');
-  const erc721Address = await nf3.getContractAddress('ERC721Mock');
-  const erc1155Address = await nf3.getContractAddress('ERC1155Mock');
+  const { address: erc20Address } = await nf3.getContractAddress('ERC20Mock');
+  const { address: erc721Address } = await nf3.getContractAddress('ERC721Mock');
+  const { address: erc1155Address } = await nf3.getContractAddress('ERC1155Mock');
   const ercAddress = {
     ERC20: erc20Address,
     ERC721: erc721Address,

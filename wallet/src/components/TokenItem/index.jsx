@@ -109,7 +109,7 @@ export default function TokenItem(props) {
               className={styles.tokenListButton}
               id={tokenSendId}
               onClick={async () => {
-                await changeChain('polygon', setShowSendModal);
+                await props.changeChain('polygon', setShowSendModal);
               }}
             >
               Send

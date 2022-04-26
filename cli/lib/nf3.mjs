@@ -297,7 +297,6 @@ class Nf3 {
     @returns {Promise} Resolves into the Ethereum address of the contract
     */
   async getContractAddressOptimist(contractName) {
-    console.log('hello');
     const res = await axios.get(`${this.optimistBaseUrl}/contract-address/${contractName}`);
     return res.data.address;
   }

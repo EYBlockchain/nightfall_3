@@ -6,7 +6,6 @@ funds on a zkp deposit
 import express from 'express';
 import logger from 'common-files/utils/logger.mjs';
 import { getContractAddress } from 'common-files/utils/contract.mjs';
-import { getContractPaymentsAddress } from 'common-files/utils/contract-payments.mjs';
 
 const router = express.Router();
 
@@ -14,12 +13,10 @@ router.get('/:contract', async (req, res, next) => {
   logger.debug('contract-address endpoint received GET');
   const { contract } = req.params;
   try {
-    let address;
-    if (contract === 'FeeBook') address = await getContractPaymentsAddress(contract);
-    else address = await getContractAddress(contract);
-    logger.debug(`returning address ${address}`);
+    const address = await getContractAddress(contract);
+    logger.debug(`returning address ${address.address} for contract ${address.contractName}`);
     if (address) {
-      res.json({ address });
+      res.json(address);
     } else {
       res.sendStatus(404);
     }

@@ -22,7 +22,7 @@ export async function waitForContract(contractName) {
   while (errorCount < RETRIES) {
     try {
       error = undefined;
-      const address = await getContractAddress(contractName);
+      const { address } = await getContractAddress(contractName);
       if (address === undefined) throw new Error(`${contractName} contract address was undefined`);
       instance = getContractInstance(contractName, address);
       return instance;

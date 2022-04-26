@@ -11,6 +11,7 @@ const {
   RESTRICTIONS: {
     addresses: { bootProposer },
   },
+  PAYMENT_CONTRACT_NAME,
 } = global.config;
 
 const options = global.config.WEB3_OPTIONS;
@@ -31,6 +32,8 @@ export async function getContractInstance(contractName, deployedAddress) {
   if (!deployedAddress) throw Error('deployedAddress not passed');
 
   const abi = contractABIs[contractName];
+  console.log(abi);
+  console.log(deployedAddress);
   return new web3.eth.Contract(abi, deployedAddress, {
     from: options.from,
   });
@@ -41,7 +44,7 @@ export function getContractAddress(contractName) {
   return axios.get(`${proposerUrl}/contract-address/${contractName}`);
 }
 
-export async function processProposerPayment(fee) {
+export async function processProposerPayment(hash, fee) {
   const web3 = Web3.connection();
   const gas = (await web3.eth.getBlock('latest')).gasLimit;
   let gasPrice = 20000000000;
@@ -54,13 +57,15 @@ export async function processProposerPayment(fee) {
     [options.from] = accounts;
   }
 
-  await web3.eth.sendTransaction({
-    from: options.from,
-    to: bootProposer,
-    value: fee,
-    gas: web3.utils.toHex(gas),
-    gasPrice: web3.utils.toHex(gasPrice),
-  });
+  const { address: contractAddr } = (await getContractAddress(PAYMENT_CONTRACT_NAME)).data;
+  console.log('ADDR', contractAddr);
+  const feebook = await getContractInstance(PAYMENT_CONTRACT_NAME, contractAddr);
+  console.log('feebook', feebook);
+  console.log('methods', feebook.methods);
+  console.log('hash', hash);
+
+  await feebook.methods.pay(hash).send({ value: fee });
+  console.log('hello');
 }
 
 /**
