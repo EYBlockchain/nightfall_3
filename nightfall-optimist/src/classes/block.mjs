@@ -92,11 +92,6 @@ class Block {
       blockNumberL2 = this.localBlockNumberL2;
       previousBlockHash = this.localPreviousBlockHash;
       timber = new Timber(this.localRoot, this.localFrontier, this.localLeafCount);
-      console.log(
-        'HERE blockNumberL2 < this.localBlockNumberL2 this.localLeafCount',
-        this.localLeafCount,
-      );
-      console.log('HERE blockNumberL2 < this.localBlockNumberL2 timber', timber);
     }
     // extract the commitment hashes from the transactions
     // we filter out zeroes commitments that can come from withdrawals
