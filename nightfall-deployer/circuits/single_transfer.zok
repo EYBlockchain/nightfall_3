@@ -42,6 +42,11 @@ struct Secrets {
 	field sqrtMessage4
 }
 
+struct CompressedPoint {
+	field parity
+	field ordinate
+}
+
 def main(\
 	private field fErcAddress,\
 	private OldCommitmentPreimage oldCommitment,\
@@ -53,7 +58,7 @@ def main(\
 	private field[32] path,\
 	private field order,\
 	private Secrets secrets,\
-	field[8] compressedCipherText\
+	CompressedPoint[8] compressedCipherText\
 )->():
 
 	BabyJubJubParams context = curveParams()
@@ -133,10 +138,10 @@ def main(\
 		// there is likely a compiler bug with zokrates 0.6.4 which makes using spreads (e.g. [8..256]) inside a function (e.g. assert()) very slow
 		u32 j = 2*i
 		bool[256] compressed256 = edwardsCompress([secrets.cipherText[j], secrets.cipherText[j+1]])
-		bool[256] compressedCheck256 = field_to_bool_256(compressedCipherText[i])
-		bool[248] compressed = compressed256[8..256]
-		bool[248] compressedCheck = compressedCheck256[8..256]
-		assert(compressed == compressedCheck)
+		bool parity = field_to_bool_256(compressedCipherText[i].parity)[255]
+		bool[256] ordinate = field_to_bool_256(compressedCipherText[i].ordinate)
+		bool[256] compressedCheck256 = [ parity, ...ordinate[1..256] ]
+		assert(compressed256 == compressedCheck256)
 	endfor
 
 	// check that the old commitment is in the merkle tree (path[0] should be the root)

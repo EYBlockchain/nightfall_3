@@ -13,7 +13,7 @@ import { waitForContract } from '../event-handlers/subscribe.mjs';
 import { getBlockByBlockNumberL2 } from './database.mjs';
 import verify from './verify.mjs';
 
-const { generalise } = gen;
+const { generalise, GN } = gen;
 const {
   PROVING_SCHEME,
   BACKEND,
@@ -188,13 +188,19 @@ async function verifyProof(transaction) {
     case 1: // single transfer transaction
       inputs = generalise(
         [
-          // transaction.ercAddress,
           transaction.commitments[0],
           transaction.nullifiers[0],
           historicRootFirst.root,
-          ...transaction.compressedSecrets.map(compressedSecret =>
-            generalise(compressedSecret).hex(32, 31),
-          ),
+          // expand the compressed secrets slightly to extract the parity as a separate field
+          ...transaction.compressedSecrets.map(text => {
+            const bin = new GN(text).binary.padStart(256, '0');
+            const parity = bin[0];
+            const ordinate = bin.slice(1);
+            return [
+              new GN(parity, 'binary').field(BN128_GROUP_ORDER),
+              new GN(ordinate, 'binary').field(BN128_GROUP_ORDER, false),
+            ];
+          }),
         ].flat(Infinity),
       );
       // check for truncation overflow attacks
@@ -214,9 +220,16 @@ async function verifyProof(transaction) {
           transaction.nullifiers,
           historicRootFirst.root,
           historicRootSecond.root,
-          ...transaction.compressedSecrets.map(compressedSecret =>
-            generalise(compressedSecret).hex(32, 31),
-          ),
+          // expand the compressed secrets slightly to extract the parity as a separate field
+          ...transaction.compressedSecrets.map(text => {
+            const bin = new GN(text).binary.padStart(256, '0');
+            const parity = bin[0];
+            const ordinate = bin.slice(1);
+            return [
+              new GN(parity, 'binary').field(BN128_GROUP_ORDER),
+              new GN(ordinate, 'binary').field(BN128_GROUP_ORDER, false),
+            ];
+          }),
         ].flat(Infinity),
       );
       // check for truncation overflow attacks
