@@ -15,7 +15,7 @@ const Bridge = () => {
   return (
     // containerFluid
     <div>
-      <Header />
+      {/* <Header /> */}
       <div className="bridgeComponent">
         {isTabletOrMobile && (
           <div className="bridgeComponent__left">

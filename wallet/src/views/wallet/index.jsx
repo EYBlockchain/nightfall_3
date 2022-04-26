@@ -152,7 +152,7 @@ export default function Wallet() {
 
   return (
     <div>
-      <Header />
+      {/* <Header /> */}
       <div className="wallet">
         <div className="walletComponents">
           <div className="walletComponents__left">

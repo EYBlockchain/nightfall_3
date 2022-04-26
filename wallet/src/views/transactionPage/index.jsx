@@ -7,7 +7,7 @@ import Transactions from '@Components/Transactions/index.jsx';
 export default function TransactionPage() {
   return (
     <div>
-      <Header />
+      {/* <Header /> */}
       <div className="bridgeComponent">
         <div className="bridgeComponent__left">
           <SideBar />
