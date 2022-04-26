@@ -80,6 +80,8 @@ contract State is Structures, Initializable, ReentrancyGuardUpgradeable, Config 
             ); // this will fail if a tx is re-mined out of order due to a chain reorg.
         require(BLOCK_STAKE <= msg.value, 'The stake payment is incorrect');
         require(b.proposer == msg.sender, 'The proposer address is not the sender');
+        // set the maximum tx/block to prevent unchallengably large blocks
+        require (t.length < 33, 'The block has too many transactions');
         // We need to set the blockHash on chain here, because there is no way to
         // convince a challenge function of the (in)correctness by an offchain
         // computation; the on-chain code doesn't save the pre-image of the hash so

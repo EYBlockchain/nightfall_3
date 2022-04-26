@@ -155,7 +155,6 @@ def main(\
 	assert(u32_to_bool_32(sha[0])[8..32] == u32_to_bool_32(newCommitmentHash[1][0])[8..32])
 
 	// check the old commitments are valid
-	// old commitments are private inputs, so they are u32[8] and not truncated
 	for u32 i in 0..2 do
 		sha = sha256of1280([\
 			...ercAddress[i],\
@@ -164,7 +163,11 @@ def main(\
 			...pkdU32,\
 			...oldCommitment[i].salt\
 		])
-		assert(sha == oldCommitment[i].hash)
+		// assert(sha == oldCommitment[i].hash)
+		// last 224 bits:
+		assert(sha[1..8] == oldCommitment[i].hash[1..8])
+		// first 24 bits:
+		assert(u32_to_bool_32(sha[0])[8..32] == u32_to_bool_32(oldCommitment[i].hash[0])[8..32])
 	endfor
 
 	// And the encryption of the transaction (extend the value up to 256 bits)

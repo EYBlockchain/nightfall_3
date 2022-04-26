@@ -110,7 +110,6 @@ def main(\
 	assert(u32_to_bool_32(sha[0])[8..32] == u32_to_bool_32(newCommitmentHash[0])[8..32])
 
 	// check the old commitment is valid
-	// old commitments are private inputs, so they are u32[8] and not truncated
 	sha = sha256of1280([\
 		...ercAddress,\
 		...oldCommitment.id,\
@@ -118,7 +117,11 @@ def main(\
 		...pkdU32,\
 		...oldCommitment.salt\
 	])
-	assert(sha == oldCommitment.hash)
+	// assert(sha == oldCommitment.hash)
+	// last 224 bits:
+	assert(sha[1..8] == oldCommitment.hash[1..8])
+	// first 24 bits:
+	assert(u32_to_bool_32(sha[0])[8..32] == u32_to_bool_32(oldCommitment.hash[0])[8..32])
 
 	// And the encryption of the transaction (extend the value up to 256 bits)
 	assert(secrets.cipherText == enc4(ercAddress, oldCommitment.id, oldCommitment.value, newCommitment.salt, newCommitment.pkdRecipient, secrets.ephemeralKey1, secrets.ephemeralKey2, secrets.ephemeralKey3, secrets.ephemeralKey4, secrets.sqrtMessage1, secrets.sqrtMessage2, secrets.sqrtMessage3, secrets.sqrtMessage4))
