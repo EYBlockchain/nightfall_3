@@ -320,6 +320,9 @@ module.exports = function (webpackEnv) {
         .map(ext => `.${ext}`)
         .filter(ext => useTypeScript || !ext.includes('ts')),
       alias: {
+        '@TokenList': path.resolve(__dirname, '../src/static/supported-token-lists'),
+        '@Nightfall': path.resolve(__dirname, '../src/nightfall-browser'),
+        '@Components': path.resolve(__dirname, '../src/components'),
         // Support React Native Web
         // https://www.smashingmagazine.com/2016/08/a-glimpse-into-the-future-with-react-native-for-web/
         'react-native': 'react-native-web',
@@ -528,7 +531,11 @@ module.exports = function (webpackEnv) {
               test: /\.worker\.js$/,
               use: {
                 loader: 'worker-loader',
-                options: { inline: true, fallback: false },
+                options: { inline: 'fallback' },
+                // generator: {
+                //   publicPath: 'https://nightfallv3-wallet.s3.eu-west-1.amazonaws.com/',
+                //   // outputPath: 'cdn-assets/',
+                // },
               },
             },
             {
