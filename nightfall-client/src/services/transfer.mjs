@@ -108,8 +108,6 @@ async function transfer(transferParams) {
 
   // compress the secrets to save gas
   const compressedSecrets = Secrets.compressSecrets(secrets);
-  console.log('SECRETS', compressedSecrets, secrets);
-
   const commitmentTreeInfo = await Promise.all(oldCommitments.map(c => getSiblingInfo(c)));
   const localSiblingPaths = commitmentTreeInfo.map(l => {
     const path = l.siblingPath.path.map(p => p.value);
@@ -171,9 +169,7 @@ async function transfer(transferParams) {
       const bin = text.binary.padStart(256, '0');
       const parity = bin[0];
       const ordinate = bin.slice(1);
-      console.log('INPUTS', parity, ordinate, bin);
       const fields = [parity, new GN(ordinate, 'binary').field(BN128_GROUP_ORDER)];
-      console.log('FIELDS', fields);
       return fields;
     }),
   ].flat(Infinity);
