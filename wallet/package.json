@@ -106,7 +106,7 @@
     "zokrates-js": "^1.0.39"
   },
   "scripts": {
-    "start": "LOCAL_PROPOSER=true PUBLIC_URL='/nightfall/' USE_STUBS=true node scripts/start.js",    
+    "start": "LOCAL_PROPOSER=true PUBLIC_URL='/nightfall/' USE_STUBS=true REACT_APP_MODE=testnet node scripts/start.js",    
     "build": "LOCAL_PROPOSER=false USE_STUBS=false REACT_APP_MODE=testnet PUBLIC_URL='https://nightfallv3-wallet.s3.eu-west-1.amazonaws.com' node scripts/build.js",
     "deploy": "npm run build && aws s3 sync build s3://pnf-dev-browser --cache-control max-age=172800 --delete && aws configure set preview.cloudfront true && aws cloudfront create-invalidation --distribution-id ENV3X13MLR5YT --paths \"/*\"",
     "test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register 'tests/**/*.ts'",    

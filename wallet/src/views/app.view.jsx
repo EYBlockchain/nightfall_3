@@ -38,7 +38,7 @@ export default function App() {
         <AccountProvider>
           <Switch>
             {/* <Route path="/" exact render={() => <MainPage />} /> */}
-            <Route path="/" render={() => <Wallet />} />
+            <Route path="/" exact render={() => <Wallet />} />
             <Route path="/bridge" render={() => <Bridge />} />
             <Route path="/transactionPage" render={() => <TransactionPage />} />
             <Route

@@ -20,7 +20,7 @@ export default function SideBar() {
     return (
       <div className="sideBar">
         <div className="sideItems">
-          <SideItem text={'Nightfall Assets'} link={'/wallet'} Icon={[WalletImg, WalletImgGrey]} />
+          <SideItem text={'Nightfall Assets'} link={'/'} Icon={[WalletImg, WalletImgGrey]} />
           <SideItem
             text={'L2 Bridge'}
             link={'/bridge'}
