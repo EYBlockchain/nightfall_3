@@ -1,4 +1,4 @@
-import { web3 } from 'common-files/utils/web3.mjs';
+import { web3, web3Payments } from 'common-files/utils/web3.mjs';
 
 import logger from 'common-files/utils/logger.mjs';
 import circuits from './circuit-setup.mjs';
@@ -18,6 +18,7 @@ async function main() {
     else throw new Error(err);
   }
   web3.disconnect();
+  web3Payments.disconnect();
 }
 
 main();
