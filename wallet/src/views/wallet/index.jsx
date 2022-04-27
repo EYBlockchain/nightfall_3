@@ -18,7 +18,7 @@ import { UserContext } from '../../hooks/User/index.jsx';
 
 import './wallet.scss';
 import * as Storage from '../../utils/lib/local-storage';
-import Web3 from '../../common-files/utils/web3';
+import W3 from '../../common-files/utils/web3';
 import { useAccount } from '../../hooks/Account/index.tsx';
 import useInterval from '../../hooks/useInterval.js';
 
@@ -109,15 +109,14 @@ export default function Wallet({ changeChain }) {
   const [delay, setDelay] = React.useState(50);
 
   useEffect(async () => {
-    const web3 = Web3.connection();
-    const accounts = await web3.eth.getAccounts();
+    const accounts = await web3.getWeb3().eth.getAccounts();
     setAccountInstance({
       address: accounts[0],
     });
   }, []);
 
   useEffect(async () => {
-    const pkdsDerived = Storage.pkdArrayGet(await Web3.getAccount());
+    const pkdsDerived = Storage.pkdArrayGet(await web3.getWeb3().getAccount());
     if (state.compressedPkd === '' && !pkdsDerived) setModalShow(true);
     else setModalShow(false);
   }, []);

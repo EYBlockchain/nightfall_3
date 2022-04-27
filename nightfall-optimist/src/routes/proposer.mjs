@@ -7,7 +7,8 @@ import express from 'express';
 import config from 'config';
 import Timber from 'common-files/classes/timber.mjs';
 import logger from 'common-files/utils/logger.mjs';
-import { getContractInstance } from 'common-files/utils/contract.mjs';
+import { web3 } from 'common-files/utils/web3.mjs';
+
 import { enqueueEvent } from 'common-files/utils/event-queue.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction, TransactionError } from '../classes/index.mjs';
@@ -90,7 +91,7 @@ router.post('/update', async (req, res, next) => {
     if (url === '') {
       throw new Error('Rest API URL not provided');
     }
-    const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
+    const proposersContractInstance = await web3.getContractInstance(PROPOSERS_CONTRACT_NAME);
     const txDataToSign = await proposersContractInstance.methods.updateProposer(url).encodeABI();
     logger.debug('returning raw transaction data');
     logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
@@ -108,7 +109,7 @@ router.post('/update', async (req, res, next) => {
 router.get('/current-proposer', async (req, res, next) => {
   logger.debug(`list proposals endpoint received GET ${JSON.stringify(req.body, null, 2)}`);
   try {
-    const proposersContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
+    const proposersContractInstance = await web3.getContractInstance(STATE_CONTRACT_NAME);
     const { thisAddress: currentProposer } = await proposersContractInstance.methods
       .currentProposer()
       .call();
@@ -145,7 +146,7 @@ router.post('/de-register', async (req, res, next) => {
   logger.debug(`de-register proposer endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
   try {
     const { address = '' } = req.body;
-    const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
+    const proposersContractInstance = await web3.getContractInstance(PROPOSERS_CONTRACT_NAME);
     const txDataToSign = await proposersContractInstance.methods.deRegisterProposer().encodeABI();
     await deleteRegisteredProposerAddress(address);
     logger.debug('returning raw transaction data');
@@ -164,7 +165,7 @@ router.post('/de-register', async (req, res, next) => {
 router.post('/withdrawBond', async (req, res, next) => {
   logger.debug(`withdrawBond endpoint received GET`);
   try {
-    const stateContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
+    const stateContractInstance = await web3.getContractInstance(PROPOSERS_CONTRACT_NAME);
     const txDataToSign = await stateContractInstance.methods.withdrawBond().encodeABI();
     res.json({ txDataToSign });
   } catch (error) {
@@ -181,7 +182,7 @@ router.post('/withdrawBond', async (req, res, next) => {
 router.get('/withdraw', async (req, res, next) => {
   logger.debug(`withdraw endpoint received GET ${JSON.stringify(req.body, null, 2)}`);
   try {
-    const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
+    const proposersContractInstance = await web3.getContractInstance(PROPOSERS_CONTRACT_NAME);
     const txDataToSign = await proposersContractInstance.methods.withdraw().encodeABI();
     logger.debug('returning raw transaction data');
     logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
@@ -201,7 +202,7 @@ router.post('/payment', async (req, res, next) => {
   logger.debug(`payment endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
   const { block, blockNumberL2, transactions } = req.body;
   try {
-    const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
+    const shieldContractInstance = await web3.getContractInstance(SHIELD_CONTRACT_NAME);
     const txDataToSign = await shieldContractInstance.methods
       .requestBlockPayment(block, blockNumberL2, transactions)
       .encodeABI();
@@ -240,7 +241,7 @@ router.post('/propose', async (req, res, next) => {
       latestTree,
     });
     logger.debug(`New block assembled ${JSON.stringify(block, null, 2)}`);
-    const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
+    const stateContractInstance = await web3.getContractInstance(STATE_CONTRACT_NAME);
     const txDataToSign = await stateContractInstance.methods
       .proposeBlock(block, transactions)
       .encodeABI();
@@ -262,7 +263,7 @@ router.post('/propose', async (req, res, next) => {
 router.get('/change', async (req, res, next) => {
   logger.debug(`proposer/change endpoint received GET ${JSON.stringify(req.body, null, 2)}`);
   try {
-    const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
+    const proposersContractInstance = await web3.getContractInstance(PROPOSERS_CONTRACT_NAME);
     const txDataToSign = await proposersContractInstance.methods
       .changeCurrentProposer()
       .encodeABI();

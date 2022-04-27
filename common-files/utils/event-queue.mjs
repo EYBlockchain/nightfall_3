@@ -22,7 +22,7 @@ and catch these removals, processing them appropriately.
 import Queue from 'queue';
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
-import { web3 } from 'common-files/utils/contract.mjs';
+import { web3 } from './web3.mjs';
 
 const { MAX_QUEUE, CONFIRMATION_POLL_TIME, CONFIRMATIONS } = config;
 const fastQueue = new Queue({ autostart: true, concurrency: 1 });
@@ -75,7 +75,7 @@ function waitForConfirmation(eventObject) {
           ),
         );
       }
-      const currentBlock = await web3.eth.getBlock('latest');
+      const currentBlock = await web3.getWeb3().eth.getBlock('latest');
       if (currentBlock.number - blockNumber > confirmedBlocks) {
         confirmedBlocks = currentBlock.number - blockNumber;
       }

@@ -3,7 +3,7 @@ An optimistic layer 2 Block class
 */
 import config from 'config';
 import Timber from 'common-files/classes/timber.mjs';
-import Web3 from 'common-files/utils/web3.mjs';
+import { web3 } from 'common-files/utils/web3.mjs';
 import { compressProof } from 'common-files/utils/curve-maths/curves.mjs';
 import { getLatestTree, getLatestBlockInfo } from '../services/database.mjs';
 
@@ -151,7 +151,6 @@ class Block {
   }
 
   static calcHash(block, transactions) {
-    const web3 = Web3.connection();
     const { proposer, root, leafCount, blockNumberL2, previousBlockHash } = block;
     const blockArray = [leafCount, proposer, root, blockNumberL2, previousBlockHash];
     const transactionsArray = transactions.map(t => {
@@ -182,11 +181,10 @@ class Block {
         compressProof(proof),
       ];
     });
-    const encoded = web3.eth.abi.encodeParameters(PROPOSE_BLOCK_TYPES, [
-      blockArray,
-      transactionsArray,
-    ]);
-    return web3.utils.soliditySha3({ t: 'bytes', v: encoded });
+    const encoded = web3
+      .getWeb3()
+      .eth.abi.encodeParameters(PROPOSE_BLOCK_TYPES, [blockArray, transactionsArray]);
+    return web3.getWeb3().utils.soliditySha3({ t: 'bytes', v: encoded });
   }
 
   // remove properties that do not get sent to the blockchain returning

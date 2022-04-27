@@ -7,7 +7,7 @@ This module contains the logic needed to check fee payment for the L2 transactio
 import config from 'config';
 import express from 'express';
 import logger from 'common-files/utils/logger.mjs';
-import { getContractInstance } from 'common-files/utils/contract-payments.mjs';
+import { web3Payments, getContractAddress } from 'common-files/utils/web3.mjs';
 
 const router = express.Router();
 
@@ -19,7 +19,12 @@ router.get('/check', async (req, res, next) => {
   logger.debug(`check payment endpoint received GET ${JSON.stringify(req.body, null, 2)}`);
   try {
     const { transactionHashL2, transactionFee } = req.query;
-    const paymentContractInstance = await getContractInstance(PAYMENT_CONTRACT_NAME);
+    const { address } = await getContractAddress(PAYMENT_CONTRACT_NAME);
+    const paymentContractInstance = await web3Payments.getContractInstance(
+      PAYMENT_CONTRACT_NAME,
+      address,
+    );
+    console.log(paymentContractInstance);
     logger.debug(`check payment ${transactionHashL2}, ${transactionFee}`);
     const checkPayment = await paymentContractInstance.methods
       .checkPayment(transactionHashL2, transactionFee)

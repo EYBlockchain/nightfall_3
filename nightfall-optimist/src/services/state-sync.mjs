@@ -1,7 +1,8 @@
 /* eslint-disable no-await-in-loop */
 
 import config from 'config';
-import { getContractInstance } from 'common-files/utils/contract.mjs';
+import { web3 } from 'common-files/utils/web3.mjs';
+
 import blockProposedEventHandler from '../event-handlers/block-proposed.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
 import newCurrentProposerEventHandler from '../event-handlers/new-current-proposer.mjs';
@@ -21,9 +22,9 @@ const syncState = async (
   toBlock = 'latest',
   eventFilter = 'allEvents',
 ) => {
-  const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME); // NewCurrentProposer (register)
-  const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME); // TransactionSubmitted
-  const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME); // Rollback, NewCurrentProposer, BlockProposed
+  const proposersContractInstance = await web3.getContractInstance(PROPOSERS_CONTRACT_NAME); // NewCurrentProposer (register)
+  const shieldContractInstance = await web3.getContractInstance(SHIELD_CONTRACT_NAME); // TransactionSubmitted
+  const stateContractInstance = await web3.getContractInstance(STATE_CONTRACT_NAME); // Rollback, NewCurrentProposer, BlockProposed
 
   const pastProposerEvents = await proposersContractInstance.getPastEvents(eventFilter, {
     fromBlock,

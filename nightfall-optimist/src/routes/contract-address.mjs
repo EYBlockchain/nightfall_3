@@ -5,7 +5,7 @@ funds on a zkp deposit
 */
 import express from 'express';
 import logger from 'common-files/utils/logger.mjs';
-import { getContractAddress } from 'common-files/utils/contract.mjs';
+import { getContractAddress } from 'common-files/utils/web3.mjs';
 
 const router = express.Router();
 

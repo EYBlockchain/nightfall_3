@@ -8,7 +8,8 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
 import config from 'config';
 import axios from 'axios';
 import gen from 'general-number';
-import { getContractInstance } from 'common-files/utils/contract.mjs';
+import { web3 } from 'common-files/utils/web3.mjs';
+
 import logger from 'common-files/utils/logger.mjs';
 import { Nullifier, Transaction } from '../classes/index.mjs';
 import {
@@ -94,7 +95,7 @@ async function withdraw(withdrawParams) {
   logger.silly(`Received response ${JSON.stringify(res.data, null, 2)}`);
   const { proof } = res.data;
   // and work out the ABI encoded data that the caller should sign and send to the shield contract
-  const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
+  const shieldContractInstance = await web3.getContractInstance(SHIELD_CONTRACT_NAME);
   const optimisticWithdrawTransaction = new Transaction({
     fee,
     historicRootBlockNumberL2: [isOnChain, 0],

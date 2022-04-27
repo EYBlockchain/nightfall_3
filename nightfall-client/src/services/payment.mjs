@@ -4,7 +4,8 @@ This module contains the logic needed to create fee payment for the proposer
  * @author daveroga
  */
 import config from 'config';
-import { getContractInstance } from 'common-files/utils/contract-payments.mjs';
+import { web3Payments } from 'common-files/utils/web3.mjs';
+
 import logger from 'common-files/utils/logger.mjs';
 
 const { PAYMENT_CONTRACT_NAME } = config;
@@ -14,7 +15,7 @@ async function payment(paymentParams) {
   // let's extract the input items
   const { transactionHashL2 } = paymentParams;
   logger.info(`transactionHashL2: ${transactionHashL2}`);
-  const paymentContractInstance = await getContractInstance(PAYMENT_CONTRACT_NAME);
+  const paymentContractInstance = await web3Payments.getContractInstance(PAYMENT_CONTRACT_NAME);
 
   const rawTransaction = await paymentContractInstance.methods.pay(transactionHashL2).encodeABI();
 

@@ -2,8 +2,7 @@ import config from 'config';
 import WebSocket from 'ws';
 import rand from 'common-files/utils/crypto/crypto-random.mjs';
 import logger from 'common-files/utils/logger.mjs';
-import Web3 from 'common-files/utils/web3.mjs';
-import { getContractInstance } from 'common-files/utils/contract.mjs';
+import { web3 } from 'common-files/utils/web3.mjs';
 import {
   getBlockByBlockHash,
   getBlockByTransactionHash,
@@ -35,9 +34,8 @@ export function stopMakingChallenges() {
 }
 
 async function commitToChallenge(txDataToSign) {
-  const web3 = Web3.connection();
   const commitHash = web3.utils.soliditySha3({ t: 'bytes', v: txDataToSign });
-  const challengeContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
+  const challengeContractInstance = await web3.getContractInstance(CHALLENGES_CONTRACT_NAME);
   const commitToSign = await challengeContractInstance.methods
     .commitToChallenge(commitHash)
     .encodeABI();
@@ -80,7 +78,7 @@ export async function revealChallenge(txDataToSign) {
 export async function createChallenge(block, transactions, err) {
   let txDataToSign;
   if (makeChallenges) {
-    const challengeContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
+    const challengeContractInstance = await web3.getContractInstance(CHALLENGES_CONTRACT_NAME);
     const salt = (await rand(32)).hex(32);
     switch (err.code) {
       // Challenge wrong root

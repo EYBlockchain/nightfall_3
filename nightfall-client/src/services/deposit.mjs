@@ -10,7 +10,8 @@ import config from 'config';
 import axios from 'axios';
 import gen from 'general-number';
 import rand from 'common-files/utils/crypto/crypto-random.mjs';
-import { getContractInstance } from 'common-files/utils/contract.mjs';
+import { web3 } from 'common-files/utils/web3.mjs';
+
 import logger from 'common-files/utils/logger.mjs';
 import { Commitment, Transaction } from '../classes/index.mjs';
 import { storeCommitment } from './commitment-storage.mjs';
@@ -69,7 +70,7 @@ async function deposit(items) {
   const { proof } = res.data;
   // and work out the ABI encoded data that the caller should sign and send to the shield contract
   // first, get the contract instance
-  const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
+  const shieldContractInstance = await web3.getContractInstance(SHIELD_CONTRACT_NAME);
 
   // next we need to compute the optimistic Transaction object
   const optimisticDepositTransaction = new Transaction({

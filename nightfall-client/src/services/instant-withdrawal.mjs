@@ -3,7 +3,8 @@
  */
 
 import config from 'config';
-import { getContractInstance } from 'common-files/utils/contract.mjs';
+import { web3 } from 'common-files/utils/web3.mjs';
+
 import { Transaction } from '../classes/index.mjs';
 import { buildSolidityStruct } from './finalise-withdrawal.mjs';
 import { getTransactionByTransactionHash, getBlockByTransactionHash } from './database.mjs';
@@ -16,7 +17,7 @@ const setInstantWithdrawl = async ({ transactionHash }) => {
     block.transactionHashes.map(t => getTransactionByTransactionHash(t)),
   );
   const index = transactions.findIndex(f => f.transactionHash === transactionHash);
-  const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
+  const shieldContractInstance = await web3.getContractInstance(SHIELD_CONTRACT_NAME);
   try {
     const rawTransaction = await shieldContractInstance.methods
       .setAdvanceWithdrawalFee(

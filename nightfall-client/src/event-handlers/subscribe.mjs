@@ -4,7 +4,8 @@
  * Module to subscribe to blockchain events
  */
 import config from 'config';
-import { getContractInstance, getContractAddress } from 'common-files/utils/contract.mjs';
+import { web3, getContractAddress } from 'common-files/utils/web3.mjs';
+
 import logger from 'common-files/utils/logger.mjs';
 
 const { STATE_CONTRACT_NAME, RETRIES } = config;
@@ -24,7 +25,7 @@ export async function waitForContract(contractName) {
       error = undefined;
       const { address } = await getContractAddress(contractName);
       if (address === undefined) throw new Error(`${contractName} contract address was undefined`);
-      instance = getContractInstance(contractName, address);
+      instance = web3.getContractInstance(contractName, address);
       return instance;
     } catch (err) {
       error = err;

@@ -9,8 +9,9 @@ import config from 'config';
 import fs from 'fs';
 import path from 'path';
 import logger from 'common-files/utils/logger.mjs';
-import Web3 from 'common-files/utils/web3.mjs';
-import { waitForContract, getContractAddress } from 'common-files/utils/contract.mjs';
+import { web3, getContractAddress } from 'common-files/utils/web3.mjs';
+
+import { waitForContract } from 'common-files/utils/contract.mjs';
 
 const fsPromises = fs.promises;
 
@@ -135,7 +136,7 @@ async function setupCircuits() {
       // when deploying on infura - do serial tx execution to avoid nonce issue
       // when using a private key, we shouldn't assume an unlocked account and we sign the transaction directly
       if (config.ETH_PRIVATE_KEY) {
-        await Web3.submitRawTransaction(await tx.encodeABI(), keyRegistryAddress);
+        await web3.getWeb3().submitRawTransaction(await tx.encodeABI(), keyRegistryAddress);
       } else await tx.send();
     } catch (err) {
       logger.error(err);

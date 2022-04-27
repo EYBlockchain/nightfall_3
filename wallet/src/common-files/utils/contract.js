@@ -1,6 +1,6 @@
 /* ignore unused exports */
 import axios from 'axios';
-import Web3 from './web3';
+import W3 from './web3';
 import logger from './logger';
 import contractABIs from '../../contract-abis';
 import { TOKEN_TYPE, APPROVE_AMOUNT } from '../../constants';
@@ -22,10 +22,9 @@ const gasEstimateEndpoint =
 
 // returns a web3 contract instance
 export async function getContractInstance(contractName, deployedAddress) {
-  const web3 = Web3.connection();
   // grab a 'from' account if one isn't set
   if (!options.from) {
-    const accounts = await web3.eth.getAccounts();
+    const accounts = await web3.getWeb3().eth.getAccounts();
     logger.debug('blockchain accounts are: ', accounts);
     [options.from] = accounts;
   }
@@ -45,8 +44,7 @@ export function getContractAddress(contractName) {
 }
 
 export async function processProposerPayment(hash, fee) {
-  const web3 = Web3.connection();
-  const gas = (await web3.eth.getBlock('latest')).gasLimit;
+  const gas = (await web3.getWeb3().eth.getBlock('latest')).gasLimit;
   let gasPrice = 20000000000;
   const blockGasPrice = 2 * Number(await web3.eth.getGasPrice());
   if (blockGasPrice > gasPrice) gasPrice = blockGasPrice;
@@ -76,9 +74,8 @@ export async function processProposerPayment(hash, fee) {
  * @returns {Promise} This will resolve into a transaction receipt
  */
 export async function submitTransaction(unsignedTransaction, contractAddress, fee) {
-  const web3 = Web3.connection();
-  const blockGasPrice = Number(await web3.eth.getGasPrice());
-  const from = await Web3.getAccount();
+  const blockGasPrice = Number(await web3.getWeb3().eth.getGasPrice());
+  const from = await web3.getWeb3().getAccount();
   let proposedGasPrice = blockGasPrice; // This is the backup value if external estimation fails;
   try {
     // Call the endpoint to estimate the gas fee.
@@ -121,10 +118,9 @@ export async function submitTransaction(unsignedTransaction, contractAddress, fe
  * @returns {Promise} transaction
  */
 export async function approve(ercAddress, spenderAddress, tokenType, value) {
-  const web3 = Web3.connection();
   const abi = contractABIs[tokenType];
-  const ercContract = new web3.eth.Contract(abi, ercAddress);
-  const from = await Web3.getAccount();
+  const ercContract = new web3.getWeb3().eth.Contract(abi, ercAddress);
+  const from = await web3.getWeb3().getAccount();
   switch (tokenType) {
     case TOKEN_TYPE.ERC20: {
       console.log(from);

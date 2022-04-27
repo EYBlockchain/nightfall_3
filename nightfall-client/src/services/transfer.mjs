@@ -9,7 +9,8 @@ import config from 'config';
 import axios from 'axios';
 import gen from 'general-number';
 import rand from 'common-files/utils/crypto/crypto-random.mjs';
-import { getContractInstance } from 'common-files/utils/contract.mjs';
+import { web3 } from 'common-files/utils/web3.mjs';
+
 import logger from 'common-files/utils/logger.mjs';
 import { Secrets, Nullifier, Commitment, Transaction } from '../classes/index.mjs';
 import {
@@ -193,7 +194,7 @@ async function transfer(transferParams) {
   logger.silly(`Received response ${JSON.stringify(res.data, null, 2)}`);
   const { proof } = res.data;
   // and work out the ABI encoded data that the caller should sign and send to the shield contract
-  const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
+  const shieldContractInstance = await web3.getContractInstance(SHIELD_CONTRACT_NAME);
   const optimisticTransferTransaction = new Transaction({
     fee,
     historicRootBlockNumberL2: blockNumberL2s,

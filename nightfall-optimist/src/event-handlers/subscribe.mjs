@@ -6,7 +6,7 @@
 import WebSocket from 'ws';
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
-import { getContractInstance, getContractAddress } from 'common-files/utils/contract.mjs';
+import { web3, getContractAddress } from 'common-files/utils/web3.mjs';
 
 const {
   PROPOSERS_CONTRACT_NAME,
@@ -68,7 +68,7 @@ export async function waitForContract(contractName) {
       error = undefined;
       const { address } = await getContractAddress(contractName);
       if (address === undefined) throw new Error(`${contractName} contract address was undefined`);
-      instance = getContractInstance(contractName, address);
+      instance = web3.getContractInstance(contractName, address);
       return instance;
     } catch (err) {
       error = err;

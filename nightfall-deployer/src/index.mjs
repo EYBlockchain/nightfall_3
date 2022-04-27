@@ -1,4 +1,5 @@
-import Web3 from 'common-files/utils/web3.mjs';
+import { web3 } from 'common-files/utils/web3.mjs';
+
 import logger from 'common-files/utils/logger.mjs';
 import circuits from './circuit-setup.mjs';
 import setupContracts from './contract-setup.mjs';
@@ -16,7 +17,7 @@ async function main() {
       );
     else throw new Error(err);
   }
-  Web3.disconnect();
+  web3.disconnect();
 }
 
 main();
