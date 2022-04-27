@@ -19,9 +19,14 @@ import { waitForContract } from '../event-handlers/subscribe.mjs';
 const { TRANSACTIONS_PER_BLOCK, STATE_CONTRACT_NAME } = config;
 
 let ws;
+let makeNow = false;
 
 export function setBlockAssembledWebSocketConnection(_ws) {
   ws = _ws;
+}
+
+export function setMakeNow(_makeNow = true) {
+  makeNow = _makeNow;
 }
 
 async function makeBlock(proposer, number = TRANSACTIONS_PER_BLOCK) {
@@ -47,9 +52,12 @@ export async function conditionalMakeBlock(proposer) {
   // transaction. If not, we must wait until either we have enough (hooray)
   // or we're no-longer the proposer (boo).
   if (proposer.isMe) {
-    const numberOfProposableL2Blocks = Math.floor(
-      (await numberOfUnprocessedTransactions()) / TRANSACTIONS_PER_BLOCK,
-    );
+    const unprocessed = await numberOfUnprocessedTransactions();
+    let numberOfProposableL2Blocks = Math.floor(unprocessed / TRANSACTIONS_PER_BLOCK);
+    // if we want to make a block right now but there aren't enough transactions, this logic
+    // tells us to go anyway
+    if (makeNow && unprocessed > 0 && numberOfProposableL2Blocks === 0)
+      numberOfProposableL2Blocks = 1;
 
     if (numberOfProposableL2Blocks >= 1) {
       // TODO set an upper limit to numberOfProposableL2Blocks because a proposer
@@ -58,7 +66,13 @@ export async function conditionalMakeBlock(proposer) {
       // the transactions will fail and proposer will lose gas fees
       logger.debug(`Block Assembler will create ${numberOfProposableL2Blocks} blocks at once`);
       for (let i = 0; i < numberOfProposableL2Blocks; i++) {
-        const { block, transactions } = await makeBlock(proposer.address);
+        // work out if this is a normal size block or a short one
+        const numberOfTransactionsInBlock = makeNow ? unprocessed : TRANSACTIONS_PER_BLOCK;
+        makeNow = false; // reset the makeNow so we only make one block with a short number of transactions
+        const { block, transactions } = await makeBlock(
+          proposer.address,
+          numberOfTransactionsInBlock,
+        );
         logger.info(`Block Assembler - New Block created, ${JSON.stringify(block, null, 2)}`);
         // propose this block to the Shield contract here
         const unsignedProposeBlockTransaction = await (
