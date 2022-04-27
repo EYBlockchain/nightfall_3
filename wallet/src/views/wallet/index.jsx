@@ -18,7 +18,6 @@ import { UserContext } from '../../hooks/User/index.jsx';
 
 import './wallet.scss';
 import * as Storage from '../../utils/lib/local-storage';
-import W3 from '../../common-files/utils/web3';
 import { useAccount } from '../../hooks/Account/index.tsx';
 import useInterval from '../../hooks/useInterval.js';
 

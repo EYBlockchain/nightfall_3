@@ -5,7 +5,6 @@
 An optimistic Transaction class
 */
 import gen from 'general-number';
-import W3 from '../utils/web3';
 import { compressProof } from '../utils/curve-maths/curves';
 
 const { generalise } = gen;

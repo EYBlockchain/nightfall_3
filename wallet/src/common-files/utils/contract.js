@@ -1,6 +1,5 @@
 /* ignore unused exports */
 import axios from 'axios';
-import W3 from './web3';
 import logger from './logger';
 import contractABIs from '../../contract-abis';
 import { TOKEN_TYPE, APPROVE_AMOUNT } from '../../constants';

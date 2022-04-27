@@ -7,11 +7,11 @@ import logger from './logger.mjs';
 
 const options = config.WEB3_OPTIONS;
 
-export const contractPath = contractName => {
+const contractPath = contractName => {
   return `${config.CONTRACT_ARTIFACTS}/${contractName}.json`;
 };
 
-export async function getContractInterface(contractName) {
+async function getContractInterface(contractName) {
   const path = contractPath(contractName);
   const contractInterface = JSON.parse(fs.readFileSync(path, 'utf8'));
   // logger.silly('\ncontractInterface:', contractInterface);
@@ -32,7 +32,7 @@ export async function getContractAddress(contractName) {
   return deployedAddress;
 }
 
-export default class W3 {
+class W3 {
   constructor(url, providerOptions) {
     /**
      * Connects to web3 and then sets proper handlers for events
@@ -116,4 +116,5 @@ export default class W3 {
 }
 export const web3 = new W3(config.BLOCKCHAIN_URL, config.WEB3_PROVIDER_OPTIONS);
 
+/* ignore unused exports */
 export const web3Payments = new W3(config.BLOCKCHAIN_PAYMENTS_URL, config.WEB3_PROVIDER_OPTIONS);

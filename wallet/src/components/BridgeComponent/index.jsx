@@ -18,7 +18,6 @@ import polygonNightfall from '../../assets/svg/polygon-nightfall.svg';
 import discloserBottomImage from '../../assets/img/discloser-bottom.svg';
 import lightArrowImage from '../../assets/img/light-arrow.svg';
 import { approve, getContractAddress, submitTransaction } from '../../common-files/utils/contract';
-import W3 from '../../common-files/utils/web3';
 import approveImg from '../../assets/img/modalImages/adeposit_approve1.png';
 import depositConfirmed from '../../assets/img/modalImages/adeposit_confirmed.png';
 import successHand from '../../assets/img/modalImages/success-hand.png';
