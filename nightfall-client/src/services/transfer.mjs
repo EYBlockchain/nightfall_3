@@ -172,10 +172,7 @@ async function transfer(transferParams) {
       const parity = bin[0];
       const ordinate = bin.slice(1);
       console.log('INPUTS', parity, ordinate, bin);
-      const fields = [
-        new GN(parity, 'binary').field(BN128_GROUP_ORDER),
-        new GN(ordinate, 'binary').field(BN128_GROUP_ORDER),
-      ];
+      const fields = [parity, new GN(ordinate, 'binary').field(BN128_GROUP_ORDER)];
       console.log('FIELDS', fields);
       return fields;
     }),

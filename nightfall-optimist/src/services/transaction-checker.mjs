@@ -196,10 +196,7 @@ async function verifyProof(transaction) {
             const bin = new GN(text).binary.padStart(256, '0');
             const parity = bin[0];
             const ordinate = bin.slice(1);
-            return [
-              new GN(parity, 'binary').field(BN128_GROUP_ORDER),
-              new GN(ordinate, 'binary').field(BN128_GROUP_ORDER, false),
-            ];
+            return [parity, new GN(ordinate, 'binary').field(BN128_GROUP_ORDER, false)];
           }),
         ].flat(Infinity),
       );
@@ -225,10 +222,7 @@ async function verifyProof(transaction) {
             const bin = new GN(text).binary.padStart(256, '0');
             const parity = bin[0];
             const ordinate = bin.slice(1);
-            return [
-              new GN(parity, 'binary').field(BN128_GROUP_ORDER),
-              new GN(ordinate, 'binary').field(BN128_GROUP_ORDER, false),
-            ];
+            return [parity, new GN(ordinate, 'binary').field(BN128_GROUP_ORDER, false)];
           }),
         ].flat(Infinity),
       );
