@@ -4,7 +4,6 @@ Basic data structures for an optimistic rollup
 */
 
 pragma solidity ^0.8.0;
-pragma experimental ABIEncoderV2;
 
 contract Structures {
     enum TransactionTypes {DEPOSIT, SINGLE_TRANSFER, DOUBLE_TRANSFER, WITHDRAW}
@@ -21,7 +20,11 @@ contract Structures {
 
     event CommittedToChallenge(bytes32 commitHash, address sender);
 
-    event InstantWithdrawalRequested(bytes32 withdrawTransactionHash, address paidBy, uint amount);
+    event InstantWithdrawalRequested(
+        bytes32 withdrawTransactionHash,
+        address paidBy,
+        uint256 amount
+    );
 
     /**
   These events are what the merkle-tree microservice's filters will listen for.
@@ -46,18 +49,18 @@ contract Structures {
         uint256[4] proof;
     }
 
-  struct Block {
-    uint48 leafCount; // note this is defined to be the number of leaves BEFORE the commitments in this block are added
-    address proposer;
-    bytes32 root; // the 'output' commmitment root after adding all commitments
-    uint256 blockNumberL2;
-    bytes32 previousBlockHash;
-  }
+    struct Block {
+        uint48 leafCount; // note this is defined to be the number of leaves BEFORE the commitments in this block are added
+        address proposer;
+        bytes32 root; // the 'output' commmitment root after adding all commitments
+        uint256 blockNumberL2;
+        bytes32 previousBlockHash;
+    }
 
-  struct BlockData {
-    bytes32 blockHash; // hash of the block
-    uint256 time; // time the block was created
-  }
+    struct BlockData {
+        bytes32 blockHash; // hash of the block
+        uint256 time; // time the block was created
+    }
 
     struct LinkedAddress {
         address thisAddress;

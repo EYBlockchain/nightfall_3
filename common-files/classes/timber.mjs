@@ -8,10 +8,9 @@ A class for timber-like merkle trees.
 import config from 'config';
 import utils from '../utils/crypto/merkle-tree/utils.mjs';
 
-const { TIMBER_HEIGHT } = config;
-export const TIMBER_WIDTH = 2 ** TIMBER_HEIGHT;
+const { TIMBER_HEIGHT, HASH_TYPE, ZERO } = config;
 
-/** 
+/**
 Helper functions for use in the Timber class, defined here before use
 */
 
@@ -33,7 +32,7 @@ This function is called recursively to traverse down the tree using the known in
 @function _insertLeaf
 @param {string} leafVal - The commitment hash to be inserted into the tree
 @param {object} tree - The tree where leafVal will be inserted
-@param {string} path - The path down tree that leafVal will be inserted into 
+@param {string} path - The path down tree that leafVal will be inserted into
 @returns {object} An updated tree post-insertion
 */
 const _insertLeaf = (leafVal, tree, path) => {
@@ -49,8 +48,8 @@ const _insertLeaf = (leafVal, tree, path) => {
     // We then use the next element in path to decided which subtree to traverse
     case 'leaf':
       return path[0] === '0'
-        ? Branch(_insertLeaf(leafVal, Leaf('0'), path.slice(1)), Leaf('0'))
-        : Branch(Leaf('0'), _insertLeaf(leafVal, Leaf('0'), path.slice(1)));
+        ? Branch(_insertLeaf(leafVal, Leaf(ZERO), path.slice(1)), Leaf(ZERO))
+        : Branch(Leaf(ZERO), _insertLeaf(leafVal, Leaf(ZERO), path.slice(1)));
     default:
       return tree;
   }
@@ -66,7 +65,7 @@ This function is like _insertLeaf but it doesnt prune children on insertion
 */
 const _safeInsertLeaf = (leafVal, tree, path) => {
   if (path.length === 0) {
-    if (tree.value === '0') return Leaf(leafVal);
+    if (tree.value === ZERO) return Leaf(leafVal);
     return tree;
   }
   switch (tree.tag) {
@@ -79,8 +78,8 @@ const _safeInsertLeaf = (leafVal, tree, path) => {
     // We then use the next element in path to decided which subtree to traverse
     case 'leaf':
       return path[0] === '0'
-        ? Branch(_safeInsertLeaf(leafVal, Leaf('0'), path.slice(1)), Leaf('0'))
-        : Branch(Leaf('0'), _safeInsertLeaf(leafVal, Leaf('0'), path.slice(1)));
+        ? Branch(_safeInsertLeaf(leafVal, Leaf(ZERO), path.slice(1)), Leaf(ZERO))
+        : Branch(Leaf(ZERO), _safeInsertLeaf(leafVal, Leaf(ZERO), path.slice(1)));
     default:
       return tree;
   }
@@ -96,7 +95,7 @@ This function is called recursively to traverse down the tree to find check set 
 @param {Array<object>} acc - This is the array that contains the membership proof
 @returns {Array<object>} An array containing the membership proof
 */
-const _checkMembership = (leafVal, tree, path, f, acc) => {
+const _checkMembership = (leafVal, tree, path, f, hashType, acc) => {
   switch (tree.tag) {
     case 'branch':
       // If recurse left (i.e. '0'), we apply the function f to the right subtree  and vice versa
@@ -107,14 +106,16 @@ const _checkMembership = (leafVal, tree, path, f, acc) => {
             tree.left,
             path.slice(1),
             f,
-            [{ dir: 'right', value: f(tree.right) }].concat(acc),
+            hashType,
+            [{ dir: 'right', value: f(tree.right, hashType) }].concat(acc),
           )
         : _checkMembership(
             leafVal,
             tree.right,
             path.slice(1),
             f,
-            [{ dir: 'left', value: f(tree.left) }].concat(acc),
+            hashType,
+            [{ dir: 'left', value: f(tree.left, hashType) }].concat(acc),
           );
 
     case 'leaf':
@@ -148,8 +149,8 @@ new leaves to.
  * @param timber - A timber instance whose frontier we want to tree-ify
  * @returns An object that represents a tree formed from the frontier.
  */
-const frontierToTree = timber => {
-  if (timber.frontier.length === 0) return Leaf('0');
+const frontierToTree = (timber, height) => {
+  if (timber.frontier.length === 0) return Leaf(ZERO);
   const currentFrontierSlotArray = Array(timber.frontier.length)
     .fill(timber.leafCount)
     .map((a, i) => Math.floor(a / 2 ** i));
@@ -159,13 +160,13 @@ const frontierToTree = timber => {
       frontierPaths.push(
         Number(currentFrontierSlotArray[i] - 2)
           .toString(2)
-          .padStart(TIMBER_HEIGHT - i, '0'),
+          .padStart(height - i, '0'),
       );
     else
       frontierPaths.push(
         Number(currentFrontierSlotArray[i] - 1)
           .toString(2)
-          .padStart(TIMBER_HEIGHT - i, '0'),
+          .padStart(height - i, '0'),
       );
   }
   return timber.frontier.reduce((acc, curr, index) => {
@@ -182,12 +183,12 @@ const frontierToTree = timber => {
  * @param {string} value - The leafValue corresponding to this valid sibling path.
  * @returns A tree object updated with this sibling path.
  */
-const insertSiblingPath = (tree, siblingPath, index, value) => {
-  const pathToIndex = Number(index).toString(2).padStart(TIMBER_HEIGHT, '0');
+const insertSiblingPath = (tree, siblingPath, index, value, height) => {
+  const pathToIndex = Number(index).toString(2).padStart(height, '0');
   const siblingIndexPath = siblingPath.path.map((s, idx) =>
     s.dir === 'left'
-      ? { value: s.value, path: `${pathToIndex.slice(0, TIMBER_HEIGHT - idx - 1)}0` }
-      : { value: s.value, path: `${pathToIndex.slice(0, TIMBER_HEIGHT - idx - 1)}1` },
+      ? { value: s.value, path: `${pathToIndex.slice(0, height - idx - 1)}0` }
+      : { value: s.value, path: `${pathToIndex.slice(0, height - idx - 1)}1` },
   );
   const allPaths = [{ value, path: pathToIndex }].concat(siblingIndexPath);
   return allPaths.reduce((acc, curr) => {
@@ -253,17 +254,33 @@ Creates a timber library instance. The constructor is designed to enable the rec
 class Timber {
   root;
 
-  tree = Leaf('0');
+  tree = Leaf(ZERO);
 
   frontier = [];
 
   leafCount = 0;
 
-  constructor(root = 0, frontier = [], leafCount = 0, tree = Leaf('0')) {
+  hashType;
+
+  height;
+
+  width;
+
+  constructor(
+    root = 0,
+    frontier = [],
+    leafCount = 0,
+    tree = Leaf(ZERO),
+    hashType = HASH_TYPE,
+    height = TIMBER_HEIGHT,
+  ) {
     this.root = root;
     this.tree = tree;
     this.frontier = frontier;
     this.leafCount = leafCount;
+    this.hashType = hashType;
+    this.height = height;
+    this.width = 2 ** height;
     return this;
   }
 
@@ -292,10 +309,14 @@ class Timber {
   @param {object} tree - The tree to be traversed
   @returns {string} The result of the accumulations as due to f
   */
-  static reduceTree(f, tree) {
+  static reduceTree(f, hashType, tree) {
     switch (tree.tag) {
       case 'branch':
-        return f(this.reduceTree(f, tree.left), this.reduceTree(f, tree.right));
+        return f(
+          hashType,
+          this.reduceTree(f, hashType, tree.left),
+          this.reduceTree(f, hashType, tree.right),
+        );
       case 'leaf':
         return tree.value;
       default:
@@ -309,8 +330,8 @@ class Timber {
   @param {object} tree - The tree that will be hashed
   @returns {string} The hash result;
   */
-  static hashTree(tree) {
-    return Timber.reduceTree(utils.concatenateThenHash, tree);
+  static hashTree(tree, hashType) {
+    return Timber.reduceTree(utils.concatenateThenHash, hashType, tree);
     // return Timber.reduceTree((a,b) => a + '|' + b, tree);
   }
 
@@ -346,8 +367,8 @@ class Timber {
     // eslint-disable-next-line no-param-reassign
     if (index === -1) index = this.toArray()?.findIndex(comm => comm === leafValue);
     if (index > this.leafCount || index < 0) throw new Error('Index is outside valid leaf count');
-    const indexBinary = Number(index).toString(2).padStart(TIMBER_HEIGHT, '0');
-    return _checkMembership(leafValue, this.tree, indexBinary, Timber.hashTree, []);
+    const indexBinary = Number(index).toString(2).padStart(this.height, '0');
+    return _checkMembership(leafValue, this.tree, indexBinary, Timber.hashTree, this.hashType, []);
   }
 
   /**
@@ -358,11 +379,11 @@ class Timber {
   @param {Array<object>} proofPath - The output from getSiblingPath.
   @returns {boolean} If a path is true or false.
   */
-  static verifySiblingPath(leafValue, root, proofPath) {
+  static verifySiblingPath(leafValue, root, proofPath, hashType) {
     if (proofPath.path.length === 0) return false;
     const calcRoot = proofPath.path.reduce((acc, curr) => {
-      if (curr.dir === 'right') return utils.concatenateThenHash(acc, curr.value);
-      return utils.concatenateThenHash(curr.value, acc);
+      if (curr.dir === 'right') return utils.concatenateThenHash(hashType, acc, curr.value);
+      return utils.concatenateThenHash(hashType, curr.value, acc);
     }, leafValue);
     return calcRoot === root;
   }
@@ -375,7 +396,7 @@ class Timber {
   @param {number} height - The height of the current tree, defaults to the TIMBER_HEIGHT
   @returns {Array<string>} The frontier gor the given tree
   */
-  static calcFrontier(tree, leafCount, height = TIMBER_HEIGHT) {
+  static calcFrontier(tree, leafCount, height, hashType) {
     // The base case - there are no leaves in this tree.
     if (leafCount === 0) return [];
     // If there are some leaves in this tree, we can make our life easier
@@ -388,8 +409,8 @@ class Timber {
       // Dirs is an array of directions: ['0','10','110'...]
       const dirs = [...Array(numFrontierPoints - 1).keys()].map(a => '0'.padStart(a + 1, '1'));
       // The frontier points are then the root of the tree and our deterministic paths.
-      return [Timber.hashTree(tree)].concat(
-        dirs.map(fp => Timber.hashTree(Timber.moveDown(tree, fp))),
+      return [Timber.hashTree(tree, hashType)].concat(
+        dirs.map(fp => Timber.hashTree(Timber.moveDown(tree, fp), hashType)),
       );
     }
     // Our tree is not full at this height, but there will be a level where it will be full
@@ -415,16 +436,18 @@ class Timber {
       '0'.padStart(a + 1, '1'),
     );
 
-    const leftTreeFrontierPoints = [Timber.hashTree(frontierTreeRoot.left)]
+    const leftTreeFrontierPoints = [Timber.hashTree(frontierTreeRoot.left, hashType)]
       .concat(
-        leftSubTreeDirs.map(fp => Timber.hashTree(Timber.moveDown(frontierTreeRoot.left, fp))),
+        leftSubTreeDirs.map(fp =>
+          Timber.hashTree(Timber.moveDown(frontierTreeRoot.left, fp), hashType),
+        ),
       )
       .reverse();
 
     const newHeight = numFrontierPoints - 1;
     return combineFrontiers(
       leftTreeFrontierPoints,
-      this.calcFrontier(frontierTreeRoot.right, rightLeafCount, newHeight),
+      this.calcFrontier(frontierTreeRoot.right, rightLeafCount, newHeight, hashType),
     );
   }
 
@@ -435,15 +458,15 @@ class Timber {
   @returns {object} Updated timber instance.
   */
   insertLeaf(leafValue) {
-    if (this.leafCount === TIMBER_WIDTH) throw new Error('Tree is Full');
+    if (this.leafCount === this.width) throw new Error('Tree is Full');
     // New Leaf will be added at index leafCount - the leafCount is always one more than the index.
-    const nextIndex = Number(this.leafCount).toString(2).padStart(TIMBER_HEIGHT, '0');
+    const nextIndex = Number(this.leafCount).toString(2).padStart(this.height, '0');
 
     const inputTree = this.tree;
     this.tree = _insertLeaf(leafValue, inputTree, nextIndex);
     this.leafCount += 1;
-    this.root = Timber.hashTree(this.tree);
-    this.frontier = Timber.calcFrontier(this.tree, this.leafCount);
+    this.root = Timber.hashTree(this.tree, this.hashType);
+    this.frontier = Timber.calcFrontier(this.tree, this.leafCount, this.height, this.hashType);
     return this;
   }
 
@@ -455,20 +478,20 @@ class Timber {
   */
   insertLeaves(leafValues) {
     if (leafValues.length === 0) return this;
-    if (this.leafCount + leafValues.length > TIMBER_WIDTH)
+    if (this.leafCount + leafValues.length > this.width)
       throw new Error('Cannot insert leaves as tree is/will be full');
 
     const idxValuePairs = [...Array(leafValues.length).keys()].map((a, i) => {
       const nodeIndex = Number(this.leafCount + a)
         .toString(2)
-        .padStart(TIMBER_HEIGHT, '0');
+        .padStart(this.height, '0');
       return [nodeIndex, leafValues[i]];
     });
     const inputTree = this.tree;
     this.tree = idxValuePairs.reduce((acc, curr) => _insertLeaf(curr[1], acc, curr[0]), inputTree);
     this.leafCount += leafValues.length;
-    this.root = Timber.hashTree(this.tree);
-    this.frontier = Timber.calcFrontier(this.tree, this.leafCount);
+    this.root = Timber.hashTree(this.tree, this.hashType);
+    this.frontier = Timber.calcFrontier(this.tree, this.leafCount, this.height, this.hashType);
     return this;
   }
 
@@ -483,7 +506,7 @@ class Timber {
     switch (tree.tag) {
       case 'branch':
         return pathToLeaf[0] === '0'
-          ? Branch(this.pruneRightSubTree(tree.left, pathToLeaf.slice(1)), Leaf('0')) // Going left, delete the right tree
+          ? Branch(this.pruneRightSubTree(tree.left, pathToLeaf.slice(1)), Leaf(ZERO)) // Going left, delete the right tree
           : Branch(tree.left, this.pruneRightSubTree(tree.right, pathToLeaf.slice(1))); // Going right, but leave the left tree intact
       case 'leaf':
         return tree;
@@ -500,11 +523,11 @@ class Timber {
   * @param {Array<string>} leaves - The incoming new leaves
   * @returns {object} A timber instance where everything but the tree is updated.
   */
-  static statelessUpdate(timber, leaves) {
+  static statelessUpdate(timber, leaves, hashType, height) {
     if (leaves.length === 0) return timber;
     if (timber.leafCount === 0)
       // If the timber tree is empty, it's much simpler insert the leaves anyways.
-      return new Timber().insertLeaves(leaves);
+      return new Timber(...[, , , ,], hashType, height).insertLeaves(leaves);
 
     // Since we cannot rely on timber.tree, we have to work out how "full" the trees are
     // at each level using only their respective leaf counts.
@@ -546,15 +569,20 @@ class Timber {
       // We can "round a tree out" (i.e. make it perfect) by inserting 2^depth leaves from the incoming set first.
       const leavesToSlice = 2 ** oddIndex;
       const newLeaves = leaves.slice(leavesToSlice);
-      const newTimber = this.statelessUpdate(timber, leaves.slice(0, leavesToSlice)); // Update our frontier
-      return this.statelessUpdate(newTimber, newLeaves);
+      const newTimber = this.statelessUpdate(
+        timber,
+        leaves.slice(0, leavesToSlice),
+        hashType,
+        height,
+      ); // Update our frontier
+      return this.statelessUpdate(newTimber, newLeaves, hashType, height);
     }
 
     // If we get to this point, then are inserting our leaves into an existing balanced tree
     // This is ideal as it means we can batch insert out incoming leaves by making it into a mini-tree
 
     // This is the subtree consisting of the new leaves.
-    const newSubTree = new Timber().insertLeaves(leaves);
+    const newSubTree = new Timber(...[, , , ,], hashType, height).insertLeaves(leaves);
 
     // We use spread operator here to prevent javascript call-by-sharing
     const paddedSubTreeFrontier = [...newSubTree.frontier];
@@ -564,6 +592,7 @@ class Timber {
     if (newSubTree.frontier.length < subTreeFrontierSlotArray.filter(f => f !== 0).length) {
       for (let i = newSubTree.frontier.length; i < subTreeFrontierSlotArray.length; i++) {
         paddedSubTreeFrontier[i] = utils.concatenateThenHash(
+          hashType,
           timber.frontier[i - 1],
           paddedSubTreeFrontier[i - 1],
         );
@@ -578,7 +607,7 @@ class Timber {
 
       // if (currentFrontierSlot === 0 && subTreeFrontierSlot === 0)
       //   finalFrontier.push(
-      //     utils.concatenateThenHash(timber.frontier[i - 1], newSubTree.frontier[i - 1]),
+      //     utils.concatenateThenHash(hashType, timber.frontier[i - 1], newSubTree.frontier[i - 1]),
       //   );
 
       // The rules for deciding if we should pick the existing frontier or override it with
@@ -599,16 +628,14 @@ class Timber {
     // const highestFrontier = Timber.calcRoot(timber.frontier, currentFrontierSlotArray, newSubTree);
     const rightMostElementSubTree = Number(newSubTree.leafCount - 1)
       .toString(2)
-      .padStart(TIMBER_HEIGHT, '0');
+      .padStart(height, '0');
     // This is the height of our sub tree.
     const treeHeight = Math.ceil(Math.log2(newSubTree.leafCount));
 
     // We can shortcut the root hash process by hashing our subtree.
     let root = Timber.hashTree(
-      Timber.moveDown(
-        newSubTree.tree,
-        rightMostElementSubTree.slice(0, TIMBER_HEIGHT - treeHeight),
-      ),
+      Timber.moveDown(newSubTree.tree, rightMostElementSubTree.slice(0, height - treeHeight)),
+      hashType,
     );
 
     // Now we update the root hash by moving up to the height of the existing timber tree
@@ -616,15 +643,16 @@ class Timber {
     // Otherwise we hash the frontier with our current root.
     for (let i = treeHeight; i < timber.frontier.length; i++) {
       // We do this zero check because of past padding
-      if (currentFrontierSlotArray[i] % 2 === 0) root = utils.concatenateThenHash(root, '0');
-      else if (root === timber.frontier[i]) root = utils.concatenateThenHash(root, '0');
-      else root = utils.concatenateThenHash(timber.frontier[i], root);
+      if (currentFrontierSlotArray[i] % 2 === 0)
+        root = utils.concatenateThenHash(hashType, root, ZERO);
+      else if (root === timber.frontier[i]) root = utils.concatenateThenHash(hashType, root, ZERO);
+      else root = utils.concatenateThenHash(hashType, timber.frontier[i], root);
     }
     // From the last frontier of the existing tree, we hash up to the full height with zeroes
-    for (let j = timber.frontier.length; j < TIMBER_HEIGHT; j++) {
-      root = utils.concatenateThenHash(root, '0');
+    for (let j = timber.frontier.length; j < height; j++) {
+      root = utils.concatenateThenHash(hashType, root, ZERO);
     }
-    const t = new Timber(root, finalFrontier, timber.leafCount + leaves.length);
+    const t = new Timber(root, finalFrontier, timber.leafCount + leaves.length, hashType, height);
     return t;
   }
 
@@ -637,17 +665,17 @@ class Timber {
    * @param leafIndex - The index in leaves that the sibling path will be calculated for.
    * @returns An object { isMember: bool, path: Array<{dir: 'string',value: string }> } representing the sibling path for that element.
    */
-  static statelessSiblingPath(timber, leaves, leafIndex) {
+  static statelessSiblingPath(timber, leaves, leafIndex, hashType, height) {
     if (leaves.length === 0 || leafIndex >= leaves.length || leafIndex < 0)
       return { isMember: false, path: [] };
     const leavesInsertOrder = batchLeaves(timber.leafCount, leaves, []);
     const leafVal = leaves[leafIndex];
     const leafIndexAfterInsertion = leafIndex + timber.leafCount;
 
-    const frontierTree = frontierToTree(timber);
+    const frontierTree = frontierToTree(timber, height);
     const finalTree = leavesInsertOrder.reduce(
       (acc, curr) => acc.insertLeaves(curr),
-      new Timber(timber.root, timber.frontier, timber.leafCount, frontierTree),
+      new Timber(timber.root, timber.frontier, timber.leafCount, frontierTree, hashType, height),
     );
 
     return finalTree.getSiblingPath(leafVal, leafIndexAfterInsertion);
@@ -664,13 +692,13 @@ class Timber {
     if (leafCount === this.leafCount) return this;
     const pathToNewLastElement = Number(leafCount - 1)
       .toString(2)
-      .padStart(TIMBER_HEIGHT, '0');
+      .padStart(this.height, '0');
 
     this.tree =
-      leafCount === 0 ? Leaf('0') : Timber.pruneRightSubTree(this.tree, pathToNewLastElement);
+      leafCount === 0 ? Leaf(ZERO) : Timber.pruneRightSubTree(this.tree, pathToNewLastElement);
     this.leafCount = leafCount;
-    this.frontier = Timber.calcFrontier(this.tree, this.leafCount);
-    this.root = Timber.hashTree(this.tree);
+    this.frontier = Timber.calcFrontier(this.tree, this.leafCount, this.height, this.hashType);
+    this.root = Timber.hashTree(this.tree, this.hashType);
     return this;
   }
 
@@ -681,7 +709,7 @@ class Timber {
   */
   toArray() {
     if (this.leafCount === 0) return [];
-    return Timber.reduceTree((a, b) => [].concat([a, b]).flat(), this.tree);
+    return Timber.reduceTree((...[, a, b]) => [].concat([a, b]).flat(), undefined, this.tree);
   }
 
   /**
@@ -694,18 +722,26 @@ class Timber {
    * @param {object} siblingPath - The latest sibling path that for leafIndex that will be updated.
    * @returns {object} - Updated siblingPath for leafIndex with leafValue.
    */
-  static statelessIncrementSiblingPath(timber, leaves, leafIndex, leafValue, siblingPath) {
+  static statelessIncrementSiblingPath(
+    timber,
+    leaves,
+    leafIndex,
+    leafValue,
+    siblingPath,
+    hashType,
+    height,
+  ) {
     if (leaves.length === 0 || leafIndex < 0 || leafIndex >= timber.leafCount) return siblingPath;
 
     const leavesInsertOrder = batchLeaves(timber.leafCount, leaves, []);
     // Turn the frontier into a tree-like structure
-    const newTree = frontierToTree(timber);
+    const newTree = frontierToTree(timber, height);
     // Add the sibling path to the frontier tree-like structure
-    const siblingTree = insertSiblingPath(newTree, siblingPath, leafIndex, leafValue);
+    const siblingTree = insertSiblingPath(newTree, siblingPath, leafIndex, leafValue, height);
     // Add all the new incoming leaves to this tree-like structure
     const finalTree = leavesInsertOrder.reduce(
       (acc, curr) => acc.insertLeaves(curr),
-      new Timber(timber.root, timber.frontier, timber.leafCount, siblingTree),
+      new Timber(timber.root, timber.frontier, timber.leafCount, siblingTree, hashType, height),
     );
     // Get the sibling path for leafIndex from this tree.
     return finalTree.getSiblingPath(leafValue, leafIndex);

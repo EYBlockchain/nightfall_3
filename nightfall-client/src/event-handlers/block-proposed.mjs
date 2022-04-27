@@ -6,13 +6,16 @@ import {
   markOnChain,
   countCommitments,
   setSiblingInfo,
+  setTransactionHashSiblingInfo,
+  countWithdrawTransactionHashes,
+  isTransactionHashWithdraw,
 } from '../services/commitment-storage.mjs';
 import getProposeBlockCalldata from '../services/process-calldata.mjs';
 import { ivks, nsks } from '../services/keys.mjs';
 import { getLatestTree, saveTree, saveTransaction, saveBlock } from '../services/database.mjs';
 import { decryptCommitment } from '../services/commitment-sync.mjs';
 
-const { ZERO } = config;
+const { ZERO, HASH_TYPE, TIMBER_HEIGHT, TXHASHROOT_HASH_TYPE, TXHASHROOT_TIMBER_HEIGHT } = config;
 
 /**
 This handler runs whenever a BlockProposed event is emitted by the blockchain
@@ -55,7 +58,12 @@ async function blockProposedEventHandler(data) {
 
   // await Promise.all(toStore);
   await Promise.all(dbUpdates);
-  const updatedTimber = Timber.statelessUpdate(latestTree, blockCommitments);
+  const updatedTimber = Timber.statelessUpdate(
+    latestTree,
+    blockCommitments,
+    HASH_TYPE,
+    TIMBER_HEIGHT,
+  );
   await saveTree(transactionHashL1, block.blockNumberL2, updatedTimber);
   logger.debug(`Saved tree for L2 block ${block.blockNumberL2}`);
   await Promise.all(
@@ -63,11 +71,50 @@ async function blockProposedEventHandler(data) {
     blockCommitments.map(async (c, i) => {
       const count = await countCommitments([c]);
       if (count > 0) {
-        const siblingPath = Timber.statelessSiblingPath(latestTree, blockCommitments, i);
+        const siblingPath = Timber.statelessSiblingPath(
+          latestTree,
+          blockCommitments,
+          i,
+          HASH_TYPE,
+          TIMBER_HEIGHT,
+        );
         return setSiblingInfo(c, siblingPath, latestTree.leafCount + i, updatedTimber.root);
       }
     }),
   );
+
+  // Save sibling path of withdraw transactions known to this client.
+  // This is required to finalise/instant withdraw
+  if ((await countWithdrawTransactionHashes(block.transactionHashes)) > 0) {
+    const transctionHashesTimber = new Timber(
+      ...[, , , ,],
+      TXHASHROOT_HASH_TYPE,
+      TXHASHROOT_TIMBER_HEIGHT,
+    );
+
+    const updatedTransctionHashesTimber = Timber.statelessUpdate(
+      transctionHashesTimber,
+      block.transactionHashes,
+      TXHASHROOT_HASH_TYPE,
+      TXHASHROOT_TIMBER_HEIGHT,
+    );
+
+    await Promise.all(
+      // eslint-disable-next-line consistent-return
+      block.transactionHashes.map(async (transactionHash, i) => {
+        if (await isTransactionHashWithdraw(transactionHash)) {
+          const siblingPathTransactionHash =
+            updatedTransctionHashesTimber.getSiblingPath(transactionHash);
+          return setTransactionHashSiblingInfo(
+            transactionHash,
+            siblingPathTransactionHash,
+            transctionHashesTimber.leafCount + i,
+            updatedTransctionHashesTimber.root,
+          );
+        }
+      }),
+    );
+  }
 }
 
 export default blockProposedEventHandler;

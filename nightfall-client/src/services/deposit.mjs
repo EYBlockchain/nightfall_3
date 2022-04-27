@@ -4,7 +4,7 @@
  same value. It is agnostic to whether we are dealing with an ERC20 or ERC721
  (or ERC1155).
  * @module deposit.mjs
- * @author westlad, Chaitanya-Konda, iAmMichaelConnor, will-kim
+ * @author westlad, ChaitanyaKonda, iAmMichaelConnor, will-kim
  */
 import config from 'config';
 import axios from 'axios';

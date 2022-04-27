@@ -24,7 +24,14 @@ import transactionSubmittedEventHandler from '../event-handlers/transaction-subm
 import getProposers from '../services/proposer.mjs';
 
 const router = express.Router();
-const { STATE_CONTRACT_NAME, PROPOSERS_CONTRACT_NAME, SHIELD_CONTRACT_NAME, ZERO } = config;
+const {
+  STATE_CONTRACT_NAME,
+  PROPOSERS_CONTRACT_NAME,
+  SHIELD_CONTRACT_NAME,
+  ZERO,
+  HASH_TYPE,
+  TIMBER_HEIGHT,
+} = config;
 
 let proposer;
 export function setProposer(p) {
@@ -199,11 +206,11 @@ router.get('/withdraw', async (req, res, next) => {
  */
 router.post('/payment', async (req, res, next) => {
   logger.debug(`payment endpoint received GET ${JSON.stringify(req.body, null, 2)}`);
-  const { block, blockNumberL2, transactions } = req.body;
+  const { block, transactions } = req.body;
   try {
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
     const txDataToSign = await shieldContractInstance.methods
-      .requestBlockPayment(block, blockNumberL2, transactions)
+      .requestBlockPayment(block, transactions)
       .encodeABI();
     logger.debug('returning raw transaction data');
     logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
@@ -321,7 +328,7 @@ router.post('/encode', async (req, res, next) => {
       const leafValues = newTransactions
         .map(newTransaction => newTransaction.commitments.filter(c => c !== ZERO))
         .flat(Infinity);
-      const { root } = Timber.statelessUpdate(latestTree, leafValues);
+      const { root } = Timber.statelessUpdate(latestTree, leafValues, HASH_TYPE, TIMBER_HEIGHT);
       block.root = root;
     }
 

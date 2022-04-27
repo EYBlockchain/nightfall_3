@@ -72,7 +72,7 @@ const transpileBlockBuilder = (_pathToSrc, _pathToInject) => {
 
   // We need to re-route the references to use our bad block values
   // This is preferred as we can then reuse the calcHash function.
-  const regexReplaceCalls = /this\.localLeafCount \+=.*(\n.*){3}/g;
+  const regexReplaceCalls = /this\.localLeafCount = updatedTimber.*(\n.*){3}/g;
   const reRoute = `const badBlock = createBadBlock({
       proposer,
       root: updatedTimber.root,

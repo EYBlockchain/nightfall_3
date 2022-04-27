@@ -115,7 +115,6 @@ export async function createChallenge(block, transactions, err) {
             priorBlockTransactions.map(t => Transaction.buildSolidityStruct(t)),
             frontierToValidatePreviousBlock,
             Block.buildSolidityStruct(block),
-            block.blockNumberL2,
             transactions.map(t => Transaction.buildSolidityStruct(t)),
             salt,
           )
@@ -141,9 +140,7 @@ export async function createChallenge(block, transactions, err) {
         txDataToSign = await challengeContractInstance.methods
           .challengeNoDuplicateTransaction(
             Block.buildSolidityStruct(block),
-            block.blockNumberL2,
             Block.buildSolidityStruct(block2),
-            block2.blockNumberL2,
             transactions.map(t => Transaction.buildSolidityStruct(t)),
             transactions2.map(t => Transaction.buildSolidityStruct(t)),
             transactionIndex1, // index of duplicate transaction in block
@@ -160,7 +157,6 @@ export async function createChallenge(block, transactions, err) {
         txDataToSign = await challengeContractInstance.methods
           .challengeTransactionType(
             Block.buildSolidityStruct(block),
-            block.blockNumberL2,
             transactions.map(t => Transaction.buildSolidityStruct(t)),
             transactionIndex,
             salt,
@@ -177,7 +173,6 @@ export async function createChallenge(block, transactions, err) {
         txDataToSign = await challengeContractInstance.methods
           .challengeHistoricRoot(
             Block.buildSolidityStruct(block),
-            block.blockNumberL2,
             transactions.map(t => Transaction.buildSolidityStruct(t)),
             transactionIndex,
             salt,
@@ -194,7 +189,6 @@ export async function createChallenge(block, transactions, err) {
           txDataToSign = await challengeContractInstance.methods
             .challengeProofVerification(
               Block.buildSolidityStruct(block),
-              block.blockNumberL2,
               transactions.map(t => Transaction.buildSolidityStruct(t)),
               transactionIndex,
               uncompressedProof,
@@ -216,13 +210,10 @@ export async function createChallenge(block, transactions, err) {
           txDataToSign = await challengeContractInstance.methods
             .challengeProofVerification(
               Block.buildSolidityStruct(block),
-              block.blockNumberL2,
               transactions.map(t => Transaction.buildSolidityStruct(t)),
               transactionIndex,
               Block.buildSolidityStruct(historicInput1.historicBlock),
               Block.buildSolidityStruct(historicInput2.historicBlock),
-              historicInput1.historicBlock.blockNumberL2,
-              historicInput2.historicBlock.blockNumberL2,
               historicInput1.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
               historicInput2.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
               uncompressedProof,
@@ -240,11 +231,9 @@ export async function createChallenge(block, transactions, err) {
           txDataToSign = await challengeContractInstance.methods
             .challengeProofVerification(
               Block.buildSolidityStruct(block),
-              block.blockNumberL2,
               transactions.map(t => Transaction.buildSolidityStruct(t)),
               transactionIndex,
               Block.buildSolidityStruct(blockL2ContainingHistoricRoot),
-              blockL2ContainingHistoricRoot.blockNumberL2,
               transactionsOfblockL2ContainingHistoricRoot.map(t =>
                 Transaction.buildSolidityStruct(t),
               ),
@@ -286,12 +275,10 @@ export async function createChallenge(block, transactions, err) {
           txDataToSign = await challengeContractInstance.methods
             .challengeNullifier(
               Block.buildSolidityStruct(block),
-              block.blockNumberL2,
               transactions.map(t => Transaction.buildSolidityStruct(t)),
               currentTxIdx,
               currentNullifierIdx,
               Block.buildSolidityStruct(oldBlock),
-              oldBlock.blockNumberL2,
               oldBlockTransactions.map(t => Transaction.buildSolidityStruct(t)),
               oldTxIdx,
               oldNullifierIdx,
@@ -312,7 +299,6 @@ export async function createChallenge(block, transactions, err) {
             Block.buildSolidityStruct(priorBlockL2), // the block immediately prior to this one
             priorBlockTransactions.map(t => Transaction.buildSolidityStruct(t)), // the transactions in the prior block
             Block.buildSolidityStruct(block),
-            block.blockNumberL2,
             transactions.map(t => Transaction.buildSolidityStruct(t)),
             salt,
           )

@@ -9,6 +9,7 @@ import gen from 'general-number';
 import { openDB } from 'idb';
 import logger from '../../common-files/utils/logger';
 import { Commitment, Nullifier } from '../classes/index';
+// eslint-disable-next-line import/no-cycle
 import { isValidWithdrawal } from './valid-withdrawal';
 import { getBlockByBlockNumberL2, getTransactionByTransactionHash } from './database';
 
@@ -80,6 +81,29 @@ export async function countTransactionHashes(transactionHashes) {
   return filtered.length;
 }
 
+// function to get count of transaction hashes of withdraw type. Used to decide if we should store sibling path of transaction hash to be used later for finalising or instant withdrawal
+export async function countWithdrawTransactionHashes(transactionHashes) {
+  const db = await connectDB();
+  // const res = await db.getAll(COMMITMENTS_COLLECTION);
+  const txs = await db.getAll(TRANSACTIONS_COLLECTION);
+  const filtered = txs.filter(tx => {
+    return transactionHashes.includes(tx.transactionHash) && tx.nullifierTransactionType === '3';
+  });
+  // const filtered = res.filter(r => transactionHashes.includes(r.transactionHash));
+  return filtered.length;
+}
+
+// function to get if the transaction hash belongs to a withdraw transaction
+export async function isTransactionHashWithdraw(transactionHash) {
+  const db = await connectDB();
+  // const res = await db.getAll(COMMITMENTS_COLLECTION);
+  const txs = await db.getAll(TRANSACTIONS_COLLECTION);
+  const filtered = txs.filter(tx => {
+    return tx.transactionHash === transactionHash && tx.nullifierTransactionType === '3';
+  });
+  return filtered.length;
+}
+
 // function to mark a commitments as on chain for a mongo db
 export async function markOnChain(
   commitments,
@@ -126,6 +150,42 @@ export async function setSiblingInfo(commitment, siblingPath, leafIndex, root) {
     );
   }
   return null;
+}
+
+// function to set the path of the transaction hash leaf in transaction hash timber
+export async function setTransactionHashSiblingInfo(
+  transactionHash,
+  transactionHashSiblingPath,
+  transactionHashLeafIndex,
+  transactionHashesRoot,
+) {
+  const db = await connectDB();
+  const res = await db.getAll(COMMITMENTS_COLLECTION);
+  const filtered = res.filter(r => r._id === transactionHash && r.isOnChain !== -1);
+  if (filtered.length === 1) {
+    const {
+      transactionHashSiblingPath: a,
+      transactionHashLeafIndex: b,
+      transactionHashesRoot: c,
+      ...rest
+    } = filtered[0];
+    return db.put(
+      COMMITMENTS_COLLECTION,
+      {
+        transactionHashSiblingPath,
+        transactionHashLeafIndex,
+        transactionHashesRoot,
+        ...rest,
+      },
+      filtered[0]._id,
+    );
+  }
+  return null;
+}
+
+export async function getTransactionHashSiblingInfo(transactionHash) {
+  const db = await connectDB();
+  return db.get(COMMITMENTS_COLLECTION, transactionHash);
 }
 
 // function to mark a commitment as pending nullication for a mongo db
@@ -522,7 +582,8 @@ export async function getWithdrawCommitments() {
   const withdrawsDetailsValid = await Promise.all(
     blockTxs.map(async wt => {
       const { block, transactions, index } = wt;
-      const valid = await isValidWithdrawal({ block, transactions, index });
+      // TODO isValidWithdrawal is called with wrong parameters
+      const valid = await isValidWithdrawal(block, transactions, index);
       return {
         compressedPkd: wt.compressedPkd,
         ercAddress: wt.ercAddress,

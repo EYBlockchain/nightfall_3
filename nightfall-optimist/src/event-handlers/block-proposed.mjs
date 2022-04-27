@@ -15,7 +15,7 @@ import {
 } from '../services/database.mjs';
 import { getProposeBlockCalldata } from '../services/process-calldata.mjs';
 
-const { ZERO } = config;
+const { ZERO, HASH_TYPE, TIMBER_HEIGHT } = config;
 
 let ws;
 
@@ -66,7 +66,12 @@ async function blockProposedEventHandler(data) {
 
     const latestTree = await getLatestTree();
     const blockCommitments = transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat();
-    const updatedTimber = Timber.statelessUpdate(latestTree, blockCommitments);
+    const updatedTimber = Timber.statelessUpdate(
+      latestTree,
+      blockCommitments,
+      HASH_TYPE,
+      TIMBER_HEIGHT,
+    );
     const res = await saveTree(currentBlockCount, block.blockNumberL2, updatedTimber);
     logger.debug(`Saving tree with block number ${block.blockNumberL2}, ${res}`);
     // signal to the block-making routines that a block is received: they

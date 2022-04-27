@@ -12,6 +12,7 @@ pragma solidity ^0.8.0;
 import './Structures.sol';
 import './Utils.sol';
 import './Config.sol';
+import './MerkleTree_Stateless_KECCAK.sol';
 
 contract State is Structures, Initializable, ReentrancyGuardUpgradeable, Config {
     // global state variables
@@ -72,7 +73,6 @@ contract State is Structures, Initializable, ReentrancyGuardUpgradeable, Config 
         onlyCurrentProposer
     {
         require(b.blockNumberL2 == blockHashes.length, 'The block is out of order'); // this will fail if a tx is re-mined out of order due to a chain reorg.
-        bytes32 previousBlockHash;
         if (blockHashes.length != 0)
             require(
                 b.previousBlockHash == blockHashes[blockHashes.length - 1].blockHash,
@@ -87,7 +87,44 @@ contract State is Structures, Initializable, ReentrancyGuardUpgradeable, Config 
         // To do this, we simply hash the function parameters because (1) they
         // contain all of the relevant data (2) it doesn't take much gas.
         // All check pass so add the block to the list of blocks waiting to be permanently added to the state - we only save the hash of the block data plus the absolute minimum of metadata - it's up to the challenger, or person requesting inclusion of the block to the permanent contract state, to provide the block data.
-        blockHashes.push(BlockData({blockHash: keccak256(msg.data[4:]), time: block.timestamp}));
+        bytes32 transactionHashesRoot;
+        {
+            bytes32[6] memory frontier;
+            uint256 transactionHashCount;
+            bytes32[] memory transactionHashes = new bytes32[](Config.TRANSACTIONS_BATCH_SIZE); // TRANSACTIONS_BATCH_SIZE to control stack too deep error
+
+            for (uint256 i = 0; i < t.length; i++) {
+                {
+                    Transaction memory transaction =
+                        abi.decode(
+                            msg.data[((768 * i) + 228):((768 * (i + 1)) + 228)],
+                            (Transaction)
+                        ); // a transaction has 768 bytes of calldata; 228 = 4 (function signature) + 160 (Block) + 64 (Transaction[] details)
+                    transactionHashes[i % Config.TRANSACTIONS_BATCH_SIZE] = Utils.hashTransaction(
+                        transaction
+                    );
+                }
+                // a batch of transactions of size TRANSACTIONS_BATCH_SIZE is ready
+                if (i % Config.TRANSACTIONS_BATCH_SIZE == Config.TRANSACTIONS_BATCH_SIZE - 1) {
+                    (
+                        transactionHashesRoot,
+                        frontier,
+                        transactionHashCount
+                    ) = MerkleTree_Stateless_KECCAK.insertLeaves(
+                        transactionHashes,
+                        frontier,
+                        transactionHashCount
+                    );
+                }
+            }
+        }
+
+        blockHashes.push(
+            BlockData({
+                blockHash: keccak256(abi.encodePacked(msg.data[4:164], transactionHashesRoot)),
+                time: block.timestamp
+            })
+        );
         // Timber will listen for the BlockProposed event as well as
         // nightfall-optimist.  The current, optimistic version of Timber does not
         // require the smart contract to craft NewLeaf/NewLeaves events.
@@ -200,13 +237,23 @@ contract State is Structures, Initializable, ReentrancyGuardUpgradeable, Config 
     // Checks if a block is actually referenced in the queue of blocks waiting
     // to go into the Shield state (stops someone challenging with a non-existent
     // block).
-    function isBlockReal(
+    function isBlockReal(Block memory b, Transaction[] memory ts) public view returns (bytes32) {
+        bytes32 blockHash = Utils.hashBlock(b, Utils.hashTransactionHashes(ts));
+        require(blockHashes[b.blockNumberL2].blockHash == blockHash, 'This block does not exist');
+        return blockHash;
+    }
+
+    function areBlockAndTransactionValid(
         Block memory b,
-        Transaction[] memory t,
-        uint256 blockNumberL2
+        Transaction memory t,
+        uint256 index,
+        bytes32[6] memory siblingPath
     ) public view {
-        bytes32 blockHash = Utils.hashBlock(b, t);
-        require(blockHashes[blockNumberL2].blockHash == blockHash, 'This block does not exist');
+        bytes32 blockHash = Utils.hashBlock(b, siblingPath[0]);
+        require(blockHashes[b.blockNumberL2].blockHash == blockHash, 'This block does not exist');
+        (bool valid, ) =
+            MerkleTree_Stateless_KECCAK.checkPath(siblingPath, index, Utils.hashTransaction(t));
+        require(valid, 'Transaction does not exist in block');
     }
 
     function setBondAccount(address addr, uint256 amount) public onlyRegistered {

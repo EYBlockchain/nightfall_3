@@ -56,16 +56,30 @@ export async function countCommitments(commitments) {
   return db.collection(COMMITMENTS_COLLECTION).countDocuments(query);
 }
 
-/*
-// function to get count of transaction hashes. Used to decide if we should store
-// incoming blocks or transactions.
-export async function countTransactionHashes(transactionHashes) {
+// // function to get count of transaction hashes. Used to decide if we should store
+// // incoming blocks or transactions.
+// export async function countTransactionHashes(transactionHashes) {
+//   const connection = await mongo.connection(MONGO_URL);
+//   const query = { transactionHash: { $in: transactionHashes } };
+//   const db = connection.db(COMMITMENTS_DB);
+//   return db.collection(COMMITMENTS_COLLECTION).countDocuments(query);
+// }
+
+// function to get count of transaction hashes of withdraw type. Used to decide if we should store sibling path of transaction hash to be used later for finalising or instant withdrawal
+export async function countWithdrawTransactionHashes(transactionHashes) {
   const connection = await mongo.connection(MONGO_URL);
-  const query = { transactionHash: { $in: transactionHashes } };
+  const query = { transactionHash: { $in: transactionHashes }, nullifierTransactionType: '3' };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).countDocuments(query);
 }
-*/
+
+// function to get if the transaction hash belongs to a withdraw transaction
+export async function isTransactionHashWithdraw(transactionHash) {
+  const connection = await mongo.connection(MONGO_URL);
+  const query = { transactionHash, nullifierTransactionType: '3' };
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(COMMITMENTS_COLLECTION).countDocuments(query);
+}
 
 // function to mark a commitments as on chain for a mongo db
 export async function markOnChain(
@@ -90,6 +104,38 @@ export async function setSiblingInfo(commitment, siblingPath, leafIndex, root) {
   const update = { $set: { siblingPath, leafIndex, root } };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
+}
+
+// function to set the path of the transaction hash leaf in transaction hash timber
+export async function setTransactionHashSiblingInfo(
+  transactionHash,
+  transactionHashSiblingPath,
+  transactionHashLeafIndex,
+  transactionHashesRoot,
+) {
+  const connection = await mongo.connection(MONGO_URL);
+  const query = { transactionHash, isOnChain: { $ne: -1 } };
+  const update = {
+    $set: { transactionHashSiblingPath, transactionHashLeafIndex, transactionHashesRoot },
+  };
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
+}
+
+export async function getTransactionHashSiblingInfo(transactionHash) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(COMMITMENTS_COLLECTION).findOne(
+    { transactionHash },
+    {
+      projection: {
+        transactionHashSiblingPath: 1,
+        transactionHashLeafIndex: 1,
+        transactionHashesRoot: 1,
+        isOnChain: 1,
+      },
+    },
+  );
 }
 
 // function to mark a commitment as pending nullication for a mongo db
@@ -142,6 +188,7 @@ export async function getNullifiedByTransactionHashL1(transactionHashNullifiedL1
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).find({ transactionHashNullifiedL1 }).toArray();
 }
+
 export async function getSiblingInfo(commitment) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
@@ -493,7 +540,13 @@ export async function getWithdrawCommitments() {
   const withdrawsDetailsValid = await Promise.all(
     blockTxs.map(async wt => {
       const { block, transactions, index } = wt;
-      const valid = await isValidWithdrawal({ block, transactions, index });
+      const transaction = transactions[index];
+      const { transactionHashSiblingPath, transactionHashesRoot } =
+        await getTransactionHashSiblingInfo(transaction.transactionHash);
+      const siblingPath = [transactionHashesRoot].concat(
+        transactionHashSiblingPath.path.map(p => p.value).reverse(),
+      );
+      const valid = await isValidWithdrawal({ block, transaction, index, siblingPath });
       return {
         compressedPkd: wt.compressedPkd,
         ercAddress: wt.ercAddress,

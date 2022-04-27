@@ -4,10 +4,18 @@ An optimistic layer 2 Block class
 import config from 'config';
 import Timber from 'common-files/classes/timber.mjs';
 import Web3 from 'common-files/utils/web3.mjs';
-import { compressProof } from 'common-files/utils/curve-maths/curves.mjs';
+import Transaction from 'common-files/classes/transaction.mjs';
+// import { compressProof } from 'common-files/utils/curve-maths/curves.mjs';
 import { getLatestTree, getLatestBlockInfo } from '../services/database.mjs';
 
-const { ZERO, PROPOSE_BLOCK_TYPES } = config;
+const {
+  ZERO,
+  BLOCK_HASH_TYPES,
+  HASH_TYPE,
+  TIMBER_HEIGHT,
+  TXHASHROOT_HASH_TYPE,
+  TXHASHROOT_TIMBER_HEIGHT,
+} = config;
 
 /**
 This Block class does not have the Block components that are computed on-chain.
@@ -91,7 +99,14 @@ class Block {
       // Make blocks with our local values.
       blockNumberL2 = this.localBlockNumberL2;
       previousBlockHash = this.localPreviousBlockHash;
-      timber = new Timber(this.localRoot, this.localFrontier, this.localLeafCount);
+      timber = new Timber(
+        this.localRoot,
+        this.localFrontier,
+        this.localLeafCount,
+        undefined,
+        HASH_TYPE,
+        TIMBER_HEIGHT,
+      );
     }
     // extract the commitment hashes from the transactions
     // we filter out zeroes commitments that can come from withdrawals
@@ -101,7 +116,7 @@ class Block {
     const nCommitments = leafValues.length;
 
     // Stateless update our frontier and root
-    const updatedTimber = Timber.statelessUpdate(timber, leafValues);
+    const updatedTimber = Timber.statelessUpdate(timber, leafValues, HASH_TYPE, TIMBER_HEIGHT);
     // remember the updated values in case we need them for the next block.
     this.localLeafCount = updatedTimber.leafCount;
     this.localFrontier = updatedTimber.frontier;
@@ -168,7 +183,7 @@ class Block {
         compressedSecrets,
         proof,
       } = t;
-      return [
+      const transaction = {
         value,
         historicRootBlockNumberL2,
         transactionType,
@@ -179,12 +194,22 @@ class Block {
         commitments,
         nullifiers,
         compressedSecrets,
-        compressProof(proof),
-      ];
+        proof,
+      };
+      transaction.transactionHash = Transaction.calcHash(transaction);
+      return transaction;
     });
-    const encoded = web3.eth.abi.encodeParameters(PROPOSE_BLOCK_TYPES, [
+    const transactionHashes = transactionsArray.map(t => t.transactionHash);
+    const timber = new Timber(...[, , , ,], TXHASHROOT_HASH_TYPE, TXHASHROOT_TIMBER_HEIGHT);
+    const updatedTHashesTimber = Timber.statelessUpdate(
+      timber,
+      transactionHashes,
+      TXHASHROOT_HASH_TYPE,
+      TXHASHROOT_TIMBER_HEIGHT,
+    );
+    const encoded = web3.eth.abi.encodeParameters(BLOCK_HASH_TYPES, [
       blockArray,
-      transactionsArray,
+      updatedTHashesTimber.root,
     ]);
     return web3.utils.soliditySha3({ t: 'bytes', v: encoded });
   }

@@ -73,6 +73,7 @@ module.exports = {
   BN128_GROUP_ORDER: 21888242871839275222246405745257275088548364400416034343698204186575808495617n,
   BN128_PRIME_FIELD: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
   TRANSACTIONS_PER_BLOCK: Number(process.env.TRANSACTIONS_PER_BLOCK) || 2,
+  BLOCK_HASH_TYPES: ['(uint48,address,bytes32,uint256,bytes32)', 'bytes32'],
   PROPOSE_BLOCK_TYPES: [
     '(uint48,address,bytes32,uint256,bytes32)',
     '(uint112,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[8],uint[4])[]',
@@ -83,9 +84,11 @@ module.exports = {
   NODE_HASHLENGTH: 32,
   ZERO: '0x0000000000000000000000000000000000000000000000000000000000000000',
   HASH_TYPE: 'mimc',
+  TXHASHROOT_HASH_TYPE: 'keccak256',
   USE_STUBS: process.env.USE_STUBS === 'true',
   VK_IDS: { deposit: 0, single_transfer: 1, double_transfer: 2, withdraw: 3 }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
   TIMBER_HEIGHT: 32,
+  TXHASHROOT_TIMBER_HEIGHT: 5,
 
   // the various parameters needed to describe the Babyjubjub curve that we use for El-Gamal
   // BABYJUBJUB

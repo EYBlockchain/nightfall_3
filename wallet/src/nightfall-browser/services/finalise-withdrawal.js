@@ -7,6 +7,7 @@ address.
 import { getContractInstance } from '../../common-files/utils/contract';
 import { Transaction } from '../classes/index';
 import { getTransactionByTransactionHash, getBlockByTransactionHash } from './database';
+import { getTransactionHashSiblingInfo } from './commitment-storage';
 
 const { SHIELD_CONTRACT_NAME } = global.config;
 
@@ -30,6 +31,13 @@ export async function finaliseWithdrawal(transactionHash, shieldContractAddress)
   );
   const index = transactions.findIndex(f => f.transactionHash === transactionHash);
 
+  const { transactionHashSiblingPath, transactionHashesRoot } = await getTransactionHashSiblingInfo(
+    transactions[index].transactionHash,
+  );
+  const siblingPath = [transactionHashesRoot].concat(
+    transactionHashSiblingPath.path.map(p => p.value).reverse(),
+  );
+
   const shieldContractInstance = await getContractInstance(
     SHIELD_CONTRACT_NAME,
     shieldContractAddress,
@@ -38,9 +46,9 @@ export async function finaliseWithdrawal(transactionHash, shieldContractAddress)
     const rawTransaction = await shieldContractInstance.methods
       .finaliseWithdrawal(
         buildSolidityStruct(block),
-        block.blockNumberL2,
-        transactions.map(t => Transaction.buildSolidityStruct(t)),
+        Transaction.buildSolidityStruct(transactions[index]),
         index,
+        siblingPath,
       )
       .encodeABI();
     // store the commitment on successful computation of the transaction

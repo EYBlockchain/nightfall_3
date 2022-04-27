@@ -16,6 +16,8 @@ const {
   TIMBER_COLLECTION,
   SUBMITTED_BLOCKS_COLLECTION,
   TRANSACTIONS_COLLECTION,
+  HASH_TYPE,
+  TIMBER_HEIGHT,
 } = config;
 
 /**
@@ -45,8 +47,24 @@ export async function getLatestTree() {
     .toArray();
 
   const timberObj =
-    timberObjArr.length === 1 ? timberObjArr[0] : { root: 0, frontier: [], leafCount: 0 };
-  const t = new Timber(timberObj.root, timberObj.frontier, timberObj.leafCount);
+    timberObjArr.length === 1
+      ? timberObjArr[0]
+      : {
+          root: 0,
+          frontier: [],
+          leafCount: 0,
+          tree: undefined,
+          hashType: HASH_TYPE,
+          height: TIMBER_HEIGHT,
+        };
+  const t = new Timber(
+    timberObj.root,
+    timberObj.frontier,
+    timberObj.leafCount,
+    timberObj.tree,
+    timberObj.hashType,
+    timberObj.height,
+  );
   return t;
 }
 
@@ -56,7 +74,7 @@ export async function getTreeByRoot(treeRoot) {
   const { root, frontier, leafCount } = (await db
     .collection(TIMBER_COLLECTION)
     .findOne({ root: treeRoot })) ?? { root: 0, frontier: [], leafCount: 0 };
-  const t = new Timber(root, frontier, leafCount);
+  const t = new Timber(root, frontier, leafCount, undefined, HASH_TYPE, TIMBER_HEIGHT);
   return t;
 }
 
@@ -65,7 +83,7 @@ export async function getTreeByBlockNumberL2(blockNumberL2) {
   const db = connection.db(COMMITMENTS_DB);
   const { root, frontier, leafCount } =
     (await db.collection(TIMBER_COLLECTION).findOne({ blockNumberL2 })) ?? {};
-  const t = new Timber(root, frontier, leafCount);
+  const t = new Timber(root, frontier, leafCount, undefined, HASH_TYPE, TIMBER_HEIGHT);
   return t;
 }
 
