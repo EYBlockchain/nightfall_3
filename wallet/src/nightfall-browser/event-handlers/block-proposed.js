@@ -18,7 +18,7 @@ import Secrets from '../classes/secrets';
 // import { ivks, nsks } from '../services/keys';
 import { getTreeByBlockNumberL2, saveTree, saveTransaction, saveBlock } from '../services/database';
 
-const { ZERO, HASH_TYPE, TIMBER_HEIGHT, TXHASHROOT_HASH_TYPE, TXHASHROOT_TIMBER_HEIGHT } =
+const { ZERO, HASH_TYPE, TIMBER_HEIGHT, TXHASH_TREE_HASH_TYPE, TXHASH_TREE_HEIGHT } =
   global.config;
 
 /**
@@ -119,15 +119,15 @@ async function blockProposedEventHandler(data, ivks, nsks) {
   if ((await countWithdrawTransactionHashes(block.transactionHashes)) > 0) {
     const transctionHashesTimber = new Timber(
       ...[, , , ,],
-      TXHASHROOT_HASH_TYPE,
-      TXHASHROOT_TIMBER_HEIGHT,
+      TXHASH_TREE_HASH_TYPE,
+      TXHASH_TREE_HEIGHT,
     );
 
     const updatedTransctionHashesTimber = Timber.statelessUpdate(
       transctionHashesTimber,
       block.transactionHashes,
-      TXHASHROOT_HASH_TYPE,
-      TXHASHROOT_TIMBER_HEIGHT,
+      TXHASH_TREE_HASH_TYPE,
+      TXHASH_TREE_HEIGHT,
     );
 
     await Promise.all(

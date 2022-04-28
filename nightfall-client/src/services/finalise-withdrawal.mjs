@@ -5,6 +5,9 @@ address.
 import config from 'config';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
 import { Transaction } from '../classes/index.mjs';
+import { getTransactionByTransactionHash, getBlockByTransactionHash } from './database.mjs';
+// eslint-disable-next-line import/no-cycle
+import { getTransactionHashSiblingInfo } from './commitment-storage.mjs';
 
 const { SHIELD_CONTRACT_NAME } = config;
 
@@ -21,13 +24,25 @@ export function buildSolidityStruct(block) {
   };
 }
 
-export async function finaliseWithdrawal(block, transaction, index, siblingPath) {
+export async function finaliseWithdrawal(transactionHash) {
+  const block = await getBlockByTransactionHash(transactionHash);
+  const transactions = await Promise.all(
+    block.transactionHashes.map(t => getTransactionByTransactionHash(t)),
+  );
+  const index = transactions.findIndex(f => f.transactionHash === transactionHash);
+
+  const { transactionHashSiblingPath, transactionHashesRoot } = await getTransactionHashSiblingInfo(
+    transactions[index].transactionHash,
+  );
+  const siblingPath = [transactionHashesRoot].concat(
+    transactionHashSiblingPath.path.map(p => p.value).reverse(),
+  );
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
   try {
     const rawTransaction = await shieldContractInstance.methods
       .finaliseWithdrawal(
         buildSolidityStruct(block),
-        Transaction.buildSolidityStruct(transaction),
+        Transaction.buildSolidityStruct(transactions[index]),
         index,
         siblingPath,
       )

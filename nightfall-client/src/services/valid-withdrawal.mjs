@@ -21,6 +21,7 @@ export async function isValidWithdrawal({ block, transaction, index, siblingPath
         siblingPath,
       )
       .call();
+
     return valid;
   } catch (err) {
     return false;

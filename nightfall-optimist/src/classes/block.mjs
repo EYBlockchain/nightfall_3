@@ -13,8 +13,8 @@ const {
   BLOCK_HASH_TYPES,
   HASH_TYPE,
   TIMBER_HEIGHT,
-  TXHASHROOT_HASH_TYPE,
-  TXHASHROOT_TIMBER_HEIGHT,
+  TXHASH_TREE_HASH_TYPE,
+  TXHASH_TREE_HEIGHT,
 } = config;
 
 /**
@@ -200,12 +200,12 @@ class Block {
       return transaction;
     });
     const transactionHashes = transactionsArray.map(t => t.transactionHash);
-    const timber = new Timber(...[, , , ,], TXHASHROOT_HASH_TYPE, TXHASHROOT_TIMBER_HEIGHT);
+    const timber = new Timber(...[, , , ,], TXHASH_TREE_HASH_TYPE, TXHASH_TREE_HEIGHT);
     const updatedTHashesTimber = Timber.statelessUpdate(
       timber,
       transactionHashes,
-      TXHASHROOT_HASH_TYPE,
-      TXHASHROOT_TIMBER_HEIGHT,
+      TXHASH_TREE_HASH_TYPE,
+      TXHASH_TREE_HEIGHT,
     );
     const encoded = web3.eth.abi.encodeParameters(BLOCK_HASH_TYPES, [
       blockArray,

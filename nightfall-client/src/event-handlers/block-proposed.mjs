@@ -15,7 +15,7 @@ import { ivks, nsks } from '../services/keys.mjs';
 import { getLatestTree, saveTree, saveTransaction, saveBlock } from '../services/database.mjs';
 import { decryptCommitment } from '../services/commitment-sync.mjs';
 
-const { ZERO, HASH_TYPE, TIMBER_HEIGHT, TXHASHROOT_HASH_TYPE, TXHASHROOT_TIMBER_HEIGHT } = config;
+const { ZERO, HASH_TYPE, TIMBER_HEIGHT, TXHASH_TREE_HASH_TYPE, TXHASH_TREE_HEIGHT } = config;
 
 /**
 This handler runs whenever a BlockProposed event is emitted by the blockchain
@@ -88,15 +88,15 @@ async function blockProposedEventHandler(data) {
   if ((await countWithdrawTransactionHashes(block.transactionHashes)) > 0) {
     const transctionHashesTimber = new Timber(
       ...[, , , ,],
-      TXHASHROOT_HASH_TYPE,
-      TXHASHROOT_TIMBER_HEIGHT,
+      TXHASH_TREE_HASH_TYPE,
+      TXHASH_TREE_HEIGHT,
     );
 
     const updatedTransctionHashesTimber = Timber.statelessUpdate(
       transctionHashesTimber,
       block.transactionHashes,
-      TXHASHROOT_HASH_TYPE,
-      TXHASHROOT_TIMBER_HEIGHT,
+      TXHASH_TREE_HASH_TYPE,
+      TXHASH_TREE_HEIGHT,
     );
 
     await Promise.all(
