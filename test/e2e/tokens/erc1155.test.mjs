@@ -166,7 +166,7 @@ describe('ERC1155 tests', () => {
     });
   });
 
-  describe.skip('Transfer', () => {
+  describe('Transfer', () => {
     it('should decrement the balance after transfer ERC1155 to other wallet and increment the other wallet', async function () {
       let balances;
       async function getBalances() {
@@ -250,8 +250,6 @@ describe('ERC1155 tests', () => {
         await emptyL2(nf3Users[0]);
 
         await web3Client.timeJump(3600 * 24 * 10); // jump in time by 50 days
-
-        await new Promise(resolve => setTimeout(resolve, 3000));
 
         const commitments = await nf3Users[0].getPendingWithdraws();
 

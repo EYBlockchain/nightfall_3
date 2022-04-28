@@ -98,7 +98,14 @@ export async function getLatestTree() {
     hashType: HASH_TYPE,
     height: TIMBER_HEIGHT,
   };
-  const t = new Timber(timberObj);
+  const t = new Timber(
+    timberObj.root,
+    timberObj.frontier,
+    timberObj.leafCount,
+    timberObj.tree,
+    timberObj.hashType,
+    timberObj.height,
+  );
   return t;
 }
 
