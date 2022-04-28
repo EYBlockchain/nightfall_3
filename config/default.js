@@ -112,7 +112,8 @@ module.exports = {
   },
   MAX_QUEUE: 5,
   MPC: {
-    RADIX_FILES_URL: 'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com/radix',
+    MPC_PARAMS_URL:
+      'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com/phase2/mpc_params',
   },
   ENVIRONMENTS: {
     mainnet: {
