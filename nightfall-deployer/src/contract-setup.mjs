@@ -17,34 +17,28 @@ async function setupCircuits() {
   // do serial registration to predict nonce
   // or, if we have the owner's private key, sign with that, rather than use an unlocked account
   if (config.ETH_PRIVATE_KEY) {
-    await web3
-      .getWeb3()
-      .submitRawTransaction(
-        (await waitForContract('Proposers')).methods
-          .setStateContract(stateInstance.options.address)
-          .encodeABI(),
-        (
-          await getContractAddress('Proposers')
-        ).address,
-      );
-    await web3
-      .getWeb3()
-      .submitRawTransaction(
-        (await waitForContract('Shield')).methods
-          .setStateContract(stateInstance.options.address)
-          .encodeABI(),
-        (
-          await getContractAddress('Shield')
-        ).address,
-      );
-    return web3
-      .getWeb3()
-      .submitRawTransaction(
-        (await waitForContract('Challenges')).methods
-          .setStateContract(stateInstance.options.address)
-          .encodeABI(),
-        (await getContractAddress('Challenges')).address,
-      );
+    await web3.submitRawTransaction(
+      (await waitForContract('Proposers')).methods
+        .setStateContract(stateInstance.options.address)
+        .encodeABI(),
+      (
+        await getContractAddress('Proposers')
+      ).address,
+    );
+    await web3.submitRawTransaction(
+      (await waitForContract('Shield')).methods
+        .setStateContract(stateInstance.options.address)
+        .encodeABI(),
+      (
+        await getContractAddress('Shield')
+      ).address,
+    );
+    return web3.submitRawTransaction(
+      (await waitForContract('Challenges')).methods
+        .setStateContract(stateInstance.options.address)
+        .encodeABI(),
+      (await getContractAddress('Challenges')).address,
+    );
   }
   // the following code runs the registrations in parallel
   return Promise.all([

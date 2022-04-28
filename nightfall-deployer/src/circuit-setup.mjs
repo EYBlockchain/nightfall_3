@@ -136,7 +136,7 @@ async function setupCircuits() {
       // when deploying on infura - do serial tx execution to avoid nonce issue
       // when using a private key, we shouldn't assume an unlocked account and we sign the transaction directly
       if (config.ETH_PRIVATE_KEY) {
-        await web3.getWeb3().submitRawTransaction(await tx.encodeABI(), keyRegistryAddress);
+        await web3.submitRawTransaction(await tx.encodeABI(), keyRegistryAddress);
       } else await tx.send();
     } catch (err) {
       logger.error(err);
