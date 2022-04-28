@@ -18,8 +18,7 @@ import Secrets from '../classes/secrets';
 // import { ivks, nsks } from '../services/keys';
 import { getTreeByBlockNumberL2, saveTree, saveTransaction, saveBlock } from '../services/database';
 
-const { ZERO, HASH_TYPE, TIMBER_HEIGHT, TXHASH_TREE_HASH_TYPE, TXHASH_TREE_HEIGHT } =
-  global.config;
+const { ZERO, HASH_TYPE, TIMBER_HEIGHT, TXHASH_TREE_HASH_TYPE, TXHASH_TREE_HEIGHT } = global.config;
 
 /**
 This handler runs whenever a BlockProposed event is emitted by the blockchain
