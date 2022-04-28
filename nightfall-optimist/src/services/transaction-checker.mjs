@@ -13,8 +13,22 @@ import { waitForContract } from '../event-handlers/subscribe.mjs';
 import { getBlockByBlockNumberL2 } from './database.mjs';
 import verify from './verify.mjs';
 
-const { generalise } = gen;
-const { PROVING_SCHEME, BACKEND, CURVE, ZERO, CHALLENGES_CONTRACT_NAME } = config;
+const { generalise, GN } = gen;
+const {
+  PROVING_SCHEME,
+  BACKEND,
+  CURVE,
+  ZERO,
+  CHALLENGES_CONTRACT_NAME,
+  BN128_GROUP_ORDER,
+  MAX_PUBLIC_VALUES,
+} = config;
+
+function isOverflow(value, check) {
+  const bigValue = value.bigInt;
+  if (bigValue < 0 || bigValue >= check) return true;
+  return false;
+}
 
 // first, let's check the hash. That's nice and easy:
 // NB as we actually now comput the hash on receipt of the transaction this
@@ -162,22 +176,37 @@ async function verifyProof(transaction) {
           transaction.ercAddress,
           transaction.tokenId,
           transaction.value,
-          transaction.commitments[0], // not truncating here as we already ensured hash < group order
+          transaction.commitments[0],
         ].flat(Infinity),
       );
+      if (
+        isOverflow(transaction.ercAddress, MAX_PUBLIC_VALUES.ERCADDRESS) ||
+        isOverflow(transaction.commitments[0], MAX_PUBLIC_VALUES.COMMITMENTS)
+      )
+        throw new TransactionError('Truncated value overflow in public input', 4);
       break;
     case 1: // single transfer transaction
       inputs = generalise(
         [
-          // transaction.ercAddress,
-          transaction.commitments[0], // not truncating here as we already ensured hash < group order
-          generalise(transaction.nullifiers[0]).hex(32, 31),
+          transaction.commitments[0],
+          transaction.nullifiers[0],
           historicRootFirst.root,
-          ...transaction.compressedSecrets.map(compressedSecret =>
-            generalise(compressedSecret).hex(32, 31),
-          ),
+          // expand the compressed secrets slightly to extract the parity as a separate field
+          ...transaction.compressedSecrets.map(text => {
+            const bin = new GN(text).binary.padStart(256, '0');
+            const parity = bin[0];
+            const ordinate = bin.slice(1);
+            return [parity, new GN(ordinate, 'binary').field(BN128_GROUP_ORDER, false)];
+          }),
         ].flat(Infinity),
       );
+      // check for truncation overflow attacks
+      if (
+        isOverflow(transaction.commitments[0], MAX_PUBLIC_VALUES.COMMITMENTS) ||
+        isOverflow(transaction.nullifiers[0], MAX_PUBLIC_VALUES.NULLIFIER) ||
+        isOverflow(historicRootFirst.root, BN128_GROUP_ORDER)
+      )
+        throw new TransactionError('Overflow in public input', 4);
       break;
     case 2: // double transfer transaction
       inputs = generalise(
@@ -185,14 +214,32 @@ async function verifyProof(transaction) {
           // transaction.ercAddress, // this is correct; ercAddress appears twice
           // transaction.ercAddress, // in a double-transfer public input hash
           transaction.commitments, // not truncating here as we already ensured hash < group order
-          transaction.nullifiers.map(nullifier => generalise(nullifier).hex(32, 31)),
+          transaction.nullifiers,
           historicRootFirst.root,
           historicRootSecond.root,
-          ...transaction.compressedSecrets.map(compressedSecret =>
-            generalise(compressedSecret).hex(32, 31),
-          ),
+          // expand the compressed secrets slightly to extract the parity as a separate field
+          ...transaction.compressedSecrets.map(text => {
+            const bin = new GN(text).binary.padStart(256, '0');
+            const parity = bin[0];
+            const ordinate = bin.slice(1);
+            return [parity, new GN(ordinate, 'binary').field(BN128_GROUP_ORDER, false)];
+          }),
         ].flat(Infinity),
       );
+      // check for truncation overflow attacks
+      for (let i = 0; i < transaction.nullifiers.length; i++) {
+        if (isOverflow(transaction.nullifiers[i], MAX_PUBLIC_VALUES.NULLIFIER))
+          throw new TransactionError('Overflow in public input', 4);
+      }
+      for (let i = 0; i < transaction.commitments.length; i++) {
+        if (isOverflow(transaction.commitments[i], MAX_PUBLIC_VALUES.COMMITMENT))
+          throw new TransactionError('Overflow in public input', 4);
+      }
+      if (
+        isOverflow(historicRootFirst.root, BN128_GROUP_ORDER) ||
+        isOverflow(historicRootSecond.root, BN128_GROUP_ORDER)
+      )
+        throw new TransactionError('Overflow in public input', 4);
       break;
     case 3: // withdraw transaction
       inputs = generalise(
@@ -200,15 +247,26 @@ async function verifyProof(transaction) {
           transaction.ercAddress,
           transaction.tokenId,
           transaction.value,
-          generalise(transaction.nullifiers[0]).hex(32, 31),
+          transaction.nullifiers[0],
           transaction.recipientAddress,
           historicRootFirst.root,
         ].flat(Infinity),
       );
+      // check for truncation overflow attacks
+      if (
+        isOverflow(transaction.ercAddress, MAX_PUBLIC_VALUES.ERCADDRESS) ||
+        isOverflow(transaction.recipientAddress, MAX_PUBLIC_VALUES.ERCADDRESS) ||
+        isOverflow(transaction.nullifiers[0], MAX_PUBLIC_VALUES.NULLIFIER) ||
+        isOverflow(historicRootFirst.root, BN128_GROUP_ORDER)
+      )
+        throw new TransactionError('Truncated value overflow in public input', 4);
       break;
     default:
       throw new TransactionError('Unknown transaction type', 2);
   }
+  // check for modular overflow attacks
+  // if (inputs.filter(input => input.bigInt >= BN128_GROUP_ORDER).length > 0)
+  //  throw new TransactionError('Modular overflow in public input', 4);
   const res = await verify({
     vk: new VerificationKey(vkArray),
     proof: new Proof(transaction.proof),

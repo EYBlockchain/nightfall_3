@@ -24,6 +24,11 @@ struct Secrets {
 	field sqrtMessage4
 }
 
+struct CompressedPoint {
+	bool parity
+	field ordinate
+}
+
 def main(\
 	private field fErcAddress,\
 	private OldCommitmentPreimage oldCommitment,\
@@ -35,11 +40,12 @@ def main(\
 	private field[32] path,\
 	private field order,\
 	private Secrets secrets,\
-	field[8] compressedCipherText\
+	CompressedPoint[8] compressedCipherText\
 )->():
 
 	field u = fErcAddress + fNewCommitmentHash + fNullifier - root
 	u32 v = 0x00000000
+	bool b = true
 	for u32 i in 0..8 do
 		v = v + oldCommitment.id[i] +\
 			oldCommitment.value[i] +\
@@ -52,7 +58,8 @@ def main(\
 
 	u32 w = 0x00000000
 	for u32 i in 0..8 do
-		u = u + compressedCipherText[i]
+		u = u + compressedCipherText[i].ordinate
+		b = b && compressedCipherText[i].parity
 		w = w + secrets.ephemeralKey1[i] +\
 			secrets.ephemeralKey2[i] +\
 			secrets.ephemeralKey3[i] +\
@@ -71,5 +78,6 @@ def main(\
 	assert(v == v)
 	assert(u == u)
 	assert(w == w)
+	assert(b == b)
 
 	return
