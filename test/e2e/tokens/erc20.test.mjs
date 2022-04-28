@@ -27,7 +27,9 @@ const {
 } = config.TEST_OPTIONS;
 
 const {
-  RESTRICTIONS: { tokens: defaultRestrictions },
+  RESTRICTIONS: {
+    tokens: { blockchain1: defaultRestrictions },
+  },
 } = config;
 
 const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
