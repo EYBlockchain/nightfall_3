@@ -5,6 +5,7 @@ address.
 import config from 'config';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
 import { Transaction } from '../classes/index.mjs';
+// eslint-disable-next-line import/no-cycle
 import { buildSolidityStruct } from './finalise-withdrawal.mjs';
 
 const { SHIELD_CONTRACT_NAME } = config;

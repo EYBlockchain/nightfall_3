@@ -8,6 +8,7 @@ import gen from 'general-number';
 import mongo from 'common-files/utils/mongo.mjs';
 import logger from 'common-files/utils/logger.mjs';
 import { Commitment, Nullifier } from '../classes/index.mjs';
+// eslint-disable-next-line import/no-cycle
 import { isValidWithdrawal } from './valid-withdrawal.mjs';
 import { getBlockByBlockNumberL2, getTransactionByTransactionHash } from './database.mjs';
 
