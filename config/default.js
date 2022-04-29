@@ -185,6 +185,7 @@ module.exports = {
       optimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
       proposerBaseUrl: `https://${process.env.PROPOSER_HOST}`,
       web3WsUrl: `wss://${process.env.BLOCKCHAIN_WS_HOST}`,
+      web3PaymentsWsUrl: `wss://${process.env.BLOCKCHAIN_PAYMENTS_WS_HOST}`,
     },
   },
   TEST_OPTIONS: {
