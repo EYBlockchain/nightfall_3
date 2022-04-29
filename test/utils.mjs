@@ -346,6 +346,60 @@ export const depositNTransactions = async (nf3, N, ercAddress, tokenType, value,
   return depositTransactions;
 };
 
+export const transferNTransactions = async (
+  nf3,
+  N,
+  ercAddress,
+  tokenType,
+  value,
+  tokenId,
+  compressedPkd,
+  fee,
+) => {
+  const transferTransactions = [];
+  for (let i = 0; i < N; i++) {
+    const res = await nf3.transfer(
+      false,
+      ercAddress,
+      tokenType,
+      value,
+      tokenId,
+      compressedPkd,
+      fee,
+    );
+    expectTransaction(res);
+    transferTransactions.push(res);
+  }
+  return transferTransactions;
+};
+
+export const withdrawNTransactions = async (
+  nf3,
+  N,
+  ercAddress,
+  tokenType,
+  value,
+  tokenId,
+  recipientAddress,
+  fee,
+) => {
+  const withdrawTransactions = [];
+  for (let i = 0; i < N; i++) {
+    const res = await nf3.withdraw(
+      false,
+      ercAddress,
+      tokenType,
+      value,
+      tokenId,
+      recipientAddress,
+      fee,
+    );
+    expectTransaction(res);
+    withdrawTransactions.push(res);
+  }
+  return withdrawTransactions;
+};
+
 /**
   function to retrieve balance of user because getLayer2Balances returns
   balances of all users
