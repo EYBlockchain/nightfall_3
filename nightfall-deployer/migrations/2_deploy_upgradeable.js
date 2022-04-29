@@ -14,7 +14,8 @@ const State = artifacts.require('State.sol');
 
 const config = require('config');
 
-const { addresses } = config.RESTRICTIONS;
+const { RESTRICTIONS } = config;
+const { addresses } = RESTRICTIONS;
 
 module.exports = async function (deployer) {
   await deployer.deploy(Verifier);
@@ -43,4 +44,11 @@ module.exports = async function (deployer) {
   const { bootProposer, bootChallenger } = addresses;
   await proposers.setBootProposer(bootProposer);
   await challengers.setBootChallenger(bootChallenger);
+  const restrictions = await Shield.deployed();
+  // restrict transfer amounts
+  console.log('**TEST**', process.env.ETH_NETWORK, RESTRICTIONS.tokens, RESTRICTIONS);
+  for (let token of RESTRICTIONS.tokens[process.env.ETH_NETWORK]) {
+    console.log(`Max deposit restriction for ${token.name}: ${token.amount}`);
+    await restrictions.setRestriction(token.address, token.amount);
+  }
 };

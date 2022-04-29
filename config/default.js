@@ -271,28 +271,96 @@ module.exports = {
       bootChallenger:
         process.env.BOOT_CHALLENGER_ADDRESS || '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
     },
-    tokens: [
-      {
-        name: 'MockERC20',
-        address: '0xB5Acbe9a0F1F8B98F3fC04471F7fE5d2c222cB44',
-        amount: 200,
-      },
-      {
-        name: 'Test-Eth',
-        address: '0x3f152B63Ec5CA5831061B2DccFb29a874C317502',
-        amount: '10000000000000000000000',
-      },
-      {
-        name: 'MATIC',
-        address: '0x499d11E0b6eAC7c0593d8Fb292DCBbF815Fb29Ae',
-        amount: '10000000000000000000000',
-      },
-      {
-        name: 'USDC',
-        address: '0x07865c6e87b9f70255377e024ace6630c1eaa37f',
-        amount: '1000000000000',
-      },
-    ],
+    tokens: {
+      blockchain1: [
+        {
+          name: 'MockERC20',
+          address: '0xB5Acbe9a0F1F8B98F3fC04471F7fE5d2c222cB44',
+          amount: 200,
+        },
+        {
+          name: 'Test-Eth',
+          address: '0x3f152B63Ec5CA5831061B2DccFb29a874C317502',
+          amount: '10000000000000000000000',
+        },
+        {
+          name: 'MATIC',
+          address: '0x499d11E0b6eAC7c0593d8Fb292DCBbF815Fb29Ae',
+          amount: '10000000000000000000000',
+        },
+        {
+          name: 'USDC',
+          address: '0x07865c6e87b9f70255377e024ace6630c1eaa37f',
+          amount: '1000000000000',
+        },
+      ],
+      development: [
+        {
+          name: 'MockERC20',
+          address: '0xB5Acbe9a0F1F8B98F3fC04471F7fE5d2c222cB44',
+          amount: 200,
+        },
+        {
+          name: 'Test-Eth',
+          address: '0x3f152B63Ec5CA5831061B2DccFb29a874C317502',
+          amount: '10000000000000000000000',
+        },
+        {
+          name: 'MATIC',
+          address: '0x499d11E0b6eAC7c0593d8Fb292DCBbF815Fb29Ae',
+          amount: '10000000000000000000000',
+        },
+        {
+          name: 'USDC',
+          address: '0x07865c6e87b9f70255377e024ace6630c1eaa37f',
+          amount: '1000000000000',
+        },
+      ],
+      mainnet: [
+        {
+          name: 'WETH',
+          address: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+          amount: process.env.WETH_MAINNET_RESTRICT || '1000000000000000000',
+        },
+        {
+          name: 'MATIC',
+          address: '0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0',
+          amount: process.env.MATIC_MAINNET_RESTRICT || '1000000000000000000000',
+        },
+        {
+          name: 'USDC',
+          address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+          amount: process.env.USDC_MAINNET_RESTRICT || '1000000000',
+        },
+        {
+          name: 'USDT',
+          address: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+          amount: process.env.USDT_MAINNET_RESTRICT || '1000000000',
+        },
+        {
+          name: 'DAI',
+          address: '0x6B175474E89094C44Da98b954EedeAC495271d0F',
+          amount: process.env.DAI_MAINNET_RESTRICT || '1000000000000000000000',
+        },
+      ],
+      goerli: [
+        {
+          name: 'WETH',
+          address: '0x3f152B63Ec5CA5831061B2DccFb29a874C317502',
+          amount: process.env.WETH_GOERLI_RESTRICT || '1000000000000000000',
+        },
+        {
+          name: 'MATIC',
+          address: '0x499d11E0b6eAC7c0593d8Fb292DCBbF815Fb29Ae',
+          amount: process.env.MATIC_GOERLI_RESTRICT || '1000000000000000000000',
+        },
+        {
+          name: 'USDC',
+          address: '0x07865c6E87B9F70255377e024ace6630C1Eaa37F',
+          amount: process.env.USDC_GOERLI_RESTRICT || '1000000000',
+        },
+      ],
+    },
   },
 
   // for Browser use
