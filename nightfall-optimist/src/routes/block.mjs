@@ -11,6 +11,7 @@ import {
   getBlockByRoot,
   getTransactionsByTransactionHashes,
 } from '../services/database.mjs';
+import { setMakeNow } from '../services/block-assembler.mjs';
 
 const router = express.Router();
 
@@ -21,6 +22,16 @@ router.post('/check', async (req, res, next) => {
     const result = await checkBlock(block, transactions);
     logger.debug(`Result of block check was ${JSON.stringify(result, null, 2)}`);
     res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/make-now', async (req, res, next) => {
+  logger.debug('make-now endpoint received GET');
+  try {
+    setMakeNow();
+    res.send('Making short block');
   } catch (err) {
     next(err);
   }

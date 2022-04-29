@@ -182,12 +182,23 @@ class Nf3 {
 
   /**
     Gets the number of unprocessed transactions on the optimist
+    @method
     @async
     */
 
   async unprocessedTransactionCount() {
     const { result: mempool } = (await axios.get(`${this.optimistBaseUrl}/proposer/mempool`)).data;
     return mempool.filter(e => e.mempool).length;
+  }
+
+  /**
+  Forces optimist to make a block with whatever transactions it has to hand i.e. it won't wait
+  until it has TRANSACTIONS_PER_BLOCK of them
+  @method
+  @async
+  */
+  async makeBlockNow() {
+    return axios.get(`${this.optimistBaseUrl}/block/make-now`);
   }
 
   /**
