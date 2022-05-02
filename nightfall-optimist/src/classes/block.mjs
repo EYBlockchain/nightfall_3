@@ -5,16 +5,16 @@ import config from 'config';
 import Timber from 'common-files/classes/timber.mjs';
 import Web3 from 'common-files/utils/web3.mjs';
 import Transaction from 'common-files/classes/transaction.mjs';
-// import { compressProof } from 'common-files/utils/curve-maths/curves.mjs';
+import { compressProof } from 'common-files/utils/curve-maths/curves.mjs';
 import { getLatestTree, getLatestBlockInfo } from '../services/database.mjs';
 
 const {
   ZERO,
-  BLOCK_HASH_TYPES,
   HASH_TYPE,
   TIMBER_HEIGHT,
   TXHASH_TREE_HASH_TYPE,
   TXHASH_TREE_HEIGHT,
+  PROPOSE_BLOCK_TYPES,
 } = config;
 
 /**
@@ -30,6 +30,8 @@ class Block {
   leafCount;
 
   transactionHashes;
+
+  transactionHashesRoot;
 
   proposer;
 
@@ -56,6 +58,7 @@ class Block {
     const {
       proposer,
       transactionHashes,
+      transactionHashesRoot,
       leafCount,
       root,
       blockHash,
@@ -66,6 +69,7 @@ class Block {
     this.leafCount = leafCount;
     this.proposer = proposer;
     this.transactionHashes = transactionHashes;
+    this.transactionHashesRoot = transactionHashesRoot;
     this.root = root;
     this.blockHash = blockHash;
     this.nCommitments = nCommitments;
@@ -128,9 +132,9 @@ class Block {
         proposer,
         root: updatedTimber.root,
         leafCount: timber.leafCount,
-        nCommitments,
         blockNumberL2,
         previousBlockHash,
+        transactionHashesRoot: this.calcTransactionHashesRoot(transactions),
       },
       transactions,
     );
@@ -141,6 +145,7 @@ class Block {
     return new Block({
       proposer,
       transactionHashes: transactions.map(t => t.transactionHash),
+      transactionHashesRoot: this.calcTransactionHashesRoot(transactions),
       leafCount: timber.leafCount,
       root: updatedTimber.root,
       blockHash,
@@ -165,10 +170,30 @@ class Block {
     return this.calcHash(block, transactions) === block.blockHash;
   }
 
+  static calcTransactionHashesRoot(transactions) {
+    const transactionHashes = transactions.map(t => t.transactionHash);
+    const timber = new Timber(...[, , , ,], TXHASH_TREE_HASH_TYPE, TXHASH_TREE_HEIGHT);
+    const updatedTimber = Timber.statelessUpdate(
+      timber,
+      transactionHashes,
+      TXHASH_TREE_HASH_TYPE,
+      TXHASH_TREE_HEIGHT,
+    );
+    return updatedTimber.root;
+  }
+
   static calcHash(block, transactions) {
     const web3 = Web3.connection();
-    const { proposer, root, leafCount, blockNumberL2, previousBlockHash } = block;
-    const blockArray = [leafCount, proposer, root, blockNumberL2, previousBlockHash];
+    const { proposer, root, leafCount, blockNumberL2, previousBlockHash, transactionHashesRoot } =
+      block;
+    const blockArray = [
+      leafCount,
+      proposer,
+      root,
+      blockNumberL2,
+      previousBlockHash,
+      transactionHashesRoot,
+    ];
     const transactionsArray = transactions.map(t => {
       const {
         value,
@@ -183,7 +208,7 @@ class Block {
         compressedSecrets,
         proof,
       } = t;
-      const transaction = {
+      return [
         value,
         historicRootBlockNumberL2,
         transactionType,
@@ -194,36 +219,37 @@ class Block {
         commitments,
         nullifiers,
         compressedSecrets,
-        proof,
-      };
-      transaction.transactionHash = Transaction.calcHash(transaction);
-      return transaction;
+        compressProof(proof),
+      ];
     });
-    const transactionHashes = transactionsArray.map(t => t.transactionHash);
-    const timber = new Timber(...[, , , ,], TXHASH_TREE_HASH_TYPE, TXHASH_TREE_HEIGHT);
-    const updatedTHashesTimber = Timber.statelessUpdate(
-      timber,
-      transactionHashes,
-      TXHASH_TREE_HASH_TYPE,
-      TXHASH_TREE_HEIGHT,
+    let encodedTransactions = web3.eth.abi.encodeParameters(
+      [PROPOSE_BLOCK_TYPES[1]],
+      [transactionsArray],
     );
-    const encoded = web3.eth.abi.encodeParameters(BLOCK_HASH_TYPES, [
-      blockArray,
-      updatedTHashesTimber.root,
-    ]);
+    encodedTransactions = '0x'.concat(encodedTransactions.slice(66)); // Remove the first 32 bytes that hold location during encoding
+    block.transactionsHash = web3.utils.soliditySha3({
+      t: 'bytes',
+      v: encodedTransactions,
+    });
+    const encoded = web3.eth.abi.encodeParameters(
+      [PROPOSE_BLOCK_TYPES[0], 'bytes32'],
+      [blockArray, block.transactionsHash],
+    );
     return web3.utils.soliditySha3({ t: 'bytes', v: encoded });
   }
 
   // remove properties that do not get sent to the blockchain returning
   // a new object (don't mutate the original)
   static buildSolidityStruct(block) {
-    const { proposer, root, leafCount, blockNumberL2, previousBlockHash } = block;
+    const { proposer, root, leafCount, blockNumberL2, previousBlockHash, transactionHashesRoot } =
+      block;
     return {
       leafCount: Number(leafCount),
       proposer,
       root,
       blockNumberL2: Number(blockNumberL2),
       previousBlockHash,
+      transactionHashesRoot,
     };
   }
 }

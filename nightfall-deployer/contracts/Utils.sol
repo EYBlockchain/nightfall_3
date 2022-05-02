@@ -28,16 +28,24 @@ library Utils {
             );
     }
 
-    function hashBlock(Structures.Block memory b, bytes32 transactionHashesRoot)
+    function hashBlock(Structures.Block memory b, Structures.Transaction[] memory t)
         internal
         pure
         returns (bytes32)
     {
-        return keccak256(abi.encodePacked(abi.encode(b), transactionHashesRoot));
+        return keccak256(abi.encode(b, t));
+    }
+
+    function hashBlock(Structures.Block memory b, bytes32 transactionsHash)
+        internal
+        pure
+        returns (bytes32)
+    {
+        return keccak256(abi.encode(b, transactionsHash));
     }
 
     function hashTransactionHashes(Structures.Transaction[] memory ts)
-        internal
+        public
         pure
         returns (bytes32)
     {

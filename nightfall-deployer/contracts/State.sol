@@ -87,41 +87,12 @@ contract State is Structures, Initializable, ReentrancyGuardUpgradeable, Config 
         // To do this, we simply hash the function parameters because (1) they
         // contain all of the relevant data (2) it doesn't take much gas.
         // All check pass so add the block to the list of blocks waiting to be permanently added to the state - we only save the hash of the block data plus the absolute minimum of metadata - it's up to the challenger, or person requesting inclusion of the block to the permanent contract state, to provide the block data.
-        bytes32 transactionHashesRoot;
-        {
-            bytes32[6] memory frontier;
-            uint256 transactionHashCount;
-            bytes32[] memory transactionHashes = new bytes32[](Config.TRANSACTIONS_BATCH_SIZE); // TRANSACTIONS_BATCH_SIZE to control stack too deep error
 
-            for (uint256 i = 0; i < t.length; i++) {
-                {
-                    Transaction memory transaction =
-                        abi.decode(
-                            msg.data[((768 * i) + 228):((768 * (i + 1)) + 228)],
-                            (Transaction)
-                        ); // a transaction has 768 bytes of calldata; 228 = 4 (function signature) + 160 (Block) + 64 (Transaction[] details)
-                    transactionHashes[i % Config.TRANSACTIONS_BATCH_SIZE] = Utils.hashTransaction(
-                        transaction
-                    );
-                }
-                // a batch of transactions of size TRANSACTIONS_BATCH_SIZE is ready
-                if (i % Config.TRANSACTIONS_BATCH_SIZE == Config.TRANSACTIONS_BATCH_SIZE - 1) {
-                    (
-                        transactionHashesRoot,
-                        frontier,
-                        transactionHashCount
-                    ) = MerkleTree_Stateless_KECCAK.insertLeaves(
-                        transactionHashes,
-                        frontier,
-                        transactionHashCount
-                    );
-                }
-            }
-        }
-
+        // blockHash is hash of all block data and hash of all the transactions data. We remove the 32 bytes of transactions encoding which
+        // holds memory location
         blockHashes.push(
             BlockData({
-                blockHash: keccak256(abi.encodePacked(msg.data[4:164], transactionHashesRoot)),
+                blockHash: keccak256(abi.encodePacked(msg.data[4:196], keccak256(msg.data[228:]))),
                 time: block.timestamp
             })
         );
@@ -238,19 +209,24 @@ contract State is Structures, Initializable, ReentrancyGuardUpgradeable, Config 
     // to go into the Shield state (stops someone challenging with a non-existent
     // block).
     function isBlockReal(Block memory b, Transaction[] memory ts) public view returns (bytes32) {
-        bytes32 blockHash = Utils.hashBlock(b, Utils.hashTransactionHashes(ts));
+        bytes32 blockHash = Utils.hashBlock(b, ts);
         require(blockHashes[b.blockNumberL2].blockHash == blockHash, 'This block does not exist');
         return blockHash;
     }
 
     function areBlockAndTransactionValid(
         Block memory b,
+        bytes32 transactionsHash,
         Transaction memory t,
         uint256 index,
         bytes32[6] memory siblingPath
     ) public view {
-        bytes32 blockHash = Utils.hashBlock(b, siblingPath[0]);
+        bytes32 blockHash = Utils.hashBlock(b, transactionsHash);
         require(blockHashes[b.blockNumberL2].blockHash == blockHash, 'This block does not exist');
+        require(
+            b.transactionHashesRoot == siblingPath[0],
+            'This transaction hashes root is incorrect'
+        );
         (bool valid, ) =
             MerkleTree_Stateless_KECCAK.checkPath(siblingPath, index, Utils.hashTransaction(t));
         require(valid, 'Transaction does not exist in block');

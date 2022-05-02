@@ -55,6 +55,7 @@ contract Structures {
         bytes32 root; // the 'output' commmitment root after adding all commitments
         uint256 blockNumberL2;
         bytes32 previousBlockHash;
+        bytes32 transactionHashesRoot;
     }
 
     struct BlockData {

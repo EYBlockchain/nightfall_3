@@ -93,6 +93,7 @@ const transpileBlockBuilder = (_pathToSrc, _pathToInject) => {
   const reReturn = `return new Block({
       proposer,
       transactionHashes: transactions.map(t => t.transactionHash),
+      transactionHashesRoot: this.calcTransactionHashesRoot(transactions),
       leafCount: badBlock.leafCount,
       root: badBlock.root,
       blockHash,

@@ -340,6 +340,7 @@ router.post('/encode', async (req, res, next) => {
       nCommitments: block.nCommitments,
       blockNumberL2: block.blockNumberL2,
       previousBlockHash: block.previousBlockHash,
+      transactionHashesRoot: block.transactionHashesRoot,
     };
     newBlock.blockHash = await Block.calcHash(newBlock, newTransactions);
     logger.debug(`New block encoded for test ${JSON.stringify(newBlock, null, 2)}`);

@@ -10,7 +10,11 @@ import logger from 'common-files/utils/logger.mjs';
 import { Commitment, Nullifier } from '../classes/index.mjs';
 // eslint-disable-next-line import/no-cycle
 import { isValidWithdrawal } from './valid-withdrawal.mjs';
-import { getBlockByBlockNumberL2, getTransactionByTransactionHash } from './database.mjs';
+import {
+  getBlockByBlockNumberL2,
+  getTransactionByTransactionHash,
+  getTransactionHashSiblingInfo,
+} from './database.mjs';
 
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
 const { generalise } = gen;
@@ -105,38 +109,6 @@ export async function setSiblingInfo(commitment, siblingPath, leafIndex, root) {
   const update = { $set: { siblingPath, leafIndex, root } };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
-}
-
-// function to set the path of the transaction hash leaf in transaction hash timber
-export async function setTransactionHashSiblingInfo(
-  transactionHash,
-  transactionHashSiblingPath,
-  transactionHashLeafIndex,
-  transactionHashesRoot,
-) {
-  const connection = await mongo.connection(MONGO_URL);
-  const query = { transactionHash, isOnChain: { $ne: -1 } };
-  const update = {
-    $set: { transactionHashSiblingPath, transactionHashLeafIndex, transactionHashesRoot },
-  };
-  const db = connection.db(COMMITMENTS_DB);
-  return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
-}
-
-export async function getTransactionHashSiblingInfo(transactionHash) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(COMMITMENTS_DB);
-  return db.collection(COMMITMENTS_COLLECTION).findOne(
-    { transactionHash },
-    {
-      projection: {
-        transactionHashSiblingPath: 1,
-        transactionHashLeafIndex: 1,
-        transactionHashesRoot: 1,
-        isOnChain: 1,
-      },
-    },
-  );
 }
 
 // function to mark a commitment as pending nullication for a mongo db
@@ -516,7 +488,6 @@ export async function getWithdrawCommitments() {
   };
   // Get associated nullifiers of commitments that have been spent on-chain and are used for withdrawals.
   const withdraws = await db.collection(COMMITMENTS_COLLECTION).find(query).toArray();
-
   // To check validity we need the withdrawal transaction, the block the transaction is in and all other
   // transactions in the block. We need this for on-chain validity checks.
   const blockTxs = await Promise.all(
@@ -547,7 +518,13 @@ export async function getWithdrawCommitments() {
       const siblingPath = [transactionHashesRoot].concat(
         transactionHashSiblingPath.path.map(p => p.value).reverse(),
       );
-      const valid = await isValidWithdrawal({ block, transaction, index, siblingPath });
+      const { transactionsHash } = block;
+      const valid = await isValidWithdrawal({
+        block,
+        transaction,
+        index,
+        siblingPath,
+      });
       return {
         compressedPkd: wt.compressedPkd,
         ercAddress: wt.ercAddress,

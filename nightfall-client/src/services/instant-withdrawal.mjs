@@ -7,7 +7,6 @@ import { getContractInstance } from 'common-files/utils/contract.mjs';
 import { Transaction } from '../classes/index.mjs';
 import { buildSolidityStruct } from './finalise-withdrawal.mjs';
 import { getTransactionByTransactionHash, getBlockByTransactionHash } from './database.mjs';
-import { getTransactionHashSiblingInfo } from './commitment-storage.mjs';
 
 const { SHIELD_CONTRACT_NAME } = config;
 
@@ -18,11 +17,8 @@ const setInstantWithdrawl = async ({ transactionHash }) => {
   );
   const index = transactions.findIndex(f => f.transactionHash === transactionHash);
 
-  const { transactionHashSiblingPath, transactionHashesRoot } = await getTransactionHashSiblingInfo(
-    transactions[index].transactionHash,
-  );
-  const siblingPath = [transactionHashesRoot].concat(
-    transactionHashSiblingPath.path.map(p => p.value).reverse(),
+  const siblingPath = [transactions[index].transactionHashesRoot].concat(
+    transactions[index].transactionHashSiblingPath.path.map(p => p.value).reverse(),
   );
 
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
@@ -30,6 +26,7 @@ const setInstantWithdrawl = async ({ transactionHash }) => {
     const rawTransaction = await shieldContractInstance.methods
       .setAdvanceWithdrawalFee(
         buildSolidityStruct(block),
+        block.transactionsHash,
         Transaction.buildSolidityStruct(transactions[index]),
         index,
         siblingPath,

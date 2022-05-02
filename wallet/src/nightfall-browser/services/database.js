@@ -210,6 +210,30 @@ export async function getMaxBlock() {
   // return db.get(SUBMITTED_BLOCKS_COLLECTION, maxKey);
 }
 
+// function to set the path of the transaction hash leaf in transaction hash timber
+export async function setTransactionsHashForBlock(transactionHash, transactionsHash) {
+  const db = await connectDB();
+  const res = await db.getAll(TRANSACTIONS_COLLECTION);
+  const block = res.filter(r => r.transactionHashes.includes(transactionHash));
+  if (block) {
+    const {
+      // transactionHashSiblingPath: a,
+      // transactionHashLeafIndex: b,
+      // transactionHashesRoot: c,
+      ...rest
+    } = block[0];
+    return db.put(
+      TRANSACTIONS_COLLECTION,
+      {
+        transactionsHash,
+        ...rest,
+      },
+      block[0]._id,
+    );
+  }
+  return null;
+}
+
 /**
 Transaction Collection
 */
@@ -283,4 +307,35 @@ export async function markWithdrawState(transactionHash, withdrawState) {
     },
     tx._id,
   );
+}
+
+// function to set the path of the transaction hash leaf in transaction hash timber
+export async function setTransactionHashSiblingInfo(
+  transactionHash,
+  transactionHashSiblingPath,
+  transactionHashLeafIndex,
+  transactionHashesRoot,
+) {
+  const db = await connectDB();
+  const res = await db.getAll(TRANSACTIONS_COLLECTION);
+  const filtered = res.filter(r => r._id === transactionHash);
+  if (filtered.length === 1) {
+    const {
+      // transactionHashSiblingPath: a,
+      // transactionHashLeafIndex: b,
+      // transactionHashesRoot: c,
+      ...rest
+    } = filtered[0];
+    return db.put(
+      TRANSACTIONS_COLLECTION,
+      {
+        transactionHashSiblingPath,
+        transactionHashLeafIndex,
+        transactionHashesRoot,
+        ...rest,
+      },
+      filtered[0]._id,
+    );
+  }
+  return null;
 }

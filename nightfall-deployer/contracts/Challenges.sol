@@ -111,7 +111,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         require(
             Utils.hashTransaction(transactions1[transactionIndex1]) ==
                 Utils.hashTransaction(transactions2[transactionIndex2]),
-            'Transactions are not the same'
+            'Txns are not the same'
         );
         // Delete the latest block of the two
         if (block1.blockNumberL2 > block2.blockNumberL2) {
@@ -250,7 +250,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         uint256 transactionIndex2,
         uint256 nullifierIndex2,
         bytes32 salt
-    ) public onlyBootChallenger {
+    ) external onlyBootChallenger {
         checkCommit(msg.data);
         ChallengesUtil.libChallengeNullifier(
             txs1[transactionIndex1],
@@ -313,6 +313,20 @@ contract Challenges is Stateful, Key_Registry, Config {
         challengeAccepted(blockL2);
     }
 
+    /*
+  This is a challenge that transactionHashesRoot is incorrectly calculated
+  */
+    function challengeTransactionHashesRoot(
+        Block memory blockL2,
+        Transaction[] memory transactions,
+        bytes32 salt
+    ) external onlyBootChallenger {
+        checkCommit(msg.data);
+        bytes32 currentBlockHash = state.isBlockReal(blockL2, transactions);
+        ChallengesUtil.libChallengeTransactionHashesRoot(blockL2, transactions, currentBlockHash);
+        challengeAccepted(blockL2);
+    }
+
     // This gets called when a challenge succeeds
     function challengeAccepted(Block memory badBlock) private {
         // Check to ensure that the block being challenged is less than a week old
@@ -342,16 +356,13 @@ contract Challenges is Stateful, Key_Registry, Config {
         for (uint256 i = lastBlock; i >= blockNumberL2; i--) {
             state.setBlockStakeWithdrawn(state.popBlockData().blockHash);
         }
-        require(
-            state.getNumberOfL2Blocks() == blockNumberL2,
-            'The number remaining is not as expected.'
-        );
+        require(state.getNumberOfL2Blocks() == blockNumberL2, 'Number remaining not as expected.');
         return (lastBlock + 1 - blockNumberL2);
     }
 
     //To prevent frontrunning, we need to commit to a challenge before we send it
     function commitToChallenge(bytes32 commitHash) external onlyBootChallenger {
-        require(committers[commitHash] == address(0), 'Hash is already committed to');
+        require(committers[commitHash] == address(0), 'Hash already committed to');
         committers[commitHash] = msg.sender;
         emit CommittedToChallenge(commitHash, msg.sender);
     }

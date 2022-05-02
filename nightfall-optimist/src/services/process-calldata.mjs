@@ -22,13 +22,15 @@ export async function getProposeBlockCalldata(eventData) {
   const decoded = web3.eth.abi.decodeParameters(PROPOSE_BLOCK_TYPES, abiBytecode);
   const blockData = decoded['0'];
   const transactionsData = decoded['1'];
-  const [leafCount, proposer, root, blockNumberL2, previousBlockHash] = blockData;
+  const [leafCount, proposer, root, blockNumberL2, previousBlockHash, transactionHashesRoot] =
+    blockData;
   const block = {
     proposer,
     root,
     leafCount: Number(leafCount),
     blockNumberL2: Number(blockNumberL2),
     previousBlockHash,
+    transactionHashesRoot,
   };
   const transactions = transactionsData.map(t => {
     const [
@@ -70,38 +72,38 @@ export async function getProposeBlockCalldata(eventData) {
   block.nCommitments = transactions
     .map(t => t.commitments.filter(c => c !== ZERO))
     .flat(Infinity).length;
-  // This line grabs the blockData array and extracts the index of the block
-  // that we are dealing with.  TODO - this may get unmanageable with large
-  // numbers of L2 blocks. Then we'll need to store it in a DB and sync
-
-  // TODO - do we need this code now that the blockNumberL2 is stored in the struct?...
-  // This gets all blocks that we have stored locally - could be improved by pre-filtering here
-  const storedBlocks = await getBlocks();
-  const storedL2BlockNumbers = storedBlocks.map(s => s.blockNumberL2);
-  // This is a kinda cool way to check for gaps since blockhashes is also zero-indexed!
-  const L2BlockNumbersSequenced = storedL2BlockNumbers.filter((num, index) => num - index === 0); // This is the array of numbers that are in order.
-  // This is the last block number that is in sequence order, otherwise set it as -1
-  const lastReliableL2BlockNumber =
-    L2BlockNumbersSequenced[L2BlockNumbersSequenced.length - 1] || -1;
-
-  const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
-  let counter = lastReliableL2BlockNumber;
-  let onChainBlockData;
-  do {
-    counter++;
-    try {
-      // eslint-disable-next-line no-await-in-loop
-      onChainBlockData = await stateContractInstance.methods.blockHashes(counter).call();
-    } catch (error) {
-      // Getting to this means the block hash doesnt exist (perhaps its was rolled back)
-      counter = Math.max(...storedL2BlockNumbers) + 1;
-      break;
-      // throw new Error('Could not find blockHash in blockchain record');
-      // break;
-    }
-  } while (onChainBlockData.blockHash !== block.blockHash);
-  // counter now has the new blockNumberL2
-  block.blockNumberL2 = counter;
+  // // This line grabs the blockData array and extracts the index of the block
+  // // that we are dealing with.  TODO - this may get unmanageable with large
+  // // numbers of L2 blocks. Then we'll need to store it in a DB and sync
+  //
+  // // TODO - do we need this code now that the blockNumberL2 is stored in the struct?...
+  // // This gets all blocks that we have stored locally - could be improved by pre-filtering here
+  // const storedBlocks = await getBlocks();
+  // const storedL2BlockNumbers = storedBlocks.map(s => s.blockNumberL2);
+  // // This is a kinda cool way to check for gaps since blockhashes is also zero-indexed!
+  // const L2BlockNumbersSequenced = storedL2BlockNumbers.filter((num, index) => num - index === 0); // This is the array of numbers that are in order.
+  // // This is the last block number that is in sequence order, otherwise set it as -1
+  // const lastReliableL2BlockNumber =
+  //   L2BlockNumbersSequenced[L2BlockNumbersSequenced.length - 1] || -1;
+  //
+  // const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
+  // let counter = lastReliableL2BlockNumber;
+  // let onChainBlockData;
+  // do {
+  //   counter++;
+  //   try {
+  //     // eslint-disable-next-line no-await-in-loop
+  //     onChainBlockData = await stateContractInstance.methods.blockHashes(counter).call();
+  //   } catch (error) {
+  //     // Getting to this means the block hash doesnt exist (perhaps its was rolled back)
+  //     counter = Math.max(...storedL2BlockNumbers) + 1;
+  //     break;
+  //     // throw new Error('Could not find blockHash in blockchain record');
+  //     // break;
+  //   }
+  // } while (onChainBlockData.blockHash !== block.blockHash);
+  // // counter now has the new blockNumberL2
+  // block.blockNumberL2 = counter;
 
   block.transactionHashes = transactions.map(t => t.transactionHash);
   // currentLeafCount holds the count of the next leaf to be added

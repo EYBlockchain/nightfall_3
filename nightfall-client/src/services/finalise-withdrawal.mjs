@@ -6,21 +6,21 @@ import config from 'config';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
 import { Transaction } from '../classes/index.mjs';
 import { getTransactionByTransactionHash, getBlockByTransactionHash } from './database.mjs';
-// eslint-disable-next-line import/no-cycle
-import { getTransactionHashSiblingInfo } from './commitment-storage.mjs';
 
 const { SHIELD_CONTRACT_NAME } = config;
 
 // TODO move classes to their own folder so this is not needed (it's already a
 // static function in the Block class)
 export function buildSolidityStruct(block) {
-  const { proposer, root, leafCount, blockNumberL2, previousBlockHash } = block;
+  const { proposer, root, leafCount, blockNumberL2, previousBlockHash, transactionHashesRoot } =
+    block;
   return {
     proposer,
     root,
     leafCount: Number(leafCount),
     blockNumberL2: Number(blockNumberL2),
     previousBlockHash,
+    transactionHashesRoot,
   };
 }
 
@@ -31,17 +31,16 @@ export async function finaliseWithdrawal(transactionHash) {
   );
   const index = transactions.findIndex(f => f.transactionHash === transactionHash);
 
-  const { transactionHashSiblingPath, transactionHashesRoot } = await getTransactionHashSiblingInfo(
-    transactions[index].transactionHash,
+  const siblingPath = [transactions[index].transactionHashesRoot].concat(
+    transactions[index].transactionHashSiblingPath.path.map(p => p.value).reverse(),
   );
-  const siblingPath = [transactionHashesRoot].concat(
-    transactionHashSiblingPath.path.map(p => p.value).reverse(),
-  );
+
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
   try {
     const rawTransaction = await shieldContractInstance.methods
       .finaliseWithdrawal(
         buildSolidityStruct(block),
+        block.transactionsHash,
         Transaction.buildSolidityStruct(transactions[index]),
         index,
         siblingPath,

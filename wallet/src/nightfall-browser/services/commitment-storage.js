@@ -152,42 +152,6 @@ export async function setSiblingInfo(commitment, siblingPath, leafIndex, root) {
   return null;
 }
 
-// function to set the path of the transaction hash leaf in transaction hash timber
-export async function setTransactionHashSiblingInfo(
-  transactionHash,
-  transactionHashSiblingPath,
-  transactionHashLeafIndex,
-  transactionHashesRoot,
-) {
-  const db = await connectDB();
-  const res = await db.getAll(COMMITMENTS_COLLECTION);
-  const filtered = res.filter(r => r._id === transactionHash && r.isOnChain !== -1);
-  if (filtered.length === 1) {
-    const {
-      transactionHashSiblingPath: a,
-      transactionHashLeafIndex: b,
-      transactionHashesRoot: c,
-      ...rest
-    } = filtered[0];
-    return db.put(
-      COMMITMENTS_COLLECTION,
-      {
-        transactionHashSiblingPath,
-        transactionHashLeafIndex,
-        transactionHashesRoot,
-        ...rest,
-      },
-      filtered[0]._id,
-    );
-  }
-  return null;
-}
-
-export async function getTransactionHashSiblingInfo(transactionHash) {
-  const db = await connectDB();
-  return db.get(COMMITMENTS_COLLECTION, transactionHash);
-}
-
 // function to mark a commitment as pending nullication for a mongo db
 async function markPending(commitment) {
   const db = await connectDB();

@@ -2,6 +2,7 @@
 
 import logger from '../../common-files/utils/logger';
 import Timber from '../../common-files/classes/timber';
+import Web3 from '../../common-files/utils/web3';
 import {
   markNullifiedOnChain,
   markOnChain,
@@ -9,16 +10,29 @@ import {
   countCommitments,
   setSiblingInfo,
   countTransactionHashes,
-  setTransactionHashSiblingInfo,
   countWithdrawTransactionHashes,
   isTransactionHashWithdraw,
 } from '../services/commitment-storage';
 // import getProposeBlockCalldata from '../services/process-calldata';
 import Secrets from '../classes/secrets';
 // import { ivks, nsks } from '../services/keys';
-import { getTreeByBlockNumberL2, saveTree, saveTransaction, saveBlock } from '../services/database';
+import {
+  getTreeByBlockNumberL2,
+  saveTree,
+  saveTransaction,
+  saveBlock,
+  setTransactionsHashForBlock,
+  setTransactionHashSiblingInfo,
+} from '../services/database';
 
-const { ZERO, HASH_TYPE, TIMBER_HEIGHT, TXHASH_TREE_HASH_TYPE, TXHASH_TREE_HEIGHT } = global.config;
+const {
+  ZERO,
+  HASH_TYPE,
+  TIMBER_HEIGHT,
+  TXHASH_TREE_HASH_TYPE,
+  TXHASH_TREE_HEIGHT,
+  PROPOSE_BLOCK_TYPES,
+} = global.config;
 
 /**
 This handler runs whenever a BlockProposed event is emitted by the blockchain
@@ -113,17 +127,21 @@ async function blockProposedEventHandler(data, ivks, nsks) {
     }),
   );
 
-  // Save sibling path of withdraw transactions known to this client.
-  // This is required to finalise/instant withdraw
+  // If this L2 block contains withdraw transactions known to this client,
+  // the following needs to be saved for later to be used during finalise/instant withdraw
+  // 1. Save sibling path for the withdraw transaction hash that is present in transaction hashes timber tree
+  // 2. Save transactions hash of the transactions in this L2 block that contains withdraw transactions for this client
+  // transactions hash is a linear hash of the transactions in an L2 block which is calculated during proposeBlock in
+  // the contract
   if ((await countWithdrawTransactionHashes(block.transactionHashes)) > 0) {
-    const transctionHashesTimber = new Timber(
+    const transactionHashesTimber = new Timber(
       ...[, , , ,],
       TXHASH_TREE_HASH_TYPE,
       TXHASH_TREE_HEIGHT,
     );
 
     const updatedTransctionHashesTimber = Timber.statelessUpdate(
-      transctionHashesTimber,
+      transactionHashesTimber,
       block.transactionHashes,
       TXHASH_TREE_HASH_TYPE,
       TXHASH_TREE_HEIGHT,
@@ -138,11 +156,16 @@ async function blockProposedEventHandler(data, ivks, nsks) {
           return setTransactionHashSiblingInfo(
             transactionHash,
             siblingPathTransactionHash,
-            transctionHashesTimber.leafCount + i,
+            transactionHashesTimber.leafCount + i,
             updatedTransctionHashesTimber.root,
           );
         }
       }),
+    );
+
+    await setTransactionsHashForBlock(
+      block.transactionHashes[0], // any transaction hash in a block can be used
+      block.transactionsHash,
     );
   }
 }

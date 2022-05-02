@@ -7,8 +7,6 @@ address.
 import { getContractInstance } from '../../common-files/utils/contract';
 import { Transaction } from '../classes/index';
 import { getBlockByTransactionHash, getTransactionByTransactionHash } from './database';
-// eslint-disable-next-line import/no-cycle
-import { getTransactionHashSiblingInfo } from './commitment-storage';
 
 const { SHIELD_CONTRACT_NAME } = global.config;
 
@@ -33,11 +31,8 @@ export async function isValidWithdrawal(transactionHash, shieldContractAddress) 
   );
   const index = transactions.findIndex(f => f.transactionHash === transactionHash);
 
-  const { transactionHashSiblingPath, transactionHashesRoot } = await getTransactionHashSiblingInfo(
-    transactions[index].transactionHash,
-  );
-  const siblingPath = [transactionHashesRoot].concat(
-    transactionHashSiblingPath.path.map(p => p.value).reverse(),
+  const siblingPath = [transactions[index].transactionHashesRoot].concat(
+    transactions[index].transactionHashSiblingPath.path.map(p => p.value).reverse(),
   );
 
   const shieldContractInstance = await getContractInstance(
@@ -48,6 +43,7 @@ export async function isValidWithdrawal(transactionHash, shieldContractAddress) 
     const valid = await shieldContractInstance.methods
       .isValidWithdrawal(
         buildSolidityStruct(block),
+        block.transactionsHash,
         Transaction.buildSolidityStruct(transactions[index]),
         index,
         siblingPath,

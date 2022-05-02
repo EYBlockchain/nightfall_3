@@ -218,4 +218,24 @@ library ChallengesUtil {
             'Transactions need to be different'
         );
     }
+
+    function libChallengeTransactionHashesRoot(
+        Structures.Block memory blockL2,
+        Structures.Transaction[] memory transactions,
+        bytes32 currentBlockHash
+    ) public pure {
+        bytes32 correctBlockHash =
+            keccak256(
+                abi.encode(
+                    blockL2.leafCount,
+                    blockL2.proposer,
+                    blockL2.root,
+                    blockL2.blockNumberL2,
+                    blockL2.previousBlockHash,
+                    Utils.hashTransactionHashes(transactions),
+                    transactions
+                )
+            );
+        require(correctBlockHash != currentBlockHash, 'txHashRoot incorrect');
+    }
 }
