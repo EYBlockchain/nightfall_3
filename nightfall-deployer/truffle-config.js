@@ -99,6 +99,14 @@ module.exports = {
       networkCheckTimeout: 1000000000,
     },
 
+    staging_payments: {
+      url: config.BLOCKCHAIN_PAYMENTS_URL,
+      network_id: 4378922, // Any network (default: none)
+      gas: 8000000,
+      websockets: true,
+      networkCheckTimeout: 1000000000,
+    },
+
     ropsten: {
       provider: () => new HDWalletProvider(config.ETH_PRIVATE_KEY, config.BLOCKCHAIN_URL),
       network_id: 3,
