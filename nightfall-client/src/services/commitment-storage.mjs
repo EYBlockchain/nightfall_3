@@ -518,7 +518,6 @@ export async function getWithdrawCommitments() {
       const siblingPath = [transactionHashesRoot].concat(
         transactionHashSiblingPath.path.map(p => p.value).reverse(),
       );
-      const { transactionsHash } = block;
       const valid = await isValidWithdrawal({
         block,
         transaction,

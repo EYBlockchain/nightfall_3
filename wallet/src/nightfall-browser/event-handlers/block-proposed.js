@@ -2,7 +2,6 @@
 
 import logger from '../../common-files/utils/logger';
 import Timber from '../../common-files/classes/timber';
-import Web3 from '../../common-files/utils/web3';
 import {
   markNullifiedOnChain,
   markOnChain,
@@ -25,14 +24,7 @@ import {
   setTransactionHashSiblingInfo,
 } from '../services/database';
 
-const {
-  ZERO,
-  HASH_TYPE,
-  TIMBER_HEIGHT,
-  TXHASH_TREE_HASH_TYPE,
-  TXHASH_TREE_HEIGHT,
-  PROPOSE_BLOCK_TYPES,
-} = global.config;
+const { ZERO, HASH_TYPE, TIMBER_HEIGHT, TXHASH_TREE_HASH_TYPE, TXHASH_TREE_HEIGHT } = global.config;
 
 /**
 This handler runs whenever a BlockProposed event is emitted by the blockchain

@@ -8,10 +8,8 @@ import Web3 from 'common-files/utils/web3.mjs';
 import { decompressProof } from 'common-files/utils/curve-maths/curves.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
-import { waitForContract } from '../event-handlers/subscribe.mjs';
-import { getBlocks } from './database.mjs';
 
-const { PROPOSE_BLOCK_TYPES, SUBMIT_TRANSACTION_TYPES, STATE_CONTRACT_NAME, ZERO } = config;
+const { PROPOSE_BLOCK_TYPES, SUBMIT_TRANSACTION_TYPES, ZERO } = config;
 
 export async function getProposeBlockCalldata(eventData) {
   const web3 = Web3.connection();

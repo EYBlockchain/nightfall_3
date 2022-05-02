@@ -69,7 +69,7 @@ async function getProposeBlockCalldata(eventData) {
     t: 'bytes',
     v: encodedTransactions,
   });
-  
+
   return { transactions, block };
 }
 

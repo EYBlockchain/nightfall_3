@@ -4,7 +4,6 @@ An optimistic layer 2 Block class
 import config from 'config';
 import Timber from 'common-files/classes/timber.mjs';
 import Web3 from 'common-files/utils/web3.mjs';
-import Transaction from 'common-files/classes/transaction.mjs';
 import { compressProof } from 'common-files/utils/curve-maths/curves.mjs';
 import { getLatestTree, getLatestBlockInfo } from '../services/database.mjs';
 
@@ -227,13 +226,13 @@ class Block {
       [transactionsArray],
     );
     encodedTransactions = '0x'.concat(encodedTransactions.slice(66)); // Remove the first 32 bytes that hold location during encoding
-    block.transactionsHash = web3.utils.soliditySha3({
+    const transactionsHash = web3.utils.soliditySha3({
       t: 'bytes',
       v: encodedTransactions,
     });
     const encoded = web3.eth.abi.encodeParameters(
       [PROPOSE_BLOCK_TYPES[0], 'bytes32'],
-      [blockArray, block.transactionsHash],
+      [blockArray, transactionsHash],
     );
     return web3.utils.soliditySha3({ t: 'bytes', v: encoded });
   }
