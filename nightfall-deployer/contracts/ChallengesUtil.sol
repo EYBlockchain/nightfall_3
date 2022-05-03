@@ -10,6 +10,9 @@ import './Structures.sol';
 library ChallengesUtil {
     bytes32 public constant ZERO =
         0x0000000000000000000000000000000000000000000000000000000000000000;
+    uint256 public constant MAX31 = 2 ** 249 - 1;
+    uint256 public constant MAX20 = 2 ** 161 - 1;
+    uint256 public constant BN128_GROUP_ORDER = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
 
     function libChallengeLeafCountCorrect(
         Structures.Block memory priorBlockL2,
@@ -201,6 +204,19 @@ library ChallengesUtil {
                 keccak256(abi.encodePacked(Utils.compressProof(uncompressedProof))),
             'Cannot recreate compressed proof from uncompressed proof'
         );
+    }
+
+    function libCheckOverflows(
+      Structures.Block calldata blockL2,
+      Structures.Transaction calldata transaction
+    ) public pure {
+      require(uint256(transaction.ercAddress) <= MAX20, 'ERC address out of range');
+      require(uint256(transaction.recipientAddress) <= MAX20, 'Recipient ERC address out of range');
+      require(uint256(transaction.commitments[0]) <= MAX31, 'Commitment 0 out of range');
+      require(uint256(transaction.commitments[1]) <= MAX31, 'Commitment 1 out of range');
+      require(uint256(transaction.nullifiers[0]) <= MAX31, 'Nullifier 0 out of range');
+      require(uint256(transaction.nullifiers[1]) <= MAX31, 'Nullifier 1 out of range');
+      require(uint256(blockL2.root) < BN128_GROUP_ORDER, 'root out of range');
     }
 
     function libChallengeNullifier(

@@ -16,16 +16,7 @@ const main = async () => {
 
     const mpcPromises = [];
 
-    for (const circuit of [
-      'deposit',
-      'double_transfer',
-      'single_transfer',
-      'withdraw',
-      'deposit_stub',
-      'withdraw_stub',
-      'double_transfer_stub',
-      'single_transfer_stub',
-    ]) {
+    for (const circuit of ['deposit', 'double_transfer', 'single_transfer', 'withdraw']) {
       if (!fs.existsSync(`./mpc_params/${circuit}`)) {
         mpcPromises.push(
           new Promise((resolve, reject) => {

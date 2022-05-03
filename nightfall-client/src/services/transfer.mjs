@@ -108,7 +108,6 @@ async function transfer(transferParams) {
 
   // compress the secrets to save gas
   const compressedSecrets = Secrets.compressSecrets(secrets);
-
   const commitmentTreeInfo = await Promise.all(oldCommitments.map(c => getSiblingInfo(c)));
   const localSiblingPaths = commitmentTreeInfo.map(l => {
     const path = l.siblingPath.path.map(p => p.value);
@@ -166,7 +165,13 @@ async function transfer(transferParams) {
       secrets.cipherText.flat().map(text => text.field(BN128_GROUP_ORDER)),
       ...secrets.squareRootsElligator2.map(sqroot => sqroot.field(BN128_GROUP_ORDER)),
     ],
-    compressedSecrets.map(text => generalise(text.hex(32, 31)).field(BN128_GROUP_ORDER)),
+    compressedSecrets.map(text => {
+      const bin = text.binary.padStart(256, '0');
+      const parity = bin[0];
+      const ordinate = bin.slice(1);
+      const fields = [parity, new GN(ordinate, 'binary').field(BN128_GROUP_ORDER)];
+      return fields;
+    }),
   ].flat(Infinity);
 
   logger.debug(`witness input is ${witness.join(' ')}`);

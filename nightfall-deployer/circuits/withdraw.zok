@@ -65,14 +65,17 @@ def main(\
 	assert(u32_to_bool_32(sha[0])[8..32] == u32_to_bool_32(nullifier[0])[8..32])
 
 	// check the old commitment is valid
-	// old commitments are private inputs, so they are u32[8] and not truncated
-	assert(oldCommitment.hash == sha256of1280([\
+	sha = sha256of1280([\
 		...ercAddress,\
 		...id,\
 		...value,\
 		...pkdU32,\
 		...oldCommitment.salt\
-	]))
+	])
+	// last 224 bits:
+	assert(sha[1..8] == oldCommitment.hash[1..8])
+	// first 24 bits:
+	assert(u32_to_bool_32(sha[0])[8..32] == u32_to_bool_32(oldCommitment.hash[0])[8..32])
 
 	// check that the old commitment is in the merkle tree
 	field mimcHash = u32_8_to_field(oldCommitment.hash)
