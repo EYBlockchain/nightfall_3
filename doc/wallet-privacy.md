@@ -38,7 +38,7 @@ to Layer 1 by destroying a Layer 2 commitment, everyone knows who received it an
 Privacy comes entirely from transfers within Layer 2. From the point of view of the
 Ethereum blockchain, these are fully private. The only data leaked is your IP address when
 you send a transfer transaction to a Block Proposer. For early Beta, Polygon runs the
-only Proposers. If this worries you, use TOR.
+only Proposers.
 
 Remember too that ZKP privacy solutions are, essentially, decentralised coin tumblers, and so privacy
 comes from hiding in a crowd.
