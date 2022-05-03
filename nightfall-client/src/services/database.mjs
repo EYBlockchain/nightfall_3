@@ -192,17 +192,6 @@ export async function clearBlockNumberL1ForBlock(transactionHashL1) {
   return db.collection(SUBMITTED_BLOCKS_COLLECTION).updateOne(query, update);
 }
 
-// function to set the path of the transaction hash leaf in transaction hash timber
-export async function setTransactionsHashForBlock(transactionHash, transactionsHash) {
-  const connection = await mongo.connection(MONGO_URL);
-  const query = { transactionHashes: transactionHash };
-  const update = {
-    $set: { transactionsHash },
-  };
-  const db = connection.db(COMMITMENTS_DB);
-  return db.collection(TRANSACTIONS_COLLECTION).updateMany(query, update);
-}
-
 /**
 Transaction Collection
 */
@@ -275,6 +264,17 @@ export async function getTransactionByTransactionHash(transactionHash) {
   // We should not delete from a spent mempool
   const query = { _id: transactionHash };
   return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
+}
+
+// function to set the path of the transaction hash leaf in transaction hash timber
+export async function setTransactionsHashForBlock(transactionHash, transactionsHash) {
+  const connection = await mongo.connection(MONGO_URL);
+  const query = { transactionHash };
+  const update = {
+    $set: { transactionsHash },
+  };
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(TRANSACTIONS_COLLECTION).updateMany(query, update);
 }
 
 // function to set the path of the transaction hash leaf in transaction hash timber

@@ -12,41 +12,6 @@ contract Config is Ownable {
     bytes32 constant ZERO = bytes32(0);
     uint256 constant TXHASH_TREE_HEIGHT = 5;
     uint256 constant TRANSACTIONS_BATCH_SIZE = 2; // TODO Change this from 2 to an appropriate value to control stack too deep error
-    /* bytes32[33] ZERO_BYTES32_ARRAYSIZE33 = [
-        ZERO,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-    ]; */
 
     address bootProposer;
     address bootChallenger;

@@ -56,7 +56,10 @@ library Utils {
 
         for (uint256 i = 0; i < ts.length; i++) {
             transactionHashes[i % TRANSACTIONS_BATCH_SIZE] = hashTransaction(ts[i]);
-            if (i % TRANSACTIONS_BATCH_SIZE == TRANSACTIONS_BATCH_SIZE - 1) {
+            if (
+                i % TRANSACTIONS_BATCH_SIZE == TRANSACTIONS_BATCH_SIZE - 1 || i == (ts.length - 1)
+            ) {
+                // If the number of transactions cannot be factored by TRANSACTIONS_BATCH_SIZE, then the second condtional check ensures that this smaller transactions batch is also included
                 (
                     transactionHashesRoot,
                     frontier,

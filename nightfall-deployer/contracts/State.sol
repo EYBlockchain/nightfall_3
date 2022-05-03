@@ -81,7 +81,7 @@ contract State is Structures, Initializable, ReentrancyGuardUpgradeable, Config 
         require(BLOCK_STAKE <= msg.value, 'The stake payment is incorrect');
         require(b.proposer == msg.sender, 'The proposer address is not the sender');
         // set the maximum tx/block to prevent unchallengably large blocks
-        require (t.length < 33, 'The block has too many transactions');
+        require(t.length < 33, 'The block has too many transactions');
         // We need to set the blockHash on chain here, because there is no way to
         // convince a challenge function of the (in)correctness by an offchain
         // computation; the on-chain code doesn't save the pre-image of the hash so
@@ -90,11 +90,10 @@ contract State is Structures, Initializable, ReentrancyGuardUpgradeable, Config 
         // contain all of the relevant data (2) it doesn't take much gas.
         // All check pass so add the block to the list of blocks waiting to be permanently added to the state - we only save the hash of the block data plus the absolute minimum of metadata - it's up to the challenger, or person requesting inclusion of the block to the permanent contract state, to provide the block data.
 
-        // blockHash is hash of all block data and hash of all the transactions data. We remove the 32 bytes of transactions encoding which
-        // holds memory location
+        // blockHash is hash of all block data and hash of all the transactions data.
         blockHashes.push(
             BlockData({
-                blockHash: keccak256(abi.encodePacked(msg.data[4:196], keccak256(msg.data[228:]))),
+                blockHash: keccak256(abi.encodePacked(msg.data[4:196], keccak256(msg.data[196:]))),
                 time: block.timestamp
             })
         );

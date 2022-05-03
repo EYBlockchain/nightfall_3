@@ -221,11 +221,11 @@ class Block {
         compressProof(proof),
       ];
     });
-    let encodedTransactions = web3.eth.abi.encodeParameters(
-      [PROPOSE_BLOCK_TYPES[1]],
-      [transactionsArray],
-    );
-    encodedTransactions = '0x'.concat(encodedTransactions.slice(66)); // Remove the first 32 bytes that hold location during encoding
+    let encodedTransactions = web3.eth.abi.encodeParameters(PROPOSE_BLOCK_TYPES, [
+      blockArray,
+      transactionsArray,
+    ]);
+    encodedTransactions = `0x${encodedTransactions.slice(386)}`; // Retrieve transactions data only
     const transactionsHash = web3.utils.soliditySha3({
       t: 'bytes',
       v: encodedTransactions,

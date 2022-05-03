@@ -62,9 +62,9 @@ async function getProposeBlockCalldata(eventData) {
     transaction.transactionHash = Transaction.calcHash(transaction);
     return transaction;
   });
+
   block.transactionHashes = transactions.map(t => t.transactionHash);
-  let encodedTransactions = web3.eth.abi.encodeParameters([PROPOSE_BLOCK_TYPES[1]], [decoded['1']]);
-  encodedTransactions = '0x'.concat(encodedTransactions.slice(66)); // remove 32 bytes of memory location added to encoding
+  const encodedTransactions = `0x${tx.input.slice(394)}`; // retrieve only transactions data
   block.transactionsHash = web3.utils.soliditySha3({
     t: 'bytes',
     v: encodedTransactions,

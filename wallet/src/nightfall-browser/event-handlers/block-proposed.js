@@ -145,6 +145,7 @@ async function blockProposedEventHandler(data, ivks, nsks) {
         if (await isTransactionHashWithdraw(transactionHash)) {
           const siblingPathTransactionHash =
             updatedTransctionHashesTimber.getSiblingPath(transactionHash);
+          await setTransactionsHashForBlock(transactionHash, block.transactionsHash);
           return setTransactionHashSiblingInfo(
             transactionHash,
             siblingPathTransactionHash,
@@ -153,11 +154,6 @@ async function blockProposedEventHandler(data, ivks, nsks) {
           );
         }
       }),
-    );
-
-    await setTransactionsHashForBlock(
-      block.transactionHashes[0], // any transaction hash in a block can be used
-      block.transactionsHash,
     );
   }
 }
