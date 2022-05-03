@@ -182,12 +182,23 @@ class Nf3 {
 
   /**
     Gets the number of unprocessed transactions on the optimist
+    @method
     @async
     */
 
   async unprocessedTransactionCount() {
     const { result: mempool } = (await axios.get(`${this.optimistBaseUrl}/proposer/mempool`)).data;
     return mempool.filter(e => e.mempool).length;
+  }
+
+  /**
+  Forces optimist to make a block with whatever transactions it has to hand i.e. it won't wait
+  until it has TRANSACTIONS_PER_BLOCK of them
+  @method
+  @async
+  */
+  async makeBlockNow() {
+    return axios.get(`${this.optimistBaseUrl}/block/make-now`);
   }
 
   /**
@@ -591,11 +602,11 @@ class Nf3 {
       this.intervalIDs.push(
         setInterval(() => {
           connection._ws.ping();
-          logger.debug('sent websocket ping');
+          // logger.debug('sent websocket ping');
         }, WEBSOCKET_PING_TIME),
       );
       // and a listener for the pong
-      connection._ws.on('pong', () => logger.debug('websocket received pong'));
+      // connection._ws.on('pong', () => logger.debug('websocket received pong'));
       logger.debug('websocket connection opened');
       connection.send('instant');
     };
@@ -837,11 +848,11 @@ class Nf3 {
       this.intervalIDs.push(
         setInterval(() => {
           connection._ws.ping();
-          logger.debug('sent websocket ping');
+          // logger.debug('sent websocket ping');
         }, WEBSOCKET_PING_TIME),
       );
       // and a listener for the pong
-      connection._ws.on('pong', () => logger.debug('websocket received pong'));
+      // connection._ws.on('pong', () => logger.debug('websocket received pong'));
       logger.debug('websocket connection opened');
       connection.send('blocks');
     };
@@ -906,11 +917,11 @@ class Nf3 {
       this.intervalIDs.push(
         setInterval(() => {
           connection._ws.ping();
-          logger.debug('sent websocket ping');
+          // logger.debug('sent websocket ping');
         }, WEBSOCKET_PING_TIME),
       );
       // and a listener for the pong
-      connection._ws.on('pong', () => logger.debug('websocket received pong'));
+      // connection._ws.on('pong', () => logger.debug('websocket received pong'));
       logger.debug('websocket connection opened');
       connection.send('blocks');
     };
@@ -962,11 +973,11 @@ class Nf3 {
       this.intervalIDs.push(
         setInterval(() => {
           connection._ws.ping();
-          logger.debug('sent websocket ping');
+          // logger.debug('sent websocket ping');
         }, WEBSOCKET_PING_TIME),
       );
       // and a listener for the pong
-      connection._ws.on('pong', () => logger.debug('websocket received pong'));
+      // connection._ws.on('pong', () => logger.debug('websocket received pong'));
       logger.debug('websocket connection opened');
       connection.send('challenge');
     };
@@ -1012,11 +1023,11 @@ class Nf3 {
       this.intervalIDs.push(
         setInterval(() => {
           connection._ws.ping();
-          logger.debug('sent websocket ping');
+          // logger.debug('sent websocket ping');
         }, WEBSOCKET_PING_TIME),
       );
       // and a listener for the pong
-      connection._ws.on('pong', () => logger.debug('websocket received pong'));
+      // connection._ws.on('pong', () => logger.debug('websocket received pong'));
       logger.debug('websocket connection opened');
       connection.send('challenge');
     };

@@ -164,6 +164,25 @@ describe('ERC1155 tests', () => {
       expect(balanceAfter[0] - balanceBefore[0]).to.be.equal(transferValue);
       expect(balanceAfter[1] - balanceBefore[1]).to.be.equal(transferValue);
     });
+
+    it('should deposit some ERC1155 crypto into a ZKP commitment and make a block with a single transaction', async function () {
+      // We create enough transactions to fill blocks full of deposits.
+      const res0 = await nf3Proposer1.makeBlockNow();
+      expect(res0.data).to.be.equal('Making short block');
+      const res = await nf3Users[0].deposit(
+        erc1155Address,
+        tokenTypeERC1155,
+        transferValue,
+        availableTokenIds[2],
+        fee,
+      );
+      expectTransaction(res);
+
+      // Wait until we see the right number of blocks appear
+      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+
+      await emptyL2(nf3Users[0]);
+    });
   });
 
   describe('Transfer', () => {

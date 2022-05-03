@@ -18,7 +18,7 @@ class Nullifier {
       nsk,
       commitment: commitment.hash,
     });
-    this.hash = sha256([this.preimage.nsk, this.preimage.commitment]);
+    this.hash = generalise(sha256([this.preimage.nsk, this.preimage.commitment]).hex(32, 31));
   }
 }
 

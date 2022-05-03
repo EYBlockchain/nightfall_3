@@ -108,17 +108,37 @@ make the standard tests fast.
 
 In reality, a value of two transactions per block, although convenient for testing, wouldn't make
 very efficient use of Optimism. A more realistic value is 32 transactions per layer 2 block. This
-value can be configured by the environment variable `TRANSACTIONS_PER_BLOCK` in the
-`docker-compose.yml` file (part of the `optimist` service). This is important for the Block Gas
-measurement, which requires a value of 32 to be set.
+value can be configured by the environment variable `TRANSACTIONS_PER_BLOCK`. This is important
+for the Block Gas measurement, which only makes sense for more realistic block sizes.
 
-To measure the Block Gas used per transaction, first edit the `TRANSACTIONS_PER_BLOCK` variable as
-above (don't forget to change it back after), restart nightfall_3, and run:
+To measure the Block Gas used per transaction, export the `TRANSACTIONS_PER_BLOCK` variable in both
+the terminal which will run nightfall and the terminal from which the test will be run, setting it to the
+value at which you want to run the test (32 in the example here):
+
+```sh
+export TRANSACTIONS_PER_BLOCK=32
+```
+Any reasonable value will work but they must be the same for both nightfall and the test.
+Obviously, it only makes sense to compare performance at the same value of `TRANSACTIONS_PER_BLOCK`.
+
+Then start nightfall:
+
+```sh
+./start-nightfall -g -d -s
+```
+Then, in the other terminal window run the test
 
 ```sh
 npm run test-gas
 ```
+The test will print out values of gas used for each type of transaction as it progresses.
 
+Do not forget to set the `TRANSACTIONS_PER_BLOCK` back to 2 when you have finished or the other tests
+may fail in strange ways.
+
+```sh
+export TRANSACTIONS_PER_BLOCK=2
+```
 ### Test chain reorganisations
 
 In Layer 2 solutions, Layer 2 state is held off-chain but created by a series of Layer 1
@@ -192,14 +212,14 @@ Nightfall_3 provides a Wallet to exercise its features. To use it:
 
 - Deploy nightfall (only ganache for now) from Nightfall's root folder
 
-```
+```sh
 ./start-nightfall -g -d -s
 ```
 
 - In a different terminal, start proposer from Nightfall's root folder once Nightfall deployment is
   finished (you will see this `nightfall_3-deployer-1 exited with code 0`).
 
-```
+```sh
 ./proposer
 ```
 

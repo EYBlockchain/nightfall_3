@@ -21,13 +21,9 @@ const nERC721 = 35;
 module.exports = function (deployer, _, accounts) {
   deployer.then(async () => {
     const restrictions = await Shield.deployed();
-    
-    for (let token of RESTRICTIONS.tokens) {
-      console.log(`Max deposit restriction for ${token.name}: ${token.amount}`);
-      await restrictions.setRestriction(token.address, token.amount);
-    }
 
     if (DEPLOY_MOCK_TOKENS === 'false') return;
+
     await deployer.deploy(ERC20Mock, 1001010000000000); // initialSupply
 
     const ERC20deployed = await ERC20Mock.deployed();

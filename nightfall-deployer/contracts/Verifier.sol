@@ -34,6 +34,8 @@ library Verifier {
 
   using Pairing for *;
 
+  uint256 constant BN128_GROUP_ORDER = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
+
   struct Proof_G16 {
       Pairing.G1Point A;
       Pairing.G2Point B;
@@ -98,7 +100,9 @@ library Verifier {
           // The following success variables replace require statements with corresponding functions called. Removing require statements to ensure a wrong proof verification challenge's require statement correctly works
           bool success_sm_qpih;
           bool success_vkdi_sm_qpih;
-          for (uint i = 0; i < _publicInputs.length; i++) {
+            for (uint i = 0; i < _publicInputs.length; i++) {
+            // check for overflow attacks
+            if (_publicInputs[i] >= BN128_GROUP_ORDER) return 2;
             (sm_qpih, success_sm_qpih) = Pairing.scalar_mul(vk.gamma_abc[i+1], _publicInputs[i]);
             (vk_dot_inputs, success_vkdi_sm_qpih) = Pairing.addition(
               vk_dot_inputs,

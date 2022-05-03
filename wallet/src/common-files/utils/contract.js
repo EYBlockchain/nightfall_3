@@ -62,7 +62,10 @@ export async function submitTransaction(unsignedTransaction, contractAddress, fe
     data: unsignedTransaction,
   });
 
-  const gasLimitWithBuffer = Math.ceil(Number(gasLimit) * 1.1); // 10% seems a reasonable buffer.
+  const gasLimitWithBuffer = Math.ceil(Number(gasLimit) * 1.5); // 50% seems a more than reasonable buffer.
+  // When submitTransaction is called is sets a state in the Shield contract.
+  // This setting costs extra gas and is not captured by the estimateGas cost.
+  // A smarter way is to change the buffer based on what the operation will be.
 
   const tx = {
     from,

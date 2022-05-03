@@ -144,6 +144,8 @@ contract Challenges is Stateful, Key_Registry, Config {
     ) external onlyBootChallenger {
         checkCommit(msg.data);
         state.isBlockReal(blockL2, transactions);
+        // first check the transaction and block do not overflow
+        ChallengesUtil.libCheckOverflows(blockL2, transactions[transactionIndex]);
         // now we need to check that the proof is correct
         ChallengesUtil.libCheckCompressedProof(
             transactions[transactionIndex].proof,
@@ -179,6 +181,8 @@ contract Challenges is Stateful, Key_Registry, Config {
             transactions[transactionIndex].historicRootBlockNumberL2[0] ==
                 blockL2ContainingHistoricRoot.blockNumberL2
         );
+        // first check the transaction and block do not overflow
+        ChallengesUtil.libCheckOverflows(blockL2, transactions[transactionIndex]);
         // now we need to check that the proof is correct
         ChallengesUtil.libCheckCompressedProof(
             transactions[transactionIndex].proof,
@@ -222,6 +226,8 @@ contract Challenges is Stateful, Key_Registry, Config {
                 blockL2ContainingHistoricRoot[1].blockNumberL2,
             'Incorrect historic root block'
         );
+        // first check the transaction and block do not overflow
+        ChallengesUtil.libCheckOverflows(blockL2, transactions[transactionIndex]);
         // now we need to check that the proof is correct
         ChallengesUtil.libChallengeProofVerification(
             transactions[transactionIndex],
