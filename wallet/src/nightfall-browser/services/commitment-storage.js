@@ -9,6 +9,7 @@ import gen from 'general-number';
 import { openDB } from 'idb';
 import logger from '../../common-files/utils/logger';
 import { Commitment, Nullifier } from '../classes/index';
+// eslint-disable-next-line import/no-cycle
 import { isValidWithdrawal } from './valid-withdrawal';
 import { getBlockByBlockNumberL2, getTransactionByTransactionHash } from './database';
 
@@ -77,6 +78,29 @@ export async function countTransactionHashes(transactionHashes) {
   const txs = await db.getAll(TRANSACTIONS_COLLECTION);
   const filtered = txs.filter(tx => transactionHashes.includes(tx.transactionHash));
   // const filtered = res.filter(r => transactionHashes.includes(r.transactionHash));
+  return filtered.length;
+}
+
+// function to get count of transaction hashes of withdraw type. Used to decide if we should store sibling path of transaction hash to be used later for finalising or instant withdrawal
+export async function countWithdrawTransactionHashes(transactionHashes) {
+  const db = await connectDB();
+  // const res = await db.getAll(COMMITMENTS_COLLECTION);
+  const txs = await db.getAll(TRANSACTIONS_COLLECTION);
+  const filtered = txs.filter(tx => {
+    return transactionHashes.includes(tx.transactionHash) && tx.nullifierTransactionType === '3';
+  });
+  // const filtered = res.filter(r => transactionHashes.includes(r.transactionHash));
+  return filtered.length;
+}
+
+// function to get if the transaction hash belongs to a withdraw transaction
+export async function isTransactionHashWithdraw(transactionHash) {
+  const db = await connectDB();
+  // const res = await db.getAll(COMMITMENTS_COLLECTION);
+  const txs = await db.getAll(TRANSACTIONS_COLLECTION);
+  const filtered = txs.filter(tx => {
+    return tx.transactionHash === transactionHash && tx.nullifierTransactionType === '3';
+  });
   return filtered.length;
 }
 
@@ -522,7 +546,8 @@ export async function getWithdrawCommitments() {
   const withdrawsDetailsValid = await Promise.all(
     blockTxs.map(async wt => {
       const { block, transactions, index } = wt;
-      const valid = await isValidWithdrawal({ block, transactions, index });
+      // TODO isValidWithdrawal is called with wrong parameters
+      const valid = await isValidWithdrawal(block, transactions, index);
       return {
         compressedPkd: wt.compressedPkd,
         ercAddress: wt.ercAddress,

@@ -2,7 +2,7 @@
 
 /**
 @module utils.js
-@author Westlad,Chaitanya-Konda,iAmMichaelConnor
+@author Westlad,ChaitanyaKonda,iAmMichaelConnor
 @desc Set of utilities
 */
 import createKeccakHash from 'keccak';
@@ -10,7 +10,7 @@ import crypto from 'crypto';
 import sb from 'safe-buffer';
 
 const { Buffer } = sb;
-const { CURVE, HASH_TYPE } = global.config;
+const { CURVE } = global.config;
 
 // BW6 not yet implemented
 
@@ -204,9 +204,11 @@ function powerMod(base, exponent, m) {
   return result;
 }
 
-function keccak256Hash(item) {
-  const preimage = strip0x(item);
-  return `0x${createKeccakHash('keccak256').update(preimage, 'hex').digest('hex')}`;
+function keccak256Hash(...items) {
+  const concatvalue = items
+    .map(item => Buffer.from(strip0x(item), 'hex'))
+    .reduce((acc, item) => concatenate(acc, item));
+  return `0x${createKeccakHash('keccak256').update(concatvalue, 'hex').digest('hex')}`;
 }
 
 /**
@@ -261,12 +263,17 @@ function shaHash(...items) {
   return `0x${crypto.createHash('sha256').update(concatvalue, 'hex').digest('hex')}`;
 }
 
-function concatenateThenHash(...items) {
+function concatenateThenHash(hashType, ...items) {
   let h;
-  if (HASH_TYPE === 'mimc') {
+  if (hashType === 'mimc') {
     h = mimcHash(...items);
-  } else {
+  } else if (hashType === 'sha256') {
     h = shaHash(...items);
+  } else if (hashType === 'keccak256') {
+    h = keccak256Hash(...items);
+  } else {
+    // can be changed to other hash
+    h = mimcHash(...items);
   }
   return h;
 }

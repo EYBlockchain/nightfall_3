@@ -9,7 +9,6 @@ functionality is not really required - it's just a data availability aid.
 */
 
 pragma solidity ^0.8.0;
-pragma experimental ABIEncoderV2;
 
 import './Utils.sol';
 import './ERCInterface.sol';
@@ -47,15 +46,10 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
     }
 
     // function to enable a proposer to get paid for proposing a block
-    function requestBlockPayment(
-        Block memory b,
-        uint256 blockNumberL2,
-        Transaction[] memory ts
-    ) external {
-        bytes32 blockHash = Utils.hashBlock(b, ts);
-        state.isBlockReal(b, ts, blockNumberL2);
+    function requestBlockPayment(Block memory b, Transaction[] memory ts) external {
+        bytes32 blockHash = state.isBlockReal(b, ts);
         // check that the block has been finalised
-        uint256 time = state.getBlockData(blockNumberL2).time;
+        uint256 time = state.getBlockData(b.blockNumberL2).time;
         require(
             time + COOLING_OFF_PERIOD < block.timestamp,
             'It is too soon to get paid for this block'
@@ -95,31 +89,32 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
         return bytes4(keccak256('onERC1155Received(address,address,uint256,uint256,bytes)'));
     }
 
-    /**
+    /* *
   This function returns if you are able to withdraw the funds, once a block is finalised
   @param b - the block containing the Withdraw transaction
-  @param ts - array of the transactions contained in the block
+  @param t - array of the transactions contained in the block
   @param index - the index of the transaction that locates it in the array of Transactions in Block b
   */
     function isValidWithdrawal(
         Block memory b,
-        uint256 blockNumberL2,
-        Transaction[] memory ts,
-        uint256 index
+        bytes32 transactionsHash,
+        Transaction memory t,
+        uint256 index,
+        bytes32[6] memory siblingPath
     ) external view returns (bool) {
         // check this block is a real one, in the queue, not something made up.
-        state.isBlockReal(b, ts, blockNumberL2);
+        state.areBlockAndTransactionValid(b, transactionsHash, t, index, siblingPath);
         // check that the block has been finalised
-        uint256 time = state.getBlockData(blockNumberL2).time;
+        uint256 time = state.getBlockData(b.blockNumberL2).time;
         require(
             time + COOLING_OFF_PERIOD < block.timestamp,
             'It is too soon to withdraw funds from this block'
         );
 
-        bytes32 transactionHash = Utils.hashTransaction(ts[index]);
+        bytes32 transactionHash = Utils.hashTransaction(t);
         require(!withdrawn[transactionHash], 'This transaction has already paid out');
         require(
-            ts[index].transactionType == TransactionTypes.WITHDRAW,
+            t.transactionType == TransactionTypes.WITHDRAW,
             'This transaction is not a valid WITHDRAW'
         );
 
@@ -129,37 +124,37 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
     /**
   This function enables funds to be withdrawn, once a block is finalised
   @param b - the block containing the Withdraw transaction
-  @param ts - array of the transactions contained in the block
+  @param t - array of the transactions contained in the block
   @param index - the index of the transaction that locates it in the array of Transactions in Block b
   TODO do we need to pass in  all the block data?
   */
 
     function finaliseWithdrawal(
         Block calldata b,
-        uint256 blockNumberL2,
-        Transaction[] calldata ts,
-        uint256 index
+        bytes32 transactionsHash,
+        Transaction calldata t,
+        uint256 index,
+        bytes32[6] memory siblingPath
     ) external {
-        // check this block is a real one, in the queue, not something made up.
-        state.isBlockReal(b, ts, blockNumberL2);
+        // check this block is a real one, in the queue, not something made up and that the transaction exists in the block
+        state.areBlockAndTransactionValid(b, transactionsHash, t, index, siblingPath);
         // check that the block has been finalised
-        uint256 time = state.getBlockData(blockNumberL2).time;
+        uint256 time = state.getBlockData(b.blockNumberL2).time;
         require(
             time + COOLING_OFF_PERIOD < block.timestamp,
             'It is too soon to withdraw funds from this block'
         );
-        bytes32 transactionHash = Utils.hashTransaction(ts[index]);
+        bytes32 transactionHash = Utils.hashTransaction(t);
         require(!withdrawn[transactionHash], 'This transaction has already paid out');
         withdrawn[transactionHash] = true;
-        if (ts[index].transactionType == TransactionTypes.WITHDRAW) {
-            address originalRecipientAddress =
-                address(uint160(uint256(ts[index].recipientAddress)));
+        if (t.transactionType == TransactionTypes.WITHDRAW) {
+            address originalRecipientAddress = address(uint160(uint256(t.recipientAddress)));
             // check if an advancedWithdrawal has been paid, if so payout the new owner.
             address recipientAddress =
                 advancedWithdrawals[transactionHash] == address(0)
                     ? originalRecipientAddress
                     : advancedWithdrawals[transactionHash];
-            payOut(ts[index], recipientAddress);
+            payOut(t, recipientAddress);
         }
     }
 
@@ -214,22 +209,21 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
     // TODO Is there a better way to set this fee, e.g. at the point of making a transaction.
     function setAdvanceWithdrawalFee(
         Block memory b,
-        uint256 blockNumberL2,
-        Transaction[] memory ts,
-        uint256 index
+        bytes32 transactionsHash,
+        Transaction memory t,
+        uint256 index,
+        bytes32[6] memory siblingPath
     ) external payable nonReentrant {
         // The transaction is a withdrawal transaction
-        require(
-            ts[index].transactionType == TransactionTypes.WITHDRAW,
-            'Can only advance withdrawals'
-        );
-        // The block and transactions are real
-        state.isBlockReal(b, ts, blockNumberL2);
+        require(t.transactionType == TransactionTypes.WITHDRAW, 'Can only advance withdrawals');
 
-        bytes32 withdrawTransactionHash = Utils.hashTransaction(ts[index]);
+        // check this block is a real one, in the queue, not something made up.
+        state.areBlockAndTransactionValid(b, transactionsHash, t, index, siblingPath);
+
+        bytes32 withdrawTransactionHash = Utils.hashTransaction(t);
         // The withdrawal has not been withdrawn
         require(!withdrawn[withdrawTransactionHash], 'Cannot double withdraw');
-        address originalRecipientAddress = address(uint160(uint256(ts[index].recipientAddress)));
+        address originalRecipientAddress = address(uint160(uint256(t.recipientAddress)));
         address currentOwner =
             advancedWithdrawals[withdrawTransactionHash] == address(0)
                 ? originalRecipientAddress

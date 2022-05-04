@@ -19,6 +19,11 @@ const error = [
   'ValidBlock',
 ];
 
+// eslint-disable-next-line no-unused-vars
+const incorrectTransactionHashesRoot = block => {
+  // TODO implement this
+};
+
 const incorrectTreeRoot = block => {
   logger.debug('Creating Incorrect Tree Root');
   const { root, ...rest } = block;

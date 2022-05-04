@@ -10,6 +10,7 @@ contract Config is Ownable {
     uint256 constant ROTATE_PROPOSER_BLOCKS = 4;
     uint256 constant COOLING_OFF_PERIOD = 1 weeks;
     bytes32 constant ZERO = bytes32(0);
+    uint256 constant TXHASH_TREE_HEIGHT = 5;
 
     address bootProposer;
     address bootChallenger;

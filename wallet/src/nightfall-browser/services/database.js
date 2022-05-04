@@ -15,6 +15,8 @@ const {
   COMMITMENTS_COLLECTION,
   KEYS_COLLECTION,
   CIRCUIT_COLLECTION,
+  HASH_TYPE,
+  TIMBER_HEIGHT,
 } = global.config;
 
 // This needs to have better indexDB performance.
@@ -88,8 +90,22 @@ export async function getLatestTree() {
   const maxKey = Math.max(...keys);
   const timberObjArr = await db.get(TIMBER_COLLECTION, maxKey);
 
-  const timberObj = timberObjArr || { root: 0, frontier: [], leafCount: 0 };
-  const t = new Timber(timberObj.root, timberObj.frontier, timberObj.leafCount);
+  const timberObj = timberObjArr || {
+    root: 0,
+    frontier: [],
+    leafCount: 0,
+    tree: undefined,
+    hashType: HASH_TYPE,
+    height: TIMBER_HEIGHT,
+  };
+  const t = new Timber(
+    timberObj.root,
+    timberObj.frontier,
+    timberObj.leafCount,
+    timberObj.tree,
+    timberObj.hashType,
+    timberObj.height,
+  );
   return t;
 }
 
@@ -97,17 +113,17 @@ export async function getTreeByRoot(treeRoot) {
   const db = await connectDB();
   const vals = await db.getAll(TIMBER_COLLECTION);
   const { root, frontier, leafCount } = vals.filter(v => v.root === treeRoot);
-  if (!root) return new Timber(0, [], 0);
-  const t = new Timber(root, frontier, leafCount);
+  if (!root) return new Timber(0, [], 0, undefined, HASH_TYPE, TIMBER_HEIGHT);
+  const t = new Timber(root, frontier, leafCount, undefined, HASH_TYPE, TIMBER_HEIGHT);
   return t;
 }
 
 export async function getTreeByBlockNumberL2(blockNumberL2) {
   const db = await connectDB();
-  if (blockNumberL2 < 0) return new Timber(0, [], 0);
+  if (blockNumberL2 < 0) return new Timber(0, [], 0, undefined, HASH_TYPE, TIMBER_HEIGHT);
   try {
     const { root, frontier, leafCount } = await db.get(TIMBER_COLLECTION, blockNumberL2);
-    const t = new Timber(root, frontier, leafCount);
+    const t = new Timber(root, frontier, leafCount, undefined, HASH_TYPE, TIMBER_HEIGHT);
     return t;
   } catch (error) {
     throw Error('Tree not Found');
@@ -267,4 +283,59 @@ export async function markWithdrawState(transactionHash, withdrawState) {
     },
     tx._id,
   );
+}
+
+// function to set the path of the transaction hash leaf in transaction hash timber
+export async function setTransactionsHashForBlock(transactionHash, transactionsHash) {
+  const db = await connectDB();
+  const res = await db.getAll(TRANSACTIONS_COLLECTION);
+  const block = res.filter(r => r._id === transactionHash);
+  if (block) {
+    const {
+      // transactionHashSiblingPath: a,
+      // transactionHashLeafIndex: b,
+      // transactionHashesRoot: c,
+      ...rest
+    } = block[0];
+    return db.put(
+      TRANSACTIONS_COLLECTION,
+      {
+        transactionsHash,
+        ...rest,
+      },
+      block[0]._id,
+    );
+  }
+  return null;
+}
+
+// function to set the path of the transaction hash leaf in transaction hash timber
+export async function setTransactionHashSiblingInfo(
+  transactionHash,
+  transactionHashSiblingPath,
+  transactionHashLeafIndex,
+  transactionHashesRoot,
+) {
+  const db = await connectDB();
+  const res = await db.getAll(TRANSACTIONS_COLLECTION);
+  const filtered = res.filter(r => r._id === transactionHash);
+  if (filtered.length === 1) {
+    const {
+      // transactionHashSiblingPath: a,
+      // transactionHashLeafIndex: b,
+      // transactionHashesRoot: c,
+      ...rest
+    } = filtered[0];
+    return db.put(
+      TRANSACTIONS_COLLECTION,
+      {
+        transactionHashSiblingPath,
+        transactionHashLeafIndex,
+        transactionHashesRoot,
+        ...rest,
+      },
+      filtered[0]._id,
+    );
+  }
+  return null;
 }

@@ -10,6 +10,8 @@ import {
   getBlockByBlockNumberL2,
   getTreeByLeafCount,
 } from './database.mjs';
+import Block from '../classes/block.mjs';
+
 /**
 Checks the block's properties.  It will return the first inconsistency it finds
 @param {object} block - the block being checked
@@ -23,6 +25,8 @@ async function checkBlock(block, transactions) {
   // being correct!
   // We need to get hold of the prior block to do this because the leafCount
   // is derrived from data in that block.
+  if (Block.checkHash(block, transactions) === false)
+    throw new BlockError('The transaction hashes Root is incorrect', 8);
   if (block.blockNumberL2 > 0) {
     const priorBlock = await getBlockByBlockNumberL2(block.blockNumberL2 - 1);
     if (priorBlock === null) logger.warn('Could not find prior block while checking leaf count');

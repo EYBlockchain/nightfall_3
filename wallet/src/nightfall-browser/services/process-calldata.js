@@ -20,13 +20,15 @@ async function getProposeBlockCalldata(eventData) {
   const decoded = web3.eth.abi.decodeParameters(PROPOSE_BLOCK_TYPES, abiBytecode);
   const blockData = decoded['0'];
   const transactionsData = decoded['1'];
-  const [leafCount, proposer, root, blockNumberL2, previousBlockHash] = blockData;
+  const [leafCount, proposer, root, blockNumberL2, previousBlockHash, transactionHashesRoot] =
+    blockData;
   const block = {
     proposer,
     root,
     leafCount: Number(leafCount),
     blockNumberL2: Number(blockNumberL2),
     previousBlockHash,
+    transactionHashesRoot,
   };
   const transactions = transactionsData.map(t => {
     const [
@@ -34,7 +36,6 @@ async function getProposeBlockCalldata(eventData) {
       historicRootBlockNumberL2,
       transactionType,
       tokenType,
-      publicInputHash,
       tokenId,
       ercAddress,
       recipientAddress,
@@ -48,7 +49,6 @@ async function getProposeBlockCalldata(eventData) {
       historicRootBlockNumberL2,
       transactionType,
       tokenType,
-      publicInputHash,
       tokenId,
       ercAddress,
       recipientAddress,
@@ -62,7 +62,13 @@ async function getProposeBlockCalldata(eventData) {
     transaction.transactionHash = Transaction.calcHash(transaction);
     return transaction;
   });
+
   block.transactionHashes = transactions.map(t => t.transactionHash);
+  const encodedTransactions = `0x${tx.input.slice(394)}`; // retrieve only transactions data
+  block.transactionsHash = web3.utils.soliditySha3({
+    t: 'bytes',
+    v: encodedTransactions,
+  });
 
   return { transactions, block };
 }

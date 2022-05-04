@@ -4,5 +4,4 @@ cd node_modules/*
 **/doc/*
 cli/build/*
 test/adversary/nightfall-adversary/*
-wallet/**
 /**/*.d.ts

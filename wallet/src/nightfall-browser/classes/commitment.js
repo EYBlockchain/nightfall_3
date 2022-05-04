@@ -33,13 +33,15 @@ class Commitment {
       compressedPkd,
       salt,
     });
-    this.hash = generalise(sha256([
-      this.preimage.ercAddress,
-      this.preimage.tokenId,
-      this.preimage.value,
-      this.preimage.compressedPkd,
-      this.preimage.salt,
-    ]).hex(32, 31));
+    this.hash = generalise(
+      sha256([
+        this.preimage.ercAddress,
+        this.preimage.tokenId,
+        this.preimage.value,
+        this.preimage.compressedPkd,
+        this.preimage.salt,
+      ]).hex(32, 31),
+    );
   }
 
   // sometimes (e.g. going over http) the general-number class is inconvenient

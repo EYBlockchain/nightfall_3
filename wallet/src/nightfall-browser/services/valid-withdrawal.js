@@ -7,9 +7,21 @@ address.
 import { getContractInstance } from '../../common-files/utils/contract';
 import { Transaction } from '../classes/index';
 import { getBlockByTransactionHash, getTransactionByTransactionHash } from './database';
-import { buildSolidityStruct } from './finalise-withdrawal';
 
 const { SHIELD_CONTRACT_NAME } = global.config;
+
+// TODO move classes to their own folder so this is not needed (it's already a
+// static function in the Block class)
+function buildSolidityStruct(block) {
+  const { proposer, root, leafCount, blockNumberL2, previousBlockHash } = block;
+  return {
+    proposer,
+    root,
+    leafCount: Number(leafCount),
+    blockNumberL2: Number(blockNumberL2),
+    previousBlockHash,
+  };
+}
 
 // eslint-disable-next-line import/prefer-default-export
 export async function isValidWithdrawal(transactionHash, shieldContractAddress) {
@@ -18,6 +30,11 @@ export async function isValidWithdrawal(transactionHash, shieldContractAddress) 
     block.transactionHashes.map(t => getTransactionByTransactionHash(t)),
   );
   const index = transactions.findIndex(f => f.transactionHash === transactionHash);
+
+  const siblingPath = [transactions[index].transactionHashesRoot].concat(
+    transactions[index].transactionHashSiblingPath.path.map(p => p.value).reverse(),
+  );
+
   const shieldContractInstance = await getContractInstance(
     SHIELD_CONTRACT_NAME,
     shieldContractAddress,
@@ -26,9 +43,10 @@ export async function isValidWithdrawal(transactionHash, shieldContractAddress) 
     const valid = await shieldContractInstance.methods
       .isValidWithdrawal(
         buildSolidityStruct(block),
-        block.blockNumberL2,
-        transactions.map(t => Transaction.buildSolidityStruct(t)),
+        block.transactionsHash,
+        Transaction.buildSolidityStruct(transactions[index]),
         index,
+        siblingPath,
       )
       .call();
     return valid;

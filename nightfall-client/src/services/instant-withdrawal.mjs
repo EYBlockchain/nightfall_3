@@ -16,14 +16,20 @@ const setInstantWithdrawl = async ({ transactionHash }) => {
     block.transactionHashes.map(t => getTransactionByTransactionHash(t)),
   );
   const index = transactions.findIndex(f => f.transactionHash === transactionHash);
+
+  const siblingPath = [transactions[index].transactionHashesRoot].concat(
+    transactions[index].transactionHashSiblingPath.path.map(p => p.value).reverse(),
+  );
+
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
   try {
     const rawTransaction = await shieldContractInstance.methods
       .setAdvanceWithdrawalFee(
         buildSolidityStruct(block),
-        block.blockNumberL2,
-        transactions.map(t => Transaction.buildSolidityStruct(t)),
+        block.transactionsHash,
+        Transaction.buildSolidityStruct(transactions[index]),
         index,
+        siblingPath,
       )
       .encodeABI();
     return { rawTransaction };

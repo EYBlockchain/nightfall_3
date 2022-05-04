@@ -7,7 +7,14 @@ import Web3 from 'common-files/utils/web3.mjs';
 import { compressProof } from 'common-files/utils/curve-maths/curves.mjs';
 import { getLatestTree, getLatestBlockInfo } from '../services/database.mjs';
 
-const { ZERO, PROPOSE_BLOCK_TYPES } = config;
+const {
+  ZERO,
+  HASH_TYPE,
+  TIMBER_HEIGHT,
+  TXHASH_TREE_HASH_TYPE,
+  TXHASH_TREE_HEIGHT,
+  PROPOSE_BLOCK_TYPES,
+} = config;
 
 /**
 This Block class does not have the Block components that are computed on-chain.
@@ -22,6 +29,8 @@ class Block {
   leafCount;
 
   transactionHashes;
+
+  transactionHashesRoot;
 
   proposer;
 
@@ -48,6 +57,7 @@ class Block {
     const {
       proposer,
       transactionHashes,
+      transactionHashesRoot,
       leafCount,
       root,
       blockHash,
@@ -58,6 +68,7 @@ class Block {
     this.leafCount = leafCount;
     this.proposer = proposer;
     this.transactionHashes = transactionHashes;
+    this.transactionHashesRoot = transactionHashesRoot;
     this.root = root;
     this.blockHash = blockHash;
     this.nCommitments = nCommitments;
@@ -91,7 +102,14 @@ class Block {
       // Make blocks with our local values.
       blockNumberL2 = this.localBlockNumberL2;
       previousBlockHash = this.localPreviousBlockHash;
-      timber = new Timber(this.localRoot, this.localFrontier, this.localLeafCount);
+      timber = new Timber(
+        this.localRoot,
+        this.localFrontier,
+        this.localLeafCount,
+        undefined,
+        HASH_TYPE,
+        TIMBER_HEIGHT,
+      );
     }
     // extract the commitment hashes from the transactions
     // we filter out zeroes commitments that can come from withdrawals
@@ -101,7 +119,7 @@ class Block {
     const nCommitments = leafValues.length;
 
     // Stateless update our frontier and root
-    const updatedTimber = Timber.statelessUpdate(timber, leafValues);
+    const updatedTimber = Timber.statelessUpdate(timber, leafValues, HASH_TYPE, TIMBER_HEIGHT);
     // remember the updated values in case we need them for the next block.
     this.localLeafCount = updatedTimber.leafCount;
     this.localFrontier = updatedTimber.frontier;
@@ -113,9 +131,9 @@ class Block {
         proposer,
         root: updatedTimber.root,
         leafCount: timber.leafCount,
-        nCommitments,
         blockNumberL2,
         previousBlockHash,
+        transactionHashesRoot: this.calcTransactionHashesRoot(transactions),
       },
       transactions,
     );
@@ -126,6 +144,7 @@ class Block {
     return new Block({
       proposer,
       transactionHashes: transactions.map(t => t.transactionHash),
+      transactionHashesRoot: this.calcTransactionHashesRoot(transactions),
       leafCount: timber.leafCount,
       root: updatedTimber.root,
       blockHash,
@@ -150,10 +169,30 @@ class Block {
     return this.calcHash(block, transactions) === block.blockHash;
   }
 
+  static calcTransactionHashesRoot(transactions) {
+    const transactionHashes = transactions.map(t => t.transactionHash);
+    const timber = new Timber(...[, , , ,], TXHASH_TREE_HASH_TYPE, TXHASH_TREE_HEIGHT);
+    const updatedTimber = Timber.statelessUpdate(
+      timber,
+      transactionHashes,
+      TXHASH_TREE_HASH_TYPE,
+      TXHASH_TREE_HEIGHT,
+    );
+    return updatedTimber.root;
+  }
+
   static calcHash(block, transactions) {
     const web3 = Web3.connection();
-    const { proposer, root, leafCount, blockNumberL2, previousBlockHash } = block;
-    const blockArray = [leafCount, proposer, root, blockNumberL2, previousBlockHash];
+    const { proposer, root, leafCount, blockNumberL2, previousBlockHash, transactionHashesRoot } =
+      block;
+    const blockArray = [
+      leafCount,
+      proposer,
+      root,
+      blockNumberL2,
+      previousBlockHash,
+      transactionHashesRoot,
+    ];
     const transactionsArray = transactions.map(t => {
       const {
         value,
@@ -182,23 +221,34 @@ class Block {
         compressProof(proof),
       ];
     });
-    const encoded = web3.eth.abi.encodeParameters(PROPOSE_BLOCK_TYPES, [
+    let encodedTransactions = web3.eth.abi.encodeParameters(PROPOSE_BLOCK_TYPES, [
       blockArray,
       transactionsArray,
     ]);
+    encodedTransactions = `0x${encodedTransactions.slice(386)}`; // Retrieve transactions data only
+    const transactionsHash = web3.utils.soliditySha3({
+      t: 'bytes',
+      v: encodedTransactions,
+    });
+    const encoded = web3.eth.abi.encodeParameters(
+      [PROPOSE_BLOCK_TYPES[0], 'bytes32'],
+      [blockArray, transactionsHash],
+    );
     return web3.utils.soliditySha3({ t: 'bytes', v: encoded });
   }
 
   // remove properties that do not get sent to the blockchain returning
   // a new object (don't mutate the original)
   static buildSolidityStruct(block) {
-    const { proposer, root, leafCount, blockNumberL2, previousBlockHash } = block;
+    const { proposer, root, leafCount, blockNumberL2, previousBlockHash, transactionHashesRoot } =
+      block;
     return {
       leafCount: Number(leafCount),
       proposer,
       root,
       blockNumberL2: Number(blockNumberL2),
       previousBlockHash,
+      transactionHashesRoot,
     };
   }
 }

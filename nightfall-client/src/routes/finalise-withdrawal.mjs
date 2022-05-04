@@ -12,7 +12,8 @@ const router = express.Router();
 router.post('/', async (req, res, next) => {
   logger.debug(`finalise-withdrawal endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
   try {
-    const { rawTransaction: txDataToSign } = await finaliseWithdrawal(req.body);
+    const { transactionHash } = req.body;
+    const { rawTransaction: txDataToSign } = await finaliseWithdrawal(transactionHash);
     logger.debug('returning raw transaction');
     logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
     // convert commitment from GN to hex form for transmission

@@ -16,6 +16,8 @@ const {
   TIMBER_COLLECTION,
   SUBMITTED_BLOCKS_COLLECTION,
   TRANSACTIONS_COLLECTION,
+  HASH_TYPE,
+  TIMBER_HEIGHT,
 } = config;
 
 /**
@@ -45,8 +47,26 @@ export async function getLatestTree() {
     .toArray();
 
   const timberObj =
-    timberObjArr.length === 1 ? timberObjArr[0] : { root: 0, frontier: [], leafCount: 0 };
-  const t = new Timber(timberObj.root, timberObj.frontier, timberObj.leafCount);
+    timberObjArr.length === 1
+      ? timberObjArr[0]
+      : {
+          root: 0,
+          frontier: [],
+          leafCount: 0,
+          tree: undefined,
+          hashType: HASH_TYPE,
+          height: TIMBER_HEIGHT,
+        };
+
+  const t = new Timber(
+    timberObj.root,
+    timberObj.frontier,
+    timberObj.leafCount,
+    timberObj.tree,
+    timberObj.hashType,
+    timberObj.height,
+  );
+  // const t = new Timber(timberObj);
   return t;
 }
 
@@ -56,7 +76,7 @@ export async function getTreeByRoot(treeRoot) {
   const { root, frontier, leafCount } = (await db
     .collection(TIMBER_COLLECTION)
     .findOne({ root: treeRoot })) ?? { root: 0, frontier: [], leafCount: 0 };
-  const t = new Timber(root, frontier, leafCount);
+  const t = new Timber(root, frontier, leafCount, undefined, HASH_TYPE, TIMBER_HEIGHT);
   return t;
 }
 
@@ -65,7 +85,7 @@ export async function getTreeByBlockNumberL2(blockNumberL2) {
   const db = connection.db(COMMITMENTS_DB);
   const { root, frontier, leafCount } =
     (await db.collection(TIMBER_COLLECTION).findOne({ blockNumberL2 })) ?? {};
-  const t = new Timber(root, frontier, leafCount);
+  const t = new Timber(root, frontier, leafCount, undefined, HASH_TYPE, TIMBER_HEIGHT);
   return t;
 }
 
@@ -154,6 +174,24 @@ export async function getBlockByTransactionHash(transactionHash) {
   return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
 }
 
+export async function getBlockByTransactionHashL1(transactionHashL1) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  const query = { transactionHashL1 };
+  return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
+}
+// function that sets the Block's L1 blocknumber to null
+// to indicate that it's back in the L1 mempool (and will probably be re-mined
+// and given a new L1 transactionHash)
+export async function clearBlockNumberL1ForBlock(transactionHashL1) {
+  logger.debug(`clearing layer 1 blockNumber for L2 block with L1 hash ${transactionHashL1}`);
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  const query = { transactionHashL1 };
+  const update = { $set: { blockNumber: null } };
+  return db.collection(SUBMITTED_BLOCKS_COLLECTION).updateOne(query, update);
+}
+
 /**
 Transaction Collection
 */
@@ -227,20 +265,47 @@ export async function getTransactionByTransactionHash(transactionHash) {
   const query = { _id: transactionHash };
   return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
 }
-export async function getBlockByTransactionHashL1(transactionHashL1) {
+
+// function to set the path of the transaction hash leaf in transaction hash timber
+export async function setTransactionsHashForBlock(transactionHash, transactionsHash) {
   const connection = await mongo.connection(MONGO_URL);
+  const query = { transactionHash };
+  const update = {
+    $set: { transactionsHash },
+  };
   const db = connection.db(COMMITMENTS_DB);
-  const query = { transactionHashL1 };
-  return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
+  return db.collection(TRANSACTIONS_COLLECTION).updateMany(query, update);
 }
-// function that sets the Block's L1 blocknumber to null
-// to indicate that it's back in the L1 mempool (and will probably be re-mined
-// and given a new L1 transactionHash)
-export async function clearBlockNumberL1ForBlock(transactionHashL1) {
-  logger.debug(`clearing layer 1 blockNumber for L2 block with L1 hash ${transactionHashL1}`);
+
+// function to set the path of the transaction hash leaf in transaction hash timber
+export async function setTransactionHashSiblingInfo(
+  transactionHash,
+  transactionHashSiblingPath,
+  transactionHashLeafIndex,
+  transactionHashesRoot,
+) {
+  const connection = await mongo.connection(MONGO_URL);
+  const query = { transactionHash };
+  const update = {
+    $set: { transactionHashSiblingPath, transactionHashLeafIndex, transactionHashesRoot },
+  };
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(TRANSACTIONS_COLLECTION).updateMany(query, update);
+}
+
+// function to get the path of the transaction hash leaf in transaction hash timber
+export async function getTransactionHashSiblingInfo(transactionHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
-  const query = { transactionHashL1 };
-  const update = { $set: { blockNumber: null } };
-  return db.collection(SUBMITTED_BLOCKS_COLLECTION).updateOne(query, update);
+  return db.collection(TRANSACTIONS_COLLECTION).findOne(
+    { transactionHash },
+    {
+      projection: {
+        transactionHashSiblingPath: 1,
+        transactionHashLeafIndex: 1,
+        transactionHashesRoot: 1,
+        isOnChain: 1,
+      },
+    },
+  );
 }

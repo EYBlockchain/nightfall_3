@@ -3,7 +3,7 @@ This module contains the logic needed create a zkp transfer, i.e. to nullify
 two input commitments and create two new output commitments to the same value.
 It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
  * @module deposit.mjs
- * @author westlad, Chaitanya-Konda, iAmMichaelConnor, will-kim
+ * @author westlad, ChaitanyaKonda, iAmMichaelConnor, will-kim
  */
 import config from 'config';
 import axios from 'axios';
@@ -124,6 +124,8 @@ async function withdraw(withdrawParams) {
             throw new Error(err);
           });
       });
+      // on successful computation of the transaction mark the old commitments as nullified
+      await markNullified(oldCommitment, optimisticWithdrawTransaction);
       const th = optimisticWithdrawTransaction.transactionHash;
       delete optimisticWithdrawTransaction.transactionHash;
       optimisticWithdrawTransaction.transactionHash = th;

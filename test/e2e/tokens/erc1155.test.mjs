@@ -271,6 +271,7 @@ describe('ERC1155 tests', () => {
         await web3Client.timeJump(3600 * 24 * 10); // jump in time by 50 days
 
         const commitments = await nf3Users[0].getPendingWithdraws();
+
         expect(
           commitments[nf3Users[0].zkpKeys.compressedPkd][erc1155Address].length,
         ).to.be.greaterThan(0);

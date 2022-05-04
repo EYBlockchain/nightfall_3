@@ -74,7 +74,7 @@ module.exports = {
   BN128_PRIME_FIELD: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
   TRANSACTIONS_PER_BLOCK: Number(process.env.TRANSACTIONS_PER_BLOCK) || 2,
   PROPOSE_BLOCK_TYPES: [
-    '(uint48,address,bytes32,uint256,bytes32)',
+    '(uint48,address,bytes32,uint256,bytes32,bytes32)',
     '(uint112,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[8],uint[4])[]',
   ], // used to encode/decode proposeBlock signature
   SUBMIT_TRANSACTION_TYPES:
@@ -83,9 +83,11 @@ module.exports = {
   NODE_HASHLENGTH: 32,
   ZERO: '0x0000000000000000000000000000000000000000000000000000000000000000',
   HASH_TYPE: 'mimc',
+  TXHASH_TREE_HASH_TYPE: 'keccak256',
   USE_STUBS: process.env.USE_STUBS === 'true',
   VK_IDS: { deposit: 0, single_transfer: 1, double_transfer: 2, withdraw: 3 }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
   TIMBER_HEIGHT: 32,
+  TXHASH_TREE_HEIGHT: 5,
   MAX_PUBLIC_VALUES: {
     ERCADDRESS: 2n ** 161n - 1n,
     COMMITMENT: 2n ** 249n - 1n,

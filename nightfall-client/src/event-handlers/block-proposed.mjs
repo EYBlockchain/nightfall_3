@@ -6,13 +6,22 @@ import {
   markOnChain,
   countCommitments,
   setSiblingInfo,
+  countWithdrawTransactionHashes,
+  isTransactionHashWithdraw,
 } from '../services/commitment-storage.mjs';
 import getProposeBlockCalldata from '../services/process-calldata.mjs';
 import { ivks, nsks } from '../services/keys.mjs';
-import { getLatestTree, saveTree, saveTransaction, saveBlock } from '../services/database.mjs';
+import {
+  getLatestTree,
+  saveTree,
+  saveTransaction,
+  saveBlock,
+  setTransactionHashSiblingInfo,
+  setTransactionsHashForBlock,
+} from '../services/database.mjs';
 import { decryptCommitment } from '../services/commitment-sync.mjs';
 
-const { ZERO } = config;
+const { ZERO, HASH_TYPE, TIMBER_HEIGHT, TXHASH_TREE_HASH_TYPE, TXHASH_TREE_HEIGHT } = config;
 
 /**
 This handler runs whenever a BlockProposed event is emitted by the blockchain
@@ -55,7 +64,12 @@ async function blockProposedEventHandler(data) {
 
   // await Promise.all(toStore);
   await Promise.all(dbUpdates);
-  const updatedTimber = Timber.statelessUpdate(latestTree, blockCommitments);
+  const updatedTimber = Timber.statelessUpdate(
+    latestTree,
+    blockCommitments,
+    HASH_TYPE,
+    TIMBER_HEIGHT,
+  );
   await saveTree(transactionHashL1, block.blockNumberL2, updatedTimber);
   logger.debug(`Saved tree for L2 block ${block.blockNumberL2}`);
   await Promise.all(
@@ -63,11 +77,54 @@ async function blockProposedEventHandler(data) {
     blockCommitments.map(async (c, i) => {
       const count = await countCommitments([c]);
       if (count > 0) {
-        const siblingPath = Timber.statelessSiblingPath(latestTree, blockCommitments, i);
+        const siblingPath = Timber.statelessSiblingPath(
+          latestTree,
+          blockCommitments,
+          i,
+          HASH_TYPE,
+          TIMBER_HEIGHT,
+        );
         return setSiblingInfo(c, siblingPath, latestTree.leafCount + i, updatedTimber.root);
       }
     }),
   );
+
+  // If this L2 block contains withdraw transactions known to this client,
+  // the following needs to be saved for later to be used during finalise/instant withdraw
+  // 1. Save sibling path for the withdraw transaction hash that is present in transaction hashes timber tree
+  // 2. Save transactions hash of the transactions in this L2 block that contains withdraw transactions for this client
+  // transactions hash is a linear hash of the transactions in an L2 block which is calculated during proposeBlock in
+  // the contract
+  if ((await countWithdrawTransactionHashes(block.transactionHashes)) > 0) {
+    const transactionHashesTimber = new Timber(
+      ...[, , , ,],
+      TXHASH_TREE_HASH_TYPE,
+      TXHASH_TREE_HEIGHT,
+    );
+    const updatedTransctionHashesTimber = Timber.statelessUpdate(
+      transactionHashesTimber,
+      block.transactionHashes,
+      TXHASH_TREE_HASH_TYPE,
+      TXHASH_TREE_HEIGHT,
+    );
+
+    await Promise.all(
+      // eslint-disable-next-line consistent-return
+      block.transactionHashes.map(async (transactionHash, i) => {
+        if (await isTransactionHashWithdraw(transactionHash)) {
+          const siblingPathTransactionHash =
+            updatedTransctionHashesTimber.getSiblingPath(transactionHash);
+          await setTransactionsHashForBlock(transactionHash, block.transactionsHash);
+          return setTransactionHashSiblingInfo(
+            transactionHash,
+            siblingPathTransactionHash,
+            transactionHashesTimber.leafCount + i,
+            updatedTransctionHashesTimber.root,
+          );
+        }
+      }),
+    );
+  }
 }
 
 export default blockProposedEventHandler;

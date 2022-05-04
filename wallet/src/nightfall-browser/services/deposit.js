@@ -6,7 +6,7 @@
  same value. It is agnostic to whether we are dealing with an ERC20 or ERC721
  (or ERC1155).
  * @module deposit
- * @author westlad, Chaitanya-Konda, iAmMichaelConnor, will-kim
+ * @author westlad, ChaitanyaKonda, iAmMichaelConnor, will-kim
  */
 
 import gen from 'general-number';
