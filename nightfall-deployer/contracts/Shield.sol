@@ -137,7 +137,7 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
         bytes32[6] memory siblingPath
     ) external {
         // check this block is a real one, in the queue, not something made up and that the transaction exists in the block
-        /* state.areBlockAndTransactionValid(b, transactionsHash, t, index, siblingPath); */
+        state.areBlockAndTransactionValid(b, transactionsHash, t, index, siblingPath);
         // check that the block has been finalised
         uint256 time = state.getBlockData(b.blockNumberL2).time;
         require(
@@ -218,7 +218,7 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
         require(t.transactionType == TransactionTypes.WITHDRAW, 'Can only advance withdrawals');
 
         // check this block is a real one, in the queue, not something made up.
-        /* state.areBlockAndTransactionValid(b, transactionsHash, t, index, siblingPath); */
+        state.areBlockAndTransactionValid(b, transactionsHash, t, index, siblingPath);
 
         bytes32 withdrawTransactionHash = Utils.hashTransaction(t);
         // The withdrawal has not been withdrawn
