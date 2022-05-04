@@ -11,7 +11,6 @@ contract Config is Ownable {
     uint256 constant COOLING_OFF_PERIOD = 1 weeks;
     bytes32 constant ZERO = bytes32(0);
     uint256 constant TXHASH_TREE_HEIGHT = 5;
-    uint256 constant TRANSACTIONS_BATCH_SIZE = 2; // TODO Change this from 2 to an appropriate value to control stack too deep error
 
     address bootProposer;
     address bootChallenger;
