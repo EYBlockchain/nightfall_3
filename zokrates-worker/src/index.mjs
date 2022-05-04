@@ -7,35 +7,26 @@ import queues from './queues/index.mjs';
 import logger from './utils/logger.mjs';
 
 const {
-  MPC: { RADIX_FILES_URL },
+  MPC: { MPC_PARAMS_URL },
 } = config;
 
 const main = async () => {
   try {
-    if (!fs.existsSync('./src/radix')) fs.mkdirSync('./src/radix');
+    if (!fs.existsSync('./mpc_params')) fs.mkdirSync('./mpc_params');
 
-    const radixPromises = [];
+    const mpcPromises = [];
 
-    for (const circuit of [
-      'deposit',
-      'double_transfer',
-      'single_transfer',
-      'withdraw',
-      'deposit_stub',
-      'withdraw_stub',
-      'double_transfer_stub',
-      'single_transfer_stub',
-    ]) {
-      if (!fs.existsSync(`./src/radix/${circuit}`)) {
-        radixPromises.push(
+    for (const circuit of ['deposit', 'double_transfer', 'single_transfer', 'withdraw']) {
+      if (!fs.existsSync(`./mpc_params/${circuit}`)) {
+        mpcPromises.push(
           new Promise((resolve, reject) => {
             axios
-              .get(`${RADIX_FILES_URL}/${circuit}`, {
+              .get(`${MPC_PARAMS_URL}/${circuit}`, {
                 responseType: 'stream',
               })
               .then(response => {
                 resolve();
-                response.data.pipe(fs.createWriteStream(`./src/radix/${circuit}`));
+                response.data.pipe(fs.createWriteStream(`./mpc_params/${circuit}`));
               })
               .catch(error => {
                 reject();
@@ -47,7 +38,7 @@ const main = async () => {
       }
     }
 
-    await Promise.all(radixPromises);
+    await Promise.all(mpcPromises);
 
     // 1 means enable it
     // 0 mean keep it disabled
