@@ -267,7 +267,7 @@ library MerkleTree_Stateless_KECCAK {
             } else {
                 node = keccak256(abi.encodePacked(siblingPath[i], node));
             }
-            leafIndex >> 1;
+            leafIndex = leafIndex >> 1;
         }
         frontier[0] = node;
         return (siblingPath[0] == node, frontier);
