@@ -32,7 +32,7 @@ export default function InstantWithdraw(props: InstantWithdrawProps): JSX.Elemen
         {/* <Modal.Title> */}
         <div className="modal-title">Request Instant Withdrawl</div>
         {/* </Modal.Title> */}
-        <Button className="btn-close" bsPrefix="close-btn" onClick={() => props.onHide()}></Button>
+        <Button className="btn-close" bsPrefix="close-btn" onClick={() => props.onHide()} />
       </Modal.Header>
       <Modal.Body>
         <Row className="ps-x-32 ps-y-16 border-top border-bottom">
@@ -47,14 +47,14 @@ export default function InstantWithdraw(props: InstantWithdrawProps): JSX.Elemen
           <p>
             For security reasons, withdrawals takes 7 days to be finalised. Instant withdrawals
             allows you to skip this 7 day wait for a fee.
-            <br></br>
+            <br />
             This fee is collected by Liquidity Providers (LPs) in exchange for paying you the
             withdrawal ahead of time.
-            <br></br>
+            <br />
             Set the fee that you are willing to pay for this withdrawal to be processed early.
-            <br></br>
+            <br />
             Note:
-            <br></br>
+            <br />
             There is no guarantee that your request for an instant withdrawal will be fulfilled. It
             is dependent on the fee provided and availability of LPs.
           </p>

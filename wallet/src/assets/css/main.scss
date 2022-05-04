@@ -246,7 +246,7 @@ $value in $supportive-colors {
     border-top: 0.3em solid $white;
     border-right: 0.3em solid $white;
     border-bottom: 0.3em solid $white;
-    border-left: 0.3em solid lighten(theme-color("primary"), 10%);
+    border-left: 0.3em solid theme-color("primary");
   }
 }
 
@@ -844,13 +844,13 @@ $p-color: dark-color("100");
     height: 100%;
 
     .info-title-container {
-      @extend .d-flex;
+      @extend .d-flex !optional;
       cursor: pointer;
 
       .info-title {
         @include font-setting("caps", "medium");
-        @extend .flex-grow-1;
-        @extend .align-self-center;
+        @extend .flex-grow-1 !optional;
+        @extend .align-self-center !optional;
         text-transform: uppercase;
         letter-spacing: 0.04em;
         color: dark-color("100");
@@ -900,9 +900,9 @@ $p-color: dark-color("100");
   display: block;
   overflow-x: hidden;
   overflow-y: auto;
-  @extend .pt-4;
-  @extend .d-flex;
-  @extend .justify-content-center;
+  @extend .pt-4 !optional;
+  @extend .d-flex !optional;
+  @extend .justify-content-center !optional;
 
   .modal-dialog {
     max-width: 480px;
@@ -1040,7 +1040,7 @@ textarea.form-control:active {
   position: relative;
 
   .input-action {
-    @extend .align-self-center;
+    @extend .align-self-center !optional;
     position: absolute;
     right: 10px;
   }
@@ -1080,7 +1080,7 @@ input.na::-webkit-outer-spin-button {
   background-color: transparent;
   padding: 20px 0px;
   margin-bottom: 0px;
-  @extend .d-flex;
+  @extend .d-flex !optional;
   @include font-setting("body-normal", "medium");
 
   a {
@@ -1092,7 +1092,7 @@ input.na::-webkit-outer-spin-button {
   }
 
   .right-arrow {
-    @extend .align-self-center;
+    @extend .align-self-center !optional;
     fill: dark-color("300");
     margin-left: 10px;
     margin-right: 10px;
@@ -1137,12 +1137,12 @@ input.na::-webkit-outer-spin-button {
     border-bottom: 1px solid light-color("400");
 
     .table-column {
-      @extend .d-flex;
+      @extend .d-flex !optional;
       padding: 32px;
     }
 
     .table-header-column-text {
-      @extend .align-self-center;
+      @extend .align-self-center !optional;
     }
 
     .info-help-icon {
@@ -1159,7 +1159,7 @@ input.na::-webkit-outer-spin-button {
     @include font-setting("body-small");
 
     .table-row {
-      @extend .d-flex;
+      @extend .d-flex !optional;
       border-bottom: 1px solid light-color("400");
       padding-top: 20px;
       padding-bottom: 20px;
@@ -1170,8 +1170,8 @@ input.na::-webkit-outer-spin-button {
       }
 
       .table-column {
-        @extend .align-self-center;
-        @extend .d-flex;
+        @extend .align-self-center !optional;
+        @extend .d-flex !optional;
       }
     }
 
@@ -1188,14 +1188,14 @@ input.na::-webkit-outer-spin-button {
   .table-message,
   .table-loading {
     padding: 50px;
-    @extend .d-flex;
-    @extend .justify-content-center;
+    @extend .d-flex !optional;
+    @extend .justify-content-center !optional;
     border-top: 1px solid light-color("400");
     border-radius: 0 0 $border-radius-lg $border-radius-lg;
 
     .message-text,
     .spinner {
-      @extend .align-self-center;
+      @extend .align-self-center !optional;
       @include font-setting("body-small");
       color: dark-color("400");
     }

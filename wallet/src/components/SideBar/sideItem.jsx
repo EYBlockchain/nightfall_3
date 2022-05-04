@@ -1,10 +1,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 
 import './sideItem.scss';
 
 export default function SideItem({ text, link, Icon, SideState }) {
+  const history = useHistory();
+  console.log('history', history);
   return (
     <Link
       to={{
@@ -15,9 +17,9 @@ export default function SideItem({ text, link, Icon, SideState }) {
         },
       }}
     >
-      <div className={window.location.pathname !== link ? 'itemInactive' : 'itemActive'}>
+      <div className={history.location.pathname !== link ? 'itemInactive' : 'itemActive'}>
         {/* <Icon size={24} /> */}
-        <img src={window.location.pathname !== link ? Icon[1] : Icon[0]} />
+        <img alt="icon" src={history.location.pathname !== link ? Icon[1] : Icon[0]} />
         <div className="itemText" id={text}>
           {text}
         </div>
@@ -27,8 +29,8 @@ export default function SideItem({ text, link, Icon, SideState }) {
 }
 
 SideItem.propTypes = {
-  text: PropTypes.element.isRequired,
-  link: PropTypes.element.isRequired,
-  Icon: PropTypes.element.isRequired,
-  SideState: PropTypes.element.optionalString,
+  text: PropTypes.string.isRequired,
+  link: PropTypes.string.isRequired,
+  Icon: PropTypes.array.isRequired,
+  SideState: PropTypes.string,
 };

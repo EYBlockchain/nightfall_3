@@ -608,7 +608,7 @@ async function findUsableCommitments(compressedPkd, ercAddress, tokenId, _value,
   // if we have an exact match, we can do a single-commitment transfer.
   console.log(`Looking for ${value.hex(32)}, with ercAddress ${ercAddress.hex(32)}`);
   const [singleCommitment] = commitments.filter(c => {
-    console.log(`COmmitment: ${c.preimage.value.hex(32)}`);
+    console.log(`Commitment: ${c.preimage.value.hex(32)}`);
     return c.preimage.value.hex(32) === value.hex(32);
   });
   if (singleCommitment) {

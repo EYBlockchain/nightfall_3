@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useContext } from 'react';
+import styled, { keyframes } from 'styled-components';
 import Modal from 'react-bootstrap/Modal';
 import { AiOutlineDown } from 'react-icons/ai';
 import { FiSearch } from 'react-icons/fi';
+import { BsArrowReturnLeft } from 'react-icons/bs';
 import axios from 'axios';
 import importTokens from '@TokenList/index';
 import TokenType from '@TokenList/TokenType';
@@ -25,6 +27,314 @@ const supportedTokens = importTokens();
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 const { proposerUrl } = global.config;
+
+const HeaderTitle = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 10px;
+  font-weight: bold;
+`;
+
+const MyBody = styled.div`
+  flex-direction: column;
+  text-align: center;
+  padding: 10px;
+`;
+
+const SendModalStyle = styled.div`
+  input {
+    width: 100%;
+    height: 50px;
+    border-radius: 10px;
+    padding: 15px;
+  }
+
+  p {
+    text-align: start;
+    font-size: small;
+    color: #b0b4bb;
+    margin-top: 10px;
+  }
+`;
+
+const InputSearchTitle = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 44px;
+  width: 100%;
+  padding: 24px 12px;
+  /* Header/H2 */
+
+  font-style: normal;
+  font-weight: 800;
+  font-size: 26px;
+
+  /* identical to box height, or 122% */
+
+  letter-spacing: -0.01em;
+
+  /* light/gray-900 */
+
+  color: #0a0b0d;
+
+  span {
+    color: #7b3fe4;
+  }
+
+  svg {
+    &:hover {
+      cursor: pointer;
+      color: 555;
+    }
+  }
+`;
+
+const InputWrapper = styled.div`
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  width: 100%;
+  padding: 32px;
+
+  input {
+    border: 0px;
+    margin-left: 10px;
+
+    &:placeholder {
+      font-family: Manrope;
+      font-style: normal;
+      font-weight: 500;
+      font-size: 14px;
+      line-height: 24px;
+      /* identical to box height, or 171% */
+
+      display: flex;
+      align-items: flex-end;
+
+      color: #000000;
+
+      opacity: 0.5;
+    }
+
+    &:focus {
+      outline: none;
+    }
+  }
+`;
+
+const TokensList = styled.ul`
+  padding-right: 24px;
+`;
+
+const TokensLine = styled.li`
+  width: 100%;
+
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 80px;
+  border-bottom: 1px solid #f3f4f7;
+  padding: 10px;
+
+  &:hover {
+    cursor: pointer;
+    background: #ddd;
+  }
+`;
+
+const TokensLineDiv = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center !important;
+`;
+
+const TokensLineDivImg = styled.img`
+  margin-right: 12px;
+
+  width: 40px;
+  height: 40px;
+`;
+
+const SendModalBalance = styled.div`
+  margin-top: 50px;
+  display: flex;
+  flex-direction: row !important;
+  align-items: center;
+  justify-content: space-between;
+  border: solid 1px #b0b4bb;
+  height: 60px;
+  border-radius: 10px;
+  padding: 5px;
+  width: 100%;
+`;
+
+const SendModalBalanceLeft = styled.div`
+  width: 40%;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  align-content: center;
+`;
+
+const InputBalance = styled.input`
+  border: none;
+  width: 50%;
+  padding: 0 10px;
+
+  ::placeholder {
+    color: $light-gray-900;
+  }
+
+  &:focus {
+    outline: none;
+  }
+`;
+
+const InputAddress = styled.input`
+  border: solid 1px #b0b4bb;
+  height: 20px;
+  padding: 20px;
+  ::placeholder {
+    color: $light-gray-900;
+  }
+
+  &:focus {
+    outline: #b0b4bb;
+  }
+`;
+
+const MaxButton = styled.div`
+  color: #7b3fe4;
+  font-weight: 600;
+  font-size: small;
+  padding: 5px;
+
+  &:hover {
+    cursor: pointer;
+    background-color: $light-gray-200;
+    border-radius: 5px;
+  }
+`;
+
+const SendModalBalanceRight = styled.div`
+  width: 40%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  align-content: flex-end;
+  background-color: #eee;
+  height: 50px;
+  border-radius: 10px;
+  padding: 10px;
+
+  &:hover {
+    cursor: pointer;
+    background-color: #ddd;
+  }
+`;
+
+const BalanceText = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+`;
+
+const BalanceTextRight = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+
+  p {
+    &:first-child {
+      margin-right: 5px;
+    }
+  }
+`;
+
+const SendModalFooter = styled.div`
+  display: flex;
+  flex-direction: row;
+
+  img {
+    width: 20px;
+  }
+
+  padding-top: 90px;
+
+  p {
+    margin-left: 5px;
+    font-size: medium;
+  }
+`;
+
+const ContinueTransferButton = styled.div`
+  margin-top: 12px;
+  border-radius: 12px;
+  align-self: flex-end;
+  width: 100%;
+  background-color: #7b3fe4;
+  color: #fff;
+  padding: 15px;
+  margin-bottom: 12px;
+
+  &:hover {
+    cursor: pointer;
+  }
+`;
+
+const ProcessImages = styled.div`
+  img {
+    width: 340px;
+  }
+`;
+
+const Divider = styled.div`
+  margin-top: 30px;
+  border-bottom: solid 1px #ddd;
+`;
+
+const SpineerBox = styled.div`
+  display: flex;
+  justify-content: center;
+  align-content: center;
+  align-items: center;
+  margin-top: 20px;
+`;
+
+const SpinnerBoard = styled.div`
+  display: flex;
+  justify-content: center;
+  align-content: center;
+  align-items: center;
+  --size: 150px;
+  --border: 2px;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+
+  border: var(--border) solid #eee;
+`;
+const spin = keyframes`
+  100% {
+    transform: rotate(360deg);
+  }
+`;
+
+const Spinner = styled.div`
+  --size: 100px;
+  --border: 4px;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  position: relative;
+  border: var(--border) solid #7b3fe4;
+  border-right: var(--border) solid #eae0fb;
+  animation: ${spin} 1s linear infinite;
+`;
 
 type SendModalProps = {
   currencyValue: number;
@@ -184,50 +494,52 @@ const SendModal = (props: SendModalProps): JSX.Element => {
 
   return (
     <>
-      <Modal contentClassName={stylesModal.modalFather} show={show} onHide={() => onHide()}>
+      <Modal contentClassName="modalFather" show={show} onHide={() => onHide()}>
         <Modal.Header closeButton>
-          <Modal.Title>Send</Modal.Title>
+          <HeaderTitle>Send</HeaderTitle>
         </Modal.Header>
         <Modal.Body>
           {showTokensListModal ? (
-            <div className={stylesModal.modalBody}>
-              <div className={stylesModal.sendModal}>
-                <p className="input_search_title">
-                  Choose token from <span>Ethereum</span>
-                </p>
-                <div className="input_wrapper">
+            <MyBody>
+              <SendModalStyle>
+                <InputSearchTitle>
+                  <BsArrowReturnLeft title="Back" onClick={() => setShowTokensListModal(false)} />
+                  <div>
+                    Choose token from <span>Ethereum</span>
+                  </div>
+                </InputSearchTitle>
+                <InputWrapper>
                   <FiSearch />
                   <input
                     type="text"
                     placeholder="Search here"
                     onChange={e => setFilteredTokens(filterTxs(e.target.value.toLowerCase()))}
                   />
-                </div>
-                <ul className="tokens_list">
+                </InputWrapper>
+                <TokensList>
                   {filteredTokens.map((token, index) => (
-                    <li
-                      className="tokens_line"
+                    <TokensLine
                       key={index}
                       onClick={() => {
                         setSendToken(token);
                         setShowTokensListModal(false);
                       }}
                     >
-                      <div>
-                        <img src={token.logoURI} alt="token image" />
+                      <TokensLineDiv>
+                        <TokensLineDivImg src={token.logoURI} alt="token image" />
                         <p>{token.name}</p>
-                      </div>
+                      </TokensLineDiv>
                       <p>Balance</p>
-                    </li>
+                    </TokensLine>
                   ))}
-                </ul>
-              </div>
-            </div>
+                </TokensList>
+              </SendModalStyle>
+            </MyBody>
           ) : (
-            <div className={stylesModal.modalBody}>
-              <div className={stylesModal.sendModal}>
+            <MyBody>
+              <SendModalStyle>
                 <div>
-                  <input
+                  <InputAddress
                     type="text"
                     placeholder="Enter a Nightfall Address"
                     onChange={e => setRecipient(e.target.value)}
@@ -235,9 +547,9 @@ const SendModal = (props: SendModalProps): JSX.Element => {
                   />
                   <p>Enter a valid address existing on the Polygon Nightfall L2</p>
                 </div>
-                <div className={stylesModal.sendModalBalance}>
-                  <div className={stylesModal.letfItems}>
-                    <input
+                <SendModalBalance>
+                  <SendModalBalanceLeft>
+                    <InputBalance
                       type="text"
                       placeholder="0.00"
                       onKeyDown={e => {
@@ -251,41 +563,38 @@ const SendModal = (props: SendModalProps): JSX.Element => {
                       onChange={e => setTransferValue(e.target.value)}
                       id="TokenItem_modalSend_tokenAmount"
                     />
-                    <div className={stylesModal.maxButton}>MAX</div>
-                  </div>
-                  <div
-                    className={stylesModal.rightItems}
+                  </SendModalBalanceLeft>
+                  <MaxButton>MAX</MaxButton>
+                  <SendModalBalanceRight
                     onClick={() => setShowTokensListModal(true)}
                     id="TokenItem_modalSend_tokenName"
                   >
                     <img src={sendToken.logoURI} alt="matic" />
                     <div>{sendToken.symbol}</div>
                     <AiOutlineDown />
-                  </div>
-                </div>
-                <div className={stylesModal.balanceText}>
+                  </SendModalBalanceRight>
+                </SendModalBalance>
+                <BalanceText>
                   <p>
                     ${' '}
                     {new BigFloat(l2Balance, sendToken.decimals)
                       .mul(sendToken.currencyValue)
                       .toFixed(4)}
                   </p>
-                  <div className={stylesModal.right}>
+                  <BalanceTextRight>
                     <p>Available Balance:</p>
                     <p>
                       {new BigFloat(l2Balance, sendToken.decimals).toFixed(4)} {sendToken.symbol}
                     </p>
-                  </div>
-                </div>
+                  </BalanceTextRight>
+                </BalanceText>
 
-                <div className={stylesModal.sendModalfooter}>
+                <SendModalFooter>
                   <img src={maticImg} alt="matic icon" />
-                  <p className={stylesModal.gasFee}> 0.00 Matic Transfer Fee</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                className={stylesModal.continueTrasferButton}
+                  <p className="gasFee"> 0.00 Matic Transfer Fee</p>
+                </SendModalFooter>
+              </SendModalStyle>
+              <ContinueTransferButton
                 onClick={async () => {
                   props.onHide();
                   setShowModalConfirm(true);
@@ -294,90 +603,89 @@ const SendModal = (props: SendModalProps): JSX.Element => {
                 }}
               >
                 Continue
-              </button>
-            </div>
+              </ContinueTransferButton>
+            </MyBody>
           )}
         </Modal.Body>
       </Modal>
       <Modal
-        contentClassName={stylesModal.modalFather}
+        contentClassName="modalFather"
         show={showModalConfirm}
         onHide={handleCloseConfirmModal}
       >
         <Modal.Header closeButton>
-          <div className={styles.modalTitle}>Transfer in progress</div>
+          <HeaderTitle>Transfer in progress</HeaderTitle>
         </Modal.Header>
         {showModalTransferInProgress && (
           <Modal.Body>
-            <div className={stylesModal.modalBody}>
-              <div className={styles.processImages}>
+            <MyBody>
+              <ProcessImages>
                 <img src={approveImg} alt="approve" />
-              </div>
-              <div className={stylesModal.divider} />
-              <div className={styles.spinnerBox}>
-                <div className={styles.spinnerBoard}>
-                  <div className={styles.spinner} />
-                </div>
-              </div>
-
-              <div className={stylesModal.transferModeModal}>
+              </ProcessImages>
+              <Divider />
+              <SpineerBox>
+                <SpinnerBoard>
+                  <Spinner />
+                </SpinnerBoard>
+              </SpineerBox>
+              <div className="transferModeModal">
                 <h3>Creating Transaction</h3>
-                <div className={stylesModal.modalText}>
+                <div className="modalText">
                   Retrieving your commitments and generating transaction inputs.
                 </div>
-                {/* <a className={styles.footerText}>View on etherscan</a> */}
+                {/* <a className="footerText">View on etherscan</a> */}
               </div>
-            </div>
+            </MyBody>
           </Modal.Body>
         )}
 
         {showModalTransferEnRoute && (
           <Modal.Body>
-            <div className={stylesModal.modalBody}>
-              <div className={styles.processImages}>
+            <MyBody>
+              <ProcessImages>
                 <img src={depositConfirmed} alt="deposit confirmed" />
-              </div>
-              <div className={stylesModal.divider} />
-              <div className={styles.spinnerBox}>
-                <div className={styles.spinnerBoard}>
-                  <div className={styles.spinner} />
-                </div>
-              </div>
-              <div className={stylesModal.transferModeModal}>
+              </ProcessImages>
+              <Divider />
+              <SpineerBox>
+                <SpinnerBoard>
+                  <Spinner />
+                </SpinnerBoard>
+              </SpineerBox>
+              <div className="transferModeModal">
                 <h3>Generating Zk Proof</h3>
-                <div className={stylesModal.modalText}>
+                <div className="modalText">
                   Proof generation may take up to 2 mins to complete. Do not navigate away.
                 </div>
-                {/* <a className={styles.footerText}>View on etherscan</a> */}
+                {/* <a className="footerText">View on etherscan</a> */}
               </div>
-            </div>
+            </MyBody>
           </Modal.Body>
         )}
 
         {showModalTransferConfirmed && (
           <Modal.Body>
-            <div className={stylesModal.modalBody}>
-              <div className={styles.processImages}>
+            <MyBody>
+              <ProcessImages>
                 <img src={transferCompletedImg} alt="transfer completed" />
-              </div>
-              <div className={stylesModal.divider} />
-              <div className={styles.spinnerBox}>
+              </ProcessImages>
+              <Divider />
+              <SpineerBox>
                 <img src={successHand} alt="success hand" />
-              </div>
-              <div className={stylesModal.transferModeModal} id="Bridge_modal_success">
+              </SpineerBox>
+              <div className="transferModeModal" id="Bridge_modal_success">
                 <h3>Transaction created sucessfully.</h3>
-                <div className={stylesModal.modalText}>Your transfer is ready to send.</div>
+                <div className="modalText">Your transfer is ready to send.</div>
                 <button
                   type="button"
-                  className={stylesModal.continueTrasferButton}
+                  className="continueTrasferButton"
                   id="Bridge_modal_continueTransferButton"
                   onClick={() => submitTx()}
                 >
                   Send Transaction
                 </button>
-                {/* <a className={styles.footerText}>View on etherscan</a> */}
+                {/* <a className="footerText">View on etherscan</a> */}
               </div>
-            </div>
+            </MyBody>
           </Modal.Body>
         )}
       </Modal>

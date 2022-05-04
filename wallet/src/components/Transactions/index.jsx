@@ -155,7 +155,7 @@ const Transactions = () => {
 
   return (
     <div className="pagePartition" style={{ width: '100%' }}>
-      <TxInfoModal onHide={() => setShowModal(false)} {...showModal}></TxInfoModal>
+      <TxInfoModal onHide={() => setShowModal(false)} {...showModal} />
       <div className="infoWrapper">
         <div className="tab-list">
           <div
@@ -189,7 +189,7 @@ const Transactions = () => {
             Withdraws
           </div>
         </div>
-        <div className="separator"></div>
+        <div className="separator" />
         <div className="innerWrapper">
           {txs
             .filter(f => {
@@ -225,7 +225,7 @@ const Transactions = () => {
                   <div className="transactionDetails">
                     <div>
                       {tx.isOnChain >= 0 ? (
-                        <Image src={tickBox}></Image>
+                        <Image src={tickBox} />
                       ) : (
                         <Spinner animation="border" variant="warning" />
                       )}
@@ -342,7 +342,7 @@ const Transactions = () => {
                       style={{ marginLeft: '20px' }}
                       onClick={e => e.stopPropagation()}
                     >
-                      <Image src={etherscanArrow}></Image>
+                      <Image src={etherscanArrow} />
                     </a>
                   </div>
                 </Row>
@@ -350,7 +350,7 @@ const Transactions = () => {
                   <WithdrawTransaction
                     withdrawready={tx.withdrawReady}
                     transactionhash={tx.transactionHash}
-                  ></WithdrawTransaction>
+                  />
                 ) : (
                   <></>
                 )}

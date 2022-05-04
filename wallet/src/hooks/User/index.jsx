@@ -1,11 +1,10 @@
 import React from 'react';
-import { useLocation } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
 
 import { generateKeys } from '@Nightfall/services/keys';
 import blockProposedEventHandler from '@Nightfall/event-handlers/block-proposed';
 import { getMaxBlock } from '@Nightfall/services/database';
 import * as Storage from '../../utils/lib/local-storage';
-import Web3 from '../../common-files/utils/web3';
 import { encryptAndStore, retrieveAndDecrypt, storeBrowserKey } from '../../utils/lib/key-storage';
 
 const { eventWsUrl } = global.config;
@@ -22,7 +21,7 @@ export const UserContext = React.createContext({
 export const UserProvider = ({ children }) => {
   const [state, setState] = React.useState(initialState);
   const [isSyncComplete, setIsSyncComplete] = React.useState(false);
-  const location = useLocation();
+  const history = useHistory();
 
   const deriveAccounts = async (mnemonic, numAccts) => {
     const accountRange = Array.from({ length: numAccts }, (v, i) => i);
@@ -34,7 +33,7 @@ export const UserProvider = ({ children }) => {
     await storeBrowserKey(key);
     await Promise.all(zkpKeys.map(zkpKey => encryptAndStore(zkpKey)));
     Storage.pkdArraySet(
-      await Web3.getAccount(),
+      '',
       zkpKeys.map(z => z.compressedPkd),
     );
     setState(previousState => {
@@ -46,7 +45,7 @@ export const UserProvider = ({ children }) => {
   };
 
   const syncState = async () => {
-    const pkds = Storage.pkdArrayGet(await Web3.getAccount());
+    const pkds = Storage.pkdArrayGet('');
     if (pkds) {
       setState(previousState => {
         return {
@@ -97,10 +96,7 @@ export const UserProvider = ({ children }) => {
             await acc; // Acc is a promise so we await it before processing the next one;
             return blockProposedEventHandler(curr, [ivk], [nsk]); // TODO Should be array
           }, Promise.resolve());
-        if (
-          Number(parsed.maxBlock) !==
-          Number(parsed.historicalData[parsed.historicalData.length - 1].block.blockNumberL2)
-        ) {
+        if (Number(parsed.maxBlock) !== 1) {
           socket.send(
             JSON.stringify({
               type: 'sync',
@@ -122,11 +118,12 @@ export const UserProvider = ({ children }) => {
   }, []);
 
   React.useEffect(async () => {
-    if (location.pathname !== '/' && state.compressedPkd === '') {
+    if (state.compressedPkd === '') {
+      console.log('Sync State');
       await syncState();
     }
     if (!isSyncComplete) setIsSyncComplete({ isSyncComplete: true });
-  }, [location]);
+  }, [history.location.pathname]);
 
   React.useEffect(() => {
     configureMessageListener();

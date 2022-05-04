@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import React, { createContext, useContext, useState } from 'react';
 
 type AccountType = {

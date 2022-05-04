@@ -1,17 +1,16 @@
 import React, { useContext, useState, useEffect } from 'react';
 import Modal from 'react-bootstrap/Modal';
-import { MdArrowForwardIos } from 'react-icons/md';
 import { toast } from 'react-toastify';
-import { useLocation } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
 import axios from 'axios';
+import styled, { keyframes } from 'styled-components';
 import importTokens from '@TokenList/index';
 import deposit from '@Nightfall/services/deposit';
 import withdraw from '@Nightfall/services/withdraw';
 import { getWalletBalance } from '@Nightfall/services/commitment-storage';
 import { decompressKey } from '@Nightfall/services/keys';
 import { saveTransaction } from '@Nightfall/services/database';
-import styles from '../../styles/bridge.module.scss';
-import stylesModal from '../../styles/modal.module.scss';
+import Lottie from 'lottie-react';
 import ethChainImage from '../../assets/img/ethereum-chain.svg';
 import polygonNightfall from '../../assets/svg/polygon-nightfall.svg';
 import discloserBottomImage from '../../assets/img/discloser-bottom.svg';
@@ -23,16 +22,101 @@ import depositConfirmed from '../../assets/img/modalImages/adeposit_confirmed.pn
 import successHand from '../../assets/img/modalImages/success-hand.png';
 import transferCompletedImg from '../../assets/img/modalImages/tranferCompleted.png';
 import { UserContext } from '../../hooks/User/index.jsx';
-import './styles.scss';
 import Input from '../Input/index.tsx';
 import TokensList from '../Modals/Bridge/index.tsx';
 import { useAccount } from '../../hooks/Account/index.tsx';
 import './toast.css';
+import './styles.scss';
+import TransferModal from '../Modals/Bridge/Transfer/index.jsx';
+import checkMarkYes from '../../assets/lottie/check-mark-yes.json';
+
 import ERC20 from '../../contract-abis/ERC20.json';
 import { APPROVE_AMOUNT } from '../../constants';
 import { retrieveAndDecrypt } from '../../utils/lib/key-storage';
 import BigFloat from '../../common-files/classes/bigFloat';
 
+const ModalTitle = styled.div`
+  width: 50%;
+`;
+
+const MyModalBody = styled.div`
+  flex-direction: column;
+  text-align: center;
+  padding: 10px;
+`;
+
+const ProcessImage = styled.div`
+  img {
+    width: 340px;
+  }
+`;
+
+export const SpinnerBox = styled.div`
+  display: flex;
+  justify-content: center;
+  align-content: center;
+  align-items: center;
+  margin-top: 20px;
+`;
+
+export const SpinnerBoard = styled.div`
+  display: flex;
+  justify-content: center;
+  align-content: center;
+  align-items: center;
+  --size: 150px;
+  --border: 2px;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+
+  border: var(--border) solid #eee;
+`;
+const spin = keyframes`
+  100% {
+    transform: rotate(360deg);
+  }
+`;
+
+export const Spinner = styled.div`
+  --size: 100px;
+  --border: 4px;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  position: relative;
+  border: var(--border) solid #7b3fe4;
+  border-right: var(--border) solid #eae0fb;
+  animation: ${spin} 1s linear infinite;
+`;
+
+const TransferMode = styled.div`
+  margin-top: 24px;
+`;
+
+const ModalText = styled.div`
+  text-align: center;
+`;
+
+const Divider = styled.div`
+  margin-top: 30px;
+  border-bottom: solid 1px #ddd;
+`;
+
+const ContinueTransferButton = styled.button`
+  margin-top: 12px;
+  border-radius: 12px;
+  align-self: flex-end;
+  width: 100%;
+  background-color: #7b3fe4;
+  color: #fff;
+  padding: 15px;
+  margin-bottom: 12px;
+
+  &:hover {
+    cursor: pointer;
+  }
+`;
 const supportedTokens = importTokens();
 
 const { proposerUrl } = global.config;
@@ -44,15 +128,17 @@ const { generalise } = gen;
 
 const BridgeComponent = () => {
   const [state] = useContext(UserContext);
-  const { setAccountInstance, accountInstance } = useAccount();
+  const { accountInstance } = useAccount();
   const [l1Balance, setL1Balance] = useState(0n);
   const [l2Balance, setL2Balance] = useState(0n);
+  const [sending, setSendingState] = useState(false);
   const [shieldContractAddress, setShieldAddress] = useState('');
-  const location = useLocation();
-  const initialTx = location?.tokenState?.initialTxType ?? 'deposit';
+  const history = useHistory();
+  const initialTx = history?.location?.tokenState?.initialTxType ?? 'deposit';
   const initialToken =
-    supportedTokens.find(t => t.address.toLowerCase() === location?.tokenState?.tokenAddress) ??
-    supportedTokens[0];
+    supportedTokens.find(
+      t => t.address.toLowerCase() === history?.location?.tokenState?.tokenAddress,
+    ) ?? supportedTokens[0];
 
   const [token, setToken] = useState(initialToken);
   const [txType, setTxType] = useState(initialTx);
@@ -61,16 +147,10 @@ const BridgeComponent = () => {
 
   const [showTokensListModal, setShowTokensListModal] = useState(false);
 
-  useEffect(async () => {
-    const web3 = Web3.connection();
-    const accounts = await web3.eth.getAccounts();
-    setAccountInstance({
-      address: accounts[0],
-    });
-  }, []);
-
   useEffect(() => {
-    document.getElementById('inputValue').value = 0;
+    if (document.getElementById('inputValue')) {
+      document.getElementById('inputValue').value = 0;
+    }
   }, [txType]);
 
   useEffect(() => {
@@ -81,6 +161,13 @@ const BridgeComponent = () => {
     getShieldAddress();
   }, []);
 
+  useEffect(() => {
+    if (sending)
+      setTimeout(() => {
+        setSendingState(false);
+      }, 8000);
+  }, [sending]);
+
   const [showModalConfirm, setShowModalConfirm] = useState(false);
   const [showModalTransferInProgress, setShowModalTransferInProgress] = useState(true);
   const [showModalTransferEnRoute, setShowModalTransferEnRoute] = useState(false);
@@ -90,6 +177,7 @@ const BridgeComponent = () => {
   function timeout(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
+
   // TODO Make this dependent on proof generation time.
   const handleCloseConfirmModal = () => {
     setShowModalConfirm(false);
@@ -98,18 +186,6 @@ const BridgeComponent = () => {
     setShowModalTransferConfirmed(false);
   };
 
-  // const handleShowModalConfirm = async () => {
-  //   setShowModalConfirm(true);
-  //   setShowModalTransferInProgress(true);
-  //   // await timeout(3000);
-  //   setShowModalTransferInProgress(false);
-  //   setShowModalTransferEnRoute(true);
-
-  //   // await timeout(3000);
-  //   setShowModalTransferEnRoute(false);
-  //   setShowModalTransferConfirmed(true);
-  // };
-
   const handleClose = () => setShow(false);
 
   async function submitTx() {
@@ -117,7 +193,7 @@ const BridgeComponent = () => {
     try {
       switch (readyTx.type) {
         case 'onchain':
-          await submitTransaction(readyTx.rawTransaction, shieldContractAddress, 1);
+          await submitTransaction(readyTx.rawTransaction, shieldContractAddress);
           break;
         case 'offchain':
           await axios
@@ -145,8 +221,10 @@ const BridgeComponent = () => {
   }
 
   async function triggerTx() {
+    console.log('triggering tx');
     if (shieldContractAddress === '')
       setShieldAddress((await getContractAddress('Shield')).data.address);
+    console.log('triggering tx2');
     const ercAddress = token.address;
     console.log('ercAddress', ercAddress);
     const zkpKeys = await retrieveAndDecrypt(state.compressedPkd);
@@ -173,6 +251,7 @@ const BridgeComponent = () => {
         );
         setShowModalTransferEnRoute(false);
         setShowModalTransferConfirmed(true);
+        console.log('Proof Done');
         return {
           type: 'onchain',
           rawTransaction,
@@ -247,7 +326,7 @@ const BridgeComponent = () => {
   useEffect(() => {
     updateL1Balance();
     updateL2Balance();
-  }, [token, txType]);
+  }, [token, txType, accountInstance]);
 
   const updateInputValue = () => {
     if (txType === 'deposit') {
@@ -302,7 +381,7 @@ const BridgeComponent = () => {
                   <p>{txType === 'deposit' ? 'Ethereum Mainnet' : 'Polygon Nightfall L2'}</p>
                 </div>
                 <div className="balance_details">
-                  <p>Balance: </p>
+                  <p>Balance:</p>
                   {token && txType === 'deposit' && (
                     <p>{`${new BigFloat(l1Balance, token.decimals).toFixed(4)} ${token.symbol}`}</p>
                   )}
@@ -312,15 +391,14 @@ const BridgeComponent = () => {
                   {!token && <p>0</p>}
                 </div>
               </div>
-              <div className="from_section_line"></div>
+              <div className="from_section_line" />
               <div className="token_amount_details">
                 <div className="amount_details">
                   <div className="amount_value_wrapper">
                     <Input
                       id="inputValue"
                       name="price"
-                      prefix="$"
-                      placeholder="0,00"
+                      placeholder="0.00"
                       onKeyDown={e => {
                         if (
                           (transferValue.toString().split('.')[1]?.length ?? 0) > 3 &&
@@ -351,7 +429,7 @@ const BridgeComponent = () => {
                     )}
                     {!token && (
                       <>
-                        <div></div>
+                        <div />
                         <div className="token_details_text" id="bridge_tokenDetails_tokenName">
                           <span>Select</span>
                         </div>
@@ -411,182 +489,112 @@ const BridgeComponent = () => {
             </button>
           </div>
         </div>
-        <Modal contentClassName={stylesModal.modalFather} show={show} onHide={() => setShow(false)}>
-          <Modal.Header closeButton>
-            <div className={styles.modalTitle}>Confirm transaction</div>
-          </Modal.Header>
-          <Modal.Body>
-            <div className={stylesModal.modalBody}>
-              <div className={stylesModal.tokenDetails}>
-                {/* d-flex justify-content-center align-self-center mx-auto */}
-                <div className={stylesModal.tokenDetails__img}>
-                  {/* <img
-                                  v-if="
-                                  selectedToken.symbol &&
-                                      !!tokenImage(selectedToken)
-                                  "
-                                  class="align-self-center"
-                                  :src="tokenImage(selectedToken)"
-                                  alt="Token Image"
-                              > */}
-                  <img src={polygonNightfall} alt="Token" />
-                  {/* <span
-                                  v-else-if="selectedToken.symbol"
-                                  class="align-self-center font-heading-large ps-t-2 font-semibold"
-                              >{{ selectedToken.symbol[0] }}</span> */}
-                </div>
-                {/* font-heading-large font-bold ps-t-16 ps-b-6 */}
-                <div className={stylesModal.tokenDetails__val} id="Bridge_modal_tokenAmount">
-                  {Number(transferValue).toFixed(4)}
-                </div>
-                {/* font-body-small */}
-                <div className={stylesModal.tokenDetails__usd}>
-                  {/* ${Number(token.currencyValue) * (Number(token.l2Balance) / 10 ** token.decimals)} */}
-                </div>
-              </div>
-
-              {/* Buttons */}
-              <div>
-                <div className={stylesModal.networkButtons}>
-                  <div className={stylesModal.networkButtons__button1}>
-                    <span>
-                      {txType === 'deposit' ? 'Ethereum Mainnet' : 'Polygon Nightfall L2'}
-                    </span>
-                  </div>
-                  <MdArrowForwardIos />
-                  <div className={stylesModal.networkButtons__button2}>
-                    <span>
-                      {txType === 'deposit' ? 'Polygon Nightfall L2' : 'Ethereum Mainnet'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className={stylesModal.divider} />
-              <div className={stylesModal.transferModeModal}>
-                <div className={stylesModal.transferModeModal__title}>
-                  <div className={stylesModal.transferModeModal__title__main}>Transfer Mode</div>
-                  <div className={stylesModal.transferModeModal__title__light}>
-                    {txType === 'deposit' ? 'On-Chain' : 'Direct Transfer'}
-                  </div>
-                </div>
-                <div className={stylesModal.transferModeModal__text}>
-                  <span>Transfer security is provided by the Ethereum miners.</span>
-                  {/* <span v-else>
-                              Plasma provides advanced security with plasma exit
-                              mechanism. </span>It will take approximately */}
-                  <span>
-                    {' '}
-                    To minimise the risk of chain reorganisations, your transfer will wait for{' '}
-                  </span>
-                  <span className="text-primary"> 12 block confirmations</span> before being
-                  finalized.
-                </div>
-              </div>
-              <div className={stylesModal.divider} />
-              <div className={stylesModal.estimationFee}>
-                <div className={stylesModal.estimationFee__title}>
-                  <div className={stylesModal.estimationFee__title__main}>
-                    Estimation Transaction fee
-                  </div>
-                  <div className={stylesModal.estimationFee__title__light}>TBC</div>
-                </div>
-                <button
-                  type="button"
-                  className={stylesModal.continueTrasferButton}
-                  onClick={async () => {
-                    handleClose();
-                    setShowModalConfirm(true);
-                    setShowModalTransferInProgress(true);
-                    setReadyTx(await triggerTx());
-                  }}
-                >
-                  Create Transaction
-                </button>
-              </div>
-            </div>
-          </Modal.Body>
-        </Modal>
+        {show && (
+          <TransferModal
+            show={show}
+            setShow={handleShow}
+            handleClose={handleClose}
+            transferValue={transferValue}
+            txType={txType}
+            triggerTx={triggerTx}
+            setReadyTx={setReadyTx}
+          />
+        )}
 
         {/* TRANSFER IN PROGRESS MODAL */}
         <Modal
-          contentClassName={stylesModal.modalFather}
+          contentClassName="modalFather"
           show={showModalConfirm}
           onHide={handleCloseConfirmModal}
         >
           <Modal.Header closeButton>
-            <div className={styles.modalTitle}>Transfer in progress</div>
+            <ModalTitle>Transfer in progress</ModalTitle>
           </Modal.Header>
           {showModalTransferInProgress && (
             <Modal.Body>
-              <div className={stylesModal.modalBody}>
-                <div className={styles.processImages}>
+              <MyModalBody>
+                <ProcessImage>
                   <img src={approveImg} alt="approve" />
-                </div>
-                <div className={stylesModal.divider} />
-                <div className={styles.spinnerBox}>
-                  <div className={styles.spinnerBoard}>
-                    <div className={styles.spinner} />
-                  </div>
-                </div>
+                </ProcessImage>
+                <Divider />
+                <SpinnerBox>
+                  <SpinnerBoard>
+                    <Spinner />
+                  </SpinnerBoard>
+                </SpinnerBox>
 
-                <div className={stylesModal.transferModeModal}>
+                <TransferMode>
                   <h3>Creating Transaction</h3>
-                  <div className={stylesModal.modalText}>
+                  <ModalText>
                     Retrieving your commitments and generating transaction inputs.
-                  </div>
+                  </ModalText>
                   {/* <a className={styles.footerText}>View on etherscan</a> */}
-                </div>
-              </div>
+                </TransferMode>
+              </MyModalBody>
             </Modal.Body>
           )}
 
           {showModalTransferEnRoute && (
             <Modal.Body>
-              <div className={stylesModal.modalBody}>
-                <div className={styles.processImages}>
+              <MyModalBody>
+                <ProcessImage>
                   <img src={depositConfirmed} alt="deposit confirmed" />
-                </div>
-                <div className={stylesModal.divider} />
-                <div className={styles.spinnerBox}>
-                  <div className={styles.spinnerBoard}>
-                    <div className={styles.spinner} />
-                  </div>
-                </div>
-                <div className={stylesModal.transferModeModal}>
+                </ProcessImage>
+                <Divider />
+                <SpinnerBox>
+                  <SpinnerBoard>
+                    <Spinner />
+                  </SpinnerBoard>
+                </SpinnerBox>
+
+                <TransferMode>
                   <h3>Generating Zk Proof</h3>
-                  <div className={stylesModal.modalText}>
+                  <ModalText>
                     Proof generation may take up to 2 mins to complete. Do not navigate away.
-                  </div>
+                  </ModalText>
                   {/* <a className={styles.footerText}>View on etherscan</a> */}
-                </div>
-              </div>
+                </TransferMode>
+              </MyModalBody>
             </Modal.Body>
           )}
 
           {showModalTransferConfirmed && (
             <Modal.Body>
-              <div className={stylesModal.modalBody}>
-                <div className={styles.processImages}>
+              <MyModalBody>
+                <ProcessImage>
                   <img src={transferCompletedImg} alt="transfer completed" />
-                </div>
-                <div className={stylesModal.divider} />
-                <div className={styles.spinnerBox}>
+                </ProcessImage>
+                <Divider />
+                <SpinnerBox>
                   <img src={successHand} alt="success hand" />
-                </div>
-                <div className={stylesModal.transferModeModal} id="Bridge_modal_success">
+                </SpinnerBox>
+
+                <TransferMode>
                   <h3>Transaction created sucessfully.</h3>
-                  <div className={stylesModal.modalText}>Your transfer is ready to send.</div>
-                  <button
-                    type="button"
-                    className={stylesModal.continueTrasferButton}
-                    id="Bridge_modal_continueTransferButton"
-                    onClick={() => submitTx()}
-                  >
-                    Send Transaction
-                  </button>
+                  <ModalText>Your transfer is ready to send.</ModalText>
                   {/* <a className={styles.footerText}>View on etherscan</a> */}
-                </div>
-              </div>
+                  <ContinueTransferButton
+                    type="button"
+                    id="Bridge_modal_continueTransferButton"
+                    onClick={() => {
+                      setSendingState(true);
+                      submitTx();
+                    }}
+                  >
+                    {sending ? (
+                      <div style={{ display: 'flex', justifyContent: 'center' }}>
+                        <Lottie
+                          style={{ height: '32px', width: '32px' }}
+                          animationData={checkMarkYes}
+                          loop
+                        />
+                      </div>
+                    ) : (
+                      <div>Send Transaction</div>
+                    )}
+                  </ContinueTransferButton>
+                </TransferMode>
+              </MyModalBody>
             </Modal.Body>
           )}
         </Modal>
