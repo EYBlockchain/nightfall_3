@@ -167,7 +167,7 @@ async function transfer(transferParams, shieldContractAddress) {
       const parity = bin[0];
       const ordinate = bin.slice(1);
       const fields = {
-        parity: parity === '0',
+        parity: !!Number(parity), // This converts parity into true / false from 1 / 0;
         ordinate: new GN(ordinate, 'binary').field(BN128_GROUP_ORDER),
       };
       return fields;
