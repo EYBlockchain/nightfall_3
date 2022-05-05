@@ -288,14 +288,14 @@ export async function saveTransaction(_transaction) {
   const db = connection.db(OPTIMIST_DB);
   const query = { transactionHash: transaction.transactionHash };
   const update = { $set: transaction };
-  const existing = await db.collection(TRANSACTIONS_COLLECTION).findOne(query);
-  if (!existing)
-    return db.collection(TRANSACTIONS_COLLECTION).updateOne(query, update, { upsert: true });
-  if (!existing.blockNumber) {
-    logger.info('Saving re-mined transaction resulting from chain reorganisation');
-    return db.collection(TRANSACTIONS_COLLECTION).updateOne(query, update, { upsert: true });
-  }
-  throw new Error('Attempted to replay existing transaction');
+  // const existing = await db.collection(TRANSACTIONS_COLLECTION).findOne(query);
+  // if (!existing)
+  return db.collection(TRANSACTIONS_COLLECTION).updateOne(query, update, { upsert: true });
+  // if (!existing.blockNumber) {
+  //   logger.info('Saving re-mined transaction resulting from chain reorganisation');
+  //   return db.collection(TRANSACTIONS_COLLECTION).updateOne(query, update, { upsert: true });
+  // }
+  // throw new Error('Attempted to replay existing transaction');
 }
 
 /**

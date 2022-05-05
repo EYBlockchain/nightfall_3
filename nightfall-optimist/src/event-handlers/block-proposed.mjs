@@ -12,6 +12,7 @@ import {
   stampNullifiers,
   getLatestTree,
   saveTree,
+  saveTransaction,
 } from '../services/database.mjs';
 import { getProposeBlockCalldata } from '../services/process-calldata.mjs';
 
@@ -62,6 +63,7 @@ async function blockProposedEventHandler(data) {
     );
     // mark transactions so that they are out of the mempool,
     // so we don't try to use them in a block which we're proposing.
+    await Promise.all(transactions.map(t => saveTransaction(t)));
     await removeTransactionsFromMemPool(block.transactionHashes, block.blockNumberL2); // TODO is await needed?
 
     const latestTree = await getLatestTree();
