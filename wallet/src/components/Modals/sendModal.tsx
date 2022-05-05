@@ -10,17 +10,17 @@ import TokenType from '@TokenList/TokenType';
 import transfer from '@Nightfall/services/transfer';
 import { getWalletBalance } from '@Nightfall/services/commitment-storage';
 import { saveTransaction } from '@Nightfall/services/database';
-import stylesModal from '../../styles/modal.module.scss';
+import Lottie from 'lottie-react';
 import { UserContext } from '../../hooks/User';
 import maticImg from '../../assets/img/polygon-chain.svg';
 import { retrieveAndDecrypt } from '../../utils/lib/key-storage';
 import { getContractAddress } from '../../common-files/utils/contract';
-import styles from '../../styles/bridge.module.scss';
 import approveImg from '../../assets/img/modalImages/adeposit_approve1.png';
 import depositConfirmed from '../../assets/img/modalImages/adeposit_confirmed.png';
 import successHand from '../../assets/img/modalImages/success-hand.png';
 import transferCompletedImg from '../../assets/img/modalImages/tranferCompleted.png';
 import BigFloat from '../../common-files/classes/bigFloat';
+import checkMarkYes from '../../assets/lottie/check-mark-yes.json';
 
 const supportedTokens = importTokens();
 
@@ -353,6 +353,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
   // @ts-ignore
   const [state] = useContext(UserContext); // Why does typescript think this is an object?
   const [valueToSend, setTransferValue] = useState('0');
+  const [sending, setSendingState] = useState(false);
   const [recipient, setRecipient] = useState('');
   const { onHide, show, ...initialSendToken } = props;
   const [sendToken, setSendToken] = useState(initialSendToken);
@@ -399,6 +400,13 @@ const SendModal = (props: SendModalProps): JSX.Element => {
     };
     getBalance();
   }, [sendToken, state]);
+
+  useEffect(() => {
+    if (sending)
+      setTimeout(() => {
+        setSendingState(false);
+      }, 8000);
+  }, [sending]);
 
   const [showModalConfirm, setShowModalConfirm] = useState(false);
   const [showModalTransferInProgress, setShowModalTransferInProgress] = useState(true);
@@ -675,14 +683,22 @@ const SendModal = (props: SendModalProps): JSX.Element => {
               <div className="transferModeModal" id="Bridge_modal_success">
                 <h3>Transaction created sucessfully.</h3>
                 <div className="modalText">Your transfer is ready to send.</div>
-                <button
-                  type="button"
-                  className="continueTrasferButton"
+                <ContinueTransferButton
                   id="Bridge_modal_continueTransferButton"
                   onClick={() => submitTx()}
                 >
-                  Send Transaction
-                </button>
+                  {sending ? (
+                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                      <Lottie
+                        style={{ height: '32px', width: '32px' }}
+                        animationData={checkMarkYes}
+                        loop
+                      />
+                    </div>
+                  ) : (
+                    <div>Send Transaction</div>
+                  )}
+                </ContinueTransferButton>
                 {/* <a className="footerText">View on etherscan</a> */}
               </div>
             </MyBody>

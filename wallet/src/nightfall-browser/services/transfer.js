@@ -162,7 +162,16 @@ async function transfer(transferParams, shieldContractAddress) {
       sqrtMessage3: secrets.squareRootsElligator2[2].field(BN128_GROUP_ORDER),
       sqrtMessage4: secrets.squareRootsElligator2[3].field(BN128_GROUP_ORDER),
     },
-    compressedSecrets.map(text => generalise(text.hex(32, 31)).field(BN128_GROUP_ORDER)),
+    compressedSecrets.map(text => {
+      const bin = text.binary.padStart(256, '0');
+      const parity = bin[0];
+      const ordinate = bin.slice(1);
+      const fields = {
+        parity: parity === '0',
+        ordinate: new GN(ordinate, 'binary').field(BN128_GROUP_ORDER),
+      };
+      return fields;
+    }),
   ];
 
   const flattenInput = witnessInput.map(w => {
