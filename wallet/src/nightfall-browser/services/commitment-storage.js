@@ -84,8 +84,8 @@ export async function countTransactionHashes(transactionHashes) {
 // function to get count of transaction hashes of withdraw type. Used to decide if we should store sibling path of transaction hash to be used later for finalising or instant withdrawal
 export async function countWithdrawTransactionHashes(transactionHashes) {
   const db = await connectDB();
-  // const res = await db.getAll(COMMITMENTS_COLLECTION);
-  const txs = await db.getAll(TRANSACTIONS_COLLECTION);
+  const txs = await db.getAll(COMMITMENTS_COLLECTION);
+  // const txs = await db.getAll(TRANSACTIONS_COLLECTION);
   const filtered = txs.filter(tx => {
     return transactionHashes.includes(tx.transactionHash) && tx.nullifierTransactionType === '3';
   });
@@ -96,8 +96,8 @@ export async function countWithdrawTransactionHashes(transactionHashes) {
 // function to get if the transaction hash belongs to a withdraw transaction
 export async function isTransactionHashWithdraw(transactionHash) {
   const db = await connectDB();
-  // const res = await db.getAll(COMMITMENTS_COLLECTION);
-  const txs = await db.getAll(TRANSACTIONS_COLLECTION);
+  const txs = await db.getAll(COMMITMENTS_COLLECTION);
+  // const txs = await db.getAll(TRANSACTIONS_COLLECTION);
   const filtered = txs.filter(tx => {
     return tx.transactionHash === transactionHash && tx.nullifierTransactionType === '3';
   });
