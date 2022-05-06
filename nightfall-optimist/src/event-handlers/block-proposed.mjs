@@ -66,8 +66,9 @@ async function blockProposedEventHandler(data) {
           logger.debug(
             `Processing external offchain transaction with L2 hash ${tx.transactionHash}`,
           );
-          transactionSubmittedEventHandler({ offchain: true, ...tx }); // must be offchain or we'll have seen them
+          return transactionSubmittedEventHandler({ offchain: true, ...tx }); // must be offchain or we'll have seen them
         }
+        return true;
       }),
     );
 
