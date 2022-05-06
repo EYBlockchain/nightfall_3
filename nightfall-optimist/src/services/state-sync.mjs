@@ -52,14 +52,14 @@ const syncState = async (
       case 'Rollback':
         await rollbackEventHandler(pastEvent);
         break;
+      case 'TransactionSubmitted':
+        await transactionSubmittedEventHandler(pastEvent);
+        break;
       case 'BlockProposed':
         await blockProposedEventHandler(pastEvent);
         break;
       case 'CommittedToChallenge':
         await committedToChallengeEventHandler(pastEvent);
-        break;
-      case 'TransactionSubmitted':
-        await transactionSubmittedEventHandler(pastEvent);
         break;
       default:
         break;
