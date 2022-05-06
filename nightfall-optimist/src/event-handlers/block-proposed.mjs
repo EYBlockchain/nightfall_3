@@ -12,8 +12,10 @@ import {
   stampNullifiers,
   getLatestTree,
   saveTree,
+  getTransactionByTransactionHash,
 } from '../services/database.mjs';
 import { getProposeBlockCalldata } from '../services/process-calldata.mjs';
+import transactionSubmittedEventHandler from './transaction-submitted.mjs';
 
 const { ZERO, HASH_TYPE, TIMBER_HEIGHT } = config;
 
@@ -51,6 +53,25 @@ async function blockProposedEventHandler(data) {
     // when a challenge is raised because the is correct block data, then the corresponding block deleted event will
     // update this collection
     await saveBlock({ blockNumber: currentBlockCount, transactionHashL1, ...block });
+
+    // It's possible that some of these transactions are new to us. That's because they were
+    // submitted by someone directly to another proposer and so there was never a TransactionSubmitted
+    // event associated with them. Either that, or we lost our database and had to resync from the chain.
+    // In which case this handler is being called be the resync code. either way, we need to add the transaction.
+    // let's use transactionSubmittedEventHandler to do this because it will perform all the duties associated
+    // with saving a transaction.
+    await Promise.all(
+      transactions.map(async tx => {
+        if (!(await getTransactionByTransactionHash(tx.transactionHash))) {
+          logger.debug(
+            `Processing external offchain transaction with L2 hash ${tx.transactionHash}`,
+          );
+          return transactionSubmittedEventHandler({ offchain: true, ...tx }); // must be offchain or we'll have seen them
+        }
+        return true;
+      }),
+    );
+
     // Update the nullifiers we have stored, with the blockhash. These will
     // be deleted if the block check fails and we get a rollback.  We do this
     // before running the block check because we want to delete the nullifiers

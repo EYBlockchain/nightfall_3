@@ -46,7 +46,6 @@ module.exports = async function (deployer) {
   await challengers.setBootChallenger(bootChallenger);
   const restrictions = await Shield.deployed();
   // restrict transfer amounts
-  console.log('**TEST**', process.env.ETH_NETWORK, RESTRICTIONS.tokens, RESTRICTIONS);
   for (let token of RESTRICTIONS.tokens[process.env.ETH_NETWORK]) {
     console.log(`Max deposit restriction for ${token.name}: ${token.amount}`);
     await restrictions.setRestriction(token.address, token.amount);
