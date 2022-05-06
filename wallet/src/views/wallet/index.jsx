@@ -26,6 +26,8 @@ const supportedTokens = importTokens();
 
 const { DEFAULT_ACCOUNT_NUM } = global.config;
 
+const { ethereum } = global;
+
 /**
 This is a modal to detect if a wallet has been initialized
 */
@@ -114,10 +116,22 @@ export default function Wallet() {
     setAccountInstance({
       address: accounts[0],
     });
+    ethereum.on('accountsChanged', ([account]) => {
+      setAccountInstance({
+        address: account,
+      });
+    });
+    return () => {
+      ethereum.removeListener('accountsChanged', ([account]) => {
+        setAccountInstance({
+          address: account,
+        });
+      });
+    };
   }, []);
 
   useEffect(async () => {
-    const pkdsDerived = Storage.pkdArrayGet(await Web3.getAccount());
+    const pkdsDerived = Storage.pkdArrayGet('');
     if (state.compressedPkd === '' && !pkdsDerived) setModalShow(true);
     else setModalShow(false);
   }, []);
@@ -152,7 +166,7 @@ export default function Wallet() {
 
   return (
     <div>
-      <Header />
+      {process.env.REACT_APP_MODE === 'local' ? <Header /> : <></>}
       <div className="wallet">
         <div className="walletComponents">
           <div className="walletComponents__left">

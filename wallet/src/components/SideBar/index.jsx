@@ -20,23 +20,23 @@ export default function SideBar() {
     return (
       <div className="sideBar">
         <div className="sideItems">
-          <SideItem text={'Nightfall Assets'} link={'/wallet'} Icon={[WalletImg, WalletImgGrey]} />
+          <SideItem text="Nightfall Assets" link="/" Icon={[WalletImg, WalletImgGrey]} />
           <SideItem
-            text={'L2 Bridge'}
-            link={'/bridge'}
+            text="L2 Bridge"
+            link="/bridge"
             Icon={[BridgeImg, BridgeImgGrey]}
-            SideState={''}
+            SideState=""
           />
           <SideItem
-            text={'Transactions'}
-            link={'/transactionPage'}
+            text="Transactions"
+            link="/transactionPage"
             Icon={[TransactionImg, TransactionImgGrey]}
           />
         </div>
         <div>
           <div className="links">
             <GiElectric size={24} />
-            <div className="linkText">{"What's new?"}</div>
+            <div className="linkText">What&apos;s new?</div>
           </div>
           <div className="links">
             <RiWallet3Line size={24} />
@@ -50,5 +50,5 @@ export default function SideBar() {
       </div>
     );
   }
-  return <div></div>;
+  return <div />;
 }

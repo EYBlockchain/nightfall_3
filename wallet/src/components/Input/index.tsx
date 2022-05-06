@@ -6,7 +6,6 @@ import './styles.scss';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   mask: 'cep' | 'currency' | 'cpf';
-  prefix?: string;
 }
 
 const Input: React.FC<InputProps> = ({ mask, ...props }) => {

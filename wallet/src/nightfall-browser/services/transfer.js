@@ -53,7 +53,6 @@ async function transfer(transferParams, shieldContractAddress) {
   );
   if (oldCommitments) logger.debug(`Found commitments ${JSON.stringify(oldCommitments, null, 2)}`);
   else throw new Error('No suitable commitments were found'); // caller to handle - need to get the user to make some commitments or wait until they've been posted to the blockchain and Timber knows about them
-
   // Having found either 1 or 2 commitments, which are suitable inputs to the
   // proof, the next step is to compute their nullifiers;
   const nullifiers = oldCommitments.map(commitment => new Nullifier(commitment, nsk));
@@ -163,7 +162,16 @@ async function transfer(transferParams, shieldContractAddress) {
       sqrtMessage3: secrets.squareRootsElligator2[2].field(BN128_GROUP_ORDER),
       sqrtMessage4: secrets.squareRootsElligator2[3].field(BN128_GROUP_ORDER),
     },
-    compressedSecrets.map(text => generalise(text.hex(32, 31)).field(BN128_GROUP_ORDER)),
+    compressedSecrets.map(text => {
+      const bin = text.binary.padStart(256, '0');
+      const parity = bin[0];
+      const ordinate = bin.slice(1);
+      const fields = {
+        parity: !!Number(parity), // This converts parity into true / false from 1 / 0;
+        ordinate: new GN(ordinate, 'binary').field(BN128_GROUP_ORDER),
+      };
+      return fields;
+    }),
   ];
 
   const flattenInput = witnessInput.map(w => {

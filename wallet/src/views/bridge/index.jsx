@@ -15,7 +15,7 @@ const Bridge = () => {
   return (
     // containerFluid
     <div>
-      <Header />
+      {process.env.REACT_APP_MODE === 'local' ? <Header /> : <></>}
       <div className="bridgeComponent">
         {isTabletOrMobile && (
           <div className="bridgeComponent__left">
@@ -33,7 +33,8 @@ const Bridge = () => {
               <div className="info_wrapper">
                 <div className="info_painel_title">Nightfall Bridge</div>
                 <div className="info_painel_description">
-                  The safe, fast and most secure way to bring cross-chain assets to Polygon chain.
+                  The safe, fast and most secure way to bring cross-chain assets to Polygon
+                  Nightfall.
                 </div>
                 {isTabletOrMobile && (
                   <>

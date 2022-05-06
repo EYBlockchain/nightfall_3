@@ -1,5 +1,7 @@
 // ignore unused exports default
 
+import Web3 from '../../common-files/utils/web3';
+import { compressProof } from '../../common-files/utils/curve-maths/curves';
 import logger from '../../common-files/utils/logger';
 import Timber from '../../common-files/classes/timber';
 import {
@@ -24,7 +26,66 @@ import {
   setTransactionHashSiblingInfo,
 } from '../services/database';
 
-const { ZERO, HASH_TYPE, TIMBER_HEIGHT, TXHASH_TREE_HASH_TYPE, TXHASH_TREE_HEIGHT } = global.config;
+const {
+  ZERO,
+  HASH_TYPE,
+  TIMBER_HEIGHT,
+  TXHASH_TREE_HASH_TYPE,
+  TXHASH_TREE_HEIGHT,
+  PROPOSE_BLOCK_TYPES,
+} = global.config;
+
+const calcTransactionsHash = (block, transactions) => {
+  const web3 = Web3.connection();
+  const { proposer, root, leafCount, blockNumberL2, previousBlockHash, transactionHashesRoot } =
+    block;
+  const blockArray = [
+    leafCount,
+    proposer,
+    root,
+    blockNumberL2,
+    previousBlockHash,
+    transactionHashesRoot,
+  ];
+  const transactionsArray = transactions.map(t => {
+    const {
+      value,
+      historicRootBlockNumberL2,
+      transactionType,
+      tokenType,
+      tokenId,
+      ercAddress,
+      recipientAddress,
+      commitments,
+      nullifiers,
+      compressedSecrets,
+      proof,
+    } = t;
+    return [
+      value,
+      historicRootBlockNumberL2,
+      transactionType,
+      tokenType,
+      tokenId,
+      ercAddress,
+      recipientAddress,
+      commitments,
+      nullifiers,
+      compressedSecrets,
+      compressProof(proof),
+    ];
+  });
+  let encodedTransactions = web3.eth.abi.encodeParameters(PROPOSE_BLOCK_TYPES, [
+    blockArray,
+    transactionsArray,
+  ]);
+  encodedTransactions = `0x${encodedTransactions.slice(386)}`; // Retrieve transactions data only
+  const transactionsHash = web3.utils.soliditySha3({
+    t: 'bytes',
+    v: encodedTransactions,
+  });
+  return transactionsHash;
+};
 
 /**
 This handler runs whenever a BlockProposed event is emitted by the blockchain
@@ -39,8 +100,14 @@ async function blockProposedEventHandler(data, ivks, nsks) {
   const blockCommitments = transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat();
 
   let tempBlockSaved = false;
+  const transactionsHash = calcTransactionsHash(block, transactions);
   if ((await countTransactionHashes(block.transactionHashes)) > 0) {
-    await saveBlock({ blockNumber: currentBlockCount, transactionHashL1, ...block });
+    await saveBlock({
+      blockNumber: currentBlockCount,
+      transactionHashL1,
+      transactionsHash,
+      ...block,
+    });
     await Promise.all(transactions.map(t => saveTransaction({ transactionHashL1, ...t })));
     tempBlockSaved = true;
   }
@@ -145,7 +212,7 @@ async function blockProposedEventHandler(data, ivks, nsks) {
         if (await isTransactionHashWithdraw(transactionHash)) {
           const siblingPathTransactionHash =
             updatedTransctionHashesTimber.getSiblingPath(transactionHash);
-          await setTransactionsHashForBlock(transactionHash, block.transactionsHash);
+          await setTransactionsHashForBlock(transactionHash, transactionsHash);
           return setTransactionHashSiblingInfo(
             transactionHash,
             siblingPathTransactionHash,
