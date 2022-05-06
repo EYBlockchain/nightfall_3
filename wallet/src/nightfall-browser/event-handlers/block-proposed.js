@@ -20,7 +20,6 @@ import {
   saveTree,
   saveTransaction,
   saveBlock,
-  setTransactionsHashForBlock,
   setTransactionHashSiblingInfo,
 } from '../services/database';
 
@@ -145,7 +144,6 @@ async function blockProposedEventHandler(data, ivks, nsks) {
         if (await isTransactionHashWithdraw(transactionHash)) {
           const siblingPathTransactionHash =
             updatedTransctionHashesTimber.getSiblingPath(transactionHash);
-          await setTransactionsHashForBlock(transactionHash, block.transactionsHash);
           return setTransactionHashSiblingInfo(
             transactionHash,
             siblingPathTransactionHash,

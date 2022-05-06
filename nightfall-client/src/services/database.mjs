@@ -267,17 +267,6 @@ export async function getTransactionByTransactionHash(transactionHash) {
 }
 
 // function to set the path of the transaction hash leaf in transaction hash timber
-export async function setTransactionsHashForBlock(transactionHash, transactionsHash) {
-  const connection = await mongo.connection(MONGO_URL);
-  const query = { transactionHash };
-  const update = {
-    $set: { transactionsHash },
-  };
-  const db = connection.db(COMMITMENTS_DB);
-  return db.collection(TRANSACTIONS_COLLECTION).updateMany(query, update);
-}
-
-// function to set the path of the transaction hash leaf in transaction hash timber
 export async function setTransactionHashSiblingInfo(
   transactionHash,
   transactionHashSiblingPath,

@@ -12,7 +12,6 @@ pragma solidity ^0.8.0;
 import './Structures.sol';
 import './Utils.sol';
 import './Config.sol';
-import './MerkleTree_Stateless_KECCAK.sol';
 
 contract State is Structures, Initializable, ReentrancyGuardUpgradeable, Config {
     // global state variables
@@ -82,6 +81,57 @@ contract State is Structures, Initializable, ReentrancyGuardUpgradeable, Config 
         require(b.proposer == msg.sender, 'The proposer address is not the sender');
         // set the maximum tx/block to prevent unchallengably large blocks
         require(t.length < 33, 'The block has too many transactions');
+
+        bytes32 blockHash;
+        assembly {
+            let blockPos := mload(0x40) // get empty memory location pointer
+            calldatacopy(blockPos, 4, add(mul(t.length, 0x300), 0x100)) // copy calldata into this location. 0x300 is 768 bytes of data for each transaction. 0x100 is 192 bytes of block data, 32 bytes for transactions array memory and size each. TODO skip this by passing parameters in memory. But inline assembly to destructure struct array is not straight forward
+            let transactionPos := add(blockPos, 0x100) // calculate memory location of transactions data copied
+            let transactionHashesPos := add(transactionPos, mul(t.length, 0x300)) // calculate memory location to store transaction hashes to be calculated
+            // calculate and store transaction hashes
+            for {
+                let i := 0
+            } lt(i, t.length) {
+                i := add(i, 1)
+            } {
+                mstore(
+                    add(transactionHashesPos, mul(0x20, i)),
+                    keccak256(add(transactionPos, mul(0x300, i)), 0x300)
+                )
+            }
+            let transactionHashesRoot
+            // calculate and store transaction hashes root
+            for {
+                let i := 5
+            } gt(i, 0) {
+                i := sub(i, 1)
+            } {
+                for {
+                    let j := 0
+                } lt(j, exp(2, sub(i, 1))) {
+                    j := add(j, 1)
+                } {
+                    let left := mload(add(transactionHashesPos, mul(mul(0x20, j), 2)))
+                    let right := mload(add(transactionHashesPos, add(mul(mul(0x20, j), 2), 0x20)))
+                    if eq(and(iszero(left), iszero(right)), 1) {
+                        transactionHashesRoot := 0
+                    } // returns bool
+                    if eq(and(iszero(left), iszero(right)), 0) {
+                        transactionHashesRoot := keccak256(
+                            add(transactionHashesPos, mul(mul(0x20, j), 2)),
+                            0x40
+                        )
+                    } // returns bool
+                    mstore(add(transactionHashesPos, mul(0x20, j)), transactionHashesRoot)
+                }
+            }
+            // check if the transaction hashes root calculated equal to the one passed as part of block data
+            if eq(eq(mload(add(blockPos, mul(5, 0x20))), transactionHashesRoot), 0) {
+                revert(0, 0)
+            }
+            // calculate block hash
+            blockHash := keccak256(blockPos, mul(6, 0x20))
+        }
         // We need to set the blockHash on chain here, because there is no way to
         // convince a challenge function of the (in)correctness by an offchain
         // computation; the on-chain code doesn't save the pre-image of the hash so
@@ -91,12 +141,7 @@ contract State is Structures, Initializable, ReentrancyGuardUpgradeable, Config 
         // All check pass so add the block to the list of blocks waiting to be permanently added to the state - we only save the hash of the block data plus the absolute minimum of metadata - it's up to the challenger, or person requesting inclusion of the block to the permanent contract state, to provide the block data.
 
         // blockHash is hash of all block data and hash of all the transactions data.
-        blockHashes.push(
-            BlockData({
-                blockHash: keccak256(abi.encodePacked(msg.data[4:196], keccak256(msg.data[196:]))),
-                time: block.timestamp
-            })
-        );
+        blockHashes.push(BlockData({blockHash: blockHash, time: block.timestamp}));
         // Timber will listen for the BlockProposed event as well as
         // nightfall-optimist.  The current, optimistic version of Timber does not
         // require the smart contract to craft NewLeaf/NewLeaves events.
@@ -209,27 +254,34 @@ contract State is Structures, Initializable, ReentrancyGuardUpgradeable, Config 
     // Checks if a block is actually referenced in the queue of blocks waiting
     // to go into the Shield state (stops someone challenging with a non-existent
     // block).
-    function isBlockReal(Block memory b, Transaction[] memory ts) public view returns (bytes32) {
-        bytes32 blockHash = Utils.hashBlock(b, ts);
+    function areBlockAndTransactionsReal(Block memory b, Transaction[] memory ts)
+        public
+        view
+        returns (bytes32)
+    {
+        bytes32 blockHash = Utils.hashBlock(b);
         require(blockHashes[b.blockNumberL2].blockHash == blockHash, 'This block does not exist');
+        bytes32 tranasactionHashesRoot = Utils.hashTransactionHashes(ts);
+        require(
+            b.transactionHashesRoot == tranasactionHashesRoot,
+            'Some of these transactions are not in this block'
+        );
         return blockHash;
     }
 
-    function areBlockAndTransactionValid(
+    function areBlockAndTransactionReal(
         Block memory b,
-        bytes32 transactionsHash,
         Transaction memory t,
         uint256 index,
         bytes32[6] memory siblingPath
     ) public view {
-        bytes32 blockHash = Utils.hashBlock(b, transactionsHash);
+        bytes32 blockHash = Utils.hashBlock(b);
         require(blockHashes[b.blockNumberL2].blockHash == blockHash, 'This block does not exist');
         require(
             b.transactionHashesRoot == siblingPath[0],
             'This transaction hashes root is incorrect'
         );
-        (bool valid, ) =
-            MerkleTree_Stateless_KECCAK.checkPath(siblingPath, index, Utils.hashTransaction(t));
+        bool valid = Utils.checkPath(siblingPath, index, Utils.hashTransaction(t));
         require(valid, 'Transaction does not exist in block');
     }
 

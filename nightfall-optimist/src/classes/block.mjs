@@ -4,17 +4,10 @@ An optimistic layer 2 Block class
 import config from 'config';
 import Timber from 'common-files/classes/timber.mjs';
 import Web3 from 'common-files/utils/web3.mjs';
-import { compressProof } from 'common-files/utils/curve-maths/curves.mjs';
 import { getLatestTree, getLatestBlockInfo } from '../services/database.mjs';
 
-const {
-  ZERO,
-  HASH_TYPE,
-  TIMBER_HEIGHT,
-  TXHASH_TREE_HASH_TYPE,
-  TXHASH_TREE_HEIGHT,
-  PROPOSE_BLOCK_TYPES,
-} = config;
+const { ZERO, HASH_TYPE, TIMBER_HEIGHT, TXHASH_TREE_HASH_TYPE, TXHASH_TREE_HEIGHT, BLOCK_TYPES } =
+  config;
 
 /**
 This Block class does not have the Block components that are computed on-chain.
@@ -126,17 +119,14 @@ class Block {
     this.localBlockNumberL2 += 1;
     this.localRoot = updatedTimber.root;
     // compute the keccak hash of the proposeBlock signature
-    const blockHash = this.calcHash(
-      {
-        proposer,
-        root: updatedTimber.root,
-        leafCount: timber.leafCount,
-        blockNumberL2,
-        previousBlockHash,
-        transactionHashesRoot: this.calcTransactionHashesRoot(transactions),
-      },
-      transactions,
-    );
+    const blockHash = this.calcHash({
+      proposer,
+      root: updatedTimber.root,
+      leafCount: timber.leafCount,
+      blockNumberL2,
+      previousBlockHash,
+      transactionHashesRoot: this.calcTransactionHashesRoot(transactions),
+    });
     this.localPreviousBlockHash = blockHash;
     // note that the transactionHashes array is not part of the on-chain block
     // but we compute it here for convenience. It needs removing before sending
@@ -165,8 +155,8 @@ class Block {
     this.localPreviousBlockHash = ZERO;
   }
 
-  static checkHash(block, transactions) {
-    return this.calcHash(block, transactions) === block.blockHash;
+  static checkHash(block) {
+    return this.calcHash(block) === block.blockHash;
   }
 
   static calcTransactionHashesRoot(transactions) {
@@ -181,7 +171,7 @@ class Block {
     return updatedTimber.root;
   }
 
-  static calcHash(block, transactions) {
+  static calcHash(block) {
     const web3 = Web3.connection();
     const { proposer, root, leafCount, blockNumberL2, previousBlockHash, transactionHashesRoot } =
       block;
@@ -193,47 +183,7 @@ class Block {
       previousBlockHash,
       transactionHashesRoot,
     ];
-    const transactionsArray = transactions.map(t => {
-      const {
-        value,
-        historicRootBlockNumberL2,
-        transactionType,
-        tokenType,
-        tokenId,
-        ercAddress,
-        recipientAddress,
-        commitments,
-        nullifiers,
-        compressedSecrets,
-        proof,
-      } = t;
-      return [
-        value,
-        historicRootBlockNumberL2,
-        transactionType,
-        tokenType,
-        tokenId,
-        ercAddress,
-        recipientAddress,
-        commitments,
-        nullifiers,
-        compressedSecrets,
-        compressProof(proof),
-      ];
-    });
-    let encodedTransactions = web3.eth.abi.encodeParameters(PROPOSE_BLOCK_TYPES, [
-      blockArray,
-      transactionsArray,
-    ]);
-    encodedTransactions = `0x${encodedTransactions.slice(386)}`; // Retrieve transactions data only
-    const transactionsHash = web3.utils.soliditySha3({
-      t: 'bytes',
-      v: encodedTransactions,
-    });
-    const encoded = web3.eth.abi.encodeParameters(
-      [PROPOSE_BLOCK_TYPES[0], 'bytes32'],
-      [blockArray, transactionsHash],
-    );
+    const encoded = web3.eth.abi.encodeParameters([BLOCK_TYPES], [blockArray]);
     return web3.utils.soliditySha3({ t: 'bytes', v: encoded });
   }
 

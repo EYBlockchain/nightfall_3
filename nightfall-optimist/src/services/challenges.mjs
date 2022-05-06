@@ -305,18 +305,6 @@ export async function createChallenge(block, transactions, err) {
           .encodeABI();
         break;
       }
-      // challenge incorrect transaction hashes root
-      case 8: {
-        // Create a challenge
-        txDataToSign = await challengeContractInstance.methods
-          .challengeTransactionHashesRoot(
-            Block.buildSolidityStruct(block),
-            transactions.map(t => Transaction.buildSolidityStruct(t)),
-            salt,
-          )
-          .encodeABI();
-        break;
-      }
       default:
       // code block
     }

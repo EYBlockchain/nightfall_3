@@ -44,7 +44,6 @@ export async function finaliseWithdrawal(transactionHash, shieldContractAddress)
     const rawTransaction = await shieldContractInstance.methods
       .finaliseWithdrawal(
         buildSolidityStruct(block),
-        block.transactionsHash,
         Transaction.buildSolidityStruct(transactions[index]),
         index,
         siblingPath,

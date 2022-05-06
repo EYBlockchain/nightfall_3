@@ -4,6 +4,7 @@
 /**
 An optimistic Transaction class
 */
+import config from 'config';
 import gen from 'general-number';
 import Web3 from '../utils/web3.mjs';
 import { compressProof } from '../utils/curve-maths/curves.mjs';
@@ -11,24 +12,43 @@ import { compressProof } from '../utils/curve-maths/curves.mjs';
 const { generalise } = gen;
 
 const TOKEN_TYPES = { ERC20: 0, ERC721: 1, ERC1155: 2 };
+const { TRANSACTION_TYPES } = config;
 
 // function to compute the keccak hash of a transaction
 function keccak(preimage) {
   const web3 = Web3.connection();
-  // compute the solidity hash, using suitable type conversions
-  return web3.utils.soliditySha3(
-    { t: 'uint112', v: preimage.value },
-    ...preimage.historicRootBlockNumberL2.map(hi => ({ t: 'uint256', v: hi })),
-    { t: 'uint8', v: preimage.transactionType },
-    { t: 'uint8', v: preimage.tokenType },
-    { t: 'bytes32', v: preimage.tokenId },
-    { t: 'bytes32', v: preimage.ercAddress },
-    { t: 'bytes32', v: preimage.recipientAddress },
-    ...preimage.commitments.map(ch => ({ t: 'bytes32', v: ch })),
-    ...preimage.nullifiers.map(nh => ({ t: 'bytes32', v: nh })),
-    ...preimage.compressedSecrets.map(es => ({ t: 'bytes32', v: es })),
-    ...compressProof(preimage.proof).map(p => ({ t: 'uint', v: p })),
-  );
+  const {
+    value,
+    historicRootBlockNumberL2,
+    transactionType,
+    tokenType,
+    tokenId,
+    ercAddress,
+    recipientAddress,
+    commitments,
+    nullifiers,
+    compressedSecrets,
+  } = preimage;
+  let { proof } = preimage;
+  proof = compressProof(proof);
+  const transaction = [
+    value,
+    historicRootBlockNumberL2,
+    transactionType,
+    tokenType,
+    tokenId,
+    ercAddress,
+    recipientAddress,
+    commitments,
+    nullifiers,
+    compressedSecrets,
+    proof,
+  ];
+  const encodedTransaction = web3.eth.abi.encodeParameters([TRANSACTION_TYPES], [transaction]);
+  return web3.utils.soliditySha3({
+    t: 'bytes',
+    v: encodedTransaction,
+  });
 }
 
 class Transaction {

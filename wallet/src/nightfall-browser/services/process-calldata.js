@@ -64,11 +64,6 @@ async function getProposeBlockCalldata(eventData) {
   });
 
   block.transactionHashes = transactions.map(t => t.transactionHash);
-  const encodedTransactions = `0x${tx.input.slice(394)}`; // retrieve only transactions data
-  block.transactionsHash = web3.utils.soliditySha3({
-    t: 'bytes',
-    v: encodedTransactions,
-  });
 
   return { transactions, block };
 }
