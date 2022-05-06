@@ -4,7 +4,9 @@ import TokenType from './TokenType';
 
 const supportedTokens = (): TokenType[] => {
   switch (process.env.REACT_APP_MODE) {
-    case 'test':
+    case 'testnet':
+      return testnetTokens.tokens;
+    case 'staging':
       return testnetTokens.tokens;
     default: {
       return localTokens.tokens;

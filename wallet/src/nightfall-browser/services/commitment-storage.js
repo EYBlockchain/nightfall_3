@@ -84,8 +84,7 @@ export async function countTransactionHashes(transactionHashes) {
 // function to get count of transaction hashes of withdraw type. Used to decide if we should store sibling path of transaction hash to be used later for finalising or instant withdrawal
 export async function countWithdrawTransactionHashes(transactionHashes) {
   const db = await connectDB();
-  // const res = await db.getAll(COMMITMENTS_COLLECTION);
-  const txs = await db.getAll(TRANSACTIONS_COLLECTION);
+  const txs = await db.getAll(COMMITMENTS_COLLECTION);
   const filtered = txs.filter(tx => {
     return transactionHashes.includes(tx.transactionHash) && tx.nullifierTransactionType === '3';
   });
@@ -96,8 +95,7 @@ export async function countWithdrawTransactionHashes(transactionHashes) {
 // function to get if the transaction hash belongs to a withdraw transaction
 export async function isTransactionHashWithdraw(transactionHash) {
   const db = await connectDB();
-  // const res = await db.getAll(COMMITMENTS_COLLECTION);
-  const txs = await db.getAll(TRANSACTIONS_COLLECTION);
+  const txs = await db.getAll(COMMITMENTS_COLLECTION);
   const filtered = txs.filter(tx => {
     return tx.transactionHash === transactionHash && tx.nullifierTransactionType === '3';
   });
@@ -608,7 +606,7 @@ async function findUsableCommitments(compressedPkd, ercAddress, tokenId, _value,
   // if we have an exact match, we can do a single-commitment transfer.
   console.log(`Looking for ${value.hex(32)}, with ercAddress ${ercAddress.hex(32)}`);
   const [singleCommitment] = commitments.filter(c => {
-    console.log(`COmmitment: ${c.preimage.value.hex(32)}`);
+    console.log(`Commitment: ${c.preimage.value.hex(32)}`);
     return c.preimage.value.hex(32) === value.hex(32);
   });
   if (singleCommitment) {

@@ -250,6 +250,54 @@
     "constant": true
   },
   {
+    "inputs": [],
+    "name": "getBootChallenger",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [],
+    "name": "getBootProposer",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "tokenAddr",
+        "type": "address"
+      }
+    ],
+    "name": "getRestriction",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
     "inputs": [
       {
         "internalType": "enum Structures.TransactionTypes",
@@ -297,6 +345,63 @@
       }
     ],
     "name": "registerVerificationKey",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "tokenAddr",
+        "type": "address"
+      }
+    ],
+    "name": "removeRestriction",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "challenger",
+        "type": "address"
+      }
+    ],
+    "name": "setBootChallenger",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "proposer",
+        "type": "address"
+      }
+    ],
+    "name": "setBootProposer",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "tokenAddr",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "setRestriction",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -385,6 +490,13 @@
     "stateMutability": "view",
     "type": "function",
     "constant": true
+  },
+  {
+    "inputs": [],
+    "name": "initialize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
     "inputs": [
@@ -485,6 +597,11 @@
             "internalType": "bytes32",
             "name": "previousBlockHash",
             "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "transactionHashesRoot",
+            "type": "bytes32"
           }
         ],
         "internalType": "struct Structures.Block",
@@ -492,16 +609,11 @@
         "type": "tuple"
       },
       {
-        "internalType": "uint256",
-        "name": "blockNumberL2",
-        "type": "uint256"
-      },
-      {
         "components": [
           {
-            "internalType": "uint64",
+            "internalType": "uint112",
             "name": "value",
-            "type": "uint64"
+            "type": "uint112"
           },
           {
             "internalType": "uint64[2]",
@@ -665,6 +777,11 @@
             "internalType": "bytes32",
             "name": "previousBlockHash",
             "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "transactionHashesRoot",
+            "type": "bytes32"
           }
         ],
         "internalType": "struct Structures.Block",
@@ -672,16 +789,11 @@
         "type": "tuple"
       },
       {
-        "internalType": "uint256",
-        "name": "blockNumberL2",
-        "type": "uint256"
-      },
-      {
         "components": [
           {
-            "internalType": "uint64",
+            "internalType": "uint112",
             "name": "value",
-            "type": "uint64"
+            "type": "uint112"
           },
           {
             "internalType": "uint64[2]",
@@ -734,14 +846,19 @@
             "type": "uint256[4]"
           }
         ],
-        "internalType": "struct Structures.Transaction[]",
-        "name": "ts",
-        "type": "tuple[]"
+        "internalType": "struct Structures.Transaction",
+        "name": "t",
+        "type": "tuple"
       },
       {
         "internalType": "uint256",
         "name": "index",
         "type": "uint256"
+      },
+      {
+        "internalType": "bytes32[6]",
+        "name": "siblingPath",
+        "type": "bytes32[6]"
       }
     ],
     "name": "isValidWithdrawal",
@@ -784,6 +901,11 @@
             "internalType": "bytes32",
             "name": "previousBlockHash",
             "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "transactionHashesRoot",
+            "type": "bytes32"
           }
         ],
         "internalType": "struct Structures.Block",
@@ -791,16 +913,11 @@
         "type": "tuple"
       },
       {
-        "internalType": "uint256",
-        "name": "blockNumberL2",
-        "type": "uint256"
-      },
-      {
         "components": [
           {
-            "internalType": "uint64",
+            "internalType": "uint112",
             "name": "value",
-            "type": "uint64"
+            "type": "uint112"
           },
           {
             "internalType": "uint64[2]",
@@ -853,14 +970,19 @@
             "type": "uint256[4]"
           }
         ],
-        "internalType": "struct Structures.Transaction[]",
-        "name": "ts",
-        "type": "tuple[]"
+        "internalType": "struct Structures.Transaction",
+        "name": "t",
+        "type": "tuple"
       },
       {
         "internalType": "uint256",
         "name": "index",
         "type": "uint256"
+      },
+      {
+        "internalType": "bytes32[6]",
+        "name": "siblingPath",
+        "type": "bytes32[6]"
       }
     ],
     "name": "finaliseWithdrawal",
@@ -873,9 +995,9 @@
       {
         "components": [
           {
-            "internalType": "uint64",
+            "internalType": "uint112",
             "name": "value",
-            "type": "uint64"
+            "type": "uint112"
           },
           {
             "internalType": "uint64[2]",
@@ -966,6 +1088,11 @@
             "internalType": "bytes32",
             "name": "previousBlockHash",
             "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "transactionHashesRoot",
+            "type": "bytes32"
           }
         ],
         "internalType": "struct Structures.Block",
@@ -973,16 +1100,11 @@
         "type": "tuple"
       },
       {
-        "internalType": "uint256",
-        "name": "blockNumberL2",
-        "type": "uint256"
-      },
-      {
         "components": [
           {
-            "internalType": "uint64",
+            "internalType": "uint112",
             "name": "value",
-            "type": "uint64"
+            "type": "uint112"
           },
           {
             "internalType": "uint64[2]",
@@ -1035,14 +1157,19 @@
             "type": "uint256[4]"
           }
         ],
-        "internalType": "struct Structures.Transaction[]",
-        "name": "ts",
-        "type": "tuple[]"
+        "internalType": "struct Structures.Transaction",
+        "name": "t",
+        "type": "tuple"
       },
       {
         "internalType": "uint256",
         "name": "index",
         "type": "uint256"
+      },
+      {
+        "internalType": "bytes32[6]",
+        "name": "siblingPath",
+        "type": "bytes32[6]"
       }
     ],
     "name": "setAdvanceWithdrawalFee",

@@ -39,7 +39,11 @@ async function blockProposedEventHandler(data, ivks, nsks) {
 
   let tempBlockSaved = false;
   if ((await countTransactionHashes(block.transactionHashes)) > 0) {
-    await saveBlock({ blockNumber: currentBlockCount, transactionHashL1, ...block });
+    await saveBlock({
+      blockNumber: currentBlockCount,
+      transactionHashL1,
+      ...block,
+    });
     await Promise.all(transactions.map(t => saveTransaction({ transactionHashL1, ...t })));
     tempBlockSaved = true;
   }

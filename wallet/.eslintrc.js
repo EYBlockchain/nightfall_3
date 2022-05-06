@@ -14,6 +14,8 @@ module.exports = {
     'no-plusplus': 'off',
     'func-names': 'off',
     'no-sparse-arrays': 'off',
+    'jsx-a11y/click-events-have-key-events': 'off',
+    'react/forbid-prop-types': 'off',
   },
   parser: 'babel-eslint', // Uses babel-eslint transforms.
   parserOptions: {
@@ -25,11 +27,19 @@ module.exports = {
   },
   settings: {
     react: {
-      version: 'latest',
+      version: 'detect',
     },
     'import/resolver': {
       node: {
         extensions: ['.js', '.jsx', '.ts', '.tsx'],
+      },
+      alias: {
+        map: [
+          ['@TokenList', './src/static/supported-token-lists'],
+          ['@Nightfall', './src/nightfall-browser'],
+          ['@Components', './src/components'],
+        ],
+        extensions: ['.ts', '.js', '.jsx', '.json'],
       },
     },
   },
@@ -71,6 +81,8 @@ module.exports = {
         '@typescript-eslint/no-explicit-any': 0,
         'no-use-before-define': 'off',
         '@typescript-eslint/no-use-before-define': ['error'],
+        'click-events-have-key-events': 'off',
+        'react/prop-types': 'off',
       },
     },
   ],

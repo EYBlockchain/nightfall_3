@@ -5,6 +5,11 @@ function configureAWSBucket() {
   return `${bucket}-${mode}`;
 }
 
+/* eslint-disable no-extend-native */
+BigInt.prototype.toJSON = function () {
+  return `${this.toString()} BigInt`;
+};
+
 module.exports = {
   COMMITMENTS_DB: 'nightfall_commitments',
   OPTIMIST_DB: 'optimist_data',
@@ -121,7 +126,8 @@ module.exports = {
   },
   MAX_QUEUE: 5,
   MPC: {
-    RADIX_FILES_URL: 'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com/radix',
+    MPC_PARAMS_URL:
+      'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com/phase2/mpc_params',
   },
   ENVIRONMENTS: {
     mainnet: {

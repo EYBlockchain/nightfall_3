@@ -1,16 +1,105 @@
 import React, { useContext, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import QRCode from 'qrcode.react';
-import { Button, Modal } from 'react-bootstrap';
+import { Modal } from 'react-bootstrap';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import Lottie from 'lottie-react';
 import { RiQrCodeLine } from 'react-icons/ri';
 import { FiSend } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
-import styles from '../../styles/assets.module.scss';
+
+import styled from 'styled-components';
 import { UserContext } from '../../hooks/User';
 import checkMarkYes from '../../assets/lottie/check-mark-yes.json';
 import SendModal from '../Modals/sendModal';
+
+import '../../styles/assets.scss';
+
+const Header = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+`;
+
+const HeaderTitle = styled.p`
+  left: 17.08%;
+  right: 16.18%;
+  top: 36.36%;
+  bottom: 36.36%;
+
+  margin: 12px 0;
+
+  /* Header/H5 */
+
+  font-style: normal;
+  font-weight: bold;
+  font-size: 18px;
+  /* identical to box height, or 150% */
+
+  text-align: center;
+  letter-spacing: 0.01em;
+
+  /* Dark_Gray_700 */
+
+  color: #061024;
+`;
+
+const MyBody = styled.div`
+  text-align: center;
+  width: 100%;
+
+  div {
+    margin-top: 48px;
+  }
+
+  p {
+    margin-top: 32px;
+    font-size: 14px;
+    color: #3b465c;
+    margin-bottom: 10px;
+  }
+
+  span {
+    font-size: 15px;
+    font-weight: bold;
+  }
+`;
+
+const MyFooter = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  text-align: center;
+`;
+
+const QrCodeButton = styled.button`
+  color: #fff;
+  background-color: #854ce6;
+  display: block;
+  width: 100%;
+  border: 0 !important;
+  cursor: pointer;
+  outline: none;
+  border: none;
+
+  margin-top: 2%;
+  padding: 20px;
+
+  &:focus,
+  &:active,
+  &.focus,
+  &.active,
+  &:hover {
+    cursor: pointer;
+    color: #fff;
+    background-color: #854ce6;
+    box-shadow: none !important;
+    outline: none;
+    border: none;
+  }
+`;
 
 function ReceiveModal(props) {
   const [state] = useContext(UserContext);
@@ -30,40 +119,38 @@ function ReceiveModal(props) {
         dialogClassName="modal-90w"
         centered
         className="modal_wrapper"
-        show={true}
+        show
         {...props}
       >
         <Modal.Header closeButton>
-          <div className={styles.tokens_items_modal_header}>
-            <p className={styles.tokens_items_modal_title}>My QR Code</p>
-          </div>
+          <Header>
+            <HeaderTitle>My QR Code</HeaderTitle>
+          </Header>
         </Modal.Header>
-        <Modal.Body>
-          <div className={styles.qrcode}>
-            <QRCode value={state.compressedPkd} />
-          </div>
-          <p>Wallet Address</p>
-          <p>{state.compressedPkd}</p>
-        </Modal.Body>
-        {copied ? (
-          <Modal.Footer className={styles.copyFooter} style={{ background: 'white' }}>
-            <div className="col-lg-12" style={{ background: 'white' }}>
-              <Lottie
-                style={{ height: '32px', width: '32px', margin: '0 auto' }}
-                animationData={checkMarkYes}
-                loop={true}
-              />
+        <Modal.Body style={{ padding: '0px' }}>
+          <MyBody>
+            <div>
+              <QRCode value={state.compressedPkd} />
             </div>
-          </Modal.Footer>
-        ) : (
-          <CopyToClipboard text={state.compressedPkd} onCopy={() => setCopied(true)}>
-            <Modal.Footer className={styles.copyFooter}>
-              <div className="col-lg-12">
-                <Button bsPrefix={styles.copyButton}>Copy Address</Button>
-              </div>
-            </Modal.Footer>
-          </CopyToClipboard>
-        )}
+            <p>Wallet Address</p>
+            <span>{state.compressedPkd}</span>
+            {copied ? (
+              <MyFooter>
+                <Lottie
+                  style={{ height: '32px', width: '32px', margin: '20px' }}
+                  animationData={checkMarkYes}
+                  loop
+                />
+              </MyFooter>
+            ) : (
+              <CopyToClipboard text={state.compressedPkd} onCopy={() => setCopied(true)}>
+                <MyFooter>
+                  <QrCodeButton>Copy Address</QrCodeButton>
+                </MyFooter>
+              </CopyToClipboard>
+            )}
+          </MyBody>
+        </Modal.Body>
       </Modal>
     </div>
   );
@@ -80,52 +167,47 @@ export default function Assets({ tokenList }) {
     0,
   );
   return (
-    <div className={styles.dashboardTopSection}>
-      <div className={styles.container}>
-        <div className="row">
-          <div className="col-lg-6">
-            <div className={styles.heading}>Polygon Nightfall Testnet</div>
-            <div className={styles.amount}>&#36;{total.toFixed(2)}</div>
-            <div className={styles.buttonsWrapper}>
-              <button className="" onClick={() => setModalShow(true)}>
-                <RiQrCodeLine />
-                Receive
-              </button>
-              <button icon-name="navbar/send" onClick={() => setShowSendModal(true)}>
-                <FiSend />
-                Send
-              </button>
-            </div>
+    <div className="dashboardTopSection">
+      <div className="container">
+        <div className="containerLeftSide">
+          <div className="heading">Polygon Nightfall Staging</div>
+          <div className="amount">&#36;{total.toFixed(2)}</div>
+          <div className="buttonsWrapper">
+            <button type="button" onClick={() => setModalShow(true)}>
+              <RiQrCodeLine />
+              <span>Receive</span>
+            </button>
+            <button type="button" icon-name="navbar/send" onClick={() => setShowSendModal(true)}>
+              <FiSend />
+              <span>Send</span>
+            </button>
           </div>
+        </div>
 
-          <div className="col-lg-6">
-            <div className={styles.depositWrapper}>
-              <a
-                className={styles.linkButton}
-                href="https://docs.polygon.technology/docs/develop/wallets/polygon-web-wallet/web-wallet-v2-guide"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                How it works?
-              </a>
+        <div className="depositWrapper">
+          <a
+            className="linkButton"
+            href="https://docs.polygon-nightfall.technology/Nightfall/tools/nightfall-wallet/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            How it works?
+          </a>
 
-              <button className={styles.linkButton} onClick={() => {}}>
-                <Link
-                  to={{
-                    pathname: '/bridge',
-                    tokenState: {
-                      tokenAddress: tokenList[0].address,
-                      initialTxType: 'deposit',
-                    },
-                  }}
-                  className={styles.tokenListButton}
-                  id={tokenDepositId}
-                >
-                  Move funds from Goerli to Nightfall
-                </Link>
-              </button>
-            </div>
-          </div>
+          <button type="button" className="linkButton" onClick={() => {}}>
+            <Link
+              to={{
+                pathname: '/bridge',
+                tokenState: {
+                  tokenAddress: tokenList[0].address,
+                  initialTxType: 'deposit',
+                },
+              }}
+              id={tokenDepositId}
+            >
+              <span>Move funds from Goerli to Nightfall</span>
+            </Link>
+          </button>
         </div>
       </div>
       <ReceiveModal show={modalShow} onHide={() => setModalShow(false)} />

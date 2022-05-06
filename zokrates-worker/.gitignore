@@ -81,4 +81,4 @@ circuits/*
 !circuits/test/
 
 # for now, ignore mpc parameters
-radix
+mpc_params
