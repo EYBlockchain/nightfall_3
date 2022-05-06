@@ -1,7 +1,10 @@
 import fs from 'fs';
 import path from 'path';
+import config from 'config';
 import { compile, extractVk, exportKeys, setup } from '../zokrates-lib/index.mjs';
 import logger from '../utils/logger.mjs';
+
+const { USE_STUBS } = config;
 
 export default async function generateKeys({ filepath, curve = 'bn128' }) {
   const outputPath = `./output`;
@@ -28,7 +31,7 @@ export default async function generateKeys({ filepath, curve = 'bn128' }) {
     curve,
   );
 
-  if (process.env.MPC) {
+  if (!USE_STUBS) {
     logger.info('Export keys...');
     await exportKeys(`${outputPath}/${circuitDir}`, `${circuitName}`);
   } else {

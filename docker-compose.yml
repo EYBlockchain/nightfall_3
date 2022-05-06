@@ -82,7 +82,6 @@ services:
       - nightfall_network
     environment:
       LOG_LEVEL: info
-      MPC: ${MPC}
     # Temporary container to deploy contracts and circuits and populate volumes
   deployer:
     #image: docker.pkg.github.com/eyblockchain/nightfall-deployer/nightfall_deployer:1.1.0
@@ -178,7 +177,6 @@ services:
       - type: volume
         source: proving_files
         target: /app/public/
-
 
 volumes:
   mongodb1: null
