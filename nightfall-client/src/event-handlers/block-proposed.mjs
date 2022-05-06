@@ -17,7 +17,6 @@ import {
   saveTransaction,
   saveBlock,
   setTransactionHashSiblingInfo,
-  setTransactionsHashForBlock,
 } from '../services/database.mjs';
 import { decryptCommitment } from '../services/commitment-sync.mjs';
 
@@ -114,7 +113,6 @@ async function blockProposedEventHandler(data) {
         if (await isTransactionHashWithdraw(transactionHash)) {
           const siblingPathTransactionHash =
             updatedTransctionHashesTimber.getSiblingPath(transactionHash);
-          await setTransactionsHashForBlock(transactionHash, block.transactionsHash);
           return setTransactionHashSiblingInfo(
             transactionHash,
             siblingPathTransactionHash,

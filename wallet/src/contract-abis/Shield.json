@@ -789,11 +789,6 @@
         "type": "tuple"
       },
       {
-        "internalType": "bytes32",
-        "name": "transactionsHash",
-        "type": "bytes32"
-      },
-      {
         "components": [
           {
             "internalType": "uint112",
@@ -916,11 +911,6 @@
         "internalType": "struct Structures.Block",
         "name": "b",
         "type": "tuple"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "transactionsHash",
-        "type": "bytes32"
       },
       {
         "components": [
@@ -1108,11 +1098,6 @@
         "internalType": "struct Structures.Block",
         "name": "b",
         "type": "tuple"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "transactionsHash",
-        "type": "bytes32"
       },
       {
         "components": [

@@ -45,7 +45,6 @@ export async function isValidWithdrawal(transactionHash, shieldContractAddress) 
     const valid = await shieldContractInstance.methods
       .isValidWithdrawal(
         buildSolidityStruct(block),
-        block.transactionsHash,
         Transaction.buildSolidityStruct(transactions[index]),
         index,
         siblingPath,

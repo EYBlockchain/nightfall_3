@@ -39,8 +39,8 @@ contract Challenges is Stateful, Key_Registry, Config {
     ) external onlyBootChallenger {
         checkCommit(msg.data);
         // check if the block hash is correct and the block hash exists for the block and prior block. Also if the transactions are part of these block
-        state.isBlockReal(priorBlockL2, priorBlockTransactions);
-        state.isBlockReal(blockL2, transactions);
+        state.areBlockAndTransactionsReal(priorBlockL2, priorBlockTransactions);
+        state.areBlockAndTransactionsReal(blockL2, transactions);
         ChallengesUtil.libChallengeLeafCountCorrect(
             priorBlockL2,
             priorBlockTransactions,
@@ -73,8 +73,8 @@ contract Challenges is Stateful, Key_Registry, Config {
     ) external onlyBootChallenger {
         checkCommit(msg.data);
         // check if the block hash is correct and the block hash exists for the block and prior block
-        state.isBlockReal(priorBlockL2, priorBlockTransactions);
-        state.isBlockReal(blockL2, transactions);
+        state.areBlockAndTransactionsReal(priorBlockL2, priorBlockTransactions);
+        state.areBlockAndTransactionsReal(blockL2, transactions);
         // see if the challenge is valid
         ChallengesUtil.libChallengeNewRootCorrect(
             priorBlockL2,
@@ -102,8 +102,8 @@ contract Challenges is Stateful, Key_Registry, Config {
     ) external onlyBootChallenger {
         checkCommit(msg.data);
         // first, check we have real, in-train, contiguous blocks
-        state.isBlockReal(block1, transactions1);
-        state.isBlockReal(block2, transactions2);
+        state.areBlockAndTransactionsReal(block1, transactions1);
+        state.areBlockAndTransactionsReal(block2, transactions2);
         // If the duplicate exists in the same block, the index cannot be the same
         if (block1.blockNumberL2 == block2.blockNumberL2)
             require(transactionIndex1 != transactionIndex2, 'Cannot be the same index');
@@ -128,7 +128,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         bytes32 salt
     ) external onlyBootChallenger {
         checkCommit(msg.data);
-        state.isBlockReal(blockL2, transactions);
+        state.areBlockAndTransactionsReal(blockL2, transactions);
         ChallengesUtil.libChallengeTransactionType(transactions[transactionIndex]);
         // Delete the latest block of the two
         challengeAccepted(blockL2);
@@ -143,7 +143,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         bytes32 salt
     ) external onlyBootChallenger {
         checkCommit(msg.data);
-        state.isBlockReal(blockL2, transactions);
+        state.areBlockAndTransactionsReal(blockL2, transactions);
         // first check the transaction and block do not overflow
         ChallengesUtil.libCheckOverflows(blockL2, transactions[transactionIndex]);
         // now we need to check that the proof is correct
@@ -171,8 +171,8 @@ contract Challenges is Stateful, Key_Registry, Config {
         bytes32 salt
     ) external onlyBootChallenger {
         checkCommit(msg.data);
-        state.isBlockReal(blockL2, transactions);
-        state.isBlockReal(
+        state.areBlockAndTransactionsReal(blockL2, transactions);
+        state.areBlockAndTransactionsReal(
             blockL2ContainingHistoricRoot,
             transactionsOfblockL2ContainingHistoricRoot
         );
@@ -209,12 +209,12 @@ contract Challenges is Stateful, Key_Registry, Config {
         bytes32 salt
     ) external onlyBootChallenger {
         checkCommit(msg.data);
-        state.isBlockReal(blockL2, transactions);
-        state.isBlockReal(
+        state.areBlockAndTransactionsReal(blockL2, transactions);
+        state.areBlockAndTransactionsReal(
             blockL2ContainingHistoricRoot[0],
             transactionsOfblockL2ContainingHistoricRoot
         );
-        state.isBlockReal(
+        state.areBlockAndTransactionsReal(
             blockL2ContainingHistoricRoot[1],
             transactionsOfblockL2ContainingHistoricRoot2
         );
@@ -264,8 +264,8 @@ contract Challenges is Stateful, Key_Registry, Config {
             txs2[transactionIndex2],
             nullifierIndex2
         );
-        state.isBlockReal(block1, txs1);
-        state.isBlockReal(block2, txs2);
+        state.areBlockAndTransactionsReal(block1, txs1);
+        state.areBlockAndTransactionsReal(block2, txs2);
 
         // The blocks are different and we prune the later block of the two
         // as we have a block number, it's easy to see which is the latest.
@@ -288,7 +288,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         bytes32 salt
     ) external onlyBootChallenger {
         checkCommit(msg.data);
-        state.isBlockReal(blockL2, transactions);
+        state.areBlockAndTransactionsReal(blockL2, transactions);
         if (
             transactions[transactionIndex].transactionType ==
             Structures.TransactionTypes.DOUBLE_TRANSFER
@@ -316,20 +316,6 @@ contract Challenges is Stateful, Key_Registry, Config {
                 'Historic root exists'
             );
         }
-        challengeAccepted(blockL2);
-    }
-
-    /*
-  This is a challenge that transactionHashesRoot is incorrectly calculated
-  */
-    function challengeTransactionHashesRoot(
-        Block memory blockL2,
-        Transaction[] memory transactions,
-        bytes32 salt
-    ) external onlyBootChallenger {
-        checkCommit(msg.data);
-        bytes32 currentBlockHash = state.isBlockReal(blockL2, transactions);
-        ChallengesUtil.libChallengeTransactionHashesRoot(blockL2, transactions, currentBlockHash);
         challengeAccepted(blockL2);
     }
 

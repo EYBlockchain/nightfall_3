@@ -3,45 +3,17 @@
 pragma solidity ^0.8.0;
 
 import './Structures.sol';
-import './MerkleTree_Stateless_KECCAK.sol';
 
 library Utils {
     bytes32 public constant ZERO = bytes32(0);
     uint256 constant TRANSACTIONS_BATCH_SIZE = 6; // TODO Change this from 2 to an appropriate value to control stack too deep error
 
     function hashTransaction(Structures.Transaction memory t) internal pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encodePacked(
-                    t.value,
-                    t.historicRootBlockNumberL2,
-                    t.transactionType,
-                    t.tokenType,
-                    t.tokenId,
-                    t.ercAddress, // Take in as bytes32 for consistent hashing
-                    t.recipientAddress,
-                    t.commitments,
-                    t.nullifiers,
-                    t.compressedSecrets,
-                    t.proof
-                )
-            );
+        return keccak256(abi.encode(t));
     }
 
-    function hashBlock(Structures.Block memory b, Structures.Transaction[] memory t)
-        internal
-        pure
-        returns (bytes32)
-    {
-        return keccak256(abi.encode(b, t));
-    }
-
-    function hashBlock(Structures.Block memory b, bytes32 transactionsHash)
-        internal
-        pure
-        returns (bytes32)
-    {
-        return keccak256(abi.encode(b, transactionsHash));
+    function hashBlock(Structures.Block memory b) internal pure returns (bytes32) {
+        return keccak256(abi.encode(b));
     }
 
     function hashTransactionHashes(Structures.Transaction[] memory ts)
@@ -60,15 +32,7 @@ library Utils {
                 i % TRANSACTIONS_BATCH_SIZE == TRANSACTIONS_BATCH_SIZE - 1 || i == (ts.length - 1)
             ) {
                 // If the number of transactions cannot be factored by TRANSACTIONS_BATCH_SIZE, then the second condtional check ensures that this smaller transactions batch is also included
-                (
-                    transactionHashesRoot,
-                    frontier,
-                    transactionHashCount
-                ) = MerkleTree_Stateless_KECCAK.insertLeaves(
-                    transactionHashes,
-                    frontier,
-                    transactionHashCount
-                );
+                (transactionHashesRoot) = calculateMerkleRoot(transactionHashes);
             }
         }
         return transactionHashesRoot;
@@ -221,5 +185,47 @@ library Utils {
             inputs[i] = uint256(ts.compressedSecrets[i - 8]);
         }
         return inputs;
+    }
+
+    function calculateMerkleRoot(bytes32[] memory leaves) public pure returns (bytes32 result) {
+        assembly {
+            for {
+                let i := 5
+            } gt(i, 0) {
+                i := sub(i, 1)
+            } {
+                for {
+                    let j := 0
+                } lt(j, exp(2, sub(i, 1))) {
+                    j := add(j, 1)
+                } {
+                    let left := mload(add(leaves, add(0x20, mul(mul(0x20, j), 2))))
+                    let right := mload(add(leaves, add(add(0x20, mul(mul(0x20, j), 2)), 0x20)))
+                    if eq(and(iszero(left), iszero(right)), 1) {
+                        result := 0
+                    } // returns bool
+                    if eq(and(iszero(left), iszero(right)), 0) {
+                        result := keccak256(add(leaves, add(0x20, mul(mul(0x20, j), 2))), 0x40)
+                    } // returns bool
+                    mstore(add(leaves, add(0x20, mul(0x20, j))), result)
+                }
+            }
+        }
+    }
+
+    function checkPath(
+        bytes32[6] memory siblingPath,
+        uint256 leafIndex,
+        bytes32 node
+    ) public pure returns (bool) {
+        for (uint256 i = 5; i > 0; i--) {
+            if (leafIndex % 2 == 0) {
+                node = keccak256(abi.encodePacked(node, siblingPath[i]));
+            } else {
+                node = keccak256(abi.encodePacked(siblingPath[i], node));
+            }
+            leafIndex = leafIndex >> 1;
+        }
+        return (siblingPath[0] == node);
     }
 }

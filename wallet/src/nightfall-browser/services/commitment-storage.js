@@ -85,7 +85,6 @@ export async function countTransactionHashes(transactionHashes) {
 export async function countWithdrawTransactionHashes(transactionHashes) {
   const db = await connectDB();
   const txs = await db.getAll(COMMITMENTS_COLLECTION);
-  // const txs = await db.getAll(TRANSACTIONS_COLLECTION);
   const filtered = txs.filter(tx => {
     return transactionHashes.includes(tx.transactionHash) && tx.nullifierTransactionType === '3';
   });
@@ -97,7 +96,6 @@ export async function countWithdrawTransactionHashes(transactionHashes) {
 export async function isTransactionHashWithdraw(transactionHash) {
   const db = await connectDB();
   const txs = await db.getAll(COMMITMENTS_COLLECTION);
-  // const txs = await db.getAll(TRANSACTIONS_COLLECTION);
   const filtered = txs.filter(tx => {
     return tx.transactionHash === transactionHash && tx.nullifierTransactionType === '3';
   });

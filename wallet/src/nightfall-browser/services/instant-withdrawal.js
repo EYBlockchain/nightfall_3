@@ -29,7 +29,6 @@ const setInstantWithdrawl = async (transactionHash, shieldContractAddress) => {
     const rawTransaction = await shieldContractInstance.methods
       .setAdvanceWithdrawalFee(
         buildSolidityStruct(block),
-        block.transactionsHash,
         Transaction.buildSolidityStruct(transactions[index]),
         index,
         siblingPath,

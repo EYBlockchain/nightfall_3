@@ -78,6 +78,9 @@ module.exports = {
   BN128_GROUP_ORDER: 21888242871839275222246405745257275088548364400416034343698204186575808495617n,
   BN128_PRIME_FIELD: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
   TRANSACTIONS_PER_BLOCK: Number(process.env.TRANSACTIONS_PER_BLOCK) || 2,
+  BLOCK_TYPES: '(uint48,address,bytes32,uint256,bytes32,bytes32)',
+  TRANSACTION_TYPES:
+    '(uint112,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[8],uint[4])',
   PROPOSE_BLOCK_TYPES: [
     '(uint48,address,bytes32,uint256,bytes32,bytes32)',
     '(uint112,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[8],uint[4])[]',

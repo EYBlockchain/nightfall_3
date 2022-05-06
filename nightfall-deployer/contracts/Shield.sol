@@ -47,7 +47,7 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
 
     // function to enable a proposer to get paid for proposing a block
     function requestBlockPayment(Block memory b, Transaction[] memory ts) external {
-        bytes32 blockHash = state.isBlockReal(b, ts);
+        bytes32 blockHash = state.areBlockAndTransactionsReal(b, ts);
         // check that the block has been finalised
         uint256 time = state.getBlockData(b.blockNumberL2).time;
         require(
@@ -97,13 +97,12 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
   */
     function isValidWithdrawal(
         Block memory b,
-        bytes32 transactionsHash,
         Transaction memory t,
         uint256 index,
         bytes32[6] memory siblingPath
     ) external view returns (bool) {
         // check this block is a real one, in the queue, not something made up.
-        state.areBlockAndTransactionValid(b, transactionsHash, t, index, siblingPath);
+        state.areBlockAndTransactionReal(b, t, index, siblingPath);
         // check that the block has been finalised
         uint256 time = state.getBlockData(b.blockNumberL2).time;
         require(
@@ -131,13 +130,12 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
 
     function finaliseWithdrawal(
         Block calldata b,
-        bytes32 transactionsHash,
         Transaction calldata t,
         uint256 index,
         bytes32[6] memory siblingPath
     ) external {
         // check this block is a real one, in the queue, not something made up and that the transaction exists in the block
-        state.areBlockAndTransactionValid(b, transactionsHash, t, index, siblingPath);
+        state.areBlockAndTransactionReal(b, t, index, siblingPath);
         // check that the block has been finalised
         uint256 time = state.getBlockData(b.blockNumberL2).time;
         require(
@@ -209,7 +207,6 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
     // TODO Is there a better way to set this fee, e.g. at the point of making a transaction.
     function setAdvanceWithdrawalFee(
         Block memory b,
-        bytes32 transactionsHash,
         Transaction memory t,
         uint256 index,
         bytes32[6] memory siblingPath
@@ -218,7 +215,7 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
         require(t.transactionType == TransactionTypes.WITHDRAW, 'Can only advance withdrawals');
 
         // check this block is a real one, in the queue, not something made up.
-        state.areBlockAndTransactionValid(b, transactionsHash, t, index, siblingPath);
+        state.areBlockAndTransactionReal(b, t, index, siblingPath);
 
         bytes32 withdrawTransactionHash = Utils.hashTransaction(t);
         // The withdrawal has not been withdrawn
