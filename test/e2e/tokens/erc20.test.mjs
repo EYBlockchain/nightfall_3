@@ -92,7 +92,8 @@ const emptyL2 = async nf3Instance => {
 describe('ERC20 tests', () => {
   before(async () => {
     await nf3Proposer.init(mnemonics.proposer);
-    await nf3Proposer.registerProposer();
+    // we must set the URL from the point of view of the client container
+    await nf3Proposer.registerProposer('http://optimist1');
 
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer.startProposer();
