@@ -31,7 +31,6 @@ import TransferModal from '../Modals/Bridge/Transfer/index.jsx';
 import checkMarkYes from '../../assets/lottie/check-mark-yes.json';
 
 import ERC20 from '../../contract-abis/ERC20.json';
-import { APPROVE_AMOUNT } from '../../constants';
 import { retrieveAndDecrypt } from '../../utils/lib/key-storage';
 import BigFloat from '../../common-files/classes/bigFloat';
 
@@ -231,7 +230,12 @@ const BridgeComponent = () => {
     switch (txType) {
       case 'deposit': {
         const pkd = decompressKey(generalise(state.compressedPkd));
-        await approve(ercAddress, shieldContractAddress, 'ERC20', APPROVE_AMOUNT);
+        await approve(
+          ercAddress,
+          shieldContractAddress,
+          'ERC20',
+          new BigFloat(transferValue, token.decimals).toBigInt().toString(),
+        );
         setShowModalConfirm(true);
         setShowModalTransferInProgress(true);
         await timeout(2000);
