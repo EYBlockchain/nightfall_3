@@ -16,10 +16,10 @@ import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import {
-   increaseProposerWsFailed, 
-   increaseProposerWsClosed,
-   increaseProposerBlockNotSent,
- } from './debug-counters.mjs';
+  increaseProposerWsFailed,
+  increaseProposerWsClosed,
+  increaseProposerBlockNotSent,
+} from './debug-counters.mjs';
 
 const { TRANSACTIONS_PER_BLOCK, STATE_CONTRACT_NAME } = config;
 

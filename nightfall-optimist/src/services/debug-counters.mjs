@@ -1,4 +1,4 @@
-let debugCounters = {
+const debugCounters = {
   // CheckBlock returns a failure
   nBlockInvalid: 0,
   // Proposer WS is closed
@@ -7,7 +7,6 @@ let debugCounters = {
   proposerWsFailed: 0,
   // Optimist couldnt proposed blocks because of WS
   proposerBlockNotSent: 0,
-
 };
 
 /**
