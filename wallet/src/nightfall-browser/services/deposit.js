@@ -65,35 +65,35 @@ async function deposit(items, shieldContractAddress) {
   ];
   logger.debug(`witness input is ${witnessInput.join(' ')}`);
 
-  const zokratesProvider = await initialize();
-  const artifacts = { program: new Uint8Array(program), abi };
-  const keypair = { pk: new Uint8Array(pk) };
-
-  // computation
-  const { witness } = zokratesProvider.computeWitness(artifacts, witnessInput);
-  // generate proof
-  const { proof } = zokratesProvider.generateProof(artifacts.program, witness, keypair.pk);
-  const shieldContractInstance = await getContractInstance(
-    SHIELD_CONTRACT_NAME,
-    shieldContractAddress,
-  );
-
-  // next we need to compute the optimistic Transaction object
-  const optimisticDepositTransaction = new Transaction({
-    fee,
-    transactionType: 0,
-    tokenType: items.tokenType,
-    tokenId,
-    value,
-    ercAddress,
-    commitments: [commitment],
-    proof,
-  });
-  logger.silly(
-    `Optimistic deposit transaction ${JSON.stringify(optimisticDepositTransaction, null, 2)}`,
-  );
-  // and then we can create an unsigned blockchain transaction
   try {
+    const zokratesProvider = await initialize();
+    const artifacts = { program: new Uint8Array(program), abi };
+    const keypair = { pk: new Uint8Array(pk) };
+
+    // computation
+    const { witness } = zokratesProvider.computeWitness(artifacts, witnessInput);
+    // generate proof
+    const { proof } = zokratesProvider.generateProof(artifacts.program, witness, keypair.pk);
+    const shieldContractInstance = await getContractInstance(
+      SHIELD_CONTRACT_NAME,
+      shieldContractAddress,
+    );
+
+    // next we need to compute the optimistic Transaction object
+    const optimisticDepositTransaction = new Transaction({
+      fee,
+      transactionType: 0,
+      tokenType: items.tokenType,
+      tokenId,
+      value,
+      ercAddress,
+      commitments: [commitment],
+      proof,
+    });
+    logger.silly(
+      `Optimistic deposit transaction ${JSON.stringify(optimisticDepositTransaction, null, 2)}`,
+    );
+    // and then we can create an unsigned blockchain transaction
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(optimisticDepositTransaction))
       .encodeABI();
