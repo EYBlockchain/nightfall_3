@@ -15,7 +15,7 @@ import ethChainImage from '../../assets/img/ethereum-chain.svg';
 import polygonNightfall from '../../assets/svg/polygon-nightfall.svg';
 import discloserBottomImage from '../../assets/img/discloser-bottom.svg';
 import lightArrowImage from '../../assets/img/light-arrow.svg';
-import { approve, getContractAddress, submitTransaction } from '../../common-files/utils/contract';
+import { approve, submitTransaction } from '../../common-files/utils/contract';
 import Web3 from '../../common-files/utils/web3';
 import approveImg from '../../assets/img/modalImages/adeposit_approve1.png';
 import depositConfirmed from '../../assets/img/modalImages/adeposit_confirmed.png';
@@ -34,6 +34,7 @@ import checkMarkCross from '../../assets/lottie/check-mark-cross.json';
 import ERC20 from '../../contract-abis/ERC20.json';
 import { retrieveAndDecrypt } from '../../utils/lib/key-storage';
 import BigFloat from '../../common-files/classes/bigFloat';
+import { shieldAddressGet } from '../../utils/lib/local-storage';
 
 const ModalTitle = styled.div`
   width: 50%;
@@ -132,7 +133,7 @@ const BridgeComponent = () => {
   const [l1Balance, setL1Balance] = useState(0n);
   const [l2Balance, setL2Balance] = useState(0n);
   const [sending, setSendingState] = useState(false);
-  const [shieldContractAddress, setShieldAddress] = useState('');
+  const [shieldContractAddress, setShieldAddress] = useState(shieldAddressGet());
   const history = useHistory();
   const initialTx = history?.location?.tokenState?.initialTxType ?? 'deposit';
   const initialToken =
@@ -154,11 +155,7 @@ const BridgeComponent = () => {
   }, [txType]);
 
   useEffect(() => {
-    const getShieldAddress = async () => {
-      const { address } = (await getContractAddress('Shield')).data;
-      setShieldAddress(address);
-    };
-    getShieldAddress();
+    setShieldAddress(shieldAddressGet());
   }, []);
 
   useEffect(() => {
@@ -224,8 +221,7 @@ const BridgeComponent = () => {
 
   async function triggerTx() {
     console.log('triggering tx');
-    if (shieldContractAddress === '')
-      setShieldAddress((await getContractAddress('Shield')).data.address);
+    if (shieldContractAddress === '') setShieldAddress(shieldAddressGet());
     console.log('triggering tx2');
     const ercAddress = token.address;
     console.log('ercAddress', ercAddress);

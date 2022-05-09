@@ -12,9 +12,9 @@ import etherscanArrow from '../../assets/svg/etherscanGo.svg';
 import TxInfoModal from '../Modals/txInfoModal.tsx';
 import Web3 from '../../common-files/utils/web3';
 import './index.scss';
-import { getContractAddress, getContractInstance } from '../../common-files/utils/contract';
+import { getContractInstance } from '../../common-files/utils/contract';
 import useInterval from '../../hooks/useInterval';
-import { getPricing, setPricing } from '../../utils/lib/local-storage';
+import { getPricing, setPricing, shieldAddressGet } from '../../utils/lib/local-storage';
 
 const supportedTokens = importTokens();
 
@@ -67,8 +67,7 @@ const Transactions = () => {
         t.commitments.some(c => commits.includes(c)) ||
         t.nullifiers.some(n => nullifiers.includes(n)),
     );
-    const { address: shieldContractAddress } = (await getContractAddress(SHIELD_CONTRACT_NAME))
-      .data;
+    const shieldContractAddress = shieldAddressGet();
     const shieldContractInstance = await getContractInstance(
       SHIELD_CONTRACT_NAME,
       shieldContractAddress,

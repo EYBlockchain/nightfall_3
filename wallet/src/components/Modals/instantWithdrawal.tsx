@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { Button, Col, FormControl, InputGroup, Modal, ProgressBar, Row } from 'react-bootstrap';
 import { markWithdrawState } from '@Nightfall/services/database';
 import setInstantWithdrawl from '@Nightfall/services/instant-withdrawal';
-import { getContractAddress, submitTransaction } from '../../common-files/utils/contract';
+import { submitTransaction } from '../../common-files/utils/contract';
 import './index.scss';
+import { shieldAddressGet } from '../../utils/lib/local-storage';
 
 interface InstantWithdrawProps {
   transactionhash: string;
@@ -14,7 +15,7 @@ interface InstantWithdrawProps {
 export default function InstantWithdraw(props: InstantWithdrawProps): JSX.Element {
   const [fee, setFee] = useState(0);
   const setInstantWithdrawal = async () => {
-    const { address: shieldContractAddress } = (await getContractAddress('Shield')).data;
+    const shieldContractAddress = shieldAddressGet();
     const { rawTransaction } = await setInstantWithdrawl(
       props.transactionhash,
       shieldContractAddress,

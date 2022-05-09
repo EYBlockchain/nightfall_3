@@ -3,8 +3,9 @@ import { Button, Col, Modal, Row } from 'react-bootstrap';
 import { markWithdrawState } from '@Nightfall/services/database';
 import { finaliseWithdrawal } from '@Nightfall/services/finalise-withdrawal';
 import { isValidWithdrawal } from '@Nightfall/services/valid-withdrawal';
-import { getContractAddress, submitTransaction } from '../../common-files/utils/contract';
+import { submitTransaction } from '../../common-files/utils/contract';
 import stylesModal from '../../styles/modal.module.scss';
+import { shieldAddressGet } from '../../utils/lib/local-storage';
 
 interface TxModalProps {
   transactionhash: string;
@@ -16,7 +17,7 @@ interface TxModalProps {
 
 export default function TxInfoModal(props: TxModalProps): JSX.Element {
   const confirmWithdraw = async () => {
-    const { address: shieldContractAddress } = (await getContractAddress('Shield')).data;
+    const shieldContractAddress = shieldAddressGet();
     const isValid = await isValidWithdrawal(props.transactionhash, shieldContractAddress);
     if (isValid) {
       const { rawTransaction } = await finaliseWithdrawal(
