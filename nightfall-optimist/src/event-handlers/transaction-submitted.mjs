@@ -27,7 +27,7 @@ async function checkAlreadyInBlock(_transaction) {
   const [block] = await getBlockByTransactionHash(transaction.transactionHash);
   if (!block) return transaction; // all ok, we've not seen this before
   const storedTransaction = await getTransactionByTransactionHash(transaction.transactionHash);
-  if (storedTransaction.blockNumber)
+  if (storedTransaction?.blockNumber)
     // it's a re-play of an existing transaction that's in a block
     throw new TransactionError('This transaction has been processed previously', 6);
   // it's a re-mine of an existing transaction that's in a block
