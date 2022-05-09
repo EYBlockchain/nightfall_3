@@ -269,12 +269,12 @@ export async function getMostProfitableTransactions(number) {
 Function to save a (unprocessed) Transaction
 */
 export async function saveTransaction(_transaction) {
-  const { mempool = true } = _transaction; // mempool may not exist
+  const { mempool = true, blockNumberL2 = -1 } = _transaction;
   const transaction = {
     _id: _transaction.transactionHash,
     ..._transaction,
     mempool,
-    blockNumberL2: -1,
+    blockNumberL2,
   };
   logger.debug(
     `saving transaction ${transaction.transactionHash}, with layer 1 block number ${_transaction.blockNumber}`,

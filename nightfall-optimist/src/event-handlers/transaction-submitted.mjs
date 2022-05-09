@@ -41,7 +41,7 @@ async function checkAlreadyInBlock(_transaction) {
 /**
 This handler runs whenever a new transaction is submitted to the blockchain
 */
-async function transactionSubmittedEventHandler(eventParams, mempool) {
+async function transactionSubmittedEventHandler(eventParams) {
   const { offchain = false, ...data } = eventParams;
   let transaction;
   if (offchain) {
@@ -72,7 +72,6 @@ async function transactionSubmittedEventHandler(eventParams, mempool) {
     }
     if (transactionNullifiers.length > 0)
       saveNullifiers(transactionNullifiers, transaction.blockNumber); // we can now safely store the nullifiers IFF they are present
-    if (mempool) transaction.mempool = mempool;
     saveTransaction({ ...transaction }); // then we need to save it
   } catch (err) {
     if (err instanceof TransactionError)
