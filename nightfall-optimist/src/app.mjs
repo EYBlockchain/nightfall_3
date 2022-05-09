@@ -2,7 +2,7 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import fileUpload from 'express-fileupload';
-import { proposer, block, challenger, transaction, getContractAddress } from './routes/index.mjs';
+import { proposer, block, challenger, transaction, getContractAddress, debug } from './routes/index.mjs';
 
 const app = express();
 app.use((req, res, next) => {
@@ -25,5 +25,6 @@ app.use('/block', block);
 app.use('/challenger', challenger);
 app.use('/transaction', transaction);
 app.use('/contract-address', getContractAddress);
+app.use('/debug', debug);
 
 export default app;
