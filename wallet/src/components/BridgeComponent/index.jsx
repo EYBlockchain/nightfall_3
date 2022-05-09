@@ -29,9 +29,9 @@ import './toast.css';
 import './styles.scss';
 import TransferModal from '../Modals/Bridge/Transfer/index.jsx';
 import checkMarkYes from '../../assets/lottie/check-mark-yes.json';
+import checkMarkCross from '../../assets/lottie/check-mark-cross.json';
 
 import ERC20 from '../../contract-abis/ERC20.json';
-import { APPROVE_AMOUNT } from '../../constants';
 import { retrieveAndDecrypt } from '../../utils/lib/key-storage';
 import BigFloat from '../../common-files/classes/bigFloat';
 
@@ -171,6 +171,7 @@ const BridgeComponent = () => {
   const [showModalConfirm, setShowModalConfirm] = useState(false);
   const [showModalTransferInProgress, setShowModalTransferInProgress] = useState(true);
   const [showModalTransferEnRoute, setShowModalTransferEnRoute] = useState(false);
+  const [showModalTransferFailed, setShowModalTransferFailed] = useState(false);
   const [showModalTransferConfirmed, setShowModalTransferConfirmed] = useState(false);
   const [readyTx, setReadyTx] = useState('');
 
@@ -183,6 +184,7 @@ const BridgeComponent = () => {
     setShowModalConfirm(false);
     setShowModalTransferInProgress(false);
     setShowModalTransferEnRoute(false);
+    setShowModalTransferFailed(false);
     setShowModalTransferConfirmed(false);
   };
 
@@ -231,7 +233,12 @@ const BridgeComponent = () => {
     switch (txType) {
       case 'deposit': {
         const pkd = decompressKey(generalise(state.compressedPkd));
-        await approve(ercAddress, shieldContractAddress, 'ERC20', APPROVE_AMOUNT);
+        await approve(
+          ercAddress,
+          shieldContractAddress,
+          'ERC20',
+          new BigFloat(transferValue, token.decimals).toBigInt().toString(),
+        );
         setShowModalConfirm(true);
         setShowModalTransferInProgress(true);
         await timeout(2000);
@@ -248,7 +255,13 @@ const BridgeComponent = () => {
             tokenType: 'ERC20',
           },
           shieldContractAddress,
-        );
+        ).catch(e => {
+          console.log('Error in transfer', e);
+          setShowModalTransferEnRoute(false);
+          setShowModalTransferFailed(true);
+          return { transaction: null };
+        });
+        if (transaction === null) return { type: 'failed_transfer' };
         setShowModalTransferEnRoute(false);
         setShowModalTransferConfirmed(true);
         console.log('Proof Done');
@@ -277,7 +290,13 @@ const BridgeComponent = () => {
             fees: 1,
           },
           shieldContractAddress,
-        );
+        ).catch(e => {
+          console.log('Error in transfer', e);
+          setShowModalTransferEnRoute(false);
+          setShowModalTransferFailed(true);
+          return { transaction: null };
+        });
+        if (transaction === null) return { type: 'failed_transfer' };
         setShowModalTransferEnRoute(false);
         setShowModalTransferConfirmed(true);
         return {
@@ -592,6 +611,29 @@ const BridgeComponent = () => {
                     ) : (
                       <div>Send Transaction</div>
                     )}
+                  </ContinueTransferButton>
+                </TransferMode>
+              </MyModalBody>
+            </Modal.Body>
+          )}
+
+          {showModalTransferFailed && (
+            <Modal.Body>
+              <MyModalBody>
+                <ProcessImage>
+                  <img src={transferCompletedImg} alt="transfer failed" />
+                </ProcessImage>
+                <Divider />
+                <SpinnerBox>
+                  <Lottie animationData={checkMarkCross} />
+                </SpinnerBox>
+
+                <TransferMode>
+                  <h3>Failed To Create Transaction.</h3>
+                  {/* <ModalText>Please Try Again</ModalText> */}
+                  {/* <a className={styles.footerText}>View on etherscan</a> */}
+                  <ContinueTransferButton type="button" id="Bridge_modal_continueTransferButton">
+                    <div onClick={() => handleCloseConfirmModal()}>Close</div>
                   </ContinueTransferButton>
                 </TransferMode>
               </MyModalBody>

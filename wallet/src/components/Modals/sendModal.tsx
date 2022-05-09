@@ -21,8 +21,14 @@ import successHand from '../../assets/img/modalImages/success-hand.png';
 import transferCompletedImg from '../../assets/img/modalImages/tranferCompleted.png';
 import BigFloat from '../../common-files/classes/bigFloat';
 import checkMarkYes from '../../assets/lottie/check-mark-yes.json';
+import Transaction from '../../common-files/classes/transaction';
+import checkMarkCross from '../../assets/lottie/check-mark-cross.json';
 
 const supportedTokens = importTokens();
+
+type Transfer =
+  | { type: 'offchain'; transaction: Transaction; rawTransaction: string }
+  | { type: 'failed_transfer' };
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -297,7 +303,7 @@ const Divider = styled.div`
   border-bottom: solid 1px #ddd;
 `;
 
-const SpineerBox = styled.div`
+const SpinnerBox = styled.div`
   display: flex;
   justify-content: center;
   align-content: center;
@@ -411,6 +417,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
   const [showModalConfirm, setShowModalConfirm] = useState(false);
   const [showModalTransferInProgress, setShowModalTransferInProgress] = useState(true);
   const [showModalTransferEnRoute, setShowModalTransferEnRoute] = useState(false);
+  const [showModalTransferFailed, setShowModalTransferFailed] = useState(false);
   const [showModalTransferConfirmed, setShowModalTransferConfirmed] = useState(false);
   // const [showTransferModal, setShowTransferModal] = useState(false);
 
@@ -425,6 +432,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
     setShowModalConfirm(false);
     setShowModalTransferInProgress(false);
     setShowModalTransferEnRoute(false);
+    setShowModalTransferFailed(false);
     setShowModalTransferConfirmed(false);
   };
   // const handleClose = () => setShowTransferModal(false);
@@ -467,7 +475,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
     getShieldAddress();
   }, []);
 
-  async function sendTx() {
+  async function sendTx(): Promise<Transfer> {
     if (shieldContractAddress === '')
       setShieldAddress((await getContractAddress('Shield')).data.address);
     setShowModalConfirm(true);
@@ -490,7 +498,13 @@ const SendModal = (props: SendModalProps): JSX.Element => {
         fee: 1,
       },
       shieldContractAddress,
-    );
+    ).catch(e => {
+      console.log('Error in transfer', e);
+      setShowModalTransferEnRoute(false);
+      setShowModalTransferFailed(true);
+      return { transaction: null, rawTransaction: '' };
+    });
+    if (transaction === null) return { type: 'failed_transfer' };
     setShowModalTransferEnRoute(false);
     setShowModalTransferConfirmed(true);
     return {
@@ -607,7 +621,8 @@ const SendModal = (props: SendModalProps): JSX.Element => {
                   props.onHide();
                   setShowModalConfirm(true);
                   setShowModalTransferInProgress(true);
-                  setReadyTx(await sendTx());
+                  const pendingTx = await sendTx();
+                  if (pendingTx.type !== 'failed_transfer') setReadyTx(pendingTx);
                 }}
               >
                 Continue
@@ -631,11 +646,11 @@ const SendModal = (props: SendModalProps): JSX.Element => {
                 <img src={approveImg} alt="approve" />
               </ProcessImages>
               <Divider />
-              <SpineerBox>
+              <SpinnerBox>
                 <SpinnerBoard>
                   <Spinner />
                 </SpinnerBoard>
-              </SpineerBox>
+              </SpinnerBox>
               <div className="transferModeModal">
                 <h3>Creating Transaction</h3>
                 <div className="modalText">
@@ -654,11 +669,11 @@ const SendModal = (props: SendModalProps): JSX.Element => {
                 <img src={depositConfirmed} alt="deposit confirmed" />
               </ProcessImages>
               <Divider />
-              <SpineerBox>
+              <SpinnerBox>
                 <SpinnerBoard>
                   <Spinner />
                 </SpinnerBoard>
-              </SpineerBox>
+              </SpinnerBox>
               <div className="transferModeModal">
                 <h3>Generating Zk Proof</h3>
                 <div className="modalText">
@@ -677,9 +692,9 @@ const SendModal = (props: SendModalProps): JSX.Element => {
                 <img src={transferCompletedImg} alt="transfer completed" />
               </ProcessImages>
               <Divider />
-              <SpineerBox>
+              <SpinnerBox>
                 <img src={successHand} alt="success hand" />
-              </SpineerBox>
+              </SpinnerBox>
               <div className="transferModeModal" id="Bridge_modal_success">
                 <h3>Transaction created sucessfully.</h3>
                 <div className="modalText">Your transfer is ready to send.</div>
@@ -698,6 +713,28 @@ const SendModal = (props: SendModalProps): JSX.Element => {
                   ) : (
                     <div>Send Transaction</div>
                   )}
+                </ContinueTransferButton>
+                {/* <a className="footerText">View on etherscan</a> */}
+              </div>
+            </MyBody>
+          </Modal.Body>
+        )}
+
+        {showModalTransferFailed && (
+          <Modal.Body>
+            <MyBody>
+              <ProcessImages>
+                <img src={transferCompletedImg} alt="transfer failed" />
+              </ProcessImages>
+              <Divider />
+              <SpinnerBox>
+                <Lottie animationData={checkMarkCross} />
+              </SpinnerBox>
+              <div className="transferModeModal" id="Bridge_modal_success">
+                <h3>Failed To Create Transaction.</h3>
+                {/* <div className="modalText">Please Try Again</div> */}
+                <ContinueTransferButton id="Bridge_modal_continueTransferButton">
+                  <div onClick={() => handleCloseConfirmModal()}>Close</div>
                 </ContinueTransferButton>
                 {/* <a className="footerText">View on etherscan</a> */}
               </div>
