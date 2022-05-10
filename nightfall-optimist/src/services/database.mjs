@@ -169,7 +169,7 @@ export async function getLatestBlockInfo() {
   const db = connection.db(OPTIMIST_DB);
   const [blockInfo] = await db
     .collection(SUBMITTED_BLOCKS_COLLECTION)
-    .find({}, { blockNumberL2: 1, blockHash: 1 })
+    .find({}, { blockNumberL2: 1, blockHash: 1, blockNumber: 1 })
     .sort({ blockNumberL2: -1 })
     .limit(1)
     .toArray();
