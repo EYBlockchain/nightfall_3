@@ -8,7 +8,7 @@ import transactionSubmittedEventHandler from '../event-handlers/transaction-subm
 import newCurrentProposerEventHandler from '../event-handlers/new-current-proposer.mjs';
 import committedToChallengeEventHandler from '../event-handlers/challenge-commit.mjs';
 import rollbackEventHandler from '../event-handlers/rollback.mjs';
-import { getBlockByBlockNumberL2, getBlocks } from './database.mjs';
+import { getBlockByBlockNumberL2, getBlocks, getLatestBlockInfo } from './database.mjs';
 import { stopMakingChallenges, startMakingChallenges } from './challenges.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 
@@ -123,8 +123,11 @@ export default async proposer => {
   }
   const currentProposer = (await stateContractInstance.methods.currentProposer().call())
     .thisAddress;
-  await newCurrentProposerEventHandler({ returnValues: { proposer: currentProposer } }, [proposer]);
+  if (currentProposer !== proposer.address)
+    await newCurrentProposerEventHandler({ returnValues: { proposer: currentProposer } }, [
+      proposer,
+    ]);
   unpauseQueue(0);
   unpauseQueue(1);
-  return latestBlockLocally; // when sync has finished, we'll be synced up to this point.
+  return (await getLatestBlockInfo()).blockNumber;
 };
