@@ -339,11 +339,9 @@ export const expectTransaction = res => {
 export const depositNTransactions = async (nf3, N, ercAddress, tokenType, value, tokenId, fee) => {
   const depositTransactions = [];
   for (let i = 0; i < N; i++) {
-    const res = await nf3.deposit(ercAddress, tokenType, value, tokenId, fee);
-    expectTransaction(res);
-    depositTransactions.push(res);
+    depositTransactions.push(nf3.deposit(ercAddress, tokenType, value, tokenId, fee));
   }
-  return depositTransactions;
+  return Promise.all(depositTransactions);
 };
 
 export const transferNTransactions = async (

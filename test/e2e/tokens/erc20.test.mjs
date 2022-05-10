@@ -28,7 +28,7 @@ const {
 
 const {
   RESTRICTIONS: {
-    tokens: { blockchain1: defaultRestrictions },
+    tokens: { blockchain1: maxWithdrawValue },
   },
 } = config;
 
@@ -439,106 +439,130 @@ describe('ERC20 tests', () => {
     What is this, you wonder? We're just testing restrictions, since for an initial release phase
     we want to restrict the amount of deposits/withdraws. Take a look at #516 if you want to know more
     */
-  describe('Restrictions', () => {
-    describe('Testing new restrictions', async () => {
-      let newAmount;
-      before(() => {
-        const defaultERC20restriction =
-          defaultRestrictions.find(e => e.address.toLowerCase() === erc20Address)?.amount ||
-          erc20default;
+  describe('Testing deposit and withdraw restrictions', () => {
+    let maxERC20WithdrawValue;
+    let maxERC20DepositValue;
 
-        newAmount = Math.ceil(
-          Math.random() * (defaultERC20restriction - transferValue) + transferValue,
+    before(() => {
+      maxERC20WithdrawValue =
+        maxWithdrawValue.find(e => e.address.toLowerCase() === erc20Address)?.amount ||
+        erc20default;
+      maxERC20DepositValue = Math.floor(maxERC20WithdrawValue / 4);
+      // console.log('Max ERC20 Deposit Value', maxERC20DepositValue);
+      // console.log('Max ERC20 Withdraw Value', maxERC20WithdrawValue);
+    });
+
+    it('should restrict deposits', async () => {
+      // anything equal or above the restricted amount should fail
+      // console.log('depositing', maxERC20DepositValue + 1);
+      try {
+        await depositNTransactions(
+          nf3Users[0],
+          txPerBlock,
+          erc20Address,
+          tokenType,
+          maxERC20DepositValue + 1,
+          tokenId,
+          fee,
         );
-      });
+        expect.fail('Transaction has not been reverted by the EVM');
+      } catch (error) {
+        expect(error.message).to.satisfy(message =>
+          message.includes('Transaction has been reverted by the EVM'),
+        );
+      }
+    });
 
-      it('should restrict deposits', async () => {
-        // anything equal or above the restricted amount should fail
+    it('should restrict withdrawals', async () => {
+      const nodeInfo = await web3Client.getInfo();
+      if (nodeInfo.includes('TestRPC')) {
         try {
+          // we need to withdraw more than the max withdraw limit, but we can't deposit
+          // more than the max withdraw limit because deposit's limit is 1/4 that of withdraw
+          // limit (floor of 1/4th). So we perform 6 deposits of the max deposit value, accumulate them into
+          // one commitment with multiple tranfers. Then perform withdraw with this huge commitment which
+          // will be bigger than withdraw limit. Transfers to accumulate are done in such that they can
+          // accumulate this final value with any txPerBlock
+
+          // Transfer which gives a change of 0 is not possible because these commitments won't be picked
+          // and transfer errors with no suitable commitments. Example, this is not possible
+          //                                                                          Commitment List Before [250, 250, 250, 250, 250, 250]
+          // Transfer 500 to self             Input [250, 250]   Output [500, 0]      Commitment List after [0, 250, 250, 250, 250, 500]
+
+          // Example for accumulating withdraw
+          // Max Withdraw Limit : 1000                                                 Max Deposit Limit 1000/4 = 250
+          // Need a commitment with value greater than 1000
+          // Deposit 250 6 times                                                      Commitment List [250, 250, 250, 250, 250, 250]
+          // Transfer 400 to self             Input [250, 250]   Output [400, 100]    Commitment List after [100, 250, 250, 250, 250, 400]
+          // Transfer 400 + 200 to self       Input [400, 250]   Output [600, 50]     Commitment List after [50, 100, 250, 250, 250, 600]
+          // Transfer 600 + 200 to self       Input [600, 250]   Output [800, 50]     Commitment List after [50, 50, 100, 250, 250, 800]
+          // Transfer 800 + 200 to self       Input [800, 250]   Output [800, 50]     Commitment List after [50, 50, 50, 100, 250, 1000]
+          // Transfer 1000 + 200 to self      Input [1000, 250]  Output [1200, 50]    Commitment List after [50, 50, 50, 50, 100, 1200]
+
+          // console.log('Making 6 deposits', maxERC20DepositValue);
+          let transferValue = Math.floor(maxERC20WithdrawValue / 5); // maxERC20DepositValue < transferValue < maxERC20WithdrawValue
+          let withdrawValue = transferValue * 6; // transferValue = ( maxERC20WithdrawValue / 5 ) * 6 > maxERC20WithdrawValue
+
           await depositNTransactions(
             nf3Users[0],
-            txPerBlock,
+            txPerBlock < 6 ? 6 : txPerBlock, // at least 6 deposits of max deposit value, put together it is bigger than max withdraw value
             erc20Address,
             tokenType,
-            newAmount,
+            maxERC20DepositValue,
             tokenId,
             fee,
           );
-          expect.fail('Transaction has been reverted by the EVM');
+
+          await emptyL2(nf3Users[0]);
+          await new Promise(resolve => setTimeout(resolve, 15000));
+
+          for (let i = 0; i < 5; i++) {
+            // console.log('transfering self', transferValue * (i + 2));
+            await nf3Users[0].transfer(
+              false,
+              erc20Address,
+              tokenType,
+              transferValue * (i + 2),
+              tokenId,
+              nf3Users[0].zkpKeys.compressedPkd,
+              fee,
+            );
+            await emptyL2(nf3Users[0]);
+            await new Promise(resolve => setTimeout(resolve, 15000));
+          }
+
+          // console.log('withdrawing', transferValue * 6);
+          const rec = await nf3Users[0].withdraw(
+            false,
+            erc20Address,
+            tokenType,
+            withdrawValue,
+            tokenId,
+            nf3Users[0].ethereumAddress,
+            fee,
+          );
+
+          await new Promise(resolve => setTimeout(resolve, 15000));
+
+          expectTransaction(rec);
+          const withdrawal = await nf3Users[0].getLatestWithdrawHash();
+
+          await emptyL2(nf3Users[0]);
+
+          await web3Client.timeJump(3600 * 24 * 10); // jump in time by 50 days
+
+          // anything equal or above the restricted amount should fail
+          await nf3Users[0].finaliseWithdrawal(withdrawal);
+          expect.fail('Transaction has not been reverted by the EVM');
         } catch (error) {
           expect(error.message).to.satisfy(message =>
             message.includes('Transaction has been reverted by the EVM'),
           );
         }
-      });
-
-      it('should restrict withdrawals', async () => {
-        const nodeInfo = await web3Client.getInfo();
-        if (nodeInfo.includes('TestRPC')) {
-          try {
-            // we need two transactions to serve as commitments to the withdrawal
-            // but we can't deposit the whole amount because... that's the limit 😅
-            // so let's just split it
-            await depositNTransactions(
-              nf3Users[0],
-              txPerBlock,
-              erc20Address,
-              tokenType,
-              Math.ceil(newAmount / txPerBlock),
-              tokenId,
-              fee,
-            );
-
-            await new Promise(resolve => setTimeout(resolve, 15000));
-
-            // we also need a commitment of the specific amount we need to withdraw
-            // so we should transfer that amount to ourselves
-            await nf3Users[0].transfer(
-              false,
-              erc20Address,
-              tokenType,
-              newAmount,
-              tokenId,
-              nf3Users[0].zkpKeys.compressedPkd,
-              fee,
-            );
-
-            await emptyL2(nf3Users[0]);
-
-            await new Promise(resolve => setTimeout(resolve, 15000));
-
-            const rec = await nf3Users[0].withdraw(
-              false,
-              erc20Address,
-              tokenType,
-              newAmount,
-              tokenId,
-              nf3Users[0].ethereumAddress,
-              fee,
-            );
-
-            await new Promise(resolve => setTimeout(resolve, 15000));
-
-            expectTransaction(rec);
-            const withdrawal = await nf3Users[0].getLatestWithdrawHash();
-
-            await emptyL2(nf3Users[0]);
-
-            await web3Client.timeJump(3600 * 24 * 10); // jump in time by 50 days
-
-            // anything equal or above the restricted amount should fail
-            await nf3Users[0].finaliseWithdrawal(withdrawal);
-            expect.fail('Transaction has been reverted by the EVM');
-          } catch (error) {
-            expect(error.message).to.satisfy(message =>
-              message.includes('Transaction has been reverted by the EVM'),
-            );
-          }
-        } else {
-          console.log('     Not using a time-jump capable test client so this test is skipped');
-          this.skip();
-        }
-      });
+      } else {
+        console.log('     Not using a time-jump capable test client so this test is skipped');
+        this.skip();
+      }
     });
   });
 
