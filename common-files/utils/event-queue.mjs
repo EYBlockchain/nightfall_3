@@ -71,7 +71,7 @@ function pauseQueue(priority) {
 
 function unpauseQueue(priority) {
   queues[priority].autostart = true;
-  logger.info(`queue ${priority} has been unpaused`);
+  queues[priority].unshift(async () => logger.info(`queue ${priority} has been unpaused`));
 }
 
 /**
