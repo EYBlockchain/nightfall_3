@@ -15,6 +15,11 @@ import {
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
+import {
+  increaseProposerWsFailed,
+  increaseProposerWsClosed,
+  increaseProposerBlockNotSent,
+} from './debug-counters.mjs';
 
 const { TRANSACTIONS_PER_BLOCK, STATE_CONTRACT_NAME } = config;
 
@@ -89,7 +94,11 @@ export async function conditionalMakeBlock(proposer) {
         while (!ws || ws.readyState !== WebSocket.OPEN) {
           await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
           logger.warn(`Websocket to proposer is closed.  Waiting for proposer to reconnect`);
-          if (tryCount++ > 100) throw new Error(`Websocket to proposer has failed`);
+          increaseProposerWsClosed();
+          if (tryCount++ > 100) {
+            increaseProposerWsFailed();
+            throw new Error(`Websocket to proposer has failed`);
+          }
         }
         if (ws && ws.readyState === WebSocket.OPEN) {
           await ws.send(
@@ -102,8 +111,10 @@ export async function conditionalMakeBlock(proposer) {
           );
           logger.debug('Send unsigned block-assembler transactions to ws client');
         } else if (ws) {
+          increaseProposerBlockNotSent();
           logger.debug('Block not sent. Socket state', ws.readyState);
         } else {
+          increaseProposerBlockNotSent();
           logger.debug('Block not sent. uinitialized socket');
         }
         // remove the transactions from the mempool so we don't keep making new

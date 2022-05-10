@@ -15,6 +15,7 @@ import {
   getTransactionByTransactionHash,
 } from '../services/database.mjs';
 import { getProposeBlockCalldata } from '../services/process-calldata.mjs';
+import { increaseBlockInvalidCounter } from '../services/debug-counters.mjs';
 import transactionSubmittedEventHandler from './transaction-submitted.mjs';
 
 const { ZERO, HASH_TYPE, TIMBER_HEIGHT } = config;
@@ -107,6 +108,7 @@ async function blockProposedEventHandler(data) {
       // We enqueue an event onto the stopQueue to halt block production.
       // This message will not be printed because event dequeuing does not run the job.
       // This is fine as we are just using it to stop running.
+      increaseBlockInvalidCounter();
       await enqueueEvent(() => logger.info('Stop Until Rollback'), 2);
       await createChallenge(block, transactions, err);
     } else {
