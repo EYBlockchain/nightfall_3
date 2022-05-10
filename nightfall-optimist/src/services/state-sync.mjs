@@ -2,6 +2,7 @@
 
 import config from 'config';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
+import { pauseQueue, unpauseQueue } from 'common-files/utils/event-queue.mjs';
 import blockProposedEventHandler from '../event-handlers/block-proposed.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
 import newCurrentProposerEventHandler from '../event-handlers/new-current-proposer.mjs';
@@ -102,8 +103,9 @@ export default async proposer => {
   const lastBlockNumberL2 = Number(
     (await stateContractInstance.methods.getNumberOfL2Blocks().call()) - 1,
   );
-  if (lastBlockNumberL2 === -1) return; // The blockchain is empty
-
+  if (lastBlockNumberL2 === -1) return null; // The blockchain is empty
+  // pause the queues so we stop processing incoming events while we sync
+  await Promise.all([pauseQueue(0), pauseQueue(1)]);
   const missingBlocks = await checkBlocks(); // Stores any gaps of missing blocks
   // const [fromBlock] = missingBlocks[0];
   const latestBlockLocally = (await getBlockByBlockNumberL2(lastBlockNumberL2)) ?? undefined;
@@ -122,4 +124,7 @@ export default async proposer => {
   const currentProposer = (await stateContractInstance.methods.currentProposer().call())
     .thisAddress;
   await newCurrentProposerEventHandler({ returnValues: { proposer: currentProposer } }, [proposer]);
+  unpauseQueue(0);
+  unpauseQueue(1);
+  return latestBlockLocally; // when sync has finished, we'll be synced up to this point.
 };
