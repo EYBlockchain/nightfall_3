@@ -10,6 +10,7 @@ const Utils = artifacts.require('Utils.sol');
 const ChallengesUtil = artifacts.require('ChallengesUtil.sol');
 const Proposers = artifacts.require('Proposers.sol');
 const Challenges = artifacts.require('Challenges.sol');
+const State = artifacts.require('State.sol');
 
 module.exports = async function (deployer) {
   await deployer.deploy(Verifier);
