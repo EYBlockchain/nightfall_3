@@ -47,7 +47,8 @@ module.exports = async function (deployer) {
   const restrictions = await Shield.deployed();
   // restrict transfer amounts
   for (let token of RESTRICTIONS.tokens[process.env.ETH_NETWORK]) {
-    console.log(`Max deposit restriction for ${token.name}: ${token.amount}`);
-    await restrictions.setRestriction(token.address, token.amount);
+    console.log(`Max allowed deposit value for ${token.name}: ${(BigInt(token.amount) / BigInt(4)).toString()}`); // BigInt division returns whole number which is a floor. Not Math.floor() needed
+    console.log(`Max allowed withdraw value for ${token.name}: ${token.amount}`);
+    await restrictions.setRestriction(token.address, (BigInt(token.amount) / BigInt(4)).toString(), token.amount);
   }
 };

@@ -285,9 +285,9 @@ module.exports = {
     tokens: {
       blockchain1: [
         {
-          name: 'MockERC20',
+          name: 'ERC20Mock',
           address: '0xB5Acbe9a0F1F8B98F3fC04471F7fE5d2c222cB44',
-          amount: 200,
+          amount: '200',
         },
         {
           name: 'Test-Eth',
@@ -307,9 +307,9 @@ module.exports = {
       ],
       staging: [
         {
-          name: 'MockERC20',
+          name: 'ERC20Mock',
           address: '0xB5Acbe9a0F1F8B98F3fC04471F7fE5d2c222cB44',
-          amount: 200,
+          amount: '200',
         },
         {
           name: 'Test-Eth',
@@ -329,7 +329,7 @@ module.exports = {
       ],
       development: [
         {
-          name: 'MockERC20',
+          name: 'ERC20Mock',
           address: '0xB5Acbe9a0F1F8B98F3fC04471F7fE5d2c222cB44',
           amount: 200,
         },

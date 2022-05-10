@@ -32,7 +32,7 @@ module.exports = function (deployer, _, accounts) {
     await ERC20deployed.transfer(addresses.user2, 1000000000000);
 
     // Set a restriction for ping-pong
-    await restrictions.setRestriction(ERC20deployed.address, erc20default);
+    await restrictions.setRestriction(ERC20deployed.address, (BigInt(erc20default)/BigInt(4)).toString(), erc20default);
 
     if (!config.ETH_ADDRESS) {
       // indicates we're running a wallet test that uses hardcoded addresses
