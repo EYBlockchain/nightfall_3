@@ -9,7 +9,7 @@ import transactionSubmittedEventHandler from '../event-handlers/transaction-subm
 import newCurrentProposerEventHandler from '../event-handlers/new-current-proposer.mjs';
 import committedToChallengeEventHandler from '../event-handlers/challenge-commit.mjs';
 import rollbackEventHandler from '../event-handlers/rollback.mjs';
-import { getBlockByBlockNumberL2, getBlocks, getLatestBlockInfo } from './database.mjs';
+import { getBlockByBlockNumberL2, getBlocks } from './database.mjs';
 import { stopMakingChallenges, startMakingChallenges } from './challenges.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 
