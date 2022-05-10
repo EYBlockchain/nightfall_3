@@ -2,6 +2,7 @@
 
 import config from 'config';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
+import web3 from 'common-files/utils/web3.mjs';
 import { pauseQueue, unpauseQueue } from 'common-files/utils/event-queue.mjs';
 import blockProposedEventHandler from '../event-handlers/block-proposed.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
@@ -109,6 +110,7 @@ export default async proposer => {
   const missingBlocks = await checkBlocks(); // Stores any gaps of missing blocks
   // const [fromBlock] = missingBlocks[0];
   const latestBlockLocally = (await getBlockByBlockNumberL2(lastBlockNumberL2)) ?? undefined;
+  let finalBlock;
   if (!latestBlockLocally || missingBlocks[0] !== latestBlockLocally.blockNumber + 1) {
     // The latest block stored locally does not match the last on-chain block
     // or we have detected a gap in the L2 blockchain
@@ -118,6 +120,7 @@ export default async proposer => {
       // Sync the state inbetween these blocks
 
       await syncState(proposer, fromBlock, toBlock);
+      finalBlock = web3.connection().eth.getBlock(toBlock);
     }
     await startMakingChallenges();
   }
@@ -129,5 +132,6 @@ export default async proposer => {
     ]);
   unpauseQueue(0);
   unpauseQueue(1);
-  return (await getLatestBlockInfo()).blockNumber;
+  return finalBlock.number;
+  // return (await getLatestBlockInfo()).blockNumber;
 };
