@@ -500,8 +500,8 @@ describe('ERC20 tests', () => {
           // Transfer 1000 + 200 to self      Input [1000, 250]  Output [1200, 50]    Commitment List after [50, 50, 50, 50, 100, 1200]
 
           // console.log('Making 6 deposits', maxERC20DepositValue);
-          let transferValue = Math.floor(maxERC20WithdrawValue / 5); // maxERC20DepositValue < transferValue < maxERC20WithdrawValue
-          let withdrawValue = transferValue * 6; // transferValue = ( maxERC20WithdrawValue / 5 ) * 6 > maxERC20WithdrawValue
+          const trnsferValue = Math.floor(maxERC20WithdrawValue / 5); // maxERC20DepositValue < trnsferValue < maxERC20WithdrawValue
+          const withdrawValue = trnsferValue * 6; // trnsferValue = ( maxERC20WithdrawValue / 5 ) * 6 > maxERC20WithdrawValue
 
           await depositNTransactions(
             nf3Users[0],
@@ -517,12 +517,12 @@ describe('ERC20 tests', () => {
           await new Promise(resolve => setTimeout(resolve, 15000));
 
           for (let i = 0; i < 5; i++) {
-            // console.log('transfering self', transferValue * (i + 2));
+            // console.log('transfering self', trnsferValue * (i + 2));
             await nf3Users[0].transfer(
               false,
               erc20Address,
               tokenType,
-              transferValue * (i + 2),
+              trnsferValue * (i + 2),
               tokenId,
               nf3Users[0].zkpKeys.compressedPkd,
               fee,
@@ -531,7 +531,7 @@ describe('ERC20 tests', () => {
             await new Promise(resolve => setTimeout(resolve, 15000));
           }
 
-          // console.log('withdrawing', transferValue * 6);
+          // console.log('withdrawing', trnsferValue * 6);
           const rec = await nf3Users[0].withdraw(
             false,
             erc20Address,
