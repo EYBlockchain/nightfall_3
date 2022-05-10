@@ -43,4 +43,8 @@ module.exports = async function (deployer) {
     deployer,
     unsafeAllowLinkedLibraries: true,
   });
+  await upgradeProxy((await State.deployed()).address, State, {
+    deployer,
+    unsafeAllowLinkedLibraries: true,
+  });
 };
