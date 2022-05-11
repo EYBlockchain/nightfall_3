@@ -7,6 +7,7 @@ import styled from 'styled-components';
 import { MdArrowForwardIos } from 'react-icons/md';
 import { ModalBody } from 'react-bootstrap';
 import matic from '../../../../assets/svg/matic.svg';
+import { ChainIdMapping } from '../../../../common-files/utils/web3';
 
 const MyModalBody = styled.div`
   flex-direction: column;
@@ -109,17 +110,11 @@ const ContinueTransferButton = styled.button`
   }
 `;
 
-const TransferModal = ({
-  show,
-  setShow,
-  handleClose,
-  transferValue,
-  txType,
-  triggerTx,
-  setReadyTx,
-}) => {
+const { ethereum } = global;
+
+const TransferModal = ({ show, handleClose, transferValue, txType, triggerTx, setReadyTx }) => {
   return (
-    <Modal contentClassName="modalFather" show={show} onHide={() => setShow(false)}>
+    <Modal contentClassName="modalFather" show={show} onHide={handleClose}>
       <Modal.Header closeButton>
         <div className="modalTitle">Confirm transaction</div>
       </Modal.Header>
@@ -173,16 +168,32 @@ const TransferModal = ({
               <EstimationFeeTitleMain>Estimation Transaction fee</EstimationFeeTitleMain>
               <EstimationFeeTitleLight>TBC</EstimationFeeTitleLight>
             </EstimationFeeTitle>
-            <ContinueTransferButton
-              type="button"
-              // onClick={() => triggerTx()}
-              onClick={async () => {
-                handleClose();
-                setReadyTx(await triggerTx());
-              }}
-            >
-              Create Transaction
-            </ContinueTransferButton>
+            {txType === 'withdraw' ||
+            (txType === 'deposit' &&
+              ethereum.chainId === ChainIdMapping[process.env.REACT_APP_MODE].chainId) ? (
+              <ContinueTransferButton
+                type="button"
+                onClick={async () => {
+                  handleClose();
+                  setReadyTx(await triggerTx());
+                }}
+              >
+                Create Transaction
+              </ContinueTransferButton>
+            ) : (
+              <ContinueTransferButton
+                type="button"
+                style={{ backgroundColor: 'grey' }}
+                onClick={() => {
+                  return ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: ChainIdMapping[process.env.REACT_APP_MODE].chainId }], // chainId must be in hexadecimal numbers
+                  });
+                }}
+              >
+                Switch to {ChainIdMapping[process.env.REACT_APP_MODE].chainName} For Deposits.
+              </ContinueTransferButton>
+            )}
           </EstimationFee>
         </MyModalBody>
       </ModalBody>
