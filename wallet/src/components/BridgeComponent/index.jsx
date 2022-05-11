@@ -456,9 +456,23 @@ const BridgeComponent = () => {
               </div>
             </div>
 
-            <div className="arrow_icon_wrapper">
-              <img src={lightArrowImage} alt="to arrow" />
-            </div>
+            {new BigFloat(transferValue, token.decimals).toBigInt() >
+            BigInt(token.restrictions[txType]) ? (
+              <div className="warning">
+                <Lottie
+                  style={{ height: '16px', width: '16px', display: 'flex', marginRight: '10px' }}
+                  animationData={checkMarkCross}
+                />
+                <p>
+                  {token.symbol} {txType}s are restricted to less than
+                  {` ${(parseFloat(token.restrictions[txType]) / 10 ** token.decimals).toFixed(2)}`}
+                </p>
+              </div>
+            ) : (
+              <div className="arrow_icon_wrapper">
+                <img src={lightArrowImage} alt="to arrow" />
+              </div>
+            )}
 
             {/* TO SECTION */}
             <div className="to_text">To</div>

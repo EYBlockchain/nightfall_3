@@ -170,7 +170,7 @@ export default function Assets({ tokenList }) {
     <div className="dashboardTopSection">
       <div className="container">
         <div className="containerLeftSide">
-          <div className="heading">Polygon Nightfall Staging</div>
+          <div className="heading">Polygon Nightfall</div>
           <div className="amount">&#36;{total.toFixed(2)}</div>
           <div className="buttonsWrapper">
             <button type="button" onClick={() => setModalShow(true)}>

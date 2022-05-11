@@ -9,6 +9,10 @@ const tokensList = {
       logoURI: 'https://wallet-asset.matic.network/img/tokens/eth.svg',
       tags: ['pos', 'erc20', 'swapable', 'metaTx'],
       id: 'ethereum',
+      restrictions: {
+        withdraw: '1000000000000000000',
+        deposit: '250000000000000000',
+      },
       extensions: {
         parentAddress: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
         project: {
@@ -28,6 +32,10 @@ const tokensList = {
       logoURI: 'https://wallet-asset.matic.network/img/tokens/matic.svg',
       tags: ['plasma', 'erc20', 'swapable'],
       id: 'matic-network',
+      restrictions: {
+        withdraw: '1000000000000000000000',
+        deposit: '250000000000000000000',
+      },
       extensions: {
         parentAddress: '0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0',
         project: {
@@ -47,6 +55,10 @@ const tokensList = {
       logoURI: 'https://wallet-asset.matic.network/img/tokens/usdc.svg',
       tags: ['pos', 'erc20', 'swapable', 'metaTx', 'stablecoin'],
       id: 'usd-coin',
+      restrictions: {
+        withdraw: '1000000000',
+        deposit: '250000000',
+      },
       extensions: {
         parentAddress: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
         project: {
