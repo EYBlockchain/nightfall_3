@@ -68,6 +68,7 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
         }
         payment += BLOCK_STAKE;
         state.addPendingWithdrawal(msg.sender, payment);
+        state.setBlockStakeWithdrawn(blockHash);
     }
 
     function onERC721Received(
