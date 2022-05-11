@@ -124,7 +124,7 @@ function ReceiveModal(props) {
       >
         <Modal.Header closeButton>
           <Header>
-            <HeaderTitle>My QR Code</HeaderTitle>
+            <HeaderTitle>Receive on Polygon Nightfall</HeaderTitle>
           </Header>
         </Modal.Header>
         <Modal.Body style={{ padding: '0px' }}>
@@ -205,7 +205,7 @@ export default function Assets({ tokenList }) {
               }}
               id={tokenDepositId}
             >
-              <span>Move funds from Goerli to Nightfall</span>
+              <span>Move funds from Ethereum to Nightfall</span>
             </Link>
           </button>
         </div>
