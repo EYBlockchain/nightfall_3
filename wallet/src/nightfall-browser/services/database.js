@@ -230,7 +230,7 @@ export async function saveTransaction(_transaction) {
   const db = await connectDB();
   const query = await db.getAll(TRANSACTIONS_COLLECTION);
   const existing = query.filter(q => q.transactionHash === transaction.transactionHash);
-  transaction.createdTime = Date.now(); // TODO REMOVE THIS ONCE WE HAVE A BETTER SOLUTION.
+  transaction.createdTime = _transaction?.createdTime ?? Date.now();
   if (!existing) return db.put(TRANSACTIONS_COLLECTION, transaction, transaction._id);
   if (!existing.blockNumber) {
     return db.put(TRANSACTIONS_COLLECTION, transaction, transaction._id);

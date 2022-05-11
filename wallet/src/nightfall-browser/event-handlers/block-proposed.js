@@ -71,7 +71,13 @@ async function blockProposedEventHandler(data, ivks, nsks) {
             logger.info("This encrypted message isn't for this recipient");
           else {
             storeCommitments.push(storeCommitment(commitment, nsks[i]));
-            tempTransactionStore.push(saveTransaction({ transactionHashL1, ...transaction }));
+            tempTransactionStore.push(
+              saveTransaction({
+                transactionHashL1,
+                createdTime: block.blockTimestamp,
+                ...transaction,
+              }),
+            );
           }
         } catch (err) {
           logger.info(err);
