@@ -165,8 +165,8 @@ const TransferModal = ({ show, handleClose, transferValue, txType, triggerTx, se
           <Divider />
           <EstimationFee>
             <EstimationFeeTitle>
-              <EstimationFeeTitleMain>Estimation Transaction fee</EstimationFeeTitleMain>
-              <EstimationFeeTitleLight>TBC</EstimationFeeTitleLight>
+              <EstimationFeeTitleMain>Estimated Nightfall Fee</EstimationFeeTitleMain>
+              <EstimationFeeTitleLight>Free</EstimationFeeTitleLight>
             </EstimationFeeTitle>
             {txType === 'withdraw' ||
             (txType === 'deposit' &&
