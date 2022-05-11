@@ -21,6 +21,7 @@ import {
   saveTransaction,
   saveBlock,
   setTransactionHashSiblingInfo,
+  updateTransactionTime,
 } from '../services/database';
 
 const { ZERO, HASH_TYPE, TIMBER_HEIGHT, TXHASH_TREE_HASH_TYPE, TXHASH_TREE_HEIGHT } = global.config;
@@ -33,7 +34,7 @@ async function blockProposedEventHandler(data, ivks, nsks) {
   // ivk will be used to decrypt secrets whilst nsk will be used to calculate nullifiers for commitments and store them
   const { blockNumber: currentBlockCount, transactionHash: transactionHashL1 } = data;
   // const { transactions, block } = await getProposeBlockCalldata(data);
-  const { transactions, block } = data;
+  const { transactions, block, blockTimestamp } = data;
   const latestTree = await getTreeByBlockNumberL2(block.blockNumberL2 - 1);
   const blockCommitments = transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat();
 
@@ -74,7 +75,6 @@ async function blockProposedEventHandler(data, ivks, nsks) {
             tempTransactionStore.push(
               saveTransaction({
                 transactionHashL1,
-                createdTime: block.blockTimestamp,
                 ...transaction,
               }),
             );
@@ -89,6 +89,11 @@ async function blockProposedEventHandler(data, ivks, nsks) {
       logger.info(err);
     }); // control errors when storing commitments in order to ensure next Promise being executed
     if (!tempBlockSaved) await Promise.all(tempTransactionStore);
+    // Update timestamps
+    await updateTransactionTime(
+      transactions.map(t => t.transactionHash),
+      blockTimestamp,
+    );
     return [
       Promise.all(storeCommitments),
       markOnChain(nonZeroCommitments, block.blockNumberL2, data.blockNumber, data.transactionHash),

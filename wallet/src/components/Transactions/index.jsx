@@ -29,7 +29,7 @@ const txTypeDest = [
 ];
 
 const displayTime = (start, end) => {
-  const diff = (Number(end) - Number(start)) / 1000;
+  const diff = Number(end) - Number(start);
   if (diff < 60) return `${Math.floor(diff)} secs ago`;
   if (diff < 3600) return `${Math.floor(diff / 60)} mins ago`;
   return `${Math.floor(diff / 3600)} hours ago`;
@@ -111,7 +111,7 @@ const Transactions = () => {
         safeTransactionType === '3' &&
         tx.isOnChain > 0 &&
         tx.withdrawState !== 'finalised' &&
-        Date.now() - tx.createdTime > 1000 * 3600 * 24 * 7
+        Date.now() - tx.createdTime > 3600 * 24 * 7
       ) {
         withdrawReady = await isValidWithdrawal(tx._id, shieldContractAddress);
       }
