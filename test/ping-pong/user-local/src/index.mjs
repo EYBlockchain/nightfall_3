@@ -37,7 +37,11 @@ async function localTest() {
   let offchainTx = !!IS_TEST_RUNNER;
   // Create a block of deposits
   for (let i = 0; i < txPerBlock; i++) {
-    await nf3.deposit(ercAddress, tokenType, value, tokenId);
+    try {
+      await nf3.deposit(ercAddress, tokenType, value, tokenId);
+    } catch (err) {
+      logger.warn(`Error in deposit ${err}`);
+    }
   }
 
   // Create a block of transfer and deposit transactions
