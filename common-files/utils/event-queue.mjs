@@ -53,6 +53,28 @@ async function enqueueEvent(callback, priority, args) {
 }
 
 /**
+These functions pause the queue once the current process at the head of the queue has
+completed.  It will then wait until we tell it to start again via unpause.
+While paused, it will still accept incoming items.
+*/
+function pauseQueue(priority) {
+  return new Promise(resolve => {
+    // put an event at the head of the queue which will cleanly pause it.
+    queues[priority].unshift(async () => {
+      queues[priority].autostart = false;
+      queues[priority].stop();
+      logger.info(`queue ${priority} has been paused`);
+      resolve();
+    });
+  });
+}
+
+function unpauseQueue(priority) {
+  queues[priority].autostart = true;
+  queues[priority].unshift(async () => logger.info(`queue ${priority} has been unpaused`));
+}
+
+/**
 This function will return when the event has been on chain for <confirmations> blocks
 It's useful to call this if you want to be sure that your event has been confirmed
 multiple times before you go ahead and process it.
@@ -135,4 +157,12 @@ async function queueManager(eventObject, eventArgs) {
 }
 
 /* ignore unused exports */
-export { flushQueue, enqueueEvent, queueManager, dequeueEvent, waitForConfirmation };
+export {
+  flushQueue,
+  enqueueEvent,
+  queueManager,
+  dequeueEvent,
+  waitForConfirmation,
+  pauseQueue,
+  unpauseQueue,
+};

@@ -31,8 +31,8 @@ const main = async () => {
     await subscribeToProposedBlockWebSocketConnection(setBlockProposedWebSocketConnection);
     // try to sync any missing blockchain state
     // only then start making blocks and listening to new proposers
-    initialBlockSync(proposer).then(async () => {
-      await startEventQueue(queueManager, eventHandlers, proposer);
+    initialBlockSync(proposer).then(async lastSyncedBlock => {
+      await startEventQueue(lastSyncedBlock, queueManager, eventHandlers, proposer);
       queues[0].on('end', () => {
         // We do the proposer isMe check here to fail fast instead of re-enqueing.
         // We check if the queue[2] is empty, this is safe it is manually enqueued/dequeued.
