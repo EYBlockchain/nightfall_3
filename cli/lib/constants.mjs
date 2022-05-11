@@ -19,3 +19,5 @@ export const DEFAULT_PROPOSER_BOND = 10;
 export const DEFAULT_BLOCK_STAKE = 1;
 
 export const WEBSOCKET_PING_TIME = 15000;
+
+export const GAS_MULTIPLIER = Number(process.env.GAS_MULTIPLIER) || 2;

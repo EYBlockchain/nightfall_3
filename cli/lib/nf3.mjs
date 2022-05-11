@@ -15,6 +15,7 @@ import {
   DEFAULT_PROPOSER_BOND,
   DEFAULT_FEE,
   WEBSOCKET_PING_TIME,
+  GAS_MULTIPLIER,
 } from './constants.mjs';
 
 // TODO when SDK is refactored such that these functions are split by user, proposer and challenger,
@@ -221,7 +222,7 @@ class Nf3 {
     //   this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress, 'pending');
     let gasPrice = 20000000000;
     const gas = (await this.web3.eth.getBlock('latest')).gasLimit;
-    const blockGasPrice = 2 * Number(await this.web3.eth.getGasPrice());
+    const blockGasPrice = GAS_MULTIPLIER * Number(await this.web3.eth.getGasPrice());
     if (blockGasPrice > gasPrice) gasPrice = blockGasPrice;
 
     const tx = {
