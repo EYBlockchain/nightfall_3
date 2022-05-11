@@ -59,6 +59,7 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
             state.isBlockStakeWithdrawn(blockHash) == false,
             'The block stake for this block is already claimed'
         );
+        state.setBlockStakeWithdrawn(blockHash);
         // add up how much the proposer is owed.
         uint256 payment;
         for (uint256 i = 0; i < ts.length; i++) {
@@ -68,7 +69,6 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
         }
         payment += BLOCK_STAKE;
         state.addPendingWithdrawal(msg.sender, payment);
-        state.setBlockStakeWithdrawn(blockHash);
     }
 
     function onERC721Received(
@@ -193,16 +193,16 @@ contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUp
         if (withdrawTransaction.tokenId != ZERO)
             revert('ERC20 deposit should have tokenId equal to ZERO');
         else {
+            // set new owner of transaction, settign fee to zero.
+            advancedFeeWithdrawals[withdrawTransactionHash] = 0;
+            advancedWithdrawals[withdrawTransactionHash] = msg.sender;
+            state.addPendingWithdrawal(msg.sender, advancedFee);
             tokenContract.transferFrom(
                 address(msg.sender),
                 currentOwner,
                 uint256(withdrawTransaction.value)
             );
         }
-        // set new owner of transaction, settign fee to zero.
-        advancedFeeWithdrawals[withdrawTransactionHash] = 0;
-        advancedWithdrawals[withdrawTransactionHash] = msg.sender;
-        state.addPendingWithdrawal(msg.sender, advancedFee);
     }
 
     // TODO Is there a better way to set this fee, e.g. at the point of making a transaction.
