@@ -1,4 +1,4 @@
-// ignore unused exports default
+/* ignore unused exports */
 
 import Web3 from 'web3';
 
