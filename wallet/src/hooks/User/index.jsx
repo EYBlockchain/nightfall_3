@@ -145,7 +145,9 @@ export const UserProvider = ({ children }) => {
       const circuitName = USE_STUBS
         ? ['deposit_stub', 'single_transfer_stub', 'double_transfer_stub', 'withdraw_stub']
         : ['deposit', 'single_transfer', 'double_transfer', 'withdraw'];
-      if (circuitName.every(c => checkIndexDBForCircuit(c))) {
+
+      const circuitCheck = circuitName.map(c => checkIndexDBForCircuit(c));
+      if (circuitCheck.every(c => c)) {
         setState(previousState => {
           return {
             ...previousState,
@@ -155,7 +157,7 @@ export const UserProvider = ({ children }) => {
         setSyncing(false);
       }
     },
-    isSyncing ? 1000 : null,
+    isSyncing ? 30000 : null,
   );
   /*
    * TODO: children should render when sync is complete
