@@ -68,7 +68,7 @@ async function blockProposedEventHandler(data) {
             `Processing external offchain transaction with L2 hash ${tx.transactionHash}`,
           );
           return transactionSubmittedEventHandler({
-            blocknumberL2: block.blockNumberL2,
+            blockNumberL2: block.blockNumberL2,
             mempool: false,
             offchain: true,
             ...tx,
