@@ -222,7 +222,9 @@ export async function updateTransactionTime(transactionHashes, blockTimestamp) {
   return Promise.all(
     txToUpdate.map(async txHash => {
       const tx = await db.get(TRANSACTIONS_COLLECTION, txHash);
-      return db.put(TRANSACTIONS_COLLECTION, { ...tx, createdTime: blockTimestamp }, txHash);
+      if (blockTimestamp)
+        return db.put(TRANSACTIONS_COLLECTION, { ...tx, createdTime: blockTimestamp }, txHash);
+      return db.put(TRANSACTIONS_COLLECTION, tx, txHash);
     }),
   );
 }
