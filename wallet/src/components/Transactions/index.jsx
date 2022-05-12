@@ -15,6 +15,7 @@ import './index.scss';
 import { getContractInstance } from '../../common-files/utils/contract';
 import useInterval from '../../hooks/useInterval';
 import { getPricing, setPricing, shieldAddressGet } from '../../utils/lib/local-storage';
+import BigFloat from '../../common-files/classes/bigFloat';
 
 const supportedTokens = importTokens();
 
@@ -111,7 +112,7 @@ const Transactions = () => {
         safeTransactionType === '3' &&
         tx.isOnChain > 0 &&
         tx.withdrawState !== 'finalised' &&
-        Date.now() - tx.createdTime > 3600 * 24 * 7
+        Math.floor(Date.now() / 1000) - tx.createdTime > 3600 * 24 * 7
       ) {
         withdrawReady = await isValidWithdrawal(tx._id, shieldContractAddress);
       }
@@ -136,7 +137,7 @@ const Transactions = () => {
         transactionHash: tx._id,
         txType: safeTransactionType,
         value: safeValue,
-        now: Date.now(),
+        now: Math.floor(Date.now() / 1000),
         logoURI,
         decimals,
         currencyValue,
@@ -213,10 +214,12 @@ const Transactions = () => {
                   setShowModal({
                     show: true,
                     transactionhash: tx.transactionHash,
+                    symbol: tx.symbol,
+                    value: new BigFloat(BigInt(tx.value), tx.decimals).toFixed(4),
                     _id: tx._id,
                     recipientaddress: tx.recipientAddress,
-                    isonChain: tx.isOnChain,
-                    withdrawready: tx.withdrawReady,
+                    withdrawready: tx.withdrawReady ? 1 : 0,
+                    txtype: tx.txType,
                   })
                 }
               >
@@ -282,7 +285,8 @@ const Transactions = () => {
                     >
                       {/* amount-details */}
                       <div style={{ fontWeight: '600', fontSize: '14px', lineHeight: '20px' }}>
-                        {(Number(tx.value) / 10 ** tx.decimals).toFixed(4)} {tx.symbol}
+                        {new BigFloat(BigInt(tx.value), tx.decimals).toFixed(4)} {tx.symbol}
+                        {/* {(Number(tx.value) / 10 ** tx.decimals).toFixed(4)} {tx.symbol} */}
                       </div>
                       <div
                         style={{
@@ -295,10 +299,9 @@ const Transactions = () => {
                         }}
                       >
                         $
-                        {(
-                          (Number(tx.value) / 10 ** tx.decimals) *
-                          Number(tx.currencyValue)
-                        ).toFixed(4)}
+                        {new BigFloat(BigInt(tx.value), tx.decimals)
+                          .mul(tx.currencyValue)
+                          .toFixed(4)}
                       </div>
                     </div>
                     <div

@@ -6,13 +6,17 @@ import { isValidWithdrawal } from '@Nightfall/services/valid-withdrawal';
 import { submitTransaction } from '../../common-files/utils/contract';
 import stylesModal from '../../styles/modal.module.scss';
 import { shieldAddressGet } from '../../utils/lib/local-storage';
+import successHand from '../../assets/img/success-hand.png';
+import polygonNightfall from '../../assets/svg/polygon-nightfall.svg';
 
 interface TxModalProps {
   transactionhash: string;
   _id: string;
   recipientaddress: string;
-  isonChain: string;
+  symbol: string;
   withdrawready: boolean;
+  value: string;
+  txtype: string;
 }
 
 export default function TxInfoModal(props: TxModalProps): JSX.Element {
@@ -34,33 +38,60 @@ export default function TxInfoModal(props: TxModalProps): JSX.Element {
   };
 
   return (
-    <Modal {...props} size="lg" centered>
+    <Modal {...props} centered>
       <Modal.Header closeButton>
         <Modal.Title>Transaction Information</Modal.Title>
       </Modal.Header>
+      <Modal.Header>
+        <Modal.Title style={{ fontSize: '1rem', lineHeight: '1.5rem' }}>
+          <div>Transaction Amount</div>
+        </Modal.Title>
+        <Modal.Title style={{ fontSize: '1rem', lineHeight: '1.5rem' }}>
+          <div>
+            {props.value} {props.symbol}
+          </div>
+        </Modal.Title>
+      </Modal.Header>
       <Modal.Body>
-        <div className={stylesModal.modalBody}>
-          <Row className={stylesModal.transferModeModal__text}>
-            <Col xs={3}>Nightfall Transaction Hash</Col>
-            <Col xs={9}>{props._id}</Col>
-          </Row>
-          <Row className={stylesModal.transferModeModal__text}>
-            <Col xs={3}>Transaction Recipient</Col>
-            <Col xs={9}>{props.recipientaddress}</Col>
-          </Row>
-          <Row className={stylesModal.transferModeModal__text}>
-            <Col xs={3}>Nightfall Block Number</Col>
-            <Col xs={9}>{props.isonChain}</Col>
-          </Row>
-          <Row>
-            {props.withdrawready ? (
-              <Button onClick={() => confirmWithdraw()}> Continue </Button>
-            ) : (
-              ''
-            )}
-          </Row>
+        <div className={stylesModal.modalBody} style={{ textAlign: 'center' }}>
+          <img src={successHand}></img>
+          <p style={{ fontWeight: '600', fontSize: '1.125rem', lineHeight: '1.5rem' }}>
+            Transaction Successfully Completed
+          </p>
+        </div>
+        <div>
+          <div
+            className={stylesModal.transferModeModal__text}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            {/* <Col xs={3}>Nightfall Hash</Col> */}
+            <img src={polygonNightfall} style={{ height: '32px', width: '32px' }}></img>
+            <p style={{ margin: '0' }}>
+              {props?.transactionhash
+                ? `${props?.transactionhash.slice(0, 10)}...${props?.transactionhash.slice(-10)}`
+                : ''}
+            </p>
+          </div>
         </div>
       </Modal.Body>
+      <Modal.Footer>
+        {props.withdrawready && props.txtype === '3' ? (
+          <Button
+            style={{
+              background: '#7B3FE4',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              boxSizing: 'border-box',
+              width: '100%',
+            }}
+            onClick={() => confirmWithdraw()}
+          >
+            {' '}
+            Complete Withdrawal{' '}
+          </Button>
+        ) : (
+          ''
+        )}
+      </Modal.Footer>
     </Modal>
   );
 }
