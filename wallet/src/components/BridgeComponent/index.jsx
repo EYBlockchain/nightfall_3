@@ -422,7 +422,21 @@ const BridgeComponent = () => {
                           e.preventDefault(); // If exceed input count then stop updates.
                         }
                       }}
-                      onChange={e => setTransferValue(e.target.value)}
+                      onChange={e => {
+                        if (/^\d+\.\d+$/.test(e.target.value) || /^\d+$/.test(e.target.value)) {
+                          console.log('In', e.target.value.split('.')[1]);
+                          if (typeof e.target.value.split('.')[1] === 'undefined')
+                            setTransferValue(e.target.value);
+                          else if (e.target.value.split('.')[1]?.length < 5)
+                            setTransferValue(e.target.value);
+                          else
+                            setTransferValue(
+                              `${e.target.value.split('.')[0]}.${e.target.value
+                                .split('.')[1]
+                                .slice(0, 4)}`,
+                            );
+                        } else setTransferValue('0');
+                      }}
                     />
                     <div className="amount_details_max" onClick={() => updateInputValue()}>
                       <span>MAX</span>
@@ -513,9 +527,15 @@ const BridgeComponent = () => {
 
           {/* TRANSFER BUTTON */}
           <div>
-            <button type="button" className="transfer_button" onClick={handleShow}>
-              <p>Transfer</p>
-            </button>
+            {Number(transferValue) > 0 ? (
+              <button type="button" className="transfer_button" onClick={handleShow}>
+                <p>Transfer</p>
+              </button>
+            ) : (
+              <button type="button" className="transfer_button">
+                <p>Transfer</p>
+              </button>
+            )}
           </div>
         </div>
         {show && (
