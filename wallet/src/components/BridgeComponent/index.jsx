@@ -494,7 +494,7 @@ const BridgeComponent = () => {
           </div>
           {/* TRANSFER MODE */}
           <div className="transfer_mode">
-            <span className="transfer_mode_text"> Transfer Mode: </span>
+            <span className="transfer_mode_text">Transfer Mode:</span>
             <span className="transfer_bridge_text">
               {txType.charAt(0).toUpperCase() + txType.slice(1)} Bridge
             </span>
@@ -588,7 +588,7 @@ const BridgeComponent = () => {
                 </SpinnerBox>
 
                 <TransferMode>
-                  <h3>Transaction created sucessfully.</h3>
+                  <h3>Transaction created successfully.</h3>
                   <ModalText>Your transfer is ready to send.</ModalText>
                   {/* <a className={styles.footerText}>View on etherscan</a> */}
                   <ContinueTransferButton

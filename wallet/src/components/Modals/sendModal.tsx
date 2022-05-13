@@ -696,7 +696,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
                 <img src={successHand} alt="success hand" />
               </SpinnerBox>
               <div className="transferModeModal" id="Bridge_modal_success">
-                <h3>Transaction created sucessfully.</h3>
+                <h3>Transaction created successfully.</h3>
                 <div className="modalText">Your transfer is ready to send.</div>
                 <ContinueTransferButton
                   id="Bridge_modal_continueTransferButton"

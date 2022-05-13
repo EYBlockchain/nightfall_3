@@ -164,7 +164,7 @@ const TransferModal = ({
                 {' '}
                 To minimise the risk of chain reorganisations, your transfer will wait for{' '}
               </span>
-              <span className="text-primary"> 12 block confirmations</span> before being finalized.
+              <span className="text-primary"> 12 block confirmations</span> before being finalised.
             </TransferModeText>
           </TransferMode>
           <Divider />
