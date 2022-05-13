@@ -288,9 +288,11 @@ contract Shield is Stateful, Ownable, Structures, Config, Key_Registry, Reentran
 
         if (t.tokenType == TokenType.ERC20) {
             if (t.tokenId != ZERO) revert('ERC20 deposit should have tokenId equal to ZERO');
-            if (t.value > super.getRestriction(addr, 0))
+            uint256 check = super.getRestriction(addr, 0);
+            require(check > 0, 'Cannot have restrictions of zero value');
+            if (t.value > check)
                 revert('Value is above current restrictions for deposits');
-            else tokenContract.transferFrom(msg.sender, address(this), uint256(t.value));
+            else require(tokenContract.transferFrom(msg.sender, address(this), uint256(t.value)), 'transferFrom returned false');
         } else if (t.tokenType == TokenType.ERC721) {
             if (t.value != 0)
                 // value should always be equal to 0
