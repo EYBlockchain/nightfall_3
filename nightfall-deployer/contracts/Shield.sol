@@ -16,17 +16,29 @@ import './Key_Registry.sol';
 import './Structures.sol';
 import './Config.sol';
 import './Stateful.sol';
+import './Ownable.sol';
 
-contract Shield is Stateful, Structures, Config, Key_Registry, ReentrancyGuardUpgradeable {
+contract Shield is Stateful, Ownable, Structures, Config, Key_Registry, ReentrancyGuardUpgradeable {
     mapping(bytes32 => bool) public withdrawn;
     mapping(bytes32 => uint256) public feeBook;
     mapping(bytes32 => address) public advancedWithdrawals;
     mapping(bytes32 => uint256) public advancedFeeWithdrawals;
 
-    function initialize() public override(Stateful, Key_Registry, Config) initializer {
+    function initialize() public override(Stateful, Key_Registry, Config, Ownable) initializer {
         Stateful.initialize();
         Key_Registry.initialize();
         Config.initialize();
+        Ownable.initialize();
+    }
+
+    function transferShieldBalance(address ercAddress, uint256 value) public onlyOwner {
+        ERCInterface tokenContract = ERCInterface(ercAddress);
+        if (value == uint256(0)) {
+            uint256 balance = tokenContract.balanceOf(address(this));
+            tokenContract.transfer(owner(), balance);
+        } else {
+            tokenContract.transfer(owner(), value);
+        }
     }
 
     function submitTransaction(Transaction memory t) external payable nonReentrant {
