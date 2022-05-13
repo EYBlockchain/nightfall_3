@@ -137,9 +137,8 @@ const BridgeComponent = () => {
   const initialTx = history?.location?.tokenState?.initialTxType ?? 'deposit';
   const initialToken =
     supportedTokens.find(
-      t => t.address.toLowerCase() === history?.location?.tokenState?.tokenAddress,
+      t => t.address.toLowerCase() === history?.location?.tokenState?.tokenAddress.toLowerCase(),
     ) ?? supportedTokens[0];
-
   const [token, setToken] = useState(initialToken);
   const [txType, setTxType] = useState(initialTx);
   const [transferValue, setTransferValue] = useState('0');
