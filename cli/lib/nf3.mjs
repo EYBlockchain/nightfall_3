@@ -16,6 +16,8 @@ import {
   DEFAULT_FEE,
   WEBSOCKET_PING_TIME,
   GAS_MULTIPLIER,
+  GAS,
+  GAS_PRICE,
 } from './constants.mjs';
 
 // TODO when SDK is refactored such that these functions are split by user, proposer and challenger,
@@ -220,10 +222,20 @@ class Nf3 {
   ) {
     // if (!this.nonce)
     //   this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress, 'pending');
-    let gasPrice = 20000000000;
+
+    //let gasPrice = 200000000000;
+    /*
     const gas = (await this.web3.eth.getBlock('latest')).gasLimit;
     const blockGasPrice = GAS_MULTIPLIER * Number(await this.web3.eth.getGasPrice());
     if (blockGasPrice > gasPrice) gasPrice = blockGasPrice;
+    */
+    let gasPrice = GAS_PRICE;
+    const blockGasPrice = GAS_MULTIPLIER * Number(await this.web3.eth.getGasPrice());
+    if (blockGasPrice > gasPrice) gasPrice = blockGasPrice;
+    const gas = GAS;
+
+    //const gasPrice = GAS_PRICE;
+    //const gas = GAS;
 
     const tx = {
       from: this.ethereumAddress,
