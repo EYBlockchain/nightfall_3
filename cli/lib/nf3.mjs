@@ -223,7 +223,7 @@ class Nf3 {
     // if (!this.nonce)
     //   this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress, 'pending');
 
-    //let gasPrice = 200000000000;
+    // let gasPrice = 200000000000;
     /*
     const gas = (await this.web3.eth.getBlock('latest')).gasLimit;
     const blockGasPrice = GAS_MULTIPLIER * Number(await this.web3.eth.getGasPrice());
@@ -234,8 +234,8 @@ class Nf3 {
     if (blockGasPrice > gasPrice) gasPrice = blockGasPrice;
     const gas = GAS;
 
-    //const gasPrice = GAS_PRICE;
-    //const gas = GAS;
+    // const gasPrice = GAS_PRICE;
+    // const gas = GAS;
 
     const tx = {
       from: this.ethereumAddress,
