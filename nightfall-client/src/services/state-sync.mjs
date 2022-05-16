@@ -10,9 +10,16 @@ import { waitForContract } from '../event-handlers/subscribe.mjs';
 import blockProposedEventHandler from '../event-handlers/block-proposed.mjs';
 import rollbackEventHandler from '../event-handlers/rollback.mjs';
 
-const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION, STATE_CONTRACT_NAME } = config;
+const {
+  MONGO_URL,
+  COMMITMENTS_DB,
+  COMMITMENTS_COLLECTION,
+  STATE_CONTRACT_NAME,
+  STATE_GENESIS_BLOCK,
+} = config;
 
 const syncState = async (fromBlock = 'earliest', toBlock = 'latest', eventFilter = 'allEvents') => {
+  console.log('From block', fromBlock);
   const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME); // Rollback, BlockProposed
 
   const pastStateEvents = await stateContractInstance.getPastEvents(eventFilter, {
@@ -50,6 +57,6 @@ export const initialClientSync = async () => {
   const firstSeenBlockNumber = Math.min(...commitmentBlockNumbers);
   logger.info(`firstSeenBlockNumber: ${firstSeenBlockNumber}`);
   // fistSeenBlockNumber can be infinity if the commitmentBlockNumbers array is empty
-  if (firstSeenBlockNumber === Infinity) return syncState();
+  if (firstSeenBlockNumber === Infinity) return syncState(STATE_GENESIS_BLOCK);
   return syncState(firstSeenBlockNumber);
 };

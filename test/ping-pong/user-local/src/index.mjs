@@ -11,9 +11,20 @@ import { waitForSufficientBalance, retrieveL2Balance } from './utils.mjs';
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
-const { mnemonics, signingKeys, txPerBlock, pkds } = config.TEST_OPTIONS;
+const { mnemonics, signingKeys, pkds } = config.TEST_OPTIONS;
 
-const { TEST_LENGTH, ERC20_NAME, TX_WAIT = 1000, IS_TEST_RUNNER = '' } = process.env;
+const txPerBlock =
+  process.env.DEPLOYER_ETH_NETWORK === 'mainnet'
+    ? process.env.TEST_LENGTH
+    : config.TEST_OPTIONS.txPerBlock;
+
+const {
+  TEST_LENGTH,
+  ERC20_NAME,
+  TX_WAIT = 1000,
+  IS_TEST_RUNNER = '',
+  TEST_ERC20_ADDRESS,
+} = process.env;
 
 /**
 Does the preliminary setup and starts listening on the websocket
@@ -31,7 +42,7 @@ async function localTest() {
   if (await nf3.healthcheck('client')) logger.info('Healthcheck passed');
   else throw new Error('Healthcheck failed');
 
-  const ercAddress = await nf3.getContractAddress(ERC20_NAME);
+  const ercAddress = TEST_ERC20_ADDRESS || (await nf3.getContractAddress(ERC20_NAME));
   const startBalance = await retrieveL2Balance(nf3);
 
   let offchainTx = !!IS_TEST_RUNNER;

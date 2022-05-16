@@ -111,7 +111,7 @@ module.exports = {
       skipDryRun: true,
       websockets: true,
       gasPrice: config.WEB3_OPTIONS.gasPrice,
-      gas: 7000000,
+      gas: config.WEB3_OPTIONS.gas,
     },
     mainnet: {
       provider: () => new HDWalletProvider(config.ETH_PRIVATE_KEY, config.BLOCKCHAIN_URL),
@@ -121,7 +121,7 @@ module.exports = {
       skipDryRun: true,
       websockets: true,
       gasPrice: config.WEB3_OPTIONS.gasPrice,
-      gas: 7000000,
+      gas: config.WEB3_OPTIONS.gas,
     },
 
     // Another network with more advanced options...

@@ -29,6 +29,7 @@ module.exports = {
   SHIELD_CONTRACT_NAME: 'Shield',
   CHALLENGES_CONTRACT_NAME: 'Challenges',
   STATE_CONTRACT_NAME: 'State',
+  STATE_GENESIS_BLOCK: process.env.STATE_GENESIS_BLOCK,
   BLOCK_PROPOSED_EVENT_NAME: 'BlockProposed',
   CIRCUITS_HOME: process.env.CIRCUITS_HOME || '/app/circuits/',
   ALWAYS_DO_TRUSTED_SETUP: process.env.ALWAYS_DO_TRUSTED_SETUP || false,
