@@ -15,7 +15,7 @@ import './index.scss';
 import { getContractInstance } from '../../common-files/utils/contract';
 import useInterval from '../../hooks/useInterval';
 import { getPricing, setPricing, shieldAddressGet } from '../../utils/lib/local-storage';
-import BigFloat from '../../common-files/classes/bigFloat';
+// import BigFloat from '../../common-files/classes/bigFloat';
 
 const supportedTokens = importTokens();
 
@@ -215,7 +215,8 @@ const Transactions = () => {
                     show: true,
                     transactionhash: tx.transactionHash,
                     symbol: tx.symbol,
-                    value: new BigFloat(BigInt(tx.value), tx.decimals).toFixed(4),
+                    // value: new BigFloat(BigInt(tx.value), tx.decimals).toFixed(4),
+                    value: (Number(tx.value) * tx.decimals).toFixed(4),
                     _id: tx._id,
                     recipientaddress: tx.recipientAddress,
                     withdrawready: tx.withdrawReady ? 1 : 0,
@@ -285,8 +286,8 @@ const Transactions = () => {
                     >
                       {/* amount-details */}
                       <div style={{ fontWeight: '600', fontSize: '14px', lineHeight: '20px' }}>
-                        {new BigFloat(BigInt(tx.value), tx.decimals).toFixed(4)} {tx.symbol}
-                        {/* {(Number(tx.value) / 10 ** tx.decimals).toFixed(4)} {tx.symbol} */}
+                        {/* {new BigFloat(BigInt(tx.value), tx.decimals).toFixed(4)} {tx.symbol} */}
+                        {(Number(tx.value) / 10 ** tx.decimals).toFixed(4)} {tx.symbol}
                       </div>
                       <div
                         style={{
@@ -298,10 +299,10 @@ const Transactions = () => {
                           lineHeight: '16px',
                         }}
                       >
-                        $
-                        {new BigFloat(BigInt(tx.value), tx.decimals)
+                        $ {((Number(tx.value) / 10 ** tx.decimals) * tx.currencyValue).toFixed(4)}
+                        {/* {new BigFloat(BigInt(tx.value), tx.decimals)
                           .mul(tx.currencyValue)
-                          .toFixed(4)}
+                          .toFixed(4)} */}
                       </div>
                     </div>
                     <div
