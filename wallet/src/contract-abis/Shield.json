@@ -283,6 +283,11 @@
         "internalType": "address",
         "name": "tokenAddr",
         "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "transactionType",
+        "type": "uint256"
       }
     ],
     "name": "getRestriction",
@@ -355,6 +360,11 @@
         "internalType": "address",
         "name": "tokenAddr",
         "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "transactionType",
+        "type": "uint256"
       }
     ],
     "name": "removeRestriction",
@@ -397,7 +407,12 @@
       },
       {
         "internalType": "uint256",
-        "name": "amount",
+        "name": "depositAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "withdrawAmount",
         "type": "uint256"
       }
     ],

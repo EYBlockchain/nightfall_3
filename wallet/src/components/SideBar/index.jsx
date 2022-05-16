@@ -38,7 +38,7 @@ export default function SideBar() {
         <div>
           <div className="links">
             {/* <GiElectric size={24} /> */}
-            {state.circuitSync ? (
+            {state.circuitSync && state.chainSync ? (
               <>
                 <img src={synced} style={{ height: '32px', width: '32px' }} />
                 <div className="linkText">Nightfall Synced</div>

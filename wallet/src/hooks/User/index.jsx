@@ -141,12 +141,13 @@ export const UserProvider = ({ children }) => {
   }, [state.compressedPkd]);
 
   useInterval(
-    () => {
+    async () => {
       const circuitName = USE_STUBS
         ? ['deposit_stub', 'single_transfer_stub', 'double_transfer_stub', 'withdraw_stub']
         : ['deposit', 'single_transfer', 'double_transfer', 'withdraw'];
 
-      const circuitCheck = circuitName.map(c => checkIndexDBForCircuit(c));
+      const circuitCheck = await Promise.all(circuitName.map(c => checkIndexDBForCircuit(c)));
+      console.log('Circuit Check', circuitCheck);
       if (circuitCheck.every(c => c)) {
         setState(previousState => {
           return {

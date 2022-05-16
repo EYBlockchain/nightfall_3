@@ -490,7 +490,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
         },
         nsk,
         ask,
-        fee: 1,
+        fee: 0,
       },
       shieldContractAddress,
     ).catch(e => {

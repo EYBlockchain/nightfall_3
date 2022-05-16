@@ -21,7 +21,7 @@ export default function InstantWithdraw(props: InstantWithdrawProps): JSX.Elemen
       shieldContractAddress,
     );
     try {
-      await submitTransaction(rawTransaction, shieldContractAddress, fee);
+      await submitTransaction(rawTransaction, shieldContractAddress, 0, fee);
       await markWithdrawState(props.transactionhash, 'instant');
     } catch (error) {
       console.log('Withdraw Failed');

@@ -138,7 +138,7 @@ const BridgeComponent = () => {
   const initialTx = history?.location?.tokenState?.initialTxType ?? 'deposit';
   const initialToken =
     supportedTokens.find(
-      t => t.address.toLowerCase() === history?.location?.tokenState?.tokenAddress,
+      t => t.address.toLowerCase() === history?.location?.tokenState?.tokenAddress.toLowerCase(),
     ) ?? supportedTokens[0];
 
   const [token, setToken] = useState(initialToken);
@@ -192,7 +192,7 @@ const BridgeComponent = () => {
     try {
       switch (readyTx.type) {
         case 'onchain':
-          await submitTransaction(readyTx.rawTransaction, shieldContractAddress);
+          await submitTransaction(readyTx.rawTransaction, shieldContractAddress, 150000, 0); // 150k is enough gasLimit for a deposit
           break;
         case 'offchain':
           await axios

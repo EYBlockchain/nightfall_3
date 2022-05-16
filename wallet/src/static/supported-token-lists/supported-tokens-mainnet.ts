@@ -69,29 +69,29 @@ const tokensList = {
         },
       },
     },
-    {
-      chainId: 1,
-      name: 'Tether USD',
-      symbol: 'USDT',
-      decimals: 6,
-      address: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-      logoURI: 'https://wallet-asset.matic.network/img/tokens/usdt.svg',
-      tags: ['pos', 'stablecoin', 'erc20', 'swapable', 'metaTx'],
-      id: 'tether',
-      restrictions: {
-        withdraw: '1000000000',
-        deposit: '250000000',
-      },
-      extensions: {
-        parentAddress: '',
-        project: {
-          name: 'Tether',
-          summary: '-',
-          contact: 'support@tether.to',
-          website: 'https://tether.to/',
-        },
-      },
-    },
+    // {
+    //   chainId: 1,
+    //   name: 'Tether USD',
+    //   symbol: 'USDT',
+    //   decimals: 6,
+    //   address: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+    //   logoURI: 'https://wallet-asset.matic.network/img/tokens/usdt.svg',
+    //   tags: ['pos', 'stablecoin', 'erc20', 'swapable', 'metaTx'],
+    //   id: 'tether',
+    //   restrictions: {
+    //     withdraw: '1000000000',
+    //     deposit: '250000000',
+    //   },
+    //   extensions: {
+    //     parentAddress: '',
+    //     project: {
+    //       name: 'Tether',
+    //       summary: '-',
+    //       contact: 'support@tether.to',
+    //       website: 'https://tether.to/',
+    //     },
+    //   },
+    // },
     {
       chainId: 1,
       name: 'Dai',

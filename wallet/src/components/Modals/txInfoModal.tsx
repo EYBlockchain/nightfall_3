@@ -29,7 +29,7 @@ export default function TxInfoModal(props: TxModalProps): JSX.Element {
         shieldContractAddress,
       );
       try {
-        await submitTransaction(rawTransaction, shieldContractAddress, 0);
+        await submitTransaction(rawTransaction, shieldContractAddress, 0, 0);
         await markWithdrawState(props.transactionhash, 'finalised');
       } catch (error) {
         console.log('Withdraw Failed');
