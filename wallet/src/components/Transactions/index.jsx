@@ -216,7 +216,7 @@ const Transactions = () => {
                     transactionhash: tx.transactionHash,
                     symbol: tx.symbol,
                     // value: new BigFloat(BigInt(tx.value), tx.decimals).toFixed(4),
-                    value: (Number(tx.value) * tx.decimals).toFixed(4),
+                    value: (Number(tx.value) / 10 ** tx.decimals).toFixed(4),
                     _id: tx._id,
                     recipientaddress: tx.recipientAddress,
                     withdrawready: tx.withdrawReady ? 1 : 0,
