@@ -10,7 +10,7 @@ import polygonChainImage from '../../assets/img/polygon-chain.svg';
 import tickBox from '../../assets/svg/tickBox.svg';
 import etherscanArrow from '../../assets/svg/etherscanGo.svg';
 import TxInfoModal from '../Modals/txInfoModal.tsx';
-import Web3 from '../../common-files/utils/web3';
+import Web3, { ChainIdMapping } from '../../common-files/utils/web3';
 import './index.scss';
 import { getContractInstance } from '../../common-files/utils/contract';
 import useInterval from '../../hooks/useInterval';
@@ -41,6 +41,10 @@ const Transactions = () => {
   const [isActive, setActive] = React.useState('all');
   const [showModal, setShowModal] = React.useState({ show: false });
   const [delay, setDelay] = React.useState(50);
+  const [etherscan] = React.useState(
+    ChainIdMapping[process.env.REACT_APP_MODE].chainName === 'Ethereum Mainnet' ?
+    'etherscan.io' : 'goerli.etherscan.io'
+  );
 
   const initialPrices = {};
   supportedTokens.forEach(t => {
@@ -338,7 +342,7 @@ const Transactions = () => {
                       </div>
                     </div>
                     <a
-                      href={`https://goerli.etherscan.io/tx/${tx.transactionHashL1}`}
+                      href={`https://${etherscan}/tx/${tx.transactionHashL1}`}
                       className="etherscanLink"
                       rel="noopener noreferrer"
                       target="_blank"
