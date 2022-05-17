@@ -192,7 +192,8 @@ const BridgeComponent = () => {
     try {
       switch (readyTx.type) {
         case 'onchain':
-          await submitTransaction(readyTx.rawTransaction, shieldContractAddress, 150000, 0); // 150k is enough gasLimit for a deposit
+          const txL1Hash = await submitTransaction(readyTx.rawTransaction, shieldContractAddress, 150000, 0); // 150k is enough gasLimit for a deposit
+          readyTx.transaction.l1Hash = txL1Hash;
           break;
         case 'offchain':
           await axios

@@ -153,6 +153,8 @@ const Transactions = () => {
       (a, b) => b.createdTime - a.createdTime,
     );
 
+    console.log('TRANSACTION TX: ',mappedTxs[0]);
+
     console.log('Transactions', transactions);
     setTxs(mappedTxs);
   }, delay);
@@ -342,7 +344,7 @@ const Transactions = () => {
                       </div>
                     </div>
                     <a
-                      href={`https://${etherscan}/tx/${tx.transactionHashL1}`}
+                      href={`https://${etherscan}/tx/${tx.l1Hash}`}
                       className="etherscanLink"
                       rel="noopener noreferrer"
                       target="_blank"
