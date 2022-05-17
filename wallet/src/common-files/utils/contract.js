@@ -83,7 +83,7 @@ export async function submitTransaction(
     to: contractAddress,
     data: unsignedTransaction,
     gas: web3.utils.toHex(gasLimitWithBuffer),
-    gasPrice: web3.utils.toHex(proposedGasPrice),
+    gasPrice: web3.utils.toHex(proposedGasPrice * 1.2),
   };
 
   if (fee) tx.value = web3.utils.toHex(fee);

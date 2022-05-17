@@ -56,7 +56,7 @@ async function blockProposedEventHandler(data, ivks, nsks) {
     const storeCommitments = [];
     const tempTransactionStore = [];
     if (
-      (Number(transaction.transactionType) === 1 || Number(transaction.transactionType) === '2') &&
+      (Number(transaction.transactionType) === 1 || Number(transaction.transactionType) === 2) &&
       (await countCommitments(nonZeroCommitments)) === 0
     ) {
       ivks.forEach((key, i) => {
