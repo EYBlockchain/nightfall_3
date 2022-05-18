@@ -42,8 +42,9 @@ const Transactions = () => {
   const [showModal, setShowModal] = React.useState({ show: false });
   const [delay, setDelay] = React.useState(50);
   const [etherscan] = React.useState(
-    ChainIdMapping[process.env.REACT_APP_MODE].chainName === 'Ethereum Mainnet' ?
-    'etherscan.io' : 'goerli.etherscan.io'
+    ChainIdMapping[process.env.REACT_APP_MODE].chainName === 'Ethereum Mainnet'
+    ?'etherscan.io':
+    'goerli.etherscan.io'
   );
 
   const initialPrices = {};

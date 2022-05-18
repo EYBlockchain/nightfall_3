@@ -191,11 +191,17 @@ const BridgeComponent = () => {
     console.log('readyTx', readyTx);
     try {
       switch (readyTx.type) {
-        case 'onchain':
-          const txL1Hash = await submitTransaction(readyTx.rawTransaction, shieldContractAddress, 150000, 0); // 150k is enough gasLimit for a deposit
+        case 'onchain': {
+          const txL1Hash = await submitTransaction(
+            readyTx.rawTransaction,
+            shieldContractAddress,
+            150000,
+            0,
+          ); // 150k is enough gasLimit for a deposit
           readyTx.transaction.l1Hash = txL1Hash;
           break;
-        case 'offchain':
+        }
+        case 'offchain': {
           await axios
             .post(
               `${proposerUrl}/proposer/offchain-transaction`,
@@ -206,8 +212,10 @@ const BridgeComponent = () => {
               throw new Error(err);
             });
           break;
-        default:
+        }
+        default: {
           console.log('Error when sending');
+        }
       }
       await saveTransaction(readyTx.transaction);
       handleClose();
