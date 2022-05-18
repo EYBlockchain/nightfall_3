@@ -43,8 +43,8 @@ const Transactions = () => {
   const [delay, setDelay] = React.useState(50);
   const [etherscan] = React.useState(
     ChainIdMapping[process.env.REACT_APP_MODE].chainName === 'Ethereum Mainnet'
-    ?'etherscan.io':
-    'goerli.etherscan.io'
+      ? 'etherscan.io'
+      : 'goerli.etherscan.io',
   );
 
   const initialPrices = {};
@@ -153,9 +153,6 @@ const Transactions = () => {
     const mappedTxs = (await Promise.all(promisedTxs)).sort(
       (a, b) => b.createdTime - a.createdTime,
     );
-
-    console.log('TRANSACTION TX: ',mappedTxs[0]);
-
     console.log('Transactions', transactions);
     setTxs(mappedTxs);
   }, delay);
