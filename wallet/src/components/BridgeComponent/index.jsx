@@ -316,7 +316,6 @@ const BridgeComponent = () => {
   }
 
   const handleShow = () => {
-    console.log('Transfer value: ',transferValue);
     if (
       (txType === 'deposit' &&
         new BigFloat(transferValue, token.decimals).toBigInt() > l1Balance) ||
@@ -326,13 +325,15 @@ const BridgeComponent = () => {
       return;
     }
 
-    if (txType === 'deposit' &&
-        new BigFloat(transferValue, token.decimals).toBigInt() > new BigFloat('0.25 ', token.decimals).toBigInt()
+    if (
+      txType === 'deposit' &&
+      new BigFloat(transferValue, token.decimals).toBigInt() >
+        new BigFloat('0.25 ', token.decimals).toBigInt()
     ) {
       toast.error("Input value can't be greater than 0.25");
       return;
     }
-    
+
     if (!transferValue) {
       toast.warn('Input a value for transfer, please.');
       return;
@@ -377,11 +378,11 @@ const BridgeComponent = () => {
       .shadowRoot.getElementById('inputValue');
     if (txType === 'deposit') {
       inputElement.value = new BigFloat(l1Balance, token.decimals).toFixed(4);
-      setTransferValue((new BigFloat(l1Balance, token.decimals).toFixed(4)).toString());
+      setTransferValue(new BigFloat(l1Balance, token.decimals).toFixed(4).toString());
       return;
     }
-    inputElement.value = new BigFloat(l2Balance, token.decimals).toFixed(4);    
-    setTransferValue((new BigFloat(l2Balance, token.decimals).toFixed(4)).toString());
+    inputElement.value = new BigFloat(l2Balance, token.decimals).toFixed(4);
+    setTransferValue(new BigFloat(l2Balance, token.decimals).toFixed(4).toString());
   };
 
   return (
@@ -557,10 +558,10 @@ const BridgeComponent = () => {
           </div>
 
           {/* TRANSFER BUTTON */}
-          <div>            
+          <div>
             <button type="button" className="transfer_button" onClick={handleShow}>
               <p>Transfer</p>
-            </button>            
+            </button>
           </div>
         </div>
         {show && (
