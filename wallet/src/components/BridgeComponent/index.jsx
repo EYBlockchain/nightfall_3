@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect, createRef } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import Modal from 'react-bootstrap/Modal';
 import { toast } from 'react-toastify';
 import { useHistory } from 'react-router-dom';
@@ -147,8 +147,6 @@ const BridgeComponent = () => {
   const [show, setShow] = useState(false);
 
   const [showTokensListModal, setShowTokensListModal] = useState(false);
-
-  const inputRef = createRef();
 
   useEffect(() => {
     if (document.getElementById('inputValue')) {
@@ -355,14 +353,16 @@ const BridgeComponent = () => {
   }, [token, txType, accountInstance]);
 
   const updateInputValue = () => {
-    const inputElement = document.querySelector('nightfall-app').shadowRoot.getElementById('inputValue');    
+    const inputElement = document
+      .querySelector('nightfall-app')
+      .shadowRoot.getElementById('inputValue');
     if (txType === 'deposit') {
       inputElement.value = new BigFloat(l1Balance, token.decimals).toFixed(4);
       setTransferValue(l1Balance);
       return;
     }
     inputElement.value = new BigFloat(l2Balance, token.decimals).toFixed(4);
-    setTransferValue(l2Balance);    
+    setTransferValue(l2Balance);
   };
 
   return (
@@ -425,7 +425,7 @@ const BridgeComponent = () => {
                     <Input
                       id="inputValue"
                       name="price"
-                      placeholder="0.00"                      
+                      placeholder="0.00"
                       onKeyDown={e => {
                         if (
                           (transferValue.toString().split('.')[1]?.length ?? 0) > 3 &&
