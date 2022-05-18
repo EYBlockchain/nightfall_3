@@ -316,14 +316,33 @@ const BridgeComponent = () => {
   }
 
   const handleShow = () => {
+    console.log('Transfer value: ',transferValue);
     if (
       (txType === 'deposit' &&
         new BigFloat(transferValue, token.decimals).toBigInt() > l1Balance) ||
       (txType === 'withdraw' && new BigFloat(transferValue, token.decimals).toBigInt() > l2Balance)
-    )
+    ) {
       toast.error("Input value can't be greater than balance!");
-    else if (!transferValue) toast.warn('Input a value for transfer, please.');
-    else if (transferValue === 0) toast.warn("Input a value can't be zero.");
+      return;
+    }
+
+    if (txType === 'deposit' &&
+        new BigFloat(transferValue, token.decimals).toBigInt() > new BigFloat('0.25 ', token.decimals).toBigInt()
+    ) {
+      toast.error("Input value can't be greater than 0.25");
+      return;
+    }
+    
+    if (!transferValue) {
+      toast.warn('Input a value for transfer, please.');
+      return;
+    }
+
+    if (transferValue === '0') {
+      toast.warn("Input a value can't be zero.");
+      return;
+    }
+
     setShow(true);
   };
 
@@ -358,11 +377,11 @@ const BridgeComponent = () => {
       .shadowRoot.getElementById('inputValue');
     if (txType === 'deposit') {
       inputElement.value = new BigFloat(l1Balance, token.decimals).toFixed(4);
-      setTransferValue(l1Balance);
+      setTransferValue((new BigFloat(l1Balance, token.decimals).toFixed(4)).toString());
       return;
     }
-    inputElement.value = new BigFloat(l2Balance, token.decimals).toFixed(4);
-    setTransferValue(l2Balance);
+    inputElement.value = new BigFloat(l2Balance, token.decimals).toFixed(4);    
+    setTransferValue((new BigFloat(l2Balance, token.decimals).toFixed(4)).toString());
   };
 
   return (
@@ -538,16 +557,10 @@ const BridgeComponent = () => {
           </div>
 
           {/* TRANSFER BUTTON */}
-          <div>
-            {Number(transferValue) > 0 ? (
-              <button type="button" className="transfer_button" onClick={handleShow}>
-                <p>Transfer</p>
-              </button>
-            ) : (
-              <button type="button" className="transfer_button">
-                <p>Transfer</p>
-              </button>
-            )}
+          <div>            
+            <button type="button" className="transfer_button" onClick={handleShow}>
+              <p>Transfer</p>
+            </button>            
           </div>
         </div>
         {show && (
