@@ -328,7 +328,7 @@ const BridgeComponent = () => {
     if (
       txType === 'deposit' &&
       new BigFloat(transferValue, token.decimals).toBigInt() >
-        new BigFloat('0.25 ', token.decimals).toBigInt()
+        new BigFloat('0.25', token.decimals).toBigInt()
     ) {
       toast.error("Input value can't be greater than 0.25");
       return;

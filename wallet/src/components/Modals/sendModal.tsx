@@ -23,6 +23,7 @@ import checkMarkYes from '../../assets/lottie/check-mark-yes.json';
 import Transaction from '../../common-files/classes/transaction';
 import checkMarkCross from '../../assets/lottie/check-mark-cross.json';
 import { shieldAddressGet } from '../../utils/lib/local-storage';
+import { toast } from 'react-toastify';
 
 const supportedTokens = importTokens();
 
@@ -423,6 +424,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
 
   const [readyTx, setReadyTx] = useState({ type: '', rawTransaction: '', transaction: {} });
   const [shieldContractAddress, setShieldAddress] = useState('');
+  const [isValidAddress, setIsValidAddress] = useState(false);
 
   function timeout(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -468,8 +470,16 @@ const SendModal = (props: SendModalProps): JSX.Element => {
   }
 
   useEffect(() => {
-    setShieldAddress(shieldAddressGet());
+    setShieldAddress(shieldAddressGet());    
   }, []);
+
+  useEffect(() => {
+    if(recipient && recipient.length === 66) {
+      setIsValidAddress(true);
+      return;
+    }
+    setIsValidAddress(false);
+  }, [recipient]);
 
   async function sendTx(): Promise<Transfer> {
     if (shieldContractAddress === '') setShieldAddress(shieldAddressGet());
@@ -507,6 +517,15 @@ const SendModal = (props: SendModalProps): JSX.Element => {
       transaction,
       rawTransaction,
     };
+  }
+
+  const updateMaxBalance = () => {          
+    const inputElement = document        
+      ?.getElementById('TokenItem_modalSend_tokenAmount') as HTMLInputElement;      
+    if(inputElement !== undefined && inputElement !== null) {        
+      inputElement.value = new BigFloat(l2Balance, sendToken.decimals).toFixed(4).toString();
+      setTransferValue(new BigFloat(l2Balance, sendToken.decimals).toFixed(4).toString());
+    }
   }
 
   return (
@@ -562,7 +581,9 @@ const SendModal = (props: SendModalProps): JSX.Element => {
                     onChange={e => setRecipient(e.target.value)}
                     id="TokenItem_modalSend_compressedPkd"
                   />
-                  <p>Enter a valid address existing on the Polygon Nightfall L2</p>
+                  {!isValidAddress && 
+                    <p style={{color: 'red'}}>Enter a valid address existing on the Polygon Nightfall L2</p>
+                  }                  
                 </div>
                 <SendModalBalance>
                   <SendModalBalanceLeft>
@@ -581,7 +602,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
                       id="TokenItem_modalSend_tokenAmount"
                     />
                   </SendModalBalanceLeft>
-                  <MaxButton>MAX</MaxButton>
+                  <MaxButton onClick={() => updateMaxBalance()}>MAX</MaxButton>
                   <SendModalBalanceRight
                     onClick={() => setShowTokensListModal(true)}
                     id="TokenItem_modalSend_tokenName"
@@ -609,19 +630,37 @@ const SendModal = (props: SendModalProps): JSX.Element => {
                 <SendModalFooter>
                   <img src={maticImg} alt="matic icon" />
                   <p className="gasFee"> 0.00 Matic Transfer Fee</p>
+                  <div></div>
                 </SendModalFooter>
+                {new BigFloat(valueToSend.toString(), sendToken.decimals).toFixed(4) > new BigFloat(l2Balance, sendToken.decimals).toFixed(4) &&
+                  <p style={{color: 'red'}}>The amount is greater than your balance.</p>
+                }
+                {new BigFloat(valueToSend.toString(), sendToken.decimals).toFixed(4) === new BigFloat('0', sendToken.decimals).toFixed(4) &&
+                  <p style={{color: 'red'}}>Insert an amount greater than zero.</p>
+                }
               </SendModalStyle>
-              <ContinueTransferButton
-                onClick={async () => {
-                  props.onHide();
-                  setShowModalConfirm(true);
-                  setShowModalTransferInProgress(true);
-                  const pendingTx = await sendTx();
-                  if (pendingTx.type !== 'failed_transfer') setReadyTx(pendingTx);
-                }}
-              >
-                Continue
-              </ContinueTransferButton>
+              {isValidAddress &&
+                new BigFloat(valueToSend.toString(), sendToken.decimals).toFixed(4) <= new BigFloat(l2Balance, sendToken.decimals).toFixed(4) &&
+                  new BigFloat(valueToSend.toString(), sendToken.decimals).toFixed(4) !== new BigFloat('0', sendToken.decimals).toFixed(4) &&
+
+                <ContinueTransferButton
+                  onClick={async () => {
+                    props.onHide();
+                    setShowModalConfirm(true);
+                    setShowModalTransferInProgress(true);
+                    setIsValidAddress(false);
+                    const pendingTx = await sendTx();
+                    if (pendingTx.type !== 'failed_transfer') setReadyTx(pendingTx);
+                  }}
+                >
+                  Continue
+                </ContinueTransferButton>
+              }
+              {/* {!isValidAddress &&
+                <ContinueTransferButton>
+                  Continue
+                </ContinueTransferButton>                
+              } */}              
             </MyBody>
           )}
         </Modal.Body>
