@@ -424,6 +424,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
   const [readyTx, setReadyTx] = useState({ type: '', rawTransaction: '', transaction: {} });
   const [shieldContractAddress, setShieldAddress] = useState('');
   const [isValidAddress, setIsValidAddress] = useState(false);
+  const [isValidBalance, setIsValidBalance] = useState(false);
 
   function timeout(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -479,6 +480,23 @@ const SendModal = (props: SendModalProps): JSX.Element => {
     }
     setIsValidAddress(false);
   }, [recipient]);
+
+  useEffect(() => {
+    console.log('ENTRA LEGAL');
+    if (new BigFloat(valueToSend.toString(), sendToken.decimals).toFixed(4) >
+        new BigFloat(l2Balance, sendToken.decimals).toFixed(4) ) {
+      setIsValidBalance(false);
+      return;
+    }
+    
+    if (new BigFloat(valueToSend.toString(), sendToken.decimals).toFixed(4) ===
+        new BigFloat('0', sendToken.decimals).toFixed(4)) {
+      setIsValidBalance(false);
+      return;
+    }
+    console.log('FICA OK');
+    setIsValidBalance(true);      
+  }, [valueToSend]);
 
   async function sendTx(): Promise<Transfer> {
     if (shieldContractAddress === '') setShieldAddress(shieldAddressGet());
@@ -642,11 +660,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
                   <p style={{ color: 'red' }}>Insert an amount greater than zero.</p>
                 )}
               </SendModalStyle>
-              {isValidAddress &&
-                new BigFloat(valueToSend.toString(), sendToken.decimals).toFixed(4) <=
-                  new BigFloat(l2Balance, sendToken.decimals).toFixed(4) &&
-                new BigFloat(valueToSend.toString(), sendToken.decimals).toFixed(4) !==
-                  new BigFloat('0', sendToken.decimals).toFixed(4) && (
+              {isValidAddress && isValidBalance && (
                 <ContinueTransferButton
                   onClick={async () => {
                     props.onHide();
