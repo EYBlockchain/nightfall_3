@@ -21,5 +21,9 @@ export const DEFAULT_BLOCK_STAKE = 1;
 export const WEBSOCKET_PING_TIME = 15000;
 
 export const GAS_MULTIPLIER = Number(process.env.GAS_MULTIPLIER) || 2;
-export const GAS = process.env.GAS || 8000000;
+export const GAS_PRICE_MULTIPLIER = Number(process.env.GAS_PRICE_MULTIPLIER) || 2;
+export const GAS = process.env.GAS || 4000000;
 export const GAS_PRICE = process.env.GAS_PRICE || '20000000000';
+export const GAS_ESTIMATE_ENDPOINT =
+  process.env.GAS_ESTIMATE_ENDPOINT ||
+  'https://vqxy02tr5e.execute-api.us-east-2.amazonaws.com/production/estimateGas';
