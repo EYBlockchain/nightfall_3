@@ -482,20 +482,22 @@ const SendModal = (props: SendModalProps): JSX.Element => {
   }, [recipient]);
 
   useEffect(() => {
-    console.log('ENTRA LEGAL');
-    if (new BigFloat(valueToSend.toString(), sendToken.decimals).toFixed(4) >
-        new BigFloat(l2Balance, sendToken.decimals).toFixed(4) ) {
+    if (
+      new BigFloat(valueToSend.toString(), sendToken.decimals).toFixed(4) >
+      new BigFloat(l2Balance, sendToken.decimals).toFixed(4)
+    ) {
       setIsValidBalance(false);
       return;
     }
-    
-    if (new BigFloat(valueToSend.toString(), sendToken.decimals).toFixed(4) ===
-        new BigFloat('0', sendToken.decimals).toFixed(4)) {
+
+    if (
+      new BigFloat(valueToSend.toString(), sendToken.decimals).toFixed(4) ===
+      new BigFloat('0', sendToken.decimals).toFixed(4)
+    ) {
       setIsValidBalance(false);
       return;
     }
-    console.log('FICA OK');
-    setIsValidBalance(true);      
+    setIsValidBalance(true);
   }, [valueToSend]);
 
   async function sendTx(): Promise<Transfer> {
