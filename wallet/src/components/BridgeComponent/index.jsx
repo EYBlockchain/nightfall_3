@@ -385,6 +385,12 @@ const BridgeComponent = () => {
     setTransferValue(new BigFloat(l2Balance, token.decimals).toFixed(4).toString());
   };
 
+  const continueTransfer = async () => {
+    if (await submitTx()) {
+      history.push("/transactionPage");
+    }    
+  }
+
   return (
     <div>
       {showTokensListModal && (
@@ -653,7 +659,7 @@ const BridgeComponent = () => {
                     id="Bridge_modal_continueTransferButton"
                     onClick={async () => {
                       setSendingState(true);
-                      await submitTx() && history.push("/transactionPage");
+                      continueTransfer();
                     }}
                   >
                     {sending ? (
