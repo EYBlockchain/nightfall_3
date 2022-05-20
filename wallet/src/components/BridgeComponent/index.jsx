@@ -651,9 +651,9 @@ const BridgeComponent = () => {
                   <ContinueTransferButton
                     type="button"
                     id="Bridge_modal_continueTransferButton"
-                    onClick={() => {
+                    onClick={async () => {
                       setSendingState(true);
-                      submitTx();
+                      await submitTx() && history.push("/transactionPage");
                     }}
                   >
                     {sending ? (
