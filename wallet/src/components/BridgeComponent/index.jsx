@@ -387,9 +387,9 @@ const BridgeComponent = () => {
 
   const continueTransfer = async () => {
     if (await submitTx()) {
-      history.push("/transactionPage");
-    }    
-  }
+      history.push('/transactionPage');
+    }
+  };
 
   return (
     <div>
