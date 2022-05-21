@@ -13,7 +13,6 @@
     "test-erc20-tokens": "LOG_LEVEL=error mocha --timeout 0 --bail --exit test/e2e/tokens/erc20.test.mjs ",
     "lint": "eslint . --ext js,mjs,jsx,ts,tsx && find-unused-exports",
     "prepare": "husky install",
-    "doc:build:sdk": "jsdoc -c jsdoc.json cli/lib/nf3.mjs",
     "build-adversary": "node test/adversary/transpile-adversary.mjs",
     "adversary-test": "mocha --timeout 0 --bail --exit test/adversary.test.mjs"
   },
@@ -64,6 +63,7 @@
     "async-mutex": "^0.3.2",
     "docker-compose": "^0.23.13",
     "general-number": "^1.0.1",
+    "nightfall-sdk": "file:../nightfall_sdk",
     "typescript": "^4.6.2",
     "web3": "^1.4.0"
   }
