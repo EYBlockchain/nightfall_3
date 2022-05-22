@@ -187,8 +187,7 @@ with `-p`, `-u`.
 
 ## Software Development Kit
 
-Nightfall_3 provides an SDK which makes it easy to develop applications that use Nightfall_3. The
-SDK API is documented in `./doc/lib/Nf3.html` and is provided by the NF_3 class `./cli/lib/nf3.mjs`.
+TODO - review CLI section too.
 
 ## Command line interface
 
