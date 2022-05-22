@@ -5,7 +5,7 @@ import { Command } from 'commander/esm.mjs';
 import clear from 'clear';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import Nf3 from '../lib/nf3.mjs';
+import { Nf3 } from 'nightfall-sdk';
 import { setEnvironment, getCurrentEnvironment } from '../lib/environment.mjs';
 
 const defaultKey = '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb';

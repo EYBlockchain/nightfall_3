@@ -4,10 +4,9 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
-import Nf3 from '../../../cli/lib/nf3.mjs';
+import { Nf3, Tokens } from 'nightfall-sdk';
 import logger from '../../../common-files/utils/logger.mjs';
 import { expectTransaction, Web3Client, depositNTransactions } from '../../utils.mjs';
-import { getERCInfo } from '../../../cli/lib/tokens.mjs';
 
 // so we can use require with mjs file
 const { expect } = chai;
@@ -100,7 +99,7 @@ describe('ERC1155 tests', () => {
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
 
     const availableTokens = (
-      await getERCInfo(erc1155Address, nf3Users[0].ethereumAddress, web3Client.getWeb3(), {
+      await Tokens.getERCInfo(erc1155Address, nf3Users[0].ethereumAddress, web3Client.getWeb3(), {
         details: true,
       })
     ).details;

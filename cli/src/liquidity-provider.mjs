@@ -9,7 +9,7 @@ import { Command } from 'commander/esm.mjs';
 import clear from 'clear';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import Nf3 from '../lib/nf3.mjs';
+import { Nf3 } from 'nightfall-sdk';
 import { APPROVE_AMOUNT, TOKEN_TYPE } from '../lib/constants.mjs';
 import { setEnvironment, getCurrentEnvironment } from '../lib/environment.mjs';
 import { approve } from '../lib/tokens.mjs';

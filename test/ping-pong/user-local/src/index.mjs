@@ -6,7 +6,7 @@ Module that runs up as a user
 
 import config from 'config';
 import logger from '../../../../common-files/utils/logger.mjs';
-import Nf3 from '../../../../cli/lib/nf3.mjs';
+import { Nf3 } from 'nightfall-sdk';
 import { waitForSufficientBalance, retrieveL2Balance } from './utils.mjs';
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;

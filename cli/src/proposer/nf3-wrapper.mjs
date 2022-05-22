@@ -1,4 +1,4 @@
-import Nf3 from '../../lib/nf3.mjs';
+import { Nf3 } from 'nightfall-sdk';
 
 let nf3Instance = '';
 

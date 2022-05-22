@@ -7,7 +7,7 @@ import clear from 'clear';
 import Web3 from 'web3';
 import Table from 'cli-table';
 import { generateMnemonic } from 'bip39';
-import Nf3 from '../lib/nf3.mjs';
+import { Nf3 } from 'nightfall-sdk';
 import { toBaseUnit } from '../lib/units.mjs';
 import { getDecimals } from '../lib/tokens.mjs';
 import { setEnvironment, getCurrentEnvironment } from '../lib/environment.mjs';
