@@ -385,6 +385,20 @@ module.exports = function (webpackEnv) {
                 name: 'static/media/[name].[hash:8].[ext]',
               },
             },
+            {
+              test: /\.worker\.js$/,
+              include: paths.appSrc,
+              loader: require.resolve('worker-loader'),
+            },
+            {
+              test: /\.shared-worker\.js$/,
+              include: paths.appSrc,
+              loader: require.resolve('worker-loader'),
+              options: {
+                worker: 'SharedWorker',
+                filename: '[name].js',
+              },
+            },
             // Process application JS with Babel.
             // The preset includes JSX, Flow, TypeScript, and some ESnext features.
             {

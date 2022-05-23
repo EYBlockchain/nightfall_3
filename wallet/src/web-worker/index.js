@@ -15,7 +15,7 @@ const {
   USE_STUBS,
   utilApiServerUrl,
   isLocalRun,
-  AWS: { s3Bucket },
+  AWS: { s3Url },
 } = global.config;
 
 export default async function fetchCircuitFileAndStoreInIndexedDB() {
@@ -29,7 +29,7 @@ export default async function fetchCircuitFileAndStoreInIndexedDB() {
           utilApiServerUrl,
           isLocalRun,
           circuitsAWSFiles,
-          AWS: { s3Bucket },
+          s3Url,
         });
         await storeCircuit(`${circuit}-abi`, abi);
         await storeCircuit(`${circuit}-program`, program);

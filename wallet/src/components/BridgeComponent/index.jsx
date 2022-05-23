@@ -203,7 +203,14 @@ const BridgeComponent = () => {
             0,
           ); // 150k is enough gasLimit for a deposit
           readyTx.transaction.l1Hash = txL1Hash;
-          removeRawTx(readyTx.rawTransaction);
+
+          // after submitting tx we should remove rawTransaction and transaction
+          // object store in localStorage
+          removeRawTx({
+            rawTransaction: readyTx.rawTransaction,
+            transactionHash: readyTx.transaction.transactionHash,
+          });
+          removeTxObject({ ...readyTx.transaction, isOnChain: true });
           break;
         }
         case 'offchain': {
@@ -213,7 +220,9 @@ const BridgeComponent = () => {
               { transaction: readyTx.transaction },
               { timeout: 3600000 },
             )
-            .then(() => removeTxObject(readyTx.transaction))
+            // after sending transaction successfully proposer remove transaction
+            // object store in localStorage
+            .then(() => removeTxObject({ ...readyTx.transaction, isOnChain: false }))
             .catch(err => {
               throw new Error(err);
             });
@@ -270,7 +279,12 @@ const BridgeComponent = () => {
           return { transaction: null };
         });
         if (transaction === null) return { type: 'failed_transfer' };
-        storeRawTx(rawTransaction); // storing raw tx because tx is sent onchain
+
+        // store rawTx and transaction object to localStorage
+        // incase user want to submit it later
+        storeRawTx({ rawTransaction, transactionHash: transaction.transactionHash });
+        storeTxObject({ ...transaction, isOnChain: true });
+
         setShowModalTransferEnRoute(false);
         setShowModalTransferConfirmed(true);
         console.log('Proof Done');
@@ -306,7 +320,11 @@ const BridgeComponent = () => {
           return { transaction: null };
         });
         if (transaction === null) return { type: 'failed_transfer' };
-        storeTxObject(transaction); // storing tx object because tx is going to send offchain
+
+        // store transaction object to localStorage
+        // incase user want to submit it later
+        storeTxObject({ ...transaction, isOnChain: false });
+
         setShowModalTransferEnRoute(false);
         setShowModalTransferConfirmed(true);
         return {

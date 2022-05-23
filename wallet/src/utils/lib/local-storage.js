@@ -84,9 +84,9 @@ function storeRawTx(tx) {
 }
 
 function removeRawTx(tx) {
+  let txStr = typeof tx === 'string' ? tx : JSON.stringify(tx);
   const txs = storage.getItem(RAW_TXS);
-  if (txs.indexOf(tx) === -1) return;
-  let txStr = `"${tx}"`;
+  if (txs.indexOf(txStr) === -1) return;
   if (txs.indexOf(`${txStr},`) !== -1) txStr = `${txStr},`;
   else if (txs.indexOf(`,${txStr}`) !== -1) txStr = `,${txStr}`;
   storage.setItem(RAW_TXS, storage.getItem(RAW_TXS).replace(txStr, ''));
@@ -105,6 +105,11 @@ function removeTxObject(txObj) {
   if (txObjs.indexOf(`${txObjStr},`) !== -1) txObjStr = `${txObjStr},`;
   else if (txObjs.indexOf(`,${txObjStr}`) !== -1) txObjStr = `,${txObjStr}`;
   storage.setItem(TX_OBJS, storage.getItem(TX_OBJS).replace(txObjStr, ''));
+}
+
+function getTxObjectByTxHash(txHash) {
+  const txObjs = JSON.parse(storage.getItem(TX_OBJS));
+  return txObjs.filter(txObj => txObj.transactionHash === txHash)[0];
 }
 
 const getAllTxObjects = () => JSON.parse(storage.getItem(TX_OBJS));
@@ -148,6 +153,7 @@ export {
   removeRawTx,
   getAllRawTxs,
   storeTxObject,
+  getTxObjectByTxHash,
   removeTxObject,
   getAllTxObjects,
   shieldAddressSet,

@@ -1,10 +1,12 @@
 import axios from 'axios';
 
+import { saveTransaction } from '@Nightfall/services/database';
 import {
   getAllRawTxs,
   removeRawTx,
   getAllTxObjects,
   removeTxObject,
+  getTxObjectByTxHash,
 } from './utils/lib/local-storage';
 import { getContractAddress, submitTransaction } from './common-files/utils/contract';
 
@@ -18,9 +20,15 @@ async function submitTransactionsOnChain() {
   if (!shieldContractAddress)
     shieldContractAddress = (await getContractAddress('Shield')).data.address;
 
-  for (const rawTx of getAllRawTxs()) {
+  for (const { rawTransaction, transactionHash } of getAllRawTxs()) {
+    const transaction = getTxObjectByTxHash(transactionHash);
     // eslint-disable-next-line no-await-in-loop
-    await submitTransaction(rawTx, shieldContractAddress, 1).then(() => removeRawTx(rawTx));
+    await submitTransaction(rawTransaction, shieldContractAddress)
+      .then(() => {
+        removeRawTx({ rawTransaction, transactionHash });
+        removeTxObject(transaction);
+      })
+      .then(() => saveTransaction(transaction));
   }
 }
 
@@ -32,14 +40,19 @@ async function submitTransactionOffChain() {
     shieldContractAddress = (await getContractAddress('Shield')).data.address;
 
   for (const txObj of getAllTxObjects()) {
-    // eslint-disable-next-line no-await-in-loop
-    await axios
-      .post(
-        `${proposerUrl}/proposer/offchain-transaction`,
-        { transaction: txObj },
-        { timeout: 3600000 },
-      )
-      .then(() => removeTxObject(txObj));
+    console.log('txObj-------', txObj);
+    if (!txObj.isOnChain) {
+      console.log('txObj-- 2--');
+      // eslint-disable-next-line no-await-in-loop
+      await axios
+        .post(
+          `${proposerUrl}/proposer/offchain-transaction`,
+          { transaction: txObj },
+          { timeout: 3600000 },
+        )
+        .then(() => removeTxObject(txObj))
+        .then(() => saveTransaction(txObj));
+    }
   }
 }
 

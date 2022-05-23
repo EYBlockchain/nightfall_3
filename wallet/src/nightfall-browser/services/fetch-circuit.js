@@ -15,10 +15,9 @@ async function fetchCircuitFiles(url) {
 
 export default async function fetchCircuit(
   circuit,
-  { utilApiServerUrl, isLocalRun, circuitsAWSFiles, AWS: { s3Url } },
+  { utilApiServerUrl, isLocalRun, circuitsAWSFiles, s3Url },
 ) {
   let { abi, program, pk } = circuitsAWSFiles[circuit]; // keys path in bucket
-
   abi = JSON.parse(new TextDecoder().decode(await fetchCircuitFiles(`${s3Url}/${abi}`)));
   program = await fetchCircuitFiles(`${s3Url}/${program}`);
   if (isLocalRun) {
