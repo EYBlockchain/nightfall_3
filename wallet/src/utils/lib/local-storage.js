@@ -1,10 +1,13 @@
 /* ignore unused exports */
 
+import { getContractAddress } from '../../common-files/utils/contract';
 import getPrice from '../pricingAPI';
 
 const STORAGE_VERSION_KEY = 'nightfallStorageVersion';
 const STORAGE_VERSION = 1;
 const TOKEN_POOL_KEY = 'nightfallTokensPool';
+
+const { SHIELD_CONTRACT_NAME } = global.config;
 
 const storage = window.localStorage;
 
@@ -67,4 +70,41 @@ function getPricing() {
   return JSON.parse(retrievedPrice);
 }
 
-export { tokensSet, tokensGet, clear, pkdArrayGet, pkdArraySet, setPricing, getPricing };
+async function shieldAddressSet() {
+  init();
+  const now = Date.now();
+  const storedAddress = storage.getItem('/shieldAddress');
+  try {
+    if (storedAddress === null || now - storedAddress.now > 1000 * 3600 * 24 * 1) {
+      const { address } = (await getContractAddress(SHIELD_CONTRACT_NAME)).data;
+      console.log('Address', address);
+      storage.setItem('/shieldAddress', JSON.stringify({ address, now }));
+    }
+  } catch (error) {
+    console.log('errr', error);
+    throw new Error('Could not get Shield Address');
+  }
+}
+
+function shieldAddressGet() {
+  const addressObj = storage.getItem('/shieldAddress');
+  console.log('AddressObj', addressObj);
+  if (!addressObj)
+    return shieldAddressSet().then(() => {
+      return shieldAddressGet();
+    });
+  const { address } = JSON.parse(storage.getItem('/shieldAddress'));
+  return address;
+}
+
+export {
+  tokensSet,
+  tokensGet,
+  clear,
+  pkdArrayGet,
+  pkdArraySet,
+  setPricing,
+  getPricing,
+  shieldAddressGet,
+  shieldAddressSet,
+};

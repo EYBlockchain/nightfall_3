@@ -7,6 +7,10 @@ type TokenType = {
   logoURI: string;
   tags: Array<string>;
   id: string;
+  restrictions: {
+    deposit: string;
+    withdraw: string;
+  };
   extensions: {
     parentAddress: string;
     project: {

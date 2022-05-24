@@ -14,7 +14,6 @@ import Lottie from 'lottie-react';
 import { UserContext } from '../../hooks/User';
 import maticImg from '../../assets/img/polygon-chain.svg';
 import { retrieveAndDecrypt } from '../../utils/lib/key-storage';
-import { getContractAddress } from '../../common-files/utils/contract';
 import approveImg from '../../assets/img/modalImages/adeposit_approve1.png';
 import depositConfirmed from '../../assets/img/modalImages/adeposit_confirmed.png';
 import successHand from '../../assets/img/modalImages/success-hand.png';
@@ -23,6 +22,7 @@ import BigFloat from '../../common-files/classes/bigFloat';
 import checkMarkYes from '../../assets/lottie/check-mark-yes.json';
 import Transaction from '../../common-files/classes/transaction';
 import checkMarkCross from '../../assets/lottie/check-mark-cross.json';
+import { shieldAddressGet } from '../../utils/lib/local-storage';
 
 const supportedTokens = importTokens();
 
@@ -468,16 +468,11 @@ const SendModal = (props: SendModalProps): JSX.Element => {
   }
 
   useEffect(() => {
-    const getShieldAddress = async () => {
-      const { address } = (await getContractAddress('Shield')).data;
-      setShieldAddress(address);
-    };
-    getShieldAddress();
+    setShieldAddress(shieldAddressGet());
   }, []);
 
   async function sendTx(): Promise<Transfer> {
-    if (shieldContractAddress === '')
-      setShieldAddress((await getContractAddress('Shield')).data.address);
+    if (shieldContractAddress === '') setShieldAddress(shieldAddressGet());
     setShowModalConfirm(true);
     setShowModalTransferInProgress(true);
     const { nsk, ask } = await retrieveAndDecrypt(state.compressedPkd);
@@ -495,7 +490,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
         },
         nsk,
         ask,
-        fee: 1,
+        fee: 0,
       },
       shieldContractAddress,
     ).catch(e => {

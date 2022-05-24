@@ -214,6 +214,21 @@ export async function getMaxBlock() {
 Transaction Collection
 */
 
+export async function updateTransactionTime(transactionHashes, blockTimestamp) {
+  const db = await connectDB();
+  const keys = await db.getAllKeys(TRANSACTIONS_COLLECTION);
+  const txToUpdate = transactionHashes.filter(tx => keys.includes(tx));
+
+  return Promise.all(
+    txToUpdate.map(async txHash => {
+      const tx = await db.get(TRANSACTIONS_COLLECTION, txHash);
+      if (blockTimestamp)
+        return db.put(TRANSACTIONS_COLLECTION, { ...tx, createdTime: blockTimestamp }, txHash);
+      return db.put(TRANSACTIONS_COLLECTION, tx, txHash);
+    }),
+  );
+}
+
 /**
 Function to save a (unprocessed) Transaction
 */
@@ -230,7 +245,7 @@ export async function saveTransaction(_transaction) {
   const db = await connectDB();
   const query = await db.getAll(TRANSACTIONS_COLLECTION);
   const existing = query.filter(q => q.transactionHash === transaction.transactionHash);
-  transaction.createdTime = Date.now(); // TODO REMOVE THIS ONCE WE HAVE A BETTER SOLUTION.
+  transaction.createdTime = _transaction?.createdTime ?? Math.floor(Date.now() / 1000);
   if (!existing) return db.put(TRANSACTIONS_COLLECTION, transaction, transaction._id);
   if (!existing.blockNumber) {
     return db.put(TRANSACTIONS_COLLECTION, transaction, transaction._id);

@@ -1,9 +1,7 @@
-import React from 'react';
+import React, { useContext } from 'react';
 
-import { GiElectric } from 'react-icons/gi';
-import { RiWallet3Line } from 'react-icons/ri';
-import { MdOutlineSupport } from 'react-icons/md';
 import { useMediaQuery } from 'react-responsive';
+import Lottie from 'lottie-react';
 import TransactionImg from '../../assets/svg/transactions-side.svg';
 import TransactionImgGrey from '../../assets/svg/transactions-side-grey.svg';
 import WalletImg from '../../assets/svg/wallet-side.svg';
@@ -11,11 +9,15 @@ import WalletImgGrey from '../../assets/svg/wallet-side-grey.svg';
 import BridgeImg from '../../assets/svg/bridge-side.svg';
 import BridgeImgGrey from '../../assets/svg/bridge-side-grey.svg';
 import SideItem from './sideItem.jsx';
+import syncing from '../../assets/lottie/syncing.json';
+import synced from '../../assets/svg/tickBox.svg';
 
 import './index.scss';
+import { UserContext } from '../../hooks/User';
 
 export default function SideBar() {
   const isSmallScreen = useMediaQuery({ query: '(min-width: 768px)' });
+  const [state] = useContext(UserContext);
   if (isSmallScreen) {
     return (
       <div className="sideBar">
@@ -35,17 +37,23 @@ export default function SideBar() {
         </div>
         <div>
           <div className="links">
-            <GiElectric size={24} />
-            <div className="linkText">What&apos;s new?</div>
+            {/* <GiElectric size={24} /> */}
+            {state.circuitSync && state.chainSync ? (
+              <>
+                <img src={synced} style={{ height: '32px', width: '32px' }} />
+                <div className="linkText">Nightfall Synced</div>
+              </>
+            ) : (
+              <>
+                <Lottie style={{ height: '32px', width: '32px' }} animationData={syncing} loop />
+                <div className="linkText">Syncing Nightfall...</div>
+              </>
+            )}
           </div>
-          <div className="links">
-            <RiWallet3Line size={24} />
-            <div className="linkText">Main Wallet</div>
-          </div>
-          <div className="links">
+          {/* <div className="links">
             <MdOutlineSupport size={24} />
             <div className="linkText">Support</div>
-          </div>
+          </div> */}
         </div>
       </div>
     );
