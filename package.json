@@ -63,7 +63,7 @@
     "async-mutex": "^0.3.2",
     "docker-compose": "^0.23.13",
     "general-number": "^1.0.1",
-    "nightfall-sdk": "git+https://${GIT_ACCESS_TOKEN}:x-oauth-basic@github.com/maticnetwork/nightfall-sdk#pull/1",
+    "nightfall-sdk": "git+https://github.com/maticnetwork/nightfall-sdk.git",
     "typescript": "^4.6.2",
     "web3": "^1.4.0"
   }
