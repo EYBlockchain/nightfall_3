@@ -3,6 +3,7 @@ node_modules
 cli/build
 .*swp
 .vscode/*
+.env
 
 # wallet
 wallet/build
