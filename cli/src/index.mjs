@@ -7,10 +7,7 @@ import clear from 'clear';
 import Web3 from 'web3';
 import Table from 'cli-table';
 import { generateMnemonic } from 'bip39';
-import { Nf3 } from 'nightfall-sdk';
-import { toBaseUnit } from '../lib/units.mjs';
-import { getDecimals } from '../lib/tokens.mjs';
-import { setEnvironment, getCurrentEnvironment } from '../lib/environment.mjs';
+import { Nf3, Environment, Tokens, Units } from 'nightfall-sdk';
 
 const web3 = new Web3('ws://localhost:8546');
 let latestWithdrawTransactionHash; // we'll remember this globally so it can be used for instant withdrawals
@@ -177,17 +174,17 @@ async function loop(nf3, ercAddress) {
   // handle the task that the user has asked for
   switch (task) {
     case 'Deposit': {
-      const valueWei = toBaseUnit(
+      const valueWei = Units.toBaseUnit(
         value.toString(),
-        await getDecimals(ercAddress[tokenType], tokenType, web3),
+        await Tokens.getDecimals(ercAddress[tokenType], tokenType, web3),
       );
       receiptPromise = nf3.deposit(ercAddress[tokenType], tokenType, valueWei, tokenId, fee);
       break;
     }
     case 'Transfer': {
-      const valueWei = toBaseUnit(
+      const valueWei = Units.toBaseUnit(
         value.toString(),
-        await getDecimals(ercAddress[tokenType], tokenType, web3),
+        await Tokens.getDecimals(ercAddress[tokenType], tokenType, web3),
       );
       try {
         receiptPromise = nf3.transfer(
@@ -209,9 +206,9 @@ async function loop(nf3, ercAddress) {
       break;
     }
     case 'Withdraw': {
-      const valueWei = toBaseUnit(
+      const valueWei = Units.toBaseUnit(
         value.toString(),
-        await getDecimals(ercAddress[tokenType], tokenType, web3),
+        await Tokens.getDecimals(ercAddress[tokenType], tokenType, web3),
       );
       try {
         receiptPromise = nf3.withdraw(
@@ -270,11 +267,11 @@ async function main(testEnvironment) {
   // intialisation
   init();
   if (typeof testEnvironment !== 'undefined') {
-    setEnvironment(testEnvironment);
+    Environment.setEnvironment(testEnvironment);
   } else {
-    setEnvironment('Localhost');
+    Environment.setEnvironment('Localhost');
   }
-  const nf3Env = getCurrentEnvironment().currentEnvironment;
+  const nf3Env = Environment.getCurrentEnvironment().currentEnvironment;
   const nf3 = new Nf3('', {
     web3WsUrl: nf3Env.web3WsUrl,
     optimistApiUrl: nf3Env.optimistApiUrl,

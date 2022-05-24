@@ -3,12 +3,11 @@ Module that runs up as a proposer
 */
 import { Command } from 'commander/esm.mjs';
 import clear from 'clear';
+import { Environment } from 'nightfall-sdk';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { nf3Init, nf3Healthcheck, nf3RegisterProposer, nf3StartProposer } from './nf3-wrapper.mjs';
 import app from './app.mjs';
-
-import { setEnvironment, getCurrentEnvironment } from '../../lib/environment.mjs';
 
 const program = new Command();
 const defaultKey = '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d';
@@ -34,8 +33,8 @@ Does the preliminary setup and starts listening on the websocket
 async function startProposer(testEnvironment) {
   clear();
   console.log('Starting Proposer...');
-  setEnvironment(testEnvironment);
-  const nf3Env = getCurrentEnvironment().currentEnvironment;
+  Environment.setEnvironment(testEnvironment);
+  const nf3Env = Environment.getCurrentEnvironment().currentEnvironment;
   await nf3Init(
     ethereumSigningKey,
     {

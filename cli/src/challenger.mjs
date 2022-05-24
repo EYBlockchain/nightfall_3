@@ -5,8 +5,7 @@ import { Command } from 'commander/esm.mjs';
 import clear from 'clear';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { Nf3 } from 'nightfall-sdk';
-import { setEnvironment, getCurrentEnvironment } from '../lib/environment.mjs';
+import { Nf3, Environment } from 'nightfall-sdk';
 
 const defaultKey = '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb';
 const defaultMnemonic =
@@ -27,11 +26,11 @@ async function startChallenger(testEnvironment) {
   clear();
   console.log('Starting Challenger...');
   if (typeof testEnvironment !== 'undefined') {
-    setEnvironment(testEnvironment);
+    Environment.setEnvironment(testEnvironment);
   } else {
-    setEnvironment('Localhost');
+    Environment.setEnvironment('Localhost');
   }
-  const nf3Env = getCurrentEnvironment().currentEnvironment;
+  const nf3Env = Environment.getCurrentEnvironment().currentEnvironment;
   const nf3 = new Nf3(nf3Env.web3WsUrl, ethereumSigningKey, nf3Env);
   await nf3.init(defaultMnemonic);
   if (await nf3.healthcheck('optimist')) console.log('Healthcheck passed');
