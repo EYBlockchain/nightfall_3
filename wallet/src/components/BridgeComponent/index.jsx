@@ -15,7 +15,7 @@ import ethChainImage from '../../assets/img/ethereum-chain.svg';
 import polygonNightfall from '../../assets/svg/polygon-nightfall.svg';
 import discloserBottomImage from '../../assets/img/discloser-bottom.svg';
 import lightArrowImage from '../../assets/img/light-arrow.svg';
-import { approve, getContractAddress, submitTransaction } from '../../common-files/utils/contract';
+import { approve, submitTransaction } from '../../common-files/utils/contract';
 import Web3 from '../../common-files/utils/web3';
 import approveImg from '../../assets/img/modalImages/adeposit_approve1.png';
 import depositConfirmed from '../../assets/img/modalImages/adeposit_confirmed.png';
@@ -34,6 +34,7 @@ import checkMarkCross from '../../assets/lottie/check-mark-cross.json';
 import ERC20 from '../../contract-abis/ERC20.json';
 import { retrieveAndDecrypt } from '../../utils/lib/key-storage';
 import BigFloat from '../../common-files/classes/bigFloat';
+import { shieldAddressGet } from '../../utils/lib/local-storage';
 
 const ModalTitle = styled.div`
   width: 50%;
@@ -132,7 +133,7 @@ const BridgeComponent = () => {
   const [l1Balance, setL1Balance] = useState(0n);
   const [l2Balance, setL2Balance] = useState(0n);
   const [sending, setSendingState] = useState(false);
-  const [shieldContractAddress, setShieldAddress] = useState('');
+  const [shieldContractAddress, setShieldAddress] = useState(shieldAddressGet());
   const history = useHistory();
   const initialTx = history?.location?.tokenState?.initialTxType ?? 'deposit';
   const initialToken =
@@ -153,11 +154,7 @@ const BridgeComponent = () => {
   }, [txType]);
 
   useEffect(() => {
-    const getShieldAddress = async () => {
-      const { address } = (await getContractAddress('Shield')).data;
-      setShieldAddress(address);
-    };
-    getShieldAddress();
+    setShieldAddress(shieldAddressGet());
   }, []);
 
   useEffect(() => {
@@ -194,7 +191,7 @@ const BridgeComponent = () => {
     try {
       switch (readyTx.type) {
         case 'onchain':
-          await submitTransaction(readyTx.rawTransaction, shieldContractAddress);
+          await submitTransaction(readyTx.rawTransaction, shieldContractAddress, 150000, 0); // 150k is enough gasLimit for a deposit
           break;
         case 'offchain':
           await axios
@@ -223,8 +220,7 @@ const BridgeComponent = () => {
 
   async function triggerTx() {
     console.log('triggering tx');
-    if (shieldContractAddress === '')
-      setShieldAddress((await getContractAddress('Shield')).data.address);
+    if (shieldContractAddress === '') setShieldAddress(shieldAddressGet());
     console.log('triggering tx2');
     const ercAddress = token.address;
     console.log('ercAddress', ercAddress);
@@ -425,7 +421,21 @@ const BridgeComponent = () => {
                           e.preventDefault(); // If exceed input count then stop updates.
                         }
                       }}
-                      onChange={e => setTransferValue(e.target.value)}
+                      onChange={e => {
+                        if (/^\d+\.\d+$/.test(e.target.value) || /^\d+$/.test(e.target.value)) {
+                          console.log('In', e.target.value.split('.')[1]);
+                          if (typeof e.target.value.split('.')[1] === 'undefined')
+                            setTransferValue(e.target.value);
+                          else if (e.target.value.split('.')[1]?.length < 5)
+                            setTransferValue(e.target.value);
+                          else
+                            setTransferValue(
+                              `${e.target.value.split('.')[0]}.${e.target.value
+                                .split('.')[1]
+                                .slice(0, 4)}`,
+                            );
+                        } else setTransferValue('0');
+                      }}
                     />
                     <div className="amount_details_max" onClick={() => updateInputValue()}>
                       <span>MAX</span>
@@ -459,9 +469,23 @@ const BridgeComponent = () => {
               </div>
             </div>
 
-            <div className="arrow_icon_wrapper">
-              <img src={lightArrowImage} alt="to arrow" />
-            </div>
+            {new BigFloat(transferValue, token.decimals).toBigInt() >
+            BigInt(token.restrictions[txType]) ? (
+              <div className="warning">
+                <Lottie
+                  style={{ height: '16px', width: '16px', display: 'flex', marginRight: '10px' }}
+                  animationData={checkMarkCross}
+                />
+                <p>
+                  {token.symbol} {txType}s are restricted to less than
+                  {` ${(parseFloat(token.restrictions[txType]) / 10 ** token.decimals).toFixed(2)}`}
+                </p>
+              </div>
+            ) : (
+              <div className="arrow_icon_wrapper">
+                <img src={lightArrowImage} alt="to arrow" />
+              </div>
+            )}
 
             {/* TO SECTION */}
             <div className="to_text">To</div>
@@ -502,9 +526,15 @@ const BridgeComponent = () => {
 
           {/* TRANSFER BUTTON */}
           <div>
-            <button type="button" className="transfer_button" onClick={handleShow}>
-              <p>Transfer</p>
-            </button>
+            {Number(transferValue) > 0 ? (
+              <button type="button" className="transfer_button" onClick={handleShow}>
+                <p>Transfer</p>
+              </button>
+            ) : (
+              <button type="button" className="transfer_button">
+                <p>Transfer</p>
+              </button>
+            )}
           </div>
         </div>
         {show && (

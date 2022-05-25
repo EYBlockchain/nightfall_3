@@ -1,11 +1,11 @@
 const tokensList = {
   tokens: [
     {
-      chainId: 5,
-      name: 'Ether - ERC20 Mock',
-      symbol: 'ETH',
+      chainId: 1,
+      name: 'Wrapped Ether',
+      symbol: 'WETH',
       decimals: 18,
-      address: '0x3f152B63Ec5CA5831061B2DccFb29a874C317502',
+      address: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
       logoURI: 'https://wallet-asset.matic.network/img/tokens/eth.svg',
       tags: ['pos', 'erc20', 'swapable', 'metaTx'],
       id: 'ethereum',
@@ -14,7 +14,7 @@ const tokensList = {
         deposit: '250000000000000000',
       },
       extensions: {
-        parentAddress: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+        parentAddress: '',
         project: {
           name: '-',
           summary: '-',
@@ -24,11 +24,11 @@ const tokensList = {
       },
     },
     {
-      chainId: 5,
+      chainId: 1,
       name: 'Matic Token',
       symbol: 'MATIC',
       decimals: 18,
-      address: '0x499d11E0b6eAC7c0593d8Fb292DCBbF815Fb29Ae',
+      address: '0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0',
       logoURI: 'https://wallet-asset.matic.network/img/tokens/matic.svg',
       tags: ['plasma', 'erc20', 'swapable'],
       id: 'matic-network',
@@ -37,7 +37,7 @@ const tokensList = {
         deposit: '250000000000000000000',
       },
       extensions: {
-        parentAddress: '0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0',
+        parentAddress: '',
         project: {
           name: 'Polygon',
           summary: '-',
@@ -47,11 +47,11 @@ const tokensList = {
       },
     },
     {
-      chainId: 5,
+      chainId: 1,
       name: 'USD Coin',
       symbol: 'USDC',
       decimals: 6,
-      address: '0x07865c6e87b9f70255377e024ace6630c1eaa37f',
+      address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
       logoURI: 'https://wallet-asset.matic.network/img/tokens/usdc.svg',
       tags: ['pos', 'erc20', 'swapable', 'metaTx', 'stablecoin'],
       id: 'usd-coin',
@@ -60,7 +60,7 @@ const tokensList = {
         deposit: '250000000',
       },
       extensions: {
-        parentAddress: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+        parentAddress: '',
         project: {
           name: 'Centre',
           summary: '-',
@@ -70,16 +70,20 @@ const tokensList = {
       },
     },
     // {
-    //   chainId: 5,
+    //   chainId: 1,
     //   name: 'Tether USD',
     //   symbol: 'USDT',
     //   decimals: 6,
-    //   address: '0xc2132d05d31c914a87c6611c10748aeb04b58e8f',
+    //   address: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
     //   logoURI: 'https://wallet-asset.matic.network/img/tokens/usdt.svg',
     //   tags: ['pos', 'stablecoin', 'erc20', 'swapable', 'metaTx'],
     //   id: 'tether',
+    //   restrictions: {
+    //     withdraw: '1000000000',
+    //     deposit: '250000000',
+    //   },
     //   extensions: {
-    //     parentAddress: '0xdac17f958d2ee523a2206206994597c13d831ec7',
+    //     parentAddress: '',
     //     project: {
     //       name: 'Tether',
     //       summary: '-',
@@ -88,25 +92,29 @@ const tokensList = {
     //     },
     //   },
     // },
-    // {
-    //   chainId: 5,
-    //   name: 'Dai',
-    //   symbol: 'DAI',
-    //   decimals: 18,
-    //   address: '0x8f3cf7ad23cd3cadbd9735aff958023239c6a063',
-    //   logoURI: 'https://wallet-asset.matic.network/img/tokens/dai.svg',
-    //   tags: ['pos', 'stablecoin', 'erc20', 'swapable', 'metaTx'],
-    //   id: 'dai',
-    //   extensions: {
-    //     parentAddress: '0x6b175474e89094c44da98b954eedeac495271d0f',
-    //     project: {
-    //       name: '-',
-    //       summary: '-',
-    //       contact: '-',
-    //       website: 'https://makerdao.com/',
-    //     },
-    //   },
-    // },
+    {
+      chainId: 1,
+      name: 'Dai',
+      symbol: 'DAI',
+      decimals: 18,
+      address: '0x6B175474E89094C44Da98b954EedeAC495271d0F',
+      logoURI: 'https://wallet-asset.matic.network/img/tokens/dai.svg',
+      tags: ['pos', 'stablecoin', 'erc20', 'swapable', 'metaTx'],
+      id: 'dai',
+      restrictions: {
+        withdraw: '1000000000000000000000',
+        deposit: '250000000000000000000',
+      },
+      extensions: {
+        parentAddress: '',
+        project: {
+          name: '-',
+          summary: '-',
+          contact: '-',
+          website: 'https://makerdao.com/',
+        },
+      },
+    },
   ],
 };
 

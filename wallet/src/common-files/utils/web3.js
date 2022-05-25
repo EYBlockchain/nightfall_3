@@ -1,8 +1,16 @@
-// ignore unused exports default
+/* ignore unused exports */
 
 import Web3 from 'web3';
 
 const { ethereum } = global;
+
+export const ChainIdMapping = {
+  preprod: { chainId: '0x5', chainName: 'Goerli' },
+  testnet: { chainId: '0x5', chainName: 'Goerli' },
+  staging: { chainId: '0x5', chainName: 'Goerli' },
+  local: { chainId: '0x539', chainName: 'Ganache' }, // 1337
+  production: { chainId: '0x1', chainName: 'Ethereum Mainnet' },
+};
 
 export default {
   connectedAccount: undefined,
@@ -16,16 +24,33 @@ export default {
    * Note: function only supposed to call once
    */
   async connect() {
-    if (!ethereum) {
-      throw Error('MetaMask is not connected');
+    if (!ethereum || !ethereum.isMetaMask) {
+      throw Error('Wallet is not connected or is not MetaMask', ethereum.isMetaMask);
     }
     this.web3 = new Web3(ethereum);
     global.web3 = this.web3; // for now global.web3 is only set and not referenced anywhere
 
     [this.connectedAccount] = await ethereum.request({ method: 'eth_requestAccounts' });
+    ethereum.on('chainChanged', () => window.location.reload());
+
     ethereum.on('accountsChanged', ([account]) => {
       this.connectedAccount = account;
     });
+
+    const chainId = await ethereum.request({ method: 'eth_chainId' });
+    console.log('Chain ID', chainId);
+    if (
+      chainId !== ChainIdMapping[process.env.REACT_APP_MODE].chainId &&
+      process.env.REACT_APP_MODE !== 'local'
+    )
+      await ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [
+          {
+            chainId: ChainIdMapping[process.env.REACT_APP_MODE].chainId,
+          },
+        ], // chainId must be in hexadecimal numbers
+      });
 
     return ethereum;
   },

@@ -876,3 +876,26 @@ $medium: 900px;
   }
 }
 
+.warning {
+  display: flex;
+  justify-content: left;
+  align-items: left;
+  padding: 5px;
+
+  img {
+    height:24px;
+    width:24;
+
+    margin: 16px 9px 16px 16px;
+  }
+
+  p {
+    font-style: normal;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 20px;
+    color: red;
+
+    // margin-top: 18px;
+  }
+}

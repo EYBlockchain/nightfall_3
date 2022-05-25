@@ -43,7 +43,12 @@ export function getContractAddress(contractName) {
  * @param {number} fee - the value of the transaction.
  * @returns {Promise} This will resolve into a transaction receipt
  */
-export async function submitTransaction(unsignedTransaction, contractAddress, fee) {
+export async function submitTransaction(
+  unsignedTransaction,
+  contractAddress,
+  gasLimitOverride = 0,
+  fee,
+) {
   const web3 = Web3.connection();
   const blockGasPrice = Number(await web3.eth.getGasPrice());
   const from = await Web3.getAccount();
@@ -55,12 +60,18 @@ export async function submitTransaction(unsignedTransaction, contractAddress, fe
   } catch (error) {
     console.log('Gas Estimation Failed: ', error);
   }
-  // Estimate the gasLimit
-  const gasLimit = await web3.eth.estimateGas({
-    from,
-    to: contractAddress,
-    data: unsignedTransaction,
-  });
+
+  let gasLimit = 0;
+  try {
+    gasLimit = await web3.eth.estimateGas({
+      from,
+      to: contractAddress,
+      data: unsignedTransaction,
+    });
+  } catch (error) {
+    console.log('Gas Estimate Failed');
+    gasLimit = gasLimitOverride;
+  }
 
   const gasLimitWithBuffer = Math.ceil(Number(gasLimit) * 1.5); // 50% seems a more than reasonable buffer.
   // When submitTransaction is called is sets a state in the Shield contract.
@@ -72,11 +83,10 @@ export async function submitTransaction(unsignedTransaction, contractAddress, fe
     to: contractAddress,
     data: unsignedTransaction,
     gas: web3.utils.toHex(gasLimitWithBuffer),
-    gasPrice: web3.utils.toHex(proposedGasPrice),
+    gasPrice: web3.utils.toHex(proposedGasPrice * 1.2),
   };
 
   if (fee) tx.value = web3.utils.toHex(fee);
-
   return ethereum.request({
     method: 'eth_sendTransaction',
     params: [tx],
