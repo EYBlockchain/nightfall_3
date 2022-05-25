@@ -38,9 +38,9 @@ import {
   removeRawTx,
   storeTxObject,
   removeTxObject,
+  shieldAddressGet,
 } from '../../utils/lib/local-storage';
 import BigFloat from '../../common-files/classes/bigFloat';
-import { shieldAddressGet } from '../../utils/lib/local-storage';
 
 const ModalTitle = styled.div`
   width: 50%;
