@@ -40,9 +40,7 @@ async function submitTransactionOffChain() {
     shieldContractAddress = (await getContractAddress('Shield')).data.address;
 
   for (const txObj of getAllTxObjects()) {
-    console.log('txObj-------', txObj);
     if (!txObj.isOnChain) {
-      console.log('txObj-- 2--');
       // eslint-disable-next-line no-await-in-loop
       await axios
         .post(

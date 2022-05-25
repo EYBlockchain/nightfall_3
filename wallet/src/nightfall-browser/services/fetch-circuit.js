@@ -7,6 +7,9 @@
 import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
 
 async function fetchCircuitFiles(url) {
+  if (url.endsWith('.json')) {
+    return fetch(url).then(response => response.json());
+  }
   return fetch(url)
     .then(response => response.body.getReader())
     .then(parseData)
@@ -18,7 +21,7 @@ export default async function fetchCircuit(
   { utilApiServerUrl, isLocalRun, circuitsAWSFiles, s3Url },
 ) {
   let { abi, program, pk } = circuitsAWSFiles[circuit]; // keys path in bucket
-  abi = JSON.parse(new TextDecoder().decode(await fetchCircuitFiles(`${s3Url}/${abi}`)));
+  abi = await fetchCircuitFiles(`${s3Url}/${abi}`);
   program = await fetchCircuitFiles(`${s3Url}/${program}`);
   if (isLocalRun) {
     // here fetchCircuitFiles function is fetching
