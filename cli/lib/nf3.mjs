@@ -18,6 +18,8 @@ import {
   GAS_MULTIPLIER,
   GAS,
   GAS_PRICE,
+  GAS_PRICE_MULTIPLIER,
+  GAS_ESTIMATE_ENDPOINT,
 } from './constants.mjs';
 
 // TODO when SDK is refactored such that these functions are split by user, proposer and challenger,
@@ -204,39 +206,65 @@ class Nf3 {
     return axios.get(`${this.optimistBaseUrl}/block/make-now`);
   }
 
+  async estimateGas(contractAddress, unsignedTransaction) {
+    let gasLimit;
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      gasLimit = await this.web3.eth.estimateGas({
+        from: this.ethereumAddress,
+        to: contractAddress,
+        data: unsignedTransaction,
+      });
+    } catch (error) {
+      logger.warn(`estimateGas failed. Falling back to constant value`);
+      gasLimit = GAS; // backup if estimateGas failed
+    }
+    return Math.ceil(Number(gasLimit) * GAS_MULTIPLIER); // 50% seems a more than reasonable buffer.
+  }
+
+  async estimateGasPrice() {
+    let proposedGasPrice;
+    try {
+      // Call the endpoint to estimate the gas fee.
+      const res = (await axios.get(GAS_ESTIMATE_ENDPOINT)).data.result;
+      proposedGasPrice = Number(res?.ProposeGasPrice) * 10 ** 9;
+    } catch (error) {
+      logger.warn('Gas Estimation Failed, using previous block gasPrice');
+      try {
+        proposedGasPrice = Number(await this.web3.eth.getGasPrice());
+      } catch (err) {
+        logger.warn('Failed to get previous block gasprice.  Falling back to default');
+        proposedGasPrice = GAS_PRICE;
+      }
+    }
+    return Math.ceil(proposedGasPrice * GAS_PRICE_MULTIPLIER);
+  }
+
   /**
-    Method for signing and submitting an Ethereum transaction to the
-    blockchain.
-    @method
-    @async
-    @param {object} unsignedTransaction - An unsigned web3js transaction object.
-    @param {string} shieldContractAddress - The address of the Nightfall_3 shield address.
-    @param {number} fee - the value of the transaction.
-    This can be found using the getContractAddress convenience function.
-    @returns {Promise} This will resolve into a transaction receipt.
-    */
+  Method for signing and submitting an Ethereum transaction to the
+  blockchain.
+  @method
+  @async
+  @param {object} unsignedTransaction - An unsigned web3js transaction object.
+  @param {string} shieldContractAddress - The address of the Nightfall_3 shield address.
+  @param {number} fee - the value of the transaction.
+  This can be found using the getContractAddress convenience function.
+  @returns {Promise} This will resolve into a transaction receipt.
+  */
   async submitTransaction(
     unsignedTransaction,
     contractAddress = this.shieldContractAddress,
     fee = this.defaultFee,
   ) {
-    // if (!this.nonce)
-    //   this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress, 'pending');
-
-    // let gasPrice = 200000000000;
-    /*
-    const gas = (await this.web3.eth.getBlock('latest')).gasLimit;
-    const blockGasPrice = GAS_MULTIPLIER * Number(await this.web3.eth.getGasPrice());
-    if (blockGasPrice > gasPrice) gasPrice = blockGasPrice;
-    */
-    let gasPrice = GAS_PRICE;
-    const blockGasPrice = GAS_MULTIPLIER * Number(await this.web3.eth.getGasPrice());
-    if (blockGasPrice > gasPrice) gasPrice = blockGasPrice;
-    const gas = GAS;
-
-    // const gasPrice = GAS_PRICE;
-    // const gas = GAS;
-
+    // estimate the gasPrice
+    const gasPrice = await this.estimateGasPrice();
+    // Estimate the gasLimit
+    const gas = await this.estimateGas(contractAddress, unsignedTransaction);
+    logger.debug(
+      `Transaction gasPrice was set at ${Math.ceil(
+        gasPrice / 10 ** 9,
+      )} GWei, gas limit was set at ${gas}`,
+    );
     const tx = {
       from: this.ethereumAddress,
       to: contractAddress,
@@ -244,7 +272,6 @@ class Nf3 {
       value: fee,
       gas,
       gasPrice,
-      // nonce: this.nonce,
     };
 
     // logger.debug(`The nonce for the unsigned transaction ${tx.data} is ${this.nonce}`);
