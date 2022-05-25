@@ -453,7 +453,9 @@ const SendModal = (props: SendModalProps): JSX.Element => {
               { transaction: readyTx.transaction },
               { timeout: 3600000 },
             )
-            .then(() => removeTxObject(readyTx.transaction))
+            // after sending transaction successfully proposer remove transaction
+            // object store in localStorage
+            .then(() => removeTxObject({ ...readyTx.transaction, isOnChain: false }))
             .catch(err => {
               throw new Error(err);
             });
