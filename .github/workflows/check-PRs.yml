@@ -5,6 +5,14 @@ on:
     branches: [master]
 
 jobs:
+  dependency-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v3
+      - name: 'Dependency Review'
+        uses: actions/dependency-review-action@v1
+
   eslint-check:
     runs-on: ubuntu-18.04
     steps:
@@ -17,7 +25,7 @@ jobs:
           npm ci
           cd wallet/
           npm ci
-          cd ..
+          cd .. 
           npm run lint
 
   ganache-test:
