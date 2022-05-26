@@ -5,6 +5,13 @@ on:
     branches: [master]
 
 jobs:
+  temp-checkout-sdk:
+    runs-on: ubuntu-18.04
+    steps:
+      - name: clones nightfall-sdk
+        run: |
+          git clone https://github.com/maticnetwork/nightfall-sdk.git ./nightfall-sdk
+
   eslint-check:
     runs-on: ubuntu-18.04
     steps:
