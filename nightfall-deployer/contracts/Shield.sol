@@ -29,6 +29,7 @@ contract Shield is Stateful, Ownable, Structures, Config, Key_Registry, Reentran
         Key_Registry.initialize();
         Config.initialize();
         Ownable.initialize();
+        ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
     }
 
     function transferShieldBalance(address ercAddress, uint256 value) public onlyOwner {

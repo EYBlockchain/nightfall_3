@@ -35,6 +35,8 @@ contract State is Structures, Initializable, ReentrancyGuardUpgradeable, Config 
         proposersAddress = _proposersAddress;
         challengesAddress = _challengesAddress;
         shieldAddress = _shieldAddress;
+        Config.initialize();
+        ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
     }
 
     modifier onlyRegistered {
