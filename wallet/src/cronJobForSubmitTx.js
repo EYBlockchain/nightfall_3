@@ -25,7 +25,7 @@ async function submitTransactionsOnChain() {
     // eslint-disable-next-line no-await-in-loop
     await submitTransaction(rawTransaction, shieldContractAddress, 150000, 0)
       .then(() => saveTransaction(transaction))
-      .catch(err => console.error);
+      .catch(console.error);
 
     // after submitting tx we should remove rawTransaction and transaction
     // object store in localStorage
