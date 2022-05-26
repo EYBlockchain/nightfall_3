@@ -220,9 +220,6 @@ const BridgeComponent = () => {
               { transaction: readyTx.transaction },
               { timeout: 3600000 },
             )
-            // after sending transaction successfully proposer remove transaction
-            // object store in localStorage
-            .then(() => removeTxObject({ ...readyTx.transaction, isOnChain: false }))
             .catch(err => {
               throw new Error(err);
             });
@@ -233,14 +230,27 @@ const BridgeComponent = () => {
         }
       }
       await saveTransaction(readyTx.transaction);
-      handleClose();
-      handleCloseConfirmModal();
-      return true;
     } catch (error) {
-      handleClose();
-      handleCloseConfirmModal();
-      return false;
+      isSuccessful = false;
     }
+
+    handleClose();
+    handleCloseConfirmModal();
+
+    if (readyTx.type === 'onchain') {
+      // after submitting tx we should remove rawTransaction and transaction
+      // object store in localStorage
+      removeRawTx({
+        rawTransaction: readyTx.rawTransaction,
+        transactionHash: readyTx.transaction.transactionHash,
+      });
+      removeTxObject({ ...readyTx.transaction, isOnChain: true });
+    } else {
+      // after sending transaction successfully to proposer remove transaction
+      // object store in localStorage
+      removeTxObject({ ...readyTx.transaction, isOnChain: false });
+    }
+    return isSuccessful;
   }
 
   async function triggerTx() {

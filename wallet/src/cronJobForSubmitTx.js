@@ -23,12 +23,14 @@ async function submitTransactionsOnChain() {
   for (const { rawTransaction, transactionHash } of getAllRawTxs()) {
     const transaction = getTxObjectByTxHash(transactionHash);
     // eslint-disable-next-line no-await-in-loop
-    await submitTransaction(rawTransaction, shieldContractAddress)
-      .then(() => {
-        removeRawTx({ rawTransaction, transactionHash });
-        removeTxObject(transaction);
-      })
-      .then(() => saveTransaction(transaction));
+    await submitTransaction(rawTransaction, shieldContractAddress, 150000, 0)
+      .then(() => saveTransaction(transaction))
+      .catch(err => console.error);
+
+    // after submitting tx we should remove rawTransaction and transaction
+    // object store in localStorage
+    removeRawTx({ rawTransaction, transactionHash });
+    removeTxObject(transaction);
   }
 }
 
