@@ -23,6 +23,9 @@ import checkMarkYes from '../../assets/lottie/check-mark-yes.json';
 import Transaction from '../../common-files/classes/transaction';
 import checkMarkCross from '../../assets/lottie/check-mark-cross.json';
 import { shieldAddressGet } from '../../utils/lib/local-storage';
+// @ts-ignore
+import { generalise } from 'general-number';
+import { decompressKey } from '@Nightfall/services/keys';
 
 const supportedTokens = importTokens();
 
@@ -474,11 +477,12 @@ const SendModal = (props: SendModalProps): JSX.Element => {
   }, []);
 
   useEffect(() => {
-    if (recipient && recipient.length === 66) {
+    try {
+      decompressKey(generalise(recipient));
       setIsValidAddress(true);
-      return;
+    } catch {
+      setIsValidAddress(false);
     }
-    setIsValidAddress(false);
   }, [recipient]);
 
   useEffect(() => {
