@@ -11,6 +11,10 @@ import transfer from '@Nightfall/services/transfer';
 import { getWalletBalance } from '@Nightfall/services/commitment-storage';
 import { saveTransaction } from '@Nightfall/services/database';
 import Lottie from 'lottie-react';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import { generalise } from 'general-number';
+import { decompressKey } from '@Nightfall/services/keys';
 import { UserContext } from '../../hooks/User';
 import maticImg from '../../assets/img/polygon-chain.svg';
 import { retrieveAndDecrypt } from '../../utils/lib/key-storage';
@@ -23,9 +27,6 @@ import checkMarkYes from '../../assets/lottie/check-mark-yes.json';
 import Transaction from '../../common-files/classes/transaction';
 import checkMarkCross from '../../assets/lottie/check-mark-cross.json';
 import { shieldAddressGet } from '../../utils/lib/local-storage';
-// @ts-ignore
-import { generalise } from 'general-number';
-import { decompressKey } from '@Nightfall/services/keys';
 
 const supportedTokens = importTokens();
 
