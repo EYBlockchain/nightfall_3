@@ -304,15 +304,15 @@ contract Challenges is Stateful, Key_Registry, Config {
             transactions[transactionIndex].transactionType == Structures.TransactionTypes.DEPOSIT
         ) {
             require(
-                uint256(transactions[transactionIndex].historicRootBlockNumberL2[0]) == 0 &&
-                    uint256(transactions[transactionIndex].historicRootBlockNumberL2[1]) == 0,
+                uint256(transactions[transactionIndex].historicRootBlockNumberL2[0]) != 0 ||
+                    uint256(transactions[transactionIndex].historicRootBlockNumberL2[1]) != 0,
                 'Historic root exists'
             );
         } else {
             require(
                 state.getNumberOfL2Blocks() <
-                    uint256(transactions[transactionIndex].historicRootBlockNumberL2[0]) &&
-                    uint256(transactions[transactionIndex].historicRootBlockNumberL2[1]) == 0,
+                    uint256(transactions[transactionIndex].historicRootBlockNumberL2[0]) ||
+                    uint256(transactions[transactionIndex].historicRootBlockNumberL2[1]) != 0,
                 'Historic root exists'
             );
         }

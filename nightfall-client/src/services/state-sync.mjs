@@ -6,6 +6,7 @@ their local commitments databsae.
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import mongo from 'common-files/utils/mongo.mjs';
+import { unpauseQueue } from 'common-files/utils/event-queue.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import blockProposedEventHandler from '../event-handlers/block-proposed.mjs';
 import rollbackEventHandler from '../event-handlers/rollback.mjs';
@@ -57,6 +58,8 @@ export const initialClientSync = async () => {
   const firstSeenBlockNumber = Math.min(...commitmentBlockNumbers);
   logger.info(`firstSeenBlockNumber: ${firstSeenBlockNumber}`);
   // fistSeenBlockNumber can be infinity if the commitmentBlockNumbers array is empty
-  if (firstSeenBlockNumber === Infinity) return syncState(STATE_GENESIS_BLOCK);
-  return syncState(firstSeenBlockNumber);
+  if (firstSeenBlockNumber === Infinity) await syncState(STATE_GENESIS_BLOCK);
+  else await syncState(firstSeenBlockNumber);
+  unpauseQueue(0); // the queues are paused to start with, so get them going once we are synced
+  unpauseQueue(1);
 };

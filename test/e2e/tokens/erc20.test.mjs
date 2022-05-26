@@ -527,7 +527,7 @@ describe('ERC20 tests', () => {
               fee,
             );
             await emptyL2(nf3Users[0]);
-            await new Promise(resolve => setTimeout(resolve, 15000));
+            await new Promise(resolve => setTimeout(resolve, 30000));
           }
 
           // console.log('withdrawing', trnsferValue * 6);

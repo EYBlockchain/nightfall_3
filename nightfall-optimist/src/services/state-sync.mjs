@@ -103,7 +103,11 @@ export default async proposer => {
   const lastBlockNumberL2 = Number(
     (await stateContractInstance.methods.getNumberOfL2Blocks().call()) - 1,
   );
-  if (lastBlockNumberL2 === -1) return null; // The blockchain is empty
+  if (lastBlockNumberL2 === -1) {
+    unpauseQueue(0); // queues are started paused, therefore we need to unpause them before proceeding.
+    unpauseQueue(1);
+    return null; // The blockchain is empty
+  }
   // pause the queues so we stop processing incoming events while we sync
   await Promise.all([pauseQueue(0), pauseQueue(1)]);
   const missingBlocks = await checkBlocks(); // Stores any gaps of missing blocks
