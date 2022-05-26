@@ -29,8 +29,6 @@ module.exports = async function (deployer) {
   await deployer.deploy(ChallengesUtil);
   await deployer.link(ChallengesUtil, Challenges);
 
-  // await deployProxy(Structures, [], { deployer, unsafeAllowLinkedLibraries: true });
-  // await deployProxy(Config, [], { deployer, unsafeAllowLinkedLibraries: true });
   await deployProxy(Proposers, [], { deployer, unsafeAllowLinkedLibraries: true });
   await deployProxy(Challenges, [], { deployer, unsafeAllowLinkedLibraries: true });
   await deployProxy(Shield, [], { deployer, unsafeAllowLinkedLibraries: true });
