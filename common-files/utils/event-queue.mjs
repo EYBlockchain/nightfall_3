@@ -25,8 +25,8 @@ import logger from 'common-files/utils/logger.mjs';
 import { web3 } from 'common-files/utils/contract.mjs';
 
 const { MAX_QUEUE, CONFIRMATION_POLL_TIME, CONFIRMATIONS } = config;
-const fastQueue = new Queue({ autostart: true, concurrency: 1 });
-const slowQueue = new Queue({ autostart: true, concurrency: 1 });
+const fastQueue = new Queue({ autostart: false, concurrency: 1 });
+const slowQueue = new Queue({ autostart: false, concurrency: 1 });
 const removed = {}; // singleton holding transaction hashes of any removed events
 const stopQueue = new Queue({ autostart: false, concurrency: 1 });
 export const queues = [fastQueue, slowQueue, stopQueue];

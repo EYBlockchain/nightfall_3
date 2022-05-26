@@ -87,7 +87,7 @@ export async function waitForContract(contractName) {
  * @param arg - List of arguments to be passed to callback, the first element must be the event-handler functions
  * @returns = List of emitters from each contract.
  */
-export async function startEventQueue(lastSyncedBlock, callback, ...arg) {
+export async function startEventQueue(callback, ...arg) {
   const contractNames = [
     STATE_CONTRACT_NAME,
     SHIELD_CONTRACT_NAME,
@@ -96,10 +96,7 @@ export async function startEventQueue(lastSyncedBlock, callback, ...arg) {
   ];
   const contracts = await Promise.all(contractNames.map(c => waitForContract(c)));
   const emitters = contracts.map(e => {
-    let emitterC;
-    // if we've just resynced, start from the end of the sync:
-    if (lastSyncedBlock) emitterC = e.events.allEvents({ fromBlock: lastSyncedBlock + 1 });
-    else emitterC = e.events.allEvents();
+    const emitterC = e.events.allEvents();
     emitterC.on('changed', event => callback(event, arg));
     emitterC.on('data', event => callback(event, arg));
     return emitterC;
