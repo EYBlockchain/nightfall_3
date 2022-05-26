@@ -5,13 +5,6 @@ on:
     branches: [master]
 
 jobs:
-  temp-checkout-sdk:
-    runs-on: ubuntu-18.04
-    steps:
-      - name: clones nightfall-sdk
-        run: |
-          git clone https://github.com/maticnetwork/nightfall-sdk.git ./nightfall-sdk
-
   eslint-check:
     runs-on: ubuntu-18.04
     steps:
@@ -19,6 +12,14 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: '14.17.0'
+      - name: clones nightfall-sdk
+        run: |
+          git clone https://github.com/maticnetwork/nightfall-sdk.git ./nightfall-sdk
+          cd nightfall-sdk/
+          npm ci
+          cd ..
+          pwd
+          ls -l
       - name: eslint check
         run: |
           npm ci
