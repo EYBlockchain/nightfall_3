@@ -28,18 +28,22 @@ contract State is Structures, Initializable, ReentrancyGuardUpgradeable, Pausabl
     address public challengesAddress;
     address public shieldAddress;
 
+    function initialize() public override(Pausable, Config){
+      Pausable.initialize();
+      Config.initialize();
+      ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
+    }
+
     function initialize(
         address _proposersAddress,
         address _challengesAddress,
         address _shieldAddress
-    ) public override(Pausable, Config) initializer {
+    ) public initializer {
         proposersAddress = _proposersAddress;
         challengesAddress = _challengesAddress;
         shieldAddress = _shieldAddress;
-        ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
-        Pausable.initialize();
-        Config.initialize()
-    }
+        initialize();
+      }
 
     modifier onlyRegistered {
         require(

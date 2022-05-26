@@ -32,7 +32,7 @@ contract Shield is Stateful, Ownable, Structures, Config, Key_Registry, Reentran
         Ownable.initialize();
         ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
         Pausable.initialize();
-    }git add 
+    }
 
     function transferShieldBalance(address ercAddress, uint256 value) public onlyOwner {
         ERCInterface tokenContract = ERCInterface(ercAddress);

@@ -1,11 +1,15 @@
-import '@openzeppelin/contracts-upgradeable/security/PauseableUpgradeable.sol';
+// SPDX-License-Identifier: CC0-1.0
 
-contract Pausable is PauseableUpgradeable, Initializable {
+import '@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol';
+
+pragma solidity ^0.8.0;
+
+abstract contract Pausable is PausableUpgradeable {
 
   address public pauser;
 
-  function initialize() public initializer {
-    PauseableUpgradeable.initialize();
+  function initialize() public virtual initializer {
+    PausableUpgradeable.__Pausable_init();
     pauser = msg.sender; // pauser and deployer are the same
   }
 
