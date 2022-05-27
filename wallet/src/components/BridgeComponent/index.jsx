@@ -190,10 +190,17 @@ const BridgeComponent = () => {
     console.log('readyTx', readyTx);
     try {
       switch (readyTx.type) {
-        case 'onchain':
-          await submitTransaction(readyTx.rawTransaction, shieldContractAddress, 150000, 0); // 150k is enough gasLimit for a deposit
+        case 'onchain': {
+          const txL1Hash = await submitTransaction(
+            readyTx.rawTransaction,
+            shieldContractAddress,
+            150000,
+            0,
+          ); // 150k is enough gasLimit for a deposit
+          readyTx.transaction.l1Hash = txL1Hash;
           break;
-        case 'offchain':
+        }
+        case 'offchain': {
           await axios
             .post(
               `${proposerUrl}/proposer/offchain-transaction`,
@@ -204,8 +211,10 @@ const BridgeComponent = () => {
               throw new Error(err);
             });
           break;
-        default:
+        }
+        default: {
           console.log('Error when sending');
+        }
       }
       await saveTransaction(readyTx.transaction);
       handleClose();
@@ -310,10 +319,35 @@ const BridgeComponent = () => {
       (txType === 'deposit' &&
         new BigFloat(transferValue, token.decimals).toBigInt() > l1Balance) ||
       (txType === 'withdraw' && new BigFloat(transferValue, token.decimals).toBigInt() > l2Balance)
-    )
+    ) {
       toast.error("Input value can't be greater than balance!");
-    else if (!transferValue) toast.warn('Input a value for transfer, please.');
-    else if (transferValue === 0) toast.warn("Input a value can't be zero.");
+      return;
+    }
+
+    if (
+      txType === 'deposit' &&
+      new BigFloat(transferValue, token.decimals).toBigInt() >
+        parseInt(token.restrictions[txType], 10)
+    ) {
+      toast.error(
+        `Input value can't be greater than ${
+          parseInt(token.restrictions[txType], 10) /
+          parseInt(new BigFloat('1', token.decimals).toBigInt().toString(), 10)
+        }`,
+      );
+      return;
+    }
+
+    if (!transferValue) {
+      toast.warn('Input a value for transfer, please.');
+      return;
+    }
+
+    if (transferValue === '0') {
+      toast.warn("Input a value can't be zero.");
+      return;
+    }
+
     setShow(true);
   };
 
@@ -343,13 +377,22 @@ const BridgeComponent = () => {
   }, [token, txType, accountInstance]);
 
   const updateInputValue = () => {
+    const inputElement = document
+      .querySelector('nightfall-app')
+      .shadowRoot.getElementById('inputValue');
     if (txType === 'deposit') {
-      document.getElementById('inputValue').value = l1Balance;
-      setTransferValue(l1Balance);
+      inputElement.value = new BigFloat(l1Balance, token.decimals).toFixed(4);
+      setTransferValue(new BigFloat(l1Balance, token.decimals).toFixed(4).toString());
       return;
     }
-    document.getElementById('inputValue').value = l2Balance;
-    setTransferValue(l2Balance);
+    inputElement.value = new BigFloat(l2Balance, token.decimals).toFixed(4);
+    setTransferValue(new BigFloat(l2Balance, token.decimals).toFixed(4).toString());
+  };
+
+  const continueTransfer = async () => {
+    if (await submitTx()) {
+      history.push('/transactionPage');
+    }
   };
 
   return (
@@ -526,15 +569,9 @@ const BridgeComponent = () => {
 
           {/* TRANSFER BUTTON */}
           <div>
-            {Number(transferValue) > 0 ? (
-              <button type="button" className="transfer_button" onClick={handleShow}>
-                <p>Transfer</p>
-              </button>
-            ) : (
-              <button type="button" className="transfer_button">
-                <p>Transfer</p>
-              </button>
-            )}
+            <button type="button" className="transfer_button" onClick={handleShow}>
+              <p>Transfer</p>
+            </button>
           </div>
         </div>
         {show && (
@@ -624,9 +661,9 @@ const BridgeComponent = () => {
                   <ContinueTransferButton
                     type="button"
                     id="Bridge_modal_continueTransferButton"
-                    onClick={() => {
+                    onClick={async () => {
                       setSendingState(true);
-                      submitTx();
+                      continueTransfer();
                     }}
                   >
                     {sending ? (
