@@ -15,6 +15,7 @@ contract Proposers is Stateful, Structures, Config, ReentrancyGuardUpgradeable {
     function initialize() public override(Stateful, Config) initializer {
         Stateful.initialize();
         Config.initialize();
+        ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
     }
 
     /**
