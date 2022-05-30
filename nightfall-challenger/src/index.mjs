@@ -23,7 +23,7 @@ async function startChallenger() {
   logger.info('Starting Challenger...');
   // Mnemonic are only required for services connecting to a client that
   // can generate a compressed PKD.
-  await nf3Init(signingKeys.proposer1, environment, undefined, 'optimist');
+  await nf3Init(signingKeys.challenger, environment, undefined, 'optimist');
   if (await nf3Healthcheck('optimist')) logger.info('Healthcheck passed');
   else throw new Error('Healthcheck failed');
   logger.info('Attempting to register challenger');
