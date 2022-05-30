@@ -4,13 +4,14 @@ Some transactions are so simple that, we don't split out a separate service
 module but handle the entire request here.
 */
 import express from 'express';
+import logger from '../../../common-files/utils/logger.mjs';
 import { nf3SendOffchainTransaction } from '../nf3-wrapper.mjs';
 
 const router = express.Router();
 
 router.post('/offchain-transaction', async (req, res) => {
-  console.log(`Proposer/offchain-transaction endpoint received POST`);
-  console.log(`With content ${JSON.stringify(req.body, null, 2)}`);
+  logger.debug(`Proposer/offchain-transaction endpoint received POST`);
+  logger.debug(`With content ${JSON.stringify(req.body, null, 2)}`);
   const { transaction } = req.body;
 
   if (!transaction) {

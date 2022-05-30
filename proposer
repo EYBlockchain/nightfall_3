@@ -8,4 +8,4 @@
 #  --proposerBaseUrl: API is launched at Url. 
 #  --proposerPort: API is launched at this port. If not provided, default port 8100 is selected
 
-/usr/bin/env node cli/src/proposer/proposer.mjs "${@:1}"
+/usr/bin/env node nightfall-proposer/src/index.mjs "${@:1}"
