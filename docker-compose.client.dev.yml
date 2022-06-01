@@ -1,0 +1,37 @@
+version: '3.5'
+# Use this script for running up nightfall_3 client in 'developer' mode with local
+# bindings.  See the readme for more information.
+services:
+  client1:
+    build:
+      dockerfile: client.Dockerfile
+      context: .
+    volumes:
+      - type: bind
+        source: ./nightfall-client/src
+        target: /app/src
+      - type: bind
+        source: ./common-files
+        target: /common-files
+      - type: bind
+        source: ./config/default.js
+        target: /app/config/default.js
+
+  worker:
+    build:
+      dockerfile: worker.Dockerfile
+      context: .
+    volumes:
+      - type: bind
+        source: ./nightfall-deployer/circuits
+        target: /app/circuits/
+      - type: bind
+        source: ./zokrates-worker/src
+        target: /app/src/
+      - type: bind
+        source: ./config/default.js
+        target: /app/config/default.js
+    ports:
+      # to use with postman and etc
+      - 8091:80
+    entrypoint: ['npm', 'run', 'start']

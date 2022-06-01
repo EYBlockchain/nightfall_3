@@ -3,6 +3,10 @@ Resync code so that restarted client instances are able to read past events and 
 their local commitments databsae.
 */
 
+import axios from 'axios';
+import fs from 'fs';
+import * as stream from 'stream';
+import { promisify } from 'util';
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import mongo from 'common-files/utils/mongo.mjs';
@@ -18,6 +22,10 @@ const {
   STATE_CONTRACT_NAME,
   STATE_GENESIS_BLOCK,
 } = config;
+
+const { ETH_NETWORK, CONTRACT_FILES_URL } = process.env;
+
+const finished = promisify(stream.finished);
 
 const syncState = async (fromBlock = 'earliest', toBlock = 'latest', eventFilter = 'allEvents') => {
   console.log('From block', fromBlock);
@@ -44,14 +52,70 @@ const syncState = async (fromBlock = 'earliest', toBlock = 'latest', eventFilter
   }
 };
 
+const downloadFile = async (fileUrl, outputLocationPath) => {
+  const writer = fs.createWriteStream(outputLocationPath);
+  return axios({
+    method: 'get',
+    url: fileUrl,
+    responseType: 'stream',
+  }).then(response => {
+    response.data.pipe(writer);
+    return finished(writer); // this is a Promise
+  });
+};
+
 const genGetCommitments = async (query = {}, proj = {}) => {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).find(query, proj).toArray();
 };
 
+const checkContractsABI = async () => {
+  let env = '';
+  switch (ETH_NETWORK) {
+    case 'goerli':
+      env = 'testnet';
+      break;
+    case 'mainnet':
+      env = 'production';
+      break;
+    default:
+      env = '';
+  }
+
+  if (env) {
+    const url = `${CONTRACT_FILES_URL}/${env}/build/hash.txt`;
+
+    const res = await axios.get(url); // get all json abi contracts
+    const files = res.data.split('\n');
+
+    if (!fs.existsSync(`${config.CONTRACT_ARTIFACTS}`)) {
+      fs.mkdirSync(`${config.CONTRACT_ARTIFACTS}`);
+    }
+
+    logger.info(`Downloading contracts from ${url}...`);
+
+    await Promise.all(
+      files.map(async f => {
+        if (f) {
+          try {
+            await downloadFile(
+              `${CONTRACT_FILES_URL}/${env}/build/contracts/${f.split('  ')[1]}`,
+              `${config.CONTRACT_ARTIFACTS}/${f.split('  ')[1]}`,
+            );
+          } catch (e) {
+            console.error(`ERROR downloading ${f.split('  ')[1]}`);
+          }
+        }
+      }),
+    );
+    logger.info(`Contracts downloaded`);
+  }
+};
+
 // eslint-disable-next-line import/prefer-default-export
 export const initialClientSync = async () => {
+  await checkContractsABI();
   const allCommitments = await genGetCommitments();
   const commitmentBlockNumbers = allCommitments.map(a => a.blockNumber).filter(n => n >= 0);
   logger.info(`commitmentBlockNumbers: ${commitmentBlockNumbers}`);

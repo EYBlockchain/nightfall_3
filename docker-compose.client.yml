@@ -1,0 +1,72 @@
+version: '3.5'
+# Use this script for running up nightfall_3 client in 'developer' mode with local
+# bindings.  See the readme for more information.
+services:
+  client1:
+    image: ghcr.io/eyblockchain/nightfall3-client:latest
+    volumes:
+      - type: volume
+        source: build
+        target: /app/build
+      - type: volume
+        source: mongodb1
+        target: /app/mongodb
+    networks:
+      - nightfall_network
+    ports:
+      - 27017:27017
+      - 8080:80
+    depends_on:
+      - worker
+      - rabbitmq1
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+      LOG_LEVEL: debug
+      ZOKRATES_WORKER_HOST: worker
+      RABBITMQ_HOST: amqp://rabbitmq1
+      RABBITMQ_PORT: 5672
+      ENABLE_QUEUE: 1
+      USE_STUBS: 'false' # make sure this flag is the same as in deployer service
+      BLOCKCHAIN_URL: ${BLOCKCHAIN_URL}
+      USE_EXTERNAL_NODE: 'true'
+      AUTOSTART_RETRIES: 600
+      ETH_NETWORK: ${ETH_NETWORK}
+      CONTRACT_FILES_URL: https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com
+    command: ['npm', 'run', 'dev']
+
+  worker:
+    image: ghcr.io/eyblockchain/nightfall3-worker:latest
+    volumes:
+      - type: volume
+        source: proving_files
+        target: /app/output/
+    networks:
+      - nightfall_network
+    environment:
+      LOG_LEVEL: info
+      MPC: ${MPC}
+      ETH_NETWORK: ${ETH_NETWORK}
+      CIRCUIT_FILES_URL: https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com
+
+  rabbitmq1:
+    image: rabbitmq
+    ports:
+      - '15674:15674'
+      - '5672:5672'
+    networks:
+      - nightfall_network
+
+volumes:
+  mongodb1:
+  proving_files:
+  build:
+
+networks:
+  nightfall_network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.238.0/24
+          gateway: 172.16.238.1

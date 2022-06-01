@@ -9,7 +9,7 @@ const { expect } = chai;
 const { WEB3_PROVIDER_OPTIONS } = config;
 const ENVIRONMENT = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
-const USE_ROPSTEN_NODE = config.USE_ROPSTEN_NODE === 'true';
+const USE_EXTERNAL_NODE = config.USE_EXTERNAL_NODE === 'true';
 
 export const topicEventMapping = {
   BlockProposed: '0x566d835e602d4aa5802ee07d3e452e755bc77623507825de7bc163a295d76c0b',
@@ -116,7 +116,7 @@ export class Web3Client {
         const accountAddress = await this.web3.eth.accounts.privateKeyToAccount(privateKey);
         nonce = await this.web3.eth.getTransactionCount(accountAddress.address);
       }
-      if (USE_ROPSTEN_NODE) {
+      if (USE_EXTERNAL_NODE) {
         // get gaslimt from latest block as gaslimt may vary
         gas = (await this.web3.eth.getBlock('latest')).gasLimit;
         const blockGasPrice = Number(await this.web3.eth.getGasPrice());

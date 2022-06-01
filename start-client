@@ -1,0 +1,62 @@
+#! /bin/bash
+
+VOLUME_LIST=$(docker volume ls -q)
+FILE=
+
+usage()
+{
+  echo "Usage:"
+  echo "  -c or --client; for client service"
+  echo "  -d or --dev; to bind mount the filesystem and use it for development"
+}
+
+# select a Geth or Ganache client
+if [ -z "$1" ]; then
+  usage
+  exit 1
+fi
+
+# delete env file
+rm -f ${ENV_FILE}
+while [ -n "$1" ]; do
+  case $1 in
+      -c  | --client )              FILE="-f docker-compose.client.yml";
+                                    ;;
+      -d  | --dev )                 DEV="-f docker-compose.client.dev.yml"
+                                    ;;
+      -h  | --help )                usage
+                                    ;;
+      * )                           usage
+                              exit 1
+    esac
+  shift
+done
+# FILE should always be set.  Asking for -s on its own makes no sense
+if [ -z "$FILE" ]; then
+  usage
+  exit 1
+fi
+# shut down cleanly in the event of a cntl-c etc. We don't want to leave containers running
+trap "docker-compose $FILE $DEV down --remove-orphans -t 1; exit 1" SIGHUP SIGINT SIGTERM
+
+docker-compose $FILE $DEV down --remove-orphans
+
+# if-else block checks - volume exist and then removes it.
+if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb1) ]]; then
+  echo -n 'Removing '
+  docker volume rm nightfall_3_mongodb1
+fi
+
+if [[ $(echo $VOLUME_LIST | grep nightfall_3_build) ]]; then
+  echo -n 'Removing '
+  docker volume rm nightfall_3_build
+fi
+
+DIR=./common-files/node_modules
+if [[ -d "$DIR" ]]; then
+  rm -dr common-files/node_modules
+fi
+
+echo "docker-compose $FILE $DEV up -d --remove-orphans"
+docker-compose $FILE $DEV up -d --remove-orphans
+docker-compose logs -f
