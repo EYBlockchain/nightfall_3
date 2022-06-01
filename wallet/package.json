@@ -26,6 +26,8 @@
     "comlink-loader": "^2.0.0",
     "crypto-js": "^4.1.1",
     "css-loader": "4.3.0",
+    "dexie": "^3.2.2",
+    "dexie-export-import": "^1.0.3",
     "dotenv": "8.2.0",
     "dotenv-expand": "5.1.0",
     "env-cmd": "^10.1.0",
