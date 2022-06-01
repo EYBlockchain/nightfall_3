@@ -254,7 +254,6 @@ export default function Assets({ tokenList }) {
           name="myfile"
           onChange={e => handleImportCommitmentsAndTransactionsFlow(e)}
         />
-        {loaded && <p>Carregando . . .</p>}
       </div>
       <ReceiveModal show={modalShow} onHide={() => setModalShow(false)} />
       <SendModal
