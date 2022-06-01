@@ -13,11 +13,13 @@ import { UserContext } from '../../hooks/User';
 import checkMarkYes from '../../assets/lottie/check-mark-yes.json';
 import SendModal from '../Modals/sendModal';
 
-import Dexie from 'dexie';
-import { importDB, exportDB } from 'dexie-export-import';
-import * as fs from 'fs';
-
 import '../../styles/assets.scss';
+import { exportIndexdDB } from '../../useCases/CommitmentsBackup/export';
+import {
+  getIndexedDBObjectRowsFromBackupFile,
+  convertFileToObject,
+  addObjectStoreToIndexedDB,
+} from '../../useCases/CommitmentsBackup/import';
 
 const Header = styled.div`
   display: flex;
@@ -170,76 +172,6 @@ export default function Assets({ tokenList }) {
     0,
   );
 
-  const exportDB = async () => {
-    const db = await new Dexie('nightfall_commitments').open();
-    console.log('DB: ', db);
-    const exportedDB = await exportIndexdDB(db);
-    const filteredTables = exportedDB.filter(
-      arr => arr.table === 'commitments' || arr.table === 'transactions',
-    );
-    const stringfy = JSON.stringify(filteredTables);
-    download(stringfy);
-  };
-
-  function download(content) {
-    const a = document.createElement('a');
-    const file = new Blob([content], { type: 'text/plain' });
-    a.href = URL.createObjectURL(file);
-    a.download = 'json-file-name.json';
-    a.click();
-  }
-
-  function exportIndexdDB(db) {
-    return db.transaction('r', db.tables, () => {
-      return Promise.all(
-        db.tables.map(table => table.toArray().then(rows => ({ table: table.name, rows: rows }))),
-      );
-    });
-  }
-
-  /**
-   *
-   * @param {*} objectRecovered the object converted from the backup.
-   * file uploaded.
-   * @param {*} objectStoreName the name of indexedDB database objectStore.
-   * @description get the rows from the objectsStore recovered from the
-   * backup file.
-   * @returns promise of array of rows.
-   */
-  const getIndexedDBObjectRowsFromBackupFile = (objectRecovered, objectStoreName) => {
-    return new Promise((resolve, reject) => {
-      try {
-        resolve(objectRecovered.filter(obj => obj.table === objectStoreName)[0].rows);
-      } catch (e) {
-        reject(e);
-      }
-    });
-  };
-
-  /**
-   *
-   * @param {File} file
-   * @description read the content of the file got, and convert this
-   * in a object.
-   * @returns {Promise<object>} Promise of object
-   */
-  const convertFileToObject = file => {
-    return new Promise((resolve, reject) => {
-      try {
-        let objectRecovered;
-        const reader = new FileReader();
-        reader.onload = async e => {
-          const fileText = e.target.result;
-          objectRecovered = JSON.parse(fileText);
-          resolve(objectRecovered);
-        };
-        reader.readAsText(file);
-      } catch (e) {
-        reject(e);
-      }
-    });
-  };
-
   /**
    *
    * @param {*} event
@@ -251,43 +183,26 @@ export default function Assets({ tokenList }) {
     let objectRecovered = await convertFileToObject(event.target.files[0]);
     console.log('OBJ REC: ', objectRecovered);
     let commitments = await getIndexedDBObjectRowsFromBackupFile(objectRecovered, 'commitments');
-    await addObjectStoreToIndexedDB(commitments, 'commitments');
+    await addObjectStoreToIndexedDB('nightfall_commitments', commitments, 'commitments');
     let transactions = await getIndexedDBObjectRowsFromBackupFile(objectRecovered, 'transactions');
-    await addObjectStoreToIndexedDB(transactions, 'transactions');
+    await addObjectStoreToIndexedDB('nightfall_commitments', transactions, 'transactions');
   };
 
-  const addObjectStoreToIndexedDB = (arrayOfObjects, nameOfObjectStore) => {
-    return new Promise((resolve, reject) => {
-      const myIndexedDB = indexedDB.open('nightfall_commitments', 1);
-
-      myIndexedDB.onerror = function () {
-        reject(myIndexedDB.error);
-      };
-
-      myIndexedDB.onsuccess = function () {
-        let db = myIndexedDB.result;
-        arrayOfObjects.map((obj, index) => {
-          console.log(`OBJ ${index}: ${obj}`);
-          let transaction = db.transaction([nameOfObjectStore], 'readwrite');
-          console.log('DB TRANSACTION: ', transaction);
-          let objStore = transaction.objectStore(nameOfObjectStore);
-          console.log(`${nameOfObjectStore}: ${objStore}`);
-
-          let request = objStore.add(obj, obj._id); // (3)
-
-          request.onsuccess = function () {
-            console.log(`${nameOfObjectStore} added to the store ${request.result}`);
-          };
-
-          request.onerror = function () {
-            reject(`Error, ${request.error}`);
-          };
-        });
-        db.close();
-        resolve(true);
-      };
-    });
+  const handleExportIndedexDB = async () => {
+    const exportedDB = await exportIndexdDB('nightfall_commitments');
+    const filteredTables = exportedDB.filter(
+      arr => arr.table === 'commitments' || arr.table === 'transactions',
+    );
+    downloadFile(JSON.stringify(filteredTables));
   };
+
+  function downloadFile(content) {
+    const a = document.createElement('a');
+    const file = new Blob([content], { type: 'text/plain' });
+    a.href = URL.createObjectURL(file);
+    a.download = 'json-file-name.json';
+    a.click();
+  }
 
   return (
     <div className="dashboardTopSection">
@@ -332,13 +247,14 @@ export default function Assets({ tokenList }) {
             </Link>
           </button>
         </div>
-        <button onClick={() => exportDB()}>Download</button>
+        <button onClick={() => handleExportIndedexDB()}>Download</button>
         <input
           type="file"
           id="myfile"
           name="myfile"
           onChange={e => handleImportCommitmentsAndTransactionsFlow(e)}
         />
+        {loaded && <p>Carregando . . .</p>}
       </div>
       <ReceiveModal show={modalShow} onHide={() => setModalShow(false)} />
       <SendModal
