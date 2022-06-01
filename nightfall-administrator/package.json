@@ -1,0 +1,31 @@
+{
+  "name": "nightfall-administrator",
+  "version": "1.0.0",
+  "description": "Carries out smart-contract administrator functions",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EYBlockchain/nightfall_3.git"
+  },
+  "keywords": [
+    "Nightfall_3",
+    "Polygon"
+  ],
+  "author": "Westlad",
+  "license": "CC0-1.0",
+  "bugs": {
+    "url": "https://github.com/EYBlockchain/nightfall_3/issues"
+  },
+  "homepage": "https://github.com/EYBlockchain/nightfall_3#readme",
+  "dependencies": {
+    "chalk": "^5.0.1",
+    "clear": "^0.1.0",
+    "figlet": "^1.5.2",
+    "inquirer": "^8.2.4",
+    "web3": "^1.7.3",
+    "yargs": "^17.5.1"
+  }
+}
