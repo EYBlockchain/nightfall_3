@@ -172,9 +172,13 @@ module.exports = {
         : 'http://localhost:8092',
       adversarialOptimistApiUrl: 'http://localhost:8088',
       adversarialOptimistWsUrl: 'ws://localhost:8089',
-      web3WsUrl: process.env.BLOCKCHAIN_WS_HOST
-        ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`
-        : 'ws://localhost:8546',
+      web3WsUrl:
+        // eslint-disable-next-line no-nested-ternary
+        process.env.BLOCKCHAIN_WS_HOST && process.env.BLOCKCHAIN_PORT
+          ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`
+          : process.env.BLOCKCHAIN_WS_HOST
+          ? `wss://${process.env.BLOCKCHAIN_WS_HOST}`
+          : 'ws://localhost:8546',
     },
     aws: {
       name: 'AWS',
