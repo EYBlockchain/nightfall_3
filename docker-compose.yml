@@ -167,15 +167,6 @@ services:
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
     command: [ 'npm', 'run', 'dev' ]
 
-  # proposer:
-  #   image: ghcr.io/eyblockchain/nightfall3-proposer:latest
-  #   networks:
-  #     - nightfall_network
-  #   environment:
-  #     OPTIMIST_HOST: optimist1
-  #     OPTIMIST_WS_PORT: 8080
-  #     OPTIMIST_PORT: 8081
-
   hosted-utils-api-server:
     build:
       context: ./hosted-utils-api-server

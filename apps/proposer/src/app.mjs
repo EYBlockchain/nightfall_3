@@ -7,12 +7,17 @@ import { proposer, contracts } from './routes/index.mjs';
 import startProposer from './proposer.mjs';
 import Nf3 from '../../../cli/lib/nf3.mjs';
 
-const { signingKeys } = config.TEST_OPTIONS;
-const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
-const { PROPOSER_PORT } = config;
+const { SIGNING_KEY, PROPOSER_PORT } = config;
+const environment = {
+  clientApiUrl: `http://${config.CLIENT_HOST}:${config.CLIENT_PORT}`,
+  optimistApiUrl: `http://${config.OPTIMIST_HOST}:${config.OPTIMIST_PORT}`,
+  optimistWsUrl: `ws://${config.OPTIMIST_HOST}:${config.OPTIMIST_WS_PORT}`,
+  web3WsUrl: `ws://${config.BLOCKCHAIN_WS_HOST}:${config.BLOCKCHAIN_PORT}`,
+  proposerBaseUrl: `http://${process.env.PROPOSER_HOST}:${process.env.PROPOSER_PORT}`,
+};
 
 const app = express();
-const nf3 = new Nf3(signingKeys.proposer1, environment);
+const nf3 = new Nf3(SIGNING_KEY, environment);
 
 app.set('nf3', nf3);
 

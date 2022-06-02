@@ -7,12 +7,16 @@ import { contracts } from './routes/index.mjs';
 import Nf3 from '../../../cli/lib/nf3.mjs';
 import startSynchronizer from './synchronizer.mjs';
 
-const { signingKeys } = config.TEST_OPTIONS;
-const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 const { SYNCHRONIZER_PORT } = config;
+const environment = {
+  clientApiUrl: `http://${config.CLIENT_HOST}:${config.CLIENT_PORT}`,
+  optimistApiUrl: `http://${config.OPTIMIST_HOST}:${config.OPTIMIST_PORT}`,
+  optimistWsUrl: `ws://${config.OPTIMIST_HOST}:${config.OPTIMIST_WS_PORT}`,
+  web3WsUrl: `ws://${config.BLOCKCHAIN_WS_HOST}:${config.BLOCKCHAIN_PORT}`,
+};
 
 const app = express();
-const nf3 = new Nf3(signingKeys.synchronizer, environment);
+const nf3 = new Nf3('', environment);
 
 app.set('nf3', nf3);
 

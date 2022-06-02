@@ -48,11 +48,6 @@ module.exports = {
     `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`,
   ETH_PRIVATE_KEY: process.env.ETH_PRIVATE_KEY, // owner's/deployer's private key
   ETH_ADDRESS: process.env.ETH_ADDRESS,
-  OPTIMIST_HOST: process.env.OPTIMIST_HOST || 'optimist',
-  OPTIMIST_PORT: process.env.OPTIMIST_PORT || 80,
-  PROPOSER_HOST: process.env.PROPOSER_HOST || 'proposer',
-  PROPOSER_PORT: process.env.PROPOSER_PORT || 8090,
-  SYNCHRONIZER_PORT: process.env.SYNCHRONIZER_PORT || 8092,
   WEB3_OPTIONS: {
     gas: process.env.GAS || 8000000,
     gasPrice: process.env.GAS_PRICE || '20000000000',
@@ -227,9 +222,6 @@ module.exports = {
       liquidityProvider:
         process.env.LIQUIDITY_PROVIDER_KEY ||
         '0xfbc1ee1c7332e2e5a76a99956f50b3ba2639aff73d56477e877ef8390c41e0c6',
-      synchronizer:
-        process.env.SYNCHRONIZER_KEY ||
-        '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
     },
     addresses: {
       walletTest: process.env.WALLET_TEST_ADDRESS || '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
