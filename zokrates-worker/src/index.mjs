@@ -10,6 +10,7 @@ import logger from './utils/logger.mjs';
 
 const {
   MPC: { MPC_PARAMS_URL },
+  DEPLOYMENT_FILES_URL: { DEFAULT_CIRCUIT_FILES_URL },
 } = config;
 
 const { ETH_NETWORK, CIRCUIT_FILES_URL } = process.env;
@@ -42,7 +43,10 @@ const checkCircuitsOutput = async () => {
   }
 
   if (env) {
-    const url = `${CIRCUIT_FILES_URL}/${env}/proving_files/hash.txt`;
+    const baseUrl = CIRCUIT_FILES_URL
+      ? `${CIRCUIT_FILES_URL}`
+      : `${DEFAULT_CIRCUIT_FILES_URL}/${env}`;
+    const url = `${baseUrl}/proving_files/hash.txt`;
     const outputPath = `./output`;
     const circuits = ['deposit', 'double_transfer', 'single_transfer', 'withdraw'];
 
@@ -63,7 +67,7 @@ const checkCircuitsOutput = async () => {
 
           try {
             await downloadFile(
-              `${CIRCUIT_FILES_URL}/${env}/proving_files/${circuit}/${f.split('  ')[1]}`,
+              `${baseUrl}/proving_files/${circuit}/${f.split('  ')[1]}`,
               `${outputPath}/${circuit}/${f.split('  ')[1]}`,
             );
           } catch (e) {

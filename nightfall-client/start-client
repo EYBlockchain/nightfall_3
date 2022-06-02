@@ -2,21 +2,15 @@
 
 if [ -f client.env ]; then
   grep -v '^#' client.env
+  # Export env vars
+  export $(grep -v '^#' client.env | xargs)
 else
   echo "client.env does not exist. You need to define the client.env with the needed variables to run the client."
   exit 1
 fi
 
-# Show env vars
-grep -v '^#' client.env
-
-# Export env vars
-export $(grep -v '^#' client.env | xargs)
-
 VOLUME_LIST=$(docker volume ls -q)
 FILE=
-
-echo "${BLOCKCHAIN_URL}"
 
 usage()
 {

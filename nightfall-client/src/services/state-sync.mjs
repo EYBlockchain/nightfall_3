@@ -21,6 +21,7 @@ const {
   COMMITMENTS_COLLECTION,
   STATE_CONTRACT_NAME,
   STATE_GENESIS_BLOCK,
+  DEPLOYMENT_FILES_URL: { DEFAULT_CONTRACT_FILES_URL },
 } = config;
 
 const { ETH_NETWORK, CONTRACT_FILES_URL } = process.env;
@@ -84,7 +85,10 @@ const checkContractsABI = async () => {
   }
 
   if (env) {
-    const url = `${CONTRACT_FILES_URL}/${env}/build/hash.txt`;
+    const baseUrl = CONTRACT_FILES_URL
+      ? `${CONTRACT_FILES_URL}`
+      : `${DEFAULT_CONTRACT_FILES_URL}/${env}`;
+    const url = `${baseUrl}/build/hash.txt`;
 
     const res = await axios.get(url); // get all json abi contracts
     const files = res.data.split('\n');
@@ -100,7 +104,7 @@ const checkContractsABI = async () => {
         if (f) {
           try {
             await downloadFile(
-              `${CONTRACT_FILES_URL}/${env}/build/contracts/${f.split('  ')[1]}`,
+              `${baseUrl}/build/contracts/${f.split('  ')[1]}`,
               `${config.CONTRACT_ARTIFACTS}/${f.split('  ')[1]}`,
             );
           } catch (e) {

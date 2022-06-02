@@ -37,8 +37,6 @@ run the client.
 ```
 ETH_NETWORK=goerli or mainnet
 BLOCKCHAIN_URL=your web3 url provider to access the blockchain
-CIRCUIT_FILES_URL=url of the repository for the circuit files
-CONTRACT_FILES_URL=url of the repository for the contract files
 ```
 
 Example of `client.env`:
@@ -46,11 +44,10 @@ Example of `client.env`:
 ```
 ETH_NETWORK=goerli
 BLOCKCHAIN_URL=wss://eth-goerli.alchemyapi.io/v2/xxxxxxxxxxxxxxxxxxxxxxxxxxxxs
-CIRCUIT_FILES_URL=https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com
-CONTRACT_FILES_URL=https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com
 ```
 
-To run the script with existing images:
+To run the script with existing images of the different services based on the
+`docker-compose.client.yml` of the Polygon Nightfall root folder:
 
 ```
 ./start-client -c
@@ -62,6 +59,13 @@ repository with binding his local files:
 
 ```
 ./start-client -c -d
+```
+
+Also for development purposes you can pass CIRCUIT_FILES_URL and CONTRACT_FILES_URL.
+
+```
+CIRCUIT_FILES_URL=url of the repository for the circuit files
+CONTRACT_FILES_URL=url of the repository for the contract files
 ```
 
 This will run a docker-compose with the needed components:
