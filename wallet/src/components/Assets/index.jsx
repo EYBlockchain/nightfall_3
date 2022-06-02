@@ -15,11 +15,6 @@ import SendModal from '../Modals/sendModal';
 
 import '../../styles/assets.scss';
 import { exportIndexdDB } from '../../useCases/CommitmentsBackup/export';
-import {
-  getIndexedDBObjectRowsFromBackupFile,
-  convertFileToObject,
-  addObjectStoreToIndexedDB,
-} from '../../useCases/CommitmentsBackup/import';
 
 const Header = styled.div`
   display: flex;
@@ -172,22 +167,6 @@ export default function Assets({ tokenList }) {
     0,
   );
 
-  /**
-   *
-   * @param {*} event
-   * @description got the file choosen by the input for upload
-   * file and handle the import commitments and backup flow.
-   */
-  const handleImportCommitmentsAndTransactionsFlow = async event => {
-    event.preventDefault();
-    let objectRecovered = await convertFileToObject(event.target.files[0]);
-    console.log('OBJ REC: ', objectRecovered);
-    let commitments = await getIndexedDBObjectRowsFromBackupFile(objectRecovered, 'commitments');
-    await addObjectStoreToIndexedDB('nightfall_commitments', commitments, 'commitments');
-    let transactions = await getIndexedDBObjectRowsFromBackupFile(objectRecovered, 'transactions');
-    await addObjectStoreToIndexedDB('nightfall_commitments', transactions, 'transactions');
-  };
-
   const handleExportIndedexDB = async () => {
     const exportedDB = await exportIndexdDB('nightfall_commitments');
     const filteredTables = exportedDB.filter(
@@ -248,12 +227,6 @@ export default function Assets({ tokenList }) {
           </button>
         </div>
         <button onClick={() => handleExportIndedexDB()}>Download</button>
-        <input
-          type="file"
-          id="myfile"
-          name="myfile"
-          onChange={e => handleImportCommitmentsAndTransactionsFlow(e)}
-        />
       </div>
       <ReceiveModal show={modalShow} onHide={() => setModalShow(false)} />
       <SendModal

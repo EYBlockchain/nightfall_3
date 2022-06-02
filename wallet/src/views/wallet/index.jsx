@@ -21,6 +21,11 @@ import * as Storage from '../../utils/lib/local-storage';
 import Web3 from '../../common-files/utils/web3';
 import { useAccount } from '../../hooks/Account/index.tsx';
 import useInterval from '../../hooks/useInterval.js';
+import {
+  getIndexedDBObjectRowsFromBackupFile,
+  convertFileToObject,
+  addObjectStoreToIndexedDB,
+} from '../../useCases/CommitmentsBackup/import';
 
 const supportedTokens = importTokens();
 
@@ -31,6 +36,166 @@ const { ethereum } = global;
 /**
 This is a modal to detect if a wallet has been initialized
 */
+
+function WalletModalRecover(props) {
+  const [, , deriveAccounts] = useContext(UserContext);
+  const [screenMnemonic, setScreenMnemonic] = useState();
+  const [backupFile, setBackupFile] = useState();
+  const [mnemonicRecArray, setMnemonicRecArray] = useState([
+    [
+      { id: 0, word: '' },
+      { id: 1, word: '' },
+      { id: 2, word: '' },
+      { id: 3, word: '' },
+    ],
+    [
+      { id: 4, word: '' },
+      { id: 5, word: '' },
+      { id: 6, word: '' },
+      { id: 7, word: '' },
+    ],
+    [
+      { id: 8, word: '' },
+      { id: 9, word: '' },
+      { id: 10, word: '' },
+      { id: 11, word: '' },
+    ],
+  ]);
+
+  /**
+   *
+   * @param {*} event
+   * @description got the file choosen by the input for upload
+   * file and handle the import commitments and backup flow.
+   */
+  const handleImportCommitmentsAndTransactionsFlow = async event => {
+    event.preventDefault();
+    let objectRecovered = await convertFileToObject(event.target.files[0]);
+    setBackupFile(objectRecovered);
+  };
+
+  const concatAllWords = () => {
+    console.log('MEN: ', mnemonicRecArray.length);
+    console.log('MEN: ', mnemonicRecArray.length);
+    return new Promise(resolve => {
+      let mnemonic = '';
+      mnemonicRecArray.map((objRow, indexR) => {
+        objRow.map((objCol, indexC) => {
+          if (indexR === mnemonicRecArray.length - 1 && indexC === objRow.length - 1) {
+            console.log('ULTIMO');
+            mnemonic = mnemonic + objCol.word;
+          } else {
+            console.log('NAO ULTIMO');
+            mnemonic = mnemonic + objCol.word + ' ';
+          }
+        });
+      });
+      resolve(mnemonic);
+    });
+  };
+
+  const recoverWallet = async () => {
+    let mnemonic = await concatAllWords();
+    console.log('AQUIII: ', mnemonic);
+    await deriveAccounts(
+      'predict shy uncover kid found discover discover original inherit empty analyst method',
+      DEFAULT_ACCOUNT_NUM,
+    );
+    setObjectStore();
+  };
+
+  const setObjectStore = async () => {
+    let commitments = await getIndexedDBObjectRowsFromBackupFile(backupFile, 'commitments');
+    await addObjectStoreToIndexedDB('nightfall_commitments', commitments, 'commitments');
+    let transactions = await getIndexedDBObjectRowsFromBackupFile(backupFile, 'transactions');
+    await addObjectStoreToIndexedDB('nightfall_commitments', transactions, 'transactions');
+  };
+
+  const updateState = (event, indexRow, indexColumn) => {
+    setMnemonicRecArray(prevState => {
+      const newStateRow = prevState.map((objRow, indexR) => {
+        if (indexR === indexRow) {
+          const newCol = objRow.map((obj, indexC) => {
+            if (indexC === indexColumn) {
+              return { ...obj, word: event.target.value };
+            }
+            return { ...obj };
+          });
+          return newCol;
+        }
+        return objRow;
+      });
+      return newStateRow;
+    });
+    console.log('MNEMONIC: ', mnemonicRecArray);
+  };
+
+  return (
+    <Modal {...props} size="lg" aria-labelledby="contained-modal-title-vcenter" centered>
+      <Modal.Header closeButton>
+        <Modal.Title id="contained-modal-title-vcenter">
+          Recover your Polygon Nightfall Wallet
+        </Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <p
+          style={{
+            padding: '0px 8px',
+          }}
+        >
+          Polygon Nightfall accounts are protected by a 12 word mnemonic. Insert the words that you
+          have securely storeds and select your backup file.
+        </p>
+        <Container style={{ display: 'inline-block', margin: '0' }}>
+          {[0, 1, 2].map(r => (
+            <Row key={r}>
+              {[0, 1, 2, 3].map(c => (
+                <Col key={c}>
+                  <InputGroup className="mb-3">
+                    <input
+                      onChange={e => updateState(e, r, c)}
+                      style={{ width: '130px' }}
+                      type={true && 'text'}
+                    ></input>
+                  </InputGroup>
+                </Col>
+              ))}
+            </Row>
+          ))}
+        </Container>
+        {/* <Button onClick={() => setScreenMnemonic(generateMnemonic())}>Recover</Button> */}
+        <input
+          type="file"
+          id="myfile"
+          name="myfile"
+          onChange={e => handleImportCommitmentsAndTransactionsFlow(e)}
+          style={{
+            borderRadius: '3px',
+            padding: '20px 8px 0',
+            outline: 'none',
+            whiteSpace: 'nowrap',
+            cursor: 'pointer',
+            textShadow: '1px 1px #fff',
+            fontWeight: '500',
+            fontSize: '12pt',
+          }}
+        />
+      </Modal.Body>
+      <Modal.Footer>
+        <Button
+          style={{ backgroundColor: '#7b3fe4', border: '0px' }}
+          onClick={() => {
+            // await configureMnemonic(screenMnemonic);
+            recoverWallet();
+            props.onHide();
+          }}
+        >
+          Recover Wallet
+        </Button>
+      </Modal.Footer>
+    </Modal>
+  );
+}
 
 function WalletModal(props) {
   const [, , deriveAccounts] = useContext(UserContext);
@@ -58,7 +223,7 @@ function WalletModal(props) {
                     <FormControl
                       value={
                         typeof screenMnemonic !== 'undefined'
-                          ? screenMnemonic.split(' ')[r * 5 + c]
+                          ? screenMnemonic.split(' ')[r * 5 + (r === 0 ? c : c + 1)]
                           : ''
                       }
                       readOnly
@@ -72,12 +237,21 @@ function WalletModal(props) {
           ))}
         </Container>
         <Button onClick={() => setScreenMnemonic(generateMnemonic())}>Generate Mnemonic</Button>
+        <Button
+          style={{ marginLeft: '10px' }}
+          onClick={() => {
+            props.onHide();
+          }}
+        >
+          Recover Wallet
+        </Button>
       </Modal.Body>
       <Modal.Footer>
         <Button
           onClick={async () => {
             // await configureMnemonic(screenMnemonic);
-            await deriveAccounts(screenMnemonic, DEFAULT_ACCOUNT_NUM);
+            console.log('SCREEN MNEMONICADA: ', screenMnemonic);
+            //await deriveAccounts(screenMnemonic, DEFAULT_ACCOUNT_NUM);
             props.onHide();
           }}
           disabled={typeof screenMnemonic === 'undefined'}
@@ -108,6 +282,7 @@ export default function Wallet() {
   const [tokens, setTokens] = useState(initialTokenState);
   const [state] = useContext(UserContext);
   const [modalShow, setModalShow] = useState(false);
+  const [modalRecoverShow, setModalRecoverShow] = useState(false);
   const [delay, setDelay] = React.useState(50);
 
   useEffect(async () => {
@@ -178,7 +353,14 @@ export default function Wallet() {
           </div>
         </div>
         <div>
-          <WalletModal show={modalShow} onHide={() => setModalShow(false)} />
+          <WalletModal
+            show={modalShow}
+            onHide={() => {
+              setModalShow(false);
+              setModalRecoverShow(true);
+            }}
+          />
+          <WalletModalRecover show={modalRecoverShow} onHide={() => setModalRecoverShow(false)} />
         </div>
       </div>
     </div>
