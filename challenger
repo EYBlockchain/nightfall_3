@@ -1,9 +1,0 @@
-#! /bin/bash
-
-## Usage
-# ./challenger [OPTIONAL ARGUMENTS]
-# OPTIONAL_ARGUMENTS:
-#  --environment : test environment (such us localhost, docker, testnet). If no argument given
-#     challenger is launched in localhost environment
-
-/usr/bin/env node nightfall-challenger/src/index.mjs "${@:1}"

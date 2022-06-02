@@ -108,37 +108,41 @@ make the standard tests fast.
 
 In reality, a value of two transactions per block, although convenient for testing, wouldn't make
 very efficient use of Optimism. A more realistic value is 32 transactions per layer 2 block. This
-value can be configured by the environment variable `TRANSACTIONS_PER_BLOCK`. This is important
-for the Block Gas measurement, which only makes sense for more realistic block sizes.
+value can be configured by the environment variable `TRANSACTIONS_PER_BLOCK`. This is important for
+the Block Gas measurement, which only makes sense for more realistic block sizes.
 
 To measure the Block Gas used per transaction, export the `TRANSACTIONS_PER_BLOCK` variable in both
-the terminal which will run nightfall and the terminal from which the test will be run, setting it to the
-value at which you want to run the test (32 in the example here):
+the terminal which will run nightfall and the terminal from which the test will be run, setting it
+to the value at which you want to run the test (32 in the example here):
 
 ```sh
 export TRANSACTIONS_PER_BLOCK=32
 ```
-Any reasonable value will work but they must be the same for both nightfall and the test.
-Obviously, it only makes sense to compare performance at the same value of `TRANSACTIONS_PER_BLOCK`.
+
+Any reasonable value will work but they must be the same for both nightfall and the test. Obviously,
+it only makes sense to compare performance at the same value of `TRANSACTIONS_PER_BLOCK`.
 
 Then start nightfall:
 
 ```sh
 ./start-nightfall -g -d -s
 ```
+
 Then, in the other terminal window run the test
 
 ```sh
 npm run test-gas
 ```
+
 The test will print out values of gas used for each type of transaction as it progresses.
 
-Do not forget to set the `TRANSACTIONS_PER_BLOCK` back to 2 when you have finished or the other tests
-may fail in strange ways.
+Do not forget to set the `TRANSACTIONS_PER_BLOCK` back to 2 when you have finished or the other
+tests may fail in strange ways.
 
 ```sh
 export TRANSACTIONS_PER_BLOCK=2
 ```
+
 ### Test chain reorganisations
 
 In Layer 2 solutions, Layer 2 state is held off-chain but created by a series of Layer 1
@@ -196,18 +200,12 @@ Nightfall_3 provides a CLI (which makes use of the SDK) so that you can exercise
 use it:
 
 - run up nightfall_3 as described above and wait for the deployment to complete;
-- open another terminal and type `./proposer`. This will start a small application running which
-  will sign block proposal transactions;
-- open up a third terminal and type `./nf`. This will start the CLI. It should be fairly self
-  explanatory but be mindful that you can only use the output of previous transactions once they
-  have been incorporated in a Layer 2 block - for example you need you at least two deposits to be
-  able to do a transfer because by default two deposits is the minimum needed to fill a block.
-- You can also run a Challenge signer if you wish (`./challenger`) but it is of limited use because
-  NF_3 will reject locally-created invalid transactions and so you will never get to the stage of
-  something challengeable making it on chain.
-
+- in the `apps` folder there are small applications like `proposer` or `challenger` you can run with
+  `npm start`. For example, `proposer` will start a small application running which will sign block
+  proposal transactions;
 
 ## Limitations
+
 Nightfall uses the G16 proof system, and we believe it is
 [not vulnerable](./doc/G16-malleability.md) to its malleability.
 
