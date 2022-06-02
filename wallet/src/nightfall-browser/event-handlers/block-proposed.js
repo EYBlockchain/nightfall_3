@@ -38,15 +38,12 @@ async function blockProposedEventHandler(data, ivks, nsks) {
   const latestTree = await getTreeByBlockNumberL2(block.blockNumberL2 - 1);
   const blockCommitments = transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat();
 
-  let tempBlockSaved = false;
   if ((await countTransactionHashes(block.transactionHashes)) > 0) {
     await saveBlock({
       blockNumber: currentBlockCount,
       transactionHashL1,
       ...block,
     });
-    await Promise.all(transactions.map(t => saveTransaction({ transactionHashL1, ...t })));
-    tempBlockSaved = true;
   }
 
   const dbUpdates = transactions.map(async transaction => {
@@ -88,14 +85,14 @@ async function blockProposedEventHandler(data, ivks, nsks) {
     await Promise.all(storeCommitments).catch(function (err) {
       logger.info(err);
     }); // control errors when storing commitments in order to ensure next Promise being executed
-    if (!tempBlockSaved) await Promise.all(tempTransactionStore);
+
+    await Promise.all(tempTransactionStore);
     // Update timestamps
     await updateTransactionTime(
       transactions.map(t => t.transactionHash),
       blockTimestamp,
     );
     return [
-      Promise.all(storeCommitments),
       markOnChain(nonZeroCommitments, block.blockNumberL2, data.blockNumber, data.transactionHash),
       markNullifiedOnChain(
         nonZeroNullifiers,
