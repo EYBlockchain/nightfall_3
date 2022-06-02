@@ -13,9 +13,9 @@ RUN npm ci
 WORKDIR /app/proposer
 RUN apt-get update -y
 RUN apt-get install -y netcat-openbsd
-COPY nightfall-proposer/package*.json ./
-COPY nightfall-proposer/src src
-COPY nightfall-proposer/docker-entrypoint.sh docker-entrypoint.sh
+COPY apps/proposer/package*.json ./
+COPY apps/proposer/src src
+COPY apps/proposer/docker-entrypoint.sh docker-entrypoint.sh
 
 # websocket port 8080
 EXPOSE 8080

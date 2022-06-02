@@ -1,10 +1,10 @@
 {
-  "name": "proposer",
+  "name": "synchronizer",
   "version": "1.0.0",
-  "description": "'makes a container with proposer functionality'",
+  "description": "Exposes several endpoints related to the optimist information",
   "main": "index.js",
   "scripts": {
-    "start": "node --trace-warnings src/index.mjs",
+    "start": "NODE_CONFIG_DIR=../../config node --trace-warnings src/app.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "westlad",
