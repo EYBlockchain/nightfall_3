@@ -61,10 +61,6 @@ const addObjectStoreToIndexedDB = (databaseName, arrayOfObjects, nameOfObjectSto
         const objStore = transaction.objectStore(nameOfObjectStore);
         const request = objStore.add(obj, obj._id);
 
-        request.onsuccess = function () {
-          console.log(`${nameOfObjectStore} added to the store ${request.result}`);
-        };
-
         request.onerror = function () {
           reject(request.error);
         };

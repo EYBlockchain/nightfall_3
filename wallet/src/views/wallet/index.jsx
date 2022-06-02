@@ -75,17 +75,13 @@ function WalletModalRecover(props) {
   };
 
   const concatAllWords = () => {
-    console.log('MEN: ', mnemonicRecArray.length);
-    console.log('MEN: ', mnemonicRecArray.length);
     return new Promise(resolve => {
       let mnemonic = '';
       mnemonicRecArray.map((objRow, indexR) => {
         objRow.map((objCol, indexC) => {
           if (indexR === mnemonicRecArray.length - 1 && indexC === objRow.length - 1) {
-            console.log('ULTIMO');
             mnemonic = mnemonic + objCol.word;
           } else {
-            console.log('NAO ULTIMO');
             mnemonic = mnemonic + objCol.word + ' ';
           }
         });
@@ -96,7 +92,6 @@ function WalletModalRecover(props) {
 
   const recoverWallet = async () => {
     let mnemonic = await concatAllWords();
-    console.log('AQUIII: ', mnemonic);
     await deriveAccounts(
       'predict shy uncover kid found discover discover original inherit empty analyst method',
       DEFAULT_ACCOUNT_NUM,
@@ -127,7 +122,6 @@ function WalletModalRecover(props) {
       });
       return newStateRow;
     });
-    console.log('MNEMONIC: ', mnemonicRecArray);
   };
 
   return (
@@ -250,8 +244,7 @@ function WalletModal(props) {
         <Button
           onClick={async () => {
             // await configureMnemonic(screenMnemonic);
-            console.log('SCREEN MNEMONICADA: ', screenMnemonic);
-            //await deriveAccounts(screenMnemonic, DEFAULT_ACCOUNT_NUM);
+            await deriveAccounts(screenMnemonic, DEFAULT_ACCOUNT_NUM);
             props.onHide();
           }}
           disabled={typeof screenMnemonic === 'undefined'}
@@ -319,7 +312,6 @@ export default function Wallet() {
   }, []);
 
   useInterval(async () => {
-    console.log('l2Balance', state.compressedPkd);
     const l2BalanceObj = await getWalletBalance(state.compressedPkd);
     const updatedState = await Promise.all(
       tokens.map(async t => {
