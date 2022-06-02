@@ -32,7 +32,7 @@ services:
       USE_EXTERNAL_NODE: 'true'
       AUTOSTART_RETRIES: 600
       ETH_NETWORK: ${ETH_NETWORK}
-      CONTRACT_FILES_URL: https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com
+      CONTRACT_FILES_URL: ${CONTRACT_FILES_URL}
     command: ['npm', 'run', 'dev']
 
   worker:
@@ -45,9 +45,9 @@ services:
       - nightfall_network
     environment:
       LOG_LEVEL: info
-      MPC: ${MPC}
+      MPC: 'true'
       ETH_NETWORK: ${ETH_NETWORK}
-      CIRCUIT_FILES_URL: https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com
+      CIRCUIT_FILES_URL: ${CIRCUIT_FILES_URL}
 
   rabbitmq1:
     image: rabbitmq

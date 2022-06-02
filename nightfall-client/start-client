@@ -1,7 +1,22 @@
 #! /bin/bash
 
+if [ -f client.env ]; then
+  grep -v '^#' client.env
+else
+  echo "client.env does not exist. You need to define the client.env with the needed variables to run the client."
+  exit 1
+fi
+
+# Show env vars
+grep -v '^#' client.env
+
+# Export env vars
+export $(grep -v '^#' client.env | xargs)
+
 VOLUME_LIST=$(docker volume ls -q)
 FILE=
+
+echo "${BLOCKCHAIN_URL}"
 
 usage()
 {
@@ -20,9 +35,9 @@ fi
 rm -f ${ENV_FILE}
 while [ -n "$1" ]; do
   case $1 in
-      -c  | --client )              FILE="-f docker-compose.client.yml";
+      -c  | --client )              FILE="-f ../docker-compose.client.yml";
                                     ;;
-      -d  | --dev )                 DEV="-f docker-compose.client.dev.yml"
+      -d  | --dev )                 DEV="-f ../docker-compose.client.dev.yml"
                                     ;;
       -h  | --help )                usage
                                     ;;
@@ -52,7 +67,7 @@ if [[ $(echo $VOLUME_LIST | grep nightfall_3_build) ]]; then
   docker volume rm nightfall_3_build
 fi
 
-DIR=./common-files/node_modules
+DIR=../common-files/node_modules
 if [[ -d "$DIR" ]]; then
   rm -dr common-files/node_modules
 fi
