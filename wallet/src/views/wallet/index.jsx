@@ -26,6 +26,7 @@ import {
   convertFileToObject,
   addObjectStoreToIndexedDB,
 } from '../../useCases/CommitmentsBackup/import';
+import { exportIndexdDB } from '../../useCases/CommitmentsBackup/export.js';
 
 const supportedTokens = importTokens();
 
@@ -39,7 +40,7 @@ This is a modal to detect if a wallet has been initialized
 
 function WalletModalRecover(props) {
   const [, , deriveAccounts] = useContext(UserContext);
-  const [screenMnemonic, setScreenMnemonic] = useState();
+  const [objectStore, setObjectStore] = useState();
   const [backupFile, setBackupFile] = useState();
   const [mnemonicRecArray, setMnemonicRecArray] = useState([
     [
@@ -68,7 +69,7 @@ function WalletModalRecover(props) {
    * @description got the file choosen by the input for upload
    * file and handle the import commitments and backup flow.
    */
-  const handleImportCommitmentsAndTransactionsFlow = async event => {
+  const uploadBackupFile = async event => {
     event.preventDefault();
     let objectRecovered = await convertFileToObject(event.target.files[0]);
     setBackupFile(objectRecovered);
@@ -92,14 +93,46 @@ function WalletModalRecover(props) {
 
   const recoverWallet = async () => {
     let mnemonic = await concatAllWords();
-    await deriveAccounts(
-      'predict shy uncover kid found discover discover original inherit empty analyst method',
-      DEFAULT_ACCOUNT_NUM,
-    );
-    setObjectStore();
+    await deriveAccounts(mnemonic, DEFAULT_ACCOUNT_NUM);
+
+    /**
+     * TODO
+     * Conditional to verify if the commitments keys match with the keys derivated
+     * from the mnemonic
+     */
+    // new Promise(async resolve => {
+    //   let flag = false;
+    //   let myIndexedDB;
+
+    //   while (!flag) {
+    //     try {
+    //       myIndexedDB = indexedDB.open('nightfall_commitments', 1);
+    //       flag = true;
+    //     } catch (e) {
+    //       flag = false;
+    //     }
+    //   }
+
+    //   myIndexedDB.onerror = function () {
+    //     reject(myIndexedDB.error);
+    //   };
+
+    //   flag = false;
+
+    //   const db = myIndexedDB.result;
+    //   let objStore;
+    //   while (!flag) {
+    //     if (db.transaction(['keys'], 'readwrite').objectStore('keys')) {
+    //       resolve(db.transaction(['keys'], 'readwrite').objectStore('keys'));
+    //       console.log('E AQUI NADA?? ', db.transaction(['keys'], 'readwrite').objectStore('keys'));
+    //       flag = true;
+    //     }
+    //   }
+    // }).then(res => console.log('ESSA::::: ', objectStore));
+    setIndexedDBObjectsStore();
   };
 
-  const setObjectStore = async () => {
+  const setIndexedDBObjectsStore = async () => {
     let commitments = await getIndexedDBObjectRowsFromBackupFile(backupFile, 'commitments');
     await addObjectStoreToIndexedDB('nightfall_commitments', commitments, 'commitments');
     let transactions = await getIndexedDBObjectRowsFromBackupFile(backupFile, 'transactions');
@@ -162,7 +195,7 @@ function WalletModalRecover(props) {
           type="file"
           id="myfile"
           name="myfile"
-          onChange={e => handleImportCommitmentsAndTransactionsFlow(e)}
+          onChange={e => uploadBackupFile(e)}
           style={{
             borderRadius: '3px',
             padding: '20px 8px 0',
@@ -244,6 +277,7 @@ function WalletModal(props) {
         <Button
           onClick={async () => {
             // await configureMnemonic(screenMnemonic);
+            console.log('SCREEN MNEMO: ', screenMnemonic);
             await deriveAccounts(screenMnemonic, DEFAULT_ACCOUNT_NUM);
             props.onHide();
           }}

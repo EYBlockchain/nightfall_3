@@ -14,7 +14,6 @@ import checkMarkYes from '../../assets/lottie/check-mark-yes.json';
 import SendModal from '../Modals/sendModal';
 
 import '../../styles/assets.scss';
-import { exportIndexdDB } from '../../useCases/CommitmentsBackup/export';
 
 const Header = styled.div`
   display: flex;
@@ -167,22 +166,6 @@ export default function Assets({ tokenList }) {
     0,
   );
 
-  const handleExportIndedexDB = async () => {
-    const exportedDB = await exportIndexdDB('nightfall_commitments');
-    const filteredTables = exportedDB.filter(
-      arr => arr.table === 'commitments' || arr.table === 'transactions',
-    );
-    downloadFile(JSON.stringify(filteredTables));
-  };
-
-  function downloadFile(content) {
-    const a = document.createElement('a');
-    const file = new Blob([content], { type: 'text/plain' });
-    a.href = URL.createObjectURL(file);
-    a.download = 'json-file-name.json';
-    a.click();
-  }
-
   return (
     <div className="dashboardTopSection">
       <div className="container">
@@ -226,7 +209,6 @@ export default function Assets({ tokenList }) {
             </Link>
           </button>
         </div>
-        <button onClick={() => handleExportIndedexDB()}>Download</button>
       </div>
       <ReceiveModal show={modalShow} onHide={() => setModalShow(false)} />
       <SendModal
