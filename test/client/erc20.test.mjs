@@ -35,7 +35,8 @@ describe('ERC20 tests', () => {
   let remainingBalance;
 
   before(async () => {
-    console.log('ENV', environment);
+    logger.info('Environment', environment);
+    // console.log('ENV', environment);
     await nf3Users[0].init(mnemonics.user1);
     await nf3Users[1].init(mnemonics.user2);
     erc20Address = '0x499d11e0b6eac7c0593d8fb292dcbbf815fb29ae'; // MATIC
@@ -49,7 +50,7 @@ describe('ERC20 tests', () => {
       let beforePkdBalance = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance;
       if (!beforePkdBalance) beforePkdBalance = 0;
 
-      logger.info(`Initial balance: ${beforePkdBalance}`);
+      logger.debug(`Initial L2 balance: ${beforePkdBalance}`);
       // We do txPerBlock deposits of 10 each
       await depositNTransactions(
         nf3Users[0],
@@ -61,9 +62,10 @@ describe('ERC20 tests', () => {
         fee,
       );
       eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-      const afterPkdBalance = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance;
+      let afterPkdBalance = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance;
+      if (!afterPkdBalance) afterPkdBalance = 0;
       remainingBalance = txPerBlock * transferValue - (afterPkdBalance - beforePkdBalance);
-      logger.info(`Remaining balance: ${remainingBalance}`);
+      logger.debug(`Remaining L2 balance not in a block yet: ${remainingBalance}`);
       expect(afterPkdBalance).to.be.greaterThan(beforePkdBalance);
     });
   });

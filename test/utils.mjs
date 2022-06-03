@@ -352,9 +352,9 @@ export const depositNTransactions = async (nf3, N, ercAddress, tokenType, value,
           e.message.includes('nonce too low') ||
           e.message.includes('replacement transaction underpriced')
         ) {
-          console.log(`Trying again...${tries}`);
           ok = false;
           tries -= 1;
+          logger.debug(`Transaction failed. Trying again...${tries} tries left`);
           await new Promise(resolving => setTimeout(resolving, 10000));
         }
       }
