@@ -47,10 +47,9 @@ describe('ERC20 tests', () => {
 
   describe('Deposits', () => {
     it('should increment the balance after deposit some ERC20 crypto', async function () {
-      let beforePkdBalance = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance;
-      if (!beforePkdBalance) beforePkdBalance = 0;
+      const before = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0;
 
-      logger.debug(`Initial L2 balance: ${beforePkdBalance}`);
+      logger.debug(`Initial L2 balance: ${before}`);
       // We do txPerBlock deposits of 10 each
       await depositNTransactions(
         nf3Users[0],
@@ -62,17 +61,19 @@ describe('ERC20 tests', () => {
         fee,
       );
       eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-      let afterPkdBalance = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance;
-      if (!afterPkdBalance) afterPkdBalance = 0;
-      remainingBalance = txPerBlock * transferValue - (afterPkdBalance - beforePkdBalance);
+      // wait a bit to blockProposed be processed by the client
+      await new Promise(resolving => setTimeout(resolving, 10000));
+      const after = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0;
+      remainingBalance = txPerBlock * transferValue - (after - before);
+      logger.debug(after, before, remainingBalance);
       logger.debug(`Remaining L2 balance not in a block yet: ${remainingBalance}`);
-      expect(afterPkdBalance).to.be.greaterThan(beforePkdBalance);
+      expect(after).to.be.greaterThan(before);
     });
   });
 
   describe('Transfers', () => {
     it('should send a single ERC20 transfer directly to a proposer', async function () {
-      const before = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance;
+      const before = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0;
 
       const res = await nf3Users[0].transfer(
         true,
@@ -85,7 +86,7 @@ describe('ERC20 tests', () => {
       );
       expect(res).to.be.equal(200);
 
-      const after = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance;
+      const after = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0;
       logger.debug(after, before, before + remainingBalance - transferValue);
       expect(after).to.be.lessThan(before);
       expect(after).to.satisfy(balance => {
@@ -96,7 +97,7 @@ describe('ERC20 tests', () => {
 
   describe('Normal withdraws from L2', () => {
     it('should withdraw from L2, checking for missing commitment', async function () {
-      const before = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance;
+      const before = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0;
       const rec = await nf3Users[0].withdraw(
         true,
         erc20Address,
@@ -107,7 +108,7 @@ describe('ERC20 tests', () => {
       );
       expect(rec).to.be.equal(200);
 
-      const after = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance;
+      const after = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0;
       logger.debug(after, before, before + remainingBalance - transferValue * 2);
       expect(after).to.satisfy(balance => {
         return balance < before || balance === before + remainingBalance - transferValue * 2;
