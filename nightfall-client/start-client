@@ -10,7 +10,7 @@ else
 fi
 
 VOLUME_LIST=$(docker volume ls -q)
-FILE=
+FILE="-f ../docker-compose.client.yml"
 
 usage()
 {
@@ -19,18 +19,10 @@ usage()
   echo "  -d or --dev; to bind mount the filesystem and use it for development"
 }
 
-# select a Geth or Ganache client
-if [ -z "$1" ]; then
-  usage
-  exit 1
-fi
-
 # delete env file
 rm -f ${ENV_FILE}
 while [ -n "$1" ]; do
   case $1 in
-      -c  | --client )              FILE="-f ../docker-compose.client.yml";
-                                    ;;
       -d  | --dev )                 DEV="-f ../docker-compose.client.dev.yml"
                                     ;;
       -h  | --help )                usage

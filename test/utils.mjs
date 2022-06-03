@@ -339,9 +339,31 @@ export const expectTransaction = res => {
 export const depositNTransactions = async (nf3, N, ercAddress, tokenType, value, tokenId, fee) => {
   const depositTransactions = [];
   for (let i = 0; i < N; i++) {
-    depositTransactions.push(nf3.deposit(ercAddress, tokenType, value, tokenId, fee));
+    let res;
+    let tries = 3;
+    let ok = false;
+
+    while (!ok && tries > 0) {
+      try {
+        res = await nf3.deposit(ercAddress, tokenType, value, tokenId, fee);
+        ok = true;
+      } catch (e) {
+        if (
+          e.message.includes('nonce too low') ||
+          e.message.includes('replacement transaction underpriced')
+        ) {
+          console.log(`Trying again...${tries}`);
+          ok = false;
+          tries -= 1;
+          await new Promise(resolving => setTimeout(resolving, 10000));
+        }
+      }
+    }
+    expectTransaction(res);
+    depositTransactions.push(res);
+    await new Promise(resolving => setTimeout(resolving, 1000));
   }
-  return Promise.all(depositTransactions);
+  return depositTransactions;
 };
 
 export const transferNTransactions = async (
