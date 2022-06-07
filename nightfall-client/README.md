@@ -50,7 +50,7 @@ To run the script with existing images of the different services based on the
 `docker-compose.client.yml` of the Polygon Nightfall root folder:
 
 ```
-./start-client -c
+./start-client
 ```
 
 A developer who is adding some functionality or fixing some bug in the `nightfall-client` repository
@@ -58,7 +58,7 @@ should run the script in development mode with the changes in his local `nightfa
 repository with binding his local files:
 
 ```
-./start-client -c -d
+./start-client -d
 ```
 
 Also for development purposes you can pass CIRCUIT_FILES_URL and CONTRACT_FILES_URL.

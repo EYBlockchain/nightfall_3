@@ -15,7 +15,6 @@ FILE="-f ../docker-compose.client.yml"
 usage()
 {
   echo "Usage:"
-  echo "  -c or --client; for client service"
   echo "  -d or --dev; to bind mount the filesystem and use it for development"
 }
 
