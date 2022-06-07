@@ -115,7 +115,21 @@ services:
       - type: bind
         source: ./config/default.js
         target: /app/config/default.js
-  # proposer:
-  #   build:
-  #     dockerfile: proposer.Dockerfile
-  #     context: ../../
+
+  administrator:
+    build:
+      dockerfile: admin.Dockerfile
+      context: .
+    volumes:
+      - type: bind
+        source: ./nightfall-administrator/src
+        target: /app/admin/src
+      - type: bind
+        source: ./common-files/utils
+        target: /app/common-files/utils
+      - type: bind
+        source: ./common-files/classes
+        target: /app/common-files/classes
+      - type: bind
+        source: ./config/default.js
+        target: /app/config/default.js

@@ -4,7 +4,8 @@
   "description": "Carries out smart-contract administrator functions",
   "main": "index.js",
   "scripts": {
-    "test": "test"
+    "test": "test",
+    "start": "node --trace-warnings src/index.mjs"
   },
   "repository": {
     "type": "git",
@@ -23,6 +24,7 @@
   "dependencies": {
     "chalk": "^5.0.1",
     "clear": "^0.1.0",
+    "config": "^3.3.7",
     "figlet": "^1.5.2",
     "inquirer": "^8.2.4",
     "web3": "^1.7.3",

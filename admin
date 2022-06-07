@@ -1,3 +1,0 @@
-#! /bin/bash
-
-/usr/bin/env node nightfall-administrator/src/index.mjs "${@:1}"

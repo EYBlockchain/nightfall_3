@@ -179,6 +179,20 @@ services:
         source: proving_files
         target: /app/public/
 
+  administrator:
+    image: ghcr.io/eyblockchain/nightfall3-administrator:latest
+    networks:
+      - nightfall_network
+    volumes:
+      - type: volume
+        source: build
+        target: /app/build/
+    environment:
+      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_PORT: 8546
+      LOG_LEVEL: warn
+      ETH_NETWORK: blockchain1
+
 volumes:
   mongodb1: null
   mongodb2: null

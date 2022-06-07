@@ -43,7 +43,7 @@ export async function askQuestions(ethereumSigningKey) {
       type: 'list',
       message: 'What would you like to do?',
       choices: ['Get token restrictions', 'Set token restrictions', 'Exit'],
-      when: answers => !!answers.privateKey,
+      when: answers => !!answers.privateKey || !!ethereumSigningKey,
     },
     {
       name: 'tokenName',
@@ -52,7 +52,22 @@ export async function askQuestions(ethereumSigningKey) {
         return getTokenNames();
       },
       message: 'Choose a token:',
-      when: answers => answers.task === 'Get token restrictions',
+      when: answers =>
+        answers.task === 'Get token restrictions' || answers.task === 'Set token restrictions',
+    },
+    {
+      name: 'depositRestriction',
+      type: 'input',
+      message: 'Please provide the deposit restriction in base units (ignoring decimalisation)',
+      when: answers => answers.task === 'Set token restrictions',
+      validate: input => Number.isInteger(Number(input)),
+    },
+    {
+      name: 'withdrawRestriction',
+      type: 'input',
+      message: 'Please provide the withdraw restriction in base units (ignoring decimalisation)',
+      when: answers => answers.task === 'Set token restrictions',
+      validate: input => Number.isInteger(Number(input)),
     },
   ];
   return inquirer.prompt(questions);

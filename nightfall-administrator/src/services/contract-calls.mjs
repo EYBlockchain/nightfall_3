@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 import config from 'config';
 import { waitForContract } from '../../../common-files/utils/contract.mjs';
 
@@ -11,8 +12,8 @@ export async function getTokenRestrictions(tokenName) {
   let withdrawRestrictions;
   for (const token of RESTRICTIONS.tokens[process.env.ETH_NETWORK]) {
     if (token.name === tokenName) {
-      depositRestrictions = shieldContractInstance.getRestrictions(token.address, 0).call();
-      withdrawRestrictions = shieldContractInstance.getRestrictions(token.address, 1).call();
+      depositRestrictions = shieldContractInstance.methods.getRestriction(token.address, 0).call();
+      withdrawRestrictions = shieldContractInstance.methods.getRestriction(token.address, 1).call();
     }
   }
   return Promise.all([depositRestrictions, withdrawRestrictions]);
