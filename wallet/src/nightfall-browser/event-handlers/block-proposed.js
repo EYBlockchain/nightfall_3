@@ -33,18 +33,10 @@ async function blockProposedEventHandler(data, ivks, nsks) {
   console.log(`Received Block Proposed event: ${JSON.stringify(data)}`);
   // ivk will be used to decrypt secrets whilst nsk will be used to calculate nullifiers for commitments and store them
   const { blockNumber: currentBlockCount, transactionHash: transactionHashL1 } = data;
-  // const { transactions, block } = await getProposeBlockCalldata(data);
   const { transactions, block, blockTimestamp } = data;
   const latestTree = await getTreeByBlockNumberL2(block.blockNumberL2 - 1);
   const blockCommitments = transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat();
-
-  if ((await countTransactionHashes(block.transactionHashes)) > 0) {
-    await saveBlock({
-      blockNumber: currentBlockCount,
-      transactionHashL1,
-      ...block,
-    });
-  }
+  let isTxDecrypt = false;
 
   const dbUpdates = transactions.map(async transaction => {
     // filter out non zero commitments and nullifiers
@@ -68,6 +60,7 @@ async function blockProposedEventHandler(data, ivks, nsks) {
           if (Object.keys(commitment).length === 0)
             logger.info("This encrypted message isn't for this recipient");
           else {
+            isTxDecrypt = true;
             storeCommitments.push(storeCommitment(commitment, nsks[i]));
             tempTransactionStore.push(
               saveTransaction({
@@ -105,6 +98,15 @@ async function blockProposedEventHandler(data, ivks, nsks) {
 
   // await Promise.all(toStore);
   await Promise.all(dbUpdates);
+
+  if (isTxDecrypt || (await countTransactionHashes(block.transactionHashes)) > 0) {
+    await saveBlock({
+      blockNumber: currentBlockCount,
+      transactionHashL1,
+      ...block,
+    });
+  }
+
   const updatedTimber = Timber.statelessUpdate(
     latestTree,
     blockCommitments,
