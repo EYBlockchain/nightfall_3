@@ -76,6 +76,7 @@ echo "Launching optimist..."
 docker run --rm -d \
   --name optimist_1 \
   -v ${VOLUMES}/build:/app/build \
+  -p 8080:8080 \
   -e MONGO_URL=${MONGO_URL} \
   -e MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_PASSWORD} \
   -e MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_USERNAME} \
