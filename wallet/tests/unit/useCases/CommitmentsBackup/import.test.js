@@ -1,6 +1,4 @@
-// import Dexie from 'dexie';
 import indexedDB from 'fake-indexeddb';
-// import IDBKeyRange from 'fake-indexeddb/lib/FDBKeyRange';
 
 import {
   addObjectStoreToIndexedDB,
@@ -53,52 +51,47 @@ describe('Tests about file', () => {
 });
 
 describe('Tests about indexedDB', () => {
+  let object;
+  const OBJ_STORE_NAME = 'commitments';
   beforeEach(async () => {
     const request = indexedDB.open('MyDatabase', 1);
-    await new Promise(resolve => {
-      request.onupgradeneeded = event => {
-        const db = event.target.result;
 
-        // Create an objectStore for this database
-        const objectStore = db.createObjectStore('commitments', { keyPath: 'key' });
+    request.onupgradeneeded = event => {
+      const db = event.target.result;
 
-        // define what data items the objectStore will contain
-        objectStore.createIndex('key', 'key', { unique: false });
-        objectStore.createIndex('value', 'value', { unique: false });
+      // Create an objectStore for this database
+      const objectStore = db.createObjectStore(OBJ_STORE_NAME, { keyPath: 'key' });
 
-        resolve(objectStore);
-      };
-    });
+      // define what data items the objectStore will contain
+      objectStore.createIndex('key', 'key', { unique: false });
+      objectStore.createIndex('value', 'value', { unique: false });
+    };
 
-    // new Dexie('MyDatabase', { indexedDB, IDBKeyRange });
-
-    // const db = await new Dexie('MyDatabase').open();
-    // db.version(1).stores({
-    //   commitments: 'id++,table,rows',
-    //   transactions: 'id++,table,rows',
-    // });
-  });
-  test('Should test indexedDB', async () => {
     window.indexedDB = indexedDB;
 
     const file = new Blob([JSON.stringify(mockObject)], { type: 'text/plain' });
     expect(file).not.toEqual(mockObject);
-    const object = await convertFileToObject(file);
-    const rows = await getIndexedDBObjectRowsFromBackupFile(object, 'commitments');
-    await addObjectStoreToIndexedDB('MyDatabase', rows, 'commitments');
+    object = await convertFileToObject(file);
+  });
+  test('Should add objects in the indexedDB objectStore chosen', async () => {
+    const rows = await getIndexedDBObjectRowsFromBackupFile(object, OBJ_STORE_NAME);
+    await addObjectStoreToIndexedDB('MyDatabase', rows, OBJ_STORE_NAME);
+    const request = indexedDB.open('MyDatabase', 1);
+
+    request.onsuccess = async function () {
+      // store the result of opening the database in the db variable.
+      // This is used a lot below
+      const db = request.result;
+      const transaction = db.transaction([OBJ_STORE_NAME], 'readwrite');
+      const objectStore = transaction.objectStore(OBJ_STORE_NAME);
+      const objectStoreRequest = objectStore.get('1');
+      objectStoreRequest.onsuccess = function () {
+        // report the success of our request
+        const objResult = objectStoreRequest.result;
+        expect(objResult.key).toEqual('1');
+      };
+    };
   });
 
-  // afterEach(() => {
-  //   const request = indexedDB.open('MyDatabase', 1);
-  //   // eslint-disable-next-line no-unused-vars
-  //   request.onsuccess = function (event) {
-  //     // store the result of opening the database in the db variable.
-  //     // This is used a lot below
-  //     const db = request.result;
-  //     const transaction = db.transaction(['commitments'], 'readwrite');
-  //     const objectStore = transaction.objectStore('commitments');
-  //     const objectStoreRequest = objectStore.get('1');
-  //     console.log('OLHA O DANADO: ', objectStoreRequest);
-  //   };
-  // });
+  afterEach(() => {});
 });
