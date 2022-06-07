@@ -11,7 +11,7 @@ const supportedTokens = (): TokenType[] => {
       return testnetTokens.tokens;
     case 'production':
     case 'mainnet':
-        return mainnetTokens.tokens;
+      return mainnetTokens.tokens;
     default: {
       return localTokens.tokens;
     }
