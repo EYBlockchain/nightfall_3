@@ -102,3 +102,8 @@ dist
 
 # TernJS port file
 .tern-port
+
+# Volumes
+volumes/
+hash.txt
+optimist.env
