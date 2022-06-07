@@ -179,7 +179,6 @@ services:
         source: proving_files
         target: /app/public/
 
-
 volumes:
   mongodb1: null
   mongodb2: null

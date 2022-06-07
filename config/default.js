@@ -48,10 +48,6 @@ module.exports = {
     `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`,
   ETH_PRIVATE_KEY: process.env.ETH_PRIVATE_KEY, // owner's/deployer's private key
   ETH_ADDRESS: process.env.ETH_ADDRESS,
-  OPTIMIST_HOST: process.env.OPTIMIST_HOST || 'optimist',
-  OPTIMIST_PORT: process.env.OPTIMIST_PORT || 80,
-  PROPOSER_HOST: process.env.PROPOSER_HOST || 'proposer',
-  PROPOSER_PORT: process.env.PROPOSER_PORT || 8080,
   WEB3_OPTIONS: {
     gas: process.env.GAS || 8000000,
     gasPrice: process.env.GAS_PRICE || '20000000000',

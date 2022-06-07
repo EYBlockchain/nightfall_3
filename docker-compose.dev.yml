@@ -115,3 +115,7 @@ services:
       - type: bind
         source: ./config/default.js
         target: /app/config/default.js
+  # proposer:
+  #   build:
+  #     dockerfile: proposer.Dockerfile
+  #     context: ../../
