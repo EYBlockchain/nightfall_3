@@ -16,9 +16,11 @@ usage()
   echo "  -d or --delete_db; delete mongo db contents"
 }
 
+MONGODB=/var/lib/nightfall/mongodb
+
 while [ -n "$1" ]; do
   case $1 in
-      -d  | --delete_db )           sudo rm -rf ${VOLUMES}/mongodb/*
+      -d  | --delete_db )           sudo rm -rf ${MONGODB}
 	                            ;;
       -h  | --help )                usage
                                     ;;
@@ -30,9 +32,11 @@ done
 
 
 VOLUMES=${PWD}/volumes
+mkdir -p /var/lib/nightfall
+mkdir -p ${MONGODB}
+
 S3_CONTRACTS=nightfallv3-proving-files.s3.eu-west-1.amazonaws.com/testnet/build
 mkdir -p ${VOLUMES}
-mkdir -p ${VOLUMES}/mongodb
 mkdir -p ${VOLUMES}/build
 mkdir -p ${VOLUMES}/build/contracts
 
@@ -59,7 +63,7 @@ docker stop optimist_1
 docker rm optimist_1
 echo "Launching mongodb container..."
 docker run -d \
- -v ${VOLUMES}/mongodb:/data/db \
+ -v ${MONGODB}:/data/db \
  -p 27017:27017 \
  --name mongodb_1 \
  -e MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD} \
