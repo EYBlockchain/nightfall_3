@@ -1,5 +1,4 @@
 #! /bin/bash
-set -x
 
 if [ -f optimist.env ]; then
   grep -v '^#' optimist.env
@@ -32,8 +31,8 @@ done
 
 
 VOLUMES=${PWD}/volumes
-mkdir -p /var/lib/nightfall
-mkdir -p ${MONGODB}
+sudo mkdir -p /var/lib/nightfall
+sudo mkdir -p ${MONGODB}
 
 S3_CONTRACTS=nightfallv3-proving-files.s3.eu-west-1.amazonaws.com/testnet/build
 mkdir -p ${VOLUMES}
@@ -49,6 +48,7 @@ fi
 DIFF=$(cmp ${VOLUMES}/build/hash.txt hash.txt)
 
 if [ "${DIFF}" ]; then
+  echo "Copying contracts"
   while read -r remote; do
     HASH=$(echo $remote | awk '{print $1}')
     CONTRACT_NAME=$(echo $remote | awk '{print $2}')
