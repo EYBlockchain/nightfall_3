@@ -55,4 +55,5 @@ app.use('/contract-address', contracts);
 app.listen(SYNCHRONIZER_PORT);
 
 startSynchronizer(nf3);
+/* ignore unused exports */
 export default app;

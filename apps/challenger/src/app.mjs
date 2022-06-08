@@ -35,4 +35,5 @@ app.listen(CHALLENGER_PORT);
 
 startChallenger(nf3);
 
+/* ignore unused exports */
 export default app;

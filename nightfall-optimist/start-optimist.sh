@@ -13,16 +13,28 @@ usage()
 {
   echo "Usage:"
   echo "  -d or --delete_db; delete mongo db contents"
+  echo "  -e or --environment; start optimist on mainnet or testnet."
+  echo "     If not added, it will start optimist to local setup created wih ./start-nightfall"
 }
 
+# MONGODB volume
 MONGODB=/var/lib/nightfall/mongodb
+sudo mkdir -p /var/lib/nightfall
+sudo mkdir -p ${MONGODB}
 
 while [ -n "$1" ]; do
   case $1 in
       -d  | --delete_db )           sudo rm -rf ${MONGODB}
 	                            ;;
-      -e  | --environment )         DEPLOYMENT="$1"; shift
-	                            ;;
+      -e  | --environment )         DEPLOYMENT="$1"; 
+                                    if [ "${DEPLOYMENT}" != "tesnet" ] && [ "${DEPLOYMENT}" != "mainnet" ]; then
+                                       echo "Incorrect Deployment ${DEPLOYMENT}"
+                                       usage
+                                       exit 0
+                                    elif [ "${DEPLOYMENT}" = "mainnet" ]; then
+                                       DEPLOYMENT=production
+                                    fi   
+                                    shift ;;
       -h  | --help )                usage
                                     ;;
       * )                           usage
@@ -32,16 +44,17 @@ while [ -n "$1" ]; do
 done
 
 
-VOLUMES=${PWD}/volumes
-sudo mkdir -p /var/lib/nightfall
-sudo mkdir -p ${MONGODB}
-
-S3_CONTRACTS=nightfallv3-proving-files.s3.eu-west-1.amazonaws.com/testnet/build
-mkdir -p ${VOLUMES}
-mkdir -p ${VOLUMES}/build
-mkdir -p ${VOLUMES}/build/contracts
-
+# If deploymeny
 if [ ! -z "${DEPLOYMENT}" ]; then
+  # Create folders where aux date will be stored
+  #  VOLUMES -> stores build/contract volumes
+  VOLUMES=${PWD}/volumes
+  mkdir -p ${VOLUMES}
+  mkdir -p ${VOLUMES}/build
+  mkdir -p ${VOLUMES}/build/contracts
+  
+  # S3 buckect wehere mainnet/testnet contracts are stored
+  S3_CONTRACTS=nightfallv3-proving-files.s3.eu-west-1.amazonaws.com/${DEPLOYMENT}/build
   curl ${S3_CONTRACTS}/hash.txt --output hash.txt 2> /dev/null
   
   # Update S3 contracts if different from the ones locally stored
@@ -61,6 +74,7 @@ if [ ! -z "${DEPLOYMENT}" ]; then
   fi
   OPTIMIST_VOLUME_STRING="-v ${VOLUMES}/build:/app/build "
 else
+  # If we use ./start-nightfall script, then assume we are using ganache. Retrieve IP to establish connection
   OPTIMIST_VOLUME_STRING="--mount source=nightfall_3_build,destination=/app/build"
   BLOCKCHAIN_CONTAINER_ID=$(docker ps  --no-trunc | grep ganache | awk '{print $1}')
   BLOCKCHAIN_IP=$(docker network inspect nightfall_3_nightfall_network | jq ".[0].Containers.\"${BLOCKCHAIN_CONTAINER_ID}\"".IPv4Address | tr -d "\"")
@@ -68,9 +82,9 @@ else
   BLOCKCHAIN_URL=ws://${BLOCKCHAIN_IP}:8546
 fi
 
-docker stop mongodb_1
-docker rm mongodb_1
-docker stop optimist_1
+# Stop optimist and mongodb containers if they exist
+./stop-optimist.sh
+
 echo "Launching mongodb container..."
 docker run -d \
  -v ${MONGODB}:/data/db \
@@ -83,6 +97,7 @@ docker run -d \
 
 sleep 5
 
+# retrieve mongodb container IP 
 MONGO_CONTAINER_ID=$(docker ps  --no-trunc | grep mongodb_1 | awk '{print $1}')
 MONGO_IP=$(docker network inspect nightfall_3_nightfall_network | jq ".[0].Containers.\"${MONGO_CONTAINER_ID}\"".IPv4Address | tr -d "\"")
 MONGO_IP=${MONGO_IP::-3}

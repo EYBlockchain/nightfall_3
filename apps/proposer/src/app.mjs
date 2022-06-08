@@ -44,4 +44,5 @@ app.listen(PROPOSER_PORT);
 
 startProposer(nf3, environment.proposerBaseUrl);
 
+/* ignore unused exports */
 export default app;
