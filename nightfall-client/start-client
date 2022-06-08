@@ -16,6 +16,7 @@ usage()
 {
   echo "Usage:"
   echo "  -d or --dev; to bind mount the filesystem and use it for development"
+  echo "  -r; to remove existing volumes for mongodb and abi contracts"
 }
 
 # delete env file
@@ -23,6 +24,8 @@ rm -f ${ENV_FILE}
 while [ -n "$1" ]; do
   case $1 in
       -d  | --dev )                 DEV="-f ../docker-compose.client.dev.yml"
+                                    ;;
+      -r )                          REMOVE_VOLUMES="true"
                                     ;;
       -h  | --help )                usage
                                     ;;
@@ -36,21 +39,24 @@ if [ -z "$FILE" ]; then
   usage
   exit 1
 fi
+
+if [ -n "$REMOVE_VOLUMES" ]; then
+  # if-else block checks - volume exist and then removes it.
+  if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb1) ]]; then
+    echo -n 'Removing '
+    docker volume rm nightfall_3_mongodb1
+  fi
+
+  if [[ $(echo $VOLUME_LIST | grep nightfall_3_build) ]]; then
+    echo -n 'Removing '
+    docker volume rm nightfall_3_build
+  fi
+fi 
+
 # shut down cleanly in the event of a cntl-c etc. We don't want to leave containers running
 trap "docker-compose $FILE $DEV down --remove-orphans -t 1; exit 1" SIGHUP SIGINT SIGTERM
 
 docker-compose $FILE $DEV down --remove-orphans
-
-# if-else block checks - volume exist and then removes it.
-if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb1) ]]; then
-  echo -n 'Removing '
-  docker volume rm nightfall_3_mongodb1
-fi
-
-if [[ $(echo $VOLUME_LIST | grep nightfall_3_build) ]]; then
-  echo -n 'Removing '
-  docker volume rm nightfall_3_build
-fi
 
 DIR=../common-files/node_modules
 if [[ -d "$DIR" ]]; then
