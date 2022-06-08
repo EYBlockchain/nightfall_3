@@ -21,6 +21,8 @@ while [ -n "$1" ]; do
   case $1 in
       -d  | --delete_db )           sudo rm -rf ${MONGODB}
 	                            ;;
+      -e  | --environment )         DEPLOYMENT="$1"; shift
+	                            ;;
       -h  | --help )                usage
                                     ;;
       * )                           usage
@@ -39,48 +41,67 @@ mkdir -p ${VOLUMES}
 mkdir -p ${VOLUMES}/build
 mkdir -p ${VOLUMES}/build/contracts
 
-curl ${S3_CONTRACTS}/hash.txt --output hash.txt 2> /dev/null
-
-# Update S3 contracts if different from the ones locally stored
-if [ ! -f ${VOLUMES}/build/hash.txt ]; then
-  echo "empty" > ${VOLUMES}/build/hash.txt
-fi
-DIFF=$(cmp ${VOLUMES}/build/hash.txt hash.txt)
-
-if [ "${DIFF}" ]; then
-  echo "Copying contracts"
-  while read -r remote; do
-    HASH=$(echo $remote | awk '{print $1}')
-    CONTRACT_NAME=$(echo $remote | awk '{print $2}')
-    curl ${S3_CONTRACTS}/contracts/${CONTRACT_NAME} --output ${VOLUMES}/build/contracts/${CONTRACT_NAME} 2> /dev/null
-  done < hash.txt
-  cp hash.txt ${VOLUMES}/build/hash.txt
+if [ ! -z "${DEPLOYMENT}" ]; then
+  curl ${S3_CONTRACTS}/hash.txt --output hash.txt 2> /dev/null
+  
+  # Update S3 contracts if different from the ones locally stored
+  if [ ! -f ${VOLUMES}/build/hash.txt ]; then
+    echo "empty" > ${VOLUMES}/build/hash.txt
+  fi
+  DIFF=$(cmp ${VOLUMES}/build/hash.txt hash.txt)
+  
+  if [ "${DIFF}" ]; then
+    echo "Copying contracts"
+    while read -r remote; do
+      HASH=$(echo $remote | awk '{print $1}')
+      CONTRACT_NAME=$(echo $remote | awk '{print $2}')
+      curl ${S3_CONTRACTS}/contracts/${CONTRACT_NAME} --output ${VOLUMES}/build/contracts/${CONTRACT_NAME} 2> /dev/null
+    done < hash.txt
+    cp hash.txt ${VOLUMES}/build/hash.txt
+  fi
+  OPTIMIST_VOLUME_STRING="-v ${VOLUMES}/build:/app/build "
+else
+  OPTIMIST_VOLUME_STRING="--mount source=nightfall_3_build,destination=/app/build"
+  BLOCKCHAIN_CONTAINER_ID=$(docker ps  --no-trunc | grep ganache | awk '{print $1}')
+  BLOCKCHAIN_IP=$(docker network inspect nightfall_3_nightfall_network | jq ".[0].Containers.\"${BLOCKCHAIN_CONTAINER_ID}\"".IPv4Address | tr -d "\"")
+  BLOCKCHAIN_IP=${BLOCKCHAIN_IP::-3}
+  BLOCKCHAIN_URL=ws://${BLOCKCHAIN_IP}:8546
 fi
 
 docker stop mongodb_1
 docker rm mongodb_1
 docker stop optimist_1
-docker rm optimist_1
 echo "Launching mongodb container..."
 docker run -d \
  -v ${MONGODB}:/data/db \
- -p 27017:27017 \
+ -p ${MONGO_PORT}:27017 \
  --name mongodb_1 \
+ --network=nightfall_3_nightfall_network \
  -e MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD} \
  -e MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME} \
  mongo
 
-cd .. && sudo docker build -f optimist.standalone.Dockerfile . -t nightfall-optimist:latest
+sleep 5
+
+MONGO_CONTAINER_ID=$(docker ps  --no-trunc | grep mongodb_1 | awk '{print $1}')
+MONGO_IP=$(docker network inspect nightfall_3_nightfall_network | jq ".[0].Containers.\"${MONGO_CONTAINER_ID}\"".IPv4Address | tr -d "\"")
+MONGO_IP=${MONGO_IP::-3}
+
+cd .. && sudo docker build \
+ --build-arg OPTIMIST_PORT=${OPTIMIST_PORT} \
+ --build-arg OPTIMIST_WS_PORT=${OPTIMIST_WS_PORT} \
+ -f optimist.standalone.Dockerfile . -t nightfall-optimist:latest
+
 
 echo "Launching optimist..."
 docker run --rm -d \
   --name optimist_1 \
-  -v ${VOLUMES}/build:/app/build \
-  -p 8080:8080 \
-  -p 80:80 \
-  -e MONGO_URL=${MONGO_URL} \
-  -e MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_PASSWORD} \
-  -e MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_USERNAME} \
+  ${OPTIMIST_VOLUME_STRING} \
+  --network=nightfall_3_nightfall_network \
+  -p ${OPTIMIST_WS_PORT}:8080 \
+  -p ${OPTIMIST_PORT}:80 \
+  -e MONGO_CONNECTION_STRING="mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@${MONGO_IP}:27017/" \
+  -e MONGO_URL=${MONGO_IP} \
   -e WEBSOCKET_PORT=8080 \
   -e BLOCKCHAIN_URL=${BLOCKCHAIN_URL} \
   -e HASH_TYPE=mimc \

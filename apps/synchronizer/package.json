@@ -4,7 +4,7 @@
   "description": "Exposes several endpoints related to the optimist information",
   "main": "index.js",
   "scripts": {
-    "start": "node --trace-warnings src/app.mjs",
+    "start": "export $(cat ../../nightfall-optimist/optimist.env | xargs)  && node --trace-warnings src/app.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "westlad",
