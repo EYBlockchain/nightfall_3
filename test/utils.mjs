@@ -340,7 +340,7 @@ export const depositNTransactions = async (nf3, N, ercAddress, tokenType, value,
   const depositTransactions = [];
   for (let i = 0; i < N; i++) {
     let res;
-    let tries = 3;
+    let tries = 3; // sometimes in testnet we have issues about nonce and replacement transactions so we try again
     let ok = false;
 
     while (!ok && tries > 0) {
@@ -356,6 +356,8 @@ export const depositNTransactions = async (nf3, N, ercAddress, tokenType, value,
           tries -= 1;
           logger.debug(`Transaction failed. Trying again...${tries} tries left`);
           await new Promise(resolving => setTimeout(resolving, 10000));
+        } else {
+          throw e;
         }
       }
     }
