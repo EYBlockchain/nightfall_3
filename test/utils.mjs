@@ -340,21 +340,19 @@ export const depositNTransactions = async (nf3, N, ercAddress, tokenType, value,
   const depositTransactions = [];
   for (let i = 0; i < N; i++) {
     let res;
-    let tries = 3; // sometimes in testnet we have issues about nonce and replacement transactions so we try again
-    let ok = false;
+    let count = 3; // sometimes in testnet we have issues about nonce and replacement transactions so we try again
 
-    while (!ok && tries > 0) {
+    while (count > 0) {
       try {
         res = await nf3.deposit(ercAddress, tokenType, value, tokenId, fee);
-        ok = true;
+        count = 0;
       } catch (e) {
         if (
           e.message.includes('nonce too low') ||
           e.message.includes('replacement transaction underpriced')
         ) {
-          ok = false;
-          tries -= 1;
-          logger.debug(`Transaction failed. Trying again...${tries} tries left`);
+          count -= 1;
+          logger.debug(`Transaction failed. Trying again...${count} tries left`);
           await new Promise(resolving => setTimeout(resolving, 10000));
         } else {
           throw e;
