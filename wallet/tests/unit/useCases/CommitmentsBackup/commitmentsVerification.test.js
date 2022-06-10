@@ -1,4 +1,4 @@
-import { isCommitmentsCPKDMatchDerivedKeys } from '../../../../src/useCases/CommitmentsBackup/commitmentsVerification';
+import isCommitmentsCPKDMatchDerivedKeys from '../../../../src/useCases/CommitmentsBackup/commitmentsVerification';
 
 const wrongCommitments = [
   {
