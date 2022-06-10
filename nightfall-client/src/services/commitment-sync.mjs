@@ -34,9 +34,11 @@ export async function decryptCommitment(transaction, zkpPrivateKey, nullifierKey
       logger.info("This encrypted message isn't for this recipient");
     }
   });
-  await Promise.all(storeCommitments).catch(function (err) {
-    logger.info(err);
-  });
+
+  if (storeCommitments.length === 0) {
+    throw Error("This encrypted message isn't for any of recipients");
+  }
+  return Promise.all(storeCommitments);
 }
 
 /**

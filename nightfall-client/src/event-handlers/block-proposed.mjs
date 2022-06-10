@@ -5,6 +5,7 @@ import {
   markNullifiedOnChain,
   markOnChain,
   countCommitments,
+  countNullifiers,
   setSiblingInfo,
   countWithdrawTransactionHashes,
   isTransactionHashWithdraw,
@@ -35,34 +36,57 @@ async function blockProposedEventHandler(data, syncing) {
   const latestTree = await getLatestTree();
   const blockCommitments = transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat();
 
-  // if ((await countCommitments(blockCommitments)) > 0) {
-  await saveBlock({ blockNumber: currentBlockCount, transactionHashL1, ...block });
-  logger.debug(`Saved L2 block ${block.blockNumberL2}, with tx hash ${transactionHashL1}`);
-  await Promise.all(
-    transactions.map(t =>
-      saveTransaction({
-        transactionHashL1,
-        blockNumber: data.blockNumber,
-        blockNumberL2: block.blockNumberL2,
-        ...t,
-      }).catch(function (err) {
-        if (!syncing || !err.message.includes('replay existing transaction')) throw err;
-        logger.warn('Attempted to replay existing transaction. This is expected while syncing');
-      }),
-    ),
-  );
-  // }
-
   const dbUpdates = transactions.map(async transaction => {
+    let saveTxToDb = false;
+
     // filter out non zero commitments and nullifiers
     const nonZeroCommitments = transaction.commitments.flat().filter(n => n !== ZERO);
     const nonZeroNullifiers = transaction.nullifiers.flat().filter(n => n !== ZERO);
-    if (
-      (Number(transaction.transactionType) === 1 || Number(transaction.transactionType) === 2) &&
-      (await countCommitments(nonZeroCommitments)) === 0
-    )
-      await decryptCommitment(transaction, zkpPrivateKeys, nullifierKeys);
+
+    const countOfNonZeroCommitments = await countCommitments(nonZeroCommitments);
+    const countOfNonZeroNullifiers = await countNullifiers(nonZeroNullifiers);
+
+    if (transaction.transactionType === '1' || transaction.transactionType === '2') {
+      if (countOfNonZeroCommitments === 0) {
+        await decryptCommitment(transaction, zkpPrivateKeys, nullifierKeys)
+          .then(isDecrypted => {
+            // case when one of user is recipient of transfer transaction
+            if (isDecrypted) {
+              saveTxToDb = true;
+            }
+          })
+          .catch(err => {
+            // case when transfer transaction created by user
+            if (countOfNonZeroNullifiers >= 1) {
+              saveTxToDb = true;
+            } else {
+              logger.error(err);
+            }
+          });
+      } else {
+        // case when user has transferred to himself
+        saveTxToDb = true;
+      }
+    } else if (transaction.transactionType === '0' && countOfNonZeroCommitments >= 1) {
+      // case when deposit transaction created by user
+      saveTxToDb = true;
+    } else if (transaction.transactionType === '3' && countOfNonZeroNullifiers >= 1) {
+      // case when withdraw transaction created by user
+      saveTxToDb = true;
+    }
+
+    if (saveTxToDb) await saveTransaction({
+      transactionHashL1,
+      blockNumber: data.blockNumber,
+      blockNumberL2: block.blockNumberL2,
+      ...transaction
+    }).catch(function (err) {
+      if (!syncing || !err.message.includes('replay existing transaction')) throw err;
+      logger.warn('Attempted to replay existing transaction. This is expected while syncing');
+    });
+
     return Promise.all([
+      saveTxToDb,
       markOnChain(nonZeroCommitments, block.blockNumberL2, data.blockNumber, data.transactionHash),
       markNullifiedOnChain(
         nonZeroNullifiers,
@@ -73,8 +97,13 @@ async function blockProposedEventHandler(data, syncing) {
     ]);
   });
 
-  // await Promise.all(toStore);
-  await Promise.all(dbUpdates);
+  await Promise.all(dbUpdates).then(async updateReturn => {
+    const saveBlockToDb = updateReturn.map(d => d[0]);
+    if (saveBlockToDb.includes(true)) {
+      await saveBlock({ blockNumber: currentBlockCount, transactionHashL1, ...block });
+    }
+  });
+
   const updatedTimber = Timber.statelessUpdate(
     latestTree,
     blockCommitments,
