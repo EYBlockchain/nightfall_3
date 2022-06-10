@@ -25,18 +25,18 @@ const getIndexedDBObjectRowsFromBackupFile = (objectRecovered, objectStoreName) 
  */
 const convertFileToObject = file => {
   return new Promise((resolve, reject) => {
-    try {
-      let objectRecovered;
-      const reader = new FileReader();
-      reader.onload = async e => {
+    let objectRecovered;
+    const reader = new FileReader();
+    reader.onload = async e => {
+      try {
         const fileText = e.target.result;
         objectRecovered = JSON.parse(fileText);
         resolve(objectRecovered);
-      };
-      reader.readAsText(file);
-    } catch (e) {
-      reject(e);
-    }
+      } catch (e) {
+        reject(e);
+      }
+    };
+    reader.readAsText(file);
   });
 };
 

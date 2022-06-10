@@ -26,8 +26,7 @@ import {
   convertFileToObject,
   addObjectStoreToIndexedDB,
 } from '../../useCases/CommitmentsBackup/import';
-import { exportIndexdDB } from '../../useCases/CommitmentsBackup/export.js';
-import { isCommitmentsCPKDMatchDerivedKeys } from '../../useCases/CommitmentsBackup/commitmentsVerification.js';
+import isCommitmentsCPKDMatchDerivedKeys from '../../useCases/CommitmentsBackup/commitmentsVerification.js';
 import successHand from '../../assets/img/modalImages/success-hand.png';
 import checkMarkCross from '../../assets/lottie/check-mark-cross.json';
 import Lottie from 'lottie-react';
@@ -71,8 +70,12 @@ function WalletModal(props) {
    */
   const uploadBackupFile = async event => {
     event.preventDefault();
-    let objectRecovered = await convertFileToObject(event.target.files[0]);
-    setBackupFile(objectRecovered);
+    try {
+      let objectRecovered = await convertFileToObject(event.target.files[0]);
+      setBackupFile(objectRecovered);
+    } catch {
+      setBackupFile(null);
+    }
   };
 
   const concatAllWords = () => {
@@ -293,6 +296,8 @@ function WalletModal(props) {
             type="file"
             id="myfile"
             name="myfile"
+            accept=".json"
+            webkitdirectory
             onChange={e => uploadBackupFile(e)}
             style={{
               borderRadius: '3px',
@@ -311,7 +316,9 @@ function WalletModal(props) {
             <p style={{ margin: '5px 0 0 10px', color: 'red' }}>Insert a valid mnemonic, please.</p>
           )}
           {!backupFile && !isNewWallet && (
-            <p style={{ margin: '10px 0 0 10px', color: 'red' }}>Choose a backup file, please.</p>
+            <p style={{ margin: '10px 0 0 10px', color: 'red' }}>
+              Choose a valid backup file, please.
+            </p>
           )}
         </div>
       </Modal.Body>
