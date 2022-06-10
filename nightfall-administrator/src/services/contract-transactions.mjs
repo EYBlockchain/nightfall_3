@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export */
 import config from 'config';
 import { waitForContract, web3 } from '../../../common-files/utils/contract.mjs';
 import logger from '../../../common-files/utils/logger.mjs';
@@ -95,13 +94,5 @@ export async function setBootChallenger(newChallengerPrivateKey, signingKey) {
   console.log('BOOT CHALLENGER', newChallenger);
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
   const data = shieldContractInstance.methods.setBootChallenger(newChallenger).encodeABI();
-  return queueTransaction(data, signingKey, shieldContractInstance.options.address);
-}
-
-export async function registerVerificationKey(keyArray, transactionType, signingKey) {
-  const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
-  const data = shieldContractInstance.methods
-    .registerVerificationKey(keyArray, transactionType)
-    .encodeABI();
   return queueTransaction(data, signingKey, shieldContractInstance.options.address);
 }
