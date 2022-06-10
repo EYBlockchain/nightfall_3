@@ -283,8 +283,8 @@ module.exports = {
       blockchain1: [
         {
           name: 'ERC20Mock',
-          address: '0xB5Acbe9a0F1F8B98F3fC04471F7fE5d2c222cB44',
-          amount: '200',
+          address: '0x9b7bD670D87C3Dd5C808ba627c75ba7E88aD066f',
+          amount: '100000000000',
         },
         {
           name: 'Test-Eth',
@@ -306,7 +306,7 @@ module.exports = {
         {
           name: 'ERC20Mock',
           address: '0xB5Acbe9a0F1F8B98F3fC04471F7fE5d2c222cB44',
-          amount: '200',
+          amount: '100000000000',
         },
         {
           name: 'Test-Eth',
@@ -328,7 +328,7 @@ module.exports = {
         {
           name: 'ERC20Mock',
           address: '0xB5Acbe9a0F1F8B98F3fC04471F7fE5d2c222cB44',
-          amount: 200,
+          amount: '100000000000',
         },
         {
           name: 'Test-Eth',

@@ -9,12 +9,11 @@ together with functions for mutating it.
 
 pragma solidity ^0.8.0;
 
-import './Structures.sol';
 import './Utils.sol';
 import './Config.sol';
 import './Pausable.sol';
 
-contract State is Structures, Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
+contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
     // global state variables
     BlockData[] public blockHashes; // array containing mainly blockHashes
     mapping(address => uint256) public pendingWithdrawals;

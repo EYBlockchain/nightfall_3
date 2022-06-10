@@ -1,32 +1,22 @@
 // SPDX-License-Identifier: CC0-1.0
 
 import '@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol';
+import './Ownable.sol';
 
 pragma solidity ^0.8.0;
 
-abstract contract Pausable is PausableUpgradeable {
+abstract contract Pausable is PausableUpgradeable, Ownable {
 
-  address public pauser;
-
-  function initialize() public virtual initializer {
+  function initialize() public override(Ownable) virtual initializer {
+    Ownable.initialize();
     PausableUpgradeable.__Pausable_init();
-    pauser = msg.sender; // pauser and deployer are the same
   }
 
-  modifier onlyPauser {
-      // Modifier
-      require(
-          msg.sender == pauser,
-          'Only the pauser can call this.'
-      );
-      _;
-  }
-
-  function pause() external onlyPauser {
+  function pause() external onlyOwner {
     _pause();
   }
 
-  function unpause() external onlyPauser {
+  function unpause() external onlyOwner {
     _unpause();
   }
 }

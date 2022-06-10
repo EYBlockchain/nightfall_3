@@ -132,4 +132,4 @@ services:
         target: /app/common-files/classes
       - type: bind
         source: ./config/default.js
-        target: /app/config/default.js
+        target: /app/admin/config/default.js

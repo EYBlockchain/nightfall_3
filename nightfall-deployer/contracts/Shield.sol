@@ -13,23 +13,20 @@ pragma solidity ^0.8.0;
 import './Utils.sol';
 import './ERCInterface.sol';
 import './Key_Registry.sol';
-import './Structures.sol';
 import './Config.sol';
 import './Stateful.sol';
-import './Ownable.sol';
 import './Pausable.sol';
 
-contract Shield is Stateful, Ownable, Structures, Config, Key_Registry, ReentrancyGuardUpgradeable, Pausable {
+contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, Pausable {
     mapping(bytes32 => bool) public withdrawn;
     mapping(bytes32 => uint256) public feeBook;
     mapping(bytes32 => address) public advancedWithdrawals;
     mapping(bytes32 => uint256) public advancedFeeWithdrawals;
 
-    function initialize() public override(Stateful, Key_Registry, Config, Ownable, Pausable) initializer {
+    function initialize() public override(Stateful, Key_Registry, Config, Pausable) initializer {
         Stateful.initialize();
         Key_Registry.initialize();
         Config.initialize();
-        Ownable.initialize();
         ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
         Pausable.initialize();
     }
@@ -42,6 +39,7 @@ contract Shield is Stateful, Ownable, Structures, Config, Key_Registry, Reentran
         } else {
             tokenContract.transfer(owner(), value);
         }
+        emit ShieldBalanceTransferred(ercAddress, value);
     }
 
     function submitTransaction(Transaction memory t) external payable nonReentrant whenNotPaused {

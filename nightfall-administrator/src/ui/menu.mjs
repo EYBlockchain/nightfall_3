@@ -42,7 +42,18 @@ export async function askQuestions(ethereumSigningKey) {
       name: 'task',
       type: 'list',
       message: 'What would you like to do?',
-      choices: ['Get token restrictions', 'Set token restrictions', 'Exit'],
+      choices: [
+        'Get token restrictions',
+        'Set token restrictions',
+        'Remove token restrictions',
+        'Pause contracts',
+        'Unpause contracts',
+        'Transfer Shield contract balance',
+        'Transfer ownership',
+        'Set new boot proposer',
+        'Set new boot challenger',
+        'Exit',
+      ],
       when: answers => !!answers.privateKey || !!ethereumSigningKey,
     },
     {
@@ -53,7 +64,12 @@ export async function askQuestions(ethereumSigningKey) {
       },
       message: 'Choose a token:',
       when: answers =>
-        answers.task === 'Get token restrictions' || answers.task === 'Set token restrictions',
+        [
+          'Get token restrictions',
+          'Set token restrictions',
+          'Transfer Shield contract balance',
+          'Remove token restrictions',
+        ].includes(answers.task),
     },
     {
       name: 'depositRestriction',
@@ -68,6 +84,36 @@ export async function askQuestions(ethereumSigningKey) {
       message: 'Please provide the withdraw restriction in base units (ignoring decimalisation)',
       when: answers => answers.task === 'Set token restrictions',
       validate: input => Number.isInteger(Number(input)),
+    },
+    {
+      name: 'pause',
+      type: 'confirm',
+      message: 'Pause contracts?',
+      when: answers => answers.task === 'Pause contracts',
+    },
+    {
+      name: 'unpause',
+      type: 'confirm',
+      message: 'Unpause contracts?',
+      when: answers => answers.task === 'Unpause contracts',
+    },
+    {
+      name: 'amount',
+      type: 'input',
+      message:
+        'Please provide the amount in base units, ignoring decimalisation (0 to transfer everything)',
+      when: answers => answers.task === 'Transfer Shield contract balance' && answers.tokenName,
+      validate: input => Number.isInteger(Number(input)),
+    },
+    {
+      name: 'newPrivateKey',
+      type: 'input',
+      message: 'Please provide the new PRIVATE key',
+      validate: input => web3.utils.isHexStrict(input),
+      when: answers =>
+        ['Transfer ownership', 'Set new boot proposer', 'Set new boot challenger'].includes(
+          answers.task,
+        ),
     },
   ];
   return inquirer.prompt(questions);
