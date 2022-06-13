@@ -297,7 +297,6 @@ function WalletModal(props) {
             id="myfile"
             name="myfile"
             accept=".json"
-            webkitdirectory
             onChange={e => uploadBackupFile(e)}
             style={{
               borderRadius: '3px',

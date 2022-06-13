@@ -92,6 +92,4 @@ describe('Tests about indexedDB', () => {
       };
     };
   });
-
-  afterEach(() => {});
 });
