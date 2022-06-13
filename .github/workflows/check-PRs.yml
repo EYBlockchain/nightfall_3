@@ -157,7 +157,7 @@ jobs:
 
       - name: debug logs - after integration test run
         if: always()
-        run: cat test/ping-pong/ping-pong-test.log
+        run: results=$(cat test/ping-pong/ping-pong-test.log | grep passed); cat test/ping-pong/ping-pong-test.log; if [ ! -z "${results}" ]; then exit 0; else exit 1; fi
 
       - name: If integration test failed, shutdown the Containers
         if: failure()

@@ -58,25 +58,8 @@ async function localTest() {
   // Create a block of transfer and deposit transactions
   for (let i = 0; i < TEST_LENGTH; i++) {
     await waitForSufficientBalance(nf3, value);
-    try {
-      await nf3.transfer(
-        offchainTx,
-        ercAddress,
-        tokenType,
-        value,
-        tokenId,
-        IS_TEST_RUNNER ? pkds.user2 : pkds.user1,
-      );
-    } catch (err) {
-      if (err.message.includes('No suitable commitments')) {
-        // if we get here, it's possible that a block we are waiting for has not been proposed yet
-        // let's wait 10x normal and then try again
-        logger.warn(
-          `No suitable commitments were found for transfer. I will wait ${
-            0.01 * TX_WAIT
-          } seconds and try one last time`,
-        );
-        await new Promise(resolve => setTimeout(resolve, 10 * TX_WAIT));
+    for (let j = 0; j < txPerBlock - 1; j++) {
+      try {
         await nf3.transfer(
           offchainTx,
           ercAddress,
@@ -85,12 +68,35 @@ async function localTest() {
           tokenId,
           IS_TEST_RUNNER ? pkds.user2 : pkds.user1,
         );
+      } catch (err) {
+        if (err.message.includes('No suitable commitments')) {
+          // if we get here, it's possible that a block we are waiting for has not been proposed yet
+          // let's wait 10x normal and then try again
+          logger.warn(
+            `No suitable commitments were found for transfer. I will wait ${
+              0.01 * TX_WAIT
+            } seconds and try one last time`,
+          );
+          await new Promise(resolve => setTimeout(resolve, 10 * TX_WAIT));
+          await nf3.transfer(
+            offchainTx,
+            ercAddress,
+            tokenType,
+            value,
+            tokenId,
+            IS_TEST_RUNNER ? pkds.user2 : pkds.user1,
+          );
+        }
       }
+      offchainTx = !offchainTx;
     }
-    await nf3.deposit(ercAddress, tokenType, value, tokenId);
-    await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
-    console.log(`Completed ${i + 1} pings`);
-    offchainTx = !offchainTx;
+    try {
+      await nf3.deposit(ercAddress, tokenType, value, tokenId);
+      await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
+      console.log(`Completed ${i + 1} pings`);
+    } catch (err) {
+      console.warn('Error deposit', err);
+    }
   }
 
   // Wait for sometime at the end to retrieve balance to include any transactions sent by the other use
