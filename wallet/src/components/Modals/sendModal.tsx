@@ -523,7 +523,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
         fee: 0,
       },
       shieldContractAddress,
-    ).catch(e => {
+    ).catch(() => {
       setShowModalTransferEnRoute(false);
       setShowModalTransferFailed(true);
       return { transaction: null, rawTransaction: '' };

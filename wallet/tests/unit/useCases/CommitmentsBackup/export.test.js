@@ -8,7 +8,7 @@
 import indexedDB from 'fake-indexeddb';
 import 'fake-indexeddb/auto';
 
-import { exportIndexdDB } from '../../../../src/useCases/CommitmentsBackup/export';
+import exportIndexdDB from '../../../../src/useCases/CommitmentsBackup/export';
 
 describe('Tests about indexedDB', () => {
   const OBJ_STORE_NAME = 'commitments';
