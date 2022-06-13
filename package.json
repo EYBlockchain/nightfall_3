@@ -15,7 +15,7 @@
     "prepare": "husky install",
     "doc:build:sdk": "jsdoc -c jsdoc.json cli/lib/nf3.mjs",
     "build-adversary": "node test/adversary/transpile-adversary.mjs",
-    "adversary-test": "mocha --timeout 0 --bail --exit test/adversary.test.mjs"
+    "adversary-test": "LOG_LEVEL=debug mocha --timeout 0 --bail --exit test/adversary.test.mjs"
   },
   "repository": {
     "type": "git",

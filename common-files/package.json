@@ -10,6 +10,7 @@
   "dependencies": {
     "config": "^3.3.7",
     "winston": "^3.6.0",
-    "ws": "^8.5.0"
+    "ws": "^8.5.0",
+    "mongodb": "^3.6.3"
   }
 }

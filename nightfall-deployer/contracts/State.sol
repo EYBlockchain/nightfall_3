@@ -253,6 +253,11 @@ contract State is Structures, Initializable, ReentrancyGuardUpgradeable, Config 
         proposers[proposer].url = url;
     }
 
+    function hashTransactionHashes(Transaction[] memory ts) public view returns (bytes32) {
+        bytes32 transactionHashesRoot = Utils.hashTransactionHashes(ts);
+        return transactionHashesRoot;
+    }
+
     // Checks if a block is actually referenced in the queue of blocks waiting
     // to go into the Shield state (stops someone challenging with a non-existent
     // block).
