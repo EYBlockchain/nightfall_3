@@ -6,6 +6,8 @@ COPY apps/proposer/config /app/apps/proposer/config
 COPY cli cli
 WORKDIR /app/common-files
 RUN npm ci
+WORKDIR /app/cli
+RUN npm ci
 
 WORKDIR /app/apps/proposer
 RUN apt-get update -y
