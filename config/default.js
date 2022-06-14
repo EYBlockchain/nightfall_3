@@ -165,7 +165,7 @@ module.exports = {
         : 'ws://localhost:8082',
       proposerBaseUrl: process.env.PROPOSER_HOST
         ? `http://${process.env.PROPOSER_HOST}:${process.env.PROPOSER_PORT}`
-        : 'http://172.16.238.1:8100',
+        : 'http://localhost:8092',
       adversarialOptimistApiUrl: 'http://localhost:8088',
       adversarialOptimistWsUrl: 'ws://localhost:8089',
       web3WsUrl: process.env.BLOCKCHAIN_WS_HOST

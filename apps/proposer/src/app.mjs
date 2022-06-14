@@ -1,3 +1,5 @@
+/* ignore unused exports */
+
 import express from 'express';
 import bodyParser from 'body-parser';
 import config from 'config';
@@ -40,6 +42,6 @@ app.use('/proposer', proposer);
 app.use('/contract-address', contracts);
 app.listen(PROPOSER_PORT);
 
-startProposer(nf3);
+startProposer(nf3, environment.proposerBaseUrl);
 
 export default app;
