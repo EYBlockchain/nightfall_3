@@ -19,8 +19,6 @@ usage()
   echo "  -r; to remove existing volumes for mongodb and abi contracts"
 }
 
-# delete env file
-rm -f ${ENV_FILE}
 while [ -n "$1" ]; do
   case $1 in
       -d  | --dev )                 DEV="-f ../docker-compose.client.dev.yml"

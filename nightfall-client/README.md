@@ -8,23 +8,23 @@
 
 # nightfall-client
 
-This code generates a containerised application that can be used to interact with Polygon Nightfall
-via http endpoints.
+## Requirements
+
+This application runs in docker containers so you will need Docker installed and Docker Compose
+v3.5.
+
+You will need a local copy of `node` and `npm` to run the tests and `git` to clone the repository.
+We have tested with versions 14.15.1 and 6.14.13 of `node` and `npm`, respectively.
+
+This code generates a containerised client application that can be used to interact with Polygon
+Nightfall via http endpoints.
 
 It has a docker-compose.yml file that will run nightfall-client up with local file system bindings
 as well as a number of supporting services. This is useful for development work (you can change
 source code without having to rebuild the Docker image).
 
-nightfall-client requires a number of services to be present for it to work. The following
-instructions explain how to run all of these up, in a similar 'developer' mode with local file
-system bindings.
-
-If you just want to run Polygon Nightfall then an easier way is to use
-[start-nightfall script](https://github.com/EYBlockchain/nightfall_3), which does a similar job but
-with all necessary services conteainerised.
-
-Check out the [Polygon Nightfall](https://github.com/EYBlockchain/nightfall_3) meta repository for
-an overview of all the Polygon Nightfall services.
+Nightfall-client requires a number of services to be present for it to work in testnet/mainnet. The
+following instructions explain how set up testnet and mainnet deployment for this client.
 
 ## Building and testing nightfall-client
 
