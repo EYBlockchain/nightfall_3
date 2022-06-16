@@ -25,6 +25,7 @@ sudo mkdir -p ${MONGODB}
 while [ -n "$1" ]; do
   case $1 in
       -d  | --delete_db )           sudo rm -rf ${MONGODB}
+                                    sudo mkdir -p ${MONGODB}
 	                            ;;
       -e  | --environment )         DEPLOYMENT="$1"; 
                                     if [ "${DEPLOYMENT}" != "tesnet" ] && [ "${DEPLOYMENT}" != "mainnet" ]; then
