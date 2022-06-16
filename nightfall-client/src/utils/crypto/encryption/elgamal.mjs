@@ -17,10 +17,10 @@ const Fq = JUBJUBE / JUBJUBC;
 
 function isOnCurve(p) {
   const { JUBJUBA: a, JUBJUBD: d } = BABYJUBJUB;
-  const uu = (p[0] * p[0]) % Fp;
-  const vv = (p[1] * p[1]) % Fp;
-  const uuvv = (uu * vv) % Fp;
-  return (a * uu + vv) % Fp === (one + d * uuvv) % Fp;
+  const uu = (((p[0] * p[0]) % Fp) + Fp) % Fp;
+  const vv = (((p[1] * p[1]) % Fp) + Fp) % Fp;
+  const uuvv = (((uu * vv) % Fp) + Fp) % Fp;
+  return (((a * uu + vv) % Fp) + Fp) % Fp === (((one + d * uuvv) % Fp) + Fp) % Fp;
 }
 
 // // is On Montgomery curve By^2 = x^3 + Ax^2 + x

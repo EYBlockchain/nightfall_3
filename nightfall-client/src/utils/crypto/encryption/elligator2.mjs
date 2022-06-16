@@ -27,7 +27,7 @@ function chi(a) {
 
 // if value > p-1//2, then negative
 function isNegative(value) {
-  return value % Fp > modDivide(Fp - BigInt(1), BigInt(2), Fp);
+  return ((value % Fp) + Fp) % Fp > modDivide(Fp - BigInt(1), BigInt(2), Fp);
 }
 
 // if value == 0 or chi(value) == 1
@@ -38,9 +38,10 @@ function isSquare(value) {
 // r∈Fq :1+ur^2!=0, A^2ur^2!=B(1+ur^2)^2
 function checkR(r) {
   return (
-    (BigInt(1) + ((U * r * r) % Fp)) % Fp !== BigInt(0) &&
-    (MONTA * MONTA * U * r * r) % Fp !==
-      (MONTB * (BigInt(1) + ((U * r * r) % Fp)) * (BigInt(1) + ((U * r * r) % Fp))) % Fp
+    (BigInt(1) + ((((U * r * r) % Fp) + Fp) % Fp)) % Fp !== BigInt(0) &&
+    (((MONTA * MONTA * U * r * r) % Fp) + Fp) % Fp !==
+      (((MONTB * (BigInt(1) + ((U * r * r) % Fp)) * (BigInt(1) + ((U * r * r) % Fp))) % Fp) + Fp) %
+        Fp
   );
 }
 
@@ -53,8 +54,8 @@ export function hashToCurve(r) {
   if (r === BigInt(0)) return [BigInt(0), BigInt(0)];
   if (checkR(r) !== true) throw new Error(`This value can't be hashed to curve using Elligator2`);
   const v = modDivide(-MONTA, one + U * r * r, Fp);
-  const e = chi((v * v * v + MONTA * v * v + MONTB * v) % Fp);
-  const x = ((e * v) % Fp) - modDivide((one - e) * MONTA, BigInt(2), Fp);
+  const e = (chi((v * v * v + MONTA * v * v + MONTB * v) % Fp) + Fp) % Fp;
+  const x = ((((e * v) % Fp) + Fp) % Fp) - modDivide((one - e) * MONTA, BigInt(2), Fp);
   let y2 = squareRootModPrime((x * x * x + MONTA * x * x + MONTB * x) % Fp, Fp);
   // Ensure returned value is the principal root (i.e. sqrt(x) ∈ [0, (Fp -1) / 2] )
   if (y2 > (Fp - BigInt(1)) / BigInt(2)) y2 = Fp - y2;
@@ -66,8 +67,8 @@ export function hashToCurve(r) {
 // square roots is the number for constraint efficiency
 export function hashToCurveYSqrt(r) {
   const v = modDivide(-MONTA, one + U * r * r, Fp);
-  const e = chi((v * v * v + MONTA * v * v + MONTB * v) % Fp);
-  const x = ((e * v) % Fp) - modDivide((one - e) * MONTA, BigInt(2), Fp);
+  const e = (chi((v * v * v + MONTA * v * v + MONTB * v) % Fp) + Fp) % Fp;
+  const x = ((((e * v) % Fp) + Fp) % Fp) - modDivide((one - e) * MONTA, BigInt(2), Fp);
   let y2 = squareRootModPrime((x * x * x + MONTA * x * x + MONTB * x) % Fp, Fp);
   // Ensure returned value is the principal root (i.e. sqrt(x) ∈ [0, (Fp -1) / 2] )
   if (y2 > (Fp - BigInt(1)) / BigInt(2)) y2 = Fp - y2;
