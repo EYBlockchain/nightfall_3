@@ -327,7 +327,7 @@ module.exports = {
       development: [
         {
           name: 'ERC20Mock',
-          address: '0xB5Acbe9a0F1F8B98F3fC04471F7fE5d2c222cB44',
+          address: '0x470556dE5865D293dCcc0b47644fac7721168065',
           amount: '100000000000',
         },
         {

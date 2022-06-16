@@ -380,6 +380,7 @@ class Nf3 {
         !!this.ethereumSigningKey,
       );
     } catch (err) {
+      logger.error(`Approve transaction failed`);
       throw new Error(err);
     }
     if (txDataToSign) {
@@ -406,6 +407,7 @@ class Nf3 {
           );
           resolve(receipt);
         } catch (err) {
+          logger.error('Deposit transaction failed');
           reject(err);
         }
       });
