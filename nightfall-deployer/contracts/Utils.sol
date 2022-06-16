@@ -22,19 +22,12 @@ library Utils {
         returns (bytes32)
     {
         bytes32 transactionHashesRoot;
-        bytes32[6] memory frontier;
-        uint256 transactionHashCount;
-        bytes32[] memory transactionHashes = new bytes32[](TRANSACTIONS_BATCH_SIZE); // TRANSACTIONS_BATCH_SIZE to control stack too deep error
+        bytes32[] memory transactionHashes = new bytes32[](ts.length);
 
         for (uint256 i = 0; i < ts.length; i++) {
-            transactionHashes[i % TRANSACTIONS_BATCH_SIZE] = hashTransaction(ts[i]);
-            if (
-                i % TRANSACTIONS_BATCH_SIZE == TRANSACTIONS_BATCH_SIZE - 1 || i == (ts.length - 1)
-            ) {
-                // If the number of transactions cannot be factored by TRANSACTIONS_BATCH_SIZE, then the second condtional check ensures that this smaller transactions batch is also included
-                (transactionHashesRoot) = calculateMerkleRoot(transactionHashes);
-            }
+            transactionHashes[i ] = hashTransaction(ts[i]);
         }
+        transactionHashesRoot = calculateMerkleRoot(transactionHashes);
         return transactionHashesRoot;
     }
 
@@ -189,6 +182,19 @@ library Utils {
 
     function calculateMerkleRoot(bytes32[] memory leaves) public pure returns (bytes32 result) {
         assembly {
+            let length := mload(leaves)
+            let leavesPos := add(leaves,0x20)
+            let transactionHashesPos := mload(0x40)
+            for {
+                let i := 0
+            } lt(i, length) {
+                i := add(i, 1)
+            } {
+                mstore(
+                    add(transactionHashesPos, mul(0x20, i)),
+                    mload(add(leavesPos, mul(0x20, i)))
+                )
+            }
             for {
                 let i := 5
             } gt(i, 0) {
@@ -199,15 +205,18 @@ library Utils {
                 } lt(j, exp(2, sub(i, 1))) {
                     j := add(j, 1)
                 } {
-                    let left := mload(add(leaves, add(0x20, mul(mul(0x20, j), 2))))
-                    let right := mload(add(leaves, add(add(0x20, mul(mul(0x20, j), 2)), 0x20)))
+                    let left := mload(add(transactionHashesPos, mul(mul(0x20, j), 2)))
+                    let right := mload(add(transactionHashesPos, add(mul(mul(0x20, j), 2), 0x20)))
                     if eq(and(iszero(left), iszero(right)), 1) {
                         result := 0
                     } // returns bool
                     if eq(and(iszero(left), iszero(right)), 0) {
-                        result := keccak256(add(leaves, add(0x20, mul(mul(0x20, j), 2))), 0x40)
+                        result := keccak256(
+                            add(transactionHashesPos, mul(mul(0x20, j), 2)),
+                            0x40
+                        )
                     } // returns bool
-                    mstore(add(leaves, add(0x20, mul(0x20, j))), result)
+                    mstore(add(transactionHashesPos, mul(0x20, j)), result)
                 }
             }
         }
