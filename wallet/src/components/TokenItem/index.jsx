@@ -6,6 +6,7 @@ import { getWalletBalance } from '@Nightfall/services/commitment-storage';
 import metamaskIcon from '../../assets/svg/metamask.svg';
 import { UserContext } from '../../hooks/User/index.jsx';
 import SendModal from '../Modals/sendModal';
+import BigFloat from '../../common-files/classes/bigFloat';
 
 import '../../styles/tokenItem.scss';
 
@@ -63,18 +64,16 @@ export default function TokenItem(props) {
           <div className="balancesDetails">
             <div className="balancesWrapper">
               <div className="balancesDetailsUpperSection" id={tokenBalanceId}>
-                {(Number(props.l2Balance) / 10 ** Number(props.decimals)).toFixed(4)}
+                {new BigFloat(BigInt(props.l2Balance), props.decimals).toFixed(4)}
               </div>
               <div className="balancesDetailsLowerSection">
                 <span className="seperatingDot" id={tokenBalanceUsdId}>
                   {' '}
                   •{' '}
                 </span>
-                $
-                {(
-                  Number(props.currencyValue) *
-                  (Number(props.l2Balance) / 10 ** props.decimals)
-                ).toFixed(4)}
+                {'$' + new BigFloat(BigInt(props.l2Balance), props.decimals)
+                          .mul(props.currencyValue)
+                          .toFixed(4)}
               </div>
             </div>
           </div>
