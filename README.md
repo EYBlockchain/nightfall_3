@@ -194,9 +194,9 @@ with `-p`, `-u`.
 Nightfall_3 provides an SDK which makes it easy to develop applications that use Nightfall_3. The
 SDK API is documented in `./doc/lib/Nf3.html` and is provided by the NF_3 class `./cli/lib/nf3.mjs`.
 
-## Command line interface
+## Apps
 
-Nightfall_3 provides a CLI (which makes use of the SDK) so that you can exercise its features. To
+Nightfall_3 provides some reference applications (which make use of the SDK) so that you can exercise its features. To
 use it:
 
 - run up nightfall_3 as described above and wait for the deployment to complete;
