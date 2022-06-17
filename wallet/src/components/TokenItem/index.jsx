@@ -71,9 +71,10 @@ export default function TokenItem(props) {
                   {' '}
                   •{' '}
                 </span>
-                {'$' + new BigFloat(BigInt(props.l2Balance), props.decimals)
-                          .mul(props.currencyValue)
-                          .toFixed(4)}
+                $
+                {new BigFloat(BigInt(props.l2Balance), props.decimals)
+                  .mul(props.currencyValue)
+                  .toFixed(4)}
               </div>
             </div>
           </div>

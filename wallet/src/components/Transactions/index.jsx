@@ -301,7 +301,8 @@ const Transactions = () => {
                           lineHeight: '16px',
                         }}
                       >
-                        {'$' + new BigFloat(BigInt(tx.value), tx.decimals)
+                        $
+                        {new BigFloat(BigInt(tx.value), tx.decimals)
                           .mul(tx.currencyValue)
                           .toFixed(4)}
                       </div>
