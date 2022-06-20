@@ -9,6 +9,7 @@
   "description": "nightfall_3 common files",
   "dependencies": {
     "config": "^3.3.7",
+    "web3": "^1.7.3",
     "winston": "^3.6.0",
     "ws": "^8.5.0"
   }

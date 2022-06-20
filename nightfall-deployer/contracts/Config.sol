@@ -3,8 +3,9 @@
 pragma solidity ^0.8.0;
 
 import './Ownable.sol';
+import './Structures.sol';
 
-contract Config is Ownable {
+contract Config is Ownable, Structures {
     uint256 constant REGISTRATION_BOND = 10 wei; // TODO owner can update
     uint256 constant BLOCK_STAKE = 1 wei;
     uint256 constant ROTATE_PROPOSER_BLOCKS = 4;
@@ -28,6 +29,7 @@ contract Config is Ownable {
 
     function setBootProposer(address proposer) external onlyOwner {
         bootProposer = proposer;
+        emit NewBootProposerSet(bootProposer);
     }
 
     function getBootProposer() external view returns (address) {
@@ -42,6 +44,7 @@ contract Config is Ownable {
 
     function setBootChallenger(address challenger) external onlyOwner {
         bootChallenger = challenger;
+        emit NewBootChallengerSet(bootChallenger);
     }
 
     function getBootChallenger() external view returns (address) {
@@ -67,7 +70,8 @@ contract Config is Ownable {
         erc20limit[tokenAddr][1] = withdrawAmount;
     }
 
-    function removeRestriction(address tokenAddr, uint256 transactionType) external onlyOwner {
-        delete erc20limit[tokenAddr][transactionType];
+    function removeRestriction(address tokenAddr) external onlyOwner {
+      delete erc20limit[tokenAddr][0];
+      delete erc20limit[tokenAddr][1];
     }
 }

@@ -16,7 +16,7 @@ export default {
   connect() {
     if (this.web3) return this.web3.currentProvider;
 
-    logger.info('Blockchain Connecting ...');
+    logger.info(`Blockchain Connecting on ${config.BLOCKCHAIN_URL}...`);
 
     const provider = new Web3.providers.WebsocketProvider(
       config.BLOCKCHAIN_URL,

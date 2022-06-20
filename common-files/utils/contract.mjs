@@ -25,14 +25,10 @@ export async function getContractInterface(contractName) {
 export async function getContractAddress(contractName) {
   let deployedAddress;
   const contractInterface = await getContractInterface(contractName);
-
   const networkId = await web3.eth.net.getId();
-  logger.silly('networkId:', networkId);
-
   if (contractInterface && contractInterface.networks && contractInterface.networks[networkId]) {
     deployedAddress = contractInterface.networks[networkId].address;
   }
-  logger.silly('deployed address:', deployedAddress);
   return deployedAddress;
 }
 

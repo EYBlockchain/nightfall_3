@@ -9,11 +9,11 @@ together with functions for mutating it.
 
 pragma solidity ^0.8.0;
 
-import './Structures.sol';
 import './Utils.sol';
 import './Config.sol';
+import './Pausable.sol';
 
-contract State is Structures, Initializable, ReentrancyGuardUpgradeable, Config {
+contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
     // global state variables
     BlockData[] public blockHashes; // array containing mainly blockHashes
     mapping(address => uint256) public pendingWithdrawals;
@@ -27,6 +27,12 @@ contract State is Structures, Initializable, ReentrancyGuardUpgradeable, Config 
     address public challengesAddress;
     address public shieldAddress;
 
+    function initialize() public override(Pausable, Config){
+      Pausable.initialize();
+      Config.initialize();
+      ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
+    }
+
     function initialize(
         address _proposersAddress,
         address _challengesAddress,
@@ -35,9 +41,8 @@ contract State is Structures, Initializable, ReentrancyGuardUpgradeable, Config 
         proposersAddress = _proposersAddress;
         challengesAddress = _challengesAddress;
         shieldAddress = _shieldAddress;
-        Config.initialize();
-        ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
-    }
+        initialize();
+      }
 
     modifier onlyRegistered {
         require(
@@ -72,6 +77,7 @@ contract State is Structures, Initializable, ReentrancyGuardUpgradeable, Config 
         external
         payable
         onlyCurrentProposer
+        whenNotPaused
     {
         require(b.blockNumberL2 == blockHashes.length, 'The block is out of order'); // this will fail if a tx is re-mined out of order due to a chain reorg.
         if (blockHashes.length != 0)
@@ -221,7 +227,7 @@ contract State is Structures, Initializable, ReentrancyGuardUpgradeable, Config 
         pendingWithdrawals[addr] += amount;
     }
 
-    function withdraw() external nonReentrant {
+    function withdraw() external nonReentrant whenNotPaused {
         uint256 amount = pendingWithdrawals[msg.sender];
         pendingWithdrawals[msg.sender] = 0;
         (bool success, ) = payable(msg.sender).call{value: amount}('');
