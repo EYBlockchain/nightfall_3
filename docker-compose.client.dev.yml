@@ -17,7 +17,7 @@ services:
         source: ./config/default.js
         target: /app/config/default.js
 
-  zokrates-worker:
+  worker:
     build:
       dockerfile: worker.Dockerfile
       context: .

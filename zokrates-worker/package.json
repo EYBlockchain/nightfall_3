@@ -14,6 +14,7 @@
   "dependencies": {
     "amqplib": "^0.8.0",
     "axios": "^0.26.1",
+    "common-files": "file:../common-files",
     "body-parser": "1.19.0",
     "config": "^3.3.2",
     "cors": "2.8.5",

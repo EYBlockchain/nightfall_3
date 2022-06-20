@@ -1,8 +1,7 @@
 import axios from 'axios';
 import fs from 'fs';
-import * as stream from 'stream';
-import { promisify } from 'util';
 import config from 'config';
+import downloadFile from 'common-files/utils/httputils.mjs';
 import app from './app.mjs';
 import rabbitmq from './utils/rabbitmq.mjs';
 import queues from './queues/index.mjs';
@@ -14,20 +13,6 @@ const {
 } = config;
 
 const { ETH_NETWORK, CIRCUIT_FILES_URL } = process.env;
-
-const finished = promisify(stream.finished);
-
-const downloadFile = async (fileUrl, outputLocationPath) => {
-  const writer = fs.createWriteStream(outputLocationPath);
-  return axios({
-    method: 'get',
-    url: fileUrl,
-    responseType: 'stream',
-  }).then(response => {
-    response.data.pipe(writer);
-    return finished(writer); // this is a Promise
-  });
-};
 
 const checkCircuitsOutput = async () => {
   let env = '';

@@ -5,11 +5,10 @@ their local commitments databsae.
 
 import axios from 'axios';
 import fs from 'fs';
-import * as stream from 'stream';
-import { promisify } from 'util';
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import mongo from 'common-files/utils/mongo.mjs';
+import downloadFile from 'common-files/utils/httputils.mjs';
 import { unpauseQueue } from 'common-files/utils/event-queue.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import blockProposedEventHandler from '../event-handlers/block-proposed.mjs';
@@ -25,8 +24,6 @@ const {
 } = config;
 
 const { ETH_NETWORK, CONTRACT_FILES_URL } = process.env;
-
-const finished = promisify(stream.finished);
 
 const syncState = async (fromBlock = 'earliest', toBlock = 'latest', eventFilter = 'allEvents') => {
   console.log('From block', fromBlock);
@@ -51,18 +48,6 @@ const syncState = async (fromBlock = 'earliest', toBlock = 'latest', eventFilter
         break;
     }
   }
-};
-
-const downloadFile = async (fileUrl, outputLocationPath) => {
-  const writer = fs.createWriteStream(outputLocationPath);
-  return axios({
-    method: 'get',
-    url: fileUrl,
-    responseType: 'stream',
-  }).then(response => {
-    response.data.pipe(writer);
-    return finished(writer); // this is a Promise
-  });
 };
 
 const genGetCommitments = async (query = {}, proj = {}) => {
