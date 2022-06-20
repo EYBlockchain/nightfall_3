@@ -15,7 +15,7 @@ const {
 const { ETH_NETWORK, CIRCUIT_FILES_URL } = process.env;
 
 const checkCircuitsOutput = async () => {
-  let env = '';
+  let env;
   switch (ETH_NETWORK) {
     case 'goerli':
       env = 'testnet';

@@ -57,7 +57,7 @@ const genGetCommitments = async (query = {}, proj = {}) => {
 };
 
 const checkContractsABI = async () => {
-  let env = '';
+  let env;
   switch (ETH_NETWORK) {
     case 'goerli':
       env = 'testnet';
