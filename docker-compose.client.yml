@@ -17,13 +17,13 @@ services:
       - 27017:27017
       - 8080:80
     depends_on:
-      - worker
+      - zokrates-worker
       - rabbitmq1
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
       LOG_LEVEL: debug
-      ZOKRATES_WORKER_HOST: worker
+      ZOKRATES_WORKER_HOST: zokrates-worker
       RABBITMQ_HOST: amqp://rabbitmq1
       RABBITMQ_PORT: 5672
       ENABLE_QUEUE: 1
@@ -35,7 +35,7 @@ services:
       CONTRACT_FILES_URL: ${CONTRACT_FILES_URL}
     command: ['npm', 'run', 'dev']
 
-  worker:
+  zokrates-worker:
     image: ghcr.io/eyblockchain/nightfall3-worker:latest
     volumes:
       - type: volume
