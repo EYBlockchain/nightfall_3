@@ -19,7 +19,7 @@ import './Config.sol';
 import './Stateful.sol';
 import './Pausable.sol';
 
-contract Shield is Stateful, Ownable, Config, Key_Registry, ReentrancyGuardUpgradeable, Pausable {
+contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, Pausable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     mapping(bytes32 => bool) public withdrawn;
     mapping(bytes32 => uint256) public feeBook;
