@@ -13,23 +13,22 @@ pragma solidity ^0.8.0;
 import './Utils.sol';
 import './ERCInterface.sol';
 import './Key_Registry.sol';
-import './Structures.sol';
 import './Config.sol';
 import './Stateful.sol';
-import './Ownable.sol';
+import './Pausable.sol';
 
-contract Shield is Stateful, Ownable, Structures, Config, Key_Registry, ReentrancyGuardUpgradeable {
+contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, Pausable {
     mapping(bytes32 => bool) public withdrawn;
     mapping(bytes32 => uint256) public feeBook;
     mapping(bytes32 => address) public advancedWithdrawals;
     mapping(bytes32 => uint256) public advancedFeeWithdrawals;
 
-    function initialize() public override(Stateful, Key_Registry, Config, Ownable) initializer {
+    function initialize() public override(Stateful, Key_Registry, Config, Pausable) initializer {
         Stateful.initialize();
         Key_Registry.initialize();
         Config.initialize();
-        Ownable.initialize();
         ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
+        Pausable.initialize();
     }
 
     function transferShieldBalance(address ercAddress, uint256 value) public onlyOwner {
@@ -40,9 +39,10 @@ contract Shield is Stateful, Ownable, Structures, Config, Key_Registry, Reentran
         } else {
             tokenContract.transfer(owner(), value);
         }
+        emit ShieldBalanceTransferred(ercAddress, value);
     }
 
-    function submitTransaction(Transaction memory t) external payable nonReentrant {
+    function submitTransaction(Transaction memory t) external payable nonReentrant whenNotPaused {
         // let everyone know what you did
         emit TransactionSubmitted();
         // if this is a deposit transaction, take payment now (TODO: is there a
@@ -248,7 +248,7 @@ contract Shield is Stateful, Ownable, Structures, Config, Key_Registry, Reentran
         emit InstantWithdrawalRequested(withdrawTransactionHash, msg.sender, msg.value);
     }
 
-    function payOut(Transaction memory t, address recipientAddress) internal {
+    function payOut(Transaction memory t, address recipientAddress) internal whenNotPaused {
         // Now pay out the value of the commitment
         address addr = address(uint160(uint256(t.ercAddress)));
         ERCInterface tokenContract = ERCInterface(addr);

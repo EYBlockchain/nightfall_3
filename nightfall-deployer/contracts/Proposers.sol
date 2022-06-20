@@ -8,10 +8,9 @@ pragma solidity ^0.8.0;
 
 import './Config.sol';
 import './Utils.sol';
-import './Structures.sol';
 import './Stateful.sol';
 
-contract Proposers is Stateful, Structures, Config, ReentrancyGuardUpgradeable {
+contract Proposers is Stateful, Config, ReentrancyGuardUpgradeable {
     function initialize() public override(Stateful, Config) initializer {
         Stateful.initialize();
         Config.initialize();

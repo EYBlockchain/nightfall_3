@@ -295,12 +295,12 @@ class Nf3 {
   }
 
   /**
-    Determines if a Nightfall_3 server is running and healthy.
-    @method
-    @async
-    @param {string} server - The name of the server being checked ['client', 'optimist']
-    @returns {Promise} This will resolve into a boolean - true if the healthcheck passed.
-    */
+  Determines if a Nightfall_3 server is running and healthy.
+  @method
+  @async
+  @param {string} server - The name of the server being checked ['client', 'optimist']
+  @returns {Promise} This will resolve into a boolean - true if the healthcheck passed.
+  */
   async healthcheck(server) {
     let url;
     switch (server) {
@@ -380,6 +380,7 @@ class Nf3 {
         !!this.ethereumSigningKey,
       );
     } catch (err) {
+      logger.error(`Approve transaction failed`);
       throw new Error(err);
     }
     if (txDataToSign) {
@@ -406,6 +407,7 @@ class Nf3 {
           );
           resolve(receipt);
         } catch (err) {
+          logger.error('Deposit transaction failed');
           reject(err);
         }
       });

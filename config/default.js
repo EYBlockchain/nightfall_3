@@ -197,7 +197,6 @@ module.exports = {
       tokenTypeERC1155: 'ERC1155',
     },
     transferValue: process.env.TRANSFER_VALUE || 10,
-    // this is the etherum private key for accounts[0]
     privateKey: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e',
     gas: 10000000,
     gasCosts: 80000000000000000,
@@ -291,8 +290,8 @@ module.exports = {
       blockchain1: [
         {
           name: 'ERC20Mock',
-          address: '0xB5Acbe9a0F1F8B98F3fC04471F7fE5d2c222cB44',
-          amount: '200',
+          address: '0x9b7bD670D87C3Dd5C808ba627c75ba7E88aD066f',
+          amount: '100000000000',
         },
         {
           name: 'Test-Eth',
@@ -314,7 +313,7 @@ module.exports = {
         {
           name: 'ERC20Mock',
           address: '0xB5Acbe9a0F1F8B98F3fC04471F7fE5d2c222cB44',
-          amount: '200',
+          amount: '100000000000',
         },
         {
           name: 'Test-Eth',
@@ -335,8 +334,8 @@ module.exports = {
       development: [
         {
           name: 'ERC20Mock',
-          address: '0xB5Acbe9a0F1F8B98F3fC04471F7fE5d2c222cB44',
-          amount: 200,
+          address: '0x470556dE5865D293dCcc0b47644fac7721168065',
+          amount: '100000000000',
         },
         {
           name: 'Test-Eth',

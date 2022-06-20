@@ -25,6 +25,9 @@ contract Structures {
         address paidBy,
         uint256 amount
     );
+    event ShieldBalanceTransferred(address ercAddress, uint256 amount);
+    event NewBootProposerSet(address addr);
+    event NewBootChallengerSet(address addr);
 
     /**
   These events are what the merkle-tree microservice's filters will listen for.
