@@ -1,4 +1,5 @@
 /* eslint-disable no-await-in-loop */
+/* ignore unused exports */
 import Web3 from 'web3';
 import chai from 'chai';
 import config from 'config';
