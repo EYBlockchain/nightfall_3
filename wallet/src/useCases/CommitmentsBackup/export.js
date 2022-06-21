@@ -1,6 +1,7 @@
+/* ignore unused exports */
 import Dexie from 'dexie';
 
-export default async function exportIndexdDB(databaseName) {
+async function exportIndexdDB(databaseName) {
   const db = await new Dexie(databaseName).open();
   return db.transaction('r', db.tables, () => {
     return Promise.all(
@@ -8,3 +9,5 @@ export default async function exportIndexdDB(databaseName) {
     );
   });
 }
+
+export default exportIndexdDB;

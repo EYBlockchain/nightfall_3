@@ -1,3 +1,4 @@
+/* ignore unused exports */
 /**
  *
  * @description this function should verify if the commitment's compressedPkd match with one of the derived keys.
@@ -6,10 +7,7 @@
  * @param {Object[]} commitmentsFromBackup the rows of commitments from the backup uploaded file.
  * @returns boolean
  */
-export default function isCommitmentsCPKDMatchDerivedKeys(
-  indexedDBDerivedKeys,
-  commitmentsFromBackup,
-) {
+const isCommitmentsCPKDMatchDerivedKeys = (indexedDBDerivedKeys, commitmentsFromBackup) => {
   return new Promise(resolve => {
     commitmentsFromBackup.forEach(commitment => {
       for (let i = 0; i < indexedDBDerivedKeys.length; i++) {
@@ -23,4 +21,6 @@ export default function isCommitmentsCPKDMatchDerivedKeys(
     });
     resolve(true);
   });
-}
+};
+
+export default isCommitmentsCPKDMatchDerivedKeys;
