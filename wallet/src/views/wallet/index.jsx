@@ -95,13 +95,13 @@ function WalletModal(props) {
   };
 
   const setIndexedDBObjectsStore = async () => {
-    let commitments = await getIndexedDBObjectRowsFromBackupFile(backupFile, 'commitments');
+    const commitments = await getIndexedDBObjectRowsFromBackupFile(backupFile, 'commitments');
     await addObjectStoreToIndexedDB('nightfall_commitments', commitments, 'commitments');
-    let transactions = await getIndexedDBObjectRowsFromBackupFile(backupFile, 'transactions');
+    const transactions = await getIndexedDBObjectRowsFromBackupFile(backupFile, 'transactions');
     await addObjectStoreToIndexedDB('nightfall_commitments', transactions, 'transactions');
   };
 
-  const recoverWallet = async propsModal => {
+  const recoverWallet = async () => {
     const mnemonic = await concatAllWords();
     const isValid = validateMnemonic(mnemonic);
 
@@ -122,7 +122,7 @@ function WalletModal(props) {
      * Conditional to verify if the commitments keys match with the keys derivated
      * from the mnemonic
      */
-    new Promise(async (resolve, reject) => {
+    new Promise((resolve, reject) => {
       let flag = false;
       let myIndexedDB;
       // const request = indexedDB.open('MyDatabase', 1);
@@ -338,7 +338,7 @@ function WalletModal(props) {
           <Button
             onClick={async () => {
               // await configureMnemonic(screenMnemonic);
-              recoverWallet(props);
+              recoverWallet();
             }}
             style={{ backgroundColor: '#7b3fe4', border: '0px' }}
           >
@@ -378,7 +378,7 @@ function RecoveredWalletModal(props) {
                 marginLeft: '15px',
               }}
             >
-              Your commitments don't match with your mnemonic. Please insert other mnemonic or
+              Your commitments do not match with your mnemonic. Please insert other mnemonic or
               generate a new wallet!
             </h5>
           )}
