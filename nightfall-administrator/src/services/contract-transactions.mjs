@@ -1,7 +1,7 @@
 import config from 'config';
 import { waitForContract, web3 } from '../../../common-files/utils/contract.mjs';
 import logger from '../../../common-files/utils/logger.mjs';
-import { queueTransaction, getTokenAddress } from './helpers.mjs';
+import { addMultiSigSignature, getTokenAddress } from './helpers.mjs';
 
 const { RESTRICTIONS, SHIELD_CONTRACT_NAME } = config;
 const pausables = ['State', 'Shield'];
@@ -21,7 +21,7 @@ export async function setTokenRestrictions(
       const data = shieldContractInstance.methods
         .setRestriction(token.address, depositRestriction, withdrawRestriction)
         .encodeABI();
-      queueTransaction(data, signingKey, shieldContractInstance.options.address);
+      addMultiSigSignature(data, signingKey, shieldContractInstance.options.address);
     }
   }
 }
@@ -31,7 +31,7 @@ export async function removeTokenRestrictions(tokenName, signingKey) {
   for (const token of RESTRICTIONS.tokens[process.env.ETH_NETWORK]) {
     if (token.name === tokenName) {
       const data = shieldContractInstance.methods.removeRestriction(token.address).encodeABI();
-      queueTransaction(data, signingKey, shieldContractInstance.options.address);
+      addMultiSigSignature(data, signingKey, shieldContractInstance.options.address);
     }
   }
 }
@@ -42,7 +42,7 @@ export function pauseContracts(signingKey) {
     pausables.map(async pausable => {
       const contractInstance = await waitForContract(pausable);
       const data = contractInstance.methods.pause().encodeABI();
-      return queueTransaction(data, signingKey, contractInstance.options.address);
+      return addMultiSigSignature(data, signingKey, contractInstance.options.address);
     }),
   );
 }
@@ -53,7 +53,7 @@ export function unpauseContracts(signingKey) {
     pausables.map(async pausable => {
       const contractInstance = await waitForContract(pausable);
       const data = contractInstance.methods.unpause().encodeABI();
-      return queueTransaction(data, signingKey, contractInstance.options.address);
+      return addMultiSigSignature(data, signingKey, contractInstance.options.address);
     }),
   );
 }
@@ -65,7 +65,7 @@ export async function transferShieldBalance(tokenName, amount, signingKey) {
   const data = shieldContractInstance.methods
     .transferShieldBalance(tokenAddress, amount)
     .encodeABI();
-  return queueTransaction(data, signingKey, shieldContractInstance.options.address);
+  return addMultiSigSignature(data, signingKey, shieldContractInstance.options.address);
 }
 
 export function transferOwnership(newOwnerPrivateKey, signingKey) {
@@ -74,7 +74,7 @@ export function transferOwnership(newOwnerPrivateKey, signingKey) {
     pausables.map(async pausable => {
       const contractInstance = await waitForContract(pausable);
       const data = contractInstance.methods.transferOwnership(newOwner).encodeABI();
-      return queueTransaction(data, signingKey, contractInstance.options.address);
+      return addMultiSigSignature(data, signingKey, contractInstance.options.address);
     }),
   );
 }
@@ -83,7 +83,7 @@ export async function setBootProposer(newProposerPrivateKey, signingKey) {
   const newProposer = web3.eth.accounts.privateKeyToAccount(newProposerPrivateKey, true).address;
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
   const data = shieldContractInstance.methods.setBootProposer(newProposer).encodeABI();
-  return queueTransaction(data, signingKey, shieldContractInstance.options.address);
+  return addMultiSigSignature(data, signingKey, shieldContractInstance.options.address);
 }
 
 export async function setBootChallenger(newChallengerPrivateKey, signingKey) {
@@ -94,5 +94,5 @@ export async function setBootChallenger(newChallengerPrivateKey, signingKey) {
   console.log('BOOT CHALLENGER', newChallenger);
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
   const data = shieldContractInstance.methods.setBootChallenger(newChallenger).encodeABI();
-  return queueTransaction(data, signingKey, shieldContractInstance.options.address);
+  return addMultiSigSignature(data, signingKey, shieldContractInstance.options.address);
 }
