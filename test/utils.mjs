@@ -11,6 +11,10 @@ const ENVIRONMENT = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIR
 
 const USE_EXTERNAL_NODE = config.USE_EXTERNAL_NODE === 'true';
 
+export const waitForTimeout = async timeoutInMs => {
+  await new Promise(resolve => setTimeout(resolve, timeoutInMs));
+};
+
 export const topicEventMapping = {
   BlockProposed: '0x566d835e602d4aa5802ee07d3e452e755bc77623507825de7bc163a295d76c0b',
   Rollback: '0xea34b0bc565cb5f2ac54eaa86422ae05651f84522ef100e16b54a422f2053852',
@@ -103,7 +107,7 @@ export class Web3Client {
 
   async submitTransaction(unsignedTransaction, privateKey, shieldAddress, gasCount, value = 0) {
     while (this.isSubmitTxLocked) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await waitForTimeout(1000);
     }
     this.isSubmitTxLocked = true;
     let gas = gasCount;
@@ -193,7 +197,7 @@ export class Web3Client {
       });
       // console.log('EVENTS WERE', events);
 
-      await new Promise(resolve => setTimeout(resolve, WAIT));
+      await waitForTimeout(WAIT);
       counter--;
     }
     if (counter < 0) {
@@ -211,13 +215,13 @@ export class Web3Client {
     const length = count !== 1 ? count : expectedEvents.length;
     let timeout = 100;
     while (eventLogs.length < length) {
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      await waitForTimeout(3000);
       timeout--;
       if (timeout === 0) throw new Error('Timeout in waitForEvent');
     }
 
     while (eventLogs[0] !== expectedEvents[0]) {
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      await waitForTimeout(3000);
     }
 
     expect(eventLogs[0]).to.equal(expectedEvents[0]);
@@ -231,11 +235,11 @@ export class Web3Client {
     await this.subscribeTo('newBlockHeaders', blockHeaders);
 
     while (blockHeaders.length < 12) {
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      await waitForTimeout(3000);
     }
 
     // Have to wait here as client block proposal takes longer now
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    await waitForTimeout(3000);
     return eventLogs;
   }
 }
@@ -353,7 +357,7 @@ export const depositNTransactions = async (nf3, N, ercAddress, tokenType, value,
         ) {
           count -= 1;
           logger.debug(`Transaction failed. Trying again...${count} tries left`);
-          await new Promise(resolving => setTimeout(resolving, 10000));
+          await waitForTimeout(10000);
         } else {
           throw e;
         }
@@ -361,7 +365,7 @@ export const depositNTransactions = async (nf3, N, ercAddress, tokenType, value,
     }
     expectTransaction(res);
     depositTransactions.push(res);
-    await new Promise(resolving => setTimeout(resolving, 1000));
+    await waitForTimeout(1000);
   }
   return depositTransactions;
 };
@@ -453,7 +457,7 @@ export const waitForSufficientBalance = (client, value) => {
       const balance = await retrieveL2Balance(client);
       logger.debug(` Balance needed ${value}. Current balance ${balance}.`);
       if (balance < value) {
-        await new Promise(resolving => setTimeout(resolving, 10000));
+        await waitForTimeout(10000);
         isSufficientBalance();
       } else resolve();
     }
