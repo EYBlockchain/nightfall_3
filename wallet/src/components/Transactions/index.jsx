@@ -17,7 +17,6 @@ import useInterval from '../../hooks/useInterval';
 import { getPricing, setPricing, shieldAddressGet } from '../../utils/lib/local-storage';
 import BigFloat from '../../common-files/classes/bigFloat';
 import exportIndexdDB from '../../useCases/CommitmentsBackup/export';
-// import BigFloat from '../../common-files/classes/bigFloat';
 
 const supportedTokens = importTokens();
 
