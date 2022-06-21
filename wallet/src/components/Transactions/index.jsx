@@ -159,14 +159,6 @@ const Transactions = () => {
     setTxs(mappedTxs);
   }, delay);
 
-  const handleExportIndedexDB = async () => {
-    const exportedDB = await exportIndexdDB('nightfall_commitments');
-    const filteredTables = exportedDB.filter(
-      arr => arr.table === 'commitments' || arr.table === 'transactions',
-    );
-    downloadFile(JSON.stringify(filteredTables));
-  };
-
   function downloadFile(content) {
     const a = document.createElement('a');
     const file = new Blob([content], { type: 'text/plain' });
@@ -174,6 +166,14 @@ const Transactions = () => {
     a.download = 'pnf_bkp.json';
     a.click();
   }
+
+  const handleExportIndedexDB = async () => {
+    const exportedDB = await exportIndexdDB('nightfall_commitments');
+    const filteredTables = exportedDB.filter(
+      arr => arr.table === 'commitments' || arr.table === 'transactions',
+    );
+    downloadFile(JSON.stringify(filteredTables));
+  };
 
   return (
     <div className="pagePartition" style={{ width: '100%' }}>

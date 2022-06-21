@@ -86,7 +86,7 @@ function WalletModal(props) {
           if (indexR === mnemonicRecArray.length - 1 && indexC === objRow.length - 1) {
             mnemonic = mnemonic.concat(objCol.word);
           } else {
-            mnemonic = mnemonic = mnemonic.concat(objCol.word).concat(' ');
+            mnemonic = mnemonic.concat(objCol.word).concat(' ');
           }
         });
       });
