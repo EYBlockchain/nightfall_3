@@ -377,17 +377,34 @@ module.exports = {
         {
           name: 'WETH',
           address: '0x3f152B63Ec5CA5831061B2DccFb29a874C317502',
-          amount: process.env.WETH_GOERLI_RESTRICT || '1000000000000000000',
+          amount: process.env.WETH_TESTNET_RESTRICT || '1000000000000000000',
         },
         {
           name: 'MATIC',
           address: '0x499d11E0b6eAC7c0593d8Fb292DCBbF815Fb29Ae',
-          amount: process.env.MATIC_GOERLI_RESTRICT || '1000000000000000000000',
+          amount: process.env.MATIC_TESTNET_RESTRICT || '1000000000000000000000',
         },
         {
           name: 'USDC',
           address: '0x07865c6E87B9F70255377e024ace6630C1Eaa37F',
-          amount: process.env.USDC_GOERLI_RESTRICT || '1000000000',
+          amount: process.env.USDC_TESTNET_RESTRICT || '1000000000',
+        },
+      ],
+      ropsten: [
+        {
+          name: 'WETH',
+          address: '0xc778417E063141139Fce010982780140Aa0cD5Ab',
+          amount: process.env.WETH_TESTNET_RESTRICT || '1000000000000000000',
+        },
+        {
+          name: 'MATIC',
+          address: '0x499d11E0b6eAC7c0593d8Fb292DCBbF815Fb29Ae',
+          amount: process.env.MATIC_TESTNET_RESTRICT || '1000000000000000000000',
+        },
+        {
+          name: 'USDC',
+          address: '0x07865c6E87B9F70255377e024ace6630C1Eaa37F',
+          amount: process.env.USDC_TESTNET_RESTRICT || '1000000000',
         },
       ],
     },
