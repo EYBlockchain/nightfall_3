@@ -3,9 +3,12 @@ Resync code so that restarted client instances are able to read past events and 
 their local commitments databsae.
 */
 
+import axios from 'axios';
+import fs from 'fs';
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import mongo from 'common-files/utils/mongo.mjs';
+import downloadFile from 'common-files/utils/httputils.mjs';
 import { unpauseQueue } from 'common-files/utils/event-queue.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import blockProposedEventHandler from '../event-handlers/block-proposed.mjs';
@@ -17,7 +20,10 @@ const {
   COMMITMENTS_COLLECTION,
   STATE_CONTRACT_NAME,
   STATE_GENESIS_BLOCK,
+  DEPLOYMENT_FILES_URL: { DEFAULT_CONTRACT_FILES_URL },
 } = config;
+
+const { ETH_NETWORK, CONTRACT_FILES_URL } = process.env;
 
 const syncState = async (fromBlock = 'earliest', toBlock = 'latest', eventFilter = 'allEvents') => {
   console.log('From block', fromBlock);
@@ -32,7 +38,7 @@ const syncState = async (fromBlock = 'earliest', toBlock = 'latest', eventFilter
     switch (pastStateEvents[i].event) {
       case 'BlockProposed':
         // eslint-disable-next-line no-await-in-loop
-        await blockProposedEventHandler(pastStateEvents[i]);
+        await blockProposedEventHandler(pastStateEvents[i], true);
         break;
       case 'Rollback':
         // eslint-disable-next-line no-await-in-loop
@@ -50,8 +56,55 @@ const genGetCommitments = async (query = {}, proj = {}) => {
   return db.collection(COMMITMENTS_COLLECTION).find(query, proj).toArray();
 };
 
+const checkContractsABI = async () => {
+  let env;
+  switch (ETH_NETWORK) {
+    case 'goerli':
+      env = 'testnet';
+      break;
+    case 'mainnet':
+      env = 'production';
+      break;
+    default:
+      env = '';
+  }
+
+  if (env) {
+    const baseUrl = CONTRACT_FILES_URL
+      ? `${CONTRACT_FILES_URL}`
+      : `${DEFAULT_CONTRACT_FILES_URL}/${env}`;
+    const url = `${baseUrl}/build/hash.txt`;
+
+    const res = await axios.get(url); // get all json abi contracts
+    const files = res.data.split('\n');
+
+    if (!fs.existsSync(`${config.CONTRACT_ARTIFACTS}`)) {
+      fs.mkdirSync(`${config.CONTRACT_ARTIFACTS}`);
+    }
+
+    logger.info(`Downloading contracts from ${url}...`);
+
+    await Promise.all(
+      files.map(async f => {
+        if (f) {
+          try {
+            await downloadFile(
+              `${baseUrl}/build/contracts/${f.split('  ')[1]}`,
+              `${config.CONTRACT_ARTIFACTS}/${f.split('  ')[1]}`,
+            );
+          } catch (e) {
+            console.error(`ERROR downloading ${f.split('  ')[1]}`);
+          }
+        }
+      }),
+    );
+    logger.info(`Contracts downloaded`);
+  }
+};
+
 // eslint-disable-next-line import/prefer-default-export
 export const initialClientSync = async () => {
+  await checkContractsABI();
   const allCommitments = await genGetCommitments();
   const commitmentBlockNumbers = allCommitments.map(a => a.blockNumber).filter(n => n >= 0);
   logger.info(`commitmentBlockNumbers: ${commitmentBlockNumbers}`);

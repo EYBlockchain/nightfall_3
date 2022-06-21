@@ -126,6 +126,10 @@ module.exports = {
     MPC_PARAMS_URL:
       'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com/phase2/mpc_params',
   },
+  DEPLOYMENT_FILES_URL: {
+    DEFAULT_CIRCUIT_FILES_URL: 'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com',
+    DEFAULT_CONTRACT_FILES_URL: 'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com',
+  },
   ENVIRONMENTS: {
     mainnet: {
       name: 'Mainnet',
@@ -168,9 +172,13 @@ module.exports = {
         : 'http://localhost:8092',
       adversarialOptimistApiUrl: 'http://localhost:8088',
       adversarialOptimistWsUrl: 'ws://localhost:8089',
-      web3WsUrl: process.env.BLOCKCHAIN_WS_HOST
-        ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`
-        : 'ws://localhost:8546',
+      web3WsUrl:
+        // eslint-disable-next-line no-nested-ternary
+        process.env.BLOCKCHAIN_WS_HOST && process.env.BLOCKCHAIN_PORT
+          ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`
+          : process.env.BLOCKCHAIN_WS_HOST
+          ? `wss://${process.env.BLOCKCHAIN_WS_HOST}`
+          : 'ws://localhost:8546',
     },
     aws: {
       name: 'AWS',
@@ -188,8 +196,7 @@ module.exports = {
       tokenTypeERC721: 'ERC721',
       tokenTypeERC1155: 'ERC1155',
     },
-    transferValue: 10,
-    // this is the (test) ethereum private key for accounts[0]
+    transferValue: process.env.TRANSFER_VALUE || 10,
     privateKey: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e',
     gas: 10000000,
     gasCosts: 80000000000000000,

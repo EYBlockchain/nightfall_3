@@ -2,6 +2,10 @@
 FROM ghcr.io/eyblockchain/local-zokrates as builder
 
 FROM ubuntu:20.04
+
+WORKDIR /
+COPY common-files common-files
+
 WORKDIR /app
 
 COPY config/default.js config/default.js

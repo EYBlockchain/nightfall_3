@@ -14,6 +14,7 @@ const main = async () => {
       await rabbitmq.connect();
       queues();
     }
+
     await initialClientSync();
     await startEventQueue(queueManager, eventHandlers);
 

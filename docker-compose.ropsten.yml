@@ -3,13 +3,13 @@ services:
   client1:
     environment:
       BLOCKCHAIN_URL: $ROPSTEN_NODE
-      USE_ROPSTEN_NODE: 'true'
+      USE_EXTERNAL_NODE: 'true'
       AUTOSTART_RETRIES: 600
 
   client2:
     environment:
       BLOCKCHAIN_URL: $ROPSTEN_NODE
-      USE_ROPSTEN_NODE: 'true'
+      USE_EXTERNAL_NODE: 'true'
       AUTOSTART_RETRIES: 600
 
   deployer:
@@ -18,18 +18,18 @@ services:
       # startup routines will wait for a blockchain client to be reachable on this network
       ETH_NETWORK: ropsten
       BLOCKCHAIN_URL: $ROPSTEN_NODE
-      USE_ROPSTEN_NODE: 'true'
+      USE_EXTERNAL_NODE: 'true'
       FROM_ADDRESS: ${FROM_ADDRESS:-0x29100E7E3dA6654BF63d9E7804ADe518aCc5AaA5}
       ETH_PRIVATE_KEY: $ETH_PRIVATE_KEY
 
   optimist1:
     environment:
       BLOCKCHAIN_URL: $ROPSTEN_NODE
-      USE_ROPSTEN_NODE: 'true'
+      USE_EXTERNAL_NODE: 'true'
       AUTOSTART_RETRIES: 600
 
   optimist2:
     environment:
       BLOCKCHAIN_URL: $ROPSTEN_NODE
-      USE_ROPSTEN_NODE: 'true'
+      USE_EXTERNAL_NODE: 'true'
       AUTOSTART_RETRIES: 600

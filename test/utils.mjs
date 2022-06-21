@@ -1,4 +1,5 @@
 /* eslint-disable no-await-in-loop */
+/* ignore unused exports */
 import Web3 from 'web3';
 import chai from 'chai';
 import config from 'config';
@@ -9,7 +10,11 @@ const { expect } = chai;
 const { WEB3_PROVIDER_OPTIONS } = config;
 const ENVIRONMENT = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
-const USE_ROPSTEN_NODE = config.USE_ROPSTEN_NODE === 'true';
+const USE_EXTERNAL_NODE = config.USE_EXTERNAL_NODE === 'true';
+
+export const waitForTimeout = async timeoutInMs => {
+  await new Promise(resolve => setTimeout(resolve, timeoutInMs));
+};
 
 export const topicEventMapping = {
   BlockProposed: '0x566d835e602d4aa5802ee07d3e452e755bc77623507825de7bc163a295d76c0b',
@@ -103,7 +108,7 @@ export class Web3Client {
 
   async submitTransaction(unsignedTransaction, privateKey, shieldAddress, gasCount, value = 0) {
     while (this.isSubmitTxLocked) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await waitForTimeout(1000);
     }
     this.isSubmitTxLocked = true;
     let gas = gasCount;
@@ -116,7 +121,7 @@ export class Web3Client {
         const accountAddress = await this.web3.eth.accounts.privateKeyToAccount(privateKey);
         nonce = await this.web3.eth.getTransactionCount(accountAddress.address);
       }
-      if (USE_ROPSTEN_NODE) {
+      if (USE_EXTERNAL_NODE) {
         // get gaslimt from latest block as gaslimt may vary
         gas = (await this.web3.eth.getBlock('latest')).gasLimit;
         const blockGasPrice = Number(await this.web3.eth.getGasPrice());
@@ -193,7 +198,7 @@ export class Web3Client {
       });
       // console.log('EVENTS WERE', events);
 
-      await new Promise(resolve => setTimeout(resolve, WAIT));
+      await waitForTimeout(WAIT);
       counter--;
     }
     if (counter < 0) {
@@ -211,13 +216,13 @@ export class Web3Client {
     const length = count !== 1 ? count : expectedEvents.length;
     let timeout = 100;
     while (eventLogs.length < length) {
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      await waitForTimeout(3000);
       timeout--;
       if (timeout === 0) throw new Error('Timeout in waitForEvent');
     }
 
     while (eventLogs[0] !== expectedEvents[0]) {
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      await waitForTimeout(3000);
     }
 
     expect(eventLogs[0]).to.equal(expectedEvents[0]);
@@ -231,11 +236,11 @@ export class Web3Client {
     await this.subscribeTo('newBlockHeaders', blockHeaders);
 
     while (blockHeaders.length < 12) {
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      await waitForTimeout(3000);
     }
 
     // Have to wait here as client block proposal takes longer now
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    await waitForTimeout(3000);
     return eventLogs;
   }
 }
@@ -339,9 +344,31 @@ export const expectTransaction = res => {
 export const depositNTransactions = async (nf3, N, ercAddress, tokenType, value, tokenId, fee) => {
   const depositTransactions = [];
   for (let i = 0; i < N; i++) {
-    depositTransactions.push(nf3.deposit(ercAddress, tokenType, value, tokenId, fee));
+    let res;
+    let count = 3; // sometimes in testnet we have issues about nonce and replacement transactions so we try again
+
+    while (count > 0) {
+      try {
+        res = await nf3.deposit(ercAddress, tokenType, value, tokenId, fee);
+        count = 0;
+      } catch (e) {
+        if (
+          e.message.includes('nonce too low') ||
+          e.message.includes('replacement transaction underpriced')
+        ) {
+          count -= 1;
+          logger.debug(`Transaction failed. Trying again...${count} tries left`);
+          await waitForTimeout(10000);
+        } else {
+          throw e;
+        }
+      }
+    }
+    expectTransaction(res);
+    depositTransactions.push(res);
+    await waitForTimeout(1000);
   }
-  return Promise.all(depositTransactions);
+  return depositTransactions;
 };
 
 export const transferNTransactions = async (
@@ -431,7 +458,7 @@ export const waitForSufficientBalance = (client, value) => {
       const balance = await retrieveL2Balance(client);
       logger.debug(` Balance needed ${value}. Current balance ${balance}.`);
       if (balance < value) {
-        await new Promise(resolving => setTimeout(resolving, 10000));
+        await waitForTimeout(10000);
         isSufficientBalance();
       } else resolve();
     }
