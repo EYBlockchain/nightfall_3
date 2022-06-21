@@ -14,6 +14,7 @@ import Header from '@Components/Header/header.jsx';
 import SideBar from '@Components/SideBar/index.jsx';
 import Tokens from '@Components/Tokens/index.jsx';
 import { getWalletBalance } from '@Nightfall/services/commitment-storage.js';
+import Lottie from 'lottie-react';
 import { UserContext } from '../../hooks/User/index.jsx';
 
 import './wallet.scss';
@@ -29,7 +30,6 @@ import {
 import isCommitmentsCPKDMatchDerivedKeys from '../../useCases/CommitmentsBackup/commitmentsVerification.js';
 import successHand from '../../assets/img/modalImages/success-hand.png';
 import checkMarkCross from '../../assets/lottie/check-mark-cross.json';
-import Lottie from 'lottie-react';
 
 const supportedTokens = importTokens();
 
@@ -71,7 +71,7 @@ function WalletModal(props) {
   const uploadBackupFile = async event => {
     event.preventDefault();
     try {
-      let objectRecovered = await convertFileToObject(event.target.files[0]);
+      const objectRecovered = await convertFileToObject(event.target.files[0]);
       setBackupFile(objectRecovered);
     } catch {
       setBackupFile(null);
@@ -81,12 +81,12 @@ function WalletModal(props) {
   const concatAllWords = () => {
     return new Promise(resolve => {
       let mnemonic = '';
-      mnemonicRecArray.map((objRow, indexR) => {
-        objRow.map((objCol, indexC) => {
+      mnemonicRecArray.forEach((objRow, indexR) => {
+        objRow.forEach((objCol, indexC) => {
           if (indexR === mnemonicRecArray.length - 1 && indexC === objRow.length - 1) {
-            mnemonic = mnemonic + objCol.word;
+            mnemonic += objCol.word;
           } else {
-            mnemonic = mnemonic + objCol.word + ' ';
+            mnemonic += objCol.word + ' ';
           }
         });
       });
@@ -95,7 +95,7 @@ function WalletModal(props) {
   };
 
   const recoverWallet = async propsModal => {
-    let mnemonic = await concatAllWords();
+    const mnemonic = await concatAllWords();
     const isValid = validateMnemonic(mnemonic);
 
     if (!isValid) {
