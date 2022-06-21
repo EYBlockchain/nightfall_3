@@ -6,7 +6,10 @@
  * @param {Object[]} commitmentsFromBackup the rows of commitments from the backup uploaded file.
  * @returns boolean
  */
-const isCommitmentsCPKDMatchDerivedKeys = (indexedDBDerivedKeys, commitmentsFromBackup) => {
+export default function isCommitmentsCPKDMatchDerivedKeys(
+  indexedDBDerivedKeys,
+  commitmentsFromBackup,
+) {
   return new Promise(resolve => {
     commitmentsFromBackup.forEach(commitment => {
       for (let i = 0; i < indexedDBDerivedKeys.length; i++) {
@@ -20,6 +23,4 @@ const isCommitmentsCPKDMatchDerivedKeys = (indexedDBDerivedKeys, commitmentsFrom
     });
     resolve(true);
   });
-};
-
-export default isCommitmentsCPKDMatchDerivedKeys;
+}

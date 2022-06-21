@@ -6,7 +6,7 @@
  * backup file.
  * @returns promise of array of rows.
  */
-const getIndexedDBObjectRowsFromBackupFile = (objectRecovered, objectStoreName) => {
+export const getIndexedDBObjectRowsFromBackupFile = (objectRecovered, objectStoreName) => {
   return new Promise((resolve, reject) => {
     try {
       resolve(objectRecovered.filter(obj => obj.table === objectStoreName)[0].rows);
@@ -23,7 +23,7 @@ const getIndexedDBObjectRowsFromBackupFile = (objectRecovered, objectStoreName) 
  * in a object.
  * @returns {Promise<object>} Promise of object
  */
-const convertFileToObject = file => {
+export const convertFileToObject = file => {
   return new Promise((resolve, reject) => {
     let objectRecovered;
     const reader = new FileReader();
@@ -46,7 +46,7 @@ const convertFileToObject = file => {
  * @param {string} nameOfObjectStore the name of the table or objectStore.
  * @returns an error or true if the process was completed.
  */
-const addObjectStoreToIndexedDB = (databaseName, arrayOfObjects, nameOfObjectStore) => {
+export const addObjectStoreToIndexedDB = (databaseName, arrayOfObjects, nameOfObjectStore) => {
   return new Promise((resolve, reject) => {
     const myIndexedDB = indexedDB.open(databaseName, 1);
 
@@ -72,5 +72,3 @@ const addObjectStoreToIndexedDB = (databaseName, arrayOfObjects, nameOfObjectSto
     };
   });
 };
-
-export { getIndexedDBObjectRowsFromBackupFile, convertFileToObject, addObjectStoreToIndexedDB };
