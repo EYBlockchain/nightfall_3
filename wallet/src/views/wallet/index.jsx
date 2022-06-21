@@ -84,14 +84,21 @@ function WalletModal(props) {
       mnemonicRecArray.forEach((objRow, indexR) => {
         objRow.forEach((objCol, indexC) => {
           if (indexR === mnemonicRecArray.length - 1 && indexC === objRow.length - 1) {
-            mnemonic += objCol.word;
+            mnemonic = mnemonic.concat(objCol.word);
           } else {
-            mnemonic += objCol.word + ' ';
+            mnemonic = mnemonic = mnemonic.concat(objCol.word).concat(' ');
           }
         });
       });
       resolve(mnemonic);
     });
+  };
+
+  const setIndexedDBObjectsStore = async () => {
+    let commitments = await getIndexedDBObjectRowsFromBackupFile(backupFile, 'commitments');
+    await addObjectStoreToIndexedDB('nightfall_commitments', commitments, 'commitments');
+    let transactions = await getIndexedDBObjectRowsFromBackupFile(backupFile, 'transactions');
+    await addObjectStoreToIndexedDB('nightfall_commitments', transactions, 'transactions');
   };
 
   const recoverWallet = async propsModal => {
@@ -101,7 +108,6 @@ function WalletModal(props) {
     if (!isValid) {
       setIsMnemonicValid(isValid);
       return;
-      //propsModal.onHide();
     }
 
     if (!backupFile) {
@@ -116,7 +122,7 @@ function WalletModal(props) {
      * Conditional to verify if the commitments keys match with the keys derivated
      * from the mnemonic
      */
-    new Promise(async resolve => {
+    new Promise(async (resolve, reject) => {
       let flag = false;
       let myIndexedDB;
       // const request = indexedDB.open('MyDatabase', 1);
@@ -172,13 +178,6 @@ function WalletModal(props) {
         props.onHide();
       }
     });
-  };
-
-  const setIndexedDBObjectsStore = async () => {
-    let commitments = await getIndexedDBObjectRowsFromBackupFile(backupFile, 'commitments');
-    await addObjectStoreToIndexedDB('nightfall_commitments', commitments, 'commitments');
-    let transactions = await getIndexedDBObjectRowsFromBackupFile(backupFile, 'transactions');
-    await addObjectStoreToIndexedDB('nightfall_commitments', transactions, 'transactions');
   };
 
   const updateState = async (event, indexRow, indexColumn) => {
