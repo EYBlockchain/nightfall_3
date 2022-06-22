@@ -114,7 +114,7 @@ def deployAndStartAws(environmentToDeploy) {
 }
 
 def buildNightfall() {
-    sh "WORKSPACE=${env.WORKSPACE} make -C ${JENKINS_PING_PONG_DIR} build"
+    sh "make build"
 }
 
 def execute(String command) {

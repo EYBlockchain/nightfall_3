@@ -1,6 +1,6 @@
 
 build:
-	npm ci
+	npm install
 
 ## --- Local stuff
 
