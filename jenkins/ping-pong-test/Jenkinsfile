@@ -56,14 +56,14 @@ def cleanUpEnvironment(environmentToDeploy) {
     if(environmentToDeploy == null) return
 
     if(environmentToDeploy == 'local') {
-        sh "WORKSPACE=${env.WORKSPACE} make -C ${env.JENKINS_PING_PONG_DIR} clean-local"
+        sh "WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_DIR} clean-local"
     } else {
         sh 'make clean-aws'
     }
 }
 
 def runPingPongTestOnLocal() {
-    sh "WORKSPACE=${env.WORKSPACE} make -C ${env.JENKINS_PING_PONG_DIR} run-ping-pong-local"
+    sh "WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_DIR} run-ping-pong-local"
 }
 
 def runPingPongTestOnAws(environmentToDeploy) {
@@ -71,7 +71,7 @@ def runPingPongTestOnAws(environmentToDeploy) {
 }
 
 def deployAndStartLocal() {
-    sh "WORKSPACE=${env.WORKSPACE} make -C ${env.JENKINS_PING_PONG_DIR} build-ping-pong-local"
+    sh "WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_DIR} build-ping-pong-local"
     
     startGanache()
     startNightfallLocal()
@@ -114,7 +114,7 @@ def deployAndStartAws(environmentToDeploy) {
 }
 
 def buildNightfall() {
-    sh "WORKSPACE=${env.WORKSPACE} make -C ${env.WORKSPACE} build"
+    sh "WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_DIR} build"
 }
 
 def execute(String command) {

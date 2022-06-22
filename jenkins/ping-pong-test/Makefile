@@ -1,5 +1,6 @@
 
 build:
+	cd $(WORKSPACE)
 	npm install
 
 ## --- Local stuff
