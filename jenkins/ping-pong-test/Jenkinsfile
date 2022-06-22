@@ -24,26 +24,29 @@ lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
                 buildNightfall()
             }
 
-            stage('Deploy and Start Application') {
-                if(environmentToDeploy == 'local') {
-                    deployAndStartLocal()
-                } else {
-                    // TODO which Blockchain we will use for AWS envs?
-                    checkout '' // TODO checks out nf3_private, since we need VPN and deployment stuff
-                    deployAndStartAws(environmentToDeploy)
+            failFast true
+            parallel {
+                stage('Deploy and Start Application') {
+                    if(environmentToDeploy == 'local') {
+                        deployAndStartLocal()
+                    } else {
+                        // TODO which Blockchain we will use for AWS envs?
+                        checkout '' // TODO checks out nf3_private, since we need VPN and deployment stuff
+                        deployAndStartAws(environmentToDeploy)
+                    }
                 }
-            }
 
-            stage('Run the Ping-pong test') {
-                if(environmentToDeploy == 'local') {
-                    runPingPongTestOnLocal()
-                } else {
-                    runPingPongTestOnAws(environmentToDeploy)
+                stage('Run the Ping-pong test') {
+                    if(environmentToDeploy == 'local') {
+                        runPingPongTestOnLocal()
+                    } else {
+                        runPingPongTestOnAws(environmentToDeploy)
+                    }
                 }
-            }
 
-            stage('Clean') {
-                cleanUpEnvironment(environmentToDeploy)
+                stage('Clean') {
+                    cleanUpEnvironment(environmentToDeploy)
+                }
             }
         }
     } catch (e) {
@@ -78,6 +81,12 @@ def deployAndStartLocal() {
 }
 
 def startNightfallLocal() {
+    println "Waiting Ganache to be up!"
+    // Waits for Ganache to be fully up
+    sleep(30)
+
+    println "Ok, lets go to start Nightfall"
+
     sh "WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_DIR} start-nightfall-local"
 
     waitNightfallFinishingInitialization()
@@ -85,12 +94,6 @@ def startNightfallLocal() {
 
 def startGanache() {
     sh "WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_DIR} start-ganache-local"
-
-    // Waits for Ganache to be fully up
-    sleep(30) { // Sleeps for 30s
-        println("Deployment process interruped!")
-        // currentBuild.result = 'FAILED' // De we need this?
-    }
 }
 
 // Try to reuse for AWS
