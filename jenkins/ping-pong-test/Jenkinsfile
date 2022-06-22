@@ -34,8 +34,8 @@ lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
                 }
             }
 
-            parallel {
-                stage('Start Ganache') {
+            parallel (
+                'Start Ganache': {
                     sh "WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_DIR} start-ganache-local"
 
                     //if(environmentToDeploy == 'local') {
@@ -45,9 +45,9 @@ lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
                   //      checkout '' // TODO checks out nf3_private, since we need VPN and deployment stuff
                     //    startAws(environmentToDeploy)
                     //}
-                }
+                },
 
-                stage('Start Nightfall') {
+                'Start Nightfall': {
                     sh "sleep(20); WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_DIR} start-nightfall-local"
 
                     //if(environmentToDeploy == 'local') {
@@ -71,10 +71,10 @@ lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
                     cleanUpEnvironment(environmentToDeploy)
                 }
                 */
-            }
+            )
         }
     } catch (e) {
-        //cleanUpEnvironment(environmentToDeploy);
+        cleanUpEnvironment(environmentToDeploy);
     }
 }
 
