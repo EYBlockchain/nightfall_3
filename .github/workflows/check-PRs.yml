@@ -86,7 +86,7 @@ jobs:
       - name: Build adversary
         run: npm run build-adversary
 
-      - name: Start Containers
+      - name: Start Containers with geth
         run: |
           ./setup-nightfall
           ./geth-standalone -s
@@ -95,12 +95,17 @@ jobs:
         env:
           TRANSACTIONS_PER_BLOCK: 32
 
+      - name: Wait for images to be ready
+        uses: Wandalen/wretry.action@v1.0.11
+        with:
+          command: |
+            docker wait nightfall_3_deployer_1
+          attempt_limit: 100
+          attempt_delay: 20000
+
       - name: debug logs - after container startup
         if: always()
         run: cat adversary-test.log
-
-      - name: wait 1200s for Containers startup and setup completion
-        run: sleep 1200
 
       - name: Run integration test
         run: |
