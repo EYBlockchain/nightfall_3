@@ -49,7 +49,7 @@ lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
 
                 stage('Start Nightfall') {
                     sh "sleep(20); WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_DIR} start-nightfall-local"
-                    
+
                     //if(environmentToDeploy == 'local') {
                        // startNightfallLocal()
                     //} else {
@@ -70,8 +70,8 @@ lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
                 stage('Clean') {
                     cleanUpEnvironment(environmentToDeploy)
                 }
+                */
             }
-            */
         }
     } catch (e) {
         cleanUpEnvironment(environmentToDeploy);
