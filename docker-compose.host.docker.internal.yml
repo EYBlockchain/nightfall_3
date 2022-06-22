@@ -36,3 +36,8 @@ services:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
       AUTOSTART_RETRIES: 100
+
+  administrator:
+    environment:
+      BLOCKCHAIN_WS_HOST: host.docker.internal
+      ETH_NETWORK: host.docker.internal
