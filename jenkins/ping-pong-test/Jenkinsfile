@@ -114,7 +114,7 @@ def deployAndStartAws(environmentToDeploy) {
 }
 
 def buildNightfall() {
-    sh "make build"
+    sh "WORKSPACE=${env.WORKSPACE} make -C ${env.WORKSPACE} build"
 }
 
 def execute(String command) {
