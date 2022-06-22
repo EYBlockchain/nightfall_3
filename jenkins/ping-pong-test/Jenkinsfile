@@ -7,7 +7,7 @@ timeout(time: 5, unit: "MINUTES") {
 
 // The environment where the code will be deployed on and tested 
 def environmentToDeploy = env.ENVIRONMENT_TO_DEPLOY
-def currentUser = $BUILD_USER
+def currentUser = env.BUILD_USER
 
 post {
     always {
