@@ -263,6 +263,7 @@ function WalletModal(props) {
                   <InputGroup className="mb-3">
                     {isNewWallet && (
                       <FormControl
+                        readOnly
                         value={
                           typeof screenMnemonic !== 'undefined'
                             ? screenMnemonic.split(' ')[r * 5 + (r === 0 ? c : c + 1)]
@@ -420,6 +421,7 @@ function RecoveredWalletModal(props) {
               onClick={async () => {
                 props.onHide();
                 props.setShowModal(true);
+                window.location.reload();
               }}
               style={{
                 marginTop: '30px',
