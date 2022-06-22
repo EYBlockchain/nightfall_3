@@ -78,12 +78,13 @@ def deployAndStartLocal() {
 }
 
 def startNightfallLocal() {
-    sh 'start-nightfall-local'
+    sh "WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_DIR} start-nightfall-local"
+
     waitNightfallFinishingInitialization()
 }
 
 def startGanache() {
-    sh 'start-ganache-local'
+    sh "WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_DIR} start-ganache-local"
 
     // Waits for Ganache to be fully up
     sleep(30) { // Sleeps for 30s
