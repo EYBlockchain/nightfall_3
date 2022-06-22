@@ -24,7 +24,6 @@ lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
                 buildNightfall()
             }
 
-            failFast true
             parallel {
                 stage('Deploy and Start Application') {
                     if(environmentToDeploy == 'local') {
