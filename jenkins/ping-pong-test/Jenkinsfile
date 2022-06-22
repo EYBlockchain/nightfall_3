@@ -24,7 +24,7 @@ lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
                 buildNightfall()
             }
 
-            stage("Deploy Application") [
+            stage("Deploy Application") {
                 if(environmentToDeploy == 'local') {
                     deployLocal()
                 } else {
@@ -32,7 +32,7 @@ lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
                     checkout '' // TODO checks out nf3_private, since we need VPN and deployment stuff
                     deployAws(environmentToDeploy)
                 }
-            ]
+            }
 
             parallel {
                 stage('Start Application') {
