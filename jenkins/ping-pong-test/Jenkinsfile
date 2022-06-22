@@ -24,7 +24,7 @@ lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
                 buildNightfall()
             }
 
-            stage('Deploying and Starting Application') {
+            stage('Deploy and Start Application') {
                 if(environmentToDeploy == 'local') {
                     deployAndStartLocal()
                 } else {
@@ -34,7 +34,7 @@ lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
                 }
             }
 
-            stage('Running the Ping-pong test') {
+            stage('Run the Ping-pong test') {
                 if(environmentToDeploy == 'local') {
                     runPingPongTestOnLocal()
                 } else {

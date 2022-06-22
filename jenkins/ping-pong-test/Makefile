@@ -10,10 +10,10 @@ build-ping-pong-local:
 	docker-compose build -f $(WORKSPACE)/test/ping-pong/docker-compose.yml
 
 start-ganache-local:
-	cd $(WORKSPACE)/test/ping-pong/ && ./ganache-standalone -s &> ganache.log 
+	cd $(WORKSPACE)/test/ping-pong/ && ./ganache-standalone -s > /dev/null 2>&1
 
 start-nightfall-local:
-	cd $(WORKSPACE)/test/ping-pong/ && ./pong-nightfall -d -s &> ping-pong-test.log &disown
+	cd $(WORKSPACE)/test/ping-pong/ && ./pong-nightfall -d -s > ping-pong-test.log 2>&1
 
 run-ping-pong-local:
 	cd $(WORKSPACE)/test/ping-pong/ && ./pong-apps
