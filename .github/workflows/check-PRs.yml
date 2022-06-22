@@ -82,37 +82,41 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: '14.17.0'
-  
+
       - name: Build adversary
         run: npm run build-adversary
-  
+
       - name: Start Containers
         run: |
           ./setup-nightfall
-          ./start-nightfall -g -d -a &> adversary-test.log &disown
-  
+          ./geth-standalone -s
+          sleep 240
+          ./start-nightfall -l -d -a &> adversary-test.log &disown
+        env:
+          TRANSACTIONS_PER_BLOCK: 32
+
       - name: debug logs - after container startup
         if: always()
         run: cat adversary-test.log
- 
+
       - name: wait 1200s for Containers startup and setup completion
         run: sleep 1200
- 
+
       - name: Run integration test
         run: |
           npm ci
           VERBOSE=true npm run adversary-test
- 
+
       - name: debug logs - after integration test run
         if: always()
         run: cat adversary-test.log
- 
+
       - name: If integration test failed, shutdown the Containers
         if: failure()
         run:
           docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f
           docker-compose.ganache.yml -f docker-compose.adversary.yml down -v
- 
+
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
         uses: actions/upload-artifact@master
