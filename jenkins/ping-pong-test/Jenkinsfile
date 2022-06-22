@@ -74,7 +74,7 @@ lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
             }
         }
     } catch (e) {
-        cleanUpEnvironment(environmentToDeploy);
+        //cleanUpEnvironment(environmentToDeploy);
     }
 }
 
