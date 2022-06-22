@@ -48,7 +48,7 @@ lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
                 },
 
                 'Start Nightfall': {
-                    sh "sleep 20; WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_DIR} start-nightfall-local"
+                    sh "sleep 10; WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_DIR} start-nightfall-local"
 
                     //if(environmentToDeploy == 'local') {
                        // startNightfallLocal()
@@ -81,9 +81,6 @@ lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
 def cleanUpEnvironment(environmentToDeploy) {
     if(environmentToDeploy == null) return
 
-    while(env.TEST_FINISHED != 'true')
-        sleep(60)
-
     println "Cleaning up environment"
 
     if(environmentToDeploy == 'local') {
@@ -108,7 +105,7 @@ def deployLocal() {
 def startNightfallLocal() {
     println "Waiting Ganache to be up!"
     // Waits for Ganache to be fully up
-    sleep(20)
+    sleep(10)
 
     println "Ok, lets go to start Nightfall"
 
@@ -121,6 +118,8 @@ def startGanache() {
 
 // Try to reuse for AWS
 def waitNightfallFinishingInitialization() {
+    sleep(120)
+
     print("Waiting Nightfall initialization")
     while(true) {
         def result = execute('docker wait ping-pong_deployer_1')
