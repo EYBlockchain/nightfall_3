@@ -4,7 +4,6 @@ version: '3.5'
 # Use it as an override file for docker-compose.yml
 # See the readme for more information.
 services:
-
   client1:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
@@ -29,6 +28,11 @@ services:
       AUTOSTART_RETRIES: 100
 
   optimist2:
+    environment:
+      BLOCKCHAIN_WS_HOST: host.docker.internal
+      AUTOSTART_RETRIES: 100
+
+  adversary1:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
       AUTOSTART_RETRIES: 100
