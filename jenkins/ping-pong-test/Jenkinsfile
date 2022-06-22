@@ -20,13 +20,13 @@ lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
                 echo "Workspace: ${env.WORKSPACE}"
 
                 deleteDir()
-                checkout scm
+                //checkout scm // TODO uncomment after tests
                 buildNightfall()
             }
 
             stage("Deploy Application") {
                 if(environmentToDeploy == 'local') {
-                    deployLocal()
+                    // deployLocal()  // TODO uncomment after tests
                 } else {
                     // TODO which Blockchain we will use for AWS envs?
                     checkout '' // TODO checks out nf3_private, since we need VPN and deployment stuff
