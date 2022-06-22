@@ -101,6 +101,12 @@ function WalletModal(props) {
     await addObjectStoreToIndexedDB('nightfall_commitments', transactions, 'transactions');
   };
 
+  const clearSiteData = indexedDBDatabaseName => {
+    indexedDB.deleteDatabase(indexedDBDatabaseName);
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+  };
+
   const recoverWallet = async () => {
     const mnemonic = await concatAllWords();
     const isValid = validateMnemonic(mnemonic);
@@ -117,11 +123,6 @@ function WalletModal(props) {
     setIsMnemonicValid(isValid);
     await deriveAccounts(mnemonic, DEFAULT_ACCOUNT_NUM);
 
-    /**
-     * TODO
-     * Conditional to verify if the commitments keys match with the keys derivated
-     * from the mnemonic
-     */
     new Promise((resolve, reject) => {
       let flag = false;
       let myIndexedDB;
@@ -178,12 +179,6 @@ function WalletModal(props) {
         props.onHide();
       }
     });
-  };
-
-  const clearSiteData = indexedDBDatabaseName => {
-    indexedDB.deleteDatabase(indexedDBDatabaseName);
-    window.localStorage.clear();
-    window.sessionStorage.clear();
   };
 
   const updateState = async (event, indexRow, indexColumn) => {
