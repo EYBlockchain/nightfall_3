@@ -10,17 +10,16 @@ build-ping-pong-local:
 	docker-compose build -f $(WORKSPACE)/test/ping-pong/docker-compose.yml
 
 start-ganache-local:
-	cd $(WORKSPACE)/test/ping-pong/ && ./ganache-standalone -s > /dev/null 2>&1
+	cd $(WORKSPACE)/test/ping-pong/ && ./ganache-standalone -s
 
 start-nightfall-local:
-	cd $(WORKSPACE)/test/ping-pong/ && ./pong-nightfall -d -s > ping-pong-test.log 2>&1
+	cd $(WORKSPACE)/test/ping-pong/ && ./pong-nightfall -d -s
 
 run-ping-pong-local:
 	cd $(WORKSPACE)/test/ping-pong/ && ./pong-apps
-
-clean-local:
 	cd $(WORKSPACE)/test/ping-pong/ && ./pong-down -v
 	cd $(WORKSPACE)/test/ping-pong/ && ./ganache-standalone -d
 
-
+clean-local:
+	
 ## ---- AWS stuff
