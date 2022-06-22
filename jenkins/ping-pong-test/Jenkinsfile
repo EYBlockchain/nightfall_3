@@ -35,16 +35,26 @@ lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
             }
 
             parallel {
-                stage('Start Application') {
+                stage('Start Ganache') {
                     if(environmentToDeploy == 'local') {
-                        startLocal()
+                        startGanache()
                     } else {
                         // TODO which Blockchain we will use for AWS envs?
-                        checkout '' // TODO checks out nf3_private, since we need VPN and deployment stuff
-                        startAws(environmentToDeploy)
+                  //      checkout '' // TODO checks out nf3_private, since we need VPN and deployment stuff
+                    //    startAws(environmentToDeploy)
                     }
                 }
 
+                stage('Start Nightfall') {
+                    if(environmentToDeploy == 'local') {
+                        startNightfallLocal()
+                    } else {
+                        // TODO which Blockchain we will use for AWS envs?
+                        //checkout '' // TODO checks out nf3_private, since we need VPN and deployment stuff
+                        //startAws(environmentToDeploy)
+                    }
+                }
+/*
                 stage('Run the Ping-pong test') {
                     if(environmentToDeploy == 'local') {
                         runPingPongTestOnLocal()
@@ -52,10 +62,10 @@ lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
                         runPingPongTestOnAws(environmentToDeploy)
                     }
                 }
-            }
-
-            stage('Clean') {
-                cleanUpEnvironment(environmentToDeploy)
+*/
+                stage('Clean') {
+                    cleanUpEnvironment(environmentToDeploy)
+                }
             }
         }
     } catch (e) {
@@ -67,6 +77,11 @@ lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
 def cleanUpEnvironment(environmentToDeploy) {
     if(environmentToDeploy == null) return
 
+    while(env.TEST_FINISHED != 'true')
+        sleep(60)
+
+    println "Cleaning up environment"
+
     if(environmentToDeploy == 'local') {
         sh "WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_DIR} clean-local"
     } else {
@@ -76,6 +91,7 @@ def cleanUpEnvironment(environmentToDeploy) {
 
 def runPingPongTestOnLocal() {
     sh "WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_DIR} run-ping-pong-local"
+    env.TEST_FINISHED = 'true'
 }
 
 def runPingPongTestOnAws(environmentToDeploy) {
@@ -86,21 +102,14 @@ def deployLocal() {
     sh "WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_DIR} build-ping-pong-local"
 }
 
-def startLocal() {
-    startGanache()
-    startNightfallLocal()
-}
-
 def startNightfallLocal() {
     println "Waiting Ganache to be up!"
     // Waits for Ganache to be fully up
-    sleep(30)
+    sleep(60)
 
     println "Ok, lets go to start Nightfall"
 
     sh "WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_DIR} start-nightfall-local"
-
-    waitNightfallFinishingInitialization()
 }
 
 def startGanache() {
@@ -112,10 +121,8 @@ def waitNightfallFinishingInitialization() {
     print("Waiting Nightfall initialization")
     while(true) {
         def result = execute('docker wait ping-pong_deployer_1')
-        if(result == '0') {
-            break
-        }
-        print(".")
+        if(result == '0') break
+        
         sleep(20)
     }
     println("Nightfall initialization is done!")
