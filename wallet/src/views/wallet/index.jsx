@@ -172,12 +172,18 @@ function WalletModal(props) {
         props.setShowWalletRecoveredModal(true);
         props.onHide();
       } else {
-        indexedDB.deleteDatabase('nightfall_commitments');
+        clearSiteData('nightfall_commitments');
         props.setIsWalletRecovered(false);
         props.setShowWalletRecoveredModal(true);
         props.onHide();
       }
     });
+  };
+
+  const clearSiteData = indexedDBDatabaseName => {
+    indexedDB.deleteDatabase(indexedDBDatabaseName);
+    window.localStorage.clear();
+    window.sessionStorage.clear();
   };
 
   const updateState = async (event, indexRow, indexColumn) => {
