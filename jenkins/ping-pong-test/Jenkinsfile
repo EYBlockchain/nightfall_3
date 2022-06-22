@@ -24,14 +24,24 @@ lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
                 buildNightfall()
             }
 
+            stage("Deploy Application") [
+                if(environmentToDeploy == 'local') {
+                    deployLocal()
+                } else {
+                    // TODO which Blockchain we will use for AWS envs?
+                    checkout '' // TODO checks out nf3_private, since we need VPN and deployment stuff
+                    deployAws(environmentToDeploy)
+                }
+            ]
+
             parallel {
-                stage('Deploy and Start Application') {
+                stage('Start Application') {
                     if(environmentToDeploy == 'local') {
-                        deployAndStartLocal()
+                        startLocal()
                     } else {
                         // TODO which Blockchain we will use for AWS envs?
                         checkout '' // TODO checks out nf3_private, since we need VPN and deployment stuff
-                        deployAndStartAws(environmentToDeploy)
+                        startAws(environmentToDeploy)
                     }
                 }
 
@@ -72,9 +82,11 @@ def runPingPongTestOnAws(environmentToDeploy) {
     // TODO
 }
 
-def deployAndStartLocal() {
+def deployLocal() {
     sh "WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_DIR} build-ping-pong-local"
-    
+}
+
+def startLocal() {
     startGanache()
     startNightfallLocal()
 }
