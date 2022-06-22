@@ -1,5 +1,5 @@
 
-env.JENKINS_PING_PONG_DIR = "${env.WORKSPACE}/jenkins/ping-pong-test"
+env.JENKINS_PING_PONG_DIR = "jenkins/ping-pong-test"
 def currentUser = env.BUILD_USER
 def environmentToDeploy = null
 
@@ -16,7 +16,7 @@ lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
 
                 echo "Environment choosen: $environmentToDeploy\n"
                 echo "Building Nightfall\n"
-                echo "${env.JENKINS_PING_PONG_DIR}"
+                echo "Current user: ${currentUser}"
 
                 deleteDir()
                 checkout scm
