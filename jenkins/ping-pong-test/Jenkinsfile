@@ -1,75 +1,69 @@
-#!/usr/bin/env groovy
 
-// Waits for 5 min before keep going
-timeout(time: 5, unit: "MINUTES") {
-    choice(description: 'Which environment should be used to deploy?', choices: ["local", "internal", "staging", "preprod"].join('\n'), name: 'ENVIRONMENT_TO_DEPLOY')
-}
 
-// The environment where the code will be deployed on and tested 
-def environmentToDeploy = env.ENVIRONMENT_TO_DEPLOY
+env.JENKINS_PING_PONG_DIR = "${env.WORKSPACE}/jenkins/ping-pong-test"
 def currentUser = env.BUILD_USER
+def environmentToDeploy = null
 
-
-pipeline {
-    agent any
-
-    post {
-        always {
-            
-        }
-    }
-
-    lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
+lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
+    try {
         node {
-            stages {
-                stage("Build Application") {
-                    steps {
-                        echo "Environment choosen: $environmentToDeploy\n"
-                        echo "Building Nightfall\n"
-
-                        deleteDir()
-                        checkout scm
-                        buildNightfall()
-                    }
+            
+            stage("Build Application") {
+                // Waits for 5 min before keep going
+                timeout(time: 5, unit: "MINUTES") {
+                    def options = ["local", "internal", "staging", "preprod"]
+                    environmentToDeploy = input message: 'Which environment should be used to deploy?', parameters: [choice(choices: options, name: "Choose one option")]
                 }
 
-                stage('Deploying and Starting Application') {
-                    steps {
-                        if(environmentToDeploy == 'local') {
-                            deployAndStartLocal();
-                        } else {
-                            // TODO which Blockchain we will use for AWS envs?
-                            checkout '' // TODO checks out nf3_private, since we need VPN and deployment stuff
-                            deployAndStartAws(environmentToDeploy);
-                        }
-                    }
-                }
+                echo "Environment choosen: $environmentToDeploy\n"
+                echo "Building Nightfall\n"
+                echo "${env.JENKINS_PING_PONG_DIR}"
 
-                stage('Running the Ping-pong test') {
-                    steps {
-                        if(environmentToDeploy == 'local') {
-                            runPingPongTestOnLocal();
-                        } else {
-                            runPingPongTestOnAws(environmentToDeploy);
-                        }
-                    }
+                deleteDir()
+                checkout scm
+                buildNightfall()
+            }
+
+            stage('Deploying and Starting Application') {
+                if(environmentToDeploy == 'local') {
+                    deployAndStartLocal()
+                } else {
+                    // TODO which Blockchain we will use for AWS envs?
+                    checkout '' // TODO checks out nf3_private, since we need VPN and deployment stuff
+                    deployAndStartAws(environmentToDeploy)
                 }
             }
+
+            stage('Running the Ping-pong test') {
+                if(environmentToDeploy == 'local') {
+                    runPingPongTestOnLocal()
+                } else {
+                    runPingPongTestOnAws(environmentToDeploy)
+                }
+            }
+
+            stage('Clean') {
+                cleanUpEnvironment()
+            }
         }
+    } catch (e) {
+        cleanUpEnvironment();
     }
 }
 
 // #### Utilitary functions
-def clean() {
+def cleanUpEnvironment() {
+    if(environmentToDeploy == null) return
+
     if(environmentToDeploy == 'local') {
-        sh 'make clean-local'
+        sh "make -C ${env.JENKINS_PING_PONG_DIR} clean-local"
     } else {
         sh 'make clean-aws'
     }
 }
 
 def runPingPongTestOnLocal() {
-    sh 'make run-ping-pong-local'
+    sh "make -C ${env.JENKINS_PING_PONG_DIR} run-ping-pong-local"
 }
 
 def runPingPongTestOnAws(environmentToDeploy) {
@@ -77,7 +71,7 @@ def runPingPongTestOnAws(environmentToDeploy) {
 }
 
 def deployAndStartLocal() {
-    sh 'make build-ping-pong-local'
+    sh "make -C ${env.JENKINS_PING_PONG_DIR} build-ping-pong-local"
     
     startGanache()
     startNightfallLocal()
@@ -120,7 +114,7 @@ def deployAndStartAws(environmentToDeploy) {
 }
 
 def buildNightfall() {
-    sh 'make build'
+    sh 'make -C $JENKINS_PING_PONG_DIR build'
 }
 
 def execute(String command) {
