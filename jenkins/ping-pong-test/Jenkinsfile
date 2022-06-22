@@ -48,7 +48,7 @@ lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
                 },
 
                 'Start Nightfall': {
-                    sh "sleep(20); WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_DIR} start-nightfall-local"
+                    sh "sleep 20; WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_DIR} start-nightfall-local"
 
                     //if(environmentToDeploy == 'local') {
                        // startNightfallLocal()
@@ -57,21 +57,20 @@ lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
                         //checkout '' // TODO checks out nf3_private, since we need VPN and deployment stuff
                         //startAws(environmentToDeploy)
                     //}
-                }
-/*
-                stage('Run the Ping-pong test') {
+                },
+                'Run the Ping-pong test': {
                     if(environmentToDeploy == 'local') {
+                        waitNightfallFinishingInitialization()
                         runPingPongTestOnLocal()
                     } else {
                         runPingPongTestOnAws(environmentToDeploy)
                     }
                 }
-
-                stage('Clean') {
-                    cleanUpEnvironment(environmentToDeploy)
-                }
-                */
             )
+
+            stage('Clean') {
+                cleanUpEnvironment(environmentToDeploy)
+            }
         }
     } catch (e) {
         cleanUpEnvironment(environmentToDeploy);
@@ -96,7 +95,6 @@ def cleanUpEnvironment(environmentToDeploy) {
 
 def runPingPongTestOnLocal() {
     sh "WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_DIR} run-ping-pong-local"
-    env.TEST_FINISHED = 'true'
 }
 
 def runPingPongTestOnAws(environmentToDeploy) {
