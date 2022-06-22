@@ -1,18 +1,19 @@
-#!/usr/bin/env groovy
 
-// Waits for 5 min before keep going
-timeout(time: 5, unit: "MINUTES") {
-    choice(description: 'Which environment should be used to deploy?', choices: ["local", "internal", "staging", "preprod"].join('\n'), name: 'ENVIRONMENT_TO_DEPLOY')
-}
-
-// The environment where the code will be deployed on and tested 
-def environmentToDeploy = env.ENVIRONMENT_TO_DEPLOY
 def currentUser = env.BUILD_USER
+def environmentToDeploy
 
 lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
     try {
         node {
+            
             stage("Build Application") {
+                // Waits for 5 min before keep going
+                timeout(time: 5, unit: "MINUTES") {
+                    choice(description: 'Which environment should be used to deploy?', choices: ["local", "internal", "staging", "preprod"].join('\n'), name: 'ENVIRONMENT_TO_DEPLOY')
+                }
+                
+                environmentToDeploy = env.ENVIRONMENT_TO_DEPLOY
+
                 echo "Environment choosen: $environmentToDeploy\n"
                 echo "Building Nightfall\n"
 
