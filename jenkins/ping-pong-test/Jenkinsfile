@@ -1,12 +1,12 @@
 
 env.JENKINS_PING_PONG_DIR = "jenkins/ping-pong-test"
-env.WORKSPACE = execute("pwd")
 def currentUser = env.BUILD_USER
-def environmentToDeploy = ''
+def environmentToDeploy = null
 
 lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
     try {
-        node {          
+        node {
+            
             stage("Build Application") {
                 // Waits for 5 min before keep going
                 timeout(time: 5, unit: "MINUTES") {
@@ -16,7 +16,7 @@ lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
 
                 echo "Environment choosen: $environmentToDeploy\n"
                 echo "Building Nightfall\n"
-                echo "Workspace: ${env.WORKSPACE}"
+                echo "Current user: ${currentUser}"
 
                 deleteDir()
                 checkout scm
@@ -42,11 +42,11 @@ lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
             }
 
             stage('Clean') {
-                cleanUpEnvironment(environmentToDeploy)
+                cleanUpEnvironment()
             }
         }
     } catch (e) {
-        cleanUpEnvironment(environmentToDeploy);
+        cleanUpEnvironment();
     }
 }
 
@@ -55,14 +55,14 @@ def cleanUpEnvironment() {
     if(environmentToDeploy == null) return
 
     if(environmentToDeploy == 'local') {
-        sh "WORKSPACE=${env.WORKSPACE} make -C ${env.JENKINS_PING_PONG_DIR} clean-local"
+        sh "make -C ${env.JENKINS_PING_PONG_DIR} clean-local"
     } else {
         sh 'make clean-aws'
     }
 }
 
 def runPingPongTestOnLocal() {
-    sh "WORKSPACE=${env.WORKSPACE} make -C ${env.JENKINS_PING_PONG_DIR} run-ping-pong-local"
+    sh "make -C ${env.JENKINS_PING_PONG_DIR} run-ping-pong-local"
 }
 
 def runPingPongTestOnAws(environmentToDeploy) {
@@ -70,7 +70,7 @@ def runPingPongTestOnAws(environmentToDeploy) {
 }
 
 def deployAndStartLocal() {
-    sh "WORKSPACE=${env.WORKSPACE} make -C ${env.JENKINS_PING_PONG_DIR} build-ping-pong-local"
+    sh "make -C ${env.JENKINS_PING_PONG_DIR} build-ping-pong-local"
     
     startGanache()
     startNightfallLocal()
@@ -113,7 +113,7 @@ def deployAndStartAws(environmentToDeploy) {
 }
 
 def buildNightfall() {
-    sh "WORKSPACE=${env.WORKSPACE} make -C ${JENKINS_PING_PONG_DIR} build"
+    sh 'make -C $JENKINS_PING_PONG_DIR build'
 }
 
 def execute(String command) {
