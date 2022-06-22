@@ -1,0 +1,117 @@
+#!/usr/bin/env groovy
+
+// Waits for 5 min before keep going
+timeout(time: 5, unit: "MINUTES") {
+    choice(description: 'Which environment should be used to deploy?', choices: ["local", "internal", "staging", "preprod"].join('\n'), name: 'ENVIRONMENT_TO_DEPLOY')
+}
+
+// The environment where the code will be deployed on and tested 
+def environmentToDeploy = env.ENVIRONMENT_TO_DEPLOY
+def currentUser = $BUILD_USER
+
+post {
+    always {
+        if(environmentToDeploy == 'local') {
+            sh 'make clean-local'
+        } else {
+            sh 'make clean-aws'
+        }
+    }
+}
+
+// #### Pipeline
+lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
+    node {
+        stage("Build Application") {
+            echo "Environment choosen: $environmentToDeploy\n"
+            echo "Building Nightfall\n"
+
+            deleteDir()
+            checkout scm
+            buildNightfall()
+        }
+
+        stage('Deploying and Starting Application') {
+            if(environmentToDeploy == 'local') {
+                deployAndStartLocal();
+            } else {
+                // TODO which Blockchain we will use for AWS envs?
+                checkout '' // TODO checks out nf3_private, since we need VPN and deployment stuff
+                deployAndStartAws(environmentToDeploy);
+            }
+        }
+
+        stage('Running the Ping-pong test') {
+            if(environmentToDeploy == 'local') {
+                runPingPongTestOnLocal();
+            } else {
+                runPingPongTestOnAws(environmentToDeploy);
+            }
+        }
+    }
+}
+
+
+// #### Utilitary functions
+def runPingPongTestOnLocal() {
+    sh 'make run-ping-pong-local'
+}
+
+def runPingPongTestOnAws(environmentToDeploy) {
+    // TODO
+}
+
+def deployAndStartLocal() {
+    sh 'make build-ping-pong-local'
+    
+    startGanache()
+    startNightfallLocal()
+}
+
+def startNightfallLocal() {
+    sh 'start-nightfall-local'
+    waitNightfallFinishingInitialization()
+}
+
+def startGanache() {
+    sh 'start-ganache-local'
+
+    // Waits for Ganache to be fully up
+    sleep(30) { // Sleeps for 30s
+        println("Deployment process interruped!")
+        // currentBuild.result = 'FAILED' // De we need this?
+    }
+}
+
+// Try to reuse for AWS
+def waitNightfallFinishingInitialization() {
+    print("Waiting Nightfall initialization")
+    while(true) {
+        def result = execute('docker wait ping-pong_deployer_1')
+        if(result == '0') {
+            break
+        }
+        print(".")
+        sleep(20)
+    }
+    println("Nightfall initialization is done!")
+}
+
+/**
+ * Deploys the app on the specified environment on AWS 
+ */
+def deployAndStartAws(environmentToDeploy) {
+    // TODO
+}
+
+def buildNightfall() {
+    sh 'make build'
+}
+
+def execute(String command) {
+    sh(script: command, returnStdout: true).trim()
+}
+
+def sendSlackNotification() {
+    // TODO create Slack channel 
+}
