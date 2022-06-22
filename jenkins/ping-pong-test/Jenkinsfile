@@ -42,10 +42,10 @@ lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
                         runPingPongTestOnAws(environmentToDeploy)
                     }
                 }
+            }
 
-                stage('Clean') {
-                    cleanUpEnvironment(environmentToDeploy)
-                }
+            stage('Clean') {
+                cleanUpEnvironment(environmentToDeploy)
             }
         }
     } catch (e) {
