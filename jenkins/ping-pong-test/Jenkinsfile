@@ -19,8 +19,6 @@ pipeline {
         }
     }
 
-    lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
-        node {
             stages {
                 stage("Build Application") {
                     steps {
@@ -56,8 +54,7 @@ pipeline {
                 }
             }
         }
-    }
-}
+
 
 // #### Utilitary functions
 def clean() {
