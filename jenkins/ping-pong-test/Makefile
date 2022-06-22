@@ -11,6 +11,7 @@ build-ping-pong-local:
 
 start-ganache-local:
 	cd $(WORKSPACE)/test/ping-pong/
+	ls -l
 	./ganache-standalone -s &> ganache.log 
 
 start-nightfall-local:
