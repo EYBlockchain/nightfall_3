@@ -91,8 +91,6 @@ jobs:
           ./setup-nightfall
           ./geth-standalone -s
           sleep 10
-          ./geth-standalone -l
-          sleep 10
           ./start-nightfall -l -d -a &> adversary-test.log &disown
         env:
           TRANSACTIONS_PER_BLOCK: 32
