@@ -90,7 +90,9 @@ jobs:
         run: |
           ./setup-nightfall
           ./geth-standalone -s
-          sleep 240
+          sleep 10
+          ./geth-standalone -l
+          sleep 10
           ./start-nightfall -l -d -a &> adversary-test.log &disown
         env:
           TRANSACTIONS_PER_BLOCK: 32
@@ -161,7 +163,9 @@ jobs:
 
       - name: debug logs - after integration test run
         if: always()
-        run: results=$(cat test/ping-pong/ping-pong-test.log | grep passed); if [ ! -z "${results}" ]; then exit 0; else exit 1; fi
+        run:
+          results=$(cat test/ping-pong/ping-pong-test.log | grep passed); if [ ! -z "${results}" ];
+          then exit 0; else exit 1; fi
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
