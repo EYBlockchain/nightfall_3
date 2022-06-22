@@ -1,6 +1,6 @@
 module.exports = {
   SIGNING_KEY:
-    process.env.SIGNING_KEY || '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
+    process.env.SIGNING_KEY || '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
   CLIENT_HOST: process.env.CLIENT_HOST || 'localhost',
   CLIENT_PORT: process.env.CLIENT_PORT || 8080,
   OPTIMIST_HOST: process.env.OPTIMIST_HOST || 'localhost',
