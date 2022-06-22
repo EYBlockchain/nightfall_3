@@ -2,12 +2,11 @@
 env.JENKINS_PING_PONG_DIR = "jenkins/ping-pong-test"
 env.WORKSPACE = execute("pwd")
 def currentUser = env.BUILD_USER
+def environmentToDeploy = ''
 
 lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
     try {
-        node {
-            def environmentToDeploy = ''
-                        
+        node {          
             stage("Build Application") {
                 // Waits for 5 min before keep going
                 timeout(time: 5, unit: "MINUTES") {
