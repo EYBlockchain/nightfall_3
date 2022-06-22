@@ -1,5 +1,4 @@
 
-
 env.JENKINS_PING_PONG_DIR = "${env.WORKSPACE}/jenkins/ping-pong-test"
 def currentUser = env.BUILD_USER
 def environmentToDeploy = null
