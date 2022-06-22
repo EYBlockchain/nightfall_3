@@ -9,50 +9,65 @@ timeout(time: 5, unit: "MINUTES") {
 def environmentToDeploy = env.ENVIRONMENT_TO_DEPLOY
 def currentUser = env.BUILD_USER
 
-post {
-    always {
-        if(environmentToDeploy == 'local') {
-            sh 'make clean-local'
-        } else {
-            sh 'make clean-aws'
+
+pipeline {
+    agent any
+
+    post {
+        always {
+            
+        }
+    }
+
+    lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
+        node {
+            stages {
+                stage("Build Application") {
+                    steps {
+                        echo "Environment choosen: $environmentToDeploy\n"
+                        echo "Building Nightfall\n"
+
+                        deleteDir()
+                        checkout scm
+                        buildNightfall()
+                    }
+                }
+
+                stage('Deploying and Starting Application') {
+                    steps {
+                        if(environmentToDeploy == 'local') {
+                            deployAndStartLocal();
+                        } else {
+                            // TODO which Blockchain we will use for AWS envs?
+                            checkout '' // TODO checks out nf3_private, since we need VPN and deployment stuff
+                            deployAndStartAws(environmentToDeploy);
+                        }
+                    }
+                }
+
+                stage('Running the Ping-pong test') {
+                    steps {
+                        if(environmentToDeploy == 'local') {
+                            runPingPongTestOnLocal();
+                        } else {
+                            runPingPongTestOnAws(environmentToDeploy);
+                        }
+                    }
+                }
+            }
         }
     }
 }
-
-// #### Pipeline
-lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
-    node {
-        stage("Build Application") {
-            echo "Environment choosen: $environmentToDeploy\n"
-            echo "Building Nightfall\n"
-
-            deleteDir()
-            checkout scm
-            buildNightfall()
-        }
-
-        stage('Deploying and Starting Application') {
-            if(environmentToDeploy == 'local') {
-                deployAndStartLocal();
-            } else {
-                // TODO which Blockchain we will use for AWS envs?
-                checkout '' // TODO checks out nf3_private, since we need VPN and deployment stuff
-                deployAndStartAws(environmentToDeploy);
-            }
-        }
-
-        stage('Running the Ping-pong test') {
-            if(environmentToDeploy == 'local') {
-                runPingPongTestOnLocal();
-            } else {
-                runPingPongTestOnAws(environmentToDeploy);
-            }
-        }
-    }
-}
-
 
 // #### Utilitary functions
+def clean() {
+    if(environmentToDeploy == 'local') {
+        sh 'make clean-local'
+    } else {
+        sh 'make clean-aws'
+    }
+}
+
 def runPingPongTestOnLocal() {
     sh 'make run-ping-pong-local'
 }
