@@ -9,10 +9,14 @@ lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
             stage("Build Application") {
                 // Waits for 5 min before keep going
                 timeout(time: 5, unit: "MINUTES") {
-                    choice(description: 'Which environment should be used to deploy?', choices: ["local", "internal", "staging", "preprod"].join('\n'), name: 'ENVIRONMENT_TO_DEPLOY')
+                    def options = ["local", "internal", "staging", "preprod"]
+                    environmentToDeploy = input message: 'Which environment should be used to deploy?', parameters: [choice(choices: options, name: "Choose one option")]
                 }
                 
-                environmentToDeploy = env.ENVIRONMENT_TO_DEPLOY
+                if(environmentToDeploy == null) {
+                    println("No environment was selected!")
+                    return
+                }
 
                 echo "Environment choosen: $environmentToDeploy\n"
                 echo "Building Nightfall\n"
