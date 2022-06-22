@@ -36,23 +36,27 @@ lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
 
             parallel {
                 stage('Start Ganache') {
-                    if(environmentToDeploy == 'local') {
-                        startGanache()
-                    } else {
+                    sh "WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_DIR} start-ganache-local"
+
+                    //if(environmentToDeploy == 'local') {
+                        //startGanache()
+                    //} else {
                         // TODO which Blockchain we will use for AWS envs?
                   //      checkout '' // TODO checks out nf3_private, since we need VPN and deployment stuff
                     //    startAws(environmentToDeploy)
-                    }
+                    //}
                 }
 
                 stage('Start Nightfall') {
-                    if(environmentToDeploy == 'local') {
-                        startNightfallLocal()
-                    } else {
+                    sh "sleep(20); WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_DIR} start-nightfall-local"
+                    
+                    //if(environmentToDeploy == 'local') {
+                       // startNightfallLocal()
+                    //} else {
                         // TODO which Blockchain we will use for AWS envs?
                         //checkout '' // TODO checks out nf3_private, since we need VPN and deployment stuff
                         //startAws(environmentToDeploy)
-                    }
+                    //}
                 }
 /*
                 stage('Run the Ping-pong test') {
@@ -62,11 +66,12 @@ lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
                         runPingPongTestOnAws(environmentToDeploy)
                     }
                 }
-*/
+
                 stage('Clean') {
                     cleanUpEnvironment(environmentToDeploy)
                 }
             }
+            */
         }
     } catch (e) {
         cleanUpEnvironment(environmentToDeploy);
@@ -105,7 +110,7 @@ def deployLocal() {
 def startNightfallLocal() {
     println "Waiting Ganache to be up!"
     // Waits for Ganache to be fully up
-    sleep(60)
+    sleep(20)
 
     println "Ok, lets go to start Nightfall"
 
