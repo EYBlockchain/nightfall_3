@@ -5,6 +5,28 @@
 #
 # Test returns exit code 0 if sucessful and 1 if unsucessful
 
+# Init tmux session
+init_tmux(){
+  KILL_SESSION=$(tmux ls 2> /dev/null | grep ${OPTIMIST_SESSION} || true)
+  if [ "${KILL_SESSION}" ]; then
+     tmux kill-session -t ${OPTIMIST_SESSION}
+  fi
+  tmux new -d -s ${OPTIMIST_SESSION}
+  tmux split-window -h
+}
+
+kill_session(){
+  ./stop-optimist.sh 
+  tmux kill-session -t ${OPTIMIST_SESSION}
+}
+
+OPTIMIST_SESSION=optimist-test
+
+echo "Init tmux session...."
+OPTIMIST_PANE=0
+ERC_TEST_PANE=1
+init_tmux 
+
 ./start-optimist.sh -d
 
 if [ -f optimist.env ]; then
@@ -13,8 +35,11 @@ if [ -f optimist.env ]; then
   export $(grep -v '^#' optimist.env | xargs)
 else
   echo "optimist.env does not exist. You need to define the optimist.env with the needed variables to run an optimist."
+  kill_session
   exit 1
 fi
+
+tmux send-keys -t ${OPTIMIST_PANE} "docker logs -f optimist_1" Enter
 
 niter=0
 while true; do
@@ -27,12 +52,13 @@ while true; do
   niter=$(($niter+1))
   if [ "${niter}" = "20" ]; then
     echo "Couldnt connect to Optimist"
+    kill_session
     exit 1
   fi
   sleep 10;
 done
 
-cd .. && npm run test-e2e-tokens&
+tmux send-keys -t ${ERC_TEST_PANE} "cd .. && npm run test-e2e-tokens" Enter
 
 niter=0
 while true; do
@@ -43,7 +69,7 @@ while true; do
    --eval  "db.getMongo().use(\"optimist_data\");\
            db.blocks.find().count();") 
 
-  if [ "$((${NBLOCKS}))" -gt "10" ]; then
+  if [ "$((${NBLOCKS}))" -gt "5" ]; then
     break;
   fi
   echo "Optimizer synchronized ${NBLOCKS} blocks..."
@@ -51,6 +77,7 @@ while true; do
   niter=$(($niter+1))
   if [ "${niter}" = "20" ]; then
     echo "Couldnt synchronize"
+    kill_session
     exit 1
   fi
 
@@ -60,6 +87,8 @@ done
 echo "Restart optimist"
 ./start-optimist.sh -d
 
+tmux send-keys -t ${OPTIMIST_PANE} "docker logs -f optimist_1" Enter
+
 niter=0
 while true; do
   NBLOCKS=$(mongosh --host localhost:${MONGO_PORT}\
@@ -77,12 +106,14 @@ while true; do
   niter=$(($niter+1))
   if [ "${niter}" = "20" ]; then
     echo "Couldnt synchronize"
+    kill_session
     exit 1
   fi
 
   sleep 10;
 done
 
-kill -9 $(ps -aux | grep token | awk {'print $2'})
+kill_session 
+
 echo "Test passed"
 exit 0
