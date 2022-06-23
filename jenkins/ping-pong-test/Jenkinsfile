@@ -38,11 +38,9 @@ lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
                 parallel (
                     'Start Ganache': {
                         startGanacheLocal()
-                        //sh "WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_MAKE_DIR} start-ganache"
                     },
                     'Start Nightfall': {
                         startNightfallLocal()
-                        //sh "sleep 10; WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_MAKE_DIR} start-nightfall"
                     },
                     'Run the Ping-pong test': {
                         waitNightfallFinishingInitialization()
