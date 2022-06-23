@@ -36,14 +36,12 @@ const mockObject = [
 describe('Tests about file', () => {
   test('Should convert a blob file in a object', async () => {
     const file = new Blob([JSON.stringify(mockObject)], { type: 'text/plain' });
-    expect(file).not.toEqual(mockObject);
     const object = await convertFileToObject(file);
     expect(object).toEqual(mockObject);
   });
 
   test('Should get an array of rows from the object recovered from a file', async () => {
     const file = new Blob([JSON.stringify(mockObject)], { type: 'text/plain' });
-    expect(file).not.toEqual(mockObject);
     const object = await convertFileToObject(file);
     const rows = await getIndexedDBObjectRowsFromBackupFile(object, 'commitments');
     expect(rows).toEqual(mockObject[1].rows);
