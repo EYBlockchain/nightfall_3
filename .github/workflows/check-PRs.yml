@@ -119,9 +119,9 @@ jobs:
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
-        run:
-          docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f
-          docker-compose.ganache.yml -f docker-compose.adversary.yml down -v
+        run: |
+          docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.ganache.yml -f docker-compose.adversary.yml down -v 
+          ./geth-standalone -d
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
