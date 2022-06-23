@@ -1,5 +1,4 @@
 
-env.JENKINS_PING_PONG_DIR = "jenkins/ping-pong-test"
 def currentUser = env.BUILD_USER
 def environmentToDeploy = ''
 
@@ -13,63 +12,53 @@ lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
                     environmentToDeploy = input message: 'Which environment should be used to deploy?', parameters: [choice(choices: options, name: "Choose one option")]
                 }
 
-                echo "Environment choosen: $environmentToDeploy\n"
-                echo "Building Nightfall\n"
+                println "Environment choosen: $environmentToDeploy"
                 
                 env.WORKSPACE = execute("pwd")
-                echo "Workspace: ${env.WORKSPACE}"
+
+                def makefileDir = "aws"
+                if(environmentToDeploy == 'local') {
+                    makefileDir = "local"
+                }
+                
+                env.JENKINS_PING_PONG_MAKE_DIR = "jenkins/ping-pong-test/${makefileDir}"
+
+                println "Building Nightfall"
 
                 deleteDir()
                 checkout scm
                 buildNightfall()
             }
 
-            stage("Deploy Application") {
-                if(environmentToDeploy == 'local') {
+            if(environmentToDeploy == 'local') {
+                stage("Deploy Application") {
                     deployLocal()
-                } else {
+                }
+
+                parallel (
+                    'Start Ganache': {
+                        startGanacheLocal()
+                        //sh "WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_MAKE_DIR} start-ganache"
+                    },
+                    'Start Nightfall': {
+                        startNightfallLocal()
+                        //sh "sleep 10; WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_MAKE_DIR} start-nightfall"
+                    },
+                    'Run the Ping-pong test': {
+                        waitNightfallFinishingInitialization()
+                        runPingPongTestOnLocal()
+                    },
+                    'Clean': {
+                        cleanUpEnvironment(environmentToDeploy)
+                    }
+                )
+
+            } else { // aws pipeline
+                stage("Deploy Application") {
                     // TODO which Blockchain we will use for AWS envs?
                     checkout '' // TODO checks out nf3_private, since we need VPN and deployment stuff
                     deployAws(environmentToDeploy)
                 }
-            }
-
-            parallel (
-                'Start Ganache': {
-                    sh "WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_DIR} start-ganache-local"
-
-                    //if(environmentToDeploy == 'local') {
-                        //startGanache()
-                    //} else {
-                        // TODO which Blockchain we will use for AWS envs?
-                  //      checkout '' // TODO checks out nf3_private, since we need VPN and deployment stuff
-                    //    startAws(environmentToDeploy)
-                    //}
-                },
-
-                'Start Nightfall': {
-                    sh "sleep 10; WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_DIR} start-nightfall-local"
-
-                    //if(environmentToDeploy == 'local') {
-                       // startNightfallLocal()
-                    //} else {
-                        // TODO which Blockchain we will use for AWS envs?
-                        //checkout '' // TODO checks out nf3_private, since we need VPN and deployment stuff
-                        //startAws(environmentToDeploy)
-                    //}
-                },
-                'Run the Ping-pong test': {
-                    if(environmentToDeploy == 'local') {
-                        waitNightfallFinishingInitialization()
-                        runPingPongTestOnLocal()
-                    } else {
-                        runPingPongTestOnAws(environmentToDeploy)
-                    }
-                }
-            )
-
-            stage('Clean') {
-                cleanUpEnvironment(environmentToDeploy)
             }
         }
     } catch (e) {
@@ -78,28 +67,34 @@ lock(resource: 'nightfall-ping-pong-test', inversePrecedence: true) {
 }
 
 // #### Utilitary functions
+def execute(String command) {
+    sh(script: command, returnStdout: true).trim()
+}
+
+def sendSlackNotification() {
+    // TODO create Slack channel 
+}
+
+def buildNightfall() {
+    sh "WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_MAKE_DIR} build"
+}
+
 def cleanUpEnvironment(environmentToDeploy) {
-    if(environmentToDeploy == null) return
+    while(env.PING_PONG_TEST_FINISHED != 'true')
+        sleep(60)
 
     println "Cleaning up environment"
 
-    if(environmentToDeploy == 'local') {
-        sh "WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_DIR} clean-local"
-    } else {
-        sh 'make clean-aws'
-    }
+    sh "WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_MAKE_DIR} clean"
 }
 
 def runPingPongTestOnLocal() {
-    sh "WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_DIR} run-ping-pong-local"
-}
-
-def runPingPongTestOnAws(environmentToDeploy) {
-    // TODO
+    sh "WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_MAKE_DIR} run-ping-pong"
+    env.PING_PONG_TEST_FINISHED = 'true'
 }
 
 def deployLocal() {
-    sh "WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_DIR} build-ping-pong-local"
+    sh "WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_MAKE_DIR} build-ping-pong"
 }
 
 def startNightfallLocal() {
@@ -109,16 +104,16 @@ def startNightfallLocal() {
 
     println "Ok, lets go to start Nightfall"
 
-    sh "WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_DIR} start-nightfall-local"
+    sh "WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_MAKE_DIR} start-nightfall"
 }
 
-def startGanache() {
-    sh "WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_DIR} start-ganache-local"
+def startGanacheLocal() {
+    sh "WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_MAKE_DIR} start-ganache"
 }
 
 // Try to reuse for AWS
 def waitNightfallFinishingInitialization() {
-    sleep(120)
+    sleep(80)
 
     print("Waiting Nightfall initialization")
     while(true) {
@@ -126,7 +121,9 @@ def waitNightfallFinishingInitialization() {
         if(result == '0') break
         
         sleep(20)
+        print "."
     }
+
     println("Nightfall initialization is done!")
 }
 
@@ -137,14 +134,6 @@ def deployAndStartAws(environmentToDeploy) {
     // TODO
 }
 
-def buildNightfall() {
-    sh "WORKSPACE=${WORKSPACE} make -C ${JENKINS_PING_PONG_DIR} build"
-}
-
-def execute(String command) {
-    sh(script: command, returnStdout: true).trim()
-}
-
-def sendSlackNotification() {
-    // TODO create Slack channel 
+def runPingPongTestOnAws(environmentToDeploy) {
+    // TODO
 }
