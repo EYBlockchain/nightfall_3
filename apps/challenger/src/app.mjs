@@ -1,10 +1,9 @@
 /* ignore unused exports */
-
 import express from 'express';
 import bodyParser from 'body-parser';
-import config from 'config';
 import cors from 'cors';
 import fileUpload from 'express-fileupload';
+import config from 'config';
 import Nf3 from '../../../cli/lib/nf3.mjs';
 import startChallenger from './challenger.mjs';
 
@@ -14,6 +13,7 @@ const {
   OPTIMIST_HTTP_URL = '',
   OPTIMIST_WS_URL = '',
   BLOCKCHAIN_URL = '',
+  PROPOSER_URL = '',
 } = process.env;
 const environment = {
   clientApiUrl:
@@ -28,12 +28,16 @@ const environment = {
   web3WsUrl: `${BLOCKCHAIN_URL}`
     ? `${BLOCKCHAIN_URL}`
     : `ws://${config.BLOCKCHAIN_WS_HOST}:${config.BLOCKCHAIN_PORT}`,
+  proposerBaseUrl: `${PROPOSER_URL}`
+    ? `${PROPOSER_URL}`
+    : `http://${process.env.PROPOSER_HOST}:${process.env.PROPOSER_PORT}`,
 };
 
+const app = express();
 const nf3 = new Nf3(SIGNING_KEY, environment);
 
-const app = express();
 app.set('nf3', nf3);
+
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   next();
