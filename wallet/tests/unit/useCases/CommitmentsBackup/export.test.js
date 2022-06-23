@@ -1,10 +1,3 @@
-// 0: {table: 'blocks', rows: Array(0)}
-// 1: {table: 'circuit_storage', rows: Array(12)}
-// 2: {table: 'commitments', rows: Array(2)}
-// 3: {table: 'keys', rows: Array(11)}
-// 4: {table: 'timber', rows: Array(106)}
-// 5: {table: 'transactions', rows: Array(2)}
-
 import indexedDB from 'fake-indexeddb';
 import 'fake-indexeddb/auto';
 
