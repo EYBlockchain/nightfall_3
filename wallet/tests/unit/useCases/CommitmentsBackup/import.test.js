@@ -86,7 +86,7 @@ describe('Tests about indexedDB', () => {
       objectStoreRequest.onsuccess = function () {
         // report the success of our request
         const objResult = objectStoreRequest.result;
-        expect(objResult.key).toEqual('1');
+        expect(objResult.value._id).toEqual('1');
       };
     };
   });
