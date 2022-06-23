@@ -101,8 +101,6 @@ jobs:
             docker wait nightfall_3_deployer_1
           attempt_limit: 100
           attempt_delay: 20000
-        env:
-          TRANSACTIONS_PER_BLOCK: 32
 
       - name: debug logs - after container startup
         if: always()
