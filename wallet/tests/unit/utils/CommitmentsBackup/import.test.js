@@ -4,7 +4,7 @@ import {
   addObjectStoreToIndexedDB,
   convertFileToObject,
   getIndexedDBObjectRowsFromBackupFile,
-} from '../../../../src/useCases/CommitmentsBackup/import';
+} from '../../../../src/utils/CommitmentsBackup/import';
 
 const mockObject = [
   {

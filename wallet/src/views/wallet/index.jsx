@@ -26,8 +26,8 @@ import {
   getIndexedDBObjectRowsFromBackupFile,
   convertFileToObject,
   addObjectStoreToIndexedDB,
-} from '../../useCases/CommitmentsBackup/import';
-import isCommitmentsCPKDMatchDerivedKeys from '../../useCases/CommitmentsBackup/commitmentsVerification.js';
+} from '../../utils/CommitmentsBackup/import';
+import isCommitmentsCPKDMatchDerivedKeys from '../../utils/CommitmentsBackup/commitmentsVerification.js';
 import successHand from '../../assets/img/modalImages/success-hand.png';
 import checkMarkCross from '../../assets/lottie/check-mark-cross.json';
 

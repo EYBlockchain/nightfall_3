@@ -16,7 +16,7 @@ import { getContractInstance } from '../../common-files/utils/contract';
 import useInterval from '../../hooks/useInterval';
 import { getPricing, setPricing, shieldAddressGet } from '../../utils/lib/local-storage';
 import BigFloat from '../../common-files/classes/bigFloat';
-import exportIndexdDB from '../../useCases/CommitmentsBackup/export';
+import exportIndexdDB from '../../utils/CommitmentsBackup/export';
 
 const supportedTokens = importTokens();
 
