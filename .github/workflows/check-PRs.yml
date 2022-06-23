@@ -111,6 +111,7 @@ jobs:
       - name: Run integration test
         run: |
           npm ci
+          docker wait nightfall_3_deployer_1
           VERBOSE=true npm run adversary-test
 
       - name: debug logs - after integration test run
