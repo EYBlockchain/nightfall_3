@@ -77,6 +77,8 @@ jobs:
 
   adversary-test:
     runs-on: ubuntu-18.04
+    env:
+      TRANSACTIONS_PER_BLOCK: 32
     steps:
       - uses: actions/checkout@master
       - uses: actions/setup-node@v1
@@ -90,7 +92,7 @@ jobs:
         run: |
           ./setup-nightfall
           ./geth-standalone -s
-          sleep 240
+          sleep 360
           ./start-nightfall -l -d -a &> adversary-test.log &disown
 
       - name: Wait for images to be ready
@@ -108,6 +110,7 @@ jobs:
       - name: Run integration test
         run: |
           npm ci
+          docker wait nightfall_3_deployer_1
           VERBOSE=true npm run adversary-test
 
       - name: debug logs - after integration test run
@@ -202,6 +205,7 @@ jobs:
         uses: Wandalen/wretry.action@v1.0.11
         with:
           command: |
+            docker ps
             docker wait nightfall_3_deployer_1
           attempt_limit: 100
           attempt_delay: 20000
