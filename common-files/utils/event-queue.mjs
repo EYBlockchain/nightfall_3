@@ -59,13 +59,17 @@ While paused, it will still accept incoming items.
 */
 function pauseQueue(priority) {
   return new Promise(resolve => {
-    // put an event at the head of the queue which will cleanly pause it.
-    queues[priority].unshift(async () => {
-      queues[priority].autostart = false;
-      queues[priority].stop();
-      logger.info(`queue ${priority} has been paused`);
+    if (queues[priority].autostart) {
+      // put an event at the head of the queue which will cleanly pause it.
+      queues[priority].unshift(async () => {
+        queues[priority].autostart = false;
+        queues[priority].stop();
+        logger.info(`queue ${priority} has been paused`);
+        resolve();
+      });
+    } else {
       resolve();
-    });
+    }
   });
 }
 

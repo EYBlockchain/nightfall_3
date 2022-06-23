@@ -14,4 +14,5 @@ export default async function startSynchronizer(nf3) {
   await nf3.init(undefined, 'optimist');
   if (await nf3.healthcheck('optimist')) logger.info('Healthcheck passed');
   else throw new Error('Healthcheck failed');
+  logger.info('Listening for incoming events');
 }
