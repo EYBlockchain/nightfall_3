@@ -112,6 +112,8 @@ jobs:
         run: |
           npm ci
           VERBOSE=true npm run adversary-test
+        env:
+          TRANSACTIONS_PER_BLOCK: 32
 
       - name: debug logs - after integration test run
         if: always()
