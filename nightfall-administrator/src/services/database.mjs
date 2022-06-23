@@ -7,30 +7,31 @@ const COLLECTION = 'signatures';
 /**
 Function to save a signed transaction, ready for the multisig
 */
-export async function saveSigned(sig, tx) {
+export async function saveSigned(signed) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(DB);
-  // we key by transaction data and signer's public key
-  return db.collection(COLLECTION).insertOne({ _id: tx.data.concat(tx.from.slice(2)), sig, tx });
+  // we key by message hash and signer's address
+  return db
+    .collection(COLLECTION)
+    .insertOne({ _id: signed.messageHash.concat(signed.by.slice(2)), signed });
 }
 
 /**
 Function to check that there are enough transactions to send some signed data
 */
-export async function checkThreshold(data) {
+export async function checkThreshold(messageHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(DB);
-  const query = { 'tx.data': data };
+  const query = { 'signed.messageHash': messageHash };
   return db.collection(COLLECTION).countDocuments(query);
 }
 
 /**
 Function to get the signatures
 */
-export async function getSigned(data) {
+export async function getSigned(messageHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(DB);
-  console.log('DATA', data);
-  const query = { 'tx.data': data };
+  const query = { 'signed.messageHash': messageHash };
   return db.collection(COLLECTION).find(query).toArray();
 }

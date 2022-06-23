@@ -49,7 +49,7 @@ module.exports = {
       // host: 'blockchain', // Localhost (default: none)
       // port: 8546, // Standard Ethereum port (default: none)
       url: 'ws://blockchain1:8546',
-      network_id: 4378921, // Any network (default: none)
+      network_id: 43, // Any network (default: none)
       gas: 1000000000,
       websockets: true,
     },
@@ -58,7 +58,7 @@ module.exports = {
       // host: 'blockchain', // Localhost (default: none)
       // port: 8546, // Standard Ethereum port (default: none)
       url: 'ws://blockchain2:8546',
-      network_id: 4378921, // Any network (default: none)
+      network_id: 43, // Any network (default: none)
       gas: 8000000,
       websockets: true,
     },
@@ -72,21 +72,21 @@ module.exports = {
 
     development: {
       url: 'ws://host.docker.internal:8546',
-      network_id: 4378921, // Any network (default: none)
+      network_id: 43, // Any network (default: none)
       gas: 8000000,
       websockets: true,
     },
 
     localhost: {
       url: 'ws://localhost:8546',
-      network_id: 4378921, // Any network (default: none)
+      network_id: 43, // Any network (default: none)
       gas: 8000000,
       websockets: true,
     },
 
     staging: {
       url: config.BLOCKCHAIN_URL,
-      network_id: 4378921, // Any network (default: none)
+      network_id: 43, // Any network (default: none)
       gas: 8000000,
       websockets: true,
       networkCheckTimeout: 1000000000,

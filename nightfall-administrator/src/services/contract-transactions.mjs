@@ -21,9 +21,10 @@ export async function setTokenRestrictions(
       const data = shieldContractInstance.methods
         .setRestriction(token.address, depositRestriction, withdrawRestriction)
         .encodeABI();
-      addMultiSigSignature(data, signingKey, shieldContractInstance.options.address);
+      return addMultiSigSignature(data, signingKey, shieldContractInstance.options.address);
     }
   }
+  return false;
 }
 
 export async function removeTokenRestrictions(tokenName, signingKey) {
@@ -31,9 +32,10 @@ export async function removeTokenRestrictions(tokenName, signingKey) {
   for (const token of RESTRICTIONS.tokens[process.env.ETH_NETWORK]) {
     if (token.name === tokenName) {
       const data = shieldContractInstance.methods.removeRestriction(token.address).encodeABI();
-      addMultiSigSignature(data, signingKey, shieldContractInstance.options.address);
+      return addMultiSigSignature(data, signingKey, shieldContractInstance.options.address);
     }
   }
+  return false;
 }
 
 export function pauseContracts(signingKey) {

@@ -25,7 +25,8 @@ function sortAscending(hexArray) {
   return hexArray.sort((a, b) => {
     x = BigInt(a);
     y = BigInt(b);
-    (x < y) ? -1 : ((x > y) ? 1 : 0)}); // a bit complex because sort expects a number, not a bigint
+    return x < y ? -1 : x > y ? 1 : 0; // a bit complex because sort expects a number, not a bigint
+  });
 }
 const sortedOwners = sortAscending(OWNERS);
 
@@ -40,6 +41,7 @@ module.exports = async function (deployer) {
   await deployer.link(Utils, [Shield, State, Challenges, ChallengesUtil]);
   await deployer.deploy(ChallengesUtil);
   await deployer.link(ChallengesUtil, Challenges);
+  console.log('ARGS',SIGNATURE_THRESHOLD, sortedOwners, network_id);
   await deployer.deploy(SimpleMultiSig, SIGNATURE_THRESHOLD, sortedOwners, network_id);
 
   await deployProxy(Proposers, [], { deployer, unsafeAllowLinkedLibraries: true });

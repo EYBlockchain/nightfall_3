@@ -29,7 +29,7 @@ export function initUI() {
 /**
 Asks CLI questions
 */
-export async function askQuestions(ethereumSigningKey) {
+export async function askQuestions(ethereumSigningKey, signed) {
   const questions = [
     {
       name: 'privateKey',
@@ -54,7 +54,7 @@ export async function askQuestions(ethereumSigningKey) {
         'Set new boot challenger',
         'Exit',
       ],
-      when: answers => !!answers.privateKey || !!ethereumSigningKey,
+      when: answers => (!!answers.privateKey || !!ethereumSigningKey) && !signed,
     },
     {
       name: 'tokenName',
@@ -114,6 +114,13 @@ export async function askQuestions(ethereumSigningKey) {
         ['Transfer ownership', 'Set new boot proposer', 'Set new boot challenger'].includes(
           answers.task,
         ),
+    },
+    {
+      name: 'executor',
+      type: 'input',
+      message: 'Please provide the Executor signing key in hex format (0x...)',
+      validate: input => web3.utils.isHexStrict(input),
+      when: () => !!signed,
     },
   ];
   return inquirer.prompt(questions);

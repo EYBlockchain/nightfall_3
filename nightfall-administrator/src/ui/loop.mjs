@@ -11,6 +11,7 @@ import {
   setBootProposer,
   setBootChallenger,
 } from '../services/contract-transactions.mjs';
+import { executeMultiSigTransaction } from '../services/helpers.mjs';
 
 /**
 UI control loop
@@ -19,7 +20,9 @@ async function startLoop() {
   let exit = false;
   let ethereumSigningKey;
   let newEthereumSigningKey;
+  let signed = false; // if we have enough signatures, the signed data is returned
   do {
+    console.log('*!SIGNED', signed);
     const {
       task,
       privateKey,
@@ -30,13 +33,21 @@ async function startLoop() {
       unpause,
       amount,
       newPrivateKey,
-    } = await askQuestions(ethereumSigningKey);
+      executor,
+    } = await askQuestions(ethereumSigningKey, signed);
     if (!privateKey && !ethereumSigningKey) {
       console.log('No private key was provided: exiting');
       return;
     }
     if (privateKey) ethereumSigningKey = `0x${privateKey.slice(2).padStart(64, '0')}`; // once we get a signing key remember it
     if (newPrivateKey) newEthereumSigningKey = `0x${newPrivateKey.slice(2).padStart(64, '0')}`;
+    if (signed) {
+      console.log('Executing multisig transaction');
+      await executeMultiSigTransaction(signed, executor);
+      signed = false;
+      // it's not possible to have a signature and a task so we can safely skip the rest of the loop
+      continue; // eslint-disable-line no-continue
+    }
     switch (task) {
       case 'Exit': {
         console.log('Exiting normally');
@@ -51,7 +62,7 @@ async function startLoop() {
         break;
       }
       case 'Set token restrictions': {
-        await setTokenRestrictions(
+        signed = await setTokenRestrictions(
           tokenName,
           depositRestriction,
           withdrawRestriction,
@@ -60,34 +71,34 @@ async function startLoop() {
         break;
       }
       case 'Remove token restrictions': {
-        await removeTokenRestrictions(tokenName, ethereumSigningKey);
+        signed = await removeTokenRestrictions(tokenName, ethereumSigningKey);
         break;
       }
       case 'Unpause contracts': {
         if (!unpause) break;
-        await unpauseContracts(ethereumSigningKey);
+        signed = await unpauseContracts(ethereumSigningKey);
         break;
       }
       case 'Pause contracts': {
         if (!pause) break;
-        await pauseContracts(ethereumSigningKey);
+        signed = await pauseContracts(ethereumSigningKey);
         break;
       }
       case 'Transfer Shield contract balance': {
-        await transferShieldBalance(tokenName, Number(amount), ethereumSigningKey);
+        signed = await transferShieldBalance(tokenName, Number(amount), ethereumSigningKey);
         break;
       }
       case 'Transfer ownership': {
-        await transferOwnership(newEthereumSigningKey, ethereumSigningKey);
+        signed = await transferOwnership(newEthereumSigningKey, ethereumSigningKey);
         ethereumSigningKey = newEthereumSigningKey;
         break;
       }
       case 'Set new boot proposer': {
-        await setBootProposer(newEthereumSigningKey, ethereumSigningKey);
+        signed = await setBootProposer(newEthereumSigningKey, ethereumSigningKey);
         break;
       }
       case 'Set new boot challenger': {
-        await setBootChallenger(newEthereumSigningKey, ethereumSigningKey);
+        signed = await setBootChallenger(newEthereumSigningKey, ethereumSigningKey);
         break;
       }
       default: {
