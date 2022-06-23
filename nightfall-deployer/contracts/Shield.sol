@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: CC0-1.0
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import '@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol';
+import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
+import '@openzeppelin/contracts/token/ERC1155/IERC1155.sol';
 /**
 Contract to enable someone to submit a ZKP transaction for processing.
 It is possible we will move this off-chain in the future as blockchain
@@ -11,13 +14,13 @@ functionality is not really required - it's just a data availability aid.
 pragma solidity ^0.8.0;
 
 import './Utils.sol';
-import './ERCInterface.sol';
 import './Key_Registry.sol';
 import './Config.sol';
 import './Stateful.sol';
 import './Pausable.sol';
 
 contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, Pausable {
+    using SafeERC20Upgradeable for IERC20Upgradeable;
     mapping(bytes32 => bool) public withdrawn;
     mapping(bytes32 => uint256) public feeBook;
     mapping(bytes32 => address) public advancedWithdrawals;
@@ -32,12 +35,11 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
     }
 
     function transferShieldBalance(address ercAddress, uint256 value) public onlyOwner {
-        ERCInterface tokenContract = ERCInterface(ercAddress);
         if (value == uint256(0)) {
-            uint256 balance = tokenContract.balanceOf(address(this));
-            tokenContract.transfer(owner(), balance);
+            uint256 balance = IERC20Upgradeable(ercAddress).balanceOf(address(this));
+            IERC20Upgradeable(ercAddress).safeTransfer(owner(), balance);
         } else {
-            tokenContract.transfer(owner(), value);
+            IERC20Upgradeable(ercAddress).safeTransfer(owner(), value);
         }
         emit ShieldBalanceTransferred(ercAddress, value);
     }
@@ -191,9 +193,7 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
         // TODO should we check if the withdrawal is not in a finalised block
         // this might incentives sniping freshly finalised blocks by liquidity providers
         // this is risk-free as the block is finalised, the advancedFee should reflect a risk premium.
-
-        ERCInterface tokenContract =
-            ERCInterface(address(uint160(uint256(withdrawTransaction.ercAddress))));
+        address tokenAddress = address(uint160(uint256(withdrawTransaction.ercAddress)));
         address originalRecipientAddress =
             address(uint160(uint256(withdrawTransaction.recipientAddress)));
         address currentOwner =
@@ -210,7 +210,7 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
             advancedFeeWithdrawals[withdrawTransactionHash] = 0;
             advancedWithdrawals[withdrawTransactionHash] = msg.sender;
             state.addPendingWithdrawal(msg.sender, advancedFee);
-            tokenContract.transferFrom(
+            IERC20Upgradeable(tokenAddress).safeTransferFrom(
                 address(msg.sender),
                 currentOwner,
                 uint256(withdrawTransaction.value)
@@ -251,27 +251,25 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
     function payOut(Transaction memory t, address recipientAddress) internal whenNotPaused {
         // Now pay out the value of the commitment
         address addr = address(uint160(uint256(t.ercAddress)));
-        ERCInterface tokenContract = ERCInterface(addr);
-        // address recipientAddress = address(uint160(uint256(t.recipientAddress)));
 
         if (t.tokenType == TokenType.ERC20) {
             if (t.tokenId != ZERO) revert('ERC20 deposit should have tokenId equal to ZERO');
             if (t.value > super.getRestriction(addr, 1))
                 revert('Value is above current restrictions for withdrawals');
-            else tokenContract.transfer(recipientAddress, uint256(t.value));
+            else IERC20Upgradeable(addr).safeTransfer(recipientAddress, uint256(t.value));
         } else if (t.tokenType == TokenType.ERC721) {
             if (t.value != 0)
                 // value should always be equal to 0
                 revert('Invalid inputs for ERC721 deposit');
             else
-                tokenContract.safeTransferFrom(
+                IERC721(addr).safeTransferFrom(
                     address(this),
                     recipientAddress,
                     uint256(t.tokenId),
                     ''
                 );
         } else if (t.tokenType == TokenType.ERC1155) {
-            tokenContract.safeTransferFrom(
+            IERC1155(addr).safeTransferFrom(
                 address(this),
                 recipientAddress,
                 uint256(t.tokenId),
@@ -285,22 +283,25 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
 
     function payIn(Transaction memory t) internal {
         address addr = address(uint160(uint256(t.ercAddress)));
-        ERCInterface tokenContract = ERCInterface(addr);
 
         if (t.tokenType == TokenType.ERC20) {
             if (t.tokenId != ZERO) revert('ERC20 deposit should have tokenId equal to ZERO');
             uint256 check = super.getRestriction(addr, 0);
             require(check > 0, 'Cannot have restrictions of zero value');
-            if (t.value > check)
-                revert('Value is above current restrictions for deposits');
-            else require(tokenContract.transferFrom(msg.sender, address(this), uint256(t.value)), 'transferFrom returned false');
+            if (t.value > check) revert('Value is above current restrictions for deposits');
+            else
+                IERC20Upgradeable(addr).safeTransferFrom(
+                    msg.sender,
+                    address(this),
+                    uint256(t.value)
+                );
         } else if (t.tokenType == TokenType.ERC721) {
             if (t.value != 0)
                 // value should always be equal to 0
                 revert('Invalid inputs for ERC721 deposit');
-            else tokenContract.safeTransferFrom(msg.sender, address(this), uint256(t.tokenId), '');
+            else IERC721(addr).safeTransferFrom(msg.sender, address(this), uint256(t.tokenId), '');
         } else if (t.tokenType == TokenType.ERC1155) {
-            tokenContract.safeTransferFrom(
+            IERC1155(addr).safeTransferFrom(
                 msg.sender,
                 address(this),
                 uint256(t.tokenId),
