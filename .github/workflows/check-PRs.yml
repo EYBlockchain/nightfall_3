@@ -90,10 +90,8 @@ jobs:
         run: |
           ./setup-nightfall
           ./geth-standalone -s
-          sleep 10
+          sleep 240
           ./start-nightfall -l -d -a &> adversary-test.log &disown
-        env:
-          TRANSACTIONS_PER_BLOCK: 32
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -111,7 +109,6 @@ jobs:
       - name: Run integration test
         run: |
           npm ci
-          docker wait nightfall_3_deployer_1
           VERBOSE=true npm run adversary-test
 
       - name: debug logs - after integration test run

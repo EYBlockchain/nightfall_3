@@ -59,6 +59,8 @@ describe('Testing with an adversary', () => {
   const fee = 1;
 
   before(async () => {
+    console.log(`TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK}`);
+    console.log('ENV:\n', environment);
     nf3User = new Nf3(ethereumSigningKeyUser, environment);
 
     const {
@@ -160,8 +162,10 @@ describe('Testing with an adversary', () => {
             // expectedBalance += value2; // transfer to self, so balance does not increase
           }
         }
-        await nf3User.deposit(ercAddress, tokenType, value2, tokenId);
-        expectedBalance += value2;
+        for (let k = 0; k < TRANSACTIONS_PER_BLOCK - 1; k++) {
+          await nf3User.deposit(ercAddress, tokenType, value2, tokenId);
+          expectedBalance += value2;
+        }
         await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
         console.log(`Completed ${i + 1} pings`);
       }
