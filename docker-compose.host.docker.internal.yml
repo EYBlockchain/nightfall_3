@@ -54,4 +54,4 @@ services:
       - 'host.docker.internal:host-gateway'
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
-      ETH_NETWORK: host.docker.internal
+      ETH_NETWORK: development
