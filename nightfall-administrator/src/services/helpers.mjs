@@ -27,7 +27,7 @@ export function getTokenAddress(tokenName) {
   return 'unknown';
 }
 
-export function queueTransaction(unsignedTransaction, signingKey, contractAddress) {
+function queueTransaction(unsignedTransaction, signingKey, contractAddress) {
   transactionQueue.push(async () => {
     const tx = {
       from: web3.eth.accounts.privateKeyToAccount(signingKey).address,
@@ -54,7 +54,7 @@ export function queueTransaction(unsignedTransaction, signingKey, contractAddres
 
 // This function creates the multisig message hash, which is signed (approved) by the key-holders.
 // It's worth looking at the multisig contract to see where this all comes from.
-export function createMultiSigMessageHash(destination, value, data, executor, gasLimit) {
+function createMultiSigMessageHash(destination, value, data, executor, gasLimit) {
   const { domainSeparator, txTypeHash, multiSigInstance, txInputHashABI } = MULTISIG_CONSTANTS;
   // get the current multisig nonce
   const nonce = multiSigInstance.methods.nonce.call();
