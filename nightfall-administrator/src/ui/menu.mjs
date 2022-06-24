@@ -39,6 +39,14 @@ export async function askQuestions(ethereumSigningKey, signed) {
       when: () => !ethereumSigningKey,
     },
     {
+      name: 'executorAddr',
+      type: 'input',
+      message:
+        "Please type in the address that will eventually execute the multisig. If it's you, you can enter 'self' instead",
+      validate: input => web3.utils.isAddress(input) || input === 'self',
+      when: answers => !!answers.privateKey,
+    },
+    {
       name: 'task',
       type: 'list',
       message: 'What would you like to do?',

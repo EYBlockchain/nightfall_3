@@ -166,7 +166,7 @@ module.exports = {
     },
     localhost: {
       name: 'Localhost',
-      chainId: 43,
+      chainId: 1337,
       clientApiUrl: process.env.CLIENT_HOST
         ? `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`
         : 'http://localhost:8080',

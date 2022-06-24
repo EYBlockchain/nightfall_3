@@ -7,11 +7,14 @@ import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { initUI } from './ui/menu.mjs';
 import startLoop from './ui/loop.mjs';
+import { initMultiSig } from './services/helpers.mjs';
 
 const argv = yargs(hideBin(process.argv)).parse();
 const { environment } = argv;
 
 async function main() {
+  // compute multisig constants
+  initMultiSig();
   // intialise the UI menu
   initUI();
   // start the interactive control loop

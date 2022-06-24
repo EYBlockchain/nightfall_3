@@ -12,6 +12,7 @@ import {
   setBootChallenger,
 } from '../services/contract-transactions.mjs';
 import { executeMultiSigTransaction } from '../services/helpers.mjs';
+import { web3 } from '../../../common-files/utils/contract.mjs';
 
 /**
 UI control loop
@@ -21,6 +22,7 @@ async function startLoop() {
   let ethereumSigningKey;
   let newEthereumSigningKey;
   let signed = false; // if we have enough signatures, the signed data is returned
+  let executorAddress; // we need the address up front but the private key only at the end of the signing ceremony
   do {
     console.log('*!SIGNED', signed);
     const {
@@ -34,6 +36,7 @@ async function startLoop() {
       amount,
       newPrivateKey,
       executor,
+      executorAddr,
     } = await askQuestions(ethereumSigningKey, signed);
     if (!privateKey && !ethereumSigningKey) {
       console.log('No private key was provided: exiting');
@@ -41,6 +44,12 @@ async function startLoop() {
     }
     if (privateKey) ethereumSigningKey = `0x${privateKey.slice(2).padStart(64, '0')}`; // once we get a signing key remember it
     if (newPrivateKey) newEthereumSigningKey = `0x${newPrivateKey.slice(2).padStart(64, '0')}`;
+    // the executor address is needed to properly create a multisig signature.
+    if (executorAddr) {
+      executorAddress = executorAddr;
+      if (executorAddr === 'self')
+        executorAddress = web3.eth.accounts.privateKeyToAccount(ethereumSigningKey).address;
+    }
     if (signed) {
       console.log('Executing multisig transaction');
       await executeMultiSigTransaction(signed, executor);
@@ -67,38 +76,52 @@ async function startLoop() {
           depositRestriction,
           withdrawRestriction,
           ethereumSigningKey,
+          executorAddress,
         );
         break;
       }
       case 'Remove token restrictions': {
-        signed = await removeTokenRestrictions(tokenName, ethereumSigningKey);
+        signed = await removeTokenRestrictions(tokenName, ethereumSigningKey, executorAddress);
         break;
       }
       case 'Unpause contracts': {
         if (!unpause) break;
-        signed = await unpauseContracts(ethereumSigningKey);
+        signed = await unpauseContracts(ethereumSigningKey, executorAddress);
         break;
       }
       case 'Pause contracts': {
         if (!pause) break;
-        signed = await pauseContracts(ethereumSigningKey);
+        signed = await pauseContracts(ethereumSigningKey, executorAddress);
         break;
       }
       case 'Transfer Shield contract balance': {
-        signed = await transferShieldBalance(tokenName, Number(amount), ethereumSigningKey);
+        signed = await transferShieldBalance(
+          tokenName,
+          Number(amount),
+          ethereumSigningKey,
+          executorAddress,
+        );
         break;
       }
       case 'Transfer ownership': {
-        signed = await transferOwnership(newEthereumSigningKey, ethereumSigningKey);
+        signed = await transferOwnership(
+          newEthereumSigningKey,
+          ethereumSigningKey,
+          executorAddress,
+        );
         ethereumSigningKey = newEthereumSigningKey;
         break;
       }
       case 'Set new boot proposer': {
-        signed = await setBootProposer(newEthereumSigningKey, ethereumSigningKey);
+        signed = await setBootProposer(newEthereumSigningKey, ethereumSigningKey, executorAddress);
         break;
       }
       case 'Set new boot challenger': {
-        signed = await setBootChallenger(newEthereumSigningKey, ethereumSigningKey);
+        signed = await setBootChallenger(
+          newEthereumSigningKey,
+          ethereumSigningKey,
+          executorAddress,
+        );
         break;
       }
       default: {

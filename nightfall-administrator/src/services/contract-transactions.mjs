@@ -14,6 +14,7 @@ export async function setTokenRestrictions(
   depositRestriction,
   withdrawRestriction,
   signingKey,
+  executorAddress,
 ) {
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
   for (const token of RESTRICTIONS.tokens[process.env.ETH_NETWORK]) {
@@ -21,74 +22,106 @@ export async function setTokenRestrictions(
       const data = shieldContractInstance.methods
         .setRestriction(token.address, depositRestriction, withdrawRestriction)
         .encodeABI();
-      return addMultiSigSignature(data, signingKey, shieldContractInstance.options.address);
+      return addMultiSigSignature(
+        data,
+        signingKey,
+        shieldContractInstance.options.address,
+        executorAddress,
+      );
     }
   }
   return false;
 }
 
-export async function removeTokenRestrictions(tokenName, signingKey) {
+export async function removeTokenRestrictions(tokenName, signingKey, executorAddress) {
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
   for (const token of RESTRICTIONS.tokens[process.env.ETH_NETWORK]) {
     if (token.name === tokenName) {
       const data = shieldContractInstance.methods.removeRestriction(token.address).encodeABI();
-      return addMultiSigSignature(data, signingKey, shieldContractInstance.options.address);
+      return addMultiSigSignature(
+        data,
+        signingKey,
+        shieldContractInstance.options.address,
+        executorAddress,
+      );
     }
   }
   return false;
 }
 
-export function pauseContracts(signingKey) {
+export function pauseContracts(signingKey, executorAddress) {
   logger.info('All pausable contracts being paused');
   return Promise.all(
     pausables.map(async pausable => {
       const contractInstance = await waitForContract(pausable);
       const data = contractInstance.methods.pause().encodeABI();
-      return addMultiSigSignature(data, signingKey, contractInstance.options.address);
+      return addMultiSigSignature(
+        data,
+        signingKey,
+        contractInstance.options.address,
+        executorAddress,
+      );
     }),
   );
 }
 
-export function unpauseContracts(signingKey) {
+export function unpauseContracts(signingKey, executorAddress) {
   logger.info('All pausable contracts being unpaused');
   return Promise.all(
     pausables.map(async pausable => {
       const contractInstance = await waitForContract(pausable);
       const data = contractInstance.methods.unpause().encodeABI();
-      return addMultiSigSignature(data, signingKey, contractInstance.options.address);
+      return (
+        addMultiSigSignature(data, signingKey, contractInstance.options.address), executorAddress
+      );
     }),
   );
 }
 
-export async function transferShieldBalance(tokenName, amount, signingKey) {
+export async function transferShieldBalance(tokenName, amount, signingKey, executorAddress) {
   const tokenAddress = getTokenAddress(tokenName);
   if (tokenAddress === 'unknown') throw new Error('Unknown token name');
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
   const data = shieldContractInstance.methods
     .transferShieldBalance(tokenAddress, amount)
     .encodeABI();
-  return addMultiSigSignature(data, signingKey, shieldContractInstance.options.address);
+  return addMultiSigSignature(
+    data,
+    signingKey,
+    shieldContractInstance.options.address,
+    executorAddress,
+  );
 }
 
-export function transferOwnership(newOwnerPrivateKey, signingKey) {
+export function transferOwnership(newOwnerPrivateKey, signingKey, executorAddress) {
   const newOwner = web3.eth.accounts.privateKeyToAccount(newOwnerPrivateKey, true).address;
   return Promise.all(
     pausables.map(async pausable => {
       const contractInstance = await waitForContract(pausable);
       const data = contractInstance.methods.transferOwnership(newOwner).encodeABI();
-      return addMultiSigSignature(data, signingKey, contractInstance.options.address);
+      return addMultiSigSignature(
+        data,
+        signingKey,
+        contractInstance.options.address,
+        executorAddress,
+      );
     }),
   );
 }
 
-export async function setBootProposer(newProposerPrivateKey, signingKey) {
+export async function setBootProposer(newProposerPrivateKey, signingKey, executorAddress) {
   const newProposer = web3.eth.accounts.privateKeyToAccount(newProposerPrivateKey, true).address;
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
   const data = shieldContractInstance.methods.setBootProposer(newProposer).encodeABI();
-  return addMultiSigSignature(data, signingKey, shieldContractInstance.options.address);
+  return addMultiSigSignature(
+    data,
+    signingKey,
+    shieldContractInstance.options.address,
+    executorAddress,
+  );
 }
 
-export async function setBootChallenger(newChallengerPrivateKey, signingKey) {
+export async function setBootChallenger(newChallengerPrivateKey, signingKey, executorAddress) {
   const newChallenger = web3.eth.accounts.privateKeyToAccount(
     newChallengerPrivateKey,
     true,
@@ -96,5 +129,10 @@ export async function setBootChallenger(newChallengerPrivateKey, signingKey) {
   console.log('BOOT CHALLENGER', newChallenger);
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
   const data = shieldContractInstance.methods.setBootChallenger(newChallenger).encodeABI();
-  return addMultiSigSignature(data, signingKey, shieldContractInstance.options.address);
+  return addMultiSigSignature(
+    data,
+    signingKey,
+    shieldContractInstance.options.address,
+    executorAddress,
+  );
 }
