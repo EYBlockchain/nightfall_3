@@ -4,8 +4,8 @@ version: '3.5'
 services:
   client1:
     build:
-      dockerfile: client.Dockerfile
-      context: .
+      dockerfile: docker/file/client.Dockerfile
+      context: ../../
     volumes:
       - type: bind
         source: ./nightfall-client/src
@@ -19,8 +19,8 @@ services:
 
   worker:
     build:
-      dockerfile: worker.Dockerfile
-      context: .
+      dockerfile: docker/file/worker.Dockerfile
+      context: ../../
     volumes:
       - type: bind
         source: ./nightfall-deployer/circuits

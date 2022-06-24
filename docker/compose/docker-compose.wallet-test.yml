@@ -3,7 +3,7 @@ services:
    wallet-test:
       build:
         dockerfile: Dockerfile
-        context: ./wallet
+        context: ../../wallet
       networks:
         - nightfall_network
       user: apps
