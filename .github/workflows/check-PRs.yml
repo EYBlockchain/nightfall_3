@@ -92,7 +92,7 @@ jobs:
         run: |
           ./setup-nightfall
           ./geth-standalone -s
-          sleep 360
+          sleep 600
           ./start-nightfall -l -d -a &> adversary-test.log &disown
 
       - name: Wait for images to be ready
