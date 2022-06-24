@@ -66,7 +66,7 @@ jobs:
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
-        run: docker-compose -f docker-compose.yml -f docker-compose.ganache.yml down -v
+        run: docker-compose -f docker/compose/docker-compose.yml -f docker/compose/docker-compose.ganache.yml down -v
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
@@ -110,8 +110,8 @@ jobs:
   #     - name: If integration test failed, shutdown the Containers
   #       if: failure()
   #       run:
-  #         docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f
-  #         docker-compose.ganache.yml -f docker-compose.adversary.yml down -v
+  #         docker-compose -f docker/compose/docker-compose.yml -f docker/compose/docker-compose.dev.yml -f
+  #         docker/compose/docker-compose.ganache.yml -f docker/compose/docker-compose.adversary.yml down -v
   #
   #     - name: If integration test failed, upload logs files as artifacts
   #       if: failure()
@@ -130,7 +130,7 @@ jobs:
 
       - name: Start Containers
         run: |
-          docker build --no-cache	-t ghcr.io/eyblockchain/local-zokrates -f zokrates.Dockerfile .
+          docker build --no-cache	-t ghcr.io/eyblockchain/local-zokrates -f docker/file/zokrates.Dockerfile .
           cd test/ping-pong
           docker-compose build
           ./ganache-standalone -s
@@ -212,7 +212,7 @@ jobs:
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
-        run: docker-compose -f docker-compose.yml -f docker-compose.ganache.yml down -v
+        run: docker-compose -f docker/compose/docker-compose.yml -f docker/compose/docker-compose.ganache.yml down -v
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()

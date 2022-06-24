@@ -10,7 +10,7 @@ else
 fi
 
 VOLUME_LIST=$(docker volume ls -q)
-FILE="-f ../docker-compose.client.yml"
+FILE="-f ../docker/compose/docker-compose.client.yml"
 
 usage()
 {
@@ -21,7 +21,7 @@ usage()
 
 while [ -n "$1" ]; do
   case $1 in
-      -d  | --dev )                 DEV="-f ../docker-compose.client.dev.yml"
+      -d  | --dev )                 DEV="-f ../docker/compose/docker-compose.client.dev.yml"
                                     ;;
       -r )                          REMOVE_VOLUMES="true"
                                     ;;

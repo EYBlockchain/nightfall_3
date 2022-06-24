@@ -19,7 +19,7 @@ jobs:
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $DOCKER_ACTOR --password-stdin
       - name: Docker push worker
         run: |
-          docker build -t ghcr.io/eyblockchain/nightfall3-worker . -f worker.Dockerfile
+          docker build -t ghcr.io/eyblockchain/nightfall3-worker . -f docker/file/worker.Dockerfile
           docker push ghcr.io/eyblockchain/nightfall3-worker
 
   build-deployer:
@@ -32,7 +32,7 @@ jobs:
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $DOCKER_ACTOR --password-stdin
       - name: Docker push deployer
         run: |
-          docker build -t ghcr.io/eyblockchain/nightfall3-deployer . -f deployer.Dockerfile
+          docker build -t ghcr.io/eyblockchain/nightfall3-deployer . -f docker/file/deployer.Dockerfile
           docker push ghcr.io/eyblockchain/nightfall3-deployer
 
   build-optimist:
@@ -45,7 +45,7 @@ jobs:
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $DOCKER_ACTOR --password-stdin
       - name: Docker push optimist
         run: |
-          docker build -t ghcr.io/eyblockchain/nightfall3-optimist . -f optimist.Dockerfile
+          docker build -t ghcr.io/eyblockchain/nightfall3-optimist . -f docker/file/optimist.Dockerfile
           docker push ghcr.io/eyblockchain/nightfall3-optimist
 
   build-proposer:
@@ -58,7 +58,7 @@ jobs:
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $DOCKER_ACTOR --password-stdin
       - name: Docker push proposer
         run: |
-          docker build -t ghcr.io/eyblockchain/nightfall3-proposer . -f proposer.Dockerfile
+          docker build -t ghcr.io/eyblockchain/nightfall3-proposer . -f docker/file/proposer.Dockerfile
           docker push ghcr.io/eyblockchain/nightfall3-proposer
 
 #  build-challenger:
@@ -71,7 +71,7 @@ jobs:
 #        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $DOCKER_ACTOR --password-stdin
 #      - name: Docker push challenger
 #        run: |
-#          docker build -t ghcr.io/eyblockchain/nightfall3-challenger . -f challenger.Dockerfile
+#          docker build -t ghcr.io/eyblockchain/nightfall3-challenger . -f docker/file/challenger.Dockerfile
 #          docker push ghcr.io/eyblockchain/nightfall3-challenger
 
 #  build-liquidity:
@@ -84,7 +84,7 @@ jobs:
 #        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $DOCKER_ACTOR --password-stdin
 #      - name: Docker push liqidity
 #        run: |
-#          docker build -t ghcr.io/eyblockchain/nightfall3-liquidity . -f liquidity.Dockerfile
+#          docker build -t ghcr.io/eyblockchain/nightfall3-liquidity . -f docker/file/liquidity.Dockerfile
 #          docker push ghcr.io/eyblockchain/nightfall3-liquidity
 
   deploy:

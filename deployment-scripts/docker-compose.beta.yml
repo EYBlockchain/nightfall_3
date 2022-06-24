@@ -5,7 +5,7 @@ services:
   optimist:
     image: ghcr.io/eyblockchain/nightfall3-optimist:latest
     build:
-      dockerfile: optimist.Dockerfile
+      dockerfile: docker/file/optimist.Dockerfile
       context: ./
     profiles:
       - servers
@@ -33,7 +33,7 @@ services:
   deployer:
     image: ghcr.io/eyblockchain/nightfall3-deployer:latest
     build:
-      dockerfile: deployer.Dockerfile
+      dockerfile: docker/file/deployer.Dockerfile
       context: ./
     profiles:
       - servers
@@ -64,7 +64,7 @@ services:
   worker:
     image: ghcr.io/eyblockchain/nightfall3-worker:latest
     build:
-      dockerfile: worker.Dockerfile
+      dockerfile: docker/file/worker.Dockerfile
       context: ./
     profiles:
       - servers
@@ -80,7 +80,7 @@ services:
   proposer:
     image: ghcr.io/eyblockchain/nightfall3-proposer:latest
     build:
-      dockerfile: proposer.Dockerfile
+      dockerfile: docker/file/proposer.Dockerfile
       context: ./
     profiles:
       - applications

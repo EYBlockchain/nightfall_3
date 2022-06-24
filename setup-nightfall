@@ -2,5 +2,5 @@
 
 # Install node dependencies
 npm ci
-docker build -t ghcr.io/eyblockchain/local-zokrates -f zokrates.Dockerfile .
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml build
+docker build -t ghcr.io/eyblockchain/local-zokrates -f docker/file/zokrates.Dockerfile .
+docker-compose -f docker/compose/docker-compose.yml -f docker/compose/docker-compose.dev.yml build

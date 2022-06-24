@@ -47,7 +47,7 @@ BLOCKCHAIN_URL=wss://eth-goerli.alchemyapi.io/v2/xxxxxxxxxxxxxxxxxxxxxxxxxxxxs
 ```
 
 To run the script with existing images of the different services based on the
-`docker-compose.client.yml` of the Polygon Nightfall root folder:
+`docker/compose/docker-compose.client.yml` of the Polygon Nightfall root folder:
 
 ```
 ./start-client

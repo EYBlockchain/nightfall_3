@@ -26,29 +26,30 @@ fi
 rm -f ${ENV_FILE}
 while [ -n "$1" ]; do
   case $1 in
-      -g  | --ganache )             FILE="-f docker-compose.yml -f docker-compose.ganache.yml";
+      -g  | --ganache )             FILE="-f docker/compose/docker-compose.yml -f docker/compose/docker-compose.ganache.yml";
                                     ;;
-      -wt | --wallet-testing )      FILE="-f docker-compose.yml -f docker-compose.ganache.yml -f docker-compose.wallet-test.yml"
+      -wt | --wallet-testing )      FILE="-f docker/compose/docker-compose.yml -f docker/compose/docker-compose.ganache.yml -f docker/compose/docker-compose.wallet-test.yml"
                                     export ENABLE_VNC_SERVER=0
 				    export RUN_SELENIUM_TESTS=1
 				    cd wallet && ./pre-start-script.sh && cd -
                                     ;;
-      -w  | --wallet)               FILE="-f docker-compose.yml -f docker-compose.ganache.yml -f docker-compose.wallet-test.yml"
+                                    # // TODO confirm!  This line is similar to the one for the argument '-wt', is this supposed to be correct?
+      -w  | --wallet)               FILE="-f docker/compose/docker-compose.yml -f docker/compose/docker-compose.ganache.yml -f docker/compose/docker-compose.wallet-test.yml"
                                     export ENABLE_VNC_SERVER=1
 				    export RUN_SELENIUM_TESTS=0
 				    cd wallet && ./pre-start-script.sh && cd -
                                     ;;
-      -l  | --localhost )           FILE="-f docker-compose.yml -f docker-compose.host.docker.internal.yml"
+      -l  | --localhost )           FILE="-f docker/compose/docker-compose.yml -f docker/compose/docker-compose.host.docker.internal.yml"
                                     ;;
-      -r  | --ropsten )              FILE="-f docker-compose.yml -f docker-compose.ropsten.yml"
+      -r  | --ropsten )              FILE="-f docker/compose/docker-compose.yml -f docker/compose/docker-compose.ropsten.yml"
                                     ;;
       -h  | --help )                usage
                                     ;;
-      -s  | --stubs )               STUBS="-f docker-compose.stubs.yml"
+      -s  | --stubs )               STUBS="-f docker/compose/docker-compose.stubs.yml"
                                     ;;
-      -d  | --dev )                 DEV="-f docker-compose.dev.yml"
+      -d  | --dev )                 DEV="-f docker/compose/docker-compose.dev.yml"
                                     ;;
-      -a  | --adversary)            ADVERSARY="-f docker-compose.adversary.yml"
+      -a  | --adversary)            ADVERSARY="-f docker/compose/docker-compose.adversary.yml"
                                     ;;
       -mpc)                         export MPC="true"
                                     ;;
@@ -65,7 +66,7 @@ fi
 # shut down cleanly in the event of a cntl-c etc. We don't want to leave containers running
 trap "docker-compose $FILE $STUBS $DEV $ADVERSARY down --remove-orphans -t 1; exit 1" SIGHUP SIGINT SIGTERM
 
-docker-compose -f docker-compose.yml $FILE $STUBS $DEV $ADVERSARY down --remove-orphans
+docker-compose -f docker/compose/docker-compose.yml $FILE $STUBS $DEV $ADVERSARY down --remove-orphans
 
 # if-else block checks - volume exist and then removes it.
 if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb1) ]]; then
@@ -117,6 +118,6 @@ DIR=./common-files/node_modules
 if [[ -d "$DIR" ]]; then
   rm -dr common-files/node_modules
 fi
-#docker-compose -f docker-compose.yml $FILE up -d deployer
+
 docker-compose $FILE $STUBS $DEV $ADVERSARY up -d --remove-orphans
 docker-compose logs -f

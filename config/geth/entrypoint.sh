@@ -7,7 +7,7 @@ echo test key for second account >> $PASSWORDFILE
 echo test key for third account >> $PASSWORDFILE
 echo test key for fourth account >> $PASSWORDFILE
 # These config items are shared by all nodes
-# Individual configs can be given in docker-compose.geth.yml 'command:' lines
+# Individual configs can be given in docker/compose/docker-compose.geth.yml 'command:' lines
 exec geth --bootnodes=`cat /setup/bootnodes` \
   --networkid 4378921 \
   --password $PASSWORDFILE \

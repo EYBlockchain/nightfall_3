@@ -4,7 +4,7 @@ services:
   client:
     image: ghcr.io/eyblockchain/nightfall3-client:latest
     build:
-      dockerfile: client.Dockerfile
+      dockerfile: docker/file/client.Dockerfile
       context: ../../
     volumes:
       - type: volume
@@ -43,7 +43,7 @@ services:
   optimist:
     image: ghcr.io/eyblockchain/nightfall3-optimist:latest
     build:
-      dockerfile: optimist.Dockerfile
+      dockerfile: docker/file/optimist.Dockerfile
       context: ../../
     networks:
       - pong_network
@@ -67,7 +67,7 @@ services:
   deployer:
     image: ghcr.io/eyblockchain/nightfall3-deployer:latest
     build:
-      dockerfile: deployer.Dockerfile
+      dockerfile: docker/file/deployer.Dockerfile
       context: ../../
     volumes:
       - type: volume
@@ -88,7 +88,7 @@ services:
   worker:
     image: ghcr.io/eyblockchain/nightfall3-worker:latest
     build:
-      dockerfile: worker.Dockerfile
+      dockerfile: docker/file/worker.Dockerfile
       context: ../../
     volumes:
       - type: volume
@@ -102,7 +102,7 @@ services:
   proposer:
     image: ghcr.io/eyblockchain/nightfall3-proposer:latest
     build:
-      dockerfile: proposer.Dockerfile
+      dockerfile: docker/file/proposer.Dockerfile
       context: ../../
     networks:
       - pong_network
@@ -120,7 +120,7 @@ services:
   user-local1:
     image: ghcr.io/eyblockchain/nightfall3-user-local:latest
     build:
-      dockerfile: user-local.Dockerfile
+      dockerfile: docker/file/user-local.Dockerfile
       context: ../../
     networks:
       - pong_network
@@ -139,7 +139,7 @@ services:
   user-local2:
     image: ghcr.io/eyblockchain/nightfall3-user-local:latest
     build:
-      dockerfile: user-local.Dockerfile
+      dockerfile: docker/file/user-local.Dockerfile
       context: ../../
     networks:
       - pong_network

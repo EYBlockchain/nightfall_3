@@ -106,7 +106,7 @@ MONGO_IP=${MONGO_IP::-3}
 cd .. && sudo docker build \
  --build-arg OPTIMIST_PORT=${OPTIMIST_PORT} \
  --build-arg OPTIMIST_WS_PORT=${OPTIMIST_WS_PORT} \
- -f optimist.standalone.Dockerfile . -t nightfall-optimist:latest
+ -f docker/file/optimist.standalone.Dockerfile . -t nightfall-optimist:latest
 
 
 echo "Launching optimist..."
