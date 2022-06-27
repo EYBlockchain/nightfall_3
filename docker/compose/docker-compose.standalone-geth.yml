@@ -12,8 +12,7 @@ services:
       geth_network:
         # fixed IP because the enode can't use a dns name
         ipv4_address: 172.16.239.10
-    command:
-      bootnode --nodekey=setup/node.key
+    command: bootnode --nodekey=setup/node.key
 
   blockchain1:
     image: ethereum/client-go:stable
@@ -29,8 +28,7 @@ services:
     networks:
       geth_network:
     entrypoint: /setup/entrypoint.sh
-    command:
-      --ws.port 8546 --ws --ws.origins '*' --ws.addr 0.0.0.0 --verbosity 3
+    command: --ws.port 8546 --ws --ws.origins '*' --ws.addr 0.0.0.0 --verbosity 3 --rpc.txfeecap 0
 
   blockchain2:
     image: ethereum/client-go:stable
@@ -46,8 +44,7 @@ services:
     networks:
       geth_network:
     entrypoint: /setup/entrypoint.sh
-    command:
-      --ws.port 8546 --ws --ws.origins '*' --ws.addr 0.0.0.0 --verbosity 3
+    command: --ws.port 8546 --ws --ws.origins '*' --ws.addr 0.0.0.0 --verbosity 3 --rpc.txfeecap 0
 
   blockchain-miner1:
     image: ethereum/client-go:stable
@@ -65,7 +62,7 @@ services:
       geth_network:
     entrypoint: /setup/entrypoint.sh
     command:
-      --ws.port 8546 --ws --ws.origins '*' --ws.addr 0.0.0.0 --mine --verbosity 3
+      --ws.port 8546 --ws --ws.origins '*' --ws.addr 0.0.0.0 --mine --verbosity 3 --rpc.txfeecap 0
 
   blockchain-miner2:
     image: ethereum/client-go:stable
@@ -83,7 +80,7 @@ services:
       geth_network:
     entrypoint: /setup/entrypoint.sh
     command:
-      --ws.port 8546 --ws --ws.origins '*' --ws.addr 0.0.0.0 --mine --verbosity 3
+      --ws.port 8546 --ws --ws.origins '*' --ws.addr 0.0.0.0 --mine --verbosity 3 --rpc.txfeecap 0
 
 networks:
   geth_network:

@@ -28,7 +28,7 @@ services:
         target: /app/config/default.js
     environment:
       WEBSOCKET_PORT: 8080
-      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_WS_HOST: host.docker.internal
       BLOCKCHAIN_PORT: 8546
       HASH_TYPE: mimc
       LOG_LEVEL: debug
