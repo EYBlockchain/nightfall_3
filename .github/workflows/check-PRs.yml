@@ -47,6 +47,7 @@ jobs:
       #    npm run test-erc20-cli
       - name: Run Tests
         run: |
+          docker-compose -v
           npm install
           npm run neg-test
           npm run neg-test-ropsten
