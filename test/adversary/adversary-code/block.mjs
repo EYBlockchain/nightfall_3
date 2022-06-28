@@ -8,7 +8,7 @@ const error = [
   'IncorrectTreeRoot', // Needs two prior blocks
   'ValidBlock',
   'ValidBlock',
-  'ValidBlock',
+  /* 'ValidBlock',
   'ValidBlock',
   'ValidBlock',
   'ValidBlock',
@@ -23,7 +23,7 @@ const error = [
   'HistoricRootError',
   'ValidBlock',
   'IncorrectProof',
-  'ValidBlock',
+  'ValidBlock', */
 ];
 
 // eslint-disable-next-line no-unused-vars
