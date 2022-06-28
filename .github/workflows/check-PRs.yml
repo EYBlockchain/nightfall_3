@@ -27,6 +27,7 @@ jobs:
           npm ci
           cd .. 
           npm run lint
+          npm test
 
   ganache-test:
     runs-on: ubuntu-18.04
