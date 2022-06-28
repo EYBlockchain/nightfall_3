@@ -75,15 +75,16 @@ async function blockProposedEventHandler(data, syncing) {
       saveTxToDb = true;
     }
 
-    if (saveTxToDb) await saveTransaction({
-      transactionHashL1,
-      blockNumber: data.blockNumber,
-      blockNumberL2: block.blockNumberL2,
-      ...transaction
-    }).catch(function (err) {
-      if (!syncing || !err.message.includes('replay existing transaction')) throw err;
-      logger.warn('Attempted to replay existing transaction. This is expected while syncing');
-    });
+    if (saveTxToDb)
+      await saveTransaction({
+        transactionHashL1,
+        blockNumber: data.blockNumber,
+        blockNumberL2: block.blockNumberL2,
+        ...transaction,
+      }).catch(function (err) {
+        if (!syncing || !err.message.includes('replay existing transaction')) throw err;
+        logger.warn('Attempted to replay existing transaction. This is expected while syncing');
+      });
 
     return Promise.all([
       saveTxToDb,
