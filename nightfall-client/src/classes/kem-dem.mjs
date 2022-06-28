@@ -24,42 +24,27 @@ const immutableSplice = (array, index, element) => {
 };
 
 /**
-This helper function finds the first element of the array that is !== '0'
-@function findFirstByteIndex
-@param {Array<string>} byteArray - An array of strings
-@returns {number} The index of the first element !== '0'
-*/
-const findFirstByteIndex = byteArray => {
-  for (let i = 0; i < byteArray.length; i++) {
-    if (byteArray[i] !== '0') return i;
-  }
-  return byteArray.length - 1;
-};
-
-/**
 This helper function moves the top most 32-bits from one general number to another
 @function packSecrets
 @param {GeneralNumber} from - The general number which the top more 32-bits will be taken from
 @param {GeneralNumber} to - The general number which the top more 32-bits will be inserted into
-@param {number} fromIndex - Used override the topmost 32-bits, move custom bit positions
-@param {number} toIndex - Used override the topmost 32-bits, move custom bit positions
+@param {number} topMostFromBytesIndex - Index to move custom bit positions from
+@param {number} topMostToBytesIndex - Index to move custom bit positions to
 @returns {Array<GeneralNumber>} The two general numbers after moving the 32-bits.
 */
-const packSecrets = (from, to, fromIndex = -1, toIndex = -1) => {
-  // This moves the top most 32-bits from from to 'to'
-  let topMostFromBytesIndex = fromIndex;
-  let topMostToBytesIndex = toIndex;
+const packSecrets = (from, to, topMostFromBytesIndex, topMostToBytesIndex) => {
+  if (topMostFromBytesIndex >= 8 || topMostToBytesIndex >= 8)
+    throw new Error('This function packs u32[8], indices must be < 8');
   const fromLimbs = from.limbs(32, 8);
   const toLimbs = to.limbs(32, 8);
   if (toLimbs[0] !== '0') throw new Error('Cannot pack since top bits non-zero');
-  if (topMostFromBytesIndex < 0) topMostFromBytesIndex = findFirstByteIndex(fromLimbs);
-  if (topMostToBytesIndex < 0) topMostToBytesIndex = findFirstByteIndex(toLimbs);
 
-  if (topMostToBytesIndex === toLimbs.length) throw new Error('Pack To Array is zero');
+  if (topMostToBytesIndex + 1 === toLimbs.length)
+    throw new Error('Pack To Array is zero, need to specify to address');
   const topMostBytes = fromLimbs[topMostFromBytesIndex];
 
-  const unpackedFrom = immutableSplice(fromLimbs, topMostFromBytesIndex - 1, '0');
-  const packedTo = immutableSplice(toLimbs, topMostToBytesIndex - 1, topMostBytes);
+  const unpackedFrom = immutableSplice(fromLimbs, topMostFromBytesIndex, '0');
+  const packedTo = immutableSplice(toLimbs, topMostToBytesIndex, topMostBytes);
   return [generalise(stitchLimbs(unpackedFrom, 32)), generalise(stitchLimbs(packedTo, 32))];
 };
 
@@ -106,14 +91,14 @@ This function performs the data encapsulation step, encrypting the plaintext
 */
 const dem = (encryptionKey, plaintexts) =>
   plaintexts.map(
-    (p, i) => (BigInt(mimcHash([DOMAIN_DEM, encryptionKey, BigInt(i)])) + p) % BN128_GROUP_ORDER,
+    (p, i) => (mimcHash([DOMAIN_DEM, encryptionKey, BigInt(i)]) + p) % BN128_GROUP_ORDER,
   );
 
 /**
 This function inverts the data encapsulation step, decrypting the ciphertext
 @function deDem
 @param {BigInt} encryptionKey - The symmetric encryption key
-@param {Array<BigInt>} ciphertexts - The array of ciphertexts to be decrypted
+@param {Array<GeneralNumber>} ciphertexts - The array of ciphertexts to be decrypted
 @returns {Array<BigInt>} The decrypted plaintexts.
 */
 const deDem = (encryptionKey, ciphertexts) => {
@@ -145,8 +130,8 @@ This function performs the kem-deDem required to decrypt plaintext.
 @function decrypt
 @param {GeneralNumber} privateKey - The private key of the recipient pkd
 @param {Array<GeneralNumber>} ephemeralPub - The ephemeralPubKey
-@param {Array<BigInt>} ciphertexts - The array of ciphertexts to be decrypted
-@returns {Array<BigInt>} The decrypted plaintexts, the ordering is [ercAddress,tokenId, value, salt]
+@param {Array<GeneralNumber>} ciphertexts - The array of ciphertexts to be decrypted
+@returns {Array<GeneralNumber>} The decrypted plaintexts, the ordering is [ercAddress,tokenId, value, salt]
 */
 const decrypt = (privateKey, ephemeralPub, cipherTexts) => {
   const [, encKey] = kem(privateKey, ephemeralPub, ephemeralPub);
