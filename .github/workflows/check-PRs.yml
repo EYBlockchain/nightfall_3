@@ -36,7 +36,7 @@ jobs:
         with:
           node-version: '14.17.0'
       - name: Run Tests
-        run:
+        run: |
           npm test
           npm run neg-test
           npm run neg-test-ropsten
