@@ -1,0 +1,41 @@
+from "ecc/babyjubjubParams" import BabyJubJubParams
+from "ecc/babyjubjubParams" import main as curveParams
+from "ecc/edwardsScalarMult" import main as scalarMult
+from "utils/casts/u32_to_field" import main as u32_to_field
+from "../hashes/mimc/mimc-hash-N.zok" import main as mimcN
+
+struct EncryptedMsgs<N> {
+    field[N] cipherText
+    field[2] ephemeralPublicKey
+}
+
+// DOMAIN_KEM = field(SHA256('nightfall-kem'))
+const field DOMAIN_KEM = 21033365405711675223813179268586447041622169155539365736392974498519442361181
+// DOMAIN_KEM = field(SHA256('nightfall-dem'))
+const field DOMAIN_DEM = 1241463701002173366467794894814691939898321302682516549591039420117995599097
+
+def kem(bool[256] ephemeralKey, field[2] sharedSecret, field[2] ephemeralPub) -> field:
+    field encryptionKey = mimcN([DOMAIN_KEM, sharedSecret[0], sharedSecret[1], ephemeralPub[0], ephemeralPub[1]])
+    return encryptionKey
+
+def dem<N>(field encryptionKey, field[N] plainText) -> field[N]:
+    field[N] output = [0; N]
+    for u32 i in 0..N do
+        output[i] = mimcN([DOMAIN_DEM, encryptionKey, u32_to_field(i)]) + plainText[i]
+    endfor
+    return output
+
+def main<N>(bool[256] ephemeralKey,field[2] recipientPub,field[N] plainText) -> EncryptedMsgs<N>:
+    BabyJubJubParams context = curveParams()
+	field[2] g = [context.Gu, context.Gv]
+    field[2] ephemeralPub = scalarMult(ephemeralKey, g, context)
+    field[2] sharedSecret = scalarMult(ephemeralKey, recipientPub, context)
+
+    field encryptionKey = kem(ephemeralKey, sharedSecret, ephemeralPub)
+
+    field[N] cipherText = dem(encryptionKey, plainText)
+    EncryptedMsgs<N> e = EncryptedMsgs { cipherText: cipherText, ephemeralPublicKey: ephemeralPub}
+    return e
+
+
+
