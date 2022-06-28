@@ -35,14 +35,21 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: '14.17.0'
+      #- name: Run Tests
+      #  run: |
+      #    npm install
+      #    npm test
+      #    npm run neg-test
+      #    npm run neg-test-ropsten
+      #    npm run test-e2e-protocol
+      #    npm run test-e2e-tokens
+      #    npm run test-erc20-tokens
+      #    npm run test-erc20-cli
       - name: Run Tests
         run: |
           npm install
-          npm test
           npm run neg-test
           npm run neg-test-ropsten
-          npm run test-e2e-protocol
-          npm run test-e2e-tokens
           npm run test-erc20-tokens
           npm run test-erc20-cli
 
