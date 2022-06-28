@@ -37,7 +37,7 @@ jobs:
           node-version: '14.17.0'
       - name: Run Tests
         run: |
-          npm install -g mocha chai
+          npm install
           npm test
           npm run neg-test
           npm run neg-test-ropsten
