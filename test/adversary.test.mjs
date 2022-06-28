@@ -108,20 +108,23 @@ describe('Testing with an adversary', () => {
       });
     ercAddress = await nf3User.getContractAddress('ERC20Mock');
 
+    // Because rollbacks removes the only registered proposer,
+    // the proposer is registered again after each removal
+    intervalId = setInterval(() => {
+      registerProposerOnNoProposer(nf3AdversarialProposer);
+    }, 5000);
+
     // Challenger registration
     await nf3Challenger.registerChallenger();
     // Chalenger listening for incoming events
     nf3Challenger.startChallenger();
+    console.log('Pausing challenger queue...');
+    // we pause the challenger queue and don't process challenger until unpauseQueueChallenger
+    nf3Challenger.pauseQueueChallenger();
   });
 
-  describe('User creates deposit and transfer transctions', () => {
-    it('User should have the correct balance after a series of rollbacks', async () => {
-      // Because rollbacks removes the only registered proposer,
-      // the proposer is registered again after each remova
-      intervalId = setInterval(() => {
-        registerProposerOnNoProposer(nf3AdversarialProposer);
-      }, 5000);
-
+  describe('User creates deposit and transfer transactions', () => {
+    it('User should have the correct balance after without challenge', async () => {
       // we are creating a block of deposits with high values such that there is
       // enough balance for a lot of transfers with low value.
       for (let j = 0; j < TRANSACTIONS_PER_BLOCK; j++) {
@@ -172,6 +175,20 @@ describe('Testing with an adversary', () => {
 
       // waiting sometime to ensure that all the good transactions from bad
       // blocks were proposed in other good blocks
+      await new Promise(resolve => setTimeout(resolve, 20 * TX_WAIT));
+      const endBalance = await retrieveL2Balance(nf3User);
+      console.log(`Completed startBalance`, startBalance);
+      console.log(`Completed endBalance`, endBalance);
+      expect(expectedBalance).to.be.equal(endBalance - startBalance);
+    });
+
+    it('User should have the correct balance after challenge and a series of rollbacks', async () => {
+      console.log('Unpausing challenger queue...');
+      // Challenger unpause
+      await nf3Challenger.unpauseQueueChallenger();
+      // waiting sometime to ensure that all the good transactions from bad
+      // blocks were proposed in other good blocks
+      console.log('Waiting for rollbacks...');
       await new Promise(resolve => setTimeout(resolve, 20 * TX_WAIT));
       const endBalance = await retrieveL2Balance(nf3User);
       console.log(`Completed startBalance`, startBalance);

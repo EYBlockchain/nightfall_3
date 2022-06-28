@@ -43,6 +43,7 @@ module.exports = {
   WEBSOCKET_PORT: process.env.WEBSOCKET_PORT || 8080,
   WEBSOCKET_PING_TIME: 15000,
   ZOKRATES_WORKER_HOST: process.env.ZOKRATES_WORKER_HOST || 'worker',
+  STOP_QUEUE_AFTER_INVALID_BLOCK: process.env.STOP_QUEUE_AFTER_INVALID_BLOCK === 'true',
   BLOCKCHAIN_URL:
     process.env.BLOCKCHAIN_URL ||
     `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`,
