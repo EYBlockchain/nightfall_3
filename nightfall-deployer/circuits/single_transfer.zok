@@ -2,10 +2,12 @@ from "ecc/babyjubjubParams" import BabyJubJubParams
 from "ecc/babyjubjubParams" import main as curveParams
 from "ecc/edwardsScalarMult" import main as scalarMult
 from "ecc/edwardsCompress" import main as edwardsCompress
-from "./common/encryption/el-gamal4" import main as enc4
+// from "./common/encryption/el-gamal4" import main as enc4
+from "./common/encryption/kem-dem" import main as kemDem, EncryptedMsgs
 
 from "utils/casts/u32_to_bits.zok" import main as u32_to_bool_32
 from "utils/casts/bool_256_to_u32_8.zok" import main as bool_256_to_u32_8
+from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256
 from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
 from "utils/pack/u32/pack256.zok" import main as u32_8_to_field
 from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8
@@ -30,18 +32,6 @@ struct NewCommitmentPreimage {
 	u32[8] salt
 }
 
-struct Secrets {
-	u32[8] ephemeralKey1
-	u32[8] ephemeralKey2
-	u32[8] ephemeralKey3
-	u32[8] ephemeralKey4
-	field[16] cipherText
-	field sqrtMessage1
-	field sqrtMessage2
-	field sqrtMessage3
-	field sqrtMessage4
-}
-
 struct CompressedPoint {
 	bool parity
 	field ordinate
@@ -56,8 +46,9 @@ def main(\
 	field root,\
 	private field[32] path,\
 	private field order,\
-	private Secrets secrets,\
-	CompressedPoint[8] compressedCipherText\
+	private u32[8] ephemeralKey,\
+	CompressedPoint compressedEphemeralPublicKey,\
+	field[4] cipherText\
 )->():
 
 	BabyJubJubParams context = curveParams()
@@ -129,21 +120,32 @@ def main(\
 	// first 24 bits:
 	assert(u32_to_bool_32(sha[0])[8..32] == u32_to_bool_32(oldCommitment.hash[0])[8..32])
 
-	// And the encryption of the transaction (extend the value up to 256 bits)
-	assert(secrets.cipherText == enc4(ercAddress, oldCommitment.id, oldCommitment.value, newCommitment.salt, newCommitment.zkpPublicKeyRecipient, secrets.ephemeralKey1, secrets.ephemeralKey2, secrets.ephemeralKey3, secrets.ephemeralKey4, secrets.sqrtMessage1, secrets.sqrtMessage2, secrets.sqrtMessage3, secrets.sqrtMessage4))
+	// KEM-DEM Encryption
+	bool[256] bitEphemeralKey = u32_8_to_bool_256(ephemeralKey)
 
-	// check the compressed cipherText
-	// we pass in 8x compressed points rather than 16x uncompressed points to save time / gas
-	for u32 i in 0..8 do
-		// these intermediate vars really speed up compile time
-		// there is likely a compiler bug with zokrates 0.6.4 which makes using spreads (e.g. [8..256]) inside a function (e.g. assert()) very slow
-		u32 j = 2*i
-		bool[256] compressed256 = edwardsCompress([secrets.cipherText[j], secrets.cipherText[j+1]])
-		bool parity = compressedCipherText[i].parity
-		bool[256] ordinate = field_to_bool_256(compressedCipherText[i].ordinate)
-		bool[256] compressedCheck256 = [ parity, ...ordinate[1..256] ]
-		assert(compressed256 == compressedCheck256)
-	endfor
+	// To ensure all values are < p we move some bits around (as tokenID can be a full 256bits)
+	assert(ercAddress[0..3] == [0x00000000,0x00000000,0x00000000]) // Make sure the leading 96bits are 0
+	assert(oldCommitment.value[0] == 0x00000000) // Value can be up to 224 bits
+	// assert(oldCommitment.salt[0] == 0x00000000) // Salt can be up to 224 bits
+
+	// We move the top-most 32bits from the tokenID to the ercAddress
+	u32[8] packedERCAddress = [...ercAddress[0..2], oldCommitment.id[0], ...ercAddress[3..8]]
+	u32[8] unpackedTokenID = [0x00000000, ...oldCommitment.id[1..8]]
+	field[4] plainTexts = [\
+		u32_8_to_field(packedERCAddress),\
+		u32_8_to_field(unpackedTokenID),\
+		u32_8_to_field(newCommitment.value),\
+		u32_8_to_field(newCommitment.salt)\
+	]
+
+	EncryptedMsgs<4> enc = kemDem(bitEphemeralKey, newCommitment.zkpPublicKeyRecipient, plainTexts)
+	assert(cipherText == enc.cipherText)
+
+	bool[256] compressedPubKeyOutput = edwardsCompress(enc.ephemeralPublicKey)
+	bool parity = compressedEphemeralPublicKey.parity
+	bool[256] ordinate = field_to_bool_256(compressedEphemeralPublicKey.ordinate)
+	bool[256] compressedCheck256 = [ parity, ...ordinate[1..256] ]
+	assert(compressedPubKeyOutput == compressedCheck256)
 
 	// check that the old commitment is in the merkle tree (path[0] should be the root)
 	field mimcHash = u32_8_to_field(oldCommitment.hash)

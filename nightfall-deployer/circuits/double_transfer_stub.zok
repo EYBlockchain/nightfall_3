@@ -13,18 +13,6 @@ struct NewCommitmentPreimage {
 	u32[8] salt
 }
 
-struct Secrets {
-	u32[8] ephemeralKey1
-	u32[8] ephemeralKey2
-	u32[8] ephemeralKey3
-	u32[8] ephemeralKey4
-	field[16] cipherText
-	field sqrtMessage1
-	field sqrtMessage2
-	field sqrtMessage3
-	field sqrtMessage4
-}
-
 struct CompressedPoint {
 	bool parity
 	field ordinate
@@ -39,8 +27,9 @@ def main(\
 	field[2] root,\
 	private field[2][32] path,\
 	private field[2] order,\
-	private Secrets secrets,\
-	CompressedPoint[8] compressedCipherText\
+	private u32[8] ephemeralKey,\
+	CompressedPoint compressedEphemeralPublicKey,\
+	field[4] cipherText\
 )->():
 
 	field u = 0
@@ -59,14 +48,6 @@ def main(\
 	endfor
 
 	u32 w = 0x00000000
-	for u32 i in 0..8 do
-		u = u + compressedCipherText[i].ordinate
-		b = b && compressedCipherText[i].parity
-		w = w + secrets.ephemeralKey1[i] +\
-			secrets.ephemeralKey2[i] +\
-			secrets.ephemeralKey3[i] +\
-			secrets.ephemeralKey4[i]
-	endfor
 
 	for u32 j in 0..2 do
 		for u32 i in 0..32 do
@@ -80,14 +61,12 @@ def main(\
 		endfor
 	endfor
 
-	for u32 i in 0..16 do
-		u = u * secrets.cipherText[i]
-	endfor
-
-	u = u * order[0] * order[1] * oldCommitment[0].rootKey * oldCommitment[1].rootKey * secrets.sqrtMessage1 * secrets.sqrtMessage2 * secrets.sqrtMessage3 * secrets.sqrtMessage4
+	u = u * order[0] * order[1] * oldCommitment[0].rootKey * oldCommitment[1].rootKey
 	assert(v == v)
 	assert(u == u)
 	assert(w == w)
 	assert(b == b)
+	assert(ephemeralKey == ephemeralKey)
+	assert(cipherText == cipherText)
 
 	return
