@@ -10,8 +10,14 @@ import config from 'config';
 import { mulMod, addMod, squareRootModPrime } from '../crypto/number-theory.mjs';
 import Fq2 from '../../classes/fq2.mjs';
 import Proof from '../../classes/proof.mjs';
+import { modDivide } from '../crypto/modular-division.mjs';
 
-const { BN128_PRIME_FIELD } = config;
+const { BN128_PRIME_FIELD, BN128_GROUP_ORDER, BABYJUBJUB } = config;
+
+const one = BigInt(1);
+const { JUBJUBE, JUBJUBC } = BABYJUBJUB;
+const Fp = BN128_GROUP_ORDER; // the prime field used with the curve E(Fp)
+const Fq = JUBJUBE / JUBJUBC;
 
 /**
 function to compress a G1 point. If we throw away the y coodinate, we can
@@ -104,4 +110,48 @@ export function decompressProof(compressedProof) {
     decompressG2([bCompressedReal, bCompressedImaginary]),
     decompressG1(cCompressed),
   ].flat(2);
+}
+
+function isOnCurve(p) {
+  const { JUBJUBA: a, JUBJUBD: d } = BABYJUBJUB;
+  const uu = (p[0] * p[0]) % Fp;
+  const vv = (p[1] * p[1]) % Fp;
+  const uuvv = (uu * vv) % Fp;
+  return (a * uu + vv) % Fp === (one + d * uuvv) % Fp;
+}
+
+/**
+Point addition on the babyjubjub curve TODO - MOD P THIS
+*/
+export function add(p, q) {
+  const { JUBJUBA: a, JUBJUBD: d } = BABYJUBJUB;
+  const u1 = p[0];
+  const v1 = p[1];
+  const u2 = q[0];
+  const v2 = q[1];
+  const uOut = modDivide(u1 * v2 + v1 * u2, one + d * u1 * u2 * v1 * v2, Fp);
+  const vOut = modDivide(v1 * v2 - a * u1 * u2, one - d * u1 * u2 * v1 * v2, Fp);
+  if (!isOnCurve([uOut, vOut])) throw new Error('Addition point is not on the babyjubjub curve');
+  return [uOut, vOut];
+}
+
+/**
+Scalar multiplication on a babyjubjub curve
+@param {String} scalar - scalar mod q (will wrap if greater than mod q, which is probably ok)
+@param {Object} h - curve point in u,v coordinates
+*/
+export function scalarMult(scalar, h, form = 'Edwards') {
+  const { INFINITY } = BABYJUBJUB;
+  const a = ((BigInt(scalar) % Fq) + Fq) % Fq; // just in case we get a value that's too big or negative
+  const exponent = a.toString(2).split(''); // extract individual binary elements
+  let doubledP = [...h]; // shallow copy h to prevent h being mutated by the algorithm
+  let accumulatedP = INFINITY;
+  for (let i = exponent.length - 1; i >= 0; i--) {
+    const candidateP = add(accumulatedP, doubledP, form);
+    accumulatedP = exponent[i] === '1' ? candidateP : accumulatedP;
+    doubledP = add(doubledP, doubledP, form);
+  }
+  if (!isOnCurve(accumulatedP))
+    throw new Error('Scalar multiplication point is not on the babyjubjub curve');
+  return accumulatedP;
 }

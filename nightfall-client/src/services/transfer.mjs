@@ -11,7 +11,7 @@ import gen from 'general-number';
 import rand from 'common-files/utils/crypto/crypto-random.mjs';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
 import logger from 'common-files/utils/logger.mjs';
-import { Secrets, Nullifier, Commitment, Transaction } from '../classes/index.mjs';
+import { Nullifier, Commitment, Transaction } from '../classes/index.mjs';
 import {
   findUsableCommitmentsMutex,
   storeCommitment,
@@ -21,6 +21,8 @@ import {
 } from './commitment-storage.mjs';
 import getProposersUrl from './peers.mjs';
 import { ZkpKeys } from './keys.mjs';
+import { encrypt, genEphemeralKeys, packSecrets } from '../classes/kem-dem.mjs';
+import { edwardsCompress } from '../utils/crypto/encryption/elgamal.mjs';
 
 const {
   BN128_GROUP_ORDER,
@@ -77,39 +79,42 @@ async function transfer(transferParams) {
     recipientZkpPublicKeys.push(zkpPublicKey);
     recipientCompressedZkpPublicKeys.push(compressedZkpPublicKey);
   }
-  const newCommitments = [];
-  let secrets = [];
-  const salts = [];
-  let potentialSalt;
-  let potentialCommitment;
-  for (let i = 0; i < recipientCompressedZkpPublicKeys.length; i++) {
-    // loop to find a new salt until the commitment hash is smaller than the BN128_GROUP_ORDER
-    do {
-      // eslint-disable-next-line no-await-in-loop
-      potentialSalt = new GN((await rand(ZKP_KEY_LENGTH)).bigInt % BN128_GROUP_ORDER);
-      potentialCommitment = new Commitment({
+  // Generate salts, constrained to be < field size
+  const salts = await Promise.all(
+    recipientCompressedZkpPublicKeys.map(async () => {
+      return new GN((await rand(ZKP_KEY_LENGTH)).field(BN128_GROUP_ORDER, false));
+    }),
+  );
+
+  // Generate new commitments, already truncated to u32[7]
+  const newCommitments = recipientCompressedZkpPublicKeys.map(
+    (rcp, i) =>
+      new Commitment({
         ercAddress,
         tokenId,
         value: values[i],
         zkpPublicKey: recipientZkpPublicKeys[i],
-        compressedZkpPublicKey: recipientCompressedZkpPublicKeys[i],
-        salt: potentialSalt,
-      });
-      // encrypt secrets such as erc20Address, tokenId, value, salt for recipient
-      if (i === 0) {
-        // eslint-disable-next-line no-await-in-loop
-        secrets = await Secrets.encryptSecrets(
-          [ercAddress.bigInt, tokenId.bigInt, values[i].bigInt, potentialSalt.bigInt],
-          [recipientZkpPublicKeys[0][0].bigInt, recipientZkpPublicKeys[0][1].bigInt],
-        );
-      }
-    } while (potentialCommitment.hash.bigInt > BN128_GROUP_ORDER);
-    salts.push(potentialSalt);
-    newCommitments.push(potentialCommitment);
-  }
+        compressedZkpPublicKey: rcp,
+        salt: salts[i].bigInt,
+      }),
+  );
 
-  // compress the secrets to save gas
-  const compressedSecrets = Secrets.compressSecrets(secrets);
+  // KEM-DEM encryption
+  const [ePrivate, ePublic] = await genEphemeralKeys();
+  const [unpackedTokenID, packedErc] = packSecrets(tokenId, ercAddress);
+  // Only the first output is encrypted
+  const compressedSecrets = encrypt(
+    generalise(ePrivate),
+    generalise(ePublic),
+    generalise(recipientZkpPublicKeys[0]),
+    [packedErc.bigInt, unpackedTokenID.bigInt, values[0].bigInt, salts[0].bigInt],
+  );
+
+  // Compress the public key as it will be put on-chain
+  const compressedEPub = edwardsCompress(ePublic);
+  const binaryEPub = generalise(compressedEPub).binary.padStart(256, '0');
+
+  // Commitment Tree Information
   const commitmentTreeInfo = await Promise.all(oldCommitments.map(c => getSiblingInfo(c)));
   const localSiblingPaths = commitmentTreeInfo.map(l => {
     const path = l.siblingPath.path.map(p => p.value);
@@ -161,18 +166,9 @@ async function transfer(transferParams) {
       siblingPath.slice(1).map(node => node.field(BN128_GROUP_ORDER, false)),
     ), // siblingPAth[32] is a sha hash and will overflow a field but it's ok to take the mod here - hence the 'false' flag
     leafIndices,
-    [
-      ...secrets.ephemeralKeys.map(key => key.limbs(32, 8)),
-      secrets.cipherText.flat().map(text => text.field(BN128_GROUP_ORDER)),
-      ...secrets.squareRootsElligator2.map(sqroot => sqroot.field(BN128_GROUP_ORDER)),
-    ],
-    compressedSecrets.map(text => {
-      const bin = text.binary.padStart(256, '0');
-      const parity = bin[0];
-      const ordinate = bin.slice(1);
-      const fields = [parity, new GN(ordinate, 'binary').field(BN128_GROUP_ORDER)];
-      return fields;
-    }),
+    generalise(ePrivate).limbs(32, 8),
+    [binaryEPub[0], new GN(binaryEPub.slice(1), 'binary').field(BN128_GROUP_ORDER)],
+    compressedSecrets.map(c => generalise(c).field(BN128_GROUP_ORDER, false)),
   ].flat(Infinity);
 
   logger.debug(`witness input is ${witness.join(' ')}`);
@@ -207,7 +203,7 @@ async function transfer(transferParams) {
     ercAddress: ZERO, // we don't want to expose the ERC address during a transfer
     commitments: newCommitments,
     nullifiers,
-    compressedSecrets,
+    compressedSecrets: [compressedEPub, ...compressedSecrets],
     proof,
   });
   logger.debug(

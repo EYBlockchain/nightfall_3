@@ -80,7 +80,7 @@ class Transaction {
     if (_nullifiers === undefined) nullifiers = [{ hash: 0 }, { hash: 0 }];
     else if (_nullifiers.length === 1) nullifiers = [..._nullifiers, { hash: 0 }];
     else nullifiers = _nullifiers;
-    if (_compressedSecrets === undefined) compressedSecrets = [0, 0, 0, 0, 0, 0, 0, 0];
+    if (_compressedSecrets === undefined) compressedSecrets = [0, 0, 0, 0, 0];
     else compressedSecrets = _compressedSecrets;
 
     if ((transactionType === 0 || transactionType === 3) && TOKEN_TYPES[tokenType] === undefined)
