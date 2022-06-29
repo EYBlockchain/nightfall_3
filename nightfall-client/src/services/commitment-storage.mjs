@@ -136,6 +136,13 @@ export async function markNullified(commitment, transaction) {
   return db.collection(COMMITMENTS_COLLECTION).updateOne(query, update);
 }
 
+export async function getAllCommitments() {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  const commitments = await db.collection(COMMITMENTS_COLLECTION).find({}).toArray();
+  return commitments;
+}
+
 // function to retrieve commitment with a specified salt
 export async function getCommitmentBySalt(salt) {
   const connection = await mongo.connection(MONGO_URL);

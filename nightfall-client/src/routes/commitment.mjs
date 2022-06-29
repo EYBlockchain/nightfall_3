@@ -13,8 +13,23 @@ import {
   getWalletPendingDepositBalance,
   getWalletPendingSpentBalance,
 } from '../services/commitment-storage.mjs';
+import getCommitmentsByCompressedPkd from '../controller/commitment.mjs';
 
 const router = express.Router();
+
+router.get('/allCommitments', async (req, res, next) => {
+  logger.debug('commitment/salt endpoint received GET');
+  try {
+    const { salt } = req.query;
+    const commitment = await getCommitmentBySalt(salt);
+    if (commitment === null) logger.debug(`Found commitment ${commitment} for salt ${salt}`);
+    else logger.debug(`No commitment found for salt ${salt}`);
+    res.json({ commitment });
+  } catch (err) {
+    logger.error(err);
+    next(err);
+  }
+});
 
 router.get('/salt', async (req, res, next) => {
   logger.debug('commitment/salt endpoint received GET');
@@ -75,6 +90,17 @@ router.get('/commitments', async (req, res, next) => {
   logger.debug('commitment/commitments endpoint received GET');
   try {
     const commitments = await getWalletCommitments();
+    res.json({ commitments });
+  } catch (err) {
+    logger.error(err);
+    next(err);
+  }
+});
+
+router.get('/all', async (req, res, next) => {
+  logger.debug('commitment/all endpoint received GET');
+  try {
+    const commitments = await getCommitmentsByCompressedPkd();
     res.json({ commitments });
   } catch (err) {
     logger.error(err);
