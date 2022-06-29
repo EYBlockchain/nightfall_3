@@ -3,7 +3,7 @@ import chai from 'chai';
 import fc from 'fast-check';
 import { generalise } from 'general-number';
 import { scalarMult } from 'common-files/utils/curve-maths/curves.mjs';
-import { encrypt, decrypt, packSecrets } from '../nightfall-client/src/classes/kem-dem.mjs';
+import { encrypt, decrypt, packSecrets } from '../nightfall-client/src/services/kem-dem.mjs';
 
 const { expect } = chai;
 

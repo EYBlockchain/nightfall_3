@@ -8,7 +8,7 @@ import logger from 'common-files/utils/logger.mjs';
 import { generalise } from 'general-number';
 import { getAllTransactions } from './database.mjs';
 import { countCommitments, storeCommitment } from './commitment-storage.mjs';
-import { decrypt, packSecrets } from '../classes/kem-dem.mjs';
+import { decrypt, packSecrets } from './kem-dem.mjs';
 import { ZkpKeys } from './keys.mjs';
 import Commitment from '../classes/commitment.mjs';
 import { edwardsDecompress } from '../utils/crypto/encryption/elgamal.mjs';

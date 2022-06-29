@@ -138,4 +138,4 @@ const decrypt = (privateKey, ephemeralPub, cipherTexts) => {
   return deDem(encKey, cipherTexts);
 };
 
-export { encrypt, decrypt, kem, genEphemeralKeys, packSecrets };
+export { encrypt, decrypt, genEphemeralKeys, packSecrets };

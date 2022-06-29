@@ -21,7 +21,7 @@ import {
 } from './commitment-storage.mjs';
 import getProposersUrl from './peers.mjs';
 import { ZkpKeys } from './keys.mjs';
-import { encrypt, genEphemeralKeys, packSecrets } from '../classes/kem-dem.mjs';
+import { encrypt, genEphemeralKeys, packSecrets } from './kem-dem.mjs';
 import { edwardsCompress } from '../utils/crypto/encryption/elgamal.mjs';
 
 const {
