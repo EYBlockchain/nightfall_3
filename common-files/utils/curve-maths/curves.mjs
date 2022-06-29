@@ -7,6 +7,7 @@ return values are BigInts (or arrays of BigInts).
 */
 // eslint-disable-next-line import/no-extraneous-dependencies
 import config from 'config';
+import utils from 'common-files/utils/crypto/merkle-tree/utils.mjs';
 import { mulMod, addMod, squareRootModPrime } from '../crypto/number-theory.mjs';
 import Fq2 from '../../classes/fq2.mjs';
 import Proof from '../../classes/proof.mjs';
@@ -15,7 +16,7 @@ import { modDivide } from '../crypto/modular-division.mjs';
 const { BN128_PRIME_FIELD, BN128_GROUP_ORDER, BABYJUBJUB } = config;
 
 const one = BigInt(1);
-const { JUBJUBE, JUBJUBC } = BABYJUBJUB;
+const { JUBJUBE, JUBJUBC, JUBJUBD, JUBJUBA } = BABYJUBJUB;
 const Fp = BN128_GROUP_ORDER; // the prime field used with the curve E(Fp)
 const Fq = JUBJUBE / JUBJUBC;
 
@@ -154,4 +155,43 @@ export function scalarMult(scalar, h, form = 'Edwards') {
   if (!isOnCurve(accumulatedP))
     throw new Error('Scalar multiplication point is not on the babyjubjub curve');
   return accumulatedP;
+}
+
+/** A useful function that takes a curve point and throws away the x coordinate
+retaining only the y coordinate and the odd/eveness of the x coordinate (plays the
+part of a sign in mod arithmetic with a prime field).  This loses no information
+because we know the curve that relates x to y and the odd/eveness disabiguates the two
+possible solutions. So it's a useful data compression.
+TODO - probably simpler to use integer arithmetic rather than binary manipulations
+*/
+export function edwardsCompress(p) {
+  const px = p[0];
+  const py = p[1];
+  const xBits = px.toString(2).padStart(256, '0');
+  const yBits = py.toString(2).padStart(256, '0');
+  const sign = xBits[255] === '1' ? '1' : '0';
+  const yBitsC = sign.concat(yBits.slice(1)); // add in the sign bit
+  const y = utils.ensure0x(BigInt('0b'.concat(yBitsC)).toString(16).padStart(64, '0')); // put yBits into hex
+  return y;
+}
+
+export function edwardsDecompress(y) {
+  const py = BigInt(y).toString(2).padStart(256, '0');
+  const sign = py[0];
+  const yfield = BigInt(`0b${py.slice(1)}`); // remove the sign encoding
+  if (yfield > Fp || yfield < 0) throw new Error(`y cordinate ${yfield} is not a field element`);
+  // 168700.x^2 + y^2 = 1 + 168696.x^2.y^2
+  const y2 = mulMod([yfield, yfield], Fp);
+  const x2 = modDivide(
+    addMod([y2, BigInt(-1)], Fp),
+    addMod([mulMod([JUBJUBD, y2], Fp), -JUBJUBA], Fp),
+    Fp,
+  );
+  if (x2 === 0n && sign === '0') return BABYJUBJUB.INFINITY;
+  let xfield = squareRootModPrime(x2, Fp);
+  const px = BigInt(xfield).toString(2).padStart(256, '0');
+  if (px[255] !== sign) xfield = Fp - xfield;
+  const p = [xfield, yfield];
+  if (!isOnCurve(p)) throw new Error('The computed point was not on the Babyjubjub curve');
+  return p;
 }

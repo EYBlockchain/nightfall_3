@@ -7,7 +7,7 @@ import {
   scalarMult,
   edwardsCompress,
   edwardsDecompress,
-} from '../utils/crypto/encryption/elgamal.mjs';
+} from 'common-files/utils/curve-maths/curves.mjs';
 
 const { hdkey } = pkg;
 const { validateMnemonic, mnemonicToSeedSync } = bip39Pkg;

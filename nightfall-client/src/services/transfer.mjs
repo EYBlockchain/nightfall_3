@@ -11,6 +11,7 @@ import gen from 'general-number';
 import rand from 'common-files/utils/crypto/crypto-random.mjs';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
 import logger from 'common-files/utils/logger.mjs';
+import { edwardsCompress } from 'common-files/utils/curve-maths/curves.mjs';
 import { Nullifier, Commitment, Transaction } from '../classes/index.mjs';
 import {
   findUsableCommitmentsMutex,
@@ -22,7 +23,6 @@ import {
 import getProposersUrl from './peers.mjs';
 import { ZkpKeys } from './keys.mjs';
 import { encrypt, genEphemeralKeys, packSecrets } from './kem-dem.mjs';
-import { edwardsCompress } from '../utils/crypto/encryption/elgamal.mjs';
 
 const {
   BN128_GROUP_ORDER,
