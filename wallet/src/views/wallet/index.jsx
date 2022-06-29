@@ -108,7 +108,8 @@ function WalletModal(props) {
   };
 
   const recoverWallet = async () => {
-    const mnemonic = await concatAllWords();
+    let mnemonic = await concatAllWords();
+    setMnemonicRecArray([]);
     const isValid = validateMnemonic(mnemonic);
 
     if (!isValid) {
@@ -122,7 +123,6 @@ function WalletModal(props) {
 
     setIsMnemonicValid(isValid);
     await deriveAccounts(mnemonic, DEFAULT_ACCOUNT_NUM);
-
     new Promise((resolve, reject) => {
       let flag = false;
       let myIndexedDB;
@@ -162,6 +162,7 @@ function WalletModal(props) {
         };
       };
     }).then(async res => {
+      mnemonic = '';
       if (
         await isCommitmentsCPKDMatchDerivedKeys(
           res,
@@ -328,6 +329,7 @@ function WalletModal(props) {
             onClick={async () => {
               // await configureMnemonic(screenMnemonic);
               await deriveAccounts(screenMnemonic, DEFAULT_ACCOUNT_NUM);
+              setScreenMnemonic('');
               props.onHide();
             }}
             style={{ backgroundColor: '#7b3fe4', border: '0px' }}
