@@ -76,7 +76,7 @@ bytes32 constant SALT = 0x251543af6a222378665a76fe38dbceae4871a070b7fdaf5c6c30cf
 
   // Note that owners_ must be strictly increasing, in order to prevent duplicates
   function setOwners_(uint threshold_, address[] memory owners_) private {
-    require(owners_.length <= 20 && threshold_ <= owners_.length && threshold_ > 0, 'Invalid constructor parameter');
+    require(owners_.length <= 20 && threshold_ <= owners_.length && threshold_ > 0, 'Invalid constructor parameter.');
 
     // remove old owners from map
     for (uint i = 0; i < ownersArr.length; i++) {
@@ -86,7 +86,7 @@ bytes32 constant SALT = 0x251543af6a222378665a76fe38dbceae4871a070b7fdaf5c6c30cf
     // add new owners to map
     address lastAdd = address(0);
     for (uint i = 0; i < owners_.length; i++) {
-      require(owners_[i] > lastAdd);
+      require(owners_[i] > lastAdd, 'Owners were not added in ascending order.');
       isOwner[owners_[i]] = true;
       lastAdd = owners_[i];
     }
@@ -109,15 +109,15 @@ bytes32 constant SALT = 0x251543af6a222378665a76fe38dbceae4871a070b7fdaf5c6c30cf
 
   // Requires a quorum of owners to call from this contract using execute
   function setOwners(uint threshold_, address[] memory owners_) external {
-    require(msg.sender == address(this));
+    require(msg.sender == address(this), 'Not called from the Multisig contract.');
     setOwners_(threshold_, owners_);
   }
 
   // Note that address recovered from signatures must be strictly increasing, in order to prevent duplicates
   function execute(uint8[] memory sigV, bytes32[] memory sigR, bytes32[] memory sigS, address destination, uint value, bytes memory data, address executor, uint gasLimit) external {
-    require(sigR.length == threshold);
-    require(sigR.length == sigS.length && sigR.length == sigV.length);
-    require(executor == msg.sender || executor == address(0));
+    require(sigR.length == threshold, 'r length not equal to threshold');
+    require(sigR.length == sigS.length && sigR.length == sigV.length, 's or v length not equal to threshold.');
+    require(executor == msg.sender || executor == address(0), 'Executor is not the sender or the zero address.');
 
     // EIP712 scheme: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-712.md
     bytes32 txInputHash = keccak256(abi.encode(TXTYPE_HASH, destination, value, keccak256(data), nonce, executor, gasLimit));
@@ -126,7 +126,7 @@ bytes32 constant SALT = 0x251543af6a222378665a76fe38dbceae4871a070b7fdaf5c6c30cf
     address lastAdd = address(0); // cannot have address(0) as an owner
     for (uint i = 0; i < threshold; i++) {
       address recovered = ecrecover(totalHash, sigV[i], sigR[i], sigS[i]);
-      require(recovered > lastAdd && isOwner[recovered]);
+      require(recovered > lastAdd && isOwner[recovered], 'Recovered addresses are not in ascending order.');
       lastAdd = recovered;
     }
 
@@ -134,7 +134,7 @@ bytes32 constant SALT = 0x251543af6a222378665a76fe38dbceae4871a070b7fdaf5c6c30cf
     nonce = nonce + 1;
     bool success = false;
     (success,) = destination.call{value: value, gas: gasLimit}(data);
-    require(success);
+    require(success, 'Execution failed');
   }
 
   receive() external payable {}

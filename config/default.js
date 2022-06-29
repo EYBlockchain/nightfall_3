@@ -45,7 +45,7 @@ module.exports = {
   ZOKRATES_WORKER_HOST: process.env.ZOKRATES_WORKER_HOST || 'worker',
   MULTISIG: {
     SIGNATURE_THRESHOLD: 2, // number of signatures needed to perform an admin task
-    OWNERS: [
+    APPROVERS: [
       '0x9C8B2276D490141Ae1440Da660E470E7C0349C63',
       '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0',
       '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',

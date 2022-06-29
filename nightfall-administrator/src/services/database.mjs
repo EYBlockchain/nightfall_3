@@ -13,7 +13,7 @@ export async function saveSigned(signed) {
   // we key by message hash and signer's address
   return db
     .collection(COLLECTION)
-    .insertOne({ _id: signed.messageHash.concat(signed.by.slice(2)), signed });
+    .insertOne({ _id: signed.messageHash.concat(signed.by.slice(2)), ...signed });
 }
 
 /**
@@ -22,7 +22,7 @@ Function to check that there are enough transactions to send some signed data
 export async function checkThreshold(messageHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(DB);
-  const query = { 'signed.messageHash': messageHash };
+  const query = { messageHash };
   return db.collection(COLLECTION).countDocuments(query);
 }
 
@@ -32,6 +32,6 @@ Function to get the signatures
 export async function getSigned(messageHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(DB);
-  const query = { 'signed.messageHash': messageHash };
+  const query = { messageHash };
   return db.collection(COLLECTION).find(query).toArray();
 }

@@ -1,5 +1,4 @@
 import config from 'config';
-import Queue from 'queue';
 import { ecsign } from 'ethereumjs-util';
 import logger from '../../../common-files/utils/logger.mjs';
 import { waitForContract, web3 } from '../../../common-files/utils/contract.mjs';
@@ -7,7 +6,6 @@ import { checkThreshold, saveSigned, getSigned } from './database.mjs';
 
 const { RESTRICTIONS, WEB3_OPTIONS, MULTISIG } = config;
 const { SIGNATURE_THRESHOLD } = MULTISIG;
-const transactionQueue = new Queue({ autostart: true, concurrency: 1 });
 const MULTISIG_CONSTANTS = {};
 /**
 Read the names of tokens from the config
@@ -27,37 +25,49 @@ export function getTokenAddress(tokenName) {
   return 'unknown';
 }
 
-function queueTransaction(unsignedTransaction, signingKey, contractAddress) {
-  transactionQueue.push(async () => {
-    const tx = {
-      from: web3.eth.accounts.privateKeyToAccount(signingKey).address,
-      to: contractAddress,
-      data: unsignedTransaction,
-      gas: WEB3_OPTIONS.gas,
-      gasPrice: await web3.eth.getGasPrice(),
-    };
-    const signed = await web3.eth.accounts.signTransaction(tx, signingKey);
-    return new Promise(resolve => {
-      web3.eth
-        .sendSignedTransaction(signed.rawTransaction)
-        .once('receipt', receipt => {
-          logger.debug(`Transaction ${receipt.transactionHash} has been received.`);
-          resolve(receipt);
-        })
-        .on('error', err => {
-          logger.error(err.message);
-          resolve(false);
-        });
-    });
+async function sendTransaction(unsignedTransaction, signingKey, contractAddress) {
+  const tx = {
+    from: web3.eth.accounts.privateKeyToAccount(signingKey).address,
+    to: contractAddress,
+    data: unsignedTransaction,
+    gas: WEB3_OPTIONS.gas,
+    gasPrice: await web3.eth.getGasPrice(),
+  };
+  const signed = await web3.eth.accounts.signTransaction(tx, signingKey);
+  return web3.eth.sendSignedTransaction(signed.rawTransaction);
+}
+
+// This function saves a signed transaction and will return the array of so-far signed
+// transactions
+export async function addSignedTransaction(signed) {
+  // save the signed transaction until we meet the signature threshold, only if it's actually signed
+  if (signed.r) {
+    try {
+      await saveSigned(signed);
+    } catch (err) {
+      if (err.message.includes('duplicate key'))
+        console.log('You have already signed this message - no action taken');
+      else throw new Error(err);
+    }
+  }
+  const numberOfSignatures = await checkThreshold(signed.messageHash);
+  logger.info(`Number of signatures for this transaction is ${numberOfSignatures}`);
+  if (numberOfSignatures === SIGNATURE_THRESHOLD) logger.info(`Signature threshold reached`);
+  const signedArray = (await getSigned(signed.messageHash)).sort((a, b) => {
+    const x = BigInt(a.by);
+    const y = BigInt(b.by);
+    return x < y ? -1 : x > y ? 1 : 0; // eslint-disable-line no-nested-ternary
   });
+  return signedArray;
 }
 
 // This function creates the multisig message hash, which is signed (approved) by the key-holders.
 // It's worth looking at the multisig contract to see where this all comes from.
-function createMultiSigMessageHash(destination, value, data, executor, gasLimit) {
+async function createMultiSigMessageHash(destination, value, data, _nonce, executor, gasLimit) {
   const { domainSeparator, txTypeHash, multiSigInstance, txInputHashABI } = MULTISIG_CONSTANTS;
-  // get the current multisig nonce
-  const nonce = multiSigInstance.methods.nonce.call();
+  let nonce = _nonce;
+  // get the current multisig nonce if it's not provided (requires blockchain connection)
+  if (!_nonce) nonce = await multiSigInstance.methods.nonce().call();
   // compute the hashes to sign over note, sometimes we want a keccak hash over encoded parameter
   // and sometimes over encodedPacked parameters. Hence the two slightly different approaches used.
   const dataHash = web3.utils.soliditySha3({ t: 'bytes', v: data });
@@ -78,44 +88,32 @@ export async function addMultiSigSignature(
   signingKey,
   contractAddress,
   executorAddress,
+  nonce,
 ) {
   // compute a signature over the unsigned transaction data
-  const messageHash = createMultiSigMessageHash(
+  const messageHash = await createMultiSigMessageHash(
     contractAddress,
     0,
     unsignedTransactionData,
+    nonce,
     executorAddress,
     WEB3_OPTIONS.gas,
   );
-  const { r, s, v } = ecsign(Buffer.from(messageHash.slice(2)), Buffer.from(signingKey.slice(2)));
+  if (!signingKey) return addSignedTransaction({ messageHash }); // if no signing key is given, don't create a new signed transaction
+  const { r, s, v } = ecsign(
+    Buffer.from(messageHash.slice(2), 'hex'),
+    Buffer.from(signingKey.slice(2), 'hex'),
+  );
   const signed = {
     messageHash,
     r: `0x${r.toString('hex').padStart(64, '0')}`,
     s: `0x${s.toString('hex').padStart(64, '0')}`,
-    v: v.toString(16),
+    v: `0x${v.toString(16)}`,
     by: web3.eth.accounts.privateKeyToAccount(signingKey).address,
+    contractAddress,
+    data: unsignedTransactionData,
   };
-  // save the signed transaction until we meet the signature threshold
-  try {
-    await saveSigned(signed);
-  } catch (err) {
-    if (err.message.includes('duplicate key')) {
-      console.log('You have already signed this message - no action taken');
-      return false;
-    }
-    throw new Error(err);
-  }
-  console.log('Saved signatures are', await getSigned(signed.messageHash));
-  const numberOfSignatures = await checkThreshold(signed.messageHash);
-  logger.info(`Number of signatures for this transaction is ${numberOfSignatures}`);
-  if (numberOfSignatures < SIGNATURE_THRESHOLD) return false;
-  logger.info(`Signature threshold reached`);
-  const signedArray = (await getSigned(signed.messageHash)).sort((a, b) => {
-    const x = BigInt(a.signed.by);
-    const y = BigInt(b.signed.by);
-    return x < y ? -1 : x > y ? 1 : 0; // eslint-disable-line no-nested-ternary
-  });
-  return signedArray;
+  return addSignedTransaction(signed);
 }
 
 export async function executeMultiSigTransaction(signedArray, executor) {
@@ -128,14 +126,29 @@ export async function executeMultiSigTransaction(signedArray, executor) {
       signedArray.map(s => s.s),
       signedArray[0].contractAddress,
       0,
-      signedArray[0].message,
+      signedArray[0].data,
       web3.eth.accounts.privateKeyToAccount(executor).address,
       WEB3_OPTIONS.gas,
     )
     .encodeABI();
-  queueTransaction(multiSigTransaction, executor, multiSigInstance.options.address);
-  logger.info('Transaction queued');
-  return true;
+  return sendTransaction(multiSigTransaction, executor, multiSigInstance.options.address);
+}
+
+// checks that a pasted set of signed transactions are valid
+export function verifyTransactions(transactions) {
+  let parsed;
+  try {
+    parsed = JSON.parse(transactions);
+  } catch (err) {
+    return false;
+  }
+  if (!Array.isArray(parsed)) return false;
+  for (const el of parsed) {
+    if (!el.v || !el.r || !el.s) return false;
+    if (!el.messageHash) return false;
+    if (!el.by || !el.contractAddress || !el.data) return false;
+  }
+  return parsed;
 }
 
 // called at startup to pre-compute some constants used by the multisig
@@ -161,7 +174,7 @@ export async function initMultiSig() {
     multiSigInstance.options.address,
     SALT,
   ];
-  const domainSeparatorEncoded = web3.eth.abi.encode(domainSeparatorABI, domainSeparator);
+  const domainSeparatorEncoded = web3.eth.abi.encodeParameters(domainSeparatorABI, domainSeparator);
   const DOMAIN_SEPARATOR = web3.utils.soliditySha3({ t: 'bytes', v: domainSeparatorEncoded });
   MULTISIG_CONSTANTS.domainSeparator = DOMAIN_SEPARATOR;
   MULTISIG_CONSTANTS.txTypeHash = TXTYPE_HASH;
