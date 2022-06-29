@@ -378,7 +378,7 @@ export const transferNTransactions = async (
   tokenType,
   value,
   tokenId,
-  compressedPkd,
+  compressedZkpPublicKey,
   fee,
 ) => {
   const transferTransactions = [];
@@ -389,7 +389,7 @@ export const transferNTransactions = async (
       tokenType,
       value,
       tokenId,
-      compressedPkd,
+      compressedZkpPublicKey,
       fee,
     );
     expectTransaction(res);

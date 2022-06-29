@@ -147,7 +147,7 @@ describe('Gas test', () => {
         tokenType,
         transferValue,
         tokenId,
-        nf3Users[0].zkpKeys.compressedPkd,
+        nf3Users[0].zkpKeys.compressedZkpPublicKey,
         fee,
       );
       eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
@@ -169,7 +169,7 @@ describe('Gas test', () => {
         tokenType,
         transferValue / 2,
         tokenId,
-        nf3Users[0].zkpKeys.compressedPkd,
+        nf3Users[0].zkpKeys.compressedZkpPublicKey,
         fee,
       );
       eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
@@ -210,10 +210,10 @@ describe('Gas test', () => {
         await web3Client.timeJump(3600 * 24 * 10); // jump in time by 50 days
         const commitments = await nf3Users[0].getPendingWithdraws();
         expect(
-          commitments[nf3Users[0].zkpKeys.compressedPkd][erc20Address].length,
+          commitments[nf3Users[0].zkpKeys.compressedZkpPublicKey][erc20Address].length,
         ).to.be.greaterThan(0);
         expect(
-          commitments[nf3Users[0].zkpKeys.compressedPkd][erc20Address].filter(c => c.valid === true)
+          commitments[nf3Users[0].zkpKeys.compressedZkpPublicKey][erc20Address].filter(c => c.valid === true)
             .length,
         ).to.be.greaterThan(0);
         const res = await nf3Users[0].finaliseWithdrawal(withdrawal);

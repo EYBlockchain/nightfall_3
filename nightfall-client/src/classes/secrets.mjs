@@ -11,7 +11,7 @@ import {
   edwardsCompress,
   edwardsDecompress,
 } from '../utils/crypto/encryption/elgamal.mjs';
-import { calculatePkd } from '../services/keys.mjs';
+import { zkpKeys } from '../services/keys.mjs';
 
 const { ZKP_KEY_LENGTH, BN128_GROUP_ORDER } = config;
 
@@ -86,13 +86,15 @@ class Secrets {
       const value = decryptedMessages[2];
       saltProbable.push(decryptedMessages[3]);
       saltProbable.push((BN128_GROUP_ORDER - BigInt(decryptedMessages[3])) % BN128_GROUP_ORDER);
-      const { pkd, compressedPkd } = calculatePkd(new GN(privateKey));
+      const { zkpPublicKey, compressedZkpPublicKey } = zkpKeys.calculateZkpPublicKey(
+        new GN(privateKey),
+      );
       let commitment = {};
       for (let i = 0; i < tokenIdProbable.length; i++) {
         for (let j = 0; j < saltProbable.length; j++) {
           const commitmentProbable = new Commitment({
-            compressedPkd,
-            pkd,
+            compressedZkpPublicKey,
+            zkpPublicKey,
             ercAddress,
             tokenId: tokenIdProbable[i],
             value,

@@ -138,7 +138,7 @@ describe('Testing with an adversary', () => {
             tokenType,
             value2,
             tokenId,
-            nf3User.zkpKeys.compressedPkd,
+            nf3User.zkpKeys.compressedZkpPublicKey,
           );
           // expectedBalance += value2;
         } catch (err) {
@@ -157,7 +157,7 @@ describe('Testing with an adversary', () => {
               tokenType,
               value2,
               tokenId,
-              nf3User.zkpKeys.compressedPkd,
+              nf3User.zkpKeys.compressedZkpPublicKey,
             );
             // expectedBalance += value2; // transfer to self, so balance does not increase
           }

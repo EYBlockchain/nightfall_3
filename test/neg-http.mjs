@@ -23,11 +23,11 @@ describe('Testing the challenge http API', () => {
   let stateAddress;
   let ercAddress;
   let connection; // WS connection
-  let ask1;
-  let nsk1;
-  let ivk1;
-  let pkd1;
-  let compressedPkd1;
+  let rootKey1;
+  let nullifierKey1;
+  let zkpPrivateKey1;
+  let zkpPublicKey1;
+  let compressedZkpPublicKey1;
 
   const USE_EXTERNAL_NODE = process.env.USE_EXTERNAL_NODE === 'true';
   const { ETH_PRIVATE_KEY, BLOCKCHAIN_URL } = process.env;
@@ -126,13 +126,13 @@ describe('Testing the challenge http API', () => {
     const mnemonic = generateMnemonic();
 
     ({
-      ask: ask1,
-      nsk: nsk1,
-      ivk: ivk1,
-      pkd: pkd1,
-      compressedPkd: compressedPkd1,
+      rootKey: rootKey1,
+      nullifierKey: nullifierKey1,
+      zkpPrivateKey: zkpPrivateKey1,
+      zkpPublicKey: zkpPublicKey1,
+      compressedZkpPublicKey: compressedZkpPublicKey1,
     } = (
-      await chai.request(url).post('/generate-keys').send({ mnemonic, path: `m/44'/60'/0'/0` })
+      await chai.request(url).post('/generate-zkp-keys').send({ mnemonic, path: `m/44'/60'/0'/0` })
     ).body);
 
     web3.eth.subscribe('logs', { address: stateAddress }).on('data', log => {
@@ -160,8 +160,8 @@ describe('Testing the challenge http API', () => {
       .request(url)
       .post('/incoming-viewing-key')
       .send({
-        ivks: [ivk1],
-        nsks: [nsk1],
+        zkpPrivateKeys: [zkpPrivateKey1],
+        nullifierKeys: [nullifierKey1],
       });
 
     connection = new WebSocket(optimistWsUrl);
@@ -305,10 +305,14 @@ describe('Testing the challenge http API', () => {
       const depositTransactions = (
         await Promise.all(
           Array.from({ length: txPerBlock }, () =>
-            chai
-              .request(url)
-              .post('/deposit')
-              .send({ ercAddress, tokenId, tokenType, value, pkd: pkd1, nsk: nsk1, fee }),
+            chai.request(url).post('/deposit').send({
+              ercAddress,
+              tokenId,
+              tokenType,
+              value,
+              rootKey: rootKey1,
+              fee,
+            }),
           ),
         )
       ).map(res => res.body);
@@ -348,10 +352,9 @@ describe('Testing the challenge http API', () => {
             tokenId,
             recipientData: {
               values: [value],
-              recipientCompressedPkds: [compressedPkd1],
+              recipientCompressedZkpPublicKeys: [compressedZkpPublicKey1],
             },
-            nsk: nsk1,
-            ask: ask1,
+            rootKey: rootKey1,
             fee,
           });
       } while (res.body.error === 'No suitable commitments');
@@ -361,10 +364,14 @@ describe('Testing the challenge http API', () => {
       const depositTransactions = (
         await Promise.all(
           Array.from({ length: txPerBlock - 1 }, () =>
-            chai
-              .request(url)
-              .post('/deposit')
-              .send({ ercAddress, tokenId, tokenType, value, pkd: pkd1, nsk: nsk1, fee }),
+            chai.request(url).post('/deposit').send({
+              ercAddress,
+              tokenId,
+              tokenType,
+              value,
+              rootKey: rootKey1,
+              fee,
+            }),
           ),
         )
       ).map(depRes => depRes.body);
@@ -388,10 +395,14 @@ describe('Testing the challenge http API', () => {
         await Promise.all(
           // txPerBlock - 1 so that we can fit in a single transfer
           Array.from({ length: txPerBlock - 1 }, () =>
-            chai
-              .request(url)
-              .post('/deposit')
-              .send({ ercAddress, tokenId, tokenType, value, pkd: pkd1, nsk: nsk1, fee }),
+            chai.request(url).post('/deposit').send({
+              ercAddress,
+              tokenId,
+              tokenType,
+              value,
+              rootKey: rootKey1,
+              fee,
+            }),
           ),
         )
       ).map(res => res.body);
@@ -420,10 +431,9 @@ describe('Testing the challenge http API', () => {
           tokenId,
           recipientData: {
             values: [value],
-            recipientCompressedPkds: [compressedPkd1],
+            recipientCompressedZkpPublicKeys: [compressedZkpPublicKey1],
           },
-          nsk: nsk1,
-          ask: ask1,
+          rootKey: rootKey1,
           fee,
         });
       const { txDataToSign } = res.body;
@@ -491,10 +501,9 @@ describe('Testing the challenge http API', () => {
             tokenId,
             recipientData: {
               values: [value],
-              recipientCompressedPkds: [compressedPkd1],
+              recipientCompressedZkpPublicKeys: [compressedZkpPublicKey1],
             },
-            nsk: nsk1,
-            ask: ask1,
+            rootKey: rootKey1,
             fee,
           });
         const { txDataToSign } = res.body;
@@ -515,10 +524,9 @@ describe('Testing the challenge http API', () => {
             tokenId,
             recipientData: {
               values: [value],
-              recipientCompressedPkds: [compressedPkd1],
+              recipientCompressedZkpPublicKeys: [compressedZkpPublicKey1],
             },
-            nsk: nsk1,
-            ask: ask1,
+            rootKey: rootKey1,
             fee,
           });
         const { txDataToSign } = res.body;
@@ -559,10 +567,9 @@ describe('Testing the challenge http API', () => {
             tokenId,
             recipientData: {
               values: [value],
-              recipientCompressedPkds: [compressedPkd1],
+              recipientCompressedZkpPublicKeys: [compressedZkpPublicKey1],
             },
-            nsk: nsk1,
-            ask: ask1,
+            rootKey: rootKey1,
             fee,
           });
         const { txDataToSign } = res.body;
