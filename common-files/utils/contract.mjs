@@ -96,7 +96,7 @@ export async function waitForContract(contractName) {
   let errorCount = 0;
   let error;
   let instance;
-  while (errorCount < 50) {
+  while (errorCount < 100) {
     try {
       error = undefined;
       const address = await getContractAddress(contractName); // eslint-disable-line no-await-in-loop
