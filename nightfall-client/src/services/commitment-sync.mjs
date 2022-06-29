@@ -24,10 +24,15 @@ export async function decryptCommitment(transaction, zkpPrivateKey, nullifierKey
   zkpPrivateKey.forEach((key, j) => {
     const { zkpPublicKey, compressedZkpPublicKey } = ZkpKeys.calculateZkpPublicKey(generalise(key));
     try {
+      const cipherTexts = [
+        transaction.ercAddress,
+        transaction.tokenId,
+        ...transaction.compressedSecrets,
+      ];
       const [packedErc, unpackedTokenID, ...rest] = decrypt(
         generalise(key),
-        generalise(edwardsDecompress(transaction.compressedSecrets[0])),
-        generalise(transaction.compressedSecrets.slice(1)),
+        generalise(edwardsDecompress(transaction.recipientAddress)),
+        generalise(cipherTexts),
       );
       const [erc, tokenId] = packSecrets(generalise(packedErc), generalise(unpackedTokenID), 2, 0);
       const plainTexts = generalise([erc, tokenId, ...rest]);

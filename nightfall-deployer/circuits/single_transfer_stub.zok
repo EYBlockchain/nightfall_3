@@ -41,7 +41,7 @@ def main(\
 			oldCommitment.hash[i] +\
 			newCommitment.value[i] +\
 			newCommitment.salt[i] +\
-			ephemeralKey[i] +\
+			ephemeralKey[i]
 	endfor
 
 	b = b && compressedEphemeralPublicKey.parity

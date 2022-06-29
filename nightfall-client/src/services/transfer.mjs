@@ -33,7 +33,6 @@ const {
   SHIELD_CONTRACT_NAME,
   PROTOCOL,
   USE_STUBS,
-  ZERO,
 } = config;
 const { generalise, GN } = gen;
 
@@ -199,10 +198,12 @@ async function transfer(transferParams) {
     fee,
     historicRootBlockNumberL2: blockNumberL2s,
     transactionType,
-    ercAddress: ZERO, // we don't want to expose the ERC address during a transfer
+    ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
+    tokenId: compressedSecrets[1], // this is the encrypted tokenID
+    recipientAddress: compressedEPub,
     commitments: newCommitments,
     nullifiers,
-    compressedSecrets: [compressedEPub, ...compressedSecrets],
+    compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
     proof,
   });
   logger.debug(

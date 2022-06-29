@@ -86,7 +86,7 @@ library ChallengesUtil {
                 transaction.commitments[1] != ZERO ||
                 transaction.nullifiers[0] != ZERO ||
                 transaction.nullifiers[1] != ZERO ||
-                nZeroCompressedSecrets != 5 ||
+                nZeroCompressedSecrets != 2 ||
                 nZeroProof == 4 || // We assume that 3 out of the 4 proof elements can be a valid ZERO. Deals with exception cases
                 transaction.historicRootBlockNumberL2[0] != 0 ||
                 transaction.historicRootBlockNumberL2[1] != 0,
@@ -108,15 +108,12 @@ library ChallengesUtil {
             if (transaction.proof[i] == 0) nZeroProof++;
         }
         require(
-            transaction.tokenId != ZERO ||
                 transaction.value != 0 ||
-                transaction.ercAddress == ZERO ||
-                transaction.recipientAddress != ZERO ||
                 transaction.commitments[0] == ZERO ||
                 transaction.commitments[1] != ZERO ||
                 transaction.nullifiers[0] == ZERO ||
                 transaction.nullifiers[1] != ZERO ||
-                nZeroCompressedSecrets == 5 || // We assume that 4 out of the 5 compressed secrets elements can be a valid ZERO. Deals with exception cases
+                nZeroCompressedSecrets == 2 || // We assume that 1 out of the 2 compressed secrets elements can be a valid ZERO. Deals with exception cases
                 nZeroProof == 4 || // We assume that 3 out of the 4 proof elements can be a valid ZERO. Deals with exception cases
                 transaction.historicRootBlockNumberL2[1] != 0, // If this is a single, the second historicBlockNumber needs to be zero
             'This single transfer transaction type is valid'
@@ -137,15 +134,12 @@ library ChallengesUtil {
             if (transaction.proof[i] == 0) nZeroProof++;
         }
         require(
-            transaction.tokenId != ZERO ||
                 transaction.value != 0 ||
-                transaction.ercAddress == ZERO ||
-                transaction.recipientAddress != ZERO ||
                 transaction.commitments[0] == ZERO ||
                 transaction.commitments[1] == ZERO ||
                 transaction.nullifiers[0] == ZERO ||
                 transaction.nullifiers[1] == ZERO ||
-                nZeroCompressedSecrets == 5 || // We assume that 4 out of the 5 compressed secrets elements can be a valid ZERO. Deals with exception cases
+                nZeroCompressedSecrets == 2 || // We assume that 1 out of the 2 compressed secrets elements can be a valid ZERO. Deals with exception cases
                 nZeroProof == 4, // We assume that 3 out of the 4 proof elements can be a valid ZERO. Deals with exception cases
             'This double transfer transaction type is valid'
         );
@@ -172,7 +166,7 @@ library ChallengesUtil {
                 transaction.commitments[1] != ZERO ||
                 transaction.nullifiers[0] == ZERO ||
                 transaction.nullifiers[1] != ZERO ||
-                nZeroCompressedSecrets != 5 ||
+                nZeroCompressedSecrets != 2 ||
                 nZeroProof == 4 || // We assume that 3 out of the 4 proof elements can be a valid ZERO. Deals with exception cases
                 transaction.historicRootBlockNumberL2[1] != 0, // A withdraw has a similar constraint as a single transfer
             'This withdraw transaction type is valid'

@@ -58,7 +58,7 @@ async function checkTransactionType(transaction) {
         transaction.commitments.length !== 2 ||
         transaction.nullifiers.some(n => n !== ZERO) ||
         transaction.compressedSecrets.some(cs => cs !== ZERO) ||
-        transaction.compressedSecrets.length !== 5 ||
+        transaction.compressedSecrets.length !== 2 ||
         transaction.proof.every(p => p === ZERO) ||
         // This extra check is unique to deposits
         Number(transaction.historicRootBlockNumberL2[0]) !== 0 ||
@@ -71,10 +71,7 @@ async function checkTransactionType(transaction) {
       break;
     case 1: // single token transaction
       if (
-        transaction.tokenId !== ZERO ||
         BigInt(transaction.value) !== 0n ||
-        transaction.ercAddress !== ZERO ||
-        transaction.recipientAddress !== ZERO ||
         transaction.commitments[0] === ZERO ||
         transaction.commitments[1] !== ZERO ||
         transaction.commitments.length !== 2 ||
@@ -82,7 +79,7 @@ async function checkTransactionType(transaction) {
         transaction.nullifiers[1] !== ZERO ||
         transaction.nullifiers.length !== 2 ||
         transaction.compressedSecrets.every(cs => cs === ZERO) ||
-        transaction.compressedSecrets.length !== 5 ||
+        transaction.compressedSecrets.length !== 2 ||
         transaction.proof.every(p => p === ZERO)
       )
         throw new TransactionError(
@@ -92,17 +89,14 @@ async function checkTransactionType(transaction) {
       break;
     case 2: // double token transaction
       if (
-        transaction.tokenId !== ZERO ||
         BigInt(transaction.value) !== 0n ||
-        transaction.ercAddress !== ZERO ||
-        transaction.recipientAddress !== ZERO ||
         transaction.commitments.some(c => c === ZERO) ||
         transaction.commitments.length !== 2 ||
         transaction.nullifiers.some(n => n === ZERO) ||
         transaction.nullifiers.length !== 2 ||
         transaction.nullifiers[0] === transaction.nullifiers[1] ||
         transaction.compressedSecrets.every(cs => cs === ZERO) ||
-        transaction.compressedSecrets.length !== 5 ||
+        transaction.compressedSecrets.length !== 2 ||
         transaction.proof.every(p => p === ZERO)
       )
         throw new TransactionError(
@@ -169,7 +163,7 @@ async function verifyProof(transaction) {
     transaction.historicRootBlockNumberL2[1],
   )) ?? { root: ZERO };
 
-  const bin = new GN(transaction.compressedSecrets[0]).binary.padStart(256, '0');
+  const bin = new GN(transaction.recipientAddress).binary.padStart(256, '0');
   const parity = bin[0];
   const ordinate = bin.slice(1);
   const binaryEPub = [parity, new GN(ordinate, 'binary').field(BN128_GROUP_ORDER, false)];
@@ -197,7 +191,9 @@ async function verifyProof(transaction) {
           transaction.nullifiers[0],
           historicRootFirst.root,
           binaryEPub,
-          ...transaction.compressedSecrets.slice(1), // The first element is the ephemeralPub
+          transaction.ercAddress,
+          transaction.tokenId,
+          ...transaction.compressedSecrets,
         ].flat(Infinity),
       );
       // check for truncation overflow attacks
@@ -216,7 +212,9 @@ async function verifyProof(transaction) {
           historicRootFirst.root,
           historicRootSecond.root,
           binaryEPub,
-          ...transaction.compressedSecrets.slice(1), // The first element is the ephemeralPub
+          transaction.ercAddress,
+          transaction.tokenId,
+          ...transaction.compressedSecrets,
         ].flat(Infinity),
       );
       // check for truncation overflow attacks
