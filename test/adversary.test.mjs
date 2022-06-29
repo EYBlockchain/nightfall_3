@@ -52,7 +52,7 @@ describe('Testing with an adversary', () => {
   const tokenId = '0x00'; // has to be zero for ERC20
   const tokenType = 'ERC20'; // it can be 'ERC721' or 'ERC1155'
   // const value = 10;
-  const value1 = 1000;
+  // const value1 = 1000;
   const value2 = 5;
 
   // this is what we pay the proposer for incorporating a transaction
