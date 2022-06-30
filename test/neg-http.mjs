@@ -114,7 +114,7 @@ describe('Testing the challenge http API', () => {
     stateAddress = res.body.address;
 
     // should get the address of the test ERC contract stub
-    res = await chai.request(url).get('/contract-address/ERCStub');
+    res = await chai.request(url).get('/contract-address/ERC20Mock');
     ercAddress = res.body.address;
     // set the current nonce before we start the test
     web3Client.setNonce(
@@ -314,18 +314,28 @@ describe('Testing the challenge http API', () => {
       ).map(res => res.body);
 
       depositTransactions.forEach(({ txDataToSign }) => expect(txDataToSign).to.be.a('string'));
+      console.log("1")
 
       const receiptArrays = [];
       txQueue.push(async () => {
         await holdupTxQueue('txSubmitted', logs.txSubmitted.length + depositTransactions.length);
       });
+      console.log("2")
       for (let i = 0; i < depositTransactions.length; i++) {
         const { txDataToSign } = depositTransactions[i];
         const count = logs.txSubmitted.length;
+        console.log("3")
+        //const a = await web3Client.submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
+        //console.log(a);
+        try {
         receiptArrays.push(
           await web3Client.submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee),
         );
+        } catch (err) {
+           console.log("ERROR", err)
+        }
 
+        console.log("XXX")
         await waitForTxExecution(count, 'txSubmitted');
       }
       receiptArrays.forEach(receipt => {

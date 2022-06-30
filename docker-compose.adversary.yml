@@ -2,6 +2,8 @@ version: '3.5'
 # Use this script for making an adversary service
 services:
   adversary1:
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     build:
       dockerfile: optimist.Dockerfile
       context: .
@@ -32,6 +34,11 @@ services:
       BLOCKCHAIN_PORT: 8546
       HASH_TYPE: mimc
       LOG_LEVEL: debug
-      IS_CHALLENGER: 'false'
+      IS_CHALLENGER: 'true'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
+      AUTOSTART_RETRIES: 100
+      BAD_BLOCK_SEQUENCE: ${BAD_BLOCK_SEQUENCE}
+      BAD_TX_SEQUENCE: ${BAD_TX_SEQUENCE}
     command: ['npm', 'run', 'dev']
+
+
