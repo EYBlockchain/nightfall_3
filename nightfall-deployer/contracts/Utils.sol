@@ -150,7 +150,7 @@ library Utils {
         pure
         returns (uint256[] memory)
     {
-        uint256[] memory inputs = new uint256[](16);
+        uint256[] memory inputs = new uint256[](6);
         inputs[0] = uint256(ts.ercAddress);
         inputs[1] = uint256(ts.tokenId);
         inputs[2] = ts.value;
@@ -165,7 +165,7 @@ library Utils {
         pure
         returns (uint256[] memory)
     {
-        uint256[] memory inputs = new uint256[](6);
+        uint256[] memory inputs = new uint256[](16);
         inputs[0] = uint256(ts.ercAddress);
         inputs[1] = uint256(ts.ercAddress);
         inputs[2] = uint256(ts.commitments[0]);
