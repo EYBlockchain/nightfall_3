@@ -131,7 +131,6 @@ describe('Testing with an adversary', () => {
     } else {
       logger.debug(`Configuring Default Challenge Type`);
     }
-
   });
 
   describe('User creates deposit and transfer transactions', () => {
@@ -141,8 +140,8 @@ describe('Testing with an adversary', () => {
       intervalId = setInterval(() => {
         registerProposerOnNoProposer(nf3AdversarialProposer);
       }, 5000);
-      let nDeposits=0;
-      let nTransfers=0;
+      let nDeposits = 0;
+      let nTransfers = 0;
 
       // we are creating a block of deposits with high values such that there is
       // enough balance for a lot of transfers with low value.

@@ -314,28 +314,18 @@ describe('Testing the challenge http API', () => {
       ).map(res => res.body);
 
       depositTransactions.forEach(({ txDataToSign }) => expect(txDataToSign).to.be.a('string'));
-      console.log("1")
 
       const receiptArrays = [];
       txQueue.push(async () => {
         await holdupTxQueue('txSubmitted', logs.txSubmitted.length + depositTransactions.length);
       });
-      console.log("2")
       for (let i = 0; i < depositTransactions.length; i++) {
         const { txDataToSign } = depositTransactions[i];
         const count = logs.txSubmitted.length;
-        console.log("3")
-        //const a = await web3Client.submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee);
-        //console.log(a);
-        try {
         receiptArrays.push(
           await web3Client.submitTransaction(txDataToSign, privateKey, shieldAddress, gas, fee),
         );
-        } catch (err) {
-           console.log("ERROR", err)
-        }
 
-        console.log("XXX")
         await waitForTxExecution(count, 'txSubmitted');
       }
       receiptArrays.forEach(receipt => {
