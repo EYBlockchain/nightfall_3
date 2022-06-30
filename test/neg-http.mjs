@@ -26,7 +26,6 @@ describe('Testing the challenge http API', () => {
   let rootKey1;
   let nullifierKey1;
   let zkpPrivateKey1;
-  let zkpPublicKey1;
   let compressedZkpPublicKey1;
 
   const USE_EXTERNAL_NODE = process.env.USE_EXTERNAL_NODE === 'true';

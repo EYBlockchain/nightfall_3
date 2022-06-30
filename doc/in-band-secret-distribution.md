@@ -78,9 +78,9 @@ where 78051874391181984688098968222999738975931083794940792138705622082294921090
 zkpPublicKey = zkpPrivateKey * G
 ```
 
-The apps which will use the `zkpKeys` to generate these keys can store the `rootKey` in different devices by splitting
+The apps which will use the `ZkpKeys` to generate these keys can store the `rootKey` in different devices by splitting
 this into shares using Shamir Secret Sharing. If either `rootKey` or `mnemonic` is compromised, then the adversary
 can calculate the `zkpPrivateKey` and `nullifierKey`. The `zkpPrivateKey` can be used to decrypt secrets of a commitment
 whilst the `nullifierKey` can be used to spend the commitment. Hence `rootKey` and `mnemonic` must be stored very securely.
 It is also recommended to store `zkpPrivateKey` and `nullifierKey` separately to avoid theft of commitments in case one of these
-is compromised. 
+is compromised.

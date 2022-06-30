@@ -10,7 +10,7 @@ import {
 } from '../utils/crypto/encryption/elgamal.mjs';
 
 const { hdkey } = pkg;
-const { generateMnemonic, validateMnemonic, mnemonicToSeedSync } = bip39Pkg;
+const { validateMnemonic, mnemonicToSeedSync } = bip39Pkg;
 export const zkpPrivateKeys = [];
 export const nullifierKeys = [];
 const { BABYJUBJUB, BN128_GROUP_ORDER } = config;
@@ -26,11 +26,15 @@ const { BABYJUBJUB, BN128_GROUP_ORDER } = config;
 //   return mnemonicToSeedSync(mnemonic);
 // }
 
-export class zkpKeys {
+export class ZkpKeys {
   rootKey;
+
   zkpPrivateKey;
+
   nullifierKey;
+
   zkpPublicKey;
+
   compressedZkpPublicKey;
 
   constructor(rootKey) {

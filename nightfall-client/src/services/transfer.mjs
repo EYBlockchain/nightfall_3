@@ -20,7 +20,7 @@ import {
   getSiblingInfo,
 } from './commitment-storage.mjs';
 import getProposersUrl from './peers.mjs';
-import { zkpKeys } from './keys.mjs';
+import { ZkpKeys } from './keys.mjs';
 
 const {
   BN128_GROUP_ORDER,
@@ -42,10 +42,10 @@ async function transfer(transferParams) {
   // let's extract the input items
   const { offchain = false, ...items } = transferParams;
   const { ercAddress, tokenId, recipientData, rootKey, fee } = generalise(items);
-  const { zkpPublicKey, compressedZkpPublicKey, nullifierKey } = new zkpKeys(rootKey);
+  const { zkpPublicKey, compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
   const { recipientCompressedZkpPublicKeys, values } = recipientData;
   const recipientZkpPublicKeys = recipientCompressedZkpPublicKeys.map(key =>
-    zkpKeys.decompressCompressedZkpPublicKey(key),
+    ZkpKeys.decompressCompressedZkpPublicKey(key),
   );
   if (recipientCompressedZkpPublicKeys.length > 1)
     throw new Error(`Batching is not supported yet: only one recipient is allowed`); // this will not always be true so we try to make the following code agnostic to the number of commitments

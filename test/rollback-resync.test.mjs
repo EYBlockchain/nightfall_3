@@ -44,7 +44,7 @@ describe('Running rollback and resync test', () => {
   let rootKey1;
   let nullifierKey1;
   let zkpPrivateKey1;
-  let zkpPublicKey;
+  let zkpPublicKey1;
   const txPerBlock = 2;
   const validTransactions = [];
   const environment = web3Client.getCurrentEnvironment();
@@ -80,7 +80,7 @@ describe('Running rollback and resync test', () => {
       rootKey: rootKey1,
       nullifierKey: nullifierKey1,
       zkpPrivateKey: zkpPrivateKey1,
-      zkPublicKey: zkPublicKey1,
+      zkPublicKey: zkpPublicKey1,
     } = (
       await chai
         .request(environment.clientApiUrl)
@@ -101,7 +101,7 @@ describe('Running rollback and resync test', () => {
       tokenId,
       recipientData: {
         transferValues: [transferValue],
-        recipientZkpPublicKeys: [zkPublicKey1],
+        recipientZkpPublicKeys: [zkpPublicKey1],
       },
       rootKey: rootKey1,
       fee,

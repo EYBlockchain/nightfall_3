@@ -18,7 +18,7 @@ import {
   getSiblingInfo,
 } from './commitment-storage.mjs';
 import getProposersUrl from './peers.mjs';
-import { zkpKeys } from './keys.mjs';
+import { ZkpKeys } from './keys.mjs';
 
 const {
   BN128_GROUP_ORDER,
@@ -38,7 +38,7 @@ async function withdraw(withdrawParams) {
   // let's extract the input items
   const { offchain = false, ...items } = withdrawParams;
   const { ercAddress, tokenId, value, recipientAddress, rootKey, fee } = generalise(items);
-  const { compressedZkpPublicKey, nullifierKey } = new zkpKeys(rootKey);
+  const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
 
   // the first thing we need to do is to find and input commitment which
   // will enable us to conduct our withdraw.  Let's rummage in the db...

@@ -1,7 +1,7 @@
 import chai from 'chai';
 import { generalise, GN } from 'general-number';
 import rand from 'common-files/utils/crypto/crypto-random.mjs';
-import { generateZkpKeys, zkpKeys } from '../nightfall-client/src/services/keys.mjs';
+import { ZkpKeys } from '../nightfall-client/src/services/keys.mjs';
 import { Secrets, Commitment } from '../nightfall-client/src/classes/index.mjs';
 
 const BN128_GROUP_ORDER =
@@ -24,12 +24,13 @@ describe('Testing encrypt and decrypt in Secrets class', () => {
   let recipientZkpPublicKey;
   let recipientZkpPrivateKey;
   before(async () => {
-    const keys = await zkpKeys.generateZkpKeysFromMnemonic(mnemonic, '0');
+    const keys = await ZkpKeys.generateZkpKeysFromMnemonic(mnemonic, '0');
 
     recipientZkpPublicKey = generalise(keys.zkpPublicKey);
     const recipientCompressedZkpPublicKey = keys.compressedZkpPublicKey;
     recipientZkpPrivateKey = new GN(keys.zkpPrivateKey);
     do {
+      // eslint-disable-next-line no-await-in-loop
       potentialSalt = new GN((await rand(ZKP_KEY_LENGTH)).bigInt % BN128_GROUP_ORDER).hex(32);
       potentialCommitment = new Commitment({
         ercAddress,

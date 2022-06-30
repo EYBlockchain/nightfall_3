@@ -213,8 +213,9 @@ describe('Gas test', () => {
           commitments[nf3Users[0].zkpKeys.compressedZkpPublicKey][erc20Address].length,
         ).to.be.greaterThan(0);
         expect(
-          commitments[nf3Users[0].zkpKeys.compressedZkpPublicKey][erc20Address].filter(c => c.valid === true)
-            .length,
+          commitments[nf3Users[0].zkpKeys.compressedZkpPublicKey][erc20Address].filter(
+            c => c.valid === true,
+          ).length,
         ).to.be.greaterThan(0);
         const res = await nf3Users[0].finaliseWithdrawal(withdrawal);
         expectTransaction(res);
