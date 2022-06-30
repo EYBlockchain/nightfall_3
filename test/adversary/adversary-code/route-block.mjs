@@ -1,4 +1,5 @@
 /* eslint-disable no-undef */
+/* ignore unused exports */
 router.get('/reset-localblock', async (req, res, next) => {
   logger.debug('block endpoint received get');
   try {
