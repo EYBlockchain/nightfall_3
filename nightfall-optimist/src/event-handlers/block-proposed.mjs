@@ -114,10 +114,7 @@ async function blockProposedEventHandler(data) {
       // This message will not be printed because event dequeuing does not run the job.
       // This is fine as we are just using it to stop running.
       increaseBlockInvalidCounter();
-      logger.info(`NONSTOP_QUEUE_AFTER_INVALID_BLOCK: ${config.NONSTOP_QUEUE_AFTER_INVALID_BLOCK}`);
-      // stop queue based on config.NONSTOP_QUEUE_AFTER_INVALID_BLOCK
-      if (!config.NONSTOP_QUEUE_AFTER_INVALID_BLOCK)
-        await enqueueEvent(() => logger.info('Stop Until Rollback'), 2);
+      await enqueueEvent(() => logger.info('Stop Until Rollback'), 2);
       await createChallenge(block, transactions, err);
     } else {
       logger.error(err.stack);
