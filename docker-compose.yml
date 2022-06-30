@@ -139,7 +139,7 @@ services:
       BLOCKCHAIN_PORT: 8546
       HASH_TYPE: mimc
       LOG_LEVEL: debug
-      IS_CHALLENGER: 'true'
+      IS_CHALLENGER: 'false'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
     command: [ 'npm', 'run', 'dev' ]
 
@@ -163,7 +163,7 @@ services:
       BLOCKCHAIN_PORT: 8546
       HASH_TYPE: mimc
       LOG_LEVEL: error
-      IS_CHALLENGER: 'true'
+      IS_CHALLENGER: 'false'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
     command: [ 'npm', 'run', 'dev' ]
 
