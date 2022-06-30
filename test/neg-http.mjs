@@ -26,7 +26,6 @@ describe('Testing the challenge http API', () => {
   let rootKey1;
   let nullifierKey1;
   let zkpPrivateKey1;
-  let zkpPublicKey1;
   let compressedZkpPublicKey1;
 
   const USE_EXTERNAL_NODE = process.env.USE_EXTERNAL_NODE === 'true';
@@ -129,7 +128,7 @@ describe('Testing the challenge http API', () => {
       rootKey: rootKey1,
       nullifierKey: nullifierKey1,
       zkpPrivateKey: zkpPrivateKey1,
-      zkpPublicKey: zkpPublicKey1,
+      zkpPublicKey,
       compressedZkpPublicKey: compressedZkpPublicKey1,
     } = (
       await chai.request(url).post('/generate-zkp-keys').send({ mnemonic, path: `m/44'/60'/0'/0` })
