@@ -128,7 +128,6 @@ describe('Testing the challenge http API', () => {
       rootKey: rootKey1,
       nullifierKey: nullifierKey1,
       zkpPrivateKey: zkpPrivateKey1,
-      zkpPublicKey,
       compressedZkpPublicKey: compressedZkpPublicKey1,
     } = (
       await chai.request(url).post('/generate-zkp-keys').send({ mnemonic, path: `m/44'/60'/0'/0` })
