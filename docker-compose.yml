@@ -140,7 +140,6 @@ services:
       HASH_TYPE: mimc
       LOG_LEVEL: debug
       IS_CHALLENGER: 'true'
-      STOP_QUEUE_AFTER_INVALID_BLOCK: 'true'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
     command: ['npm', 'run', 'dev']
 
@@ -166,7 +165,6 @@ services:
       LOG_LEVEL: error
       IS_CHALLENGER: 'true'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
-      STOP_QUEUE_AFTER_INVALID_BLOCK: 'true'
     command: ['npm', 'run', 'dev']
 
   hosted-utils-api-server:
