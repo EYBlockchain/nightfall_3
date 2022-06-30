@@ -115,7 +115,7 @@ async function blockProposedEventHandler(data) {
       // This is fine as we are just using it to stop running.
       increaseBlockInvalidCounter();
       logger.info(`NONSTOP_QUEUE_AFTER_INVALID_BLOCK: ${config.NONSTOP_QUEUE_AFTER_INVALID_BLOCK}`);
-      // stop queue based on NONSTOP_QUEUE_AFTER_INVALID_BLOCK option
+      // stop queue based on config.NONSTOP_QUEUE_AFTER_INVALID_BLOCK option
       if (!config.NONSTOP_QUEUE_AFTER_INVALID_BLOCK)
         await enqueueEvent(() => logger.info('Stop Until Rollback'), 2);
       await createChallenge(block, transactions, err);
