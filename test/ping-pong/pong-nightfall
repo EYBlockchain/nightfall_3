@@ -31,5 +31,12 @@ done
 # shut down cleanly in the event of a cntl-c etc. We don't want to leave containers running
 trap "exit 1" SIGHUP SIGINT SIGTERM
 
+
 docker-compose -f docker-compose.yml $FILE $STUBS up -d --remove-orphans client optimist worker $DEPLOYER
+docker wait ping-pong_deployer_1
+
+cd ../deploy-contracts
+npx truffle migrate --to 2 --network=${ETH_NETWORK}
+cd ../ping-pong
+
 docker-compose logs -f

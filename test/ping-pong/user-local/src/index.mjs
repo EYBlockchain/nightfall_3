@@ -45,8 +45,6 @@ async function localTest() {
 
   const ercAddress = TEST_ERC20_ADDRESS || (await getAddress(ERC20_NAME, await nf3.getNetworkId()));
 
-  console.log(await getAddress(ERC20_NAME, await nf3.getNetworkId()));
-  console.log(ercAddress);
   const startBalance = await retrieveL2Balance(nf3);
 
   let offchainTx = !!IS_TEST_RUNNER;
