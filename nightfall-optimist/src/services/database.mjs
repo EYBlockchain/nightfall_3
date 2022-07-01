@@ -7,6 +7,7 @@ import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import mongo from 'common-files/utils/mongo.mjs';
 import Timber from 'common-files/classes/timber.mjs';
+import { setTimeout } from 'timers/promises'
 
 const {
   MONGO_URL,
@@ -545,5 +546,7 @@ export async function getTreeByLeafCount(historicalLeafCount) {
 export async function deleteTreeByBlockNumberL2(blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
+  db.collection(TIMBER_COLLECTION).updateOne({ blockNumberL2: blockNumberL2 }, { $set: { rollback: true } });
+  await setTimeout(1000)
   return db.collection(TIMBER_COLLECTION).deleteMany({ blockNumberL2: { $gte: blockNumberL2 } });
 }
