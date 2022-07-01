@@ -138,7 +138,7 @@ describe('Testing with an adversary', () => {
     } else {
       logger.debug(`Configuring Default Challenge Type`);
     }
-    
+
     console.log('Pausing challenger queue...');
     // we pause the challenger queue and don't process challenger until unpauseQueueChallenger
     nf3Challenger.pauseQueueChallenger();
