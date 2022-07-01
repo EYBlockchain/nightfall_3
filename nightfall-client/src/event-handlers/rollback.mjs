@@ -27,7 +27,7 @@ async function rollbackEventHandler(data) {
   // If we clear the commitments in blockNumberL2, we may spend them again while they are in an optimist mempool.
   const commitments = await getCommitmentsFromBlockNumberL2(Number(blockNumberL2) + 1);
   // Deposit transactions should not be dropped because they are always valid even post-rollback.
-  const nonDeposit = commitments.filter(t => t.transactionType !== '0').map(c => c._id);
+  const nonDeposit = commitments.filter(c => c.isDeposited === false).map(c => c._id);
   logger.debug(`nonDeposit: ${JSON.stringify(nonDeposit)}`);
   // Any commitments that have been nullified and are now no longer spent because
   // of the rollback should be made available to be spent again.

@@ -112,10 +112,17 @@ describe('Testing with an adversary', () => {
       });
     ercAddress = await nf3User.getContractAddress('ERC20Mock');
 
+    // Because rollbacks removes the only registered proposer,
+    // the proposer is registered again after each removal
+    intervalId = setInterval(() => {
+      registerProposerOnNoProposer(nf3AdversarialProposer);
+    }, 5000);
+
     // Challenger registration
     await nf3Challenger.registerChallenger();
     // Chalenger listening for incoming events
     nf3Challenger.startChallenger();
+
     const challengerEmitter = await nf3Challenger.getChallengeEmitter();
     challengerEmitter.on('data', txDataToSign => {
       logger.debug(`Challenger emitter with data ${txDataToSign}`);
@@ -131,6 +138,10 @@ describe('Testing with an adversary', () => {
     } else {
       logger.debug(`Configuring Default Challenge Type`);
     }
+    
+    console.log('Pausing challenger queue...');
+    // we pause the challenger queue and don't process challenger until unpauseQueueChallenger
+    nf3Challenger.pauseQueueChallenger();
   });
 
   describe('User creates deposit and transfer transactions', () => {
@@ -207,6 +218,21 @@ describe('Testing with an adversary', () => {
       console.log(`Completed startBalance`, startBalance);
       console.log(`Completed endBalance`, endBalance);
       logger.debug(`N deposits: ${nDeposits} - N Transfers: ${nTransfers}`);
+      expect(expectedBalance).to.be.equal(endBalance - startBalance);
+    });
+
+    it('User should have the correct balance after challenge and a series of rollbacks', async () => {
+      console.log('Unpausing challenger queue...');
+      // Challenger unpause
+      await nf3Challenger.unpauseQueueChallenger();
+      // waiting sometime to ensure that all the good transactions from bad
+      // blocks were proposed in other good blocks
+      console.log('Waiting for rollbacks...');
+      await new Promise(resolve => setTimeout(resolve, 20 * TX_WAIT));
+      await waitForSufficientBalance(nf3User, expectedBalance);
+      const endBalance = await retrieveL2Balance(nf3User);
+      console.log(`Completed startBalance`, startBalance);
+      console.log(`Completed endBalance`, endBalance);
       expect(expectedBalance).to.be.equal(endBalance - startBalance);
     });
   });

@@ -33,7 +33,7 @@ services:
       OPTIMIST_HOST: optimist1
       OPTIMIST_PORT: 80
       USE_STUBS: 'false' # make sure this flag is the same as in deployer service
-    command: [ 'npm', 'run', 'dev' ]
+    command: ['npm', 'run', 'dev']
 
   client2:
     image: ghcr.io/eyblockchain/nightfall3-client:latest
@@ -66,7 +66,7 @@ services:
       OPTIMIST_HOST: optimist2
       OPTIMIST_PORT: 80
       USE_STUBS: 'false' # make sure this flag is the same as in deployer service
-    command: [ 'npm', 'run', 'dev' ]
+    command: ['npm', 'run', 'dev']
 
   worker:
     #  image: 3800decac71d
@@ -141,7 +141,7 @@ services:
       LOG_LEVEL: debug
       IS_CHALLENGER: 'false'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
-    command: [ 'npm', 'run', 'dev' ]
+    command: ['npm', 'run', 'dev']
 
   optimist2:
     image: ghcr.io/eyblockchain/nightfall3-optimist:latest
@@ -165,7 +165,7 @@ services:
       LOG_LEVEL: error
       IS_CHALLENGER: 'false'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
-    command: [ 'npm', 'run', 'dev' ]
+    command: ['npm', 'run', 'dev']
 
   hosted-utils-api-server:
     build:
@@ -197,9 +197,7 @@ volumes:
   mongodb1: null
   mongodb2: null
   proving_files: null
-  build:
-
-    null
+  build: null
 networks:
   nightfall_network:
     driver: bridge
