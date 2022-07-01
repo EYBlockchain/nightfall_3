@@ -1,7 +1,9 @@
 const { exec } = require('child_process');
+const path = require('path');
 
 exports.mochaGlobalSetup = async function (cd) {
-  console.log(process.env);
+  process.env.NODE_CONFIG_DIR = path.join(__dirname, '../../config');
+
   const prom = () =>
     new Promise(resolve =>
       exec(

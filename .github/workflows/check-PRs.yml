@@ -34,7 +34,13 @@ jobs:
       - uses: actions/checkout@master
       - uses: actions/setup-node@v1
         with:
-          node-version: '14.17.0'
+          node-version: '14.16.1'
+
+      - name: install latest npm
+        run: |
+          npm install -g npm &&
+          npm --version &&
+          npm list -g --depth 0
 
       - name: Start Containers
         run: |

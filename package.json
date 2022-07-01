@@ -73,6 +73,6 @@
     "typescript": "^4.6.2"
   },
   "overrides": {
-    "got": "12.1.0"
+    "got": "11.8.5"
   }
 }
