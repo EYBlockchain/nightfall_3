@@ -11,6 +11,13 @@ const error = [
   'ValidTransaction',
   'IncorrectTreeRoot',
   'ValidTransaction',
+  'ValidTransaction',
+  /* 'ValidTransaction',
+  'ValidTransaction',
+  'ValidTransaction',
+  'ValidTransaction',
+  'ValidTransaction',
+  'ValidTransaction',
   'IncorrectLeafCount',
   'ValidTransaction',
   'DuplicateTransaction',
@@ -20,7 +27,7 @@ const error = [
   'HistoricRootError',
   'ValidTransaction',
   'IncorrectProof',
-  'ValidTransaction',
+  'ValidTransaction', */
 ];
 
 const duplicateNullifier = async number => {

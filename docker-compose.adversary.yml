@@ -33,5 +33,6 @@ services:
       HASH_TYPE: mimc
       LOG_LEVEL: debug
       IS_CHALLENGER: 'false'
+      NONSTOP_QUEUE_AFTER_INVALID_BLOCK: 'true'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
     command: ['npm', 'run', 'dev']
