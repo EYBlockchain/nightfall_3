@@ -207,7 +207,7 @@ describe('Gas test', () => {
         const startBalance = await web3Client.getBalance(nf3Users[0].ethereumAddress);
         const withdrawal = await nf3Users[0].getLatestWithdrawHash();
         await emptyL2(nf3Users[0]);
-        await web3Client.timeJump(3600 * 24 * 10); // jump in time by 50 days
+        await web3Client.timeJump(3600 * 24 * 50); // jump in time by 50 days
         const commitments = await nf3Users[0].getPendingWithdraws();
         expect(
           commitments[nf3Users[0].zkpKeys.compressedPkd][erc20Address].length,

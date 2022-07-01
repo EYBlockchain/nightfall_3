@@ -323,7 +323,7 @@ describe('ERC20 tests', () => {
 
         await emptyL2(nf3Users[0]);
 
-        await web3Client.timeJump(3600 * 24 * 10); // jump in time by 50 days
+        await web3Client.timeJump(3600 * 24 * 50); // jump in time by 50 days
 
         const commitments = await nf3Users[0].getPendingWithdraws();
         expect(
@@ -550,7 +550,7 @@ describe('ERC20 tests', () => {
 
           await emptyL2(nf3Users[0]);
 
-          await web3Client.timeJump(3600 * 24 * 10); // jump in time by 50 days
+          await web3Client.timeJump(3600 * 24 * 50); // jump in time by 50 days
 
           // anything equal or above the restricted amount should fail
           await nf3Users[0].finaliseWithdrawal(withdrawal);
