@@ -27,8 +27,8 @@ while [ -n "$1" ]; do
       -d  | --delete_db )           sudo rm -rf ${MONGODB}
                                     sudo mkdir -p ${MONGODB}
 	                            ;;
-      -e  | --environment )         DEPLOYMENT="$2"; 
-                                    if [ "${DEPLOYMENT}" != "testnet" ] && [ "${DEPLOYMENT}" != "mainnet" ]; then
+      -e  | --environment )         DEPLOYMENT="$1"; 
+                                    if [ "${DEPLOYMENT}" != "tesnet" ] && [ "${DEPLOYMENT}" != "mainnet" ]; then
                                        echo "Incorrect Deployment ${DEPLOYMENT}"
                                        usage
                                        exit 0
@@ -43,9 +43,6 @@ while [ -n "$1" ]; do
     esac
   shift
 done
-
-# Stop optimist and mongodb containers if they exist
-./stop-optimist.sh
 
 
 # If deploymeny
@@ -77,15 +74,6 @@ if [ ! -z "${DEPLOYMENT}" ]; then
     cp hash.txt ${VOLUMES}/build/hash.txt
   fi
   OPTIMIST_VOLUME_STRING="-v ${VOLUMES}/build:/app/build "
-
-  echo "Launching mongodb container..."
-  docker run -d \
-   -v ${MONGODB}:/data/db \
-   -p ${MONGO_PORT}:27017 \
-   --name mongodb_1 \
-   -e MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD} \
-   -e MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME} \
-   mongo
 else
   # If we use ./start-nightfall script, then assume we are using ganache. Retrieve IP to establish connection
   OPTIMIST_VOLUME_STRING="--mount source=nightfall_3_build,destination=/app/build"
@@ -93,29 +81,27 @@ else
   BLOCKCHAIN_IP=$(docker network inspect nightfall_3_nightfall_network | jq ".[0].Containers.\"${BLOCKCHAIN_CONTAINER_ID}\"".IPv4Address | tr -d "\"")
   BLOCKCHAIN_IP=${BLOCKCHAIN_IP::-3}
   BLOCKCHAIN_URL=ws://${BLOCKCHAIN_IP}:8546
-
-  echo "Launching mongodb container..."
-  docker run -d \
-   -v ${MONGODB}:/data/db \
-   -p ${MONGO_PORT}:27017 \
-   --name mongodb_1 \
-   --network=nightfall_3_nightfall_network  \
-   -e MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD} \
-   -e MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME} \
-   mongo
 fi
 
+# Stop optimist and mongodb containers if they exist
+./stop-optimist.sh
+
+echo "Launching mongodb container..."
+docker run -d \
+ -v ${MONGODB}:/data/db \
+ -p ${MONGO_PORT}:27017 \
+ --name mongodb_1 \
+ --network=nightfall_3_nightfall_network \
+ -e MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD} \
+ -e MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME} \
+ mongo
 
 sleep 5
 
 # retrieve mongodb container IP 
 MONGO_CONTAINER_ID=$(docker ps  --no-trunc | grep mongodb_1 | awk '{print $1}')
-if [ ! -z "${DEPLOYMENT}" ]; then
-  MONGO_IP=$(docker inspect ${MONGO_CONTAINER_ID} | jq ".[0].NetworkSettings.Networks.bridge.IPAddress" | tr -d "\"")
-else
-  MONGO_IP=$(docker network inspect nightfall_3_nightfall_network | jq ".[0].Containers.\"${MONGO_CONTAINER_ID}\"".IPv4Address | tr -d "\"")
-  MONGO_IP=${MONGO_IP::-3}
-fi
+MONGO_IP=$(docker network inspect nightfall_3_nightfall_network | jq ".[0].Containers.\"${MONGO_CONTAINER_ID}\"".IPv4Address | tr -d "\"")
+MONGO_IP=${MONGO_IP::-3}
 
 cd .. && sudo docker build \
  --build-arg OPTIMIST_PORT=${OPTIMIST_PORT} \
@@ -123,37 +109,20 @@ cd .. && sudo docker build \
  -f optimist.standalone.Dockerfile . -t nightfall-optimist:latest
 
 
-if [ ! -z "${DEPLOYMENT}" ]; then
-  echo "Launching optimist..."
-  docker run --rm -d \
-    --name optimist_1 \
-    ${OPTIMIST_VOLUME_STRING} \
-    -p ${OPTIMIST_WS_PORT}:8080 \
-    -p ${OPTIMIST_PORT}:80 \
-    -e MONGO_CONNECTION_STRING="mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@${MONGO_IP}:27017/" \
-    -e MONGO_URL=${MONGO_IP} \
-    -e WEBSOCKET_PORT=8080 \
-    -e BLOCKCHAIN_URL=${BLOCKCHAIN_URL} \
-    -e HASH_TYPE=mimc \
-    -e LOG_LEVEL=debug \
-    -e TRANSACTIONS_PER_BLOCK=32 \
-    -e AUTOSTART_RETRIES=10000 \
-    nightfall-optimist:latest
-else
-  docker run --rm -d \
-    --name optimist_1 \
-    ${OPTIMIST_VOLUME_STRING} \
-    --network=nightfall_3_nightfall_network \
-    -p ${OPTIMIST_WS_PORT}:8080 \
-    -p ${OPTIMIST_PORT}:80 \
-    -e MONGO_CONNECTION_STRING="mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@${MONGO_IP}:27017/" \
-    -e MONGO_URL=${MONGO_IP} \
-    -e WEBSOCKET_PORT=8080 \
-    -e BLOCKCHAIN_URL=${BLOCKCHAIN_URL} \
-    -e HASH_TYPE=mimc \
-    -e LOG_LEVEL=debug \
-    -e TRANSACTIONS_PER_BLOCK=32 \
-    -e AUTOSTART_RETRIES=10000 \
-    nightfall-optimist:latest
-fi
+echo "Launching optimist..."
+docker run --rm -d \
+  --name optimist_1 \
+  ${OPTIMIST_VOLUME_STRING} \
+  --network=nightfall_3_nightfall_network \
+  -p ${OPTIMIST_WS_PORT}:8080 \
+  -p ${OPTIMIST_PORT}:80 \
+  -e MONGO_CONNECTION_STRING="mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@${MONGO_IP}:27017/" \
+  -e MONGO_URL=${MONGO_IP} \
+  -e WEBSOCKET_PORT=8080 \
+  -e BLOCKCHAIN_URL=${BLOCKCHAIN_URL} \
+  -e HASH_TYPE=mimc \
+  -e LOG_LEVEL=debug \
+  -e TRANSACTIONS_PER_BLOCK=32 \
+  -e AUTOSTART_RETRIES=10000 \
+  nightfall-optimist:latest
 
