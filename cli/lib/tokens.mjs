@@ -24,18 +24,9 @@ async function approve(
 ) {
   const abi = getAbi(tokenType);
   const ercContract = new provider.eth.Contract(abi, ercAddress);
-  console.log(ercContract.methods);
-  console.log(spenderAddress);
-  console.log(ownerAddress);
-  console.log(APPROVE_AMOUNT);
-  console.log(encodeABI);
-  console.log(tokenType);
-  console.log(tokenType === TOKEN_TYPE.ERC20);
   switch (tokenType) {
     case TOKEN_TYPE.ERC20: {
-      console.log('hello');
       const allowance = await ercContract.methods.allowance(ownerAddress, spenderAddress).call();
-      console.log('hello2');
       const allowanceBN = new Web3.utils.BN(allowance);
       const valueBN = new Web3.utils.BN(value);
 
