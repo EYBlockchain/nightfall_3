@@ -171,9 +171,8 @@ describe('Testing with an adversary', () => {
           expectedBalance += value2;
         }
         await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
-        console.log(`Completed ${i + 1} pings`);
-
         await waitForNoPendingCommitments(nf3User);
+        console.log(`Completed ${i + 1} pings`);
       }
 
       // waiting sometime to ensure that all the good transactions from bad
