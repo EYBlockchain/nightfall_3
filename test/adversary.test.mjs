@@ -76,16 +76,8 @@ describe('Testing with an adversary', () => {
       optimistApiUrl: adversarialOptimistApiUrl,
       optimistWsUrl: adversarialOptimistWsUrl,
     });
-<<<<<<< Updated upstream
 
     nf3Challenger = new Nf3(ethereumSigningKeyChallenger, environment);
-=======
-    nf3Challenger = new Nf3(ethereumSigningKeyChallenger, {
-      ...others,
-      optimistApiUrl: adversarialOptimistApiUrl,
-      optimistWsUrl: adversarialOptimistWsUrl,
-    });
->>>>>>> Stashed changes
 
     // Generate a random mnemonic (uses crypto.randomBytes under the hood), defaults to 128-bits of entropy
     await nf3User.init(mnemonicUser);
