@@ -111,7 +111,7 @@ const transpileBlockBuilder = (_pathToSrc, _pathToInject) => {
       proposer,
       transactionHashes: transactions.map(t => t.transactionHash),
       transactionHashesRoot: this.calcTransactionHashesRoot(transactions),
-      leafCount: timber.leafCount,
+      leafCount: badBlock.leafCount,
       root: badBlock.root,
       blockHash,
       nCommitments: badBlock.nCommitments,
