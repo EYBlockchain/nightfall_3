@@ -465,3 +465,22 @@ export const waitForSufficientBalance = (client, value) => {
     isSufficientBalance();
   });
 };
+
+/**
+  function to wait for no pending commitments
+*/
+export const waitForNoPendingCommitments = client => {
+  return new Promise(resolve => {
+    async function pendingCommitments() {
+      const pendingDeposit = await client.getLayer2PendingDepositBalances(undefined, true);
+      const pendingSpent = await client.getLayer2PendingSpentBalances(undefined, true);
+      console.log('COMM', pendingDeposit, pendingSpent);
+      // if (false) {
+      // await waitForTimeout(10000);
+      // pendingCommitments();
+      // } else resolve();
+      resolve();
+    }
+    pendingCommitments();
+  });
+};

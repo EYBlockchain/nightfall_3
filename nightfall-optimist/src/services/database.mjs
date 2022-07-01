@@ -523,6 +523,15 @@ export async function getLatestTree() {
   return t;
 }
 
+export async function getTreeByBlockNumberL2(blockNumberL2) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const { root, frontier, leafCount } =
+    (await db.collection(TIMBER_COLLECTION).findOne({ blockNumberL2 })) ?? {};
+  const t = new Timber(root, frontier, leafCount, undefined, HASH_TYPE, TIMBER_HEIGHT);
+  return t;
+}
+
 export async function getTreeByRoot(treeRoot) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);

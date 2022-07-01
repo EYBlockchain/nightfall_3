@@ -14,6 +14,7 @@ import {
   waitForSufficientBalance,
   registerProposerOnNoProposer,
   retrieveL2Balance,
+  waitForNoPendingCommitments,
 } from './utils.mjs';
 import logger from '../common-files/utils/logger.mjs';
 
@@ -75,8 +76,16 @@ describe('Testing with an adversary', () => {
       optimistApiUrl: adversarialOptimistApiUrl,
       optimistWsUrl: adversarialOptimistWsUrl,
     });
+<<<<<<< Updated upstream
 
     nf3Challenger = new Nf3(ethereumSigningKeyChallenger, environment);
+=======
+    nf3Challenger = new Nf3(ethereumSigningKeyChallenger, {
+      ...others,
+      optimistApiUrl: adversarialOptimistApiUrl,
+      optimistWsUrl: adversarialOptimistWsUrl,
+    });
+>>>>>>> Stashed changes
 
     // Generate a random mnemonic (uses crypto.randomBytes under the hood), defaults to 128-bits of entropy
     await nf3User.init(mnemonicUser);
@@ -171,6 +180,8 @@ describe('Testing with an adversary', () => {
         }
         await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
         console.log(`Completed ${i + 1} pings`);
+
+        await waitForNoPendingCommitments(nf3User);
       }
 
       // waiting sometime to ensure that all the good transactions from bad

@@ -93,7 +93,7 @@ const transpileBlockBuilder = (_pathToSrc, _pathToInject) => {
   const reRoute = `const badBlock = createBadBlock({
       proposer,
       root: updatedTimber.root,
-      leafCount: timber.leafCount,
+      leafCount: updatedTimber.leafCount,
       nCommitments,
       blockNumberL2,
       previousBlockHash,
@@ -111,7 +111,7 @@ const transpileBlockBuilder = (_pathToSrc, _pathToInject) => {
       proposer,
       transactionHashes: transactions.map(t => t.transactionHash),
       transactionHashesRoot: this.calcTransactionHashesRoot(transactions),
-      leafCount: badBlock.leafCount,
+      leafCount: timber.leafCount,
       root: badBlock.root,
       blockHash,
       nCommitments: badBlock.nCommitments,
