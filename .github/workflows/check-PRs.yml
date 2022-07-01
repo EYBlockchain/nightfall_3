@@ -78,7 +78,7 @@ jobs:
   adversary-test:
     runs-on: ubuntu-18.04
     env:
-      TRANSACTIONS_PER_BLOCK: 2
+      TRANSACTIONS_PER_BLOCK: 32
     steps:
       - uses: actions/checkout@master
       - uses: actions/setup-node@v1
