@@ -7,6 +7,13 @@ const error = [
   'ValidBlock',
   'IncorrectTreeRoot', // Needs two prior blocks
   'ValidBlock',
+  'ValidBlock',
+  /* 'ValidBlock',
+  'ValidBlock',
+  'ValidBlock',
+  'ValidBlock',
+  'ValidBlock',
+  'ValidBlock',
   'IncorrectLeafCount', //  Needs one prior block
   'ValidBlock',
   'DuplicateTransaction', // needs atleast one transaction in a prior block
@@ -16,7 +23,7 @@ const error = [
   'HistoricRootError',
   'ValidBlock',
   'IncorrectProof',
-  'ValidBlock',
+  'ValidBlock', */
 ];
 
 // eslint-disable-next-line no-unused-vars

@@ -10,19 +10,16 @@ else
 fi
 
 VOLUME_LIST=$(docker volume ls -q)
-FILE="-f ../docker-compose.client.yml"
+FILE="-f ../docker-compose.client.yml -f ../docker-compose.client.dev.yml"
 
 usage()
 {
   echo "Usage:"
-  echo "  -d or --dev; to bind mount the filesystem and use it for development"
   echo "  -r; to remove existing volumes for mongodb and abi contracts"
 }
 
 while [ -n "$1" ]; do
   case $1 in
-      -d  | --dev )                 DEV="-f ../docker-compose.client.dev.yml"
-                                    ;;
       -r )                          REMOVE_VOLUMES="true"
                                     ;;
       -h  | --help )                usage

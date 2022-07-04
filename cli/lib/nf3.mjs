@@ -1026,8 +1026,10 @@ class Nf3 {
       const { type, txDataToSign } = msg;
       if (type === 'commit' || type === 'challenge') {
         return new Promise((resolve, reject) => {
+          logger.debug('-> Push transaction to challengerQueue');
           challengerQueue.push(async () => {
             try {
+              logger.debug('-> Submit transaction from challengerQueue');
               const receipt = await this.submitTransaction(
                 txDataToSign,
                 this.challengesContractAddress,
@@ -1042,6 +1044,29 @@ class Nf3 {
       }
       return null;
     };
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  pauseQueueChallenger() {
+    return new Promise(resolve => {
+      if (challengerQueue.autostart) {
+        // put an event at the head of the queue which will cleanly pause it.
+        challengerQueue.unshift(async () => {
+          challengerQueue.autostart = false;
+          challengerQueue.stop();
+          logger.info(`queue challengerQueue has been paused`);
+          resolve();
+        });
+      } else {
+        resolve();
+      }
+    });
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  unpauseQueueChallenger() {
+    challengerQueue.autostart = true;
+    challengerQueue.unshift(async () => logger.info(`queue challengerQueue has been unpaused`));
   }
 
   /**
