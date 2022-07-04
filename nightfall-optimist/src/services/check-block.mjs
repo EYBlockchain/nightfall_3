@@ -84,9 +84,7 @@ async function checkDuplicateNullifier(block, transactions) {
   const alreadyMinedNullifiers = storedMinedNullifiers
     .filter(sNull => blockNullifiers.includes(sNull.hash))
     .filter(aNull => aNull.blockHash !== block.blockHash);
-  const nonZeroBlockNullifiers = blockNullifiers.filter(
-    blockNullifiers => blockNullifiers !== ZERO,
-  );
+  const nonZeroBlockNullifiers = blockNullifiers.filter(blockNullifier => blockNullifier !== ZERO);
   if (
     alreadyMinedNullifiers.length > 0 ||
     nonZeroBlockNullifiers.length !== new Set(nonZeroBlockNullifiers).size // if there is a duplicate nullifier in the same block
