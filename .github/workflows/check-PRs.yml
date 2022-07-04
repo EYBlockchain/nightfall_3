@@ -184,14 +184,20 @@ jobs:
 
   test-gas:
     name: check gas for 32 transactions per block
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@master
       - uses: actions/setup-node@v1
         with:
-          node-version: '14.17.0'
+          node-version: '14.16.1'
 
-      - name: Start Containers with ganache
+      - name: install latest npm
+        run: |
+          npm install -g npm &&
+          npm --version &&
+          npm list -g --depth 0
+
+      - name: Start Containers
         run: |
           ./setup-nightfall
           ./start-nightfall -g -d &> test-gas.log &disown
@@ -202,7 +208,6 @@ jobs:
         uses: Wandalen/wretry.action@v1.0.11
         with:
           command: |
-            docker ps
             docker wait nightfall_3_deployer_1
           attempt_limit: 100
           attempt_delay: 20000

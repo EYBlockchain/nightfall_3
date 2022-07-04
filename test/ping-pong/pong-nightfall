@@ -36,7 +36,9 @@ docker-compose -f docker-compose.yml $FILE $STUBS up -d --remove-orphans client 
 docker wait ping-pong_deployer_1
 
 cd ../deploy-contracts
-npx truffle migrate --to 2 --network=${ETH_NETWORK}
+export NODE_CONFIG_DIR=$(pwd)/../../config
+
+npx --yes truffle migrate --to 2 --network=${ETH_NETWORK}
 cd ../ping-pong
 
 docker-compose logs -f
