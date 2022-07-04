@@ -93,13 +93,13 @@ const transpileBlockBuilder = (_pathToSrc, _pathToInject) => {
   const reRoute = `const badBlock = createBadBlock({
       proposer,
       root: updatedTimber.root,
-      leafCount: updatedTimber.leafCount,
+      leafCount: timber.leafCount,
       nCommitments,
       blockNumberL2,
       previousBlockHash,
       frontier: updatedTimber.frontier,
     }, errorIndex);
-    this.localLeafCount = badBlock.leafCount;
+    this.localLeafCount = updatedTimber.leafCount;
     this.localFrontier = badBlock.frontier;
     this.localBlockNumberL2 += 1;
     this.localRoot = badBlock.root;`;

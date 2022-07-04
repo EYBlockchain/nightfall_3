@@ -474,12 +474,11 @@ export const waitForNoPendingCommitments = client => {
     async function pendingCommitments() {
       const pendingDeposit = await client.getLayer2PendingDepositBalances(undefined, true);
       const pendingSpent = await client.getLayer2PendingSpentBalances(undefined, true);
-      console.log('COMM', pendingDeposit, pendingSpent);
-      // if (false) {
-      // await waitForTimeout(10000);
-      // pendingCommitments();
-      // } else resolve();
-      resolve();
+      if (Object.keys(pendingDeposit).length !== 0 || Object.keys(pendingSpent).length !== 0) {
+        logger.debug(`Nonzero Pending commitments.`);
+        await waitForTimeout(10000);
+        pendingCommitments();
+      } else resolve();
     }
     pendingCommitments();
   });
