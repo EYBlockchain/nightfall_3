@@ -1,3 +1,4 @@
+/* ignore unused exports */
 import deposit from './deposit.mjs';
 import getContractAddress from './contract-address.mjs';
 import transfer from './transfer.mjs';
