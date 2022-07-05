@@ -88,7 +88,6 @@ async function shieldAddressSet() {
 
 function shieldAddressGet() {
   const addressObj = storage.getItem('/shieldAddress');
-  console.log('AddressObj', addressObj);
   if (!addressObj)
     return shieldAddressSet().then(() => {
       return shieldAddressGet();
