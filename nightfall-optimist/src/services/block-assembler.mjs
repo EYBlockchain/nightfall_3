@@ -45,6 +45,44 @@ async function makeBlock(proposer, number = TRANSACTIONS_PER_BLOCK) {
   return { block, transactions };
 }
 
+async function submitBlockToWS(block, unsignedProposeBlockTransaction, transactions) {
+  const message = JSON.stringify({
+    number: block.blockNumberL2,
+    type: 'block',
+    txDataToSign: unsignedProposeBlockTransaction,
+    block,
+    transactions,
+  });
+
+  return new Promise(function (resolve) {
+    let ack = false;
+    ws.once('message', function () {
+      ack = true;
+    });
+
+    const retry = () => ws.send(message);
+    const delay = () =>
+      new Promise((_, reject) => {
+        setTimeout(reject, 10000);
+      });
+    const checkAck = () => {
+      if (ack) return ack;
+      throw ack;
+    };
+
+    let p = Promise.reject();
+    for (let i = 0; i < 2; i++) {
+      p = p
+        .catch(retry)
+        .then(() => {
+          checkAck();
+          resolve();
+        })
+        .catch(delay);
+    }
+  });
+}
+
 /**
 This function will make a block iff I am the proposer and there are enough
 transactions in the database to assembke a block from. It loops until told to
@@ -101,15 +139,8 @@ export async function conditionalMakeBlock(proposer) {
           }
         }
         if (ws && ws.readyState === WebSocket.OPEN) {
-          await ws.send(
-            JSON.stringify({
-              type: 'block',
-              txDataToSign: unsignedProposeBlockTransaction,
-              block,
-              transactions,
-            }),
-          );
           logger.debug('Send unsigned block-assembler transactions to ws client');
+          await submitBlockToWS(block, unsignedProposeBlockTransaction, transactions);
         } else if (ws) {
           increaseProposerBlockNotSent();
           logger.debug('Block not sent. Socket state', ws.readyState);
