@@ -136,11 +136,21 @@ export async function markNullified(commitment, transaction) {
   return db.collection(COMMITMENTS_COLLECTION).updateOne(query, update);
 }
 
-export async function getAllCommitments() {
+export async function getAllCommitments(compressedPkd) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
-  const commitments = await db.collection(COMMITMENTS_COLLECTION).find({}).toArray();
-  return commitments;
+  if (!compressedPkd) {
+    const allCommitments = await db.collection(COMMITMENTS_COLLECTION).find({}).toArray();
+    return allCommitments;
+  }
+
+  const allCommitmentsByCompressedPKD = await db
+    .collection(COMMITMENTS_COLLECTION)
+    .find({
+      'preimage.compressedPkd': compressedPkd.toString(),
+    })
+    .toArray();
+  return allCommitmentsByCompressedPKD;
 }
 
 // function to retrieve commitment with a specified salt

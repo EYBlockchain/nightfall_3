@@ -1,7 +1,7 @@
 import { getAllCommitments } from '../services/commitment-storage.mjs';
 
-function getCommitmentsByCompressedPkd() {
-  const commitments = getAllCommitments();
+function getCommitmentsByCompressedPkd(param) {
+  const commitments = getAllCommitments(param);
   return commitments;
 }
 

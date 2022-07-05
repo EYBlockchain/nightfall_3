@@ -99,8 +99,10 @@ router.get('/commitments', async (req, res, next) => {
 
 router.get('/all', async (req, res, next) => {
   logger.debug('commitment/all endpoint received GET');
+  console.log('COMPRESSED PKD: ', req.query.compressedPkd);
+  const { compressedPkd } = req.query;
   try {
-    const commitments = await getCommitmentsByCompressedPkd();
+    const commitments = await getCommitmentsByCompressedPkd(compressedPkd);
     res.json({ commitments });
   } catch (err) {
     logger.error(err);
