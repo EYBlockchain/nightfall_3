@@ -14,6 +14,7 @@ import {
   waitForSufficientBalance,
   registerProposerOnNoProposer,
   retrieveL2Balance,
+  // eslint-disable-next-line no-unused-vars
   waitForNoPendingCommitments,
 } from './utils.mjs';
 import logger from '../common-files/utils/logger.mjs';
