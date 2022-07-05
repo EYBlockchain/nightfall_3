@@ -190,10 +190,33 @@ class Nf3 {
     @method
     @async
     */
-
   async unprocessedTransactionCount() {
     const { result: mempool } = (await axios.get(`${this.optimistBaseUrl}/proposer/mempool`)).data;
     return mempool.filter(e => e.mempool).length;
+  }
+
+  /**
+    Gets all unprocessed transactions on the optimist
+    @method
+    @async
+    */
+  async getUnprocessedTransaction() {
+    const { result: mempool } = (await axios.get(`${this.optimistBaseUrl}/proposer/mempool`)).data;
+    return mempool.filter(e => e.mempool);
+  }
+
+  /**
+    Get transaction info from transaction hash op optimist
+    @method
+    @async
+    @param {string} transactionHash - L2 transaction hash
+    @returns {object} 
+    */
+  async getTransactionByTransactionHash(transactionHash) {
+    const res = await axios.get(
+      `${this.optimistBaseUrl}/transaction/transactionHash/${transactionHash}`,
+    );
+    return res.data;
   }
 
   /**

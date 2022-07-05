@@ -22,4 +22,23 @@ router.post('/advanceWithdrawal', async (req, res, next) => {
   }
 });
 
+router.get('/transaction-hash/:transactionHash', async (req, res, next) => {
+  logger.debug('block endpoint received get');
+  try {
+    const { transactionHash } = req.params;
+    logger.debug(`searching for block containing transaction hash ${transactionHash}`);
+    // get data to return
+    const transaction = await getTransactionByTransactionHash(transactionHash);
+    if (transaction) {
+      logger.debug(`Found transaction ${JSON.stringify(transaction, null, 2)} in database`);
+      res.json({ transaction });
+    } else {
+      logger.debug('Transaction not found');
+      res.json({ transaction: null });
+    }
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;

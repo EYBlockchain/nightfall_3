@@ -1,0 +1,46 @@
+/**
+Module containing functions relating to proposers and their registration
+*/
+import config from 'config';
+import axios from 'axios';
+import { waitForContract, getContractInstance } from 'common-files/utils/contract.mjs';
+
+const { STATE_CONTRACT_NAME } = config;
+
+export async function getProposers() {
+  const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
+  // proposers is an on-chain mapping so to get proposers we need to key to start iterating
+  // the safest to start with is the currentProposer
+  const currentProposer = await stateContractInstance.methods.currentProposer().call();
+  const proposers = [];
+  let thisPtr = currentProposer.thisAddress;
+  // Loop through the circular list until we run back into the currentProposer.
+  do {
+    // eslint-disable-next-line no-await-in-loop
+    const prop = await stateContractInstance.methods.proposers(thisPtr).call();
+    proposers.push(prop);
+    thisPtr = prop.nextAddress;
+  } while (thisPtr !== currentProposer.thisAddress);
+  return proposers;
+}
+
+export async function getCurrentProposer() {
+  const proposersContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
+  const { thisAddress: currentProposer } = await proposersContractInstance.methods
+    .currentProposer()
+    .call();
+
+  return currentProposer;
+}
+
+export async function getTransactionByTransactionHash(transactionHash) {
+  const proposer = await getCurrentProposer();
+  const res = await axios.get(`${proposer.url}/transaction/transaction-hash/${transactionHash}`);
+  return res.data;
+}
+
+export async function getMempoolTransactions() {
+  const proposer = await getCurrentProposer();
+  const res = await axios.get(`${proposer.url}/proposer/mempoo`);
+  return res.data;
+}
