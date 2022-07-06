@@ -1,3 +1,4 @@
+/* ignore unused exports */
 import WebSocket from 'ws';
 import logger from './logger.mjs';
 
@@ -65,7 +66,7 @@ export class NFWebsocket {
   }
 }
 
-export default async function submitBlockToWS(ws, data, id) {
+export function submitBlockToWS(ws, data, id) {
   const message = JSON.stringify({
     id,
     ...data,

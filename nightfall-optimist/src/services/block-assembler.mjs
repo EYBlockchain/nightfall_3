@@ -7,7 +7,7 @@ from posted transactions and proposes these blocks.
 import WebSocket from 'ws';
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
-import submitBlockToWS from 'common-files/utils/websocket.mjs';
+import { submitBlockToWS } from 'common-files/utils/websocket.mjs';
 import {
   removeTransactionsFromMemPool,
   getMostProfitableTransactions,
@@ -104,7 +104,7 @@ export async function conditionalMakeBlock(proposer) {
         if (ws && ws.readyState === WebSocket.OPEN) {
           logger.debug('Send unsigned block-assembler transactions to ws client');
 
-          await submitBlockToWS(
+          submitBlockToWS(
             ws,
             {
               type: 'block',
