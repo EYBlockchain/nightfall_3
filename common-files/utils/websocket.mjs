@@ -44,9 +44,7 @@ export class NFWebsocket {
 
   subscribe({ topic, socketName, filter }, callback) {
     this.wss.on('connection', ws => {
-      console.log('connected', socketName);
       ws.on('message', message => {
-        console.log('msg', message);
         try {
           if (filter === 'type' && JSON.parse(message).type === topic) {
             logger.info(`SUBSCRIBING TO PROPOSEDBLOCK`);
