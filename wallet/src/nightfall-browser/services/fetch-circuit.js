@@ -20,8 +20,7 @@ export default async function fetchCircuit(
 ) {
   let { abi, program, pk } = circuitFiles[circuit]; // keys path in bucket
   if (isLocalRun) {
-    abi = await fetch(`${utilApiServerUrl}/${circuit}/abi.json`)
-      .then(response => response.json());
+    abi = await fetch(`${utilApiServerUrl}/${circuit}/abi.json`).then(response => response.json());
     program = await fetch(`${utilApiServerUrl}/${circuit}/${circuit}_out`)
       .then(response => response.body.getReader())
       .then(parseData)
