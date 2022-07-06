@@ -31,7 +31,7 @@ export default async function compile(
   return new Promise((resolve, reject) => {
     const zokrates = spawn(
       '/app/zokrates',
-      ['compile', '-i', codePath, '-o', `${parsedOutputPath}${parsedOutputName}`, '--curve', curve],
+      ['compile', '-i', codePath, '-o', `${parsedOutputPath}${parsedOutputName}`, '-s', `${parsedOutputPath}abi.json`, '--curve', curve],
       {
         stdio: ['ignore', 'pipe', 'pipe'],
         env: {
