@@ -7,6 +7,7 @@ from posted transactions and proposes these blocks.
 import WebSocket from 'ws';
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
+import submitBlockToWS from 'common-files/utils/websocket.mjs';
 import {
   removeTransactionsFromMemPool,
   getMostProfitableTransactions,
@@ -14,7 +15,7 @@ import {
 } from './database.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
-import { waitForContract } from '../event-handlers/subscribe.mjs';
+import { waitForContract } from '../utils/index.mjs';
 import {
   increaseProposerWsFailed,
   increaseProposerWsClosed,
@@ -43,44 +44,6 @@ async function makeBlock(proposer, number = TRANSACTIONS_PER_BLOCK) {
   // transactions
   const block = await Block.build({ proposer, transactions });
   return { block, transactions };
-}
-
-async function submitBlockToWS(block, unsignedProposeBlockTransaction, transactions) {
-  const message = JSON.stringify({
-    number: block.blockNumberL2,
-    type: 'block',
-    txDataToSign: unsignedProposeBlockTransaction,
-    block,
-    transactions,
-  });
-
-  return new Promise(function (resolve) {
-    let ack = false;
-    ws.once('message', function () {
-      ack = true;
-    });
-
-    const retry = () => ws.send(message);
-    const delay = () =>
-      new Promise((_, reject) => {
-        setTimeout(reject, 10000);
-      });
-    const checkAck = () => {
-      if (ack) return ack;
-      throw ack;
-    };
-
-    let p = Promise.reject();
-    for (let i = 0; i < 2; i++) {
-      p = p
-        .catch(retry)
-        .then(() => {
-          checkAck();
-          resolve();
-        })
-        .catch(delay);
-    }
-  });
 }
 
 /**
@@ -140,7 +103,17 @@ export async function conditionalMakeBlock(proposer) {
         }
         if (ws && ws.readyState === WebSocket.OPEN) {
           logger.debug('Send unsigned block-assembler transactions to ws client');
-          await submitBlockToWS(block, unsignedProposeBlockTransaction, transactions);
+
+          await submitBlockToWS(
+            ws,
+            {
+              type: 'block',
+              txDataToSign: unsignedProposeBlockTransaction,
+              block,
+              transactions,
+            },
+            block.blockHash,
+          );
         } else if (ws) {
           increaseProposerBlockNotSent();
           logger.debug('Block not sent. Socket state', ws.readyState);
