@@ -15,7 +15,7 @@ import {
   getTransactionByTransactionHash,
   getTransactionHashSiblingInfo,
 } from './database.mjs';
-import { getAllCommitmentsByCompressedPkd } from '../repositories/commitment-repository.mjs';
+import getAllCommitmentsByCompressedPkd from '../repositories/commitment-repository.mjs';
 
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
 const { generalise } = gen;
