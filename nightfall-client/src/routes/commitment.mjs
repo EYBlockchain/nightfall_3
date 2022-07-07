@@ -17,20 +17,6 @@ import {
 
 const router = express.Router();
 
-router.get('/allCommitments', async (req, res, next) => {
-  logger.debug('commitment/salt endpoint received GET');
-  try {
-    const { salt } = req.query;
-    const commitment = await getCommitmentBySalt(salt);
-    if (commitment === null) logger.debug(`Found commitment ${commitment} for salt ${salt}`);
-    else logger.debug(`No commitment found for salt ${salt}`);
-    res.json({ commitment });
-  } catch (err) {
-    logger.error(err);
-    next(err);
-  }
-});
-
 router.get('/salt', async (req, res, next) => {
   logger.debug('commitment/salt endpoint received GET');
   try {
