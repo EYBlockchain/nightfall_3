@@ -136,9 +136,20 @@ export async function markNullified(commitment, transaction) {
   return db.collection(COMMITMENTS_COLLECTION).updateOne(query, update);
 }
 
+/**
+ *
+ * @function getAllCommitments does the communication with the database.
+ * @param {string | undefined} compressedPkd the compressed pkd derivated from the user
+ * mnemonic coming from the SDK or Wallet.
+ * @returns if the paramenter is different of undefined, returns all the
+ * commitments existent for this compressed pkd. Else returns all the commitments
+ * in the database.
+ * @author luizoamorim
+ */
 export async function getAllCommitments(compressedPkd) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
+
   if (!compressedPkd) {
     const allCommitments = await db.collection(COMMITMENTS_COLLECTION).find({}).toArray();
     return allCommitments;

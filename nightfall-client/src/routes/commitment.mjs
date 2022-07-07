@@ -97,9 +97,14 @@ router.get('/commitments', async (req, res, next) => {
   }
 });
 
+/**
+ * @description the endponit that will send a reponse with all the
+ * existent commitments if the query param compressedPkd comes undefined
+ * or all commitments by compressedPkd if the query param comes with a string.
+ * @author luizoamorim
+ */
 router.get('/all', async (req, res, next) => {
   logger.debug('commitment/all endpoint received GET');
-  console.log('COMPRESSED PKD: ', req.query.compressedPkd);
   const { compressedPkd } = req.query;
   try {
     const commitments = await getCommitmentsByCompressedPkd(compressedPkd);
