@@ -12,8 +12,8 @@ import {
   getWithdrawCommitments,
   getWalletPendingDepositBalance,
   getWalletPendingSpentBalance,
+  getCommitmentsByCompressedPkd,
 } from '../services/commitment-storage.mjs';
-import getCommitmentsByCompressedPkd from '../controller/commitment.mjs';
 
 const router = express.Router();
 
