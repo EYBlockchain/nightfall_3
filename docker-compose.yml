@@ -33,7 +33,7 @@ services:
       OPTIMIST_HOST: optimist1
       OPTIMIST_PORT: 80
       USE_STUBS: 'false' # make sure this flag is the same as in deployer service
-    command: ['npm', 'run', 'dev']
+    command: [ 'npm', 'run', 'dev' ]
 
   client2:
     image: ghcr.io/eyblockchain/nightfall3-client:latest
@@ -66,7 +66,7 @@ services:
       OPTIMIST_HOST: optimist2
       OPTIMIST_PORT: 80
       USE_STUBS: 'false' # make sure this flag is the same as in deployer service
-    command: ['npm', 'run', 'dev']
+    command: [ 'npm', 'run', 'dev' ]
 
   worker:
     #  image: 3800decac71d
@@ -134,6 +134,8 @@ services:
         source: build
         target: /app/build/
     environment:
+      RABBITMQ_HOST: amqp://rabbitmq1
+      RABBITMQ_PORT: 5672
       WEBSOCKET_PORT: 8080
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
@@ -141,7 +143,7 @@ services:
       LOG_LEVEL: debug
       IS_CHALLENGER: 'true'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
-    command: ['npm', 'run', 'dev']
+    command: [ 'npm', 'run', 'dev' ]
 
   optimist2:
     image: ghcr.io/eyblockchain/nightfall3-optimist:latest
@@ -158,6 +160,8 @@ services:
         source: build
         target: /app/build/
     environment:
+      RABBITMQ_HOST: amqp://rabbitmq1
+      RABBITMQ_PORT: 5672
       WEBSOCKET_PORT: 8080
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
@@ -165,7 +169,7 @@ services:
       LOG_LEVEL: error
       IS_CHALLENGER: 'true'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
-    command: ['npm', 'run', 'dev']
+    command: [ 'npm', 'run', 'dev' ]
 
   hosted-utils-api-server:
     build:

@@ -4,10 +4,8 @@
 This module does all of the heaving lifting for a Proposer: It assembles blocks
 from posted transactions and proposes these blocks.
 */
-import WebSocket from 'ws';
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
-import { submitBlockToWS } from 'common-files/utils/websocket.mjs';
 import {
   removeTransactionsFromMemPool,
   getMostProfitableTransactions,
@@ -16,11 +14,7 @@ import {
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
 import { waitForContract } from '../utils/index.mjs';
-import {
-  increaseProposerWsFailed,
-  increaseProposerWsClosed,
-  increaseProposerBlockNotSent,
-} from './debug-counters.mjs';
+import { increaseProposerBlockNotSent } from './debug-counters.mjs';
 
 const { TRANSACTIONS_PER_BLOCK, STATE_CONTRACT_NAME } = config;
 
@@ -91,32 +85,40 @@ export async function conditionalMakeBlock(proposer) {
           .encodeABI();
         // check that the websocket exists (it should) and its readyState is OPEN
         // before sending Proposed block. If not wait until the proposer reconnects
-        let tryCount = 0;
-        while (!ws || ws.readyState !== WebSocket.OPEN) {
-          await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
-          logger.warn(`Websocket to proposer is closed.  Waiting for proposer to reconnect`);
-          increaseProposerWsClosed();
-          if (tryCount++ > 100) {
-            increaseProposerWsFailed();
-            throw new Error(`Websocket to proposer has failed`);
-          }
-        }
-        if (ws && ws.readyState === WebSocket.OPEN) {
+        // let tryCount = 0;
+        // while (!ws || ws.readyState !== WebSocket.OPEN) {
+        //   await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
+        //   logger.warn(`Websocket to proposer is closed.  Waiting for proposer to reconnect`);
+        //   increaseProposerWsClosed();
+        //   if (tryCount++ > 100) {
+        //     increaseProposerWsFailed();
+        //     throw new Error(`Websocket to proposer has failed`);
+        //   }
+        // }
+        if (ws) {
           logger.debug('Send unsigned block-assembler transactions to ws client');
 
-          submitBlockToWS(
-            ws,
-            {
-              type: 'block',
-              txDataToSign: unsignedProposeBlockTransaction,
-              block,
-              transactions,
-            },
-            block.blockHash,
-          );
-        } else if (ws) {
-          increaseProposerBlockNotSent();
-          logger.debug('Block not sent. Socket state', ws.readyState);
+          const message = {
+            type: 'block',
+            txDataToSign: unsignedProposeBlockTransaction,
+            block,
+            transactions,
+          };
+          ws.sendMessage('block', message);
+
+          // submitBlockToWS(
+          //   ws,
+          //   {
+          //     type: 'block',
+          //     txDataToSign: unsignedProposeBlockTransaction,
+          //     block,
+          //     transactions,
+          //   },
+          //   block.blockHash,
+          // );
+          // } else if (ws) {
+          //   increaseProposerBlockNotSent();
+          //   logger.debug('Block not sent. Socket state', ws.readyState);
         } else {
           increaseProposerBlockNotSent();
           logger.debug('Block not sent. uinitialized socket');

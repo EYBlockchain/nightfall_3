@@ -2,9 +2,8 @@ import axios from 'axios';
 import fs from 'fs';
 import config from 'config';
 import downloadFile from 'common-files/utils/httputils.mjs';
+import RabbitMQ from 'common-files/utils/rabbitmq.mjs';
 import app from './app.mjs';
-import rabbitmq from './utils/rabbitmq.mjs';
-import queues from './queues/index.mjs';
 import logger from './utils/logger.mjs';
 
 const {
@@ -100,8 +99,9 @@ const main = async () => {
     // 1 means enable it
     // 0 mean keep it disabled
     if (Number(process.env.ENABLE_QUEUE)) {
+      const rabbitmq = new RabbitMQ(`${process.env.RABBITMQ_HOST}:${process.env.RABBITMQ_PORT}`);
+
       await rabbitmq.connect();
-      queues();
     }
 
     app.listen(80);

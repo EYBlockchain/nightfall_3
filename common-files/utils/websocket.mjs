@@ -70,31 +70,5 @@ export function submitBlockToWS(ws, data, id) {
     ...data,
   });
 
-  return new Promise(function (resolve) {
-    let ack = false;
-    ws.once('message', function (msg) {
-      if (msg === id) ack = true;
-    });
-
-    const retry = () => ws.send(message);
-    const delay = () =>
-      new Promise((_, reject) => {
-        setTimeout(reject, 10000);
-      });
-    const checkAck = () => {
-      if (ack) return ack;
-      throw ack;
-    };
-
-    let p = Promise.reject();
-    for (let i = 0; i < 2; i++) {
-      p = p
-        .catch(retry)
-        .then(() => {
-          checkAck();
-          resolve();
-        })
-        .catch(delay);
-    }
-  });
+  ws.sendMessage('block', message);
 }

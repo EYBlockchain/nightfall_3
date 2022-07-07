@@ -8,6 +8,7 @@
   "license": "ISC",
   "description": "nightfall_3 common files",
   "dependencies": {
+    "amqplib": "^0.10.0",
     "config": "^3.3.7",
     "web3": "^1.7.3",
     "winston": "^3.6.0",

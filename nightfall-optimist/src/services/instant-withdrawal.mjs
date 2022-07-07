@@ -28,5 +28,8 @@ export async function notifyInstantWithdrawalRequest(withdrawTransactionHash, pa
     logger.warn('No one is listening for instant withdrawal requests');
     return;
   }
-  ws.send(JSON.stringify({ type: 'instant', withdrawTransactionHash, paidBy, amount }));
+  const message = { withdrawTransactionHash, paidBy, amount };
+  ws.sendMessage('instant', message);
+
+  // ws.send(JSON.stringify({ type: 'instant', withdrawTransactionHash, paidBy, amount }));
 }

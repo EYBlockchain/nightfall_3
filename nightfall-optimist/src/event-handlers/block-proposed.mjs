@@ -22,7 +22,7 @@ const { ZERO, HASH_TYPE, TIMBER_HEIGHT } = config;
 
 let ws;
 
-export function setBlockProposedWebSocketConnection(_ws) {
+export function setBlockProposedWebSocketConnection(message, _ws) {
   ws = _ws;
 }
 
@@ -35,7 +35,8 @@ async function blockProposedEventHandler(data) {
 
   // If a service is subscribed to this websocket and listening for events.
   if (ws && ws.readyState === WebSocket.OPEN) {
-    await ws.send(
+    await ws.sendMessage(
+      'sync',
       JSON.stringify({
         type: 'blockProposed',
         data: {
