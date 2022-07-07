@@ -193,6 +193,7 @@ const BridgeComponent = () => {
   const handleClose = () => setShow(false);
 
   async function submitTx() {
+    let isSuccessful = true;
     try {
       switch (readyTx.type) {
         case 'onchain': {
@@ -203,14 +204,6 @@ const BridgeComponent = () => {
             0,
           ); // 150k is enough gasLimit for a deposit
           readyTx.transaction.l1Hash = txL1Hash;
-
-          // after submitting tx we should remove rawTransaction and transaction
-          // object store in localStorage
-          removeRawTx({
-            rawTransaction: readyTx.rawTransaction,
-            transactionHash: readyTx.transaction.transactionHash,
-          });
-          removeTxObject({ ...readyTx.transaction, isOnChain: true });
           break;
         }
         case 'offchain': {
