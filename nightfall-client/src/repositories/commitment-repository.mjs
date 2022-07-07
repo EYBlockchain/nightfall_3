@@ -21,12 +21,12 @@ async function initDb() {
  * @returns all the commitments in the database.
  * @author luizoamorim
  */
-export async function getAllCommitments() {
-  initDb();
+// export async function getAllCommitments() {
+//   initDb();
 
-  const allCommitments = await db.collection(COMMITMENTS_COLLECTION).find({}).toArray();
-  return allCommitments;
-}
+//   const allCommitments = await db.collection(COMMITMENTS_COLLECTION).find({}).toArray();
+//   return allCommitments;
+// }
 
 /**
  *
@@ -36,7 +36,7 @@ export async function getAllCommitments() {
  * @returns all the commitments existent for this compressed pkd.
  * @author luizoamorim
  */
-export async function getAllCommitmentsByCompressedPkd(compressedPkd) {
+export default async function getAllCommitmentsByCompressedPkd(compressedPkd) {
   initDb();
   const allCommitmentsByCompressedPKD = await db
     .collection(COMMITMENTS_COLLECTION)
