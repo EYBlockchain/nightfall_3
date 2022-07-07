@@ -367,7 +367,6 @@ describe('ERC20 tests', () => {
       // Liquidity provider for instant withdraws
       const emitter = await nf3Users[0].getInstantWithdrawalRequestedEmitter();
       emitter.on('data', async withdrawTransactionHash => {
-        console.log('EMIITER', withdrawTransactionHash);
         // approve tokens to be advanced by liquidity provider in the instant withdraw
         try {
           await nf3LiquidityProvider.advanceInstantWithdrawal(withdrawTransactionHash);

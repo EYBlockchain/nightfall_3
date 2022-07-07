@@ -1,3 +1,4 @@
+/* ignore unused exports */
 import amqp from 'amqplib';
 
 export default class RabbitMQ {
