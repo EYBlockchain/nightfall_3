@@ -7,7 +7,7 @@ let connection;
 let db;
 
 /**
- * @description initialize the connection with the database
+ * @function initDb initialize the connection with the database
  */
 async function initDb() {
   connection = await mongo.connection(MONGO_URL);
