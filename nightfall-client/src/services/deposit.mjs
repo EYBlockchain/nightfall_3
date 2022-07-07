@@ -40,7 +40,7 @@ async function deposit(items) {
   do {
     // we also need a salt to make the commitment unique and increase its entropy
     // eslint-disable-next-line
-    salt = await rand(ZKP_KEY_LENGTH);
+    salt = (await rand(ZKP_KEY_LENGTH)).field(BN128_GROUP_ORDER, false);
     // next, let's compute the zkp commitment we're going to store
     commitment = new Commitment({ ercAddress, tokenId, value, compressedPkd, salt });
   } while (commitment.hash.bigInt > BN128_GROUP_ORDER);
@@ -48,12 +48,12 @@ async function deposit(items) {
   logger.debug(`Hash of new commitment is ${commitment.hash.hex()}`);
   // now we can compute a Witness so that we can generate the proof
   const witness = [
-    ercAddress.integer,
-    tokenId.integer,
-    value.integer,
-    compressedPkd.limbs(32, 8),
-    salt.limbs(32, 8),
-    commitment.hash.integer, // not truncating here as we already ensured hash < group order
+    ercAddress.field(BN128_GROUP_ORDER),
+    tokenId.limbs(224, 2),
+    value.field(BN128_GROUP_ORDER),
+    ...Commitment.compressedPointToFields(compressedPkd),
+    salt,
+    commitment.hash.field(BN128_GROUP_ORDER),
   ].flat(Infinity);
   logger.debug(`witness input is ${witness.join(' ')}`);
   // call a zokrates worker to generate the proof

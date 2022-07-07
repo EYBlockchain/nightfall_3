@@ -2,9 +2,11 @@
 A commitment class
 */
 import gen from 'general-number';
-import sha256 from 'common-files/utils/crypto/sha256.mjs';
+import config from 'config';
+import poseidon from 'common-files/utils/crypto/poseidon/poseidon.mjs';
 
-const { generalise } = gen;
+const { generalise, GN } = gen;
+const { BN128_GROUP_ORDER } = config;
 
 class Commitment {
   preimage;
@@ -33,6 +35,7 @@ class Commitment {
     });
     // we truncate the hash down to 31 bytes but store it in a 32 byte variable
     // this is consistent to what we do in the ZKP circuits
+    /*
     this.hash = generalise(
       sha256([
         this.preimage.ercAddress,
@@ -42,6 +45,18 @@ class Commitment {
         this.preimage.salt,
       ]).hex(32, 31),
     );
+    */
+    const [top4Bytes, remainder] = tokenId.limbs(160, 2).map(l => BigInt(l));
+    const SHIFT = 2923003274661805836407369665432566039311865085952n;
+    this.hash = poseidon(
+      generalise([
+        this.preimage.ercAddress.bigInt + top4Bytes * SHIFT,
+        remainder,
+        this.preimage.value.field(BN128_GROUP_ORDER),
+        ...Commitment.compressedPointToFields(this.preimage.compressedPkd),
+        this.preimage.salt.field(BN128_GROUP_ORDER),
+      ]),
+    );
   }
 
   // sometimes (e.g. going over http) the general-number class is inconvenient
@@ -50,6 +65,13 @@ class Commitment {
       preimage: this.preimage.all.hex(),
       hash: this.hash.hex(),
     };
+  }
+
+  static compressedPointToFields(point) {
+    const bin = point.binary.padStart(256, '0');
+    const parity = bin[0];
+    const ordinate = bin.slice(1);
+    return [parity, new GN(ordinate, 'binary').field(BN128_GROUP_ORDER)];
   }
 }
 
