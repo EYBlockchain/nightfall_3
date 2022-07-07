@@ -15,21 +15,6 @@ async function initDb() {
 }
 /**
  *
- * @function getAllCommitments does the communication with the database.
- * @param {string | undefined} compressedPkd the compressed pkd derivated from the user
- * mnemonic coming from the SDK or Wallet.
- * @returns all the commitments in the database.
- * @author luizoamorim
- */
-// export async function getAllCommitments() {
-//   initDb();
-
-//   const allCommitments = await db.collection(COMMITMENTS_COLLECTION).find({}).toArray();
-//   return allCommitments;
-// }
-
-/**
- *
  * @function getAllCommitmentsByCompressedPkd does the communication with the database.
  * @param {string | undefined} compressedPkd the compressed pkd derivated from the user
  * mnemonic coming from the SDK or Wallet.
