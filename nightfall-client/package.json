@@ -7,7 +7,8 @@
     "prestart": "./pre-start-script.sh",
     "predev": "./pre-start-script.sh",
     "start": "node src/index.mjs",
-    "dev": "nodemon src/index.mjs"
+    "dev": "nodemon src/index.mjs",
+    "test": "node __tests__/index.test.mjs"
   },
   "repository": {
     "type": "git",

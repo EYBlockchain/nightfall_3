@@ -12,8 +12,9 @@ import {
   getWithdrawCommitments,
   getWalletPendingDepositBalance,
   getWalletPendingSpentBalance,
-  getCommitmentsByCompressedPkd,
 } from '../services/commitment-storage.mjs';
+import CommitmentService from '../services/commitment-service.mjs';
+import CommitmentRepository from '../repositories/commitment-repository.mjs';
 
 const router = express.Router();
 
@@ -93,7 +94,8 @@ router.get('/all', async (req, res, next) => {
   logger.debug('commitment/all endpoint received GET');
   const { compressedPkd } = req.query;
   try {
-    const commitments = await getCommitmentsByCompressedPkd(compressedPkd);
+    const commitmentService = new CommitmentService(new CommitmentRepository());
+    const commitments = await commitmentService.getAllCommitmentsByCompressedPkd(compressedPkd);
     res.json({ commitments });
   } catch (err) {
     logger.error(err);

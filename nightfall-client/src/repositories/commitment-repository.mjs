@@ -1,33 +1,43 @@
 import config from 'config';
 import mongo from 'common-files/utils/mongo.mjs';
+import Repository from './repository.mjs';
 
-const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
+export default class CommitmentRepository extends Repository {
+  constructor() {
+    super();
+    this.MONGO_URL = config.MONGO_URL;
+    this.COMMITMENTS_DB = config.COMMITMENTS_DB;
+    this.COMMITMENTS_COLLECTION = config.COMMITMENTS_COLLECTION;
+  }
 
-let connection;
-let db;
+  connection;
 
-/**
- * @function initDb initialize the connection with the database
- */
-async function initDb() {
-  connection = await mongo.connection(MONGO_URL);
-  db = connection.db(COMMITMENTS_DB);
-}
-/**
- *
- * @function getAllCommitmentsByCompressedPkd does the communication with the database.
- * @param {string | undefined} compressedPkd the compressed pkd derivated from the user
- * mnemonic coming from the SDK or Wallet.
- * @returns all the commitments existent for this compressed pkd.
- * @author luizoamorim
- */
-export default async function getAllCommitmentsByCompressedPkd(compressedPkd) {
-  initDb();
-  const allCommitmentsByCompressedPKD = await db
-    .collection(COMMITMENTS_COLLECTION)
-    .find({
-      'preimage.compressedPkd': compressedPkd.toString(),
-    })
-    .toArray();
-  return allCommitmentsByCompressedPKD;
+  db;
+
+  /**
+   * @function initDb initialize the connection with the database
+   */
+  async initDb() {
+    this.connection = await mongo.connection(this.MONGO_URL);
+    this.db = this.connection.db(this.COMMITMENTS_DB);
+  }
+
+  /**
+   *
+   * @function getAllCommitmentsByCompressedPkd does the communication with the database.
+   * @param {string | undefined} compressedPkd the compressed pkd derivated from the user
+   * mnemonic coming from the SDK or Wallet.
+   * @returns all the commitments existent for this compressed pkd.
+   * @author luizoamorim
+   */
+  async getAllCommitmentsByCompressedPkd(compressedPkd) {
+    await this.initDb();
+    const allCommitmentsByCompressedPKD = await this.db
+      .collection(this.COMMITMENTS_COLLECTION)
+      .find({
+        'preimage.compressedPkd': compressedPkd.toString(),
+      })
+      .toArray();
+    return allCommitmentsByCompressedPKD;
+  }
 }

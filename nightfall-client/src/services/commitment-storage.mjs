@@ -15,7 +15,6 @@ import {
   getTransactionByTransactionHash,
   getTransactionHashSiblingInfo,
 } from './database.mjs';
-import getAllCommitmentsByCompressedPkd from '../repositories/commitment-repository.mjs';
 
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
 const { generalise } = gen;
@@ -135,21 +134,6 @@ export async function markNullified(commitment, transaction) {
   };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateOne(query, update);
-}
-
-/**
- * @function getCommitmentsByCompressedPkd is a controller to take care of some logic
- * between the route endpoint and the service function.
- * @param {string | undefined} compressedPkd the compressed pkd derivated from the user
- * mnemonic coming from the SDK or Wallet.
- * @returns if the paramenter is different of undefined, returns all the
- * commitments existent for this compressed pkd. Else returns all the commitments
- * in the database.
- * @author luizoamorim
- */
-export function getCommitmentsByCompressedPkd(compressedPkd) {
-  const commitments = getAllCommitmentsByCompressedPkd(compressedPkd);
-  return commitments;
 }
 
 // function to retrieve commitment with a specified salt
