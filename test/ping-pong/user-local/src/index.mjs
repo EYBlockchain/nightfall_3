@@ -8,6 +8,7 @@ import config from 'config';
 import logger from '../../../../common-files/utils/logger.mjs';
 import Nf3 from '../../../../cli/lib/nf3.mjs';
 import { waitForSufficientBalance, retrieveL2Balance } from './utils.mjs';
+import getAddress from '../../../utils/getAddress.js';
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
@@ -42,7 +43,10 @@ async function localTest() {
   if (await nf3.healthcheck('client')) logger.info('Healthcheck passed');
   else throw new Error('Healthcheck failed');
 
-  const ercAddress = TEST_ERC20_ADDRESS || (await nf3.getContractAddress(ERC20_NAME));
+  const ercAddress = TEST_ERC20_ADDRESS || (await getAddress(ERC20_NAME, await nf3.getNetworkId()));
+
+  console.log(await getAddress(ERC20_NAME, await nf3.getNetworkId()));
+  console.log(ercAddress);
   const startBalance = await retrieveL2Balance(nf3);
 
   let offchainTx = !!IS_TEST_RUNNER;

@@ -6,7 +6,7 @@ import Queue from 'queue';
 import WebSocket from 'ws';
 import { generateMnemonic } from 'bip39';
 import logger from '../common-files/utils/logger.mjs';
-import { createBadBlock, topicEventMapping, Web3Client } from './utils.mjs';
+import { createBadBlock, topicEventMapping, Web3Client } from './utils/utils.mjs';
 
 const { expect } = chai;
 const txQueue = new Queue({ autostart: true, concurrency: 1 });

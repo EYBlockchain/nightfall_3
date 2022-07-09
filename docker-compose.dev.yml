@@ -14,8 +14,8 @@ services:
         source: ./common-files
         target: /common-files
       - type: bind
-        source: ./config/default.js
-        target: /app/config/default.js
+        source: ./config
+        target: /app/config
 
   client2:
     build:
@@ -29,8 +29,8 @@ services:
         source: ./common-files
         target: /common-files
       - type: bind
-        source: ./config/default.js
-        target: /app/config/default.js
+        source: ./config
+        target: /app/config
 
   worker:
     #  image: 3800decac71d
@@ -45,8 +45,8 @@ services:
         source: ./zokrates-worker/src
         target: /app/src/
       - type: bind
-        source: ./config/default.js
-        target: /app/config/default.js
+        source: ./config
+        target: /app/config
     ports:
       # to use with postman and etc
       - 8091:80
@@ -71,8 +71,8 @@ services:
         source: ./common-files
         target: /common-files
       - type: bind
-        source: ./config/default.js
-        target: /app/config/default.js
+        source: ./config
+        target: /app/config
       - type: bind
         source: ./nightfall-deployer/migrations
         target: /app/migrations
@@ -97,8 +97,8 @@ services:
         source: ./common-files
         target: /common-files
       - type: bind
-        source: ./config/default.js
-        target: /app/config/default.js
+        source: ./config
+        target: /app/config
   optimist2:
 
     build:
@@ -113,8 +113,8 @@ services:
         source: ./common-files
         target: /common-files
       - type: bind
-        source: ./config/default.js
-        target: /app/config/default.js
+        source: ./config
+        target: /app/config
 
   administrator:
     build:
@@ -131,5 +131,5 @@ services:
         source: ./common-files/classes
         target: /app/common-files/classes
       - type: bind
-        source: ./config/default.js
-        target: /app/admin/config/default.js
+        source: ./config
+        target: /app/admin/config

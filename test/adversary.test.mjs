@@ -16,7 +16,7 @@ import {
   retrieveL2Balance,
   // eslint-disable-next-line no-unused-vars
   waitForNoPendingCommitments,
-} from './utils.mjs';
+} from './utils/utils.mjs';
 import logger from '../common-files/utils/logger.mjs';
 
 const { expect } = chai;

@@ -4,6 +4,7 @@ import config from 'config';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import Nf3 from '../../../cli/lib/nf3.mjs';
+import getAddress from '../../utils/getAddress.js';
 
 // so we can use require with mjs file
 const { expect } = chai;
@@ -31,17 +32,17 @@ describe('Health and Contract Checks', () => {
   });
 
   it('should get the address of the test ERC20 mock contract', async function () {
-    const res = await nf3User1.getContractAddress('ERC20Mock');
+    const res = await getAddress('ERC20Mock', await nf3User1.getNetworkId());
     expect(res).to.be.a('string').and.to.include('0x');
   });
 
   it('should get the address of the test ERC721 mock contract', async function () {
-    const res = await nf3User1.getContractAddress('ERC721Mock');
+    const res = await getAddress('ERC721Mock', await nf3User1.getNetworkId());
     expect(res).to.be.a('string').and.to.include('0x');
   });
 
   it('should get the address of the test ERC1155 mock contract', async function () {
-    const res = await nf3User1.getContractAddress('ERC1155Mock');
+    const res = await getAddress('ERC1155Mock', await nf3User1.getNetworkId());
     expect(res).to.be.a('string').and.to.include('0x');
   });
 

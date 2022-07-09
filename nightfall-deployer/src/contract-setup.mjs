@@ -12,7 +12,6 @@ async function setupCircuits() {
   const stateInstance = await waitForContract('State');
   logger.debug(`address of State contract is ${stateInstance.options.address}`);
 
-  // when deploying on infura
   // do serial registration to predict nonce
   // or, if we have the owner's private key, sign with that, rather than use an unlocked account
   if (config.ETH_PRIVATE_KEY) {

@@ -13,7 +13,7 @@ import {
   makeTransactions,
   sendTransactions,
   Web3Client,
-} from './utils.mjs';
+} from './utils/utils.mjs';
 
 const { privateKey, gas, BLOCK_STAKE, fee, tokenId, transferValue, tokenType, bond } =
   config.TEST_OPTIONS;

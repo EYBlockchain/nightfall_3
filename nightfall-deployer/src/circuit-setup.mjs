@@ -132,7 +132,6 @@ async function setupCircuits() {
         tx = keyRegistry.methods.registerVerificationKey(vkArray, config.VK_IDS[folderpath]);
       }
 
-      // when deploying on infura - do serial tx execution to avoid nonce issue
       // when using a private key, we shouldn't assume an unlocked account and we sign the transaction directly
       if (config.ETH_PRIVATE_KEY) {
         await Web3.submitRawTransaction(await tx.encodeABI(), keyRegistryAddress);

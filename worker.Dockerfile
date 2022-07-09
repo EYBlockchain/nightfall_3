@@ -8,7 +8,7 @@ COPY common-files common-files
 
 WORKDIR /app
 
-COPY config/default.js config/default.js
+COPY config config
 COPY /nightfall-deployer/circuits circuits
 COPY ./zokrates-worker/package.json ./zokrates-worker/package-lock.json ./
 COPY --from=builder /app/ZoKrates/zokrates_stdlib/stdlib /app/stdlib

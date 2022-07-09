@@ -10,7 +10,11 @@ BigInt.prototype.toJSON = function () {
   return `${this.toString()} BigInt`;
 };
 
+const { WEB3_OPTIONS, BLOCKCHAIN_URL, ETH_PRIVATE_KEY } = require('./common.js');
+const { TRUFFLE } = require('./truffle.js');
+
 module.exports = {
+  TRUFFLE,
   COMMITMENTS_DB: 'nightfall_commitments',
   OPTIMIST_DB: 'optimist_data',
   PROPOSER_COLLECTION: 'proposers',
@@ -52,16 +56,10 @@ module.exports = {
       '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
     ],
   },
-  BLOCKCHAIN_URL:
-    process.env.BLOCKCHAIN_URL ||
-    `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`,
-  ETH_PRIVATE_KEY: process.env.ETH_PRIVATE_KEY, // owner's/deployer's private key
+  BLOCKCHAIN_URL: process.env.BLOCKCHAIN_URL || BLOCKCHAIN_URL,
+  ETH_PRIVATE_KEY, // owner's/deployer's private key
+  WEB3_OPTIONS,
   ETH_ADDRESS: process.env.ETH_ADDRESS,
-  WEB3_OPTIONS: {
-    gas: process.env.GAS || 8000000,
-    gasPrice: process.env.GAS_PRICE || '20000000000',
-    from: process.env.FROM_ADDRESS || process.env.ETH_ADDRESS,
-  },
   WEB3_PROVIDER_OPTIONS: {
     clientConfig: {
       // Useful to keep a connection alive

@@ -47,7 +47,6 @@ export default {
     this.web3.currentProvider.connection.close();
   },
 
-  // function only needed for infura deployment
   async submitRawTransaction(rawTransaction, contractAddress, value = 0) {
     if (!rawTransaction) throw Error('No tx data to sign');
     if (!contractAddress) throw Error('No contract address passed');

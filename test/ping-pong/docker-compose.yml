@@ -18,6 +18,8 @@ services:
     depends_on:
       - worker
       - rabbitmq
+    ports:
+      - 8080:80
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin

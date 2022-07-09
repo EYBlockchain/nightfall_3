@@ -6,8 +6,9 @@ import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
 import Nf3 from '../../../cli/lib/nf3.mjs';
 import logger from '../../../common-files/utils/logger.mjs';
-import { expectTransaction, Web3Client, depositNTransactions } from '../../utils.mjs';
+import { expectTransaction, Web3Client, depositNTransactions } from '../../utils/utils.mjs';
 import { getERCInfo } from '../../../cli/lib/tokens.mjs';
+import getAddress from '../../utils/getAddress.js';
 
 // so we can use require with mjs file
 const { expect } = chai;
@@ -93,8 +94,8 @@ describe('ERC1155 tests', () => {
 
     await nf3Users[0].init(mnemonics.user1);
     await nf3Users[1].init(mnemonics.user2);
-    erc20Address = await nf3Users[0].getContractAddress('ERC20Mock');
-    erc1155Address = await nf3Users[0].getContractAddress('ERC1155Mock');
+    erc20Address = getAddress('ERC20Mock', await nf3Users[0].getNetworkId());
+    erc1155Address = getAddress('ERC1155Mock', await nf3Users[0].getNetworkId());
 
     stateAddress = await nf3Users[0].stateContractAddress;
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });

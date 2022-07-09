@@ -20,7 +20,7 @@ RUN npm ci
 
 WORKDIR /app/admin
 RUN mkdir /app/admin/mongodb
-COPY config/default.js config/default.js
+COPY config app/config
 RUN apt-get update -y
 RUN apt-get install -y netcat-openbsd
 COPY nightfall-administrator/src src

@@ -4,21 +4,21 @@
   "description": "Optimistic Nightfall",
   "main": "./nightfall-client/src/index.mjs",
   "scripts": {
-    "test": "LOG_LEVEL=error mocha --timeout 0 --bail --exit test/e2e/protocol/*.test.mjs test/e2e/tokens/*.test.mjs",
-    "neg-test": "mocha --timeout 0 --bail --exit test/neg-http.mjs",
-    "neg-test-ropsten": "mocha --timeout 0 --bail --exit test/neg-http.mjs",
-    "test-e2e-protocol": "LOG_LEVEL=error mocha --timeout 0 --bail --exit test/e2e/protocol/*.test.mjs ",
-    "test-gas": "mocha --timeout 0 --bail --exit test/e2e/gas.test.mjs ",
-    "test-e2e-tokens": "LOG_LEVEL=error mocha --timeout 0 --bail --exit test/e2e/tokens/*.test.mjs ",
-    "test-erc20-tokens": "LOG_LEVEL=error mocha --timeout 0 --bail --exit test/e2e/tokens/erc20.test.mjs ",
-    "test-erc20-cli": "LOG_LEVEL=debug mocha --timeout 0 --bail --exit test/client/erc20.test.mjs ",
+    "test": "LOG_LEVEL=error mocha --require test/utils/deployMocks.js --timeout 0 --bail --exit test/e2e/protocol/*.test.mjs test/e2e/tokens/*.test.mjs",
+    "neg-test": "mocha --require test/utils/deployMocks.js --timeout 0 --bail --exit test/neg-http.mjs",
+    "neg-test-ropsten": "mocha --require test/utils/deployMocks.js --timeout 0 --bail --exit test/neg-http.mjs",
+    "test-e2e-protocol": "LOG_LEVEL=error mocha --require test/utils/deployMocks.js --timeout 0 --bail --exit test/e2e/protocol/*.test.mjs ",
+    "test-gas": "mocha --require test/utils/deployMocks.js --timeout 0 --bail --exit test/e2e/gas.test.mjs ",
+    "test-e2e-tokens": "LOG_LEVEL=error mocha --require test/utils/deployMocks.js --timeout 0 --bail --exit test/e2e/tokens/*.test.mjs ",
+    "test-erc20-tokens": "LOG_LEVEL=error mocha --require test/utils/deployMocks.js --timeout 0 --bail --exit test/e2e/tokens/erc20.test.mjs ",
+    "test-erc20-cli": "LOG_LEVEL=debug mocha --require test/utils/deployMocks.js --timeout 0 --bail --exit test/client/erc20.test.mjs ",
     "lint": "eslint . --ext js,mjs,jsx,ts,tsx && find-unused-exports",
     "prepare": "husky install",
     "doc:build:sdk": "jsdoc -c jsdoc.json cli/lib/nf3.mjs",
     "build-adversary": "node test/adversary/transpile-adversary.mjs",
-    "adversary-test": "CHALLENGE_TYPE=${CHALLENGE_TYPE} mocha --timeout 0 --bail --exit test/adversary.test.mjs",
     "adversary-test-all": "for CHALLENGE_TYPE in IncorrectTreeRoot IncorrectLeafCount DuplicateTransaction DuplicateNullifier HistoricRootError IncorrectProof; do CHALLENGE_TYPE=${CHALLENGE_TYPE} mocha --timeout 0 --bail --exit test/adversary.test.mjs; sleep 5; done",
-    "secrets-encryption-test": "mocha --timeout 0 --bail --exit test/encryption.test.mjs"
+    "secrets-encryption-test": "mocha --timeout 0 --bail --exit test/encryption.test.mjs",
+    "adversary-test": "CHALLENGE_TYPE=${CHALLENGE_TYPE} mocha --require test/utils/deployMocks.js --timeout 0 --bail --exit test/adversary.test.mjs"
   },
   "repository": {
     "type": "git",
@@ -31,8 +31,11 @@
   },
   "homepage": "https://github.com/EYBlockchain/optimistic-nightfall#readme",
   "devDependencies": {
+    "@babel/plugin-syntax-import-assertions": "^7.17.12",
+    "@babel/plugin-transform-modules-commonjs": "^7.18.2",
     "@commitlint/cli": "^12.1.1",
     "@commitlint/config-conventional": "^12.1.1",
+    "@openzeppelin/contracts": "^4.3.2",
     "async-mutex": "^0.3.2",
     "axios": "^0.21.4",
     "babel-eslint": "^10.1.0",
@@ -59,8 +62,8 @@
     "prettier": "^2.2.1",
     "prettier-plugin-solidity": "^1.0.0-beta.10",
     "queue": "^6.0.2",
-    "web3": "^1.4.0",
     "reconnecting-websocket": "^4.4.0",
+    "web3": "^1.4.0",
     "ws": "^7.5.0"
   },
   "dependencies": {

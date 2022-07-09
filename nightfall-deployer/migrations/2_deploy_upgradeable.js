@@ -17,7 +17,7 @@ const config = require('config');
 
 const { RESTRICTIONS, MULTISIG, owners } = config;
 const { addresses } = RESTRICTIONS;
-const { SIGNATURE_THRESHOLD, APPROVERS} = MULTISIG
+const { SIGNATURE_THRESHOLD, APPROVERS } = MULTISIG;
 const { network_id } = networks[process.env.ETH_NETWORK];
 
 // function to sort addresses into ascending order (required for SimpleMultiSig)
@@ -54,15 +54,24 @@ module.exports = async function (deployer) {
   const proposers = await Proposers.deployed();
   const challengers = await Challenges.deployed();
   const shield = await Shield.deployed();
-  const state = await State.deployed()
+  const state = await State.deployed();
   const { bootProposer, bootChallenger } = addresses;
   await proposers.setBootProposer(bootProposer);
   await challengers.setBootChallenger(bootChallenger);
-  // restrict transfer amounts
-  for (let token of RESTRICTIONS.tokens[process.env.ETH_NETWORK]) {
-    if (token.name = 'ERC20Mock') break; // ignore test tokens, they're already handled in the test_tokens migration
-    console.log(`Max allowed deposit value for ${token.name}: ${(BigInt(token.amount) / BigInt(4)).toString()}`); // BigInt division returns whole number which is a floor. Not Math.floor() needed
-    console.log(`Max allowed withdraw value for ${token.name}: ${token.amount}`);
-    await shield.setRestriction(token.address, (BigInt(token.amount) / BigInt(4)).toString(), token.amount);
-  }
+  // const restrictions = await Shield.deployed();
+  // // restrict transfer amounts
+  // for (let token of RESTRICTIONS.tokens[process.env.ETH_NETWORK]) {
+  //   if ((token.name = 'ERC20Mock')) break; // ignore test tokens, they're already handled in the test_tokens migration
+  //   console.log(
+  //     `Max allowed deposit value for ${token.name}: ${(
+  //       BigInt(token.amount) / BigInt(4)
+  //     ).toString()}`,
+  //   ); // BigInt division returns whole number which is a floor. Not Math.floor() needed
+  //   console.log(`Max allowed withdraw value for ${token.name}: ${token.amount}`);
+  //   await restrictions.setRestriction(
+  //     token.address,
+  //     (BigInt(token.amount) / BigInt(4)).toString(),
+  //     token.amount,
+  //   );
+  // }
 };

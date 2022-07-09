@@ -10,7 +10,7 @@ import {
   withdrawNTransactions,
   Web3Client,
   expectTransaction,
-} from '../utils.mjs';
+} from '../utils/utils.mjs';
 
 // so we can use require with mjs file
 const { expect } = chai;
