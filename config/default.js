@@ -242,13 +242,13 @@ module.exports = {
       liquidityProvider:
         process.env.LIQUIDITY_PROVIDER_ADDRESS || '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
     },
-    pkds: {
+    zkpPublicKeys: {
       user1:
-        process.env.USER1_PKD ||
-        '0x0d27fb8112bf3274e27094ab05cc72db4d573ba081a659c3210a7bdbc1a9ec48',
+        process.env.USER1_COMPRESSED_ZKP_PUBLIC_KEY ||
+        '0x80b1f5d0328f9e68ef1318a21f5ec379e4457ecf1c11b0f9dad2d375c02652a3',
       user2:
-        process.env.USER2_PKD ||
-        '0xaa3b5bbf25ee9aab94757487d21c9da7a1166f1cf1f65162c23579149eba8590',
+        process.env.USER2_COMPRESSED_ZKP_PUBLIC_KEY ||
+        '0x2a67fa06f5861f0ba0e963c4f52062a6da95adaf778759f399b05c666d3ff95d',
     },
     mnemonics: {
       user1:

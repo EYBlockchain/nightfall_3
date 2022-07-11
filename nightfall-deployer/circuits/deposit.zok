@@ -13,7 +13,7 @@ def main(\
 	field ercContractAddress,\
 	field id,\
  	field value,\
-	private u32[8] compressedPkd,\
+	private u32[8] compressedZkpPublicKey,\
 	private u32[8] salt,\
 	field newCommitment\
 )->():
@@ -23,7 +23,7 @@ def main(\
 		...field_to_u32_8(ercContractAddress),\
 		...field_to_u32_8(id),\
 		...field_to_u32_8(value),\
-		...compressedPkd,\
+		...compressedZkpPublicKey,\
 		...salt\
 	])
 

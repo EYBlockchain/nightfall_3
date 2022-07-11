@@ -136,7 +136,7 @@ class Nf3 {
     }
     // set zkp keys from mnemonic if provided
     if (typeof mnemonic !== 'undefined') {
-      await this.setzkpKeysFromMnemonic(mnemonic, 0);
+      await this.setZkpKeysFromMnemonic(mnemonic, 0);
     }
   }
 
@@ -171,15 +171,15 @@ class Nf3 {
     @param {string} mnemonic - 12 word phrase
     @param {number} addressIndex - Index used to generate keys combined with mnemonic
     */
-  async setzkpKeysFromMnemonic(mnemonic, addressIndex) {
+  async setZkpKeysFromMnemonic(mnemonic, addressIndex) {
     if (mnemonic !== '') {
       this.mnemonic.phrase = mnemonic;
     }
     this.mnemonic.addressIndex = addressIndex.toString();
     this.zkpKeys = (
-      await axios.post(`${this.clientBaseUrl}/generate-keys`, {
+      await axios.post(`${this.clientBaseUrl}/generate-zkp-keys`, {
         mnemonic: this.mnemonic.phrase,
-        path: `m/44'/60'/0'/${this.mnemonic.addressIndex}`,
+        addressIndex: this.mnemonic.addressIndex,
       })
     ).data;
     return this.subscribeToIncomingViewingKeys();
@@ -393,8 +393,8 @@ class Nf3 {
       tokenId,
       tokenType,
       value,
-      pkd: this.zkpKeys.pkd,
-      nsk: this.zkpKeys.nsk,
+      compressedZkpPublicKey: this.zkpKeys.compressedZkpPublicKey,
+      nullifierKey: this.zkpKeys.nullifierKey,
       fee,
     });
     return new Promise((resolve, reject) => {
@@ -429,7 +429,7 @@ class Nf3 {
     @param {string} tokenId - The ID of an ERC721 or ERC1155 token.  In the case of
     an 'ERC20' coin, this should be set to '0x00'.
     @param {object} keys - The ZKP private key set of the sender.
-    @param {string} compressedPkd - The compressed transmission key of the recipient
+    @param {string} compressedZkpPublicKey - The compressed transmission key of the recipient
     @returns {Promise} Resolves into the Ethereum transaction receipt.
     */
   async transfer(
@@ -438,7 +438,7 @@ class Nf3 {
     tokenType,
     value,
     tokenId,
-    compressedPkd,
+    compressedZkpPublicKey,
     fee = this.defaultFee,
   ) {
     const res = await axios.post(`${this.clientBaseUrl}/transfer`, {
@@ -447,10 +447,9 @@ class Nf3 {
       tokenId,
       recipientData: {
         values: [value],
-        recipientCompressedPkds: [compressedPkd],
+        recipientCompressedZkpPublicKeys: [compressedZkpPublicKey],
       },
-      nsk: this.zkpKeys.nsk,
-      ask: this.zkpKeys.ask,
+      rootKey: this.zkpKeys.rootKey,
       fee,
     });
     if (res.data.error && res.data.error === 'No suitable commitments') {
@@ -511,8 +510,7 @@ class Nf3 {
       tokenType,
       value,
       recipientAddress,
-      nsk: this.zkpKeys.nsk,
-      ask: this.zkpKeys.ask,
+      rootKey: this.zkpKeys.rootKey,
       fee,
     });
     this.latestWithdrawHash = res.data.transaction.transactionHash;
@@ -673,8 +671,8 @@ class Nf3 {
     */
   async subscribeToIncomingViewingKeys() {
     return axios.post(`${this.clientBaseUrl}/incoming-viewing-key`, {
-      ivks: [this.zkpKeys.ivk],
-      nsks: [this.zkpKeys.nsk],
+      zkpPrivateKeys: [this.zkpKeys.zkpPrivateKey],
+      nullifierKeys: [this.zkpKeys.nullifierKey],
     });
   }
 
@@ -1120,7 +1118,7 @@ class Nf3 {
   async getLayer2Balances({ ercList } = {}) {
     const res = await axios.get(`${this.clientBaseUrl}/commitment/balance`, {
       params: {
-        compressedPkd: this.zkpKeys.compressedPkd,
+        compressedZkpPublicKey: this.zkpKeys.compressedZkpPublicKey,
         ercList,
       },
     });
@@ -1130,7 +1128,7 @@ class Nf3 {
   async getLayer2BalancesUnfiltered({ ercList } = {}) {
     const res = await axios.get(`${this.clientBaseUrl}/commitment/balance`, {
       params: {
-        compressedPkd: ercList,
+        compressedZkpPublicKey: ercList,
       },
     });
     return res.data.balance;
@@ -1141,16 +1139,17 @@ class Nf3 {
     @method
     @async
     @param {Array} ercList - list of erc contract addresses to filter.
-    @param {Boolean} filterByCompressedPkd - flag to indicate if request is filtered
-    ones compressed pkd
+    @param {Boolean} filterByCompressedZkpPublicKey - flag to indicate if request is filtered
+    ones compressed zkp public key
     @returns {Promise} This promise resolves into an object whose properties are the
     addresses of the ERC contracts of the tokens held by this account in Layer 2. The
     value of each propery is the number of tokens pending deposit from that contract.
     */
-  async getLayer2PendingDepositBalances(ercList, filterByCompressedPkd) {
+  async getLayer2PendingDepositBalances(ercList, filterByCompressedZkpPublicKey) {
     const res = await axios.get(`${this.clientBaseUrl}/commitment/pending-deposit`, {
       params: {
-        compressedPkd: filterByCompressedPkd === true ? this.zkpKeys.compressedPkd : null,
+        compressedZkpPublicKey:
+          filterByCompressedZkpPublicKey === true ? this.zkpKeys.compressedZkpPublicKey : null,
         ercList,
       },
     });
@@ -1162,17 +1161,18 @@ class Nf3 {
     @method
     @async
     @param {Array} ercList - list of erc contract addresses to filter.
-    @param {Boolean} filterByCompressedPkd - flag to indicate if request is filtered
-    ones compressed pkd
+    @param {Boolean} filterByCompressedZkpPublicKey- flag to indicate if request is filtered
+    ones compressed zkp public key
     @returns {Promise} This promise resolves into an object whose properties are the
     addresses of the ERC contracts of the tokens held by this account in Layer 2. The
     value of each propery is the number of tokens pending spent (transfer & withdraw)
     from that contract.
     */
-  async getLayer2PendingSpentBalances(ercList, filterByCompressedPkd) {
+  async getLayer2PendingSpentBalances(ercList, filterByCompressedZkpPublicKey) {
     const res = await axios.get(`${this.clientBaseUrl}/commitment/pending-spent`, {
       params: {
-        compressedPkd: filterByCompressedPkd === true ? this.zkpKeys.compressedPkd : null,
+        compressedZkpPublicKey:
+          filterByCompressedZkpPublicKey === true ? this.zkpKeys.compressedZkpPublicKey : null,
         ercList,
       },
     });

@@ -168,7 +168,7 @@ describe('ERC721 tests', () => {
           tokenTypeERC721,
           0,
           balances[0].shift().tokenId,
-          nf3Users[1].zkpKeys.compressedPkd,
+          nf3Users[1].zkpKeys.compressedZkpPublicKey,
           fee,
         );
         expectTransaction(res);
@@ -233,10 +233,10 @@ describe('ERC721 tests', () => {
 
         const commitments = await nf3Users[0].getPendingWithdraws();
         expect(
-          commitments[nf3Users[0].zkpKeys.compressedPkd][erc721Address].length,
+          commitments[nf3Users[0].zkpKeys.compressedZkpPublicKey][erc721Address].length,
         ).to.be.greaterThan(0);
         expect(
-          commitments[nf3Users[0].zkpKeys.compressedPkd][erc721Address].filter(
+          commitments[nf3Users[0].zkpKeys.compressedZkpPublicKey][erc721Address].filter(
             c => c.valid === true,
           ).length,
         ).to.be.greaterThan(0);

@@ -4,11 +4,11 @@ struct OldCommitmentPreimage {
 	u32[8] value
 	u32[8] salt
 	u32[8] hash
-	field ask
+	field rootKey
 }
 
 struct NewCommitmentPreimage {
-	field[2] pkdRecipient
+	field[2] zkpPublicKeyRecipient
 	u32[8] value
 	u32[8] salt
 }
@@ -35,7 +35,6 @@ def main(\
 	private OldCommitmentPreimage[2] oldCommitment,\
 	private NewCommitmentPreimage[2] newCommitment,\
 	field[2] fNewCommitmentHash,\
-	private u32[2][8] nsk,\
 	field[2] fNullifier,\
 	field[2] root,\
 	private field[2][32] path,\
@@ -55,8 +54,7 @@ def main(\
 				oldCommitment[j].salt[i] +\
 				oldCommitment[j].hash[i] +\
 				newCommitment[j].value[i] +\
-				newCommitment[j].salt[i] +\
-				nsk[j][i]
+				newCommitment[j].salt[i]
 		endfor
 	endfor
 
@@ -78,7 +76,7 @@ def main(\
 
 	for u32 j in 0..2 do
 		for u32 i in 0..2 do
-			u = u * newCommitment[j].pkdRecipient[i]
+			u = u * newCommitment[j].zkpPublicKeyRecipient[i]
 		endfor
 	endfor
 
@@ -86,7 +84,7 @@ def main(\
 		u = u * secrets.cipherText[i]
 	endfor
 
-	u = u * order[0] * order[1] * oldCommitment[0].ask * oldCommitment[1].ask * secrets.sqrtMessage1 * secrets.sqrtMessage2 * secrets.sqrtMessage3 * secrets.sqrtMessage4
+	u = u * order[0] * order[1] * oldCommitment[0].rootKey * oldCommitment[1].rootKey * secrets.sqrtMessage1 * secrets.sqrtMessage2 * secrets.sqrtMessage3 * secrets.sqrtMessage4
 	assert(v == v)
 	assert(u == u)
 	assert(w == w)

@@ -21,8 +21,8 @@ this key will be used to decrypt secrets send to the blockchain as part of a tra
 
 ```js
 {
-  ivks: // the array of private keys which will be used to decrypt messages
-  nsks: // the array of secrets required to create nullifier for a commitment being spent. Required to store nullifier for a commitment being created in DB
+  zkpPrivateKeys: // the array of private keys which will be used to decrypt messages
+  nullifierKeys: // the array of secrets required to create nullifier for a commitment being spent. Required to store nullifier for a commitment being created in DB
 }
 ```
 
@@ -52,10 +52,9 @@ Creates a transaction to make Layer 2 token from a Layer 1 ERC20, ERC721 or ERC1
 ```js
 {
   ercAddress: // the address of the Layer 1 ERCx token contract
+  tokenType: // type of token - ERC20/ERC721/ERC1155
   tokenId: // the ID of the token ('0x00' for ERC20 tokens)
   value: // the value of the token ('0x00' for ERC721 tokens)
-  pkd: // the value of the public key to establish the owner of the commitment
-  nsk: // the secret required to create nullifier for a commitment being spent. Required to store nullifier for a commitment being created in DB
   fee: // the amount that the transactor will pay to a proposer to incorporate the transaction in a Layer 2 block.
 }
 ```
@@ -78,14 +77,12 @@ by their zkp public key).
 
 ```js
 {
+  offchain: // sends the transfer transaction directly to a proposer instead of the smart contract if set to true
   ercAddress: // the address of the ERCx contract holding the equivalent Layer 1 tokens
+  tokenType: // type of token - ERC20/ERC721/ERC1155
+  value: // value of token to be sent
   tokenID: // the identity of the token to be transferred (`0x00 for an ERC20`)
-  recipientData: {
-    values: // values of tokens to be sent (array of length 1 or 2)
-    recipientPkds: // recipients' respective public keys
-  }
-  nsk: // secret key required to nullify a commitment
-  ask: // secret key required to show that the user has authorisation to spend commitment by proving they creating the pkd used in commitment using ask and nsk
+  compressedZkpPublicKey: // recipients' respective compressed zkp public key
   fee: // amount to pay proposer
 }
 ```
@@ -106,11 +103,11 @@ the correct value.
 
 ```js
 {
-  ercAddress:
+  offchain: // sends the transfer transaction directly to a proposer instead of the smart contract if set to true
+  ercAddress: // the address of the ERCx contract holding the equivalent Layer 1 tokens
+  tokenType: // type of token - ERC20/ERC721/ERC1155
   tokenID: // the identity of the token to be transferred (`0x00 for an ERC20`)
-  value:
-  nsk: // secret key required to nullify a commitment
-  ask: // secret key required to show that the user has authorisation to spend commitment by proving they creating the pkd used in commitment using ask and nsk
+  value: // value of token to be withdrawn
   recipientAddress: // Ethereum address of the Layer 1 token recipient
   fee: // amount to pay proposer
 }

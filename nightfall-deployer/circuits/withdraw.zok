@@ -18,7 +18,7 @@ from "./common/merkle-tree/mimc-path-check.zok" import main as pathCheck
 struct OldCommitmentPreimage {
 	u32[8] salt
 	u32[8] hash
-	field ask
+	field rootKey
 }
 
 def main(\
@@ -26,7 +26,6 @@ def main(\
 	field fId,\
  	field fValue,\
 	private OldCommitmentPreimage oldCommitment,\
-	private u32[8] nsk,\
 	field fNullifier,\
 	field recipientAddress,\
 	field root,\
@@ -37,13 +36,15 @@ def main(\
 	BabyJubJubParams context = curveParams()
 	field[2] g = [context.Gu, context.Gv]
 
-	// Calculation of ivk from ask and nsk
-	field nskField = u32_8_to_field(nsk)
-	field ivk = mimc2([oldCommitment.ask, nskField])
-	bool[256] ivkBool = field_to_bool_256(ivk)
-	field[2] pkd = scalarMult(ivkBool, g, context)
-	bool[256] pkdBool = edwardsCompress(pkd)
-	u32[8] pkdU32 = bool_256_to_u32_8(pkdBool)
+	// Calculation of zkpPrivateKey and nullifierKey from rootKey
+	field zkpPrivateKey = mimc2([oldCommitment.rootKey, 2708019456231621178814538244712057499818649907582893776052749473028258908910])
+	field nullifierKey = mimc2([oldCommitment.rootKey, 7805187439118198468809896822299973897593108379494079213870562208229492109015])
+	u32[8] nullifierKeyU328 = field_to_u32_8(nullifierKey)
+
+	bool[256] zkpPrivateKeyBool = field_to_bool_256(zkpPrivateKey)
+	field[2] zkpPublicKey = scalarMult(zkpPrivateKeyBool, g, context)
+	bool[256] zkpPublicKeyBool = edwardsCompress(zkpPublicKey)
+	u32[8] zkpPublicKeyU32 = bool_256_to_u32_8(zkpPublicKeyBool)
 
 	u32[8] ercAddress = field_to_u32_8(fErcAddress)
 	u32[8] id = field_to_u32_8(fId)
@@ -52,7 +53,7 @@ def main(\
 
 	// check the nullifier is valid
 	u32[8] sha = sha256of512([\
-		...nsk,\
+		...nullifierKeyU328,\
 		...oldCommitment.hash\
 	])
 
@@ -69,7 +70,7 @@ def main(\
 		...ercAddress,\
 		...id,\
 		...value,\
-		...pkdU32,\
+		...zkpPublicKeyU32,\
 		...oldCommitment.salt\
 	])
 	// last 224 bits:

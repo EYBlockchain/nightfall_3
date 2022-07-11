@@ -17,7 +17,8 @@
     "doc:build:sdk": "jsdoc -c jsdoc.json cli/lib/nf3.mjs",
     "build-adversary": "node test/adversary/transpile-adversary.mjs",
     "adversary-test": "CHALLENGE_TYPE=${CHALLENGE_TYPE} mocha --timeout 0 --bail --exit test/adversary.test.mjs",
-    "adversary-test-all": "for CHALLENGE_TYPE in IncorrectTreeRoot IncorrectLeafCount DuplicateTransaction DuplicateNullifier HistoricRootError IncorrectProof; do CHALLENGE_TYPE=${CHALLENGE_TYPE} mocha --timeout 0 --bail --exit test/adversary.test.mjs; sleep 5; done"
+    "adversary-test-all": "for CHALLENGE_TYPE in IncorrectTreeRoot IncorrectLeafCount DuplicateTransaction DuplicateNullifier HistoricRootError IncorrectProof; do CHALLENGE_TYPE=${CHALLENGE_TYPE} mocha --timeout 0 --bail --exit test/adversary.test.mjs; sleep 5; done",
+    "secrets-encryption-test": "mocha --timeout 0 --bail --exit test/encryption.test.mjs"
   },
   "repository": {
     "type": "git",
