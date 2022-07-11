@@ -5,28 +5,30 @@ import mongo from 'common-files/utils/mongo.mjs';
 
 const { MONGO_URL, OPTIMIST_DB, TRANSACTIONS_COLLECTION } = config;
 
-let error = process.env.BAD_TX_SEQUENCE
-  ? process.env.BAD_TX_SEQUENCE.split(',')
-  : [
-      'ValidTransaction',
-      'ValidTransaction',
-      'ValidTransaction',
-      'IncorrectTreeRoot',
-      'ValidTransaction',
-      'IncorrectLeafCount',
-      'ValidTransaction',
-      'DuplicateTransaction',
-      'ValidTransaction',
-      'DuplicateNullifier',
-      'ValidTransaction',
-      'HistoricRootError',
-      'ValidTransaction',
-      'IncorrectProof',
-      'ValidTransaction',
-    ];
-
-let resetErrorIdx = false;
-let indexOffset = 0;
+const error = [
+  'ValidTransaction',
+  'ValidTransaction',
+  'ValidTransaction',
+  'IncorrectTreeRoot',
+  'ValidTransaction',
+  'ValidTransaction',
+  /* 'ValidTransaction',
+  'ValidTransaction',
+  'ValidTransaction',
+  'ValidTransaction',
+  'ValidTransaction',
+  'ValidTransaction',
+  'IncorrectLeafCount',
+  'ValidTransaction',
+  'DuplicateTransaction',
+  'ValidTransaction',
+  'DuplicateNullifier',
+  'ValidTransaction',
+  'HistoricRootError',
+  'ValidTransaction',
+  'IncorrectProof',
+  'ValidTransaction', */
+];
 
 const duplicateNullifier = async number => {
   logger.debug('Creating Block with Duplicate Nullifier');
@@ -141,25 +143,14 @@ const historicRootError = async number => {
   return transactions;
 };
 
-export const addTx = txType => {
-  error = txType;
-  resetErrorIdx = true;
-  logger.debug(`Received new Tx types to generate ${error}`);
-};
-
 /**
 Function to return 'number' transactions, ordered by the highest fee. If there
 are fewer than 'number' transactions, all are returned.
 */
 // eslint-disable-next-line import/prefer-default-export
 export async function getMostProfitableTransactions(number, errorIndex) {
-  if (resetErrorIdx) {
-    resetErrorIdx = false;
-    indexOffset = errorIndex;
-  }
-  const badTxType = error[errorIndex - indexOffset];
-  logger.debug(`Creating a transaction of type ${badTxType}`);
-  switch (badTxType) {
+  logger.debug('Creating a transaction of type', error[errorIndex]);
+  switch (error[errorIndex]) {
     case 'DuplicateTransaction':
       return duplicateTransaction(number);
     case 'DuplicateNullifier':
@@ -169,7 +160,6 @@ export async function getMostProfitableTransactions(number, errorIndex) {
     case 'HistoricRootError':
       return historicRootError(number);
     default: {
-      logger.debug(`Creating a transaction of type ValidBlock`);
       const connection = await mongo.connection(MONGO_URL);
       const db = connection.db(OPTIMIST_DB);
       return db

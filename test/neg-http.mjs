@@ -114,7 +114,7 @@ describe('Testing the challenge http API', () => {
     stateAddress = res.body.address;
 
     // should get the address of the test ERC contract stub
-    res = await chai.request(url).get('/contract-address/ERC20Mock');
+    res = await chai.request(url).get('/contract-address/ERCStub');
     ercAddress = res.body.address;
     // set the current nonce before we start the test
     web3Client.setNonce(
