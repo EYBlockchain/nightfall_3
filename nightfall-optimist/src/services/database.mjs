@@ -554,5 +554,7 @@ export async function getTreeByLeafCount(historicalLeafCount) {
 export async function deleteTreeByBlockNumberL2(blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
+  await db.collection(TIMBER_COLLECTION).updateOne({ blockNumberL2 }, { $set: { rollback: true } });
+  await new Promise(resolve => setTimeout(() => resolve(), 1000));
   return db.collection(TIMBER_COLLECTION).deleteMany({ blockNumberL2: { $gte: blockNumberL2 } });
 }
