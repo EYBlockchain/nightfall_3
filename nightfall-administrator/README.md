@@ -103,3 +103,5 @@ are not an approver, they should hit return when asked for an Approver private k
 It may be necessary to remove control from the multisig contract.  This should be a rare event but it enables software that is not directly compatible with a multisig to be used (an example is upgrading a contract using `nightfall-deployer`)
 
 The multisig can be removed and replaced with a single account by selecting `Transfer ownership` from the Admin menu and transferring ownership to a single account key.  Multisig approval is required to remove the multisig of course.
+
+This process can be carried out in reverse to re-establish the multisig, in which case ownership must be transferred from the single account address to the multisig address.
