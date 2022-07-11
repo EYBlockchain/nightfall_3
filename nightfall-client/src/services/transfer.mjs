@@ -8,7 +8,7 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
 import config from 'config';
 import axios from 'axios';
 import gen from 'general-number';
-import rand from 'common-files/utils/crypto/crypto-random.mjs';
+import { randValueLT } from 'common-files/utils/crypto/crypto-random.mjs';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
 import logger from 'common-files/utils/logger.mjs';
 import { edwardsCompress } from 'common-files/utils/curve-maths/curves.mjs';
@@ -26,7 +26,6 @@ import { encrypt, genEphemeralKeys, packSecrets } from './kem-dem.mjs';
 
 const {
   BN128_GROUP_ORDER,
-  ZKP_KEY_LENGTH,
   ZOKRATES_WORKER_HOST,
   PROVING_SCHEME,
   BACKEND,
@@ -79,11 +78,7 @@ async function transfer(transferParams) {
     recipientCompressedZkpPublicKeys.push(compressedZkpPublicKey);
   }
   // Generate salts, constrained to be < field size
-  const salts = await Promise.all(
-    recipientCompressedZkpPublicKeys.map(async () => {
-      return new GN((await rand(ZKP_KEY_LENGTH)).field(BN128_GROUP_ORDER, false));
-    }),
-  );
+  const salts = await Promise.all(values.map(async () => randValueLT(BN128_GROUP_ORDER)));
 
   // Generate new commitments, already truncated to u32[7]
   const newCommitments = recipientCompressedZkpPublicKeys.map(
@@ -101,12 +96,12 @@ async function transfer(transferParams) {
   // KEM-DEM encryption
   const [ePrivate, ePublic] = await genEphemeralKeys();
   const [unpackedTokenID, packedErc] = packSecrets(tokenId, ercAddress, 0, 2);
-  const compressedSecrets = encrypt(
-    generalise(ePrivate),
-    generalise(ePublic),
-    generalise(recipientZkpPublicKeys[0]),
-    [packedErc.bigInt, unpackedTokenID.bigInt, values[0].bigInt, salts[0].bigInt],
-  );
+  const compressedSecrets = encrypt(generalise(ePrivate), generalise(recipientZkpPublicKeys[0]), [
+    packedErc.bigInt,
+    unpackedTokenID.bigInt,
+    values[0].bigInt,
+    salts[0].bigInt,
+  ]);
 
   // Compress the public key as it will be put on-chain
   const compressedEPub = edwardsCompress(ePublic);

@@ -22,12 +22,7 @@ describe('KEM-DEM Tests', () => {
             const genSenderPrivateKey = generalise(senderPrivateKey);
             const recipientPublicKey = scalarMult(recipientPrivateKey, BABYJUBJUB.GENERATOR);
             const genRecipientPrivateKey = generalise(recipientPrivateKey);
-            const enc = encrypt(
-              genSenderPrivateKey,
-              generalise(senderPublicKey),
-              generalise(recipientPublicKey),
-              plaintexts,
-            );
+            const enc = encrypt(genSenderPrivateKey, generalise(recipientPublicKey), plaintexts);
             const dec = decrypt(
               genRecipientPrivateKey,
               generalise(senderPublicKey),
@@ -42,7 +37,7 @@ describe('KEM-DEM Tests', () => {
       fc.assert(
         fc.property(
           fc.bigInt({ min: 0n, max: BN128_GROUP_ORDER - 1n }),
-          fc.bigInt({ min: 0n, max: 2n ** 160n }),
+          fc.bigInt({ min: 0n, max: 2n ** 160n - 1n }),
           (a, b) => {
             const [unpackedA, packedB] = packSecrets(generalise(a), generalise(b), 0, 2);
             // console.log('a / b', a, b);

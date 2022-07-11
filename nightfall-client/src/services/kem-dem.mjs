@@ -1,11 +1,13 @@
 import { scalarMult } from 'common-files/utils/curve-maths/curves.mjs';
 import config from 'config';
 import mimcHash from 'common-files/utils/crypto/mimc/mimc.mjs';
-import rand from 'common-files/utils/crypto/crypto-random.mjs';
+import { randValueLT } from 'common-files/utils/crypto/crypto-random.mjs';
 import { generalise, stitchLimbs } from 'general-number';
 
-const { BABYJUBJUB, BN128_GROUP_ORDER, ZKP_KEY_LENGTH } = config;
+const { BABYJUBJUB, BN128_GROUP_ORDER } = config;
+// DOMAIN_KEM = field(SHA256('nightfall-kem'))
 const DOMAIN_KEM = 21033365405711675223813179268586447041622169155539365736392974498519442361181n;
+// DOMAIN_KEM = field(SHA256('nightfall-dem'))
 const DOMAIN_DEM = 1241463701002173366467794894814691939898321302682516549591039420117995599097n;
 
 /**
@@ -54,7 +56,7 @@ This function generates the ephemeral key pair used in the kem-dem
 @returns {Promise<Array<GeneralNumber, Array<BigInt>>>} The private and public key pair
 */
 const genEphemeralKeys = async () => {
-  const privateKey = await rand(ZKP_KEY_LENGTH);
+  const privateKey = await randValueLT(BN128_GROUP_ORDER);
   const publicKey = scalarMult(privateKey.bigInt, BABYJUBJUB.GENERATOR);
   return [privateKey, publicKey];
 };
@@ -67,19 +69,12 @@ This function performs the key encapsulation step, deriving a symmetric encrypti
 @param {Array<GeneralNumber>} recipientPubKey - The recipientPkd, in decryption this is also the ephemeralPub
 @returns {Array<Array<GeneralNumber>, BigInt>>} The ephemeralPub key and the symmteric key used for encryption
 */
-const kem = (privateKey, ephemeralPub, recipientPubKey) => {
+const kem = (privateKey, recipientPubKey) => {
   const sharedSecret = scalarMult(
     privateKey.bigInt,
     recipientPubKey.map(r => r.bigInt),
   );
-  const encryptionKey = mimcHash([
-    DOMAIN_KEM,
-    sharedSecret[0],
-    sharedSecret[1],
-    ephemeralPub[0].bigInt,
-    ephemeralPub[1].bigInt,
-  ]);
-  return [ephemeralPub, encryptionKey];
+  return mimcHash([sharedSecret[0], sharedSecret[1], DOMAIN_KEM]);
 };
 
 /**
@@ -91,7 +86,7 @@ This function performs the data encapsulation step, encrypting the plaintext
 */
 const dem = (encryptionKey, plaintexts) =>
   plaintexts.map(
-    (p, i) => (mimcHash([DOMAIN_DEM, encryptionKey, BigInt(i)]) + p) % BN128_GROUP_ORDER,
+    (p, i) => (mimcHash([encryptionKey, DOMAIN_DEM, BigInt(i)]) + p) % BN128_GROUP_ORDER,
   );
 
 /**
@@ -103,7 +98,7 @@ This function inverts the data encapsulation step, decrypting the ciphertext
 */
 const deDem = (encryptionKey, ciphertexts) => {
   const plainTexts = ciphertexts.map((c, i) => {
-    const pt = c.bigInt - BigInt(mimcHash([DOMAIN_DEM, encryptionKey, BigInt(i)]));
+    const pt = c.bigInt - BigInt(mimcHash([encryptionKey, DOMAIN_DEM, BigInt(i)]));
     if (pt < 0) return ((pt % BN128_GROUP_ORDER) + BN128_GROUP_ORDER) % BN128_GROUP_ORDER;
     return pt % BN128_GROUP_ORDER;
   });
@@ -119,8 +114,8 @@ This function performs the kem-dem required to encrypt plaintext.
 @param {Array<BigInt>} plaintexts - The array of plain text to be encrypted, the ordering is [ercAddress,tokenId, value, salt]
 @returns {Array<BigInt>} The encrypted ciphertexts.
 */
-const encrypt = (ephemeralPrivate, ephemeralPub, recipientPkds, plaintexts) => {
-  const [, encKey] = kem(ephemeralPrivate, ephemeralPub, recipientPkds);
+const encrypt = (ephemeralPrivate, recipientPkds, plaintexts) => {
+  const encKey = kem(ephemeralPrivate, recipientPkds);
   return dem(encKey, plaintexts);
   // return cipherTexts;
 };
@@ -134,7 +129,7 @@ This function performs the kem-deDem required to decrypt plaintext.
 @returns {Array<GeneralNumber>} The decrypted plaintexts, the ordering is [ercAddress,tokenId, value, salt]
 */
 const decrypt = (privateKey, ephemeralPub, cipherTexts) => {
-  const [, encKey] = kem(privateKey, ephemeralPub, ephemeralPub);
+  const encKey = kem(privateKey, ephemeralPub);
   return deDem(encKey, cipherTexts);
 };
 

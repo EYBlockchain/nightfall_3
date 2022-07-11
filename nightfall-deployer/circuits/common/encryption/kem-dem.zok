@@ -14,14 +14,17 @@ const field DOMAIN_KEM = 2103336540571167522381317926858644704162216915553936573
 // DOMAIN_KEM = field(SHA256('nightfall-dem'))
 const field DOMAIN_DEM = 1241463701002173366467794894814691939898321302682516549591039420117995599097
 
-def kem(bool[256] ephemeralKey, field[2] sharedSecret, field[2] ephemeralPub) -> field:
-    field encryptionKey = mimcN([DOMAIN_KEM, sharedSecret[0], sharedSecret[1], ephemeralPub[0], ephemeralPub[1]])
+def kem(bool[256] ephemeralKey, field[2] ephemeralPub) -> field:
+    BabyJubJubParams context = curveParams()
+	field[2] g = [context.Gu, context.Gv]
+    field[2] sharedSecret = scalarMult(ephemeralKey, ephemeralPub, context)
+    field encryptionKey = mimcN([sharedSecret[0], sharedSecret[1], DOMAIN_KEM])
     return encryptionKey
 
 def dem<N>(field encryptionKey, field[N] plainText) -> field[N]:
     field[N] output = [0; N]
     for u32 i in 0..N do
-        output[i] = mimcN([DOMAIN_DEM, encryptionKey, u32_to_field(i)]) + plainText[i]
+        output[i] = mimcN([encryptionKey, DOMAIN_DEM, u32_to_field(i)]) + plainText[i]
     endfor
     return output
 
@@ -29,9 +32,8 @@ def main<N>(bool[256] ephemeralKey,field[2] recipientPub,field[N] plainText) -> 
     BabyJubJubParams context = curveParams()
 	field[2] g = [context.Gu, context.Gv]
     field[2] ephemeralPub = scalarMult(ephemeralKey, g, context)
-    field[2] sharedSecret = scalarMult(ephemeralKey, recipientPub, context)
 
-    field encryptionKey = kem(ephemeralKey, sharedSecret, ephemeralPub)
+    field encryptionKey = kem(ephemeralKey, recipientPub)
 
     field[N] cipherText = dem(encryptionKey, plainText)
     EncryptedMsgs<N> e = EncryptedMsgs { cipherText: cipherText, ephemeralPublicKey: ephemeralPub}
