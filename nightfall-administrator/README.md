@@ -96,4 +96,10 @@ not particularly sensitive because the only information it contains is the possi
 the near future. The Executor can then `add` these data to their local administrator container (which MUST be connected to the relevant blockchain).
 
 Note that if an Executor is not an approver, they can still trigger a transaction _provided there are sufficient approvals_ in the database. If they
-are not an approver, they should hit return when asked for an Approver private key. 
+are not an approver, they should hit return when asked for an Approver private key.
+
+## Removing the multisig
+
+It may be necessary to remove control from the multisig contract.  This should be a rare event but it enables software that is not directly compatible with a multisig to be used (an example is upgrading a contract using `nightfall-deployer`)
+
+The multisig can be removed and replaced with a single account by selecting `Transfer ownership` from the Admin menu and transferring ownership to a single account key.  Multisig approval is required to remove the multisig of course.
