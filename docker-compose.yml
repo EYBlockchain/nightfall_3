@@ -190,7 +190,7 @@ services:
     environment:
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
-      LOG_LEVEL: warn
+      LOG_LEVEL: error
       ETH_NETWORK: blockchain1
 
 volumes:

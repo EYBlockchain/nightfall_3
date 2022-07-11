@@ -26,7 +26,7 @@ const SUPPORTED_ENVIRONMENTS = {
   },
   localhost: {
     name: 'Localhost',
-    chainId: 4378921,
+    chainId: 1337,
     clientApiUrl: 'http://localhost:8080',
     optimistApiUrl: 'http://localhost:8081',
     optimistWsUrl: 'ws://localhost:8082',
@@ -34,7 +34,7 @@ const SUPPORTED_ENVIRONMENTS = {
   },
   docker: {
     name: 'Docker',
-    chainId: 4378921,
+    chainId: 1337,
     clientApiUrl: 'http://client1',
     optimistApiUrl: 'http://optimist1',
     optimistWsUrl: 'ws://optimist1:8080',
