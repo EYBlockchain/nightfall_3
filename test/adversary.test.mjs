@@ -14,6 +14,8 @@ import {
   waitForSufficientBalance,
   registerProposerOnNoProposer,
   retrieveL2Balance,
+  // eslint-disable-next-line no-unused-vars
+  waitForNoPendingCommitments,
 } from './utils.mjs';
 import logger from '../common-files/utils/logger.mjs';
 
@@ -76,7 +78,11 @@ describe('Testing with an adversary', () => {
       optimistWsUrl: adversarialOptimistWsUrl,
     });
 
-    nf3Challenger = new Nf3(ethereumSigningKeyChallenger, environment);
+    nf3Challenger = new Nf3(ethereumSigningKeyChallenger, {
+      ...others,
+      optimistApiUrl: adversarialOptimistApiUrl,
+      optimistWsUrl: adversarialOptimistWsUrl,
+    });
 
     // Generate a random mnemonic (uses crypto.randomBytes under the hood), defaults to 128-bits of entropy
     await nf3User.init(mnemonicUser);
@@ -118,17 +124,45 @@ describe('Testing with an adversary', () => {
     await nf3Challenger.registerChallenger();
     // Chalenger listening for incoming events
     nf3Challenger.startChallenger();
+
+    const challengerEmitter = await nf3Challenger.getChallengeEmitter();
+    challengerEmitter.on('data', txDataToSign => {
+      logger.debug(`Challenger emitter with data ${txDataToSign}`);
+    });
+
+    // Configure adversary bad block sequence
+    if (process.env.CHALLENGE_TYPE !== '') {
+      logger.debug(`Configuring Challenge Type ${process.env.CHALLENGE_TYPE}`);
+      await chai
+        .request(adversarialOptimistApiUrl)
+        .post('/block/gen-block')
+        .send({ blockType: ['ValidBlock', 'ValidBlock', process.env.CHALLENGE_TYPE] });
+    } else {
+      logger.debug(`Configuring Default Challenge Type`);
+    }
+
     console.log('Pausing challenger queue...');
     // we pause the challenger queue and don't process challenger until unpauseQueueChallenger
     nf3Challenger.pauseQueueChallenger();
   });
 
   describe('User creates deposit and transfer transactions', () => {
-    it('User should have the correct balance after without challenge', async () => {
+    it('User should have the correct balance after a series of rollbacks', async () => {
+      // Because rollbacks removes the only registered proposer,
+      // the proposer is registered again after each remova
+      intervalId = setInterval(() => {
+        registerProposerOnNoProposer(nf3AdversarialProposer);
+      }, 5000);
+      let nDeposits = 0;
+      let nTransfers = 0;
+
       // we are creating a block of deposits with high values such that there is
       // enough balance for a lot of transfers with low value.
+      console.log('Starting balance :', startBalance);
+      expectedBalance = startBalance;
       for (let j = 0; j < TRANSACTIONS_PER_BLOCK; j++) {
         await nf3User.deposit(ercAddress, tokenType, value2, tokenId, fee);
+        nDeposits++;
         expectedBalance += value2;
       }
 
@@ -143,6 +177,7 @@ describe('Testing with an adversary', () => {
             tokenId,
             nf3User.zkpKeys.compressedZkpPublicKey,
           );
+          nTransfers++;
           // expectedBalance += value2;
         } catch (err) {
           if (err.message.includes('No suitable commitments')) {
@@ -162,23 +197,30 @@ describe('Testing with an adversary', () => {
               tokenId,
               nf3User.zkpKeys.compressedZkpPublicKey,
             );
+            nTransfers++;
             // expectedBalance += value2; // transfer to self, so balance does not increase
           }
         }
         for (let k = 0; k < TRANSACTIONS_PER_BLOCK - 1; k++) {
           await nf3User.deposit(ercAddress, tokenType, value2, tokenId);
+          nDeposits++;
           expectedBalance += value2;
         }
         await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
         console.log(`Completed ${i + 1} pings`);
       }
 
+      // TODO:_ how can i check that queue 2 is empty
+      await waitForSufficientBalance(nf3User, expectedBalance);
       // waiting sometime to ensure that all the good transactions from bad
       // blocks were proposed in other good blocks
+      await waitForSufficientBalance(nf3User, expectedBalance);
       await new Promise(resolve => setTimeout(resolve, 20 * TX_WAIT));
+      await waitForSufficientBalance(nf3User, expectedBalance);
       const endBalance = await retrieveL2Balance(nf3User);
       console.log(`Completed startBalance`, startBalance);
       console.log(`Completed endBalance`, endBalance);
+      logger.debug(`N deposits: ${nDeposits} - N Transfers: ${nTransfers}`);
       expect(expectedBalance).to.be.equal(endBalance - startBalance);
     });
 
@@ -189,7 +231,10 @@ describe('Testing with an adversary', () => {
       // waiting sometime to ensure that all the good transactions from bad
       // blocks were proposed in other good blocks
       console.log('Waiting for rollbacks...');
+
+      await waitForSufficientBalance(nf3User, expectedBalance);
       await new Promise(resolve => setTimeout(resolve, 30 * TX_WAIT));
+      await waitForSufficientBalance(nf3User, expectedBalance);
       const endBalance = await retrieveL2Balance(nf3User);
       console.log(`Completed startBalance`, startBalance);
       console.log(`Completed endBalance`, endBalance);

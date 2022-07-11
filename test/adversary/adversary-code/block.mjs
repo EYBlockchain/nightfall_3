@@ -1,30 +1,28 @@
 /* ignore unused exports */
 import logger from 'common-files/utils/logger.mjs';
 
-const error = [
-  'ValidBlock',
-  'ValidBlock',
-  'ValidBlock',
-  'IncorrectTreeRoot', // Needs two prior blocks
-  'ValidBlock',
-  'ValidBlock',
-  /* 'ValidBlock',
-  'ValidBlock',
-  'ValidBlock',
-  'ValidBlock',
-  'ValidBlock',
-  'ValidBlock',
-  'IncorrectLeafCount', //  Needs one prior block
-  'ValidBlock',
-  'DuplicateTransaction', // needs atleast one transaction in a prior block
-  'ValidBlock',
-  'DuplicateNullifier', // needs atleast one non deposit transaction in a prior block
-  'ValidBlock',
-  'HistoricRootError',
-  'ValidBlock',
-  'IncorrectProof',
-  'ValidBlock', */
-];
+let error = process.env.BAD_BLOCK_SEQUENCE
+  ? process.env.BAD_BLOCK_SEQUENCE.split(',')
+  : [
+      'ValidBlock',
+      'ValidBlock',
+      'ValidBlock',
+      'IncorrectTreeRoot', // Needs two prior blocks
+      'ValidBlock',
+      'IncorrectLeafCount', //  Needs one prior block
+      'ValidBlock',
+      'DuplicateTransaction', // needs atleast one transaction in a prior block
+      'ValidBlock',
+      'DuplicateNullifier', // needs atleast one non deposit transaction in a prior block
+      'ValidBlock',
+      'HistoricRootError',
+      'ValidBlock',
+      'IncorrectProof',
+      'ValidBlock',
+    ];
+
+let resetErrorIdx = false;
+let indexOffset = 0;
 
 // eslint-disable-next-line no-unused-vars
 const incorrectTransactionHashesRoot = block => {
@@ -51,15 +49,27 @@ const incorrectLeafCount = block => {
   };
 };
 
+export const addBlock = blockType => {
+  error = blockType;
+  resetErrorIdx = true;
+  logger.debug(`Received new block types to generate ${error}`);
+};
+
 // eslint-disable-next-line import/prefer-default-export
 export const createBadBlock = (block, errorIndex) => {
-  logger.debug('Creating a block of type', error[errorIndex]);
-  switch (error[errorIndex]) {
+  if (resetErrorIdx) {
+    resetErrorIdx = false;
+    indexOffset = errorIndex;
+  }
+  const badBlockType = error[errorIndex - indexOffset];
+  logger.debug(`Creating a block of type ${badBlockType}`);
+  switch (badBlockType) {
     case 'IncorrectTreeRoot':
       return incorrectTreeRoot(block);
     case 'IncorrectLeafCount':
       return incorrectLeafCount(block);
     default:
+      logger.debug(`Creating a block of type ValidBlock`);
       return block;
   }
 };

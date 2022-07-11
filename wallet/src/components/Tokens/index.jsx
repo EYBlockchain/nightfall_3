@@ -9,8 +9,6 @@ import polygonNightfall from '../../assets/svg/polygon-nightfall.svg';
 export default function Tokens(token) {
   const [state] = useContext(UserContext);
 
-  console.log(state);
-
   return (
     <div className="maticTokensList">
       <div className="formHeader">
