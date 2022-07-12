@@ -4,6 +4,7 @@ A commitment class
 import gen from 'general-number';
 import config from 'config';
 import poseidon from 'common-files/utils/crypto/poseidon/poseidon.mjs';
+import { compressPublicKey } from './keys.mjs';
 
 const { generalise } = gen;
 const { BN128_GROUP_ORDER } = config;
@@ -25,10 +26,14 @@ class Commitment {
         throw new Error(
           `Property ${key} was undefined. Did you pass the wrong object to the constructor?`,
         );
+
+    // TODO the compressedPkd is not really part of the pre-image but it's used to look up
+    // the commitment in the DB.  We should move it outside the NewCommitmentPreimage
     this.preimage = generalise({
       ercAddress,
       tokenId,
       value,
+      compressedPkd: compressPublicKey(pkd),
       pkd,
       salt,
     });
