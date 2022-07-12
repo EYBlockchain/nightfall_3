@@ -41,10 +41,10 @@ describe('Running rollback and resync test', () => {
   let commitTxDataToSign;
   let defaultDepositArgs;
   let defaultTransferArgs;
-  let ask1;
-  let nsk1;
-  let ivk1;
-  let pkd1;
+  let rootKey1;
+  let nullifierKey1;
+  let zkpPrivateKey1;
+  let zkpPublicKey1;
   const txPerBlock = 2;
   const validTransactions = [];
   const environment = web3Client.getCurrentEnvironment();
@@ -77,14 +77,14 @@ describe('Running rollback and resync test', () => {
     const mnemonic = generateMnemonic();
 
     ({
-      ask: ask1,
-      nsk: nsk1,
-      ivk: ivk1,
-      pkd: pkd1,
+      rootKey: rootKey1,
+      nullifierKey: nullifierKey1,
+      zkpPrivateKey: zkpPrivateKey1,
+      zkPublicKey: zkpPublicKey1,
     } = (
       await chai
         .request(environment.clientApiUrl)
-        .post('/generate-keys')
+        .post('/generate-zkp-keys')
         .send({ mnemonic, path: `m/44'/60'/0'/0` })
     ).body);
 
@@ -93,8 +93,7 @@ describe('Running rollback and resync test', () => {
       tokenId,
       tokenType,
       transferValue,
-      pkd: pkd1,
-      nsk: nsk1,
+      rootKey: rootKey1,
       fee,
     };
     defaultTransferArgs = {
@@ -102,10 +101,9 @@ describe('Running rollback and resync test', () => {
       tokenId,
       recipientData: {
         transferValues: [transferValue],
-        recipientPkds: [pkd1],
+        recipientZkpPublicKeys: [zkpPublicKey1],
       },
-      nsk: nsk1,
-      ask: ask1,
+      rootKey: rootKey1,
       fee,
     };
 
@@ -159,8 +157,8 @@ describe('Running rollback and resync test', () => {
       .request(environment.clientApiUrl)
       .post('/incoming-viewing-key')
       .send({
-        ivks: [ivk1],
-        nsks: [nsk1],
+        zkpPrivateKeys: [zkpPrivateKey1],
+        nullifierKeys: [nullifierKey1],
       });
 
     // Register Challenger
@@ -320,8 +318,8 @@ describe('Running rollback and resync test', () => {
         .request(environment.clientApiUrl)
         .post('/incoming-viewing-key')
         .send({
-          ivks: [ivk1],
-          nsks: [nsk1],
+          zkpPrivateKeys: [zkpPrivateKey1],
+          nullifierKeys: [nullifierKey1],
         });
       // Register Challenger
       await chai

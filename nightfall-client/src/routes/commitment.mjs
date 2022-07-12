@@ -34,11 +34,13 @@ router.get('/salt', async (req, res, next) => {
 router.get('/balance', async (req, res, next) => {
   logger.debug('commitment/balance endpoint received GET');
   try {
-    const { compressedPkd, ercList } = req.query;
-    logger.debug(`Details requested with compressedPkd ${compressedPkd} and ercList ${ercList}`);
+    const { compressedZkpPublicKey, ercList } = req.query;
+    logger.debug(
+      `Details requested with compressedZkpPublicKey ${compressedZkpPublicKey} and ercList ${ercList}`,
+    );
     let balance;
-    if (compressedPkd) balance = await getWalletBalance(compressedPkd, ercList);
-    else balance = await getWalletBalanceUnfiltered(compressedPkd, ercList);
+    if (compressedZkpPublicKey) balance = await getWalletBalance(compressedZkpPublicKey, ercList);
+    else balance = await getWalletBalanceUnfiltered(compressedZkpPublicKey, ercList);
     res.json({ balance });
   } catch (err) {
     logger.error(err);
@@ -49,9 +51,11 @@ router.get('/balance', async (req, res, next) => {
 router.get('/pending-deposit', async (req, res, next) => {
   logger.debug('commitment/pending-deposit endpoint received GET');
   try {
-    const { compressedPkd, ercList } = req.query;
-    logger.debug(`Details requested with compressedPkd ${compressedPkd} and ercList ${ercList}`);
-    const balance = await getWalletPendingDepositBalance(compressedPkd, ercList);
+    const { compressedZkpPublicKey, ercList } = req.query;
+    logger.debug(
+      `Details requested with compressedZkpPublicKey ${compressedZkpPublicKey} and ercList ${ercList}`,
+    );
+    const balance = await getWalletPendingDepositBalance(compressedZkpPublicKey, ercList);
     res.json({ balance });
   } catch (err) {
     logger.error(err);
@@ -62,9 +66,11 @@ router.get('/pending-deposit', async (req, res, next) => {
 router.get('/pending-spent', async (req, res, next) => {
   logger.debug('commitment/pending-spent endpoint received GET');
   try {
-    const { compressedPkd, ercList } = req.query;
-    logger.debug(`Details requested with compressedPkd ${compressedPkd} and ercList ${ercList}`);
-    const balance = await getWalletPendingSpentBalance(compressedPkd, ercList);
+    const { compressedZkpPublicKey, ercList } = req.query;
+    logger.debug(
+      `Details requested with compressedZkpPublicKey ${compressedZkpPublicKey} and ercList ${ercList}`,
+    );
+    const balance = await getWalletPendingSpentBalance(compressedZkpPublicKey, ercList);
     res.json({ balance });
   } catch (err) {
     logger.error(err);

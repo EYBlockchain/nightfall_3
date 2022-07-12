@@ -230,7 +230,8 @@ library ChallengesUtil {
         uint256 nullifierIndex2
     ) public pure {
         require(
-            tx1.nullifiers[nullifierIndex1] == tx2.nullifiers[nullifierIndex2],
+            tx1.nullifiers[nullifierIndex1] != 0 &&
+                tx1.nullifiers[nullifierIndex1] == tx2.nullifiers[nullifierIndex2],
             'Not matching nullifiers'
         );
         require(

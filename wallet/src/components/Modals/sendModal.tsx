@@ -399,7 +399,6 @@ const SendModal = (props: SendModalProps): JSX.Element => {
       });
 
   useEffect(() => {
-    console.log('state', state);
     const getBalance = async () => {
       const l2bal: Record<string, Record<string, bigint>> = await getWalletBalance(
         state?.compressedPkd,
@@ -444,8 +443,6 @@ const SendModal = (props: SendModalProps): JSX.Element => {
   // const handleClose = () => setShowTransferModal(false);
 
   async function submitTx() {
-    console.log('readyTx', readyTx);
-    console.log('submitTx State', state);
     try {
       switch (readyTx.type) {
         case 'offchain':
@@ -460,7 +457,6 @@ const SendModal = (props: SendModalProps): JSX.Element => {
             });
           break;
         default:
-          console.log('Error when sending');
       }
       await saveTransaction(readyTx.transaction);
       props.onHide();
@@ -527,8 +523,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
         fee: 0,
       },
       shieldContractAddress,
-    ).catch(e => {
-      console.log('Error in transfer', e);
+    ).catch(() => {
       setShowModalTransferEnRoute(false);
       setShowModalTransferFailed(true);
       return { transaction: null, rawTransaction: '' };

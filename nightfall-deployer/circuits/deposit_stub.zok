@@ -1,7 +1,7 @@
 // Inputs for main:
 // - ercContractAddress (public) is the ERCx contract address
 // - value (public) is the 256 bit value (fungible) or identifier (non-fungible)
-// - compressedPkd (private) is the public key of the newCommitment derived by hashing the Secret Key Sk of the newCommitment. IT IS KEPT PRIVATE!!
+// - compressedZkpPublicKey (private) is the public key of the newCommitment derived by hashing the Secret Key Sk of the newCommitment. IT IS KEPT PRIVATE!!
 // - salt (private) is the salt for the newCommitment
 // - newCommitment (public) is the newCommitment
 
@@ -9,7 +9,7 @@ def main(\
 	field ercContractAddress,\
 	field id,\
  	field value,\
-	private u32[8] compressedPkd,\
+	private u32[8] compressedZkpPublicKey,\
 	private u32[8] salt,\
 	field newCommitment\
 )->():
@@ -18,7 +18,7 @@ def main(\
 	u32 v = 0x00000000
 
 	for u32 i in 0..8 do
-		v = v + compressedPkd[i] +\
+		v = v + compressedZkpPublicKey[i] +\
 				salt[i]
 	endfor
 	assert(v==v)

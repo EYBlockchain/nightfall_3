@@ -187,7 +187,6 @@ const BridgeComponent = () => {
   const handleClose = () => setShow(false);
 
   async function submitTx() {
-    console.log('readyTx', readyTx);
     try {
       switch (readyTx.type) {
         case 'onchain': {
@@ -228,11 +227,8 @@ const BridgeComponent = () => {
   }
 
   async function triggerTx() {
-    console.log('triggering tx');
     if (shieldContractAddress === '') setShieldAddress(shieldAddressGet());
-    console.log('triggering tx2');
     const ercAddress = token.address;
-    console.log('ercAddress', ercAddress);
     const zkpKeys = await retrieveAndDecrypt(state.compressedPkd);
     switch (txType) {
       case 'deposit': {
@@ -352,7 +348,6 @@ const BridgeComponent = () => {
   };
 
   async function updateL1Balance() {
-    console.log('L1 Balance');
     if (token && token?.address) {
       const contract = new window.web3.eth.Contract(ERC20, token.address);
       const result = await contract.methods.balanceOf(accountInstance.address).call(); // 29803630997051883414242659
@@ -466,7 +461,6 @@ const BridgeComponent = () => {
                       }}
                       onChange={e => {
                         if (/^\d+\.\d+$/.test(e.target.value) || /^\d+$/.test(e.target.value)) {
-                          console.log('In', e.target.value.split('.')[1]);
                           if (typeof e.target.value.split('.')[1] === 'undefined')
                             setTransferValue(e.target.value);
                           else if (e.target.value.split('.')[1]?.length < 5)

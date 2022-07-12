@@ -208,7 +208,7 @@ describe('ERC1155 tests', () => {
           tokenTypeERC1155,
           transferValue,
           availableTokenIds[0],
-          nf3Users[1].zkpKeys.compressedPkd,
+          nf3Users[1].zkpKeys.compressedZkpPublicKey,
           fee,
         );
         expectTransaction(res);
@@ -268,15 +268,15 @@ describe('ERC1155 tests', () => {
 
         await emptyL2(nf3Users[0]);
 
-        await web3Client.timeJump(3600 * 24 * 10); // jump in time by 50 days
+        await web3Client.timeJump(3600 * 24 * 10); // jump in time by 10 days
 
         const commitments = await nf3Users[0].getPendingWithdraws();
 
         expect(
-          commitments[nf3Users[0].zkpKeys.compressedPkd][erc1155Address].length,
+          commitments[nf3Users[0].zkpKeys.compressedZkpPublicKey][erc1155Address].length,
         ).to.be.greaterThan(0);
         expect(
-          commitments[nf3Users[0].zkpKeys.compressedPkd][erc1155Address].filter(
+          commitments[nf3Users[0].zkpKeys.compressedZkpPublicKey][erc1155Address].filter(
             c => c.valid === true,
           ).length,
         ).to.be.greaterThan(0);

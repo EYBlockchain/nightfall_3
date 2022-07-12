@@ -21,11 +21,11 @@ struct OldCommitmentPreimage {
 	u32[8] value
 	u32[8] salt
 	u32[8] hash
-	field ask
+	field rootKey
 }
 
 struct NewCommitmentPreimage {
-	field[2] pkdRecipient
+	field[2] zkpPublicKeyRecipient
 	u32[8] value
 	u32[8] salt
 }
@@ -52,7 +52,6 @@ def main(\
 	private OldCommitmentPreimage[2] oldCommitment,\
 	private NewCommitmentPreimage[2] newCommitment,\
 	field[2] fNewCommitmentHash,\
-	private u32[2][8] nsk,\
 	field[2] fNullifier,\
 	field[2] root,\
 	private field[2][32] path,\
@@ -64,15 +63,15 @@ def main(\
 	BabyJubJubParams context = curveParams()
 	field[2] g = [context.Gu, context.Gv]
 
-	// Calculation of ivk from ask and nsk
-	field nskField = u32_8_to_field(nsk[0])
-	field ivk = mimc2([oldCommitment[0].ask, nskField])
-	bool[256] ivkBool = field_to_bool_256(ivk)
-	field[2] pkd = scalarMult(ivkBool, g, context)
-	bool[256] pkdBool = edwardsCompress(pkd)
-	u32[8] pkdU32 = bool_256_to_u32_8(pkdBool)
+	// Calculation of zkpPrivateKey and nullifierKey from rootKey
+	field[2] zkpPrivateKey = [mimc2([oldCommitment[0].rootKey, 2708019456231621178814538244712057499818649907582893776052749473028258908910]),  mimc2([oldCommitment[1].rootKey, 2708019456231621178814538244712057499818649907582893776052749473028258908910])]
+	field[2] nullifierKey = [mimc2([oldCommitment[0].rootKey, 7805187439118198468809896822299973897593108379494079213870562208229492109015]), mimc2([oldCommitment[1].rootKey, 7805187439118198468809896822299973897593108379494079213870562208229492109015])]
+	u32[2][8] nullifierKeyU328 = [field_to_u32_8(nullifierKey[0]), field_to_u32_8(nullifierKey[1])] //this
 
-	assert(oldCommitment[1].ask == oldCommitment[0].ask)
+	bool[2][256] zkpPrivateKeyBool = [field_to_bool_256(zkpPrivateKey[0]), field_to_bool_256(zkpPrivateKey[1])]
+	field[2][2] zkpPublicKey = [scalarMult(zkpPrivateKeyBool[0], g, context), scalarMult(zkpPrivateKeyBool[1], g, context)] //this
+	bool[2][256] zkpPublicKeyBool = [edwardsCompress(zkpPublicKey[0]), edwardsCompress(zkpPublicKey[1])]
+	u32[2][8] zkpPublicKeyU32 = [bool_256_to_u32_8(zkpPublicKeyBool[0]), bool_256_to_u32_8(zkpPublicKeyBool[1])] //this
 
 	// we convert the types to hash friendly u32s
 	u32[2][8] ercAddress = [field_to_u32_8(fErcAddress[0]), field_to_u32_8(fErcAddress[1])]
@@ -82,9 +81,9 @@ def main(\
 	// Convert (x,y) public key of recipient to a single element using Edwards compress
 	// Recipient (x,y) form public key is used for encryption input while single element
 	// is used for commitment inputs
-	bool[256] pkdRecipientBool = edwardsCompress(newCommitment[0].pkdRecipient)
-	u32[8] pkdRecipientU32 = bool_256_to_u32_8(pkdRecipientBool)
-	assert(newCommitment[1].pkdRecipient == pkd)
+	bool[256] zkpPublicKeyRecipientBool = edwardsCompress(newCommitment[0].zkpPublicKeyRecipient)
+	u32[8] zkpPublicKeyRecipientU32 = bool_256_to_u32_8(zkpPublicKeyRecipientBool)
+	assert(newCommitment[1].zkpPublicKeyRecipient == zkpPublicKey[0])
 
 	// Check the commitment value will not overflow we do this by only allowing
 	// the value to be <224 bits (Most Significant U32 = 0). TODO is it worth
@@ -115,7 +114,7 @@ def main(\
 	// check the nullifiers are valid
 	for u32 i in 0..2 do
 		u32[8] sha = sha256of512([\
-			...nsk[i],\
+			...nullifierKeyU328[i],\
 			...oldCommitment[i].hash\
 		])
 		// nullifiers are truncated to 248 bits since they are public inputs
@@ -132,7 +131,7 @@ def main(\
 		...ercAddress[0],\
 		...oldCommitment[0].id,\
 		...newCommitment[0].value,\
-		...pkdRecipientU32,\
+		...zkpPublicKeyRecipientU32,\
 		...newCommitment[0].salt\
 	])
 		// new commitments are truncated to 248 bits since they are public inputs
@@ -148,7 +147,7 @@ def main(\
 		...ercAddress[1],\
 		...oldCommitment[1].id,\
 		...newCommitment[1].value,\
-		...pkdU32,\
+		...zkpPublicKeyU32[0],\
 		...newCommitment[1].salt\
 	])
 	// new commitments are truncated to 248 bits since they are public inputs
@@ -165,7 +164,7 @@ def main(\
 			...ercAddress[i],\
 			...oldCommitment[i].id,\
 			...oldCommitment[i].value,\
-			...pkdU32,\
+			...zkpPublicKeyU32[i],\
 			...oldCommitment[i].salt\
 		])
 		// assert(sha == oldCommitment[i].hash)
@@ -176,7 +175,7 @@ def main(\
 	endfor
 
 	// And the encryption of the transaction (extend the value up to 256 bits)
-	assert(secrets.cipherText == enc4(ercAddress[0], oldCommitment[0].id, newCommitment[0].value, newCommitment[0].salt, newCommitment[0].pkdRecipient, secrets.ephemeralKey1, secrets.ephemeralKey2, secrets.ephemeralKey3, secrets.ephemeralKey4, secrets.sqrtMessage1, secrets.sqrtMessage2, secrets.sqrtMessage3, secrets.sqrtMessage4))
+	assert(secrets.cipherText == enc4(ercAddress[0], oldCommitment[0].id, newCommitment[0].value, newCommitment[0].salt, newCommitment[0].zkpPublicKeyRecipient, secrets.ephemeralKey1, secrets.ephemeralKey2, secrets.ephemeralKey3, secrets.ephemeralKey4, secrets.sqrtMessage1, secrets.sqrtMessage2, secrets.sqrtMessage3, secrets.sqrtMessage4))
 
 
 	// check the compressed cipherText

@@ -43,6 +43,15 @@ module.exports = {
   WEBSOCKET_PORT: process.env.WEBSOCKET_PORT || 8080,
   WEBSOCKET_PING_TIME: 15000,
   ZOKRATES_WORKER_HOST: process.env.ZOKRATES_WORKER_HOST || 'worker',
+  MULTISIG: {
+    SIGNATURE_THRESHOLD: 2, // number of signatures needed to perform an admin task
+    APPROVERS: [
+      '0x9C8B2276D490141Ae1440Da660E470E7C0349C63',
+      '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0',
+      '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
+      '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
+    ],
+  },
   BLOCKCHAIN_URL:
     process.env.BLOCKCHAIN_URL ||
     `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`,
@@ -84,7 +93,7 @@ module.exports = {
   ], // used to encode/decode proposeBlock signature
   SUBMIT_TRANSACTION_TYPES:
     '(uint112,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[8],uint[4])',
-  RETRIES: Number(process.env.AUTOSTART_RETRIES) || 50,
+  RETRIES: Number(process.env.AUTOSTART_RETRIES) || 600,
   NODE_HASHLENGTH: 32,
   ZERO: '0x0000000000000000000000000000000000000000000000000000000000000000',
   HASH_TYPE: 'mimc',
@@ -157,7 +166,7 @@ module.exports = {
     },
     localhost: {
       name: 'Localhost',
-      chainId: 4378921,
+      chainId: 1337,
       clientApiUrl: process.env.CLIENT_HOST
         ? `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`
         : 'http://localhost:8080',
@@ -242,13 +251,13 @@ module.exports = {
       liquidityProvider:
         process.env.LIQUIDITY_PROVIDER_ADDRESS || '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
     },
-    pkds: {
+    zkpPublicKeys: {
       user1:
-        process.env.USER1_PKD ||
-        '0x0d27fb8112bf3274e27094ab05cc72db4d573ba081a659c3210a7bdbc1a9ec48',
+        process.env.USER1_COMPRESSED_ZKP_PUBLIC_KEY ||
+        '0x80b1f5d0328f9e68ef1318a21f5ec379e4457ecf1c11b0f9dad2d375c02652a3',
       user2:
-        process.env.USER2_PKD ||
-        '0xaa3b5bbf25ee9aab94757487d21c9da7a1166f1cf1f65162c23579149eba8590',
+        process.env.USER2_COMPRESSED_ZKP_PUBLIC_KEY ||
+        '0x2a67fa06f5861f0ba0e963c4f52062a6da95adaf778759f399b05c666d3ff95d',
     },
     mnemonics: {
       user1:

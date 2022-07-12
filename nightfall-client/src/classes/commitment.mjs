@@ -15,8 +15,8 @@ class Commitment {
 
   isNullifiedOnChain = -1;
 
-  constructor({ ercAddress, tokenId, value, pkd = [], compressedPkd, salt }) {
-    const items = { ercAddress, tokenId, value, pkd, compressedPkd, salt };
+  constructor({ ercAddress, tokenId, value, zkpPublicKey = [], compressedZkpPublicKey, salt }) {
+    const items = { ercAddress, tokenId, value, zkpPublicKey, compressedZkpPublicKey, salt };
     const keys = Object.keys(items);
     for (const key of keys)
       if (items[key] === undefined)
@@ -27,8 +27,8 @@ class Commitment {
       ercAddress,
       tokenId,
       value,
-      pkd,
-      compressedPkd,
+      zkpPublicKey,
+      compressedZkpPublicKey,
       salt,
     });
     // we truncate the hash down to 31 bytes but store it in a 32 byte variable
@@ -38,7 +38,7 @@ class Commitment {
         this.preimage.ercAddress,
         this.preimage.tokenId,
         this.preimage.value,
-        this.preimage.compressedPkd,
+        this.preimage.compressedZkpPublicKey,
         this.preimage.salt,
       ]).hex(32, 31),
     );
