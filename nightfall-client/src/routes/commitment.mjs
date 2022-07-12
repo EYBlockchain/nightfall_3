@@ -12,7 +12,7 @@ import {
   getWithdrawCommitments,
   getWalletPendingDepositBalance,
   getWalletPendingSpentBalance,
-  getAllCommitmentsByCompressedPkd,
+  getAllCommitmentsByCompressedZkpPublicKey,
 } from '../services/commitment-storage.mjs';
 
 const router = express.Router();
@@ -91,15 +91,16 @@ router.get('/commitments', async (req, res, next) => {
 
 /**
  * @description the endponit that will send a reponse with all the
- * existent commitments if the query param compressedPkd comes undefined
- * or all commitments by compressedPkd if the query param comes with a string.
+ * existent commitments for the compressedPkd received in the params.
  * @author luizoamorim
  */
 router.get('/all', async (req, res, next) => {
   logger.debug('commitment/all endpoint received GET');
-  const { compressedPkd } = req.query;
+  const { compressedZkpPublicKey } = req.query;
   try {
-    const allCommitmentsByCompressedPkd = await getAllCommitmentsByCompressedPkd(compressedPkd);
+    const allCommitmentsByCompressedPkd = await getAllCommitmentsByCompressedZkpPublicKey(
+      compressedZkpPublicKey,
+    );
     res.json({ allCommitmentsByCompressedPkd });
   } catch (err) {
     logger.error(err);
