@@ -12,9 +12,8 @@ import {
   getWithdrawCommitments,
   getWalletPendingDepositBalance,
   getWalletPendingSpentBalance,
+  getAllCommitmentsByCompressedPkd,
 } from '../services/commitment-storage.mjs';
-import CommitmentService from '../services/commitment-service.mjs';
-import CommitmentRepository from '../repositories/commitment-repository.mjs';
 
 const router = express.Router();
 
@@ -94,9 +93,9 @@ router.get('/all', async (req, res, next) => {
   logger.debug('commitment/all endpoint received GET');
   const { compressedPkd } = req.query;
   try {
-    const commitmentService = new CommitmentService(new CommitmentRepository());
-    const commitments = await commitmentService.getAllCommitmentsByCompressedPkd(compressedPkd);
-    res.json({ commitments });
+    const allCommitmentsByCompressedPkd = await getAllCommitmentsByCompressedPkd(compressedPkd);
+    if (allCommitmentsByCompressedPkd) res.status(200).json({ allCommitmentsByCompressedPkd });
+    res.status(404).json({ message: 'Do not exist commitments for this compressedPkd' });
   } catch (err) {
     logger.error(err);
     next(err);

@@ -673,3 +673,25 @@ export async function findUsableCommitmentsMutex(
     findUsableCommitments(compressedPkd, ercAddress, tokenId, _value, onlyOne),
   );
 }
+
+/**
+ * @function getCommitmentsByCompressedPkd is a controller to take care of some logic
+ * between the route endpoint and the service function.
+ * @param {string | undefined} compressedPkd the compressed pkd derivated from the user
+ * mnemonic coming from the SDK or Wallet.
+ * @returns if the paramenter is different of undefined, returns all the
+ * commitments existent for this compressed pkd. Else returns all the commitments
+ * in the database.
+ * @author luizoamorim
+ */
+export async function getAllCommitmentsByCompressedPkd(compressedPkd) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  const allCommitmentsByCompressedPKD = await db
+    .collection(COMMITMENTS_COLLECTION)
+    .find({
+      'preimage.compressedPkd': compressedPkd.toString(),
+    })
+    .toArray();
+  return allCommitmentsByCompressedPKD;
+}
