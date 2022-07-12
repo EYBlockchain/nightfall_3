@@ -4,7 +4,7 @@ A commitment class
 import gen from 'general-number';
 import config from 'config';
 import poseidon from 'common-files/utils/crypto/poseidon/poseidon.mjs';
-import { compressPublicKey } from './keys.mjs';
+import { compressPublicKey } from '../services/keys.mjs';
 
 const { generalise } = gen;
 const { BN128_GROUP_ORDER } = config;
