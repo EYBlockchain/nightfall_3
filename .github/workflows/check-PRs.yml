@@ -91,6 +91,12 @@ jobs:
         with:
           node-version: '14.17.0'
 
+      - name: install latest npm
+        run: |
+          npm install -g npm &&
+          npm --version &&
+          npm list -g --depth 0
+
       - name: Build adversary
         run: npm run build-adversary
 
@@ -219,6 +225,7 @@ jobs:
       - name: Run tx-gas.mjs test suites
         run: |
           npm ci
+          docker wait nightfall_3_deployer_1
           VERBOSE=true npm run test-gas
 
       - name: Debug logs - after integration test run

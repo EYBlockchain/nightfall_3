@@ -18,6 +18,7 @@ import {
   waitForNoPendingCommitments,
 } from './utils/utils.mjs';
 import logger from '../common-files/utils/logger.mjs';
+import getAddress from './utils/getAddress.js';
 
 const { expect } = chai;
 chai.use(chaiHttp);
@@ -112,7 +113,7 @@ describe('Testing with an adversary', () => {
           `Proposing L2 Block with L2 block number ${block.blockNumberL2} failed due to error: ${error} `,
         );
       });
-    ercAddress = await nf3User.getContractAddress('ERC20Mock');
+    ercAddress = getAddress('ERC20Mock', await nf3User.getNetworkId());
 
     // Because rollbacks removes the only registered proposer,
     // the proposer is registered again after each removal

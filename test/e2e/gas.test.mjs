@@ -11,6 +11,7 @@ import {
   Web3Client,
   expectTransaction,
 } from '../utils/utils.mjs';
+import getAddress from '../utils/getAddress.js';
 
 // so we can use require with mjs file
 const { expect } = chai;
@@ -95,7 +96,7 @@ describe('Gas test', () => {
     });
 
     await nf3Users[0].init(mnemonics.user1);
-    erc20Address = await nf3Users[0].getContractAddress('ERC20Mock');
+    erc20Address = getAddress('ERC20Mock', await nf3Users[0].getNetworkId());
 
     stateAddress = await nf3Users[0].stateContractAddress;
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
