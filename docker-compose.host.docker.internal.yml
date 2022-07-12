@@ -25,7 +25,7 @@ services:
       LOG_LEVEL: debug
       # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
       # startup routines will wait for a blockchain client to be reachable on this network
-      ETH_NETWORK: development
+      ETH_NETWORK: geth
       BLOCKCHAIN_WS_HOST: host.docker.internal
 
   optimist1:
@@ -47,4 +47,4 @@ services:
       - 'host.docker.internal:host-gateway'
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
-      ETH_NETWORK: development
+      ETH_NETWORK: geth

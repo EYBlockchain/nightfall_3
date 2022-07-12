@@ -1,15 +1,15 @@
 const { exec } = require('child_process');
+const { ENVIRONMENTS } = require('config');
 const path = require('path');
 
 exports.mochaGlobalSetup = async function () {
   process.env.NODE_CONFIG_DIR = path.join(__dirname, '../../config');
-  const ETH_NETWORK = process.env.ETH_NETWORK || 'localhost';
-  console.log(ETH_NETWORK);
+  const environment = ENVIRONMENTS[process.env.ENVIRONMENT] || ENVIRONMENTS.localhost;
 
   const prom = () =>
     new Promise(resolve =>
       exec(
-        `cd 'test/deploy-contracts' && npx --yes truffle migrate --to 2 --network=${ETH_NETWORK}`,
+        `cd 'test/deploy-contracts' && npx --yes truffle migrate --to 2 --network=${environment.ethNetwork}`,
         (error, stdout, stderr) => {
           console.log(stdout);
           console.log(stderr);

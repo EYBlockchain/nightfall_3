@@ -33,7 +33,7 @@ services:
       OPTIMIST_HOST: optimist1
       OPTIMIST_PORT: 80
       USE_STUBS: 'false' # make sure this flag is the same as in deployer service
-    command: ['npm', 'run', 'dev']
+    command: [ 'npm', 'run', 'dev' ]
 
   client2:
     image: ghcr.io/eyblockchain/nightfall3-client:latest
@@ -66,7 +66,7 @@ services:
       OPTIMIST_HOST: optimist2
       OPTIMIST_PORT: 80
       USE_STUBS: 'false' # make sure this flag is the same as in deployer service
-    command: ['npm', 'run', 'dev']
+    command: [ 'npm', 'run', 'dev' ]
 
   worker:
     #  image: 3800decac71d
@@ -97,7 +97,7 @@ services:
       LOG_LEVEL: debug
       # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
       # startup routines will wait for a blockchain client to be reachable on this network
-      ETH_NETWORK: blockchain1
+      ETH_NETWORK: ganache
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
       ZOKRATES_WORKER_HOST: worker
@@ -141,7 +141,7 @@ services:
       LOG_LEVEL: debug
       IS_CHALLENGER: 'false'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
-    command: ['npm', 'run', 'dev']
+    command: [ 'npm', 'run', 'dev' ]
 
   optimist2:
     image: ghcr.io/eyblockchain/nightfall3-optimist:latest
@@ -165,7 +165,7 @@ services:
       LOG_LEVEL: error
       IS_CHALLENGER: 'false'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
-    command: ['npm', 'run', 'dev']
+    command: [ 'npm', 'run', 'dev' ]
 
   hosted-utils-api-server:
     build:
@@ -190,8 +190,13 @@ services:
     environment:
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
+<<<<<<< HEAD
       LOG_LEVEL: error
       ETH_NETWORK: blockchain1
+=======
+      LOG_LEVEL: warn
+      ETH_NETWORK: ganache
+>>>>>>> bec74114 (fix: fixing adversary test ⚔)
 
 volumes:
   mongodb1: null

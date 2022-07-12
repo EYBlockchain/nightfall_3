@@ -138,14 +138,6 @@ module.exports = {
     DEFAULT_CONTRACT_FILES_URL: 'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com',
   },
   ENVIRONMENTS: {
-    mainnet: {
-      name: 'Mainnet',
-      chainId: 1,
-      clientApiUrl: '',
-      optimistApiUrl: '',
-      optimistWsUrl: '',
-      web3WsUrl: '',
-    },
     ropsten: {
       name: 'Ropsten',
       chainId: 3,
@@ -154,17 +146,16 @@ module.exports = {
       optimistWsUrl: 'wss://optimist1-ws.testnet.nightfall3.com',
       web3WsUrl: `${process.env.ROPSTEN_NODE}`,
     },
-    rinkeby: {
-      name: 'Rinkeby',
-      chainId: 4,
-      clientApiUrl: '',
-      optimistApiUrl: '',
-      optimistWsUrl: '',
-      web3WsUrl: '',
-    },
+
     localhost: {
+<<<<<<< HEAD
       name: 'Localhost',
       chainId: 1337,
+=======
+      name: 'localhost',
+      ethNetwork: process.env.ETH_NETWORK || 'localhost',
+      chainId: 4378921,
+>>>>>>> bec74114 (fix: fixing adversary test ⚔)
       clientApiUrl: process.env.CLIENT_HOST
         ? `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`
         : 'http://localhost:8080',
