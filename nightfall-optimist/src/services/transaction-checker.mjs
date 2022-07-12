@@ -174,7 +174,7 @@ async function verifyProof(transaction) {
       inputs = generalise(
         [
           transaction.ercAddress,
-          ...generalise(transaction.tokenId).limbs(224, 2),
+          generalise(transaction.tokenId).limbs(32, 8),
           transaction.value,
           transaction.commitments[0],
         ].flat(Infinity),
@@ -245,7 +245,7 @@ async function verifyProof(transaction) {
       inputs = generalise(
         [
           transaction.ercAddress,
-          transaction.tokenId,
+          generalise(transaction.tokenId).limbs(32, 8),
           transaction.value,
           transaction.nullifiers[0],
           transaction.recipientAddress,

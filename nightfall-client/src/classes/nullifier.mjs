@@ -2,7 +2,7 @@
 A nullifier class
 */
 import gen from 'general-number';
-import sha256 from 'common-files/utils/crypto/sha256.mjs';
+import poseidon from 'common-files/utils/crypto/poseidon/poseidon.mjs';
 
 const { generalise } = gen;
 
@@ -16,9 +16,7 @@ class Nullifier {
       nsk,
       commitment: commitment.hash,
     });
-    // we truncate the hash down to 31 bytes but store it in a 32 byte variable
-    // this is consistent to what we do in the ZKP circuits
-    this.hash = generalise(sha256([this.preimage.nsk, this.preimage.commitment]).hex(32, 31));
+    this.hash = poseidon([this.preimage.nsk, this.preimage.commitment]);
   }
 }
 

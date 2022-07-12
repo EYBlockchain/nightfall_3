@@ -42,7 +42,7 @@ async function transfer(transferParams) {
   // let's extract the input items
   const { offchain = false, ...items } = transferParams;
   const { ercAddress, tokenId, recipientData, nsk, ask, fee } = generalise(items);
-  const { pkd, compressedPkd } = calculateIvkPkdfromAskNsk(ask, nsk);
+  const { pkd } = calculateIvkPkdfromAskNsk(ask, nsk);
   const { recipientCompressedPkds, values } = recipientData;
   const recipientPkds = recipientCompressedPkds.map(key => decompressKey(key));
   if (recipientCompressedPkds.length > 1)
@@ -52,7 +52,7 @@ async function transfer(transferParams) {
   // will enable us to conduct our transfer.  Let's rummage in the db...
   const totalValueToSend = values.reduce((acc, value) => acc + value.bigInt, 0n);
   const oldCommitments = await findUsableCommitmentsMutex(
-    compressedPkd,
+    pkd,
     ercAddress,
     tokenId,
     totalValueToSend,
@@ -73,38 +73,26 @@ async function transfer(transferParams) {
   if (change !== 0n) {
     values.push(new GN(change));
     recipientPkds.push(pkd);
-    recipientCompressedPkds.push(compressedPkd);
   }
   const newCommitments = [];
   let secrets = [];
   const salts = [];
-  let potentialSalt;
-  let potentialCommitment;
-  for (let i = 0; i < recipientCompressedPkds.length; i++) {
-    // loop to find a new salt until the commitment hash is smaller than the BN128_GROUP_ORDER
-    do {
-      // eslint-disable-next-line no-await-in-loop
-      potentialSalt = new GN((await rand(ZKP_KEY_LENGTH)).bigInt % BN128_GROUP_ORDER);
-      potentialCommitment = new Commitment({
+  for (let i = 0; i < recipientPkds.length; i++) {
+    newCommitments.push(
+      new Commitment({
         ercAddress,
         tokenId,
         value: values[i],
         pkd: recipientPkds[i],
-        compressedPkd: recipientCompressedPkds[i],
-        salt: potentialSalt,
-      });
-      // encrypt secrets such as erc20Address, tokenId, value, salt for recipient
-      if (i === 0) {
-        // eslint-disable-next-line no-await-in-loop
-        secrets = await Secrets.encryptSecrets(
-          [ercAddress.bigInt, tokenId.bigInt, values[i].bigInt, potentialSalt.bigInt],
-          [recipientPkds[0][0].bigInt, recipientPkds[0][1].bigInt],
-        );
-      }
-    } while (potentialCommitment.hash.bigInt > BN128_GROUP_ORDER);
-    salts.push(potentialSalt);
-    newCommitments.push(potentialCommitment);
+        salt: new GN((await rand(ZKP_KEY_LENGTH)).field(BN128_GROUP_ORDER)), // eslint-disable-line no-await-in-loop
+      }),
+    );
   }
+  // encrypt secrets such as erc20Address, tokenId, value, salt for recipient
+  secrets = await Secrets.encryptSecrets(
+    [ercAddress.bigInt, tokenId.bigInt, values[0].bigInt, newCommitments[0].salt.bigInt],
+    [recipientPkds[0][0].bigInt, recipientPkds[0][1].bigInt],
+  );
 
   // compress the secrets to save gas
   const compressedSecrets = Secrets.compressSecrets(secrets);
@@ -136,12 +124,12 @@ async function transfer(transferParams) {
 
   // now we have everything we need to create a Witness and compute a proof
   const witness = [
-    oldCommitments.map(commitment => commitment.preimage.ercAddress.integer),
+    oldCommitments.map(commitment => commitment.preimage.ercAddress.field(BN128_GROUP_ORDER)),
     oldCommitments.map(commitment => [
       commitment.preimage.tokenId.limbs(32, 8),
-      commitment.preimage.value.limbs(32, 8),
-      commitment.preimage.salt.limbs(32, 8),
-      commitment.hash.limbs(32, 8),
+      commitment.preimage.value.limbs(8, 31),
+      commitment.preimage.salt.field(BN128_GROUP_ORDER),
+      commitment.hash.field(BN128_GROUP_ORDER),
       ask.field(BN128_GROUP_ORDER),
     ]),
     newCommitments.map(commitment => [
@@ -149,16 +137,16 @@ async function transfer(transferParams) {
         commitment.preimage.pkd[0].field(BN128_GROUP_ORDER),
         commitment.preimage.pkd[1].field(BN128_GROUP_ORDER),
       ],
-      commitment.preimage.value.limbs(32, 8),
-      commitment.preimage.salt.limbs(32, 8),
+      commitment.preimage.value.limbs(8, 31),
+      commitment.preimage.salt.field(BN128_GROUP_ORDER),
     ]),
-    newCommitments.map(commitment => commitment.hash.integer),
-    nullifiers.map(nullifier => nullifier.preimage.nsk.limbs(32, 8)),
-    nullifiers.map(nullifier => generalise(nullifier.hash.hex(32, 31)).integer),
-    localSiblingPaths.map(siblingPath => siblingPath[0].field(BN128_GROUP_ORDER, false)),
+    newCommitments.map(commitment => commitment.hash.field(BN128_GROUP_ORDER)),
+    nullifiers.map(nullifier => nullifier.preimage.nsk.field(BN128_GROUP_ORDER)),
+    nullifiers.map(nullifier => nullifier.hash.field(BN128_GROUP_ORDER)),
+    localSiblingPaths.map(siblingPath => siblingPath[0].field(BN128_GROUP_ORDER)),
     localSiblingPaths.map(siblingPath =>
-      siblingPath.slice(1).map(node => node.field(BN128_GROUP_ORDER, false)),
-    ), // siblingPAth[32] is a sha hash and will overflow a field but it's ok to take the mod here - hence the 'false' flag
+      siblingPath.slice(1).map(node => node.field(BN128_GROUP_ORDER)),
+    ),
     leafIndices,
     [
       ...secrets.ephemeralKeys.map(key => key.limbs(32, 8)),
@@ -236,7 +224,10 @@ async function transfer(transferParams) {
       // we only want to store our own commitments so filter those that don't
       // have our public key
       newCommitments
-        .filter(commitment => commitment.preimage.compressedPkd.hex(32) === compressedPkd.hex(32))
+        .filter(
+          commitment =>
+            commitment.preimage.pkd[0].field(BN128_GROUP_ORDER) === pkd[0].field(BN128_GROUP_ORDER),
+        )
         .forEach(commitment => storeCommitment(commitment, nsk)); // TODO insertMany
       // mark the old commitments as nullified
       await Promise.all(
@@ -252,7 +243,10 @@ async function transfer(transferParams) {
       .encodeABI();
     // store the commitment on successful computation of the transaction
     newCommitments
-      .filter(commitment => commitment.preimage.compressedPkd.hex(32) === compressedPkd.hex(32))
+      .filter(
+        commitment =>
+          commitment.preimage.pkd[0].field(BN128_GROUP_ORDER) === pkd[0].field(BN128_GROUP_ORDER),
+      )
       .forEach(commitment => storeCommitment(commitment, nsk)); // TODO insertMany
     // mark the old commitments as nullified
     await Promise.all(

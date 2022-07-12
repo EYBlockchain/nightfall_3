@@ -14,7 +14,6 @@ import { getContractInstance } from 'common-files/utils/contract.mjs';
 import logger from 'common-files/utils/logger.mjs';
 import { Commitment, Transaction } from '../classes/index.mjs';
 import { storeCommitment } from './commitment-storage.mjs';
-import { compressPublicKey } from './keys.mjs';
 
 const {
   ZKP_KEY_LENGTH,
@@ -33,25 +32,19 @@ async function deposit(items) {
   // before we do anything else, long hex strings should be generalised to make
   // subsequent manipulations easier
   const { ercAddress, tokenId, value, pkd, nsk, fee } = generalise(items);
-  const compressedPkd = compressPublicKey(pkd);
-
-  let commitment;
-  let salt;
-  do {
-    // we also need a salt to make the commitment unique and increase its entropy
-    // eslint-disable-next-line
-    salt = (await rand(ZKP_KEY_LENGTH)).field(BN128_GROUP_ORDER, false);
-    // next, let's compute the zkp commitment we're going to store
-    commitment = new Commitment({ ercAddress, tokenId, value, compressedPkd, salt });
-  } while (commitment.hash.bigInt > BN128_GROUP_ORDER);
+  // we also need a salt to make the commitment unique and increase its entropy
+  const salt = (await rand(ZKP_KEY_LENGTH)).field(BN128_GROUP_ORDER, false);
+  // next, let's compute the zkp commitment we're going to store
+  const commitment = new Commitment({ ercAddress, tokenId, value, pkd, salt });
 
   logger.debug(`Hash of new commitment is ${commitment.hash.hex()}`);
   // now we can compute a Witness so that we can generate the proof
   const witness = [
     ercAddress.field(BN128_GROUP_ORDER),
-    tokenId.limbs(224, 2),
+    tokenId.limbs(32, 8),
     value.field(BN128_GROUP_ORDER),
-    ...Commitment.compressedPointToFields(compressedPkd),
+    pkd[0].field(BN128_GROUP_ORDER),
+    pkd[1].field(BN128_GROUP_ORDER),
     salt,
     commitment.hash.field(BN128_GROUP_ORDER),
   ].flat(Infinity);

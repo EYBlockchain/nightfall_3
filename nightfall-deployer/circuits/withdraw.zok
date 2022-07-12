@@ -8,26 +8,32 @@ from "utils/casts/u32_to_bits.zok" import main as u32_to_bool_32
 from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
 from "utils/pack/u32/pack256.zok" import main as u32_8_to_field
 from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8
+from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field
+from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field
 
 from "./common/hashes/mimc/mimc-hash-2.zok" import main as mimc2
 from "./common/hashes/sha256/pad512ThenHash.zok" import main as sha256of512
 from "./common/hashes/sha256/pad1280ThenHash.zok" import main as sha256of1280
+from "hashes/poseidon/poseidon.zok" import main as poseidon
 
 from "./common/merkle-tree/mimc-path-check.zok" import main as pathCheck
 
+// 2 ^ 161
+const field SHIFT = 2923003274661805836407369665432566039311865085952
+
 struct OldCommitmentPreimage {
-	u32[8] salt
-	u32[8] hash
+	field salt
+	field hash
 	field ask
 }
 
 def main(\
-	field fErcAddress,\
-	field fId,\
- 	field fValue,\
+	field ercAddress,\
+	u32[8] id,\
+ 	field value,\
 	private OldCommitmentPreimage oldCommitment,\
-	private u32[8] nsk,\
-	field fNullifier,\
+	private field nsk,\
+	field nullifier,\
 	field recipientAddress,\
 	field root,\
 	private field[32] path,\
@@ -38,47 +44,35 @@ def main(\
 	field[2] g = [context.Gu, context.Gv]
 
 	// Calculation of ivk from ask and nsk
-	field nskField = u32_8_to_field(nsk)
-	field ivk = mimc2([oldCommitment.ask, nskField])
+	field ivk = mimc2([oldCommitment.ask, nsk])
 	bool[256] ivkBool = field_to_bool_256(ivk)
 	field[2] pkd = scalarMult(ivkBool, g, context)
-	bool[256] pkdBool = edwardsCompress(pkd)
-	u32[8] pkdU32 = bool_256_to_u32_8(pkdBool)
-
-	u32[8] ercAddress = field_to_u32_8(fErcAddress)
-	u32[8] id = field_to_u32_8(fId)
-	u32[8] value = field_to_u32_8(fValue)
-	u32[8] nullifier = field_to_u32_8(fNullifier)
 
 	// check the nullifier is valid
-	u32[8] sha = sha256of512([\
-		...nsk,\
-		...oldCommitment.hash\
+	field nullifierCheck = poseidon([\
+		nsk,\
+		oldCommitment.hash\
 	])
+	assert(nullifierCheck == nullifier)
 
-	// nullifiers are truncated to 248 bits since they are public inputs
-	// so we must check the 248 bits while minimising constraints/comp time - casting to bool[256] is a slower operation than comparing u32s
-
-	// last 224 bits:
-	assert(sha[1..8] == nullifier[1..8])
-	// first 24 bits:
-	assert(u32_to_bool_32(sha[0])[8..32] == u32_to_bool_32(nullifier[0])[8..32])
+	// pack the top four bytes of the token id into the ercAddress field (address only
+	// uses 160 bits and the Shield contract prevents creation of something with more than 160 bits)
+	field idTop4Bytes = u32_array_to_field([id[0]])
+	field idRemainder = u32_array_to_field(id[1..8])
+	field packedErcAddress = ercAddress + idTop4Bytes * SHIFT
 
 	// check the old commitment is valid
-	sha = sha256of1280([\
-		...ercAddress,\
-		...id,\
-		...value,\
-		...pkdU32,\
-		...oldCommitment.salt\
+	field oldCommitmentCheck = poseidon([\
+		packedErcAddress,\
+		idRemainder,\
+		value,\
+		...pkd,\
+		oldCommitment.salt\
 	])
-	// last 224 bits:
-	assert(sha[1..8] == oldCommitment.hash[1..8])
-	// first 24 bits:
-	assert(u32_to_bool_32(sha[0])[8..32] == u32_to_bool_32(oldCommitment.hash[0])[8..32])
+	assert(oldCommitmentCheck == oldCommitment.hash)
 
 	// check that the old commitment is in the merkle tree
-	field mimcHash = u32_8_to_field(oldCommitment.hash)
+	field mimcHash = oldCommitment.hash
 	assert(pathCheck([root, ...path], order, mimcHash))
 
 	return

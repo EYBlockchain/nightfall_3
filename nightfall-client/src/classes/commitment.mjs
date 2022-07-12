@@ -5,7 +5,7 @@ import gen from 'general-number';
 import config from 'config';
 import poseidon from 'common-files/utils/crypto/poseidon/poseidon.mjs';
 
-const { generalise, GN } = gen;
+const { generalise } = gen;
 const { BN128_GROUP_ORDER } = config;
 
 class Commitment {
@@ -17,8 +17,8 @@ class Commitment {
 
   isNullifiedOnChain = -1;
 
-  constructor({ ercAddress, tokenId, value, pkd = [], compressedPkd, salt }) {
-    const items = { ercAddress, tokenId, value, pkd, compressedPkd, salt };
+  constructor({ ercAddress, tokenId, value, pkd = [], salt }) {
+    const items = { ercAddress, tokenId, value, pkd, salt };
     const keys = Object.keys(items);
     for (const key of keys)
       if (items[key] === undefined)
@@ -30,22 +30,10 @@ class Commitment {
       tokenId,
       value,
       pkd,
-      compressedPkd,
       salt,
     });
     // we truncate the hash down to 31 bytes but store it in a 32 byte variable
     // this is consistent to what we do in the ZKP circuits
-    /*
-    this.hash = generalise(
-      sha256([
-        this.preimage.ercAddress,
-        this.preimage.tokenId,
-        this.preimage.value,
-        this.preimage.compressedPkd,
-        this.preimage.salt,
-      ]).hex(32, 31),
-    );
-    */
     const [top4Bytes, remainder] = tokenId.limbs(160, 2).map(l => BigInt(l));
     const SHIFT = 2923003274661805836407369665432566039311865085952n;
     this.hash = poseidon(
@@ -53,7 +41,8 @@ class Commitment {
         this.preimage.ercAddress.bigInt + top4Bytes * SHIFT,
         remainder,
         this.preimage.value.field(BN128_GROUP_ORDER),
-        ...Commitment.compressedPointToFields(this.preimage.compressedPkd),
+        this.preimage.pkd[0].field(BN128_GROUP_ORDER),
+        this.preimage.pkd[1].field(BN128_GROUP_ORDER),
         this.preimage.salt.field(BN128_GROUP_ORDER),
       ]),
     );
@@ -65,13 +54,6 @@ class Commitment {
       preimage: this.preimage.all.hex(),
       hash: this.hash.hex(),
     };
-  }
-
-  static compressedPointToFields(point) {
-    const bin = point.binary.padStart(256, '0');
-    const parity = bin[0];
-    const ordinate = bin.slice(1);
-    return [parity, new GN(ordinate, 'binary').field(BN128_GROUP_ORDER)];
   }
 }
 

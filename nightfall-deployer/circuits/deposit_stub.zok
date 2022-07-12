@@ -5,9 +5,9 @@
 // - salt (private) is the salt for the newCommitment
 // - newCommitment (public) is the newCommitment
 
-struct CompressedPoint {
-	field parity
-	field ordinate
+struct Point {
+	field x
+	field y
 }
 
 struct TokenId {
@@ -19,14 +19,12 @@ def main(\
 	field ercContractAddress,\
 	TokenId id,\
  	field value,\
-	private CompressedPoint compressedPkd,\
+	private Point pkd,\
 	private field salt,\
 	field newCommitment\
 )->():
 
-	field u = ercContractAddress + id.top4Bytes + id.remainder + value + newCommitment + salt
-	field v = compressedPkd.parity + compressedPkd.ordinate
+	field u = pkd.x * pkd.y + ercContractAddress + id.top4Bytes + id.remainder + value + newCommitment * salt
 
-	assert(v==v)
 	assert(u==u)
 	return

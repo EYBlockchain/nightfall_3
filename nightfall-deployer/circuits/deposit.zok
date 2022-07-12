@@ -1,4 +1,5 @@
 from "hashes/poseidon/poseidon.zok" import main as poseidon
+from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field
 
 // Inputs for main:
 // - ercContractAddress (public) is the ERCx contract address
@@ -7,44 +8,31 @@ from "hashes/poseidon/poseidon.zok" import main as poseidon
 // - salt (private) is the salt for the newCommitment
 // - newCommitment (public) is the newCommitment
 
-struct CompressedPoint {
-	field parity
-	field ordinate
-}
-
-// we encode the tokenId as two fields.  The 'top4Bytes' field contains the upper 32 bits,
-// the 'remainder' field contains the rest of the number
-struct u256 {
-	field top4Bytes
-	field remainder
-}
+type Point = field[2]
 
 // 2 ^ 161
 const field SHIFT = 2923003274661805836407369665432566039311865085952
 
 def main(\
 	field ercContractAddress,\
-	u256 id,\
+	u32[8] id,\
  	field value,\
-	private CompressedPoint compressedPkd,\
+	private Point pkd,\
 	private field salt,\
 	field newCommitment\
 )->():
 
 	// pack the top four bytes of the token id into the ercAddress field (address only
 	// uses 160 bits and the Shield contract prevents creation of something with more than 160 bits)
-	field packedErcAddress = ercContractAddress + id.top4Bytes * SHIFT
-
-	// check that the parity bit is indeed a single bit. Not certain this is required but it's
-	// a very low-cost validation
-	assert (compressedPkd.parity * ( 1 - compressedPkd.parity) == 0)
+	field idTop4Bytes = u32_array_to_field([id[0]])
+	field idRemainder = u32_array_to_field(id[1..8])
+	field packedErcAddress = ercContractAddress + idTop4Bytes * SHIFT
 
 	field newCommitmentCheck = poseidon([
 		packedErcAddress,\
-		id.remainder,\
+		idRemainder,\
 		value,\
-		compressedPkd.parity,\
-		compressedPkd.ordinate,\
+		...pkd,\
 		salt\
 	])
 	assert(newCommitmentCheck == newCommitment)
