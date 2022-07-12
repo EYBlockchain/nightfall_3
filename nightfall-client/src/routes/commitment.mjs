@@ -94,8 +94,7 @@ router.get('/all', async (req, res, next) => {
   const { compressedPkd } = req.query;
   try {
     const allCommitmentsByCompressedPkd = await getAllCommitmentsByCompressedPkd(compressedPkd);
-    if (allCommitmentsByCompressedPkd) res.status(200).json({ allCommitmentsByCompressedPkd });
-    res.status(404).json({ message: 'Do not exist commitments for this compressedPkd' });
+    res.json({ allCommitmentsByCompressedPkd });
   } catch (err) {
     logger.error(err);
     next(err);
