@@ -81,7 +81,7 @@ services:
       LOG_LEVEL: debug
       # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
       # startup routines will wait for a blockchain client to be reachable on this network
-      ETH_NETWORK: blockchain1
+      ETH_NETWORK: geth
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
       ZOKRATES_WORKER_HOST: worker
@@ -124,6 +124,10 @@ services:
     build:
       dockerfile: user-local.Dockerfile
       context: ../../
+    volumes:
+      - type: bind
+        source: ../deploy-contracts
+        target: /app/test/deploy-contracts
     networks:
       - pong_network
     environment:
@@ -143,6 +147,10 @@ services:
     build:
       dockerfile: user-local.Dockerfile
       context: ../../
+    volumes:
+      - type: bind
+        source: ../deploy-contracts
+        target: /app/test/deploy-contracts
     networks:
       - pong_network
     environment:

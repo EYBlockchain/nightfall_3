@@ -38,7 +38,8 @@ docker wait ping-pong_deployer_1
 cd ../deploy-contracts
 export NODE_CONFIG_DIR=$(pwd)/../../config
 
-npx --yes truffle migrate --to 2 --network=${ETH_NETWORK}
+npx truffle compile --all
+npx --yes truffle migrate --to 2 --network=localhost
 cd ../ping-pong
 
 docker-compose logs -f

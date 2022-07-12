@@ -16,7 +16,7 @@ services:
       LOG_LEVEL: debug
       # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
       # startup routines will wait for a blockchain client to be reachable on this network
-      ETH_NETWORK: development
+      ETH_NETWORK: geth
       BLOCKCHAIN_WS_HOST: host.docker.internal
       BLOCKCHAIN_PORT: 8546
       # ETH_PRIVATE_KEY: 4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e
