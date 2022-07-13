@@ -18,8 +18,8 @@ class Commitment {
 
   isNullifiedOnChain = -1;
 
-  constructor({ ercAddress, tokenId, value, pkd = [], salt }) {
-    const items = { ercAddress, tokenId, value, pkd, salt };
+  constructor({ ercAddress, tokenId, value, pkd, salt }) {
+    const items = generalise({ ercAddress, tokenId, value, pkd, salt });
     const keys = Object.keys(items);
     for (const key of keys)
       if (items[key] === undefined)
@@ -29,17 +29,11 @@ class Commitment {
 
     // TODO the compressedPkd is not really part of the pre-image but it's used to look up
     // the commitment in the DB.  We should move it outside the NewCommitmentPreimage
-    this.preimage = generalise({
-      ercAddress,
-      tokenId,
-      value,
-      compressedPkd: compressPublicKey(pkd),
-      pkd,
-      salt,
-    });
+    this.preimage = generalise({ ...items, compressedPkd: compressPublicKey(items.pkd) });
+    console.log('PREIMAGE', this.preimage);
     // we truncate the hash down to 31 bytes but store it in a 32 byte variable
     // this is consistent to what we do in the ZKP circuits
-    const [top4Bytes, remainder] = tokenId.limbs(160, 2).map(l => BigInt(l));
+    const [top4Bytes, remainder] = items.tokenId.limbs(160, 2).map(l => BigInt(l));
     const SHIFT = 2923003274661805836407369665432566039311865085952n;
     this.hash = poseidon(
       generalise([

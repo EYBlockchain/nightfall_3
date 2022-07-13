@@ -42,7 +42,7 @@ async function transfer(transferParams) {
   // let's extract the input items
   const { offchain = false, ...items } = transferParams;
   const { ercAddress, tokenId, recipientData, nsk, ask, fee } = generalise(items);
-  const { pkd } = calculateIvkPkdfromAskNsk(ask, nsk);
+  const { pkd, compressedPkd } = calculateIvkPkdfromAskNsk(ask, nsk);
   const { recipientCompressedPkds, values } = recipientData;
   const recipientPkds = recipientCompressedPkds.map(key => decompressKey(key));
   if (recipientCompressedPkds.length > 1)
@@ -52,7 +52,7 @@ async function transfer(transferParams) {
   // will enable us to conduct our transfer.  Let's rummage in the db...
   const totalValueToSend = values.reduce((acc, value) => acc + value.bigInt, 0n);
   const oldCommitments = await findUsableCommitmentsMutex(
-    pkd,
+    compressedPkd,
     ercAddress,
     tokenId,
     totalValueToSend,
@@ -84,13 +84,19 @@ async function transfer(transferParams) {
         tokenId,
         value: values[i],
         pkd: recipientPkds[i],
-        salt: new GN((await rand(ZKP_KEY_LENGTH)).field(BN128_GROUP_ORDER)), // eslint-disable-line no-await-in-loop
+        salt: new GN((await rand(ZKP_KEY_LENGTH)).field(BN128_GROUP_ORDER, false)), // eslint-disable-line no-await-in-loop
       }),
     );
   }
+  console.log('SECRETS1');
+  console.log('ERC', ercAddress.bigInt);
+  console.log('TOKEN', tokenId.bigInt);
+  console.log('VALUE', values[0].bigInt);
+  console.log('NEW_COM', newCommitments[0].preimage.salt.bigInt);
+  console.log('SECRETS2', [recipientPkds[0][0].bigInt, recipientPkds[0][1].bigInt]);
   // encrypt secrets such as erc20Address, tokenId, value, salt for recipient
   secrets = await Secrets.encryptSecrets(
-    [ercAddress.bigInt, tokenId.bigInt, values[0].bigInt, newCommitments[0].salt.bigInt],
+    [ercAddress.bigInt, tokenId.bigInt, values[0].bigInt, newCommitments[0].preimage.salt.bigInt],
     [recipientPkds[0][0].bigInt, recipientPkds[0][1].bigInt],
   );
 
@@ -224,10 +230,7 @@ async function transfer(transferParams) {
       // we only want to store our own commitments so filter those that don't
       // have our public key
       newCommitments
-        .filter(
-          commitment =>
-            commitment.preimage.pkd[0].field(BN128_GROUP_ORDER) === pkd[0].field(BN128_GROUP_ORDER),
-        )
+        .filter(commitment => commitment.preimage.compressedPkd.bigInt === compressedPkd.bigInt)
         .forEach(commitment => storeCommitment(commitment, nsk)); // TODO insertMany
       // mark the old commitments as nullified
       await Promise.all(
@@ -243,10 +246,7 @@ async function transfer(transferParams) {
       .encodeABI();
     // store the commitment on successful computation of the transaction
     newCommitments
-      .filter(
-        commitment =>
-          commitment.preimage.pkd[0].field(BN128_GROUP_ORDER) === pkd[0].field(BN128_GROUP_ORDER),
-      )
+      .filter(commitment => commitment.preimage.compressedPkd.bigInt === compressedPkd.bigInt)
       .forEach(commitment => storeCommitment(commitment, nsk)); // TODO insertMany
     // mark the old commitments as nullified
     await Promise.all(

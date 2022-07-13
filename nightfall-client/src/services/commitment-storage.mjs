@@ -22,6 +22,7 @@ const mutex = new Mutex();
 
 // function to format a commitment for a mongo db and store it
 export async function storeCommitment(commitment, nsk) {
+  if (!commitment.preimage.pkd) throw new Error('Tried to store commitment with no pkd');
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   // we'll also compute and store the nullifier hash.  This will be useful for
@@ -577,6 +578,7 @@ async function findUsableCommitments(compressedPkd, ercAddress, tokenId, _value,
     })
     .toArray();
   if (commitmentArray === []) return null;
+  console.log('COMMITMENT ARRAY', commitmentArray);
   // turn the commitments into real commitment objects
   const commitments = commitmentArray
     .filter(commitment => Number(commitment.isOnChain) > Number(-1)) // filters for on chain commitments

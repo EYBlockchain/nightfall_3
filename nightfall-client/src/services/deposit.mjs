@@ -36,7 +36,6 @@ async function deposit(items) {
   const salt = (await rand(ZKP_KEY_LENGTH)).field(BN128_GROUP_ORDER, false);
   // next, let's compute the zkp commitment we're going to store
   const commitment = new Commitment({ ercAddress, tokenId, value, pkd, salt });
-
   logger.debug(`Hash of new commitment is ${commitment.hash.hex()}`);
   // now we can compute a Witness so that we can generate the proof
   const witness = [
