@@ -54,9 +54,11 @@ const incorrectLeafCount = block => {
 };
 
 export const addBlock = blockType => {
-  error = blockType;
   resetErrorIdx = true;
-  logger.debug(`Received new block types to generate ${error}`);
+  if (blockType !== 'reset') {
+    error = blockType;
+    logger.debug(`Received new block types to generate ${error}`);
+  }
 };
 
 // eslint-disable-next-line import/prefer-default-export
