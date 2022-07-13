@@ -103,7 +103,7 @@ module.exports = {
   TRANSACTIONS_PER_BLOCK: Number(process.env.TRANSACTIONS_PER_BLOCK) || 2,
   RETRIES: Number(process.env.AUTOSTART_RETRIES) || 50,
   USE_STUBS: process.env.USE_STUBS === 'true',
-  VK_IDS: { deposit: 0, single_transfer: 1, double_transfer: 2, withdraw: 3 }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
+  VK_IDS: { deposit: 0, transfer: 1, withdraw: 2 }, // withdraw: 3, withdraw_change: 4 }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
   MAX_PUBLIC_VALUES: {
     ERCADDRESS: 2n ** 161n - 1n,
     COMMITMENT: 2n ** 249n - 1n,

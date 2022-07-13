@@ -24,6 +24,7 @@ import {
 import getProposersUrl from './peers.mjs';
 import { ZkpKeys } from './keys.mjs';
 import { encrypt, genEphemeralKeys, packSecrets } from './kem-dem.mjs';
+import { computeWitness } from '../utils/compute-witness.mjs';
 
 const { BN128_GROUP_ORDER, ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, USE_STUBS } =
   config;
@@ -76,14 +77,13 @@ async function transfer(transferParams) {
   const salts = await Promise.all(values.map(async () => randValueLT(BN128_GROUP_ORDER)));
 
   // Generate new commitments, already truncated to u32[7]
-  const newCommitments = recipientCompressedZkpPublicKeys.map(
-    (rcp, i) =>
+  const newCommitments = values.map(
+    (value, i) =>
       new Commitment({
         ercAddress,
         tokenId,
-        value: values[i],
+        value,
         zkpPublicKey: recipientZkpPublicKeys[i],
-        // compressedZkpPublicKey: rcp,
         salt: salts[i].bigInt,
       }),
   );
@@ -100,7 +100,6 @@ async function transfer(transferParams) {
 
   // Compress the public key as it will be put on-chain
   const compressedEPub = edwardsCompress(ePublic);
-  const binaryEPub = generalise(compressedEPub).binary.padStart(256, '0');
 
   // Commitment Tree Information
   const commitmentTreeInfo = await Promise.all(oldCommitments.map(c => getSiblingInfo(c)));
@@ -111,7 +110,7 @@ async function transfer(transferParams) {
   const leafIndices = commitmentTreeInfo.map(l => l.leafIndex);
   const blockNumberL2s = commitmentTreeInfo.map(l => l.isOnChain);
   const roots = commitmentTreeInfo.map(l => l.root);
-  console.log(
+  logger.info(
     'Constructing transfer transaction with blockNumberL2s',
     blockNumberL2s,
     'and roots',
@@ -130,53 +129,44 @@ async function transfer(transferParams) {
   }
 
   // now we have everything we need to create a Witness and compute a proof
-  const witness = [
-    oldCommitments.map(commitment => commitment.preimage.ercAddress.field(BN128_GROUP_ORDER)),
-    oldCommitments.map(commitment => [
-      commitment.preimage.tokenId.limbs(32, 8),
-      commitment.preimage.value.limbs(8, 31),
-      commitment.preimage.salt.field(BN128_GROUP_ORDER),
-      commitment.hash.field(BN128_GROUP_ORDER),
-      rootKey.field(BN128_GROUP_ORDER),
-    ]),
-    newCommitments.map(commitment => [
-      [
-        commitment.preimage.zkpPublicKey[0].field(BN128_GROUP_ORDER),
-        commitment.preimage.zkpPublicKey[1].field(BN128_GROUP_ORDER),
-      ],
-      commitment.preimage.value.limbs(8, 31),
-      commitment.preimage.salt.field(BN128_GROUP_ORDER),
-    ]),
-    newCommitments.map(commitment => commitment.hash.field(BN128_GROUP_ORDER)),
-    nullifiers.map(nullifier => nullifier.hash.field(BN128_GROUP_ORDER)),
-    localSiblingPaths.map(siblingPath => siblingPath[0].field(BN128_GROUP_ORDER)),
-    localSiblingPaths.map(siblingPath =>
-      siblingPath.slice(1).map(node => node.field(BN128_GROUP_ORDER)),
-    ),
-    leafIndices,
-    generalise(ePrivate).limbs(32, 8),
-    [binaryEPub[0], new GN(binaryEPub.slice(1), 'binary').field(BN128_GROUP_ORDER)],
-    compressedSecrets.map(c => generalise(c).field(BN128_GROUP_ORDER, false)),
-  ].flat(Infinity);
+  const transaction = Transaction.buildSolidityStruct(
+    new Transaction({
+      fee,
+      historicRootBlockNumberL2: blockNumberL2s,
+      transactionType: 1,
+      ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
+      tokenId: compressedSecrets[1], // this is the encrypted tokenID
+      recipientAddress: compressedEPub,
+      commitments: newCommitments,
+      nullifiers,
+      compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
+    }),
+  );
 
+  const privateData = {
+    rootKey: [rootKey, rootKey],
+    oldCommitmentPreimage: oldCommitments.map(o => {
+      return { value: o.preimage.value, salt: o.preimage.salt };
+    }),
+    paths: localSiblingPaths.map(siblingPath => siblingPath.slice(1)),
+    orders: leafIndices,
+    newCommitmentPreimage: newCommitments.map(o => {
+      return { value: o.preimage.value, salt: o.preimage.salt };
+    }),
+    recipientPublicKeys: newCommitments.map(o => o.preimage.zkpPublicKey),
+    ercAddress,
+    tokenId,
+    ephemeralKey: ePrivate,
+  };
+
+  const witness = computeWitness(transaction, roots, privateData);
   logger.debug(`witness input is ${witness.join(' ')}`);
   // call a zokrates worker to generate the proof
-  // This is (so far) the only place where we need to get specific about the
-  // circuit
-  let folderpath;
-  let transactionType;
-  if (oldCommitments.length === 1) {
-    folderpath = 'single_transfer';
-    transactionType = 1;
-    blockNumberL2s.push(0); // We need top pad block numbers if we do a single transfer
-  } else if (oldCommitments.length === 2) {
-    folderpath = 'double_transfer';
-    transactionType = 2;
-  } else throw new Error('Unsupported number of commitments');
-  if (USE_STUBS) folderpath = `${folderpath}_stub`;
+  let folderpath = 'transfer';
+  if (USE_STUBS) folderpath = 'transfer_stub';
   const res = await axios.post(`${PROTOCOL}${ZOKRATES_WORKER_HOST}/generate-proof`, {
     folderpath,
-    inputs: await witness,
+    inputs: witness,
     provingScheme: PROVING_SCHEME,
     backend: BACKEND,
   });
@@ -187,7 +177,7 @@ async function transfer(transferParams) {
   const optimisticTransferTransaction = new Transaction({
     fee,
     historicRootBlockNumberL2: blockNumberL2s,
-    transactionType,
+    transactionType: 1,
     ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
     tokenId: compressedSecrets[1], // this is the encrypted tokenID
     recipientAddress: compressedEPub,

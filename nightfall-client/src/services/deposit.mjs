@@ -16,6 +16,7 @@ import constants from 'common-files/constants/index.mjs';
 import { Commitment, Transaction } from '../classes/index.mjs';
 import { storeCommitment } from './commitment-storage.mjs';
 import { ZkpKeys } from './keys.mjs';
+import { computeWitness } from '../utils/compute-witness.mjs';
 
 const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, USE_STUBS, BN128_GROUP_ORDER } =
   config;
@@ -33,14 +34,18 @@ async function deposit(items) {
   const commitment = new Commitment({ ercAddress, tokenId, value, zkpPublicKey, salt });
   logger.debug(`Hash of new commitment is ${commitment.hash.hex()}`);
   // now we can compute a Witness so that we can generate the proof
-  const witness = [
-    ercAddress.field(BN128_GROUP_ORDER),
-    tokenId.limbs(32, 8),
-    value.field(BN128_GROUP_ORDER),
-    ...zkpPublicKey.all.field(BN128_GROUP_ORDER),
-    salt.field(BN128_GROUP_ORDER),
-    commitment.hash.field(BN128_GROUP_ORDER),
-  ].flat(Infinity);
+  const publicData = Transaction.buildSolidityStruct(
+    new Transaction({
+      fee,
+      transactionType: 0,
+      tokenType: items.tokenType,
+      tokenId,
+      value,
+      ercAddress,
+      commitments: [commitment],
+    }),
+  );
+  const witness = computeWitness(publicData, [], { salt, recipientPublicKeys: [zkpPublicKey] });
   logger.debug(`witness input is ${witness.join(' ')}`);
   // call a zokrates worker to generate the proof
   let folderpath = 'deposit';
