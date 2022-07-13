@@ -10,7 +10,8 @@ import axios from 'axios';
 import gen from 'general-number';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
 import logger from 'common-files/utils/logger.mjs';
-import { Nullifier, Transaction } from '../classes/index.mjs';
+import { randValueLT } from 'common-files/utils/crypto/crypto-random.mjs';
+import { Commitment, Nullifier, Transaction } from '../classes/index.mjs';
 import {
   findUsableCommitmentsMutex,
   markNullified,
@@ -54,6 +55,9 @@ async function withdraw(withdrawParams) {
   // Having found 1 commitment, which is a suitable input to the
   // proof, the next step is to compute its nullifier;
   const nullifier = new Nullifier(oldCommitment, nullifierKey);
+  // we may need to return change to the recipient
+  const change = oldCommitment.preimage.value.bigInt - value;
+  // if so, add an output commitment to do that
   // and the Merkle path from the commitment to the root
   const commitmentTreeInfo = await getSiblingInfo(oldCommitment);
   const siblingPath = generalise(
@@ -65,20 +69,54 @@ async function withdraw(withdrawParams) {
 
   const { leafIndex, isOnChain } = commitmentTreeInfo;
 
-  // now we have everything we need to create a Witness and compute a proof
-  const witness = [
-    oldCommitment.preimage.ercAddress.field(BN128_GROUP_ORDER),
-    oldCommitment.preimage.tokenId.limbs(32, 8),
-    oldCommitment.preimage.value.field(BN128_GROUP_ORDER),
-    oldCommitment.preimage.salt.field(BN128_GROUP_ORDER),
-    oldCommitment.hash.field(BN128_GROUP_ORDER),
-    rootKey.field(BN128_GROUP_ORDER),
-    nullifier.hash.field(BN128_GROUP_ORDER),
-    recipientAddress.field(BN128_GROUP_ORDER),
-    siblingPath[0].field(BN128_GROUP_ORDER),
-    siblingPath.slice(1).map(node => node.field(BN128_GROUP_ORDER)), // siblingPAth[32] is a sha hash and will overflow a field but it's ok to take the mod here - hence the 'false' flag
-    leafIndex,
-  ].flat(Infinity);
+  let witness = [];
+  if (change !== 0n) {
+    const salt = await randValueLT(BN128_GROUP_ORDER);
+    const newCommitment = new Commitment({
+      ercAddress,
+      tokenId,
+      value: change,
+      zkpPublicKey: ZkpKeys.decompressCompressedZkpPublicKey(compressedZkpPublicKey),
+      compressedZkpPublicKey,
+      salt,
+    });
+    witness = [
+      oldCommitment.preimage.ercAddress.field(BN128_GROUP_ORDER),
+      oldCommitment.preimage.tokenId.limbs(32, 8),
+      nullifier.hash.field(BN128_GROUP_ORDER),
+      rootKey.field(BN128_GROUP_ORDER),
+      value.field(BN128_GROUP_ORDER),
+      [
+        oldCommitment.preimage.value.field(BN128_GROUP_ORDER),
+        oldCommitment.preimage.salt.limbs(32, 8),
+      ],
+      // recipientAddress.field(BN128_GROUP_ORDER),
+      siblingPath[0].field(BN128_GROUP_ORDER),
+      siblingPath.slice(1).map(node => node.field(BN128_GROUP_ORDER, false)), // siblingPAth[32] is a sha hash and will overflow a field but it's ok to take the mod here - hence the 'false' flag
+      leafIndex,
+      [
+        newCommitment.preimage.value.field(BN128_GROUP_ORDER),
+        newCommitment.reimage.salt.limbs(32, 8),
+      ],
+      newCommitment.preimage.zkpPublicKey.map(zkp => zkp.field(BN128_GROUP_ORDER)),
+      newCommitment.hash.field(BN128_GROUP_ORDER),
+    ].flat(Infinity);
+  } else {
+    // now we have everything we need to create a Witness and compute a proof
+    witness = [
+      oldCommitment.preimage.ercAddress.field(BN128_GROUP_ORDER),
+      oldCommitment.preimage.tokenId.limbs(32, 8),
+      oldCommitment.preimage.value.field(BN128_GROUP_ORDER),
+      oldCommitment.preimage.salt.field(BN128_GROUP_ORDER),
+      oldCommitment.hash.field(BN128_GROUP_ORDER),
+      rootKey.field(BN128_GROUP_ORDER),
+      nullifier.hash.field(BN128_GROUP_ORDER),
+      recipientAddress.field(BN128_GROUP_ORDER),
+      siblingPath[0].field(BN128_GROUP_ORDER),
+      siblingPath.slice(1).map(node => node.field(BN128_GROUP_ORDER)), // siblingPAth[32] is a sha hash and will overflow a field but it's ok to take the mod here - hence the 'false' flag
+      leafIndex,
+    ].flat(Infinity);
+  }
 
   logger.debug(`witness input is ${witness.join(' ')}`);
   // call a zokrates worker to generate the proof

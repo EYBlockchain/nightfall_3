@@ -349,6 +349,23 @@ describe('ERC20 tests', () => {
         this.skip();
       }
     });
+
+    it('should withdraw from L2 with some change', async function () {
+      const beforeBalance = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance;
+      const rec = await nf3Users[0].withdraw(
+        false,
+        erc20Address,
+        tokenType,
+        Math.floor(transferValue / 2),
+        tokenId,
+        nf3Users[0].ethereumAddress,
+      );
+      expectTransaction(rec);
+
+      logger.debug(`     Gas used was ${Number(rec.gasUsed)}`);
+      const afterBalance = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance;
+      expect(afterBalance).to.be.lessThan(beforeBalance);
+    });
   });
 
   describe('Instant withdrawals from L2', () => {

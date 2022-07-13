@@ -1,0 +1,67 @@
+
+from "ecc/edwardsCompress" import main as edwardsCompress
+from "hashes/sha256/sha256Padded.zok" import sha256Padded
+from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256
+from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
+from "utils/pack/u32/pack256.zok" import main as u32_8_to_field
+from "./structures.zok" import CommitmentPreimage, Transaction, Point
+
+def sum<N>(field[N] a) -> field:
+    field res = 0
+    for u32 i in 0..N do
+        res = res + a[i]
+    endfor
+    return res
+
+def calculateCommitmentHashesN<N>(\
+    field[N] value,\
+    u32[N][8] salt,\
+    field ercAddress,\
+    u32[8] tokenId,\
+    Point[N] zkpPublicKeyRecipient\
+    ) -> field[N]:
+    field[N] output = [0; N]
+    for u32 i in 0..N do
+        u32[8] shaOut = sha256Padded([\
+            ...field_to_bool_256(ercAddress),\
+            ...u32_8_to_bool_256(tokenId),\
+            ...field_to_bool_256(value[i]),\
+            ...field_to_bool_256(zkpPublicKeyRecipient[i][0]),\
+            ...field_to_bool_256(zkpPublicKeyRecipient[i][1]),\
+            ...u32_8_to_bool_256(salt[i])\
+        ])
+        output[i] = u32_8_to_field(shaOut)
+    endfor
+    return output
+
+def calculateCommitmentHash(\
+    field[1] value,\
+    u32[1][8] salt,\
+    field ercAddress,\
+    u32[8] tokenId,\
+    Point[1] zkpPublicKeyRecipient\
+    ) -> field:
+    field[1] output = calculateCommitmentHashesN(value,salt,ercAddress, tokenId, zkpPublicKeyRecipient)
+    return output[0]
+
+
+def calculateNullifier(\
+    field nullifierKey,\
+    field commitmentHashes\
+) -> field:
+    u32[8] shaOut = sha256Padded([\
+        ...field_to_bool_256(nullifierKey),\
+        ...field_to_bool_256(commitmentHashes)\
+    ])
+    field output = u32_8_to_field(shaOut)
+    return output
+
+def calculateNullifiersN<N>(\
+    field[N] nullifierKey,\
+    field[N] commitmentHashes\
+) -> field[N]:
+    field[N] output = [0; N]
+    for u32 i in 0..N do
+        output[i] = calculateNullifier(nullifierKey[i], commitmentHashes[i])
+    endfor
+    return output
