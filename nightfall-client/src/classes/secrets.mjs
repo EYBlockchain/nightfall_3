@@ -99,17 +99,13 @@ class Secrets {
             value,
             salt: saltProbable[j],
           });
-          console.log('COMMITMENT_PROBABLE', commitmentProbable, newCommitment);
           if (commitmentProbable.hash.hex(32) === newCommitment) {
-            console.log('SUCCESSFUL decryption');
             commitment = commitmentProbable;
           }
         }
       }
-      console.log('RETURNING', commitment);
       return commitment;
     } catch (err) {
-      console.log(err);
       throw new Error('Decryption error', err);
     }
   }

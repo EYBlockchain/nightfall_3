@@ -26,7 +26,6 @@ export async function decryptCommitment(transaction, ivk, nsk) {
       if (Object.keys(commitment).length === 0)
         logger.info("This encrypted message isn't for this recipient");
       else {
-        console.log('PUSHED', commitment, 'nsks', nsk[j]);
         storeCommitments.push(storeCommitment(commitment, nsk[j]));
       }
     } catch (err) {

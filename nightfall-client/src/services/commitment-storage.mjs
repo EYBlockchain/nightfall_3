@@ -583,7 +583,6 @@ async function findUsableCommitments(compressedPkd, ercAddress, tokenId, _value,
     })
     .toArray();
   if (commitmentArray === []) return null;
-  console.log('COMMITMENT ARRAY', commitmentArray);
   // turn the commitments into real commitment objects
   const commitments = commitmentArray
     .filter(commitment => Number(commitment.isOnChain) > Number(-1)) // filters for on chain commitments

@@ -119,7 +119,6 @@ describe('ERC721 tests', () => {
   describe('Deposit', () => {
     it('should deposit some ERC721 crypto into a ZKP commitment', async function () {
       let balances = await nf3Users[0].getLayer2Balances();
-      console.log('BALANCES_BEFORE', balances);
       const balanceBefore = balances[erc721Address]?.length || 0;
       // We create enough transactions to fill blocks full of deposits.
       let res = await nf3Users[0].deposit(
@@ -142,7 +141,6 @@ describe('ERC721 tests', () => {
       eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       await emptyL2(nf3Users[0]);
       balances = await nf3Users[0].getLayer2Balances();
-      console.log('BALANCES_AFTER', balances);
       const balanceAfter = balances[erc721Address].length;
       expect(balanceAfter - balanceBefore).to.be.equal(2);
     });
@@ -159,7 +157,6 @@ describe('ERC721 tests', () => {
       }
 
       await getBalances();
-      console.log('BALANCES_Before', balances);
       // weird way to clone an array, but we need a deep clone as it's a multidimensional array
       const beforeBalances = JSON.parse(JSON.stringify(balances));
 
@@ -182,7 +179,6 @@ describe('ERC721 tests', () => {
       await emptyL2(nf3Users[0]);
 
       await getBalances();
-      console.log('BALANCES_After', balances);
       expect((balances[0]?.length || 0) - (beforeBalances[0]?.length || 0)).to.be.equal(-2);
       expect((balances[1]?.length || 0) - (beforeBalances[1]?.length || 0)).to.be.equal(2);
     });
