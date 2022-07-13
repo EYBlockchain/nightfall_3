@@ -820,6 +820,46 @@ class Nf3 {
   }
 
   /**
+    Check accumulated challenger earnings (BOND + n blocks * STAKE)
+    @method
+    @async
+    @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
+    */
+  async checkChallengerEarnings() {
+    const res = await axios.get(`${this.optimistBaseUrl}/challenger/checkEarnings`, {
+      params: {
+        address: this.ethereumAddress,
+      },
+    });
+    return res.data;
+  }
+
+  /**
+    Withdraw accumulated challenger earnings.
+    It will use the address of the Ethereum Signing key that is holds to withdraw the earnings.
+    @method
+    @async
+    @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
+    */
+  async withdrawChallengerEarnings() {
+    const res = await axios.post(`${this.optimistBaseUrl}/challenger/withdrawEarnings`);
+    return new Promise((resolve, reject) => {
+      challengerQueue.push(async () => {
+        try {
+          const receipt = await this.submitTransaction(
+            res.data.txDataToSign,
+            this.stateContractAddress,
+            0,
+          );
+          resolve(receipt);
+        } catch (err) {
+          reject(err);
+        }
+      });
+    });
+  }
+
+  /**
     Get current proposer
     @method
     @async

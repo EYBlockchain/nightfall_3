@@ -25,7 +25,11 @@ chai.use(chaiAsPromised);
 
 const { TRANSACTIONS_PER_BLOCK } = config;
 const TX_WAIT = 12000;
-const TEST_LENGTH = 5;
+// these variables allow to enable/disable different tests. First approach is to just enable
+// single transfer. But passing different ENVs, we can enable the rest of the tests
+const TEST_LENGTH_TRANSFER = process.env.TEST_LENGTH_TRANSFER || 4;
+const TEST_LENGTH_DOUBLE_TRANSFER = process.env.TEST_LENGTH_DOUBLE_TRANSFER || 0;
+const TEST_LENGTH_WITHDRAW = process.env.TEST_LENGTH_WITHDRAW || 0;
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
@@ -34,8 +38,8 @@ describe('Testing with an adversary', () => {
   let nf3AdversarialProposer;
   let ercAddress;
   let nf3Challenger;
-  let startBalance;
-  let expectedBalance = 0;
+  let startL2Balance;
+  let expectedL2Balance = 0;
   let intervalId;
 
   // this is the etherum private key for accounts[0] and so on
@@ -56,6 +60,9 @@ describe('Testing with an adversary', () => {
   // const value = 10;
   const value = 5;
   const value2 = 1000;
+
+  let challengerInitialEarnings = 0;
+  let challengerFinalEarnings = 0;
 
   // this is what we pay the proposer for incorporating a transaction
   const fee = 1;
@@ -129,6 +136,7 @@ describe('Testing with an adversary', () => {
 
   describe('User creates deposit, transfer and withdraw transactions', () => {
     it('User should have the correct balance after a series of rollbacks', async () => {
+      if (TEST_LENGTH_TRANSFER === 0) return;
       // Configure adversary bad block sequence
       if (process.env.CHALLENGE_TYPE !== '') {
         logger.debug(`Configuring Challenge Type ${process.env.CHALLENGE_TYPE}`);
@@ -151,19 +159,21 @@ describe('Testing with an adversary', () => {
       let nTransfers = 0;
 
       // retrieve initial balance
-      startBalance = await retrieveL2Balance(nf3User);
+      startL2Balance = await retrieveL2Balance(nf3User);
+
+      challengerInitialEarnings = Number((await nf3Challenger.checkChallengerEarnings()).amount);
 
       // we are creating a block of deposits with high values such that there is
       // enough balance for a lot of transfers with low value.
-      console.log('Starting balance :', startBalance);
-      expectedBalance = startBalance;
+      console.log('Starting balance :', startL2Balance);
+      expectedL2Balance = startL2Balance;
       for (let j = 0; j < TRANSACTIONS_PER_BLOCK; j++) {
         await nf3User.deposit(ercAddress, tokenType, value, tokenId, fee);
         nDeposits++;
-        expectedBalance += value;
+        expectedL2Balance += value;
       }
 
-      for (let i = 0; i < TEST_LENGTH; i++) {
+      for (let i = 0; i < TEST_LENGTH_TRANSFER; i++) {
         await waitForSufficientBalance(nf3User, value);
         try {
           await nf3User.transfer(
@@ -175,7 +185,6 @@ describe('Testing with an adversary', () => {
             nf3User.zkpKeys.compressedZkpPublicKey,
           );
           nTransfers++;
-          // expectedBalance += value;
         } catch (err) {
           if (err.message.includes('No suitable commitments')) {
             // if we get here, it's possible that a block we are waiting for has not been proposed yet
@@ -195,13 +204,12 @@ describe('Testing with an adversary', () => {
               nf3User.zkpKeys.compressedZkpPublicKey,
             );
             nTransfers++;
-            // expectedBalance += value; // transfer to self, so balance does not increase
           }
         }
         for (let k = 0; k < TRANSACTIONS_PER_BLOCK - 1; k++) {
           await nf3User.deposit(ercAddress, tokenType, value, tokenId);
           nDeposits++;
-          expectedBalance += value;
+          expectedL2Balance += value;
         }
         await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
         console.log(`Completed ${i + 1} pings`);
@@ -218,15 +226,20 @@ describe('Testing with an adversary', () => {
       console.log('Waiting for rollbacks...');
 
       await new Promise(resolve => setTimeout(resolve, 30 * TX_WAIT));
-      await waitForSufficientBalance(nf3User, expectedBalance);
-      const endBalance = await retrieveL2Balance(nf3User);
-      console.log(`Completed startBalance`, startBalance);
-      console.log(`Completed endBalance`, endBalance);
-      expect(expectedBalance).to.be.equal(endBalance);
+      await waitForSufficientBalance(nf3User, expectedL2Balance);
+      const endL2Balance = await retrieveL2Balance(nf3User);
+      console.log(`Completed startL2Balance`, startL2Balance);
+      console.log(`Completed endL2Balance`, endL2Balance);
+      challengerFinalEarnings = Number((await nf3Challenger.checkChallengerEarnings()).amount);
+      console.log(`Challenger Initial Earnings`, challengerInitialEarnings);
+      console.log(`Challenger Final Earnings`, challengerFinalEarnings);
+      expect(expectedL2Balance).to.be.equal(endL2Balance);
+      expect(challengerFinalEarnings).to.be.greaterThan(challengerInitialEarnings);
     });
 
     it('User should have the correct balance after a series of rollbacks with double transfers', async () => {
       // Configure adversary bad block sequence
+      if (TEST_LENGTH_DOUBLE_TRANSFER === 0) return;
       if (process.env.CHALLENGE_TYPE !== '') {
         logger.debug(`Configuring Challenge Type ${process.env.CHALLENGE_TYPE}`);
         await chai
@@ -240,6 +253,7 @@ describe('Testing with an adversary', () => {
           .post('/block/gen-block')
           .send({ blockType: 'reset' });
       }
+      challengerInitialEarnings = Number((await nf3Challenger.checkChallengerEarnings()).amount);
 
       console.log('Pausing challenger queue...');
       // we pause the challenger queue and don't process challenger until unpauseQueueChallenger
@@ -247,30 +261,30 @@ describe('Testing with an adversary', () => {
       let nDeposits = 0;
       let nDoubleTransfers = 0;
       // retrieve initial balance
-      startBalance = await retrieveL2Balance(nf3User);
+      startL2Balance = await retrieveL2Balance(nf3User);
 
       // we are creating a block of deposits with high values such that there is
       // enough balance for a lot of transfers with low value.
-      console.log('Starting balance :', startBalance);
-      expectedBalance = startBalance;
+      console.log('Starting balance :', startL2Balance);
+      expectedL2Balance = startL2Balance;
       for (let j = 0; j < TRANSACTIONS_PER_BLOCK; j++) {
         await nf3User.deposit(ercAddress, tokenType, value2, tokenId, fee);
         nDeposits++;
-        expectedBalance += value2;
+        expectedL2Balance += value2;
       }
 
       // We do double transfers + deposit in one round, and just deposits in the other
       let depositEn = false;
       // a random fraction for double transfer ensures we always use a double transfer
       let doubleTransferValue;
-      for (let i = 0; i < TEST_LENGTH; i++) {
+      for (let i = 0; i < TEST_LENGTH_DOUBLE_TRANSFER; i++) {
         doubleTransferValue = Math.floor(Math.random() * 2 * value2) + 1;
 
         await waitForSufficientBalance(nf3User, value2 * 2);
         if (depositEn) {
           console.log(`Deposit of ${value2}`);
           await nf3User.deposit(ercAddress, tokenType, value2, tokenId, fee);
-          expectedBalance += value2;
+          expectedL2Balance += value2;
           nDeposits++;
         } else {
           try {
@@ -284,7 +298,6 @@ describe('Testing with an adversary', () => {
               nf3User.zkpKeys.compressedZkpPublicKey,
             );
             nDoubleTransfers++;
-            // expectedBalance += value2;
           } catch (err) {
             if (err.message.includes('No suitable commitments')) {
               // if we get here, it's possible that a block we are waiting for has not been proposed yet
@@ -304,7 +317,6 @@ describe('Testing with an adversary', () => {
                 nf3User.zkpKeys.compressedZkpPublicKey,
               );
               nDoubleTransfers++;
-              // expectedBalance += value2; // transfer to self, so balance does not increase
             }
           }
         }
@@ -312,7 +324,7 @@ describe('Testing with an adversary', () => {
         for (let k = 0; k < TRANSACTIONS_PER_BLOCK - 1; k++) {
           await nf3User.deposit(ercAddress, tokenType, value2, tokenId);
           nDeposits++;
-          expectedBalance += value2;
+          expectedL2Balance += value2;
         }
         await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
         console.log(`Completed ${i + 1} pings`);
@@ -329,14 +341,19 @@ describe('Testing with an adversary', () => {
       console.log('Waiting for rollbacks...');
 
       await new Promise(resolve => setTimeout(resolve, 30 * TX_WAIT));
-      await waitForSufficientBalance(nf3User, expectedBalance);
-      const endBalance = await retrieveL2Balance(nf3User);
-      console.log(`Completed startBalance`, startBalance);
-      console.log(`Completed endBalance`, endBalance);
-      expect(expectedBalance).to.be.equal(endBalance);
+      await waitForSufficientBalance(nf3User, expectedL2Balance);
+      const endL2Balance = await retrieveL2Balance(nf3User);
+      console.log(`Completed startL2Balance`, startL2Balance);
+      console.log(`Completed endL2Balance`, endL2Balance);
+      challengerFinalEarnings = Number((await nf3Challenger.checkChallengerEarnings()).amount);
+      console.log(`Challenger Initial Earnings`, challengerInitialEarnings);
+      console.log(`Challenger Final Earnings`, challengerFinalEarnings);
+      expect(expectedL2Balance).to.be.equal(endL2Balance);
+      expect(challengerFinalEarnings).to.be.greaterThan(challengerInitialEarnings);
     });
 
     it('User should have the correct balance after a series of rollbacks with withdraws', async () => {
+      if (TEST_LENGTH_WITHDRAW === 0) return;
       // Configure adversary bad block sequence
       if (process.env.CHALLENGE_TYPE !== '') {
         logger.debug(`Configuring Challenge Type ${process.env.CHALLENGE_TYPE}`);
@@ -352,25 +369,26 @@ describe('Testing with an adversary', () => {
           .send({ blockType: 'reset' });
       }
 
+      challengerInitialEarnings = Number((await nf3Challenger.checkChallengerEarnings()).amount);
       console.log('Pausing challenger queue...');
       // we pause the challenger queue and don't process challenger until unpauseQueueChallenger
       nf3Challenger.pauseQueueChallenger();
       let nDeposits = 0;
       let nWithdraws = 0;
       // retrieve initial balance
-      startBalance = await retrieveL2Balance(nf3User);
+      startL2Balance = await retrieveL2Balance(nf3User);
 
       // we are creating a block of deposits with high values such that there is
       // enough balance for a lot of transfers with low value.
-      console.log('Starting balance :', startBalance);
-      expectedBalance = startBalance;
+      console.log('Starting balance :', startL2Balance);
+      expectedL2Balance = startL2Balance;
       for (let j = 0; j < TRANSACTIONS_PER_BLOCK; j++) {
         await nf3User.deposit(ercAddress, tokenType, value, tokenId, fee);
         nDeposits++;
-        expectedBalance += value;
+        expectedL2Balance += value;
       }
 
-      for (let i = 0; i < TEST_LENGTH; i++) {
+      for (let i = 0; i < TEST_LENGTH_WITHDRAW; i++) {
         await waitForSufficientBalance(nf3User, value);
         try {
           console.log(`Withdraw ${value}`);
@@ -383,7 +401,7 @@ describe('Testing with an adversary', () => {
             nf3User.ethereumAddress,
           );
           nWithdraws++;
-          expectedBalance -= value;
+          expectedL2Balance -= value;
         } catch (err) {
           if (err.message.includes('No suitable commitments')) {
             // if we get here, it's possible that a block we are waiting for has not been proposed yet
@@ -403,14 +421,13 @@ describe('Testing with an adversary', () => {
               nf3User.ethereumAddress,
             );
             nWithdraws++;
-            expectedBalance -= value;
-            // expectedBalance += value; // transfer to self, so balance does not increase
+            expectedL2Balance -= value;
           }
         }
         for (let k = 0; k < TRANSACTIONS_PER_BLOCK - 1; k++) {
           await nf3User.deposit(ercAddress, tokenType, value, tokenId);
           nDeposits++;
-          expectedBalance += value;
+          expectedL2Balance += value;
         }
         await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
         console.log(`Completed ${i + 1} pings`);
@@ -427,11 +444,26 @@ describe('Testing with an adversary', () => {
       console.log('Waiting for rollbacks...');
 
       await new Promise(resolve => setTimeout(resolve, 30 * TX_WAIT));
-      await waitForSufficientBalance(nf3User, expectedBalance);
-      const endBalance = await retrieveL2Balance(nf3User);
-      console.log(`Completed startBalance`, startBalance);
-      console.log(`Completed endBalance`, endBalance);
-      expect(expectedBalance).to.be.equal(endBalance);
+      await waitForSufficientBalance(nf3User, expectedL2Balance);
+      const endL2Balance = await retrieveL2Balance(nf3User);
+      console.log(`Completed startL2Balance`, startL2Balance);
+      console.log(`Completed endL2Balance`, endL2Balance);
+      challengerFinalEarnings = Number((await nf3Challenger.checkChallengerEarnings()).amount);
+      console.log(`Challenger Initial Earnings`, challengerInitialEarnings);
+      console.log(`Challenger Final Earnings`, challengerFinalEarnings);
+      expect(expectedL2Balance).to.be.equal(endL2Balance);
+      expect(challengerFinalEarnings).to.be.greaterThan(challengerInitialEarnings);
+    });
+
+    it('Challenger withdraws earnings', async () => {
+      challengerInitialEarnings = Number((await nf3Challenger.checkChallengerEarnings()).amount);
+      // withdraw challenger earnings
+      await nf3Challenger.withdrawChallengerEarnings();
+      challengerFinalEarnings = Number((await nf3Challenger.checkChallengerEarnings()).amount);
+      console.log(`Challenger Initial Earnings`, challengerInitialEarnings);
+      console.log(`Challenger Final Earnings`, challengerFinalEarnings);
+      expect(challengerInitialEarnings).to.be.greaterThan(0);
+      expect(challengerFinalEarnings).to.be.equal(0);
     });
   });
 
