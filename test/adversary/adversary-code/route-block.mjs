@@ -22,4 +22,15 @@ router.post('/gen-block', async (req, res, next) => {
   }
 });
 
+router.post('/stop-queue', async (req, res, next) => {
+  logger.debug('stop-queue endpoint received POST');
+  try {
+    const { nonStopFlag } = req.body;
+    setNonStopFlag(nonStopFlag);
+    res.json({ status: 'OK' });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;

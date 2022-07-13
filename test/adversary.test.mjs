@@ -132,9 +132,15 @@ describe('Testing with an adversary', () => {
     intervalId = setInterval(() => {
       registerProposerOnNoProposer(nf3AdversarialProposer);
     }, 5000);
-  });
 
-  describe('User creates deposit, transfer and withdraw transactions', () => {
+    // Optimist keeps generating blocks after a challenge
+    await chai
+      .request(environment.adversarialOptimistApiUrl)
+      .post('/block/stop-queue')
+      .send({ nonStopFlag: 'true' });
+  });
+  
+  describe('User creates deposit, single and double transfers and withdraw transactions with adversary + challenger', () => {
     it('User should have the correct balance after a series of rollbacks', async () => {
       if (TEST_LENGTH_TRANSFER === 0) return;
       // Configure adversary bad block sequence
@@ -456,6 +462,12 @@ describe('Testing with an adversary', () => {
     });
 
     it('Challenger withdraws earnings', async () => {
+      if (
+        TEST_LENGTH_WITHDRAW === 0 &&
+        TEST_LENGTH_DOUBLE_TRANSFER === 0 &&
+        TEST_LENGTH_TRANSFER === 0
+      )
+        return;
       challengerInitialEarnings = Number((await nf3Challenger.checkChallengerEarnings()).amount);
       // withdraw challenger earnings
       await nf3Challenger.withdrawChallengerEarnings();
@@ -463,6 +475,79 @@ describe('Testing with an adversary', () => {
       console.log(`Challenger Initial Earnings`, challengerInitialEarnings);
       console.log(`Challenger Final Earnings`, challengerFinalEarnings);
       expect(challengerInitialEarnings).to.be.greaterThan(0);
+      expect(challengerFinalEarnings).to.be.equal(0);
+    });
+  });
+
+  describe('User creates deposit, transfer with adversary + deregistered challenger', () => {
+    it('User shouldnt have the correct balance because of incorrect unchallenged blocks', async () => {
+      if (TEST_LENGTH_TRANSFER === 0) return;
+      // Register challenger. Should be ok to re-register a challenger
+      await nf3Challenger.registerChallenger();
+      // Reset challenger earnings
+      await nf3Challenger.withdrawChallengerEarnings();
+      // De-register challenger
+      await nf3Challenger.deregisterChallenger();
+      // Configure adversary bad block sequence
+      logger.debug(`Configuring Challenge Type ${process.env.CHALLENGE_TYPE}`);
+      await chai
+        .request(environment.adversarialOptimistApiUrl)
+        .post('/block/gen-block')
+        .send({ blockType: ['ValidBlock', 'ValidBlock', 'IncorrectTreeRoot'] });
+
+      // we pause the challenger queue and don't process challenger until unpauseQueueChallenger
+      nf3Challenger.pauseQueueChallenger();
+      // retrieve initial balance
+      challengerInitialEarnings = Number((await nf3Challenger.checkChallengerEarnings()).amount);
+
+      // we are creating a block of deposits with high values such that there is
+      // enough balance for a lot of transfers with low value.
+      for (let j = 0; j < TRANSACTIONS_PER_BLOCK; j++) {
+        await nf3User.deposit(ercAddress, tokenType, value, tokenId, fee);
+      }
+
+      for (let i = 0; i < TEST_LENGTH_TRANSFER; i++) {
+        await waitForSufficientBalance(nf3User, value);
+        try {
+          await nf3User.transfer(
+            false,
+            ercAddress,
+            tokenType,
+            value,
+            tokenId,
+            nf3User.zkpKeys.compressedZkpPublicKey,
+          );
+        } catch (err) {
+          if (err.message.includes('No suitable commitments')) {
+            // if we get here, it's possible that a block we are waiting for has not been proposed yet
+            // let's wait 10x normal and then try again
+            console.log(
+              `No suitable commitments were found for transfer. I will wait ${
+                0.01 * TX_WAIT
+              } seconds and try one last time`,
+            );
+            await new Promise(resolve => setTimeout(resolve, 10 * TX_WAIT));
+            await nf3User.transfer(
+              false,
+              ercAddress,
+              tokenType,
+              value,
+              tokenId,
+              nf3User.zkpKeys.compressedZkpPublicKey,
+            );
+          }
+        }
+        for (let k = 0; k < TRANSACTIONS_PER_BLOCK - 1; k++) {
+          await nf3User.deposit(ercAddress, tokenType, value, tokenId);
+        }
+        await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
+        console.log(`Completed ${i + 1} pings`);
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 30 * TX_WAIT));
+      challengerFinalEarnings = Number((await nf3Challenger.checkChallengerEarnings()).amount);
+      console.log(`Challenger Initial Earnings`, challengerInitialEarnings);
+      console.log(`Challenger Final Earnings`, challengerFinalEarnings);
       expect(challengerFinalEarnings).to.be.equal(0);
     });
   });
