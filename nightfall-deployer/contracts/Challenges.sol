@@ -291,7 +291,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         state.areBlockAndTransactionsReal(blockL2, transactions);
         if (
             transactions[transactionIndex].transactionType ==
-            Structures.TransactionTypes.DOUBLE_TRANSFER
+            Structures.TransactionTypes.TRANSFER
         ) {
             require(
                 state.getNumberOfL2Blocks() <

@@ -107,9 +107,7 @@ library Utils {
         // uint256[] memory inputs = new uint256[](countPublicInputs(ts));
         if (ts.transactionType == Structures.TransactionTypes.DEPOSIT) {
             inputs = getDepositInputs(ts);
-        } else if (ts.transactionType == Structures.TransactionTypes.SINGLE_TRANSFER) {
-            inputs = getSingleTransferInputs(ts, roots);
-        } else if (ts.transactionType == Structures.TransactionTypes.DOUBLE_TRANSFER) {
+        } else if (ts.transactionType == Structures.TransactionTypes.TRANSFER) {
             inputs = getDoubleTransferInputs(ts, roots);
         } else {
             inputs = getWithdrawInputs(ts, roots);

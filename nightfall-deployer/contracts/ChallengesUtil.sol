@@ -58,9 +58,7 @@ library ChallengesUtil {
         if (transaction.transactionType == Structures.TransactionTypes.DEPOSIT)
             libChallengeTransactionTypeDeposit(transaction);
             // TODO add these checks back after PR for out of gas
-        else if (transaction.transactionType == Structures.TransactionTypes.SINGLE_TRANSFER)
-            libChallengeTransactionTypeSingleTransfer(transaction);
-        else if (transaction.transactionType == Structures.TransactionTypes.DOUBLE_TRANSFER)
+        else if (transaction.transactionType == Structures.TransactionTypes.TRANSFER)
             libChallengeTransactionTypeDoubleTransfer(transaction); // if(transaction.transactionType == TransactionTypes.WITHDRAW)
         else libChallengeTransactionTypeWithdraw(transaction);
     }

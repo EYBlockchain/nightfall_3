@@ -7,10 +7,11 @@ from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field
 from "./common/utils/calculations.zok" import sum
 from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field
 
-const u32 txType = 2
-const u32 numCommitments = 1
+const u32 txType = 1
+const u32 numCommitments = 2
 const u32 numNullifiers = 2
 const u32 transfer = 1
+
 
 def main(\
     PublicTransaction tx,\
@@ -19,10 +20,13 @@ def main(\
     private field[numNullifiers] rootKey,\
     private field[numNullifiers][32] paths,\
 	private field[numNullifiers] orders,\
-    private CommitmentPreimage<numCommitments> newCommitment\
-	)-> ():
-
-	//Verify public transaction structure
+    private CommitmentPreimage<numCommitments> newCommitment,\
+    private Point[numCommitments] recipientPublicKey,\
+    private u32[8] ephemeralKey,\
+    private field ercAddressTransfer,\
+    private u32[8] tokenId\
+)-> ():
+    //Verify public transaction structure
     assert(verify_structure::<txType, numNullifiers, numCommitments>(\
         tx.value,\
 	    tx.transactionType,\
@@ -36,18 +40,18 @@ def main(\
 	    tx.compressedSecrets\
     ))
 
-	//Check that values match
-	assert(\
+    //Check that values match
+    assert(\
         sum(u8_array_to_field(oldCommitment.value)) ==\
-        sum(u8_array_to_field(newCommitment.value)) + tx.value\
+        sum(u8_array_to_field(newCommitment.value))\
     )
 
-	// pack the top four bytes of the token id into the ercAddress field (address only
+    // pack the top four bytes of the token id into the ercAddress field (address only
 	// uses 160 bits and the Shield contract prevents creation of something with more than 160 bits)
-    field idRemainder = u32_array_to_field(tx.tokenId[1..8]) 
-    field packedErcAddress = tx.ercAddress + u32_array_to_field([tx.tokenId[0]]) * SHIFT 
+    field idRemainder = u32_array_to_field(tokenId[1..8]) 
+    field packedErcAddress = ercAddressTransfer + u32_array_to_field([tokenId[0]]) * SHIFT 
 
-	//Verify nullifiers
+    //Verify nullifiers
     Point firstInputZkpPublicKeys = [0,0]
     firstInputZkpPublicKeys = verify_nullifiers::<numNullifiers>(\
 		packedErcAddress,\
@@ -60,7 +64,12 @@ def main(\
 		paths,\
 		orders\
 	)
-	
+
+    assert(\
+        u8_array_to_field([newCommitment.value[numCommitments - 1]])[0] == 0 || \
+        firstInputZkpPublicKeys == recipientPublicKey[numCommitments - 1]\
+    )
+
 	//Verify new Commmitments
     assert(verify_commitments::<numCommitments, txType>(\
 		packedErcAddress,\
@@ -69,7 +78,21 @@ def main(\
 		firstInputZkpPublicKeys,\
 		u8_array_to_field(newCommitment.value),\
 		newCommitment.salt,\
-		[firstInputZkpPublicKeys]\
+		recipientPublicKey\
 	))
 
-	return
+    //Verify Kem Dem encryption
+    assert(verify_encryption::<numCommitments,txType>(\
+        tx.ercAddress,\
+        tx.tokenId,\
+        tx.compressedSecrets,\
+        packedErcAddress,\
+        idRemainder,\
+        u8_array_to_field(newCommitment.value),\
+        newCommitment.salt,\
+        recipientPublicKey,\
+        tx.recipientAddress,\
+        ephemeralKey\
+    ))
+
+    return

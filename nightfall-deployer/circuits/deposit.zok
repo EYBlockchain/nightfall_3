@@ -1,40 +1,48 @@
-from "hashes/poseidon/poseidon.zok" import main as poseidon
+from "./common/utils/structures.zok" import CommitmentPreimage,Point, PublicTransaction, SHIFT
+from "./common/generic_circuit/Verifiers/verify_commitments.zok" import main as verify_commitments
+from "./common/generic_circuit/Verifiers/verify_structure.zok" import main as verify_structure
 from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field
 
-// Inputs for main:
-// - ercContractAddress (public) is the ERCx contract address
-// - value (public) is the 256 bit value (fungible) or identifier (non-fungible)
-// - publicKey (private) is the public key of the newCommitment derived by hashing the Secret Key Sk of the newCommitment. IT IS KEPT PRIVATE!!
-// - salt (private) is the salt for the newCommitment
-// - newCommitment (public) is the newCommitment
-
-type Point = field[2]
-
-// 2 ^ 160
-const field SHIFT = 1461501637330902918203684832716283019655932542976
+const u32 txType = 0
+const u32 numCommitments = 1
+const u32 numNullifiers = 0
+const u32 transfer = 0
 
 def main(\
-	field ercContractAddress,\
-	u32[8] id,\
- 	field value,\
-	private Point compressedZkpPublicKey,\
+    PublicTransaction tx,\
 	private field salt,\
-	field newCommitment\
-)->():
+    private Point[numCommitments] recipientPublicKey\
+    ) -> ():
 
-	// pack the top four bytes of the token id into the ercAddress field (address only
+    //Verify public transaction structure
+    assert(verify_structure::<txType, numNullifiers, numCommitments>(\
+        tx.value,\
+	    tx.transactionType,\
+	    tx.tokenType,\
+	    tx.tokenId,\
+	    tx.ercAddress,\
+	    tx.recipientAddress,\
+	    tx.commitments,\
+	    tx.nullifiers,\
+	    tx.historicRootBlockNumberL2,\
+	    tx.compressedSecrets\
+    ))
+
+    // pack the top four bytes of the token id into the ercAddress field (address only
 	// uses 160 bits and the Shield contract prevents creation of something with more than 160 bits)
-	field idTop4Bytes = u32_array_to_field([id[0]])
-	field idRemainder = u32_array_to_field(id[1..8])
-	field packedErcAddress = ercContractAddress + idTop4Bytes * SHIFT
+    field idRemainder = u32_array_to_field(tx.tokenId[1..8]) 
+    field packedErcAddress = tx.ercAddress + u32_array_to_field([tx.tokenId[0]]) * SHIFT 
 
-	field newCommitmentCheck = poseidon([
+    //Verify new Commmitments
+    Point firstInputZkpPublicKeys = [0,0]
+    assert(verify_commitments::<numCommitments, txType>(\
 		packedErcAddress,\
 		idRemainder,\
-		value,\
-		...compressedZkpPublicKey,\
-		salt\
-	])
-	assert(newCommitmentCheck == newCommitment)
-
-	return
+		tx.commitments,\
+		firstInputZkpPublicKeys,\
+		[tx.value],\
+		[salt],\
+		recipientPublicKey\
+	))
+    
+    return
