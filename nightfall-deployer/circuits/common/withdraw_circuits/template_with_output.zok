@@ -1,0 +1,79 @@
+from "ecc/babyjubjubParams" import BabyJubJubParams, main as curveParams
+from "ecc/edwardsCompress" import main as edwardsCompress
+
+from "../hashes/mimc/mimc-hash-N.zok" import main as mimcN
+from "../utils/structures.zok" import CommitmentPreimage, Point, PRIVATE_KEY_DOMAIN, NULLIFIER_KEY_DOMAIN
+from "../utils/calculations.zok" import sum, calculateCommitmentHashesN, calculateNullifiersN
+from "../merkle-tree/mimc-path-check.zok" import main as pathCheck
+from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
+from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8
+from "ecc/edwardsScalarMult" import main as scalarMult
+from "utils/pack/u32/pack256.zok" import main as u32_8_to_field
+
+def main<CInps,COuts>(\
+    field [CInps] nullifiers,\
+    field ercAddress,\
+    u32[8] tokenId,\
+    field[CInps] root,\
+    field withdrawnValue,\
+    private field[CInps] oldCommitmentValues,\
+    private u32[CInps][8] oldCommitmentSalts,\
+    private field[CInps] rootKey,\
+    private field[CInps][32] path,\
+	private field[CInps] order,\
+    private field[COuts] newCommitmentValues,\
+    private u32[COuts][8] newCommitmentSalts,\
+    private Point[COuts] recipientPublicKey,\
+    field[COuts] newCommitmentHash\
+)-> bool:
+    // Get Curve Params
+    BabyJubJubParams context = curveParams()
+    Point g = [context.Gu, context.Gv]
+
+
+    field[CInps] nullifierKeys = [0; CInps]
+    Point[CInps] zkpPublicKeys = [[0,0]; CInps]
+    for u32 i in 0..CInps do
+      // Calculation of zkpPrivateKey and nullifierKey from rootKey
+      field zkpPrivateKey = mimcN([rootKey[i], PRIVATE_KEY_DOMAIN])
+
+      nullifierKeys[i] = mimcN([rootKey[i], NULLIFIER_KEY_DOMAIN])
+
+      // Calculate zkpPublicKey
+      zkpPublicKeys[i] = scalarMult(field_to_bool_256(zkpPrivateKey), g, context)
+
+      assert(sum(oldCommitmentValues) == withdrawnValue + sum(newCommitmentValues))
+    endfor
+
+    //Check the change address is mine (TODO CHECK WHETHER THIS IS COMPRESSED)
+    assert(recipientPublicKey[COuts - 1] == zkpPublicKeys[0])
+    /*
+    Calculate + Check Commitment/Nullifiers
+    */
+    // Check old commitments hash
+    field[CInps] calculatedInputCommitmentHash = calculateCommitmentHashesN(\
+        oldCommitmentValues,\
+        oldCommitmentSalts,\
+        ercAddress,\
+        tokenId,\
+        zkpPublicKeys\
+    )
+
+    // Use calculated old commiment hashes in nullifier calculation
+    field[CInps] outputNullifier = calculateNullifiersN(nullifierKeys, calculatedInputCommitmentHash)
+    assert(outputNullifier == nullifiers)
+   
+    
+    field[COuts] outputCommitments = calculateCommitmentHashesN(\
+        newCommitmentValues,\
+        newCommitmentSalts,\
+        ercAddress,\
+        tokenId,\
+        recipientPublicKey\
+    )
+    assert(outputCommitments == newCommitmentHash)
+
+    for u32 i in 0..CInps do
+      assert(pathCheck([root[i], ...path[i]], order[i], calculatedInputCommitmentHash[i]))
+   endfor
+   return true
