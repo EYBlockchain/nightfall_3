@@ -148,14 +148,9 @@ module.exports = {
     },
 
     localhost: {
-<<<<<<< HEAD
-      name: 'Localhost',
-      chainId: 1337,
-=======
       name: 'localhost',
       ethNetwork: process.env.ETH_NETWORK || 'localhost',
-      chainId: 4378921,
->>>>>>> bec74114 (fix: fixing adversary test ⚔)
+      chainId: 1337,
       clientApiUrl: process.env.CLIENT_HOST
         ? `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`
         : 'http://localhost:8080',

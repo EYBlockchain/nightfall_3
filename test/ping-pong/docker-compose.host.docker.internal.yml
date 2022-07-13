@@ -49,13 +49,8 @@ services:
       USER1_KEY: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e'
       USER1_ADDRESS: '0x9C8B2276D490141Ae1440Da660E470E7C0349C63'
       USER1_MNEMONIC: 'trip differ bamboo bundle bonus luxury strike mad merry muffin nose auction'
-<<<<<<< HEAD
       USER1_COMPRESSED_ZKP_PUBLIC_KEY: '0x80b1f5d0328f9e68ef1318a21f5ec379e4457ecf1c11b0f9dad2d375c02652a3'
       USER2_COMPRESSED_ZKP_PUBLIC_KEY: '0x2a67fa06f5861f0ba0e963c4f52062a6da95adaf778759f399b05c666d3ff95d'
-=======
-      USER1_PKD: '0x0d27fb8112bf3274e27094ab05cc72db4d573ba081a659c3210a7bdbc1a9ec48'
-      USER2_PKD: '0xaa3b5bbf25ee9aab94757487d21c9da7a1166f1cf1f65162c23579149eba8590'
->>>>>>> d49b7a5e (Revert "feat: refactored ping-pong 🏓")
 
   user-local2:
     extra_hosts:
@@ -68,5 +63,5 @@ services:
       USER2_KEY: '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb'
       USER2_ADDRESS: '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9'
       USER2_MNEMONIC: 'control series album tribe category saddle prosper enforce moon eternal talk fame'
-      USER1_PKD: '0x0d27fb8112bf3274e27094ab05cc72db4d573ba081a659c3210a7bdbc1a9ec48'
-      USER2_PKD: '0xaa3b5bbf25ee9aab94757487d21c9da7a1166f1cf1f65162c23579149eba8590'
+      USER1_COMPRESSED_ZKP_PUBLIC_KEY: '0x80b1f5d0328f9e68ef1318a21f5ec379e4457ecf1c11b0f9dad2d375c02652a3'
+      USER2_COMPRESSED_ZKP_PUBLIC_KEY: '0x2a67fa06f5861f0ba0e963c4f52062a6da95adaf778759f399b05c666d3ff95d'

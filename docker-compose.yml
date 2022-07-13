@@ -190,13 +190,8 @@ services:
     environment:
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
-<<<<<<< HEAD
-      LOG_LEVEL: error
-      ETH_NETWORK: blockchain1
-=======
       LOG_LEVEL: warn
       ETH_NETWORK: ganache
->>>>>>> bec74114 (fix: fixing adversary test ⚔)
 
 volumes:
   mongodb1: null

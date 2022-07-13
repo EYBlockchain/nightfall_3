@@ -3,21 +3,21 @@ module.exports = {
     networks: {
       ganache: {
         url: 'ws://blockchain1:8546',
-        network_id: 4378921, // Any network (default: none)
+        network_id: 1337, // Any network (default: none)
         gas: 1000000000,
         websockets: true,
       },
 
       localhost: {
         url: 'ws://localhost:8546',
-        network_id: 4378921, // Any network (default: none)
+        network_id: 1337, // Any network (default: none)
         gas: 8000000,
         websockets: true,
       },
 
       geth: {
         url: 'ws://host.docker.internal:8546',
-        network_id: 4378921, // Any network (default: none)
+        network_id: 1337, // Any network (default: none)
         gas: 8000000,
         websockets: true,
       },
