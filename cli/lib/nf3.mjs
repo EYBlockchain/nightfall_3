@@ -407,7 +407,7 @@ class Nf3 {
           );
           resolve(receipt);
         } catch (err) {
-          logger.error('Deposit transaction failed');
+          // logger.error('Deposit transaction failed');
           reject(err);
         }
       });

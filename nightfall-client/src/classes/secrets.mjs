@@ -88,9 +88,10 @@ class Secrets {
       saltProbable.push((BN128_GROUP_ORDER - BigInt(decryptedMessages[3])) % BN128_GROUP_ORDER);
       const { pkd, compressedPkd } = calculatePkd(new GN(privateKey));
       let commitment = {};
+      let commitmentProbable = {};
       for (let i = 0; i < tokenIdProbable.length; i++) {
         for (let j = 0; j < saltProbable.length; j++) {
-          const commitmentProbable = new Commitment({
+          commitmentProbable = new Commitment({
             compressedPkd,
             pkd,
             ercAddress,
@@ -98,13 +99,17 @@ class Secrets {
             value,
             salt: saltProbable[j],
           });
+          console.log('COMMITMENT_PROBABLE', commitmentProbable, newCommitment);
           if (commitmentProbable.hash.hex(32) === newCommitment) {
+            console.log('SUCCESSFUL decryption');
             commitment = commitmentProbable;
           }
         }
       }
+      console.log('RETURNING', commitment);
       return commitment;
     } catch (err) {
+      console.log(err);
       throw new Error('Decryption error', err);
     }
   }

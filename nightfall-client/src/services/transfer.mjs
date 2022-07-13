@@ -230,7 +230,7 @@ async function transfer(transferParams) {
       // we only want to store our own commitments so filter those that don't
       // have our public key
       newCommitments
-        .filter(commitment => commitment.preimage.compressedPkd.bigInt === compressedPkd.bigInt)
+        .filter(commitment => commitment.compressedPkd.bigInt === compressedPkd.bigInt)
         .forEach(commitment => storeCommitment(commitment, nsk)); // TODO insertMany
       // mark the old commitments as nullified
       await Promise.all(
@@ -246,7 +246,7 @@ async function transfer(transferParams) {
       .encodeABI();
     // store the commitment on successful computation of the transaction
     newCommitments
-      .filter(commitment => commitment.preimage.compressedPkd.bigInt === compressedPkd.bigInt)
+      .filter(commitment => commitment.compressedPkd.bigInt === compressedPkd.bigInt)
       .forEach(commitment => storeCommitment(commitment, nsk)); // TODO insertMany
     // mark the old commitments as nullified
     await Promise.all(

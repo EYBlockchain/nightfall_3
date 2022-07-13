@@ -137,7 +137,6 @@ describe('ERC20 tests', () => {
     });
 
     it('should increment the balance after deposit some ERC20 crypto', async function () {
-      console.log('BALANCES', await nf3Users[0].getLayer2Balances());
       const currentPkdBalance = (await nf3Users[0].getLayer2Balances())[erc20Address][0].balance;
       // We do txPerBlock deposits of 10 each
       await depositNTransactions(
