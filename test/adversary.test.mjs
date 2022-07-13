@@ -139,7 +139,7 @@ describe('Testing with an adversary', () => {
       .post('/block/stop-queue')
       .send({ nonStopFlag: 'true' });
   });
-  
+
   describe('User creates deposit, single and double transfers and withdraw transactions with adversary + challenger', () => {
     it('User should have the correct balance after a series of rollbacks', async () => {
       if (TEST_LENGTH_TRANSFER === 0) return;
