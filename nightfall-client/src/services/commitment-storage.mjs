@@ -690,22 +690,30 @@ export async function findUsableCommitmentsMutex(
 }
 
 /**
- * @function getCommitmentsByCompressedPkd do the role of a service taking care of the
+ * @function getCommitmentsByCompressedPkdList do the role of a service taking care of the
  * business logic and of a repository doing the communication with the database for this
  * use case.
- * @param {string } compressedPkd the compressed pkd derivated from the user
+ * @param {string[]} compressedZkpPublicKey a list of compressedZkpPublicKey derivated from the user
  * mnemonic coming from the SDK or Wallet.
- * @returns all the commitments existent for this compressed pkd.
+ * @returns all the commitments existent for this list of compressedZkpPublicKey.
  * @author luizoamorim
  */
-export async function getAllCommitmentsByCompressedZkpPublicKey(compressedZkpPublicKey) {
+export async function getAllCommitmentsByCompressedZkpPublicKeyList(listOfCompressedZkpPublicKey) {
+  console.log(
+    'LISTAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA: ',
+    listOfCompressedZkpPublicKey,
+  );
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
-  const allCommitmentsByCompressedPKD = await db
+  const allCommitmentsByListOfCompressedZkpPublicKey = await db
     .collection(COMMITMENTS_COLLECTION)
     .find({
-      'preimage.compressedZkpPublicKey': compressedZkpPublicKey,
+      'preimage.compressedZkpPublicKey': { $in: listOfCompressedZkpPublicKey },
     })
     .toArray();
-  return allCommitmentsByCompressedPKD;
+  console.log(
+    'RETORNOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO: ',
+    allCommitmentsByListOfCompressedZkpPublicKey,
+  );
+  return allCommitmentsByListOfCompressedZkpPublicKey;
 }
