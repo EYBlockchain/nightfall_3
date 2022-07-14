@@ -5,6 +5,20 @@ function configureAWSBucket() {
   return `${bucket}-${mode}`;
 }
 
+function parseCircuitFilesPath() {
+  let circuits = ['deposit', 'withdraw', 'single_transfer', 'double_transfer'];
+  if (process.env.USE_STUBS === 'true') circuits = circuits.map(circuit => `${circuit}_stub`);
+  const parsedPath = {};
+  for (const circuit of circuits) {
+    parsedPath[circuit] = {
+      abi: `circuits/${circuit}/artifacts/${circuit}-abi.json`,
+      program: `circuits/${circuit}/artifacts/${circuit}-program`,
+      pk: `circuits/${circuit}/keypair/${circuit}_pk.key`,
+    };
+  }
+  return parsedPath;
+}
+
 /* eslint-disable no-extend-native */
 BigInt.prototype.toJSON = function () {
   return `${this.toString()} BigInt`;
@@ -437,51 +451,9 @@ module.exports = {
 
   KEYS_COLLECTION: 'keys',
   DEFAULT_ACCOUNT_NUM: 10,
-  circuitsAWSFiles: {
-    deposit_stub: {
-      abi: 'circuits/deposit_stub/artifacts/deposit_stub-abi.json',
-      program: 'circuits/deposit_stub/artifacts/deposit_stub-program',
-      pk: 'circuits/deposit_stub/keypair/deposit_stub_pk.key',
-    },
-    withdraw_stub: {
-      abi: 'circuits/withdraw_stub/artifacts/withdraw_stub-abi.json',
-      program: 'circuits/withdraw_stub/artifacts/withdraw_stub-program',
-      pk: 'circuits/withdraw_stub/keypair/withdraw_stub_pk.key',
-    },
-    single_transfer_stub: {
-      abi: 'circuits/single_transfer_stub/artifacts/single_transfer_stub-abi.json',
-      program: 'circuits/single_transfer_stub/artifacts/single_transfer_stub-program',
-      pk: 'circuits/single_transfer_stub/keypair/single_transfer_stub_pk.key',
-    },
-    double_transfer_stub: {
-      abi: 'circuits/double_transfer_stub/artifacts/double_transfer_stub-abi.json',
-      program: 'circuits/double_transfer_stub/artifacts/double_transfer_stub-program',
-      pk: 'circuits/double_transfer_stub/keypair/double_transfer_stub_pk.key',
-    },
-    deposit: {
-      abi: 'circuits/deposit/artifacts/deposit-abi.json',
-      program: 'circuits/deposit/artifacts/deposit-program',
-      pk: 'circuits/deposit/keypair/deposit_pk.key',
-    },
-    withdraw: {
-      abi: 'circuits/withdraw/artifacts/withdraw-abi.json',
-      program: 'circuits/withdraw/artifacts/withdraw-program',
-      pk: 'circuits/withdraw/keypair/withdraw_pk.key',
-    },
-    single_transfer: {
-      abi: 'circuits/single_transfer/artifacts/single_transfer-abi.json',
-      program: 'circuits/single_transfer/artifacts/single_transfer-program',
-      pk: 'circuits/single_transfer/keypair/single_transfer_pk.key',
-    },
-    double_transfer: {
-      abi: 'circuits/double_transfer/artifacts/double_transfer-abi.json',
-      program: 'circuits/double_transfer/artifacts/double_transfer-program',
-      pk: 'circuits/double_transfer/keypair/double_transfer_pk.key',
-    },
-  },
-
   AWS: {
     s3Bucket: configureAWSBucket(),
+    circuitFiles: parseCircuitFilesPath(),
   },
 
   utilApiServerUrl: process.env.LOCAL_UTIL_API_URL,
