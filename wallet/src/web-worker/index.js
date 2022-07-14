@@ -8,30 +8,22 @@ import fetchCircuit from 'comlink-loader?singleton!@Nightfall/services/fetch-cir
 import { checkIndexDBForCircuit, storeCircuit } from '@Nightfall/services/database';
 
 const {
-  circuitsAWSFiles,
-  USE_STUBS,
   utilApiServerUrl,
   isLocalRun,
-  AWS: { s3Bucket },
+  AWS: { s3Bucket, circuitFiles },
 } = global.config;
 
 export default async function fetchCircuitFileAndStoreInIndexedDB() {
-  for (const circuit in circuitsAWSFiles) {
-    if (
-      (!USE_STUBS && circuit.slice(-4) !== 'stub') ||
-      (USE_STUBS && circuit.slice(-4) === 'stub')
-    ) {
-      if (!(await checkIndexDBForCircuit(circuit))) {
-        const { abi, program, pk } = await fetchCircuit(circuit, {
-          utilApiServerUrl,
-          isLocalRun,
-          circuitsAWSFiles,
-          AWS: { s3Bucket },
-        });
-        await storeCircuit(`${circuit}-abi`, abi);
-        await storeCircuit(`${circuit}-program`, program);
-        await storeCircuit(`${circuit}-pk`, pk);
-      }
+  for (const circuit in circuitFiles) {
+    if (!(await checkIndexDBForCircuit(circuit))) {
+      const { abi, program, pk } = await fetchCircuit(circuit, {
+        utilApiServerUrl,
+        isLocalRun,
+        AWS: { s3Bucket, circuitFiles },
+      });
+      await storeCircuit(`${circuit}-abi`, abi);
+      await storeCircuit(`${circuit}-program`, program);
+      await storeCircuit(`${circuit}-pk`, pk);
     }
   }
 }
