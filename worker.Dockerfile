@@ -3,8 +3,14 @@ FROM ghcr.io/eyblockchain/local-zokrates as builder
 
 FROM ubuntu:20.04
 
+RUN apt-get update -y
+RUN apt-get install -y netcat curl
+RUN curl -fsSL https://deb.nodesource.com/setup_14.x | bash -
+RUN apt-get install -y nodejs gcc g++ make
+
 WORKDIR /
 COPY common-files common-files
+RUN cd common-files && npm ci
 
 WORKDIR /app
 
@@ -17,11 +23,6 @@ COPY ./zokrates-worker/src ./src
 COPY ./zokrates-worker/circuits ./circuits
 COPY ./zokrates-worker/start-script ./start-script
 COPY ./zokrates-worker/start-dev ./start-dev
-
-RUN apt-get update -y
-RUN apt-get install -y netcat curl
-RUN curl -fsSL https://deb.nodesource.com/setup_14.x | bash -
-RUN apt-get install -y nodejs gcc g++ make
 
 ENV ZOKRATES_HOME /app
 ENV ZOKRATES_STDLIB /app/stdlib

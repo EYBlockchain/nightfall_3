@@ -19,7 +19,6 @@ services:
     depends_on:
       - deployer
       - worker
-      - rabbitmq1
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
@@ -52,7 +51,6 @@ services:
     depends_on:
       - deployer
       - worker
-      - rabbitmq2
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
@@ -75,7 +73,6 @@ services:
       - type: volume
         source: proving_files
         target: /app/output/
-
     depends_on:
       - deployer
     networks:
@@ -87,6 +84,8 @@ services:
   deployer:
     #image: docker.pkg.github.com/eyblockchain/nightfall-deployer/nightfall_deployer:1.1.0
     image: ghcr.io/eyblockchain/nightfall3-deployer:latest
+    depends_on:
+      - rabbitmq1
     volumes:
       - type: volume
         source: build
@@ -149,6 +148,7 @@ services:
     image: ghcr.io/eyblockchain/nightfall3-optimist:latest
     depends_on:
       - deployer
+      - rabbitmq2
     networks:
       - nightfall_network
     ports:
