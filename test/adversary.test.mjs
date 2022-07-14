@@ -30,6 +30,7 @@ const TX_WAIT = 12000;
 const TEST_LENGTH_TRANSFER = process.env.TEST_LENGTH_TRANSFER || 4;
 const TEST_LENGTH_DOUBLE_TRANSFER = process.env.TEST_LENGTH_DOUBLE_TRANSFER || 0;
 const TEST_LENGTH_WITHDRAW = process.env.TEST_LENGTH_WITHDRAW || 0;
+const TEST_LENGTH_TRANSFER_UNCHALLENGED = process.env.TEST_LENGTH_TRANSFER_UNCHALLENGED || 0;
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
@@ -481,7 +482,7 @@ describe('Testing with an adversary', () => {
 
   describe('User creates deposit, transfer with adversary + deregistered challenger', () => {
     it('User shouldnt have the correct balance because of incorrect unchallenged blocks', async () => {
-      if (TEST_LENGTH_TRANSFER === 0) return;
+      if (TEST_LENGTH_TRANSFER_UNCHALLENGED === 0) return;
       // Register challenger. Should be ok to re-register a challenger
       await nf3Challenger.registerChallenger();
       // Reset challenger earnings
