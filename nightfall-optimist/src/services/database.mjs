@@ -15,6 +15,7 @@ const {
   PROPOSER_COLLECTION,
   CHALLENGER_COLLECTION,
   SUBMITTED_BLOCKS_COLLECTION,
+  INVALID_BLOCKS_COLLECTION,
   NULLIFIER_COLLECTION,
   COMMIT_COLLECTION,
   TIMBER_COLLECTION,
@@ -208,6 +209,20 @@ export async function findBlocksFromBlockNumberL2(blockNumberL2) {
     .collection(SUBMITTED_BLOCKS_COLLECTION)
     .find(query, { sort: { blockNumberL2: 1 } })
     .toArray();
+}
+
+/**
+function to save an invalid block, so that we can later search the invalid block
+and the type of invalid block.
+*/
+export async function saveInvalidBlock(_block) {
+  const block = { _id: _block.blockHash, ..._block };
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  logger.debug(`saving invalid block ${JSON.stringify(block, null, 2)}`);
+  const query = { blockHash: block.blockHash };
+  const update = { $set: block };
+  return db.collection(INVALID_BLOCKS_COLLECTION).updateOne(query, update, { upsert: true });
 }
 
 /**

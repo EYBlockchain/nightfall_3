@@ -17,6 +17,7 @@ module.exports = {
   CHALLENGER_COLLECTION: 'challengers',
   TRANSACTIONS_COLLECTION: 'transactions',
   SUBMITTED_BLOCKS_COLLECTION: 'blocks',
+  INVALID_BLOCKS_COLLECTION: 'invalid_blocks',
   NULLIFIER_COLLECTION: 'nullifiers',
   COMMIT_COLLECTION: 'commits',
   WALLETS_COLLECTION: 'wallets',
