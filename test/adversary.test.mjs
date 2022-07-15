@@ -168,7 +168,10 @@ describe('Testing with an adversary', () => {
       }
 
       for (let i = 0; i < TEST_LENGTH; i++) {
-        await waitForSufficientBalance(nf3User, startBalance + (i + 1) * value2);
+        await waitForSufficientBalance(
+          nf3User,
+          startBalance + (i + 1) * (TRANSACTIONS_PER_BLOCK - 1) * value2,
+        );
         try {
           await nf3User.transfer(
             false,
