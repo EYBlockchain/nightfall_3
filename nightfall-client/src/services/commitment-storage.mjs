@@ -699,10 +699,6 @@ export async function findUsableCommitmentsMutex(
  * @author luizoamorim
  */
 export async function getAllCommitmentsByCompressedZkpPublicKeyList(listOfCompressedZkpPublicKey) {
-  console.log(
-    'LISTAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA: ',
-    listOfCompressedZkpPublicKey,
-  );
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const allCommitmentsByListOfCompressedZkpPublicKey = await db
@@ -711,9 +707,41 @@ export async function getAllCommitmentsByCompressedZkpPublicKeyList(listOfCompre
       'preimage.compressedZkpPublicKey': { $in: listOfCompressedZkpPublicKey },
     })
     .toArray();
-  console.log(
-    'RETORNOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO: ',
-    allCommitmentsByListOfCompressedZkpPublicKey,
-  );
   return allCommitmentsByListOfCompressedZkpPublicKey;
+}
+
+/**
+ * @function getAllCommitments do the role of a service taking care of the
+ * business logic and of a repository doing the communication with the database for this
+ * use case.
+ * @returns all the commitments existent in this database.
+ * @author luizoamorim
+ */
+export async function getAllCommitments() {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  const allCommitments = await db.collection(COMMITMENTS_COLLECTION).find({}).toArray();
+  return allCommitments;
+}
+
+/**
+ *
+ * @function saveAllCommitments save a list of commitments in the database
+ * @param {[]} listOfCommitments a list of commitments to be saved in the database
+ * @returns
+ */
+export async function saveAllCommitments(listOfCommitments) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  const isCommitmentAlreadyExists = listOfCommitments.map(
+    async commitment =>
+      (await db.collection(COMMITMENTS_COLLECTION).find({ _id: commitment._id })) && commitment,
+  );
+
+  if (isCommitmentAlreadyExists.length > 0) {
+    return new Error('Some of these commitments already existis in the database!');
+  }
+
+  const response = await db.collection(COMMITMENTS_COLLECTION).insertMany(listOfCommitments);
+  return response;
 }
