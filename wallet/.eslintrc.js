@@ -16,6 +16,8 @@ module.exports = {
     'no-sparse-arrays': 'off',
     'jsx-a11y/click-events-have-key-events': 'off',
     'react/forbid-prop-types': 'off',
+    'no-shadow': 'off',
+    '@typescript-eslint/no-shadow': ['off'],
   },
   parser: 'babel-eslint', // Uses babel-eslint transforms.
   parserOptions: {

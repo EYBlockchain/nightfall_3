@@ -137,7 +137,8 @@ describe('ERC20 tests', () => {
     });
 
     it('should increment the balance after deposit some ERC20 crypto', async function () {
-      const currentPkdBalance = (await nf3Users[0].getLayer2Balances())[erc20Address][0].balance;
+      const currentZkpPublicKeyBalance = (await nf3Users[0].getLayer2Balances())[erc20Address][0]
+        .balance;
       // We do txPerBlock deposits of 10 each
       await depositNTransactions(
         nf3Users[0],
@@ -149,8 +150,11 @@ describe('ERC20 tests', () => {
         fee,
       );
       eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-      const afterPkdBalance = (await nf3Users[0].getLayer2Balances())[erc20Address][0].balance;
-      expect(afterPkdBalance - currentPkdBalance).to.be.equal(txPerBlock * transferValue);
+      const afterZkpPublicKeyBalance = (await nf3Users[0].getLayer2Balances())[erc20Address][0]
+        .balance;
+      expect(afterZkpPublicKeyBalance - currentZkpPublicKeyBalance).to.be.equal(
+        txPerBlock * transferValue,
+      );
     });
   });
 
@@ -174,7 +178,7 @@ describe('ERC20 tests', () => {
           tokenType,
           transferValue,
           tokenId,
-          nf3Users[1].zkpKeys.compressedPkd,
+          nf3Users[1].zkpKeys.compressedZkpPublicKey,
           fee,
         );
         expectTransaction(res);
@@ -200,7 +204,7 @@ describe('ERC20 tests', () => {
           tokenType,
           transferValue,
           tokenId,
-          nf3Users[0].zkpKeys.compressedPkd,
+          nf3Users[0].zkpKeys.compressedZkpPublicKey,
           fee,
         );
         expectTransaction(res);
@@ -224,7 +228,7 @@ describe('ERC20 tests', () => {
           tokenType,
           transferValue,
           tokenId,
-          nf3Users[1].zkpKeys.compressedPkd,
+          nf3Users[1].zkpKeys.compressedZkpPublicKey,
           fee,
         );
         expect(res).to.be.equal(200);
@@ -249,7 +253,7 @@ describe('ERC20 tests', () => {
           tokenType,
           doubleTransferValue,
           tokenId,
-          nf3Users[1].zkpKeys.compressedPkd,
+          nf3Users[1].zkpKeys.compressedZkpPublicKey,
           fee,
         );
         expect(res).to.be.equal(200);
@@ -323,15 +327,16 @@ describe('ERC20 tests', () => {
 
         await emptyL2(nf3Users[0]);
 
-        await web3Client.timeJump(3600 * 24 * 10); // jump in time by 50 days
+        await web3Client.timeJump(3600 * 24 * 10); // jump in time by 10 days
 
         const commitments = await nf3Users[0].getPendingWithdraws();
         expect(
-          commitments[nf3Users[0].zkpKeys.compressedPkd][erc20Address].length,
+          commitments[nf3Users[0].zkpKeys.compressedZkpPublicKey][erc20Address].length,
         ).to.be.greaterThan(0);
         expect(
-          commitments[nf3Users[0].zkpKeys.compressedPkd][erc20Address].filter(c => c.valid === true)
-            .length,
+          commitments[nf3Users[0].zkpKeys.compressedZkpPublicKey][erc20Address].filter(
+            c => c.valid === true,
+          ).length,
         ).to.be.greaterThan(0);
 
         const res = await nf3Users[0].finaliseWithdrawal(withdrawal);
@@ -525,7 +530,7 @@ describe('ERC20 tests', () => {
               tokenType,
               trnsferValue * (i + 2),
               tokenId,
-              nf3Users[0].zkpKeys.compressedPkd,
+              nf3Users[0].zkpKeys.compressedZkpPublicKey,
               fee,
             );
             await emptyL2(nf3Users[0]);
@@ -544,16 +549,14 @@ describe('ERC20 tests', () => {
           );
 
           await new Promise(resolve => setTimeout(resolve, 15000));
-
           expectTransaction(rec);
+
           const withdrawal = await nf3Users[0].getLatestWithdrawHash();
-
           await emptyL2(nf3Users[0]);
-
           await web3Client.timeJump(3600 * 24 * 10); // jump in time by 50 days
-
           // anything equal or above the restricted amount should fail
           await nf3Users[0].finaliseWithdrawal(withdrawal);
+
           expect.fail('Transaction has not been reverted by the EVM');
         } catch (error) {
           expect(error.message).to.satisfy(message =>

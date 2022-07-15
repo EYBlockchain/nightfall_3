@@ -2,6 +2,7 @@
 This module contains the UI components that are presented to the user so that they
 can interact with the admin application.
 */
+import config from 'config';
 import figlet from 'figlet';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
@@ -10,6 +11,8 @@ import Web3 from 'web3';
 import { getTokenNames } from '../services/helpers.mjs';
 
 const web3 = new Web3();
+const { MULTISIG } = config;
+const { APPROVERS } = MULTISIG;
 /**
 Initialises the CLI
 */
@@ -29,14 +32,38 @@ export function initUI() {
 /**
 Asks CLI questions
 */
-export async function askQuestions(ethereumSigningKey) {
+export async function askQuestions(approved) {
   const questions = [
     {
-      name: 'privateKey',
+      name: 'workflow',
+      type: 'list',
+      message: 'Add an existing signed transaction or create a new one?',
+      choices: ['add', 'create'],
+      when: () => !approved,
+    },
+    {
+      name: 'ethereumSigningKey',
       type: 'input',
-      message: 'Please provide the Admin signing key in hex format (0x...). Return to exit',
-      validate: input => web3.utils.isHexStrict(input) || !input,
-      when: () => !ethereumSigningKey,
+      message:
+        'Please provide the Approver signing key in hex format (0x...), return to find existing transactions',
+      validate: input =>
+        !input || APPROVERS.includes(web3.eth.accounts.privateKeyToAccount(input).address),
+      when: answers => !approved && answers.workflow === 'create',
+    },
+    {
+      name: 'executorAddress',
+      type: 'input',
+      message: 'Please provide the address of the multisig executor',
+      validate: input => web3.utils.isAddress(input),
+      when: answers => !approved && answers.workflow === 'create',
+    },
+    {
+      name: 'nonce',
+      type: 'input',
+      message:
+        'Please provide the nonce for the multisig transaction (return to read from blockchain)',
+      validate: input => (Number.isInteger(Number(input)) && Number(input) >= 0) || !input,
+      when: answers => !approved && answers.workflow === 'create',
     },
     {
       name: 'task',
@@ -52,9 +79,11 @@ export async function askQuestions(ethereumSigningKey) {
         'Transfer ownership',
         'Set new boot proposer',
         'Set new boot challenger',
-        'Exit',
       ],
-      when: answers => !!answers.privateKey || !!ethereumSigningKey,
+      get pageSize() {
+        return this.choices.length;
+      },
+      when: answers => !approved && answers.workflow === 'create',
     },
     {
       name: 'tokenName',
@@ -76,14 +105,14 @@ export async function askQuestions(ethereumSigningKey) {
       type: 'input',
       message: 'Please provide the deposit restriction in base units (ignoring decimalisation)',
       when: answers => answers.task === 'Set token restrictions',
-      validate: input => Number.isInteger(Number(input)),
+      validate: input => Number.isInteger(Number(input)) && Number(input) > 0,
     },
     {
       name: 'withdrawRestriction',
       type: 'input',
       message: 'Please provide the withdraw restriction in base units (ignoring decimalisation)',
       when: answers => answers.task === 'Set token restrictions',
-      validate: input => Number.isInteger(Number(input)),
+      validate: input => Number.isInteger(Number(input)) && Number(input) > 0,
     },
     {
       name: 'pause',
@@ -106,7 +135,7 @@ export async function askQuestions(ethereumSigningKey) {
       validate: input => Number.isInteger(Number(input)),
     },
     {
-      name: 'newPrivateKey',
+      name: 'newEthereumSigningKey',
       type: 'input',
       message: 'Please provide the new PRIVATE key',
       validate: input => web3.utils.isHexStrict(input),
@@ -114,6 +143,19 @@ export async function askQuestions(ethereumSigningKey) {
         ['Transfer ownership', 'Set new boot proposer', 'Set new boot challenger'].includes(
           answers.task,
         ),
+    },
+    {
+      name: 'executor',
+      type: 'input',
+      message: 'Please provide the Executor signing key in hex format (0x...)',
+      validate: input => web3.utils.isHexStrict(input),
+      when: () => !!approved,
+    },
+    {
+      name: 'signedTx',
+      type: 'input',
+      message: 'Paste the signed transaction(s) here',
+      when: answers => answers.workflow === 'add',
     },
   ];
   return inquirer.prompt(questions);

@@ -11,12 +11,12 @@ class Nullifier {
 
   hash;
 
-  constructor(commitment, nsk) {
+  constructor(commitment, nullifierKey) {
     this.preimage = generalise({
-      nsk,
+      nullifierKey,
       commitment: commitment.hash,
     });
-    this.hash = poseidon([this.preimage.nsk, this.preimage.commitment]);
+    this.hash = poseidon([this.preimage.nullifierKey, this.preimage.commitment]);
   }
 }
 
