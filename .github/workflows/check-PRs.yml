@@ -17,9 +17,9 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@master
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v3
         with:
-          node-version: '14.17.0'
+          node-version: '18.4.0'
       - name: eslint check
         run: |
           npm ci
@@ -81,9 +81,9 @@ jobs:
       TRANSACTIONS_PER_BLOCK: 32
     steps:
       - uses: actions/checkout@master
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v3
         with:
-          node-version: '14.17.0'
+          node-version: '18.4.0'
 
       - name: Build adversary
         run: npm run build-adversary
@@ -134,9 +134,9 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@master
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v3
         with:
-          node-version: '14.17.0'
+          node-version: '18.4.0'
 
       - name: Start Containers
         run: |
@@ -190,9 +190,9 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@master
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v3
         with:
-          node-version: '14.17.0'
+          node-version: '18.4.0'
 
       - name: Start Containers with ganache
         run: |
