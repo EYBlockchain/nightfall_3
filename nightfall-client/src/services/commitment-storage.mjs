@@ -733,12 +733,19 @@ export async function getAllCommitments() {
 export async function saveAllCommitments(listOfCommitments) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
-  const isCommitmentAlreadyExists = listOfCommitments.map(
-    async commitment =>
-      (await db.collection(COMMITMENTS_COLLECTION).find({ _id: commitment._id })) && commitment,
-  );
+  let exist = false;
+  for (const commitment of listOfCommitments) {
+    if (
+      // eslint-disable-next-line no-await-in-loop
+      (await db.collection(COMMITMENTS_COLLECTION).find({ _id: commitment._id }).toArray()).length >
+      0
+    ) {
+      exist = true;
+      break;
+    }
+  }
 
-  if (isCommitmentAlreadyExists.length > 0) {
+  if (exist) {
     return new Error('Some of these commitments already existis in the database!');
   }
 
