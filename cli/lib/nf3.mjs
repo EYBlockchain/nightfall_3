@@ -951,7 +951,6 @@ class Nf3 {
             blockProposeEmitter.emit('receipt', receipt, block, transactions);
           } catch (err) {
             blockProposeEmitter.emit('error', err, block, transactions);
-            console.log("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
             await axios.get(`${this.optimistBaseUrl}/reset-localblock`);
           }
         });
