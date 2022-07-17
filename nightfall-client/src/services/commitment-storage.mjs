@@ -82,7 +82,10 @@ export async function countNullifiers(nullifiers) {
 // function to get count of transaction hashes of withdraw type. Used to decide if we should store sibling path of transaction hash to be used later for finalising or instant withdrawal
 export async function countWithdrawTransactionHashes(transactionHashes) {
   const connection = await mongo.connection(MONGO_URL);
-  const query = { transactionHash: { $in: transactionHashes }, nullifierTransactionType: '3' };
+  const query = {
+    transactionHash: { $in: transactionHashes },
+    nullifierTransactionType: { $in: ['3', '4'] },
+  };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).countDocuments(query);
 }
@@ -90,7 +93,7 @@ export async function countWithdrawTransactionHashes(transactionHashes) {
 // function to get if the transaction hash belongs to a withdraw transaction
 export async function isTransactionHashWithdraw(transactionHash) {
   const connection = await mongo.connection(MONGO_URL);
-  const query = { transactionHash, nullifierTransactionType: '3' };
+  const query = { transactionHash, nullifierTransactionType: { $in: ['3', '4'] } };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).countDocuments(query);
 }
@@ -511,7 +514,7 @@ export async function getWithdrawCommitments() {
   const db = connection.db(COMMITMENTS_DB);
   const query = {
     isNullified: true,
-    nullifierTransactionType: '3',
+    nullifierTransactionType: { $in: ['3', '4'] },
     isNullifiedOnChain: { $gte: 0 },
   };
   // Get associated nullifiers of commitments that have been spent on-chain and are used for withdrawals.
@@ -619,7 +622,7 @@ async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId
   }
   // If we only want one or there is only 1 commitment - then we should try a single transfer with change
   if (onlyOne || commitments.length === 1) {
-    const valuesGreaterThanTarget = commitments.filter(c => c.preimage.value.bigInt > value); // Do intermediary step since reduce has ugly exception
+    const valuesGreaterThanTarget = commitments.filter(c => c.preimage.value.bigInt > value.bigInt); // Do intermediary step since reduce has ugly exception
     if (valuesGreaterThanTarget.length === 0) return null;
     const singleCommitmentWithChange = valuesGreaterThanTarget.reduce((prev, curr) =>
       prev.preimage.value.bigInt < curr.preimage.value.bigInt ? prev : curr,

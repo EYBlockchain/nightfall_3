@@ -123,6 +123,26 @@ async function checkTransactionType(transaction) {
           1,
         );
       break;
+    case 4: // withdraw_change transaction
+      if (
+        (Number(transaction.tokenType) !== 0 &&
+          transaction.tokenId === ZERO &&
+          BigInt(transaction.value) === 0n) ||
+        transaction.commitments[0] === ZERO ||
+        transaction.commitments[1] !== ZERO ||
+        transaction.ercAddress === ZERO ||
+        transaction.recipientAddress === ZERO ||
+        transaction.nullifiers[0] === ZERO ||
+        transaction.nullifiers[1] !== ZERO ||
+        transaction.nullifiers.length !== 2 ||
+        transaction.compressedSecrets.some(cs => cs !== ZERO) ||
+        transaction.proof.every(p => p === ZERO)
+      )
+        throw new TransactionError(
+          'The data provided was inconsistent with a transaction type of WITHDRAW_CHANGE',
+          1,
+        );
+      break;
     default:
       throw new TransactionError('Unknown transaction type', 2);
   }
@@ -177,7 +197,7 @@ async function verifyProof(transaction) {
           transaction.value,
           transaction.commitments[0],
         ].flat(Infinity),
-      );
+      ).all.hex(32);
       if (
         isOverflow(transaction.ercAddress, MAX_PUBLIC_VALUES.ERCADDRESS) ||
         isOverflow(transaction.commitments[0], MAX_PUBLIC_VALUES.COMMITMENTS)
@@ -195,7 +215,7 @@ async function verifyProof(transaction) {
           transaction.tokenId,
           ...transaction.compressedSecrets,
         ].flat(Infinity),
-      );
+      ).all.hex(32);
       // check for truncation overflow attacks
       if (
         isOverflow(transaction.commitments[0], MAX_PUBLIC_VALUES.COMMITMENTS) ||
@@ -216,7 +236,7 @@ async function verifyProof(transaction) {
           transaction.tokenId,
           ...transaction.compressedSecrets,
         ].flat(Infinity),
-      );
+      ).all.hex(32);
       // check for truncation overflow attacks
       for (let i = 0; i < transaction.nullifiers.length; i++) {
         if (isOverflow(transaction.nullifiers[i], MAX_PUBLIC_VALUES.NULLIFIER))
@@ -242,7 +262,25 @@ async function verifyProof(transaction) {
           transaction.recipientAddress,
           historicRootFirst.root,
         ].flat(Infinity),
-      );
+      ).all.hex(32);
+      // check for truncation overflow attacks
+      if (
+        isOverflow(transaction.ercAddress, MAX_PUBLIC_VALUES.ERCADDRESS) ||
+        isOverflow(transaction.recipientAddress, MAX_PUBLIC_VALUES.ERCADDRESS) ||
+        isOverflow(transaction.nullifiers[0], MAX_PUBLIC_VALUES.NULLIFIER) ||
+        isOverflow(historicRootFirst.root, BN128_GROUP_ORDER)
+      )
+        throw new TransactionError('Truncated value overflow in public input', 4);
+      break;
+    case 4: // withdraw_change transaction
+      inputs = [
+        generalise(transaction.ercAddress).hex(32),
+        generalise(transaction.tokenId).limbs(32, 8),
+        generalise(transaction.nullifiers[0]).hex(32),
+        generalise(transaction.value).hex(32),
+        generalise(historicRootFirst.root).hex(32),
+        generalise(transaction.commitments[0]).hex(32),
+      ].flat(Infinity);
       // check for truncation overflow attacks
       if (
         isOverflow(transaction.ercAddress, MAX_PUBLIC_VALUES.ERCADDRESS) ||
@@ -264,7 +302,7 @@ async function verifyProof(transaction) {
     provingScheme: PROVING_SCHEME,
     backend: BACKEND,
     curve: CURVE,
-    inputs: inputs.all.hex(32),
+    inputs,
   });
   if (!res) throw new TransactionError('The proof did not verify', 4);
 }

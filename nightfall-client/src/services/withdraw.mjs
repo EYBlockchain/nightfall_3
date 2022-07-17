@@ -33,6 +33,7 @@ const {
 const { generalise } = gen;
 
 const NEXT_N_PROPOSERS = 3;
+const MAX_WITHDRAW = 5192296858534827628530496329220096n; // 2n**112n
 
 async function withdraw(withdrawParams) {
   logger.info('Creating a withdraw transaction');
@@ -56,7 +57,7 @@ async function withdraw(withdrawParams) {
   // proof, the next step is to compute its nullifier;
   const nullifier = new Nullifier(oldCommitment, nullifierKey);
   // we may need to return change to the recipient
-  const change = oldCommitment.preimage.value.bigInt - value;
+  const change = oldCommitment.preimage.value.bigInt - value.bigInt;
   // if so, add an output commitment to do that
   // and the Merkle path from the commitment to the root
   const commitmentTreeInfo = await getSiblingInfo(oldCommitment);
@@ -70,9 +71,10 @@ async function withdraw(withdrawParams) {
   const { leafIndex, isOnChain } = commitmentTreeInfo;
 
   let witness = [];
+  let newCommitment = null;
   if (change !== 0n) {
     const salt = await randValueLT(BN128_GROUP_ORDER);
-    const newCommitment = new Commitment({
+    newCommitment = new Commitment({
       ercAddress,
       tokenId,
       value: change,
@@ -83,23 +85,23 @@ async function withdraw(withdrawParams) {
     witness = [
       oldCommitment.preimage.ercAddress.field(BN128_GROUP_ORDER),
       oldCommitment.preimage.tokenId.limbs(32, 8),
-      nullifier.hash.field(BN128_GROUP_ORDER),
-      rootKey.field(BN128_GROUP_ORDER),
+      [nullifier.hash.field(BN128_GROUP_ORDER)],
+      [rootKey.field(BN128_GROUP_ORDER)],
       value.field(BN128_GROUP_ORDER),
       [
-        oldCommitment.preimage.value.field(BN128_GROUP_ORDER),
-        oldCommitment.preimage.salt.limbs(32, 8),
+        [oldCommitment.preimage.value.field(BN128_GROUP_ORDER)],
+        [oldCommitment.preimage.salt.limbs(32, 8)],
       ],
       // recipientAddress.field(BN128_GROUP_ORDER),
-      siblingPath[0].field(BN128_GROUP_ORDER),
-      siblingPath.slice(1).map(node => node.field(BN128_GROUP_ORDER, false)), // siblingPAth[32] is a sha hash and will overflow a field but it's ok to take the mod here - hence the 'false' flag
-      leafIndex,
+      [siblingPath[0].field(BN128_GROUP_ORDER)],
+      [siblingPath.slice(1).map(node => node.field(BN128_GROUP_ORDER, false))], // siblingPAth[32] is a sha hash and will overflow a field but it's ok to take the mod here - hence the 'false' flag
+      [leafIndex],
       [
-        newCommitment.preimage.value.field(BN128_GROUP_ORDER),
-        newCommitment.reimage.salt.limbs(32, 8),
+        [newCommitment.preimage.value.field(BN128_GROUP_ORDER)],
+        [newCommitment.preimage.salt.limbs(32, 8)],
       ],
-      newCommitment.preimage.zkpPublicKey.map(zkp => zkp.field(BN128_GROUP_ORDER)),
-      newCommitment.hash.field(BN128_GROUP_ORDER),
+      [newCommitment.preimage.zkpPublicKey.map(zkp => zkp.field(BN128_GROUP_ORDER))],
+      [newCommitment.hash.field(BN128_GROUP_ORDER)],
     ].flat(Infinity);
   } else {
     // now we have everything we need to create a Witness and compute a proof
@@ -120,7 +122,15 @@ async function withdraw(withdrawParams) {
 
   logger.debug(`witness input is ${witness.join(' ')}`);
   // call a zokrates worker to generate the proof
-  let folderpath = 'withdraw';
+  let folderpath;
+  let transactionType;
+  if (change > 0n || value.bigInt >= MAX_WITHDRAW) {
+    folderpath = 'withdraw_change';
+    transactionType = 4;
+  } else {
+    folderpath = 'withdraw';
+    transactionType = 3;
+  }
   if (USE_STUBS) folderpath = `${folderpath}_stub`;
   const res = await axios.post(`${PROTOCOL}${ZOKRATES_WORKER_HOST}/generate-proof`, {
     folderpath,
@@ -135,7 +145,8 @@ async function withdraw(withdrawParams) {
   const optimisticWithdrawTransaction = new Transaction({
     fee,
     historicRootBlockNumberL2: [isOnChain, 0],
-    transactionType: 3,
+    commitments: newCommitment ? [newCommitment] : [{ hash: 0 }, { hash: 0 }],
+    transactionType,
     tokenType: items.tokenType,
     tokenId,
     value,
