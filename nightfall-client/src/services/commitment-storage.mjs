@@ -30,6 +30,7 @@ export async function storeCommitment(commitment, nullifierKey) {
   const nullifierHash = new Nullifier(commitment, nullifierKey).hash.hex(32);
   const data = {
     _id: commitment.hash.hex(32),
+    compressedZkpPublicKey: commitment.compressedZkpPublicKey.hex(32),
     preimage: commitment.preimage.all.hex(32),
     isDeposited: commitment.isDeposited || false,
     isOnChain: Number(commitment.isOnChain) || -1,
@@ -239,7 +240,8 @@ export async function getWalletBalanceUnfiltered() {
   const query = { isNullified: false, isOnChain: { $gte: 0 } };
   const options = {
     projection: {
-      preimage: { ercAddress: 1, compressedZkpPublicKey: 1, tokenId: 1, value: 1 },
+      compressedZkpPublicKey: 1,
+      preimage: { ercAddress: 1, tokenId: 1, value: 1 },
       _id: 0,
     },
   };
@@ -254,7 +256,7 @@ export async function getWalletBalanceUnfiltered() {
   return wallet
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
-      compressedZkpPublicKey: e.preimage.compressedZkpPublicKey,
+      compressedZkpPublicKey: e.compressedZkpPublicKey,
       tokenId: !!BigInt(e.preimage.tokenId),
       value: Number(BigInt(e.preimage.value)),
     }))
@@ -283,7 +285,8 @@ export async function getWalletBalance(compressedZkpPublicKey, ercList) {
   const query = { isNullified: false, isOnChain: { $gte: 0 } };
   const options = {
     projection: {
-      preimage: { ercAddress: 1, compressedZkpPublicKey: 1, tokenId: 1, value: 1 },
+      compressedZkpPublicKey: 1,
+      preimage: { ercAddress: 1, tokenId: 1, value: 1 },
       _id: 0,
     },
   };
@@ -298,7 +301,7 @@ export async function getWalletBalance(compressedZkpPublicKey, ercList) {
   const res = wallet
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
-      compressedZkpPublicKey: e.preimage.compressedZkpPublicKey,
+      compressedZkpPublicKey: e.compressedZkpPublicKey,
       tokenId: Number(BigInt(e.preimage.tokenId)),
       value: Number(BigInt(e.preimage.value)),
     }))
@@ -339,7 +342,8 @@ export async function getWalletPendingDepositBalance(compressedZkpPublicKey, erc
   const query = { isDeposited: true, isNullified: false, isOnChain: { $eq: -1 } };
   const options = {
     projection: {
-      preimage: { ercAddress: 1, compressedZkpPublicKey: 1, tokenId: 1, value: 1 },
+      compressedZkpPublicKey: 1,
+      preimage: { ercAddress: 1, tokenId: 1, value: 1 },
       _id: 0,
     },
   };
@@ -354,7 +358,7 @@ export async function getWalletPendingDepositBalance(compressedZkpPublicKey, erc
   return wallet
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
-      compressedZkpPublicKey: e.preimage.compressedZkpPublicKey,
+      compressedZkpPublicKey: e.compressedZkpPublicKey,
       tokenId: Number(BigInt(e.preimage.tokenId)),
       value: Number(BigInt(e.preimage.value)),
     }))
@@ -399,7 +403,8 @@ export async function getWalletPendingSpentBalance(compressedZkpPublicKey, ercLi
   const query = { isNullified: true, isNullifiedOnChain: { $eq: -1 } };
   const options = {
     projection: {
-      preimage: { ercAddress: 1, compressedZkpPublicKey: 1, tokenId: 1, value: 1 },
+      compressedZkpPublicKey: 1,
+      preimage: { ercAddress: 1, tokenId: 1, value: 1 },
       _id: 0,
     },
   };
@@ -414,7 +419,7 @@ export async function getWalletPendingSpentBalance(compressedZkpPublicKey, ercLi
   return wallet
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
-      compressedZkpPublicKey: e.preimage.compressedZkpPublicKey,
+      compressedZkpPublicKey: e.compressedZkpPublicKey,
       tokenId: Number(BigInt(e.preimage.tokenId)),
       value: Number(BigInt(e.preimage.value)),
     }))
@@ -457,7 +462,8 @@ export async function getWalletCommitments() {
   const query = { isNullified: false, isOnChain: { $gte: 0 } };
   const options = {
     projection: {
-      preimage: { ercAddress: 1, compressedZkpPublicKey: 1, tokenId: 1, value: 1 },
+      compressedZkpPublicKey: 1,
+      preimage: { ercAddress: 1, tokenId: 1, value: 1 },
       _id: 0,
     },
   };
@@ -472,7 +478,7 @@ export async function getWalletCommitments() {
   return wallet
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`,
-      compressedZkpPublicKey: e.preimage.compressedZkpPublicKey,
+      compressedZkpPublicKey: e.compressedZkpPublicKey,
       tokenId: Number(BigInt(e.preimage.tokenId)),
       value: Number(BigInt(e.preimage.value)),
     }))
@@ -515,7 +521,7 @@ export async function getWithdrawCommitments() {
         block,
         transactions,
         index,
-        compressedZkpPublicKey: w.preimage.compressedZkpPublicKey,
+        compressedZkpPublicKey: w.compressedZkpPublicKey,
         ercAddress: `0x${BigInt(w.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to be a correct address length
         balance: w.preimage.tokenId ? 1 : w.preimage.value,
       };
@@ -584,7 +590,7 @@ async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId
   const commitmentArray = await db
     .collection(COMMITMENTS_COLLECTION)
     .find({
-      'preimage.compressedZkpPublicKey': compressedZkpPublicKey.hex(32),
+      compressedZkpPublicKey: compressedZkpPublicKey.hex(32),
       'preimage.ercAddress': ercAddress.hex(32),
       'preimage.tokenId': tokenId.hex(32),
       isNullified: false,

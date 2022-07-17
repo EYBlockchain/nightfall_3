@@ -2,34 +2,34 @@ from "ecc/babyjubjubParams" import BabyJubJubParams
 from "ecc/babyjubjubParams" import main as curveParams
 from "ecc/edwardsScalarMult" import main as scalarMult
 from "ecc/edwardsCompress" import main as edwardsCompress
-// from "./common/encryption/el-gamal4" import main as enc4
+from "hashes/poseidon/poseidon.zok" import main as poseidon
 from "./common/encryption/kem-dem" import main as kemDem, EncryptedMsgs
 
-from "utils/casts/u32_to_bits.zok" import main as u32_to_bool_32
-from "utils/casts/bool_256_to_u32_8.zok" import main as bool_256_to_u32_8
 from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256
 from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
-from "utils/pack/u32/pack256.zok" import main as u32_8_to_field
-from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8
 
 from "./common/hashes/mimc/mimc-hash-2.zok" import main as mimc2
-from "./common/hashes/sha256/pad512ThenHash.zok" import main as sha256of512
-from "./common/hashes/sha256/pad1280ThenHash.zok" import main as sha256of1280
-
 from "./common/merkle-tree/mimc-path-check.zok" import main as pathCheck
+from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field
+from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field
+
+type Point = field[2]
+
+// 2 ^ 161
+const field SHIFT = 2923003274661805836407369665432566039311865085952
 
 struct OldCommitmentPreimage {
 	u32[8] id
-	u32[8] value
-	u32[8] salt
-	u32[8] hash
+	u8[31] value // needed to prevent overflow attacks in transfers
+	field salt
+	field hash
 	field rootKey
 }
 
 struct NewCommitmentPreimage {
-	field[2] zkpPublicKeyRecipient
-	u32[8] value
-	u32[8] salt
+	Point zkpPublicKeyRecipient
+	u8[31] value
+	field salt
 }
 
 struct CompressedPoint {
@@ -38,11 +38,11 @@ struct CompressedPoint {
 }
 
 def main(\
-	private field fErcAddress,\
+	private field ercAddress,\
 	private OldCommitmentPreimage oldCommitment,\
 	private NewCommitmentPreimage newCommitment,\
-	field fNewCommitmentHash,\
-	field fNullifier,\
+	field newCommitmentHash,\
+	field nullifier,\
 	field root,\
 	private field[32] path,\
 	private field order,\
@@ -57,85 +57,58 @@ def main(\
 	// Calculation of zkpPrivateKey and nullifierKey from rootKey
 	field zkpPrivateKey = mimc2([oldCommitment.rootKey, 2708019456231621178814538244712057499818649907582893776052749473028258908910])
 	field nullifierKey = mimc2([oldCommitment.rootKey, 7805187439118198468809896822299973897593108379494079213870562208229492109015])
-	u32[8] nullifierKeyU328 = field_to_u32_8(nullifierKey)
-
 	bool[256] zkpPrivateKeyBool = field_to_bool_256(zkpPrivateKey)
 	field[2] zkpPublicKey = scalarMult(zkpPrivateKeyBool, g, context)
-	bool[256] zkpPublicKeyBool = edwardsCompress(zkpPublicKey)
-	u32[8] zkpPublicKeyU32 = bool_256_to_u32_8(zkpPublicKeyBool)
-
-	u32[8] ercAddress = field_to_u32_8(fErcAddress)
-	u32[8] newCommitmentHash = field_to_u32_8(fNewCommitmentHash)
-	u32[8] nullifier = field_to_u32_8(fNullifier)
-	// Convert (x,y) public key of recipient to a single element using Edwards compress
-	// Recipient (x,y) form public key is used for encryption input while single element
-	// is used for commitment inputs
-	bool[256] zkpPublicKeyRecipientBool = edwardsCompress(newCommitment.zkpPublicKeyRecipient)
-    u32[8] zkpPublicKeyRecipientU32 = bool_256_to_u32_8(zkpPublicKeyRecipientBool)
 
 	// check the nullifier is valid
-	u32[8] sha = sha256of512([\
-		...nullifierKeyU328,\
-		...oldCommitment.hash\
-	])
-	// nullifiers are truncated to 248 bits since they are public inputs
-	// so we must check the 248 bits while minimising constraints/comp time - casting to bool[256] is a slower operation than comparing u32s
-
-	// last 224 bits:
-	assert(sha[1..8] == nullifier[1..8])
-	// first 24 bits:
-	assert(u32_to_bool_32(sha[0])[8..32] == u32_to_bool_32(nullifier[0])[8..32])
+	field nullifierCheck = poseidon([nullifierKey, oldCommitment.hash])
+	assert (nullifierCheck == nullifier)
 
 	// check the new commitment is valid
 	// we effectively throw away the value of the new commitment by insisting
 	// that it is equal to the old commitment value for a single-token transfer
 	// This is a little inefficient but makes the witness computation in node
 	// independent of how many commitments are being transformed.
-	sha = sha256of1280([\
-		...ercAddress,\
-		...oldCommitment.id,\
-		...oldCommitment.value,\
-		...zkpPublicKeyRecipientU32,\
-		...newCommitment.salt\
-	])
-	// new commitments are truncated to 248 bits since they are public inputs
-	// so we must check the 248 bits while minimising constraints/comp time - casting to bool[256] is a slower operation than comparing u32s
+	assert(newCommitment.value == oldCommitment.value)
+	field value = u8_array_to_field(oldCommitment.value)
+	// pack the top four bytes of the token id into the ercAddress field (address only
+	// uses 160 bits and the Shield contract prevents creation of something with more than 160 bits)
+	field idTop4Bytes = u32_array_to_field([oldCommitment.id[0]])
+	field idRemainder = u32_array_to_field(oldCommitment.id[1..8])
+	field packedErcAddress = ercAddress + idTop4Bytes * SHIFT
 
-	// last 224 bits:
-	assert(sha[1..8] == newCommitmentHash[1..8])
-	// first 24 bits:
-	assert(u32_to_bool_32(sha[0])[8..32] == u32_to_bool_32(newCommitmentHash[0])[8..32])
+	field newCommitmentCheck = poseidon([\
+		packedErcAddress,\
+		idRemainder,\
+		value,\
+		...newCommitment.zkpPublicKeyRecipient,\
+		newCommitment.salt\
+	])
+	assert (newCommitmentCheck == newCommitmentHash)
 
 	// check the old commitment is valid
-	sha = sha256of1280([\
-		...ercAddress,\
-		...oldCommitment.id,\
-		...oldCommitment.value,\
-		...zkpPublicKeyU32,\
-		...oldCommitment.salt\
+	field oldCommitmentCheck = poseidon([\
+		packedErcAddress,\
+		idRemainder,\
+		value,\
+		...zkpPublicKey,\
+		oldCommitment.salt\
 	])
-	// assert(sha == oldCommitment.hash)
-	// last 224 bits:
-	assert(sha[1..8] == oldCommitment.hash[1..8])
-	// first 24 bits:
-	assert(u32_to_bool_32(sha[0])[8..32] == u32_to_bool_32(oldCommitment.hash[0])[8..32])
+	assert(oldCommitmentCheck == oldCommitment.hash)
+
+	// check that the old commitment is in the merkle tree (path[0] should be the root)
+	field mimcHash = oldCommitment.hash
+	bool x = pathCheck([root, ...path], order, mimcHash)
+	assert(x)
 
 	// KEM-DEM Encryption
 	bool[256] bitEphemeralKey = u32_8_to_bool_256(ephemeralKey)
 
-	// To ensure all values are < p we move some bits around (as tokenID can be a full 256bits)
-	assert(ercAddress[0..3] == [0x00000000,0x00000000,0x00000000]) // Make sure the leading 96bits are 0
-	assert(oldCommitment.value[0] == 0x00000000) // Value can be up to 224 bits
-	// assert(oldCommitment.salt[0] == 0x00000000) // Salt can be up to 224 bits
-
-	// We move the top-most 32bits from the tokenID to the ercAddress
-	u32[8] packedERCAddress = [...ercAddress[0..2], oldCommitment.id[0], ...ercAddress[3..8]]
-	u32[8] unpackedTokenID = [0x00000000, ...oldCommitment.id[1..8]]
 	field[4] plainTexts = [\
-		u32_8_to_field(packedERCAddress),\
-		u32_8_to_field(unpackedTokenID),\
-		u32_8_to_field(newCommitment.value),\
-		u32_8_to_field(newCommitment.salt)\
+		packedErcAddress,\
+		idRemainder,\
+		value,\
+		newCommitment.salt\
 	]
 
 	EncryptedMsgs<4> enc = kemDem(bitEphemeralKey, newCommitment.zkpPublicKeyRecipient, plainTexts)
@@ -146,10 +119,5 @@ def main(\
 	bool[256] ordinate = field_to_bool_256(compressedEphemeralPublicKey.ordinate)
 	bool[256] compressedCheck256 = [ parity, ...ordinate[1..256] ]
 	assert(compressedPubKeyOutput == compressedCheck256)
-
-	// check that the old commitment is in the merkle tree (path[0] should be the root)
-	field mimcHash = u32_8_to_field(oldCommitment.hash)
-	bool x = pathCheck([root, ...path], order, mimcHash)
-	assert(x)
 
 	return

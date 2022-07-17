@@ -11,7 +11,7 @@ from "../hashToCurve/montgomeryToTwistedEdwards.zok" import main as montgomeryTo
 //* This function encrypts the transaction value and the sender's and recipient's public keys (so that the authority can recover them)
 //* using El-Gamal encryption.  It can work with 256 bit messages (>Fq) because the ZoKrates scalarMult function
 //* supports this (the number can wrap around the group) [TODO - double check this is ok]
-def main(u32[8] message1, u32[8] message2, u32[8] message3, u32[8] message4, field[2] publicKey, u32[8] randomSecret1, u32[8] randomSecret2, u32[8] randomSecret3, u32[8] randomSecret4, field sqrtMessage1, field sqrtMessage2, field sqrtMessage3, field sqrtMessage4)->(field[16]):
+def main(field message1, field message2, field message3, field message4, field[2] publicKey, u32[8] randomSecret1, u32[8] randomSecret2, u32[8] randomSecret3, u32[8] randomSecret4, field sqrtMessage1, field sqrtMessage2, field sqrtMessage3, field sqrtMessage4)->(field[16]):
 
   // We can only encrypt curve points.  Unfortunately, we have binary messages.  Luckily, we can map one to the other with a scalar multiplication:
   field[2] message1Point = hashToCurve(message1, sqrtMessage1)

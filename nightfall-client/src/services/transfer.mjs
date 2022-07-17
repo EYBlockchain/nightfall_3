@@ -45,7 +45,7 @@ async function transfer(transferParams) {
   const { zkpPublicKey, compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
   const { recipientCompressedZkpPublicKeys, values } = recipientData;
   const recipientZkpPublicKeys = recipientCompressedZkpPublicKeys.map(key =>
-    ZkpKeys.decompressCompressedZkpPublicKey(key),
+    ZkpKeys.decompressZkpPublicKey(key),
   );
   if (recipientCompressedZkpPublicKeys.length > 1)
     throw new Error(`Batching is not supported yet: only one recipient is allowed`); // this will not always be true so we try to make the following code agnostic to the number of commitments
@@ -88,7 +88,7 @@ async function transfer(transferParams) {
         tokenId,
         value: values[i],
         zkpPublicKey: recipientZkpPublicKeys[i],
-        compressedZkpPublicKey: rcp,
+        // compressedZkpPublicKey: rcp,
         salt: salts[i].bigInt,
       }),
   );
@@ -136,12 +136,12 @@ async function transfer(transferParams) {
 
   // now we have everything we need to create a Witness and compute a proof
   const witness = [
-    oldCommitments.map(commitment => commitment.preimage.ercAddress.integer),
+    oldCommitments.map(commitment => commitment.preimage.ercAddress.field(BN128_GROUP_ORDER)),
     oldCommitments.map(commitment => [
       commitment.preimage.tokenId.limbs(32, 8),
-      commitment.preimage.value.limbs(32, 8),
-      commitment.preimage.salt.limbs(32, 8),
-      commitment.hash.limbs(32, 8),
+      commitment.preimage.value.limbs(8, 31),
+      commitment.preimage.salt.field(BN128_GROUP_ORDER),
+      commitment.hash.field(BN128_GROUP_ORDER),
       rootKey.field(BN128_GROUP_ORDER),
     ]),
     newCommitments.map(commitment => [
@@ -149,15 +149,15 @@ async function transfer(transferParams) {
         commitment.preimage.zkpPublicKey[0].field(BN128_GROUP_ORDER),
         commitment.preimage.zkpPublicKey[1].field(BN128_GROUP_ORDER),
       ],
-      commitment.preimage.value.limbs(32, 8),
-      commitment.preimage.salt.limbs(32, 8),
+      commitment.preimage.value.limbs(8, 31),
+      commitment.preimage.salt.field(BN128_GROUP_ORDER),
     ]),
-    newCommitments.map(commitment => commitment.hash.integer),
-    nullifiers.map(nullifier => generalise(nullifier.hash.hex(32, 31)).integer),
-    localSiblingPaths.map(siblingPath => siblingPath[0].field(BN128_GROUP_ORDER, false)),
+    newCommitments.map(commitment => commitment.hash.field(BN128_GROUP_ORDER)),
+    nullifiers.map(nullifier => nullifier.hash.field(BN128_GROUP_ORDER)),
+    localSiblingPaths.map(siblingPath => siblingPath[0].field(BN128_GROUP_ORDER)),
     localSiblingPaths.map(siblingPath =>
-      siblingPath.slice(1).map(node => node.field(BN128_GROUP_ORDER, false)),
-    ), // siblingPAth[32] is a sha hash and will overflow a field but it's ok to take the mod here - hence the 'false' flag
+      siblingPath.slice(1).map(node => node.field(BN128_GROUP_ORDER)),
+    ),
     leafIndices,
     generalise(ePrivate).limbs(32, 8),
     [binaryEPub[0], new GN(binaryEPub.slice(1), 'binary').field(BN128_GROUP_ORDER)],
@@ -230,7 +230,7 @@ async function transfer(transferParams) {
       newCommitments
         .filter(
           commitment =>
-            commitment.preimage.compressedZkpPublicKey.hex(32) === compressedZkpPublicKey.hex(32),
+            commitment.compressedZkpPublicKey.hex(32) === compressedZkpPublicKey.hex(32),
         )
         .forEach(commitment => storeCommitment(commitment, nullifierKey)); // TODO insertMany
       // mark the old commitments as nullified
@@ -248,8 +248,7 @@ async function transfer(transferParams) {
     // store the commitment on successful computation of the transaction
     newCommitments
       .filter(
-        commitment =>
-          commitment.preimage.compressedZkpPublicKey.hex(32) === compressedZkpPublicKey.hex(32),
+        commitment => commitment.compressedZkpPublicKey.hex(32) === compressedZkpPublicKey.hex(32),
       )
       .forEach(commitment => storeCommitment(commitment, nullifierKey)); // TODO insertMany
     // mark the old commitments as nullified
