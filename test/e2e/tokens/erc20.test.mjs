@@ -330,6 +330,8 @@ describe('ERC20 tests', () => {
         await web3Client.timeJump(3600 * 24 * 10); // jump in time by 10 days
 
         const commitments = await nf3Users[0].getPendingWithdraws();
+        console.log('withdrawal', withdrawal);
+        console.log('Commitments', commitments);
         expect(
           commitments[nf3Users[0].zkpKeys.compressedZkpPublicKey][erc20Address].length,
         ).to.be.greaterThan(0);
