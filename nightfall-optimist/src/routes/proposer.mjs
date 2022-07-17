@@ -371,7 +371,8 @@ router.post('/offchain-transaction', async (req, res) => {
     switch (Number(transactionType)) {
       case 1:
       case 2:
-      case 3: {
+      case 3:
+      case 4: {
         // When comparing this with getTransactionSubmittedCalldata,
         // note we dont need to decompressProof as proofs are only compressed if they go on-chain.
         // let's not directly call transactionSubmittedEventHandler, instead, we'll queue it
