@@ -378,7 +378,7 @@ export const transferNTransactions = async (
   tokenType,
   value,
   tokenId,
-  compressedPkd,
+  compressedZkpPublicKey,
   fee,
 ) => {
   const transferTransactions = [];
@@ -389,7 +389,7 @@ export const transferNTransactions = async (
       tokenType,
       value,
       tokenId,
-      compressedPkd,
+      compressedZkpPublicKey,
       fee,
     );
     expectTransaction(res);
@@ -463,5 +463,23 @@ export const waitForSufficientBalance = (client, value) => {
       } else resolve();
     }
     isSufficientBalance();
+  });
+};
+
+/**
+  function to wait for no pending commitments
+*/
+export const waitForNoPendingCommitments = client => {
+  return new Promise(resolve => {
+    async function pendingCommitments() {
+      const pendingDeposit = await client.getLayer2PendingDepositBalances(undefined, true);
+      const pendingSpent = await client.getLayer2PendingSpentBalances(undefined, true);
+      if (Object.keys(pendingDeposit).length !== 0 || Object.keys(pendingSpent).length !== 0) {
+        logger.debug(`Nonzero Pending commitments.`);
+        await waitForTimeout(10000);
+        pendingCommitments();
+      } else resolve();
+    }
+    pendingCommitments();
   });
 };

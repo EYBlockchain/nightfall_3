@@ -257,7 +257,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line17">line 17</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line43">line 43</a>
     </li></ul></dd>
     
 
@@ -306,147 +306,6 @@
 
     
         <h3 class="subsection-title">Methods</h3>
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id="addPeer"><span class="type-signature">(async) </span>addPeer<span class="signature">(peerUrl)</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Adds a new Proposer peer to a list of proposers that are available for accepting
-  offchain (direct) transfers and withdraws. The client will submit direct transfers
-  and withdraws to all of these peers.
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>peerUrl</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">the URL of the Proposer being added. This will be from
-  the point of view of nightfall-client, not the SDK user (e.g. 'http://optimist1:80').
-  Nightfall-client will use this URL to contact the Proposer.</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line508">line 508</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
         
             
@@ -555,7 +414,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line374">line 374</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line601">line 601</a>
     </li></ul></dd>
     
 
@@ -591,7 +450,119 @@
     
 
     
-    <h4 class="name" id="close"><span class="type-signature">(async) </span>close<span class="signature">()</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="changeCurrentProposer"><span class="type-signature">(async) </span>changeCurrentProposer<span class="signature">()</span><span class="type-signature"> &rarr; {Promise}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Change current proposer.
+    It will use the address of the Ethereum Signing key that is holds to change the current
+    proposer.
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line773">line 773</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    A promise that resolves to the Ethereum transaction receipt.
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="close"><span class="type-signature"></span>close<span class="signature">()</span><span class="type-signature"></span></h4>
     
 
     
@@ -643,7 +614,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line432">line 432</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line681">line 681</a>
     </li></ul></dd>
     
 
@@ -688,7 +659,7 @@
 
 <div class="description">
     Deposits a Layer 1 token into Layer 2, so that it can be transacted
-  privately.
+    privately.
 </div>
 
 
@@ -764,8 +735,8 @@
             
 
             <td class="description last">The address of the ERCx contract from which the token
-  is being taken.  Note that the Nightfall_3 State.sol contract must be approved
-  by the token's owner to be able to withdraw the token.</td>
+    is being taken.  Note that the Nightfall_3 State.sol contract must be approved
+    by the token's owner to be able to withdraw the token.</td>
         </tr>
 
     
@@ -789,7 +760,7 @@
             
 
             <td class="description last">The type of token to deposit. Possible values are
-  'ERC20', 'ERC721', 'ERC1155'.</td>
+    'ERC20', 'ERC721', 'ERC1155'.</td>
         </tr>
 
     
@@ -813,7 +784,7 @@
             
 
             <td class="description last">The value of the token, in the case of an ERC20 or ERC1155
-  token.  For ERC721 this should be set to zero.</td>
+    token.  For ERC721 this should be set to zero.</td>
         </tr>
 
     
@@ -837,7 +808,7 @@
             
 
             <td class="description last">The ID of an ERC721 or ERC1155 token.  In the case of
-  an 'ERC20' coin, this should be set to '0x00'.</td>
+    an 'ERC20' coin, this should be set to '0x00'.</td>
         </tr>
 
     
@@ -901,7 +872,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line213">line 213</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line370">line 370</a>
     </li></ul></dd>
     
 
@@ -1011,7 +982,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line585">line 585</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line994">line 994</a>
     </li></ul></dd>
     
 
@@ -1078,8 +1049,8 @@
 
 <div class="description">
     De-registers an existing proposer.
-  It will use the address of the Ethereum Signing key that is holds to de-register
-  the proposer.
+    It will use the address of the Ethereum Signing key that is holds to de-register
+    the proposer.
 </div>
 
 
@@ -1123,7 +1094,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line464">line 464</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line745">line 745</a>
     </li></ul></dd>
     
 
@@ -1190,7 +1161,7 @@
 
 <div class="description">
     Enables someone with a valid withdraw transaction in flight to finalise the
-  withdrawal of funds to L1 (only relevant for ERC20).
+    withdrawal of funds to L1 (only relevant for ERC20).
 </div>
 
 
@@ -1283,7 +1254,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line331">line 331</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line541">line 541</a>
     </li></ul></dd>
     
 
@@ -1319,6 +1290,165 @@
     
 
     
+    <h4 class="name" id="getAccounts"><span class="type-signature"></span>getAccounts<span class="signature">(privateKey)</span><span class="type-signature"> &rarr; {String}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Get EthereumAddress available.
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>privateKey</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Private Key - optional</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line1278">line 1278</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    - Ether balance in account
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">String</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
     <h4 class="name" id="getChallengeEmitter"><span class="type-signature">(async) </span>getChallengeEmitter<span class="signature">()</span><span class="type-signature"> &rarr; {Promise}</span></h4>
     
 
@@ -1328,10 +1458,10 @@
 
 <div class="description">
     Returns an emitter, whose 'data' event fires whenever a challengeable block is
-  detected, passing out the transaction needed to raise the challenge. This
-  is a lower level method than `Nf3.startChallenger` because it does not sign and
-  send the transaction to the blockchain. If required, `Nf3.submitTransaction`
-  can be used to do that.
+    detected, passing out the transaction needed to raise the challenge. This
+    is a lower level method than `Nf3.startChallenger` because it does not sign and
+    send the transaction to the blockchain. If required, `Nf3.submitTransaction`
+    can be used to do that.
 </div>
 
 
@@ -1375,7 +1505,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line622">line 622</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line1055">line 1055</a>
     </li></ul></dd>
     
 
@@ -1441,7 +1571,7 @@
 
 
 <div class="description">
-    Returns the address of a Nightfall_3 contract.
+    Returns the address of a Nightfall_3 contract calling the client.
 </div>
 
 
@@ -1494,7 +1624,7 @@
             
 
             <td class="description last">the name of the smart contract in question. Possible
-  values are 'Shield', 'State', 'Proposers', 'Challengers'.</td>
+    values are 'Shield', 'State', 'Proposers', 'Challengers'.</td>
         </tr>
 
     
@@ -1535,7 +1665,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line190">line 190</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line334">line 334</a>
     </li></ul></dd>
     
 
@@ -1593,7 +1723,7 @@
     
 
     
-    <h4 class="name" id="getInstantWithdrawalRequestedEmitter"><span class="type-signature">(async) </span>getInstantWithdrawalRequestedEmitter<span class="signature">()</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="getContractAddressOptimist"><span class="type-signature">(async) </span>getContractAddressOptimist<span class="signature">(contractName)</span><span class="type-signature"> &rarr; {Promise}</span></h4>
     
 
     
@@ -1601,8 +1731,167 @@
 
 
 <div class="description">
-    Returns an event emitter that fires each time an InstantWithdrawalRequested
-  event is detected on the blockchain
+    Returns the address of a Nightfall_3 contract calling the optimist.
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>contractName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">the name of the smart contract in question. Possible
+    values are 'Shield', 'State', 'Proposers', 'Challengers'.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line347">line 347</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    Resolves into the Ethereum address of the contract
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="getCurrentProposer"><span class="type-signature">(async) </span>getCurrentProposer<span class="signature">()</span><span class="type-signature"> &rarr; {array}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Get current proposer
 </div>
 
 
@@ -1646,7 +1935,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line394">line 394</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line826">line 826</a>
     </li></ul></dd>
     
 
@@ -1671,6 +1960,276 @@
 
 
 
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    A promise that resolves to the Ethereum transaction receipt.
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">array</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="getInstantWithdrawalRequestedEmitter"><span class="type-signature">(async) </span>getInstantWithdrawalRequestedEmitter<span class="signature">()</span><span class="type-signature"></span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Returns an event emitter that fires each time an InstantWithdrawalRequested
+    event is detected on the blockchain
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line634">line 634</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="getL1Balance"><span class="type-signature"></span>getL1Balance<span class="signature">(address)</span><span class="type-signature"> &rarr; {String}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Get Ethereum Balance
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>address</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Ethereum address of account</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line1267">line 1267</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    - Ether balance in account
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">String</span>
+
+
+    </dd>
+</dl>
+
+    
 
 
 
@@ -1734,7 +2293,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line386">line 386</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line626">line 626</a>
     </li></ul></dd>
     
 
@@ -1792,7 +2351,7 @@
     
 
     
-    <h4 class="name" id="getLayer2Balances"><span class="type-signature">(async) </span>getLayer2Balances<span class="signature">()</span><span class="type-signature"> &rarr; {Promise}</span></h4>
+    <h4 class="name" id="getLayer2Balances"><span class="type-signature">(async) </span>getLayer2Balances<span class="signature">(ercList)</span><span class="type-signature"> &rarr; {Promise}</span></h4>
     
 
     
@@ -1809,6 +2368,55 @@
 
 
 
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>ercList</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">list of erc contract addresses to filter.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
 
 
 
@@ -1844,7 +2452,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line647">line 647</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line1091">line 1091</a>
     </li></ul></dd>
     
 
@@ -1873,9 +2481,9 @@
 
         
 <div class="param-desc">
-    This promise rosolves into an object whose properties are the
-  addresses of the ERC contracts of the tokens held by this account in Layer 2. The
-  value of each propery is the number of tokens originating from that contract.
+    This promise resolves into an object whose properties are the
+    addresses of the ERC contracts of the tokens held by this account in Layer 2. The
+    value of each propery is the number of tokens originating from that contract.
 </div>
 
 
@@ -1956,7 +2564,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line660">line 660</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line1163">line 1163</a>
     </li></ul></dd>
     
 
@@ -1985,9 +2593,9 @@
 
         
 <div class="param-desc">
-    This promise rosolves into an object whose properties are the
-  addresses of the ERC contracts of the tokens held by this account in Layer 2. The
-  value of each propery is an array of commitments originating from that contract.
+    This promise resolves into an object whose properties are the
+    addresses of the ERC contracts of the tokens held by this account in Layer 2. The
+    value of each propery is an array of commitments originating from that contract.
 </div>
 
 
@@ -2016,7 +2624,7 @@
     
 
     
-    <h4 class="name" id="getNewBlockEmitter"><span class="type-signature">(async) </span>getNewBlockEmitter<span class="signature">()</span><span class="type-signature"> &rarr; {Promise}</span></h4>
+    <h4 class="name" id="getLayer2PendingDepositBalances"><span class="type-signature">(async) </span>getLayer2PendingDepositBalances<span class="signature">(ercList, filterByCompressedZkpPublicKey)</span><span class="type-signature"> &rarr; {Promise}</span></h4>
     
 
     
@@ -2024,11 +2632,378 @@
 
 
 <div class="description">
-    Returns an emitter, whose 'data' event fires whenever a block is
-  detected, passing out the transaction needed to propose the block. This
-  is a lower level method than `Nf3.startProposer` because it does not sign and
-  send the transaction to the blockchain. If required, `Nf3.submitTransaction`
-  can be used to do that.
+    Returns the balance of tokens held in layer 2
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>ercList</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">list of erc contract addresses to filter.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>filterByCompressedZkpPublicKey</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Boolean</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">flag to indicate if request is filtered
+    ones compressed zkp public key</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line1121">line 1121</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    This promise resolves into an object whose properties are the
+    addresses of the ERC contracts of the tokens held by this account in Layer 2. The
+    value of each propery is the number of tokens pending deposit from that contract.
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="getLayer2PendingSpentBalances"><span class="type-signature">(async) </span>getLayer2PendingSpentBalances<span class="signature">(ercList, filterByCompressedZkpPublicKey-)</span><span class="type-signature"> &rarr; {Promise}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Returns the balance of tokens held in layer 2
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>ercList</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">list of erc contract addresses to filter.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>filterByCompressedZkpPublicKey-</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Boolean</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">flag to indicate if request is filtered
+    ones compressed zkp public key</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line1144">line 1144</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    This promise resolves into an object whose properties are the
+    addresses of the ERC contracts of the tokens held by this account in Layer 2. The
+    value of each propery is the number of tokens pending spent (transfer & withdraw)
+    from that contract.
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="getNetworkId"><span class="type-signature"></span>getNetworkId<span class="signature">()</span><span class="type-signature"> &rarr; {Promise}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Returns current network ID
 </div>
 
 
@@ -2072,7 +3047,121 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line550">line 550</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line1303">line 1303</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    - Network Id number
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="getNewBlockEmitter"><span class="type-signature">(async) </span>getNewBlockEmitter<span class="signature">()</span><span class="type-signature"> &rarr; {Promise}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Returns an emitter, whose 'data' event fires whenever a block is
+    detected, passing out the transaction needed to propose the block. This
+    is a lower level method than `Nf3.startProposer` because it does not sign and
+    send the transaction to the blockchain. If required, `Nf3.submitTransaction`
+    can be used to do that.
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line949">line 949</a>
     </li></ul></dd>
     
 
@@ -2102,6 +3191,118 @@
         
 <div class="param-desc">
     A Promise that resolves into an event emitter.
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="getPendingWithdraws"><span class="type-signature">(async) </span>getPendingWithdraws<span class="signature">()</span><span class="type-signature"> &rarr; {Promise}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Returns the pending withdraws commitments
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line1176">line 1176</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    This promise resolves into an object whose properties are the
+    addresses of the ERC contracts of the tokens held by this account in Layer 2. The
+    value of each propery is an array of withdraw commitments originating from that contract.
 </div>
 
 
@@ -2182,7 +3383,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line491">line 491</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line837">line 837</a>
     </li></ul></dd>
     
 
@@ -2223,6 +3424,116 @@
     <dd>
         
 <span class="param-type">array</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="getWeb3Provider"><span class="type-signature"></span>getWeb3Provider<span class="signature">()</span><span class="type-signature"> &rarr; {Object}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Web3 provider getter
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line1258">line 1258</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    provider
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Object</span>
 
 
     </dd>
@@ -2341,7 +3652,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line160">line 160</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line304">line 304</a>
     </li></ul></dd>
     
 
@@ -2408,7 +3719,7 @@
 
 <div class="description">
     Initialises the Nf_3 object so that it can communicate with Nightfall_3 and the
-  blockchain.
+    blockchain.
 </div>
 
 
@@ -2452,7 +3763,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line77">line 77</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line112">line 112</a>
     </li></ul></dd>
     
 
@@ -2506,7 +3817,7 @@
     
 
     
-    <h4 class="name" id="registerChallenger"><span class="type-signature">(async) </span>registerChallenger<span class="signature">()</span><span class="type-signature"> &rarr; {Promise}</span></h4>
+    <h4 class="name" id="makeBlockNow"><span class="type-signature">(async) </span>makeBlockNow<span class="signature">()</span><span class="type-signature"></span></h4>
     
 
     
@@ -2514,9 +3825,8 @@
 
 
 <div class="description">
-    Registers our address as a challenger address with the optimist container.
-  This is so that the optimist container can tell when a challenge that we have
-  committed to has appeared on chain.
+    Forces optimist to make a block with whatever transactions it has to hand i.e. it won't wait
+  until it has TRANSACTIONS_PER_BLOCK of them
 </div>
 
 
@@ -2560,7 +3870,97 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line575">line 575</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line205">line 205</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="registerChallenger"><span class="type-signature">(async) </span>registerChallenger<span class="signature">()</span><span class="type-signature"> &rarr; {Promise}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Registers our address as a challenger address with the optimist container.
+    This is so that the optimist container can tell when a challenge that we have
+    committed to has appeared on chain.
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line984">line 984</a>
     </li></ul></dd>
     
 
@@ -2618,7 +4018,7 @@
     
 
     
-    <h4 class="name" id="registerProposer"><span class="type-signature">(async) </span>registerProposer<span class="signature">()</span><span class="type-signature"> &rarr; {Promise}</span></h4>
+    <h4 class="name" id="registerProposer"><span class="type-signature">(async) </span>registerProposer<span class="signature">(Proposer)</span><span class="type-signature"> &rarr; {Promise}</span></h4>
     
 
     
@@ -2627,8 +4027,174 @@
 
 <div class="description">
     Registers a new proposer and pays the Bond required to register.
-  It will use the address of the Ethereum Signing key that is holds to register
-  the proposer.
+    It will use the address of the Ethereum Signing key that is holds to register
+    the proposer.
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>Proposer</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">REST API URL with format https://xxxx.xxx.xx</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line696">line 696</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    A promise that resolves to the Ethereum transaction receipt.
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="registerProposerLocally"><span class="type-signature">(async) </span>registerProposerLocally<span class="signature">()</span><span class="type-signature"> &rarr; {Promise}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Registers a proposer locally with the Optimist instance only.  This will cause
+    Optimist to make blocks when this proposer is current but these will revert if
+    the proposer isn't registered on the blockchain too.  This method is useful only
+    if the proposer is already registered on the blockchain (has paid their bond) and
+    for some reason the Optimist instance does not know about them, e.g. a new instance
+    has been created. The method 'registerProposer' will both register the proposer
+    with the blockchain and register locally with the optimist instance. So, if
+    that method has been used successfully, there is no need to also call this method
 </div>
 
 
@@ -2672,7 +4238,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line445">line 445</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line731">line 731</a>
     </li></ul></dd>
     
 
@@ -2739,7 +4305,7 @@
 
 <div class="description">
     Enables someone with a valid withdraw transaction in flight to request instant
-  withdrawal of funds (only relevant for ERC20).
+    withdrawal of funds (only relevant for ERC20).
 </div>
 
 
@@ -2855,7 +4421,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line353">line 353</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line570">line 570</a>
     </li></ul></dd>
     
 
@@ -2891,7 +4457,166 @@
     
 
     
-    <h4 class="name" id="setEthereumSigningKey"><span class="type-signature"></span>setEthereumSigningKey<span class="signature">(key)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="sendOffchainTransaction"><span class="type-signature">(async) </span>sendOffchainTransaction<span class="signature">(transaction)</span><span class="type-signature"> &rarr; {array}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Send offchain transaction to Optimist
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>transaction</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line930">line 930</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    A promise that resolves to the API call status
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">array</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="setEthereumSigningKey"><span class="type-signature">(async) </span>setEthereumSigningKey<span class="signature">(key)</span><span class="type-signature"></span></h4>
     
 
     
@@ -2900,7 +4625,7 @@
 
 <div class="description">
     Setter for the ethereum private key, in case it wasn't known at build time.
-  This will also update the corresponding Ethereum address that Nf_3 uses.
+    This will also update the corresponding Ethereum address that Nf_3 uses.
 </div>
 
 
@@ -2993,7 +4718,95 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line98">line 98</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line149">line 149</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="setWeb3Provider"><span class="type-signature">(async) </span>setWeb3Provider<span class="signature">()</span><span class="type-signature"></span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Set a Web3 Provider URL
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line1202">line 1202</a>
     </li></ul></dd>
     
 
@@ -3038,7 +4851,7 @@
 
 <div class="description">
     Setter for the zkp keys, in case it wasn't known at build time and we don't
-  want to use autogenerated ones.
+    want to use autogenerated ones.
 </div>
 
 
@@ -3131,7 +4944,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line113">line 113</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line162">line 162</a>
     </li></ul></dd>
     
 
@@ -3167,6 +4980,349 @@
     
 
     
+    <h4 class="name" id="setZkpKeysFromMnemonic"><span class="type-signature">(async) </span>setZkpKeysFromMnemonic<span class="signature">(mnemonic, addressIndex)</span><span class="type-signature"></span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Setter for the zkp keys by mnemonic, in case it wasn't known at build time and we don't
+    want to use autogenerated ones.
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>mnemonic</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">12 word phrase</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>addressIndex</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Index used to generate keys combined with mnemonic</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line174">line 174</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="signMessage"><span class="type-signature"></span>signMessage<span class="signature">(msg, account)</span><span class="type-signature"> &rarr; {Promise}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Signs a message with a given authenticated account
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>msg</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Message to sign</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>account</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Ethereum address of account</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line1292">line 1292</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    - string with the signature
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
     <h4 class="name" id="startChallenger"><span class="type-signature">(async) </span>startChallenger<span class="signature">()</span><span class="type-signature"></span></h4>
     
 
@@ -3176,7 +5332,7 @@
 
 <div class="description">
     Starts a Challenger that listens for challengable blocks and submits challenge
-  transactions to the blockchain to challenge the block.
+    transactions to the blockchain to challenge the block.
 </div>
 
 
@@ -3220,7 +5376,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line597">line 597</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line1006">line 1006</a>
     </li></ul></dd>
     
 
@@ -3265,7 +5421,7 @@
 
 <div class="description">
     Starts a Proposer that listens for blocks and submits block proposal
-  transactions to the blockchain.
+    transactions to the blockchain.
 </div>
 
 
@@ -3309,7 +5465,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line524">line 524</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line877">line 877</a>
     </li></ul></dd>
     
 
@@ -3494,7 +5650,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line128">line 128</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line254">line 254</a>
     </li></ul></dd>
     
 
@@ -3561,8 +5717,8 @@
 
 <div class="description">
     Provides nightfall-client with a set of viewing keys.  Without these,
-  it won't listen for BlockProposed events and so won't update its transaction collection
-  with information about which are on-line.
+    it won't listen for BlockProposed events and so won't update its transaction collection
+    with information about which are on-line.
 </div>
 
 
@@ -3615,7 +5771,7 @@
             
 
             <td class="description last">Object containing the ZKP key set (this may be generated
-  with the makeKeys function).</td>
+    with the makeKeys function).</td>
         </tr>
 
     
@@ -3656,7 +5812,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line420">line 420</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line670">line 670</a>
     </li></ul></dd>
     
 
@@ -3692,7 +5848,7 @@
     
 
     
-    <h4 class="name" id="transfer"><span class="type-signature">(async) </span>transfer<span class="signature">(fee, ercAddress, tokenType, value, tokenId, keys, pkd)</span><span class="type-signature"> &rarr; {Promise}</span></h4>
+    <h4 class="name" id="transfer"><span class="type-signature">(async) </span>transfer<span class="signature">(fee, ercAddress, tokenType, value, tokenId, keys, compressedZkpPublicKey)</span><span class="type-signature"> &rarr; {Promise}</span></h4>
     
 
     
@@ -3776,8 +5932,8 @@
             
 
             <td class="description last">The address of the ERCx contract from which the token
-  is being taken.  Note that the Nightfall_3 State.sol contract must be approved
-  by the token's owner to be able to withdraw the token.</td>
+    is being taken.  Note that the Nightfall_3 State.sol contract must be approved
+    by the token's owner to be able to withdraw the token.</td>
         </tr>
 
     
@@ -3801,7 +5957,7 @@
             
 
             <td class="description last">The type of token to deposit. Possible values are
-  'ERC20', 'ERC721', 'ERC1155'.</td>
+    'ERC20', 'ERC721', 'ERC1155'.</td>
         </tr>
 
     
@@ -3825,7 +5981,7 @@
             
 
             <td class="description last">The value of the token, in the case of an ERC20 or ERC1155
-  token.  For ERC721 this should be set to zero.</td>
+    token.  For ERC721 this should be set to zero.</td>
         </tr>
 
     
@@ -3849,7 +6005,7 @@
             
 
             <td class="description last">The ID of an ERC721 or ERC1155 token.  In the case of
-  an 'ERC20' coin, this should be set to '0x00'.</td>
+    an 'ERC20' coin, this should be set to '0x00'.</td>
         </tr>
 
     
@@ -3879,13 +6035,13 @@
 
         <tr>
             
-                <td class="name"><code>pkd</code></td>
+                <td class="name"><code>compressedZkpPublicKey</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">array</span>
+<span class="param-type">string</span>
 
 
             
@@ -3895,8 +6051,7 @@
 
             
 
-            <td class="description last">The transmission key of the recipient (this is a curve point
-  represented as an array of two hex strings).</td>
+            <td class="description last">The compressed transmission key of the recipient</td>
         </tr>
 
     
@@ -3937,7 +6092,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line245">line 245</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line433">line 433</a>
     </li></ul></dd>
     
 
@@ -3995,6 +6150,253 @@
     
 
     
+    <h4 class="name" id="unprocessedTransactionCount"><span class="type-signature">(async) </span>unprocessedTransactionCount<span class="signature">()</span><span class="type-signature"></span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Gets the number of unprocessed transactions on the optimist
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line194">line 194</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="updateProposer"><span class="type-signature">(async) </span>updateProposer<span class="signature">(Proposer)</span><span class="type-signature"> &rarr; {array}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Update Proposers URL
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>Proposer</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">REST API URL with format https://xxxx.xxx.xx</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line849">line 849</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    A promise that resolves to the Ethereum transaction receipt.
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">array</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
     <h4 class="name" id="withdraw"><span class="type-signature">(async) </span>withdraw<span class="signature">(fee, ercAddress, tokenType, value, tokenId, keys, recipientAddress)</span><span class="type-signature"> &rarr; {Promise}</span></h4>
     
 
@@ -4004,7 +6406,7 @@
 
 <div class="description">
     Withdraws a token from Layer 2 back to Layer 1. It can then be withdrawn from
-  the Shield contract's account by the owner in Layer 1.
+    the Shield contract's account by the owner in Layer 1.
 </div>
 
 
@@ -4080,8 +6482,8 @@
             
 
             <td class="description last">The address of the ERCx contract from which the token
-  is being taken.  Note that the Nightfall_3 State.sol contract must be approved
-  by the token's owner to be able to withdraw the token.</td>
+    is being taken.  Note that the Nightfall_3 State.sol contract must be approved
+    by the token's owner to be able to withdraw the token.</td>
         </tr>
 
     
@@ -4105,7 +6507,7 @@
             
 
             <td class="description last">The type of token to deposit. Possible values are
-  'ERC20', 'ERC721', 'ERC1155'.</td>
+    'ERC20', 'ERC721', 'ERC1155'.</td>
         </tr>
 
     
@@ -4129,7 +6531,7 @@
             
 
             <td class="description last">The value of the token, in the case of an ERC20 or ERC1155
-  token.  For ERC721 this should be set to zero.</td>
+    token.  For ERC721 this should be set to zero.</td>
         </tr>
 
     
@@ -4153,7 +6555,7 @@
             
 
             <td class="description last">The ID of an ERC721 or ERC1155 token.  In the case of
-  an 'ERC20' coin, this should be set to '0x00'.</td>
+    an 'ERC20' coin, this should be set to '0x00'.</td>
         </tr>
 
     
@@ -4200,7 +6602,7 @@
             
 
             <td class="description last">The Ethereum address to where the withdrawn tokens
-  should be deposited.</td>
+    should be deposited.</td>
         </tr>
 
     
@@ -4241,7 +6643,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line292">line 292</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line495">line 495</a>
     </li></ul></dd>
     
 
@@ -4308,7 +6710,7 @@
 
 <div class="description">
     Withdraw the bond left by the proposer.
-  It will use the address of the Ethereum Signing key that is holds to withdraw the bond.
+    It will use the address of the Ethereum Signing key that is holds to withdraw the bond.
 </div>
 
 
@@ -4352,7 +6754,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line478">line 478</a>
+        <a href="nf3.mjs.html">nf3.mjs</a>, <a href="nf3.mjs.html#line800">line 800</a>
     </li></ul></dd>
     
 
@@ -4426,7 +6828,7 @@
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a> on Thu Oct 28 2021 09:22:22 GMT+0100 (British Summer Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.10</a> on Tue Jun 28 2022 17:32:37 GMT+0100 (British Summer Time)
 </footer>
 
 <script> prettyPrint(); </script>

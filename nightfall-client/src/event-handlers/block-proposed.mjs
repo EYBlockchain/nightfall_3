@@ -10,7 +10,7 @@ import {
   isTransactionHashWithdraw,
 } from '../services/commitment-storage.mjs';
 import getProposeBlockCalldata from '../services/process-calldata.mjs';
-import { ivks, nsks } from '../services/keys.mjs';
+import { zkpPrivateKeys, nullifierKeys } from '../services/keys.mjs';
 import {
   getLatestTree,
   saveTree,
@@ -26,7 +26,7 @@ const { ZERO, HASH_TYPE, TIMBER_HEIGHT, TXHASH_TREE_HASH_TYPE, TXHASH_TREE_HEIGH
 This handler runs whenever a BlockProposed event is emitted by the blockchain
 */
 async function blockProposedEventHandler(data, syncing) {
-  // ivk will be used to decrypt secrets whilst nsk will be used to calculate nullifiers for commitments and store them
+  // zkpPrivateKey will be used to decrypt secrets whilst nullifierKey will be used to calculate nullifiers for commitments and store them
   const { blockNumber: currentBlockCount, transactionHash: transactionHashL1 } = data;
   const { transactions, block } = await getProposeBlockCalldata(data);
   logger.info(
@@ -61,7 +61,7 @@ async function blockProposedEventHandler(data, syncing) {
       (Number(transaction.transactionType) === 1 || Number(transaction.transactionType) === 2) &&
       (await countCommitments(nonZeroCommitments)) === 0
     )
-      await decryptCommitment(transaction, ivks, nsks);
+      await decryptCommitment(transaction, zkpPrivateKeys, nullifierKeys);
     return Promise.all([
       markOnChain(nonZeroCommitments, block.blockNumberL2, data.blockNumber, data.transactionHash),
       markNullifiedOnChain(

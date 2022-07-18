@@ -11,7 +11,7 @@ import { waitForSufficientBalance, retrieveL2Balance } from './utils.mjs';
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
-const { mnemonics, signingKeys, pkds } = config.TEST_OPTIONS;
+const { mnemonics, signingKeys, zkpPublicKeys } = config.TEST_OPTIONS;
 
 const txPerBlock =
   process.env.DEPLOYER_ETH_NETWORK === 'mainnet'
@@ -66,7 +66,7 @@ async function localTest() {
           tokenType,
           value,
           tokenId,
-          IS_TEST_RUNNER ? pkds.user2 : pkds.user1,
+          IS_TEST_RUNNER ? zkpPublicKeys.user2 : zkpPublicKeys.user1,
         );
       } catch (err) {
         if (err.message.includes('No suitable commitments')) {
@@ -84,7 +84,7 @@ async function localTest() {
             tokenType,
             value,
             tokenId,
-            IS_TEST_RUNNER ? pkds.user2 : pkds.user1,
+            IS_TEST_RUNNER ? zkpPublicKeys.user2 : zkpPublicKeys.user1,
           );
         }
       }

@@ -65,32 +65,22 @@ recover `m` from `M`.
 
 ## Derivation and generation of the various keys involved in encryption, ownership of commitments and spending
 
-The names of the various keys follow the same terminology as zCash in order to make it easy for
-those familiar with zCash speciifcation to follow this
-
-Generate random secret keys `ask` and `nsk` which belong to the field with prime
-`BN128_GROUP_ORDER`. `ask` will be used along with `nsk` to separate nullifying and proving
-ownership. `nsk` is used in a nullifier along with the commitment. Next calculate incoming viewing
-key `ivk` and diversified transmission key `pkd` as follows:
+Using BIP39 genenerate a 12 word `mnemonic` and from this generate a `seed` by calling `mnemonicToSeedSync`.
+Then following the standards of BIP32 and BIP44, generate a `rootKey` based on this `seed` and `path`.
 
 ```
-ivk = MiMC(ask, nsk)
-pkd = ivk.G //used in a commitment to describe the owner as well as to encrypt secrets
+zkpPrivateKey = mimc(rootKey, 2708019456231621178814538244712057499818649907582893776052749473028258908910)
+where 2708019456231621178814538244712057499818649907582893776052749473028258908910 is keccak256(`zkpPrivateKey`) % BN128_GROUP_ORDER
+
+nullifierKey = mimc(rootKey, 7805187439118198468809896822299973897593108379494079213870562208229492109015n)
+where 7805187439118198468809896822299973897593108379494079213870562208229492109015n is keccak256(`nullifierKey`) % BN128_GROUP_ORDER
+
+zkpPublicKey = zkpPrivateKey * G
 ```
 
-Both `ask` and `nsk` will need to be securely stored separately from each other and should be rolled
-from time to time. This way if one of `nsk` or `ask` is leaked, the adversary still cannot provide
-proof of ownership which requires `ivk` which in turn requires knowlegde of `ask` or `nsk`
-respectively. If both `ask` and `ivk` are leaked, one requires knowledge of `nsk` to nullify. If
-both `nsk` and `ivk` are leaked, one requires knowledge of `ask` to show that they can derive `ivk`
-to spend.
-
-`pkd` will also be used in the encryption of secrets by a sender. This will need to be a point on
-the elliptic curve and we derive this from `ivk` through scalar multiplication. `ivk` will be used
-to decrypt the secrets. If `ivk` is leaked and as a result the secrets are known to the adversary,
-they will still need knowledge of `ask` and `nsk` to spend a commitment.
-
-### Acknowledgements
-
-Some of the work for in band secret distribution is inspired by zCash. Grateful for their work in
-this field.
+The apps which will use the `ZkpKeys` to generate these keys can store the `rootKey` in different devices by splitting
+this into shares using Shamir Secret Sharing. If either `rootKey` or `mnemonic` is compromised, then the adversary
+can calculate the `zkpPrivateKey` and `nullifierKey`. The `zkpPrivateKey` can be used to decrypt secrets of a commitment
+whilst the `nullifierKey` can be used to spend the commitment. Hence `rootKey` and `mnemonic` must be stored very securely.
+It is also recommended to store `zkpPrivateKey` and `nullifierKey` separately to avoid theft of commitments in case one of these
+is compromised.

@@ -1,7 +1,7 @@
 struct OldCommitmentPreimage {
 	u32[8] salt
 	u32[8] hash
-	field ask
+	field rootKey
 }
 
 def main(\
@@ -9,7 +9,6 @@ def main(\
 	field fId,\
  	field fValue,\
 	private OldCommitmentPreimage oldCommitment,\
-	private u32[8] nsk,\
 	field fNullifier,\
 	field recipientAddress,\
 	field root,\
@@ -22,14 +21,13 @@ def main(\
 
 	for u32 i in 0..8 do
 		v = v + oldCommitment.salt[i] +\
-				oldCommitment.hash[i] +\
-				nsk[i]
+				oldCommitment.hash[i]
 	endfor
 
 	for u32 i in 0..32 do
 		u = u * path[i]
 	endfor
-	u = u * order * recipientAddress * oldCommitment.ask
+	u = u * order * recipientAddress * oldCommitment.rootKey
 
 	assert(v == v)
 	assert(u == u)

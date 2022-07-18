@@ -18,7 +18,7 @@ import {
   getSiblingInfo,
 } from './commitment-storage.mjs';
 import getProposersUrl from './peers.mjs';
-import { calculateIvkPkdfromAskNsk } from './keys.mjs';
+import { ZkpKeys } from './keys.mjs';
 
 const {
   BN128_GROUP_ORDER,
@@ -37,13 +37,13 @@ async function withdraw(withdrawParams) {
   logger.info('Creating a withdraw transaction');
   // let's extract the input items
   const { offchain = false, ...items } = withdrawParams;
-  const { ercAddress, tokenId, value, recipientAddress, nsk, ask, fee } = generalise(items);
-  const { compressedPkd } = await calculateIvkPkdfromAskNsk(ask, nsk);
+  const { ercAddress, tokenId, value, recipientAddress, rootKey, fee } = generalise(items);
+  const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
 
   // the first thing we need to do is to find and input commitment which
   // will enable us to conduct our withdraw.  Let's rummage in the db...
   const [oldCommitment] = (await findUsableCommitmentsMutex(
-    compressedPkd,
+    compressedZkpPublicKey,
     ercAddress,
     tokenId,
     value,
@@ -53,7 +53,7 @@ async function withdraw(withdrawParams) {
   else throw new Error('No suitable commitments were found'); // caller to handle - need to get the user to make some commitments or wait until they've been posted to the blockchain and Timber knows about them
   // Having found 1 commitment, which is a suitable input to the
   // proof, the next step is to compute its nullifier;
-  const nullifier = new Nullifier(oldCommitment, nsk);
+  const nullifier = new Nullifier(oldCommitment, nullifierKey);
   // and the Merkle path from the commitment to the root
   const commitmentTreeInfo = await getSiblingInfo(oldCommitment);
   const siblingPath = generalise(
@@ -72,8 +72,7 @@ async function withdraw(withdrawParams) {
     oldCommitment.preimage.value.integer,
     oldCommitment.preimage.salt.limbs(32, 8),
     oldCommitment.hash.limbs(32, 8),
-    ask.field(BN128_GROUP_ORDER),
-    nullifier.preimage.nsk.limbs(32, 8),
+    rootKey.field(BN128_GROUP_ORDER),
     generalise(nullifier.hash.hex(32, 31)).integer,
     recipientAddress.field(BN128_GROUP_ORDER),
     siblingPath[0].field(BN128_GROUP_ORDER),

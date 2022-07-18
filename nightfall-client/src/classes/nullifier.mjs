@@ -11,14 +11,16 @@ class Nullifier {
 
   hash;
 
-  constructor(commitment, nsk) {
+  constructor(commitment, nullifierKey) {
     this.preimage = generalise({
-      nsk,
+      nullifierKey,
       commitment: commitment.hash,
     });
     // we truncate the hash down to 31 bytes but store it in a 32 byte variable
     // this is consistent to what we do in the ZKP circuits
-    this.hash = generalise(sha256([this.preimage.nsk, this.preimage.commitment]).hex(32, 31));
+    this.hash = generalise(
+      sha256([this.preimage.nullifierKey, this.preimage.commitment]).hex(32, 31),
+    );
   }
 }
 
