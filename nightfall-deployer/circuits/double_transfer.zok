@@ -9,9 +9,8 @@ from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
 from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field
 from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field
 
-from "./common/hashes/mimc/mimc-hash-2.zok" import main as mimc2
 from "hashes/poseidon/poseidon.zok" import main as poseidon
-from "./common/merkle-tree/mimc-path-check.zok" import main as pathCheck
+from "./common/merkle-tree/path-check.zok" import main as pathCheck
 
 type Point = field[2]
 
