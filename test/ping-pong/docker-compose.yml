@@ -55,6 +55,8 @@ services:
       WEBSOCKET_PORT: 8080
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
+      RABBITMQ_HOST: amqp://rabbitmq
+      RABBITMQ_PORT: 5672
       HASH_TYPE: mimc
       LOG_LEVEL: debug
       IS_CHALLENGER: 'true'
@@ -84,6 +86,8 @@ services:
       BLOCKCHAIN_PORT: 8546
       ZOKRATES_WORKER_HOST: worker
       USE_STUBS: 'false'
+      RABBITMQ_HOST: amqp://rabbitmq
+      RABBITMQ_PORT: 5672
 
   worker:
     image: ghcr.io/eyblockchain/nightfall3-worker:latest
@@ -98,6 +102,8 @@ services:
       - pong_network
     environment:
       LOG_LEVEL: info
+      RABBITMQ_HOST: amqp://rabbitmq
+      RABBITMQ_PORT: 5672
 
   proposer:
     image: ghcr.io/eyblockchain/nightfall3-proposer:latest
@@ -116,6 +122,8 @@ services:
       BLOCKCHAIN_PORT: 8546
       CLIENT_HOST: client
       CLIENT_PORT: 80
+      RABBITMQ_HOST: amqp://rabbitmq
+      RABBITMQ_PORT: 5672
 
   user-local1:
     image: ghcr.io/eyblockchain/nightfall3-user-local:latest

@@ -14,7 +14,7 @@ jobs:
         uses: actions/dependency-review-action@v1.0.2
 
   eslint-check:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
       - uses: actions/setup-node@v3
@@ -29,7 +29,7 @@ jobs:
           npm run lint
 
   ganache-test:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
       - uses: actions/setup-node@v3
@@ -76,7 +76,7 @@ jobs:
           path: ./ganache-test.log
 
   adversary-test:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     env:
       TRANSACTIONS_PER_BLOCK: 32
     steps:
@@ -131,7 +131,7 @@ jobs:
           path: ./adversary-test.log
 
   ping-pong-test:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
       - uses: actions/setup-node@v3
@@ -187,7 +187,7 @@ jobs:
 
   test-gas:
     name: check gas for 32 transactions per block
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
       - uses: actions/setup-node@v3
