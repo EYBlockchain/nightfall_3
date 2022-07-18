@@ -14,14 +14,15 @@ struct TokenId {
 
 def main(\
 	field ercContractAddress,\
-	TokenId id,\
+	u32[8] id,\
  	field value,\
 	private Point compressedZkpPublicKey,\
 	private field salt,\
 	field newCommitment\
 )->():
 
-	field u = compressedZkpPublicKey[0] * compressedZkpPublicKey[1] + ercContractAddress + id.top4Bytes + id.remainder + value + newCommitment * salt
-
+	field u = compressedZkpPublicKey[0] * compressedZkpPublicKey[1] + ercContractAddress + value + newCommitment * salt
+	u32 v = id[0] * id[1] + id[2] + id[3] + id[4] + id[5] + id[6] * id[7]
 	assert(u==u)
+	assert (v==v)
 	return

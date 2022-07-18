@@ -9,9 +9,8 @@ from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
 from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field
 from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field
 
-from "./common/hashes/mimc/mimc-hash-2.zok" import main as mimc2
 from "hashes/poseidon/poseidon.zok" import main as poseidon
-from "./common/merkle-tree/mimc-path-check.zok" import main as pathCheck
+from "./common/merkle-tree/path-check.zok" import main as pathCheck
 
 type Point = field[2]
 
@@ -60,12 +59,12 @@ def main(\
 
 	// Calculation of zkpPrivateKey and nullifierKey from rootKey
 	field[2] zkpPrivateKey = [\
-		mimc2([oldCommitment[0].rootKey, 2708019456231621178814538244712057499818649907582893776052749473028258908910]),\
-		mimc2([oldCommitment[1].rootKey, 2708019456231621178814538244712057499818649907582893776052749473028258908910])\
+		poseidon([oldCommitment[0].rootKey, 2708019456231621178814538244712057499818649907582893776052749473028258908910]),\
+		poseidon([oldCommitment[1].rootKey, 2708019456231621178814538244712057499818649907582893776052749473028258908910])\
 	]
 	field[2] nullifierKey = [\
-		mimc2([oldCommitment[0].rootKey, 7805187439118198468809896822299973897593108379494079213870562208229492109015]),\
-		mimc2([oldCommitment[1].rootKey, 7805187439118198468809896822299973897593108379494079213870562208229492109015])\
+		poseidon([oldCommitment[0].rootKey, 7805187439118198468809896822299973897593108379494079213870562208229492109015]),\
+		poseidon([oldCommitment[1].rootKey, 7805187439118198468809896822299973897593108379494079213870562208229492109015])\
 	]
 	bool[2][256] zkpPrivateKeyBool = [field_to_bool_256(zkpPrivateKey[0]), field_to_bool_256(zkpPrivateKey[1])]
 	field[2][2] zkpPublicKey = [scalarMult(zkpPrivateKeyBool[0], g, context), scalarMult(zkpPrivateKeyBool[1], g, context)]
