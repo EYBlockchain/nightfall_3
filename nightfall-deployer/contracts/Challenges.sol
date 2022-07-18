@@ -46,13 +46,7 @@ contract Challenges is Stateful, Key_Registry, Config {
             priorBlockTransactions,
             blockL2.leafCount
         );
-        // Now, we have an incorrect leafCount, but Timber relies on the leafCount
-        // emitted by the rollback event to revert its commitment database, so we
-        // need to correct the leafCount before we call challengeAccepted(...).
-        // We'll do that by counting forwards from the prior block.
-        uint48 leafCount =
-            priorBlockL2.leafCount + uint48(Utils.countCommitments(priorBlockTransactions));
-        challengeAccepted(blockL2, blockL2.leafCount);
+        challengeAccepted(blockL2);
     }
 
     /**
@@ -82,7 +76,7 @@ contract Challenges is Stateful, Key_Registry, Config {
             blockL2,
             transactions
         );
-        challengeAccepted(blockL2, blockL2.leafCount);
+        challengeAccepted(blockL2);
     }
 
     /**
@@ -114,9 +108,9 @@ contract Challenges is Stateful, Key_Registry, Config {
         );
         // Delete the latest block of the two
         if (block1.blockNumberL2 > block2.blockNumberL2) {
-            challengeAccepted(block1, block1.leafCount);
+            challengeAccepted(block1);
         } else {
-            challengeAccepted(block2, block2.leafCount);
+            challengeAccepted(block2);
         }
     }
 
@@ -130,7 +124,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         state.areBlockAndTransactionsReal(blockL2, transactions);
         ChallengesUtil.libChallengeTransactionType(transactions[transactionIndex]);
         // Delete the latest block of the two
-        challengeAccepted(blockL2, blockL2.leafCount);
+        challengeAccepted(blockL2);
     }
 
     // signature for deposit:
@@ -156,7 +150,7 @@ contract Challenges is Stateful, Key_Registry, Config {
             uncompressedProof,
             vks[transactions[transactionIndex].transactionType]
         );
-        challengeAccepted(blockL2, blockL2.leafCount);
+        challengeAccepted(blockL2);
     }
 
     // signature for single transfer/withdraw:
@@ -193,7 +187,7 @@ contract Challenges is Stateful, Key_Registry, Config {
             uncompressedProof,
             vks[transactions[transactionIndex].transactionType]
         );
-        challengeAccepted(blockL2, blockL2.leafCount);
+        challengeAccepted(blockL2);
     }
 
     // signature for double transfer:
@@ -237,7 +231,7 @@ contract Challenges is Stateful, Key_Registry, Config {
             uncompressedProof,
             vks[transactions[transactionIndex].transactionType]
         );
-        challengeAccepted(blockL2, blockL2.leafCount);
+        challengeAccepted(blockL2);
     }
 
     /*
@@ -269,9 +263,9 @@ contract Challenges is Stateful, Key_Registry, Config {
         // The blocks are different and we prune the later block of the two
         // as we have a block number, it's easy to see which is the latest.
         if (block1.blockNumberL2 < block2.blockNumberL2) {
-            challengeAccepted(block2, block2.leafCount);
+            challengeAccepted(block2);
         } else {
-            challengeAccepted(block1, block1.leafCount);
+            challengeAccepted(block1);
         }
     }
 
@@ -315,11 +309,11 @@ contract Challenges is Stateful, Key_Registry, Config {
                 'Historic root exists'
             );
         }
-        challengeAccepted(blockL2, blockL2.leafCount);
+        challengeAccepted(blockL2);
     }
 
     // This gets called when a challenge succeeds
-    function challengeAccepted(Block calldata badBlock, uint48 leafCount) private {
+    function challengeAccepted(Block calldata badBlock) private {
         // Check to ensure that the block being challenged is less than a week old
         require(
             state.getBlockData(badBlock.blockNumberL2).time >= (block.timestamp - 7 days),
@@ -330,7 +324,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         // State.sol because Timber gets confused if its events come from two
         // different contracts (it uses the contract name as part of the db
         // connection - we need to change that).
-        state.emitRollback(badBlock.blockNumberL2, leafCount);
+        state.emitRollback(badBlock.blockNumberL2);
         // we need to remove the block that has been successfully
         // challenged from the linked list of blocks and all of the subsequent
         // blocks
