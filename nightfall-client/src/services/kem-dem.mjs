@@ -1,8 +1,8 @@
 import { scalarMult } from 'common-files/utils/curve-maths/curves.mjs';
 import config from 'config';
-import mimcHash from 'common-files/utils/crypto/mimc/mimc.mjs';
 import { randValueLT } from 'common-files/utils/crypto/crypto-random.mjs';
 import { generalise, stitchLimbs } from 'general-number';
+import poseidon from 'common-files/utils/crypto/poseidon/poseidon.mjs';
 
 const { BABYJUBJUB, BN128_GROUP_ORDER } = config;
 // DOMAIN_KEM = field(SHA256('nightfall-kem'))
@@ -74,7 +74,7 @@ const kem = (privateKey, recipientPubKey) => {
     privateKey.bigInt,
     recipientPubKey.map(r => r.bigInt),
   );
-  return mimcHash([sharedSecret[0], sharedSecret[1], DOMAIN_KEM]);
+  return poseidon(generalise([sharedSecret[0], sharedSecret[1], DOMAIN_KEM])).bigInt;
 };
 
 /**
@@ -86,7 +86,8 @@ This function performs the data encapsulation step, encrypting the plaintext
 */
 const dem = (encryptionKey, plaintexts) =>
   plaintexts.map(
-    (p, i) => (mimcHash([encryptionKey, DOMAIN_DEM, BigInt(i)]) + p) % BN128_GROUP_ORDER,
+    (p, i) =>
+      (poseidon(generalise([encryptionKey, DOMAIN_DEM, BigInt(i)])).bigInt + p) % BN128_GROUP_ORDER,
   );
 
 /**
@@ -98,7 +99,7 @@ This function inverts the data encapsulation step, decrypting the ciphertext
 */
 const deDem = (encryptionKey, ciphertexts) => {
   const plainTexts = ciphertexts.map((c, i) => {
-    const pt = c.bigInt - BigInt(mimcHash([encryptionKey, DOMAIN_DEM, BigInt(i)]));
+    const pt = c.bigInt - poseidon(generalise([encryptionKey, DOMAIN_DEM, BigInt(i)])).bigInt;
     if (pt < 0) return ((pt % BN128_GROUP_ORDER) + BN128_GROUP_ORDER) % BN128_GROUP_ORDER;
     return pt % BN128_GROUP_ORDER;
   });

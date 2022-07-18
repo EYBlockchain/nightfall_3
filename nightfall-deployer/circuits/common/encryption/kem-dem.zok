@@ -2,7 +2,7 @@ from "ecc/babyjubjubParams" import BabyJubJubParams
 from "ecc/babyjubjubParams" import main as curveParams
 from "ecc/edwardsScalarMult" import main as scalarMult
 from "utils/casts/u32_to_field" import main as u32_to_field
-from "../hashes/mimc/mimc-hash-N.zok" import main as mimcN
+from "hashes/poseidon/poseidon.zok" import main as poseidon
 
 struct EncryptedMsgs<N> {
     field[N] cipherText
@@ -18,13 +18,13 @@ def kem(bool[256] ephemeralKey, field[2] ephemeralPub) -> field:
     BabyJubJubParams context = curveParams()
 	field[2] g = [context.Gu, context.Gv]
     field[2] sharedSecret = scalarMult(ephemeralKey, ephemeralPub, context)
-    field encryptionKey = mimcN([sharedSecret[0], sharedSecret[1], DOMAIN_KEM])
+    field encryptionKey = poseidon([sharedSecret[0], sharedSecret[1], DOMAIN_KEM])
     return encryptionKey
 
 def dem<N>(field encryptionKey, field[N] plainText) -> field[N]:
     field[N] output = [0; N]
     for u32 i in 0..N do
-        output[i] = mimcN([encryptionKey, DOMAIN_DEM, u32_to_field(i)]) + plainText[i]
+        output[i] = poseidon([encryptionKey, DOMAIN_DEM, u32_to_field(i)]) + plainText[i]
     endfor
     return output
 
