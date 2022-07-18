@@ -1,7 +1,7 @@
 import axios from 'axios';
 import Queue from 'queue';
 import Web3 from 'web3';
-import RabbitMQ from 'common-files/utils/rabbitmq.mjs';
+import RabbitMQ from '../../common-files/utils/rabbitmq.mjs';
 import EventEmitter from 'events';
 import logger from '../../common-files/utils/logger.mjs';
 import { approve } from './tokens.mjs';
