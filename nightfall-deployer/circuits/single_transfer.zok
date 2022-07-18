@@ -55,8 +55,8 @@ def main(\
 	field[2] g = [context.Gu, context.Gv]
 
 	// Calculation of zkpPrivateKey and nullifierKey from rootKey
-	field zkpPrivateKey = mimc2([oldCommitment.rootKey, 2708019456231621178814538244712057499818649907582893776052749473028258908910])
-	field nullifierKey = mimc2([oldCommitment.rootKey, 7805187439118198468809896822299973897593108379494079213870562208229492109015])
+	field zkpPrivateKey = poseidon([oldCommitment.rootKey, 2708019456231621178814538244712057499818649907582893776052749473028258908910])
+	field nullifierKey = poseidon([oldCommitment.rootKey, 7805187439118198468809896822299973897593108379494079213870562208229492109015])
 	bool[256] zkpPrivateKeyBool = field_to_bool_256(zkpPrivateKey)
 	field[2] zkpPublicKey = scalarMult(zkpPrivateKeyBool, g, context)
 
