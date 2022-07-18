@@ -11,7 +11,7 @@ Thus, it is up to the calling contract to store the updated leafCount, frontier 
 
 pragma solidity ^0.8.0;
 
-import './MiMC.sol'; // import contract with MiMC function
+import './Poseidon.sol'; //import contract with Poseidon function
 
 library MerkleTree_Stateless {
     /*
@@ -84,75 +84,6 @@ library MerkleTree_Stateless {
     }
 
     /**
-    @notice Insert a leaf into the Merkle Tree, update the root.  The user must
-    update the persistently stored frontier based on the values returned here.
-    @param leafValue - the value of the leaf being inserted.
-    @param _frontier - current Frontier values
-    @return root bytes32 - the root of the merkle tree, after the insert.
-    @return _frontier bytes32[33] - the updated frontier
-    */
-    /* function insertLeaf(
-        bytes32 leafValue,
-        bytes32[33] memory _frontier,
-        uint256 _leafCount
-    )
-        public
-        pure
-        returns (
-            bytes32 root,
-            bytes32[33] memory,
-            uint256
-        )
-    {
-        // check that space exists in the tree:
-        require(treeWidth > _leafCount, 'There is no space left in the tree.');
-
-        uint256 slot = getFrontierSlot(_leafCount);
-        uint256 nodeIndex = _leafCount + treeWidth - 1;
-        uint256 prevNodeIndex;
-        bytes32 nodeValue = leafValue; // nodeValue is the hash, which iteratively gets overridden to the top of the tree until it becomes the root.
-
-        //bytes32 leftInput; //can remove these and just use input[0] input[1]
-        //bytes32 rightInput;
-        bytes32[2] memory input; //input of the hash fuction
-        bytes32[1] memory output; // output of the hash function
-
-        for (uint256 level = 0; level < treeHeight; level++) {
-            if (level == slot) _frontier[slot] = nodeValue;
-
-            if (nodeIndex % 2 == 0) {
-                // even nodeIndex
-                input[0] = _frontier[level];
-                input[1] = nodeValue;
-
-                output[0] = MiMC.mimcHash2(input); // mimc hash of concatenation of each node
-                nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
-                prevNodeIndex = nodeIndex;
-                nodeIndex = (nodeIndex - 1) / 2; // move one row up the tree
-                // emit Output(input, output, prevNodeIndex, nodeIndex); // for debugging only
-            } else {
-                // odd nodeIndex
-                input[0] = nodeValue;
-                input[1] = zero;
-
-                output[0] = MiMC.mimcHash2(input); // mimc hash of concatenation of each node
-                nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
-                prevNodeIndex = nodeIndex;
-                nodeIndex = nodeIndex / 2; // move one row up the tree
-                // emit Output(input, output, prevNodeIndex, nodeIndex); // for debugging only
-            }
-        }
-
-        root = nodeValue;
-
-        //emit NewLeaf(leafCount, leafValue, root); // this event is what the merkle-tree microservice's filter will listen for.
-
-        _leafCount++; // the incrememnting of leafCount costs us 20k for the first leaf, and 5k thereafter
-
-        return (root, _frontier, _leafCount); //the root of the tree
-    } */
-
-    /**
     @notice Insert multiple leaves into the Merkle Tree, and then update the root, The user must update and persistently stored the new frontier.
     @param leafValues - the values of the leaves being inserted.
     @param _frontier - the current Frontier value
@@ -194,22 +125,20 @@ library MerkleTree_Stateless {
         uint256 slot;
         uint256 nodeIndex;
         uint256 prevNodeIndex;
-        bytes32 nodeValue;
+        uint256 nodeValue;
 
-        //bytes32 leftInput;
-        //bytes32 rightInput;
-        bytes32[2] memory input;
-        bytes32[1] memory output; // the output of the hash
+        uint256[2] memory input;
+        uint256[1] memory output; // the output of the hash
 
         // consider each new leaf in turn, from left to right:
         for (uint256 leafIndex = _leafCount; leafIndex < _leafCount + numberOfLeaves; leafIndex++) {
-            nodeValue = leafValues[leafIndex - _leafCount];
+            nodeValue = uint256(leafValues[leafIndex - _leafCount]);
             nodeIndex = leafIndex + treeWidth - 1; // convert the leafIndex to a nodeIndex
 
             slot = getFrontierSlot(leafIndex); // determine at which level we will next need to store a nodeValue
 
             if (slot == 0) {
-                _frontier[slot] = nodeValue; // update Frontier
+                _frontier[slot] = bytes32(nodeValue); // update Frontier
                 continue;
             }
 
@@ -217,9 +146,9 @@ library MerkleTree_Stateless {
             for (uint256 level = 1; level <= slot; level++) {
                 if (nodeIndex % 2 == 0) {
                     // even nodeIndex
-                    input[0] = _frontier[level - 1]; //replace with push?
+                    input[0] = uint256(_frontier[level - 1]); //replace with push?
                     input[1] = nodeValue;
-                    output[0] = MiMC.mimcHash2(input); // mimc hash of concatenation of each node
+                    output[0] = PoseidonT3.poseidon(input); // poseidon hash of concatenation of each node
 
                     nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
                     prevNodeIndex = nodeIndex;
@@ -228,8 +157,8 @@ library MerkleTree_Stateless {
                 } else {
                     // odd nodeIndex
                     input[0] = nodeValue;
-                    input[1] = zero;
-                    output[0] = MiMC.mimcHash2(input); // mimc hash of concatenation of each node
+                    input[1] = 0;
+                    output[0] = PoseidonT3.poseidon(input); // poseidon hash of concatenation of each node
 
                     nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
                     prevNodeIndex = nodeIndex;
@@ -237,16 +166,16 @@ library MerkleTree_Stateless {
                     // emit Output(input, output, prevNodeIndex, nodeIndex); // for debugging only
                 }
             }
-            _frontier[slot] = nodeValue; // update frontier
+            _frontier[slot] = bytes32(nodeValue); // update frontier
         }
 
         // So far we've added all leaves, and hashed up to a particular level of the tree. We now need to continue hashing from that level until the root:
         for (uint256 level = slot + 1; level <= treeHeight; level++) {
             if (nodeIndex % 2 == 0) {
                 // even nodeIndex
-                input[0] = _frontier[level - 1];
+                input[0] = uint256(_frontier[level - 1]);
                 input[1] = nodeValue;
-                output[0] = MiMC.mimcHash2(input); // mimc hash of concatenation of each node
+                output[0] = PoseidonT3.poseidon(input); // poseidon hash of concatenation of each node
 
                 nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
                 prevNodeIndex = nodeIndex;
@@ -255,8 +184,8 @@ library MerkleTree_Stateless {
             } else {
                 // odd nodeIndex
                 input[0] = nodeValue;
-                input[1] = zero;
-                output[0] = MiMC.mimcHash2(input); // mimc hash of concatenation of each node
+                input[1] = 0;
+                output[0] = PoseidonT3.poseidon(input); // poseidon hash of concatenation of each node
 
                 nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
                 prevNodeIndex = nodeIndex;
@@ -265,7 +194,7 @@ library MerkleTree_Stateless {
             }
         }
 
-        root = nodeValue;
+        root = bytes32(nodeValue);
 
         //emit NewLeaves(_leafCount, leafValues, root); // this event is what the merkle-tree microservice's filter will listen for.
 
@@ -289,10 +218,12 @@ library MerkleTree_Stateless {
         bytes32[33] memory _frontier;
         /* if (siblingPath[0] != root) return (false, _frontier); // check root of sibling path is actually the prior block root */
         // This is an incomplete check. Root parameter can be manipulated to pass the following check because this is not grounded to any data
+        uint256 nodeValue = uint256(node);
         for (uint256 i = 32; i > 0; i--) {
-            _frontier[i] = node;
-            if (leafIndex % 2 == 0) node = MiMC.mimcHash2([node, siblingPath[i]]);
-            else node = MiMC.mimcHash2([siblingPath[i], node]);
+            _frontier[i] = bytes32(nodeValue);
+            if (leafIndex % 2 == 0)
+                nodeValue = PoseidonT3.poseidon([nodeValue, uint256(siblingPath[i])]);
+            else nodeValue = PoseidonT3.poseidon([uint256(siblingPath[i]), nodeValue]);
             leafIndex >> 1;
         }
         _frontier[0] = node;
@@ -328,22 +259,20 @@ library MerkleTree_Stateless {
         uint256 slot;
         uint256 nodeIndex;
         uint256 prevNodeIndex;
-        bytes32 nodeValue;
+        uint256 nodeValue;
 
-        //bytes32 leftInput;
-        //bytes32 rightInput;
-        bytes32[2] memory input;
-        bytes32[1] memory output; // the output of the hash
+        uint256[2] memory input;
+        uint256[1] memory output; // the output of the hash
 
         // consider each new leaf in turn, from left to right:
         for (uint256 leafIndex = _leafCount; leafIndex < _leafCount + numberOfLeaves; leafIndex++) {
-            nodeValue = leafValues[leafIndex - _leafCount];
+            nodeValue = uint256(leafValues[leafIndex - _leafCount]);
             nodeIndex = leafIndex + treeWidth - 1; // convert the leafIndex to a nodeIndex
 
             slot = getFrontierSlot(leafIndex); // determine at which level we will next need to store a nodeValue
 
             if (slot == 0) {
-                _frontier[slot] = nodeValue; // update Frontier
+                _frontier[slot] = bytes32(nodeValue); // update Frontier
                 continue;
             }
 
@@ -351,9 +280,9 @@ library MerkleTree_Stateless {
             for (uint256 level = 1; level <= slot; level++) {
                 if (nodeIndex % 2 == 0) {
                     // even nodeIndex
-                    input[0] = _frontier[level - 1]; //replace with push?
+                    input[0] = uint256(_frontier[level - 1]); //replace with push?
                     input[1] = nodeValue;
-                    output[0] = MiMC.mimcHash2(input); // mimc hash of concatenation of each node
+                    output[0] = PoseidonT3.poseidon(input); // poseidon hash of concatenation of each node
 
                     nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
                     prevNodeIndex = nodeIndex;
@@ -362,8 +291,8 @@ library MerkleTree_Stateless {
                 } else {
                     // odd nodeIndex
                     input[0] = nodeValue;
-                    input[1] = zero;
-                    output[0] = MiMC.mimcHash2(input); // mimc hash of concatenation of each node
+                    input[1] = 0;
+                    output[0] = PoseidonT3.poseidon(input); // poseidon hash of concatenation of each node
 
                     nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
                     prevNodeIndex = nodeIndex;
@@ -371,16 +300,16 @@ library MerkleTree_Stateless {
                     // emit Output(input, output, prevNodeIndex, nodeIndex); // for debugging only
                 }
             }
-            _frontier[slot] = nodeValue; // update frontier
+            _frontier[slot] = bytes32(nodeValue); // update frontier
         }
 
         // So far we've added all leaves, and hashed up to a particular level of the tree. We now need to continue hashing from that level until the root:
         for (uint256 level = slot + 1; level <= treeHeight; level++) {
             if (nodeIndex % 2 == 0) {
                 // even nodeIndex
-                input[0] = _frontier[level - 1];
+                input[0] = uint256(_frontier[level - 1]);
                 input[1] = nodeValue;
-                output[0] = MiMC.mimcHash2(input); // mimc hash of concatenation of each node
+                output[0] = PoseidonT3.poseidon(input); // poseidon hash of concatenation of each node
 
                 nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
                 prevNodeIndex = nodeIndex;
@@ -389,8 +318,8 @@ library MerkleTree_Stateless {
             } else {
                 // odd nodeIndex
                 input[0] = nodeValue;
-                input[1] = zero;
-                output[0] = MiMC.mimcHash2(input); // mimc hash of concatenation of each node
+                input[1] = 0;
+                output[0] = PoseidonT3.poseidon(input); // poseidon hash of concatenation of each node
 
                 nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
                 prevNodeIndex = nodeIndex;
@@ -404,6 +333,6 @@ library MerkleTree_Stateless {
         //emit NewLeaves(_leafCount, leafValues, root); // this event is what the merkle-tree microservice's filter will listen for.
 
         /* return (root, _frontier, _leafCount); //the root of the tree */
-        return (_root == nodeValue, _frontier);
+        return (_root == bytes32(nodeValue), _frontier);
     }
 }

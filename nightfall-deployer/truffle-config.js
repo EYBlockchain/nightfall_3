@@ -66,6 +66,7 @@ module.exports = {
     ganache: {
       host: 'ganache', // Localhost (default: none)
       port: 8545, // Standard Ethereum port (default: none)
+      url: 'http://localhost:8545',
       network_id: '*', // Any network (default: none)
       gas: 8000000,
     },

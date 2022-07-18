@@ -3,7 +3,6 @@ const { upgradeProxy } = require('@openzeppelin/truffle-upgrades');
 const Verifier = artifacts.require('Verifier.sol');
 const Shield = artifacts.require('Shield.sol');
 const MerkleTree_Stateless = artifacts.require('MerkleTree_Stateless.sol');
-const MiMC = artifacts.require('MiMC.sol');
 const Structures = artifacts.require('Structures.sol');
 const Config = artifacts.require('Config.sol');
 const Utils = artifacts.require('Utils.sol');
@@ -11,12 +10,35 @@ const ChallengesUtil = artifacts.require('ChallengesUtil.sol');
 const Proposers = artifacts.require('Proposers.sol');
 const Challenges = artifacts.require('Challenges.sol');
 const State = artifacts.require('State.sol');
+const { poseidonContract } = require('circomlibjs');
+const contract = require('@truffle/contract');
+const Web3 = require('web3');
 
 module.exports = async function (deployer) {
+  const poseidonT3ABI = poseidonContract.generateABI(2);
+  const poseidonT3Bytecode = poseidonContract.createCode(2);
+
+  let web3Provider = provider
+    ? provider
+    : host === 'ganache'
+    ? new Web3.providers.HttpProvider(url)
+    : new Web3.providers.WebsocketProvider(url);
+
+  const web3 = new Web3(web3Provider);
+  const accounts = await web3.eth.getAccounts();
+
+  const PoseidonT3Lib = contract({
+    contractName: 'PoseidonT3',
+    abi: poseidonT3ABI,
+    bytecode: poseidonT3Bytecode,
+  });
+
+  PoseidonT3Lib.setProvider(web3Provider);
+
   await deployer.deploy(Verifier);
   await deployer.link(Verifier, [Challenges, ChallengesUtil]);
-  await deployer.deploy(MiMC);
-  await deployer.link(MiMC, MerkleTree_Stateless);
+  await deployer.deploy(PoseidonT3Lib, { from: accounts[0] });
+  await deployer.link(PoseidonT3Lib, MerkleTree_Stateless);
   await deployer.deploy(MerkleTree_Stateless);
   await deployer.link(MerkleTree_Stateless, [Challenges, ChallengesUtil]);
   await deployer.deploy(Utils);

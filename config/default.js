@@ -99,7 +99,7 @@ module.exports = {
   RETRIES: Number(process.env.AUTOSTART_RETRIES) || 50,
   NODE_HASHLENGTH: 32,
   ZERO: '0x0000000000000000000000000000000000000000000000000000000000000000',
-  HASH_TYPE: 'mimc',
+  HASH_TYPE: 'poseidon',
   TXHASH_TREE_HASH_TYPE: 'keccak256',
   USE_STUBS: process.env.USE_STUBS === 'true',
   VK_IDS: { deposit: 0, single_transfer: 1, double_transfer: 2, withdraw: 3 }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
