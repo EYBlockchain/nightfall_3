@@ -91,6 +91,7 @@ class Nf3 {
       optimistApiUrl: 'http://localhost:8081',
       optimistWsUrl: 'ws://localhost:8082',
       web3WsUrl: 'ws://localhost:8546',
+      rabbitmq: 'amqp://localhost:5672',
     },
     zkpKeys,
   ) {
@@ -101,7 +102,8 @@ class Nf3 {
     this.ethereumSigningKey = ethereumSigningKey;
     this.zkpKeys = zkpKeys;
     this.currentEnvironment = environment;
-    this.rabbitmq = new RabbitMQ('amqp://localhost:5672');
+    console.log('rabbitmq:', environment.rabbitmq);
+    this.rabbitmq = new RabbitMQ(environment.rabbitmq);
   }
 
   /**

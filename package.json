@@ -67,5 +67,8 @@
     "general-number": "^1.0.1",
     "typescript": "^4.6.2",
     "web3": "^1.4.0"
+  },
+  "engines": {
+    "node": "16.16.0"
   }
 }

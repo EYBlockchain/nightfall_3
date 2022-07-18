@@ -32,6 +32,7 @@ const environment = {
   proposerBaseUrl: `${PROPOSER_URL}`
     ? `${PROPOSER_URL}`
     : `http://${process.env.PROPOSER_HOST}:${process.env.PROPOSER_PORT}`,
+  rabbitmq: `${process.env.RABBITMQ_HOST}:${process.env.RABBITMQ_PORT}`,
 };
 const app = express();
 const nf3 = new Nf3(SIGNING_KEY, environment);

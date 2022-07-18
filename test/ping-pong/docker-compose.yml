@@ -113,6 +113,8 @@ services:
     build:
       dockerfile: proposer.Dockerfile
       context: ../../
+    depends_on:
+      - rabbitmq
     networks:
       - pong_network
     environment:
@@ -133,6 +135,8 @@ services:
     build:
       dockerfile: user-local.Dockerfile
       context: ../../
+    depends_on:
+      - rabbitmq
     networks:
       - pong_network
     environment:
@@ -146,12 +150,16 @@ services:
       IS_TEST_RUNNER: 'yes'
       PROPOSER_PORT: 8080
       PROPOSER_HOST: proposer
+      RABBITMQ_HOST: amqp://rabbitmq
+      RABBITMQ_PORT: 5672
 
   user-local2:
     image: ghcr.io/eyblockchain/nightfall3-user-local:latest
     build:
       dockerfile: user-local.Dockerfile
       context: ../../
+    depends_on:
+      - rabbitmq
     networks:
       - pong_network
     environment:
@@ -164,6 +172,8 @@ services:
       BLOCKCHAIN_PORT: 8546
       PROPOSER_PORT: 8080
       PROPOSER_HOST: proposer
+      RABBITMQ_HOST: amqp://rabbitmq
+      RABBITMQ_PORT: 5672
 
 volumes:
   mongodb:
