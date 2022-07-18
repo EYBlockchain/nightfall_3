@@ -12,11 +12,7 @@ import {
   getWithdrawCommitments,
   getWalletPendingDepositBalance,
   getWalletPendingSpentBalance,
-  getAllCommitmentsByCompressedZkpPublicKeyList,
-  saveAllCommitments,
-  getAllCommitments,
   getCommitments,
-  saveCommitments,
   getCommitmentsByCompressedZkpPublicKeyList,
 } from '../services/commitment-storage.mjs';
 
