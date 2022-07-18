@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@master
       - uses: actions/setup-node@v3
         with:
-          node-version: '18.4.0'
+          node-version: '14.20'
       - name: eslint check
         run: |
           npm ci
@@ -34,7 +34,7 @@ jobs:
       - uses: actions/checkout@master
       - uses: actions/setup-node@v3
         with:
-          node-version: '18.4.0'
+          node-version: '14.20'
 
       - name: Start Containers
         run: |
@@ -83,7 +83,7 @@ jobs:
       - uses: actions/checkout@master
       - uses: actions/setup-node@v3
         with:
-          node-version: '18.4.0'
+          node-version: '14.20'
 
       - name: Build adversary
         run: npm run build-adversary
@@ -136,7 +136,7 @@ jobs:
       - uses: actions/checkout@master
       - uses: actions/setup-node@v3
         with:
-          node-version: '18.4.0'
+          node-version: '14.20'
 
       - name: Start Containers
         run: |
@@ -192,7 +192,7 @@ jobs:
       - uses: actions/checkout@master
       - uses: actions/setup-node@v3
         with:
-          node-version: '18.4.0'
+          node-version: '14.20'
 
       - name: Start Containers with ganache
         run: |
