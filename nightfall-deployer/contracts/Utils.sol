@@ -8,15 +8,15 @@ library Utils {
     bytes32 public constant ZERO = bytes32(0);
     uint256 constant TRANSACTIONS_BATCH_SIZE = 6; // TODO Change this from 2 to an appropriate value to control stack too deep error
 
-    function hashTransaction(Structures.Transaction memory t) internal pure returns (bytes32) {
+    function hashTransaction(Structures.Transaction calldata t) internal pure returns (bytes32) {
         return keccak256(abi.encode(t));
     }
 
-    function hashBlock(Structures.Block memory b) internal pure returns (bytes32) {
+    function hashBlock(Structures.Block calldata b) internal pure returns (bytes32) {
         return keccak256(abi.encode(b));
     }
 
-    function hashTransactionHashes(Structures.Transaction[] memory ts)
+    function hashTransactionHashes(Structures.Transaction[] calldata ts)
         public
         pure
         returns (bytes32)
@@ -25,7 +25,7 @@ library Utils {
         bytes32[] memory transactionHashes = new bytes32[](ts.length);
 
         for (uint256 i = 0; i < ts.length; i++) {
-            transactionHashes[i ] = hashTransaction(ts[i]);
+            transactionHashes[i] = hashTransaction(ts[i]);
         }
         transactionHashesRoot = calculateMerkleRoot(transactionHashes);
         return transactionHashesRoot;
@@ -57,7 +57,7 @@ library Utils {
     }
 
     // counts the number of non-zero values (useful for counting real commitments and nullifiers)
-    function countNonZeroValues(bytes32[2] memory vals) internal pure returns (uint256) {
+    function countNonZeroValues(bytes32[2] calldata vals) internal pure returns (uint256) {
         uint256 count;
         if (vals[0] != ZERO) count++;
         if (vals[1] != ZERO) count++;
@@ -65,7 +65,11 @@ library Utils {
     }
 
     // filters the number of non-zero values (useful for getting real commitments and nullifiers)
-    function filterNonZeroValues(bytes32[2] memory vals) internal pure returns (bytes32[] memory) {
+    function filterNonZeroValues(bytes32[2] calldata vals)
+        internal
+        pure
+        returns (bytes32[] memory)
+    {
         bytes32[] memory filtered = new bytes32[](countNonZeroValues(vals));
         uint256 count;
         if (vals[0] != ZERO) filtered[count++] = vals[0]; // a bit faster than looping?
@@ -74,7 +78,11 @@ library Utils {
     }
 
     // counts the number of non-zero commitments in a block containing the ts transactions)
-    function countCommitments(Structures.Transaction[] memory ts) internal pure returns (uint256) {
+    function countCommitments(Structures.Transaction[] calldata ts)
+        internal
+        pure
+        returns (uint256)
+    {
         uint256 count;
         for (uint256 i = 0; i < ts.length; i++) {
             count += countNonZeroValues(ts[i].commitments);
@@ -83,7 +91,7 @@ library Utils {
     }
 
     // filters the non-zero commitments in a block containing the ts transactions)
-    function filterCommitments(Structures.Transaction[] memory ts)
+    function filterCommitments(Structures.Transaction[] calldata ts)
         internal
         pure
         returns (bytes32[] memory)
@@ -183,17 +191,14 @@ library Utils {
     function calculateMerkleRoot(bytes32[] memory leaves) public pure returns (bytes32 result) {
         assembly {
             let length := mload(leaves)
-            let leavesPos := add(leaves,0x20)
+            let leavesPos := add(leaves, 0x20)
             let transactionHashesPos := mload(0x40)
             for {
                 let i := 0
             } lt(i, length) {
                 i := add(i, 1)
             } {
-                mstore(
-                    add(transactionHashesPos, mul(0x20, i)),
-                    mload(add(leavesPos, mul(0x20, i)))
-                )
+                mstore(add(transactionHashesPos, mul(0x20, i)), mload(add(leavesPos, mul(0x20, i))))
             }
             for {
                 let i := 5
@@ -211,10 +216,7 @@ library Utils {
                         result := 0
                     } // returns bool
                     if eq(and(iszero(left), iszero(right)), 0) {
-                        result := keccak256(
-                            add(transactionHashesPos, mul(mul(0x20, j), 2)),
-                            0x40
-                        )
+                        result := keccak256(add(transactionHashesPos, mul(mul(0x20, j), 2)), 0x40)
                     } // returns bool
                     mstore(add(transactionHashesPos, mul(0x20, j)), result)
                 }
@@ -223,7 +225,7 @@ library Utils {
     }
 
     function checkPath(
-        bytes32[6] memory siblingPath,
+        bytes32[6] calldata siblingPath,
         uint256 leafIndex,
         bytes32 node
     ) public pure returns (bool) {

@@ -15,8 +15,8 @@ library ChallengesUtil {
         21888242871839275222246405745257275088548364400416034343698204186575808495617;
 
     function libChallengeLeafCountCorrect(
-        Structures.Block memory priorBlockL2,
-        Structures.Transaction[] memory priorBlockTransactions,
+        Structures.Block calldata priorBlockL2,
+        Structures.Transaction[] calldata priorBlockTransactions,
         uint256 leafCount
     ) public pure {
         uint256 expectedLeafCount =
@@ -25,11 +25,11 @@ library ChallengesUtil {
     }
 
     function libChallengeNewRootCorrect(
-        Structures.Block memory priorBlockL2, // the block immediately prior to this one
-        Structures.Transaction[] memory priorBlockTransactions, // the transactions in the prior block
+        Structures.Block calldata priorBlockL2, // the block immediately prior to this one
+        Structures.Transaction[] calldata priorBlockTransactions, // the transactions in the prior block
         bytes32[33] calldata frontierPriorBlock, // frontier path before prior block is added. The same frontier used in calculating root when prior block is added
-        Structures.Block memory blockL2,
-        Structures.Transaction[] memory transactions
+        Structures.Block calldata blockL2,
+        Structures.Transaction[] calldata transactions
     ) public pure {
         // next check the sibling path is valid and get the Frontier
         bool valid;
@@ -54,7 +54,7 @@ library ChallengesUtil {
     }
 
     // the transaction type is challenged to not be valid
-    function libChallengeTransactionType(Structures.Transaction memory transaction) public pure {
+    function libChallengeTransactionType(Structures.Transaction calldata transaction) public pure {
         if (transaction.transactionType == Structures.TransactionTypes.DEPOSIT)
             libChallengeTransactionTypeDeposit(transaction);
             // TODO add these checks back after PR for out of gas
@@ -66,7 +66,7 @@ library ChallengesUtil {
     }
 
     // the transaction type deposit is challenged to not be valid
-    function libChallengeTransactionTypeDeposit(Structures.Transaction memory transaction)
+    function libChallengeTransactionTypeDeposit(Structures.Transaction calldata transaction)
         public
         pure
     {
@@ -95,7 +95,7 @@ library ChallengesUtil {
     }
 
     // the transaction type single transfer is challenged to not be valid
-    function libChallengeTransactionTypeSingleTransfer(Structures.Transaction memory transaction)
+    function libChallengeTransactionTypeSingleTransfer(Structures.Transaction calldata transaction)
         public
         pure
     {
@@ -121,7 +121,7 @@ library ChallengesUtil {
     }
 
     // the transaction type double transfer is challenged to not be valid
-    function libChallengeTransactionTypeDoubleTransfer(Structures.Transaction memory transaction)
+    function libChallengeTransactionTypeDoubleTransfer(Structures.Transaction calldata transaction)
         public
         pure
     {
@@ -146,7 +146,7 @@ library ChallengesUtil {
     }
 
     // the transaction type withdraw is challenged to not be valid
-    function libChallengeTransactionTypeWithdraw(Structures.Transaction memory transaction)
+    function libChallengeTransactionTypeWithdraw(Structures.Transaction calldata transaction)
         public
         pure
     {
@@ -218,9 +218,9 @@ library ChallengesUtil {
     }
 
     function libChallengeNullifier(
-        Structures.Transaction memory tx1,
+        Structures.Transaction calldata tx1,
         uint256 nullifierIndex1,
-        Structures.Transaction memory tx2,
+        Structures.Transaction calldata tx2,
         uint256 nullifierIndex2
     ) public pure {
         require(
