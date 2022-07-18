@@ -102,7 +102,6 @@ class Nf3 {
     this.ethereumSigningKey = ethereumSigningKey;
     this.zkpKeys = zkpKeys;
     this.currentEnvironment = environment;
-    console.log('rabbitmq:', environment.rabbitmq);
     this.rabbitmq = new RabbitMQ(environment.rabbitmq);
   }
 

@@ -188,7 +188,9 @@ module.exports = {
           : process.env.BLOCKCHAIN_WS_HOST
           ? `wss://${process.env.BLOCKCHAIN_WS_HOST}`
           : 'ws://localhost:8546',
-      rabbitmq: `${process.env.RABBITMQ_HOST}:${process.env.RABBITMQ_PORT}`,
+      rabbitmq: process.env.RABBITMQ_HOST
+        ? `${process.env.RABBITMQ_HOST}:${process.env.RABBITMQ_PORT}`
+        : 'amqp://localhost:5672',
     },
     aws: {
       name: 'AWS',
