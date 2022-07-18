@@ -690,65 +690,36 @@ export async function findUsableCommitmentsMutex(
 }
 
 /**
- * @function getCommitmentsByCompressedPkdList do the role of a service taking care of the
+ * @function getCommitmentsByCompressedZkpPublicKeyList do the role of a service taking care of the
  * business logic and of a repository doing the communication with the database for this
  * use case.
- * @param {string[]} compressedZkpPublicKey a list of compressedZkpPublicKey derivated from the user
+ * @param {string[]} listOfCompressedZkpPublicKey a list of compressedZkpPublicKey derivated from the user
  * mnemonic coming from the SDK or Wallet.
  * @returns all the commitments existent for this list of compressedZkpPublicKey.
  * @author luizoamorim
  */
-export async function getAllCommitmentsByCompressedZkpPublicKeyList(listOfCompressedZkpPublicKey) {
+export async function getCommitmentsByCompressedZkpPublicKeyList(listOfCompressedZkpPublicKey) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
-  const allCommitmentsByListOfCompressedZkpPublicKey = await db
+  const commitmentsByListOfCompressedZkpPublicKey = await db
     .collection(COMMITMENTS_COLLECTION)
     .find({
       'preimage.compressedZkpPublicKey': { $in: listOfCompressedZkpPublicKey },
     })
     .toArray();
-  return allCommitmentsByListOfCompressedZkpPublicKey;
+  return commitmentsByListOfCompressedZkpPublicKey;
 }
 
 /**
- * @function getAllCommitments do the role of a service taking care of the
+ * @function getCommitments do the role of a service taking care of the
  * business logic and of a repository doing the communication with the database for this
  * use case.
  * @returns all the commitments existent in this database.
  * @author luizoamorim
  */
-export async function getAllCommitments() {
+export async function getCommitments() {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
-  const allCommitments = await db.collection(COMMITMENTS_COLLECTION).find({}).toArray();
+  const allCommitments = await db.collection(COMMITMENTS_COLLECTION).find().toArray();
   return allCommitments;
-}
-
-/**
- *
- * @function saveAllCommitments save a list of commitments in the database
- * @param {[]} listOfCommitments a list of commitments to be saved in the database
- * @returns
- */
-export async function saveAllCommitments(listOfCommitments) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(COMMITMENTS_DB);
-  let exist = false;
-  for (const commitment of listOfCommitments) {
-    if (
-      // eslint-disable-next-line no-await-in-loop
-      (await db.collection(COMMITMENTS_COLLECTION).find({ _id: commitment._id }).toArray()).length >
-      0
-    ) {
-      exist = true;
-      break;
-    }
-  }
-
-  if (exist) {
-    return new Error('Some of these commitments already existis in the database!');
-  }
-
-  const response = await db.collection(COMMITMENTS_COLLECTION).insertMany(listOfCommitments);
-  return response;
 }

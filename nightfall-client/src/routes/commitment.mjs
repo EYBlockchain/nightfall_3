@@ -15,6 +15,9 @@ import {
   getAllCommitmentsByCompressedZkpPublicKeyList,
   saveAllCommitments,
   getAllCommitments,
+  getCommitments,
+  saveCommitments,
+  getCommitmentsByCompressedZkpPublicKeyList,
 } from '../services/commitment-storage.mjs';
 
 const router = express.Router();
@@ -97,13 +100,13 @@ router.get('/commitments', async (req, res, next) => {
  * request body.
  * @author luizoamorim
  */
-router.post('/allByCompressedZkpPublicKey', async (req, res, next) => {
-  logger.debug('commitment/allByCompressedZkpPublicKey endpoint received POST');
-  const arrayOfCompressedZkpPublicKey = req.body;
+router.post('/byCompressedZkpPublicKey', async (req, res, next) => {
+  logger.debug('commitment/byCompressedZkpPublicKey endpoint received POST');
+  const listOfCompressedZkpPublicKey = req.body;
   try {
-    const allCommitmentsByListOfCompressedZkpPublicKey =
-      await getAllCommitmentsByCompressedZkpPublicKeyList(arrayOfCompressedZkpPublicKey);
-    res.json({ allCommitmentsByListOfCompressedZkpPublicKey });
+    const commitmentsByListOfCompressedZkpPublicKey =
+      await getCommitmentsByCompressedZkpPublicKeyList(listOfCompressedZkpPublicKey);
+    res.json({ commitmentsByListOfCompressedZkpPublicKey });
   } catch (err) {
     logger.error(err);
     next(err);
@@ -112,34 +115,14 @@ router.post('/allByCompressedZkpPublicKey', async (req, res, next) => {
 
 /**
  * @description the endpoint that will send a reponse with all the
- * existent commitments for the list of compressedPkd received in the
- * request body.
+ * existent commitments.
  * @author luizoamorim
  */
 router.get('/', async (req, res, next) => {
   logger.debug('commitment/ endpoint received GET');
   try {
-    const allCommitments = await getAllCommitments();
+    const allCommitments = await getCommitments();
     res.json({ allCommitments });
-  } catch (err) {
-    logger.error(err);
-    next(err);
-  }
-});
-
-/**
- * @description the endpoint that will save a list of commitments
- * @author luizoamorim
- */
-router.post('/saveAll', async (req, res, next) => {
-  logger.debug('commitment/saveAll endpoint received POST');
-  const listOfCommitments = req.body;
-  try {
-    const response = await saveAllCommitments(listOfCommitments);
-    if (response instanceof Error) {
-      throw response;
-    }
-    res.json({ response });
   } catch (err) {
     logger.error(err);
     next(err);
