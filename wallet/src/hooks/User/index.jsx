@@ -3,12 +3,16 @@ import { useHistory } from 'react-router-dom';
 
 import { generateKeys } from '@Nightfall/services/keys';
 import blockProposedEventHandler from '@Nightfall/event-handlers/block-proposed';
+import rollbackEventHandler from '@Nightfall/event-handlers/rollback';
 import { checkIndexDBForCircuit, getMaxBlock } from '@Nightfall/services/database';
 import * as Storage from '../../utils/lib/local-storage';
 import { encryptAndStore, retrieveAndDecrypt, storeBrowserKey } from '../../utils/lib/key-storage';
 import useInterval from '../useInterval';
+import mqtt from "mqtt";
+import {wsMqMapping, topicRollback, topicBlockProposed} from '../../common-files/utils/mq';
 
-const { eventWsUrl, USE_STUBS } = global.config;
+
+const { USE_STUBS, usernameMq, pswMQ } = global.config;
 
 export const initialState = {
   compressedPkd: '',
@@ -25,6 +29,8 @@ export const UserProvider = ({ children }) => {
   const [state, setState] = React.useState(initialState);
   const [isSyncComplete, setIsSyncComplete] = React.useState(false); // This is not really a sync;
   const [isSyncing, setSyncing] = React.useState(true);
+  const [client, setClient] = React.useState(null);
+
   const history = useHistory();
 
   const deriveAccounts = async (mnemonic, numAccts) => {
@@ -61,68 +67,87 @@ export const UserProvider = ({ children }) => {
   };
 
   const setupWebSocket = () => {
-    const socket = new WebSocket(eventWsUrl);
+    let options ={
+      clientId:"clientId",
+      clean: false,
+      username: usernameMq,
+      password: pswMQ,
+      rejectUnauthorized: false,
+      reconnectPeriod: 1000,
+      resubscribe: true,
+      keepalive: 0,
+    };
 
-    // Connection opened
-    socket.addEventListener('open', async function () {
-      console.log(`Websocket is open`);
-      const lastBlock = (await getMaxBlock()) ?? -1;
-      console.log('LastBlock', lastBlock);
-      socket.send(JSON.stringify({ type: 'sync', lastBlock }));
-    });
+    mqttConnect(wsMqMapping[process.env.REACT_APP_MODE], options)
 
     setState(previousState => {
       return {
-        ...previousState,
-        socket,
+        ...previousState
       };
     });
   };
 
-  let messageEventHandler;
+  const mqttConnect = (host, mqttOption) => {
+    setClient(mqtt.connect(host, mqttOption));
+  };
+
   const configureMessageListener = () => {
-    const { compressedPkd, socket } = state;
+    const { compressedPkd } = state;
     if (compressedPkd === '') return;
 
-    if (messageEventHandler) {
-      socket.removeEventListener('message', messageEventHandler);
-    }
-
     // Listen for messages
-    messageEventHandler = async function (event) {
-      console.log('Message from server ', JSON.parse(event.data));
-      const parsed = JSON.parse(event.data);
-      const { ivk, nsk } = await retrieveAndDecrypt(compressedPkd);
-      if (parsed.type === 'sync') {
-        await parsed.historicalData
-          .sort((a, b) => a.block.blockNumberL2 - b.block.blockNumberL2)
-          .reduce(async (acc, curr) => {
-            await acc; // Acc is a promise so we await it before processing the next one;
-            return blockProposedEventHandler(curr, [ivk], [nsk]); // TODO Should be array
-          }, Promise.resolve());
-        if (Number(parsed.maxBlock) !== 1) {
-          socket.send(
-            JSON.stringify({
-              type: 'sync',
-              lastBlock:
-                parsed.historicalData[parsed.historicalData.length - 1].block.blockNumberL2,
-            }),
-          );
-        }
-        console.log('Sync complete');
-        setState(previousState => {
-          return {
-            ...previousState,
-            chainSync: true,
-          };
-        });
-      } else if (parsed.type === 'blockProposed')
-        await blockProposedEventHandler(parsed.data, [ivk], [nsk]);
-      // TODO Rollback Handler
-    };
+      if(client) {
+        client.on('message', async (topic, message) => {
 
-    socket.addEventListener('message', messageEventHandler);
+          const { type, data } = JSON.parse(message.toString());
+          const { ivk, nsk } = await retrieveAndDecrypt(compressedPkd);
+          if (topic === 'blockProposed') {
+            if(type == topic)
+              await blockProposedEventHandler(data, [ivk], [nsk]);
+            else
+              console.log("Error: messange sent on wrong topic")
+          }
+          else if (topic === 'rollback'){
+            if(type == topic)
+              await rollbackEventHandler(data);
+            else
+              console.log("Error: messange sent on wrong topic")
+          }
+        });
+      }
   };
+
+  React.useEffect(() => {
+    if (client) {
+      client.on('connect', () => {
+        console.log('connected');
+        client.subscribe(topicRollback, {qos: 2}, function (err, granted) {
+          if (err) {
+            console.log(err)
+          } else if (granted){
+            console.log("subscribe to " + topicRollback, granted)
+          }
+        })
+
+        client.subscribe(topicBlockProposed, function (err, granted) {
+          if (err) {
+            console.log(err)
+          } else if (granted){
+            console.log("subscribe to" + topicBlockProposed, granted)
+          }
+        })
+      });
+
+      client.on('error', (err) => {
+        console.error('Connection error: ', err);
+        client.end();
+      });
+
+      client.on('reconnect', () => {
+        console.log('Reconnecting');
+      });
+    }
+  }, [client]);
 
   React.useEffect(() => {
     setupWebSocket();
