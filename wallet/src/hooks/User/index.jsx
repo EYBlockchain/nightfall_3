@@ -142,11 +142,11 @@ export const UserProvider = ({ children }) => {
           }
         })
 
-        client.subscribe(topicBlockProposed, function (err, granted) {
+        client.subscribe(topicBlockProposed, {qos: 2}, function (err, granted) {
           if (err) {
             console.log(err)
           } else if (granted){
-            console.log("subscribe to" + topicBlockProposed, granted)
+            console.log("subscribe to " + topicBlockProposed, granted)
           }
         })
       });
