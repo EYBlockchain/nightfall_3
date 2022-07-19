@@ -98,8 +98,8 @@ router.get('/commitments', async (req, res, next) => {
  * a size limit.
  * @author luizoamorim
  */
-router.post('/byCompressedZkpPublicKey', async (req, res, next) => {
-  logger.debug('commitment/byCompressedZkpPublicKey endpoint received POST');
+router.post('/compressedZkpPublicKeys', async (req, res, next) => {
+  logger.debug('commitment/compressedZkpPublicKeys endpoint received POST');
   const listOfCompressedZkpPublicKey = req.body;
   try {
     const commitmentsByListOfCompressedZkpPublicKey =
