@@ -1,14 +1,16 @@
 from "ecc/babyjubjubParams" import BabyJubJubParams, main as curveParams
 from "ecc/edwardsCompress" import main as edwardsCompress
 
-from "../hashes/mimc/mimc-hash-N.zok" import main as mimcN
-from "../utils/structures.zok" import CommitmentPreimage, Point, PRIVATE_KEY_DOMAIN, NULLIFIER_KEY_DOMAIN
+from "hashes/poseidon/poseidon.zok" import main as poseidon
+from "../utils/structures.zok" import CommitmentPreimage, Point, PRIVATE_KEY_DOMAIN, NULLIFIER_KEY_DOMAIN, SHIFT
 from "../utils/calculations.zok" import sum, calculateCommitmentHashesN, calculateNullifiersN
-from "../merkle-tree/mimc-path-check.zok" import main as pathCheck
+from "../merkle-tree/path-check.zok" import main as pathCheck
 from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
 from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8
 from "ecc/edwardsScalarMult" import main as scalarMult
 from "utils/pack/u32/pack256.zok" import main as u32_8_to_field
+from "../casts/u8_array_to_field.zok" import main as u8_array_to_field
+from "../casts/u32_array_to_field.zok" import main as u32_array_to_field
 
 def main<CInps,COuts>(\
     field [CInps] nullifiers,\
@@ -17,12 +19,12 @@ def main<CInps,COuts>(\
     field[CInps] root,\
     field withdrawnValue,\
     private field[CInps] oldCommitmentValues,\
-    private u32[CInps][8] oldCommitmentSalts,\
+    private field[CInps] oldCommitmentSalts,\
     private field[CInps] rootKey,\
     private field[CInps][32] path,\
 	private field[CInps] order,\
     private field[COuts] newCommitmentValues,\
-    private u32[COuts][8] newCommitmentSalts,\
+    private field[COuts] newCommitmentSalts,\
     private Point[COuts] recipientPublicKey,\
     field[COuts] newCommitmentHash\
 )-> bool:
@@ -35,9 +37,9 @@ def main<CInps,COuts>(\
     Point[CInps] zkpPublicKeys = [[0,0]; CInps]
     for u32 i in 0..CInps do
       // Calculation of zkpPrivateKey and nullifierKey from rootKey
-      field zkpPrivateKey = mimcN([rootKey[i], PRIVATE_KEY_DOMAIN])
+      field zkpPrivateKey = poseidon([rootKey[i], PRIVATE_KEY_DOMAIN])
 
-      nullifierKeys[i] = mimcN([rootKey[i], NULLIFIER_KEY_DOMAIN])
+      nullifierKeys[i] = poseidon([rootKey[i], NULLIFIER_KEY_DOMAIN])
 
       // Calculate zkpPublicKey
       zkpPublicKeys[i] = scalarMult(field_to_bool_256(zkpPrivateKey), g, context)
@@ -50,13 +52,20 @@ def main<CInps,COuts>(\
     /*
     Calculate + Check Commitment/Nullifiers
     */
+
+    // pack the top four bytes of the token id into the ercAddress field (address only
+	// uses 160 bits and the Shield contract prevents creation of something with more than 160 bits)
+	field idTop4Bytes = u32_array_to_field([tokenId[0]])
+	field idRemainder = u32_array_to_field(tokenId[1..8])
+	field packedErcAddress = ercAddress + idTop4Bytes * SHIFT
+
     // Check old commitments hash
     field[CInps] calculatedInputCommitmentHash = calculateCommitmentHashesN(\
-        oldCommitmentValues,\
-        oldCommitmentSalts,\
-        ercAddress,\
-        tokenId,\
-        zkpPublicKeys\
+        packedErcAddress,\
+		idRemainder,\
+		oldCommitmentValues,\
+		zkpPublicKeys,\
+		oldCommitmentSalts\
     )
 
     // Use calculated old commiment hashes in nullifier calculation
@@ -65,11 +74,11 @@ def main<CInps,COuts>(\
    
     
     field[COuts] outputCommitments = calculateCommitmentHashesN(\
+        packedErcAddress,\
+		idRemainder,\
         newCommitmentValues,\
-        newCommitmentSalts,\
-        ercAddress,\
-        tokenId,\
-        recipientPublicKey\
+        recipientPublicKey,\
+        newCommitmentSalts\
     )
     assert(outputCommitments == newCommitmentHash)
 

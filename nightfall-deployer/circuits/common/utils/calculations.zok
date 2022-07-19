@@ -1,10 +1,10 @@
 
 from "ecc/edwardsCompress" import main as edwardsCompress
-from "hashes/sha256/sha256Padded.zok" import sha256Padded
+from "hashes/poseidon/poseidon.zok" import main as poseidon
 from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256
 from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
 from "utils/pack/u32/pack256.zok" import main as u32_8_to_field
-from "./structures.zok" import CommitmentPreimage, Transaction, Point
+from "./structures.zok" import CommitmentPreimage, Point
 
 def sum<N>(field[N] a) -> field:
     field res = 0
@@ -14,34 +14,33 @@ def sum<N>(field[N] a) -> field:
     return res
 
 def calculateCommitmentHashesN<N>(\
+    field packedErcAddress,\
+    field idRemainder,\
     field[N] value,\
-    u32[N][8] salt,\
-    field ercAddress,\
-    u32[8] tokenId,\
-    Point[N] zkpPublicKeyRecipient\
+    Point[N] zkpPublicKeyRecipient,\
+    field[N] salt\
     ) -> field[N]:
     field[N] output = [0; N]
     for u32 i in 0..N do
-        u32[8] shaOut = sha256Padded([\
-            ...field_to_bool_256(ercAddress),\
-            ...u32_8_to_bool_256(tokenId),\
-            ...field_to_bool_256(value[i]),\
-            ...field_to_bool_256(zkpPublicKeyRecipient[i][0]),\
-            ...field_to_bool_256(zkpPublicKeyRecipient[i][1]),\
-            ...u32_8_to_bool_256(salt[i])\
+        output[i] = poseidon([\
+            packedErcAddress,\
+            idRemainder,\
+            value[i],\
+            zkpPublicKeyRecipient[i][0],\
+            zkpPublicKeyRecipient[i][1],\
+            salt[i]\
         ])
-        output[i] = u32_8_to_field(shaOut)
     endfor
     return output
 
 def calculateCommitmentHash(\
+    field packedErcAddress,\
+    field idRemainder,\
     field[1] value,\
-    u32[1][8] salt,\
-    field ercAddress,\
-    u32[8] tokenId,\
-    Point[1] zkpPublicKeyRecipient\
+    Point[1] zkpPublicKeyRecipient,\
+    field[1] salt\
     ) -> field:
-    field[1] output = calculateCommitmentHashesN(value,salt,ercAddress, tokenId, zkpPublicKeyRecipient)
+    field[1] output = calculateCommitmentHashesN(packedErcAddress,idRemainder, value, zkpPublicKeyRecipient, salt)
     return output[0]
 
 
@@ -49,12 +48,7 @@ def calculateNullifier(\
     field nullifierKey,\
     field commitmentHashes\
 ) -> field:
-    u32[8] shaOut = sha256Padded([\
-        ...field_to_bool_256(nullifierKey),\
-        ...field_to_bool_256(commitmentHashes)\
-    ])
-    field output = u32_8_to_field(shaOut)
-    return output
+    return poseidon([nullifierKey,commitmentHashes])
 
 def calculateNullifiersN<N>(\
     field[N] nullifierKey,\
