@@ -14,7 +14,7 @@ from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field
 
 type Point = field[2]
 
-// 2 ^ 161
+// 2 ^ 160
 const field SHIFT = 1461501637330902918203684832716283019655932542976
 
 struct OldCommitmentPreimage {
