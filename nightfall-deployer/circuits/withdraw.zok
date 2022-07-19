@@ -10,8 +10,8 @@ from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field
 from "hashes/poseidon/poseidon.zok" import main as poseidon
 from "./common/merkle-tree/path-check.zok" import main as pathCheck
 
-// 2 ^ 161
-const field SHIFT = 2923003274661805836407369665432566039311865085952
+// 2 ^ 160
+const field SHIFT = 1461501637330902918203684832716283019655932542976
 
 struct OldCommitmentPreimage {
 	field salt

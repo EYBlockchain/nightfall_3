@@ -34,7 +34,7 @@ class Commitment {
     // we encode the top four bytes of the tokenId into the empty bytes at the top of the erc address.
     // this is consistent to what we do in the ZKP circuits
     const [top4Bytes, remainder] = this.preimage.tokenId.limbs(224, 2).map(l => BigInt(l));
-    const SHIFT = 2923003274661805836407369665432566039311865085952n;
+    const SHIFT = 1461501637330902918203684832716283019655932542976n;
     this.hash = poseidon(
       generalise([
         this.preimage.ercAddress.bigInt + top4Bytes * SHIFT,
