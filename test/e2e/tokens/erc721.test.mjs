@@ -244,7 +244,7 @@ describe('ERC721 tests', () => {
         await new Promise(resolve => setTimeout(resolve, 15000));
 
         const res = await nf3Users[0].finaliseWithdrawal(withdrawal);
-        expectTransaction(res.receipt);
+        expectTransaction(res);
 
         erc721balances = (await nf3Users[0].getLayer2Balances())[erc721Address];
         const endBalance = erc721balances.length;
