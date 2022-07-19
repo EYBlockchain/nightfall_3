@@ -12,6 +12,7 @@ import {
   incomingViewingKey,
   setInstantWithdrawl,
   generateZkpKeys,
+  block,
 } from './routes/index.mjs';
 
 const app = express();
@@ -34,5 +35,6 @@ app.use('/commitment', commitment);
 app.use('/incoming-viewing-key', incomingViewingKey);
 app.use('/set-instant-withdrawal', setInstantWithdrawl);
 app.use('/generate-zkp-keys', generateZkpKeys);
+app.use('/block', block);
 
 export default app;

@@ -4,6 +4,7 @@ import Web3 from 'web3';
 import WebSocket from 'ws';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import EventEmitter from 'events';
+import { restartAll } from 'docker-compose';
 import logger from '../../common-files/utils/logger.mjs';
 import { approve } from './tokens.mjs';
 import erc20 from './abis/ERC20.mjs';
@@ -397,21 +398,24 @@ class Nf3 {
       nullifierKey: this.zkpKeys.nullifierKey,
       fee,
     });
-    return new Promise((resolve, reject) => {
-      userQueue.push(async () => {
-        try {
-          const receipt = await this.submitTransaction(
-            res.data.txDataToSign,
-            this.shieldContractAddress,
-            fee,
-          );
-          resolve(receipt);
-        } catch (err) {
-          logger.error('Deposit transaction failed');
-          reject(err);
-        }
-      });
-    });
+    return {
+      receipt: new Promise((resolve, reject) => {
+        userQueue.push(async () => {
+          try {
+            const receipt = await this.submitTransaction(
+              res.data.txDataToSign,
+              this.shieldContractAddress,
+              fee,
+            );
+            resolve(receipt);
+          } catch (err) {
+            logger.error('Deposit transaction failed');
+            reject(err);
+          }
+        });
+      }),
+      tx: res.data.transaction,
+    };
   }
 
   /**
@@ -456,22 +460,25 @@ class Nf3 {
       throw new Error('No suitable commitments');
     }
     if (!offchain) {
-      return new Promise((resolve, reject) => {
-        userQueue.push(async () => {
-          try {
-            const receipt = await this.submitTransaction(
-              res.data.txDataToSign,
-              this.shieldContractAddress,
-              fee,
-            );
-            resolve(receipt);
-          } catch (err) {
-            reject(err);
-          }
-        });
-      });
+      return {
+        receipt: new Promise((resolve, reject) => {
+          userQueue.push(async () => {
+            try {
+              const receipt = await this.submitTransaction(
+                res.data.txDataToSign,
+                this.shieldContractAddress,
+                fee,
+              );
+              resolve(receipt);
+            } catch (err) {
+              reject(err);
+            }
+          });
+        }),
+        tx: res.data.transaction,
+      };
     }
-    return res.status;
+    return { status: res.status, tx: res.data.transaction };
   }
 
   /**
@@ -515,22 +522,25 @@ class Nf3 {
     });
     this.latestWithdrawHash = res.data.transaction.transactionHash;
     if (!offchain) {
-      return new Promise((resolve, reject) => {
-        userQueue.push(async () => {
-          try {
-            const receipt = await this.submitTransaction(
-              res.data.txDataToSign,
-              this.shieldContractAddress,
-              fee,
-            );
-            resolve(receipt);
-          } catch (err) {
-            reject(err);
-          }
-        });
-      });
+      return {
+        receipt: new Promise((resolve, reject) => {
+          userQueue.push(async () => {
+            try {
+              const receipt = await this.submitTransaction(
+                res.data.txDataToSign,
+                this.shieldContractAddress,
+                fee,
+              );
+              resolve(receipt);
+            } catch (err) {
+              reject(err);
+            }
+          });
+        }),
+        tx: res.data.transaction,
+      };
     }
-    return res.status;
+    return { status: res.status, tx: res.data.transaction };
   }
 
   /**
@@ -951,7 +961,8 @@ class Nf3 {
             blockProposeEmitter.emit('receipt', receipt, block, transactions);
           } catch (err) {
             blockProposeEmitter.emit('error', err, block, transactions);
-            await axios.get(`${this.optimistBaseUrl}/reset-localblock`);
+            // block proposed is reverted. Send transactions back to mempool
+            await axios.get(`${this.optimistBaseUrl}/block/reset-localblock`);
           }
         });
       }

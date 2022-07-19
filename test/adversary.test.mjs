@@ -64,6 +64,9 @@ describe('Testing with an adversary', () => {
 
   let challengerInitialEarnings = 0;
   let challengerFinalEarnings = 0;
+  let firstL2Block = -1;
+
+  let localMemPool = [];
 
   // this is what we pay the proposer for incorporating a transaction
   const fee = 1;
@@ -111,6 +114,8 @@ describe('Testing with an adversary', () => {
         logger.debug(
           `L2 Block with L2 block number ${block.blockNumberL2} was proposed. The L1 transaction hash is ${receipt.transactionHash}`,
         );
+        // Initialize first block
+        if (firstL2Block === -1) firstL2Block = block.blockNumberL2;
       })
       .on('error', (error, block) => {
         logger.error(
@@ -158,12 +163,15 @@ describe('Testing with an adversary', () => {
           .post('/block/gen-block')
           .send({ blockType: 'reset' });
       }
-
+      // Reset first block
+      firstL2Block = -1;
+      localMemPool = [];
       console.log('Pausing challenger queue...');
       // we pause the challenger queue and don't process challenger until unpauseQueueChallenger
       nf3Challenger.pauseQueueChallenger();
       let nDeposits = 0;
       let nTransfers = 0;
+      let transaction;
 
       // retrieve initial balance
       startL2Balance = await retrieveL2Balance(nf3User);
@@ -175,15 +183,16 @@ describe('Testing with an adversary', () => {
       console.log('Starting balance :', startL2Balance);
       expectedL2Balance = startL2Balance;
       for (let j = 0; j < TRANSACTIONS_PER_BLOCK; j++) {
-        await nf3User.deposit(ercAddress, tokenType, value, tokenId, fee);
+        transaction = await nf3User.deposit(ercAddress, tokenType, value, tokenId, fee);
         nDeposits++;
         expectedL2Balance += value;
+        localMemPool.push({ transactionHash: transaction.tx.transactionHash, txType: '0' });
       }
 
       for (let i = 0; i < TEST_LENGTH_TRANSFER; i++) {
         await waitForSufficientBalance(nf3User, value);
         try {
-          await nf3User.transfer(
+          transaction = await nf3User.transfer(
             false,
             ercAddress,
             tokenType,
@@ -202,7 +211,7 @@ describe('Testing with an adversary', () => {
               } seconds and try one last time`,
             );
             await new Promise(resolve => setTimeout(resolve, 10 * TX_WAIT));
-            await nf3User.transfer(
+            transaction = await nf3User.transfer(
               false,
               ercAddress,
               tokenType,
@@ -213,10 +222,13 @@ describe('Testing with an adversary', () => {
             nTransfers++;
           }
         }
+        localMemPool.push({ transactionHash: transaction.tx.transactionHash, txType: '1' });
         for (let k = 0; k < TRANSACTIONS_PER_BLOCK - 1; k++) {
-          await nf3User.deposit(ercAddress, tokenType, value, tokenId);
+          transaction = await nf3User.deposit(ercAddress, tokenType, value, tokenId);
           nDeposits++;
           expectedL2Balance += value;
+          console.log('Deposit', transaction.tx.transactionHash);
+          localMemPool.push({ transactionHash: transaction.tx.transactionHash, txType: '0' });
         }
         await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
         console.log(`Completed ${i + 1} pings`);
@@ -224,6 +236,19 @@ describe('Testing with an adversary', () => {
 
       await new Promise(resolve => setTimeout(resolve, 20 * TX_WAIT));
       logger.debug(`N deposits: ${nDeposits} - N Transfers: ${nTransfers}`);
+
+      // Check all transactions were added to L2 Blocks
+      const proposedL2Blocks = JSON.parse(
+        (await chai.request(environment.clientApiUrl).get(`/block/blocks/${firstL2Block}`).send())
+          .text,
+      ).blocks;
+      let submittedTx = [];
+      for (const block of proposedL2Blocks) {
+        submittedTx = [...submittedTx, ...block.transactionHashes];
+      }
+      localMemPool = localMemPool.filter(tx => !submittedTx.includes(tx.transactionHash));
+      console.log('Unsent Transactions: ', localMemPool);
+      expect(localMemPool.length).to.be.equal(0);
 
       console.log('Unpausing challenger queue...');
       // Challenger unpause
@@ -261,11 +286,15 @@ describe('Testing with an adversary', () => {
           .send({ blockType: 'reset' });
       }
       challengerInitialEarnings = Number((await nf3Challenger.checkChallengerEarnings()).amount);
+      // Reset first block
+      firstL2Block = -1;
+      localMemPool = [];
 
       console.log('Pausing challenger queue...');
       // we pause the challenger queue and don't process challenger until unpauseQueueChallenger
       nf3Challenger.pauseQueueChallenger();
       let nDeposits = 0;
+      let transaction;
       let nDoubleTransfers = 0;
       // retrieve initial balance
       startL2Balance = await retrieveL2Balance(nf3User);
@@ -275,9 +304,10 @@ describe('Testing with an adversary', () => {
       console.log('Starting balance :', startL2Balance);
       expectedL2Balance = startL2Balance;
       for (let j = 0; j < TRANSACTIONS_PER_BLOCK; j++) {
-        await nf3User.deposit(ercAddress, tokenType, value2, tokenId, fee);
+        transaction = await nf3User.deposit(ercAddress, tokenType, value2, tokenId, fee);
         nDeposits++;
         expectedL2Balance += value2;
+        localMemPool.push({ transactionHash: transaction.tx.transactionHash, txType: '0' });
       }
 
       // We do double transfers + deposit in one round, and just deposits in the other
@@ -290,13 +320,14 @@ describe('Testing with an adversary', () => {
         await waitForSufficientBalance(nf3User, value2 * 2);
         if (depositEn) {
           console.log(`Deposit of ${value2}`);
-          await nf3User.deposit(ercAddress, tokenType, value2, tokenId, fee);
+          transaction = await nf3User.deposit(ercAddress, tokenType, value2, tokenId, fee);
           expectedL2Balance += value2;
           nDeposits++;
+          localMemPool.push({ transactionHash: transaction.tx.transactionHash, txType: '0' });
         } else {
           try {
             console.log(`Double Transfer of ${doubleTransferValue}`);
-            await nf3User.transfer(
+            transaction = await nf3User.transfer(
               false,
               ercAddress,
               tokenType,
@@ -315,7 +346,7 @@ describe('Testing with an adversary', () => {
                 } seconds and try one last time`,
               );
               await new Promise(resolve => setTimeout(resolve, 10 * TX_WAIT));
-              await nf3User.transfer(
+              transaction = await nf3User.transfer(
                 false,
                 ercAddress,
                 tokenType,
@@ -326,12 +357,14 @@ describe('Testing with an adversary', () => {
               nDoubleTransfers++;
             }
           }
+          localMemPool.push({ transactionHash: transaction.tx.transactionHash, txType: '2' });
         }
         depositEn = !depositEn;
         for (let k = 0; k < TRANSACTIONS_PER_BLOCK - 1; k++) {
-          await nf3User.deposit(ercAddress, tokenType, value2, tokenId);
+          transaction = await nf3User.deposit(ercAddress, tokenType, value2, tokenId);
           nDeposits++;
           expectedL2Balance += value2;
+          localMemPool.push({ transactionHash: transaction.tx.transactionHash, txType: '0' });
         }
         await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
         console.log(`Completed ${i + 1} pings`);
@@ -339,6 +372,20 @@ describe('Testing with an adversary', () => {
 
       await new Promise(resolve => setTimeout(resolve, 20 * TX_WAIT));
       logger.debug(`N deposits: ${nDeposits} - N Double Transfers: ${nDoubleTransfers}`);
+
+      // Check all transactions were added to L2 Blocks
+      const proposedL2Blocks = JSON.parse(
+        (await chai.request(environment.clientApiUrl).get(`/block/blocks/${firstL2Block}`).send())
+          .text,
+      ).blocks;
+      firstL2Block = -1;
+      let submittedTx = [];
+      for (const block of proposedL2Blocks) {
+        submittedTx = [...submittedTx, ...block.transactionHashes];
+      }
+      localMemPool = localMemPool.filter(tx => !submittedTx.includes(tx.transactionHash));
+      console.log('Unsent Transactions: ', localMemPool);
+      expect(localMemPool.length).to.be.equal(0);
 
       console.log('Unpausing challenger queue...');
       // Challenger unpause
@@ -375,12 +422,16 @@ describe('Testing with an adversary', () => {
           .post('/block/gen-block')
           .send({ blockType: 'reset' });
       }
+      // Reset first block
+      firstL2Block = -1;
+      localMemPool = [];
 
       challengerInitialEarnings = Number((await nf3Challenger.checkChallengerEarnings()).amount);
       console.log('Pausing challenger queue...');
       // we pause the challenger queue and don't process challenger until unpauseQueueChallenger
       nf3Challenger.pauseQueueChallenger();
       let nDeposits = 0;
+      let transaction;
       let nWithdraws = 0;
       // retrieve initial balance
       startL2Balance = await retrieveL2Balance(nf3User);
@@ -390,16 +441,17 @@ describe('Testing with an adversary', () => {
       console.log('Starting balance :', startL2Balance);
       expectedL2Balance = startL2Balance;
       for (let j = 0; j < TRANSACTIONS_PER_BLOCK; j++) {
-        await nf3User.deposit(ercAddress, tokenType, value, tokenId, fee);
+        transaction = await nf3User.deposit(ercAddress, tokenType, value, tokenId, fee);
         nDeposits++;
         expectedL2Balance += value;
+        localMemPool.push({ transactionHash: transaction.tx.transactionHash, txType: '0' });
       }
 
       for (let i = 0; i < TEST_LENGTH_WITHDRAW; i++) {
         await waitForSufficientBalance(nf3User, value);
         try {
           console.log(`Withdraw ${value}`);
-          await nf3User.withdraw(
+          transaction = await nf3User.withdraw(
             false,
             ercAddress,
             tokenType,
@@ -419,7 +471,7 @@ describe('Testing with an adversary', () => {
               } seconds and try one last time`,
             );
             await new Promise(resolve => setTimeout(resolve, 10 * TX_WAIT));
-            await nf3User.withdraw(
+            transaction = await nf3User.withdraw(
               false,
               ercAddress,
               tokenType,
@@ -431,10 +483,12 @@ describe('Testing with an adversary', () => {
             expectedL2Balance -= value;
           }
         }
+        localMemPool.push({ transactionHash: transaction.tx.transactionHash, txType: '3' });
         for (let k = 0; k < TRANSACTIONS_PER_BLOCK - 1; k++) {
-          await nf3User.deposit(ercAddress, tokenType, value, tokenId);
+          transaction = await nf3User.deposit(ercAddress, tokenType, value, tokenId);
           nDeposits++;
           expectedL2Balance += value;
+          localMemPool.push({ transactionHash: transaction.tx.transactionHash, txType: '0' });
         }
         await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
         console.log(`Completed ${i + 1} pings`);
@@ -442,6 +496,20 @@ describe('Testing with an adversary', () => {
 
       await new Promise(resolve => setTimeout(resolve, 20 * TX_WAIT));
       logger.debug(`N deposits: ${nDeposits} - N Withdraws: ${nWithdraws}`);
+
+      // Check all transactions were added to L2 Blocks
+      const proposedL2Blocks = JSON.parse(
+        (await chai.request(environment.clientApiUrl).get(`/block/blocks/${firstL2Block}`).send())
+          .text,
+      ).blocks;
+      firstL2Block = -1;
+      let submittedTx = [];
+      for (const block of proposedL2Blocks) {
+        submittedTx = [...submittedTx, ...block.transactionHashes];
+      }
+      localMemPool = localMemPool.filter(tx => !submittedTx.includes(tx.transactionHash));
+      console.log('Unsent Transactions: ', localMemPool);
+      expect(localMemPool.length).to.be.equal(0);
 
       console.log('Unpausing challenger queue...');
       // Challenger unpause

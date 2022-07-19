@@ -4,6 +4,7 @@ router.get('/reset-localblock', async (req, res, next) => {
   logger.debug('block endpoint received get');
   try {
     await Block.rollback();
+    await resetUnsuccessfulBlockProposedTransactions();
     res.json({ resetstatus: true });
   } catch (err) {
     next(err);
