@@ -3,6 +3,7 @@ import { useHistory } from 'react-router-dom';
 
 import { ZkpKeys } from '@Nightfall/services/keys';
 import blockProposedEventHandler from '@Nightfall/event-handlers/block-proposed';
+import rollbackEventHandler from '@Nightfall/event-handlers/rollback';
 import {
   checkIndexDBForCircuit,
   checkIndexDBForCircuitHash,
@@ -14,15 +15,12 @@ import { fetchAWSfiles } from '@Nightfall/services/fetch-circuit';
 import * as Storage from '../../utils/lib/local-storage';
 import { encryptAndStore, retrieveAndDecrypt, storeBrowserKey } from '../../utils/lib/key-storage';
 import useInterval from '../useInterval';
+import mqtt from "mqtt";
+import {wsMqMapping, topicRollback, topicBlockProposed} from '../../common-files/utils/mq';
 import init from '../../web-worker/index.js';
 
-const {
-  utilApiServerUrl,
-  AWS: { s3Bucket },
-  isLocalRun,
-} = global.config;
 
-const { eventWsUrl } = global.config;
+const { USE_STUBS, usernameMq, pswMQ } = global.config;
 
 export const initialState = {
   compressedZkpPublicKey: '',
@@ -39,6 +37,8 @@ export const UserProvider = ({ children }) => {
   const [state, setState] = React.useState(initialState);
   const [isSyncComplete, setIsSyncComplete] = React.useState(false); // This is not really a sync;
   const [isSyncing, setSyncing] = React.useState(true);
+  const [client, setClient] = React.useState(null);
+
   const [lastBlock, setLastBlock] = React.useState({ blockHash: '0x0' });
   const history = useHistory();
 
@@ -76,25 +76,30 @@ export const UserProvider = ({ children }) => {
   };
 
   const setupWebSocket = () => {
-    const socket = new WebSocket(eventWsUrl);
+    let options ={
+      clientId:"clientId",
+      clean: false,
+      username: usernameMq,
+      password: pswMQ,
+      rejectUnauthorized: false,
+      reconnectPeriod: 1000,
+      resubscribe: true,
+      keepalive: 0,
+    };
 
-    // Connection opened
-    socket.addEventListener('open', async function () {
-      console.log(`Websocket is open`);
-      const lastBlockL2 = (await getMaxBlock()) ?? -1;
-      console.log('LastBlock', lastBlockL2);
-      socket.send(JSON.stringify({ type: 'sync', lastBlock: lastBlockL2 }));
-    });
+    mqttConnect(wsMqMapping[process.env.REACT_APP_MODE], options)
 
     setState(previousState => {
       return {
-        ...previousState,
-        socket,
+        ...previousState
       };
     });
   };
 
-  let messageEventHandler;
+  const mqttConnect = (host, mqttOption) => {
+    setClient(mqtt.connect(host, mqttOption));
+  };
+
   const configureMessageListener = () => {
     const { compressedZkpPublicKey, socket } = state;
     if (compressedZkpPublicKey === '') return;
@@ -104,74 +109,90 @@ export const UserProvider = ({ children }) => {
     }
 
     // Listen for messages
-    messageEventHandler = async function (event) {
-      console.log('Message from server ', JSON.parse(event.data));
-      const parsed = JSON.parse(event.data);
-      const { nullifierKey, zkpPrivateKey } = await retrieveAndDecrypt(compressedZkpPublicKey);
-      if (parsed.type === 'sync') {
-        await parsed.historicalData
-          .sort((a, b) => a.block.blockNumberL2 - b.block.blockNumberL2)
-          .reduce(async (acc, curr) => {
-            await acc; // Acc is a promise so we await it before processing the next one;
-            return blockProposedEventHandler(curr, [zkpPrivateKey], [nullifierKey]); // TODO Should be array
-          }, Promise.resolve());
+      if(client) {
+        client.on('message', async (topic, message) => {
 
-        // We want to verify that the received block is from the current contract deployment.
-        // for this, we store the lastBlock received in lastBlock, and compare the hash with the previousBlockHash
-        // from the received block. If they don't match, then there has been a redeployment.
-        if (Number(parsed.maxBlock) !== 1) {
-          if (
-            parsed.historicalData[parsed.historicalData.length - 1].block.previousBlockHash !==
-              lastBlock.blockHash &&
-            Number(lastBlock.blockHash) !== 0
-          ) {
-            // resync
-            console.log('Resync DB');
-            emptyStoreBlocks();
-            emptyStoreTimber();
-            Storage.shieldAddressSet();
-          } else if (
-            parsed.historicalData[parsed.historicalData.length - 1].block.previousBlockHash ===
-              lastBlock.blockHash ||
-            Number(lastBlock.blockHash) === 0
-          ) {
-            setLastBlock(parsed.historicalData[parsed.historicalData.length - 1].block);
-            socket.send(
-              JSON.stringify({
-                type: 'sync',
-                lastBlock:
-                  parsed.historicalData[parsed.historicalData.length - 1].block.blockNumberL2,
-              }),
-            );
+          const { type, data } = JSON.parse(message.toString());
+          const { ivk, nsk } = await retrieveAndDecrypt(compressedPkd);
+          if (topic === 'blockProposed') {
+            if(type == topic)
+              await blockProposedEventHandler(data, [ivk], [nsk]);
+            else
+              console.log("Error: messange sent on wrong topic")
           }
-        } else if (lastBlock.blockHash) console.log('Sync complete');
-        setState(previousState => {
-          return {
-            ...previousState,
-            chainSync: true,
-          };
+          else if (topic === 'rollback'){
+            if(type == topic)
+              await rollbackEventHandler(data);
+            else
+              console.log("Error: messange sent on wrong topic")
+          }
         });
-      } else if (parsed.type === 'blockProposed') {
-        console.log('blockProposed Event');
-        if (
-          parsed.data.block.previousBlockHash !== lastBlock.blockHash &&
-          Number(lastBlock.blockHash) !== 0
-        ) {
-          // resync
-          console.log('Resync DB');
-          emptyStoreBlocks();
-          emptyStoreTimber();
-          Storage.shieldAddressSet();
-        } else {
-          setLastBlock(parsed.data.block);
-          await blockProposedEventHandler(parsed.data, [zkpPrivateKey], [nullifierKey]);
-        }
       }
-      // TODO Rollback Handler
-    };
-
-    socket.addEventListener('message', messageEventHandler);
   };
+
+  React.useEffect(() => {
+    if (client) {
+      client.on('connect', () => {
+        console.log('connected');
+        client.subscribe(topicRollback, {qos: 2}, function (err, granted) {
+          if (err) {
+            console.log(err)
+          } else if (granted){
+            console.log("subscribe to " + topicRollback, granted)
+          }
+        })
+
+        client.subscribe(topicBlockProposed, function (err, granted) {
+          if (err) {
+            console.log(err)
+          } else if (granted){
+            console.log("subscribe to" + topicBlockProposed, granted)
+          }
+        })
+      });
+
+      client.on('error', (err) => {
+        console.error('Connection error: ', err);
+        client.end();
+      });
+
+      client.on('reconnect', () => {
+        console.log('Reconnecting');
+      });
+    }
+  }, [client]);
+
+  React.useEffect(() => {
+    if (client) {
+      client.on('connect', () => {
+        console.log('connected');
+        client.subscribe(topicRollback, {qos: 2}, function (err, granted) {
+          if (err) {
+            console.log(err)
+          } else if (granted){
+            console.log("subscribe to " + topicRollback, granted)
+          }
+        })
+
+        client.subscribe(topicBlockProposed, function (err, granted) {
+          if (err) {
+            console.log(err)
+          } else if (granted){
+            console.log("subscribe to" + topicBlockProposed, granted)
+          }
+        })
+      });
+
+      client.on('error', (err) => {
+        console.error('Connection error: ', err);
+        client.end();
+      });
+
+      client.on('reconnect', () => {
+        console.log('Reconnecting');
+      });
+    }
+  }, [client]);
 
   React.useEffect(() => {
     setupWebSocket();

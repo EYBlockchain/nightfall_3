@@ -429,4 +429,8 @@ module.exports = {
   // assumption is if LOCAL_PROPOSER is true, wallet UI app
   // is running in local machine
   isLocalRun: process.env.LOCAL_PROPOSER === 'true',
+
+  // AMAZONMQ
+  usernameMq: process.env.USERNAME_MQ,
+  pswMQ: process.env.PASSWORD_MQ,
 };
