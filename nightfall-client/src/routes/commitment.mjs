@@ -93,7 +93,9 @@ router.get('/commitments', async (req, res, next) => {
 /**
  * @description the endpoint that will send a reponse with all the
  * existent commitments for the list of compressedPkd received in the
- * request body.
+ * request body. We're using POST for this endpoint, because if the
+ * number of compressed keys per user increase the query params have
+ * a size limit.
  * @author luizoamorim
  */
 router.post('/byCompressedZkpPublicKey', async (req, res, next) => {
