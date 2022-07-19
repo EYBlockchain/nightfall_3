@@ -1,7 +1,7 @@
 from "ecc/babyjubjubParams" import BabyJubJubParams, main as curveParams
 from "ecc/edwardsCompress" import main as edwardsCompress
 
-from "../hashes/mimc/mimc-hash-N.zok" import main as mimcN
+from "hashes/poseidon/poseidon.zok" import main as poseidon
 from "../utils/structures.zok" import CommitmentPreimage, Point, PRIVATE_KEY_DOMAIN, NULLIFIER_KEY_DOMAIN
 from "../utils/calculations.zok" import sum, calculateCommitmentHashesN, calculateNullifiersN
 from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
@@ -31,9 +31,9 @@ def main<CInps>(\
 
     for u32 i in 0..CInps do
       // Calculation of zkpPrivateKey and nullifierKey from rootKey
-      field zkpPrivateKey = mimcN([rootKey[i], PRIVATE_KEY_DOMAIN])
+      field zkpPrivateKey = poseidon([rootKey[i], PRIVATE_KEY_DOMAIN])
 
-        nullifierKeys[i] = mimcN([rootKey[i], NULLIFIER_KEY_DOMAIN])
+        nullifierKeys[i] = poseidon([rootKey[i], NULLIFIER_KEY_DOMAIN])
 
       // Calculate zkpPublicKey
       zkpPublicKeys[i] = scalarMult(field_to_bool_256(zkpPrivateKey), g, context)
@@ -41,13 +41,19 @@ def main<CInps>(\
     /*
     Calculate + Check Commitment/Nullifiers
     */
+    // pack the top four bytes of the token id into the ercAddress field (address only
+    // uses 160 bits and the Shield contract prevents creation of something with more than 160 bits)
+    field idTop4Bytes = u32_array_to_field([tokenId[0]])
+    field idRemainder = u32_array_to_field(tokenId[1..8])
+    field packedErcAddress = ercAddress + idTop4Bytes * SHIFT
+
     // Check old commitments hash
     field[CInps] calculatedInputCommitmentHash = calculateCommitmentHashesN(\
-        oldCommitmentValues,\
-        oldCommitmentSalts,\
-        ercAddress,\
-        tokenId,\
-        zkpPublicKeys\
+      packedErcAddress,\
+      idRemainder,\
+      oldCommitmentValues,\
+      zkpPublicKeys,\
+      oldCommitmentSalts\
     )
     field[CInps] outputNullifier = calculateNullifiersN(nullifierKeys, calculatedInputCommitmentHash)
     assert(outputNullifier == nullifiers)
