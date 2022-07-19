@@ -365,7 +365,7 @@ class Nf3 {
     @param {string} tokenId - The ID of an ERC721 or ERC1155 token.  In the case of
     an 'ERC20' coin, this should be set to '0x00'.
     @param {object} keys - The ZKP private key set.
-    @returns {Promise} Resolves into the Ethereum transaction receipt.
+    @returns {Promise} Resolves into object with the Ethereum transaction receipt and L2 transaction.
     */
   async deposit(ercAddress, tokenType, value, tokenId, fee = this.defaultFee) {
     let txDataToSign;
@@ -397,24 +397,21 @@ class Nf3 {
       nullifierKey: this.zkpKeys.nullifierKey,
       fee,
     });
-    return {
-      receipt: new Promise((resolve, reject) => {
-        userQueue.push(async () => {
-          try {
-            const receipt = await this.submitTransaction(
-              res.data.txDataToSign,
-              this.shieldContractAddress,
-              fee,
-            );
-            resolve(receipt);
-          } catch (err) {
-            logger.error('Deposit transaction failed');
-            reject(err);
-          }
-        });
-      }),
-      tx: res.data.transaction,
-    };
+    return new Promise((resolve, reject) => {
+      userQueue.push(async () => {
+        try {
+          const receipt = await this.submitTransaction(
+            res.data.txDataToSign,
+            this.shieldContractAddress,
+            fee,
+          );
+          resolve({ receipt, tx: res.data.transaction });
+        } catch (err) {
+          logger.error('Deposit transaction failed');
+          reject(err);
+        }
+      });
+    });
   }
 
   /**
@@ -433,7 +430,7 @@ class Nf3 {
     an 'ERC20' coin, this should be set to '0x00'.
     @param {object} keys - The ZKP private key set of the sender.
     @param {string} compressedZkpPublicKey - The compressed transmission key of the recipient
-    @returns {Promise} Resolves into the Ethereum transaction receipt.
+    @returns {Promise} Resolves into object with the Ethereum transaction receipt and L2 transaction.
     */
   async transfer(
     offchain = false,
@@ -459,23 +456,20 @@ class Nf3 {
       throw new Error('No suitable commitments');
     }
     if (!offchain) {
-      return {
-        receipt: new Promise((resolve, reject) => {
-          userQueue.push(async () => {
-            try {
-              const receipt = await this.submitTransaction(
-                res.data.txDataToSign,
-                this.shieldContractAddress,
-                fee,
-              );
-              resolve(receipt);
-            } catch (err) {
-              reject(err);
-            }
-          });
-        }),
-        tx: res.data.transaction,
-      };
+      return new Promise((resolve, reject) => {
+        userQueue.push(async () => {
+          try {
+            const receipt = await this.submitTransaction(
+              res.data.txDataToSign,
+              this.shieldContractAddress,
+              fee,
+            );
+            resolve({ receipt, tx: res.data.transaction });
+          } catch (err) {
+            reject(err);
+          }
+        });
+      });
     }
     return { status: res.status, tx: res.data.transaction };
   }
@@ -498,7 +492,7 @@ class Nf3 {
     @param {object} keys - The ZKP private key set of the sender.
     @param {string} recipientAddress - The Ethereum address to where the withdrawn tokens
     should be deposited.
-    @returns {Promise} Resolves into the Ethereum transaction receipt.
+    @returns {Promise} Resolves into object with the Ethereum transaction receipt and L2 transaction.
     */
   async withdraw(
     offchain = false,
@@ -521,23 +515,20 @@ class Nf3 {
     });
     this.latestWithdrawHash = res.data.transaction.transactionHash;
     if (!offchain) {
-      return {
-        receipt: new Promise((resolve, reject) => {
-          userQueue.push(async () => {
-            try {
-              const receipt = await this.submitTransaction(
-                res.data.txDataToSign,
-                this.shieldContractAddress,
-                fee,
-              );
-              resolve(receipt);
-            } catch (err) {
-              reject(err);
-            }
-          });
-        }),
-        tx: res.data.transaction,
-      };
+      return new Promise((resolve, reject) => {
+        userQueue.push(async () => {
+          try {
+            const receipt = await this.submitTransaction(
+              res.data.txDataToSign,
+              this.shieldContractAddress,
+              fee,
+            );
+            resolve({ receipt, tx: res.data.transaction });
+          } catch (err) {
+            reject(err);
+          }
+        });
+      });
     }
     return { status: res.status, tx: res.data.transaction };
   }

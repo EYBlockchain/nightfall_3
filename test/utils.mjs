@@ -337,8 +337,8 @@ export const sendTransactions = async (transactions, submitArgs, web3) => {
 };
 
 export const expectTransaction = res => {
-  expect(res.receipt).to.have.property('transactionHash');
-  expect(res.receipt).to.have.property('blockHash');
+  expect(res).to.have.property('transactionHash');
+  expect(res).to.have.property('blockHash');
 };
 
 export const depositNTransactions = async (nf3, N, ercAddress, tokenType, value, tokenId, fee) => {
@@ -364,8 +364,8 @@ export const depositNTransactions = async (nf3, N, ercAddress, tokenType, value,
         }
       }
     }
-    expectTransaction(res);
-    depositTransactions.push(res);
+    expectTransaction(res.receipt);
+    depositTransactions.push(res.receipt);
     await waitForTimeout(1000);
   }
   return depositTransactions;
@@ -392,8 +392,8 @@ export const transferNTransactions = async (
       compressedZkpPublicKey,
       fee,
     );
-    expectTransaction(res);
-    transferTransactions.push(res);
+    expectTransaction(res.receipt);
+    transferTransactions.push(res.receipt);
   }
   return transferTransactions;
 };
@@ -419,8 +419,8 @@ export const withdrawNTransactions = async (
       recipientAddress,
       fee,
     );
-    expectTransaction(res);
-    withdrawTransactions.push(res);
+    expectTransaction(res.receipt);
+    withdrawTransactions.push(res.receipt);
   }
   return withdrawTransactions;
 };

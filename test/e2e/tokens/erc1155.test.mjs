@@ -140,7 +140,7 @@ describe('ERC1155 tests', () => {
         availableTokenIds[0],
         fee,
       );
-      expectTransaction(res);
+      expectTransaction(res.receipt);
 
       res = await nf3Users[0].deposit(
         erc1155Address,
@@ -149,7 +149,7 @@ describe('ERC1155 tests', () => {
         availableTokenIds[1],
         fee,
       );
-      expectTransaction(res);
+      expectTransaction(res.receipt);
       // Wait until we see the right number of blocks appear
       eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
@@ -176,7 +176,7 @@ describe('ERC1155 tests', () => {
         availableTokenIds[2],
         fee,
       );
-      expectTransaction(res);
+      expectTransaction(res.receipt);
 
       // Wait until we see the right number of blocks appear
       eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
@@ -211,7 +211,7 @@ describe('ERC1155 tests', () => {
           nf3Users[1].zkpKeys.compressedZkpPublicKey,
           fee,
         );
-        expectTransaction(res);
+        expectTransaction(res.receipt);
       }
       eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
@@ -236,7 +236,7 @@ describe('ERC1155 tests', () => {
         availableTokenIds[0],
         nf3Users[0].ethereumAddress,
       );
-      expectTransaction(rec);
+      expectTransaction(rec.receipt);
       logger.debug(`     Gas used was ${Number(rec.gasUsed)}`);
 
       await emptyL2(nf3Users[0]);
@@ -263,7 +263,7 @@ describe('ERC1155 tests', () => {
           availableTokenIds[0],
           nf3Users[0].ethereumAddress,
         );
-        expectTransaction(rec);
+        expectTransaction(rec.receipt);
         const withdrawal = await nf3Users[0].getLatestWithdrawHash();
 
         await emptyL2(nf3Users[0]);
