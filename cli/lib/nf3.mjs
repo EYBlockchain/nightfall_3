@@ -4,7 +4,6 @@ import Web3 from 'web3';
 import WebSocket from 'ws';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import EventEmitter from 'events';
-import { restartAll } from 'docker-compose';
 import logger from '../../common-files/utils/logger.mjs';
 import { approve } from './tokens.mjs';
 import erc20 from './abis/ERC20.mjs';
