@@ -15,7 +15,7 @@ from "./common/merkle-tree/path-check.zok" import main as pathCheck
 type Point = field[2]
 
 // 2 ^ 161
-const field SHIFT = 2923003274661805836407369665432566039311865085952
+const field SHIFT = 1461501637330902918203684832716283019655932542976
 
 struct OldCommitmentPreimage {
 	u32[8] id
