@@ -46,12 +46,10 @@ export async function decryptCommitment(transaction, zkpPrivateKey, nullifierKey
       if (commitment.hash.hex(32) === nonZeroCommitments[0]) {
         logger.info('Successfully decrypted commitment for this recipient');
         storeCommitments.push(storeCommitment(commitment, nullifierKey[j]));
-      } else {
-        logger.info("This encrypted message isn't for this recipient");
       }
     } catch (err) {
-      logger.info(err);
-      logger.info("This encrypted message isn't for this recipient");
+      // This error will be caught regularly if the commitment isn't for us
+      // We dont print anything in order not to pollute the logs
     }
   });
   await Promise.all(storeCommitments).catch(function (err) {
