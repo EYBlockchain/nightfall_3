@@ -337,8 +337,8 @@ export const sendTransactions = async (transactions, submitArgs, web3) => {
 };
 
 export const expectTransaction = res => {
-  expect(res).to.have.property('transactionHash');
-  expect(res).to.have.property('blockHash');
+  expect(res.receipt).to.have.property('transactionHash');
+  expect(res.receipt).to.have.property('blockHash');
 };
 
 export const depositNTransactions = async (nf3, N, ercAddress, tokenType, value, tokenId, fee) => {
