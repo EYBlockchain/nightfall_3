@@ -22,7 +22,7 @@ export async function decryptCommitment(transaction, zkpPrivateKey, nullifierKey
   const nonZeroCommitments = transaction.commitments.flat().filter(n => n !== ZERO);
   const storeCommitments = [];
   zkpPrivateKey.forEach((key, j) => {
-    const { zkpPublicKey, compressedZkpPublicKey } = ZkpKeys.calculateZkpPublicKey(generalise(key));
+    const { zkpPublicKey } = ZkpKeys.calculateZkpPublicKey(generalise(key));
     try {
       const cipherTexts = [
         transaction.ercAddress,
@@ -37,7 +37,6 @@ export async function decryptCommitment(transaction, zkpPrivateKey, nullifierKey
       const [erc, tokenId] = packSecrets(generalise(packedErc), generalise(unpackedTokenID), 2, 0);
       const plainTexts = generalise([erc, tokenId, ...rest]);
       const commitment = new Commitment({
-        compressedZkpPublicKey,
         zkpPublicKey,
         ercAddress: plainTexts[0].bigInt,
         tokenId: plainTexts[1].bigInt,
@@ -45,6 +44,7 @@ export async function decryptCommitment(transaction, zkpPrivateKey, nullifierKey
         salt: plainTexts[3].bigInt,
       });
       if (commitment.hash.hex(32) === nonZeroCommitments[0]) {
+        logger.info('Successfully decrypted commitment for this recipient');
         storeCommitments.push(storeCommitment(commitment, nullifierKey[j]));
       } else {
         logger.info("This encrypted message isn't for this recipient");
