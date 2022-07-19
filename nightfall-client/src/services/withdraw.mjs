@@ -78,7 +78,7 @@ async function withdraw(withdrawParams) {
       ercAddress,
       tokenId,
       value: change,
-      zkpPublicKey: ZkpKeys.decompressCompressedZkpPublicKey(compressedZkpPublicKey),
+      zkpPublicKey: ZkpKeys.decompressZkpPublicKey(compressedZkpPublicKey),
       compressedZkpPublicKey,
       salt,
     });
@@ -90,7 +90,7 @@ async function withdraw(withdrawParams) {
       value.field(BN128_GROUP_ORDER),
       [
         [oldCommitment.preimage.value.field(BN128_GROUP_ORDER)],
-        [oldCommitment.preimage.salt.limbs(32, 8)],
+        [oldCommitment.preimage.salt.field(BN128_GROUP_ORDER)],
       ],
       // recipientAddress.field(BN128_GROUP_ORDER),
       [siblingPath[0].field(BN128_GROUP_ORDER)],
@@ -98,7 +98,7 @@ async function withdraw(withdrawParams) {
       [leafIndex],
       [
         [newCommitment.preimage.value.field(BN128_GROUP_ORDER)],
-        [newCommitment.preimage.salt.limbs(32, 8)],
+        [newCommitment.preimage.salt.field(BN128_GROUP_ORDER)],
       ],
       [newCommitment.preimage.zkpPublicKey.map(zkp => zkp.field(BN128_GROUP_ORDER))],
       [newCommitment.hash.field(BN128_GROUP_ORDER)],
