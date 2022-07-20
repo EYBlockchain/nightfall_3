@@ -7,7 +7,7 @@ import rollbackEventHandler from '@Nightfall/event-handlers/rollback';
 import {
   checkIndexDBForCircuit,
   checkIndexDBForCircuitHash,
-  getMaxBlock,
+  getMaxBlock, storeClientId, getClientId,
   emptyStoreBlocks,
   emptyStoreTimber,
 } from '@Nightfall/services/database';
@@ -55,6 +55,10 @@ export const UserProvider = ({ children }) => {
       '',
       zkpKeys.map(z => z.compressedZkpPublicKey),
     );
+
+    let clientId = new Date().getTime() + Math.floor(Math.random() * 1000000) + zkpKeys[0].compressedPkd;
+    storeClientId(clientId);
+    
     setState(previousState => {
       return {
         ...previousState,
@@ -75,9 +79,9 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  const setupWebSocket = () => {
+  const setupWebSocket = async () => {
     let options ={
-      clientId:"clientId",
+      clientId: await getClientId(0),
       clean: false,
       username: usernameMq,
       password: pswMQ,

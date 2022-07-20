@@ -20,6 +20,7 @@ const {
   COMMITMENTS_COLLECTION,
   KEYS_COLLECTION,
   CIRCUIT_COLLECTION,
+  CLIENT_ID_COLLECTION,
   CIRCUIT_HASH_COLLECTION,
 } = global.config;
 
@@ -35,6 +36,7 @@ const connectDB = async () => {
       newDb.createObjectStore(TRANSACTIONS_COLLECTION);
       newDb.createObjectStore(KEYS_COLLECTION);
       newDb.createObjectStore(CIRCUIT_COLLECTION);
+      newDb.createObjectStore(CLIENT_ID_COLLECTION);
       newDb.createObjectStore(CIRCUIT_HASH_COLLECTION);
     },
   });
@@ -330,11 +332,11 @@ export async function getWalletBalance(compressedZkpPublicKey) {
   const wallet =
     Object.keys(vals).length > 0
       ? vals.filter(
-          v =>
-            !v.isNullified &&
-            v.isOnChain >= 0 &&
-            v.compressedZkpPublicKey === compressedZkpPublicKey,
-        )
+        v =>
+          !v.isNullified &&
+          v.isOnChain >= 0 &&
+          v.compressedZkpPublicKey === compressedZkpPublicKey,
+      )
       : [];
   // the below is a little complex.  First we extract the ercAddress, tokenId and value
   // from the preimage.  Then we format them nicely. We don't care about the value of the
