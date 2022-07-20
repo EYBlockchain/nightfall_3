@@ -962,7 +962,7 @@ class Nf3 {
     */
   async startChallenger() {
     this.rabbitmq.subscribe({ queue: 'block' }, message => {
-      const msg = JSON.parse(message.data);
+      const msg = JSON.parse(message.content.toString());
       const { type, txDataToSign } = msg;
       if (type === 'commit' || type === 'challenge') {
         return new Promise((resolve, reject) => {
