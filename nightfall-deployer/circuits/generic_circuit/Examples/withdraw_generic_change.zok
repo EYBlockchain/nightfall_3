@@ -1,0 +1,44 @@
+from "../generic_circuit.zok" import main as generic
+from "../../common/utils/structures.zok" import CommitmentPreimage, CompressedPoint, Point
+def main(\
+    field ercAddress,\
+    u32[8] tokenId,\
+    field[2] nullifiers,\
+    private field[2] rootKey,\
+    field value,\
+    private CommitmentPreimage<2> oldCommitment,\
+    field[2] root,\
+    private field[2][32] path,\
+	private field[2] order,\
+    private CommitmentPreimage<1> newCommitment,\
+    private Point[1] recipientPublicKey,\
+    field[1] newCommitmentHash,\
+    CompressedPoint<0> compressedEphemeralPublicKey,\
+    field[0][4] cipherText,\
+    private u32[0][8] ephemeralKey\
+    ) -> ():
+    
+    assert(generic::<2,2,1,1,0>(\
+            nullifiers,\
+            ercAddress,\
+            tokenId,\
+            root,\
+            value,\
+            oldCommitment.value,\
+            oldCommitment.salt,\
+            rootKey,\
+            path,\
+            order,\
+            newCommitment.value,\
+            newCommitment.salt,\
+            recipientPublicKey,\
+            newCommitmentHash,\
+            compressedEphemeralPublicKey.parity,\
+            compressedEphemeralPublicKey.ordinate,\
+            cipherText,\
+            ephemeralKey\
+        )\
+    )
+    
+    return
+

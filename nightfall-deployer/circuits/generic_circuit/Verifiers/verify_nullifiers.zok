@@ -1,0 +1,52 @@
+from "ecc/babyjubjubParams" import BabyJubJubParams, main as curveParams
+from "ecc/edwardsScalarMult" import main as scalarMult
+from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
+from "hashes/poseidon/poseidon.zok" import main as poseidon
+from "../../common/utils/structures.zok" import Point, PRIVATE_KEY_DOMAIN, NULLIFIER_KEY_DOMAIN
+from "../../common/merkle-tree/path-check.zok" import main as pathCheck
+
+def main<CInps>(\
+    field [CInps] nullifiers,\
+    field packedErcAddress,\
+    field idRemainder,\
+    field[CInps] roots,\
+    field value,\
+    private field[CInps] oldCommitmentValues,\
+    private field[CInps] oldCommitmentSalts,\
+    private field[CInps] rootKey,\
+    private field[CInps][32] paths,\
+	private field[CInps] orders\
+) -> (bool, Point):
+    // Get Curve Params
+    BabyJubJubParams context = curveParams()
+    Point g = [context.Gu, context.Gv]
+
+    Point changeZkpPublicKeys = [0,0]
+
+    for u32 i in 0..CInps do
+        // Calculation of zkpPrivateKey and nullifierKey from rootKey
+        field zkpPrivateKeys = poseidon([rootKey[i], PRIVATE_KEY_DOMAIN])
+
+        field nullifierKeys = poseidon([rootKey[i], NULLIFIER_KEY_DOMAIN])
+
+        // Calculate zkpPublicKey
+        Point zkpPublicKeys = scalarMult(field_to_bool_256(zkpPrivateKeys), g, context)
+
+        field calculatedInputCommitmentHash = poseidon([\
+            packedErcAddress,\
+            idRemainder,\
+            oldCommitmentValues[i],\
+            ...zkpPublicKeys,\
+            oldCommitmentSalts[i]\
+        ])
+
+        // Use calculated old commiment hashes in nullifier calculation
+        field outputNullifier = poseidon([nullifierKeys, calculatedInputCommitmentHash])
+        assert(outputNullifier == nullifiers[i])
+
+        assert(pathCheck([roots[i], ...paths[i]], orders[i], calculatedInputCommitmentHash))
+
+        changeZkpPublicKeys = i == 0 ? zkpPublicKeys : [0,0]
+    endfor
+    
+    return true, changeZkpPublicKeys

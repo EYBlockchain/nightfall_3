@@ -1,0 +1,29 @@
+from "hashes/poseidon/poseidon.zok" import main as poseidon
+from "../../common/utils/structures.zok" import Point
+
+def main<COuts, Change>(\
+    field packedErcAddress,\
+    field idRemainder,\
+    private field[COuts] newCommitmentValues,\
+    private field[COuts] newCommitmentSalts,\
+    private Point[COuts] recipientPublicKey,\
+    field[COuts] newCommitmentHash,\
+    field[2] changeZkpPublicKeys\
+) -> bool:
+
+   for u32 i in 0..COuts do
+        field outputCommitment = poseidon([\
+            packedErcAddress,\
+            idRemainder,\
+            newCommitmentValues[i],\
+            ...recipientPublicKey[i],\
+            newCommitmentSalts[i]\
+        ])
+
+        assert(outputCommitment == newCommitmentHash[i])
+        assert(i != COuts - 1 || Change == 0 || changeZkpPublicKeys == recipientPublicKey[COuts - 1])
+
+    endfor
+    
+    
+    return true
