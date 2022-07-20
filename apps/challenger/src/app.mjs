@@ -31,6 +31,7 @@ const environment = {
   proposerBaseUrl: `${PROPOSER_URL}`
     ? `${PROPOSER_URL}`
     : `http://${process.env.PROPOSER_HOST}:${process.env.PROPOSER_PORT}`,
+  rabbitmq: `${process.env.RABBITMQ_HOST}:${process.env.RABBITMQ_PORT}`,
 };
 
 const app = express();

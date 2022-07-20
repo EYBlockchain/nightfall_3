@@ -30,6 +30,4 @@ export async function notifyInstantWithdrawalRequest(withdrawTransactionHash, pa
   }
   const message = { withdrawTransactionHash, paidBy, amount };
   ws.sendMessage('instant', message);
-
-  // ws.send(JSON.stringify({ type: 'instant', withdrawTransactionHash, paidBy, amount }));
 }

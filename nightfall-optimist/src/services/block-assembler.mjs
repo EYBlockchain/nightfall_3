@@ -83,18 +83,7 @@ export async function conditionalMakeBlock(proposer) {
             transactions.map(t => Transaction.buildSolidityStruct(t)),
           )
           .encodeABI();
-        // check that the websocket exists (it should) and its readyState is OPEN
-        // before sending Proposed block. If not wait until the proposer reconnects
-        // let tryCount = 0;
-        // while (!ws || ws.readyState !== WebSocket.OPEN) {
-        //   await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
-        //   logger.warn(`Websocket to proposer is closed.  Waiting for proposer to reconnect`);
-        //   increaseProposerWsClosed();
-        //   if (tryCount++ > 100) {
-        //     increaseProposerWsFailed();
-        //     throw new Error(`Websocket to proposer has failed`);
-        //   }
-        // }
+
         if (ws) {
           logger.debug('Send unsigned block-assembler transactions to ws client');
 
@@ -105,20 +94,6 @@ export async function conditionalMakeBlock(proposer) {
             transactions,
           };
           ws.sendMessage('block', message);
-
-          // submitBlockToWS(
-          //   ws,
-          //   {
-          //     type: 'block',
-          //     txDataToSign: unsignedProposeBlockTransaction,
-          //     block,
-          //     transactions,
-          //   },
-          //   block.blockHash,
-          // );
-          // } else if (ws) {
-          //   increaseProposerBlockNotSent();
-          //   logger.debug('Block not sent. Socket state', ws.readyState);
         } else {
           increaseProposerBlockNotSent();
           logger.debug('Block not sent. uinitialized socket');
