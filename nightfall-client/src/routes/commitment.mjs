@@ -12,6 +12,8 @@ import {
   getWithdrawCommitments,
   getWalletPendingDepositBalance,
   getWalletPendingSpentBalance,
+  getCommitments,
+  getCommitmentsByCompressedZkpPublicKeyList,
 } from '../services/commitment-storage.mjs';
 
 const router = express.Router();
@@ -82,6 +84,43 @@ router.get('/commitments', async (req, res, next) => {
   try {
     const commitments = await getWalletCommitments();
     res.json({ commitments });
+  } catch (err) {
+    logger.error(err);
+    next(err);
+  }
+});
+
+/**
+ * @description the endpoint that will send a reponse with all the
+ * existent commitments for the list of compressedPkd received in the
+ * request body. We're using POST for this endpoint, because if the
+ * number of compressed keys per user increase the query params have
+ * a size limit.
+ * @author luizoamorim
+ */
+router.post('/compressedZkpPublicKeys', async (req, res, next) => {
+  logger.debug('commitment/compressedZkpPublicKeys endpoint received POST');
+  const listOfCompressedZkpPublicKey = req.body;
+  try {
+    const commitmentsByListOfCompressedZkpPublicKey =
+      await getCommitmentsByCompressedZkpPublicKeyList(listOfCompressedZkpPublicKey);
+    res.json({ commitmentsByListOfCompressedZkpPublicKey });
+  } catch (err) {
+    logger.error(err);
+    next(err);
+  }
+});
+
+/**
+ * @description the endpoint that will send a reponse with all the
+ * existent commitments.
+ * @author luizoamorim
+ */
+router.get('/', async (req, res, next) => {
+  logger.debug('commitment/ endpoint received GET');
+  try {
+    const allCommitments = await getCommitments();
+    res.json({ allCommitments });
   } catch (err) {
     logger.error(err);
     next(err);
