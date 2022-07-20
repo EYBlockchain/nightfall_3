@@ -61,6 +61,7 @@ describe('Testing with an adversary', () => {
   const fee = 1;
 
   before(async () => {
+    console.log(`CHALLENGE_TYPE: ${process.env.CHALLENGE_TYPE}`);
     console.log(`TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK}`);
     console.log('ENV:\n', environment);
     nf3User = new Nf3(ethereumSigningKeyUser, environment);
@@ -167,7 +168,10 @@ describe('Testing with an adversary', () => {
       }
 
       for (let i = 0; i < TEST_LENGTH; i++) {
-        await waitForSufficientBalance(nf3User, value2);
+        await waitForSufficientBalance(
+          nf3User,
+          startBalance + (i + 1) * (TRANSACTIONS_PER_BLOCK - 1) * value2,
+        );
         try {
           await nf3User.transfer(
             false,
@@ -211,17 +215,13 @@ describe('Testing with an adversary', () => {
       }
 
       // TODO:_ how can i check that queue 2 is empty
-      await waitForSufficientBalance(nf3User, expectedBalance);
-      // waiting sometime to ensure that all the good transactions from bad
-      // blocks were proposed in other good blocks
-      await waitForSufficientBalance(nf3User, expectedBalance);
       await new Promise(resolve => setTimeout(resolve, 20 * TX_WAIT));
       await waitForSufficientBalance(nf3User, expectedBalance);
       const endBalance = await retrieveL2Balance(nf3User);
       console.log(`Completed startBalance`, startBalance);
       console.log(`Completed endBalance`, endBalance);
       logger.debug(`N deposits: ${nDeposits} - N Transfers: ${nTransfers}`);
-      expect(expectedBalance).to.be.equal(endBalance - startBalance);
+      expect(expectedBalance).to.be.equal(endBalance);
     });
 
     it('User should have the correct balance after challenge and a series of rollbacks', async () => {
@@ -232,13 +232,12 @@ describe('Testing with an adversary', () => {
       // blocks were proposed in other good blocks
       console.log('Waiting for rollbacks...');
 
-      await waitForSufficientBalance(nf3User, expectedBalance);
       await new Promise(resolve => setTimeout(resolve, 30 * TX_WAIT));
       await waitForSufficientBalance(nf3User, expectedBalance);
       const endBalance = await retrieveL2Balance(nf3User);
       console.log(`Completed startBalance`, startBalance);
       console.log(`Completed endBalance`, endBalance);
-      expect(expectedBalance).to.be.equal(endBalance - startBalance);
+      expect(expectedBalance).to.be.equal(endBalance);
     });
   });
 
