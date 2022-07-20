@@ -1,0 +1,42 @@
+from "../generic_circuit.zok" import main as generic
+from "../../common/utils/structures.zok" import CommitmentPreimage, CompressedPoint,Point, PublicTransaction
+
+const u32 txType = 2
+const u32 numNullifiers = 2
+const u32 numCommitments = 1
+const u32 transfer = 0
+
+def main(\
+    PublicTransaction transaction,\
+    CompressedPoint<transfer> compressedEphemeralPublicKey,\
+    private field packedErcAddressTransfer,\
+    private field idRemainderTransfer,\
+    private field[numNullifiers] rootKey,\
+    private CommitmentPreimage<numNullifiers> oldCommitment,\
+    private field[numNullifiers][32] path,\
+	private field[numNullifiers] order,\
+    private CommitmentPreimage<numCommitments> newCommitment,\
+    private Point[numCommitments] recipientPublicKey,\
+    private u32[transfer][8] ephemeralKey\
+    ) -> ():
+    
+    assert(generic::<txType,numNullifiers,numCommitments, transfer>(\
+            transaction,\
+            compressedEphemeralPublicKey.parity,\
+            compressedEphemeralPublicKey.ordinate,\
+            ephemeralKey,\
+            packedErcAddressTransfer,\
+            idRemainderTransfer,\
+            oldCommitment.value,\
+            oldCommitment.salt,\
+            rootKey,\
+            path,\
+            order,\
+            newCommitment.value,\
+            newCommitment.salt,\
+            recipientPublicKey\
+        )\
+    )
+    
+    return
+ 
