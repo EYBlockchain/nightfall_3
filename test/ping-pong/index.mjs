@@ -7,7 +7,7 @@ Module that runs up as a user
 import config from 'config';
 import logger from '../../common-files/utils/logger.mjs';
 import Nf3 from '../../cli/lib/nf3.mjs';
-import { waitForSufficientBalance, retrieveL2Balance } from './utils.mjs';
+import { waitForSufficientBalance, retrieveL2Balance } from '../utils.mjs';
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
@@ -38,7 +38,9 @@ export default async function localTest(IS_TEST_RUNNER) {
   else throw new Error('Healthcheck failed');
 
   const ercAddress = TEST_ERC20_ADDRESS || (await nf3.getContractAddress('ERC20Mock'));
-  const startBalance = await retrieveL2Balance(nf3);
+
+  const startBalance = await retrieveL2Balance(nf3, ercAddress);
+  console.log('start balance', startBalance);
 
   let offchainTx = !!IS_TEST_RUNNER;
   // Create a block of deposits
