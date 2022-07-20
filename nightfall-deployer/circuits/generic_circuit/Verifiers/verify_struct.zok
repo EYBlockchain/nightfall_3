@@ -2,7 +2,7 @@ from "../../common/casts/u32_array_to_field.zok" import main as u32_array_to_fie
 from "../../common/utils/structures.zok" import PublicTransaction, NUMBER_COMMITMENTS, NUMBER_NULLIFIERS
 
 
-def main<TxType, CInps, COuts>(\
+def main<TxType, NumNullifiers, NumCommitments>(\
     field value,\
 	u32 transactionType,\
 	field tokenType,\
@@ -16,7 +16,11 @@ def main<TxType, CInps, COuts>(\
 	field[4] proof\
 ) -> (bool):
 
-    assert(COuts <= NUMBER_COMMITMENTS && CInps <= NUMBER_NULLIFIERS && TxType == transactionType)
+    assert(NumCommitments <= NUMBER_COMMITMENTS && NumNullifiers <= NUMBER_NULLIFIERS && TxType == transactionType)
+
+    assert((TxType == 0 && NumCommitments == 1)\
+        || (TxType == 1 && NumCommitments >= 1 && NumNullifiers >= 1)\
+        || (TxType == 2 && NumNullifiers >= 1))
 
     assert(ercAddress != 0)
     assert((TxType != 2 && recipientAddress == 0)\
@@ -30,22 +34,22 @@ def main<TxType, CInps, COuts>(\
         || (tokenType == 2 && value != 0 && id != 0))))
     
     //Check new commitments
-    for u32 i in 0..COuts do
+    for u32 i in 0..NumCommitments do
         assert(commitments[i] != 0)
-        for u32 j in i + 1..COuts do
+        for u32 j in i + 1..NumCommitments do
             assert(commitments[i] != commitments[j])
         endfor  
        
     endfor
-    for u32 i in COuts..NUMBER_COMMITMENTS do
+    for u32 i in NumCommitments..NUMBER_COMMITMENTS do
         assert(commitments[i] == 0)
     endfor
 
     //Check Nullifiers
-    for u32 i in 0..CInps do 
+    for u32 i in 0..NumNullifiers do 
         assert(nullifiers[i] != 0)
         assert(historicRootBlockNumberL2[i] != 0)
-        for u32 j in i + 1..CInps do
+        for u32 j in i + 1..NumNullifiers do
             assert(nullifiers[i] != nullifiers[j])
         endfor  
     endfor

@@ -8,26 +8,28 @@ from "./Verifiers/verify_encryption.zok" import main as verify_encryption
 from "./Verifiers/verify_nullifiers.zok" import main as verify_nullifiers
 from "./Verifiers/verify_commitments.zok" import main as verify_commitments
 
-def main<TxType, CInps, COuts>(\
+def main<TxType, NumNullifiers, NumCommitments, Transfer>(\
     PublicTransaction tx,\
-    bool[1] compressedEphemeralPublicKeyParity,\
-    field[1] compressedEphemeralPublicKeyOrdinate,\
-    private u32[8] ephemeralKey,\
+    bool[Transfer] compressedEphemeralPublicKeyParity,\
+    field[Transfer] compressedEphemeralPublicKeyOrdinate,\
+    private u32[Transfer][8] ephemeralKey,\
     private field packedErcAddressTransfer,\
     private field idRemainderTransfer,\
-    private field[CInps] oldCommitmentValues,\
-    private field[CInps] oldCommitmentSalts,\
-    private field[CInps] rootKey,\
-    private field[CInps][32] paths,\
-	private field[CInps] orders,\
-    private field[COuts] newCommitmentValues,\
-    private field[COuts] newCommitmentSalts,\
-    private Point[COuts] recipientPublicKey\
+    private field[NumNullifiers] oldCommitmentValues,\
+    private field[NumNullifiers] oldCommitmentSalts,\
+    private field[NumNullifiers] rootKey,\
+    private field[NumNullifiers][32] paths,\
+	private field[NumNullifiers] orders,\
+    private field[NumCommitments] newCommitmentValues,\
+    private field[NumCommitments] newCommitmentSalts,\
+    private Point[NumCommitments] recipientPublicKey\
 )-> (bool):
     
+    assert((TxType == 1 && Transfer == 1) || (TxType != 1 && Transfer == 0))
+    
     //Verify public transaction structure
-    //assert(verify_structure::<TxType, CInps, COuts>(tx))
-    assert(verify_struct::<TxType, CInps, COuts>(\
+    //assert(verify_structure::<TxType, NumNullifiers, NumCommitments>(tx))
+    assert(verify_struct::<TxType, NumNullifiers, NumCommitments>(\
         tx.value,\
 	    tx.transactionType,\
 	    tx.tokenType,\
@@ -55,19 +57,16 @@ def main<TxType, CInps, COuts>(\
         || (TxType != 1 && idRemainderTransfer == 0 || packedErcAddressTransfer == 0))
 
     //Verify nullifiers
-    bool valid, field[2] changeZkpPublicKeys = verify_nullifiers::<CInps>(packedErcAddress, idRemainder, tx.value,\
+    bool valid, field[2] changeZkpPublicKeys = verify_nullifiers::<NumNullifiers>(packedErcAddress, idRemainder, tx.value,\
         tx.nullifiers, tx.historicRootBlockNumberL2, oldCommitmentValues, oldCommitmentSalts, rootKey, paths, orders)
     assert(valid)
 
     //Verify new Commmitments
-    assert(verify_commitments::<COuts, TxType>(packedErcAddress, idRemainder, tx.commitments, changeZkpPublicKeys,\
+    assert(verify_commitments::<NumCommitments, TxType>(packedErcAddress, idRemainder, tx.commitments, changeZkpPublicKeys,\
     newCommitmentValues, newCommitmentSalts, recipientPublicKey))
-    
-    u32 isTransfer = if TxType != 1 then 0 else 1 fi
-    field[4] cipherText = [packedErcAddress,idRemainder,tx.compressedSecrets[0],tx.compressedSecrets[1]]
-    
+        
     //Verify Kem Dem encryption
-    assert(verify_encryption::<COuts, isTransfer>(packedErcAddress, idRemainder, cipherText,\
+    assert(verify_encryption::<NumCommitments,Transfer>(packedErcAddress, idRemainder, tx.compressedSecrets,\
         newCommitmentValues,newCommitmentSalts,recipientPublicKey,compressedEphemeralPublicKeyParity,\
         compressedEphemeralPublicKeyOrdinate, ephemeralKey))
     
