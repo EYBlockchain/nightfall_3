@@ -4,12 +4,12 @@ from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256
 from "../../common/encryption/kem-dem.zok" import main as kemDem, EncryptedMsgs
 from "../../common/utils/structures.zok" import Point
 
-def main<COuts, Transfers>(\
+def main<Transfers>(\
     field packedErcAddress,\
     field idRemainder,\
-    private field[COuts] newCommitmentValues,\
-    private field[COuts] newCommitmentSalts,\
-    private Point[COuts] recipientPublicKey,\
+    private field[Transfers] newCommitmentValues,\
+    private field[Transfers] newCommitmentSalts,\
+    private Point[Transfers] recipientPublicKey,\
     bool[Transfers] compressedEphemeralPublicKeyParities,\
     field[Transfers] compressedEphemeralPublicKeyOrdinates,\
 	field[Transfers][4] cipherText,\

@@ -1,7 +1,6 @@
 from "../../common/casts/u32_array_to_field.zok" import main as u32_array_to_field
 from "../../common/utils/structures.zok" import CompressedPoint
 
-//TODO: This is not completed
 def main<TxType, CInps, COuts, Change, Transfers>(\
     field ercAddress,\
     u32[8] tokenId,\
@@ -13,23 +12,40 @@ def main<TxType, CInps, COuts, Change, Transfers>(\
     field[Transfers][4] cipherText\
 ) -> bool:
 
-    assert((TxType == 0 && Change == 0) || (TxType == 1 && (Change == 0 || Change == 1 && COuts > 1)) || (TxType == 2 && (Change == 0 || Change == 1 && COuts != 0)))
+    //Deposits cannot have change (for now, this will change when Payments are integrated)
+    //Transfers can have change but there must be at least two new commitments (one for the receiver and one for the change)
+    //Withdrawal can have change but there must be at least one new commitment
+    assert((TxType == 0 && Change == 0)\
+        || (TxType == 1 && (Change == 0 || Change == 1 && COuts > 1))\
+        || (TxType == 2 && (Change == 0 || Change == 1 && COuts != 0)))
 
-    assert((TxType != 1 && Transfers == 0) || (TxType == 1 && Transfers == COuts - Change))
+    //If transaction is not a transfer, Transfers must be zero
+    //Otherwise, Transfers needs to be equal to COuts if there's no change 
+    //or equal to COuts - 1 if there is change
+    assert((TxType != 1 && Transfers == 0)\
+        || (TxType == 1 && Transfers == COuts - Change))
 
-    field id = u32_array_to_field(tokenId[0..8])
+    //Transfers do not have ERC Address so it must be set to ZERO.
+    //Otherwise ERC Address should be different than zero
     assert((TxType == 1 && ercAddress == 0) || ercAddress != 0)
+
+    //Transfers do not have value nor id, so those fields must be set to ZERO
+    //Otherwise at least one of those two values must be different than zero
+    field id = u32_array_to_field(tokenId[0..8])
     assert((TxType == 1 && value == 0 && id == 0) || (TxType != 1 && (value != 0 || id != 0)))
     
+    //All commitments must be different than zero
     for u32 i in 0..COuts do
         assert(commitments[i] != 0)
     endfor
 
+    //All nullifiers and roots must be different than zero
     for u32 i in 0..CInps do 
         assert(nullifiers[i] != 0)
         assert(roots[i] != 0)
     endfor
 
+    //For all the transfers we need to check that cipherText and compressedEphemeralPublicKey are not zero.
     for u32 i in 0..Transfers do
         for u32 j in 0..4 do
             assert((TxType == 1 && cipherText[i][j] != 0) || (TxType != 1 && cipherText[i][j] == 0))
