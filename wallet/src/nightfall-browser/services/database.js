@@ -17,6 +17,7 @@ const {
   CIRCUIT_COLLECTION,
   CIRCUIT_HASH_COLLECTION,
   TIMBER_HEIGHT,
+  CLIENT_ID_COLLECTION,
   HASH_TYPE,
 } = global.config;
 
@@ -32,6 +33,7 @@ const connectDB = async () => {
       newDb.createObjectStore(KEYS_COLLECTION);
       newDb.createObjectStore(CIRCUIT_COLLECTION);
       newDb.createObjectStore(CIRCUIT_HASH_COLLECTION);
+      newDb.createObjectStore(CLIENT_ID_COLLECTION);
     },
   });
 };
@@ -361,4 +363,17 @@ export async function setTransactionHashSiblingInfo(
     );
   }
   return null;
+}
+
+export async function storeClientId(clientId) {
+  const db = await connectDB();
+  return db.put(
+    CLIENT_ID_COLLECTION,
+    clientId, 0
+  );
+}
+
+export async function getClientId(key) {
+  const db = await connectDB();
+  return db.get(CLIENT_ID_COLLECTION, key);
 }
