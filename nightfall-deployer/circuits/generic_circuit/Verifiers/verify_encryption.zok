@@ -4,21 +4,21 @@ from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256
 from "../../common/encryption/kem-dem.zok" import main as kemDem, EncryptedMsgs
 from "../../common/utils/structures.zok" import Point
 
-def main<Transfers>(\
+def main<COuts, isTransfer>(\
     field packedErcAddress,\
     field idRemainder,\
-    private field[Transfers] newCommitmentValues,\
-    private field[Transfers] newCommitmentSalts,\
-    private Point[Transfers] recipientPublicKey,\
-    bool[Transfers] compressedEphemeralPublicKeyParities,\
-    field[Transfers] compressedEphemeralPublicKeyOrdinates,\
-	field[Transfers][4] cipherText,\
-    private u32[Transfers][8] ephemeralKey\
+    field[4] cipherText,\
+    private field[COuts] newCommitmentValues,\
+    private field[COuts] newCommitmentSalts,\
+    private Point[COuts] recipientPublicKey,\
+    bool[1] compressedEphemeralPublicKeyParities,\
+    field[1] compressedEphemeralPublicKeyOrdinates,\
+    private u32[8] ephemeralKey\
 ) -> bool:
 
     // KEM-DEM Encryption
-    for u32 i in 0..Transfers do
-        bool[256] bitEphemeralKey = u32_8_to_bool_256(ephemeralKey[i])
+    for u32 i in 0..isTransfer do
+        bool[256] bitEphemeralKey = u32_8_to_bool_256(ephemeralKey)
 
         field[4] plainTexts = [\
             packedErcAddress,\
@@ -28,7 +28,7 @@ def main<Transfers>(\
         ]
 
         EncryptedMsgs<4> enc = kemDem(bitEphemeralKey, [recipientPublicKey[i][0], recipientPublicKey[i][1]], plainTexts)
-        assert(cipherText[i] == enc.cipherText)
+        assert(cipherText == enc.cipherText)
 
         bool[256] compressedPubKeyOutput = edwardsCompress(enc.ephemeralPublicKey)
         bool parity = compressedEphemeralPublicKeyParities[i]

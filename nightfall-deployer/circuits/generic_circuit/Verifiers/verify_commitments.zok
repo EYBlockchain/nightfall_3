@@ -1,17 +1,19 @@
 from "hashes/poseidon/poseidon.zok" import main as poseidon
-from "../../common/utils/structures.zok" import Point
+from "../../common/utils/structures.zok" import Point, NUMBER_COMMITMENTS
 
-def main<COuts, Change>(\
+def main<COuts, TxType>(\
     field packedErcAddress,\
     field idRemainder,\
+    field[NUMBER_COMMITMENTS] commitments,\
+    field[2] changeZkpPublicKeys,\
     private field[COuts] newCommitmentValues,\
     private field[COuts] newCommitmentSalts,\
-    private Point[COuts] recipientPublicKey,\
-    field[COuts] newCommitmentHash,\
-    field[2] changeZkpPublicKeys\
+    private Point[COuts] recipientPublicKey\
 ) -> bool:
 
-   for u32 i in 0..COuts do
+    bool change = if (TxType == 2 && COuts > 0) || (TxType == 1 && COuts > 1) then true else false fi 
+
+    for u32 i in 0..COuts do
         field outputCommitment = poseidon([\
             packedErcAddress,\
             idRemainder,\
@@ -19,10 +21,9 @@ def main<COuts, Change>(\
             ...recipientPublicKey[i],\
             newCommitmentSalts[i]\
         ])
-
-        assert(outputCommitment == newCommitmentHash[i])
-        assert(i != COuts - 1 || Change == 0 || changeZkpPublicKeys == recipientPublicKey[COuts - 1])
-
+      
+        assert(outputCommitment == commitments[i])
+        assert(change == false || i != COuts - 1 || changeZkpPublicKeys == recipientPublicKey[i])
     endfor
     
     

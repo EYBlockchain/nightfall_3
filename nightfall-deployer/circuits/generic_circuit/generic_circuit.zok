@@ -1,19 +1,20 @@
 
-from "../common/utils/structures.zok" import Point, SHIFT
+from "../common/utils/structures.zok" import Point, SHIFT, PublicTransaction, CompressedPoint
 from "../common/utils/calculations.zok" import sum
 from "../common/casts/u32_array_to_field.zok" import main as u32_array_to_field
-
-from "./Verifiers/verify_generics.zok" import main as verify_generics
+from "./Verifiers/verify_struct.zok" import main as verify_struct
+from "./Verifiers/verify_structure.zok" import main as verify_structure
 from "./Verifiers/verify_encryption.zok" import main as verify_encryption
 from "./Verifiers/verify_nullifiers.zok" import main as verify_nullifiers
 from "./Verifiers/verify_commitments.zok" import main as verify_commitments
 
-def main<TxType, CInps, COuts, Change, Transfers>(\
-    field [CInps] nullifiers,\
-    field ercAddress,\
-    u32[8] tokenId,\
-    field[CInps] roots,\
-    field value,\
+def main<TxType, CInps, COuts>(\
+    PublicTransaction tx,\
+    bool[1] compressedEphemeralPublicKeyParity,\
+    field[1] compressedEphemeralPublicKeyOrdinate,\
+    private u32[8] ephemeralKey,\
+    private field packedErcAddressTransfer,\
+    private field idRemainderTransfer,\
     private field[CInps] oldCommitmentValues,\
     private field[CInps] oldCommitmentSalts,\
     private field[CInps] rootKey,\
@@ -21,41 +22,53 @@ def main<TxType, CInps, COuts, Change, Transfers>(\
 	private field[CInps] orders,\
     private field[COuts] newCommitmentValues,\
     private field[COuts] newCommitmentSalts,\
-    private Point[COuts] recipientPublicKey,\
-    field[COuts] newCommitmentHash,\
-    bool[Transfers] compressedEphemeralPublicKeyParities,\
-    field[Transfers] compressedEphemeralPublicKeyOrdinates,\
-	field[Transfers][4] cipherText,\
-    private u32[Transfers][8] ephemeralKey\
+    private Point[COuts] recipientPublicKey\
 )-> (bool):
     
-    //Verify generics
-    assert(verify_generics::<TxType, CInps, COuts, Change, Transfers>(ercAddress, tokenId, value, newCommitmentHash,\
-    nullifiers, roots, compressedEphemeralPublicKeyOrdinates, cipherText))
+    //Verify public transaction structure
+    //assert(verify_structure::<TxType, CInps, COuts>(tx))
+    assert(verify_struct::<TxType, CInps, COuts>(\
+        tx.value,\
+	    tx.transactionType,\
+	    tx.tokenType,\
+	    tx.tokenId,\
+	    tx.ercAddress,\
+	    tx.recipientAddress,\
+	    tx.commitments,\
+	    tx.nullifiers,\
+	    tx.historicRootBlockNumberL2,\
+	    tx.compressedSecrets,\
+	    tx.proof\
+    ))
 
     //Check that values match
-    field oldValues = sum(oldCommitmentValues) + if TxType == 0 then value else 0 fi
-    field newValues = sum(newCommitmentValues) + if TxType == 2 then value else 0 fi
+    field oldValues = sum(oldCommitmentValues) + if TxType == 0 then tx.value else 0 fi
+    field newValues = sum(newCommitmentValues) + if TxType == 2 then tx.value else 0 fi
     assert(oldValues == newValues)
 
     // pack the top four bytes of the token id into the ercAddress field (address only
 	// uses 160 bits and the Shield contract prevents creation of something with more than 160 bits)
-	field idTop4Bytes = u32_array_to_field([tokenId[0]])
-	field idRemainder = u32_array_to_field(tokenId[1..8])
-	field packedErcAddress = ercAddress + idTop4Bytes * SHIFT
+    field idRemainder = if TxType == 1 then idRemainderTransfer else u32_array_to_field(tx.tokenId[1..8]) fi
+    field packedErcAddress = if TxType == 1 then packedErcAddressTransfer else tx.ercAddress + u32_array_to_field([tx.tokenId[0]]) * SHIFT fi
+
+    assert((TxType == 1 && idRemainderTransfer != 0 && packedErcAddressTransfer != 0)\
+        || (TxType != 1 && idRemainderTransfer == 0 || packedErcAddressTransfer == 0))
 
     //Verify nullifiers
-    bool valid, field[2] changeZkpPublicKeys = verify_nullifiers::<CInps>(nullifiers, packedErcAddress, idRemainder, roots, value,\
-        oldCommitmentValues, oldCommitmentSalts, rootKey, paths, orders)
+    bool valid, field[2] changeZkpPublicKeys = verify_nullifiers::<CInps>(packedErcAddress, idRemainder, tx.value,\
+        tx.nullifiers, tx.historicRootBlockNumberL2, oldCommitmentValues, oldCommitmentSalts, rootKey, paths, orders)
     assert(valid)
 
     //Verify new Commmitments
-    assert(verify_commitments::<COuts, Change>(packedErcAddress, idRemainder, newCommitmentValues, newCommitmentSalts, recipientPublicKey,\
-        newCommitmentHash, changeZkpPublicKeys))
+    assert(verify_commitments::<COuts, TxType>(packedErcAddress, idRemainder, tx.commitments, changeZkpPublicKeys,\
+    newCommitmentValues, newCommitmentSalts, recipientPublicKey))
+    
+    u32 isTransfer = if TxType != 1 then 0 else 1 fi
+    field[4] cipherText = [packedErcAddress,idRemainder,tx.compressedSecrets[0],tx.compressedSecrets[1]]
     
     //Verify Kem Dem encryption
-    assert(verify_encryption::<Transfers>(packedErcAddress, idRemainder, newCommitmentValues[0..Transfers],\
-        newCommitmentSalts[0..Transfers],recipientPublicKey[0..Transfers],compressedEphemeralPublicKeyParities,\
-        compressedEphemeralPublicKeyOrdinates,cipherText, ephemeralKey))
+    assert(verify_encryption::<COuts, isTransfer>(packedErcAddress, idRemainder, cipherText,\
+        newCommitmentValues,newCommitmentSalts,recipientPublicKey,compressedEphemeralPublicKeyParity,\
+        compressedEphemeralPublicKeyOrdinate, ephemeralKey))
     
     return true
