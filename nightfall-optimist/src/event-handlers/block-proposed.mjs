@@ -13,6 +13,7 @@ import {
   getLatestTree,
   saveTree,
   getTransactionByTransactionHash,
+  saveInvalidBlock,
 } from '../services/database.mjs';
 import { getProposeBlockCalldata } from '../services/process-calldata.mjs';
 import { increaseBlockInvalidCounter } from '../services/debug-counters.mjs';
@@ -114,6 +115,13 @@ async function blockProposedEventHandler(data) {
       // This message will not be printed because event dequeuing does not run the job.
       // This is fine as we are just using it to stop running.
       increaseBlockInvalidCounter();
+      saveInvalidBlock({
+        invalidCode: err.code,
+        invalidMessage: err.message,
+        blockNumber: currentBlockCount,
+        transactionHashL1,
+        ...block,
+      });
       await enqueueEvent(() => logger.info('Stop Until Rollback'), 2);
       await createChallenge(block, transactions, err);
     } else {

@@ -72,6 +72,7 @@ describe('Testing with an adversary', () => {
   const fee = 1;
 
   before(async () => {
+    console.log(`CHALLENGE_TYPE: ${process.env.CHALLENGE_TYPE}`);
     console.log(`TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK}`);
     console.log('ENV:\n', environment);
     nf3User = new Nf3(ethereumSigningKeyUser, environment);
