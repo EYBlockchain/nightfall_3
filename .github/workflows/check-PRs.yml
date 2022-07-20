@@ -262,12 +262,6 @@ jobs:
           docker wait nightfall_3_deployer_1
           npm run ping-pong
 
-      - name: debug logs - after integration test run
-        if: always()
-        run:
-          results=$(cat test/ping-pong/ping-pong-test.log | grep passed); if [ ! -z "${results}" ];
-          then exit 0; else exit 1; fi
-
       - name: If integration test failed, shutdown the Containers
         if: failure()
         run: docker-compose -f docker-compose.yml -f docker-compose.ganache.yml down -v
