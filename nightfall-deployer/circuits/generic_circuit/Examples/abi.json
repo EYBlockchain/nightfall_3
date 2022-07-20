@@ -1,0 +1,208 @@
+{
+  "inputs": [
+    {
+      "name": "ercAddress",
+      "public": true,
+      "type": "field"
+    },
+    {
+      "name": "tokenId",
+      "public": true,
+      "type": "array",
+      "components": {
+        "size": 8,
+        "type": "u32"
+      }
+    },
+    {
+      "name": "nullifiers",
+      "public": true,
+      "type": "array",
+      "components": {
+        "size": 2,
+        "type": "field"
+      }
+    },
+    {
+      "name": "rootKey",
+      "public": false,
+      "type": "array",
+      "components": {
+        "size": 2,
+        "type": "field"
+      }
+    },
+    {
+      "name": "value",
+      "public": true,
+      "type": "field"
+    },
+    {
+      "name": "oldCommitment",
+      "public": false,
+      "type": "struct",
+      "components": {
+        "name": "CommitmentPreimage",
+        "generics": [
+          2
+        ],
+        "members": [
+          {
+            "name": "value",
+            "type": "array",
+            "components": {
+              "size": 2,
+              "type": "field"
+            }
+          },
+          {
+            "name": "salt",
+            "type": "array",
+            "components": {
+              "size": 2,
+              "type": "field"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "root",
+      "public": true,
+      "type": "array",
+      "components": {
+        "size": 2,
+        "type": "field"
+      }
+    },
+    {
+      "name": "path",
+      "public": false,
+      "type": "array",
+      "components": {
+        "size": 2,
+        "type": "array",
+        "components": {
+          "size": 32,
+          "type": "field"
+        }
+      }
+    },
+    {
+      "name": "order",
+      "public": false,
+      "type": "array",
+      "components": {
+        "size": 2,
+        "type": "field"
+      }
+    },
+    {
+      "name": "newCommitment",
+      "public": false,
+      "type": "struct",
+      "components": {
+        "name": "CommitmentPreimage",
+        "generics": [
+          2
+        ],
+        "members": [
+          {
+            "name": "value",
+            "type": "array",
+            "components": {
+              "size": 2,
+              "type": "field"
+            }
+          },
+          {
+            "name": "salt",
+            "type": "array",
+            "components": {
+              "size": 2,
+              "type": "field"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "recipientPublicKey",
+      "public": false,
+      "type": "array",
+      "components": {
+        "size": 2,
+        "type": "array",
+        "components": {
+          "size": 2,
+          "type": "field"
+        }
+      }
+    },
+    {
+      "name": "newCommitmentHash",
+      "public": true,
+      "type": "array",
+      "components": {
+        "size": 2,
+        "type": "field"
+      }
+    },
+    {
+      "name": "compressedEphemeralPublicKey",
+      "public": true,
+      "type": "struct",
+      "components": {
+        "name": "CompressedPoint",
+        "generics": [
+          1
+        ],
+        "members": [
+          {
+            "name": "parity",
+            "type": "array",
+            "components": {
+              "size": 1,
+              "type": "bool"
+            }
+          },
+          {
+            "name": "ordinate",
+            "type": "array",
+            "components": {
+              "size": 1,
+              "type": "field"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "cipherText",
+      "public": true,
+      "type": "array",
+      "components": {
+        "size": 1,
+        "type": "array",
+        "components": {
+          "size": 4,
+          "type": "field"
+        }
+      }
+    },
+    {
+      "name": "ephemeralKey",
+      "public": false,
+      "type": "array",
+      "components": {
+        "size": 1,
+        "type": "array",
+        "components": {
+          "size": 8,
+          "type": "u32"
+        }
+      }
+    }
+  ],
+  "outputs": []
+}

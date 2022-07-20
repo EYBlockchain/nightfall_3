@@ -1,0 +1,64 @@
+from "../../common/casts/u32_array_to_field.zok" import main as u32_array_to_field
+from "../../common/utils/structures.zok" import PublicTransaction, NUMBER_COMMITMENTS, NUMBER_NULLIFIERS
+
+
+def main<TxType, CInps, COuts>(\
+    field value,\
+	u32 transactionType,\
+	field tokenType,\
+	u32[8] tokenId,\
+	field ercAddress,\
+	field recipientAddress,\
+	field[NUMBER_COMMITMENTS] commitments,\
+	field[NUMBER_NULLIFIERS] nullifiers,\
+	field[NUMBER_NULLIFIERS] historicRootBlockNumberL2,\
+	field[2] compressedSecrets,\
+	field[4] proof\
+) -> (bool):
+
+    assert(COuts <= NUMBER_COMMITMENTS && CInps <= NUMBER_NULLIFIERS && TxType == transactionType)
+
+    assert(ercAddress != 0)
+    assert((TxType != 2 && recipientAddress == 0)\
+        || (TxType == 2 && recipientAddress != 0))
+    
+    field id = u32_array_to_field(tokenId)
+
+    assert((TxType == 1 && id != 0 && value == 0)\
+        || (TxType != 1 && ((tokenType == 0 && value != 0 && id == 0)\
+        || (tokenType == 1 && value == 0 && id != 0)\
+        || (tokenType == 2 && value != 0 && id != 0))))
+    
+    //Check new commitments
+    for u32 i in 0..COuts do
+        assert(commitments[i] != 0)
+        for u32 j in i + 1..COuts do
+            assert(commitments[i] != commitments[j])
+        endfor  
+       
+    endfor
+    for u32 i in COuts..NUMBER_COMMITMENTS do
+        assert(commitments[i] == 0)
+    endfor
+
+    //Check Nullifiers
+    for u32 i in 0..CInps do 
+        assert(nullifiers[i] != 0)
+        assert(historicRootBlockNumberL2[i] != 0)
+        for u32 j in i + 1..CInps do
+            assert(nullifiers[i] != nullifiers[j])
+        endfor  
+    endfor
+    for u32 i in 0..NUMBER_NULLIFIERS do 
+        assert(nullifiers[i] == 0)
+        assert(historicRootBlockNumberL2[i] == 0)
+    endfor
+
+    assert((TxType == 1 && compressedSecrets[0] != 0 && compressedSecrets[1] != 0)\
+        || (TxType != 1 && compressedSecrets[0] == 0 && compressedSecrets[1] == 0))
+
+    for u32 i in 0..4 do
+        //Verify proof ?? How? 
+    endfor 
+    
+    return true

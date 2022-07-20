@@ -5,6 +5,7 @@ struct CommitmentPreimage<N> {
  	field[N] salt
 }
 
+
 const field PRIVATE_KEY_DOMAIN = 2708019456231621178814538244712057499818649907582893776052749473028258908910
 const field NULLIFIER_KEY_DOMAIN = 7805187439118198468809896822299973897593108379494079213870562208229492109015
 
@@ -15,3 +16,21 @@ struct CompressedPoint<N> {
 	bool[N] parity
 	field[N] ordinate
 }
+
+const u32 NUMBER_NULLIFIERS = 2
+const u32 NUMBER_COMMITMENTS = 2
+
+struct PublicTransaction {
+	field value
+	u32 transactionType
+	field tokenType
+	u32[8] tokenId
+	field ercAddress
+	field recipientAddress
+	field[NUMBER_COMMITMENTS] commitments
+	field[NUMBER_NULLIFIERS] nullifiers
+	field[NUMBER_NULLIFIERS] historicRootBlockNumberL2
+	field[2] compressedSecrets
+	field[4] proof
+}
+

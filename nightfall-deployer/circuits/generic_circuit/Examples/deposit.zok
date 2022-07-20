@@ -1,0 +1,38 @@
+from "../generic_circuit.zok" import main as generic
+from "../Verifiers/verify_structure.zok" import main as verify_structure
+from "../Verifiers/verify_struct.zok" import main as verify_struct
+from "../../common/utils/structures.zok" import CommitmentPreimage, CompressedPoint,Point, PublicTransaction
+
+def main(\
+    PublicTransaction transaction,\
+    CompressedPoint<1> compressedEphemeralPublicKey,\
+    private field packedErcAddressTransfer,\
+    private field idRemainderTransfer,\
+    private field[0] rootKey,\
+    private CommitmentPreimage<0> oldCommitment,\
+    private field[0][32] path,\
+	private field[0] order,\
+    private CommitmentPreimage<1> newCommitment,\
+    private Point[1] recipientPublicKey,\
+    private u32[8] ephemeralKey\
+    ) -> ():
+
+    assert(generic::<0,0,1>(\
+            transaction,\
+            compressedEphemeralPublicKey.parity,\
+            compressedEphemeralPublicKey.ordinate,\
+            ephemeralKey,\
+            packedErcAddressTransfer,\
+            idRemainderTransfer,\
+            oldCommitment.value,\
+            oldCommitment.salt,\
+            rootKey,\
+            path,\
+            order,\
+            newCommitment.value,\
+            newCommitment.salt,\
+            recipientPublicKey\
+        )\
+    )
+    
+    return
