@@ -54,8 +54,8 @@ def main<TxType, CInps, COuts, Change, Transfers>(\
         newCommitmentHash, changeZkpPublicKeys))
     
     //Verify Kem Dem encryption
-    assert(verify_encryption::<COuts, Transfers>(packedErcAddress, idRemainder, newCommitmentValues,\
-        newCommitmentSalts,recipientPublicKey,compressedEphemeralPublicKeyParities,\
+    assert(verify_encryption::<Transfers>(packedErcAddress, idRemainder, newCommitmentValues[0..Transfers],\
+        newCommitmentSalts[0..Transfers],recipientPublicKey[0..Transfers],compressedEphemeralPublicKeyParities,\
         compressedEphemeralPublicKeyOrdinates,cipherText, ephemeralKey))
     
     return true
