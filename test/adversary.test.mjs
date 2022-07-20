@@ -257,7 +257,7 @@ describe('Testing with an adversary', () => {
       // blocks were proposed in other good blocks
       console.log('Waiting for rollbacks...');
 
-      await new Promise(resolve => setTimeout(resolve, 30 * TX_WAIT));
+      await new Promise(resolve => setTimeout(resolve, 40 * TX_WAIT));
       await waitForSufficientBalance(nf3User, expectedL2Balance);
       const endL2Balance = await retrieveL2Balance(nf3User);
       console.log(`Completed startL2Balance`, startL2Balance);
