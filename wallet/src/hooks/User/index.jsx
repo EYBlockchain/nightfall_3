@@ -4,7 +4,7 @@ import { useHistory } from 'react-router-dom';
 import { generateKeys } from '@Nightfall/services/keys';
 import blockProposedEventHandler from '@Nightfall/event-handlers/block-proposed';
 import rollbackEventHandler from '@Nightfall/event-handlers/rollback';
-import { checkIndexDBForCircuit, getMaxBlock } from '@Nightfall/services/database';
+import { checkIndexDBForCircuit, getMaxBlock, storeClientId, getClientId } from '@Nightfall/services/database';
 import * as Storage from '../../utils/lib/local-storage';
 import { encryptAndStore, retrieveAndDecrypt, storeBrowserKey } from '../../utils/lib/key-storage';
 import useInterval from '../useInterval';
@@ -46,6 +46,10 @@ export const UserProvider = ({ children }) => {
       '',
       zkpKeys.map(z => z.compressedPkd),
     );
+
+    let clientId = new Date().getTime() + Math.floor(Math.random() * 1000000) + zkpKeys[0].compressedPkd;
+    storeClientId(clientId);
+    
     setState(previousState => {
       return {
         ...previousState,
@@ -66,9 +70,9 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  const setupWebSocket = () => {
+  const setupWebSocket = async () => {
     let options ={
-      clientId:"clientId",
+      clientId: await getClientId(0),
       clean: false,
       username: usernameMq,
       password: pswMQ,

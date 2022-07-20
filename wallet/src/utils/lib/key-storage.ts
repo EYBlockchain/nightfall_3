@@ -27,6 +27,7 @@ const {
   COMMITMENTS_COLLECTION,
   KEYS_COLLECTION,
   CIRCUIT_COLLECTION,
+  CLIENT_ID_COLLECTION
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
 } = global.config;
@@ -40,6 +41,7 @@ const connectDB = async () => {
       newDb.createObjectStore(TRANSACTIONS_COLLECTION);
       newDb.createObjectStore(KEYS_COLLECTION);
       newDb.createObjectStore(CIRCUIT_COLLECTION);
+      newDb.createObjectStore(CLIENT_ID_COLLECTION);
     },
   });
 };
