@@ -96,8 +96,8 @@ def main(\
 	assert(oldCommitmentCheck == oldCommitment.hash)
 
 	// check that the old commitment is in the merkle tree (path[0] should be the root)
-	field mimcHash = oldCommitment.hash
-	bool x = pathCheck([root, ...path], order, mimcHash)
+	field hash = oldCommitment.hash
+	bool x = pathCheck([root, ...path], order, hash)
 	assert(x)
 
 	// KEM-DEM Encryption
