@@ -2,7 +2,6 @@
 from "../common/utils/structures.zok" import Point, SHIFT, PublicTransaction
 from "../common/utils/calculations.zok" import sum
 from "../common/casts/u32_array_to_field.zok" import main as u32_array_to_field
-from "./Verifiers/verify_struct.zok" import main as verify_struct
 from "./Verifiers/verify_structure.zok" import main as verify_structure
 from "./Verifiers/verify_encryption.zok" import main as verify_encryption
 from "./Verifiers/verify_nullifiers.zok" import main as verify_nullifiers
@@ -10,6 +9,7 @@ from "./Verifiers/verify_commitments.zok" import main as verify_commitments
 
 def main<TxType, NumNullifiers, NumCommitments, Transfer>(\
     PublicTransaction tx,\
+    field[NumNullifiers] nullifierRoots,\
     private field[NumNullifiers] oldCommitmentValues,\
     private field[NumNullifiers] oldCommitmentSalts,\
     private field[NumNullifiers] rootKey,\
@@ -18,8 +18,6 @@ def main<TxType, NumNullifiers, NumCommitments, Transfer>(\
     private field[NumCommitments] newCommitmentValues,\
     private field[NumCommitments] newCommitmentSalts,\
     private Point[NumCommitments] recipientPublicKey,\
-    bool[Transfer] compressedEphemeralPublicKeyParity,\
-    field[Transfer] compressedEphemeralPublicKeyOrdinate,\
     private u32[Transfer][8] ephemeralKey,\
     private field[Transfer] ercAddressTransfer,\
     private u32[Transfer][8] idTransfer\
@@ -29,8 +27,7 @@ def main<TxType, NumNullifiers, NumCommitments, Transfer>(\
     assert((TxType == 1 && Transfer == 1) || (TxType != 1 && Transfer == 0))
     
     //Verify public transaction structure
-    //assert(verify_structure::<TxType, NumNullifiers, NumCommitments>(tx))
-    assert(verify_struct::<TxType, NumNullifiers, NumCommitments>(\
+    assert(verify_structure::<TxType, NumNullifiers, NumCommitments>(\
         tx.value,\
 	    tx.transactionType,\
 	    tx.tokenType,\
@@ -63,17 +60,18 @@ def main<TxType, NumNullifiers, NumCommitments, Transfer>(\
     endfor
 
     //Verify nullifiers
-    bool valid, field[2] changeZkpPublicKeys = verify_nullifiers::<NumNullifiers>(packedErcAddress, idRemainder, tx.value,\
-        tx.nullifiers, tx.historicRootBlockNumberL2, oldCommitmentValues, oldCommitmentSalts, rootKey, paths, orders)
-    assert(valid)
+    Point firstInputZkpPublicKeys = [0,0]
+
+    firstInputZkpPublicKeys = verify_nullifiers::<NumNullifiers>(packedErcAddress, idRemainder, tx.value,\
+        tx.nullifiers, nullifierRoots, oldCommitmentValues, oldCommitmentSalts, rootKey, paths, orders)
 
     //Verify new Commmitments
-    assert(verify_commitments::<NumCommitments, TxType>(packedErcAddress, idRemainder, tx.commitments, changeZkpPublicKeys,\
+    assert(verify_commitments::<NumCommitments, TxType>(packedErcAddress, idRemainder, tx.commitments, firstInputZkpPublicKeys,\
     newCommitmentValues, newCommitmentSalts, recipientPublicKey))
         
     //Verify Kem Dem encryption
     assert(verify_encryption::<NumCommitments,Transfer>(tx.ercAddress,tx.tokenId, tx.compressedSecrets,\
         packedErcAddress,idRemainder,newCommitmentValues,newCommitmentSalts,recipientPublicKey,\
-        compressedEphemeralPublicKeyParity, compressedEphemeralPublicKeyOrdinate, ephemeralKey))
+        tx.recipientAddress, ephemeralKey))
     
     return true
