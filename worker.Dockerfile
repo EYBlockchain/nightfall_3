@@ -1,7 +1,7 @@
-FROM ubuntu:20.04
-
 # build zokrates from source for local verify
 FROM ghcr.io/eyblockchain/local-zokrates as builder
+
+FROM ubuntu:20.04
 
 RUN apt-get update -y
 RUN apt-get install -y netcat curl
