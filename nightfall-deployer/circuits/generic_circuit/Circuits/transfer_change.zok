@@ -8,25 +8,20 @@ const u32 transfer = 1
 
 def main(\
     PublicTransaction transaction,\
-    CompressedPoint<transfer> compressedEphemeralPublicKey,\
-    private field packedErcAddressTransfer,\
-    private field idRemainderTransfer,\
     private field[numNullifiers] rootKey,\
     private CommitmentPreimage<numNullifiers> oldCommitment,\
     private field[numNullifiers][32] path,\
 	private field[numNullifiers] order,\
     private CommitmentPreimage<numCommitments> newCommitment,\
     private Point[numCommitments] recipientPublicKey,\
+    CompressedPoint<transfer> compressedEphemeralPublicKey,\
+    private field[transfer] ercAddressTransfer,\
+    private u32[transfer][8] idTransfer,\
     private u32[transfer][8] ephemeralKey\
     ) -> ():
     
     assert(generic::<txType,numNullifiers,numCommitments, transfer>(\
             transaction,\
-            compressedEphemeralPublicKey.parity,\
-            compressedEphemeralPublicKey.ordinate,\
-            ephemeralKey,\
-            packedErcAddressTransfer,\
-            idRemainderTransfer,\
             oldCommitment.value,\
             oldCommitment.salt,\
             rootKey,\
@@ -34,9 +29,13 @@ def main(\
             order,\
             newCommitment.value,\
             newCommitment.salt,\
-            recipientPublicKey\
+            recipientPublicKey,\
+            compressedEphemeralPublicKey.parity,\
+            compressedEphemeralPublicKey.ordinate,\
+            ephemeralKey,\
+            ercAddressTransfer,\
+            idTransfer\
         )\
     )
     
     return
- 
