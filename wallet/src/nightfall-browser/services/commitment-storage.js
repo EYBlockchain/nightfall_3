@@ -327,7 +327,7 @@ export async function getWalletBalance(pkd) {
   const vals = await db.getAll(COMMITMENTS_COLLECTION);
   const wallet =
     Object.keys(vals).length > 0
-      ? vals.filter(v => !v.isNullified && v.isOnChain >= 0 && v.preimage.compressedPkd === pkd)
+      ? vals.filter(v => !v.isNullified && v.isOnChain >= 0 && v.compressedPkd === pkd)
       : [];
   // the below is a little complex.  First we extract the ercAddress, tokenId and value
   // from the preimage.  Then we format them nicely. We don't care about the value of the
@@ -339,7 +339,7 @@ export async function getWalletBalance(pkd) {
   return wallet
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
-      compressedPkd: e.preimage.compressedPkd,
+      compressedPkd: e.compressedPkd,
       tokenId: !!BigInt(e.preimage.tokenId),
       value: BigInt(e.preimage.value),
     }))
@@ -376,7 +376,7 @@ export async function getWalletPendingDepositBalance() {
   return wallet
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
-      compressedPkd: e.preimage.compressedPkd,
+      compressedPkd: e.compressedPkd,
       tokenId: !!BigInt(e.preimage.tokenId),
       value: Number(BigInt(e.preimage.value)),
     }))
@@ -409,7 +409,7 @@ export async function getWalletPendingSpentBalance() {
   return wallet
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
-      compressedPkd: e.preimage.compressedPkd,
+      compressedPkd: e.compressedPkd,
       tokenId: !!BigInt(e.preimage.tokenId),
       value: Number(BigInt(e.preimage.value)),
     }))
@@ -446,7 +446,7 @@ export async function getWalletBalanceDetails(compressedPkd, ercList) {
   const res = wallet
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
-      compressedPkd: e.preimage.compressedPkd,
+      compressedPkd: e.compressedPkd,
       tokenId: !!BigInt(e.preimage.tokenId),
       value: Number(BigInt(e.preimage.value)),
       id: Number(BigInt(e.preimage.tokenId)),
@@ -493,7 +493,7 @@ export async function getWalletCommitments() {
   return wallet
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`,
-      compressedPkd: e.preimage.compressedPkd,
+      compressedPkd: e.compressedPkd,
       tokenId: !!BigInt(e.preimage.tokenId),
       value: Number(BigInt(e.preimage.value)),
     }))
@@ -533,7 +533,7 @@ export async function getWithdrawCommitments() {
         block,
         transactions,
         index,
-        compressedPkd: w.preimage.compressedPkd,
+        compressedPkd: w.compressedPkd,
         ercAddress: `0x${BigInt(w.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to be a correct address length
         balance: w.preimage.tokenId ? 1 : w.preimage.value,
       };
@@ -591,7 +591,7 @@ async function findUsableCommitments(compressedPkd, ercAddress, tokenId, _value,
   const res = await db.getAll(COMMITMENTS_COLLECTION);
   const commitmentArray = res.filter(
     r =>
-      r.preimage.compressedPkd === compressedPkd.hex(32) &&
+      r.compressedPkd === compressedPkd.hex(32) &&
       r.preimage.ercAddress.toLowerCase() === ercAddress.hex(32).toLowerCase() &&
       r.preimage.tokenId === tokenId.hex(32) &&
       !r.isNullified &&

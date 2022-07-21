@@ -4,64 +4,67 @@
 
 To ensure a recipient receives the secret information required to spend their commitment, the sender
 encrypts the secrets (salt, value, tokenId, ercAddress) of the commitment sent to the recipient and
-proves using zkp that they encrypted this correctly with the recipient's public key. El Gamal
-encryption over elliptic curves is used for encryption.
+proves using zkp that they encrypted this correctly with the recipient's public key. We use the 
+KEM-DEM hybrid encryption paradigm.
 
-## El Gamal Encryption
+## KEM-DEM Hybrid Encryption
 
 ### Key Creation
 
 Use Elliptic curve (here we use Baby Jubjub curve) `E` over a finite field `Fp` where `p` is a large
 prime and `G` is the generator.
 
-Alice then selects a random private key `x` and performs:
+Alice generates a random ephemeral asymmetric key-pair $(x_e, Q_e)$:  
+$$ x_e \; \leftarrow\; \{0, 1\}^{256} \qquad Q_e \coloneqq x_eG $$
 
-```
-Y = x . G
-```
-
-The dot product represents scalar multiplication over the curve E. A good explanation of arithmetic
-over this particular curve can be found
-[here](https://iden3-docs.readthedocs.io/en/latest/iden3_repos/research/publications/zkproof-standards-workshop-2/baby-jubjub/baby-jubjub.html).
-
-Alice’s pub key is `(E, p, G, Y)` which she shares this with Bob.
+These keys are only used once, and are unique to this transaction, giving us perfect forward secerecy.
 
 ### Encryption
 
-In order to perform encryption of a message `m`, we need this to be represented as a point on the
-elliptic curve. We will use [Elligator 2](https://elligator.cr.yp.to/elligator-20130828.pdf) to
-perform this hash to curve mapping where each `m` will be mapped to a point `M`.
+The encryption process involves 2 steps: a KEM step to derive a symmetric encryption key from a shared secret, and a DEM step to encrypt the plaintexts using the encryption key.
 
-For every message `M` that Bob wants to encrypt, he picks an ephemeral key `k` which is a random non
-zero number in field Fp. Let us assume Bob wants to encrypt three pieces of information M1, M2 and
-M3. He will generate the cipher text R0, S0, R1, S1, R2 and S2 as follows:
+### Key Encapsulation Method (Encryption)
+Using the previously generated asymmetric private key, we obtain a shared secret, $key_{DH}$, using standard Diffie-Hellman. This is hashed alongside the ephemeral public key to obtain the encryption key.
+$$ key_{DH} \coloneqq x_eQ_r \qquad key_{enc} \coloneqq H_{K}(key_{DH} \; + \;Q_e)$$
 
-```
-R0 = k1.G
-S0 = M1 + k1.Y
-R1 = k2.G
-S1 = M2 + k2.Y
-R2 = k3.G
-S2 = = M3 + k3.Y
-```
+where  
+$Q_r$ is the recipient's public key  
+$H_{K}(x) \coloneqq \text{MIMC}(Domain_{K}, x)$  
+$Domain_{K} \coloneqq \text{to\_field}(\text{SHA256}(\text{'nightfall-kem'}))$
 
-Here S0, S1 and S2 are based on point addition and scalar multiplication.
 
-Bob then sends the cipher text `R0, S0, R1, S1, R2, S2` to Alice by passing these as public inputs
-to the proof verification on chain.
+### Data Encapsulation Method (Encryption)
+For circuit efficiency, the encryption used is a block cipher in counter mode where the cipher algorithm is a mimc hash. Given the ephemeral keys are unique to each transaction, there is no need for a nonce to be included. The encryption of the $i^{th}$ message is as follows:  
+
+$$ c_i \coloneqq H_{D}(key_{enc} + i) + p_i$$  
+
+where  
+$H_{D}(x) \coloneqq \text{MIMC}(Domain_{D}, x)$  
+$Domain_{D} \coloneqq \text{to\_field}(\text{SHA256}(\text{'nightfall-dem'}))$   
+
+The sender then provides the recipient with $(Q_e, \text{ciphertexts})$. These are included as part of the transaction struct sent on-chain.
 
 ### Decryption
+In order to decrypt, the recipient performs a slightly modified version of the KEM-DEM steps.
+### Key Encapsulation Method (Decryption)
+Given $Q_e$, the recipient is able to calculate the encryption key locally by performing the following steps.
 
-Alice then decrypts this by using her private key `x` such as:
+$$key_{DH} \coloneqq x_eQ_e \qquad key_{enc} \coloneqq H_{K}(key_{DH} \; + \;Q_e)$$  
 
-```
-M0 = S0 - x.R0
-M1 = S1 - x.R1
-M2 = S2 - x.R2
-```
+where  
+$Q_e$ is the ephemeral public key  
+$H_{K}(x) \coloneqq \text{MIMC}(Domain_{K}, x)$  
+$Domain_{K} \coloneqq \text{to\_field}(\text{SHA256}(\text{'nightfall-kem'}))$
 
-We then use the inversion of the hash to curve which is a curve to hash as defined in Elligator 2 to
-recover `m` from `M`.
+### Data Encapsulation Method (Decryption)
+With $key_{enc}$ and an array of ciphertexts, the $i_{th}$ plaintext can be recovered with the following:  
+
+$$p_i \coloneqq c_i - H_{D}(key_{enc} + i)$$  
+
+where  
+$H_{D}(x) \coloneqq \text{MIMC}(Domain_{D}, x)$  
+$Domain_{D} \coloneqq \text{to\_field}(SHA256(\text{'nightfall-dem'}))$
+
 
 ## Derivation and generation of the various keys involved in encryption, ownership of commitments and spending
 

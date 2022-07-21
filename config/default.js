@@ -89,14 +89,14 @@ module.exports = {
   TRANSACTIONS_PER_BLOCK: Number(process.env.TRANSACTIONS_PER_BLOCK) || 2,
   BLOCK_TYPES: '(uint48,address,bytes32,uint256,bytes32,bytes32)',
   TRANSACTION_TYPES:
-    '(uint112,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[8],uint[4])',
+    '(uint112,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[2],uint[4])',
   PROPOSE_BLOCK_TYPES: [
     '(uint48,address,bytes32,uint256,bytes32,bytes32)',
-    '(uint112,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[8],uint[4])[]',
+    '(uint112,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[2],uint[4])[]',
   ], // used to encode/decode proposeBlock signature
   SUBMIT_TRANSACTION_TYPES:
-    '(uint112,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[8],uint[4])',
-  RETRIES: Number(process.env.AUTOSTART_RETRIES) || 600,
+    '(uint112,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[2],uint[4])',
+  RETRIES: Number(process.env.AUTOSTART_RETRIES) || 50,
   NODE_HASHLENGTH: 32,
   ZERO: '0x0000000000000000000000000000000000000000000000000000000000000000',
   HASH_TYPE: 'mimc',
@@ -257,10 +257,10 @@ module.exports = {
     zkpPublicKeys: {
       user1:
         process.env.USER1_COMPRESSED_ZKP_PUBLIC_KEY ||
-        '0x80b1f5d0328f9e68ef1318a21f5ec379e4457ecf1c11b0f9dad2d375c02652a3',
+        '0x236af0fee749dd191e317fc8199f20c5b3df728bd3247db0623c3085e7ff501a',
       user2:
         process.env.USER2_COMPRESSED_ZKP_PUBLIC_KEY ||
-        '0x2a67fa06f5861f0ba0e963c4f52062a6da95adaf778759f399b05c666d3ff95d',
+        '0x8b1cd14f2defec7928cc958e2dfbc86fbd3218e25a10807388a5db4b8fa4837e',
     },
     mnemonics: {
       user1:
