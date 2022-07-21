@@ -6,8 +6,8 @@ FROM ubuntu:20.04
 WORKDIR /app
 RUN apt-get update -y
 RUN apt-get install -y netcat curl
-RUN apt-get install -y nodejs gcc g++ make
 RUN curl -fsSL https://deb.nodesource.com/setup_14.x | bash -
+RUN apt-get install -y nodejs gcc g++ make
 
 EXPOSE 80
 
