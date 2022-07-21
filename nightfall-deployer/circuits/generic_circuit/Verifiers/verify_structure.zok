@@ -1,47 +1,77 @@
 from "../../common/casts/u32_array_to_field.zok" import main as u32_array_to_field
 from "../../common/utils/structures.zok" import PublicTransaction, NUMBER_COMMITMENTS, NUMBER_NULLIFIERS
 
-
+/*
+* Given a Public tx, check that the structure and all the public parameters are valid
+*/
 def main<TxType, NumNullifiers, NumCommitments>(\
     PublicTransaction tx\
 ) -> (bool):
+    //Check that transaction type matches    
+    assert(TxType == tx.transactionType)
 
-    assert(NumCommitments <= NUMBER_COMMITMENTS && NumNullifiers <= NUMBER_NULLIFIERS && TxType == tx.transactionType)
+    //Check that number of commitments and number of nullifiers aren't bigger than the fixed length in PublicTransaction 
+    assert(NumCommitments <= NUMBER_COMMITMENTS && NumNullifiers <= NUMBER_NULLIFIERS)
+    
+    //Deposits must have at least a commitment, transfers must at least have one commitment and one nullifier 
+    //and withdrawal must have at least a nullifier
+    assert((TxType == 0 && NumCommitments != 0)\
+        || (TxType == 1 && NumCommitments != 0 && NumNullifiers != 0)\
+        || (TxType == 2 && NumNullifiers  != 0)) 
 
+    //ErcAddress cannot be zero. In transfer will contain the encrypted version of the ercAddress belonging to the ciphertext
     assert(tx.ercAddress != 0)
+
+    //Only withdrawals will have a recipient address
     assert((TxType != 2 && tx.recipientAddress == 0)\
         || (TxType == 2 && tx.recipientAddress != 0))
     
     field id = u32_array_to_field(tx.tokenId)
 
+    //Transfers will have value equal to zero and id different than zero because it will contain the encrypted version 
+    //of the id beloning to the CipherText
+    //For deposits and withdrawals, check that combination id and value matches the token type
+    //ERC20 -> Value > 0 and Id == 0
+    //ERC721 -> Value == 0 and Id > 0
+    //ERC1155 -> Value > 0 and Id > 0
     assert((TxType == 1 && id != 0 && tx.value == 0)\
         || (TxType != 1 && ((tx.tokenType == 0 && tx.value != 0 && id == 0)\
         || (tx.tokenType == 1 && tx.value == 0 && id != 0)\
         || (tx.tokenType == 2 && tx.value != 0 && id != 0))))
     
-    //Check new commitments
+    //Check new commitments are different than zero and that there aren't two equal commitments
     for u32 i in 0..NumCommitments do
         assert(tx.commitments[i] != 0)
+        for u32 j in i+1..NumCommitments do
+            assert(tx.commitments[i] != tx.commitments[j])
+        endfor
     endfor
+    //If NUMBER_COMMITMENTS is bigger than the actual number of commitments, check that the remaining one are 0
     for u32 i in NumCommitments..NUMBER_COMMITMENTS do
         assert(tx.commitments[i] == 0)
     endfor
 
-    //Check Nullifiers
+    //Check new nullifiers and roots are different than zero and that there aren't two equal nullifiers nor roots
     for u32 i in 0..NumNullifiers do 
         assert(tx.nullifiers[i] != 0)
         assert(tx.historicRootBlockNumberL2[i] != 0)
+        for u32 j in i+1..NumNullifiers do
+            assert(tx.nullifiers[i] != tx.nullifiers[j])
+            assert(tx.historicRootBlockNumberL2[i] != tx.historicRootBlockNumberL2[j])
+        endfor
     endfor
+    //If NUMBER_NULLIFIERS is bigger than the actual number of nullifiers, check that the remaining one are 0
     for u32 i in 0..NUMBER_NULLIFIERS do 
         assert(tx.nullifiers[i] == 0)
         assert(tx.historicRootBlockNumberL2[i] == 0)
     endfor
 
-    assert((TxType == 1 && tx.compressedSecrets[0] != 0 && tx.compressedSecrets[1] != 0)\
+    //For transfers, compressedSecrets needs to have at least one element different than zero
+    //For deposits and withdrawals, compressedSecrets will be zero
+    assert((TxType == 1 && (tx.compressedSecrets[0] != 0 || tx.compressedSecrets[1] != 0))\
         || (TxType != 1 && tx.compressedSecrets[0] == 0 && tx.compressedSecrets[1] == 0))
 
-    for u32 i in 0..4 do
-        //Verify proof ?? How? 
-    endfor 
+    //Check that at least one element of the proof is different than zero
+    assert(tx.proof[0] != 0 || tx.proof[1] != 0 || tx.proof[2] != 0 || tx.proof[3] != 0)
     
     return true

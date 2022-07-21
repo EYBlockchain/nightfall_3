@@ -5,6 +5,9 @@ from "hashes/poseidon/poseidon.zok" import main as poseidon
 from "../../common/utils/structures.zok" import Point, PRIVATE_KEY_DOMAIN, NULLIFIER_KEY_DOMAIN, NUMBER_NULLIFIERS
 from "../../common/merkle-tree/path-check.zok" import main as pathCheck
 
+/*
+* Verify that all the nullifiers are correct
+*/
 def main<NumNullifiers>(\
     field packedErcAddress,\
     field idRemainder,\
@@ -21,32 +24,38 @@ def main<NumNullifiers>(\
     BabyJubJubParams context = curveParams()
     Point g = [context.Gu, context.Gv]
 
+    //If the transaction contains change, the receiver of that change MUST be the same user that 
+    //created the transaction. In this field[2] we will store the zkpPublicKey of the sender in case
+    //we need it to check the change. 
     Point changeZkpPublicKeys = [0,0]
 
+    //Check that all the nullifiers are valid. If NumNullifiers equals zero this loop will be ignored
     for u32 i in 0..NumNullifiers do
         // Calculation of zkpPrivateKey and nullifierKey from rootKey
         field zkpPrivateKeys = poseidon([rootKey[i], PRIVATE_KEY_DOMAIN])
-
         field nullifierKeys = poseidon([rootKey[i], NULLIFIER_KEY_DOMAIN])
 
         // Calculate zkpPublicKey
         Point zkpPublicKeys = scalarMult(field_to_bool_256(zkpPrivateKeys), g, context)
 
-        field calculatedInputCommitmentHash = poseidon([\
+        //Calculate the nullifier hash from the oldCommitment parameters
+        field calculatedOldCommitmentHash = poseidon([\
             packedErcAddress,\
             idRemainder,\
             oldCommitmentValues[i],\
             ...zkpPublicKeys,\
             oldCommitmentSalts[i]\
         ])
+        field nullifier = poseidon([nullifierKeys, calculatedOldCommitmentHash])
 
-        // Use calculated old commiment hashes in nullifier calculation
-        field outputNullifier = poseidon([nullifierKeys, calculatedInputCommitmentHash])
-        assert(outputNullifier == nullifiers[i])
+        //Check that the calculated nullifier matches with the one contained in the transaction
+        assert(nullifier == nullifiers[i])
 
-        assert(pathCheck([roots[i], ...paths[i]], orders[i], calculatedInputCommitmentHash))
+        //Check that the nullifier is contained in the tree
+        assert(pathCheck([roots[i], ...paths[i]], orders[i], nullifiers[i]))
 
-        changeZkpPublicKeys = i == 0 ? zkpPublicKeys : [0,0]
+        //Set the changeZkpPublicKeys if i = 0. Otherwise just set the same value
+        changeZkpPublicKeys = i == 0 ? zkpPublicKeys : changeZkpPublicKeys
     endfor
     
     return true, changeZkpPublicKeys

@@ -1,5 +1,5 @@
 
-from "../common/utils/structures.zok" import Point, SHIFT, PublicTransaction, CompressedPoint
+from "../common/utils/structures.zok" import Point, SHIFT, PublicTransaction
 from "../common/utils/calculations.zok" import sum
 from "../common/casts/u32_array_to_field.zok" import main as u32_array_to_field
 from "./Verifiers/verify_struct.zok" import main as verify_struct
@@ -10,11 +10,6 @@ from "./Verifiers/verify_commitments.zok" import main as verify_commitments
 
 def main<TxType, NumNullifiers, NumCommitments, Transfer>(\
     PublicTransaction tx,\
-    bool[Transfer] compressedEphemeralPublicKeyParity,\
-    field[Transfer] compressedEphemeralPublicKeyOrdinate,\
-    private u32[Transfer][8] ephemeralKey,\
-    private field packedErcAddressTransfer,\
-    private field idRemainderTransfer,\
     private field[NumNullifiers] oldCommitmentValues,\
     private field[NumNullifiers] oldCommitmentSalts,\
     private field[NumNullifiers] rootKey,\
@@ -22,9 +17,15 @@ def main<TxType, NumNullifiers, NumCommitments, Transfer>(\
 	private field[NumNullifiers] orders,\
     private field[NumCommitments] newCommitmentValues,\
     private field[NumCommitments] newCommitmentSalts,\
-    private Point[NumCommitments] recipientPublicKey\
+    private Point[NumCommitments] recipientPublicKey,\
+    bool[Transfer] compressedEphemeralPublicKeyParity,\
+    field[Transfer] compressedEphemeralPublicKeyOrdinate,\
+    private u32[Transfer][8] ephemeralKey,\
+    private field[Transfer] ercAddressTransfer,\
+    private u32[Transfer][8] idTransfer\
 )-> (bool):
     
+    //Check that if transaction type is transfer, Transfer generic parameter is set to 1. Otherwise, check Transfer is 0
     assert((TxType == 1 && Transfer == 1) || (TxType != 1 && Transfer == 0))
     
     //Verify public transaction structure
@@ -50,11 +51,16 @@ def main<TxType, NumNullifiers, NumCommitments, Transfer>(\
 
     // pack the top four bytes of the token id into the ercAddress field (address only
 	// uses 160 bits and the Shield contract prevents creation of something with more than 160 bits)
-    field idRemainder = if TxType == 1 then idRemainderTransfer else u32_array_to_field(tx.tokenId[1..8]) fi
-    field packedErcAddress = if TxType == 1 then packedErcAddressTransfer else tx.ercAddress + u32_array_to_field([tx.tokenId[0]]) * SHIFT fi
+    field idRemainder = u32_array_to_field(tx.tokenId[1..8]) 
+    field packedErcAddress = tx.ercAddress + u32_array_to_field([tx.tokenId[0]]) * SHIFT 
 
-    assert((TxType == 1 && idRemainderTransfer != 0 && packedErcAddressTransfer != 0)\
-        || (TxType != 1 && idRemainderTransfer == 0 || packedErcAddressTransfer == 0))
+    //If TxType is a transfer, Transfer generic parameter will be set to 1 and this loop will be run once
+    //Otherwise, the loop will go from 0..0 so it will never enter
+    for u32 i in 0..Transfer do
+        //Calculate idRemainder and packedErcAddress for a transfer transaction
+        idRemainder = u32_array_to_field(idTransfer[0][1..8]) 
+        packedErcAddress = ercAddressTransfer[0] + u32_array_to_field([idTransfer[0][0]]) * SHIFT 
+    endfor
 
     //Verify nullifiers
     bool valid, field[2] changeZkpPublicKeys = verify_nullifiers::<NumNullifiers>(packedErcAddress, idRemainder, tx.value,\
@@ -66,8 +72,8 @@ def main<TxType, NumNullifiers, NumCommitments, Transfer>(\
     newCommitmentValues, newCommitmentSalts, recipientPublicKey))
         
     //Verify Kem Dem encryption
-    assert(verify_encryption::<NumCommitments,Transfer>(packedErcAddress, idRemainder, tx.compressedSecrets,\
-        newCommitmentValues,newCommitmentSalts,recipientPublicKey,compressedEphemeralPublicKeyParity,\
-        compressedEphemeralPublicKeyOrdinate, ephemeralKey))
+    assert(verify_encryption::<NumCommitments,Transfer>(tx.ercAddress,tx.tokenId, tx.compressedSecrets,\
+        packedErcAddress,idRemainder,newCommitmentValues,newCommitmentSalts,recipientPublicKey,\
+        compressedEphemeralPublicKeyParity, compressedEphemeralPublicKeyOrdinate, ephemeralKey))
     
     return true
