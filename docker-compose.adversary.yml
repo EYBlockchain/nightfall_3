@@ -40,6 +40,6 @@ services:
       AUTOSTART_RETRIES: 100
       BAD_BLOCK_SEQUENCE: ${BAD_BLOCK_SEQUENCE}
       BAD_TX_SEQUENCE: ${BAD_TX_SEQUENCE}
-    command: ['npm', 'run', 'dev']
-
-
+      RABBITMQ_HOST: amqp://rabbitmq1
+      RABBITMQ_PORT: 5672
+    command: [ 'npm', 'run', 'dev' ]

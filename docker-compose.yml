@@ -19,7 +19,6 @@ services:
     depends_on:
       - deployer
       - worker
-      - rabbitmq1
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
@@ -33,7 +32,7 @@ services:
       OPTIMIST_HOST: optimist1
       OPTIMIST_PORT: 80
       USE_STUBS: 'false' # make sure this flag is the same as in deployer service
-    command: ['npm', 'run', 'dev']
+    command: [ 'npm', 'run', 'dev' ]
 
   client2:
     image: ghcr.io/eyblockchain/nightfall3-client:latest
@@ -52,7 +51,6 @@ services:
     depends_on:
       - deployer
       - worker
-      - rabbitmq2
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
@@ -66,7 +64,7 @@ services:
       OPTIMIST_HOST: optimist2
       OPTIMIST_PORT: 80
       USE_STUBS: 'false' # make sure this flag is the same as in deployer service
-    command: ['npm', 'run', 'dev']
+    command: [ 'npm', 'run', 'dev' ]
 
   worker:
     #  image: 3800decac71d
@@ -75,7 +73,6 @@ services:
       - type: volume
         source: proving_files
         target: /app/output/
-
     depends_on:
       - deployer
     networks:
@@ -87,6 +84,8 @@ services:
   deployer:
     #image: docker.pkg.github.com/eyblockchain/nightfall-deployer/nightfall_deployer:1.1.0
     image: ghcr.io/eyblockchain/nightfall3-deployer:latest
+    depends_on:
+      - rabbitmq1
     volumes:
       - type: volume
         source: build
@@ -134,6 +133,8 @@ services:
         source: build
         target: /app/build/
     environment:
+      RABBITMQ_HOST: amqp://rabbitmq1
+      RABBITMQ_PORT: 5672
       WEBSOCKET_PORT: 8080
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
@@ -141,12 +142,13 @@ services:
       LOG_LEVEL: debug
       IS_CHALLENGER: 'false'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
-    command: ['npm', 'run', 'dev']
+    command: [ 'npm', 'run', 'dev' ]
 
   optimist2:
     image: ghcr.io/eyblockchain/nightfall3-optimist:latest
     depends_on:
       - deployer
+      - rabbitmq2
     networks:
       - nightfall_network
     ports:
@@ -158,6 +160,8 @@ services:
         source: build
         target: /app/build/
     environment:
+      RABBITMQ_HOST: amqp://rabbitmq1
+      RABBITMQ_PORT: 5672
       WEBSOCKET_PORT: 8080
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
@@ -165,7 +169,7 @@ services:
       LOG_LEVEL: error
       IS_CHALLENGER: 'false'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
-    command: ['npm', 'run', 'dev']
+    command: [ 'npm', 'run', 'dev' ]
 
   hosted-utils-api-server:
     build:

@@ -17,18 +17,6 @@ export function increaseBlockInvalidCounter() {
 }
 
 /**
-Function to increase proposer Ws Closed
-*/
-export function increaseProposerWsClosed() {
-  debugCounters.proposerWsClosed++;
-}
-/**
-Function to increase proposer Ws Failed
-*/
-export function increaseProposerWsFailed() {
-  debugCounters.proposerWsFailed++;
-}
-/**
 Function to increase proposer Block not sent
 */
 export function increaseProposerBlockNotSent() {

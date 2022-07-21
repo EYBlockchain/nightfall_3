@@ -14,12 +14,12 @@ jobs:
         uses: actions/dependency-review-action@v1.0.2
 
   eslint-check:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v3
         with:
-          node-version: '14.17.0'
+          node-version: '14.20.0'
       - name: eslint check
         run: |
           npm ci
@@ -29,12 +29,12 @@ jobs:
           npm run lint
 
   ganache-test:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v3
         with:
-          node-version: '14.17.0'
+          node-version: '14.20.0'
 
       - name: Start Containers
         run: |
@@ -76,14 +76,14 @@ jobs:
           path: ./ganache-test.log
 
   adversary-test:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     env:
       TRANSACTIONS_PER_BLOCK: 32
     steps:
       - uses: actions/checkout@master
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v3
         with:
-          node-version: '14.17.0'
+          node-version: '14.20.0'
 
       - name: Build adversary
         run: npm run build-adversary
@@ -131,12 +131,12 @@ jobs:
           path: ./adversary-test.log
 
   ping-pong-test:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v3
         with:
-          node-version: '14.17.0'
+          node-version: '14.20.0'
 
       - name: Start Containers
         run: |
@@ -187,12 +187,12 @@ jobs:
 
   test-gas:
     name: check gas for 32 transactions per block
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v3
         with:
-          node-version: '14.17.0'
+          node-version: '14.20.0'
 
       - name: Start Containers with ganache
         run: |

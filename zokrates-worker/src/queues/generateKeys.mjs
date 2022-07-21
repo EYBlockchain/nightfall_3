@@ -1,4 +1,4 @@
-import rabbitmq from '../utils/rabbitmq.mjs';
+import rabbitmq from 'common-files/utils/rabbitmq.mjs';
 import logger from '../utils/logger.mjs';
 import generateKeys from '../services/generateKeys.mjs';
 

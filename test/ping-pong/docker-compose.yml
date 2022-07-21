@@ -37,6 +37,9 @@ services:
 
   rabbitmq:
     image: rabbitmq
+    ports:
+      - '15674:15674'
+      - '5672:5672'
     networks:
       - pong_network
 
@@ -55,6 +58,8 @@ services:
       WEBSOCKET_PORT: 8080
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
+      RABBITMQ_HOST: amqp://rabbitmq
+      RABBITMQ_PORT: 5672
       HASH_TYPE: mimc
       LOG_LEVEL: debug
       IS_CHALLENGER: 'true'
@@ -84,6 +89,8 @@ services:
       BLOCKCHAIN_PORT: 8546
       ZOKRATES_WORKER_HOST: worker
       USE_STUBS: 'false'
+      RABBITMQ_HOST: amqp://rabbitmq
+      RABBITMQ_PORT: 5672
 
   worker:
     image: ghcr.io/eyblockchain/nightfall3-worker:latest
@@ -98,12 +105,16 @@ services:
       - pong_network
     environment:
       LOG_LEVEL: info
+      RABBITMQ_HOST: amqp://rabbitmq
+      RABBITMQ_PORT: 5672
 
   proposer:
     image: ghcr.io/eyblockchain/nightfall3-proposer:latest
     build:
       dockerfile: proposer.Dockerfile
       context: ../../
+    depends_on:
+      - rabbitmq
     networks:
       - pong_network
     environment:
@@ -116,12 +127,16 @@ services:
       BLOCKCHAIN_PORT: 8546
       CLIENT_HOST: client
       CLIENT_PORT: 80
+      RABBITMQ_HOST: amqp://rabbitmq
+      RABBITMQ_PORT: 5672
 
   user-local1:
     image: ghcr.io/eyblockchain/nightfall3-user-local:latest
     build:
       dockerfile: user-local.Dockerfile
       context: ../../
+    depends_on:
+      - rabbitmq
     networks:
       - pong_network
     environment:
@@ -135,12 +150,16 @@ services:
       IS_TEST_RUNNER: 'yes'
       PROPOSER_PORT: 8080
       PROPOSER_HOST: proposer
+      RABBITMQ_HOST: amqp://rabbitmq
+      RABBITMQ_PORT: 5672
 
   user-local2:
     image: ghcr.io/eyblockchain/nightfall3-user-local:latest
     build:
       dockerfile: user-local.Dockerfile
       context: ../../
+    depends_on:
+      - rabbitmq
     networks:
       - pong_network
     environment:
@@ -153,6 +172,8 @@ services:
       BLOCKCHAIN_PORT: 8546
       PROPOSER_PORT: 8080
       PROPOSER_HOST: proposer
+      RABBITMQ_HOST: amqp://rabbitmq
+      RABBITMQ_PORT: 5672
 
 volumes:
   mongodb:

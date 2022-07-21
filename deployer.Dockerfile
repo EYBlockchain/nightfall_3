@@ -2,6 +2,7 @@ FROM node:14.17
 
 WORKDIR /
 COPY common-files common-files
+RUN cd common-files && npm ci
 COPY config/default.js app/config/default.js
 
 WORKDIR /app

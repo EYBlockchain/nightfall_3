@@ -1,23 +1,17 @@
 import logger from 'common-files/utils/logger.mjs';
 import { queueManager, queues, enqueueEvent } from 'common-files/utils/event-queue.mjs';
+import RabbitMQ from 'common-files/utils/rabbitmq.mjs';
 import app from './app.mjs';
-import {
-  startEventQueue,
-  subscribeToBlockAssembledWebSocketConnection,
-  subscribeToChallengeWebSocketConnection,
-  subscribeToInstantWithDrawalWebSocketConnection,
-  subscribeToProposedBlockWebSocketConnection,
-  eventHandlers,
-} from './event-handlers/index.mjs';
+import { startEventQueue, eventHandlers } from './event-handlers/index.mjs';
 import Proposer from './classes/proposer.mjs';
 import {
-  setBlockAssembledWebSocketConnection,
   conditionalMakeBlock,
+  setBlockAssembledWebSocketConnection,
 } from './services/block-assembler.mjs';
 import { setChallengeWebSocketConnection } from './services/challenges.mjs';
 import initialBlockSync from './services/state-sync.mjs';
-import { setInstantWithdrawalWebSocketConnection } from './services/instant-withdrawal.mjs';
 import { setProposer } from './routes/proposer.mjs';
+import { setInstantWithdrawalWebSocketConnection } from './services/instant-withdrawal.mjs';
 import { setBlockProposedWebSocketConnection } from './event-handlers/block-proposed.mjs';
 
 const main = async () => {
@@ -25,10 +19,15 @@ const main = async () => {
     const proposer = new Proposer();
     setProposer(proposer); // passes the proposer instance int the proposer routes
     // subscribe to WebSocket events first
-    await subscribeToBlockAssembledWebSocketConnection(setBlockAssembledWebSocketConnection);
-    await subscribeToChallengeWebSocketConnection(setChallengeWebSocketConnection);
-    await subscribeToInstantWithDrawalWebSocketConnection(setInstantWithdrawalWebSocketConnection);
-    await subscribeToProposedBlockWebSocketConnection(setBlockProposedWebSocketConnection);
+
+    const rabbitmq = new RabbitMQ(`${process.env.RABBITMQ_HOST}:${process.env.RABBITMQ_PORT}`);
+
+    await rabbitmq.connect();
+    setChallengeWebSocketConnection(await rabbitmq.subscribe({ queue: 'challenge' }));
+    setBlockAssembledWebSocketConnection(await rabbitmq.subscribe({ queue: 'blocks' }));
+    setInstantWithdrawalWebSocketConnection(await rabbitmq.subscribe({ queue: 'instant' }));
+    setBlockProposedWebSocketConnection(await rabbitmq.subscribe({ queue: 'sync' }));
+
     // start the event queue
     await startEventQueue(queueManager, eventHandlers, proposer);
     // enqueue the block-assembler every time the queue becomes empty

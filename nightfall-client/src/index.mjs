@@ -2,18 +2,22 @@ import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import mongo from 'common-files/utils/mongo.mjs';
 import { queueManager } from 'common-files/utils/event-queue.mjs';
+import RabbitMQ from 'common-files/utils/rabbitmq.mjs';
 import app from './app.mjs';
-import rabbitmq from './utils/rabbitmq.mjs';
 import queues from './queues/index.mjs';
 import { initialClientSync } from './services/state-sync.mjs';
 import { startEventQueue, eventHandlers } from './event-handlers/index.mjs';
 
 const main = async () => {
   try {
-    if (process.env.ENABLE_QUEUE) {
-      await rabbitmq.connect();
-      queues();
-    }
+    const rabbitmq = new RabbitMQ(`${process.env.RABBITMQ_HOST}:${process.env.RABBITMQ_PORT}`);
+
+    await rabbitmq.connect();
+    await Promise.all(
+      Object.keys(queues).map(queue => {
+        return rabbitmq.subscribe({ queue }, queues[queue]);
+      }),
+    );
 
     await initialClientSync();
     await startEventQueue(queueManager, eventHandlers);

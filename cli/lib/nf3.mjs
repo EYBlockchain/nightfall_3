@@ -1,9 +1,8 @@
 import axios from 'axios';
 import Queue from 'queue';
 import Web3 from 'web3';
-import WebSocket from 'ws';
-import ReconnectingWebSocket from 'reconnecting-websocket';
 import EventEmitter from 'events';
+import RabbitMQ from '../../common-files/utils/rabbitmq.mjs';
 import logger from '../../common-files/utils/logger.mjs';
 import { approve } from './tokens.mjs';
 import erc20 from './abis/ERC20.mjs';
@@ -92,6 +91,7 @@ class Nf3 {
       optimistApiUrl: 'http://localhost:8081',
       optimistWsUrl: 'ws://localhost:8082',
       web3WsUrl: 'ws://localhost:8546',
+      rabbitmq: 'amqp://localhost:5672',
     },
     zkpKeys,
   ) {
@@ -102,6 +102,7 @@ class Nf3 {
     this.ethereumSigningKey = ethereumSigningKey;
     this.zkpKeys = zkpKeys;
     this.currentEnvironment = environment;
+    this.rabbitmq = new RabbitMQ(environment.rabbitmq);
   }
 
   /**
@@ -110,6 +111,7 @@ class Nf3 {
     @returns {Promise}
     */
   async init(mnemonic, contractAddressProvider) {
+    await this.rabbitmq.connect();
     await this.setWeb3Provider();
     // this code will call client to get contract addresses, or optimist if client isn't deployed
     switch (contractAddressProvider) {
@@ -635,28 +637,12 @@ class Nf3 {
     */
   async getInstantWithdrawalRequestedEmitter() {
     const emitter = new EventEmitter();
-    const connection = new ReconnectingWebSocket(this.optimistWsUrl, [], { WebSocket });
-    this.websockets.push(connection); // save so we can close it properly later
-    connection.onopen = () => {
-      // setup a ping every 15s
-      this.intervalIDs.push(
-        setInterval(() => {
-          connection._ws.ping();
-          // logger.debug('sent websocket ping');
-        }, WEBSOCKET_PING_TIME),
-      );
-      // and a listener for the pong
-      // connection._ws.on('pong', () => logger.debug('websocket received pong'));
-      logger.debug('websocket connection opened');
-      connection.send('instant');
-    };
-    connection.onmessage = async message => {
-      const msg = JSON.parse(message.data);
-      const { type, withdrawTransactionHash, paidBy, amount } = msg;
-      if (type === 'instant') {
-        emitter.emit('data', withdrawTransactionHash, paidBy, amount);
-      }
-    };
+    this.rabbitmq.subscribe({ queue: 'instant' }, message => {
+      const msg = JSON.parse(message.content.toString());
+
+      const { withdrawTransactionHash, paidBy, amount } = msg;
+      emitter.emit('data', withdrawTransactionHash, paidBy, amount);
+    });
     return emitter;
   }
 
@@ -667,7 +653,8 @@ class Nf3 {
     @method
     @async
     @param {object} keys - Object containing the ZKP key set (this may be generated
-    with the makeKeys function).
+    with the makeKeys function)
+        with the makeKeys function).
     */
   async subscribeToIncomingViewingKeys() {
     return axios.post(`${this.clientBaseUrl}/incoming-viewing-key`, {
@@ -683,7 +670,7 @@ class Nf3 {
   close() {
     this.intervalIDs.forEach(intervalID => clearInterval(intervalID));
     this.web3.currentProvider.connection.close();
-    this.websockets.forEach(websocket => websocket.close());
+    this.rabbitmq.close();
   }
 
   /**
@@ -878,26 +865,8 @@ class Nf3 {
     */
   async startProposer() {
     const blockProposeEmitter = new EventEmitter();
-    const connection = new ReconnectingWebSocket(this.optimistWsUrl, [], { WebSocket });
-    this.websockets.push(connection); // save so we can close it properly later
-    // we can't setup up a ping until the connection is made because the ping function
-    // only exists in the underlying 'ws' object (_ws) and that is undefined until the
-    // websocket is opened, it seems. Hence, we put all this code inside the onopen.
-    connection.onopen = () => {
-      // setup a ping every 15s
-      this.intervalIDs.push(
-        setInterval(() => {
-          connection._ws.ping();
-          // logger.debug('sent websocket ping');
-        }, WEBSOCKET_PING_TIME),
-      );
-      // and a listener for the pong
-      // connection._ws.on('pong', () => logger.debug('websocket received pong'));
-      logger.debug('websocket connection opened');
-      connection.send('blocks');
-    };
-    connection.onmessage = async message => {
-      const msg = JSON.parse(message.data);
+    this.rabbitmq.subscribe({ queue: 'block' }, message => {
+      const msg = JSON.parse(message.content.toString());
       const { type, txDataToSign, block, transactions } = msg;
       logger.debug(`Proposer received websocket message of type ${type}`);
       if (type === 'block') {
@@ -915,9 +884,8 @@ class Nf3 {
         });
       }
       return null;
-    };
-    connection.onerror = () => logger.error('websocket connection error');
-    connection.onclosed = () => logger.warn('websocket connection closed');
+    });
+
     // add this proposer to the list of peers that can accept direct transfers and withdraws
     return blockProposeEmitter;
   }
@@ -950,28 +918,15 @@ class Nf3 {
     */
   async getNewBlockEmitter() {
     const newBlockEmitter = new EventEmitter();
-    const connection = new ReconnectingWebSocket(this.optimistWsUrl, [], { WebSocket });
-    this.websockets.push(connection); // save so we can close it properly later
-    connection.onopen = () => {
-      // setup a ping every 15s
-      this.intervalIDs.push(
-        setInterval(() => {
-          connection._ws.ping();
-          // logger.debug('sent websocket ping');
-        }, WEBSOCKET_PING_TIME),
-      );
-      // and a listener for the pong
-      // connection._ws.on('pong', () => logger.debug('websocket received pong'));
-      logger.debug('websocket connection opened');
-      connection.send('blocks');
-    };
-    connection.onmessage = async message => {
+    this.rabbitmq.subscribe({ queue: 'block' }, message => {
       const msg = JSON.parse(message.data);
       const { type, txDataToSign } = msg;
       if (type === 'block') {
         newBlockEmitter.emit('data', txDataToSign);
       }
-    };
+      return null;
+    });
+
     return newBlockEmitter;
   }
 
@@ -1006,23 +961,8 @@ class Nf3 {
     @async
     */
   async startChallenger() {
-    const connection = new ReconnectingWebSocket(this.optimistWsUrl, [], { WebSocket });
-    this.websockets.push(connection); // save so we can close it properly later
-    connection.onopen = () => {
-      // setup a ping every 15s
-      this.intervalIDs.push(
-        setInterval(() => {
-          connection._ws.ping();
-          // logger.debug('sent websocket ping');
-        }, WEBSOCKET_PING_TIME),
-      );
-      // and a listener for the pong
-      // connection._ws.on('pong', () => logger.debug('websocket received pong'));
-      logger.debug('websocket connection opened');
-      connection.send('challenge');
-    };
-    connection.onmessage = async message => {
-      const msg = JSON.parse(message.data);
+    this.rabbitmq.subscribe({ queue: 'block' }, message => {
+      const msg = JSON.parse(message.content.toString());
       const { type, txDataToSign } = msg;
       if (type === 'commit' || type === 'challenge') {
         return new Promise((resolve, reject) => {
@@ -1043,7 +983,7 @@ class Nf3 {
         });
       }
       return null;
-    };
+    });
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -1081,28 +1021,13 @@ class Nf3 {
     */
   async getChallengeEmitter() {
     const newChallengeEmitter = new EventEmitter();
-    const connection = new ReconnectingWebSocket(this.optimistWsUrl, [], { WebSocket });
-    this.websockets.push(connection); // save so we can close it properly later
-    connection.onopen = () => {
-      // setup a ping every 15s
-      this.intervalIDs.push(
-        setInterval(() => {
-          connection._ws.ping();
-          // logger.debug('sent websocket ping');
-        }, WEBSOCKET_PING_TIME),
-      );
-      // and a listener for the pong
-      // connection._ws.on('pong', () => logger.debug('websocket received pong'));
-      logger.debug('websocket connection opened');
-      connection.send('challenge');
-    };
-    connection.onmessage = async message => {
+    this.rabbitmq.subscribe({ queue: 'challenge' }, message => {
       const msg = JSON.parse(message.data);
       const { type, txDataToSign } = msg;
       if (type === 'challenge') {
         newChallengeEmitter.emit('data', txDataToSign);
       }
-    };
+    });
     return newChallengeEmitter;
   }
 
