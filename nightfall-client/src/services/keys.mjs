@@ -1,13 +1,13 @@
 import { GN, generalise } from 'general-number';
 import config from 'config';
-import mimcHash from 'common-files/utils/crypto/mimc/mimc.mjs';
+import poseidon from 'common-files/utils/crypto/poseidon/poseidon.mjs';
 import bip39Pkg from 'bip39';
 import pkg from 'ethereumjs-wallet';
 import {
   scalarMult,
   edwardsCompress,
   edwardsDecompress,
-} from '../utils/crypto/encryption/elgamal.mjs';
+} from 'common-files/utils/curve-maths/curves.mjs';
 
 const { hdkey } = pkg;
 const { validateMnemonic, mnemonicToSeedSync } = bip39Pkg;
@@ -39,18 +39,14 @@ export class ZkpKeys {
 
   constructor(rootKey) {
     this.rootKey = rootKey;
-    this.zkpPrivateKey = new GN(
-      mimcHash([
-        rootKey.bigInt,
-        2708019456231621178814538244712057499818649907582893776052749473028258908910n,
-      ]),
-    );
-    this.nullifierKey = new GN(
-      mimcHash([
-        rootKey.bigInt,
-        7805187439118198468809896822299973897593108379494079213870562208229492109015n,
-      ]),
-    );
+    this.zkpPrivateKey = poseidon([
+      rootKey,
+      new GN(2708019456231621178814538244712057499818649907582893776052749473028258908910n),
+    ]);
+    this.nullifierKey = poseidon([
+      rootKey,
+      new GN(7805187439118198468809896822299973897593108379494079213870562208229492109015n),
+    ]);
     this.zkpPublicKey = generalise(scalarMult(this.zkpPrivateKey.hex(), BABYJUBJUB.GENERATOR));
     this.compressedZkpPublicKey = new GN(
       edwardsCompress([this.zkpPublicKey[0].bigInt, this.zkpPublicKey[1].bigInt]),
@@ -65,9 +61,9 @@ export class ZkpKeys {
 
   // function to generate all the required keys deterministically from a random mnemonic
   // Use mnemonic to generate seed which will then be used to generate sets of zkpPrivateKey and nullifierKey based on different account numbers
-
-  // keccak256(zkpPrivateKey) % BN128_GROUP_ORDER 2708019456231621178814538244712057499818649907582893776052749473028258908910
-  // keccak256(nullifierKey) % BN128_GROUP_ORDER 7805187439118198468809896822299973897593108379494079213870562208229492109015
+  // The domain numbers are derived thusly:
+  // keccak256('zkpPrivateKey') % BN128_GROUP_ORDER 2708019456231621178814538244712057499818649907582893776052749473028258908910
+  // keccak256('nullifierKey') % BN128_GROUP_ORDER 7805187439118198468809896822299973897593108379494079213870562208229492109015
   static generateZkpKeysFromMnemonic(mnemonic, addressIndex) {
     if (validateMnemonic(mnemonic)) {
       const seed = mnemonicToSeedSync(mnemonic).toString('hex');
@@ -81,18 +77,14 @@ export class ZkpKeys {
         ).bigInt % BN128_GROUP_ORDER,
         'bigInt',
       );
-      const zkpPrivateKey = new GN(
-        mimcHash([
-          rootKey.bigInt,
-          2708019456231621178814538244712057499818649907582893776052749473028258908910n,
-        ]),
-      );
-      const nullifierKey = new GN(
-        mimcHash([
-          rootKey.bigInt,
-          7805187439118198468809896822299973897593108379494079213870562208229492109015n,
-        ]),
-      );
+      const zkpPrivateKey = poseidon([
+        rootKey,
+        new GN(2708019456231621178814538244712057499818649907582893776052749473028258908910n),
+      ]);
+      const nullifierKey = poseidon([
+        rootKey,
+        new GN(7805187439118198468809896822299973897593108379494079213870562208229492109015n),
+      ]);
       const zkpPublicKey = generalise(scalarMult(zkpPrivateKey.hex(), BABYJUBJUB.GENERATOR));
       const compressedZkpPublicKey = new GN(
         edwardsCompress([zkpPublicKey[0].bigInt, zkpPublicKey[1].bigInt]),
@@ -116,8 +108,12 @@ export class ZkpKeys {
     return { zkpPublicKey, compressedZkpPublicKey };
   }
 
-  static decompressCompressedZkpPublicKey(compressedZkpPublicKey) {
+  static decompressZkpPublicKey(compressedZkpPublicKey) {
     return generalise(edwardsDecompress(compressedZkpPublicKey.bigInt));
+  }
+
+  static compressZkpPublicKey(zkpPublicKey) {
+    return new GN(edwardsCompress([zkpPublicKey[0].bigInt, zkpPublicKey[1].bigInt]));
   }
 }
 

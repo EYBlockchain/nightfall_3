@@ -141,7 +141,6 @@ describe('ERC721 tests', () => {
       eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       await emptyL2(nf3Users[0]);
       balances = await nf3Users[0].getLayer2Balances();
-
       const balanceAfter = balances[erc721Address].length;
       expect(balanceAfter - balanceBefore).to.be.equal(2);
     });
@@ -180,7 +179,6 @@ describe('ERC721 tests', () => {
       await emptyL2(nf3Users[0]);
 
       await getBalances();
-
       expect((balances[0]?.length || 0) - (beforeBalances[0]?.length || 0)).to.be.equal(-2);
       expect((balances[1]?.length || 0) - (beforeBalances[1]?.length || 0)).to.be.equal(2);
     });

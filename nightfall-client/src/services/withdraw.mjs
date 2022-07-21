@@ -67,16 +67,16 @@ async function withdraw(withdrawParams) {
 
   // now we have everything we need to create a Witness and compute a proof
   const witness = [
-    oldCommitment.preimage.ercAddress.integer,
-    oldCommitment.preimage.tokenId.integer,
-    oldCommitment.preimage.value.integer,
-    oldCommitment.preimage.salt.limbs(32, 8),
-    oldCommitment.hash.limbs(32, 8),
+    oldCommitment.preimage.ercAddress.field(BN128_GROUP_ORDER),
+    oldCommitment.preimage.tokenId.limbs(32, 8),
+    oldCommitment.preimage.value.field(BN128_GROUP_ORDER),
+    oldCommitment.preimage.salt.field(BN128_GROUP_ORDER),
+    oldCommitment.hash.field(BN128_GROUP_ORDER),
     rootKey.field(BN128_GROUP_ORDER),
-    generalise(nullifier.hash.hex(32, 31)).integer,
+    nullifier.hash.field(BN128_GROUP_ORDER),
     recipientAddress.field(BN128_GROUP_ORDER),
     siblingPath[0].field(BN128_GROUP_ORDER),
-    siblingPath.slice(1).map(node => node.field(BN128_GROUP_ORDER, false)), // siblingPAth[32] is a sha hash and will overflow a field but it's ok to take the mod here - hence the 'false' flag
+    siblingPath.slice(1).map(node => node.field(BN128_GROUP_ORDER)), // siblingPAth[32] is a sha hash and will overflow a field but it's ok to take the mod here - hence the 'false' flag
     leafIndex,
   ].flat(Infinity);
 
