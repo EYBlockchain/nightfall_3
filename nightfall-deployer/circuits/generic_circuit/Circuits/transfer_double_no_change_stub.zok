@@ -1,10 +1,10 @@
-from "../generic_circuit.zok" import main as generic
+from "../generic_circuit_stub.zok" import main as generic_stub
 from "../../common/utils/structures.zok" import CommitmentPreimage,Point, PublicTransaction
 
-const u32 txType = 0
+const u32 txType = 1
+const u32 numNullifiers = 2
 const u32 numCommitments = 1
-const u32 numNullifiers = 0
-const u32 transfer = 0
+const u32 transfer = 1
 
 def main(\
     PublicTransaction transaction,\
@@ -20,7 +20,7 @@ def main(\
     private u32[transfer][8] ephemeralKey\
     ) -> ():
     
-    assert(generic::<txType,numNullifiers,numCommitments, transfer>(\
+    assert(generic_stub::<txType,numNullifiers,numCommitments, transfer>(\
             transaction,\
             nullifierRoots,\
             oldCommitment.value,\

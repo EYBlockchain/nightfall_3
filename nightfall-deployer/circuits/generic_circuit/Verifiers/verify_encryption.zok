@@ -17,8 +17,7 @@ def main<NumCommitments,Transfer>(\
     private field[NumCommitments] newCommitmentValues,\
     private field[NumCommitments] newCommitmentSalts,\
     private Point[NumCommitments] recipientPublicKey,\
-    bool[Transfer] compressedEphemeralPublicKeyParities,\
-    field[Transfer] compressedEphemeralPublicKeyOrdinates,\
+    u32[8] recipientAddress,\
     private u32[Transfer][8] ephemeralKey\
 ) -> bool:
 
@@ -38,10 +37,7 @@ def main<NumCommitments,Transfer>(\
         assert(cipherText == enc.cipherText)
 
         bool[256] compressedPubKeyOutput = edwardsCompress(enc.ephemeralPublicKey)
-        bool parity = compressedEphemeralPublicKeyParities[0]
-        bool[256] ordinate = field_to_bool_256(compressedEphemeralPublicKeyOrdinates[0])
-        bool[256] compressedCheck256 = [ parity, ...ordinate[1..256] ]
-        assert(compressedPubKeyOutput == compressedCheck256)
+        assert(compressedPubKeyOutput == u32_8_to_bool_256(recipientAddress))
     endfor
     
     return true

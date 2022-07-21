@@ -13,13 +13,13 @@ def main<NumNullifiers>(\
     field idRemainder,\
     field value,\
     field[NUMBER_NULLIFIERS] nullifiers,\
-    field[NUMBER_NULLIFIERS] roots,\
+    field[NumNullifiers] roots,\
     private field[NumNullifiers] oldCommitmentValues,\
     private field[NumNullifiers] oldCommitmentSalts,\
     private field[NumNullifiers] rootKey,\
     private field[NumNullifiers][32] paths,\
 	private field[NumNullifiers] orders\
-) -> (bool, Point):
+) -> (Point):
     // Get Curve Params
     BabyJubJubParams context = curveParams()
     Point g = [context.Gu, context.Gv]
@@ -27,7 +27,7 @@ def main<NumNullifiers>(\
     //If the transaction contains change, the receiver of that change MUST be the same user that 
     //created the transaction. In this field[2] we will store the zkpPublicKey of the sender in case
     //we need it to check the change. 
-    Point changeZkpPublicKeys = [0,0]
+    Point firstInputZkpPublicKeys = [0,0]
 
     //Check that all the nullifiers are valid. If NumNullifiers equals zero this loop will be ignored
     for u32 i in 0..NumNullifiers do
@@ -55,7 +55,7 @@ def main<NumNullifiers>(\
         assert(pathCheck([roots[i], ...paths[i]], orders[i], nullifiers[i]))
 
         //Set the changeZkpPublicKeys if i = 0. Otherwise just set the same value
-        changeZkpPublicKeys = i == 0 ? zkpPublicKeys : changeZkpPublicKeys
+        firstInputZkpPublicKeys = i == 0 ? zkpPublicKeys : firstInputZkpPublicKeys
     endfor
     
-    return true, changeZkpPublicKeys
+    return firstInputZkpPublicKeys
