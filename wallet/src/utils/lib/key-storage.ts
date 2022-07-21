@@ -25,7 +25,7 @@ const {
   COMMITMENTS_COLLECTION,
   KEYS_COLLECTION,
   CIRCUIT_COLLECTION,
-  CLIENT_ID_COLLECTION
+  CLIENT_ID_COLLECTION,
   CIRCUIT_HASH_COLLECTION,
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore

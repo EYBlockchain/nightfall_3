@@ -7,18 +7,17 @@ import rollbackEventHandler from '@Nightfall/event-handlers/rollback';
 import {
   checkIndexDBForCircuit,
   checkIndexDBForCircuitHash,
-  getMaxBlock, storeClientId, getClientId,
+  storeClientId, getClientId,
   emptyStoreBlocks,
   emptyStoreTimber,
 } from '@Nightfall/services/database';
 import { fetchAWSfiles } from '@Nightfall/services/fetch-circuit';
+import mqtt from 'mqtt';
 import * as Storage from '../../utils/lib/local-storage';
 import { encryptAndStore, retrieveAndDecrypt, storeBrowserKey } from '../../utils/lib/key-storage';
 import useInterval from '../useInterval';
-import mqtt from "mqtt";
-import {wsMqMapping, topicRollback, topicBlockProposed} from '../../common-files/utils/mq';
+import { wsMqMapping, topicRollback, topicBlockProposed } from '../../common-files/utils/mq';
 import init from '../../web-worker/index.js';
-
 
 const { USE_STUBS, usernameMq, pswMQ } = global.config;
 
@@ -37,10 +36,32 @@ export const UserProvider = ({ children }) => {
   const [state, setState] = React.useState(initialState);
   const [isSyncComplete, setIsSyncComplete] = React.useState(false); // This is not really a sync;
   const [isSyncing, setSyncing] = React.useState(true);
-  const [client, setClient] = React.useState(null);
-
+  const [client, setClient] = React.useState(null);  
   const [lastBlock, setLastBlock] = React.useState({ blockHash: '0x0' });
   const history = useHistory();
+
+  const mqttConnect = (host, mqttOption) => {
+    setClient(mqtt.connect(host, mqttOption));
+  };
+
+  const setupWebSocket = async () => {
+    const options = {
+      clientId: await getClientId(0),
+      clean: false,
+      username: usernameMq,
+      password: pswMQ,
+      rejectUnauthorized: false,
+      reconnectPeriod: 1000,
+    };
+
+    mqttConnect(wsMqMapping[process.env.REACT_APP_MODE], options);
+
+    setState(previousState => {
+      return {
+        ...previousState,
+      };
+    });
+  };
 
   const deriveAccounts = async (mnemonic, numAccts) => {
     const accountRange = Array.from({ length: numAccts }, (v, i) => i);
@@ -56,15 +77,18 @@ export const UserProvider = ({ children }) => {
       zkpKeys.map(z => z.compressedZkpPublicKey),
     );
 
-    let clientId = new Date().getTime() + Math.floor(Math.random() * 1000000) + zkpKeys[0].compressedPkd;
+    const clientId =
+      Math.floor(new Date().getTime() / 1000) +
+      Math.floor(Math.random() * 100) +
+      zkpKeys[0].compressedPkd;
     storeClientId(clientId);
-    
     setState(previousState => {
       return {
         ...previousState,
         compressedZkpPublicKey: zkpKeys[0].compressedZkpPublicKey,
       };
     });
+    setupWebSocket();
   };
 
   const syncState = async () => {
@@ -77,31 +101,6 @@ export const UserProvider = ({ children }) => {
         };
       });
     }
-  };
-
-  const setupWebSocket = async () => {
-    let options ={
-      clientId: await getClientId(0),
-      clean: false,
-      username: usernameMq,
-      password: pswMQ,
-      rejectUnauthorized: false,
-      reconnectPeriod: 1000,
-      resubscribe: true,
-      keepalive: 0,
-    };
-
-    mqttConnect(wsMqMapping[process.env.REACT_APP_MODE], options)
-
-    setState(previousState => {
-      return {
-        ...previousState
-      };
-    });
-  };
-
-  const mqttConnect = (host, mqttOption) => {
-    setClient(mqtt.connect(host, mqttOption));
   };
 
   const configureMessageListener = () => {
@@ -138,24 +137,24 @@ export const UserProvider = ({ children }) => {
     if (client) {
       client.on('connect', () => {
         console.log('connected');
-        client.subscribe(topicRollback, {qos: 2}, function (err, granted) {
+        client.subscribe(topicRollback, { qos: 2 }, function (err, granted) {
           if (err) {
-            console.log(err)
-          } else if (granted){
-            console.log("subscribe to " + topicRollback, granted)
+            console.log(err);
+          } else if (granted) {
+            console.log('subscribe to ', topicRollback, granted);
           }
-        })
+        });
 
-        client.subscribe(topicBlockProposed, {qos: 2}, function (err, granted) {
+        client.subscribe(topicBlockProposed, { qos: 2 }, function (err, granted) {
           if (err) {
-            console.log(err)
-          } else if (granted){
-            console.log("subscribe to " + topicBlockProposed, granted)
+            console.log(err);
+          } else if (granted) {
+            console.log('subscribe to ', topicBlockProposed, granted);
           }
-        })
+        });
       });
 
-      client.on('error', (err) => {
+      client.on('error', err => {
         console.error('Connection error: ', err);
         client.end();
       });
@@ -163,43 +162,30 @@ export const UserProvider = ({ children }) => {
       client.on('reconnect', () => {
         console.log('Reconnecting');
       });
-    }
-  }, [client]);
 
-  React.useEffect(() => {
-    if (client) {
-      client.on('connect', () => {
-        console.log('connected');
-        client.subscribe(topicRollback, {qos: 2}, function (err, granted) {
-          if (err) {
-            console.log(err)
-          } else if (granted){
-            console.log("subscribe to " + topicRollback, granted)
-          }
-        })
+      const { compressedPkd } = state;
+      if (compressedPkd === '') return;
 
-        client.subscribe(topicBlockProposed, function (err, granted) {
-          if (err) {
-            console.log(err)
-          } else if (granted){
-            console.log("subscribe to" + topicBlockProposed, granted)
-          }
-        })
-      });
+      // Listen for messages
 
-      client.on('error', (err) => {
-        console.error('Connection error: ', err);
-        client.end();
-      });
+      client.on('message', async (topic, message) => {
+        const { type, data } = JSON.parse(message.toString());
+        const { ivk, nsk } = await retrieveAndDecrypt(compressedPkd);
+        console.log('message received', data, topic);
 
-      client.on('reconnect', () => {
-        console.log('Reconnecting');
+        if (topic === topicBlockProposed) {
+          if (type === topic) await blockProposedEventHandler(data, [ivk], [nsk]);
+          else console.log('Error: messange sent on wrong topic');
+        } else if (topic === topicRollback) {
+          if (type === topic) await rollbackEventHandler(data);
+          else console.log('Error: messange sent on wrong topic');
+        }
       });
     }
   }, [client]);
 
-  React.useEffect(() => {
-    setupWebSocket();
+  React.useEffect(async () => {
+    if (await getClientId(0)) setupWebSocket();
   }, []);
 
   React.useEffect(async () => {
@@ -210,9 +196,9 @@ export const UserProvider = ({ children }) => {
     if (!isSyncComplete) setIsSyncComplete({ isSyncComplete: true });
   }, [history.location.pathname]);
 
-  React.useEffect(() => {
-    configureMessageListener();
-  }, [state.compressedZkpPublicKey]);
+  // React.useEffect(() => {
+  //   configureMessageListener();
+  // }, [state.compressedPkd]);
 
   useInterval(
     async () => {
