@@ -387,10 +387,7 @@ export async function setTransactionHashSiblingInfo(
 
 export async function storeClientId(clientId) {
   const db = await connectDB();
-  return db.put(
-    CLIENT_ID_COLLECTION,
-    clientId, 0
-  );
+  return db.put(CLIENT_ID_COLLECTION, clientId, 0);
 }
 
 export async function getClientId(key) {

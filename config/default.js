@@ -172,8 +172,8 @@ module.exports = {
         process.env.BLOCKCHAIN_WS_HOST && process.env.BLOCKCHAIN_PORT
           ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`
           : process.env.BLOCKCHAIN_WS_HOST
-            ? `wss://${process.env.BLOCKCHAIN_WS_HOST}`
-            : 'ws://localhost:8546',
+          ? `wss://${process.env.BLOCKCHAIN_WS_HOST}`
+          : 'ws://localhost:8546',
     },
     aws: {
       name: 'AWS',
