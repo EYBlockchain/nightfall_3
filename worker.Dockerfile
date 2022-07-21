@@ -1,5 +1,8 @@
 FROM ubuntu:20.04
 
+# build zokrates from source for local verify
+FROM ghcr.io/eyblockchain/local-zokrates as builder
+
 RUN apt-get update -y
 RUN apt-get install -y netcat curl
 RUN apt-get install -y nodejs gcc g++ make
@@ -9,9 +12,6 @@ EXPOSE 80
 
 ENV ZOKRATES_HOME /app
 ENV ZOKRATES_STDLIB /app/stdlib
-
-# build zokrates from source for local verify
-FROM ghcr.io/eyblockchain/local-zokrates as builder
 
 WORKDIR /
 COPY common-files common-files
