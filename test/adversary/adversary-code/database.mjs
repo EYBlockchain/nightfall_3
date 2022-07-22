@@ -11,22 +11,63 @@ let error = process.env.BAD_TX_SEQUENCE
       'ValidTransaction',
       'ValidTransaction',
       'ValidTransaction',
-      'IncorrectTreeRoot',
-      'ValidTransaction',
-      'IncorrectLeafCount',
-      'ValidTransaction',
-      'DuplicateTransaction',
+      // 'IncorrectTreeRoot',
+      // 'ValidTransaction',
+      // 'IncorrectLeafCount',
+      // 'ValidTransaction',
+      'DuplicateCommitment',
       'ValidTransaction',
       'DuplicateNullifier',
       'ValidTransaction',
-      'HistoricRootError',
-      'ValidTransaction',
-      'IncorrectProof',
-      'ValidTransaction',
+      // 'IncorrectProof',
+      // 'ValidTransaction',
     ];
 
 let resetErrorIdx = false;
 let indexOffset = 0;
+
+// eslint-disable-next-line import/first
+import { Transaction } from '../classes/index.mjs';
+
+const duplicateCommitment = async number => {
+  logger.debug('Creating Block with Duplicate Commitment');
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const res = await db
+    .collection(TRANSACTIONS_COLLECTION)
+    .find({ transactionType: { $in: ['0', '1', '2'] } })
+    .toArray();
+  const spentTransfer = res.filter(t => t.mempool === false);
+  const unspentTransfer = res.filter(t => t.mempool);
+  if (unspentTransfer.length <= 0 || spentTransfer.length <= 0) {
+    logger.error('Could not create duplicate commitment');
+    return db
+      .collection(TRANSACTIONS_COLLECTION)
+      .find({ mempool: true }, { limit: number, sort: { fee: -1 }, projection: { _id: 0 } })
+      .toArray();
+  }
+  const { commitments: spentCommitments } = spentTransfer[0];
+  const { commitments: unspentCommitments, ...unspentRes } = unspentTransfer[0];
+  const modifiedTransfer = {
+    commitments: [spentCommitments[0], unspentCommitments[1]],
+    ...unspentRes,
+  };
+  // update transactionHash because proposeBlock in State.sol enforces transactionHashesRoot in Block data to be equal to what it calculates from the transactions
+  modifiedTransfer.transactionHash = Transaction.calcHash(modifiedTransfer);
+
+  const availableTxs = await db
+    .collection(TRANSACTIONS_COLLECTION)
+    .find({ mempool: true }, { projection: { _id: 0 } })
+    .toArray();
+
+  const transactions = availableTxs.filter(
+    f => f.transactionHash !== modifiedTransfer.transactionHash,
+  );
+  const modifiedTransactions = transactions.slice(0, number - 1);
+  modifiedTransactions.push(modifiedTransfer);
+
+  return modifiedTransactions;
+};
 
 const duplicateNullifier = async number => {
   logger.debug('Creating Block with Duplicate Nullifier');
@@ -51,6 +92,8 @@ const duplicateNullifier = async number => {
     nullifiers: [spentNullifiers[0], unspentNullifiers[1]],
     ...unspentRes,
   };
+  // update transactionHash because proposeBlock in State.sol enforces transactionHashesRoot in Block data to be equal to what it calculates from the transactions
+  modifiedTransfer.transactionHash = Transaction.calcHash(modifiedTransfer);
 
   const availableTxs = await db
     .collection(TRANSACTIONS_COLLECTION)
@@ -64,23 +107,6 @@ const duplicateNullifier = async number => {
   modifiedTransactions.push(modifiedTransfer);
 
   return modifiedTransactions;
-};
-
-const duplicateTransaction = async number => {
-  logger.debug('Creating Block with Duplicate Transaction');
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  const duplicateTx = await db
-    .collection(TRANSACTIONS_COLLECTION)
-    .findOne({ mempool: false }, { projection: { _id: 0 } });
-
-  const transactions = await db
-    .collection(TRANSACTIONS_COLLECTION)
-    .find({ mempool: true }, { limit: number - 1, sort: { fee: -1 }, projection: { _id: 0 } })
-    .toArray();
-
-  transactions.push(duplicateTx);
-  return transactions;
 };
 
 const incorrectProof = async number => {
@@ -106,45 +132,10 @@ const incorrectProof = async number => {
     ],
     ...rest,
   };
+  // update transactionHash because proposeBlock in State.sol enforces transactionHashesRoot in Block data to be equal to what it calculates from the transactions
+  incorrectProofTx.transactionHash = Transaction.calcHash(incorrectProofTx);
   transactions.push(incorrectProofTx);
   return transactions;
-};
-
-const historicRootError = async number => {
-  logger.debug('Creating Block with Historic Root Error');
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  const res = await db
-    .collection(TRANSACTIONS_COLLECTION)
-    .find(
-      { mempool: true, transactionType: { $in: ['1', '2', '3'] } },
-      { limit: number - 1, sort: { fee: -1 }, projection: { _id: 0 } },
-    )
-    .toArray();
-  if (res.length === 0) {
-    logger.error('Could not create historicRootError error');
-    return db
-      .collection(TRANSACTIONS_COLLECTION)
-      .find({ mempool: true }, { limit: number, sort: { fee: -1 }, projection: { _id: 0 } })
-      .toArray();
-  }
-  const [{ historicRootBlockNumberL2, ...rest }, ...transactions] = res;
-  const { transactionType } = rest;
-  const incorrectHistoricRoot = {
-    historicRootBlockNumberL2:
-      Number(transactionType) === 1 || Number(transactionType) === 3
-        ? [Math.floor(Math.random() * 100).toString(), '0']
-        : Array(2).fill(Math.floor(Math.random() * 100).toString()),
-    ...rest,
-  };
-  transactions.push(incorrectHistoricRoot);
-  return transactions;
-};
-
-export const addTx = txType => {
-  error = txType;
-  resetErrorIdx = true;
-  logger.debug(`Received new Tx types to generate ${error}`);
 };
 
 /**
@@ -160,14 +151,12 @@ export async function getMostProfitableTransactions(number, errorIndex) {
   const badTxType = error[errorIndex - indexOffset];
   logger.debug(`Creating a transaction of type ${badTxType}`);
   switch (badTxType) {
-    case 'DuplicateTransaction':
-      return duplicateTransaction(number);
+    case 'DuplicateCommitment':
+      return duplicateCommitment(number);
     case 'DuplicateNullifier':
       return duplicateNullifier(number);
     case 'IncorrectProof':
       return incorrectProof(number);
-    case 'HistoricRootError':
-      return historicRootError(number);
     default: {
       logger.debug(`Creating a transaction of type ValidBlock`);
       const connection = await mongo.connection(MONGO_URL);

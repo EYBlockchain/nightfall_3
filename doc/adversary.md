@@ -6,9 +6,8 @@ Nightfall adversary is meant to be an adversarial block proposer that creates a 
 - ValidTransaction
 - IncorrectTreeRoot
 - IncorrectLeafCount
-- DuplicateTransaction
+- DuplicateCommitment
 - DuplicateNullifier
-- HistoricRootError
 - IncorrectProof
 
 ## How to build nightfall adversary
@@ -41,7 +40,7 @@ This functionality is tested by `adversary-test` job in `check-PRs.yml` github a
 The nightfall adversary code is written such that it picks bad block or bad transaction type in the order as defined in `database.mjs` and `block.mjs` files. This order avoids the adversary from randomly picking
 
 - `DuplicateNullifier` when there are no spent transactions whose nullifiers can be duplicated
-- `DuplicateTransaction` when there are no transactions to duplicate
+- `DuplicateCommitment` when there are no transactions to duplicate
 - `IncorrectLeafCount` when there is no prior block
 - `IncorrectTreeRoot` when there are no 2 prior blocks
 

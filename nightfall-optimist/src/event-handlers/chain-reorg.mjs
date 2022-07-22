@@ -64,7 +64,6 @@ import {
   isRegisteredProposerAddressMine,
   getBlockByTransactionHashL1,
   deleteTreeByBlockNumberL2,
-  deleteNullifiersForBlock,
 } from '../services/database.mjs';
 import { waitForContract } from './subscribe.mjs';
 
@@ -79,7 +78,6 @@ export async function removeBlockProposedEventHandler(eventObject) {
   logger.debug(`Deleted tree with block number ${block.blockNumberL2}, ${res}`);
   // we also need to remove any nullifiers that were added by this block, because
   // they're no longer valid.
-  await deleteNullifiersForBlock(block.blockHash);
   // now we can clear the L1 blocknumber to indicate that the L2 block is no longer
   // on chain.
   return clearBlockNumberL1ForBlock(eventObject.transactionHash);

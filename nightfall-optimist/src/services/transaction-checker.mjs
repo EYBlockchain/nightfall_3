@@ -1,16 +1,22 @@
+/* eslint-disable no-await-in-loop */
 /**
-Module to check that a transaction is valid before it goes into a Block.
+Module to check that a transaction is valid
 Here are the things that could be wrong with a transaction:
 - the proof doesn't verify
-- the transaction hash doesn't match with the preimage
-- the transaction type is inconsistent with the fields populated
+- transaction has a duplicate commitment
+- transaction has a duplicate nullifier
 */
+
 import config from 'config';
 import gen from 'general-number';
-import logger from 'common-files/utils/logger.mjs';
-import { Transaction, VerificationKey, Proof, TransactionError } from '../classes/index.mjs';
+import { VerificationKey, Proof, TransactionError } from '../classes/index.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
-import { getBlockByBlockNumberL2 } from './database.mjs';
+import {
+  getBlockByBlockNumberL2,
+  getL2TransactionByCommitment,
+  getL2TransactionByNullifier,
+  getTransactionsByTransactionHashes,
+} from './database.mjs';
 import verify from './verify.mjs';
 
 const { generalise, GN } = gen;
@@ -30,17 +36,6 @@ function isOverflow(value, check) {
   return false;
 }
 
-// first, let's check the hash. That's nice and easy:
-// NB as we actually now comput the hash on receipt of the transaction this
-// _should_ never fail.  Consider removal in the future.
-async function checkTransactionHash(transaction) {
-  if (!Transaction.checkHash(transaction)) {
-    logger.debug(
-      `The transaction with the hash that didn't match was ${JSON.stringify(transaction, null, 2)}`,
-    );
-    throw new TransactionError('The transaction hash did not match the transaction data', 0);
-  }
-}
 // next that the fields provided are consistent with the transaction type
 async function checkTransactionType(transaction) {
   switch (Number(transaction.transactionType)) {
@@ -66,7 +61,7 @@ async function checkTransactionType(transaction) {
       )
         throw new TransactionError(
           'The data provided was inconsistent with a transaction type of DEPOSIT',
-          1,
+          0,
         );
       break;
     case 1: // single token transaction
@@ -84,7 +79,7 @@ async function checkTransactionType(transaction) {
       )
         throw new TransactionError(
           'The data provided was inconsistent with a transaction type of SINGLE_TRANSFER',
-          1,
+          0,
         );
       break;
     case 2: // double token transaction
@@ -101,7 +96,7 @@ async function checkTransactionType(transaction) {
       )
         throw new TransactionError(
           'The data provided was inconsistent with a transaction type of DOUBLE_TRANSFER',
-          1,
+          0,
         );
       break;
     case 3: // withdraw transaction
@@ -120,30 +115,11 @@ async function checkTransactionType(transaction) {
       )
         throw new TransactionError(
           'The data provided was inconsistent with a transaction type of WITHDRAW',
-          1,
+          0,
         );
       break;
     default:
-      throw new TransactionError('Unknown transaction type', 2);
-  }
-}
-
-async function checkHistoricRoot(transaction) {
-  // Deposit transaction have a historic root of 0
-  // the validity is tested in checkTransactionType
-  if (Number(transaction.transactionType) === 1 || Number(transaction.transactionType) === 3) {
-    const historicRootFirst = await getBlockByBlockNumberL2(
-      transaction.historicRootBlockNumberL2[0],
-    );
-    if (historicRootFirst === null)
-      throw new TransactionError('The historic root in the transaction does not exist', 3);
-  }
-  if (Number(transaction.transactionType) === 2) {
-    const [historicRootFirst, historicRootSecond] = await Promise.all(
-      transaction.historicRootBlockNumberL2.map(h => getBlockByBlockNumberL2(h)),
-    );
-    if (historicRootFirst === null || historicRootSecond === null)
-      throw new TransactionError('The historic root in the transaction does not exist', 3);
+      throw new TransactionError('Unknown transaction type', 4);
   }
 }
 
@@ -182,7 +158,7 @@ async function verifyProof(transaction) {
         isOverflow(transaction.ercAddress, MAX_PUBLIC_VALUES.ERCADDRESS) ||
         isOverflow(transaction.commitments[0], MAX_PUBLIC_VALUES.COMMITMENTS)
       )
-        throw new TransactionError('Truncated value overflow in public input', 4);
+        throw new TransactionError('Truncated value overflow in public input', 1);
       break;
     case 1: // single transfer transaction
       inputs = generalise(
@@ -202,7 +178,7 @@ async function verifyProof(transaction) {
         isOverflow(transaction.nullifiers[0], MAX_PUBLIC_VALUES.NULLIFIER) ||
         isOverflow(historicRootFirst.root, BN128_GROUP_ORDER)
       )
-        throw new TransactionError('Overflow in public input', 4);
+        throw new TransactionError('Overflow in public input', 1);
       break;
     case 2: // double transfer transaction
       inputs = generalise(
@@ -220,17 +196,17 @@ async function verifyProof(transaction) {
       // check for truncation overflow attacks
       for (let i = 0; i < transaction.nullifiers.length; i++) {
         if (isOverflow(transaction.nullifiers[i], MAX_PUBLIC_VALUES.NULLIFIER))
-          throw new TransactionError('Overflow in public input', 4);
+          throw new TransactionError('Overflow in public input', 1);
       }
       for (let i = 0; i < transaction.commitments.length; i++) {
         if (isOverflow(transaction.commitments[i], MAX_PUBLIC_VALUES.COMMITMENT))
-          throw new TransactionError('Overflow in public input', 4);
+          throw new TransactionError('Overflow in public input', 1);
       }
       if (
         isOverflow(historicRootFirst.root, BN128_GROUP_ORDER) ||
         isOverflow(historicRootSecond.root, BN128_GROUP_ORDER)
       )
-        throw new TransactionError('Overflow in public input', 4);
+        throw new TransactionError('Overflow in public input', 1);
       break;
     case 3: // withdraw transaction
       inputs = generalise(
@@ -250,10 +226,10 @@ async function verifyProof(transaction) {
         isOverflow(transaction.nullifiers[0], MAX_PUBLIC_VALUES.NULLIFIER) ||
         isOverflow(historicRootFirst.root, BN128_GROUP_ORDER)
       )
-        throw new TransactionError('Truncated value overflow in public input', 4);
+        throw new TransactionError('Truncated value overflow in public input', 1);
       break;
     default:
-      throw new TransactionError('Unknown transaction type', 2);
+      throw new TransactionError('Unknown transaction type', 4);
   }
   // check for modular overflow attacks
   // if (inputs.filter(input => input.bigInt >= BN128_GROUP_ORDER).length > 0)
@@ -266,16 +242,127 @@ async function verifyProof(transaction) {
     curve: CURVE,
     inputs: inputs.all.hex(32),
   });
-  if (!res) throw new TransactionError('The proof did not verify', 4);
+  if (!res) throw new TransactionError('The proof did not verify', 1);
 }
 
-async function checkTransaction(transaction) {
+export async function checkDuplicateCommitment(
+  transaction,
+  inL2AndNotInL2 = false,
+  blockNumberL2OfTx,
+) {
+  // check if there are duplicate commitments in the same transaction
+  if (
+    transaction.commitments[0] !== ZERO &&
+    transaction.commitments[0] === transaction.commitments[1]
+  ) {
+    throw new TransactionError(
+      `The transaction holds duplicate commitments with commitment hash ${transaction.commitments[0]}`,
+      2,
+      {
+        transaction1: transaction,
+        duplicateCommitment1Index: 0,
+        transaction2: transaction,
+        duplicateCommitment2Index: 1,
+      },
+    );
+  }
+
+  // check if any commitment in the transaction is already part of an L2 block
+  for (const [index, commitment] of transaction.commitments.entries()) {
+    // transaction.commitments.forEach(async (commitment, index) => {
+    const txWithOrgCommitment = await getL2TransactionByCommitment(
+      commitment,
+      inL2AndNotInL2,
+      blockNumberL2OfTx,
+    );
+    if (commitment !== ZERO && txWithOrgCommitment !== null) {
+      const blockWithOrgCommitment = await getBlockByBlockNumberL2(
+        txWithOrgCommitment.blockNumberL2,
+      );
+      if (blockWithOrgCommitment !== null) {
+        const orgBlockTransactions = await getTransactionsByTransactionHashes(
+          blockWithOrgCommitment.transactionHashes,
+        );
+        throw new TransactionError(
+          `The transaction has a duplicate commitment ${commitment}`,
+          2,
+          inL2AndNotInL2 === false
+            ? {
+                duplicateCommitment1Index: index,
+                block2: blockWithOrgCommitment,
+                transactions2: orgBlockTransactions,
+                transaction2Index: blockWithOrgCommitment.transactionHashes.indexOf(
+                  txWithOrgCommitment.transactionHash,
+                ),
+                duplicateCommitment2Index: txWithOrgCommitment.commitments.indexOf(commitment),
+              }
+            : undefined,
+        );
+      }
+    }
+  }
+}
+
+export async function checkDuplicateNullifier(
+  transaction,
+  inL2AndNotInL2 = false,
+  blockNumberL2OfTx,
+) {
+  // check if there are duplicate nullifiers in the same transaction
+  if (
+    transaction.nullifiers[0] !== ZERO &&
+    transaction.nullifiers[0] === transaction.nullifiers[1]
+  ) {
+    throw new TransactionError(
+      `The transaction holds duplicate nullifiers with nullifier hash ${transaction.nullifiers[0]}`,
+      3,
+      {
+        transaction1: transaction,
+        duplicateNullifier1Index: 0,
+        transaction2: transaction,
+        duplicateNullifier2Index: 1,
+      },
+    );
+  }
+
+  // check if any nullifier in the transction is already part of an L2 block
+  for (const [index, nullifier] of transaction.nullifiers.entries()) {
+    const txWithOrgNullifier = await getL2TransactionByNullifier(
+      nullifier,
+      inL2AndNotInL2,
+      blockNumberL2OfTx,
+    );
+    if (nullifier !== ZERO && txWithOrgNullifier !== null) {
+      const blockWithOrgNullifier = await getBlockByBlockNumberL2(txWithOrgNullifier.blockNumberL2);
+      if (blockWithOrgNullifier !== null) {
+        const orgBlockTransactions = await getTransactionsByTransactionHashes(
+          blockWithOrgNullifier.transactionHashes,
+        );
+        throw new TransactionError(
+          `The transaction has a duplicate nullifier ${nullifier}`,
+          3,
+          inL2AndNotInL2 === false
+            ? {
+                duplicateNullifier1Index: index,
+                block2: blockWithOrgNullifier,
+                transactions2: orgBlockTransactions,
+                transaction2Index: blockWithOrgNullifier.transactionHashes.indexOf(
+                  txWithOrgNullifier.transactionHash,
+                ),
+                duplicateNullifier2Index: txWithOrgNullifier.nullifiers.indexOf(nullifier),
+              }
+            : undefined,
+        );
+      }
+    }
+  }
+}
+
+export async function checkTransaction(transaction, inL2AndNotInL2 = false, args) {
   return Promise.all([
-    checkTransactionHash(transaction),
     checkTransactionType(transaction),
-    checkHistoricRoot(transaction),
+    checkDuplicateCommitment(transaction, inL2AndNotInL2, args?.blockNumberL2),
+    checkDuplicateNullifier(transaction, inL2AndNotInL2, args?.blockNumberL2),
     verifyProof(transaction),
   ]);
 }
-
-export default checkTransaction;
