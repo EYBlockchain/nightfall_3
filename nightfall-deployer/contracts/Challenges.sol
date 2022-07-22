@@ -104,7 +104,8 @@ contract Challenges is Stateful, Key_Registry, Config {
     ) external onlyBootChallenger {
         checkCommit(msg.data);
         require(
-            transactions1[transaction1Index].commitments[commitment1Index] ==
+            transactions1[transaction1Index].commitments[commitment1Index] != 0 &&
+                transactions1[transaction1Index].commitments[commitment1Index] ==
                 transactions2[transaction2Index].commitments[commitment2Index],
             'Not matching commitments'
         );
@@ -260,7 +261,8 @@ contract Challenges is Stateful, Key_Registry, Config {
     ) external onlyBootChallenger {
         checkCommit(msg.data);
         require(
-            transactions1[transaction1Index].nullifiers[nullifier1Index] ==
+            transactions1[transaction1Index].nullifiers[nullifier1Index] != 0 &&
+                transactions1[transaction1Index].nullifiers[nullifier1Index] ==
                 transactions2[transaction2Index].nullifiers[nullifier2Index],
             'Not matching nullifiers'
         );
