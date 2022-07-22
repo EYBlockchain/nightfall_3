@@ -26,7 +26,7 @@ let error = process.env.BAD_TX_SEQUENCE
 let resetErrorIdx = false;
 let indexOffset = 0;
 
-// eslint-disable-next-line import/first
+// eslint-disable-next-line import/first, import/no-unresolved
 import { Transaction } from '../classes/index.mjs';
 
 const duplicateCommitment = async number => {

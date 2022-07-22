@@ -7,8 +7,7 @@ import {
   getBlockByTransactionHash,
   getTransactionByTransactionHash,
 } from '../services/database.mjs';
-// import mappedTransaction from '../event-mappers/transaction-submitted.mjs';
-import { checkTransaction } from '../services/transaction-checker.mjs';
+import checkTransaction from '../services/transaction-checker.mjs';
 import TransactionError from '../classes/transaction-error.mjs';
 import { getTransactionSubmittedCalldata } from '../services/process-calldata.mjs';
 

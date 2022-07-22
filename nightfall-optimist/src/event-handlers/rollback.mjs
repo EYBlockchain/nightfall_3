@@ -15,9 +15,12 @@ import {
   deleteTransactionsByTransactionHashes,
   deleteTreeByBlockNumberL2,
 } from '../services/database.mjs';
-import { checkDuplicateCommitmentsWithinBlock } from '../services/check-block.mjs';
+import {
+  checkDuplicateCommitmentsWithinBlock,
+  checkDuplicateNullifiersWithinBlock,
+} from '../services/check-block.mjs';
 import Block from '../classes/block.mjs';
-import { checkTransaction } from '../services/transaction-checker.mjs';
+import checkTransaction from '../services/transaction-checker.mjs';
 
 async function rollbackEventHandler(data) {
   const { blockNumberL2 } = data.returnValues;
@@ -59,6 +62,7 @@ async function rollbackEventHandler(data) {
     }
     try {
       checkDuplicateCommitmentsWithinBlock(blocksToBeDeleted[i], blockTransactions);
+      checkDuplicateNullifiersWithinBlock(blocksToBeDeleted[i], blockTransactions);
     } catch (error) {
       const { transaction2: transaction } = error.metadata; // TODO pick transaction to delete based on which transaction pays more to proposer
       logger.debug(`Invalid checkTransaction: ${transaction.transactionHash}`);
