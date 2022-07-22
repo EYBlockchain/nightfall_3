@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: CC0-1.0
+// This is adapted from https://github.com/Loopring/
+// but converted for our specific 2-input hash variety
+// We are grateful for the work done by Loopring.
 pragma solidity ^0.8.0;
 
 library Poseidon
