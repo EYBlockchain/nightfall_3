@@ -125,8 +125,7 @@ library MerkleTree_Stateless {
         uint256 prevNodeIndex;
         uint256 nodeValue;
 
-        uint256[2] memory input;
-        uint256[1] memory output; // the output of the hash
+        uint256 output; // the output of the hash
 
         // consider each new leaf in turn, from left to right:
         for (uint256 leafIndex = _leafCount; leafIndex < _leafCount + numberOfLeaves; leafIndex++) {
@@ -144,21 +143,17 @@ library MerkleTree_Stateless {
             for (uint256 level = 1; level <= slot; level++) {
                 if (nodeIndex % 2 == 0) {
                     // even nodeIndex
-                    input[0] = uint256(_frontier[level - 1]); //replace with push?
-                    input[1] = nodeValue;
-                    output[0] = Poseidon.poseidon(input); // poseidon hash of concatenation of each node
+                    output = Poseidon.poseidon(uint256(_frontier[level - 1]), nodeValue); // poseidon hash of concatenation of each node
 
-                    nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
+                    nodeValue = output; // the parentValue, but will become the nodeValue of the next level
                     prevNodeIndex = nodeIndex;
                     nodeIndex = (nodeIndex - 1) / 2; // move one row up the tree
                     // emit Output(input, output, prevNodeIndex, nodeIndex); // for debugging only
                 } else {
                     // odd nodeIndex
-                    input[0] = nodeValue;
-                    input[1] = 0;
-                    output[0] = Poseidon.poseidon(input); // poseidon hash of concatenation of each node
+                    output = Poseidon.poseidon(nodeValue, 0); // poseidon hash of concatenation of each node
 
-                    nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
+                    nodeValue = output; // the parentValue, but will become the nodeValue of the next level
                     prevNodeIndex = nodeIndex;
                     nodeIndex = nodeIndex / 2; // the parentIndex, but will become the nodeIndex of the next level
                     // emit Output(input, output, prevNodeIndex, nodeIndex); // for debugging only
@@ -171,21 +166,17 @@ library MerkleTree_Stateless {
         for (uint256 level = slot + 1; level <= treeHeight; level++) {
             if (nodeIndex % 2 == 0) {
                 // even nodeIndex
-                input[0] = uint256(_frontier[level - 1]);
-                input[1] = nodeValue;
-                output[0] = Poseidon.poseidon(input); // poseidon hash of concatenation of each node
+                output = Poseidon.poseidon(uint256(_frontier[level - 1]), 0); // poseidon hash of concatenation of each node
 
-                nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
+                nodeValue = output; // the parentValue, but will become the nodeValue of the next level
                 prevNodeIndex = nodeIndex;
                 nodeIndex = (nodeIndex - 1) / 2; // the parentIndex, but will become the nodeIndex of the next level
                 // emit Output(input, output, prevNodeIndex, nodeIndex); // for debugging only
             } else {
                 // odd nodeIndex
-                input[0] = nodeValue;
-                input[1] = 0;
-                output[0] = Poseidon.poseidon(input); // poseidon hash of concatenation of each node
+                output = Poseidon.poseidon(nodeValue, 0); // poseidon hash of concatenation of each node
 
-                nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
+                nodeValue = output; // the parentValue, but will become the nodeValue of the next level
                 prevNodeIndex = nodeIndex;
                 nodeIndex = nodeIndex / 2; // the parentIndex, but will become the nodeIndex of the next level
                 // emit Output(input, output, prevNodeIndex, nodeIndex); // for debugging only
@@ -220,8 +211,8 @@ library MerkleTree_Stateless {
         for (uint256 i = 32; i > 0; i--) {
             _frontier[i] = bytes32(nodeValue);
             if (leafIndex % 2 == 0)
-                nodeValue = Poseidon.poseidon([nodeValue, uint256(siblingPath[i])]);
-            else nodeValue = Poseidon.poseidon([uint256(siblingPath[i]), nodeValue]);
+                nodeValue = Poseidon.poseidon(nodeValue, uint256(siblingPath[i]));
+            else nodeValue = Poseidon.poseidon(uint256(siblingPath[i]), nodeValue);
             leafIndex >> 1;
         }
         _frontier[0] = node;
@@ -259,8 +250,7 @@ library MerkleTree_Stateless {
         uint256 prevNodeIndex;
         uint256 nodeValue;
 
-        uint256[2] memory input;
-        uint256[1] memory output; // the output of the hash
+        uint256 output; // the output of the hash
 
         // consider each new leaf in turn, from left to right:
         for (uint256 leafIndex = _leafCount; leafIndex < _leafCount + numberOfLeaves; leafIndex++) {
@@ -278,21 +268,17 @@ library MerkleTree_Stateless {
             for (uint256 level = 1; level <= slot; level++) {
                 if (nodeIndex % 2 == 0) {
                     // even nodeIndex
-                    input[0] = uint256(_frontier[level - 1]); //replace with push?
-                    input[1] = nodeValue;
-                    output[0] = Poseidon.poseidon(input); // poseidon hash of concatenation of each node
+                    output = Poseidon.poseidon(uint256(_frontier[level - 1]), nodeValue); // poseidon hash of concatenation of each node
 
-                    nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
+                    nodeValue = output; // the parentValue, but will become the nodeValue of the next level
                     prevNodeIndex = nodeIndex;
                     nodeIndex = (nodeIndex - 1) / 2; // move one row up the tree
                     // emit Output(input, output, prevNodeIndex, nodeIndex); // for debugging only
                 } else {
                     // odd nodeIndex
-                    input[0] = nodeValue;
-                    input[1] = 0;
-                    output[0] = Poseidon.poseidon(input); // poseidon hash of concatenation of each node
+                    output = Poseidon.poseidon(nodeValue, 0); // poseidon hash of concatenation of each node
 
-                    nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
+                    nodeValue = output; // the parentValue, but will become the nodeValue of the next level
                     prevNodeIndex = nodeIndex;
                     nodeIndex = nodeIndex / 2; // the parentIndex, but will become the nodeIndex of the next level
                     // emit Output(input, output, prevNodeIndex, nodeIndex); // for debugging only
@@ -305,21 +291,17 @@ library MerkleTree_Stateless {
         for (uint256 level = slot + 1; level <= treeHeight; level++) {
             if (nodeIndex % 2 == 0) {
                 // even nodeIndex
-                input[0] = uint256(_frontier[level - 1]);
-                input[1] = nodeValue;
-                output[0] = Poseidon.poseidon(input); // poseidon hash of concatenation of each node
+                output = Poseidon.poseidon(uint256(_frontier[level - 1]), nodeValue); // poseidon hash of concatenation of each node
 
-                nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
+                nodeValue = output; // the parentValue, but will become the nodeValue of the next level
                 prevNodeIndex = nodeIndex;
                 nodeIndex = (nodeIndex - 1) / 2; // the parentIndex, but will become the nodeIndex of the next level
                 // emit Output(input, output, prevNodeIndex, nodeIndex); // for debugging only
             } else {
                 // odd nodeIndex
-                input[0] = nodeValue;
-                input[1] = 0;
-                output[0] = Poseidon.poseidon(input); // poseidon hash of concatenation of each node
+                output = Poseidon.poseidon(nodeValue, 0); // poseidon hash of concatenation of each node
 
-                nodeValue = output[0]; // the parentValue, but will become the nodeValue of the next level
+                nodeValue = output; // the parentValue, but will become the nodeValue of the next level
                 prevNodeIndex = nodeIndex;
                 nodeIndex = nodeIndex / 2; // the parentIndex, but will become the nodeIndex of the next level
                 // emit Output(input, output, prevNodeIndex, nodeIndex); // for debugging only
