@@ -5,7 +5,7 @@ import mongo from 'common-files/utils/mongo.mjs';
 
 const { MONGO_URL, OPTIMIST_DB, TRANSACTIONS_COLLECTION } = config;
 
-const error = process.env.BAD_TX_SEQUENCE
+let error = process.env.BAD_TX_SEQUENCE
   ? process.env.BAD_TX_SEQUENCE.split(',')
   : [
       'ValidTransaction',
@@ -136,6 +136,12 @@ const incorrectProof = async number => {
   incorrectProofTx.transactionHash = Transaction.calcHash(incorrectProofTx);
   transactions.push(incorrectProofTx);
   return transactions;
+};
+
+export const addTx = txType => {
+  error = txType;
+  resetErrorIdx = true;
+  logger.debug(`Received new Tx types to generate ${error}`);
 };
 
 /**
