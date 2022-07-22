@@ -7,20 +7,13 @@ import './MerkleTree_Stateless.sol';
 import './Structures.sol';
 
 library ChallengesUtil {
-    bytes32 public constant ZERO =
-        0x0000000000000000000000000000000000000000000000000000000000000000;
-    uint256 public constant MAX31 = 2**249 - 1;
-    uint256 public constant MAX20 = 2**161 - 1;
-    uint256 public constant BN128_GROUP_ORDER =
-        21888242871839275222246405745257275088548364400416034343698204186575808495617;
-
     function libChallengeLeafCountCorrect(
         Structures.Block memory priorBlockL2,
         Structures.Transaction[] memory priorBlockTransactions,
         uint256 leafCount
     ) public pure {
-        uint256 expectedLeafCount =
-            priorBlockL2.leafCount + Utils.countCommitments(priorBlockTransactions);
+        uint256 expectedLeafCount = priorBlockL2.leafCount +
+            Utils.countCommitments(priorBlockTransactions);
         require(expectedLeafCount != leafCount, 'The leafCount is actually correct');
     }
 
@@ -40,10 +33,10 @@ library ChallengesUtil {
             priorBlockL2.leafCount
         );
         require(root == priorBlockL2.root, 'The sibling path is invalid');
-        uint256 commitmentIndex =
-            priorBlockL2.leafCount + Utils.filterCommitments(priorBlockTransactions).length;
+        uint256 commitmentIndex = priorBlockL2.leafCount +
+            Utils.filterCommitments(priorBlockTransactions).length;
         // At last, we can check if the root itself is correct!
-        (root, , ) = MerkleTree_Stateless.insertLeaves(
+        (bytes32 root, , ) = MerkleTree_Stateless.insertLeaves(
             Utils.filterCommitments(transactions),
             _frontier,
             commitmentIndex
@@ -63,12 +56,11 @@ library ChallengesUtil {
         for (uint256 i = 0; i < proof.length; i++) {
             proof1[i] = proof[i];
         }
-        uint256[] memory publicInputs =
-            Utils.getPublicInputs(
-                transaction,
-                extraPublicInputs.roots,
-                extraPublicInputs.maticAddress
-            );
+        uint256[] memory publicInputs = Utils.getPublicInputs(
+            transaction,
+            extraPublicInputs.roots,
+            extraPublicInputs.maticAddress
+        );
         require(!Verifier.verify(proof1, publicInputs, vk), 'This proof appears to be valid');
     }
 
@@ -84,6 +76,19 @@ library ChallengesUtil {
         );
     }
 
+    function libChallengeCommitment(
+        Structures.Transaction memory tx1,
+        uint256 commitmentIndex1,
+        Structures.Transaction memory tx2,
+        uint256 commitmentIndex2
+    ) public pure {
+        require(
+            tx1.commitments[commitmentIndex1] != 0 &&
+                tx1.commitments[commitmentIndex1] == tx2.commitments[commitmentIndex2],
+            'Not matching commitments'
+        );
+    }
+
     function libChallengeNullifier(
         Structures.Transaction memory tx1,
         uint256 nullifierIndex1,
@@ -91,13 +96,9 @@ library ChallengesUtil {
         uint256 nullifierIndex2
     ) public pure {
         require(
-            tx1.nullifiers[nullifierIndex1] == tx2.nullifiers[nullifierIndex2],
+            tx1.nullifiers[nullifierIndex1] != 0 &&
+                tx1.nullifiers[nullifierIndex1] == tx2.nullifiers[nullifierIndex2],
             'Not matching nullifiers'
-        );
-
-        require(
-            Utils.hashTransaction(tx1) != Utils.hashTransaction(tx2),
-            'Transactions need to be different'
         );
     }
 }

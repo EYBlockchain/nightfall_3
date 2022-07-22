@@ -4,13 +4,8 @@ Module to check that submitted Blocks and Transactions are valid
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import { BlockError } from '../classes/index.mjs';
-import checkTransaction from './transaction-checker.mjs';
-import {
-  numberOfBlockWithTransactionHash,
-  retrieveMinedNullifiers,
-  getBlockByBlockNumberL2,
-  getTreeByLeafCount,
-} from './database.mjs';
+import { checkTransaction } from './transaction-checker.mjs';
+import { getBlockByBlockNumberL2, getTreeByLeafCount } from './database.mjs';
 
 const { ZERO } = config;
 
@@ -25,10 +20,10 @@ async function checkLeafCount(block) {
     const priorBlock = await getBlockByBlockNumberL2(block.blockNumberL2 - 1);
     if (priorBlock === null) logger.warn('Could not find prior block while checking leaf count');
     if (priorBlock.leafCount + priorBlock.nCommitments !== block.leafCount)
-      throw new BlockError('The leaf count in the block is not correct', 7);
+      throw new BlockError('The leaf count in the block is not correct', 0);
   } else if (block.leafCount !== 0)
     // this throws if it's the first block and leafCount!=0, which is impossible
-    throw new BlockError('The leaf count in the block is not correct', 7);
+    throw new BlockError('The leaf count in the block is not correct', 0);
 }
 
 // There's a bit of an issue here though.  It's possible that our block didn't
@@ -55,45 +50,64 @@ async function checkBlockRoot(block) {
   if (history.root !== block.root)
     throw new BlockError(
       `The block's root (${block.root}) cannot be reconstructed from the commitment hashes in the transactions in this block and the historic Frontier held by Timber for this root`,
-      0,
+      1,
     );
 }
 
-// check if the transactions in the block have not already been submitted
-// This will also capture a duplicate block error
-async function checkDuplicateTransaction(transactions) {
-  Promise.all(
-    transactions.map(async (transaction, index) => {
-      if ((await numberOfBlockWithTransactionHash(transaction.transactionHash)) > 1)
-        throw new BlockError(
-          `The transaction with transaction hash (${transaction.transactionHash}) has already been submitted, hence this block is incorrect`,
-          1,
-          { transactionHashIndex: index, transactionHash: transaction.transactionHash },
-        );
-    }),
-  );
+// check if there are duplicate commitments in different transactions of the same block
+export function checkDuplicateCommitmentsWithinBlock(block, transactions) {
+  const blockCommitments = transactions.map(transaction => transaction.commitments).flat(Infinity);
+  blockCommitments.forEach((blockCommitment, index) => {
+    const lastIndex = blockCommitments.lastIndexOf(blockCommitment);
+    if (
+      blockCommitment !== ZERO &&
+      // blockCommitments.indexOf(blockCommitment) !== blockCommitments.lastIndexOf(blockCommitment)
+      index !== lastIndex
+    ) {
+      throw new BlockError(
+        `The block check failed due to duplicate commitments in different transactions of the same block`,
+        2,
+        {
+          block1: block,
+          transactions1: transactions,
+          transaction1Index: index % 2 === 0 ? index / 2 : (index - 1) / 2,
+          duplicateCommitment1Index: index % 2 === 0 ? 0 : 1,
+          block2: block,
+          transactions2: transactions,
+          transaction2Index: lastIndex % 2 === 0 ? lastIndex / 2 : (lastIndex - 1) / 2,
+          duplicateCommitment2Index: lastIndex % 2 === 0 ? 0 : 1,
+        },
+      );
+    }
+  });
 }
 
-// Check nullifiers for duplicates that have already been mined. It's possible to get a block that
-// we haven't seen the transactions for, because it was made from off-chain transactions. Thus, it's not
-// sufficient just to check transactions for duplicate nullifiers. Also, we have to be careful not
-// to check a block against itself (hence the second filter).
-async function checkDuplicateNullifier(block, transactions) {
-  const storedMinedNullifiers = await retrieveMinedNullifiers(); // List of Nullifiers stored by blockProposer
-  const blockNullifiers = transactions.map(tNull => tNull.nullifiers).flat(Infinity); // List of Nullifiers in block
-  const alreadyMinedNullifiers = storedMinedNullifiers
-    .filter(sNull => blockNullifiers.includes(sNull.hash))
-    .filter(aNull => aNull.blockHash !== block.blockHash);
-  const nonZeroBlockNullifiers = blockNullifiers.filter(blockNullifier => blockNullifier !== ZERO);
-  if (
-    alreadyMinedNullifiers.length > 0 ||
-    nonZeroBlockNullifiers.length !== new Set(nonZeroBlockNullifiers).size // if there is a duplicate nullifier in the same block
-  ) {
-    throw new BlockError(
-      `Some Nullifiers included in ${block.blockHash} have been included in previous blocks.`,
-      6,
-    );
-  }
+// check if there are duplicate nullifiers in different transactions of the same block
+export function checkDuplicateNullifiersWithinBlock(block, transactions) {
+  const blockNullifiers = transactions.map(transaction => transaction.nullifiers).flat(Infinity);
+  blockNullifiers.forEach((blockNullifier, index) => {
+    const lastIndex = blockNullifiers.lastIndexOf(blockNullifier);
+    if (
+      blockNullifier !== ZERO &&
+      // blockNullifiers.indexOf(blockNullifier) !== blockNullifiers.lastIndexOf(blockNullifier)
+      index !== lastIndex
+    ) {
+      throw new BlockError(
+        `The block check failed due to duplicate nullifiers in different transactions of the same block`,
+        3,
+        {
+          block1: block,
+          transactions1: transactions,
+          transaction1Index: index % 2 === 0 ? index / 2 : (index - 1) / 2,
+          duplicateNullifier1Index: index % 2 === 0 ? 0 : 1,
+          block2: block,
+          transactions2: transactions,
+          transaction2Index: lastIndex % 2 === 0 ? lastIndex / 2 : (lastIndex - 1) / 2,
+          duplicateNullifier2Index: lastIndex % 2 === 0 ? 0 : 1,
+        },
+      );
+    }
+  });
 }
 
 /**
@@ -103,32 +117,35 @@ Checks the block's properties.  It will return the first inconsistency it finds
 TODO - nullifiers
 */
 
-async function checkBlock(block, transactions) {
+export async function checkBlock(block, transactions) {
   await checkLeafCount(block);
   // now we have to check the commitment root.
   // For this we can make use of Timber with its optimistic extensions.
   await new Promise(resolve => setTimeout(resolve, 1000));
   await checkBlockRoot(block);
-  await checkDuplicateTransaction(transactions);
-  await checkDuplicateNullifier(block, transactions);
+  await checkDuplicateCommitmentsWithinBlock(block, transactions);
+  await checkDuplicateNullifiersWithinBlock(block, transactions);
   // check if the transactions are valid - transaction type, public input hash and proof verification are all checked
   for (let i = 0; i < transactions.length; i++) {
     try {
-      await checkTransaction(transactions[i]); // eslint-disable-line no-await-in-loop
+      await checkTransaction(transactions[i], false, { blockNumberL2: block.blockNumberL2 }); // eslint-disable-line no-await-in-loop
     } catch (err) {
-      if (err.code !== 2) {
-        // Error 2 of transaction checker does not need a challenge
-        throw new BlockError(
-          `The transaction check failed with error: ${err.message}`,
-          err.code === 1 ? 2 : err.code, // mapping transaction error to block error
-          {
-            transaction: transactions[i],
-            transactionHashIndex: block.transactionHashes.indexOf(transactions[i].transactionHash),
-          },
-        );
-      }
+      if (err.code + 2 === 2 || err.code + 2 === 3)
+        err.metadata = {
+          ...err.metadata,
+          block1: block,
+          transactions1: transactions,
+          transaction1Index: block.transactionHashes.indexOf(transactions[i].transactionHash),
+        };
+      throw new BlockError(
+        `The transaction check failed with error: ${err.message}`,
+        err.code + 2, // mapping transaction error to block error
+        {
+          ...err.metadata,
+          transaction: transactions[i],
+          transactionHashIndex: block.transactionHashes.indexOf(transactions[i].transactionHash),
+        },
+      );
     }
   }
 }
-
-export default checkBlock;
