@@ -179,7 +179,7 @@ function shaHash(...items) {
 function poseidonHash(...items) {
   const inputs = items.map(i => generalise(i));
   const hash = poseidonHashFunction(inputs);
-  return `0x${hash.hex().slice(2).padStart(64, '0')}`;
+  return hash.hex(32);
 }
 
 function concatenateThenHash(hashType, ...items) {
