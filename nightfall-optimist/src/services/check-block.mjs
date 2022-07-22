@@ -4,7 +4,7 @@ Module to check that submitted Blocks and Transactions are valid
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import { BlockError } from '../classes/index.mjs';
-import { checkTransaction } from './transaction-checker.mjs';
+import checkTransaction from './transaction-checker.mjs';
 import { getBlockByBlockNumberL2, getTreeByLeafCount } from './database.mjs';
 
 const { ZERO } = config;

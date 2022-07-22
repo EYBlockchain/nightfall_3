@@ -245,11 +245,7 @@ async function verifyProof(transaction) {
   if (!res) throw new TransactionError('The proof did not verify', 1);
 }
 
-export async function checkDuplicateCommitment(
-  transaction,
-  inL2AndNotInL2 = false,
-  blockNumberL2OfTx,
-) {
+async function checkDuplicateCommitment(transaction, inL2AndNotInL2 = false, blockNumberL2OfTx) {
   // check if there are duplicate commitments in the same transaction
   if (
     transaction.commitments[0] !== ZERO &&
@@ -303,11 +299,7 @@ export async function checkDuplicateCommitment(
   }
 }
 
-export async function checkDuplicateNullifier(
-  transaction,
-  inL2AndNotInL2 = false,
-  blockNumberL2OfTx,
-) {
+async function checkDuplicateNullifier(transaction, inL2AndNotInL2 = false, blockNumberL2OfTx) {
   // check if there are duplicate nullifiers in the same transaction
   if (
     transaction.nullifiers[0] !== ZERO &&
@@ -358,7 +350,7 @@ export async function checkDuplicateNullifier(
   }
 }
 
-export async function checkTransaction(transaction, inL2AndNotInL2 = false, args) {
+async function checkTransaction(transaction, inL2AndNotInL2 = false, args) {
   return Promise.all([
     checkTransactionType(transaction),
     checkDuplicateCommitment(transaction, inL2AndNotInL2, args?.blockNumberL2),
@@ -366,3 +358,5 @@ export async function checkTransaction(transaction, inL2AndNotInL2 = false, args
     verifyProof(transaction),
   ]);
 }
+
+export default checkTransaction;
