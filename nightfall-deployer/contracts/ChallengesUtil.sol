@@ -43,11 +43,12 @@ library ChallengesUtil {
         uint256 commitmentIndex =
             priorBlockL2.leafCount + Utils.filterCommitments(priorBlockTransactions).length;
         // At last, we can check if the root itself is correct!
-        (root, , ) = MerkleTree_Stateless.insertLeaves(
-            Utils.filterCommitments(transactions),
-            _frontier,
-            commitmentIndex
-        );
+        (bytes32 root, , ) =
+            MerkleTree_Stateless.insertLeaves(
+                Utils.filterCommitments(transactions),
+                _frontier,
+                commitmentIndex
+            );
         require(root != blockL2.root, 'The root is actually fine');
     }
 
@@ -98,6 +99,41 @@ library ChallengesUtil {
         require(uint256(blockL2.root) < BN128_GROUP_ORDER, 'root out of range');
     }
 
+    function libChallengeCommitment(
+        Structures.Transaction memory tx1,
+        uint256 commitmentIndex1,
+        bool isCommitmentFee1,
+        Structures.Transaction memory tx2,
+        uint256 commitmentIndex2,
+        bool isCommitmentFee2
+    ) public pure {
+        if (!commitmentIndex1 && !commitmentIndex2) {
+            require(
+                tx1.commitments[commitmentIndex1] != 0 &&
+                    tx1.commitments[commitmentIndex1] == tx2.commitments[commitmentIndex2],
+                'Not matching commitments'
+            );
+        } else if (!commitmentIndex1 && commitmentIndex2) {
+            require(
+                tx1.commitments[commitmentIndex1] != 0 &&
+                    tx1.commitments[commitmentIndex1] == tx2.commitmentFee[commitmentIndex2],
+                'Not matching commitments'
+            );
+        } else if (!commitmentIndex2 && commitmentIndex1) {
+            require(
+                tx1.commitmentFee[commitmentIndex1] != 0 &&
+                    tx1.commitmentFee[commitmentIndex1] == tx2.commitments[commitmentIndex2],
+                'Not matching commitments'
+            );
+        } else {
+            require(
+                tx1.commitmentFee[commitmentIndex1] != 0 &&
+                    tx1.commitmentFee[commitmentIndex1] == tx2.commitmentFee[commitmentIndex2],
+                'Not matching commitments'
+            );
+        }
+    }
+
     function libChallengeNullifier(
         Structures.Transaction memory tx1,
         uint256 nullifierIndex1,
@@ -112,13 +148,13 @@ library ChallengesUtil {
                     tx1.nullifiers[nullifierIndex1] == tx2.nullifiers[nullifierIndex2],
                 'Not matching nullifiers'
             );
-        } else if (!isNullifierFee1) {
+        } else if (!isNullifierFee1 && isNullifierFee2) {
             require(
                 tx1.nullifiers[nullifierIndex1] != 0 &&
                     tx1.nullifiers[nullifierIndex1] == tx2.nullifiersFee[nullifierIndex2],
                 'Not matching nullifiers'
             );
-        } else if (!isNullifierFee2) {
+        } else if (!isNullifierFee2 && isNullifierFee1) {
             require(
                 tx1.nullifiersFee[nullifierIndex1] != 0 &&
                     tx1.nullifiersFee[nullifierIndex1] == tx2.nullifiers[nullifierIndex2],
@@ -131,10 +167,5 @@ library ChallengesUtil {
                 'Not matching nullifiers'
             );
         }
-
-        require(
-            Utils.hashTransaction(tx1) != Utils.hashTransaction(tx2),
-            'Transactions need to be different'
-        );
     }
 }
