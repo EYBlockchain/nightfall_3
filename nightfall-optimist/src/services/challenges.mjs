@@ -6,7 +6,6 @@ import { getContractInstance } from 'common-files/utils/contract.mjs';
 import constants from 'common-files/constants/index.mjs';
 import { rand } from 'common-files/utils/crypto/crypto-random.mjs';
 import {
-  getBlockByBlockHash,
   saveCommit,
   getTransactionsByTransactionHashes,
   getBlockByBlockNumberL2,
