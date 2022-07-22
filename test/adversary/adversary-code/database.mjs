@@ -5,7 +5,7 @@ import mongo from 'common-files/utils/mongo.mjs';
 
 const { MONGO_URL, TRANSACTIONS_COLLECTION, OPTIMIST_DB } = config;
 
-let error = process.env.BAD_TX_SEQUENCE
+const error = process.env.BAD_TX_SEQUENCE
   ? process.env.BAD_TX_SEQUENCE.split(',')
   : [
       'ValidTransaction',

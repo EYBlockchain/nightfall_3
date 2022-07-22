@@ -1,7 +1,7 @@
 /* ignore unused exports */
 import logger from 'common-files/utils/logger.mjs';
 
-let error = process.env.BAD_BLOCK_SEQUENCE
+const error = process.env.BAD_BLOCK_SEQUENCE
   ? process.env.BAD_BLOCK_SEQUENCE.split(',')
   : [
       'ValidBlock',
