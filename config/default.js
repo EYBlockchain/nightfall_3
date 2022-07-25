@@ -11,6 +11,7 @@ BigInt.prototype.toJSON = function () {
 };
 
 module.exports = {
+  // constant
   COMMITMENTS_DB: 'nightfall_commitments',
   OPTIMIST_DB: 'optimist_data',
   PROPOSER_COLLECTION: 'proposers',
@@ -25,21 +26,35 @@ module.exports = {
   PEERS_COLLECTION: 'peers',
   TIMBER_COLLECTION: 'timber',
   CIRCUIT_COLLECTION: 'circuit_storage',
+  KEYS_COLLECTION: 'keys',
   CONTRACT_ARTIFACTS: '/app/build/contracts',
   PROPOSERS_CONTRACT_NAME: 'Proposers',
   SHIELD_CONTRACT_NAME: 'Shield',
   CHALLENGES_CONTRACT_NAME: 'Challenges',
   STATE_CONTRACT_NAME: 'State',
-  STATE_GENESIS_BLOCK: process.env.STATE_GENESIS_BLOCK,
   BLOCK_PROPOSED_EVENT_NAME: 'BlockProposed',
-  CIRCUITS_HOME: process.env.CIRCUITS_HOME || '/app/circuits/',
-  ALWAYS_DO_TRUSTED_SETUP: process.env.ALWAYS_DO_TRUSTED_SETUP || false,
   EXCLUDE_DIRS: 'common', // don't setup files with this in their path
-  LOG_LEVEL: process.env.LOG_LEVEL || 'debug',
-  MONGO_URL: process.env.MONGO_URL || 'mongodb://localhost:27017/',
+  PROOF_QUEUE: 'generate-proof',
+  MAX_QUEUE: 5,
   ZKP_KEY_LENGTH: 32, // use a 32 byte key length for SHA compatibility
   CONFIRMATION_POLL_TIME: 1000, // time to wait before querying the blockchain (ms). Must be << block interval
   CONFIRMATIONS: 12, // number of confirmations to wait before accepting a transaction
+  NODE_HASHLENGTH: 32,
+  TIMBER_HEIGHT: 32,
+  TXHASH_TREE_HEIGHT: 5,
+  DEFAULT_ACCOUNT_NUM: 10,
+  BN128_GROUP_ORDER: 21888242871839275222246405745257275088548364400416034343698204186575808495617n,
+  BN128_PRIME_FIELD: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
+  ZERO: '0x0000000000000000000000000000000000000000000000000000000000000000',
+  HASH_TYPE: 'mimc',
+  TXHASH_TREE_HASH_TYPE: 'keccak256',
+
+  // config
+  STATE_GENESIS_BLOCK: process.env.STATE_GENESIS_BLOCK,
+  CIRCUITS_HOME: process.env.CIRCUITS_HOME || '/app/circuits/',
+  ALWAYS_DO_TRUSTED_SETUP: process.env.ALWAYS_DO_TRUSTED_SETUP || false,
+  LOG_LEVEL: process.env.LOG_LEVEL || 'debug',
+  MONGO_URL: process.env.MONGO_URL || 'mongodb://localhost:27017/',
   PROTOCOL: 'http://', // connect to zokrates microservice like this
   WEBSOCKET_PORT: process.env.WEBSOCKET_PORT || 8080,
   WEBSOCKET_PING_TIME: 15000,
@@ -83,9 +98,7 @@ module.exports = {
   PROVING_SCHEME: process.env.PROVING_SCHEME || 'g16',
   BACKEND: process.env.BACKEND || 'bellman',
   CURVE: process.env.CURVE || 'bn128',
-  PROOF_QUEUE: 'generate-proof',
-  BN128_GROUP_ORDER: 21888242871839275222246405745257275088548364400416034343698204186575808495617n,
-  BN128_PRIME_FIELD: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
+
   TRANSACTIONS_PER_BLOCK: Number(process.env.TRANSACTIONS_PER_BLOCK) || 2,
   BLOCK_TYPES: '(uint48,address,bytes32,uint256,bytes32,bytes32)',
   TRANSACTION_TYPES:
@@ -97,14 +110,8 @@ module.exports = {
   SUBMIT_TRANSACTION_TYPES:
     '(uint112,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[2],uint[4])',
   RETRIES: Number(process.env.AUTOSTART_RETRIES) || 50,
-  NODE_HASHLENGTH: 32,
-  ZERO: '0x0000000000000000000000000000000000000000000000000000000000000000',
-  HASH_TYPE: 'mimc',
-  TXHASH_TREE_HASH_TYPE: 'keccak256',
   USE_STUBS: process.env.USE_STUBS === 'true',
   VK_IDS: { deposit: 0, single_transfer: 1, double_transfer: 2, withdraw: 3 }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
-  TIMBER_HEIGHT: 32,
-  TXHASH_TREE_HEIGHT: 5,
   MAX_PUBLIC_VALUES: {
     ERCADDRESS: 2n ** 161n - 1n,
     COMMITMENT: 2n ** 249n - 1n,
@@ -133,7 +140,6 @@ module.exports = {
   ELLIGATOR2: {
     U: BigInt(5), // non square in Fp
   },
-  MAX_QUEUE: 5,
   MPC: {
     MPC_PARAMS_URL:
       'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com/phase2/mpc_params',
@@ -438,8 +444,6 @@ module.exports = {
   eventWsUrl:
     process.env.LOCAL_PROPOSER === 'true' ? process.env.LOCAL_WS_URL : process.env.PROPOSER_WS_URL,
 
-  KEYS_COLLECTION: 'keys',
-  DEFAULT_ACCOUNT_NUM: 10,
   circuitsAWSFiles: {
     deposit_stub: {
       abi: 'circuits/deposit_stub/artifacts/deposit_stub-abi.json',
