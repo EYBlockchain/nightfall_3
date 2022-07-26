@@ -4,7 +4,7 @@ from "../../utils/structures.zok" import Point, NUMBER_COMMITMENTS
 /*
 * Verify that all commitments are correct
 */
-def main<NumCommitments, TxType>(\
+def main<NumCommitments>(\
     field packedErcAddress,\
     field idRemainder,\
     Point changeZkpPublicKeys,\

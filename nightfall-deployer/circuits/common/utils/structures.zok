@@ -33,6 +33,7 @@ struct PublicTransaction {
 	field[1] commitmentsFee
 	field[2] nullifiersFee
 	field[2] historicRootBlockNumberL2
+	field[2] historicRootBlockNumberL2Fee
 	field[2] compressedSecrets
 }
 

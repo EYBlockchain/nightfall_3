@@ -1,12 +1,19 @@
 
 from "../common/utils/structures.zok" import PublicTransaction, Commitments
 from "../common/generic_circuit/Stubs/commitments_stub.zok" import main as commitment_stub
+from "../common/generic_circuit/Stubs/nullifiers_stub.zok" import main as nullifier_stub
 
 def main(\
     PublicTransaction tx,\
+    field[2] nullifierRoots,\
     private Commitments<1> commitments\
+    private Nullifiers<2> nullifiers\
 )-> ():
     
     assert(commitment_stub::<1>(commitments.newCommitments.value, commitments.newCommitments.salt, commitments.recipientPublicKey))
 
+    assert(nullifier_stub::<2>(\
+        nullifierRoots, nullifiers.oldCommitments.value, nullifiers.oldCommitments.salt,\
+        nullifiers.rootKey, nullifiers.paths, nullifiers.orders))
+        
     return
