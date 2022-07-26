@@ -9,9 +9,8 @@ from "../common/generic_circuit/Verifiers/verify_commitments.zok" import main as
 def main(\
     PublicTransaction tx,\
     field[2] nullifierRoots,\
-    field ercAddressFee,\
-    u32[8] tokenIdFee,\
     field[2] nullifierRootsFee,\
+    field ercAddressFee,\
     private Nullifiers<2> nullifiers,\
     private Commitments<2> commitments,\
     private Nullifiers<2> nullifiersFee,\
@@ -46,29 +45,30 @@ def main(\
     field idRemainder = u32_array_to_field(tx.tokenId[1..8]) 
     field packedErcAddress = tx.ercAddress + u32_array_to_field([tx.tokenId[0]]) * SHIFT 
 
-   
+    //Verify nullifiers
     Point firstInputZkpPublicKeys = verify_nullifiers::<2>(packedErcAddress, idRemainder,\
         tx.nullifiers, nullifierRoots, nullifiers.oldCommitments.value, nullifiers.oldCommitments.salt,\
         nullifiers.rootKey, nullifiers.paths, nullifiers.orders)
 
     //Verify new Commmitments
-    assert(verify_commitments::<2, 2>(packedErcAddress, idRemainder, tx.commitments, firstInputZkpPublicKeys,\
+    assert(verify_commitments::<2>(packedErcAddress, idRemainder, tx.commitments, firstInputZkpPublicKeys,\
     commitments.newCommitments.value, commitments.newCommitments.salt, commitments.recipientPublicKey))
 
     //Verify Change
-    //TODO: assert(newCommitmentValues[NumCommitments - 1] == 0 || changeZkpPublicKeys == recipientPublicKey[NumCommitments - 1])
-
-    field idRemainderFee = u32_array_to_field(tokenIdFee[1..8]) 
-    field packedErcAddressFee = ercAddressFee + u32_array_to_field([tokenIdFee[0]]) * SHIFT
+    assert(commitments.newCommitments.value[0] == 0 || firstInputZkpPublicKeys == commitments.recipientPublicKey[0])
 
     //Verify Fee Nullifiers
-    Point firstInputZkpPublicKeysFee = verify_nullifiers::<2>(packedErcAddressFee, idRemainderFee,\
+    Point firstInputZkpPublicKeysFee = verify_nullifiers::<2>(ercAddressFee, 0,\
         tx.nullifiersFee, nullifierRootsFee, nullifiersFee.oldCommitments.value, nullifiersFee.oldCommitments.salt,\
         nullifiersFee.rootKey, nullifiersFee.paths, nullifiersFee.orders)
 
     //Verify Fee Commitments
-    assert(verify_commitments::<1, 2>(packedErcAddressFee, idRemainderFee, firstInputZkpPublicKeysFee,\
+    assert(verify_commitments::<1>(ercAddressFee, 0, firstInputZkpPublicKeysFee,\
     tx.commitmentsFee, commitmentsFee.newCommitments.value,commitmentsFee.newCommitments.salt,\
     commitmentsFee.recipientPublicKey))
 
+    //Verify Fee change
+    assert(commitments.newCommitments.value[0] == 0 || firstInputZkpPublicKeys == commitments.recipientPublicKey[0])
+
     return
+

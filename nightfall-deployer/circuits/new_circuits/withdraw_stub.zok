@@ -6,9 +6,8 @@ from "../common/generic_circuit/Stubs/commitments_stub.zok" import main as commi
 def main(\
     PublicTransaction tx,\
     field[2] nullifierRoots,\
-    field ercAddressFee,\
-    u32[8] tokenIdFee,\
     field[2] nullifierRootsFee,\
+    field ercAddressFee,\
     private Nullifiers<2> nullifiers,\
     private Commitments<2> commitments,\
     private Nullifiers<2> nullifiersFee,\

@@ -9,7 +9,10 @@ from "../common/generic_circuit/Verifiers/verify_commitments.zok" import main as
 
 def main(\
     PublicTransaction tx,\
-    private Commitments<1> commitments\
+    field[2] nullifierRoots,\
+    field[2] nullifierRootsFee,\
+    field ercAddressFee,\
+    private Commitments<1> commitments,\
     private Nullifiers<2> nullifiers\
 )-> ():
     
@@ -38,10 +41,16 @@ def main(\
     field idRemainder = u32_array_to_field(tx.tokenId[1..8]) 
     field packedErcAddress = tx.ercAddress + u32_array_to_field([tx.tokenId[0]]) * SHIFT 
 
-    Point firstInputZkpPublicKeys = [0,0]
+    //Verify nullifiers
+    Point firstInputZkpPublicKeys = verify_nullifiers::<2>(packedErcAddress, idRemainder,\
+        tx.nullifiers, nullifierRoots, nullifiers.oldCommitments.value, nullifiers.oldCommitments.salt,\
+        nullifiers.rootKey, nullifiers.paths, nullifiers.orders)
 
     //Verify new Commmitments
-    assert(verify_commitments::<1, 0>(packedErcAddress, idRemainder, firstInputZkpPublicKeys, [tx.commitments[0]],\
+    assert(verify_commitments::<1>(packedErcAddress, idRemainder, firstInputZkpPublicKeys, [tx.commitments[0]],\
     commitments.newCommitments.value, commitments.newCommitments.salt, commitments.recipientPublicKey))
+
+    //Verify Change
+    assert(nullifiers.oldCommitments.value[0] == 0 || firstInputZkpPublicKeys == commitments.recipientPublicKey[0])
 
     return

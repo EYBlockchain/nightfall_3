@@ -46,6 +46,10 @@ def main<TxType>(\
     assert((TxType == 0 && commitments[0] != 0 && commitments[1] == 0) ||\
         (TxType == 1 && commitments[0] != 0 && commitments[0] != commitments[1]) ||\
         (TxType == 2 && commitments[1] == 0))
+
+    //Check nullifiers
+    assert(TxType == 0 || ((TxType == 1 || TxType == 2) &&\
+     (nullifiers[0] != 0 && nullifiers[0] != nullifiers[1] && historicRootBlockNumberL2[0] != 0)))
     
     //Check nullifiers
     assert(\
