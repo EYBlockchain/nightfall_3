@@ -135,8 +135,8 @@ def main(\
 
 	// check that the old commitments are in the merkle tree
 	for u32 i in 0..2 do
-		field mimcHash = oldCommitment[i].hash
-		assert(pathCheck([root[i], ...path[i]], order[i], mimcHash))
+		field hash = oldCommitment[i].hash
+		assert(pathCheck([root[i], ...path[i]], order[i], hash))
 	endfor
 
 	// KEM-DEM Encryption

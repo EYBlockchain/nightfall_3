@@ -3,7 +3,7 @@ const { networks } = require('../truffle-config.js');
 const Verifier = artifacts.require('Verifier.sol');
 const Shield = artifacts.require('Shield.sol');
 const MerkleTree_Stateless = artifacts.require('MerkleTree_Stateless.sol');
-const MiMC = artifacts.require('MiMC.sol');
+const Poseidon = artifacts.require('Poseidon.sol');
 const Structures = artifacts.require('Structures.sol');
 const Config = artifacts.require('Config.sol');
 const Utils = artifacts.require('Utils.sol');
@@ -33,8 +33,8 @@ const sortedOwners = sortAscending(APPROVERS);
 module.exports = async function (deployer) {
   await deployer.deploy(Verifier);
   await deployer.link(Verifier, [Challenges, ChallengesUtil]);
-  await deployer.deploy(MiMC);
-  await deployer.link(MiMC, MerkleTree_Stateless);
+  await deployer.deploy(Poseidon);
+  await deployer.link(Poseidon, MerkleTree_Stateless);
   await deployer.deploy(MerkleTree_Stateless);
   await deployer.link(MerkleTree_Stateless, [Challenges, ChallengesUtil]);
   await deployer.deploy(Utils);
@@ -54,15 +54,23 @@ module.exports = async function (deployer) {
   const proposers = await Proposers.deployed();
   const challengers = await Challenges.deployed();
   const shield = await Shield.deployed();
-  const state = await State.deployed()
+  const state = await State.deployed();
   const { bootProposer, bootChallenger } = addresses;
   await proposers.setBootProposer(bootProposer);
   await challengers.setBootChallenger(bootChallenger);
   // restrict transfer amounts
-  for (let token of RESTRICTIONS.tokens[process.env.ETH_NETWORK]) {
-    if (token.name = 'ERC20Mock') break; // ignore test tokens, they're already handled in the test_tokens migration
-    console.log(`Max allowed deposit value for ${token.name}: ${(BigInt(token.amount) / BigInt(4)).toString()}`); // BigInt division returns whole number which is a floor. Not Math.floor() needed
+  for (const token of RESTRICTIONS.tokens[process.env.ETH_NETWORK]) {
+    if ((token.name = 'ERC20Mock')) break; // ignore test tokens, they're already handled in the test_tokens migration
+    console.log(
+      `Max allowed deposit value for ${token.name}: ${(
+        BigInt(token.amount) / BigInt(4)
+      ).toString()}`,
+    ); // BigInt division returns whole number which is a floor. Not Math.floor() needed
     console.log(`Max allowed withdraw value for ${token.name}: ${token.amount}`);
-    await shield.setRestriction(token.address, (BigInt(token.amount) / BigInt(4)).toString(), token.amount);
+    await shield.setRestriction(
+      token.address,
+      (BigInt(token.amount) / BigInt(4)).toString(),
+      token.amount,
+    );
   }
 };

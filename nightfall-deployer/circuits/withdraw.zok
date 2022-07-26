@@ -64,7 +64,7 @@ def main(\
 	assert(oldCommitmentCheck == oldCommitment.hash)
 
 	// check that the old commitment is in the merkle tree
-	field mimcHash = oldCommitment.hash
-	assert(pathCheck([root, ...path], order, mimcHash))
+	field hash = oldCommitment.hash
+	assert(pathCheck([root, ...path], order, hash))
 
 	return
