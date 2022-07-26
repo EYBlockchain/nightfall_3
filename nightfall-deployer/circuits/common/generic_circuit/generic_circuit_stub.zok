@@ -1,10 +1,23 @@
-from "../common/utils/structures.zok" import Point, PublicTransaction
+from "../utils/structures.zok" import Point, NUMBER_COMMITMENTS, NUMBER_NULLIFIERS
 from "./Stubs/commitments_stub.zok" import main as commitment_stub
 from "./Stubs/nullifiers_stub.zok" import main as nullifiers_stub
 from "./Stubs/encryption_stub.zok" import main as encryption_stub
 
 def main<TxType, NumNullifiers, NumCommitments, Transfer>(\
-    PublicTransaction tx,\
+    field value,\
+	u32 transactionType,\
+	field tokenType,\
+	u32[8] tokenId,\
+	field ercAddress,\
+	u32[8] recipientAddress,\
+	field[NUMBER_COMMITMENTS] commitments,\
+	field[NUMBER_NULLIFIERS] nullifiers,\
+	field[NUMBER_NULLIFIERS] historicRootBlockNumberL2,\
+	field[2] compressedSecrets,\
+    field fee,\
+    field commitmentsFee,\
+    field[2] nullifiersFee,\
+    field ercAddressFee,\
     field[NumNullifiers] nullifierRoots,\
     private field[NumNullifiers] oldCommitmentValues,\
     private field[NumNullifiers] oldCommitmentSalts,\

@@ -2,8 +2,8 @@ from "ecc/babyjubjubParams" import BabyJubJubParams, main as curveParams
 from "ecc/edwardsScalarMult" import main as scalarMult
 from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
 from "hashes/poseidon/poseidon.zok" import main as poseidon
-from "../../common/utils/structures.zok" import Point, PRIVATE_KEY_DOMAIN, NULLIFIER_KEY_DOMAIN, NUMBER_NULLIFIERS
-from "../../common/merkle-tree/path-check.zok" import main as pathCheck
+from "../../utils/structures.zok" import Point, PRIVATE_KEY_DOMAIN, NULLIFIER_KEY_DOMAIN, NUMBER_NULLIFIERS
+from "../../merkle-tree/path-check.zok" import main as pathCheck
 
 /*
 * Verify that all the nullifiers are correct
@@ -11,8 +11,7 @@ from "../../common/merkle-tree/path-check.zok" import main as pathCheck
 def main<NumNullifiers>(\
     field packedErcAddress,\
     field idRemainder,\
-    field value,\
-    field[NUMBER_NULLIFIERS] nullifiers,\
+    field[NumNullifiers] nullifiers,\
     field[NumNullifiers] roots,\
     private field[NumNullifiers] oldCommitmentValues,\
     private field[NumNullifiers] oldCommitmentSalts,\
@@ -49,10 +48,10 @@ def main<NumNullifiers>(\
         field nullifier = poseidon([nullifierKeys, calculatedOldCommitmentHash])
 
         //Check that the calculated nullifier matches with the one contained in the transaction
-        assert(nullifier == nullifiers[i])
+        assert(nullifiers[i] == 0 || nullifier == nullifiers[i])
 
         //Check that the nullifier is contained in the tree
-        assert(pathCheck([roots[i], ...paths[i]], orders[i], nullifiers[i]))
+        assert(nullifiers[i] == 0 || pathCheck([roots[i], ...paths[i]], orders[i], nullifiers[i]))
 
         //Set the changeZkpPublicKeys if i = 0. Otherwise just set the same value
         firstInputZkpPublicKeys = i == 0 ? zkpPublicKeys : firstInputZkpPublicKeys

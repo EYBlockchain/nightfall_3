@@ -22,15 +22,34 @@ const u32 NUMBER_COMMITMENTS = 2
 
 struct PublicTransaction {
 	field value
+	field fee
 	u32 transactionType
 	field tokenType
 	u32[8] tokenId
 	field ercAddress
 	u32[8] recipientAddress
-	field[NUMBER_COMMITMENTS] commitments
-	field[NUMBER_NULLIFIERS] nullifiers
-	field[NUMBER_NULLIFIERS] historicRootBlockNumberL2
+	field[2] commitments
+	field[2] nullifiers
+	field[1] commitmentsFee
+	field[2] nullifiersFee
+	field[2] historicRootBlockNumberL2
 	field[2] compressedSecrets
-	field[4] proof
 }
 
+struct Nullifiers<N> {
+	CommitmentPreimage<N> oldCommitments
+    field[N] rootKey
+    field[N][32] paths
+	field[N] orders
+}
+
+struct Commitments<N> {
+	CommitmentPreimage<N> newCommitments
+    Point[N] recipientPublicKey
+}
+
+struct Transfer {
+	u32[8] ephemeralKey
+    field ercAddressTransfer
+    u32[8] idTransfer
+}
