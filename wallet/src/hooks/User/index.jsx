@@ -7,7 +7,7 @@ import rollbackEventHandler from '@Nightfall/event-handlers/rollback';
 import {
   checkIndexDBForCircuit,
   checkIndexDBForCircuitHash,
-  storeClientId, getClientId,
+  storeClientId, getClientId, saveTree, getMaxBlock,
   emptyStoreBlocks,
   emptyStoreTimber,
 } from '@Nightfall/services/database';
@@ -17,6 +17,7 @@ import * as Storage from '../../utils/lib/local-storage';
 import { encryptAndStore, retrieveAndDecrypt, storeBrowserKey } from '../../utils/lib/key-storage';
 import useInterval from '../useInterval';
 import { wsMqMapping, topicRollback, topicBlockProposed } from '../../common-files/utils/mq';
+import axios from 'axios';
 import init from '../../web-worker/index.js';
 
 const { USE_STUBS, usernameMq, pswMQ } = global.config;
@@ -25,6 +26,7 @@ export const initialState = {
   compressedZkpPublicKey: '',
   chainSync: false,
   circuitSync: false,
+  timberSync: false,
 };
 
 export const UserContext = React.createContext({
@@ -88,8 +90,51 @@ export const UserProvider = ({ children }) => {
         compressedZkpPublicKey: zkpKeys[0].compressedZkpPublicKey,
       };
     });
-    setupWebSocket();
+    await timberAndBlockSync(process.env.REACT_APP_MODE, -1, -1, false);
+    setupMqtt();
   };
+
+  const timberAndBlockSync = async (deployment, lastTimberBlock, lastL2Block, isTimberSynced, isL2Synced = false) => {
+    if (isTimberSynced && isL2Synced) {
+      return;
+    }
+    let res = await axios
+      .get(
+        `https://xz83s31133.execute-api.eu-west-1.amazonaws.com/?deployment=${deployment}&lastTimberBlock=${lastTimberBlock}&lastL2Block=${lastL2Block}&isTimberSynced=${isTimberSynced}`,
+      )
+      .catch(err => {
+        throw new Error(err);
+      });
+
+    for(let timb of res.data.timber.data) {
+      await saveTree(timb.timber.blockNumber, timb.blockNumberL2, timb.timber);
+    }
+
+    if(res.data.timber.isSynced) {
+      setState(previousState => {
+        return {
+          ...previousState,
+          timberSync: res.data.timber.isSynced,
+        };
+      });
+    }
+
+    for(let block of res.data.l2.data) {
+      const { ivk, nsk } = await retrieveAndDecrypt(compressedPkd);
+      await blockProposedEventHandler(block, [ivk], [nsk], false);
+    }
+
+    if(res.data.l2Block.isSynced) {
+      setState(previousState => {
+        return {
+          ...previousState,
+          chainSync: res.data.l2Block.isSynced,
+        };
+      });
+    }
+
+    timberAndBlockSync(deployment, res.data.timber.lastBlock, res.data.l2Block.lastBlock, res.data.timber.isSynced, res.data.l2Block.isSynced);
+  }
 
   const syncState = async () => {
     const compressedZkpPublicKeys = Storage.ZkpPubKeyArrayGet('');
@@ -171,9 +216,8 @@ export const UserProvider = ({ children }) => {
       client.on('message', async (topic, message) => {
         const { type, data } = JSON.parse(message.toString());
         const { ivk, nsk } = await retrieveAndDecrypt(compressedPkd);
-        console.log('message received', data, topic);
 
-        if (topic === topicBlockProposed) {
+        if (topic === topicBlockProposed && chainSync) {
           if (type === topic) await blockProposedEventHandler(data, [ivk], [nsk]);
           else console.log('Error: messange sent on wrong topic');
         } else if (topic === topicRollback) {
@@ -185,7 +229,9 @@ export const UserProvider = ({ children }) => {
   }, [client]);
 
   React.useEffect(async () => {
-    if (await getClientId(0)) setupWebSocket();
+    const maxBlockL2 = await getMaxBlock()
+    await timberAndBlockSync(process.env.REACT_APP_MODE, maxBlockL2, maxBlockL2, false);
+    if (await getClientId(0)) setupMqtt();
   }, []);
 
   React.useEffect(async () => {
