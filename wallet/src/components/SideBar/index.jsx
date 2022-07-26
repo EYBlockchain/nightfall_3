@@ -43,6 +43,11 @@ export default function SideBar() {
                 <img src={synced} style={{ height: '32px', width: '32px' }} />
                 <div className="linkText">Nightfall Synced</div>
               </>
+            ) : state.timberSync ?(
+              <>
+                <Lottie style={{ height: '32px', width: '32px' }} animationData={syncing} loop />
+                <div className="linkText">Timber Synced - Syncing Nightfall...</div>
+              </>
             ) : (
               <>
                 <Lottie style={{ height: '32px', width: '32px' }} animationData={syncing} loop />
