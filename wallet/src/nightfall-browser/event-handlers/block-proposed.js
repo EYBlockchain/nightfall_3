@@ -29,7 +29,7 @@ const { ZERO, HASH_TYPE, TIMBER_HEIGHT, TXHASH_TREE_HASH_TYPE, TXHASH_TREE_HEIGH
 /**
 This handler runs whenever a BlockProposed event is emitted by the blockchain
 */
-async function blockProposedEventHandler(data, ivks, nsks) {
+async function blockProposedEventHandler(data, ivks, nsks, isProposedBlock = true) {
   console.log(`Received Block Proposed event: ${JSON.stringify(data)}`);
   // ivk will be used to decrypt secrets whilst nsk will be used to calculate nullifiers for commitments and store them
   const { blockNumber: currentBlockCount, transactionHash: transactionHashL1 } = data;
@@ -114,7 +114,7 @@ async function blockProposedEventHandler(data, ivks, nsks) {
     HASH_TYPE,
     TIMBER_HEIGHT,
   );
-  await saveTree(data.blockNumber, block.blockNumberL2, updatedTimber);
+  if (isProposedBlock) await saveTree(data.blockNumber, block.blockNumberL2, updatedTimber);
 
   await Promise.all(
     // eslint-disable-next-line consistent-return
