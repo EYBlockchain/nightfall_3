@@ -15,6 +15,10 @@ let error = process.env.BAD_TX_SEQUENCE
       'ValidTransaction',
       'IncorrectLeafCount',
       'ValidTransaction',
+      'ValidTransaction',
+      'ValidTransaction',
+      'ValidTransaction',
+      'ValidTransaction',
       'DuplicateTransaction',
       'ValidTransaction',
       'DuplicateNullifier',
@@ -142,9 +146,11 @@ const historicRootError = async number => {
 };
 
 export const addTx = txType => {
-  error = txType;
   resetErrorIdx = true;
-  logger.debug(`Received new Tx types to generate ${error}`);
+  if (txType !== 'reset') {
+    error = txType;
+    logger.debug(`Received new Tx types to generate ${error}`);
+  }
 };
 
 /**

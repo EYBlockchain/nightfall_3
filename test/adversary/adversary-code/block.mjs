@@ -11,6 +11,10 @@ let error = process.env.BAD_BLOCK_SEQUENCE
       'ValidBlock',
       'IncorrectLeafCount', //  Needs one prior block
       'ValidBlock',
+      'ValidBlock',
+      'ValidBlock',
+      'ValidBlock',
+      'ValidBlock',
       'DuplicateTransaction', // needs atleast one transaction in a prior block
       'ValidBlock',
       'DuplicateNullifier', // needs atleast one non deposit transaction in a prior block
@@ -50,9 +54,11 @@ const incorrectLeafCount = block => {
 };
 
 export const addBlock = blockType => {
-  error = blockType;
   resetErrorIdx = true;
-  logger.debug(`Received new block types to generate ${error}`);
+  if (blockType !== 'reset') {
+    error = blockType;
+    logger.debug(`Received new block types to generate ${error}`);
+  }
 };
 
 // eslint-disable-next-line import/prefer-default-export

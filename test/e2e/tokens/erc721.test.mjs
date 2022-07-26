@@ -128,7 +128,7 @@ describe('ERC721 tests', () => {
         availableTokenIds.shift(),
         fee,
       );
-      expectTransaction(res);
+      expectTransaction(res.receipt);
       res = await nf3Users[0].deposit(
         erc721Address,
         tokenTypeERC721,
@@ -136,7 +136,7 @@ describe('ERC721 tests', () => {
         availableTokenIds.shift(),
         fee,
       );
-      expectTransaction(res);
+      expectTransaction(res.receipt);
       // Wait until we see the right number of blocks appear
       eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       await emptyL2(nf3Users[0]);
@@ -170,7 +170,7 @@ describe('ERC721 tests', () => {
           nf3Users[1].zkpKeys.compressedZkpPublicKey,
           fee,
         );
-        expectTransaction(res);
+        expectTransaction(res.receipt);
       }
       eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       // await new Promise(resolve => setTimeout(resolve, 3000));
@@ -198,7 +198,7 @@ describe('ERC721 tests', () => {
         tokenToWithdraw,
         nf3Users[0].ethereumAddress,
       );
-      expectTransaction(rec);
+      expectTransaction(rec.receipt);
       logger.debug(`     Gas used was ${Number(rec.gasUsed)}`);
 
       await emptyL2(nf3Users[0]);
@@ -222,7 +222,7 @@ describe('ERC721 tests', () => {
           tokenToWithdraw,
           nf3Users[0].ethereumAddress,
         );
-        expectTransaction(rec);
+        expectTransaction(rec.receipt);
         const withdrawal = await nf3Users[0].getLatestWithdrawHash();
 
         await emptyL2(nf3Users[0]);

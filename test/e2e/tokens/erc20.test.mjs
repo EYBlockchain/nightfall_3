@@ -181,7 +181,7 @@ describe('ERC20 tests', () => {
           nf3Users[1].zkpKeys.compressedZkpPublicKey,
           fee,
         );
-        expectTransaction(res);
+        expectTransaction(res.receipt);
 
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
@@ -207,7 +207,7 @@ describe('ERC20 tests', () => {
           nf3Users[0].zkpKeys.compressedZkpPublicKey,
           fee,
         );
-        expectTransaction(res);
+        expectTransaction(res.receipt);
         logger.debug(`     Gas used was ${Number(res.gasUsed)}`);
       }
       const after = (await nf3Users[0].getLayer2Balances())[erc20Address][0].balance;
@@ -231,7 +231,7 @@ describe('ERC20 tests', () => {
           nf3Users[1].zkpKeys.compressedZkpPublicKey,
           fee,
         );
-        expect(res).to.be.equal(200);
+        expect(res.status).to.be.equal(200);
       }
 
       const after = (await nf3Users[0].getLayer2Balances())[erc20Address][0].balance;
@@ -256,7 +256,7 @@ describe('ERC20 tests', () => {
           nf3Users[1].zkpKeys.compressedZkpPublicKey,
           fee,
         );
-        expect(res).to.be.equal(200);
+        expect(res.status).to.be.equal(200);
       }
 
       const after = (await nf3Users[0].getLayer2Balances())[erc20Address][0].balance;
@@ -275,7 +275,7 @@ describe('ERC20 tests', () => {
         tokenId,
         nf3Users[0].ethereumAddress,
       );
-      expectTransaction(rec);
+      expectTransaction(rec.receipt);
 
       logger.debug(`     Gas used was ${Number(rec.gasUsed)}`);
       const afterBalance = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance;
@@ -293,11 +293,11 @@ describe('ERC20 tests', () => {
           tokenId,
           nf3Users[0].ethereumAddress,
         );
-        expectTransaction(rec);
+        expectTransaction(rec.receipt);
         const withdrawal = await nf3Users[0].getLatestWithdrawHash();
         await emptyL2(nf3Users[0]);
         const res = await nf3Users[0].finaliseWithdrawal(withdrawal);
-        expectTransaction(res);
+        expectTransaction(res.receipt);
       } catch (err) {
         error = err;
       }
@@ -322,7 +322,7 @@ describe('ERC20 tests', () => {
           tokenId,
           nf3Users[0].ethereumAddress,
         );
-        expectTransaction(rec);
+        expectTransaction(rec.receipt);
         const withdrawal = await nf3Users[0].getLatestWithdrawHash();
 
         await emptyL2(nf3Users[0]);
@@ -549,7 +549,7 @@ describe('ERC20 tests', () => {
           );
 
           await new Promise(resolve => setTimeout(resolve, 15000));
-          expectTransaction(rec);
+          expectTransaction(rec.receipt);
 
           const withdrawal = await nf3Users[0].getLatestWithdrawHash();
           await emptyL2(nf3Users[0]);

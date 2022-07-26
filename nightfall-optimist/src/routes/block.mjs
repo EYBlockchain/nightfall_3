@@ -10,6 +10,7 @@ import {
   getBlockByTransactionHash,
   getBlockByRoot,
   getTransactionsByTransactionHashes,
+  resetUnsuccessfulBlockProposedTransactions,
 } from '../services/database.mjs';
 import { setMakeNow } from '../services/block-assembler.mjs';
 
@@ -92,6 +93,7 @@ router.get('/reset-localblock', async (req, res, next) => {
   logger.debug('block endpoint received get');
   try {
     await Block.rollback();
+    await resetUnsuccessfulBlockProposedTransactions();
     res.json({ resetstatus: true });
   } catch (err) {
     next(err);

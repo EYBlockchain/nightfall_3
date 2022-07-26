@@ -8,6 +8,7 @@ import commitment from './commitment.mjs';
 import incomingViewingKey from './incoming-viewing-key.mjs';
 import setInstantWithdrawl from './instant-withdrawal.mjs';
 import generateZkpKeys from './generate-zkp-keys.mjs';
+import block from './block.mjs';
 
 export {
   transfer,
@@ -20,4 +21,5 @@ export {
   incomingViewingKey,
   setInstantWithdrawl,
   generateZkpKeys,
+  block,
 };
