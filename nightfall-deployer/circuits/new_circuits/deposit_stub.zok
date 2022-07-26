@@ -1,0 +1,12 @@
+
+from "../common/utils/structures.zok" import PublicTransaction, Commitments
+from "../common/generic_circuit/Stubs/commitments_stub.zok" import main as commitment_stub
+
+def main(\
+    PublicTransaction tx,\
+    private Commitments<1> commitments\
+)-> ():
+    
+    assert(commitment_stub::<1>(commitments.newCommitments.value, commitments.newCommitments.salt, commitments.recipientPublicKey))
+
+    return
