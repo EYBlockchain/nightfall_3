@@ -65,19 +65,6 @@ services:
       USE_STUBS: 'false' # make sure this flag is the same as in deployer service
     command: ['npm', 'run', 'dev']
 
-  worker:
-    image: ghcr.io/eyblockchain/nightfall3-worker
-    volumes:
-      - type: volume
-        source: ./proving_files
-        target: /app/output/
-    depends_on:
-      - deployer
-    networks:
-      - nightfall_network
-    environment:
-      LOG_LEVEL: info
-
     # Temporary container to deploy contracts and circuits and populate volumes
   deployer:
     image: ghcr.io/eyblockchain/nightfall3-deployer
@@ -99,22 +86,6 @@ services:
       BLOCKCHAIN_PORT: 8546
       ZOKRATES_WORKER_HOST: worker
       USE_STUBS: 'false'
-
-  rabbitmq1:
-    image: rabbitmq
-    ports:
-      - '15674:15674'
-      - '5672:5672'
-    networks:
-      - nightfall_network
-
-  rabbitmq2:
-    image: rabbitmq
-    ports:
-      - '15675:15674'
-      - '5673:5672'
-    networks:
-      - nightfall_network
 
   optimist1:
     image: ghcr.io/eyblockchain/nightfall3-optimist:latest
@@ -164,6 +135,35 @@ services:
       IS_CHALLENGER: 'true'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
     command: ['npm', 'run', 'dev']
+
+  rabbitmq1:
+    image: rabbitmq
+    ports:
+      - '15674:15674'
+      - '5672:5672'
+    networks:
+      - nightfall_network
+
+  rabbitmq2:
+    image: rabbitmq
+    ports:
+      - '15675:15674'
+      - '5673:5672'
+    networks:
+      - nightfall_network
+
+  worker:
+    image: ghcr.io/eyblockchain/nightfall3-worker
+    volumes:
+      - type: volume
+        source: ./proving_files
+        target: /app/output/
+    depends_on:
+      - deployer
+    networks:
+      - nightfall_network
+    environment:
+      LOG_LEVEL: info
 
 volumes:
   mongodb1:

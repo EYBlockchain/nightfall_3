@@ -35,6 +35,14 @@ services:
       CONTRACT_FILES_URL: ${CONTRACT_FILES_URL}
     command: ['npm', 'run', 'dev']
 
+  rabbitmq1:
+    image: rabbitmq
+    ports:
+      - '15674:15674'
+      - '5672:5672'
+    networks:
+      - nightfall_network
+
   worker:
     image: ghcr.io/eyblockchain/nightfall3-worker:latest
     volumes:
@@ -48,14 +56,6 @@ services:
       MPC: 'true'
       ETH_NETWORK: ${ETH_NETWORK}
       CIRCUIT_FILES_URL: ${CIRCUIT_FILES_URL}
-
-  rabbitmq1:
-    image: rabbitmq
-    ports:
-      - '15674:15674'
-      - '5672:5672'
-    networks:
-      - nightfall_network
 
 volumes:
   mongodb1:
