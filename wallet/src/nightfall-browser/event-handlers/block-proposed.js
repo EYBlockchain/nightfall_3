@@ -140,7 +140,6 @@ async function blockProposedEventHandler(
     HASH_TYPE,
     TIMBER_HEIGHT,
   );
-
   if (isProposedBlock) await saveTree(data.blockNumber, block.blockNumberL2, updatedTimber);
 
   await Promise.all(
