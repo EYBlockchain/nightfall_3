@@ -91,6 +91,12 @@ user to recover from this situation and to be able to increase the fee for the t
 
 This is actually simple to arrange.  The user can just create a new transaction, which is otherwise identical to the original one but with a higher fee.  Currently, this would be rejected by Optimist as a duplicate (same commitments and nullifiers) but the will be changed by [insert issue no] and so resubmitting a transaction with a higher fee should 'just work'.
 
+### Rollbacks
+
+If a layer two block is successfully challenged and is rolled back then the user does not lose their fee payment.  This is because their transaction
+will either go back into the L2 mempool (e.g. all deposit transactions or transfers with finalised input commitments) or, if it's a dependent transaction
+(e.g. a transfer with at least one input that is not finalised), it will be deleted and the user is free to reuse the inputs.
+
 ## Zero commitments and nullifiers
 
 A limitation of the above approach is that the transfer/withdraw circuit requires two input Matic commitments even if it would be possible to use
