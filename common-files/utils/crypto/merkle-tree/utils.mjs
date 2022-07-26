@@ -10,33 +10,12 @@ import config from 'config';
 import createKeccakHash from 'keccak';
 import crypto from 'crypto';
 import sb from 'safe-buffer';
+import { generalise } from 'general-number';
 import logger from '../../logger.mjs';
+import mimcHashFunction from '../mimc/mimc.mjs';
+import poseidonHashFunction from '../poseidon/poseidon.mjs';
 
 const { Buffer } = sb;
-
-// BW6 not yet implemented
-
-const mimcCurves = {
-  BLS12_377: {
-    exponent: 11,
-    rounds: 74,
-    modulus: BigInt('8444461749428370424248824938781546531375899335154063827935233455917409239041'),
-  },
-  bn128: {
-    exponent: 7,
-    rounds: 91,
-    modulus: BigInt(
-      '21888242871839275222246405745257275088548364400416034343698204186575808495617',
-    ),
-  },
-  BW6_761: {
-    exponent: 23,
-    rounds: 84,
-    modulus: BigInt(
-      '258664426012969094010652733694893533536393512754914660539884262666720468348340822774968888139573360124440321458177',
-    ),
-  },
-};
 
 function parseToDigitsArray(str, base) {
   const digits = str.split('');
@@ -177,35 +156,6 @@ function concatenate(a, b) {
   return buffer;
 }
 
-/**
-Utility function to:
-- convert each item in items to a 'buffer' of bytes (2 hex values), convert those bytes into decimal representation
-- 'concatenate' each decimally-represented byte together into 'concatenated bytes'
-- hash the 'buffer' of 'concatenated bytes' (sha256) (sha256 returns a hex output)
-- truncate the result to the right-most 64 bits
-Return:
-createHash: we're creating a sha256 hash
-update: [input string to hash (an array of bytes (in decimal representaion) [byte, byte, ..., byte] which represents the result of: item1, item2, item3. Note, we're calculating hash(item1, item2, item3) ultimately]
-digest: [output format ("hex" in our case)]
-slice: [begin value] outputs the items in the array on and after the 'begin value'
-*/
-function addMod(addMe, m) {
-  return addMe.reduce((e, acc) => (e + acc) % m, BigInt(0));
-}
-
-function powerMod(base, exponent, m) {
-  if (m === BigInt(1)) return BigInt(0);
-  let result = BigInt(1);
-  let b = base % m;
-  let e = exponent;
-  while (e > BigInt(0)) {
-    if (e % BigInt(2) === BigInt(1)) result = (result * b) % m;
-    e >>= BigInt(1); // eslint-disable-line no-bitwise
-    b = (b * b) % m;
-  }
-  return result;
-}
-
 function keccak256Hash(...items) {
   const concatvalue = items
     .map(item => Buffer.from(strip0x(item), 'hex'))
@@ -213,49 +163,10 @@ function keccak256Hash(...items) {
   return `0x${createKeccakHash('keccak256').update(concatvalue, 'hex').digest('hex')}`;
 }
 
-/**
-mimc encryption function
-@param  {String} x - the input value
-@param {String} k - the key value
-@param {String} seed - input seed for first round (=0n for a hash)
-@param {int} exponent - the exponent
-*/
-function mimcpe(x, k, seed, roundCount, exponent, m) {
-  let xx = x;
-  let t;
-  let c = seed;
-  for (let i = 0; i < roundCount; i++) {
-    c = keccak256Hash(c);
-    t = addMod([xx, BigInt(c), k], m); // t = x + c_i + k
-    xx = powerMod(t, BigInt(exponent), m); // t^7
-  }
-  // Result adds key again as blinding factor
-  return addMod([xx, k], m);
-}
-
-function mimcpemp(x, k, seed, roundCount, exponent, m) {
-  let r = k;
-  let i;
-  for (i = 0; i < x.length; i++) {
-    r = (r + (x[i] % m) + mimcpe(x[i], r, seed, roundCount, exponent, m)) % m;
-  }
-  return r;
-}
-
 function mimcHash(...msgs) {
-  const { rounds, exponent, modulus } = !config.CURVE
-    ? mimcCurves.ALT_BN_254
-    : mimcCurves[config.CURVE];
-  logger.silly(`curve: ${config.CURVE} rounds: ${rounds} exp ${exponent} mod ${modulus}`);
-  const mimc = '0x6d696d63'; // this is 'mimc' in hex as a nothing-up-my-sleeve seed
-  return `0x${mimcpemp(
-    msgs.map(BigInt),
-    BigInt(0), // k
-    keccak256Hash(mimc), // seed
-    rounds, // rounds of hashing
-    exponent, // exponent
-    modulus, // modulus
-  )
+  const curve = !config.CURVE || config.CURVE === 'bn128' ? 'ALT_BN_254' : config.CURVE;
+  logger.silly(`curve: ${config.CURVE}`);
+  return `0x${mimcHashFunction(msgs, curve)
     .toString(16) // hex string - can remove 0s
     .padStart(64, '0')}`; // so pad
 }
@@ -268,6 +179,12 @@ function shaHash(...items) {
   return `0x${crypto.createHash('sha256').update(concatvalue, 'hex').digest('hex')}`;
 }
 
+function poseidonHash(...items) {
+  const inputs = items.map(i => generalise(i));
+  const hash = poseidonHashFunction(inputs);
+  return hash.hex(32);
+}
+
 function concatenateThenHash(hashType, ...items) {
   let h;
   if (hashType === 'mimc') {
@@ -276,6 +193,8 @@ function concatenateThenHash(hashType, ...items) {
     h = shaHash(...items);
   } else if (hashType === 'keccak256') {
     h = keccak256Hash(...items);
+  } else if (hashType === 'poseidon') {
+    h = poseidonHash(...items);
   } else {
     // can be changed to other hash
     h = mimcHash(...items);
@@ -292,5 +211,6 @@ export default {
   concatenate,
   mimcHash,
   shaHash,
+  poseidonHash,
   concatenateThenHash,
 };

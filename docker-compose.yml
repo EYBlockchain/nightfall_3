@@ -132,7 +132,7 @@ services:
       WEBSOCKET_PORT: 8080
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
-      HASH_TYPE: mimc
+      HASH_TYPE: poseidon
       LOG_LEVEL: debug
       IS_CHALLENGER: 'false'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
@@ -156,7 +156,7 @@ services:
       WEBSOCKET_PORT: 8080
       BLOCKCHAIN_WS_HOST: blockchain1
       BLOCKCHAIN_PORT: 8546
-      HASH_TYPE: mimc
+      HASH_TYPE: poseidon
       LOG_LEVEL: error
       IS_CHALLENGER: 'false'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}

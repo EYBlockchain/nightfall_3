@@ -32,7 +32,7 @@ services:
       WEBSOCKET_PORT: 8080
       BLOCKCHAIN_WS_HOST: host.docker.internal
       BLOCKCHAIN_PORT: 8546
-      HASH_TYPE: mimc
+      HASH_TYPE: poseidon
       LOG_LEVEL: debug
       IS_CHALLENGER: 'true'
       NONSTOP_QUEUE_AFTER_INVALID_BLOCK: 'true'

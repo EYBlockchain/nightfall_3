@@ -134,7 +134,7 @@ if [ ! -z "${DEPLOYMENT}" ]; then
     -e MONGO_URL=${MONGO_IP} \
     -e WEBSOCKET_PORT=8080 \
     -e BLOCKCHAIN_URL=${BLOCKCHAIN_URL} \
-    -e HASH_TYPE=mimc \
+    -e HASH_TYPE=poseidon \
     -e LOG_LEVEL=debug \
     -e TRANSACTIONS_PER_BLOCK=32 \
     -e AUTOSTART_RETRIES=10000 \
@@ -150,7 +150,7 @@ else
     -e MONGO_URL=${MONGO_IP} \
     -e WEBSOCKET_PORT=8080 \
     -e BLOCKCHAIN_URL=${BLOCKCHAIN_URL} \
-    -e HASH_TYPE=mimc \
+    -e HASH_TYPE=poseidon \
     -e LOG_LEVEL=debug \
     -e TRANSACTIONS_PER_BLOCK=32 \
     -e AUTOSTART_RETRIES=10000 \
