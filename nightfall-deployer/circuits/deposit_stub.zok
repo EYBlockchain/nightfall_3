@@ -7,20 +7,11 @@ from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field
 def main(\
     PublicTransaction tx,\
     field[2] nullifierRoots,\
-    private Commitments<1> commitments,\
-    private Nullifiers<2> nullifiers\
+    private Commitments<1> commitments\
 )-> ():
     
-    field[2] nullifiersValue = [\
-        u32_array_to_field(nullifiers.oldCommitments.value[0]),\
-        u32_array_to_field(nullifiers.oldCommitments.value[1])\
-    ]
     field[1] commitment1Value = [u32_array_to_field(commitments.newCommitments.value[0])]
 
     assert(commitment_stub::<1>(commitment1Value, commitments.newCommitments.salt, commitments.recipientPublicKey))
-
-    assert(nullifier_stub::<2>(\
-        nullifierRoots, nullifiersValue, nullifiers.oldCommitments.salt,\
-        nullifiers.rootKey, nullifiers.paths, nullifiers.orders))
         
     return
