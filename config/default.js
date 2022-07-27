@@ -12,7 +12,7 @@ BigInt.prototype.toJSON = function () {
 
 module.exports = {
   // constant
-  COMMITMENTS_DB: 'nightfall_commitments',
+  COMMITMENTS_DB: "nightfall_commitments",
   OPTIMIST_DB: 'optimist_data',
   PROPOSER_COLLECTION: 'proposers',
   CHALLENGER_COLLECTION: 'challengers',
@@ -43,11 +43,18 @@ module.exports = {
   TIMBER_HEIGHT: 32,
   TXHASH_TREE_HEIGHT: 5,
   DEFAULT_ACCOUNT_NUM: 10,
-  BN128_GROUP_ORDER: 21888242871839275222246405745257275088548364400416034343698204186575808495617n,
-  BN128_PRIME_FIELD: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
   ZERO: '0x0000000000000000000000000000000000000000000000000000000000000000',
   HASH_TYPE: 'mimc',
   TXHASH_TREE_HASH_TYPE: 'keccak256',
+  BLOCK_TYPES: '(uint48,address,bytes32,uint256,bytes32,bytes32)',
+  TRANSACTION_TYPES:
+    '(uint112,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[2],uint[4])',
+  PROPOSE_BLOCK_TYPES: [
+    '(uint48,address,bytes32,uint256,bytes32,bytes32)',
+    '(uint112,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[2],uint[4])[]',
+  ], // used to encode/decode proposeBlock signature
+  SUBMIT_TRANSACTION_TYPES:
+    '(uint112,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[2],uint[4])',
 
   // config
   STATE_GENESIS_BLOCK: process.env.STATE_GENESIS_BLOCK,
@@ -100,15 +107,6 @@ module.exports = {
   CURVE: process.env.CURVE || 'bn128',
 
   TRANSACTIONS_PER_BLOCK: Number(process.env.TRANSACTIONS_PER_BLOCK) || 2,
-  BLOCK_TYPES: '(uint48,address,bytes32,uint256,bytes32,bytes32)',
-  TRANSACTION_TYPES:
-    '(uint112,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[2],uint[4])',
-  PROPOSE_BLOCK_TYPES: [
-    '(uint48,address,bytes32,uint256,bytes32,bytes32)',
-    '(uint112,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[2],uint[4])[]',
-  ], // used to encode/decode proposeBlock signature
-  SUBMIT_TRANSACTION_TYPES:
-    '(uint112,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[2],uint[4])',
   RETRIES: Number(process.env.AUTOSTART_RETRIES) || 50,
   USE_STUBS: process.env.USE_STUBS === 'true',
   VK_IDS: { deposit: 0, single_transfer: 1, double_transfer: 2, withdraw: 3 }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
@@ -117,6 +115,8 @@ module.exports = {
     COMMITMENT: 2n ** 249n - 1n,
     NULLIFIER: 2n ** 249n - 1n,
   },
+  BN128_GROUP_ORDER: 21888242871839275222246405745257275088548364400416034343698204186575808495617n,
+  BN128_PRIME_FIELD: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
   // the various parameters needed to describe the Babyjubjub curve that we use for El-Gamal
   // BABYJUBJUB
   // Montgomery EC form is y^2 = x^3 + Ax^2 + Bx
