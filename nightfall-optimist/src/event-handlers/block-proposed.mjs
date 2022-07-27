@@ -15,7 +15,8 @@ import {
   getTransactionByTransactionHash,
   saveInvalidBlock,
 } from '../services/database.mjs';
-import { getProposeBlockCalldata, getTimeByBlock } from '../services/process-calldata.mjs';
+import { getProposeBlockCalldata } from '../services/process-calldata.mjs';
+import getTimeByBlock from '../services/block-info.mjs';
 import { increaseBlockInvalidCounter } from '../services/debug-counters.mjs';
 import transactionSubmittedEventHandler from './transaction-submitted.mjs';
 

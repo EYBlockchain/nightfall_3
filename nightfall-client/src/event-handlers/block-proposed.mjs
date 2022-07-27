@@ -11,6 +11,7 @@ import {
   isTransactionHashWithdraw,
 } from '../services/commitment-storage.mjs';
 import getProposeBlockCalldata from '../services/process-calldata.mjs';
+import getTimeByBlock from '../services/block-info.mjs';
 import { zkpPrivateKeys, nullifierKeys } from '../services/keys.mjs';
 import {
   getLatestTree,
@@ -35,6 +36,9 @@ async function blockProposedEventHandler(data, syncing) {
   );
   const latestTree = await getLatestTree();
   const blockCommitments = transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat();
+
+  let timeBlockL2 = await getTimeByBlock(transactionHashL1);
+  timeBlockL2 = new Date(timeBlockL2 * 1000);
 
   const dbUpdates = transactions.map(async transaction => {
     let saveTxToDb = false;
@@ -80,6 +84,7 @@ async function blockProposedEventHandler(data, syncing) {
         transactionHashL1,
         blockNumber: data.blockNumber,
         blockNumberL2: block.blockNumberL2,
+        timeBlockL2,
         ...transaction,
       }).catch(function (err) {
         if (!syncing || !err.message.includes('replay existing transaction')) throw err;
