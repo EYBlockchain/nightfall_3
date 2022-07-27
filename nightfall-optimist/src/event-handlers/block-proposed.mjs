@@ -15,7 +15,7 @@ import {
   getTransactionByTransactionHash,
   saveInvalidBlock,
 } from '../services/database.mjs';
-import { getProposeBlockCalldata } from '../services/process-calldata.mjs';
+import { getProposeBlockCalldata, getTimeByBlock } from '../services/process-calldata.mjs';
 import { increaseBlockInvalidCounter } from '../services/debug-counters.mjs';
 import transactionSubmittedEventHandler from './transaction-submitted.mjs';
 
@@ -90,7 +90,10 @@ async function blockProposedEventHandler(data) {
     );
     // mark transactions so that they are out of the mempool,
     // so we don't try to use them in a block which we're proposing.
-    await removeTransactionsFromMemPool(block.transactionHashes, block.blockNumberL2); // TODO is await needed?
+    // We get the L1 block time in order to save it in the database to have this information available
+    let timeBlockL2 = await getTimeByBlock(transactionHashL1);
+    timeBlockL2 = new Date(timeBlockL2 * 1000);
+    await removeTransactionsFromMemPool(block.transactionHashes, block.blockNumberL2, timeBlockL2); // TODO is await needed?
 
     const latestTree = await getLatestTree();
     const blockCommitments = transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat();
