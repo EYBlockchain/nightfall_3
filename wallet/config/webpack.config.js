@@ -161,7 +161,7 @@ module.exports = function (webpackEnv) {
     mode: isEnvProduction ? 'production' : isEnvDevelopment && 'development',
     externals: {
       config: JSON.stringify(config),
-      constants: JSON.stringify(constants),
+      nightfallConstants: JSON.stringify(constants),
     },
     // Stop compilation early in production
     bail: isEnvProduction,

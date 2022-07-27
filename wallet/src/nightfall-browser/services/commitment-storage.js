@@ -21,7 +21,7 @@ const {
   COMMITMENTS_COLLECTION,
   KEYS_COLLECTION,
   CIRCUIT_COLLECTION,
-} = global.config;
+} = global.nightfallConstants;
 
 const { generalise } = gen;
 const mutex = new Mutex();
