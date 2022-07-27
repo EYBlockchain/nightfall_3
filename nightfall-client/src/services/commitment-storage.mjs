@@ -84,7 +84,7 @@ export async function countWithdrawTransactionHashes(transactionHashes) {
   const connection = await mongo.connection(MONGO_URL);
   const query = {
     transactionHash: { $in: transactionHashes },
-    nullifierTransactionType: { $in: ['3', '4'] },
+    nullifierTransactionType: { $in: ['2'] },
   };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).countDocuments(query);
@@ -93,7 +93,7 @@ export async function countWithdrawTransactionHashes(transactionHashes) {
 // function to get if the transaction hash belongs to a withdraw transaction
 export async function isTransactionHashWithdraw(transactionHash) {
   const connection = await mongo.connection(MONGO_URL);
-  const query = { transactionHash, nullifierTransactionType: { $in: ['3', '4'] } };
+  const query = { transactionHash, nullifierTransactionType: { $in: ['2'] } };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).countDocuments(query);
 }
@@ -514,7 +514,7 @@ export async function getWithdrawCommitments() {
   const db = connection.db(COMMITMENTS_DB);
   const query = {
     isNullified: true,
-    nullifierTransactionType: { $in: ['3', '4'] },
+    nullifierTransactionType: { $in: ['2'] },
     isNullifiedOnChain: { $gte: 0 },
   };
   // Get associated nullifiers of commitments that have been spent on-chain and are used for withdrawals.

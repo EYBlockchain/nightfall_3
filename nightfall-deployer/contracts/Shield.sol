@@ -129,8 +129,7 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
         bytes32 transactionHash = Utils.hashTransaction(t);
         require(!withdrawn[transactionHash], 'This transaction has already paid out');
         require(
-            t.transactionType == TransactionTypes.WITHDRAW ||
-            t.transactionType == TransactionTypes.WITHDRAW_CHANGE,
+            t.transactionType == TransactionTypes.WITHDRAW,
             'This transaction is not a valid WITHDRAW'
         );
 
@@ -162,8 +161,7 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
         bytes32 transactionHash = Utils.hashTransaction(t);
         require(!withdrawn[transactionHash], 'This transaction has already paid out');
         withdrawn[transactionHash] = true;
-        if (t.transactionType == TransactionTypes.WITHDRAW || 
-            t.transactionType == TransactionTypes.WITHDRAW_CHANGE) {
+        if (t.transactionType == TransactionTypes.WITHDRAW) {
             address originalRecipientAddress = address(uint160(uint256(t.recipientAddress)));
             // check if an advancedWithdrawal has been paid, if so payout the new owner.
             address recipientAddress =
@@ -228,9 +226,7 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
         bytes32[6] memory siblingPath
     ) external payable nonReentrant {
         // The transaction is a withdrawal transaction
-        require(t.transactionType == TransactionTypes.WITHDRAW ||
-            t.transactionType == TransactionTypes.WITHDRAW_CHANGE,
-            'Can only advance withdrawals');
+        require(t.transactionType == TransactionTypes.WITHDRAW, 'Can only advance withdrawals');
 
         // check this block is a real one, in the queue, not something made up.
         state.areBlockAndTransactionReal(b, t, index, siblingPath);
@@ -288,7 +284,10 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
     function payIn(Transaction memory t) internal {
         // check the address fits in 160 bits. This is so we can't overflow the circuit
         uint256 addrNum = uint256(t.ercAddress);
-        require (addrNum < 0x010000000000000000000000000000000000000000, 'The given address is more than 160 bits');
+        require(
+            addrNum < 0x010000000000000000000000000000000000000000,
+            'The given address is more than 160 bits'
+        );
         address addr = address(uint160(addrNum));
 
         if (t.tokenType == TokenType.ERC20) {

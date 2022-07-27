@@ -14,10 +14,7 @@ def main<TxType>(\
 	field[2] commitments,\
 	field[2] nullifiers,\
 	field[2] historicRootBlockNumberL2,\
-	field[2] compressedSecrets,\
-    field fee,\
-    field[1] commitmentsFee,\
-    field[2] nullifiersFee\
+	field[2] compressedSecrets\
 ) -> (bool):
 
    //Check that transaction type matches    
@@ -58,9 +55,5 @@ def main<TxType>(\
     //For deposits and withdrawals, compressedSecrets will be zero
     assert((TxType == 1 && (compressedSecrets[0] != 0 || compressedSecrets[1] != 0))\
         || (TxType != 1 && compressedSecrets[0] == 0 && compressedSecrets[1] == 0))
-    
-    //Check fee structure
-    assert((TxType == 0 && fee == 0) || TxType != 0)
-    assert(nullifiersFee[0] != 0)
 
     return true

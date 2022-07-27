@@ -25,7 +25,7 @@ library Utils {
         bytes32[] memory transactionHashes = new bytes32[](ts.length);
 
         for (uint256 i = 0; i < ts.length; i++) {
-            transactionHashes[i ] = hashTransaction(ts[i]);
+            transactionHashes[i] = hashTransaction(ts[i]);
         }
         transactionHashesRoot = calculateMerkleRoot(transactionHashes);
         return transactionHashesRoot;
@@ -99,101 +99,39 @@ library Utils {
 
     // gathers public inputs for each tx type
     // required now we have removed the publicInputHash
-    function getPublicInputs(Structures.Transaction calldata ts, uint256[2] memory roots)
-        internal
-        pure
-        returns (uint256[] memory inputs)
-    {
-        // uint256[] memory inputs = new uint256[](countPublicInputs(ts));
-        if (ts.transactionType == Structures.TransactionTypes.DEPOSIT) {
-            inputs = getDepositInputs(ts);
-        } else if (ts.transactionType == Structures.TransactionTypes.SINGLE_TRANSFER) {
-            inputs = getSingleTransferInputs(ts, roots);
-        } else if (ts.transactionType == Structures.TransactionTypes.DOUBLE_TRANSFER) {
-            inputs = getDoubleTransferInputs(ts, roots);
-        } else {
-            inputs = getWithdrawInputs(ts, roots);
-        }
-    }
-
-    function getDepositInputs(Structures.Transaction calldata ts)
-        internal
-        pure
-        returns (uint256[] memory)
-    {
-        uint256[] memory inputs = new uint256[](4);
-        inputs[0] = uint256(ts.ercAddress);
-        inputs[1] = uint256(ts.tokenId);
-        inputs[2] = ts.value;
-        inputs[3] = uint256(ts.commitments[0]);
-        return inputs;
-    }
-
-    function getSingleTransferInputs(Structures.Transaction calldata ts, uint256[2] memory roots)
-        internal
-        pure
-        returns (uint256[] memory)
-    {
-        uint256[] memory inputs = new uint256[](12);
-        inputs[0] = uint256(ts.ercAddress);
-        inputs[1] = uint256(ts.commitments[0]);
-        inputs[2] = uint256(ts.nullifiers[0]);
-        inputs[3] = roots[0];
-        for (uint256 i = 4; i < 12; i++) {
-            inputs[i] = uint256(ts.compressedSecrets[i - 4]);
-        }
-        return inputs;
-    }
-
-    function getWithdrawInputs(Structures.Transaction calldata ts, uint256[2] memory roots)
-        internal
-        pure
-        returns (uint256[] memory)
-    {
-        uint256[] memory inputs = new uint256[](6);
-        inputs[0] = uint256(ts.ercAddress);
-        inputs[1] = uint256(ts.tokenId);
-        inputs[2] = ts.value;
-        inputs[3] = uint256(ts.nullifiers[0]);
-        inputs[4] = uint256(ts.recipientAddress);
-        inputs[5] = roots[0];
-        return inputs;
-    }
-
-    function getDoubleTransferInputs(Structures.Transaction calldata ts, uint256[2] memory roots)
-        internal
-        pure
-        returns (uint256[] memory)
-    {
-        uint256[] memory inputs = new uint256[](16);
-        inputs[0] = uint256(ts.ercAddress);
-        inputs[1] = uint256(ts.ercAddress);
-        inputs[2] = uint256(ts.commitments[0]);
-        inputs[3] = uint256(ts.commitments[1]);
-        inputs[4] = uint256(ts.nullifiers[0]);
-        inputs[5] = uint256(ts.nullifiers[1]);
-        inputs[6] = roots[0];
-        inputs[7] = roots[1];
-        for (uint256 i = 8; i < 16; i++) {
-            inputs[i] = uint256(ts.compressedSecrets[i - 8]);
-        }
-        return inputs;
+    function getPublicInputs(
+        Structures.Transaction calldata ts,
+        uint256[2] memory roots
+    ) internal pure returns (uint256[17] memory inputs) {
+        inputs[0] = uint256(ts.value);
+        inputs[1] = uint256(ts.transactionType);
+        inputs[2] = uint256(ts.tokenType);
+        inputs[3] = uint256(ts.tokenId);
+        inputs[4] = uint256(ts.ercAddress);
+        inputs[5] = uint256(ts.recipientAddress);
+        inputs[6] = uint256(ts.commitments[0]);
+        inputs[7] = uint256(ts.commitments[1]);
+        inputs[8] = uint256(ts.nullifiers[0]);
+        inputs[9] = uint256(ts.nullifiers[1]);
+        inputs[11] = uint256(ts.historicRootBlockNumberL2[0]);
+        inputs[12] = uint256(ts.historicRootBlockNumberL2[1]);
+        inputs[13] = uint256(ts.compressedSecrets[0]);
+        inputs[14] = uint256(ts.compressedSecrets[1]);
+        inputs[15] = roots[0];
+        inputs[16] = roots[1];
     }
 
     function calculateMerkleRoot(bytes32[] memory leaves) public pure returns (bytes32 result) {
         assembly {
             let length := mload(leaves)
-            let leavesPos := add(leaves,0x20)
+            let leavesPos := add(leaves, 0x20)
             let transactionHashesPos := mload(0x40)
             for {
                 let i := 0
             } lt(i, length) {
                 i := add(i, 1)
             } {
-                mstore(
-                    add(transactionHashesPos, mul(0x20, i)),
-                    mload(add(leavesPos, mul(0x20, i)))
-                )
+                mstore(add(transactionHashesPos, mul(0x20, i)), mload(add(leavesPos, mul(0x20, i))))
             }
             for {
                 let i := 5
@@ -211,10 +149,7 @@ library Utils {
                         result := 0
                     } // returns bool
                     if eq(and(iszero(left), iszero(right)), 0) {
-                        result := keccak256(
-                            add(transactionHashesPos, mul(mul(0x20, j), 2)),
-                            0x40
-                        )
+                        result := keccak256(add(transactionHashesPos, mul(mul(0x20, j), 2)), 0x40)
                     } // returns bool
                     mstore(add(transactionHashesPos, mul(0x20, j)), result)
                 }

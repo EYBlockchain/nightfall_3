@@ -2,6 +2,7 @@
 from "./common/utils/structures.zok" import Point, PublicTransaction, Nullifiers, Commitments, Transfer, SHIFT
 from "./common/utils/calculations.zok" import sum
 from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field
+from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field
 from "./common/generic_circuit/Verifiers/verify_structure.zok" import main as verify_structure
 from "./common/generic_circuit/Verifiers/verify_encryption.zok" import main as verify_encryption
 from "./common/generic_circuit/Verifiers/verify_nullifiers.zok" import main as verify_nullifiers
@@ -10,17 +11,12 @@ from "./common/generic_circuit/Verifiers/verify_commitments.zok" import main as 
 def main(\
     PublicTransaction tx,\
     field[2] nullifierRoots,\
-    field[2] nullifierRootsFee,\
-    field ercAddressFee,\
     private Nullifiers<2> nullifiers,\
     private Commitments<2> commitments,\
-    private Nullifiers<2> nullifiersFee,\
-    private Commitments<1> commitmentFee,\
     private Transfer transfer\
 )-> ():
     
     field value = u8_array_to_field(tx.value)
-    field fee = u8_array_to_field(tx.fee)
 
     //Verify public transaction structure
     assert(verify_structure::<1>(\
@@ -33,10 +29,7 @@ def main(\
 	    tx.commitments,\
 	    tx.nullifiers,\
 	    tx.historicRootBlockNumberL2,\
-	    tx.compressedSecrets,\
-        fee,\
-        tx.commitmentFee,\
-        tx.nullifiersFee\
+	    tx.compressedSecrets\
     ))
 
     field[2] nullifiersValue = [\
@@ -48,18 +41,8 @@ def main(\
         u32_array_to_field(commitments.newCommitments.value[1])\
     ]
 
-    field[2] nullifiersFeeValue = [\
-        u32_array_to_field(nullifiersFee.oldCommitments.value[0]),\
-        u32_array_to_field(nullifiersFee.oldCommitments.value[1])\
-        ]
-
-    field[1] commitmentFeeValue = [u32_array_to_field(commitmentFee.newCommitments.value[0])]
-
     //Check that values match
     assert(sum(nullifiersValue) == sum(commitmentsValue))
-
-    //Check that values fee match
-    assert(sum(nullifiersValue) == fee + sum(commitmentsValue))
 
     // pack the top four bytes of the token id into the ercAddress field (address only
 	// uses 160 bits and the Shield contract prevents creation of something with more than 160 bits)
@@ -82,18 +65,5 @@ def main(\
     assert(verify_encryption(tx.ercAddress,tx.tokenId, tx.compressedSecrets,\
         packedErcAddress,idRemainder,commitmentsValue[0],commitments.newCommitments.salt[0],\
         commitments.recipientPublicKey[0],tx.recipientAddress, transfer.ephemeralKey))
-
-    //Verify Fee Nullifiers
-    Point firstInputZkpPublicKeysFee = verify_nullifiers::<2>(ercAddressFee, 0,\
-        tx.nullifiersFee, nullifierRootsFee, nullifiersFeeValue, nullifiersFee.oldCommitments.salt,\
-        nullifiersFee.rootKey, nullifiersFee.paths, nullifiersFee.orders)
-
-    //Verify Fee Commitments
-    assert(verify_commitments::<1>(ercAddressFee, 0, firstInputZkpPublicKeysFee,\
-    tx.commitmentFee, commitmentFeeValue,commitmentFee.newCommitments.salt,\
-    commitmentFee.recipientPublicKey))
-
-    //Verify Fee change
-    assert(commitmentFeeValue[0] == 0 || firstInputZkpPublicKeys == commitments.recipientPublicKey[0])
 
     return

@@ -13,7 +13,7 @@ import { waitForContract } from '../event-handlers/subscribe.mjs';
 import { getBlockByBlockNumberL2 } from './database.mjs';
 import verify from './verify.mjs';
 
-const { generalise, GN } = gen;
+const { generalise } = gen;
 const {
   PROVING_SCHEME,
   BACKEND,
@@ -39,112 +39,6 @@ async function checkTransactionHash(transaction) {
       `The transaction with the hash that didn't match was ${JSON.stringify(transaction, null, 2)}`,
     );
     throw new TransactionError('The transaction hash did not match the transaction data', 0);
-  }
-}
-// next that the fields provided are consistent with the transaction type
-async function checkTransactionType(transaction) {
-  switch (Number(transaction.transactionType)) {
-    // Assuming nullifiers and commitments can't be valid ZEROs.
-    // But points can such as compressedSecrets, Proofs
-    case 0: // deposit
-      if (
-        (Number(transaction.tokenType) !== 0 &&
-          transaction.tokenId === ZERO &&
-          BigInt(transaction.value) === 0n) ||
-        transaction.ercAddress === ZERO ||
-        transaction.recipientAddress !== ZERO ||
-        transaction.commitments[0] === ZERO ||
-        transaction.commitments[1] !== ZERO ||
-        transaction.commitments.length !== 2 ||
-        transaction.nullifiers.some(n => n !== ZERO) ||
-        transaction.compressedSecrets.some(cs => cs !== ZERO) ||
-        transaction.compressedSecrets.length !== 2 ||
-        transaction.proof.every(p => p === ZERO) ||
-        // This extra check is unique to deposits
-        Number(transaction.historicRootBlockNumberL2[0]) !== 0 ||
-        Number(transaction.historicRootBlockNumberL2[1]) !== 0
-      )
-        throw new TransactionError(
-          'The data provided was inconsistent with a transaction type of DEPOSIT',
-          1,
-        );
-      break;
-    case 1: // single token transaction
-      if (
-        BigInt(transaction.value) !== 0n ||
-        transaction.commitments[0] === ZERO ||
-        transaction.commitments[1] !== ZERO ||
-        transaction.commitments.length !== 2 ||
-        transaction.nullifiers[0] === ZERO ||
-        transaction.nullifiers[1] !== ZERO ||
-        transaction.nullifiers.length !== 2 ||
-        transaction.compressedSecrets.every(cs => cs === ZERO) ||
-        transaction.compressedSecrets.length !== 2 ||
-        transaction.proof.every(p => p === ZERO)
-      )
-        throw new TransactionError(
-          'The data provided was inconsistent with a transaction type of SINGLE_TRANSFER',
-          1,
-        );
-      break;
-    case 2: // double token transaction
-      if (
-        BigInt(transaction.value) !== 0n ||
-        transaction.commitments.some(c => c === ZERO) ||
-        transaction.commitments.length !== 2 ||
-        transaction.nullifiers.some(n => n === ZERO) ||
-        transaction.nullifiers.length !== 2 ||
-        transaction.nullifiers[0] === transaction.nullifiers[1] ||
-        transaction.compressedSecrets.every(cs => cs === ZERO) ||
-        transaction.compressedSecrets.length !== 2 ||
-        transaction.proof.every(p => p === ZERO)
-      )
-        throw new TransactionError(
-          'The data provided was inconsistent with a transaction type of DOUBLE_TRANSFER',
-          1,
-        );
-      break;
-    case 3: // withdraw transaction
-      if (
-        (Number(transaction.tokenType) !== 0 &&
-          transaction.tokenId === ZERO &&
-          BigInt(transaction.value) === 0n) ||
-        transaction.ercAddress === ZERO ||
-        transaction.recipientAddress === ZERO ||
-        transaction.commitments.some(c => c !== ZERO) ||
-        transaction.nullifiers[0] === ZERO ||
-        transaction.nullifiers[1] !== ZERO ||
-        transaction.nullifiers.length !== 2 ||
-        transaction.compressedSecrets.some(cs => cs !== ZERO) ||
-        transaction.proof.every(p => p === ZERO)
-      )
-        throw new TransactionError(
-          'The data provided was inconsistent with a transaction type of WITHDRAW',
-          1,
-        );
-      break;
-    case 4: // withdraw_change transaction
-      if (
-        (Number(transaction.tokenType) !== 0 &&
-          transaction.tokenId === ZERO &&
-          BigInt(transaction.value) === 0n) ||
-        transaction.commitments[0] === ZERO ||
-        transaction.commitments[1] !== ZERO ||
-        transaction.ercAddress === ZERO ||
-        transaction.recipientAddress === ZERO ||
-        transaction.nullifiers[0] === ZERO ||
-        transaction.nullifiers[1] !== ZERO ||
-        transaction.nullifiers.length !== 2 ||
-        transaction.compressedSecrets.some(cs => cs !== ZERO) ||
-        transaction.proof.every(p => p === ZERO)
-      )
-        throw new TransactionError(
-          'The data provided was inconsistent with a transaction type of WITHDRAW_CHANGE',
-          1,
-        );
-      break;
-    default:
-      throw new TransactionError('Unknown transaction type', 2);
   }
 }
 
@@ -175,7 +69,6 @@ async function verifyProof(transaction) {
     .call();
   // to verify a proof, we make use of a zokrates-worker, which has an offchain
   // verifier capability
-  let inputs;
   const historicRootFirst = (await getBlockByBlockNumberL2(
     transaction.historicRootBlockNumberL2[0],
   )) ?? { root: ZERO };
@@ -183,116 +76,39 @@ async function verifyProof(transaction) {
     transaction.historicRootBlockNumberL2[1],
   )) ?? { root: ZERO };
 
-  const bin = new GN(transaction.recipientAddress).binary.padStart(256, '0');
-  const parity = bin[0];
-  const ordinate = bin.slice(1);
-  const binaryEPub = [parity, new GN(ordinate, 'binary').field(BN128_GROUP_ORDER, false)];
+  const inputs = generalise(
+    [
+      generalise(transaction.value).limbs(8, 31),
+      generalise(transaction.transactionType).limbs(32, 1),
+      transaction.tokenType,
+      generalise(transaction.tokenId).limbs(32, 8),
+      transaction.ercAddress,
+      generalise(transaction.recipientAddress).limbs(32, 8),
+      generalise(transaction.commitments[0]).limbs(32, 7),
+      generalise(transaction.commitments[1]).limbs(32, 7),
+      generalise(transaction.nullifiers[0]).limbs(32, 7),
+      generalise(transaction.nullifiers[1]).limbs(32, 7),
+      ...transaction.historicRootBlockNumberL2,
+      ...transaction.compressedSecrets,
+      historicRootFirst.root,
+      historicRootSecond.root,
+    ].flat(Infinity),
+  ).all.hex(32);
 
-  switch (Number(transaction.transactionType)) {
-    case 0: // deposit transaction
-      inputs = generalise(
-        [
-          transaction.ercAddress,
-          generalise(transaction.tokenId).limbs(32, 8),
-          transaction.value,
-          transaction.commitments[0],
-        ].flat(Infinity),
-      ).all.hex(32);
-      if (
-        isOverflow(transaction.ercAddress, MAX_PUBLIC_VALUES.ERCADDRESS) ||
-        isOverflow(transaction.commitments[0], MAX_PUBLIC_VALUES.COMMITMENTS)
-      )
-        throw new TransactionError('Truncated value overflow in public input', 4);
-      break;
-    case 1: // single transfer transaction
-      inputs = generalise(
-        [
-          transaction.commitments[0],
-          transaction.nullifiers[0],
-          historicRootFirst.root,
-          binaryEPub,
-          transaction.ercAddress,
-          transaction.tokenId,
-          ...transaction.compressedSecrets,
-        ].flat(Infinity),
-      ).all.hex(32);
-      // check for truncation overflow attacks
-      if (
-        isOverflow(transaction.commitments[0], MAX_PUBLIC_VALUES.COMMITMENTS) ||
-        isOverflow(transaction.nullifiers[0], MAX_PUBLIC_VALUES.NULLIFIER) ||
-        isOverflow(historicRootFirst.root, BN128_GROUP_ORDER)
-      )
-        throw new TransactionError('Overflow in public input', 4);
-      break;
-    case 2: // double transfer transaction
-      inputs = generalise(
-        [
-          transaction.commitments, // not truncating here as we already ensured hash < group order
-          transaction.nullifiers,
-          historicRootFirst.root,
-          historicRootSecond.root,
-          binaryEPub,
-          transaction.ercAddress,
-          transaction.tokenId,
-          ...transaction.compressedSecrets,
-        ].flat(Infinity),
-      ).all.hex(32);
-      // check for truncation overflow attacks
-      for (let i = 0; i < transaction.nullifiers.length; i++) {
-        if (isOverflow(transaction.nullifiers[i], MAX_PUBLIC_VALUES.NULLIFIER))
-          throw new TransactionError('Overflow in public input', 4);
-      }
-      for (let i = 0; i < transaction.commitments.length; i++) {
-        if (isOverflow(transaction.commitments[i], MAX_PUBLIC_VALUES.COMMITMENT))
-          throw new TransactionError('Overflow in public input', 4);
-      }
-      if (
-        isOverflow(historicRootFirst.root, BN128_GROUP_ORDER) ||
-        isOverflow(historicRootSecond.root, BN128_GROUP_ORDER)
-      )
-        throw new TransactionError('Overflow in public input', 4);
-      break;
-    case 3: // withdraw transaction
-      inputs = generalise(
-        [
-          transaction.ercAddress,
-          generalise(transaction.tokenId).limbs(32, 8),
-          transaction.value,
-          transaction.nullifiers[0],
-          transaction.recipientAddress,
-          historicRootFirst.root,
-        ].flat(Infinity),
-      ).all.hex(32);
-      // check for truncation overflow attacks
-      if (
-        isOverflow(transaction.ercAddress, MAX_PUBLIC_VALUES.ERCADDRESS) ||
-        isOverflow(transaction.recipientAddress, MAX_PUBLIC_VALUES.ERCADDRESS) ||
-        isOverflow(transaction.nullifiers[0], MAX_PUBLIC_VALUES.NULLIFIER) ||
-        isOverflow(historicRootFirst.root, BN128_GROUP_ORDER)
-      )
-        throw new TransactionError('Truncated value overflow in public input', 4);
-      break;
-    case 4: // withdraw_change transaction
-      inputs = [
-        generalise(transaction.ercAddress).hex(32),
-        generalise(transaction.tokenId).limbs(32, 8),
-        generalise(transaction.nullifiers[0]).hex(32),
-        generalise(transaction.value).hex(32),
-        generalise(historicRootFirst.root).hex(32),
-        generalise(transaction.commitments[0]).hex(32),
-      ].flat(Infinity);
-      // check for truncation overflow attacks
-      if (
-        isOverflow(transaction.ercAddress, MAX_PUBLIC_VALUES.ERCADDRESS) ||
-        isOverflow(transaction.recipientAddress, MAX_PUBLIC_VALUES.ERCADDRESS) ||
-        isOverflow(transaction.nullifiers[0], MAX_PUBLIC_VALUES.NULLIFIER) ||
-        isOverflow(historicRootFirst.root, BN128_GROUP_ORDER)
-      )
-        throw new TransactionError('Truncated value overflow in public input', 4);
-      break;
-    default:
-      throw new TransactionError('Unknown transaction type', 2);
+  if (
+    isOverflow(transaction.ercAddress, MAX_PUBLIC_VALUES.ERCADDRESS) ||
+    isOverflow(transaction.commitments[0], MAX_PUBLIC_VALUES.COMMITMENTS) ||
+    isOverflow(transaction.commitments[1], MAX_PUBLIC_VALUES.COMMITMENTS) ||
+    isOverflow(transaction.nullifiers[0], MAX_PUBLIC_VALUES.NULLIFIER) ||
+    isOverflow(transaction.nullifiers[1], MAX_PUBLIC_VALUES.NULLIFIER) ||
+    isOverflow(historicRootFirst.root, BN128_GROUP_ORDER) ||
+    isOverflow(historicRootSecond.root, BN128_GROUP_ORDER) ||
+    (transaction.transactionType === 2 &&
+      isOverflow(transaction.recipientAddress, MAX_PUBLIC_VALUES.ERCADDRESS))
+  ) {
+    throw new TransactionError('Overflow in public input', 4);
   }
+
   // check for modular overflow attacks
   // if (inputs.filter(input => input.bigInt >= BN128_GROUP_ORDER).length > 0)
   //  throw new TransactionError('Modular overflow in public input', 4);
@@ -310,7 +126,6 @@ async function verifyProof(transaction) {
 async function checkTransaction(transaction) {
   return Promise.all([
     checkTransactionHash(transaction),
-    checkTransactionType(transaction),
     checkHistoricRoot(transaction),
     verifyProof(transaction),
   ]);

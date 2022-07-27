@@ -11,14 +11,11 @@ from "./common/generic_circuit/Verifiers/verify_commitments.zok" import main as 
 def main(\
     PublicTransaction tx,\
     field[2] nullifierRoots,\
-    field[2] nullifierRootsFee,\
-    field ercAddressFee,\
     private Commitments<1> commitments,\
     private Nullifiers<2> nullifiers\
 )-> ():
     
     field value = u8_array_to_field(tx.value)
-    field fee = u8_array_to_field(tx.fee)
 
     //Verify public transaction structure
     assert(verify_structure::<0>(\
@@ -31,10 +28,7 @@ def main(\
 	    tx.commitments,\
 	    tx.nullifiers,\
 	    tx.historicRootBlockNumberL2,\
-	    tx.compressedSecrets,\
-        fee,\
-        tx.commitmentFee,\
-        tx.nullifiersFee\
+	    tx.compressedSecrets\
     ))
 
     field[2] nullifiersValue = [\

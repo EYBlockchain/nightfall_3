@@ -143,14 +143,8 @@ export const UserProvider = ({ children }) => {
   useInterval(
     async () => {
       const circuitName = USE_STUBS
-        ? [
-            'deposit_stub',
-            'single_transfer_stub',
-            'double_transfer_stub',
-            'withdraw_stub',
-            'withdraw_change_stub',
-          ]
-        : ['deposit', 'single_transfer', 'double_transfer', 'withdraw', 'withdraw_change'];
+        ? ['deposit_stub', 'transfer_stub', 'withdraw_stub']
+        : ['deposit', 'transfer', 'withdraw'];
 
       const circuitCheck = await Promise.all(circuitName.map(c => checkIndexDBForCircuit(c)));
       console.log('Circuit Check', circuitCheck);
