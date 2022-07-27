@@ -104,7 +104,7 @@ services:
 
   hosted-utils-api-server:
     build:
-      context: ./hosted-utils-api-server
+      context: ../hosted-utils-api-server
     depends_on:
       - worker
     ports:

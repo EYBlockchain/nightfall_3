@@ -20,13 +20,13 @@ services:
         source: build
         target: /app/build/
       - type: bind
-        source: ./test/adversary/nightfall-adversary/src
+        source: ../test/adversary/nightfall-adversary/src
         target: /app/src
       - type: bind
-        source: ./common-files
+        source: ../common-files
         target: /common-files
       - type: bind
-        source: ./config/default.js
+        source: ../config/default.js
         target: /app/config/default.js
     environment:
       WEBSOCKET_PORT: 8080
