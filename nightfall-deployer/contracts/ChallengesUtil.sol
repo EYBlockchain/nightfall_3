@@ -54,6 +54,7 @@ library ChallengesUtil {
     function libChallengeProofVerification(
         Structures.Transaction calldata transaction,
         uint256[2] memory roots,
+        uint256[2] memory rootsFee,
         uint256[8] memory proof,
         uint256[] memory vk
     ) internal {
@@ -63,7 +64,7 @@ library ChallengesUtil {
         for (uint256 i = 0; i < proof.length; i++) {
             proof1[i] = proof[i];
         }
-        uint256[] memory publicInputs = Utils.getPublicInputs(transaction, roots);
+        uint256[] memory publicInputs = Utils.getPublicInputs(transaction, roots, rootsFee);
         require(!Verifier.verify(proof1, publicInputs, vk), 'This proof appears to be valid');
     }
 
@@ -87,23 +88,54 @@ library ChallengesUtil {
         require(
             (transaction.transactionType != Structures.TransactionTypes.TRANSFER &&
                 uint256(transaction.recipientAddress) <= MAX20) ||
-                (transaction.transactionType == Structures.TransactionTypes.TRANSFER),
+                (transaction.transactionType == Structures.TransactionTypes.TRANSFER &&
+                    uint256(transaction.recipientAddress) <= MAX31),
             'Recipient ERC address out of range'
         );
+        require(uint256(transaction.commitments[0]) <= MAX31, 'Commitment 0 out of range');
+        require(uint256(transaction.commitments[1]) <= MAX31, 'Commitment 1 out of range');
+        require(uint256(transaction.nullifiers[0]) <= MAX31, 'Nullifier 0 out of range');
+        require(uint256(transaction.nullifiers[1]) <= MAX31, 'Nullifier 1 out of range');
+        require(uint256(transaction.commitments[0]) <= MAX31, 'Commitment Fee out of range');
+        require(uint256(transaction.nullifiers[0]) <= MAX31, 'Nullifier Fee 0 out of range');
+        require(uint256(transaction.nullifiers[1]) <= MAX31, 'Nullifier Fee 1 out of range');
         require(uint256(blockL2.root) < BN128_GROUP_ORDER, 'root out of range');
     }
 
     function libChallengeNullifier(
         Structures.Transaction memory tx1,
         uint256 nullifierIndex1,
+        bool isNullifierFee1,
         Structures.Transaction memory tx2,
-        uint256 nullifierIndex2
+        uint256 nullifierIndex2,
+        bool isNullifierFee2
     ) public pure {
-        require(
-            tx1.nullifiers[nullifierIndex1] != 0 &&
-                tx1.nullifiers[nullifierIndex1] == tx2.nullifiers[nullifierIndex2],
-            'Not matching nullifiers'
-        );
+        if (!isNullifierFee1 && !isNullifierFee2) {
+            require(
+                tx1.nullifiers[nullifierIndex1] != 0 &&
+                    tx1.nullifiers[nullifierIndex1] == tx2.nullifiers[nullifierIndex2],
+                'Not matching nullifiers'
+            );
+        } else if (!isNullifierFee1) {
+            require(
+                tx1.nullifiers[nullifierIndex1] != 0 &&
+                    tx1.nullifiers[nullifierIndex1] == tx2.nullifiersFee[nullifierIndex2],
+                'Not matching nullifiers'
+            );
+        } else if (!isNullifierFee2) {
+            require(
+                tx1.nullifiersFee[nullifierIndex1] != 0 &&
+                    tx1.nullifiersFee[nullifierIndex1] == tx2.nullifiers[nullifierIndex2],
+                'Not matching nullifiers'
+            );
+        } else {
+            require(
+                tx1.nullifiersFee[nullifierIndex1] != 0 &&
+                    tx1.nullifiersFee[nullifierIndex1] == tx2.nullifiersFee[nullifierIndex2],
+                'Not matching nullifiers'
+            );
+        }
+
         require(
             Utils.hashTransaction(tx1) != Utils.hashTransaction(tx2),
             'Transactions need to be different'

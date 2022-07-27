@@ -16,7 +16,8 @@ import verify from './verify.mjs';
 
 const { ZERO, CHALLENGES_CONTRACT_NAME } = constants;
 const { generalise } = gen;
-const { PROVING_SCHEME, BACKEND, CURVE, BN128_GROUP_ORDER, MAX_PUBLIC_VALUES } = config;
+const { PROVING_SCHEME, BACKEND, CURVE, BN128_GROUP_ORDER, MAX_PUBLIC_VALUES, RESTRICTIONS } =
+  config;
 
 function isOverflow(value, check) {
   const bigValue = value.bigInt;
@@ -37,20 +38,24 @@ async function checkTransactionHash(transaction) {
 }
 
 async function checkHistoricRoot(transaction) {
-  // Deposit transaction have a historic root of 0
-  // the validity is tested in checkTransactionType
   if (Number(transaction.nullifiers[0]) !== 0) {
-    const historicRootFirst = await getBlockByBlockNumberL2(
-      transaction.historicRootBlockNumberL2[0],
-    );
-    if (historicRootFirst === null)
+    const historicRoot = await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2[0]);
+    if (historicRoot === null)
       throw new TransactionError('The historic root in the transaction does not exist', 3);
   }
   if (Number(transaction.nullifiers[1]) !== 0) {
-    const historicRootSecond = await getBlockByBlockNumberL2(
-      transaction.historicRootBlockNumberL2[1],
-    );
-    if (historicRootSecond === null)
+    const historicRoot = await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2[1]);
+    if (historicRoot === null)
+      throw new TransactionError('The historic root in the transaction does not exist', 3);
+  }
+  if (Number(transaction.nullifiersFee[0]) !== 0) {
+    const historicRoot = await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2Fee[0]);
+    if (historicRoot === null)
+      throw new TransactionError('The historic root in the transaction does not exist', 3);
+  }
+  if (Number(transaction.nullifiersFee[1]) !== 0) {
+    const historicRoot = await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2Fee[1]);
+    if (historicRoot === null)
       throw new TransactionError('The historic root in the transaction does not exist', 3);
   }
 }
@@ -63,53 +68,67 @@ async function verifyProof(transaction) {
     .call();
   // to verify a proof, we make use of a zokrates-worker, which has an offchain
   // verifier capability
-  const historicRootFirst =
-    transaction.nullifiers[0] === ZERO
-      ? { root: ZERO }
-      : (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2[0])) ?? { root: ZERO };
-  const historicRootSecond =
-    transaction.nullifiers[1] === ZERO
-      ? { root: ZERO }
-      : (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2[1])) ?? { root: ZERO };
+  const historicRootFirst = (await getBlockByBlockNumberL2(
+    transaction.historicRootBlockNumberL2[0],
+  )) ?? { root: ZERO };
+  const historicRootSecond = (await getBlockByBlockNumberL2(
+    transaction.historicRootBlockNumberL2[1],
+  )) ?? { root: ZERO };
+
+  const historicRootFeeFirst = (await getBlockByBlockNumberL2(
+    transaction.historicRootBlockNumberL2Fee[0],
+  )) ?? { root: ZERO };
+  const historicRootFeeSecond = (await getBlockByBlockNumberL2(
+    transaction.historicRootBlockNumberL2Fee[1],
+  )) ?? { root: ZERO };
+
+  const maticAddress = RESTRICTIONS.tokens[process.env.ETH_NETWORK].find(
+    token => token.name === 'MATIC',
+  ).address;
 
   const inputs = generalise(
     [
       transaction.value,
-      transaction.historicRootBlockNumberL2,
-      transaction.transactionType,
+      transaction.fee,
+      generalise(transaction.transactionType).limbs(32, 1),
       transaction.tokenType,
       generalise(transaction.tokenId).limbs(32, 8),
       transaction.ercAddress,
       generalise(transaction.recipientAddress).limbs(32, 8),
-      transaction.commitments,
-      transaction.nullifiers,
-      transaction.compressedSecrets,
+      ...transaction.commitments,
+      ...transaction.nullifiers,
+      transaction.commitmentFee,
+      ...transaction.nullifiersFee,
+      ...transaction.historicRootBlockNumberL2,
+      ...transaction.historicRootBlockNumberL2Fee,
+      ...transaction.compressedSecrets,
+      historicRootFirst.root,
+      historicRootSecond.root,
+      historicRootFeeFirst.root,
+      historicRootFeeSecond.root,
+      maticAddress,
     ].flat(Infinity),
   ).all.hex(32);
 
-  if (Number(transaction.transactionType) !== 0) {
-    inputs.push(generalise(historicRootFirst.root).hex(32));
-    inputs.push(generalise(historicRootSecond.root).hex(32));
-  }
-
   if (
     isOverflow(transaction.ercAddress, MAX_PUBLIC_VALUES.ERCADDRESS) ||
+    isOverflow(transaction.commitments[0], MAX_PUBLIC_VALUES.COMMITMENTS) ||
+    isOverflow(transaction.commitments[1], MAX_PUBLIC_VALUES.COMMITMENTS) ||
+    isOverflow(transaction.nullifiers[0], MAX_PUBLIC_VALUES.NULLIFIER) ||
+    isOverflow(transaction.nullifiers[1], MAX_PUBLIC_VALUES.NULLIFIER) ||
+    isOverflow(transaction.commitmentFee[0], MAX_PUBLIC_VALUES.COMMITMENTS) ||
+    isOverflow(transaction.nullifiersFee[0], MAX_PUBLIC_VALUES.NULLIFIER) ||
+    isOverflow(transaction.nullifiersFee[1], MAX_PUBLIC_VALUES.NULLIFIER) ||
     isOverflow(historicRootFirst.root, BN128_GROUP_ORDER) ||
     isOverflow(historicRootSecond.root, BN128_GROUP_ORDER) ||
-    (transaction.transactionType === 2 &&
-      isOverflow(transaction.recipientAddress, MAX_PUBLIC_VALUES.ERCADDRESS))
+    isOverflow(historicRootFeeFirst.root, BN128_GROUP_ORDER) ||
+    isOverflow(historicRootFeeSecond.root, BN128_GROUP_ORDER) ||
+    (isOverflow(transaction.recipientAddress, MAX_PUBLIC_VALUES.ERCADDRESS) &&
+      transaction.transactionType === 2)
   ) {
     throw new TransactionError('Overflow in public input', 4);
   }
 
-  for (let i = 0; i < transaction.nullifiers.length; i++) {
-    if (isOverflow(transaction.nullifiers[i], MAX_PUBLIC_VALUES.NULLIFIER))
-      throw new TransactionError('Overflow in public input', 4);
-  }
-  for (let i = 0; i < transaction.commitments.length; i++) {
-    if (isOverflow(transaction.commitments[i], MAX_PUBLIC_VALUES.COMMITMENT))
-      throw new TransactionError('Overflow in public input', 4);
-  }
   // check for modular overflow attacks
   // if (inputs.filter(input => input.bigInt >= BN128_GROUP_ORDER).length > 0)
   //  throw new TransactionError('Modular overflow in public input', 4);

@@ -93,6 +93,7 @@ library Utils {
         for (uint256 i = 0; i < ts.length; i++) {
             if (ts[i].commitments[0] != ZERO) filtered[count++] = ts[i].commitments[0];
             if (ts[i].commitments[1] != ZERO) filtered[count++] = ts[i].commitments[1];
+            if (ts[i].commitmentFee != ZERO) filtered[count++] = ts[i].commitmentFee;
         }
         return filtered;
     }

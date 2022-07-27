@@ -33,7 +33,9 @@ export async function getProposeBlockCalldata(eventData) {
   const transactions = transactionsData.map(t => {
     const [
       value,
+      fee,
       historicRootBlockNumberL2,
+      historicRootBlockNumberL2Fee,
       transactionType,
       tokenType,
       tokenId,
@@ -41,12 +43,16 @@ export async function getProposeBlockCalldata(eventData) {
       recipientAddress,
       commitments,
       nullifiers,
+      commitmentFee,
+      nullifiersFee,
       compressedSecrets,
       proof,
     ] = t;
     const transaction = {
       value,
+      fee,
       historicRootBlockNumberL2,
+      historicRootBlockNumberL2Fee,
       transactionType,
       tokenType,
       tokenId,
@@ -54,6 +60,8 @@ export async function getProposeBlockCalldata(eventData) {
       recipientAddress,
       commitments,
       nullifiers,
+      commitmentFee,
+      nullifiersFee,
       compressedSecrets,
       proof: decompressProof(proof),
     };
