@@ -117,6 +117,7 @@ async function verifyProof(transaction) {
     if (isOverflow(transaction.commitments[i], MAX_PUBLIC_VALUES.COMMITMENT))
       throw new TransactionError('Overflow in public input', 4);
   }
+
   // check for modular overflow attacks
   // if (inputs.filter(input => input.bigInt >= BN128_GROUP_ORDER).length > 0)
   //  throw new TransactionError('Modular overflow in public input', 4);

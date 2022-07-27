@@ -454,6 +454,39 @@ module.exports = {
 
   KEYS_COLLECTION: 'keys',
   DEFAULT_ACCOUNT_NUM: 10,
+  circuitsAWSFiles: {
+    deposit_stub: {
+      abi: 'circuits/deposit_stub/artifacts/deposit_stub-abi.json',
+      program: 'circuits/deposit_stub/artifacts/deposit_stub-program',
+      pk: 'circuits/deposit_stub/keypair/deposit_stub_pk.key',
+    },
+    transfer_stub: {
+      abi: 'circuits/transfer_stub/artifacts/transfer_stub-abi.json',
+      program: 'circuits/transfer_stub/artifacts/transfer_stub-program',
+      pk: 'circuits/transfer_stub/keypair/transfer_stub_pk.key',
+    },
+    withdraw_stub: {
+      abi: 'circuits/withdraw_stub/artifacts/withdraw_stub-abi.json',
+      program: 'circuits/withdraw_stub/artifacts/withdraw_stub-program',
+      pk: 'circuits/withdraw_stub/keypair/withdraw_stub_pk.key',
+    },
+    deposit: {
+      abi: 'circuits/deposit/artifacts/deposit-abi.json',
+      program: 'circuits/deposit/artifacts/deposit-program',
+      pk: 'circuits/deposit/keypair/deposit_pk.key',
+    },
+    transfer: {
+      abi: 'circuits/transfer/artifacts/transfer-abi.json',
+      program: 'circuits/transfer/artifacts/transfer-program',
+      pk: 'circuits/transfer/keypair/transfer_pk.key',
+    },
+    withdraw: {
+      abi: 'circuits/withdraw/artifacts/withdraw-abi.json',
+      program: 'circuits/withdraw/artifacts/withdraw-program',
+      pk: 'circuits/withdraw/keypair/withdraw_pk.key',
+    },
+  },
+
   AWS: {
     s3Bucket: configureAWSBucket(),
     circuitFiles: parseCircuitFilesPath(),
