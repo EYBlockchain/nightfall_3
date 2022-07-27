@@ -113,3 +113,11 @@ export async function getTransactionSubmittedCalldata(eventData) {
   transaction.transactionHash = Transaction.calcHash(transaction);
   return transaction;
 }
+
+export async function getTimeByBlock(txHash) {
+  const web3 = Web3.connection();
+  const blockN = await web3.eth.getTransaction(txHash);
+  const blockData = await web3.eth.getBlock(blockN.blockNumber);
+
+  return blockData.timestamp;
+}
