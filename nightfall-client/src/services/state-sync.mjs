@@ -10,15 +10,14 @@ import logger from 'common-files/utils/logger.mjs';
 import mongo from 'common-files/utils/mongo.mjs';
 import downloadFile from 'common-files/utils/httputils.mjs';
 import { unpauseQueue } from 'common-files/utils/event-queue.mjs';
+import constants from 'common-files/constants/index.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import blockProposedEventHandler from '../event-handlers/block-proposed.mjs';
 import rollbackEventHandler from '../event-handlers/rollback.mjs';
 
+const { COMMITMENTS_DB, COMMITMENTS_COLLECTION, STATE_CONTRACT_NAME } = constants;
 const {
   MONGO_URL,
-  COMMITMENTS_DB,
-  COMMITMENTS_COLLECTION,
-  STATE_CONTRACT_NAME,
   STATE_GENESIS_BLOCK,
   DEPLOYMENT_FILES_URL: { DEFAULT_CONTRACT_FILES_URL },
 } = config;

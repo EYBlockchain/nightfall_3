@@ -9,16 +9,17 @@ import config from 'config';
 import mongo from 'common-files/utils/mongo.mjs';
 import Timber from 'common-files/classes/timber.mjs';
 import logger from 'common-files/utils/logger.mjs';
+import constants from 'common-files/constants/index.mjs';
 
 const {
-  MONGO_URL,
   COMMITMENTS_DB,
   TIMBER_COLLECTION,
   SUBMITTED_BLOCKS_COLLECTION,
   TRANSACTIONS_COLLECTION,
   HASH_TYPE,
   TIMBER_HEIGHT,
-} = config;
+} = constants;
+const { MONGO_URL } = config;
 
 /**
 Timber functions
