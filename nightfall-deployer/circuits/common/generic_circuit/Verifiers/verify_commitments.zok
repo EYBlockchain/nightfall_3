@@ -1,5 +1,5 @@
 from "hashes/poseidon/poseidon.zok" import main as poseidon
-from "../../utils/structures.zok" import Point, NUMBER_COMMITMENTS
+from "../../utils/structures.zok" import Point
 
 /*
 * Verify that all commitments are correct

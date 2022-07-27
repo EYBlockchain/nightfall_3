@@ -2,7 +2,7 @@ from "ecc/babyjubjubParams" import BabyJubJubParams, main as curveParams
 from "ecc/edwardsScalarMult" import main as scalarMult
 from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
 from "hashes/poseidon/poseidon.zok" import main as poseidon
-from "../../utils/structures.zok" import Point, PRIVATE_KEY_DOMAIN, NULLIFIER_KEY_DOMAIN, NUMBER_NULLIFIERS
+from "../../utils/structures.zok" import Point, PRIVATE_KEY_DOMAIN, NULLIFIER_KEY_DOMAIN
 from "../../merkle-tree/path-check.zok" import main as pathCheck
 
 /*

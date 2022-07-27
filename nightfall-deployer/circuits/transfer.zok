@@ -1,3 +1,4 @@
+
 from "./common/utils/structures.zok" import Point, PublicTransaction, Nullifiers, Commitments, Transfer, SHIFT
 from "./common/utils/calculations.zok" import sum
 from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field
@@ -14,14 +15,15 @@ def main(\
     private Nullifiers<2> nullifiers,\
     private Commitments<2> commitments,\
     private Nullifiers<2> nullifiersFee,\
-    private Commitments<1> commitmentFee\
+    private Commitments<1> commitmentFee,\
+    private Transfer transfer\
 )-> ():
     
     field value = u8_array_to_field(tx.value)
     field fee = u8_array_to_field(tx.fee)
 
     //Verify public transaction structure
-    assert(verify_structure::<2>(\
+    assert(verify_structure::<1>(\
         value,\
 	    tx.transactionType,\
 	    tx.tokenType,\
@@ -54,15 +56,15 @@ def main(\
     field[1] commitmentFeeValue = [u32_array_to_field(commitmentFee.newCommitments.value[0])]
 
     //Check that values match
-    assert(sum(nullifiersValue) == sum(commitmentsValue) + value)
+    assert(sum(nullifiersValue) == sum(commitmentsValue))
 
     //Check that values fee match
-    assert(sum(nullifiersFeeValue) == fee + sum(commitmentFeeValue))
+    assert(sum(nullifiersValue) == fee + sum(commitmentsValue))
 
     // pack the top four bytes of the token id into the ercAddress field (address only
 	// uses 160 bits and the Shield contract prevents creation of something with more than 160 bits)
-    field idRemainder = u32_array_to_field(tx.tokenId[1..8]) 
-    field packedErcAddress = tx.ercAddress + u32_array_to_field([tx.tokenId[0]]) * SHIFT 
+    field idRemainder = u32_array_to_field(transfer.idTransfer[1..8]) 
+    field packedErcAddress = transfer.ercAddressTransfer + u32_array_to_field([transfer.idTransfer[0]]) * SHIFT 
 
     //Verify nullifiers
     Point firstInputZkpPublicKeys = verify_nullifiers::<2>(packedErcAddress, idRemainder,\
@@ -72,9 +74,14 @@ def main(\
     //Verify new Commmitments
     assert(verify_commitments::<2>(packedErcAddress, idRemainder, tx.commitments, firstInputZkpPublicKeys,\
     commitmentsValue, commitments.newCommitments.salt, commitments.recipientPublicKey))
-
+        
     //Verify Change
-    assert(commitmentsValue[0] == 0 || firstInputZkpPublicKeys == commitments.recipientPublicKey[0])
+    assert(commitmentsValue[1] == 0 || firstInputZkpPublicKeys == commitments.recipientPublicKey[1])
+    
+    //Verify Kem Dem encryption
+    assert(verify_encryption(tx.ercAddress,tx.tokenId, tx.compressedSecrets,\
+        packedErcAddress,idRemainder,commitmentsValue[0],commitments.newCommitments.salt[0],\
+        commitments.recipientPublicKey[0],tx.recipientAddress, transfer.ephemeralKey))
 
     //Verify Fee Nullifiers
     Point firstInputZkpPublicKeysFee = verify_nullifiers::<2>(ercAddressFee, 0,\
@@ -90,4 +97,3 @@ def main(\
     assert(commitmentFeeValue[0] == 0 || firstInputZkpPublicKeys == commitments.recipientPublicKey[0])
 
     return
-
