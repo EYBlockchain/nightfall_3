@@ -1,6 +1,0 @@
-#! /bin/bash
-
-# Install node dependencies
-cd apps/proposer
-npm i
-npm run start

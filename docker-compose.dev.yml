@@ -136,3 +136,12 @@ services:
       - type: bind
         source: ./config/default.js
         target: /app/admin/config/default.js
+
+  proposer:
+    build:
+      dockerfile: proposer.Dockerfile
+      context: .
+    volumes:
+      - type: bind
+        source: ./apps/proposer/src
+        target: /app/src
