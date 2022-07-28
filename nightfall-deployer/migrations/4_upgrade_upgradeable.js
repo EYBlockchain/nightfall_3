@@ -13,6 +13,9 @@ const Challenges = artifacts.require('Challenges.sol');
 const State = artifacts.require('State.sol');
 
 module.exports = async function (deployer) {
+  const maticToken = RESTRICTIONS.tokens[process.env.ETH_NETWORK].find(
+    token => token.name === 'MATIC',
+  );
   await deployer.deploy(Verifier);
   await deployer.link(Verifier, [Challenges, ChallengesUtil]);
   await deployer.deploy(Poseidon);

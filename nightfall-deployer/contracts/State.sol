@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: CC0-1.0
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import '@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol';
+
 /**
 Contract to hold global state that is needed by a number of other contracts,
 together with functions for mutating it.
@@ -14,11 +16,14 @@ import './Config.sol';
 import './Pausable.sol';
 
 contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
+    using SafeERC20Upgradeable for IERC20Upgradeable;
+
     // global state variables
     BlockData[] public blockHashes; // array containing mainly blockHashes
-    mapping(address => uint256) public pendingWithdrawals;
+    mapping(address => uint256[2]) public pendingWithdrawals;
     mapping(address => LinkedAddress) public proposers;
     mapping(address => TimeLockedBond) public bondAccounts;
+    mapping(bytes32 => uint256[2]) public feeBook;
     mapping(bytes32 => bool) public claimedBlockStakes;
     LinkedAddress public currentProposer; // who can propose a new shield state
     uint256 public proposerStartBlock; // L1 block where currentProposer became current
@@ -26,6 +31,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
     address public proposersAddress;
     address public challengesAddress;
     address public shieldAddress;
+    address public maticAddress;
 
     function initialize() public override(Pausable, Config) {
         Pausable.initialize();
@@ -36,11 +42,13 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
     function initialize(
         address _proposersAddress,
         address _challengesAddress,
-        address _shieldAddress
+        address _shieldAddress,
+        address _maticAddress
     ) public initializer {
         proposersAddress = _proposersAddress;
         challengesAddress = _challengesAddress;
         shieldAddress = _shieldAddress;
+        maticAddress = _maticAddress;
         initialize();
     }
 
@@ -89,6 +97,21 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         require(b.proposer == msg.sender, 'The proposer address is not the sender');
         // set the maximum tx/block to prevent unchallengably large blocks
         require(t.length < 33, 'The block has too many transactions');
+
+        uint256 feePaymentsEth = 0;
+        uint256 feePaymentsMatic = 0;
+        for (uint256 i = 0; i < t.length; i++) {
+            if (t[i].transactionType == TransactionTypes.DEPOSIT) {
+                feePaymentsEth += uint256(t[i].fee);
+            } else {
+                feePaymentsMatic += uint256(t[i].fee);
+            }
+        }
+
+        feeBook[keccak256(abi.encodePacked(b.proposer, b.blockNumberL2))] = [
+            feePaymentsEth,
+            feePaymentsMatic
+        ];
 
         bytes32 blockHash;
         assembly {
@@ -184,6 +207,30 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         return currentProposer;
     }
 
+    function getMaticAddress() public view returns (address) {
+        return maticAddress;
+    }
+
+    function getFeeBookInfo(address proposer, uint256 blockNumberL2)
+        public
+        view
+        returns (uint256, uint256)
+    {
+        bytes32 input = keccak256(abi.encodePacked(proposer, blockNumberL2));
+        return (feeBook[input][0], feeBook[input][1]);
+    }
+
+    function setFeeBookInfo(
+        address proposer,
+        uint256 blockNumberL2,
+        uint256 feePaymentsEth,
+        uint256 feePaymentsMatic
+    ) public {
+        bytes32 input = keccak256(abi.encodePacked(proposer, blockNumberL2));
+        feeBook[input][0] = feePaymentsEth;
+        feeBook[input][1] = feePaymentsMatic;
+    }
+
     function pushBlockData(BlockData memory bd) public onlyRegistered {
         blockHashes.push(bd);
     }
@@ -216,15 +263,32 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         else return Config.ZERO;
     }
 
-    function addPendingWithdrawal(address addr, uint256 amount) public onlyRegistered {
-        pendingWithdrawals[addr] += amount;
+    function addPendingWithdrawal(
+        address addr,
+        uint256 amountEth,
+        uint256 amountMatic
+    ) public onlyRegistered {
+        pendingWithdrawals[addr][0] += amountEth;
+        pendingWithdrawals[addr][1] += amountMatic;
     }
 
     function withdraw() external nonReentrant whenNotPaused {
-        uint256 amount = pendingWithdrawals[msg.sender];
-        pendingWithdrawals[msg.sender] = 0;
-        (bool success, ) = payable(msg.sender).call{value: amount}('');
-        require(success, 'Transfer failed.');
+        uint256 amountEth = pendingWithdrawals[msg.sender][0];
+        uint256 amountMatic = pendingWithdrawals[msg.sender][1];
+
+        pendingWithdrawals[msg.sender] = [0, 0];
+        if (amountEth > 0) {
+            (bool success, ) = payable(msg.sender).call{value: amountEth}('');
+            require(success, 'Transfer failed.');
+        }
+        if (amountMatic > 0) {
+            pendingWithdrawals[msg.sender][1] = 0;
+            IERC20Upgradeable(maticAddress).safeTransferFrom(
+                address(this),
+                msg.sender,
+                amountMatic
+            );
+        }
     }
 
     function setProposerStartBlock(uint256 sb) public onlyRegistered {
@@ -302,7 +366,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         removeProposer(proposer);
         TimeLockedBond memory bond = bondAccounts[proposer];
         bondAccounts[proposer] = TimeLockedBond(0, 0);
-        pendingWithdrawals[challengerAddr] += bond.amount + numRemoved * BLOCK_STAKE;
+        pendingWithdrawals[challengerAddr][0] += bond.amount + numRemoved * BLOCK_STAKE;
     }
 
     function updateBondAccountTime(address addr, uint256 time) public onlyRegistered {

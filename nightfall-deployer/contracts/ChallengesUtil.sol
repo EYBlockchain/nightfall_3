@@ -53,8 +53,7 @@ library ChallengesUtil {
 
     function libChallengeProofVerification(
         Structures.Transaction calldata transaction,
-        uint256[2] memory roots,
-        uint256[2] memory rootsFee,
+        uint256[4] memory roots,
         uint256[8] memory proof,
         uint256[] memory vk
     ) internal {
@@ -64,7 +63,7 @@ library ChallengesUtil {
         for (uint256 i = 0; i < proof.length; i++) {
             proof1[i] = proof[i];
         }
-        uint256[] memory publicInputs = Utils.getPublicInputs(transaction, roots, rootsFee);
+        uint256[25] memory publicInputs = Utils.getPublicInputs(transaction, roots);
         require(!Verifier.verify(proof1, publicInputs, vk), 'This proof appears to be valid');
     }
 

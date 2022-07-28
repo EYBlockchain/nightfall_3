@@ -17,7 +17,7 @@ const config = require('config');
 
 const { RESTRICTIONS, MULTISIG, owners } = config;
 const { addresses } = RESTRICTIONS;
-const { SIGNATURE_THRESHOLD, APPROVERS} = MULTISIG
+const { SIGNATURE_THRESHOLD, APPROVERS } = MULTISIG;
 const { network_id } = networks[process.env.ETH_NETWORK];
 
 // function to sort addresses into ascending order (required for SimpleMultiSig)
@@ -31,6 +31,9 @@ function sortAscending(hexArray) {
 const sortedOwners = sortAscending(APPROVERS);
 
 module.exports = async function (deployer) {
+  const maticToken = RESTRICTIONS.tokens[process.env.ETH_NETWORK].find(
+    token => token.name === 'MATIC',
+  );
   await deployer.deploy(Verifier);
   await deployer.link(Verifier, [Challenges, ChallengesUtil]);
   await deployer.deploy(Poseidon);
@@ -46,10 +49,14 @@ module.exports = async function (deployer) {
   await deployProxy(Proposers, [], { deployer, unsafeAllowLinkedLibraries: true });
   await deployProxy(Challenges, [], { deployer, unsafeAllowLinkedLibraries: true });
   await deployProxy(Shield, [], { deployer, unsafeAllowLinkedLibraries: true });
-  await deployProxy(State, [Proposers.address, Challenges.address, Shield.address], {
-    deployer,
-    unsafeAllowLinkedLibraries: true,
-  });
+  await deployProxy(
+    State,
+    [Proposers.address, Challenges.address, Shield.address, maticToken.address],
+    {
+      deployer,
+      unsafeAllowLinkedLibraries: true,
+    },
+  );
   // initialisation
   const proposers = await Proposers.deployed();
   const challengers = await Challenges.deployed();

@@ -124,7 +124,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         checkCommit(msg.data);
         state.areBlockAndTransactionsReal(blockL2, transactions);
 
-        uint256[2] memory roots;
+        uint256[4] memory roots;
 
         if (uint256(transactions[transactionIndex].nullifiers[0]) != 0) {
             state.areBlockAndTransactionsReal(
@@ -153,12 +153,10 @@ contract Challenges is Stateful, Key_Registry, Config {
             );
             roots[1] = uint256(blockL2ContainingHistoricRoot[1].root);
         } else {
-            roots[0] = uint256(0);
+            roots[1] = uint256(0);
         }
 
-        uint256[2] memory rootsFee;
-
-        if (uint256(ts.nullifiersFee[0]) != 0) {
+        if (uint256(transactions[transactionIndex].nullifiersFee[0]) != 0) {
             state.areBlockAndTransactionsReal(
                 blockL2ContainingHistoricRootFee[0],
                 transactionsOfblockL2ContainingHistoricRootFee[0]
@@ -168,12 +166,12 @@ contract Challenges is Stateful, Key_Registry, Config {
                     blockL2ContainingHistoricRootFee[0].blockNumberL2,
                 'Incorrect historic root block'
             );
-            rootsFee[0] = uint256(blockL2ContainingHistoricRootFee[0].root);
+            roots[2] = uint256(blockL2ContainingHistoricRootFee[0].root);
         } else {
-            rootsFee[0] = uint256(0);
+            roots[2] = uint256(0);
         }
 
-        if (uint256(ts.nullifiersFee[1]) != 0) {
+        if (uint256(transactions[transactionIndex].nullifiersFee[1]) != 0) {
             state.areBlockAndTransactionsReal(
                 blockL2ContainingHistoricRootFee[1],
                 transactionsOfblockL2ContainingHistoricRootFee[1]
@@ -183,9 +181,9 @@ contract Challenges is Stateful, Key_Registry, Config {
                     blockL2ContainingHistoricRootFee[1].blockNumberL2,
                 'Incorrect historic root block'
             );
-            rootsFee[1] = uint256(blockL2ContainingHistoricRootFee[1].root);
+            roots[3] = uint256(blockL2ContainingHistoricRootFee[1].root);
         } else {
-            rootsFee[1] = uint256(0);
+            roots[3] = uint256(0);
         }
 
         // first check the transaction and block do not overflow
@@ -277,7 +275,10 @@ contract Challenges is Stateful, Key_Registry, Config {
             );
         }
 
-        if (uint256(ts.nullifiersFee[0]) != 0 && uint256(ts.nullifiersFee[1] != 0)) {
+        if (
+            uint256(transactions[transactionIndex].nullifiersFee[0]) != 0 &&
+            uint256(transactions[transactionIndex].nullifiersFee[1]) != 0
+        ) {
             require(
                 state.getNumberOfL2Blocks() <
                     uint256(transactions[transactionIndex].historicRootBlockNumberL2Fee[0]) ||
@@ -285,7 +286,7 @@ contract Challenges is Stateful, Key_Registry, Config {
                     uint256(transactions[transactionIndex].historicRootBlockNumberL2Fee[1]),
                 'Historic root exists'
             );
-        } else if (uint256(ts.nullifiersFee[0]) == 0) {
+        } else if (uint256(transactions[transactionIndex].nullifiersFee[0]) == 0) {
             require(
                 uint256(transactions[transactionIndex].historicRootBlockNumberL2Fee[0]) != 0 ||
                     uint256(transactions[transactionIndex].historicRootBlockNumberL2Fee[1]) != 0,

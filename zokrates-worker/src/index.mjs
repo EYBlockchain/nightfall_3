@@ -33,7 +33,13 @@ const checkCircuitsOutput = async () => {
       : `${DEFAULT_CIRCUIT_FILES_URL}/${env}`;
     const url = `${baseUrl}/proving_files/hash.txt`;
     const outputPath = `./output`;
-    const circuits = ['deposit', 'transfer', 'withdraw'];
+    const circuits = [
+      'deposit',
+      'double_transfer',
+      'single_transfer',
+      'withdraw',
+      'withdraw_change',
+    ];
 
     const res = await axios.get(url); // get all circuit files
     const files = res.data.split('\n');
@@ -73,7 +79,7 @@ const main = async () => {
 
     const mpcPromises = [];
 
-    for (const circuit of ['deposit', 'transfer', 'withdraw']) {
+    for (const circuit of ['deposit', 'double_transfer', 'single_transfer', 'withdraw']) {
       if (!fs.existsSync(`./mpc_params/${circuit}`)) {
         mpcPromises.push(
           new Promise((resolve, reject) => {

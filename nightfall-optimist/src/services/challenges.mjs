@@ -221,7 +221,6 @@ export async function createChallenge(block, transactions, err) {
       }
       // Challenge Duplicate Nullfier
       case 6: {
-        // TODO: MODIFY!
         const storedMinedNullifiers = await retrieveMinedNullifiers(); // List of Nullifiers stored by blockProposer
         const blockNullifiers = transactions
           .map(tNull => [tNull.nullifiers, tNull.nullifiersFee])
@@ -278,6 +277,22 @@ export async function createChallenge(block, transactions, err) {
             )
             .encodeABI();
         }
+        break;
+      }
+      // challenge incorrect leaf count
+      case 7: {
+        const priorBlockL2 = await getBlockByBlockNumberL2(block.blockNumberL2 - 1);
+        const priorBlockTransactions = await getTransactionsByTransactionHashes(
+          priorBlockL2.transactionHashes,
+        );
+        txDataToSign = await challengeContractInstance.methods
+          .challengeLeafCountCorrect(
+            Block.buildSolidityStruct(priorBlockL2), // the block immediately prior to this one
+            priorBlockTransactions.map(t => Transaction.buildSolidityStruct(t)), // the transactions in the prior block
+            Block.buildSolidityStruct(block),
+            transactions.map(t => Transaction.buildSolidityStruct(t)),
+          )
+          .encodeABI();
         break;
       }
       default:

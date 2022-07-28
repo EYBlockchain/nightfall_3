@@ -99,16 +99,13 @@ class Transaction {
     if (_commitments === undefined) commitments = [{ hash: 0 }, { hash: 0 }];
     else if (_commitments.length === 1) commitments = [..._commitments, { hash: 0 }];
     else commitments = _commitments;
-
     if (_nullifiers === undefined) nullifiers = [{ hash: 0 }, { hash: 0 }];
     else if (_nullifiers.length === 1) nullifiers = [..._nullifiers, { hash: 0 }];
     else nullifiers = _nullifiers;
-
     if (_commitmentFee === undefined) commitmentFee = [{ hash: 0 }];
     if (_nullifiersFee === undefined) nullifiersFee = [{ hash: 0 }, { hash: 0 }];
     else if (_nullifiersFee.length === 1) nullifiersFee = [..._nullifiersFee, { hash: 0 }];
     else nullifiersFee = _nullifiersFee;
-
     if (_compressedSecrets === undefined) compressedSecrets = [0, 0];
     else compressedSecrets = _compressedSecrets;
     if (_historicRoot === undefined) historicRootBlockNumberL2 = [0, 0];

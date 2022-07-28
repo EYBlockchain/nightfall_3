@@ -201,11 +201,11 @@ router.get('/withdraw', async (req, res, next) => {
  */
 router.post('/payment', async (req, res, next) => {
   logger.debug(`payment endpoint received GET ${JSON.stringify(req.body, null, 2)}`);
-  const { block, transactions } = req.body;
+  const { block } = req.body;
   try {
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
     const txDataToSign = await shieldContractInstance.methods
-      .requestBlockPayment(block, transactions)
+      .requestBlockPayment(block)
       .encodeABI();
     logger.debug('returning raw transaction data');
     logger.trace(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);

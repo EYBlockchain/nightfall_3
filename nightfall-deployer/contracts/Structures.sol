@@ -81,4 +81,9 @@ contract Structures {
         uint256 amount; // The amount held
         uint256 time; // The time the funds were locked from
     }
+
+    struct Fee {
+        address proposer;
+        uint256 blockNumberL2;
+    }
 }

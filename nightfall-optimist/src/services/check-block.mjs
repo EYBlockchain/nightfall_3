@@ -28,10 +28,10 @@ async function checkBlock(block, transactions) {
     const priorBlock = await getBlockByBlockNumberL2(block.blockNumberL2 - 1);
     if (priorBlock === null) logger.warn('Could not find prior block while checking leaf count');
     if (priorBlock.leafCount + priorBlock.nCommitments !== block.leafCount)
-      throw new BlockError('The leaf count in the block is not correct', 2);
+      throw new BlockError('The leaf count in the block is not correct', 7);
   } else if (block.leafCount !== 0)
     // this throws if it's the first block and leafCount!=0, which is impossible
-    throw new BlockError('The leaf count in the block is not correct', 2);
+    throw new BlockError('The leaf count in the block is not correct', 7);
 
   // now we have to check the commitment root.  For this we can make use of
   // Timber with its optimistic extensions.

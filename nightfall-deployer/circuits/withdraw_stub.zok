@@ -16,20 +16,20 @@ def main(\
 )-> ():
     
     field[2] nullifiersValue = [\
-        u32_array_to_field(nullifiers.oldCommitments.value[0]),\
-        u32_array_to_field(nullifiers.oldCommitments.value[1])\
+        u8_array_to_field(nullifiers.oldCommitments.value[0]),\
+        u8_array_to_field(nullifiers.oldCommitments.value[1])\
     ]
     field[2] commitmentsValue = [\
-        u32_array_to_field(commitments.newCommitments.value[0]),\
-        u32_array_to_field(commitments.newCommitments.value[1])\
+        u8_array_to_field(commitments.newCommitments.value[0]),\
+        u8_array_to_field(commitments.newCommitments.value[1])\
     ]
 
     field[2] nullifiersFeeValue = [\
-        u32_array_to_field(nullifiersFee.oldCommitments.value[0]),\
-        u32_array_to_field(nullifiersFee.oldCommitments.value[1])\
+        u8_array_to_field(nullifiersFee.oldCommitments.value[0]),\
+        u8_array_to_field(nullifiersFee.oldCommitments.value[1])\
         ]
 
-    field[1] commitmentFeeValue = [u32_array_to_field(commitmentFee.newCommitments.value[0])]
+    field[1] commitmentFeeValue = [u8_array_to_field(commitmentFee.newCommitments.value[0])]
 
     assert(nullifier_stub::<2>(\
         nullifierRoots, nullifiersValue, nullifiers.oldCommitments.salt,\
