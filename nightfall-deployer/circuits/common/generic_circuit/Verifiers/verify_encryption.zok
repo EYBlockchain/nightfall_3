@@ -21,7 +21,6 @@ def main(\
     private u32[8] ephemeralKey\
 ) -> bool:
 
-
     field[4] cipherText = [ercAddress,u32_array_to_field(tokenId),compressedSecrets[0],compressedSecrets[1]]
     bool[256] bitEphemeralKey = u32_8_to_bool_256(ephemeralKey)
 
@@ -37,6 +36,4 @@ def main(\
 
     bool[256] compressedPubKeyOutput = edwardsCompress(enc.ephemeralPublicKey)
     assert(compressedPubKeyOutput == u32_8_to_bool_256(recipientAddress))
-    
-    
     return true

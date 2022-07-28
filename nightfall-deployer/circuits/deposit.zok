@@ -4,21 +4,20 @@ from "./common/utils/calculations.zok" import sum
 from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field
 from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field
 from "./common/generic_circuit/Verifiers/verify_structure.zok" import main as verify_structure
-from "./common/generic_circuit/Verifiers/verify_encryption.zok" import main as verify_encryption
-from "./common/generic_circuit/Verifiers/verify_nullifiers.zok" import main as verify_nullifiers
 from "./common/generic_circuit/Verifiers/verify_commitments.zok" import main as verify_commitments
 
 def main(\
     PublicTransaction tx,\
     field[2] nullifierRoots,\
-    private Commitments<1> commitments\
+    private field salt,\
+    private Point recipientPublicKey\
 )-> ():
     
-    field value = u8_array_to_field(tx.value)
+    field[1] value = u8_array_to_field([tx.value])
 
     //Verify public transaction structure
     assert(verify_structure::<0>(\
-        value,\
+        value[0],\
 	    tx.transactionType,\
 	    tx.tokenType,\
 	    tx.tokenId,\
@@ -30,18 +29,13 @@ def main(\
 	    tx.compressedSecrets\
     ))
 
-    field[1] commitmentValue = [u8_array_to_field(commitments.newCommitments.value[0])]
-
-    //Check that values match
-    assert(value == sum(commitmentValue))
-
     // pack the top four bytes of the token id into the ercAddress field (address only
 	// uses 160 bits and the Shield contract prevents creation of something with more than 160 bits)
     field idRemainder = u32_array_to_field(tx.tokenId[1..8]) 
     field packedErcAddress = tx.ercAddress + u32_array_to_field([tx.tokenId[0]]) * SHIFT 
 
     //Verify new Commmitments
-    assert(verify_commitments::<1>(packedErcAddress, idRemainder, [0,0], [tx.commitments[0]],\
-    commitmentValue, commitments.newCommitments.salt, commitments.recipientPublicKey))
+    assert(verify_commitments::<1>(packedErcAddress, idRemainder, [tx.commitments[0]],\
+    value, [salt], [recipientPublicKey]))
 
     return

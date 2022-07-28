@@ -43,12 +43,11 @@ library ChallengesUtil {
         uint256 commitmentIndex =
             priorBlockL2.leafCount + Utils.filterCommitments(priorBlockTransactions).length;
         // At last, we can check if the root itself is correct!
-        (root, , ) =
-            MerkleTree_Stateless.insertLeaves(
-                Utils.filterCommitments(transactions),
-                _frontier,
-                commitmentIndex
-            );
+        (root, , ) = MerkleTree_Stateless.insertLeaves(
+            Utils.filterCommitments(transactions),
+            _frontier,
+            commitmentIndex
+        );
         require(root != blockL2.root, 'The root is actually fine');
     }
 
@@ -64,7 +63,7 @@ library ChallengesUtil {
         for (uint256 i = 0; i < proof.length; i++) {
             proof1[i] = proof[i];
         }
-        uint256[17] memory publicInputs = Utils.getPublicInputs(transaction, roots);
+        uint256[16] memory publicInputs = Utils.getPublicInputs(transaction, roots);
         require(!Verifier.verify(proof1, publicInputs, vk), 'This proof appears to be valid');
     }
 

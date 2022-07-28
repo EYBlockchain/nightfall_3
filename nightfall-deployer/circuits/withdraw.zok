@@ -14,7 +14,7 @@ def main(\
     private Commitments<2> commitments\
 )-> ():
     
-    field value = u8_array_to_field(tx.value)
+    field value = u8_array_to_field([tx.value])[0]
 
     //Verify public transaction structure
     assert(verify_structure::<2>(\
@@ -30,14 +30,8 @@ def main(\
 	    tx.compressedSecrets\
     ))
 
-    field[2] nullifiersValue = [\
-        u8_array_to_field(nullifiers.oldCommitments.value[0]),\
-        u8_array_to_field(nullifiers.oldCommitments.value[1])\
-    ]
-    field[2] commitmentsValue = [\
-        u8_array_to_field(commitments.newCommitments.value[0]),\
-        u8_array_to_field(commitments.newCommitments.value[1])\
-    ]
+    field[2] nullifiersValue = u8_array_to_field(nullifiers.oldCommitments.value)
+    field[2] commitmentsValue = u8_array_to_field(commitments.newCommitments.value)
 
     //Check that values match
     assert(sum(nullifiersValue) == sum(commitmentsValue) + value)
@@ -53,7 +47,7 @@ def main(\
         nullifiers.rootKey, nullifiers.paths, nullifiers.orders)
 
     //Verify new Commmitments
-    assert(verify_commitments::<2>(packedErcAddress, idRemainder, tx.commitments, firstInputZkpPublicKeys,\
+    assert(verify_commitments::<2>(packedErcAddress, idRemainder, tx.commitments,\
     commitmentsValue, commitments.newCommitments.salt, commitments.recipientPublicKey))
 
     //Verify Change

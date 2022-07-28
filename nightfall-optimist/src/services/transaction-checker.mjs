@@ -45,18 +45,18 @@ async function checkTransactionHash(transaction) {
 async function checkHistoricRoot(transaction) {
   // Deposit transaction have a historic root of 0
   // the validity is tested in checkTransactionType
-  if (Number(transaction.transactionType) === 1 || Number(transaction.transactionType) === 3) {
+  if (Number(transaction.nullifiers[0]) !== 0) {
     const historicRootFirst = await getBlockByBlockNumberL2(
       transaction.historicRootBlockNumberL2[0],
     );
     if (historicRootFirst === null)
       throw new TransactionError('The historic root in the transaction does not exist', 3);
   }
-  if (Number(transaction.transactionType) === 2) {
-    const [historicRootFirst, historicRootSecond] = await Promise.all(
-      transaction.historicRootBlockNumberL2.map(h => getBlockByBlockNumberL2(h)),
+  if (Number(transaction.nullifiers[0]) !== 0) {
+    const historicRootSecond = await getBlockByBlockNumberL2(
+      transaction.historicRootBlockNumberL2[1],
     );
-    if (historicRootFirst === null || historicRootSecond === null)
+    if (historicRootSecond === null)
       throw new TransactionError('The historic root in the transaction does not exist', 3);
   }
 }
@@ -69,27 +69,31 @@ async function verifyProof(transaction) {
     .call();
   // to verify a proof, we make use of a zokrates-worker, which has an offchain
   // verifier capability
-  const historicRootFirst = (await getBlockByBlockNumberL2(
-    transaction.historicRootBlockNumberL2[0],
-  )) ?? { root: ZERO };
-  const historicRootSecond = (await getBlockByBlockNumberL2(
-    transaction.historicRootBlockNumberL2[1],
-  )) ?? { root: ZERO };
+  const historicRootFirst =
+    transaction.nullifiers[0] === ZERO
+      ? { root: ZERO }
+      : (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2[0])) ?? { root: ZERO };
+  const historicRootSecond =
+    transaction.nullifiers[1] === ZERO
+      ? { root: ZERO }
+      : (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2[1])) ?? { root: ZERO };
+
+  if (![0, 1, 2].includes(Number(transaction.transactionType))) {
+    throw new TransactionError('Unknown transaction type', 2);
+  }
 
   const inputs = generalise(
     [
       generalise(transaction.value).limbs(8, 31),
-      generalise(transaction.transactionType).limbs(32, 1),
+      transaction.historicRootBlockNumberL2,
+      transaction.transactionType,
       transaction.tokenType,
       generalise(transaction.tokenId).limbs(32, 8),
       transaction.ercAddress,
       generalise(transaction.recipientAddress).limbs(32, 8),
-      generalise(transaction.commitments[0]).limbs(32, 7),
-      generalise(transaction.commitments[1]).limbs(32, 7),
-      generalise(transaction.nullifiers[0]).limbs(32, 7),
-      generalise(transaction.nullifiers[1]).limbs(32, 7),
-      ...transaction.historicRootBlockNumberL2,
-      ...transaction.compressedSecrets,
+      transaction.commitments,
+      transaction.nullifiers,
+      transaction.compressedSecrets,
       historicRootFirst.root,
       historicRootSecond.root,
     ].flat(Infinity),
@@ -97,10 +101,6 @@ async function verifyProof(transaction) {
 
   if (
     isOverflow(transaction.ercAddress, MAX_PUBLIC_VALUES.ERCADDRESS) ||
-    isOverflow(transaction.commitments[0], MAX_PUBLIC_VALUES.COMMITMENTS) ||
-    isOverflow(transaction.commitments[1], MAX_PUBLIC_VALUES.COMMITMENTS) ||
-    isOverflow(transaction.nullifiers[0], MAX_PUBLIC_VALUES.NULLIFIER) ||
-    isOverflow(transaction.nullifiers[1], MAX_PUBLIC_VALUES.NULLIFIER) ||
     isOverflow(historicRootFirst.root, BN128_GROUP_ORDER) ||
     isOverflow(historicRootSecond.root, BN128_GROUP_ORDER) ||
     (transaction.transactionType === 2 &&
@@ -109,6 +109,14 @@ async function verifyProof(transaction) {
     throw new TransactionError('Overflow in public input', 4);
   }
 
+  for (let i = 0; i < transaction.nullifiers.length; i++) {
+    if (isOverflow(transaction.nullifiers[i], MAX_PUBLIC_VALUES.NULLIFIER))
+      throw new TransactionError('Overflow in public input', 4);
+  }
+  for (let i = 0; i < transaction.commitments.length; i++) {
+    if (isOverflow(transaction.commitments[i], MAX_PUBLIC_VALUES.COMMITMENT))
+      throw new TransactionError('Overflow in public input', 4);
+  }
   // check for modular overflow attacks
   // if (inputs.filter(input => input.bigInt >= BN128_GROUP_ORDER).length > 0)
   //  throw new TransactionError('Modular overflow in public input', 4);

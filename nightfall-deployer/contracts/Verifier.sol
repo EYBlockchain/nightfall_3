@@ -50,7 +50,7 @@ library Verifier {
         Pairing.G1Point[] gamma_abc;
   }
 
-  function verify(uint256[] memory _proof, uint256[17] memory _publicInputs, uint256[] memory _vk) public returns (bool result) {
+  function verify(uint256[] memory _proof, uint256[16] memory _publicInputs, uint256[] memory _vk) public returns (bool result) {
       if (verificationCalculation(_proof, _publicInputs, _vk) == 0) {
           result = true;
       } else {
@@ -58,7 +58,7 @@ library Verifier {
       }
   }
 
-  function verificationCalculation(uint256[] memory _proof, uint256[17] memory _publicInputs, uint256[] memory _vk) public returns (uint) {
+  function verificationCalculation(uint256[] memory _proof, uint256[16] memory _publicInputs, uint256[] memory _vk) public returns (uint) {
 
       Proof_G16 memory proof;
       Pairing.G1Point memory vk_dot_inputs;

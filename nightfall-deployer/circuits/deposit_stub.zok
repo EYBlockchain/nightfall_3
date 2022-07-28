@@ -7,11 +7,12 @@ from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field
 def main(\
     PublicTransaction tx,\
     field[2] nullifierRoots,\
-    private Commitments<1> commitments\
+    private field salt,\
+    private field[2] recipientPublicKey\
 )-> ():
     
-    field[1] commitment1Value = [u8_array_to_field(commitments.newCommitments.value[0])]
+    field[1] commitmentValue = u8_array_to_field([tx.value])
 
-    assert(commitment_stub::<1>(commitment1Value, commitments.newCommitments.salt, commitments.recipientPublicKey))
+    assert(commitment_stub::<1>(commitmentValue, [salt], [recipientPublicKey]))
         
     return

@@ -20,6 +20,7 @@ import {
 } from './commitment-storage.mjs';
 import getProposersUrl from './peers.mjs';
 import { ZkpKeys } from './keys.mjs';
+import { computeWitness } from '../utils/compute-witness.mjs';
 
 const {
   BN128_GROUP_ORDER,
@@ -44,93 +45,85 @@ async function withdraw(withdrawParams) {
 
   // the first thing we need to do is to find and input commitment which
   // will enable us to conduct our withdraw.  Let's rummage in the db...
-  const [oldCommitment] = (await findUsableCommitmentsMutex(
-    compressedZkpPublicKey,
-    ercAddress,
-    tokenId,
-    value,
-    true,
-  )) || [null];
-  if (oldCommitment) logger.debug(`Found commitment ${JSON.stringify(oldCommitment, null, 2)}`);
+  const oldCommitments =
+    (await findUsableCommitmentsMutex(compressedZkpPublicKey, ercAddress, tokenId, value, true)) ||
+    null;
+  if (oldCommitments) logger.debug(`Found commitment ${JSON.stringify(oldCommitments, null, 2)}`);
   else throw new Error('No suitable commitments were found'); // caller to handle - need to get the user to make some commitments or wait until they've been posted to the blockchain and Timber knows about them
   // Having found 1 commitment, which is a suitable input to the
   // proof, the next step is to compute its nullifier;
-  const nullifier = new Nullifier(oldCommitment, nullifierKey);
+  const nullifiers = oldCommitments.map(
+    oldCommitment => new Nullifier(oldCommitment, nullifierKey),
+  );
   // we may need to return change to the recipient
-  const change = oldCommitment.preimage.value.bigInt - value.bigInt;
+  const totalInputCommitmentValue = oldCommitments.reduce(
+    (acc, curr) => curr.preimage.value.bigInt + acc,
+    0n,
+  );
+  const withdrawValue = value.bigInt > MAX_WITHDRAW ? MAX_WITHDRAW : value.bigInt;
+  const change = totalInputCommitmentValue - withdrawValue;
   // if so, add an output commitment to do that
   // and the Merkle path from the commitment to the root
-  const commitmentTreeInfo = await getSiblingInfo(oldCommitment);
-  const siblingPath = generalise(
-    [commitmentTreeInfo.root].concat(
-      commitmentTreeInfo.siblingPath.path.map(p => p.value).reverse(),
-    ),
-  );
-  logger.silly(`SiblingPath was: ${JSON.stringify(siblingPath)}`);
+  // Commitment Tree Information
+  const commitmentTreeInfo = await Promise.all(oldCommitments.map(c => getSiblingInfo(c)));
+  const localSiblingPaths = commitmentTreeInfo.map(l => {
+    const path = l.siblingPath.path.map(p => p.value);
+    return generalise([l.root].concat(path.reverse()));
+  });
+  const leafIndices = commitmentTreeInfo.map(l => l.leafIndex);
+  const blockNumberL2s = commitmentTreeInfo.map(l => l.isOnChain);
+  logger.silly(`SiblingPath was: ${JSON.stringify(localSiblingPaths)}`);
 
-  const { leafIndex, isOnChain } = commitmentTreeInfo;
-
-  let witness = [];
-  let newCommitment = null;
+  const newCommitment = [];
   if (change !== 0n) {
     const salt = await randValueLT(BN128_GROUP_ORDER);
-    newCommitment = new Commitment({
-      ercAddress,
-      tokenId,
-      value: change,
-      zkpPublicKey: ZkpKeys.decompressZkpPublicKey(compressedZkpPublicKey),
-      compressedZkpPublicKey,
-      salt,
-    });
-    witness = [
-      oldCommitment.preimage.ercAddress.field(BN128_GROUP_ORDER),
-      oldCommitment.preimage.tokenId.limbs(32, 8),
-      [nullifier.hash.field(BN128_GROUP_ORDER)],
-      [rootKey.field(BN128_GROUP_ORDER)],
-      value.field(BN128_GROUP_ORDER),
-      [
-        [oldCommitment.preimage.value.field(BN128_GROUP_ORDER)],
-        [oldCommitment.preimage.salt.field(BN128_GROUP_ORDER)],
-      ],
-      // recipientAddress.field(BN128_GROUP_ORDER),
-      [siblingPath[0].field(BN128_GROUP_ORDER)],
-      [siblingPath.slice(1).map(node => node.field(BN128_GROUP_ORDER, false))], // siblingPAth[32] is a sha hash and will overflow a field but it's ok to take the mod here - hence the 'false' flag
-      [leafIndex],
-      [
-        [newCommitment.preimage.value.field(BN128_GROUP_ORDER)],
-        [newCommitment.preimage.salt.field(BN128_GROUP_ORDER)],
-      ],
-      [newCommitment.preimage.zkpPublicKey.map(zkp => zkp.field(BN128_GROUP_ORDER))],
-      [newCommitment.hash.field(BN128_GROUP_ORDER)],
-    ].flat(Infinity);
-  } else {
-    // now we have everything we need to create a Witness and compute a proof
-    witness = [
-      oldCommitment.preimage.ercAddress.field(BN128_GROUP_ORDER),
-      oldCommitment.preimage.tokenId.limbs(32, 8),
-      oldCommitment.preimage.value.field(BN128_GROUP_ORDER),
-      oldCommitment.preimage.salt.field(BN128_GROUP_ORDER),
-      oldCommitment.hash.field(BN128_GROUP_ORDER),
-      rootKey.field(BN128_GROUP_ORDER),
-      nullifier.hash.field(BN128_GROUP_ORDER),
-      recipientAddress.field(BN128_GROUP_ORDER),
-      siblingPath[0].field(BN128_GROUP_ORDER),
-      siblingPath.slice(1).map(node => node.field(BN128_GROUP_ORDER)), // siblingPAth[32] is a sha hash and will overflow a field but it's ok to take the mod here - hence the 'false' flag
-      leafIndex,
-    ].flat(Infinity);
+    newCommitment.push(
+      new Commitment({
+        ercAddress,
+        tokenId,
+        value: change,
+        zkpPublicKey: ZkpKeys.decompressZkpPublicKey(compressedZkpPublicKey),
+        compressedZkpPublicKey,
+        salt,
+      }),
+    );
   }
+  const publicData = Transaction.buildSolidityStruct(
+    new Transaction({
+      fee,
+      historicRootBlockNumberL2: blockNumberL2s,
+      commitments: newCommitment.length > 0 ? newCommitment : [{ hash: 0 }, { hash: 0 }],
+      transactionType: 2,
+      tokenType: items.tokenType,
+      tokenId,
+      value,
+      ercAddress,
+      recipientAddress,
+      nullifiers,
+    }),
+  );
+  const privateData = {
+    rootKey,
+    oldCommitmentPreimage: oldCommitments.map(o => {
+      return { value: o.preimage.value, salt: o.preimage.salt };
+    }),
+    paths: localSiblingPaths.map(siblingPath => siblingPath.slice(1)),
+    orders: leafIndices,
+    newCommitmentPreimage: newCommitment.map(o => {
+      return { value: o.preimage.value, salt: o.preimage.salt };
+    }),
+    recipientPublicKeys: newCommitment.map(o => o.preimage.zkpPublicKey),
+  };
+
+  const witness = computeWitness(
+    publicData,
+    localSiblingPaths.map(siblingPath => siblingPath[0]),
+    privateData,
+  );
 
   logger.debug(`witness input is ${witness.join(' ')}`);
   // call a zokrates worker to generate the proof
-  let folderpath;
-  let transactionType;
-  if (change > 0n || value.bigInt >= MAX_WITHDRAW) {
-    folderpath = 'withdraw_change';
-    transactionType = 4;
-  } else {
-    folderpath = 'withdraw';
-    transactionType = 3;
-  }
+  let folderpath = 'withdraw';
   if (USE_STUBS) folderpath = `${folderpath}_stub`;
   const res = await axios.post(`${PROTOCOL}${ZOKRATES_WORKER_HOST}/generate-proof`, {
     folderpath,
@@ -144,15 +137,15 @@ async function withdraw(withdrawParams) {
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
   const optimisticWithdrawTransaction = new Transaction({
     fee,
-    historicRootBlockNumberL2: [isOnChain, 0],
-    commitments: newCommitment ? [newCommitment] : [{ hash: 0 }, { hash: 0 }],
-    transactionType,
+    historicRootBlockNumberL2: blockNumberL2s,
+    commitments: newCommitment.length > 0 ? newCommitment : [{ hash: 0 }, { hash: 0 }],
+    transactionType: 2,
     tokenType: items.tokenType,
     tokenId,
     value,
     ercAddress,
     recipientAddress,
-    nullifiers: [nullifier],
+    nullifiers,
     proof,
   });
   try {
@@ -172,7 +165,9 @@ async function withdraw(withdrawParams) {
         }),
       );
       // on successful computation of the transaction mark the old commitments as nullified
-      await markNullified(oldCommitment, optimisticWithdrawTransaction);
+      await Promise.all(
+        oldCommitments.map(commitment => markNullified(commitment, optimisticWithdrawTransaction)),
+      );
       const th = optimisticWithdrawTransaction.transactionHash;
       delete optimisticWithdrawTransaction.transactionHash;
       optimisticWithdrawTransaction.transactionHash = th;
@@ -182,10 +177,12 @@ async function withdraw(withdrawParams) {
       .submitTransaction(Transaction.buildSolidityStruct(optimisticWithdrawTransaction))
       .encodeABI();
     // on successful computation of the transaction mark the old commitments as nullified
-    await markNullified(oldCommitment, optimisticWithdrawTransaction);
+    await Promise.all(
+      oldCommitments.map(commitment => markNullified(commitment, optimisticWithdrawTransaction)),
+    );
     return { rawTransaction, transaction: optimisticWithdrawTransaction };
   } catch (err) {
-    await clearPending(oldCommitment);
+    await Promise.all(oldCommitments.map(commitment => clearPending(commitment)));
     throw new Error(err); // let the caller handle the error
   }
 }

@@ -1,7 +1,7 @@
 type Point = field[2]
 
 struct CommitmentPreimage<N> {
- 	u8[31][N] value
+ 	u8[N][31] value
  	field[N] salt
 }
 
@@ -20,7 +20,7 @@ struct CompressedPoint<N> {
 struct PublicTransaction {
 	u8[31] value
 	field[2] historicRootBlockNumberL2
-	u32 transactionType
+	field transactionType
 	field tokenType
 	u32[8] tokenId
 	field ercAddress

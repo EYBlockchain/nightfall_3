@@ -7,7 +7,6 @@ from "../../utils/structures.zok" import Point
 def main<NumCommitments>(\
     field packedErcAddress,\
     field idRemainder,\
-    Point changeZkpPublicKeys,\
     field[NumCommitments] commitments,\
     private field[NumCommitments] newCommitmentValues,\
     private field[NumCommitments] newCommitmentSalts,\
