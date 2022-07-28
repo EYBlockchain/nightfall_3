@@ -111,7 +111,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         }
     }
 
-function challengeProofVerification(
+    function challengeProofVerification(
         Block memory blockL2,
         Transaction[] calldata transactions,
         uint256 transactionIndex,
@@ -134,7 +134,7 @@ function challengeProofVerification(
                     blockL2ContainingHistoricRoot[0].blockNumberL2,
                 'Incorrect historic root block'
             );
-            roots[0] = uint256(blockL2ContainingHistoricRoot[1].root);
+            roots[0] = uint256(blockL2ContainingHistoricRoot[0].root);
         } else {
             roots[0] = uint256(0);
         }
@@ -213,8 +213,10 @@ function challengeProofVerification(
     ) external onlyBootChallenger {
         checkCommit(msg.data);
         state.areBlockAndTransactionsReal(blockL2, transactions);
-        if (uint256(transactions[transactionIndex].nullifiers[0]) != 0 
-            && uint256(transactions[transactionIndex].nullifiers[1]) != 0) {
+        if (
+            uint256(transactions[transactionIndex].nullifiers[0]) != 0 &&
+            uint256(transactions[transactionIndex].nullifiers[1]) != 0
+        ) {
             require(
                 state.getNumberOfL2Blocks() <
                     uint256(transactions[transactionIndex].historicRootBlockNumberL2[0]) ||
