@@ -128,7 +128,7 @@ const transpileTransactionLookup = (_pathToSrc, _pathToInject) => {
   let srcFile = fs.readFileSync(_pathToSrc, 'utf-8');
   const injectFile = fs.readFileSync(_pathToInject, 'utf-8');
 
-  const regexInjectFileNoPreamble = /let error(\n|.)*/g;
+  const regexInjectFileNoPreamble = /const error(\n|.)*/g;
   const [postAmble] = injectFile.match(regexInjectFileNoPreamble);
 
   const regexReplaceCall =

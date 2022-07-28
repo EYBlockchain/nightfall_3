@@ -108,7 +108,7 @@ library ChallengesUtil {
             if (transaction.proof[i] == 0) nZeroProof++;
         }
         require(
-                transaction.value != 0 ||
+            transaction.value != 0 ||
                 transaction.commitments[0] == ZERO ||
                 transaction.commitments[1] != ZERO ||
                 transaction.nullifiers[0] == ZERO ||
@@ -134,7 +134,7 @@ library ChallengesUtil {
             if (transaction.proof[i] == 0) nZeroProof++;
         }
         require(
-                transaction.value != 0 ||
+            transaction.value != 0 ||
                 transaction.commitments[0] == ZERO ||
                 transaction.commitments[1] == ZERO ||
                 transaction.nullifiers[0] == ZERO ||
@@ -215,22 +215,5 @@ library ChallengesUtil {
         require(uint256(transaction.nullifiers[0]) <= MAX31, 'Nullifier 0 out of range');
         require(uint256(transaction.nullifiers[1]) <= MAX31, 'Nullifier 1 out of range');
         require(uint256(blockL2.root) < BN128_GROUP_ORDER, 'root out of range');
-    }
-
-    function libChallengeNullifier(
-        Structures.Transaction memory tx1,
-        uint256 nullifierIndex1,
-        Structures.Transaction memory tx2,
-        uint256 nullifierIndex2
-    ) public pure {
-        require(
-            tx1.nullifiers[nullifierIndex1] != 0 &&
-                tx1.nullifiers[nullifierIndex1] == tx2.nullifiers[nullifierIndex2],
-            'Not matching nullifiers'
-        );
-        require(
-            Utils.hashTransaction(tx1) != Utils.hashTransaction(tx2),
-            'Transactions need to be different'
-        );
     }
 }

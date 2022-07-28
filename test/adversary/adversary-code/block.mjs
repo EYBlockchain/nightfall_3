@@ -7,18 +7,16 @@ let error = process.env.BAD_BLOCK_SEQUENCE
       'ValidBlock',
       'ValidBlock',
       'ValidBlock',
-      'IncorrectTreeRoot', // Needs two prior blocks
-      'ValidBlock',
-      'IncorrectLeafCount', //  Needs one prior block
-      'ValidBlock',
-      'DuplicateTransaction', // needs atleast one transaction in a prior block
+      // 'IncorrectTreeRoot', // Needs two prior blocks
+      // 'ValidBlock',
+      // 'IncorrectLeafCount', //  Needs one prior block
+      // 'ValidBlock',
+      'DuplicateCommitment', // needs atleast one non withdraw transaction in a prior block
       'ValidBlock',
       'DuplicateNullifier', // needs atleast one non deposit transaction in a prior block
       'ValidBlock',
-      'HistoricRootError',
-      'ValidBlock',
-      'IncorrectProof',
-      'ValidBlock',
+      // 'IncorrectProof',
+      // 'ValidBlock',
     ];
 
 let resetErrorIdx = false;

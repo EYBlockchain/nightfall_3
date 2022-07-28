@@ -27,10 +27,10 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
     address public challengesAddress;
     address public shieldAddress;
 
-    function initialize() public override(Pausable, Config){
-      Pausable.initialize();
-      Config.initialize();
-      ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
+    function initialize() public override(Pausable, Config) {
+        Pausable.initialize();
+        Config.initialize();
+        ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
     }
 
     function initialize(
@@ -42,7 +42,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         challengesAddress = _challengesAddress;
         shieldAddress = _shieldAddress;
         initialize();
-      }
+    }
 
     modifier onlyRegistered {
         require(
@@ -269,9 +269,9 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
     {
         bytes32 blockHash = Utils.hashBlock(b);
         require(blockHashes[b.blockNumberL2].blockHash == blockHash, 'This block does not exist');
-        bytes32 tranasactionHashesRoot = Utils.hashTransactionHashes(ts);
+        bytes32 transactionHashesRoot = Utils.hashTransactionHashes(ts);
         require(
-            b.transactionHashesRoot == tranasactionHashesRoot,
+            b.transactionHashesRoot == transactionHashesRoot,
             'Some of these transactions are not in this block'
         );
         return blockHash;
