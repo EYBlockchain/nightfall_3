@@ -1,4 +1,6 @@
 /* ignore unused exports */
+/* eslint-disable import/no-unresolved */
+
 import express from 'express';
 import bodyParser from 'body-parser';
 import config from 'config';
@@ -6,7 +8,7 @@ import cors from 'cors';
 import fileUpload from 'express-fileupload';
 import { proposer, contracts } from './routes/index.mjs';
 import startProposer from './proposer.mjs';
-import Nf3 from '../../../cli/lib/nf3.mjs';
+import Nf3 from '../cli/lib/nf3.mjs';
 
 const ETH_PRIVATE_KEY =
   config.ETH_PRIVATE_KEY || '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d';

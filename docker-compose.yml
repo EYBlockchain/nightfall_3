@@ -44,11 +44,43 @@ services:
       RABBITMQ_HOST: amqp://rabbitmq
       RABBITMQ_PORT: 5672
       ENABLE_QUEUE: 1
-      OPTIMIST_HOST: optimist
+      OPTIMIST_HOST: optimist1
       OPTIMIST_PORT: 80
       USE_STUBS: 'false' # make sure this flag is the same as in deployer service
-    command: ['npm', 'run', 'dev']
+    command: [ 'npm', 'run', 'dev' ]
 
+  client2:
+    image: ghcr.io/eyblockchain/nightfall3-client:latest
+    volumes:
+      - type: volume
+        source: build
+        target: /app/build
+      - type: volume
+        source: mongodb2
+        target: /app/mongodb
+    networks:
+      - nightfall_network
+    ports:
+      - 27018:27017
+      - 8084:80
+    depends_on:
+      - deployer
+      - worker
+      - rabbitmq2
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+      LOG_LEVEL: error
+      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_PORT: 8546
+      ZOKRATES_WORKER_HOST: worker
+      RABBITMQ_HOST: amqp://rabbitmq2
+      RABBITMQ_PORT: 5672
+      ENABLE_QUEUE: 1
+      OPTIMIST_HOST: optimist2
+      OPTIMIST_PORT: 80
+      USE_STUBS: 'false' # make sure this flag is the same as in deployer service
+    command: [ 'npm', 'run', 'dev' ]
     # Temporary container to deploy contracts and circuits and populate volumes
   deployer:
     #image: docker.pkg.github.com/eyblockchain/nightfall-deployer/nightfall_deployer:1.1.0
@@ -83,8 +115,8 @@ services:
 
   optimist:
     image: ghcr.io/eyblockchain/nightfall3-optimist:latest
-  #  depends_on:
-  #    - deployer
+    #  depends_on:
+    #    - deployer
     networks:
       - nightfall_network
     ports:
@@ -103,9 +135,33 @@ services:
       LOG_LEVEL: debug
       IS_CHALLENGER: 'false'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
-    command: ['npm', 'run', 'dev']
+    command: [ 'npm', 'run', 'dev' ]
 
-  rabbitmq:
+  optimist2:
+    image: ghcr.io/eyblockchain/nightfall3-optimist:latest
+    depends_on:
+      - deployer
+    networks:
+      - nightfall_network
+    ports:
+      - 8085:80
+      # websocket port for Optimist is on localhost:8086
+      - 8086:8080
+    volumes:
+      - type: volume
+        source: build
+        target: /app/build/
+    environment:
+      WEBSOCKET_PORT: 8080
+      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_PORT: 8546
+      HASH_TYPE: poseidon
+      LOG_LEVEL: error
+      IS_CHALLENGER: 'false'
+      TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
+    command: [ 'npm', 'run', 'dev' ]
+
+  rabbitmq1:
     image: rabbitmq
     ports:
       - '15674:15674'
@@ -128,6 +184,24 @@ services:
     environment:
       LOG_LEVEL: info
       MPC: ${MPC}
+
+  proposer:
+    image: ghcr.io/eyblockchain/nightfall3-proposer:latest
+    build:
+      dockerfile: proposer.Dockerfile
+      context: .
+    networks:
+      - nightfall_network
+    environment:
+      OPTIMIST_HOST: optimist1
+      OPTIMIST_WS_PORT: 8080
+      PROPOSER_HOST: proposer
+      PROPOSER_PORT: 8080
+      OPTIMIST_PORT: 80
+      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_PORT: 8546
+      CLIENT_HOST: client1
+      CLIENT_PORT: 80
 
 volumes:
   mongodb: null

@@ -1,7 +1,8 @@
+/* eslint-disable import/no-unresolved */
 /**
 Module that runs up as a proposer
 */
-import logger from '../../../common-files/utils/logger.mjs';
+import logger from '../common-files/utils/logger.mjs';
 
 /**
 Does the preliminary setup and starts listening on the websocket
