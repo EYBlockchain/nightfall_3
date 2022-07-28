@@ -14,8 +14,8 @@ module.exports = {
   // constant
   // COMMITMENTS_DB: 'nightfall_commitments',
   // OPTIMIST_DB: 'optimist_data',
-  PROPOSER_COLLECTION: 'proposers',
-  CHALLENGER_COLLECTION: 'challengers',
+  // PROPOSER_COLLECTION: 'proposers',
+  // CHALLENGER_COLLECTION: 'challengers',
   TRANSACTIONS_COLLECTION: 'transactions',
   SUBMITTED_BLOCKS_COLLECTION: 'blocks',
   INVALID_BLOCKS_COLLECTION: 'invalid_blocks',
