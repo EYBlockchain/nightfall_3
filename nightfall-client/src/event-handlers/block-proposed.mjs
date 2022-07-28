@@ -107,7 +107,7 @@ async function blockProposedEventHandler(data, syncing) {
     // only save block if any transaction in it is saved/stored to db
     const saveBlockToDb = updateReturn.map(d => d[0]);
     if (saveBlockToDb.includes(true)) {
-      await saveBlock({ blockNumber: currentBlockCount, transactionHashL1, ...block });
+      await saveBlock({ blockNumber: currentBlockCount, transactionHashL1, timeBlockL2, ...block });
     }
   });
 
