@@ -485,4 +485,8 @@ module.exports = {
   // AMAZONMQ
   usernameMq: process.env.USERNAME_MQ,
   pswMQ: process.env.PASSWORD_MQ,
+
+  // LAMBDA TWOSTEPSYNC
+  twoStepSyncUrl: process.env.TWO_STEP_SYNC_URL,
+  twoStepSyncDeployment: process.env.TWO_STEP_SYNC_DEPLOYMENT,
 };
