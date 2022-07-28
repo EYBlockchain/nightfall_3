@@ -1,6 +1,7 @@
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import Timber from 'common-files/classes/timber.mjs';
+import getTimeByBlock from 'common-files/utils/block-info.mjs';
 import {
   markNullifiedOnChain,
   markOnChain,
@@ -11,7 +12,6 @@ import {
   isTransactionHashWithdraw,
 } from '../services/commitment-storage.mjs';
 import getProposeBlockCalldata from '../services/process-calldata.mjs';
-import getTimeByBlock from '../services/block-info.mjs';
 import { zkpPrivateKeys, nullifierKeys } from '../services/keys.mjs';
 import {
   getLatestTree,
