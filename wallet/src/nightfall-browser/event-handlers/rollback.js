@@ -21,7 +21,7 @@ import {
 } from '../services/database';
 
 async function rollbackEventHandler(data) {
-  const { blockNumberL2 } = data.returnValues;
+  const blockNumberL2 = data;
   logger.info(`Received Rollback event, with layer 2 block number ${blockNumberL2}`);
 
   // We get the commitments from blockNumberL2 + 1 because the bad block itself (except
