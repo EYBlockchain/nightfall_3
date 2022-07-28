@@ -2,6 +2,7 @@ FROM mongo:4.4.1-bionic
 
 # install node
 RUN apt-get update
+RUN apt-get install build-essential -y
 
 # TEMPORARY WORKAROUND FOR ISSUE https://github.com/nodesource/distributions/issues/1266
 RUN apt-get install -y ca-certificates
