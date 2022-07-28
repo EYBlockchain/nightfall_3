@@ -13,7 +13,7 @@ BigInt.prototype.toJSON = function () {
 module.exports = {
   // constant
   // COMMITMENTS_DB: 'nightfall_commitments',
-  OPTIMIST_DB: 'optimist_data',
+  // OPTIMIST_DB: 'optimist_data',
   PROPOSER_COLLECTION: 'proposers',
   CHALLENGER_COLLECTION: 'challengers',
   TRANSACTIONS_COLLECTION: 'transactions',
