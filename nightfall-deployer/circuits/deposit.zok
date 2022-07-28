@@ -30,7 +30,7 @@ def main(\
 	    tx.compressedSecrets\
     ))
 
-    field[1] commitmentValue = [u32_array_to_field(commitments.newCommitments.value[0])]
+    field[1] commitmentValue = [u8_array_to_field(commitments.newCommitments.value[0])]
 
     //Check that values match
     assert(value == sum(commitmentValue))

@@ -27,7 +27,7 @@ def main<NumCommitments>(\
         ])
 
         //Check that the calculated commitment matches with the one contained in the transaction
-        assert(commitments[i] == 0  || commitment == commitments[i])
+        assert(newCommitmentValues[i] == 0  || commitment == commitments[i])
     endfor    
     
     return true

@@ -48,10 +48,10 @@ def main<NumNullifiers>(\
         field nullifier = poseidon([nullifierKeys, calculatedOldCommitmentHash])
 
         //Check that the calculated nullifier matches with the one contained in the transaction
-        assert(nullifiers[i] == 0 || nullifier == nullifiers[i])
+        assert(oldCommitmentValues[i] == 0 || nullifier == nullifiers[i])
 
         //Check that the nullifier is contained in the tree
-        assert(nullifiers[i] == 0 || pathCheck([roots[i], ...paths[i]], orders[i], nullifiers[i]))
+        assert(oldCommitmentValues[i] == 0 || pathCheck([roots[i], ...paths[i]], orders[i], calculatedOldCommitmentHash))
 
         //Set the changeZkpPublicKeys if i = 0. Otherwise just set the same value
         firstInputZkpPublicKeys = i == 0 ? zkpPublicKeys : firstInputZkpPublicKeys

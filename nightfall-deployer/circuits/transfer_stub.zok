@@ -2,7 +2,7 @@ from "./common/utils/structures.zok" import Point, PublicTransaction, Nullifiers
 from "./common/generic_circuit/Stubs/nullifiers_stub.zok" import main as nullifier_stub
 from "./common/generic_circuit/Stubs/commitments_stub.zok" import main as commitment_stub
 from "./common/generic_circuit/Stubs/encryption_stub.zok" import main as encryption_stub
-from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field
+from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field
 
 
 def main(\
@@ -14,12 +14,12 @@ def main(\
 )-> ():
     
     field[2] nullifiersValue = [\
-        u32_array_to_field(nullifiers.oldCommitments.value[0]),\
-        u32_array_to_field(nullifiers.oldCommitments.value[1])\
+        u8_array_to_field(nullifiers.oldCommitments.value[0]),\
+        u8_array_to_field(nullifiers.oldCommitments.value[1])\
     ]
     field[2] commitmentsValue = [\
-        u32_array_to_field(commitments.newCommitments.value[0]),\
-        u32_array_to_field(commitments.newCommitments.value[1])\
+        u8_array_to_field(commitments.newCommitments.value[0]),\
+        u8_array_to_field(commitments.newCommitments.value[1])\
     ]
 
     assert(nullifier_stub::<2>(\

@@ -31,12 +31,12 @@ def main(\
     ))
 
     field[2] nullifiersValue = [\
-        u32_array_to_field(nullifiers.oldCommitments.value[0]),\
-        u32_array_to_field(nullifiers.oldCommitments.value[1])\
+        u8_array_to_field(nullifiers.oldCommitments.value[0]),\
+        u8_array_to_field(nullifiers.oldCommitments.value[1])\
     ]
     field[2] commitmentsValue = [\
-        u32_array_to_field(commitments.newCommitments.value[0]),\
-        u32_array_to_field(commitments.newCommitments.value[1])\
+        u8_array_to_field(commitments.newCommitments.value[0]),\
+        u8_array_to_field(commitments.newCommitments.value[1])\
     ]
 
     //Check that values match
