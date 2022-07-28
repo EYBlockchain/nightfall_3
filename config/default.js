@@ -28,7 +28,7 @@ module.exports = {
   // CIRCUIT_COLLECTION: 'circuit_storage',
   // KEYS_COLLECTION: 'keys',
   // CONTRACT_ARTIFACTS: '/app/build/contracts',
-  PROPOSERS_CONTRACT_NAME: 'Proposers',
+  // PROPOSERS_CONTRACT_NAME: 'Proposers',
   SHIELD_CONTRACT_NAME: 'Shield',
   CHALLENGES_CONTRACT_NAME: 'Challenges',
   STATE_CONTRACT_NAME: 'State',
