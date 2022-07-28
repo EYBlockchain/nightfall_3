@@ -1,3 +1,4 @@
+/* ignore unused exports */
 /**
 Function to retreive block timestamp of a transaction.
 */
