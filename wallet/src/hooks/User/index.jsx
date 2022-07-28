@@ -20,7 +20,7 @@ import { wsMqMapping, topicRollback, topicBlockProposed } from '../../common-fil
 import axios from 'axios';
 import init from '../../web-worker/index.js';
 
-const { USE_STUBS, usernameMq, pswMQ } = global.config;
+const { USE_STUBS, usernameMq, pswMQ, twoStepSyncUrl, twoStepSyncDeployment } = global.config;
 
 export const initialState = {
   compressedZkpPublicKey: '',
@@ -39,24 +39,35 @@ export const UserProvider = ({ children }) => {
   const [isSyncComplete, setIsSyncComplete] = React.useState(false); // This is not really a sync;
   const [isSyncing, setSyncing] = React.useState(true);
   const [client, setClient] = React.useState(null);  
+  const [blockClient, setBlockClient] = React.useState(null);
   const [lastBlock, setLastBlock] = React.useState({ blockHash: '0x0' });
   const history = useHistory();
 
-  const mqttConnect = (host, mqttOption) => {
-    setClient(mqtt.connect(host, mqttOption));
-  };
-
-  const setupWebSocket = async () => {
+  const mqttConnect = async (host) => {
+    let clientId = await getClientId(0)
     const options = {
-      clientId: await getClientId(0),
+      clientId: clientId,
       clean: false,
       username: usernameMq,
       password: pswMQ,
       rejectUnauthorized: false,
       reconnectPeriod: 1000,
     };
+    setClient(mqtt.connect(host, options));
 
-    mqttConnect(wsMqMapping[process.env.REACT_APP_MODE], options);
+    const blockOptions = {
+      clientId: `block_${clientId}`,
+      clean: true,
+      username: usernameMq,
+      password: pswMQ,
+      rejectUnauthorized: false,
+      reconnectPeriod: 1000,
+    };
+    setBlockClient(mqtt.connect(host, blockOptions));
+  };
+
+  const setupMqtt = async () => {
+    mqttConnect(wsMqMapping[process.env.REACT_APP_MODE]);
 
     setState(previousState => {
       return {
@@ -79,31 +90,36 @@ export const UserProvider = ({ children }) => {
       zkpKeys.map(z => z.compressedZkpPublicKey),
     );
 
-    const clientId =
-      Math.floor(new Date().getTime() / 1000) +
-      Math.floor(Math.random() * 100) +
-      zkpKeys[0].compressedPkd;
-    storeClientId(clientId);
+    createClientId(zkpKeys[0].compressedPkd);
     setState(previousState => {
       return {
         ...previousState,
         compressedZkpPublicKey: zkpKeys[0].compressedZkpPublicKey,
       };
     });
-    await timberAndBlockSync(process.env.REACT_APP_MODE, -1, -1, false);
+    await timberAndBlockSync(-1, -1, false);
     setupMqtt();
   };
 
-  const timberAndBlockSync = async (deployment, lastTimberBlock, lastL2Block, isTimberSynced, isL2Synced = false) => {
+  const createClientId = async (address) => {
+    const clientId =
+      Math.floor(new Date().getTime() / 1000) +
+      Math.floor(Math.random() * 100) +
+      address;
+    storeClientId(clientId);
+  }
+
+  const timberAndBlockSync = async (lastTimberBlock, lastL2Block, isTimberSynced, isL2Synced = false) => {
     if (isTimberSynced && isL2Synced) {
       return;
     }
+
     let res = await axios
       .get(
-        `https://xz83s31133.execute-api.eu-west-1.amazonaws.com/?deployment=${deployment}&lastTimberBlock=${lastTimberBlock}&lastL2Block=${lastL2Block}&isTimberSynced=${isTimberSynced}`,
+        `${twoStepSyncUrl}?deployment=${twoStepSyncDeployment}&lastTimberBlock=${lastTimberBlock}&lastL2Block=${lastL2Block}&isTimberSynced=${isTimberSynced}`,
       )
       .catch(err => {
-        throw new Error(err);
+       console.log(err);
       });
 
     for(let timb of res.data.timber.data) {
@@ -119,8 +135,8 @@ export const UserProvider = ({ children }) => {
       });
     }
 
-    for(let block of res.data.l2.data) {
-      const { ivk, nsk } = await retrieveAndDecrypt(compressedPkd);
+    for(let block of res.data.l2Block.data) {
+      const { ivk, nsk } = await retrieveAndDecrypt(state.compressedPkd);
       await blockProposedEventHandler(block, [ivk], [nsk], false);
     }
 
@@ -133,7 +149,7 @@ export const UserProvider = ({ children }) => {
       });
     }
 
-    timberAndBlockSync(deployment, res.data.timber.lastBlock, res.data.l2Block.lastBlock, res.data.timber.isSynced, res.data.l2Block.isSynced);
+    timberAndBlockSync(res.data.timber.lastBlock, res.data.l2Block.lastBlock, res.data.timber.isSynced, res.data.l2Block.isSynced);
   }
 
   const syncState = async () => {
@@ -180,58 +196,73 @@ export const UserProvider = ({ children }) => {
 
   React.useEffect(() => {
     if (client) {
-      client.on('connect', () => {
-        console.log('connected');
-        client.subscribe(topicRollback, { qos: 2 }, function (err, granted) {
-          if (err) {
-            console.log(err);
-          } else if (granted) {
-            console.log('subscribe to ', topicRollback, granted);
-          }
-        });
-
-        client.subscribe(topicBlockProposed, { qos: 2 }, function (err, granted) {
-          if (err) {
-            console.log(err);
-          } else if (granted) {
-            console.log('subscribe to ', topicBlockProposed, granted);
-          }
-        });
-      });
-
-      client.on('error', err => {
-        console.error('Connection error: ', err);
-        client.end();
-      });
-
-      client.on('reconnect', () => {
-        console.log('Reconnecting');
-      });
-
-      const { compressedPkd } = state;
-      if (compressedPkd === '') return;
-
-      // Listen for messages
-
+      mqttClientOnChange(client, topicRollback)
       client.on('message', async (topic, message) => {
+        console.log("newmessage",message)
         const { type, data } = JSON.parse(message.toString());
-        const { ivk, nsk } = await retrieveAndDecrypt(compressedPkd);
-
-        if (topic === topicBlockProposed && chainSync) {
-          if (type === topic) await blockProposedEventHandler(data, [ivk], [nsk]);
-          else console.log('Error: messange sent on wrong topic');
+        if (topic === topicBlockProposed) {
+          console.log('Error: messange sent on wrong topic');
         } else if (topic === topicRollback) {
-          if (type === topic) await rollbackEventHandler(data);
+          if (type === topic) {
+            const maxBlockTimber = await getMaxBlock();
+            if(data <= maxBlockTimber) {
+              await rollbackEventHandler(data);
+              await timberAndBlockSync(maxBlockTimber, maxBlockTimber, false);
+            }
+          }
           else console.log('Error: messange sent on wrong topic');
         }
       });
     }
   }, [client]);
 
+
+  React.useEffect(() => {
+    if (blockClient) {
+      mqttClientOnChange(blockClient, topicBlockProposed)
+      const { compressedPkd } = state;
+      if (compressedPkd === '') return;
+      blockClient.on('message', async (topic, message) => {
+        console.log("newmessage",message)
+        const { type, data } = JSON.parse(message.toString());
+        const { ivk, nsk } = await retrieveAndDecrypt(compressedPkd);
+        if (topic === topicBlockProposed && state.chainSync) {
+          if (type === topic) await blockProposedEventHandler(data, [ivk], [nsk]);
+          else console.log('Error: messange sent on wrong topic');
+        } else if (topic === topicRollback) {
+          console.log('Error: messange sent on wrong topic');
+        }
+      });
+    }
+  }, [blockClient]);
+
+  const mqttClientOnChange = async (client, topic) => {
+    client.on('connect', () => {
+      console.log('connected');
+
+      client.subscribe(topic, { qos: 2 }, function (err, granted) {
+        if (err) {
+          console.log(err);
+        } else if (granted) {
+          console.log('subscribe to ', topic, granted);
+        }
+      });
+    });
+
+    client.on('error', err => {
+      console.error('Connection error: ', err);
+      client.end();
+    });
+
+    client.on('reconnect', () => {
+      console.log('Reconnecting');
+    });
+  }
+
   React.useEffect(async () => {
-    const maxBlockL2 = await getMaxBlock()
-    await timberAndBlockSync(process.env.REACT_APP_MODE, maxBlockL2, maxBlockL2, false);
-    if (await getClientId(0)) setupMqtt();
+    const maxBlockTimber = await getMaxBlock();
+    if (await getClientId(0)) await setupMqtt();
+    await timberAndBlockSync(maxBlockTimber, maxBlockTimber, false);
   }, []);
 
   React.useEffect(async () => {
@@ -241,10 +272,6 @@ export const UserProvider = ({ children }) => {
     }
     if (!isSyncComplete) setIsSyncComplete({ isSyncComplete: true });
   }, [history.location.pathname]);
-
-  // React.useEffect(() => {
-  //   configureMessageListener();
-  // }, [state.compressedPkd]);
 
   useInterval(
     async () => {
