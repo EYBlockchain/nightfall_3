@@ -7,6 +7,7 @@ from posted transactions and proposes these blocks.
 import WebSocket from 'ws';
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
+import { submitBlockToWS } from 'common-files/utils/websocket.mjs';
 import {
   removeTransactionsFromMemPool,
   getMostProfitableTransactions,
@@ -14,7 +15,7 @@ import {
 } from './database.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
-import { waitForContract } from '../event-handlers/subscribe.mjs';
+import { waitForContract } from '../utils/index.mjs';
 import {
   increaseProposerWsFailed,
   increaseProposerWsClosed,
@@ -101,15 +102,18 @@ export async function conditionalMakeBlock(proposer) {
           }
         }
         if (ws && ws.readyState === WebSocket.OPEN) {
-          await ws.send(
-            JSON.stringify({
+          logger.debug('Send unsigned block-assembler transactions to ws client');
+
+          submitBlockToWS(
+            ws,
+            {
               type: 'block',
               txDataToSign: unsignedProposeBlockTransaction,
               block,
               transactions,
-            }),
+            },
+            block.blockHash,
           );
-          logger.debug('Send unsigned block-assembler transactions to ws client');
         } else if (ws) {
           increaseProposerBlockNotSent();
           logger.debug('Block not sent. Socket state', ws.readyState);
