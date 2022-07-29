@@ -52,6 +52,7 @@ async function blockProposedEventHandler(data) {
     );
   }
   logger.info('Received BlockProposed event');
+  logger.debug(`With transactions ${transactions}`);
   try {
     // We get the L1 block time in order to save it in the database to have this information available
     let timeBlockL2 = await getTimeByBlock(transactionHashL1);
@@ -78,6 +79,7 @@ async function blockProposedEventHandler(data) {
             blockNumberL2: block.blockNumberL2,
             mempool: false,
             offchain: true,
+            fromBlockProposer: true,
             ...tx,
           }); // must be offchain or we'll have seen them, mempool = false
         }

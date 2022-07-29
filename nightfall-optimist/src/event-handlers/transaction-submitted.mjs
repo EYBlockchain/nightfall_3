@@ -39,7 +39,7 @@ async function checkAlreadyInBlock(_transaction) {
 This handler runs whenever a new transaction is submitted to the blockchain
 */
 async function transactionSubmittedEventHandler(eventParams) {
-  const { offchain = false, ...data } = eventParams;
+  const { offchain = false, fromBlockProposer, ...data } = eventParams;
   let transaction;
   if (offchain) {
     transaction = data;
@@ -63,6 +63,7 @@ async function transactionSubmittedEventHandler(eventParams) {
         `The transaction check failed with error: ${err.message}. The transaction has been ignored`,
       );
     else logger.error(err.stack);
+    if (fromBlockProposer) saveTransaction({ ...transaction }); // then we need to save it
   }
 }
 
