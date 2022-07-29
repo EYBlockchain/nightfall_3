@@ -83,7 +83,6 @@ export async function createChallenge(block, transactions, err) {
   let txDataToSign;
   if (makeChallenges) {
     const challengeContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
-    const salt = (await rand(32)).hex(32);
     switch (err.code) {
       // Challenge wrong root
       case 0: {
@@ -118,7 +117,6 @@ export async function createChallenge(block, transactions, err) {
             frontierToValidatePreviousBlock,
             Block.buildSolidityStruct(block),
             transactions.map(t => Transaction.buildSolidityStruct(t)),
-            salt,
           )
           .encodeABI();
         break;
@@ -147,7 +145,6 @@ export async function createChallenge(block, transactions, err) {
             transactions2.map(t => Transaction.buildSolidityStruct(t)),
             transactionIndex1, // index of duplicate transaction in block
             transactionIndex2,
-            salt,
           )
           .encodeABI();
         break;
@@ -161,7 +158,6 @@ export async function createChallenge(block, transactions, err) {
             Block.buildSolidityStruct(block),
             transactions.map(t => Transaction.buildSolidityStruct(t)),
             transactionIndex,
-            salt,
           )
           .encodeABI();
         break;
@@ -242,7 +238,6 @@ export async function createChallenge(block, transactions, err) {
               oldBlockTransactions.map(t => Transaction.buildSolidityStruct(t)),
               oldTxIdx,
               oldNullifierIdx,
-              salt,
             )
             .encodeABI();
         }
@@ -260,7 +255,6 @@ export async function createChallenge(block, transactions, err) {
             priorBlockTransactions.map(t => Transaction.buildSolidityStruct(t)), // the transactions in the prior block
             Block.buildSolidityStruct(block),
             transactions.map(t => Transaction.buildSolidityStruct(t)),
-            salt,
           )
           .encodeABI();
         break;

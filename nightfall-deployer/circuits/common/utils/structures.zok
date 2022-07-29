@@ -30,7 +30,6 @@ struct PublicTransaction {
 	field[2] compressedSecrets
 }
 
-<<<<<<< HEAD
 struct Nullifiers<N> {
 	CommitmentPreimage<N> oldCommitments
     field[N] rootKey
@@ -48,5 +47,3 @@ struct Transfer {
     field ercAddressTransfer
     u32[8] idTransfer
 }
-=======
->>>>>>> 1258ba37 (feat: simplify circuits and tx public data)

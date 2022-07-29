@@ -60,6 +60,13 @@ async function checkHistoricRoot(transaction) {
     if (historicRootFirst === null)
       throw new TransactionError('The historic root in the transaction does not exist', 3);
   }
+  if (Number(transaction.nullifiers[0]) !== 0) {
+    const historicRootSecond = await getBlockByBlockNumberL2(
+      transaction.historicRootBlockNumberL2[1],
+    );
+    if (historicRootSecond === null)
+      throw new TransactionError('The historic root in the transaction does not exist', 3);
+  }
 }
 
 async function verifyProof(transaction) {

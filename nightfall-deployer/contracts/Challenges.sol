@@ -34,8 +34,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         Block memory priorBlockL2, // the block immediately prior to this one
         Transaction[] memory priorBlockTransactions, // the transactions in the prior block
         Block memory blockL2,
-        Transaction[] memory transactions,
-        bytes32 salt
+        Transaction[] memory transactions
     ) external onlyBootChallenger {
         checkCommit(msg.data);
         // check if the block hash is correct and the block hash exists for the block and prior block. Also if the transactions are part of these block
@@ -61,8 +60,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         Transaction[] memory priorBlockTransactions, // the transactions in the prior block
         bytes32[33] calldata frontierPriorBlock, // frontier path before prior block is added. The same frontier used in calculating root when prior block is added
         Block memory blockL2,
-        Transaction[] memory transactions,
-        bytes32 salt
+        Transaction[] memory transactions
     ) external onlyBootChallenger {
         checkCommit(msg.data);
         // check if the block hash is correct and the block hash exists for the block and prior block
@@ -90,8 +88,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         Transaction[] memory transactions1,
         Transaction[] memory transactions2,
         uint256 transactionIndex1,
-        uint256 transactionIndex2,
-        bytes32 salt
+        uint256 transactionIndex2
     ) external onlyBootChallenger {
         checkCommit(msg.data);
         // first, check we have real, in-train, contiguous blocks
@@ -183,8 +180,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         Block memory block2,
         Transaction[] memory txs2,
         uint256 transactionIndex2,
-        uint256 nullifierIndex2,
-        bytes32 salt
+        uint256 nullifierIndex2
     ) external onlyBootChallenger {
         checkCommit(msg.data);
         state.areBlockAndTransactionsReal(block1, txs1);
@@ -214,8 +210,7 @@ contract Challenges is Stateful, Key_Registry, Config {
     function challengeHistoricRoot(
         Block memory blockL2,
         Transaction[] memory transactions,
-        uint256 transactionIndex,
-        bytes32 salt
+        uint256 transactionIndex
     ) external onlyBootChallenger {
         checkCommit(msg.data);
         state.areBlockAndTransactionsReal(blockL2, transactions);
