@@ -56,8 +56,8 @@ Rollback events:
 TODO - rollback code is currently undergoing changes.
 
 */
-import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
+import constants from 'common-files/constants/index.mjs';
 import {
   clearBlockNumberL1ForBlock,
   clearBlockNumberL1ForTransaction,
@@ -68,7 +68,7 @@ import {
 } from '../services/database.mjs';
 import { waitForContract } from './subscribe.mjs';
 
-const { STATE_CONTRACT_NAME } = config;
+const { STATE_CONTRACT_NAME } = constants;
 
 export async function removeBlockProposedEventHandler(eventObject) {
   // we need to remove the state associated with this event from the Timber class

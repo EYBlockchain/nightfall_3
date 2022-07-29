@@ -31,7 +31,7 @@ module.exports = {
   // PROPOSERS_CONTRACT_NAME: 'Proposers',
   // SHIELD_CONTRACT_NAME: 'Shield',
   // CHALLENGES_CONTRACT_NAME: 'Challenges',
-  STATE_CONTRACT_NAME: 'State',
+  // STATE_CONTRACT_NAME: 'State',
   BLOCK_PROPOSED_EVENT_NAME: 'BlockProposed',
   EXCLUDE_DIRS: 'common', // don't setup files with this in their path
   PROOF_QUEUE: 'generate-proof',

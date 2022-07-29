@@ -1,10 +1,10 @@
 /**
  * This module discovers and manages optimistic peers for direct transfers
  */
-import config from 'config';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
+import constants from 'common-files/constants/index.mjs';
 
-const { STATE_CONTRACT_NAME } = config;
+const { STATE_CONTRACT_NAME } = constants;
 
 /* Retrieve N next proposers (eth address + URL). If N is not defined, retrieve all */
 const getProposersUrl = async N => {
