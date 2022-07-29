@@ -69,23 +69,25 @@ async function withdraw(withdrawParams) {
   const blockNumberL2s = commitmentTreeInfo.map(l => l.isOnChain);
   logger.silly(`SiblingPath was: ${JSON.stringify(localSiblingPaths)}`);
 
-  let newCommitment = null;
+  const newCommitment = [];
   if (change !== 0n) {
     const salt = await randValueLT(BN128_GROUP_ORDER);
-    newCommitment = new Commitment({
-      ercAddress,
-      tokenId,
-      value: change,
-      zkpPublicKey: ZkpKeys.decompressZkpPublicKey(compressedZkpPublicKey),
-      compressedZkpPublicKey,
-      salt,
-    });
+    newCommitment.push(
+      new Commitment({
+        ercAddress,
+        tokenId,
+        value: change,
+        zkpPublicKey: ZkpKeys.decompressZkpPublicKey(compressedZkpPublicKey),
+        compressedZkpPublicKey,
+        salt,
+      }),
+    );
   }
   const publicData = Transaction.buildSolidityStruct(
     new Transaction({
       fee,
       historicRootBlockNumberL2: blockNumberL2s,
-      commitments: newCommitment ? [newCommitment] : [{ hash: 0 }, { hash: 0 }],
+      commitments: newCommitment.length > 0 ? newCommitment : [{ hash: 0 }, { hash: 0 }],
       transactionType: 2,
       tokenType: items.tokenType,
       tokenId,
@@ -95,25 +97,23 @@ async function withdraw(withdrawParams) {
       nullifiers,
     }),
   );
-  const privateObj = {
+  const privateData = {
     rootKey,
     oldCommitmentPreimage: oldCommitments.map(o => {
       return { value: o.preimage.value, salt: o.preimage.salt };
     }),
     paths: localSiblingPaths.map(siblingPath => siblingPath.slice(1)),
     orders: leafIndices,
+    newCommitmentPreimage: newCommitment.map(o => {
+      return { value: o.preimage.value, salt: o.preimage.salt };
+    }),
+    recipientPublicKeys: newCommitment.map(o => o.preimage.zkpPublicKey),
   };
-
-  if (newCommitment)
-    privateObj.newCommitmentPreimage = {
-      value: newCommitment.preimage.value,
-      salt: newCommitment.preimage.salt,
-    };
 
   const witness = computeWitness(
     publicData,
     localSiblingPaths.map(siblingPath => siblingPath[0]),
-    privateObj,
+    privateData,
   );
 
   logger.debug(`witness input is ${witness.join(' ')}`);
@@ -133,7 +133,7 @@ async function withdraw(withdrawParams) {
   const optimisticWithdrawTransaction = new Transaction({
     fee,
     historicRootBlockNumberL2: blockNumberL2s,
-    commitments: newCommitment ? [newCommitment] : [{ hash: 0 }, { hash: 0 }],
+    commitments: newCommitment.length > 0 ? newCommitment : [{ hash: 0 }, { hash: 0 }],
     transactionType: 2,
     tokenType: items.tokenType,
     tokenId,

@@ -45,7 +45,11 @@ async function deposit(items) {
       commitments: [commitment],
     }),
   );
-  const witness = computeWitness(publicData, [], { salt, recipientPublicKeys: [zkpPublicKey] });
+
+  const privateData = { salt, recipientPublicKeys: [zkpPublicKey] };
+  const roots = [];
+
+  const witness = computeWitness(publicData, roots, privateData);
   logger.debug(`witness input is ${witness.join(' ')}`);
   // call a zokrates worker to generate the proof
   let folderpath = 'deposit';

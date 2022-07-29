@@ -1,21 +1,20 @@
-from "./common/utils/structures.zok" import CommitmentPreimage,Point, PublicTransaction, SHIFT
-from "./common/generic_circuit/Verifiers/verify_commitments.zok" import main as verify_commitments
-from "./common/generic_circuit/Verifiers/verify_structure.zok" import main as verify_structure
-from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field
 
-const u32 txType = 0
-const u32 numCommitments = 1
-const u32 numNullifiers = 0
-const u32 transfer = 0
+from "./common/utils/structures.zok" import Point, PublicTransaction, Nullifiers, Commitments, Transfer, SHIFT
+from "./common/utils/calculations.zok" import sum
+from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field
+from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field
+from "./common/generic_circuit/Verifiers/verify_structure.zok" import main as verify_structure
+from "./common/generic_circuit/Verifiers/verify_commitments.zok" import main as verify_commitments
 
 def main(\
     PublicTransaction tx,\
-	private field salt,\
-    private Point[numCommitments] recipientPublicKey\
-    ) -> ():
-
+    field[2] nullifierRoots,\
+    private field salt,\
+    private Point recipientPublicKey\
+)-> ():
+    
     //Verify public transaction structure
-    assert(verify_structure::<txType, numNullifiers, numCommitments>(\
+    assert(verify_structure::<0>(\
         tx.value,\
 	    tx.transactionType,\
 	    tx.tokenType,\
@@ -34,15 +33,7 @@ def main(\
     field packedErcAddress = tx.ercAddress + u32_array_to_field([tx.tokenId[0]]) * SHIFT 
 
     //Verify new Commmitments
-    Point firstInputZkpPublicKeys = [0,0]
-    assert(verify_commitments::<numCommitments, txType>(\
-		packedErcAddress,\
-		idRemainder,\
-		tx.commitments,\
-		firstInputZkpPublicKeys,\
-		[tx.value],\
-		[salt],\
-		recipientPublicKey\
-	))
-    
+    assert(verify_commitments::<1>(packedErcAddress, idRemainder, [tx.commitments[0]],\
+    [tx.value], [salt], [recipientPublicKey]))
+
     return
