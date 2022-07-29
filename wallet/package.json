@@ -10,7 +10,6 @@
     "@typescript-eslint/eslint-plugin": "^4.5.0",
     "@typescript-eslint/parser": "^4.5.0",
     "async-mutex": "^0.3.2",
-    "aws-sdk": "^2.1102.0",
     "axios": "^0.25.0",
     "babel-eslint": "^10.1.0",
     "babel-jest": "^26.6.3",
@@ -23,7 +22,7 @@
     "bootstrap-social": "^5.1.1",
     "camelcase": "^6.1.0",
     "case-sensitive-paths-webpack-plugin": "2.3.0",
-    "comlink-loader": "^2.0.0",
+    "comlink": "^4.3.1",
     "crypto-js": "^4.1.1",
     "css-loader": "4.3.0",
     "dexie": "^3.2.2",
@@ -102,6 +101,7 @@
     "webpack-dev-server": "3.11.1",
     "webpack-manifest-plugin": "2.2.0",
     "workbox-webpack-plugin": "5.1.4",
+    "worker-loader": "^3.0.8",
     "zokrates-js": "1.0.39"
   },
   "scripts": {

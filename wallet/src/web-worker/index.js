@@ -4,15 +4,18 @@
 /*
  * main thread file
  */
-import fetchCircuit from 'comlink-loader?singleton!@Nightfall/services/fetch-circuit';
-import { checkIndexDBForCircuit, storeCircuit } from '@Nightfall/services/database';
+import { wrap } from 'comlink';
+import { checkIndexDBForCircuit, storeCircuit } from '../nightfall-browser/services/database';
+import fetchCircuitWorker from './fetch-circuit.worker';
+
+const fetchCircuit = wrap(fetchCircuitWorker());
 
 const {
   circuitsAWSFiles,
   USE_STUBS,
   utilApiServerUrl,
   isLocalRun,
-  AWS: { s3Bucket },
+  AWS: { s3Url },
 } = global.config;
 
 export default async function fetchCircuitFileAndStoreInIndexedDB() {
@@ -26,7 +29,7 @@ export default async function fetchCircuitFileAndStoreInIndexedDB() {
           utilApiServerUrl,
           isLocalRun,
           circuitsAWSFiles,
-          AWS: { s3Bucket },
+          s3Url,
         });
         await storeCircuit(`${circuit}-abi`, abi);
         await storeCircuit(`${circuit}-program`, program);

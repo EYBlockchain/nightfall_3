@@ -485,6 +485,7 @@ module.exports = {
 
   AWS: {
     s3Bucket: configureAWSBucket(),
+    s3Url: `https://${configureAWSBucket()}.s3.amazonaws.com`,
   },
 
   utilApiServerUrl: process.env.LOCAL_UTIL_API_URL,

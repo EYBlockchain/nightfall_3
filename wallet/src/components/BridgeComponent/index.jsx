@@ -33,8 +33,14 @@ import checkMarkCross from '../../assets/lottie/check-mark-cross.json';
 
 import ERC20 from '../../contract-abis/ERC20.json';
 import { retrieveAndDecrypt } from '../../utils/lib/key-storage';
+import {
+  storeRawTx,
+  removeRawTx,
+  storeTxObject,
+  removeTxObject,
+  shieldAddressGet,
+} from '../../utils/lib/local-storage';
 import BigFloat from '../../common-files/classes/bigFloat';
-import { shieldAddressGet } from '../../utils/lib/local-storage';
 
 const ModalTitle = styled.div`
   width: 50%;
@@ -187,6 +193,7 @@ const BridgeComponent = () => {
   const handleClose = () => setShow(false);
 
   async function submitTx() {
+    let isSuccessful = true;
     try {
       switch (readyTx.type) {
         case 'onchain': {
@@ -216,14 +223,27 @@ const BridgeComponent = () => {
         }
       }
       await saveTransaction(readyTx.transaction);
-      handleClose();
-      handleCloseConfirmModal();
-      return true;
     } catch (error) {
-      handleClose();
-      handleCloseConfirmModal();
-      return false;
+      isSuccessful = false;
     }
+
+    handleClose();
+    handleCloseConfirmModal();
+
+    if (readyTx.type === 'onchain') {
+      // after submitting tx we should remove rawTransaction and transaction
+      // object store in localStorage
+      removeRawTx({
+        rawTransaction: readyTx.rawTransaction,
+        transactionHash: readyTx.transaction.transactionHash,
+      });
+      removeTxObject({ ...readyTx.transaction, isOnChain: true });
+    } else {
+      // after sending transaction successfully to proposer remove transaction
+      // object store in localStorage
+      removeTxObject({ ...readyTx.transaction, isOnChain: false });
+    }
+    return isSuccessful;
   }
 
   async function triggerTx() {
@@ -262,6 +282,12 @@ const BridgeComponent = () => {
           return { transaction: null };
         });
         if (transaction === null) return { type: 'failed_transfer' };
+
+        // store rawTx and transaction object to localStorage
+        // incase user want to submit it later
+        storeRawTx({ rawTransaction, transactionHash: transaction.transactionHash });
+        storeTxObject({ ...transaction, isOnChain: true });
+
         setShowModalTransferEnRoute(false);
         setShowModalTransferConfirmed(true);
         console.log('Proof Done');
@@ -297,6 +323,11 @@ const BridgeComponent = () => {
           return { transaction: null };
         });
         if (transaction === null) return { type: 'failed_transfer' };
+
+        // store transaction object to localStorage
+        // incase user want to submit it later
+        storeTxObject({ ...transaction, isOnChain: false });
+
         setShowModalTransferEnRoute(false);
         setShowModalTransferConfirmed(true);
         return {
@@ -350,7 +381,8 @@ const BridgeComponent = () => {
   async function updateL1Balance() {
     if (token && token?.address) {
       const contract = new window.web3.eth.Contract(ERC20, token.address);
-      const result = await contract.methods.balanceOf(accountInstance.address).call(); // 29803630997051883414242659
+      let result = await contract.methods.balanceOf(accountInstance.address).call(); // 29803630997051883414242659
+      if (result === null) result = 0n; // bug fix: is result in null, BigInt(null) fails in below statement.
       setL1Balance(BigInt(result));
     } else {
       setL1Balance(0n);

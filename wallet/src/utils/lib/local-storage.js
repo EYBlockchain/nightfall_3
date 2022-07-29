@@ -6,10 +6,19 @@ import getPrice from '../pricingAPI';
 const STORAGE_VERSION_KEY = 'nightfallStorageVersion';
 const STORAGE_VERSION = 1;
 const TOKEN_POOL_KEY = 'nightfallTokensPool';
+const RAW_TXS = 'rawTransactions';
+const TX_OBJS = 'transactionObject';
 
 const { SHIELD_CONTRACT_NAME } = global.config;
 
 const storage = window.localStorage;
+
+if (storage.getItem(RAW_TXS) === null) {
+  storage.setItem(RAW_TXS, JSON.stringify([]));
+}
+if (storage.getItem(TX_OBJS) === null) {
+  storage.setItem(TX_OBJS, JSON.stringify([]));
+}
 
 function init() {
   if (!storage.getItem(STORAGE_VERSION_KEY)) {
@@ -70,6 +79,41 @@ function getPricing() {
   return JSON.parse(retrievedPrice);
 }
 
+function storeRawTx(tx) {
+  storage.setItem(RAW_TXS, JSON.stringify([...JSON.parse(storage.getItem(RAW_TXS)), tx]));
+}
+
+function removeRawTx(tx) {
+  let txStr = typeof tx === 'string' ? tx : JSON.stringify(tx);
+  const txs = storage.getItem(RAW_TXS);
+  if (txs.indexOf(txStr) === -1) return;
+  if (txs.indexOf(`${txStr},`) !== -1) txStr = `${txStr},`;
+  else if (txs.indexOf(`,${txStr}`) !== -1) txStr = `,${txStr}`;
+  storage.setItem(RAW_TXS, storage.getItem(RAW_TXS).replace(txStr, ''));
+}
+
+const getAllRawTxs = () => JSON.parse(storage.getItem(RAW_TXS));
+
+function storeTxObject(txObj) {
+  storage.setItem(TX_OBJS, JSON.stringify([...JSON.parse(storage.getItem(TX_OBJS)), txObj]));
+}
+
+function removeTxObject(txObj) {
+  let txObjStr = typeof txObj === 'string' ? txObj : JSON.stringify(txObj);
+  const txObjs = storage.getItem(TX_OBJS);
+  if (txObjs.indexOf(txObjStr) === -1) return;
+  if (txObjs.indexOf(`${txObjStr},`) !== -1) txObjStr = `${txObjStr},`;
+  else if (txObjs.indexOf(`,${txObjStr}`) !== -1) txObjStr = `,${txObjStr}`;
+  storage.setItem(TX_OBJS, storage.getItem(TX_OBJS).replace(txObjStr, ''));
+}
+
+function getTxObjectByTxHash(txHash) {
+  const txObjs = JSON.parse(storage.getItem(TX_OBJS));
+  return txObjs.filter(txObj => txObj.transactionHash === txHash)[0];
+}
+
+const getAllTxObjects = () => JSON.parse(storage.getItem(TX_OBJS));
+
 async function shieldAddressSet() {
   init();
   const now = Date.now();
@@ -105,6 +149,13 @@ export {
   pkdArraySet,
   setPricing,
   getPricing,
-  shieldAddressGet,
+  storeRawTx,
+  removeRawTx,
+  getAllRawTxs,
+  storeTxObject,
+  getTxObjectByTxHash,
+  removeTxObject,
+  getAllTxObjects,
   shieldAddressSet,
+  shieldAddressGet,
 };
