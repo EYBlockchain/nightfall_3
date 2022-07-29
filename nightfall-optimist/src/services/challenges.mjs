@@ -40,13 +40,6 @@ async function commitToChallenge(txDataToSign) {
   const commitToSign = await challengeContractInstance.methods
     .commitToChallenge(commitHash)
     .encodeABI();
-  logger.debug(
-    `raw transaction for committing to challenge has been sent to be signed and submitted ${JSON.stringify(
-      commitToSign,
-      null,
-      2,
-    )}`,
-  );
   await saveCommit(commitHash, txDataToSign);
   // check that the websocket exists (it should) and its readyState is OPEN
   // before sending commit. If not wait until the challenger reconnects
@@ -59,6 +52,13 @@ async function commitToChallenge(txDataToSign) {
     if (tryCount++ > 100) throw new Error(`Websocket to challenger has failed`);
   }
   ws.send(JSON.stringify({ type: 'commit', txDataToSign: commitToSign }));
+  logger.debug(
+    `raw transaction for committing to challenge has been sent to be signed and submitted ${JSON.stringify(
+      commitToSign,
+      null,
+      2,
+    )}`,
+  );
 }
 
 export async function revealChallenge(txDataToSign) {

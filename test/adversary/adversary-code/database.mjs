@@ -11,10 +11,10 @@ let error = process.env.BAD_TX_SEQUENCE
       'ValidTransaction',
       'ValidTransaction',
       'ValidTransaction',
-      // 'IncorrectTreeRoot',
-      // 'ValidTransaction',
-      // 'IncorrectLeafCount',
-      // 'ValidTransaction',
+      'IncorrectTreeRoot',
+      'ValidTransaction',
+      'IncorrectLeafCount',
+      'ValidTransaction',
       'DuplicateCommitment',
       'ValidTransaction',
       'DuplicateNullifier',
@@ -155,7 +155,7 @@ export async function getMostProfitableTransactions(number, errorIndex) {
     indexOffset = errorIndex;
   }
   const badTxType = error[errorIndex - indexOffset];
-  logger.debug(`Creating a transaction of type ${badTxType}`);
+  logger.debug('Creating a transaction of type', badTxType);
   switch (badTxType) {
     case 'DuplicateCommitment':
       return duplicateCommitment(number);
@@ -164,7 +164,6 @@ export async function getMostProfitableTransactions(number, errorIndex) {
     case 'IncorrectProof':
       return incorrectProof(number);
     default: {
-      logger.debug(`Creating a transaction of type ValidBlock`);
       const connection = await mongo.connection(MONGO_URL);
       const db = connection.db(OPTIMIST_DB);
       return db
