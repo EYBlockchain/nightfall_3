@@ -33,7 +33,7 @@ import checkMarkCross from '../../assets/lottie/check-mark-cross.json';
 
 const supportedTokens = importTokens();
 
-const { DEFAULT_ACCOUNT_NUM } = global.config;
+const { DEFAULT_ACCOUNT_NUM } = global.nightfallConstants;
 
 const { ethereum } = global;
 

@@ -36,25 +36,25 @@ module.exports = {
   // EXCLUDE_DIRS: 'common', // don't setup files with this in their path
   // PROOF_QUEUE: 'generate-proof',
   // MAX_QUEUE: 5,
-  ZKP_KEY_LENGTH: 32, // use a 32 byte key length for SHA compatibility
-  CONFIRMATION_POLL_TIME: 1000, // time to wait before querying the blockchain (ms). Must be << block interval
-  CONFIRMATIONS: 12, // number of confirmations to wait before accepting a transaction
-  NODE_HASHLENGTH: 32,
-  TIMBER_HEIGHT: 32,
-  TXHASH_TREE_HEIGHT: 5,
-  DEFAULT_ACCOUNT_NUM: 10,
-  ZERO: '0x0000000000000000000000000000000000000000000000000000000000000000',
-  HASH_TYPE: 'mimc',
-  TXHASH_TREE_HASH_TYPE: 'keccak256',
-  BLOCK_TYPES: '(uint48,address,bytes32,uint256,bytes32,bytes32)',
-  TRANSACTION_TYPES:
-    '(uint112,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[2],uint[4])',
-  PROPOSE_BLOCK_TYPES: [
-    '(uint48,address,bytes32,uint256,bytes32,bytes32)',
-    '(uint112,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[2],uint[4])[]',
-  ], // used to encode/decode proposeBlock signature
-  SUBMIT_TRANSACTION_TYPES:
-    '(uint112,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[2],uint[4])',
+  // ZKP_KEY_LENGTH: 32, // use a 32 byte key length for SHA compatibility
+  // CONFIRMATION_POLL_TIME: 1000, // time to wait before querying the blockchain (ms). Must be << block interval
+  // CONFIRMATIONS: 12, // number of confirmations to wait before accepting a transaction
+  // NODE_HASHLENGTH: 32,
+  // TIMBER_HEIGHT: 32,
+  // TXHASH_TREE_HEIGHT: 5,
+  // DEFAULT_ACCOUNT_NUM: 10,
+  // ZERO: '0x0000000000000000000000000000000000000000000000000000000000000000',
+  // HASH_TYPE: 'mimc',
+  // TXHASH_TREE_HASH_TYPE: 'keccak256',
+  // BLOCK_TYPES: '(uint48,address,bytes32,uint256,bytes32,bytes32)',
+  // TRANSACTION_TYPES:
+  //   '(uint112,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[2],uint[4])',
+  // PROPOSE_BLOCK_TYPES: [
+  //   '(uint48,address,bytes32,uint256,bytes32,bytes32)',
+  //   '(uint112,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[2],uint[4])[]',
+  // ], // used to encode/decode proposeBlock signature
+  // SUBMIT_TRANSACTION_TYPES:
+  //   '(uint112,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[2],uint[4])',
 
   // config
   STATE_GENESIS_BLOCK: process.env.STATE_GENESIS_BLOCK,

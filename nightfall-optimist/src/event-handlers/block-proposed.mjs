@@ -1,8 +1,8 @@
 import WebSocket from 'ws';
 import logger from 'common-files/utils/logger.mjs';
 import Timber from 'common-files/classes/timber.mjs';
-import config from 'config';
 import { enqueueEvent } from 'common-files/utils/event-queue.mjs';
+import constants from 'common-files/constants/index.mjs';
 import checkBlock from '../services/check-block.mjs';
 import BlockError from '../classes/block-error.mjs';
 import { createChallenge } from '../services/challenges.mjs';
@@ -19,7 +19,7 @@ import { getProposeBlockCalldata } from '../services/process-calldata.mjs';
 import { increaseBlockInvalidCounter } from '../services/debug-counters.mjs';
 import transactionSubmittedEventHandler from './transaction-submitted.mjs';
 
-const { ZERO, HASH_TYPE, TIMBER_HEIGHT } = config;
+const { ZERO, HASH_TYPE, TIMBER_HEIGHT } = constants;
 
 let ws;
 

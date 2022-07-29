@@ -1,6 +1,6 @@
-import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import Timber from 'common-files/classes/timber.mjs';
+import constants from 'common-files/constants/index.mjs';
 import {
   markNullifiedOnChain,
   markOnChain,
@@ -20,7 +20,7 @@ import {
 } from '../services/database.mjs';
 import { decryptCommitment } from '../services/commitment-sync.mjs';
 
-const { ZERO, HASH_TYPE, TIMBER_HEIGHT, TXHASH_TREE_HASH_TYPE, TXHASH_TREE_HEIGHT } = config;
+const { ZERO, HASH_TYPE, TIMBER_HEIGHT, TXHASH_TREE_HASH_TYPE, TXHASH_TREE_HEIGHT } = constants;
 
 /**
 This handler runs whenever a BlockProposed event is emitted by the blockchain

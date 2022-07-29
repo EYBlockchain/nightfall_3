@@ -4,15 +4,15 @@
 /**
 An optimistic Transaction class
 */
-import config from 'config';
 import gen from 'general-number';
 import Web3 from '../utils/web3.mjs';
 import { compressProof } from '../utils/curve-maths/curves.mjs';
+import constants from '../constants/index.mjs';
 
 const { generalise } = gen;
 
 const TOKEN_TYPES = { ERC20: 0, ERC721: 1, ERC1155: 2 };
-const { TRANSACTION_TYPES } = config;
+const { TRANSACTION_TYPES } = constants;
 
 // function to compute the keccak hash of a transaction
 function keccak(preimage) {
