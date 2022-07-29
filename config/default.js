@@ -32,10 +32,10 @@ module.exports = {
   // SHIELD_CONTRACT_NAME: 'Shield',
   // CHALLENGES_CONTRACT_NAME: 'Challenges',
   // STATE_CONTRACT_NAME: 'State',
-  BLOCK_PROPOSED_EVENT_NAME: 'BlockProposed',
-  EXCLUDE_DIRS: 'common', // don't setup files with this in their path
-  PROOF_QUEUE: 'generate-proof',
-  MAX_QUEUE: 5,
+  // BLOCK_PROPOSED_EVENT_NAME: 'BlockProposed',
+  // EXCLUDE_DIRS: 'common', // don't setup files with this in their path
+  // PROOF_QUEUE: 'generate-proof',
+  // MAX_QUEUE: 5,
   ZKP_KEY_LENGTH: 32, // use a 32 byte key length for SHA compatibility
   CONFIRMATION_POLL_TIME: 1000, // time to wait before querying the blockchain (ms). Must be << block interval
   CONFIRMATIONS: 12, // number of confirmations to wait before accepting a transaction
