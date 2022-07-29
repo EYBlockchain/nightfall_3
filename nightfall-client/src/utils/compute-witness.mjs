@@ -18,8 +18,9 @@ const padArray = (arr, padWith, n) => {
   return generalise(arr);
 };
 
-const computeWitnessPublic = (tx, rootArray) => {
+const computeWitnessPublic = (tx, rootsNullifiers) => {
   const transaction = generalise(tx);
+  const roots = padArray(generalise(rootsNullifiers), 0, 2);
   const publicWitness = [
     transaction.value.field(BN128_GROUP_ORDER),
     transaction.historicRootBlockNumberL2.map(h => h.field(BN128_GROUP_ORDER)),
@@ -31,52 +32,52 @@ const computeWitnessPublic = (tx, rootArray) => {
     transaction.commitments.map(c => c.field(BN128_GROUP_ORDER)),
     transaction.nullifiers.map(n => n.field(BN128_GROUP_ORDER)),
     transaction.compressedSecrets.map(cs => cs.field(BN128_GROUP_ORDER)),
-  ];
-  if (rootArray.length !== 0) {
-    const roots = padArray(generalise(rootArray), 0, 2);
-    publicWitness.push(roots.map(r => r.field(BN128_GROUP_ORDER)));
-  }
-  return publicWitness.flat(Infinity);
+    roots.map(r => r.field(BN128_GROUP_ORDER)),
+  ].flat(Infinity);
+  return publicWitness;
 };
 
-const computeWitnessPrivateTransfer = privateObj => {
-  const {
-    rootKey,
-    oldCommitmentPreimage,
-    paths,
-    orders,
-    newCommitmentPreimage,
-    recipientPublicKeys,
-    ercAddress,
-    tokenId,
-    ephemeralKey,
-  } = generalise(privateObj);
-  const paddedOldCommitmentPreimage = padArray(oldCommitmentPreimage, NULL_COMMITMENT, 2);
-  const paddedNewCommitmentPreimage = padArray(newCommitmentPreimage, NULL_COMMITMENT, 2);
-  const paddedPaths = padArray(paths, new Array(32).fill(0), 2);
-  const paddedOrders = padArray(orders, 0, 2);
-  const paddedRootKeys = padArray(rootKey, 0, 2);
-  const paddedRecipientPublicKeys = padArray(recipientPublicKeys, [0, 0], 2);
+const computeWitnessEncryption = privateData => {
+  const { ephemeralKey, ercAddress, tokenId } = generalise(privateData);
   return [
-    paddedOldCommitmentPreimage.map(r => r.value.limbs(8, 31)),
-    paddedOldCommitmentPreimage.map(r => r.salt.field(BN128_GROUP_ORDER)),
-    paddedRootKeys.map(r => r.field(BN128_GROUP_ORDER)),
-    paddedPaths.map(ps => ps.map(p => p.field(BN128_GROUP_ORDER))),
-    paddedOrders.map(m => m.field(BN128_GROUP_ORDER)),
-    paddedNewCommitmentPreimage.map(r => r.value.limbs(8, 31)),
-    paddedNewCommitmentPreimage.map(r => r.salt.field(BN128_GROUP_ORDER)),
-    paddedRecipientPublicKeys.map(rcp => [
-      rcp[0].field(BN128_GROUP_ORDER),
-      rcp[1].field(BN128_GROUP_ORDER),
-    ]),
     ephemeralKey.limbs(32, 8),
     ercAddress.field(BN128_GROUP_ORDER),
     tokenId.limbs(32, 8),
   ].flat(Infinity);
 };
 
-const computeWitnessPrivateDeposit = privateObj => {
-  const { salt, recipientPublicKeys } = generalise(privateObj);
+const computeWitnessNullifiers = privateData => {
+  const { oldCommitmentPreimage, paths, orders, rootKey } = generalise(privateData);
+  const paddedOldCommitmentPreimage = padArray(oldCommitmentPreimage, NULL_COMMITMENT, 2);
+  const paddedPaths = padArray(paths, new Array(32).fill(0), 2);
+  const paddedOrders = padArray(orders, 0, 2);
+  const paddedRootKeys = padArray(rootKey, 0, 2);
+
+  return [
+    paddedOldCommitmentPreimage.map(commitment => commitment.value.limbs(8, 31)),
+    paddedOldCommitmentPreimage.map(commitment => commitment.salt.field(BN128_GROUP_ORDER)),
+    paddedRootKeys.map(r => r.field(BN128_GROUP_ORDER)),
+    paddedPaths.map(ps => ps.map(p => p.field(BN128_GROUP_ORDER))),
+    paddedOrders.map(m => m.field(BN128_GROUP_ORDER)),
+  ].flat(Infinity);
+};
+
+const computeWitnessCommitments = privateData => {
+  const { newCommitmentPreimage, recipientPublicKeys } = generalise(privateData);
+  const paddedNewCommitmentPreimage = padArray(newCommitmentPreimage, NULL_COMMITMENT, 2);
+  const paddedRecipientPublicKeys = padArray(recipientPublicKeys, [0, 0], 2);
+  return [
+    paddedNewCommitmentPreimage.map(commitment => commitment.value.limbs(8, 31)),
+    paddedNewCommitmentPreimage.map(commitment => commitment.salt.field(BN128_GROUP_ORDER)),
+    paddedRecipientPublicKeys.map(rcp => [
+      rcp[0].field(BN128_GROUP_ORDER),
+      rcp[1].field(BN128_GROUP_ORDER),
+    ]),
+  ].flat(Infinity);
+};
+
+const computeWitnessPrivateDeposit = privateData => {
+  const { salt, recipientPublicKeys } = generalise(privateData);
   return [
     salt.field(BN128_GROUP_ORDER),
     recipientPublicKeys.map(rcp => [
@@ -86,34 +87,24 @@ const computeWitnessPrivateDeposit = privateObj => {
   ].flat(Infinity);
 };
 
-const computeWitnessPrivateWithdraw = privateObj => {
-  const { rootKey, oldCommitmentPreimage, paths, orders } = generalise(privateObj);
-  const paddedOldCommitmentPreimage = padArray(oldCommitmentPreimage, NULL_COMMITMENT, 2);
-  const paddedPaths = padArray(paths, new Array(32).fill(0), 2);
-  const paddedOrders = padArray(orders, 0, 2);
-  const paddedRootKeys = padArray(rootKey, 0, 2);
-  const paddedNewCommitmentPreimage =
-    generalise(privateObj.newCommitmentPreimage) || generalise(NULL_COMMITMENT);
-  return [
-    paddedOldCommitmentPreimage.map(r => r.value.limbs(8, 31)),
-    paddedOldCommitmentPreimage.map(r => r.salt.field(BN128_GROUP_ORDER)),
-    paddedRootKeys.map(r => r.field(BN128_GROUP_ORDER)),
-    paddedPaths.map(ps => ps.map(p => p.field(BN128_GROUP_ORDER))),
-    paddedOrders.map(m => m.field(BN128_GROUP_ORDER)),
-    paddedNewCommitmentPreimage.value.limbs(8, 31),
-    paddedNewCommitmentPreimage.salt.field(BN128_GROUP_ORDER),
-  ].flat(Infinity);
-};
-
 // eslint-disable-next-line import/prefer-default-export
-export const computeWitness = (txObject, rootArray, privateObj) => {
-  const publicWitness = computeWitnessPublic(txObject, rootArray);
+export const computeWitness = (txObject, rootsNullifiers, privateData) => {
+  const publicWitness = computeWitnessPublic(txObject, rootsNullifiers);
   switch (Number(txObject.transactionType)) {
     case 0:
-      return [...publicWitness, ...computeWitnessPrivateDeposit(privateObj)];
+      return [...publicWitness, ...computeWitnessPrivateDeposit(privateData)];
     case 1:
-      return [...publicWitness, ...computeWitnessPrivateTransfer(privateObj)];
+      return [
+        ...publicWitness,
+        ...computeWitnessNullifiers(privateData),
+        ...computeWitnessCommitments(privateData),
+        ...computeWitnessEncryption(privateData),
+      ];
     default:
-      return [...publicWitness, ...computeWitnessPrivateWithdraw(privateObj)];
+      return [
+        ...publicWitness,
+        ...computeWitnessNullifiers(privateData),
+        ...computeWitnessCommitments(privateData),
+      ];
   }
 };

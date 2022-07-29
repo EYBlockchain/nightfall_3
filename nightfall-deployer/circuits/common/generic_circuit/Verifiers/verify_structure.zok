@@ -1,10 +1,11 @@
 from "../../casts/u32_array_to_field.zok" import main as u32_array_to_field
+from "utils/casts/u32_to_field.zok" import main as u32_to_field
 from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8
 
 /*
 * Given a Public tx, check that the structure and all the public parameters are valid
 */
-def main<TxType, NumNullifiers, NumCommitments>(\
+def main<TxType>(\
     field value,\
 	field transactionType,\
 	field tokenType,\
@@ -17,14 +18,8 @@ def main<TxType, NumNullifiers, NumCommitments>(\
 	field[2] compressedSecrets\
 ) -> (bool):
 
-   //Check that transaction type matches    
-    // assert(TxType == transactionType)
-
-    //Deposits must have at least a commitment, transfers must at least have one commitment and one nullifier 
-    //and withdrawal must have at least a nullifier
-    assert((TxType == 0 && NumCommitments != 0)\
-        || (TxType == 1 && NumCommitments != 0 && NumNullifiers != 0)\
-        || (TxType == 2 && NumNullifiers  != 0)) 
+    //Check that transaction type matches        
+    assert(u32_to_field(TxType) == transactionType) 
 
     //ErcAddress cannot be zero. In transfer will contain the encrypted version of the ercAddress belonging to the ciphertext
     assert(ercAddress != 0)
@@ -47,6 +42,7 @@ def main<TxType, NumNullifiers, NumCommitments>(\
         ||  (tokenType == 1 && value == 0)\
         ||  (tokenType == 2 && value != 0)))
     
+    //Check commitments
     assert((TxType == 0 && commitments[0] != 0 && commitments[1] == 0) ||\
         (TxType == 1 && commitments[0] != 0 && commitments[0] != commitments[1]) ||\
         (TxType == 2 && commitments[1] == 0))

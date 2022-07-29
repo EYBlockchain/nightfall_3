@@ -30,3 +30,20 @@ struct PublicTransaction {
 	field[2] compressedSecrets
 }
 
+struct Nullifiers<N> {
+	CommitmentPreimage<N> oldCommitments
+    field[N] rootKey
+    field[N][32] paths
+	field[N] orders
+}
+
+struct Commitments<N> {
+	CommitmentPreimage<N> newCommitments
+    Point[N] recipientPublicKey
+}
+
+struct Transfer {
+	u32[8] ephemeralKey
+    field ercAddressTransfer
+    u32[8] idTransfer
+}

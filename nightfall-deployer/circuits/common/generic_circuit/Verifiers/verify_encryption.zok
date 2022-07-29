@@ -8,15 +8,15 @@ from "../../utils/structures.zok" import Point
 /*
 * Verify that the secrets are encrypted properly in the Transfer
 */
-def main<NumCommitments,Transfer>(\
+def main(\
     field ercAddress,\
     u32[8] tokenId,\
     field[2] compressedSecrets,\
     field packedErcAddress,\
     field idRemainder,\
-    private field[NumCommitments] newCommitmentValues,\
-    private field[NumCommitments] newCommitmentSalts,\
-    private Point[NumCommitments] recipientPublicKey,\
+    private field newCommitmentValues,\
+    private field newCommitmentSalts,\
+    private Point recipientPublicKey,\
     u32[8] recipientAddress,\
     private u32[8] ephemeralKey\
 ) -> bool:
@@ -27,11 +27,11 @@ def main<NumCommitments,Transfer>(\
     field[4] plainTexts = [\
         packedErcAddress,\
         idRemainder,\
-        newCommitmentValues[0],\
-        newCommitmentSalts[0]\
+        newCommitmentValues,\
+        newCommitmentSalts\
     ]
 
-    EncryptedMsgs<4> enc = kemDem(bitEphemeralKey, [recipientPublicKey[0][0], recipientPublicKey[0][1]], plainTexts)
+    EncryptedMsgs<4> enc = kemDem(bitEphemeralKey, [recipientPublicKey[0], recipientPublicKey[1]], plainTexts)
     assert(cipherText == enc.cipherText)
 
     bool[256] compressedPubKeyOutput = edwardsCompress(enc.ephemeralPublicKey)

@@ -95,7 +95,7 @@ class Transaction {
     else if (_historicRoot.length === 1) historicRootBlockNumberL2 = [..._historicRoot, 0];
     else historicRootBlockNumberL2 = _historicRoot;
 
-    if ((transactionType === 0 || transactionType === 3) && TOKEN_TYPES[tokenType] === undefined)
+    if ((transactionType === 0 || transactionType === 2) && TOKEN_TYPES[tokenType] === undefined)
       throw new Error('Unrecognized token type');
     // convert everything to hex(32) for interfacing with web3
     const preimage = generalise({

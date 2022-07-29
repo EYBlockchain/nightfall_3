@@ -160,15 +160,8 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
     // it's uinque, although technically not needed (Optimist consumes the
     // block number and Timber the leaf count). It's helpful when testing to make
     // sure we have the correct event.
-    function emitRollback(uint256 blockNumberL2ToRollbackTo, uint256 leafCountToRollbackTo)
-        public
-        onlyRegistered
-    {
-        emit Rollback(
-            blockHashes[blockNumberL2ToRollbackTo].blockHash,
-            blockNumberL2ToRollbackTo,
-            leafCountToRollbackTo
-        );
+    function emitRollback(uint256 blockNumberL2ToRollbackTo) public onlyRegistered {
+        emit Rollback(blockNumberL2ToRollbackTo);
     }
 
     function setProposer(address addr, LinkedAddress memory proposer) public onlyRegistered {
