@@ -18,7 +18,7 @@ struct CompressedPoint<N> {
 }
 
 struct PublicTransaction {
-	u8[31] value
+	field value
 	field[2] historicRootBlockNumberL2
 	field transactionType
 	field tokenType

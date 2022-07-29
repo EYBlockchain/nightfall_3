@@ -14,11 +14,9 @@ def main(\
     private Commitments<2> commitments\
 )-> ():
     
-    field value = u8_array_to_field([tx.value])[0]
-
     //Verify public transaction structure
     assert(verify_structure::<2>(\
-        value,\
+        tx.value,\
 	    tx.transactionType,\
 	    tx.tokenType,\
 	    tx.tokenId,\
@@ -34,7 +32,7 @@ def main(\
     field[2] commitmentsValue = u8_array_to_field(commitments.newCommitments.value)
 
     //Check that values match
-    assert(sum(nullifiersValue) == sum(commitmentsValue) + value)
+    assert(sum(nullifiersValue) == sum(commitmentsValue) + tx.value)
 
     // pack the top four bytes of the token id into the ercAddress field (address only
 	// uses 160 bits and the Shield contract prevents creation of something with more than 160 bits)

@@ -11,8 +11,6 @@ def main(\
     private field[2] recipientPublicKey\
 )-> ():
     
-    field[1] commitmentValue = u8_array_to_field([tx.value])
-
-    assert(commitment_stub::<1>(commitmentValue, [salt], [recipientPublicKey]))
+    assert(commitment_stub::<1>([tx.value], [salt], [recipientPublicKey]))
         
     return

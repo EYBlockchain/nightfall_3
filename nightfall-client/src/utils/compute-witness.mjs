@@ -22,7 +22,7 @@ const computeWitnessPublic = (tx, rootsNullifiers) => {
   const transaction = generalise(tx);
   const roots = padArray(generalise(rootsNullifiers), 0, 2);
   const publicWitness = [
-    transaction.value.limbs(8, 31),
+    transaction.value.field(BN128_GROUP_ORDER),
     transaction.historicRootBlockNumberL2.map(h => h.field(BN128_GROUP_ORDER)),
     transaction.transactionType.field(BN128_GROUP_ORDER),
     transaction.tokenType.field(BN128_GROUP_ORDER),
@@ -34,7 +34,6 @@ const computeWitnessPublic = (tx, rootsNullifiers) => {
     transaction.compressedSecrets.map(cs => cs.field(BN128_GROUP_ORDER)),
     roots.map(r => r.field(BN128_GROUP_ORDER)),
   ].flat(Infinity);
-  console.log('PUBLIC WITNESS', publicWitness);
   return publicWitness;
 };
 

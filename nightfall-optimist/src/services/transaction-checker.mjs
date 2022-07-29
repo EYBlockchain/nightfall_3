@@ -84,7 +84,7 @@ async function verifyProof(transaction) {
 
   const inputs = generalise(
     [
-      generalise(transaction.value).limbs(8, 31),
+      transaction.value,
       transaction.historicRootBlockNumberL2,
       transaction.transactionType,
       transaction.tokenType,

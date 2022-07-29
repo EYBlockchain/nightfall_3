@@ -16,11 +16,10 @@ def main(\
     private Transfer transfer\
 )-> ():
     
-    field value = u8_array_to_field([tx.value])[0]
 
     //Verify public transaction structure
     assert(verify_structure::<1>(\
-        value,\
+        tx.value,\
 	    tx.transactionType,\
 	    tx.tokenType,\
 	    tx.tokenId,\

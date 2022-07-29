@@ -11,7 +11,7 @@ from "../../merkle-tree/path-check.zok" import main as pathCheck
 def main<NumNullifiers>(\
     field packedErcAddress,\
     field idRemainder,\
-    field[NumNullifiers] nullifiers,\
+    field[NumNullifiers] nullifierHashes,\
     field[NumNullifiers] roots,\
     private field[NumNullifiers] oldCommitmentValues,\
     private field[NumNullifiers] oldCommitmentSalts,\
@@ -48,7 +48,7 @@ def main<NumNullifiers>(\
         field nullifier = poseidon([nullifierKeys, calculatedOldCommitmentHash])
 
         //Check that the calculated nullifier matches with the one contained in the transaction
-        assert(oldCommitmentValues[i] == 0 || nullifier == nullifiers[i])
+        assert(oldCommitmentValues[i] == 0 || nullifier == nullifierHashes[i])
 
         //Check that the nullifier is contained in the tree
         assert(oldCommitmentValues[i] == 0 || pathCheck([roots[i], ...paths[i]], orders[i], calculatedOldCommitmentHash))
