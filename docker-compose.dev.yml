@@ -145,3 +145,9 @@ services:
       - type: bind
         source: ./apps/proposer/src
         target: /app/src
+      - type: bind
+        source: ./cli
+        target: /app/cli
+      - type: bind
+        source: ./common-files
+        target: /app/common-files

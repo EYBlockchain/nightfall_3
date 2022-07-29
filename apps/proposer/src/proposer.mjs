@@ -12,10 +12,7 @@ export default async function startProposer(nf3, proposerBaseUrl) {
   // Mnemonic are only required for services connecting to a client that
   // can generate a compressed PKD.
 
-  await nf3.init(
-    'trip differ bamboo bundle bonus luxury strike mad merry muffin nose auction',
-    'optimist',
-  );
+  await nf3.init(undefined, 'optimist');
   if (await nf3.healthcheck('optimist')) logger.info('Healthcheck passed');
   else throw new Error('Healthcheck failed');
   logger.info('Attempting to register proposer');
