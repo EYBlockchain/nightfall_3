@@ -102,7 +102,7 @@ library Utils {
     function getPublicInputs(Structures.Transaction calldata ts, uint256[2] memory roots)
         internal
         pure
-        returns (uint256[30] memory inputs)
+        returns (uint256[] memory inputs)
     {
         inputs[0] = uint256(ts.value);
         inputs[1] = uint256(ts.historicRootBlockNumberL2[0]);
@@ -132,8 +132,11 @@ library Utils {
         inputs[25] = uint256(ts.nullifiers[1]);
         inputs[26] = uint256(ts.compressedSecrets[0]);
         inputs[27] = uint256(ts.compressedSecrets[1]);
-        inputs[28] = roots[0];
-        inputs[29] = roots[1];
+
+        if (uint256(ts.transactionType) != 0) {
+            inputs[28] = uint256(roots[0]);
+            inputs[29] = uint256(roots[1]);
+        }
     }
 
     function calculateMerkleRoot(bytes32[] memory leaves) public pure returns (bytes32 result) {

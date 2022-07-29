@@ -6,7 +6,6 @@ from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field
 
 def main(\
     PublicTransaction tx,\
-    field[2] nullifierRoots,\
     private field salt,\
     private field[2] recipientPublicKey\
 )-> ():

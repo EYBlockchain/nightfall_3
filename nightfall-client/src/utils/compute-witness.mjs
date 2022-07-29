@@ -18,10 +18,10 @@ const padArray = (arr, padWith, n) => {
   return generalise(arr);
 };
 
-const computeWitnessPublic = (tx, rootsNullifiers) => {
+const computePublicInputs = (tx, roots) => {
   const transaction = generalise(tx);
-  const roots = padArray(generalise(rootsNullifiers), 0, 2);
-  const publicWitness = [
+  const rootsOldCommitments = padArray(generalise(roots), 0, 2);
+  let publicWitness = [
     transaction.value.field(BN128_GROUP_ORDER),
     transaction.historicRootBlockNumberL2.map(h => h.field(BN128_GROUP_ORDER)),
     transaction.transactionType.field(BN128_GROUP_ORDER),
@@ -32,12 +32,16 @@ const computeWitnessPublic = (tx, rootsNullifiers) => {
     transaction.commitments.map(c => c.field(BN128_GROUP_ORDER)),
     transaction.nullifiers.map(n => n.field(BN128_GROUP_ORDER)),
     transaction.compressedSecrets.map(cs => cs.field(BN128_GROUP_ORDER)),
-    roots.map(r => r.field(BN128_GROUP_ORDER)),
-  ].flat(Infinity);
-  return publicWitness;
+  ];
+
+  if (Number(tx.transactionType) !== 0) {
+    publicWitness = [...publicWitness, rootsOldCommitments.map(r => r.field(BN128_GROUP_ORDER))];
+  }
+
+  return publicWitness.flat(Infinity);
 };
 
-const computeWitnessEncryption = privateData => {
+const computePrivateInputsEncryption = privateData => {
   const { ephemeralKey, ercAddress, tokenId } = generalise(privateData);
   return [
     ephemeralKey.limbs(32, 8),
@@ -46,7 +50,7 @@ const computeWitnessEncryption = privateData => {
   ].flat(Infinity);
 };
 
-const computeWitnessNullifiers = privateData => {
+const computePrivateInputsNullifiers = privateData => {
   const { oldCommitmentPreimage, paths, orders, rootKey } = generalise(privateData);
   const paddedOldCommitmentPreimage = padArray(oldCommitmentPreimage, NULL_COMMITMENT, 2);
   const paddedPaths = padArray(paths, new Array(32).fill(0), 2);
@@ -62,7 +66,7 @@ const computeWitnessNullifiers = privateData => {
   ].flat(Infinity);
 };
 
-const computeWitnessCommitments = privateData => {
+const computePrivateInputsCommitments = privateData => {
   const { newCommitmentPreimage, recipientPublicKeys } = generalise(privateData);
   const paddedNewCommitmentPreimage = padArray(newCommitmentPreimage, NULL_COMMITMENT, 2);
   const paddedRecipientPublicKeys = padArray(recipientPublicKeys, [0, 0], 2);
@@ -76,7 +80,7 @@ const computeWitnessCommitments = privateData => {
   ].flat(Infinity);
 };
 
-const computeWitnessPrivateDeposit = privateData => {
+const computePrivateInputsDeposit = privateData => {
   const { salt, recipientPublicKeys } = generalise(privateData);
   return [
     salt.field(BN128_GROUP_ORDER),
@@ -88,23 +92,23 @@ const computeWitnessPrivateDeposit = privateData => {
 };
 
 // eslint-disable-next-line import/prefer-default-export
-export const computeWitness = (txObject, rootsNullifiers, privateData) => {
-  const publicWitness = computeWitnessPublic(txObject, rootsNullifiers);
+export const computeWitness = (txObject, roots, privateData) => {
+  const publicInputs = computePublicInputs(txObject, roots);
   switch (Number(txObject.transactionType)) {
     case 0:
-      return [...publicWitness, ...computeWitnessPrivateDeposit(privateData)];
+      return [...publicInputs, ...computePrivateInputsDeposit(privateData)];
     case 1:
       return [
-        ...publicWitness,
-        ...computeWitnessNullifiers(privateData),
-        ...computeWitnessCommitments(privateData),
-        ...computeWitnessEncryption(privateData),
+        ...publicInputs,
+        ...computePrivateInputsNullifiers(privateData),
+        ...computePrivateInputsCommitments(privateData),
+        ...computePrivateInputsEncryption(privateData),
       ];
     default:
       return [
-        ...publicWitness,
-        ...computeWitnessNullifiers(privateData),
-        ...computeWitnessCommitments(privateData),
+        ...publicInputs,
+        ...computePrivateInputsNullifiers(privateData),
+        ...computePrivateInputsCommitments(privateData),
       ];
   }
 };

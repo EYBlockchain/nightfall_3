@@ -10,7 +10,7 @@ from "./common/generic_circuit/Verifiers/verify_commitments.zok" import main as 
 
 def main(\
     PublicTransaction tx,\
-    field[2] nullifierRoots,\
+    field[2] roots,\
     private Nullifiers<2> nullifiers,\
     private Commitments<2> commitments,\
     private Transfer transfer\
@@ -44,7 +44,7 @@ def main(\
 
     //Verify nullifiers
     Point firstInputZkpPublicKeys = verify_nullifiers::<2>(packedErcAddress, idRemainder,\
-        tx.nullifiers, nullifierRoots, nullifiersValue, nullifiers.oldCommitments.salt,\
+        tx.nullifiers, roots, nullifiersValue, nullifiers.oldCommitments.salt,\
         nullifiers.rootKey, nullifiers.paths, nullifiers.orders)
 
     //Verify new Commmitments

@@ -8,7 +8,6 @@ from "./common/generic_circuit/Verifiers/verify_commitments.zok" import main as 
 
 def main(\
     PublicTransaction tx,\
-    field[2] nullifierRoots,\
     private field salt,\
     private Point recipientPublicKey\
 )-> ():
