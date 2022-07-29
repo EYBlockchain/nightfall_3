@@ -102,7 +102,7 @@ module.exports = {
   HASH_TYPE: 'poseidon',
   TXHASH_TREE_HASH_TYPE: 'keccak256',
   USE_STUBS: process.env.USE_STUBS === 'true',
-  VK_IDS: { deposit: 0, transfer: 1, withdraw: 2 }, // withdraw: 3, withdraw_change: 4 }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
+  VK_IDS: { deposit: 0, transfer: 1, withdraw: 2 }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
   TIMBER_HEIGHT: 32,
   TXHASH_TREE_HEIGHT: 5,
   MAX_PUBLIC_VALUES: {

@@ -1,29 +1,21 @@
-from "./common/utils/structures.zok" import CommitmentPreimage,Point, PublicTransaction, SHIFT
-from "./common/generic_circuit/Verifiers/verify_commitments.zok" import main as verify_commitments
+from "./common/utils/structures.zok" import Point, PublicTransaction, Nullifiers, Commitments, Transfer, SHIFT
+from "./common/utils/calculations.zok" import sum
+from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field
+from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field
 from "./common/generic_circuit/Verifiers/verify_structure.zok" import main as verify_structure
 from "./common/generic_circuit/Verifiers/verify_encryption.zok" import main as verify_encryption
 from "./common/generic_circuit/Verifiers/verify_nullifiers.zok" import main as verify_nullifiers
-from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field
-from "./common/utils/calculations.zok" import sum
-from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field
-
-const u32 txType = 2
-const u32 numCommitments = 1
-const u32 numNullifiers = 2
-const u32 transfer = 1
+from "./common/generic_circuit/Verifiers/verify_commitments.zok" import main as verify_commitments
 
 def main(\
     PublicTransaction tx,\
-    field[numNullifiers] roots,\
-    private CommitmentPreimage<numNullifiers> oldCommitment,\
-    private field[numNullifiers] rootKey,\
-    private field[numNullifiers][32] paths,\
-	private field[numNullifiers] orders,\
-    private CommitmentPreimage<numCommitments> newCommitment\
-	)-> ():
-
-	//Verify public transaction structure
-    assert(verify_structure::<txType, numNullifiers, numCommitments>(\
+    field[2] nullifierRoots,\
+    private Nullifiers<2> nullifiers,\
+    private Commitments<2> commitments\
+)-> ():
+    
+    //Verify public transaction structure
+    assert(verify_structure::<2>(\
         tx.value,\
 	    tx.transactionType,\
 	    tx.tokenType,\
@@ -36,40 +28,28 @@ def main(\
 	    tx.compressedSecrets\
     ))
 
-	//Check that values match
-	assert(\
-        sum(u8_array_to_field(oldCommitment.value)) ==\
-        sum(u8_array_to_field(newCommitment.value)) + tx.value\
-    )
+    field[2] nullifiersValue = u8_array_to_field(nullifiers.oldCommitments.value)
+    field[2] commitmentsValue = u8_array_to_field(commitments.newCommitments.value)
 
-	// pack the top four bytes of the token id into the ercAddress field (address only
+    //Check that values match
+    assert(sum(nullifiersValue) == sum(commitmentsValue) + tx.value)
+
+    // pack the top four bytes of the token id into the ercAddress field (address only
 	// uses 160 bits and the Shield contract prevents creation of something with more than 160 bits)
     field idRemainder = u32_array_to_field(tx.tokenId[1..8]) 
     field packedErcAddress = tx.ercAddress + u32_array_to_field([tx.tokenId[0]]) * SHIFT 
 
-	//Verify nullifiers
-    Point firstInputZkpPublicKeys = [0,0]
-    firstInputZkpPublicKeys = verify_nullifiers::<numNullifiers>(\
-		packedErcAddress,\
-		idRemainder,\
-        tx.nullifiers,\
-		roots,\
-		u8_array_to_field(oldCommitment.value),\
-		oldCommitment.salt,\
-		rootKey,\
-		paths,\
-		orders\
-	)
-	
-	//Verify new Commmitments
-    assert(verify_commitments::<numCommitments, txType>(\
-		packedErcAddress,\
-		idRemainder,\
-		tx.commitments,\
-		firstInputZkpPublicKeys,\
-		u8_array_to_field(newCommitment.value),\
-		newCommitment.salt,\
-		[firstInputZkpPublicKeys]\
-	))
+    //Verify nullifiers
+    Point firstInputZkpPublicKeys = verify_nullifiers::<2>(packedErcAddress, idRemainder,\
+        tx.nullifiers, nullifierRoots, nullifiersValue, nullifiers.oldCommitments.salt,\
+        nullifiers.rootKey, nullifiers.paths, nullifiers.orders)
 
-	return
+    //Verify new Commmitments
+    assert(verify_commitments::<2>(packedErcAddress, idRemainder, tx.commitments,\
+    commitmentsValue, commitments.newCommitments.salt, commitments.recipientPublicKey))
+
+    //Verify Change
+    assert(commitmentsValue[0] == 0 || firstInputZkpPublicKeys == commitments.recipientPublicKey[0])
+
+    return
+
