@@ -25,7 +25,8 @@ import {
 import { decompressKey, calculateIvkPkdfromAskNsk } from './keys';
 import { checkIndexDBForCircuit, getStoreCircuit } from './database';
 
-const { BN128_GROUP_ORDER, ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, ZERO, USE_STUBS } = global.config;
+const { BN128_GROUP_ORDER, USE_STUBS } = global.config;
+const { ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, ZERO } = global.nightfallConstants;
 const { generalise, GN } = gen;
 
 const singleTransfer = USE_STUBS ? 'single_transfer_stub' : 'single_transfer';

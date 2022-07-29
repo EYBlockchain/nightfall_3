@@ -20,6 +20,7 @@ import {
   clearPending,
   getSiblingInfo,
 } from './commitment-storage.mjs';
+import constants from 'common-files/constants/index.mjs';
 import getProposersUrl from './peers.mjs';
 import { ZkpKeys } from './keys.mjs';
 import { encrypt, genEphemeralKeys, packSecrets } from './kem-dem.mjs';
@@ -29,10 +30,10 @@ const {
   ZOKRATES_WORKER_HOST,
   PROVING_SCHEME,
   BACKEND,
-  SHIELD_CONTRACT_NAME,
   PROTOCOL,
   USE_STUBS,
 } = config;
+const { SHIELD_CONTRACT_NAME } = constants;
 const { generalise, GN } = gen;
 
 const NEXT_N_PROPOSERS = 3;

@@ -21,7 +21,8 @@ import {
 import { calculateIvkPkdfromAskNsk } from './keys';
 import { checkIndexDBForCircuit, getStoreCircuit } from './database';
 
-const { BN128_GROUP_ORDER, SHIELD_CONTRACT_NAME, USE_STUBS } = global.config;
+const { BN128_GROUP_ORDER, USE_STUBS } = global.config;
+const { SHIELD_CONTRACT_NAME } = global.nightfallConstants;
 const { generalise } = gen;
 const circuitName = USE_STUBS ? 'withdraw_stub' : 'withdraw';
 

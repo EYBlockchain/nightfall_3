@@ -1,9 +1,11 @@
 import config from 'config';
 import { waitForContract, web3 } from '../../../common-files/utils/contract.mjs';
 import logger from '../../../common-files/utils/logger.mjs';
+import constants from '../../../common-files/constants/index.mjs';
 import { addMultiSigSignature, getTokenAddress } from './helpers.mjs';
 
-const { RESTRICTIONS, SHIELD_CONTRACT_NAME } = config;
+const { RESTRICTIONS } = config;
+const { SHIELD_CONTRACT_NAME } = constants;
 const pausables = ['State', 'Shield'];
 
 /**

@@ -3,7 +3,7 @@
 
 import fs from 'fs';
 import config from 'config';
-import constants from 'common-files/constants/index.mjs';
+import constants from '../constants/index.mjs';
 
 import Web3 from './web3.mjs';
 import logger from './logger.mjs';

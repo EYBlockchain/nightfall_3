@@ -2,12 +2,12 @@
 Module to endable withdrawal of funds from the Shield contract to the user's
 address.
 */
-import config from 'config';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
+import constants from 'common-files/constants/index.mjs';
 import { Transaction } from '../classes/index.mjs';
 import { getTransactionByTransactionHash, getBlockByTransactionHash } from './database.mjs';
 
-const { SHIELD_CONTRACT_NAME } = config;
+const { SHIELD_CONTRACT_NAME } = constants;
 
 // TODO move classes to their own folder so this is not needed (it's already a
 // static function in the Block class)
