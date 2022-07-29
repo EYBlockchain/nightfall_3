@@ -18,24 +18,15 @@ struct CompressedPoint<N> {
 }
 
 struct PublicTransaction {
-<<<<<<< HEAD
 	field value
 	field[2] historicRootBlockNumberL2
 	field transactionType
-=======
-	u8[31] value
-	u32 transactionType
->>>>>>> d9fc6ab3 (refactor: split changes between issue 818 (generic circuits) and issue 733 (payments))
 	field tokenType
 	u32[8] tokenId
 	field ercAddress
 	u32[8] recipientAddress
 	field[2] commitments
 	field[2] nullifiers
-<<<<<<< HEAD
-=======
-	field[2] historicRootBlockNumberL2
->>>>>>> d9fc6ab3 (refactor: split changes between issue 818 (generic circuits) and issue 733 (payments))
 	field[2] compressedSecrets
 }
 
