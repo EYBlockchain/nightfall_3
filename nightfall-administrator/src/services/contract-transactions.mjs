@@ -2,7 +2,7 @@ import config from 'config';
 import { waitForContract, web3 } from '../../../common-files/utils/contract.mjs';
 import logger from '../../../common-files/utils/logger.mjs';
 import constants from '../../../common-files/constants/index.mjs';
-import { addMultiSigSignature, getTokenAddress } from './helpers.mjs';
+import { addMultiSigSignature } from './helpers.mjs';
 
 const { RESTRICTIONS } = config;
 const { SHIELD_CONTRACT_NAME } = constants;
@@ -86,22 +86,6 @@ export function unpauseContracts(signingKey, executorAddress, nonce) {
         nonce,
       );
     }),
-  );
-}
-
-export async function transferShieldBalance(tokenName, amount, signingKey, executorAddress, nonce) {
-  const tokenAddress = getTokenAddress(tokenName);
-  if (tokenAddress === 'unknown') throw new Error('Unknown token name');
-  const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
-  const data = shieldContractInstance.methods
-    .transferShieldBalance(tokenAddress, amount)
-    .encodeABI();
-  return addMultiSigSignature(
-    data,
-    signingKey,
-    shieldContractInstance.options.address,
-    executorAddress,
-    nonce,
   );
 }
 

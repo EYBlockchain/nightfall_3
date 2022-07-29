@@ -75,7 +75,6 @@ export async function askQuestions(approved) {
         'Remove token restrictions',
         'Pause contracts',
         'Unpause contracts',
-        'Transfer Shield contract balance',
         'Transfer ownership',
         'Set new boot proposer',
         'Set new boot challenger',

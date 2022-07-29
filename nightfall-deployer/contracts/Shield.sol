@@ -34,16 +34,6 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
         Pausable.initialize();
     }
 
-    function transferShieldBalance(address ercAddress, uint256 value) public onlyOwner {
-        if (value == uint256(0)) {
-            uint256 balance = IERC20Upgradeable(ercAddress).balanceOf(address(this));
-            IERC20Upgradeable(ercAddress).safeTransfer(owner(), balance);
-        } else {
-            IERC20Upgradeable(ercAddress).safeTransfer(owner(), value);
-        }
-        emit ShieldBalanceTransferred(ercAddress, value);
-    }
-
     function submitTransaction(Transaction memory t) external payable nonReentrant whenNotPaused {
         // let everyone know what you did
         emit TransactionSubmitted();

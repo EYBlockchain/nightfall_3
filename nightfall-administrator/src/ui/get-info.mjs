@@ -7,7 +7,6 @@ import {
   removeTokenRestrictions,
   pauseContracts,
   unpauseContracts,
-  transferShieldBalance,
   transferOwnership,
   setBootProposer,
   setBootChallenger,
@@ -34,7 +33,6 @@ async function start() {
     withdrawRestriction,
     pause,
     unpause,
-    amount,
     newEthereumSigningKey,
     executorAddress,
     nonce,
@@ -78,15 +76,6 @@ async function start() {
       case 'Pause contracts': {
         if (!pause) break;
         approved = await pauseContracts(ethereumSigningKey, executorAddress);
-        break;
-      }
-      case 'Transfer Shield contract balance': {
-        approved = await transferShieldBalance(
-          tokenName,
-          Number(amount),
-          ethereumSigningKey,
-          executorAddress,
-        );
         break;
       }
       case 'Transfer ownership': {
