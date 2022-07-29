@@ -21,14 +21,8 @@ import {
 import getProposersUrl from './peers.mjs';
 import { ZkpKeys } from './keys.mjs';
 
-const {
-  BN128_GROUP_ORDER,
-  ZOKRATES_WORKER_HOST,
-  PROVING_SCHEME,
-  BACKEND,
-  PROTOCOL,
-  USE_STUBS,
-} = config;
+const { BN128_GROUP_ORDER, ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, USE_STUBS } =
+  config;
 const { SHIELD_CONTRACT_NAME } = constants;
 const { generalise } = gen;
 

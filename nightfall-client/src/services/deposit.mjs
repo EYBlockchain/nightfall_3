@@ -17,14 +17,8 @@ import { Commitment, Transaction } from '../classes/index.mjs';
 import { storeCommitment } from './commitment-storage.mjs';
 import { ZkpKeys } from './keys.mjs';
 
-const {
-  ZOKRATES_WORKER_HOST,
-  PROVING_SCHEME,
-  BACKEND,
-  PROTOCOL,
-  USE_STUBS,
-  BN128_GROUP_ORDER,
-} = config;
+const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, USE_STUBS, BN128_GROUP_ORDER } =
+  config;
 const { SHIELD_CONTRACT_NAME } = constants;
 const { generalise } = gen;
 
