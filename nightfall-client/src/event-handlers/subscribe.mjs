@@ -9,7 +9,7 @@ import constants from 'common-files/constants/index.mjs';
 import logger from 'common-files/utils/logger.mjs';
 
 const { RETRIES } = config;
-const { STATE_CONTRACT_NAME } = constants
+const { STATE_CONTRACT_NAME } = constants;
 /**
  * Function that tries to get a (named) contract instance and, if it fails, will
  * retry after 3 seconds.  After RETRIES attempts, it will give up and throw.

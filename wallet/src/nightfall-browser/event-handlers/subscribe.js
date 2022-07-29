@@ -8,7 +8,7 @@
 import { getContractInstance, getContractAddress } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
 
-const { STATE_CONTRACT_NAME, RETRIES } = global.nightfallConstants;
+const { STATE_CONTRACT_NAME } = global.nightfallConstants;
 const { RETRIES } = global.config;
 
 /**
