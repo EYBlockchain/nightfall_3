@@ -63,7 +63,7 @@ library ChallengesUtil {
         for (uint256 i = 0; i < proof.length; i++) {
             proof1[i] = proof[i];
         }
-        uint256[25] memory publicInputs = Utils.getPublicInputs(transaction, roots);
+        uint256[38] memory publicInputs = Utils.getPublicInputs(transaction, roots);
         require(!Verifier.verify(proof1, publicInputs, vk), 'This proof appears to be valid');
     }
 

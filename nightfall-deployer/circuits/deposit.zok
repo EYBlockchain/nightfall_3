@@ -22,6 +22,8 @@ def main(\
 	    tx.recipientAddress,\
 	    tx.commitments,\
 	    tx.nullifiers,\
+        tx.commitmentFee,\
+        tx.nullifiersFee,\
 	    tx.historicRootBlockNumberL2,\
 	    tx.compressedSecrets\
     ))

@@ -17,21 +17,11 @@ def main(\
     private Transfer transfer\
 )-> ():
     
-    field[2] nullifiersValue = [\
-        u8_array_to_field(nullifiers.oldCommitments.value[0]),\
-        u8_array_to_field(nullifiers.oldCommitments.value[1])\
-    ]
-    field[2] commitmentsValue = [\
-        u8_array_to_field(commitments.newCommitments.value[0]),\
-        u8_array_to_field(commitments.newCommitments.value[1])\
-    ]
+    field[2] nullifiersValue = u8_array_to_field(nullifiers.oldCommitments.value)
+    field[2] commitmentsValue = u8_array_to_field(commitments.newCommitments.value)
 
-    field[2] nullifiersFeeValue = [\
-        u8_array_to_field(nullifiersFee.oldCommitments.value[0]),\
-        u8_array_to_field(nullifiersFee.oldCommitments.value[1])\
-        ]
-
-    field[1] commitmentFeeValue = [u8_array_to_field(commitmentFee.newCommitments.value[0])]
+    field[2] nullifiersFeeValue = u8_array_to_field(nullifiersFee.oldCommitments.value)
+    field[1] commitmentFeeValue = u8_array_to_field(commitmentFee.newCommitments.value)
 
     assert(nullifier_stub::<2>(\
         nullifierRoots, nullifiersValue, nullifiers.oldCommitments.salt,\

@@ -7,6 +7,10 @@ from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8
 */
 def main<TxType>(\
     field value,\
+<<<<<<< HEAD
+=======
+    field fee,\
+>>>>>>> 25c9b6c5 (build: continue to implement payments)
 	field transactionType,\
 	field tokenType,\
 	u32[8] tokenId,\
@@ -14,7 +18,13 @@ def main<TxType>(\
 	u32[8] recipientAddress,\
 	field[2] commitments,\
 	field[2] nullifiers,\
+    field[1] commitmentFee,\
+    field[2] nullifiersFee,\
 	field[2] historicRootBlockNumberL2,\
+<<<<<<< HEAD
+=======
+    field[2] historicRootBlockNumberL2Fee,\
+>>>>>>> 25c9b6c5 (build: continue to implement payments)
 	field[2] compressedSecrets\
 ) -> (bool):
 
@@ -46,10 +56,6 @@ def main<TxType>(\
     assert((TxType == 0 && commitments[0] != 0 && commitments[1] == 0) ||\
         (TxType == 1 && commitments[0] != 0 && commitments[0] != commitments[1]) ||\
         (TxType == 2 && commitments[1] == 0))
-
-    //Check nullifiers
-    assert((TxType == 0 && nullifiers[0] == 0 && nullifiers[1] == 0)\
-     || (TxType != 0 && nullifiers[0] != 0 && nullifiers[0] != nullifiers[1]))
     
     //Check nullifiers
     assert(\
@@ -64,4 +70,9 @@ def main<TxType>(\
     assert((TxType == 1 && (compressedSecrets[0] != 0 || compressedSecrets[1] != 0))\
         || (TxType != 1 && compressedSecrets[0] == 0 && compressedSecrets[1] == 0))
     
+    //Check fee structure
+    //Fee can be set to zero
+    assert((TxType == 0 && nullifiersFee[0] == 0 && nullifiersFee[1] == 0 && commitmentFee[0] == 0)\
+     || (TxType != 0 && nullifiersFee[0] != 0))
+
     return true

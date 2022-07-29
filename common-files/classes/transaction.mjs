@@ -94,6 +94,7 @@ class Transaction {
     let compressedSecrets;
     let flatProof;
     let historicRootBlockNumberL2;
+    let historicRootBlockNumberL2Fee;
     if (proof === undefined) flatProof = [0, 0, 0, 0, 0, 0, 0, 0];
     else flatProof = Object.values(proof).flat(Infinity);
     if (_commitments === undefined) commitments = [{ hash: 0 }, { hash: 0 }];
@@ -111,6 +112,9 @@ class Transaction {
     if (_historicRoot === undefined) historicRootBlockNumberL2 = [0, 0];
     else if (_historicRoot.length === 1) historicRootBlockNumberL2 = [..._historicRoot, 0];
     else historicRootBlockNumberL2 = _historicRoot;
+    if (_historicRootFee === undefined) historicRootBlockNumberL2Fee = [0, 0];
+    else if (_historicRootFee.length === 1) historicRootBlockNumberL2Fee = [..._historicRootFee, 0];
+    else historicRootBlockNumberL2Fee = _historicRootFee;
 
     if ((transactionType === 0 || transactionType === 2) && TOKEN_TYPES[tokenType] === undefined)
       throw new Error('Unrecognized token type');
@@ -183,7 +187,7 @@ class Transaction {
       compressedSecrets,
       commitmentFee,
       nullifiersFee,
-      proof: compressProof(proof),
+      proof: arrayEquality(proof, [0, 0, 0, 0, 0, 0, 0, 0]) ? [0, 0, 0, 0] : compressProof(proof),
     };
   }
 }

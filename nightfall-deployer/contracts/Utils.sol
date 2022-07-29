@@ -100,44 +100,49 @@ library Utils {
 
     // gathers public inputs for each tx type
     // required now we have removed the publicInputHash
-    function getPublicInputs(Structures.Transaction calldata ts, uint256[2] memory roots)
+    function getPublicInputs(Structures.Transaction calldata ts, uint256[4] memory roots)
         internal
         pure
-        returns (uint256[] memory inputs)
+        returns (uint256[38] memory inputs)
     {
         inputs[0] = uint256(ts.value);
-        inputs[1] = uint256(ts.historicRootBlockNumberL2[0]);
-        inputs[2] = uint256(ts.historicRootBlockNumberL2[1]);
-        inputs[3] = uint256(ts.transactionType);
-        inputs[4] = uint256(ts.tokenType);
-        inputs[5] = uint32(uint256(ts.tokenId) >> 224);
-        inputs[6] = uint32(uint256(ts.tokenId) >> 192);
-        inputs[7] = uint32(uint256(ts.tokenId) >> 160);
-        inputs[8] = uint32(uint256(ts.tokenId) >> 128);
-        inputs[9] = uint32(uint256(ts.tokenId) >> 96);
-        inputs[10] = uint32(uint256(ts.tokenId) >> 64);
-        inputs[11] = uint32(uint256(ts.tokenId) >> 32);
-        inputs[12] = uint32(uint256(ts.tokenId));
-        inputs[13] = uint256(ts.ercAddress);
-        inputs[14] = uint32(uint256(ts.recipientAddress) >> 224);
-        inputs[15] = uint32(uint256(ts.recipientAddress) >> 192);
-        inputs[16] = uint32(uint256(ts.recipientAddress) >> 160);
-        inputs[17] = uint32(uint256(ts.recipientAddress) >> 128);
-        inputs[18] = uint32(uint256(ts.recipientAddress) >> 96);
-        inputs[19] = uint32(uint256(ts.recipientAddress) >> 64);
-        inputs[20] = uint32(uint256(ts.recipientAddress) >> 32);
-        inputs[21] = uint32(uint256(ts.recipientAddress));
-        inputs[22] = uint256(ts.commitments[0]);
-        inputs[23] = uint256(ts.commitments[1]);
-        inputs[24] = uint256(ts.nullifiers[0]);
-        inputs[25] = uint256(ts.nullifiers[1]);
-        inputs[26] = uint256(ts.compressedSecrets[0]);
-        inputs[27] = uint256(ts.compressedSecrets[1]);
-
-        if (uint256(ts.transactionType) != 0) {
-            inputs[28] = uint256(roots[0]);
-            inputs[29] = uint256(roots[1]);
-        }
+        inputs[1] = uint256(ts.fee);
+        inputs[2] = uint256(ts.historicRootBlockNumberL2[0]);
+        inputs[3] = uint256(ts.historicRootBlockNumberL2[1]);
+        inputs[4] = uint256(ts.historicRootBlockNumberL2Fee[0]);
+        inputs[5] = uint256(ts.historicRootBlockNumberL2Fee[1]);
+        inputs[6] = uint256(ts.transactionType);
+        inputs[7] = uint256(ts.tokenType);
+        inputs[8] = uint32(uint256(ts.tokenId) >> 224);
+        inputs[9] = uint32(uint256(ts.tokenId) >> 192);
+        inputs[10] = uint32(uint256(ts.tokenId) >> 160);
+        inputs[11] = uint32(uint256(ts.tokenId) >> 128);
+        inputs[12] = uint32(uint256(ts.tokenId) >> 96);
+        inputs[13] = uint32(uint256(ts.tokenId) >> 64);
+        inputs[14] = uint32(uint256(ts.tokenId) >> 32);
+        inputs[15] = uint32(uint256(ts.tokenId));
+        inputs[16] = uint256(ts.ercAddress);
+        inputs[17] = uint32(uint256(ts.recipientAddress) >> 224);
+        inputs[18] = uint32(uint256(ts.recipientAddress) >> 192);
+        inputs[19] = uint32(uint256(ts.recipientAddress) >> 160);
+        inputs[20] = uint32(uint256(ts.recipientAddress) >> 128);
+        inputs[21] = uint32(uint256(ts.recipientAddress) >> 96);
+        inputs[22] = uint32(uint256(ts.recipientAddress) >> 64);
+        inputs[23] = uint32(uint256(ts.recipientAddress) >> 32);
+        inputs[24] = uint32(uint256(ts.recipientAddress));
+        inputs[25] = uint256(ts.commitments[0]);
+        inputs[26] = uint256(ts.commitments[1]);
+        inputs[27] = uint256(ts.nullifiers[0]);
+        inputs[28] = uint256(ts.nullifiers[1]);
+        inputs[29] = uint256(ts.commitmentFee);
+        inputs[30] = uint256(ts.nullifiersFee[0]);
+        inputs[31] = uint256(ts.nullifiersFee[1]);
+        inputs[32] = uint256(ts.compressedSecrets[0]);
+        inputs[33] = uint256(ts.compressedSecrets[1]);
+        inputs[34] = roots[0];
+        inputs[35] = roots[1];
+        inputs[36] = roots[2];
+        inputs[37] = roots[3];
     }
 
     function calculateMerkleRoot(bytes32[] memory leaves) public pure returns (bytes32 result) {

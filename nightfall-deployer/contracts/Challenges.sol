@@ -111,7 +111,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         }
     }
 
-    function challengeProofVerification(
+function challengeProofVerification(
         Block memory blockL2,
         Transaction[] calldata transactions,
         uint256 transactionIndex,

@@ -68,40 +68,50 @@ async function verifyProof(transaction) {
     .call();
   // to verify a proof, we make use of a zokrates-worker, which has an offchain
   // verifier capability
-  const historicRootFirst = (await getBlockByBlockNumberL2(
-    transaction.historicRootBlockNumberL2[0],
-  )) ?? { root: ZERO };
-  const historicRootSecond = (await getBlockByBlockNumberL2(
-    transaction.historicRootBlockNumberL2[1],
-  )) ?? { root: ZERO };
+  const historicRootFirst =
+    transaction.nullifiers[0] === ZERO
+      ? { root: ZERO }
+      : (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2[0])) ?? { root: ZERO };
+  const historicRootSecond =
+    transaction.nullifiers[1] === ZERO
+      ? { root: ZERO }
+      : (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2[1])) ?? { root: ZERO };
 
-  const historicRootFeeFirst = (await getBlockByBlockNumberL2(
-    transaction.historicRootBlockNumberL2Fee[0],
-  )) ?? { root: ZERO };
-  const historicRootFeeSecond = (await getBlockByBlockNumberL2(
-    transaction.historicRootBlockNumberL2Fee[1],
-  )) ?? { root: ZERO };
-
+  const historicRootFeeFirst =
+    transaction.nullifiersFee[0] === ZERO
+      ? { root: ZERO }
+      : (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2Fee[0])) ?? {
+          root: ZERO,
+        };
+  const historicRootFeeSecond =
+    transaction.nullifiersFee[1] === ZERO
+      ? { root: ZERO }
+      : (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2Fee[1])) ?? {
+          root: ZERO,
+        };
   const maticAddress = RESTRICTIONS.tokens[process.env.ETH_NETWORK].find(
     token => token.name === 'MATIC',
   ).address;
 
+  if (![0, 1, 2].includes(Number(transaction.transactionType))) {
+    throw new TransactionError('Unknown transaction type', 2);
+  }
   const inputs = generalise(
     [
-      generalise(transaction.value).limbs(8, 31),
-      generalise(transaction.fee).limbs(8, 31),
-      ...transaction.historicRootBlockNumberL2,
-      ...transaction.historicRootBlockNumberL2Fee,
-      generalise(transaction.transactionType).limbs(32, 1),
+      transaction.value,
+      transaction.fee,
+      transaction.historicRootBlockNumberL2,
+      transaction.historicRootBlockNumberL2Fee,
+      transaction.transactionType,
       transaction.tokenType,
       generalise(transaction.tokenId).limbs(32, 8),
       transaction.ercAddress,
       generalise(transaction.recipientAddress).limbs(32, 8),
-      generalise(transaction.commitments[0]).limbs(32, 7),
-      generalise(transaction.commitments[1]).limbs(32, 7),
-      generalise(transaction.nullifiers[0]).limbs(32, 7),
-      generalise(transaction.nullifiers[1]).limbs(32, 7),
-      ...transaction.compressedSecrets,
+      transaction.commitments,
+      transaction.nullifiers,
+      transaction.commitmentFee,
+      transaction.nullifiersFee,
+      transaction.compressedSecrets,
       historicRootFirst.root,
       historicRootSecond.root,
       historicRootFeeFirst.root,
@@ -112,13 +122,6 @@ async function verifyProof(transaction) {
 
   if (
     isOverflow(transaction.ercAddress, MAX_PUBLIC_VALUES.ERCADDRESS) ||
-    isOverflow(transaction.commitments[0], MAX_PUBLIC_VALUES.COMMITMENTS) ||
-    isOverflow(transaction.commitments[1], MAX_PUBLIC_VALUES.COMMITMENTS) ||
-    isOverflow(transaction.nullifiers[0], MAX_PUBLIC_VALUES.NULLIFIER) ||
-    isOverflow(transaction.nullifiers[1], MAX_PUBLIC_VALUES.NULLIFIER) ||
-    isOverflow(transaction.commitmentFee[0], MAX_PUBLIC_VALUES.COMMITMENTS) ||
-    isOverflow(transaction.nullifiersFee[0], MAX_PUBLIC_VALUES.NULLIFIER) ||
-    isOverflow(transaction.nullifiersFee[1], MAX_PUBLIC_VALUES.NULLIFIER) ||
     isOverflow(historicRootFirst.root, BN128_GROUP_ORDER) ||
     isOverflow(historicRootSecond.root, BN128_GROUP_ORDER) ||
     isOverflow(historicRootFeeFirst.root, BN128_GROUP_ORDER) ||
@@ -129,6 +132,23 @@ async function verifyProof(transaction) {
     throw new TransactionError('Overflow in public input', 4);
   }
 
+  for (let i = 0; i < transaction.nullifiers.length; i++) {
+    if (isOverflow(transaction.nullifiers[i], MAX_PUBLIC_VALUES.NULLIFIER))
+      throw new TransactionError('Overflow in public input', 4);
+  }
+  for (let i = 0; i < transaction.commitments.length; i++) {
+    if (isOverflow(transaction.commitments[i], MAX_PUBLIC_VALUES.COMMITMENT))
+      throw new TransactionError('Overflow in public input', 4);
+  }
+
+  for (let i = 0; i < transaction.nullifiersFee.length; i++) {
+    if (isOverflow(transaction.nullifiersFee[i], MAX_PUBLIC_VALUES.NULLIFIER))
+      throw new TransactionError('Overflow in public input', 4);
+  }
+  for (let i = 0; i < transaction.commitmentFee.length; i++) {
+    if (isOverflow(transaction.commitmentFee[i], MAX_PUBLIC_VALUES.COMMITMENT))
+      throw new TransactionError('Overflow in public input', 4);
+  }
   // check for modular overflow attacks
   // if (inputs.filter(input => input.bigInt >= BN128_GROUP_ORDER).length > 0)
   //  throw new TransactionError('Modular overflow in public input', 4);

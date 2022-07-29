@@ -120,15 +120,7 @@ async function withdraw(withdrawParams) {
 
   logger.debug(`witness input is ${witness.join(' ')}`);
   // call a zokrates worker to generate the proof
-  let folderpath;
-  let transactionType;
-  if (change > 0n || value.bigInt >= MAX_WITHDRAW) {
-    folderpath = 'withdraw_change';
-    transactionType = 4;
-  } else {
-    folderpath = 'withdraw';
-    transactionType = 3;
-  }
+  let folderpath = 'withdraw';
   if (USE_STUBS) folderpath = `${folderpath}_stub`;
   const res = await axios.post(`${PROTOCOL}${ZOKRATES_WORKER_HOST}/generate-proof`, {
     folderpath,
