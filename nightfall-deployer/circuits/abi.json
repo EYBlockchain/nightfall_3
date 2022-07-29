@@ -1,0 +1,219 @@
+{
+  "inputs": [
+    {
+      "name": "tx",
+      "public": true,
+      "type": "struct",
+      "components": {
+        "name": "PublicTransaction",
+        "generics": [],
+        "members": [
+          {
+            "name": "value",
+            "type": "field"
+          },
+          {
+            "name": "historicRootBlockNumberL2",
+            "type": "array",
+            "components": {
+              "size": 2,
+              "type": "field"
+            }
+          },
+          {
+            "name": "transactionType",
+            "type": "field"
+          },
+          {
+            "name": "tokenType",
+            "type": "field"
+          },
+          {
+            "name": "tokenId",
+            "type": "array",
+            "components": {
+              "size": 8,
+              "type": "u32"
+            }
+          },
+          {
+            "name": "ercAddress",
+            "type": "field"
+          },
+          {
+            "name": "recipientAddress",
+            "type": "array",
+            "components": {
+              "size": 8,
+              "type": "u32"
+            }
+          },
+          {
+            "name": "commitments",
+            "type": "array",
+            "components": {
+              "size": 2,
+              "type": "field"
+            }
+          },
+          {
+            "name": "nullifiers",
+            "type": "array",
+            "components": {
+              "size": 2,
+              "type": "field"
+            }
+          },
+          {
+            "name": "compressedSecrets",
+            "type": "array",
+            "components": {
+              "size": 2,
+              "type": "field"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "roots",
+      "public": true,
+      "type": "array",
+      "components": {
+        "size": 2,
+        "type": "field"
+      }
+    },
+    {
+      "name": "nullifiers",
+      "public": false,
+      "type": "struct",
+      "components": {
+        "name": "Nullifiers",
+        "generics": [
+          2
+        ],
+        "members": [
+          {
+            "name": "oldCommitments",
+            "type": "struct",
+            "components": {
+              "name": "CommitmentPreimage",
+              "generics": [
+                2
+              ],
+              "members": [
+                {
+                  "name": "value",
+                  "type": "array",
+                  "components": {
+                    "size": 2,
+                    "type": "array",
+                    "components": {
+                      "size": 31,
+                      "type": "u8"
+                    }
+                  }
+                },
+                {
+                  "name": "salt",
+                  "type": "array",
+                  "components": {
+                    "size": 2,
+                    "type": "field"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "rootKey",
+            "type": "array",
+            "components": {
+              "size": 2,
+              "type": "field"
+            }
+          },
+          {
+            "name": "paths",
+            "type": "array",
+            "components": {
+              "size": 2,
+              "type": "array",
+              "components": {
+                "size": 32,
+                "type": "field"
+              }
+            }
+          },
+          {
+            "name": "orders",
+            "type": "array",
+            "components": {
+              "size": 2,
+              "type": "field"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "commitments",
+      "public": false,
+      "type": "struct",
+      "components": {
+        "name": "Commitments",
+        "generics": [
+          2
+        ],
+        "members": [
+          {
+            "name": "newCommitments",
+            "type": "struct",
+            "components": {
+              "name": "CommitmentPreimage",
+              "generics": [
+                2
+              ],
+              "members": [
+                {
+                  "name": "value",
+                  "type": "array",
+                  "components": {
+                    "size": 2,
+                    "type": "array",
+                    "components": {
+                      "size": 31,
+                      "type": "u8"
+                    }
+                  }
+                },
+                {
+                  "name": "salt",
+                  "type": "array",
+                  "components": {
+                    "size": 2,
+                    "type": "field"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "recipientPublicKey",
+            "type": "array",
+            "components": {
+              "size": 2,
+              "type": "array",
+              "components": {
+                "size": 2,
+                "type": "field"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": []
+}

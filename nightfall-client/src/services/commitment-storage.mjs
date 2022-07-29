@@ -711,7 +711,7 @@ async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId
     // This value will always be negative,
     // this is equivalent to  tempSum - value.bigInt - commitsLessThanTargetValue[lhs].preimage.value.bigInt
     const tempChangeDiff = commitsLessThanTargetValue[rhs].preimage.value.bigInt - value.bigInt;
-    if (tempSum > value.bigInt) {
+    if (tempSum >= value.bigInt) {
       if (tempChangeDiff > changeDiff) {
         // We have a set of commitments that has a lower negative change in our outputs.
         changeDiff = tempChangeDiff;
@@ -724,9 +724,10 @@ async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId
     logger.info(
       `Found commitments suitable for two-token transfer: ${JSON.stringify(commitmentsToUse)}`,
     );
+    await Promise.all(commitmentsToUse.map(commitment => markPending(commitment)));
+    return commitmentsToUse;
   }
-  await Promise.all(commitmentsToUse.map(commitment => markPending(commitment)));
-  return commitmentsToUse;
+  return null;
 }
 
 // mutex for the above function to ensure it only runs with a concurrency of one

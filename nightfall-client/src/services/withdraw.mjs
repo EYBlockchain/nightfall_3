@@ -17,6 +17,7 @@ import {
   markNullified,
   clearPending,
   getSiblingInfo,
+  storeCommitment,
 } from './commitment-storage.mjs';
 import getProposersUrl from './peers.mjs';
 import { ZkpKeys } from './keys.mjs';
@@ -31,7 +32,7 @@ const {
   PROTOCOL,
   USE_STUBS,
 } = config;
-const { generalise } = gen;
+const { generalise, GN } = gen;
 
 const NEXT_N_PROPOSERS = 3;
 const MAX_WITHDRAW = 5192296858534827628530496329220096n; // 2n**112n
@@ -41,14 +42,17 @@ async function withdraw(withdrawParams) {
   // let's extract the input items
   const { offchain = false, ...items } = withdrawParams;
   const { ercAddress, tokenId, value, recipientAddress, rootKey, fee } = generalise(items);
-  const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
+  const { compressedZkpPublicKey, nullifierKey, zkpPublicKey } = new ZkpKeys(rootKey);
 
   // the first thing we need to do is to find and input commitment which
   // will enable us to conduct our withdraw.  Let's rummage in the db...
-  const oldCommitments =
-    (await findUsableCommitmentsMutex(compressedZkpPublicKey, ercAddress, tokenId, value, true)) ||
-    null;
-  if (oldCommitments) logger.debug(`Found commitment ${JSON.stringify(oldCommitments, null, 2)}`);
+  const oldCommitments = await findUsableCommitmentsMutex(
+    compressedZkpPublicKey,
+    ercAddress,
+    tokenId,
+    value,
+  );
+  if (oldCommitments) logger.debug(`Found commitments ${JSON.stringify(oldCommitments, null, 2)}`);
   else throw new Error('No suitable commitments were found'); // caller to handle - need to get the user to make some commitments or wait until they've been posted to the blockchain and Timber knows about them
   // Having found 1 commitment, which is a suitable input to the
   // proof, the next step is to compute its nullifier;
@@ -62,7 +66,6 @@ async function withdraw(withdrawParams) {
   );
   const withdrawValue = value.bigInt > MAX_WITHDRAW ? MAX_WITHDRAW : value.bigInt;
   const change = totalInputCommitmentValue - withdrawValue;
-  // if so, add an output commitment to do that
   // and the Merkle path from the commitment to the root
   // Commitment Tree Information
   const commitmentTreeInfo = await Promise.all(oldCommitments.map(c => getSiblingInfo(c)));
@@ -75,16 +78,15 @@ async function withdraw(withdrawParams) {
   logger.silly(`SiblingPath was: ${JSON.stringify(localSiblingPaths)}`);
 
   const newCommitment = [];
+  const salt = await randValueLT(BN128_GROUP_ORDER);
   if (change !== 0n) {
-    const salt = await randValueLT(BN128_GROUP_ORDER);
     newCommitment.push(
       new Commitment({
         ercAddress,
         tokenId,
-        value: change,
-        zkpPublicKey: ZkpKeys.decompressZkpPublicKey(compressedZkpPublicKey),
-        compressedZkpPublicKey,
-        salt,
+        value: new GN(change),
+        zkpPublicKey,
+        salt: salt.bigInt,
       }),
     );
   }
@@ -103,7 +105,7 @@ async function withdraw(withdrawParams) {
     }),
   );
   const privateData = {
-    rootKey,
+    rootKey: [rootKey, rootKey],
     oldCommitmentPreimage: oldCommitments.map(o => {
       return { value: o.preimage.value, salt: o.preimage.salt };
     }),
@@ -164,6 +166,10 @@ async function withdraw(withdrawParams) {
           );
         }),
       );
+      // we store the change commitment
+      if (change !== 0n) {
+        await storeCommitment(newCommitment[0], nullifierKey);
+      }
       // on successful computation of the transaction mark the old commitments as nullified
       await Promise.all(
         oldCommitments.map(commitment => markNullified(commitment, optimisticWithdrawTransaction)),
@@ -171,16 +177,20 @@ async function withdraw(withdrawParams) {
       const th = optimisticWithdrawTransaction.transactionHash;
       delete optimisticWithdrawTransaction.transactionHash;
       optimisticWithdrawTransaction.transactionHash = th;
-      return { transaction: optimisticWithdrawTransaction };
+      return { transaction: optimisticWithdrawTransaction, salts: [salt.hex(32)] };
     }
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(optimisticWithdrawTransaction))
       .encodeABI();
+    // we store the change commitment
+    if (change !== 0n) {
+      await storeCommitment(newCommitment[0], nullifierKey);
+    }
     // on successful computation of the transaction mark the old commitments as nullified
     await Promise.all(
       oldCommitments.map(commitment => markNullified(commitment, optimisticWithdrawTransaction)),
     );
-    return { rawTransaction, transaction: optimisticWithdrawTransaction };
+    return { rawTransaction, transaction: optimisticWithdrawTransaction, salts: [salt.hex(32)] };
   } catch (err) {
     await Promise.all(oldCommitments.map(commitment => clearPending(commitment)));
     throw new Error(err); // let the caller handle the error

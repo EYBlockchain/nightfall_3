@@ -122,15 +122,12 @@ async function transfer(transferParams) {
     roots,
   );
 
-  // time for a quick sanity check.  We expect the number of old commitments,
-  // new commitments and nullifiers to be equal.
-  if (nullifiers.length !== oldCommitments.length || nullifiers.length !== newCommitments.length) {
+  // time for a quick sanity check.  We expect the number of old commitments and nullifiers to be equal.
+  if (nullifiers.length !== oldCommitments.length) {
     logger.error(
-      `number of old commitments: ${oldCommitments.length}, number of new commitments: ${newCommitments.length}, number of nullifiers: ${nullifiers.length}`,
+      `number of old commitments: ${oldCommitments.length}, number of nullifiers: ${nullifiers.length}`,
     );
-    throw new Error(
-      'Commitment or nullifier numbers are mismatched.  There should be equal numbers of each',
-    );
+    throw new Error('Number of nullifiers and old commitments are mismatched');
   }
 
   // now we have everything we need to create a Witness and compute a proof
