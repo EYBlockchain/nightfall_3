@@ -29,7 +29,7 @@ const {
   CIRCUIT_COLLECTION,
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-} = global.config;
+} = global.nightfallConstants;
 
 const connectDB = async () => {
   return openDB(COMMITMENTS_DB, 1, {

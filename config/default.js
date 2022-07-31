@@ -25,35 +25,11 @@ BigInt.prototype.toJSON = function () {
 };
 
 module.exports = {
-  COMMITMENTS_DB: 'nightfall_commitments',
-  OPTIMIST_DB: 'optimist_data',
-  PROPOSER_COLLECTION: 'proposers',
-  CHALLENGER_COLLECTION: 'challengers',
-  TRANSACTIONS_COLLECTION: 'transactions',
-  SUBMITTED_BLOCKS_COLLECTION: 'blocks',
-  INVALID_BLOCKS_COLLECTION: 'invalid_blocks',
-  NULLIFIER_COLLECTION: 'nullifiers',
-  COMMIT_COLLECTION: 'commits',
-  WALLETS_COLLECTION: 'wallets',
-  COMMITMENTS_COLLECTION: 'commitments',
-  PEERS_COLLECTION: 'peers',
-  TIMBER_COLLECTION: 'timber',
-  CIRCUIT_COLLECTION: 'circuit_storage',
-  CONTRACT_ARTIFACTS: '/app/build/contracts',
-  PROPOSERS_CONTRACT_NAME: 'Proposers',
-  SHIELD_CONTRACT_NAME: 'Shield',
-  CHALLENGES_CONTRACT_NAME: 'Challenges',
-  STATE_CONTRACT_NAME: 'State',
   STATE_GENESIS_BLOCK: process.env.STATE_GENESIS_BLOCK,
-  BLOCK_PROPOSED_EVENT_NAME: 'BlockProposed',
   CIRCUITS_HOME: process.env.CIRCUITS_HOME || '/app/circuits/',
   ALWAYS_DO_TRUSTED_SETUP: process.env.ALWAYS_DO_TRUSTED_SETUP || false,
-  EXCLUDE_DIRS: 'common', // don't setup files with this in their path
   LOG_LEVEL: process.env.LOG_LEVEL || 'debug',
   MONGO_URL: process.env.MONGO_URL || 'mongodb://localhost:27017/',
-  ZKP_KEY_LENGTH: 32, // use a 32 byte key length for SHA compatibility
-  CONFIRMATION_POLL_TIME: 1000, // time to wait before querying the blockchain (ms). Must be << block interval
-  CONFIRMATIONS: 12, // number of confirmations to wait before accepting a transaction
   PROTOCOL: 'http://', // connect to zokrates microservice like this
   WEBSOCKET_PORT: process.env.WEBSOCKET_PORT || 8080,
   WEBSOCKET_PING_TIME: 15000,
@@ -97,33 +73,18 @@ module.exports = {
   PROVING_SCHEME: process.env.PROVING_SCHEME || 'g16',
   BACKEND: process.env.BACKEND || 'bellman',
   CURVE: process.env.CURVE || 'bn128',
-  PROOF_QUEUE: 'generate-proof',
-  BN128_GROUP_ORDER: 21888242871839275222246405745257275088548364400416034343698204186575808495617n,
-  BN128_PRIME_FIELD: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
+
   TRANSACTIONS_PER_BLOCK: Number(process.env.TRANSACTIONS_PER_BLOCK) || 2,
-  BLOCK_TYPES: '(uint48,address,bytes32,uint256,bytes32,bytes32)',
-  TRANSACTION_TYPES:
-    '(uint112,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[2],uint[4])',
-  PROPOSE_BLOCK_TYPES: [
-    '(uint48,address,bytes32,uint256,bytes32,bytes32)',
-    '(uint112,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[2],uint[4])[]',
-  ], // used to encode/decode proposeBlock signature
-  SUBMIT_TRANSACTION_TYPES:
-    '(uint112,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[2],uint[4])',
   RETRIES: Number(process.env.AUTOSTART_RETRIES) || 50,
-  NODE_HASHLENGTH: 32,
-  ZERO: '0x0000000000000000000000000000000000000000000000000000000000000000',
-  HASH_TYPE: 'poseidon',
-  TXHASH_TREE_HASH_TYPE: 'keccak256',
   USE_STUBS: process.env.USE_STUBS === 'true',
   VK_IDS: { deposit: 0, single_transfer: 1, double_transfer: 2, withdraw: 3 }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
-  TIMBER_HEIGHT: 32,
-  TXHASH_TREE_HEIGHT: 5,
   MAX_PUBLIC_VALUES: {
     ERCADDRESS: 2n ** 161n - 1n,
     COMMITMENT: 2n ** 249n - 1n,
     NULLIFIER: 2n ** 249n - 1n,
   },
+  BN128_GROUP_ORDER: 21888242871839275222246405745257275088548364400416034343698204186575808495617n,
+  BN128_PRIME_FIELD: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
   // the various parameters needed to describe the Babyjubjub curve that we use for El-Gamal
   // BABYJUBJUB
   // Montgomery EC form is y^2 = x^3 + Ax^2 + Bx
@@ -147,7 +108,6 @@ module.exports = {
   ELLIGATOR2: {
     U: BigInt(5), // non square in Fp
   },
-  MAX_QUEUE: 5,
   MPC: {
     MPC_PARAMS_URL:
       'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com/phase2/mpc_params',
@@ -452,8 +412,54 @@ module.exports = {
   eventWsUrl:
     process.env.LOCAL_PROPOSER === 'true' ? process.env.LOCAL_WS_URL : process.env.PROPOSER_WS_URL,
 
+<<<<<<< HEAD
   KEYS_COLLECTION: 'keys',
   DEFAULT_ACCOUNT_NUM: 10,
+=======
+  circuitsAWSFiles: {
+    deposit_stub: {
+      abi: 'circuits/deposit_stub/artifacts/deposit_stub-abi.json',
+      program: 'circuits/deposit_stub/artifacts/deposit_stub-program',
+      pk: 'circuits/deposit_stub/keypair/deposit_stub_pk.key',
+    },
+    withdraw_stub: {
+      abi: 'circuits/withdraw_stub/artifacts/withdraw_stub-abi.json',
+      program: 'circuits/withdraw_stub/artifacts/withdraw_stub-program',
+      pk: 'circuits/withdraw_stub/keypair/withdraw_stub_pk.key',
+    },
+    single_transfer_stub: {
+      abi: 'circuits/single_transfer_stub/artifacts/single_transfer_stub-abi.json',
+      program: 'circuits/single_transfer_stub/artifacts/single_transfer_stub-program',
+      pk: 'circuits/single_transfer_stub/keypair/single_transfer_stub_pk.key',
+    },
+    double_transfer_stub: {
+      abi: 'circuits/double_transfer_stub/artifacts/double_transfer_stub-abi.json',
+      program: 'circuits/double_transfer_stub/artifacts/double_transfer_stub-program',
+      pk: 'circuits/double_transfer_stub/keypair/double_transfer_stub_pk.key',
+    },
+    deposit: {
+      abi: 'circuits/deposit/artifacts/deposit-abi.json',
+      program: 'circuits/deposit/artifacts/deposit-program',
+      pk: 'circuits/deposit/keypair/deposit_pk.key',
+    },
+    withdraw: {
+      abi: 'circuits/withdraw/artifacts/withdraw-abi.json',
+      program: 'circuits/withdraw/artifacts/withdraw-program',
+      pk: 'circuits/withdraw/keypair/withdraw_pk.key',
+    },
+    single_transfer: {
+      abi: 'circuits/single_transfer/artifacts/single_transfer-abi.json',
+      program: 'circuits/single_transfer/artifacts/single_transfer-program',
+      pk: 'circuits/single_transfer/keypair/single_transfer_pk.key',
+    },
+    double_transfer: {
+      abi: 'circuits/double_transfer/artifacts/double_transfer-abi.json',
+      program: 'circuits/double_transfer/artifacts/double_transfer-program',
+      pk: 'circuits/double_transfer/keypair/double_transfer_pk.key',
+    },
+  },
+
+>>>>>>> fix: refactor done seprated constants from config
   AWS: {
     s3Bucket: configureAWSBucket(),
     circuitFiles: parseCircuitFilesPath(),

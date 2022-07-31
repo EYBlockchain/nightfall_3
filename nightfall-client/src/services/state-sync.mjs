@@ -10,15 +10,15 @@ import logger from 'common-files/utils/logger.mjs';
 import mongo from 'common-files/utils/mongo.mjs';
 import downloadFile from 'common-files/utils/httputils.mjs';
 import { unpauseQueue } from 'common-files/utils/event-queue.mjs';
+import constants from 'common-files/constants/index.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import blockProposedEventHandler from '../event-handlers/block-proposed.mjs';
 import rollbackEventHandler from '../event-handlers/rollback.mjs';
 
+const { COMMITMENTS_DB, COMMITMENTS_COLLECTION, STATE_CONTRACT_NAME, CONTRACT_ARTIFACTS } =
+  constants;
 const {
   MONGO_URL,
-  COMMITMENTS_DB,
-  COMMITMENTS_COLLECTION,
-  STATE_CONTRACT_NAME,
   STATE_GENESIS_BLOCK,
   DEPLOYMENT_FILES_URL: { DEFAULT_CONTRACT_FILES_URL },
 } = config;
@@ -78,8 +78,8 @@ const checkContractsABI = async () => {
     const res = await axios.get(url); // get all json abi contracts
     const files = res.data.split('\n');
 
-    if (!fs.existsSync(`${config.CONTRACT_ARTIFACTS}`)) {
-      fs.mkdirSync(`${config.CONTRACT_ARTIFACTS}`);
+    if (!fs.existsSync(`${CONTRACT_ARTIFACTS}`)) {
+      fs.mkdirSync(`${CONTRACT_ARTIFACTS}`);
     }
 
     logger.info(`Downloading contracts from ${url}...`);
@@ -90,7 +90,7 @@ const checkContractsABI = async () => {
           try {
             await downloadFile(
               `${baseUrl}/build/contracts/${f.split('  ')[1]}`,
-              `${config.CONTRACT_ARTIFACTS}/${f.split('  ')[1]}`,
+              `${CONTRACT_ARTIFACTS}/${f.split('  ')[1]}`,
             );
           } catch (e) {
             console.error(`ERROR downloading ${f.split('  ')[1]}`);

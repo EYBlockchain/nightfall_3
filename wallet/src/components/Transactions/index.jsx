@@ -20,7 +20,7 @@ import exportIndexdDB from '../../utils/CommitmentsBackup/export';
 
 const supportedTokens = importTokens();
 
-const { SHIELD_CONTRACT_NAME, ZERO } = global.config;
+const { SHIELD_CONTRACT_NAME, ZERO } = global.nightfallConstants;
 
 const txTypeOptions = ['Deposit', 'Transfer', 'Transfer', 'Withdraw'];
 const txTypeDest = [

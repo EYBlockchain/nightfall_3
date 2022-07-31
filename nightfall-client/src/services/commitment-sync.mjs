@@ -3,17 +3,17 @@ commitmentsync services to decrypt commitments from transaction blockproposed ev
 or use clientCommitmentSync to decrypt when new zkpPrivateKey is received.
 */
 
-import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import { generalise } from 'general-number';
 import { edwardsDecompress } from 'common-files/utils/curve-maths/curves.mjs';
+import constants from 'common-files/constants/index.mjs';
 import { getAllTransactions } from './database.mjs';
 import { countCommitments, storeCommitment } from './commitment-storage.mjs';
 import { decrypt, packSecrets } from './kem-dem.mjs';
 import { ZkpKeys } from './keys.mjs';
 import Commitment from '../classes/commitment.mjs';
 
-const { ZERO } = config;
+const { ZERO } = constants;
 
 /**
 decrypt commitments for a transaction given zkpPrivateKeys and nullifierKeys.

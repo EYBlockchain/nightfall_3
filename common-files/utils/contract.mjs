@@ -3,6 +3,7 @@
 
 import fs from 'fs';
 import config from 'config';
+import constants from '../constants/index.mjs';
 
 import Web3 from './web3.mjs';
 import logger from './logger.mjs';
@@ -12,7 +13,7 @@ export const web3 = Web3.connection();
 const options = config.WEB3_OPTIONS;
 
 export const contractPath = contractName => {
-  return `${config.CONTRACT_ARTIFACTS}/${contractName}.json`;
+  return `${constants.CONTRACT_ARTIFACTS}/${contractName}.json`;
 };
 
 export async function getContractInterface(contractName) {

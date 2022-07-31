@@ -10,7 +10,8 @@ import { getContractInstance } from '../../common-files/utils/contract';
 import blockProposedEventHandler from '../event-handlers/block-proposed';
 import rollbackEventHandler from '../event-handlers/rollback';
 
-const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION, STATE_CONTRACT_NAME } = global.config;
+const { COMMITMENTS_DB, COMMITMENTS_COLLECTION, STATE_CONTRACT_NAME } = global.nightfallConstants;
+const { MONGO_URL } = global.config;
 
 const syncState = async (
   shieldContractAddress,

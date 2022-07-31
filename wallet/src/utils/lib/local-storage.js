@@ -7,7 +7,7 @@ const STORAGE_VERSION_KEY = 'nightfallStorageVersion';
 const STORAGE_VERSION = 1;
 const TOKEN_POOL_KEY = 'nightfallTokensPool';
 
-const { SHIELD_CONTRACT_NAME } = global.config;
+const { SHIELD_CONTRACT_NAME } = global.nightfallConstants;
 
 const storage = window.localStorage;
 

@@ -17,7 +17,7 @@ const {
   CIRCUIT_COLLECTION,
   HASH_TYPE,
   TIMBER_HEIGHT,
-} = global.config;
+} = global.nightfallConstants;
 
 // This needs to have better indexDB performance.
 
