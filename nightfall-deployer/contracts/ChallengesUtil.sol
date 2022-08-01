@@ -87,14 +87,9 @@ library ChallengesUtil {
         require(
             (transaction.transactionType != Structures.TransactionTypes.TRANSFER &&
                 uint256(transaction.recipientAddress) <= MAX20) ||
-                (transaction.transactionType == Structures.TransactionTypes.TRANSFER &&
-                    uint256(transaction.recipientAddress) <= MAX31),
+                (transaction.transactionType == Structures.TransactionTypes.TRANSFER),
             'Recipient ERC address out of range'
         );
-        require(uint256(transaction.commitments[0]) <= MAX31, 'Commitment 0 out of range');
-        require(uint256(transaction.commitments[1]) <= MAX31, 'Commitment 1 out of range');
-        require(uint256(transaction.nullifiers[0]) <= MAX31, 'Nullifier 0 out of range');
-        require(uint256(transaction.nullifiers[1]) <= MAX31, 'Nullifier 1 out of range');
         require(uint256(blockL2.root) < BN128_GROUP_ORDER, 'root out of range');
     }
 
