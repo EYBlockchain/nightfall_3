@@ -5,4 +5,6 @@ WORKDIR /app
 RUN git clone --depth 1 --branch 0.7.13 https://github.com/Zokrates/ZoKrates.git
 
 WORKDIR /app/ZoKrates
-RUN cargo build --release --package zokrates_cli
+# For Mac Silicon this will default to aarch64-unknown-linux-gnu
+RUN rustup toolchain install nightly
+RUN cargo +nightly build -p zokrates_cli --release
