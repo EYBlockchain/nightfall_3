@@ -276,7 +276,7 @@ export async function getMostProfitableTransactions(number) {
   const db = connection.db(OPTIMIST_DB);
   return db
     .collection(TRANSACTIONS_COLLECTION)
-    .find({ mempool: true }, { limit: number, sort: { fee: -1 }, projection: { _id: 0 } })
+    .find({ mempool: true }, {_id: 0}).sort({fee: -1}).limit(number)
     .toArray();
 }
 
