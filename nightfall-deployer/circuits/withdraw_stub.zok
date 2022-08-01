@@ -6,7 +6,7 @@ from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field
 
 def main(\
     PublicTransaction tx,\
-    field[2] nullifierRoots,\
+    field[2] roots,\
     private Nullifiers<2> nullifiers,\
     private Commitments<2> commitments\
 )-> ():
@@ -15,7 +15,7 @@ def main(\
     field[2] commitmentsValue = u8_array_to_field(commitments.newCommitments.value)
 
     assert(nullifier_stub::<2>(\
-        nullifierRoots, nullifiersValue, nullifiers.oldCommitments.salt,\
+        roots, nullifiersValue, nullifiers.oldCommitments.salt,\
         nullifiers.rootKey, nullifiers.paths, nullifiers.orders))
 
     assert(commitment_stub::<2>(\

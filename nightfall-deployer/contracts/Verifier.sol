@@ -52,7 +52,7 @@ library Verifier {
 
     function verify(
         uint256[] memory _proof,
-        uint256[30] memory _publicInputs,
+        uint256[] memory _publicInputs,
         uint256[] memory _vk
     ) public returns (bool result) {
         if (verificationCalculation(_proof, _publicInputs, _vk) == 0) {
@@ -64,7 +64,7 @@ library Verifier {
 
     function verificationCalculation(
         uint256[] memory _proof,
-        uint256[30] memory _publicInputs,
+        uint256[] memory _publicInputs,
         uint256[] memory _vk
     ) public returns (uint256) {
         Proof_G16 memory proof;
