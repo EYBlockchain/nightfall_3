@@ -30,6 +30,8 @@ export default async function fetchCircuit(
       .then(parseData)
       .then(mergeUint8Array);
   } else {
+    abi = JSON.parse(new TextDecoder().decode(await fetchAWSfiles(s3Bucket, abi)));
+    program = await fetchAWSfiles(s3Bucket, program);
     pk = await fetchAWSfiles(s3Bucket, pk);
   }
   return { abi, program, pk };
