@@ -27,10 +27,10 @@ function keccak(preimage) {
   const {
     value,
     fee,
-    historicRootBlockNumberL2,
-    historicRootBlockNumberL2Fee,
     transactionType,
     tokenType,
+    historicRootBlockNumberL2,
+    historicRootBlockNumberL2Fee,
     tokenId,
     ercAddress,
     recipientAddress,
@@ -45,10 +45,10 @@ function keccak(preimage) {
   const transaction = [
     value,
     fee,
-    historicRootBlockNumberL2,
-    historicRootBlockNumberL2Fee,
     transactionType,
     tokenType,
+    historicRootBlockNumberL2,
+    historicRootBlockNumberL2Fee,
     tokenId,
     ercAddress,
     recipientAddress,
@@ -59,6 +59,7 @@ function keccak(preimage) {
     compressedSecrets,
     proof,
   ];
+
   const encodedTransaction = web3.eth.abi.encodeParameters([TRANSACTION_TYPES], [transaction]);
   return web3.utils.soliditySha3({
     t: 'bytes',
@@ -104,6 +105,7 @@ class Transaction {
     else if (_nullifiers.length === 1) nullifiers = [..._nullifiers, { hash: 0 }];
     else nullifiers = _nullifiers;
     if (_commitmentFee === undefined) commitmentFee = [{ hash: 0 }];
+    else commitmentFee = _commitmentFee;
     if (_nullifiersFee === undefined) nullifiersFee = [{ hash: 0 }, { hash: 0 }];
     else if (_nullifiersFee.length === 1) nullifiersFee = [..._nullifiersFee, { hash: 0 }];
     else nullifiersFee = _nullifiersFee;
@@ -119,23 +121,25 @@ class Transaction {
     if ((transactionType === 0 || transactionType === 2) && TOKEN_TYPES[tokenType] === undefined)
       throw new Error('Unrecognized token type');
     // convert everything to hex(32) for interfacing with web3
+
     const preimage = generalise({
+      value: value || 0,
       fee: fee || 0,
-      historicRootBlockNumberL2: historicRootBlockNumberL2 || [0, 0],
-      historicRootBlockNumberL2Fee: historicRootBlockNumberL2Fee || [0, 0],
       transactionType: transactionType || 0,
       tokenType: TOKEN_TYPES[tokenType] || 0, // tokenType does not matter for transfer
+      historicRootBlockNumberL2: historicRootBlockNumberL2 || [0, 0],
+      historicRootBlockNumberL2Fee: historicRootBlockNumberL2Fee || [0, 0],
       tokenId: tokenId || 0,
-      value: value || 0,
       ercAddress: ercAddress || 0,
       recipientAddress: recipientAddress || 0,
       commitments: commitments.map(c => c.hash),
       nullifiers: nullifiers.map(n => n.hash),
-      commitmentsFee: commitmentFee.map(c => c.hash),
+      commitmentFee: commitmentFee.map(c => c.hash),
       nullifiersFee: nullifiersFee.map(n => n.hash),
       compressedSecrets,
       proof: flatProof,
     }).all.hex(32);
+
     // compute the solidity hash, using suitable type conversions
     preimage.transactionHash = keccak(preimage);
     return preimage;
@@ -175,18 +179,18 @@ class Transaction {
     return {
       value,
       fee,
-      historicRootBlockNumberL2,
-      historicRootBlockNumberL2Fee,
       transactionType,
       tokenType,
+      historicRootBlockNumberL2,
+      historicRootBlockNumberL2Fee,
       tokenId,
       ercAddress,
       recipientAddress,
       commitments,
       nullifiers,
-      compressedSecrets,
       commitmentFee,
       nullifiersFee,
+      compressedSecrets,
       proof: arrayEquality(proof, [0, 0, 0, 0, 0, 0, 0, 0]) ? [0, 0, 0, 0] : compressProof(proof),
     };
   }

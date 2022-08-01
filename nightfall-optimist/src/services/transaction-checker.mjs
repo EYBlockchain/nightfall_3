@@ -14,10 +14,17 @@ import { waitForContract } from '../event-handlers/subscribe.mjs';
 import { getBlockByBlockNumberL2 } from './database.mjs';
 import verify from './verify.mjs';
 
-const { ZERO, CHALLENGES_CONTRACT_NAME } = constants;
 const { generalise } = gen;
-const { PROVING_SCHEME, BACKEND, CURVE, BN128_GROUP_ORDER, MAX_PUBLIC_VALUES, RESTRICTIONS } =
-  config;
+const {
+  PROVING_SCHEME,
+  BACKEND,
+  CURVE,
+  BN128_GROUP_ORDER,
+  MAX_PUBLIC_VALUES,
+  RESTRICTIONS,
+  ETH_NETWORK,
+} = config;
+const { ZERO, CHALLENGES_CONTRACT_NAME } = constants;
 
 function isOverflow(value, check) {
   const bigValue = value.bigInt;
@@ -89,21 +96,20 @@ async function verifyProof(transaction) {
       : (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2Fee[1])) ?? {
           root: ZERO,
         };
-  const maticAddress = RESTRICTIONS.tokens[process.env.ETH_NETWORK].find(
+
+  console.log('ETH NEWTORK', ETH_NETWORK);
+  const maticAddress = RESTRICTIONS.tokens[ETH_NETWORK].find(
     token => token.name === 'MATIC',
   ).address;
 
-  if (![0, 1, 2].includes(Number(transaction.transactionType))) {
-    throw new TransactionError('Unknown transaction type', 2);
-  }
   const inputs = generalise(
     [
       transaction.value,
       transaction.fee,
-      transaction.historicRootBlockNumberL2,
-      transaction.historicRootBlockNumberL2Fee,
       transaction.transactionType,
       transaction.tokenType,
+      transaction.historicRootBlockNumberL2,
+      transaction.historicRootBlockNumberL2Fee,
       generalise(transaction.tokenId).limbs(32, 8),
       transaction.ercAddress,
       generalise(transaction.recipientAddress).limbs(32, 8),
@@ -112,13 +118,16 @@ async function verifyProof(transaction) {
       transaction.commitmentFee,
       transaction.nullifiersFee,
       transaction.compressedSecrets,
-      historicRootFirst.root,
-      historicRootSecond.root,
-      historicRootFeeFirst.root,
-      historicRootFeeSecond.root,
-      maticAddress,
     ].flat(Infinity),
   ).all.hex(32);
+
+  if (Number(transaction.transactionType) !== 0) {
+    inputs.push(generalise(historicRootFirst.root).hex(32));
+    inputs.push(generalise(historicRootSecond.root).hex(32));
+    inputs.push(generalise(historicRootFeeFirst.root).hex(32));
+    inputs.push(generalise(historicRootFeeSecond.root).hex(32));
+    inputs.push(generalise(maticAddress).hex(32));
+  }
 
   if (
     isOverflow(transaction.ercAddress, MAX_PUBLIC_VALUES.ERCADDRESS) ||

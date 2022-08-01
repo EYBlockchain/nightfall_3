@@ -93,7 +93,7 @@ library Utils {
         for (uint256 i = 0; i < ts.length; i++) {
             if (ts[i].commitments[0] != ZERO) filtered[count++] = ts[i].commitments[0];
             if (ts[i].commitments[1] != ZERO) filtered[count++] = ts[i].commitments[1];
-            if (ts[i].commitmentFee != ZERO) filtered[count++] = ts[i].commitmentFee;
+            if (ts[i].commitmentFee[0] != ZERO) filtered[count++] = ts[i].commitmentFee[0];
         }
         return filtered;
     }
@@ -103,7 +103,7 @@ library Utils {
     function getPublicInputs(Structures.Transaction calldata ts, uint256[4] memory roots)
         internal
         pure
-        returns (uint256[38] memory inputs)
+        returns (uint256[] memory inputs)
     {
         inputs[0] = uint256(ts.value);
         inputs[1] = uint256(ts.fee);
@@ -134,15 +134,17 @@ library Utils {
         inputs[26] = uint256(ts.commitments[1]);
         inputs[27] = uint256(ts.nullifiers[0]);
         inputs[28] = uint256(ts.nullifiers[1]);
-        inputs[29] = uint256(ts.commitmentFee);
+        inputs[29] = uint256(ts.commitmentFee[0]);
         inputs[30] = uint256(ts.nullifiersFee[0]);
         inputs[31] = uint256(ts.nullifiersFee[1]);
         inputs[32] = uint256(ts.compressedSecrets[0]);
         inputs[33] = uint256(ts.compressedSecrets[1]);
-        inputs[34] = roots[0];
-        inputs[35] = roots[1];
-        inputs[36] = roots[2];
-        inputs[37] = roots[3];
+        if (uint256(ts.transactionType) != 0) {
+            inputs[34] = uint256(roots[0]);
+            inputs[35] = uint256(roots[1]);
+            inputs[36] = uint256(roots[2]);
+            inputs[37] = uint256(roots[3]);
+        }
     }
 
     function calculateMerkleRoot(bytes32[] memory leaves) public pure returns (bytes32 result) {

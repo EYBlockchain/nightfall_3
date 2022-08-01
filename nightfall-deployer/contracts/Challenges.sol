@@ -34,7 +34,8 @@ contract Challenges is Stateful, Key_Registry, Config {
         Block memory priorBlockL2, // the block immediately prior to this one
         Transaction[] memory priorBlockTransactions, // the transactions in the prior block
         Block memory blockL2,
-        Transaction[] memory transactions
+        Transaction[] memory transactions,
+        bytes32 salt
     ) external onlyBootChallenger {
         checkCommit(msg.data);
         // check if the block hash is correct and the block hash exists for the block and prior block. Also if the transactions are part of these block
@@ -60,7 +61,8 @@ contract Challenges is Stateful, Key_Registry, Config {
         Transaction[] memory priorBlockTransactions, // the transactions in the prior block
         bytes32[33] calldata frontierPriorBlock, // frontier path before prior block is added. The same frontier used in calculating root when prior block is added
         Block memory blockL2,
-        Transaction[] memory transactions
+        Transaction[] memory transactions,
+        bytes32 salt
     ) external onlyBootChallenger {
         checkCommit(msg.data);
         // check if the block hash is correct and the block hash exists for the block and prior block
@@ -88,7 +90,8 @@ contract Challenges is Stateful, Key_Registry, Config {
         Transaction[] memory transactions1,
         Transaction[] memory transactions2,
         uint256 transactionIndex1,
-        uint256 transactionIndex2
+        uint256 transactionIndex2,
+        bytes32 salt
     ) external onlyBootChallenger {
         checkCommit(msg.data);
         // first, check we have real, in-train, contiguous blocks
@@ -111,7 +114,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         }
     }
 
-function challengeProofVerification(
+    function challengeProofVerification(
         Block memory blockL2,
         Transaction[] calldata transactions,
         uint256 transactionIndex,
@@ -119,7 +122,8 @@ function challengeProofVerification(
         Block[2] calldata blockL2ContainingHistoricRootFee,
         Transaction[][2] memory transactionsOfblockL2ContainingHistoricRoot,
         Transaction[][2] memory transactionsOfblockL2ContainingHistoricRootFee,
-        uint256[8] memory uncompressedProof
+        uint256[8] memory uncompressedProof,
+        bytes32 salt
     ) external onlyBootChallenger {
         checkCommit(msg.data);
         state.areBlockAndTransactionsReal(blockL2, transactions);
@@ -213,7 +217,8 @@ function challengeProofVerification(
         Transaction[] memory txs2,
         uint256 transactionIndex2,
         uint256 nullifierIndex2,
-        bool isNullifierFee2
+        bool isNullifierFee2,
+        bytes32 salt
     ) external onlyBootChallenger {
         checkCommit(msg.data);
         state.areBlockAndTransactionsReal(block1, txs1);
@@ -245,7 +250,8 @@ function challengeProofVerification(
     function challengeHistoricRoot(
         Block memory blockL2,
         Transaction[] memory transactions,
-        uint256 transactionIndex
+        uint256 transactionIndex,
+        bytes32 salt
     ) external onlyBootChallenger {
         checkCommit(msg.data);
         state.areBlockAndTransactionsReal(blockL2, transactions);
@@ -288,14 +294,14 @@ function challengeProofVerification(
             );
         } else if (uint256(transactions[transactionIndex].nullifiersFee[0]) == 0) {
             require(
-                uint256(transactions[transactionIndex].historicRootBlockNumberL2Fee[0]) != 0 ||
+                state.getNumberOfL2Blocks() <
+                    uint256(transactions[transactionIndex].historicRootBlockNumberL2Fee[0]) ||
                     uint256(transactions[transactionIndex].historicRootBlockNumberL2Fee[1]) != 0,
                 'Historic root exists'
             );
         } else {
             require(
-                state.getNumberOfL2Blocks() <
-                    uint256(transactions[transactionIndex].historicRootBlockNumberL2Fee[0]) ||
+                uint256(transactions[transactionIndex].historicRootBlockNumberL2Fee[0]) != 0 ||
                     uint256(transactions[transactionIndex].historicRootBlockNumberL2Fee[1]) != 0,
                 'Historic root exists'
             );

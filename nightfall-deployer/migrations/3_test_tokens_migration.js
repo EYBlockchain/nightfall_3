@@ -1,6 +1,9 @@
 const config = require('config');
 
-const { TEST_OPTIONS: { addresses }, RESTRICTIONS } = config;
+const {
+  TEST_OPTIONS: { addresses },
+  RESTRICTIONS,
+} = config;
 const { DEPLOY_MOCK_TOKENS = true } = process.env;
 
 const Shield = artifacts.require('Shield.sol');
@@ -28,10 +31,18 @@ module.exports = function (deployer, _, accounts) {
 
     // set restictions for test ERC20Mock contract (we handle this differently because the address is not fixed)
     try {
-      const erc20MockRestriction = RESTRICTIONS.tokens[process.env.ETH_NETWORK].find(el => el.name === 'ERC20Mock').amount;
-      await restrictions.setRestriction(ERC20Mock.address, (BigInt(erc20MockRestriction) / BigInt(4)).toString(), erc20MockRestriction);
+      const erc20MockRestriction = RESTRICTIONS.tokens[process.env.ETH_NETWORK].find(
+        el => el.name === 'ERC20Mock',
+      ).amount;
+      await restrictions.setRestriction(
+        ERC20Mock.address,
+        (BigInt(erc20MockRestriction) / BigInt(4)).toString(),
+        erc20MockRestriction,
+      );
     } catch (err) {
-      console.warn('Test contract restrictions were not set, and yet you have deployed test contracts');
+      console.warn(
+        'Test contract restrictions were not set, and yet you have deployed test contracts',
+      );
     }
 
     if (!config.ETH_ADDRESS) {

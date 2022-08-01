@@ -97,7 +97,8 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         require(b.proposer == msg.sender, 'The proposer address is not the sender');
         // set the maximum tx/block to prevent unchallengably large blocks
         require(t.length < 33, 'The block has too many transactions');
-
+        
+        /*
         uint256 feePaymentsEth = 0;
         uint256 feePaymentsMatic = 0;
         for (uint256 i = 0; i < t.length; i++) {
@@ -111,7 +112,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         feeBook[keccak256(abi.encodePacked(b.proposer, b.blockNumberL2))] = [
             feePaymentsEth,
             feePaymentsMatic
-        ];
+        ]; */
 
         bytes32 blockHash;
         assembly {

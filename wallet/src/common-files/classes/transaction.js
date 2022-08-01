@@ -26,9 +26,9 @@ function keccak(preimage) {
   const {
     value,
     fee,
+    transactionType,
     historicRootBlockNumberL2,
     historicRootBlockNumberL2Fee,
-    transactionType,
     tokenType,
     tokenId,
     ercAddress,
@@ -104,6 +104,7 @@ class Transaction {
     else nullifiers = _nullifiers;
 
     if (_commitmentFee === undefined) commitmentFee = [{ hash: 0 }];
+    else commitmentFee = _commitmentFee;
     if (_nullifiersFee === undefined) nullifiersFee = [{ hash: 0 }, { hash: 0 }];
     else if (_nullifiersFee.length === 1) nullifiersFee = [..._nullifiersFee, { hash: 0 }];
     else nullifiersFee = _nullifiersFee;

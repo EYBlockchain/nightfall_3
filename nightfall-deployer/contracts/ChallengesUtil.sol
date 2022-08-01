@@ -63,7 +63,7 @@ library ChallengesUtil {
         for (uint256 i = 0; i < proof.length; i++) {
             proof1[i] = proof[i];
         }
-        uint256[38] memory publicInputs = Utils.getPublicInputs(transaction, roots);
+        uint256[] memory publicInputs = Utils.getPublicInputs(transaction, roots);
         require(!Verifier.verify(proof1, publicInputs, vk), 'This proof appears to be valid');
     }
 
@@ -87,17 +87,9 @@ library ChallengesUtil {
         require(
             (transaction.transactionType != Structures.TransactionTypes.TRANSFER &&
                 uint256(transaction.recipientAddress) <= MAX20) ||
-                (transaction.transactionType == Structures.TransactionTypes.TRANSFER &&
-                    uint256(transaction.recipientAddress) <= MAX31),
+                (transaction.transactionType == Structures.TransactionTypes.TRANSFER),
             'Recipient ERC address out of range'
         );
-        require(uint256(transaction.commitments[0]) <= MAX31, 'Commitment 0 out of range');
-        require(uint256(transaction.commitments[1]) <= MAX31, 'Commitment 1 out of range');
-        require(uint256(transaction.nullifiers[0]) <= MAX31, 'Nullifier 0 out of range');
-        require(uint256(transaction.nullifiers[1]) <= MAX31, 'Nullifier 1 out of range');
-        require(uint256(transaction.commitments[0]) <= MAX31, 'Commitment Fee out of range');
-        require(uint256(transaction.nullifiers[0]) <= MAX31, 'Nullifier Fee 0 out of range');
-        require(uint256(transaction.nullifiers[1]) <= MAX31, 'Nullifier Fee 1 out of range');
         require(uint256(blockL2.root) < BN128_GROUP_ORDER, 'root out of range');
     }
 

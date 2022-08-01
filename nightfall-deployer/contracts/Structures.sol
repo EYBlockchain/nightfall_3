@@ -50,7 +50,7 @@ contract Structures {
         bytes32 recipientAddress;
         bytes32[2] commitments;
         bytes32[2] nullifiers;
-        bytes32 commitmentFee;
+        bytes32[1] commitmentFee;
         bytes32[2] nullifiersFee;
         bytes32[2] compressedSecrets;
         uint256[4] proof;

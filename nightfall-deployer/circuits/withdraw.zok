@@ -9,8 +9,8 @@ from "./common/generic_circuit/Verifiers/verify_commitments.zok" import main as 
 
 def main(\
     PublicTransaction tx,\
-    field[2] nullifierRoots,\
-    field[2] nullifierRootsFee,\
+    field[2] roots,\
+    field[2] rootsFee,\
     field ercAddressFee,\
     private Nullifiers<2> nullifiers,\
     private Commitments<2> commitments,\
@@ -55,7 +55,7 @@ def main(\
 
     //Verify nullifiers
     Point firstInputZkpPublicKeys = verify_nullifiers::<2>(packedErcAddress, idRemainder,\
-        tx.nullifiers, nullifierRoots, nullifiersValue, nullifiers.oldCommitments.salt,\
+        tx.nullifiers, roots, nullifiersValue, nullifiers.oldCommitments.salt,\
         nullifiers.rootKey, nullifiers.paths, nullifiers.orders)
 
     //Verify new Commmitments
@@ -67,7 +67,7 @@ def main(\
 
     //Verify Fee Nullifiers
     Point firstInputZkpPublicKeysFee = verify_nullifiers::<2>(ercAddressFee, 0,\
-        tx.nullifiersFee, nullifierRootsFee, nullifiersFeeValue, nullifiersFee.oldCommitments.salt,\
+        tx.nullifiersFee, rootsFee, nullifiersFeeValue, nullifiersFee.oldCommitments.salt,\
         nullifiersFee.rootKey, nullifiersFee.paths, nullifiersFee.orders)
 
     //Verify Fee Commitments
