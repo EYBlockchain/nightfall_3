@@ -18,13 +18,6 @@ export function getTokenNames() {
   return tokenNames;
 }
 
-export function getTokenAddress(tokenName) {
-  for (const token of RESTRICTIONS.tokens[process.env.ETH_NETWORK]) {
-    if (token.name === tokenName) return token.address;
-  }
-  return 'unknown';
-}
-
 async function sendTransaction(unsignedTransaction, signingKey, contractAddress) {
   const tx = {
     from: web3.eth.accounts.privateKeyToAccount(signingKey).address,
