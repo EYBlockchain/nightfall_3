@@ -72,7 +72,8 @@ export async function conditionalMakeBlock(proposer) {
       logger.debug(`Block Assembler will create ${numberOfProposableL2Blocks} blocks at once`);
       for (let i = 0; i < numberOfProposableL2Blocks; i++) {
         // work out if this is a normal size block or a short one
-        const numberOfTransactionsInBlock = unprocessed >= TRANSACTIONS_PER_BLOCK ? TRANSACTIONS_PER_BLOCK : unprocessed;
+        const numberOfTransactionsInBlock =
+          unprocessed >= TRANSACTIONS_PER_BLOCK ? TRANSACTIONS_PER_BLOCK : unprocessed;
         makeNow = false; // reset the makeNow so we only make one block with a short number of transactions
         const { block, transactions } = await makeBlock(
           proposer.address,
