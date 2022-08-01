@@ -685,6 +685,8 @@ async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId
     logger.info(
       `Found commitments suitable for two-token transfer: ${JSON.stringify(commitmentsToUse)}`,
     );
+  } else {
+    return null;
   }
   await Promise.all(commitmentsToUse.map(commitment => markPending(commitment)));
   return commitmentsToUse;
