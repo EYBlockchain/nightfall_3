@@ -33,10 +33,17 @@ async function rollbackEventHandler(data) {
   logger.debug(`nonDeposit: ${JSON.stringify(nonDeposit)}`);
   // Any commitments that have been nullified and are now no longer spent because
   // of the rollback should be made available to be spent again.
-  const { result } = await clearNullified(Number(blockNumberL2));
-  logger.debug(`Rollback removed ${result.nModified} nullfiers`);
-  const cResult = await clearOnChain(Number(blockNumberL2));
-  logger.debug(`Rollback moved ${cResult.result.nModified} commitments off-chain`);
+  const nullified = await clearNullified(Number(blockNumberL2));
+  if (nullified) {
+    const { result } = nullified;
+    logger.debug(`Rollback removed ${result.nModified} nullfiers`);
+  }
+
+  const clear = await clearOnChain(Number(blockNumberL2));
+  if (clear) {
+    const cResult = clear;
+    logger.debug(`Rollback moved ${cResult.result.nModified} commitments off-chain`);
+  }
 
   const blocksToDelete = await findBlocksFromBlockNumberL2(Number(blockNumberL2));
   const txsToDelete = blocksToDelete.map(b => b.transactionHashes).flat(Infinity);
