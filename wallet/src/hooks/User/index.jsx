@@ -13,11 +13,11 @@ import {
 } from '@Nightfall/services/database';
 import mqtt from 'mqtt';
 import axios from 'axios';
+import logger from 'common-files/utils/logger';
 import * as Storage from '../../utils/lib/local-storage';
 import { encryptAndStore, retrieveAndDecrypt, storeBrowserKey } from '../../utils/lib/key-storage';
 import useInterval from '../useInterval';
 import { wsMqMapping, topicRollback, topicBlockProposed } from '../../common-files/utils/mq';
-import logger from 'common-files/utils/logger';
 
 const { USE_STUBS, usernameMq, pswMQ, twoStepSyncUrl, twoStepSyncDeployment } = global.config;
 
@@ -50,7 +50,6 @@ export const UserProvider = ({ children }) => {
       rejectUnauthorized: false,
       reconnectPeriod: 1000,
     };
-    console.log("options1", options)
     setClient(mqtt.connect(host, options));
 
     const blockOptions = {
@@ -61,7 +60,6 @@ export const UserProvider = ({ children }) => {
       rejectUnauthorized: false,
       reconnectPeriod: 1000,
     };
-    console.log("options2", blockOptions)
     setBlockClient(mqtt.connect(host, blockOptions));
   };
 
