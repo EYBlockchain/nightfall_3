@@ -1,6 +1,7 @@
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import Timber from 'common-files/classes/timber.mjs';
+import getTimeByBlock from 'common-files/utils/block-info.mjs';
 import {
   markNullifiedOnChain,
   markOnChain,
@@ -35,6 +36,9 @@ async function blockProposedEventHandler(data, syncing) {
   );
   const latestTree = await getLatestTree();
   const blockCommitments = transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat();
+
+  let timeBlockL2 = await getTimeByBlock(transactionHashL1);
+  timeBlockL2 = new Date(timeBlockL2 * 1000);
 
   const dbUpdates = transactions.map(async transaction => {
     let saveTxToDb = false;
@@ -80,6 +84,7 @@ async function blockProposedEventHandler(data, syncing) {
         transactionHashL1,
         blockNumber: data.blockNumber,
         blockNumberL2: block.blockNumberL2,
+        timeBlockL2,
         ...transaction,
       }).catch(function (err) {
         if (!syncing || !err.message.includes('replay existing transaction')) throw err;
@@ -102,7 +107,7 @@ async function blockProposedEventHandler(data, syncing) {
     // only save block if any transaction in it is saved/stored to db
     const saveBlockToDb = updateReturn.map(d => d[0]);
     if (saveBlockToDb.includes(true)) {
-      await saveBlock({ blockNumber: currentBlockCount, transactionHashL1, ...block });
+      await saveBlock({ blockNumber: currentBlockCount, transactionHashL1, timeBlockL2, ...block });
     }
   });
 

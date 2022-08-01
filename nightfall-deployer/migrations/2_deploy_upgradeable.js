@@ -60,7 +60,7 @@ module.exports = async function (deployer) {
   await challengers.setBootChallenger(bootChallenger);
   // restrict transfer amounts
   for (const token of RESTRICTIONS.tokens[process.env.ETH_NETWORK]) {
-    if ((token.name = 'ERC20Mock')) break; // ignore test tokens, they're already handled in the test_tokens migration
+    if (token.name === 'ERC20Mock') continue; // ignore test tokens, they're already handled in the test_tokens migration
     console.log(
       `Max allowed deposit value for ${token.name}: ${(
         BigInt(token.amount) / BigInt(4)
