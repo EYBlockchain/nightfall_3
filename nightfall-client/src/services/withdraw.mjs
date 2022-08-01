@@ -172,7 +172,7 @@ async function withdraw(withdrawParams) {
       const th = optimisticWithdrawTransaction.transactionHash;
       delete optimisticWithdrawTransaction.transactionHash;
       optimisticWithdrawTransaction.transactionHash = th;
-      return { transaction: optimisticWithdrawTransaction };
+      return { transaction: optimisticWithdrawTransaction, salts: [salt.hex(32)] };
     }
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(optimisticWithdrawTransaction))
@@ -185,7 +185,7 @@ async function withdraw(withdrawParams) {
     await Promise.all(
       oldCommitments.map(commitment => markNullified(commitment, optimisticWithdrawTransaction)),
     );
-    return { rawTransaction, transaction: optimisticWithdrawTransaction };
+    return { rawTransaction, transaction: optimisticWithdrawTransaction, salts: [salt.hex(32)] };
   } catch (err) {
     await Promise.all(oldCommitments.map(commitment => clearPending(commitment)));
     throw new Error(err); // let the caller handle the error

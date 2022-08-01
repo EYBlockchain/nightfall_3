@@ -102,7 +102,7 @@ library Utils {
     function getPublicInputs(Structures.Transaction calldata ts, uint256[2] memory roots)
         internal
         pure
-        returns (uint256[30] memory inputs)
+        returns (uint256[] memory inputs)
     {
         inputs[0] = uint256(ts.value);
         inputs[1] = uint256(ts.historicRootBlockNumberL2[0]);

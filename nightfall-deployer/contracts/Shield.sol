@@ -216,8 +216,7 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
         bytes32[6] memory siblingPath
     ) external payable nonReentrant {
         // The transaction is a withdrawal transaction
-        require(t.transactionType == TransactionTypes.WITHDRAW,
-            'Can only advance withdrawals');
+        require(t.transactionType == TransactionTypes.WITHDRAW, 'Can only advance withdrawals');
 
         // check this block is a real one, in the queue, not something made up.
         state.areBlockAndTransactionReal(b, t, index, siblingPath);

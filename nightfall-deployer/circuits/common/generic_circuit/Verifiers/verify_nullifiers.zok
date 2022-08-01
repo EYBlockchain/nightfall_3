@@ -56,7 +56,7 @@ def main<MinNullifiers, MaxNullifiers>(\
         field nullifier = if(oldCommitmentValues[i] != 0 || (i+1) == MinNullifiers) then poseidon([nullifierKeys, calculatedOldCommitmentHash]) else 0 fi
 
         //Check that the calculated nullifier matches with the one contained in the transaction
-        assert(oldCommitmentValues[i] == 0 || nullifier == nullifierHashes[i])
+        assert(nullifier == nullifierHashes[i])
 
         //Check that the nullifier is contained in the tree
         bool pathValidity = if(oldCommitmentValues[i] != 0 || (i+1) == MinNullifiers) then pathCheck([roots[i], ...paths[i]], orders[i], calculatedOldCommitmentHash) else true fi
