@@ -910,7 +910,9 @@ class Nf3 {
             );
             blockProposeEmitter.emit('receipt', receipt, block, transactions);
           } catch (err) {
+            // block proposed is reverted. Send transactions back to mempool
             blockProposeEmitter.emit('error', err, block, transactions);
+            await axios.get(`${this.optimistBaseUrl}/block/reset-localblock`);
           }
         });
       }
