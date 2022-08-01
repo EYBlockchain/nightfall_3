@@ -6,18 +6,18 @@ import blockProposedEventHandler from '@Nightfall/event-handlers/block-proposed'
 import rollbackEventHandler from '@Nightfall/event-handlers/rollback';
 import {
   checkIndexDBForCircuit,
-  checkIndexDBForCircuitHash,
-  storeClientId, getClientId, saveTree, getMaxBlock,
-  emptyStoreBlocks,
-  emptyStoreTimber,
+  storeClientId,
+  getClientId,
+  saveTree,
+  getMaxBlock,
 } from '@Nightfall/services/database';
-import { fetchAWSfiles } from '@Nightfall/services/fetch-circuit';
 import mqtt from 'mqtt';
+import axios from 'axios';
 import * as Storage from '../../utils/lib/local-storage';
 import { encryptAndStore, retrieveAndDecrypt, storeBrowserKey } from '../../utils/lib/key-storage';
 import useInterval from '../useInterval';
 import { wsMqMapping, topicRollback, topicBlockProposed } from '../../common-files/utils/mq';
-import axios from 'axios';
+import logger from 'common-files/utils/logger';
 import init from '../../web-worker/index.js';
 
 const { USE_STUBS, usernameMq, pswMQ, twoStepSyncUrl, twoStepSyncDeployment } = global.config;
@@ -43,26 +43,29 @@ export const UserProvider = ({ children }) => {
   const [lastBlock, setLastBlock] = React.useState({ blockHash: '0x0' });
   const history = useHistory();
 
-  const mqttConnect = async (host) => {
-    let clientId = await getClientId(0)
+  const mqttConnect = async host => {
+    const currentClientId = await getClientId(0);
     const options = {
-      clientId: clientId,
+      clientId: currentClientId,
       clean: false,
       username: usernameMq,
       password: pswMQ,
       rejectUnauthorized: false,
       reconnectPeriod: 1000,
+      offlineDurableSubscriberTaskSchedule: '300000',
     };
+    console.log("options1", options)
     setClient(mqtt.connect(host, options));
 
     const blockOptions = {
-      clientId: `block_${clientId}`,
+      clientId: `block_${currentClientId}`,
       clean: true,
       username: usernameMq,
       password: pswMQ,
       rejectUnauthorized: false,
       reconnectPeriod: 1000,
     };
+    console.log("options2", blockOptions)
     setBlockClient(mqtt.connect(host, blockOptions));
   };
 
@@ -103,30 +106,34 @@ export const UserProvider = ({ children }) => {
 
   const createClientId = async (address) => {
     const clientId =
-      Math.floor(new Date().getTime() / 1000) +
-      Math.floor(Math.random() * 100) +
-      address;
+      Math.floor(new Date().getTime() / 1000) + Math.floor(Math.random() * 100) + address;
     storeClientId(clientId);
-  }
+  };
 
-  const timberAndBlockSync = async (lastTimberBlock, lastL2Block, isTimberSynced, isL2Synced = false) => {
+  const timberAndBlockSync = async (
+    lastTimberBlock,
+    lastL2Block,
+    isTimberSynced,
+    isL2Synced = false,
+  ) => {
     if (isTimberSynced && isL2Synced) {
       return;
     }
 
-    let res = await axios
+    const res = await axios
       .get(
         `${twoStepSyncUrl}?deployment=${twoStepSyncDeployment}&lastTimberBlock=${lastTimberBlock}&lastL2Block=${lastL2Block}&isTimberSynced=${isTimberSynced}`,
       )
       .catch(err => {
-       console.log(err);
+        console.log(err);
       });
 
-    for(let timb of res.data.timber.data) {
+    for (const timb of res.data.timber.data) {
+      // eslint-disable-next-line
       await saveTree(timb.timber.blockNumber, timb.blockNumberL2, timb.timber);
     }
 
-    if(res.data.timber.isSynced) {
+    if (res.data.timber.isSynced) {
       setState(previousState => {
         return {
           ...previousState,
@@ -135,12 +142,14 @@ export const UserProvider = ({ children }) => {
       });
     }
 
-    for(let block of res.data.l2Block.data) {
+    for (const block of res.data.l2Block.data) {
+      /* eslint-disable */
       const { ivk, nsk } = await retrieveAndDecrypt(state.compressedPkd);
       await blockProposedEventHandler(block, [ivk], [nsk], false);
+      /* eslint-enable */
     }
 
-    if(res.data.l2Block.isSynced) {
+    if (res.data.l2Block.isSynced) {
       setState(previousState => {
         return {
           ...previousState,
@@ -149,8 +158,13 @@ export const UserProvider = ({ children }) => {
       });
     }
 
-    timberAndBlockSync(res.data.timber.lastBlock, res.data.l2Block.lastBlock, res.data.timber.isSynced, res.data.l2Block.isSynced);
-  }
+    timberAndBlockSync(
+      res.data.timber.lastBlock,
+      res.data.l2Block.lastBlock,
+      res.data.timber.isSynced,
+      res.data.l2Block.isSynced,
+    );
+  };
 
   const syncState = async () => {
     const compressedZkpPublicKeys = Storage.ZkpPubKeyArrayGet('');
@@ -196,34 +210,31 @@ export const UserProvider = ({ children }) => {
 
   React.useEffect(() => {
     if (client) {
-      mqttClientOnChange(client, topicRollback)
+      mqttClientOnChange(client, topicRollback);
       client.on('message', async (topic, message) => {
-        console.log("newmessage",message)
+        logger.info(message.toString());
         const { type, data } = JSON.parse(message.toString());
         if (topic === topicBlockProposed) {
           console.log('Error: messange sent on wrong topic');
         } else if (topic === topicRollback) {
           if (type === topic) {
             const maxBlockTimber = await getMaxBlock();
-            if(data <= maxBlockTimber) {
+            if (data <= maxBlockTimber) {
               await rollbackEventHandler(data);
               await timberAndBlockSync(maxBlockTimber, maxBlockTimber, false);
             }
-          }
-          else console.log('Error: messange sent on wrong topic');
+          } else console.log('Error: messange sent on wrong topic');
         }
       });
     }
   }, [client]);
 
-
   React.useEffect(() => {
     if (blockClient) {
-      mqttClientOnChange(blockClient, topicBlockProposed)
+      mqttClientOnChange(blockClient, topicBlockProposed);
       const { compressedPkd } = state;
       if (compressedPkd === '') return;
       blockClient.on('message', async (topic, message) => {
-        console.log("newmessage",message)
         const { type, data } = JSON.parse(message.toString());
         const { ivk, nsk } = await retrieveAndDecrypt(compressedPkd);
         if (topic === topicBlockProposed && state.chainSync) {
@@ -235,29 +246,6 @@ export const UserProvider = ({ children }) => {
       });
     }
   }, [blockClient]);
-
-  const mqttClientOnChange = async (client, topic) => {
-    client.on('connect', () => {
-      console.log('connected');
-
-      client.subscribe(topic, { qos: 2 }, function (err, granted) {
-        if (err) {
-          console.log(err);
-        } else if (granted) {
-          console.log('subscribe to ', topic, granted);
-        }
-      });
-    });
-
-    client.on('error', err => {
-      console.error('Connection error: ', err);
-      client.end();
-    });
-
-    client.on('reconnect', () => {
-      console.log('Reconnecting');
-    });
-  }
 
   React.useEffect(async () => {
     const maxBlockTimber = await getMaxBlock();
