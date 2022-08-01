@@ -52,7 +52,6 @@ export const UserProvider = ({ children }) => {
       password: pswMQ,
       rejectUnauthorized: false,
       reconnectPeriod: 1000,
-      offlineDurableSubscriberTaskSchedule: '300000',
     };
     console.log("options1", options)
     setClient(mqtt.connect(host, options));
