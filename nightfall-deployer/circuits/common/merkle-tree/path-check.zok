@@ -1,7 +1,6 @@
 from "hashes/poseidon/poseidon.zok" import main as poseidon
 import "utils/pack/bool/unpack128.zok" as unpack128
 
-
 def orderFields(bool order, field pathNode, field siblingNode)->(field[2]):
 	field right = if order then pathNode else siblingNode fi
 	field left = if order then siblingNode else pathNode fi
