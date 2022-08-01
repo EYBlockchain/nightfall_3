@@ -38,7 +38,8 @@ export default function SideBar() {
         <div>
           <div className="links">
             {/* <GiElectric size={24} /> */}
-            {state.circuitSync && state.chainSync ? (
+            {/* eslint-disable */
+            state.circuitSync && state.chainSync ? (
               <>
                 <img src={synced} style={{ height: '32px', width: '32px' }} />
                 <div className="linkText">Nightfall Synced</div>
@@ -53,7 +54,9 @@ export default function SideBar() {
                 <Lottie style={{ height: '32px', width: '32px' }} animationData={syncing} loop />
                 <div className="linkText">Syncing Nightfall...</div>
               </>
-            )}
+            )
+            /* eslint-enable */
+            }
           </div>
           {/* <div className="links">
             <MdOutlineSupport size={24} />
