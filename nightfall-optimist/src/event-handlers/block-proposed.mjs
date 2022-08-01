@@ -1,6 +1,7 @@
 import WebSocket from 'ws';
 import logger from 'common-files/utils/logger.mjs';
 import Timber from 'common-files/classes/timber.mjs';
+import getTimeByBlock from 'common-files/utils/block-info.mjs';
 import config from 'config';
 import { enqueueEvent } from 'common-files/utils/event-queue.mjs';
 import checkBlock from '../services/check-block.mjs';
@@ -50,11 +51,14 @@ async function blockProposedEventHandler(data) {
   }
   logger.info('Received BlockProposed event');
   try {
+    // We get the L1 block time in order to save it in the database to have this information available
+    let timeBlockL2 = await getTimeByBlock(transactionHashL1);
+    timeBlockL2 = new Date(timeBlockL2 * 1000);
     // and save the block to facilitate later lookup of block data
     // we will save before checking because the database at any time should reflect the state the blockchain holds
     // when a challenge is raised because the is correct block data, then the corresponding block deleted event will
     // update this collection
-    await saveBlock({ blockNumber: currentBlockCount, transactionHashL1, ...block });
+    await saveBlock({ blockNumber: currentBlockCount, transactionHashL1, timeBlockL2, ...block });
 
     // It's possible that some of these transactions are new to us. That's because they were
     // submitted by someone directly to another proposer and so there was never a TransactionSubmitted
@@ -90,7 +94,7 @@ async function blockProposedEventHandler(data) {
     );
     // mark transactions so that they are out of the mempool,
     // so we don't try to use them in a block which we're proposing.
-    await removeTransactionsFromMemPool(block.transactionHashes, block.blockNumberL2); // TODO is await needed?
+    await removeTransactionsFromMemPool(block.transactionHashes, block.blockNumberL2, timeBlockL2); // TODO is await needed?
 
     const latestTree = await getLatestTree();
     const blockCommitments = transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat();
