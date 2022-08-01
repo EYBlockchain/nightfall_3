@@ -226,7 +226,6 @@ async function transfer(transferParams) {
       );
       return {
         transaction: optimisticTransferTransaction,
-        salts: salts.map(salt => salt.hex(32)),
       };
     }
     const rawTransaction = await shieldContractInstance.methods
@@ -245,7 +244,6 @@ async function transfer(transferParams) {
     return {
       rawTransaction,
       transaction: optimisticTransferTransaction,
-      salts: salts.map(salt => salt.hex(32)),
     };
   } catch (err) {
     await Promise.all(oldCommitments.map(commitment => clearPending(commitment)));

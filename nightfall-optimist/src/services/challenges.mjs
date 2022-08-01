@@ -3,6 +3,7 @@ import WebSocket from 'ws';
 import logger from 'common-files/utils/logger.mjs';
 import Web3 from 'common-files/utils/web3.mjs';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
+import { rand } from 'common-files/utils/crypto/crypto-random.mjs';
 import {
   getBlockByBlockHash,
   getBlockByTransactionHash,
@@ -80,6 +81,7 @@ export async function createChallenge(block, transactions, err) {
   let txDataToSign;
   if (makeChallenges) {
     const challengeContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
+    const salt = (await rand(32)).hex(32);
     switch (err.code) {
       // Challenge wrong root
       case 0: {
@@ -114,6 +116,7 @@ export async function createChallenge(block, transactions, err) {
             frontierToValidatePreviousBlock,
             Block.buildSolidityStruct(block),
             transactions.map(t => Transaction.buildSolidityStruct(t)),
+            salt,
           )
           .encodeABI();
         break;
@@ -142,6 +145,7 @@ export async function createChallenge(block, transactions, err) {
             transactions2.map(t => Transaction.buildSolidityStruct(t)),
             transactionIndex1, // index of duplicate transaction in block
             transactionIndex2,
+            salt,
           )
           .encodeABI();
         break;
@@ -155,6 +159,7 @@ export async function createChallenge(block, transactions, err) {
             Block.buildSolidityStruct(block),
             transactions.map(t => Transaction.buildSolidityStruct(t)),
             transactionIndex,
+            salt,
           )
           .encodeABI();
         break;
@@ -165,8 +170,8 @@ export async function createChallenge(block, transactions, err) {
         // Create a challenge
         const uncompressedProof = transactions[transactionIndex].proof;
         const [historicInput1, historicInput2] = await Promise.all(
-          transactions[transactionIndex].historicRootBlockNumberL2.map(async b => {
-            if (b === 0) {
+          transactions[transactionIndex].historicRootBlockNumberL2.map(async (b, i) => {
+            if (transactions[transactionIndex].nullifiers[i] === 0) {
               return {
                 historicBlock: {},
                 historicTxs: [],
@@ -181,22 +186,6 @@ export async function createChallenge(block, transactions, err) {
           }),
         );
 
-        const [historicInputFee1, historicInputFee2] = await Promise.all(
-          transactions[transactionIndex].historicRootBlockNumberL2Fee.map(async b => {
-            if (b === 0) {
-              return {
-                historicBlock: {},
-                historicTxs: [],
-              };
-            }
-            const historicBlock = await getBlockByBlockNumberL2(b);
-            const historicTxs = await getTransactionsByTransactionHashes(block.transactionHashes);
-            return {
-              historicBlock: Block.buildSolidityStruct(historicBlock),
-              historicTxs,
-            };
-          }),
-        );
         txDataToSign = await challengeContractInstance.methods
           .challengeProofVerification(
             Block.buildSolidityStruct(block),
@@ -207,12 +196,8 @@ export async function createChallenge(block, transactions, err) {
               historicInput1.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
               historicInput2.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
             ],
-            [historicInputFee1.historicBlock, historicInputFee2.historicBlock],
-            [
-              historicInputFee1.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
-              historicInputFee2.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
-            ],
             uncompressedProof,
+            salt,
           )
           .encodeABI();
         break;
@@ -255,6 +240,7 @@ export async function createChallenge(block, transactions, err) {
               oldBlockTransactions.map(t => Transaction.buildSolidityStruct(t)),
               oldTxIdx,
               oldNullifierIdx,
+              salt,
             )
             .encodeABI();
         }
@@ -272,6 +258,7 @@ export async function createChallenge(block, transactions, err) {
             priorBlockTransactions.map(t => Transaction.buildSolidityStruct(t)), // the transactions in the prior block
             Block.buildSolidityStruct(block),
             transactions.map(t => Transaction.buildSolidityStruct(t)),
+            salt,
           )
           .encodeABI();
         break;

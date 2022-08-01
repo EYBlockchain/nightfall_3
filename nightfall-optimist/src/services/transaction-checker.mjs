@@ -52,7 +52,7 @@ async function checkHistoricRoot(transaction) {
     if (historicRootFirst === null)
       throw new TransactionError('The historic root in the transaction does not exist', 3);
   }
-  if (Number(transaction.nullifiers[0]) !== 0) {
+  if (Number(transaction.nullifiers[1]) !== 0) {
     const historicRootSecond = await getBlockByBlockNumberL2(
       transaction.historicRootBlockNumberL2[1],
     );
@@ -77,10 +77,6 @@ async function verifyProof(transaction) {
     transaction.nullifiers[1] === ZERO
       ? { root: ZERO }
       : (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2[1])) ?? { root: ZERO };
-
-  if (![0, 1, 2].includes(Number(transaction.transactionType))) {
-    throw new TransactionError('Unknown transaction type', 2);
-  }
 
   const inputs = generalise(
     [
