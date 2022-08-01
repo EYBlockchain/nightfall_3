@@ -38,7 +38,7 @@ export async function askQuestions(approved) {
       name: 'workflow',
       type: 'list',
       message: 'Add an existing signed transaction or create a new one?',
-      choices: ['add', 'create'],
+      choices: ['add', 'create', 'get nonce'],
       when: () => !approved,
     },
     {

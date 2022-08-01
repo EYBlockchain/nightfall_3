@@ -95,7 +95,7 @@ export async function addMultiSigSignature(
     contractAddress,
     0,
     unsignedTransactionData,
-    nonce,
+    nonce, // eslint-disable-line no-param-reassign
     executorAddress,
     WEB3_OPTIONS.gas,
   );
@@ -143,10 +143,13 @@ export function verifyTransactions(transactions) {
     return false;
   }
   if (!Array.isArray(parsed)) return false;
-  for (const el of parsed) {
-    if (!el.v || !el.r || !el.s) return false;
-    if (!el.messageHash) return false;
-    if (!el.by || !el.contractAddress || !el.data) return false;
+  for (const elt of parsed) {
+    if (!Array.isArray(elt)) return false;
+    for (const el of elt) {
+      if (!el.v || !el.r || !el.s) return false;
+      if (!el.messageHash) return false;
+      if (!el.by || !el.contractAddress || !el.data) return false;
+    }
   }
   return parsed;
 }
