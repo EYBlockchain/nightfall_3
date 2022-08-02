@@ -5,8 +5,6 @@
   "main": "./nightfall-client/src/index.mjs",
   "scripts": {
     "test": "LOG_LEVEL=error mocha --timeout 0 --bail --exit test/e2e/protocol/*.test.mjs test/e2e/tokens/*.test.mjs",
-    "neg-test": "mocha --timeout 0 --bail --exit test/neg-http.mjs",
-    "neg-test-ropsten": "mocha --timeout 0 --bail --exit test/neg-http.mjs",
     "test-e2e-protocol": "LOG_LEVEL=error mocha --timeout 0 --bail --exit test/e2e/protocol/*.test.mjs ",
     "test-gas": "mocha --timeout 0 --bail --exit test/e2e/gas.test.mjs ",
     "test-circuits": "LOG_LEVEL=error mocha --timeout 0 --bail --exit test/e2e/circuits.test.mjs ",

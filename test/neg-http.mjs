@@ -1,4 +1,7 @@
 /* eslint-disable no-await-in-loop */
+/**
+ * This test is DEPRECATED according to https://hackmd.io/2VI6nAfoR5i4XoxIKIA4RA?view and will be removed soon.
+ */
 import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
