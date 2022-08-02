@@ -9,7 +9,11 @@ import mongo from 'common-files/utils/mongo.mjs';
 import Timber from 'common-files/classes/timber.mjs';
 import constants from 'common-files/constants/index.mjs';
 
+const { ZERO, HASH_TYPE } = constants;
+
 const {
+  MONGO_URL,
+  OPTIMIST_DB,
   TRANSACTIONS_COLLECTION,
   PROPOSER_COLLECTION,
   CHALLENGER_COLLECTION,
@@ -18,11 +22,8 @@ const {
   NULLIFIER_COLLECTION,
   COMMIT_COLLECTION,
   TIMBER_COLLECTION,
-  ZERO,
-  HASH_TYPE,
-} = constants;
-
-const { MONGO_URL, OPTIMIST_DB, TIMBER_HEIGHT } = config;
+  TIMBER_HEIGHT,
+} = config;
 
 /**
 Function to save a commit, used in a challenge commit-reveal process

@@ -7,16 +7,17 @@ Functions for interacting with the local client data stores
 import { openDB } from 'idb';
 import Timber from '../../common-files/classes/timber';
 
-const { COMMITMENTS_DB, TIMBER_HEIGHT } = global.config;
 const {
+  COMMITMENTS_DB,
   TIMBER_COLLECTION,
   SUBMITTED_BLOCKS_COLLECTION,
   TRANSACTIONS_COLLECTION,
   COMMITMENTS_COLLECTION,
   KEYS_COLLECTION,
   CIRCUIT_COLLECTION,
-  HASH_TYPE,
-} = global.nightfallConstants;
+  TIMBER_HEIGHT,
+} = global.config;
+const { HASH_TYPE } = global.nightfallConstants;
 
 // This needs to have better indexDB performance.
 

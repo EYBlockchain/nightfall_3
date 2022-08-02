@@ -7,7 +7,6 @@ import { Mutex } from 'async-mutex';
 import gen from 'general-number';
 import mongo from 'common-files/utils/mongo.mjs';
 import logger from 'common-files/utils/logger.mjs';
-import constants from 'common-files/constants/index.mjs';
 import { Commitment, Nullifier } from '../classes/index.mjs';
 // eslint-disable-next-line import/no-cycle
 import { isValidWithdrawal } from './valid-withdrawal.mjs';
@@ -17,8 +16,7 @@ import {
   getTransactionHashSiblingInfo,
 } from './database.mjs';
 
-const { COMMITMENTS_COLLECTION } = constants;
-const { MONGO_URL, COMMITMENTS_DB } = config;
+const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
 const { generalise } = gen;
 const mutex = new Mutex();
 

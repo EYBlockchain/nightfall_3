@@ -13,15 +13,15 @@ import { Commitment, Nullifier } from '../classes/index';
 import { isValidWithdrawal } from './valid-withdrawal';
 import { getBlockByBlockNumberL2, getTransactionByTransactionHash } from './database';
 
-const { COMMITMENTS_DB } = global.config;
 const {
+  COMMITMENTS_DB,
   TIMBER_COLLECTION,
   SUBMITTED_BLOCKS_COLLECTION,
   TRANSACTIONS_COLLECTION,
   COMMITMENTS_COLLECTION,
   KEYS_COLLECTION,
   CIRCUIT_COLLECTION,
-} = global.nightfallConstants;
+} = global.config;
 
 const { generalise } = gen;
 const mutex = new Mutex();

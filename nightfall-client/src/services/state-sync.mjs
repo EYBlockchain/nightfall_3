@@ -15,10 +15,11 @@ import { waitForContract } from '../event-handlers/subscribe.mjs';
 import blockProposedEventHandler from '../event-handlers/block-proposed.mjs';
 import rollbackEventHandler from '../event-handlers/rollback.mjs';
 
-const { COMMITMENTS_COLLECTION, STATE_CONTRACT_NAME, CONTRACT_ARTIFACTS } = constants;
+const { STATE_CONTRACT_NAME, CONTRACT_ARTIFACTS } = constants;
 const {
   MONGO_URL,
   COMMITMENTS_DB,
+  COMMITMENTS_COLLECTION,
   STATE_GENESIS_BLOCK,
   DEPLOYMENT_FILES_URL: { DEFAULT_CONTRACT_FILES_URL },
 } = config;

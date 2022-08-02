@@ -19,8 +19,8 @@ type CipherText = {
   iv: Uint8Array;
 };
 
-const { COMMITMENTS_DB } = global.config;
 const {
+  COMMITMENTS_DB
   TIMBER_COLLECTION,
   SUBMITTED_BLOCKS_COLLECTION,
   TRANSACTIONS_COLLECTION,
@@ -29,7 +29,7 @@ const {
   CIRCUIT_COLLECTION,
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-} = global.nightfallConstants;
+} = global.config;
 
 const connectDB = async () => {
   return openDB(COMMITMENTS_DB, 1, {
