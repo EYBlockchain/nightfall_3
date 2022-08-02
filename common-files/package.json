@@ -2,7 +2,7 @@
   "name": "common-files",
   "version": "1.0.0",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "NODE_CONFIG_DIR=../config mocha --timeout 0 --bail --exit test/*.mjs"
   },
   "author": "“Liju <“liju.jose@gds.ey.com”>",
   "license": "CC0-1.0",
