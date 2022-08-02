@@ -18,8 +18,6 @@ COPY config config
 
 # websocket port 8080
 EXPOSE 8080
-RUN ls 
-RUN ls /app
 
 RUN npm i
 ENTRYPOINT ["/app/docker-entrypoint.sh"]

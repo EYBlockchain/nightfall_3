@@ -166,6 +166,9 @@ module.exports = {
           : process.env.BLOCKCHAIN_WS_HOST
           ? `wss://${process.env.BLOCKCHAIN_WS_HOST}`
           : 'ws://localhost:8546',
+      PROPOSER_KEY:
+        process.env.ETH_PRIVATE_KEY ||
+        '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d', // owner's/deployer's private key
     },
     aws: {
       name: 'AWS',
@@ -174,6 +177,9 @@ module.exports = {
       optimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
       proposerBaseUrl: `https://${process.env.PROPOSER_HOST}`,
       web3WsUrl: `wss://${process.env.BLOCKCHAIN_WS_HOST}`,
+      PROPOSER_KEY:
+        process.env.PROPOSER_KEY ||
+        '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d', // owner's/deployer's private key
     },
   },
   TEST_OPTIONS: {
