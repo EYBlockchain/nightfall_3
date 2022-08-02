@@ -1,8 +1,9 @@
 /* eslint-disable no-await-in-loop */
 
 import { getContractInstance } from 'common-files/utils/contract.mjs';
-import { pauseQueue, unpauseQueue } from 'common-files/utils/event-queue.mjs';
 import constants from 'common-files/constants/index.mjs';
+import { pauseQueue, unpauseQueue, dequeueEvent, queues } from 'common-files/utils/event-queue.mjs';
+import logger from 'common-files/utils/logger.mjs';
 import blockProposedEventHandler from '../event-handlers/block-proposed.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
 import newCurrentProposerEventHandler from '../event-handlers/new-current-proposer.mjs';
@@ -121,10 +122,25 @@ export default async proposer => {
     for (let i = 0; i < missingBlocks.length; i++) {
       const [fromBlock, toBlock] = missingBlocks[i];
       // Sync the state inbetween these blocks
-
       await syncState(proposer, fromBlock, toBlock);
     }
+    // at this point, we have synchronised all the existing blocks. If there are no outstanding
+    // challenges (all rollbacks have completed) then we're done.  It's possible however that
+    // we had a bad block that was not rolled back. If this is the case then there will still be
+    // a challenge in the stop queue that was not removed by a rollback.
+    if (queues[2].length === 0)
+      logger.info('After synchronisation, no challenges remain unresolved');
+    else {
+      logger.info(
+        `After synchronisation, there were ${queues[2].length} unresolved challenges.  Running them now.`,
+      );
+    }
     await startMakingChallenges();
+    // running the unresolved challenges
+    while (queues[2].length !== 0) {
+      const challenge = dequeueEvent(2);
+      await challenge();
+    }
   }
   const currentProposer = (await stateContractInstance.methods.currentProposer().call())
     .thisAddress;

@@ -139,12 +139,10 @@ async function rollbackEventHandler(data) {
   const invalidTransactionHashesArr = [...invalidTransactionSet];
   logger.debug(`Deleting transactions: ${invalidTransactionHashesArr}`);
   await deleteTransactionsByTransactionHashes(invalidTransactionHashesArr);
-
-  logger.debug(
-    `Nullifier of deleted transactions: ${
-      transactions.find(t => t.transactionHash === invalidTransactionHashesArr[0])?.nullifiers[0]
-    }`,
-  );
+  const deletedTxNulllifier = transactions.find(
+    t => t.transactionHash === invalidTransactionHashesArr[0],
+  )?.nullifiers[0];
+  logger.debug(`Nullifier of deleted transactions: ${deletedTxNulllifier}`);
 
   // Once we have deleted transactions, we now need to delete any dangling nullifiers
   // We cannot just delete the nullifiers is invalid transactions, as they may duplicate of nullifiers we need.

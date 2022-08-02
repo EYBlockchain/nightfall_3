@@ -119,7 +119,7 @@ function waitForConfirmation(eventObject) {
 }
 
 async function dequeueEvent(priority) {
-  queues[priority].shift();
+  return queues[priority].pop();
 }
 
 async function queueManager(eventObject, eventArgs) {
