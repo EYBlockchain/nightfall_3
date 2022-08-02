@@ -17,8 +17,8 @@ import {
   getTransactionHashSiblingInfo,
 } from './database.mjs';
 
-const { COMMITMENTS_DB, COMMITMENTS_COLLECTION } = constants;
-const { MONGO_URL } = config;
+const { COMMITMENTS_COLLECTION } = constants;
+const { MONGO_URL, COMMITMENTS_DB } = config;
 const { generalise } = gen;
 const mutex = new Mutex();
 

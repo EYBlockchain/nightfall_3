@@ -19,8 +19,8 @@ type CipherText = {
   iv: Uint8Array;
 };
 
+const { COMMITMENTS_DB } = global.config;
 const {
-  COMMITMENTS_DB,
   TIMBER_COLLECTION,
   SUBMITTED_BLOCKS_COLLECTION,
   TRANSACTIONS_COLLECTION,

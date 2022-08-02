@@ -13,8 +13,8 @@ import { Commitment, Nullifier } from '../classes/index';
 import { isValidWithdrawal } from './valid-withdrawal';
 import { getBlockByBlockNumberL2, getTransactionByTransactionHash } from './database';
 
+const { COMMITMENTS_DB } = global.config;
 const {
-  COMMITMENTS_DB,
   TIMBER_COLLECTION,
   SUBMITTED_BLOCKS_COLLECTION,
   TRANSACTIONS_COLLECTION,

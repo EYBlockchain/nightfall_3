@@ -4,6 +4,7 @@ Some transactions are so simple that, we don't split out a separate service
 module but handle the entire request here.
 */
 import express from 'express';
+import config from 'config';
 import Timber from 'common-files/classes/timber.mjs';
 import logger from 'common-files/utils/logger.mjs';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
@@ -24,13 +25,13 @@ import transactionSubmittedEventHandler from '../event-handlers/transaction-subm
 import getProposers from '../services/proposer.mjs';
 
 const router = express.Router();
+const { TIMBER_HEIGHT } = config;
 const {
   STATE_CONTRACT_NAME,
   PROPOSERS_CONTRACT_NAME,
   SHIELD_CONTRACT_NAME,
   ZERO,
   HASH_TYPE,
-  TIMBER_HEIGHT,
 } = constants;
 
 let proposer;

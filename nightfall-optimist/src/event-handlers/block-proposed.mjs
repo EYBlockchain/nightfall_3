@@ -1,4 +1,5 @@
 import WebSocket from 'ws';
+import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import Timber from 'common-files/classes/timber.mjs';
 import getTimeByBlock from 'common-files/utils/block-info.mjs';
@@ -20,7 +21,8 @@ import { getProposeBlockCalldata } from '../services/process-calldata.mjs';
 import { increaseBlockInvalidCounter } from '../services/debug-counters.mjs';
 import transactionSubmittedEventHandler from './transaction-submitted.mjs';
 
-const { ZERO, HASH_TYPE, TIMBER_HEIGHT } = constants;
+const { TIMBER_HEIGHT } = config;
+const { ZERO, HASH_TYPE } = constants;
 
 let ws;
 

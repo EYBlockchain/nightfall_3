@@ -25,6 +25,10 @@ BigInt.prototype.toJSON = function () {
 };
 
 module.exports = {
+  COMMITMENTS_DB: 'nightfall_commitments',
+  OPTIMIST_DB: 'optimist_data',
+  TIMBER_HEIGHT: 32,
+  TXHASH_TREE_HEIGHT: 5,
   STATE_GENESIS_BLOCK: process.env.STATE_GENESIS_BLOCK,
   CIRCUITS_HOME: process.env.CIRCUITS_HOME || '/app/circuits/',
   ALWAYS_DO_TRUSTED_SETUP: process.env.ALWAYS_DO_TRUSTED_SETUP || false,

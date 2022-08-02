@@ -1,13 +1,14 @@
 /**
 An optimistic layer 2 Block class
 */
+import config from 'config';
 import Timber from 'common-files/classes/timber.mjs';
 import Web3 from 'common-files/utils/web3.mjs';
 import constants from 'common-files/constants/index.mjs';
 import { getLatestBlockInfo, getTreeByBlockNumberL2 } from '../services/database.mjs';
 
-const { ZERO, HASH_TYPE, TIMBER_HEIGHT, TXHASH_TREE_HASH_TYPE, TXHASH_TREE_HEIGHT, BLOCK_TYPES } =
-  constants;
+const { TIMBER_HEIGHT, TXHASH_TREE_HEIGHT } = confiig
+const { ZERO, HASH_TYPE, TXHASH_TREE_HASH_TYPE, BLOCK_TYPES } = constants;
 
 /**
 This Block class does not have the Block components that are computed on-chain.

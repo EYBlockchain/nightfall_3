@@ -1,4 +1,5 @@
 import WebSocket from 'ws';
+import config from 'config';
 import { rand } from 'common-files/utils/crypto/crypto-random.mjs';
 import logger from 'common-files/utils/logger.mjs';
 import Web3 from 'common-files/utils/web3.mjs';
@@ -16,7 +17,8 @@ import {
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
 
-const { CHALLENGES_CONTRACT_NAME, TIMBER_HEIGHT, ZERO } = constants;
+const { TIMBER_HEIGHT } = config;
+const { CHALLENGES_CONTRACT_NAME, ZERO } = constants;
 
 let makeChallenges = process.env.IS_CHALLENGER === 'true';
 let ws;
