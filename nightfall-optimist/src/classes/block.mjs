@@ -7,7 +7,7 @@ import Web3 from 'common-files/utils/web3.mjs';
 import constants from 'common-files/constants/index.mjs';
 import { getLatestBlockInfo, getTreeByBlockNumberL2 } from '../services/database.mjs';
 
-const { TIMBER_HEIGHT, TXHASH_TREE_HEIGHT } = confiig
+const { TIMBER_HEIGHT, TXHASH_TREE_HEIGHT } = config;
 const { ZERO, HASH_TYPE, TXHASH_TREE_HASH_TYPE, BLOCK_TYPES } = constants;
 
 /**

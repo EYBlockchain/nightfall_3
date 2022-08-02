@@ -26,13 +26,8 @@ import getProposers from '../services/proposer.mjs';
 
 const router = express.Router();
 const { TIMBER_HEIGHT } = config;
-const {
-  STATE_CONTRACT_NAME,
-  PROPOSERS_CONTRACT_NAME,
-  SHIELD_CONTRACT_NAME,
-  ZERO,
-  HASH_TYPE,
-} = constants;
+const { STATE_CONTRACT_NAME, PROPOSERS_CONTRACT_NAME, SHIELD_CONTRACT_NAME, ZERO, HASH_TYPE } =
+  constants;
 
 let proposer;
 export function setProposer(p) {

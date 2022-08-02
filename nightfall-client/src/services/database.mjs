@@ -11,12 +11,8 @@ import Timber from 'common-files/classes/timber.mjs';
 import logger from 'common-files/utils/logger.mjs';
 import constants from 'common-files/constants/index.mjs';
 
-const {
-  TIMBER_COLLECTION,
-  SUBMITTED_BLOCKS_COLLECTION,
-  TRANSACTIONS_COLLECTION,
-  HASH_TYPE,
-} = constants;
+const { TIMBER_COLLECTION, SUBMITTED_BLOCKS_COLLECTION, TRANSACTIONS_COLLECTION, HASH_TYPE } =
+  constants;
 const { MONGO_URL, COMMITMENTS_DB, TIMBER_HEIGHT } = config;
 
 /**
