@@ -4,27 +4,36 @@ from "../../utils/structures.zok" import Point
 /*
 * Verify that all commitments are correct
 */
-def main<NumCommitments>(\
+def main<MinCommitments, MaxCommitments>(\
     field packedErcAddress,\
     field idRemainder,\
-    field[NumCommitments] commitmentHashes,\
-    private field[NumCommitments] newCommitmentValues,\
-    private field[NumCommitments] newCommitmentSalts,\
-    private Point[NumCommitments] recipientPublicKey\
+    field[MaxCommitments] commitmentHashes,\
+    private field[MaxCommitments] newCommitmentValues,\
+    private field[MaxCommitments] newCommitmentSalts,\
+    private Point[MaxCommitments] recipientPublicKey\
 ) -> bool:
 
     //Check that all the commitments are valid. If NumCommitments equals zero this loop will be ignored
-    for u32 i in 0..NumCommitments do
+    for u32 i in 0..MaxCommitments do
         
-        //Calculate the commmitment hash from the newCommitment parameters
-        field commitment = if newCommitmentValues[i] == 0 then  0 else \
+        /*
+            Calculate the commmitment hash from the newCommitment parameters
+            We can check if commitment is supposed to be null or non-null by the following
+            1) Note that degenerate case for each circuit type (deposit, transfer, withdraw) also matches the possible uses involving erc721
+            2) Thus, we first perform checks based on this degenerate case (characterised by MinCommitments).
+            3) We use (i + 1) as the loop is zero-indexed by MinCommitments is a count of minimum allowable commitments.
+            4) Therefore we check (with a poseidon hash) any input when the incremented loop index matches this conditional.
+            5) Finally, we check the "optional extra commitments" that are only allowable to erc20/1155 (characterised by value > 0)
+        */
+
+        field commitment = if (newCommitmentValues[i] != 0 || (i+1) == MinCommitments) then\
             poseidon([\
                 packedErcAddress,\
                 idRemainder,\
                 newCommitmentValues[i],\
                 ...recipientPublicKey[i],\
                 newCommitmentSalts[i]\
-            ])\
+            ])  else 0\
         fi
 
         //Check that the calculated commitment matches with the one contained in the transaction

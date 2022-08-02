@@ -11,7 +11,7 @@ def main(\
     PublicTransaction tx,\
     field[2] roots,\
     private Nullifiers<2> nullifiers,\
-    private Commitments<2> commitments\
+    private Commitments<1> commitments\
 )-> ():
     
     //Verify public transaction structure
@@ -29,23 +29,23 @@ def main(\
     ))
 
     field[2] nullifiersValue = u8_array_to_field(nullifiers.oldCommitments.value)
-    field[2] commitmentsValue = u8_array_to_field(commitments.newCommitments.value)
+    field[1] commitmentsValue = u8_array_to_field(commitments.newCommitments.value)
 
     //Check that values match
     assert(sum(nullifiersValue) == sum(commitmentsValue) + tx.value)
 
     // pack the top four bytes of the token id into the ercAddress field (address only
 	// uses 160 bits and the Shield contract prevents creation of something with more than 160 bits)
-    field idRemainder = u32_array_to_field(tx.tokenId[1..8]) 
+    field idRemainder = u32_array_to_field(tx.tokenId[1..8])
     field packedErcAddress = tx.ercAddress + u32_array_to_field([tx.tokenId[0]]) * SHIFT 
 
     //Verify nullifiers
-    Point firstInputZkpPublicKeys = verify_nullifiers::<2>(packedErcAddress, idRemainder,\
+    Point firstInputZkpPublicKeys = verify_nullifiers::<1,2>(packedErcAddress, idRemainder,\
         tx.nullifiers, roots, nullifiersValue, nullifiers.oldCommitments.salt,\
         nullifiers.rootKey, nullifiers.paths, nullifiers.orders)
 
     //Verify new Commmitments
-    assert(verify_commitments::<2>(packedErcAddress, idRemainder, tx.commitments,\
+    assert(verify_commitments::<0,1>(packedErcAddress, idRemainder, [tx.commitments[0]],\
     commitmentsValue, commitments.newCommitments.salt, commitments.recipientPublicKey))
 
     //Verify Change

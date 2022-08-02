@@ -43,12 +43,12 @@ def main(\
     field packedErcAddress = transfer.ercAddressTransfer + u32_array_to_field([transfer.idTransfer[0]]) * SHIFT 
 
     //Verify nullifiers
-    Point firstInputZkpPublicKeys = verify_nullifiers::<2>(packedErcAddress, idRemainder,\
+    Point firstInputZkpPublicKeys = verify_nullifiers::<1,2>(packedErcAddress, idRemainder,\
         tx.nullifiers, roots, nullifiersValue, nullifiers.oldCommitments.salt,\
         nullifiers.rootKey, nullifiers.paths, nullifiers.orders)
 
     //Verify new Commmitments
-    assert(verify_commitments::<2>(packedErcAddress, idRemainder, tx.commitments,\
+    assert(verify_commitments::<1,2>(packedErcAddress, idRemainder, tx.commitments,\
     commitmentsValue, commitments.newCommitments.salt, commitments.recipientPublicKey))
         
     //Verify Change
