@@ -47,7 +47,7 @@
     "ws": "^7.5.0"
   },
   "devDependencies": {
-    "nodemon": "^2.0.12"
+    "nodemon": "^2.0.19"
   },
   "nodemonConfig": {
     "verbose": true,
