@@ -50,6 +50,7 @@ async function localTest() {
   for (let i = 0; i < txPerBlock; i++) {
     try {
       await nf3.deposit(ercAddress, tokenType, value, tokenId);
+      await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
     } catch (err) {
       logger.warn(`Error in deposit ${err}`);
     }
