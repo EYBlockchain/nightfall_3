@@ -66,10 +66,10 @@ const computePrivateInputsNullifiers = privateData => {
   ].flat(Infinity);
 };
 
-const computePrivateInputsCommitments = privateData => {
+const computePrivateInputsCommitments = (privateData, padTo) => {
   const { newCommitmentPreimage, recipientPublicKeys } = generalise(privateData);
-  const paddedNewCommitmentPreimage = padArray(newCommitmentPreimage, NULL_COMMITMENT, 2);
-  const paddedRecipientPublicKeys = padArray(recipientPublicKeys, [0, 0], 2);
+  const paddedNewCommitmentPreimage = padArray(newCommitmentPreimage, NULL_COMMITMENT, padTo);
+  const paddedRecipientPublicKeys = padArray(recipientPublicKeys, [0, 0], padTo);
   return [
     paddedNewCommitmentPreimage.map(commitment => commitment.value.limbs(8, 31)),
     paddedNewCommitmentPreimage.map(commitment => commitment.salt.field(BN128_GROUP_ORDER)),
@@ -96,19 +96,22 @@ export const computeWitness = (txObject, roots, privateData) => {
   const publicInputs = computePublicInputs(txObject, roots);
   switch (Number(txObject.transactionType)) {
     case 0:
+      // Deposit
       return [...publicInputs, ...computePrivateInputsDeposit(privateData)];
     case 1:
+      // Transfer
       return [
         ...publicInputs,
         ...computePrivateInputsNullifiers(privateData),
-        ...computePrivateInputsCommitments(privateData),
+        ...computePrivateInputsCommitments(privateData, 2),
         ...computePrivateInputsEncryption(privateData),
       ];
     default:
+      // Withdraw
       return [
         ...publicInputs,
         ...computePrivateInputsNullifiers(privateData),
-        ...computePrivateInputsCommitments(privateData),
+        ...computePrivateInputsCommitments(privateData, 1),
       ];
   }
 };

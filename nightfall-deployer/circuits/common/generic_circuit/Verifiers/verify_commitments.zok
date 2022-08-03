@@ -21,7 +21,7 @@ def main<MinCommitments, MaxCommitments>(\
             We can check if commitment is supposed to be null or non-null by the following
             1) Note that degenerate case for each circuit type (deposit, transfer, withdraw) also matches the possible uses involving erc721
             2) Thus, we first perform checks based on this degenerate case (characterised by MinCommitments).
-            3) We use (i + 1) as the loop is zero-indexed by MinCommitments is a count of minimum allowable commitments.
+            3) We use (i + 1) as the loop is zero-indexed while MinCommitments is a count of minimum allowable commitments.
             4) Therefore we check (with a poseidon hash) any input when the incremented loop index matches this conditional.
             5) Finally, we check the "optional extra commitments" that are only allowable to erc20/1155 (characterised by value > 0)
         */

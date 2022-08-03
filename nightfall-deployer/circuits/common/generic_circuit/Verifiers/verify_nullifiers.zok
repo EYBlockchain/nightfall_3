@@ -42,7 +42,7 @@ def main<MinNullifiers, MaxNullifiers>(\
             We can check if nullifier is supposed to be null or non-null by the following
             1) Note that degenerate case for each circuit type (deposit, transfer, withdraw) also matches the possible uses involving erc721
             2) Thus, we first perform checks based on this degenerate case (characterised by MinNullifiers).
-            3) We use (i + 1) as the loop is zero-indexed by MinNullifiers is a count of minimum allowable nullifiers.
+            3) We use (i + 1) as the loop is zero-indexed while MinNullifiers is a count of minimum allowable nullifiers.
             4) Therefore we check (with a poseidon hash/path check) any input when the incremented loop index matches this conditional.
             5) Finally, we check the "optional extra nullifiers" that are only allowable to erc20/1155 (characterised by value > 0)
         */
@@ -53,15 +53,17 @@ def main<MinNullifiers, MaxNullifiers>(\
             ...zkpPublicKeys,\
             oldCommitmentSalts[i]\
         ])
-        field nullifier = if(oldCommitmentValues[i] != 0 || (i+1) != MinNullifiers) then poseidon([nullifierKeys, calculatedOldCommitmentHash]) else 0 fi
+        field nullifier = if(oldCommitmentValues[i] != 0 || (i+1) == MinNullifiers) then poseidon([nullifierKeys, calculatedOldCommitmentHash]) else 0 fi
 
         //Check that the calculated nullifier matches with the one contained in the transaction
         assert(nullifier == nullifierHashes[i])
 
         //Check that the nullifier is contained in the tree
-        bool pathValidity = if(oldCommitmentValues[i] != 0 || (i+1) != MinNullifiers) then pathCheck([roots[i], ...paths[i]], orders[i], calculatedOldCommitmentHash) else true fi
+        bool pathValidity = if(oldCommitmentValues[i] != 0 || (i+1) == MinNullifiers) then pathCheck([roots[i], ...paths[i]], orders[i], calculatedOldCommitmentHash) else true fi
         assert(pathValidity)
 
+        //Set the changeZkpPublicKeys if i = 0. Otherwise just set the same value
+        firstInputZkpPublicKeys = i == 0 ? zkpPublicKeys : firstInputZkpPublicKeys
     endfor
     
     return firstInputZkpPublicKeys
