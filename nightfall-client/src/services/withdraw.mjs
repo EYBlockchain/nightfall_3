@@ -61,7 +61,7 @@ async function withdraw(withdrawParams) {
       commitmentTreeInfo.siblingPath.path.map(p => p.value).reverse(),
     ),
   );
-  logger.silly(`SiblingPath was: ${JSON.stringify(siblingPath)}`);
+  logger.trace(`SiblingPath was: ${JSON.stringify(siblingPath)}`);
 
   const { leafIndex, isOnChain } = commitmentTreeInfo;
 
@@ -90,7 +90,7 @@ async function withdraw(withdrawParams) {
     provingScheme: PROVING_SCHEME,
     backend: BACKEND,
   });
-  logger.silly(`Received response ${JSON.stringify(res.data, null, 2)}`);
+  logger.trace(`Received response ${JSON.stringify(res.data, null, 2)}`);
   const { proof } = res.data;
   // and work out the ABI encoded data that the caller should sign and send to the shield contract
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);

@@ -56,7 +56,7 @@ async function deposit(items) {
     provingScheme: PROVING_SCHEME,
     backend: BACKEND,
   });
-  logger.silly(`Received response ${JSON.stringify(res.data, null, 2)}`);
+  logger.trace(`Received response ${JSON.stringify(res.data, null, 2)}`);
   const { proof } = res.data;
   // and work out the ABI encoded data that the caller should sign and send to the shield contract
   // first, get the contract instance
@@ -73,7 +73,7 @@ async function deposit(items) {
     commitments: [commitment],
     proof,
   });
-  logger.silly(
+  logger.trace(
     `Optimistic deposit transaction ${JSON.stringify(optimisticDepositTransaction, null, 2)}`,
   );
   // and then we can create an unsigned blockchain transaction

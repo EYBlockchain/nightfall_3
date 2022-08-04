@@ -100,7 +100,7 @@ router.post('/update', async (req, res, next) => {
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
     const txDataToSign = await proposersContractInstance.methods.updateProposer(url).encodeABI();
     logger.debug('returning raw transaction data');
-    logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
+    logger.trace(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
     res.json({ txDataToSign });
     setRegisteredProposerAddress(address, url); // save the registration address and URL
   } catch (err) {
@@ -121,7 +121,7 @@ router.get('/current-proposer', async (req, res, next) => {
       .call();
 
     logger.debug('returning current proposer');
-    logger.silly(`current proposer is ${JSON.stringify(currentProposer, null, 2)}`);
+    logger.trace(`current proposer is ${JSON.stringify(currentProposer, null, 2)}`);
     res.json({ currentProposer });
   } catch (err) {
     logger.error(err);
@@ -156,7 +156,7 @@ router.post('/de-register', async (req, res, next) => {
     const txDataToSign = await proposersContractInstance.methods.deRegisterProposer().encodeABI();
     await deleteRegisteredProposerAddress(address);
     logger.debug('returning raw transaction data');
-    logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
+    logger.trace(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
     res.json({ txDataToSign });
   } catch (err) {
     logger.error(err);
@@ -191,7 +191,7 @@ router.get('/withdraw', async (req, res, next) => {
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
     const txDataToSign = await proposersContractInstance.methods.withdraw().encodeABI();
     logger.debug('returning raw transaction data');
-    logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
+    logger.trace(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
     res.json({ txDataToSign });
   } catch (err) {
     logger.error(err);
@@ -213,7 +213,7 @@ router.post('/payment', async (req, res, next) => {
       .requestBlockPayment(block, transactions)
       .encodeABI();
     logger.debug('returning raw transaction data');
-    logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
+    logger.trace(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
     res.json({ txDataToSign });
   } catch (err) {
     logger.error(err);
@@ -229,7 +229,7 @@ router.post('/payment', async (req, res, next) => {
  */
 router.post('/propose', async (req, res, next) => {
   logger.debug(`propose endpoint received POST`);
-  logger.silly(`With content ${JSON.stringify(req.body, null, 2)}`);
+  logger.trace(`With content ${JSON.stringify(req.body, null, 2)}`);
   try {
     const { transactions, proposer: prop, currentLeafCount } = req.body;
     const latestBlockInfo = await getLatestBlockInfo();
@@ -252,7 +252,7 @@ router.post('/propose', async (req, res, next) => {
       .proposeBlock(block, transactions)
       .encodeABI();
     logger.debug('returning raw transaction');
-    logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
+    logger.trace(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
     res.json({ txDataToSign, block, transactions });
   } catch (err) {
     logger.error(err);
@@ -274,7 +274,7 @@ router.get('/change', async (req, res, next) => {
       .changeCurrentProposer()
       .encodeABI();
     logger.debug('returning raw transaction data');
-    logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
+    logger.trace(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
     res.json({ txDataToSign });
   } catch (err) {
     logger.error(err);
@@ -305,7 +305,7 @@ router.get('/mempool', async (req, res, next) => {
  */
 router.post('/encode', async (req, res, next) => {
   logger.debug(`encode endpoint received POST`);
-  logger.silly(`With content ${JSON.stringify(req.body, null, 2)}`);
+  logger.trace(`With content ${JSON.stringify(req.body, null, 2)}`);
   try {
     const { transactions, block } = req.body;
 
@@ -351,7 +351,7 @@ router.post('/encode', async (req, res, next) => {
       )
       .encodeABI();
     logger.debug('returning raw transaction');
-    logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
+    logger.trace(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
     res.json({ txDataToSign, block: newBlock, transactions: newTransactions });
   } catch (err) {
     logger.error(err.stack);
@@ -361,7 +361,7 @@ router.post('/encode', async (req, res, next) => {
 
 router.post('/offchain-transaction', async (req, res) => {
   logger.debug(`proposer/offchain-transaction endpoint received POST`);
-  logger.silly(`With content ${JSON.stringify(req.body, null, 2)}`);
+  logger.trace(`With content ${JSON.stringify(req.body, null, 2)}`);
   const { transaction } = req.body;
   // When a transaction is built by client, they are generalised into hex(32) interfacing with web3
   // The response from on-chain events converts them to saner string values (e.g. uint64 etc).

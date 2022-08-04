@@ -163,7 +163,7 @@ export async function createChallenge(block, transactions, err) {
           )
           .encodeABI();
         logger.debug('returning raw transaction');
-        logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
+        logger.trace(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
         break;
       }
       // historic root is incorrect
