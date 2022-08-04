@@ -21,8 +21,8 @@ import { getProposeBlockCalldata } from '../services/process-calldata.mjs';
 import { increaseBlockInvalidCounter } from '../services/debug-counters.mjs';
 import transactionSubmittedEventHandler from './transaction-submitted.mjs';
 
-const { TIMBER_HEIGHT } = config;
-const { ZERO, HASH_TYPE } = constants;
+const { TIMBER_HEIGHT, HASH_TYPE } = config;
+const { ZERO } = constants;
 
 let ws;
 

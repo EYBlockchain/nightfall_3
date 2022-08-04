@@ -25,9 +25,8 @@ import transactionSubmittedEventHandler from '../event-handlers/transaction-subm
 import getProposers from '../services/proposer.mjs';
 
 const router = express.Router();
-const { TIMBER_HEIGHT } = config;
-const { STATE_CONTRACT_NAME, PROPOSERS_CONTRACT_NAME, SHIELD_CONTRACT_NAME, ZERO, HASH_TYPE } =
-  constants;
+const { TIMBER_HEIGHT, HASH_TYPE } = config;
+const { STATE_CONTRACT_NAME, PROPOSERS_CONTRACT_NAME, SHIELD_CONTRACT_NAME, ZERO } = constants;
 
 let proposer;
 export function setProposer(p) {

@@ -23,8 +23,8 @@ import {
 } from '../services/database.mjs';
 import { decryptCommitment } from '../services/commitment-sync.mjs';
 
-const { TIMBER_HEIGHT, TXHASH_TREE_HEIGHT } = config;
-const { ZERO, HASH_TYPE, TXHASH_TREE_HASH_TYPE } = constants;
+const { TIMBER_HEIGHT, TXHASH_TREE_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE } = config;
+const { ZERO } = constants;
 
 /**
 This handler runs whenever a BlockProposed event is emitted by the blockchain

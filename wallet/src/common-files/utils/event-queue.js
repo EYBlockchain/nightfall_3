@@ -20,7 +20,7 @@ and catch these removals, processing them appropriately.
 import Queue from 'queue';
 import logger from './logger';
 
-const { MAX_QUEUE } = global.nightfallConstants;
+const { MAX_QUEUE } = global.config;
 const fastQueue = new Queue({ autostart: true, concurrency: 1 });
 const slowQueue = new Queue({ autostart: true, concurrency: 1 });
 export const queues = [fastQueue, slowQueue];

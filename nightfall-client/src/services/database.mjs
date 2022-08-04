@@ -9,9 +9,7 @@ import config from 'config';
 import mongo from 'common-files/utils/mongo.mjs';
 import Timber from 'common-files/classes/timber.mjs';
 import logger from 'common-files/utils/logger.mjs';
-import constants from 'common-files/constants/index.mjs';
 
-const { HASH_TYPE } = constants;
 const {
   MONGO_URL,
   COMMITMENTS_DB,
@@ -19,6 +17,7 @@ const {
   SUBMITTED_BLOCKS_COLLECTION,
   TRANSACTIONS_COLLECTION,
   TIMBER_HEIGHT,
+  HASH_TYPE,
 } = config;
 
 /**

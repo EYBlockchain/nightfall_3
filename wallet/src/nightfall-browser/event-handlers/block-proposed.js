@@ -24,8 +24,8 @@ import {
   updateTransactionTime,
 } from '../services/database';
 
-const { TIMBER_HEIGHT, TXHASH_TREE_HEIGHT } = global.config;
-const { ZERO, HASH_TYPE, TXHASH_TREE_HASH_TYPE } = global.nightfallConstants;
+const { TIMBER_HEIGHT, TXHASH_TREE_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE } = global.config;
+const { ZERO } = global.nightfallConstants;
 
 /**
 This handler runs whenever a BlockProposed event is emitted by the blockchain

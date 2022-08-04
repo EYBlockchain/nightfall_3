@@ -9,7 +9,7 @@ import mongo from 'common-files/utils/mongo.mjs';
 import Timber from 'common-files/classes/timber.mjs';
 import constants from 'common-files/constants/index.mjs';
 
-const { ZERO, HASH_TYPE } = constants;
+const { ZERO } = constants;
 
 const {
   MONGO_URL,
@@ -23,6 +23,7 @@ const {
   COMMIT_COLLECTION,
   TIMBER_COLLECTION,
   TIMBER_HEIGHT,
+  HASH_TYPE,
 } = config;
 
 /**

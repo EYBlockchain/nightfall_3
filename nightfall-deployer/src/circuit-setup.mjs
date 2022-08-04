@@ -10,7 +10,6 @@ import fs from 'fs';
 import path from 'path';
 import logger from 'common-files/utils/logger.mjs';
 import Web3 from 'common-files/utils/web3.mjs';
-import constants from 'common-files/constants/index.mjs';
 import { waitForContract, getContractAddress } from 'common-files/utils/contract.mjs';
 
 const fsPromises = fs.promises;
@@ -44,7 +43,7 @@ async function waitForZokrates() {
 
 async function walk(dir) {
   let files = await fsPromises.readdir(dir);
-  files = files.filter(file => !file.includes(constants.EXCLUDE_DIRS)); // remove common dir
+  files = files.filter(file => !file.includes(config.EXCLUDE_DIRS)); // remove common dir
   files = await Promise.all(
     files.map(async file => {
       const filePath = path.join(dir, file);
