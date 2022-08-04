@@ -45,7 +45,7 @@ jobs:
         uses: Wandalen/wretry.action@v1.0.11
         with:
           command: |
-            docker wait docker_deployer_1
+            docker wait nightfall_3_deployer_1
           attempt_limit: 100
           attempt_delay: 20000
 
@@ -56,7 +56,7 @@ jobs:
       - name: Run integration test
         run: |
           npm ci
-          docker wait docker_deployer_1
+          docker wait nightfall_3_deployer_1
           npm run test-e2e-protocol
           npm run test-e2e-tokens
 
@@ -99,7 +99,7 @@ jobs:
         uses: Wandalen/wretry.action@v1.0.11
         with:
           command: |
-            docker wait docker_deployer_1
+            docker wait nightfall_3_deployer_1
           attempt_limit: 100
           attempt_delay: 20000
 
@@ -110,7 +110,7 @@ jobs:
       - name: Run integration test
         run: |
           npm ci
-          docker wait docker_deployer_1
+          docker wait nightfall_3_deployer_1
           VERBOSE=true npm run adversary-test
 
       - name: debug logs - after integration test run
@@ -205,7 +205,7 @@ jobs:
         with:
           command: |
             docker ps
-            docker wait docker_deployer_1
+            docker wait nightfall_3_deployer_1
           attempt_limit: 100
           attempt_delay: 20000
 

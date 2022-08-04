@@ -195,10 +195,10 @@ services:
       MPC: ${MPC}
 
 volumes:
-  mongodb1: null
-  mongodb2: null
-  proving_files: null
-  build: null
+  mongodb1: 
+  mongodb2: 
+  proving_files: 
+  build: 
 networks:
   nightfall_network:
     driver: bridge
