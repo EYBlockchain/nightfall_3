@@ -898,7 +898,7 @@ class Nf3 {
     };
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
-      const { id, type, txDataToSign, block, transactions } = msg;
+      const { type, txDataToSign, block, transactions } = msg;
       logger.debug(`Proposer received websocket message of type ${type}`);
       if (type === 'block') {
         proposerQueue.push(async () => {
@@ -913,8 +913,6 @@ class Nf3 {
             blockProposeEmitter.emit('error', err, block, transactions);
           }
         });
-
-        connection.send(id);
       }
       return null;
     };
