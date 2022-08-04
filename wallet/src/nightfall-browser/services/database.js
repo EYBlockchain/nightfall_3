@@ -116,8 +116,8 @@ export async function getLatestTimber() {
   const keys = await db.getAllKeys(TIMBER_COLLECTION);
   const maxKey = Math.max(...keys);
   const timberObjArr = await db.get(TIMBER_COLLECTION, maxKey);
-  timberObjArr['blockNumber'] = timberObjArr['_id'];
-  delete timberObjArr['_id'];
+  timberObjArr.blockNumber = timberObjArr._id;
+  delete timberObjArr._id;
   return timberObjArr;
 }
 

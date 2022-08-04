@@ -20,7 +20,14 @@ import { encryptAndStore, retrieveAndDecrypt, storeBrowserKey } from '../../util
 import useInterval from '../useInterval';
 import { wsMqMapping, topicRollback, topicBlockProposed } from '../../common-files/utils/mq';
 
-const { USE_STUBS, usernameMq, pswMQ, twoStepSyncUrl, twoStepSyncDeployment, checkBlockVersionUrl } = global.config;
+const {
+  USE_STUBS,
+  usernameMq,
+  pswMQ,
+  twoStepSyncUrl,
+  twoStepSyncDeployment,
+  checkBlockVersionUrl,
+} = global.config;
 
 export const initialState = {
   compressedPkd: '',
@@ -142,19 +149,16 @@ export const UserProvider = ({ children }) => {
 
   const verifyBlock = async (blockNumber, timberJson) => {
     const res = await axios
-      .post(
-        `${checkBlockVersionUrl}`,
-        {
-          timber: timberJson,
-          deployment: twoStepSyncDeployment,
-          block: blockNumber,
-        }
-      )
+      .post(`${checkBlockVersionUrl}`, {
+        timber: timberJson,
+        deployment: twoStepSyncDeployment,
+        block: blockNumber,
+      })
       .catch(err => {
         console.log(err);
       });
 
-    return res
+    return res;
   };
 
   const deriveAccounts = async (mnemonic, numAccts) => {
@@ -264,7 +268,7 @@ export const UserProvider = ({ children }) => {
     const isSynced = (await verifyBlock(maxBlockTimber, lastTimber)).data.body;
     if (!isSynced) {
       maxBlockTimber = -1;
-      completeSync = true
+      completeSync = true;
     }
     if (await getClientId(0)) await setupMqtt();
     await timberAndBlockSync(maxBlockTimber, maxBlockTimber, false, completeSync);
