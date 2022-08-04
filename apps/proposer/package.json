@@ -20,6 +20,8 @@
     "web3": "^1.6.1",
     "winston": "^3.3.3",
     "ws": "^8.2.3",
-    "reconnecting-websocket": "^4.4.0"
+    "reconnecting-websocket": "^4.4.0",
+    "cls-hooked": "4.2.2",
+    "uuid": "8.3.2"
   }
 }

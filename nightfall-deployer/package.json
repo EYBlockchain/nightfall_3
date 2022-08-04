@@ -31,7 +31,9 @@
     "safe-buffer": "^5.2.1",
     "truffle": "^5.5.13",
     "web3": "^1.4.0",
-    "winston": "^3.3.3"
+    "winston": "^3.3.3",
+    "cls-hooked": "4.2.2",
+    "uuid": "8.3.2"
   },
   "devDependencies": {
     "@truffle/hdwallet-provider": "^1.5.0",

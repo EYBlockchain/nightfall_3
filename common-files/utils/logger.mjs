@@ -7,6 +7,7 @@
 import winston from 'winston';
 import util from 'util';
 import config from 'config';
+import correlator from './correlation-id.mjs'
 
 const { createLogger, format, transports } = winston;
 const { inspect } = util;
@@ -27,6 +28,8 @@ export default createLogger({
       const splatArgs = info[Symbol.for('splat')];
       let log = `${info.level}: ${info.message}`;
 
+      log += ', correlationId: ' + (correlator.getId() || 'nocorrelation');
+
       // append splat messages to log
       if (splatArgs) {
         const rest = splatArgs.map(formatWithInspect).join();
@@ -37,6 +40,7 @@ export default createLogger({
       if (info.stack) {
         log += ` ${info.stack}`;
       }
+      
       return log;
     }),
   ),

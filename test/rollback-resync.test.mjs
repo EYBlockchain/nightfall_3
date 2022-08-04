@@ -47,7 +47,7 @@ describe('Running rollback and resync test', () => {
   let zkpPublicKey1;
   const txPerBlock = 2;
   const validTransactions = [];
-  const environment = web3Client.getCurrentEnvironment();
+  const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
   before(async function () {
     web3 = await web3Client.connectWeb3();
@@ -66,7 +66,7 @@ describe('Running rollback and resync test', () => {
       await chai.request(environment.clientApiUrl).get('/contract-address/Challenges')
     ).body.address;
 
-    ercAddress = (await chai.request(environment.clientApiUrl).get('/contract-address/ERCStub'))
+    ercAddress = (await chai.request(environment.clientApiUrl).get('/contract-address/ERC20Mock'))
       .body.address;
 
     [myAddress] = await web3Client.getAccounts();
@@ -85,7 +85,7 @@ describe('Running rollback and resync test', () => {
       await chai
         .request(environment.clientApiUrl)
         .post('/generate-zkp-keys')
-        .send({ mnemonic, path: `m/44'/60'/0'/0` })
+        .send({ mnemonic, addressIndex: 0 })
     ).body);
 
     defaultDepositArgs = {

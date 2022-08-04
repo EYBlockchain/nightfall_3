@@ -18,7 +18,6 @@ export const contractPath = contractName => {
 export async function getContractInterface(contractName) {
   const path = contractPath(contractName);
   const contractInterface = JSON.parse(fs.readFileSync(path, 'utf8'));
-  // logger.silly('\ncontractInterface:', contractInterface);
   return contractInterface;
 }
 
