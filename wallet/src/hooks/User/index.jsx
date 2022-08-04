@@ -10,6 +10,7 @@ import {
   getClientId,
   saveTree,
   getMaxBlock,
+  getLatestTimber,
 } from '@Nightfall/services/database';
 import mqtt from 'mqtt';
 import axios from 'axios';
@@ -19,7 +20,7 @@ import { encryptAndStore, retrieveAndDecrypt, storeBrowserKey } from '../../util
 import useInterval from '../useInterval';
 import { wsMqMapping, topicRollback, topicBlockProposed } from '../../common-files/utils/mq';
 
-const { USE_STUBS, usernameMq, pswMQ, twoStepSyncUrl, twoStepSyncDeployment } = global.config;
+const { USE_STUBS, usernameMq, pswMQ, twoStepSyncUrl, twoStepSyncDeployment, checkBlockVersionUrl } = global.config;
 
 export const initialState = {
   compressedPkd: '',
@@ -44,15 +45,16 @@ export const UserProvider = ({ children }) => {
     const currentClientId = await getClientId(0);
     const options = {
       clientId: currentClientId,
+      protocolVersion: 4,
       clean: false,
       username: usernameMq,
       password: pswMQ,
-      rejectUnauthorized: false,
       reconnectPeriod: 1000,
     };
     setClient(mqtt.connect(host, options));
 
     const blockOptions = {
+      protocolVersion: 4,
       clientId: `block_${currentClientId}`,
       clean: true,
       username: usernameMq,
@@ -77,7 +79,7 @@ export const UserProvider = ({ children }) => {
 
   const createClientId = async address => {
     const clientId =
-      Math.floor(new Date().getTime() / 1000) + Math.floor(Math.random() * 100) + address;
+      Math.floor(new Date().getTime() / 1000) + Math.floor(Math.random() * 99) + address;
     storeClientId(clientId);
   };
 
@@ -86,6 +88,7 @@ export const UserProvider = ({ children }) => {
     lastL2Block,
     isTimberSynced,
     isL2Synced = false,
+    completeSync = false,
   ) => {
     if (isTimberSynced && isL2Synced) {
       return;
@@ -93,7 +96,7 @@ export const UserProvider = ({ children }) => {
 
     const res = await axios
       .get(
-        `${twoStepSyncUrl}?deployment=${twoStepSyncDeployment}&lastTimberBlock=${lastTimberBlock}&lastL2Block=${lastL2Block}&isTimberSynced=${isTimberSynced}`,
+        `${twoStepSyncUrl}?deployment=${twoStepSyncDeployment}&lastTimberBlock=${lastTimberBlock}&lastL2Block=${lastL2Block}&isTimberSynced=${isTimberSynced}&completeSync=${completeSync}`,
       )
       .catch(err => {
         console.log(err);
@@ -135,6 +138,23 @@ export const UserProvider = ({ children }) => {
       res.data.timber.isSynced,
       res.data.l2Block.isSynced,
     );
+  };
+
+  const verifyBlock = async (blockNumber, timberJson) => {
+    const res = await axios
+      .post(
+        `${checkBlockVersionUrl}`,
+        {
+          timber: timberJson,
+          deployment: twoStepSyncDeployment,
+          block: blockNumber,
+        }
+      )
+      .catch(err => {
+        console.log(err);
+      });
+
+    return res
   };
 
   const deriveAccounts = async (mnemonic, numAccts) => {
@@ -224,6 +244,7 @@ export const UserProvider = ({ children }) => {
       const { compressedPkd } = state;
       if (compressedPkd === '') return;
       blockClient.on('message', async (topic, message) => {
+        logger.info(message.toString());
         const { type, data } = JSON.parse(message.toString());
         const { ivk, nsk } = await retrieveAndDecrypt(compressedPkd);
         if (topic === topicBlockProposed && state.chainSync) {
@@ -237,9 +258,16 @@ export const UserProvider = ({ children }) => {
   }, [blockClient]);
 
   React.useEffect(async () => {
-    const maxBlockTimber = await getMaxBlock();
+    let maxBlockTimber = await getMaxBlock();
+    let completeSync = false;
+    const lastTimber = await getLatestTimber();
+    const isSynced = (await verifyBlock(maxBlockTimber, lastTimber)).data.body;
+    if (!isSynced) {
+      maxBlockTimber = -1;
+      completeSync = true
+    }
     if (await getClientId(0)) await setupMqtt();
-    await timberAndBlockSync(maxBlockTimber, maxBlockTimber, false);
+    await timberAndBlockSync(maxBlockTimber, maxBlockTimber, false, completeSync);
   }, []);
 
   React.useEffect(async () => {

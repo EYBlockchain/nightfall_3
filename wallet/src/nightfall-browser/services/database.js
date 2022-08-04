@@ -111,6 +111,16 @@ export async function getLatestTree() {
   return t;
 }
 
+export async function getLatestTimber() {
+  const db = await connectDB();
+  const keys = await db.getAllKeys(TIMBER_COLLECTION);
+  const maxKey = Math.max(...keys);
+  const timberObjArr = await db.get(TIMBER_COLLECTION, maxKey);
+  timberObjArr['blockNumber'] = timberObjArr['_id'];
+  delete timberObjArr['_id'];
+  return timberObjArr;
+}
+
 export async function getTreeByRoot(treeRoot) {
   const db = await connectDB();
   const vals = await db.getAll(TIMBER_COLLECTION);

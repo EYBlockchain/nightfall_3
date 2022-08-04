@@ -489,4 +489,7 @@ module.exports = {
   // LAMBDA TWOSTEPSYNC
   twoStepSyncUrl: process.env.TWO_STEP_SYNC_URL,
   twoStepSyncDeployment: process.env.TWO_STEP_SYNC_DEPLOYMENT,
+
+  //LAMBDA CHECKBLOCKVERSION
+  checkBlockVersionUrl: process.env.CHECK_BLOCK_VERSION_URL,
 };
