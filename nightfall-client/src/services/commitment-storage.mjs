@@ -720,7 +720,7 @@ export async function getCommitmentsByCompressedZkpPublicKeyList(listOfCompresse
   const commitmentsByListOfCompressedZkpPublicKey = await db
     .collection(COMMITMENTS_COLLECTION)
     .find({
-      'preimage.compressedZkpPublicKey': { $in: listOfCompressedZkpPublicKey },
+      compressedZkpPublicKey: { $in: listOfCompressedZkpPublicKey },
     })
     .toArray();
   return commitmentsByListOfCompressedZkpPublicKey;
