@@ -58,9 +58,9 @@ const emptyL2 = async nf3Instance => {
         fee,
       );
 
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
     } else {
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
     }
 
     count = await nf3Instance.unprocessedTransactionCount();
@@ -75,7 +75,7 @@ const emptyL2 = async nf3Instance => {
     tokenId,
     fee,
   );
-  eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+  ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
 };
 
 describe('ERC1155 tests', () => {
@@ -116,7 +116,7 @@ describe('ERC1155 tests', () => {
         fee,
       );
     }
-    eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed'], 2);
+    ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed'], 2));
 
     await emptyL2(nf3Users[0]);
   });
@@ -151,7 +151,7 @@ describe('ERC1155 tests', () => {
       );
       expectTransaction(res);
       // Wait until we see the right number of blocks appear
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
 
       await emptyL2(nf3Users[0]);
       balances = await nf3Users[0].getLayer2Balances();
@@ -179,7 +179,7 @@ describe('ERC1155 tests', () => {
       expectTransaction(res);
 
       // Wait until we see the right number of blocks appear
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
 
       await emptyL2(nf3Users[0]);
     });
@@ -214,7 +214,7 @@ describe('ERC1155 tests', () => {
         );
         expectTransaction(res);
       }
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
 
       await getBalances();
 

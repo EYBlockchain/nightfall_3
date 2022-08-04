@@ -57,9 +57,9 @@ const emptyL2 = async nf3Instance => {
         fee,
       );
 
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
     } else {
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
     }
 
     count = await nf3Instance.unprocessedTransactionCount();
@@ -74,7 +74,7 @@ const emptyL2 = async nf3Instance => {
     tokenId,
     fee,
   );
-  eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+  ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
 };
 
 describe('ERC721 tests', () => {
@@ -107,7 +107,7 @@ describe('ERC721 tests', () => {
     for (let i = 0; i < txPerBlock * 2; i++) {
       await nf3Users[0].deposit(erc721Address, tokenTypeERC721, 0, availableTokenIds.shift(), fee);
     }
-    eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+    ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
 
     await emptyL2(nf3Users[0]);
   });
@@ -138,7 +138,7 @@ describe('ERC721 tests', () => {
       );
       expectTransaction(res);
       // Wait until we see the right number of blocks appear
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       await emptyL2(nf3Users[0]);
       balances = await nf3Users[0].getLayer2Balances();
       const balanceAfter = balances[erc721Address].length;
@@ -172,7 +172,7 @@ describe('ERC721 tests', () => {
         );
         expectTransaction(res);
       }
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       // await new Promise(resolve => setTimeout(resolve, 3000));
 
       // depositing some ERC20 transactions to fill the block

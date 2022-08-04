@@ -66,16 +66,16 @@ export class Web3Client {
         for (const topic of log.topics) {
           switch (topic) {
             case topicEventMapping.BlockProposed:
-              queue.push('blockProposed');
+              queue.push({ eventName: 'blockProposed', log });
               break;
             case topicEventMapping.TransactionSubmitted:
-              queue.push('TransactionSubmitted');
+              queue.push({ eventName: 'TransactionSubmitted', log });
               break;
             case topicEventMapping.NewCurrentProposer:
-              queue.push('NewCurrentProposer');
+              queue.push({ eventName: 'NewCurrentProposer', log });
               break;
             default:
-              queue.push('Challenge');
+              queue.push({ eventName: 'Challenge', log });
               break;
           }
         }
@@ -221,14 +221,14 @@ export class Web3Client {
       if (timeout === 0) throw new Error('Timeout in waitForEvent');
     }
 
-    while (eventLogs[0] !== expectedEvents[0]) {
+    while (eventLogs[0]?.eventName !== expectedEvents[0]) {
       await waitForTimeout(3000);
     }
 
-    expect(eventLogs[0]).to.equal(expectedEvents[0]);
-
+    expect(eventLogs[0].eventName).to.equal(expectedEvents[0]);
+    const eventsSeen = [];
     for (let i = 0; i < length; i++) {
-      eventLogs.shift();
+      eventsSeen.push(eventLogs.shift());
     }
 
     const blockHeaders = [];
@@ -241,7 +241,7 @@ export class Web3Client {
 
     // Have to wait here as client block proposal takes longer now
     await waitForTimeout(3000);
-    return eventLogs;
+    return { eventLogs, eventsSeen };
   }
 }
 

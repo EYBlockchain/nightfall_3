@@ -5,7 +5,7 @@
 An optimistic Transaction class
 */
 import gen from 'general-number';
-import Web3 from '../utils/web3.mjs';
+import Web3 from 'web3';
 import { compressProof } from '../utils/curve-maths/curves.mjs';
 import constants from '../constants/index.mjs';
 
@@ -23,7 +23,7 @@ const arrayEquality = (as, bs) => {
 
 // function to compute the keccak hash of a transaction
 function keccak(preimage) {
-  const web3 = Web3.connection();
+  const web3 = new Web3();
   const {
     value,
     fee,

@@ -69,9 +69,9 @@ const emptyL2 = async nf3Instance => {
         fee,
       );
 
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
     } else {
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
     }
 
     count = await nf3Instance.unprocessedTransactionCount();
@@ -86,7 +86,7 @@ const emptyL2 = async nf3Instance => {
     tokenId,
     fee,
   );
-  eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+  ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
 };
 
 describe('ERC20 tests', () => {
@@ -131,7 +131,7 @@ describe('ERC20 tests', () => {
         fee,
       );
       // Wait until we see the right number of blocks appear
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       const totalGas = depositTransactions.reduce((acc, { gasUsed }) => acc + Number(gasUsed), 0);
       logger.debug(`     Average Gas used was ${Math.ceil(totalGas / txPerBlock)}`);
     });
@@ -149,7 +149,7 @@ describe('ERC20 tests', () => {
         tokenId,
         fee,
       );
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       const afterZkpPublicKeyBalance = (await nf3Users[0].getLayer2Balances())[erc20Address][0]
         .balance;
       expect(afterZkpPublicKeyBalance - currentZkpPublicKeyBalance).to.be.equal(
@@ -186,7 +186,7 @@ describe('ERC20 tests', () => {
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
       // stateBalance += fee * txPerBlock + BLOCK_STAKE;
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
 
       await getBalances();
 
@@ -213,7 +213,7 @@ describe('ERC20 tests', () => {
       const after = (await nf3Users[0].getLayer2Balances())[erc20Address][0].balance;
 
       // stateBalance += fee * txPerBlock + BLOCK_STAKE;
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       expect(after).to.be.lessThan(before);
     });
 
