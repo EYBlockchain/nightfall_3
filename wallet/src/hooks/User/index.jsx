@@ -113,6 +113,7 @@ export const UserProvider = ({ children }) => {
     lastL2Block,
     isTimberSynced,
     isL2Synced = false,
+    completeSync = false,
   ) => {
     if (isTimberSynced && isL2Synced) {
       return;
@@ -120,7 +121,7 @@ export const UserProvider = ({ children }) => {
 
     const res = await axios
       .get(
-        `${twoStepSyncUrl}?deployment=${twoStepSyncDeployment}&lastTimberBlock=${lastTimberBlock}&lastL2Block=${lastL2Block}&isTimberSynced=${isTimberSynced}`,
+        `${twoStepSyncUrl}?deployment=${twoStepSyncDeployment}&lastTimberBlock=${lastTimberBlock}&lastL2Block=${lastL2Block}&isTimberSynced=${isTimberSynced}&completeSync=${completeSync}`,
       )
       .catch(err => {
         console.log(err);
@@ -176,13 +177,18 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  const configureMessageListener = () => {
-    const { compressedZkpPublicKey, socket } = state;
-    if (compressedZkpPublicKey === '') return;
+  const mqttClientOnChange = async (mqClient, topic) => {
+    mqClient.on('connect', () => {
+      console.log('connected');
 
-    if (messageEventHandler) {
-      socket.removeEventListener('message', messageEventHandler);
-    }
+      mqClient.subscribe(topic, { qos: 2 }, function (err, granted) {
+        if (err) {
+          logger.error(err);
+        } else if (granted) {
+          logger.debug('subscribe to ', topic, granted);
+        }
+      });
+    });
 
     // Listen for messages
       if(client) {
@@ -194,7 +200,7 @@ export const UserProvider = ({ children }) => {
             if(type == topic)
               await blockProposedEventHandler(data, [ivk], [nsk]);
             else
-              console.log("Error: messange sent on wrong topic")
+              logger.debug("Error: messange sent on wrong topic")
           }
           else if (topic === 'rollback'){
             if(type == topic)
@@ -213,7 +219,7 @@ export const UserProvider = ({ children }) => {
         logger.info(message.toString());
         const { type, data } = JSON.parse(message.toString());
         if (topic === topicBlockProposed) {
-          console.log('Error: messange sent on wrong topic');
+          logger.error('Error: messange sent on wrong topic');
         } else if (topic === topicRollback) {
           if (type === topic) {
             const maxBlockTimber = await getMaxBlock();
@@ -221,7 +227,7 @@ export const UserProvider = ({ children }) => {
               await rollbackEventHandler(data);
               await timberAndBlockSync(maxBlockTimber, maxBlockTimber, false);
             }
-          } else console.log('Error: messange sent on wrong topic');
+          } else logger.error('Error: messange sent on wrong topic');
         }
       });
     }
@@ -237,9 +243,9 @@ export const UserProvider = ({ children }) => {
         const { ivk, nsk } = await retrieveAndDecrypt(compressedPkd);
         if (topic === topicBlockProposed && state.chainSync) {
           if (type === topic) await blockProposedEventHandler(data, [ivk], [nsk]);
-          else console.log('Error: messange sent on wrong topic');
+          else logger.error('Error: messange sent on wrong topic');
         } else if (topic === topicRollback) {
-          console.log('Error: messange sent on wrong topic');
+          logger.error('Error: messange sent on wrong topic');
         }
       });
     }
