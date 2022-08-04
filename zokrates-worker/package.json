@@ -16,12 +16,12 @@
     "axios": "^0.26.1",
     "body-parser": "1.19.0",
     "common-files": "file:../common-files",
-    "config": "^3.3.2",
+    "config": "^3.3.7",
     "cors": "2.8.5",
     "express": "^4.17.1",
     "jsonfile": "^6.1.0",
     "tar": "^6.1.11",
-    "web3": "^1.4.0",
+    "web3": "^1.7.5",
     "winston": "^3.3.3"
   },
   "devDependencies": {
