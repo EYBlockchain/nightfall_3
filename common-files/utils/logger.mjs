@@ -6,7 +6,7 @@ import pino from 'pino';
 const LOGGER_TIME_STRING = 'yyyy-mm-dd HH:MM:ss';
 
 export default pino({
-  level: config.LOG_LEVEL,
+  level: config.LOG_LEVEL || 'info',
   transport: {
     target: 'pino-pretty',
     options: {
