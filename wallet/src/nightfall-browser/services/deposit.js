@@ -12,13 +12,14 @@
 import gen from 'general-number';
 import { initialize } from 'zokrates-js';
 
-import rand from '../../common-files/utils/crypto/crypto-random';
+import { randValueLT } from '../../common-files/utils/crypto/crypto-random';
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
 import { Commitment, Transaction } from '../classes/index';
 import { storeCommitment } from './commitment-storage';
-import { compressPublicKey } from './keys';
+import { ZkpKeys } from './keys.mjs';
 import { checkIndexDBForCircuit, getStoreCircuit } from './database';
+import { computeWitness } from '../utils/compute-witness';
 
 const { BN128_GROUP_ORDER, USE_STUBS } = global.config;
 const { ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME } = global.nightfallConstants;
@@ -29,8 +30,9 @@ async function deposit(items, shieldContractAddress) {
   logger.info('Creating a deposit transaction');
   // before we do anything else, long hex strings should be generalised to make
   // subsequent manipulations easier
-  const { ercAddress, tokenId, value, pkd, nsk, fee } = generalise(items);
-  const compressedPkd = compressPublicKey(pkd);
+  const { ercAddress, tokenId, value, compressedZkpPublicKey, nullifierKey, fee } =
+    generalise(items);
+  const zkpPublicKey = ZkpKeys.decompressZkpPublicKey(compressedZkpPublicKey);
 
   if (!(await checkIndexDBForCircuit(circuitName)))
     throw Error('Some circuit data are missing from IndexedDB');
@@ -44,26 +46,26 @@ async function deposit(items, shieldContractAddress) {
   const program = programData.data;
   const pk = pkData.data;
 
-  let commitment;
-  let salt;
-  do {
-    // we also need a salt to make the commitment unique and increase its entropy
-    // eslint-disable-next-line
-    salt = await rand(ZKP_KEY_LENGTH);
-    // next, let's compute the zkp commitment we're going to store and the hash of the public inputs (truncated to 248 bits)
-    commitment = new Commitment({ ercAddress, tokenId, value, compressedPkd, salt });
-  } while (commitment.hash.bigInt > BN128_GROUP_ORDER);
-
+  const salt = await randValueLT(BN128_GROUP_ORDER);
+  const commitment = new Commitment({ ercAddress, tokenId, value, zkpPublicKey, salt });
   logger.debug(`Hash of new commitment is ${commitment.hash.hex()}`);
   // now we can compute a Witness so that we can generate the proof
-  const witnessInput = [
-    ercAddress.integer,
-    tokenId.integer,
-    value.integer,
-    compressedPkd.limbs(32, 8),
-    salt.limbs(32, 8),
-    commitment.hash.integer,
-  ];
+  const publicData = Transaction.buildSolidityStruct(
+    new Transaction({
+      fee,
+      transactionType: 0,
+      tokenType: items.tokenType,
+      tokenId,
+      value,
+      ercAddress,
+      commitments: [commitment],
+    }),
+  );
+
+  const privateData = { salt, recipientPublicKeys: [zkpPublicKey] };
+  const roots = [];
+
+  const witnessInput = computeWitness(publicData, roots, privateData);
   logger.debug(`witness input is ${witnessInput.join(' ')}`);
 
   try {
