@@ -39,8 +39,6 @@ module.exports = {
   PEERS_COLLECTION: 'peers',
   TIMBER_COLLECTION: 'timber',
   CIRCUIT_COLLECTION: 'circuit_storage',
-  CLIENT_ID_COLLECTION: 'client_id',
-  KEYS_COLLECTION: 'keys',
   CONTRACT_ARTIFACTS: '/app/build/contracts',
   EXCLUDE_DIRS: 'common',
   PROOF_QUEUE: 'generate-proof',
@@ -61,17 +59,6 @@ module.exports = {
   WEBSOCKET_PORT: process.env.WEBSOCKET_PORT || 8080,
   WEBSOCKET_PING_TIME: 15000,
   ZOKRATES_WORKER_HOST: process.env.ZOKRATES_WORKER_HOST || 'worker',
-  MULTISIG: {
-    SIGNATURE_THRESHOLD: process.env.MULTISIG_SIGNATURE_THRESHOLD || 2, // number of signatures needed to perform an admin task
-    APPROVERS: process.env.MULTISIG_APPROVERS
-      ? process.env.MULTISG_APPROVERS.split(',')
-      : [
-        '0x9C8B2276D490141Ae1440Da660E470E7C0349C63',
-        '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0',
-        '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
-        '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
-      ],
-  },
   BLOCKCHAIN_URL:
     process.env.BLOCKCHAIN_URL ||
     `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`,
