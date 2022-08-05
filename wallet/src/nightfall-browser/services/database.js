@@ -16,6 +16,8 @@ const {
   KEYS_COLLECTION,
   CIRCUIT_COLLECTION,
   TIMBER_HEIGHT,
+  HASH_TYPE,
+  CLIENT_ID_COLLECTION,
 } = global.config;
 
 // This needs to have better indexDB performance.
