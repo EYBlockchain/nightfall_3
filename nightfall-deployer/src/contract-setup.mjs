@@ -36,7 +36,7 @@ async function setupCircuits() {
     );
   }
   // the following code runs the registrations in parallel
-  return Promise.all([
+  await Promise.all([
     (await waitForContract('Proposers')).methods
       .setStateContract(stateInstance.options.address)
       .send(),
@@ -46,6 +46,19 @@ async function setupCircuits() {
     (await waitForContract('Challenges')).methods
       .setStateContract(stateInstance.options.address)
       .send(),
+  ]);
+  // our last action as the deployer is to hand off our onlyOwner powers to the
+  // multisig contract
+  const simpleMultiSigAddress = (await waitForContract('SimpleMultiSig')).options.address;
+  const shieldContractInstance = await waitForContract('Shield');
+  const stateContractInstance = await waitForContract('State');
+  const proposerContractInstance = await waitForContract('Proposers');
+  const challengesContractInstance = await waitForContract('Challenges');
+  return Promise.all([
+    shieldContractInstance.methods.transferOwnership(simpleMultiSigAddress).send(),
+    stateContractInstance.methods.transferOwnership(simpleMultiSigAddress).send(),
+    proposerContractInstance.methods.transferOwnership(simpleMultiSigAddress).send(),
+    challengesContractInstance.methods.transferOwnership(simpleMultiSigAddress).send(),
   ]);
 }
 

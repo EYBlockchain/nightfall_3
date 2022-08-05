@@ -5,6 +5,20 @@ function configureAWSBucket() {
   return `${bucket}-${mode}`;
 }
 
+function parseCircuitFilesPath() {
+  let circuits = ['deposit', 'withdraw', 'single_transfer', 'double_transfer'];
+  if (process.env.USE_STUBS === 'true') circuits = circuits.map(circuit => `${circuit}_stub`);
+  const parsedPath = {};
+  for (const circuit of circuits) {
+    parsedPath[circuit] = {
+      abi: `circuits/${circuit}/artifacts/${circuit}-abi.json`,
+      program: `circuits/${circuit}/artifacts/${circuit}-program`,
+      pk: `circuits/${circuit}/keypair/${circuit}_pk.key`,
+    };
+  }
+  return parsedPath;
+}
+
 /* eslint-disable no-extend-native */
 BigInt.prototype.toJSON = function () {
   return `${this.toString()} BigInt`;
@@ -17,6 +31,7 @@ module.exports = {
   CHALLENGER_COLLECTION: 'challengers',
   TRANSACTIONS_COLLECTION: 'transactions',
   SUBMITTED_BLOCKS_COLLECTION: 'blocks',
+  INVALID_BLOCKS_COLLECTION: 'invalid_blocks',
   NULLIFIER_COLLECTION: 'nullifiers',
   COMMIT_COLLECTION: 'commits',
   WALLETS_COLLECTION: 'wallets',
@@ -24,22 +39,22 @@ module.exports = {
   PEERS_COLLECTION: 'peers',
   TIMBER_COLLECTION: 'timber',
   CIRCUIT_COLLECTION: 'circuit_storage',
-  CLIENT_ID_COLLECTION: 'client_id',
   CONTRACT_ARTIFACTS: '/app/build/contracts',
-  PROPOSERS_CONTRACT_NAME: 'Proposers',
-  SHIELD_CONTRACT_NAME: 'Shield',
-  CHALLENGES_CONTRACT_NAME: 'Challenges',
-  STATE_CONTRACT_NAME: 'State',
+  EXCLUDE_DIRS: 'common',
+  PROOF_QUEUE: 'generate-proof',
+  MAX_QUEUE: 5,
+  TIMBER_HEIGHT: 32,
+  TXHASH_TREE_HEIGHT: 5,
+  CONFIRMATION_POLL_TIME: 1000,
+  CONFIRMATIONS: 12,
+  DEFAULT_ACCOUNT_NUM: 10,
+  HASH_TYPE: 'poseidon',
+  TXHASH_TREE_HASH_TYPE: 'keccak256',
   STATE_GENESIS_BLOCK: process.env.STATE_GENESIS_BLOCK,
-  BLOCK_PROPOSED_EVENT_NAME: 'BlockProposed',
   CIRCUITS_HOME: process.env.CIRCUITS_HOME || '/app/circuits/',
   ALWAYS_DO_TRUSTED_SETUP: process.env.ALWAYS_DO_TRUSTED_SETUP || false,
-  EXCLUDE_DIRS: 'common', // don't setup files with this in their path
   LOG_LEVEL: process.env.LOG_LEVEL || 'debug',
   MONGO_URL: process.env.MONGO_URL || 'mongodb://localhost:27017/',
-  ZKP_KEY_LENGTH: 32, // use a 32 byte key length for SHA compatibility
-  CONFIRMATION_POLL_TIME: 1000, // time to wait before querying the blockchain (ms). Must be << block interval
-  CONFIRMATIONS: 12, // number of confirmations to wait before accepting a transaction
   PROTOCOL: 'http://', // connect to zokrates microservice like this
   WEBSOCKET_PORT: process.env.WEBSOCKET_PORT || 8080,
   WEBSOCKET_PING_TIME: 15000,
@@ -72,33 +87,18 @@ module.exports = {
   PROVING_SCHEME: process.env.PROVING_SCHEME || 'g16',
   BACKEND: process.env.BACKEND || 'bellman',
   CURVE: process.env.CURVE || 'bn128',
-  PROOF_QUEUE: 'generate-proof',
-  BN128_GROUP_ORDER: 21888242871839275222246405745257275088548364400416034343698204186575808495617n,
-  BN128_PRIME_FIELD: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
+
   TRANSACTIONS_PER_BLOCK: Number(process.env.TRANSACTIONS_PER_BLOCK) || 2,
-  BLOCK_TYPES: '(uint48,address,bytes32,uint256,bytes32,bytes32)',
-  TRANSACTION_TYPES:
-    '(uint112,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[8],uint[4])',
-  PROPOSE_BLOCK_TYPES: [
-    '(uint48,address,bytes32,uint256,bytes32,bytes32)',
-    '(uint112,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[8],uint[4])[]',
-  ], // used to encode/decode proposeBlock signature
-  SUBMIT_TRANSACTION_TYPES:
-    '(uint112,uint64[2],uint8,uint8,bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[8],uint[4])',
-  RETRIES: Number(process.env.AUTOSTART_RETRIES) || 600,
-  NODE_HASHLENGTH: 32,
-  ZERO: '0x0000000000000000000000000000000000000000000000000000000000000000',
-  HASH_TYPE: 'mimc',
-  TXHASH_TREE_HASH_TYPE: 'keccak256',
+  RETRIES: Number(process.env.AUTOSTART_RETRIES) || 50,
   USE_STUBS: process.env.USE_STUBS === 'true',
   VK_IDS: { deposit: 0, single_transfer: 1, double_transfer: 2, withdraw: 3 }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
-  TIMBER_HEIGHT: 32,
-  TXHASH_TREE_HEIGHT: 5,
   MAX_PUBLIC_VALUES: {
     ERCADDRESS: 2n ** 161n - 1n,
     COMMITMENT: 2n ** 249n - 1n,
     NULLIFIER: 2n ** 249n - 1n,
   },
+  BN128_GROUP_ORDER: 21888242871839275222246405745257275088548364400416034343698204186575808495617n,
+  BN128_PRIME_FIELD: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
   // the various parameters needed to describe the Babyjubjub curve that we use for El-Gamal
   // BABYJUBJUB
   // Montgomery EC form is y^2 = x^3 + Ax^2 + Bx
@@ -122,7 +122,6 @@ module.exports = {
   ELLIGATOR2: {
     U: BigInt(5), // non square in Fp
   },
-  MAX_QUEUE: 5,
   MPC: {
     MPC_PARAMS_URL:
       'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com/phase2/mpc_params',
@@ -158,7 +157,7 @@ module.exports = {
     },
     localhost: {
       name: 'Localhost',
-      chainId: 4378921,
+      chainId: 1337,
       clientApiUrl: process.env.CLIENT_HOST
         ? `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`
         : 'http://localhost:8080',
@@ -178,8 +177,8 @@ module.exports = {
         process.env.BLOCKCHAIN_WS_HOST && process.env.BLOCKCHAIN_PORT
           ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`
           : process.env.BLOCKCHAIN_WS_HOST
-          ? `wss://${process.env.BLOCKCHAIN_WS_HOST}`
-          : 'ws://localhost:8546',
+            ? `wss://${process.env.BLOCKCHAIN_WS_HOST}`
+            : 'ws://localhost:8546',
     },
     aws: {
       name: 'AWS',
@@ -243,13 +242,13 @@ module.exports = {
       liquidityProvider:
         process.env.LIQUIDITY_PROVIDER_ADDRESS || '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
     },
-    pkds: {
+    zkpPublicKeys: {
       user1:
-        process.env.USER1_PKD ||
-        '0x0d27fb8112bf3274e27094ab05cc72db4d573ba081a659c3210a7bdbc1a9ec48',
+        process.env.USER1_COMPRESSED_ZKP_PUBLIC_KEY ||
+        '0x236af0fee749dd191e317fc8199f20c5b3df728bd3247db0623c3085e7ff501a',
       user2:
-        process.env.USER2_PKD ||
-        '0xaa3b5bbf25ee9aab94757487d21c9da7a1166f1cf1f65162c23579149eba8590',
+        process.env.USER2_COMPRESSED_ZKP_PUBLIC_KEY ||
+        '0x8b1cd14f2defec7928cc958e2dfbc86fbd3218e25a10807388a5db4b8fa4837e',
     },
     mnemonics: {
       user1:
@@ -427,53 +426,9 @@ module.exports = {
   eventWsUrl:
     process.env.LOCAL_PROPOSER === 'true' ? process.env.LOCAL_WS_URL : process.env.PROPOSER_WS_URL,
 
-  KEYS_COLLECTION: 'keys',
-  DEFAULT_ACCOUNT_NUM: 10,
-  circuitsAWSFiles: {
-    deposit_stub: {
-      abi: 'circuits/deposit_stub/artifacts/deposit_stub-abi.json',
-      program: 'circuits/deposit_stub/artifacts/deposit_stub-program',
-      pk: 'circuits/deposit_stub/keypair/deposit_stub_pk.key',
-    },
-    withdraw_stub: {
-      abi: 'circuits/withdraw_stub/artifacts/withdraw_stub-abi.json',
-      program: 'circuits/withdraw_stub/artifacts/withdraw_stub-program',
-      pk: 'circuits/withdraw_stub/keypair/withdraw_stub_pk.key',
-    },
-    single_transfer_stub: {
-      abi: 'circuits/single_transfer_stub/artifacts/single_transfer_stub-abi.json',
-      program: 'circuits/single_transfer_stub/artifacts/single_transfer_stub-program',
-      pk: 'circuits/single_transfer_stub/keypair/single_transfer_stub_pk.key',
-    },
-    double_transfer_stub: {
-      abi: 'circuits/double_transfer_stub/artifacts/double_transfer_stub-abi.json',
-      program: 'circuits/double_transfer_stub/artifacts/double_transfer_stub-program',
-      pk: 'circuits/double_transfer_stub/keypair/double_transfer_stub_pk.key',
-    },
-    deposit: {
-      abi: 'circuits/deposit/artifacts/deposit-abi.json',
-      program: 'circuits/deposit/artifacts/deposit-program',
-      pk: 'circuits/deposit/keypair/deposit_pk.key',
-    },
-    withdraw: {
-      abi: 'circuits/withdraw/artifacts/withdraw-abi.json',
-      program: 'circuits/withdraw/artifacts/withdraw-program',
-      pk: 'circuits/withdraw/keypair/withdraw_pk.key',
-    },
-    single_transfer: {
-      abi: 'circuits/single_transfer/artifacts/single_transfer-abi.json',
-      program: 'circuits/single_transfer/artifacts/single_transfer-program',
-      pk: 'circuits/single_transfer/keypair/single_transfer_pk.key',
-    },
-    double_transfer: {
-      abi: 'circuits/double_transfer/artifacts/double_transfer-abi.json',
-      program: 'circuits/double_transfer/artifacts/double_transfer-program',
-      pk: 'circuits/double_transfer/keypair/double_transfer_pk.key',
-    },
-  },
-
   AWS: {
     s3Bucket: configureAWSBucket(),
+    circuitFiles: parseCircuitFilesPath(),
   },
 
   utilApiServerUrl: process.env.LOCAL_UTIL_API_URL,
@@ -489,7 +444,4 @@ module.exports = {
   // LAMBDA TWOSTEPSYNC
   twoStepSyncUrl: process.env.TWO_STEP_SYNC_URL,
   twoStepSyncDeployment: process.env.TWO_STEP_SYNC_DEPLOYMENT,
-
-  // LAMBDA CHECKBLOCKVERSION
-  checkBlockVersionUrl: process.env.CHECK_BLOCK_VERSION_URL,
 };

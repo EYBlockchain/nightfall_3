@@ -38,7 +38,7 @@ class Commitment {
         this.preimage.ercAddress,
         this.preimage.tokenId,
         this.preimage.value,
-        this.preimage.compressedPkd,
+        this.compressedPkd,
         this.preimage.salt,
       ]).hex(32, 31),
     );

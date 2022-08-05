@@ -141,7 +141,6 @@ describe('ERC721 tests', () => {
       eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       await emptyL2(nf3Users[0]);
       balances = await nf3Users[0].getLayer2Balances();
-
       const balanceAfter = balances[erc721Address].length;
       expect(balanceAfter - balanceBefore).to.be.equal(2);
     });
@@ -168,7 +167,7 @@ describe('ERC721 tests', () => {
           tokenTypeERC721,
           0,
           balances[0].shift().tokenId,
-          nf3Users[1].zkpKeys.compressedPkd,
+          nf3Users[1].zkpKeys.compressedZkpPublicKey,
           fee,
         );
         expectTransaction(res);
@@ -180,7 +179,6 @@ describe('ERC721 tests', () => {
       await emptyL2(nf3Users[0]);
 
       await getBalances();
-
       expect((balances[0]?.length || 0) - (beforeBalances[0]?.length || 0)).to.be.equal(-2);
       expect((balances[1]?.length || 0) - (beforeBalances[1]?.length || 0)).to.be.equal(2);
     });
@@ -233,10 +231,10 @@ describe('ERC721 tests', () => {
 
         const commitments = await nf3Users[0].getPendingWithdraws();
         expect(
-          commitments[nf3Users[0].zkpKeys.compressedPkd][erc721Address].length,
+          commitments[nf3Users[0].zkpKeys.compressedZkpPublicKey][erc721Address].length,
         ).to.be.greaterThan(0);
         expect(
-          commitments[nf3Users[0].zkpKeys.compressedPkd][erc721Address].filter(
+          commitments[nf3Users[0].zkpKeys.compressedZkpPublicKey][erc721Address].filter(
             c => c.valid === true,
           ).length,
         ).to.be.greaterThan(0);

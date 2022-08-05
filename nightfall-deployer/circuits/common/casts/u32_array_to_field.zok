@@ -1,0 +1,12 @@
+from "EMBED" import u32_to_bits
+
+def main<N>(u32[N] i) -> (field):
+    field res = 0
+    for u32 k in 0..N do
+        for u32 j in 0..32 do
+            bool[32] bits = u32_to_bits(i[k])
+            u32 exponent = (N - k - 1) * 32 + (32 - j - 1)
+            res = res + if bits[j] then 2 ** exponent else 0 fi
+        endfor
+    endfor
+    return res

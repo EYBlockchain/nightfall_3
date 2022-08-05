@@ -30,17 +30,6 @@ export default function WithdrawTransaction(props: WithdrawProps): JSX.Element {
             {!props.withdrawready ? (
               <></>
             ) : (
-              // <Button
-              //   variant="secondary"
-              //   bsPrefix="withdraw-instant-btn"
-              //   onClick={e => {
-              //     console.log('Instant', e.currentTarget);
-              //     e.stopPropagation();
-              //     // setInstant(true);
-              //   }}
-              // >
-              //   Instant Withdraw
-              // </Button>
               <Button
                 variant="primary"
                 // Prop for if it is confirmed

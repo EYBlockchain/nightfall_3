@@ -204,20 +204,20 @@ export const UserProvider = ({ children }) => {
 
       mqClient.subscribe(topic, { qos: 2 }, function (err, granted) {
         if (err) {
-          console.log(err);
+          logger.error(err);
         } else if (granted) {
-          console.log('subscribe to ', topic, granted);
+          logger.debug('subscribe to ', topic, granted);
         }
       });
     });
 
     mqClient.on('error', err => {
-      console.error('Connection error: ', err);
+      logger.error('Connection error: ', err);
       mqClient.end();
     });
 
     mqClient.on('reconnect', () => {
-      console.log('Reconnecting');
+      logger.debug('Reconnecting');
     });
   };
 
@@ -228,7 +228,7 @@ export const UserProvider = ({ children }) => {
         logger.info(message.toString());
         const { type, data } = JSON.parse(message.toString());
         if (topic === topicBlockProposed) {
-          console.log('Error: messange sent on wrong topic');
+          logger.error('Error: messange sent on wrong topic');
         } else if (topic === topicRollback) {
           if (type === topic) {
             const maxBlockTimber = await getMaxBlock();
@@ -236,7 +236,7 @@ export const UserProvider = ({ children }) => {
               await rollbackEventHandler(data);
               await timberAndBlockSync(maxBlockTimber, maxBlockTimber, false);
             }
-          } else console.log('Error: messange sent on wrong topic');
+          } else logger.error('Error: messange sent on wrong topic');
         }
       });
     }
@@ -253,9 +253,9 @@ export const UserProvider = ({ children }) => {
         const { ivk, nsk } = await retrieveAndDecrypt(compressedPkd);
         if (topic === topicBlockProposed && state.chainSync) {
           if (type === topic) await blockProposedEventHandler(data, [ivk], [nsk]);
-          else console.log('Error: messange sent on wrong topic');
+          else logger.error('Error: messange sent on wrong topic');
         } else if (topic === topicRollback) {
-          console.log('Error: messange sent on wrong topic');
+          logger.error('Error: messange sent on wrong topic');
         }
       });
     }
@@ -276,7 +276,7 @@ export const UserProvider = ({ children }) => {
 
   React.useEffect(async () => {
     if (state.compressedPkd === '') {
-      console.log('Sync State');
+      logger.debug('Sync State');
       await syncState();
     }
     if (!isSyncComplete) setIsSyncComplete({ isSyncComplete: true });
@@ -289,7 +289,7 @@ export const UserProvider = ({ children }) => {
         : ['deposit', 'single_transfer', 'double_transfer', 'withdraw'];
 
       const circuitCheck = await Promise.all(circuitName.map(c => checkIndexDBForCircuit(c)));
-      console.log('Circuit Check', circuitCheck);
+      logger.debug('Circuit Check', circuitCheck);
       if (circuitCheck.every(c => c)) {
         setState(previousState => {
           return {

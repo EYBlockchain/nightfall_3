@@ -8,21 +8,15 @@ Here are the things that could be wrong with a transaction:
 import config from 'config';
 import gen from 'general-number';
 import logger from 'common-files/utils/logger.mjs';
+import constants from 'common-files/constants/index.mjs';
 import { Transaction, VerificationKey, Proof, TransactionError } from '../classes/index.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import { getBlockByBlockNumberL2 } from './database.mjs';
 import verify from './verify.mjs';
 
 const { generalise, GN } = gen;
-const {
-  PROVING_SCHEME,
-  BACKEND,
-  CURVE,
-  ZERO,
-  CHALLENGES_CONTRACT_NAME,
-  BN128_GROUP_ORDER,
-  MAX_PUBLIC_VALUES,
-} = config;
+const { PROVING_SCHEME, BACKEND, CURVE, BN128_GROUP_ORDER, MAX_PUBLIC_VALUES } = config;
+const { ZERO, CHALLENGES_CONTRACT_NAME } = constants;
 
 function isOverflow(value, check) {
   const bigValue = value.bigInt;
@@ -58,7 +52,7 @@ async function checkTransactionType(transaction) {
         transaction.commitments.length !== 2 ||
         transaction.nullifiers.some(n => n !== ZERO) ||
         transaction.compressedSecrets.some(cs => cs !== ZERO) ||
-        transaction.compressedSecrets.length !== 8 ||
+        transaction.compressedSecrets.length !== 2 ||
         transaction.proof.every(p => p === ZERO) ||
         // This extra check is unique to deposits
         Number(transaction.historicRootBlockNumberL2[0]) !== 0 ||
@@ -71,10 +65,7 @@ async function checkTransactionType(transaction) {
       break;
     case 1: // single token transaction
       if (
-        transaction.tokenId !== ZERO ||
         BigInt(transaction.value) !== 0n ||
-        transaction.ercAddress !== ZERO ||
-        transaction.recipientAddress !== ZERO ||
         transaction.commitments[0] === ZERO ||
         transaction.commitments[1] !== ZERO ||
         transaction.commitments.length !== 2 ||
@@ -82,7 +73,7 @@ async function checkTransactionType(transaction) {
         transaction.nullifiers[1] !== ZERO ||
         transaction.nullifiers.length !== 2 ||
         transaction.compressedSecrets.every(cs => cs === ZERO) ||
-        transaction.compressedSecrets.length !== 8 ||
+        transaction.compressedSecrets.length !== 2 ||
         transaction.proof.every(p => p === ZERO)
       )
         throw new TransactionError(
@@ -92,17 +83,14 @@ async function checkTransactionType(transaction) {
       break;
     case 2: // double token transaction
       if (
-        transaction.tokenId !== ZERO ||
         BigInt(transaction.value) !== 0n ||
-        transaction.ercAddress !== ZERO ||
-        transaction.recipientAddress !== ZERO ||
         transaction.commitments.some(c => c === ZERO) ||
         transaction.commitments.length !== 2 ||
         transaction.nullifiers.some(n => n === ZERO) ||
         transaction.nullifiers.length !== 2 ||
         transaction.nullifiers[0] === transaction.nullifiers[1] ||
         transaction.compressedSecrets.every(cs => cs === ZERO) ||
-        transaction.compressedSecrets.length !== 8 ||
+        transaction.compressedSecrets.length !== 2 ||
         transaction.proof.every(p => p === ZERO)
       )
         throw new TransactionError(
@@ -169,12 +157,17 @@ async function verifyProof(transaction) {
     transaction.historicRootBlockNumberL2[1],
   )) ?? { root: ZERO };
 
+  const bin = new GN(transaction.recipientAddress).binary.padStart(256, '0');
+  const parity = bin[0];
+  const ordinate = bin.slice(1);
+  const binaryEPub = [parity, new GN(ordinate, 'binary').field(BN128_GROUP_ORDER, false)];
+
   switch (Number(transaction.transactionType)) {
     case 0: // deposit transaction
       inputs = generalise(
         [
           transaction.ercAddress,
-          transaction.tokenId,
+          generalise(transaction.tokenId).limbs(32, 8),
           transaction.value,
           transaction.commitments[0],
         ].flat(Infinity),
@@ -191,13 +184,10 @@ async function verifyProof(transaction) {
           transaction.commitments[0],
           transaction.nullifiers[0],
           historicRootFirst.root,
-          // expand the compressed secrets slightly to extract the parity as a separate field
-          ...transaction.compressedSecrets.map(text => {
-            const bin = new GN(text).binary.padStart(256, '0');
-            const parity = bin[0];
-            const ordinate = bin.slice(1);
-            return [parity, new GN(ordinate, 'binary').field(BN128_GROUP_ORDER, false)];
-          }),
+          binaryEPub,
+          transaction.ercAddress,
+          transaction.tokenId,
+          ...transaction.compressedSecrets,
         ].flat(Infinity),
       );
       // check for truncation overflow attacks
@@ -211,19 +201,14 @@ async function verifyProof(transaction) {
     case 2: // double transfer transaction
       inputs = generalise(
         [
-          // transaction.ercAddress, // this is correct; ercAddress appears twice
-          // transaction.ercAddress, // in a double-transfer public input hash
           transaction.commitments, // not truncating here as we already ensured hash < group order
           transaction.nullifiers,
           historicRootFirst.root,
           historicRootSecond.root,
-          // expand the compressed secrets slightly to extract the parity as a separate field
-          ...transaction.compressedSecrets.map(text => {
-            const bin = new GN(text).binary.padStart(256, '0');
-            const parity = bin[0];
-            const ordinate = bin.slice(1);
-            return [parity, new GN(ordinate, 'binary').field(BN128_GROUP_ORDER, false)];
-          }),
+          binaryEPub,
+          transaction.ercAddress,
+          transaction.tokenId,
+          ...transaction.compressedSecrets,
         ].flat(Infinity),
       );
       // check for truncation overflow attacks
@@ -245,7 +230,7 @@ async function verifyProof(transaction) {
       inputs = generalise(
         [
           transaction.ercAddress,
-          transaction.tokenId,
+          generalise(transaction.tokenId).limbs(32, 8),
           transaction.value,
           transaction.nullifiers[0],
           transaction.recipientAddress,
