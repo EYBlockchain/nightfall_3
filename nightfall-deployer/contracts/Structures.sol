@@ -6,9 +6,17 @@ Basic data structures for an optimistic rollup
 pragma solidity ^0.8.0;
 
 contract Structures {
-    enum TransactionTypes {DEPOSIT, TRANSFER, WITHDRAW}
+    enum TransactionTypes {
+        DEPOSIT,
+        TRANSFER,
+        WITHDRAW
+    }
 
-    enum TokenType {ERC20, ERC721, ERC1155}
+    enum TokenType {
+        ERC20,
+        ERC721,
+        ERC1155
+    }
 
     event Rollback(uint256 blockNumberL2);
 

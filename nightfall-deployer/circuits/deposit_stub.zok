@@ -3,6 +3,13 @@ from "./common/generic_circuit/Stubs/commitments_stub.zok" import main as commit
 from "./common/generic_circuit/Stubs/nullifiers_stub.zok" import main as nullifier_stub;
 from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field;
 
+type Point = field[2]
+
+struct TokenId {
+	field top4Bytes
+	field remainder
+}
+
 def main(\
     PublicTransaction tx,\
     field[4] roots,\
