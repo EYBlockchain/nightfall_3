@@ -7,6 +7,9 @@ import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import mongo from 'common-files/utils/mongo.mjs';
 import Timber from 'common-files/classes/timber.mjs';
+import constants from 'common-files/constants/index.mjs';
+
+const { ZERO } = constants;
 
 const {
   MONGO_URL,
@@ -19,9 +22,8 @@ const {
   NULLIFIER_COLLECTION,
   COMMIT_COLLECTION,
   TIMBER_COLLECTION,
-  ZERO,
-  HASH_TYPE,
   TIMBER_HEIGHT,
+  HASH_TYPE,
 } = config;
 
 /**

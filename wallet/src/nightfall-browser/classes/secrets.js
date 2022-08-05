@@ -9,7 +9,8 @@ import Commitment from './commitment';
 import { enc, dec, edwardsCompress, edwardsDecompress } from '../utils/crypto/encryption/elgamal';
 import { calculatePkd } from '../services/keys';
 
-const { ZKP_KEY_LENGTH, BN128_GROUP_ORDER } = global.config;
+const { BN128_GROUP_ORDER } = global.config;
+const { ZKP_KEY_LENGTH } = global.nightfallConstants;
 
 class Secrets {
   ephemeralKeys; // random secret used in shared secret creation

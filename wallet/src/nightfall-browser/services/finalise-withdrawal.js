@@ -8,7 +8,7 @@ import { getContractInstance } from '../../common-files/utils/contract';
 import { Transaction } from '../classes/index';
 import { getTransactionByTransactionHash, getBlockByTransactionHash } from './database';
 
-const { SHIELD_CONTRACT_NAME } = global.config;
+const { SHIELD_CONTRACT_NAME } = global.nightfallConstants;
 
 // TODO move classes to their own folder so this is not needed (it's already a
 // static function in the Block class)

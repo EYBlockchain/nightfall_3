@@ -8,21 +8,15 @@ Here are the things that could be wrong with a transaction:
 import config from 'config';
 import gen from 'general-number';
 import logger from 'common-files/utils/logger.mjs';
+import constants from 'common-files/constants/index.mjs';
 import { Transaction, VerificationKey, Proof, TransactionError } from '../classes/index.mjs';
 import { waitForContract } from '../utils/index.mjs';
 import { getBlockByBlockNumberL2 } from './database.mjs';
 import verify from './verify.mjs';
 
 const { generalise, GN } = gen;
-const {
-  PROVING_SCHEME,
-  BACKEND,
-  CURVE,
-  ZERO,
-  CHALLENGES_CONTRACT_NAME,
-  BN128_GROUP_ORDER,
-  MAX_PUBLIC_VALUES,
-} = config;
+const { PROVING_SCHEME, BACKEND, CURVE, BN128_GROUP_ORDER, MAX_PUBLIC_VALUES } = config;
+const { ZERO, CHALLENGES_CONTRACT_NAME } = constants;
 
 function isOverflow(value, check) {
   const bigValue = value.bigInt;

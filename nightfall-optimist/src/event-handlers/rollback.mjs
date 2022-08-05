@@ -5,8 +5,8 @@ same blocks from our local database record and to reset cached Frontier and
 leafCount values in the Block class
 */
 import logger from 'common-files/utils/logger.mjs';
-import config from 'config';
 import { dequeueEvent, enqueueEvent } from 'common-files/utils/event-queue.mjs';
+import constants from 'common-files/constants/index.mjs';
 import {
   addTransactionsToMemPool,
   deleteBlock,
@@ -22,7 +22,7 @@ import {
 import Block from '../classes/block.mjs';
 import checkTransaction from '../services/transaction-checker.mjs';
 
-const { ZERO } = config;
+const { ZERO } = constants;
 
 async function rollbackEventHandler(data) {
   const { blockNumberL2 } = data.returnValues;

@@ -5,15 +5,16 @@
  */
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
+import constants from 'common-files/constants/index.mjs';
 import { getContractInstance, getContractAddress } from 'common-files/utils/contract.mjs';
 
+const { RETRIES } = config;
 const {
   PROPOSERS_CONTRACT_NAME,
   SHIELD_CONTRACT_NAME,
-  RETRIES,
   CHALLENGES_CONTRACT_NAME,
   STATE_CONTRACT_NAME,
-} = config;
+} = constants;
 
 /**
  * Function that tries to get a (named) contract instance and, if it fails, will

@@ -1,9 +1,10 @@
-import config from 'config';
 import WebSocket from 'ws';
+import config from 'config';
 import { rand } from 'common-files/utils/crypto/crypto-random.mjs';
 import logger from 'common-files/utils/logger.mjs';
 import Web3 from 'common-files/utils/web3.mjs';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
+import constants from 'common-files/constants/index.mjs';
 import {
   getBlockByBlockHash,
   getBlockByTransactionHash,
@@ -16,7 +17,8 @@ import {
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
 
-const { CHALLENGES_CONTRACT_NAME, TIMBER_HEIGHT, ZERO } = config;
+const { TIMBER_HEIGHT } = config;
+const { CHALLENGES_CONTRACT_NAME, ZERO } = constants;
 
 let makeChallenges = process.env.IS_CHALLENGER === 'true';
 let ws;

@@ -9,6 +9,7 @@ import Timber from 'common-files/classes/timber.mjs';
 import logger from 'common-files/utils/logger.mjs';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
 import { enqueueEvent } from 'common-files/utils/event-queue.mjs';
+import constants from 'common-files/constants/index.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction, TransactionError } from '../classes/index.mjs';
 import {
@@ -24,14 +25,8 @@ import transactionSubmittedEventHandler from '../event-handlers/transaction-subm
 import getProposers from '../services/proposer.mjs';
 
 const router = express.Router();
-const {
-  STATE_CONTRACT_NAME,
-  PROPOSERS_CONTRACT_NAME,
-  SHIELD_CONTRACT_NAME,
-  ZERO,
-  HASH_TYPE,
-  TIMBER_HEIGHT,
-} = config;
+const { TIMBER_HEIGHT, HASH_TYPE } = config;
+const { STATE_CONTRACT_NAME, PROPOSERS_CONTRACT_NAME, SHIELD_CONTRACT_NAME, ZERO } = constants;
 
 let proposer;
 export function setProposer(p) {

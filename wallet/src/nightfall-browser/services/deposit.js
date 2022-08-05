@@ -20,7 +20,8 @@ import { storeCommitment } from './commitment-storage';
 import { compressPublicKey } from './keys';
 import { checkIndexDBForCircuit, getStoreCircuit } from './database';
 
-const { ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER, USE_STUBS } = global.config;
+const { BN128_GROUP_ORDER, USE_STUBS } = global.config;
+const { ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME } = global.nightfallConstants;
 const { generalise } = gen;
 const circuitName = USE_STUBS ? 'deposit_stub' : 'deposit';
 

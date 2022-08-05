@@ -10,6 +10,7 @@ import axios from 'axios';
 import gen from 'general-number';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
 import logger from 'common-files/utils/logger.mjs';
+import constants from 'common-files/constants/index.mjs';
 import { Nullifier, Transaction } from '../classes/index.mjs';
 import {
   findUsableCommitmentsMutex,
@@ -20,15 +21,9 @@ import {
 import getProposersUrl from './peers.mjs';
 import { ZkpKeys } from './keys.mjs';
 
-const {
-  BN128_GROUP_ORDER,
-  ZOKRATES_WORKER_HOST,
-  PROVING_SCHEME,
-  BACKEND,
-  SHIELD_CONTRACT_NAME,
-  PROTOCOL,
-  USE_STUBS,
-} = config;
+const { BN128_GROUP_ORDER, ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, USE_STUBS } =
+  config;
+const { SHIELD_CONTRACT_NAME } = constants;
 const { generalise } = gen;
 
 const NEXT_N_PROPOSERS = 3;

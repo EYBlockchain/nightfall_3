@@ -1,10 +1,10 @@
 /**
 Module containing functions relating to proposers and their registration
 */
-import config from 'config';
 import { waitForContract } from 'common-files/utils/contract.mjs';
+import constants from 'common-files/constants/index.mjs';
 
-const { STATE_CONTRACT_NAME } = config;
+const { STATE_CONTRACT_NAME } = constants;
 
 async function getProposers() {
   const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
