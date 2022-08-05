@@ -7,6 +7,11 @@ const LOGGER_TIME_STRING = 'yyyy-mm-dd HH:MM:ss';
 
 export default pino({
   level: config.LOG_LEVEL || 'info',
+  formatters: {
+    level (label, number) {
+      return { level: label };
+    }
+  },
   transport: {
     target: 'pino-pretty',
     options: {
