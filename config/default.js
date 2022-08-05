@@ -187,8 +187,8 @@ module.exports = {
         process.env.BLOCKCHAIN_WS_HOST && process.env.BLOCKCHAIN_PORT
           ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`
           : process.env.BLOCKCHAIN_WS_HOST
-            ? `wss://${process.env.BLOCKCHAIN_WS_HOST}`
-            : 'ws://localhost:8546',
+          ? `wss://${process.env.BLOCKCHAIN_WS_HOST}`
+          : 'ws://localhost:8546',
     },
     aws: {
       name: 'AWS',
@@ -454,4 +454,7 @@ module.exports = {
   // LAMBDA TWOSTEPSYNC
   twoStepSyncUrl: process.env.TWO_STEP_SYNC_URL,
   twoStepSyncDeployment: process.env.TWO_STEP_SYNC_DEPLOYMENT,
+
+  KEYS_COLLECTION: 'keys',
+  CLIENT_ID_COLLECTION: 'client_id',
 };
