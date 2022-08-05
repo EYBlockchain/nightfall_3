@@ -33,7 +33,8 @@
     "web3": "^1.4.0",
     "winston": "^3.3.3",
     "cls-hooked": "4.2.2",
-    "uuid": "8.3.2"
+    "uuid": "8.3.2",
+    "express-fileupload": "1.3.1"
   },
   "devDependencies": {
     "@truffle/hdwallet-provider": "^1.5.0",
