@@ -110,9 +110,9 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         bytes32 blockHash;
         assembly {
             let blockPos := mload(0x40) // get empty memory location pointer
-            calldatacopy(blockPos, 4, add(mul(t.length, 0x300), 0x100)) // copy calldata into this location. 0x300 is 768 bytes of data for each transaction. 0x100 is 192 bytes of block data, 32 bytes for transactions array memory and size each. TODO skip this by passing parameters in memory. But inline assembly to destructure struct array is not straight forward
+            calldatacopy(blockPos, 4, add(mul(t.length, 0x240), 0x100)) // copy calldata into this location. 0x240 is 576 bytes of data for each transaction. 0x100 is 192 bytes of block data, 32 bytes for transactions array memory and size each. TODO skip this by passing parameters in memory. But inline assembly to destructure struct array is not straight forward
             let transactionPos := add(blockPos, 0x100) // calculate memory location of transactions data copied
-            let transactionHashesPos := add(transactionPos, mul(t.length, 0x300)) // calculate memory location to store transaction hashes to be calculated
+            let transactionHashesPos := add(transactionPos, mul(t.length, 0x240)) // calculate memory location to store transaction hashes to be calculated
             // calculate and store transaction hashes
             for {
                 let i := 0
@@ -121,7 +121,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
             } {
                 mstore(
                     add(transactionHashesPos, mul(0x20, i)),
-                    keccak256(add(transactionPos, mul(0x300, i)), 0x300)
+                    keccak256(add(transactionPos, mul(0x240, i)), 0x240)
                 )
             }
             let transactionHashesRoot

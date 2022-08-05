@@ -19,8 +19,8 @@ library ChallengesUtil {
         Structures.Transaction[] memory priorBlockTransactions,
         uint256 leafCount
     ) public pure {
-        uint256 expectedLeafCount =
-            priorBlockL2.leafCount + Utils.countCommitments(priorBlockTransactions);
+        uint256 expectedLeafCount = priorBlockL2.leafCount +
+            Utils.countCommitments(priorBlockTransactions);
         require(expectedLeafCount != leafCount, 'The leafCount is actually correct');
     }
 
@@ -40,8 +40,8 @@ library ChallengesUtil {
             priorBlockL2.leafCount
         );
         require(root == priorBlockL2.root, 'The sibling path is invalid');
-        uint256 commitmentIndex =
-            priorBlockL2.leafCount + Utils.filterCommitments(priorBlockTransactions).length;
+        uint256 commitmentIndex = priorBlockL2.leafCount +
+            Utils.filterCommitments(priorBlockTransactions).length;
         // At last, we can check if the root itself is correct!
         (root, , ) = MerkleTree_Stateless.insertLeaves(
             Utils.filterCommitments(transactions),
@@ -63,12 +63,11 @@ library ChallengesUtil {
         for (uint256 i = 0; i < proof.length; i++) {
             proof1[i] = proof[i];
         }
-        uint256[] memory publicInputs =
-            Utils.getPublicInputs(
-                transaction,
-                extraPublicInputs.roots,
-                extraPublicInputs.maticAddress
-            );
+        uint256[] memory publicInputs = Utils.getPublicInputs(
+            transaction,
+            extraPublicInputs.roots,
+            extraPublicInputs.maticAddress
+        );
         require(!Verifier.verify(proof1, publicInputs, vk), 'This proof appears to be valid');
     }
 
