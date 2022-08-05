@@ -7,8 +7,10 @@ A class for timber-like merkle trees.
 
 import config from 'config';
 import utils from '../utils/crypto/merkle-tree/utils.mjs';
+import constants from '../constants/index.mjs';
 
-const { TIMBER_HEIGHT, HASH_TYPE, ZERO } = config;
+const { TIMBER_HEIGHT, HASH_TYPE } = config;
+const { ZERO } = constants;
 
 /**
 Helper functions for use in the Timber class, defined here before use
