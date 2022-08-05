@@ -14,6 +14,7 @@ import {
   getWalletPendingSpentBalance,
   getCommitments,
   getCommitmentsByCompressedZkpPublicKeyList,
+  saveCommitments,
 } from '../services/commitment-storage.mjs';
 
 const router = express.Router();

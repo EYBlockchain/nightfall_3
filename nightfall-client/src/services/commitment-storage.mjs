@@ -706,6 +706,35 @@ export async function findUsableCommitmentsMutex(
 }
 
 /**
+ *
+ * @function saveCommitments save a list of commitments in the database
+ * @param {[]} listOfCommitments a list of commitments to be saved in the database
+ * @returns
+ */
+export async function saveCommitments(listOfCommitments) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  let exist = false;
+  for (const commitment of listOfCommitments) {
+    if (
+      // eslint-disable-next-line no-await-in-loop
+      (await db.collection(COMMITMENTS_COLLECTION).find({ _id: commitment._id }).toArray()).length >
+      0
+    ) {
+      exist = true;
+      break;
+    }
+  }
+
+  if (exist) {
+    return new Error('Some of these commitments already existis in the database!');
+  }
+
+  const response = await db.collection(COMMITMENTS_COLLECTION).insertMany(listOfCommitments);
+  return response;
+}
+
+/**
  * @function getCommitmentsByCompressedZkpPublicKeyList do the role of a service taking care of the
  * business logic and of a repository doing the communication with the database for this
  * use case.
