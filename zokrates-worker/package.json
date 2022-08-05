@@ -23,7 +23,8 @@
     "pino": "^8.3.1",
     "pino-pretty": "^8.1.0",
     "tar": "^6.1.11",
-    "web3": "^1.7.5"
+    "web3": "^1.7.5",
+    "winston": "^3.8.1"
   },
   "devDependencies": {
     "async": "^3.2.2",
