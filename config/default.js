@@ -20,6 +20,7 @@ module.exports = {
   CIRCUIT_HASH_COLLECTION: 'circuit_hash_storage',
   KEYS_COLLECTION: 'keys',
   CLIENT_ID_COLLECTION: 'client_id',
+  KEYS_COLLECTION: 'keys',
   CONTRACT_ARTIFACTS: '/app/build/contracts',
   EXCLUDE_DIRS: 'common',
   MAX_QUEUE: 5,
@@ -405,6 +406,7 @@ module.exports = {
 
   AWS: {
     s3Bucket: configureAWSBucket(),
+    circuitFiles: parseCircuitFilesPath(),
   },
 
   utilApiServerUrl: process.env.LOCAL_UTIL_API_URL,
