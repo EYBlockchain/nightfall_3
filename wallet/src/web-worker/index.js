@@ -19,7 +19,7 @@ import {
 const {
   utilApiServerUrl,
   isLocalRun,
-  AWS: { s3Bucket },
+  AWS: { s3Bucket, circuitFiles },
 } = global.config;
 
 export default async function fetchCircuitFileAndStoreInIndexedDB() {

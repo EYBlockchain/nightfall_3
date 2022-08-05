@@ -42,6 +42,9 @@ services:
       - type: volume
         source: build
         target: /app/build/
+      # - type: bind
+      #   source: ./config/default.js
+      #   target: /app/config/default.js
     networks:
       - nightfall_network
     environment:

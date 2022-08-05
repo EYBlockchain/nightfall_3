@@ -192,6 +192,20 @@ export async function saveInvalidBlock(_block) {
 }
 
 /**
+function to save an invalid block, so that we can later search the invalid block
+and the type of invalid block.
+*/
+export async function saveInvalidBlock(_block) {
+  const block = { _id: _block.blockHash, ..._block };
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  logger.debug(`saving invalid block ${JSON.stringify(block, null, 2)}`);
+  const query = { blockHash: block.blockHash };
+  const update = { $set: block };
+  return db.collection(INVALID_BLOCKS_COLLECTION).updateOne(query, update, { upsert: true });
+}
+
+/**
 function to store addresses and URL of proposers that are registered through this
 app. These are needed because the app needs to know when one of them is the
 current (active) proposer, at which point it will automatically start to
@@ -409,9 +423,9 @@ export async function getL2TransactionByCommitment(
   const query = inL2AndNotInL2
     ? { commitments: commitmentHash }
     : {
-        commitments: commitmentHash,
-        blockNumberL2: { $gte: -1, $ne: blockNumberL2OfTx },
-      };
+      commitments: commitmentHash,
+      blockNumberL2: { $gte: -1, $ne: blockNumberL2OfTx },
+    };
   return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
 }
 
@@ -427,9 +441,9 @@ export async function getL2TransactionByNullifier(
   const query = inL2AndNotInL2
     ? { nullifiers: nullifierHash }
     : {
-        nullifiers: nullifierHash,
-        blockNumberL2: { $gte: -1, $ne: blockNumberL2OfTx },
-      };
+      nullifiers: nullifierHash,
+      blockNumberL2: { $gte: -1, $ne: blockNumberL2OfTx },
+    };
   return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
 }
 

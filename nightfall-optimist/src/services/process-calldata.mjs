@@ -3,7 +3,6 @@ Function to retreive calldata associated with a blockchain event.
 This is used, rather than re-emmiting the calldata in the event because it's
 much cheaper, although the offchain part is more complex.
 */
-import config from 'config';
 import Web3 from 'common-files/utils/web3.mjs';
 import { decompressProof } from 'common-files/utils/curve-maths/curves.mjs';
 import constants from 'common-files/constants/index.mjs';

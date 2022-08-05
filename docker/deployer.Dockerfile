@@ -5,6 +5,11 @@ RUN apt-get install -y netcat-openbsd
 
 ENTRYPOINT ["/app/entrypoint.sh"]
 
+RUN apt-get update -y
+RUN apt-get install -y netcat-openbsd
+
+ENTRYPOINT ["/app/entrypoint.sh"]
+
 WORKDIR /
 COPY common-files common-files
 COPY config/default.js app/config/default.js

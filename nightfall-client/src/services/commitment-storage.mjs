@@ -1077,3 +1077,38 @@ export async function getCommitments() {
   const allCommitments = await db.collection(COMMITMENTS_COLLECTION).find().toArray();
   return allCommitments;
 }
+
+/**
+ * @function getCommitmentsByCompressedZkpPublicKeyList do the role of a service taking care of the
+ * business logic and of a repository doing the communication with the database for this
+ * use case.
+ * @param {string[]} listOfCompressedZkpPublicKey a list of compressedZkpPublicKey derivated from the user
+ * mnemonic coming from the SDK or Wallet.
+ * @returns all the commitments existent for this list of compressedZkpPublicKey.
+ * @author luizoamorim
+ */
+export async function getCommitmentsByCompressedZkpPublicKeyList(listOfCompressedZkpPublicKey) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  const commitmentsByListOfCompressedZkpPublicKey = await db
+    .collection(COMMITMENTS_COLLECTION)
+    .find({
+      compressedZkpPublicKey: { $in: listOfCompressedZkpPublicKey },
+    })
+    .toArray();
+  return commitmentsByListOfCompressedZkpPublicKey;
+}
+
+/**
+ * @function getCommitments do the role of a service taking care of the
+ * business logic and of a repository doing the communication with the database for this
+ * use case.
+ * @returns all the commitments existent in this database.
+ * @author luizoamorim
+ */
+export async function getCommitments() {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  const allCommitments = await db.collection(COMMITMENTS_COLLECTION).find().toArray();
+  return allCommitments;
+}

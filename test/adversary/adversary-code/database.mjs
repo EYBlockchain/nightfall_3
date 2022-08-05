@@ -10,22 +10,22 @@ const { ZERO } = constants;
 let error = process.env.BAD_TX_SEQUENCE
   ? process.env.BAD_TX_SEQUENCE.split(',')
   : [
-      'ValidTransaction',
-      'ValidTransaction',
-      'ValidTransaction',
-      // 'IncorrectTreeRoot',
-      // 'ValidTransaction',
-      'IncorrectLeafCount',
-      'ValidTransaction',
-      'DuplicateCommitment',
-      'ValidTransaction',
-      'DuplicateNullifier',
-      'ValidTransaction',
-      'HistoricRootError',
-      'ValidTransaction',
-      // 'IncorrectProof',
-      // 'ValidTransaction',
-    ];
+    'ValidTransaction',
+    'ValidTransaction',
+    'ValidTransaction',
+    // 'IncorrectTreeRoot',
+    // 'ValidTransaction',
+    'IncorrectLeafCount',
+    'ValidTransaction',
+    'DuplicateCommitment',
+    'ValidTransaction',
+    'DuplicateNullifier',
+    'ValidTransaction',
+    'HistoricRootError',
+    'ValidTransaction',
+    // 'IncorrectProof',
+    // 'ValidTransaction',
+  ];
 
 let resetErrorIdx = false;
 let indexOffset = 0;
@@ -189,6 +189,12 @@ export const addTx = txType => {
   logger.debug(`Received new Tx types to generate ${error}`);
 };
 
+export const addTx = txType => {
+  error = txType;
+  resetErrorIdx = true;
+  logger.debug(`Received new Tx types to generate ${error}`);
+};
+
 /**
 Function to return 'number' transactions, ordered by the highest fee. If there
 are fewer than 'number' transactions, all are returned.
@@ -211,6 +217,7 @@ export async function getMostProfitableTransactions(number, errorIndex) {
     case 'HistoricRootError':
       return historicRootError(number);
     default: {
+      logger.debug(`Creating a transaction of type ValidBlock`);
       const connection = await mongo.connection(MONGO_URL);
       const db = connection.db(OPTIMIST_DB);
       return db

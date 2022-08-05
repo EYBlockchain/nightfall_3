@@ -6,6 +6,7 @@ leafCount values in the Block class
 */
 import logger from 'common-files/utils/logger.mjs';
 import { dequeueEvent, enqueueEvent } from 'common-files/utils/event-queue.mjs';
+import constants from 'common-files/constants/index.mjs';
 import {
   addTransactionsToMemPool,
   deleteBlock,

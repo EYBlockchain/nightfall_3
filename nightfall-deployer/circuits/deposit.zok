@@ -6,6 +6,11 @@ from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field;
 from "./common/generic_circuit/Verifiers/verify_structure.zok" import main as verify_structure;
 from "./common/generic_circuit/Verifiers/verify_commitments.zok" import main as verify_commitments;
 
+type Point = field[2]
+
+// 2 ^ 160
+const field SHIFT = 1461501637330902918203684832716283019655932542976
+
 def main(\
     PublicTransaction tx,\
     field[4] roots,\

@@ -70,8 +70,7 @@ export default async function localTest(IS_TEST_RUNNER) {
           // if we get here, it's possible that a block we are waiting for has not been proposed yet
           // let's wait 10x normal and then try again
           logger.warn(
-            `No suitable commitments were found for transfer. I will wait ${
-              0.01 * TX_WAIT
+            `No suitable commitments were found for transfer. I will wait ${0.01 * TX_WAIT
             } seconds and try one last time`,
           );
           await new Promise(resolve => setTimeout(resolve, 10 * TX_WAIT));
@@ -116,8 +115,7 @@ export default async function localTest(IS_TEST_RUNNER) {
     } else {
       logger.info(
         `The test has not yet passed because the L2 balance has not increased, or I am not the test runner - waiting:
-        Current Transacted Balance is: ${endBalance - startBalance} - Expecting: ${
-          txPerBlock * value + value * TEST_LENGTH
+        Current Transacted Balance is: ${endBalance - startBalance} - Expecting: ${txPerBlock * value + value * TEST_LENGTH
         }`,
       );
       await new Promise(resolving => setTimeout(resolving, 20 * TX_WAIT)); // TODO get balance waiting working well
