@@ -15,11 +15,7 @@ const {
   CHALLENGES_CONTRACT_NAME,
   STATE_CONTRACT_NAME,
 } = constants;
-const {
-  RETRIES,
-  WEBSOCKET_PORT,
-  WEBSOCKET_PING_TIME,
-} = config;
+const { RETRIES, WEBSOCKET_PORT, WEBSOCKET_PING_TIME } = config;
 const wss = new WebSocket.Server({ port: WEBSOCKET_PORT });
 
 /**
