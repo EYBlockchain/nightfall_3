@@ -1,13 +1,13 @@
-import config from 'config';
 import chai from 'chai';
 import fc from 'fast-check';
 import Timber from '../common-files/classes/timber.mjs';
 import utils from '../common-files/utils/crypto/merkle-tree/utils.mjs';
+import constants from '../common-files/constants/index.mjs';
 
 const { expect } = chai;
 const TIMBER_HEIGHT = 5;
 const HASH_TYPE = 'keccak256'; // 'poseidon', 'mimc', 'sha256'
-const { ZERO } = config;
+const { ZERO } = constants;
 
 // Old way to generate leaf values, now we use fast-check
 // const genLeafValues = (n, start = 0) => {

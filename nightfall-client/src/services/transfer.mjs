@@ -12,6 +12,7 @@ import { randValueLT } from 'common-files/utils/crypto/crypto-random.mjs';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
 import logger from 'common-files/utils/logger.mjs';
 import { edwardsCompress } from 'common-files/utils/curve-maths/curves.mjs';
+import constants from 'common-files/constants/index.mjs';
 import { Nullifier, Commitment, Transaction } from '../classes/index.mjs';
 import {
   findUsableCommitmentsMutex,
@@ -24,15 +25,9 @@ import getProposersUrl from './peers.mjs';
 import { ZkpKeys } from './keys.mjs';
 import { encrypt, genEphemeralKeys, packSecrets } from './kem-dem.mjs';
 
-const {
-  BN128_GROUP_ORDER,
-  ZOKRATES_WORKER_HOST,
-  PROVING_SCHEME,
-  BACKEND,
-  SHIELD_CONTRACT_NAME,
-  PROTOCOL,
-  USE_STUBS,
-} = config;
+const { BN128_GROUP_ORDER, ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, USE_STUBS } =
+  config;
+const { SHIELD_CONTRACT_NAME } = constants;
 const { generalise, GN } = gen;
 
 const NEXT_N_PROPOSERS = 3;

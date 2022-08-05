@@ -4,16 +4,22 @@
  * Module to subscribe to blockchain events
  */
 import config from 'config';
-import { getContractInstance, getContractAddress } from 'common-files/utils/contract.mjs';
-import constants from 'common-files/constants/index.mjs';
 import logger from 'common-files/utils/logger.mjs';
+import constants from 'common-files/constants/index.mjs';
+import { getContractInstance, getContractAddress } from 'common-files/utils/contract.mjs';
 
 const { RETRIES } = config;
-const { STATE_CONTRACT_NAME } = constants;
+const {
+  PROPOSERS_CONTRACT_NAME,
+  SHIELD_CONTRACT_NAME,
+  CHALLENGES_CONTRACT_NAME,
+  STATE_CONTRACT_NAME,
+} = constants;
+
 /**
  * Function that tries to get a (named) contract instance and, if it fails, will
  * retry after 3 seconds.  After RETRIES attempts, it will give up and throw.
- * This is useful in case nightfall-client comes up before the contract
+ * This is useful in case nightfall-optimist comes up before the contract
  * is fully deployed.
  */
 export async function waitForContract(contractName) {
@@ -38,11 +44,26 @@ export async function waitForContract(contractName) {
   return instance;
 }
 
-// eslint-disable-next-line import/prefer-default-export
-export async function startEventQueue(callback, ...args) {
-  const emitter = (await waitForContract(STATE_CONTRACT_NAME)).events.allEvents();
-  emitter.on('data', event => callback(event, args));
-  emitter.on('changed', event => callback(event, args));
+/**
+ *
+ * @param callback - The function that distributes events to the event-handler function
+ * @param arg - List of arguments to be passed to callback, the first element must be the event-handler functions
+ * @returns = List of emitters from each contract.
+ */
+export async function startEventQueue(callback, ...arg) {
+  const contractNames = [
+    STATE_CONTRACT_NAME,
+    SHIELD_CONTRACT_NAME,
+    CHALLENGES_CONTRACT_NAME,
+    PROPOSERS_CONTRACT_NAME,
+  ];
+  const contracts = await Promise.all(contractNames.map(c => waitForContract(c)));
+  const emitters = contracts.map(e => {
+    const emitterC = e.events.allEvents();
+    emitterC.on('changed', event => callback(event, arg));
+    emitterC.on('data', event => callback(event, arg));
+    return emitterC;
+  });
   logger.debug('Subscribed to layer 2 state events');
-  return emitter;
+  return emitters;
 }

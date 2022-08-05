@@ -155,11 +155,13 @@ module.exports = function (webpackEnv) {
   };
 
   const config = require('../../config/default');
+  const constants = require('../../common-files/constants/constants.json');
 
   return {
     mode: isEnvProduction ? 'production' : isEnvDevelopment && 'development',
     externals: {
       config: JSON.stringify(config),
+      nightfallConstants: JSON.stringify(constants),
     },
     // Stop compilation early in production
     bail: isEnvProduction,
