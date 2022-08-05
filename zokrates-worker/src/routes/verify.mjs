@@ -1,6 +1,6 @@
 import express from 'express';
+import logger from 'common-files/utils/logger.mjs';
 import { verify } from '../zokrates-lib/index.mjs';
-import logger from '../utils/logger.mjs';
 
 const router = express.Router();
 /**

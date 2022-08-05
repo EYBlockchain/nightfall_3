@@ -2,10 +2,10 @@ import axios from 'axios';
 import fs from 'fs';
 import config from 'config';
 import downloadFile from 'common-files/utils/httputils.mjs';
+import logger from 'common-files/utils/logger.mjs';
 import app from './app.mjs';
 import rabbitmq from './utils/rabbitmq.mjs';
 import queues from './queues/index.mjs';
-import logger from './utils/logger.mjs';
 
 const {
   MPC: { MPC_PARAMS_URL },
