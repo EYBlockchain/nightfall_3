@@ -6,10 +6,6 @@ import config from 'config';
 import Nf3 from '../cli/lib/nf3.mjs';
 import { depositNTransactions, Web3Client } from './utils.mjs';
 import logger from '../common-files/utils/logger.mjs';
-import {
-  getProposeBlockCalldata,
-  setWeb3,
-} from '../nightfall-optimist/src/services/process-calldata.mjs';
 import { buildBlockSolidityStruct } from '../nightfall-optimist/src/services/block-utils.mjs';
 import Transaction from '../common-files/classes/transaction.mjs';
 // so we can use require with mjs file
@@ -38,7 +34,6 @@ const web3Client = new Web3Client();
 let erc20Address;
 let stateAddress;
 let eventLogs = [];
-let eventsSeen = [];
 
 /*
   This function tries to zero the number of unprocessed transactions in the optimist node
@@ -99,7 +94,6 @@ describe('ERC20 tests', () => {
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
 
     await emptyL2(nf3Users[0]);
-    setWeb3(web3Client.getWeb3());
   });
 
   afterEach(async () => {
@@ -110,7 +104,7 @@ describe('ERC20 tests', () => {
     it('should make a block of two deposit transactions, then a bad block containing the same deposit transactions', async function () {
       console.log(`      Sending ${txPerBlock} deposits...`);
       // We create enough transactions to fill blocks full of deposits.
-      const depositTransactions = await depositNTransactions(
+      await depositNTransactions(
         nf3Users[0],
         txPerBlock,
         erc20Address,
@@ -119,15 +113,13 @@ describe('ERC20 tests', () => {
         tokenId,
         fee,
       );
-      ({ eventLogs, eventsSeen } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
-      const totalGas = depositTransactions.reduce((acc, { gasUsed }) => acc + Number(gasUsed), 0);
-      logger.debug(`     Average Gas used was ${Math.ceil(totalGas / txPerBlock)}`);
-      // now we have a single block proposed, full of deposits. the next job is to make a bad blocks
-      // we can do that by recovering the blockPropsed transaction that's just happened, messing with it,
-      // re-signing it with the proposer's key and sending it in again.
-      const { block, transactions } = await getProposeBlockCalldata({
-        transactionHash: eventsSeen[0].log.transactionHash,
-      });
+      // we can use the emitter than nf3 provides to get the block and transactions we've just made.
+      // The promise resolves once the block is on-chain.
+      const { block, transactions } = await new Promise(resolve =>
+        blockProposeEmitter.on('receipt', (receipt, b, t) =>
+          resolve({ receipt, block: b, transactions: t }),
+        ),
+      );
       // update the block so we can submit it again
       block.previousBlockHash = block.blockHash;
       block.blockNumberL2++;
@@ -143,7 +135,7 @@ describe('ERC20 tests', () => {
       const newTx = `0xa9cb3b6f${encodedParams.slice(2)}`;
       logger.debug('Resubmitting the same transactions in the next block');
       web3Client.submitTransaction(newTx, signingKeys.proposer1, stateAddress, 8000000, 1);
-      ({ eventLogs, eventsSeen } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
+      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
     });
   });
 
