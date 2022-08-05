@@ -146,7 +146,6 @@ const TokensList = ({ handleClose, setToken }: TokenListType): JSX.Element => {
         token.name.toLowerCase().includes(e.target.value.toLocaleLowerCase()),
       ),
     );
-    console.log('E: ', e.target.value);
   };
 
   const handleTokenSelection = (token: any) => {

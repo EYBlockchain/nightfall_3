@@ -1,6 +1,5 @@
-from "./common/hashes/sha256/pad1280ThenHash.zok" import main as sha256of1280
-from "utils/casts/u32_to_bits.zok" import main as u32_to_bool_32
-from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8
+from "hashes/poseidon/poseidon.zok" import main as poseidon
+from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field
 
 // Inputs for main:
 // - ercContractAddress (public) is the ERCx contract address
@@ -9,30 +8,33 @@ from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8
 // - salt (private) is the salt for the newCommitment
 // - newCommitment (public) is the newCommitment
 
+type Point = field[2]
+
+// 2 ^ 160
+const field SHIFT = 1461501637330902918203684832716283019655932542976
+
 def main(\
 	field ercContractAddress,\
-	field id,\
+	u32[8] id,\
  	field value,\
-	private u32[8] compressedPkd,\
-	private u32[8] salt,\
+	private Point compressedZkpPublicKey,\
+	private field salt,\
 	field newCommitment\
 )->():
 
-	u32[8] newCommitmentU32 = field_to_u32_8(newCommitment)
-	u32[8] newCommitmentCheck = sha256of1280([\
-		...field_to_u32_8(ercContractAddress),\
-		...field_to_u32_8(id),\
-		...field_to_u32_8(value),\
-		...compressedPkd,\
-		...salt\
+	// pack the top four bytes of the token id into the ercAddress field (address only
+	// uses 160 bits and the Shield contract prevents creation of something with more than 160 bits)
+	field idTop4Bytes = u32_array_to_field([id[0]])
+	field idRemainder = u32_array_to_field(id[1..8])
+	field packedErcAddress = ercContractAddress + idTop4Bytes * SHIFT
+
+	field newCommitmentCheck = poseidon([
+		packedErcAddress,\
+		idRemainder,\
+		value,\
+		...compressedZkpPublicKey,\
+		salt\
 	])
-
-	// new commitments are truncated to 248 bits since they are public inputs
-	// so we must check the 248 bits while minimising constraints/comp time - casting to bool[256] is a slower operation than comparing u32s
-
-	// last 224 bits:
-	assert(newCommitmentCheck[1..8] == newCommitmentU32[1..8])
-	// first 24 bits:
-	assert(u32_to_bool_32(newCommitmentCheck[0])[8..32] == u32_to_bool_32(newCommitmentU32[0])[8..32])
+	assert(newCommitmentCheck == newCommitment)
 
 	return

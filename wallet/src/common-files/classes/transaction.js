@@ -11,7 +11,7 @@ import { compressProof } from '../utils/curve-maths/curves';
 const { generalise } = gen;
 
 const TOKEN_TYPES = { ERC20: 0, ERC721: 1, ERC1155: 2 };
-const { TRANSACTION_TYPES } = global.config;
+const { TRANSACTION_TYPES } = global.nightfallConstants;
 
 // function to compute the keccak hash of a transaction
 function keccak(preimage) {

@@ -6,7 +6,8 @@ A class for timber-like merkle trees.
 */
 import utils from '../utils/crypto/merkle-tree/utils';
 
-const { TIMBER_HEIGHT, HASH_TYPE, ZERO } = global.config;
+const { TIMBER_HEIGHT, HASH_TYPE } = global.config;
+const { ZERO } = global.nightfallConstants;
 
 /**
 Helper functions for use in the Timber class, defined here before use

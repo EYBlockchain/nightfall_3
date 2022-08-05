@@ -4,10 +4,11 @@ An optimistic layer 2 Block class
 import config from 'config';
 import Timber from 'common-files/classes/timber.mjs';
 import Web3 from 'common-files/utils/web3.mjs';
-import { getLatestTree, getLatestBlockInfo } from '../services/database.mjs';
+import constants from 'common-files/constants/index.mjs';
+import { getLatestBlockInfo, getTreeByBlockNumberL2 } from '../services/database.mjs';
 
-const { ZERO, HASH_TYPE, TIMBER_HEIGHT, TXHASH_TREE_HASH_TYPE, TXHASH_TREE_HEIGHT, BLOCK_TYPES } =
-  config;
+const { TIMBER_HEIGHT, TXHASH_TREE_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE } = config;
+const { ZERO, BLOCK_TYPES } = constants;
 
 /**
 This Block class does not have the Block components that are computed on-chain.
@@ -90,7 +91,7 @@ class Block {
       // Make blocks with our on-chain values.
       this.localBlockNumberL2 = blockNumberL2;
       this.localPreviousBlockHash = previousBlockHash;
-      timber = await getLatestTree();
+      timber = await getTreeByBlockNumberL2(blockNumberL2 - 1);
     } else {
       // Make blocks with our local values.
       blockNumberL2 = this.localBlockNumberL2;

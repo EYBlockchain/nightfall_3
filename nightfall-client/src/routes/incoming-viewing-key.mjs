@@ -11,16 +11,16 @@ import { clientCommitmentSync } from '../services/commitment-sync.mjs';
 const router = express.Router();
 
 router.post('/', async (req, res, next) => {
-  logger.debug(`Incoming Viewing Key endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
+  logger.debug(`Incoming Viewing Key endpoint received POST`);
   try {
-    const { ivks, nsks } = generalise(req.body);
+    const { zkpPrivateKeys, nullifierKeys } = generalise(req.body);
     await storeMemoryKeysForDecryption(
-      ivks.map(ivk => ivk.bigInt),
-      nsks.map(nsk => nsk.bigInt),
+      zkpPrivateKeys.map(zkpPrivateKey => zkpPrivateKey.bigInt),
+      nullifierKeys.map(nullifierKey => nullifierKey.bigInt),
     );
     await clientCommitmentSync(
-      ivks.map(ivk => ivk.bigInt),
-      nsks.map(nsk => nsk.bigInt),
+      zkpPrivateKeys.map(zkpPrivateKey => zkpPrivateKey.bigInt),
+      nullifierKeys.map(nullifierKey => nullifierKey.bigInt),
     );
     res.json({ status: 'success' });
   } catch (err) {

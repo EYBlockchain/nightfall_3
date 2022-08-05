@@ -4,15 +4,15 @@
 /**
 An optimistic Transaction class
 */
-import config from 'config';
 import gen from 'general-number';
 import Web3 from '../utils/web3.mjs';
 import { compressProof } from '../utils/curve-maths/curves.mjs';
+import constants from '../constants/index.mjs';
 
 const { generalise } = gen;
 
 const TOKEN_TYPES = { ERC20: 0, ERC721: 1, ERC1155: 2 };
-const { TRANSACTION_TYPES } = config;
+const { TRANSACTION_TYPES } = constants;
 
 // function to compute the keccak hash of a transaction
 function keccak(preimage) {
@@ -80,12 +80,11 @@ class Transaction {
     if (_nullifiers === undefined) nullifiers = [{ hash: 0 }, { hash: 0 }];
     else if (_nullifiers.length === 1) nullifiers = [..._nullifiers, { hash: 0 }];
     else nullifiers = _nullifiers;
-    if (_compressedSecrets === undefined) compressedSecrets = [0, 0, 0, 0, 0, 0, 0, 0];
+    if (_compressedSecrets === undefined) compressedSecrets = [0, 0];
     else compressedSecrets = _compressedSecrets;
 
     if ((transactionType === 0 || transactionType === 3) && TOKEN_TYPES[tokenType] === undefined)
       throw new Error('Unrecognized token type');
-
     // convert everything to hex(32) for interfacing with web3
     const preimage = generalise({
       fee: fee || 0,

@@ -16,10 +16,11 @@ import { getContractInstance } from '../../common-files/utils/contract';
 import useInterval from '../../hooks/useInterval';
 import { getPricing, setPricing, shieldAddressGet } from '../../utils/lib/local-storage';
 import BigFloat from '../../common-files/classes/bigFloat';
+import exportIndexdDB from '../../utils/CommitmentsBackup/export';
 
 const supportedTokens = importTokens();
 
-const { SHIELD_CONTRACT_NAME, ZERO } = global.config;
+const { SHIELD_CONTRACT_NAME, ZERO } = global.nightfallConstants;
 
 const txTypeOptions = ['Deposit', 'Transfer', 'Transfer', 'Withdraw'];
 const txTypeDest = [
@@ -157,40 +158,63 @@ const Transactions = () => {
     setTxs(mappedTxs);
   }, delay);
 
+  function downloadFile(content) {
+    const a = document.createElement('a');
+    const file = new Blob([content], { type: 'text/plain' });
+    a.href = URL.createObjectURL(file);
+    a.download = 'pnf_bkp.json';
+    a.click();
+  }
+
+  const handleExportIndedexDB = async () => {
+    const exportedDB = await exportIndexdDB('nightfall_commitments');
+    const filteredTables = exportedDB.filter(
+      arr => arr.table === 'commitments' || arr.table === 'transactions',
+    );
+    downloadFile(JSON.stringify(filteredTables));
+  };
+
   return (
     <div className="pagePartition" style={{ width: '100%' }}>
       <TxInfoModal onHide={() => setShowModal(false)} {...showModal} />
       <div className="infoWrapper">
-        <div className="tab-list">
-          <div
-            className={`tab-list-item ${isActive === 'all' ? 'active' : ''}`}
-            onClick={() => setActive('all')}
-          >
-            All Transactions
+        <div className="wrapperTabList">
+          <div className="tab-list">
+            <div
+              className={`tab-list-item ${isActive === 'all' ? 'active' : ''}`}
+              onClick={() => setActive('all')}
+            >
+              All Transactions
+            </div>
+            <div
+              className={`tab-list-item ${isActive === 'pending' ? 'active' : ''}`}
+              onClick={() => setActive('pending')}
+            >
+              Pending
+            </div>
+            <div
+              className={`tab-list-item ${isActive === 'deposit' ? 'active' : ''}`}
+              onClick={() => setActive('deposit')}
+            >
+              Deposits
+            </div>
+            <div
+              className={`tab-list-item ${isActive === 'transfer' ? 'active' : ''}`}
+              onClick={() => setActive('transfer')}
+            >
+              Transfers
+            </div>
+            <div
+              className={`tab-list-item ${isActive === 'withdraw' ? 'active' : ''}`}
+              onClick={() => setActive('withdraw')}
+            >
+              Withdraws
+            </div>
           </div>
-          <div
-            className={`tab-list-item ${isActive === 'pending' ? 'active' : ''}`}
-            onClick={() => setActive('pending')}
-          >
-            Pending
-          </div>
-          <div
-            className={`tab-list-item ${isActive === 'deposit' ? 'active' : ''}`}
-            onClick={() => setActive('deposit')}
-          >
-            Deposits
-          </div>
-          <div
-            className={`tab-list-item ${isActive === 'transfer' ? 'active' : ''}`}
-            onClick={() => setActive('transfer')}
-          >
-            Transfers
-          </div>
-          <div
-            className={`tab-list-item ${isActive === 'withdraw' ? 'active' : ''}`}
-            onClick={() => setActive('withdraw')}
-          >
-            Withdraws
+          <div>
+            <button onClick={() => handleExportIndedexDB()} className="exportTransactionsButton">
+              Export transactions
+            </button>
           </div>
         </div>
         <div className="separator" />

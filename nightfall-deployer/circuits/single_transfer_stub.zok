@@ -1,27 +1,17 @@
+type Point = field[2]
+
 struct OldCommitmentPreimage {
 	u32[8] id
-	u32[8] value
-	u32[8] salt
-	u32[8] hash
-	field ask
+	u8[31] value // needed to prevent overflow attacks in transfers
+	field salt
+	field hash
+	field rootKey
 }
 
 struct NewCommitmentPreimage {
-	field[2] pkdRecipient
-	u32[8] value
-	u32[8] salt
-}
-
-struct Secrets {
-	u32[8] ephemeralKey1
-	u32[8] ephemeralKey2
-	u32[8] ephemeralKey3
-	u32[8] ephemeralKey4
-	field[16] cipherText
-	field sqrtMessage1
-	field sqrtMessage2
-	field sqrtMessage3
-	field sqrtMessage4
+	Point zkpPublicKeyRecipient
+	u8[31] value
+	field salt
 }
 
 struct CompressedPoint {
@@ -30,54 +20,34 @@ struct CompressedPoint {
 }
 
 def main(\
-	private field fErcAddress,\
+	private field ercAddress,\
 	private OldCommitmentPreimage oldCommitment,\
 	private NewCommitmentPreimage newCommitment,\
-	field fNewCommitmentHash,\
-	private u32[8] nsk,\
-	field fNullifier,\
+	field newCommitmentHash,\
+	field nullifier,\
 	field root,\
 	private field[32] path,\
 	private field order,\
-	private Secrets secrets,\
-	CompressedPoint[8] compressedCipherText\
+	private u32[8] ephemeralKey,\
+	CompressedPoint compressedEphemeralPublicKey,\
+	field[4] cipherText\
 )->():
 
-	field u = fErcAddress + fNewCommitmentHash + fNullifier - root
-	u32 v = 0x00000000
-	bool b = true
-	for u32 i in 0..8 do
-		v = v + oldCommitment.id[i] +\
-			oldCommitment.value[i] +\
-			oldCommitment.salt[i] +\
-			oldCommitment.hash[i] +\
-			newCommitment.value[i] +\
-			newCommitment.salt[i] +\
-			nsk[i]
-	endfor
-
-	u32 w = 0x00000000
-	for u32 i in 0..8 do
-		u = u + compressedCipherText[i].ordinate
-		b = b && compressedCipherText[i].parity
-		w = w + secrets.ephemeralKey1[i] +\
-			secrets.ephemeralKey2[i] +\
-			secrets.ephemeralKey3[i] +\
-			secrets.ephemeralKey4[i]
-	endfor
+	field u = ercAddress + oldCommitment.salt + oldCommitment.hash + newCommitment.salt + newCommitment.zkpPublicKeyRecipient[0] + newCommitment.zkpPublicKeyRecipient[1] + nullifier + root + order + oldCommitment.rootKey
 
 	for u32 i in 0..32 do
 		u = u * path[i]
 	endfor
 
-	for u32 i in 0..16 do
-		u = u * secrets.cipherText[i]
+	u32 v = oldCommitment.id[0] * oldCommitment.id[1] + oldCommitment.id[2] + oldCommitment.id[3] + oldCommitment.id[4] + oldCommitment.id[5] + oldCommitment.id[6] * oldCommitment.id[7]
+
+	u8 w = 0
+	for u32 i in 0..31 do
+		w = w + newCommitment.value[i]
 	endfor
 
-	u = u * order * oldCommitment.ask * newCommitment.pkdRecipient[0] * newCommitment.pkdRecipient[1] * secrets.sqrtMessage1 * secrets.sqrtMessage2 * secrets.sqrtMessage3 * secrets.sqrtMessage4
-	assert(v == v)
 	assert(u == u)
+	assert(v == v)
 	assert(w == w)
-	assert(b == b)
 
 	return

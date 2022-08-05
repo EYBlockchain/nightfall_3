@@ -5,8 +5,8 @@ same blocks from our local database record and to reset cached Frontier and
 leafCount values in the Block class
 */
 import logger from 'common-files/utils/logger.mjs';
-import config from 'config';
 import { dequeueEvent, enqueueEvent } from 'common-files/utils/event-queue.mjs';
+import constants from 'common-files/constants/index.mjs';
 import {
   addTransactionsToMemPool,
   deleteBlock,
@@ -22,7 +22,7 @@ import {
 import Block from '../classes/block.mjs';
 import checkTransaction from '../services/transaction-checker.mjs';
 
-const { ZERO } = config;
+const { ZERO } = constants;
 
 async function rollbackEventHandler(data) {
   const { blockNumberL2 } = data.returnValues;
@@ -93,7 +93,7 @@ async function rollbackEventHandler(data) {
     .map(sNull => sNull.hash);
 
   // Create sets to manage nullifiers and invalid transactions - this makes membership easier.
-  const nulliferSet = new Set();
+  const nullifierSet = new Set();
   // Spent nullifiers are used to check duplicate nullifiers
   const spentNullifierHashesSet = new Set(spentNullifierHashes);
   const invalidTransactionSet = new Set();
@@ -110,13 +110,13 @@ async function rollbackEventHandler(data) {
     const { transactionHash, nullifiers } = t;
     const nonZeroNullifiers = nullifiers.filter(n => n !== ZERO);
     // Is there a duplicate nullifier in our list of mempool: true and block transactions
-    const duplicateSeenNullifier = nonZeroNullifiers.some(nz => nulliferSet.has(nz));
+    const duplicateSeenNullifier = nonZeroNullifiers.some(nz => nullifierSet.has(nz));
     // Is there a duplicate nullifier in our list of already spent nullifier
     const duplicateSpentNullifier = nonZeroNullifiers.some(nz => spentNullifierHashesSet.has(nz));
     if (duplicateSpentNullifier || duplicateSeenNullifier)
       invalidTransactionSet.add(transactionHash);
     else {
-      nulliferSet.add(nonZeroNullifiers);
+      nullifierSet.add(nonZeroNullifiers);
       maybeValidTransactions.push(t);
     }
   });
@@ -151,7 +151,7 @@ async function rollbackEventHandler(data) {
   // (1) nullifiers seen in valid transactions and
   // (2) nullifiers we saw while processing transactions.
   // The remaining nullifiers can be deleted
-  const nullifierArray = [...nulliferSet];
+  const nullifierArray = [...nullifierSet];
   const validTransactions = transactions.filter(
     tx => !invalidTransactionHashesArr.includes(tx.transactionHash),
   );

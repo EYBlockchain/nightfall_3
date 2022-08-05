@@ -8,10 +8,12 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
 import config from 'config';
 import axios from 'axios';
 import gen from 'general-number';
-import rand from 'common-files/utils/crypto/crypto-random.mjs';
+import { randValueLT } from 'common-files/utils/crypto/crypto-random.mjs';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
 import logger from 'common-files/utils/logger.mjs';
-import { Secrets, Nullifier, Commitment, Transaction } from '../classes/index.mjs';
+import { edwardsCompress } from 'common-files/utils/curve-maths/curves.mjs';
+import constants from 'common-files/constants/index.mjs';
+import { Nullifier, Commitment, Transaction } from '../classes/index.mjs';
 import {
   findUsableCommitmentsMutex,
   storeCommitment,
@@ -20,19 +22,12 @@ import {
   getSiblingInfo,
 } from './commitment-storage.mjs';
 import getProposersUrl from './peers.mjs';
-import { decompressKey, calculateIvkPkdfromAskNsk } from './keys.mjs';
+import { ZkpKeys } from './keys.mjs';
+import { encrypt, genEphemeralKeys, packSecrets } from './kem-dem.mjs';
 
-const {
-  BN128_GROUP_ORDER,
-  ZKP_KEY_LENGTH,
-  ZOKRATES_WORKER_HOST,
-  PROVING_SCHEME,
-  BACKEND,
-  SHIELD_CONTRACT_NAME,
-  PROTOCOL,
-  USE_STUBS,
-  ZERO,
-} = config;
+const { BN128_GROUP_ORDER, ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, USE_STUBS } =
+  config;
+const { SHIELD_CONTRACT_NAME } = constants;
 const { generalise, GN } = gen;
 
 const NEXT_N_PROPOSERS = 3;
@@ -41,18 +36,20 @@ async function transfer(transferParams) {
   logger.info('Creating a transfer transaction');
   // let's extract the input items
   const { offchain = false, ...items } = transferParams;
-  const { ercAddress, tokenId, recipientData, nsk, ask, fee } = generalise(items);
-  const { pkd, compressedPkd } = calculateIvkPkdfromAskNsk(ask, nsk);
-  const { recipientCompressedPkds, values } = recipientData;
-  const recipientPkds = recipientCompressedPkds.map(key => decompressKey(key));
-  if (recipientCompressedPkds.length > 1)
+  const { ercAddress, tokenId, recipientData, rootKey, fee } = generalise(items);
+  const { zkpPublicKey, compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
+  const { recipientCompressedZkpPublicKeys, values } = recipientData;
+  const recipientZkpPublicKeys = recipientCompressedZkpPublicKeys.map(key =>
+    ZkpKeys.decompressZkpPublicKey(key),
+  );
+  if (recipientCompressedZkpPublicKeys.length > 1)
     throw new Error(`Batching is not supported yet: only one recipient is allowed`); // this will not always be true so we try to make the following code agnostic to the number of commitments
 
   // the first thing we need to do is to find some input commitments which
   // will enable us to conduct our transfer.  Let's rummage in the db...
   const totalValueToSend = values.reduce((acc, value) => acc + value.bigInt, 0n);
   const oldCommitments = await findUsableCommitmentsMutex(
-    compressedPkd,
+    compressedZkpPublicKey,
     ercAddress,
     tokenId,
     totalValueToSend,
@@ -61,7 +58,7 @@ async function transfer(transferParams) {
   else throw new Error('No suitable commitments were found'); // caller to handle - need to get the user to make some commitments or wait until they've been posted to the blockchain and Timber knows about them
   // Having found either 1 or 2 commitments, which are suitable inputs to the
   // proof, the next step is to compute their nullifiers;
-  const nullifiers = oldCommitments.map(commitment => new Nullifier(commitment, nsk));
+  const nullifiers = oldCommitments.map(commitment => new Nullifier(commitment, nullifierKey));
   // then the new output commitment(s)
   const totalInputCommitmentValue = oldCommitments.reduce(
     (acc, commitment) => acc + commitment.preimage.value.bigInt,
@@ -72,42 +69,40 @@ async function transfer(transferParams) {
   // if so, add an output commitment to do that
   if (change !== 0n) {
     values.push(new GN(change));
-    recipientPkds.push(pkd);
-    recipientCompressedPkds.push(compressedPkd);
+    recipientZkpPublicKeys.push(zkpPublicKey);
+    recipientCompressedZkpPublicKeys.push(compressedZkpPublicKey);
   }
-  const newCommitments = [];
-  let secrets = [];
-  const salts = [];
-  let potentialSalt;
-  let potentialCommitment;
-  for (let i = 0; i < recipientCompressedPkds.length; i++) {
-    // loop to find a new salt until the commitment hash is smaller than the BN128_GROUP_ORDER
-    do {
-      // eslint-disable-next-line no-await-in-loop
-      potentialSalt = new GN((await rand(ZKP_KEY_LENGTH)).bigInt % BN128_GROUP_ORDER);
-      potentialCommitment = new Commitment({
+  // Generate salts, constrained to be < field size
+  const salts = await Promise.all(values.map(async () => randValueLT(BN128_GROUP_ORDER)));
+
+  // Generate new commitments, already truncated to u32[7]
+  const newCommitments = recipientCompressedZkpPublicKeys.map(
+    (rcp, i) =>
+      new Commitment({
         ercAddress,
         tokenId,
         value: values[i],
-        pkd: recipientPkds[i],
-        compressedPkd: recipientCompressedPkds[i],
-        salt: potentialSalt,
-      });
-      // encrypt secrets such as erc20Address, tokenId, value, salt for recipient
-      if (i === 0) {
-        // eslint-disable-next-line no-await-in-loop
-        secrets = await Secrets.encryptSecrets(
-          [ercAddress.bigInt, tokenId.bigInt, values[i].bigInt, potentialSalt.bigInt],
-          [recipientPkds[0][0].bigInt, recipientPkds[0][1].bigInt],
-        );
-      }
-    } while (potentialCommitment.hash.bigInt > BN128_GROUP_ORDER);
-    salts.push(potentialSalt);
-    newCommitments.push(potentialCommitment);
-  }
+        zkpPublicKey: recipientZkpPublicKeys[i],
+        // compressedZkpPublicKey: rcp,
+        salt: salts[i].bigInt,
+      }),
+  );
 
-  // compress the secrets to save gas
-  const compressedSecrets = Secrets.compressSecrets(secrets);
+  // KEM-DEM encryption
+  const [ePrivate, ePublic] = await genEphemeralKeys();
+  const [unpackedTokenID, packedErc] = packSecrets(tokenId, ercAddress, 0, 2);
+  const compressedSecrets = encrypt(generalise(ePrivate), generalise(recipientZkpPublicKeys[0]), [
+    packedErc.bigInt,
+    unpackedTokenID.bigInt,
+    values[0].bigInt,
+    salts[0].bigInt,
+  ]);
+
+  // Compress the public key as it will be put on-chain
+  const compressedEPub = edwardsCompress(ePublic);
+  const binaryEPub = generalise(compressedEPub).binary.padStart(256, '0');
+
+  // Commitment Tree Information
   const commitmentTreeInfo = await Promise.all(oldCommitments.map(c => getSiblingInfo(c)));
   const localSiblingPaths = commitmentTreeInfo.map(l => {
     const path = l.siblingPath.path.map(p => p.value);
@@ -136,42 +131,32 @@ async function transfer(transferParams) {
 
   // now we have everything we need to create a Witness and compute a proof
   const witness = [
-    oldCommitments.map(commitment => commitment.preimage.ercAddress.integer),
+    oldCommitments.map(commitment => commitment.preimage.ercAddress.field(BN128_GROUP_ORDER)),
     oldCommitments.map(commitment => [
       commitment.preimage.tokenId.limbs(32, 8),
-      commitment.preimage.value.limbs(32, 8),
-      commitment.preimage.salt.limbs(32, 8),
-      commitment.hash.limbs(32, 8),
-      ask.field(BN128_GROUP_ORDER),
+      commitment.preimage.value.limbs(8, 31),
+      commitment.preimage.salt.field(BN128_GROUP_ORDER),
+      commitment.hash.field(BN128_GROUP_ORDER),
+      rootKey.field(BN128_GROUP_ORDER),
     ]),
     newCommitments.map(commitment => [
       [
-        commitment.preimage.pkd[0].field(BN128_GROUP_ORDER),
-        commitment.preimage.pkd[1].field(BN128_GROUP_ORDER),
+        commitment.preimage.zkpPublicKey[0].field(BN128_GROUP_ORDER),
+        commitment.preimage.zkpPublicKey[1].field(BN128_GROUP_ORDER),
       ],
-      commitment.preimage.value.limbs(32, 8),
-      commitment.preimage.salt.limbs(32, 8),
+      commitment.preimage.value.limbs(8, 31),
+      commitment.preimage.salt.field(BN128_GROUP_ORDER),
     ]),
-    newCommitments.map(commitment => commitment.hash.integer),
-    nullifiers.map(nullifier => nullifier.preimage.nsk.limbs(32, 8)),
-    nullifiers.map(nullifier => generalise(nullifier.hash.hex(32, 31)).integer),
-    localSiblingPaths.map(siblingPath => siblingPath[0].field(BN128_GROUP_ORDER, false)),
+    newCommitments.map(commitment => commitment.hash.field(BN128_GROUP_ORDER)),
+    nullifiers.map(nullifier => nullifier.hash.field(BN128_GROUP_ORDER)),
+    localSiblingPaths.map(siblingPath => siblingPath[0].field(BN128_GROUP_ORDER)),
     localSiblingPaths.map(siblingPath =>
-      siblingPath.slice(1).map(node => node.field(BN128_GROUP_ORDER, false)),
-    ), // siblingPAth[32] is a sha hash and will overflow a field but it's ok to take the mod here - hence the 'false' flag
+      siblingPath.slice(1).map(node => node.field(BN128_GROUP_ORDER)),
+    ),
     leafIndices,
-    [
-      ...secrets.ephemeralKeys.map(key => key.limbs(32, 8)),
-      secrets.cipherText.flat().map(text => text.field(BN128_GROUP_ORDER)),
-      ...secrets.squareRootsElligator2.map(sqroot => sqroot.field(BN128_GROUP_ORDER)),
-    ],
-    compressedSecrets.map(text => {
-      const bin = text.binary.padStart(256, '0');
-      const parity = bin[0];
-      const ordinate = bin.slice(1);
-      const fields = [parity, new GN(ordinate, 'binary').field(BN128_GROUP_ORDER)];
-      return fields;
-    }),
+    generalise(ePrivate).limbs(32, 8),
+    [binaryEPub[0], new GN(binaryEPub.slice(1), 'binary').field(BN128_GROUP_ORDER)],
+    compressedSecrets.map(c => generalise(c).field(BN128_GROUP_ORDER, false)),
   ].flat(Infinity);
 
   logger.debug(`witness input is ${witness.join(' ')}`);
@@ -203,10 +188,12 @@ async function transfer(transferParams) {
     fee,
     historicRootBlockNumberL2: blockNumberL2s,
     transactionType,
-    ercAddress: ZERO, // we don't want to expose the ERC address during a transfer
+    ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
+    tokenId: compressedSecrets[1], // this is the encrypted tokenID
+    recipientAddress: compressedEPub,
     commitments: newCommitments,
     nullifiers,
-    compressedSecrets,
+    compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
     proof,
   });
   logger.debug(
@@ -236,8 +223,11 @@ async function transfer(transferParams) {
       // we only want to store our own commitments so filter those that don't
       // have our public key
       newCommitments
-        .filter(commitment => commitment.preimage.compressedPkd.hex(32) === compressedPkd.hex(32))
-        .forEach(commitment => storeCommitment(commitment, nsk)); // TODO insertMany
+        .filter(
+          commitment =>
+            commitment.compressedZkpPublicKey.hex(32) === compressedZkpPublicKey.hex(32),
+        )
+        .forEach(commitment => storeCommitment(commitment, nullifierKey)); // TODO insertMany
       // mark the old commitments as nullified
       await Promise.all(
         oldCommitments.map(commitment => markNullified(commitment, optimisticTransferTransaction)),
@@ -252,8 +242,10 @@ async function transfer(transferParams) {
       .encodeABI();
     // store the commitment on successful computation of the transaction
     newCommitments
-      .filter(commitment => commitment.preimage.compressedPkd.hex(32) === compressedPkd.hex(32))
-      .forEach(commitment => storeCommitment(commitment, nsk)); // TODO insertMany
+      .filter(
+        commitment => commitment.compressedZkpPublicKey.hex(32) === compressedZkpPublicKey.hex(32),
+      )
+      .forEach(commitment => storeCommitment(commitment, nullifierKey)); // TODO insertMany
     // mark the old commitments as nullified
     await Promise.all(
       oldCommitments.map(commitment => markNullified(commitment, optimisticTransferTransaction)),

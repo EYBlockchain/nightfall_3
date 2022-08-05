@@ -4,6 +4,13 @@ version: '3.5'
 # Use it as an override file for docker-compose.yml
 # See the readme for more information.
 services:
+  administrator:
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    environment:
+      BLOCKCHAIN_WS_HOST: host.docker.internal
+      ETH_NETWORK: development
+      
   client1:
     extra_hosts:
       - 'host.docker.internal:host-gateway'
@@ -41,17 +48,3 @@ services:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
       AUTOSTART_RETRIES: 100
-
-  adversary1:
-    extra_hosts:
-      - 'host.docker.internal:host-gateway'
-    environment:
-      BLOCKCHAIN_WS_HOST: host.docker.internal
-      AUTOSTART_RETRIES: 100
-
-  administrator:
-    extra_hosts:
-      - 'host.docker.internal:host-gateway'
-    environment:
-      BLOCKCHAIN_WS_HOST: host.docker.internal
-      ETH_NETWORK: development

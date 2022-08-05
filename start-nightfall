@@ -7,8 +7,6 @@ usage()
 {
   echo "Usage:"
   echo "  -g or --ganache; for a ganache simulator"
-  echo "  -wt or --wallet-testing; to launch wallet unit testing"
-  echo "  -w or  --wallet; to deploy wallet"
   echo "  -l or --localhost; to connect to an already running blockchain on ws://localhost:8546"
   echo "  -s or --stubs; runs with circuits stubbed out (faster but no checking of ZKP code) - use with either -g or -l"
   echo "  -h or --help; to print this message"
@@ -27,16 +25,6 @@ rm -f ${ENV_FILE}
 while [ -n "$1" ]; do
   case $1 in
       -g  | --ganache )             FILE="-f docker-compose.yml -f docker-compose.ganache.yml";
-                                    ;;
-      -wt | --wallet-testing )      FILE="-f docker-compose.yml -f docker-compose.ganache.yml -f docker-compose.wallet-test.yml"
-                                    export ENABLE_VNC_SERVER=0
-				    export RUN_SELENIUM_TESTS=1
-				    cd wallet && ./pre-start-script.sh && cd -
-                                    ;;
-      -w  | --wallet)               FILE="-f docker-compose.yml -f docker-compose.ganache.yml -f docker-compose.wallet-test.yml"
-                                    export ENABLE_VNC_SERVER=1
-				    export RUN_SELENIUM_TESTS=0
-				    cd wallet && ./pre-start-script.sh && cd -
                                     ;;
       -l  | --localhost )           FILE="-f docker-compose.yml -f docker-compose.host.docker.internal.yml"
                                     ;;
@@ -88,11 +76,6 @@ if [[ $(echo $VOLUME_LIST | grep nightfall_3_geth1-chain) ]]; then
   docker volume rm nightfall_3_geth1-chain
 fi
 
-if [[ $(echo $VOLUME_LIST | grep nightfall_3_geth2-chain) ]]; then
-  echo -n 'Removing '
-  docker volume rm nightfall_3_geth2-chain
-fi
-
 if [[ $(echo $VOLUME_LIST | grep nightfall_3_geth-miner-chain1) ]]; then
   echo -n 'Removing '
   docker volume rm nightfall_3_geth-miner-chain1
@@ -103,20 +86,10 @@ if [[ $(echo $VOLUME_LIST | grep nightfall_3_dag1) ]]; then
   docker volume rm nightfall_3_dag1
 fi
 
-if [[ $(echo $VOLUME_LIST | grep nightfall_3_geth-miner-chain2) ]]; then
-  echo -n 'Removing '
-  docker volume rm nightfall_3_geth-miner-chain2
-fi
-
-if [[ $(echo $VOLUME_LIST | grep nightfall_3_dag2) ]]; then
-  echo -n 'Removing '
-  docker volume rm nightfall_3_dag2
-fi
-
 DIR=./common-files/node_modules
 if [[ -d "$DIR" ]]; then
   rm -dr common-files/node_modules
 fi
 #docker-compose -f docker-compose.yml $FILE up -d deployer
 docker-compose $FILE $STUBS $DEV $ADVERSARY up -d --remove-orphans
-docker-compose logs -f
+docker-compose logs -f client1 optimist1 worker deployer

@@ -9,51 +9,37 @@
 import config from 'config';
 import axios from 'axios';
 import gen from 'general-number';
-import rand from 'common-files/utils/crypto/crypto-random.mjs';
+import { randValueLT } from 'common-files/utils/crypto/crypto-random.mjs';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
 import logger from 'common-files/utils/logger.mjs';
+import constants from 'common-files/constants/index.mjs';
 import { Commitment, Transaction } from '../classes/index.mjs';
 import { storeCommitment } from './commitment-storage.mjs';
-import { compressPublicKey } from './keys.mjs';
+import { ZkpKeys } from './keys.mjs';
 
-const {
-  ZKP_KEY_LENGTH,
-  ZOKRATES_WORKER_HOST,
-  SHIELD_CONTRACT_NAME,
-  PROVING_SCHEME,
-  BACKEND,
-  PROTOCOL,
-  USE_STUBS,
-  BN128_GROUP_ORDER,
-} = config;
+const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, USE_STUBS, BN128_GROUP_ORDER } =
+  config;
+const { SHIELD_CONTRACT_NAME } = constants;
 const { generalise } = gen;
 
 async function deposit(items) {
   logger.info('Creating a deposit transaction');
   // before we do anything else, long hex strings should be generalised to make
   // subsequent manipulations easier
-  const { ercAddress, tokenId, value, pkd, nsk, fee } = generalise(items);
-  const compressedPkd = compressPublicKey(pkd);
-
-  let commitment;
-  let salt;
-  do {
-    // we also need a salt to make the commitment unique and increase its entropy
-    // eslint-disable-next-line
-    salt = await rand(ZKP_KEY_LENGTH);
-    // next, let's compute the zkp commitment we're going to store
-    commitment = new Commitment({ ercAddress, tokenId, value, compressedPkd, salt });
-  } while (commitment.hash.bigInt > BN128_GROUP_ORDER);
-
+  const { ercAddress, tokenId, value, compressedZkpPublicKey, nullifierKey, fee } =
+    generalise(items);
+  const zkpPublicKey = ZkpKeys.decompressZkpPublicKey(compressedZkpPublicKey);
+  const salt = await randValueLT(BN128_GROUP_ORDER);
+  const commitment = new Commitment({ ercAddress, tokenId, value, zkpPublicKey, salt });
   logger.debug(`Hash of new commitment is ${commitment.hash.hex()}`);
   // now we can compute a Witness so that we can generate the proof
   const witness = [
-    ercAddress.integer,
-    tokenId.integer,
-    value.integer,
-    compressedPkd.limbs(32, 8),
-    salt.limbs(32, 8),
-    commitment.hash.integer, // not truncating here as we already ensured hash < group order
+    ercAddress.field(BN128_GROUP_ORDER),
+    tokenId.limbs(32, 8),
+    value.field(BN128_GROUP_ORDER),
+    ...zkpPublicKey.all.field(BN128_GROUP_ORDER),
+    salt.field(BN128_GROUP_ORDER),
+    commitment.hash.field(BN128_GROUP_ORDER),
   ].flat(Infinity);
   logger.debug(`witness input is ${witness.join(' ')}`);
   // call a zokrates worker to generate the proof
@@ -92,7 +78,7 @@ async function deposit(items) {
       .encodeABI();
     // store the commitment on successful computation of the transaction
     commitment.isDeposited = true;
-    storeCommitment(commitment, nsk);
+    storeCommitment(commitment, nullifierKey);
     return { rawTransaction, transaction: optimisticDepositTransaction };
   } catch (err) {
     throw new Error(err); // let the caller handle the error

@@ -7,6 +7,9 @@ import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import mongo from 'common-files/utils/mongo.mjs';
 import Timber from 'common-files/classes/timber.mjs';
+import constants from 'common-files/constants/index.mjs';
+
+const { ZERO } = constants;
 
 const {
   MONGO_URL,
@@ -15,12 +18,12 @@ const {
   PROPOSER_COLLECTION,
   CHALLENGER_COLLECTION,
   SUBMITTED_BLOCKS_COLLECTION,
+  INVALID_BLOCKS_COLLECTION,
   NULLIFIER_COLLECTION,
   COMMIT_COLLECTION,
   TIMBER_COLLECTION,
-  ZERO,
-  HASH_TYPE,
   TIMBER_HEIGHT,
+  HASH_TYPE,
 } = config;
 
 /**
@@ -211,6 +214,20 @@ export async function findBlocksFromBlockNumberL2(blockNumberL2) {
 }
 
 /**
+function to save an invalid block, so that we can later search the invalid block
+and the type of invalid block.
+*/
+export async function saveInvalidBlock(_block) {
+  const block = { _id: _block.blockHash, ..._block };
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  logger.debug(`saving invalid block ${JSON.stringify(block, null, 2)}`);
+  const query = { blockHash: block.blockHash };
+  const update = { $set: block };
+  return db.collection(INVALID_BLOCKS_COLLECTION).updateOne(query, update, { upsert: true });
+}
+
+/**
 function to store addresses and URL of proposers that are registered through this
 app. These are needed because the app needs to know when one of them is the
 current (active) proposer, at which point it will automatically start to
@@ -316,11 +333,15 @@ export async function addTransactionsToMemPool(block) {
 Function to remove a set of transactions from the layer 2 mempool once they've
 been processed into a block
 */
-export async function removeTransactionsFromMemPool(transactionHashes, blockNumberL2 = -1) {
+export async function removeTransactionsFromMemPool(
+  transactionHashes,
+  blockNumberL2 = -1,
+  timeBlockL2 = null,
+) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { transactionHash: { $in: transactionHashes }, blockNumberL2: -1 };
-  const update = { $set: { mempool: false, blockNumberL2 } };
+  const update = { $set: { mempool: false, blockNumberL2, timeBlockL2 } };
   return db.collection(TRANSACTIONS_COLLECTION).updateMany(query, update);
 }
 
@@ -523,6 +544,15 @@ export async function getLatestTree() {
   return t;
 }
 
+export async function getTreeByBlockNumberL2(blockNumberL2) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const { root, frontier, leafCount } =
+    (await db.collection(TIMBER_COLLECTION).findOne({ blockNumberL2 })) ?? {};
+  const t = new Timber(root, frontier, leafCount, undefined, HASH_TYPE, TIMBER_HEIGHT);
+  return t;
+}
+
 export async function getTreeByRoot(treeRoot) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
@@ -545,5 +575,7 @@ export async function getTreeByLeafCount(historicalLeafCount) {
 export async function deleteTreeByBlockNumberL2(blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
+  await db.collection(TIMBER_COLLECTION).updateOne({ blockNumberL2 }, { $set: { rollback: true } });
+  await new Promise(resolve => setTimeout(() => resolve(), 1000));
   return db.collection(TIMBER_COLLECTION).deleteMany({ blockNumberL2: { $gte: blockNumberL2 } });
 }
