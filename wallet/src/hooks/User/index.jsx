@@ -1,7 +1,7 @@
 import React from 'react';
 import { useHistory } from 'react-router-dom';
 
-import { generateKeys } from '@Nightfall/services/keys';
+import { ZkpKeys } from '@Nightfall/services/keys';
 import blockProposedEventHandler from '@Nightfall/event-handlers/block-proposed';
 import { checkIndexDBForCircuit, getMaxBlock } from '@Nightfall/services/database';
 import * as Storage from '../../utils/lib/local-storage';
@@ -30,7 +30,9 @@ export const UserProvider = ({ children }) => {
   const deriveAccounts = async (mnemonic, numAccts) => {
     const accountRange = Array.from({ length: numAccts }, (v, i) => i);
     const zkpKeys = await Promise.all(
-      accountRange.map(i => generateKeys(mnemonic, `m/44'/60'/0'/${i.toString()}`)),
+      accountRange.map(i =>
+        ZkpKeys.generateZkpKeysFromMnemonic(mnemonic, `m/44'/60'/0'/${i.toString()}`),
+      ),
     );
     const aesGenParams = { name: 'AES-GCM', length: 128 };
     const key = await crypto.subtle.generateKey(aesGenParams, false, ['encrypt', 'decrypt']);

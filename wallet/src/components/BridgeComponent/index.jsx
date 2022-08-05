@@ -8,7 +8,7 @@ import importTokens from '@TokenList/index';
 import deposit from '@Nightfall/services/deposit';
 import withdraw from '@Nightfall/services/withdraw';
 import { getWalletBalance } from '@Nightfall/services/commitment-storage';
-import { decompressKey } from '@Nightfall/services/keys';
+import { ZkpKeys } from '@Nightfall/services/keys';
 import { saveTransaction } from '@Nightfall/services/database';
 import Lottie from 'lottie-react';
 import ethChainImage from '../../assets/img/ethereum-chain.svg';
@@ -232,7 +232,7 @@ const BridgeComponent = () => {
     const zkpKeys = await retrieveAndDecrypt(state.compressedPkd);
     switch (txType) {
       case 'deposit': {
-        const pkd = decompressKey(generalise(state.compressedPkd));
+        const pkd = ZkpKeys.decompressZkpPublicKey(generalise(state.compressedPkd));
         await approve(
           ercAddress,
           shieldContractAddress,

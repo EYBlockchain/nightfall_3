@@ -20,8 +20,8 @@ import {
   getSiblingInfo,
   storeCommitment,
 } from './commitment-storage';
-import { ZkpKeys } from './keys.mjs';
-import { computeWitness } from '../utils/compute-witness.mjs';
+import { ZkpKeys } from './keys';
+import { computeWitness } from '../utils/compute-witness';
 import { checkIndexDBForCircuit, getStoreCircuit } from './database';
 
 const { BN128_GROUP_ORDER, USE_STUBS } = global.config;
@@ -34,7 +34,7 @@ const MAX_WITHDRAW = 5192296858534827628530496329220096n; // 2n**112n
 async function withdraw(withdrawParams, shieldContractAddress) {
   logger.info('Creating a withdraw transaction');
   // let's extract the input items
-  const { ercAddress, tokenId, value, recipientAddress, rootKey, fee } = generalise(items);
+  const { ercAddress, tokenId, value, recipientAddress, rootKey, fee } = generalise(withdrawParams);
   const { compressedZkpPublicKey, nullifierKey, zkpPublicKey } = new ZkpKeys(rootKey);
 
   if (!(await checkIndexDBForCircuit(circuitName)))
@@ -52,7 +52,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
   // the first thing we need to do is to find and input commitment which
   // will enable us to conduct our withdraw.  Let's rummage in the db...
   const oldCommitments = await findUsableCommitmentsMutex(
-    compressedPkd,
+    compressedZkpPublicKey,
     ercAddress,
     tokenId,
     value,
@@ -75,11 +75,10 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     const change = totalInputCommitmentValue - withdrawValue;
     // and the Merkle path from the commitment to the root
     const commitmentTreeInfo = await Promise.all(oldCommitments.map(c => getSiblingInfo(c)));
-    const siblingPath = generalise(
-      [commitmentTreeInfo.root].concat(
-        commitmentTreeInfo.siblingPath.path.map(p => p.value).reverse(),
-      ),
-    );
+    const localSiblingPaths = commitmentTreeInfo.map(l => {
+      const path = l.siblingPath.path.map(p => p.value);
+      return generalise([l.root].concat(path.reverse()));
+    });
 
     // public inputs
     const leafIndices = commitmentTreeInfo.map(l => l.leafIndex);
@@ -100,37 +99,37 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     }
     // now we have everything we need to create a Witness and compute a proof
     const publicData = Transaction.buildSolidityStruct(
-    new Transaction({
-      fee,
-      historicRootBlockNumberL2: blockNumberL2s,
-      commitments: newCommitment.length > 0 ? newCommitment : [{ hash: 0 }, { hash: 0 }],
-      transactionType: 2,
-      tokenType: items.tokenType,
-      tokenId,
-      value,
-      ercAddress,
-      recipientAddress,
-      nullifiers,
-    }),
-  );
-  const privateData = {
-    rootKey: [rootKey, rootKey],
-    oldCommitmentPreimage: oldCommitments.map(o => {
-      return { value: o.preimage.value, salt: o.preimage.salt };
-    }),
-    paths: localSiblingPaths.map(siblingPath => siblingPath.slice(1)),
-    orders: leafIndices,
-    newCommitmentPreimage: newCommitment.map(o => {
-      return { value: o.preimage.value, salt: o.preimage.salt };
-    }),
-    recipientPublicKeys: newCommitment.map(o => o.preimage.zkpPublicKey),
-  };
+      new Transaction({
+        fee,
+        historicRootBlockNumberL2: blockNumberL2s,
+        commitments: newCommitment.length > 0 ? newCommitment : [{ hash: 0 }, { hash: 0 }],
+        transactionType: 2,
+        tokenType: withdrawParams.tokenType,
+        tokenId,
+        value,
+        ercAddress,
+        recipientAddress,
+        nullifiers,
+      }),
+    );
+    const privateData = {
+      rootKey: [rootKey, rootKey],
+      oldCommitmentPreimage: oldCommitments.map(o => {
+        return { value: o.preimage.value, salt: o.preimage.salt };
+      }),
+      paths: localSiblingPaths.map(siblingPath => siblingPath.slice(1)),
+      orders: leafIndices,
+      newCommitmentPreimage: newCommitment.map(o => {
+        return { value: o.preimage.value, salt: o.preimage.salt };
+      }),
+      recipientPublicKeys: newCommitment.map(o => o.preimage.zkpPublicKey),
+    };
 
-  const witnessInput = computeWitness(
-    publicData,
-    localSiblingPaths.map(siblingPath => siblingPath[0]),
-    privateData,
-  );
+    const witnessInput = computeWitness(
+      publicData,
+      localSiblingPaths.map(siblingPath => siblingPath[0]),
+      privateData,
+    );
 
     logger.debug(`witness input is ${JSON.stringify(witnessInput)}`);
     // call a zokrates worker to generate the proof
@@ -164,12 +163,15 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(optimisticWithdrawTransaction))
       .encodeABI();
+    if (change !== 0n) await storeCommitment(newCommitment[0], nullifierKey);
     // on successful computation of the transaction mark the old commitments as nullified
-    await markNullified(oldCommitment, optimisticWithdrawTransaction);
+    await Promise.all(
+      oldCommitments.map(commitment => markNullified(commitment, optimisticWithdrawTransaction)),
+    );
     // await saveTransaction(optimisticWithdrawTransaction);
     return { rawTransaction, transaction: optimisticWithdrawTransaction };
   } catch (err) {
-    await clearPending(oldCommitment);
+    await Promise.all(oldCommitments.map(commitment => clearPending(commitment)));
     throw new Error(err); // let the caller handle the error
   }
 }

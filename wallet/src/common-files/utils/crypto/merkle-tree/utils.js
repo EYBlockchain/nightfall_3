@@ -8,12 +8,13 @@
 import createKeccakHash from 'keccak';
 import crypto from 'crypto';
 import sb from 'safe-buffer';
-import { generalise } from 'general-number';
+import gen from 'general-number';
 import mimcHashFunction from '../mimc/mimc.js';
 import poseidonHashFunction from '../poseidon/poseidon.js';
 
 const { Buffer } = sb;
 const { CURVE } = global.config;
+const { generalise } = gen;
 
 function parseToDigitsArray(str, base) {
   const digits = str.split('');

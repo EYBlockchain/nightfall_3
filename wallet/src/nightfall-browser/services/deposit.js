@@ -17,7 +17,7 @@ import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
 import { Commitment, Transaction } from '../classes/index';
 import { storeCommitment } from './commitment-storage';
-import { ZkpKeys } from './keys.mjs';
+import { ZkpKeys } from './keys';
 import { checkIndexDBForCircuit, getStoreCircuit } from './database';
 import { computeWitness } from '../utils/compute-witness';
 
@@ -103,7 +103,7 @@ async function deposit(items, shieldContractAddress) {
 
     // store the commitment on successful computation of the transaction
     commitment.isDeposited = true;
-    await storeCommitment(commitment, nsk);
+    await storeCommitment(commitment, nullifierKey);
     // await saveTransaction(optimisticDepositTransaction);
     return { rawTransaction, transaction: optimisticDepositTransaction };
   } catch (err) {

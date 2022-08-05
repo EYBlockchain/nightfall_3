@@ -15,6 +15,7 @@ import { randValueLT } from '../../common-files/utils/crypto/crypto-random';
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
 import { Nullifier, Commitment, Transaction } from '../classes/index';
+import { edwardsCompress } from '../../common-files/utils/curve-maths/curves';
 import {
   findUsableCommitmentsMutex,
   storeCommitment,
@@ -22,10 +23,10 @@ import {
   clearPending,
   getSiblingInfo,
 } from './commitment-storage';
-import { ZkpKeys } from './keys.mjs';
+import { ZkpKeys } from './keys';
 import { checkIndexDBForCircuit, getStoreCircuit } from './database';
-import { encrypt, genEphemeralKeys, packSecrets } from './kem-dem.mjs';
-import { computeWitness } from '../utils/compute-witness.mjs';
+import { encrypt, genEphemeralKeys, packSecrets } from './kem-dem';
+import { computeWitness } from '../utils/compute-witness';
 
 const { BN128_GROUP_ORDER, USE_STUBS } = global.config;
 const { ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, ZERO } = global.nightfallConstants;
@@ -117,7 +118,7 @@ async function transfer(transferParams, shieldContractAddress) {
     );
     // time for a quick sanity check.  We expect the number of old commitments,
     // new commitments and nullifiers to be equal.
-    if ( nullifiers.length !== oldCommitments.length) {
+    if (nullifiers.length !== oldCommitments.length) {
       logger.error(
         `number of old commitments: ${oldCommitments.length}, number of new commitments: ${newCommitments.length}, number of nullifiers: ${nullifiers.length}`,
       );
@@ -127,37 +128,37 @@ async function transfer(transferParams, shieldContractAddress) {
     }
 
     // now we have everything we need to create a Witness and compute a proof
-  const transaction = Transaction.buildSolidityStruct(
-    new Transaction({
-      fee,
-      historicRootBlockNumberL2: blockNumberL2s,
-      transactionType: 1,
-      ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
-      tokenId: compressedSecrets[1], // this is the encrypted tokenID
-      recipientAddress: compressedEPub,
-      commitments: newCommitments,
-      nullifiers,
-      compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
-    }),
-  );
+    const transaction = Transaction.buildSolidityStruct(
+      new Transaction({
+        fee,
+        historicRootBlockNumberL2: blockNumberL2s,
+        transactionType: 1,
+        ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
+        tokenId: compressedSecrets[1], // this is the encrypted tokenID
+        recipientAddress: compressedEPub,
+        commitments: newCommitments,
+        nullifiers,
+        compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
+      }),
+    );
 
-  const privateData = {
-    rootKey: [rootKey, rootKey],
-    oldCommitmentPreimage: oldCommitments.map(o => {
-      return { value: o.preimage.value, salt: o.preimage.salt };
-    }),
-    paths: localSiblingPaths.map(siblingPath => siblingPath.slice(1)),
-    orders: leafIndices,
-    newCommitmentPreimage: newCommitments.map(o => {
-      return { value: o.preimage.value, salt: o.preimage.salt };
-    }),
-    recipientPublicKeys: newCommitments.map(o => o.preimage.zkpPublicKey),
-    ercAddress,
-    tokenId,
-    ephemeralKey: ePrivate,
-  };
+    const privateData = {
+      rootKey: [rootKey, rootKey],
+      oldCommitmentPreimage: oldCommitments.map(o => {
+        return { value: o.preimage.value, salt: o.preimage.salt };
+      }),
+      paths: localSiblingPaths.map(siblingPath => siblingPath.slice(1)),
+      orders: leafIndices,
+      newCommitmentPreimage: newCommitments.map(o => {
+        return { value: o.preimage.value, salt: o.preimage.salt };
+      }),
+      recipientPublicKeys: newCommitments.map(o => o.preimage.zkpPublicKey),
+      ercAddress,
+      tokenId,
+      ephemeralKey: ePrivate,
+    };
 
-  const witnessInput = computeWitness(transaction, roots, privateData);
+    const witnessInput = computeWitness(transaction, roots, privateData);
 
     // const flattenInput = witnessInput.map(w => {
     //   if (w.length === 1) {
@@ -171,13 +172,13 @@ async function transfer(transferParams, shieldContractAddress) {
     // call a zokrates worker to generate the proof
     // This is (so far) the only place where we need to get specific about the
     // circuit
-    let transactionType = 2;
-    if (!(await checkIndexDBForCircuit(doubleTransfer)))
+    const transactionType = 2;
+    if (!(await checkIndexDBForCircuit(circuitName)))
       throw Error('Some circuit data are missing from IndexedDB');
     const [abiData, programData, pkData] = await Promise.all([
-      getStoreCircuit(`${doubleTransfer}-abi`),
-      getStoreCircuit(`${doubleTransfer}-program`),
-      getStoreCircuit(`${doubleTransfer}-pk`),
+      getStoreCircuit(`${circuitName}-abi`),
+      getStoreCircuit(`${circuitName}-program`),
+      getStoreCircuit(`${circuitName}-pk`),
     ]);
     const abi = abiData.data;
     const program = programData.data;
@@ -186,7 +187,7 @@ async function transfer(transferParams, shieldContractAddress) {
     const zokratesProvider = await initialize();
     const artifacts = { program: new Uint8Array(program), abi };
     const keypair = { pk: new Uint8Array(pk) };
-    const { witness } = zokratesProvider.computeWitness(artifacts, flattenInput);
+    const { witness } = zokratesProvider.computeWitness(artifacts, witnessInput);
     // generate proof
     let { proof } = zokratesProvider.generateProof(artifacts.program, witness, keypair.pk);
     proof = [...proof.a, ...proof.b, ...proof.c];
@@ -211,8 +212,8 @@ async function transfer(transferParams, shieldContractAddress) {
       .encodeABI();
     // store the commitment on successful computation of the transaction
     newCommitments
-      .filter(commitment => commitment.compressedPkd.hex(32) === compressedPkd.hex(32))
-      .forEach(commitment => storeCommitment(commitment, nsk)); // TODO insertMany
+      .filter(commitment => commitment.compressedPkd.hex(32) === compressedZkpPublicKey.hex(32))
+      .forEach(commitment => storeCommitment(commitment, nullifierKey)); // TODO insertMany
     // mark the old commitments as nullified
     await Promise.all(
       oldCommitments.map(commitment => markNullified(commitment, optimisticTransferTransaction)),

@@ -1,4 +1,4 @@
-// ignore unused exports default
+// ignore unused exports
 /* eslint import/no-extraneous-dependencies: "off" */
 
 /**
@@ -10,13 +10,13 @@ import gen from 'general-number';
 
 const { GN, generalise } = gen;
 
-async function rand(bytes) {
+export async function rand(bytes) {
   const buf = await crypto.randomBytes(bytes);
   return new GN(buf.toString('hex'), 'hex');
 }
 
 // Rejection sampling for a value < bigIntValue
-async function randValueLT(bigIntValue) {
+export async function randValueLT(bigIntValue) {
   let genVal = Infinity;
   const MAX_ATTEMPTS = 1000;
   const minimumBytes = Math.ceil(generalise(bigIntValue).binary.length / 8);
@@ -29,5 +29,3 @@ async function randValueLT(bigIntValue) {
   if (counter === MAX_ATTEMPTS) throw new Error("Couldn't make a number below target value");
   return genVal;
 }
-
-export { rand, randValueLT };

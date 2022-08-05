@@ -1,6 +1,7 @@
 /* ignore unused exports */
-
-import { GN, generalise } from 'general-number';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import { GN, generalise, GeneralNumber } from 'general-number';
 import { validateMnemonic, mnemonicToSeedSync } from 'bip39';
 import { hdkey } from 'ethereumjs-wallet';
 
@@ -11,8 +12,10 @@ import {
   edwardsDecompress,
 } from '../../common-files/utils/curve-maths/curves';
 
-export const zkpPrivateKeys = [];
-export const nullifierKeys = [];
+export const zkpPrivateKeys: any = [];
+export const nullifierKeys: any = [];
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 const { BABYJUBJUB, BN128_GROUP_ORDER } = global.config;
 
 export class ZkpKeys {
@@ -26,7 +29,7 @@ export class ZkpKeys {
 
   compressedZkpPublicKey;
 
-  constructor(rootKey) {
+  constructor(rootKey: GeneralNumber) {
     this.rootKey = rootKey;
     this.zkpPrivateKey = poseidon([
       rootKey,
@@ -36,7 +39,8 @@ export class ZkpKeys {
       rootKey,
       new GN(7805187439118198468809896822299973897593108379494079213870562208229492109015n),
     ]);
-    this.zkpPublicKey = generalise(scalarMult(this.zkpPrivateKey.hex(), BABYJUBJUB.GENERATOR));
+    const scalarResult: string[] = scalarMult(this.zkpPrivateKey.hex(32), BABYJUBJUB.GENERATOR);
+    this.zkpPublicKey = generalise(scalarResult);
     this.compressedZkpPublicKey = new GN(
       edwardsCompress([this.zkpPublicKey[0].bigInt, this.zkpPublicKey[1].bigInt]),
     );
@@ -53,18 +57,16 @@ export class ZkpKeys {
   // The domain numbers are derived thusly:
   // keccak256('zkpPrivateKey') % BN128_GROUP_ORDER 2708019456231621178814538244712057499818649907582893776052749473028258908910
   // keccak256('nullifierKey') % BN128_GROUP_ORDER 7805187439118198468809896822299973897593108379494079213870562208229492109015
-  static generateZkpKeysFromMnemonic(mnemonic, addressIndex) {
+  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+  static generateZkpKeysFromMnemonic(mnemonic: string, addressIndex: number) {
     if (validateMnemonic(mnemonic)) {
-      const seed = mnemonicToSeedSync(mnemonic).toString('hex');
+      const seed = mnemonicToSeedSync(mnemonic);
       const rootKey = generalise(
-        new GN(
-          hdkey
-            .fromMasterSeed(seed)
-            .derivePath(`m/44'/60'/0'/0/${addressIndex}`)
-            .getWallet()
-            .getPrivateKey(),
-        ).bigInt % BN128_GROUP_ORDER,
-        'bigInt',
+        hdkey
+          .fromMasterSeed(seed)
+          .derivePath(`m/44'/60'/0'/0/${addressIndex}`)
+          .getWallet()
+          .getPrivateKey(),
       );
       const zkpPrivateKey = poseidon([
         rootKey,
@@ -74,43 +76,40 @@ export class ZkpKeys {
         rootKey,
         new GN(7805187439118198468809896822299973897593108379494079213870562208229492109015n),
       ]);
-      const zkpPublicKey = generalise(scalarMult(zkpPrivateKey.hex(), BABYJUBJUB.GENERATOR));
+      const scalarResult: string[] = scalarMult(zkpPrivateKey.hex(32), BABYJUBJUB.GENERATOR);
+      const zkpPublicKey = generalise(scalarResult);
       const compressedZkpPublicKey = new GN(
         edwardsCompress([zkpPublicKey[0].bigInt, zkpPublicKey[1].bigInt]),
       );
       return {
-        rootKey: rootKey.hex(),
-        zkpPrivateKey: zkpPrivateKey.hex(),
-        nullifierKey: nullifierKey.hex(),
-        zkpPublicKey: [zkpPublicKey[0].hex(), zkpPublicKey[1].hex()],
+        rootKey: generalise(rootKey.field(BN128_GROUP_ORDER)).hex(32),
+        zkpPrivateKey: zkpPrivateKey.hex(32),
+        nullifierKey: nullifierKey.hex(32),
+        zkpPublicKey: [zkpPublicKey[0].hex(32), zkpPublicKey[1].hex(32)],
         compressedZkpPublicKey: compressedZkpPublicKey.hex(),
       };
     }
     throw new Error('invalid mnemonic');
   }
 
-  static calculateZkpPublicKey(zkpPrivateKey) {
-    const zkpPublicKey = generalise(scalarMult(zkpPrivateKey.hex(), BABYJUBJUB.GENERATOR));
+  static calculateZkpPublicKey(zkpPrivateKey: GeneralNumber): {
+    zkpPublicKey: GeneralNumber[];
+    compressedZkpPublicKey: GeneralNumber;
+  } {
+    const scalarResult: string[] = scalarMult(zkpPrivateKey.hex(32), BABYJUBJUB.GENERATOR);
+    const zkpPublicKey = generalise(scalarResult);
     const compressedZkpPublicKey = new GN(
       edwardsCompress([zkpPublicKey[0].bigInt, zkpPublicKey[1].bigInt]),
     );
     return { zkpPublicKey, compressedZkpPublicKey };
   }
 
-  static decompressZkpPublicKey(compressedZkpPublicKey) {
-    return generalise(edwardsDecompress(compressedZkpPublicKey.bigInt));
+  static decompressZkpPublicKey(compressedZkpPublicKey: GeneralNumber): GeneralNumber[] {
+    const decompressedPoint: string[] = edwardsDecompress(compressedZkpPublicKey.bigInt);
+    return generalise(decompressedPoint);
   }
 
-  static compressZkpPublicKey(zkpPublicKey) {
+  static compressZkpPublicKey(zkpPublicKey: GeneralNumber[]): GeneralNumber {
     return new GN(edwardsCompress([zkpPublicKey[0].bigInt, zkpPublicKey[1].bigInt]));
   }
-}
-
-export function storeMemoryKeysForDecryption(zkpPrivateKey, nullifierKey) {
-  return Promise.all([
-    zkpPrivateKeys.includes(zkpPrivateKey[0])
-      ? zkpPrivateKeys
-      : zkpPrivateKeys.push(...zkpPrivateKey),
-    nullifierKeys.includes(nullifierKey[0]) ? nullifierKey : nullifierKeys.push(...nullifierKey),
-  ]);
 }
