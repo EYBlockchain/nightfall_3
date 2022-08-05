@@ -91,6 +91,25 @@ router.get('/commitments', async (req, res, next) => {
 });
 
 /**
+ * @description the endpoint that will save a list of commitments
+ * @author luizoamorim
+ */
+router.post('/saveAll', async (req, res, next) => {
+  logger.debug('commitment/saveAll endpoint received POST');
+  const listOfCommitments = req.body;
+  try {
+    const response = await saveCommitments(listOfCommitments);
+    if (response instanceof Error) {
+      throw response;
+    }
+    res.json({ response });
+  } catch (err) {
+    logger.error(err);
+    next(err);
+  }
+});
+
+/**
  * @description the endpoint that will send a reponse with all the
  * existent commitments for the list of compressedPkd received in the
  * request body. We're using POST for this endpoint, because if the
