@@ -27,10 +27,12 @@
     "winston": "^3.3.3"
   },
   "devDependencies": {
+    "async": "^3.2.2",
     "chai": "^4.2.0",
     "chai-http": "^4.3.0",
     "mocha": "^10.0.0",
-    "nodemon": "^2.0.19"
+    "nodemon": "^2.0.19",
+    "url-parse": "^1.5.9"
   },
   "nodemonConfig": {
     "verbose": true,
@@ -39,10 +41,5 @@
       "circuits/",
       "*.json"
     ]
-  },
-  "overrides": {
-    "terser": "5.14.2",
-    "asyc": "3.2.2",
-    "url-parse": "1.5.9"
   }
 }
