@@ -192,8 +192,9 @@ describe('ERC1155 tests', () => {
         balances = [
           (await nf3Users[0].getLayer2Balances())[erc1155Address].find(e => Number(e.tokenId) === 0)
             .balance,
-          (await nf3Users[1].getLayer2Balances())[erc1155Address]?.find(e => Number(e.tokenId) === 0)
-            ?.balance || 0,
+          (await nf3Users[1].getLayer2Balances())[erc1155Address]?.find(
+            e => Number(e.tokenId) === 0,
+          )?.balance || 0,
         ];
       }
 
