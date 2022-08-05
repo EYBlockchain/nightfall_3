@@ -310,7 +310,7 @@ export async function getWalletBalance(compressedZkpPublicKey, ercList) {
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
       compressedZkpPublicKey: e.compressedZkpPublicKey,
-      tokenId: `0x${BigInt(e.preimage.tokenId).toString(16).padStart(32, '0')}`,
+      tokenId: `0x${BigInt(e.preimage.tokenId).toString(16).padStart(64, '0')}`,
       value: Number(BigInt(e.preimage.value)),
     }))
     .filter(
@@ -367,7 +367,7 @@ export async function getWalletPendingDepositBalance(compressedZkpPublicKey, erc
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
       compressedZkpPublicKey: e.compressedZkpPublicKey,
-      tokenId: `0x${BigInt(e.preimage.tokenId).toString(16).padStart(32, '0')}`,
+      tokenId: `0x${BigInt(e.preimage.tokenId).toString(16).padStart(64, '0')}`,
       value: Number(BigInt(e.preimage.value)),
     }))
     .filter(
@@ -428,7 +428,7 @@ export async function getWalletPendingSpentBalance(compressedZkpPublicKey, ercLi
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
       compressedZkpPublicKey: e.compressedZkpPublicKey,
-      tokenId: `0x${BigInt(e.preimage.tokenId).toString(16).padStart(32, '0')}`,
+      tokenId: `0x${BigInt(e.preimage.tokenId).toString(16).padStart(64, '0')}`,
       value: Number(BigInt(e.preimage.value)),
     }))
     .filter(
@@ -487,7 +487,7 @@ export async function getWalletCommitments() {
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`,
       compressedZkpPublicKey: e.compressedZkpPublicKey,
-      tokenId: `0x${BigInt(e.preimage.tokenId).toString(16).padStart(32, '0')}`,
+      tokenId: `0x${BigInt(e.preimage.tokenId).toString(16).padStart(64, '0')}`,
       value: Number(BigInt(e.preimage.value)),
     }))
     .filter(e => e.tokenId || e.value > 0) // there should be no commitments with tokenId and value of ZERO
