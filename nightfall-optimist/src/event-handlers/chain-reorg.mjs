@@ -66,7 +66,7 @@ import {
   deleteTreeByBlockNumberL2,
   deleteNullifiersForBlock,
 } from '../services/database.mjs';
-import { waitForContract } from '../utils/index.mjs';
+import { waitForContract } from './subscribe.mjs';
 
 const { STATE_CONTRACT_NAME } = constants;
 
