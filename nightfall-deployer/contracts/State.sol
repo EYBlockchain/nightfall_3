@@ -31,7 +31,6 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
     address public proposersAddress;
     address public challengesAddress;
     address public shieldAddress;
-    address public maticAddress;
 
     function initialize() public override(Pausable, Config) {
         Pausable.initialize();
@@ -42,13 +41,11 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
     function initialize(
         address _proposersAddress,
         address _challengesAddress,
-        address _shieldAddress,
-        address _maticAddress
+        address _shieldAddress
     ) public initializer {
         proposersAddress = _proposersAddress;
         challengesAddress = _challengesAddress;
         shieldAddress = _shieldAddress;
-        maticAddress = _maticAddress;
         initialize();
     }
 
@@ -97,8 +94,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         require(b.proposer == msg.sender, 'The proposer address is not the sender');
         // set the maximum tx/block to prevent unchallengably large blocks
         require(t.length < 33, 'The block has too many transactions');
-        
-        /*
+
         uint256 feePaymentsEth = 0;
         uint256 feePaymentsMatic = 0;
         for (uint256 i = 0; i < t.length; i++) {
@@ -109,17 +105,14 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
             }
         }
 
-        feeBook[keccak256(abi.encodePacked(b.proposer, b.blockNumberL2))] = [
-            feePaymentsEth,
-            feePaymentsMatic
-        ]; */
+        setFeeBookInfo(b.proposer, b.blockNumberL2, feePaymentsEth, feePaymentsMatic);
 
         bytes32 blockHash;
         assembly {
             let blockPos := mload(0x40) // get empty memory location pointer
-            calldatacopy(blockPos, 4, add(mul(t.length, 0x240), 0x100)) // copy calldata into this location. 0x240 is 576 bytes of data for each transaction. 0x100 is 192 bytes of block data, 32 bytes for transactions array memory and size each. TODO skip this by passing parameters in memory. But inline assembly to destructure struct array is not straight forward
+            calldatacopy(blockPos, 4, add(mul(t.length, 0x300), 0x100)) // copy calldata into this location. 0x300 is 768 bytes of data for each transaction. 0x100 is 192 bytes of block data, 32 bytes for transactions array memory and size each. TODO skip this by passing parameters in memory. But inline assembly to destructure struct array is not straight forward
             let transactionPos := add(blockPos, 0x100) // calculate memory location of transactions data copied
-            let transactionHashesPos := add(transactionPos, mul(t.length, 0x240)) // calculate memory location to store transaction hashes to be calculated
+            let transactionHashesPos := add(transactionPos, mul(t.length, 0x300)) // calculate memory location to store transaction hashes to be calculated
             // calculate and store transaction hashes
             for {
                 let i := 0
@@ -128,7 +121,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
             } {
                 mstore(
                     add(transactionHashesPos, mul(0x20, i)),
-                    keccak256(add(transactionPos, mul(0x240, i)), 0x240)
+                    keccak256(add(transactionPos, mul(0x300, i)), 0x300)
                 )
             }
             let transactionHashesRoot
@@ -208,10 +201,6 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         return currentProposer;
     }
 
-    function getMaticAddress() public view returns (address) {
-        return maticAddress;
-    }
-
     function getFeeBookInfo(address proposer, uint256 blockNumberL2)
         public
         view
@@ -284,7 +273,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         }
         if (amountMatic > 0) {
             pendingWithdrawals[msg.sender][1] = 0;
-            IERC20Upgradeable(maticAddress).safeTransferFrom(
+            IERC20Upgradeable(super.getMaticAddress()).safeTransferFrom(
                 address(this),
                 msg.sender,
                 amountMatic

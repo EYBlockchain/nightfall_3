@@ -128,7 +128,8 @@ contract Challenges is Stateful, Key_Registry, Config {
         checkCommit(msg.data);
         state.areBlockAndTransactionsReal(blockL2, transactions);
 
-        uint256[4] memory roots;
+        PublicInputs memory extraPublicInputs =
+            PublicInputs([uint256(0), 0, 0, 0], super.getMaticAddress());
 
         if (uint256(transactions[transactionIndex].nullifiers[0]) != 0) {
             state.areBlockAndTransactionsReal(
@@ -140,9 +141,7 @@ contract Challenges is Stateful, Key_Registry, Config {
                     blockL2ContainingHistoricRoot[0].blockNumberL2,
                 'Incorrect historic root block'
             );
-            roots[0] = uint256(blockL2ContainingHistoricRoot[0].root);
-        } else {
-            roots[0] = uint256(0);
+            extraPublicInputs.roots[0] = uint256(blockL2ContainingHistoricRoot[0].root);
         }
 
         if (uint256(transactions[transactionIndex].nullifiers[1]) != 0) {
@@ -155,9 +154,7 @@ contract Challenges is Stateful, Key_Registry, Config {
                     blockL2ContainingHistoricRoot[1].blockNumberL2,
                 'Incorrect historic root block'
             );
-            roots[1] = uint256(blockL2ContainingHistoricRoot[1].root);
-        } else {
-            roots[1] = uint256(0);
+            extraPublicInputs.roots[1] = uint256(blockL2ContainingHistoricRoot[1].root);
         }
 
         if (uint256(transactions[transactionIndex].nullifiersFee[0]) != 0) {
@@ -170,9 +167,7 @@ contract Challenges is Stateful, Key_Registry, Config {
                     blockL2ContainingHistoricRootFee[0].blockNumberL2,
                 'Incorrect historic root block'
             );
-            roots[2] = uint256(blockL2ContainingHistoricRootFee[0].root);
-        } else {
-            roots[2] = uint256(0);
+            extraPublicInputs.roots[2] = uint256(blockL2ContainingHistoricRootFee[0].root);
         }
 
         if (uint256(transactions[transactionIndex].nullifiersFee[1]) != 0) {
@@ -185,9 +180,7 @@ contract Challenges is Stateful, Key_Registry, Config {
                     blockL2ContainingHistoricRootFee[1].blockNumberL2,
                 'Incorrect historic root block'
             );
-            roots[3] = uint256(blockL2ContainingHistoricRootFee[1].root);
-        } else {
-            roots[3] = uint256(0);
+            extraPublicInputs.roots[3] = uint256(blockL2ContainingHistoricRootFee[1].root);
         }
 
         // first check the transaction and block do not overflow
@@ -195,7 +188,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         // now we need to check that the proof is correct
         ChallengesUtil.libChallengeProofVerification(
             transactions[transactionIndex],
-            roots,
+            extraPublicInputs,
             uncompressedProof,
             vks[transactions[transactionIndex].transactionType]
         );
@@ -266,7 +259,7 @@ contract Challenges is Stateful, Key_Registry, Config {
                     uint256(transactions[transactionIndex].historicRootBlockNumberL2[1]),
                 'Historic root exists'
             );
-        } else if (uint256(transactions[transactionIndex].nullifiers[0]) == 0) {
+        } else if (uint256(transactions[transactionIndex].nullifiers[0]) != 0) {
             require(
                 state.getNumberOfL2Blocks() <
                     uint256(transactions[transactionIndex].historicRootBlockNumberL2[0]) ||
@@ -292,7 +285,7 @@ contract Challenges is Stateful, Key_Registry, Config {
                     uint256(transactions[transactionIndex].historicRootBlockNumberL2Fee[1]),
                 'Historic root exists'
             );
-        } else if (uint256(transactions[transactionIndex].nullifiersFee[0]) == 0) {
+        } else if (uint256(transactions[transactionIndex].nullifiersFee[0]) != 0) {
             require(
                 state.getNumberOfL2Blocks() <
                     uint256(transactions[transactionIndex].historicRootBlockNumberL2Fee[0]) ||
@@ -328,9 +321,6 @@ contract Challenges is Stateful, Key_Registry, Config {
         uint256 numRemoved = removeBlockHashes(badBlock.blockNumberL2);
         // remove the proposer and give the proposer's block stake to the challenger
         state.rewardChallenger(msg.sender, badBlock.proposer, numRemoved);
-
-        // TODO repay the fees of the transactors and any escrowed funds held by the
-        // Shield contract.
     }
 
     function removeBlockHashes(uint256 blockNumberL2) internal returns (uint256) {

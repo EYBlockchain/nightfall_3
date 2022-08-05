@@ -2,13 +2,13 @@ import logger from 'common-files/utils/logger.mjs';
 import axios from 'axios';
 import Transaction from 'common-files/classes/transaction.mjs';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
-import config from 'config';
+import constants from 'common-files/constants/index.mjs';
 import getProposersUrl from '../services/peers.mjs';
 import { clearPending, markNullified, storeCommitment } from '../services/commitment-storage.mjs';
 import { ZkpKeys } from '../services/keys.mjs';
 
 const NEXT_N_PROPOSERS = 3;
-const { SHIELD_CONTRACT_NAME } = config;
+const { SHIELD_CONTRACT_NAME } = constants;
 // eslint-disable-next-line import/prefer-default-export
 export const updateCommitments = async (
   offchain,

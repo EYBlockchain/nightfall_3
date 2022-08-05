@@ -594,7 +594,13 @@ export async function getCommitmentsFromBlockNumberL2(blockNumberL2) {
 // also mark any found commitments as nullified (TODO mark them as un-nullified
 // if the transaction errors). The mutex lock is in the function
 // findUsableCommitmentsMutex, which calls this function.
-async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId, _value, onlyOne) {
+async function findUsableCommitments(
+  compressedZkpPublicKey,
+  ercAddress,
+  tokenId,
+  _value,
+  nonUsableCommitments = [],
+) {
   const value = generalise(_value); // sometimes this is sent as a BigInt.
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
@@ -608,9 +614,13 @@ async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId
       isPendingNullification: false,
     })
     .toArray();
-  if (commitmentArray === []) return null;
+
+  const usableCommitments = commitmentArray.filter(
+    commitment => !nonUsableCommitments.includes(commitment),
+  );
+  if (usableCommitments === []) return null;
   // turn the commitments into real commitment objects
-  const commitments = commitmentArray
+  const commitments = usableCommitments
     .filter(commitment => Number(commitment.isOnChain) > Number(-1)) // filters for on chain commitments
     .map(ct => new Commitment(ct.preimage));
   // if we have an exact match, we can do a single-commitment transfer.
@@ -621,7 +631,7 @@ async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId
     return [singleCommitment];
   }
   // If we only want one or there is only 1 commitment - then we should try a single transfer with change
-  if (onlyOne || commitments.length === 1) {
+  if (commitments.length === 1) {
     const valuesGreaterThanTarget = commitments.filter(c => c.preimage.value.bigInt > value.bigInt); // Do intermediary step since reduce has ugly exception
     if (valuesGreaterThanTarget.length === 0) return null;
     const singleCommitmentWithChange = valuesGreaterThanTarget.reduce((prev, curr) =>
@@ -736,10 +746,16 @@ export async function findUsableCommitmentsMutex(
   ercAddress,
   tokenId,
   _value,
-  onlyOne,
+  nonUsableCommitments = [],
 ) {
   return mutex.runExclusive(async () =>
-    findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId, _value, onlyOne),
+    findUsableCommitments(
+      compressedZkpPublicKey,
+      ercAddress,
+      tokenId,
+      _value,
+      nonUsableCommitments,
+    ),
   );
 }
 

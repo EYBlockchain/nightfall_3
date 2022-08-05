@@ -16,7 +16,7 @@ import constants from 'common-files/constants/index.mjs';
 import { Commitment, Transaction } from '../classes/index.mjs';
 import { storeCommitment } from './commitment-storage.mjs';
 import { ZkpKeys } from './keys.mjs';
-import { computeWitness } from '../utils/compute-witness.mjs';
+import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
 
 const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, USE_STUBS, BN128_GROUP_ORDER } =
   config;
@@ -46,7 +46,7 @@ async function deposit(items) {
 
   const privateData = { salt, recipientPublicKeys: [zkpPublicKey] };
 
-  const witness = computeWitness(publicData, privateData);
+  const witness = computeCircuitInputs(publicData, privateData);
   logger.debug(`witness input is ${witness.join(' ')}`);
   // call a zokrates worker to generate the proof
   let folderpath = 'deposit';

@@ -100,11 +100,11 @@ library Utils {
 
     // gathers public inputs for each tx type
     // required now we have removed the publicInputHash
-    function getPublicInputs(Structures.Transaction calldata ts, uint256[4] memory roots)
-        internal
-        pure
-        returns (uint256[] memory inputs)
-    {
+    function getPublicInputs(
+        Structures.Transaction calldata ts,
+        uint256[4] memory roots,
+        address maticAddress
+    ) internal pure returns (uint256[] memory inputs) {
         inputs[0] = uint256(ts.value);
         inputs[1] = uint256(ts.fee);
         inputs[2] = uint256(ts.historicRootBlockNumberL2[0]);
@@ -144,6 +144,7 @@ library Utils {
             inputs[35] = uint256(roots[1]);
             inputs[36] = uint256(roots[2]);
             inputs[37] = uint256(roots[3]);
+            inputs[38] = uint256(uint160(maticAddress));
         }
     }
 

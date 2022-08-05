@@ -98,23 +98,29 @@ class Transaction {
     let historicRootBlockNumberL2Fee;
     if (proof === undefined) flatProof = [0, 0, 0, 0, 0, 0, 0, 0];
     else flatProof = Object.values(proof).flat(Infinity);
-    if (_commitments === undefined) commitments = [{ hash: 0 }, { hash: 0 }];
+    if (_commitments === undefined || _commitments.length === 0)
+      commitments = [{ hash: 0 }, { hash: 0 }];
     else if (_commitments.length === 1) commitments = [..._commitments, { hash: 0 }];
     else commitments = _commitments;
-    if (_nullifiers === undefined) nullifiers = [{ hash: 0 }, { hash: 0 }];
+    if (_nullifiers === undefined || _nullifiers.length === 0)
+      nullifiers = [{ hash: 0 }, { hash: 0 }];
     else if (_nullifiers.length === 1) nullifiers = [..._nullifiers, { hash: 0 }];
     else nullifiers = _nullifiers;
-    if (_commitmentFee === undefined) commitmentFee = [{ hash: 0 }];
+    if (_commitmentFee === undefined || _commitmentFee.length === 0) commitmentFee = [{ hash: 0 }];
     else commitmentFee = _commitmentFee;
-    if (_nullifiersFee === undefined) nullifiersFee = [{ hash: 0 }, { hash: 0 }];
+    if (_nullifiersFee === undefined || _nullifiersFee.length === 0)
+      nullifiersFee = [{ hash: 0 }, { hash: 0 }];
     else if (_nullifiersFee.length === 1) nullifiersFee = [..._nullifiersFee, { hash: 0 }];
     else nullifiersFee = _nullifiersFee;
-    if (_compressedSecrets === undefined) compressedSecrets = [0, 0];
+    if (_compressedSecrets === undefined || _compressedSecrets.length === 0)
+      compressedSecrets = [0, 0];
     else compressedSecrets = _compressedSecrets;
-    if (_historicRoot === undefined) historicRootBlockNumberL2 = [0, 0];
+    if (_historicRoot === undefined || _historicRoot.length === 0)
+      historicRootBlockNumberL2 = [0, 0];
     else if (_historicRoot.length === 1) historicRootBlockNumberL2 = [..._historicRoot, 0];
     else historicRootBlockNumberL2 = _historicRoot;
-    if (_historicRootFee === undefined) historicRootBlockNumberL2Fee = [0, 0];
+    if (_historicRootFee === undefined || _historicRootFee.length === 0)
+      historicRootBlockNumberL2Fee = [0, 0];
     else if (_historicRootFee.length === 1) historicRootBlockNumberL2Fee = [..._historicRootFee, 0];
     else historicRootBlockNumberL2Fee = _historicRootFee;
 
@@ -142,6 +148,7 @@ class Transaction {
 
     // compute the solidity hash, using suitable type conversions
     preimage.transactionHash = keccak(preimage);
+
     return preimage;
   }
 

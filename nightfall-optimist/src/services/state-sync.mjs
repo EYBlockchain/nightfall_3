@@ -46,6 +46,7 @@ const syncState = async (
     .sort((a, b) => a.blockNumber - b.blockNumber);
   for (let i = 0; i < splicedList.length; i++) {
     const pastEvent = splicedList[i];
+    console.log('PAST EVENT', pastEvent);
     switch (pastEvent.event) {
       case 'NewCurrentProposer':
         await newCurrentProposerEventHandler(pastEvent, [proposer]);

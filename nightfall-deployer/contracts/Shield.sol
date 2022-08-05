@@ -40,8 +40,8 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
         // better way? This feels expensive).
 
         if (t.transactionType == TransactionTypes.DEPOSIT) {
-            payIn(t);
             require(uint256(t.fee) == msg.value);
+            payIn(t);
         }
     }
 
@@ -71,7 +71,7 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
             state.getFeeBookInfo(b.proposer, b.blockNumberL2);
         feePaymentsEth += BLOCK_STAKE;
 
-        state.setFeeBookInfo(b.proposer, b.blockNumberL2, 0, 0);
+        state.setFeeBookInfo(b.proposer, b.blockNumberL2, uint256(0), 0);
 
         if (feePaymentsEth > 0) {
             (bool success, ) = payable(address(state)).call{value: feePaymentsEth}('');
@@ -79,7 +79,7 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
         }
 
         if (feePaymentsMatic > 0) {
-            IERC20Upgradeable(state.getMaticAddress()).safeTransferFrom(
+            IERC20Upgradeable(super.getMaticAddress()).safeTransferFrom(
                 address(this),
                 address(state),
                 feePaymentsMatic

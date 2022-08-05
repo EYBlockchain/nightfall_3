@@ -76,7 +76,10 @@ module.exports = {
     `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`,
   ETH_PRIVATE_KEY: process.env.ETH_PRIVATE_KEY, // owner's/deployer's private key
   ETH_ADDRESS: process.env.ETH_ADDRESS,
-  ETH_NETWORK: process.env.BLOCKCHAIN_WS_HOST,
+  PAYMENT_ADDRESS:
+    process.env.ETH_NETWORK === 'mainnet'
+      ? '0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0'
+      : '0x499d11E0b6eAC7c0593d8Fb292DCBbF815Fb29Ae',
   WEB3_OPTIONS: {
     gas: process.env.GAS || 8000000,
     gasPrice: process.env.GAS_PRICE || '20000000000',
@@ -213,7 +216,7 @@ module.exports = {
     privateKey: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e',
     gas: 10000000,
     gasCosts: 80000000000000000,
-    fee: 0,
+    fee: 1,
     BLOCK_STAKE: 1, // 1 wei
     bond: 10, // 10 wei
     txPerBlock: process.env.TRANSACTIONS_PER_BLOCK || 2,

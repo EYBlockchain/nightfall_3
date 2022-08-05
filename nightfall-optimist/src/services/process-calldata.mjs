@@ -76,7 +76,7 @@ export async function getProposeBlockCalldata(eventData) {
   // we no longer put the number of commitments in the on-chain struct but for
   // backwards compatibility, we'll recreate it here.
   block.nCommitments = transactions
-    .map(t => t.commitments.filter(c => c !== ZERO))
+    .map(t => [...t.commitments, ...t.commitmentFee].filter(c => c !== ZERO))
     .flat(Infinity).length;
   block.transactionHashes = transactions.map(t => t.transactionHash);
   // currentLeafCount holds the count of the next leaf to be added

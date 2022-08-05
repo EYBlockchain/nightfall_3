@@ -15,16 +15,8 @@ import { getBlockByBlockNumberL2 } from './database.mjs';
 import verify from './verify.mjs';
 
 const { generalise } = gen;
-const {
-  PROVING_SCHEME,
-  BACKEND,
-  CURVE,
-  BN128_GROUP_ORDER,
-  MAX_PUBLIC_VALUES,
-  RESTRICTIONS,
-  ETH_NETWORK,
-} = config;
-const { ZERO, CHALLENGES_CONTRACT_NAME } = constants;
+const { PROVING_SCHEME, BACKEND, CURVE, BN128_GROUP_ORDER, MAX_PUBLIC_VALUES } = config;
+const { ZERO, CHALLENGES_CONTRACT_NAME, SHIELD_CONTRACT_NAME } = constants;
 
 function isOverflow(value, check) {
   const bigValue = value.bigInt;
@@ -97,10 +89,9 @@ async function verifyProof(transaction) {
           root: ZERO,
         };
 
-  console.log('ETH NEWTORK', ETH_NETWORK);
-  const maticAddress = RESTRICTIONS.tokens[ETH_NETWORK].find(
-    token => token.name === 'MATIC',
-  ).address;
+  const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
+
+  const maticAddress = await shieldContractInstance.methods.getMaticAddress().call();
 
   const inputs = generalise(
     [
@@ -126,7 +117,7 @@ async function verifyProof(transaction) {
     inputs.push(generalise(historicRootSecond.root).hex(32));
     inputs.push(generalise(historicRootFeeFirst.root).hex(32));
     inputs.push(generalise(historicRootFeeSecond.root).hex(32));
-    inputs.push(generalise(maticAddress).hex(32));
+    inputs.push(generalise(maticAddress.toLowerCase()).hex(32));
   }
 
   if (

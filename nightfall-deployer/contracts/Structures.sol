@@ -39,8 +39,8 @@ contract Structures {
     // will hold default values for any specific tranaction, e.g. there are no
     // nullifiers for a Deposit transaction.
     struct Transaction {
-        uint120 value;
-        uint120 fee;
+        uint112 value;
+        uint112 fee;
         TransactionTypes transactionType;
         TokenType tokenType;
         uint64[2] historicRootBlockNumberL2; // number of L2 block containing historic root
@@ -85,5 +85,10 @@ contract Structures {
     struct Fee {
         address proposer;
         uint256 blockNumberL2;
+    }
+
+    struct PublicInputs {
+        uint256[4] roots;
+        address maticAddress;
     }
 }

@@ -13,19 +13,20 @@ const { BN128_GROUP_ORDER } = config;
 
 // eslint-disable-next-line import/prefer-default-export
 export const getCommitmentsValues = async (
+  totalValueToSend,
   values,
   recipientZkpPublicKeys,
-  recipientCompressedZkpPublicKeys,
   ercAddress,
   tokenId,
   rootKey,
+  nonUsableCommitments = [],
+  isFee,
 ) => {
   const { zkpPublicKey, compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
 
   // Generate salts, constrained to be < field size
-  const salts = await Promise.all(values.map(async () => randValueLT(BN128_GROUP_ORDER)));
+  let salts;
 
-  const totalValueToSend = values.reduce((acc, value) => acc + value.bigInt, 0n);
   let oldCommitments = [];
   let newCommitments = [];
   let leafIndices = [];
@@ -33,12 +34,13 @@ export const getCommitmentsValues = async (
   let blockNumberL2s = [];
   let roots = [];
   let nullifiers = [];
-  if (totalValueToSend > 0) {
+  if (!isFee || totalValueToSend > 0n) {
     oldCommitments = await findUsableCommitmentsMutex(
       compressedZkpPublicKey,
       ercAddress,
       tokenId,
       totalValueToSend,
+      nonUsableCommitments,
     );
     if (oldCommitments)
       logger.debug(`Found commitments ${JSON.stringify(oldCommitments, null, 2)}`);
@@ -67,8 +69,9 @@ export const getCommitmentsValues = async (
     if (change !== 0n) {
       values.push(new GN(change));
       recipientZkpPublicKeys.push(zkpPublicKey);
-      recipientCompressedZkpPublicKeys.push(compressedZkpPublicKey);
     }
+
+    salts = await Promise.all(values.map(async () => randValueLT(BN128_GROUP_ORDER)));
 
     // Generate new commitments, already truncated to u32[7]
     newCommitments = values.map(

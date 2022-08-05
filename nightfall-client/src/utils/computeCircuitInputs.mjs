@@ -23,10 +23,10 @@ const computePublicInputs = (tx, rootsOldCommitments, rootsOldCommitmentsFee, ma
   let publicInputs = [
     transaction.value.field(BN128_GROUP_ORDER),
     transaction.fee.field(BN128_GROUP_ORDER),
-    transaction.historicRootBlockNumberL2.map(h => h.field(BN128_GROUP_ORDER)),
-    transaction.historicRootBlockNumberL2Fee.map(h => h.field(BN128_GROUP_ORDER)),
     transaction.transactionType.field(BN128_GROUP_ORDER),
     transaction.tokenType.field(BN128_GROUP_ORDER),
+    transaction.historicRootBlockNumberL2.map(h => h.field(BN128_GROUP_ORDER)),
+    transaction.historicRootBlockNumberL2Fee.map(h => h.field(BN128_GROUP_ORDER)),
     transaction.tokenId.limbs(32, 8),
     transaction.ercAddress.field(BN128_GROUP_ORDER),
     transaction.recipientAddress.limbs(32, 8),
@@ -44,7 +44,7 @@ const computePublicInputs = (tx, rootsOldCommitments, rootsOldCommitmentsFee, ma
       ...publicInputs,
       roots.map(r => r.field(BN128_GROUP_ORDER)),
       rootsFee.map(r => r.field(BN128_GROUP_ORDER)),
-      maticAddress.field(BN128_GROUP_ORDER),
+      generalise(maticAddress).field(BN128_GROUP_ORDER),
     ];
   }
 
@@ -65,18 +65,24 @@ const computePrivateInputsNullifiers = (oldCommitmentPreimage, paths, orders, ro
   const paddedOrders = padArray(orders, 0, 2);
   const paddedRootKeys = padArray(rootKey, 0, 2);
 
-  return [
+  const privateInputsNullifiers = [
     paddedOldCommitmentPreimage.map(commitment => commitment.value.limbs(8, 31)),
     paddedOldCommitmentPreimage.map(commitment => commitment.salt.field(BN128_GROUP_ORDER)),
     paddedRootKeys.map(r => r.field(BN128_GROUP_ORDER)),
     paddedPaths.map(ps => ps.map(p => p.field(BN128_GROUP_ORDER))),
     paddedOrders.map(m => m.field(BN128_GROUP_ORDER)),
   ].flat(Infinity);
+  return privateInputsNullifiers;
 };
 
-const computePrivateInputsCommitments = (newCommitmentPreimage, recipientPublicKeys) => {
-  const paddedNewCommitmentPreimage = padArray(newCommitmentPreimage, NULL_COMMITMENT, 2);
-  const paddedRecipientPublicKeys = padArray(recipientPublicKeys, [0, 0], 2);
+const computePrivateInputsCommitments = (
+  newCommitmentPreimage,
+  recipientPublicKeys,
+  isTransfer,
+) => {
+  const padLength = isTransfer ? 2 : 1;
+  const paddedNewCommitmentPreimage = padArray(newCommitmentPreimage, NULL_COMMITMENT, padLength);
+  const paddedRecipientPublicKeys = padArray(recipientPublicKeys, [0, 0], padLength);
   return [
     paddedNewCommitmentPreimage.map(commitment => commitment.value.limbs(8, 31)),
     paddedNewCommitmentPreimage.map(commitment => commitment.salt.field(BN128_GROUP_ORDER)),
@@ -98,7 +104,13 @@ const computePrivateInputsDeposit = (salt, recipientPublicKeys) => {
 };
 
 // eslint-disable-next-line import/prefer-default-export
-export const computeWitness = (txObject, privateData, roots = [], rootsFee = [], maticAddress) => {
+export const computeCircuitInputs = (
+  txObject,
+  privateData,
+  roots = [],
+  rootsFee = [],
+  maticAddress,
+) => {
   const publicWitness = computePublicInputs(txObject, roots, rootsFee, maticAddress);
   const {
     salt,
@@ -123,12 +135,13 @@ export const computeWitness = (txObject, privateData, roots = [], rootsFee = [],
   if (Number(txObject.transactionType) === 0) {
     witness = [...publicWitness, ...computePrivateInputsDeposit(salt, recipientPublicKeys)];
   } else {
+    const isTransfer = Number(txObject.transactionType) === 1;
     witness = [
       ...publicWitness,
       ...computePrivateInputsNullifiers(oldCommitmentPreimage, paths, orders, rootKey),
-      ...computePrivateInputsCommitments(newCommitmentPreimage, recipientPublicKeys),
+      ...computePrivateInputsCommitments(newCommitmentPreimage, recipientPublicKeys, isTransfer),
       ...computePrivateInputsNullifiers(oldCommitmentPreimageFee, pathsFee, ordersFee, rootKeyFee),
-      ...computePrivateInputsCommitments(newCommitmentPreimageFee, recipientPublicKeysFee),
+      ...computePrivateInputsCommitments(newCommitmentPreimageFee, recipientPublicKeysFee, false),
     ];
 
     if (Number(txObject.transactionType) === 1) {

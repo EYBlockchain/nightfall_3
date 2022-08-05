@@ -190,7 +190,7 @@ describe('ERC20 tests', () => {
 
       await getBalances();
 
-      expect(balances[0] - beforeBalances[0]).to.be.equal(-txPerBlock * transferValue);
+      expect(balances[0] - beforeBalances[0]).to.be.equal(-txPerBlock * (transferValue + fee));
       expect(balances[1] - beforeBalances[1]).to.be.equal(txPerBlock * transferValue);
     });
 

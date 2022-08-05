@@ -15,6 +15,7 @@ contract Config is Ownable, Structures {
 
     address bootProposer;
     address bootChallenger;
+    address maticAddress;
     mapping(address => uint256[2]) erc20limit;
 
     function initialize() public virtual override initializer {
@@ -51,6 +52,15 @@ contract Config is Ownable, Structures {
         return bootChallenger;
     }
 
+    //Set payments address
+    function setMaticAddress(address _maticAddress) external onlyOwner {
+        maticAddress = _maticAddress;
+    }
+
+    function getMaticAddress() public view returns (address) {
+        return maticAddress;
+    }
+
     // restricting tokens
     // 0 for deposit and 1 for withdraw
     function getRestriction(address tokenAddr, uint256 transactionType)
@@ -71,7 +81,7 @@ contract Config is Ownable, Structures {
     }
 
     function removeRestriction(address tokenAddr) external onlyOwner {
-      delete erc20limit[tokenAddr][0];
-      delete erc20limit[tokenAddr][1];
+        delete erc20limit[tokenAddr][0];
+        delete erc20limit[tokenAddr][1];
     }
 }

@@ -11,22 +11,15 @@ import gen from 'general-number';
 import logger from 'common-files/utils/logger.mjs';
 import { edwardsCompress } from 'common-files/utils/curve-maths/curves.mjs';
 import constants from 'common-files/constants/index.mjs';
+import { waitForContract } from 'common-files/utils/contract.mjs';
 import { Transaction } from '../classes/index.mjs';
 import { ZkpKeys } from './keys.mjs';
-import { computeWitness } from '../utils/compute-witness.mjs';
+import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
 import { getCommitmentsValues } from '../utils/getCommitmentValues.mjs';
 import { encrypt, genEphemeralKeys, packSecrets } from './kem-dem.mjs';
 import { updateCommitments } from '../utils/updateCommitments.mjs';
 
-const {
-  ZOKRATES_WORKER_HOST,
-  PROVING_SCHEME,
-  BACKEND,
-  PROTOCOL,
-  USE_STUBS,
-  RESTRICTIONS,
-  ETH_NETWORK,
-} = config;
+const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, USE_STUBS } = config;
 const { SHIELD_CONTRACT_NAME } = constants;
 const { generalise } = gen;
 
@@ -42,35 +35,34 @@ async function transfer(transferParams) {
   if (recipientCompressedZkpPublicKeys.length > 1)
     throw new Error(`Batching is not supported yet: only one recipient is allowed`); // this will not always be true so we try to make the following code agnostic to the number of commitments
 
-  const maticAddress = RESTRICTIONS.tokens[ETH_NETWORK].find(token => token.name === 'MATIC');
+  const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
 
-  const {
-    oldCommitments,
-    nullifiers,
-    newCommitments,
-    localSiblingPaths,
-    leafIndices,
-    blockNumberL2s,
-    roots,
-    salts,
-  } = await getCommitmentsValues(
+  const maticAddress = await shieldContractInstance.methods.getMaticAddress().call();
+
+  const totalValueToSend = values.reduce((acc, value) => acc + value.bigInt, 0n);
+
+  const commitmentsInfo = await getCommitmentsValues(
+    totalValueToSend,
     values,
     recipientZkpPublicKeys,
-    recipientCompressedZkpPublicKeys,
     ercAddress,
     tokenId,
     rootKey,
+    [],
+    false,
   );
 
-  const {
-    oldCommitmentsFee,
-    nullifiersFee,
-    newCommitmentsFee,
-    localSiblingPathsFee,
-    leafIndicesFee,
-    blockNumberL2sFee,
-    rootsFee,
-  } = await getCommitmentsValues([fee], [], [], maticAddress, 0, rootKey);
+  const usedCommitments = commitmentsInfo.oldCommitments.map(commitment => commitment.hash.hex(32));
+  const commitmentsInfoFee = await getCommitmentsValues(
+    fee.bigInt,
+    [],
+    [],
+    generalise(maticAddress.toLowerCase()),
+    generalise(0),
+    rootKey,
+    usedCommitments,
+    true,
+  );
 
   // KEM-DEM encryption
   const [ePrivate, ePublic] = await genEphemeralKeys();
@@ -79,7 +71,7 @@ async function transfer(transferParams) {
     packedErc.bigInt,
     unpackedTokenID.bigInt,
     values[0].bigInt,
-    salts[0].bigInt,
+    commitmentsInfo.salts[0].bigInt,
   ]);
 
   // Compress the public key as it will be put on-chain
@@ -88,46 +80,52 @@ async function transfer(transferParams) {
   // now we have everything we need to create a Witness and compute a proof
   const transaction = new Transaction({
     fee,
-    historicRootBlockNumberL2: blockNumberL2s,
-    historicRootBlockNumberL2Fee: blockNumberL2sFee,
+    historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
+    historicRootBlockNumberL2Fee: commitmentsInfoFee.blockNumberL2s,
     transactionType: 1,
     ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
     tokenId: compressedSecrets[1], // this is the encrypted tokenID
     recipientAddress: compressedEPub,
-    commitments: newCommitments,
-    commitmentFee: newCommitmentsFee,
-    nullifiers,
-    nullifiersFee,
+    commitments: commitmentsInfo.newCommitments,
+    commitmentFee: commitmentsInfoFee.newCommitments,
+    nullifiers: commitmentsInfo.nullifiers,
+    nullifiersFee: commitmentsInfoFee.nullifiers,
     compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
   });
 
   const privateData = {
     rootKey: [rootKey, rootKey],
-    oldCommitmentPreimage: oldCommitments.map(o => {
+    oldCommitmentPreimage: commitmentsInfo.oldCommitments.map(o => {
       return { value: o.preimage.value, salt: o.preimage.salt };
     }),
-    paths: localSiblingPaths.map(siblingPath => siblingPath.slice(1)),
-    orders: leafIndices,
-    newCommitmentPreimage: newCommitments.map(o => {
+    paths: commitmentsInfo.localSiblingPaths.map(siblingPath => siblingPath.slice(1)),
+    orders: commitmentsInfo.leafIndices,
+    newCommitmentPreimage: commitmentsInfo.newCommitments.map(o => {
       return { value: o.preimage.value, salt: o.preimage.salt };
     }),
-    recipientPublicKeys: newCommitments.map(o => o.preimage.zkpPublicKey),
+    recipientPublicKeys: commitmentsInfo.newCommitments.map(o => o.preimage.zkpPublicKey),
     rootKeyFee: [rootKey, rootKey],
-    oldCommitmentPreimageFee: oldCommitmentsFee.map(o => {
+    oldCommitmentPreimageFee: commitmentsInfoFee.oldCommitments.map(o => {
       return { value: o.preimage.value, salt: o.preimage.salt };
     }),
-    pathsFee: localSiblingPathsFee.map(siblingPath => siblingPath.slice(1)),
-    ordersFee: leafIndicesFee,
-    newCommitmentPreimageFee: newCommitmentsFee.map(o => {
+    pathsFee: commitmentsInfoFee.localSiblingPaths.map(siblingPath => siblingPath.slice(1)),
+    ordersFee: commitmentsInfoFee.leafIndices,
+    newCommitmentPreimageFee: commitmentsInfoFee.newCommitments.map(o => {
       return { value: o.preimage.value, salt: o.preimage.salt };
     }),
-    recipientPublicKeysFee: newCommitmentsFee.map(o => o.preimage.zkpPublicKey),
+    recipientPublicKeysFee: commitmentsInfoFee.newCommitments.map(o => o.preimage.zkpPublicKey),
     ercAddress,
     tokenId,
     ephemeralKey: ePrivate,
   };
 
-  const witness = computeWitness(transaction, privateData, roots, rootsFee, maticAddress);
+  const witness = computeCircuitInputs(
+    transaction,
+    privateData,
+    commitmentsInfo.roots,
+    commitmentsInfoFee.roots,
+    maticAddress,
+  );
   logger.debug(`witness input is ${witness.join(' ')}`);
   // call a zokrates worker to generate the proof
   let folderpath = 'transfer';
@@ -141,21 +139,23 @@ async function transfer(transferParams) {
   logger.trace(`Received response ${JSON.stringify(res.data, null, 2)}`);
   const { proof } = res.data;
   // and work out the ABI encoded data that the caller should sign and send to the shield contract
+
   const optimisticTransferTransaction = new Transaction({
     fee,
-    historicRootBlockNumberL2: blockNumberL2s,
-    historicRootBlockNumberL2Fee: blockNumberL2sFee,
+    historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
+    historicRootBlockNumberL2Fee: commitmentsInfoFee.blockNumberL2s,
     transactionType: 1,
     ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
     tokenId: compressedSecrets[1], // this is the encrypted tokenID
     recipientAddress: compressedEPub,
-    commitments: newCommitments,
-    nullifiers,
-    commitmentFee: newCommitmentsFee,
-    nullifiersFee,
+    commitments: commitmentsInfo.newCommitments,
+    nullifiers: commitmentsInfo.nullifiers,
+    commitmentFee: commitmentsInfoFee.newCommitments,
+    nullifiersFee: commitmentsInfoFee.nullifiers,
     compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
     proof,
   });
+
   logger.debug(
     `Client made transaction ${JSON.stringify(
       optimisticTransferTransaction,
@@ -163,11 +163,11 @@ async function transfer(transferParams) {
       2,
     )} offchain ${offchain}`,
   );
-  await updateCommitments(
+  return updateCommitments(
     offchain,
     optimisticTransferTransaction,
-    [...newCommitments, ...newCommitmentsFee],
-    [...oldCommitments, ...oldCommitmentsFee],
+    [...commitmentsInfo.newCommitments, ...commitmentsInfoFee.newCommitments],
+    [...commitmentsInfo.oldCommitments, ...commitmentsInfoFee.oldCommitments],
     rootKey,
   );
 }

@@ -10,13 +10,13 @@ def main(\
     field[2] rootsFee,\
     field ercAddressFee,\
     private Nullifiers<2> nullifiers,\
-    private Commitments<2> commitments,\
+    private Commitments<1> commitments,\
     private Nullifiers<2> nullifiersFee,\
     private Commitments<1> commitmentFee\
 )-> ():
     
     field[2] nullifiersValue = u8_array_to_field(nullifiers.oldCommitments.value)
-    field[2] commitmentsValue = u8_array_to_field(commitments.newCommitments.value)
+    field[1] commitmentsValue = u8_array_to_field(commitments.newCommitments.value)
 
     field[2] nullifiersFeeValue = u8_array_to_field(nullifiersFee.oldCommitments.value)
     field[1] commitmentFeeValue = u8_array_to_field(commitmentFee.newCommitments.value)
@@ -25,7 +25,7 @@ def main(\
         roots, nullifiersValue, nullifiers.oldCommitments.salt,\
         nullifiers.rootKey, nullifiers.paths, nullifiers.orders))
 
-    assert(commitment_stub::<2>(\
+    assert(commitment_stub::<1>(\
         commitmentsValue, commitments.newCommitments.salt, commitments.recipientPublicKey))
 
     assert(nullifier_stub::<2>(\

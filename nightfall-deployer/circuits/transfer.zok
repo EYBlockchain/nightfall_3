@@ -58,12 +58,12 @@ def main(\
     field packedErcAddress = transfer.ercAddressTransfer + u32_array_to_field([transfer.idTransfer[0]]) * SHIFT 
 
     //Verify nullifiers
-    Point firstInputZkpPublicKeys = verify_nullifiers::<2>(packedErcAddress, idRemainder,\
+    Point firstInputZkpPublicKeys = verify_nullifiers::<1,2>(packedErcAddress, idRemainder,\
         tx.nullifiers, roots, nullifiersValue, nullifiers.oldCommitments.salt,\
         nullifiers.rootKey, nullifiers.paths, nullifiers.orders)
 
     //Verify new Commmitments
-    assert(verify_commitments::<2>(packedErcAddress, idRemainder, tx.commitments,\
+    assert(verify_commitments::<1,2>(packedErcAddress, idRemainder, tx.commitments,\
     commitmentsValue, commitments.newCommitments.salt, commitments.recipientPublicKey))
         
     //Verify Change
@@ -73,17 +73,17 @@ def main(\
     assert(verify_encryption(tx.ercAddress,tx.tokenId, tx.compressedSecrets,\
         packedErcAddress,idRemainder,commitmentsValue[0],commitments.newCommitments.salt[0],\
         commitments.recipientPublicKey[0],tx.recipientAddress, transfer.ephemeralKey))
-
+    
     //Verify nullifiers fee
-    Point firstInputZkpPublicKeysFee = verify_nullifiers::<2>(packedErcAddress, idRemainder,\
+    Point firstInputZkpPublicKeysFee = verify_nullifiers::<0,2>(ercAddressFee, 0,\
         tx.nullifiersFee, rootsFee, nullifiersFeeValue, nullifiersFee.oldCommitments.salt,\
         nullifiersFee.rootKey, nullifiersFee.paths, nullifiersFee.orders)
 
     //Verify new Commmitments
-    assert(verify_commitments::<1>(packedErcAddress, idRemainder, tx.commitmentFee,\
+    assert(verify_commitments::<0,1>(ercAddressFee, 0, tx.commitmentFee,\
     commitmentFeeValue, commitmentFee.newCommitments.salt, commitmentFee.recipientPublicKey))
         
-    //Verify Change Fee
-    assert(commitmentFeeValue[0] == 0 || firstInputZkpPublicKeys == commitmentFee.recipientPublicKey[0])
+    //Verify Fee change
+    assert(commitmentFeeValue[0] == 0 || firstInputZkpPublicKeysFee == commitmentFee.recipientPublicKey[0])
 
     return
