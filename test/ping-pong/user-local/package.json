@@ -16,7 +16,10 @@
     "config": "^3.3.1",
     "reconnecting-websocket": "^4.4.0",
     "web3": "^1.7.5",
-    "winston": "^3.3.3",
+    "pino": "^8.3.1",
     "ws": "^8.2.3"
+  },
+  "devDependencies": {
+    "pino-pretty": "^8.1.0"
   }
 }
