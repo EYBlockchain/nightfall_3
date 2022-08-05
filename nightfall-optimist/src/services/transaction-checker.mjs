@@ -10,7 +10,7 @@ import gen from 'general-number';
 import logger from 'common-files/utils/logger.mjs';
 import constants from 'common-files/constants/index.mjs';
 import { Transaction, VerificationKey, Proof, TransactionError } from '../classes/index.mjs';
-import { waitForContract } from '../utils/index.mjs';
+import { waitForContract } from '../event-handlers/subscribe.mjs';
 import { getBlockByBlockNumberL2 } from './database.mjs';
 import verify from './verify.mjs';
 

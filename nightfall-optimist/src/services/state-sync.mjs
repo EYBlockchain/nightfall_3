@@ -10,7 +10,7 @@ import committedToChallengeEventHandler from '../event-handlers/challenge-commit
 import rollbackEventHandler from '../event-handlers/rollback.mjs';
 import { getBlockByBlockNumberL2, getBlocks, getLatestBlockInfo } from './database.mjs';
 import { stopMakingChallenges, startMakingChallenges } from './challenges.mjs';
-import { waitForContract } from '../utils/index.mjs';
+import { waitForContract } from '../event-handlers/subscribe.mjs';
 
 // TODO can we remove these await-in-loops?
 

@@ -1,4 +1,10 @@
-import { startEventQueue } from '../utils/index.mjs';
+import {
+  startEventQueue,
+  subscribeToBlockAssembledWebSocketConnection,
+  subscribeToChallengeWebSocketConnection,
+  subscribeToInstantWithDrawalWebSocketConnection,
+  subscribeToProposedBlockWebSocketConnection,
+} from './subscribe.mjs';
 import blockProposedEventHandler from './block-proposed.mjs';
 import newCurrentProposerEventHandler from './new-current-proposer.mjs';
 import transactionSubmittedEventHandler from './transaction-submitted.mjs';
@@ -37,4 +43,11 @@ const eventHandlers = {
   },
 };
 
-export { startEventQueue, eventHandlers };
+export {
+  startEventQueue,
+  subscribeToBlockAssembledWebSocketConnection,
+  subscribeToChallengeWebSocketConnection,
+  subscribeToInstantWithDrawalWebSocketConnection,
+  subscribeToProposedBlockWebSocketConnection,
+  eventHandlers,
+};

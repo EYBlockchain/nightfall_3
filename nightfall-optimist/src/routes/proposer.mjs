@@ -20,7 +20,7 @@ import {
   getLatestTree,
   getLatestBlockInfo,
 } from '../services/database.mjs';
-import { waitForContract } from '../utils/index.mjs';
+import { waitForContract } from '../event-handlers/subscribe.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
 import getProposers from '../services/proposer.mjs';
 
