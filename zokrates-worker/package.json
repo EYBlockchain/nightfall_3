@@ -43,6 +43,6 @@
   "overrides": {
     "terser": "5.14.2",
     "asyc": "3.2.2",
-    "url-parse": "1.5.8"
+    "url-parse": "1.5.9"
   }
 }

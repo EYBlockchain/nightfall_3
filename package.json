@@ -79,6 +79,7 @@
     "web3": "^1.4.0"
   },
   "overrides": {
-    "minimist": "1.2.6"
+    "minimist": "1.2.6",
+    "url-parse": "1.5.9"
   }
 }
