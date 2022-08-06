@@ -209,6 +209,8 @@ describe('Gas test', () => {
         await emptyL2(nf3Users[0]);
         await web3Client.timeJump(3600 * 24 * 10); // jump in time by 10 days
         const commitments = await nf3Users[0].getPendingWithdraws();
+        console.log('Withdraw Commitments', commitments);
+        console.log('CompressedZKP', commitments[nf3Users[0].zkpKeys.compressedZkpPublicKey]);
         expect(
           commitments[nf3Users[0].zkpKeys.compressedZkpPublicKey][erc20Address].length,
         ).to.be.greaterThan(0);
