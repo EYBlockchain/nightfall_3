@@ -1,4 +1,4 @@
-// ignore unused exports default
+// ignore unused exports
 
 /*
  * can also be used as worker file to download circuits files from AWS (a worker thread).
@@ -30,4 +30,22 @@ export default async function fetchCircuit(
     pk = await fetchAWSfiles(s3Bucket, pk);
   }
   return { abi, program, pk };
+}
+
+export async function fetchSingleCircuit(circuit, s3Bucket) {
+  const circuitExtension = circuit.split('-');
+  let ext;
+  if (circuitExtension[1] === 'abi') ext = '.json';
+  else if (circuitExtension[1] === 'program') ext = '';
+  else if (circuitExtension.length === 1 && circuitExtension[0].slice(-2) === 'pk') ext = '.key';
+  const circuitPath = `circuits/${circuitExtension[0]}/artifacts/${circuit}${ext}`;
+  let circRes;
+  if (circuitExtension[1] === 'abi') {
+    circRes = JSON.parse(new TextDecoder().decode(await fetchAWSfiles(s3Bucket, circuitPath)));
+  } else if (circuitExtension[1] === 'program') {
+    circRes = await fetchAWSfiles(s3Bucket, circuitPath);
+  } else if (circuitExtension.length === 1 && circuitExtension[0].slice(-2) === 'pk') {
+    circRes = await fetchAWSfiles(s3Bucket, circuitPath);
+  }
+  return circRes;
 }

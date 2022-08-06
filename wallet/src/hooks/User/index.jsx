@@ -11,10 +11,15 @@ import {
   saveTree,
   getMaxBlock,
   getLatestTimber,
+  getStoreCircuit,
+  storeCircuit,
 } from '@Nightfall/services/database';
 import mqtt from 'mqtt';
 import axios from 'axios';
 import logger from 'common-files/utils/logger';
+import { fetchSingleCircuit } from '@Nightfall/services/fetch-circuit';
+import S3 from 'aws-sdk/clients/s3';
+import { createHash } from 'crypto';
 import * as Storage from '../../utils/lib/local-storage';
 import { encryptAndStore, retrieveAndDecrypt, storeBrowserKey } from '../../utils/lib/key-storage';
 import useInterval from '../useInterval';
@@ -27,6 +32,7 @@ const {
   twoStepSyncUrl,
   twoStepSyncDeployment,
   checkBlockVersionUrl,
+  AWS: { s3Bucket },
 } = global.config;
 
 export const initialState = {
@@ -47,6 +53,8 @@ export const UserProvider = ({ children }) => {
   const [isSyncing, setSyncing] = React.useState(true);
   const [client, setClient] = React.useState(null);
   const [blockClient, setBlockClient] = React.useState(null);
+
+  const s3 = new S3();
 
   const mqttConnect = async host => {
     const currentClientId = await getClientId(0);
@@ -161,6 +169,37 @@ export const UserProvider = ({ children }) => {
     return res;
   };
 
+  const verifyCircuit = async () => {
+    const notSynced = [];
+    const params = { Bucket: s3Bucket, Key: `circuits/circuit-info.json` };
+    const s3GetObject = await s3.makeUnauthenticatedRequest('getObject', params).promise();
+    const resS3 = JSON.parse(new TextDecoder().decode(s3GetObject.Body));
+    const keys = Object.keys(resS3);
+    const values = Object.values(resS3);
+    const promises = [];
+    for (const circuitName of keys) {
+      promises.push(getStoreCircuit(circuitName));
+    }
+
+    const res = await Promise.all(promises);
+    for (let index = 0; index < res.length; index++) {
+      if (res[index]) {
+        let hashed;
+        if (res[index].data) hashed = createHash('sha256').update(res[index].data).digest('hex');
+        else hashed = '';
+        if (hashed !== values[index].hash) {
+          notSynced.push(keys[index]);
+        }
+      }
+    }
+    return notSynced;
+  };
+
+  const fetchAndStore = async circuitName => {
+    const circ = await fetchSingleCircuit(circuitName, s3Bucket);
+    await storeCircuit(circuitName, circ);
+  };
+
   const deriveAccounts = async (mnemonic, numAccts) => {
     const accountRange = Array.from({ length: numAccts }, (v, i) => i);
     const zkpKeys = await Promise.all(
@@ -262,6 +301,11 @@ export const UserProvider = ({ children }) => {
   }, [blockClient]);
 
   React.useEffect(async () => {
+    const circuitNotSynced = await verifyCircuit();
+    for (const circuitName of circuitNotSynced) {
+      // eslint-disable-next-line no-await-in-loop
+      await fetchAndStore(circuitName);
+    }
     let maxBlockTimber = await getMaxBlock();
     let completeSync = false;
     const lastTimber = await getLatestTimber();
