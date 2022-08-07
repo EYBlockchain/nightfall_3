@@ -26,7 +26,7 @@ import { checkIndexDBForCircuit, getStoreCircuit } from './database';
 
 const { BN128_GROUP_ORDER, USE_STUBS } = global.config;
 const { SHIELD_CONTRACT_NAME } = global.nightfallConstants;
-const { generalise } = gen;
+const { generalise, GN } = gen;
 const circuitName = USE_STUBS ? 'withdraw_stub' : 'withdraw';
 
 const MAX_WITHDRAW = 5192296858534827628530496329220096n; // 2n**112n

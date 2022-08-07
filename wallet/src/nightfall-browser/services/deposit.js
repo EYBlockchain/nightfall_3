@@ -22,7 +22,7 @@ import { checkIndexDBForCircuit, getStoreCircuit } from './database';
 import { computeWitness } from '../utils/compute-witness';
 
 const { BN128_GROUP_ORDER, USE_STUBS } = global.config;
-const { ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME } = global.nightfallConstants;
+const { SHIELD_CONTRACT_NAME } = global.nightfallConstants;
 const { generalise } = gen;
 const circuitName = USE_STUBS ? 'deposit_stub' : 'deposit';
 

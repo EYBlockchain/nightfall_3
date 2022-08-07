@@ -29,7 +29,7 @@ import { encrypt, genEphemeralKeys, packSecrets } from './kem-dem';
 import { computeWitness } from '../utils/compute-witness';
 
 const { BN128_GROUP_ORDER, USE_STUBS } = global.config;
-const { ZKP_KEY_LENGTH, SHIELD_CONTRACT_NAME, ZERO } = global.nightfallConstants;
+const { SHIELD_CONTRACT_NAME, ZERO } = global.nightfallConstants;
 const { generalise, GN } = gen;
 
 const circuitName = USE_STUBS ? 'transfer_stub' : 'transfer';
