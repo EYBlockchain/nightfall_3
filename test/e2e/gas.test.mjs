@@ -205,6 +205,7 @@ describe('Gas test', () => {
     it('should withdraw from L2, checking for L1 balance (only with time-jump client)', async function () {
       const nodeInfo = await web3Client.getInfo();
       if (nodeInfo.includes('TestRPC')) {
+        waitForTimeout(10000);
         const startBalance = await web3Client.getBalance(nf3Users[0].ethereumAddress);
         const withdrawal = await nf3Users[0].getLatestWithdrawHash();
         console.log('Withdrawal Hash', withdrawal);
@@ -213,7 +214,6 @@ describe('Gas test', () => {
         const commitments = await nf3Users[0].getPendingWithdraws();
         console.log('Withdraw Commitments', commitments);
         console.log('CompressedZKP', commitments[nf3Users[0].zkpKeys.compressedZkpPublicKey]);
-        console.log('L2 Commitments', JSON.stringify(await nf3Users[0].getLayer2Commitments()));
         expect(
           commitments[nf3Users[0].zkpKeys.compressedZkpPublicKey][erc20Address].length,
         ).to.be.greaterThan(0);

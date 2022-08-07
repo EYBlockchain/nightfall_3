@@ -76,12 +76,10 @@ async function blockProposedEventHandler(data, syncing) {
     } else if (transaction.transactionType === '0' && countOfNonZeroCommitments >= 1) {
       // case when deposit transaction created by user
       saveTxToDb = true;
-    } else if (transaction.transactionType === '3' && countOfNonZeroNullifiers >= 1) {
-      // case when withdraw transaction created by user
-      saveTxToDb = true;
     }
 
-    if (saveTxToDb)
+    if (saveTxToDb) {
+      logger.info('Saving Tx', transaction.transactionHash);
       await saveTransaction({
         transactionHashL1,
         blockNumber: data.blockNumber,
@@ -92,6 +90,7 @@ async function blockProposedEventHandler(data, syncing) {
         if (!syncing || !err.message.includes('replay existing transaction')) throw err;
         logger.warn('Attempted to replay existing transaction. This is expected while syncing');
       });
+    }
 
     return Promise.all([
       saveTxToDb,
