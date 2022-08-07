@@ -1,9 +1,5 @@
 # build zokrates from source for local verify
 FROM rust:1.53.0 as builder
-
-RUN apt-get update -y
-RUN apt-get install -y cmake
-
 WORKDIR /app
 # Zokrates 0.8.2
 RUN git clone --depth 1 --branch 0.8.2 https://github.com/Zokrates/ZoKrates.git
