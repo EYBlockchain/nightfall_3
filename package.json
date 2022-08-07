@@ -54,6 +54,7 @@
     "fast-check": "^2.18.0",
     "find-unused-exports": "^2.0.0",
     "general-number": "^1.0.1",
+    "got": "^12.1.0",
     "husky": "^6.0.0",
     "jsdoc": "^3.6.10",
     "minimist": "^1.2.6",
