@@ -103,7 +103,7 @@
     "webpack-dev-server": "3.11.1",
     "webpack-manifest-plugin": "2.2.0",
     "workbox-webpack-plugin": "5.1.4",
-    "zokrates-js": "1.0.39"
+    "zokrates-js": "1.0.43"
   },
   "scripts": {
     "start": "LOCAL_PROPOSER=true PUBLIC_URL='/nightfall/' USE_STUBS=true REACT_APP_MODE=local node scripts/start.js",
@@ -145,6 +145,7 @@
     "eslint-plugin-cypress": "^2.12.1",
     "eslint-plugin-import": "^2.26.0",
     "fake-indexeddb": "^3.1.7",
+    "got": "^12.1.0",
     "mocha": "^9.2.2",
     "react-error-overlay": "6.0.9",
     "react-scripts": "4.0.3",

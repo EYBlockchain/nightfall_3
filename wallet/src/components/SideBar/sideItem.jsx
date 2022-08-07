@@ -6,7 +6,6 @@ import './sideItem.scss';
 
 export default function SideItem({ text, link, Icon, SideState }) {
   const history = useHistory();
-  console.log('history', history);
   return (
     <Link
       to={{

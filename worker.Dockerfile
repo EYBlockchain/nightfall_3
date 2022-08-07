@@ -1,5 +1,5 @@
 # build zokrates from source for local verify
-FROM ghcr.io/eyblockchain/local-zokrates as builder
+FROM ghcr.io/eyblockchain/local-zokrates:0.7.13 as builder
 
 FROM ubuntu:20.04
 
