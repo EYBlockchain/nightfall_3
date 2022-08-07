@@ -63,7 +63,6 @@ const Transactions = () => {
   }, []);
 
   useInterval(async () => {
-    console.log('currencyVals', currencyValues);
     const transactionsDB = await getAllTransactions();
     const commitmentsDB = await getAllCommitments();
     const commits = commitmentsDB.map(c => c._id);
