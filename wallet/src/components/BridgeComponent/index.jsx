@@ -224,7 +224,6 @@ const BridgeComponent = () => {
   async function triggerTx() {
     if (shieldContractAddress === '') setShieldAddress(shieldAddressGet());
     const ercAddress = token.address;
-    console.log('state', state);
     const zkpKeys = await retrieveAndDecrypt(state.compressedZkpPublicKey);
     switch (txType) {
       case 'deposit': {

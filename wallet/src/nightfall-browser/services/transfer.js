@@ -160,15 +160,6 @@ async function transfer(transferParams, shieldContractAddress) {
 
     const witnessInput = computeWitness(transaction, roots, privateData);
 
-    // const flattenInput = witnessInput.map(w => {
-    //   if (w.length === 1) {
-    //     const [w_] = w;
-    //     return w_;
-    //   }
-    //   return w;
-    // });
-
-    console.log(`witness input is ${JSON.stringify(witnessInput)}`);
     // call a zokrates worker to generate the proof
     // This is (so far) the only place where we need to get specific about the
     // circuit

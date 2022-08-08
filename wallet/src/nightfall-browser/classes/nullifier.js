@@ -1,3 +1,4 @@
+// ignore unused exports default
 /**
 A nullifier class
 */

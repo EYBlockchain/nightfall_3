@@ -53,7 +53,7 @@ module.exports = {
   TXHASH_TREE_HASH_TYPE: 'keccak256',
   STATE_GENESIS_BLOCK: process.env.STATE_GENESIS_BLOCK,
   CIRCUITS_HOME: process.env.CIRCUITS_HOME || '/app/circuits/',
-  ALWAYS_DO_TRUSTED_SETUP: true, // process.env.ALWAYS_DO_TRUSTED_SETUP || false,
+  ALWAYS_DO_TRUSTED_SETUP: process.env.ALWAYS_DO_TRUSTED_SETUP || false,
   LOG_LEVEL: process.env.LOG_LEVEL || 'debug',
   MONGO_URL: process.env.MONGO_URL || 'mongodb://localhost:27017/',
   PROTOCOL: 'http://', // connect to zokrates microservice like this
@@ -101,9 +101,9 @@ module.exports = {
   CURVE: process.env.CURVE || 'bn128',
 
   TRANSACTIONS_PER_BLOCK: Number(process.env.TRANSACTIONS_PER_BLOCK) || 2,
-  RETRIES: 1000, // Number(process.env.AUTOSTART_RETRIES) || 50,
+  RETRIES: Number(process.env.AUTOSTART_RETRIES) || 50,
   USE_STUBS: process.env.USE_STUBS === 'true',
-  VK_IDS: { deposit: 0, transfer: 1, withdraw: 2 }, // withdraw: 3, withdraw_change: 4 }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
+  VK_IDS: { deposit: 0, transfer: 1, withdraw: 2 }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
   MAX_PUBLIC_VALUES: {
     ERCADDRESS: 2n ** 161n - 1n,
     COMMITMENT: 2n ** 249n - 1n,

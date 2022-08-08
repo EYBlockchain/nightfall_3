@@ -131,7 +131,6 @@ async function withdraw(withdrawParams, shieldContractAddress) {
       privateData,
     );
 
-    logger.debug(`witness input is ${JSON.stringify(witnessInput)}`);
     // call a zokrates worker to generate the proof
     const zokratesProvider = await initialize();
     const artifacts = { program: new Uint8Array(program), abi };

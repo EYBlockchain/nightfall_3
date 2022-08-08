@@ -66,7 +66,6 @@ async function deposit(items, shieldContractAddress) {
   const roots = [];
 
   const witnessInput = computeWitness(publicData, roots, privateData);
-  logger.debug('witness input is', JSON.stringify(witnessInput));
 
   try {
     const zokratesProvider = await initialize();

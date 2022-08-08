@@ -379,7 +379,6 @@ export async function getWalletPendingDepositBalance() {
   // work out the balance contribution of each commitment  - a 721 token has no value field in the
   // commitment but each 721 token counts as a balance of 1. Then finally add up the individual
   // commitment balances to get a balance for each erc address.
-  console.log(`Wallet: ${JSON.stringify(wallet)}`);
   return wallet
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
@@ -619,9 +618,7 @@ async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId
     .filter(commitment => Number(commitment.isOnChain) > Number(-1)) // filters for on chain commitments
     .map(ct => new Commitment(ct.preimage));
   // if we have an exact match, we can do a single-commitment transfer.
-  console.log(`Looking for ${value.hex(32)}, with ercAddress ${ercAddress.hex(32)}`);
   const [singleCommitment] = commitments.filter(c => {
-    console.log(`Commitment: ${c.preimage.value.hex(32)}`);
     return c.preimage.value.hex(32) === value.hex(32);
   });
   if (singleCommitment) {
