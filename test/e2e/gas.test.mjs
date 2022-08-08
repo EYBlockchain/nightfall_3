@@ -43,40 +43,6 @@ let eventLogs = [];
 const averageL1GasCost = receipts =>
   receipts.map(receipt => receipt.gasUsed).reduce((acc, el) => acc + el) / receipts.length;
 
-/*
-  This function tries to zero the number of unprocessed transactions in the optimist node
-  that nf3 is connected to. We call it extensively on the tests, as we want to query stuff from the
-  L2 layer, which is dependent on a block being made. We also need 0 unprocessed transactions by the end
-  of the tests, otherwise the optimist will become out of sync with the L2 block count on-chain.
-*/
-const emptyL2 = async nf3Instance => {
-  let count = await nf3Instance.unprocessedTransactionCount();
-  while (count !== 0) {
-    if (count % txPerBlock) {
-      const tx = (count % txPerBlock) - 1;
-      for (let i = 0; i < tx; i++) {
-        eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-      }
-    } else {
-      const tx = txPerBlock - count;
-
-      await depositNTransactions(
-        nf3Instance,
-        tx,
-        erc20Address,
-        tokenType,
-        transferValue,
-        tokenId,
-        fee,
-      );
-
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-
-      count = await nf3Instance.unprocessedTransactionCount();
-    }
-  }
-};
-
 describe('Gas test', () => {
   let gasCost = 0;
   before(async () => {
@@ -195,6 +161,7 @@ describe('Gas test', () => {
         nf3Users[0].ethereumAddress,
         fee,
       );
+      await nf3Users[0].makeBlockNow();
       eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
       console.log('Withdraw L1 average gas used, if on-chain, was', averageL1GasCost(receipts));
@@ -208,12 +175,10 @@ describe('Gas test', () => {
         waitForTimeout(10000);
         const startBalance = await web3Client.getBalance(nf3Users[0].ethereumAddress);
         const withdrawal = await nf3Users[0].getLatestWithdrawHash();
-        console.log('Withdrawal Hash', withdrawal);
-        await emptyL2(nf3Users[0]);
+        await nf3Users[0].makeBlockNow();
+        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
         await web3Client.timeJump(3600 * 24 * 10); // jump in time by 10 days
         const commitments = await nf3Users[0].getPendingWithdraws();
-        console.log('Withdraw Commitments', commitments);
-        console.log('CompressedZKP', commitments[nf3Users[0].zkpKeys.compressedZkpPublicKey]);
         expect(
           commitments[nf3Users[0].zkpKeys.compressedZkpPublicKey][erc20Address].length,
         ).to.be.greaterThan(0);
@@ -235,7 +200,8 @@ describe('Gas test', () => {
   });
 
   after(async () => {
-    await emptyL2(nf3Users[0]);
+    await nf3Users[0].makeBlockNow();
+    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
     await nf3Proposer1.deregisterProposer();
     await nf3Proposer1.close();
     await nf3Users[0].close();
