@@ -105,6 +105,7 @@
     "zokrates-js": "1.0.43"
   },
   "scripts": {
+    "preinstall": "npx npm-force-resolutions",
     "start": "LOCAL_PROPOSER=true PUBLIC_URL='/nightfall/' USE_STUBS=true REACT_APP_MODE=local node scripts/start.js",
     "start:testnet": "LOCAL_PROPOSER=false PUBLIC_URL='/nightfall/' USE_STUBS=false REACT_APP_MODE=testnet env-cmd -f .testnet.env node scripts/start.js",
     "start:mainnet": "LOCAL_PROPOSER=false PUBLIC_URL='/nightfall/' USE_STUBS=false REACT_APP_MODE=mainnet env-cmd -f .mainnet.env node scripts/start.js",
@@ -144,7 +145,9 @@
     "eslint-plugin-cypress": "^2.12.1",
     "eslint-plugin-import": "^2.26.0",
     "fake-indexeddb": "^3.1.7",
+    "got": "^12.1.0",
     "mocha": "^9.2.2",
+    "nth-check": "^2.0.1",
     "react-error-overlay": "6.0.9",
     "react-scripts": "^5.0.1",
     "react-test-renderer": "^18.1.0",
@@ -152,7 +155,9 @@
     "ts-node": "^10.7.0"
   },
   "resolutions": {
-    "react-error-overlay": "6.0.9"
+    "react-error-overlay": "6.0.9",
+    "nth-check": "2.0.1",
+    "got": "12.1.0"
   },
   "babel": {
     "presets": [
