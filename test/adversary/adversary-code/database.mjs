@@ -3,7 +3,7 @@ import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import mongo from 'common-files/utils/mongo.mjs';
 
-const { MONGO_URL, OPTIMIST_DB, TRANSACTIONS_COLLECTION } = config;
+const { MONGO_URL, TRANSACTIONS_COLLECTION, OPTIMIST_DB } = config;
 
 let error = process.env.BAD_TX_SEQUENCE
   ? process.env.BAD_TX_SEQUENCE.split(',')

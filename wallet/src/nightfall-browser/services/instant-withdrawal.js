@@ -8,7 +8,7 @@ import { Transaction } from '../classes/index';
 import { buildSolidityStruct } from './finalise-withdrawal';
 import { getTransactionByTransactionHash, getBlockByTransactionHash } from './database';
 
-const { SHIELD_CONTRACT_NAME } = global.config;
+const { SHIELD_CONTRACT_NAME } = global.nightfallConstants;
 
 const setInstantWithdrawl = async (transactionHash, shieldContractAddress) => {
   const block = await getBlockByTransactionHash(transactionHash);

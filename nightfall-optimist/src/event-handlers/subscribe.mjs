@@ -7,16 +7,15 @@ import WebSocket from 'ws';
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import { getContractInstance, getContractAddress } from 'common-files/utils/contract.mjs';
+import constants from 'common-files/constants/index.mjs';
 
 const {
   PROPOSERS_CONTRACT_NAME,
   SHIELD_CONTRACT_NAME,
-  RETRIES,
-  WEBSOCKET_PORT,
   CHALLENGES_CONTRACT_NAME,
   STATE_CONTRACT_NAME,
-  WEBSOCKET_PING_TIME,
-} = config;
+} = constants;
+const { RETRIES, WEBSOCKET_PORT, WEBSOCKET_PING_TIME } = config;
 const wss = new WebSocket.Server({ port: WEBSOCKET_PORT });
 
 /**
