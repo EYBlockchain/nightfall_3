@@ -271,7 +271,7 @@ describe('ERC20 tests', () => {
         false,
         erc20Address,
         tokenType,
-        transferValue,
+        transferValue / 2,
         tokenId,
         nf3Users[0].ethereumAddress,
       );
@@ -289,7 +289,7 @@ describe('ERC20 tests', () => {
           false,
           erc20Address,
           tokenType,
-          transferValue,
+          Math.floor(transferValue / 2),
           tokenId,
           nf3Users[0].ethereumAddress,
         );
@@ -318,7 +318,7 @@ describe('ERC20 tests', () => {
           false,
           erc20Address,
           tokenType,
-          transferValue,
+          Math.floor(transferValue / 2),
           tokenId,
           nf3Users[0].ethereumAddress,
         );
@@ -349,6 +349,23 @@ describe('ERC20 tests', () => {
         this.skip();
       }
     });
+
+    it('should withdraw from L2 with some change', async function () {
+      const beforeBalance = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance;
+      const rec = await nf3Users[0].withdraw(
+        false,
+        erc20Address,
+        tokenType,
+        Math.floor(transferValue / 2),
+        tokenId,
+        nf3Users[0].ethereumAddress,
+      );
+      expectTransaction(rec);
+
+      logger.debug(`     Gas used was ${Number(rec.gasUsed)}`);
+      const afterBalance = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance;
+      expect(afterBalance).to.be.lessThan(beforeBalance);
+    });
   });
 
   describe('Instant withdrawals from L2', () => {
@@ -361,7 +378,7 @@ describe('ERC20 tests', () => {
         nf3LiquidityProvider.ethereumAddress,
         nf3LiquidityProvider.shieldContractAddress,
         tokenType,
-        transferValue,
+        Math.floor(transferValue / 2),
         web3Client.getWeb3(),
         !!nf3LiquidityProvider.ethereumSigningKey,
       );
@@ -392,7 +409,7 @@ describe('ERC20 tests', () => {
         false,
         erc20Address,
         tokenType,
-        transferValue,
+        Math.floor(transferValue / 2),
         tokenId,
         nf3Users[0].ethereumAddress,
         fee,
@@ -423,7 +440,7 @@ describe('ERC20 tests', () => {
         false,
         erc20Address,
         tokenType,
-        transferValue,
+        Math.floor(transferValue / 2),
         tokenId,
         nf3Users[0].ethereumAddress,
         fee,
@@ -537,7 +554,6 @@ describe('ERC20 tests', () => {
             await new Promise(resolve => setTimeout(resolve, 30000));
           }
 
-          // console.log('withdrawing', trnsferValue * 6);
           const rec = await nf3Users[0].withdraw(
             false,
             erc20Address,
@@ -547,7 +563,6 @@ describe('ERC20 tests', () => {
             nf3Users[0].ethereumAddress,
             fee,
           );
-
           await new Promise(resolve => setTimeout(resolve, 15000));
           expectTransaction(rec);
 

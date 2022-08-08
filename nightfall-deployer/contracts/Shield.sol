@@ -274,7 +274,10 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
     function payIn(Transaction memory t) internal {
         // check the address fits in 160 bits. This is so we can't overflow the circuit
         uint256 addrNum = uint256(t.ercAddress);
-        require (addrNum < 0x010000000000000000000000000000000000000000, 'The given address is more than 160 bits');
+        require(
+            addrNum < 0x010000000000000000000000000000000000000000,
+            'The given address is more than 160 bits'
+        );
         address addr = address(uint160(addrNum));
 
         if (t.tokenType == TokenType.ERC20) {

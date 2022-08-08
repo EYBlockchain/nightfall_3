@@ -38,7 +38,7 @@ export default async function compile(
         '-o',
         `${parsedOutputPath}${parsedOutputName}`,
         '-s',
-        `${parsedOutputPath}abi.json`,
+        `${parsedOutputPath}_abi.json`,
         '--curve',
         curve,
       ],
