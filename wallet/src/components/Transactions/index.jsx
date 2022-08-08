@@ -219,9 +219,9 @@ const Transactions = () => {
                 case 'deposit':
                   return f.txType === '0';
                 case 'transfer':
-                  return f.txType === '1' || f.txType === '2';
+                  return f.txType === '1';
                 case 'withdraw':
-                  return f.txType === '3';
+                  return f.txType === '2';
                 case 'pending':
                   return f.isOnChain === -1;
                 default:

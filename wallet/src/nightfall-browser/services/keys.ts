@@ -70,7 +70,6 @@ export class ZkpKeys {
             .getPrivateKey(),
         ).bigInt % BN128_GROUP_ORDER,
       );
-      console.log('rootKey', rootKey);
       const zkpPrivateKey = poseidon([
         rootKey,
         new GN(2708019456231621178814538244712057499818649907582893776052749473028258908910n),
