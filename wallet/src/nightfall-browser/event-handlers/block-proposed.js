@@ -34,7 +34,6 @@ This handler runs whenever a BlockProposed event is emitted by the blockchain
 */
 async function blockProposedEventHandler(data, zkpPrivateKeys, nullifierKeys) {
   console.log(`Received Block Proposed event: ${JSON.stringify(data)}`);
-  // ivk will be used to decrypt secrets whilst nsk will be used to calculate nullifiers for commitments and store them
   const { blockNumber: currentBlockCount, transactionHash: transactionHashL1 } = data;
   const { transactions, block, blockTimestamp } = data;
   const latestTree = await getTreeByBlockNumberL2(block.blockNumberL2 - 1);

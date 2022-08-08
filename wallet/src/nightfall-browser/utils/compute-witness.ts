@@ -36,17 +36,15 @@ type CommitmentPreimage = {
   salt: string[];
 };
 
-type Point = [string, string];
-
 type Nullifier = {
-  oldCommitment: CommitmentPreimage;
+  oldCommitments: CommitmentPreimage;
   rootKey: string[];
   paths: string[][];
   orders: string[];
 };
 
 type Commitment = {
-  newCommitment: CommitmentPreimage;
+  newCommitments: CommitmentPreimage;
   recipientPublicKey: string[][];
 };
 
@@ -103,7 +101,7 @@ const computePrivateInputsNullifiers = (privateData: any): Nullifier => {
   const paddedRootKeys: GeneralNumber[] = padArray(rootKey, 0, 2);
 
   return {
-    oldCommitment: {
+    oldCommitments: {
       value: paddedOldCommitmentPreimage.map(commitment => commitment.value.limbs(8, 31)),
       salt: paddedOldCommitmentPreimage.map(commitment => commitment.salt.field(BN128_GROUP_ORDER)),
     },
@@ -122,7 +120,7 @@ const computePrivateInputsCommitments = (privateData: any, padTo: number): Commi
   );
   const paddedRecipientPublicKeys: GeneralNumber[][] = padArray(recipientPublicKeys, [0, 0], padTo);
   return {
-    newCommitment: {
+    newCommitments: {
       value: paddedNewCommitmentPreimage.map(commitment => commitment.value.limbs(8, 31)),
       salt: paddedNewCommitmentPreimage.map(commitment => commitment.salt.field(BN128_GROUP_ORDER)),
     },
@@ -133,15 +131,15 @@ const computePrivateInputsCommitments = (privateData: any, padTo: number): Commi
   };
 };
 
-const computePrivateInputsDeposit = (privateData: any) => {
+const computePrivateInputsDeposit = (privateData: any): string[] => {
   const { salt, recipientPublicKeys } = generalise(privateData);
-  return {
-    salt: salt.field(BN128_GROUP_ORDER),
-    recipientPublicKey: recipientPublicKeys.map((rcp: GeneralNumber[]) => [
+  return [
+    salt.field(BN128_GROUP_ORDER),
+    recipientPublicKeys.map((rcp: GeneralNumber[]) => [
       rcp[0].field(BN128_GROUP_ORDER),
       rcp[1].field(BN128_GROUP_ORDER),
     ]),
-  };
+  ].flat(1);
 };
 
 // eslint-disable-next-line import/prefer-default-export
@@ -154,7 +152,7 @@ export const computeWitness = (
   switch (Number(txObject.transactionType)) {
     case 0:
       // Deposit
-      return [...publicInputs, computePrivateInputsDeposit(privateData)];
+      return [...publicInputs, ...computePrivateInputsDeposit(privateData)];
     case 1:
       // Transfer
       return [

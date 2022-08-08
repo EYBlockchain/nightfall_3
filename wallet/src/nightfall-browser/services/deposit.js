@@ -66,7 +66,7 @@ async function deposit(items, shieldContractAddress) {
   const roots = [];
 
   const witnessInput = computeWitness(publicData, roots, privateData);
-  logger.debug(`witness input is ${witnessInput.join(' ')}`);
+  logger.debug('witness input is', JSON.stringify(witnessInput));
 
   try {
     const zokratesProvider = await initialize();
@@ -74,8 +74,10 @@ async function deposit(items, shieldContractAddress) {
     const keypair = { pk: new Uint8Array(pk) };
 
     // computation
+    console.log('Computing Witness');
     const { witness } = zokratesProvider.computeWitness(artifacts, witnessInput);
     // generate proof
+    console.log('Generate Proof');
     const { proof } = zokratesProvider.generateProof(artifacts.program, witness, keypair.pk);
     const shieldContractInstance = await getContractInstance(
       SHIELD_CONTRACT_NAME,

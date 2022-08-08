@@ -401,10 +401,10 @@ const SendModal = (props: SendModalProps): JSX.Element => {
   useEffect(() => {
     const getBalance = async () => {
       const l2bal: Record<string, Record<string, bigint>> = await getWalletBalance(
-        state?.compressedPkd,
+        state?.compressedZkpPublicKey,
       );
-      if (Object.hasOwnProperty.call(l2bal, state?.compressedPkd))
-        setL2Balance(l2bal[state.compressedPkd][sendToken.address.toLowerCase()] ?? 0n);
+      if (Object.hasOwnProperty.call(l2bal, state?.compressedZkpPublicKey))
+        setL2Balance(l2bal[state.compressedZkpPublicKey][sendToken.address.toLowerCase()] ?? 0n);
       else setL2Balance(0n);
     };
     getBalance();
@@ -505,7 +505,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
     if (shieldContractAddress === '') setShieldAddress(shieldAddressGet());
     setShowModalConfirm(true);
     setShowModalTransferInProgress(true);
-    const { nsk, ask } = await retrieveAndDecrypt(state.compressedPkd);
+    const { nullifierKey, rootKey } = await retrieveAndDecrypt(state.compressedZkpPublicKey);
     await timeout(2000);
     setShowModalTransferInProgress(false);
     setShowModalTransferEnRoute(true);
@@ -515,11 +515,12 @@ const SendModal = (props: SendModalProps): JSX.Element => {
         ercAddress: sendToken.address,
         tokenId: 0,
         recipientData: {
-          recipientCompressedPkds: [recipient],
+          recipientCompressedZkpPublicKeys: [recipient],
           values: [new BigFloat(valueToSend, sendToken.decimals).toBigInt().toString()],
         },
-        nsk,
-        ask,
+        nullifierKey,
+        rootKey,
+        compressedZkpPublicKey: state.compressedZkpPublicKey,
         fee: 0,
       },
       shieldContractAddress,
@@ -599,7 +600,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
                     type="text"
                     placeholder="Enter a Nightfall Address"
                     onChange={e => setRecipient(e.target.value)}
-                    id="TokenItem_modalSend_compressedPkd"
+                    id="TokenItem_modalSend_compressedZkpPublicKey"
                   />
                   {!isValidAddress && (
                     <p style={{ color: 'red' }}>

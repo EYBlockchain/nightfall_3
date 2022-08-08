@@ -29,7 +29,7 @@ import { encrypt, genEphemeralKeys, packSecrets } from './kem-dem';
 import { computeWitness } from '../utils/compute-witness';
 
 const { BN128_GROUP_ORDER, USE_STUBS } = global.config;
-const { SHIELD_CONTRACT_NAME, ZERO } = global.nightfallConstants;
+const { SHIELD_CONTRACT_NAME } = global.nightfallConstants;
 const { generalise, GN } = gen;
 
 const circuitName = USE_STUBS ? 'transfer_stub' : 'transfer';
@@ -172,7 +172,6 @@ async function transfer(transferParams, shieldContractAddress) {
     // call a zokrates worker to generate the proof
     // This is (so far) the only place where we need to get specific about the
     // circuit
-    const transactionType = 2;
     if (!(await checkIndexDBForCircuit(circuitName)))
       throw Error('Some circuit data are missing from IndexedDB');
     const [abiData, programData, pkData] = await Promise.all([
@@ -187,9 +186,12 @@ async function transfer(transferParams, shieldContractAddress) {
     const zokratesProvider = await initialize();
     const artifacts = { program: new Uint8Array(program), abi };
     const keypair = { pk: new Uint8Array(pk) };
+    console.log('Computing witness');
     const { witness } = zokratesProvider.computeWitness(artifacts, witnessInput);
     // generate proof
+    console.log('Generating Proof');
     let { proof } = zokratesProvider.generateProof(artifacts.program, witness, keypair.pk);
+    console.log('Proof Generated');
     proof = [...proof.a, ...proof.b, ...proof.c];
     proof = proof.flat(Infinity);
     // and work out the ABI encoded data that the caller should sign and send to the shield contract
@@ -200,11 +202,13 @@ async function transfer(transferParams, shieldContractAddress) {
     const optimisticTransferTransaction = new Transaction({
       fee,
       historicRootBlockNumberL2: blockNumberL2s,
-      transactionType,
-      ercAddress: ZERO,
+      transactionType: 1,
+      ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
+      tokenId: compressedSecrets[1], // this is the encrypted tokenID
+      recipientAddress: compressedEPub,
       commitments: newCommitments,
       nullifiers,
-      compressedSecrets,
+      compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
       proof,
     });
     const rawTransaction = await shieldContractInstance.methods
@@ -212,7 +216,9 @@ async function transfer(transferParams, shieldContractAddress) {
       .encodeABI();
     // store the commitment on successful computation of the transaction
     newCommitments
-      .filter(commitment => commitment.compressedPkd.hex(32) === compressedZkpPublicKey.hex(32))
+      .filter(
+        commitment => commitment.compressedZkpPublicKey.hex(32) === compressedZkpPublicKey.hex(32),
+      )
       .forEach(commitment => storeCommitment(commitment, nullifierKey)); // TODO insertMany
     // mark the old commitments as nullified
     await Promise.all(
@@ -226,6 +232,7 @@ async function transfer(transferParams, shieldContractAddress) {
     };
   } catch (err) {
     await Promise.all(oldCommitments.map(commitment => clearPending(commitment)));
+    console.log('err', err);
     throw new Error(err); // let the caller handle the error
   }
 }

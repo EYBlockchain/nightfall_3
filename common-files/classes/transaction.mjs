@@ -21,13 +21,6 @@ const arrayEquality = (as, bs) => {
   return false;
 };
 
-const arrayEquality = (as, bs) => {
-  if (as.length === bs.length) {
-    return as.every(a => bs.includes(a));
-  }
-  return false;
-};
-
 // function to compute the keccak hash of a transaction
 function keccak(preimage) {
   const web3 = Web3.connection();

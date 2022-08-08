@@ -62,12 +62,15 @@ export class ZkpKeys {
     if (validateMnemonic(mnemonic)) {
       const seed = mnemonicToSeedSync(mnemonic);
       const rootKey = generalise(
-        hdkey
-          .fromMasterSeed(seed)
-          .derivePath(`m/44'/60'/0'/0/${addressIndex}`)
-          .getWallet()
-          .getPrivateKey(),
+        new GN(
+          hdkey
+            .fromMasterSeed(seed)
+            .derivePath(`m/44'/60'/0'/0/${addressIndex}`)
+            .getWallet()
+            .getPrivateKey(),
+        ).bigInt % BN128_GROUP_ORDER,
       );
+      console.log('rootKey', rootKey);
       const zkpPrivateKey = poseidon([
         rootKey,
         new GN(2708019456231621178814538244712057499818649907582893776052749473028258908910n),

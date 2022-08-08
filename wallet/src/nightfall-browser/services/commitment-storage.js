@@ -40,11 +40,12 @@ const connectDB = async () => {
 };
 
 // function to format a commitment for a mongo db and store it
-export async function storeCommitment(commitment, nsk) {
-  const nullifierHash = new Nullifier(commitment, nsk).hash.hex(32);
+export async function storeCommitment(commitment, nullifierKey) {
+  const nullifierHash = new Nullifier(commitment, nullifierKey).hash.hex(32);
   const data = {
     _id: commitment.hash.hex(32),
     preimage: commitment.preimage.all.hex(32),
+    compressedZkpPublicKey: commitment.compressedZkpPublicKey.hex(32),
     isDeposited: commitment.isDeposited || false,
     isOnChain: Number(commitment.isOnChain) || -1,
     isPendingNullification: false, // will not be pending when stored
@@ -86,7 +87,7 @@ export async function countWithdrawTransactionHashes(transactionHashes) {
   const db = await connectDB();
   const txs = await db.getAll(COMMITMENTS_COLLECTION);
   const filtered = txs.filter(tx => {
-    return transactionHashes.includes(tx.transactionHash) && tx.nullifierTransactionType === '3';
+    return transactionHashes.includes(tx.transactionHash) && tx.nullifierTransactionType === '2';
   });
   // const filtered = res.filter(r => transactionHashes.includes(r.transactionHash));
   return filtered.length;
@@ -97,7 +98,7 @@ export async function isTransactionHashWithdraw(transactionHash) {
   const db = await connectDB();
   const txs = await db.getAll(COMMITMENTS_COLLECTION);
   const filtered = txs.filter(tx => {
-    return tx.transactionHash === transactionHash && tx.nullifierTransactionType === '3';
+    return tx.transactionHash === transactionHash && tx.nullifierTransactionType === '2';
   });
   return filtered.length;
 }
@@ -322,12 +323,17 @@ export async function markNullifiedOnChain(
 }
 
 // function to get the balance of commitments for each ERC address
-export async function getWalletBalance(pkd) {
+export async function getWalletBalance(compressedZkpPublicKey) {
   const db = await connectDB();
   const vals = await db.getAll(COMMITMENTS_COLLECTION);
   const wallet =
     Object.keys(vals).length > 0
-      ? vals.filter(v => !v.isNullified && v.isOnChain >= 0 && v.compressedPkd === pkd)
+      ? vals.filter(
+          v =>
+            !v.isNullified &&
+            v.isOnChain >= 0 &&
+            v.compressedZkpPublicKey === compressedZkpPublicKey,
+        )
       : [];
   // the below is a little complex.  First we extract the ercAddress, tokenId and value
   // from the preimage.  Then we format them nicely. We don't care about the value of the
@@ -339,20 +345,21 @@ export async function getWalletBalance(pkd) {
   return wallet
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
-      compressedPkd: e.compressedPkd,
+      compressedZkpPublicKey: e.compressedZkpPublicKey,
       tokenId: !!BigInt(e.preimage.tokenId),
       value: BigInt(e.preimage.value),
     }))
     .filter(e => e.tokenId || e.value > 0) // there should be no commitments with tokenId and value of ZERO
     .map(e => ({
-      compressedPkd: e.compressedPkd,
+      compressedZkpPublicKey: e.compressedZkpPublicKey,
       ercAddress: e.ercAddress,
       balance: e.tokenId ? 1 : e.value,
     }))
     .reduce((acc, e) => {
-      if (!acc[e.compressedPkd]) acc[e.compressedPkd] = {};
-      if (!acc[e.compressedPkd][e.ercAddress]) acc[e.compressedPkd][e.ercAddress] = 0n;
-      acc[e.compressedPkd][e.ercAddress] += e.balance;
+      if (!acc[e.compressedZkpPublicKey]) acc[e.compressedZkpPublicKey] = {};
+      if (!acc[e.compressedZkpPublicKey][e.ercAddress])
+        acc[e.compressedZkpPublicKey][e.ercAddress] = 0n;
+      acc[e.compressedZkpPublicKey][e.ercAddress] += e.balance;
       return acc;
     }, {});
 }
@@ -376,20 +383,21 @@ export async function getWalletPendingDepositBalance() {
   return wallet
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
-      compressedPkd: e.compressedPkd,
+      compressedZkpPublicKey: e.compressedZkpPublicKey,
       tokenId: !!BigInt(e.preimage.tokenId),
       value: Number(BigInt(e.preimage.value)),
     }))
     .filter(e => e.tokenId || e.value > 0) // there should be no commitments with tokenId and value of ZERO
     .map(e => ({
-      compressedPkd: e.compressedPkd,
+      compressedZkpPublicKey: e.compressedZkpPublicKey,
       ercAddress: e.ercAddress,
       balance: e.tokenId ? 1 : e.value,
     }))
     .reduce((acc, e) => {
-      if (!acc[e.compressedPkd]) acc[e.compressedPkd] = {};
-      if (!acc[e.compressedPkd][e.ercAddress]) acc[e.compressedPkd][e.ercAddress] = 0;
-      acc[e.compressedPkd][e.ercAddress] += e.balance;
+      if (!acc[e.compressedZkpPublicKey]) acc[e.compressedZkpPublicKey] = {};
+      if (!acc[e.compressedZkpPublicKey][e.ercAddress])
+        acc[e.compressedZkpPublicKey][e.ercAddress] = 0;
+      acc[e.compressedZkpPublicKey][e.ercAddress] += e.balance;
       return acc;
     }, {});
 }
@@ -409,26 +417,27 @@ export async function getWalletPendingSpentBalance() {
   return wallet
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
-      compressedPkd: e.compressedPkd,
+      compressedZkpPublicKey: e.compressedZkpPublicKey,
       tokenId: !!BigInt(e.preimage.tokenId),
       value: Number(BigInt(e.preimage.value)),
     }))
     .filter(e => e.tokenId || e.value > 0) // there should be no commitments with tokenId and value of ZERO
     .map(e => ({
-      compressedPkd: e.compressedPkd,
+      compressedZkpPublicKey: e.compressedZkpPublicKey,
       ercAddress: e.ercAddress,
       balance: e.tokenId ? 1 : e.value,
     }))
     .reduce((acc, e) => {
-      if (!acc[e.compressedPkd]) acc[e.compressedPkd] = {};
-      if (!acc[e.compressedPkd][e.ercAddress]) acc[e.compressedPkd][e.ercAddress] = 0;
-      acc[e.compressedPkd][e.ercAddress] += e.balance;
+      if (!acc[e.compressedZkpPublicKey]) acc[e.compressedZkpPublicKey] = {};
+      if (!acc[e.compressedZkpPublicKey][e.ercAddress])
+        acc[e.compressedZkpPublicKey][e.ercAddress] = 0;
+      acc[e.compressedZkpPublicKey][e.ercAddress] += e.balance;
       return acc;
     }, {});
 }
 
 // function to get the balance of commitments for each ERC address
-export async function getWalletBalanceDetails(compressedPkd, ercList) {
+export async function getWalletBalanceDetails(compressedZkpPublicKey, ercList) {
   let ercAddressList = ercList || [];
   ercAddressList = ercAddressList.map(e => e.toUpperCase());
   const db = await connectDB();
@@ -446,7 +455,7 @@ export async function getWalletBalanceDetails(compressedPkd, ercList) {
   const res = wallet
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
-      compressedPkd: e.compressedPkd,
+      compressedZkpPublicKey: e.compressedZkpPublicKey,
       tokenId: !!BigInt(e.preimage.tokenId),
       value: Number(BigInt(e.preimage.value)),
       id: Number(BigInt(e.preimage.tokenId)),
@@ -454,22 +463,26 @@ export async function getWalletBalanceDetails(compressedPkd, ercList) {
     .filter(
       e =>
         (e.tokenId || e.value > 0) &&
-        e.compressedPkd === compressedPkd &&
+        e.compressedZkpPublicKey === compressedZkpPublicKey &&
         (ercAddressList.length === 0 || ercAddressList.includes(e.ercAddress.toUpperCase())),
     ) // there should be no commitments with tokenId and value of ZERO
     .map(e => ({
-      compressedPkd: e.compressedPkd,
+      compressedZkpPublicKey: e.compressedZkpPublicKey,
       ercAddress: e.ercAddress,
       balance: e.tokenId ? 1 : e.value,
       tokenId: e.id,
     }))
     .reduce((acc, e) => {
-      if (!acc[e.compressedPkd]) acc[e.compressedPkd] = {};
-      if (!acc[e.compressedPkd][e.ercAddress]) acc[e.compressedPkd][e.ercAddress] = [];
-      if (e.tokenId === 0 && acc[e.compressedPkd][e.ercAddress].length > 0) {
-        acc[e.compressedPkd][e.ercAddress][0].balance += e.balance;
+      if (!acc[e.compressedZkpPublicKey]) acc[e.compressedZkpPublicKey] = {};
+      if (!acc[e.compressedZkpPublicKey][e.ercAddress])
+        acc[e.compressedZkpPublicKey][e.ercAddress] = [];
+      if (e.tokenId === 0 && acc[e.compressedZkpPublicKey][e.ercAddress].length > 0) {
+        acc[e.compressedZkpPublicKey][e.ercAddress][0].balance += e.balance;
       } else {
-        acc[e.compressedPkd][e.ercAddress].push({ balance: e.balance, tokenId: e.tokenId });
+        acc[e.compressedZkpPublicKey][e.ercAddress].push({
+          balance: e.balance,
+          tokenId: e.tokenId,
+        });
       }
       return acc;
     }, {});
@@ -477,7 +490,7 @@ export async function getWalletBalanceDetails(compressedPkd, ercList) {
   return res;
 }
 
-// function to get the commitments for each ERC address of a pkd
+// function to get the commitments for each ERC address of a compressedZkpPublicKey
 export async function getWalletCommitments() {
   const db = await connectDB();
   const vals = await db.getAll(COMMITMENTS_COLLECTION);
@@ -493,31 +506,32 @@ export async function getWalletCommitments() {
   return wallet
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`,
-      compressedPkd: e.compressedPkd,
+      compressedZkpPublicKey: e.compressedZkpPublicKey,
       tokenId: !!BigInt(e.preimage.tokenId),
       value: Number(BigInt(e.preimage.value)),
     }))
     .filter(e => e.tokenId || e.value > 0) // there should be no commitments with tokenId and value of ZERO
     .map(e => ({
-      compressedPkd: e.compressedPkd,
+      compressedZkpPublicKey: e.compressedZkpPublicKey,
       ercAddress: e.ercAddress,
       balance: e.tokenId ? 1 : e.value,
     }))
     .reduce((acc, e) => {
-      if (!acc[e.compressedPkd]) acc[e.compressedPkd] = {};
-      if (!acc[e.compressedPkd][e.ercAddress]) acc[e.compressedPkd][e.ercAddress] = [];
-      acc[e.compressedPkd][e.ercAddress].push(e);
+      if (!acc[e.compressedZkpPublicKey]) acc[e.compressedZkpPublicKey] = {};
+      if (!acc[e.compressedZkpPublicKey][e.ercAddress])
+        acc[e.compressedZkpPublicKey][e.ercAddress] = [];
+      acc[e.compressedZkpPublicKey][e.ercAddress].push(e);
       return acc;
     }, {});
 }
 
-// function to get the withdraw commitments for each ERC address of a pkd
+// function to get the withdraw commitments for each ERC address of a compressedZkpPublicKey
 export async function getWithdrawCommitments() {
   const db = await connectDB();
   const vals = await db.getAll(COMMITMENTS_COLLECTION);
   const withdraws =
     Object.keys(vals).length > 0
-      ? vals.filter(v => v.isNullified && v.isOnChain >= 0 && v.nullifierTransactionType === '3')
+      ? vals.filter(v => v.isNullified && v.isOnChain >= 0 && v.nullifierTransactionType === '2')
       : [];
 
   // To check validity we need the withdrawal transaction, the block the transaction is in and all other
@@ -533,7 +547,7 @@ export async function getWithdrawCommitments() {
         block,
         transactions,
         index,
-        compressedPkd: w.compressedPkd,
+        compressedZkpPublicKey: w.compressedZkpPublicKey,
         ercAddress: `0x${BigInt(w.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to be a correct address length
         balance: w.preimage.tokenId ? 1 : w.preimage.value,
       };
@@ -547,7 +561,7 @@ export async function getWithdrawCommitments() {
       // TODO isValidWithdrawal is called with wrong parameters
       const valid = await isValidWithdrawal(block, transactions, index);
       return {
-        compressedPkd: wt.compressedPkd,
+        compressedZkpPublicKey: wt.compressedZkpPublicKey,
         ercAddress: wt.ercAddress,
         balance: wt.balance,
         valid,
@@ -556,9 +570,10 @@ export async function getWithdrawCommitments() {
   );
 
   return withdrawsDetailsValid.reduce((acc, e) => {
-    if (!acc[e.compressedPkd]) acc[e.compressedPkd] = {};
-    if (!acc[e.compressedPkd][e.ercAddress]) acc[e.compressedPkd][e.ercAddress] = [];
-    acc[e.compressedPkd][e.ercAddress].push(e);
+    if (!acc[e.compressedZkpPublicKey]) acc[e.compressedZkpPublicKey] = {};
+    if (!acc[e.compressedZkpPublicKey][e.ercAddress])
+      acc[e.compressedZkpPublicKey][e.ercAddress] = [];
+    acc[e.compressedZkpPublicKey][e.ercAddress].push(e);
     return acc;
   }, {});
 }
@@ -584,14 +599,14 @@ export async function getCommitmentsFromBlockNumberL2(blockNumberL2) {
 // also mark any found commitments as nullified (TODO mark them as un-nullified
 // if the transaction errors). The mutex lock is in the function
 // findUsableCommitmentsMutex, which calls this function.
-async function findUsableCommitments(compressedPkd, ercAddress, tokenId, _value, onlyOne) {
+async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId, _value, onlyOne) {
   const value = generalise(_value); // sometimes this is sent as a BigInt.
   // eslint-disable-next-line no-undef
   const db = await connectDB();
   const res = await db.getAll(COMMITMENTS_COLLECTION);
   const commitmentArray = res.filter(
     r =>
-      r.compressedPkd === compressedPkd.hex(32) &&
+      r.compressedZkpPublicKey === compressedZkpPublicKey.hex(32) &&
       r.preimage.ercAddress.toLowerCase() === ercAddress.hex(32).toLowerCase() &&
       r.preimage.tokenId === tokenId.hex(32) &&
       !r.isNullified &&
@@ -689,14 +704,14 @@ async function findUsableCommitments(compressedPkd, ercAddress, tokenId, _value,
 
 // mutex for the above function to ensure it only runs with a concurrency of one
 export async function findUsableCommitmentsMutex(
-  compressedPkd,
+  compressedZkpPublicKey,
   ercAddress,
   tokenId,
   _value,
   onlyOne,
 ) {
   return mutex.runExclusive(async () =>
-    findUsableCommitments(compressedPkd, ercAddress, tokenId, _value, onlyOne),
+    findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId, _value, onlyOne),
   );
 }
 

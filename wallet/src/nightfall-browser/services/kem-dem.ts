@@ -70,7 +70,7 @@ const genEphemeralKeys = async (): Promise<[GeneralNumber, BigInt[]]> => {
 This function performs the key encapsulation step, deriving a symmetric encryption key from a shared secret.
 @function kem
 @param {GeneralNumber} privateKey - The private key related to either the ephemeralPub or recipientPubKey (depending on operation)
-@param {Array<GeneralNumber>} recipientPubKey - The recipientPkd, in decryption this is also the ephemeralPub
+@param {Array<GeneralNumber>} recipientPubKey - The recipientPubKey, in decryption this is also the ephemeralPub
 @returns {Array<Array<GeneralNumber>, BigInt>>} The ephemeralPub key and the symmteric key used for encryption
 */
 const kem = (privateKey: any, recipientPubKey: any) => {
@@ -116,7 +116,7 @@ This function performs the kem-dem required to encrypt plaintext.
 @function encrypt
 @param {GeneralNumber} ephemeralPrivate - The private key that generates the ephemeralPub
 @param {Array<GeneralNumber>} ephemeralPub - The ephemeralPubKey
-@param {Array<GeneralNumber>} recipientPkds - The public pkd of the recipients
+@param {Array<GeneralNumber>} recipientPublicKey - The public recipientPublicKey of the recipients
 @param {Array<BigInt>} plaintexts - The array of plain text to be encrypted, the ordering is [ercAddress,tokenId, value, salt]
 @returns {Array<BigInt>} The encrypted ciphertexts.
 */
@@ -132,7 +132,7 @@ const encrypt = (
 /**
 This function performs the kem-deDem required to decrypt plaintext.
 @function decrypt
-@param {GeneralNumber} privateKey - The private key of the recipient pkd
+@param {GeneralNumber} privateKey - The private key of the recipientPublicKey
 @param {Array<GeneralNumber>} ephemeralPub - The ephemeralPubKey
 @param {Array<GeneralNumber>} cipherTexts - The array of ciphertexts to be decrypted
 @returns {Array<GeneralNumber>} The decrypted plaintexts, the ordering is [ercAddress,tokenId, value, salt]
