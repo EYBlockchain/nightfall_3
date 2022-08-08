@@ -24,7 +24,7 @@ export default async function generateKeys({ filepath, curve = 'bn128' }) {
   await compile(
     `${circuitsPath}/${filepath}`,
     `${outputPath}/${circuitDir}`,
-    `${circuitName}`,
+    `${circuitName}_out`,
     curve,
   );
 
