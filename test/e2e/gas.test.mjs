@@ -200,8 +200,6 @@ describe('Gas test', () => {
   });
 
   after(async () => {
-    await nf3Users[0].makeBlockNow();
-    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
     await nf3Proposer1.deregisterProposer();
     await nf3Proposer1.close();
     await nf3Users[0].close();
