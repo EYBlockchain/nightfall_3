@@ -15,6 +15,7 @@ def main(\
     //Verify public transaction structure
     assert(verify_structure::<0>(\
         tx.value,\
+        tx.fee,\
 	    tx.transactionType,\
 	    tx.tokenType,\
 	    tx.tokenId,\
@@ -25,6 +26,7 @@ def main(\
         tx.commitmentFee,\
         tx.nullifiersFee,\
 	    tx.historicRootBlockNumberL2,\
+        tx.historicRootBlockNumberL2Fee,\
 	    tx.compressedSecrets\
     ))
 

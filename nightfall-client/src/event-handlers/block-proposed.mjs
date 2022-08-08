@@ -91,8 +91,7 @@ async function blockProposedEventHandler(data, syncing) {
       saveTxToDb = true;
     }
 
-    if (saveTxToDb) {
-      logger.info('Saving Tx', transaction.transactionHash);
+    if (saveTxToDb)
       await saveTransaction({
         transactionHashL1,
         blockNumber: data.blockNumber,
@@ -103,7 +102,6 @@ async function blockProposedEventHandler(data, syncing) {
         if (!syncing || !err.message.includes('replay existing transaction')) throw err;
         logger.warn('Attempted to replay existing transaction. This is expected while syncing');
       });
-    }
 
     return Promise.all([
       saveTxToDb,
