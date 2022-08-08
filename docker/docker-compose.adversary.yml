@@ -5,8 +5,8 @@ services:
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     build:
-      dockerfile: optimist.Dockerfile
-      context: .
+      dockerfile: docker/optimist.Dockerfile
+      context: ..
     depends_on:
       - deployer
     networks:
