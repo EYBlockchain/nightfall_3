@@ -7,35 +7,37 @@ import isDev from './utils.mjs';
 
 const LOGGER_TIME_STRING = 'yyyy-mm-dd HH:MM:ss.l';
 
-const getInstance = (isDev) => {
+const getInstance = () => {
   const pinoOptions = {
     level: config.LOG_LEVEL || 'info',
     formatters: {
-      level (label, number) { // echoes the level as the label instead of the number
+      // echoes the level as the label instead of the number
+      level(label, number) {
         return { level: label };
       },
-      bindings (bindings) { // removes the pid and hostname fields from the logs
+      // removes the pid and hostname fields from the logs
+      bindings(bindings) {
         return {};
-      }
+      },
     },
     timestamp: () => `,"time": "${new Date(Date.now()).toISOString()}"`,
     transport: {
-        target: 'pino-pretty',
-        options: {
-          colorize: true,
-          ignore: 'pid,hostname,filename',
-          translateTime: LOGGER_TIME_STRING,
-        },
-    }
+      target: 'pino-pretty',
+      options: {
+        colorize: true,
+        ignore: 'pid,hostname,filename',
+        translateTime: LOGGER_TIME_STRING,
+      },
+    },
   };
 
-  if(! isDev) {
+  if (!isDev()) {
     delete pinoOptions.transport;
   }
 
   return pino(pinoOptions);
-}
+};
 
-const instance = getInstance(isDev());
+const instance = getInstance();
 
 export default instance;
